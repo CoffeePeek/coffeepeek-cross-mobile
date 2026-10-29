@@ -68,7 +68,7 @@ import com.coffeepeek.admin.ui.component.CompactOutlinedTextField
 import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.ui.component.AppButton
 import com.coffeepeek.admin.ui.component.CoffeePeekLoader
-import com.coffeepeek.admin.ui.component.CoffeeShopPlaceholderImage
+import com.coffeepeek.core.designsystem.component.CoffeePeekImagePlaceholder
 import com.coffeepeek.admin.ui.component.PhotoAttachmentsSection
 import com.coffeepeek.admin.ui.icons.CpIcons
 import com.coffeepeek.core.designsystem.component.CoffeePeekImage
@@ -432,7 +432,7 @@ private fun RoasterPreviewCard(
                         contentScale = ContentScale.Crop,
                     )
                 } else {
-                    CoffeeShopPlaceholderImage(labelSize = 16.sp)
+                    CoffeePeekImagePlaceholder(labelSize = 16.sp)
                 }
             }
             Column(modifier = Modifier.padding(CpDimens.spacing4)) {

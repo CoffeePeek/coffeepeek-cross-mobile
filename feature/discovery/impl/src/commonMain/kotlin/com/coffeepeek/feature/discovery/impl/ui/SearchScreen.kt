@@ -1,5 +1,10 @@
 package com.coffeepeek.feature.discovery.impl.ui
 
+import com.coffeepeek.core.media.PrefetchListPhotos
+import com.coffeepeek.core.designsystem.component.CoffeePeekLoadErrorContent
+import com.coffeepeek.core.designsystem.icons.CoffeePeekIllustrations
+import org.jetbrains.compose.resources.painterResource
+
 import androidx.compose.animation.AnimatedContent
 import com.coffeepeek.feature.discovery.impl.resources.Res
 import com.coffeepeek.feature.discovery.impl.resources.discovery_filters
@@ -63,8 +68,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.painter.ColorPainter
 import com.coffeepeek.feature.discovery.domain.model.ShopSummary
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.unit.IntOffset
@@ -193,7 +196,7 @@ private fun ResultsList(
     val shopsFirst = showsTextResults && state.showsShopsFirst(hasRoasterResults)
     // Section changes must bring the first result into view instead of retaining the old item anchor.
     LaunchedEffect(showsTextResults, shopsFirst) { listState.scrollToItem(0) }
-    if (prefetch) host.photoPrefetch(listState, shops.map { it.id to listOfNotNull(it.photoUrl) })
+    if (prefetch) PrefetchListPhotos(listState, shops.map { it.id to listOfNotNull(it.photoUrl) })
     val nearEnd by remember { derivedStateOf { listState.layoutInfo.let { info -> (info.visibleItemsInfo.lastOrNull()?.index ?: 0) >= info.totalItemsCount - 5 } } }
     LaunchedEffect(nearEnd, state.hasMore, state.isLoadingMore, shops.size) { if (nearEnd && state.hasMore && shops.isNotEmpty()) onAction(SearchAction.LoadMore) }
     CoffeePeekPullToRefresh(
@@ -238,9 +241,9 @@ private fun LazyListScope.shopResults(
             }
         }
         state.error != null && shops.isEmpty() -> item(key = "error") {
-            host.loadError({ onAction(SearchAction.Refresh) }, Modifier.fillParentMaxSize())
+            CoffeePeekLoadErrorContent({ onAction(SearchAction.Refresh) }, Modifier.fillParentMaxSize())
         }
-        shops.isEmpty() -> item(key = "suggestion") { SuggestionCard(host, onAddShop) }
+        shops.isEmpty() -> item(key = "suggestion") { SuggestionCard(onAddShop) }
         else -> shopRows(state, host, onAddShop, onAction)
     }
 }
@@ -253,16 +256,16 @@ private fun LazyListScope.shopRows(
             onOpen = { onAction(SearchAction.OpenShop(shop.id)) },
             onFavorite = { onAction(SearchAction.ToggleFavorite(shop.id)) })
     }
-    if (!state.isLoading && state.error == null) item(key = "suggestion") { SuggestionCard(host, onAddShop) }
+    if (!state.isLoading && state.error == null) item(key = "suggestion") { SuggestionCard(onAddShop) }
 }
 
 @Composable
-private fun SuggestionCard(host: DiscoveryHost, onAddShop: () -> Unit) {
+private fun SuggestionCard(onAddShop: () -> Unit) {
     CoffeePeekCatalogSuggestionCard(
         title = stringResource(Res.string.discovery_suggestion_title),
         description = stringResource(Res.string.discovery_suggestion_description),
         actionLabel = stringResource(Res.string.discovery_suggestion_action),
-        illustration = host.suggestionIllustration(),
+        illustration = painterResource(CoffeePeekIllustrations.CatalogSearch),
         onAdd = onAddShop,
     )
 }
@@ -274,7 +277,7 @@ private fun SearchContentPreview(hasRoasterResults: Boolean, dark: Boolean) = Co
         SearchContent(
             state = SearchState(query = "Coffee", searchActive = true, isLoading = false,
                 shops = listOf(ShopSummary("fixture-shop", "CoffeePeek", rating = 4.7, checkInCount = 12))),
-            host = DiscoveryHost(suggestionIllustration = { ColorPainter(Color.Transparent) }),
+            host = DiscoveryHost(),
             onAddShop = {}, bottomClearance = 0.dp, discovery = {}, textResults = {},
             hasRoasterResults = hasRoasterResults, onAction = {},
         )

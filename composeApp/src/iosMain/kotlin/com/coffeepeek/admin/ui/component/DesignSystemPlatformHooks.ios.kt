@@ -12,6 +12,8 @@ import com.coffeepeek.core.designsystem.component.CoffeePeekHaptic
 import com.coffeepeek.core.designsystem.component.CoffeePeekNativeControlsPresenter
 import com.coffeepeek.core.designsystem.component.CoffeePeekNativeMenuItem
 import com.coffeepeek.core.designsystem.component.LocalCoffeePeekNativeControlsPresenter
+import com.coffeepeek.core.designsystem.component.CoffeePeekNativeSearchPresenter
+import com.coffeepeek.core.designsystem.component.LocalCoffeePeekNativeSearchPresenter
 import com.coffeepeek.core.designsystem.component.CoffeePeekInputRole
 import com.coffeepeek.core.designsystem.component.CoffeePeekKeyboardPresenter
 import com.coffeepeek.core.designsystem.component.LocalCoffeePeekKeyboardPresenter
@@ -60,6 +62,13 @@ private object IosNativeHeaderPresenter : CoffeePeekNativeHeaderPresenter {
     @Composable
     override fun Present(title: String, onBack: (() -> Unit)?, customBack: Boolean, action: CoffeePeekHeaderAction?): Boolean =
         NativeNavigationBar(title, onBack, customBack, action?.let { NavigationBarAction(it.label, it.onClick) })
+}
+
+private object IosNativeSearchPresenter : CoffeePeekNativeSearchPresenter {
+    @Composable
+    override fun Present(value: String, onValueChange: (String) -> Unit, placeholder: String,
+        onSearch: () -> Unit, onCancel: () -> Unit, modifier: Modifier): Boolean =
+        NativeSearchField(value, onValueChange, placeholder, onSearch, {}, onCancel, modifier)
 }
 
 /** The UIDatePicker wheels of [NativeDatePicker]. */
@@ -173,6 +182,7 @@ internal actual fun ProvideDesignSystemPlatformHooks(content: @Composable () -> 
         LocalCoffeePeekPlatformEffects provides IosPlatformEffects,
         LocalCoffeePeekKeyboardPresenter provides IosKeyboardPresenter,
         LocalCoffeePeekNativeControlsPresenter provides IosNativeControlsPresenter,
+        LocalCoffeePeekNativeSearchPresenter provides IosNativeSearchPresenter,
         content = content,
     )
 }

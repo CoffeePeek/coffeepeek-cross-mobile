@@ -35,6 +35,7 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 import com.coffeepeek.feature.discovery.impl.map.MapAction
 import com.coffeepeek.feature.discovery.impl.map.MapState
 import com.coffeepeek.feature.discovery.api.DiscoveryHost
+import com.coffeepeek.feature.discovery.api.MapOpeningHours
 import com.coffeepeek.feature.discovery.api.MapShopDetails
 import com.coffeepeek.feature.discovery.domain.model.Coordinates
 import com.coffeepeek.feature.discovery.domain.model.MapMarker
@@ -53,7 +54,7 @@ internal fun androidx.compose.foundation.layout.BoxScope.MapOverlayControls(
 @Composable
 private fun MapOverlayControlsPreview() = CoffeePeekTheme {
     val shop = MapMarker("preview", "CoffeePeek Specialty Coffee", Coordinates(53.9, 27.56))
-    val details = MapShopDetails(null, 4.5, 12, true, "09:00 – 21:00")
+    val details = MapShopDetails(null, 4.5, 12, true, MapOpeningHours(false, "09:00", "21:00"))
     val state = MapState(nearby = listOf(shop), cardDetails = mapOf(shop.id to details))
     Surface(color = MaterialTheme.colorScheme.surfaceVariant) {
         Box(Modifier.fillMaxWidth().height(480.dp)) {
@@ -97,7 +98,7 @@ private fun androidx.compose.foundation.layout.BoxScope.MapSelection(
             Modifier.align(Alignment.BottomCenter).padding(start = CoffeePeekDimens.spacing4, end = CoffeePeekDimens.spacing4, bottom = bottomClearance + CoffeePeekDimens.spacing4),
         )
     } else if (state.hasCarousel) {
-        MapShopCarousel(state, host, dismissInput, onAction, Modifier.align(Alignment.BottomCenter)
+        MapShopCarousel(state, dismissInput, onAction, Modifier.align(Alignment.BottomCenter)
             .padding(bottom = bottomClearance + CoffeePeekDimens.spacing4).onSizeChanged { onCarouselHeight(it.height) })
     }
 }

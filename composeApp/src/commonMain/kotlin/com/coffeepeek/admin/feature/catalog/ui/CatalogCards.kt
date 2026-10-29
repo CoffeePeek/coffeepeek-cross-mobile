@@ -27,8 +27,8 @@ import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.constrainHeight
 import com.coffeepeek.admin.theme.CpColor
 import com.coffeepeek.admin.theme.CpDimens
-import com.coffeepeek.admin.ui.component.CoffeeShopImage
-import com.coffeepeek.admin.ui.component.CoffeeShopPlaceholderImage
+import com.coffeepeek.core.designsystem.component.CoffeePeekBrandedImage
+import com.coffeepeek.core.designsystem.component.CoffeePeekImagePlaceholder
 import com.coffeepeek.admin.ui.component.FavoriteButton
 import com.coffeepeek.admin.ui.component.PriceBynRow
 import com.coffeepeek.admin.ui.component.brewMethodIcon
@@ -75,7 +75,7 @@ internal fun ShopCardContent(
             ) {
                 val photoUrl = shop.photoUrl
                 if (!photoUrl.isNullOrBlank()) {
-                    CoffeeShopImage(
+                    CoffeePeekBrandedImage(
                         imageUrl = photoUrl,
                         contentDescription = shop.title,
                         contentScale = ContentScale.Crop,
@@ -83,7 +83,7 @@ internal fun ShopCardContent(
                         modifier = Modifier.fillMaxSize(),
                     )
                 } else {
-                    CoffeeShopPlaceholderImage(
+                    CoffeePeekImagePlaceholder(
                         labelSize = 18.sp,
                         contentDescription = "Фото ${shop.title} отсутствует",
                     )
@@ -184,7 +184,7 @@ internal fun ShopCardContent(
                                     ),
                                 contentAlignment = Alignment.Center,
                             ) {
-                                CoffeeShopImage(
+                                CoffeePeekBrandedImage(
                                     imageUrl = logoUrl,
                                     contentDescription = "Логотип обжарщика ${index + 1}",
                                     contentScale = ContentScale.Crop,
@@ -327,10 +327,10 @@ private fun CompactShopCardContent(
                 .background(MaterialTheme.colorScheme.surfaceVariant),
         ) {
             val photo = shop.photoUrl
-            if (!photo.isNullOrBlank()) CoffeeShopImage(
+            if (!photo.isNullOrBlank()) CoffeePeekBrandedImage(
                 photo, contentDescription = shop.title,
                 modifier = Modifier.fillMaxSize(), placeholderLabelSize = 10.sp,
-            ) else CoffeeShopPlaceholderImage(labelSize = 10.sp, contentDescription = "Фото ${shop.title} отсутствует")
+            ) else CoffeePeekImagePlaceholder(labelSize = 10.sp, contentDescription = "Фото ${shop.title} отсутствует")
             Box(Modifier.align(Alignment.TopEnd).padding(6.dp)) {
                 CatalogFavoriteControl(shop.isFavorite, onToggleFavorite, overImage = true, compact = true)
             }
@@ -504,7 +504,7 @@ internal fun RoasterCardContent(
                                 .background(if (photo != null) Color.White else MaterialTheme.colorScheme.surfaceVariant),
                             contentAlignment = Alignment.Center,
                         ) {
-                            if (photo != null) CoffeeShopImage(
+                            if (photo != null) CoffeePeekBrandedImage(
                                 imageUrl = photo, contentDescription = "Логотип ${roaster.name}",
                                 contentScale = ContentScale.Fit, placeholderLabelSize = 6.sp,
                                 modifier = Modifier.fillMaxSize(),

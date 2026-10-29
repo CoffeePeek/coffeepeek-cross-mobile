@@ -4,7 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import com.coffeepeek.feature.roaster.api.RoasterExposure
-import com.coffeepeek.feature.roaster.api.RoasterImage
+import com.coffeepeek.feature.roaster.impl.ui.compose.model.RoasterImage
 import com.coffeepeek.feature.roaster.api.RoasterScreenAnalytics
 import com.coffeepeek.feature.roaster.impl.ui.model.RoasterListAction
 import com.coffeepeek.feature.roaster.impl.ui.model.RoasterListItem

@@ -1,17 +1,18 @@
 package com.coffeepeek.admin.di.discovery
 
 import com.coffeepeek.admin.settings.CityPreference
-import com.coffeepeek.admin.ui.screen.map.formatMapHoursSummary
 import com.coffeepeek.admin.utils.FavoriteSync
 import com.coffeepeek.core.session.Session
 import com.coffeepeek.core.session.SessionReader
 import com.coffeepeek.domain.model.City
-import com.coffeepeek.domain.repository.ShopRepository
+import com.coffeepeek.feature.shop.api.PublicShopPreviews
+import com.coffeepeek.feature.roaster.api.PublicRoasterCatalog
 import com.coffeepeek.feature.discovery.api.DiscoveryAccount
 import com.coffeepeek.feature.discovery.api.DiscoveryCity
 import com.coffeepeek.feature.discovery.api.DiscoveryFavorites
 import com.coffeepeek.feature.discovery.api.DiscoveryShopDetails
 import com.coffeepeek.feature.discovery.api.MapShopDetails
+import com.coffeepeek.feature.discovery.api.MapOpeningHours
 import com.coffeepeek.feature.discovery.domain.model.CatalogEntry
 import com.coffeepeek.feature.discovery.domain.model.Coordinates
 import com.coffeepeek.feature.discovery.domain.model.CityEntry
@@ -62,25 +63,21 @@ internal class PreferenceDiscoveryCity(private val preference: CityPreference) :
     override suspend fun resolve(cities: List<CityEntry>): String? = preference.resolve(cities.map { City(it.id, it.name) })
 }
 
-/** The card of the selected shop reads the legacy shop details until the Shop owner backs this port. */
-internal class ShopDiscoveryDetails(private val shops: ShopRepository) : DiscoveryShopDetails {
-    override suspend fun details(shopId: String): Result<MapShopDetails> = shops.getShopDetails(shopId).map { details ->
+/** Adapts only public Shop API data; no legacy repository or presentation formatter. */
+internal class ShopDiscoveryDetails(private val shops: PublicShopPreviews) : DiscoveryShopDetails {
+    override suspend fun details(shopId: String): Result<MapShopDetails> = shops.load(shopId).map { details ->
         MapShopDetails(
-            photoUrl = details.shop.photoUrl ?: details.photos.firstOrNull(),
-            rating = details.shop.rating,
-            reviewCount = details.shop.reviewCount,
-            isOpen = details.shop.isOpen,
-            hours = formatMapHoursSummary(details.schedules),
-            coordinates = details.location?.let { point ->
-                val lat = point.latitude
-                val lon = point.longitude
-                if (lat != null && lon != null) Coordinates(lat, lon).takeIf { it.isValid } else null
-            },
+            photoUrl = details.coverPhotoUrl,
+            rating = details.rating,
+            reviewCount = details.reviewCount,
+            isOpen = details.isOpen,
+            hours = details.hours?.let { MapOpeningHours(it.isClosed, it.openTime, it.closeTime) },
+            coordinates = details.coordinates?.let { Coordinates(it.latitude, it.longitude).takeIf { it.isValid } },
         )
     }
 }
 
-/** The roaster list of the filters is the legacy catalog (it is cached on disk), as the plain search of the legacy feed read it. */
-internal fun roasterEntries(shops: ShopRepository): suspend () -> Result<List<CatalogEntry>> = {
-    shops.getCatalogs().map { all -> all.roasters.map { CatalogEntry(it.id, it.name, it.photoUrl) } }
+/** Public slugs and labels come from Roaster's existing persisted catalog. */
+internal fun roasterEntries(catalog: PublicRoasterCatalog): suspend () -> Result<List<CatalogEntry>> = {
+    catalog.load().map { rows -> rows.map { CatalogEntry(it.slug, it.name, it.photoUrl) } }
 }

@@ -45,104 +45,57 @@ private val SearchFieldHeight = CoffeePeekDimens.buttonHeight
 
 @Composable
 fun CoffeePeekSearchField(
-    value: String,
-    onValueChange: (String) -> Unit,
-    placeholder: String,
-    clearDescription: String,
-    enabled: Boolean = true,
-    readOnly: Boolean = false,
-    modifier: Modifier = Modifier,
-    onSearch: () -> Unit = {},
-    fieldHeight: Dp = SearchFieldHeight,
-    shadowElevation: Dp = 0.dp,
+    value: String, onValueChange: (String) -> Unit, placeholder: String, clearDescription: String,
+    enabled: Boolean = true, readOnly: Boolean = false, modifier: Modifier = Modifier,
+    onSearch: () -> Unit = {}, fieldHeight: Dp = SearchFieldHeight, shadowElevation: Dp = 0.dp,
+    clearButtonSize: Dp = 48.dp,
 ) {
     val focusManager = LocalFocusManager.current
     val shape = RoundedCornerShape(percent = 50)
     val field = remember { SyncedTextFieldState(value) }
     SideEffect { field.syncExternal(value) }
+    BasicTextField(value = field.value, onValueChange = { updated ->
+        val changed = field.value.text != updated.text
+        field.value = updated
+        if (changed) onValueChange(updated.text)
+    }, modifier = modifier.heightIn(min = fieldHeight).shadow(shadowElevation, shape, clip = false)
+        .border(1.dp, MaterialTheme.colorScheme.outline, shape).clip(shape).background(MaterialTheme.colorScheme.surface),
+        enabled = enabled, readOnly = readOnly, singleLine = true,
+        textStyle = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onSurface),
+        cursorBrush = SolidColor(MaterialTheme.colorScheme.primary), keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+        keyboardActions = KeyboardActions(onSearch = {
+            focusManager.clearFocus()
+            onSearch()
+        }), decorationBox = { inner ->
+            SearchFieldDecoration(field.value.text, placeholder, clearDescription, fieldHeight, clearButtonSize, enabled && !readOnly,
+                onClear = {
+                    field.value = TextFieldValue("")
+                    onValueChange("")
+                }, inner = inner)
+        })
+}
 
-    BasicTextField(
-        value = field.value,
-        onValueChange = { updated ->
-            val changed = field.value.text != updated.text
-            field.value = updated
-            if (changed) onValueChange(updated.text)
-        },
-        modifier = modifier
-            .heightIn(min = fieldHeight)
-            .shadow(
-                elevation = shadowElevation,
-                shape = shape,
-                clip = false,
-            )
-            .border(1.dp, MaterialTheme.colorScheme.outline, shape)
-            .clip(shape)
-            .background(MaterialTheme.colorScheme.surface),
-        enabled = enabled,
-        readOnly = readOnly,
-        singleLine = true,
-        textStyle = MaterialTheme.typography.bodyLarge.copy(
-            color = MaterialTheme.colorScheme.onSurface,
-        ),
-        cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
-        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-        keyboardActions = KeyboardActions(
-            onSearch = {
-                focusManager.clearFocus()
-                onSearch()
-            },
-        ),
-        decorationBox = { innerTextField ->
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(min = fieldHeight)
-                    .padding(start = 12.dp, end = 4.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Icon(
-                    imageVector = CoffeePeekIcons.Search,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(20.dp),
-                )
-                Spacer(Modifier.width(8.dp))
-                Box(
-                    modifier = Modifier.weight(1f),
-                    contentAlignment = Alignment.CenterStart,
-                ) {
-                    if (field.value.text.isEmpty()) {
-                        Text(
-                            text = placeholder,
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            maxLines = 1,
-                        )
-                    }
-                    innerTextField()
-                }
-                if (field.value.text.isNotEmpty()) {
-                    Box(
-                        modifier = Modifier
-                            .size(48.dp)
-                            .clip(CircleShape)
-                            .clickable(enabled = enabled && !readOnly) {
-                                field.value = TextFieldValue("")
-                                onValueChange("")
-                            },
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Icon(
-                            imageVector = CoffeePeekIcons.Close,
-                            contentDescription = clearDescription,
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.size(18.dp),
-                        )
-                    }
-                }
-            }
-        },
-    )
+@Composable
+private fun SearchFieldDecoration(value: String, placeholder: String, clearDescription: String, fieldHeight: Dp,
+    clearButtonSize: Dp, canEdit: Boolean, onClear: () -> Unit, inner: @Composable () -> Unit) {
+    Row(Modifier.fillMaxWidth().heightIn(min = fieldHeight).padding(start = 12.dp, end = 4.dp),
+        verticalAlignment = Alignment.CenterVertically) {
+        Icon(CoffeePeekIcons.Search, null, Modifier.size(20.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        Spacer(Modifier.width(8.dp))
+        Box(Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
+            if (value.isEmpty()) Text(placeholder, style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
+            inner()
+        }
+        if (value.isNotEmpty()) SearchClearButton(clearDescription, clearButtonSize, canEdit, onClear)
+    }
+}
+
+@Composable
+private fun SearchClearButton(description: String, size: Dp, enabled: Boolean, onClear: () -> Unit) {
+    Box(Modifier.size(size).clip(CircleShape).clickable(enabled = enabled, onClick = onClear), contentAlignment = Alignment.Center) {
+        Icon(CoffeePeekIcons.Close, description, Modifier.size(18.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+    }
 }
 
 @Composable

@@ -1,4 +1,10 @@
 <resources>
+    <string name="roaster_search_placeholder">Поиск обжарщиков…</string>
+    <string name="roaster_search_clear">Очистить поиск</string>
+    <string name="roaster_search_back">Назад</string>
+    <string name="roaster_suggestion_title">Не нашли нужного обжарщика?</string>
+    <string name="roaster_suggestion_description">Предложите добавить его в CoffeePeek — после проверки он появится в каталоге.</string>
+    <string name="roaster_suggestion_action">Добавить обжарщика</string>
     <!-- The active Roasters UI currently has Russian text only. -->
     <string name="roaster_loading">Загрузка</string>
     <string name="roaster_refresh">Обновить обжарщиков</string>

@@ -11,7 +11,6 @@ import com.coffeepeek.admin.utils.FavoriteSync
 import com.coffeepeek.domain.model.CatalogItem
 import com.coffeepeek.domain.model.City
 import com.coffeepeek.domain.model.CoffeeShop
-import com.coffeepeek.domain.model.PagedResult
 import com.coffeepeek.domain.model.ShopFilters
 import com.coffeepeek.domain.model.ShopLocation
 import com.coffeepeek.domain.repository.FavoriteRepository
@@ -19,8 +18,6 @@ import com.coffeepeek.domain.repository.SessionRepository
 import com.coffeepeek.domain.repository.ShopRepository
 import com.coffeepeek.feature.favorites.domain.usecase.ObserveFavoriteIdsUseCase
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.currentCoroutineContext
-import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -31,6 +28,7 @@ import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -83,7 +81,6 @@ data class FeedUiState(
     val isLoadingMore: Boolean = false,
     val error: String? = null,
     val query: String = "",
-    val searchOrigin: ShopLocation? = null,
     val isSearchActive: Boolean = false,
     val filters: FeedFiltersUi = FeedFiltersUi(),
     val cities: List<City> = emptyList(),
@@ -132,14 +129,7 @@ class FeedViewModel(
     private val favoriteMembershipMutex = Mutex()
     private val favoriteMutationGuard = Mutex()
     private val searchAnalytics = SearchTracker(Catalog.Shops)
-    private val searchVisibility = MutableStateFlow(SearchVisibility())
     private var shopsLoadJob: Job? = null
-    private data class SearchVisibility(val active: Boolean = false, val revision: Int = 0)
-    private data class VisibleSearch(val attempt: SearchAttempt, val revision: Int)
-
-    fun setSearchAnalyticsActive(active: Boolean) {
-        searchVisibility.update { if (it.active == active) it else SearchVisibility(active, it.revision + 1) }
-    }
 
     fun openedShop(shop: CoffeeShop) = searchAnalytics.open(Entity.Shop, _uiState.value.visibleShops.indexOfFirst { it.id == shop.id }.takeIf { it >= 0 }?.plus(1))
     private var isCityReady = false
@@ -325,7 +315,6 @@ class FeedViewModel(
         if (origin == nearbyOrigin) return
         val firstLocation = nearbyOrigin == null
         nearbyOrigin = origin
-        _uiState.update { it.copy(searchOrigin = origin) }
         if (firstLocation && selectNearbyOnFirstLocation) {
             _uiState.update { it.copy(filters = it.filters.copy(nearbyOnly = true), shops = emptyList()) }
         } else if (_uiState.value.filters.nearbyOnly) {
@@ -494,68 +483,74 @@ class FeedViewModel(
         }
 
         shopsLoadJob?.cancel()
-        shopsLoadJob = workScope.launch { loadShopPage(reset) }
-    }
+        shopsLoadJob = workScope.launch {
+            val page = if (reset) 1 else _uiState.value.currentPage + 1
 
-    private suspend fun loadShopPage(reset: Boolean) {
-        val page = if (reset) 1 else _uiState.value.currentPage + 1
-        showPageLoading(reset)
-        val current = _uiState.value
-        val search = beginSearch(current, reset)
-        val result = shopRepository.searchShops(current.filters.toShopFilters(current.query, nearbyOrigin, page, PAGE_SIZE))
-        currentCoroutineContext().ensureActive()
-        result.onSuccess {
-            visibleAttempt(search)?.results(it.totalCount)
-            applyShopPage(it, reset)
-        }.onFailure {
-            if (it is CancellationException) throw it
-            visibleAttempt(search)?.failed(safeAnalyticsError(it))
             _uiState.update { state ->
-                state.copy(isLoading = false, isRefreshing = false, isLoadingMore = false, error = "Не удалось загрузить кофейни")
+                when {
+                    reset && state.shops.isEmpty() ->
+                        state.copy(isLoading = true, isRefreshing = false, isLoadingMore = false, error = null)
+                    reset ->
+                        state.copy(isRefreshing = true, isLoading = false, isLoadingMore = false, error = null)
+                    else ->
+                        state.copy(isLoadingMore = true, error = null)
+                }
             }
-        }
-    }
 
-    private fun beginSearch(state: FeedUiState, reset: Boolean): VisibleSearch? {
-        val visibility = searchVisibility.value
-        if (!reset || !visibility.active) return null
-        val filters = state.filters
-        val attempt = searchAnalytics.begin(state.query.trim().replace(Regex("\\s+"), " ") to filters,
-            state.query, filters.analyticsValues().keys.toList(), filters.nearbyOnly,
-            citySlug = state.cities.firstOrNull { it.id == filters.cityId }?.address?.slug) ?: return null
-        return VisibleSearch(attempt, visibility.revision)
-    }
-
-    private fun visibleAttempt(search: VisibleSearch?): SearchAttempt? = search?.takeIf {
-        val current = searchVisibility.value
-        current.active && current.revision == it.revision
-    }?.attempt
-
-    private fun showPageLoading(reset: Boolean) {
-        _uiState.update { state ->
-            when {
-                reset && state.shops.isEmpty() -> state.copy(isLoading = true, isRefreshing = false, isLoadingMore = false, error = null)
-                reset -> state.copy(isRefreshing = true, isLoading = false, isLoadingMore = false, error = null)
-                else -> state.copy(isLoadingMore = true, error = null)
-            }
-        }
-    }
-
-    private suspend fun applyShopPage(result: PagedResult<CoffeeShop>, reset: Boolean) {
-        favoriteMembershipMutex.withLock {
-            _uiState.update { state ->
-                state.copy(
-                    shops = (if (reset) result.items else state.shops + result.items).let { shops ->
-                        favoriteIds.value?.let { ids -> shops.map { it.withFavoriteMembership(ids) } } ?: shops
-                    },
-                    currentPage = result.currentPage,
-                    totalPages = result.totalPages,
-                    hasMore = result.currentPage < result.totalPages,
-                    isLoading = false,
-                    isRefreshing = false,
-                    isLoadingMore = false,
-                    error = null,
-                )
+            val current = _uiState.value
+            val filters = current.filters
+            val search = if (reset) searchAnalytics.begin(current.query.trim().replace(Regex("\\s+"), " ") to filters, current.query, filters.analyticsValues().keys.toList(), filters.nearbyOnly,
+                citySlug = current.cities.firstOrNull { it.id == filters.cityId }?.address?.slug) else null
+            shopRepository.searchShops(
+                ShopFilters(
+                    query = current.query.trim().takeIf { it.isNotBlank() },
+                    cityId = if (filters.nearbyOnly) null else filters.cityId,
+                    coffeeFocus = filters.coffeeFocus,
+                    roasterIds = filters.roasterIds.toList(),
+                    beanIds = filters.beanIds.toList(),
+                    equipmentIds = filters.equipmentIds.toList(),
+                    brewMethodIds = filters.brewMethodIds.toList(),
+                    tagIds = filters.tagIds.toList(),
+                    priceRange = filters.priceRange,
+                    minRating = filters.minRating,
+                    page = page,
+                    pageSize = PAGE_SIZE,
+                    origin = nearbyOrigin.takeIf { filters.nearbyOnly },
+                    openOnly = filters.openOnly,
+                    newOnly = filters.newOnly,
+                    visitedOnly = filters.visitedOnly,
+                    favoritesOnly = filters.favoritesOnly,
+                ),
+            ).onSuccess { result ->
+                if (!isActive) return@onSuccess
+                search?.results(result.totalCount)
+                favoriteMembershipMutex.withLock {
+                    _uiState.update { state ->
+                        state.copy(
+                            shops = (if (reset) result.items else state.shops + result.items).let { shops ->
+                                favoriteIds.value?.let { ids -> shops.map { it.withFavoriteMembership(ids) } } ?: shops
+                            },
+                            currentPage = result.currentPage,
+                            totalPages = result.totalPages,
+                            hasMore = result.currentPage < result.totalPages,
+                            isLoading = false,
+                            isRefreshing = false,
+                            isLoadingMore = false,
+                            error = null,
+                        )
+                    }
+                }
+            }.onFailure {
+                if (!isActive) return@onFailure
+                search?.failed(safeAnalyticsError(it))
+                _uiState.update {
+                    it.copy(
+                        isLoading = false,
+                        isRefreshing = false,
+                        isLoadingMore = false,
+                        error = "Не удалось загрузить кофейни",
+                    )
+                }
             }
         }
     }

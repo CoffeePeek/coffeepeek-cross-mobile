@@ -1,4 +1,8 @@
 <resources>
+    <string name="coffeepeek_photo_missing">Фото отсутствует</string>
+    <string name="coffeepeek_load_error_title">Упс, что-то пошло не так</string>
+    <string name="coffeepeek_load_error_message">Сервис временно недоступен. Возможно, ведутся работы. Попробуйте чуть позже.</string>
+    <string name="coffeepeek_load_error_retry">Попробовать снова</string>
     <string name="coffeepeek_photo_loading">Загрузка фото…</string>
     <string name="coffeepeek_viewer_close">Закрыть</string>
     <string name="coffeepeek_map_expand">Развернуть карту на весь экран</string>

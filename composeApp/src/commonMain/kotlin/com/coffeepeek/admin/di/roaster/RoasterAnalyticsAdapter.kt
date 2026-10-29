@@ -56,6 +56,7 @@ internal object RoasterScreenAnalyticsAdapter : RoasterScreenAnalytics {
 
     @Composable
     override fun exposure(modifier: Modifier, section: RoasterExposure): Modifier = when (section) {
+        RoasterExposure.Search -> modifier.analyticsExposure("search", "roasters", "roasters")
         RoasterExposure.Catalog -> modifier.analyticsExposure("roaster_catalog", "catalog", "roasters")
         RoasterExposure.Discovery -> modifier.analyticsExposure("roaster_catalog", "discovery", "discovery")
         RoasterExposure.Photos -> modifier.analyticsExposure("roaster_photos", "roaster_detail", "roaster_detail")

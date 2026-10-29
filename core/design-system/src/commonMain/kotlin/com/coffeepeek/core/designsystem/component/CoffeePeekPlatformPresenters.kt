@@ -127,3 +127,17 @@ interface CoffeePeekNativeControlsPresenter {
 }
 
 val LocalCoffeePeekNativeControlsPresenter = staticCompositionLocalOf<CoffeePeekNativeControlsPresenter?> { null }
+
+/** Optional native counterpart for a feature that already used the platform search field. */
+interface CoffeePeekNativeSearchPresenter {
+    @Composable
+    fun Present(value: String, onValueChange: (String) -> Unit, placeholder: String,
+        onSearch: () -> Unit, onCancel: () -> Unit, modifier: Modifier): Boolean
+}
+
+val LocalCoffeePeekNativeSearchPresenter = staticCompositionLocalOf<CoffeePeekNativeSearchPresenter?> { null }
+
+@Composable
+fun CoffeePeekNativeSearchField(value: String, onValueChange: (String) -> Unit, placeholder: String,
+    onSearch: () -> Unit, onCancel: () -> Unit, modifier: Modifier): Boolean =
+    LocalCoffeePeekNativeSearchPresenter.current?.Present(value, onValueChange, placeholder, onSearch, onCancel, modifier) == true

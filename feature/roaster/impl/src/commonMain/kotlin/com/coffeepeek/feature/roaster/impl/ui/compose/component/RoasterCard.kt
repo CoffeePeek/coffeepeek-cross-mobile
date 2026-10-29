@@ -7,7 +7,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.sp
 import com.coffeepeek.core.designsystem.component.CoffeePeekRoasterCard
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
-import com.coffeepeek.feature.roaster.api.RoasterImage
+import com.coffeepeek.feature.roaster.impl.ui.compose.model.RoasterImage
 import com.coffeepeek.feature.roaster.impl.resources.Res
 import com.coffeepeek.feature.roaster.impl.resources.roaster_logo
 import com.coffeepeek.feature.roaster.impl.resources.roaster_stat_catalog

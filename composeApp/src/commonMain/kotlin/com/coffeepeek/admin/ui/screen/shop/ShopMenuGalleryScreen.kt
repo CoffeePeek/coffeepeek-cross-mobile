@@ -39,7 +39,7 @@ import androidx.compose.ui.unit.sp
 import com.coffeepeek.admin.di.platformViewModel
 import com.coffeepeek.admin.theme.CpDimens
 import com.coffeepeek.admin.ui.component.CoffeePeekLoader
-import com.coffeepeek.admin.ui.component.CoffeeShopImage
+import com.coffeepeek.core.designsystem.component.CoffeePeekBrandedImage
 import com.coffeepeek.admin.ui.component.CpTopBar
 import com.coffeepeek.core.designsystem.component.CoffeePeekPhotoViewer
 import com.coffeepeek.core.media.PrefetchListPhotos
@@ -117,7 +117,7 @@ fun ShopMenuGalleryScreen(shopId: String) {
                                 .clip(RoundedCornerShape(CpDimens.radiusLg))
                                 .clickable { previewIndex = index },
                         ) {
-                            CoffeeShopImage(
+                            CoffeePeekBrandedImage(
                                 imageUrl = photo.fullUrl,
                                 contentDescription = "Фотография меню ${index + 1}",
                                 contentScale = ContentScale.Fit,

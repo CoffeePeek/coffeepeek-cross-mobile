@@ -27,7 +27,7 @@ import com.coffeepeek.admin.ui.component.CpSnackbarHost
 import com.coffeepeek.admin.ui.component.CoffeePeekLoader
 import com.coffeepeek.admin.ui.component.CoffeePeekPullToRefresh
 import com.coffeepeek.admin.ui.component.LocalFloatingNavClearance
-import com.coffeepeek.admin.ui.component.LoadErrorContent
+import com.coffeepeek.core.designsystem.component.CoffeePeekLoadErrorContent
 import com.coffeepeek.admin.ui.component.SearchHeader
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -102,7 +102,7 @@ internal fun RoasterListScreen(
                     Box(Modifier.fillMaxWidth().padding(24.dp), contentAlignment = Alignment.Center) { CoffeePeekLoader() }
                 }
                 if (state.error != null) item {
-                    LoadErrorContent(onRetry = vm::refresh)
+                    CoffeePeekLoadErrorContent(onRetry = vm::refresh)
                 } else if (visible.isEmpty() && !state.isLoading) item {
                     Text("Обжарщики не найдены", modifier = Modifier.padding(24.dp), color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
@@ -156,7 +156,7 @@ internal fun RoasterPreview(
         if (state.items.isEmpty() && state.isLoading) {
             Box(Modifier.fillMaxWidth().padding(CpDimens.spacing4), contentAlignment = Alignment.Center) { CoffeePeekLoader() }
         } else if (state.error != null) {
-            LoadErrorContent(onRetry = vm::refresh)
+            CoffeePeekLoadErrorContent(onRetry = vm::refresh)
         } else if (visible.isEmpty() && !state.isLoading) {
             Text("Обжарщики не найдены", color = MaterialTheme.colorScheme.onSurfaceVariant)
         }

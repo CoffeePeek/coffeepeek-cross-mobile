@@ -122,8 +122,8 @@ import com.coffeepeek.admin.theme.CoffeePeekTheme
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.ui.component.brewMethodIcon
-import com.coffeepeek.admin.ui.component.CoffeeShopImage
-import com.coffeepeek.admin.ui.component.CoffeeShopPlaceholderImage
+import com.coffeepeek.core.designsystem.component.CoffeePeekBrandedImage
+import com.coffeepeek.core.designsystem.component.CoffeePeekImagePlaceholder
 import com.coffeepeek.admin.ui.component.GuestAuthCard
 import com.coffeepeek.admin.ui.component.CheckInDisplayCard
 import com.coffeepeek.admin.utils.currentLocalDayOfWeek
@@ -514,7 +514,7 @@ private fun ShopHeroImage(
             if (photos.size <= 1) {
                 val coverUrl = photos.firstOrNull()
                 if (!coverUrl.isNullOrBlank()) {
-                    CoffeeShopImage(
+                    CoffeePeekBrandedImage(
                         imageUrl = coverUrl,
                         contentDescription = title,
                         contentScale = ContentScale.Crop,
@@ -524,7 +524,7 @@ private fun ShopHeroImage(
                             .clickable { onPhotoClick(coverUrl) },
                     )
                 } else {
-                    CoffeeShopPlaceholderImage(
+                    CoffeePeekImagePlaceholder(
                         labelSize = 24.sp,
                         contentDescription = "Фото $title отсутствует",
                     )
@@ -1657,7 +1657,7 @@ private fun PhotoGallery(
         state = pagerState,
     ) { page ->
         val photoUrl = photos[page]
-        CoffeeShopImage(
+        CoffeePeekBrandedImage(
             imageUrl = photoUrl,
             contentDescription = title,
             contentScale = ContentScale.Crop,
@@ -1974,7 +1974,7 @@ private fun MenuPhotoStack(
         maxPeeks = MENU_PHOTO_MAX_PEEKS,
         onItemClick = onPhotoClick,
     ) { page ->
-            CoffeeShopImage(
+            CoffeePeekBrandedImage(
                 imageUrl = photos[page],
                 contentDescription = "Фотография меню ${page + 1} из ${photos.size}",
                 contentScale = ContentScale.Crop,

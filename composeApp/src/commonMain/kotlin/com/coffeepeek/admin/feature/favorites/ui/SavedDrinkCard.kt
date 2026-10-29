@@ -13,7 +13,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.admin.theme.CpDimens
-import com.coffeepeek.admin.ui.component.CoffeeShopImage
+import com.coffeepeek.core.designsystem.component.CoffeePeekBrandedImage
 import com.coffeepeek.admin.ui.component.FavoriteButton
 import com.coffeepeek.admin.ui.icons.CpIcons
 import com.coffeepeek.domain.feature.favorites.api.FavoriteEntry
@@ -36,7 +36,7 @@ internal fun SavedDrinkCard(drink: FavoriteEntry, removing: Boolean, onRemove: (
                     .background(MaterialTheme.colorScheme.surfaceVariant),
                 contentAlignment = Alignment.Center,
             ) {
-                drink.coverPhotoUrl?.let { url -> CoffeeShopImage(
+                drink.coverPhotoUrl?.let { url -> CoffeePeekBrandedImage(
                     imageUrl = url, contentDescription = drink.name,
                     contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize(),
                 ) } ?: Icon(CpIcons.Coffee, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)

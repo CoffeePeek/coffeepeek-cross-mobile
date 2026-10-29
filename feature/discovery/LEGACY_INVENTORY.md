@@ -1,5 +1,26 @@
 # Discovery: legacy-first inventory
 
+> Public-read ownership checkpoint, 2026-10-26 (#201): active Discovery tab and
+> check-in picker no longer read legacy ShopRepository for details or catalogs.
+> Composition adapts PublicShopPreviews and PublicRoasterCatalog only. Shop data
+> owns public photo/coordinates/local schedule projection; Discovery impl formats
+> the hours. Roaster's existing persistent catalog/cache supplies filter slugs.
+> Parent `8843e5af` includes develop `063f4c5b` (post links/share and permission
+> request keys); child merge `76f2a5c8` preserves it without restoring UI slots.
+> Older inventory/fallback statements below are historical. Native map models,
+> city/settings/favorites/platform infrastructure and old consumers remain separate
+> L2/L3/L4 work; this is not the deletion of all legacy modules.
+
+> UI ownership checkpoint, 2026-10-26: child
+> `codex/migration-discovery-ui-ownership` of PR #195 removes DiscoveryHost's
+> application visual/prefetch slots. Images, placeholders, shared errors and
+> price control use design-system/media; feature filters, avatars and catalog
+> icon mapping live in impl. Native map/platform hooks and exposure stay at
+> composition. Parent `a648e200` subsequently brings the unified POST search
+> migration from develop `21d9ee9a`; the child preserves it. Legacy data removal
+> remains open. Verification and remaining gates are in
+> `feature/LEGACY_EXIT_PLAN.md` (seventh slice).
+
 > Check-in picker checkpoint, 2026-10-25 (PR #195): both CreateCheckIn route hosts
 > now resolve CheckInShopPickerRenderer → feature/discovery CheckInShopPickerEntry.
 > The picker reuses SearchViewModel/MapViewModel and app-owned map/favorites/media

@@ -46,7 +46,7 @@ internal fun DiscoveryTabContent(
         val canvasSize = DpSize(maxWidth, maxHeight)
         DiscoverySearchLayer(state, ui, motion, host, roasters, context, bottomClearance, callbacks.onAddShop, onAction)
         DiscoveryRoasterOverlay(ui, roasters, context, reduceMotion, onAction)
-        if (state.showFilters) FilterSheet(state, host, onAction)
+        if (state.showFilters) FilterSheet(state, onAction)
         if (ui.mapAnchor.width > 0f || ui.mapExpanded) DiscoveryMapLayer(ui, motion, host, canvasSize, toggleMap, map)
     }
 }
@@ -78,7 +78,7 @@ private fun DiscoverySearchPresentation(
 private fun DiscoveryTabContentPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     DiscoveryTabContent(
         state = SearchState(isLoading = false, shops = listOf(ShopSummary("sandbox-cafe", "Sandbox Cafe"))),
-        host = DiscoveryHost(suggestionIllustration = { ColorPainter(Color.Transparent) }),
+        host = DiscoveryHost(),
         roasters = DiscoveryRoasterSlots(preview = {}, search = { _, _, _ -> }),
         analytics = NoDiscoveryAnalytics, callbacks = TabCallbacks({}, {}, {}, {}, {}),
         bottomClearance = 80.dp, focus = null, onAction = {}, onSearchPresentation = { _, _ -> },

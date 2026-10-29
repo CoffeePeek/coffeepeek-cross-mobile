@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.coffeepeek.core.designsystem.resources.Res
 import com.coffeepeek.core.designsystem.resources.coffeepeek_image_placeholder_brand
+import com.coffeepeek.core.designsystem.resources.coffeepeek_photo_missing
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
@@ -29,7 +30,7 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 fun CoffeePeekImagePlaceholder(
     modifier: Modifier = Modifier,
     labelSize: TextUnit = 18.sp,
-    contentDescription: String? = null,
+    contentDescription: String? = stringResource(Res.string.coffeepeek_photo_missing),
 ) {
     val dark = MaterialTheme.colorScheme.background.luminance() < 0.5f
     Box(modifier.fillMaxSize().background(if (dark) Color.White else Color.Black)

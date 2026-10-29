@@ -12,7 +12,8 @@ import com.coffeepeek.admin.settings.CityPreference
 import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.ui.screen.checkins.CheckInShopPickerRenderer
 import com.coffeepeek.core.session.SessionReader
-import com.coffeepeek.domain.repository.ShopRepository
+import com.coffeepeek.feature.shop.api.PublicShopPreviews
+import com.coffeepeek.feature.roaster.api.PublicRoasterCatalog
 import com.coffeepeek.feature.discovery.data.repository.createDiscoveryRepository
 import com.coffeepeek.feature.discovery.impl.createCheckInShopPickerEntry
 import com.coffeepeek.feature.favorites.domain.repository.FavoritesRepository
@@ -20,7 +21,8 @@ import io.ktor.client.HttpClient
 import kotlinx.coroutines.CoroutineScope
 
 internal class FeatureCheckInShopPickerRenderer(
-    private val client: HttpClient, private val shops: ShopRepository, private val sessions: SessionReader,
+    private val client: HttpClient, private val shops: PublicShopPreviews, private val catalog: PublicRoasterCatalog,
+    private val sessions: SessionReader,
     private val favorites: FavoritesRepository, private val city: CityPreference,
 ) : CheckInShopPickerRenderer {
     @Composable
@@ -54,7 +56,7 @@ internal class FeatureCheckInShopPickerRenderer(
     private fun entry(session: ShopBrowsingHostSession, scope: CoroutineScope) =
         AppDiscoveryFavorites(session.lease.favorites(favorites)).let { favoriteAdapter ->
             createCheckInShopPickerEntry(
-                createDiscoveryRepository(client, favoriteAdapter::favoriteIds, roasterEntries(shops)),
+                createDiscoveryRepository(client, favoriteAdapter::favoriteIds, roasterEntries(catalog)),
                 favoriteAdapter, PreferenceDiscoveryCity(city), AppDiscoveryLocation(scope),
                 SessionDiscoveryAccount(sessions), ShopDiscoveryDetails(shops), AppDiscoveryAnalytics(), discoveryHost(),
             )
