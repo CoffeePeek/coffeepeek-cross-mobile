@@ -42,7 +42,10 @@ internal fun DiscoveryTab(
     }
     SearchNavigationEvents(searchViewModel, callbacks)
     DiscoveryTabContent(state, host, roasters, analytics, callbacks, bottomClearance, focus,
-        searchViewModel::onAction, modifier) { presentation, onToggleExpand, mapModifier ->
+        searchViewModel::onAction, modifier, onSearchPresentation = { listActive, mapActive ->
+            searchViewModel.onAction(SearchAction.PresentationChanged(listActive))
+            mapViewModel.onAction(MapAction.PresentationChanged(mapActive))
+        }) { presentation, onToggleExpand, mapModifier ->
         MapScreen(mapViewModel, host, callbacks.onOpenShop, bottomClearance,
             focus.takeIf { presentation.expanded }, callbacks.onFocusConsumed,
             modifier = mapModifier, isPreview = !presentation.controlsExpanded,

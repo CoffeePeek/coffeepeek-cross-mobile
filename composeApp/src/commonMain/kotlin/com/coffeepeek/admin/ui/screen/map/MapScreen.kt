@@ -1,98 +1,17 @@
 package com.coffeepeek.admin.ui.screen.map
 
-import com.coffeepeek.admin.analytics.*
-import coffeepeek.composeapp.generated.resources.discovery_map_truncated
-
-import com.coffeepeek.admin.ui.icons.CpIcons
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.pager.HorizontalPager
-import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
-import androidx.compose.ui.layout.onSizeChanged
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.key
-import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.runtime.snapshotFlow
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.*
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.luminance
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.zIndex
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.semantics.CollectionInfo
-import androidx.compose.ui.semantics.clearAndSetSemantics
-import androidx.compose.ui.semantics.collectionInfo
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.semantics.stateDescription
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.DpSize
-import androidx.compose.ui.unit.sp
-import com.coffeepeek.admin.map.zoneMapCluster
-import com.coffeepeek.admin.map.CoffeeMap
-import com.coffeepeek.admin.map.mapCanvasSize
-import com.coffeepeek.admin.theme.CpDimens
-import com.coffeepeek.admin.ui.Navigator
-import com.coffeepeek.admin.ui.component.CoffeeShopImage
-import com.coffeepeek.admin.ui.component.CoffeeShopPlaceholderImage
-import com.coffeepeek.admin.ui.component.CoffeePeekLoader
-import com.coffeepeek.admin.ui.component.CpSearchField
-import com.coffeepeek.admin.ui.component.LocalFloatingNavClearance
-import com.coffeepeek.admin.ui.component.GlassControlIcon
-import com.coffeepeek.admin.ui.component.GlassIconButton
-import com.coffeepeek.admin.ui.component.PlatformMapControlButton
-import androidx.compose.material3.LocalContentColor
-import androidx.compose.runtime.CompositionLocalProvider
-import com.coffeepeek.domain.model.CoffeeShop
-import com.coffeepeek.domain.model.CoffeeShopDetails
-import com.coffeepeek.domain.model.MapShop
-import com.coffeepeek.domain.model.MapCoffeeZone
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.coffeepeek.admin.analytics.*
 import com.coffeepeek.admin.di.platformViewModel
-import com.coffeepeek.admin.utils.formatOneDecimal
 import com.coffeepeek.admin.location.rememberPermittedUserLocation
-import com.coffeepeek.admin.location.distanceToShopMeters
-import com.coffeepeek.admin.location.formatDistance
-import com.coffeepeek.domain.model.ShopLocation
-import com.coffeepeek.core.designsystem.component.CoffeePeekMapPreviewOverlay
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.drop
+import com.coffeepeek.admin.ui.Navigator
+import com.coffeepeek.domain.model.MapShop
 
 @Composable
 fun MapScreen(
@@ -105,528 +24,113 @@ fun MapScreen(
     onQueryChange: ((String) -> Unit)? = null,
     filterControl: (@Composable () -> Unit)? = null,
     filterBar: (@Composable () -> Unit)? = null,
+    isSearchActive: Boolean = !isPreview,
 ) {
     val state by vm.state.collectAsState()
     val focusManager = LocalFocusManager.current
-    val keyboardController = LocalSoftwareKeyboardController.current
-    val dismissSearchInput = {
+    val keyboard = LocalSoftwareKeyboardController.current
+    val dismissInput: () -> Unit = {
         focusManager.clearFocus(force = true)
-        keyboardController?.hide()
+        keyboard?.hide()
     }
+    val pendingFocus = MapScreenEffects(vm, isPreview, isSearchActive, dismissInput)
+    val actions = mapScreenActions(vm, dismissInput, onToggleExpand, onOpenShop, onQueryChange)
+    MapScreenContent(state, actions, isPreview, filterControl, filterBar,
+        modifier.analyticsExposure("map", if (isPreview) "home" else "discovery", if (isPreview) "discovery" else "map")) { canvasModifier ->
+        MapCanvas(state, actions, pendingFocus, isPreview, canvasSize, canvasModifier)
+    }
+}
+
+@Composable
+private fun MapScreenEffects(
+    vm: MapViewModel,
+    isPreview: Boolean,
+    isSearchActive: Boolean,
+    dismissInput: () -> Unit,
+): MapShop? {
     val userLocation = rememberPermittedUserLocation()
     LaunchedEffect(userLocation) {
         userLocation?.let { vm.onNearbyOriginChanged(it.latitude, it.longitude) }
     }
-    val pendingMapFocus by Navigator.pendingMapFocus.collectAsState()
-    val pendingFocus = pendingMapFocus.takeUnless { isPreview }
-    val pendingFocusShop = pendingFocus?.let { focus ->
-        MapShop(
-            id = focus.shopId,
-            title = focus.title,
-            latitude = focus.latitude,
-            longitude = focus.longitude,
-        )
-    }
-    val mapShops = pendingFocusShop?.let { shop ->
-        (state.shops + shop).distinctBy { it.id }
-    } ?: state.shops
-    val selectedShopId = state.selectedShop?.id ?: pendingFocus?.shopId
-    val cameraTarget = state.cameraTarget
-        ?: pendingFocus?.let { it.latitude to it.longitude }
-    val cameraZoom = state.cameraZoom ?: if (pendingFocus != null) 16f else null
-    val isDarkTheme = MaterialTheme.colorScheme.background.luminance() < 0.5f
-    val navClearance = LocalFloatingNavClearance.current
-    val hasShopCarousel = state.selectedShop != null || state.nearbyShops.isNotEmpty()
-    var carouselHeight by remember { mutableStateOf(0.dp) }
-    val density = androidx.compose.ui.platform.LocalDensity.current
-
-    LaunchedEffect(pendingFocus) {
-        pendingFocus?.let { focus ->
-            dismissSearchInput()
-            vm.focusOnShop(focus)
+    val pendingFocus by Navigator.pendingMapFocus.collectAsState()
+    val focus = pendingFocus.takeUnless { isPreview }
+    LaunchedEffect(focus) {
+        focus?.let {
+            dismissInput()
+            vm.focusOnShop(it)
             Navigator.consumeMapFocus()
         }
     }
-
-    Box(modifier.fillMaxSize().analyticsExposure("map", if (isPreview) "home" else "discovery", if (isPreview) "discovery" else "map")) {
-        CoffeeMap(
-            shops = mapShops,
-            clusters = state.clusters + if (isPreview || !state.showZones) state.zoneGroups.filter { it.shopCount > 0 }.map(::zoneMapCluster) else emptyList(),
-            zones = if (!isPreview && state.showZones) state.zones else emptyList(),
-            selectedShopId = selectedShopId,
-            onBoundsChanged = vm::onBoundsChanged,
-            onShopClick = { shop ->
-                dismissSearchInput()
-                vm.onShopSelected(shop)
-            },
-            onZoneClick = vm::onZoneSelected,
-            modifier = Modifier.align(Alignment.Center).mapCanvasSize(canvasSize)
-                .then(if (isPreview) Modifier.clearAndSetSemantics {} else Modifier),
-            cameraTarget = cameraTarget,
-            cameraZoom = cameraZoom,
-            onCameraTargetApplied = vm::onCameraTargetApplied,
-            isDarkTheme = isDarkTheme,
-            myLocationRequestKey = state.myLocationRequest,
-            onMyLocationFound = { lat, lon -> Analytics.track(AnalyticsEvent.GEOLOCATION_RESULT, "placement" to "map", "trigger" to if (state.myLocationRequest > 0) "user" else "automatic", "outcome" to "available"); vm.onMyLocationApplied(lat, lon) },
-            onLocationPermissionDenied = { Analytics.track(AnalyticsEvent.GEOLOCATION_RESULT, "placement" to "map", "trigger" to if (state.myLocationRequest > 0) "user" else "automatic", "outcome" to "unavailable") },
-            requestLocationPermissionOnLoad = !isPreview,
-            showAttribution = !isPreview,
-        )
-
-        if (isPreview) {
-            CoffeePeekMapPreviewOverlay(
-                onExpand = { Analytics.track(AnalyticsEvent.MAP_INTERACTION, "action" to "expanded"); onToggleExpand?.invoke() },
-                modifier = Modifier.matchParentSize(),
-            )
-            return@Box
-        } else {
-            Column(
-                modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .statusBarsPadding()
-                    .fillMaxWidth()
-                    .padding(horizontal = CpDimens.spacing4, vertical = CpDimens.spacing3)
-                    .zIndex(2f),
-                verticalArrangement = Arrangement.spacedBy(CpDimens.spacing2),
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing2)) {
-                    if (onToggleExpand != null) {
-                        GlassIconButton(
-                            onClick = { Analytics.track(AnalyticsEvent.MAP_INTERACTION, "action" to "collapsed"); dismissSearchInput(); onToggleExpand() },
-                            contentDescription = "Свернуть карту",
-                            hazeState = null,
-                        ) { Icon(CpIcons.Close, contentDescription = null, modifier = Modifier.size(22.dp)) }
-                    }
-                    CpSearchField(
-                        value = state.query,
-                        onValueChange = onQueryChange ?: vm::onQueryChange,
-                        placeholder = "Поиск кофейни…",
-                        fieldHeight = CpDimens.buttonHeight,
-                        modifier = Modifier.weight(1f),
-                    )
-                    filterControl?.invoke()
-                }
-                filterBar?.invoke()
-                if (state.isTruncated) MapTruncationNotice()
-                if (state.showSearchSuggestions) {
-                    MapSearchSuggestions(
-                        results = state.searchResults,
-                        isLoading = state.isSearchLoading,
-                        failed = state.searchFailed,
-                        onSelect = { shop ->
-                            dismissSearchInput()
-                            vm.onSearchResultSelected(shop)
-                        },
-                    )
-                }
-            }
-        }
-
-        MapZoomControl(
-            onZoomIn = vm::zoomIn,
-            onZoomOut = vm::zoomOut,
-            modifier = Modifier
-                .align(Alignment.CenterEnd)
-                .padding(end = if (isPreview) CpDimens.spacing2 else CpDimens.spacing4),
-        )
-
-        Column(
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(
-                    end = if (isPreview) CpDimens.spacing2 else CpDimens.spacing4,
-                    bottom = if (isPreview) CpDimens.spacing2 else navClearance + when {
-                        state.selectedZone != null -> 180.dp
-                        hasShopCarousel -> carouselHeight + CpDimens.spacing4 * 2
-                        else -> CpDimens.spacing4
-                    },
-                ),
-            verticalArrangement = Arrangement.spacedBy(CpDimens.spacing2),
-            horizontalAlignment = Alignment.End,
-        ) {
-            if (!isPreview) MapControlButton(
-                icon = GlassControlIcon.Zones,
-                onClick = vm::toggleZones,
-                contentDescription = if (state.showZones) "Скрыть зоны" else "Показать зоны",
-                selected = state.showZones,
-                contentColor = if (state.showZones) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
-            ) {
-                Icon(
-                    CpIcons.Polygon,
-                    contentDescription = if (state.showZones) "Скрыть зоны" else "Показать зоны",
-                    modifier = Modifier.size(26.dp),
-                )
-            }
-            MapControlButton(
-                icon = GlassControlIcon.Location,
-                onClick = vm::requestMyLocation,
-                contentDescription = "Моё местоположение",
-                modifier = Modifier.size(CpDimens.buttonHeight + if (isPreview) 0.dp else 4.dp),
-            ) {
-                Icon(
-                    CpIcons.Navigation,
-                    contentDescription = "Моё местоположение",
-                    modifier = Modifier.size(if (isPreview) 24.dp else 32.dp),
-                )
-            }
-        }
-
-        if (!isPreview && state.showSearchArea) {
-            Button(
-                onClick = vm::searchCurrentArea,
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(
-                        bottom = navClearance + if (hasShopCarousel) carouselHeight + 48.dp else 32.dp,
-                    )
-                    .height(CpDimens.buttonHeight),
-                shape = RoundedCornerShape(percent = 50),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.onSurface,
-                    contentColor = MaterialTheme.colorScheme.surface,
-                ),
-                contentPadding = PaddingValues(horizontal = CpDimens.spacing5),
-            ) {
-                Text("Искать в этой области", style = MaterialTheme.typography.labelLarge)
-            }
-        }
-
-        if (!isPreview && state.selectedZone == null && hasShopCarousel) {
-            MapShopCarousel(
-                onOpenShop = { vm.openedShop(); onOpenShop(it) },
-                state = state,
-                onSelect = { shop ->
-                    dismissSearchInput()
-                    vm.onCarouselShopSelected(shop)
-                },
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(bottom = navClearance + CpDimens.spacing4)
-                    .onSizeChanged { carouselHeight = with(density) { it.height.toDp() } },
-            )
-        }
-
-        state.selectedZone?.takeUnless { isPreview }?.let { zone ->
-            MapZoneCard(
-                zone = zone,
-                onShowShops = vm::showSelectedZoneShops,
-                onDismiss = vm::clearZoneSelection,
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(
-                        start = CpDimens.spacing4,
-                        end = CpDimens.spacing4,
-                        bottom = navClearance + CpDimens.spacing4,
-                    ),
-            )
-        }
+    val lifecycle by LocalLifecycleOwner.current.lifecycle.currentStateFlow.collectAsState()
+    val visible = LocalAnalyticsVisible.current
+    DisposableEffect(vm, lifecycle, isSearchActive, visible) {
+        vm.setSearchActive(isSearchActive && visible && lifecycle.isAtLeast(Lifecycle.State.RESUMED))
+        onDispose { vm.setSearchActive(false) }
     }
+    return focus?.let { MapShop(it.shopId, it.title, it.latitude, it.longitude) }
 }
 
-@Composable
-private fun MapTruncationNotice() {
-    Surface(shape = RoundedCornerShape(CpDimens.radiusMd), color = MaterialTheme.colorScheme.surface,
-        tonalElevation = 3.dp, shadowElevation = 3.dp) {
-        Text(org.jetbrains.compose.resources.stringResource(coffeepeek.composeapp.generated.resources.Res.string.discovery_map_truncated),
-            style = MaterialTheme.typography.labelMedium,
-            modifier = Modifier.padding(horizontal = CpDimens.spacing3, vertical = CpDimens.spacing2))
-    }
+private fun mapScreenActions(
+    vm: MapViewModel,
+    dismissInput: () -> Unit,
+    toggleExpand: (() -> Unit)?,
+    openShop: (String) -> Unit,
+    queryChange: ((String) -> Unit)?,
+): MapScreenActions = mapSelectionActions(vm, dismissInput).copy(
+    onQueryChange = queryChange ?: vm::onQueryChange,
+    onExpand = {
+        Analytics.track(AnalyticsEvent.MAP_INTERACTION, "action" to "expanded")
+        toggleExpand?.invoke()
+    },
+    onCollapse = toggleExpand?.let { collapseMapAction(dismissInput, it) },
+    onOpenShop = {
+        vm.openedShop()
+        openShop(it)
+    },
+)
+
+private fun mapSelectionActions(vm: MapViewModel, dismissInput: () -> Unit) = mapCameraActions(vm).copy(
+    onShopClick = {
+        dismissInput()
+        vm.onShopSelected(it)
+    },
+    onCarouselSelect = {
+        dismissInput()
+        vm.onCarouselShopSelected(it)
+    },
+    onSearchSelect = {
+        dismissInput()
+        vm.onSearchResultSelected(it)
+    },
+)
+
+private fun mapCameraActions(vm: MapViewModel) = MapScreenActions(
+    onBoundsChanged = vm::onBoundsChanged,
+    onZoneClick = vm::onZoneSelected,
+    onCameraApplied = vm::onCameraTargetApplied,
+    onLocationFound = { lat, lon -> applyMapLocation(vm, lat, lon) },
+    onLocationDenied = { trackMapLocation(vm, "unavailable") },
+    onZoomIn = vm::zoomIn,
+    onZoomOut = vm::zoomOut,
+    onToggleZones = vm::toggleZones,
+    onMyLocation = vm::requestMyLocation,
+    onSearchArea = vm::searchCurrentArea,
+    onShowZoneShops = vm::showSelectedZoneShops,
+    onDismissZone = vm::clearZoneSelection,
+)
+
+private fun collapseMapAction(dismissInput: () -> Unit, collapse: () -> Unit): () -> Unit = {
+    Analytics.track(AnalyticsEvent.MAP_INTERACTION, "action" to "collapsed")
+    dismissInput()
+    collapse()
 }
 
-@Composable
-private fun MapSearchSuggestions(
-    results: List<CoffeeShop>,
-    isLoading: Boolean,
-    failed: Boolean,
-    onSelect: (CoffeeShop) -> Unit,
-) {
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(CpDimens.radiusLg),
-        color = MaterialTheme.colorScheme.surface,
-        shadowElevation = 6.dp,
-    ) {
-        when {
-            isLoading -> Box(
-                modifier = Modifier.fillMaxWidth().height(56.dp),
-                contentAlignment = Alignment.Center,
-            ) {
-                CoffeePeekLoader(size = 24.dp)
-            }
-
-            failed -> Text(
-                text = "Не удалось выполнить поиск",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(CpDimens.spacing4),
-            )
-
-            results.isEmpty() -> Text(
-                text = "Кофейни не найдены",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(CpDimens.spacing4),
-            )
-
-            else -> Column {
-                results.forEachIndexed { index, shop ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .heightIn(min = 56.dp)
-                            .clickable { onSelect(shop) }
-                            .padding(horizontal = CpDimens.spacing4, vertical = CpDimens.spacing2),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing3),
-                    ) {
-                        Icon(
-                            imageVector = CpIcons.Location,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(22.dp),
-                        )
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = shop.title,
-                                style = MaterialTheme.typography.bodyLarge,
-                                fontWeight = FontWeight.SemiBold,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                            )
-                            shop.address?.takeIf(String::isNotBlank)?.let { address ->
-                                Text(
-                                    text = address,
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                )
-                            }
-                        }
-                        Icon(
-                            imageVector = CpIcons.ChevronRight,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.size(18.dp),
-                        )
-                    }
-                    if (index != results.lastIndex) {
-                        HorizontalDivider(
-                            modifier = Modifier.padding(start = 56.dp),
-                            color = MaterialTheme.colorScheme.outlineVariant,
-                        )
-                    }
-                }
-            }
-        }
-    }
+private fun applyMapLocation(vm: MapViewModel, latitude: Double, longitude: Double) {
+    trackMapLocation(vm, "available")
+    vm.onMyLocationApplied(latitude, longitude)
 }
 
-@Composable
-private fun MapZoneCard(
-    zone: MapCoffeeZone,
-    onShowShops: () -> Unit,
-    onDismiss: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Card(
-        modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(CpDimens.cardRadius),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
-    ) {
-        Column(
-            modifier = Modifier.padding(CpDimens.spacing4),
-            verticalArrangement = Arrangement.spacedBy(CpDimens.spacing2),
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = zone.name,
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                    )
-                    Text(
-                        text = "${zone.shopCount} ${mapShopCountLabel(zone.shopCount)}",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-                IconButton(onClick = onDismiss) {
-                    Icon(CpIcons.Close, contentDescription = "Закрыть")
-                }
-            }
-            if (zone.description.isNotBlank()) {
-                Text(
-                    text = zone.description,
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 3,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
-            Button(
-                onClick = onShowShops,
-                modifier = Modifier.fillMaxWidth().height(CpDimens.buttonHeight),
-                shape = RoundedCornerShape(percent = 50),
-            ) {
-                Text("Показать кофейни")
-            }
-        }
-    }
-}
-
-private fun mapShopCountLabel(count: Int): String {
-    val mod100 = count % 100
-    val mod10 = count % 10
-    return when {
-        mod100 in 11..14 -> "кофеен"
-        mod10 == 1 -> "кофейня"
-        mod10 in 2..4 -> "кофейни"
-        else -> "кофеен"
-    }
-}
-
-@Composable
-private fun MapControlButton(
-    icon: GlassControlIcon,
-    onClick: () -> Unit,
-    contentDescription: String,
-    modifier: Modifier = Modifier,
-    selected: Boolean = false,
-    contentColor: Color = MaterialTheme.colorScheme.onSurface,
-    content: @Composable () -> Unit,
-) {
-    PlatformMapControlButton(
-        icon = icon,
-        onClick = onClick,
-        contentDescription = contentDescription,
-        modifier = modifier,
-        selected = selected,
-    ) {
-        CompositionLocalProvider(LocalContentColor provides contentColor) { content() }
-    }
-}
-
-@Composable
-private fun MapZoomControl(
-    onZoomIn: () -> Unit,
-    onZoomOut: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val shape = RoundedCornerShape(CpDimens.radiusLg)
-    Column(
-        modifier = modifier
-            .width(CpDimens.buttonHeight)
-            .clip(shape)
-            .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.94f))
-            .border(1.dp, MaterialTheme.colorScheme.outline, shape),
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(CpDimens.buttonHeight)
-                .clip(
-                    RoundedCornerShape(
-                        topStart = CpDimens.radiusLg,
-                        topEnd = CpDimens.radiusLg,
-                    ),
-                )
-                .clickable(onClick = onZoomIn),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                imageVector = CpIcons.Add,
-                contentDescription = "Приблизить карту",
-                tint = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.size(22.dp),
-            )
-        }
-        HorizontalDivider(
-            thickness = 1.dp,
-            color = MaterialTheme.colorScheme.outline,
-        )
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(CpDimens.buttonHeight)
-                .clip(
-                    RoundedCornerShape(
-                        bottomStart = CpDimens.radiusLg,
-                        bottomEnd = CpDimens.radiusLg,
-                    ),
-                )
-                .clickable(onClick = onZoomOut),
-            contentAlignment = Alignment.Center,
-        ) {
-            Icon(
-                imageVector = CpIcons.Minus,
-                contentDescription = "Отдалить карту",
-                tint = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.size(22.dp),
-            )
-        }
-    }
-}
-
-@Composable
-private fun MapShopCarousel(
-    onOpenShop: (String) -> Unit,
-    state: MapUiState,
-    onSelect: (MapShop) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val selected = state.selectedShop
-    val selectedShopId by rememberUpdatedState(selected?.id)
-    val shops = if (selected == null || state.nearbyShops.any { it.id == selected.id }) state.nearbyShops else
-        listOf(selected) + state.nearbyShops.take(9)
-    if (shops.isEmpty()) return
-    key(shops.map { it.id }) {
-        val selectedIndex = shops.indexOfFirst { it.id == selected?.id }.coerceAtLeast(0)
-        val pager = rememberPagerState(
-            initialPage = carouselStartPage(shops.size, selectedIndex),
-            pageCount = { if (shops.size > 1) Int.MAX_VALUE else 1 },
-        )
-        LaunchedEffect(selected?.id) {
-            if (selected == null) return@LaunchedEffect
-            val currentIndex = pager.currentPage % shops.size
-            if (currentIndex != selectedIndex) {
-                val right = (selectedIndex - currentIndex + shops.size) % shops.size
-                val delta = if (right <= shops.size / 2) right else right - shops.size
-                pager.animateScrollToPage(pager.currentPage + delta)
-            }
-        }
-        LaunchedEffect(pager) {
-            snapshotFlow { pager.settledPage }.distinctUntilChanged().drop(1).collect { page ->
-                val shop = shops[page % shops.size]
-                if (shop.id != selectedShopId) onSelect(shop)
-            }
-        }
-        HorizontalPager(
-            state = pager,
-            modifier = modifier.fillMaxWidth().semantics {
-                collectionInfo = CollectionInfo(1, shops.size)
-                stateDescription = "Кофейня ${pager.currentPage % shops.size + 1} из ${shops.size}"
-            },
-            contentPadding = PaddingValues(horizontal = 36.dp),
-            pageSpacing = 12.dp,
-            userScrollEnabled = shops.size > 1,
-            beyondViewportPageCount = 1,
-        ) { page ->
-            val shop = shops[page % shops.size]
-            val isSelected = shop.id == selected?.id
-            MapShopCard(
-                shop = shop,
-                details = state.cardDetails[shop.id] ?: state.selectedShopDetails.takeIf { isSelected },
-                isLoadingDetails = isSelected && state.isLoadingShopDetails,
-                distance = formatDistance(distanceToShopMeters(state.nearbyOrigin, ShopLocation("", shop.latitude, shop.longitude))),
-                onOpen = {
-                    if (isSelected) onOpenShop(shop.id) else onSelect(shop)
-                },
-            )
-        }
-    }
+private fun trackMapLocation(vm: MapViewModel, outcome: String) {
+    Analytics.track(AnalyticsEvent.GEOLOCATION_RESULT, "placement" to "map",
+        "trigger" to if (vm.state.value.myLocationRequest > 0) "user" else "automatic", "outcome" to outcome)
 }

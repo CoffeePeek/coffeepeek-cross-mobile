@@ -74,3 +74,29 @@ The local source is develop `7796d34d` plus this scoped patch; PR CI identifies
 the published commit. Native execution/Swift validation is recorded by the PR
 checks. No application was installed or launched, no device/UI acceptance was
 claimed, and no real account or backend data was changed.
+
+## PR review follow-up
+
+Both Android and iOS CI passed for `e883a17c` (PR #213). Review then identified
+that mirroring list criteria into a hidden map also started map suggestion
+telemetry. The reverse path could attribute map typing to a hidden list. The
+follow-up keeps shared criteria/data while tying search telemetry to actual
+presentation, lifecycle and visibility; stale hidden completions must not emit
+results/failures. Synthetic in-memory regressions cover both directions.
+
+The substantively changed legacy Map/Feed layouts and Discovery host are split
+into cohesive runtime/effect/content components to satisfy the 40-line
+Composable / 20-line ordinary-function review limits. No new module or screen
+route is introduced. Read-only peer review confirmed preservation of callbacks,
+geometry, overlay ordering, keyboard dismissal, focus and carousel state.
+
+Final local follow-up verification on 2026-10-29: 98 Discovery presentation and
+856 application unit/contract tests passed, with zero failures/skips. Combined
+with the unchanged 14 domain, 22 data and 46 Coffee cases, the unique total is
+1,036. This includes ten new Android/shared and five legacy presentation
+analytics regressions, using in-memory analytics only. Android Direct Debug and
+Direct Sandbox assembly and packaged checks passed; iOS Arm64/simulator
+production and simulator test compilation passed. An initial extraction error
+inferred nullable callback return types; explicit `() -> Unit` fixed both runtime
+adapters. The initial failed log remains local. PR CI verifies the published
+follow-up commit; device/UI acceptance remains unexecuted.

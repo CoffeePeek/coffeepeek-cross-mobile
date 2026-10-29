@@ -40,7 +40,7 @@ class MapViewModelTest {
     private val here = Coordinates(53.9, 27.56)
 
     private fun TestScope.model(): MapViewModel =
-        MapViewModel(repository, city, location, details, analytics, FakeAccount(), FakeFavorites()).also { store.put("map", it); runCurrent() }
+        MapViewModel(repository, city, location, details, analytics, FakeAccount(), FakeFavorites()).also { store.put("map", it); it.onAction(MapAction.PresentationChanged(true)); runCurrent() }
 
     private fun TestScope.settle() { advanceTimeBy(300); runCurrent() }
     private fun MapViewModel.send(vararg actions: MapAction, scope: TestScope) { actions.forEach { onAction(it); scope.runCurrent() } }

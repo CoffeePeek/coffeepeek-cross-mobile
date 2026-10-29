@@ -60,6 +60,7 @@ internal sealed interface MapAction {
     data object ClearZone : MapAction
     data object ToggleZones : MapAction
     data class SyncCriteria(val criteria: DiscoveryCriteria) : MapAction
+    data class PresentationChanged(val active: Boolean) : MapAction
     data class SelectSuggestion(val shopId: String) : MapAction
     data object RequestMyLocation : MapAction
     data object Interact : MapAction

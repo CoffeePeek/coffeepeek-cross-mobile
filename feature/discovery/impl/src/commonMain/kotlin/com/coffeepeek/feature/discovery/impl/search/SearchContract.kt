@@ -53,6 +53,7 @@ internal data class SearchState(
 
 internal sealed interface SearchAction {
     data class Query(val text: String) : SearchAction
+    data class PresentationChanged(val active: Boolean) : SearchAction
     data object ActivateSearch : SearchAction
     data object CancelSearch : SearchAction
     data object ToggleFilters : SearchAction

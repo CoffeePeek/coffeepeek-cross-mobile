@@ -12,6 +12,7 @@ import com.coffeepeek.feature.discovery.api.FilterAction
 import com.coffeepeek.feature.discovery.api.GeolocationOutcome
 import com.coffeepeek.feature.discovery.api.SearchRun
 import com.coffeepeek.feature.discovery.domain.model.Coordinates
+import com.coffeepeek.feature.discovery.domain.model.DiscoveryCriteria
 import com.coffeepeek.feature.discovery.domain.model.DiscoveryFailure
 import com.coffeepeek.feature.discovery.domain.model.DiscoveryFilters
 import com.coffeepeek.feature.discovery.domain.model.ShopSummary
@@ -58,6 +59,9 @@ internal class SearchViewModel(
     private var favoriteIds: Set<String>? = null
     private var requestedText: String? = null
     private var loadJob: Job? = null
+    private var searchPresented = false
+    private var presentationVersion = 0L
+    private var lastSearchResult: Pair<DiscoveryCriteria, Int>? = null
 
     init {
         viewModelScope.launch { account.accountKey.distinctUntilChanged().collect(::onAccount) }
@@ -73,6 +77,7 @@ internal class SearchViewModel(
     override suspend fun handleActionInternal(action: SearchAction) {
         when (action) {
             is SearchAction.Query -> { updateState { copy(query = action.text) }; queries.tryEmit(action.text) }
+            is SearchAction.PresentationChanged -> setSearchPresentation(action.active)
             SearchAction.ActivateSearch -> updateState { copy(searchActive = true) }
             SearchAction.CancelSearch -> {
                 if (currentState.activeFilterCount > 0) clearFilters() else setQuery("")
@@ -122,6 +127,7 @@ internal class SearchViewModel(
         generation++
         loadJob?.cancel()
         favoriteIds = null
+        lastSearchResult = null
         updateState { copy(filters = filters.copy(visitedOnly = false, favoritesOnly = false), shops = emptyList(), favoriteUpdates = emptySet()) }
         if (cityReady) loadShops(reset = true)
     }
@@ -242,13 +248,24 @@ internal class SearchViewModel(
     private suspend fun performSearch(reset: Boolean, generation: Long) {
         beginLoading(reset)
         val page = if (reset) 1 else currentState.currentPage + 1
-        val query = currentState.criteria.searchQuery(page, PAGE_SIZE)
+        val criteria = currentState.criteria
+        val query = criteria.searchQuery(page, PAGE_SIZE)
+        val presentation = presentationVersion
+        if (reset) lastSearchResult = null
         val key = account.currentAccountKey()
         val run = if (reset) startSearch() else null
         val result = repository.search(query)
         currentCoroutineContext().ensureActive()
         if (generation != this.generation || key != account.currentAccountKey()) return
-        result.onSuccess { applyPage(it, reset, run) }.onFailure { failure ->
+        val visibleRun = if (reset) visibleSearchRun(run, presentation, criteria) else null
+        finishSearch(result, criteria, reset, visibleRun)
+    }
+
+    private fun finishSearch(result: Result<Paged<ShopSummary>>, criteria: DiscoveryCriteria, reset: Boolean, run: SearchRun?) {
+        result.onSuccess {
+            if (reset) lastSearchResult = criteria to it.totalCount
+            applyPage(it, reset, run)
+        }.onFailure { failure ->
             run?.failed(failure)
             updateState { copy(isLoading = false, isRefreshing = false, isLoadingMore = false, error = SearchError((failure as? DiscoveryFailure)?.serverMessage)) }
         }
@@ -262,9 +279,26 @@ internal class SearchViewModel(
         }
     }
 
-    private fun startSearch(): SearchRun {
+    private fun setSearchPresentation(active: Boolean) {
+        if (searchPresented == active) return
+        searchPresented = active
+        presentationVersion++
+        if (active) lastSearchResult?.takeIf { matchesCurrentSearch(it.first) }?.let { startSearch()?.results(it.second) }
+    }
+
+    private fun visibleSearchRun(run: SearchRun?, version: Long, criteria: DiscoveryCriteria): SearchRun? {
+        if (!searchPresented || !matchesCurrentSearch(criteria)) return null
+        return if (run == null) startSearch() else run.takeIf { version == presentationVersion }
+    }
+
+    private fun matchesCurrentSearch(criteria: DiscoveryCriteria): Boolean =
+        criteria.searchQuery().copy(text = criteria.text.trim()) ==
+            currentState.criteria.searchQuery().copy(text = currentState.query.trim())
+
+    private fun startSearch(): SearchRun? {
         val state = currentState
         requestedText = searchText(state.query)
+        if (!searchPresented) return null
         return analytics.searchStarted(state.query.trim(), state.filters.analyticsValues().keys.toList(),
             state.criteria.searchQuery().origin != null, citySlug = state.filters.cityId, criteria = state.query.normalizedQuery() to state.filters)
     }

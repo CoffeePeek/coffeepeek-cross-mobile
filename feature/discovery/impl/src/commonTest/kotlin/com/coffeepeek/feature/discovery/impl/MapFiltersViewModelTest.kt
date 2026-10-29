@@ -40,6 +40,7 @@ class MapFiltersViewModelTest {
 
     private fun TestScope.model() = MapViewModel(repository, city, location, FakeShopDetails(), analytics, account, favorites).also {
         store.put("map", it)
+        it.onAction(MapAction.PresentationChanged(true))
         runCurrent()
         it.onAction(MapAction.BoundsChanged(view, 14f))
         runCurrent()

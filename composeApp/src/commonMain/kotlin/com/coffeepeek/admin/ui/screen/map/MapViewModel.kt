@@ -22,6 +22,7 @@ import com.coffeepeek.domain.model.MapCoffeeZone
 import com.coffeepeek.domain.model.MapShop
 import com.coffeepeek.domain.model.ShopFilters
 import com.coffeepeek.domain.model.ShopSchedule
+import com.coffeepeek.domain.model.ShopCatalogs
 import com.coffeepeek.domain.repository.ShopRepository
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.CancellationException
@@ -100,6 +101,7 @@ class MapViewModel(
     private var boundsJob: Job? = null
     private var nearbyJob: Job? = null
     private var queryJob: Job? = null
+    private val searchActive = MutableStateFlow(false)
     private var detailsJob: Job? = null
     private var boundsPauseJob: Job? = null
     private var selectionVersion = 0
@@ -163,8 +165,8 @@ class MapViewModel(
 
     private fun refreshPersonalResults() {
         val suggestionsVisible = _state.value.showSearchSuggestions
-        onQueryChange(_state.value.query)
-        if (!suggestionsVisible) hideSearchSuggestions()
+        updateSearchCriteria(_state.value.query)
+        if (suggestionsVisible) scheduleSuggestions(_state.value.query, trackSearch = false)
     }
 
     fun onBoundsChanged(bounds: MapBounds, zoom: Float) {
@@ -273,7 +275,13 @@ class MapViewModel(
         val resolved = filters.copy(cityId = filters.cityId ?: current.filters.cityId)
         if (current.query == query && current.filters == resolved && current.searchOrigin == origin) return
         _state.update { it.copy(filters = resolved, searchOrigin = origin) }
-        onQueryChange(query)
+        updateSearchCriteria(query)
+    }
+
+    fun setSearchActive(active: Boolean) {
+        if (searchActive.value == active) return
+        searchActive.value = active
+        if (!active) hideSearchSuggestions()
     }
 
     private fun invalidateSearchResults() {
@@ -297,35 +305,37 @@ class MapViewModel(
     }
 
     fun onQueryChange(query: String) {
+        updateSearchCriteria(query)
+        scheduleSuggestions(query, trackSearch = true)
+    }
+
+    private fun updateSearchCriteria(query: String) {
         invalidateSearchResults()
-        queryJob?.cancel()
-        _state.update {
-            it.copy(
-                query = query,
-                searchResults = emptyList(),
-                isSearchLoading = query.isNotBlank(),
-                searchFailed = false,
-                showSearchSuggestions = query.isNotBlank(),
-            )
-        }
+        hideSearchSuggestions()
+        selectionFromSearch = false
+        _state.update { it.copy(query = query) }
         _state.value.nearbyOrigin?.let { loadNearbyShops(it) }
         searchCurrentArea()
-        if (query.isBlank()) return
+    }
 
+    private fun scheduleSuggestions(query: String, trackSearch: Boolean) {
+        if (!searchActive.value || query.isBlank()) return
+        _state.update { it.copy(isSearchLoading = true, showSearchSuggestions = true) }
         queryJob = workScope.launch {
             delay(350)
-            requestSuggestions(query)
+            requestSuggestions(query, trackSearch)
         }
     }
 
-    private suspend fun requestSuggestions(query: String) {
+    private suspend fun requestSuggestions(query: String, trackSearch: Boolean) {
+        if (!searchActive.value) return
         val owner = requestOwner()
         val state = _state.value
         val filters = state.filters
-        val search = searchAnalytics.begin(query.trim() to filters, query, filters.analyticsValues().keys.toList())
+        val search = if (trackSearch) searchAnalytics.begin(query.trim() to filters, query, filters.analyticsValues().keys.toList()) else null
         val result = shopRepository.searchShops(filters.toShopFilters(query, state.searchOrigin, pageSize = 3))
         currentCoroutineContext().ensureActive()
-        if (!isCurrent(owner) || _state.value.query != query || _state.value.filters != filters) return
+        if (!searchActive.value || !isCurrent(owner) || _state.value.query != query || _state.value.filters != filters) return
         result.onSuccess { page ->
             search?.results(page.totalCount)
             _state.update { if (isCurrent(owner)) it.copy(searchResults = page.items, isSearchLoading = false) else it }
@@ -449,34 +459,29 @@ class MapViewModel(
     private fun loadCatalogs() {
         workScope.launch {
             shopRepository.getCatalogs()
-                .onSuccess { catalogs ->
-                    val cityId = cityPreference.resolve(catalogs.cities)
-                    _state.update {
-                        it.copy(
-                            filters = it.filters.copy(cityId = cityId),
-                            cities = catalogs.cities,
-                            beans = catalogs.beans,
-                            equipment = catalogs.equipment,
-                            roasters = catalogs.roasters,
-                            brewMethods = catalogs.brewMethods,
-                            shopTags = catalogs.shopTags,
-                        )
-                    }
-                    isCityReady = true
-                    _state.value.nearbyOrigin?.let { loadNearbyShops(it) }
-                    val current = _state.value
-                    val bounds = current.pendingBounds
-                    val zoom = current.pendingZoom
-                    if (bounds != null && zoom != null) loadBounds(bounds, zoom)
-                }
-                .onFailure {
-                    isCityReady = true
-                    _state.value.nearbyOrigin?.let { loadNearbyShops(it) }
-                    val current = _state.value
-                    val bounds = current.pendingBounds
-                    val zoom = current.pendingZoom
-                    if (bounds != null && zoom != null) loadBounds(bounds, zoom)
-                }
+                .onSuccess { applyCatalogs(it) }
+                .onFailure { if (it is CancellationException) throw it }
+            isCityReady = true
+            _state.value.nearbyOrigin?.let { loadNearbyShops(it) }
+            val current = _state.value
+            val bounds = current.pendingBounds
+            val zoom = current.pendingZoom
+            if (bounds != null && zoom != null) loadBounds(bounds, zoom)
+        }
+    }
+
+    private suspend fun applyCatalogs(catalogs: ShopCatalogs) {
+        val cityId = cityPreference.resolve(catalogs.cities)
+        _state.update {
+            it.copy(
+                filters = it.filters.copy(cityId = cityId),
+                cities = catalogs.cities,
+                beans = catalogs.beans,
+                equipment = catalogs.equipment,
+                roasters = catalogs.roasters,
+                brewMethods = catalogs.brewMethods,
+                shopTags = catalogs.shopTags,
+            )
         }
     }
 

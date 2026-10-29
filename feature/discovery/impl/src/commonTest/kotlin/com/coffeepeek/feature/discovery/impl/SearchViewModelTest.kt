@@ -39,7 +39,7 @@ class SearchViewModelTest {
     private val here = Coordinates(53.9, 27.56)
 
     private fun TestScope.model(): SearchViewModel =
-        SearchViewModel(repository, favorites, city, location, account, analytics).also { store.put("search", it); runCurrent() }
+        SearchViewModel(repository, favorites, city, location, account, analytics).also { store.put("search", it); it.onAction(SearchAction.PresentationChanged(true)); runCurrent() }
 
     private fun SearchViewModel.send(vararg actions: SearchAction, scope: TestScope) { actions.forEach { onAction(it); scope.runCurrent() } }
     private val SearchViewModel.now get() = state.value

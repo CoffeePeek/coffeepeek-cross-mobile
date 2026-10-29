@@ -1,14 +1,22 @@
 package com.coffeepeek.admin.ui.screen.map
 
+import com.coffeepeek.admin.analytics.*
 import com.coffeepeek.admin.settings.CityPreference
 import com.coffeepeek.admin.ui.Navigator
+import com.coffeepeek.admin.ui.screen.feed.FeedFiltersUi
+import com.coffeepeek.admin.ui.screen.feed.FeedViewModel
 import com.coffeepeek.domain.model.*
+import com.coffeepeek.domain.repository.FavoriteRepository
 import com.coffeepeek.domain.repository.ShopRepository
 import com.coffeepeek.domain.repository.SessionRepository
 import com.coffeepeek.room.model.Setting
 import com.coffeepeek.room.repository.SettingRepository
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
@@ -30,6 +38,101 @@ import kotlin.test.assertTrue
  */
 class MapViewModelParityTest {
     private val minsk = MapBounds(53.88, 27.52, 53.92, 27.60)
+
+    @Test fun listTypingKeepsMapCriteriaWithoutMapSuggestionsOrSearchEvents() = parity(presentationActive = false) {
+        withFeed { feed ->
+            withMapAnalytics { transport ->
+                feed.setSearchAnalyticsActive(true)
+                feed.onQueryChange("laptop")
+                vm.syncSearch("laptop", FeedFiltersUi(cityId = "minsk", tagIds = setOf("laptop-friendly")), null)
+                assertEquals(20, searchCalls.receive().pageSize)
+                feed.uiState.first { it.query == "laptop" && !it.isLoading && !it.isRefreshing }
+                delay(500)
+                assertTrue(searchCalls.tryReceive().isFailure)
+                assertEquals(listOf("list"), transport.searchSources("catalog_search_started"))
+                assertEquals("laptop", vm.state.value.query)
+                assertEquals(setOf("laptop-friendly"), vm.state.value.filters.tagIds)
+                assertFalse(vm.state.value.showSearchSuggestions)
+                vm.setSearchActive(true)
+                delay(500)
+                assertTrue(searchCalls.tryReceive().isFailure)
+            }
+        }
+    }
+
+    @Test fun mapTypingRecordsOneMapSearchAndKeepsTheHiddenListUpdatedWithoutListSearch() = parity {
+        withFeed { feed ->
+            withMapAnalytics { transport ->
+                feed.setSearchAnalyticsActive(false)
+                vm.onQueryChange("espresso")
+                feed.onQueryChange("espresso")
+                vm.syncSearch("espresso", feed.uiState.value.filters, feed.uiState.value.searchOrigin)
+                val calls = listOf(searchCalls.receive(), searchCalls.receive())
+                assertEquals(setOf(3, 20), calls.map { it.pageSize }.toSet())
+                vm.state.first { !it.isSearchLoading }
+                feed.uiState.first { !it.isLoading && !it.isRefreshing }
+                delay(50)
+                assertEquals(listOf("map"), transport.searchSources("catalog_search_started"))
+                assertEquals(listOf("map"), transport.searchSources("catalog_results_viewed"))
+                assertEquals("espresso", feed.uiState.value.query)
+            }
+        }
+    }
+
+    @Test fun leavingTheMapCancelsDebouncedSuggestions() = parity {
+        withMapAnalytics { transport ->
+            vm.onQueryChange("espresso")
+            vm.setSearchActive(false)
+            delay(500)
+            assertTrue(searchCalls.tryReceive().isFailure)
+            assertTrue(transport.searchSources("catalog_search_started").isEmpty())
+            assertFalse(vm.state.value.showSearchSuggestions)
+        }
+    }
+
+    @Test fun leavingTheMapRejectsLateSearchSuccessAndFailureTelemetry() {
+        assertHiddenSearchCompletion(Result.success(PagedResult(listOf(searchShop("late")), 1, 1, 1)))
+        assertHiddenSearchCompletion(Result.failure(IllegalStateException("offline")))
+    }
+
+    private fun assertHiddenSearchCompletion(result: Result<PagedResult<CoffeeShop>>) {
+        val reply = CompletableDeferred<Result<PagedResult<CoffeeShop>>>()
+        parity(search = { withContext(NonCancellable) { reply.await() } }) {
+            withMapAnalytics { transport ->
+                vm.onQueryChange("espresso")
+                searchCalls.receive()
+                vm.setSearchActive(false)
+                vm.setSearchActive(true)
+                reply.complete(result)
+                delay(150)
+                assertEquals(listOf("map"), transport.searchSources("catalog_search_started"))
+                assertTrue(transport.searchSources("catalog_results_viewed").isEmpty())
+                assertTrue(transport.searchSources("catalog_search_failed").isEmpty())
+                assertTrue(vm.state.value.searchResults.isEmpty())
+                assertFalse(vm.state.value.isSearchLoading)
+            }
+        }
+    }
+
+    @Test fun hidingAndRestoringTheListRejectsItsOldSearchCompletion() {
+        val reply = CompletableDeferred<Result<PagedResult<CoffeeShop>>>()
+        parity(search = { if (it.query == "late") reply.await() else Result.success(PagedResult(emptyList(), 0, 0, 1)) }) {
+            withFeed { feed ->
+                withMapAnalytics { transport ->
+                    feed.setSearchAnalyticsActive(true)
+                    feed.onQueryChange("late")
+                    searchCalls.receive()
+                    feed.setSearchAnalyticsActive(false)
+                    feed.setSearchAnalyticsActive(true)
+                    reply.complete(Result.success(PagedResult(listOf(searchShop("late")), 1, 1, 1)))
+                    feed.uiState.first { it.shops.isNotEmpty() }
+                    delay(50)
+                    assertEquals(listOf("list"), transport.searchSources("catalog_search_started"))
+                    assertTrue(transport.searchSources("catalog_results_viewed").isEmpty())
+                }
+            }
+        }
+    }
 
     @Test fun changedFavoriteMembershipRefreshesTheMapAndDropsTheSelectedCard() {
         val membership = MutableStateFlow(Result.success(setOf("favorite")))
@@ -333,6 +436,7 @@ class MapViewModelParityTest {
         search: suspend (ShopFilters) -> Result<PagedResult<CoffeeShop>> = { Result.success(PagedResult(emptyList(), 0, 0, 1)) },
         sessions: MapSessions = MapSessions(),
         membership: MutableStateFlow<Result<Set<String>>> = MutableStateFlow(Result.success(emptySet())),
+        presentationActive: Boolean = true,
         test: suspend MapFixture.() -> Unit,
     ) = runBlocking {
         val fixture = MapFixture(content, details, search, sessions, membership)
@@ -340,6 +444,7 @@ class MapViewModelParityTest {
             withTimeout(10_000) {
                 sessions.awaitObserved("a")
                 fixture.membershipObserved.await()
+                fixture.vm.setSearchActive(presentationActive)
                 fixture.test()
             }
         } finally { fixture.vm.close() }
@@ -365,7 +470,7 @@ private fun detail(id: String) = CoffeeShopDetails(shop = CoffeeShop(id = id, ti
 
 private class MapFixture(
     content: suspend (MapCall) -> MapContent?, details: suspend (String) -> Result<CoffeeShopDetails>, search: suspend (ShopFilters) -> Result<PagedResult<CoffeeShop>>,
-    sessions: MapSessions, membership: MutableStateFlow<Result<Set<String>>>,
+    private val sessions: MapSessions, membership: MutableStateFlow<Result<Set<String>>>,
 ) {
     val mapCalls = Channel<MapCall>(Channel.UNLIMITED)
     val searchCalls = Channel<ShopFilters>(Channel.UNLIMITED)
@@ -384,6 +489,44 @@ private class MapFixture(
         vm.onShopSelected(mapShop(id))
         vm.state.first { id in it.cardDetails }
     }
+
+    suspend fun withFeed(test: suspend (FeedViewModel) -> Unit) {
+        val feed = FeedViewModel(shops, UnusedMapFavorites, preference, sessions)
+        try {
+            searchCalls.receive()
+            feed.uiState.first { !it.isLoading && !it.isRefreshing }
+            delay(500)
+            test(feed)
+        } finally { feed.close() }
+    }
+}
+
+private suspend fun withMapAnalytics(test: suspend (RecordingTransport) -> Unit) {
+    val previous = Analytics.service
+    val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
+    val transport = RecordingTransport()
+    val service = AnalyticsService(AnalyticsContext("coffee-peek-ios", "1.0+1", "development"),
+        MemoryConsent(AnalyticsConsent.Accepted), transport, scope, enabled = true)
+    service.setForeground(true)
+    service.restoreConsent()
+    service.syncIdentity("a")
+    Analytics.install(service)
+    try { test(transport) } finally {
+        service.setForeground(false)
+        previous?.let(Analytics::install)
+        scope.cancel()
+    }
+}
+
+private fun RecordingTransport.searchSources(event: String) = events.filter { it.first == event }.map { it.second["source"] }
+
+private object UnusedMapFavorites : FavoriteRepository {
+    override suspend fun getFavoriteIds() = emptySet<String>()
+    override suspend fun isFavorite(shopId: String) = false
+    override suspend fun getFavorites() = Result.success(emptyList<CoffeeShopDetails>())
+    override suspend fun addFavorite(shop: CoffeeShop, address: String?): Result<Unit> = error("Unused")
+    override suspend fun removeFavorite(shopId: String): Result<Unit> = error("Unused")
+    override suspend fun clearAll() = Unit
 }
 
 private class DeferredMapReply {

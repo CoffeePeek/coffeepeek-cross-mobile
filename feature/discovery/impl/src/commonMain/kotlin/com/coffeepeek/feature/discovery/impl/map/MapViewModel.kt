@@ -72,6 +72,7 @@ internal class MapViewModel(
     private var locateAfterPermission = false
     private var accountSeen = false
     private var criteriaSupplied = false
+    private var searchPresented = false
     private var favoriteIds: Set<String>? = null
 
     init {
@@ -85,6 +86,7 @@ internal class MapViewModel(
     override suspend fun handleActionInternal(action: MapAction) {
         when (action) {
             is MapAction.SyncCriteria -> acceptSharedCriteria(action.criteria)
+            is MapAction.PresentationChanged -> setSearchPresentation(action.active)
             is MapAction.BoundsChanged -> onBoundsChanged(action.bounds, action.zoom)
             MapAction.SearchArea -> searchCurrentArea()
             is MapAction.SelectSuggestion -> selectSuggestion(action.shopId)
@@ -364,10 +366,16 @@ internal class MapViewModel(
 
     // ---- search ----
 
+    private fun setSearchPresentation(active: Boolean) {
+        if (searchPresented == active) return
+        searchPresented = active
+        if (active) loadSuggestions() else hideSuggestions()
+    }
+
     private fun loadSuggestions() {
         queryJob?.cancel()
         val criteria = currentState.criteria
-        val searching = criteria.text.isNotBlank() && canRequest(criteria)
+        val searching = searchPresented && criteria.text.isNotBlank() && canRequest(criteria)
         updateState { copy(suggestions = emptyList(), isSearchLoading = searching, searchFailed = false, showSuggestions = searching) }
         if (!searching) return
         queryJob = viewModelScope.launch {
@@ -377,12 +385,13 @@ internal class MapViewModel(
     }
 
     private suspend fun requestSuggestions(criteria: DiscoveryCriteria) {
+        if (!searchPresented) return
         val query = criteria.searchQuery(pageSize = SUGGESTION_COUNT).copy(text = criteria.text.trim())
         val accountKey = account.currentAccountKey()
         val run = analytics.mapSearchStarted(criteria.text.trim(), criteria.filters.analyticsValues().keys.toList(), query.filters.cityId, criteria = criteria)
         val result = repository.search(query)
         currentCoroutineContext().ensureActive()
-        if (account.currentAccountKey() != accountKey || currentState.criteria.searchQuery() != criteria.searchQuery()) return
+        if (!searchPresented || account.currentAccountKey() != accountKey || currentState.criteria.searchQuery() != criteria.searchQuery()) return
         result.onSuccess { page ->
             run.results(page.totalCount)
             updateState { copy(suggestions = page.items, isSearchLoading = false) }

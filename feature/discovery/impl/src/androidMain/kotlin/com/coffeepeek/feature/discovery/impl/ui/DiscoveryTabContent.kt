@@ -6,6 +6,12 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.ColorPainter
@@ -26,12 +32,14 @@ internal fun DiscoveryTabContent(
     state: SearchState, host: DiscoveryHost, roasters: DiscoveryRoasterSlots,
     analytics: DiscoveryAnalytics, callbacks: TabCallbacks, bottomClearance: Dp,
     focus: MapFocus?, onAction: (SearchAction) -> Unit, modifier: Modifier = Modifier,
+    onSearchPresentation: (listActive: Boolean, mapActive: Boolean) -> Unit,
     map: @Composable (DiscoveryMapPresentation, () -> Unit, Modifier) -> Unit,
 ) {
     val ui = rememberDiscoveryTabState()
     val reduceMotion = host.reduceMotion()
     val motion = discoveryTabMotion(ui, state.showsDiscovery || ui.mapExpanded, reduceMotion)
     val toggleMap = discoveryMapToggle(ui, analytics)
+    DiscoverySearchPresentation(ui, motion, host.isVisible(), onSearchPresentation)
     val context = DiscoveryRoasterContext(state.query, state.filters.roasterIds, state.filters.favoritesOnly)
     DiscoveryTabEffects(ui, state.showsDiscovery, analytics, callbacks, focus, onAction)
     BoxWithConstraints(modifier.fillMaxSize().onGloballyPositioned { ui.rootOrigin = it.positionInRoot() }) {
@@ -43,6 +51,29 @@ internal fun DiscoveryTabContent(
     }
 }
 
+@Composable
+private fun DiscoverySearchPresentation(
+    ui: DiscoveryTabState, motion: DiscoveryTabMotion, visible: Boolean, onChange: (Boolean, Boolean) -> Unit,
+) {
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
+    val callback by rememberUpdatedState(onChange)
+    val listActive = visible && !ui.showRoasters && !ui.mapExpanded && motion.expansion.value == 0f
+    val mapActive = visible && !ui.showRoasters && ui.mapExpanded && motion.expansion.value == 1f
+    DisposableEffect(lifecycle, listActive, mapActive) {
+        fun report() {
+            val resumed = lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)
+            callback(listActive && resumed, mapActive && resumed)
+        }
+        val observer = LifecycleEventObserver { _, _ -> report() }
+        lifecycle.addObserver(observer)
+        report()
+        onDispose {
+            lifecycle.removeObserver(observer)
+            callback(false, false)
+        }
+    }
+}
+
 @PreviewLightDark
 @Composable
 private fun DiscoveryTabContentPreview() = CoffeePeekTheme {
@@ -51,6 +82,6 @@ private fun DiscoveryTabContentPreview() = CoffeePeekTheme {
         host = DiscoveryHost(suggestionIllustration = { ColorPainter(Color.Transparent) }),
         roasters = DiscoveryRoasterSlots(preview = {}, search = { _, _, _ -> }),
         analytics = NoDiscoveryAnalytics, callbacks = TabCallbacks({}, {}, {}, {}, {}),
-        bottomClearance = 80.dp, focus = null, onAction = {},
+        bottomClearance = 80.dp, focus = null, onAction = {}, onSearchPresentation = { _, _ -> },
     ) { _, _, modifier -> Box(modifier.background(MaterialTheme.colorScheme.surfaceVariant)) }
 }
