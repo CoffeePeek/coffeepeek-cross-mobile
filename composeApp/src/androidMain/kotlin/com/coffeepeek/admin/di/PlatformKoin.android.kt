@@ -4,10 +4,11 @@ import com.coffeepeek.admin.di.favorites.serverFavoritesModule
 import com.coffeepeek.admin.di.shop.shopFavoriteIntent
 import com.coffeepeek.admin.di.shop.shopCheckInModule
 import com.coffeepeek.admin.di.shop.AndroidShopCheckInFormRenderer
-import com.coffeepeek.admin.di.coffee.androidCoffeeScreenRenderer
+import com.coffeepeek.admin.di.coffee.coffeeCatalogueScreenRenderer
 import com.coffeepeek.admin.di.coffee.coffeeModule
 import com.coffeepeek.admin.di.coffee.CoffeeShelfTab
-import com.coffeepeek.admin.di.shelf.AndroidShelfScreenRenderer
+import com.coffeepeek.admin.di.shelf.ShelfFeatureScreenRenderer
+import com.coffeepeek.admin.di.shelf.androidShelfBrewForm
 import com.coffeepeek.admin.di.shelf.shelfModule
 import com.coffeepeek.BuildConfig
 import com.coffeepeek.admin.di.appupdate.androidAppUpdateRenderer
@@ -77,9 +78,9 @@ internal fun initAndroidKoin(extraModules: List<org.koin.core.module.Module> = e
         checkInCreateFlowRendererFactory = { get<AndroidCheckInCreateFlowRenderer>() },
         // The shelf stays behind SHELF_ENABLED (Sandbox only) until adding a bag by scan is ready.
         coffeeRendererFactory = {
-            androidCoffeeScreenRenderer(get(), CoffeeShelfTab(get(), get(), Locator.database.settingRepository).takeIf { BuildConfig.SHELF_ENABLED })
+            coffeeCatalogueScreenRenderer(get(), CoffeeShelfTab(get(), get(), Locator.database.settingRepository).takeIf { BuildConfig.SHELF_ENABLED })
         },
-        shelfRendererFactory = { AndroidShelfScreenRenderer(get(), Locator.database.settingRepository, get()) },
+        shelfRendererFactory = { ShelfFeatureScreenRenderer(get(), Locator.database.settingRepository, androidShelfBrewForm(get())) },
         publicProfileRendererFactory = { androidPublicProfileScreenRenderer(get(), get(), get(), get(), get()) },
         ownProfileRendererFactory = { androidOwnProfileScreenRenderer(get(), get(), get(), get(), get(), get(), get(), get()) },
         accountRendererFactory = { androidAccountScreenRenderer(get(), get()) },

@@ -22,8 +22,8 @@ import platform.Foundation.dateWithTimeIntervalSince1970
 import platform.Foundation.localTimeZone
 
 /**
- * Shelf data, scanner and screens for iOS; resolving definitions performs no network, session, file or model work. Nothing
- * on iOS opens the shelf yet: its entry points live in screens that iOS still renders with the legacy implementation.
+ * Shelf data, scanner and screens for iOS; resolving definitions performs no network, session, file or model work. The Coffee
+ * tab opens the shelf when [iosShelfEnabled].
  */
 internal fun iosShelfModule(apiBaseUrl: String = Constants.BASE_URL, modelUrl: (String) -> String = ::infoPlistString) = module {
     single<ShelfRepository> {
@@ -49,5 +49,8 @@ internal fun iosShelfModule(apiBaseUrl: String = Constants.BASE_URL, modelUrl: (
 internal val IosShelfTimeZone = ShelfTimeZone { epochSeconds ->
     NSTimeZone.localTimeZone.secondsFromGMTForDate(NSDate.dateWithTimeIntervalSince1970(epochSeconds.toDouble())).toInt()
 }
+
+/** The build's SHELF_ENABLED (Info.plist ShelfEnabled): off by default, like Android outside the Sandbox. */
+internal fun iosShelfEnabled(): Boolean = infoPlistString("ShelfEnabled").equals("YES", ignoreCase = true)
 
 private fun infoPlistString(key: String): String = (NSBundle.mainBundle.objectForInfoDictionaryKey(key) as? String).orEmpty().trim()

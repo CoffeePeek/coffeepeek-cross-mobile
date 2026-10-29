@@ -4,7 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import com.coffeepeek.admin.ui.Navigator
 
-/** The shelf's full-screen destinations. Android composes the shelf feature; iOS gets the shelf in a later stage. */
+/** The shelf's full-screen destinations; builds with the shelf compose the shelf feature. */
 interface ShelfScreenRenderer {
     @Composable
     fun Archive()
@@ -16,7 +16,7 @@ interface ShelfScreenRenderer {
     fun Bag(bagId: String)
 }
 
-/** Nothing on iOS opens these routes yet; if one is reached anyway, it leaves at once. */
+/** Builds without the shelf open none of these routes; if one is reached anyway, it leaves at once. */
 internal object UnsupportedShelfScreenRenderer : ShelfScreenRenderer {
     @Composable
     override fun Archive() = LaunchedEffect(Unit) { Navigator.popBack() }
