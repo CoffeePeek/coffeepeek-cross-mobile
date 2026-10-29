@@ -49,6 +49,8 @@ internal fun HistoryPhoto(
     }
 }
 
-@Preview @Composable private fun HistoryPhotoPreview() = CoffeePeekTheme {
+@Composable private fun HistoryPhotoPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     HistoryPhoto(null, Modifier.size(64.dp))
 }
+@Preview @Composable private fun HistoryPhotoLightPreview() = HistoryPhotoPreview(false)
+@Preview @Composable private fun HistoryPhotoDarkPreview() = HistoryPhotoPreview(true)

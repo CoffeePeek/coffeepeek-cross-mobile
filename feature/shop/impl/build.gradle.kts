@@ -15,6 +15,7 @@ android {
 }
 
 dependencies {
+    implementation(project(":feature:business-ownership:api"))
     api(project(module.feature.shop.api))
     implementation(project(module.feature.shop.domain))
     implementation(project(module.core.designSystem))

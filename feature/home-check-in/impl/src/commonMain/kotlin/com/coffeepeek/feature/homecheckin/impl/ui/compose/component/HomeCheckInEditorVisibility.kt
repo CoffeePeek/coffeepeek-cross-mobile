@@ -32,6 +32,8 @@ internal fun HomeCheckInEditorVisibility(isPublic: Boolean, enabled: Boolean, on
     }
 }
 
-@Preview @Composable private fun HomeCheckInEditorVisibilityPreview() = CoffeePeekTheme {
+@Composable private fun HomeCheckInEditorVisibilityPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     Surface { HomeCheckInEditorVisibility(false, true, {}) }
 }
+@Preview @Composable private fun HomeCheckInEditorVisibilityLightPreview() = HomeCheckInEditorVisibilityPreview(false)
+@Preview @Composable private fun HomeCheckInEditorVisibilityDarkPreview() = HomeCheckInEditorVisibilityPreview(true)

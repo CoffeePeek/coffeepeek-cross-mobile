@@ -26,6 +26,8 @@ internal fun HistoryCheckInRating(rating: HistoryRating, modifier: Modifier = Mo
     CoffeePeekRating(average, modifier, valueText = label, contentDescription = description)
 }
 
-@Preview @Composable private fun HistoryCheckInRatingPreview() = CoffeePeekTheme {
+@Composable private fun HistoryCheckInRatingPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     HistoryCheckInRating(HistoryRating(4, 4, 5))
 }
+@Preview @Composable private fun HistoryCheckInRatingLightPreview() = HistoryCheckInRatingPreview(false)
+@Preview @Composable private fun HistoryCheckInRatingDarkPreview() = HistoryCheckInRatingPreview(true)

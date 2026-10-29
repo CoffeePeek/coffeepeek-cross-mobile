@@ -14,6 +14,7 @@ android {
 }
 
 dependencies {
+    implementation(project(":feature:business-ownership:api"))
     api(project(module.feature.roaster.api))
     implementation(project(module.feature.roaster.domain))
     implementation(project(module.core.presentation))

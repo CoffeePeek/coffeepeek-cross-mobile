@@ -28,11 +28,12 @@ fun createCommunityPostEntry(
         onSignIn: () -> Unit,
         onOpenAuthor: (String, String, String?) -> Unit,
         onOpenShop: (String) -> Unit,
+        onOpenCoffee: (String) -> Unit,
         modifier: Modifier,
     ) {
         PostScreen(
             viewModel(key = "community-post:$postId") { PostViewModel(postId, repository, account, visibility) },
-            host, blockActions, PostCallbacks(onBack, onSignIn, onOpenAuthor, onOpenShop), modifier,
+            host, blockActions, PostCallbacks(onBack, onSignIn, onOpenAuthor, onOpenShop, onOpenCoffee), modifier,
         )
     }
 }

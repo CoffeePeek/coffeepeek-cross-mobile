@@ -24,6 +24,7 @@ import com.coffeepeek.core.designsystem.component.CoffeePeekImagePlaceholder
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
+import com.coffeepeek.feature.coffee.impl.resources.*
 
 @Composable
 internal fun CoffeeRoasterRow(name: String, photoUrl: String?, onClick: (() -> Unit)?,
@@ -45,6 +46,8 @@ internal fun CoffeeRoasterRow(name: String, photoUrl: String?, onClick: (() -> U
     }
 }
 
-@Preview @Composable private fun CoffeeRoasterRowPreview() = CoffeePeekTheme {
+@Composable private fun CoffeeRoasterRowPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     CoffeeRoasterRow("CoffeePeek", null, {}, { _, _, _, _ -> })
 }
+@Preview @Composable private fun CoffeeRoasterRowLightPreview() = CoffeeRoasterRowPreview(false)
+@Preview @Composable private fun CoffeeRoasterRowDarkPreview() = CoffeeRoasterRowPreview(true)

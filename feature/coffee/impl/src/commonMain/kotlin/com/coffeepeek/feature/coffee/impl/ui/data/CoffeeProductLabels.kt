@@ -1,14 +1,8 @@
 package com.coffeepeek.feature.coffee.impl.ui.data
 
 import androidx.compose.runtime.Composable
-import com.coffeepeek.feature.coffee.impl.resources.Res
-import com.coffeepeek.feature.coffee.impl.resources.coffee_capsules
-import com.coffeepeek.feature.coffee.impl.resources.coffee_drip_bags
-import com.coffeepeek.feature.coffee.impl.resources.coffee_green
-import com.coffeepeek.feature.coffee.impl.resources.coffee_ground
-import com.coffeepeek.feature.coffee.impl.resources.coffee_roasted
-import com.coffeepeek.feature.coffee.impl.resources.coffee_whole_beans
 import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.feature.coffee.impl.resources.*
 
 @Composable
 internal fun coffeeProductFormLabel(code: String?): String? = when (code) {

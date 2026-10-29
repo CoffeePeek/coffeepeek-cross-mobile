@@ -13,6 +13,7 @@ import com.coffeepeek.core.designsystem.component.CoffeePeekExpandableText
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.coffee.domain.model.CoffeeDetails
+import com.coffeepeek.feature.coffee.impl.resources.*
 import com.coffeepeek.feature.coffee.impl.ui.data.coffeeProductFormLabel
 import com.coffeepeek.feature.coffee.impl.ui.data.coffeeProductKindLabel
 
@@ -48,9 +49,11 @@ internal fun CoffeeDetailIntro(
     }
 }
 
-@Preview @Composable private fun CoffeeDetailIntroPreview() = CoffeePeekTheme {
+@Composable private fun CoffeeDetailIntroPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     Surface { CoffeeDetailIntro(previewCoffeeDetails(), emptyMap(), false, {}) }
 }
+@Preview @Composable private fun CoffeeDetailIntroLightPreview() = CoffeeDetailIntroPreview(false)
+@Preview @Composable private fun CoffeeDetailIntroDarkPreview() = CoffeeDetailIntroPreview(true)
 
 internal fun previewCoffeeDetails() = CoffeeDetails(previewCoffee(), "/coffees/fixture-coffee", "Сладкий кофе с ягодным послевкусием",
     emptyList(), "fixture-roaster", "roasted_beans", "whole_beans", null, null, listOf("Ягоды"), null)

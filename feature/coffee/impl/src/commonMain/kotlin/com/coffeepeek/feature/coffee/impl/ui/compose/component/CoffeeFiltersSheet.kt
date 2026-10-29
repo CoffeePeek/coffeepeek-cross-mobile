@@ -22,6 +22,7 @@ import com.coffeepeek.core.designsystem.component.*
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.coffee.domain.model.CoffeeFilters
+import com.coffeepeek.feature.coffee.impl.resources.*
 import com.coffeepeek.feature.coffee.impl.ui.compose.model.CoffeeListAction
 import com.coffeepeek.feature.coffee.impl.ui.compose.model.CoffeeListState
 
@@ -85,6 +86,5 @@ private fun CoffeeFiltersHeader(draft: CoffeeFilters, onAction: (CoffeeListActio
         CoffeeFiltersContent(CoffeeListState(filterDraft = CoffeeFilters(), filtersLoading = false), {})
     }
 }
-
 @Preview @Composable private fun CoffeeFiltersLightPreview() = CoffeeFiltersPreview(false)
 @Preview @Composable private fun CoffeeFiltersDarkPreview() = CoffeeFiltersPreview(true)

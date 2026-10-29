@@ -18,6 +18,8 @@ internal fun HistoryKindFilterControl(filter: HistoryKindFilter, onSelect: (Hist
     CoffeePeekCapsuleSegmentedControl(HistoryKindFilter.entries, filter, { labels.getValue(it) }, onSelect, modifier)
 }
 
-@Preview @Composable private fun HistoryKindFilterPreview() = CoffeePeekTheme {
+@Composable private fun HistoryKindFilterPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     HistoryKindFilterControl(HistoryKindFilter.All, {})
 }
+@Preview @Composable private fun HistoryKindFilterLightPreview() = HistoryKindFilterPreview(false)
+@Preview @Composable private fun HistoryKindFilterDarkPreview() = HistoryKindFilterPreview(true)

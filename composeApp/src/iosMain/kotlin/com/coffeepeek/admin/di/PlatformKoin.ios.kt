@@ -34,10 +34,18 @@ import com.coffeepeek.api.CoffeePeekClient
 import com.coffeepeek.admin.di.notifications.featureNotificationsRenderer
 import com.coffeepeek.admin.di.settings.featureSettingsScreenRenderer
 import com.coffeepeek.admin.utils.ErrorHandler
+import com.coffeepeek.admin.di.coffee.CoffeeShelfTab
+import com.coffeepeek.admin.di.shelf.ShelfFeatureScreenRenderer
+import com.coffeepeek.admin.di.shelf.iosShelfEnabled
+import com.coffeepeek.admin.di.shelf.iosShelfModule
+import com.coffeepeek.admin.di.shelf.shelfBrewForm
+import com.coffeepeek.admin.locator.Locator
+import com.coffeepeek.admin.ui.screen.shelf.UnsupportedShelfScreenRenderer
 
 actual fun initPlatformKoin() {
+    val shelf = iosShelfEnabled()
     initKoin(
-        platformModules = listOf(contributionsModule(), serverFavoritesModule(), coffeeModule(), shopBrowsingModule(), shopCheckInModule(AppShopCheckInDateFormatter()), homeCheckInModule(), checkInHistoryModule(), contentReportModule()),
+        platformModules = listOf(contributionsModule(), serverFavoritesModule(), coffeeModule(), shopBrowsingModule(), shopCheckInModule(AppShopCheckInDateFormatter()), homeCheckInModule(shelfEnabled = shelf), checkInHistoryModule(shelfEnabled = shelf), contentReportModule(), iosShelfModule()),
         // Owners move to their migrated modules one at a time; the others keep the legacy renderers.
         checkInRenderers = featureCheckInRendererFactories(),
         contentReportRendererFactory = { get<FeatureContentReportRenderer>() },
@@ -52,7 +60,13 @@ actual fun initPlatformKoin() {
         authRendererFactory = { iosAuthScreenRenderer(get(), get()) },
         checkInDetailRendererFactory = { com.coffeepeek.admin.di.community.featureCheckInDetailScreenRenderer(get(), get(), get(), get()) },
         communityRendererFactory = { featureCommunityScreenRenderer(get(), get(), get(), get(), get(), get()) },
-        coffeeRendererFactory = { featureCoffeeScreenRenderer(get()) },
+        coffeeRendererFactory = {
+            featureCoffeeScreenRenderer(get(), CoffeeShelfTab(get(), get(), Locator.database.settingRepository).takeIf { shelf })
+        },
+        shelfRendererFactory = {
+            if (shelf) ShelfFeatureScreenRenderer(get(), Locator.database.settingRepository, shelfBrewForm(get()))
+            else UnsupportedShelfScreenRenderer
+        },
         publicProfileRendererFactory = { featurePublicProfileScreenRenderer(get(), get(), get(), get(), get()) },
         ownProfileRendererFactory = { featureOwnProfileScreenRenderer(get(), get(), get(), get(), get(), get(), get(), get(), get()) },
         contributionsRendererFactory = { featureContributionsScreenRenderer(get(), get(), get()) },

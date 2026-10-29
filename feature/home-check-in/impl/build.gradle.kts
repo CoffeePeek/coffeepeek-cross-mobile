@@ -14,6 +14,7 @@ android {
 }
 
 dependencies {
+    api(project(module.feature.homePreparation.api))
     implementation(project(module.feature.homePreparation.domain))
     implementation(project(module.core.presentation))
     implementation(libs.kotlinx.datetime)
@@ -23,6 +24,7 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtimeCompose)
     implementation(compose.components.resources)
     implementation(compose.components.uiToolingPreview)
+    implementation(libs.compose.ui.backhandler)
 
     testImplementation(libs.kotlin.test)
     testImplementation(libs.kotlinx.coroutines.test)

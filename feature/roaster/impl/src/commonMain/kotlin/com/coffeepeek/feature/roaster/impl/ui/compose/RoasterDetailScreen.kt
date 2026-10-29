@@ -79,6 +79,8 @@ internal fun RoasterDetailScreen(
     onEvent: (RoasterDetailEvent) -> Unit,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val changed = com.coffeepeek.feature.ownership.api.LocalBusinessOwnership.current?.ProfileChanges() ?: 0L
+    LaunchedEffect(changed) { if (changed > 0) viewModel.onAction(RoasterDetailAction.Retry) }
     val currentEvent by rememberUpdatedState(onEvent)
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     LaunchedEffect(viewModel, lifecycle) {
@@ -114,7 +116,11 @@ internal fun RoasterDetailScreenContent(
             }
             state.loadFailed && details == null -> RoasterDetailError({ onAction(RoasterDetailAction.Retry) },
                 { onAction(RoasterDetailAction.Back) }, Modifier.safeDrawingPadding())
-            details != null -> RoasterDetailContent(details, state.isFavorite, onAction, image, screen, onFavoriteFeedback)
+            details != null -> androidx.compose.runtime.CompositionLocalProvider(
+                com.coffeepeek.feature.roaster.impl.ui.compose.component.LocalRoasterBusinessIdentity provides
+                    com.coffeepeek.feature.roaster.impl.ui.compose.component.RoasterBusinessIdentity(details.id, details.address.slug, details.address.canonicalPath)) {
+                RoasterDetailContent(details, state.isFavorite, onAction, image, screen, onFavoriteFeedback)
+            }
         }
     }
 }

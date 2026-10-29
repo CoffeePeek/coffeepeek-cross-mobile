@@ -134,3 +134,5 @@ internal fun previewCombinedHistoryState(): CombinedHistoryState {
 @Composable private fun HistoryLoadingPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     CheckInHistoryScreenContent(previewCombinedHistoryState().copy(shops = CombinedHistoryPageState(isLoading = true)), {})
 }
+@Preview @Composable private fun HistoryLoadingLightPreview() = HistoryLoadingPreview(false)
+@Preview @Composable private fun HistoryLoadingDarkPreview() = HistoryLoadingPreview(true)

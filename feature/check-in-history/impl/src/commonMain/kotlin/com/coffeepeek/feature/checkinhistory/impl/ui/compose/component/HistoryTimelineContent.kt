@@ -112,6 +112,8 @@ internal fun HistoryTimelineContent(state: CombinedHistoryState, onAction: (Comb
 @Composable private fun HistoryTimelinePreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     HistoryTimelineContent(previewCombinedHistoryState(), {}, { "13:00" })
 }
+@Preview @Composable private fun HistoryTimelineLightPreview() = HistoryTimelinePreview(false)
+@Preview @Composable private fun HistoryTimelineDarkPreview() = HistoryTimelinePreview(true)
 
 @Preview @Composable private fun HistoryTimelineLoadingPreviewLight() = HistoryTimelineLoadingPreview(false)
 @Preview @Composable private fun HistoryTimelineLoadingPreviewDark() = HistoryTimelineLoadingPreview(true)
@@ -119,6 +121,8 @@ internal fun HistoryTimelineContent(state: CombinedHistoryState, onAction: (Comb
 @Composable private fun HistoryTimelineLoadingPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     HistoryTimelineContent(previewCombinedHistoryState().copy(homeCalendar = CombinedHistoryLoadState(emptyMap(), isLoading = true)), {}, { "13:00" })
 }
+@Preview @Composable private fun HistoryTimelineLoadingLightPreview() = HistoryTimelineLoadingPreview(false)
+@Preview @Composable private fun HistoryTimelineLoadingDarkPreview() = HistoryTimelineLoadingPreview(true)
 
 @Preview @Composable private fun HistoryTimelineRefreshingPreviewLight() = HistoryTimelineRefreshingPreview(false)
 @Preview @Composable private fun HistoryTimelineRefreshingPreviewDark() = HistoryTimelineRefreshingPreview(true)
@@ -126,3 +130,5 @@ internal fun HistoryTimelineContent(state: CombinedHistoryState, onAction: (Comb
 @Composable private fun HistoryTimelineRefreshingPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     HistoryTimelineContent(previewCombinedHistoryState().copy(isRefreshing = true), {}, { "13:00" })
 }
+@Preview @Composable private fun HistoryTimelineRefreshingLightPreview() = HistoryTimelineRefreshingPreview(false)
+@Preview @Composable private fun HistoryTimelineRefreshingDarkPreview() = HistoryTimelineRefreshingPreview(true)

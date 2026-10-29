@@ -15,6 +15,7 @@ import com.coffeepeek.core.designsystem.component.CoffeePeekMenuAction
 import com.coffeepeek.core.designsystem.component.CoffeePeekMenuIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
+import com.coffeepeek.feature.profile.impl.resources.*
 
 @Composable
 internal fun PublicProfileActions(isBlocked: Boolean, onShare: (() -> Unit)?, onBlock: () -> Unit) {

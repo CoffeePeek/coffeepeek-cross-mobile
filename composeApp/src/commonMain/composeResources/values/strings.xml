@@ -1,4 +1,7 @@
 <resources>
+    <string name="contribution_price_title">Цена</string>
+    <string name="contribution_price_cappuccino">Цена (капучино за %1$s)</string>
+    <string name="profile_menu_business">Мой бизнес</string>
     <string name="coffeepeek_legacy_choose_rating">%1$s: выбрать %2$d из 5</string>
     <string name="coffeepeek_legacy_rating_description">Кофе: %1$d, сервис: %2$d, место: %3$d. Средняя оценка %4$s из 5</string>
     <string name="coffeepeek_home_taste_rating_description">Оценка вкуса %1$d из 5</string>
@@ -124,4 +127,15 @@
     <string name="select_method_placeholder">Выбрать способ</string>
     <string name="select_method_none">Не указывать</string>
     <string name="photo_pick_failed">Не удалось добавить фото: %1$d</string>
+    <string name="photo_loading">Загрузка фото…</string>
+    <string name="business_tab_title">Бизнес</string>
+    <string name="discovery_map_filters">Фильтры кофеен</string>
+    <string name="discovery_map_card_loading">Загрузка…</string>
+    <string name="discovery_map_card_photo_missing">Фото %1$s отсутствует</string>
+    <string name="discovery_map_card_nearby">Кофейня рядом</string>
+    <string name="discovery_map_card_checkins">%1$d чекинов</string>
+    <string name="discovery_map_card_no_checkins">Нет чекинов</string>
+    <string name="discovery_map_card_open">Открыто</string>
+    <string name="discovery_map_card_closed">Закрыто</string>
+    <string name="discovery_map_truncated">Слишком много объектов — приблизьте карту</string>
 </resources>

@@ -6,6 +6,7 @@ import com.adamglin.phosphoricons.Fill
 import com.adamglin.phosphoricons.Regular
 import com.adamglin.phosphoricons.fill.Heart as FillHeart
 import com.adamglin.phosphoricons.fill.Star as FillStar
+import com.adamglin.phosphoricons.regular.Archive
 import com.adamglin.phosphoricons.regular.ArrowLeft
 import com.adamglin.phosphoricons.regular.Avocado
 import com.adamglin.phosphoricons.regular.Bell
@@ -97,6 +98,7 @@ object CoffeePeekIcons {
     val Expand: ImageVector get() = PhosphorIcons.Regular.ArrowsOutSimple
     val Minus: ImageVector get() = PhosphorIcons.Regular.Minus
     val Polygon: ImageVector get() = PhosphorIcons.Regular.Polygon
+    val Archive: ImageVector get() = PhosphorIcons.Regular.Archive
     val Back: ImageVector get() = PhosphorIcons.Regular.ArrowLeft
     val Block: ImageVector get() = PhosphorIcons.Regular.Prohibit
     val Calendar: ImageVector get() = PhosphorIcons.Regular.CalendarBlank

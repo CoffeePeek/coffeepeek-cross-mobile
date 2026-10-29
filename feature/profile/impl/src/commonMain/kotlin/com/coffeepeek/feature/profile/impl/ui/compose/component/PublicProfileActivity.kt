@@ -43,7 +43,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
+import com.coffeepeek.core.designsystem.text.coffeePeekPluralForm
 import com.coffeepeek.feature.profile.domain.PublicProfileActivity
+import com.coffeepeek.feature.profile.impl.resources.*
 import com.coffeepeek.feature.profile.impl.ui.data.profileMonth
 import com.coffeepeek.feature.profile.impl.ui.data.shiftProfileMonth
 

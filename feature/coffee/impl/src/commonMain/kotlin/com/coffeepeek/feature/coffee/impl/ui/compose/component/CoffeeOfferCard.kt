@@ -36,6 +36,7 @@ import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.coffee.domain.model.CoffeeAvailability
 import com.coffeepeek.feature.coffee.domain.model.CoffeeOffer
+import com.coffeepeek.feature.coffee.impl.resources.*
 import com.coffeepeek.feature.coffee.impl.ui.data.coffeeProductFormLabel
 
 @Composable
@@ -80,7 +81,9 @@ internal fun CoffeeOfferCard(offer: CoffeeOffer, brewNames: Map<String, String>,
     }
 }
 
-@Preview @Composable private fun CoffeeOfferCardPreview() = CoffeePeekTheme {
+@Composable private fun CoffeeOfferCardPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     CoffeeOfferCard(previewCoffee().offers.first().copy(availability = CoffeeAvailability.InStock, sellerName = "CoffeePeek"),
         emptyMap(), { it }, {})
 }
+@Preview @Composable private fun CoffeeOfferCardLightPreview() = CoffeeOfferCardPreview(false)
+@Preview @Composable private fun CoffeeOfferCardDarkPreview() = CoffeeOfferCardPreview(true)

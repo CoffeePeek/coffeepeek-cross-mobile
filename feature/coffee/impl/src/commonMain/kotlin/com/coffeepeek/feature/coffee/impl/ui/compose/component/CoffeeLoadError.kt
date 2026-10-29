@@ -22,6 +22,8 @@ internal fun CoffeeLoadError(onRetry: () -> Unit, modifier: Modifier = Modifier)
     }
 }
 
-@Preview @Composable private fun CoffeeLoadErrorPreview() = CoffeePeekTheme {
+@Composable private fun CoffeeLoadErrorPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     Surface { CoffeeLoadError({}) }
 }
+@Preview @Composable private fun CoffeeLoadErrorLightPreview() = CoffeeLoadErrorPreview(false)
+@Preview @Composable private fun CoffeeLoadErrorDarkPreview() = CoffeeLoadErrorPreview(true)

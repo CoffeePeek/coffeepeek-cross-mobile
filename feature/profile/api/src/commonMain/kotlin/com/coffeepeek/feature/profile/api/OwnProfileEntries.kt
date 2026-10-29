@@ -22,7 +22,10 @@ class OwnProfileSlots(
     val loadError: @Composable (onRetry: () -> Unit) -> Unit,
 )
 
-/** The Profile tab. Caller owns the tab, navigation, sign-in and the floating bar clearance. */
+/** The Profile tab. Caller owns the tab, navigation, sign-in and the floating bar clearance. *
+ * No default arguments: Kotlin/Native links an implementation in another module against the abstract Composable's exact
+ * signature, and Compose makes defaulted parameters of the override nullable, so defaults would break iOS.
+ */
 interface OwnProfileEntry {
     @Composable
     fun Content(

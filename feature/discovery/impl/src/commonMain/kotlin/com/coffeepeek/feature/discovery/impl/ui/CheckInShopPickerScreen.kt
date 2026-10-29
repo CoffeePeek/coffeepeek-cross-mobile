@@ -46,7 +46,7 @@ internal fun CheckInShopPickerScreen(
     }
     CoffeePeekBackHandler(onBack = onBack)
     CheckInShopPickerContent(state, host, showMap, { showMap = it }, search::onAction, onClose, modifier) { mapModifier ->
-        MapScreen(map, host, select, 0.dp, null, {}, mapModifier)
+        MapScreen(map, host, select, 0.dp, null, {}, mapModifier, onOpenFilters = {}, onSearchAction = search::onAction)
     }
 }
 

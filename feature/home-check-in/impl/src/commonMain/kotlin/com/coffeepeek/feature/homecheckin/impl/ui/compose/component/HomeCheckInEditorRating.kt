@@ -20,6 +20,7 @@ import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.component.CoffeePeekRating
 import com.coffeepeek.core.designsystem.component.CoffeePeekRatingSize
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
+import com.coffeepeek.feature.homecheckin.impl.resources.*
 
 @Composable
 internal fun HomeCheckInEditorRating(
@@ -40,6 +41,8 @@ internal fun HomeCheckInEditorRating(
     }
 }
 
-@Preview @Composable private fun HomeCheckInEditorRatingPreview() = CoffeePeekTheme {
+@Composable private fun HomeCheckInEditorRatingPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     Surface { HomeCheckInEditorRating(5, true, { Icon(CoffeePeekIcons.Coffee, null, it) }, {}) }
 }
+@Preview @Composable private fun HomeCheckInEditorRatingLightPreview() = HomeCheckInEditorRatingPreview(false)
+@Preview @Composable private fun HomeCheckInEditorRatingDarkPreview() = HomeCheckInEditorRatingPreview(true)

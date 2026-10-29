@@ -25,6 +25,8 @@ internal fun HistoryDrinkBadge(name: String, modifier: Modifier = Modifier) {
     }
 }
 
-@Preview @Composable private fun HistoryDrinkBadgePreview() = CoffeePeekTheme {
+@Composable private fun HistoryDrinkBadgePreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     HistoryDrinkBadge("Капучино")
 }
+@Preview @Composable private fun HistoryDrinkBadgeLightPreview() = HistoryDrinkBadgePreview(false)
+@Preview @Composable private fun HistoryDrinkBadgeDarkPreview() = HistoryDrinkBadgePreview(true)

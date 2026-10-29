@@ -35,6 +35,7 @@ import com.coffeepeek.feature.profile.api.ProfileAuthor
 import com.coffeepeek.feature.profile.api.ProfileAuthorActions
 import com.coffeepeek.feature.profile.impl.ui.compose.component.PublicProfileCheckInCard
 import com.coffeepeek.feature.profile.api.ProfileSlots
+import com.coffeepeek.feature.profile.impl.resources.*
 import com.coffeepeek.feature.profile.impl.ui.compose.component.InlineProfileError
 import com.coffeepeek.feature.profile.impl.ui.compose.component.ProfileSectionLoader
 import com.coffeepeek.feature.profile.impl.ui.model.PublicProfileState

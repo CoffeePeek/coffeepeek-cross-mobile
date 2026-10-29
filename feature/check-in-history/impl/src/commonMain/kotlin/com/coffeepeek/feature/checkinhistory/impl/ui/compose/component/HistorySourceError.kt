@@ -26,6 +26,8 @@ internal fun HistorySourceError(message: String, onRetry: () -> Unit) {
     }
 }
 
-@Preview @Composable private fun HistorySourceErrorPreview() = CoffeePeekTheme {
+@Composable private fun HistorySourceErrorPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     HistorySourceError(stringResource(Res.string.history_home_timeline_error), {})
 }
+@Preview @Composable private fun HistorySourceErrorLightPreview() = HistorySourceErrorPreview(false)
+@Preview @Composable private fun HistorySourceErrorDarkPreview() = HistorySourceErrorPreview(true)

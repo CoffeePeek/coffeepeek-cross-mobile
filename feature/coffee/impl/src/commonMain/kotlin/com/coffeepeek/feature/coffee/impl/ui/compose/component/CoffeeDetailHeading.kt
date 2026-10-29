@@ -30,6 +30,8 @@ internal fun CoffeeDetailHeading(name: String, countries: List<String>, productL
     }
 }
 
-@Preview @Composable private fun CoffeeDetailHeadingPreview() = CoffeePeekTheme {
+@Composable private fun CoffeeDetailHeadingPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     Surface { CoffeeDetailHeading("Эфиопия", listOf("Эфиопия"), "Обжаренный кофе · В зёрнах") }
 }
+@Preview @Composable private fun CoffeeDetailHeadingLightPreview() = CoffeeDetailHeadingPreview(false)
+@Preview @Composable private fun CoffeeDetailHeadingDarkPreview() = CoffeeDetailHeadingPreview(true)

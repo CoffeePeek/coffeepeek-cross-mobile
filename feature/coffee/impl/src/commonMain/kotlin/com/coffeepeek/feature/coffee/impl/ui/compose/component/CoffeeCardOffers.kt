@@ -19,6 +19,7 @@ import com.coffeepeek.core.designsystem.component.CoffeePeekCapsuleSegmentedCont
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.coffee.domain.model.CoffeeOffer
+import com.coffeepeek.feature.coffee.impl.resources.*
 
 @Composable
 internal fun CoffeeCardOffers(
@@ -56,6 +57,5 @@ internal fun CoffeeCardOffers(
 @Composable private fun CoffeeCardOffersPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     Surface { CoffeeCardOffers(previewCoffee().offers, previewCoffee().offers.first(), {}) }
 }
-
 @Preview @Composable private fun CoffeeCardOffersLightPreview() = CoffeeCardOffersPreview(false)
 @Preview @Composable private fun CoffeeCardOffersDarkPreview() = CoffeeCardOffersPreview(true)

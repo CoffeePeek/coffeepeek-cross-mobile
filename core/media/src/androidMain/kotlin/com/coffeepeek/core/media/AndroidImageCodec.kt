@@ -140,7 +140,7 @@ object AndroidImageCodec {
         return best
     }
 
-    internal fun decodeOrientedBitmap(byteArray: ByteArray, decodeMaxSide: Int): Bitmap {
+    fun decodeOrientedBitmap(byteArray: ByteArray, decodeMaxSide: Int): Bitmap {
         val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
         BitmapFactory.decodeByteArray(byteArray, 0, byteArray.size, bounds)
 

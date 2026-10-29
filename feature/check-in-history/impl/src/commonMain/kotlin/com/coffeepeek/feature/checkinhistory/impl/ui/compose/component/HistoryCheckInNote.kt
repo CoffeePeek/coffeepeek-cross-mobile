@@ -14,6 +14,8 @@ internal fun HistoryCheckInNote(note: String, modifier: Modifier = Modifier) {
         color = MaterialTheme.colorScheme.onSurface)
 }
 
-@Preview @Composable private fun HistoryCheckInNotePreview() = CoffeePeekTheme {
+@Composable private fun HistoryCheckInNotePreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     HistoryCheckInNote("Уютная кофейня и отличный кофе. ".repeat(4))
 }
+@Preview @Composable private fun HistoryCheckInNoteLightPreview() = HistoryCheckInNotePreview(false)
+@Preview @Composable private fun HistoryCheckInNoteDarkPreview() = HistoryCheckInNotePreview(true)

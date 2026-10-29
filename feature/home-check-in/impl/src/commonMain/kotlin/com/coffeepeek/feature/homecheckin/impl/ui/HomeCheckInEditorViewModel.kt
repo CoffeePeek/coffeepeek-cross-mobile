@@ -26,9 +26,9 @@ internal class HomeCheckInEditorViewModel(
     private val canAccess: () -> Boolean,
     private val now: () -> Instant = { Clock.System.now() },
     private val analytics: HomeCheckInEditorAnalytics = HomeCheckInEditorAnalytics.None,
+    startBean: HomeCheckInStartBean? = null,
 ) : MviViewModel<HomeCheckInEditorState, HomeCheckInEditorAction, HomeCheckInEditorEventEnvelope>(
-    HomeCheckInEditorState(draft = HomePreparationInput(preparedAt = initialPreparedAt,
-        preparedOn = initialPreparedOn, tasteScore = 5)),
+    homeCheckInStartState(initialPreparedAt, initialPreparedOn, startBean.takeIf { preparationId == null }),
 ) {
     private var initialized = false
     private var loadJob: Job? = null
@@ -53,6 +53,7 @@ internal class HomeCheckInEditorViewModel(
                 if (preparationId == null) {
                     track(HomeCheckInEditorMetric.Opened)
                     updateState { copy(isReady = true) }
+                    if (currentState.draft.shelfBagId != null) onAction(HomeCheckInEditorAction.ResolveShelfBagCard)
                 } else loadDetail()
             }
             HomeCheckInEditorAction.RetryDetail -> if (initialized) loadDetail()
@@ -76,7 +77,21 @@ internal class HomeCheckInEditorViewModel(
             HomeCheckInEditorAction.OpenBeanPicker -> if (canEdit()) {
                 track(HomeCheckInEditorMetric.BeanPickerOpened)
                 updateState { copy(isBeanPickerOpen = true) }
+                onAction(HomeCheckInEditorAction.LoadShelfBags)
                 searchBeans(debounce = false)
+            }
+            HomeCheckInEditorAction.LoadShelfBags -> if (canEdit() && currentState.isBeanPickerOpen) loadShelfBags()
+            is HomeCheckInEditorAction.ShelfBagSelected -> if (canEdit() && currentState.isBeanPickerOpen) {
+                currentState.shelfBags.firstOrNull { it.id == action.id }?.let { bag ->
+                    edit { copy(shelfBagId = bag.id, coffeeProductSlug = null, coffeeProductId = null, customBeanName = null,
+                        showShelfBag = true) }
+                    updateState { copy(beanSelectionName = bag.name, shelfBagCardUrl = bag.imageUrl) }
+                    closeBeanPicker()
+                }
+            }
+            HomeCheckInEditorAction.ResolveShelfBagCard -> if (canEdit()) resolveShelfBagCard()
+            is HomeCheckInEditorAction.ShowShelfBagChanged -> if (currentState.shelfBagCardUrl != null) edit {
+                copy(showShelfBag = action.show)
             }
             HomeCheckInEditorAction.CloseBeanPicker -> if (canEdit()) closeBeanPicker()
             is HomeCheckInEditorAction.BeanQueryChanged -> if (canEdit() && currentState.isBeanPickerOpen) {
@@ -91,14 +106,14 @@ internal class HomeCheckInEditorViewModel(
             }
             is HomeCheckInEditorAction.BeanSelected -> if (canEdit() && currentState.isBeanPickerOpen) {
                 currentState.beans.firstOrNull { it.slug == action.slug }?.let { bean ->
-                    edit { copy(coffeeProductSlug = bean.slug, coffeeProductId = null, customBeanName = null) }
+                    edit { copy(coffeeProductSlug = bean.slug, coffeeProductId = null, customBeanName = null, shelfBagId = null) }
                     updateState { copy(beanSelectionName = bean.name) }
                     closeBeanPicker()
                 }
             }
             is HomeCheckInEditorAction.CustomBeanChosen -> if (canEdit() && currentState.isBeanPickerOpen) {
                 if (action.name.isBlank()) return
-                edit { copy(coffeeProductSlug = null, coffeeProductId = null,
+                edit { copy(coffeeProductSlug = null, coffeeProductId = null, shelfBagId = null,
                     customBeanName = action.name.trim().take(250).ifBlank { null }) }
                 closeBeanPicker()
             }
@@ -159,8 +174,11 @@ internal class HomeCheckInEditorViewModel(
             if (!canAccess()) { revokeAccess(); return }
             if (loadJob !== job || expectedRevision != revision) return
             if (entry.id != preparationId) throw HomePreparationFailure(HomePreparationIssue.InvalidResponse)
-            updateState { copy(entry = entry, draft = entry.editorInput(), beanSelectionName = entry.beanName, isReady = true) }
+            updateState { copy(entry = entry, draft = entry.editorInput(), beanSelectionName = entry.beanName, isReady = true,
+                shelfBagCardUrl = entry.shelfBagPhoto?.cardUrl()) }
             track(HomeCheckInEditorMetric.Opened)
+            // A hidden card is still the bag's to show again, if the bag stands on the shelf with one.
+            if (entry.shelfBagId != null && entry.shelfBagPhoto == null) onAction(HomeCheckInEditorAction.ResolveShelfBagCard)
         } catch (cancelled: CancellationException) { throw cancelled }
         catch (error: Exception) {
             if (!canAccess()) { revokeAccess(); return }
@@ -216,9 +234,31 @@ internal class HomeCheckInEditorViewModel(
         }
     }
 
+    /** Bags are an optional shortcut: a failure only hides them, the catalogue search still works. */
+    private suspend fun loadShelfBags() {
+        val bags = catalog.shelfBags().getOrElse { error ->
+            if (error is CancellationException) throw error
+            emptyList()
+        }
+        if (!canAccess()) { revokeAccess(); return }
+        if (currentState.isBeanPickerOpen) updateState { copy(shelfBags = bags.distinctBy { it.id }) }
+    }
+
+    /** The card behind the switch for a bag chosen outside the picker; a bag off the shelf or without a card keeps it hidden. */
+    private suspend fun resolveShelfBagCard() {
+        val bagId = currentState.draft.shelfBagId ?: return
+        val card = catalog.shelfBags().getOrElse { error ->
+            if (error is CancellationException) throw error
+            emptyList()
+        }.firstOrNull { it.id == bagId }?.imageUrl ?: return
+        if (!canAccess()) { revokeAccess(); return }
+        if (canEdit() && currentState.draft.shelfBagId == bagId && currentState.shelfBagCardUrl == null)
+            updateState { copy(shelfBagCardUrl = card) }
+    }
+
     private fun closeBeanPicker() {
         cancelSearch()
-        updateState { copy(isBeanPickerOpen = false, beansLoading = false, beansIssue = null, beans = emptyList()) }
+        updateState { copy(isBeanPickerOpen = false, beansLoading = false, beansIssue = null, beans = emptyList(), shelfBags = emptyList()) }
     }
 
     private fun cancelSearch() {
@@ -314,5 +354,7 @@ internal class HomeCheckInEditorViewModel(
         }
     }
 }
+
+private fun HomePreparationPhoto.cardUrl() = thumbnailUrl?.takeIf(String::isNotBlank) ?: url
 
 private fun Exception.issue() = (this as? HomePreparationFailure)?.issue ?: HomePreparationIssue.RequestFailed

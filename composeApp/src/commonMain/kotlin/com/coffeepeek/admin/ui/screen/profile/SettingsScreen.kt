@@ -90,6 +90,7 @@ fun SettingsScreen(vm: ProfileViewModel = koinInject()) {
                 Spacer(Modifier.height(CpDimens.settingsSectionSpacing))
             }
 
+            koinInject<com.coffeepeek.feature.ownership.api.BusinessOwnershipEntry>().AccountSwitch()
             SettingsSection(title = "Добавить") {
                 SettingsRow(
                     icon = CpIcons.Add,

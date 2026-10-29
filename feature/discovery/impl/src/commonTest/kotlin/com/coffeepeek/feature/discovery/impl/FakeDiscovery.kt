@@ -32,7 +32,12 @@ internal class FakeRepository : DiscoveryRepository {
     override suspend fun search(query: ShopQuery): Result<Paged<ShopSummary>> { queries += query; return search.invoke(query) }
     var map: suspend (MapBounds, Float, DiscoveryFilters) -> Result<MapContent> = { _, _, _ -> Result.success(MapContent()) }
     val mapRequests = mutableListOf<Triple<MapBounds, Float, DiscoveryFilters>>()
-    override suspend fun mapContent(bounds: MapBounds, zoom: Float, filters: DiscoveryFilters): Result<MapContent> { mapRequests += Triple(bounds, zoom, filters); return map.invoke(bounds, zoom, filters) }
+    val mapCriteria = mutableListOf<DiscoveryCriteria>()
+    override suspend fun mapContent(bounds: MapBounds, zoom: Float, criteria: DiscoveryCriteria): Result<MapContent> {
+        mapCriteria += criteria
+        mapRequests += Triple(bounds, zoom, criteria.filters)
+        return map.invoke(bounds, zoom, criteria.filters)
+    }
     override suspend fun catalogs(): Result<DiscoveryCatalogs> { catalogCalls++; return catalogs.invoke() }
 }
 

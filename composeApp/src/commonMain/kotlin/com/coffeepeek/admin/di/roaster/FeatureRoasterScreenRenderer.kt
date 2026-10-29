@@ -42,7 +42,8 @@ internal class FeatureRoasterScreenRenderer(
     override fun Detail(roasterId: String) {
         detail.Content(roasterId, onBack = Navigator::popBack,
             onOpenShop = { Navigator.navigate(Navigator.Screen.ShopDetail(it)) },
-            onOpenLink = OpenInBrowser::openInBrowser, modifier = Modifier)
+            onOpenLink = OpenInBrowser::openInBrowser,
+            onShare = { com.coffeepeek.admin.utils.ShareHelper.shareText("https://coffeepeek.by$it") }, modifier = Modifier)
     }
 
     private fun addRoaster() = Navigator.navigate(Navigator.Screen.AddRoaster)

@@ -32,6 +32,8 @@ internal fun HomeCheckInEditorErrorSummary(message: String, modifier: Modifier =
     }
 }
 
-@Preview @Composable private fun HomeCheckInEditorErrorSummaryPreview() = CoffeePeekTheme {
+@Composable private fun HomeCheckInEditorErrorSummaryPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     Surface { HomeCheckInEditorErrorSummary(pluralStringResource(Res.plurals.home_check_in_validation_summary, 1, 1)) }
 }
+@Preview @Composable private fun HomeCheckInEditorErrorSummaryLightPreview() = HomeCheckInEditorErrorSummaryPreview(false)
+@Preview @Composable private fun HomeCheckInEditorErrorSummaryDarkPreview() = HomeCheckInEditorErrorSummaryPreview(true)

@@ -22,4 +22,13 @@ class ProtectedPhotoRequestTest {
         assertFalse(isImmutablePhotoVariant("$original/variants/source/0/feed.png"))
         assertFalse(isImmutablePhotoVariant("$original/variants/source/1/original.png"))
     }
+
+    @Test
+    fun shelfBagCardsAreOwnerOnlyPhotos() {
+        val card = "https://gateway.example/api/v1/shelf/bags/bag/photos/photo"
+        assertTrue(isProtectedCheckInPhoto(card))
+        assertNull(originalCheckInPhoto(card))
+        assertFalse(isImmutablePhotoVariant(card))
+        assertFalse(isProtectedCheckInPhoto("https://gateway.example/api/v1/shelf/archive"))
+    }
 }

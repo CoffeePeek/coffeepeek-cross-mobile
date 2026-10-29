@@ -21,6 +21,8 @@ internal fun HistoryGuestPrompt(onSignIn: () -> Unit, modifier: Modifier = Modif
     }
 }
 
-@Preview @Composable private fun HistoryGuestPromptPreview() = CoffeePeekTheme {
+@Composable private fun HistoryGuestPromptPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     HistoryGuestPrompt({})
 }
+@Preview @Composable private fun HistoryGuestPromptLightPreview() = HistoryGuestPromptPreview(false)
+@Preview @Composable private fun HistoryGuestPromptDarkPreview() = HistoryGuestPromptPreview(true)

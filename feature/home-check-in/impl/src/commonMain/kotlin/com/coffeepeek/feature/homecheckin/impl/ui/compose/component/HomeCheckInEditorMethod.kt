@@ -44,7 +44,9 @@ internal fun HomeCheckInEditorMethod(
     }
 }
 
-@Preview @Composable private fun HomeCheckInEditorMethodPreview() = CoffeePeekTheme {
+@Composable private fun HomeCheckInEditorMethodPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     Surface { HomeCheckInEditorMethod("hario-v60", listOf(HomeCheckInBrewMethod("hario-v60", "Hario V60")),
         true, null, { it }, { _, modifier -> Icon(CoffeePeekIcons.Coffee, null, modifier) }, {}) }
 }
+@Preview @Composable private fun HomeCheckInEditorMethodLightPreview() = HomeCheckInEditorMethodPreview(false)
+@Preview @Composable private fun HomeCheckInEditorMethodDarkPreview() = HomeCheckInEditorMethodPreview(true)

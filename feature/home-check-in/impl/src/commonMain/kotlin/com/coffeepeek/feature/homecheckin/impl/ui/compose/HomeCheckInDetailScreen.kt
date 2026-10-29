@@ -1,3 +1,5 @@
+@file:OptIn(androidx.compose.ui.ExperimentalComposeUiApi::class)
+
 package com.coffeepeek.feature.homecheckin.impl.ui.compose
 
 import com.coffeepeek.core.designsystem.component.CoffeePeekBackHandler
@@ -20,6 +22,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.homecheckin.domain.model.*
+import com.coffeepeek.feature.homecheckin.impl.resources.*
 import com.coffeepeek.feature.homecheckin.impl.ui.HomeCheckInDetailViewModel
 import com.coffeepeek.feature.homecheckin.impl.ui.compose.component.*
 import com.coffeepeek.feature.homecheckin.impl.ui.compose.model.*
@@ -132,6 +135,8 @@ internal fun previewHomePreparation() = HomePreparation(
     Surface { HomeCheckInDetailScreenContent(HomeCheckInDetailState(entry = previewHomePreparation()), {},
         { _, _ -> "17.10.2026 · 10:30" }, { "Hario V60" }, { _, _, _, _ -> }) }
 }
+@Preview @Composable private fun HomeCheckInDetailLightPreview() = HomeCheckInDetailPreview(false)
+@Preview @Composable private fun HomeCheckInDetailDarkPreview() = HomeCheckInDetailPreview(true)
 
 @Preview @Composable private fun HomeCheckInDetailLoadingPreviewLight() = HomeCheckInDetailLoadingPreview(false)
 @Preview @Composable private fun HomeCheckInDetailLoadingPreviewDark() = HomeCheckInDetailLoadingPreview(true)
@@ -139,6 +144,8 @@ internal fun previewHomePreparation() = HomePreparation(
 @Composable private fun HomeCheckInDetailLoadingPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     Surface { HomeCheckInDetailScreenContent(HomeCheckInDetailState(isLoading = true), {}, { date, _ -> date }, { it }, { _, _, _, _ -> }) }
 }
+@Preview @Composable private fun HomeCheckInDetailLoadingLightPreview() = HomeCheckInDetailLoadingPreview(false)
+@Preview @Composable private fun HomeCheckInDetailLoadingDarkPreview() = HomeCheckInDetailLoadingPreview(true)
 
 @Preview @Composable private fun HomeCheckInDetailPhotoVariantsPreviewLight() = HomeCheckInDetailPhotoVariantsPreview(false)
 @Preview @Composable private fun HomeCheckInDetailPhotoVariantsPreviewDark() = HomeCheckInDetailPhotoVariantsPreview(true)
@@ -151,6 +158,8 @@ internal fun previewHomePreparation() = HomePreparation(
             Box(modifier) // Fake image port: previews never access private images or a network loader.
         }) }
 }
+@Preview @Composable private fun HomeCheckInDetailPhotoVariantsLightPreview() = HomeCheckInDetailPhotoVariantsPreview(false)
+@Preview @Composable private fun HomeCheckInDetailPhotoVariantsDarkPreview() = HomeCheckInDetailPhotoVariantsPreview(true)
 
 @Preview @Composable private fun HomeCheckInDetailErrorPreviewLight() = HomeCheckInDetailErrorPreview(false)
 @Preview @Composable private fun HomeCheckInDetailErrorPreviewDark() = HomeCheckInDetailErrorPreview(true)
@@ -159,3 +168,5 @@ internal fun previewHomePreparation() = HomePreparation(
     Surface { HomeCheckInDetailScreenContent(HomeCheckInDetailState(loadIssue = HomePreparationIssue.Offline), {},
         { date, _ -> date }, { it }, { _, _, _, _ -> }) }
 }
+@Preview @Composable private fun HomeCheckInDetailErrorLightPreview() = HomeCheckInDetailErrorPreview(false)
+@Preview @Composable private fun HomeCheckInDetailErrorDarkPreview() = HomeCheckInDetailErrorPreview(true)

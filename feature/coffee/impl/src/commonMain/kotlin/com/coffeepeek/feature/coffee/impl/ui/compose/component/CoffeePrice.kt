@@ -22,6 +22,7 @@ import com.coffeepeek.core.designsystem.component.CoffeePeekBynIcon
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.coffee.domain.model.CoffeeOffer
+import com.coffeepeek.feature.coffee.impl.resources.*
 import com.coffeepeek.feature.coffee.impl.ui.data.formatCoffeePrice
 
 @Composable
@@ -41,6 +42,8 @@ internal fun CoffeePrice(offer: CoffeeOffer?) {
     }
 }
 
-@Preview @Composable private fun CoffeePricePreview() = CoffeePeekTheme {
+@Composable private fun CoffeePricePreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     Surface { CoffeePrice(CoffeeOffer(24.5, "BYN", 250)) }
 }
+@Preview @Composable private fun CoffeePriceLightPreview() = CoffeePricePreview(false)
+@Preview @Composable private fun CoffeePriceDarkPreview() = CoffeePricePreview(true)

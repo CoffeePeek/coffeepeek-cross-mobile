@@ -1,0 +1,5 @@
+<resources>
+    <string name="check_in_create_what">Что добавим?</string>
+    <string name="check_in_create_shelf_title">Пачку на полку</string>
+    <string name="check_in_create_shelf_body">Сфотографируйте пачку кофе</string>
+</resources>

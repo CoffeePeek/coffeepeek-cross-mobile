@@ -48,6 +48,7 @@ interface RoasterDetailEntry {
         onBack: () -> Unit,
         onOpenShop: (slug: String) -> Unit,
         onOpenLink: (url: String) -> Unit,
+        onShare: (canonicalPath: String) -> Unit,
         modifier: Modifier,
     )
 }

@@ -31,6 +31,7 @@ import com.coffeepeek.core.designsystem.component.CoffeePeekNativeAlert
 import com.coffeepeek.core.designsystem.component.CoffeePeekContentCard
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
+import com.coffeepeek.feature.profile.impl.resources.*
 
 @Composable
 internal fun UsernameChangeConfirmation(username: String, onConfirm: () -> Unit, onDismiss: () -> Unit) {
