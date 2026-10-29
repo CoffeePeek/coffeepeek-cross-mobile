@@ -57,13 +57,23 @@ import FirebaseMessaging
 import UserNotifications
 
 // Firebase packages and Push Notifications capability are installed on macOS; see docs/push-notifications.md.
+private enum FirebasePlist {
+    /// Installations throws if API_KEY is not 39 characters starting with `A`; the unsigned CI plist is only for compile checks.
+    static var isValidForConfigure: Bool {
+        guard let path = Bundle.main.path(forResource: "GoogleService-Info", ofType: "plist"),
+              let dict = NSDictionary(contentsOfFile: path) as? [String: Any],
+              let apiKey = dict["API_KEY"] as? String else { return false }
+        return apiKey.count == 39 && apiKey.hasPrefix("A")
+    }
+}
+
 final class PushAppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate, MessagingDelegate {
     private var account: String?
     private var resetting = false
     private var revokePending = true
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil) -> Bool {
-        guard Bundle.main.path(forResource: "GoogleService-Info", ofType: "plist") != nil else { return true }
+        guard FirebasePlist.isValidForConfigure else { return true }
         FirebaseApp.configure()
         Messaging.messaging().isAutoInitEnabled = false
         Messaging.messaging().delegate = self
