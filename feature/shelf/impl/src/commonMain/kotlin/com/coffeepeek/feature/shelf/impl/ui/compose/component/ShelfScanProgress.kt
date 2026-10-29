@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.semantics.heading
@@ -32,8 +33,10 @@ internal fun ShelfScanProgress(
     photo: ByteArray, stagesDone: Set<BagScanStage>, frame: BagScanFrame?, revealing: Boolean, onPhotoBounds: (Rect) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Column(modifier.fillMaxSize().padding(CoffeePeekDimens.spacing4), verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3)) {
-        ShelfPhotoBox(photo, Modifier.fillMaxWidth().weight(1f), onBounds = onPhotoBounds) {
+    // The photo takes its own height (at most the room left), and the stages follow right under it, centred as one group.
+    Column(modifier.fillMaxSize().padding(CoffeePeekDimens.spacing4),
+        verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3, Alignment.CenterVertically)) {
+        ShelfPhotoBox(photo, Modifier.fillMaxWidth().weight(1f, fill = false), onBounds = onPhotoBounds) {
             if (frame == null && !revealing) ShelfScanSweep()
             if (frame != null) ShelfFrameReveal(frame)
         }
