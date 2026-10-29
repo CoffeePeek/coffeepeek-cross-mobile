@@ -33,12 +33,16 @@ internal fun HistoryCalendarVisitMarkers(total: Long, onSelectedBackground: Bool
     }
 }
 
-@Preview @Composable private fun HistoryCalendarVisitMarkersPreview() = CoffeePeekTheme {
+@Composable private fun HistoryCalendarVisitMarkersPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     HistoryCalendarVisitMarkers(5, onSelectedBackground = false)
 }
+@Preview @Composable private fun HistoryCalendarVisitMarkersLightPreview() = HistoryCalendarVisitMarkersPreview(false)
+@Preview @Composable private fun HistoryCalendarVisitMarkersDarkPreview() = HistoryCalendarVisitMarkersPreview(true)
 
-@Preview @Composable private fun HistoryCalendarVisitMarkersSelectedPreview() = CoffeePeekTheme {
+@Composable private fun HistoryCalendarVisitMarkersSelectedPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     Box(Modifier.background(MaterialTheme.colorScheme.primary)) {
         HistoryCalendarVisitMarkers(5, onSelectedBackground = true)
     }
 }
+@Preview @Composable private fun HistoryCalendarVisitMarkersSelectedLightPreview() = HistoryCalendarVisitMarkersSelectedPreview(false)
+@Preview @Composable private fun HistoryCalendarVisitMarkersSelectedDarkPreview() = HistoryCalendarVisitMarkersSelectedPreview(true)

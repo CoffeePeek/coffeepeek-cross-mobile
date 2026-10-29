@@ -23,9 +23,11 @@ internal fun HomeCheckInEditorField(label: String, error: String? = null, conten
     }
 }
 
-@Preview @Composable private fun HomeCheckInEditorFieldPreview() = CoffeePeekTheme {
+@Composable private fun HomeCheckInEditorFieldPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     Surface { HomeCheckInEditorField(stringResource(Res.string.home_check_in_editor_note)) {
         HomeCheckInEditorInput("", {}, stringResource(Res.string.home_check_in_editor_note),
             stringResource(Res.string.home_check_in_note_hint), true, multiline = true)
     } }
 }
+@Preview @Composable private fun HomeCheckInEditorFieldLightPreview() = HomeCheckInEditorFieldPreview(false)
+@Preview @Composable private fun HomeCheckInEditorFieldDarkPreview() = HomeCheckInEditorFieldPreview(true)

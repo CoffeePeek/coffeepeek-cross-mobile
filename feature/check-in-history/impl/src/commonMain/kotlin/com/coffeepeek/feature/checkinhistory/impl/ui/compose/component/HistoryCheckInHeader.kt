@@ -42,6 +42,8 @@ internal fun HistoryCheckInHeader(username: String, dateLabel: String, modifier:
     }
 }
 
-@Preview @Composable private fun HistoryCheckInHeaderPreview() = CoffeePeekTheme {
+@Composable private fun HistoryCheckInHeaderPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     HistoryCheckInHeader("Анна", "14 октября 2026")
 }
+@Preview @Composable private fun HistoryCheckInHeaderLightPreview() = HistoryCheckInHeaderPreview(false)
+@Preview @Composable private fun HistoryCheckInHeaderDarkPreview() = HistoryCheckInHeaderPreview(true)

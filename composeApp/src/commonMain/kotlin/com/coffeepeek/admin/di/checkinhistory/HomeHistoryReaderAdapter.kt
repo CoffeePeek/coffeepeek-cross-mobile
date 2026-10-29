@@ -48,9 +48,11 @@ internal class HomeHistoryReaderAdapter(private val reader: HomePreparationReade
 
 private fun HomePreparation.historyEntry() = HomeHistoryEntry(
     id = id, preparedOn = preparedOn, preparedAtUtc = preparedAtUtc, createdAtUtc = createdAtUtc, note = text,
-    recipe = HomeHistoryRecipe(brewMethodCode, coffeeProductId, beanName, doseGrams, brewDurationSeconds, tasteScore),
+    recipe = HomeHistoryRecipe(brewMethodCode, coffeeProductId, beanName, doseGrams, brewDurationSeconds, tasteScore,
+        roasterName, coffeeProductSlug),
     drinkName = drinkName, drinkSlug = drinkSlug, customDrinkName = customDrinkName,
     photos = photos.map { HomeHistoryPhoto(it.id, it.url, it.thumbnailUrl, it.detailUrl, it.calendarUrl) },
+    shelfBagCard = shelfBagPhoto?.let { HomeHistoryPhoto(it.id, it.url, it.thumbnailUrl, it.detailUrl, it.calendarUrl) },
     visibility = when (visibility) {
         HomePreparationVisibility.Private -> HistoryVisibility.Private
         HomePreparationVisibility.Public -> HistoryVisibility.Public

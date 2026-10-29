@@ -7,8 +7,7 @@ import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 import java.util.Locale
 
-internal actual fun localizedUsernameRetryAt(value: String?): String? =
-    formatUsernameRetryAt(value, Locale.getDefault(), ZoneId.systemDefault())
+internal actual fun formatUsernameRetryAt(value: String?): String? = formatUsernameRetryAt(value, Locale.getDefault(), ZoneId.systemDefault())
 
 internal fun formatUsernameRetryAt(value: String?, locale: Locale, zone: ZoneId): String? {
     if (value.isNullOrBlank()) return null

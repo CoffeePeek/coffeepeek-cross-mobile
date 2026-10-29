@@ -5,6 +5,9 @@
     <string name="home_check_in_create_shop_hint">Выбрать место и напиток</string>
     <string name="home_check_in_create_home">Дома</string>
     <string name="home_check_in_create_home_hint">Записать приготовление</string>
+    <string name="home_check_in_create_what">Что добавим?</string>
+    <string name="home_check_in_create_shelf_title">Пачку на полку</string>
+    <string name="home_check_in_create_shelf_body">Сфотографируйте пачку кофе</string>
     <string name="home_check_in_create_continue">Продолжить</string>
     <string name="home_check_in_home">Кофе дома</string>
     <string name="home_check_in_title_fallback">Домашнее приготовление</string>
@@ -86,6 +89,11 @@
     <string name="home_check_in_beans_empty">Зерно не найдено</string>
     <string name="home_check_in_beans_empty_hint">Попробуйте изменить поиск или добавьте своё зерно ниже.</string>
     <string name="home_check_in_custom_bean">Своё зерно</string>
+    <string name="home_check_in_from_shelf">С моей полки</string>
+    <string name="home_check_in_from_catalog">Из каталога</string>
+    <string name="home_check_in_shelf_bag_unnamed">Пачка с полки</string>
+    <string name="home_check_in_show_bag_title">Показать пачку</string>
+    <string name="home_check_in_show_bag_hint">Карточка пачки будет видна вместе с чекином.</string>
     <string name="home_check_in_custom_bean_name">Название своего зерна</string>
     <string name="home_check_in_custom_bean_hint">Например, Эфиопия Иргачеффе</string>
     <string name="home_check_in_use_custom_bean">Использовать своё зерно</string>

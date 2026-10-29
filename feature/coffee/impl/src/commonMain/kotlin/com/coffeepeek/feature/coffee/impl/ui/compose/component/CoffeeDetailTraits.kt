@@ -22,6 +22,7 @@ import com.coffeepeek.core.designsystem.component.CoffeePeekInfoItem
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
+import com.coffeepeek.feature.coffee.impl.resources.*
 
 @Composable
 internal fun CoffeeDetailTraits(roast: String?, profile: String?, acidity: String?) {
@@ -50,6 +51,8 @@ private fun Trait(value: String, caption: String, icon: ImageVector) {
     )
 }
 
-@Preview @Composable private fun CoffeeDetailTraitsPreview() = CoffeePeekTheme {
+@Composable private fun CoffeeDetailTraitsPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     Surface { CoffeeDetailTraits("Средняя", "Ягоды", "Высокая") }
 }
+@Preview @Composable private fun CoffeeDetailTraitsLightPreview() = CoffeeDetailTraitsPreview(false)
+@Preview @Composable private fun CoffeeDetailTraitsDarkPreview() = CoffeeDetailTraitsPreview(true)

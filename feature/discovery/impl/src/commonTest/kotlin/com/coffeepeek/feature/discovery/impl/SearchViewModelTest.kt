@@ -39,7 +39,7 @@ class SearchViewModelTest {
     private val here = Coordinates(53.9, 27.56)
 
     private fun TestScope.model(): SearchViewModel =
-        SearchViewModel(repository, favorites, city, location, account, analytics).also { store.put("search", it); runCurrent() }
+        SearchViewModel(repository, favorites, city, location, account, analytics).also { store.put("search", it); it.onAction(SearchAction.PresentationChanged(true)); runCurrent() }
 
     private fun SearchViewModel.send(vararg actions: SearchAction, scope: TestScope) { actions.forEach { onAction(it); scope.runCurrent() } }
     private val SearchViewModel.now get() = state.value
@@ -268,6 +268,22 @@ class SearchViewModelTest {
         vm.send(SearchAction.ToggleFavorite("a"), scope = this)
         assertEquals(SearchEvent.SignInRequired, event.await())
         assertFalse(vm.now.shops.first().isFavorite); assertTrue(favorites.changes.isEmpty())
+    }
+
+    @Test fun aLateFavoriteFailureCannotRestoreThePreviousAccountsMembership() = runTest(dispatcher) {
+        val pending = CompletableDeferred<Result<Unit>>()
+        favorites.flow.value = setOf("a")
+        favorites.set = { _, _ -> pending.await() }
+        val vm = model()
+        assertTrue(vm.now.shops.first().isFavorite)
+        vm.send(SearchAction.ToggleFavorite("a"), scope = this)
+        account.key.value = "two"
+        runCurrent()
+        assertFalse(vm.now.shops.first().isFavorite)
+        pending.complete(Result.failure(IllegalStateException("old request failed")))
+        runCurrent()
+        assertFalse(vm.now.shops.first().isFavorite)
+        assertTrue(vm.now.favoriteUpdates.isEmpty())
     }
 
     // ---- location and account ----

@@ -4,6 +4,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.coffeepeek.feature.homecheckin.api.HomeCheckInBean
 import com.coffeepeek.feature.homecheckin.api.HomeCheckInEditorEntry
 import com.coffeepeek.feature.homecheckin.domain.repository.HomePreparationRepository
 import com.coffeepeek.feature.homecheckin.impl.ui.HomeCheckInEditorViewModel
@@ -38,12 +39,14 @@ private class HomeCheckInEditorApiImpl(
 ) : HomeCheckInEditorEntry {
     @Composable
     override fun Content(preparationId: String?, sessionGeneration: Int, accessAllowed: Boolean,
-        onClose: () -> Unit, onSaved: (String, Boolean) -> Unit, onDismissAllowedChange: (Boolean) -> Unit, modifier: Modifier) {
+        onClose: () -> Unit, onSaved: (String, Boolean) -> Unit, onDismissAllowedChange: (Boolean) -> Unit, modifier: Modifier,
+        bean: HomeCheckInBean?) {
         key(this, sessionGeneration, preparationId) {
             val model = viewModel(key = "home-editor:$sessionGeneration:$preparationId") {
                 val instant = dates.currentInstant()
                 HomeCheckInEditorViewModel(repository, catalog, instant, dates.localDate(instant),
-                    preparationId, sessionGeneration, canAccess, analytics = analytics(preparationId != null))
+                    preparationId, sessionGeneration, canAccess, analytics = analytics(preparationId != null),
+                    startBean = bean?.let { HomeCheckInStartBean(it.slug, it.name, it.shelfBagId) })
             }
             Editor(model, preparationId, accessAllowed, onClose, onSaved, onDismissAllowedChange, modifier)
         }

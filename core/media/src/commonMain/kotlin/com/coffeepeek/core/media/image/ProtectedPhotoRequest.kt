@@ -29,8 +29,9 @@ internal fun requirePhotoAccess(status: Int) {
     if (status in setOf(401, 403, 404, 410)) throw PhotoAccessDenied()
 }
 
+/** Owner-scoped photos: check-in photos and shelf bag cards, loaded with the session and never from a shared cache. */
 internal fun isProtectedCheckInPhoto(url: String): Boolean =
-    Regex("/api/v1/check-ins/[^/?]+/photos/[^/?]+").containsMatchIn(url)
+    Regex("/api/v1/(check-ins|shelf/bags)/[^/?]+/photos/[^/?]+").containsMatchIn(url)
 
 internal fun isImmutablePhotoVariant(url: String): Boolean = runCatching {
     val path = if (url.startsWith('/')) url.substringBefore('?').substringBefore('#') else Url(url).encodedPath

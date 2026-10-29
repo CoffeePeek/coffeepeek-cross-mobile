@@ -13,6 +13,7 @@ import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.component.CoffeePeekButton
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
+import com.coffeepeek.feature.homecheckin.impl.resources.*
 
 @Composable
 internal fun HomeCheckInDetailActions(enabled: Boolean, onEdit: () -> Unit, onDelete: () -> Unit) {
@@ -27,6 +28,8 @@ internal fun HomeCheckInDetailActions(enabled: Boolean, onEdit: () -> Unit, onDe
     }
 }
 
-@Preview @Composable private fun HomeCheckInDetailActionsPreview() = CoffeePeekTheme {
+@Composable private fun HomeCheckInDetailActionsPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     Surface { HomeCheckInDetailActions(true, {}, {}) }
 }
+@Preview @Composable private fun HomeCheckInDetailActionsLightPreview() = HomeCheckInDetailActionsPreview(false)
+@Preview @Composable private fun HomeCheckInDetailActionsDarkPreview() = HomeCheckInDetailActionsPreview(true)

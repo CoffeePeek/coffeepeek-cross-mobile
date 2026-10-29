@@ -28,6 +28,8 @@ internal fun HomeCheckInEditorFieldError(message: String) {
     }
 }
 
-@Preview @Composable private fun HomeCheckInEditorFieldErrorPreview() = CoffeePeekTheme {
+@Composable private fun HomeCheckInEditorFieldErrorPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     Surface { HomeCheckInEditorFieldError(stringResource(Res.string.home_check_in_error_dose)) }
 }
+@Preview @Composable private fun HomeCheckInEditorFieldErrorLightPreview() = HomeCheckInEditorFieldErrorPreview(false)
+@Preview @Composable private fun HomeCheckInEditorFieldErrorDarkPreview() = HomeCheckInEditorFieldErrorPreview(true)

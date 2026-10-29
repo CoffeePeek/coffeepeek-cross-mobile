@@ -61,7 +61,9 @@ internal fun HomeCheckInEditorInput(
             errorBorderColor = MaterialTheme.colorScheme.error))
 }
 
-@Preview @Composable private fun HomeCheckInEditorInputPreview() = CoffeePeekTheme {
+@Composable private fun HomeCheckInEditorInputPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     Surface { HomeCheckInEditorInput("18", {}, stringResource(Res.string.home_check_in_dose_label),
         stringResource(Res.string.home_check_in_dose_hint), true, keyboardType = KeyboardType.Decimal) }
 }
+@Preview @Composable private fun HomeCheckInEditorInputLightPreview() = HomeCheckInEditorInputPreview(false)
+@Preview @Composable private fun HomeCheckInEditorInputDarkPreview() = HomeCheckInEditorInputPreview(true)

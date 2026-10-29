@@ -37,6 +37,8 @@ internal fun HistoryShopDetailSheet(entry: PersonalCheckIn, dateLabel: String, o
 }
 
 // Dialog placement is verified on the isolated host; IDE previews render the modal content.
-@Preview @Composable private fun HistoryShopDetailPreview() = CoffeePeekTheme {
+@Composable private fun HistoryShopDetailPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     HistoryShopDetailContent(previewHistoryCheckIn(), "14 октября 2026", {}, {})
 }
+@Preview @Composable private fun HistoryShopDetailLightPreview() = HistoryShopDetailPreview(false)
+@Preview @Composable private fun HistoryShopDetailDarkPreview() = HistoryShopDetailPreview(true)

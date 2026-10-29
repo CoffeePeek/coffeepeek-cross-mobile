@@ -21,6 +21,7 @@ import com.coffeepeek.core.designsystem.component.CoffeePeekSearchField
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
+import com.coffeepeek.feature.coffee.impl.resources.*
 import com.coffeepeek.feature.coffee.api.CoffeeScreenAnalytics
 import com.coffeepeek.feature.coffee.api.CoffeeExposure
 
@@ -45,6 +46,8 @@ internal fun CoffeeSearchHeader(query: String, filterCount: Int, onQueryChange: 
     }
 }
 
-@Preview @Composable private fun CoffeeSearchHeaderPreview() = CoffeePeekTheme {
+@Composable private fun CoffeeSearchHeaderPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     Surface { CoffeeSearchHeader("", 2, {}, {}) }
 }
+@Preview @Composable private fun CoffeeSearchHeaderLightPreview() = CoffeeSearchHeaderPreview(false)
+@Preview @Composable private fun CoffeeSearchHeaderDarkPreview() = CoffeeSearchHeaderPreview(true)

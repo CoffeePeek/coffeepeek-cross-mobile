@@ -6,6 +6,7 @@ import com.coffeepeek.admin.analytics.CheckInTracker
 import com.coffeepeek.admin.di.checkinhistory.CheckInHistorySession
 import com.coffeepeek.admin.di.checkinhistory.HistoryCreationAnalytics
 import com.coffeepeek.core.session.SessionReader
+import com.coffeepeek.feature.homecheckin.api.HomeCheckInBean
 import com.coffeepeek.feature.homecheckin.api.HomeCheckInEditorEntry
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineStart
@@ -14,9 +15,13 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 
-/** App navigation/lease only; the feature owns form state, validation, photos and writes. */
+/**
+ * App navigation/lease only; the feature owns form state, validation, photos and writes. With [homeBean] the flow skips the
+ * picker and opens the Home form with that coffee already chosen ("Заварить чашку" from a shelf bag).
+ */
 internal class GlobalCheckInFlow(
     sessions: SessionReader,
+    val homeBean: HomeCheckInBean? = null,
     private val createEditor: (CheckInHistorySession, CheckInTracker?) -> HomeCheckInEditorEntry,
 ) : ViewModel() {
     val lease = CheckInHistorySession(sessions)
@@ -34,6 +39,7 @@ internal class GlobalCheckInFlow(
                 revoke()
             }.collect { if (!lease.isCurrent(it)) revoke() }
         }
+        if (homeBean != null) home()
     }
 
     fun canAccess() = lease.isLoggedIn && lease.isCurrent()
@@ -48,6 +54,13 @@ internal class GlobalCheckInFlow(
         if (!canAccess() || mutableState.value !== GlobalCheckInDestination.Picker) return
         tracker = analytics.shop()
         mutableState.value = GlobalCheckInDestination.Closed(GlobalCheckInOutcome.Shop)
+    }
+
+    /** Adding a bag is not a check-in: the picker closes and the application opens the scan. */
+    fun shelfBag() {
+        if (!canAccess() || mutableState.value !== GlobalCheckInDestination.Picker) return
+        tracker = null
+        mutableState.value = GlobalCheckInDestination.Closed(GlobalCheckInOutcome.ShelfBag)
     }
 
     fun cancel(expected: GlobalCheckInDestination) {
@@ -109,5 +122,5 @@ internal sealed interface GlobalCheckInDestination {
     class Closed(val outcome: GlobalCheckInOutcome) : GlobalCheckInDestination
 }
 
-internal enum class GlobalCheckInOutcome { Close, Saved, Shop }
+internal enum class GlobalCheckInOutcome { Close, Saved, Shop, ShelfBag }
 internal class GlobalCheckInCompletion(val outcome: GlobalCheckInOutcome, val shopTracker: CheckInTracker?)

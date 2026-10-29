@@ -43,11 +43,10 @@ class CheckInHistoryModuleTest {
                     } }
                     single<BrewMethodCatalog> { BrewMethodCatalog { error("Unexpected methods read") } }
                 },
-                homeCheckInModule("https://fixture.invalid"), checkInHistoryModule("https://fixture.invalid"))
+                homeCheckInModule(shelfEnabled = false, apiBaseUrl = "https://fixture.invalid"), checkInHistoryModule(shelfEnabled = false, apiBaseUrl = "https://fixture.invalid"))
         }
         try {
             assertSame(app.koin.get<FeatureCheckInHistoryScreenRenderer>(), app.koin.get<FeatureCheckInHistoryScreenRenderer>())
-            assertSame(app.koin.get<FeatureProfileActivityRenderer>(), app.koin.get<FeatureProfileActivityRenderer>())
             assertSame(app.koin.get<AppCheckInHistoryCalendar>(), app.koin.get<AppCheckInHistoryCalendar>())
             assertEquals(1, app.koin.getAll<CheckInHistoryRepository>().size)
             assertEquals(1, app.koin.getAll<HomePreparationReader>().size)

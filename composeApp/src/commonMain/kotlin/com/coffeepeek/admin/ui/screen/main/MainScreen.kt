@@ -45,6 +45,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
 import com.coffeepeek.admin.ui.Navigator
+import com.coffeepeek.admin.ui.MainTabReselections
 import com.coffeepeek.admin.ui.Navigator.isHandledByRootNav
 import com.coffeepeek.admin.ui.mainTabScreens
 import com.coffeepeek.admin.ui.component.PlatformFloatingBottomNavBar
@@ -55,6 +56,9 @@ import com.coffeepeek.admin.ui.component.RetainedContent
 import com.coffeepeek.admin.ui.component.ProvideFloatingNavClearance
 import com.coffeepeek.admin.ui.screen.coffee.CoffeeScreenRenderer
 import org.koin.compose.koinInject
+import coffeepeek.composeapp.generated.resources.Res
+import coffeepeek.composeapp.generated.resources.business_tab_title
+import org.jetbrains.compose.resources.stringResource
 import com.coffeepeek.admin.ui.screen.profile.OwnProfileScreenRenderer
 import com.coffeepeek.admin.ui.screen.profile.SettingsScreenRenderer
 import com.coffeepeek.admin.ui.icons.CpIcons
@@ -73,6 +77,7 @@ expect fun MainScreen(isLoggedIn: Boolean, onMapExpandedChange: (Boolean) -> Uni
 internal fun ComposeMainScreen(isLoggedIn: Boolean, onMapExpandedChange: (Boolean) -> Unit) {
     val reduceMotion = com.coffeepeek.admin.ui.component.platformReduceMotion()
     val bottomNavController = rememberNavController()
+    val tabReselections = remember { MainTabReselections() }
     val analyticsEntry by bottomNavController.currentBackStackEntryAsState()
     com.coffeepeek.admin.analytics.TrackNavigationScreen(analyticsEntry)
     val focusManager = LocalFocusManager.current
@@ -80,8 +85,10 @@ internal fun ComposeMainScreen(isLoggedIn: Boolean, onMapExpandedChange: (Boolea
     var isFeedMapExpanded by remember { mutableStateOf(false) }
     val pendingTabSelection by Navigator.pendingTabSelection.collectAsState()
 
-    val availableTabs = mainTabScreens(isLoggedIn)
+    val businessMode = koinInject<com.coffeepeek.feature.ownership.api.BusinessOwnershipEntry>().Session().businessMode
+    val availableTabs = mainTabScreens(isLoggedIn, businessMode)
     val items = listOf(
+        BottomNavItem(title = stringResource(Res.string.business_tab_title), icon = CpIcons.CoffeeBean, graph = Navigator.Screen.BusinessGraph, startScreen = Navigator.Screen.BusinessTab),
         BottomNavItem(
             title = "Поиск",
             icon = CpIcons.Search,
@@ -115,6 +122,15 @@ internal fun ComposeMainScreen(isLoggedIn: Boolean, onMapExpandedChange: (Boolea
     ).filter { it.startScreen in availableTabs }
     val availableRoutes = items.flatMap { listOf(it.graph, it.startScreen) }
 
+    var previousBusinessMode by remember { mutableStateOf(businessMode) }
+    LaunchedEffect(businessMode) {
+        if (previousBusinessMode == businessMode) return@LaunchedEffect
+        previousBusinessMode = businessMode
+        bottomNavController.navigate(if (businessMode) Navigator.Screen.BusinessGraph else Navigator.Screen.FeedGraph) {
+            popUpTo(bottomNavController.graph.id) { inclusive = true }
+            launchSingleTop = true
+        }
+    }
     LaunchedEffect(availableRoutes) {
         Navigator.navigationEvents.collect { event ->
             when (event) {
@@ -198,7 +214,7 @@ internal fun ComposeMainScreen(isLoggedIn: Boolean, onMapExpandedChange: (Boolea
                 }
                 NavHost(
                     navController = bottomNavController,
-                    startDestination = Navigator.Screen.FeedGraph,
+                    startDestination = if (businessMode) Navigator.Screen.BusinessGraph else Navigator.Screen.FeedGraph,
                     modifier = Modifier.fillMaxSize(),
                     enterTransition = {
                         slideIntoContainer(tabDirection(), tween(if (reduceMotion) 0 else 300, easing = FastOutSlowInEasing))
@@ -222,7 +238,7 @@ internal fun ComposeMainScreen(isLoggedIn: Boolean, onMapExpandedChange: (Boolea
 
                     navigation<Navigator.Screen.CoffeeGraph>(startDestination = Navigator.Screen.CoffeeTab) {
                         composable<Navigator.Screen.CoffeeTab> {
-                            CheckInTabContent { koinInject<CoffeeScreenRenderer>().List() }
+                            CheckInTabContent { koinInject<CoffeeScreenRenderer>().List(tabReselections.coffee) }
                         }
                     }
 
@@ -239,6 +255,11 @@ internal fun ComposeMainScreen(isLoggedIn: Boolean, onMapExpandedChange: (Boolea
                         composable<Navigator.Screen.ProfileTab> { if (isLoggedIn) koinInject<OwnProfileScreenRenderer>().Content() }
                     }
 
+                    navigation<Navigator.Screen.BusinessGraph>(startDestination = Navigator.Screen.BusinessTab) {
+                        composable<Navigator.Screen.BusinessTab> {
+                            koinInject<com.coffeepeek.feature.ownership.api.BusinessOwnershipEntry>().Tab()
+                        }
+                    }
                     navigation<Navigator.Screen.SettingsGraph>(startDestination = Navigator.Screen.SettingsTab) {
                         composable<Navigator.Screen.SettingsTab> { koinInject<SettingsScreenRenderer>().Tab() }
                     }
@@ -261,6 +282,7 @@ internal fun ComposeMainScreen(isLoggedIn: Boolean, onMapExpandedChange: (Boolea
                             icon = item.icon,
                             selected = isSelected,
                             onClick = {
+                                tabReselections.onTabPressed(item.startScreen, isSelected)
                                 if (isSelected) return@FloatingNavItem
                                 bottomNavController.navigate(item.graph) {
                                     popUpTo(bottomNavController.graph.findStartDestination().id) {

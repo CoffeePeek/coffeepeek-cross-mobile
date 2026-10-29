@@ -13,6 +13,7 @@ import com.coffeepeek.feature.coffee.domain.repository.CoffeeRepository
 import com.coffeepeek.feature.coffee.impl.ui.CoffeeListViewModel
 import com.coffeepeek.feature.coffee.impl.ui.compose.CoffeeListScreen
 import com.coffeepeek.feature.coffee.impl.ui.compose.model.CoffeeListEvent
+import kotlinx.coroutines.flow.Flow
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
@@ -33,10 +34,14 @@ private class CoffeeListApiImpl(private val repository: CoffeeRepository,
     private val instanceKey = Uuid.random().toString()
 
     @Composable
-    override fun Content(onOpenCoffee: (String) -> Unit, modifier: Modifier, bottomClearance: Dp) {
+    override fun Content(
+        onOpenCoffee: (String) -> Unit, modifier: Modifier, bottomClearance: Dp,
+        scrollToTopRequests: Flow<Unit>, animateScrollToTop: Boolean, header: @Composable () -> Unit,
+    ) {
         key(this) {
             val model = viewModel(key = "coffee-list:$instanceKey") { CoffeeListViewModel(repository, analytics.list()) }
-            CoffeeListScreen(model, imageContent, bottomClearance, modifier, screenAnalytics, loadError) { event ->
+            CoffeeListScreen(model, imageContent, bottomClearance, modifier, screenAnalytics, loadError,
+                scrollToTopRequests, animateScrollToTop, header) { event ->
                 when (event) { is CoffeeListEvent.OpenCoffee -> onOpenCoffee(event.slug) }
             }
         }

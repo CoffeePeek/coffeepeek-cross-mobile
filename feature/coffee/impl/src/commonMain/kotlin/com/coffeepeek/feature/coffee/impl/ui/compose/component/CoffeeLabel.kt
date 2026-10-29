@@ -23,6 +23,8 @@ internal fun CoffeeLabel(text: String) {
             .padding(horizontal = CoffeePeekDimens.spacing3, vertical = CoffeePeekDimens.spacing1))
 }
 
-@Preview @Composable private fun CoffeeLabelPreview() = CoffeePeekTheme {
+@Composable private fun CoffeeLabelPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     Surface { CoffeeLabel("Ягоды") }
 }
+@Preview @Composable private fun CoffeeLabelLightPreview() = CoffeeLabelPreview(false)
+@Preview @Composable private fun CoffeeLabelDarkPreview() = CoffeeLabelPreview(true)

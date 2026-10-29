@@ -210,7 +210,7 @@ private fun MapShopPager(state: MapState, shops: List<MapMarker>, dismissInput: 
         val shop = shops[page % shops.size]
         val isSelected = shop.id == selected?.id
         DiscoveryMapShopCard(
-            shop, state.details.takeIf { isSelected }, isSelected && state.isLoadingDetails, state.nearbyOrigin?.let { distanceMeters(it, shop.coordinates) },
+            shop, state.cardDetails[shop.id] ?: state.details.takeIf { isSelected }, isSelected && state.isLoadingDetails, state.nearbyOrigin?.let { distanceMeters(it, shop.coordinates) },
             onOpen = { if (isSelected) onAction(MapAction.OpenShop(shop.id)) else onAction(MapAction.SelectMarker(shop.id)) },
         )
     }

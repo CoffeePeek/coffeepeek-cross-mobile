@@ -16,6 +16,9 @@ import androidx.compose.ui.Modifier
  * Photo callbacks keep detail previews and issued originals in the same album order.
  * A blank detail preview means unavailable; only the active gallery page may fall
  * back to its corresponding original. Do not derive originals from preview URLs.
+ *
+ * No default arguments: Kotlin/Native links an implementation in another module against the abstract Composable's exact
+ * signature, and Compose makes defaulted parameters of the override nullable, so defaults would break iOS.
  */
 interface HomeCheckInDetailEntry {
     @Composable

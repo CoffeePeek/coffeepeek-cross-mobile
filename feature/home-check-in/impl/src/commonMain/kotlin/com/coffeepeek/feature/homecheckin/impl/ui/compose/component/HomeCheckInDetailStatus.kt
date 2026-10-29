@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
 import com.coffeepeek.feature.homecheckin.domain.model.HomePreparationIssue
+import com.coffeepeek.feature.homecheckin.impl.resources.*
 
 @Composable
 internal fun HomeCheckInDetailStatus(
@@ -64,6 +65,8 @@ internal fun HomeCheckInDetailStatus(
     }
 }
 
-@Preview @Composable private fun HomeCheckInDetailStatusPreview() = CoffeePeekTheme {
+@Composable private fun HomeCheckInDetailStatusPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     Surface { HomeCheckInDetailStatus(false, false, HomePreparationIssue.Offline, false, {}) }
 }
+@Preview @Composable private fun HomeCheckInDetailStatusLightPreview() = HomeCheckInDetailStatusPreview(false)
+@Preview @Composable private fun HomeCheckInDetailStatusDarkPreview() = HomeCheckInDetailStatusPreview(true)

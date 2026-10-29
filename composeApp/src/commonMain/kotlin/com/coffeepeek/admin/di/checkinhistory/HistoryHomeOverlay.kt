@@ -3,6 +3,7 @@ package com.coffeepeek.admin.di.checkinhistory
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import coffeepeek.composeapp.generated.resources.Res
 import coffeepeek.composeapp.generated.resources.history_home_close
@@ -17,21 +18,19 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 internal fun HistoryHomeOverlay(bridge: HistoryHomeBridge, session: HistoryHostSession,
     onPhoto: (List<String>, List<String>, Int) -> Unit) {
-    // UIKit can stop the presenting screen while its child sheet still needs replacement/dismissal updates.
-    val destination by bridge.destination.collectAsState()
+    val destination by bridge.destination.collectAsStateWithLifecycle()
     destination?.let { current -> key(current) {
-        val dismissAllowed by current.dismissAllowed.collectAsState()
+        val dismissAllowed by current.dismissAllowed.collectAsStateWithLifecycle()
         val dates = remember { appHomeCheckInDates() }
         val allowed = session.lease.isLoggedIn && session.lease.isCurrent()
-        AnalyticsOverlay {
-            CoffeePeekSwipeDismissModalBottomSheet({ bridge.dismiss(current) }, stringResource(Res.string.history_home_close),
-                dismissEnabled = dismissAllowed, maxSheetHeightFraction = 0.9f) {
-                // UIKit sheets compose in a separate root: bind the destination store inside the body.
-                CompositionLocalProvider(LocalViewModelStoreOwner provides current) {
+        CompositionLocalProvider(LocalViewModelStoreOwner provides current) {
+            AnalyticsOverlay {
+                CoffeePeekSwipeDismissModalBottomSheet({ bridge.dismiss(current) }, stringResource(Res.string.history_home_close),
+                    dismissEnabled = dismissAllowed, maxSheetHeightFraction = 0.9f) {
                     val modifier = Modifier.weight(1f).fillMaxWidth()
                     if (current.editing) current.entries.editor.Content(current.id, session.generation, allowed,
                         { bridge.dismiss(current) }, { id, notice -> bridge.saved(current, id, notice) },
-                        { bridge.setDismissAllowed(current, it) }, modifier)
+                        { bridge.setDismissAllowed(current, it) }, modifier, bean = null)
                     else current.entries.detail.Content(requireNotNull(current.id), session.generation, allowed,
                         { civil, instant -> listOf(civil.split('-').reversed().joinToString("."),
                             utcIsoToLocalDateTime(instant).substringAfterLast(' ', "")).filter(String::isNotBlank).joinToString(" · ") }, dates.formatMethod,

@@ -23,6 +23,7 @@ import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.homecheckin.domain.model.HomePreparation
+import com.coffeepeek.feature.homecheckin.impl.resources.*
 import com.coffeepeek.feature.homecheckin.impl.ui.compose.previewHomePreparation
 
 @Composable
@@ -75,6 +76,8 @@ private fun durationLabel(seconds: Int): String = listOfNotNull(
     if (seconds % 60 > 0 || seconds == 0) stringResource(Res.string.home_check_in_seconds, seconds % 60) else null,
 ).joinToString(" ")
 
-@Preview @Composable private fun HomeCheckInRecipeCardPreview() = CoffeePeekTheme {
+@Composable private fun HomeCheckInRecipeCardPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     HomeCheckInRecipeCard(previewHomePreparation(), "Hario V60")
 }
+@Preview @Composable private fun HomeCheckInRecipeCardLightPreview() = HomeCheckInRecipeCardPreview(false)
+@Preview @Composable private fun HomeCheckInRecipeCardDarkPreview() = HomeCheckInRecipeCardPreview(true)

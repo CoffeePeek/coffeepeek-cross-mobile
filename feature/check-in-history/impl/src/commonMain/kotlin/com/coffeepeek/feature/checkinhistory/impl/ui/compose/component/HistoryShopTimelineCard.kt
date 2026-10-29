@@ -10,6 +10,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.style.TextOverflow
+import org.jetbrains.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.component.CoffeePeekTimelineContent
 import com.coffeepeek.core.designsystem.component.CoffeePeekTimelineHeader
@@ -21,7 +22,6 @@ import com.coffeepeek.feature.checkinhistory.impl.ui.data.displayName
 import com.coffeepeek.feature.checkinhistory.impl.ui.data.timelinePhotos
 import com.coffeepeek.feature.checkinhistory.impl.ui.data.completeTimelineRating
 import org.jetbrains.compose.resources.stringResource
-import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
 internal fun HistoryShopTimelineCard(entry: PersonalCheckIn, dateLabel: String, onClick: () -> Unit,

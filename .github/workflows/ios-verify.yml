@@ -77,14 +77,31 @@ jobs:
               tail -n 150 "$RUNNER_TEMP/ios-verify.log"
               exit 1
             }
-      - name: Run Kotlin Native ViewModel contract tests
+      - name: Run Kotlin Native contract tests
         shell: bash
         run: |
           set -euo pipefail
           ./gradlew --max-workers=6 :composeApp:iosSimulatorArm64Test \
             --tests 'com.coffeepeek.admin.di.KoinViewModelCompatibilityTest' \
+            --tests 'com.coffeepeek.admin.ui.NavigationDelegateTest' \
+            --tests 'com.coffeepeek.admin.ui.MainTabReselectionsTest' \
+            --tests 'com.coffeepeek.admin.ui.TabDelegateTest' \
+            --tests 'com.coffeepeek.admin.di.discovery.LegacyDiscoveryMapSourceTest' \
+            --tests 'com.coffeepeek.admin.ui.screen.feed.FeedMapCriteriaTest' \
+            --tests 'com.coffeepeek.admin.ui.screen.map.MapViewModelParityTest' \
             > "$RUNNER_TEMP/ios-native-tests.log" 2>&1 || {
               tail -n 150 "$RUNNER_TEMP/ios-native-tests.log"
+              exit 1
+            }
+      - name: Run shared business ownership unit and contract tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./gradlew --max-workers=6 :feature:business-ownership:domain:iosSimulatorArm64Test \
+            :feature:business-ownership:data:iosSimulatorArm64Test \
+            :feature:business-ownership:impl:iosSimulatorArm64Test \
+            > "$RUNNER_TEMP/ios-ownership-tests.log" 2>&1 || {
+              tail -n 150 "$RUNNER_TEMP/ios-ownership-tests.log"
               exit 1
             }
       - uses: actions/upload-artifact@v4
@@ -94,6 +111,8 @@ jobs:
           path: |
             ${{ runner.temp }}/ios-verify.log
             ${{ runner.temp }}/ios-native-tests.log
+            ${{ runner.temp }}/ios-ownership-tests.log
+            feature/business-ownership/**/build/test-results/iosSimulatorArm64Test/
             composeApp/build/test-results/iosSimulatorArm64Test/
             iosApp/iosApp.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved
           retention-days: 7

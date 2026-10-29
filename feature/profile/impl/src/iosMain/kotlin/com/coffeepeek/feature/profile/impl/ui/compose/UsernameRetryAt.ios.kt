@@ -1,20 +1,21 @@
 package com.coffeepeek.feature.profile.impl.ui.compose
 
-import com.coffeepeek.core.datetime.parseServerInstant
-import platform.Foundation.NSDate
 import platform.Foundation.NSDateFormatter
 import platform.Foundation.NSDateFormatterMediumStyle
 import platform.Foundation.NSDateFormatterShortStyle
-import platform.Foundation.dateWithTimeIntervalSince1970
-import kotlin.time.ExperimentalTime
+import platform.Foundation.NSISO8601DateFormatWithFractionalSeconds
+import platform.Foundation.NSISO8601DateFormatWithInternetDateTime
+import platform.Foundation.NSISO8601DateFormatter
 
-@OptIn(ExperimentalTime::class)
-internal actual fun localizedUsernameRetryAt(value: String?): String? {
+/** The server may send fractional seconds or not; either is read, and the result follows the device locale and zone. */
+internal actual fun formatUsernameRetryAt(value: String?): String? {
     if (value.isNullOrBlank()) return null
-    val instant = parseServerInstant(value) ?: return null
-    val formatter = NSDateFormatter().apply {
+    val parser = NSISO8601DateFormatter()
+    val date = parser.dateFromString(value) ?: parser.apply {
+        formatOptions = NSISO8601DateFormatWithInternetDateTime or NSISO8601DateFormatWithFractionalSeconds
+    }.dateFromString(value) ?: return null
+    return NSDateFormatter().apply {
         dateStyle = NSDateFormatterMediumStyle
         timeStyle = NSDateFormatterShortStyle
-    }
-    return formatter.stringFromDate(NSDate.dateWithTimeIntervalSince1970(instant.epochSeconds.toDouble()))
+    }.stringFromDate(date)
 }

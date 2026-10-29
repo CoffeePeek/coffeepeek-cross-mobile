@@ -78,6 +78,7 @@ import com.coffeepeek.feature.community.api.FeedItemAction
 import com.coffeepeek.feature.community.api.FeedTrigger
 import com.coffeepeek.feature.community.domain.model.CommunityPost
 import com.coffeepeek.feature.community.domain.model.PostVisibility
+import com.coffeepeek.feature.community.impl.resources.*
 import com.coffeepeek.feature.community.impl.timeline.ActionMessage
 import com.coffeepeek.feature.community.impl.timeline.CommunityAction
 import com.coffeepeek.feature.community.impl.timeline.CommunityEvent
@@ -95,6 +96,7 @@ internal class CommunityCallbacks(
     val onOpenShop: (slug: String) -> Unit,
     val onEditHome: (id: String) -> Unit,
     val onOpenPost: (id: String) -> Unit,
+    val onOpenCoffee: (slug: String) -> Unit,
 )
 
 @Composable
@@ -292,6 +294,9 @@ private fun postActions(
         onPublish = { onAction(CommunityAction.ToggleVisibility(post.id)) }.takeIf { isOwn && post.visibility == PostVisibility.Private },
         onShare = sharer.action(post) { onAction(CommunityAction.ItemInteracted(FeedItemAction.Share, post.id)) },
         onOpen = { onAction(CommunityAction.ItemInteracted(FeedItemAction.Open, post.id)); callbacks.onOpenPost(post.id) }.takeIf { post.id.isNotBlank() },
+        onCoffee = post.home?.coffeeProductSlug?.let { slug ->
+            { onAction(CommunityAction.ItemInteracted(FeedItemAction.Coffee, post.id)); callbacks.onOpenCoffee(slug) }
+        },
     )
 }
 
@@ -320,19 +325,19 @@ internal fun ErrorBlock(onRetry: () -> Unit, retryLabel: String, modifier: Modif
     CommunityContent(
         CommunityState(isLoggedIn = true, items = listOf(previewPost(), previewPost().copy(id = "second", note = "Вторая запись", photos = com.coffeepeek.feature.community.domain.model.PostPhotos.None))),
         {}, CommunityHost(), object : AuthorBlockActions { override fun requestBlock(author: AuthorReference) {}; override fun requestUnblock(author: AuthorReference) {} },
-        CommunityCallbacks({}, { _, _, _ -> }, {}, {}, {}), SnackbarHostState(),
+        CommunityCallbacks({}, { _, _, _ -> }, {}, {}, {}, {}), SnackbarHostState(),
     )
 }
+@Preview @Composable private fun CommunityLightPreview() = CommunityPreview(false)
+@Preview @Composable private fun CommunityDarkPreview() = CommunityPreview(true)
 
 @Composable private fun CommunityErrorPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     CommunityContent(
         CommunityState(isLoggedIn = true, error = com.coffeepeek.feature.community.impl.timeline.TimelineError.LoadFailed),
         {}, CommunityHost(), object : AuthorBlockActions { override fun requestBlock(author: AuthorReference) {}; override fun requestUnblock(author: AuthorReference) {} },
-        CommunityCallbacks({}, { _, _, _ -> }, {}, {}, {}), SnackbarHostState(),
+        CommunityCallbacks({}, { _, _, _ -> }, {}, {}, {}, {}), SnackbarHostState(),
     )
 }
 
-@Preview @Composable private fun CommunityLightPreview() = CommunityPreview(false)
-@Preview @Composable private fun CommunityDarkPreview() = CommunityPreview(true)
 @Preview @Composable private fun CommunityErrorLightPreview() = CommunityErrorPreview(false)
 @Preview @Composable private fun CommunityErrorDarkPreview() = CommunityErrorPreview(true)

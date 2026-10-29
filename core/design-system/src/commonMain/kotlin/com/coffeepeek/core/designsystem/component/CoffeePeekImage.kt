@@ -35,7 +35,7 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 fun CoffeePeekImage(
     data: Any, placeholder: DrawableResource? = null, error: DrawableResource? = null,
     contentScale: ContentScale = ContentScale.Crop, modifier: Modifier = Modifier, contentDescription: String? = null,
-    highQualityData: Any? = null, upgradeDelayMillis: Long = 1_500L, showLoader: Boolean = false,
+    alignment: Alignment = Alignment.Center, highQualityData: Any? = null, upgradeDelayMillis: Long = 1_500L, showLoader: Boolean = false,
     placeholderContent: (@Composable (Modifier) -> Unit)? = null,
 ) {
     val base = LocalImageEnvironment.current.apiBaseUrl
@@ -44,7 +44,7 @@ fun CoffeePeekImage(
     var visible by remember(preview, detail) { mutableStateOf(false) }
     val result = rememberProgressiveImageResult(preview, detail, upgradeDelayMillis, visible)
     val observed = modifier.imageVisibility(detail != null && upgradeDelayMillis > 0) { visible = it }
-    CoffeePeekImageContent(result, placeholder, error, showLoader, contentScale, observed, contentDescription, placeholderContent)
+    CoffeePeekImageContent(result, placeholder, error, showLoader, contentScale, observed, contentDescription, alignment, placeholderContent)
 }
 
 @Composable
@@ -71,7 +71,7 @@ private fun rememberProgressiveImageResult(preview: Any, detail: Any?, upgradeDe
 @Composable
 private fun CoffeePeekImageContent(
     result: Resource<Painter>, placeholder: DrawableResource?, error: DrawableResource?, loader: Boolean,
-    scale: ContentScale, modifier: Modifier, description: String?,
+    scale: ContentScale, modifier: Modifier, description: String?, alignment: Alignment,
     placeholderContent: (@Composable (Modifier) -> Unit)?,
 ) {
     val loading = placeholder?.let { painterResource(it) }
@@ -84,7 +84,7 @@ private fun CoffeePeekImageContent(
     val content: @Composable () -> Unit = {
         val usePlaceholder = result is Resource.Loading || result is Resource.Failure && error == null
         if (usePlaceholder && placeholderContent != null) placeholderContent(modifier)
-        else Image(painter, description, modifier, contentScale = scale)
+        else Image(painter, description, modifier, contentScale = scale, alignment = alignment)
     }
     if (loader) Box(contentAlignment = Alignment.Center) {
         content()

@@ -85,6 +85,7 @@ import com.coffeepeek.core.designsystem.theme.CoffeePeekColors
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.feature.profile.api.EditProfileSlots
 import com.coffeepeek.feature.profile.api.ProfileAvatarImage
+import com.coffeepeek.feature.profile.impl.resources.*
 import com.coffeepeek.feature.profile.impl.ui.EditProfileViewModel
 import com.coffeepeek.feature.profile.impl.ui.model.EditProfileAction
 import com.coffeepeek.feature.profile.impl.ui.model.EditProfileEvent

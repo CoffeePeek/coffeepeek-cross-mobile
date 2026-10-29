@@ -14,9 +14,11 @@ android {
 }
 
 dependencies {
+    api(project(module.feature.checkInHistory.api))
     implementation(project(module.feature.checkInHistory.domain))
     implementation(project(module.core.presentation))
     implementation(project(module.core.datetime))
+    implementation(project(module.core.designSystem))
     implementation(libs.compose.components.resources)
 
     api(project(module.feature.checkInHistory.api))
@@ -24,6 +26,7 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodelCompose)
     implementation(libs.androidx.lifecycle.runtimeCompose)
     implementation(compose.components.uiToolingPreview)
+    implementation(libs.compose.ui.backhandler)
 
     testImplementation(libs.kotlin.test)
     testImplementation(libs.kotlinx.coroutines.test)

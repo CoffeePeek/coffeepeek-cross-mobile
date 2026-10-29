@@ -60,6 +60,7 @@ private class OwnProfileEntryImpl(
             onOpenUser = onOpenUser, onOpenFavorites = onOpenFavorites, onOpenCheckIns = onOpenCheckIns,
             onOpenContributions = onOpenContributions,
             onOpenBlockedAuthors = onOpenBlockedAuthors,
+
         )
     }
 }

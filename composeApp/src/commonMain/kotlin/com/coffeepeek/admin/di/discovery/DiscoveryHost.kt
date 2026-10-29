@@ -8,6 +8,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
 import androidx.compose.ui.graphics.luminance
 import com.coffeepeek.admin.analytics.analyticsExposure
+import com.coffeepeek.admin.analytics.LocalAnalyticsVisible
 import com.coffeepeek.admin.location.LocationPermissionEffect
 import com.coffeepeek.admin.map.CoffeeMap
 import com.coffeepeek.admin.map.mapCanvasSize
@@ -36,6 +37,7 @@ internal fun discoveryHost() = DiscoveryHost(
         LocationPermissionEffect(requestKey, onGranted, onDenied, requestOnce = true)
     },
     reduceMotion = { platformReduceMotion() },
+    isVisible = { LocalAnalyticsVisible.current },
     mapCanvas = { state, callbacks, modifier -> DiscoveryMapCanvas(state, callbacks, modifier) },
 )
 

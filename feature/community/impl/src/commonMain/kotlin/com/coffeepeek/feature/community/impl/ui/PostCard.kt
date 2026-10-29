@@ -92,6 +92,7 @@ import com.coffeepeek.feature.community.domain.model.PostVisibility
 import com.coffeepeek.feature.community.domain.rules.PublicationLabel
 import com.coffeepeek.feature.community.domain.rules.publicationLabel
 import com.coffeepeek.feature.community.domain.rules.shareLink
+import com.coffeepeek.feature.community.impl.resources.*
 import kotlin.math.roundToInt
 
 /** What a card needs to know about the viewer; the actions are null when the viewer cannot use them. */
@@ -110,6 +111,8 @@ internal class PostCardActions(
     val onShare: (() -> Unit)? = null,
     /** The whole card opens the post on its own screen; the author, shop, photos, like and menu keep their own taps. */
     val onOpen: (() -> Unit)? = null,
+    /** A home post's bag opens its coffee in the catalogue; null without a published catalogue coffee. */
+    val onCoffee: (() -> Unit)? = null,
 )
 
 @Composable
@@ -133,9 +136,12 @@ internal fun PostCard(
         PostHeader(post, isOwn, actions, enabled, changingVisibility, host)
         if (post.isHome) {
             post.home?.let { recipe ->
-                recipe.beanName?.takeIf(String::isNotBlank)?.let { Text(it, style = MaterialTheme.typography.titleMedium) }
                 val details = recipe.details(host.brewMethodLabel)
-                if (details.isNotBlank()) Text(details, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                // A shown bag is the title and carries the recipe line itself.
+                recipe.shelfBagCardUrl?.let { PostShelfBag(it, recipe.beanName, recipe.roasterName, details, actions.onCoffee, host) } ?: run {
+                    recipe.beanName?.takeIf(String::isNotBlank)?.let { Text(it, style = MaterialTheme.typography.titleMedium) }
+                    if (details.isNotBlank()) Text(details, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
             }
         } else PostHeading(post.shopName.ifBlank { stringResource(Res.string.community_shop_default) }, post.rating, actions.onShop)
         if (post.note.isNotBlank()) Text(post.note, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
@@ -246,6 +252,9 @@ internal class PostSharer(
         return Regex("%([1-3])\\\u0024s").replace(format) { arguments[it.groupValues[1].toInt() - 1] }
     }
 }
+
+/** Fills the `%1$s`-style placeholders of a share template, as String.format does for these. */
+private fun String.fill(vararg args: String): String = args.foldIndexed(this) { index, text, arg -> text.replace("%${index + 1}\$s", arg) }
 
 @Composable
 internal fun postSharer(host: CommunityHost) = PostSharer(
@@ -362,13 +371,13 @@ internal fun previewPost() = CommunityPost(
 @Composable private fun PostCardPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     PostCard(previewPost(), isOwn = false, publicTimeline = true, showHelpfulCount = true, enabled = true, PostCardActions({}, {}, {}, {}, {}), CommunityHost())
 }
+@Preview @Composable private fun PostCardLightPreview() = PostCardPreview(false)
+@Preview @Composable private fun PostCardDarkPreview() = PostCardPreview(true)
 
 @Composable private fun HomePostCardPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     PostCard(previewPost().copy(isHome = true, home = HomePreparation("2026-10-07", "hario-v60", "Эфиопия", 18.0, 150, 4), photos = PostPhotos.None, rating = null),
         isOwn = true, publicTimeline = false, showHelpfulCount = false, enabled = true, PostCardActions(null, null, null, null, {}), CommunityHost())
 }
 
-@Preview @Composable private fun PostCardLightPreview() = PostCardPreview(false)
-@Preview @Composable private fun PostCardDarkPreview() = PostCardPreview(true)
 @Preview @Composable private fun HomePostCardLightPreview() = HomePostCardPreview(false)
 @Preview @Composable private fun HomePostCardDarkPreview() = HomePostCardPreview(true)

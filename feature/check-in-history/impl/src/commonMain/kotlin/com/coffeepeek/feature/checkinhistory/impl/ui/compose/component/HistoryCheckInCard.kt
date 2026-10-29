@@ -57,12 +57,16 @@ internal fun previewHistoryCheckIn() = PersonalCheckIn(
     rejectionReason = null, helpfulCount = 0, isHelpfulByCurrentUser = false,
 )
 
-@Preview @Composable private fun HistoryCheckInUnavailablePhotoPreview() = CoffeePeekTheme {
+@Composable private fun HistoryCheckInUnavailablePhotoPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     HistoryCheckInCard(previewHistoryCheckIn().copy(photoUrls = listOf("fixture-original"),
         photoThumbnailUrls = listOf("")), "14 октября", {})
 }
+@Preview @Composable private fun HistoryCheckInUnavailablePhotoLightPreview() = HistoryCheckInUnavailablePhotoPreview(false)
+@Preview @Composable private fun HistoryCheckInUnavailablePhotoDarkPreview() = HistoryCheckInUnavailablePhotoPreview(true)
 
-@Preview @Composable private fun HistoryCheckInCardPreview() = CoffeePeekTheme {
+@Composable private fun HistoryCheckInCardPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     HistoryCheckInCard(previewHistoryCheckIn().copy(visibility = HistoryVisibility.Public,
         helpfulCount = 3, isHelpfulByCurrentUser = true), "14 октября 2026", {})
 }
+@Preview @Composable private fun HistoryCheckInCardLightPreview() = HistoryCheckInCardPreview(false)
+@Preview @Composable private fun HistoryCheckInCardDarkPreview() = HistoryCheckInCardPreview(true)

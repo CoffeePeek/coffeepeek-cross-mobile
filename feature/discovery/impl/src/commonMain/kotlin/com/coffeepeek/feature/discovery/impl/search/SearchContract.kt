@@ -3,6 +3,7 @@ package com.coffeepeek.feature.discovery.impl.search
 import com.coffeepeek.feature.discovery.domain.model.CityEntry
 import com.coffeepeek.feature.discovery.domain.model.Coordinates
 import com.coffeepeek.feature.discovery.domain.model.DiscoveryCatalogs
+import com.coffeepeek.feature.discovery.domain.model.DiscoveryCriteria
 import com.coffeepeek.feature.discovery.domain.model.DiscoveryFilters
 import com.coffeepeek.feature.discovery.domain.model.PriceLevel
 import com.coffeepeek.feature.discovery.domain.model.ShopKind
@@ -43,6 +44,7 @@ internal data class SearchState(
     fun showsShopsFirst(hasRoasterResults: Boolean?): Boolean =
         query.isNotBlank() && hasRoasterResults == false && visibleShops.isNotEmpty()
 
+    val criteria: DiscoveryCriteria get() = DiscoveryCriteria(query, filters, userLocation)
     val activeFilterCount: Int get() = filters.activeCount
     val showsDiscovery: Boolean get() = showsDiscovery(query, searchActive, filters)
     val visibleShops: List<ShopSummary> get() = visibleShops(shops, filters)
@@ -51,6 +53,7 @@ internal data class SearchState(
 
 internal sealed interface SearchAction {
     data class Query(val text: String) : SearchAction
+    data class PresentationChanged(val active: Boolean) : SearchAction
     data object ActivateSearch : SearchAction
     data object CancelSearch : SearchAction
     data object ToggleFilters : SearchAction

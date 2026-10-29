@@ -26,6 +26,8 @@ internal fun HomeCheckInTasteRating(score: Int) {
     }
 }
 
-@Preview @Composable private fun HomeCheckInTasteRatingPreview() = CoffeePeekTheme {
+@Composable private fun HomeCheckInTasteRatingPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     Surface { HomeCheckInTasteRating(4) }
 }
+@Preview @Composable private fun HomeCheckInTasteRatingLightPreview() = HomeCheckInTasteRatingPreview(false)
+@Preview @Composable private fun HomeCheckInTasteRatingDarkPreview() = HomeCheckInTasteRatingPreview(true)

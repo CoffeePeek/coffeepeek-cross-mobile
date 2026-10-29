@@ -8,6 +8,10 @@ import androidx.compose.ui.unit.Dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.coffeepeek.feature.discovery.api.*
 import com.coffeepeek.feature.discovery.impl.map.MapViewModel
+import com.coffeepeek.feature.discovery.impl.map.MapAction
+import com.coffeepeek.feature.discovery.impl.search.SearchAction
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.distinctUntilChanged
 import com.coffeepeek.feature.discovery.impl.search.SearchEvent
 import com.coffeepeek.feature.discovery.impl.search.SearchViewModel
 
@@ -33,13 +37,20 @@ internal fun DiscoveryTab(
     modifier: Modifier = Modifier,
 ) {
     val state by searchViewModel.state.collectAsStateWithLifecycle()
+    LaunchedEffect(searchViewModel, mapViewModel) {
+        searchViewModel.state.map { it.criteria }.distinctUntilChanged().collect { mapViewModel.onAction(MapAction.SyncCriteria(it)) }
+    }
     SearchNavigationEvents(searchViewModel, callbacks)
     DiscoveryTabContent(state, host, roasters, analytics, callbacks, bottomClearance, focus,
-        searchViewModel::onAction, modifier) { presentation, onToggleExpand, mapModifier ->
+        searchViewModel::onAction, modifier, onSearchPresentation = { listActive, mapActive ->
+            searchViewModel.onAction(SearchAction.PresentationChanged(listActive))
+            mapViewModel.onAction(MapAction.PresentationChanged(mapActive))
+        }) { presentation, onToggleExpand, mapModifier ->
         MapScreen(mapViewModel, host, callbacks.onOpenShop, bottomClearance,
             focus.takeIf { presentation.expanded }, callbacks.onFocusConsumed,
             modifier = mapModifier, isPreview = !presentation.controlsExpanded,
-            onToggleExpand = onToggleExpand, canvasSize = presentation.canvasSize)
+            onToggleExpand = onToggleExpand, canvasSize = presentation.canvasSize,
+            onOpenFilters = { searchViewModel.onAction(SearchAction.ToggleFilters) }, onSearchAction = searchViewModel::onAction)
     }
 }
 

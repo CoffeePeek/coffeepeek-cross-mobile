@@ -30,6 +30,7 @@ class SettingsSlots(
     val guestCard: @Composable (onLogin: () -> Unit, onRegister: () -> Unit, modifier: Modifier) -> Unit,
     /** A short message that does not take focus (a toast on Android); shown for the update check outcome. */
     val notify: (String) -> Unit,
+    val accountSwitch: @Composable () -> Unit = {},
 )
 
 /** The Settings tab. Caller owns the tab, navigation and the floating bar clearance. */

@@ -35,6 +35,10 @@ class CommunityFloating(val isLoggedIn: Boolean?, val sessionGeneration: Long, v
  * «Лента». The caller owns navigation, the check-in creation flow (the [floatingAction] slot) and the ViewModel store.
  * [onEditHome] opens the Home editor for a home preparation; the list reloads when the user comes back.
  * [onOpenPost] opens one post on its own screen, the one a shared link opens.
+ * [onOpenCoffee] opens a catalogue coffee by its current slug, from a home post's bag.
+ *
+ * No default arguments: Kotlin/Native links an implementation in another module against the abstract Composable's exact
+ * signature, and Compose makes defaulted parameters of the override nullable, so defaults would break iOS.
  */
 interface CommunityEntry {
     @Composable
@@ -42,6 +46,7 @@ interface CommunityEntry {
         onSignIn: () -> Unit,
         onOpenAuthor: (slug: String, name: String, avatarUrl: String?) -> Unit,
         onOpenShop: (slug: String) -> Unit,
+        onOpenCoffee: (slug: String) -> Unit,
         onEditHome: (id: String) -> Unit,
         onOpenPost: (id: String) -> Unit,
         modifier: Modifier,
