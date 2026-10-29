@@ -23,10 +23,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.painterResource
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.PreviewLightDark
+import org.jetbrains.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -40,7 +40,7 @@ import com.coffeepeek.feature.authorblocking.api.AuthorBlockActions
 import com.coffeepeek.feature.authorblocking.api.AuthorReference
 import com.coffeepeek.feature.community.api.CommunityHost
 import com.coffeepeek.feature.community.domain.model.CommunityPost
-import com.coffeepeek.feature.community.impl.R
+import com.coffeepeek.feature.community.impl.resources.*
 import com.coffeepeek.feature.community.impl.post.PostAction
 import com.coffeepeek.feature.community.impl.post.PostError
 import com.coffeepeek.feature.community.impl.post.PostEvent
@@ -91,11 +91,11 @@ internal fun PostScreenContent(
     var preview by remember { mutableStateOf<PostPhotoPreview?>(null) }
     preview?.let { host.photoViewer(it.thumbnails, it.originals, it.index) { preview = null } }
     if (state.isReportOpen) ReportSheet(state.reportForm(), postReportCallbacks(onAction))
-    val authorFallback = stringResource(R.string.community_user)
+    val authorFallback = stringResource(Res.string.community_user)
     val sharer = postSharer(host)
     CoffeePeekScaffold(
         modifier = modifier,
-        topBar = { CoffeePeekTopBar(stringResource(R.string.community_post_title), stringResource(R.string.community_back), onBack = callbacks.onBack) },
+        topBar = { CoffeePeekTopBar(stringResource(Res.string.community_post_title), stringResource(Res.string.community_back), onBack = callbacks.onBack) },
         snackbarHost = { host.snackbar(snackbar, 0.dp) },
     ) { padding ->
         Box(Modifier.fillMaxSize().padding(padding)) {
@@ -103,7 +103,7 @@ internal fun PostScreenContent(
             when {
                 post != null -> PostBody(post, state, host, postActions(post, state, onAction, callbacks, blockActions, authorFallback, sharer) { preview = it })
                 state.error == PostError.Unavailable -> PostUnavailable()
-                state.error == PostError.Failed -> ErrorBlock(onRetry = { onAction(PostAction.Retry) }, retryLabel = stringResource(R.string.community_retry))
+                state.error == PostError.Failed -> ErrorBlock(onRetry = { onAction(PostAction.Retry) }, retryLabel = stringResource(Res.string.community_retry))
                 else -> CenteredLoader()
             }
         }
@@ -170,10 +170,10 @@ private fun PostUnavailable(modifier: Modifier = Modifier) {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2),
     ) {
-        Image(painterResource(R.drawable.community_mascot_error), null, contentScale = ContentScale.Fit, modifier = Modifier.size(120.dp))
-        Text(stringResource(R.string.community_post_unavailable_title), style = MaterialTheme.typography.titleMedium,
+        Image(painterResource(Res.drawable.community_mascot_error), null, contentScale = ContentScale.Fit, modifier = Modifier.size(120.dp))
+        Text(stringResource(Res.string.community_post_unavailable_title), style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.onSurface, textAlign = TextAlign.Center)
-        Text(stringResource(R.string.community_post_unavailable_body), style = MaterialTheme.typography.bodyMedium,
+        Text(stringResource(Res.string.community_post_unavailable_body), style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
     }
 }
@@ -185,10 +185,14 @@ private val previewBlockActions = object : AuthorBlockActions {
 
 private val previewCallbacks = PostCallbacks({}, {}, { _, _, _ -> }, {}, {})
 
-@PreviewLightDark @Composable private fun PostPreview() = CoffeePeekTheme {
+@Composable private fun PostPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     PostScreenContent(PostState(isLoggedIn = true, post = previewPost()), {}, CommunityHost(), previewBlockActions, previewCallbacks, SnackbarHostState())
 }
+@Preview @Composable private fun PostLightPreview() = PostPreview(false)
+@Preview @Composable private fun PostDarkPreview() = PostPreview(true)
 
-@PreviewLightDark @Composable private fun PostUnavailablePreview() = CoffeePeekTheme {
+@Composable private fun PostUnavailablePreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     PostScreenContent(PostState(isLoggedIn = false, error = PostError.Unavailable), {}, CommunityHost(), previewBlockActions, previewCallbacks, SnackbarHostState())
 }
+@Preview @Composable private fun PostUnavailableLightPreview() = PostUnavailablePreview(false)
+@Preview @Composable private fun PostUnavailableDarkPreview() = PostUnavailablePreview(true)

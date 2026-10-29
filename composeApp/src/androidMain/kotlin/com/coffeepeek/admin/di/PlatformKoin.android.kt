@@ -13,8 +13,8 @@ import com.coffeepeek.admin.di.shelf.shelfModule
 import com.coffeepeek.BuildConfig
 import com.coffeepeek.admin.di.appupdate.androidAppUpdateRenderer
 import com.coffeepeek.admin.di.auth.androidAuthScreenRenderer
-import com.coffeepeek.admin.di.community.androidCheckInDetailScreenRenderer
-import com.coffeepeek.admin.di.community.androidCommunityScreenRenderer
+import com.coffeepeek.admin.di.community.checkInDetailFeatureScreenRenderer
+import com.coffeepeek.admin.di.community.communityFeatureScreenRenderer
 import com.coffeepeek.api.CoffeePeekClient
 import com.coffeepeek.admin.di.contributions.androidContributionsScreenRenderer
 import com.coffeepeek.admin.di.discovery.androidDiscoveryScreenRenderer
@@ -88,8 +88,8 @@ internal fun initAndroidKoin(extraModules: List<org.koin.core.module.Module> = e
         appUpdateRendererFactory = { androidAppUpdateRenderer(get(), get()) },
         notificationsRendererFactory = { androidNotificationsRenderer(get(), get(), get()) },
         authRendererFactory = { androidAuthScreenRenderer(get(), get()) },
-        communityRendererFactory = { androidCommunityScreenRenderer(get(), get(), get(), get(), get(), get()) },
-        checkInDetailRendererFactory = { androidCheckInDetailScreenRenderer(get(), get(), get(), get()) },
+        communityRendererFactory = { communityFeatureScreenRenderer(get(), get(), get(), get(), get(), get()) },
+        checkInDetailRendererFactory = { checkInDetailFeatureScreenRenderer(get(), get(), get(), get()) },
         contributionsRendererFactory = {
             androidContributionsScreenRenderer(get(), get(), get())
         },

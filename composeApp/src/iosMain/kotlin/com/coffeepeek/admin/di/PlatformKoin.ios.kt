@@ -3,6 +3,8 @@ package com.coffeepeek.admin.di
 import com.coffeepeek.admin.di.coffee.CoffeeShelfTab
 import com.coffeepeek.admin.di.coffee.coffeeCatalogueScreenRenderer
 import com.coffeepeek.admin.di.coffee.coffeeModule
+import com.coffeepeek.admin.di.community.checkInDetailFeatureScreenRenderer
+import com.coffeepeek.admin.di.community.communityFeatureScreenRenderer
 import com.coffeepeek.admin.di.homecheckin.FeatureCheckInCreateFlowRenderer
 import com.coffeepeek.admin.di.homecheckin.homeCheckInModule
 import com.coffeepeek.admin.di.shelf.ShelfFeatureScreenRenderer
@@ -22,6 +24,9 @@ actual fun initPlatformKoin() {
         },
         // The "+" sheet is the migrated flow: a visit, a home check-in or, with the shelf, a bag to scan.
         checkInCreateFlowRendererFactory = { get<FeatureCheckInCreateFlowRenderer>() },
+        // The feed and a post's own screen are the migrated community entries, home posts with their bag cards included.
+        communityRendererFactory = { communityFeatureScreenRenderer(get(), get(), get(), get(), get(), get()) },
+        checkInDetailRendererFactory = { checkInDetailFeatureScreenRenderer(get(), get(), get(), get()) },
         shelfRendererFactory = {
             if (shelf) ShelfFeatureScreenRenderer(get(), Locator.database.settingRepository, shelfBrewForm(get()))
             else UnsupportedShelfScreenRenderer

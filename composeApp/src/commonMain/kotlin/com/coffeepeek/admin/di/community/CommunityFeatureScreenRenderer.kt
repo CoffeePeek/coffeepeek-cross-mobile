@@ -42,8 +42,8 @@ import com.coffeepeek.feature.community.api.CommunityAnalytics
 import com.coffeepeek.feature.community.api.ConsumedDrinks
 import com.coffeepeek.feature.community.domain.repository.CommunityRepository
 
-/** Android routes the feed tab to the migrated entry; navigation, images, the photo viewer, analytics trackers and the creation flow stay app-owned. */
-internal class AndroidCommunityScreenRenderer(private val entry: CommunityEntry) : CommunityScreenRenderer {
+/** The feed tab is the migrated entry on both platforms; navigation, images, the photo viewer, analytics trackers and the creation flow stay app-owned. */
+internal class CommunityFeatureScreenRenderer(private val entry: CommunityEntry) : CommunityScreenRenderer {
     @Composable
     override fun Content(onCreateCheckIn: () -> Unit, notificationsAction: @Composable () -> Unit) {
         entry.Content(
@@ -53,6 +53,7 @@ internal class AndroidCommunityScreenRenderer(private val entry: CommunityEntry)
             onOpenCoffee = { Navigator.navigate(Navigator.Screen.CoffeeDetail(it)) },
             onEditHome = { Navigator.navigate(Navigator.Screen.EditHomeCheckIn(it)) },
             onOpenPost = { Navigator.navigate(Navigator.Screen.CheckInDetail(it)) },
+            modifier = Modifier,
             headerAction = notificationsAction,
             bottomClearance = LocalFloatingNavClearance.current,
             floatingAction = { floating -> CreateAction(floating, onCreateCheckIn) },
@@ -95,9 +96,9 @@ internal fun communityHost() = CommunityHost(
     share = ShareHelper::shareText,
 )
 
-internal fun androidCommunityScreenRenderer(
+internal fun communityFeatureScreenRenderer(
     repository: CommunityRepository, account: CommunityAccount, analytics: CommunityAnalytics, drinks: ConsumedDrinks,
     visibility: AuthorVisibility, blockActions: AuthorBlockActions,
-): CommunityScreenRenderer = AndroidCommunityScreenRenderer(
+): CommunityScreenRenderer = CommunityFeatureScreenRenderer(
     createCommunityEntry(repository, account, analytics, drinks, visibility, blockActions, communityHost()),
 )
