@@ -127,4 +127,14 @@
     <string name="photo_pick_failed">Не удалось добавить фото: %1$d</string>
     <string name="photo_loading">Загрузка фото…</string>
     <string name="business_tab_title">Бизнес</string>
+    <string name="discovery_open_map">Открыть карту</string>
+    <string name="discovery_map_filters">Фильтры кофеен</string>
+    <string name="discovery_map_card_loading">Загрузка…</string>
+    <string name="discovery_map_card_photo_missing">Фото %1$s отсутствует</string>
+    <string name="discovery_map_card_nearby">Кофейня рядом</string>
+    <string name="discovery_map_card_checkins">%1$d чекинов</string>
+    <string name="discovery_map_card_no_checkins">Нет чекинов</string>
+    <string name="discovery_map_card_open">Открыто</string>
+    <string name="discovery_map_card_closed">Закрыто</string>
+    <string name="discovery_map_truncated">Слишком много объектов — приблизьте карту</string>
 </resources>

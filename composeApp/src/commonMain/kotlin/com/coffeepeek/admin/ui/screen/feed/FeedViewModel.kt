@@ -81,6 +81,7 @@ data class FeedUiState(
     val isLoadingMore: Boolean = false,
     val error: String? = null,
     val query: String = "",
+    val searchOrigin: ShopLocation? = null,
     val isSearchActive: Boolean = false,
     val filters: FeedFiltersUi = FeedFiltersUi(),
     val cities: List<City> = emptyList(),
@@ -315,6 +316,7 @@ class FeedViewModel(
         if (origin == nearbyOrigin) return
         val firstLocation = nearbyOrigin == null
         nearbyOrigin = origin
+        _uiState.update { it.copy(searchOrigin = origin) }
         if (firstLocation && selectNearbyOnFirstLocation) {
             _uiState.update { it.copy(filters = it.filters.copy(nearbyOnly = true), shops = emptyList()) }
         } else if (_uiState.value.filters.nearbyOnly) {
@@ -502,25 +504,7 @@ class FeedViewModel(
             val search = if (reset) searchAnalytics.begin(current.query.trim().replace(Regex("\\s+"), " ") to filters, current.query, filters.analyticsValues().keys.toList(), filters.nearbyOnly,
                 citySlug = current.cities.firstOrNull { it.id == filters.cityId }?.address?.slug) else null
             shopRepository.searchShops(
-                ShopFilters(
-                    query = current.query.trim().takeIf { it.isNotBlank() },
-                    cityId = if (filters.nearbyOnly) null else filters.cityId,
-                    coffeeFocus = filters.coffeeFocus,
-                    roasterIds = filters.roasterIds.toList(),
-                    beanIds = filters.beanIds.toList(),
-                    equipmentIds = filters.equipmentIds.toList(),
-                    brewMethodIds = filters.brewMethodIds.toList(),
-                    tagIds = filters.tagIds.toList(),
-                    priceRange = filters.priceRange,
-                    minRating = filters.minRating,
-                    page = page,
-                    pageSize = PAGE_SIZE,
-                    origin = nearbyOrigin.takeIf { filters.nearbyOnly },
-                    openOnly = filters.openOnly,
-                    newOnly = filters.newOnly,
-                    visitedOnly = filters.visitedOnly,
-                    favoritesOnly = filters.favoritesOnly,
-                ),
+                filters.toShopFilters(current.query, nearbyOrigin, page, PAGE_SIZE),
             ).onSuccess { result ->
                 if (!isActive) return@onSuccess
                 search?.results(result.totalCount)

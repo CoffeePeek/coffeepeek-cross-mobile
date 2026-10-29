@@ -19,7 +19,7 @@ import com.coffeepeek.feature.discovery.impl.search.SearchState
 internal fun DiscoverySearchLayer(
     state: SearchState, ui: DiscoveryTabState, motion: DiscoveryTabMotion, host: DiscoveryHost,
     roasters: DiscoveryRoasterSlots, context: DiscoveryRoasterContext, bottomClearance: Dp,
-    onAddShop: () -> Unit, onAction: (SearchAction) -> Unit,
+    onAddShop: () -> Unit, onAction: (SearchAction) -> Unit, onOpenMap: () -> Unit,
 ) {
     host.retained(motion.searchOpacity.value > 0f) {
         Box(Modifier.fillMaxSize().graphicsLayer {
@@ -43,9 +43,8 @@ internal fun DiscoverySearchLayer(
                         alpha = 1f - motion.expansion.value
                         translationY = -size.height * motion.expansion.value
                     }.statusBarsPadding(),
-                bodyModifier = Modifier.onGloballyPositioned(ui::recordViewport), prefetch = !ui.mapExpanded,
+                bodyModifier = Modifier.onGloballyPositioned(ui::recordViewport), prefetch = !ui.mapExpanded, onOpenMap = onOpenMap,
             )
-            if (state.showFilters) FilterSheet(state, host, onAction = onAction)
         }
     }
 }

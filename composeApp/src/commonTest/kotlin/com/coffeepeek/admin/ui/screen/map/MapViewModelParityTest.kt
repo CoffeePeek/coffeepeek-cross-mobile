@@ -4,15 +4,20 @@ import com.coffeepeek.admin.settings.CityPreference
 import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.domain.model.*
 import com.coffeepeek.domain.repository.ShopRepository
+import com.coffeepeek.domain.repository.SessionRepository
 import com.coffeepeek.room.model.Setting
 import com.coffeepeek.room.repository.SettingRepository
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.withContext
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -25,6 +30,101 @@ import kotlin.test.assertTrue
  */
 class MapViewModelParityTest {
     private val minsk = MapBounds(53.88, 27.52, 53.92, 27.60)
+
+    @Test fun changedFavoriteMembershipRefreshesTheMapAndDropsTheSelectedCard() {
+        val membership = MutableStateFlow(Result.success(setOf("favorite")))
+        parity(membership = membership, content = { MapContent(shops = membership.value.getOrThrow().map { mapShop(it) }) }) {
+            vm.syncSearch("", com.coffeepeek.admin.ui.screen.feed.FeedFiltersUi(cityId = "minsk", favoritesOnly = true), null)
+            vm.onBoundsChanged(minsk, 14f)
+            mapCalls.next(14f)
+            vm.state.first { it.shops.isNotEmpty() && it.nearbyShops.isNotEmpty() }
+            vm.onShopSelected(mapShop("favorite"))
+            vm.state.first { it.selectedShopDetails != null }
+            membership.value = Result.success(emptySet())
+            mapCalls.next(14f)
+            val state = vm.state.first { !it.isLoading && it.shops.isEmpty() && it.nearbyShops.isEmpty() }
+            assertNull(state.selectedShop)
+            assertNull(state.selectedShopDetails)
+            assertTrue(state.filters.favoritesOnly)
+        }
+    }
+
+    @Test fun replacingAnActiveAccountClearsTheCardCacheAndRejectsLateViewportReplies() {
+        val sessions = MapSessions()
+        val late = DeferredMapReply()
+        parity(sessions = sessions, content = { call ->
+            if (call.filters.query == "late" && sessions.peekSession()?.userId == "a") late.await(call.zoom)
+            else MapContent()
+        }) {
+            cacheCard("cached-a")
+            vm.syncSearch("late", com.coffeepeek.admin.ui.screen.feed.FeedFiltersUi(cityId = "minsk", visitedOnly = true), null)
+            vm.onBoundsChanged(minsk, 14f)
+            mapCalls.next(14f)
+            late.awaitStarted(14f)
+            sessions.changeAccount("b")
+            sessions.awaitObserved("b")
+            assertTrue(vm.state.value.cardDetails.isEmpty())
+            late.release(MapContent(shops = listOf(mapShop("private-a"))))
+            delay(150)
+            assertTrue(vm.state.value.shops.none { it.id == "private-a" })
+            assertTrue(vm.state.value.nearbyShops.none { it.id == "private-a" })
+        }
+    }
+
+    @Test fun replacingAnActiveAccountRejectsLateCardDetails() {
+        val sessions = MapSessions()
+        val late = CompletableDeferred<Result<CoffeeShopDetails>>()
+        val started = CompletableDeferred<Unit>()
+        parity(sessions = sessions, details = {
+            started.complete(Unit)
+            withContext(NonCancellable) { late.await() }
+        }) {
+            vm.onShopSelected(mapShop("private-a"))
+            started.await()
+            sessions.changeAccount("b")
+            sessions.awaitObserved("b")
+            late.complete(Result.success(detail("private-a")))
+            delay(150)
+            assertTrue(vm.state.value.cardDetails.isEmpty())
+            assertNull(vm.state.value.selectedShop)
+            assertNull(vm.state.value.selectedShopDetails)
+        }
+    }
+
+    @Test fun sharedSearchCriteriaReachViewportAndNearbyCards() = parity {
+        val filters = com.coffeepeek.admin.ui.screen.feed.FeedFiltersUi(cityId = "minsk",
+            tagIds = setOf("laptop-friendly"), favoritesOnly = true, openOnly = true)
+        vm.syncSearch("Coffee", filters, null)
+        vm.onBoundsChanged(minsk, 14f)
+        val nearby = mapCalls.next(22f)
+        val viewport = mapCalls.next(14f)
+        assertEquals("Coffee", viewport.filters.query)
+        assertEquals(listOf("laptop-friendly"), viewport.filters.tagIds)
+        assertTrue(viewport.filters.favoritesOnly && viewport.filters.openOnly)
+        assertEquals(viewport.filters, nearby.filters)
+    }
+
+    @Test fun cachedCardDetailsRemainAvailableWhenAnotherCardIsSelectedAndOnReturn() = parity {
+        vm.onShopSelected(mapShop("a"))
+        vm.state.first { it.cardDetails.containsKey("a") }
+        vm.onShopSelected(mapShop("b"))
+        val state = vm.state.first { it.cardDetails.containsKey("b") }
+        assertEquals(setOf("a", "b"), state.cardDetails.keys)
+        vm.onShopSelected(mapShop("a"))
+        assertEquals("a", vm.state.value.selectedShopDetails?.shop?.id)
+        assertFalse(vm.state.value.isLoadingShopDetails)
+        assertEquals(listOf("a", "b"), detailCalls)
+    }
+
+    @Test fun choosingASuggestionPreservesTheSharedListQueryAndFilters() = parity {
+        val filters = com.coffeepeek.admin.ui.screen.feed.FeedFiltersUi(cityId = "minsk", tagIds = setOf("laptop-friendly"))
+        vm.syncSearch("Coffee", filters, null)
+        vm.onSearchResultSelected(searchShop("found"))
+        val selected = vm.state.first { it.selectedShop?.id == "found" }
+        assertEquals("Coffee", selected.query)
+        assertEquals(filters, selected.filters)
+        assertFalse(selected.showSearchSuggestions)
+    }
 
     @Test
     fun aBoundsLoadIsDebouncedUsesThePrefetchAreaAndTheCityAndSkipsPansInsideIt() = parity {
@@ -231,10 +331,18 @@ class MapViewModelParityTest {
         content: suspend (MapCall) -> MapContent? = { MapContent() },
         details: suspend (String) -> Result<CoffeeShopDetails> = { Result.success(detail(it)) },
         search: suspend (ShopFilters) -> Result<PagedResult<CoffeeShop>> = { Result.success(PagedResult(emptyList(), 0, 0, 1)) },
+        sessions: MapSessions = MapSessions(),
+        membership: MutableStateFlow<Result<Set<String>>> = MutableStateFlow(Result.success(emptySet())),
         test: suspend MapFixture.() -> Unit,
     ) = runBlocking {
-        val fixture = MapFixture(content, details, search)
-        try { withTimeout(10_000) { fixture.test() } } finally { fixture.vm.close() }
+        val fixture = MapFixture(content, details, search, sessions, membership)
+        try {
+            withTimeout(10_000) {
+                sessions.awaitObserved("a")
+                fixture.membershipObserved.await()
+                fixture.test()
+            }
+        } finally { fixture.vm.close() }
     }
 }
 
@@ -257,12 +365,69 @@ private fun detail(id: String) = CoffeeShopDetails(shop = CoffeeShop(id = id, ti
 
 private class MapFixture(
     content: suspend (MapCall) -> MapContent?, details: suspend (String) -> Result<CoffeeShopDetails>, search: suspend (ShopFilters) -> Result<PagedResult<CoffeeShop>>,
+    sessions: MapSessions, membership: MutableStateFlow<Result<Set<String>>>,
 ) {
     val mapCalls = Channel<MapCall>(Channel.UNLIMITED)
     val searchCalls = Channel<ShopFilters>(Channel.UNLIMITED)
     val detailCalls = mutableListOf<String>()
+    val membershipObserved = CompletableDeferred<Unit>()
     val preference = CityPreference(MapSettings)
-    val vm = MapViewModel(MapShops(mapCalls, searchCalls, detailCalls, content, details, search), preference)
+    private val shops = MapShops(mapCalls, searchCalls, detailCalls, content, details, search)
+    val vm = MapViewModel(shops, preference, MapContentSource(shops::getMapContent), sessions, flow {
+        membership.collect { result ->
+            emit(result)
+            membershipObserved.complete(Unit)
+        }
+    })
+
+    suspend fun cacheCard(id: String) {
+        vm.onShopSelected(mapShop(id))
+        vm.state.first { id in it.cardDetails }
+    }
+}
+
+private class DeferredMapReply {
+    private val value = CompletableDeferred<MapContent>()
+    private val started = Channel<Float>(Channel.UNLIMITED)
+    private val returned = Channel<Unit>(Channel.UNLIMITED)
+
+    suspend fun await(zoom: Float): MapContent = withContext(NonCancellable) {
+        started.send(zoom)
+        value.await().also { returned.send(Unit) }
+    }
+
+    suspend fun awaitStarted(zoom: Float) {
+        while (started.receive() != zoom) Unit
+    }
+
+    suspend fun release(content: MapContent) {
+        value.complete(content)
+        returned.receive()
+    }
+}
+
+private class MapSessions : SessionRepository {
+    private val current = MutableStateFlow<Session?>(Session(accessToken = "a-token", userId = "a"))
+    private val observed = Channel<String?>(Channel.UNLIMITED)
+    override fun peekSession() = current.value
+    override fun applySession(session: Session?) { current.value = session }
+    override fun isActiveSession(session: Session?) = session != null && session == current.value
+    override suspend fun getSession() = current.value
+    override suspend fun persistSession(session: Session?) = applySession(session)
+    override suspend fun saveSession(session: Session?) = applySession(session)
+    override suspend fun warmCache() = Unit
+    override suspend fun isLoggedIn() = current.value != null
+    override fun observeSession() = flow {
+        current.collect { session ->
+            emit(session)
+            observed.send(session?.userId)
+        }
+    }
+
+    fun changeAccount(userId: String) { applySession(Session(accessToken = "$userId-token", userId = userId)) }
+    suspend fun awaitObserved(userId: String) {
+        while (observed.receive() != userId) Unit
+    }
 }
 
 private class MapShops(

@@ -26,8 +26,11 @@ import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.ui.component.RetainedContent
 import com.coffeepeek.admin.ui.screen.feed.FeedScreen
 import com.coffeepeek.admin.ui.screen.feed.FeedViewModel
+import com.coffeepeek.admin.ui.screen.feed.DiscoveryMapFilterBar
 import com.coffeepeek.admin.di.platformViewModel
 import com.coffeepeek.admin.ui.screen.map.MapScreen
+import com.coffeepeek.admin.ui.screen.map.MapViewModel
+import com.coffeepeek.admin.ui.screen.map.DiscoveryMapFiltersButton
 import com.coffeepeek.admin.ui.screen.roaster.RoasterScreenRenderer
 import org.koin.compose.koinInject
 
@@ -39,6 +42,10 @@ internal fun DiscoveryTabContent(onMapExpandedChange: (Boolean) -> Unit) {
     var isMapExpanded by remember { mutableStateOf(false) }
     val feedVm: FeedViewModel = platformViewModel()
     val feedState by feedVm.uiState.collectAsState()
+    val mapVm: MapViewModel = platformViewModel()
+    LaunchedEffect(feedState.query, feedState.filters, feedState.searchOrigin) {
+        mapVm.syncSearch(feedState.query, feedState.filters, feedState.searchOrigin)
+    }
     val roasters = koinInject<RoasterScreenRenderer>()
     val pendingMapFocus by Navigator.pendingMapFocus.collectAsState()
     var previousOverlay by remember { mutableStateOf("discovery") }
@@ -65,10 +72,14 @@ internal fun DiscoveryTabContent(onMapExpandedChange: (Boolean) -> Unit) {
                     onSelectRoasters = { showRoasters = true },
                     mapPreview = { expanded, onToggleExpand, canvasSize, modifier ->
                         MapScreen(
+                            vm = mapVm,
                             modifier = modifier,
                             isPreview = !expanded,
                             onToggleExpand = onToggleExpand,
                             canvasSize = canvasSize,
+                            onQueryChange = feedVm::onQueryChange,
+                            filterControl = { DiscoveryMapFiltersButton(feedState.activeFilterCount, feedVm::toggleFilters) },
+                            filterBar = { DiscoveryMapFilterBar(feedState, feedVm) },
                         )
                     },
                     roasterPreview = {

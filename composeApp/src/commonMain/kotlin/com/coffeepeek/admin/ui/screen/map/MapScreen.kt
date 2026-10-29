@@ -1,6 +1,7 @@
 package com.coffeepeek.admin.ui.screen.map
 
 import com.coffeepeek.admin.analytics.*
+import coffeepeek.composeapp.generated.resources.discovery_map_truncated
 
 import com.coffeepeek.admin.ui.icons.CpIcons
 import androidx.compose.foundation.background
@@ -37,6 +38,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.rememberUpdatedState
@@ -97,6 +102,9 @@ fun MapScreen(
     onToggleExpand: (() -> Unit)? = null,
     canvasSize: DpSize? = null,
     onOpenShop: (String) -> Unit = { Navigator.navigate(Navigator.Screen.ShopDetail(it)) },
+    onQueryChange: ((String) -> Unit)? = null,
+    filterControl: (@Composable () -> Unit)? = null,
+    filterBar: (@Composable () -> Unit)? = null,
 ) {
     val state by vm.state.collectAsState()
     val focusManager = LocalFocusManager.current
@@ -129,6 +137,8 @@ fun MapScreen(
     val isDarkTheme = MaterialTheme.colorScheme.background.luminance() < 0.5f
     val navClearance = LocalFloatingNavClearance.current
     val hasShopCarousel = state.selectedShop != null || state.nearbyShops.isNotEmpty()
+    var carouselHeight by remember { mutableStateOf(0.dp) }
+    val density = androidx.compose.ui.platform.LocalDensity.current
 
     LaunchedEffect(pendingFocus) {
         pendingFocus?.let { focus ->
@@ -189,12 +199,15 @@ fun MapScreen(
                     }
                     CpSearchField(
                         value = state.query,
-                        onValueChange = vm::onQueryChange,
+                        onValueChange = onQueryChange ?: vm::onQueryChange,
                         placeholder = "Поиск кофейни…",
                         fieldHeight = CpDimens.buttonHeight,
                         modifier = Modifier.weight(1f),
                     )
+                    filterControl?.invoke()
                 }
+                filterBar?.invoke()
+                if (state.isTruncated) MapTruncationNotice()
                 if (state.showSearchSuggestions) {
                     MapSearchSuggestions(
                         results = state.searchResults,
@@ -206,29 +219,6 @@ fun MapScreen(
                         },
                     )
                 }
-            }
-        }
-
-        if (!isPreview && state.isTruncated) {
-            Surface(
-                modifier = Modifier
-                    .align(Alignment.TopCenter)
-                    .statusBarsPadding()
-                    .padding(top = 60.dp, start = CpDimens.spacing4, end = CpDimens.spacing4),
-                shape = RoundedCornerShape(CpDimens.radiusMd),
-                color = MaterialTheme.colorScheme.surface,
-                tonalElevation = 3.dp,
-                shadowElevation = 3.dp,
-            ) {
-                Text(
-                    text = "Слишком много объектов — приблизьте карту",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    modifier = Modifier.padding(
-                        horizontal = CpDimens.spacing3,
-                        vertical = CpDimens.spacing2,
-                    ),
-                )
             }
         }
 
@@ -247,7 +237,7 @@ fun MapScreen(
                     end = if (isPreview) CpDimens.spacing2 else CpDimens.spacing4,
                     bottom = if (isPreview) CpDimens.spacing2 else navClearance + when {
                         state.selectedZone != null -> 180.dp
-                        hasShopCarousel -> 132.dp
+                        hasShopCarousel -> carouselHeight + CpDimens.spacing4 * 2
                         else -> CpDimens.spacing4
                     },
                 ),
@@ -287,7 +277,7 @@ fun MapScreen(
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
                     .padding(
-                        bottom = navClearance + if (hasShopCarousel) 148.dp else 32.dp,
+                        bottom = navClearance + if (hasShopCarousel) carouselHeight + 48.dp else 32.dp,
                     )
                     .height(CpDimens.buttonHeight),
                 shape = RoundedCornerShape(percent = 50),
@@ -311,7 +301,8 @@ fun MapScreen(
                 },
                 modifier = Modifier
                     .align(Alignment.BottomCenter)
-                    .padding(bottom = navClearance + CpDimens.spacing4),
+                    .padding(bottom = navClearance + CpDimens.spacing4)
+                    .onSizeChanged { carouselHeight = with(density) { it.height.toDp() } },
             )
         }
 
@@ -329,6 +320,16 @@ fun MapScreen(
                     ),
             )
         }
+    }
+}
+
+@Composable
+private fun MapTruncationNotice() {
+    Surface(shape = RoundedCornerShape(CpDimens.radiusMd), color = MaterialTheme.colorScheme.surface,
+        tonalElevation = 3.dp, shadowElevation = 3.dp) {
+        Text(org.jetbrains.compose.resources.stringResource(coffeepeek.composeapp.generated.resources.Res.string.discovery_map_truncated),
+            style = MaterialTheme.typography.labelMedium,
+            modifier = Modifier.padding(horizontal = CpDimens.spacing3, vertical = CpDimens.spacing2))
     }
 }
 
@@ -617,149 +618,15 @@ private fun MapShopCarousel(
         ) { page ->
             val shop = shops[page % shops.size]
             val isSelected = shop.id == selected?.id
-            MapShopBottomSheet(
+            MapShopCard(
                 shop = shop,
-                details = state.selectedShopDetails.takeIf { isSelected },
+                details = state.cardDetails[shop.id] ?: state.selectedShopDetails.takeIf { isSelected },
                 isLoadingDetails = isSelected && state.isLoadingShopDetails,
                 distance = formatDistance(distanceToShopMeters(state.nearbyOrigin, ShopLocation("", shop.latitude, shop.longitude))),
                 onOpen = {
                     if (isSelected) onOpenShop(shop.id) else onSelect(shop)
                 },
             )
-        }
-    }
-}
-
-@Composable
-private fun MapShopBottomSheet(
-    shop: MapShop,
-    details: CoffeeShopDetails?,
-    isLoadingDetails: Boolean,
-    onOpen: () -> Unit,
-    distance: String?,
-    modifier: Modifier = Modifier,
-) {
-    val photoUrl = details?.shop?.photoUrl ?: details?.photos?.firstOrNull()
-    val rating = details?.shop?.rating
-    val reviewCount = details?.shop?.reviewCount ?: 0
-    val hours = details?.schedules?.let { formatMapHoursSummary(it) }
-    val isOpen = details?.shop?.isOpen == true
-
-    Card(
-        modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(CpDimens.cardRadius),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable(onClick = onOpen)
-                .padding(CpDimens.spacing3),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(72.dp)
-                    .clip(RoundedCornerShape(CpDimens.radiusMd))
-                    .background(MaterialTheme.colorScheme.surfaceVariant),
-                contentAlignment = Alignment.Center,
-            ) {
-                when {
-                    !photoUrl.isNullOrBlank() -> {
-                        CoffeeShopImage(
-                            imageUrl = photoUrl,
-                            contentDescription = shop.title,
-                            contentScale = ContentScale.Crop,
-                            placeholderLabelSize = 7.sp,
-                            modifier = Modifier.fillMaxSize(),
-                        )
-                    }
-                    isLoadingDetails -> {
-                        CoffeePeekLoader(
-                            size = CpDimens.loaderButton,
-                            strokeWidth = 2.dp,
-                        )
-                    }
-                    else -> {
-                        CoffeeShopPlaceholderImage(
-                            labelSize = 7.sp,
-                            contentDescription = "Фото ${shop.title} отсутствует",
-                        )
-                    }
-                }
-            }
-
-            Spacer(Modifier.width(CpDimens.spacing3))
-
-            Column(modifier = Modifier.weight(1f)) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    if (rating != null && rating > 0) {
-                        Icon(
-                            CpIcons.StarFilled,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(14.dp),
-                        )
-                        Spacer(Modifier.width(4.dp))
-                        Text(
-                            text = formatOneDecimal(rating),
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onSurface,
-                        )
-                        if (reviewCount > 0) {
-                            Text(
-                                text = " ($reviewCount)",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        }
-                    } else {
-                        Text(
-                            text = if (details == null) "Кофейня рядом" else if (reviewCount > 0) "$reviewCount чекинов" else "Нет чекинов",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                }
-
-                Text(
-                    text = shop.title,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.padding(top = 2.dp),
-                )
-                distance?.let {
-                    Text(it, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-
-                when {
-                    hours != null -> {
-                        Text(
-                            text = buildString {
-                                append(if (isOpen) "Открыто" else "Закрыто")
-                                append(" · ")
-                                append(hours)
-                            },
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(top = 4.dp),
-                        )
-                    }
-                    isLoadingDetails -> {
-                        Text(
-                            text = "Загрузка…",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(top = 4.dp),
-                        )
-                    }
-                }
-            }
-
         }
     }
 }

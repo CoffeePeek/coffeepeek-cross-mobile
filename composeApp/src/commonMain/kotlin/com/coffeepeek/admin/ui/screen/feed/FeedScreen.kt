@@ -122,12 +122,10 @@ fun FeedScreen(
     val showRoasterSearch = roasterPreview != null && state.query.isNotBlank()
     val shopsFirst = showRoasterSearch && state.showsShopsFirst(hasRoasterResults)
     LaunchedEffect(showRoasterSearch, shopsFirst) { listState.scrollToItem(0) }
-    val discoveryTransition = updateTransition(showDiscovery, label = "discovery-shop-list")
-    val discoveryProgress = discoveryTransition.animateFloat(
-        transitionSpec = { tween(360) },
-        label = "discovery-map-slide",
-    ) { if (it) 1f else 0f }
     var mapExpanded by remember { mutableStateOf(false) }
+    val discoveryTransition = updateTransition(showDiscovery, label = "discovery-shop-list")
+    val discoveryProgress = animateFloatAsState(if (showDiscovery || mapExpanded) 1f else 0f,
+        tween(360), label = "discovery-map-slide")
     val expansion = animateFloatAsState(
         targetValue = if (mapExpanded) 1f else 0f,
         animationSpec = tween(420, easing = FastOutSlowInEasing),
@@ -148,13 +146,11 @@ fun FeedScreen(
     val pendingMapFocus by Navigator.pendingMapFocus.collectAsState()
     LaunchedEffect(pendingMapFocus, mapAnchor.width > 0f) {
         if (mapPreview != null && pendingMapFocus != null) {
-            vm.cancelSearch()
-            if (mapAnchor.width > 0f) mapExpanded = true
+            mapExpanded = true
         }
     }
     LaunchedEffect(mapExpanded) { onMapExpandedChange(mapExpanded) }
     DisposableEffect(Unit) { onDispose { onMapExpandedChange(false) } }
-    LaunchedEffect(showDiscovery) { if (!showDiscovery) mapExpanded = false }
     val cancelSearch = {
         focusManager.clearFocus(force = true)
         keyboard?.hide()
@@ -163,8 +159,7 @@ fun FeedScreen(
     val lifecycleState by LocalLifecycleOwner.current.lifecycle.currentStateFlow.collectAsState()
     BackHandler(enabled = lifecycleState.isAtLeast(Lifecycle.State.STARTED) &&
         (mapExpanded || (mapPreview != null && !showDiscovery))) {
-        cancelSearch()
-        mapExpanded = false
+        if (mapExpanded) mapExpanded = false else cancelSearch()
     }
     var locationRefreshKey by remember { mutableStateOf(0) }
     LocationPermissionEffect(requestKey = 1, onGranted = { locationRefreshKey++ }, onDenied = { Analytics.track(AnalyticsEvent.GEOLOCATION_RESULT, "placement" to "discovery", "trigger" to "automatic", "outcome" to "unavailable") })
@@ -216,8 +211,9 @@ fun FeedScreen(
                                 .fillMaxWidth()
                                 .padding(top = CpDimens.spacing3, bottom = CpDimens.spacing2),
                         ) {
+                            Row(Modifier.padding(horizontal = CpDimens.spacing4), verticalAlignment = Alignment.CenterVertically) {
                             SearchHeader(
-                                modifier = Modifier.padding(horizontal = CpDimens.spacing4),
+                                modifier = Modifier.weight(1f),
                                 query = state.query,
                                 onQueryChange = vm::onQueryChange,
                                 roastersSelected = false,
@@ -228,6 +224,13 @@ fun FeedScreen(
                                 onSearchFocus = { if (mapPreview != null) vm.activateSearch() },
                                 onCancelSearch = cancelSearch.takeIf { mapPreview != null && !showDiscovery },
                             )
+                            if (mapPreview != null && !showDiscovery) DiscoveryOpenMapButton {
+                                focusManager.clearFocus(force = true)
+                                keyboard?.hide()
+                                Analytics.track(AnalyticsEvent.MAP_INTERACTION, "action" to "expanded")
+                                mapExpanded = true
+                            }
+                            }
                             Spacer(modifier = Modifier.height(CpDimens.spacing2))
                             FeedQuickFilterBar(
                                 nearbyOnly = state.filters.nearbyOnly,
@@ -451,7 +454,7 @@ fun FeedScreen(
             }
         }
 
-        if (mapPreview != null && mapAnchor.width > 0f) {
+        if (mapPreview != null && (mapAnchor.width > 0f || mapExpanded)) {
             val mapVisible by remember { derivedStateOf { discoveryProgress.value > 0f } }
             val radiusPx = with(density) { CpDimens.radius2xl.toPx() }
             val outline = MaterialTheme.colorScheme.outline
@@ -528,7 +531,7 @@ private fun DiscoverySectionTitle(title: String, onShowAll: (() -> Unit)?, modif
 }
 
 @Composable
-private fun FeedQuickFilterBar(
+internal fun FeedQuickFilterBar(
     nearbyOnly: Boolean,
     showNearby: Boolean,
     openOnly: Boolean,

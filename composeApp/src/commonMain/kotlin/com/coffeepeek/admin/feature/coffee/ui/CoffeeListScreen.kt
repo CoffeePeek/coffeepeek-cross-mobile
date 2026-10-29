@@ -8,6 +8,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -43,11 +44,22 @@ import com.coffeepeek.admin.ui.component.PriceBynIcon
 import com.coffeepeek.admin.ui.component.SearchHeader
 import kotlin.math.round
 import com.coffeepeek.admin.di.platformViewModel
+import com.coffeepeek.admin.ui.component.platformReduceMotion
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.repeatOnLifecycle
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.emptyFlow
 
 @Composable
-internal fun CoffeeListScreen(vm: CoffeeListViewModel = platformViewModel()) {
+internal fun CoffeeListScreen(
+    vm: CoffeeListViewModel = platformViewModel(),
+    scrollToTopRequests: Flow<Unit> = emptyFlow(),
+) {
     val state by vm.state.collectAsState()
     val listState = rememberLazyListState()
+    CoffeeListTabReselection(listState, scrollToTopRequests)
     var showFilters by rememberSaveable { mutableStateOf(false) }
     val clearance = LocalFloatingNavClearance.current
     val tasteNames = remember(state.filterGroups) {
@@ -126,6 +138,19 @@ internal fun CoffeeListScreen(vm: CoffeeListViewModel = platformViewModel()) {
                         Text("Попробуйте изменить поиск или фильтры", color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun CoffeeListTabReselection(listState: LazyListState, requests: Flow<Unit>) {
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
+    val reduceMotion by rememberUpdatedState(platformReduceMotion())
+    LaunchedEffect(listState, requests, lifecycle) {
+        lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+            requests.collectLatest {
+                if (reduceMotion) listState.scrollToItem(0) else listState.animateScrollToItem(0)
             }
         }
     }

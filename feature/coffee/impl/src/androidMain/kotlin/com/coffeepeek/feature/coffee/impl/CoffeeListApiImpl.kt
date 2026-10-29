@@ -14,6 +14,7 @@ import com.coffeepeek.feature.coffee.impl.ui.CoffeeListViewModel
 import com.coffeepeek.feature.coffee.impl.ui.compose.CoffeeListScreen
 import com.coffeepeek.feature.coffee.impl.ui.compose.model.CoffeeListEvent
 import java.util.UUID
+import kotlinx.coroutines.flow.Flow
 
 /** Construct once in composition. Image loader owns failure fallback; no network client is created here. */
 fun createCoffeeListEntry(repository: CoffeeRepository,
@@ -31,10 +32,14 @@ private class CoffeeListApiImpl(private val repository: CoffeeRepository,
     private val instanceKey = UUID.randomUUID().toString()
 
     @Composable
-    override fun Content(onOpenCoffee: (String) -> Unit, modifier: Modifier, bottomClearance: Dp) {
+    override fun Content(
+        onOpenCoffee: (String) -> Unit, modifier: Modifier, bottomClearance: Dp,
+        scrollToTopRequests: Flow<Unit>, animateScrollToTop: Boolean,
+    ) {
         key(this) {
             val model = viewModel(key = "coffee-list:$instanceKey") { CoffeeListViewModel(repository, analytics.list()) }
-            CoffeeListScreen(model, imageContent, bottomClearance, modifier, screenAnalytics, loadError) { event ->
+            CoffeeListScreen(model, imageContent, bottomClearance, modifier, screenAnalytics, loadError,
+                scrollToTopRequests, animateScrollToTop) { event ->
                 when (event) { is CoffeeListEvent.OpenCoffee -> onOpenCoffee(event.slug) }
             }
         }

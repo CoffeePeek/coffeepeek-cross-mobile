@@ -7,6 +7,7 @@ import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.ui.component.CoffeeShopImage
 import com.coffeepeek.admin.ui.component.FullScreenImageDialog
 import com.coffeepeek.admin.ui.component.LocalFloatingNavClearance
+import com.coffeepeek.admin.ui.component.platformReduceMotion
 import com.coffeepeek.admin.ui.screen.coffee.CoffeeScreenRenderer
 import com.coffeepeek.admin.utils.OpenInBrowser
 import com.coffeepeek.admin.utils.ShareHelper
@@ -17,6 +18,7 @@ import com.coffeepeek.feature.coffee.domain.repository.CoffeeRepository
 import com.coffeepeek.feature.coffee.impl.createCoffeeDetailEntry
 import com.coffeepeek.admin.ui.component.LoadErrorContent
 import com.coffeepeek.feature.coffee.impl.createCoffeeListEntry
+import kotlinx.coroutines.flow.Flow
 
 /** Android routes to the migrated catalogue; root navigation, browser, share and photo viewer stay app-owned. */
 internal class AndroidCoffeeScreenRenderer(
@@ -24,9 +26,10 @@ internal class AndroidCoffeeScreenRenderer(
     private val detail: CoffeeDetailEntry,
 ) : CoffeeScreenRenderer {
     @Composable
-    override fun List() {
+    override fun List(scrollToTopRequests: Flow<Unit>) {
         list.Content(onOpenCoffee = { Navigator.navigate(Navigator.Screen.CoffeeDetail(it)) },
-            modifier = Modifier, bottomClearance = LocalFloatingNavClearance.current)
+            modifier = Modifier, bottomClearance = LocalFloatingNavClearance.current,
+            scrollToTopRequests = scrollToTopRequests, animateScrollToTop = !platformReduceMotion())
     }
 
     @Composable
