@@ -98,6 +98,9 @@ import com.coffeepeek.domain.model.ShopChangeSection
 import com.coffeepeek.admin.di.imageModule
 import com.coffeepeek.data.di.dataModule
 import com.coffeepeek.feature.favorites.domain.usecase.ObserveFavoriteIdsUseCase
+import com.coffeepeek.domain.feature.favorites.api.FavoriteKind
+import com.coffeepeek.domain.feature.favorites.api.FavoritesRepository
+import kotlinx.coroutines.flow.map
 import org.koin.core.context.startKoin
 import org.koin.core.module.Module
 import org.koin.core.scope.Scope
@@ -276,7 +279,12 @@ private fun appModule(
     factory { FeedViewModel(get(), get(), get(), get(), getOrNull<ObserveFavoriteIdsUseCase>()) }
     factory { com.coffeepeek.admin.feature.community.ui.CommunityViewModel(get(), get(), get(), get(), get(), get()) }
     factory { com.coffeepeek.admin.ui.screen.roaster.RoasterListViewModel(get(), get(), get()) }
-    factory { MapViewModel(get(), get()) }
+    factory {
+        MapViewModel(get(), get(), com.coffeepeek.admin.di.discovery.legacyDiscoveryMapSource(get<CoffeePeekClient>().client, get(), get()),
+            sessions = get(), favoriteMembership = get<FavoritesRepository>().observeFavorites().map { result ->
+                result.map { entries -> entries.filter { it.kind == FavoriteKind.CoffeeShop }.mapNotNull { it.slug }.toSet() }
+            })
+    }
     factory { (shopId: String) -> ShopDetailViewModel(
         shopId = shopId,
         shopRepository = get(),

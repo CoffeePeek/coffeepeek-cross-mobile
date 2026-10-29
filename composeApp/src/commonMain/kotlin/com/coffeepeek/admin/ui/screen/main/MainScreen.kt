@@ -45,6 +45,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.navigation
 import androidx.navigation.compose.rememberNavController
 import com.coffeepeek.admin.ui.Navigator
+import com.coffeepeek.admin.ui.MainTabReselections
 import com.coffeepeek.admin.ui.Navigator.isHandledByRootNav
 import com.coffeepeek.admin.ui.mainTabScreens
 import com.coffeepeek.admin.ui.component.PlatformFloatingBottomNavBar
@@ -76,6 +77,7 @@ expect fun MainScreen(isLoggedIn: Boolean, onMapExpandedChange: (Boolean) -> Uni
 internal fun ComposeMainScreen(isLoggedIn: Boolean, onMapExpandedChange: (Boolean) -> Unit) {
     val reduceMotion = com.coffeepeek.admin.ui.component.platformReduceMotion()
     val bottomNavController = rememberNavController()
+    val tabReselections = remember { MainTabReselections() }
     val analyticsEntry by bottomNavController.currentBackStackEntryAsState()
     com.coffeepeek.admin.analytics.TrackNavigationScreen(analyticsEntry)
     val focusManager = LocalFocusManager.current
@@ -236,7 +238,7 @@ internal fun ComposeMainScreen(isLoggedIn: Boolean, onMapExpandedChange: (Boolea
 
                     navigation<Navigator.Screen.CoffeeGraph>(startDestination = Navigator.Screen.CoffeeTab) {
                         composable<Navigator.Screen.CoffeeTab> {
-                            CheckInTabContent { koinInject<CoffeeScreenRenderer>().List() }
+                            CheckInTabContent { koinInject<CoffeeScreenRenderer>().List(tabReselections.coffee) }
                         }
                     }
 
@@ -281,6 +283,7 @@ internal fun ComposeMainScreen(isLoggedIn: Boolean, onMapExpandedChange: (Boolea
                             icon = item.icon,
                             selected = isSelected,
                             onClick = {
+                                tabReselections.onTabPressed(item.startScreen, isSelected)
                                 if (isSelected) return@FloatingNavItem
                                 bottomNavController.navigate(item.graph) {
                                     popUpTo(bottomNavController.graph.findStartDestination().id) {

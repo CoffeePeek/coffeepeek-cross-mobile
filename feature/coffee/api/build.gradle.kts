@@ -7,6 +7,7 @@ plugins {
 android.namespace = "com.coffeepeek.feature.coffee.api"
 
 dependencies {
+    androidApi(libs.kotlinx.coroutines.core)
     androidApi(libs.compose.runtime)
     androidApi(compose.ui)
 }

@@ -154,7 +154,7 @@ internal class SandboxBackend(private val samplePhoto: ByteArray,
         if (mode == SandboxScenario.ServerError) return fail(HttpStatusCode.InternalServerError)
         val path = request.url.encodedPath
         if (mode == SandboxScenario.SaveError && request.method in listOf(HttpMethod.Post, HttpMethod.Put, HttpMethod.Patch, HttpMethod.Delete) &&
-            !path.endsWith("/search") && !path.startsWith("/api/Photos/")) return fail(HttpStatusCode.ServiceUnavailable)
+            !path.endsWith("/search") && path != "/api/v1/coffee-shops/map" && !path.startsWith("/api/Photos/")) return fail(HttpStatusCode.ServiceUnavailable)
         val home = "/api/v1/check-ins/home"
         if (mode == SandboxScenario.SaveError && (path == home || path.startsWith("$home/")) &&
             request.method in listOf(HttpMethod.Post, HttpMethod.Put, HttpMethod.Delete)) return fail(HttpStatusCode.ServiceUnavailable)

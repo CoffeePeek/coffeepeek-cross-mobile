@@ -15,6 +15,7 @@ import androidx.compose.ui.unit.sp
 import coffeepeek.composeapp.generated.resources.Res
 import coffeepeek.composeapp.generated.resources.maskot_with_magnifying_glass
 import com.coffeepeek.admin.analytics.analyticsExposure
+import com.coffeepeek.admin.analytics.LocalAnalyticsVisible
 import com.coffeepeek.admin.location.LocationPermissionEffect
 import com.coffeepeek.admin.map.CoffeeMap
 import com.coffeepeek.admin.ui.component.CoffeeShopImage
@@ -82,6 +83,7 @@ internal fun discoveryHost() = DiscoveryHost(
     },
     photoPrefetch = { listState, photos -> PrefetchListPhotos(listState, photos) },
     reduceMotion = { platformReduceMotion() },
+    isVisible = { LocalAnalyticsVisible.current },
     mapCanvas = { state, callbacks, modifier -> DiscoveryMapCanvas(state, callbacks, modifier) },
 )
 

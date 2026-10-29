@@ -63,11 +63,16 @@ internal class NavigationDelegate : NSObject(), UINavigationControllerDelegatePr
     }
 }
 
-private class TabDelegate : NSObject(), UITabBarControllerDelegateProtocol {
+internal class TabDelegate : NSObject(), UITabBarControllerDelegateProtocol {
     var onTabChanged: (() -> Unit)? = null
+    var onTabReselected: ((UIViewController) -> Unit)? = null
     @ObjCSignatureOverride
     override fun tabBarController(tabBarController: UITabBarController, shouldSelectViewController: UIViewController): Boolean {
         tabBarController.view.endEditing(true)
+        val navigation = shouldSelectViewController as? UINavigationController
+        if (navigation != null && tabBarController.selectedViewController == navigation && navigation.viewControllers.size == 1) {
+            onTabReselected?.invoke(navigation)
+        }
         return true
     }
 
@@ -110,6 +115,7 @@ internal actual fun PlatformRootNavigation(
     val transitions = remember { Mutex() }
     val tabs = remember { UITabBarController() }
     val tabDelegate = remember { TabDelegate() }
+    val tabReselections = remember { MainTabReselections() }
     val navigationDelegates = remember { List(6) { NavigationDelegate() } }
     val navigations = remember { List(6) { UINavigationController() } }
     val businessMode = koinInject<com.coffeepeek.feature.ownership.api.BusinessOwnershipEntry>().Session().businessMode
@@ -162,7 +168,7 @@ internal actual fun PlatformRootNavigation(
             val root = NativeScreenController(labels[index], analyticsPage = listOf("discovery", "coffees", "feed", "profile", "settings", "business_ownership")[index], isTabRoot = true) {
                 when (index) {
                     0 -> koinInject<DiscoveryScreenRenderer>().Tab(onMapExpandedChange = {})
-                    1 -> CheckInTabContent { CoffeeListScreen() }
+                    1 -> CheckInTabContent { CoffeeListScreen(scrollToTopRequests = tabReselections.coffee) }
                     2 -> CommunityScreen(
                         onCreateCheckIn = { Navigator.navigate(Navigator.Screen.CreateCheckIn) },
                         notificationsAction = { koinInject<com.coffeepeek.admin.feature.notifications.ui.NotificationsRenderer>().Bell() },
@@ -191,6 +197,9 @@ internal actual fun PlatformRootNavigation(
         tabs.customizableViewControllers = null
         tabs.delegate = tabDelegate
         tabDelegate.onTabChanged = { saveNavigation() }
+        tabDelegate.onTabReselected = { navigation ->
+            tabReselections.onTabPressed(Navigator.Screen.CoffeeTab, isSelected = navigation == navigations[1])
+        }
         tabs
     }, modifier = Modifier.fillMaxSize(), properties = UIKitInteropProperties(
         interactionMode = UIKitInteropInteractionMode.NonCooperative,
@@ -266,6 +275,7 @@ internal actual fun PlatformRootNavigation(
         onDispose {
             tabs.delegate = null
             tabDelegate.onTabChanged = null
+            tabDelegate.onTabReselected = null
             navigations.forEach { it.delegate = null; it.interactivePopGestureRecognizer?.delegate = null }
             navigationDelegates.forEach { it.navigation = null; it.onStackChanged = null }
         }
