@@ -1,6 +1,7 @@
 package com.coffeepeek.feature.ownership.data.backend
 
 import com.coffeepeek.feature.ownership.domain.model.*
+import io.ktor.client.request.forms.*
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.ResponseException
@@ -17,8 +18,22 @@ internal class OwnershipBackend(private val client: HttpClient) {
     suspend fun claim(id: String): ClaimDto = client.get("/api/owner/ownership-claims/${segment(id)}") { privateRead() }.data()
     suspend fun submit(input: ClaimSubmission): ClaimDto = client.post("/api/owner/ownership-claims") {
         contentType(ContentType.Application.Json)
-        setBody(ClaimRequest(input.kind.name, input.slug, input.contact, input.evidence))
+        setBody(ClaimRequest(input.kind.name, input.slug, input.contact, input.evidence, input.photos.map { checkNotNull(it.id) }))
     }.data()
+    suspend fun evidence(claimId: String, photoId: String): ByteArray {
+        val response = client.get("/api/owner/ownership-claims/${segment(claimId)}/photos/${segment(photoId)}") { privateRead() }
+        if (!response.status.isSuccess()) throw problem(response.status.value)
+        return response.body()
+    }
+    suspend fun uploadEvidence(photo: BusinessPhoto): EvidenceUploadDto =
+        client.post("/api/Photos/ownership-evidence") {
+            setBody(MultiPartFormDataContent(formData {
+                append("file", checkNotNull(photo.bytes), Headers.build {
+                    append(HttpHeaders.ContentType, photo.contentType)
+                    append(HttpHeaders.ContentDisposition, "filename=proof")
+                })
+            }))
+        }.data()
     suspend fun shops(): OwnerShopsDto = client.get(path(BusinessKind.CoffeeShop)) { privateRead() }.data()
     suspend fun roasters(page: Int): OwnershipPageDto<OwnerSummaryDto> = client.get(path(BusinessKind.Roaster)) {
         privateRead()

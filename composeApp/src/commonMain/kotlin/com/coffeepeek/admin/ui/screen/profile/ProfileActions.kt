@@ -4,7 +4,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
 import coffeepeek.composeapp.generated.resources.Res
-import coffeepeek.composeapp.generated.resources.profile_menu_business
 import coffeepeek.composeapp.generated.resources.profile_actions
 import coffeepeek.composeapp.generated.resources.profile_menu_blocked_authors
 import coffeepeek.composeapp.generated.resources.profile_menu_logout
@@ -25,13 +24,10 @@ internal fun ProfileActions(
     onContributions: (ContributionKind) -> Unit,
     onLogout: () -> Unit,
     onBlockedAuthors: () -> Unit,
-    onBusiness: () -> Unit = {},
 ) {
     val description = stringResource(Res.string.profile_actions)
     PlatformMenuButton(
         items = listOf(
-            PlatformMenuItem("business", stringResource(Res.string.profile_menu_business), icon = PlatformMenuIcon.CoffeeBean,
-                onClick = onBusiness),
             PlatformMenuItem("shop-changes", stringResource(Res.string.profile_menu_shop_changes), icon = PlatformMenuIcon.NoteEdit,
                 onClick = { onContributions(ContributionKind.Changes) }),
             PlatformMenuItem("submitted-shops", stringResource(Res.string.profile_menu_submitted_shops), icon = PlatformMenuIcon.Add,

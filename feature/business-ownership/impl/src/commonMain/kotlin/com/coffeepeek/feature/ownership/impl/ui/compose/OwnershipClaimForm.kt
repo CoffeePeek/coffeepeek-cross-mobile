@@ -8,21 +8,20 @@ import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.component.*
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.ownership.domain.model.*
+import com.coffeepeek.feature.ownership.api.*
 import com.coffeepeek.feature.ownership.impl.resources.*
 import com.coffeepeek.feature.ownership.impl.ui.compose.model.*
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
-internal fun OwnershipClaimForm(state: OwnershipState, action: (OwnershipAction) -> Unit) {
+internal fun OwnershipClaimForm(state: OwnershipState, action: (OwnershipAction) -> Unit,
+    image: OwnershipImage = { _, _, modifier, _ -> CoffeePeekImagePlaceholder(modifier) },
+    picker: OwnershipPhotoPicker = { _, _, content -> content {} }) {
     Text(stringResource(Res.string.ownership_claim_hint))
-    BusinessKind.entries.forEach { kind ->
-        FilterChip(selected = state.submission.kind == kind, onClick = { action(OwnershipAction.Kind(kind)) },
-            enabled = !state.busy, label = { Text(stringResource(if (kind == BusinessKind.CoffeeShop) Res.string.ownership_kind_shop else Res.string.ownership_kind_roaster)) })
-    }
-    ClaimInput(Res.string.ownership_slug, state.submission.slug, state.busy) { action(OwnershipAction.ClaimText(ClaimField.Slug, it)) }
     ClaimInput(Res.string.ownership_contact, state.submission.contact, state.busy) { action(OwnershipAction.ClaimText(ClaimField.Contact, it)) }
     ClaimInput(Res.string.ownership_evidence, state.submission.evidence, state.busy) { action(OwnershipAction.ClaimText(ClaimField.Evidence, it)) }
+    OwnershipEvidencePhotos(state, action, image, picker)
     Text(stringResource(Res.string.ownership_limits), style = MaterialTheme.typography.bodySmall)
     CoffeePeekButton(stringResource(Res.string.ownership_submit), { action(OwnershipAction.Submit) }, enabled = !state.busy)
 }

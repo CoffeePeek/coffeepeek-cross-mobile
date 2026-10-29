@@ -36,7 +36,7 @@ interface OwnProfileEntry {
         onOpenCheckIns: () -> Unit,
         onOpenContributions: (ProfileContribution) -> Unit,
         onOpenBlockedAuthors: () -> Unit,
-        onOpenBusiness: () -> Unit = {},
+
         modifier: Modifier = Modifier,
         bottomClearance: Dp = 0.dp,
     )

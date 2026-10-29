@@ -14,11 +14,26 @@ fun createBusinessOwnershipRepository(client: HttpClient, uploader: BusinessPhot
 
 private class OwnershipRepository(private val backend: OwnershipBackend, private val uploader: BusinessPhotoUploader, private val account: OwnershipAccount) : BusinessOwnershipRepository {
     override suspend fun claims(page: Int) = scoped { backend.claims(page).domain { it.domain() } }
-    override suspend fun claim(id: String) = scoped { backend.claim(id).domain() }
-    override suspend fun submit(input: ClaimSubmission) = scoped { backend.submit(input.validated()).domain() }
+    override suspend fun claim(id: String) = scoped {
+        val claim = backend.claim(id).domain()
+        claim.copy(evidencePhotos = claim.evidencePhotoIds.map { photoId ->
+            val bytes = backend.evidence(id, photoId)
+            BusinessPhoto(photoId, id = photoId, fileName = "proof", bytes = bytes, size = bytes.size.toLong())
+        })
+    }
+    override suspend fun submit(input: ClaimSubmission) = scoped { owner ->
+        val valid = input.validated()
+        val photos = valid.photos.map { photo ->
+            checkAccount(owner)
+            val uploaded = backend.uploadEvidence(photo)
+            photo.copy(id = uploaded.photoId, storageKey = uploaded.storageKey, bytes = null)
+        }
+        checkAccount(owner)
+        backend.submit(valid.copy(photos = photos)).domain().copy(evidencePhotos = valid.photos)
+    }
     override suspend fun businesses(kind: BusinessKind, page: Int) = scoped {
-        if (kind == BusinessKind.Roaster) backend.roasters(page).domain { OwnedBusiness(it.id, kind, it.name) }
-        else backend.shops().items.map { OwnedBusiness(it.id, kind, it.name) }.let { BusinessPage(it, it.size, 1, maxOf(1, it.size)) }
+        if (kind == BusinessKind.Roaster) backend.roasters(page).domain { OwnedBusiness(it.id, kind, it.name, it.publicSlug) }
+        else backend.shops().items.map { OwnedBusiness(it.id, kind, it.name, it.publicSlug) }.let { BusinessPage(it, it.size, 1, maxOf(1, it.size)) }
     }
     override suspend fun profile(kind: BusinessKind, id: String) = scoped { backend.profile(kind, id).domain(kind) }
     override suspend fun save(original: BusinessProfile, draft: ProfileDraft) = scoped { owner ->

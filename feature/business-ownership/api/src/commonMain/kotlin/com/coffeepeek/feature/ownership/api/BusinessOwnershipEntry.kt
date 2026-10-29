@@ -1,6 +1,7 @@
 package com.coffeepeek.feature.ownership.api
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 
@@ -11,5 +12,14 @@ typealias OwnershipPhotoPicker = @Composable (limit: Int, onPicked: (List<Owners
 typealias OwnershipBackHandler = @Composable (onBack: () -> Unit) -> Unit
 interface BusinessOwnershipEntry {
     @Composable
-    fun Content(onBack: () -> Unit, onLogin: () -> Unit, initialKind: String? = null, initialSlug: String? = null)
+    fun Content(onBack: () -> Unit, onLogin: () -> Unit, initialKind: String? = null, initialSlug: String? = null, initialId: String? = null)
+    @Composable fun ProfileChanges(): Long
+    @Composable fun Session(): BusinessSessionState
+    @Composable fun AccountSwitch()
+    @Composable fun Tab(onCheckIns: () -> Unit, checkIns: @Composable () -> Unit)
+    @Composable fun ProfileActions(kind: String, id: String, slug: String, onSuggest: () -> Unit, onOwnerEdit: () -> Unit,
+        favorite: @Composable () -> Unit, share: @Composable () -> Unit)
 }
+
+data class BusinessSessionState(val businessMode: Boolean = false, val hasBusinesses: Boolean = false, val ownedIdentities: Set<String> = emptySet())
+val LocalBusinessOwnership = staticCompositionLocalOf<BusinessOwnershipEntry?> { null }

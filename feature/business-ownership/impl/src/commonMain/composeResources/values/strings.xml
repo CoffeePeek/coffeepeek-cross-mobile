@@ -7,7 +7,7 @@
     <string name="ownership_new_claim">Заявить права на бизнес</string>
     <string name="ownership_claim_title">Заявка на владение</string>
     <string name="ownership_editor_title">Профиль бизнеса</string>
-    <string name="ownership_claim_hint">Вставьте ссылку на существующий бизнес в CoffeePeek или его короткий адрес. Администратор проверит ваши полномочия вручную.</string>
+    <string name="ownership_claim_hint">Укажите контакт для связи и объясните, как можно подтвердить ваши полномочия. Приложите подтверждающие фотографии.</string>
     <string name="ownership_slug">Ссылка или короткий адрес бизнеса</string>
     <string name="ownership_contact">Контакт для связи</string>
     <string name="ownership_evidence">Подтверждение полномочий</string>
@@ -52,9 +52,19 @@
     <string name="ownership_error_conflict">Данные изменились или заявка уже существует. Черновик сохранён. Перед повторным сохранением перечитайте профиль.</string>
     <string name="ownership_error_validation">Проверьте поля: ссылка на бизнес в CoffeePeek, контакт до 320, подтверждение до 4000 символов. Название обязательно, ссылки начинаются с https:// или http://, координаты должны быть корректными.</string>
     <string name="ownership_error_partial">Часть изменений могла сохраниться. Черновик сохранён; перечитайте профиль перед повтором.</string>
-    <string name="ownership_limits">Контакт — до 320 символов, подтверждение — до 4000.</string>
+    <string name="ownership_limits">Контакт — до 320 символов, подтверждение — до 4000. До 3 фото, каждое не больше 5 МБ.</string>
     <string name="ownership_editor_hint">Здесь можно изменить описание, контакты, адрес и фотографии. Город и расписание останутся прежними. Меню, цены и отзывы здесь не меняются.</string>
     <string name="ownership_retry">Повторить</string>
     <string name="ownership_claim_created">Дата подачи</string>
     <string name="ownership_no_reason">Комментарий не указан</string>
+    <string name="ownership_business">Бизнес</string>
+    <string name="ownership_edit">Редактировать</string>
+    <string name="ownership_actions">Действия с бизнесом</string>
+    <string name="ownership_representative">Я представитель кофейни</string>
+    <string name="ownership_representative_roaster">Я представитель обжарщика</string>
+    <string name="ownership_account">Аккаунт</string>
+    <string name="ownership_switch_business">Перейти на бизнес аккаунт</string>
+    <string name="ownership_switch_personal">Перейти на личный аккаунт</string>
+    <string name="ownership_checkins">Мои чекины</string>
+    <string name="ownership_evidence_photos">Фото подтверждения полномочий</string>
 </resources>

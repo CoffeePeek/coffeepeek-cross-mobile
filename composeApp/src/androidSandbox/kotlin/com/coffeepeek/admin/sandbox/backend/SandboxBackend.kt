@@ -59,10 +59,30 @@ internal class SandboxBackend(private val samplePhoto: ByteArray,
             val (status, headers, bytes) = synchronized(lock) { protectedPhoto(request, mode, match.groupValues[1]) }
             return@MockEngine respond(bytes, status, headers)
         }
+        if (request.url.encodedPath == "/api/Photos/ownership-evidence" && request.method == HttpMethod.Post) {
+            val id = UUID.randomUUID().toString()
+            val valid = mode != SandboxScenario.UploadError && request.body is io.ktor.client.request.forms.MultiPartFormDataContent
+            if (valid) synchronized(lock) {
+                application.registerOwnershipEvidence(id)
+                images["/ownership-evidence/$id"] = samplePhoto.copyOf()
+            }
+            return@MockEngine respond(buildJsonObject {
+                put("isSuccess", valid)
+                putJsonObject("data") { put("photoId", id); put("storageKey", "ownership-evidence/$id") }
+            }.toString(), if (valid) HttpStatusCode.OK else HttpStatusCode.BadRequest,
+                headersOf(HttpHeaders.ContentType, "application/json"))
+        }
+        ownershipEvidencePath.matchEntire(request.url.encodedPath)?.let { match ->
+            val available = application.ownershipEvidenceAvailable(match.groupValues[1], match.groupValues[2])
+            return@MockEngine respond(if (available) samplePhoto else byteArrayOf(),
+                if (available) HttpStatusCode.OK else HttpStatusCode.NotFound,
+                headersOf(HttpHeaders.ContentType to listOf("image/png"), HttpHeaders.CacheControl to listOf("private, no-store")))
+        }
         synchronized(lock) { handle(request, mode) }.let { (status, payload) ->
             respond(payload.toString(), status, headersOf(HttpHeaders.ContentType, "application/json"))
         }
     }
+    private val ownershipEvidencePath = Regex("/api/owner/ownership-claims/([^/]+)/photos/([^/]+)")
     private val protectedPhotoPath = Regex("/api/v1/check-ins/([^/]+)/photos/[^/]+(?:/variants/[A-Za-z0-9_-]+/[1-9][0-9]*/[a-z]+\\.[a-z]+)?")
     // Owner-scoped media: uncached, ETag-revalidated, and a blocked author's photo disappears (404, no existence leak).
     private fun protectedPhoto(request: HttpRequestData, mode: SandboxScenario, checkInId: String): Triple<HttpStatusCode, Headers, ByteArray> {

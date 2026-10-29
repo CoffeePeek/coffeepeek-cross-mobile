@@ -3,6 +3,9 @@
 package com.coffeepeek.admin.ui
 
 import org.koin.compose.koinInject
+import coffeepeek.composeapp.generated.resources.Res
+import coffeepeek.composeapp.generated.resources.business_tab_title
+import org.jetbrains.compose.resources.stringResource
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.*
 import androidx.compose.material3.MaterialTheme
@@ -78,7 +81,7 @@ private class TabDelegate : NSObject(), UITabBarControllerDelegateProtocol {
 private object NavigationMemory {
     var generation = 0
     var selectedTab = 0
-    var stacks: List<List<Navigator.Screen>> = List(5) { emptyList() }
+    var stacks: List<List<Navigator.Screen>> = List(6) { emptyList() }
 
     fun save(tabs: UITabBarController, navigations: List<UINavigationController>, visibleTabIndices: List<Int>) {
         selectedTab = visibleTabIndices[tabs.selectedIndex.toInt().coerceIn(visibleTabIndices.indices)]
@@ -90,7 +93,7 @@ private object NavigationMemory {
     fun clear() {
         generation++
         selectedTab = 0
-        stacks = List(5) { emptyList() }
+        stacks = List(6) { emptyList() }
     }
 }
 
@@ -107,9 +110,10 @@ internal actual fun PlatformRootNavigation(
     val transitions = remember { Mutex() }
     val tabs = remember { UITabBarController() }
     val tabDelegate = remember { TabDelegate() }
-    val navigationDelegates = remember { List(5) { NavigationDelegate() } }
-    val navigations = remember { List(5) { UINavigationController() } }
-    val visibleTabIndices = remember(isLoggedIn) { mainTabScreens(isLoggedIn).map { requireNotNull(nativeTabIndex(it)) } }
+    val navigationDelegates = remember { List(6) { NavigationDelegate() } }
+    val navigations = remember { List(6) { UINavigationController() } }
+    val businessMode = koinInject<com.coffeepeek.feature.ownership.api.BusinessOwnershipEntry>().Session().businessMode
+    val visibleTabIndices = remember(isLoggedIn, businessMode) { mainTabScreens(isLoggedIn, businessMode).map { requireNotNull(nativeTabIndex(it)) } }
     val restoredTab = remember { NavigationMemory.selectedTab }
     val restoredStacks = remember { NavigationMemory.stacks }
     val memoryGeneration = remember { NavigationMemory.generation }
@@ -149,12 +153,13 @@ internal actual fun PlatformRootNavigation(
         }
     }
 
+    val businessTitle = stringResource(Res.string.business_tab_title)
     UIKitViewController(factory = {
-        val labels = listOf("Поиск", "Кофе", "Лента", "Профиль", "Настройки")
-        val symbols = listOf("magnifyingglass", "cup.and.saucer", "person.2", "person.crop.circle", "gearshape")
-        visibleTabIndices.forEach { index ->
+        val labels = listOf("Поиск", "Кофе", "Лента", "Профиль", "Настройки", businessTitle)
+        val symbols = listOf("magnifyingglass", "cup.and.saucer", "person.2", "person.crop.circle", "gearshape", "building.2")
+        navigations.indices.forEach { index ->
             val navigation = navigations[index]
-            val root = NativeScreenController(labels[index], analyticsPage = listOf("discovery", "coffees", "feed", "profile", "settings")[index], isTabRoot = true) {
+            val root = NativeScreenController(labels[index], analyticsPage = listOf("discovery", "coffees", "feed", "profile", "settings", "business_ownership")[index], isTabRoot = true) {
                 when (index) {
                     0 -> koinInject<DiscoveryScreenRenderer>().Tab(onMapExpandedChange = {})
                     1 -> CheckInTabContent { CoffeeListScreen() }
@@ -164,6 +169,8 @@ internal actual fun PlatformRootNavigation(
                     )
                     3 -> ProfileScreen()
                     4 -> SettingsScreen()
+                    5 -> koinInject<com.coffeepeek.feature.ownership.api.BusinessOwnershipEntry>().Tab(onCheckIns = { Navigator.navigate(Navigator.Screen.VisitedPlaces) },
+                                checkIns = { com.coffeepeek.admin.ui.screen.profile.PersonalProfileActivityPreview { Navigator.navigate(Navigator.Screen.VisitedPlaces) } })
                 }
             }
             navigation.setNavigationBarHidden(true, false)
@@ -192,16 +199,27 @@ internal actual fun PlatformRootNavigation(
         placedAsOverlay = false,
     ))
 
+    var previousTabIndices by remember { mutableStateOf(visibleTabIndices) }
+    LaunchedEffect(visibleTabIndices) {
+        if (previousTabIndices == visibleTabIndices) return@LaunchedEffect
+        previousTabIndices = visibleTabIndices
+        navigations.forEach { it.popToRootViewControllerAnimated(false) }
+        tabs.setViewControllers(visibleTabIndices.map(navigations::get), false)
+        tabs.selectedIndex = 0u
+        saveNavigation()
+    }
     val colors = MaterialTheme.colorScheme
     val themeMode by ThemeManager.themeMode.collectAsState()
     SideEffect {
+        navigationDelegates.forEach { it.onStackChanged = { saveNavigation() } }
+        tabDelegate.onTabChanged = { saveNavigation() }
         tabs.overrideUserInterfaceStyle = themeMode.uiKitStyle
         tabs.view.backgroundColor = colors.background.toUIColor()
         tabs.tabBar.tintColor = colors.primary.toUIColor()
         tabs.tabBar.unselectedItemTintColor = colors.onSurfaceVariant.toUIColor()
         navigations.forEach { it.view.backgroundColor = colors.background.toUIColor() }
     }
-    LaunchedEffect(tabs) {
+    LaunchedEffect(tabs, visibleTabIndices) {
         events.collect { event -> navigate {
             val navigation = currentNavigation()
             val animated = !UIAccessibilityIsReduceMotionEnabled()
@@ -225,13 +243,13 @@ internal actual fun PlatformRootNavigation(
             saveNavigation()
         } }
     }
-    LaunchedEffect(pendingTab) {
+    LaunchedEffect(pendingTab, visibleTabIndices) {
         pendingTab?.let { destination ->
             navigate { selectTabRoot(destination) }
             Navigator.consumeTabSelection()
         }
     }
-    LaunchedEffect(appLink) {
+    LaunchedEffect(appLink, visibleTabIndices) {
         appLink?.let { destination ->
             navigate {
                 if (nativeTabIndex(destination) != null) selectTabRoot(destination)

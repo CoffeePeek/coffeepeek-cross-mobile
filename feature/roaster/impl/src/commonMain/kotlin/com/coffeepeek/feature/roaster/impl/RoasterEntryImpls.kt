@@ -110,17 +110,19 @@ private class RoasterDetailApiImpl(
     private val instanceKey = Uuid.random().toString()
 
     @Composable
-    override fun Content(slug: String, onBack: () -> Unit, onOpenShop: (String) -> Unit, onOpenLink: (String) -> Unit, modifier: Modifier) {
+    override fun Content(slug: String, onBack: () -> Unit, onOpenShop: (String) -> Unit, onOpenLink: (String) -> Unit, onShare: (String) -> Unit, modifier: Modifier) {
         key(this, slug) {
             val model = viewModel(key = "roaster-detail:$instanceKey:$slug") {
                 RoasterDetailViewModel(slug, repository, favorites, shopPhotos, analytics.detail())
             }
+            androidx.compose.runtime.CompositionLocalProvider(com.coffeepeek.feature.roaster.impl.ui.compose.component.LocalRoasterShare provides onShare) {
             RoasterDetailScreen(model, image, photoViewer, screenAnalytics, onFavoriteFeedback, modifier) { event ->
                 when (event) {
                     RoasterDetailEvent.Back -> onBack()
                     is RoasterDetailEvent.OpenShop -> onOpenShop(event.slug)
                     is RoasterDetailEvent.OpenLink -> onOpenLink(event.url)
                 }
+            }
             }
         }
     }

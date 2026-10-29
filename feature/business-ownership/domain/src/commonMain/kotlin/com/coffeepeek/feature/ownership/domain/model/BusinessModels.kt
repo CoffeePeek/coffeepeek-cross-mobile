@@ -13,18 +13,18 @@ data class BusinessPage<T>(val items: List<T>, val totalCount: Int, val page: In
 data class OwnershipClaim(
     val id: String, val kind: BusinessKind, val businessId: String, val name: String,
     val slug: String, val contact: String, val evidence: String, val status: ClaimStatus,
-    val createdAt: String, val decisionReason: String?, val reviewedAt: String?, val hasCurrentAccess: Boolean,
+    val createdAt: String, val decisionReason: String?, val reviewedAt: String?, val hasCurrentAccess: Boolean, val evidencePhotoIds: List<String> = emptyList(), val evidencePhotos: List<BusinessPhoto> = emptyList(),
 )
-data class ClaimSubmission(val kind: BusinessKind, val slug: String, val contact: String, val evidence: String) {
+data class ClaimSubmission(val kind: BusinessKind, val slug: String, val contact: String, val evidence: String, val photos: List<BusinessPhoto> = emptyList()) {
     fun validated(): ClaimSubmission {
         val value = copy(slug = publicSlug(kind, slug), contact = contact.trim(), evidence = evidence.trim())
         if (value.slug.isEmpty() || value.slug.length > 200 || '/' in value.slug ||
             value.contact.isEmpty() || value.contact.length > 320 ||
-            value.evidence.isEmpty() || value.evidence.length > 4000) throw OwnershipFailure(OwnershipProblem.Validation)
+            value.evidence.isEmpty() || value.evidence.length > 4000 || !value.photos.validEvidence()) throw OwnershipFailure(OwnershipProblem.Validation)
         return value
     }
 }
-data class OwnedBusiness(val id: String, val kind: BusinessKind, val name: String)
+data class OwnedBusiness(val id: String, val kind: BusinessKind, val name: String, val slug: String? = null)
 data class BusinessPhoto(
     val key: String, val id: String? = null, val storageKey: String? = null, val fileName: String,
     val contentType: String = "image/jpeg", val url: String? = null, val size: Long = 0,
@@ -57,4 +57,8 @@ private fun publicSlug(kind: BusinessKind, raw: String): String {
     }.substringBefore('?').substringBefore('#').trimEnd('/')
     if (!path.startsWith(prefix)) throw OwnershipFailure(OwnershipProblem.Validation)
     return path.removePrefix(prefix)
+}
+
+private fun List<BusinessPhoto>.validEvidence(): Boolean = size <= 3 && all {
+    it.size in 1..(5 * 1024 * 1024) && it.contentType.lowercase() in setOf("image/jpeg", "image/png", "image/webp", "image/gif", "image/bmp", "image/avif")
 }

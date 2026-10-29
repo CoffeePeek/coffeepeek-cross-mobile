@@ -60,7 +60,8 @@ internal fun androidSettingsScreenRenderer(
         tab = createSettingsEntry(
             account = AndroidSettingsAccountPort(sessions), theme = theme, cities = cities, updates = AndroidUpdateCheckPort(updates),
             external = external, appInfo = SettingsAppInfo(AppConfig.versionName),
-            slots = SettingsSlots(guestCard = { onLogin, onRegister, modifier -> GuestAuthCard(onLogin, onRegister, modifier) }),
+            slots = SettingsSlots(guestCard = { onLogin, onRegister, modifier -> GuestAuthCard(onLogin, onRegister, modifier) },
+                accountSwitch = { org.koin.compose.koinInject<com.coffeepeek.feature.ownership.api.BusinessOwnershipEntry>().AccountSwitch() }),
         ),
         theme = createThemeEntry(theme),
         city = createCityEntry(cities),

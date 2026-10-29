@@ -2,6 +2,12 @@ package com.coffeepeek.feature.ownership.impl.ui.compose
 
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.foundation.layout.*
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.layout.ContentScale
+import com.coffeepeek.feature.ownership.api.OwnershipImage
+import com.coffeepeek.core.designsystem.component.CoffeePeekImagePlaceholder
 import androidx.compose.ui.text.font.FontWeight
 import com.coffeepeek.core.designsystem.component.CoffeePeekContentCard
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
@@ -11,7 +17,7 @@ import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
-internal fun OwnershipClaimDetails(claim: OwnershipClaim) {
+internal fun OwnershipClaimDetails(claim: OwnershipClaim, image: OwnershipImage = { _, _, m, _ -> CoffeePeekImagePlaceholder(m) }) {
     Text(claim.name, style = MaterialTheme.typography.headlineSmall)
     Text(claim.slug)
     Text(claimStatus(claim.status), color = MaterialTheme.colorScheme.primary)
@@ -24,6 +30,7 @@ internal fun OwnershipClaimDetails(claim: OwnershipClaim) {
         Text(stringResource(Res.string.ownership_claim_created), fontWeight = FontWeight.SemiBold)
         Text(claim.createdAt)
     }
+    claim.evidencePhotos.forEach { photo -> image(null, photo.bytes, Modifier.fillMaxWidth().height(160.dp), ContentScale.Fit) }
     if (claim.status != ClaimStatus.Pending) CoffeePeekContentCard {
         Text(stringResource(Res.string.ownership_decision), fontWeight = FontWeight.SemiBold)
         Text(claim.decisionReason ?: stringResource(Res.string.ownership_no_reason))

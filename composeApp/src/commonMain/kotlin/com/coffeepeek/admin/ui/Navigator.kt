@@ -119,6 +119,8 @@ object Navigator {
         @Serializable data object CoffeeGraph : Screen
         @Serializable data object CommunityGraph : Screen
         @Serializable data object ProfileGraph : Screen
+        @Serializable data object BusinessGraph : Screen
+        @Serializable data object BusinessTab : Screen
         @Serializable data object SettingsGraph : Screen
 
         // Tabs
@@ -145,7 +147,7 @@ object Navigator {
         @Serializable data class ShopChangeRequestDetail(
             val requestId: String,
         ) : Screen
-        @Serializable data class MyBusiness(val kind: String? = null, val slug: String? = null) : Screen
+        @Serializable data class MyBusiness(val kind: String? = null, val slug: String? = null, val businessId: String? = null) : Screen
         @Serializable data object AddShop : Screen
         @Serializable data object AddRoaster : Screen
         @Serializable data class RoasterDetail(val roasterId: String) : Screen
@@ -619,6 +621,6 @@ private fun BusinessOwnershipRoute(screen: Navigator.Screen.MyBusiness) {
     koinInject<com.coffeepeek.feature.ownership.api.BusinessOwnershipEntry>().Content(
         onBack = Navigator::popBack,
         onLogin = { Navigator.navigate(Navigator.Screen.Auth) },
-        initialKind = screen.kind, initialSlug = screen.slug,
+        initialKind = screen.kind, initialSlug = screen.slug, initialId = screen.businessId,
     )
 }

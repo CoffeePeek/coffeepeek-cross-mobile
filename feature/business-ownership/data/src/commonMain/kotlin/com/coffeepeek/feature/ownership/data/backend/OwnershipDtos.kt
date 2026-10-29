@@ -9,10 +9,11 @@ import kotlinx.serialization.json.JsonObject
     val id: String, val businessType: String, val businessId: String, val businessNameSnapshot: String,
     val businessSlugSnapshot: String, val contact: String, val evidence: String, val status: String,
     val createdAtUtc: String, val decisionReason: String? = null, val reviewedAtUtc: String? = null,
-    val hasCurrentAccess: Boolean = false,
+    val hasCurrentAccess: Boolean = false, val evidencePhotoIds: List<String> = emptyList(),
 )
-@Serializable internal data class ClaimRequest(val businessType: String, val businessSlug: String, val contact: String, val evidence: String)
-@Serializable internal data class OwnerSummaryDto(val id: String, val name: String)
+@Serializable internal data class ClaimRequest(val businessType: String, val businessSlug: String, val contact: String, val evidence: String, val evidencePhotoIds: List<String> = emptyList())
+@Serializable internal data class EvidenceUploadDto(val photoId: String, val storageKey: String)
+@Serializable internal data class OwnerSummaryDto(val id: String, val name: String, val publicSlug: String? = null)
 @Serializable internal data class OwnerShopsDto(val items: List<OwnerSummaryDto> = emptyList())
 @Serializable internal data class ProfileDto(
     val id: String, val name: String, val profileRevision: Long, val description: String? = null,

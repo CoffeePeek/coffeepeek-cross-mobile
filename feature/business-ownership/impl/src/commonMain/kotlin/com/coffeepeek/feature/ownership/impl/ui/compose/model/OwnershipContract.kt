@@ -36,6 +36,9 @@ internal sealed interface OwnershipAction {
     data class OpenClaim(val id: String) : OwnershipAction
     data class OpenBusiness(val kind: BusinessKind, val id: String) : OwnershipAction
     data class ProfileText(val field: ProfileField, val value: String) : OwnershipAction
+    data class AddEvidence(val generation: Int, val photos: List<BusinessPhoto>) : OwnershipAction
+    data class MoveEvidence(val from: Int, val to: Int) : OwnershipAction
+    data class RemoveEvidence(val index: Int) : OwnershipAction
     data class AddPhotos(val generation: Int, val photos: List<BusinessPhoto>) : OwnershipAction
     data class RemovePhoto(val index: Int) : OwnershipAction
     data class MovePhoto(val from: Int, val to: Int) : OwnershipAction

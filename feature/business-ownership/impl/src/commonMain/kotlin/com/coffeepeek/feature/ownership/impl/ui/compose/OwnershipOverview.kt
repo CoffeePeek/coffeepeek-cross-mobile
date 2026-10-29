@@ -16,7 +16,6 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
 internal fun OwnershipOverview(state: OwnershipState, action: (OwnershipAction) -> Unit) {
-    CoffeePeekButton(stringResource(Res.string.ownership_new_claim), { action(OwnershipAction.NewClaim) })
     CoffeePeekButton(stringResource(Res.string.ownership_refresh), { action(OwnershipAction.Refresh) })
     if (state.claims == null) return
     Text(stringResource(Res.string.ownership_claims), style = MaterialTheme.typography.titleLarge)

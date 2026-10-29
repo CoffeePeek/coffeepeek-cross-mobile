@@ -59,14 +59,14 @@ private fun OwnershipBody(state: OwnershipState, action: (OwnershipAction) -> Un
     return }
     when (state.destination) {
         OwnershipDestination.Overview -> OwnershipOverview(state, action)
-        OwnershipDestination.Submit -> OwnershipClaimForm(state, action)
-        OwnershipDestination.Claim -> state.selectedClaim?.let { OwnershipClaimDetails(it) }
+        OwnershipDestination.Submit -> OwnershipClaimForm(state, action, image, picker)
+        OwnershipDestination.Claim -> state.selectedClaim?.let { OwnershipClaimDetails(it, image) }
         OwnershipDestination.Editor -> state.profile?.let { BusinessProfileEditor(state, action, image, picker) }
     }
 }
 
 @Composable
-private fun OwnershipConfirmations(state: OwnershipState, action: (OwnershipAction) -> Unit) {
+internal fun OwnershipConfirmations(state: OwnershipState, action: (OwnershipAction) -> Unit) {
     val cancel = stringResource(Res.string.ownership_cancel)
     if (state.confirmPublish) CoffeePeekActionDialog(stringResource(Res.string.ownership_publish_title),
         stringResource(Res.string.ownership_publish_hint),

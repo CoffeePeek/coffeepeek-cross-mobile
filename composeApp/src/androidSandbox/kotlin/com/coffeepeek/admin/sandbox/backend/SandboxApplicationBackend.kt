@@ -78,6 +78,9 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
         if (populated) favorites += listOf("coffee_shop:sandbox-cafe", "roaster:sandbox-roaster", "drink:cappuccino")
     }
 
+    fun registerOwnershipEvidence(id: String) = ownershipStore.registerEvidence(id)
+    fun ownershipEvidenceAvailable(claimId: String, photoId: String) = ownershipStore.evidenceAvailable(claimId, photoId)
+
     fun handle(request: HttpRequestData, body: JsonElement?): Pair<HttpStatusCode, JsonObject>? {
         val path = request.url.encodedPath.lowercase()
         val method = request.method

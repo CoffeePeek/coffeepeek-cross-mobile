@@ -43,8 +43,37 @@ class OwnershipContractTest {
             assertFalse(result.hasCurrentAccess)
             assertEquals(ClaimStatus.Approved, result.status)
             assertEquals("/api/owner/ownership-claims", requests.single().url.encodedPath)
-            assertEquals(setOf("businessType", "businessSlug", "contact", "evidence"), requests.single().jsonBody().keys)
+            assertEquals(setOf("businessType", "businessSlug", "contact", "evidence", "evidencePhotoIds"), requests.single().jsonBody().keys)
             assertEquals("roast", requests.single().jsonBody()["businessSlug"]?.jsonPrimitive?.content)
+        }
+    }
+    @Test fun evidenceUsesThePrivateUploadAndOnlyItsPhotoIdEntersTheClaim() = runTest {
+        val requests = mutableListOf<HttpRequestData>()
+        val engine = MockEngine { request ->
+            requests += request
+            if (request.url.encodedPath == "/api/Photos/ownership-evidence") {
+                assertEquals(HttpMethod.Post, request.method)
+                assertTrue(request.body is io.ktor.client.request.forms.MultiPartFormDataContent)
+                respond(envelope("""{"photoId":"private-id","storageKey":"ownership-evidence/opaque"}"""), headers = headers)
+            } else {
+                assertEquals(listOf("private-id"), request.jsonBody()["evidencePhotoIds"]!!.jsonArray.map { it.jsonPrimitive.content })
+                respond(envelope(claim), headers = headers)
+            }
+        }
+        val account = Account()
+        withRepository(engine, account) { repo ->
+            val photo = BusinessPhoto("picked", fileName = "proof.png", contentType = "image/png", size = 2, bytes = byteArrayOf(1, 2))
+            val saved = repo.submit(ClaimSubmission(BusinessKind.CoffeeShop, "shop", "contact", "proof", listOf(photo))).getOrThrow()
+            assertContentEquals(photo.bytes, saved.evidencePhotos.single().bytes)
+            assertEquals(2, requests.size)
+        }
+    }
+    @Test fun invalidEvidenceIsRejectedBeforeUploading() = runTest {
+        val engine = MockEngine { error("Invalid evidence must not touch HTTP") }
+        val account = Account()
+        withRepository(engine, account) { repo ->
+            val photo = BusinessPhoto("bad", fileName = "proof.svg", contentType = "image/svg+xml", size = 10, bytes = byteArrayOf(1))
+            assertTrue(repo.submit(ClaimSubmission(BusinessKind.Roaster, "roaster", "contact", "proof", listOf(photo))).isFailure)
         }
     }
     @Test fun validatesBeforeSendingAndPreservesPrivatePagingEnvelope() = runTest {

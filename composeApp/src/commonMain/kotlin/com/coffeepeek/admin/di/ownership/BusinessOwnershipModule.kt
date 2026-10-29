@@ -25,7 +25,14 @@ internal fun businessOwnershipModule() = module {
     single<BusinessOwnershipRepository> { createBusinessOwnershipRepository(get<CoffeePeekClient>().client, get(), get()) }
     single<BusinessOwnershipEntry> {
         createBusinessOwnershipEntry(get(), get(), ownershipImage, ownershipPicker,
-            backHandler = { back -> NativeNavigationBar("", back, customBack = true, action = null) })
+            backHandler = { back -> NativeNavigationBar("", back, customBack = true, action = null) },
+            onEdit = { kind, id -> com.coffeepeek.admin.ui.Navigator.navigate(com.coffeepeek.admin.ui.Navigator.Screen.MyBusiness(kind = kind, businessId = id)) },
+            onLogin = { com.coffeepeek.admin.ui.Navigator.navigate(com.coffeepeek.admin.ui.Navigator.Screen.Auth) },
+            onOpenBusiness = { kind, slug ->
+                com.coffeepeek.admin.ui.Navigator.navigate(if (kind == "CoffeeShop")
+                    com.coffeepeek.admin.ui.Navigator.Screen.ShopDetail(slug)
+                    else com.coffeepeek.admin.ui.Navigator.Screen.RoasterDetail(slug))
+            })
     }
 }
 private class SessionOwnershipAccount(private val sessions: SessionReader) : OwnershipAccount {

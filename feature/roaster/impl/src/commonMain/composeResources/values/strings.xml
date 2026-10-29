@@ -24,4 +24,5 @@
     <string name="roaster_open_shop">Открыть кофейню %1$s</string>
     <string name="roaster_photos_missing">Фотографии %1$s отсутствуют</string>
     <string name="roaster_photo_position">%1$d / %2$d</string>
+    <string name="roaster_share">Поделиться</string>
 </resources>

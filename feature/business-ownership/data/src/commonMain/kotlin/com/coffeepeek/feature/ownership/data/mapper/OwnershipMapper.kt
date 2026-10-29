@@ -4,7 +4,7 @@ import com.coffeepeek.feature.ownership.data.backend.*
 import com.coffeepeek.feature.ownership.domain.model.*
 
 internal fun ClaimDto.domain() = OwnershipClaim(id, BusinessKind.valueOf(businessType), businessId, businessNameSnapshot,
-    businessSlugSnapshot, contact, evidence, ClaimStatus.valueOf(status), createdAtUtc, decisionReason, reviewedAtUtc, hasCurrentAccess)
+    businessSlugSnapshot, contact, evidence, ClaimStatus.valueOf(status), createdAtUtc, decisionReason, reviewedAtUtc, hasCurrentAccess, evidencePhotoIds)
 internal fun <T, R> OwnershipPageDto<T>.domain(map: (T) -> R) = BusinessPage(items.map(map), totalCount, page, pageSize)
 internal fun ProfileDto.domain(kind: BusinessKind): BusinessProfile {
     val links = if (kind == BusinessKind.CoffeeShop) contacts else contact

@@ -9,8 +9,10 @@ import java.util.UUID
 /** In-memory owner endpoints for manual Sandbox review; never delegates to a real account/server. */
 internal class SandboxOwnershipBackend(private val today: LocalDate) {
     private val profiles = linkedMapOf<String, JsonObject>()
+    private val evidence = mutableSetOf<String>()
     private val claims = linkedMapOf<String, JsonObject>()
     fun reset(populated: Boolean) {
+        evidence.clear()
         profiles.clear()
         claims.clear()
         if (!populated) return
@@ -19,6 +21,9 @@ internal class SandboxOwnershipBackend(private val today: LocalDate) {
         claims["sandbox-approved"] = claim("sandbox-approved", "Roaster", ROASTER, "sandbox-roaster", "Approved", true)
         claims["sandbox-rejected"] = claim("sandbox-rejected", "CoffeeShop", SHOP, "sandbox-cafe", "Rejected", false)
     }
+    fun registerEvidence(id: String) { evidence += id }
+    fun evidenceAvailable(claimId: String, photoId: String): Boolean =
+        claims[claimId]?.get("evidencePhotoIds")?.jsonArray?.any { it.jsonPrimitive.content == photoId } == true
     fun handle(request: HttpRequestData, input: JsonObject): Pair<HttpStatusCode, JsonObject>? {
         val path = request.url.encodedPath.removePrefix("/api/owner/")
         if (!request.url.encodedPath.startsWith("/api/owner/")) return null
@@ -36,12 +41,14 @@ internal class SandboxOwnershipBackend(private val today: LocalDate) {
     }
     private fun businesses(kind: String, request: HttpRequestData): Pair<HttpStatusCode, JsonObject> {
         val items = profiles.filterKeys { it.startsWith("$kind/") }.values.map { value ->
-            buildJsonObject { put("id", value.getValue("id")); put("name", value.getValue("name")) }
+            buildJsonObject { put("id", value.getValue("id")); put("name", value.getValue("name")); put("publicSlug", value.getValue("publicSlug")) }
         }
         return ok(if (kind == "coffee-shops") buildJsonObject { put("items", JsonArray(items)) } else page(items, request))
     }
     private fun claims(request: HttpRequestData, input: JsonObject): Pair<HttpStatusCode, JsonObject> {
         if (request.method == HttpMethod.Get) return ok(page(claims.values.toList(), request))
+        val photos = input["evidencePhotoIds"]?.jsonArray?.map { it.jsonPrimitive.content }.orEmpty()
+        if (photos.size > 3 || photos.any { it !in evidence }) return fail(HttpStatusCode.BadRequest)
         val slug = input["businessSlug"]?.jsonPrimitive?.content.orEmpty()
         val kind = input["businessType"]?.jsonPrimitive?.content.orEmpty()
         if (kind != "CoffeeShop" && kind != "Roaster") return fail(HttpStatusCode.BadRequest)
@@ -51,6 +58,7 @@ internal class SandboxOwnershipBackend(private val today: LocalDate) {
         val value = claim(id, kind, SHOP, slug, "Pending", false).toMutableMap()
         value["contact"] = input["contact"] ?: JsonPrimitive("")
         value["evidence"] = input["evidence"] ?: JsonPrimitive("")
+        value["evidencePhotoIds"] = JsonArray(photos.map(::JsonPrimitive))
         claims[id] = JsonObject(value)
         return HttpStatusCode.Created to envelope(claims.getValue(id))
     }
@@ -108,6 +116,7 @@ internal class SandboxOwnershipBackend(private val today: LocalDate) {
     private fun profile(id: String, name: String, shop: Boolean) = buildJsonObject {
         put("id", id)
         put("name", name)
+        put("publicSlug", if (shop) "sandbox-cafe" else "sandbox-roaster")
         put("profileRevision", 1)
         put("cityId", "sandbox-minsk")
         put(if (shop) "description" else "about", "Локальный профиль бизнеса для проверки Sandbox")

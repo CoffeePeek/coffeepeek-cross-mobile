@@ -14,6 +14,8 @@ internal class OwnershipViewModel(
     private val account: OwnershipAccount,
     private val initialKind: BusinessKind? = null,
     private val initialSlug: String? = null,
+    private val initialId: String? = null,
+    private val businessTab: Boolean = false,
 ) : MviViewModel<OwnershipState, OwnershipAction, OwnershipEvent>(OwnershipState()) {
     private val operations = mutableSetOf<Job>()
     private var initialized = false
@@ -29,7 +31,9 @@ internal class OwnershipViewModel(
         }
     }
     private fun initialize() {
-        if (!initialized && initialKind != null && !initialSlug.isNullOrBlank()) {
+        if (!initialized && initialKind != null && initialId != null) {
+            onAction(OwnershipAction.OpenBusiness(initialKind, initialId))
+        } else if (!initialized && initialKind != null && !initialSlug.isNullOrBlank()) {
             updateState { copy(destination = OwnershipDestination.Submit, submission = ClaimSubmission(initialKind, initialSlug, "", "")) }
         } else onAction(OwnershipAction.Refresh)
         initialized = true
@@ -51,7 +55,7 @@ internal class OwnershipViewModel(
             OwnershipAction.Save -> save()
             OwnershipAction.AskReload -> updateState { copy(confirmDiscard = true, reloadAfterDiscard = true) }
             OwnershipAction.Reload -> reload()
-            OwnershipAction.Discard -> overview()
+            OwnershipAction.Discard -> if (initialKind != null) sendEvent(OwnershipEvent.Close) else overview()
             OwnershipAction.CancelConfirmation -> updateState { copy(confirmDiscard = false, confirmPublish = false) }
             is OwnershipAction.OpenClaim -> openClaim(action.id)
             is OwnershipAction.OpenBusiness -> openProfile(action.kind, action.id)
@@ -73,6 +77,9 @@ internal class OwnershipViewModel(
             is OwnershipAction.Kind -> copy(submission = submission.copy(kind = action.kind), problem = null)
             is OwnershipAction.ClaimText -> copy(submission = submission.edit(action.field, action.value), problem = null)
             is OwnershipAction.ProfileText -> copy(draft = draft?.edit(action.field, action.value), saved = false, problem = if (reloadRequired) problem else null)
+            is OwnershipAction.AddEvidence -> if (action.generation == generation) copy(submission = submission.copy(photos = (submission.photos + action.photos).take(3)), problem = null) else this
+            is OwnershipAction.MoveEvidence -> copy(submission = submission.copy(photos = submission.photos.move(action.from, action.to)))
+            is OwnershipAction.RemoveEvidence -> copy(submission = submission.copy(photos = submission.photos.filterIndexed { index, _ -> index != action.index }))
             is OwnershipAction.AddPhotos -> if (action.generation == generation) copy(draft = draft?.copy(photos = (draft.photos + action.photos).take(10)), saved = false) else this
             is OwnershipAction.RemovePhoto -> copy(draft = draft?.copy(photos = draft.photos.filterIndexed { index, _ -> index != action.index }), saved = false)
             is OwnershipAction.MovePhoto -> copy(draft = draft?.copy(photos = draft.photos.move(action.from, action.to)), saved = false)
@@ -91,7 +98,7 @@ internal class OwnershipViewModel(
         catch (failure: Exception) { failed(failure) }
     }
     private suspend fun fetchOverview(snapshot: OwnershipState) = coroutineScope {
-        val claims = async { repository.claims(snapshot.claimsPage) }
+        val claims = async { if (businessTab) Result.success(BusinessPage<OwnershipClaim>(emptyList(), 0, 1, 20)) else repository.claims(snapshot.claimsPage) }
         val shops = async { repository.businesses(BusinessKind.CoffeeShop, 1) }
         val roasters = async { repository.businesses(BusinessKind.Roaster, snapshot.roastersPage) }
         Triple(claims.await().getOrThrow(), shops.await().getOrThrow().items, roasters.await().getOrThrow())
@@ -152,7 +159,7 @@ internal class OwnershipViewModel(
         if (currentState.destination == OwnershipDestination.Overview) sendEvent(OwnershipEvent.Close)
         else if (currentState.dirty || currentState.destination == OwnershipDestination.Submit && currentState.submission.hasContent()) {
             updateState { copy(confirmDiscard = true, reloadAfterDiscard = false) }
-        } else overview()
+        } else if (initialKind != null) sendEvent(OwnershipEvent.Close) else overview()
     }
     private suspend fun <T> guarded(block: suspend () -> Result<T>): Result<T> {
         val snapshot = currentState
@@ -181,4 +188,4 @@ private fun <T> List<T>.move(from: Int, to: Int): List<T> {
     return toMutableList().apply { add(to, removeAt(from)) }
 }
 
-private fun ClaimSubmission.hasContent(): Boolean = slug.isNotBlank() || contact.isNotBlank() || evidence.isNotBlank()
+private fun ClaimSubmission.hasContent(): Boolean = contact.isNotBlank() || evidence.isNotBlank() || photos.isNotEmpty()

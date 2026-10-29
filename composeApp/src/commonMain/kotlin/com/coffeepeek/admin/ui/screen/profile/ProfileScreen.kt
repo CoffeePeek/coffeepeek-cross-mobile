@@ -42,8 +42,7 @@ fun ProfileScreen(vm: ProfileViewModel = koinInject()) {
     }
     val actions: @Composable () -> Unit = {
         ProfileActions(onContributions = ::openContributions, onLogout = { showLogoutDialog = true },
-            onBlockedAuthors = { Navigator.navigate(Navigator.Screen.BlockedAuthors) },
-            onBusiness = { Navigator.navigate(Navigator.Screen.MyBusiness()) })
+            onBlockedAuthors = { Navigator.navigate(Navigator.Screen.BlockedAuthors) })
     }
     val bottomPadding = 20.dp + LocalFloatingNavClearance.current
 

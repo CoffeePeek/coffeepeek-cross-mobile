@@ -126,4 +126,5 @@
     <string name="select_method_none">Не указывать</string>
     <string name="photo_pick_failed">Не удалось добавить фото: %1$d</string>
     <string name="photo_loading">Загрузка фото…</string>
+    <string name="business_tab_title">Бизнес</string>
 </resources>

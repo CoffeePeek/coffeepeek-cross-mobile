@@ -1,3 +1,6 @@
+Current flow and evidence contract: [FLOW_UPDATE.md](FLOW_UPDATE.md).
+Historical implementation notes below predate this correction.
+
 # Business ownership: Android and iOS
 
 Base checkout: develop 2016c84f, updated before implementation as requested.
