@@ -11,10 +11,12 @@ import com.coffeepeek.admin.di.platformViewModel
 import com.coffeepeek.admin.feature.checkin.api.CheckInFlowHandoff
 import com.coffeepeek.admin.feature.homecheckin.ui.HomeCheckInViewModel
 import com.coffeepeek.admin.feature.homecheckin.ui.HomeEditor
+import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.ui.component.SwipeDismissModalBottomSheet
+import com.coffeepeek.admin.ui.screen.shelf.ShelfScreenRenderer
 import org.koin.compose.koinInject
 
-/** Platform-selected global flow. Resolve legacy form state only inside the shared/iOS fallback. */
+/** Platform-selected global flow. Resolve legacy form state only inside the shared/iOS fallback, which offers the shelf where the build has it. */
 @Composable
 internal fun CheckInCreateFlow(
     onDismiss: () -> Unit,
@@ -24,7 +26,8 @@ internal fun CheckInCreateFlow(
     renderer: CheckInCreateFlowRenderer = koinInject(),
 ) {
     renderer.Content(onDismiss, onShop, onHomeSaved) {
-        LegacyCheckInCreateFlow(onDismiss, onShop, onHomeSaved, homeVm ?: platformViewModel())
+        val shelf = koinInject<ShelfScreenRenderer>().available
+        LegacyCheckInCreateFlow(onDismiss, onShop, onHomeSaved, homeVm ?: platformViewModel(), shelf)
     }
 }
 
@@ -34,6 +37,7 @@ private fun LegacyCheckInCreateFlow(
     onShop: () -> Unit,
     onHomeSaved: () -> Unit,
     homeVm: HomeCheckInViewModel,
+    shelf: Boolean,
 ) {
     val tracker = remember(homeVm) { homeVm.creationTracker() }
     val home by homeVm.state.collectAsState()
@@ -51,6 +55,8 @@ private fun LegacyCheckInCreateFlow(
     ) {
         if (creatingHome) HomeEditor(home, homeVm, Modifier.fillMaxWidth().heightIn(max = 680.dp))
         else CheckInCreateContent(onShop = { tracker.kind(CheckInKind.Visit); CheckInFlowHandoff.tracker = tracker; homeVm.creationPickerFinished(); onShop() },
-            onHome = { tracker.kind(CheckInKind.Home); homeVm.create(tracker); creatingHome = true })
+            onHome = { tracker.kind(CheckInKind.Home); homeVm.create(tracker); creatingHome = true },
+            // As in the migrated flow: the picker closes and the shelf's scan takes over; no check-in is started.
+            onShelfBag = { homeVm.creationPickerFinished(); onDismiss(); Navigator.navigate(Navigator.Screen.ShelfAddBag) }.takeIf { shelf })
     }
 }
