@@ -29,7 +29,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.hapticfeedback.HapticFeedback
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.input.pointer.changedToUp
+import androidx.compose.ui.input.pointer.changedToUpIgnoreConsumed
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -166,8 +166,10 @@ private fun Modifier.shelfGestures(
         val index = geometry.bagAt(down.position, bags.size)?.takeIf { dragState.settling == null } ?: return@awaitEachGesture
         val press = awaitLongPressOrCancellation(down.id)
         if (press == null) {
+            // A scroll ends the wait on a consumed move, so a release here is a tap. iOS hands it over already consumed,
+            // which is why consumption is not asked about.
             val up = currentEvent.changes.firstOrNull { it.id == down.id }
-            if (up != null && up.changedToUp() && geometry.slot(index).contains(up.position)) onAction(ShelfAction.OpenBag(bags[index].id))
+            if (up != null && up.changedToUpIgnoreConsumed() && geometry.slot(index).contains(up.position)) onAction(ShelfAction.OpenBag(bags[index].id))
             return@awaitEachGesture
         }
         haptics.performHapticFeedback(HapticFeedbackType.LongPress)
