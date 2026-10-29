@@ -1,6 +1,40 @@
 package com.coffeepeek.feature.community.impl.ui
 
 import androidx.compose.foundation.background
+import org.jetbrains.compose.ui.tooling.preview.Preview
+import com.coffeepeek.feature.community.impl.resources.Res
+import com.coffeepeek.feature.community.impl.resources.community_share_shop
+import com.coffeepeek.feature.community.impl.resources.community_share_home
+import com.coffeepeek.feature.community.impl.resources.community_share
+import com.coffeepeek.feature.community.impl.resources.community_open_post
+import com.coffeepeek.feature.community.impl.resources.community_actions
+import com.coffeepeek.feature.community.impl.resources.community_block_author
+import com.coffeepeek.feature.community.impl.resources.community_details_separator
+import com.coffeepeek.feature.community.impl.resources.community_dose
+import com.coffeepeek.feature.community.impl.resources.community_edit
+import com.coffeepeek.feature.community.impl.resources.community_hide
+import com.coffeepeek.feature.community.impl.resources.community_label_pending
+import com.coffeepeek.feature.community.impl.resources.community_label_private
+import com.coffeepeek.feature.community.impl.resources.community_label_public
+import com.coffeepeek.feature.community.impl.resources.community_label_published
+import com.coffeepeek.feature.community.impl.resources.community_label_rejected
+import com.coffeepeek.feature.community.impl.resources.community_label_unknown
+import com.coffeepeek.feature.community.impl.resources.community_like
+import com.coffeepeek.feature.community.impl.resources.community_likes
+import com.coffeepeek.feature.community.impl.resources.community_loading
+import com.coffeepeek.feature.community.impl.resources.community_more_photos
+import com.coffeepeek.feature.community.impl.resources.community_open_profile
+import com.coffeepeek.feature.community.impl.resources.community_photo
+import com.coffeepeek.feature.community.impl.resources.community_publish
+import com.coffeepeek.feature.community.impl.resources.community_rating_description
+import com.coffeepeek.feature.community.impl.resources.community_report
+import com.coffeepeek.feature.community.impl.resources.community_saving
+import com.coffeepeek.feature.community.impl.resources.community_seconds
+import com.coffeepeek.feature.community.impl.resources.community_shop_default
+import com.coffeepeek.feature.community.impl.resources.community_taste
+import com.coffeepeek.feature.community.impl.resources.community_unlike
+import com.coffeepeek.feature.community.impl.resources.community_user
+import com.coffeepeek.feature.community.impl.resources.community_you
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -36,12 +70,12 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.style.TextOverflow
-import org.jetbrains.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.component.CoffeePeekActionMenu
 import com.coffeepeek.core.designsystem.component.CoffeePeekLikeIcon
 import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
 import com.coffeepeek.core.designsystem.component.CoffeePeekMenuAction
+import com.coffeepeek.core.designsystem.component.CoffeePeekMenuIcon
 import com.coffeepeek.core.designsystem.component.CoffeePeekRating
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekColors
@@ -171,16 +205,16 @@ private fun PostMenu(actions: PostCardActions, enabled: Boolean, hiding: Boolean
     if (actions.onShare == null && actions.onBlock == null && actions.onEdit == null && actions.onHide == null && actions.onReport == null) return
     val label = stringResource(Res.string.community_actions)
     val items = buildList {
-        actions.onShare?.let { add(CoffeePeekMenuAction(stringResource(Res.string.community_share), CoffeePeekIcons.Share, onClick = it)) }
-        actions.onEdit?.let { add(CoffeePeekMenuAction(stringResource(Res.string.community_edit), CoffeePeekIcons.Edit, onClick = it)) }
+        actions.onShare?.let { add(CoffeePeekMenuAction(stringResource(Res.string.community_share), CoffeePeekIcons.Share, nativeIcon = CoffeePeekMenuIcon.Share, onClick = it)) }
+        actions.onEdit?.let { add(CoffeePeekMenuAction(stringResource(Res.string.community_edit), CoffeePeekIcons.Edit, nativeIcon = CoffeePeekMenuIcon.Edit, onClick = it)) }
         actions.onHide?.let {
             // The menu has no disabled rows: while the hide request is running the row only says so and does nothing.
-            add(CoffeePeekMenuAction(stringResource(if (hiding) Res.string.community_saving else Res.string.community_hide), CoffeePeekIcons.VisibilityOff, onClick = if (hiding) ({}) else it))
+            add(CoffeePeekMenuAction(stringResource(if (hiding) Res.string.community_saving else Res.string.community_hide), CoffeePeekIcons.VisibilityOff, nativeIcon = CoffeePeekMenuIcon.Hide, onClick = if (hiding) ({}) else it))
         }
-        actions.onReport?.let { add(CoffeePeekMenuAction(stringResource(Res.string.community_report), CoffeePeekIcons.Error, onClick = it)) }
-        actions.onBlock?.let { add(CoffeePeekMenuAction(stringResource(Res.string.community_block_author), CoffeePeekIcons.VisibilityOff, destructive = true, onClick = it)) }
+        actions.onReport?.let { add(CoffeePeekMenuAction(stringResource(Res.string.community_report), CoffeePeekIcons.Error, nativeIcon = CoffeePeekMenuIcon.Report, onClick = it)) }
+        actions.onBlock?.let { add(CoffeePeekMenuAction(stringResource(Res.string.community_block_author), CoffeePeekIcons.VisibilityOff, destructive = true, nativeIcon = CoffeePeekMenuIcon.Block, onClick = it)) }
     }
-    CoffeePeekActionMenu(items) { open ->
+    CoffeePeekActionMenu(items, menuDescription = label, enabled = enabled) { open ->
         IconButton(onClick = open, enabled = enabled) { Icon(CoffeePeekIcons.MoreHorizontal, label, tint = MaterialTheme.colorScheme.onSurfaceVariant) }
     }
 }
@@ -213,7 +247,9 @@ internal class PostSharer(
 
     private fun text(post: CommunityPost, link: String): String {
         val author = post.author.name.ifBlank { userFallback }
-        return if (post.isHome) homeFormat.fill(author, link) else shopFormat.fill(author, post.shopName.ifBlank { shopFallback }, link)
+        val arguments = if (post.isHome) listOf(author, link) else listOf(author, post.shopName.ifBlank { shopFallback }, link)
+        val format = if (post.isHome) homeFormat else shopFormat
+        return Regex("%([1-3])\\\u0024s").replace(format) { arguments[it.groupValues[1].toInt() - 1] }
     }
 }
 
@@ -342,14 +378,6 @@ internal fun previewPost() = CommunityPost(
     PostCard(previewPost().copy(isHome = true, home = HomePreparation("2026-10-07", "hario-v60", "Эфиопия", 18.0, 150, 4), photos = PostPhotos.None, rating = null),
         isOwn = true, publicTimeline = false, showHelpfulCount = false, enabled = true, PostCardActions(null, null, null, null, {}), CommunityHost())
 }
+
 @Preview @Composable private fun HomePostCardLightPreview() = HomePostCardPreview(false)
 @Preview @Composable private fun HomePostCardDarkPreview() = HomePostCardPreview(true)
-
-@Composable private fun HomeBagPostCardPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
-    PostCard(previewPost().copy(isHome = true, rating = null, photos = PostPhotos.None,
-        home = HomePreparation("2026-10-07", "hario-v60", "Эфиопия Иргачеффе", 18.0, 150, 4, "Sibaristica", "ethiopia", "card")),
-        isOwn = false, publicTimeline = true, showHelpfulCount = true, enabled = true, PostCardActions(null, null, null, null, {}, onCoffee = {}),
-        CommunityHost(image = { _, _, modifier, _ -> Box(modifier.size(38.dp, 52.dp).background(MaterialTheme.colorScheme.tertiary)) }))
-}
-@Preview @Composable private fun HomeBagPostCardLightPreview() = HomeBagPostCardPreview(false)
-@Preview @Composable private fun HomeBagPostCardDarkPreview() = HomeBagPostCardPreview(true)

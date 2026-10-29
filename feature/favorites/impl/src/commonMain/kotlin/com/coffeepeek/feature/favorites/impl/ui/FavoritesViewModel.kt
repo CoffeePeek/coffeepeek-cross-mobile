@@ -30,6 +30,7 @@ internal class FavoritesViewModel(
     override suspend fun handleActionInternal(action: FavoritesAction) {
         when (action) {
             FavoritesAction.Retry -> retry()
+            FavoritesAction.DismissActionFailure -> updateState { copy(actionFailed = false) }
             is FavoritesAction.Remove -> remove(action.shopId)
             is FavoritesAction.OpenShop -> currentState.shops.firstOrNull { it.id == action.shopId }
                 ?.publicSlug?.takeIf(String::isNotBlank)?.let { sendEvent(FavoritesEvent.OpenShop(it)) }

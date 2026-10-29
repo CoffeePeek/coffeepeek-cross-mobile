@@ -83,6 +83,71 @@ private class LocalSession : SessionRepository {
 
 class SandboxApplicationBackendTest {
     @get:Rule val temporary = TemporaryFolder()
+
+    @Test fun migratedOwnProfileReadsAndEditsShareOneCacheInTheLocalBackend() = runTest { fixture { _, client ->
+        val data = com.coffeepeek.feature.profile.data.repository.createProfileAccountData(client.client, client.uploadClient, LocalSession(), backgroundScope)
+        assertEquals("Sandbox", data.accounts.loadOwnProfile(false).getOrThrow().userName)
+        data.edit.updateUsername("Local Tester").getOrThrow()
+        data.edit.updateAbout("Local biography").getOrThrow()
+        assertEquals("Local Tester", data.accounts.cachedOwnProfile()?.userName)
+        assertEquals("Local biography", data.accounts.loadOwnProfile(false).getOrThrow().about)
+        assertEquals("sandbox", data.accounts.cachedOwnProfile()?.address?.slug)
+        assertNull(data.deletion.existingRequest().getOrThrow())
+    } }
+
+    @Test fun migratedPublicFavoriteEnrichmentUsesNewShopAndRoasterReaders() = runTest { fixture { _, client ->
+        val store = object : com.coffeepeek.feature.roaster.data.repository.RoasterCatalogStore {
+            private var saved: String? = null
+            override suspend fun read() = saved
+            override suspend fun write(value: String) { saved = value }
+        }
+        val roasters = com.coffeepeek.feature.roaster.data.repository.createRoasterRepository(client.client, SandboxBackend.BASE_URL, store) { 0L }
+        val details = com.coffeepeek.feature.profile.data.repository.createPublicProfileFavoriteDetails(
+            com.coffeepeek.feature.shop.data.repository.createPublicShopDetails(client.client),
+            com.coffeepeek.feature.roaster.data.repository.createPublicRoasterDetails(roasters))
+        val favorites = createPublicProfileData(client.client, details).getFavorites("sandbox").getOrThrow()
+        assertEquals(3, favorites.size)
+        assertTrue(favorites.first { it.kind == com.coffeepeek.feature.profile.domain.PublicFavoriteKind.CoffeeShop }.description?.isNotBlank() == true)
+        assertTrue(favorites.first { it.kind == com.coffeepeek.feature.profile.domain.PublicFavoriteKind.Roaster }.description?.isNotBlank() == true)
+    } }
+
+    @Test fun publicProfileCheckInsUseMigratedReadersAndRemainPublicForOwnAndGuestProfiles() = runTest { fixture { _, client ->
+        val community = com.coffeepeek.feature.community.data.repository.createCommunityRepository(client.client, "https://sandbox.coffeepeek.invalid")
+        val posts = com.coffeepeek.feature.community.data.repository.createPublicAuthorPosts(community)
+        val reader = com.coffeepeek.feature.profile.data.repository.createPublicProfileCheckIns(posts)
+        val own = reader.page("sandbox").getOrThrow()
+        assertEquals(1, own.items.size)
+        assertEquals("Sandbox", own.items.single().authorName)
+        val friend = reader.page("sandbox-friend").getOrThrow()
+        assertEquals(1, friend.items.size)
+        assertTrue(reader.page("not-found").getOrThrow().items.isEmpty())
+    } }
+
+    @Test fun migratedContentReportUsesOnlyTheLocalSandboxContract() = runTest { fixture { backend, client ->
+        val repository = com.coffeepeek.feature.contentreport.data.repository.createContentReportRepository(client.client)
+        val target = com.coffeepeek.feature.contentreport.domain.model.ContentReportTarget(
+            com.coffeepeek.feature.contentreport.domain.model.ContentReportKind.CheckIn, SandboxApplicationBackend.FRIEND_VISIT_ID)
+        repository.submit(target, "  Тестовая причина  ").getOrThrow()
+        assertEquals(1, backend.contentReportCount)
+        assertIs<MockEngine>(client.client.engine)
+        backend.reset(populated = true)
+        assertEquals(0, backend.contentReportCount)
+    } }
+
+    @Test fun locallyCreatedOwnCheckInCannotBeReportedEvenWithoutAuthorId() = runTest { fixture { backend, client ->
+        val created = client.client.post("/api/v1/check-ins") {
+            contentType(ContentType.Application.Json)
+            setBody(buildJsonObject { put("coffeeShopSlug", "sandbox-cafe"); put("text", "Локальный чекин") })
+        }.body<JsonObject>()["data"]!!.jsonObject
+        assertNull(created["authorId"])
+        val repository = com.coffeepeek.feature.contentreport.data.repository.createContentReportRepository(client.client)
+        val target = com.coffeepeek.feature.contentreport.domain.model.ContentReportTarget(
+            com.coffeepeek.feature.contentreport.domain.model.ContentReportKind.CheckIn, created["id"]!!.jsonPrimitive.content)
+        val failure = repository.submit(target, "Тестовая причина").exceptionOrNull()
+        assertEquals(com.coffeepeek.feature.contentreport.domain.model.ContentReportProblem.Forbidden,
+            assertIs<com.coffeepeek.feature.contentreport.domain.model.ContentReportFailure>(failure).problem)
+        assertEquals(0, backend.contentReportCount)
+    } }
     private suspend fun fixture(block: suspend (SandboxBackend, CoffeePeekClient) -> Unit) {
         val backend = SandboxBackend(byteArrayOf(1, 2, 3), today = LocalDate.parse("2026-10-18"))
         val client = CoffeePeekClient(SandboxBackend.BASE_URL, temporary.newFolder().path, false,
@@ -547,7 +612,7 @@ class SandboxApplicationBackendTest {
         assertEquals(47 - 1 - 15, visible.size); assertTrue(visible.none { it.checkIn.authorId == friend })
         client.client.delete("/api/v1/me/blocks/$friend")
         assertEquals(47, feed.getFeed(100).getOrThrow().items.size)
-        // Votes work for generated posts too and keep their state; reports stay unimplemented in the Sandbox.
+        // Votes work for generated posts too and keep their state.
         val vote = json(client.client.put("/api/v1/check-ins/sandbox-feed-1/helpful"))
         assertTrue(vote["isHelpful"]!!.jsonPrimitive.boolean); assertEquals(2, vote["helpfulCount"]!!.jsonPrimitive.int)
         assertEquals(1, json(client.client.delete("/api/v1/check-ins/sandbox-feed-1/helpful"))["helpfulCount"]!!.jsonPrimitive.int)

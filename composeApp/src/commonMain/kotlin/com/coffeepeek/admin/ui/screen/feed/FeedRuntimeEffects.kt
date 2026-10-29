@@ -12,7 +12,7 @@ import com.coffeepeek.admin.location.GeoPoint
 import com.coffeepeek.admin.location.LocationPermissionEffect
 import com.coffeepeek.admin.location.rememberPermittedUserLocation
 import com.coffeepeek.admin.ui.Navigator
-import com.coffeepeek.admin.utils.PrefetchListPhotos
+import com.coffeepeek.core.media.PrefetchListPhotos
 
 @Composable
 internal fun FeedLocationEffects(vm: FeedViewModel, refreshKey: Int, onGranted: () -> Unit): GeoPoint? {

@@ -17,7 +17,7 @@ import coffeepeek.composeapp.generated.resources.Res
 import coffeepeek.composeapp.generated.resources.ic_hide_image_24px
 import com.coffeepeek.admin.theme.CpColor
 import com.coffeepeek.admin.ui.icons.CpIcons
-import com.coffeepeek.admin.utils.CpImage
+import com.coffeepeek.core.designsystem.component.CoffeePeekImage
 
 object PhotoViewer {
 
@@ -46,7 +46,7 @@ object PhotoViewer {
                     if (index <= images.lastIndex) {
                         val item = images[index]
                         Box(modifier = cardModifier) {
-                            CpImage(
+                            CoffeePeekImage(
                                 data = item,
                                 contentScale = ContentScale.Crop,
                                 placeholder = Res.drawable.ic_hide_image_24px,

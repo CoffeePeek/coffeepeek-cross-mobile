@@ -19,7 +19,7 @@ class HomeCheckInPortsTest {
     @Test fun catalogMapsActualSlugsLabelsAndHistoricalAliasesWithoutASecondBackend() = runTest {
         val lease = CheckInHistorySession(CheckInTestSessions())
         val queries = mutableListOf<String>()
-        val catalog = HomeCheckInAppCatalog(lease, object : CoffeePicker {
+        val catalog = AppHomeCheckInCatalog(lease, object : CoffeePicker {
             override suspend fun search(query: String): Result<List<CoffeePickerItem>> {
                 queries += query; return Result.success(listOf(CoffeePickerItem("slug", "Зерно", "Обжарщик")))
             }
@@ -35,7 +35,7 @@ class HomeCheckInPortsTest {
         val sessions = CheckInTestSessions()
         val lease = CheckInHistorySession(sessions)
         val source = Repository()
-        val repository = HomeCheckInAppRepository(lease, source)
+        val repository = AppHomeCheckInRepository(lease, source)
         sessions.applySession(Session("renewed", userId = "owner"))
         assertTrue(repository.delete("id").isSuccess)
         val failure = repository.detail("id").exceptionOrNull()
@@ -52,7 +52,7 @@ class HomeCheckInPortsTest {
 
     @Test fun guestCatalogueDoesNotInvokeActualPortsAndPickedOriginalsAreBounded() = runTest {
         val lease = CheckInHistorySession(CheckInTestSessions(null))
-        val catalog = HomeCheckInAppCatalog(lease, object : CoffeePicker {
+        val catalog = AppHomeCheckInCatalog(lease, object : CoffeePicker {
             override suspend fun search(query: String): Result<List<CoffeePickerItem>> = error("Guest search")
         }, BrewMethodCatalog { error("Guest methods") })
         assertTrue(catalog.brewMethods().isFailure); assertTrue(catalog.searchBeans("").isFailure)
@@ -67,7 +67,7 @@ class HomeCheckInPortsTest {
     }
 
     @Test fun dateAssemblyPreservesCivilDateAndLimitsInitialTimestampPrecision() {
-        val dates = homeCheckInDates()
+        val dates = appHomeCheckInDates()
         val instant = dates.currentInstant()
         assertTrue(Regex("""\.\d{1,3}Z$|:\d{2}Z$""").containsMatchIn(instant))
         assertEquals("2026-10-16", dates.localDate(dates.civilDateToInstant("2026-10-16")))
@@ -76,7 +76,7 @@ class HomeCheckInPortsTest {
     }
 
     @Test fun anUnreadableServerDateDoesNotBreakTheForm() {
-        val dates = homeCheckInDates()
+        val dates = appHomeCheckInDates()
         assertEquals("not-a-date", dates.formatDate("not-a-date"))
         assertEquals("", dates.formatDate(""))
         assertEquals("2026-02-30", dates.formatDate("2026-02-30"))
@@ -85,7 +85,7 @@ class HomeCheckInPortsTest {
 
     @Test fun catalogueTransportMessagesStayHiddenAndReturnedCancellationIsRethrown() = runTest {
         val lease = CheckInHistorySession(CheckInTestSessions())
-        val catalog = HomeCheckInAppCatalog(lease, object : CoffeePicker {
+        val catalog = AppHomeCheckInCatalog(lease, object : CoffeePicker {
             override suspend fun search(query: String): Result<List<CoffeePickerItem>> =
                 Result.failure(java.io.IOException("Private transport details"))
         }, BrewMethodCatalog { Result.failure(CancellationException("cancelled")) })

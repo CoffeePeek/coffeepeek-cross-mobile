@@ -1,12 +1,10 @@
 package com.coffeepeek.admin.di.ownership
 
-import androidx.compose.foundation.Image
 import androidx.compose.runtime.Composable
 import com.coffeepeek.admin.ui.component.NativeNavigationBar
-import com.coffeepeek.admin.utils.cpImageData
-import com.coffeepeek.admin.utils.rememberCpImagePainter
 import com.coffeepeek.admin.utils.rememberPhotoPicker
 import com.coffeepeek.api.CoffeePeekClient
+import com.coffeepeek.core.designsystem.component.CoffeePeekImage
 import com.coffeepeek.core.network.requestResult
 import com.coffeepeek.core.session.SessionReader
 import com.coffeepeek.domain.model.PendingPhotoUpload
@@ -51,8 +49,7 @@ private class OwnershipMediaUploader(private val photos: PhotoRepository, privat
     }
 }
 private val ownershipImage: OwnershipImage = { url, bytes, modifier, scale ->
-    Image(painter = rememberCpImagePainter(bytes ?: cpImageData(url.orEmpty())), contentDescription = null,
-        modifier = modifier, contentScale = scale)
+    CoffeePeekImage(data = bytes ?: url.orEmpty(), modifier = modifier, contentScale = scale)
 }
 private val ownershipPicker: OwnershipPhotoPicker = { limit, onPicked, content ->
     val controller = rememberPhotoPicker(maxSelection = limit, onPhotosPicked = { photos ->

@@ -1,5 +1,11 @@
 # Contributions: legacy inventory (step 0 of the owner migration)
 
+Activation update — 2026-10-25: Android and iOS now use the shared feature renderer
+and app-owned photo/map/price slots. UI remains in feature/contributions/impl;
+legacy screens are retained as fallback pending acceptance. The inventory below
+records the original Android-first baseline, not current iOS wiring. Verification
+and remaining device/server gates: [iOS migration plan](../IOS_MIGRATION_PLAN.md).
+
 Date: 2026-10-21. Base: `feature/community-app-connection` (stack tip). Read-only pass: nothing is changed in code.
 Everything below was read line by line unless marked "skimmed". Android is migrated first; iOS and shared keep the legacy
 screens behind `Legacy…Renderer` defaults (see `feature/LEGACY_REMOVAL.md`).

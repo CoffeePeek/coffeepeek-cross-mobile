@@ -71,7 +71,7 @@ import com.coffeepeek.admin.ui.component.CoffeePeekLoader
 import com.coffeepeek.admin.ui.component.CoffeeShopPlaceholderImage
 import com.coffeepeek.admin.ui.component.PhotoAttachmentsSection
 import com.coffeepeek.admin.ui.icons.CpIcons
-import com.coffeepeek.admin.utils.CpImage
+import com.coffeepeek.core.designsystem.component.CoffeePeekImage
 import com.coffeepeek.domain.model.City
 import com.coffeepeek.admin.di.platformViewModel
 import org.jetbrains.compose.resources.painterResource
@@ -426,7 +426,7 @@ private fun RoasterPreviewCard(
                     .clip(RoundedCornerShape(topStart = CpDimens.cardRadius, topEnd = CpDimens.cardRadius)),
             ) {
                 if (coverPhoto != null) {
-                    CpImage(
+                    CoffeePeekImage(
                         data = coverPhoto,
                         modifier = Modifier.fillMaxSize(),
                         contentScale = ContentScale.Crop,

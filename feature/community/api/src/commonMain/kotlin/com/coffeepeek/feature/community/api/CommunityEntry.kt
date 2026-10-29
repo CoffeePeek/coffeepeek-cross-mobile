@@ -8,7 +8,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.dp
 
 /** Where a card or the list is measured for exposure analytics. */
 enum class ExposureKind { Feed, ShopPost, HomePost }

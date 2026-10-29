@@ -61,7 +61,7 @@ import com.coffeepeek.admin.ui.component.CpSnackbarHost
 import com.coffeepeek.admin.ui.component.CoffeePeekLoader
 import com.coffeepeek.admin.ui.component.CoffeeShopImage
 import com.coffeepeek.admin.ui.component.CoffeeShopPlaceholderImage
-import com.coffeepeek.admin.ui.component.FullScreenImageDialog
+import com.coffeepeek.core.designsystem.component.CoffeePeekPhotoViewer
 import com.coffeepeek.admin.ui.component.FavoriteButton
 import com.coffeepeek.admin.ui.icons.CpIcons
 import com.coffeepeek.admin.utils.OpenInBrowser
@@ -85,7 +85,7 @@ fun RoasterDetailScreen(roasterId: String) {
     }
 
     previewUrl?.let { url ->
-        FullScreenImageDialog(imageUrl = url, onDismiss = { previewUrl = null })
+        CoffeePeekPhotoViewer(imageUrl = url, onDismiss = { previewUrl = null })
     }
 
     Scaffold(

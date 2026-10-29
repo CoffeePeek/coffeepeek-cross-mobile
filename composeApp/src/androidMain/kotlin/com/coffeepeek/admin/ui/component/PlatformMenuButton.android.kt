@@ -75,6 +75,7 @@ internal actual fun PlatformMenuButton(
                                 PlatformMenuIcon.Add -> CpIcons.Add
                                 PlatformMenuIcon.CoffeeBean -> CpIcons.CoffeeBean
                                 PlatformMenuIcon.Logout -> CpIcons.Logout
+                                PlatformMenuIcon.Share -> CpIcons.Share
                                 null -> null
                             }
                         }

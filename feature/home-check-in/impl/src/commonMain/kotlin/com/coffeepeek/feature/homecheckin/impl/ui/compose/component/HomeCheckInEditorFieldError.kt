@@ -1,6 +1,9 @@
 package com.coffeepeek.feature.homecheckin.impl.ui.compose.component
 
 import androidx.compose.foundation.layout.*
+import org.jetbrains.compose.ui.tooling.preview.Preview
+import com.coffeepeek.feature.homecheckin.impl.resources.Res
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_error_dose
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -10,11 +13,9 @@ import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.luminance
 import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.semantics.*
-import org.jetbrains.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
-import com.coffeepeek.feature.homecheckin.impl.resources.*
 
 @Composable
 internal fun HomeCheckInEditorFieldError(message: String) {

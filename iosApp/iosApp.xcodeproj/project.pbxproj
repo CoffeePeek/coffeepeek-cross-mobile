@@ -15,7 +15,6 @@
 		A10000000000000000000003 /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = A90000000000000000000001 /* GoogleSignIn */; };
 		A10000000000000000000005 /* MapLibre in Frameworks */ = {isa = PBXBuildFile; productRef = A90000000000000000000003 /* MapLibre */; };
 		A10000000000000000000008 /* KotlinMultiplatformLinkedPackage in Frameworks */ = {isa = PBXBuildFile; productRef = A90000000000000000000005 /* KotlinMultiplatformLinkedPackage */; };
-		A10000000000000000000009 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000012 /* GoogleService-Info.plist */; };
 		A10000000000000000000010 /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = A90000000000000000000008 /* FirebaseCore */; };
 		A10000000000000000000011 /* FirebaseMessaging in Frameworks */ = {isa = PBXBuildFile; productRef = A90000000000000000000009 /* FirebaseMessaging */; };
 /* End PBXBuildFile section */
@@ -101,6 +100,7 @@
 			buildConfigurationList = A80000000000000000000002 /* Build configuration list for PBXNativeTarget "iosApp" */;
 			buildPhases = (
 				A60000000000000000000003 /* Compile Kotlin Framework */,
+				A60000000000000000000004 /* Copy Firebase Configuration */,
 				A60000000000000000000001 /* Sources */,
 				A30000000000000000000001 /* Frameworks */,
 				A60000000000000000000002 /* Resources */,
@@ -167,13 +167,24 @@
 			buildActionMask = 2147483647;
 			files = (
 				A10000000000000000000002 /* Assets.xcassets in Resources */,
-				A10000000000000000000009 /* GoogleService-Info.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
+		A60000000000000000000004 /* Copy Firebase Configuration */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = ();
+			inputPaths = ("$(SRCROOT)/copy-firebase-config.sh", "$(SRCROOT)/iosApp");
+			name = "Copy Firebase Configuration";
+			outputPaths = ("$(TARGET_BUILD_DIR)/$(UNLOCALIZED_RESOURCES_FOLDER_PATH)/GoogleService-Info.plist");
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "/bin/sh \"$SRCROOT/copy-firebase-config.sh\"\n";
+		};
 		A60000000000000000000003 /* Compile Kotlin Framework */ = {
 			isa = PBXShellScriptBuildPhase;
 			alwaysOutOfDate = 1;
@@ -191,7 +202,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "cd \"$SRCROOT/..\"\nexport JAVA_HOME=$(/usr/libexec/java_home -v 17)\n./gradlew --build-cache :composeApp:embedAndSignAppleFrameworkForXcode --max-workers=\"${GRADLE_MAX_WORKERS:-2}\"\n";
+			shellScript = "cd \"$SRCROOT/..\"\nexport JAVA_HOME=$(/usr/libexec/java_home -v 17)\n./gradlew --build-cache :composeApp:embedAndSignAppleFrameworkForXcode --max-workers=\"${GRADLE_MAX_WORKERS}\"\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 

@@ -51,8 +51,8 @@ import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.ui.icons.CpIcons
 import com.coffeepeek.admin.ui.component.CoffeePeekLoader
 import com.coffeepeek.admin.ui.component.CpTopBar
-import com.coffeepeek.admin.ui.component.FullScreenImageDialog
-import com.coffeepeek.admin.ui.component.PhotoViewerImages
+import com.coffeepeek.core.designsystem.component.CoffeePeekPhotoViewer
+import com.coffeepeek.core.designsystem.component.CoffeePeekPhotoViewerImages
 import com.coffeepeek.admin.utils.utcIsoToLocalDateTime
 import com.coffeepeek.legacy.homecheckin.domain.HomeCheckIn
 import com.coffeepeek.legacy.homecheckin.domain.HomeCheckInVisibility
@@ -65,8 +65,8 @@ internal fun HomeCheckInScreen(vm: HomeCheckInViewModel = platformViewModel()) {
     val state by vm.state.collectAsState()
     var tab by remember { mutableStateOf(HomeTab.History) }
     LaunchedEffect(tab) { if (tab == HomeTab.Statistics) vm.loadStats() }
-    var photoPreview by remember { mutableStateOf<Pair<PhotoViewerImages, Int>?>(null) }
-    photoPreview?.let { (images, index) -> FullScreenImageDialog(images, index) { photoPreview = null } }
+    var photoPreview by remember { mutableStateOf<Pair<CoffeePeekPhotoViewerImages, Int>?>(null) }
+    photoPreview?.let { (images, index) -> CoffeePeekPhotoViewer(images, index) { photoPreview = null } }
 
     if (state.deleteConfirmation) PlatformAlert(title = "Удалить домашнюю запись?", message = "Она исчезнет из истории, календаря и статистики.", confirmLabel = "Удалить", onConfirm = vm::delete, onDismiss = vm::cancelDelete, cancelLabel = "Отмена", destructive = true)
 

@@ -24,4 +24,7 @@ SHELF_INPAINTER_URL = https:/$()/huggingface.co/andraniksargsyan/migan/resolve/m
 POSTHOG_ENABLE_DEV = NO
 POSTHOG_PROJECT_TOKEN =
 
+// A build setting lets both Xcode and the KMP IDE resolve the argument before Gradle starts.
+GRADLE_MAX_WORKERS = 6
+
 #include? "Local.xcconfig"

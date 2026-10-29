@@ -45,7 +45,7 @@ internal actual fun PlatformSwitch(checked: Boolean, onCheckedChange: ((Boolean)
         ))
 }
 @Composable
-internal actual fun NativeSegmentedControl(labels: List<String>, selectedIndex: Int, onSelected: (Int) -> Unit, modifier: Modifier) = false
+internal actual fun NativeSegmentedControl(labels: List<String>, selectedIndex: Int, onSelected: (Int) -> Unit, modifier: Modifier, enabled: Boolean) = false
 internal actual fun platformHaptic(event: HapticEvent) = Unit
 @Composable
 internal actual fun platformReduceMotion() = false

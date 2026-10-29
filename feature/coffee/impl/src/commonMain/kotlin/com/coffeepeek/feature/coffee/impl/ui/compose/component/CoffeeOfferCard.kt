@@ -1,6 +1,25 @@
 package com.coffeepeek.feature.coffee.impl.ui.compose.component
 
 import androidx.compose.foundation.background
+import org.jetbrains.compose.ui.tooling.preview.Preview
+import com.coffeepeek.feature.coffee.impl.resources.Res
+import com.coffeepeek.feature.coffee.impl.resources.coffee_availability_unknown
+import com.coffeepeek.feature.coffee.impl.resources.coffee_both
+import com.coffeepeek.feature.coffee.impl.resources.coffee_brew
+import com.coffeepeek.feature.coffee.impl.resources.coffee_checked
+import com.coffeepeek.feature.coffee.impl.resources.coffee_grind
+import com.coffeepeek.feature.coffee.impl.resources.coffee_in_stock
+import com.coffeepeek.feature.coffee.impl.resources.coffee_offline
+import com.coffeepeek.feature.coffee.impl.resources.coffee_online
+import com.coffeepeek.feature.coffee.impl.resources.coffee_open_seller
+import com.coffeepeek.feature.coffee.impl.resources.coffee_out_of_stock
+import com.coffeepeek.feature.coffee.impl.resources.coffee_preorder
+import com.coffeepeek.feature.coffee.impl.resources.coffee_seller
+import com.coffeepeek.feature.coffee.impl.resources.coffee_source
+import com.coffeepeek.feature.coffee.impl.resources.coffee_unconfirmed
+import com.coffeepeek.feature.coffee.impl.resources.coffee_unspecified
+import com.coffeepeek.feature.coffee.impl.resources.coffee_weight
+import com.coffeepeek.feature.coffee.impl.resources.coffee_weight_missing
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.*
@@ -9,7 +28,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import org.jetbrains.compose.resources.stringResource
-import org.jetbrains.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.component.CoffeePeekButton
 import com.coffeepeek.core.designsystem.component.CoffeePeekContentCard

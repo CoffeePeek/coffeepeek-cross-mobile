@@ -35,7 +35,48 @@
     <string name="profile_favorites_empty">Пока ничего нет в избранном</string>
     <string name="profile_check_ins_failed">Не удалось загрузить чекины</string>
     <string name="profile_check_ins_empty">Пока нет чекинов</string>
+    <string name="profile_check_in_likes">Лайки: %1$d</string>
+    <string name="profile_check_in_rating">Кофе: %1$d, сервис: %2$d, атмосфера: %3$d. Средняя оценка: %4$s из 5</string>
+    <string name="profile_check_in_photo">Фотография %1$d из %2$d</string>
+    <string name="profile_check_in_actions">Действия с чекином</string>
+    <string name="profile_check_in_report">Пожаловаться</string>
+    <string name="profile_check_in_dose">%1$s г</string>
+    <string name="profile_check_in_seconds">%1$d с</string>
+    <string name="profile_check_in_taste">%1$d/5</string>
+    <string name="profile_check_in_separator"> · </string>
+    <string name="profile_brew_espresso">Эспрессо</string>
+    <string name="profile_brew_pour_over">Пуровер</string>
+    <string name="profile_brew_batch">Фильтр batch</string>
+    <string name="profile_brew_moka">Гейзерная кофеварка</string>
+    <string name="profile_brew_cezve">Турка</string>
+    <string name="profile_brew_aeropress">Аэропресс</string>
+    <string name="profile_brew_french_press">Френч-пресс</string>
+    <string name="profile_brew_other">Другое</string>
+    <string name="profile_brew_hario">Hario V60</string>
+    <string name="profile_brew_chemex">Chemex</string>
+    <string name="profile_brew_cold">Cold Brew</string>
+    <string name="profile_brew_batch_brew">Batch Brew</string>
+    <string name="profile_brew_moka_pot">Moka Pot</string>
+    <string name="profile_brew_turkish">Cezve (Turkish Coffee)</string>
     <string name="profile_activity_failed">Не удалось загрузить активность</string>
+    <string name="profile_week_loading">Загрузка активности…</string>
+    <string name="profile_week_error">Не удалось загрузить активность</string>
+    <string name="profile_week_open">Открыть чекины</string>
+    <string name="profile_week_day">%1$s: %2$s</string>
+    <plurals name="profile_week_count">
+        <item quantity="one">%1$d чекин</item>
+        <item quantity="few">%1$d чекина</item>
+        <item quantity="many">%1$d чекинов</item>
+        <item quantity="other">%1$d чекинов</item>
+    </plurals>
+    <string name="profile_favorite_shop">Кофейня</string>
+    <string name="profile_favorite_shops">Кофейни</string>
+    <string name="profile_favorite_catalog">Каталог</string>
+    <string name="profile_favorite_drink">Напиток</string>
+    <string name="profile_favorite_saved">В избранном</string>
+    <string name="profile_favorite_open">ОТКРЫТО</string>
+    <string name="profile_favorite_closed">ЗАКРЫТО</string>
+    <string name="profile_favorite_no_photo">Фото %1$s отсутствует</string>
 
     <string name="profile_blocked_title">Автор заблокирован</string>
     <string name="profile_blocked_message">Публикации автора «%1$s» скрыты. Вы можете снять блокировку в любой момент.</string>
@@ -138,4 +179,10 @@
     <string name="profile_deletion_wait_hint">После подтверждения вы автоматически выйдете из приложения.</string>
     <string name="profile_deletion_resend">Отправить письмо ещё раз</string>
     <string name="profile_deletion_resend_wait">Повторная отправка пока недоступна</string>
+    <plurals name="profile_days_with_check_ins">
+        <item quantity="one">%1$d день с чекинами</item>
+        <item quantity="few">%1$d дня с чекинами</item>
+        <item quantity="many">%1$d дней с чекинами</item>
+        <item quantity="other">%1$d дней с чекинами</item>
+    </plurals>
 </resources>

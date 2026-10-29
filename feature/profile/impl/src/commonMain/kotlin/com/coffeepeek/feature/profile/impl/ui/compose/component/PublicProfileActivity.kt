@@ -1,6 +1,19 @@
 package com.coffeepeek.feature.profile.impl.ui.compose.component
 
 import androidx.compose.foundation.background
+import com.coffeepeek.feature.profile.impl.resources.Res
+import com.coffeepeek.feature.profile.impl.resources.profile_days_with_check_ins
+import com.coffeepeek.feature.profile.impl.resources.profile_months
+import com.coffeepeek.feature.profile.impl.resources.profile_weekdays
+import com.coffeepeek.feature.profile.impl.resources.profile_activity_failed
+import com.coffeepeek.feature.profile.impl.resources.profile_activity_legend
+import com.coffeepeek.feature.profile.impl.resources.profile_activity_minsk_time
+import com.coffeepeek.feature.profile.impl.resources.profile_day_active
+import com.coffeepeek.feature.profile.impl.resources.profile_day_inactive
+import com.coffeepeek.feature.profile.impl.resources.profile_month_title
+import com.coffeepeek.feature.profile.impl.resources.profile_next_month
+import com.coffeepeek.feature.profile.impl.resources.profile_previous_month
+import com.coffeepeek.feature.profile.impl.resources.profile_retry
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,6 +34,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringArrayResource
 import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -36,8 +50,7 @@ import com.coffeepeek.feature.profile.impl.ui.data.profileMonth
 import com.coffeepeek.feature.profile.impl.ui.data.shiftProfileMonth
 
 @Composable
-private fun daysLabel(count: Int): String = stringResource(coffeePeekPluralForm(count, Res.string.profile_days_with_check_ins_one,
-    Res.string.profile_days_with_check_ins_few, Res.string.profile_days_with_check_ins_many), count)
+private fun daysLabel(count: Int): String = pluralStringResource(Res.plurals.profile_days_with_check_ins, count, count)
 
 @Composable
 private fun monthTitle(value: String): String {

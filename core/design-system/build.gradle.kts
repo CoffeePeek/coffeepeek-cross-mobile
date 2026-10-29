@@ -16,6 +16,7 @@ kotlin {
     iosSimulatorArm64()
     sourceSets {
         commonMain.dependencies {
+            api(project(":core:media"))
             api(compose.runtime)
             api(compose.ui)
             api(compose.foundation)
@@ -24,6 +25,10 @@ kotlin {
             implementation(libs.phosphor.icon)
             implementation(compose.components.resources)
             implementation(compose.components.uiToolingPreview)
+            implementation(libs.androidx.lifecycle.runtimeCompose)
+        }
+        androidMain.dependencies {
+            implementation(libs.androidx.activity.compose)
         }
         commonTest.dependencies {
             implementation(libs.kotlin.test)

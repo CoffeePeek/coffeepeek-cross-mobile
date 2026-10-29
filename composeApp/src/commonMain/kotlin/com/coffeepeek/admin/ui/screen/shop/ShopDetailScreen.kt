@@ -134,8 +134,8 @@ import com.coffeepeek.admin.ui.component.priceLevelHint
 import com.coffeepeek.admin.ui.component.priceLevelValue
 import com.coffeepeek.admin.ui.component.priceRangeLevel
 import com.coffeepeek.admin.ui.component.shopTagIcon
-import com.coffeepeek.admin.ui.component.FullScreenImageDialog
-import com.coffeepeek.admin.ui.component.PhotoViewerImages
+import com.coffeepeek.core.designsystem.component.CoffeePeekPhotoViewer
+import com.coffeepeek.core.designsystem.component.CoffeePeekPhotoViewerImages
 import com.coffeepeek.admin.ui.component.CpSnackbarHost
 import com.coffeepeek.admin.ui.component.CoffeePeekLoader
 import com.coffeepeek.admin.ui.component.OutlinedContentCard
@@ -173,7 +173,7 @@ fun ShopDetailScreen(shopId: String, forCheckIn: Boolean = false) {
     val screenScope = rememberCoroutineScope()
     val missingShopAddress = stringResource(Res.string.checkin_error_shop_address)
     // Photos open as a swipeable set: (urls, startIndex).
-    var preview by remember { mutableStateOf<Pair<PhotoViewerImages, Int>?>(null) }
+    var preview by remember { mutableStateOf<Pair<CoffeePeekPhotoViewerImages, Int>?>(null) }
     var showRoutePicker by remember { mutableStateOf(false) }
 
     LaunchedEffect(state.actionMessage) {
@@ -186,7 +186,7 @@ fun ShopDetailScreen(shopId: String, forCheckIn: Boolean = false) {
     val authorVisibility by vm.authorVisibility.collectAsState()
     androidx.compose.runtime.LaunchedEffect(authorVisibility.revision, state.isLoggedIn) { preview = null }
     preview?.let { (urls, index) ->
-        FullScreenImageDialog(images = urls, initialIndex = index, onDismiss = { preview = null })
+        CoffeePeekPhotoViewer(images = urls, initialIndex = index, onDismiss = { preview = null })
     }
 
     if (showRoutePicker) {
@@ -352,8 +352,8 @@ private fun ShopDetailContent(
     onOpenOnMap: () -> Unit = {},
     onReportIssue: () -> Unit = {},
     onCopyPhone: (String) -> Unit = {},
-    onOpenPhotos: (PhotoViewerImages, Int) -> Unit = { _, _ -> },
-    onReviewPhotoClick: (PhotoViewerImages, Int) -> Unit = { _, _ -> },
+    onOpenPhotos: (CoffeePeekPhotoViewerImages, Int) -> Unit = { _, _ -> },
+    onReviewPhotoClick: (CoffeePeekPhotoViewerImages, Int) -> Unit = { _, _ -> },
     onReviewHelpfulClick: (String) -> Unit = {},
     menuGalleryAction: @Composable () -> Unit = {},
     headerActions: @Composable (HazeState) -> Unit = {},
@@ -391,7 +391,7 @@ private fun ShopDetailContent(
                         details.location?.longitude != null,
                     onOpenOnMap = onOpenOnMap,
                     onOpenReviews = { Navigator.navigate(Navigator.Screen.ShopReviews(shop.id)) },
-                    onPhotoClick = { url -> Analytics.track(AnalyticsEvent.SHOP_CONTENT_INTERACTED, "section" to "photos", "action" to "open"); onOpenPhotos(PhotoViewerImages(photos, fullscreenPhotos), photos.indexOf(url).coerceAtLeast(0)) },
+                    onPhotoClick = { url -> Analytics.track(AnalyticsEvent.SHOP_CONTENT_INTERACTED, "section" to "photos", "action" to "open"); onOpenPhotos(CoffeePeekPhotoViewerImages(photos, fullscreenPhotos), photos.indexOf(url).coerceAtLeast(0)) },
                     modifier = Modifier.hazeSource(heroHaze),
                 )
                 headerActions(heroHaze)
@@ -435,7 +435,7 @@ private fun ShopDetailContent(
             item {
                 MenuSection(
                     menu = menu,
-                    onPhotoClick = { index -> Analytics.track(AnalyticsEvent.SHOP_CONTENT_INTERACTED, "section" to "menu", "action" to "open"); onOpenPhotos(PhotoViewerImages(menu.photos.map { it.previewUrl }, menu.photos.map { it.fullUrl }), index) },
+                    onPhotoClick = { index -> Analytics.track(AnalyticsEvent.SHOP_CONTENT_INTERACTED, "section" to "menu", "action" to "open"); onOpenPhotos(CoffeePeekPhotoViewerImages(menu.photos.map { it.previewUrl }, menu.photos.map { it.fullUrl }), index) },
                     galleryAction = menuGalleryAction,
                 )
             }
@@ -1268,7 +1268,7 @@ private fun ReviewsSection(
     isLoggedIn: Boolean,
     currentUserId: String?,
     ownCheckInIds: Set<String>,
-    onReviewPhotoClick: (PhotoViewerImages, Int) -> Unit,
+    onReviewPhotoClick: (CoffeePeekPhotoViewerImages, Int) -> Unit,
     onReviewHelpfulClick: (String) -> Unit,
 ) {
     Column(

@@ -2,7 +2,11 @@
 
 package com.coffeepeek.feature.homecheckin.impl.ui.compose
 
-import androidx.compose.ui.backhandler.BackHandler
+import com.coffeepeek.core.designsystem.component.CoffeePeekBackHandler
+import org.jetbrains.compose.ui.tooling.preview.Preview
+import com.coffeepeek.feature.homecheckin.impl.resources.Res
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_close
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_note
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -11,7 +15,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import org.jetbrains.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -55,7 +58,7 @@ internal fun HomeCheckInDetailScreen(
     val visibleState = if (accessAllowed) state else HomeCheckInDetailState(isAccessRevoked = true)
     LaunchedEffect(visibleState.isDeleting) { currentDismissAllowed(!visibleState.isDeleting) }
     DisposableEffect(viewModel) { onDispose { currentDismissAllowed(true) } }
-    BackHandler(enabled = !visibleState.isClosed) {
+    CoffeePeekBackHandler(enabled = !visibleState.isClosed) {
         // Closing an already revoked destination is safe; private effects remain filtered above.
         if (visibleState.isAccessRevoked) currentEvent(HomeCheckInDetailEvent.Close)
         else viewModel.onAction(if (visibleState.showDeleteConfirmation) HomeCheckInDetailAction.CancelDelete else HomeCheckInDetailAction.Close)
@@ -125,6 +128,9 @@ internal fun previewHomePreparation() = HomePreparation(
     visibility = HomePreparationVisibility.Private, moderation = HomePreparationModeration.NotSubmitted,
 )
 
+@Preview @Composable private fun HomeCheckInDetailPreviewLight() = HomeCheckInDetailPreview(false)
+@Preview @Composable private fun HomeCheckInDetailPreviewDark() = HomeCheckInDetailPreview(true)
+
 @Composable private fun HomeCheckInDetailPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     Surface { HomeCheckInDetailScreenContent(HomeCheckInDetailState(entry = previewHomePreparation()), {},
         { _, _ -> "17.10.2026 · 10:30" }, { "Hario V60" }, { _, _, _, _ -> }) }
@@ -132,11 +138,17 @@ internal fun previewHomePreparation() = HomePreparation(
 @Preview @Composable private fun HomeCheckInDetailLightPreview() = HomeCheckInDetailPreview(false)
 @Preview @Composable private fun HomeCheckInDetailDarkPreview() = HomeCheckInDetailPreview(true)
 
+@Preview @Composable private fun HomeCheckInDetailLoadingPreviewLight() = HomeCheckInDetailLoadingPreview(false)
+@Preview @Composable private fun HomeCheckInDetailLoadingPreviewDark() = HomeCheckInDetailLoadingPreview(true)
+
 @Composable private fun HomeCheckInDetailLoadingPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     Surface { HomeCheckInDetailScreenContent(HomeCheckInDetailState(isLoading = true), {}, { date, _ -> date }, { it }, { _, _, _, _ -> }) }
 }
 @Preview @Composable private fun HomeCheckInDetailLoadingLightPreview() = HomeCheckInDetailLoadingPreview(false)
 @Preview @Composable private fun HomeCheckInDetailLoadingDarkPreview() = HomeCheckInDetailLoadingPreview(true)
+
+@Preview @Composable private fun HomeCheckInDetailPhotoVariantsPreviewLight() = HomeCheckInDetailPhotoVariantsPreview(false)
+@Preview @Composable private fun HomeCheckInDetailPhotoVariantsPreviewDark() = HomeCheckInDetailPhotoVariantsPreview(true)
 
 @Composable private fun HomeCheckInDetailPhotoVariantsPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     Surface { HomeCheckInDetailScreenContent(HomeCheckInDetailState(entry = previewHomePreparation().copy(
@@ -148,6 +160,9 @@ internal fun previewHomePreparation() = HomePreparation(
 }
 @Preview @Composable private fun HomeCheckInDetailPhotoVariantsLightPreview() = HomeCheckInDetailPhotoVariantsPreview(false)
 @Preview @Composable private fun HomeCheckInDetailPhotoVariantsDarkPreview() = HomeCheckInDetailPhotoVariantsPreview(true)
+
+@Preview @Composable private fun HomeCheckInDetailErrorPreviewLight() = HomeCheckInDetailErrorPreview(false)
+@Preview @Composable private fun HomeCheckInDetailErrorPreviewDark() = HomeCheckInDetailErrorPreview(true)
 
 @Composable private fun HomeCheckInDetailErrorPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     Surface { HomeCheckInDetailScreenContent(HomeCheckInDetailState(loadIssue = HomePreparationIssue.Offline), {},

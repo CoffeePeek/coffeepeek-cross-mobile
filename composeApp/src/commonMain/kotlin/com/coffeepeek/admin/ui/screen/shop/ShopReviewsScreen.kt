@@ -32,11 +32,11 @@ import com.coffeepeek.admin.theme.CpDimens
 import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.ui.component.CoffeePeekLoader
 import com.coffeepeek.admin.ui.component.CpTopBar
-import com.coffeepeek.admin.ui.component.FullScreenImageDialog
-import com.coffeepeek.admin.ui.component.PhotoViewerImages
+import com.coffeepeek.core.designsystem.component.CoffeePeekPhotoViewer
+import com.coffeepeek.core.designsystem.component.CoffeePeekPhotoViewerImages
 import com.coffeepeek.admin.ui.component.GuestAuthCard
 import com.coffeepeek.admin.ui.component.CheckInDisplayCard
-import com.coffeepeek.admin.utils.PrefetchListPhotos
+import com.coffeepeek.core.media.PrefetchListPhotos
 import org.koin.core.parameter.parametersOf
 
 @Composable
@@ -47,11 +47,11 @@ fun ShopReviewsScreen(shopId: String) {
     PrefetchListPhotos(listState, state.details?.checkIns.orEmpty()
         .take(if (state.isLoggedIn) Int.MAX_VALUE else 1)
         .map { it.id to it.photoThumbnailUrls.take(3) })
-    var preview by remember { mutableStateOf<Pair<PhotoViewerImages, Int>?>(null) }
+    var preview by remember { mutableStateOf<Pair<CoffeePeekPhotoViewerImages, Int>?>(null) }
     val authorVisibility by vm.authorVisibility.collectAsState()
     androidx.compose.runtime.LaunchedEffect(authorVisibility.revision, state.isLoggedIn) { preview = null }
     preview?.let { (urls, index) ->
-        FullScreenImageDialog(images = urls, initialIndex = index, onDismiss = { preview = null })
+        CoffeePeekPhotoViewer(images = urls, initialIndex = index, onDismiss = { preview = null })
     }
     Scaffold(topBar = { CpTopBar(title = "Чекины") }) { padding ->
         val details = state.details

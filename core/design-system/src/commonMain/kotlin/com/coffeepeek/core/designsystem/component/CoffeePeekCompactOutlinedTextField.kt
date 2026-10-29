@@ -2,6 +2,8 @@ package com.coffeepeek.core.designsystem.component
 
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.text.BasicTextField
@@ -20,14 +22,20 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.takeOrElse
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.semantics.error
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.VisualTransformation
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.ui.tooling.preview.Preview
+
+private val NumericKeyboards = listOf(KeyboardType.Number, KeyboardType.Decimal, KeyboardType.NumberPassword, KeyboardType.Phone)
 
 /**
  * Single-line outlined field that can stay at [CoffeePeekDimens.controlHeight].
@@ -57,6 +65,7 @@ fun CoffeePeekCompactOutlinedTextField(
     shape: androidx.compose.ui.graphics.Shape = OutlinedTextFieldDefaults.shape,
     colors: TextFieldColors = OutlinedTextFieldDefaults.colors(),
     contentPadding: PaddingValues = CoffeePeekDimens.singleLineFieldContentPadding,
+    inputRole: CoffeePeekInputRole = CoffeePeekInputRole.Default,
 ) {
     require(!isError || !errorDescription.isNullOrBlank()) {
         "Error fields require a localized error description"
@@ -72,6 +81,13 @@ fun CoffeePeekCompactOutlinedTextField(
         }
     }
     val cursorColor = if (isError) colors.errorCursorColor else colors.cursorColor
+    val keyboard = LocalCoffeePeekKeyboardPresenter.current
+    val focusManager = LocalFocusManager.current
+    val softwareKeyboard = LocalSoftwareKeyboardController.current
+    keyboard?.DoneAccessory(
+        focused && WindowInsets.ime.getBottom(LocalDensity.current) > 0 &&
+            keyboardOptions.keyboardType in NumericKeyboards,
+    ) { focusManager.clearFocus(force = true); softwareKeyboard?.hide() }
 
     CompositionLocalProvider(LocalTextSelectionColors provides colors.textSelectionColors) {
         BasicTextField(
@@ -85,7 +101,7 @@ fun CoffeePeekCompactOutlinedTextField(
             textStyle = textStyle.merge(TextStyle(color = textColor)),
             cursorBrush = SolidColor(cursorColor),
             visualTransformation = visualTransformation,
-            keyboardOptions = keyboardOptions,
+            keyboardOptions = keyboard?.textInputOptions(keyboardOptions, inputRole) ?: keyboardOptions,
             keyboardActions = keyboardActions,
             interactionSource = interactionSource,
             singleLine = singleLine,

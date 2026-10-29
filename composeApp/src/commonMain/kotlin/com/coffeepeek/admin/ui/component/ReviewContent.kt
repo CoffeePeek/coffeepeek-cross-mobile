@@ -1,5 +1,7 @@
 package com.coffeepeek.admin.ui.component
 
+import com.coffeepeek.core.designsystem.component.CoffeePeekPhotoViewerImages
+
 import com.coffeepeek.core.datetime.parseServerInstant
 import com.coffeepeek.core.designsystem.component.CoffeePeekLikeIcon
 
@@ -80,7 +82,7 @@ import coffeepeek.composeapp.generated.resources.checkin_rating_service
 import com.coffeepeek.admin.theme.CpColor
 import com.coffeepeek.admin.theme.CpDimens
 import com.coffeepeek.admin.ui.icons.CpIcons
-import com.coffeepeek.admin.utils.CpImage
+import com.coffeepeek.core.designsystem.component.CoffeePeekImage
 import com.coffeepeek.domain.model.CheckIn
 import com.coffeepeek.domain.model.CheckInVisibility
 import com.coffeepeek.domain.model.Review
@@ -306,7 +308,7 @@ internal fun CheckInCard(
 fun ReviewDisplayCard(
     review: Review,
     modifier: Modifier = Modifier,
-    onPhotoClick: ((PhotoViewerImages, Int) -> Unit)? = null,
+    onPhotoClick: ((CoffeePeekPhotoViewerImages, Int) -> Unit)? = null,
     onEditClick: (() -> Unit)? = null,
     onReportClick: (() -> Unit)? = null,
     onHelpfulClick: (() -> Unit)? = null,
@@ -359,7 +361,7 @@ fun CheckInDisplayCard(
     modifier: Modifier = Modifier,
     showShopName: Boolean = true,
     onClick: (() -> Unit)? = null,
-    onPhotoClick: ((PhotoViewerImages, Int) -> Unit)? = null,
+    onPhotoClick: ((CoffeePeekPhotoViewerImages, Int) -> Unit)? = null,
     onHelpfulClick: (() -> Unit)? = null,
     onReportClick: (() -> Unit)? = null,
     isOwn: Boolean = true,
@@ -539,18 +541,8 @@ private fun ReviewHeader(
 
 @Composable
 internal fun ReviewAvatar(username: String, photoUrl: String?) {
-    val avatarModifier = Modifier.size(44.dp).clip(CircleShape)
-    Box(
-        modifier = avatarModifier.background(CpColor.GoldWarmSoft),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(
-            text = username.trim().firstOrNull()?.uppercase() ?: "?",
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.SemiBold,
-            color = CpColor.LightTextPrimary,
-        )
-        if (photoUrl != null) CpImage(data = photoUrl, modifier = avatarModifier)
+    com.coffeepeek.core.designsystem.component.CoffeePeekAvatar(username) { modifier ->
+        if (photoUrl != null) CoffeePeekImage(data = photoUrl, modifier = modifier)
     }
 }
 
@@ -689,7 +681,7 @@ fun ReviewPhotoStrip(
     thumbnailUrls: List<String> = photoUrls,
     singlePhotoAspectRatio: Float = 4f / 3f,
     originalUrls: List<String> = photoUrls,
-    onPhotoClick: ((PhotoViewerImages, Int) -> Unit)? = null,
+    onPhotoClick: ((CoffeePeekPhotoViewerImages, Int) -> Unit)? = null,
 ) {
     if (photoUrls.isEmpty()) return
     @Composable
@@ -697,7 +689,7 @@ fun ReviewPhotoStrip(
         Box(
             photoModifier.clip(RoundedCornerShape(CpDimens.radiusMd))
                 .then(if (onPhotoClick != null) Modifier.clickable(role = Role.Button) {
-                    onPhotoClick(PhotoViewerImages(
+                    onPhotoClick(CoffeePeekPhotoViewerImages(
                         photoUrls.mapIndexed { i, url -> thumbnailUrls.getOrNull(i) ?: url }, originalUrls,
                     ), index)
                 } else Modifier)
@@ -705,7 +697,7 @@ fun ReviewPhotoStrip(
                     contentDescription = "Фотография ${index + 1} из ${photoUrls.size}"
                 },
         ) {
-            CpImage(
+            CoffeePeekImage(
                 data = thumbnailUrls.getOrNull(index) ?: photoUrls[index],
                 highQualityData = photoUrls[index].takeIf(String::isNotBlank),
                 contentScale = ContentScale.Crop,

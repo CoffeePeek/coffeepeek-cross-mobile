@@ -22,7 +22,7 @@ import com.coffeepeek.feature.profile.domain.PublicProfileConnectionKind
 import com.coffeepeek.admin.ui.component.CoffeePeekLoader
 import com.coffeepeek.admin.ui.component.SwipeDismissModalBottomSheet
 import com.coffeepeek.admin.ui.icons.CpIcons
-import com.coffeepeek.admin.utils.CpImage
+import com.coffeepeek.core.designsystem.component.CoffeePeekImage
 
 @Composable
 internal fun PublicProfileConnectionsSheet(
@@ -64,7 +64,7 @@ internal fun PublicProfileConnectionsSheet(
                         contentAlignment = Alignment.Center,
                     ) {
                         Text(user.userName.trimStart('@').take(1).uppercase().ifBlank { "?" }, style = MaterialTheme.typography.titleMedium)
-                        user.avatarUrl?.takeIf(String::isNotBlank)?.let { CpImage(it, modifier = Modifier.fillMaxSize()) }
+                        user.avatarUrl?.takeIf(String::isNotBlank)?.let { CoffeePeekImage(it, modifier = Modifier.fillMaxSize()) }
                     }
                     Text(
                         "@${user.userName.trimStart('@')}", Modifier.weight(1f),

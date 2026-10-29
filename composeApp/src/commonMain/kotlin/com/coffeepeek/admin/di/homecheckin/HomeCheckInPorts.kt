@@ -12,7 +12,7 @@ import com.coffeepeek.feature.homecheckin.impl.ui.data.*
 import kotlinx.coroutines.CancellationException
 
 /** Current catalogue implementation stays app-owned; late/revoked results never escape its lease. */
-internal class HomeCheckInAppCatalog(
+internal class AppHomeCheckInCatalog(
     private val lease: CheckInHistorySession,
     private val picker: CoffeePicker,
     private val methods: BrewMethodCatalog,
@@ -47,7 +47,7 @@ private fun <T> Result<T>.homeCatalogResult(): Result<T> = fold({ Result.success
 })
 
 /** Guards the prepared repository without routing writes back to the legacy Home writer. */
-internal class HomeCheckInAppRepository(
+internal class AppHomeCheckInRepository(
     private val lease: CheckInHistorySession,
     private val source: HomePreparationRepository,
 ) : HomePreparationRepository {

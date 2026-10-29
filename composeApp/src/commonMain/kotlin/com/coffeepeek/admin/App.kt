@@ -18,6 +18,7 @@ import com.coffeepeek.admin.theme.platformSystemDarkTheme
 import com.coffeepeek.admin.theme.ThemeManager
 import com.coffeepeek.admin.theme.ThemeMode
 import com.coffeepeek.admin.ui.Navigator
+import com.coffeepeek.admin.ui.component.ProvideDesignSystemPlatformHooks
 import com.coffeepeek.admin.ui.component.dismissKeyboardOnBackgroundGestures
 import com.coffeepeek.admin.utils.OrientationObserver
 import io.kamel.core.config.KamelConfig
@@ -36,7 +37,7 @@ fun App(onReady: () -> Unit = {}) {
         Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).dismissKeyboardOnBackgroundGestures()) {
             OrientationObserver.StartObserver()
             Navigator()
-            com.coffeepeek.admin.feature.authorblocking.ui.AuthorBlockingHost()
+            com.coffeepeek.admin.di.authorblocking.AuthorBlockingRootHost()
             koinInject<com.coffeepeek.admin.feature.appupdate.ui.AppUpdateRenderer>().Prompt()
             com.coffeepeek.admin.analytics.AnalyticsPrivacy()
         }
@@ -71,7 +72,7 @@ internal fun AppContent(content: @Composable () -> Unit) {
             com.coffeepeek.feature.ownership.api.LocalBusinessOwnership provides koinInject<com.coffeepeek.feature.ownership.api.BusinessOwnershipEntry>(),
             LocalContentColor provides MaterialTheme.colorScheme.onBackground,
         ) {
-            content()
+            ProvideDesignSystemPlatformHooks { com.coffeepeek.admin.di.media.ProvideImageEnvironment(content) }
         }
     }
 }

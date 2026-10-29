@@ -23,6 +23,7 @@ import com.coffeepeek.admin.ui.screen.main.DiscoveryScreenRenderer
 import com.coffeepeek.admin.ui.screen.main.CheckInTabContent
 import com.coffeepeek.admin.ui.screen.profile.OwnProfileScreenRenderer
 import com.coffeepeek.admin.ui.screen.profile.SettingsScreen
+import com.coffeepeek.admin.ui.screen.profile.SettingsScreenRenderer
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
@@ -175,7 +176,7 @@ internal actual fun PlatformRootNavigation(
                         notificationsAction = { koinInject<com.coffeepeek.admin.feature.notifications.ui.NotificationsRenderer>().Bell() },
                     )
                     3 -> koinInject<OwnProfileScreenRenderer>().Content()
-                    4 -> SettingsScreen()
+                    4 -> koinInject<SettingsScreenRenderer>().Tab()
                     5 -> koinInject<com.coffeepeek.feature.ownership.api.BusinessOwnershipEntry>().Tab()
                 }
             }

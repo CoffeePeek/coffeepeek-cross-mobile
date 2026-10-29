@@ -5,11 +5,11 @@ import androidx.compose.ui.unit.dp
 import com.coffeepeek.admin.analytics.CheckInSource
 import com.coffeepeek.admin.di.shelf.ShelfHomeCheckInBags
 import com.coffeepeek.admin.analytics.CheckInTracker
-import com.coffeepeek.admin.di.homecheckin.HomeCheckInAppRepository
-import com.coffeepeek.admin.di.homecheckin.homeCheckInEditor
+import com.coffeepeek.admin.di.homecheckin.AppHomeCheckInRepository
+import com.coffeepeek.admin.di.homecheckin.appHomeCheckInEditor
 import com.coffeepeek.admin.feature.catalog.api.BrewMethodCatalog
 import com.coffeepeek.feature.coffee.api.CoffeePicker
-import com.coffeepeek.admin.utils.CpImage
+import com.coffeepeek.core.designsystem.component.CoffeePeekImage
 import com.coffeepeek.feature.homecheckin.api.HomeCheckInDetailEntry
 import com.coffeepeek.feature.homecheckin.api.HomeCheckInEditorEntry
 import com.coffeepeek.feature.homecheckin.domain.repository.HomePreparationRepository
@@ -26,10 +26,10 @@ internal fun historyHomeEditorFactory(repository: HomePreparationRepository, pic
     methods: BrewMethodCatalog, shelfBags: ShelfHomeCheckInBags? = null,
 ) = HistoryHomeEditorFactory { lease, tracker ->
     HistoryHomeEntries(
-        createHomeCheckInDetailEntry(HomeCheckInAppRepository(lease, repository),
+        createHomeCheckInDetailEntry(AppHomeCheckInRepository(lease, repository),
             { lease.isLoggedIn && lease.isCurrent() }) { url, description, modifier, _ ->
-            CpImage(url, contentDescription = description, modifier = modifier, contentScale = ContentScale.Crop)
+            CoffeePeekImage(url, contentDescription = description, modifier = modifier, contentScale = ContentScale.Crop)
         },
-        homeCheckInEditor(lease, repository, picker, methods, CheckInSource.Diary, tracker, shelfBags),
+        appHomeCheckInEditor(lease, repository, picker, methods, CheckInSource.Diary, tracker, shelfBags),
     )
 }

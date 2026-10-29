@@ -9,7 +9,7 @@ import coffeepeek.composeapp.generated.resources.Res
 import coffeepeek.composeapp.generated.resources.history_home_close
 import coffeepeek.composeapp.generated.resources.history_home_visibility_unconfirmed
 import com.coffeepeek.admin.analytics.AnalyticsOverlay
-import com.coffeepeek.admin.di.homecheckin.homeCheckInDates
+import com.coffeepeek.admin.di.homecheckin.appHomeCheckInDates
 import com.coffeepeek.admin.utils.utcIsoToLocalDateTime
 import com.coffeepeek.core.designsystem.component.CoffeePeekSwipeDismissModalBottomSheet
 import org.jetbrains.compose.resources.stringResource
@@ -21,7 +21,7 @@ internal fun HistoryHomeOverlay(bridge: HistoryHomeBridge, session: HistoryHostS
     val destination by bridge.destination.collectAsStateWithLifecycle()
     destination?.let { current -> key(current) {
         val dismissAllowed by current.dismissAllowed.collectAsStateWithLifecycle()
-        val dates = remember { homeCheckInDates() }
+        val dates = remember { appHomeCheckInDates() }
         val allowed = session.lease.isLoggedIn && session.lease.isCurrent()
         CompositionLocalProvider(LocalViewModelStoreOwner provides current) {
             AnalyticsOverlay {

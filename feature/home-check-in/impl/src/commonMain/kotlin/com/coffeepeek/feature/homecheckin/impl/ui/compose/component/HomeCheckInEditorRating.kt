@@ -1,6 +1,10 @@
 package com.coffeepeek.feature.homecheckin.impl.ui.compose.component
 
 import androidx.compose.foundation.background
+import org.jetbrains.compose.ui.tooling.preview.Preview
+import com.coffeepeek.feature.homecheckin.impl.resources.Res
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_choose_rating
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_taste_question
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -11,7 +15,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import org.jetbrains.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.component.CoffeePeekRating

@@ -1,6 +1,16 @@
 package com.coffeepeek.feature.homecheckin.impl.ui.compose.component
 
 import androidx.compose.foundation.background
+import org.jetbrains.compose.ui.tooling.preview.Preview
+import com.coffeepeek.feature.homecheckin.impl.resources.Res
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_dose
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_duration
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_grams
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_hours
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_method
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_minutes
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_seconds
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_unspecified
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -9,7 +19,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import org.jetbrains.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme

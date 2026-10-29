@@ -1,5 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string-array name="history_weekday_names"><item>Понедельник</item><item>Вторник</item><item>Среда</item><item>Четверг</item><item>Пятница</item><item>Суббота</item><item>Воскресенье</item></string-array>
+    <string name="history_activity_loading">Загрузка активности…</string>
+    <string name="history_activity_failed">Не удалось загрузить активность</string>
+    <string name="history_activity_open">Открыть чекины</string>
+    <string name="history_activity_day">%1$s: %2$s</string>
+    <string name="history_activity_empty_day">В этот день чекинов не было</string>
+    <string name="history_activity_day_summary">%1$s · %2$s</string>
+    <string name="history_activity_at_home">Дома</string>
     <string name="history_calendar_more_visits">+%1$d</string>
     <string name="history_title">Чекины</string>
     <string name="history_back">Назад</string>
@@ -29,6 +37,8 @@
     <string name="history_waiting_publication">Ожидает публикации</string>
     <string name="history_public">Публичный</string>
     <string name="history_dose">%1$s г</string>
+    <string name="history_seconds">%1$d с</string>
+    <string name="history_recipe_separator"> · </string>
     <string name="history_taste">%1$d/5</string>
     <string name="history_details_separator">%1$s · %2$s</string>
     <string name="history_shop_calendar_error">Не удалось загрузить календарь посещений кофеен</string>

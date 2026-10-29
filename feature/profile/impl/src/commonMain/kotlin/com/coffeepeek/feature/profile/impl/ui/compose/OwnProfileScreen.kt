@@ -1,6 +1,14 @@
 package com.coffeepeek.feature.profile.impl.ui.compose
 
 import androidx.compose.foundation.layout.Arrangement
+import com.coffeepeek.feature.profile.impl.resources.Res
+import com.coffeepeek.feature.profile.impl.resources.profile_cancel
+import com.coffeepeek.feature.profile.impl.resources.profile_logout_message
+import com.coffeepeek.feature.profile.impl.resources.profile_logout_title
+import com.coffeepeek.feature.profile.impl.resources.profile_menu_logout
+import com.coffeepeek.feature.profile.impl.resources.profile_own_check_ins
+import com.coffeepeek.feature.profile.impl.resources.profile_own_favorites
+import com.coffeepeek.feature.profile.impl.resources.profile_title
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -13,7 +21,8 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
+import com.coffeepeek.core.designsystem.component.CoffeePeekScaffold as Scaffold
+import com.coffeepeek.core.designsystem.component.CoffeePeekScrollableColumn
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -126,8 +135,8 @@ internal fun OwnProfileScreen(
                 state.error != null && !state.hasContent -> Box(Modifier.fillMaxSize().padding(16.dp), contentAlignment = Alignment.Center) {
                     slots.loadError { vm.onAction(OwnProfileAction.Refresh) }
                 }
-                profile != null -> Column(
-                    Modifier.fillMaxWidth().verticalScroll(rememberScrollState()),
+                profile != null -> CoffeePeekScrollableColumn(
+                    Modifier.fillMaxWidth(),
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
                     Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {

@@ -41,8 +41,8 @@ import com.coffeepeek.admin.theme.CpDimens
 import com.coffeepeek.admin.ui.component.CoffeePeekLoader
 import com.coffeepeek.admin.ui.component.CoffeeShopImage
 import com.coffeepeek.admin.ui.component.CpTopBar
-import com.coffeepeek.admin.ui.component.FullScreenImageDialog
-import com.coffeepeek.admin.utils.PrefetchListPhotos
+import com.coffeepeek.core.designsystem.component.CoffeePeekPhotoViewer
+import com.coffeepeek.core.media.PrefetchListPhotos
 import org.koin.core.parameter.parametersOf
 
 @Composable
@@ -56,7 +56,7 @@ fun ShopMenuGalleryScreen(shopId: String) {
     var previewIndex by remember { mutableStateOf<Int?>(null) }
 
     previewIndex?.let { index ->
-        FullScreenImageDialog(
+        CoffeePeekPhotoViewer(
             imageUrls = state.photos.map { it.fullUrl },
             initialIndex = index,
             onDismiss = { previewIndex = null },

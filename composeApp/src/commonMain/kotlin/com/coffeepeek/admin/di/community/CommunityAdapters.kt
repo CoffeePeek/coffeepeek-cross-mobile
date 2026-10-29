@@ -11,7 +11,7 @@ import com.coffeepeek.admin.analytics.safeAnalyticsError
 import com.coffeepeek.core.session.Session
 import com.coffeepeek.core.session.SessionReader
 import com.coffeepeek.domain.repository.ShopRepository
-import com.coffeepeek.domain.repository.UserRepository
+import com.coffeepeek.feature.profile.api.ProfileAccountPort
 import com.coffeepeek.feature.community.api.CommunityAccount
 import com.coffeepeek.feature.community.api.CommunityAnalytics
 import com.coffeepeek.feature.community.api.ConsumedDrinks
@@ -25,11 +25,11 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
 /** The account key is the user id (else the token) of an active session, null for a guest — the key the legacy feed used. */
-class SessionCommunityAccount(private val sessions: SessionReader, private val users: UserRepository) : CommunityAccount {
+class SessionCommunityAccount(private val sessions: SessionReader, private val accounts: ProfileAccountPort) : CommunityAccount {
     private fun key(session: Session?): String? = if (session != null && sessions.isActiveSession(session)) session.userId ?: session.accessToken else null
     override val accountKey: Flow<String?> = sessions.observeSession().map(::key)
     override fun currentAccountKey(): String? = key(sessions.peekSession())
-    override suspend fun ownAuthorSlug(): Result<String?> = users.refreshProfile().map { it.address?.slug?.takeIf(String::isNotBlank) }
+    override suspend fun ownAuthorSlug(): Result<String?> = accounts.loadOwnProfile(forceRefresh = true).map { it.address?.slug?.takeIf(String::isNotBlank) }
 }
 
 class ShopCommunityDrinks(private val shops: ShopRepository) : ConsumedDrinks {

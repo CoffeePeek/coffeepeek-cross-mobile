@@ -163,6 +163,8 @@ internal class NativeScreenController(
                     ),
                 ) {
                     content()
+                    // Native tabs keep multiple controllers alive; only the visible one presents prompts.
+                    if (analyticsVisible) com.coffeepeek.admin.di.authorblocking.AuthorBlockingRootHost()
                 }
             }
         }

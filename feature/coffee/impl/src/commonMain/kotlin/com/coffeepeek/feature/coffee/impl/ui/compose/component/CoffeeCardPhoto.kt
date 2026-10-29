@@ -1,6 +1,9 @@
 package com.coffeepeek.feature.coffee.impl.ui.compose.component
 
 import androidx.compose.foundation.background
+import org.jetbrains.compose.ui.tooling.preview.Preview
+import com.coffeepeek.feature.coffee.impl.resources.Res
+import com.coffeepeek.feature.coffee.impl.resources.coffee_photo_missing
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
@@ -16,7 +19,6 @@ import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
-import org.jetbrains.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.component.CoffeePeekImagePlaceholder
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens

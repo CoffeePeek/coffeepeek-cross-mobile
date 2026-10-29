@@ -1,6 +1,12 @@
 package com.coffeepeek.feature.coffee.impl.ui.compose.component
 
 import androidx.compose.foundation.BorderStroke
+import org.jetbrains.compose.ui.tooling.preview.Preview
+import com.coffeepeek.feature.coffee.impl.resources.Res
+import com.coffeepeek.feature.coffee.impl.resources.coffee_clear_search
+import com.coffeepeek.feature.coffee.impl.resources.coffee_filters
+import com.coffeepeek.feature.coffee.impl.resources.coffee_filters_count
+import com.coffeepeek.feature.coffee.impl.resources.coffee_search
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -10,7 +16,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import org.jetbrains.compose.resources.stringResource
-import org.jetbrains.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.component.CoffeePeekSearchField
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons

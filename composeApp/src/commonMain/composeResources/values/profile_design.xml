@@ -30,4 +30,10 @@
     <string name="profile_checkins_error">Не удалось загрузить чекины</string>
     <string name="profile_checkins_empty">Пока нет чекинов</string>
     <string name="profile_checkins_more">Загрузить ещё</string>
+    <plurals name="profile_week_count">
+        <item quantity="one">%1$d чекин</item>
+        <item quantity="few">%1$d чекина</item>
+        <item quantity="many">%1$d чекинов</item>
+        <item quantity="other">%1$d чекинов</item>
+    </plurals>
 </resources>

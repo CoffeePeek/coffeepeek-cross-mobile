@@ -23,7 +23,7 @@ import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.ui.component.LocalFloatingNavClearance
 import com.coffeepeek.admin.ui.screen.checkins.CheckInCreateButton
 import com.coffeepeek.admin.ui.screen.checkins.CheckInCreateFlow
-import com.coffeepeek.domain.repository.SessionRepository
+import com.coffeepeek.core.session.SessionReader
 import org.koin.compose.koinInject
 
 /** Wires tab content to the shared check-in flow in both platform navigation hosts. */
@@ -32,7 +32,7 @@ internal fun CheckInTabContent(
     showCreateButton: Boolean = true,
     content: @Composable BoxScope.() -> Unit,
 ) {
-    val sessions: SessionRepository = koinInject()
+    val sessions: SessionReader = koinInject()
     val session by remember(sessions) { sessions.observeSession() }.collectAsState(sessions.peekSession())
     var showCreate by androidx.compose.runtime.saveable.rememberSaveable(session?.userId ?: session?.accessToken) { mutableStateOf(false) }
     val clearance = LocalFloatingNavClearance.current

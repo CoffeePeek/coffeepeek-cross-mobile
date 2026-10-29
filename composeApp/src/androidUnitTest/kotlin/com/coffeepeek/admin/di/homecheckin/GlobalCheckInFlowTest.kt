@@ -115,7 +115,7 @@ class GlobalCheckInFlowTest {
         val f = fixture(accepted = true)
         f.model.home()
         val tracker = assertNotNull(f.handoffs.single())
-        val adapter = HomeCheckInTrackerAnalytics(f.model::canAccess, false, CheckInSource.Global, tracker)
+        val adapter = AppHomeCheckInAnalytics(f.model::canAccess, false, CheckInSource.Global, tracker)
         adapter.record(com.coffeepeek.feature.homecheckin.impl.ui.data.HomeCheckInEditorMetric.Opened)
         tracker.submit(); tracker.saved("Private", false)
         f.model.saved(f.model.homeDestination(), "created")

@@ -1,13 +1,13 @@
 package com.coffeepeek.feature.checkinhistory.impl.ui.compose.component
 
 import androidx.compose.foundation.layout.*
+import org.jetbrains.compose.ui.tooling.preview.Preview
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import org.jetbrains.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.component.CoffeePeekSwipeDismissModalBottomSheet
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme

@@ -27,6 +27,7 @@ import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -56,6 +57,8 @@ data class CoffeePeekMenuAction(
     val label: String,
     val icon: ImageVector,
     val destructive: Boolean = false,
+    /** The glyph a native menu draws for this row; none draws the row without one. */
+    val nativeIcon: CoffeePeekMenuIcon? = null,
     val onClick: () -> Unit,
 )
 
@@ -63,9 +66,21 @@ data class CoffeePeekMenuAction(
 fun CoffeePeekActionMenu(
     actions: List<CoffeePeekMenuAction>,
     modifier: Modifier = Modifier,
+    /** The accessibility label of the trigger when a native menu replaces the popup. */
+    menuDescription: String = "",
+    enabled: Boolean = true,
     content: @Composable (open: () -> Unit) -> Unit,
 ) {
+    val native = LocalCoffeePeekNativeControlsPresenter.current
+    if (native != null && native.Menu(
+            actions.mapIndexed { index, action ->
+                CoffeePeekNativeMenuItem(index.toString(), action.label, action.nativeIcon, action.destructive, action.onClick)
+            },
+            menuDescription, modifier, enabled, content,
+        )
+    ) return
     val expanded = remember { MutableTransitionState(false) }
+    LaunchedEffect(enabled) { if (!enabled) expanded.targetState = false }
     val margin = with(LocalDensity.current) { CoffeePeekDimens.spacing2.roundToPx() }
     val origin = remember { MenuOrigin() }
     val position = remember(margin) { object : PopupPositionProvider {
@@ -76,10 +91,10 @@ fun CoffeePeekActionMenu(
             }
     } }
     Box(modifier) {
-        content { expanded.targetState = true }
+        content { if (enabled) expanded.targetState = true }
         if (expanded.currentState || expanded.targetState) Popup(position, onDismissRequest = { expanded.targetState = false }, properties = PopupProperties(focusable = true)) {
             CoffeePeekActionMenuContent(actions, Modifier.menuAppearance(expanded, origin)) {
-                if (expanded.targetState) {
+                if (enabled && expanded.targetState) {
                     expanded.targetState = false
                     it.onClick()
                 }

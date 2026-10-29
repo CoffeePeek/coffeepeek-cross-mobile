@@ -1,6 +1,7 @@
 package com.coffeepeek.feature.checkinhistory.impl.ui.compose.component
 
 import androidx.compose.foundation.layout.*
+import org.jetbrains.compose.ui.tooling.preview.Preview
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -9,9 +10,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
-import org.jetbrains.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.coffeepeek.core.designsystem.component.coffeePeekScrollContentPadding
 import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
+import com.coffeepeek.core.designsystem.component.CoffeePeekTimelineRail
 import com.coffeepeek.core.designsystem.component.CoffeePeekPullToRefresh
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.checkinhistory.impl.resources.*
@@ -22,13 +24,14 @@ import org.jetbrains.compose.resources.stringResource
 
 @Composable
 internal fun HistoryTimelineContent(state: CombinedHistoryState, onAction: (CombinedHistoryAction) -> Unit,
-    formatTime: (String) -> String, modifier: Modifier = Modifier, imageContent: HistoryImageContent? = null) {
+    formatTime: (String) -> String, modifier: Modifier = Modifier, imageContent: HistoryImageContent? = null,
+    formatDate: (String) -> String = { it }) {
     val listState = rememberLazyListState()
     val entries = state.timeline
     CoffeePeekPullToRefresh(listState, state.isRefreshing, { onAction(CombinedHistoryAction.Refresh) },
         stringResource(Res.string.history_refresh), stringResource(Res.string.history_loading), modifier.fillMaxSize()) { scroll ->
         LazyColumn(state = listState, modifier = scroll.fillMaxSize(),
-            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 96.dp)) {
+            contentPadding = coffeePeekScrollContentPadding(PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = 96.dp))) {
             item("calendar") { HistoryCalendarCard(state, onAction, imageContent = imageContent) }
             if (state.isTimelineLoading && entries.isEmpty()) item("initial-loading") {
                 Box(Modifier.fillMaxWidth().height(90.dp), contentAlignment = Alignment.Center) {
@@ -54,14 +57,14 @@ internal fun HistoryTimelineContent(state: CombinedHistoryState, onAction: (Comb
                     if (first) Text(historyDateTitle(item.date, item.date.take(4) != state.today.take(4)),
                         style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold,
                         modifier = Modifier.padding(top = 24.dp, bottom = 12.dp))
-                    HistoryTimelineRail(item is HistoryTimelineItem.Home, first, last) {
+                    CoffeePeekTimelineRail(item is HistoryTimelineItem.Home, first, last) {
                         when (item) {
-                            is HistoryTimelineItem.Shop -> HistoryShopTimelineCard(item.entry, formatTime(item.timestamp)) {
-                                onAction(CombinedHistoryAction.OpenEntry(item.key))
-                            }
-                            is HistoryTimelineItem.Home -> HistoryHomeTimelineCard(item.entry, formatTime(item.timestamp)) {
-                                onAction(CombinedHistoryAction.OpenEntry(item.key))
-                            }
+                            is HistoryTimelineItem.Shop -> HistoryShopTimelineCard(item.entry, formatDate(item.timestamp),
+                                { onAction(CombinedHistoryAction.OpenEntry(item.key)) },
+                                { onAction(CombinedHistoryAction.OpenEntryPhoto(item.key, it)) }, imageContent)
+                            is HistoryTimelineItem.Home -> HistoryHomeTimelineCard(item.entry, formatDate(item.timestamp),
+                                { onAction(CombinedHistoryAction.OpenEntry(item.key)) },
+                                { onAction(CombinedHistoryAction.OpenEntryPhoto(item.key, it)) }, imageContent)
                         }
                     }
                 }
@@ -103,17 +106,26 @@ internal fun HistoryTimelineContent(state: CombinedHistoryState, onAction: (Comb
     }
 }
 
+@Preview @Composable private fun HistoryTimelinePreviewLight() = HistoryTimelinePreview(false)
+@Preview @Composable private fun HistoryTimelinePreviewDark() = HistoryTimelinePreview(true)
+
 @Composable private fun HistoryTimelinePreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     HistoryTimelineContent(previewCombinedHistoryState(), {}, { "13:00" })
 }
 @Preview @Composable private fun HistoryTimelineLightPreview() = HistoryTimelinePreview(false)
 @Preview @Composable private fun HistoryTimelineDarkPreview() = HistoryTimelinePreview(true)
 
+@Preview @Composable private fun HistoryTimelineLoadingPreviewLight() = HistoryTimelineLoadingPreview(false)
+@Preview @Composable private fun HistoryTimelineLoadingPreviewDark() = HistoryTimelineLoadingPreview(true)
+
 @Composable private fun HistoryTimelineLoadingPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     HistoryTimelineContent(previewCombinedHistoryState().copy(homeCalendar = CombinedHistoryLoadState(emptyMap(), isLoading = true)), {}, { "13:00" })
 }
 @Preview @Composable private fun HistoryTimelineLoadingLightPreview() = HistoryTimelineLoadingPreview(false)
 @Preview @Composable private fun HistoryTimelineLoadingDarkPreview() = HistoryTimelineLoadingPreview(true)
+
+@Preview @Composable private fun HistoryTimelineRefreshingPreviewLight() = HistoryTimelineRefreshingPreview(false)
+@Preview @Composable private fun HistoryTimelineRefreshingPreviewDark() = HistoryTimelineRefreshingPreview(true)
 
 @Composable private fun HistoryTimelineRefreshingPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     HistoryTimelineContent(previewCombinedHistoryState().copy(isRefreshing = true), {}, { "13:00" })

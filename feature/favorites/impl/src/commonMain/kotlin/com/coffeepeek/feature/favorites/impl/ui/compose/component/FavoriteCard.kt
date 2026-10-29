@@ -56,9 +56,10 @@ internal fun FavoriteCard(
     distance: String?,
     onOpen: () -> Unit,
     onRemove: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth().clickable(enabled = !shop.publicSlug.isNullOrBlank(), role = Role.Button, onClick = onOpen),
+        modifier = modifier.fillMaxWidth().clickable(enabled = !shop.publicSlug.isNullOrBlank(), role = Role.Button, onClick = onOpen),
         shape = RoundedCornerShape(CoffeePeekDimens.radiusXl),
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),

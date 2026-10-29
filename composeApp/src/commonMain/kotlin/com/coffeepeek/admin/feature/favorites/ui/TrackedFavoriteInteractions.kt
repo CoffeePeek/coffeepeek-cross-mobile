@@ -3,7 +3,7 @@ package com.coffeepeek.admin.feature.favorites.ui
 import com.coffeepeek.admin.analytics.*
 import com.coffeepeek.admin.feature.favorites.api.FavoriteInteractions
 import com.coffeepeek.admin.ui.Navigator
-import com.coffeepeek.domain.repository.SessionRepository
+import com.coffeepeek.core.session.SessionReader
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.catch
 import kotlin.time.TimeSource
 
 internal class TrackedFavoriteInteractions(
-    private val sessions: SessionRepository,
+    private val sessions: SessionReader,
     private val scope: CoroutineScope,
     private val openAuthentication: () -> Unit = { Navigator.navigate(Navigator.Screen.Auth) },
 ) : FavoriteInteractions {
@@ -33,6 +33,15 @@ internal class TrackedFavoriteInteractions(
             }
         }
     }
+    private suspend fun authenticated(pendingKey: String): Boolean = try {
+        sessions.isActiveSession(sessions.getSession())
+    } catch (cancelled: CancellationException) {
+        withContext(NonCancellable) { lock.withLock { pending.remove(pendingKey) } }
+        throw cancelled
+    } catch (_: Exception) {
+        false
+    }
+
     private fun accountKey(): String? = sessions.peekSession()?.takeIf(sessions::isActiveSession)?.let { it.userId ?: it.accessToken }
     override fun change(key: String, roaster: Boolean, desired: Boolean, action: suspend () -> Result<Unit>, completed: suspend (Result<Unit>) -> Unit) {
         scope.launch {
@@ -66,7 +75,7 @@ internal class TrackedFavoriteInteractions(
                     completed(result)
                 } finally { lock.withLock { pending.remove(pendingKey); mutations.remove(pendingKey) } }
             }
-            if (!runCatching { sessions.isLoggedIn() }.getOrDefault(false)) {
+            if (!authenticated(pendingKey)) {
                 lock.withLock {
                     // One short-lived intent, attached to this login. No action/account data on disk.
                     // Waiting for auth is not an in-flight mutation. A new tap must be able

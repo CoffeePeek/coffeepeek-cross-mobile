@@ -26,14 +26,14 @@ import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.ui.component.CpSnackbarHost
 import com.coffeepeek.admin.ui.component.CoffeePeekLoader
 import com.coffeepeek.admin.ui.component.CoffeePeekPullToRefresh
-import com.coffeepeek.admin.ui.component.FullScreenImageDialog
-import com.coffeepeek.admin.ui.component.PhotoViewerImages
+import com.coffeepeek.core.designsystem.component.CoffeePeekPhotoViewer
+import com.coffeepeek.core.designsystem.component.CoffeePeekPhotoViewerImages
 import com.coffeepeek.admin.ui.component.LocalFloatingNavClearance
 import com.coffeepeek.admin.ui.component.LoadErrorContent
 import com.coffeepeek.admin.ui.component.ReviewTextInput
 import com.coffeepeek.admin.ui.screen.checkins.CheckInCreateButton
 import com.coffeepeek.admin.ui.screen.checkins.CheckInCreateFlow
-import com.coffeepeek.admin.utils.PrefetchListPhotos
+import com.coffeepeek.core.media.PrefetchListPhotos
 import com.coffeepeek.domain.model.CheckIn
 import com.coffeepeek.domain.model.CheckInModerationState
 import com.coffeepeek.domain.model.CheckInVisibility
@@ -78,7 +78,7 @@ fun CommunityScreen(onCreateCheckIn: () -> Unit, notificationsAction: @Composabl
     LaunchedEffect(shouldLoadMore) { if (shouldLoadMore) vm.loadMore() }
 
     preview?.takeIf { it.generation == state.sessionGeneration }?.let {
-        FullScreenImageDialog(images = it.images, initialIndex = it.index, onDismiss = { preview = null })
+        CoffeePeekPhotoViewer(images = it.images, initialIndex = it.index, onDismiss = { preview = null })
     }
     if (state.editing != null) key(state.sessionGeneration, state.editing?.source?.id) { EditCheckInSheet(state, vm) }
     if (state.reportingId != null) com.coffeepeek.admin.ui.component.SwipeDismissModalBottomSheet(
@@ -211,4 +211,4 @@ internal fun CheckIn.publicationLabel(): String = if (visibility == CheckInVisib
     CheckInModerationState.Unknown -> "Статус проверки неизвестен"
 }
 
-private data class CheckInPhotoPreview(val generation: Long, val images: PhotoViewerImages, val index: Int)
+private data class CheckInPhotoPreview(val generation: Long, val images: CoffeePeekPhotoViewerImages, val index: Int)

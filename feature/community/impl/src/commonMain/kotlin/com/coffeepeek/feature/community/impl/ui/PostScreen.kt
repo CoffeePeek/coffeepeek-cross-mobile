@@ -1,5 +1,13 @@
 package com.coffeepeek.feature.community.impl.ui
 
+import com.coffeepeek.feature.community.impl.resources.Res
+import com.coffeepeek.feature.community.impl.resources.community_user
+import com.coffeepeek.feature.community.impl.resources.community_retry
+import com.coffeepeek.feature.community.impl.resources.community_post_unavailable_title
+import com.coffeepeek.feature.community.impl.resources.community_post_unavailable_body
+import com.coffeepeek.feature.community.impl.resources.community_post_title
+import com.coffeepeek.feature.community.impl.resources.community_mascot_error
+import com.coffeepeek.feature.community.impl.resources.community_back
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -194,5 +202,6 @@ private val previewCallbacks = PostCallbacks({}, {}, { _, _, _ -> }, {}, {})
 @Composable private fun PostUnavailablePreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     PostScreenContent(PostState(isLoggedIn = false, error = PostError.Unavailable), {}, CommunityHost(), previewBlockActions, previewCallbacks, SnackbarHostState())
 }
+
 @Preview @Composable private fun PostUnavailableLightPreview() = PostUnavailablePreview(false)
 @Preview @Composable private fun PostUnavailableDarkPreview() = PostUnavailablePreview(true)

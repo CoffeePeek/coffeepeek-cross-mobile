@@ -1,4 +1,14 @@
 <resources>
+    <string name="home_check_in_create_title">Новый чекин</string>
+    <string name="home_check_in_create_prompt">Где вы пили кофе?</string>
+    <string name="home_check_in_create_shop">В кофейне</string>
+    <string name="home_check_in_create_shop_hint">Выбрать место и напиток</string>
+    <string name="home_check_in_create_home">Дома</string>
+    <string name="home_check_in_create_home_hint">Записать приготовление</string>
+    <string name="home_check_in_create_what">Что добавим?</string>
+    <string name="home_check_in_create_shelf_title">Пачку на полку</string>
+    <string name="home_check_in_create_shelf_body">Сфотографируйте пачку кофе</string>
+    <string name="home_check_in_create_continue">Продолжить</string>
     <string name="home_check_in_home">Кофе дома</string>
     <string name="home_check_in_title_fallback">Домашнее приготовление</string>
     <string name="home_check_in_private">Только мне</string>
@@ -46,9 +56,12 @@
     <string name="home_check_in_saving">Сохраняем…</string>
     <string name="home_check_in_save_failed">Не удалось сохранить чекин. Проверьте данные и попробуйте ещё раз.</string>
     <string name="home_check_in_save_error_title">Не удалось сохранить чекин</string>
-    <string name="home_check_in_validation_summary_one">Проверьте заполненные поля (%1$d ошибка).</string>
-    <string name="home_check_in_validation_summary_few">Проверьте заполненные поля (%1$d ошибки).</string>
-    <string name="home_check_in_validation_summary_many">Проверьте заполненные поля (%1$d ошибок).</string>
+    <plurals name="home_check_in_validation_summary">
+        <item quantity="one">Проверьте заполненные поля (%1$d ошибка).</item>
+        <item quantity="few">Проверьте заполненные поля (%1$d ошибки).</item>
+        <item quantity="many">Проверьте заполненные поля (%1$d ошибок).</item>
+        <item quantity="other">Проверьте заполненные поля (%1$d ошибки).</item>
+    </plurals>
     <string name="home_check_in_save_unauthorized">Сессия истекла. Войдите в аккаунт и сохраните чекин снова.</string>
     <string name="home_check_in_save_forbidden">Нет доступа к этой записи. Проверьте, в какой аккаунт вы вошли.</string>
     <string name="home_check_in_photo_upload_failed">Не удалось загрузить фото. Попробуйте ещё раз.</string>

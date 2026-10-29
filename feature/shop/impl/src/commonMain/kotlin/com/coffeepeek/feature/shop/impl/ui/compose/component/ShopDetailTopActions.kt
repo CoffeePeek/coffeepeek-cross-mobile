@@ -14,6 +14,7 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.LayoutDirection
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
+import com.coffeepeek.core.designsystem.component.CoffeePeekGlassIcon
 import com.coffeepeek.core.designsystem.icons.PlatformBack
 import com.coffeepeek.core.designsystem.modifier.CoffeePeekGlassIconButton
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
@@ -43,7 +44,8 @@ internal fun ShopDetailTopActions(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically) {
         CoffeePeekGlassIconButton(onClick = onBack,
-            contentDescription = stringResource(Res.string.shop_detail_back), hazeState = hazeState) {
+            contentDescription = stringResource(Res.string.shop_detail_back), hazeState = hazeState,
+            nativeIcon = CoffeePeekGlassIcon.Back) {
             Icon(CoffeePeekIcons.PlatformBack, contentDescription = null,
                 tint = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.scale(scaleX = backScale, scaleY = 1f))

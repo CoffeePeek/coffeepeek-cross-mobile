@@ -1,5 +1,7 @@
 package com.coffeepeek.admin.feature.profile.ui
 
+import com.coffeepeek.core.designsystem.component.CoffeePeekPhotoViewerImages
+
 import org.jetbrains.compose.resources.stringResource
 import coffeepeek.composeapp.generated.resources.Res
 import coffeepeek.composeapp.generated.resources.profile_open_avatar
@@ -41,7 +43,7 @@ import com.coffeepeek.admin.feature.profile.domain.PublicProfileCheckIn
 import com.coffeepeek.feature.profile.domain.PublicProfileStats
 import com.coffeepeek.admin.theme.CpColor
 import com.coffeepeek.admin.ui.icons.CpIcons
-import com.coffeepeek.admin.utils.CpImage
+import com.coffeepeek.core.designsystem.component.CoffeePeekImage
 import com.coffeepeek.domain.feature.feed.FeedHomePreparation
 import com.coffeepeek.domain.model.CheckIn
 
@@ -88,7 +90,7 @@ private fun ProfileAvatar(nickname: String, avatarUrl: String?,
             Text(nickname.trimStart('@').take(1).uppercase().ifBlank { "?" },
                 style = MaterialTheme.typography.headlineLarge, color = CpColor.DarkTextOnPrimary,
                 fontWeight = FontWeight.SemiBold)
-            if (!avatarUrl.isNullOrBlank()) CpImage(data = avatarUrl, contentDescription =
+            if (!avatarUrl.isNullOrBlank()) CoffeePeekImage(data = avatarUrl, contentDescription =
                 stringResource(Res.string.profile_avatar_of, nickname.trimStart('@')),
                 modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
         }
@@ -139,7 +141,7 @@ private fun ProfileStats(stats: PublicProfileStats, onFollowersClick: () -> Unit
 internal fun PublicProfileCheckInCard(
     checkIn: PublicProfileCheckIn,
     onShopClick: () -> Unit,
-    onPhotoClick: (com.coffeepeek.admin.ui.component.PhotoViewerImages, Int) -> Unit,
+    onPhotoClick: (com.coffeepeek.core.designsystem.component.CoffeePeekPhotoViewerImages, Int) -> Unit,
     authorName: String = "",
     authorAvatarUrl: String? = null,
     isOwnProfile: Boolean = false,

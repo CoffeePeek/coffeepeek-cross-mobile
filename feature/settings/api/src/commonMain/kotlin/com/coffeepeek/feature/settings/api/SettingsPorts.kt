@@ -68,4 +68,4 @@ interface SettingsExternalActions {
 }
 
 /** Static facts about the build that the rows show. */
-data class SettingsAppInfo(val versionName: String)
+data class SettingsAppInfo(val versionName: String, val canCheckForUpdates: Boolean = true)

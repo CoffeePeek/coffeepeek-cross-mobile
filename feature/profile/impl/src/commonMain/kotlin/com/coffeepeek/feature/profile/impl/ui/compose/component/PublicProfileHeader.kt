@@ -2,6 +2,18 @@ package com.coffeepeek.feature.profile.impl.ui.compose.component
 
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import androidx.compose.foundation.BorderStroke
+import com.coffeepeek.feature.profile.impl.resources.Res
+import com.coffeepeek.feature.profile.impl.resources.profile_avatar_of
+import com.coffeepeek.feature.profile.impl.resources.profile_edit
+import com.coffeepeek.feature.profile.impl.resources.profile_follow
+import com.coffeepeek.feature.profile.impl.resources.profile_follow_description
+import com.coffeepeek.feature.profile.impl.resources.profile_following
+import com.coffeepeek.feature.profile.impl.resources.profile_open_avatar
+import com.coffeepeek.feature.profile.impl.resources.profile_open_followers
+import com.coffeepeek.feature.profile.impl.resources.profile_stat_check_ins
+import com.coffeepeek.feature.profile.impl.resources.profile_stat_followers
+import com.coffeepeek.feature.profile.impl.resources.profile_stat_shops
+import com.coffeepeek.feature.profile.impl.resources.profile_unfollow_description
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -132,6 +144,7 @@ private fun ProfileStats(stats: PublicProfileStats, onFollowersClick: () -> Unit
     }
 }
 
+@Preview
 @Composable
 private fun ProfileHeaderPreview(dark: Boolean) = com.coffeepeek.core.designsystem.theme.CoffeePeekTheme(darkTheme = dark) {
     Surface(color = MaterialTheme.colorScheme.background) {

@@ -62,6 +62,12 @@ class DefaultSessionStore(
     private suspend fun persistLatest(): Unit = withContext(NonCancellable) {
         while (true) {
             val snapshot = state.value
+            // A signed-out state must not be undone by an old settings row on the next start: clear them first, so a
+            // failure here leaves the secure store as it was instead of an empty one that would import the old row.
+            if (snapshot.session == null) {
+                legacyRows.delete(LegacyCredentialRows.SESSION)
+                legacyRows.delete(LegacyCredentialRows.API_KEYS)
+            }
             secureStore.write(snapshot.session?.toCredentials())
             if (state.value == snapshot) break
         }

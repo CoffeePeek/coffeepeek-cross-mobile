@@ -1,11 +1,14 @@
 package com.coffeepeek.feature.coffee.impl.ui.compose.component
 
 import androidx.compose.foundation.layout.Arrangement
+import org.jetbrains.compose.ui.tooling.preview.Preview
+import com.coffeepeek.feature.coffee.impl.resources.Res
+import com.coffeepeek.feature.coffee.impl.resources.coffee_collapse
+import com.coffeepeek.feature.coffee.impl.resources.coffee_read_more
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import org.jetbrains.compose.resources.stringResource
-import org.jetbrains.compose.ui.tooling.preview.Preview
 import com.coffeepeek.core.designsystem.component.CoffeePeekExpandableText
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme

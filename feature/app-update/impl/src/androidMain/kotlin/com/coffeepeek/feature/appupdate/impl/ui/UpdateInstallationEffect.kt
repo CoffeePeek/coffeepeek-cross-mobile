@@ -30,12 +30,15 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import com.coffeepeek.feature.appupdate.api.AndroidUpdateInstaller
 import com.coffeepeek.feature.appupdate.api.AppUpdateEnvironment
-import com.coffeepeek.feature.appupdate.impl.R
 import com.coffeepeek.feature.appupdate.domain.InstallationStage
 import com.coffeepeek.feature.appupdate.impl.AppUpdateController
+import com.coffeepeek.feature.appupdate.impl.resources.Res
+import com.coffeepeek.feature.appupdate.impl.resources.appupdate_downloaded_message
+import com.coffeepeek.feature.appupdate.impl.resources.appupdate_restart_action
+import com.coffeepeek.feature.appupdate.impl.resources.appupdate_retry_action
 import com.coffeepeek.feature.appupdate.impl.PlayUpdateRetryOutcome
 import com.coffeepeek.feature.appupdate.impl.retryPlayUpdate
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import kotlinx.coroutines.launch
 
 /** Presentation of the app's snackbar: [showRetryIcon] puts the retry icon on the action and [onAction] overrides its click. */
@@ -95,9 +98,9 @@ internal fun UpdateInstallationEffect(
 
     val required = (policy.update ?: transfer.update)?.isRequired(environment.versionCode ?: Long.MAX_VALUE) == true
     val snackbar = remember { SnackbarHostState() }
-    val readyMessage = stringResource(R.string.appupdate_downloaded_message)
-    val restart = stringResource(R.string.appupdate_restart_action)
-    val retry = stringResource(R.string.appupdate_retry_action)
+    val readyMessage = stringResource(Res.string.appupdate_downloaded_message)
+    val restart = stringResource(Res.string.appupdate_restart_action)
+    val retry = stringResource(Res.string.appupdate_retry_action)
     LaunchedEffect(transfer.stage, transfer.error, required, manualNoticeRequest, retrying, retryOutcome, hideRetryResult) {
         if (required && transfer.stage == InstallationStage.Ready && transfer.error == null) {
             installer.install()

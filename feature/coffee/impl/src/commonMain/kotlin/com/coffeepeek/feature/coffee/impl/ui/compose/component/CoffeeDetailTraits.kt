@@ -1,6 +1,11 @@
 package com.coffeepeek.feature.coffee.impl.ui.compose.component
 
 import androidx.compose.foundation.layout.Arrangement
+import org.jetbrains.compose.ui.tooling.preview.Preview
+import com.coffeepeek.feature.coffee.impl.resources.Res
+import com.coffeepeek.feature.coffee.impl.resources.coffee_acidity
+import com.coffeepeek.feature.coffee.impl.resources.coffee_profile
+import com.coffeepeek.feature.coffee.impl.resources.coffee_roast
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.MaterialTheme
@@ -10,7 +15,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalDensity
 import org.jetbrains.compose.resources.stringResource
-import org.jetbrains.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.component.CoffeePeekIconBadge
 import com.coffeepeek.core.designsystem.component.CoffeePeekIconBadgeColors

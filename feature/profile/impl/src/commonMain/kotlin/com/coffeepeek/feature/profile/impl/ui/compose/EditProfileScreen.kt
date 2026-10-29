@@ -1,6 +1,29 @@
 package com.coffeepeek.feature.profile.impl.ui.compose
 
 import androidx.compose.foundation.background
+import org.jetbrains.compose.ui.tooling.preview.Preview
+import com.coffeepeek.feature.profile.impl.resources.Res
+import com.coffeepeek.feature.profile.impl.resources.profile_edit_photo_title
+import com.coffeepeek.feature.profile.impl.resources.profile_back
+import com.coffeepeek.feature.profile.impl.resources.profile_cancel
+import com.coffeepeek.feature.profile.impl.resources.profile_edit_about_label
+import com.coffeepeek.feature.profile.impl.resources.profile_edit_about_long
+import com.coffeepeek.feature.profile.impl.resources.profile_edit_about_placeholder
+import com.coffeepeek.feature.profile.impl.resources.profile_edit_avatar_description
+import com.coffeepeek.feature.profile.impl.resources.profile_edit_change_photo
+import com.coffeepeek.feature.profile.impl.resources.profile_edit_delete_account
+import com.coffeepeek.feature.profile.impl.resources.profile_edit_delete_confirm
+import com.coffeepeek.feature.profile.impl.resources.profile_edit_delete_message
+import com.coffeepeek.feature.profile.impl.resources.profile_edit_delete_title
+import com.coffeepeek.feature.profile.impl.resources.profile_edit_save
+import com.coffeepeek.feature.profile.impl.resources.profile_edit_saving
+import com.coffeepeek.feature.profile.impl.resources.profile_edit_title
+import com.coffeepeek.feature.profile.impl.resources.profile_edit_username_empty
+import com.coffeepeek.feature.profile.impl.resources.profile_edit_username_label
+import com.coffeepeek.feature.profile.impl.resources.profile_edit_username_long
+import com.coffeepeek.feature.profile.impl.resources.profile_edit_username_placeholder
+import com.coffeepeek.feature.profile.impl.resources.profile_edit_username_short
+import com.coffeepeek.feature.profile.impl.resources.profile_loading
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -28,7 +51,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.Scaffold
+import com.coffeepeek.core.designsystem.component.CoffeePeekScaffold as Scaffold
+import com.coffeepeek.core.designsystem.component.CoffeePeekScrollableColumn
+import com.coffeepeek.core.designsystem.component.CoffeePeekNativeAlert
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -43,7 +68,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -85,7 +109,7 @@ internal fun EditProfileScreen(
     LaunchedEffect(state.usernameToConfirm, state.error) {
         if (state.usernameToConfirm != null || state.error != null) keyboard?.hide()
     }
-    slots.photoPicker(showSources, { showSources = false }, { photoLoading = it }) { vm.onAction(EditProfileAction.AvatarPicked(it)) }
+    slots.photoPicker(stringResource(Res.string.profile_edit_photo_title), showSources, { showSources = false }, { photoLoading = it }) { vm.onAction(EditProfileAction.AvatarPicked(it)) }
     EditProfileErrorDialog(state) { vm.onAction(EditProfileAction.DismissError) }
     state.usernameToConfirm?.let { username ->
         UsernameChangeConfirmation(
@@ -125,7 +149,7 @@ internal fun EditProfileScreenContent(
                 CoffeePeekLoader(stringResource(Res.string.profile_loading))
             }
         } else {
-            Column(Modifier.fillMaxSize().padding(padding).imePadding().verticalScroll(rememberScrollState()).padding(CoffeePeekDimens.spacing4)) {
+            CoffeePeekScrollableColumn(Modifier.fillMaxSize().padding(padding).padding(CoffeePeekDimens.spacing4), reserveBottomClearance = true) {
                 EditProfileIdentity(state, slots, photoLoading, onAction, onPickAvatar)
                 Spacer(Modifier.height(CoffeePeekDimens.spacing4))
                 EditProfileAbout(state, onAction)
@@ -229,6 +253,11 @@ private fun DeleteAccountButton(enabled: Boolean, onClick: () -> Unit) {
 
 @Composable
 private fun DeleteAccountDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
+    if (CoffeePeekNativeAlert(
+            title = stringResource(Res.string.profile_edit_delete_title), message = stringResource(Res.string.profile_edit_delete_message),
+            confirmLabel = stringResource(Res.string.profile_edit_delete_confirm), onConfirm = onConfirm, onDismiss = onDismiss,
+            cancelLabel = stringResource(Res.string.profile_cancel), destructive = true,
+        )) return
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(Res.string.profile_edit_delete_title)) },
@@ -249,14 +278,14 @@ private fun EditProfileScreenPreview(dark: Boolean) {
     CoffeePeekTheme(darkTheme = dark) {
         EditProfileScreenContent(
             state = EditProfileState(username = "coffee_lover", originalUsername = "coffee_lover", isLoading = false),
-            slots = EditProfileSlots(image = { _, _, _ -> }, pickedAvatar = { _, _ -> }, photoPicker = { _, _, _, _ -> }),
+            slots = EditProfileSlots(image = { _, _, _ -> }, pickedAvatar = { _, _ -> }, photoPicker = { _, _, _, _, _ -> }),
             photoLoading = false, onAction = {}, onBack = {}, onPickAvatar = {}, onDeleteAccount = {},
         )
     }
 }
 
-@Preview @Composable private fun EditProfileScreenLightPreview() = EditProfileScreenPreview(false)
-@Preview @Composable private fun EditProfileScreenDarkPreview() = EditProfileScreenPreview(true)
+@Preview @Composable private fun EditProfileLightPreview() = EditProfileScreenPreview(false)
+@Preview @Composable private fun EditProfileDarkPreview() = EditProfileScreenPreview(true)
 
 @Composable
 private fun UsernameError.message(): String = stringResource(when (this) {

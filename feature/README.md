@@ -1,5 +1,16 @@
 # Feature migration: API / implementation
 
+The current priority is the full [legacy exit](LEGACY_EXIT_PLAN.md): remove
+remaining active app UI/data adapters, obsolete screens and `modules/`.
+Selecting feature routes alone is not migration completion.
+
+Current iOS activation and remaining gates are recorded in
+[IOS_MIGRATION_PLAN.md](IOS_MIGRATION_PLAN.md). The 2026-10-25 content-report
+checkpoint adds a populated api/domain/data/impl owner for existing CheckIn/Review
+report routes; see [content-report/README.md](content-report/README.md) for module
+responsibilities, dependency/consumer rules and compatibility limits. The dated
+Android-first snapshots below are historical, not a current module count or iOS status.
+
 The active Android audit and execution order are in
 [ANDROID_REFACTORING_PLAN.md](ANDROID_REFACTORING_PLAN.md). Historical stack and
 completed-slice notes below are context, not the next-work checklist.

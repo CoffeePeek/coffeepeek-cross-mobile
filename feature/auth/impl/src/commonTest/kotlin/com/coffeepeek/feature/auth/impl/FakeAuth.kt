@@ -4,10 +4,26 @@ import com.coffeepeek.feature.auth.api.AuthAnalytics
 import com.coffeepeek.feature.auth.api.AuthEntry
 import com.coffeepeek.feature.auth.api.SignInMethod
 import com.coffeepeek.feature.auth.domain.AuthRepository
+import com.coffeepeek.feature.auth.domain.AppleSignInChallenge
 import com.coffeepeek.feature.auth.domain.SignedInAccount
 import kotlinx.coroutines.CompletableDeferred
 
 internal class FakeAuthRepository : AuthRepository {
+    var challenges = 0
+    var challenge = Result.success(AppleSignInChallenge("challenge", "nonce"))
+    val appleTokens = mutableListOf<Pair<String, String>>()
+    var apple = Result.success(SignedInAccount("apple-user"))
+
+    override suspend fun beginAppleSignIn(): Result<AppleSignInChallenge> {
+        challenges++
+        return challenge
+    }
+
+    override suspend fun signInWithApple(challengeId: String, idToken: String): Result<SignedInAccount> {
+        appleTokens += challengeId to idToken
+        gate?.await()
+        return apple
+    }
     val signIns = mutableListOf<Pair<String, String>>()
     val resets = mutableListOf<String>()
     val registrations = mutableListOf<List<String>>()

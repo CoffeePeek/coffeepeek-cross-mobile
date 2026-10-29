@@ -1,5 +1,13 @@
 # Shop feature — incremental migration
 
+## iOS activation — 2026-10-25
+
+Android and iOS now select the shared feature entries through app composition.
+Native navigation, photo/map/date presenters and the existing backend contracts
+are retained. Legacy screens remain a fallback until acceptance; the older notes
+below describe the original Android-first checkpoints. Current verification and
+remaining device/server gates: [iOS migration plan](../IOS_MIGRATION_PLAN.md).
+
 ## Selection controls correction — 2026-10-15
 
 - Photo source uses existing CoffeePeek settings rows with yellow icon badges,

@@ -1,65 +1,52 @@
 package com.coffeepeek.feature.checkinhistory.impl.ui.compose.component
 
-import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.*
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
+import com.coffeepeek.core.designsystem.component.CoffeePeekTimelineContent
+import com.coffeepeek.core.designsystem.component.CoffeePeekTimelineHeader
+import com.coffeepeek.core.designsystem.component.CoffeePeekTimelineFooter
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.checkinhistory.domain.model.*
 import com.coffeepeek.feature.checkinhistory.impl.resources.*
 import com.coffeepeek.feature.checkinhistory.impl.ui.data.historyBrewMethodLabel
 import com.coffeepeek.feature.checkinhistory.impl.ui.data.visibilityLabel
+import com.coffeepeek.feature.checkinhistory.impl.ui.data.timelinePhotos
+import com.coffeepeek.feature.checkinhistory.impl.ui.data.timelineDose
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
-internal fun HistoryHomeTimelineCard(entry: HomeHistoryEntry, timeLabel: String, onClick: () -> Unit) {
-    LocalHistoryHomeTimelineContent.current?.let { content ->
-        content(entry, onClick)
-        return
-    }
-    Card(onClick, Modifier.fillMaxWidth(), shape = RoundedCornerShape(20.dp),
-        border = BorderStroke(0.5.dp, MaterialTheme.colorScheme.outlineVariant),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
-        Column(Modifier.padding(18.dp), verticalArrangement = Arrangement.spacedBy(9.dp)) {
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp),
-                itemVerticalAlignment = Alignment.CenterVertically) {
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Icon(CoffeePeekIcons.Coffee, null, Modifier.size(18.dp), tint = MaterialTheme.colorScheme.primary)
-                    Text(stringResource(Res.string.history_source_time, stringResource(Res.string.history_at_home), timeLabel),
-                        style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-                entry.visibilityLabel()?.let { Text(it, style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant) }
-            }
-            Text(entry.recipe.beanName?.takeIf(String::isNotBlank) ?: stringResource(Res.string.history_home_title),
-                style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold,
-                maxLines = 2, overflow = TextOverflow.Ellipsis)
-            val method = entry.recipe.brewMethodCode?.let { historyBrewMethodLabel(it) }
-            val dose = entry.recipe.doseGrams?.let {
-                stringResource(Res.string.history_dose, (if ('.' in it) it.trimEnd('0').trimEnd('.') else it).replace('.', ','))
-            }
-            val details = if (method != null && dose != null) stringResource(Res.string.history_details_separator, method, dose)
-                else method ?: dose
-            if (!details.isNullOrBlank()) Text(details, style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant)
-            entry.recipe.tasteScore?.let { score ->
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                    Icon(CoffeePeekIcons.StarFilled, null, Modifier.size(15.dp), tint = MaterialTheme.colorScheme.primary)
-                    Text(stringResource(Res.string.history_taste, score), style = MaterialTheme.typography.labelMedium)
-                }
-            }
-            entry.note?.takeIf(String::isNotBlank)?.let {
-                Text(it, style = MaterialTheme.typography.bodyMedium, maxLines = 2, overflow = TextOverflow.Ellipsis)
-            }
-        }
+internal fun HistoryHomeTimelineCard(entry: HomeHistoryEntry, dateLabel: String, onClick: () -> Unit,
+    onPhoto: (Int) -> Unit, image: HistoryImageContent?) {
+    val photos = entry.timelinePhotos()
+    val status = entry.visibilityLabel()
+    val drink = entry.customDrinkName?.takeIf(String::isNotBlank) ?: entry.drinkName?.takeIf(String::isNotBlank)
+    CoffeePeekTimelineContent(entry.note.orEmpty(), Modifier.clickable(role = Role.Button, onClick = onClick),
+        header = { CoffeePeekTimelineHeader(stringResource(Res.string.history_you), dateLabel, avatar = {}) },
+        heading = { HistoryTimelineHomeRecipe(entry.recipe) },
+        photos = { HistoryTimelinePhotosContent(photos, onPhoto, image) },
+        supporting = status?.let { { Text(it, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant) } },
+        footer = { CoffeePeekTimelineFooter(null, false, "", drink) })
+}
+
+@Composable
+private fun HistoryTimelineHomeRecipe(recipe: HomeHistoryRecipe) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        recipe.beanName?.takeIf(String::isNotBlank)?.let { Text(it, style = MaterialTheme.typography.titleMedium) }
+        val details = listOfNotNull(recipe.brewMethodCode?.let { historyBrewMethodLabel(it) },
+            recipe.timelineDose()?.let { stringResource(Res.string.history_dose, it.toString()) },
+            recipe.brewDurationSeconds?.let { stringResource(Res.string.history_seconds, it) },
+            recipe.tasteScore?.let { stringResource(Res.string.history_taste, it) })
+            .joinToString(stringResource(Res.string.history_recipe_separator))
+        if (details.isNotBlank()) Text(details, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 
@@ -68,8 +55,8 @@ internal fun previewHomeHistoryEntry() = HomeHistoryEntry("home", "2026-10-14", 
     HomeHistoryRecipe("hario-v60", null, "Эфиопия", "18.00", 180, 4), null, null, null, emptyList(),
     HistoryVisibility.Private, HistoryModeration.NotSubmitted)
 
-@Composable private fun HistoryHomeTimelineCardPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
-    HistoryHomeTimelineCard(previewHomeHistoryEntry(), "11:00", {})
+@Composable private fun HomeTimelinePreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
+    HistoryHomeTimelineCard(previewHomeHistoryEntry(), "14 октября 2026", {}, {}, null)
 }
-@Preview @Composable private fun HistoryHomeTimelineCardLightPreview() = HistoryHomeTimelineCardPreview(false)
-@Preview @Composable private fun HistoryHomeTimelineCardDarkPreview() = HistoryHomeTimelineCardPreview(true)
+@Preview @Composable private fun HomeTimelineLightPreview() = HomeTimelinePreview(false)
+@Preview @Composable private fun HomeTimelineDarkPreview() = HomeTimelinePreview(true)

@@ -1,6 +1,10 @@
 package com.coffeepeek.feature.homecheckin.impl.ui.compose.component
 
 import androidx.compose.foundation.background
+import org.jetbrains.compose.ui.tooling.preview.Preview
+import com.coffeepeek.feature.homecheckin.impl.resources.Res
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_more_photos
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_photo_description
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -14,11 +18,9 @@ import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import org.jetbrains.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
-import com.coffeepeek.feature.homecheckin.impl.resources.*
 
 /** Feed-only tiles retain album positions even when a preview is unavailable. */
 @Composable

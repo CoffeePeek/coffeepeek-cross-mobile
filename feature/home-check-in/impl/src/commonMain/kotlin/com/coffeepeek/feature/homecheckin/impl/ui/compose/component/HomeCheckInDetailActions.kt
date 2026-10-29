@@ -1,11 +1,14 @@
 package com.coffeepeek.feature.homecheckin.impl.ui.compose.component
 
 import androidx.compose.foundation.layout.*
+import org.jetbrains.compose.ui.tooling.preview.Preview
+import com.coffeepeek.feature.homecheckin.impl.resources.Res
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_delete
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_edit
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import org.jetbrains.compose.resources.stringResource
-import org.jetbrains.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.component.CoffeePeekButton
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons

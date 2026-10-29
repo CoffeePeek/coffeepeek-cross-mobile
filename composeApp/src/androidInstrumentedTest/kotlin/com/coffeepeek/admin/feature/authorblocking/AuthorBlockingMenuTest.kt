@@ -5,8 +5,8 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.admin.theme.CoffeePeekTheme
-import com.coffeepeek.admin.ui.component.CpActionSheet
-import com.coffeepeek.admin.ui.component.PlatformAction
+import com.coffeepeek.core.designsystem.component.CoffeePeekActionSheet
+import com.coffeepeek.core.designsystem.component.CoffeePeekDialogAction
 import org.junit.Assert.assertTrue
 import androidx.compose.ui.test.*
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -70,8 +70,9 @@ class AuthorBlockingMenuTest {
             val density = LocalDensity.current
             CompositionLocalProvider(LocalDensity provides Density(density.density, 1.8f)) {
                 CoffeePeekTheme {
-                    CpActionSheet("Заблокировать автора?", "Публикации автора будут скрыты. Автор не получит уведомление.",
-                        listOf(PlatformAction("Заблокировать", destructive = true, onClick = { confirmed++ })), onDismiss = { canceled++ })
+                    CoffeePeekActionSheet("Заблокировать автора?", "Публикации автора будут скрыты. Автор не получит уведомление.",
+                        listOf(CoffeePeekDialogAction("Заблокировать", destructive = true, onClick = { confirmed++ })),
+                        onDismiss = { canceled++ }, cancelLabel = "Отмена")
                 }
             }
         }

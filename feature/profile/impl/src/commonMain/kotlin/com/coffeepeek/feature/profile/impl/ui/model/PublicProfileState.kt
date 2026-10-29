@@ -10,6 +10,7 @@ import kotlin.time.ExperimentalTime
 
 internal data class PublicProfileState(
     val isLoading: Boolean = true,
+    val isSignedIn: Boolean = false,
     val error: String? = null,
     val profile: PublicProfile? = null,
     val checkIns: List<PublicProfileCheckIn> = emptyList(),

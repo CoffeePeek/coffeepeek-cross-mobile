@@ -10,7 +10,6 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.uikit.LocalUIViewController
 import androidx.compose.ui.viewinterop.UIKitView
 import androidx.compose.ui.viewinterop.UIKitInteropProperties
@@ -22,8 +21,6 @@ import com.coffeepeek.admin.theme.switchPalette
 import com.coffeepeek.admin.theme.toUIColor
 import com.coffeepeek.admin.theme.uiKitStyle
 import com.coffeepeek.admin.theme.ThemeManager
-import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
-import kotlinx.cinterop.ObjCAction
 import kotlinx.cinterop.useContents
 import platform.Foundation.*
 import platform.UIKit.*
@@ -228,10 +225,6 @@ private class NativeSheetSizing(maximumHeight: Double) {
     var contentHeight by mutableDoubleStateOf(0.0)
 }
 
-private class ControlTarget(var changed: (UIControl) -> Unit) : NSObject() {
-    @ObjCAction fun change(sender: UIControl) = changed(sender)
-}
-
 @Composable
 internal actual fun PlatformSwitch(checked: Boolean, onCheckedChange: ((Boolean) -> Unit)?, enabled: Boolean, modifier: Modifier) {
     val palette = switchPalette(MaterialTheme.colorScheme.background.luminance() < .5f)
@@ -259,60 +252,6 @@ internal actual fun PlatformSwitch(checked: Boolean, onCheckedChange: ((Boolean)
         ),
     )
 }
-
-@Composable
-internal actual fun NativeSegmentedControl(labels: List<String>, selectedIndex: Int, onSelected: (Int) -> Unit, modifier: Modifier): Boolean {
-    if (labels.size !in 2..4) return false
-    val colors = MaterialTheme.colorScheme
-    val callback = rememberUpdatedState(onSelected)
-    val target = remember { ControlTarget { platformHaptic(HapticEvent.Selection); callback.value((it as UISegmentedControl).selectedSegmentIndex.toInt()) } }
-    key(labels) {
-        UIKitView(factory = {
-            val control = UISegmentedControl(items = labels).apply {
-                addTarget(target, NSSelectorFromString("change:"), UIControlEventValueChanged)
-                translatesAutoresizingMaskIntoConstraints = false
-            }
-            // The underlay hole is rectangular; its transparent pill corners need the card's color.
-            UIView().apply {
-                addSubview(control)
-                NSLayoutConstraint.activateConstraints(listOf(
-                    control.topAnchor.constraintEqualToAnchor(topAnchor),
-                    control.bottomAnchor.constraintEqualToAnchor(bottomAnchor),
-                    control.leadingAnchor.constraintEqualToAnchor(leadingAnchor),
-                    control.trailingAnchor.constraintEqualToAnchor(trailingAnchor),
-                ))
-            }
-        },
-            modifier = modifier.fillMaxWidth().height(44.dp),
-            // Embedded segments must respect Compose clipping and draw order when scrolled.
-            properties = UIKitInteropProperties(isNativeAccessibilityEnabled = true, placedAsOverlay = false),
-            update = { container ->
-                container.backgroundColor = colors.surface.toUIColor()
-                container.overrideUserInterfaceStyle = colors.uiKitStyle
-                val control = container.subviews.single() as UISegmentedControl
-                control.selectedSegmentIndex = selectedIndex.toLong()
-                control.overrideUserInterfaceStyle = colors.uiKitStyle
-                control.backgroundColor = colors.surface.toUIColor()
-                control.selectedSegmentTintColor = colors.surface.toUIColor()
-                control.setTitleTextAttributes(mapOf(NSForegroundColorAttributeName to colors.onSurfaceVariant.toUIColor()), UIControlStateNormal)
-                control.setTitleTextAttributes(mapOf(NSForegroundColorAttributeName to colors.onSurface.toUIColor()), UIControlStateSelected)
-            },
-            onRelease = { container ->
-                (container.subviews.single() as UISegmentedControl)
-                    .removeTarget(target, NSSelectorFromString("change:"), UIControlEventValueChanged)
-            })
-    }
-    return true
-}
-
-@Composable
-private fun NativeSegmentedControlPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
-    var selected by remember { mutableIntStateOf(0) }
-    NativeSegmentedControl(listOf("250 г", "1000 г"), selected, { selected = it }, Modifier.padding(16.dp))
-}
-
-@Preview @Composable private fun NativeSegmentedControlLightPreview() = NativeSegmentedControlPreview(false)
-@Preview @Composable private fun NativeSegmentedControlDarkPreview() = NativeSegmentedControlPreview(true)
 
 internal actual fun platformHaptic(event: HapticEvent) {
     when (event) {

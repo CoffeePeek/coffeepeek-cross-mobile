@@ -1,6 +1,12 @@
 package com.coffeepeek.feature.homecheckin.impl.ui.compose.component
 
 import androidx.compose.foundation.background
+import org.jetbrains.compose.ui.tooling.preview.Preview
+import com.coffeepeek.feature.homecheckin.impl.resources.Res
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_add_photos
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_camera
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_cancel
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_gallery
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -13,15 +19,15 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
-import org.jetbrains.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.coffeepeek.core.designsystem.component.CoffeePeekNativePhotoSource
 import com.coffeepeek.core.designsystem.component.CoffeePeekSwipeDismissModalBottomSheet
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
-import com.coffeepeek.feature.homecheckin.impl.resources.*
 
 @Composable
 internal fun HomeCheckInPhotoSource(onDismiss: () -> Unit, onGallery: () -> Unit, onCamera: () -> Unit) {
+    if (CoffeePeekNativePhotoSource(stringResource(Res.string.home_check_in_add_photos), onGallery, onCamera, onDismiss)) return
     CoffeePeekSwipeDismissModalBottomSheet(onDismiss, stringResource(Res.string.home_check_in_cancel)) {
         HomeCheckInPhotoSourceContent(onDismiss, onGallery, onCamera)
     }

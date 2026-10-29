@@ -15,7 +15,7 @@ import androidx.compose.ui.text.withStyle
 import coffeepeek.composeapp.generated.resources.Res
 import coffeepeek.composeapp.generated.resources.check_in_shelf_bag_open_coffee
 import coffeepeek.composeapp.generated.resources.check_in_shelf_bag_unnamed
-import com.coffeepeek.admin.utils.CpImage
+import com.coffeepeek.core.designsystem.component.CoffeePeekImage
 import com.coffeepeek.core.designsystem.component.CoffeePeekPostShelfBagRow
 import com.coffeepeek.core.designsystem.component.coffeePeekPostShelfBagCardImage
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
@@ -33,7 +33,7 @@ internal fun CheckInShelfBag(
     roaster: String?,
     details: String,
     onCoffee: (() -> Unit)?,
-    image: @Composable (url: String, Modifier) -> Unit = { url, modifier -> CpImage(url, contentScale = ContentScale.Fit, modifier = modifier) },
+    image: @Composable (url: String, Modifier) -> Unit = { url, modifier -> CoffeePeekImage(url, contentScale = ContentScale.Fit, modifier = modifier) },
 ) {
     val openLabel = stringResource(Res.string.check_in_shelf_bag_open_coffee)
     CoffeePeekPostShelfBagRow(

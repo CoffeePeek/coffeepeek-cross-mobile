@@ -1,9 +1,9 @@
-import com.coffeepeek.buildlogic.androidApi
 import com.coffeepeek.buildlogic.api
 import com.coffeepeek.buildlogic.module
 
 plugins {
-    id("com.coffeepeek.kmp.shared-android-compose-library")
+    id("com.coffeepeek.kmp.shared-library")
+    id("com.coffeepeek.kmp.android-compose-library")
 }
 
 android.namespace = "com.coffeepeek.feature.discovery.api"
@@ -11,7 +11,7 @@ android.namespace = "com.coffeepeek.feature.discovery.api"
 dependencies {
     api(project(module.feature.discovery.domain))
     api(libs.kotlinx.coroutines.core)
-    androidApi(libs.compose.runtime)
-    androidApi(compose.ui)
-    androidApi(compose.foundation)
+    api(libs.compose.runtime)
+    api(compose.ui)
+    api(compose.foundation)
 }

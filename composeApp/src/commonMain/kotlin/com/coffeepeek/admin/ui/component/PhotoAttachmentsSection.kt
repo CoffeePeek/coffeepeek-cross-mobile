@@ -31,7 +31,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.admin.theme.CpDimens
 import com.coffeepeek.admin.ui.icons.CpIcons
-import com.coffeepeek.admin.utils.CpImage
+import com.coffeepeek.core.designsystem.component.CoffeePeekImage
 import com.coffeepeek.admin.utils.PickedImage
 import com.coffeepeek.admin.utils.rememberPhotoPicker
 
@@ -95,7 +95,7 @@ fun PhotoAttachmentsSection(
                 photos.forEachIndexed { index, photo ->
                     // Outer box is NOT clipped so the delete badge can overhang the corner and stay visible.
                     Box(modifier = Modifier.size(96.dp)) {
-                        CpImage(
+                        CoffeePeekImage(
                             data = photo.bytes,
                             modifier = Modifier
                                 .fillMaxSize()

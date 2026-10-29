@@ -1,11 +1,10 @@
 package com.coffeepeek.admin.di.coffee
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.ui.component.CoffeeShopImage
-import com.coffeepeek.admin.ui.component.FullScreenImageDialog
+import com.coffeepeek.core.designsystem.component.CoffeePeekPhotoViewer
 import com.coffeepeek.admin.ui.component.LocalFloatingNavClearance
 import com.coffeepeek.admin.ui.component.platformReduceMotion
 import com.coffeepeek.admin.ui.screen.coffee.CoffeeScreenRenderer
@@ -20,11 +19,8 @@ import com.coffeepeek.admin.ui.component.LoadErrorContent
 import com.coffeepeek.feature.coffee.impl.createCoffeeListEntry
 import kotlinx.coroutines.flow.Flow
 
-/**
- * Routes to the migrated catalogue on both platforms; root navigation, browser, share and photo viewer stay app-owned.
- * With [shelf] (builds where the shelf is enabled) the tab switches between the shelf and the catalogue.
- */
-internal class CoffeeCatalogueScreenRenderer(
+/** Both platforms use migrated catalogue entries; browser, share, photos and root navigation remain app-owned. */
+internal class FeatureCoffeeScreenRenderer(
     private val list: CoffeeListEntry,
     private val detail: CoffeeDetailEntry,
     private val shelf: CoffeeShelfTab? = null,
@@ -51,15 +47,15 @@ internal class CoffeeCatalogueScreenRenderer(
     }
 }
 
-internal fun coffeeCatalogueScreenRenderer(repository: CoffeeRepository, shelf: CoffeeShelfTab? = null): CoffeeCatalogueScreenRenderer {
+internal fun featureCoffeeScreenRenderer(repository: CoffeeRepository, shelf: CoffeeShelfTab? = null): FeatureCoffeeScreenRenderer {
     val image: @Composable (String, String, Modifier, androidx.compose.ui.layout.ContentScale) -> Unit =
         { url, description, modifier, scale ->
             CoffeeShopImage(imageUrl = url, modifier = modifier, contentDescription = description, contentScale = scale)
         }
-    return CoffeeCatalogueScreenRenderer(
+    return FeatureCoffeeScreenRenderer(
         createCoffeeListEntry(repository, CoffeeCatalogueAnalytics, CoffeeCatalogueScreenAnalytics, image) { onRetry -> LoadErrorContent(onRetry) },
         createCoffeeDetailEntry(repository, image,
-            { urls, index, onDismiss -> FullScreenImageDialog(urls, index, onDismiss = onDismiss) },
+            { urls, index, onDismiss -> CoffeePeekPhotoViewer(urls, index, onDismiss = onDismiss) },
             ::utcIsoToLocalDateTime, CoffeeCatalogueAnalytics, CoffeeCatalogueScreenAnalytics),
         shelf,
     )

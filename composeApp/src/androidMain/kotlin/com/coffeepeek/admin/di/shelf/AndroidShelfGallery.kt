@@ -11,7 +11,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
-import com.coffeepeek.admin.utils.BitmapUtil
+import com.coffeepeek.core.media.AndroidImageCodec
 import com.coffeepeek.feature.shelf.api.ShelfGalleryPicker
 import com.coffeepeek.feature.shelf.api.ShelfPhoto
 import kotlinx.coroutines.CancellationException
@@ -44,7 +44,7 @@ internal val AndroidShelfGallery: ShelfGalleryPicker = { onPicked, onFailed ->
 
 private fun Context.uprightPhoto(uri: Uri): ByteArray {
     val raw = contentResolver.openInputStream(uri)?.use { it.readBytes() } ?: error("Unreadable photo")
-    return BitmapUtil.decodeOrientedBitmap(raw, decodeMaxSide = PHOTO_SIDE).shelfPhotoJpeg()
+    return AndroidImageCodec.decodeOrientedBitmap(raw, decodeMaxSide = PHOTO_SIDE).shelfPhotoJpeg()
 }
 
 /** An upright bitmap capped at the scanner's working size, as the JPEG the scan and the screens read. */

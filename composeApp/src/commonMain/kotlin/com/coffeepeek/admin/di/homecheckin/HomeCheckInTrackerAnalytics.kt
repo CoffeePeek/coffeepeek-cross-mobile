@@ -6,7 +6,7 @@ import com.coffeepeek.feature.homecheckin.domain.model.HomePreparationIssue
 import com.coffeepeek.feature.homecheckin.impl.ui.data.*
 
 /** One existing consent-aware tracker/handoff per form, never a second global analytics service. */
-internal class HomeCheckInTrackerAnalytics(
+internal class AppHomeCheckInAnalytics(
     private val isCurrent: () -> Boolean,
     private val editing: Boolean,
     private val source: CheckInSource,

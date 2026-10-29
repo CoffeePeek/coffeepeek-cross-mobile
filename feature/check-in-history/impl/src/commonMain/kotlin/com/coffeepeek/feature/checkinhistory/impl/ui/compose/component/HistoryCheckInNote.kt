@@ -1,10 +1,10 @@
 package com.coffeepeek.feature.checkinhistory.impl.ui.compose.component
 
 import androidx.compose.material3.MaterialTheme
+import org.jetbrains.compose.ui.tooling.preview.Preview
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import org.jetbrains.compose.ui.tooling.preview.Preview
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 
 /** The detail modal shows the full note, just like main's fullVersion card. */

@@ -136,6 +136,19 @@ class SettingsViewModelTest {
         assertTrue(vm.state.value.update.updateAvailable)
     }
 
+    @Test fun disabledChecksDoNotReportSuccessOrAnError() = runTest(dispatcher) {
+        val updates = Updates().apply { outcome = UpdateCheckOutcome.Disabled }
+        val vm = model(updates = updates)
+        val events = events(vm)
+        runCurrent()
+        vm.onAction(SettingsAction.CheckForUpdates)
+        runCurrent()
+        advanceTimeBy(1_000)
+        runCurrent()
+        assertTrue(events.isEmpty())
+        assertFalse(vm.state.value.updateBusy)
+    }
+
     @Test fun aCheckLocksTheRowAndKeepsTheLoaderForAMinimumTimeBeforeTheToast() = runTest(dispatcher) {
         val updates = Updates(); val vm = model(updates = updates); val events = events(vm); runCurrent()
         assertFalse(vm.state.value.updateBusy)

@@ -7,11 +7,3 @@ interface ShopReportScreenRenderer {
     @Composable
     fun Content(shopId: String, shopTitle: String)
 }
-
-/** Keeps the existing shared/iOS flow active until that platform is migrated. */
-internal object LegacyShopReportScreenRenderer : ShopReportScreenRenderer {
-    @Composable
-    override fun Content(shopId: String, shopTitle: String) {
-        ShopReportScreen(shopId = shopId, shopTitle = shopTitle)
-    }
-}

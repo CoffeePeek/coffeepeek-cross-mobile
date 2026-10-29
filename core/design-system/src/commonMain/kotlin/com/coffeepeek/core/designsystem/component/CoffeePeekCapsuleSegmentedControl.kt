@@ -50,6 +50,11 @@ fun <T> CoffeePeekCapsuleSegmentedControl(
     require(options.isNotEmpty()) { "Segmented control requires options" }
     require(options.distinct().size == options.size) { "Options must be unique" }
     require(selected in options) { "Selection must belong to options" }
+    val native = LocalCoffeePeekNativeControlsPresenter.current
+    if (!scrollable && native?.SegmentedControl(
+            options.map(label), options.indexOf(selected),
+            { index -> coffeePeekSelectSegment(options, index, enabled, onSelected) }, modifier, enabled,
+        ) == true) return
     val container = modifier
         .clip(RoundedCornerShape(percent = 50))
         .background(MaterialTheme.colorScheme.surfaceVariant)
@@ -69,6 +74,11 @@ fun <T> CoffeePeekCapsuleSegmentedControl(
             }
         }
     }
+}
+
+/** A platform callback can arrive after its options or enabled state changed. */
+internal fun <T> coffeePeekSelectSegment(options: List<T>, index: Int, enabled: Boolean, onSelected: (T) -> Unit) {
+    if (enabled && index in options.indices) onSelected(options[index])
 }
 
 @Composable

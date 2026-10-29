@@ -14,7 +14,7 @@ import com.coffeepeek.admin.ui.component.CheckInHeader
 import com.coffeepeek.admin.ui.component.CheckInHeading
 import com.coffeepeek.admin.ui.component.HelpfulButton
 import com.coffeepeek.admin.ui.component.ReviewPhotoStrip
-import com.coffeepeek.admin.ui.component.PhotoViewerImages
+import com.coffeepeek.core.designsystem.component.CoffeePeekPhotoViewerImages
 import com.coffeepeek.admin.ui.component.SavedDrinkLabel
 import com.coffeepeek.domain.feature.feed.FeedHomePreparation
 import com.coffeepeek.domain.model.CheckIn
@@ -26,7 +26,7 @@ internal fun CheckInTimelineContentImpl(
     checkIn: CheckIn,
     isOwn: Boolean,
     onShopClick: (() -> Unit)?,
-    onPhotoClick: (PhotoViewerImages, Int) -> Unit,
+    onPhotoClick: (CoffeePeekPhotoViewerImages, Int) -> Unit,
     modifier: Modifier = Modifier,
     onAuthorClick: (() -> Unit)? = null,
     onHelpful: (() -> Unit)? = null,

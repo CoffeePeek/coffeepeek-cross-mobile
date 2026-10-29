@@ -5,6 +5,18 @@ detailed source of truth; this file is the operating checklist.
 
 ## Current state and migration
 
+Current priority (owner decision, 2026-10-25): complete the legacy exit before
+new product features. Android and iOS now select the migrated feature entries;
+that alone does not complete migration. Follow `feature/LEGACY_EXIT_PLAN.md` for
+remaining active UI/data consumers, removal order and acceptance evidence.
+The target has no `modules/`, no legacy implementation aliases, and no business
+UI/state/ViewModels in `composeApp`. It contains startup, root DI, configuration
+and root navigation that calls feature entries. Root composition is not a home
+for feature cards, dialogs or presentation logic. Remove an obsolete fallback
+in the checkpoint that replaces and verifies its last consumer; do not retain
+an unused fallback indefinitely. The dated Android-first notes below describe
+the transitional history, not permission to restore legacy iOS wiring.
+
 The current Gradle layout is transitional:
 
 ```text

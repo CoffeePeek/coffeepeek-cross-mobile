@@ -7,7 +7,7 @@ import com.coffeepeek.admin.feature.catalog.api.methodLabel
 import com.coffeepeek.admin.feature.checkin.api.CheckInTimelineContent
 import com.coffeepeek.admin.ui.component.blockableAuthor
 import com.coffeepeek.admin.ui.component.CheckInActions
-import com.coffeepeek.admin.ui.component.PhotoViewerImages
+import com.coffeepeek.core.designsystem.component.CoffeePeekPhotoViewerImages
 import com.coffeepeek.domain.feature.feed.FeedHomePreparation
 import com.coffeepeek.domain.model.CheckIn
 import com.coffeepeek.domain.model.CheckInModerationState
@@ -25,7 +25,7 @@ internal fun TimelineCheckInCard(
     onVisibility: () -> Unit,
     onHelpful: () -> Unit,
     onReport: () -> Unit,
-    onPhotoClick: (PhotoViewerImages, Int) -> Unit,
+    onPhotoClick: (CoffeePeekPhotoViewerImages, Int) -> Unit,
     modifier: Modifier = Modifier,
     onAuthorClick: (() -> Unit)? = null,
     canBlockAuthor: Boolean = !isOwn,

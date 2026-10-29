@@ -2,7 +2,35 @@
 
 package com.coffeepeek.feature.homecheckin.impl.ui.compose
 
-import androidx.compose.ui.backhandler.BackHandler
+import com.coffeepeek.core.designsystem.component.CoffeePeekBackHandler
+import org.jetbrains.compose.ui.tooling.preview.Preview
+import com.coffeepeek.feature.homecheckin.impl.resources.Res
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_validation_summary
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_bean
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_brew_method
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_choose_bean
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_choose_date
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_dose_description
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_dose_hint
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_dose_label
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_drink
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_drink_hint
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_editor_close
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_editor_note
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_editor_title
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_home
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_keep_photos
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_load_failed
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_loading
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_methods_loading
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_methods_retry
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_note_hint
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_optional
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_photo_upload_failed
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_prepared_date
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_retry
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_save
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_saving
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -13,11 +41,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.semantics.*
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
-import org.jetbrains.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -67,7 +95,7 @@ internal fun HomeCheckInEditorScreen(
     }
     val visible = if (accessAllowed) state else HomeCheckInEditorState(isAccessRevoked = true)
     LaunchedEffect(visible.isSaving) { currentDismiss(!visible.isSaving) }
-    BackHandler(enabled = !visible.isClosed) {
+    CoffeePeekBackHandler(enabled = !visible.isClosed) {
         when {
             visible.isAccessRevoked -> currentEvent(HomeCheckInEditorEvent.Close)
             visible.isBeanPickerOpen -> viewModel.onAction(HomeCheckInEditorAction.CloseBeanPicker)
@@ -145,9 +173,8 @@ internal fun HomeCheckInEditorScreenContent(
             }
             val saveText = state.saveIssue?.editorText()
             val photoUploadText = stringResource(Res.string.home_check_in_photo_upload_failed)
-            val summary = if (state.fieldErrors.isNotEmpty()) stringResource(coffeePeekPluralForm(state.fieldErrors.size,
-                    Res.string.home_check_in_validation_summary_one, Res.string.home_check_in_validation_summary_few,
-                    Res.string.home_check_in_validation_summary_many), state.fieldErrors.size)
+            val summary = if (state.fieldErrors.isNotEmpty()) pluralStringResource(Res.plurals.home_check_in_validation_summary,
+                    state.fieldErrors.size, state.fieldErrors.size)
                 // Production reported any failed photo upload with one clear message, whatever the transport reason.
                 else if (state.saveIssue != null && state.failedOperation == HomePreparationOperation.PhotoUpload) photoUploadText
                 else saveText
@@ -187,8 +214,7 @@ internal fun HomeCheckInEditorScreenContent(
                         }
                     }
                     Step(HomePreparationField.Bean, stringResource(Res.string.home_check_in_bean)) { error ->
-                        HomeCheckInEditorSelect(draft.customBeanName ?: state.beanSelectionName
-                            ?: stringResource(if (draft.shelfBagId != null) Res.string.home_check_in_shelf_bag_unnamed else Res.string.home_check_in_choose_bean),
+                        HomeCheckInEditorSelect(draft.customBeanName ?: state.beanSelectionName ?: stringResource(Res.string.home_check_in_choose_bean),
                             CoffeePeekIcons.CoffeeBean, stringResource(Res.string.home_check_in_choose_bean), enabled, error) {
                             dispatch(HomeCheckInEditorAction.OpenBeanPicker)
                         }
@@ -247,6 +273,9 @@ internal fun previewHomeEditorMedia() = HomeCheckInEditorMedia(
 
 internal fun previewHomeEditorState() = HomeCheckInEditorState(isReady = true,
     draft = HomePreparationInput(preparedAt = "2026-10-17T07:30:00Z", preparedOn = "2026-10-17", tasteScore = 5))
+
+@Preview @Composable private fun HomeCheckInEditorPreviewLight() = HomeCheckInEditorPreview(false)
+@Preview @Composable private fun HomeCheckInEditorPreviewDark() = HomeCheckInEditorPreview(true)
 
 @Composable private fun HomeCheckInEditorPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     Surface { HomeCheckInEditorScreenContent(previewHomeEditorState(), {}, "2026-10-17", { "17 октября 2026" },

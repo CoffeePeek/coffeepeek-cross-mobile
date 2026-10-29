@@ -1,6 +1,11 @@
 package com.coffeepeek.feature.profile.impl.ui.compose.component
 
 import androidx.compose.foundation.BorderStroke
+import com.coffeepeek.feature.profile.impl.resources.Res
+import com.coffeepeek.feature.profile.impl.resources.profile_loading
+import com.coffeepeek.feature.profile.impl.resources.profile_retry
+import com.coffeepeek.feature.profile.impl.resources.profile_section_all
+import com.coffeepeek.feature.profile.impl.resources.profile_section_all_description
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column

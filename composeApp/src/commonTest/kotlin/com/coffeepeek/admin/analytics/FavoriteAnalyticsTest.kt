@@ -3,14 +3,31 @@
 package com.coffeepeek.admin.analytics
 
 import com.coffeepeek.admin.feature.favorites.ui.TrackedFavoriteInteractions
-import com.coffeepeek.domain.model.Session
-import com.coffeepeek.domain.repository.SessionRepository
+import com.coffeepeek.core.session.Session
+import com.coffeepeek.core.session.SessionReader
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.*
 import kotlin.test.*
 
 class FavoriteAnalyticsTest {
+    @Test fun cancelledSessionLoadDoesNotOpenAuthOrRunMutation() = runTest {
+        val service = analytics()
+        Analytics.install(service)
+        val sessions = CancellableAnalyticsSessions()
+        var authRequests = 0
+        var mutations = 0
+        val interactions = TrackedFavoriteInteractions(sessions, backgroundScope) { authRequests++ }
+        interactions.change("key", false, true, { mutations++; Result.success(Unit) })
+        runCurrent()
+        assertEquals(0, authRequests)
+        assertEquals(0, mutations)
+        sessions.cancelled = false
+        interactions.change("key", false, true, { mutations++; Result.success(Unit) })
+        runCurrent()
+        assertEquals(1, authRequests)
+    }
+
     @Test fun guestCanRetryTheSameFavoriteAndOnlyLatestIntentResumes() = runTest {
         val sessions = AnalyticsSessions()
         val sdk = RecordingTransport()
@@ -56,7 +73,7 @@ class FavoriteAnalyticsTest {
         val sdk = RecordingTransport()
         val service = analytics(MemoryConsent(AnalyticsConsent.Accepted), sdk)
         service.setForeground(true); service.restoreConsent(); service.syncIdentity(null); Analytics.install(service)
-        val sessions = object : SessionRepository by AnalyticsSessions() {
+        val sessions = object : SessionReader by AnalyticsSessions() {
             override fun observeSession() = kotlinx.coroutines.flow.flow<Session?> { error("storage unavailable") }
         }
         TrackedFavoriteInteractions(sessions, backgroundScope)
@@ -110,15 +127,19 @@ class FavoriteAnalyticsTest {
     }
 }
 
-private class AnalyticsSessions : SessionRepository {
+private class CancellableAnalyticsSessions : SessionReader by AnalyticsSessions() {
+    var cancelled = true
+    override suspend fun getSession(): Session? {
+        if (cancelled) throw kotlinx.coroutines.CancellationException()
+        return null
+    }
+}
+
+private class AnalyticsSessions : SessionReader {
     val value = MutableStateFlow<Session?>(null)
     override fun peekSession() = value.value
-    override fun applySession(session: Session?) { value.value = session }
+    fun applySession(session: Session?) { value.value = session }
     override fun isActiveSession(session: Session?) = session != null
     override suspend fun getSession() = value.value
-    override suspend fun persistSession(session: Session?) = Unit
-    override suspend fun saveSession(session: Session?) { value.value = session }
-    override suspend fun warmCache() = Unit
     override fun observeSession() = value
-    override suspend fun isLoggedIn() = value.value != null
 }

@@ -2,9 +2,31 @@
 
 package com.coffeepeek.feature.coffee.impl.ui.compose
 
+import com.coffeepeek.core.designsystem.component.CoffeePeekScaffold as Scaffold
+import com.coffeepeek.core.designsystem.component.coffeePeekScrollContentPadding
+
 import com.coffeepeek.feature.coffee.api.CoffeeExposure
+import org.jetbrains.compose.ui.tooling.preview.Preview
+import com.coffeepeek.feature.coffee.impl.resources.Res
+import com.coffeepeek.feature.coffee.impl.resources.coffee_about
+import com.coffeepeek.feature.coffee.impl.resources.coffee_back
+import com.coffeepeek.feature.coffee.impl.resources.coffee_checked_at
+import com.coffeepeek.feature.coffee.impl.resources.coffee_country
+import com.coffeepeek.feature.coffee.impl.resources.coffee_form
+import com.coffeepeek.feature.coffee.impl.resources.coffee_loading
+import com.coffeepeek.feature.coffee.impl.resources.coffee_no_offers
+import com.coffeepeek.feature.coffee.impl.resources.coffee_offers
+import com.coffeepeek.feature.coffee.impl.resources.coffee_open_photos
+import com.coffeepeek.feature.coffee.impl.resources.coffee_photo_missing
+import com.coffeepeek.feature.coffee.impl.resources.coffee_retry_similar
+import com.coffeepeek.feature.coffee.impl.resources.coffee_roaster
+import com.coffeepeek.feature.coffee.impl.resources.coffee_share
+import com.coffeepeek.feature.coffee.impl.resources.coffee_similar
+import com.coffeepeek.feature.coffee.impl.resources.coffee_taste
+import com.coffeepeek.feature.coffee.impl.resources.coffee_unspecified_feminine
 import com.coffeepeek.feature.coffee.api.CoffeeScreenAnalytics
-import androidx.compose.ui.backhandler.BackHandler
+import com.coffeepeek.core.designsystem.component.CoffeePeekBackHandler
+import com.coffeepeek.core.designsystem.component.CoffeePeekGlassIcon
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -23,7 +45,6 @@ import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
-import org.jetbrains.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -58,7 +79,7 @@ internal fun CoffeeDetailScreen(
     LaunchedEffect(viewModel, lifecycle) {
         lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) { viewModel.events.collect { currentEvent(it) } }
     }
-    BackHandler { viewModel.onAction(if (state.arePhotosOpen) CoffeeDetailAction.ClosePhotos else CoffeeDetailAction.Back) }
+    CoffeePeekBackHandler { viewModel.onAction(if (state.arePhotosOpen) CoffeeDetailAction.ClosePhotos else CoffeeDetailAction.Back) }
     CoffeeDetailScreenContent(state, viewModel::onAction, imageContent, galleryContent, formatCheckedAt, modifier, screen)
 }
 
@@ -84,7 +105,7 @@ internal fun CoffeeDetailScreenContent(
                     CoffeePeekLoader(stringResource(Res.string.coffee_loading))
                 }
                 state.loadFailed -> CoffeeLoadError({ onAction(CoffeeDetailAction.Retry) }, Modifier.fillMaxSize().padding(padding))
-                details != null -> LazyColumn(Modifier.fillMaxSize().padding(padding).testTag("coffee-detail-list"), contentPadding = PaddingValues(bottom = CoffeePeekDimens.spacing6),
+                details != null -> LazyColumn(Modifier.fillMaxSize().padding(padding).testTag("coffee-detail-list"), contentPadding = coffeePeekScrollContentPadding(PaddingValues(bottom = CoffeePeekDimens.spacing6)),
                     verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing6)) {
                     item(key = "photo") {
                         val photosDescription = stringResource(Res.string.coffee_open_photos)
@@ -160,10 +181,10 @@ internal fun CoffeeDetailScreenContent(
             }
         }
         Row(Modifier.align(Alignment.TopCenter).fillMaxWidth().statusBarsPadding().padding(CoffeePeekDimens.spacing3), horizontalArrangement = Arrangement.SpaceBetween) {
-            CoffeePeekGlassIconButton({ onAction(CoffeeDetailAction.Back) }, stringResource(Res.string.coffee_back), hazeState = hazeState) {
+            CoffeePeekGlassIconButton({ onAction(CoffeeDetailAction.Back) }, stringResource(Res.string.coffee_back), hazeState = hazeState, nativeIcon = CoffeePeekGlassIcon.Back) {
                 Icon(CoffeePeekIcons.Back, null)
             }
-            CoffeePeekGlassIconButton({ onAction(CoffeeDetailAction.Share) }, stringResource(Res.string.coffee_share), enabled = details != null, hazeState = hazeState) {
+            CoffeePeekGlassIconButton({ onAction(CoffeeDetailAction.Share) }, stringResource(Res.string.coffee_share), enabled = details != null, hazeState = hazeState, nativeIcon = CoffeePeekGlassIcon.Share) {
                 Icon(CoffeePeekIcons.Share, null)
             }
         }
@@ -178,10 +199,11 @@ internal fun CoffeeDetailScreenContent(
     CoffeeDetailScreenContent(CoffeeDetailState(details = previewCoffeeDetails(), isLoading = false), {},
         { _, _, modifier, _ -> CoffeePeekImagePlaceholder(modifier) }, { _, _, _ -> }, { it })
 }
-@Preview @Composable private fun CoffeeDetailLightPreview() = CoffeeDetailPreview(false)
-@Preview @Composable private fun CoffeeDetailDarkPreview() = CoffeeDetailPreview(true)
 @Composable private fun CoffeeDetailErrorPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     CoffeeDetailScreenContent(CoffeeDetailState(isLoading = false, loadFailed = true), {}, { _, _, _, _ -> }, { _, _, _ -> }, { it })
 }
+
+@Preview @Composable private fun CoffeeDetailLightPreview() = CoffeeDetailPreview(false)
+@Preview @Composable private fun CoffeeDetailDarkPreview() = CoffeeDetailPreview(true)
 @Preview @Composable private fun CoffeeDetailErrorLightPreview() = CoffeeDetailErrorPreview(false)
 @Preview @Composable private fun CoffeeDetailErrorDarkPreview() = CoffeeDetailErrorPreview(true)

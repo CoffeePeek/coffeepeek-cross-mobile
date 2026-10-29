@@ -56,6 +56,21 @@ class FavoritesViewModelTest {
         assertTrue(vm.state.value.removing.isEmpty())
     }
 
+    @Test fun dismissingPreviewFailureDoesNotRetryOrRemoveTheRetainedRow() = runTest(dispatcher) {
+        val repo = Repo()
+        repo.removeResult = Result.failure(IllegalStateException("Offline"))
+        val vm = vm(repo)
+        runCurrent()
+        vm.onAction(FavoritesAction.Remove("a"))
+        runCurrent()
+        assertTrue(vm.state.value.actionFailed)
+        vm.onAction(FavoritesAction.DismissActionFailure)
+        runCurrent()
+        assertFalse(vm.state.value.actionFailed)
+        assertEquals(1, repo.removals)
+        assertEquals(listOf("a"), vm.state.value.shops.map { it.id })
+    }
+
     @Test fun duplicateRemovalIsBlockedAndSuccessComesFromObservation() = runTest(dispatcher) {
         val repo = Repo(); repo.gate = CompletableDeferred()
         val vm = vm(repo); runCurrent()

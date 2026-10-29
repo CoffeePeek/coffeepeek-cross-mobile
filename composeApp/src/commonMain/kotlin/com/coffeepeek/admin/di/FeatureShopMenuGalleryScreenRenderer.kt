@@ -1,0 +1,31 @@
+package com.coffeepeek.admin.di
+
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import com.coffeepeek.admin.ui.Navigator
+import com.coffeepeek.core.designsystem.component.CoffeePeekPhotoViewer
+import com.coffeepeek.admin.ui.screen.shop.ShopMenuGalleryScreenRenderer
+import com.coffeepeek.feature.shop.api.ShopMenuGalleryEntry
+
+internal class FeatureShopMenuGalleryScreenRenderer(
+    private val entry: ShopMenuGalleryEntry,
+    private val legacyAction: @Composable (String) -> Unit = {},
+) : ShopMenuGalleryScreenRenderer {
+    @Composable
+    override fun MenuGalleryAction(shopId: String) {
+        legacyAction(shopId)
+    }
+
+    @Composable
+    override fun Content(shopId: String) {
+        var viewer by remember(shopId) { mutableStateOf<Pair<List<String>, Int>?>(null) }
+        entry.Content(shopId, onBack = Navigator::popBack,
+            onOpenPhoto = { urls, index -> viewer = urls to index })
+        viewer?.let { (urls, index) ->
+            CoffeePeekPhotoViewer(urls, index, onDismiss = { viewer = null })
+        }
+    }
+}

@@ -36,6 +36,8 @@ private const val PAGE_SIZE = 20
 private const val QUERY_DEBOUNCE_MS = 400L
 private const val PLACEMENT = "discovery"
 
+internal enum class SearchPurpose { Discovery, CheckInPicker }
+
 /**
  * The shop search as the legacy feed kept it (the debounced query, the filters, the city, nearby, paging, the optimistic favorite), with three differences.
  * One account at a time: a change of account drops the visited and favorites filters and reloads, a guest is sent to sign in for them. A query typed in the first
@@ -49,6 +51,7 @@ internal class SearchViewModel(
     private val location: DiscoveryLocation,
     private val account: DiscoveryAccount,
     private val analytics: DiscoveryAnalytics,
+    private val purpose: SearchPurpose = SearchPurpose.Discovery,
 ) : MviViewModel<SearchState, SearchAction, SearchEvent>(SearchState()) {
     private val queries = MutableSharedFlow<String>(extraBufferCapacity = 64)
     private val favoriteGuard = Mutex()
@@ -110,7 +113,7 @@ internal class SearchViewModel(
             SearchAction.Refresh -> if (!currentState.isRefreshing && !currentState.isLoading) loadShops(reset = true)
             is SearchAction.ToggleFavorite -> toggleFavorite(action.shopId)
             is SearchAction.OpenShop -> {
-                analytics.shopOpened(currentState.visibleShops.indexOfFirst { it.id == action.shopId }.takeIf { it >= 0 }?.plus(1))
+                if (purpose == SearchPurpose.Discovery) analytics.shopOpened(currentState.visibleShops.indexOfFirst { it.id == action.shopId }.takeIf { it >= 0 }?.plus(1))
                 sendEvent(SearchEvent.OpenShop(action.shopId))
             }
         }
@@ -147,9 +150,11 @@ internal class SearchViewModel(
 
     private fun onLocation(point: Coordinates?) {
         if (point == null || !point.isValid || point == origin) return
+        val selectNearby = origin == null && purpose == SearchPurpose.CheckInPicker
         origin = point
         reportLocation(GeolocationOutcome.Available)
-        updateState { copy(canUseNearby = true, userLocation = point) }
+        updateState { copy(canUseNearby = true, userLocation = point,
+            filters = if (selectNearby) filters.copy(nearbyOnly = true) else filters) }
         if (currentState.filters.nearbyOnly) {
             updateState { copy(shops = emptyList()) }
             if (cityReady) loadShops(reset = true)
@@ -157,7 +162,7 @@ internal class SearchViewModel(
     }
 
     private fun reportLocation(outcome: GeolocationOutcome) {
-        analytics.geolocation(PLACEMENT, userTriggered = false, outcome = outcome)
+        if (purpose == SearchPurpose.Discovery) analytics.geolocation(PLACEMENT, userTriggered = false, outcome = outcome)
     }
 
     private fun loadCatalogs() {

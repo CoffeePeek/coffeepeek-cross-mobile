@@ -25,21 +25,3 @@ interface RoasterScreenRenderer {
     @Composable
     fun Detail(roasterId: String)
 }
-
-internal object LegacyRoasterScreenRenderer : RoasterScreenRenderer {
-    @Composable
-    override fun DiscoverySection(query: String, selectedRoasterIds: Set<String>, favoritesOnly: Boolean) =
-        RoasterPreview(query, selectedRoasterIds, favoritesOnly)
-
-    @Composable
-    override fun DiscoverySearch(
-        onCancel: () -> Unit,
-        query: String,
-        onQueryChange: (String) -> Unit,
-        selectedRoasterIds: Set<String>,
-        favoritesOnly: Boolean,
-    ) = RoasterListScreen(onCancel, query, onQueryChange, selectedRoasterIds, favoritesOnly)
-
-    @Composable
-    override fun Detail(roasterId: String) = RoasterDetailScreen(roasterId)
-}

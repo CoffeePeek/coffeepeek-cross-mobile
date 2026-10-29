@@ -22,7 +22,7 @@ import kotlinx.coroutines.sync.withPermit
 internal class ServerRoasterFavorites(
     private val favorites: FavoritesRepository,
     private val roasters: RoasterRepository,
-    private val sessions: com.coffeepeek.domain.repository.SessionRepository? = null,
+    private val sessions: com.coffeepeek.core.session.SessionReader? = null,
 ) : RoasterFavorites {
     private val errors = MutableStateFlow<String?>(null)
     override fun observeErrors(): Flow<String?> = errors.asStateFlow()

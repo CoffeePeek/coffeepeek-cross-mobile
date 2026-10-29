@@ -1,10 +1,13 @@
 package com.coffeepeek.admin.di
 
+import com.coffeepeek.admin.ui.Navigator
+import com.coffeepeek.admin.ui.screen.shop.component.ShopMenuGalleryLink
 import com.coffeepeek.admin.di.favorites.serverFavoritesModule
 import com.coffeepeek.admin.di.shop.shopFavoriteIntent
+import com.coffeepeek.admin.di.shop.AndroidShopCheckInDateFormatter
 import com.coffeepeek.admin.di.shop.shopCheckInModule
-import com.coffeepeek.admin.di.shop.AndroidShopCheckInFormRenderer
-import com.coffeepeek.admin.di.coffee.coffeeCatalogueScreenRenderer
+import com.coffeepeek.admin.di.shop.FeatureShopCheckInFormRenderer
+import com.coffeepeek.admin.di.coffee.featureCoffeeScreenRenderer
 import com.coffeepeek.admin.di.coffee.coffeeModule
 import com.coffeepeek.admin.di.coffee.CoffeeShelfTab
 import com.coffeepeek.admin.di.shelf.ShelfFeatureScreenRenderer
@@ -13,24 +16,25 @@ import com.coffeepeek.admin.di.shelf.shelfModule
 import com.coffeepeek.BuildConfig
 import com.coffeepeek.admin.di.appupdate.androidAppUpdateRenderer
 import com.coffeepeek.admin.di.auth.androidAuthScreenRenderer
-import com.coffeepeek.admin.di.community.checkInDetailFeatureScreenRenderer
-import com.coffeepeek.admin.di.community.communityFeatureScreenRenderer
+import com.coffeepeek.admin.di.community.featureCommunityScreenRenderer
+import com.coffeepeek.admin.di.community.featureCheckInDetailScreenRenderer
 import com.coffeepeek.api.CoffeePeekClient
-import com.coffeepeek.admin.di.contributions.androidContributionsScreenRenderer
-import com.coffeepeek.admin.di.discovery.androidDiscoveryScreenRenderer
 import com.coffeepeek.admin.di.contributions.contributionsModule
-import com.coffeepeek.admin.di.profile.accountFeatureScreenRenderer
-import com.coffeepeek.admin.di.notifications.androidNotificationsRenderer
-import com.coffeepeek.admin.di.profile.ownProfileFeatureScreenRenderer
-import com.coffeepeek.admin.di.settings.androidSettingsScreenRenderer
-import com.coffeepeek.admin.di.profile.publicProfileFeatureScreenRenderer
-import com.coffeepeek.admin.di.shop.AndroidShopDetailScreenRenderer
-import com.coffeepeek.admin.di.shop.AndroidShopCheckInListScreenRenderer
+import com.coffeepeek.admin.di.contributions.featureContributionsScreenRenderer
+import com.coffeepeek.admin.di.discovery.featureDiscoveryScreenRenderer
+import com.coffeepeek.admin.di.profile.featureAccountScreenRenderer
+import com.coffeepeek.admin.di.notifications.featureNotificationsRenderer
+import com.coffeepeek.admin.di.profile.featureOwnProfileScreenRenderer
+import com.coffeepeek.admin.di.settings.featureSettingsScreenRenderer
+import com.coffeepeek.admin.di.profile.featurePublicProfileScreenRenderer
+import com.coffeepeek.admin.di.shop.FeatureShopDetailScreenRenderer
+import com.coffeepeek.admin.di.shop.FeatureShopCheckInListScreenRenderer
 import com.coffeepeek.admin.di.shop.shopBrowsingModule
 import com.coffeepeek.admin.di.checkinhistory.checkInHistoryModule
-import com.coffeepeek.admin.di.checkinhistory.CheckInHistoryFeatureScreenRenderer
+import com.coffeepeek.admin.di.contentreport.contentReportModule
+import com.coffeepeek.admin.di.contentreport.FeatureContentReportRenderer
 import com.coffeepeek.admin.di.homecheckin.homeCheckInModule
-import com.coffeepeek.admin.di.homecheckin.FeatureCheckInCreateFlowRenderer
+import android.widget.Toast
 import com.coffeepeek.admin.locator.Locator
 import com.coffeepeek.feature.shopreport.data.repository.createShopIssueReportRepository
 import com.coffeepeek.feature.shopreport.impl.createShopReportEntry
@@ -46,53 +50,55 @@ internal fun initAndroidKoin(extraModules: List<org.koin.core.module.Module> = e
         registerLegacyFavorites = true,
         platformModules = listOf(
             serverFavoritesModule(),
-            shopCheckInModule(),
+            shopCheckInModule(AndroidShopCheckInDateFormatter()),
             shopBrowsingModule(),
             homeCheckInModule(BuildConfig.SHELF_ENABLED),
             checkInHistoryModule(BuildConfig.SHELF_ENABLED),
+            contentReportModule(),
             coffeeModule(),
             contributionsModule(),
             shelfModule(),
         ) + extraModules,
         shopReportRendererFactory = { client ->
-            AndroidShopReportScreenRenderer(
+            FeatureShopReportScreenRenderer(
                 createShopReportEntry(createShopIssueReportRepository(client.client)),
             )
         },
         shopGalleryRendererFactory = { client ->
-            AndroidShopMenuGalleryScreenRenderer(
+            FeatureShopMenuGalleryScreenRenderer(
                 createShopMenuGalleryEntry(createShopMenuGalleryRepository(client.client)),
+                legacyAction = { id -> ShopMenuGalleryLink(onOpen = { Navigator.navigate(Navigator.Screen.ShopMenuGallery(id)) }) },
             )
         },
-        shopCheckInRendererFactory = { AndroidShopCheckInFormRenderer(get()) },
+        shopCheckInRendererFactory = { FeatureShopCheckInFormRenderer(get()) },
         shopDetailRendererFactory = {
-            AndroidShopDetailScreenRenderer(sessions = get(), users = get(), details = get(), votes = get(),
+            FeatureShopDetailScreenRenderer(sessions = get(), accounts = get(), details = get(), votes = get(),
                 favorites = get(), favoriteIntent = shopFavoriteIntent(get(), get(), get()), checkInForm = get(),
                 visibility = get(), blockActions = get())
         },
         shopCheckInListRendererFactory = {
-            AndroidShopCheckInListScreenRenderer(sessions = get(), users = get(), details = get(), votes = get(),
+            FeatureShopCheckInListScreenRenderer(sessions = get(), accounts = get(), details = get(), votes = get(),
                 visibility = get(), blockActions = get())
         },
-        checkInHistoryRendererFactory = { get<CheckInHistoryFeatureScreenRenderer>() },
-        checkInCreateFlowRendererFactory = { get<FeatureCheckInCreateFlowRenderer>() },
+        checkInRenderers = featureCheckInRendererFactories(),
+        contentReportRendererFactory = { get<FeatureContentReportRenderer>() },
         // Shelf: Coffee tab switcher, «+» scan flow, and shelf screens (live API on debug/release; Sandbox uses fake backend).
         coffeeRendererFactory = {
-            coffeeCatalogueScreenRenderer(get(), CoffeeShelfTab(get(), get(), Locator.database.settingRepository).takeIf { BuildConfig.SHELF_ENABLED })
+            featureCoffeeScreenRenderer(get(), CoffeeShelfTab(get(), get(), Locator.database.settingRepository).takeIf { BuildConfig.SHELF_ENABLED })
         },
         shelfRendererFactory = { ShelfFeatureScreenRenderer(get(), Locator.database.settingRepository, shelfBrewForm(get())) },
-        publicProfileRendererFactory = { publicProfileFeatureScreenRenderer(get(), get(), get(), get(), get()) },
-        ownProfileRendererFactory = { ownProfileFeatureScreenRenderer(get(), get(), get(), get(), get(), get(), get(), get()) },
-        accountRendererFactory = { accountFeatureScreenRenderer(get(), get()) },
-        settingsRendererFactory = { androidSettingsScreenRenderer(get(), get(), get(), get()) },
-        appUpdateRendererFactory = { androidAppUpdateRenderer(get(), get()) },
-        notificationsRendererFactory = { androidNotificationsRenderer(get(), get(), get()) },
-        authRendererFactory = { androidAuthScreenRenderer(get(), get()) },
-        communityRendererFactory = { communityFeatureScreenRenderer(get(), get(), get(), get(), get(), get()) },
-        checkInDetailRendererFactory = { checkInDetailFeatureScreenRenderer(get(), get(), get(), get()) },
-        contributionsRendererFactory = {
-            androidContributionsScreenRenderer(get(), get(), get())
+        publicProfileRendererFactory = { featurePublicProfileScreenRenderer(get(), get(), get(), get(), get()) },
+        ownProfileRendererFactory = { featureOwnProfileScreenRenderer(get(), get(), get(), get(), get(), get(), get(), get(), get()) },
+        accountRendererFactory = { featureAccountScreenRenderer(get(), get(), get()) },
+        settingsRendererFactory = {
+            featureSettingsScreenRenderer(get(), get(), get(), get(), notify = { Toast.makeText(Locator.appContext, it, Toast.LENGTH_SHORT).show() })
         },
-        discoveryRendererFactory = { androidDiscoveryScreenRenderer(get<CoffeePeekClient>().client, get(), get(), get(), get(), get()) },
+        appUpdateRendererFactory = { androidAppUpdateRenderer(get(), get()) },
+        notificationsRendererFactory = { featureNotificationsRenderer(get(), get(), get()) },
+        authRendererFactory = { androidAuthScreenRenderer(get(), get()) },
+        checkInDetailRendererFactory = { featureCheckInDetailScreenRenderer(get(), get(), get(), get()) },
+        communityRendererFactory = { featureCommunityScreenRenderer(get(), get(), get(), get(), get(), get()) },
+        contributionsRendererFactory = { featureContributionsScreenRenderer(get(), get(), get()) },
+        discoveryRendererFactory = { featureDiscoveryScreenRenderer(get<CoffeePeekClient>().client, get(), get(), get(), get(), get(), get()) },
     )
 }

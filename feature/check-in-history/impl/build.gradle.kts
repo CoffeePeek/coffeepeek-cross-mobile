@@ -20,6 +20,9 @@ dependencies {
     implementation(project(module.core.datetime))
     implementation(project(module.core.designSystem))
     implementation(libs.compose.components.resources)
+
+    api(project(module.feature.checkInHistory.api))
+    implementation(project(module.core.designSystem))
     implementation(libs.androidx.lifecycle.viewmodelCompose)
     implementation(libs.androidx.lifecycle.runtimeCompose)
     implementation(compose.components.uiToolingPreview)

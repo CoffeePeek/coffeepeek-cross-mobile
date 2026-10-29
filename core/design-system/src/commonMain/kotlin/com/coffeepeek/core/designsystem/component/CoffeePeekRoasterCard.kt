@@ -60,12 +60,12 @@ fun CoffeePeekRoasterCard(
     shopsLabel: String,
     productsCount: Int,
     productsLabel: String,
-    showCounters: Boolean = true,
     modifier: Modifier = Modifier,
     hasLogo: Boolean = false,
     onClick: (() -> Unit)? = null,
     logo: @Composable BoxScope.() -> Unit = {},
     favorite: (@Composable () -> Unit)? = null,
+    showCounters: Boolean = true,
 ) {
     val summary = description?.takeIf(String::isNotBlank)
     BoxWithConstraints(modifier.fillMaxWidth()) {

@@ -25,6 +25,8 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
+import com.coffeepeek.core.designsystem.component.CoffeePeekGlassIcon
+import com.coffeepeek.core.designsystem.component.LocalCoffeePeekNativeControlsPresenter
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import dev.chrisbanes.haze.HazeState
@@ -89,8 +91,11 @@ fun CoffeePeekGlassIconButton(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     hazeState: HazeState? = LocalCoffeePeekGlassHazeState.current,
+    nativeIcon: CoffeePeekGlassIcon? = null,
     content: @Composable () -> Unit,
 ) {
+    val native = LocalCoffeePeekNativeControlsPresenter.current
+    if (nativeIcon != null && native != null && native.GlassIconButton(nativeIcon, onClick, contentDescription, modifier, enabled)) return
     Box(
         modifier = modifier
             .size(CoffeePeekDimens.buttonHeight)

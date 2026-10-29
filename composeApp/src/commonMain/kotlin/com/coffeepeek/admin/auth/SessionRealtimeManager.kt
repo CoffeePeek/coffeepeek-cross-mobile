@@ -5,8 +5,8 @@ import coffeepeek.composeapp.generated.resources.local_data_cleanup_error
 import com.coffeepeek.admin.utils.ErrorHandler
 import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.data.session.UserSessionCleaner
-import com.coffeepeek.domain.model.Session
-import com.coffeepeek.domain.repository.SessionRepository
+import com.coffeepeek.core.session.Session
+import com.coffeepeek.core.session.SessionReader
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.websocket.webSocket
@@ -55,7 +55,7 @@ private const val RECONNECT_DELAY_MILLIS = 5_000L
  * close and the ForceLogout invocation that the application consumes.
  */
 class SessionRealtimeManager(
-    private val sessionRepository: SessionRepository,
+    private val sessionRepository: SessionReader,
     private val userSessionCleaner: UserSessionCleaner,
     private val httpClient: HttpClient,
     private val baseUrl: String,
@@ -93,14 +93,11 @@ class SessionRealtimeManager(
         }
     }
 
-    private suspend fun connectWithRetry(accessToken: String) {
-        while (scope.isActive && activeAccessToken == accessToken) {
-            runCatching { connectOnce(accessToken) }
-            if (scope.isActive && activeAccessToken == accessToken) {
-                delay(RECONNECT_DELAY_MILLIS)
-            }
-        }
-    }
+    private suspend fun connectWithRetry(accessToken: String) = reconnectSession(
+        isCurrent = { scope.isActive && activeAccessToken == accessToken },
+        connect = { connectOnce(accessToken) },
+        pause = { delay(RECONNECT_DELAY_MILLIS) },
+    )
 
     private suspend fun connectOnce(accessToken: String) {
         val hubUrl = resolveRealtimeSessionUrl(baseUrl)

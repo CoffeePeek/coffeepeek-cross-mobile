@@ -21,7 +21,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.admin.ui.component.AppButton
 import com.coffeepeek.admin.ui.component.ReviewPhotoStrip
-import com.coffeepeek.admin.ui.component.PhotoViewerImages
+import com.coffeepeek.core.designsystem.component.CoffeePeekPhotoViewerImages
 import com.coffeepeek.admin.ui.icons.CpIcons
 import com.coffeepeek.admin.utils.utcIsoToLocalDateTime
 import com.coffeepeek.legacy.homecheckin.domain.HomeCheckIn
@@ -34,7 +34,7 @@ internal fun HomeDetail(
     vm: HomeCheckInViewModel,
     modifier: Modifier,
     notice: String? = null,
-    onPhotoClick: (PhotoViewerImages, Int) -> Unit,
+    onPhotoClick: (CoffeePeekPhotoViewerImages, Int) -> Unit,
 ) = HomeDetailContent(entry, modifier, notice, vm::edit, vm::confirmDelete, onPhotoClick)
 
 @Composable
@@ -44,7 +44,7 @@ internal fun HomeDetailContent(
     notice: String? = null,
     onEdit: () -> Unit,
     onDelete: () -> Unit,
-    onPhotoClick: (PhotoViewerImages, Int) -> Unit,
+    onPhotoClick: (CoffeePeekPhotoViewerImages, Int) -> Unit,
 ) {
     val photos = entry.photos.filter { it.url.isNotBlank() }
     LazyColumn(
@@ -148,7 +148,7 @@ internal fun HomeDetailContent(
 }
 
 internal fun homePhotoViewerImages(photos: List<HomeCheckInPhoto>) =
-    PhotoViewerImages(photos.map { it.thumbnailUrl }, photos.map { it.url })
+    CoffeePeekPhotoViewerImages(photos.map { it.thumbnailUrl }, photos.map { it.url })
 
 @Composable
 private fun RecipeMetric(label: String, value: String) {

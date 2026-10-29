@@ -2,7 +2,7 @@ package com.coffeepeek.admin.sandbox.compose
 
 import com.coffeepeek.admin.feature.appupdate.ui.AppUpdateRenderer
 import com.coffeepeek.feature.appupdate.impl.AppUpdateController
-import com.coffeepeek.admin.feature.authorblocking.ui.AuthorBlockingHost
+import com.coffeepeek.admin.di.authorblocking.AuthorBlockingRootHost
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -58,7 +58,7 @@ import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
                     CompositionLocalProvider(LocalViewModelStoreOwner provides state.owner) { Navigator() }
                 }
                 // App.kt hosts this next to the Navigator; without it block/unblock confirmations never appear.
-                AuthorBlockingHost()
+                AuthorBlockingRootHost()
                 // Same for the update prompt: App.kt hosts it at the root and it checks on every resume.
                 updateRenderer.Prompt()
             }

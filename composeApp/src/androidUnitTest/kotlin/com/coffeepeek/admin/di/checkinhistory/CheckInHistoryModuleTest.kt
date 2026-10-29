@@ -46,8 +46,8 @@ class CheckInHistoryModuleTest {
                 homeCheckInModule(shelfEnabled = false, apiBaseUrl = "https://fixture.invalid"), checkInHistoryModule(shelfEnabled = false, apiBaseUrl = "https://fixture.invalid"))
         }
         try {
-            assertSame(app.koin.get<CheckInHistoryFeatureScreenRenderer>(), app.koin.get<CheckInHistoryFeatureScreenRenderer>())
-            assertSame(app.koin.get<CheckInHistoryCalendar>(), app.koin.get<CheckInHistoryCalendar>())
+            assertSame(app.koin.get<FeatureCheckInHistoryScreenRenderer>(), app.koin.get<FeatureCheckInHistoryScreenRenderer>())
+            assertSame(app.koin.get<AppCheckInHistoryCalendar>(), app.koin.get<AppCheckInHistoryCalendar>())
             assertEquals(1, app.koin.getAll<CheckInHistoryRepository>().size)
             assertEquals(1, app.koin.getAll<HomePreparationReader>().size)
             assertSame(app.koin.get<HomePreparationRepository>(), app.koin.get<HomePreparationReader>())

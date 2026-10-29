@@ -1,6 +1,15 @@
 package com.coffeepeek.feature.coffee.impl.ui.compose
 
+import com.coffeepeek.core.designsystem.component.CoffeePeekScaffold as Scaffold
+import com.coffeepeek.core.designsystem.component.coffeePeekScrollContentPadding
+
 import com.coffeepeek.feature.coffee.api.CoffeeExposure
+import org.jetbrains.compose.ui.tooling.preview.Preview
+import com.coffeepeek.feature.coffee.impl.resources.Res
+import com.coffeepeek.feature.coffee.impl.resources.coffee_empty
+import com.coffeepeek.feature.coffee.impl.resources.coffee_empty_hint
+import com.coffeepeek.feature.coffee.impl.resources.coffee_loading
+import com.coffeepeek.feature.coffee.impl.resources.coffee_refresh
 import com.coffeepeek.feature.coffee.api.CoffeeScreenAnalytics
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -15,7 +24,6 @@ import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
 import org.jetbrains.compose.resources.stringResource
-import org.jetbrains.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
@@ -83,8 +91,8 @@ internal fun CoffeeListScreenContent(state: CoffeeListState, onAction: (CoffeeLi
             stringResource(Res.string.coffee_refresh), stringResource(Res.string.coffee_loading),
             modifier = Modifier.fillMaxSize().padding(padding).imePadding().clipToBounds()) { scrollModifier ->
             LazyColumn(state = listState, modifier = screen.exposure(scrollModifier.fillMaxSize().testTag("coffee-list"), CoffeeExposure.Catalog),
-                contentPadding = PaddingValues(start = CoffeePeekDimens.spacing4, top = CoffeePeekDimens.spacing4,
-                    end = CoffeePeekDimens.spacing4, bottom = bottomClearance + 88.dp),
+                contentPadding = coffeePeekScrollContentPadding(PaddingValues(start = CoffeePeekDimens.spacing4, top = CoffeePeekDimens.spacing4,
+                    end = CoffeePeekDimens.spacing4, bottom = bottomClearance + 88.dp)),
                 verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing4)) {
                 if (state.isLoading && state.items.isEmpty()) item(key = "loading") { LoadingRow() }
                 items(state.items, key = { it.slug }) { coffee ->
@@ -125,19 +133,19 @@ private fun CoffeeListPagingEffects(state: CoffeeListState, listState: LazyListS
 }
 
 @Composable private fun CoffeeListPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
-    val items = List(4) { previewCoffee().copy(slug = "preview-coffee-$it") }
-    CoffeeListScreenContent(CoffeeListState(items = items, isLoading = false), {},
+    CoffeeListScreenContent(CoffeeListState(items = listOf(previewCoffee()), isLoading = false), {},
         { _, _, modifier, _ -> CoffeePeekImagePlaceholder(modifier) })
 }
-@Preview @Composable private fun CoffeeListLightPreview() = CoffeeListPreview(false)
-@Preview @Composable private fun CoffeeListDarkPreview() = CoffeeListPreview(true)
 @Composable private fun CoffeeListEmptyPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     CoffeeListScreenContent(CoffeeListState(isLoading = false), {}, { _, _, _, _ -> })
 }
-@Preview @Composable private fun CoffeeListEmptyLightPreview() = CoffeeListEmptyPreview(false)
-@Preview @Composable private fun CoffeeListEmptyDarkPreview() = CoffeeListEmptyPreview(true)
 @Composable private fun CoffeeListErrorPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     CoffeeListScreenContent(CoffeeListState(isLoading = false, loadFailed = true), {}, { _, _, _, _ -> })
 }
+
+@Preview @Composable private fun CoffeeListLightPreview() = CoffeeListPreview(false)
+@Preview @Composable private fun CoffeeListDarkPreview() = CoffeeListPreview(true)
+@Preview @Composable private fun CoffeeListEmptyLightPreview() = CoffeeListEmptyPreview(false)
+@Preview @Composable private fun CoffeeListEmptyDarkPreview() = CoffeeListEmptyPreview(true)
 @Preview @Composable private fun CoffeeListErrorLightPreview() = CoffeeListErrorPreview(false)
 @Preview @Composable private fun CoffeeListErrorDarkPreview() = CoffeeListErrorPreview(true)

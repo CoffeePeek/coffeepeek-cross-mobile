@@ -1,5 +1,7 @@
 package com.coffeepeek.admin.utils
 
+import com.coffeepeek.core.media.AndroidImageCodec
+
 import android.Manifest
 import android.content.pm.PackageManager
 import android.net.Uri
@@ -52,7 +54,7 @@ actual fun rememberPhotoPicker(
             val limit = maxSelectionState.value
             val outcome = pickOutcome(uris, limit) { uri ->
                 val raw = resolver.openInputStream(uri)?.use { it.readBytes() } ?: return@pickOutcome null
-                val prepared = BitmapUtil.prepareForUpload(raw)
+                val prepared = AndroidImageCodec.prepareForUpload(raw)
                 val fileName = resolver.queryFileName(uri)
                     ?.substringBeforeLast('.')
                     ?.takeIf { it.isNotBlank() }

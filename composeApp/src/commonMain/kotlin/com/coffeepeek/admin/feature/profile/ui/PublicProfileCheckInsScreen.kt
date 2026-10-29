@@ -22,8 +22,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coffeepeek.composeapp.generated.resources.*
-import com.coffeepeek.admin.ui.component.PhotoViewerImages
-import com.coffeepeek.admin.utils.PrefetchListPhotos
+import com.coffeepeek.core.designsystem.component.CoffeePeekPhotoViewerImages
+import com.coffeepeek.core.media.PrefetchListPhotos
 import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
 import com.coffeepeek.core.designsystem.component.CoffeePeekTopBar
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
@@ -33,7 +33,7 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 internal fun PublicProfileCheckInsScreenContent(
     state: PublicProfileUiState, onBack: () -> Unit, onOpenShop: (String) -> Unit,
-    onRetry: () -> Unit, onLoadMore: () -> Unit, onPhotoClick: (PhotoViewerImages, Int) -> Unit,
+    onRetry: () -> Unit, onLoadMore: () -> Unit, onPhotoClick: (CoffeePeekPhotoViewerImages, Int) -> Unit,
 ) {
     Scaffold(
         topBar = { CoffeePeekTopBar(stringResource(Res.string.profile_stat_check_ins), stringResource(Res.string.profile_checkins_back), onBack = onBack) },
@@ -53,7 +53,7 @@ internal fun PublicProfileCheckInsScreenContent(
 @Composable
 internal fun PublicProfileCheckInsList(
     state: PublicProfileUiState, onOpenShop: (String) -> Unit,
-    onRetry: () -> Unit, onLoadMore: () -> Unit, onPhotoClick: (PhotoViewerImages, Int) -> Unit,
+    onRetry: () -> Unit, onLoadMore: () -> Unit, onPhotoClick: (CoffeePeekPhotoViewerImages, Int) -> Unit,
     modifier: Modifier = Modifier.fillMaxSize(),
     isOwnProfile: Boolean = state.isOwnProfile,
 ) {

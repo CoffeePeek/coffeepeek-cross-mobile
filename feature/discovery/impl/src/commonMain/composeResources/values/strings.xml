@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="discovery_picker_nearby">Рядом со мной</string>
+    <string name="discovery_picker_title">Выберите кофейню</string>
+    <string name="discovery_picker_close">Закрыть</string>
+    <string name="discovery_picker_close_description">Закрыть выбор кофейни</string>
+    <string name="discovery_picker_search">Поиск кофеен</string>
+    <string name="discovery_picker_map">На карте</string>
+    <string name="discovery_picker_list">Списком</string>
+    <string name="discovery_picker_retry">Попробовать снова</string>
+    <string name="discovery_picker_empty">Кофейни не найдены</string>
+    <string name="discovery_picker_failed">Не удалось загрузить кофейни</string>
+    <string name="discovery_search_placeholder">Поиск кофеен и обжарщиков…</string>
+    <string name="discovery_search_clear">Очистить поиск</string>
+    <string name="discovery_search_cancel">Отмена</string>
+    <string name="discovery_filters">Фильтры</string>
+    <string name="discovery_filters_active">Фильтры, выбрано: %1$d</string>
+    <string name="discovery_filters_close">Закрыть фильтры</string>
+    <string name="discovery_filters_reset">Сбросить</string>
+    <string name="discovery_filters_done">Готово</string>
+    <string name="discovery_filters_selected">Выбрано: %1$d</string>
+    <string name="discovery_filters_show_all">Показать все (%1$d)</string>
+    <string name="discovery_filters_collapse">Свернуть</string>
+
+    <string name="discovery_quick_open">Открыто</string>
+    <string name="discovery_quick_new">Новые</string>
+    <string name="discovery_quick_visited">Уже был</string>
+    <string name="discovery_quick_favorites">Избранное</string>
+    <string name="discovery_quick_nearby">Рядом</string>
+
+    <string name="discovery_section_kind">Тип заведения</string>
+    <string name="discovery_section_price">Цена</string>
+    <string name="discovery_section_rating">Рейтинг</string>
+    <string name="discovery_section_shops">Кофейни</string>
+    <string name="discovery_show_all">Показать все</string>
+    <string name="discovery_section_roasters">Обжарщики</string>
+    <string name="discovery_section_beans">Зёрна</string>
+    <string name="discovery_section_equipment">Оборудование</string>
+    <string name="discovery_section_brew_methods">Метод заваривания</string>
+    <string name="discovery_section_tags">Особенности</string>
+    <string name="discovery_any">Любая</string>
+    <string name="discovery_kind_specialty">Specialty</string>
+    <string name="discovery_kind_coffee_bar">Кофейня</string>
+    <string name="discovery_price_any">Любая</string>
+    <string name="discovery_kind_cafe">Кафе</string>
+    <string name="discovery_rating_from">от %1$s</string>
+
+    <string name="discovery_shop_kind_coffee_bar">Кофейня</string>
+    <string name="discovery_shop_kind_cafe">Кафе</string>
+    <string name="discovery_shop_kind_specialty">Specialty</string>
+    <string name="discovery_shop_new">Новая</string>
+    <string name="discovery_shop_open">ОТКРЫТО</string>
+    <string name="discovery_shop_closed">ЗАКРЫТО</string>
+    <string name="discovery_map_card_open">Открыто</string>
+    <string name="discovery_map_card_loading">Загрузка…</string>
+    <string name="discovery_distance_meters">%1$d м</string>
+    <string name="discovery_distance_from_you">%1$s от вас</string>
+    <string name="discovery_distance_km">%1$s км</string>
+    <string name="discovery_favorite_add">Добавить в избранное</string>
+    <string name="discovery_favorite_remove">Убрать из избранного</string>
+
+    <string name="discovery_loading">Загрузка</string>
+    <string name="discovery_refresh">Потяните, чтобы обновить</string>
+    <string name="discovery_refreshing">Обновление</string>
+    <string name="discovery_load_failed">Не удалось загрузить кофейни</string>
+    <string name="discovery_retry">Попробовать снова</string>
+    <string name="discovery_suggestion_title">Не нашли нужную кофейню?</string>
+    <string name="discovery_suggestion_description">Предложите добавить её в CoffeePeek — после проверки она появится в каталоге.</string>
+    <string name="discovery_suggestion_action">Добавить кофейню</string>
+
+    <string name="discovery_map_search_placeholder">Поиск кофейни…</string>
+    <string name="discovery_map_search_failed">Не удалось выполнить поиск</string>
+    <string name="discovery_map_search_empty">Кофейни не найдены</string>
+    <string name="discovery_map_truncated">Слишком много объектов — приблизьте карту</string>
+    <string name="discovery_map_zoom_in">Приблизить карту</string>
+    <string name="discovery_map_zoom_out">Отдалить карту</string>
+    <string name="discovery_map_my_location">Моё местоположение</string>
+    <string name="discovery_map_zones_show">Показать зоны</string>
+    <string name="discovery_map_zones_hide">Скрыть зоны</string>
+    <string name="discovery_map_zone_close">Закрыть</string>
+    <string name="discovery_map_zone_show_shops">Показать кофейни</string>
+    <string name="discovery_map_zone_shops_one">%1$d кофейня</string>
+    <string name="discovery_map_zone_shops_few">%1$d кофейни</string>
+    <string name="discovery_map_zone_shops_many">%1$d кофеен</string>
+    <string name="discovery_map_card_nearby">Кофейня рядом</string>
+    <string name="discovery_map_card_checkins">%1$d чекинов</string>
+    <string name="discovery_map_card_no_checkins">Нет чекинов</string>
+    <string name="discovery_map_card_closed">Закрыто</string>
+    <string name="discovery_map_card_hours">%1$s · %2$s</string>
+    <string name="discovery_map_carousel_position">Кофейня %1$d из %2$d</string>
+    <string name="discovery_map_photo_missing">Фото %1$s отсутствует</string>
+    <string name="discovery_map_collapse">Свернуть карту</string>
+</resources>

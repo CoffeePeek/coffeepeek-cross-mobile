@@ -20,4 +20,4 @@ data class UsageConsentState(val available: Boolean, val accepted: Boolean) {
 data class UpdateCheckState(val checking: Boolean = false, val updateAvailable: Boolean = false)
 
 /** Result of a manual check. [Available] is answered by the app's own update prompt, not by Settings. */
-enum class UpdateCheckOutcome { UpToDate, Available, Failed }
+enum class UpdateCheckOutcome { UpToDate, Available, Failed, Disabled }

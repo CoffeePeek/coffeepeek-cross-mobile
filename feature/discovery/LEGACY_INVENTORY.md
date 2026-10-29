@@ -1,5 +1,22 @@
 # Discovery: legacy-first inventory
 
+> Check-in picker checkpoint, 2026-10-25 (PR #195): both CreateCheckIn route hosts
+> now resolve CheckInShopPickerRenderer → feature/discovery CheckInShopPickerEntry.
+> The picker reuses SearchViewModel/MapViewModel and app-owned map/favorites/media
+> adapters; only its first valid location selects Nearby automatically. The tab
+> keeps its existing defaults. Selection preserves the public slug and global
+> check-in tracker handoff to ShopDetail(forCheckIn=true). The old screen remains
+> an explicit fallback, not the active default. Verification and manual iOS gates
+> are recorded in [IOS_MIGRATION_PLAN.md](../IOS_MIGRATION_PLAN.md).
+>
+> iOS checkpoint, 2026-10-25 (PR #195): the native search tab now binds the shared
+> FeatureDiscoveryScreenRenderer. Shared app ports reuse the server favorites,
+> native CoffeeMap/MapLibre, media and analytics infrastructure; legacy picker
+> consumers stay intact. Platform canvas sizing and main-thread location reads
+> are preserved at the app boundary. See [IOS_MIGRATION_PLAN.md](../IOS_MIGRATION_PLAN.md)
+> for 164 passing unit/contract checks, Android/Native builds and open manual iOS gates.
+> Earlier Android-only/legacy-iOS wiring notes below are historical checkpoints.
+
 Date: 2026-10-23. Base: `feature/contributions-audit` (stack tip, main of 2026-10-23 merged in). Read-only pass: nothing is changed in code.
 
 ## API contract update — 2026-10-26

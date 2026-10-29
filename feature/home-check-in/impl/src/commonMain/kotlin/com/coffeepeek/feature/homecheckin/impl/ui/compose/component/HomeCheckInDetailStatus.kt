@@ -1,6 +1,20 @@
 package com.coffeepeek.feature.homecheckin.impl.ui.compose.component
 
 import androidx.compose.foundation.layout.*
+import org.jetbrains.compose.ui.tooling.preview.Preview
+import com.coffeepeek.feature.homecheckin.impl.resources.Res
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_delete_failed
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_deleting
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_forbidden
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_load_failed
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_loading
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_not_found
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_offline
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_rate_limited
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_retry
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_timeout
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_unauthorized
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_unavailable
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -9,7 +23,6 @@ import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
-import org.jetbrains.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
