@@ -1,6 +1,7 @@
 <resources>
     <string name="coffeepeek_photo_loading">Загрузка фото…</string>
     <string name="coffeepeek_viewer_close">Закрыть</string>
+    <string name="coffeepeek_map_expand">Развернуть карту на весь экран</string>
     <string name="coffeepeek_photos_manage_hint">Нажмите, чтобы посмотреть. Удерживайте и перетаскивайте, чтобы менять порядок.</string>
     <string name="coffeepeek_photo_description">Фото %1$d из %2$d</string>
     <string name="coffeepeek_photo_position">%1$d / %2$d</string>

@@ -30,7 +30,7 @@ import kotlinx.cinterop.ObjCSignatureOverride
 import platform.UIKit.*
 import platform.darwin.NSObject
 
-private class NavigationDelegate : NSObject(), UINavigationControllerDelegateProtocol, UIGestureRecognizerDelegateProtocol {
+internal class NavigationDelegate : NSObject(), UINavigationControllerDelegateProtocol, UIGestureRecognizerDelegateProtocol {
     private var previousTop: UIViewController? = null
     var navigation: UINavigationController? = null
     var onStackChanged: (() -> Unit)? = null
@@ -47,6 +47,11 @@ private class NavigationDelegate : NSObject(), UINavigationControllerDelegatePro
 
     @ObjCSignatureOverride
     override fun navigationController(navigationController: UINavigationController, didShowViewController: UIViewController, animated: Boolean) {
+        // Hidden UIKit headers must keep the system edge-back gesture after each transition.
+        navigationController.interactivePopGestureRecognizer?.apply {
+            delegate = this@NavigationDelegate
+            enabled = navigationController.viewControllers.size > 1
+        }
         val previous = previousTop as? NativeScreenController
         if (previous?.route == Navigator.Screen.CreateCheckIn && navigationController.viewControllers.none { it == previous }) {
             com.coffeepeek.admin.feature.checkin.api.CheckInFlowHandoff.cancelFromBack()

@@ -37,12 +37,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import org.jetbrains.compose.resources.stringResource
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.coffeepeek.core.designsystem.component.CoffeePeekSearchField
+import com.coffeepeek.core.designsystem.component.CoffeePeekMapPreviewOverlay
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.modifier.CoffeePeekGlassIconButton
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
@@ -68,7 +70,7 @@ internal fun MapScreen(
     focus: MapFocus?,
     onFocusConsumed: () -> Unit,
     modifier: Modifier = Modifier,
-    /** The small map of the tab: a tap on a marker opens the shop, and only the expand, zoom and location buttons are drawn. */
+    /** The small map is a read-only preview; tapping it expands the map. */
     isPreview: Boolean = false,
     onToggleExpand: (() -> Unit)? = null,
     /** The canvas keeps this size while its container animates, so the map is not resized (and redrawn) on every frame. */
@@ -92,11 +94,11 @@ internal fun MapScreen(
         }
     }
     val currentDismissInput by rememberUpdatedState(dismissInput)
-    val callbacks = remember(viewModel, isPreview) {
+    val callbacks = remember(viewModel) {
         MapCanvasCallbacks(
             onBoundsChanged = { bounds, zoom -> viewModel.onAction(MapAction.BoundsChanged(bounds, zoom)) },
             // As in prod: a tap on a marker first closes the keyboard and the search field.
-            onMarkerClick = { id -> currentDismissInput(); viewModel.onAction(if (isPreview) MapAction.OpenShop(id) else MapAction.SelectMarker(id)) },
+            onMarkerClick = { id -> currentDismissInput(); viewModel.onAction(MapAction.SelectMarker(id)) },
             onZoneClick = { id -> viewModel.onAction(MapAction.SelectZone(id)) },
             onCameraApplied = { viewModel.onAction(MapAction.CameraApplied) },
             onMyLocationFound = { point -> viewModel.onAction(MapAction.MyLocationFound(point)) },
@@ -109,7 +111,7 @@ internal fun MapScreen(
             toggle()
         }
     }
-    val mapModifier = modifier.mapInteraction { viewModel.onAction(MapAction.Interact) }
+    val mapModifier = if (isPreview) modifier else modifier.mapInteraction { viewModel.onAction(MapAction.Interact) }
     MapContent(state, host, callbacks, bottomClearance, dismissInput, viewModel::onAction, mapModifier, isPreview, toggleExpand, canvasSize)
 }
 
@@ -134,19 +136,12 @@ internal fun MapContent(
                 clusters = state.canvasClusters(isPreview),
             ),
             canvasCallbacks,
-            Modifier.align(Alignment.Center),
+            Modifier.align(Alignment.Center).then(if (isPreview) Modifier.clearAndSetSemantics {} else Modifier),
         )
         if (isPreview) {
             if (onToggleExpand != null) {
-                CoffeePeekGlassIconButton(
-                    onToggleExpand, stringResource(Res.string.discovery_map_expand), Modifier.align(Alignment.TopEnd).padding(CoffeePeekDimens.spacing2), hazeState = null,
-                ) { Icon(CoffeePeekIcons.Expand, null, Modifier.size(22.dp)) }
+                CoffeePeekMapPreviewOverlay(onToggleExpand, Modifier.matchParentSize())
             }
-            MapZoomControl({ onAction(MapAction.ZoomIn) }, { onAction(MapAction.ZoomOut) }, Modifier.align(Alignment.CenterEnd).padding(end = CoffeePeekDimens.spacing2))
-            CoffeePeekGlassIconButton(
-                { onAction(MapAction.RequestMyLocation) }, stringResource(Res.string.discovery_map_my_location),
-                Modifier.align(Alignment.BottomEnd).padding(end = CoffeePeekDimens.spacing2, bottom = CoffeePeekDimens.spacing2), hazeState = null,
-            ) { Icon(CoffeePeekIcons.Navigation, null, Modifier.size(24.dp)) }
             return@Box
         }
         Column(
