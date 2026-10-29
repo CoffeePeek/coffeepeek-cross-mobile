@@ -3,6 +3,8 @@ package com.coffeepeek.feature.ownership.impl.ui.compose
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -39,12 +41,34 @@ internal fun BusinessOwnershipScreenContent(
             OwnershipDestination.Editor -> Res.string.ownership_editor_title
         }), backDescription = stringResource(Res.string.ownership_back), onBack = { action(OwnershipAction.Back) })
     }) { padding ->
-        Column(Modifier.fillMaxSize().padding(padding).imePadding().verticalScroll(rememberScrollState())
-            .padding(16.dp).coffeePeekScreenBottomPadding(), verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            OwnershipBody(state, action, image, picker)
+        if (state.destination == OwnershipDestination.Overview) {
+            OwnershipOverviewScrollable(state, action, image, picker, Modifier.padding(padding))
+        } else {
+            Column(Modifier.fillMaxSize().padding(padding).imePadding().verticalScroll(rememberScrollState())
+                .padding(16.dp).coffeePeekScreenBottomPadding(), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                OwnershipBody(state, action, image, picker)
+            }
         }
     }
     OwnershipConfirmations(state, action)
+}
+
+@Composable
+private fun OwnershipOverviewScrollable(state: OwnershipState, action: (OwnershipAction) -> Unit,
+    image: OwnershipImage, picker: OwnershipPhotoPicker, modifier: Modifier) {
+    val listState = rememberLazyListState()
+    CoffeePeekPullToRefresh(listState, state.loading, { action(OwnershipAction.Refresh) },
+        stringResource(Res.string.ownership_refresh), stringResource(Res.string.ownership_loading),
+        modifier = modifier.fillMaxSize()) { scrollModifier ->
+        LazyColumn(Modifier.fillMaxSize().then(scrollModifier), state = listState) {
+            item {
+                Column(Modifier.padding(16.dp).coffeePeekScreenBottomPadding(),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    OwnershipBody(state, action, image, picker)
+                }
+            }
+        }
+    }
 }
 
 @Composable

@@ -48,10 +48,10 @@ private class OwnershipEntry(
         val scope = rememberCoroutineScope()
         OwnershipAccountSwitch(state) { scope.launch { access.switchMode() } }
     }
-    @Composable override fun Tab(onCheckIns: () -> Unit, checkIns: @Composable () -> Unit) {
+    @Composable override fun Tab() {
         val model = viewModel(key = "business-tab") { OwnershipViewModel(repository, account, businessTab = true) }
         val state by model.state.collectAsState()
-        BusinessTabContent(state, model::onAction, onCheckIns, checkIns, edit = { kind, id -> onEdit(kind.name, id) }) { kind, id ->
+        BusinessTabContent(state, model::onAction, image) { kind, id ->
             val business = (state.shops + state.roasters?.items.orEmpty()).firstOrNull { it.kind == kind && it.id == id }
             val slug = business?.slug
             if (slug.isNullOrBlank()) onEdit(kind.name, id) else onOpenBusiness(kind.name, slug)

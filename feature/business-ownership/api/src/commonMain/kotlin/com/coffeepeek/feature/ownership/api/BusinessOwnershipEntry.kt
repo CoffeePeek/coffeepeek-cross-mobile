@@ -16,7 +16,7 @@ interface BusinessOwnershipEntry {
     @Composable fun ProfileChanges(): Long
     @Composable fun Session(): BusinessSessionState
     @Composable fun AccountSwitch()
-    @Composable fun Tab(onCheckIns: () -> Unit, checkIns: @Composable () -> Unit)
+    @Composable fun Tab()
     @Composable fun ProfileActions(kind: String, id: String, slug: String, onSuggest: () -> Unit, onOwnerEdit: () -> Unit,
         favorite: @Composable () -> Unit, share: @Composable () -> Unit)
 }

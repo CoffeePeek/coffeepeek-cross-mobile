@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
@@ -59,6 +60,7 @@ fun CoffeePeekRoasterCard(
     shopsLabel: String,
     productsCount: Int,
     productsLabel: String,
+    showCounters: Boolean = true,
     modifier: Modifier = Modifier,
     hasLogo: Boolean = false,
     onClick: (() -> Unit)? = null,
@@ -81,12 +83,13 @@ fun CoffeePeekRoasterCard(
                     .padding(CoffeePeekDimens.spacing3),
                 content = {
                     RoasterHeader(name, summary, hasLogo, logo, favorite)
-                    RoasterCounters(shopsCount, shopsLabel, productsCount, productsLabel)
+                    if (showCounters) RoasterCounters(shopsCount, shopsLabel, productsCount, productsLabel)
+                    else Spacer(Modifier.height(0.dp))
                 },
             ) { measurables, constraints ->
                 // Reserve the footer before measuring the flexible description.
                 val footer = measurables[1].measure(constraints.copy(minHeight = 0, maxHeight = Constraints.Infinity))
-                val gap = CoffeePeekDimens.spacing2.roundToPx()
+                val gap = if (showCounters) CoffeePeekDimens.spacing2.roundToPx() else 0
                 val bodyHeight = if (constraints.hasBoundedHeight) (constraints.maxHeight - footer.height - gap).coerceAtLeast(0) else Constraints.Infinity
                 val body = measurables[0].measure(constraints.copy(minHeight = 0, maxHeight = bodyHeight))
                 val height = constraints.constrainHeight(body.height + gap + footer.height)
@@ -159,6 +162,7 @@ private fun RoasterCardPreviewContent(darkTheme: Boolean) = CoffeePeekTheme(dark
             CoffeePeekLikeButton(true, "В избранном", {}, modifier = Modifier.size(48.dp))
         })
         CoffeePeekRoasterCard("Очень длинное название обжарщика для проверки обрезки строки", null, 0, "Кофейни", 0, "Каталог")
+        CoffeePeekRoasterCard("Мой обжарщик", "Описание профиля", 0, "", 0, "", showCounters = false, onClick = {})
     }
 }
 

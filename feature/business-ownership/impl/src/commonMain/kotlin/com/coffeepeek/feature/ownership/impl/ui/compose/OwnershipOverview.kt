@@ -16,15 +16,16 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
 internal fun OwnershipOverview(state: OwnershipState, action: (OwnershipAction) -> Unit) {
-    CoffeePeekButton(stringResource(Res.string.ownership_refresh), { action(OwnershipAction.Refresh) })
     if (state.claims == null) return
     Text(stringResource(Res.string.ownership_claims), style = MaterialTheme.typography.titleLarge)
     if (state.claims.items.isEmpty()) Text(stringResource(Res.string.ownership_empty))
     state.claims.items.forEach { claim -> OwnershipClaimRow(claim) { action(OwnershipAction.OpenClaim(claim.id)) } }
     OwnershipPager(state.claims.page, state.claims.hasNext) { action(OwnershipAction.ClaimsPage(it)) }
     OwnedBusinessList(stringResource(Res.string.ownership_shops), state.shops, action)
-    OwnedBusinessList(stringResource(Res.string.ownership_roasters), state.roasters?.items.orEmpty(), action)
-    state.roasters?.let { page -> OwnershipPager(page.page, page.hasNext) { action(OwnershipAction.RoastersPage(it)) } }
+    if (!state.roasters?.items.isNullOrEmpty()) {
+        OwnedBusinessList(stringResource(Res.string.ownership_roasters), state.roasters?.items.orEmpty(), action)
+        state.roasters?.let { page -> OwnershipPager(page.page, page.hasNext) { action(OwnershipAction.RoastersPage(it)) } }
+    }
 }
 @Composable
 private fun OwnedBusinessList(title: String, businesses: List<OwnedBusiness>, action: (OwnershipAction) -> Unit) {
