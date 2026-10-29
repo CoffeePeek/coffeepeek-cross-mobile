@@ -20,15 +20,17 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
+import com.coffeepeek.core.designsystem.text.coffeePeekPluralForm
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.feature.shop.domain.model.ShopFeature
 import com.coffeepeek.feature.shop.impl.resources.Res
 import com.coffeepeek.feature.shop.impl.resources.shop_features_collapse
-import com.coffeepeek.feature.shop.impl.resources.shop_features_show_all_count
+import com.coffeepeek.feature.shop.impl.resources.shop_features_show_all_count_few
+import com.coffeepeek.feature.shop.impl.resources.shop_features_show_all_count_many
+import com.coffeepeek.feature.shop.impl.resources.shop_features_show_all_count_one
 import com.coffeepeek.feature.shop.impl.resources.shop_features_title
 import org.jetbrains.compose.resources.stringResource
-import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 private const val PREVIEW_FEATURE_COUNT = 5
@@ -57,7 +59,8 @@ internal fun ShopFeaturesSection(
                 }
                 if (features.size > PREVIEW_FEATURE_COUNT) {
                     val label = if (expanded) stringResource(Res.string.shop_features_collapse)
-                        else pluralStringResource(Res.plurals.shop_features_show_all_count, features.size, features.size)
+                        else stringResource(coffeePeekPluralForm(features.size, Res.string.shop_features_show_all_count_one,
+                            Res.string.shop_features_show_all_count_few, Res.string.shop_features_show_all_count_many), features.size)
                     Surface(Modifier.fillMaxWidth().heightIn(min = 52.dp)
                         .clickable(role = Role.Button, onClickLabel = label, onClick = onToggle),
                         shape = RoundedCornerShape(CoffeePeekDimens.radiusLg),

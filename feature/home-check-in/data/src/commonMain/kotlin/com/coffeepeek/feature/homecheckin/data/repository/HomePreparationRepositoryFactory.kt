@@ -4,6 +4,7 @@ import com.coffeepeek.feature.homecheckin.data.backend.*
 import com.coffeepeek.feature.homecheckin.data.mapper.*
 import com.coffeepeek.feature.homecheckin.domain.model.*
 import com.coffeepeek.feature.homecheckin.domain.repository.HomePreparationRepository
+import com.coffeepeek.feature.homecheckin.domain.repository.HomePreparationShelfBagReader
 import com.coffeepeek.feature.homecheckin.domain.usecase.homePreparationFieldErrors
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.ResponseException
@@ -27,6 +28,20 @@ fun createHomePreparationRepository(
     require(base.protocol.name in setOf("https", "http") && base.host.isNotBlank())
     return RemoteHomePreparationRepository(HomePreparationBackend(client),
         HomePreparationUploadBackend(client, uploadClient), apiBaseUrl)
+}
+
+/** Reads one bag's preparations through the owner history endpoint; the client is owned by the caller. */
+fun createHomePreparationShelfBagReader(client: HttpClient, apiBaseUrl: String): HomePreparationShelfBagReader {
+    require(apiBaseUrl.startsWith("https://") || apiBaseUrl.startsWith("http://"))
+    val backend = HomePreparationBackend(client)
+    return HomePreparationShelfBagReader { shelfBagId, page, pageSize ->
+        homeRequestResult {
+            if (shelfBagId.isBlank() || page !in 1..10000 || pageSize !in 1..100)
+                throw HomePreparationFailure(HomePreparationIssue.InvalidInput)
+            val response = backend.page(page, pageSize, null, null, shelfBagId)
+            HomePreparationPage(response.items.map { it.toDomain(apiBaseUrl) }, response.totalCount, page, pageSize)
+        }
+    }
 }
 
 private class RemoteHomePreparationRepository(

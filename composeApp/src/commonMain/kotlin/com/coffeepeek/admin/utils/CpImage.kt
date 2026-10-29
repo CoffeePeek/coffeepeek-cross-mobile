@@ -59,6 +59,7 @@ fun CpImage(
     contentScale: ContentScale = ContentScale.Crop,
     modifier: Modifier = Modifier,
     contentDescription: String? = null,
+    alignment: Alignment = Alignment.Center,
     highQualityData: Any? = null,
     upgradeDelayMillis: Long = 1_500L,
     /** Draws the brand loader over a translucent tile while nothing of the image has arrived yet. */
@@ -108,6 +109,7 @@ fun CpImage(
             painter = painter,
             contentDescription = contentDescription,
             contentScale = contentScale,
+            alignment = alignment,
             modifier = modifier.then(if (detailData != null && upgradeDelayMillis > 0) {
                 Modifier.onGloballyPositioned { coordinates ->
                     val bounds = coordinates.boundsInWindow()

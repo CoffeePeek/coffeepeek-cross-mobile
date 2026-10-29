@@ -178,7 +178,7 @@ interface Events {
   feed_viewed: { result_count: number; is_empty: boolean };
   feed_action_clicked: { action: 'refresh' | 'load_more' | 'retry'; trigger: 'button' | 'gesture' | 'scroll' };
   feed_item_interacted: {
-    action: 'open' | 'author' | 'shop' | 'photo' | 'like' | 'unlike' | 'home_detail' | 'share';
+    action: 'open' | 'author' | 'shop' | 'photo' | 'like' | 'unlike' | 'home_detail' | 'share' | 'coffee';
     check_in_kind: 'shop' | 'home';
   };
   api_request_completed: {

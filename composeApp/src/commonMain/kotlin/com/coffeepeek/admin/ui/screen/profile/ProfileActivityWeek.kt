@@ -23,8 +23,8 @@ import com.coffeepeek.admin.ui.screen.checkins.CalendarPhoto
 import com.coffeepeek.admin.ui.screen.checkins.CalendarWeek
 import com.coffeepeek.admin.utils.CpImage
 import com.coffeepeek.core.designsystem.component.CoffeePeekCard
+import com.coffeepeek.core.designsystem.text.coffeePeekPluralForm
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
-import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 
 /** One week layout for personal and public activity; callers supply only the data they may expose. */
@@ -60,7 +60,8 @@ internal fun ProfileActivityWeek(
 @Composable
 private fun ProfileWeekDay(date: String, label: String, count: Int, photos: List<CalendarPhoto>,
     isToday: Boolean, modifier: Modifier) {
-    val visits = pluralStringResource(Res.plurals.profile_week_count, count, count)
+    val visits = stringResource(coffeePeekPluralForm(count, Res.string.profile_week_count_one,
+        Res.string.profile_week_count_few, Res.string.profile_week_count_many), count)
     val description = stringResource(Res.string.profile_week_day, date, visits)
     Column(modifier.semantics(mergeDescendants = true) { contentDescription = description },
         horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(6.dp)) {

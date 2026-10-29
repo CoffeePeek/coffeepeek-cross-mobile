@@ -58,6 +58,7 @@ class AppCommunityAnalytics : CommunityAnalytics {
                 FeedItemAction.Like -> "like"
                 FeedItemAction.Unlike -> "unlike"
                 FeedItemAction.Share -> "share"
+                FeedItemAction.Coffee -> "coffee"
             },
             "check_in_kind" to if (isHome) "home" else "shop",
         )

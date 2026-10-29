@@ -12,6 +12,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import org.koin.compose.koinInject
@@ -21,6 +22,7 @@ import com.coffeepeek.admin.map.LocalMapStyleOverride
 import com.coffeepeek.admin.sandbox.SandboxApplication
 import com.coffeepeek.admin.sandbox.SandboxViewModel
 import com.coffeepeek.admin.sandbox.sandboxImageBytes
+import com.coffeepeek.admin.sandbox.packscan.PackScanProbe
 import com.coffeepeek.admin.sandbox.backend.SandboxAuthPolicy
 import com.coffeepeek.admin.sandbox.backend.SandboxCities
 import com.coffeepeek.admin.sandbox.backend.SandboxContributions
@@ -41,6 +43,7 @@ import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
     val updates = koinInject<AppUpdateController>()
     val updateRenderer = koinInject<AppUpdateRenderer>()
     var nextPhoto by remember { mutableIntStateOf(0) }
+    var packProbe by remember { mutableStateOf(false) }
     AppContent {
         CompositionLocalProvider(LocalMapStyleOverride provides """{"version":8,"sources":{},"layers":[{"id":"sandbox-background","type":"background","paint":{"background-color":"#716552"}}]}""",
             LocalPhotoPickerOverride provides { limit, deliver ->
@@ -87,9 +90,13 @@ import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
                     })
                     TextButton({ application.sessions.login(); model.refresh(state.scenario) }) { Text(stringResource(R.string.sandbox_login)) }
                     TextButton({ application.sessions.applySession(null); model.refresh(state.scenario) }) { Text(stringResource(R.string.sandbox_guest)) }
+                    TextButton({ model.controls(false); packProbe = true }) { Text(stringResource(R.string.sandbox_pack_probe_open)) }
                     TextButton({ model.controls(false) }) { Text(stringResource(R.string.sandbox_close)) }
                 }
             }
+        }
+        if (packProbe) Dialog({ packProbe = false }, DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)) {
+            PackScanProbe(onClose = { packProbe = false })
         }
     }
 }

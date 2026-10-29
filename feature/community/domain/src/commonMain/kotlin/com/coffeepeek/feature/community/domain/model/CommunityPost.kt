@@ -18,6 +18,11 @@ data class HomePreparation(
     val doseGrams: Double?,
     val brewDurationSeconds: Int?,
     val tasteScore: Int?,
+    val roasterName: String? = null,
+    /** The catalogue coffee's current public slug, while it is published. */
+    val coffeeProductSlug: String? = null,
+    /** The post's own copy of the shelf-bag card, when the author shows the bag. */
+    val shelfBagCardUrl: String? = null,
 )
 
 /** [thumbnails] may hold an empty string for a photo that has no usable feed variant; [details] falls back to the original. */
