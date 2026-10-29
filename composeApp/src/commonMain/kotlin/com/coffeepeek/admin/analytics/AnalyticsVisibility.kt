@@ -35,6 +35,7 @@ internal fun analyticsPage(route: String?): String = when (route?.substringBefor
     "VisitedPlaces", "HomeCheckIns" -> "my_check_ins"
     "EditProfile", "DeleteAccountPending", "Favorites" -> "profile"
     "MyContributions", "ShopChangeRequestDetail" -> "contributions"
+    "MyBusiness" -> "business_ownership"
     "SuggestShopChange", "ShopChangeEditor", "AddShop" -> "shop_edit"
     else -> "other"
 }
