@@ -93,7 +93,7 @@ class PackImagingTest {
     }
 
     private fun rotatedRectangle(cx: Double, cy: Double, w: Double, h: Double, degrees: Double): Quad {
-        val a = Math.toRadians(degrees)
+        val a = radians(degrees)
         val corners = listOf(-w / 2 to -h / 2, w / 2 to -h / 2, w / 2 to h / 2, -w / 2 to h / 2)
         return Quad(corners.flatMap { (x, y) -> listOf(cx + x * cos(a) - y * sin(a), cy + x * sin(a) + y * cos(a)) }.toDoubleArray())
     }

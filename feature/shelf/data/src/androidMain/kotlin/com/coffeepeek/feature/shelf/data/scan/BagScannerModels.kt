@@ -37,6 +37,9 @@ fun interface BagScannerModelSource {
     }
 }
 
+/** Model files for one scan; [inpainter] is null while MI-GAN is not downloaded yet. */
+internal class ScanModelFiles(val segmenter: File, val inpainter: File?)
+
 /** Model files in no-backup storage; a file counts only after its checksum matched once. */
 internal class BagScannerModels(private val directory: File, private val segmenter: BagScannerModel, private val inpainter: BagScannerModel) {
 

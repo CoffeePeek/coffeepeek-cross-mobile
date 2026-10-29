@@ -20,7 +20,7 @@ fun createAndroidBagScanner(context: () -> Context, segmenter: BagScannerModel, 
 private class AndroidBagScanner(store: () -> BagScannerModels) : BagScanner {
     private val models by lazy(store)
     private val lock = Mutex()
-    private val pipeline = AndroidPackPipeline { models.files() }
+    private val pipeline = PackPipeline(AndroidPackImaging, OnnxPackNetworks { models.files() })
 
     override suspend fun readiness(): BagScannerReadiness = withContext(Dispatchers.IO) {
         models.missingBytes().let { if (it == 0L) BagScannerReadiness.Ready else BagScannerReadiness.NeedsDownload(it) }
