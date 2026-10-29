@@ -36,6 +36,7 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
     }
     private val shopNames = mapOf("sandbox-cafe" to "Sandbox Cafe", "sandbox-lab" to "Sandbox Lab")
     private val contributionStore = SandboxContributionsBackend(today, shopNames.keys)
+    private val ownershipStore = SandboxOwnershipBackend(today)
     private val notificationStore = SandboxNotificationsBackend(today)
     private val discoveryStore = SandboxDiscoveryBackend({ populated }, { favorites }, ::photo, ::address, ::catalog)
     private val favorites = linkedSetOf("coffee_shop:sandbox-cafe", "roaster:sandbox-roaster", "drink:cappuccino")
@@ -66,6 +67,7 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
         this.populated = populated
         contributionStore.reset(populated)
         notificationStore.reset(populated)
+        ownershipStore.reset(populated)
         discoveryStore.reset()
         others.clear(); blocked.clear(); blocksRevision++
         friendFollowing = false; deletionRequest = null
@@ -76,11 +78,15 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
         if (populated) favorites += listOf("coffee_shop:sandbox-cafe", "roaster:sandbox-roaster", "drink:cappuccino")
     }
 
+    fun registerOwnershipEvidence(id: String) = ownershipStore.registerEvidence(id)
+    fun ownershipEvidenceAvailable(claimId: String, photoId: String) = ownershipStore.evidenceAvailable(claimId, photoId)
+
     fun handle(request: HttpRequestData, body: JsonElement?): Pair<HttpStatusCode, JsonObject>? {
         val path = request.url.encodedPath.lowercase()
         val method = request.method
         val input = body as? JsonObject ?: buildJsonObject {}
         notificationStore.handle(path, method, input)?.let { return it }
+        ownershipStore.handle(request, input)?.let { return it }
         if (path == "/api/v1/me/blocks" && method == HttpMethod.Get) return blockPage(request)
         if (path.startsWith("/api/v1/me/blocks/") && method in listOf(HttpMethod.Put, HttpMethod.Delete)) {
             val id = path.removePrefix("/api/v1/me/blocks/")
@@ -403,7 +409,7 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
         put("roasters", JsonArray(listOf(catalog("sandbox-roaster", "Sandbox Roaster"))))
         // Counters above stay server aggregates; only the visible cards are filtered.
         put("checkIns", JsonArray(publicVisits.filter(::visible))); put("userCheckIns", JsonArray(shopVisits))
-        putJsonObject("menu") { put("currency", "BYN"); put("photos", JsonArray(listOf(photo()))); put("items", drinks()) }
+        putJsonObject("menu") { put("inputRevision", 0); put("currency", "BYN"); put("photos", JsonArray(listOf(photo()))); put("items", drinks()) }
         putJsonArray("schedules") { (1..7).forEach { day -> add(buildJsonObject { put("dayOfWeek", day); putJsonArray("intervals") { add(buildJsonObject { put("openTime", "08:00:00"); put("closeTime", "23:00:00") }) } }) } }
     }
     // Three synthetic roasters: full data (tags, contacts, shops with and without photos), partial data, and bare.

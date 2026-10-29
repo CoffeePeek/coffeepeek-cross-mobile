@@ -12,6 +12,10 @@ import androidx.compose.ui.unit.Dp
  * loaded details). Call both in the same ViewModel-store owner; the caller owns the criteria and navigation.
  */
 interface RoasterDiscoveryEntry {
+    /** Whether the filtered carousel has results; null while loading or after a failed load. */
+    @Composable
+    fun hasResults(query: String, selectedRoasters: Set<String>, favoritesOnly: Boolean): Boolean?
+
     @Composable
     fun Section(
         query: String,
@@ -42,6 +46,7 @@ interface RoasterDetailEntry {
         onBack: () -> Unit,
         onOpenShop: (slug: String) -> Unit,
         onOpenLink: (url: String) -> Unit,
+        onShare: (canonicalPath: String) -> Unit,
         modifier: Modifier,
     )
 }

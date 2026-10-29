@@ -10,16 +10,21 @@ import com.coffeepeek.feature.discovery.api.DiscoveryGate
 import com.coffeepeek.feature.discovery.api.DiscoveryLocation
 import com.coffeepeek.feature.discovery.api.FilterAction
 import com.coffeepeek.feature.discovery.api.GeolocationOutcome
+import com.coffeepeek.feature.discovery.api.SearchRun
 import com.coffeepeek.feature.discovery.domain.model.Coordinates
+import com.coffeepeek.feature.discovery.domain.model.DiscoveryCriteria
 import com.coffeepeek.feature.discovery.domain.model.DiscoveryFailure
 import com.coffeepeek.feature.discovery.domain.model.DiscoveryFilters
-import com.coffeepeek.feature.discovery.domain.model.ShopQuery
+import com.coffeepeek.feature.discovery.domain.model.ShopSummary
+import com.coffeepeek.feature.discovery.domain.model.Paged
 import com.coffeepeek.feature.discovery.domain.repository.DiscoveryRepository
 import com.coffeepeek.feature.discovery.domain.rules.searchText
 import com.coffeepeek.feature.discovery.domain.rules.withFavoriteMembership
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.currentCoroutineContext
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -42,7 +47,7 @@ internal class SearchViewModel(
     private val favorites: DiscoveryFavorites,
     private val city: DiscoveryCity,
     private val location: DiscoveryLocation,
-    account: DiscoveryAccount,
+    private val account: DiscoveryAccount,
     private val analytics: DiscoveryAnalytics,
 ) : MviViewModel<SearchState, SearchAction, SearchEvent>(SearchState()) {
     private val queries = MutableSharedFlow<String>(extraBufferCapacity = 64)
@@ -54,6 +59,9 @@ internal class SearchViewModel(
     private var favoriteIds: Set<String>? = null
     private var requestedText: String? = null
     private var loadJob: Job? = null
+    private var searchPresented = false
+    private var presentationVersion = 0L
+    private var lastSearchResult: Pair<DiscoveryCriteria, Int>? = null
 
     init {
         viewModelScope.launch { account.accountKey.distinctUntilChanged().collect(::onAccount) }
@@ -69,6 +77,7 @@ internal class SearchViewModel(
     override suspend fun handleActionInternal(action: SearchAction) {
         when (action) {
             is SearchAction.Query -> { updateState { copy(query = action.text) }; queries.tryEmit(action.text) }
+            is SearchAction.PresentationChanged -> setSearchPresentation(action.active)
             SearchAction.ActivateSearch -> updateState { copy(searchActive = true) }
             SearchAction.CancelSearch -> {
                 if (currentState.activeFilterCount > 0) clearFilters() else setQuery("")
@@ -84,7 +93,7 @@ internal class SearchViewModel(
             SearchAction.ToggleFavorites -> if (guarded(DiscoveryGate.FavoritesFilter)) changeFilters { copy(favoritesOnly = !favoritesOnly) }
             SearchAction.ToggleNearby -> toggleNearby()
             SearchAction.LocationGranted -> location.refresh()
-            SearchAction.LocationDenied -> analytics.geolocation(PLACEMENT, userTriggered = false, outcome = GeolocationOutcome.Unavailable)
+            SearchAction.LocationDenied -> reportLocation(GeolocationOutcome.Unavailable)
             is SearchAction.SetPrice -> changeFilters { copy(priceLevel = action.level) }
             is SearchAction.SetMinRating -> changeFilters { copy(minRating = action.rating) }
             is SearchAction.ToggleCatalog -> changeFilters {
@@ -116,13 +125,18 @@ internal class SearchViewModel(
         if (first) return
         // Another account's visited and favorites are not this account's: the filters go, the page is read again.
         generation++
-        updateState { copy(filters = filters.copy(visitedOnly = false, favoritesOnly = false), favoriteUpdates = emptySet()) }
+        loadJob?.cancel()
+        favoriteIds = null
+        lastSearchResult = null
+        updateState { copy(filters = filters.copy(visitedOnly = false, favoritesOnly = false), shops = emptyList(), favoriteUpdates = emptySet()) }
         if (cityReady) loadShops(reset = true)
     }
 
     private fun onFavoriteIds(ids: Set<String>) {
+        val changed = favoriteIds != null && favoriteIds != ids
         favoriteIds = ids
         updateState { copy(shops = withFavoriteMembership(shops, ids)) }
+        if (changed && currentState.filters.favoritesOnly && cityReady) loadShops(reset = true)
     }
 
     private fun onCity(cityId: String?) {
@@ -134,12 +148,16 @@ internal class SearchViewModel(
     private fun onLocation(point: Coordinates?) {
         if (point == null || !point.isValid || point == origin) return
         origin = point
-        analytics.geolocation(PLACEMENT, userTriggered = false, outcome = GeolocationOutcome.Available)
+        reportLocation(GeolocationOutcome.Available)
         updateState { copy(canUseNearby = true, userLocation = point) }
         if (currentState.filters.nearbyOnly) {
             updateState { copy(shops = emptyList()) }
             if (cityReady) loadShops(reset = true)
         }
+    }
+
+    private fun reportLocation(outcome: GeolocationOutcome) {
+        analytics.geolocation(PLACEMENT, userTriggered = false, outcome = outcome)
     }
 
     private fun loadCatalogs() {
@@ -224,40 +242,74 @@ internal class SearchViewModel(
         if (!reset && (snapshot.isLoadingMore || !snapshot.hasMore || snapshot.isLoading || snapshot.isRefreshing)) return
         loadJob?.cancel()
         val mine = generation
-        loadJob = viewModelScope.launch {
-            val page = if (reset) 1 else currentState.currentPage + 1
-            updateState {
-                when {
-                    reset && shops.isEmpty() -> copy(isLoading = true, isRefreshing = false, isLoadingMore = false, error = null)
-                    reset -> copy(isRefreshing = true, isLoading = false, isLoadingMore = false, error = null)
-                    else -> copy(isLoadingMore = true, error = null)
-                }
-            }
-            val state = currentState
-            val filters = state.filters
-            val nearby = filters.nearbyOnly && origin != null
-            val run = if (reset) {
-                requestedText = searchText(state.query)
-                analytics.searchStarted(state.query.trim(), filters.analyticsValues().keys.toList(), nearby, citySlug = filters.cityId, criteria = state.query.normalizedQuery() to filters)
-            } else null
-            // Nearby ignores the city: the distance is the scope.
-            val query = ShopQuery(state.query, if (nearby) filters.copy(cityId = null) else filters, origin.takeIf { nearby }, page, PAGE_SIZE)
-            repository.search(query).onSuccess { result ->
-                if (mine != generation) return@launch
-                run?.results(result.totalCount)
-                updateState {
-                    val loaded = if (reset) result.items else shops + result.items
-                    copy(
-                        shops = favoriteIds?.let { withFavoriteMembership(loaded, it) } ?: loaded,
-                        currentPage = result.currentPage, totalPages = result.totalPages, hasMore = result.hasMore,
-                        isLoading = false, isRefreshing = false, isLoadingMore = false, error = null,
-                    )
-                }
-            }.onFailure { failure ->
-                if (mine != generation) return@launch
-                run?.failed(failure)
-                updateState { copy(isLoading = false, isRefreshing = false, isLoadingMore = false, error = SearchError((failure as? DiscoveryFailure)?.serverMessage)) }
-            }
+        loadJob = viewModelScope.launch { performSearch(reset, mine) }
+    }
+
+    private suspend fun performSearch(reset: Boolean, generation: Long) {
+        beginLoading(reset)
+        val page = if (reset) 1 else currentState.currentPage + 1
+        val criteria = currentState.criteria
+        val query = criteria.searchQuery(page, PAGE_SIZE)
+        val presentation = presentationVersion
+        if (reset) lastSearchResult = null
+        val key = account.currentAccountKey()
+        val run = if (reset) startSearch() else null
+        val result = repository.search(query)
+        currentCoroutineContext().ensureActive()
+        if (generation != this.generation || key != account.currentAccountKey()) return
+        val visibleRun = if (reset) visibleSearchRun(run, presentation, criteria) else null
+        finishSearch(result, criteria, reset, visibleRun)
+    }
+
+    private fun finishSearch(result: Result<Paged<ShopSummary>>, criteria: DiscoveryCriteria, reset: Boolean, run: SearchRun?) {
+        result.onSuccess {
+            if (reset) lastSearchResult = criteria to it.totalCount
+            applyPage(it, reset, run)
+        }.onFailure { failure ->
+            run?.failed(failure)
+            updateState { copy(isLoading = false, isRefreshing = false, isLoadingMore = false, error = SearchError((failure as? DiscoveryFailure)?.serverMessage)) }
+        }
+    }
+
+    private fun beginLoading(reset: Boolean) = updateState {
+        when {
+            reset && shops.isEmpty() -> copy(isLoading = true, isRefreshing = false, isLoadingMore = false, error = null)
+            reset -> copy(isRefreshing = true, isLoading = false, isLoadingMore = false, error = null)
+            else -> copy(isLoadingMore = true, error = null)
+        }
+    }
+
+    private fun setSearchPresentation(active: Boolean) {
+        if (searchPresented == active) return
+        searchPresented = active
+        presentationVersion++
+        if (active) lastSearchResult?.takeIf { matchesCurrentSearch(it.first) }?.let { startSearch()?.results(it.second) }
+    }
+
+    private fun visibleSearchRun(run: SearchRun?, version: Long, criteria: DiscoveryCriteria): SearchRun? {
+        if (!searchPresented || !matchesCurrentSearch(criteria)) return null
+        return if (run == null) startSearch() else run.takeIf { version == presentationVersion }
+    }
+
+    private fun matchesCurrentSearch(criteria: DiscoveryCriteria): Boolean =
+        criteria.searchQuery().copy(text = criteria.text.trim()) ==
+            currentState.criteria.searchQuery().copy(text = currentState.query.trim())
+
+    private fun startSearch(): SearchRun? {
+        val state = currentState
+        requestedText = searchText(state.query)
+        if (!searchPresented) return null
+        return analytics.searchStarted(state.query.trim(), state.filters.analyticsValues().keys.toList(),
+            state.criteria.searchQuery().origin != null, citySlug = state.filters.cityId, criteria = state.query.normalizedQuery() to state.filters)
+    }
+
+    private fun applyPage(result: Paged<ShopSummary>, reset: Boolean, run: SearchRun?) {
+        run?.results(result.totalCount)
+        updateState {
+            val loaded = if (reset) result.items else shops + result.items
+            copy(shops = favoriteIds?.let { withFavoriteMembership(loaded, it) } ?: loaded,
+                currentPage = result.currentPage, totalPages = result.totalPages, hasMore = result.hasMore,
+                isLoading = false, isRefreshing = false, isLoadingMore = false, error = null)
         }
     }
 
@@ -270,23 +322,29 @@ internal class SearchViewModel(
             if (shopId in currentState.favoriteUpdates) false else { updateState { copy(favoriteUpdates = favoriteUpdates + shopId) }; true }
         }
         if (!started) return
+        val generation = this.generation
         val previous = shop.isFavorite
         val next = !previous
         updateState { copy(shops = shops.map { if (it.id == shopId) it.copy(isFavorite = next) else it }) }
+        writeFavorite(shop, next, previous, generation)
+    }
+
+    private suspend fun writeFavorite(shop: ShopSummary, next: Boolean, previous: Boolean, generation: Long) {
         try {
-            if (favorites.setFavorite(shop, next).isFailure) restoreFavorite(shopId, previous)
+            if (favorites.setFavorite(shop, next).isFailure) restoreFavorite(shop.id, previous, generation)
         } catch (cancelled: CancellationException) {
-            restoreFavorite(shopId, previous)
+            restoreFavorite(shop.id, previous, generation)
             throw cancelled
         } catch (error: Exception) {
-            restoreFavorite(shopId, previous)
+            restoreFavorite(shop.id, previous, generation)
         } finally {
-            favoriteGuard.withLock { updateState { copy(favoriteUpdates = favoriteUpdates - shopId) } }
+            favoriteGuard.withLock { if (generation == this.generation) updateState { copy(favoriteUpdates = favoriteUpdates - shop.id) } }
         }
     }
 
     /** Back to what it was, unless the favorites of the account already say otherwise: they win. */
-    private fun restoreFavorite(shopId: String, previous: Boolean) {
+    private fun restoreFavorite(shopId: String, previous: Boolean, generation: Long) {
+        if (generation != this.generation) return
         val observed = favoriteIds?.contains(shopId)
         updateState { copy(shops = shops.map { if (it.id == shopId) it.copy(isFavorite = observed ?: previous) else it }) }
     }

@@ -20,6 +20,7 @@ import com.coffeepeek.feature.roaster.impl.ui.RoasterDetailViewModel
 import com.coffeepeek.feature.roaster.impl.ui.RoasterListViewModel
 import com.coffeepeek.feature.roaster.impl.ui.compose.RoasterDetailScreen
 import com.coffeepeek.feature.roaster.impl.ui.compose.RoasterDiscoverySection
+import com.coffeepeek.feature.roaster.impl.ui.compose.roasterDiscoveryState
 import com.coffeepeek.feature.roaster.impl.ui.compose.RoasterListScreen
 import com.coffeepeek.feature.roaster.impl.ui.model.RoasterDetailEvent
 import com.coffeepeek.feature.roaster.impl.ui.model.RoasterListEvent
@@ -70,6 +71,12 @@ private class RoasterDiscoveryApiImpl(
         viewModel(key = "roaster-discovery:$instanceKey") { RoasterListViewModel(repository, favorites, analytics.list()) }
 
     @Composable
+    override fun hasResults(query: String, selectedRoasters: Set<String>, favoritesOnly: Boolean): Boolean? = key(this) {
+        val state = roasterDiscoveryState(model(), query, selectedRoasters, favoritesOnly)
+        state.hasResults(query, selectedRoasters, favoritesOnly)
+    }
+
+    @Composable
     override fun Section(query: String, selectedRoasters: Set<String>, favoritesOnly: Boolean,
         onOpenRoaster: (String) -> Unit, modifier: Modifier) {
         key(this) {
@@ -103,17 +110,19 @@ private class RoasterDetailApiImpl(
     private val instanceKey = Uuid.random().toString()
 
     @Composable
-    override fun Content(slug: String, onBack: () -> Unit, onOpenShop: (String) -> Unit, onOpenLink: (String) -> Unit, modifier: Modifier) {
+    override fun Content(slug: String, onBack: () -> Unit, onOpenShop: (String) -> Unit, onOpenLink: (String) -> Unit, onShare: (String) -> Unit, modifier: Modifier) {
         key(this, slug) {
             val model = viewModel(key = "roaster-detail:$instanceKey:$slug") {
                 RoasterDetailViewModel(slug, repository, favorites, shopPhotos, analytics.detail())
             }
+            androidx.compose.runtime.CompositionLocalProvider(com.coffeepeek.feature.roaster.impl.ui.compose.component.LocalRoasterShare provides onShare) {
             RoasterDetailScreen(model, image, photoViewer, screenAnalytics, onFavoriteFeedback, modifier) { event ->
                 when (event) {
                     RoasterDetailEvent.Back -> onBack()
                     is RoasterDetailEvent.OpenShop -> onOpenShop(event.slug)
                     is RoasterDetailEvent.OpenLink -> onOpenLink(event.url)
                 }
+            }
             }
         }
     }

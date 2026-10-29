@@ -36,6 +36,7 @@ internal fun DiscoverySearchLayer(
                         })
                 },
                 textResults = { roasters.preview(context) }, onAction = onAction,
+                hasRoasterResults = if (state.query.isNotBlank()) roasters.hasResults(context) else null,
                 headerModifier = Modifier
                     .then(if (ui.mapExpanded) Modifier.clearAndSetSemantics {} else Modifier)
                     .graphicsLayer {
@@ -44,7 +45,6 @@ internal fun DiscoverySearchLayer(
                     }.statusBarsPadding(),
                 bodyModifier = Modifier.onGloballyPositioned(ui::recordViewport), prefetch = !ui.mapExpanded,
             )
-            if (state.showFilters) FilterSheet(state, host, onAction = onAction)
         }
     }
 }

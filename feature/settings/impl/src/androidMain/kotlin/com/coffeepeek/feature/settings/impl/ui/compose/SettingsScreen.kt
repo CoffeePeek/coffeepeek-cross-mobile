@@ -98,6 +98,7 @@ internal fun SettingsContent(
                 slots.guestCard(navigation.onLogin, navigation.onRegister, Modifier.padding(horizontal = CoffeePeekDimens.settingsPagePadding))
                 Spacer(Modifier.height(CoffeePeekDimens.settingsSectionSpacing))
             }
+            slots.accountSwitch()
             if (state.showAddRows) {
                 CoffeePeekSettingsSection(title = stringResource(R.string.settings_section_add)) {
                     CoffeePeekSettingsRow(

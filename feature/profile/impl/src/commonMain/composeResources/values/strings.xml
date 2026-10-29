@@ -1,4 +1,5 @@
 <resources>
+    <string name="profile_menu_business">Мой бизнес</string>
     <!-- Russian only, copied verbatim from the production profile. -->
     <string name="profile_title">Профиль</string>
     <string name="profile_loading">Загрузка</string>

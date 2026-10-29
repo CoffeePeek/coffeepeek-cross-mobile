@@ -28,12 +28,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.coffeepeek.core.designsystem.component.CoffeePeekSearchField
+import com.coffeepeek.core.designsystem.component.CoffeePeekMapPreviewOverlay
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.modifier.CoffeePeekGlassIconButton
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
@@ -48,6 +50,9 @@ import com.coffeepeek.feature.discovery.impl.map.MapAction
 import com.coffeepeek.feature.discovery.impl.map.MapEvent
 import com.coffeepeek.feature.discovery.impl.map.MapState
 import com.coffeepeek.feature.discovery.impl.map.MapViewModel
+import com.coffeepeek.feature.discovery.impl.search.SearchAction
+import androidx.compose.ui.tooling.preview.PreviewLightDark
+import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 
 @Composable
 internal fun MapScreen(
@@ -58,11 +63,13 @@ internal fun MapScreen(
     focus: MapFocus?,
     onFocusConsumed: () -> Unit,
     modifier: Modifier = Modifier,
-    /** The small map of the tab: a tap on a marker opens the shop, and only the expand, zoom and location buttons are drawn. */
+    /** The small map is a read-only preview; tapping it expands the map. */
     isPreview: Boolean = false,
     onToggleExpand: (() -> Unit)? = null,
     /** The canvas keeps this size while its container animates, so the map is not resized (and redrawn) on every frame. */
     canvasSize: DpSize? = null,
+    onOpenFilters: () -> Unit,
+    onSearchAction: (SearchAction) -> Unit,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     host.locationPermission(
@@ -81,26 +88,31 @@ internal fun MapScreen(
             onFocusConsumed()
         }
     }
-    val currentDismissInput by rememberUpdatedState(dismissInput)
-    val callbacks = remember(viewModel, isPreview) {
-        MapCanvasCallbacks(
-            onBoundsChanged = { bounds, zoom -> viewModel.onAction(MapAction.BoundsChanged(bounds, zoom)) },
-            // As in prod: a tap on a marker first closes the keyboard and the search field.
-            onMarkerClick = { id -> currentDismissInput(); viewModel.onAction(if (isPreview) MapAction.OpenShop(id) else MapAction.SelectMarker(id)) },
-            onZoneClick = { id -> viewModel.onAction(MapAction.SelectZone(id)) },
-            onCameraApplied = { viewModel.onAction(MapAction.CameraApplied) },
-            onMyLocationFound = { point -> viewModel.onAction(MapAction.MyLocationFound(point)) },
-            onLocationDenied = { viewModel.onAction(MapAction.LocationDenied) },
-        )
-    }
+    val callbacks = rememberMapCallbacks(viewModel, dismissInput)
     val toggleExpand = onToggleExpand?.let { toggle ->
         {
             viewModel.onAction(MapAction.Interact)
             toggle()
         }
     }
-    val mapModifier = modifier.mapInteraction { viewModel.onAction(MapAction.Interact) }
-    MapContent(state, host, callbacks, bottomClearance, dismissInput, viewModel::onAction, mapModifier, isPreview, toggleExpand, canvasSize)
+    val mapModifier = if (isPreview) modifier else modifier.mapInteraction { viewModel.onAction(MapAction.Interact) }
+    MapContent(state, host, callbacks, bottomClearance, dismissInput, viewModel::onAction, mapModifier, isPreview, toggleExpand, canvasSize, onOpenFilters, onSearchAction)
+}
+
+@Composable
+private fun rememberMapCallbacks(viewModel: MapViewModel, dismissInput: () -> Unit): MapCanvasCallbacks {
+    val currentDismissInput by rememberUpdatedState(dismissInput)
+    return remember(viewModel) {
+        MapCanvasCallbacks(
+            onBoundsChanged = { bounds, zoom -> viewModel.onAction(MapAction.BoundsChanged(bounds, zoom)) },
+            // As in prod: a tap on a marker first closes the keyboard and the search field.
+            onMarkerClick = { id -> currentDismissInput(); viewModel.onAction(MapAction.SelectMarker(id)) },
+            onZoneClick = { id -> viewModel.onAction(MapAction.SelectZone(id)) },
+            onCameraApplied = { viewModel.onAction(MapAction.CameraApplied) },
+            onMyLocationFound = { point -> viewModel.onAction(MapAction.MyLocationFound(point)) },
+            onLocationDenied = { viewModel.onAction(MapAction.LocationDenied) },
+        )
+    }
 }
 
 @Composable
@@ -115,6 +127,8 @@ internal fun MapContent(
     isPreview: Boolean = false,
     onToggleExpand: (() -> Unit)? = null,
     canvasSize: DpSize? = null,
+    onOpenFilters: () -> Unit,
+    onSearchAction: (SearchAction) -> Unit,
 ) {
     Box(host.exposure(modifier.fillMaxSize(), if (isPreview) DiscoveryExposure.MapPreview else DiscoveryExposure.MapFull)) {
         host.mapCanvas(
@@ -123,91 +137,25 @@ internal fun MapContent(
                 clusters = state.canvasClusters(isPreview),
             ),
             canvasCallbacks,
-            Modifier.align(Alignment.Center).then(canvasSize?.let { Modifier.requiredSize(it.width, it.height) } ?: Modifier.fillMaxSize()),
+            Modifier.align(Alignment.Center).then(canvasSize?.let { Modifier.requiredSize(it.width, it.height) } ?: Modifier.fillMaxSize())
+                .then(if (isPreview) Modifier.clearAndSetSemantics {} else Modifier),
         )
         if (isPreview) {
             if (onToggleExpand != null) {
-                CoffeePeekGlassIconButton(
-                    onToggleExpand, stringResource(R.string.discovery_map_expand), Modifier.align(Alignment.TopEnd).padding(CoffeePeekDimens.spacing2), hazeState = null,
-                ) { Icon(CoffeePeekIcons.Expand, null, Modifier.size(22.dp)) }
+                CoffeePeekMapPreviewOverlay(onToggleExpand, Modifier.matchParentSize())
             }
-            MapZoomControl({ onAction(MapAction.ZoomIn) }, { onAction(MapAction.ZoomOut) }, Modifier.align(Alignment.CenterEnd).padding(end = CoffeePeekDimens.spacing2))
-            CoffeePeekGlassIconButton(
-                { onAction(MapAction.RequestMyLocation) }, stringResource(R.string.discovery_map_my_location),
-                Modifier.align(Alignment.BottomEnd).padding(end = CoffeePeekDimens.spacing2, bottom = CoffeePeekDimens.spacing2), hazeState = null,
-            ) { Icon(CoffeePeekIcons.Navigation, null, Modifier.size(24.dp)) }
             return@Box
         }
-        Column(
+        MapSearchControls(state, dismissInput, onAction, onToggleExpand, onOpenFilters,
             Modifier.align(Alignment.TopCenter).statusBarsPadding().fillMaxWidth()
-                .padding(horizontal = CoffeePeekDimens.spacing4, vertical = CoffeePeekDimens.spacing3).zIndex(2f),
-            verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2),
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2)) {
-                if (onToggleExpand != null) {
-                    CoffeePeekGlassIconButton({ dismissInput(); onToggleExpand() }, stringResource(R.string.discovery_map_collapse), hazeState = null) {
-                        Icon(CoffeePeekIcons.Close, null, Modifier.size(22.dp))
-                    }
-                }
-                CoffeePeekSearchField(
-                    value = state.query,
-                    onValueChange = { onAction(MapAction.Query(it)) },
-                    placeholder = stringResource(R.string.discovery_map_search_placeholder),
-                    clearDescription = stringResource(R.string.discovery_search_clear),
-                    fieldHeight = CoffeePeekDimens.buttonHeight,
-                    onSearch = dismissInput,
-                    modifier = Modifier.weight(1f),
-                )
-            }
-            if (state.showSuggestions) MapSuggestions(state, onSelect = { dismissInput(); onAction(MapAction.SelectSuggestion(it)) })
-        }
-        if (state.isTruncated) {
-            Surface(
-                Modifier.align(Alignment.TopCenter).statusBarsPadding().padding(top = 60.dp, start = CoffeePeekDimens.spacing4, end = CoffeePeekDimens.spacing4),
-                shape = RoundedCornerShape(CoffeePeekDimens.radiusMd), color = MaterialTheme.colorScheme.surface, tonalElevation = 3.dp, shadowElevation = 3.dp,
-            ) {
-                Text(
-                    stringResource(R.string.discovery_map_truncated), style = MaterialTheme.typography.labelMedium,
-                    modifier = Modifier.padding(horizontal = CoffeePeekDimens.spacing3, vertical = CoffeePeekDimens.spacing2),
-                )
-            }
-        }
-        MapZoomControl({ onAction(MapAction.ZoomIn) }, { onAction(MapAction.ZoomOut) }, Modifier.align(Alignment.CenterEnd).padding(end = CoffeePeekDimens.spacing4))
-        val controlsBottom = bottomClearance + when {
-            state.selectedZone != null -> 180.dp
-            state.hasCarousel -> 132.dp
-            else -> CoffeePeekDimens.spacing4
-        }
-        Column(
-            Modifier.align(Alignment.BottomEnd).padding(end = CoffeePeekDimens.spacing4, bottom = controlsBottom),
-            verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2), horizontalAlignment = Alignment.End,
-        ) {
-            val zones = stringResource(if (state.showZones) R.string.discovery_map_zones_hide else R.string.discovery_map_zones_show)
-            CoffeePeekGlassIconButton({ onAction(MapAction.ToggleZones) }, zones) {
-                Icon(CoffeePeekIcons.Polygon, null, Modifier.size(26.dp), tint = if (state.showZones) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface)
-            }
-            // Prod draws the location button 4 dp larger than the zones button, with a larger arrow.
-            CoffeePeekGlassIconButton({ onAction(MapAction.RequestMyLocation) }, stringResource(R.string.discovery_map_my_location), Modifier.size(CoffeePeekDimens.buttonHeight + 4.dp)) {
-                Icon(CoffeePeekIcons.Navigation, null, Modifier.size(32.dp))
-            }
-        }
-        if (state.showSearchArea) {
-            Button(
-                onClick = { onAction(MapAction.SearchArea) },
-                modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = bottomClearance + if (state.hasCarousel) 148.dp else 32.dp).height(CoffeePeekDimens.buttonHeight),
-                shape = RoundedCornerShape(percent = 50),
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.onSurface, contentColor = MaterialTheme.colorScheme.surface),
-                contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = CoffeePeekDimens.spacing5),
-            ) { Text(stringResource(R.string.discovery_map_search_area), style = MaterialTheme.typography.labelLarge) }
-        }
-        val zone = state.selectedZone
-        if (zone != null) {
-            MapZoneCard(
-                zone, { onAction(MapAction.ShowZoneShops) }, { onAction(MapAction.ClearZone) },
-                Modifier.align(Alignment.BottomCenter).padding(start = CoffeePeekDimens.spacing4, end = CoffeePeekDimens.spacing4, bottom = bottomClearance + CoffeePeekDimens.spacing4),
-            )
-        } else if (state.hasCarousel) {
-            MapShopCarousel(state, host, dismissInput, onAction, Modifier.align(Alignment.BottomCenter).padding(bottom = bottomClearance + CoffeePeekDimens.spacing4))
-        }
+                .padding(horizontal = CoffeePeekDimens.spacing4, vertical = CoffeePeekDimens.spacing3).zIndex(2f), onSearchAction)
+        MapOverlayControls(state, host, bottomClearance, dismissInput, onAction)
     }
+}
+
+@PreviewLightDark
+@Composable
+private fun MapContentPreview() = CoffeePeekTheme {
+    MapContent(MapState(isTruncated = true), DiscoveryHost(), MapCanvasCallbacks({ _, _ -> }, {}, {}, {}, {}, {}),
+        0.dp, {}, {}, onOpenFilters = {}, onSearchAction = {})
 }

@@ -89,6 +89,10 @@ kotlin {
             implementation(project(module.feature.homePreparation.domain))
             implementation(project(module.feature.homePreparation.data))
             implementation(project(module.feature.homePreparation.impl))
+            implementation(project(module.feature.businessOwnership.api))
+            implementation(project(module.feature.businessOwnership.domain))
+            implementation(project(module.feature.businessOwnership.data))
+            implementation(project(module.feature.businessOwnership.impl))
             implementation(project(module.feature.profile.api))
             implementation(project(module.feature.profile.domain))
             implementation(project(module.feature.profile.data))
@@ -195,7 +199,7 @@ val appBuildNumberOffset = appVersionConfig.map { config ->
         .find(config)?.groupValues?.get(1)?.toInt() ?: error("BUILD_NUMBER_OFFSET is required")
 }
 val appVersionCode: Provider<Int> = gitCommitCount.zip(appBuildNumberOffset) { count, offset -> count + offset }
-val appVersionName: Provider<String> = appVersionCode.map { "1.1.2.$it" }
+val appVersionName: Provider<String> = appVersionCode.map { "1.1.3.$it" }
 
 tasks.register<PrintValueTask>("printVersionName") {
     group = "versioning"
@@ -362,6 +366,9 @@ androidComponents.onVariants(androidComponents.selector().withBuildType("sandbox
     val runtimeVerification = tasks.register<VerifyApkRuntimeClassesTask>("verify${variant.name.replaceFirstChar { it.uppercaseChar() }}RuntimeClasses") {
         apkDirectory.set(variant.artifacts.get(SingleArtifact.APK))
         requiredClasses.set(listOf("com.coffeepeek.admin.sandbox.SandboxActivity",
+            "com.coffeepeek.admin.di.ownership.BusinessOwnershipModuleKt",
+            "com.coffeepeek.feature.ownership.impl.BusinessOwnershipEntryImplKt",
+            "com.coffeepeek.feature.ownership.impl.ui.OwnershipViewModel",
             "com.coffeepeek.admin.sandbox.backend.SandboxBackend", "com.coffeepeek.admin.sandbox.SandboxApplication",
             "com.coffeepeek.feature.homecheckin.data.repository.HomePreparationRepositoryFactoryKt",
             "com.coffeepeek.admin.ui.Navigator"))
@@ -401,6 +408,9 @@ androidComponents {
             apkDirectory.set(variant.artifacts.get(SingleArtifact.APK))
             forbiddenClassPrefixes.set(listOf("com.coffeepeek.admin.sandbox.", "io.ktor.client.engine.mock."))
             requiredClasses.set(listOf(
+                "com.coffeepeek.admin.di.ownership.BusinessOwnershipModuleKt",
+                "com.coffeepeek.feature.ownership.impl.BusinessOwnershipEntryImplKt",
+                "com.coffeepeek.feature.ownership.impl.ui.OwnershipViewModel",
                 "com.coffeepeek.api.service.CheckInApiService",
                 "com.coffeepeek.api.CoffeePeekRepo",
                 "com.coffeepeek.data.di.DataModuleKt",

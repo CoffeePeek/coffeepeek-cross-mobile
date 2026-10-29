@@ -68,6 +68,7 @@ internal fun AppContent(content: @Composable () -> Unit) {
     CoffeePeekTheme(darkTheme = darkTheme) {
         CompositionLocalProvider(
             LocalKamelConfig provides kamelConfig,
+            com.coffeepeek.feature.ownership.api.LocalBusinessOwnership provides koinInject<com.coffeepeek.feature.ownership.api.BusinessOwnershipEntry>(),
             LocalContentColor provides MaterialTheme.colorScheme.onBackground,
         ) {
             content()

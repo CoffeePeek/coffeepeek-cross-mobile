@@ -31,6 +31,10 @@ internal class FeatureRoasterScreenRenderer(
     private val detail: RoasterDetailEntry,
 ) : RoasterScreenRenderer {
     @Composable
+    override fun hasDiscoveryResults(query: String, selectedRoasterIds: Set<String>, favoritesOnly: Boolean): Boolean? =
+        discovery.hasResults(query, selectedRoasterIds, favoritesOnly)
+
+    @Composable
     override fun DiscoverySection(query: String, selectedRoasterIds: Set<String>, favoritesOnly: Boolean) {
         discovery.Section(query, selectedRoasterIds, favoritesOnly, onOpenRoaster = ::openRoaster, modifier = Modifier)
     }
@@ -59,7 +63,8 @@ internal class FeatureRoasterScreenRenderer(
     override fun Detail(roasterId: String) {
         detail.Content(roasterId, onBack = Navigator::popBack,
             onOpenShop = { Navigator.navigate(Navigator.Screen.ShopDetail(it)) },
-            onOpenLink = OpenInBrowser::openInBrowser, modifier = Modifier)
+            onOpenLink = OpenInBrowser::openInBrowser,
+            onShare = { com.coffeepeek.admin.utils.ShareHelper.shareText("https://coffeepeek.by$it") }, modifier = Modifier)
     }
 
     private fun openRoaster(slug: String) = Navigator.navigate(Navigator.Screen.RoasterDetail(slug))

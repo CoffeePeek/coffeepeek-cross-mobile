@@ -45,6 +45,8 @@ class DiscoveryHost(
     val photoPrefetch: @Composable (listState: LazyListState, photos: List<Pair<String, List<String>>>) -> Unit = { _, _ -> },
     val reduceMotion: @Composable () -> Boolean = { false },
     val mapCanvas: @Composable (state: MapCanvasState, callbacks: MapCanvasCallbacks, modifier: Modifier) -> Unit = { _, _, _ -> },
+    /** Whether the retained tab is actually visible; the application supplies its existing visibility guard. */
+    val isVisible: @Composable () -> Boolean = { true },
 )
 
 /** What the roaster sections need to know about the search to filter themselves. */
@@ -52,10 +54,12 @@ class DiscoveryRoasterContext(val query: String, val selectedRoasterIds: Set<Str
 
 /** The roaster owner's pieces the tab embeds; the application fills them from the roaster renderer. */
 class DiscoveryRoasterSlots(
-    /** The section under «Обжарщики» in the discovery and above the shops of a text search. */
+    /** The section under «Обжарщики» in discovery and text search. */
     val preview: @Composable (DiscoveryRoasterContext) -> Unit,
     /** The full roaster search laid over the tab; [onCancel] closes it and clears the search. */
     val search: @Composable (context: DiscoveryRoasterContext, onQueryChange: (String) -> Unit, onCancel: () -> Unit) -> Unit,
+    /** Null while loading or unavailable; lets matching shops precede an empty roaster section. */
+    val hasResults: @Composable (DiscoveryRoasterContext) -> Boolean? = { null },
 )
 
 /**
