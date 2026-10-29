@@ -19,9 +19,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.ComposeUIViewController
 import com.coffeepeek.admin.AppContent
+import com.coffeepeek.admin.theme.CpDimens
 import com.coffeepeek.admin.theme.ThemeManager
 import com.coffeepeek.admin.theme.toUIColor
 import com.coffeepeek.admin.theme.uiKitStyle
@@ -30,6 +32,7 @@ import com.coffeepeek.admin.ui.component.dismissKeyboardOnBackgroundGestures
 import com.coffeepeek.core.designsystem.component.CoffeePeekScreenInsets
 import com.coffeepeek.core.designsystem.component.LocalCoffeePeekScreenInsets
 import kotlinx.cinterop.useContents
+import platform.UIKit.UINavigationController
 import platform.UIKit.NSLayoutConstraint
 import platform.UIKit.UIRectEdgeAll
 import platform.UIKit.UIRectEdgeBottom
@@ -49,7 +52,7 @@ internal class NativeScreenController(
 ) : UIViewController(nibName = null, bundle = null) {
     private val analyticsVisit = com.coffeepeek.admin.analytics.correlationId("screen")
     private var analyticsVisible by mutableStateOf(false)
-    private var bottomClearance by mutableStateOf(0.dp)
+    private var bottomClearance by mutableStateOf(if (isTabRoot) CpDimens.iosTabBarClearanceFloor else 0.dp)
     private val photoUnderStatusBar = route is Navigator.Screen.ShopDetail || route is Navigator.Screen.RoasterDetail
     private val isAuthFlow = route == Navigator.Screen.Auth || route == Navigator.Screen.Register ||
         route == Navigator.Screen.ForgotPassword || route is Navigator.Screen.ResetPassword
@@ -69,6 +72,7 @@ internal class NativeScreenController(
 
     override fun viewDidAppear(animated: Boolean) {
         super.viewDidAppear(animated)
+        syncBottomClearance()
         analyticsVisible = true
         val page = analyticsPage ?: com.coffeepeek.admin.analytics.analyticsPage(route?.let { it::class.simpleName })
         com.coffeepeek.admin.analytics.Analytics.service?.screenShown(page, analyticsVisit)
@@ -87,7 +91,34 @@ internal class NativeScreenController(
 
     override fun viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
-        bottomClearance = view.safeAreaInsets.useContents { bottom }.dp
+        refreshBottomClearance()
+    }
+
+    internal fun syncBottomClearance() {
+        refreshBottomClearance()
+    }
+
+    private fun refreshBottomClearance() {
+        if (isTabRoot && !isVisibleTabRoot()) return
+        bottomClearance = measuredBottomClearance()
+    }
+
+    /** Tab root on screen with tab bar shown; not the controller left mounted under a push. */
+    private fun isVisibleTabRoot(): Boolean {
+        val navigation = sequence {
+            var parent = parentViewController
+            while (parent != null) {
+                yield(parent)
+                parent = parent.parentViewController
+            }
+        }.filterIsInstance<UINavigationController>().firstOrNull()
+        return navigation?.topViewController === this || navigation == null
+    }
+
+    private fun measuredBottomClearance(): Dp {
+        val inset = view.safeAreaInsets.useContents { bottom }.dp
+        if (!isTabRoot) return inset
+        return maxOf(inset, CpDimens.iosTabBarClearanceFloor)
     }
 
     private fun attachContent(child: UIViewController) {
@@ -114,7 +145,8 @@ internal class NativeScreenController(
             view.backgroundColor = colors.background.toUIColor()
             setNeedsStatusBarAppearanceUpdate()
         }
-        ProvideFloatingNavClearance(if (isTabRoot) bottomClearance else 0.dp) {
+        val floatingClearance = if (isTabRoot) bottomClearance else 0.dp
+        ProvideFloatingNavClearance(floatingClearance) {
             // Tab content scrolls behind the glass; lists and controls reserve the measured safe area.
             Box(Modifier.fillMaxSize().background(colors.background)
                 .consumeWindowInsets(when {

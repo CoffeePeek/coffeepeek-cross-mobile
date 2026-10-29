@@ -19,16 +19,16 @@ import com.coffeepeek.api.CoffeePeekClient
 import com.coffeepeek.admin.di.contributions.androidContributionsScreenRenderer
 import com.coffeepeek.admin.di.discovery.androidDiscoveryScreenRenderer
 import com.coffeepeek.admin.di.contributions.contributionsModule
-import com.coffeepeek.admin.di.profile.androidAccountScreenRenderer
+import com.coffeepeek.admin.di.profile.accountFeatureScreenRenderer
 import com.coffeepeek.admin.di.notifications.androidNotificationsRenderer
-import com.coffeepeek.admin.di.profile.androidOwnProfileScreenRenderer
+import com.coffeepeek.admin.di.profile.ownProfileFeatureScreenRenderer
 import com.coffeepeek.admin.di.settings.androidSettingsScreenRenderer
-import com.coffeepeek.admin.di.profile.androidPublicProfileScreenRenderer
+import com.coffeepeek.admin.di.profile.publicProfileFeatureScreenRenderer
 import com.coffeepeek.admin.di.shop.AndroidShopDetailScreenRenderer
 import com.coffeepeek.admin.di.shop.AndroidShopCheckInListScreenRenderer
 import com.coffeepeek.admin.di.shop.shopBrowsingModule
 import com.coffeepeek.admin.di.checkinhistory.checkInHistoryModule
-import com.coffeepeek.admin.di.checkinhistory.AndroidCheckInHistoryScreenRenderer
+import com.coffeepeek.admin.di.checkinhistory.CheckInHistoryFeatureScreenRenderer
 import com.coffeepeek.admin.di.homecheckin.homeCheckInModule
 import com.coffeepeek.admin.di.homecheckin.FeatureCheckInCreateFlowRenderer
 import com.coffeepeek.admin.locator.Locator
@@ -49,7 +49,7 @@ internal fun initAndroidKoin(extraModules: List<org.koin.core.module.Module> = e
             shopCheckInModule(),
             shopBrowsingModule(),
             homeCheckInModule(BuildConfig.SHELF_ENABLED),
-            checkInHistoryModule(),
+            checkInHistoryModule(BuildConfig.SHELF_ENABLED),
             coffeeModule(),
             contributionsModule(),
             shelfModule(),
@@ -74,16 +74,16 @@ internal fun initAndroidKoin(extraModules: List<org.koin.core.module.Module> = e
             AndroidShopCheckInListScreenRenderer(sessions = get(), users = get(), details = get(), votes = get(),
                 visibility = get(), blockActions = get())
         },
-        checkInHistoryRendererFactory = { get<AndroidCheckInHistoryScreenRenderer>() },
+        checkInHistoryRendererFactory = { get<CheckInHistoryFeatureScreenRenderer>() },
         checkInCreateFlowRendererFactory = { get<FeatureCheckInCreateFlowRenderer>() },
-        // The shelf stays behind SHELF_ENABLED (Sandbox only) until adding a bag by scan is ready.
+        // Shelf: Coffee tab switcher, «+» scan flow, and shelf screens (live API on debug/release; Sandbox uses fake backend).
         coffeeRendererFactory = {
             coffeeCatalogueScreenRenderer(get(), CoffeeShelfTab(get(), get(), Locator.database.settingRepository).takeIf { BuildConfig.SHELF_ENABLED })
         },
         shelfRendererFactory = { ShelfFeatureScreenRenderer(get(), Locator.database.settingRepository, shelfBrewForm(get())) },
-        publicProfileRendererFactory = { androidPublicProfileScreenRenderer(get(), get(), get(), get(), get()) },
-        ownProfileRendererFactory = { androidOwnProfileScreenRenderer(get(), get(), get(), get(), get(), get(), get(), get()) },
-        accountRendererFactory = { androidAccountScreenRenderer(get(), get()) },
+        publicProfileRendererFactory = { publicProfileFeatureScreenRenderer(get(), get(), get(), get(), get()) },
+        ownProfileRendererFactory = { ownProfileFeatureScreenRenderer(get(), get(), get(), get(), get(), get(), get(), get()) },
+        accountRendererFactory = { accountFeatureScreenRenderer(get(), get()) },
         settingsRendererFactory = { androidSettingsScreenRenderer(get(), get(), get(), get()) },
         appUpdateRendererFactory = { androidAppUpdateRenderer(get(), get()) },
         notificationsRendererFactory = { androidNotificationsRenderer(get(), get(), get()) },

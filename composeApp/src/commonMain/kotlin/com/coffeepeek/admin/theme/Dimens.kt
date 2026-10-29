@@ -86,4 +86,6 @@ object CpDimens {
     val floatingNavBarHeight = 56.dp
     /** Panel height; the caller adds the system navigation inset. */
     val floatingNavContentClearance = floatingNavBarHeight + 8.dp // + FloatingNavBottomMargin
+    /** Typical native UITabBar + home indicator; iOS tab roots use this when UIKit inset is stale. */
+    val iosTabBarClearanceFloor = 83.dp
 }

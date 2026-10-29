@@ -3,12 +3,19 @@ package com.coffeepeek.feature.shelf.data.scan
 import android.content.Context
 import com.coffeepeek.feature.shelf.domain.model.BagScanFailure
 import com.coffeepeek.feature.shelf.domain.model.BagScanIssue
+import io.ktor.client.HttpClient
+import io.ktor.client.engine.HttpClientEngine
+import io.ktor.client.request.header
+import io.ktor.client.request.prepareGet
+import io.ktor.client.statement.bodyAsChannel
+import io.ktor.http.HttpHeaders
+import io.ktor.http.HttpStatusCode
+import io.ktor.utils.io.readAvailable
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import java.io.File
 import java.io.InputStream
-import java.net.HttpURLConnection
-import java.net.URL
 import java.security.MessageDigest
 
 /** One model file and where a missing copy comes from. [sha256] is lowercase hex. */
@@ -25,8 +32,10 @@ fun interface BagScannerModelSource {
             context().assets.open(path).use { it.copyTo(target, append = false, onBytes) }
         }
 
-        /** Downloaded once over HTTPS; an interrupted download resumes with a Range request. */
-        fun https(url: String) = BagScannerModelSource { _, target, onBytes -> download(URL(url), target, onBytes) }
+        /** Downloaded once over HTTPS (follows redirects like Hugging Face → CDN); resumes with Range when interrupted. */
+        fun https(url: String, client: HttpClient) = BagScannerModelSource { _, target, onBytes ->
+            client.download(url, target, onBytes)
+        }
 
         /** Copied from a directory, e.g. a file pushed with adb into the Sandbox, which has no network. */
         fun directory(directory: () -> File?) = BagScannerModelSource { fileName, target, onBytes ->
@@ -35,6 +44,11 @@ fun interface BagScannerModelSource {
             source.inputStream().use { it.copyTo(target, append = false, onBytes) }
         }
     }
+}
+
+/** Plain HTTP client for scanner models only — not the authenticated API client. */
+fun createBagScannerDownloadClient(engine: HttpClientEngine): HttpClient = HttpClient(engine) {
+    expectSuccess = false
 }
 
 /** Model files for one scan; [inpainter] is null while MI-GAN is not downloaded yet. */
@@ -71,25 +85,42 @@ internal class BagScannerModels(private val directory: File, private val segment
     private fun isReady(model: BagScannerModel) = file(model).length() == model.sizeBytes
 }
 
-private suspend fun download(url: URL, target: File, onBytes: (Long) -> Unit) {
+private suspend fun HttpClient.download(url: String, target: File, onBytes: (Long) -> Unit) {
     val offset = target.length()
-    val connection = (url.openConnection() as HttpURLConnection).apply {
-        connectTimeout = 15_000
-        readTimeout = 30_000
-        if (offset > 0) setRequestProperty("Range", "bytes=$offset-")
-    }
     try {
-        val resumed = connection.responseCode == HttpURLConnection.HTTP_PARTIAL
-        if (!resumed && connection.responseCode != HttpURLConnection.HTTP_OK) throw BagScanFailure(BagScanIssue.ModelDownload)
-        connection.inputStream.use { it.copyTo(target, append = resumed, onBytes) }
-    } catch (failure: java.io.IOException) {
+        prepareGet(url) {
+            header(HttpHeaders.UserAgent, "CoffeePeek")
+            if (offset > 0) header(HttpHeaders.Range, "bytes=$offset-")
+        }.execute { response ->
+            val resumed = response.status == HttpStatusCode.PartialContent
+            if (!resumed && response.status != HttpStatusCode.OK) throw BagScanFailure(BagScanIssue.ModelDownload)
+            response.bodyAsChannel().copyToFile(target, resumed, onBytes)
+        }
+    } catch (cancelled: CancellationException) {
+        throw cancelled
+    } catch (failure: BagScanFailure) {
+        throw failure
+    } catch (_: Exception) {
         throw BagScanFailure(BagScanIssue.ModelDownload)
-    } finally {
-        connection.disconnect()
     }
 }
 
 /** Copies with cancellation checks; [onBytes] gets the file's total length so far. */
+private suspend fun io.ktor.utils.io.ByteReadChannel.copyToFile(target: File, append: Boolean, onBytes: (Long) -> Unit) {
+    var written = if (append) target.length() else 0L
+    java.io.FileOutputStream(target, append).use { out ->
+        val buffer = ByteArray(64 * 1024)
+        while (true) {
+            currentCoroutineContext().ensureActive()
+            val read = readAvailable(buffer, 0, buffer.size)
+            if (read <= 0) break
+            out.write(buffer, 0, read)
+            written += read
+            onBytes(written)
+        }
+    }
+}
+
 private suspend fun InputStream.copyTo(target: File, append: Boolean, onBytes: (Long) -> Unit) {
     var written = if (append) target.length() else 0L
     java.io.FileOutputStream(target, append).use { out ->

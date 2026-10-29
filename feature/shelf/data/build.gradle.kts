@@ -29,6 +29,8 @@ dependencies {
 
 kotlin {
     // Model downloads on iOS use a plain client of their own: never the API client with its session headers.
+    // Scanner model downloads on Android use a plain client of their own: never the API client with its session headers.
+    sourceSets.androidMain.dependencies { implementation(libs.ktor.client.okhttp) }
     sourceSets.iosMain.dependencies { implementation(libs.ktor.client.darwin) }
     swiftPMDependencies {
         // ONNX Runtime's Objective-C API for iosMain, through a local package that adds the linker settings it lacks.

@@ -49,11 +49,7 @@ kotlin {
             implementation(project(module.feature.shop.domain))
             implementation(project(module.feature.shop.data))
             implementation(project(module.feature.shop.impl))
-            implementation(project(module.feature.profile.impl))
             implementation(project(module.feature.settings.impl))
-            implementation(project(module.feature.checkInHistory.api))
-            implementation(project(module.feature.checkInHistory.data))
-            implementation(project(module.feature.checkInHistory.impl))
             // The shelf's own camera: viewfinder and capture behind the ShelfCamera port.
             implementation(libs.androidx.camera.camera2)
             implementation(libs.androidx.camera.lifecycle)
@@ -72,6 +68,7 @@ kotlin {
             implementation("com.google.firebase:firebase-messaging")
             implementation("com.microsoft.signalr:signalr:10.0.9")
             implementation("org.slf4j:slf4j-nop:2.0.16")
+            implementation(libs.ktor.client.okhttp)
         }
         commonMain.dependencies {
             // Shelf, catalogue and home check-ins, composed on both platforms; the iOS scanner runs ONNX Runtime through shelf data.
@@ -83,7 +80,11 @@ kotlin {
             implementation(project(module.feature.coffee.domain))
             implementation(project(module.feature.coffee.data))
             implementation(project(module.feature.coffee.impl))
+            implementation(project(module.feature.checkInHistory.api))
             implementation(project(module.feature.checkInHistory.domain))
+            implementation(project(module.feature.checkInHistory.data))
+            implementation(project(module.feature.checkInHistory.impl))
+            implementation(project(module.feature.profile.impl))
             implementation(project(module.feature.homePreparation.api))
             implementation(project(module.feature.homePreparation.domain))
             implementation(project(module.feature.homePreparation.data))
@@ -276,9 +277,9 @@ android {
         buildConfigField("String", "API_BASE_URL", "\"$apiBaseUrl\"")
         buildConfigField("boolean", "POSTHOG_ENABLE_DEV", providers.gradleProperty("posthogEnableDev").map { (it == "true").toString() }.getOrElse("false"))
         buildConfigField("String", "POSTHOG_PROJECT_TOKEN", "\"${postHogProjectToken.get()}\"")
-        buildConfigField("boolean", "SHELF_ENABLED", "false")
-        // MI-GAN for the shelf scanner, downloaded on the first scan. The file must match the size and SHA-256 pinned in
-        // ShelfScannerFiles.kt; a build type may override this to download from its own server.
+        buildConfigField("boolean", "SHELF_ENABLED", "true")
+        // Shelf scanner models, downloaded on the first scan; files must match the size and SHA-256 pinned in ShelfScannerFiles.kt.
+        buildConfigField("String", "SHELF_SEGMENTER_URL", "\"https://github.com/danielgatis/rembg/releases/download/v0.0.0/u2netp.onnx\"")
         buildConfigField("String", "SHELF_INPAINTER_URL", "\"https://huggingface.co/andraniksargsyan/migan/resolve/main/migan_pipeline_v2.onnx\"")
     }
     packaging {
@@ -322,7 +323,6 @@ android {
             buildConfigField("String", "GOOGLE_WEB_CLIENT_ID", "\"\"")
             buildConfigField("String", "POSTHOG_PROJECT_TOKEN", "\"\"")
             buildConfigField("boolean", "POSTHOG_ENABLE_DEV", "false")
-            buildConfigField("boolean", "SHELF_ENABLED", "true")
         }
         getByName("release") {
             isMinifyEnabled = true
@@ -420,9 +420,9 @@ androidComponents {
                 "com.coffeepeek.feature.shop.data.repository.ShopCheckInRepositoryFactoryKt",
                 "com.coffeepeek.feature.shop.impl.ShopCheckInCreateApiImplKt",
                 "com.coffeepeek.admin.di.checkinhistory.CheckInHistoryModuleKt",
-                "com.coffeepeek.admin.di.checkinhistory.AndroidCheckInHistoryScreenRenderer",
+                "com.coffeepeek.admin.di.checkinhistory.CheckInHistoryFeatureScreenRenderer",
                 "com.coffeepeek.admin.di.checkinhistory.CheckInHistorySession",
-                "com.coffeepeek.admin.di.checkinhistory.AndroidHistoryHomeBridge",
+                "com.coffeepeek.admin.di.checkinhistory.HistoryHomeBridge",
                 "com.coffeepeek.admin.di.checkinhistory.HistoryHomeEditorFactoryKt",
                 "com.coffeepeek.feature.checkinhistory.api.CheckInHistoryEntry",
                 "com.coffeepeek.feature.checkinhistory.data.repository.CheckInHistoryRepositoryFactoryKt",
