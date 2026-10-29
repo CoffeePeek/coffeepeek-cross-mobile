@@ -9,7 +9,7 @@ import coffeepeek.composeapp.generated.resources.Res
 import coffeepeek.composeapp.generated.resources.history_home_close
 import coffeepeek.composeapp.generated.resources.history_home_visibility_unconfirmed
 import com.coffeepeek.admin.analytics.AnalyticsOverlay
-import com.coffeepeek.admin.di.homecheckin.androidHomeCheckInDates
+import com.coffeepeek.admin.di.homecheckin.homeCheckInDates
 import com.coffeepeek.admin.utils.utcIsoToLocalDateTime
 import com.coffeepeek.core.designsystem.component.CoffeePeekSwipeDismissModalBottomSheet
 import org.jetbrains.compose.resources.stringResource
@@ -21,7 +21,7 @@ internal fun HistoryHomeOverlay(bridge: AndroidHistoryHomeBridge, session: Histo
     val destination by bridge.destination.collectAsStateWithLifecycle()
     destination?.let { current -> key(current) {
         val dismissAllowed by current.dismissAllowed.collectAsStateWithLifecycle()
-        val dates = remember { androidHomeCheckInDates() }
+        val dates = remember { homeCheckInDates() }
         val allowed = session.lease.isLoggedIn && session.lease.isCurrent()
         CompositionLocalProvider(LocalViewModelStoreOwner provides current) {
             AnalyticsOverlay {
@@ -30,7 +30,7 @@ internal fun HistoryHomeOverlay(bridge: AndroidHistoryHomeBridge, session: Histo
                     val modifier = Modifier.weight(1f).fillMaxWidth()
                     if (current.editing) current.entries.editor.Content(current.id, session.generation, allowed,
                         { bridge.dismiss(current) }, { id, notice -> bridge.saved(current, id, notice) },
-                        { bridge.setDismissAllowed(current, it) }, modifier)
+                        { bridge.setDismissAllowed(current, it) }, modifier, bean = null)
                     else current.entries.detail.Content(requireNotNull(current.id), session.generation, allowed,
                         { civil, instant -> listOf(civil.split('-').reversed().joinToString("."),
                             utcIsoToLocalDateTime(instant).substringAfterLast(' ', "")).filter(String::isNotBlank).joinToString(" · ") }, dates.formatMethod,

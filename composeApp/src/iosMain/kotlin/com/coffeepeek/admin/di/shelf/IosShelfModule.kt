@@ -3,8 +3,6 @@ package com.coffeepeek.admin.di.shelf
 import com.coffeepeek.admin.locator.Constants
 import com.coffeepeek.api.CoffeePeekClient
 import com.coffeepeek.core.session.SessionReader
-import com.coffeepeek.feature.homecheckin.data.repository.createHomePreparationShelfBagReader
-import com.coffeepeek.feature.homecheckin.domain.repository.HomePreparationShelfBagReader
 import com.coffeepeek.feature.shelf.api.ShelfEntry
 import com.coffeepeek.feature.shelf.api.ShelfTimeZone
 import com.coffeepeek.feature.shelf.data.repository.createShelfRepository
@@ -30,7 +28,6 @@ internal fun iosShelfModule(apiBaseUrl: String = Constants.BASE_URL, modelUrl: (
         val client = get<CoffeePeekClient>()
         createShelfRepository(client.client, client.uploadClient, apiBaseUrl, SessionShelfAccount(get<SessionReader>()))
     }
-    single<HomePreparationShelfBagReader> { createHomePreparationShelfBagReader(get<CoffeePeekClient>().client, apiBaseUrl) }
     // Both models are downloaded on the first scan from the build's Info.plist addresses and checked against the pinned files.
     single<BagScanner> {
         createIosBagScanner(

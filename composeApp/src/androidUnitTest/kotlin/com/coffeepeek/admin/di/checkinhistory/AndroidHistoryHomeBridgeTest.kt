@@ -40,7 +40,7 @@ class AndroidHistoryHomeBridgeTest {
 
     private fun bridge(sessions: CheckInTestSessions = CheckInTestSessions(), source: Source = Source(),
         onFactory: (CheckInTracker?) -> Unit = {}): Pair<HistoryHostSession, AndroidHistoryHomeBridge> {
-        val session = HistoryHostSession(0, AndroidCheckInHistorySession(sessions)).also(owned::add)
+        val session = HistoryHostSession(0, CheckInHistorySession(sessions)).also(owned::add)
         val entries = historyHomeEditorFactory(source, object : CoffeePicker {
             override suspend fun search(query: String) = Result.success(emptyList<CoffeePickerItem>())
         }, BrewMethodCatalog { Result.success(emptyList()) })

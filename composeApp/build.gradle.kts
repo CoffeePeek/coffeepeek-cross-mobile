@@ -52,11 +52,8 @@ kotlin {
             implementation(project(module.feature.profile.impl))
             implementation(project(module.feature.settings.impl))
             implementation(project(module.feature.checkInHistory.api))
-            implementation(project(module.feature.checkInHistory.domain))
             implementation(project(module.feature.checkInHistory.data))
             implementation(project(module.feature.checkInHistory.impl))
-            implementation(project(module.feature.homePreparation.api))
-            implementation(project(module.feature.homePreparation.impl))
             // The shelf's own camera: viewfinder and capture behind the ShelfCamera port.
             implementation(libs.androidx.camera.camera2)
             implementation(libs.androidx.camera.lifecycle)
@@ -77,7 +74,7 @@ kotlin {
             implementation("org.slf4j:slf4j-nop:2.0.16")
         }
         commonMain.dependencies {
-            // Shelf with the catalogue search and home brews it adapts; the iOS scanner runs ONNX Runtime through shelf data.
+            // Shelf, catalogue and home check-ins, composed on both platforms; the iOS scanner runs ONNX Runtime through shelf data.
             implementation(project(module.feature.shelf.api))
             implementation(project(module.feature.shelf.domain))
             implementation(project(module.feature.shelf.data))
@@ -86,8 +83,11 @@ kotlin {
             implementation(project(module.feature.coffee.domain))
             implementation(project(module.feature.coffee.data))
             implementation(project(module.feature.coffee.impl))
+            implementation(project(module.feature.checkInHistory.domain))
+            implementation(project(module.feature.homePreparation.api))
             implementation(project(module.feature.homePreparation.domain))
             implementation(project(module.feature.homePreparation.data))
+            implementation(project(module.feature.homePreparation.impl))
             implementation(project(module.feature.profile.api))
             implementation(project(module.feature.profile.domain))
             implementation(project(module.feature.profile.data))
@@ -421,7 +421,7 @@ androidComponents {
                 "com.coffeepeek.feature.shop.impl.ShopCheckInCreateApiImplKt",
                 "com.coffeepeek.admin.di.checkinhistory.CheckInHistoryModuleKt",
                 "com.coffeepeek.admin.di.checkinhistory.AndroidCheckInHistoryScreenRenderer",
-                "com.coffeepeek.admin.di.checkinhistory.AndroidCheckInHistorySession",
+                "com.coffeepeek.admin.di.checkinhistory.CheckInHistorySession",
                 "com.coffeepeek.admin.di.checkinhistory.AndroidHistoryHomeBridge",
                 "com.coffeepeek.admin.di.checkinhistory.HistoryHomeEditorFactoryKt",
                 "com.coffeepeek.feature.checkinhistory.api.CheckInHistoryEntry",
@@ -437,13 +437,13 @@ androidComponents {
                 "com.coffeepeek.feature.homecheckin.impl.HomeCheckInEditorApiImplKt",
                 "com.coffeepeek.feature.homecheckin.impl.HomeCheckInApiImplKt",
                 "com.coffeepeek.feature.homecheckin.impl.ui.HomeCheckInEditorViewModel",
-                "com.coffeepeek.admin.di.homecheckin.AndroidHomeCheckInEditorKt",
-                "com.coffeepeek.admin.di.homecheckin.AndroidHomeCheckInRepository",
-                "com.coffeepeek.admin.di.homecheckin.AndroidHomeCheckInPhotoPicker",
+                "com.coffeepeek.admin.di.homecheckin.HomeCheckInEditorKt",
+                "com.coffeepeek.admin.di.homecheckin.HomeCheckInAppRepository",
+                "com.coffeepeek.admin.di.homecheckin.HomeCheckInAppPhotoPicker",
                 "com.coffeepeek.admin.ui.screen.checkins.CheckInCreateFlowRenderer",
                 "com.coffeepeek.admin.di.homecheckin.HomeCheckInModuleKt",
-                "com.coffeepeek.admin.di.homecheckin.AndroidCheckInCreateFlowRenderer",
-                "com.coffeepeek.admin.di.homecheckin.AndroidGlobalCheckInFlow",
+                "com.coffeepeek.admin.di.homecheckin.FeatureCheckInCreateFlowRenderer",
+                "com.coffeepeek.admin.di.homecheckin.GlobalCheckInFlow",
                 "com.coffeepeek.feature.checkinhistory.domain.repository.HomeHistoryReader",
             ))
         }

@@ -5,8 +5,8 @@ import androidx.compose.ui.unit.dp
 import com.coffeepeek.admin.analytics.CheckInSource
 import com.coffeepeek.admin.di.shelf.ShelfHomeCheckInBags
 import com.coffeepeek.admin.analytics.CheckInTracker
-import com.coffeepeek.admin.di.homecheckin.AndroidHomeCheckInRepository
-import com.coffeepeek.admin.di.homecheckin.androidHomeCheckInEditor
+import com.coffeepeek.admin.di.homecheckin.HomeCheckInAppRepository
+import com.coffeepeek.admin.di.homecheckin.homeCheckInEditor
 import com.coffeepeek.admin.feature.catalog.api.BrewMethodCatalog
 import com.coffeepeek.feature.coffee.api.CoffeePicker
 import com.coffeepeek.admin.utils.CpImage
@@ -17,7 +17,7 @@ import com.coffeepeek.feature.homecheckin.impl.createHomeCheckInDetailEntry
 
 /** App-owned assembly; history sees neither the Home ViewModel nor a legacy writer. */
 internal fun interface HistoryHomeEditorFactory {
-    fun create(lease: AndroidCheckInHistorySession, tracker: CheckInTracker?): HistoryHomeEntries
+    fun create(lease: CheckInHistorySession, tracker: CheckInTracker?): HistoryHomeEntries
 }
 
 internal class HistoryHomeEntries(val detail: HomeCheckInDetailEntry, val editor: HomeCheckInEditorEntry)
@@ -26,10 +26,10 @@ internal fun historyHomeEditorFactory(repository: HomePreparationRepository, pic
     methods: BrewMethodCatalog, shelfBags: ShelfHomeCheckInBags? = null,
 ) = HistoryHomeEditorFactory { lease, tracker ->
     HistoryHomeEntries(
-        createHomeCheckInDetailEntry(AndroidHomeCheckInRepository(lease, repository),
+        createHomeCheckInDetailEntry(HomeCheckInAppRepository(lease, repository),
             { lease.isLoggedIn && lease.isCurrent() }) { url, description, modifier, _ ->
             CpImage(url, contentDescription = description, modifier = modifier, contentScale = ContentScale.Crop)
         },
-        androidHomeCheckInEditor(lease, repository, picker, methods, CheckInSource.Diary, tracker, shelfBags),
+        homeCheckInEditor(lease, repository, picker, methods, CheckInSource.Diary, tracker, shelfBags),
     )
 }

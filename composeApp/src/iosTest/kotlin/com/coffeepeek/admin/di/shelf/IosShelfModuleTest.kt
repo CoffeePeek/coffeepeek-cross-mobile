@@ -1,6 +1,9 @@
 package com.coffeepeek.admin.di.shelf
 
 import com.coffeepeek.admin.di.coffee.coffeeModule
+import com.coffeepeek.admin.feature.catalog.api.BrewMethodCatalog
+import com.coffeepeek.admin.di.homecheckin.FeatureCheckInCreateFlowRenderer
+import com.coffeepeek.admin.di.homecheckin.homeCheckInModule
 import com.coffeepeek.api.CoffeePeekClient
 import com.coffeepeek.core.session.Session
 import com.coffeepeek.core.session.SessionReader
@@ -30,7 +33,11 @@ class IosShelfModuleTest {
         }
         val requested = mutableListOf<String>()
         val app = koinApplication {
-            modules(module { single { client }; single<SessionReader> { sessions } }, coffeeModule(),
+            modules(module {
+                single { client }; single<SessionReader> { sessions }
+                single<BrewMethodCatalog> { BrewMethodCatalog { error("Resolving the graph must not read brew methods") } }
+            }, coffeeModule(),
+                homeCheckInModule(shelfEnabled = true, apiBaseUrl = "https://fixture.invalid"),
                 iosShelfModule("https://fixture.invalid") { key -> requested += key; "https://models.invalid/$key" })
         }
         try {
@@ -39,6 +46,7 @@ class IosShelfModuleTest {
             assertSame(app.koin.get<ShelfEntry>(), app.koin.get<ShelfEntry>())
             app.koin.get<CoffeePicker>()
             app.koin.get<HomePreparationShelfBagReader>()
+            assertSame(app.koin.get<FeatureCheckInCreateFlowRenderer>(), app.koin.get<FeatureCheckInCreateFlowRenderer>())
             assertEquals(listOf("ShelfSegmenterURL", "ShelfInpainterURL"), requested)
         } finally {
             app.close()

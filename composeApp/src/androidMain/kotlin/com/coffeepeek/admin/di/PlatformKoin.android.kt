@@ -8,7 +8,7 @@ import com.coffeepeek.admin.di.coffee.coffeeCatalogueScreenRenderer
 import com.coffeepeek.admin.di.coffee.coffeeModule
 import com.coffeepeek.admin.di.coffee.CoffeeShelfTab
 import com.coffeepeek.admin.di.shelf.ShelfFeatureScreenRenderer
-import com.coffeepeek.admin.di.shelf.androidShelfBrewForm
+import com.coffeepeek.admin.di.shelf.shelfBrewForm
 import com.coffeepeek.admin.di.shelf.shelfModule
 import com.coffeepeek.BuildConfig
 import com.coffeepeek.admin.di.appupdate.androidAppUpdateRenderer
@@ -30,7 +30,7 @@ import com.coffeepeek.admin.di.shop.shopBrowsingModule
 import com.coffeepeek.admin.di.checkinhistory.checkInHistoryModule
 import com.coffeepeek.admin.di.checkinhistory.AndroidCheckInHistoryScreenRenderer
 import com.coffeepeek.admin.di.homecheckin.homeCheckInModule
-import com.coffeepeek.admin.di.homecheckin.AndroidCheckInCreateFlowRenderer
+import com.coffeepeek.admin.di.homecheckin.FeatureCheckInCreateFlowRenderer
 import com.coffeepeek.admin.locator.Locator
 import com.coffeepeek.feature.shopreport.data.repository.createShopIssueReportRepository
 import com.coffeepeek.feature.shopreport.impl.createShopReportEntry
@@ -48,7 +48,7 @@ internal fun initAndroidKoin(extraModules: List<org.koin.core.module.Module> = e
             serverFavoritesModule(),
             shopCheckInModule(),
             shopBrowsingModule(),
-            homeCheckInModule(),
+            homeCheckInModule(BuildConfig.SHELF_ENABLED),
             checkInHistoryModule(),
             coffeeModule(),
             contributionsModule(),
@@ -75,12 +75,12 @@ internal fun initAndroidKoin(extraModules: List<org.koin.core.module.Module> = e
                 visibility = get(), blockActions = get())
         },
         checkInHistoryRendererFactory = { get<AndroidCheckInHistoryScreenRenderer>() },
-        checkInCreateFlowRendererFactory = { get<AndroidCheckInCreateFlowRenderer>() },
+        checkInCreateFlowRendererFactory = { get<FeatureCheckInCreateFlowRenderer>() },
         // The shelf stays behind SHELF_ENABLED (Sandbox only) until adding a bag by scan is ready.
         coffeeRendererFactory = {
             coffeeCatalogueScreenRenderer(get(), CoffeeShelfTab(get(), get(), Locator.database.settingRepository).takeIf { BuildConfig.SHELF_ENABLED })
         },
-        shelfRendererFactory = { ShelfFeatureScreenRenderer(get(), Locator.database.settingRepository, androidShelfBrewForm(get())) },
+        shelfRendererFactory = { ShelfFeatureScreenRenderer(get(), Locator.database.settingRepository, shelfBrewForm(get())) },
         publicProfileRendererFactory = { androidPublicProfileScreenRenderer(get(), get(), get(), get(), get()) },
         ownProfileRendererFactory = { androidOwnProfileScreenRenderer(get(), get(), get(), get(), get(), get(), get(), get()) },
         accountRendererFactory = { androidAccountScreenRenderer(get(), get()) },

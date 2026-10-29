@@ -28,7 +28,7 @@ class HomeHistorySessionTest {
     @Test fun guestAndInvalidAccountsNeverInvokeHomeReads() = runTest {
         for (session in listOf(null, Session("", userId = "owner"), Session("token", userId = ""))) {
             val source = HomePreparationTestReader()
-            val lease = AndroidCheckInHistorySession(CheckInTestSessions(session))
+            val lease = CheckInHistorySession(CheckInTestSessions(session))
             val reader = lease.bind(HomeHistoryReaderAdapter(source))
             assertTrue(reader.page(1, 20, null).isFailure)
             assertTrue(reader.calendar(range).isFailure)
@@ -45,7 +45,7 @@ class HomeHistorySessionTest {
             val originalCalendar = source.days
             source.history = { query -> withContext(NonCancellable) { gate.await(); originalPage(query) } }
             source.days = { from, to -> withContext(NonCancellable) { gate.await(); originalCalendar(from, to) } }
-            val lease = AndroidCheckInHistorySession(sessions)
+            val lease = CheckInHistorySession(sessions)
             val reader = lease.bind(HomeHistoryReaderAdapter(source))
             val page = async { reader.page(1, 20, null) }
             val calendar = async { reader.calendar(range) }
@@ -68,7 +68,7 @@ class HomeHistorySessionTest {
         val originalPage = source.history
         val gate = CompletableDeferred<Unit>()
         source.history = { query -> gate.await(); originalPage(query) }
-        val lease = AndroidCheckInHistorySession(sessions)
+        val lease = CheckInHistorySession(sessions)
         val reader = lease.bind(HomeHistoryReaderAdapter(source))
         val result = async { reader.page(1, 20, null) }
         runCurrent()
@@ -86,13 +86,13 @@ class HomeHistorySessionTest {
         val source = HomePreparationTestReader()
         val originalPage = source.history
         source.history = { query -> sessions.applySession(null); originalPage(query) }
-        val lease = AndroidCheckInHistorySession(sessions)
+        val lease = CheckInHistorySession(sessions)
         val reader = lease.bind(HomeHistoryReaderAdapter(source))
         assertFailsWith<CancellationException> { reader.page(1, 20, null) }
         assertFailsWith<CancellationException> { reader.calendar(range) }
         assertEquals(1, source.queries.size)
         assertEquals(0, source.ranges.size)
-        val revoked = AndroidCheckInHistorySession(CheckInTestSessions())
+        val revoked = CheckInHistorySession(CheckInTestSessions())
         revoked.revoke()
         assertFailsWith<CancellationException> {
             revoked.bind(HomeHistoryReaderAdapter(source)).page(1, 20, null)
@@ -105,11 +105,11 @@ class HomeHistorySessionTest {
         }
         val source = HomePreparationTestReader()
         val adapter = HomeHistoryReaderAdapter(source)
-        assertFailsWith<CancellationException> { AndroidCheckInHistorySession(broken).bind(adapter).page(1, 20, null) }
+        assertFailsWith<CancellationException> { CheckInHistorySession(broken).bind(adapter).page(1, 20, null) }
         assertEquals(0, source.queries.size)
         val failure = IllegalStateException("Unavailable")
         source.history = { Result.failure(failure) }
-        val reader = AndroidCheckInHistorySession(CheckInTestSessions()).bind(adapter)
+        val reader = CheckInHistorySession(CheckInTestSessions()).bind(adapter)
         assertSame(failure, reader.page(1, 20, null).exceptionOrNull())
         source.history = { Result.failure(CancellationException("Canceled")) }
         assertFailsWith<CancellationException> { reader.page(1, 20, null) }
