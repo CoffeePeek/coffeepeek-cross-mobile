@@ -1,7 +1,5 @@
 package com.coffeepeek.admin.ui.screen.feed
 
-import com.coffeepeek.admin.analytics.Analytics
-import com.coffeepeek.admin.analytics.AnalyticsEvent
 import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.domain.model.CoffeeShop
 
@@ -20,10 +18,6 @@ internal fun feedScreenActions(vm: FeedViewModel, state: FeedUiState, dismiss: (
         onOpenShop = { openFeedShop(vm, dismiss, it) },
         onToggleFavorite = vm::toggleFavorite,
         onAddShop = { Navigator.navigate(Navigator.Screen.AddShop) },
-        onOpenMap = {
-            dismiss()
-            Analytics.track(AnalyticsEvent.MAP_INTERACTION, "action" to "expanded")
-        },
     )
 
 private fun feedFilterActions(vm: FeedViewModel, filters: FeedFiltersUi, refreshLocation: () -> Unit) = FeedScreenActions(

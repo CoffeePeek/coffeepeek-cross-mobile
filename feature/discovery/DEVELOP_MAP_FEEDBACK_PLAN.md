@@ -123,3 +123,9 @@ access error; it was corrected before the passing rerun. Native Swift/Xcode
 validation remains in PR CI, and manual light/dark, badge, chip and map
 interaction review still requires a selected device and build variant. No app
 was installed or run, and no real backend/account state was changed.
+
+The follow-up search screenshot also showed an unwanted map icon beside the
+search field. The icon and its now unused callback/resource were removed from
+both search headers. The existing map preview still opens the map through its
+expand control; this keeps a single entry point without changing the map route.
+Android Discovery/app code and iOS simulator code compiled after the removal.
