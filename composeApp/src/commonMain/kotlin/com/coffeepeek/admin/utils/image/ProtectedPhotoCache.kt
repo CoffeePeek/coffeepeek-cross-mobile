@@ -82,7 +82,8 @@ internal class ProtectedPhotoCache(
         val wall = clock.wallMillis()
         check(current() && (jwtDeadline == null || jwtDeadline > wall)) { "Фото недоступно" }
         requirePhotoAccess(response.status)
-        val policy = PhotoCachePolicy.read(response.headers, start, received, wall)
+        val maxFresh = if (isShelfBagPhoto(key.url)) 300_000L else 20_000L
+        val policy = PhotoCachePolicy.read(response.headers, start, received, wall, maxFresh)
         check(policy.allowsOnlineDisplay) { "Фото недоступно" }
         val responseTag = response.headers.getAll(HttpHeaders.ETag)?.singleOrNull()?.takeIf(::validPhotoEtag)
         val bytes = when (response.status) {
