@@ -77,6 +77,14 @@ jobs:
               tail -n 150 "$RUNNER_TEMP/ios-verify.log"
               exit 1
             }
+      - name: Verify embedded ONNX minimum OS
+        shell: bash
+        run: |
+          set -euo pipefail
+          APP_PATH="$RUNNER_TEMP/ios-verify/Build/Products/Debug-iphonesimulator/CoffeePeek.app"
+          MINIMUM_OS=$(/usr/libexec/PlistBuddy -c 'Print :MinimumOSVersion' "$APP_PATH/Info.plist")
+          python3 tools/ios/fix_onnx_framework.py "$APP_PATH/Frameworks/onnxruntime.framework" \
+            --deployment-target "$MINIMUM_OS" --check
       - name: Run Kotlin Native contract tests
         shell: bash
         run: |
