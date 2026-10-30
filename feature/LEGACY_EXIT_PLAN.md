@@ -1514,3 +1514,18 @@ source `89778c23` + этот срез. Подробный scope/остаток �
   для пользователя не изменился. Один тест `FeedApiContractTest` (смена сессии во время refresh) теперь ожидает
   `CancellationException`: клиент всегда работает с общим координатором, как и в проде (раньше тест шёл по пути без него).
 - Не делалось: ручная проверка входа/refresh/выхода на устройстве и инструментальные тесты (только компиляция).
+
+## Инструментальные тесты снова компилируются — 2026-10-30
+
+- `:composeApp:compileDirectDebugAndroidTestKotlinAndroid` падал с 21 ошибкой уже до среза C6.3 (после срезов C5 и вынесения
+  медиа-конвейера). Исправлено механически: `SessionStore` (скриншот-фикстуры авторблокировки), `AndroidImageCodec` и
+  `PrefetchPhotos` из `core/media` (`DisplayPhotoTransparencyTest`, `CpImageLoadingTest`), `AuthService` из клиентов в
+  `SessionDeviceMetadataTest`. Конфигурация `friendPaths` в `composeApp/build.gradle.kts` больше не ссылается на объект
+  скрипта: раньше задача компиляции не проходила сохранение кэша конфигурации.
+- Удалён `CheckInCalendarInteractionTest` (Арсений): он проверял удалённый экран календаря `CheckInCalendarContent`
+  (срез L2 удалил его как недостижимый, этот тест тогда не заметили). Логика его трёх сценариев (выбор даты и «сегодня»,
+  навигация по месяцам, счётчики Home + кофейни, фото календаря) покрыта в `feature/check-in-history`:
+  `CombinedHistoryViewModelTest`, `ProfileActivityViewModelTest`, `HistoryCalendarPhotosTest`,
+  `HistoryCalendarPresentationTest`. **Не покрыто:** проверка кликов по accessibility-узлам календаря на устройстве;
+  новый UI-тест не создавался.
+- Задача `compileDirectDebugAndroidTestKotlinAndroid` добавлена в стандартный набор проверок.

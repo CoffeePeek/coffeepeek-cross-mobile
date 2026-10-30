@@ -24,7 +24,9 @@ if (file("google-services.json").isFile) apply(plugin = "com.google.gms.google-s
 val mediaTestBuildDirectory = project(":core:media").layout.buildDirectory
 tasks.withType<KotlinCompile>().configureEach {
     if (name.endsWith("AndroidTestKotlinAndroid")) {
-        friendPaths.from(libraries.filter { it.toPath().startsWith(mediaTestBuildDirectory.get().asFile.toPath()) })
+        // A local value keeps the filter free of script references, which the configuration cache cannot store.
+        val mediaBuildPath = mediaTestBuildDirectory.get().asFile.toPath()
+        friendPaths.from(libraries.filter { it.toPath().startsWith(mediaBuildPath) })
     }
 }
 
