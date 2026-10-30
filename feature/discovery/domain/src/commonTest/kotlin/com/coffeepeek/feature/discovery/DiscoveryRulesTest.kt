@@ -80,6 +80,17 @@ class DiscoveryRulesTest {
         assertEquals(Coordinates(53.9005, 27.5505), small.center)
     }
 
+    @Test fun carouselIncludesNearbyShopsAtHighZoomWithoutGrowingBroadViews() {
+        val tight = MapBounds(53.899, 27.559, 53.901, 27.561)
+        val nearby = tight.expandedForCarousel()
+        assertTrue(nearby.contains(tight))
+        assertTrue(nearby.minLat < 53.887 && nearby.maxLat > 53.913)
+        assertTrue(nearby.minLon < 27.538 && nearby.maxLon > 27.582)
+        assertEquals(tight.center, nearby.center)
+        val broad = MapBounds(53.88, 27.50, 53.92, 27.60)
+        assertEquals(broad, broad.expandedForCarousel())
+    }
+
     @Test fun viewportKeepsSurvivorsAndAddsNewShopsNearestTheCenter() {
         fun marker(id: String, lat: Double, lon: Double) = MapMarker(id, id, Coordinates(lat, lon))
         val bounds = MapBounds(53.88, 27.50, 53.92, 27.60)

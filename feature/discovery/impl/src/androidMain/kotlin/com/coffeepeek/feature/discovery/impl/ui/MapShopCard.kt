@@ -33,10 +33,10 @@ internal fun MapShopCard(shop: MapMarker, host: DiscoveryHost, details: MapShopD
     Card(Modifier.fillMaxWidth(), shape = RoundedCornerShape(CoffeePeekDimens.cardRadius),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)) {
-        Row(Modifier.fillMaxWidth().clickable(onClick = onOpen).padding(CoffeePeekDimens.spacing3),
+        Row(Modifier.fillMaxWidth().clickable(onClick = onOpen).padding(CoffeePeekDimens.spacing2),
             verticalAlignment = Alignment.CenterVertically) {
             MapShopPhoto(shop, host, details?.photoUrl, isLoading)
-            Spacer(Modifier.width(CoffeePeekDimens.spacing3))
+            Spacer(Modifier.width(CoffeePeekDimens.spacing2))
             Column(Modifier.weight(1f)) { MapShopInformation(shop.title, details, isLoading, distance) }
         }
     }
@@ -44,7 +44,7 @@ internal fun MapShopCard(shop: MapMarker, host: DiscoveryHost, details: MapShopD
 
 @Composable
 private fun MapShopPhoto(shop: MapMarker, host: DiscoveryHost, photo: String?, isLoading: Boolean) {
-    Box(Modifier.size(72.dp).clip(RoundedCornerShape(CoffeePeekDimens.radiusMd))
+    Box(Modifier.size(64.dp).clip(RoundedCornerShape(CoffeePeekDimens.radiusMd))
         .background(MaterialTheme.colorScheme.surfaceVariant), contentAlignment = Alignment.Center) {
         when {
             !photo.isNullOrBlank() -> host.compactImage(photo, shop.title, Modifier.fillMaxSize(), ContentScale.Crop)
@@ -56,20 +56,23 @@ private fun MapShopPhoto(shop: MapMarker, host: DiscoveryHost, photo: String?, i
 
 @Composable
 private fun MapShopInformation(title: String, details: MapShopDetails?, isLoading: Boolean, distance: Double?) {
-    MapShopRating(details)
-    Text(title, Modifier.padding(top = 2.dp), style = MaterialTheme.typography.titleMedium,
-        fontWeight = FontWeight.SemiBold, minLines = 2, maxLines = 2, overflow = TextOverflow.Ellipsis)
-    Text(distance?.let { distanceLabel(it) }.orEmpty(), style = MaterialTheme.typography.labelSmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant, minLines = 1, maxLines = 1)
+    Text(title, style = MaterialTheme.typography.titleMedium,
+        fontWeight = FontWeight.SemiBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2),
+        verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        MapShopRating(details)
+        if (distance != null) Text(distanceLabel(distance), style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
+    }
     val schedule = details?.hours
     val hours = when {
         schedule != null -> stringResource(R.string.discovery_map_card_hours,
-            stringResource(if (details?.isOpen == true) R.string.discovery_map_card_open else R.string.discovery_map_card_closed), schedule)
+            stringResource(if (details.isOpen == true) R.string.discovery_map_card_open else R.string.discovery_map_card_closed), schedule)
         isLoading -> stringResource(R.string.discovery_map_card_loading)
         else -> ""
     }
-    Text(hours, Modifier.padding(top = 4.dp), style = MaterialTheme.typography.bodySmall,
-        color = MaterialTheme.colorScheme.onSurfaceVariant, minLines = 2, maxLines = 2, overflow = TextOverflow.Ellipsis)
+    if (hours.isNotEmpty()) Text(hours, style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2, overflow = TextOverflow.Ellipsis)
 }
 
 @Composable
@@ -101,8 +104,9 @@ private fun MapShopRating(details: MapShopDetails?) {
 @Composable
 private fun MapShopCardPreview() = CoffeePeekTheme {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        val shop = MapMarker("preview", "CoffeePeek Specialty Coffee", Coordinates(53.9, 27.56))
+        val shop = MapMarker("preview", "Терапия", Coordinates(53.9, 27.56))
         MapShopCard(shop, DiscoveryHost(), MapShopDetails(null, 4.5, 12, true, "09:00 – 21:00"), false, 250.0, {})
-        MapShopCard(shop.copy(title = "Cafe"), DiscoveryHost(), null, true, null, {})
+        MapShopCard(shop.copy(title = "CoffeePeek Specialty Coffee on a Very Long Street"), DiscoveryHost(),
+            MapShopDetails(null, null, 0, true, "07:30 – 22:00"), false, 282.0, {})
     }
 }

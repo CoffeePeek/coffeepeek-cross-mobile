@@ -13,6 +13,7 @@ const val MAX_MAP_ZOOM = 20f
 private const val KM_PER_DEGREE_LAT = 111.32
 private const val PREFETCH_MIN_MARGIN_KM = 3.0
 private const val PREFETCH_VIEWPORT_FRACTION = 0.5
+private const val CAROUSEL_MIN_RADIUS_KM = 1.5
 
 fun clampZoom(zoom: Float): Float = zoom.coerceIn(MIN_MAP_ZOOM, MAX_MAP_ZOOM)
 
@@ -35,6 +36,26 @@ fun MapBounds.expandedForPrefetch(minMarginKm: Double = PREFETCH_MIN_MARGIN_KM):
         minLon = (minLon - lonMargin).coerceAtLeast(-180.0),
         maxLat = (maxLat + latMargin).coerceAtMost(85.0),
         maxLon = (maxLon + lonMargin).coerceAtMost(180.0),
+    )
+}
+
+/** Include shops near a tightly zoomed viewport without enlarging an already broad map view. */
+fun MapBounds.expandedForCarousel(): MapBounds {
+    if (minLon > maxLon) return this
+    val middle = center
+    val kmPerDegreeLon = KM_PER_DEGREE_LAT * cos(middle.latitude * PI / 180.0).coerceAtLeast(0.01)
+    val viewportLatRadius = (maxLat - minLat) / 2.0
+    val viewportLonRadius = (maxLon - minLon) / 2.0
+    val minimumLatRadius = CAROUSEL_MIN_RADIUS_KM / KM_PER_DEGREE_LAT
+    val minimumLonRadius = CAROUSEL_MIN_RADIUS_KM / kmPerDegreeLon
+    if (viewportLatRadius >= minimumLatRadius && viewportLonRadius >= minimumLonRadius) return this
+    val latRadius = max(viewportLatRadius, minimumLatRadius)
+    val lonRadius = max(viewportLonRadius, minimumLonRadius)
+    return MapBounds(
+        minLat = (middle.latitude - latRadius).coerceAtLeast(-85.0),
+        minLon = (middle.longitude - lonRadius).coerceAtLeast(-180.0),
+        maxLat = (middle.latitude + latRadius).coerceAtMost(85.0),
+        maxLon = (middle.longitude + lonRadius).coerceAtMost(180.0),
     )
 }
 

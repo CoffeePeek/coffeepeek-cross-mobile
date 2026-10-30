@@ -165,3 +165,28 @@ area A → area B coarse response → area A sequence before B's detailed read.
 Discovery implementation tests: 102 / 9 suites, zero failures or errors;
 Direct Sandbox assembly and packaged DEX class check passed. No device was
 selected, so the fast-pan gesture remains a manual Sandbox check.
+
+## Compact map card and nearby carousel — 2026-10-30
+
+On `develop` at `484d8710` plus this scoped patch, the Android carousel card
+uses a 64 dp photo, smaller insets, and one shared row for checkins/rating and
+distance. Its title and hours consume only the lines they need. The photo,
+title, checkins/rating, distance when available, and opening hours are retained.
+The existing light/dark previews cover short and long titles.
+
+At high zoom, a strictly visible-bounds map request can return only a few
+shops even when others are close to the map center. The detailed carousel now
+requests at least a 1.5 km radius around the viewport center, while wider
+views keep their original bounds. The cyclic pager is unchanged. A late coarse
+map response preserves nearby cards; criteria and account guards still apply.
+
+Verification on Windows: Discovery domain 15 tests / 2 suites and
+implementation 103 tests / 9 suites passed with zero failures or skips. The
+new tests cover compact-viewport expansion and preservation of three nearby
+cards after a late coarse reply. Direct Sandbox APK assembly, packaged DEX
+runtime-class and isolation checks passed. Discovery implementation compiled
+for iOS Arm64. The Sandbox APK SHA-256 is
+`00671eeb16631fb12bb5cca2e661ab2a3c745ca7a1ead96a3ad7ad47e10a08d5`.
+No device or build variant was selected for launch, so no app was installed.
+Card swipes, theme/font-size layout, and live map density still require manual
+review on a selected Sandbox device; the real backend remains a release gate.
