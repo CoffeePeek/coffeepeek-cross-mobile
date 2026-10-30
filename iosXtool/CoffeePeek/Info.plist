@@ -19,11 +19,15 @@
     <key>CADisableMinimumFrameDurationOnPhone</key>
     <true/>
     <key>NSCameraUsageDescription</key>
-    <string>Камера нужна, чтобы добавлять фотографии кофеен и отзывов.</string>
+    <string>Камера нужна, чтобы добавлять фотографии кофеен и отзывов и снимать пачки кофе для вашей полки.</string>
     <key>NSLocationWhenInUseUsageDescription</key>
     <string>Геопозиция нужна, чтобы находить кофейни рядом с вами.</string>
     <key>NSPhotoLibraryUsageDescription</key>
-    <string>Доступ к фото нужен, чтобы прикреплять изображения кофеен и отзывов.</string>
+    <string>Доступ к фото нужен, чтобы прикреплять изображения кофеен и отзывов и добавлять пачки кофе на полку.</string>
+    <key>ShelfSegmenterURL</key>
+    <string>https://github.com/danielgatis/rembg/releases/download/v0.0.0/u2netp.onnx</string>
+    <key>ShelfInpainterURL</key>
+    <string>https://huggingface.co/andraniksargsyan/migan/resolve/main/migan_pipeline_v2.onnx</string>
     <key>UILaunchScreen</key>
     <dict>
         <key>UIColorName</key>

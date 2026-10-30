@@ -9,12 +9,12 @@ import com.coffeepeek.feature.checkinhistory.domain.repository.HomeHistoryReader
 import org.koin.dsl.module
 
 /** Resolving this graph neither opens an account lease nor reads credentials; Content owns the lease. */
-internal fun checkInHistoryModule(shelfEnabled: Boolean, apiBaseUrl: String = Constants.BASE_URL) = module {
+internal fun checkInHistoryModule(apiBaseUrl: String = Constants.BASE_URL) = module {
     single<CheckInHistoryRepository> { createCheckInHistoryRepository(get<CoffeePeekClient>().client, apiBaseUrl) }
     single<HomeHistoryReader> { HomeHistoryReaderAdapter(get()) }
     single { deviceCheckInHistoryCalendar() }
     single<HistoryHomeEditorFactory> {
-        historyHomeEditorFactory(get(), get(), get(), if (shelfEnabled) ShelfHomeCheckInBags(get()) else null)
+        historyHomeEditorFactory(get(), get(), get(), ShelfHomeCheckInBags(get()))
     }
     single { CheckInHistoryFeatureScreenRenderer(get(), get(), get(), get(), get()) }
 }

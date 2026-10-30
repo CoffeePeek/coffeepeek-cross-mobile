@@ -22,16 +22,16 @@ import kotlinx.coroutines.flow.Flow
 
 /**
  * Routes to the migrated catalogue on both platforms; root navigation, browser, share and photo viewer stay app-owned.
- * With [shelf] (builds where the shelf is enabled) the tab switches between the shelf and the catalogue.
+ * The tab always switches between the shelf and the catalogue on both platforms.
  */
 internal class CoffeeCatalogueScreenRenderer(
     private val list: CoffeeListEntry,
     private val detail: CoffeeDetailEntry,
-    private val shelf: CoffeeShelfTab? = null,
+    private val shelf: CoffeeShelfTab,
 ) : CoffeeScreenRenderer {
     @Composable
     override fun List(scrollToTopRequests: Flow<Unit>) {
-        if (shelf == null) Catalogue(scrollToTopRequests) {} else shelf.Content { header -> Catalogue(scrollToTopRequests, header) }
+        shelf.Content { header -> Catalogue(scrollToTopRequests, header) }
     }
 
     @Composable
@@ -51,7 +51,7 @@ internal class CoffeeCatalogueScreenRenderer(
     }
 }
 
-internal fun coffeeCatalogueScreenRenderer(repository: CoffeeRepository, shelf: CoffeeShelfTab? = null): CoffeeCatalogueScreenRenderer {
+internal fun coffeeCatalogueScreenRenderer(repository: CoffeeRepository, shelf: CoffeeShelfTab): CoffeeCatalogueScreenRenderer {
     val image: @Composable (String, String, Modifier, androidx.compose.ui.layout.ContentScale) -> Unit =
         { url, description, modifier, scale ->
             CoffeeShopImage(imageUrl = url, modifier = modifier, contentDescription = description, contentScale = scale)
