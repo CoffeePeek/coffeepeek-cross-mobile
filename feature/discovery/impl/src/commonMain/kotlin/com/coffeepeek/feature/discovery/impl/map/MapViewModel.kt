@@ -21,6 +21,7 @@ import com.coffeepeek.feature.discovery.domain.repository.DiscoveryRepository
 import com.coffeepeek.feature.discovery.domain.rules.center
 import com.coffeepeek.feature.discovery.domain.rules.clampZoom
 import com.coffeepeek.feature.discovery.domain.rules.contains
+import com.coffeepeek.feature.discovery.domain.rules.expandedForCarousel
 import com.coffeepeek.feature.discovery.domain.rules.expandedForPrefetch
 import com.coffeepeek.feature.discovery.domain.rules.viewportMarkers
 import com.coffeepeek.feature.discovery.impl.search.analyticsValues
@@ -279,7 +280,7 @@ internal class MapViewModel(
         updateState {
             val merged = (content.markers + listOfNotNull(selectedShop)).distinctBy { it.id }
             val visibleCards = if (viewport != null)
-                viewportMarkers(content.markers + carouselShops, viewport, carouselShops) else carouselShops
+                viewportMarkers(content.markers + carouselShops, viewport.expandedForCarousel(), carouselShops) else carouselShops
             val known = if (zonesCityId == cityId) zones else emptyList()
             zonesCityId = cityId
             val allZones = (content.zones + known).distinctBy { it.id }
@@ -309,7 +310,7 @@ internal class MapViewModel(
         val accountKey = account.currentAccountKey()
         carouselJob = viewModelScope.launch {
             delay(CAROUSEL_DEBOUNCE_MS)
-            val result = repository.mapContent(bounds, CAROUSEL_ZOOM, criteria)
+            val result = repository.mapContent(bounds.expandedForCarousel(), CAROUSEL_ZOOM, criteria)
             currentCoroutineContext().ensureActive()
             if (account.currentAccountKey() != accountKey || criteria.searchQuery() != currentState.criteria.searchQuery()) return@launch
             result.onSuccess { content ->
@@ -322,7 +323,7 @@ internal class MapViewModel(
 
     private fun applyCarousel(markers: List<MapMarker>, bounds: MapBounds) {
         val shops = viewportMarkers(markers + currentState.markers + listOfNotNull(currentState.selectedShop),
-            bounds, currentState.carouselShops)
+            bounds.expandedForCarousel(), currentState.carouselShops)
         val selected = currentState.selectedShop?.takeIf { shop -> shops.any { it.id == shop.id } }
         if (selected == null) {
             detailsJob?.cancel()

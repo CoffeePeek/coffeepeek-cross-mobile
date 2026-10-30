@@ -6,6 +6,7 @@ import com.coffeepeek.feature.discovery.api.MapFocus
 import com.coffeepeek.feature.discovery.api.MapInteraction
 import com.coffeepeek.feature.discovery.domain.model.*
 import com.coffeepeek.feature.discovery.domain.rules.center
+import com.coffeepeek.feature.discovery.domain.rules.expandedForCarousel
 import com.coffeepeek.feature.discovery.domain.rules.expandedForPrefetch
 import com.coffeepeek.feature.discovery.impl.map.*
 import kotlinx.coroutines.CompletableDeferred
@@ -138,6 +139,24 @@ class MapViewModelTest {
         assertEquals(12, vm.now.carouselShops.size)
         assertFalse(vm.now.carouselShops.any { it.id == "far" })
         assertTrue(vm.now.markers.isEmpty()); assertTrue(vm.now.hasCarousel)
+    }
+
+    @Test fun aTightViewportLoadsNearbyCardsAndKeepsThemAfterALateCoarseReply() = runTest(dispatcher) {
+        val tight = MapBounds(53.899, 27.559, 53.901, 27.561)
+        val coarseReply = CompletableDeferred<Result<MapContent>>()
+        repository.map = { _, zoom, _ ->
+            if (zoom == 22f) Result.success(MapContent(listOf(
+                marker("visible", 53.9), marker("near1", 53.908), marker("near2", 53.913), marker("far", 53.94))))
+            else coarseReply.await()
+        }
+        val vm = model()
+        vm.send(MapAction.BoundsChanged(tight, 18f), scope = this)
+        advanceTimeBy(501); runCurrent()
+        assertEquals(tight.expandedForCarousel(), carouselRequests().single().first)
+        assertEquals(listOf("visible", "near1", "near2"), vm.now.carouselShops.map { it.id })
+        coarseReply.complete(Result.success(MapContent(listOf(marker("visible", 53.9)))))
+        runCurrent()
+        assertEquals(listOf("visible", "near1", "near2"), vm.now.carouselShops.map { it.id })
     }
 
     @Test fun anInvalidPositionIsIgnoredAndTheViewportDoesNotBecomeTheDistanceOrigin() = runTest(dispatcher) {
