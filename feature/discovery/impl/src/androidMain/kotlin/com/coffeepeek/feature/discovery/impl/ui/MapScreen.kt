@@ -148,7 +148,7 @@ internal fun MapContent(
         }
         MapSearchControls(state, dismissInput, onAction, onToggleExpand, onOpenFilters,
             Modifier.align(Alignment.TopCenter).statusBarsPadding().fillMaxWidth()
-                .padding(horizontal = CoffeePeekDimens.spacing4, vertical = CoffeePeekDimens.spacing3).zIndex(2f), onSearchAction)
+                .padding(vertical = CoffeePeekDimens.spacing3).zIndex(2f), onSearchAction)
         MapOverlayControls(state, host, bottomClearance, dismissInput, onAction)
     }
 }

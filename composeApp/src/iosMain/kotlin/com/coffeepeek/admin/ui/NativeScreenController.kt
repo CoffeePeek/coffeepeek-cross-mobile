@@ -28,9 +28,14 @@ import com.coffeepeek.admin.theme.ThemeManager
 import com.coffeepeek.admin.theme.toUIColor
 import com.coffeepeek.admin.theme.uiKitStyle
 import com.coffeepeek.admin.ui.component.ProvideFloatingNavClearance
+import com.coffeepeek.admin.ui.component.GlassControlIcon
+import com.coffeepeek.admin.ui.component.PlatformGlassIconButton
 import com.coffeepeek.admin.ui.component.dismissKeyboardOnBackgroundGestures
 import com.coffeepeek.core.designsystem.component.CoffeePeekScreenInsets
 import com.coffeepeek.core.designsystem.component.LocalCoffeePeekScreenInsets
+import com.coffeepeek.core.designsystem.modifier.CoffeePeekGlassIcon
+import com.coffeepeek.core.designsystem.modifier.CoffeePeekNativeGlassPresenter
+import com.coffeepeek.core.designsystem.modifier.LocalCoffeePeekNativeGlassPresenter
 import kotlinx.cinterop.useContents
 import platform.UIKit.UINavigationController
 import platform.UIKit.NSLayoutConstraint
@@ -157,6 +162,7 @@ internal class NativeScreenController(
                 .dismissKeyboardOnBackgroundGestures()) {
                 CompositionLocalProvider(
                     com.coffeepeek.admin.analytics.LocalAnalyticsVisible provides analyticsVisible,
+                    LocalCoffeePeekNativeGlassPresenter provides IosCoffeePeekGlassPresenter,
                     LocalCoffeePeekScreenInsets provides CoffeePeekScreenInsets(
                         bottom = if (isTabRoot || isAuthFlow) 0.dp else bottomClearance,
                         extendsToBottom = !isTabRoot && !isAuthFlow,
@@ -166,6 +172,16 @@ internal class NativeScreenController(
                 }
             }
         }
+    }
+}
+
+private object IosCoffeePeekGlassPresenter : CoffeePeekNativeGlassPresenter {
+    @Composable
+    override fun IconButton(icon: CoffeePeekGlassIcon, onClick: () -> Unit, contentDescription: String,
+        modifier: Modifier, enabled: Boolean): Boolean {
+        val platformIcon = when (icon) { CoffeePeekGlassIcon.Edit -> GlassControlIcon.Edit }
+        PlatformGlassIconButton(platformIcon, onClick, contentDescription, modifier, enabled) {}
+        return true
     }
 }
 

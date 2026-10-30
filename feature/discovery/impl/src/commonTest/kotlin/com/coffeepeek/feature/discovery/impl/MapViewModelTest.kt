@@ -7,7 +7,6 @@ import com.coffeepeek.feature.discovery.api.MapInteraction
 import com.coffeepeek.feature.discovery.domain.model.*
 import com.coffeepeek.feature.discovery.domain.rules.center
 import com.coffeepeek.feature.discovery.domain.rules.expandedForPrefetch
-import com.coffeepeek.feature.discovery.domain.rules.nearbyBounds
 import com.coffeepeek.feature.discovery.impl.map.*
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineStart
@@ -47,6 +46,7 @@ class MapViewModelTest {
     private val MapViewModel.now get() = state.value
     private fun queryAction(text: String) = MapAction.SyncCriteria(DiscoveryCriteria(text, DiscoveryFilters(cityId = "minsk")))
     private fun cityRequests() = repository.mapRequests.filter { it.second != 22f }
+    private fun carouselRequests() = repository.mapRequests.filter { it.second == 22f }
 
     // ---- the viewport ----
 
@@ -114,7 +114,8 @@ class MapViewModelTest {
         vm.send(MapAction.BoundsChanged(view, 12f), scope = this)
         settle()
         assertEquals(listOf(cluster), vm.now.clusters)
-        assertEquals(listOf("near"), vm.now.nearby.map { it.id })
+        advanceTimeBy(201); runCurrent()
+        assertEquals(listOf("near"), vm.now.carouselShops.map { it.id })
         assertTrue(vm.now.markers.isEmpty())
         repository.map = { _, _, _ -> Result.success(MapContent(listOf(marker("unfolded")))) }
         vm.send(MapAction.BoundsChanged(view, 18f), scope = this)
@@ -123,25 +124,68 @@ class MapViewModelTest {
         assertEquals(listOf("unfolded"), vm.now.markers.map { it.id })
     }
 
-    // ---- nearby ----
+    // ---- viewport carousel ----
 
-    @Test fun theNearbyCarouselKeepsTheTenNearestWithoutDuplicatingClusteredPoints() = runTest(dispatcher) {
-        repository.map = { bounds, zoom, _ ->
+    @Test fun carouselReadsVisibleShopsWithoutGpsOrATenShopLimit() = runTest(dispatcher) {
+        repository.map = { _, zoom, _ ->
             if (zoom == 22f) Result.success(MapContent((1..12).map { marker("n$it", 53.9 + it * 0.001) } + marker("far", 54.5)))
             else Result.success(MapContent())
         }
         val vm = model()
-        location.flow.value = here; runCurrent()
-        assertEquals(nearbyBounds(here), repository.mapRequests.last().first)
-        assertEquals((1..10).map { "n$it" }, vm.now.nearby.map { it.id }); assertTrue(vm.now.markers.isEmpty()); assertTrue(vm.now.hasCarousel)
+        vm.send(MapAction.BoundsChanged(view, 14f), scope = this)
+        advanceTimeBy(501); runCurrent()
+        assertEquals(view, carouselRequests().single().first)
+        assertEquals(12, vm.now.carouselShops.size)
+        assertFalse(vm.now.carouselShops.any { it.id == "far" })
+        assertTrue(vm.now.markers.isEmpty()); assertTrue(vm.now.hasCarousel)
     }
 
-    @Test fun anInvalidPositionIsIgnoredAndTheFirstViewBecomesTheOrigin() = runTest(dispatcher) {
+    @Test fun anInvalidPositionIsIgnoredAndTheViewportDoesNotBecomeTheDistanceOrigin() = runTest(dispatcher) {
         val vm = model()
         location.flow.value = Coordinates(91.0, 27.0); runCurrent()
-        assertNull(vm.now.nearbyOrigin)
+        assertNull(vm.now.userLocation)
         vm.send(MapAction.BoundsChanged(view, 14f), scope = this)
-        assertEquals(view.center, vm.now.nearbyOrigin)
+        assertNull(vm.now.userLocation)
+    }
+
+    @Test fun visibleMarkersHaveCardsBeforeAndAfterASparseCarouselResponse() = runTest(dispatcher) {
+        repository.map = { _, zoom, _ -> Result.success(
+            if (zoom == 22f) MapContent() else MapContent(listOf(marker("visible")))) }
+        val vm = model()
+        vm.send(MapAction.BoundsChanged(view, 14f), scope = this)
+        advanceTimeBy(251); runCurrent()
+        assertEquals(listOf("visible"), vm.now.carouselShops.map { it.id })
+        advanceTimeBy(250); runCurrent()
+        assertEquals(listOf("visible"), vm.now.carouselShops.map { it.id })
+    }
+
+    @Test fun aLateCoarseMapResponseDoesNotReplaceTheDetailedCarousel() = runTest(dispatcher) {
+        val coarseReply = CompletableDeferred<Result<MapContent>>()
+        repository.map = { _, zoom, _ ->
+            if (zoom == 22f) Result.success(MapContent(listOf(marker("a"), marker("b", 53.91))))
+            else coarseReply.await()
+        }
+        val vm = model()
+        vm.send(MapAction.BoundsChanged(view, 14f), scope = this)
+        advanceTimeBy(501); runCurrent()
+        assertEquals(listOf("a", "b"), vm.now.carouselShops.map { it.id })
+        coarseReply.complete(Result.success(MapContent(listOf(marker("a")))))
+        runCurrent()
+        assertEquals(listOf("a", "b"), vm.now.carouselShops.map { it.id })
+    }
+
+    @Test fun panningInsideThePrefetchedAreaRefreshesOnlyVisibleCards() = runTest(dispatcher) {
+        repository.map = { _, _, _ -> Result.success(MapContent(listOf(marker("a", 53.89), marker("b", 53.91)))) }
+        val vm = model()
+        vm.send(MapAction.BoundsChanged(view, 14f), scope = this)
+        advanceTimeBy(501); runCurrent()
+        val coarseCount = cityRequests().size
+        val panned = MapBounds(53.90, 27.50, 53.94, 27.60)
+        vm.send(MapAction.BoundsChanged(panned, 14f), scope = this)
+        advanceTimeBy(501); runCurrent()
+        assertEquals(coarseCount, cityRequests().size)
+        assertEquals(panned, carouselRequests().last().first)
+        assertEquals(listOf("b"), vm.now.carouselShops.map { it.id })
     }
 
     // ---- selection ----
@@ -174,7 +218,8 @@ class MapViewModelTest {
     @Test fun aCarouselCardSelectsTheShopAndMovesTheCameraToZoom16() = runTest(dispatcher) {
         repository.map = { _, zoom, _ -> Result.success(MapContent(if (zoom == 22f) listOf(marker("n1")) else emptyList())) }
         val vm = model()
-        location.flow.value = here; runCurrent()
+        vm.send(MapAction.BoundsChanged(view, 14f), scope = this)
+        advanceTimeBy(501); runCurrent()
         vm.send(MapAction.SelectFromCarousel("n1"), scope = this)
         assertEquals("n1", vm.now.selectedShop?.id); assertEquals(16f, vm.now.camera?.zoom); assertEquals(marker("n1").coordinates, vm.now.camera?.target)
         vm.send(MapAction.CameraApplied, scope = this); assertNull(vm.now.camera)
@@ -238,7 +283,7 @@ class MapViewModelTest {
         assertEquals(1, vm.now.myLocationRequest)
         assertEquals(1, location.refreshes)
         vm.send(MapAction.MyLocationFound(here), scope = this)
-        assertEquals(15f, vm.now.camera?.zoom); assertEquals(here, vm.now.nearbyOrigin)
+        assertEquals(15f, vm.now.camera?.zoom); assertEquals(here, vm.now.userLocation)
         assertEquals(listOf(Triple("map", false, GeolocationOutcome.Unavailable), Triple("map", true, GeolocationOutcome.Available)), analytics.geolocations)
     }
 

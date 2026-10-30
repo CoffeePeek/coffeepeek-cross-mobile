@@ -129,3 +129,29 @@ search field. The icon and its now unused callback/resource were removed from
 both search headers. The existing map preview still opens the map through its
 expand control; this keeps a single entry point without changing the map route.
 Android Discovery/app code and iOS simulator code compiled after the removal.
+
+## Visible-map carousel and controls — 2026-10-30
+
+On fresh `develop` at `c0d5a936c`, the Android map filter row still inherited
+the search header's side padding, while the carousel used a five-kilometer GPS
+box. The row now reaches the viewport edges and retains end padding inside its
+horizontal scroller. Cards come from shops in the settled map bounds, ordered
+from the center on first load; surviving cards keep their order. The detailed
+500 ms read is independent of GPS, and late coarse replies merge its cards.
+The cyclic pager, marker selection and shared search filters remain in place.
+The Android location control now asks the existing platform reader for a fresh
+fix when its cached position is absent or stale. The attribution caption omits
+OpenFreeMap but retains OpenMapTiles and OSM.
+
+Verification on Windows: Discovery domain 14 tests / 2 suites and implementation
+101 tests / 9 suites passed without failures, errors or skips. Added regressions
+cover an absent GPS fix, more than ten visible shops, sparse and late map replies,
+and panning within a prefetched area. App Direct Debug's 888 unit/contract tests
+also passed. Direct Sandbox assembly, packaged DEX class check and isolation
+check passed. APK `com.coffeepeek.sandbox` version `1.1.3.2552-sandbox` /
+2552, SHA-256 `e5e4bb0aaab206e80e683eb0feedb2a71c014022b9daf1d4330df18168aef22`.
+The first isolated Gradle attempt stopped before tests because local SDK
+configuration was absent; the configured retry passed. No app was installed or
+launched. Chip gestures, card swipes, location permission/fix, dark/light and
+accessibility still need manual review on a selected Sandbox device. Backend
+deployment/real endpoint acceptance remains a separate release gate.

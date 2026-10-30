@@ -12,6 +12,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.compositionLocalOf
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -38,6 +39,16 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
  * tint without backdrop blur (e.g. over the native map view, which Haze can't sample).
  */
 val LocalCoffeePeekGlassHazeState = compositionLocalOf<HazeState?> { null }
+
+enum class CoffeePeekGlassIcon { Edit }
+
+interface CoffeePeekNativeGlassPresenter {
+    @Composable
+    fun IconButton(icon: CoffeePeekGlassIcon, onClick: () -> Unit, contentDescription: String,
+        modifier: Modifier, enabled: Boolean): Boolean
+}
+
+val LocalCoffeePeekNativeGlassPresenter = staticCompositionLocalOf<CoffeePeekNativeGlassPresenter?> { null }
 
 /**
  * iOS "Liquid Glass" material: soft shadow, backdrop blur tinted with the surface colour,
@@ -89,8 +100,11 @@ fun CoffeePeekGlassIconButton(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     hazeState: HazeState? = LocalCoffeePeekGlassHazeState.current,
+    nativeIcon: CoffeePeekGlassIcon? = null,
     content: @Composable () -> Unit,
 ) {
+    if (nativeIcon != null && LocalCoffeePeekNativeGlassPresenter.current
+            ?.IconButton(nativeIcon, onClick, contentDescription, modifier, enabled) == true) return
     Box(
         modifier = modifier
             .size(CoffeePeekDimens.buttonHeight)

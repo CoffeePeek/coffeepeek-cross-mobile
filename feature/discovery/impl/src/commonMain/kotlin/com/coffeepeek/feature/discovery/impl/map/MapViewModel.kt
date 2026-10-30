@@ -22,8 +22,7 @@ import com.coffeepeek.feature.discovery.domain.rules.center
 import com.coffeepeek.feature.discovery.domain.rules.clampZoom
 import com.coffeepeek.feature.discovery.domain.rules.contains
 import com.coffeepeek.feature.discovery.domain.rules.expandedForPrefetch
-import com.coffeepeek.feature.discovery.domain.rules.nearbyBounds
-import com.coffeepeek.feature.discovery.domain.rules.nearestMarkers
+import com.coffeepeek.feature.discovery.domain.rules.viewportMarkers
 import com.coffeepeek.feature.discovery.impl.search.analyticsValues
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.currentCoroutineContext
@@ -34,6 +33,7 @@ import kotlinx.coroutines.launch
 import kotlin.time.TimeSource
 
 private const val BOUNDS_DEBOUNCE_MS = 250L
+private const val CAROUSEL_DEBOUNCE_MS = 500L
 private const val SEARCH_DEBOUNCE_MS = 350L
 private const val SUGGESTION_COUNT = 3
 private const val FOCUS_ZOOM = 16f
@@ -43,7 +43,7 @@ private const val PAUSE_AFTER_MOVE_MS = 700L
 private const val PAUSE_AFTER_ZOOM_MS = 500L
 
 /**
- * Prefetches the viewport after 250 ms and keeps the nearest-shop carousel filtered consistently.
+ * Prefetches the viewport after 250 ms and loads its carousel after 500 ms of camera idle.
  * Keeps known city zones, suggests three search results and pauses reads during requested camera moves.
  * Drops late replies for an obsolete viewport, selection or query.
  */
@@ -64,7 +64,8 @@ internal class MapViewModel(
     private var loadedArea: MapBounds? = null
     private var loadedZoomLevel: Int? = null
     private var boundsJob: Job? = null
-    private var nearbyJob: Job? = null
+    private var carouselJob: Job? = null
+    private var carouselArea: MapBounds? = null
     private var queryJob: Job? = null
     private var detailsJob: Job? = null
     private var pauseJob: Job? = null
@@ -171,7 +172,6 @@ internal class MapViewModel(
             }
             // A failed catalog still lets the map load: it shows every city then.
             cityReady = true
-            currentState.nearbyOrigin?.let(::loadNearby)
             val bounds = currentState.pendingBounds
             val zoom = currentState.pendingZoom
             if (bounds != null && zoom != null) onBoundsChanged(bounds, zoom)
@@ -190,11 +190,6 @@ internal class MapViewModel(
         val selectionChanged = criteria.text != currentState.query || criteria.filters != currentState.filters ||
             criteria.filters.nearbyOnly && criteria.origin != currentState.userLocation
         updateState { copy(query = criteria.text, filters = criteria.filters, cityId = criteria.filters.cityId, userLocation = criteria.origin) }
-        val origin = criteria.origin
-        if (origin != null && origin != currentState.nearbyOrigin) {
-            updateState { copy(nearbyOrigin = origin) }
-            if (!selectionChanged) loadNearby(origin)
-        }
         if (selectionChanged) invalidateSelection()
     }
 
@@ -218,22 +213,22 @@ internal class MapViewModel(
         detailsJob?.cancel()
         selectionVersion++
         loadedArea = null
+        carouselArea = null
         zonesCityId = null
         updateState {
             copy(markers = emptyList(), clusters = emptyList(),
-                zones = emptyList(), zoneGroups = emptyList(), nearby = emptyList(),
+                zones = emptyList(), zoneGroups = emptyList(), carouselShops = emptyList(),
                 selectedShop = null, selectedZone = null, details = null, isLoadingDetails = false, isTruncated = false)
         }
         loadSuggestions()
-        currentState.nearbyOrigin?.let(::loadNearby)
         if (!suppressBounds) searchCurrentArea()
     }
 
     private fun onBoundsChanged(bounds: MapBounds, zoom: Float) {
-        if (currentState.nearbyOrigin == null) changeNearbyOrigin(bounds.center)
         // The latest viewport is remembered even while the updates are paused, so it can be loaded afterwards.
         updateState { copy(pendingBounds = bounds, pendingZoom = zoom) }
         if (suppressBounds) return
+        loadCarousel(bounds)
         // A small pan inside the prefetched area at the same zoom level needs no new request.
         if (loadedArea?.contains(bounds) == true && loadedZoomLevel == zoom.toInt()) return
         boundsJob?.cancel()
@@ -243,6 +238,8 @@ internal class MapViewModel(
     private fun searchCurrentArea() {
         val bounds = currentState.pendingBounds ?: currentState.activeBounds ?: return
         val zoom = currentState.pendingZoom ?: currentState.activeZoom ?: return
+        carouselArea = null
+        loadCarousel(bounds)
         loadBounds(bounds, zoom)
     }
 
@@ -277,13 +274,17 @@ internal class MapViewModel(
     }
 
     private fun applyContent(content: MapContent, cityId: String?) {
+        val viewport = currentState.pendingBounds ?: currentState.activeBounds
         updateState {
             val merged = (content.markers + listOfNotNull(selectedShop)).distinctBy { it.id }
+            val visibleCards = if (viewport != null)
+                viewportMarkers(content.markers + carouselShops, viewport, carouselShops) else carouselShops
             val known = if (zonesCityId == cityId) zones else emptyList()
             zonesCityId = cityId
             val allZones = (content.zones + known).distinctBy { it.id }
             copy(
                 markers = merged, clusters = content.clusters, zones = allZones, zoneGroups = content.zones,
+                carouselShops = visibleCards,
                 isTruncated = content.isTruncated, isLoading = false,
                 selectedShop = selectedShop?.let { selected -> merged.firstOrNull { it.id == selected.id } ?: selected },
                 selectedZone = selectedZone?.takeIf { selected -> allZones.any { it.id == selected.id } },
@@ -298,27 +299,36 @@ internal class MapViewModel(
         syncCriteria(currentState.criteria.copy(origin = point))
     }
 
-    private fun changeNearbyOrigin(point: Coordinates) {
-        if (!point.isValid || point.latitude !in -85.0..85.0 || currentState.nearbyOrigin == point) return
-        updateState { copy(nearbyOrigin = point) }
-        loadNearby(point)
-    }
-
-    private fun loadNearby(origin: Coordinates) {
+    private fun loadCarousel(bounds: MapBounds) {
         if (!cityReady) return
-        nearbyJob?.cancel()
+        carouselJob?.cancel()
+        if (carouselArea == bounds) return
         val criteria = currentState.criteria
         if (!canRequest(criteria)) return
         val accountKey = account.currentAccountKey()
-        nearbyJob = viewModelScope.launch {
-            val result = repository.mapContent(nearbyBounds(origin), NEARBY_ZOOM, criteria)
+        carouselJob = viewModelScope.launch {
+            delay(CAROUSEL_DEBOUNCE_MS)
+            val result = repository.mapContent(bounds, CAROUSEL_ZOOM, criteria)
             currentCoroutineContext().ensureActive()
             if (account.currentAccountKey() != accountKey || criteria.searchQuery() != currentState.criteria.searchQuery()) return@launch
             result.onSuccess { content ->
                 analytics.mapInteracted(MapInteraction.NearbyLoaded, resultCount = content.markers.size)
-                updateState { copy(nearby = nearestMarkers(content.markers, origin)) }
+                carouselArea = bounds
+                applyCarousel(content.markers, bounds)
             }.onFailure { analytics.mapInteracted(MapInteraction.NearbyFailed) }
         }
+    }
+
+    private fun applyCarousel(markers: List<MapMarker>, bounds: MapBounds) {
+        val shops = viewportMarkers(markers + currentState.markers + listOfNotNull(currentState.selectedShop),
+            bounds, currentState.carouselShops)
+        val selected = currentState.selectedShop?.takeIf { shop -> shops.any { it.id == shop.id } }
+        if (selected == null) {
+            detailsJob?.cancel()
+            selectionVersion++
+        }
+        updateState { copy(carouselShops = shops, selectedShop = selected,
+            details = details.takeIf { selected != null }, isLoadingDetails = selected != null && isLoadingDetails) }
     }
 
     private fun onMyLocationFound(point: Coordinates) {
@@ -329,7 +339,7 @@ internal class MapViewModel(
 
     // ---- selection ----
 
-    private fun findMarker(id: String): MapMarker? = currentState.markers.firstOrNull { it.id == id } ?: currentState.nearby.firstOrNull { it.id == id }
+    private fun findMarker(id: String): MapMarker? = currentState.markers.firstOrNull { it.id == id } ?: currentState.carouselShops.firstOrNull { it.id == id }
 
     private fun selectMarker(marker: MapMarker) {
         selectionFromSearch = false
@@ -444,7 +454,7 @@ internal class MapViewModel(
 
     private fun cancelViewportLoads() {
         boundsJob?.cancel()
-        nearbyJob?.cancel()
+        carouselJob?.cancel()
         updateState { copy(isLoading = false) }
     }
 
@@ -465,6 +475,7 @@ internal class MapViewModel(
     }
 
     private fun pauseBounds(durationMs: Long) {
+        cancelViewportLoads()
         pauseJob?.cancel()
         pauseJob = viewModelScope.launch {
             suppressBounds = true
@@ -482,6 +493,6 @@ internal class MapViewModel(
 }
 
 private const val PLACEMENT = "map"
-private const val NEARBY_ZOOM = 22f
+private const val CAROUSEL_ZOOM = 22f
 
 private fun ShopSummary.toMarker(): MapMarker? = coordinates?.let { MapMarker(id, title, it, kind) }

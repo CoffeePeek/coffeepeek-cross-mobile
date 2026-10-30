@@ -14,8 +14,11 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -23,6 +26,7 @@ import androidx.compose.material3.SnackbarHostState
 import com.coffeepeek.feature.shop.impl.ui.data.LocalShopAnalytics
 import com.coffeepeek.feature.shop.impl.ui.data.trackShopAction
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
@@ -31,6 +35,7 @@ import androidx.compose.runtime.key
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
@@ -52,6 +57,8 @@ import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopContactSection
 import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopDescriptionSection
 import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopFeaturesSection
 import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopDetailTopActions
+import com.coffeepeek.feature.shop.impl.ui.compose.component.LocalShopBusinessIdentity
+import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopBusinessIdentity
 import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopDetailLoadState
 import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopDetailRefreshStatus
 import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopDetailBottomBar
@@ -78,6 +85,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.Lifecycle
 import dev.chrisbanes.haze.hazeSource
+import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.rememberHazeState
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
@@ -152,6 +160,7 @@ internal fun ShopDetailScreenContent(
         ShopPriceInfoSheet(priceLevel, onDismiss = { onAction(ShopDetailAction.DismissPriceInfo) })
     }
     val hazeState = rememberHazeState()
+    val listState = rememberLazyListState()
     val floatingActionsClearance = 72.dp
     val systemBottomInset = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
     Box(Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal))) {
@@ -171,6 +180,7 @@ internal fun ShopDetailScreenContent(
                 details == null -> ShopDetailLoadState(state.isLoading,
                     onRetry = { onAction(ShopDetailAction.Retry) })
                 else -> LazyColumn(
+                    state = listState,
                     modifier = Modifier.fillMaxSize().clipToBounds(),
                     contentPadding = PaddingValues(bottom = floatingActionsClearance +
                         CoffeePeekDimens.spacing4 + CoffeePeekDimens.spacing6 + systemBottomInset),
@@ -245,17 +255,7 @@ internal fun ShopDetailScreenContent(
             }
         }
       }
-      if (state.details == null) ShopDetailTopActions(
-          showShopActions = false,
-          isFavorite = state.isFavorite,
-          favoriteAvailable = state.favoriteAvailable,
-          isFavoriteLoading = state.isFavoriteLoading,
-          onBack = { onAction(ShopDetailAction.Back) },
-          onSuggestChange = { onAction(ShopDetailAction.SuggestChange) },
-          onToggleFavorite = { onAction(ShopDetailAction.ToggleFavorite) },
-          onShare = { onAction(ShopDetailAction.Share) },
-          hazeState = hazeState,
-      )
+      ShopDetailScrollingActions(state, listState, onAction, hazeState)
       state.details?.overview?.let { overview ->
           ShopDetailBottomBar(
               canOpenRoute = overview.latitude != null && overview.longitude != null,
@@ -271,20 +271,48 @@ internal fun ShopDetailScreenContent(
 }
 
 @Composable
+private fun ShopDetailScrollingActions(
+    state: ShopDetailState,
+    listState: LazyListState,
+    onAction: (ShopDetailAction) -> Unit,
+    hazeState: HazeState,
+) {
+    if (state.details != null && listState.firstVisibleItemIndex != 0) return
+    val scrollModifier = if (state.details == null) Modifier else Modifier.offset {
+        IntOffset(0, -listState.firstVisibleItemScrollOffset)
+    }
+    val overview = state.details?.overview
+    val identity = overview?.let { ShopBusinessIdentity(it.id, it.canonicalPath?.substringAfterLast('/') ?: it.id) }
+    CompositionLocalProvider(LocalShopBusinessIdentity provides identity) {
+        ShopDetailTopActions(
+            showShopActions = overview != null,
+            isFavorite = state.isFavorite,
+            favoriteAvailable = state.favoriteAvailable,
+            isFavoriteLoading = state.isFavoriteLoading,
+            onBack = { onAction(ShopDetailAction.Back) },
+            onSuggestChange = { onAction(ShopDetailAction.SuggestChange) },
+            onToggleFavorite = { onAction(ShopDetailAction.ToggleFavorite) },
+            onShare = { onAction(ShopDetailAction.Share) },
+            modifier = scrollModifier,
+            hazeState = hazeState,
+        )
+    }
+}
+
+@Composable
 private fun ShopDetailHeader(
     state: ShopDetailState,
     onAction: (ShopDetailAction) -> Unit,
     distanceLabel: String?,
 ) {
     val overview = state.details?.overview ?: return
-    // The screen source includes these controls, so the hero uses a separate blur source.
-    val heroHaze = rememberHazeState()
     androidx.compose.runtime.CompositionLocalProvider(
         com.coffeepeek.feature.shop.impl.ui.compose.component.LocalShopBusinessIdentity provides
             com.coffeepeek.feature.shop.impl.ui.compose.component.ShopBusinessIdentity(overview.id,
                 overview.canonicalPath?.substringAfterLast('/') ?: overview.id)) {
     Column {
-        ShopDetailHero(state, onAction, overview, heroHaze)
+        ShopOverviewHero(overview,
+            onOpenPhoto = { urls, originals, index -> onAction(ShopDetailAction.OpenPhoto(urls, index, originals)) })
         Column(Modifier.padding(horizontal = CoffeePeekDimens.spacing4,
             vertical = CoffeePeekDimens.spacing3),
             verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2)) {
@@ -296,27 +324,6 @@ private fun ShopDetailHeader(
         }
     }
 }
-}
-
-@Composable
-private fun ShopDetailHero(state: ShopDetailState, onAction: (ShopDetailAction) -> Unit,
-    overview: ShopOverview, heroHaze: dev.chrisbanes.haze.HazeState) {
-        Box {
-            ShopOverviewHero(overview,
-                onOpenPhoto = { urls, originals, index -> onAction(ShopDetailAction.OpenPhoto(urls, index, originals)) },
-                modifier = Modifier.hazeSource(heroHaze))
-            ShopDetailTopActions(
-                showShopActions = true,
-                isFavorite = state.isFavorite,
-                favoriteAvailable = state.favoriteAvailable,
-                isFavoriteLoading = state.isFavoriteLoading,
-                onBack = { onAction(ShopDetailAction.Back) },
-                onSuggestChange = { onAction(ShopDetailAction.SuggestChange) },
-                onToggleFavorite = { onAction(ShopDetailAction.ToggleFavorite) },
-                onShare = { onAction(ShopDetailAction.Share) },
-                hazeState = heroHaze,
-            )
-        }
 }
 
 @Preview @Composable private fun ShopDetailScreenLightPreview() = CoffeePeekTheme(darkTheme = false) {

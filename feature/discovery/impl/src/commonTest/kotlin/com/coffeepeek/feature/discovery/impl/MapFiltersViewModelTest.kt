@@ -77,11 +77,11 @@ class MapFiltersViewModelTest {
         runCurrent()
         assertNull(vm.state.value.selectedShop)
         assertTrue(vm.state.value.zones.isEmpty())
-        assertTrue(vm.state.value.nearby.isEmpty())
+        assertTrue(vm.state.value.carouselShops.isEmpty())
         filtered.complete(Result.success(MapContent(listOf(marker("filtered")))))
         settle()
         assertEquals(listOf("filtered"), vm.state.value.markers.map { it.id })
-        assertEquals(listOf("filtered"), vm.state.value.nearby.map { it.id })
+        assertEquals(listOf("filtered"), vm.state.value.carouselShops.map { it.id })
     }
 
     @Test fun lateCancelledViewportRepliesCannotRestoreOldFiltersResults() = runTest(dispatcher) {
@@ -96,7 +96,7 @@ class MapFiltersViewModelTest {
         late.complete(Result.success(MapContent(listOf(marker("old")))))
         runCurrent()
         assertEquals(listOf("filtered"), vm.state.value.markers.map { it.id })
-        assertEquals(listOf("filtered"), vm.state.value.nearby.map { it.id })
+        assertEquals(listOf("filtered"), vm.state.value.carouselShops.map { it.id })
     }
 
     @Test fun changingQuickSwitchesReloadsTheMap() = runTest(dispatcher) {
@@ -164,7 +164,7 @@ class MapFiltersViewModelTest {
         runCurrent()
         assertFalse(vm.state.value.filters.favoritesOnly)
         assertTrue(vm.state.value.markers.isEmpty())
-        assertTrue(vm.state.value.nearby.isEmpty())
+        assertTrue(vm.state.value.carouselShops.isEmpty())
         assertNull(vm.state.value.selectedShop)
     }
 
@@ -198,7 +198,7 @@ class MapFiltersViewModelTest {
         favorites.flow.value = setOf("another")
         runCurrent()
         assertNull(vm.state.value.selectedShop)
-        assertTrue(vm.state.value.nearby.isEmpty())
+        assertTrue(vm.state.value.carouselShops.isEmpty())
         settle()
         assertTrue(vm.state.value.markers.isEmpty())
     }
