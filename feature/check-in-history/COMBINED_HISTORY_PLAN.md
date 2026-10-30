@@ -759,3 +759,20 @@ exceptions. No physical phone, account data, backend writes or iOS screen change
 ## Retroactive parity audit — 2026-10-20
 
 Open gaps from the legacy-first audit: A1–A8 (medium: A1 photo quality, A8 Sandbox data). Full table and verification status: [LEGACY_PARITY_AUDIT.md](../LEGACY_PARITY_AUDIT.md).
+
+## Timeline rail alignment — 2026-10-30
+
+- Source: `codex/migration-checkin-timeline-left` from `develop` `34e650ff`.
+  The shared history rail and its content inset move from the trailing edge to
+  the leading edge, including mirrored placement in RTL. Day connector breaks
+  and the distinct home/shop dot colors remain the same.
+- Verification: `:feature:check-in-history:impl:testDebugUnitTest` passed 54/54
+  tests in four suites (zero failures/errors/skips), and
+  `:composeApp:assembleDirectSandbox --max-workers=6` passed on Windows.
+  APK: `com.coffeepeek.sandbox`, `1.1.3.2547-sandbox` / 2547,
+  SHA-256 `d3747af9976015d24366528d6ee4207d376529d816cd76f2309b447261d78e41`.
+  `git diff --check` passed. Paired light/dark previews now show three connected
+  entries; they compiled but were not rendered on a device.
+- Device: none connected or selected. Visual placement, touch/accessibility,
+  larger fonts, native iOS rendering and live backend remain unverified. No app
+  was installed or launched and no account data was changed.
