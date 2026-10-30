@@ -155,3 +155,13 @@ configuration was absent; the configured retry passed. No app was installed or
 launched. Chip gestures, card swipes, location permission/fix, dark/light and
 accessibility still need manual review on a selected Sandbox device. Backend
 deployment/real endpoint acceptance remains a separate release gate.
+
+### PR #223 review follow-up — 2026-10-30
+
+The detailed carousel area is invalidated when a coarse reply for another
+viewport replaces its cards. Returning to the previous area now reloads those
+cards instead of treating an empty carousel as cached. A regression covers the
+area A → area B coarse response → area A sequence before B's detailed read.
+Discovery implementation tests: 102 / 9 suites, zero failures or errors;
+Direct Sandbox assembly and packaged DEX class check passed. No device was
+selected, so the fast-pan gesture remains a manual Sandbox check.

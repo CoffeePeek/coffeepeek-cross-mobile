@@ -275,6 +275,7 @@ internal class MapViewModel(
 
     private fun applyContent(content: MapContent, cityId: String?) {
         val viewport = currentState.pendingBounds ?: currentState.activeBounds
+        if (viewport != carouselArea) carouselArea = null
         updateState {
             val merged = (content.markers + listOfNotNull(selectedShop)).distinctBy { it.id }
             val visibleCards = if (viewport != null)

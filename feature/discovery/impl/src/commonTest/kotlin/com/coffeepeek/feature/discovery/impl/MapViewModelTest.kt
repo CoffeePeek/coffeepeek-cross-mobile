@@ -188,6 +188,23 @@ class MapViewModelTest {
         assertEquals(listOf("b"), vm.now.carouselShops.map { it.id })
     }
 
+    @Test fun returningToAnAreaReloadsCardsDiscardedByAnotherAreasCoarseReply() = runTest(dispatcher) {
+        val other = MapBounds(54.00, 28.00, 54.04, 28.10)
+        repository.map = { bounds, zoom, _ -> Result.success(
+            if (zoom == 22f && bounds == view) MapContent(listOf(marker("a"))) else MapContent()) }
+        val vm = model()
+        vm.send(MapAction.BoundsChanged(view, 14f), scope = this)
+        advanceTimeBy(501); runCurrent()
+        assertEquals(listOf("a"), vm.now.carouselShops.map { it.id })
+        vm.send(MapAction.BoundsChanged(other, 14f), scope = this)
+        advanceTimeBy(251); runCurrent()
+        assertTrue(vm.now.carouselShops.isEmpty())
+        vm.send(MapAction.BoundsChanged(view, 14f), scope = this)
+        advanceTimeBy(501); runCurrent()
+        assertEquals(2, carouselRequests().count { it.first == view })
+        assertEquals(listOf("a"), vm.now.carouselShops.map { it.id })
+    }
+
     // ---- selection ----
 
     @Test fun aLateDetailsAnswerForAnotherSelectionIsDroppedAndADroppedOneIsAskedAgainButACachedOneIsNot() = runTest(dispatcher) {

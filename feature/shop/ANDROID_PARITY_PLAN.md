@@ -1000,3 +1000,11 @@ Existing paired light/dark previews compile, but native Liquid Glass rendering
 cannot be inspected on Windows. No app was installed or launched. Physical iOS
 scroll, material brightness, light/dark, large fonts, accessibility and back
 gestures remain manual gates.
+
+### PR #223 review follow-up — 2026-10-30
+
+The changed shop screen now delegates its scaffold, list sections, check-ins
+and bottom action to cohesive private components. The hero action overlay
+still shares the same list state and Haze source. Shop implementation tests:
+108 / 12 suites, zero failures or errors; Direct Sandbox assembly and packaged
+DEX class check passed. iOS native visual review remains open.
