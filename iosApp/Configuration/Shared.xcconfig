@@ -14,8 +14,6 @@ GOOGLE_IOS_CLIENT_ID =
 GOOGLE_WEB_CLIENT_ID =
 GOOGLE_REVERSED_CLIENT_ID = coffeepeek-google-signin-disabled
 
-// The shelf in the Coffee tab; turn on in Local.xcconfig for builds whose backend serves the shelf.
-SHELF_ENABLED = NO
 // Shelf scanner models, downloaded on the first scan; files must match the size and SHA-256 pinned in ShelfScannerFiles.kt.
 SHELF_SEGMENTER_URL = https:/$()/github.com/danielgatis/rembg/releases/download/v0.0.0/u2netp.onnx
 SHELF_INPAINTER_URL = https:/$()/huggingface.co/andraniksargsyan/migan/resolve/main/migan_pipeline_v2.onnx

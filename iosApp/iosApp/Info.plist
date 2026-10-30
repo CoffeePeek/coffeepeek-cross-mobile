@@ -57,8 +57,6 @@
 	<string>Геопозиция нужна, чтобы находить кофейни рядом с вами.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Доступ к фото нужен, чтобы прикреплять изображения кофеен и отзывов и добавлять пачки кофе на полку.</string>
-	<key>ShelfEnabled</key>
-	<string>$(SHELF_ENABLED)</string>
 	<key>ShelfInpainterURL</key>
 	<string>$(SHELF_INPAINTER_URL)</string>
 	<key>ShelfSegmenterURL</key>

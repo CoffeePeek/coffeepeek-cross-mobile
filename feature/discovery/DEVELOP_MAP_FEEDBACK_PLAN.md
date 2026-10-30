@@ -190,3 +190,33 @@ for iOS Arm64. The Sandbox APK SHA-256 is
 No device or build variant was selected for launch, so no app was installed.
 Card swipes, theme/font-size layout, and live map density still require manual
 review on a selected Sandbox device; the real backend remains a release gate.
+
+## Compact card parity for the active iOS route — 2026-10-30
+
+Source: `origin/develop` `a5f6f1b8`, branch `codex/migration-ios-shelf-map-parity`.
+Android Discovery already uses the compact feature card, while iOS still opens
+the shared legacy Discovery route. Its app-owned MapShopCard kept a 72 dp photo,
+larger spacing, separate metadata rows and two reserved lines each for title
+and hours, including when the hours label was empty.
+
+The active shared card now uses CoffeePeekCard, 64 dp photos and spacing2 insets,
+title first, a wrapping rating/distance row, and hours only when nonempty. Text
+can grow with font scale; no fixed card height is introduced. Existing photo,
+rating, opening-hours formatting, selection, navigation and analytics ownership
+are retained. Paired multiplatform previews include loading, a rated short title
+with no hours, and a long title without distance. No feature/data/domain/Gradle
+boundaries change; the broader Discovery UI migration is outside this fix.
+
+Verification plan: compile the shared content through Android directSandbox and
+the Xcode simulator build; run existing non-UI map contracts and preserve
+Android DEX/isolation checks. No device/variant is selected for a launch. Actual
+light/dark, large-font, narrow-window, swipe and accessibility review remains a
+manual Sandbox/iPhone gate. No automated UI or screenshot tests are introduced.
+
+Local result: directSandbox assembly, packaged DEX and isolation checks pass;
+the selected app unit/contract run passed 90 tests / 14 suites, with zero
+failures/errors/skips. The map subset accounts for 32 tests / 4 suites within
+those 90, not an additional run. Both light/dark card previews compile for
+Android; IDE rendering and runtime visual review were not performed. Existing
+Preview deprecation warnings remain. iOS production compilation and the Native
+shelf graph test are pending the PR's Xcode CI.

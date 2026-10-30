@@ -281,7 +281,6 @@ android {
         buildConfigField("String", "API_BASE_URL", "\"$apiBaseUrl\"")
         buildConfigField("boolean", "POSTHOG_ENABLE_DEV", providers.gradleProperty("posthogEnableDev").map { (it == "true").toString() }.getOrElse("false"))
         buildConfigField("String", "POSTHOG_PROJECT_TOKEN", "\"${postHogProjectToken.get()}\"")
-        buildConfigField("boolean", "SHELF_ENABLED", "true")
         // Shelf scanner models, downloaded on the first scan; files must match the size and SHA-256 pinned in ShelfScannerFiles.kt.
         buildConfigField("String", "SHELF_SEGMENTER_URL", "\"https://github.com/danielgatis/rembg/releases/download/v0.0.0/u2netp.onnx\"")
         buildConfigField("String", "SHELF_INPAINTER_URL", "\"https://huggingface.co/andraniksargsyan/migan/resolve/main/migan_pipeline_v2.onnx\"")

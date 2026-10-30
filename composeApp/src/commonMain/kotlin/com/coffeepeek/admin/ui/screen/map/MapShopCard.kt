@@ -1,7 +1,6 @@
 package com.coffeepeek.admin.ui.screen.map
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -20,6 +19,7 @@ import com.coffeepeek.admin.ui.component.CoffeeShopImage
 import com.coffeepeek.admin.utils.formatOneDecimal
 import com.coffeepeek.core.designsystem.component.CoffeePeekImagePlaceholder
 import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
+import com.coffeepeek.core.designsystem.component.CoffeePeekCard
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
@@ -32,27 +32,33 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 @Composable
 internal fun MapShopCard(shop: MapShop, details: CoffeeShopDetails?, isLoadingDetails: Boolean,
     onOpen: () -> Unit, distance: String?, modifier: Modifier = Modifier) {
-    Card(modifier.fillMaxWidth(), shape = RoundedCornerShape(CoffeePeekDimens.cardRadius),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)) {
-        Row(Modifier.fillMaxWidth().clickable(onClick = onOpen).padding(CoffeePeekDimens.spacing3),
+    CoffeePeekCard(modifier, onClick = onOpen, shape = RoundedCornerShape(CoffeePeekDimens.cardRadius),
+        elevation = 8.dp, contentPadding = PaddingValues(CoffeePeekDimens.spacing2)) {
+        Row(Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically) {
             MapCardPhoto(shop.title, details?.shop?.photoUrl ?: details?.photos?.firstOrNull(), isLoadingDetails)
-            Spacer(Modifier.width(CoffeePeekDimens.spacing3))
-            Column(Modifier.weight(1f)) {
-                MapCardRating(details)
-                Text(shop.title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold,
-                    minLines = 2, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 2.dp))
-                if (distance != null) Text(distance, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                MapCardHours(details, isLoadingDetails)
-            }
+            Spacer(Modifier.width(CoffeePeekDimens.spacing2))
+            Column(Modifier.weight(1f)) { MapCardInformation(shop.title, details, isLoadingDetails, distance) }
         }
     }
 }
 
 @Composable
+private fun MapCardInformation(title: String, details: CoffeeShopDetails?, loading: Boolean, distance: String?) {
+    Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold,
+        maxLines = 2, overflow = TextOverflow.Ellipsis)
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2),
+        verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        MapCardRating(details)
+        if (distance != null) Text(distance, style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
+    }
+    MapCardHours(details, loading)
+}
+
+@Composable
 private fun MapCardPhoto(title: String, photoUrl: String?, loading: Boolean) {
-    Box(Modifier.size(72.dp).clip(RoundedCornerShape(CoffeePeekDimens.radiusMd)).background(MaterialTheme.colorScheme.surfaceVariant),
+    Box(Modifier.size(64.dp).clip(RoundedCornerShape(CoffeePeekDimens.radiusMd)).background(MaterialTheme.colorScheme.surfaceVariant),
         contentAlignment = Alignment.Center) {
         when {
             !photoUrl.isNullOrBlank() -> CoffeeShopImage(imageUrl = photoUrl, contentDescription = title,
@@ -98,17 +104,18 @@ private fun MapCardHours(details: CoffeeShopDetails?, loading: Boolean) {
         loading -> stringResource(Res.string.discovery_map_card_loading)
         else -> ""
     }
-    Text(label, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
-        minLines = 2, maxLines = 2, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 4.dp))
+    if (label.isNotEmpty()) Text(label, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+        maxLines = 2, overflow = TextOverflow.Ellipsis)
 }
 
 @Composable
 private fun MapShopCardPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
-    val shop = MapShop("preview", "CoffeePeek Specialty Coffee", 53.9, 27.56)
+    val shop = MapShop("preview", "CoffeePeek", 53.9, 27.56)
     Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         MapShopCard(shop, null, true, {}, "150 м")
         MapShopCard(shop.copy(title = "CoffeePeek"), CoffeeShopDetails(CoffeeShop(id = "preview", title = "CoffeePeek", rating = 4.5,
             cityName = null, priceRange = null, photoUrl = null)), false, {}, "150 м")
+        MapShopCard(shop.copy(title = "CoffeePeek Specialty Coffee on a Very Long Street"), null, false, {}, null)
     }
 }
 
