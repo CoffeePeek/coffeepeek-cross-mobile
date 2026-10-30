@@ -45,8 +45,7 @@ actual fun CoffeePeekGlassButton(
         modifier = modifier.height(CoffeePeekDimens.buttonHeight),
         properties = UIKitInteropProperties(isNativeAccessibilityEnabled = true, placedAsOverlay = true),
         update = { button ->
-            button.overrideUserInterfaceStyle = if (colors.background.luminance() < .5f)
-                UIUserInterfaceStyle.UIUserInterfaceStyleDark else UIUserInterfaceStyle.UIUserInterfaceStyleLight
+            button.overrideUserInterfaceStyle = coffeePeekUserInterfaceStyle(colors.background)
             button.backgroundColor = UIColor.clearColor
             button.configuration = glassButtonConfiguration().apply {
                 title = text
@@ -66,7 +65,7 @@ actual fun CoffeePeekGlassButton(
     )
 }
 
-private fun glassButtonConfiguration(): UIButtonConfiguration {
+internal fun glassButtonConfiguration(): UIButtonConfiguration {
     if ((UIDevice.currentDevice.systemVersion.substringBefore('.').toIntOrNull() ?: 0) >= 26) {
         return UIButtonConfiguration.glassButtonConfiguration()
     }
@@ -78,6 +77,10 @@ private fun glassButtonConfiguration(): UIButtonConfiguration {
     }
 }
 
-private fun Color.toUIColor(): UIColor = UIColor.colorWithRed(
+internal fun coffeePeekUserInterfaceStyle(background: Color): UIUserInterfaceStyle =
+    if (background.luminance() < .5f) UIUserInterfaceStyle.UIUserInterfaceStyleDark
+    else UIUserInterfaceStyle.UIUserInterfaceStyleLight
+
+internal fun Color.toUIColor(): UIColor = UIColor.colorWithRed(
     red.toDouble(), green.toDouble(), blue.toDouble(), alpha.toDouble(),
 )

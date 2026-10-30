@@ -23,7 +23,7 @@ Claim: feature-owned bottom sheet, contact, explanation, up to three private
 photos of at most 5 MiB. Includes discard/busy guards, guest sign-in, identity
 change disposal and in-memory photo state. Paired fake-state light/dark previews
 are colocated. Profile overflow uses the shared CoffeePeek action menu on Android
-and a native UIKit menu from a glass button on iOS; sheet/photo controls/buttons/
+and the design-system's native UIKit glass action menu on iOS; sheet/photo controls/buttons/
 dialogs use design-system.
 
 My Business is removed from personal-profile menus and its obsolete callback.
@@ -84,9 +84,11 @@ Common metadata does not certify UIKit compilation.
 
 - Source: `codex/migration-ownership-ios-glass-menu` from `develop` `e5f149b`.
   The non-owner overflow keeps the existing edit/suggest and representative
-  claim callbacks. Android uses `CoffeePeekActionMenu` and iOS uses a native
-  `UIButton`/`UIMenu`; iOS 26 uses the system glass button configuration and
-  earlier versions use the system gray fallback. Owner direct edit is unchanged.
+  claim callbacks. Android uses `CoffeePeekActionMenu` and iOS uses the shared
+  design-system `CoffeePeekNativeActionMenu` with native `UIButton`/`UIMenu`.
+  iOS 26 uses the system glass button configuration and earlier versions use
+  the same translucent blur fallback as `CoffeePeekGlassButton`. Owner direct
+  edit is unchanged.
 - Verification: `:feature:business-ownership:impl:testDebugUnitTest` passed
   18/18 tests in two suites (zero failures/errors/skips). Android
   `:composeApp:assembleDirectSandbox --max-workers=6` passed; APK identity is
@@ -95,6 +97,11 @@ Common metadata does not certify UIKit compilation.
   `git diff --check` passed. Paired light/dark previews cover owner and
   non-owner triggers; a native UIKit menu cannot be inspected in a Compose
   preview on Windows.
+- After extracting the native control into design-system, the same 18/18 unit
+  tests and `assembleDirectSandbox` passed again on 2026-10-30. The first rerun
+  stopped before tests because `ANDROID_HOME` was unset in this shell; using
+  the installed SDK path resolved it. The extraction changes only iOS source
+  and documentation; macOS CI must compile the UIKit code.
 - Device: none connected or selected. iOS CI compilation, system menu
   presentation, VoiceOver, light/dark themes and large fonts are still gates.
   No app was installed or launched and no account data was changed.
