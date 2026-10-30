@@ -13,6 +13,9 @@ Compose/Haze types are exported because public APIs expose them; the icon vendor
 is hidden behind `CoffeePeekIcons`. An independent Gradle boundary allows future features
 to reuse UI without depending on the application or accidentally accessing its
 business models. No umbrella utility or base-screen abstraction is introduced.
+On iOS, `CoffeePeekNativeActionMenu` provides a glass UIKit button with an anchored
+system menu. Features supply localized labels and callbacks; glass styling and
+theme mapping reuse the same implementation as `CoffeePeekGlassButton`.
 
 ## Naming
 
