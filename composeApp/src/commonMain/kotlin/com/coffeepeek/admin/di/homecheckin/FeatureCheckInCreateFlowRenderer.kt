@@ -25,12 +25,11 @@ import com.coffeepeek.feature.homecheckin.api.HomeCheckInEditorEntry
 import org.jetbrains.compose.resources.stringResource
 
 /**
- * A new flow lifetime per opening. Never constructs legacy Home state or a second writer. With [shelfEnabled] the picker also
- * offers "Пачку на полку", which hands over to the shelf's scan.
+ * A new flow lifetime per opening. Never constructs legacy Home state or a second writer.
+ * The picker offers "Пачку на полку", which hands over to the shelf's scan.
  */
 internal class FeatureCheckInCreateFlowRenderer(
     private val sessions: SessionReader,
-    private val shelfEnabled: Boolean,
     private val createEditor: (CheckInHistorySession, CheckInTracker?) -> HomeCheckInEditorEntry,
 ) : CheckInCreateFlowRenderer {
     @Composable
@@ -87,7 +86,7 @@ internal class FeatureCheckInCreateFlowRenderer(
         AnalyticsOverlay {
             CoffeePeekSwipeDismissModalBottomSheet({ model.cancel(destination) }, stringResource(Res.string.check_in_create_close),
                 dismissEnabled = dismissAllowed, maxSheetHeightFraction = if (home != null) 0.9f else null) {
-                if (home == null) CheckInCreateContent(model::shop, model::home, (model::shelfBag).takeIf { shelfEnabled })
+                if (home == null) CheckInCreateContent(model::shop, model::home, model::shelfBag)
                 else home.entry.Content(null, 0, model.canAccess(), { model.cancel(home) },
                     { id, _ -> model.saved(home, id) }, { model.setDismissAllowed(home, it) },
                     Modifier.weight(1f).fillMaxWidth(), bean = model.homeBean)

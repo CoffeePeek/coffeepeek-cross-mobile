@@ -10,7 +10,6 @@ import com.coffeepeek.admin.di.coffee.CoffeeShelfTab
 import com.coffeepeek.admin.di.shelf.ShelfFeatureScreenRenderer
 import com.coffeepeek.admin.di.shelf.shelfBrewForm
 import com.coffeepeek.admin.di.shelf.shelfModule
-import com.coffeepeek.BuildConfig
 import com.coffeepeek.admin.di.appupdate.androidAppUpdateRenderer
 import com.coffeepeek.admin.di.auth.androidAuthScreenRenderer
 import com.coffeepeek.admin.di.community.checkInDetailFeatureScreenRenderer
@@ -48,8 +47,8 @@ internal fun initAndroidKoin(extraModules: List<org.koin.core.module.Module> = e
             serverFavoritesModule(),
             shopCheckInModule(),
             shopBrowsingModule(),
-            homeCheckInModule(BuildConfig.SHELF_ENABLED),
-            checkInHistoryModule(BuildConfig.SHELF_ENABLED),
+            homeCheckInModule(),
+            checkInHistoryModule(),
             coffeeModule(),
             contributionsModule(),
             shelfModule(),
@@ -78,7 +77,7 @@ internal fun initAndroidKoin(extraModules: List<org.koin.core.module.Module> = e
         checkInCreateFlowRendererFactory = { get<FeatureCheckInCreateFlowRenderer>() },
         // Shelf: Coffee tab switcher, «+» scan flow, and shelf screens (live API on debug/release; Sandbox uses fake backend).
         coffeeRendererFactory = {
-            coffeeCatalogueScreenRenderer(get(), CoffeeShelfTab(get(), get(), Locator.database.settingRepository).takeIf { BuildConfig.SHELF_ENABLED })
+            coffeeCatalogueScreenRenderer(get(), CoffeeShelfTab(get(), get(), Locator.database.settingRepository))
         },
         shelfRendererFactory = { ShelfFeatureScreenRenderer(get(), Locator.database.settingRepository, shelfBrewForm(get())) },
         publicProfileRendererFactory = { publicProfileFeatureScreenRenderer(get(), get(), get(), get(), get()) },

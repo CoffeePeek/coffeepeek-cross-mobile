@@ -14,20 +14,17 @@ import com.coffeepeek.admin.di.profile.ownProfileFeatureScreenRenderer
 import com.coffeepeek.admin.di.profile.publicProfileFeatureScreenRenderer
 import com.coffeepeek.admin.di.shelf.ShelfFeatureScreenRenderer
 import com.coffeepeek.admin.di.shelf.shelfBrewForm
-import com.coffeepeek.admin.di.shelf.iosShelfEnabled
 import com.coffeepeek.admin.di.shelf.iosShelfModule
 import com.coffeepeek.admin.locator.Locator
-import com.coffeepeek.admin.ui.screen.shelf.UnsupportedShelfScreenRenderer
 
 actual fun initPlatformKoin() {
-    val shelf = iosShelfEnabled()
     initKoin(
-        platformModules = listOf(coffeeModule(), homeCheckInModule(shelfEnabled = shelf), checkInHistoryModule(shelfEnabled = shelf), iosShelfModule()),
-        // The Coffee tab is the migrated catalogue; the shelf joins it only where the build enables it (SHELF_ENABLED).
+        platformModules = listOf(coffeeModule(), homeCheckInModule(), checkInHistoryModule(), iosShelfModule()),
+        // Both platforms expose the shelf and catalogue through the same Coffee tab.
         coffeeRendererFactory = {
-            coffeeCatalogueScreenRenderer(get(), CoffeeShelfTab(get(), get(), Locator.database.settingRepository).takeIf { shelf })
+            coffeeCatalogueScreenRenderer(get(), CoffeeShelfTab(get(), get(), Locator.database.settingRepository))
         },
-        // The "+" sheet is the migrated flow: a visit, a home check-in or, with the shelf, a bag to scan.
+        // The "+" sheet offers a visit, a home check-in or a bag to scan.
         checkInCreateFlowRendererFactory = { get<FeatureCheckInCreateFlowRenderer>() },
         // Profiles, their edit screens and the check-in history are the migrated profile and history features.
         checkInHistoryRendererFactory = { get<CheckInHistoryFeatureScreenRenderer>() },
@@ -38,8 +35,7 @@ actual fun initPlatformKoin() {
         communityRendererFactory = { communityFeatureScreenRenderer(get(), get(), get(), get(), get(), get()) },
         checkInDetailRendererFactory = { checkInDetailFeatureScreenRenderer(get(), get(), get(), get()) },
         shelfRendererFactory = {
-            if (shelf) ShelfFeatureScreenRenderer(get(), Locator.database.settingRepository, shelfBrewForm(get()))
-            else UnsupportedShelfScreenRenderer
+            ShelfFeatureScreenRenderer(get(), Locator.database.settingRepository, shelfBrewForm(get()))
         },
     )
 }
