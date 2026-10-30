@@ -7,6 +7,7 @@ import com.coffeepeek.feature.ownership.impl.ui.OwnershipViewModel
 import com.coffeepeek.feature.ownership.impl.ui.compose.model.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.*
 import kotlin.test.*
 
@@ -144,6 +145,25 @@ class OwnershipViewModelTest {
         response.complete(Result.success(original.copy(revision = 8)))
         runCurrent()
         assertTrue(model.state.value.saved)
+    }
+    @Test fun aSuccessfulWriteNotifiesTheProfileEvenWhenLaterDraftFeedbackIsCleared() = runTest(dispatcher) {
+        val model = model()
+        runCurrent()
+        edit(model)
+        val notification = async(start = CoroutineStart.UNDISPATCHED) { model.events.first() }
+        model.onAction(OwnershipAction.AskSave)
+        runCurrent()
+        model.onAction(OwnershipAction.Save)
+        runCurrent()
+        assertEquals(OwnershipEvent.ProfileSaved, notification.await())
+        model.onAction(OwnershipAction.ProfileText(ProfileField.Name, "Another draft"))
+        runCurrent()
+        assertFalse(model.state.value.saved)
+        model.onAction(OwnershipAction.AskReload)
+        runCurrent()
+        model.onAction(OwnershipAction.Reload)
+        runCurrent()
+        assertFalse(model.state.value.saved)
     }
     @Test fun revokedAccessClearsEditorAndDoesNotLeaveSaveEnabled() = runTest(dispatcher) {
         val repository = Repository().apply { saveResult = { Result.failure(OwnershipFailure(OwnershipProblem.NotFound)) } }

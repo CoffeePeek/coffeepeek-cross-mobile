@@ -105,3 +105,18 @@ Common metadata does not certify UIKit compilation.
 - Device: none connected or selected. iOS CI compilation, system menu
   presentation, VoiceOver, light/dark themes and large fonts are still gates.
   No app was installed or launched and no account data was changed.
+
+## PR #212 profile refresh review fix — 2026-10-30
+
+A successful profile write now emits `ProfileSaved` immediately. Application
+composition increments the profile change signal for this event, independent
+of the transient `saved` message that later edits or reloads clear. Existing
+shop and roaster detail screens observe that signal and refresh their data.
+
+Verification source: `origin/develop` at `1f09980b6`. Ownership implementation
+ran 19 tests in 2 suites, zero failures, errors or retries. The new regression
+checks that a successful write emits the event before later draft feedback is
+cleared. Direct Sandbox assembly, DEX class and isolation checks and ownership
+Kotlin iOS Arm64 compilation passed. No device was selected or app installed;
+manual return to shop/roaster details, light/dark and native iOS review remain
+open. No real profile write was made.

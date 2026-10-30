@@ -75,11 +75,12 @@ private class OwnershipEntry(
         val back by rememberUpdatedState(onBack)
         val login by rememberUpdatedState(onLogin)
         LaunchedEffect(model) {
-            model.events.collect {
-                if (it == OwnershipEvent.Close) {
-                    if (model.state.value.saved) profileChanges.value++
-                    back()
-                } else login()
+            model.events.collect { event ->
+                when (event) {
+                    OwnershipEvent.Close -> back()
+                    OwnershipEvent.Login -> login()
+                    OwnershipEvent.ProfileSaved -> profileChanges.value++
+                }
             }
         }
         backHandler { model.onAction(com.coffeepeek.feature.ownership.impl.ui.compose.model.OwnershipAction.Back) }
