@@ -351,6 +351,11 @@ jobs:
           [[ "$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$INFO_PLIST")" == "$EXPECTED_VERSION" ]]
           [[ "$(/usr/libexec/PlistBuddy -c 'Print :APIBaseURL' "$INFO_PLIST")" == "$IOS_API_BASE_URL" ]]
           [[ "$(/usr/libexec/PlistBuddy -c 'Print :CoffeePeekDebug' "$INFO_PLIST")" == 'NO' ]]
+          APP_PATH="${INFO_PLIST%/Info.plist}"
+          MINIMUM_OS=$(/usr/libexec/PlistBuddy -c 'Print :MinimumOSVersion' "$INFO_PLIST")
+          python3 tools/ios/fix_onnx_framework.py "$APP_PATH/Frameworks/onnxruntime.framework" \
+            --deployment-target "$MINIMUM_OS" --check
+          codesign --verify --deep --strict "$APP_PATH"
 
       - name: Upload to App Store Connect
         shell: bash
