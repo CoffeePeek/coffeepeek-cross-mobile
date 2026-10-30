@@ -27,8 +27,11 @@ class ProtectedPhotoRequestTest {
     fun shelfBagCardsAreOwnerOnlyPhotos() {
         val card = "https://gateway.example/api/v1/shelf/bags/bag/photos/photo"
         assertTrue(isProtectedCheckInPhoto(card))
+        assertTrue(isShelfBagPhoto(card))
         assertNull(originalCheckInPhoto(card))
-        assertFalse(isImmutablePhotoVariant(card))
+        assertTrue(isImmutablePhotoVariant(card))
+        assertFalse(isImmutablePhotoVariant("$card/preview"))
+        assertFalse(isShelfBagPhoto("$card/preview"))
         assertFalse(isProtectedCheckInPhoto("https://gateway.example/api/v1/shelf/archive"))
     }
 }

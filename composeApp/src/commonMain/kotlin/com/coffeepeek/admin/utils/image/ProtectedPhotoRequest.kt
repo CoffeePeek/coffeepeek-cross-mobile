@@ -33,9 +33,15 @@ internal fun requirePhotoAccess(status: Int) {
 internal fun isProtectedCheckInPhoto(url: String): Boolean =
     Regex("/api/v1/(check-ins|shelf/bags)/[^/?]+/photos/[^/?]+").containsMatchIn(url)
 
+internal fun isShelfBagPhoto(url: String): Boolean = runCatching {
+    val path = if (url.startsWith('/')) url.substringBefore('?').substringBefore('#') else Url(url).encodedPath
+    Regex("/api/v1/shelf/bags/[^/]+/photos/[^/]+").matches(path)
+}.getOrDefault(false)
+
 internal fun isImmutablePhotoVariant(url: String): Boolean = runCatching {
     val path = if (url.startsWith('/')) url.substringBefore('?').substringBefore('#') else Url(url).encodedPath
-    Regex("/api/v1/check-ins/[^/]+/photos/[^/]+/variants/[A-Za-z0-9_-]+/[1-9][0-9]*/(thumb|feed|detail)\\.(jpg|jpeg|png|webp)").matches(path)
+    Regex("/api/v1/check-ins/[^/]+/photos/[^/]+/variants/[A-Za-z0-9_-]+/[1-9][0-9]*/(thumb|feed|detail)\\.(jpg|jpeg|png|webp)").matches(path) ||
+        isShelfBagPhoto(url)
 }.getOrDefault(false)
 
 internal fun originalCheckInPhoto(url: String): String? =
