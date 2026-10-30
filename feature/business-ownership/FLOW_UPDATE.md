@@ -22,8 +22,9 @@ Leaving a saved editor invalidates the public details.
 Claim: feature-owned bottom sheet, contact, explanation, up to three private
 photos of at most 5 MiB. Includes discard/busy guards, guest sign-in, identity
 change disposal and in-memory photo state. Paired fake-state light/dark previews
-are colocated. The shared design-system menu is Android-only; shared dropdown
-uses Material, while sheet/photo controls/buttons/dialogs use design-system.
+are colocated. Profile overflow uses the shared CoffeePeek action menu on Android
+and a native UIKit menu from a glass button on iOS; sheet/photo controls/buttons/
+dialogs use design-system.
 
 My Business is removed from personal-profile menus and its obsolete callback.
 Settings offers Switch to business account only for current owned businesses.
@@ -78,3 +79,22 @@ Open gates: manual Sandbox light/dark, font/window/accessibility, menu/sheet/
 keyboard/back/discard/sign-in/switching review; native iOS app build/runtime on
 macOS; prepared live-backend upload/read/approval/direct-save acceptance.
 Common metadata does not certify UIKit compilation.
+
+## Profile overflow visual follow-up — 2026-10-30
+
+- Source: `codex/migration-ownership-ios-glass-menu` from `develop` `e5f149b`.
+  The non-owner overflow keeps the existing edit/suggest and representative
+  claim callbacks. Android uses `CoffeePeekActionMenu` and iOS uses a native
+  `UIButton`/`UIMenu`; iOS 26 uses the system glass button configuration and
+  earlier versions use the system gray fallback. Owner direct edit is unchanged.
+- Verification: `:feature:business-ownership:impl:testDebugUnitTest` passed
+  18/18 tests in two suites (zero failures/errors/skips). Android
+  `:composeApp:assembleDirectSandbox --max-workers=6` passed; APK identity is
+  `com.coffeepeek.sandbox`, `1.1.3.2549-sandbox` / 2549, SHA-256
+  `89ce017fe688ec251043772b6a491776c71e77d8021c9b3cf5cd335ad407b12b`.
+  `git diff --check` passed. Paired light/dark previews cover owner and
+  non-owner triggers; a native UIKit menu cannot be inspected in a Compose
+  preview on Windows.
+- Device: none connected or selected. iOS CI compilation, system menu
+  presentation, VoiceOver, light/dark themes and large fonts are still gates.
+  No app was installed or launched and no account data was changed.
