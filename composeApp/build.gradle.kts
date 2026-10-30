@@ -49,20 +49,11 @@ kotlin {
             implementation(project(module.feature.shop.domain))
             implementation(project(module.feature.shop.data))
             implementation(project(module.feature.shop.impl))
-            implementation(project(module.feature.profile.impl))
             implementation(project(module.feature.settings.impl))
-            implementation(project(module.feature.coffee.api))
-            implementation(project(module.feature.coffee.domain))
-            implementation(project(module.feature.coffee.data))
-            implementation(project(module.feature.coffee.impl))
-            implementation(project(module.feature.checkInHistory.api))
-            implementation(project(module.feature.checkInHistory.domain))
-            implementation(project(module.feature.checkInHistory.data))
-            implementation(project(module.feature.checkInHistory.impl))
-            implementation(project(module.feature.homePreparation.domain))
-            implementation(project(module.feature.homePreparation.api))
-            implementation(project(module.feature.homePreparation.data))
-            implementation(project(module.feature.homePreparation.impl))
+            // The shelf's own camera: viewfinder and capture behind the ShelfCamera port.
+            implementation(libs.androidx.camera.camera2)
+            implementation(libs.androidx.camera.lifecycle)
+            implementation(libs.androidx.camera.view)
             implementation(project(module.core.coroutines))
             implementation(libs.androidx.activity.compose)
             implementation(libs.androidx.concurrent.futures)
@@ -77,8 +68,31 @@ kotlin {
             implementation("com.google.firebase:firebase-messaging")
             implementation("com.microsoft.signalr:signalr:10.0.9")
             implementation("org.slf4j:slf4j-nop:2.0.16")
+            implementation(libs.ktor.client.okhttp)
         }
         commonMain.dependencies {
+            // Shelf, catalogue and home check-ins, composed on both platforms; the iOS scanner runs ONNX Runtime through shelf data.
+            implementation(project(module.feature.shelf.api))
+            implementation(project(module.feature.shelf.domain))
+            implementation(project(module.feature.shelf.data))
+            implementation(project(module.feature.shelf.impl))
+            implementation(project(module.feature.coffee.api))
+            implementation(project(module.feature.coffee.domain))
+            implementation(project(module.feature.coffee.data))
+            implementation(project(module.feature.coffee.impl))
+            implementation(project(module.feature.checkInHistory.api))
+            implementation(project(module.feature.checkInHistory.domain))
+            implementation(project(module.feature.checkInHistory.data))
+            implementation(project(module.feature.checkInHistory.impl))
+            implementation(project(module.feature.profile.impl))
+            implementation(project(module.feature.homePreparation.api))
+            implementation(project(module.feature.homePreparation.domain))
+            implementation(project(module.feature.homePreparation.data))
+            implementation(project(module.feature.homePreparation.impl))
+            implementation(project(module.feature.businessOwnership.api))
+            implementation(project(module.feature.businessOwnership.domain))
+            implementation(project(module.feature.businessOwnership.data))
+            implementation(project(module.feature.businessOwnership.impl))
             implementation(project(module.feature.profile.api))
             implementation(project(module.feature.profile.domain))
             implementation(project(module.feature.profile.data))
@@ -158,6 +172,8 @@ kotlin {
         // Test the exact sandbox transport without adding it to the live APK or requiring a new test variant.
         androidUnitTest {
             kotlin.srcDir("src/androidSandbox/kotlin/com/coffeepeek/admin/sandbox/backend")
+            kotlin.srcDir("src/androidSandbox/kotlin/com/coffeepeek/admin/sandbox/packscan/geometry")
+            kotlin.srcDir("src/androidSandbox/kotlin/com/coffeepeek/admin/sandbox/packscan/imaging")
         }
         androidInstrumentedTest.dependencies {
             implementation(libs.kotlin.test)
@@ -265,8 +281,17 @@ android {
         buildConfigField("String", "API_BASE_URL", "\"$apiBaseUrl\"")
         buildConfigField("boolean", "POSTHOG_ENABLE_DEV", providers.gradleProperty("posthogEnableDev").map { (it == "true").toString() }.getOrElse("false"))
         buildConfigField("String", "POSTHOG_PROJECT_TOKEN", "\"${postHogProjectToken.get()}\"")
+        buildConfigField("boolean", "SHELF_ENABLED", "true")
+        // Shelf scanner models, downloaded on the first scan; files must match the size and SHA-256 pinned in ShelfScannerFiles.kt.
+        buildConfigField("String", "SHELF_SEGMENTER_URL", "\"https://github.com/danielgatis/rembg/releases/download/v0.0.0/u2netp.onnx\"")
+        buildConfigField("String", "SHELF_INPAINTER_URL", "\"https://huggingface.co/andraniksargsyan/migan/resolve/main/migan_pipeline_v2.onnx\"")
     }
     packaging {
+        jniLibs {
+            // Keep every supported ABI, but compress large scanner/map libraries in the APK.
+            // Android extracts them at install time; this trades installed disk usage for download size.
+            useLegacyPackaging = true
+        }
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
@@ -328,11 +353,21 @@ kotlin.applyDefaultHierarchyTemplate()
 kotlin.sourceSets {
     val androidSandbox = create("androidSandbox") {
         dependsOn(getByName("androidMain"))
-        dependencies { implementation("io.ktor:ktor-client-mock:${libs.versions.ktor.get()}") }
+        dependencies {
+            implementation("io.ktor:ktor-client-mock:${libs.versions.ktor.get()}")
+            // Coffee-pack scan probe: U2-Net-p and MI-GAN run on ONNX Runtime; the models are pushed to the device, not bundled.
+            implementation(libs.onnxruntime.android)
+        }
     }
     matching { it.name in setOf("androidDirectSandbox", "androidPlaySandbox") }.all {
         dependsOn(androidSandbox)
     }
+}
+
+// The website/Firebase channel ships one APK for ARM phones. Keep x86 native
+// libraries in Debug for emulators and in the Play bundle for ChromeOS devices.
+androidComponents.onVariants(androidComponents.selector().withName("directRelease")) { variant ->
+    variant.packaging.jniLibs.excludes.addAll("**/x86/**", "**/x86_64/**")
 }
 
 // Reuse the app graph with isolated ports, never the production Application/services.
@@ -342,6 +377,9 @@ androidComponents.onVariants(androidComponents.selector().withBuildType("sandbox
     val runtimeVerification = tasks.register<VerifyApkRuntimeClassesTask>("verify${variant.name.replaceFirstChar { it.uppercaseChar() }}RuntimeClasses") {
         apkDirectory.set(variant.artifacts.get(SingleArtifact.APK))
         requiredClasses.set(listOf("com.coffeepeek.admin.sandbox.SandboxActivity",
+            "com.coffeepeek.admin.di.ownership.BusinessOwnershipModuleKt",
+            "com.coffeepeek.feature.ownership.impl.BusinessOwnershipEntryImplKt",
+            "com.coffeepeek.feature.ownership.impl.ui.OwnershipViewModel",
             "com.coffeepeek.admin.sandbox.backend.SandboxBackend", "com.coffeepeek.admin.sandbox.SandboxApplication",
             "com.coffeepeek.feature.homecheckin.data.repository.HomePreparationRepositoryFactoryKt",
             "com.coffeepeek.admin.ui.Navigator"))
@@ -381,6 +419,9 @@ androidComponents {
             apkDirectory.set(variant.artifacts.get(SingleArtifact.APK))
             forbiddenClassPrefixes.set(listOf("com.coffeepeek.admin.sandbox.", "io.ktor.client.engine.mock."))
             requiredClasses.set(listOf(
+                "com.coffeepeek.admin.di.ownership.BusinessOwnershipModuleKt",
+                "com.coffeepeek.feature.ownership.impl.BusinessOwnershipEntryImplKt",
+                "com.coffeepeek.feature.ownership.impl.ui.OwnershipViewModel",
                 "com.coffeepeek.api.service.CheckInApiService",
                 "com.coffeepeek.api.CoffeePeekRepo",
                 "com.coffeepeek.data.di.DataModuleKt",
@@ -400,9 +441,9 @@ androidComponents {
                 "com.coffeepeek.feature.shop.data.repository.ShopCheckInRepositoryFactoryKt",
                 "com.coffeepeek.feature.shop.impl.ShopCheckInCreateApiImplKt",
                 "com.coffeepeek.admin.di.checkinhistory.CheckInHistoryModuleKt",
-                "com.coffeepeek.admin.di.checkinhistory.AndroidCheckInHistoryScreenRenderer",
-                "com.coffeepeek.admin.di.checkinhistory.AndroidCheckInHistorySession",
-                "com.coffeepeek.admin.di.checkinhistory.AndroidHistoryHomeBridge",
+                "com.coffeepeek.admin.di.checkinhistory.CheckInHistoryFeatureScreenRenderer",
+                "com.coffeepeek.admin.di.checkinhistory.CheckInHistorySession",
+                "com.coffeepeek.admin.di.checkinhistory.HistoryHomeBridge",
                 "com.coffeepeek.admin.di.checkinhistory.HistoryHomeEditorFactoryKt",
                 "com.coffeepeek.feature.checkinhistory.api.CheckInHistoryEntry",
                 "com.coffeepeek.feature.checkinhistory.data.repository.CheckInHistoryRepositoryFactoryKt",
@@ -417,13 +458,13 @@ androidComponents {
                 "com.coffeepeek.feature.homecheckin.impl.HomeCheckInEditorApiImplKt",
                 "com.coffeepeek.feature.homecheckin.impl.HomeCheckInApiImplKt",
                 "com.coffeepeek.feature.homecheckin.impl.ui.HomeCheckInEditorViewModel",
-                "com.coffeepeek.admin.di.homecheckin.AndroidHomeCheckInEditorKt",
-                "com.coffeepeek.admin.di.homecheckin.AndroidHomeCheckInRepository",
-                "com.coffeepeek.admin.di.homecheckin.AndroidHomeCheckInPhotoPicker",
+                "com.coffeepeek.admin.di.homecheckin.HomeCheckInEditorKt",
+                "com.coffeepeek.admin.di.homecheckin.HomeCheckInAppRepository",
+                "com.coffeepeek.admin.di.homecheckin.HomeCheckInAppPhotoPicker",
                 "com.coffeepeek.admin.ui.screen.checkins.CheckInCreateFlowRenderer",
                 "com.coffeepeek.admin.di.homecheckin.HomeCheckInModuleKt",
-                "com.coffeepeek.admin.di.homecheckin.AndroidCheckInCreateFlowRenderer",
-                "com.coffeepeek.admin.di.homecheckin.AndroidGlobalCheckInFlow",
+                "com.coffeepeek.admin.di.homecheckin.FeatureCheckInCreateFlowRenderer",
+                "com.coffeepeek.admin.di.homecheckin.GlobalCheckInFlow",
                 "com.coffeepeek.feature.checkinhistory.domain.repository.HomeHistoryReader",
             ))
         }

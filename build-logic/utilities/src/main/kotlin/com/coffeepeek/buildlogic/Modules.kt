@@ -9,6 +9,14 @@ object Modules {
     val feature = Feature
 
     object Feature {
+        val businessOwnership = BusinessOwnership
+        object BusinessOwnership {
+            const val api = ":feature:business-ownership:api"
+            const val domain = ":feature:business-ownership:domain"
+            const val data = ":feature:business-ownership:data"
+            const val impl = ":feature:business-ownership:impl"
+        }
+
         val appUpdate = AppUpdate
         object AppUpdate {
             const val api = ":feature:app-update:api"
@@ -119,6 +127,14 @@ object Modules {
             const val impl = ":feature:shop:impl"
         }
 
+        val shelf = Shelf
+        object Shelf {
+            const val api = ":feature:shelf:api"
+            const val domain = ":feature:shelf:domain"
+            const val data = ":feature:shelf:data"
+            const val impl = ":feature:shelf:impl"
+        }
+
         val checkInHistory = CheckInHistory
         val homePreparation = HomePreparation
         object HomePreparation {
@@ -156,6 +172,10 @@ object Modules {
 
     val all: List<String> = listOf(
         composeApp,
+        feature.businessOwnership.api,
+        feature.businessOwnership.domain,
+        feature.businessOwnership.data,
+        feature.businessOwnership.impl,
         legacy.domain,
         legacy.data,
         legacy.network,
@@ -231,6 +251,10 @@ object Modules {
         feature.notifications.api,
         feature.notifications.data,
         feature.notifications.impl,
+        feature.shelf.api,
+        feature.shelf.domain,
+        feature.shelf.data,
+        feature.shelf.impl,
     )
 }
 

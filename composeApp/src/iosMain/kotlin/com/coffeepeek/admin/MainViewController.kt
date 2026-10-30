@@ -10,8 +10,6 @@ private var koinInitialized = false
 
 fun handleAppLink(link: String): Boolean {
     val screen = appLinkScreen(link) ?: return false
-    // iOS has no post screen yet: a shared post stays on the website.
-    if (screen is Navigator.Screen.CheckInDetail) return false
     Navigator.openAppLink(screen)
     return true
 }

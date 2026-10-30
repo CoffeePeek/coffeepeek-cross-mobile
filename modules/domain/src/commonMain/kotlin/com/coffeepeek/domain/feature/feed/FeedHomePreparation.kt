@@ -8,4 +8,9 @@ data class FeedHomePreparation(
     val doseGrams: Double?,
     val brewDurationSeconds: Int?,
     val tasteScore: Int?,
+    val roasterName: String? = null,
+    /** The catalogue coffee's current public slug while it is published. */
+    val coffeeProductSlug: String? = null,
+    /** The entry's own copy of its shelf-bag card, when the author shows the bag. */
+    val shelfBagCardUrl: String? = null,
 )

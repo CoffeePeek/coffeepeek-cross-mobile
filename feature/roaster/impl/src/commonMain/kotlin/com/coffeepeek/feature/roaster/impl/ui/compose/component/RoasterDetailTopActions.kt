@@ -19,6 +19,7 @@ import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.roaster.impl.resources.Res
 import com.coffeepeek.feature.roaster.impl.resources.roaster_detail_back
+import com.coffeepeek.feature.roaster.impl.resources.roaster_share
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
@@ -38,7 +39,17 @@ internal fun RoasterDetailTopActions(
             Icon(CoffeePeekIcons.PlatformBack, null,
                 modifier = Modifier.scale(scaleX = backScale, scaleY = 1f))
         }
-        RoasterFavoriteHeart(isFavorite, onToggleFavorite, overImage = true, modifier = heartModifier)
+        val business = LocalRoasterBusinessIdentity.current
+        val ownership = com.coffeepeek.feature.ownership.api.LocalBusinessOwnership.current
+        if (business != null && ownership != null) ownership.ProfileActions("Roaster", business.id, business.slug, {}, onOwnerEdit = {},
+            favorite = { RoasterFavoriteHeart(isFavorite, onToggleFavorite, overImage = true, modifier = heartModifier) },
+            share = {
+                val share = LocalRoasterShare.current
+                CoffeePeekGlassIconButton({ share(business.canonicalPath) }, stringResource(Res.string.roaster_share)) {
+                    Icon(CoffeePeekIcons.Share, null)
+                }
+            })
+        else RoasterFavoriteHeart(isFavorite, onToggleFavorite, overImage = true, modifier = heartModifier)
     }
 }
 

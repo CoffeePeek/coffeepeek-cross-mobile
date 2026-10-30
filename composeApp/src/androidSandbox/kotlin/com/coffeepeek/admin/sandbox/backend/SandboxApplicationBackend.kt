@@ -36,6 +36,7 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
     }
     private val shopNames = mapOf("sandbox-cafe" to "Sandbox Cafe", "sandbox-lab" to "Sandbox Lab")
     private val contributionStore = SandboxContributionsBackend(today, shopNames.keys)
+    private val ownershipStore = SandboxOwnershipBackend(today)
     private val notificationStore = SandboxNotificationsBackend(today)
     private val discoveryStore = SandboxDiscoveryBackend({ populated }, { favorites }, ::photo, ::address, ::catalog)
     private val favorites = linkedSetOf("coffee_shop:sandbox-cafe", "roaster:sandbox-roaster", "drink:cappuccino")
@@ -66,6 +67,7 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
         this.populated = populated
         contributionStore.reset(populated)
         notificationStore.reset(populated)
+        ownershipStore.reset(populated)
         discoveryStore.reset()
         others.clear(); blocked.clear(); blocksRevision++
         friendFollowing = false; deletionRequest = null
@@ -76,11 +78,15 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
         if (populated) favorites += listOf("coffee_shop:sandbox-cafe", "roaster:sandbox-roaster", "drink:cappuccino")
     }
 
+    fun registerOwnershipEvidence(id: String) = ownershipStore.registerEvidence(id)
+    fun ownershipEvidenceAvailable(claimId: String, photoId: String) = ownershipStore.evidenceAvailable(claimId, photoId)
+
     fun handle(request: HttpRequestData, body: JsonElement?): Pair<HttpStatusCode, JsonObject>? {
         val path = request.url.encodedPath.lowercase()
         val method = request.method
         val input = body as? JsonObject ?: buildJsonObject {}
         notificationStore.handle(path, method, input)?.let { return it }
+        ownershipStore.handle(request, input)?.let { return it }
         if (path == "/api/v1/me/blocks" && method == HttpMethod.Get) return blockPage(request)
         if (path.startsWith("/api/v1/me/blocks/") && method in listOf(HttpMethod.Put, HttpMethod.Delete)) {
             val id = path.removePrefix("/api/v1/me/blocks/")
@@ -279,7 +285,7 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
         return page(all.drop(offset).take(size), if (offset + size < all.size) (offset + size).toString() else null)
     }
 
-    /** 45 public posts by the blockable friend (every third) and two other authors; every fifth is a home preparation. */
+    /** 45 public posts by the blockable friend (every third) and two other authors; every fifth is a home preparation, every tenth with its shelf bag. */
     private var generated: MutableList<JsonObject>? = null
     private val generatedFeed: MutableList<JsonObject> get() = generated ?: buildGeneratedFeed().also { generated = it }
     private fun buildGeneratedFeed(): MutableList<JsonObject> =
@@ -298,7 +304,12 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
                 putJsonObject("rating") { put("coffee", 4); put("service", 4); put("place", 5) }
                 if (home) {
                     put("kind", "Home")
-                    putJsonObject("home") { put("preparedOn", today.toString()); put("brewMethodCode", "hario-v60"); put("beanName", "Sandbox Bean $index"); put("doseGrams", 15.0); put("brewDurationSeconds", 150); put("tasteScore", 4) }
+                    putJsonObject("home") {
+                        put("preparedOn", today.toString()); put("brewMethodCode", "hario-v60"); put("beanName", "Sandbox Bean $index"); put("doseGrams", 15.0); put("brewDurationSeconds", 150); put("tasteScore", 4)
+                        // Every tenth shows its shelf bag; half of those are a catalogue coffee the card opens.
+                        if (index % 10 == 0) { put("roasterName", "Sandbox Roaster"); put("coffeeProductSlug", if (index % 20 == 0) null else "sandbox-ethiopia") }
+                    }
+                    if (index % 10 == 0) put("shelfBagPhotoUrl", "/media/sample")
                 }
             }
         }.toMutableList()

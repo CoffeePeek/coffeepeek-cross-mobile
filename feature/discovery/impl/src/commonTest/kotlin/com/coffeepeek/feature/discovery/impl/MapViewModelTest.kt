@@ -6,8 +6,8 @@ import com.coffeepeek.feature.discovery.api.MapFocus
 import com.coffeepeek.feature.discovery.api.MapInteraction
 import com.coffeepeek.feature.discovery.domain.model.*
 import com.coffeepeek.feature.discovery.domain.rules.center
+import com.coffeepeek.feature.discovery.domain.rules.expandedForCarousel
 import com.coffeepeek.feature.discovery.domain.rules.expandedForPrefetch
-import com.coffeepeek.feature.discovery.domain.rules.nearbyBounds
 import com.coffeepeek.feature.discovery.impl.map.*
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineStart
@@ -40,12 +40,14 @@ class MapViewModelTest {
     private val here = Coordinates(53.9, 27.56)
 
     private fun TestScope.model(): MapViewModel =
-        MapViewModel(repository, city, location, details, analytics).also { store.put("map", it); runCurrent() }
+        MapViewModel(repository, city, location, details, analytics, FakeAccount(), FakeFavorites()).also { store.put("map", it); it.onAction(MapAction.PresentationChanged(true)); runCurrent() }
 
     private fun TestScope.settle() { advanceTimeBy(300); runCurrent() }
     private fun MapViewModel.send(vararg actions: MapAction, scope: TestScope) { actions.forEach { onAction(it); scope.runCurrent() } }
     private val MapViewModel.now get() = state.value
+    private fun queryAction(text: String) = MapAction.SyncCriteria(DiscoveryCriteria(text, DiscoveryFilters(cityId = "minsk")))
     private fun cityRequests() = repository.mapRequests.filter { it.second != 22f }
+    private fun carouselRequests() = repository.mapRequests.filter { it.second == 22f }
 
     // ---- the viewport ----
 
@@ -80,20 +82,21 @@ class MapViewModelTest {
         val vm = model()
         vm.send(MapAction.BoundsChanged(view, 12f), scope = this); settle()
         answer = listOf(zone("z2"))
-        vm.send(MapAction.SearchArea, scope = this); settle()
+        vm.send(MapAction.BoundsChanged(view, 15f), scope = this); settle()
         assertEquals(setOf("z1", "z2"), vm.now.zones.map { it.id }.toSet())
         city.flow.value = "brest"; runCurrent(); settle()
         assertEquals(listOf("z2"), vm.now.zones.map { it.id })
     }
 
-    @Test fun aFailedLoadOffersSearchingTheAreaAndARetryWorks() = runTest(dispatcher) {
+    @Test fun aFilterChangeAutomaticallyReloadsAfterAFailedRequest() = runTest(dispatcher) {
         repository.map = { _, _, _ -> Result.failure(DiscoveryFailure(FailureKind.Other)) }
         val vm = model()
         vm.send(MapAction.BoundsChanged(view, 14f), scope = this); settle()
-        assertTrue(vm.now.showSearchArea); assertFalse(vm.now.isLoading); assertEquals(MapInteraction.LoadFailed, analytics.interactions.last())
+        assertFalse(vm.now.isLoading); assertEquals(MapInteraction.LoadFailed, analytics.interactions.last())
         repository.map = { _, _, _ -> Result.success(MapContent(listOf(marker("a")))) }
-        vm.send(MapAction.SearchArea, scope = this); settle()
-        assertFalse(vm.now.showSearchArea); assertEquals(listOf("a"), vm.now.markers.map { it.id })
+        vm.send(MapAction.SyncCriteria(DiscoveryCriteria("", DiscoveryFilters(cityId = "minsk", openOnly = true))), scope = this); settle()
+        assertTrue(cityRequests().last().third.openOnly)
+        assertEquals(listOf("a"), vm.now.markers.map { it.id })
     }
 
     @Test fun aMovedViewReportsTheLoadAndTruncation() = runTest(dispatcher) {
@@ -112,7 +115,8 @@ class MapViewModelTest {
         vm.send(MapAction.BoundsChanged(view, 12f), scope = this)
         settle()
         assertEquals(listOf(cluster), vm.now.clusters)
-        assertEquals(listOf("near"), vm.now.nearby.map { it.id })
+        advanceTimeBy(201); runCurrent()
+        assertEquals(listOf("near"), vm.now.carouselShops.map { it.id })
         assertTrue(vm.now.markers.isEmpty())
         repository.map = { _, _, _ -> Result.success(MapContent(listOf(marker("unfolded")))) }
         vm.send(MapAction.BoundsChanged(view, 18f), scope = this)
@@ -121,25 +125,103 @@ class MapViewModelTest {
         assertEquals(listOf("unfolded"), vm.now.markers.map { it.id })
     }
 
-    // ---- nearby ----
+    // ---- viewport carousel ----
 
-    @Test fun theNearbyCarouselKeepsTheTenNearestWithoutDuplicatingClusteredPoints() = runTest(dispatcher) {
-        repository.map = { bounds, zoom, _ ->
+    @Test fun carouselReadsVisibleShopsWithoutGpsOrATenShopLimit() = runTest(dispatcher) {
+        repository.map = { _, zoom, _ ->
             if (zoom == 22f) Result.success(MapContent((1..12).map { marker("n$it", 53.9 + it * 0.001) } + marker("far", 54.5)))
             else Result.success(MapContent())
         }
         val vm = model()
-        location.flow.value = here; runCurrent()
-        assertEquals(nearbyBounds(here), repository.mapRequests.last().first)
-        assertEquals((1..10).map { "n$it" }, vm.now.nearby.map { it.id }); assertTrue(vm.now.markers.isEmpty()); assertTrue(vm.now.hasCarousel)
+        vm.send(MapAction.BoundsChanged(view, 14f), scope = this)
+        advanceTimeBy(501); runCurrent()
+        assertEquals(view, carouselRequests().single().first)
+        assertEquals(12, vm.now.carouselShops.size)
+        assertFalse(vm.now.carouselShops.any { it.id == "far" })
+        assertTrue(vm.now.markers.isEmpty()); assertTrue(vm.now.hasCarousel)
     }
 
-    @Test fun anInvalidPositionIsIgnoredAndTheFirstViewBecomesTheOrigin() = runTest(dispatcher) {
+    @Test fun aTightViewportLoadsNearbyCardsAndKeepsThemAfterALateCoarseReply() = runTest(dispatcher) {
+        val tight = MapBounds(53.899, 27.559, 53.901, 27.561)
+        val coarseReply = CompletableDeferred<Result<MapContent>>()
+        repository.map = { _, zoom, _ ->
+            if (zoom == 22f) Result.success(MapContent(listOf(
+                marker("visible", 53.9), marker("near1", 53.908), marker("near2", 53.913), marker("far", 53.94))))
+            else coarseReply.await()
+        }
+        val vm = model()
+        vm.send(MapAction.BoundsChanged(tight, 18f), scope = this)
+        advanceTimeBy(501); runCurrent()
+        assertEquals(tight.expandedForCarousel(), carouselRequests().single().first)
+        assertEquals(listOf("visible", "near1", "near2"), vm.now.carouselShops.map { it.id })
+        coarseReply.complete(Result.success(MapContent(listOf(marker("visible", 53.9)))))
+        runCurrent()
+        assertEquals(listOf("visible", "near1", "near2"), vm.now.carouselShops.map { it.id })
+    }
+
+    @Test fun anInvalidPositionIsIgnoredAndTheViewportDoesNotBecomeTheDistanceOrigin() = runTest(dispatcher) {
         val vm = model()
         location.flow.value = Coordinates(91.0, 27.0); runCurrent()
-        assertNull(vm.now.nearbyOrigin)
+        assertNull(vm.now.userLocation)
         vm.send(MapAction.BoundsChanged(view, 14f), scope = this)
-        assertEquals(view.center, vm.now.nearbyOrigin)
+        assertNull(vm.now.userLocation)
+    }
+
+    @Test fun visibleMarkersHaveCardsBeforeAndAfterASparseCarouselResponse() = runTest(dispatcher) {
+        repository.map = { _, zoom, _ -> Result.success(
+            if (zoom == 22f) MapContent() else MapContent(listOf(marker("visible")))) }
+        val vm = model()
+        vm.send(MapAction.BoundsChanged(view, 14f), scope = this)
+        advanceTimeBy(251); runCurrent()
+        assertEquals(listOf("visible"), vm.now.carouselShops.map { it.id })
+        advanceTimeBy(250); runCurrent()
+        assertEquals(listOf("visible"), vm.now.carouselShops.map { it.id })
+    }
+
+    @Test fun aLateCoarseMapResponseDoesNotReplaceTheDetailedCarousel() = runTest(dispatcher) {
+        val coarseReply = CompletableDeferred<Result<MapContent>>()
+        repository.map = { _, zoom, _ ->
+            if (zoom == 22f) Result.success(MapContent(listOf(marker("a"), marker("b", 53.91))))
+            else coarseReply.await()
+        }
+        val vm = model()
+        vm.send(MapAction.BoundsChanged(view, 14f), scope = this)
+        advanceTimeBy(501); runCurrent()
+        assertEquals(listOf("a", "b"), vm.now.carouselShops.map { it.id })
+        coarseReply.complete(Result.success(MapContent(listOf(marker("a")))))
+        runCurrent()
+        assertEquals(listOf("a", "b"), vm.now.carouselShops.map { it.id })
+    }
+
+    @Test fun panningInsideThePrefetchedAreaRefreshesOnlyVisibleCards() = runTest(dispatcher) {
+        repository.map = { _, _, _ -> Result.success(MapContent(listOf(marker("a", 53.89), marker("b", 53.91)))) }
+        val vm = model()
+        vm.send(MapAction.BoundsChanged(view, 14f), scope = this)
+        advanceTimeBy(501); runCurrent()
+        val coarseCount = cityRequests().size
+        val panned = MapBounds(53.90, 27.50, 53.94, 27.60)
+        vm.send(MapAction.BoundsChanged(panned, 14f), scope = this)
+        advanceTimeBy(501); runCurrent()
+        assertEquals(coarseCount, cityRequests().size)
+        assertEquals(panned, carouselRequests().last().first)
+        assertEquals(listOf("b"), vm.now.carouselShops.map { it.id })
+    }
+
+    @Test fun returningToAnAreaReloadsCardsDiscardedByAnotherAreasCoarseReply() = runTest(dispatcher) {
+        val other = MapBounds(54.00, 28.00, 54.04, 28.10)
+        repository.map = { bounds, zoom, _ -> Result.success(
+            if (zoom == 22f && bounds == view) MapContent(listOf(marker("a"))) else MapContent()) }
+        val vm = model()
+        vm.send(MapAction.BoundsChanged(view, 14f), scope = this)
+        advanceTimeBy(501); runCurrent()
+        assertEquals(listOf("a"), vm.now.carouselShops.map { it.id })
+        vm.send(MapAction.BoundsChanged(other, 14f), scope = this)
+        advanceTimeBy(251); runCurrent()
+        assertTrue(vm.now.carouselShops.isEmpty())
+        vm.send(MapAction.BoundsChanged(view, 14f), scope = this)
+        advanceTimeBy(501); runCurrent()
+        assertEquals(2, carouselRequests().count { it.first == view })
+        assertEquals(listOf("a"), vm.now.carouselShops.map { it.id })
     }
 
     // ---- selection ----
@@ -172,7 +254,8 @@ class MapViewModelTest {
     @Test fun aCarouselCardSelectsTheShopAndMovesTheCameraToZoom16() = runTest(dispatcher) {
         repository.map = { _, zoom, _ -> Result.success(MapContent(if (zoom == 22f) listOf(marker("n1")) else emptyList())) }
         val vm = model()
-        location.flow.value = here; runCurrent()
+        vm.send(MapAction.BoundsChanged(view, 14f), scope = this)
+        advanceTimeBy(501); runCurrent()
         vm.send(MapAction.SelectFromCarousel("n1"), scope = this)
         assertEquals("n1", vm.now.selectedShop?.id); assertEquals(16f, vm.now.camera?.zoom); assertEquals(marker("n1").coordinates, vm.now.camera?.target)
         vm.send(MapAction.CameraApplied, scope = this); assertNull(vm.now.camera)
@@ -236,7 +319,7 @@ class MapViewModelTest {
         assertEquals(1, vm.now.myLocationRequest)
         assertEquals(1, location.refreshes)
         vm.send(MapAction.MyLocationFound(here), scope = this)
-        assertEquals(15f, vm.now.camera?.zoom); assertEquals(here, vm.now.nearbyOrigin)
+        assertEquals(15f, vm.now.camera?.zoom); assertEquals(here, vm.now.userLocation)
         assertEquals(listOf(Triple("map", false, GeolocationOutcome.Unavailable), Triple("map", true, GeolocationOutcome.Available)), analytics.geolocations)
     }
 
@@ -296,7 +379,7 @@ class MapViewModelTest {
     @Test fun theSearchIsDebouncedTrimmedAndRetainsCardsWithoutCoordinates() = runTest(dispatcher) {
         repository.search = { q -> page(listOf(shop("a").copy(coordinates = here), shop("b"))) }
         val vm = model()
-        vm.send(MapAction.Query("c"), MapAction.Query("  cof "), scope = this)
+        vm.send(queryAction("c"), queryAction("  cof "), scope = this)
         assertTrue(vm.now.showSuggestions); assertTrue(vm.now.isSearchLoading); assertTrue(repository.queries.isEmpty())
         advanceTimeBy(351); runCurrent()
         val query = repository.queries.single()
@@ -308,7 +391,7 @@ class MapViewModelTest {
         repository.search = { page(listOf(shop("a"))) }
         details.answer = { Result.success(sampleDetails(it).copy(coordinates = here)) }
         val vm = model()
-        vm.send(MapAction.Query("a"), scope = this)
+        vm.send(queryAction("a"), scope = this)
         advanceTimeBy(351)
         runCurrent()
         vm.send(MapAction.SelectSuggestion("a"), scope = this)
@@ -322,7 +405,7 @@ class MapViewModelTest {
     @Test fun missingCoordinatesOrFailedDetailsKeepSuggestionsAvailableForRetry() = runTest(dispatcher) {
         repository.search = { page(listOf(shop("a"))) }
         val vm = model()
-        vm.send(MapAction.Query("a"), scope = this)
+        vm.send(queryAction("a"), scope = this)
         advanceTimeBy(351)
         runCurrent()
         vm.send(MapAction.SelectSuggestion("a"), scope = this)
@@ -341,10 +424,10 @@ class MapViewModelTest {
         repository.search = { page(listOf(shop("a"))) }
         details.answer = { gate.await(); Result.success(sampleDetails(it).copy(coordinates = here)) }
         val vm = model()
-        vm.send(MapAction.Query("a"), scope = this)
+        vm.send(queryAction("a"), scope = this)
         advanceTimeBy(351)
         runCurrent()
-        vm.send(MapAction.SelectSuggestion("a"), MapAction.Query("new"), scope = this)
+        vm.send(MapAction.SelectSuggestion("a"), queryAction("new"), scope = this)
         gate.complete(Unit)
         runCurrent()
         assertEquals("new", vm.now.query)
@@ -356,33 +439,33 @@ class MapViewModelTest {
         val gate = CompletableDeferred<Unit>()
         repository.search = { q -> if (q.text == "old") gate.await(); page(listOf(shop(q.text!!).copy(coordinates = here))) }
         val vm = model()
-        vm.send(MapAction.Query("old"), scope = this); advanceTimeBy(351); runCurrent()
-        vm.send(MapAction.Query("new"), scope = this); advanceTimeBy(351); runCurrent()
+        vm.send(queryAction("old"), scope = this); advanceTimeBy(351); runCurrent()
+        vm.send(queryAction("new"), scope = this); advanceTimeBy(351); runCurrent()
         gate.complete(Unit); runCurrent()
         assertEquals(listOf("new"), vm.now.suggestions.map { it.id })
         repository.search = { Result.failure(DiscoveryFailure(FailureKind.Other)) }
-        vm.send(MapAction.Query("bad"), scope = this); advanceTimeBy(351); runCurrent()
+        vm.send(queryAction("bad"), scope = this); advanceTimeBy(351); runCurrent()
         assertTrue(vm.now.searchFailed); assertFalse(vm.now.isSearchLoading); assertEquals(1, analytics.mapSearchFailures.size)
     }
 
-    @Test fun aPickedSuggestionClearsTheSearchSelectsTheShopAndTheOpeningIsReportedAsFromSearch() = runTest(dispatcher) {
+    @Test fun aPickedSuggestionPreservesTheSearchSelectsTheShopAndTheOpeningIsReportedAsFromSearch() = runTest(dispatcher) {
         repository.search = { page(listOf(shop("a").copy(coordinates = here))) }
         val vm = model()
-        vm.send(MapAction.Query("a"), scope = this); advanceTimeBy(351); runCurrent()
+        vm.send(queryAction("a"), scope = this); advanceTimeBy(351); runCurrent()
         vm.send(MapAction.SelectSuggestion("a"), scope = this)
-        assertEquals("", vm.now.query); assertFalse(vm.now.showSuggestions); assertEquals("a", vm.now.selectedShop?.id)
+        assertEquals("a", vm.now.query); assertFalse(vm.now.showSuggestions); assertEquals("a", vm.now.selectedShop?.id)
         assertEquals(16f, vm.now.camera?.zoom); assertEquals(MapInteraction.SearchSelected, analytics.interactions.last())
         val event = async(start = CoroutineStart.UNDISPATCHED) { vm.events.first() }
         vm.send(MapAction.OpenShop("a"), scope = this)
         assertEquals(MapEvent.OpenShop("a"), event.await()); assertEquals(listOf(true), analytics.mapOpened)
     }
 
-    @Test fun selectingAMarkerClearsTheQueryAndReportsTheOpeningAsNotFromSearch() = runTest(dispatcher) {
+    @Test fun selectingAMarkerPreservesTheQueryAndReportsTheOpeningAsNotFromSearch() = runTest(dispatcher) {
         repository.map = { _, _, _ -> Result.success(MapContent(listOf(marker("a")))) }
         val vm = model()
-        vm.send(MapAction.BoundsChanged(view, 14f), MapAction.Query("zz"), scope = this); settle()
+        vm.send(MapAction.BoundsChanged(view, 14f), queryAction("zz"), scope = this); settle()
         vm.send(MapAction.SelectMarker("a"), scope = this)
-        assertEquals("", vm.now.query); assertFalse(vm.now.showSuggestions)
+        assertEquals("zz", vm.now.query); assertFalse(vm.now.showSuggestions)
         vm.send(MapAction.OpenShop("a"), scope = this)
         assertEquals(listOf(false), analytics.mapOpened)
     }

@@ -141,7 +141,7 @@ remote config: после разрешённого setup возможны слу
 | Кофе/обжарщик | Фото, описание, переход к обжарщику/похожему кофе/кофейне, share и существующие внешние контакты. |
 | Избранное | Одна попытка на pending элемент; гостевой intent хранится только в памяти до 10 минут, после входа возобновляется один раз. Success после подтверждённого сервером изменения, failure по безопасной категории, старый account result исключается. Кофейни и обжарщики сохраняются по контракту `/api/v1/favorites`; новые события отмечены `favorite_storage=server`. |
 | Чекин | Общий flow между type picker, shop picker и visit/home editor; VM сохраняет tracker при rotation. Create/edit, первые изменения полей, attempt, client/server validation, upload/save/bean-search failure, retry, явная отмена, saved и отдельный created только для create. |
-| Лента | Viewed по первой успешно загруженной странице public feed; refresh, load more, retry, open/photo/shop/like/unlike/share. В собственном дневнике эти действия не выдаются за использование public feed. |
+| Лента | Viewed по первой успешно загруженной странице public feed; refresh, load more, retry, open/photo/shop/like/unlike/share, `coffee` — нажатие на пачку домашнего поста открывает кофе в каталоге. В собственном дневнике эти действия не выдаются за использование public feed. |
 | API | Один результат всей request pipeline, включая 401 → refresh → повтор; безопасная категория, HTTP method/status и monotonic latency. Refresh и внешние storage uploads не создают самостоятельные результаты; cancellation и старый аккаунт исключаются. |
 
 Длительность flow считается с начала процесса; API latency — с начала запроса.

@@ -4,28 +4,33 @@ import com.coffeepeek.admin.di.favorites.serverFavoritesModule
 import com.coffeepeek.admin.di.shop.shopFavoriteIntent
 import com.coffeepeek.admin.di.shop.shopCheckInModule
 import com.coffeepeek.admin.di.shop.AndroidShopCheckInFormRenderer
-import com.coffeepeek.admin.di.coffee.androidCoffeeScreenRenderer
+import com.coffeepeek.admin.di.coffee.coffeeCatalogueScreenRenderer
 import com.coffeepeek.admin.di.coffee.coffeeModule
+import com.coffeepeek.admin.di.coffee.CoffeeShelfTab
+import com.coffeepeek.admin.di.shelf.ShelfFeatureScreenRenderer
+import com.coffeepeek.admin.di.shelf.shelfBrewForm
+import com.coffeepeek.admin.di.shelf.shelfModule
+import com.coffeepeek.BuildConfig
 import com.coffeepeek.admin.di.appupdate.androidAppUpdateRenderer
 import com.coffeepeek.admin.di.auth.androidAuthScreenRenderer
-import com.coffeepeek.admin.di.community.androidCheckInDetailScreenRenderer
-import com.coffeepeek.admin.di.community.androidCommunityScreenRenderer
+import com.coffeepeek.admin.di.community.checkInDetailFeatureScreenRenderer
+import com.coffeepeek.admin.di.community.communityFeatureScreenRenderer
 import com.coffeepeek.api.CoffeePeekClient
 import com.coffeepeek.admin.di.contributions.androidContributionsScreenRenderer
 import com.coffeepeek.admin.di.discovery.androidDiscoveryScreenRenderer
 import com.coffeepeek.admin.di.contributions.contributionsModule
-import com.coffeepeek.admin.di.profile.androidAccountScreenRenderer
+import com.coffeepeek.admin.di.profile.accountFeatureScreenRenderer
 import com.coffeepeek.admin.di.notifications.androidNotificationsRenderer
-import com.coffeepeek.admin.di.profile.androidOwnProfileScreenRenderer
+import com.coffeepeek.admin.di.profile.ownProfileFeatureScreenRenderer
 import com.coffeepeek.admin.di.settings.androidSettingsScreenRenderer
-import com.coffeepeek.admin.di.profile.androidPublicProfileScreenRenderer
+import com.coffeepeek.admin.di.profile.publicProfileFeatureScreenRenderer
 import com.coffeepeek.admin.di.shop.AndroidShopDetailScreenRenderer
 import com.coffeepeek.admin.di.shop.AndroidShopCheckInListScreenRenderer
 import com.coffeepeek.admin.di.shop.shopBrowsingModule
 import com.coffeepeek.admin.di.checkinhistory.checkInHistoryModule
-import com.coffeepeek.admin.di.checkinhistory.AndroidCheckInHistoryScreenRenderer
+import com.coffeepeek.admin.di.checkinhistory.CheckInHistoryFeatureScreenRenderer
 import com.coffeepeek.admin.di.homecheckin.homeCheckInModule
-import com.coffeepeek.admin.di.homecheckin.AndroidCheckInCreateFlowRenderer
+import com.coffeepeek.admin.di.homecheckin.FeatureCheckInCreateFlowRenderer
 import com.coffeepeek.admin.locator.Locator
 import com.coffeepeek.feature.shopreport.data.repository.createShopIssueReportRepository
 import com.coffeepeek.feature.shopreport.impl.createShopReportEntry
@@ -43,10 +48,11 @@ internal fun initAndroidKoin(extraModules: List<org.koin.core.module.Module> = e
             serverFavoritesModule(),
             shopCheckInModule(),
             shopBrowsingModule(),
-            homeCheckInModule(),
-            checkInHistoryModule(),
+            homeCheckInModule(BuildConfig.SHELF_ENABLED),
+            checkInHistoryModule(BuildConfig.SHELF_ENABLED),
             coffeeModule(),
             contributionsModule(),
+            shelfModule(),
         ) + extraModules,
         shopReportRendererFactory = { client ->
             AndroidShopReportScreenRenderer(
@@ -68,18 +74,22 @@ internal fun initAndroidKoin(extraModules: List<org.koin.core.module.Module> = e
             AndroidShopCheckInListScreenRenderer(sessions = get(), users = get(), details = get(), votes = get(),
                 visibility = get(), blockActions = get())
         },
-        checkInHistoryRendererFactory = { get<AndroidCheckInHistoryScreenRenderer>() },
-        checkInCreateFlowRendererFactory = { get<AndroidCheckInCreateFlowRenderer>() },
-        coffeeRendererFactory = { androidCoffeeScreenRenderer(get()) },
-        publicProfileRendererFactory = { androidPublicProfileScreenRenderer(get(), get(), get(), get(), get()) },
-        ownProfileRendererFactory = { androidOwnProfileScreenRenderer(get(), get(), get(), get(), get(), get(), get(), get()) },
-        accountRendererFactory = { androidAccountScreenRenderer(get(), get()) },
+        checkInHistoryRendererFactory = { get<CheckInHistoryFeatureScreenRenderer>() },
+        checkInCreateFlowRendererFactory = { get<FeatureCheckInCreateFlowRenderer>() },
+        // Shelf: Coffee tab switcher, «+» scan flow, and shelf screens (live API on debug/release; Sandbox uses fake backend).
+        coffeeRendererFactory = {
+            coffeeCatalogueScreenRenderer(get(), CoffeeShelfTab(get(), get(), Locator.database.settingRepository).takeIf { BuildConfig.SHELF_ENABLED })
+        },
+        shelfRendererFactory = { ShelfFeatureScreenRenderer(get(), Locator.database.settingRepository, shelfBrewForm(get())) },
+        publicProfileRendererFactory = { publicProfileFeatureScreenRenderer(get(), get(), get(), get(), get()) },
+        ownProfileRendererFactory = { ownProfileFeatureScreenRenderer(get(), get(), get(), get(), get(), get(), get(), get()) },
+        accountRendererFactory = { accountFeatureScreenRenderer(get(), get()) },
         settingsRendererFactory = { androidSettingsScreenRenderer(get(), get(), get(), get()) },
         appUpdateRendererFactory = { androidAppUpdateRenderer(get(), get()) },
         notificationsRendererFactory = { androidNotificationsRenderer(get(), get(), get()) },
         authRendererFactory = { androidAuthScreenRenderer(get(), get()) },
-        communityRendererFactory = { androidCommunityScreenRenderer(get(), get(), get(), get(), get(), get()) },
-        checkInDetailRendererFactory = { androidCheckInDetailScreenRenderer(get(), get(), get(), get()) },
+        communityRendererFactory = { communityFeatureScreenRenderer(get(), get(), get(), get(), get(), get()) },
+        checkInDetailRendererFactory = { checkInDetailFeatureScreenRenderer(get(), get(), get(), get()) },
         contributionsRendererFactory = {
             androidContributionsScreenRenderer(get(), get(), get())
         },

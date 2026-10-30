@@ -62,7 +62,6 @@
     <string name="discovery_map_search_failed">Не удалось выполнить поиск</string>
     <string name="discovery_map_search_empty">Кофейни не найдены</string>
     <string name="discovery_map_truncated">Слишком много объектов — приблизьте карту</string>
-    <string name="discovery_map_search_area">Искать в этой области</string>
     <string name="discovery_map_zoom_in">Приблизить карту</string>
     <string name="discovery_map_zoom_out">Отдалить карту</string>
     <string name="discovery_map_my_location">Моё местоположение</string>

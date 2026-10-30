@@ -14,6 +14,8 @@ data class HomeHistoryEntry(
     val photos: List<HomeHistoryPhoto>,
     val visibility: HistoryVisibility?,
     val moderation: HistoryModeration,
+    /** The entry's own copy of its shelf-bag card, when the author shows the bag. */
+    val shelfBagCard: HomeHistoryPhoto? = null,
 )
 
 data class HomeHistoryRecipe(
@@ -23,6 +25,9 @@ data class HomeHistoryRecipe(
     val doseGrams: String?,
     val brewDurationSeconds: Int?,
     val tasteScore: Int?,
+    val roasterName: String? = null,
+    /** The catalogue coffee's current public slug while it is published. */
+    val coffeeProductSlug: String? = null,
 )
 
 data class HomeHistoryPhoto(val id: String, val url: String,

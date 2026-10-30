@@ -21,10 +21,11 @@ internal class HomePreparationBackend(private val client: HttpClient) {
         client.delete(entryPath(id)).homeEnvelope<JsonElement>()
     }
 
-    suspend fun page(page: Int, pageSize: Int, from: String?, to: String?): HomePageDto =
+    suspend fun page(page: Int, pageSize: Int, from: String?, to: String?, shelfBagId: String? = null): HomePageDto =
         client.get(PATH) {
             parameter("pageNumber", page); parameter("pageSize", pageSize)
             from?.let { parameter("from", it) }; to?.let { parameter("to", it) }
+            shelfBagId?.let { parameter("shelfBagId", it) }
         }.homeData()
 
     suspend fun calendar(from: String, to: String): List<HomeCalendarDto> =

@@ -2,7 +2,7 @@ package com.coffeepeek.admin.di.checkinhistory
 
 import com.coffeepeek.admin.di.shop.CheckInTestSessions
 import com.coffeepeek.admin.di.homecheckin.homeCheckInModule
-import com.coffeepeek.admin.di.homecheckin.AndroidCheckInCreateFlowRenderer
+import com.coffeepeek.admin.di.homecheckin.FeatureCheckInCreateFlowRenderer
 import com.coffeepeek.api.CoffeePeekClient
 import com.coffeepeek.core.session.SessionReader
 import com.coffeepeek.domain.repository.SessionRepository
@@ -43,16 +43,16 @@ class CheckInHistoryModuleTest {
                     } }
                     single<BrewMethodCatalog> { BrewMethodCatalog { error("Unexpected methods read") } }
                 },
-                homeCheckInModule("https://fixture.invalid"), checkInHistoryModule("https://fixture.invalid"))
+                homeCheckInModule(shelfEnabled = false, apiBaseUrl = "https://fixture.invalid"), checkInHistoryModule(shelfEnabled = false, apiBaseUrl = "https://fixture.invalid"))
         }
         try {
-            assertSame(app.koin.get<AndroidCheckInHistoryScreenRenderer>(), app.koin.get<AndroidCheckInHistoryScreenRenderer>())
-            assertSame(app.koin.get<AndroidCheckInHistoryCalendar>(), app.koin.get<AndroidCheckInHistoryCalendar>())
+            assertSame(app.koin.get<CheckInHistoryFeatureScreenRenderer>(), app.koin.get<CheckInHistoryFeatureScreenRenderer>())
+            assertSame(app.koin.get<CheckInHistoryCalendar>(), app.koin.get<CheckInHistoryCalendar>())
             assertEquals(1, app.koin.getAll<CheckInHistoryRepository>().size)
             assertEquals(1, app.koin.getAll<HomePreparationReader>().size)
             assertSame(app.koin.get<HomePreparationRepository>(), app.koin.get<HomePreparationReader>())
             assertEquals(1, app.koin.getAll<HomeHistoryReader>().size)
-            assertSame(app.koin.get<AndroidCheckInCreateFlowRenderer>(), app.koin.get<AndroidCheckInCreateFlowRenderer>())
+            assertSame(app.koin.get<FeatureCheckInCreateFlowRenderer>(), app.koin.get<FeatureCheckInCreateFlowRenderer>())
             assertEquals(0, credentials)
             assertEquals(0, sessionReads)
         } finally {

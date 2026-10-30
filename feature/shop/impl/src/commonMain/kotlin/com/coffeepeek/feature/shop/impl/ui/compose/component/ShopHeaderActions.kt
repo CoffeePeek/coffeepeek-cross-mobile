@@ -30,6 +30,19 @@ internal fun ShopHeaderActions(
     onShare: () -> Unit,
     hazeState: HazeState? = null,
 ) {
+    val identity = LocalShopBusinessIdentity.current
+    val analytics = com.coffeepeek.feature.shop.impl.ui.data.LocalShopAnalytics.current
+    val ownership = com.coffeepeek.feature.ownership.api.LocalBusinessOwnership.current
+    if (identity != null && ownership != null) {
+        ownership.ProfileActions("CoffeeShop", identity.id, identity.slug, onSuggestChange,
+            onOwnerEdit = { analytics.action(com.coffeepeek.feature.shop.api.ShopActionMetric.Edit) },
+            favorite = { ShopFavoriteButton(isFavorite, favoriteAvailable, isFavoriteLoading, onToggleFavorite, hazeState = hazeState) },
+            share = {
+                CoffeePeekGlassIconButton(onShare, stringResource(Res.string.shop_detail_share), hazeState = hazeState,
+                    modifier = Modifier.shopExposure(ShopExposure.Share)) { Icon(CoffeePeekIcons.Share, null) }
+            })
+        return
+    }
     Row(horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2),
         verticalAlignment = Alignment.CenterVertically) {
         CoffeePeekGlassIconButton(onClick = onSuggestChange,

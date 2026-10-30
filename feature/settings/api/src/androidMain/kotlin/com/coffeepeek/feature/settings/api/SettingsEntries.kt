@@ -25,6 +25,7 @@ interface UsagePolicyEntry {
 class SettingsSlots(
     /** The sign-in prompt card shared with other screens (login and register actions are the tab's own callbacks). */
     val guestCard: @Composable (onLogin: () -> Unit, onRegister: () -> Unit, modifier: Modifier) -> Unit,
+    val accountSwitch: @Composable () -> Unit = {},
 )
 
 /** The Settings tab. Caller owns the tab, navigation and the floating bar clearance. */

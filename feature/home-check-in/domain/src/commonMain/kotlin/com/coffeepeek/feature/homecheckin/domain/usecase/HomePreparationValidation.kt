@@ -13,7 +13,7 @@ fun homePreparationFieldErrors(input: HomePreparationInput, editing: Boolean = f
     dateError(input, now)?.let { put(Date, it) }
     if (input.brewMethodCode != null && !Regex("^[a-z0-9][a-z0-9_-]{0,99}$").matches(input.brewMethodCode))
         put(Method, HomePreparationIssue.InvalidMethod)
-    val selectors = listOf(input.coffeeProductSlug, input.coffeeProductId, input.customBeanName).count { !it.isNullOrBlank() }
+    val selectors = listOf(input.coffeeProductSlug, input.coffeeProductId, input.customBeanName, input.shelfBagId).count { !it.isNullOrBlank() }
     if (selectors > 1 || (!editing && !input.coffeeProductId.isNullOrBlank()))
         put(Bean, HomePreparationIssue.ConflictingBeanSelection)
     else if ((input.customBeanName?.trim()?.length ?: 0) > 250)

@@ -10,6 +10,9 @@ import androidx.compose.runtime.Composable
  * delegate to the existing editor and shop picker; this read entry owns no writers.
  * Picker callbacks are one-off lifecycle notifications for application-owned flow
  * coordination; no analytics SDK, record or account data crosses this contract.
+ *
+ * No default arguments: Kotlin/Native links an implementation in another module against the abstract Composable's exact
+ * signature, and Compose makes defaulted parameters of the override nullable, so defaults would break iOS.
  */
 interface CheckInHistoryEntry {
     @Composable
@@ -25,8 +28,8 @@ interface CheckInHistoryEntry {
         onOpenHome: (id: String) -> Unit,
         onCreateShop: () -> Unit,
         onCreateHome: () -> Unit,
-        contentGeneration: Int = 0,
-        onCreatePickerOpened: () -> Unit = {},
-        onCreatePickerCancelled: () -> Unit = {},
+        contentGeneration: Int,
+        onCreatePickerOpened: () -> Unit,
+        onCreatePickerCancelled: () -> Unit,
     )
 }

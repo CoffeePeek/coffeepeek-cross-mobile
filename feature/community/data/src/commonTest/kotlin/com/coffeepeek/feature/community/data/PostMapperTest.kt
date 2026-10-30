@@ -30,6 +30,20 @@ class PostMapperTest {
         assertEquals("https://api.example/api/Photos/avatar/author.jpg", post.author.avatarUrl)
     }
 
+    @Test fun aShownBagBringsItsCardThumbnailRoasterAndCatalogueSlug() = runBlocking {
+        val post = one("""{"id":"home-1","kind":"Home","home":{"preparedOn":"2026-10-13","beanName":"Honey Bloom","roasterName":"Sibaristica","coffeeProductSlug":"honey-bloom"},
+            "shelfBagPhotoUrl":"/api/v1/check-ins/home-1/photos/bag","shelfBagPhotoVariants":[
+            {"purpose":"thumb","contentType":"image/jpeg","width":240,"height":320,"sizeBytes":9,"url":"/api/v1/check-ins/home-1/photos/bag/variants/thumb/1/t.jpg"}]}""")
+        assertEquals("https://api.example/api/v1/check-ins/home-1/photos/bag/variants/thumb/1/t.jpg", post.home?.shelfBagCardUrl)
+        assertEquals("Sibaristica", post.home?.roasterName)
+        assertEquals("honey-bloom", post.home?.coffeeProductSlug)
+        assertTrue(post.photos.originals.isEmpty(), "The bag card is not one of the post's photos")
+        val pending = one("""{"id":"home-2","kind":"Home","home":{"preparedOn":"2026-10-13"},"shelfBagPhotoUrl":"/bag","shelfBagPhotoVariants":[]}""")
+        assertEquals("https://api.example/bag", pending.home?.shelfBagCardUrl)
+        val hidden = one("""{"id":"home-3","kind":"Home","home":{"preparedOn":"2026-10-13","coffeeProductSlug":""}}""")
+        assertNull(hidden.home?.shelfBagCardUrl); assertNull(hidden.home?.coffeeProductSlug)
+    }
+
     @Test fun aShopVisitNeverCarriesARecipeEvenWhenTheServerSendsOne() = runBlocking {
         val post = one("""{"id":"visit","kind":"Shop","home":{"preparedOn":"2026-10-13","beanName":"Ignored"}}""")
         assertFalse(post.isHome); assertNull(post.home)

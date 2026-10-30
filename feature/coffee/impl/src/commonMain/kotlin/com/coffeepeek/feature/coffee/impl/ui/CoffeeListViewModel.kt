@@ -145,6 +145,6 @@ private fun changedKeys(old: CoffeeFilters, new: CoffeeFilters): List<String> =
 
 /** Canonical identity of the criteria: whitespace-normalized query and sorted selections. */
 private fun CoffeeListState.fingerprint(): String =
-    query.trim().replace(Regex("\\s+"), " ") + "|" + filters.values.filterValues { it.isNotEmpty() }.toSortedMap()
-        .entries.joinToString(";") { (group, options) -> group + "=" + options.sorted().joinToString(",") } +
+    query.trim().replace(Regex("\\s+"), " ") + "|" + filters.values.filterValues { it.isNotEmpty() }
+        .entries.sortedBy { it.key }.joinToString(";") { (group, options) -> group + "=" + options.sorted().joinToString(",") } +
         "|" + filters.availableOnly

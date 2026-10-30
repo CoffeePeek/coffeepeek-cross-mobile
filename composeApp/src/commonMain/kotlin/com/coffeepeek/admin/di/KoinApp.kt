@@ -39,6 +39,8 @@ import com.coffeepeek.admin.ui.screen.shop.ShopCheckInFormRenderer
 import com.coffeepeek.admin.ui.screen.shop.LegacyShopCheckInFormRenderer
 import com.coffeepeek.admin.ui.screen.coffee.CoffeeScreenRenderer
 import com.coffeepeek.admin.ui.screen.coffee.LegacyCoffeeScreenRenderer
+import com.coffeepeek.admin.ui.screen.shelf.ShelfScreenRenderer
+import com.coffeepeek.admin.ui.screen.shelf.UnsupportedShelfScreenRenderer
 import com.coffeepeek.admin.feature.appupdate.ui.AppUpdateRenderer
 import com.coffeepeek.admin.feature.appupdate.ui.LegacyAppUpdateRenderer
 import com.coffeepeek.admin.feature.notifications.ui.LegacyNotificationsRenderer
@@ -98,6 +100,9 @@ import com.coffeepeek.domain.model.ShopChangeSection
 import com.coffeepeek.admin.di.imageModule
 import com.coffeepeek.data.di.dataModule
 import com.coffeepeek.feature.favorites.domain.usecase.ObserveFavoriteIdsUseCase
+import com.coffeepeek.domain.feature.favorites.api.FavoriteKind
+import com.coffeepeek.domain.feature.favorites.api.FavoritesRepository
+import kotlinx.coroutines.flow.map
 import org.koin.core.context.startKoin
 import org.koin.core.module.Module
 import org.koin.core.scope.Scope
@@ -130,6 +135,7 @@ fun initKoin(
     contributionsRendererFactory: Scope.() -> ContributionsScreenRenderer = { LegacyContributionsScreenRenderer },
     discoveryRendererFactory: Scope.() -> DiscoveryScreenRenderer = { LegacyDiscoveryScreenRenderer },
     notificationsRendererFactory: Scope.() -> NotificationsRenderer = { LegacyNotificationsRenderer },
+    shelfRendererFactory: Scope.() -> ShelfScreenRenderer = { UnsupportedShelfScreenRenderer },
     analyticsEnabled: Boolean = true,
 ) {
     check(AppConfig.baseUrl.isNotBlank()) {
@@ -152,9 +158,11 @@ fun initKoin(
             shopCheckInRendererFactory, shopDetailRendererFactory, shopCheckInListRendererFactory,
             checkInHistoryRendererFactory, checkInCreateFlowRendererFactory, coffeeRendererFactory, roasterRendererFactory,
             publicProfileRendererFactory, ownProfileRendererFactory, accountRendererFactory, settingsRendererFactory, appUpdateRendererFactory,
-            authRendererFactory, communityRendererFactory, checkInDetailRendererFactory, contributionsRendererFactory, discoveryRendererFactory, notificationsRendererFactory),
+            authRendererFactory, communityRendererFactory, checkInDetailRendererFactory, contributionsRendererFactory, discoveryRendererFactory, notificationsRendererFactory,
+            shelfRendererFactory),
         imageModule(),
         roasterModule(),
+        com.coffeepeek.admin.di.ownership.businessOwnershipModule(),
         updateInstallerModule(),
     )
     val application = startKoin { modules(commonModules + platformModules) }
@@ -188,7 +196,9 @@ private fun appModule(
     contributionsRendererFactory: Scope.() -> ContributionsScreenRenderer,
     discoveryRendererFactory: Scope.() -> DiscoveryScreenRenderer,
     notificationsRendererFactory: Scope.() -> NotificationsRenderer,
+    shelfRendererFactory: Scope.() -> ShelfScreenRenderer,
 ) = module {
+    single<ShelfScreenRenderer> { shelfRendererFactory() }
     single<CoffeeScreenRenderer> { coffeeRendererFactory() }
     single<RoasterScreenRenderer> { roasterRendererFactory() }
     single<PublicProfileScreenRenderer> { publicProfileRendererFactory() }
@@ -275,7 +285,12 @@ private fun appModule(
     factory { FeedViewModel(get(), get(), get(), get(), getOrNull<ObserveFavoriteIdsUseCase>()) }
     factory { com.coffeepeek.admin.feature.community.ui.CommunityViewModel(get(), get(), get(), get(), get(), get()) }
     factory { com.coffeepeek.admin.ui.screen.roaster.RoasterListViewModel(get(), get(), get()) }
-    factory { MapViewModel(get(), get()) }
+    factory {
+        MapViewModel(get(), get(), com.coffeepeek.admin.di.discovery.legacyDiscoveryMapSource(get<CoffeePeekClient>().client, get(), get()),
+            sessions = get(), favoriteMembership = get<FavoritesRepository>().observeFavorites().map { result ->
+                result.map { entries -> entries.filter { it.kind == FavoriteKind.CoffeeShop }.mapNotNull { it.slug }.toSet() }
+            })
+    }
     factory { (shopId: String) -> ShopDetailViewModel(
         shopId = shopId,
         shopRepository = get(),

@@ -981,3 +981,30 @@ Delivery: only this check-in task is prepared for the user-requested direct push
 to develop. Its commits are based on current origin/develop (8ac9f49a), excluding
 the unrelated predecessor documentation commit 61aad2ec. Untracked marketing
 assets and local screenshots are excluded.
+
+## Profile top controls on develop — 2026-10-30
+
+Both active shop profiles are covered: Android's migrated Shop implementation
+and iOS's transitional application screen. The four hero controls share one
+screen backdrop and follow the first list item's scroll offset; they disappear
+once that item leaves view. The owner edit button now requests the same native
+UIKit glass renderer as the adjacent favorite/share buttons on iOS through a
+narrow design-system presenter. Android and previews keep the existing Compose
+renderer. No business state, route or analytics action changed.
+
+Verification from `develop` `c0d5a936c` plus the scoped fix: Shop 108 tests /
+12 suites, ownership 18 / 2, design system 45 / 13, and app Direct Debug 888 /
+177 passed with zero failures, errors or skips. Android Direct Sandbox assembly,
+DEX class and isolation checks and Kotlin iOS Arm64 compilation passed.
+Existing paired light/dark previews compile, but native Liquid Glass rendering
+cannot be inspected on Windows. No app was installed or launched. Physical iOS
+scroll, material brightness, light/dark, large fonts, accessibility and back
+gestures remain manual gates.
+
+### PR #223 review follow-up — 2026-10-30
+
+The changed shop screen now delegates its scaffold, list sections, check-ins
+and bottom action to cohesive private components. The hero action overlay
+still shares the same list state and Haze source. Shop implementation tests:
+108 / 12 suites, zero failures or errors; Direct Sandbox assembly and packaged
+DEX class check passed. iOS native visual review remains open.

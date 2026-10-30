@@ -42,6 +42,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.coffeepeek.admin.location.PlatformLocation
 import com.coffeepeek.domain.model.MapBounds
 import com.coffeepeek.domain.model.MapCluster
 import com.coffeepeek.domain.model.MapCoffeeZone
@@ -351,7 +352,7 @@ actual fun CoffeeMap(
             return@LaunchedEffect
         }
 
-        context.lastKnownLocation()?.let { location ->
+        PlatformLocation.getLastKnownLocation()?.let { location ->
             currentLocation = LatLng(location.latitude, location.longitude)
             activeMap.animateCamera(
                 CameraUpdateFactory.newLatLngZoom(
@@ -415,7 +416,7 @@ actual fun CoffeeMap(
             },
         )
         if (showAttribution) Text(
-            text = "OpenFreeMap · OpenMapTiles · © OSM",
+            text = "OpenMapTiles · © OSM",
             modifier = Modifier
                 .align(Alignment.BottomStart)
                 .padding(8.dp)

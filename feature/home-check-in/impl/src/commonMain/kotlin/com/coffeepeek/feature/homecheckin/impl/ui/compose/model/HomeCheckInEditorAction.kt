@@ -21,6 +21,12 @@ internal sealed interface HomeCheckInEditorAction {
     data object SearchBeans : HomeCheckInEditorAction
     data class BeanSelected(val slug: String) : HomeCheckInEditorAction
     data class CustomBeanChosen(val name: String) : HomeCheckInEditorAction
+    /** Internal: reads the owner's bags each time the picker opens. */
+    data object LoadShelfBags : HomeCheckInEditorAction
+    data class ShelfBagSelected(val id: String) : HomeCheckInEditorAction
+    /** Internal: finds the card of a bag the form started or was saved with. */
+    data object ResolveShelfBagCard : HomeCheckInEditorAction
+    data class ShowShelfBagChanged(val show: Boolean) : HomeCheckInEditorAction
     data class PhotosAdded(val photos: List<HomePreparationUpload>) : HomeCheckInEditorAction
     data class RemovePhoto(val index: Int) : HomeCheckInEditorAction
     data class MovePhoto(val from: Int, val to: Int) : HomeCheckInEditorAction
