@@ -1,7 +1,9 @@
 package com.coffeepeek.admin.di.coffee
 
 import com.coffeepeek.admin.sandbox.backend.SandboxBackend
-import com.coffeepeek.api.CoffeePeekClient
+import com.coffeepeek.core.network.ApiClients
+import com.coffeepeek.core.network.SessionCredentials
+import com.coffeepeek.core.network.SessionTokens
 import com.coffeepeek.feature.coffee.api.CoffeePicker
 import com.coffeepeek.feature.coffee.domain.model.CoffeeFilters
 import com.coffeepeek.feature.coffee.domain.repository.CoffeeRepository
@@ -18,8 +20,13 @@ class CoffeeModuleTest {
 
     @Test fun moduleBuildsMigratedRepositoryPickerAndRendererOverThePlainClient() = runTest {
         val backend = SandboxBackend(byteArrayOf(1), today = LocalDate.parse("2026-10-18"))
-        val client = CoffeePeekClient(SandboxBackend.BASE_URL, temporary.newFolder().path, false,
-            getToken = { null }, saveToken = { error("No credential writes") },
+        val client = ApiClients(SandboxBackend.BASE_URL, temporary.newFolder().path, false,
+            credentials = object : SessionCredentials {
+                override suspend fun load(): SessionTokens? { return null }
+                override suspend fun save(tokens: SessionTokens?) { error("No credential writes") }
+                override suspend fun replace(expected: SessionTokens, tokens: SessionTokens?): Boolean = false
+            },
+            refreshWith = { { Result.failure(IllegalStateException("unused")) } },
             apiClientFactory = backend::apiClient, uploadClientFactory = backend::uploadClient)
         val app = koinApplication { modules(module { single { client } }, coffeeModule()) }
         try {

@@ -1,7 +1,7 @@
 package com.coffeepeek.admin.analytics
 
-import com.coffeepeek.api.RequestObservation
-import com.coffeepeek.api.RequestObserver
+import com.coffeepeek.core.network.RequestObservation
+import com.coffeepeek.core.network.RequestObserver
 import com.coffeepeek.core.session.SessionReader
 
 internal fun analyticsRequestObserver(service: AnalyticsService, sessions: SessionReader) =

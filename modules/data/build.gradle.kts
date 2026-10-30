@@ -19,6 +19,7 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
+            implementation(project(module.core.network))
             implementation(project(module.core.session))
             implementation(project(module.legacy.domain))
             implementation(project(module.legacy.network))

@@ -3,7 +3,7 @@ package com.coffeepeek.admin.di.ownership
 import androidx.compose.runtime.Composable
 import com.coffeepeek.admin.ui.component.NativeNavigationBar
 import com.coffeepeek.admin.utils.rememberPhotoPicker
-import com.coffeepeek.api.CoffeePeekClient
+import com.coffeepeek.core.network.ApiClients
 import com.coffeepeek.core.designsystem.component.CoffeePeekImage
 import com.coffeepeek.core.network.requestResult
 import com.coffeepeek.core.session.SessionReader
@@ -20,7 +20,7 @@ import org.koin.dsl.module
 internal fun businessOwnershipModule() = module {
     single<OwnershipAccount> { SessionOwnershipAccount(get()) }
     single<BusinessPhotoUploader> { OwnershipMediaUploader(get(), get()) }
-    single<BusinessOwnershipRepository> { createBusinessOwnershipRepository(get<CoffeePeekClient>().client, get(), get()) }
+    single<BusinessOwnershipRepository> { createBusinessOwnershipRepository(get<ApiClients>().client, get(), get()) }
     single<BusinessOwnershipEntry> {
         createBusinessOwnershipEntry(get(), get(), ownershipImage, ownershipPicker,
             backHandler = { back -> NativeNavigationBar("", back, customBack = true, action = null) },

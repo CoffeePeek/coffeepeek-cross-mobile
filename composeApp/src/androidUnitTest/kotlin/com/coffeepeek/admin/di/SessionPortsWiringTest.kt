@@ -17,7 +17,7 @@ class SessionPortsWiringTest {
             override val settingRepository: SettingRepository get() = error("Room must stay lazy")
         }
         val app = koinApplication {
-            modules(dataModule("https://unused.example", "cache", database), offlineStorage())
+            modules(dataModule("https://unused.example", database), offlineStorage())
         }
         try {
             val reader = app.koin.get<SessionReader>()

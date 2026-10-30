@@ -30,7 +30,7 @@ import com.coffeepeek.admin.di.profile.featureOwnProfileScreenRenderer
 import com.coffeepeek.admin.di.profile.featurePublicProfileScreenRenderer
 import com.coffeepeek.admin.di.discovery.featureDiscoveryScreenRenderer
 import com.coffeepeek.admin.di.favorites.serverFavoritesModule
-import com.coffeepeek.api.CoffeePeekClient
+import com.coffeepeek.core.network.ApiClients
 import com.coffeepeek.admin.di.notifications.featureNotificationsRenderer
 import com.coffeepeek.admin.di.settings.featureSettingsScreenRenderer
 import com.coffeepeek.admin.utils.ErrorHandler
@@ -71,14 +71,14 @@ actual fun initPlatformKoin() {
         ownProfileRendererFactory = { featureOwnProfileScreenRenderer(get(), get(), get(), get(), get(), get(), get(), get(), get()) },
         contributionsRendererFactory = { featureContributionsScreenRenderer(get(), get(), get()) },
         accountRendererFactory = { featureAccountScreenRenderer(get(), get(), get()) },
-        discoveryRendererFactory = { featureDiscoveryScreenRenderer(get<CoffeePeekClient>().client, get(), get(), get(), get(), get(), get(), get()) },
+        discoveryRendererFactory = { featureDiscoveryScreenRenderer(get<ApiClients>().client, get(), get(), get(), get(), get(), get(), get()) },
     )
 }
 
-private fun iosShopReportRenderer(client: CoffeePeekClient) =
+private fun iosShopReportRenderer(client: ApiClients) =
     FeatureShopReportScreenRenderer(createShopReportEntry(createShopIssueReportRepository(client.client)))
 
-private fun iosShopGalleryRenderer(client: CoffeePeekClient) =
+private fun iosShopGalleryRenderer(client: ApiClients) =
     FeatureShopMenuGalleryScreenRenderer(createShopMenuGalleryEntry(createShopMenuGalleryRepository(client.client)))
 
 private fun Scope.iosShopDetailRenderer() =

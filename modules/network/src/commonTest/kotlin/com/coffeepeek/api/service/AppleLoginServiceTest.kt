@@ -1,6 +1,7 @@
 package com.coffeepeek.api.service
 
-import com.coffeepeek.api.installServerErrorValidation
+import com.coffeepeek.core.network.ServiceUnavailableException
+import io.ktor.client.plugins.HttpResponseValidator
 import com.coffeepeek.api.model.request.AppleLoginReq
 import com.coffeepeek.api.utils.ApiException
 import com.coffeepeek.api.utils.JsonExt
@@ -212,7 +213,9 @@ class AppleLoginServiceTest {
         // Apple exchange must inspect 4xx responses even when a caller enables default validation.
         expectSuccess = true
         install(ContentNegotiation) { json(JsonExt.json) }
-        if (validateServerErrors) installServerErrorValidation()
+        if (validateServerErrors) HttpResponseValidator {
+            validateResponse { if (it.status.value in 500..599) throw ServiceUnavailableException(it.status.value) }
+        }
     }
 
     private suspend fun HttpClient.exchangeFailure(): Throwable = try {

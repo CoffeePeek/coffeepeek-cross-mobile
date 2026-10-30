@@ -1,8 +1,6 @@
 package com.coffeepeek.data.di
 
-import com.coffeepeek.api.CoffeePeekClient
 import com.coffeepeek.api.CoffeePeekRepo
-import com.coffeepeek.data.session.SessionTokenProvider
 import com.coffeepeek.core.session.DefaultSessionStore
 import com.coffeepeek.core.session.SessionReader
 import com.coffeepeek.core.session.SessionStore
@@ -19,7 +17,6 @@ import com.coffeepeek.data.repository.ShopChangeRequestRepositoryImpl
 import com.coffeepeek.data.repository.ShopIssueReportRepositoryImpl
 import com.coffeepeek.data.repository.ShopRepositoryImpl
 import com.coffeepeek.data.util.FileUrlResolver
-import com.coffeepeek.core.session.JwtUtils
 import com.coffeepeek.domain.repository.AuthRepository
 import com.coffeepeek.domain.repository.CheckInRepository
 import com.coffeepeek.domain.repository.FavoriteRepository
@@ -38,10 +35,8 @@ import org.koin.dsl.module
 
 fun dataModule(
     baseUrl: String,
-    cacheFolderPath: String,
     database: DatabaseCore,
     platformContext: Any? = null,
-    debug: Boolean = false,
     registerLegacyFavorites: Boolean = true,
 ): Module = module {
     single { CoroutineScope(Dispatchers.Default + SupervisorJob()) }
@@ -50,40 +45,7 @@ fun dataModule(
     single { createPlatformSessionSecureStore(platformContext, get()) }
     single<SessionStore> { DefaultSessionStore(get(), get()) }
     single<SessionReader> { get<SessionStore>() }
-    single { SessionTokenProvider(get(), get()) }
     single { FileUrlResolver(baseUrl) }
-    single {
-        val tokenProvider = get<SessionTokenProvider>()
-        CoffeePeekClient(
-            url = baseUrl,
-            cacheFolderPath = cacheFolderPath,
-            debug = debug,
-            getToken = { tokenProvider.current() },
-            saveToken = { authResp ->
-                val sessionRepository = get<SessionStore>()
-                val current = sessionRepository.peekSession()
-                val session = authResp?.let {
-                    com.coffeepeek.domain.model.Session(
-                        accessToken = it.accessToken,
-                        refreshToken = it.refreshToken.takeIf { token -> token.isNotBlank() }
-                            ?: current?.refreshToken,
-                        userId = JwtUtils.extractUserId(it.accessToken) ?: current?.userId,
-                    )
-                }
-                sessionRepository.saveSession(session)
-            },
-            replaceToken = { expected, updated ->
-                val sessions = get<SessionStore>()
-                val old = sessions.peekSession()
-                if (old?.accessToken != expected.accessToken || old.refreshToken.orEmpty() != expected.refreshToken) false
-                else sessions.replaceSession(old, updated?.let {
-                    com.coffeepeek.domain.model.Session(it.accessToken, it.refreshToken,
-                        JwtUtils.extractUserId(it.accessToken) ?: old.userId)
-                })
-            },
-        )
-    }
-
     single { CoffeePeekRepo(get()) }
     single { get<CoffeePeekRepo>().authService }
     single { get<CoffeePeekRepo>().shopApiService }

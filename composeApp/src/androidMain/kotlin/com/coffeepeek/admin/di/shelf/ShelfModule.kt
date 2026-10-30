@@ -3,7 +3,7 @@ package com.coffeepeek.admin.di.shelf
 import android.content.Context
 import com.coffeepeek.admin.locator.Constants
 import com.coffeepeek.admin.locator.Locator
-import com.coffeepeek.api.CoffeePeekClient
+import com.coffeepeek.core.network.ApiClients
 import com.coffeepeek.core.session.SessionReader
 import com.coffeepeek.feature.shelf.api.ShelfEntry
 import com.coffeepeek.feature.shelf.data.repository.createShelfRepository
@@ -21,7 +21,7 @@ internal fun shelfModule(
     models: (() -> Context) -> ShelfScannerModels = ::productionShelfModels,
 ) = module {
     single<ShelfRepository> {
-        val client = get<CoffeePeekClient>()
+        val client = get<ApiClients>()
         createShelfRepository(client.client, client.uploadClient, apiBaseUrl, SessionShelfAccount(get<SessionReader>()))
     }
     single<BagScanner> {

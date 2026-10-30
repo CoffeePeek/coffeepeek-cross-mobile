@@ -3,7 +3,9 @@ package com.coffeepeek.admin.di.checkinhistory
 import com.coffeepeek.admin.di.shop.CheckInTestSessions
 import com.coffeepeek.admin.di.homecheckin.homeCheckInModule
 import com.coffeepeek.admin.di.homecheckin.FeatureCheckInCreateFlowRenderer
-import com.coffeepeek.api.CoffeePeekClient
+import com.coffeepeek.core.network.ApiClients
+import com.coffeepeek.core.network.SessionCredentials
+import com.coffeepeek.core.network.SessionTokens
 import com.coffeepeek.core.session.SessionReader
 import com.coffeepeek.core.session.SessionStore
 import com.coffeepeek.admin.feature.catalog.api.BrewMethodCatalog
@@ -26,9 +28,13 @@ class CheckInHistoryModuleTest {
     @Test fun graphResolvesLazilyWithoutReadingCredentialsOrOpeningAccountLeases() {
         var credentials = 0
         var sessionReads = 0
-        val client = CoffeePeekClient("https://fixture.invalid", temporary.newFolder("cache").path, false,
-            getToken = { credentials++; error("Unexpected credentials read") },
-            saveToken = { error("Unexpected credentials write") })
+        val client = ApiClients("https://fixture.invalid", temporary.newFolder("cache").path, false,
+            credentials = object : SessionCredentials {
+                override suspend fun load(): SessionTokens? { credentials++; error("Unexpected credentials read") }
+                override suspend fun save(tokens: SessionTokens?) { error("Unexpected credentials write") }
+                override suspend fun replace(expected: SessionTokens, tokens: SessionTokens?): Boolean = false
+            },
+            refreshWith = { { Result.failure(IllegalStateException("unused")) } })
         val sessions = object : SessionStore by CheckInTestSessions() {
             override fun peekSession(): com.coffeepeek.domain.model.Session? {
                 sessionReads++

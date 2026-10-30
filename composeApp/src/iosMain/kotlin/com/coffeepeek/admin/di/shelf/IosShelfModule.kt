@@ -1,7 +1,7 @@
 package com.coffeepeek.admin.di.shelf
 
 import com.coffeepeek.admin.locator.Constants
-import com.coffeepeek.api.CoffeePeekClient
+import com.coffeepeek.core.network.ApiClients
 import com.coffeepeek.core.session.SessionReader
 import com.coffeepeek.feature.shelf.api.ShelfEntry
 import com.coffeepeek.feature.shelf.api.ShelfTimeZone
@@ -25,7 +25,7 @@ import platform.Foundation.localTimeZone
  */
 internal fun iosShelfModule(apiBaseUrl: String = Constants.BASE_URL, modelUrl: (String) -> String = ::infoPlistString) = module {
     single<ShelfRepository> {
-        val client = get<CoffeePeekClient>()
+        val client = get<ApiClients>()
         createShelfRepository(client.client, client.uploadClient, apiBaseUrl, SessionShelfAccount(get<SessionReader>()))
     }
     // Both models are downloaded on the first scan from the build's Info.plist addresses and checked against the pinned files.

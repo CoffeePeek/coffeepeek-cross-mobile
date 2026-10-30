@@ -1490,3 +1490,27 @@ source `89778c23` + этот срез. Подробный scope/остаток �
   потребителей, Sandbox и тестов с `CoffeePeekClient` на `ApiClients`, замена `ApiException` на
   `ServiceUnavailableException` в местах, где ловят 5xx, затем удаление `CoffeePeekClient`, `SessionAuthentication`,
   `SessionRefreshCoordinator`, `SessionTokenProvider`, `AuthResp`).
+
+## L3, срез C6.3c–d — живой путь переключён на `ApiClients`, старый транспорт удалён — 2026-10-30
+
+- C6.3c. `composeApp/session/SessionStoreCredentials` — `SessionCredentials` поверх `SessionStore`: токены отдаёт только
+  активная сессия (перед чтением прогревается кэш хранилища), сохранение берёт `userId` из access-токена и оставляет
+  прежний refresh-токен, если в ответе его нет, замена сравнивает «прочитанную» пару с текущей и ничего не делает при
+  расхождении. `di/TransportModule.kt` собирает один `ApiClients` на сессию: обмен refresh — `createTokenRefresh` из
+  `feature/auth/data`, прогрев сессии при создании (раньше его делал `SessionTokenProvider`). 7 новых тестов
+  `SessionStoreCredentialsTest` заменили `SessionTokenProviderTest`.
+- C6.3d. Все потребители (composeApp commonMain/androidMain/iosMain, Sandbox и тесты) берут `ApiClients` вместо
+  `CoffeePeekClient`; `dataModule` больше не создаёт транспорт (`CoffeePeekRepo` получает `ApiClients`, `AuthService`
+  строится из `client` и `plainClient`); наблюдатель аналитики использует `RequestObserver` из `core/network`.
+  Sandbox: клиенты без учётных данных, как и раньше (`getToken = { null }`).
+- Удалено из `modules/network`: `CoffeePeekClient` (+ android/ios фабрики), `SessionAuthentication`,
+  `SessionRefreshCoordinator`, `RequestObservation`, `DeviceUserAgent`, `CurlInterceptor`, `HttpDebugLog`; из
+  `modules/data`: `SessionTokenProvider`. Их тесты были перенесены в `core/network` и `feature/auth/data` в C6.1–C6.3b
+  (`RequestObservationTest`, `CurlInterceptorTest`, `DeviceUserAgentTest`, `ServerErrorValidationTest`,
+  `SessionRefreshCoordinatorTest`, `SessionAuthenticationFailureTest`, тест нормализации адреса).
+  `AuthResp` остался: его читает легаси `AuthService` до удаления `modules/*`.
+- Поведение: 5xx теперь приходят как `ServiceUnavailableException` (текст тот же); `AuthService.appleLogin` ловит и его,
+  чтобы по-прежнему дописывать код `[ASI-Hxxx]`. `BaseViewModel` и `ErrorHandler` показывают `message`, поэтому текст
+  для пользователя не изменился. Один тест `FeedApiContractTest` (смена сессии во время refresh) теперь ожидает
+  `CancellationException`: клиент всегда работает с общим координатором, как и в проде (раньше тест шёл по пути без него).
+- Не делалось: ручная проверка входа/refresh/выхода на устройстве и инструментальные тесты (только компиляция).

@@ -17,7 +17,9 @@ import com.coffeepeek.feature.appupdate.impl.AppUpdateController
 import com.coffeepeek.admin.di.appupdate.AppConfigUpdateEnvironment
 import com.coffeepeek.admin.di.appupdate.SettingsDismissedUpdateStore
 import com.coffeepeek.feature.appupdate.data.AppUpdateRepositoryImpl
-import com.coffeepeek.api.CoffeePeekClient
+import com.coffeepeek.core.network.ApiClients
+import com.coffeepeek.core.network.SessionCredentials
+import com.coffeepeek.core.network.SessionTokens
 import com.coffeepeek.feature.favorites.data.repository.createAccountFavorites
 import com.coffeepeek.feature.favorites.domain.model.FavoriteAddress
 import com.coffeepeek.feature.favorites.domain.model.FavoriteEntry
@@ -84,7 +86,7 @@ private class LocalSession : SessionStore {
     override suspend fun isLoggedIn() = current.value != null
 }
 
-private fun accountFavorites(client: CoffeePeekClient) = createAccountFavorites(client.client, LocalSession())
+private fun accountFavorites(client: ApiClients) = createAccountFavorites(client.client, LocalSession())
 private fun shopEntry(slug: String) =
     FavoriteEntry(FavoriteKind.CoffeeShop, FavoriteAddress(slug, "/coffee-shops/$slug", 1, false))
 
@@ -155,10 +157,15 @@ class SandboxApplicationBackendTest {
             assertIs<com.coffeepeek.feature.contentreport.domain.model.ContentReportFailure>(failure).problem)
         assertEquals(0, backend.contentReportCount)
     } }
-    private suspend fun fixture(block: suspend (SandboxBackend, CoffeePeekClient) -> Unit) {
+    private suspend fun fixture(block: suspend (SandboxBackend, ApiClients) -> Unit) {
         val backend = SandboxBackend(byteArrayOf(1, 2, 3), today = LocalDate.parse("2026-10-18"))
-        val client = CoffeePeekClient(SandboxBackend.BASE_URL, temporary.newFolder().path, false,
-            getToken = { null }, saveToken = { error("No credential writes") },
+        val client = ApiClients(SandboxBackend.BASE_URL, temporary.newFolder().path, false,
+            credentials = object : SessionCredentials {
+                override suspend fun load(): SessionTokens? { return null }
+                override suspend fun save(tokens: SessionTokens?) { error("No credential writes") }
+                override suspend fun replace(expected: SessionTokens, tokens: SessionTokens?): Boolean = false
+            },
+            refreshWith = { { Result.failure(IllegalStateException("unused")) } },
             apiClientFactory = backend::apiClient, uploadClientFactory = backend::uploadClient)
         try { block(backend, client) } finally {
             client.client.close(); client.plainClient.close(); client.uploadClient.close(); client.imageClient.close(); backend.close()
@@ -451,7 +458,8 @@ class SandboxApplicationBackendTest {
         assertEquals(HttpStatusCode.NotFound, client.imageClient.get("${SandboxBackend.BASE_URL}/api/v1/check-ins/missing/photos/x") { expectSuccess = false }.status)
         backend.scenario = SandboxScenario.ServerError
         // The shared transport maps 5xx to its own service error instead of returning bytes.
-        assertFailsWith<com.coffeepeek.api.utils.ApiException> { client.imageClient.get("${SandboxBackend.BASE_URL}$friendPhoto") }
+        val outage = assertFailsWith<com.coffeepeek.core.network.ServiceUnavailableException> { client.imageClient.get("${SandboxBackend.BASE_URL}$friendPhoto") }
+        assertEquals(HttpStatusCode.InternalServerError.value, outage.statusCode)
     } }
 
     @OptIn(ExperimentalCoroutinesApi::class)

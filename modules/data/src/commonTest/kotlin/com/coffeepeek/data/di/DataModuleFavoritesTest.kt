@@ -3,6 +3,13 @@ package com.coffeepeek.data.di
 import com.coffeepeek.data.repository.FavoriteRepositoryImpl
 import com.coffeepeek.core.session.InMemorySessionSecureStore
 import com.coffeepeek.core.session.SessionSecureStore
+import com.coffeepeek.core.network.ApiClients
+import com.coffeepeek.core.network.SessionCredentials
+import com.coffeepeek.core.network.SessionTokens
+import io.ktor.client.HttpClient
+import io.ktor.client.engine.mock.MockEngine
+import io.ktor.client.engine.mock.respondError
+import io.ktor.http.HttpStatusCode
 import org.koin.dsl.module
 import com.coffeepeek.domain.feature.favorites.api.FavoriteEntry
 import com.coffeepeek.domain.feature.favorites.api.FavoriteKind
@@ -33,12 +40,13 @@ class DataModuleFavoritesTest {
 
     @Test fun oldBindingRemainsDefaultForIosAndExistingCallers() {
         val app = koinApplication {
-            modules(dataModule("url", "cache", database), module {
+            modules(dataModule("url", database), module {
                 // The legacy favorite writer now resolves session identity as production does.
                 // This isolated JVM graph supplies a test store rather than an Android Context.
                 single<SessionSecureStore> { InMemorySessionSecureStore() }
                 // The account favorites are provided by the application, not by this module.
                 single<FavoritesRepository> { UnusedAccountFavorites }
+                single { unusedTransport() }
             })
         }
         try {
@@ -48,13 +56,25 @@ class DataModuleFavoritesTest {
 
     @Test fun androidCanOmitOldBindingBeforeLoadingFeatureBridge() {
         val app = koinApplication {
-            modules(dataModule("url", "cache", database, registerLegacyFavorites = false))
+            modules(dataModule("url", database, registerLegacyFavorites = false))
         }
         try {
             assertNull(app.koin.getOrNull<FavoriteRepository>())
         } finally { app.close() }
     }
 }
+
+private fun unusedTransport() = ApiClients(
+    "https://unused.example", "cache", false,
+    credentials = object : SessionCredentials {
+        override suspend fun load(): SessionTokens? = null
+        override suspend fun save(tokens: SessionTokens?) = Unit
+        override suspend fun replace(expected: SessionTokens, tokens: SessionTokens?) = false
+    },
+    refreshWith = { { Result.failure(IllegalStateException("unused")) } },
+    apiClientFactory = { block -> HttpClient(MockEngine { respondError(HttpStatusCode.NotFound) }, block) },
+    uploadClientFactory = { block -> HttpClient(MockEngine { respondError(HttpStatusCode.NotFound) }, block) },
+)
 
 private object UnusedAccountFavorites : FavoritesRepository {
     override fun observeFavorites(): Flow<Result<List<FavoriteEntry>>> = error("unused")

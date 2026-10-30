@@ -10,7 +10,9 @@ import com.coffeepeek.admin.CoffeePeekApplication
 import com.coffeepeek.admin.di.initAndroidKoin
 import com.coffeepeek.admin.di.shelf.shelfModels
 import com.coffeepeek.admin.sandbox.backend.SandboxBackend
-import com.coffeepeek.api.CoffeePeekClient
+import com.coffeepeek.core.network.ApiClients
+import com.coffeepeek.core.network.SessionCredentials
+import com.coffeepeek.core.network.SessionTokens
 import com.coffeepeek.core.session.SessionStore
 import com.coffeepeek.feature.shelf.data.scan.BagScannerModelSource
 import com.coffeepeek.feature.shelf.data.scan.createAndroidBagScanner
@@ -37,8 +39,10 @@ internal class SandboxApplication : Application() {
         MapLibre.getInstance(this)
         initAndroidKoin(analyticsEnabled = false, extraModules = listOf(module {
             single<SessionStore> { sessions }
-            single { CoffeePeekClient(SandboxBackend.BASE_URL, cacheDir.resolve("sandbox-http").path, false,
-                getToken = { null }, saveToken = {}, apiClientFactory = backend::apiClient,
+            single { ApiClients(SandboxBackend.BASE_URL, cacheDir.resolve("sandbox-http").path, false,
+                credentials = SandboxNoCredentials,
+                refreshWith = { { Result.failure(IllegalStateException("The Sandbox has no account to refresh")) } },
+                requireHttps = false, apiClientFactory = backend::apiClient,
                 uploadClientFactory = backend::uploadClient) }
             single<io.kamel.core.config.KamelConfig> { sandboxImageConfig(backend.gateway) }
             single<com.coffeepeek.feature.appupdate.api.AndroidUpdateInstaller> {
@@ -56,4 +60,11 @@ internal class SandboxApplication : Application() {
     fun blockedExternalAction() {
         android.os.Handler(mainLooper).post { Toast.makeText(this, R.string.sandbox_external_blocked, Toast.LENGTH_SHORT).show() }
     }
+}
+
+/** The fake backend is open: the Sandbox transport never carries credentials. */
+private object SandboxNoCredentials : SessionCredentials {
+    override suspend fun load(): SessionTokens? = null
+    override suspend fun save(tokens: SessionTokens?) = Unit
+    override suspend fun replace(expected: SessionTokens, tokens: SessionTokens?) = false
 }

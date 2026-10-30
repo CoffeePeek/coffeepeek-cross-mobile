@@ -1,7 +1,9 @@
 package com.coffeepeek.admin.di.shop
 
 import com.coffeepeek.admin.ui.screen.shop.CheckInDraftStore
-import com.coffeepeek.api.CoffeePeekClient
+import com.coffeepeek.core.network.ApiClients
+import com.coffeepeek.core.network.SessionCredentials
+import com.coffeepeek.core.network.SessionTokens
 import com.coffeepeek.core.session.SessionReader
 import com.coffeepeek.core.session.SessionStore
 import com.coffeepeek.feature.shop.api.ShopCheckInCreateEntry
@@ -24,8 +26,13 @@ class ShopCheckInModuleTest {
 
     @Test fun resolvesOneGraphWithoutOpeningDraftOrReadingCredentials() {
         var credentialReads = 0
-        val client = CoffeePeekClient("https://fixture.invalid", temporary.newFolder("cache").path, false,
-            getToken = { credentialReads++; null }, saveToken = { error("Unexpected credentials write") })
+        val client = ApiClients("https://fixture.invalid", temporary.newFolder("cache").path, false,
+            credentials = object : SessionCredentials {
+                override suspend fun load(): SessionTokens? { credentialReads++; return null }
+                override suspend fun save(tokens: SessionTokens?) { error("Unexpected credentials write") }
+                override suspend fun replace(expected: SessionTokens, tokens: SessionTokens?): Boolean = false
+            },
+            refreshWith = { { Result.failure(IllegalStateException("unused")) } })
         val drafts = CheckInDraftStore { 1791547200000 }
         val existing = drafts.open("internal-id").copy(note = "Retained draft")
         drafts.save(existing)

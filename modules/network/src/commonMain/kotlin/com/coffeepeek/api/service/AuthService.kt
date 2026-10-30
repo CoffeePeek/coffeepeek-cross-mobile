@@ -10,6 +10,7 @@ import com.coffeepeek.api.model.request.AppleLoginReq
 import com.coffeepeek.api.utils.ApiException
 import com.coffeepeek.api.utils.requestResult
 import com.coffeepeek.core.network.RefreshRejectedException
+import com.coffeepeek.core.network.ServiceUnavailableException
 import com.coffeepeek.api.utils.deleteResult
 import com.coffeepeek.api.utils.extractRefreshToken
 import com.coffeepeek.api.utils.postResult
@@ -84,8 +85,10 @@ class AuthService(
                 expectSuccess = false
                 setJsonBody(AppleLoginReq(challengeId, idToken))
             }.getOrThrow()
-        } catch (error: ApiException) {
+        } catch (error: ServiceUnavailableException) {
             // The shared 5xx validator can reject the request before a response is returned here.
+            throw ApiException("${error.message} [ASI-H${error.statusCode}]", error.statusCode)
+        } catch (error: ApiException) {
             val status = error.statusCode?.takeIf { it in 400..599 } ?: throw error
             throw ApiException("${error.message} [ASI-H$status]", status)
         }

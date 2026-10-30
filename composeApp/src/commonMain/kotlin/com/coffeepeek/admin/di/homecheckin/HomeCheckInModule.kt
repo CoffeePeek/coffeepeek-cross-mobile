@@ -4,7 +4,7 @@ import com.coffeepeek.admin.analytics.CheckInSource
 import com.coffeepeek.admin.feature.catalog.api.BrewMethodCatalog
 import com.coffeepeek.feature.coffee.api.CoffeePicker
 import com.coffeepeek.admin.locator.Constants
-import com.coffeepeek.api.CoffeePeekClient
+import com.coffeepeek.core.network.ApiClients
 import com.coffeepeek.feature.homecheckin.data.repository.createHomePreparationRepository
 import com.coffeepeek.feature.homecheckin.data.repository.createHomePreparationShelfBagReader
 import com.coffeepeek.feature.homecheckin.domain.repository.HomePreparationReader
@@ -17,11 +17,11 @@ import org.koin.dsl.module
 /** Home data is shared by history and global creation; with [shelfEnabled] its forms offer shelf bags. Resolving performs no work. */
 internal fun homeCheckInModule(shelfEnabled: Boolean, apiBaseUrl: String = Constants.BASE_URL) = module {
     single<HomePreparationRepository> {
-        val client = get<CoffeePeekClient>()
+        val client = get<ApiClients>()
         createHomePreparationRepository(client.client, client.uploadClient, apiBaseUrl)
     }
     single<HomePreparationReader> { get<HomePreparationRepository>() }
-    single<HomePreparationShelfBagReader> { createHomePreparationShelfBagReader(get<CoffeePeekClient>().client, apiBaseUrl) }
+    single<HomePreparationShelfBagReader> { createHomePreparationShelfBagReader(get<ApiClients>().client, apiBaseUrl) }
     single {
         val repository = get<HomePreparationRepository>()
         val picker = get<CoffeePicker>()

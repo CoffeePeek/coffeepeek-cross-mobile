@@ -1,10 +1,12 @@
 package com.coffeepeek.api
 
+import com.coffeepeek.api.service.AuthService
 import com.coffeepeek.api.service.UserApiService
+import com.coffeepeek.core.network.ApiClients
 
-class CoffeePeekRepo(httpClient: CoffeePeekClient) {
+class CoffeePeekRepo(httpClient: ApiClients) {
 
-    val authService = httpClient.authService
+    val authService = AuthService(httpClient.client, httpClient.plainClient)
     private val client = httpClient.client
 
     val shopApiService = com.coffeepeek.api.service.ShopApiService(client)

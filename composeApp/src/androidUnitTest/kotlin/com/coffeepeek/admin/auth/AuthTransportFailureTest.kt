@@ -1,7 +1,9 @@
 package com.coffeepeek.admin.auth
 
 import com.coffeepeek.admin.utils.localizedLoginError
-import com.coffeepeek.api.CoffeePeekClient
+import com.coffeepeek.core.network.ApiClients
+import com.coffeepeek.core.network.SessionCredentials
+import com.coffeepeek.core.network.SessionTokens
 import com.coffeepeek.api.service.AuthService
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.mock.MockEngine
@@ -25,7 +27,12 @@ class AuthTransportFailureTest {
     @get:Rule val temporary = TemporaryFolder()
 
     private fun loginMessage(failure: () -> Throwable): Pair<String?, String> = runBlocking {
-        val client = CoffeePeekClient("https://api.example", temporary.newFolder().path, false, getToken = { null }, saveToken = {},
+        val client = ApiClients("https://api.example", temporary.newFolder().path, false, credentials = object : SessionCredentials {
+                override suspend fun load(): SessionTokens? { return null }
+                override suspend fun save(tokens: SessionTokens?) {  }
+                override suspend fun replace(expected: SessionTokens, tokens: SessionTokens?): Boolean = false
+            },
+            refreshWith = { { Result.failure(IllegalStateException("unused")) } },
             apiClientFactory = { configure -> HttpClient(MockEngine { throw failure() }) { configure() } },
             uploadClientFactory = { configure -> HttpClient(MockEngine { throw failure() }) { configure() } })
         try {
