@@ -679,6 +679,16 @@ class SandboxApplicationBackendTest {
         assertEquals(2, shops.getMyModerationShops(ModerationStatusDto.Approved, 1, 20).getOrThrow().totalItems)
     } }
 
+    @Test fun discoveryPageFailureAllowsRetryAndRearmsOnRefresh() = runTest { fixture { backend, client ->
+        backend.discovery = SandboxDiscovery.PageFailure
+        val shops = ShopApiService(client.client)
+        assertEquals(20, shops.searchShops(page = 1, pageSize = 20).getOrThrow().items.size)
+        assertTrue(shops.searchShops(page = 2, pageSize = 20).isFailure)
+        assertEquals(2, shops.searchShops(page = 2, pageSize = 20).getOrThrow().currentPage)
+        shops.searchShops(page = 1, pageSize = 20).getOrThrow()
+        assertTrue(shops.searchShops(page = 2, pageSize = 20).isFailure)
+    } }
+
     @Test fun discoveryClustersUnfoldIntoTheSameShopsAtTheDetailZoom() = runTest { fixture { backend, client ->
         backend.discovery = SandboxDiscovery.Paged
         val shops = ShopApiService(client.client)

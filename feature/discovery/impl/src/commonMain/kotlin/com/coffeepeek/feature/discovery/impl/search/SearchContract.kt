@@ -29,6 +29,7 @@ internal data class SearchState(
     val isRefreshing: Boolean = false,
     val isLoadingMore: Boolean = false,
     val error: SearchError? = null,
+    val loadMoreError: SearchError? = null,
     val query: String = "",
     val searchActive: Boolean = false,
     val filters: DiscoveryFilters = DiscoveryFilters(),
@@ -45,6 +46,7 @@ internal data class SearchState(
         query.isNotBlank() && hasRoasterResults == false && visibleShops.isNotEmpty()
 
     val criteria: DiscoveryCriteria get() = DiscoveryCriteria(query, filters, userLocation)
+    val canLoadMore: Boolean get() = hasMore && !isLoading && !isRefreshing && !isLoadingMore && error == null && loadMoreError == null
     val activeFilterCount: Int get() = filters.activeCount
     val showsDiscovery: Boolean get() = showsDiscovery(query, searchActive, filters)
     val visibleShops: List<ShopSummary> get() = visibleShops(shops, filters)
@@ -75,6 +77,7 @@ internal sealed interface SearchAction {
     data object ClearFilters : SearchAction
 
     data object LoadMore : SearchAction
+    data object RetryLoadMore : SearchAction
     data object Refresh : SearchAction
     data class ToggleFavorite(val shopId: String) : SearchAction
     data class OpenShop(val shopId: String) : SearchAction

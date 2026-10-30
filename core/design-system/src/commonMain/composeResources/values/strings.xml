@@ -15,4 +15,6 @@
     <string name="coffeepeek_rating_choose">Choose %1$d out of 5</string>
     <string name="coffeepeek_like_add">Like</string>
     <string name="coffeepeek_like_remove">Unlike</string>
+    <string name="coffeepeek_pagination_error">Could not load more results.</string>
+    <string name="coffeepeek_pagination_retry">Retry</string>
 </resources>

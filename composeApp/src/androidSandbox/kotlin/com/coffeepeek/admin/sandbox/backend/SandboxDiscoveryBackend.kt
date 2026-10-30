@@ -16,7 +16,7 @@ import kotlin.math.sqrt
  * 47 shops in two cities with every filter, paging, nearby search by distance, map content by bounds and two zones; `Truncated` is `Paged` with a map that cuts the
  * shops and says so; `Empty` has no shops; `SearchFailure` and `MapFailure` answer 500 for the search or for the map.
  */
-internal enum class SandboxDiscovery { Seeded, Paged, Truncated, Empty, SearchFailure, MapFailure }
+internal enum class SandboxDiscovery { Seeded, Paged, Truncated, Empty, SearchFailure, PageFailure, MapFailure }
 
 private data class Spot(
     val slug: String, val name: String, val city: String, val type: String, val price: String, val rating: Double,
@@ -58,6 +58,7 @@ internal class SandboxDiscoveryBackend(
     }
 
     @Volatile var mode = SandboxDiscovery.Seeded
+    private var pageFailureSent = false
 
     private val core = listOf(
         Spot("sandbox-cafe", "Sandbox Cafe", "minsk", "CoffeeBar", "Moderate", 4.5, open = true, new = false, visited = true, 53.9, 27.56,
@@ -95,13 +96,25 @@ internal class SandboxDiscoveryBackend(
     fun handle(path: String, method: HttpMethod, request: HttpRequestData, input: JsonObject): Pair<HttpStatusCode, JsonObject>? {
         return when {
             path == "/api/v1/coffee-shops/search" && method == HttpMethod.Post ->
-                if (mode == SandboxDiscovery.SearchFailure) HttpStatusCode.InternalServerError to failure(SEARCH_FAILURE) else search(input)
+                searchResponse(input)
             path == "/api/v1/coffee-shops/map" && method == HttpMethod.Post ->
                 if (mode == SandboxDiscovery.MapFailure) HttpStatusCode.InternalServerError to failure(MAP_FAILURE) else filteredMap(input)
             path == "/api/map" && method == HttpMethod.Get && mode != SandboxDiscovery.Seeded ->
                 if (mode == SandboxDiscovery.MapFailure) HttpStatusCode.InternalServerError to failure(MAP_FAILURE) else map(request.url.parameters)
             else -> null
         }
+    }
+
+    /** Page one rearms the failure; the first attempt at page two fails, and an explicit retry succeeds. */
+    private fun searchResponse(input: JsonObject): Pair<HttpStatusCode, JsonObject> {
+        val page = input["page"]?.jsonPrimitive?.intOrNull ?: 1
+        if (page == 1) pageFailureSent = false
+        if (mode == SandboxDiscovery.SearchFailure) return HttpStatusCode.InternalServerError to failure(SEARCH_FAILURE)
+        if (mode == SandboxDiscovery.PageFailure && page == 2 && !pageFailureSent) {
+            pageFailureSent = true
+            return HttpStatusCode.InternalServerError to failure(SEARCH_FAILURE)
+        }
+        return search(input)
     }
 
     private fun search(input: JsonObject): Pair<HttpStatusCode, JsonObject> {

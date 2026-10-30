@@ -18,6 +18,7 @@ import com.coffeepeek.admin.ui.component.CoffeePeekLoader
 import com.coffeepeek.admin.ui.component.CoffeePeekPullToRefresh
 import com.coffeepeek.admin.ui.component.LoadErrorContent
 import com.coffeepeek.core.designsystem.component.coffeePeekScrollContentPadding
+import com.coffeepeek.core.designsystem.component.CoffeePeekPaginationStatus
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
@@ -35,8 +36,11 @@ internal fun FeedSearchList(state: FeedUiState, listState: LazyListState, action
                 ShopCard(shop = shop, distance = formatDistance(shop.distanceMeters ?: distanceToShopMeters(location, shop.location)),
                     onClick = { actions.onOpenShop(shop) }, onToggleFavorite = { actions.onToggleFavorite(shop) })
             }
+            if (state.isLoadingMore || state.loadMoreFailed) item(key = "pagination-status") {
+                CoffeePeekPaginationStatus(state.isLoadingMore, state.loadMoreFailed, actions.onRetryLoadMore)
+            }
             if (shopsFirst) roasterSearchResults(roasters)
-            if (!state.isLoading && state.error == null) item(key = "add-missing-shop") {
+            if (!state.isLoading && state.error == null && !state.loadMoreFailed) item(key = "add-missing-shop") {
                 CatalogSuggestionCard(CatalogSuggestionKind.Shop, onAdd = actions.onAddShop)
             }
         }
@@ -71,12 +75,14 @@ private fun LazyListScope.roasterSearchResults(content: (@Composable () -> Unit)
 }
 
 @Composable
-private fun FeedSearchListPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
+private fun FeedSearchListPreview(dark: Boolean, paginationError: Boolean = false) = CoffeePeekTheme(darkTheme = dark) {
     Surface(color = MaterialTheme.colorScheme.background) {
-        FeedSearchList(FeedUiState(isLoading = false), rememberLazyListState(), FeedScreenActions(),
+        FeedSearchList(FeedUiState(isLoading = false, loadMoreFailed = paginationError), rememberLazyListState(), FeedScreenActions(),
             null, PaddingValues(16.dp), false, false, null)
     }
 }
 
 @Preview @Composable private fun FeedSearchListLightPreview() = FeedSearchListPreview(false)
 @Preview @Composable private fun FeedSearchListDarkPreview() = FeedSearchListPreview(true)
+@Preview @Composable private fun FeedPaginationErrorLightPreview() = FeedSearchListPreview(false, paginationError = true)
+@Preview @Composable private fun FeedPaginationErrorDarkPreview() = FeedSearchListPreview(true, paginationError = true)

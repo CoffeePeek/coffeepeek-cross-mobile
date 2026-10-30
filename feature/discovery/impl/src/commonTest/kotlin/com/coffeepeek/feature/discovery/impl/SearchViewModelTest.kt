@@ -185,6 +185,19 @@ class SearchViewModelTest {
 
     // ---- the list ----
 
+    @Test fun aFailedNextPageDoesNotAutomaticallyRetry() = runTest(dispatcher) {
+        repository.search = { query ->
+            if (query.page == 1) page(listOf(shop("first")), pages = 2)
+            else Result.failure(DiscoveryFailure(FailureKind.Other))
+        }
+        val vm = model()
+        vm.send(SearchAction.LoadMore, scope = this)
+        repeat(3) { vm.send(SearchAction.LoadMore, scope = this) }
+        assertEquals(listOf(1, 2), repository.queries.map { it.page })
+        assertEquals(listOf("first"), vm.now.shops.map { it.id })
+        assertEquals(1, vm.now.currentPage)
+    }
+
     @Test fun pagingAppendsPagesStopsAtTheLastPageAndIgnoresLoadMoreWhileLoading() = runTest(dispatcher) {
         val gate = CompletableDeferred<Unit>()
         repository.search = { q -> if (q.page == 2) gate.await(); page((1..20).map { shop("p${q.page}-$it") }, q.page, pages = 2) }
@@ -196,6 +209,80 @@ class SearchViewModelTest {
         assertEquals(40, vm.now.shops.size); assertFalse(vm.now.hasMore); assertEquals(2, vm.now.currentPage)
         vm.send(SearchAction.LoadMore, scope = this)
         assertEquals(2, repository.queries.size)
+    }
+
+    @Test fun explicitRetryRequestsTheFailedPageOnceAndPreservesLoadedShops() = runTest(dispatcher) {
+        repository.search = { page(listOf(shop("first")), pages = 2) }
+        val vm = model()
+        repository.search = { Result.failure(DiscoveryFailure(FailureKind.Other, "Offline")) }
+        vm.send(SearchAction.LoadMore, scope = this)
+        assertEquals("Offline", vm.now.loadMoreError?.serverMessage)
+        assertNull(vm.now.error)
+        val gate = CompletableDeferred<Unit>()
+        repository.search = { gate.await(); page(listOf(shop("second")), current = 2, pages = 2) }
+        vm.onAction(SearchAction.RetryLoadMore)
+        vm.onAction(SearchAction.RetryLoadMore)
+        runCurrent()
+        assertEquals(listOf(1, 2, 2), repository.queries.map { it.page })
+        assertTrue(vm.now.isLoadingMore)
+        gate.complete(Unit)
+        runCurrent()
+        assertEquals(listOf("first", "second"), vm.now.shops.map { it.id })
+        assertNull(vm.now.loadMoreError)
+        assertFalse(vm.now.hasMore)
+    }
+
+    @Test fun aFailedExplicitRetryStillBlocksAutomaticRequests() = runTest(dispatcher) {
+        repository.search = { page(listOf(shop("first")), pages = 2) }
+        val vm = model()
+        repository.search = { Result.failure(DiscoveryFailure(FailureKind.Other)) }
+        vm.send(SearchAction.LoadMore, SearchAction.RetryLoadMore, SearchAction.LoadMore, scope = this)
+        assertEquals(listOf(1, 2, 2), repository.queries.map { it.page })
+        assertNotNull(vm.now.loadMoreError)
+        assertFalse(vm.now.canLoadMore)
+    }
+
+    @Test fun refreshAndFilterChangesClearTheFailedPageAndRestartAtPageOne() = runTest(dispatcher) {
+        repository.search = { page(listOf(shop("first")), pages = 2) }
+        val vm = model()
+        for (reset in listOf(SearchAction.Refresh, SearchAction.ToggleOpen)) {
+            repository.search = { Result.failure(DiscoveryFailure(FailureKind.Other)) }
+            vm.send(SearchAction.LoadMore, scope = this)
+            assertNotNull(vm.now.loadMoreError)
+            repository.search = { page(listOf(shop("replacement")), pages = 2) }
+            vm.send(reset, scope = this)
+            assertEquals(1, repository.queries.last().page)
+            assertNull(vm.now.loadMoreError)
+            assertTrue(vm.now.canLoadMore)
+            assertEquals(listOf("replacement"), vm.now.shops.map { it.id })
+        }
+    }
+
+    @Test fun changingTheQueryCannotRetryAnOldPageDuringDebounce() = runTest(dispatcher) {
+        repository.search = { page(listOf(shop("first")), pages = 2) }
+        val vm = model()
+        repository.search = { Result.failure(DiscoveryFailure(FailureKind.Other)) }
+        vm.send(SearchAction.LoadMore, SearchAction.Query("tea"), SearchAction.RetryLoadMore, scope = this)
+        assertEquals(listOf(1, 2), repository.queries.map { it.page })
+        repository.search = { page(listOf(shop("tea")), pages = 2) }
+        advanceTimeBy(401)
+        runCurrent()
+        assertEquals(1, repository.queries.last().page)
+        assertEquals("tea", repository.queries.last().text)
+        assertNull(vm.now.loadMoreError)
+    }
+
+    @Test fun aNewAccountDoesNotInheritTheFailedPagination() = runTest(dispatcher) {
+        repository.search = { page(listOf(shop("first")), pages = 2) }
+        val vm = model()
+        repository.search = { Result.failure(DiscoveryFailure(FailureKind.Other)) }
+        vm.send(SearchAction.LoadMore, scope = this)
+        repository.search = { page(listOf(shop("new-account")), pages = 2) }
+        account.key.value = "two"
+        runCurrent()
+        assertEquals(1, repository.queries.last().page)
+        assertNull(vm.now.loadMoreError)
+        assertEquals(listOf("new-account"), vm.now.shops.map { it.id })
     }
 
     @Test fun aNewResetLoadCancelsTheOlderOne() = runTest(dispatcher) {
