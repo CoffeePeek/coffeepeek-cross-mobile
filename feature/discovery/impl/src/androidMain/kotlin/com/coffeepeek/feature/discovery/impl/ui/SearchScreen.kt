@@ -59,6 +59,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.coffeepeek.core.designsystem.component.CoffeePeekCatalogSuggestionCard
 import com.coffeepeek.core.designsystem.component.CoffeePeekFilterChip
 import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
+import com.coffeepeek.core.designsystem.component.CoffeePeekPaginationStatus
 import com.coffeepeek.core.designsystem.component.CoffeePeekPullToRefresh
 import com.coffeepeek.core.designsystem.component.CoffeePeekCircularBackButton
 import com.coffeepeek.core.designsystem.component.CoffeePeekSearchField
@@ -174,7 +175,9 @@ private fun ResultsList(
     LaunchedEffect(showsTextResults, shopsFirst) { listState.scrollToItem(0) }
     if (prefetch) host.photoPrefetch(listState, shops.map { it.id to listOfNotNull(it.photoUrl) })
     val nearEnd by remember { derivedStateOf { listState.layoutInfo.let { info -> (info.visibleItemsInfo.lastOrNull()?.index ?: 0) >= info.totalItemsCount - 5 } } }
-    LaunchedEffect(nearEnd, state.hasMore, state.isLoadingMore, shops.size) { if (nearEnd && state.hasMore && shops.isNotEmpty()) onAction(SearchAction.LoadMore) }
+    LaunchedEffect(nearEnd, state.canLoadMore, shops.size) {
+        if (nearEnd && state.canLoadMore && shops.isNotEmpty()) onAction(SearchAction.LoadMore)
+    }
     CoffeePeekPullToRefresh(
         listState = listState,
         isRefreshing = state.isRefreshing,
@@ -232,7 +235,13 @@ private fun LazyListScope.shopRows(
             onOpen = { onAction(SearchAction.OpenShop(shop.id)) },
             onFavorite = { onAction(SearchAction.ToggleFavorite(shop.id)) })
     }
-    if (!state.isLoading && state.error == null) item(key = "suggestion") { SuggestionCard(host, onAddShop) }
+    if (state.isLoadingMore || state.loadMoreError != null) item(key = "pagination-status") {
+        CoffeePeekPaginationStatus(state.isLoadingMore, state.loadMoreError != null,
+            onRetry = { onAction(SearchAction.RetryLoadMore) }, errorMessage = state.loadMoreError?.serverMessage,
+            fallbackMessage = stringResource(R.string.discovery_pagination_error),
+            retryLabel = stringResource(R.string.discovery_retry))
+    }
+    if (!state.isLoading && state.error == null && state.loadMoreError == null) item(key = "suggestion") { SuggestionCard(host, onAddShop) }
 }
 
 @Composable
@@ -248,10 +257,11 @@ private fun SuggestionCard(host: DiscoveryHost, onAddShop: () -> Unit) {
 
 
 @Composable
-private fun SearchContentPreview(hasRoasterResults: Boolean) = CoffeePeekTheme {
+private fun SearchContentPreview(hasRoasterResults: Boolean, paginationError: Boolean = false) = CoffeePeekTheme {
     androidx.compose.material3.Surface {
         SearchContent(
             state = SearchState(query = "Coffee", searchActive = true, isLoading = false,
+                loadMoreError = if (paginationError) com.coffeepeek.feature.discovery.impl.search.SearchError(null) else null,
                 shops = listOf(ShopSummary("fixture-shop", "CoffeePeek", rating = 4.7, checkInCount = 12))),
             host = DiscoveryHost(suggestionIllustration = { ColorPainter(Color.Transparent) }),
             onAddShop = {}, bottomClearance = 0.dp, discovery = {}, textResults = {},
@@ -262,3 +272,4 @@ private fun SearchContentPreview(hasRoasterResults: Boolean) = CoffeePeekTheme {
 
 @PreviewLightDark @Composable private fun SearchResultsPreview() = SearchContentPreview(true)
 @PreviewLightDark @Composable private fun SearchShopsFirstPreview() = SearchContentPreview(false)
+@PreviewLightDark @Composable private fun SearchPaginationErrorPreview() = SearchContentPreview(false, paginationError = true)

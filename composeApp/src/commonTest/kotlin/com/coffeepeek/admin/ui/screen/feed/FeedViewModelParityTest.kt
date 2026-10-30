@@ -30,6 +30,63 @@ import kotlin.test.assertTrue
  */
 class FeedViewModelParityTest {
     @Test
+    fun explicitRetryLoadsTheFailedPageAndKeepsEarlierResults() {
+        var failed = false
+        parity(handler = { filters ->
+            if (filters.page == 2 && !failed) {
+                failed = true
+                Result.failure(IllegalStateException("offline"))
+            } else pageOf(listOf(shop("page-${filters.page}")), filters.page, pages = 2)
+        }) {
+            requests.receive()
+            awaitShops()
+            vm.loadMore()
+            assertEquals(2, requests.receive().page)
+            vm.uiState.first { it.loadMoreFailed }
+            vm.retryLoadMore()
+            assertEquals(2, requests.receive().page)
+            val loaded = vm.uiState.first { it.currentPage == 2 }
+            assertEquals(listOf("page-1", "page-2"), loaded.shops.map { it.id })
+            assertFalse(loaded.loadMoreFailed)
+            assertNull(loaded.error)
+        }
+    }
+
+    @Test
+    fun refreshClearsTheFailedPaginationAndStartsAtPageOne() = parity(handler = { filters ->
+        if (filters.page == 1) pageOf(listOf(shop("first")), pages = 2)
+        else Result.failure(IllegalStateException("offline"))
+    }) {
+        requests.receive()
+        awaitShops()
+        vm.loadMore()
+        requests.receive()
+        vm.uiState.first { it.loadMoreFailed }
+        vm.refresh()
+        assertEquals(1, requests.receive().page)
+        val loaded = awaitShops()
+        assertFalse(loaded.loadMoreFailed)
+        assertTrue(loaded.canLoadMore)
+    }
+
+    @Test
+    fun aFailedNextPageDoesNotAutomaticallyRetry() = parity(handler = { filters ->
+        if (filters.page == 1) pageOf(listOf(shop("first")), pages = 2)
+        else Result.failure(IllegalStateException("offline"))
+    }) {
+        requests.receive()
+        awaitShops()
+        vm.loadMore()
+        assertEquals(2, requests.receive().page)
+        vm.uiState.first { !it.isLoadingMore }
+        repeat(3) { vm.loadMore() }
+        settle()
+        assertNull(requests.tryReceive().getOrNull())
+        assertEquals(listOf("first"), vm.uiState.value.shops.map { it.id })
+        assertEquals(1, vm.uiState.value.currentPage)
+    }
+
+    @Test
     fun theFirstSearchWaitsForTheCatalogsAndUsesTheSavedCity() = parity(savedCity = "brest") {
         val first = requests.receive()
         assertEquals("brest", first.cityId); assertEquals(1, first.page); assertEquals(20, first.pageSize); assertNull(first.query)

@@ -62,6 +62,7 @@ internal class SearchViewModel(
     private var searchPresented = false
     private var presentationVersion = 0L
     private var lastSearchResult: Pair<DiscoveryCriteria, Int>? = null
+    private var loadedCriteria: DiscoveryCriteria? = null
 
     init {
         viewModelScope.launch { account.accountKey.distinctUntilChanged().collect(::onAccount) }
@@ -107,6 +108,7 @@ internal class SearchViewModel(
             }
             SearchAction.ClearFilters -> clearFilters()
             SearchAction.LoadMore -> loadShops(reset = false)
+            SearchAction.RetryLoadMore -> if (currentState.loadMoreError != null) loadShops(reset = false, retry = true)
             SearchAction.Refresh -> if (!currentState.isRefreshing && !currentState.isLoading) loadShops(reset = true)
             is SearchAction.ToggleFavorite -> toggleFavorite(action.shopId)
             is SearchAction.OpenShop -> {
@@ -237,16 +239,17 @@ internal class SearchViewModel(
 
     // ---- the list ----
 
-    private fun loadShops(reset: Boolean) {
+    private fun loadShops(reset: Boolean, retry: Boolean = false) {
         val snapshot = currentState
-        if (!reset && (snapshot.isLoadingMore || !snapshot.hasMore || snapshot.isLoading || snapshot.isRefreshing)) return
+        if (!reset && (!snapshot.copy(loadMoreError = if (retry) null else snapshot.loadMoreError).canLoadMore ||
+                loadedCriteria?.let(::matchesCurrentSearch) != true)) return
         loadJob?.cancel()
+        beginLoading(reset)
         val mine = generation
         loadJob = viewModelScope.launch { performSearch(reset, mine) }
     }
 
     private suspend fun performSearch(reset: Boolean, generation: Long) {
-        beginLoading(reset)
         val page = if (reset) 1 else currentState.currentPage + 1
         val criteria = currentState.criteria
         val query = criteria.searchQuery(page, PAGE_SIZE)
@@ -263,19 +266,23 @@ internal class SearchViewModel(
 
     private fun finishSearch(result: Result<Paged<ShopSummary>>, criteria: DiscoveryCriteria, reset: Boolean, run: SearchRun?) {
         result.onSuccess {
+            loadedCriteria = criteria
             if (reset) lastSearchResult = criteria to it.totalCount
             applyPage(it, reset, run)
         }.onFailure { failure ->
+            if (failure is CancellationException) throw failure
             run?.failed(failure)
-            updateState { copy(isLoading = false, isRefreshing = false, isLoadingMore = false, error = SearchError((failure as? DiscoveryFailure)?.serverMessage)) }
+            val failureMessage = SearchError((failure as? DiscoveryFailure)?.serverMessage)
+            updateState { copy(isLoading = false, isRefreshing = false, isLoadingMore = false,
+                error = failureMessage.takeIf { reset }, loadMoreError = failureMessage.takeUnless { reset }) }
         }
     }
 
     private fun beginLoading(reset: Boolean) = updateState {
         when {
-            reset && shops.isEmpty() -> copy(isLoading = true, isRefreshing = false, isLoadingMore = false, error = null)
-            reset -> copy(isRefreshing = true, isLoading = false, isLoadingMore = false, error = null)
-            else -> copy(isLoadingMore = true, error = null)
+            reset && shops.isEmpty() -> copy(isLoading = true, isRefreshing = false, isLoadingMore = false, error = null, loadMoreError = null)
+            reset -> copy(isRefreshing = true, isLoading = false, isLoadingMore = false, error = null, loadMoreError = null)
+            else -> copy(isLoadingMore = true, error = null, loadMoreError = null)
         }
     }
 
@@ -309,7 +316,7 @@ internal class SearchViewModel(
             val loaded = if (reset) result.items else shops + result.items
             copy(shops = favoriteIds?.let { withFavoriteMembership(loaded, it) } ?: loaded,
                 currentPage = result.currentPage, totalPages = result.totalPages, hasMore = result.hasMore,
-                isLoading = false, isRefreshing = false, isLoadingMore = false, error = null)
+                isLoading = false, isRefreshing = false, isLoadingMore = false, error = null, loadMoreError = null)
         }
     }
 

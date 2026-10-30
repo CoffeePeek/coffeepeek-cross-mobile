@@ -87,4 +87,5 @@
     <string name="sandbox_pack_probe_reset_edits">Вернуть авто-результат</string>
     <string name="sandbox_pack_probe_repainting">MI-GAN дорисовывает…</string>
     <string name="sandbox_pack_probe_brush_millis">MI-GAN по кисти: %1$d мс</string>
+    <string name="sandbox_discovery_page_failure">Ошибка второй страницы → повтор</string>
 </resources>
