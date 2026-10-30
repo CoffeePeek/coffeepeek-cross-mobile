@@ -21,19 +21,23 @@ internal fun HistoryTimelineRail(isHome: Boolean, firstInDay: Boolean, lastInDay
     val rtl = LocalLayoutDirection.current == LayoutDirection.Rtl
     Box(Modifier.fillMaxWidth()) {
         Canvas(Modifier.matchParentSize()) {
-            val x = if (rtl) 8.dp.toPx() else size.width - 8.dp.toPx()
+            val x = if (rtl) size.width - 8.dp.toPx() else 8.dp.toPx()
             val dotY = 27.dp.toPx()
             drawLine(line, Offset(x, if (firstInDay) dotY else 0f),
                 Offset(x, if (lastInDay) dotY else size.height), 2.dp.toPx())
             drawCircle(background, 7.dp.toPx(), Offset(x, dotY))
             drawCircle(dot, 4.dp.toPx(), Offset(x, dotY))
         }
-        Box(Modifier.fillMaxWidth().padding(end = 28.dp, bottom = if (lastInDay) 0.dp else 12.dp)) { content() }
+        Box(Modifier.fillMaxWidth().padding(start = 28.dp, bottom = if (lastInDay) 0.dp else 12.dp)) { content() }
     }
 }
 
 @Composable private fun HistoryTimelineRailPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
-    HistoryTimelineRail(true, true, false) { Text("Hario V60", Modifier.padding(18.dp)) }
+    Column {
+        HistoryTimelineRail(false, true, false) { Text("В кофейне", Modifier.padding(18.dp)) }
+        HistoryTimelineRail(true, false, false) { Text("Дома", Modifier.padding(18.dp)) }
+        HistoryTimelineRail(false, false, true) { Text("В кофейне", Modifier.padding(18.dp)) }
+    }
 }
 @Preview @Composable private fun HistoryTimelineRailLightPreview() = HistoryTimelineRailPreview(false)
 @Preview @Composable private fun HistoryTimelineRailDarkPreview() = HistoryTimelineRailPreview(true)
