@@ -161,6 +161,11 @@ jobs:
             exit 1
           fi
           "$APKSIGNER" verify --verbose --print-certs "$APK_PATH"
+          APK_ABIS=$(unzip -Z1 "$APK_PATH" | awk -F/ '$1 == "lib" { print $2 }' | sort -u | paste -sd, -)
+          if [[ "$APK_ABIS" != "arm64-v8a,armeabi-v7a" ]]; then
+            echo "Direct APK must contain only both ARM ABIs; found: $APK_ABIS"
+            exit 1
+          fi
 
           VERSION_NAME=$(./gradlew -q :composeApp:printVersionName)
           VERSION_CODE=$(./gradlew -q :composeApp:printVersionCode)
@@ -208,6 +213,11 @@ jobs:
           bundles=(composeApp/build/outputs/bundle/playRelease/*.aab)
           [[ ${#bundles[@]} -eq 1 ]]
           jarsigner -verify -certs "${bundles[0]}"
+          BUNDLE_ABIS=$(unzip -Z1 "${bundles[0]}" | awk -F/ '$1 == "base" && $2 == "lib" { print $3 }' | sort -u | paste -sd, -)
+          if [[ "$BUNDLE_ABIS" != "arm64-v8a,armeabi-v7a,x86,x86_64" ]]; then
+            echo "Play bundle must retain all four ABIs; found: $BUNDLE_ABIS"
+            exit 1
+          fi
           mkdir -p dist
           cp "${bundles[0]}" dist/coffeepeek-release.aab
           cp composeApp/build/outputs/mapping/playRelease/mapping.txt dist/mapping.txt

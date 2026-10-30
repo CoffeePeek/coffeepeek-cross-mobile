@@ -16,6 +16,11 @@ production-like behavior compiled from the current branch, **not** an assertion
 that it exactly equals the currently released source. Release Google sign-in
 still needs valid OAuth configuration; Debug explicitly ignores that key.
 
+`directRelease` packages native libraries only for `arm64-v8a` and
+`armeabi-v7a`; its single APK is for ARM phones. Debug/Sandbox retain x86 ABIs
+for emulators, and the `playRelease` AAB retains all four ABIs for Play delivery.
+Do not use the direct APK to update an x86-only installation.
+
 ## Android Studio
 
 For day-to-day use, choose `directDebug`; switch to `directSandbox` only when

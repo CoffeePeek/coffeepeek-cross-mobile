@@ -287,6 +287,11 @@ android {
         buildConfigField("String", "SHELF_INPAINTER_URL", "\"https://huggingface.co/andraniksargsyan/migan/resolve/main/migan_pipeline_v2.onnx\"")
     }
     packaging {
+        jniLibs {
+            // Keep every supported ABI, but compress large scanner/map libraries in the APK.
+            // Android extracts them at install time; this trades installed disk usage for download size.
+            useLegacyPackaging = true
+        }
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
@@ -357,6 +362,12 @@ kotlin.sourceSets {
     matching { it.name in setOf("androidDirectSandbox", "androidPlaySandbox") }.all {
         dependsOn(androidSandbox)
     }
+}
+
+// The website/Firebase channel ships one APK for ARM phones. Keep x86 native
+// libraries in Debug for emulators and in the Play bundle for ChromeOS devices.
+androidComponents.onVariants(androidComponents.selector().withName("directRelease")) { variant ->
+    variant.packaging.jniLibs.excludes.addAll("**/x86/**", "**/x86_64/**")
 }
 
 // Reuse the app graph with isolated ports, never the production Application/services.
