@@ -51,7 +51,7 @@ internal fun androidx.compose.foundation.layout.BoxScope.MapOverlayControls(
 private fun MapOverlayControlsPreview() = CoffeePeekTheme {
     val shop = MapMarker("preview", "CoffeePeek Specialty Coffee", Coordinates(53.9, 27.56))
     val details = MapShopDetails(null, 4.5, 12, true, "09:00 – 21:00")
-    val state = MapState(nearby = listOf(shop), cardDetails = mapOf(shop.id to details))
+    val state = MapState(carouselShops = listOf(shop), cardDetails = mapOf(shop.id to details))
     Surface(color = MaterialTheme.colorScheme.surfaceVariant) {
         Box(Modifier.fillMaxWidth().height(480.dp)) {
             MapOverlayControls(state, DiscoveryHost(), 0.dp, {}, {})

@@ -12,6 +12,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.modifier.CoffeePeekGlassIconButton
+import com.coffeepeek.core.designsystem.modifier.CoffeePeekGlassIcon
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.ownership.impl.resources.*
 import org.jetbrains.compose.resources.stringResource
@@ -23,7 +24,8 @@ internal fun OwnershipProfileActions(owner: Boolean, suggest: () -> Unit, edit: 
     roaster: Boolean = false, claim: @Composable (dismiss: () -> Unit) -> Unit) {
     var applying by remember { mutableStateOf(false) }
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        if (owner) CoffeePeekGlassIconButton(edit, stringResource(Res.string.ownership_edit)) {
+        if (owner) CoffeePeekGlassIconButton(edit, stringResource(Res.string.ownership_edit),
+            nativeIcon = CoffeePeekGlassIcon.Edit) {
             Icon(CoffeePeekIcons.NoteEdit, null)
         }
         favorite()

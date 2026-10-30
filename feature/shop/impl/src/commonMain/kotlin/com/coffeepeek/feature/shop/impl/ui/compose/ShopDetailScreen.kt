@@ -14,8 +14,12 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -23,6 +27,7 @@ import androidx.compose.material3.SnackbarHostState
 import com.coffeepeek.feature.shop.impl.ui.data.LocalShopAnalytics
 import com.coffeepeek.feature.shop.impl.ui.data.trackShopAction
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
@@ -31,6 +36,8 @@ import androidx.compose.runtime.key
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
@@ -52,6 +59,8 @@ import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopContactSection
 import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopDescriptionSection
 import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopFeaturesSection
 import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopDetailTopActions
+import com.coffeepeek.feature.shop.impl.ui.compose.component.LocalShopBusinessIdentity
+import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopBusinessIdentity
 import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopDetailLoadState
 import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopDetailRefreshStatus
 import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopDetailBottomBar
@@ -78,6 +87,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.Lifecycle
 import dev.chrisbanes.haze.hazeSource
+import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.rememberHazeState
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
@@ -152,121 +162,166 @@ internal fun ShopDetailScreenContent(
         ShopPriceInfoSheet(priceLevel, onDismiss = { onAction(ShopDetailAction.DismissPriceInfo) })
     }
     val hazeState = rememberHazeState()
+    val listState = rememberLazyListState()
     val floatingActionsClearance = 72.dp
-    val systemBottomInset = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
     Box(Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal))) {
-      Scaffold(
-        modifier = Modifier.hazeSource(hazeState),
-        contentWindowInsets = WindowInsets(0),
-        snackbarHost = { SnackbarHost(snackbarHostState,
-            Modifier.navigationBarsPadding().padding(bottom = floatingActionsClearance)) },
-        containerColor = MaterialTheme.colorScheme.background,
-    ) { insets ->
+        ShopDetailScaffold(state, onAction, distanceLabel, formatCheckInDate, formatMenuDate,
+            snackbarHostState, listState, hazeState, floatingActionsClearance)
+        ShopDetailScrollingActions(state, listState, onAction, hazeState)
+        ShopDetailBottomAction(state, forCheckIn, onAction, hazeState, Modifier.align(Alignment.BottomCenter))
+    }
+}
+
+@Composable
+private fun ShopDetailScaffold(
+    state: ShopDetailState, onAction: (ShopDetailAction) -> Unit, distanceLabel: String?,
+    formatCheckInDate: (String) -> String, formatMenuDate: (String) -> String,
+    snackbarHostState: SnackbarHostState, listState: LazyListState, hazeState: HazeState, clearance: Dp,
+) {
+    Scaffold(modifier = Modifier.hazeSource(hazeState), contentWindowInsets = WindowInsets(0),
+        snackbarHost = { SnackbarHost(snackbarHostState, Modifier.navigationBarsPadding().padding(bottom = clearance)) },
+        containerColor = MaterialTheme.colorScheme.background) { insets ->
         Box(Modifier.fillMaxSize().padding(insets).consumeWindowInsets(insets), contentAlignment = Alignment.Center) {
             val details = state.details
-            val ownCheckInIds = remember(details?.userCheckIns) {
-                details?.userCheckIns.orEmpty().mapTo(HashSet()) { it.id }
-            }
-            when {
-                details == null -> ShopDetailLoadState(state.isLoading,
-                    onRetry = { onAction(ShopDetailAction.Retry) })
-                else -> LazyColumn(
-                    modifier = Modifier.fillMaxSize().clipToBounds(),
-                    contentPadding = PaddingValues(bottom = floatingActionsClearance +
-                        CoffeePeekDimens.spacing4 + CoffeePeekDimens.spacing6 + systemBottomInset),
-                ) {
-                    item {
-                        ShopDetailHeader(state, onAction, distanceLabel)
-                    }
-                    if (state.isLoading || state.hasError) {
-                        item { ShopDetailRefreshStatus(state.isLoading,
-                            onRetry = { onAction(ShopDetailAction.Retry) },
-                            modifier = Modifier.padding(horizontal = CoffeePeekDimens.spacing4,
-                                vertical = CoffeePeekDimens.spacing3)) }
-                    }
-                    details.overview.description?.let { description ->
-                        item { ShopDescriptionSection(description, Modifier.padding(horizontal = CoffeePeekDimens.spacing4,
-                            vertical = 6.dp)) }
-                    }
-                    item { ShopCoffeeDetailsSection(details.coffee,
-                        onOpenRoaster = { onAction(ShopDetailAction.OpenRoaster(it)) },
-                        modifier = Modifier.padding(horizontal = CoffeePeekDimens.spacing4, vertical = 6.dp)) }
-                    if (details.schedules.isNotEmpty()) {
-                        item { ShopScheduleSection(details.schedules, state.todayDayOfWeek,
-                            state.scheduleExpanded,
-                            onToggle = { onAction(ShopDetailAction.ToggleSchedule) },
-                            isOpen = details.overview.isOpen,
-                            minuteOfDay = state.todayMinuteOfDay,
-                            modifier = Modifier.padding(horizontal = CoffeePeekDimens.spacing4,
-                                vertical = CoffeePeekDimens.spacing3)) }
-                    }
-                    details.menu?.takeIf { menu ->
-                        menu.photos.isNotEmpty() || menu.items.any { it.availability.equals("Present", true) }
-                    }?.let { menu ->
-                        item { ShopMenuSection(menu, onOpenPhoto = { index ->
-                            onAction(ShopDetailAction.OpenPhoto(menu.photos.map { it.previewUrl }, index, menu.photos.map { it.fullUrl }))
-                        }, modifier = Modifier.padding(horizontal = CoffeePeekDimens.spacing4, vertical = 6.dp),
-                            formatDate = formatMenuDate) }
-                    }
-                    details.contact?.let { contact ->
-                        item { ShopContactSection(contact,
-                            onOpenLink = { onAction(ShopDetailAction.OpenLink(it)) },
-                            onCopyPhone = { onAction(ShopDetailAction.CopyPhone(it)) },
-                            modifier = Modifier.padding(horizontal = CoffeePeekDimens.spacing4,
-                                vertical = CoffeePeekDimens.spacing4)) }
-                    }
-                    if (details.features.isNotEmpty()) {
-                        item { ShopFeaturesSection(details.features, state.featuresExpanded,
-                            onToggle = { onAction(ShopDetailAction.ToggleFeatures) },
-                            modifier = Modifier.padding(horizontal = CoffeePeekDimens.spacing4)
-                                .padding(top = CoffeePeekDimens.spacing6, bottom = CoffeePeekDimens.spacing3)) }
-                    }
-                    item { ShopPublicCheckInsSection(details.checkIns, details.overview.title,
-                        state.isLoggedIn, state.currentUserId, ownCheckInIds,
-                        state.pendingCheckInVoteId,
-                        onOpenPhoto = { checkIn, index -> onAction(ShopDetailAction.OpenCheckInPhoto(checkIn.id, index)) },
-                        onVote = { onAction(ShopDetailAction.VoteCheckInHelpful(it)) },
-                        onReport = { onAction(ShopDetailAction.ReportCheckIn(it)) },
-                        onBlockAuthor = { onAction(ShopDetailAction.BlockAuthor(it)) },
-                        onOpenAuthor = { onAction(ShopDetailAction.OpenAuthor(it)) },
-                        onOpenAll = { onAction(ShopDetailAction.OpenCheckIns) },
-                        onSignIn = { onAction(ShopDetailAction.SignIn) },
-                        onRegister = { onAction(ShopDetailAction.Register) },
-                        overallRating = details.overview.rating,
-                        checkInCount = details.overview.reviewCount,
-                        formatDate = formatCheckInDate,
-                        isRefreshing = state.isLoading,
-                        contentPadding = CoffeePeekDimens.spacing4,
-                        modifier = Modifier.padding(top = CoffeePeekDimens.spacing3, bottom = CoffeePeekDimens.spacing2)) }
-                    item { ShopReportIssueSection(onReport = { onAction(ShopDetailAction.ReportShop) },
-                        modifier = Modifier.padding(horizontal = CoffeePeekDimens.spacing4,
-                            vertical = CoffeePeekDimens.spacing2)) }
-                }
-            }
+            if (details == null) ShopDetailLoadState(state.isLoading, onRetry = { onAction(ShopDetailAction.Retry) })
+            else ShopDetailList(details, state, onAction, distanceLabel, formatCheckInDate, formatMenuDate,
+                listState, clearance)
         }
-      }
-      if (state.details == null) ShopDetailTopActions(
-          showShopActions = false,
-          isFavorite = state.isFavorite,
-          favoriteAvailable = state.favoriteAvailable,
-          isFavoriteLoading = state.isFavoriteLoading,
-          onBack = { onAction(ShopDetailAction.Back) },
-          onSuggestChange = { onAction(ShopDetailAction.SuggestChange) },
-          onToggleFavorite = { onAction(ShopDetailAction.ToggleFavorite) },
-          onShare = { onAction(ShopDetailAction.Share) },
-          hazeState = hazeState,
-      )
-      state.details?.overview?.let { overview ->
-          ShopDetailBottomBar(
-              canOpenRoute = overview.latitude != null && overview.longitude != null,
-              forCheckIn = forCheckIn,
-              onRoute = { onAction(ShopDetailAction.OpenRoute) },
-              onCheckIn = { onAction(ShopDetailAction.OpenCheckIn) },
-              onChooseAnotherShop = { onAction(ShopDetailAction.ChooseAnotherShop) },
-              modifier = Modifier.align(Alignment.BottomCenter),
-              hazeState = hazeState,
-          )
-      }
+    }
+}
+
+@Composable
+private fun ShopDetailList(
+    details: ShopDetails, state: ShopDetailState, onAction: (ShopDetailAction) -> Unit,
+    distanceLabel: String?, formatCheckInDate: (String) -> String, formatMenuDate: (String) -> String,
+    listState: LazyListState, clearance: Dp,
+) {
+    val bottomInset = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
+    LazyColumn(state = listState, modifier = Modifier.fillMaxSize().clipToBounds(),
+        contentPadding = PaddingValues(bottom = clearance + CoffeePeekDimens.spacing4 +
+            CoffeePeekDimens.spacing6 + bottomInset)) {
+        item { ShopDetailHeader(state, onAction, distanceLabel) }
+        shopDetailIntroItems(details, state, onAction)
+        shopDetailCoffeeItems(details, state, onAction)
+        shopDetailMenuItems(details, formatMenuDate, onAction)
+        shopDetailContactItems(details, state, onAction)
+        item { ShopDetailCheckIns(details, state, formatCheckInDate, onAction) }
+        item { ShopReportIssueSection(onReport = { onAction(ShopDetailAction.ReportShop) },
+            modifier = Modifier.padding(horizontal = CoffeePeekDimens.spacing4, vertical = CoffeePeekDimens.spacing2)) }
+    }
+}
+
+private fun LazyListScope.shopDetailIntroItems(details: ShopDetails, state: ShopDetailState,
+    onAction: (ShopDetailAction) -> Unit) {
+    if (state.isLoading || state.hasError) item {
+        ShopDetailRefreshStatus(state.isLoading, onRetry = { onAction(ShopDetailAction.Retry) },
+            modifier = Modifier.padding(horizontal = CoffeePeekDimens.spacing4, vertical = CoffeePeekDimens.spacing3))
+    }
+    details.overview.description?.let { description -> item {
+        ShopDescriptionSection(description,
+            Modifier.padding(horizontal = CoffeePeekDimens.spacing4, vertical = 6.dp))
+    } }
+}
+
+private fun LazyListScope.shopDetailCoffeeItems(details: ShopDetails, state: ShopDetailState,
+    onAction: (ShopDetailAction) -> Unit) {
+    item { ShopCoffeeDetailsSection(details.coffee,
+        onOpenRoaster = { onAction(ShopDetailAction.OpenRoaster(it)) },
+        modifier = Modifier.padding(horizontal = CoffeePeekDimens.spacing4, vertical = 6.dp)) }
+    if (details.schedules.isNotEmpty()) item {
+        ShopScheduleSection(details.schedules, state.todayDayOfWeek, state.scheduleExpanded,
+            onToggle = { onAction(ShopDetailAction.ToggleSchedule) },
+            isOpen = details.overview.isOpen, minuteOfDay = state.todayMinuteOfDay,
+            modifier = Modifier.padding(horizontal = CoffeePeekDimens.spacing4, vertical = CoffeePeekDimens.spacing3))
+    }
+}
+
+private fun LazyListScope.shopDetailMenuItems(details: ShopDetails, formatMenuDate: (String) -> String,
+    onAction: (ShopDetailAction) -> Unit) {
+    details.menu?.takeIf { menu ->
+        menu.photos.isNotEmpty() || menu.items.any { it.availability.equals("Present", true) }
+    }?.let { menu -> item {
+        ShopMenuSection(menu, onOpenPhoto = { index ->
+            onAction(ShopDetailAction.OpenPhoto(menu.photos.map { it.previewUrl }, index, menu.photos.map { it.fullUrl }))
+        }, modifier = Modifier.padding(horizontal = CoffeePeekDimens.spacing4, vertical = 6.dp),
+            formatDate = formatMenuDate)
+    } }
+}
+
+private fun LazyListScope.shopDetailContactItems(details: ShopDetails, state: ShopDetailState,
+    onAction: (ShopDetailAction) -> Unit) {
+    details.contact?.let { contact -> item {
+        ShopContactSection(contact,
+            onOpenLink = { onAction(ShopDetailAction.OpenLink(it)) },
+            onCopyPhone = { onAction(ShopDetailAction.CopyPhone(it)) },
+            modifier = Modifier.padding(horizontal = CoffeePeekDimens.spacing4, vertical = CoffeePeekDimens.spacing4))
+    } }
+    if (details.features.isNotEmpty()) item {
+        ShopFeaturesSection(details.features, state.featuresExpanded,
+            onToggle = { onAction(ShopDetailAction.ToggleFeatures) },
+            modifier = Modifier.padding(horizontal = CoffeePeekDimens.spacing4)
+                .padding(top = CoffeePeekDimens.spacing6, bottom = CoffeePeekDimens.spacing3))
+    }
+}
+
+@Composable
+private fun ShopDetailCheckIns(details: ShopDetails, state: ShopDetailState,
+    formatDate: (String) -> String, onAction: (ShopDetailAction) -> Unit) {
+    val ownCheckInIds = remember(details.userCheckIns) { details.userCheckIns.mapTo(HashSet()) { it.id } }
+    ShopPublicCheckInsSection(details.checkIns, details.overview.title,
+        state.isLoggedIn, state.currentUserId, ownCheckInIds, state.pendingCheckInVoteId,
+        onOpenPhoto = { checkIn, index -> onAction(ShopDetailAction.OpenCheckInPhoto(checkIn.id, index)) },
+        onVote = { onAction(ShopDetailAction.VoteCheckInHelpful(it)) },
+        onReport = { onAction(ShopDetailAction.ReportCheckIn(it)) },
+        onBlockAuthor = { onAction(ShopDetailAction.BlockAuthor(it)) },
+        onOpenAuthor = { onAction(ShopDetailAction.OpenAuthor(it)) },
+        onOpenAll = { onAction(ShopDetailAction.OpenCheckIns) },
+        onSignIn = { onAction(ShopDetailAction.SignIn) },
+        onRegister = { onAction(ShopDetailAction.Register) },
+        overallRating = details.overview.rating, checkInCount = details.overview.reviewCount,
+        formatDate = formatDate, isRefreshing = state.isLoading,
+        contentPadding = CoffeePeekDimens.spacing4,
+        modifier = Modifier.padding(top = CoffeePeekDimens.spacing3, bottom = CoffeePeekDimens.spacing2))
+}
+
+@Composable
+private fun ShopDetailBottomAction(state: ShopDetailState, forCheckIn: Boolean,
+    onAction: (ShopDetailAction) -> Unit, hazeState: HazeState, modifier: Modifier) {
+    val overview = state.details?.overview ?: return
+    ShopDetailBottomBar(canOpenRoute = overview.latitude != null && overview.longitude != null,
+        forCheckIn = forCheckIn,
+        onRoute = { onAction(ShopDetailAction.OpenRoute) },
+        onCheckIn = { onAction(ShopDetailAction.OpenCheckIn) },
+        onChooseAnotherShop = { onAction(ShopDetailAction.ChooseAnotherShop) },
+        modifier = modifier, hazeState = hazeState)
+}
+
+@Composable
+private fun ShopDetailScrollingActions(
+    state: ShopDetailState,
+    listState: LazyListState,
+    onAction: (ShopDetailAction) -> Unit,
+    hazeState: HazeState,
+) {
+    if (state.details != null && listState.firstVisibleItemIndex != 0) return
+    val scrollModifier = if (state.details == null) Modifier else Modifier.offset {
+        IntOffset(0, -listState.firstVisibleItemScrollOffset)
+    }
+    val overview = state.details?.overview
+    val identity = overview?.let { ShopBusinessIdentity(it.id, it.canonicalPath?.substringAfterLast('/') ?: it.id) }
+    CompositionLocalProvider(LocalShopBusinessIdentity provides identity) {
+        ShopDetailTopActions(
+            showShopActions = overview != null,
+            isFavorite = state.isFavorite,
+            favoriteAvailable = state.favoriteAvailable,
+            isFavoriteLoading = state.isFavoriteLoading,
+            onBack = { onAction(ShopDetailAction.Back) },
+            onSuggestChange = { onAction(ShopDetailAction.SuggestChange) },
+            onToggleFavorite = { onAction(ShopDetailAction.ToggleFavorite) },
+            onShare = { onAction(ShopDetailAction.Share) },
+            modifier = scrollModifier,
+            hazeState = hazeState,
+        )
     }
 }
 
@@ -277,14 +332,13 @@ private fun ShopDetailHeader(
     distanceLabel: String?,
 ) {
     val overview = state.details?.overview ?: return
-    // The screen source includes these controls, so the hero uses a separate blur source.
-    val heroHaze = rememberHazeState()
     androidx.compose.runtime.CompositionLocalProvider(
         com.coffeepeek.feature.shop.impl.ui.compose.component.LocalShopBusinessIdentity provides
             com.coffeepeek.feature.shop.impl.ui.compose.component.ShopBusinessIdentity(overview.id,
                 overview.canonicalPath?.substringAfterLast('/') ?: overview.id)) {
     Column {
-        ShopDetailHero(state, onAction, overview, heroHaze)
+        ShopOverviewHero(overview,
+            onOpenPhoto = { urls, originals, index -> onAction(ShopDetailAction.OpenPhoto(urls, index, originals)) })
         Column(Modifier.padding(horizontal = CoffeePeekDimens.spacing4,
             vertical = CoffeePeekDimens.spacing3),
             verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2)) {
@@ -296,27 +350,6 @@ private fun ShopDetailHeader(
         }
     }
 }
-}
-
-@Composable
-private fun ShopDetailHero(state: ShopDetailState, onAction: (ShopDetailAction) -> Unit,
-    overview: ShopOverview, heroHaze: dev.chrisbanes.haze.HazeState) {
-        Box {
-            ShopOverviewHero(overview,
-                onOpenPhoto = { urls, originals, index -> onAction(ShopDetailAction.OpenPhoto(urls, index, originals)) },
-                modifier = Modifier.hazeSource(heroHaze))
-            ShopDetailTopActions(
-                showShopActions = true,
-                isFavorite = state.isFavorite,
-                favoriteAvailable = state.favoriteAvailable,
-                isFavoriteLoading = state.isFavoriteLoading,
-                onBack = { onAction(ShopDetailAction.Back) },
-                onSuggestChange = { onAction(ShopDetailAction.SuggestChange) },
-                onToggleFavorite = { onAction(ShopDetailAction.ToggleFavorite) },
-                onShare = { onAction(ShopDetailAction.Share) },
-                hazeState = heroHaze,
-            )
-        }
 }
 
 @Preview @Composable private fun ShopDetailScreenLightPreview() = CoffeePeekTheme(darkTheme = false) {

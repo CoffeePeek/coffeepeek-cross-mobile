@@ -80,21 +80,22 @@ class DiscoveryRulesTest {
         assertEquals(Coordinates(53.9005, 27.5505), small.center)
     }
 
-    @Test fun nearbyKeepsTheTenNearestInsideTheRadiusSortedByDistanceThenId() {
+    @Test fun viewportKeepsSurvivorsAndAddsNewShopsNearestTheCenter() {
         fun marker(id: String, lat: Double, lon: Double) = MapMarker(id, id, Coordinates(lat, lon))
-        val markers = listOf(marker("far", 54.5, 27.56), marker("b", 53.9, 27.561), marker("a", 53.9, 27.561), marker("near", 53.9, 27.5601), marker("a", 53.9, 27.561)) +
-            (1..12).map { marker("n$it", 53.9 + it * 0.0005, 27.56) }
-        val nearest = nearestMarkers(markers, minsk)
-        assertEquals(10, nearest.size); assertEquals("near", nearest.first().id); assertFalse(nearest.any { it.id == "far" })
-        assertEquals(listOf("a", "b"), nearest.map { it.id }.filter { it == "a" || it == "b" })
-        assertTrue(nearestMarkers(listOf(marker("bad", 91.0, 0.0)), minsk).isEmpty())
+        val bounds = MapBounds(53.88, 27.50, 53.92, 27.60)
+        val near = marker("z", 53.901, 27.551)
+        val far = marker("a", 53.919, 27.599)
+        val outside = marker("outside", 54.5, 27.56)
+        assertEquals(listOf("z", "a"), viewportMarkers(listOf(far, near, outside, near), bounds, emptyList()).map { it.id })
+        assertEquals(listOf("a", "z"), viewportMarkers(listOf(near, far), bounds, listOf(far)).map { it.id })
+        assertTrue(viewportMarkers(listOf(marker("bad", 91.0, 0.0)), bounds, emptyList()).isEmpty())
     }
 
-    @Test fun theNearbyBoxIsFiveKilometersAroundTheOriginAndStaysOnEarth() {
-        val box = nearbyBounds(minsk)
-        assertEquals(53.9 - 5_000.0 / 110_000.0, box.minLat, 1e-9); assertEquals(53.9 + 5_000.0 / 110_000.0, box.maxLat, 1e-9)
-        assertTrue(box.minLon < 27.56 && box.maxLon > 27.56)
-        assertEquals(85.0, nearbyBounds(Coordinates(84.99, 0.0)).maxLat)
+    @Test fun viewportIncludesAllVisibleShopsAndHandlesWrapping() {
+        val markers = (1..12).map { MapMarker("$it", "$it", Coordinates(53.9 + it * 0.001, 27.56)) }
+        assertEquals(12, viewportMarkers(markers, MapBounds(53.88, 27.50, 53.92, 27.60), emptyList()).size)
+        val wrapped = listOf(179.5, -179.5, 0.0).mapIndexed { index, lon -> MapMarker("$index", "$index", Coordinates(0.0, lon)) }
+        assertEquals(2, viewportMarkers(wrapped, MapBounds(-1.0, 179.0, 1.0, -179.0), emptyList()).size)
         assertNotNull(clampZoom(1f)); assertEquals(3f, clampZoom(1f)); assertEquals(20f, clampZoom(25f)); assertEquals(14f, clampZoom(14f))
     }
 

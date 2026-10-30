@@ -44,11 +44,14 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
@@ -79,6 +82,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.clipToBounds
@@ -246,6 +250,7 @@ fun ShopDetailScreen(shopId: String, forCheckIn: Boolean = false) {
     val floatingActionsClearance = 72.dp
     val systemBottomInset = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
     val hazeState = rememberHazeState()
+    val listState = rememberLazyListState()
 
     Box(modifier = Modifier.fillMaxSize()) {
         Scaffold(
@@ -296,6 +301,7 @@ fun ShopDetailScreen(shopId: String, forCheckIn: Boolean = false) {
                 details != null -> {
                     ShopDetailContent(
                         details = details,
+                        listState = listState,
                         distance = distance,
                         isLoggedIn = state.isLoggedIn,
                         currentUserId = state.currentUserId,
@@ -308,16 +314,15 @@ fun ShopDetailScreen(shopId: String, forCheckIn: Boolean = false) {
                         onReviewPhotoClick = { urls, index -> preview = urls to index },
                         onReviewHelpfulClick = vm::toggleHelpful,
                         menuGalleryAction = { menuGalleryRenderer.MenuGalleryAction(shopId) },
-                        headerActions = { heroHaze ->
-                            HeroTopActions(heroHaze, Navigator::popBack, details.shop.isFavorite,
-                                state.isFavoriteLoading, vm::toggleFavorite, vm::shareShop, vm::openSuggestChange,
-                                modifier = Modifier.statusBarsPadding(), businessId = details.shop.id, businessSlug = details.shop.publicAddress?.slug.orEmpty())
-                        },
                     )
                 }
             }
         }
 
+        if (details != null && !state.isLoading && state.error == null) {
+            ShopDetailScrollingActions(details, listState, hazeState, state.isFavoriteLoading,
+                vm::toggleFavorite, vm::shareShop, vm::openSuggestChange)
+        }
         if (details != null) {
             ShopDetailBottomBar(
                 isCheckInLoading = state.isCheckInLoading,
@@ -340,10 +345,30 @@ fun ShopDetailScreen(shopId: String, forCheckIn: Boolean = false) {
     }
 }
 
+@Composable
+private fun ShopDetailScrollingActions(
+    details: CoffeeShopDetails,
+    listState: LazyListState,
+    hazeState: HazeState,
+    isFavoriteLoading: Boolean,
+    onToggleFavorite: () -> Unit,
+    onShare: () -> Unit,
+    onSuggestChange: () -> Unit,
+) {
+    if (listState.firstVisibleItemIndex != 0) return
+    HeroTopActions(hazeState, Navigator::popBack, details.shop.isFavorite,
+        isFavoriteLoading, onToggleFavorite, onShare, onSuggestChange,
+        modifier = Modifier.statusBarsPadding().offset {
+            IntOffset(0, -listState.firstVisibleItemScrollOffset)
+        }, businessId = details.shop.id,
+        businessSlug = details.shop.publicAddress?.slug.orEmpty())
+}
+
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun ShopDetailContent(
     details: CoffeeShopDetails,
+    listState: LazyListState,
     distance: String?,
     isLoggedIn: Boolean,
     currentUserId: String? = null,
@@ -356,10 +381,7 @@ private fun ShopDetailContent(
     onReviewPhotoClick: (PhotoViewerImages, Int) -> Unit = { _, _ -> },
     onReviewHelpfulClick: (String) -> Unit = {},
     menuGalleryAction: @Composable () -> Unit = {},
-    headerActions: @Composable (HazeState) -> Unit = {},
 ) {
-    // The screen source includes these controls, so the hero uses a separate blur source.
-    val heroHaze = rememberHazeState()
     val shop = details.shop
     val photos = details.photos.filter { it.isNotBlank() }.ifEmpty {
         listOfNotNull(shop.photoUrl?.takeIf { it.isNotBlank() })
@@ -369,6 +391,7 @@ private fun ShopDetailContent(
         .takeIf { it.size == photos.size } ?: photos
 
     LazyColumn(
+        state = listState,
         modifier = modifier.fillMaxSize().clipToBounds(),
         contentPadding = PaddingValues(bottom = bottomContentPadding + CpDimens.spacing4),
     ) {
@@ -392,9 +415,7 @@ private fun ShopDetailContent(
                     onOpenOnMap = onOpenOnMap,
                     onOpenReviews = { Navigator.navigate(Navigator.Screen.ShopReviews(shop.id)) },
                     onPhotoClick = { url -> Analytics.track(AnalyticsEvent.SHOP_CONTENT_INTERACTED, "section" to "photos", "action" to "open"); onOpenPhotos(PhotoViewerImages(photos, fullscreenPhotos), photos.indexOf(url).coerceAtLeast(0)) },
-                    modifier = Modifier.hazeSource(heroHaze),
                 )
-                headerActions(heroHaze)
             }
         }
 

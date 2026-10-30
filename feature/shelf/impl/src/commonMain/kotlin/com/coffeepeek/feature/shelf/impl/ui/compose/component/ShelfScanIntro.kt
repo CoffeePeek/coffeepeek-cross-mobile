@@ -75,7 +75,7 @@ private fun ShelfScannerReadiness(scanner: ShelfScannerStatus, onDownload: () ->
         }
         is ShelfScannerStatus.Downloading -> Column(verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2)) {
             val share = if (scanner.total > 0) scanner.done.toFloat() / scanner.total else 0f
-            Text(stringResource(Res.string.shelf_scanner_downloading, (share * 100).toInt()), color = muted)
+            Text(stringResource(Res.string.shelf_scanner_downloading, "${(share * 100).toInt()}%"), color = muted)
             LinearProgressIndicator(progress = { share }, modifier = Modifier.fillMaxWidth())
         }
         ShelfScannerStatus.DownloadFailed -> Column(verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2)) {
@@ -95,4 +95,6 @@ private fun ShelfScanIntroPreview(dark: Boolean, scanner: ShelfScannerStatus) = 
 @Preview @Composable private fun ShelfScanIntroLightPreview() = ShelfScanIntroPreview(false, ShelfScannerStatus.Ready)
 @Preview @Composable private fun ShelfScanIntroDarkPreview() = ShelfScanIntroPreview(true, ShelfScannerStatus.Ready)
 @Preview @Composable private fun ShelfScanIntroDownloadLightPreview() = ShelfScanIntroPreview(false, ShelfScannerStatus.NeedsDownload(28_079_181))
-@Preview @Composable private fun ShelfScanIntroDownloadDarkPreview() = ShelfScanIntroPreview(true, ShelfScannerStatus.Downloading(9_000_000, 28_079_181))
+@Preview @Composable private fun ShelfScanIntroDownloadDarkPreview() = ShelfScanIntroPreview(true, ShelfScannerStatus.NeedsDownload(28_079_181))
+@Preview @Composable private fun ShelfScanIntroDownloadingLightPreview() = ShelfScanIntroPreview(false, ShelfScannerStatus.Downloading(9_000_000, 28_079_181))
+@Preview @Composable private fun ShelfScanIntroDownloadingDarkPreview() = ShelfScanIntroPreview(true, ShelfScannerStatus.Downloading(9_000_000, 28_079_181))

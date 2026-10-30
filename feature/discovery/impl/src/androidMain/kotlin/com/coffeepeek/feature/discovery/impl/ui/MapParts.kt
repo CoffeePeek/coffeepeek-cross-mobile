@@ -151,12 +151,12 @@ private fun zoneShopCount(count: Int): String {
     )
 }
 
-/** The selected shop (or the nearby shops while nothing is selected) as cards that swipe around in a loop; swiping selects the shop. */
+/** Visible shops as cards that swipe around in a loop; swiping selects the shop. */
 @Composable
 internal fun MapShopCarousel(state: MapState, host: DiscoveryHost, dismissInput: () -> Unit, onAction: (MapAction) -> Unit, modifier: Modifier = Modifier) {
     val selected = state.selectedShop
-    // As in prod: a shop that is already among the nearby ones keeps the order of the list; only a shop from elsewhere is put in front of ten others.
-    val shops = if (selected == null || state.nearby.any { it.id == selected.id }) state.nearby else listOf(selected) + state.nearby.take(9)
+    val shops = if (selected == null || state.carouselShops.any { it.id == selected.id }) state.carouselShops
+        else listOf(selected) + state.carouselShops
     // The pager is rebuilt when the set of shops changes, so it never animates over a list that was swapped under it.
     key(shops.map { it.id }) { MapShopPager(state, shops.distinctBy { it.id }, host, dismissInput, onAction, modifier) }
 }
@@ -190,7 +190,7 @@ private fun MapShopPager(state: MapState, shops: List<MapMarker>, host: Discover
         val shop = shops[page % shops.size]
         val isSelected = shop.id == selected?.id
         MapShopCard(
-            shop, host, state.cardDetails[shop.id] ?: state.details.takeIf { isSelected }, isSelected && state.isLoadingDetails, state.nearbyOrigin?.let { distanceMeters(it, shop.coordinates) },
+            shop, host, state.cardDetails[shop.id] ?: state.details.takeIf { isSelected }, isSelected && state.isLoadingDetails, state.userLocation?.let { distanceMeters(it, shop.coordinates) },
             onOpen = { if (isSelected) onAction(MapAction.OpenShop(shop.id)) else onAction(MapAction.SelectMarker(shop.id)) },
         )
     }
@@ -207,5 +207,5 @@ internal fun carouselStartPage(count: Int, selectedIndex: Int): Int {
 private fun MapShopCarouselPreview() = com.coffeepeek.core.designsystem.theme.CoffeePeekTheme {
     val marker = MapMarker("preview", "CoffeePeek", com.coffeepeek.feature.discovery.domain.model.Coordinates(53.9, 27.56))
     val details = com.coffeepeek.feature.discovery.api.MapShopDetails(null, 4.5, 12, true, "09:00 – 21:00")
-    MapShopCarousel(MapState(nearby = listOf(marker), cardDetails = mapOf(marker.id to details)), DiscoveryHost(), {}, {})
+    MapShopCarousel(MapState(carouselShops = listOf(marker), cardDetails = mapOf(marker.id to details)), DiscoveryHost(), {}, {})
 }
