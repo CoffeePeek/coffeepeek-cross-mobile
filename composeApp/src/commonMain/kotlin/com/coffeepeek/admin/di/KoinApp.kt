@@ -45,11 +45,9 @@ import com.coffeepeek.admin.ui.screen.shop.ShopDetailScreenRenderer
 import com.coffeepeek.admin.ui.screen.shop.ShopCheckInListScreenRenderer
 import com.coffeepeek.admin.ui.screen.checkins.CheckInHistoryScreenRenderer
 import com.coffeepeek.admin.ui.screen.checkins.CheckInCreateFlowRenderer
-import com.coffeepeek.admin.ui.screen.favorites.FavoritesViewModel
 import com.coffeepeek.admin.ui.screen.review.ContentReportScreenRenderer
 import com.coffeepeek.admin.ui.screen.contributions.ContributionKind
 import com.coffeepeek.admin.ui.screen.shop.CheckInDraftStore
-import com.coffeepeek.admin.ui.screen.shopchange.ShopChangeEditorViewModel
 import com.coffeepeek.domain.model.ShopChangeSection
 import com.coffeepeek.admin.di.imageModule
 import com.coffeepeek.data.di.dataModule
@@ -236,8 +234,4 @@ private fun appModule(
     single { CityPreference(settingRepository) }
     single { ReviewDraftStore(settingRepository) }
     factory { NavigatorViewModel(get()) }
-    factory { (shopId: String, section: ShopChangeSection, requestId: String) ->
-        ShopChangeEditorViewModel(shopId, section, requestId, get(), get())
-    }
-    single { FavoritesViewModel(get(), get(), get(), get(), sessions = get()) }
 }

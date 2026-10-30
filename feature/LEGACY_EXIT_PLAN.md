@@ -1544,3 +1544,32 @@ source `89778c23` + этот срез. Подробный scope/остаток �
 - Не сделано (следующие шаги среза): вынос настроек/города в Settings data и миграции учётных данных в `core/session`
   (`RoomLegacyCredentialRows` пока в `modules/data`), так как это зависит от удаления `modules/data`.
 - Не проверялось на устройстве: сам тест миграций (нужен девайс).
+
+## L3, шаг 1 удаления `modules/*` — недостижимое легаси-UI и его тесты — 2026-10-30
+
+- Удалены 23 файла composeApp, не достижимых из маршрутов (Navigator ведёт во все рендереры фич), и регистрации
+  `FavoritesViewModel`/`ShopChangeEditorViewModel` в Koin: `CommunityScreen`/`CommunityViewModel`/`EditCheckInSheet`/
+  `TimelineCheckInCard`, `FavoritesScreen`/`FavoritesViewModel`, `SettingsScreen`/`ProfileViewModel`,
+  `ShopChangeEditorScreen`/`ShopChangeEditorViewModel`/`ShopChangeLabels`, старые обёртки превью избранного
+  (`FavoritesProfilePreview` в `feature/favorites/api`, `FavoritesProfilePreviewContent`, `SavedDrinkCard`; профиль уже
+  использует `FavoritesEntry.Preview`), `CheckInVisibilityControl`, `CityCatalogChips`, `DetailContent`, `SettingsList`,
+  `ShopTagIcon`, `FavoriteMembershipMapping` и три пустых утилиты (`DrawableExt`, `FlowExt`, `Transactions`).
+  Оставлены по решению: `OtherUserProfileScreen`, `PublicProfileViewModel`, `ProfileActions`.
+- Тесты. Карта «тест → фича» (по двум независимым разборам):
+  - `CommunityParityGapsTest`, `CommunityViewModelTest`, `PublicCommunityViewModelTest`, `AuthorVisibilityFeedTest` →
+    `feature/community/impl` (`CommunityViewModelTest`, `CommunityEditTest`, `CommunityRulesTest`) и `feature/community/data`.
+    Три пробела закрыты новыми тестами фичи: повтор неудачной подгрузки личной ленты, первичное наблюдение аккаунта не
+    сбрасывает выбранную ленту, сбой смены видимости не несёт серверного текста.
+  - `ProfileViewModelTest` → `OwnProfileViewModelTest`, `ProfileSignOutAdapterTest`, `SettingsPortsTest`, `CityPreferenceTest`,
+    `CityViewModelTest`, `SettingsViewModelTest`.
+  - `FavoritesViewModelTest`, `FavoriteDrinkViewModelTest`, `FavoritesProfilePreviewVisibilityTest` → `AccountFavoritesTest`,
+    `FavoriteDrinksViewModelTest`, `FavoritesPreviewPolicyTest`.
+  - `SubmissionViewModelTest` → `ChangeEditorViewModelTest` (+ тесты меню в `feature/contributions`).
+  - `TimelineCheckInPresentationTest` (подписи методов) → новый `BrewMethodLabelTest` для `methodLabel()`.
+- Удалены инструментальные тесты Арсения вместе с экранами (по решению): `CheckInLikesTest`, `AuthorBlockingMenuTest`,
+  `AuthorBlockingFlowScreenshotsTest` (+ фикстуры), `PlatformSwitchInteractionTest`, `ShopMenuEditorTest`; из смешанного
+  `PublicProfilePresentationTest` убраны 3 теста про удалённое избранное (8 тестов сохранённых экранов остались).
+  **Не покрыто (только на устройстве):** отрисовка кнопок лайка и меню автора в карточке, раскладка меню при крупном
+  шрифте, скриншоты потока блокировки автора, порядок блоков и сворачивание в редакторе меню, тумблеры видимости в тёмной
+  теме, скриншоты собственного профиля с избранным и переживание пересоздания композиции. Новые UI-тесты не создавались.
+  Формат строки рецепта в карточке ленты (`HomePreparation.details`, текст ресурсов) без теста: функция composable.

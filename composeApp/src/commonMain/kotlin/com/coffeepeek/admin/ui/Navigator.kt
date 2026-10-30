@@ -4,7 +4,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
 import com.coffeepeek.admin.ui.screen.checkins.CheckInHistoryDestination
 import com.coffeepeek.admin.ui.screen.shelf.ShelfScreenRenderer
-import com.coffeepeek.admin.ui.screen.favorites.FavoritesScreen
 import com.coffeepeek.admin.ui.favorites.FavoritesDestination
 import com.coffeepeek.admin.ui.screen.contributions.ContributionKind
 import com.coffeepeek.admin.ui.screen.contributions.ContributionsScreenRenderer
