@@ -364,6 +364,12 @@ kotlin.sourceSets {
     }
 }
 
+// The website/Firebase channel ships one APK for ARM phones. Keep x86 native
+// libraries in Debug for emulators and in the Play bundle for ChromeOS devices.
+androidComponents.onVariants(androidComponents.selector().withName("directRelease")) { variant ->
+    variant.packaging.jniLibs.excludes.addAll("**/x86/**", "**/x86_64/**")
+}
+
 // Reuse the app graph with isolated ports, never the production Application/services.
 androidComponents.onVariants(androidComponents.selector().withBuildType("sandbox")) { variant ->
     tasks.matching { it.name == "process${variant.name.replaceFirstChar { it.uppercaseChar() }}GoogleServices" }
