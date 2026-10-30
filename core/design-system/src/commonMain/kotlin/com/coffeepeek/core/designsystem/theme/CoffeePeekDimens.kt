@@ -29,6 +29,7 @@ object CoffeePeekDimens {
     // ── Button / input — one control height, pill ends ────────────────────────
     val controlHeight   = 44.dp
     val buttonHeight    = controlHeight
+    val glassControlSize = 48.dp
     val buttonPaddingH  = 16.dp
     val buttonPaddingV  = 10.dp
     val buttonRadius    = controlHeight / 2

@@ -9,7 +9,7 @@ import com.coffeepeek.admin.ui.component.SubmissionStatus
 import com.coffeepeek.admin.ui.component.SubmissionStatusScreen
 import com.coffeepeek.admin.ui.component.SubmissionErrorActions
 import com.coffeepeek.admin.ui.Navigator
-import androidx.compose.material3.OutlinedButton
+import com.coffeepeek.core.designsystem.component.CoffeePeekOutlinedButton as OutlinedButton
 import com.coffeepeek.domain.model.ModerationStatus
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border

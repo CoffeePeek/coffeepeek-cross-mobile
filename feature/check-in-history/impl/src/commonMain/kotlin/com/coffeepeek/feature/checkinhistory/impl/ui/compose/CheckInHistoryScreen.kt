@@ -3,6 +3,7 @@ package com.coffeepeek.feature.checkinhistory.impl.ui.compose
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.*
+import com.coffeepeek.core.designsystem.component.CoffeePeekFloatingActionButton as FloatingActionButton
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.contentDescription

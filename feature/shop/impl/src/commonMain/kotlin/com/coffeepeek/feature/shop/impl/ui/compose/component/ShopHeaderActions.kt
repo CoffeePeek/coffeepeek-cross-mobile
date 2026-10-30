@@ -1,5 +1,7 @@
 package com.coffeepeek.feature.shop.impl.ui.compose.component
 
+import com.coffeepeek.core.designsystem.modifier.CoffeePeekGlassIcon
+
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.material3.Icon
@@ -39,21 +41,21 @@ internal fun ShopHeaderActions(
             favorite = { ShopFavoriteButton(isFavorite, favoriteAvailable, isFavoriteLoading, onToggleFavorite, hazeState = hazeState) },
             share = {
                 CoffeePeekGlassIconButton(onShare, stringResource(Res.string.shop_detail_share), hazeState = hazeState,
-                    modifier = Modifier.shopExposure(ShopExposure.Share)) { Icon(CoffeePeekIcons.Share, null) }
+                    modifier = Modifier.shopExposure(ShopExposure.Share), nativeIcon = CoffeePeekGlassIcon.Share) { Icon(CoffeePeekIcons.Share, null) }
             })
         return
     }
     Row(horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2),
         verticalAlignment = Alignment.CenterVertically) {
         CoffeePeekGlassIconButton(onClick = onSuggestChange,
-            contentDescription = stringResource(Res.string.shop_detail_suggest_change), hazeState = hazeState) {
+            contentDescription = stringResource(Res.string.shop_detail_suggest_change), hazeState = hazeState, nativeIcon = CoffeePeekGlassIcon.Edit) {
             Icon(CoffeePeekIcons.NoteEdit, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface)
         }
         ShopFavoriteButton(isFavorite, favoriteAvailable, isFavoriteLoading, onToggleFavorite,
             hazeState = hazeState)
         CoffeePeekGlassIconButton(onClick = onShare,
             contentDescription = stringResource(Res.string.shop_detail_share),
-            modifier = Modifier.shopExposure(ShopExposure.Share), hazeState = hazeState) {
+            modifier = Modifier.shopExposure(ShopExposure.Share), hazeState = hazeState, nativeIcon = CoffeePeekGlassIcon.Share) {
             Icon(CoffeePeekIcons.Share, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface)
         }
     }

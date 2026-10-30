@@ -22,6 +22,7 @@ fun CoffeePeekSwitch(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
 ) {
+    if (CoffeePeekNativeSwitch(checked, onCheckedChange, modifier, enabled)) return
     val palette = coffeePeekSwitchPalette(MaterialTheme.colorScheme.background.luminance() < 0.5f)
     Switch(checked = checked, onCheckedChange = onCheckedChange, enabled = enabled, modifier = modifier,
         thumbContent = { Box(Modifier.size(SwitchDefaults.IconSize)) },

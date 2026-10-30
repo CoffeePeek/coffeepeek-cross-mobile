@@ -22,7 +22,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
+import com.coffeepeek.core.designsystem.component.CoffeePeekFilledButton as Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -30,7 +30,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import com.coffeepeek.core.designsystem.component.CoffeePeekTextButton as TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -56,6 +56,8 @@ import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
 import com.coffeepeek.core.designsystem.component.CoffeePeekTopBar
 import com.coffeepeek.core.designsystem.component.rememberCoffeePeekSyncedText
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
+import com.coffeepeek.core.designsystem.component.CoffeePeekActionDialog
+import com.coffeepeek.core.designsystem.component.CoffeePeekDialogAction
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.core.designsystem.theme.CoffeePeekColors
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
@@ -229,16 +231,12 @@ private fun DeleteAccountButton(enabled: Boolean, onClick: () -> Unit) {
 
 @Composable
 private fun DeleteAccountDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(stringResource(Res.string.profile_edit_delete_title)) },
-        text = { Text(stringResource(Res.string.profile_edit_delete_message)) },
-        confirmButton = {
-            TextButton(onClick = onConfirm) {
-                Text(stringResource(Res.string.profile_edit_delete_confirm), color = MaterialTheme.colorScheme.error)
-            }
-        },
-        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(Res.string.profile_cancel)) } },
+    CoffeePeekActionDialog(
+        title = stringResource(Res.string.profile_edit_delete_title),
+        message = stringResource(Res.string.profile_edit_delete_message),
+        actions = listOf(CoffeePeekDialogAction(stringResource(Res.string.profile_edit_delete_confirm), onConfirm, destructive = true)),
+        cancelLabel = stringResource(Res.string.profile_cancel),
+        onDismiss = onDismiss,
     )
 }
 

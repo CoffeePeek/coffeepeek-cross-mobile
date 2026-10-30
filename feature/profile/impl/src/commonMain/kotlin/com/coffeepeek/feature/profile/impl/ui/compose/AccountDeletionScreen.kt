@@ -1,5 +1,8 @@
 package com.coffeepeek.feature.profile.impl.ui.compose
 
+import com.coffeepeek.core.designsystem.component.CoffeePeekActionDialog
+import com.coffeepeek.core.designsystem.component.CoffeePeekDialogAction
+
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,12 +16,12 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
+import com.coffeepeek.core.designsystem.component.CoffeePeekFilledButton as Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import com.coffeepeek.core.designsystem.component.CoffeePeekTextButton as TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -52,11 +55,12 @@ internal fun AccountDeletionScreen(
     LaunchedEffect(vm) { vm.events.collect { event -> when (event) { AccountDeletionEvent.SessionEnded -> sessionEnded() } } }
 
     state.error?.let { message ->
-        AlertDialog(
-            onDismissRequest = { vm.onAction(AccountDeletionAction.DismissError) },
-            title = { Text(stringResource(Res.string.profile_error_title)) },
-            text = { Text(message) },
-            confirmButton = { TextButton(onClick = { vm.onAction(AccountDeletionAction.DismissError) }) { Text(stringResource(Res.string.profile_ok)) } },
+        CoffeePeekActionDialog(
+            title = stringResource(Res.string.profile_error_title),
+            message = message,
+            actions = listOf(CoffeePeekDialogAction(stringResource(Res.string.profile_ok), { vm.onAction(AccountDeletionAction.DismissError) })),
+            cancelLabel = null,
+            onDismiss = { vm.onAction(AccountDeletionAction.DismissError) },
         )
     }
 

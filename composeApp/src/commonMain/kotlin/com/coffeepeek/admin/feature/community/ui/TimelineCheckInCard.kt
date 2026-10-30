@@ -1,6 +1,7 @@
 package com.coffeepeek.admin.feature.community.ui
 
 import androidx.compose.material3.*
+import com.coffeepeek.core.designsystem.component.CoffeePeekTextButton as TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.coffeepeek.admin.feature.catalog.api.methodLabel

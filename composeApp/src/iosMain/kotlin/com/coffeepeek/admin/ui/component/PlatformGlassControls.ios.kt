@@ -110,6 +110,7 @@ private fun IosGlassIconButton(
             button.configuration = configuration
             button.accessibilityLabel = contentDescription
             button.enabled = enabled && !isLoading
+            button.selected = selected || icon == GlassControlIcon.FavoriteFilled
         },
     )
 }

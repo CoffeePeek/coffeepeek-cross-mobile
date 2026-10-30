@@ -72,6 +72,7 @@ fun CoffeePeekSwipeDismissModalBottomSheet(
     require(maxSheetHeightFraction == null || maxSheetHeightFraction > 0f && maxSheetHeightFraction <= 1f) {
         "maxSheetHeightFraction must be in (0, 1]"
     }
+    if (CoffeePeekNativeModalSheet(onDismissRequest, dismissEnabled, maxSheetHeightFraction, modifier, content)) return
     val scope = rememberCoroutineScope()
     val currentDismissEnabled by rememberUpdatedState(dismissEnabled)
     val currentOnDismiss by rememberUpdatedState(onDismissRequest)
@@ -97,7 +98,9 @@ fun CoffeePeekSwipeDismissModalBottomSheet(
         // handle in content so locked sheets expose neither a click nor a dismiss action.
         dragHandle = null,
         properties = ModalBottomSheetProperties(shouldDismissOnClickOutside = dismissEnabled),
-        containerColor = MaterialTheme.colorScheme.surface,
+        containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.96f),
+        shape = RoundedCornerShape(28.dp),
+        tonalElevation = 0.dp,
         contentWindowInsets = contentWindowInsets,
     ) {
         // Fractional constraints belong below Material's anchor layout, not above it.

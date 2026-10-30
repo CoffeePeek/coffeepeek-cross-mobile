@@ -19,7 +19,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import com.coffeepeek.core.designsystem.component.CoffeePeekTextButton as TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -45,6 +45,8 @@ fun CoffeePeekDestructiveConfirmationSheet(
     onConfirm: () -> Unit,
     onDismiss: () -> Unit,
 ) {
+    if (CoffeePeekNativeActionDialog(title, message,
+            listOf(CoffeePeekDialogAction(confirmLabel, onConfirm, destructive = true)), cancelLabel, onDismiss)) return
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),

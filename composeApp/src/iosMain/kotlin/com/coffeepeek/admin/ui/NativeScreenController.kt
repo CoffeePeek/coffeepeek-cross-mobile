@@ -178,9 +178,16 @@ internal class NativeScreenController(
 private object IosCoffeePeekGlassPresenter : CoffeePeekNativeGlassPresenter {
     @Composable
     override fun IconButton(icon: CoffeePeekGlassIcon, onClick: () -> Unit, contentDescription: String,
-        modifier: Modifier, enabled: Boolean): Boolean {
-        val platformIcon = when (icon) { CoffeePeekGlassIcon.Edit -> GlassControlIcon.Edit }
-        PlatformGlassIconButton(platformIcon, onClick, contentDescription, modifier, enabled) {}
+        modifier: Modifier, enabled: Boolean, selected: Boolean, isLoading: Boolean): Boolean {
+        val platformIcon = when (icon) {
+            CoffeePeekGlassIcon.Back -> GlassControlIcon.Back
+            CoffeePeekGlassIcon.Edit -> GlassControlIcon.Edit
+            CoffeePeekGlassIcon.Favorite -> GlassControlIcon.Favorite
+            CoffeePeekGlassIcon.FavoriteFilled -> GlassControlIcon.FavoriteFilled
+            CoffeePeekGlassIcon.Share -> GlassControlIcon.Share
+            CoffeePeekGlassIcon.Close -> GlassControlIcon.Close
+        }
+        PlatformGlassIconButton(platformIcon, onClick, contentDescription, modifier, enabled, selected, isLoading) {}
         return true
     }
 }
