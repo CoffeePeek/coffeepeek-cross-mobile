@@ -163,7 +163,6 @@ object Modules {
         const val domain = ":modules:domain"
         const val data = ":modules:data"
         const val network = ":modules:network"
-        const val room = ":modules:room"
     }
 
     object Core {
@@ -186,7 +185,6 @@ object Modules {
         legacy.domain,
         legacy.data,
         legacy.network,
-        legacy.room,
         core.coroutines,
         core.network,
         core.database,

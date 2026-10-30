@@ -139,7 +139,7 @@ remotes и при необходимости передать изменения
 - [ ] CoffeePeekClient: transport/cache/diagnostics/auth infrastructure —
   core/network; feature endpoints/DTO — feature data. AuthService не остаётся
   зависимостью core: refresh business exchange поставляется через порт.
-- [ ] Room: driver/schema infrastructure — core/database; настройки/город —
+- [~] Room: driver/schema infrastructure — core/database (перенесено 2026-10-30); настройки/город —
   Settings data, credentials migration — core/session, feature entities —
   своим data. Сохраняем имя БД/таблицы и проверяем migration без data clearing.
 
@@ -1529,3 +1529,18 @@ source `89778c23` + этот срез. Подробный scope/остаток �
   `HistoryCalendarPresentationTest`. **Не покрыто:** проверка кликов по accessibility-узлам календаря на устройстве;
   новый UI-тест не создавался.
 - Задача `compileDirectDebugAndroidTestKotlinAndroid` добавлена в стандартный набор проверок.
+
+## L3, срез Room — база приложения перенесена в `core/database` — 2026-10-30
+
+- `modules/room` удалён: `CoffeePeekDatabase`, миграции 1→2→3, `SettingRepository`/`DatabaseCore`, `MyRoomRepositoryImpl`
+  (Android и iOS) и каталог экспортированных схем переехали в `core/database` с теми же пакетами `com.coffeepeek.room`,
+  поэтому потребители (20 файлов composeApp, 6 файлов `modules/data`) не менялись, кроме зависимости в `build.gradle.kts`.
+  Имя БД, таблица `setting_table` и схемы 1.json/3.json не изменились (переименование 100%, KSP воспроизвёл схему).
+  `CoffeePeekDatabase.configure()` теперь использует общий `configureDatabaseDriver()`; у `core/database` появились
+  iOS-таргеты, плагин Room, KSP для обеих платформ и сериализация.
+- Покрытие миграций восстановлено: `ApplicationDatabaseMigrationTest` (инструментальный, только компиляция) — v1 и v2 с
+  реальными identity hash открываются production-билдером без потери настроек, журнальные таблицы удалены, запись
+  переживает повторное открытие, новая установка создаёт текущую схему. Закрывает запись «Потеря покрытия» из среза C1.
+- Не сделано (следующие шаги среза): вынос настроек/города в Settings data и миграции учётных данных в `core/session`
+  (`RoomLegacyCredentialRows` пока в `modules/data`), так как это зависит от удаления `modules/data`.
+- Не проверялось на устройстве: сам тест миграций (нужен девайс).

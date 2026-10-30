@@ -122,7 +122,7 @@ kotlin {
             implementation(project(module.legacy.domain))
             implementation(project(module.legacy.data))
             implementation(project(module.legacy.network))
-            implementation(project(module.legacy.room))
+            implementation(project(module.core.database))
             implementation(project(module.core.network))
             implementation(project(module.feature.appUpdate.api))
             implementation(project(module.feature.auth.api))

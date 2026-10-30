@@ -6,7 +6,7 @@ import androidx.room.ConstructedBy
 import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.RoomDatabaseConstructor
-import androidx.sqlite.driver.bundled.BundledSQLiteDriver
+import com.coffeepeek.core.database.configureDatabaseDriver
 import com.coffeepeek.room.dao.SettingDAO
 import com.coffeepeek.room.entity.SettingEntity
 
@@ -24,7 +24,7 @@ abstract class CoffeePeekDatabase : RoomDatabase(), DB {
     companion object {
 
         fun RoomDatabase.Builder<CoffeePeekDatabase>.configure(): CoffeePeekDatabase {
-            return setDriver(BundledSQLiteDriver())
+            return configureDatabaseDriver()
                 .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
                 .build()
         }
