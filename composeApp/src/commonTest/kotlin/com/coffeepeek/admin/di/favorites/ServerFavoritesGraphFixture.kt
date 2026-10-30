@@ -40,7 +40,7 @@ internal class ServerFavoritesGraphFixture {
         single<RoasterRepository> { catalogs }
         single<PublicRoasterDetails> { FavoriteGraphPublicRoasters(catalogs) }
         single<PublicShopDetails> { FavoriteGraphPublicShops(catalogs) }
-        single<RoasterFavorites> { ServerRoasterFavorites(server, catalogs, sessions) }
+        single<RoasterFavorites> { ServerRoasterFavorites(server, FavoriteGraphPublicRoasters(catalogs), sessions) }
     }
 
     fun close() = graph.close()
@@ -87,8 +87,11 @@ internal class FavoriteGraphCatalogs : RoasterRepository {
         error("No submission reads")
 }
 
-private class FavoriteGraphPublicRoasters(private val catalogs: FavoriteGraphCatalogs) : PublicRoasterDetails {
-    override suspend fun summaries(): Result<List<PublicRoasterSummary>> = error("No catalog")
+internal class FavoriteGraphPublicRoasters(private val catalogs: FavoriteGraphCatalogs) : PublicRoasterDetails {
+    override suspend fun summaries(): Result<List<PublicRoasterSummary>> {
+        catalogs.reads++
+        return Result.success(emptyList())
+    }
     override suspend fun load(slug: String): Result<PublicRoasterDescription> {
         catalogs.reads++
         return Result.failure(IllegalStateException("No catalog metadata"))

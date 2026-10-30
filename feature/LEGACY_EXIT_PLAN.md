@@ -1573,3 +1573,21 @@ source `89778c23` + этот срез. Подробный scope/остаток �
   шрифте, скриншоты потока блокировки автора, порядок блоков и сворачивание в редакторе меню, тумблеры видимости в тёмной
   теме, скриншоты собственного профиля с избранным и переживание пересоздания композиции. Новые UI-тесты не создавались.
   Формат строки рецепта в карточке ленты (`HomePreparation.details`, текст ресурсов) без теста: функция composable.
+
+## L3, шаг 2 удаления `modules/*` — два живых легаси-репозитория заменены — 2026-10-30
+
+- Фото владельцев бизнеса. `BusinessPhotoUploader` теперь собирается в `feature/business-ownership/data`
+  (`createBusinessPhotoUploader(client, uploadClient, account)`): резервирование presigned URL на `/api/Photos/shop` или
+  `/api/Photos/roaster`, проверка публичного адреса через `requirePublicUploadUrl`, PUT байтов в `uploadClient` без
+  учётных данных, возврат `storageKey` и размера, сбой любого шага — `OwnershipProblem.Unavailable`, смена или выход из
+  аккаунта во время загрузки — `SignedOut`. Легаси `PhotoRepository` в композиции больше не нужен. Новый
+  `PhotoUploadTest` (6): эндпоинты по типу бизнеса, тело резервирования и PUT байтов, пустой список без запросов,
+  приватный адрес, неверное число или пустой ключ, отказ резервирования и хранилища, смена аккаунта и выход.
+  Заголовок `Accept` не проверяется: его добавляет сам Ktor (так же в `feature/contributions`).
+- Избранные обжарщики. `ServerRoasterFavorites` берёт данные из `PublicRoasterDetails` вместо `RoasterRepository`.
+  `PublicRoasterSummary` получил `name`, `PublicRoasterDescription` — `name` (по умолчанию пусто, существующие вызовы не
+  меняются). Поведение сохранено: имя из записи избранного, иначе из каталога, иначе из деталей, иначе slug; фото и
+  счётчики из каталога, описание из деталей. Тесты `ServerRoasterFavoritesTest` и граф-фикстура переведены на фейк
+  `PublicRoasterDetails` без изменения проверок.
+- Остаток легаси-репозиториев в `composeApp`: нет (остаются только `OtherUserProfile`/`PublicProfileViewModel`, использующие
+  `UserRepository`, по решению).
