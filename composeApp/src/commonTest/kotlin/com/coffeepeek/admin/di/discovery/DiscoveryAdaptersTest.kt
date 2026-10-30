@@ -5,11 +5,13 @@ import com.coffeepeek.admin.di.favorites.serverFavoriteShopsModule
 import com.coffeepeek.admin.utils.FavoriteSync
 import com.coffeepeek.core.session.Session
 import com.coffeepeek.core.session.SessionReader
-import com.coffeepeek.domain.feature.favorites.api.FavoriteEntry
-import com.coffeepeek.domain.feature.favorites.api.FavoriteKind
-import com.coffeepeek.domain.feature.favorites.api.FavoritesRepository as ServerFavorites
+import com.coffeepeek.feature.favorites.domain.model.FavoriteAddress
+import com.coffeepeek.feature.favorites.domain.model.FavoriteEntry
+import com.coffeepeek.feature.favorites.domain.model.FavoriteKind
+import com.coffeepeek.feature.favorites.domain.repository.AccountFavorites
 import com.coffeepeek.domain.model.*
-import com.coffeepeek.domain.repository.ShopRepository
+import com.coffeepeek.feature.shop.api.PublicShopDetails
+import com.coffeepeek.feature.shop.api.PublicShopSummary
 import com.coffeepeek.feature.discovery.domain.model.CatalogEntry
 import com.coffeepeek.feature.roaster.api.PublicRoasterCatalog
 import com.coffeepeek.feature.roaster.api.PublicRoasterCatalogEntry
@@ -36,8 +38,8 @@ class DiscoveryAdaptersTest {
         val graph = koinApplication {
             modules(module {
                 single<SessionReader> { FeedSessions(Session("token", userId = "user")) }
-                single<ServerFavorites> { Server() }
-                single<ShopRepository> { Shops(Result.failure(IllegalStateException("unused"))) }
+                single<AccountFavorites> { Server() }
+                single<PublicShopDetails> { PublicShops() }
             }, serverFavoriteShopsModule())
         }
         try {
@@ -97,12 +99,12 @@ class DiscoveryAdaptersTest {
         assertTrue(roasterEntries(PublicRoasterCatalog { Result.failure(IllegalStateException("offline")) })().isFailure)
     }
 
-    private class Server : ServerFavorites {
+    private class Server : AccountFavorites {
         override fun observeFavorites() = flow {
-            emit(Result.success(listOf(FavoriteEntry(FavoriteKind.CoffeeShop, PublicAddress("shop", "/coffee-shop/shop", 1, false)))))
+            emit(Result.success(listOf(FavoriteEntry(FavoriteKind.CoffeeShop, FavoriteAddress("shop", "/coffee-shop/shop", 1, false)))))
         }
         override suspend fun getFavorites(refresh: Boolean): Result<List<FavoriteEntry>> = error("unused")
-        override suspend fun setFavorite(kind: FavoriteKind, address: PublicAddress, favorite: Boolean): Result<Unit> = error("unused")
+        override suspend fun setFavorite(entry: FavoriteEntry, favorite: Boolean): Result<Unit> = error("unused")
         override fun clearCache() = error("unused")
     }
 
@@ -117,14 +119,7 @@ class DiscoveryAdaptersTest {
         override suspend fun clear(): Result<Unit> = Result.success(Unit)
     }
 
-    private class Shops(private val catalogs: Result<ShopCatalogs>) : ShopRepository {
-        override suspend fun searchShops(filters: ShopFilters): Result<PagedResult<CoffeeShop>> = error("unused")
-        override suspend fun getShopDetails(id: String): Result<CoffeeShopDetails> = error("unused")
-        override suspend fun getMapContent(bounds: MapBounds, zoom: Float, filters: ShopFilters): Result<MapContent> = error("unused")
-        override suspend fun getCatalogs() = catalogs
-        override suspend fun getConsumedDrinks(): Result<List<ConsumedDrinkOption>> = error("unused")
-        override suspend fun getMenuDrinks(): Result<List<CoffeeDrinkDefinition>> = error("unused")
-        override suspend fun createShop(input: CreateShopInput): Result<Unit> = error("unused")
-        override suspend fun getMyShopSubmissions(status: ModerationStatus, page: Int, pageSize: Int): Result<PagedResult<ShopSubmission>> = error("unused")
+    private class PublicShops : PublicShopDetails {
+        override suspend fun load(slug: String): Result<PublicShopSummary> = error("unused")
     }
 }

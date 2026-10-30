@@ -22,7 +22,6 @@ import com.coffeepeek.admin.ui.Navigator.isHandledByRootNav
 import com.coffeepeek.admin.ui.screen.main.DiscoveryScreenRenderer
 import com.coffeepeek.admin.ui.screen.main.CheckInTabContent
 import com.coffeepeek.admin.ui.screen.profile.OwnProfileScreenRenderer
-import com.coffeepeek.admin.ui.screen.profile.SettingsScreen
 import com.coffeepeek.admin.ui.screen.profile.SettingsScreenRenderer
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow

@@ -4,7 +4,9 @@ import com.coffeepeek.admin.di.coffee.coffeeModule
 import com.coffeepeek.admin.feature.catalog.api.BrewMethodCatalog
 import com.coffeepeek.admin.di.homecheckin.FeatureCheckInCreateFlowRenderer
 import com.coffeepeek.admin.di.homecheckin.homeCheckInModule
-import com.coffeepeek.api.CoffeePeekClient
+import com.coffeepeek.core.network.ApiClients
+import com.coffeepeek.core.network.SessionCredentials
+import com.coffeepeek.core.network.SessionTokens
 import com.coffeepeek.core.session.Session
 import com.coffeepeek.core.session.SessionReader
 import com.coffeepeek.feature.coffee.api.CoffeePicker
@@ -23,8 +25,13 @@ import kotlin.test.assertSame
 
 class IosShelfModuleTest {
     @Test fun graphResolvesLazilyWithoutSessionsCredentialsOrModels() {
-        val client = CoffeePeekClient("https://fixture.invalid", "${NSTemporaryDirectory()}shelf-${NSUUID().UUIDString}", false,
-            getToken = { error("Unexpected credentials read") }, saveToken = { error("Unexpected credentials write") })
+        val client = ApiClients("https://fixture.invalid", "${NSTemporaryDirectory()}shelf-${NSUUID().UUIDString}", false,
+            credentials = object : SessionCredentials {
+                override suspend fun load(): SessionTokens? { error("Unexpected credentials read") }
+                override suspend fun save(tokens: SessionTokens?) { error("Unexpected credentials write") }
+                override suspend fun replace(expected: SessionTokens, tokens: SessionTokens?): Boolean = false
+            },
+            refreshWith = { { Result.failure(IllegalStateException("unused")) } })
         val sessions = object : SessionReader {
             override fun peekSession(): Session? = error("Resolving the graph must not read the session")
             override fun isActiveSession(session: Session?): Boolean = error("Unexpected session check")

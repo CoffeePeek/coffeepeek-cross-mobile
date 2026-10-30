@@ -1,12 +1,12 @@
 package com.coffeepeek.data.repository
 
 import com.coffeepeek.api.service.AuthService
-import com.coffeepeek.data.session.UserSessionCleaner
+import com.coffeepeek.data.session.LocalUserDataCleanup
 import com.coffeepeek.domain.model.CoffeeShop
 import com.coffeepeek.domain.model.CoffeeShopDetails
 import com.coffeepeek.domain.model.Session
 import com.coffeepeek.domain.repository.FavoriteRepository
-import com.coffeepeek.domain.repository.SessionRepository
+import com.coffeepeek.core.session.SessionStore
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
@@ -115,16 +115,16 @@ class AppleLoginPersistenceTest {
         install(ContentNegotiation) { json(Json { ignoreUnknownKeys = true }) }
     }
 
-    private fun repository(client: HttpClient, sessions: SessionRepository) = AuthRepositoryImpl(
+    private fun repository(client: HttpClient, sessions: SessionStore) = AuthRepositoryImpl(
         AuthService(client, client),
         sessions,
-        UserSessionCleaner(sessions, UnusedAppleTestFavorites, "", ""),
+        LocalUserDataCleanup { sessions.saveSession(null); UnusedAppleTestFavorites.clearAll() },
     )
 }
 
 private class AppleTestSessionRepository(
     private val saveFailure: Throwable? = null,
-) : SessionRepository {
+) : SessionStore {
     private val session = MutableStateFlow<Session?>(null)
     val savedSessions = mutableListOf<Session?>()
 

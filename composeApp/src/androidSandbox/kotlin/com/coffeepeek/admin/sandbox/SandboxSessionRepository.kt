@@ -1,7 +1,7 @@
 package com.coffeepeek.admin.sandbox
 
 import com.coffeepeek.domain.model.Session
-import com.coffeepeek.domain.repository.SessionRepository
+import com.coffeepeek.core.session.SessionStore
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
@@ -9,7 +9,7 @@ import kotlinx.coroutines.flow.asStateFlow
  * No credential store, account lookup or production identity. The access token is an unsigned local JWT that carries only
  * an expiry in 2100: the protected photo loader (check-in photos, shelf cards) needs `exp` to bound how long it shows a photo.
  */
-internal class SandboxSessionRepository : SessionRepository {
+internal class SandboxSessionRepository : SessionStore {
     private val current = MutableStateFlow<Session?>(localSession())
     fun login() = applySession(localSession())
     override fun peekSession() = current.value

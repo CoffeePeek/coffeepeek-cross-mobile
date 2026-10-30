@@ -3,7 +3,7 @@ package com.coffeepeek.admin.di.shop
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelStore
 import com.coffeepeek.domain.model.Session
-import com.coffeepeek.domain.repository.SessionRepository
+import com.coffeepeek.core.session.SessionStore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flow
@@ -79,7 +79,7 @@ class ShopBrowsingHostViewModelTest {
     @Test fun observationFailureHidesAccountDataAndExplicitRetryCreatesAFreshStore() = runTest(dispatcher) {
         var fail = true
         val original = CheckInTestSessions()
-        val sessions = object : SessionRepository by original {
+        val sessions = object : SessionStore by original {
             override fun observeSession() = if (fail) flow<Session?> { error("Session observation failed") }
                 else original.observeSession()
         }

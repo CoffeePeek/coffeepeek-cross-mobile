@@ -18,18 +18,11 @@ import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.coffeepeek.admin.MainActivity
-import com.coffeepeek.core.designsystem.component.CoffeePeekTimelineRail
-import com.coffeepeek.admin.feature.homecheckin.ui.HomeDetailContent
-import com.coffeepeek.admin.feature.homecheckin.ui.HomeTimelineCard
 import com.coffeepeek.admin.theme.CoffeePeekTheme
 import com.coffeepeek.admin.theme.PlatformSystemBars
 import com.coffeepeek.admin.ui.component.CpTopBar
 import com.coffeepeek.admin.ui.component.SwipeDismissModalBottomSheet
-import com.coffeepeek.legacy.homecheckin.domain.HomeCheckIn
-import com.coffeepeek.legacy.homecheckin.domain.HomeCheckInPhoto
-import com.coffeepeek.legacy.homecheckin.domain.HomeCheckInVisibility
 import java.io.File
-import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.math.roundToInt
 import org.junit.Assert.assertEquals
@@ -43,50 +36,6 @@ import org.junit.runner.RunWith
 class CheckInPresentationTest {
     @Before
     fun grantStartupPermissions() = grantCheckInFixtureStartupPermissions()
-
-    @Test
-    fun timelineConnectsThroughCardGapsOnTheRightInBothThemes() {
-        for (dark in listOf(false, true)) {
-            val first = AtomicReference<Rect>()
-            val second = AtomicReference<Rect>()
-            val density = AtomicReference(1f)
-            val lineColor = AtomicInteger()
-            ActivityScenario.launch(MainActivity::class.java).use { scenario ->
-                scenario.onActivity { activity -> activity.setContent {
-                    CoffeePeekTheme(darkTheme = dark) {
-                        PlatformSystemBars(darkTheme = dark)
-                        density.set(LocalDensity.current.density)
-                        lineColor.set(MaterialTheme.colorScheme.outlineVariant.toArgb())
-                        Scaffold(topBar = { CpTopBar("Чекины", onBack = {}) }) { padding ->
-                            Column(Modifier.fillMaxSize().padding(padding).padding(16.dp)) {
-                                Text("14 октября", style = MaterialTheme.typography.titleLarge,
-                                    modifier = Modifier.padding(bottom = 12.dp))
-                                repeat(3) { index ->
-                                    Box(Modifier.onGloballyPositioned {
-                                        if (index == 0) first.set(it.boundsInWindow())
-                                        if (index == 1) second.set(it.boundsInWindow())
-                                    }) {
-                                        CoffeePeekTimelineRail(accent = index != 1, firstInDay = index == 0, lastInDay = index == 2) {
-                                            HomeTimelineCard(fixture.copy(id = "$index", text = null)) {}
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                } }
-                waitUntil { first.get() != null && second.get() != null && node { it.text?.toString() == "Руанда Ньякибанда" } != null }
-                val shot = screenshot("checkins-timeline-${if (dark) "dark" else "light"}.png")
-                val x = (first.get().right - 8 * density.get()).roundToInt()
-                val gapY = (first.get().bottom - 6 * density.get()).roundToInt()
-                val nextY = (second.get().top + 6 * density.get()).roundToInt()
-                assertEquals("The rail must span the gap below a card", lineColor.get(), shot.getPixel(x, gapY))
-                assertEquals("The next card must continue the same rail", lineColor.get(), shot.getPixel(x, nextY))
-                assertEquals(first.get().bottom, second.get().top, 1f)
-                shot.recycle()
-            }
-        }
-    }
 
     @Test
     fun calendarRemainsSelectableWithLargeText() {
@@ -117,126 +66,6 @@ class CheckInPresentationTest {
             click(node { it.contentDescription?.startsWith("Сегодня,") == true }!!)
             waitUntil { selection.get() == "2026-10-14" }
         }
-    }
-
-    @Test
-    fun homeDetailShowsRecipeAndKeepsPhotosAndActionsAccessible() {
-        val edits = AtomicInteger()
-        val deletes = AtomicInteger()
-        val opened = AtomicReference<Pair<List<String>, Int>>()
-        // The unavailable local URL keeps the photo tile deterministic without any external request.
-        val entry = fixture.copy(photos = listOf(HomeCheckInPhoto("photo", "http://127.0.0.1:1/checkin.jpg")))
-        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
-            scenario.onActivity { activity -> activity.setContent {
-                CoffeePeekTheme(darkTheme = false) {
-                    PlatformSystemBars(darkTheme = false)
-                    Scaffold(topBar = { CpTopBar("Чекины", onBack = {}) }) { padding ->
-                        Box(Modifier.fillMaxSize().padding(padding)) {
-                            SwipeDismissModalBottomSheet(onDismissRequest = {}) {
-                                HomeDetailContent(entry, Modifier.fillMaxWidth().heightIn(max = 680.dp),
-                                    onEdit = { edits.incrementAndGet() }, onDelete = { deletes.incrementAndGet() },
-                                    onPhotoClick = { images, index -> opened.set(images.previews to index) })
-                            }
-                        }
-                    }
-                }
-            } }
-            waitUntil { node { it.text?.toString() == "4 мин 20 с" } != null }
-            assertTrue(node { it.text?.toString() == "15 г" } != null)
-            assertTrue(node { it.text?.toString() == "Только мне" } != null)
-            screenshot("checkins-home-detail.png").recycle()
-            click(node { it.contentDescription?.toString() == "Фотография 1 из 1" }!!)
-            waitUntil { opened.get() != null }
-            assertEquals(entry.photos.map { it.url } to 0, opened.get())
-            scrollToText("Удалить запись")
-            click(node { it.text?.toString() == "Редактировать" }!!)
-            click(node { it.text?.toString() == "Удалить запись" }!!)
-            waitUntil { edits.get() == 1 && deletes.get() == 1 }
-        }
-    }
-
-    @Test
-    fun homeDetailFitsShortRecordsAndLongNotesKeepActionsReachable() {
-        val entry = mutableStateOf(fixture.copy(
-            beanName = null, text = null, brewMethodCode = null, doseGrams = null,
-            brewDurationSeconds = null, tasteScore = null, drinkName = null,
-        ))
-        val viewport = AtomicReference<Rect>()
-        val detail = AtomicReference<Rect>()
-        val density = AtomicReference(1f)
-        val edits = AtomicInteger()
-        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
-            scenario.onActivity { activity -> activity.setContent {
-                CoffeePeekTheme(darkTheme = true) {
-                    density.set(LocalDensity.current.density)
-                    Surface(Modifier.fillMaxSize()) {
-                        Box(Modifier.fillMaxSize().systemBarsPadding().onGloballyPositioned {
-                            viewport.set(it.boundsInWindow())
-                        }) {
-                            HomeDetailContent(
-                                entry.value,
-                                Modifier.fillMaxWidth().heightIn(max = 680.dp).onGloballyPositioned {
-                                    detail.set(it.boundsInWindow())
-                                },
-                                onEdit = { edits.incrementAndGet() }, onDelete = {}, onPhotoClick = { _, _ -> },
-                            )
-                        }
-                    }
-                }
-            } }
-            waitUntil { detail.get() != null && viewport.get() != null &&
-                node { it.text?.toString() == "Удалить запись" && it.isVisibleToUser } != null }
-            val shortHeight = detail.get().height
-            val maximum = minOf(viewport.get().height, 680 * density.get())
-            assertTrue("Short details must fit the record without an unused tall viewport",
-                shortHeight < maximum - 16 * density.get())
-            click(node { it.text?.toString() == "Редактировать" }!!)
-            waitUntil { edits.get() == 1 }
-
-            scenario.onActivity { entry.value = entry.value.copy(text = "Впечатления от чашки кофе. ".repeat(60)) }
-            waitUntil { detail.get().height > shortHeight + 16 * density.get() }
-            assertTrue("Long details must stay within the bounded viewport", detail.get().height <= maximum + 2)
-            scrollToText("Удалить запись")
-            click(node { it.text?.toString() == "Редактировать" }!!)
-            waitUntil { edits.get() == 2 }
-            screenshot("checkins-home-detail-long-note.png").recycle()
-        }
-    }
-
-    @Test
-    fun createChoiceRemainsScrollableWithLargeTextAndShortViewport() {
-        val homes = AtomicInteger()
-        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
-            scenario.onActivity { activity -> activity.setContent {
-                val density = LocalDensity.current
-                CompositionLocalProvider(LocalDensity provides Density(density.density, 1.6f)) {
-                    CoffeePeekTheme(darkTheme = true) {
-                        Surface(Modifier.fillMaxSize()) {
-                            Box(Modifier.fillMaxWidth().statusBarsPadding().height(260.dp)) {
-                                CheckInCreateContent(onShop = {}, onHome = { homes.incrementAndGet() })
-                            }
-                        }
-                    }
-                }
-            } }
-            waitUntil { node { it.text?.toString() == "Новый чекин" } != null }
-            scrollToText("Дома")
-            click(node { it.text?.toString() == "Дома" }!!)
-            scrollToText("Продолжить")
-            click(node { it.text?.toString() == "Продолжить" }!!)
-            waitUntil { homes.get() == 1 }
-            screenshot("checkins-create-short-large-text.png").recycle()
-        }
-    }
-
-    private fun scrollToText(text: String) {
-        repeat(8) {
-            if (node { it.text?.toString() == text && it.isVisibleToUser } != null) return
-            node { it.isScrollable }?.performAction(AccessibilityNodeInfo.ACTION_SCROLL_FORWARD)
-            InstrumentationRegistry.getInstrumentation().waitForIdleSync()
-            Thread.sleep(200)
-        }
-        assertTrue("Missing action: $text", node { it.text?.toString() == text } != null)
     }
 
     private fun screenshot(name: String): Bitmap {
@@ -271,11 +100,4 @@ class CheckInPresentationTest {
         assertTrue("Check-in UI did not reach the expected state", condition())
     }
 
-    private val fixture = HomeCheckIn(
-        id = "home", preparedAtUtc = "2026-10-14T11:47:00Z", preparedOn = "2026-10-14", createdAtUtc = "2026-10-14T11:47:00Z",
-        text = "Яркий и насыщенный ягодный вкус", brewMethodCode = "hario-v60", coffeeProductId = null,
-        beanName = "Руанда Ньякибанда", doseGrams = "15.0", brewDurationSeconds = 260, tasteScore = 5,
-        drinkName = "Фильтр", drinkSlug = "filter", customDrinkName = null,
-        photos = emptyList(), visibility = HomeCheckInVisibility.Private,
-    )
 }

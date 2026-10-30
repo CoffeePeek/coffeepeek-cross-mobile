@@ -10,7 +10,7 @@ import com.coffeepeek.admin.ui.component.GuestAuthCard
 import com.coffeepeek.admin.ui.component.LocalFloatingNavClearance
 import com.coffeepeek.admin.ui.screen.profile.SettingsScreenRenderer
 import com.coffeepeek.core.session.SessionReader
-import com.coffeepeek.domain.repository.ShopRepository
+import com.coffeepeek.feature.discovery.api.PublicDiscoveryCatalogs
 import com.coffeepeek.feature.settings.api.CityEntry
 import com.coffeepeek.feature.settings.api.SettingsAppInfo
 import com.coffeepeek.feature.settings.api.SettingsEntry
@@ -53,12 +53,12 @@ internal class FeatureSettingsScreenRenderer(
 }
 
 internal fun featureSettingsScreenRenderer(
-    shops: ShopRepository, cityPreference: CityPreference, sessions: SessionReader, updates: AppUpdateController,
+    catalogs: PublicDiscoveryCatalogs, cityPreference: CityPreference, sessions: SessionReader, updates: AppUpdateController,
     /** A short message that does not take focus: a toast on Android. */
     notify: (String) -> Unit,
 ): FeatureSettingsScreenRenderer {
     val theme = AppThemePort()
-    val cities = AppCityPort(shops, cityPreference)
+    val cities = AppCityPort(catalogs, cityPreference)
     val external = AppSettingsExternalActions()
     return FeatureSettingsScreenRenderer(
         tab = createSettingsEntry(

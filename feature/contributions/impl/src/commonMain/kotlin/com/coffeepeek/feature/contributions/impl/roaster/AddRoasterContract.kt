@@ -32,6 +32,9 @@ internal data class AddRoasterState(
 ) {
     val issues: Set<RoasterIssue> get() = validateRoaster(name, cityId, address, instagram, website)
     val valid: Boolean get() = issues.isEmpty()
+
+    /** The roaster can be sent once the form is valid and the city list has answered; a failed list does not block it. */
+    val ready: Boolean get() = valid && !citiesLoading
     val busy: Boolean get() = submit == RoasterSubmitState.Sending || submit is RoasterSubmitState.Done
 }
 

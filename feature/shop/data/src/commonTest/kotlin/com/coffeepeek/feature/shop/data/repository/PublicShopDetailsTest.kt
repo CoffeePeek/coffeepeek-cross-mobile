@@ -15,7 +15,9 @@ class PublicShopDetailsTest {
         val client = HttpClientFactory(MockEngine { request ->
             assertEquals("/api/CoffeeShops/cafe", request.url.encodedPath)
             calls++
-            respond("""{"isSuccess":true,"data":{"address":{"slug":"cafe"},"name":"Cafe","rating":4.7,"checkInCount":12,"isOpen":true,
+            respond("""{"isSuccess":true,"data":{"address":{"slug":"cafe","canonicalPath":"/coffee-shop/cafe","revision":3,"isAlias":true},"name":"Cafe","rating":4.7,"checkInCount":12,"isOpen":true,
+                "priceRange":"2","location":{"address":"Main 1","latitude":53.9,"longitude":27.56},
+                "brewMethods":[{"name":"V60"},{"name":" "}],"roasters":[{"photoUrl":"logo"},{"photoUrl":"logo"},{"photoUrl":""}],
                 "photos":[{"fullUrl":"full","urls":{"card":"card","detail":"detail"}}],
                 "tags":[" Фильтр ",{"name":"Зерно"}],"shopTags":[{"title":"Фильтр"},{"label":"Еда"},"Четвёртый"],
                 "menu":{"items":[{"slug":"coffee"}]}}}""", headers = headersOf(HttpHeaders.ContentType, "application/json"))
@@ -27,6 +29,11 @@ class PublicShopDetailsTest {
             assertEquals(4.7, row.rating)
             assertEquals(12, row.reviewCount)
             assertEquals(1, calls)
+            assertEquals(Triple("cafe", "/coffee-shop/cafe", 3), Triple(row.slug, row.canonicalPath, row.revision))
+            assertEquals(true, row.isAlias)
+            assertEquals("Cafe", row.title); assertEquals("$$", row.priceRange)
+            assertEquals(53.9 to 27.56, row.latitude to row.longitude); assertEquals("Main 1", row.address)
+            assertEquals(listOf("V60"), row.brewMethods); assertEquals(listOf("logo"), row.roasterPhotoUrls)
         } finally { client.close() }
     }
 }

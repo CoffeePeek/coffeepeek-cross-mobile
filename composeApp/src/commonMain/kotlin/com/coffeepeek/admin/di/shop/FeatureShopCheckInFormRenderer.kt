@@ -19,7 +19,6 @@ internal class FeatureShopCheckInFormRenderer(
         onSubmitted: () -> Unit,
         onGoToFeed: () -> Unit,
         onOpenHistory: () -> Unit,
-        legacyContent: @Composable () -> Unit,
     ) {
         if (shopSlug.isNullOrBlank()) {
             LaunchedEffect(Unit) { onDismiss() }

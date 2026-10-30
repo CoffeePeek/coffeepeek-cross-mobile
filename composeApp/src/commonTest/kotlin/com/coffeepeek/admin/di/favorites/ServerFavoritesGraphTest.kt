@@ -1,7 +1,7 @@
 package com.coffeepeek.admin.di.favorites
 
 import com.coffeepeek.core.session.Session
-import com.coffeepeek.domain.feature.favorites.api.FavoriteKind
+import com.coffeepeek.feature.favorites.domain.model.FavoriteKind
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest

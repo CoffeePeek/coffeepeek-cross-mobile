@@ -2,7 +2,7 @@ package com.coffeepeek.admin.di
 
 import com.coffeepeek.core.session.*
 import com.coffeepeek.data.di.dataModule
-import com.coffeepeek.domain.repository.SessionRepository
+import com.coffeepeek.core.session.SessionStore
 import com.coffeepeek.room.DatabaseCore
 import com.coffeepeek.room.repository.SettingRepository
 import kotlinx.coroutines.flow.first
@@ -17,13 +17,13 @@ class SessionPortsWiringTest {
             override val settingRepository: SettingRepository get() = error("Room must stay lazy")
         }
         val app = koinApplication {
-            modules(dataModule("https://unused.example", "cache", "root", database), offlineStorage())
+            modules(dataModule("https://unused.example", database), offlineStorage())
         }
         try {
             val reader = app.koin.get<SessionReader>()
             val store = app.koin.get<SessionStore>()
             assertSame(store, reader)
-            assertSame(store, app.koin.get<SessionRepository>())
+            assertSame(store, app.koin.get<SessionStore>())
             assertNull(reader.peekSession())
             val session = Session("in-memory-token", userId = "A")
             store.applySession(session)

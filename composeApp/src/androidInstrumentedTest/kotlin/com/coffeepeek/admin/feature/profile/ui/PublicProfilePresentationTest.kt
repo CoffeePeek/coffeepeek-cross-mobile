@@ -36,7 +36,6 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.coffeepeek.admin.MainActivity
 import com.coffeepeek.admin.feature.catalog.api.RoasterCard
 import com.coffeepeek.admin.feature.favorites.api.RoasterFavorites
-import com.coffeepeek.admin.feature.favorites.ui.FavoritesProfilePreviewContent
 import com.coffeepeek.feature.profile.domain.ProfileAddress
 import com.coffeepeek.feature.profile.domain.PublicFavoriteKind
 import com.coffeepeek.feature.profile.domain.PublicProfile
@@ -53,7 +52,7 @@ import com.coffeepeek.feature.profile.domain.PublicProfileConnectionsPage
 import com.coffeepeek.domain.model.*
 import com.coffeepeek.domain.repository.FavoriteRepository
 import com.coffeepeek.domain.repository.RoasterRepository
-import com.coffeepeek.domain.repository.SessionRepository
+import com.coffeepeek.core.session.SessionStore
 import kotlinx.coroutines.flow.MutableStateFlow
 import com.coffeepeek.admin.theme.CoffeePeekTheme
 import com.coffeepeek.admin.theme.PlatformSystemBars
@@ -64,8 +63,6 @@ import com.coffeepeek.admin.ui.component.ProvideFloatingNavClearance
 import com.coffeepeek.admin.ui.icons.CpIcons
 import com.coffeepeek.admin.ui.screen.checkins.grantCheckInFixtureStartupPermissions
 import com.coffeepeek.admin.ui.screen.contributions.ContributionKind
-import com.coffeepeek.admin.ui.screen.favorites.FavoritesScreen
-import com.coffeepeek.admin.ui.screen.favorites.FavoritesViewModel
 import com.coffeepeek.admin.ui.screen.profile.ProfileActions
 import java.io.File
 import java.util.concurrent.CopyOnWriteArrayList
@@ -86,204 +83,6 @@ import org.koin.dsl.module
 class PublicProfilePresentationTest {
     @Before
     fun grantStartupPermissions() = grantCheckInFixtureStartupPermissions()
-
-    @Test
-    fun profileAndFavoritesSurviveCompositionRecreationWithoutReloading() {
-        val visible = mutableStateOf(true)
-        val showFavorites = mutableStateOf(false)
-        val owner = object : ViewModelStoreOwner {
-            override val viewModelStore = ViewModelStore()
-        }
-        val repository = ProfileFixtureRepository()
-        val profiles = CopyOnWriteArrayList<PublicProfileViewModel>()
-        val favorites = CopyOnWriteArrayList<FavoritesViewModel>()
-        val favoriteLoads = AtomicInteger()
-        val injection = koinApplication {
-            modules(module {
-                factory { (slug: String) -> PublicProfileViewModel(slug, repository, ProfileFixtureSessions()).also(profiles::add) }
-                single { personalFavoritesFixtureViewModel { favoriteLoads.incrementAndGet() }.also(favorites::add) }
-                single<com.coffeepeek.feature.authorblocking.api.AuthorBlockActions> {
-                    object : com.coffeepeek.feature.authorblocking.api.AuthorBlockActions {
-                        override fun requestBlock(author: com.coffeepeek.feature.authorblocking.api.AuthorReference) = Unit
-                        override fun requestUnblock(author: com.coffeepeek.feature.authorblocking.api.AuthorReference) = Unit
-                    }
-                }
-            })
-        }
-        try {
-            ActivityScenario.launch(MainActivity::class.java).use { scenario ->
-                scenario.onActivity { activity -> activity.setContent {
-                    KoinIsolatedContext(injection) {
-                        CompositionLocalProvider(LocalViewModelStoreOwner provides owner) {
-                            CoffeePeekTheme(darkTheme = false) {
-                                if (showFavorites.value) FavoritesScreen()
-                                else if (visible.value) UserProfileScreen(
-                                    slug = "glasha", isOwnProfile = true,
-                                    onCoffeeShopClick = {}, onRoasterClick = {}, onLogin = {}, onUserClick = { _, _, _ -> },
-                                    favoritesPreview = { FavoritesProfilePreviewContent({}, {}) },
-                                    activityCalendar = {},
-                                )
-                            }
-                        }
-                    }
-                } }
-                waitUntil { text("glasha")?.isVisibleToUser == true && favoriteLoads.get() == 1 && !favorites.single().state.value.isLoading }
-                repeat(2) {
-                    scenario.onActivity { visible.value = false }
-                    waitUntil { text("glasha") == null }
-                    scenario.onActivity { visible.value = true }
-                    waitUntil { text("glasha")?.isVisibleToUser == true }
-                }
-                repeat(2) {
-                    scenario.onActivity { showFavorites.value = true }
-                    waitUntil { text("Избранное")?.isVisibleToUser == true && text("glasha") == null }
-                    scenario.onActivity { showFavorites.value = false }
-                    waitUntil { text("glasha")?.isVisibleToUser == true }
-                }
-                assertEquals(1, profiles.size)
-                assertEquals(1, favorites.size)
-                assertEquals(1, repository.cursors.size)
-                assertEquals(1, favoriteLoads.get())
-                favorites.single().load(force = true)
-                waitUntil { favoriteLoads.get() == 2 && !favorites.single().state.value.isLoading }
-            }
-        } finally {
-            InstrumentationRegistry.getInstrumentation().runOnMainSync { owner.viewModelStore.clear() }
-            favorites.forEach(FavoritesViewModel::close)
-            injection.close()
-        }
-    }
-
-    @Test
-    fun ownProfileAndPersonalFavoritesScreenshots() {
-        for (dark in listOf(true, false)) {
-            val profileVm = PublicProfileViewModel("glasha", ProfileFixtureRepository(), ProfileFixtureSessions())
-            val favoritesVm = personalFavoritesFixtureViewModel()
-            try {
-                ActivityScenario.launch(MainActivity::class.java).use { scenario ->
-                    scenario.onActivity { activity -> activity.setContent {
-                        CoffeePeekTheme(darkTheme = dark) {
-                            PlatformSystemBars(darkTheme = dark)
-                            ProvideFloatingNavClearance(100.dp) {
-                                Box(Modifier.fillMaxSize().semantics { testTagsAsResourceId = true }) {
-                                    UserProfileScreen(
-                                        slug = "glasha",
-                                        isOwnProfile = true,
-                                        onEditProfile = {},
-                                        onCoffeeShopClick = {},
-                                        onRoasterClick = {},
-                                        onLogin = {},
-                                        onUserClick = { _, _, _ -> },
-                                        onFavoritesClick = {},
-                                        onCheckInsClick = {},
-                                        topBarActions = {
-                                            ProfileActions(onContributions = {}, onLogout = {}, onBlockedAuthors = {})
-                                        },
-                                        favoritesPreview = {
-                                            FavoritesProfilePreviewContent({}, {}, vm = favoritesVm)
-                                        },
-                                        bottomContentPadding = 100.dp,
-                                        vm = profileVm,
-                                    )
-                                    PlatformFloatingBottomNavBar(
-                                        items = listOf(
-                                            FloatingNavItem("Поиск", CpIcons.Search, false) {},
-                                            FloatingNavItem("Кофе", CpIcons.CoffeeBean, false) {},
-                                            FloatingNavItem("Лента", CpIcons.Community, false) {},
-                                            FloatingNavItem("Профиль", CpIcons.Profile, true) {},
-                                            FloatingNavItem("Настройки", CpIcons.Settings, false) {},
-                                        ),
-                                        modifier = Modifier.align(Alignment.BottomCenter),
-                                    )
-                                }
-                            }
-                        }
-                    } }
-                    waitUntil {
-                        text("@glasha") != null && text("Территория кофе")?.isVisibleToUser == true &&
-                            !favoritesVm.state.value.isLoading && !favoritesVm.state.value.areRoastersLoading
-                    }
-                    assertTrue("Own profile must not offer following", text("Подписаться") == null)
-                    screenshot("own-profile-${if (dark) "dark" else "light"}.png")
-                    screenshot("own-profile-stacked-${if (dark) "dark" else "light"}.png")
-                    if (dark) {
-                        click(node { it.contentDescription?.toString() == "Действия с профилем" }!!)
-                        waitUntil {
-                            listOf("Правки кофеен", "Отправленные кофейни", "Отправленные обжарщики", "Выйти")
-                                .all { text(it)?.isVisibleToUser == true }
-                        }
-                        assertTrue("Editing should remain on the avatar", text("Редактировать профиль") == null)
-                        screenshot("own-profile-menu-dark.png")
-                        click(text("Правки кофеен")!!)
-                        waitUntil { text("Правки кофеен") == null }
-                    }
-                    assertPairedRoastersMatchCafeHeight()
-                    assertRoasterDetailsVisible(
-                        checkNotNull(node { it.viewIdResourceName == "favorites-preview-roaster:roast" }), "Roast", ROAST_DESCRIPTION,
-                    )
-                    assertRoasterDetailsVisible(
-                        checkNotNull(node { it.viewIdResourceName == "favorites-preview-roaster:roast-lab" }), "Roast Lab", ROAST_LAB_DESCRIPTION,
-                    )
-                    screenshot("own-profile-roasters-${if (dark) "dark" else "light"}.png")
-                    var profileScroll = node { it.viewIdResourceName == "profile-check-in:matcha" }?.parent
-                    while (profileScroll != null && !profileScroll.isScrollable) profileScroll = profileScroll.parent
-                    assertTrue("Profile should scroll to show complete check-ins",
-                        profileScroll?.performAction(AccessibilityNodeInfo.ACTION_SCROLL_FORWARD) == true)
-                    InstrumentationRegistry.getInstrumentation().waitForIdleSync()
-                    Thread.sleep(250)
-                    scrollTo { node { it.contentDescription?.toString() == "Лайки: 3" } }
-                    assertTrue("Profile check-ins should use the feed author header", text("glasha") != null)
-                    assertTrue("Profile check-ins should use the feed shop heading", text("Территория кофе") != null)
-                    screenshot("own-profile-checkins-${if (dark) "dark" else "light"}.png")
-                    if (dark) {
-                        scenario.onActivity { activity -> activity.setContent {
-                            CoffeePeekTheme(darkTheme = true) {
-                                PlatformSystemBars(darkTheme = true)
-                                FavoritesScreen(vm = favoritesVm)
-                            }
-                        } }
-                        waitUntil { text("Территория кофе")?.isVisibleToUser == true && text("Roast")?.isVisibleToUser == true }
-                        screenshot("favorites-page-dark.png")
-                        scrollTo { text(ROAST_LAB_DESCRIPTION) }
-                        assertRoasterDetailsVisible(clickableAncestor(checkNotNull(text("Roast"))), "Roast", ROAST_DESCRIPTION)
-                        assertRoasterDetailsVisible(clickableAncestor(checkNotNull(text("Roast Lab"))), "Roast Lab", ROAST_LAB_DESCRIPTION)
-                        screenshot("favorites-roasters-dark.png")
-                    }
-                    val savedRoasters = favoritesVm.state.value.roasters
-                    val savedDetails = favoritesVm.state.value.roasterDetails
-                    scenario.onActivity { activity -> activity.setContent {
-                        CoffeePeekTheme(darkTheme = dark) {
-                            PlatformSystemBars(darkTheme = dark)
-                            Box(Modifier.fillMaxSize().semantics { testTagsAsResourceId = true }) {
-                                Scaffold(topBar = { CpTopBar("Обжарщики", onBack = {}) }) { padding ->
-                                    Column(
-                                        Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()).padding(16.dp),
-                                        verticalArrangement = Arrangement.spacedBy(12.dp),
-                                    ) {
-                                        savedRoasters.forEach { roaster ->
-                                            Box(Modifier.testTag("roaster-catalog:${roaster.id}")) {
-                                                RoasterCard(
-                                                    roaster = roaster, details = savedDetails[roaster.id], onClick = {},
-                                                    isFavorite = true, isFavoriteLoading = false, onToggleFavorite = {},
-                                                )
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    } }
-                    waitUntil { text(ROAST_DESCRIPTION)?.isVisibleToUser == true && text(ROAST_LAB_DESCRIPTION)?.isVisibleToUser == true }
-                    assertRoasterDetailsVisible(checkNotNull(node { it.viewIdResourceName == "roaster-catalog:roast" }), "Roast", ROAST_DESCRIPTION)
-                    assertRoasterDetailsVisible(checkNotNull(node { it.viewIdResourceName == "roaster-catalog:roast-lab" }), "Roast Lab", ROAST_LAB_DESCRIPTION)
-                    screenshot("roaster-catalog-${if (dark) "dark" else "light"}.png")
-                }
-            } finally {
-                profileVm.close()
-                favoritesVm.close()
-            }
-        }
-    }
 
     @Test
     fun roasterDescriptionFallbackAndFooterRemainVisibleAtLargeFont() {
@@ -600,50 +399,6 @@ class PublicProfilePresentationTest {
         }
     }
 
-    @Test
-    fun allCheckInsLoadsNextPageAndFavoriteOpensItsPublicShop() {
-        val repository = ProfileFixtureRepository()
-        val vm = PublicProfileViewModel("glasha", repository, ProfileFixtureSessions())
-        val openedShop = AtomicReference<String>()
-        val openedRoaster = AtomicReference<String>()
-        val openedUser = AtomicReference<String>()
-        try {
-            ActivityScenario.launch(MainActivity::class.java).use { scenario ->
-                scenario.onActivity { activity -> activity.setContent {
-                    CoffeePeekTheme(darkTheme = false) {
-                        OtherUserProfileScreen(
-                            "glasha", onBack = {}, onCoffeeShopClick = { openedShop.set(it) },
-                            onRoasterClick = { openedRoaster.set(it) }, onLogin = {},
-                            onUserClick = { slug, _, _ -> openedUser.set(slug) }, vm = vm,
-                        )
-                    }
-                } }
-                waitUntil { text("Территория кофе") != null }
-                click(text("Территория кофе")!!)
-                waitUntil { openedShop.get() == "territory-coffee" }
-                click(node { it.contentDescription?.toString() == "Все: Избранное" }!!)
-                waitUntil { node { it.contentDescription?.toString() == "Закрыть" } != null }
-                scrollTo { text("Roast") }
-                click(text("Roast")!!)
-                waitUntil { openedRoaster.get() == "roast" }
-                waitUntil { text("Подписчики")?.isVisibleToUser == true }
-                click(text("Подписчики")!!)
-                waitUntil { text("@petr") != null }
-                click(text("@petr")!!)
-                waitUntil { openedUser.get() == "petr" }
-                waitUntil { node { it.contentDescription?.toString() == "Все: Чекины" } != null }
-                scrollTo { node { it.contentDescription?.toString() == "Все: Чекины" } }
-                click(node { it.contentDescription?.toString() == "Все: Чекины" }!!)
-                scrollTo { text("Загрузить ещё") }
-                click(text("Загрузить ещё")!!)
-                waitUntil { repository.cursors.contains("next-page") }
-                scrollTo { text("Кения Киганджо") }
-                assertEquals(listOf(null, "next-page"), repository.cursors.toList())
-                screenshot("public-profile-checkins.png")
-            }
-        } finally { vm.close() }
-    }
-
     private fun text(value: String) = node { it.text?.toString() == value }
 
     private fun bounds(node: AccessibilityNodeInfo) = Rect().also(node::getBoundsInScreen)
@@ -794,64 +549,6 @@ class PublicProfilePresentationTest {
 private const val ROAST_DESCRIPTION = "Белорусская обжарка с 2010 года. Чистый вкус и сезонные лоты."
 private const val ROAST_LAB_DESCRIPTION = "Обжариваем небольшие партии для фильтра и эспрессо в Минске."
 
-private fun personalFavoritesFixtureViewModel(onLoad: () -> Unit = {}): FavoritesViewModel {
-    val shop = CoffeeShopDetails(
-        shop = CoffeeShop(
-            id = "territory-coffee",
-            title = "Территория кофе",
-            rating = 4.7,
-            reviewCount = 12,
-            cityName = "Минск",
-            priceRange = "2",
-            photoUrl = null,
-            address = "пр. Независимости, 95",
-            isOpen = true,
-            isFavorite = true,
-            publicAddress = PublicAddress("territory-coffee", "/coffee-shops/territory-coffee", 1, false),
-        ),
-    )
-    val roaster = CatalogItem(
-        id = "roast", name = "Roast", slug = "roast",
-        address = PublicAddress("roast", "/roasters/roast", 1, false),
-        coffeeShopsCount = 7, coffeeProductsCount = 38, availableCoffeeProducts = 24,
-        description = ROAST_DESCRIPTION,
-    )
-    val secondRoaster = CatalogItem(
-        id = "roast-lab", name = "Roast Lab", slug = "roast-lab",
-        address = PublicAddress("roast-lab", "/roasters/roast-lab", 1, false),
-        coffeeShopsCount = 3, coffeeProductsCount = 16, availableCoffeeProducts = 12,
-        description = ROAST_LAB_DESCRIPTION,
-    )
-    val shops = object : FavoriteRepository {
-        override suspend fun getFavoriteIds() = setOf(shop.shop.id)
-        override suspend fun isFavorite(shopId: String) = shopId == shop.shop.id
-        override suspend fun getFavorites(): Result<List<CoffeeShopDetails>> {
-            onLoad()
-            return Result.success(listOf(shop))
-        }
-        override suspend fun addFavorite(shop: CoffeeShop, address: String?): Result<Unit> = error("Screenshot fixture is read-only")
-        override suspend fun removeFavorite(shopId: String): Result<Unit> = error("Screenshot fixture is read-only")
-        override suspend fun clearAll() = Unit
-    }
-    val favorites = object : RoasterFavorites {
-        override fun observeFavorites() = MutableStateFlow(listOf(roaster, secondRoaster))
-        override suspend fun setFavorite(roaster: CatalogItem, isFavorite: Boolean): Result<Unit> = error("Screenshot fixture is read-only")
-    }
-    val roasters = object : RoasterRepository {
-        override suspend fun getRoasters() = Result.success(emptyList<RoasterSummary>())
-        override suspend fun getRoaster(id: String): Result<RoasterDetails> {
-            val item = listOf(roaster, secondRoaster).single { it.id == id }
-            return Result.success(RoasterDetails(
-                id = item.id, name = item.name, about = item.description,
-                publicAddress = item.address,
-            ))
-        }
-        override suspend fun submitRoaster(input: CreateRoasterInput): Result<RoasterSubmissionResult> = error("Screenshot fixture is read-only")
-        override suspend fun getMyRoasterSubmissions(status: ModerationStatus, page: Int, pageSize: Int): Result<PagedResult<RoasterSubmission>> = error("Unused")
-    }
-    return FavoritesViewModel(shops, favorites, roasters)
-}
-
 private class ProfileFixtureRepository : PublicProfileRepository {
     val cursors = CopyOnWriteArrayList<String?>()
     private var following = false
@@ -929,7 +626,7 @@ private class ProfileFixtureRepository : PublicProfileRepository {
     }
 }
 
-private class ProfileFixtureSessions : SessionRepository {
+private class ProfileFixtureSessions : SessionStore {
     private val current = MutableStateFlow<Session?>(Session("fixture-token", userId = "viewer"))
     override fun peekSession() = current.value
     override fun applySession(session: Session?) { current.value = session }

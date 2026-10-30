@@ -1,5 +1,13 @@
 # Contributions: legacy inventory (step 0 of the owner migration)
 
+Ownership exit update — 2026-10-26: active Android/iOS entries now own photo,
+price, icon/image and map-picker UI in Contributions impl/design-system. Root
+hosts supply native launchers/canvas and feedback only. Seven obsolete app UI
+files are deleted; the old ShopChangeEditorScreen remains solely for an existing
+test consumer. Legacy catalog/details/drink reads and old ViewModels are separate
+remaining work. Older activation/fallback statements below are historical, not
+current production selection. See [OWNERSHIP_EXIT_PLAN.md](OWNERSHIP_EXIT_PLAN.md).
+
 Activation update — 2026-10-25: Android and iOS now use the shared feature renderer
 and app-owned photo/map/price slots. UI remains in feature/contributions/impl;
 legacy screens are retained as fallback pending acceptance. The inventory below
@@ -145,7 +153,7 @@ Live API contracts (paths and DTOs of `moderation/*`, `shop-change-requests`), i
 
 ## Step 1 result (parity tests on the legacy code)
 
-- **Added**: `ContributionsParityGapsTest` (composeApp `commonTest`, 21) and `ContributionSubmissionContractTest` (`modules/data`, 8).
+- **Added** (removed on 2026-10-27 together with the legacy ViewModels it covered; see OWNERSHIP_EXIT_PLAN): `ContributionsParityGapsTest` (composeApp `commonTest`, 21) and `ContributionSubmissionContractTest` (`modules/data`, 8).
 - **List (7)**: shop mapping (published target, waiting meta, rejected reason, tabs only with items), roaster mapping without a target, change summaries for every section with title, date and target, a failing status fails the whole list with its message or `Ошибка загрузки`, load more one page at a time with a failure keeping loaded items, the last page disables it.
 - **Wizard (7)**: name cut at 55 and step guards, single city / city from a picked point / address change clears coordinates, photo limits and removal, time stepper clamps, unified and per-day schedule as submitted (seven days, Monday first, closed days empty), trimmed input with blank optionals as null and the selections, catalog failure and retry.
 - **Change editor (4)**: prefill and the chosen section only (contacts, tags), the Instagram link quirk, photo caps counting retained photos, overlay of an existing request and a failed load.

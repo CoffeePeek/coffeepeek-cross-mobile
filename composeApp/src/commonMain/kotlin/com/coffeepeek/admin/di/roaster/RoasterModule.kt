@@ -3,7 +3,7 @@ package com.coffeepeek.admin.di.roaster
 import com.coffeepeek.admin.feature.favorites.api.RoasterFavorites
 import com.coffeepeek.admin.locator.Constants
 import com.coffeepeek.admin.locator.Locator
-import com.coffeepeek.api.CoffeePeekClient
+import com.coffeepeek.core.network.ApiClients
 import com.coffeepeek.feature.shop.api.PublicShopPreviews
 import com.coffeepeek.feature.roaster.api.PublicRoasterCatalog
 import com.coffeepeek.feature.roaster.data.repository.createPublicRoasterCatalog
@@ -32,7 +32,7 @@ internal fun roasterCatalogCacheKey(baseUrl: String) = "roaster_catalog_v1:${bas
 internal fun roasterModule(baseUrl: String = Constants.BASE_URL, settings: () -> SettingRepository = { Locator.database.settingRepository }) = module {
     single<RoasterCatalogStore> { SettingRoasterCatalogStore(settings(), roasterCatalogCacheKey(baseUrl)) }
     single<RoasterRepository> {
-        createRoasterRepository(get<CoffeePeekClient>().client, baseUrl, get()) { Clock.System.now().toEpochMilliseconds() }
+        createRoasterRepository(get<ApiClients>().client, baseUrl, get()) { Clock.System.now().toEpochMilliseconds() }
     }
     single<PublicRoasterCatalog> { createPublicRoasterCatalog(get()) }
     single<RoasterFavoritesPort> { RoasterFavoritesAdapter(get<RoasterFavorites>(), get<CoroutineScope>()) }

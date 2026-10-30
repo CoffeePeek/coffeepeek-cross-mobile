@@ -1,7 +1,7 @@
 package com.coffeepeek.admin.di.favorites
 
-import com.coffeepeek.domain.feature.favorites.api.FavoriteKind
-import com.coffeepeek.domain.feature.favorites.api.FavoritesRepository
+import com.coffeepeek.feature.favorites.domain.model.FavoriteKind
+import com.coffeepeek.feature.favorites.domain.repository.AccountFavorites
 import com.coffeepeek.core.session.SessionReader
 import com.coffeepeek.feature.favorites.domain.model.FavoriteDrink
 import com.coffeepeek.feature.favorites.domain.repository.FavoriteDrinksRepository
@@ -11,7 +11,7 @@ import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.map
 
 internal class ServerFavoriteDrinksRepository(
-    private val server: FavoritesRepository,
+    private val server: AccountFavorites,
     private val sessions: SessionReader,
 ) : FavoriteDrinksRepository {
     override fun observe() = server.observeFavorites().map { result ->

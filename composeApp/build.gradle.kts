@@ -24,7 +24,9 @@ if (file("google-services.json").isFile) apply(plugin = "com.google.gms.google-s
 val mediaTestBuildDirectory = project(":core:media").layout.buildDirectory
 tasks.withType<KotlinCompile>().configureEach {
     if (name.endsWith("AndroidTestKotlinAndroid")) {
-        friendPaths.from(libraries.filter { it.toPath().startsWith(mediaTestBuildDirectory.get().asFile.toPath()) })
+        // A local value keeps the filter free of script references, which the configuration cache cannot store.
+        val mediaBuildPath = mediaTestBuildDirectory.get().asFile.toPath()
+        friendPaths.from(libraries.filter { it.toPath().startsWith(mediaBuildPath) })
     }
 }
 
@@ -49,16 +51,6 @@ kotlin {
 
     sourceSets {
         androidMain.dependencies {
-            implementation(project(module.feature.favorites.data))
-            implementation(project(module.feature.favorites.impl))
-            implementation(project(module.feature.shopReport.api))
-            implementation(project(module.feature.shopReport.data))
-            implementation(project(module.feature.shopReport.impl))
-            implementation(project(module.feature.shop.api))
-            implementation(project(module.feature.shop.domain))
-            implementation(project(module.feature.shop.data))
-            implementation(project(module.feature.shop.impl))
-            implementation(project(module.feature.settings.impl))
             // The shelf's own camera: viewfinder and capture behind the ShelfCamera port.
             implementation(libs.androidx.camera.camera2)
             implementation(libs.androidx.camera.lifecycle)
@@ -130,9 +122,8 @@ kotlin {
             implementation(project(module.legacy.domain))
             implementation(project(module.legacy.data))
             implementation(project(module.legacy.network))
-            implementation(project(module.legacy.room))
+            implementation(project(module.core.database))
             implementation(project(module.core.network))
-            implementation(project(module.legacy.homeCheckIn))
             implementation(project(module.feature.appUpdate.api))
             implementation(project(module.feature.auth.api))
             implementation(project(module.feature.community.api))
@@ -150,6 +141,7 @@ kotlin {
             implementation(project(module.feature.discovery.api))
             implementation(project(module.feature.discovery.domain))
             implementation(project(module.feature.discovery.data))
+            implementation(project(module.feature.favorites.data))
             implementation(project(module.feature.discovery.impl))
             implementation(project(module.feature.auth.domain))
             implementation(project(module.feature.auth.data))
@@ -408,6 +400,15 @@ androidComponents.onVariants(androidComponents.selector().withBuildType("sandbox
             "com.coffeepeek.feature.roaster.api.PublicRoasterCatalog",
             "com.coffeepeek.feature.roaster.data.repository.PublicRoasterCatalogFactoryKt",
             "com.coffeepeek.feature.discovery.api.MapOpeningHours",
+            "com.coffeepeek.core.designsystem.component.CoffeePeekPhotoSourceSheetKt",
+            "com.coffeepeek.core.designsystem.component.CoffeePeekMapControlButtonKt",
+            "com.coffeepeek.feature.contributions.api.ContributionPhotoPicker",
+            "com.coffeepeek.feature.contributions.api.ContributionMapCanvas",
+            "com.coffeepeek.feature.contributions.impl.AddShopEntryImplKt",
+            "com.coffeepeek.feature.contributions.impl.AddRoasterEntryImplKt",
+            "com.coffeepeek.feature.contributions.impl.ChangeEditorEntryImplKt",
+            "com.coffeepeek.feature.contributions.impl.ui.map.ContributionMapPickerKt",
+            "com.coffeepeek.admin.di.contributions.AppContributionPhotoPicker",
             "com.coffeepeek.feature.authorblocking.api.AuthorBlockingEntry",
             "com.coffeepeek.feature.authorblocking.impl.AuthorBlockingApiImplKt",
             "com.coffeepeek.admin.di.ownership.BusinessOwnershipModuleKt",
@@ -470,6 +471,15 @@ androidComponents {
                 "com.coffeepeek.feature.roaster.api.PublicRoasterCatalog",
                 "com.coffeepeek.feature.roaster.data.repository.PublicRoasterCatalogFactoryKt",
                 "com.coffeepeek.feature.discovery.api.MapOpeningHours",
+                "com.coffeepeek.core.designsystem.component.CoffeePeekPhotoSourceSheetKt",
+                "com.coffeepeek.core.designsystem.component.CoffeePeekMapControlButtonKt",
+                "com.coffeepeek.feature.contributions.api.ContributionPhotoPicker",
+                "com.coffeepeek.feature.contributions.api.ContributionMapCanvas",
+                "com.coffeepeek.feature.contributions.impl.AddShopEntryImplKt",
+                "com.coffeepeek.feature.contributions.impl.AddRoasterEntryImplKt",
+                "com.coffeepeek.feature.contributions.impl.ChangeEditorEntryImplKt",
+                "com.coffeepeek.feature.contributions.impl.ui.map.ContributionMapPickerKt",
+                "com.coffeepeek.admin.di.contributions.AppContributionPhotoPicker",
                 "com.coffeepeek.feature.authorblocking.api.AuthorBlockingEntry",
                 "com.coffeepeek.feature.authorblocking.impl.AuthorBlockingApiImplKt",
                 "com.coffeepeek.core.session.DefaultSessionStore",
@@ -514,7 +524,8 @@ androidComponents {
                 "com.coffeepeek.feature.profile.impl.EditProfileEntryImplKt",
                 "com.coffeepeek.feature.roaster.impl.RoasterEntryImplsKt",
                 "com.coffeepeek.feature.roaster.data.repository.RoasterRepositoryFactoryKt",
-                "com.coffeepeek.data.feature.favorites.ServerFavoritesRepository",
+                "com.coffeepeek.feature.favorites.data.repository.RemoteAccountFavorites",
+                "com.coffeepeek.admin.di.favorites.LegacyAccountFavorites",
                 "com.coffeepeek.admin.di.favorites.ServerFavoriteShopsRepository",
                 "com.coffeepeek.admin.di.favorites.ServerFavoriteDrinksRepository",
                 "com.coffeepeek.admin.di.shop.ShopCheckInModuleKt",

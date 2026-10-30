@@ -202,6 +202,7 @@ class RegisterViewModelTest {
         assertEquals(listOf("id-token"), auth.googleTokens)
         assertEquals<List<List<Any?>>>(listOf(listOf("google-user", SignInMethod.Google, AuthEntry.Register, null)), analytics.signedIn)
         assertEquals(listOf<RegisterEvent>(RegisterEvent.SignedIn), events)
+        assertTrue(analytics.consents.isEmpty())
         assertFalse(vm.state.value.busy)
     }
 

@@ -34,11 +34,11 @@ internal class FeatureCheckInCreateFlowRenderer(
     private val sessions: SessionReader,
     private val shelfEnabled: Boolean,
     private val picker: CheckInCreatePickerEntry = createCheckInCreatePickerEntry(),
+    private val onCreated: () -> Unit = {},
     private val createEditor: (CheckInHistorySession, CheckInTracker?) -> HomeCheckInEditorEntry,
 ) : CheckInCreateFlowRenderer {
     @Composable
-    override fun Content(onDismiss: () -> Unit, onShop: () -> Unit, onHomeSaved: () -> Unit,
-        legacyContent: @Composable () -> Unit) = Flow("global-check-in-flow-store", null, onDismiss, onShop, onHomeSaved)
+    override fun Content(onDismiss: () -> Unit, onShop: () -> Unit, onHomeSaved: () -> Unit) = Flow("global-check-in-flow-store", null, onDismiss, onShop, onHomeSaved)
 
     /** The Home form straight away with [bean] already chosen: "Заварить чашку" from a shelf bag. */
     @Composable
@@ -49,7 +49,7 @@ internal class FeatureCheckInCreateFlowRenderer(
     private fun Flow(storeKey: String, homeBean: HomeCheckInBean?, onDismiss: () -> Unit, onShop: () -> Unit, onHomeSaved: () -> Unit) {
         val owner = viewModel(key = storeKey) { GlobalCheckInFlowStore() }
         GlobalCheckInFlowLifetimeEffect(owner)
-        val model = viewModel(viewModelStoreOwner = owner) { GlobalCheckInFlow(sessions, homeBean, createEditor) }
+        val model = viewModel(viewModelStoreOwner = owner) { GlobalCheckInFlow(sessions, onCreated, homeBean, createEditor) }
         val state by model.state.collectAsState()
         Completion(model, onDismiss, onShop, onHomeSaved)
         Destination(owner, model, state)

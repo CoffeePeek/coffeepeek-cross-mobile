@@ -48,11 +48,12 @@ class ShopCheckInCreateViewModelTest {
     private class Repository : ShopCheckInRepository {
         val writes = mutableListOf<ShopCheckInCreateInput>()
         var writeResult: Result<Unit> = Result.success(Unit)
+        var writeThrows: Throwable? = null
         var drinkResult: Result<List<ShopConsumedDrinkOption>> = Result.success(listOf(ShopConsumedDrinkOption("filter", "Фильтр", "Filter")))
         var gate: CompletableDeferred<Unit>? = null
         var drinkCalls = 0
         override suspend fun getDrinkOptions(): Result<List<ShopConsumedDrinkOption>> { drinkCalls++; return drinkResult }
-        override suspend fun create(input: ShopCheckInCreateInput): Result<Unit> { writes += input; gate?.await(); return writeResult }
+        override suspend fun create(input: ShopCheckInCreateInput): Result<Unit> { writes += input; gate?.await(); writeThrows?.let { throw it }; return writeResult }
     }
 
     private class Drafts : ShopCheckInDraftStore {
@@ -238,6 +239,30 @@ class ShopCheckInCreateViewModelTest {
         viewModel.onAction(ShopCheckInFormAction.Submit)
         runCurrent()
         assertEquals(1, repository.writes.size)
+    }
+
+    @Test fun aThrowingOrMessagelessFailureRestoresAnEditableDraftAndCanRetry() = runTest(dispatcher) {
+        val repository = Repository().apply { writeThrows = IllegalStateException("boom") }
+        val drafts = Drafts()
+        val viewModel = viewModel(repository, drafts)
+        runCurrent()
+        viewModel.onAction(ShopCheckInFormAction.TextChanged("Coffee"))
+        viewModel.onAction(ShopCheckInFormAction.Submit)
+        runCurrent()
+        assertTrue(viewModel.state.value.submitFailed)
+        assertFalse(viewModel.state.value.isSubmitting)
+        assertEquals("Coffee", drafts.snapshot!!.input.text)
+        repository.writeThrows = null
+        repository.writeResult = Result.failure(IllegalStateException())
+        viewModel.onAction(ShopCheckInFormAction.Submit)
+        runCurrent()
+        assertTrue(viewModel.state.value.submitFailed)
+        assertFalse(viewModel.state.value.isSubmitting)
+        assertEquals("Coffee", drafts.snapshot!!.input.text)
+        assertEquals(2, repository.writes.size)
+        viewModel.onAction(ShopCheckInFormAction.TextChanged("Coffee!"))
+        runCurrent()
+        assertFalse(viewModel.state.value.submitFailed)
     }
 
     @Test fun knownRejectionKeepsDraftAndAllowsExplicitRetry() = runTest(dispatcher) {

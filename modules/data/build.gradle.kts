@@ -19,10 +19,11 @@ kotlin {
 
     sourceSets {
         commonMain.dependencies {
+            implementation(project(module.core.network))
             implementation(project(module.core.session))
             implementation(project(module.legacy.domain))
             implementation(project(module.legacy.network))
-            implementation(project(module.legacy.room))
+            implementation(project(module.core.database))
             implementation(libs.kotlinx.coroutines.core)
             implementation(libs.koin.core)
             implementation(libs.ktor.serialization.kotlinx.json)

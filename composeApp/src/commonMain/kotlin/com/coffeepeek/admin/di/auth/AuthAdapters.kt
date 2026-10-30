@@ -1,6 +1,6 @@
 package com.coffeepeek.admin.di.auth
 
-import com.coffeepeek.data.session.UserSessionCleaner
+import com.coffeepeek.admin.session.UserSessionCleaner
 import com.coffeepeek.admin.analytics.Analytics
 import com.coffeepeek.admin.analytics.AnalyticsConsent
 import com.coffeepeek.admin.analytics.signInAnalytics
@@ -11,7 +11,7 @@ import com.coffeepeek.feature.auth.api.SignInMethod
 
 /** The application's cleanup of an account's local data: the stored session, its favorites and the caches. */
 class UserSessionLocalUserData(private val cleaner: UserSessionCleaner) : LocalUserData {
-    override suspend fun clear() = cleaner.clearLocalUserData()
+    override suspend fun clear() = cleaner.clear()
 }
 
 /** The analytics side of sign-in: the same events, properties and consent handling the legacy view models used. */

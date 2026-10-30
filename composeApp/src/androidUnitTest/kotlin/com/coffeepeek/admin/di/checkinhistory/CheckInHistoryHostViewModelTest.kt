@@ -4,7 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelStore
 import com.coffeepeek.admin.di.shop.CheckInTestSessions
 import com.coffeepeek.domain.model.Session
-import com.coffeepeek.domain.repository.SessionRepository
+import com.coffeepeek.core.session.SessionStore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.flow
@@ -79,7 +79,7 @@ class CheckInHistoryHostViewModelTest {
     @Test fun observationFailureHidesDataUntilExplicitRetryWithFreshStore() = runTest(dispatcher) {
         var fail = true
         val source = CheckInTestSessions()
-        val sessions = object : SessionRepository by source {
+        val sessions = object : SessionStore by source {
             override fun observeSession() = if (fail) flow<Session?> { error("Store unavailable") } else source.observeSession()
         }
         val host = CheckInHistoryHostViewModel(sessions).also { store.put("host", it) }

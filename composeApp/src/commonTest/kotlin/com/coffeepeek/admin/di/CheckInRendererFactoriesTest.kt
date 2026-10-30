@@ -60,8 +60,7 @@ class CheckInRendererFactoriesTest {
     }
 
     private object Creation : CheckInCreateFlowRenderer {
-        @Composable override fun Content(onDismiss: () -> Unit, onShop: () -> Unit, onHomeSaved: () -> Unit,
-            legacyContent: @Composable () -> Unit) = error("DI tests must not render")
+        @Composable override fun Content(onDismiss: () -> Unit, onShop: () -> Unit, onHomeSaved: () -> Unit) = error("DI tests must not render")
     }
 
     private object Picker : CheckInShopPickerRenderer {

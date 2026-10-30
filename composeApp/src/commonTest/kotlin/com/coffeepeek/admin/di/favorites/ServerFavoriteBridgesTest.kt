@@ -2,9 +2,13 @@ package com.coffeepeek.admin.di.favorites
 
 import com.coffeepeek.admin.di.shop.CheckInTestSessions
 import com.coffeepeek.admin.feature.favorites.api.RoasterFavorites
-import com.coffeepeek.domain.feature.favorites.api.*
+import com.coffeepeek.feature.favorites.domain.model.FavoriteAddress
+import com.coffeepeek.feature.favorites.domain.model.FavoriteEntry
+import com.coffeepeek.feature.favorites.domain.model.FavoriteKind
+import com.coffeepeek.feature.favorites.domain.repository.AccountFavorites
 import com.coffeepeek.domain.model.*
 import com.coffeepeek.feature.favorites.domain.model.FavoriteShop
+import com.coffeepeek.feature.shop.api.PublicShopSummary
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.test.*
@@ -12,10 +16,10 @@ import kotlin.test.*
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class ServerFavoriteBridgesTest {
-    private val address = PublicAddress("canonical", "/coffee-shop/canonical", 1, false)
+    private val address = FavoriteAddress("canonical", "/coffee-shop/canonical", 1, false)
     private fun entry(kind: FavoriteKind = FavoriteKind.CoffeeShop) =
         FavoriteEntry(kind, address, name = "Server name", coverPhotoUrl = "https://fixture.invalid/cover")
-    private class Server : FavoritesRepository {
+    private class Server : AccountFavorites {
         val state = MutableStateFlow(Result.success(emptyList<FavoriteEntry>()))
         val writes = mutableListOf<Pair<FavoriteEntry, Boolean>>()
         var reads = 0
@@ -28,8 +32,6 @@ class ServerFavoriteBridgesTest {
         override suspend fun getFavorites(refresh: Boolean): Result<List<FavoriteEntry>> {
             reads++; return state.value.also { afterRead() }
         }
-        override suspend fun setFavorite(kind: FavoriteKind, address: PublicAddress, favorite: Boolean) =
-            setFavorite(FavoriteEntry(kind, address), favorite)
         override suspend fun setFavorite(entry: FavoriteEntry, favorite: Boolean): Result<Unit> {
             writes += entry to favorite
             return Result.success(Unit)
@@ -79,6 +81,9 @@ class ServerFavoriteBridgesTest {
         assertEquals(0, server.reads)
     }
 
+    private fun summary(title: String) = PublicShopSummary(null, null, null, null, 0, false, emptyList(),
+        slug = address.slug, canonicalPath = address.canonicalPath, revision = address.revision, isAlias = address.isAlias, title = title)
+
     @Test fun accountReplacementClearsImmediatelyAndRejectsNonCooperativeDetail() = runTest {
         val sessions = CheckInTestSessions()
         val server = Server().apply { state.value = Result.success(listOf(entry())) }
@@ -86,8 +91,7 @@ class ServerFavoriteBridgesTest {
         val gate = CompletableDeferred<Unit>()
         val repo = ServerFavoriteShopsRepository(server, sessions) {
             withContext(NonCancellable) { started.complete(Unit); gate.await() }
-            Result.success(CoffeeShopDetails(CoffeeShop("canonical", "Private old row", null,
-                cityName = null, priceRange = null, photoUrl = null, publicAddress = address)))
+            Result.success(summary("Private old row"))
         }
         val results = mutableListOf<Result<List<FavoriteShop>>>()
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { repo.observe().collect { results += it } }
@@ -125,8 +129,7 @@ class ServerFavoriteBridgesTest {
         val server = Server()
         val repo = ServerFavoriteShopsRepository(server, CheckInTestSessions()) {
             assertEquals("old-alias", it)
-            Result.success(CoffeeShopDetails(CoffeeShop("guid", "Canonical title", null,
-                cityName = null, priceRange = null, photoUrl = null, publicAddress = address)))
+            Result.success(summary("Canonical title"))
         }
         repo.save(FavoriteShop("old-alias", "Old title")).getOrThrow()
         assertEquals(address, server.writes.single().first.address)

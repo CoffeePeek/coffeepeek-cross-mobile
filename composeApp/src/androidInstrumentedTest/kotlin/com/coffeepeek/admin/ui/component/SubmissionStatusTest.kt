@@ -15,8 +15,6 @@ import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.coffeepeek.admin.theme.CoffeePeekTheme
-import com.coffeepeek.admin.ui.screen.shop.CheckInSubmissionContent
-import com.coffeepeek.domain.model.CheckInVisibility
 import java.io.File
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -95,29 +93,6 @@ class SubmissionStatusTest {
         compose.onNodeWithText("Повторить отправку").assertIsDisplayed()
         compose.onNodeWithText("Вернуться к форме").assertIsDisplayed()
         screenshot("submission-large-text.png")
-    }
-
-    @Test fun checkInResultFitsItsContentAndKeepsBothActionsVisible() {
-        var feedOpened = false
-        var checkInsOpened = false
-        compose.setContent {
-            CoffeePeekTheme(darkTheme = true) {
-                Box(Modifier.fillMaxWidth().height(640.dp).testTag("result-viewport")) {
-                    Box(Modifier.testTag("checkin-result")) {
-                        CheckInSubmissionContent(CheckInVisibility.Private,
-                            onGoToFeed = { feedOpened = true }, onViewCheckIns = { checkInsOpened = true })
-                    }
-                }
-            }
-        }
-        compose.onNodeWithText("Чекин создан!").assertIsDisplayed()
-        compose.onNodeWithText("К ленте").assertIsDisplayed().performClick()
-        compose.onNodeWithText("Мои чекины").assertIsDisplayed().performClick()
-        compose.runOnIdle { assertTrue(feedOpened && checkInsOpened) }
-        val viewport = compose.onNodeWithTag("result-viewport").fetchSemanticsNode().boundsInRoot
-        val result = compose.onNodeWithTag("checkin-result").fetchSemanticsNode().boundsInRoot
-        assertTrue("The saved result must not retain the tall form height", result.height < viewport.height - 16)
-        screenshot("checkin-submission-compact.png")
     }
 
     private fun screenshot(name: String) {

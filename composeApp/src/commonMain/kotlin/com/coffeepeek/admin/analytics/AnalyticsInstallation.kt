@@ -1,7 +1,7 @@
 package com.coffeepeek.admin.analytics
 
 import com.coffeepeek.admin.config.AppConfig
-import com.coffeepeek.api.CoffeePeekClient
+import com.coffeepeek.core.network.ApiClients
 import com.coffeepeek.core.session.SessionReader
 import com.coffeepeek.room.model.Setting
 import com.coffeepeek.room.repository.SettingRepository
@@ -12,7 +12,7 @@ import kotlinx.coroutines.launch
 
 internal const val ANALYTICS_CONSENT_KEY = "coffeepeek.analyticsConsent.v1"
 
-internal fun installAnalytics(settings: SettingRepository, sessions: SessionReader, gateway: CoffeePeekClient) {
+internal fun installAnalytics(settings: SettingRepository, sessions: SessionReader, gateway: ApiClients) {
     val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     val service = createAnalyticsService(settings, scope)
     Analytics.install(service)

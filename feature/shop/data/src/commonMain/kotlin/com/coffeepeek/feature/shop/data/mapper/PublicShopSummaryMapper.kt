@@ -15,6 +15,10 @@ internal fun ShopDetailsDto.toPublicSummary() = PublicShopSummary(
     reviewCount = checkInCount.toFlexibleInt(), isOpen = isOpen,
     tags = (tags.publicTagNames() + shopTags.publicTagNames()).map(String::trim).filter(String::isNotBlank).distinct()
         .ifEmpty { (brewMethods + coffeeBeans).mapNotNull { it.name?.takeIf(String::isNotBlank) } }.take(3),
+    slug = publicAddress.slug, canonicalPath = publicAddress.canonicalPath, revision = publicAddress.revision, isAlias = publicAddress.isAlias,
+    title = name.orEmpty(), priceRange = priceRange.toPriceRangeLabel(), latitude = location?.latitude, longitude = location?.longitude,
+    brewMethods = brewMethods.mapNotNull { it.name?.takeIf(String::isNotBlank) },
+    roasterPhotoUrls = roasters.mapNotNull { it.photoUrl?.takeIf(String::isNotBlank) }.distinct(),
 )
 
 private fun JsonElement?.publicTagNames(): List<String> = (this as? JsonArray)?.mapNotNull { item ->

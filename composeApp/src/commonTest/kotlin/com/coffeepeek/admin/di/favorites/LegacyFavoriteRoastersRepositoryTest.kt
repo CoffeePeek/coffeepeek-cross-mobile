@@ -5,7 +5,7 @@ import com.coffeepeek.admin.feature.favorites.api.RoasterFavorites
 import com.coffeepeek.domain.model.CatalogItem
 import com.coffeepeek.domain.model.PublicAddress
 import com.coffeepeek.domain.model.Session
-import com.coffeepeek.domain.repository.SessionRepository
+import com.coffeepeek.core.session.SessionStore
 import com.coffeepeek.feature.favorites.domain.model.FavoriteRoaster
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
@@ -153,7 +153,7 @@ class LegacyFavoriteRoastersRepositoryTest {
     @Test fun sessionObservationFailureClearsPrivateRowsBeforeReportingError() = runTest {
         val currentSession = CheckInTestSessions()
         val failureGate = CompletableDeferred<Unit>()
-        val sessions = object : SessionRepository by currentSession {
+        val sessions = object : SessionStore by currentSession {
             override fun observeSession() = flow {
                 emit(currentSession.peekSession())
                 failureGate.await()

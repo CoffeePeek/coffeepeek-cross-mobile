@@ -1,11 +1,13 @@
 package com.coffeepeek.admin.feature.favorites.data
 
 import com.coffeepeek.admin.feature.favorites.api.RoasterFavorites
-import com.coffeepeek.domain.feature.favorites.api.FavoriteKind
-import com.coffeepeek.domain.feature.favorites.api.FavoriteEntry
-import com.coffeepeek.domain.feature.favorites.api.FavoritesRepository
+import com.coffeepeek.admin.di.favorites.toFavoriteAddress
+import com.coffeepeek.admin.di.favorites.toPublicAddress
+import com.coffeepeek.feature.favorites.domain.model.FavoriteEntry
+import com.coffeepeek.feature.favorites.domain.model.FavoriteKind
+import com.coffeepeek.feature.favorites.domain.repository.AccountFavorites
 import com.coffeepeek.domain.model.CatalogItem
-import com.coffeepeek.domain.repository.RoasterRepository
+import com.coffeepeek.feature.roaster.api.PublicRoasterDetails
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
@@ -20,8 +22,8 @@ import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 
 internal class ServerRoasterFavorites(
-    private val favorites: FavoritesRepository,
-    private val roasters: RoasterRepository,
+    private val favorites: AccountFavorites,
+    private val roasters: PublicRoasterDetails,
     private val sessions: com.coffeepeek.core.session.SessionReader? = null,
 ) : RoasterFavorites {
     private val errors = MutableStateFlow<String?>(null)
@@ -32,23 +34,30 @@ internal class ServerRoasterFavorites(
         errors.value = if (result.isFailure) "Не удалось загрузить избранных обжарщиков" else null
         val entries = result.getOrDefault(emptyList()).filter { it.kind == FavoriteKind.Roaster }
         if (entries.isEmpty()) return@mapLatest emptyList()
-        val catalog = roasters.getRoasters().getOrDefault(emptyList()).mapNotNull { roaster ->
-            roaster.publicAddress?.slug?.let { it to roaster.toCatalogItem() }
-        }.toMap()
+        val catalog = roasters.summaries().getOrDefault(emptyList()).associateBy { it.slug }
         val requests = Semaphore(4)
         coroutineScope {
             entries.map { entry -> async {
                 val slug = entry.address?.slug
-                slug?.let(catalog::get)?.let { item -> item.copy(address = entry.address,
-                    name = entry.name.ifBlank { item.name }, photoUrl = entry.coverPhotoUrl ?: item.photoUrl) } ?: run {
-                    val details = slug?.let { requests.withPermit { roasters.getRoaster(it).getOrNull() } }
+                slug?.let(catalog::get)?.let { summary ->
+                    CatalogItem(
+                        id = summary.slug, slug = summary.slug,
+                        name = entry.name.ifBlank { summary.name.ifBlank { summary.slug } },
+                        photoUrl = entry.coverPhotoUrl ?: summary.photoUrl,
+                        address = entry.address?.toPublicAddress(),
+                        coffeeShopsCount = summary.coffeeShopsCount, coffeeProductsCount = summary.coffeeProductsCount,
+                        availableCoffeeProducts = summary.availableCoffeeProducts,
+                        tags = summary.tags.map { tag -> CatalogItem(id = tag, name = tag) },
+                    )
+                } ?: run {
+                    val details = slug?.let { requests.withPermit { roasters.load(it).getOrNull() } }
                     currentCoroutineContext().ensureActive()
                     CatalogItem(
                         id = slug ?: entry.id,
                         slug = slug.orEmpty(),
-                        name = entry.name.ifBlank { details?.name ?: slug ?: "Обжарщик" },
-                        photoUrl = entry.coverPhotoUrl ?: details?.photos?.firstOrNull()?.fullUrl,
-                        address = entry.address,
+                        name = entry.name.ifBlank { details?.name?.takeIf(String::isNotBlank) ?: slug ?: "Обжарщик" },
+                        photoUrl = entry.coverPhotoUrl ?: details?.photoUrl,
+                        address = entry.address?.toPublicAddress(),
                         description = details?.about,
                     )
                 }
@@ -59,7 +68,7 @@ internal class ServerRoasterFavorites(
     override suspend fun setFavorite(roaster: CatalogItem, isFavorite: Boolean): Result<Unit> {
         val address = roaster.address
             ?: return Result.failure(IllegalArgumentException("У обжарщика нет публичного адреса"))
-        return favorites.setFavorite(FavoriteEntry(FavoriteKind.Roaster, address,
+        return favorites.setFavorite(FavoriteEntry(FavoriteKind.Roaster, address.toFavoriteAddress(),
             name = roaster.name, coverPhotoUrl = roaster.photoUrl), isFavorite)
     }
 

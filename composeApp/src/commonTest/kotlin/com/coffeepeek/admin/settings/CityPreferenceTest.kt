@@ -1,6 +1,5 @@
 package com.coffeepeek.admin.settings
 
-import com.coffeepeek.domain.model.City
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.test.runTest
@@ -11,10 +10,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNull
 
 class CityPreferenceTest {
-    private val cities = listOf(
-        City(id = "minsk", name = "Минск"),
-        City(id = "grodno", name = "Гродно"),
-    )
+    private val cities = listOf("minsk", "grodno")
 
     @Test
     fun keepsSavedCityWhenItStillExists() {
@@ -34,7 +30,7 @@ class CityPreferenceTest {
 
 /** Parity tests for the stateful half of the legacy `CityPreference` (settings migration step 1). */
 class CityPreferenceStorageTest {
-    private val cities = listOf(City("minsk", "Минск"), City("grodno", "Гродно"))
+    private val cities = listOf("minsk", "grodno")
     private suspend fun await(condition: () -> Boolean) =
         withContext(Dispatchers.Default) { withTimeout(5_000) { while (!condition()) delay(10) } }
 

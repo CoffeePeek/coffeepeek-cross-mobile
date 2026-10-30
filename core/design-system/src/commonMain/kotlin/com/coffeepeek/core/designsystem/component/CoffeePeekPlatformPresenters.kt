@@ -104,6 +104,10 @@ data class CoffeePeekNativeMenuItem(
 )
 
 interface CoffeePeekNativeControlsPresenter {
+    /** Map controls obey the native viewport's clipping and z-order rather than floating above headers. */
+    @Composable
+    fun MapControlButton(icon: CoffeePeekGlassIcon, onClick: () -> Unit, contentDescription: String, modifier: Modifier): Boolean = false
+
     /** Native equal-width segments; false keeps the shared renderer (for example for too many options). */
     @Composable
     fun SegmentedControl(labels: List<String>, selectedIndex: Int, onSelected: (Int) -> Unit, modifier: Modifier, enabled: Boolean): Boolean

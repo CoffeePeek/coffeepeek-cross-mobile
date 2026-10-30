@@ -1,6 +1,7 @@
 package com.coffeepeek.admin.utils
 
 import com.coffeepeek.core.media.ImageUrl
+import com.coffeepeek.core.media.PrefetchPhotos
 
 import com.coffeepeek.core.designsystem.component.CoffeePeekImage
 

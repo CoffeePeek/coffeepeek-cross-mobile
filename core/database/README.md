@@ -5,9 +5,9 @@ database composition and feature persistence. Depends on Room and bundled
 SQLite only. Room is exported because the public builder extension exposes it.
 The driver implementation is hidden behind the configuration function.
 
-This module is registered and compiled independently. The existing Room module
-continues to own the application database, schema and migrations until the
-integration stage. It does not depend on this module yet.
+The application database lives here: `CoffeePeekDatabase` (name, `setting_table` and the exported schema history in
+`schemas/` are unchanged), its migrations, the key-value `SettingRepository` and the platform factories
+(`MyRoomRepositoryImpl`). It shares the driver configuration below and has Android and iOS targets.
 
 A module boundary prevents driver infrastructure from acquiring feature
 entities/DAOs. The concrete Room database must reference its schema types;
@@ -45,6 +45,10 @@ To verify compilation without a device:
 ./gradlew :core:database:assembleDebug :core:database:assembleDebugAndroidTest
 ```
 
-This does not validate production migrations. Their schema history and tests must
-remain with application database composition when features migrate. No iOS
-implementation or application integration is added by this stage.
+## Application migrations
+
+`ApplicationDatabaseMigrationTest` (`androidInstrumentedTest`) creates every shipped schema version by hand with its real
+identity hash (v1, and v2 with the retired brew journal tables), opens it through the production builder and checks that
+the settings rows survive, the journal tables are gone, new writes persist across reopen and a new install gets the
+current schema. It restores the migration coverage lost with the removed local-favorites tests. Compile it with
+`./gradlew :core:database:assembleDebugAndroidTest`; it needs a device to run.

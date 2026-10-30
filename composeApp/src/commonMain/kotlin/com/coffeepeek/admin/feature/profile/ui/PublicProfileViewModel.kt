@@ -7,7 +7,7 @@ import com.coffeepeek.admin.feature.profile.domain.*
 import com.coffeepeek.feature.profile.domain.*
 import com.coffeepeek.admin.feature.profile.domain.PublicProfileCheckIn
 import com.coffeepeek.domain.model.Session
-import com.coffeepeek.domain.repository.SessionRepository
+import com.coffeepeek.core.session.SessionStore
 import com.coffeepeek.domain.repository.UserRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -56,7 +56,7 @@ internal data class PublicProfileUiState(
 internal class PublicProfileViewModel(
     private val slug: String,
     private val repository: PublicProfileRepository,
-    private val sessions: SessionRepository,
+    private val sessions: SessionStore,
     private val scope: CoroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob()),
     private val users: UserRepository? = null,
     private val visibility: AuthorVisibility = AuthorVisibility.None,

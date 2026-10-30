@@ -27,3 +27,6 @@ __pycache__/
 # Firebase app configuration is supplied locally or by CI.
 **/google-services.json
 **/GoogleService-Info.plist
+
+# Kotlin build output written next to the module sources
+/core/network/unused/

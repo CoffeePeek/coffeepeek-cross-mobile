@@ -136,6 +136,12 @@ private object IosKeyboardPresenter : CoffeePeekKeyboardPresenter {
 /** The UIKit glass buttons, UIMenu and spinner of the legacy controls (names of the glyph enums match). */
 private object IosNativeControlsPresenter : CoffeePeekNativeControlsPresenter {
     @Composable
+    override fun MapControlButton(icon: CoffeePeekGlassIcon, onClick: () -> Unit, contentDescription: String, modifier: Modifier): Boolean {
+        PlatformMapControlButton(GlassControlIcon.valueOf(icon.name), onClick, contentDescription, modifier) {}
+        return true
+    }
+
+    @Composable
     override fun SegmentedControl(labels: List<String>, selectedIndex: Int, onSelected: (Int) -> Unit, modifier: Modifier, enabled: Boolean): Boolean =
         NativeSegmentedControl(labels, selectedIndex, onSelected, modifier, enabled)
 

@@ -52,6 +52,29 @@ KoinApp сохраняет Legacy* defaults, dataModule строит стары�
 core/database пока содержит только конфигурацию драйвера, не готовую замену
 DatabaseCore. Старый LEGACY_REMOVAL.md — исторический снимок 2026-10-21.
 
+## Точка остановки — 2026-10-27
+
+Текущая ветка `codex/migration-contributions-ownership`, draft
+[PR #202](https://github.com/CoffeePeek/coffeepeek-cross-mobile/pull/202) → #201.
+Последний проверенный код — коммиты поверх `9f5291b8` (`8ba59ab1` и следующий): Contributions больше не читает каталоги, снимок кофейни и
+напитки через legacy `ShopRepository` (`ShopContributionCatalogs` удалён); данные читает собственный источник в
+`feature/contributions/data`, roasters — из общего `PublicRoasterCatalog`. Подробности, сравнение с legacy и проверки:
+[Contributions ownership exit — точка остановки](contributions/OWNERSHIP_EXIT_PLAN.md).
+
+Следующий срез в той же ветке/#202 выполнен: пять недостижимых Contributions ViewModels, их Koin-фабрики и тесты старого
+кода удалены после сверки покрытия с feature-тестами; найденный пробел (отправка формы обжарщика во время загрузки городов)
+закрыт. Остаются `ShopChangeEditorScreen`/`ShopChangeEditorViewModel`/`ShopChangeLabels`: их держит чужой `ShopMenuEditorTest`.
+Instrumented-компиляция `compileDirectDebugAndroidTestKotlinAndroid` падает на двух не связанных файлах (`CpImageLoadingTest`,
+`DisplayPhotoTransparencyTest`) — отдельная задача. Подробности: [Contributions ownership exit](contributions/OWNERSHIP_EXIT_PLAN.md).
+
+CI-фикс #195 `027c2029` уже в стеке (#201 `89778c23`). Свежий `origin/develop` (`d8864318`, bump 1.1.2) в стек пока не передан.
+Полный локальный Android lint/unit/APK/DEX/Sandbox и iOS compile/framework для этого среза прошли; ручная/native/full Xcode
+приёмка открыта. После Contributions остаются root create/tab UI, platform bridges, legacy favorites/session/storage/transport и
+L4 cleanup старых consumers. Полный выход из legacy ещё не завершён.
+
+Не трогать пользовательский локальный project.pbxproj (48+/41−). Продолжать стек, не main; перед кодом сверить свежие
+remotes и при необходимости передать изменения сначала в родителя, затем в потомков. Новую бизнес-фичу пока не начинать.
+
 ## Очерёдность срезов
 
 ### L1. Убрать бизнес-UI из активных app slots
@@ -67,13 +90,15 @@ DatabaseCore. Старый LEGACY_REMOVAL.md — исторический сни
   catalogue icons/prefetch) больше не приходят из composeApp; седьмой срез.
 - [x] Вложенные Roaster search/empty/error/image/viewer: активный UI принадлежит
   Roaster impl, публичные app visual ports удалены; восьмой срез.
-- [ ] Остальные catalog/create UI, Contributions и root tab содержание:
+- [x] Contributions: активные photo/price/icons/images/map-picker UI и состояние
+  принадлежат impl/DS, root поставляет native canvas/launchers; десятый срез.
+- [ ] Остальные catalog/create UI и root tab содержание:
   оставшиеся бизнес-вставки/состояние из composeApp — в соответствующие impl.
 - [x] Author blocking: экран/host из composeApp в feature/author-blocking/impl;
   Android/Sandbox и видимый native iOS controller вызывают feature entry.
   Ручная приёмка native prompts остаётся открытой в шестом срезе.
-- [ ] Root tabs/check-in creation host: root оставляет routing, содержимое —
-  feature entries. Вкладка Coffee не должна зависеть от legacy CheckInTabContent.
+- [x] Root tabs/check-in creation host: root оставляет routing, содержимое —
+  feature entries (срез 2026-10-27, ниже). Вкладка Coffee не должна зависеть от legacy CheckInTabContent.
 
 Не переносим весь composeApp/ui в feature одним каталогом. Каждая вставка
 переходит к владельцу, её ресурсы и paired previews — вместе с ней. Общая
@@ -114,7 +139,7 @@ DatabaseCore. Старый LEGACY_REMOVAL.md — исторический сни
 - [ ] CoffeePeekClient: transport/cache/diagnostics/auth infrastructure —
   core/network; feature endpoints/DTO — feature data. AuthService не остаётся
   зависимостью core: refresh business exchange поставляется через порт.
-- [ ] Room: driver/schema infrastructure — core/database; настройки/город —
+- [~] Room: driver/schema infrastructure — core/database (перенесено 2026-10-30); настройки/город —
   Settings data, credentials migration — core/session, feature entities —
   своим data. Сохраняем имя БД/таблицы и проверяем migration без data clearing.
 
@@ -1000,3 +1025,569 @@ decoder behavior are unchanged; no dependency upgrade or CI bypass is used.
   exact published revision still needs its new GitHub run before CI is called green.
 - Shared Kotlin changes must include common metadata compilation in local
   verification; target assembly/Native compile cannot stand in for it.
+
+## Десятый срез L1: Contributions UI ownership — 2026-10-26
+
+Новая дочерняя ветка codex/migration-contributions-ownership от #201,
+source `89778c23` + этот срез. Подробный scope/остаток и evidence:
+[Contributions ownership exit](contributions/OWNERSHIP_EXIT_PLAN.md).
+
+- Удалены 11 app-owned visual contracts photo/price/brew/logo/cover/remote-image/
+  map-picker из public hosts. Feature собирает UI из DS; root поставляет только
+  permission/native photo launchers/map canvas/haptic и прежние data/session/
+  navigation adapters. Contribution catalogs через legacy reader — следующий
+  supporting slice этой же фичи, не новая продуктовая функциональность.
+- Map modal/address state/350ms debounce/drift/confirmation теперь в feature.
+  Native CoffeeMap/provider сохранён; DS map-control presenter сохраняет iOS
+  clipping/z-order. Stateless content и paired previews находятся рядом.
+- Общий DS photo grid получил Simple mode с прежней геометрией без reorder,
+  индексов и viewer; существующий default режим других consumers сохранён.
+  Source sheet использует прежний native presenter и shared DS sheet. Platform
+  pipeline URI/JPEG/camera не копировался. Late/duplicate/disposed callbacks,
+  current capacity, byte ownership и account check закреплены unit contracts.
+- Удалены семь недостижимых app UI файлов, включая старый выбор точки.
+  ShopChangeEditorScreen сохраняет существующий чужой ShopMenuEditorTest как
+  consumer; этот экран не выбран production routes. Чужой тест не удалялся/
+  не расширялся/не запускался. Legacy ViewModels/readers — отдельный остаток.
+- Analytics page mapping и прежние routes/step state/status/haptics сохранены;
+  legacy forms не имели собственного event tracker. Новых SDK/events/consent
+  policy нет. Price/brew mapping остаётся в feature, не в generic core.
+- Первый compile обнаружил trailing-lambda preview mismatch и обязательную
+  accessibility подпись sheet; исправлено. Повтор compile/старых unit suites
+  успешен (59s). Новые contracts и удаления затем проверены финальным прогоном.
+- Финальный прогон (9m34s): library **1501 tests / 231 suites** по 55 текущим
+  testDebugUnitTest tasks, app Direct/Play **по 825 / 172**, 0 failures/errors/
+  skips. Это варианты одного приложения; их результаты не суммируются как
+  уникальные сценарии. Старые build outputs исключены из подсчёта; неизменённые
+  tasks могут быть cached/up-to-date. Contributions domain/data/impl 16/19/76,
+  DS 57; новые regressions покрывают debounce/cancellation/stale results и фото.
+- Полный Android CI набор прошёл: common metadata, Direct/Play APK + DEX guards,
+  все unit tasks и lint. Дополнительно прошли Contributions api/impl common
+  metadata, Sandbox APK/DEX/isolation, iOS Arm64 compile, Debug Simulator
+  framework link и common Native tests Contrib impl/DS/app compile. Native tests
+  не исполнялись. Gradle последовательно, --max-workers=6.
+- Studio state/photo inspections вернули timeout без найденных ошибок, то есть
+  неполную диагностику. Полного Xcode app build/preview rendering/manual UI/
+  native camera/location acceptance не было. UI/instrumentation/screenshot
+  tests/hosts не создавались и не запускались; приложения не устанавливались,
+  аккаунт/production backend/telemetry не затронуты. Пользовательский pbxproj
+  (48+/41−) исключён. Полный legacy exit и вся фича не объявляются завершёнными.
+
+## Срез Home check-in legacy UI — 2026-10-27
+
+- Удалены недостижимые: fallback `LegacyCheckInCreateFlow` и параметры
+  `legacyContent` (create flow, shop check-in form), 6 файлов
+  `feature/homecheckin/ui`, `PersonalProfileActivityCalendar/Preview`, легаси
+  `CheckInBottomSheet`, Koin-фабрика `HomeCheckInViewModel`.
+- Найден и закрыт пробел: новый глобальный create flow не вызывал
+  `NotificationFeature.onCheckInCreated()` (запрос уведомлений после создания
+  Home). Теперь вызывается один раз при принятом создании; тест
+  `GlobalCheckInFlowStoreTest`.
+- Удалены тесты мёртвого кода (commonTest Calendar/Editor/PhotoViewer/
+  Visibility/SelectedDayEntries, 4 инструментальных Home/Calendar, 2 теста в
+  `CheckInPresentationTest`). Сценарии покрыты в feature/check-in-history и
+  feature/home-check-in; отдельных unit-тестов нет у конвертации минут/секунд и
+  русских plural сводки ошибок (теперь UI/ресурсы feature).
+- Остаётся: `CheckInCreateSheet/Content` (используется инструментальным
+  `CheckInPresentationTest`), легаси-репозиторий `modules/home-checkin` (L3).
+- Прошли: Direct/Play unit, lintDirectDebug, assemble Direct/Sandbox, DEX и
+  Sandbox isolation guards, iOS Arm64 compile, simulator test-compile, framework
+  link. Native tests не исполнялись; UI/manual не проверялись.
+
+## Срез Roaster legacy UI — 2026-10-27
+
+- Удалены недостижимые `ui/screen/roaster/Roaster{Detail,List}{Screen,ViewModel}`,
+  их Koin-фабрики и тесты старого кода (`RoasterDescriptionTest`,
+  `RoasterListTest`, `RoasterAnalyticsParityTest`). Активный UI/состояние —
+  `feature/roaster/impl`; `RoasterScreenRenderer` остаётся как слот.
+- Покрытие: ленивая загрузка описаний/лимит 4 запроса, фильтры/теги,
+  избранное, stale-результаты — `RoasterListViewModelTest`/
+  `RoasterDetailViewModelTest`; аналитика — `RoasterAnalyticsAdapterTest`.
+  Parity-тест сравнивал с удалённым baseline и снят вместе с ним. Подпись
+  счётчика «—» теперь только часть рендера карточки feature (без unit-теста).
+- Прошли: Direct/Play unit, lintDirectDebug, assemble Direct/Sandbox, DEX и
+  isolation, iOS Arm64 compile, simulator test-compile, framework link.
+  Native tests/manual UI не выполнялись.
+- Кандидаты следующих срезов (по скрипту «имена не используются в main»):
+  auth Stepper/Footer/Layout и `AuthViewModel`/`RegisterViewModel`,
+  `PasswordRecovery*`, `DeleteAccountPendingViewModel`, `ReviewReportScreen`,
+  `ShopReviewsScreen`, `CheckInShopPickerScreen`, `CheckInSubmissionContent`,
+  `DiscoveryTabContent`, `ProfileActions/LogoutConfirmation`,
+  `OtherUserProfileScreen`, `Coffee{FiltersSheet,RoasterLogo}`,
+  `NotificationsButton` — каждый требует проверки тестов-потребителей.
+
+## Срез Auth legacy — 2026-10-27
+
+- Удалены недостижимые `ui/screen/auth/{AuthViewModel,registr/RegisterViewModel,
+  AuthStepper,AuthFooterRow,AuthLayout,AuthFields,AuthHeading}` и
+  `feature/passwordrecovery/ui/PasswordRecoveryViewModel` с тестами старого кода
+  (`AuthViewModelTest`, `RegisterViewModelTest`, `RegisterAnalyticsConsentTest`,
+  `PasswordRecoveryViewModelTest`). Активный Auth — `feature/auth/impl`.
+- Покрытие: `LoginViewModelTest`, `RegisterViewModelTest`,
+  `PasswordRecoveryViewModelTest` в feature/auth/impl. Найденный пробел —
+  социальная регистрация не должна применять согласие на аналитику — закрыт
+  утверждением в `aGoogleSignUpSignsInWithTheRegisterEntryAndEmitsSignedIn`.
+- Остаётся: `PasswordRecoveryRepositoryImpl` (+тест) — его использует чужой
+  `SandboxApplicationBackendTest`; убрать вместе с переводом Sandbox-теста на
+  feature-репозиторий (L3).
+- Прошли: Direct/Play unit, `:feature:auth:impl:allTests`, lintDirectDebug,
+  assemble Direct/Sandbox, DEX и isolation, iOS Arm64 compile, simulator
+  test-compile, framework link. Native tests/manual UI не выполнялись.
+
+## Срез Shop/Review legacy — 2026-10-27
+
+- Удалены недостижимые `ui/screen/review/ReviewReportScreen`,
+  `ui/screen/shop/{ShopReviewsScreen,CheckInShopPickerScreen,
+  CheckInSubmissionContent}`. Prod-потребителей не было; активные экраны —
+  `feature/shop/impl` и `feature/home-check-in/impl`.
+- Инструментальный тест `checkInResultFitsItsContentAndKeepsBothActionsVisible`
+  в `SubmissionStatusTest` (чужой, зависел от удалённого композабла) снят; два
+  других теста файла сохранены. Unit-тестов на удалённые экраны не было.
+- Прошли: Direct/Play unit, lintDirectDebug, assemble Direct/Sandbox, DEX и
+  isolation, iOS Arm64 compile, simulator test-compile, framework link.
+  Native tests/manual UI не выполнялись.
+- Остаются кандидаты: `DiscoveryTabContent`, `ProfileActions`,
+  `ProfileLogoutConfirmation`, `OtherUserProfileScreen`, `CoffeeFiltersSheet`,
+  `CoffeeRoasterLogo`, `NotificationsButton`, `PasswordRecoveryRepositoryImpl`.
+
+## Срез остатков Profile/Discovery/Coffee/Notifications — 2026-10-27
+
+- Удалены недостижимые `ui/screen/main/DiscoveryTabContent`,
+  `ui/screen/profile/ProfileLogoutConfirmation`,
+  `feature/coffee/ui/{CoffeeFiltersSheet,CoffeeRoasterLogo}`,
+  `feature/notifications/ui/NotificationsButton`,
+  `ui/screen/checkins/HomeTimelinePresentation` (+ `HomeTimelinePresentationTest`:
+  конверсия легаси HomeCheckIn → CheckIn, потребители удалены в срезе Home).
+- Прошли: Direct/Play unit, lintDirectDebug, assemble Direct/Sandbox, DEX и
+  isolation, iOS Arm64 compile, simulator test-compile, framework link.
+  Native tests/manual UI не выполнялись.
+- Теперь недостижимы из main, но удалены НЕ были (нужна сверка тестов):
+  `feature/coffee/ui/CoffeeListViewModel` (держат `CoffeeFilterAnalyticsTest`,
+  `CoffeeAnalyticsParityTest` — сверить ключи фильтров с feature/coffee impl и
+  `CoffeeAnalyticsAdapterTest`), `feature/notifications/ui/NotificationsSheet`
+  (инструментальный `NotificationsPresentationTest`), `ui/screen/feed/FeedScreen`
+  (`discoveryMapOffsetY` проверяет `FeedFiltersUiTest`),
+  `DeleteAccountPendingViewModel` (+`DeleteAccountPendingViewModelTest`, 6
+  сценариев; в feature покрытия не найдено), `feature/profile/ui/
+  OtherUserProfileScreen` и `ProfileActions` (чужие инструментальные
+  `PublicProfilePresentationTest`/`AuthorBlockingFlowScreenshotsTest`),
+  `PasswordRecoveryRepositoryImpl` (Sandbox-тест).
+
+## Срез сверки оставшихся кандидатов — 2026-10-27
+
+- Coffee: удалены легаси `CoffeeListViewModel`, `CoffeeFilterAnalyticsTest`,
+  `CoffeeAnalyticsParityTest`. Ключи фильтров/сброс/позиции/устаревшие ответы
+  покрыты `CoffeeAnalyticsPortsTest` + `CoffeeAnalyticsAdapterTest`; parity-тест
+  сравнивал с удалённым baseline.
+- Delete account: удалён `DeleteAccountPendingViewModel` + тест; 6 сценариев
+  покрыты `AccountDeletionViewModelTest` (feature/profile), он шире (тикер,
+  конец сессии). Осознанное отличие feature: открытие без заявки только просит
+  подтверждение, письмо не шлёт.
+- Notifications: удалены `NotificationsSheet`, `NotificationRow`,
+  `NotificationEmptyState`, `NotificationPushSettings` и инструментальный
+  `NotificationsPresentationTest` (проверял только удалённый композабл).
+- Feed/Discovery: удалены `FeedScreen`, `ShopFiltersScreen`,
+  `CatalogSuggestionCard`, `ShopTagGroups`; три геометрических теста из
+  `FeedFiltersUiTest` сняты (дубль `ChoreographyTest` в feature/discovery), тесты
+  живого `FeedViewModel` оставлены.
+- Прошли: Direct/Play unit, lintDirectDebug, assemble Direct/Sandbox, DEX и
+  isolation, iOS Arm64 compile, simulator test-compile, framework link.
+  Native tests/manual UI не выполнялись.
+- Намеренно НЕ удалено: `feature/profile/ui/OtherUserProfileScreen` и
+  `ui/screen/profile/ProfileActions` (держат чужие инструментальные скриншот-
+  тесты `PublicProfilePresentationTest` 943 строки,
+  `AuthorBlockingFlowScreenshotsTest`; эквивалента в feature нет — нужно решение);
+  `PasswordRecoveryRepositoryImpl` (его и легаси `AuthService` проверяет
+  `SandboxApplicationBackendTest`; уходит вместе с L3 auth cleanup).
+
+## Срез Root tabs / check-in creation host — 2026-10-27
+
+- `CheckInTabContent` оставлен как app-хост: routing, гостевой гейт, аналитика
+  попытки и открытие feature-флоу `CheckInCreateFlow`; содержимого фичи в нём нет.
+  Вкладка Coffee от легаси больше не зависит (оба root host — Android
+  `MainScreen` и iOS `PlatformRootNavigation` — зовут тот же хост).
+- Удалены `CheckInCreateSheet`, `CheckInCreateContent`, `CreateChoice` (легаси
+  выбор Дома/Кофейни; выбор делает `CheckInCreatePickerEntry` из
+  feature/home-check-in) и инструментальный тест
+  `createChoiceRemainsScrollableWithLargeTextAndShortViewport`. Файл с кнопкой
+  переименован в `CheckInCreateButton.kt` (кнопка и превью сохранены).
+- Прошли: Direct/Play unit, lintDirectDebug, assemble Direct/Sandbox, DEX и
+  isolation, iOS Arm64 compile, simulator test-compile, framework link.
+  Native tests/manual UI не выполнялись.
+- Три копии «кнопка + флоу» (CheckInTabContent, legacy CommunityScreen,
+  FeatureCommunityScreenRenderer) сведены в один `CheckInCreateHost`
+  (`ui/screen/checkins`): гость → Auth, вошедший → флоу создания;
+  `resetKey` закрывает флоу при смене аккаунта; фокус/клавиатура скрываются
+  одинаково во всех местах (раньше только на вкладке). Проверки те же, зелёные;
+  поведение на устройстве/Xcode вручную не проверялось.
+
+## L3, срез A — недостижимые легаси-экраны и ViewModels — 2026-10-27
+
+- Перед срезом develop (16 коммитов) влит в стек #195 → #201 → #202; конфликты в
+  `SearchScreen`, `FeatureDiscoveryScreenRenderer`, `NotificationPushSettings`,
+  удалённых мёртвых файлах; фикс Арсения про ревизию меню (30f1911b) перенесён в
+  новый `CatalogMapper` Contributions (`inputRevision`) с двумя тестами в feature.
+- Удалены: `VisitedPlaces{Screen,ViewModel}`, `EditProfile{Screen,ViewModel}`,
+  `Map{Screen,ViewModel}`, `FeedViewModel`, `ReviewReportViewModel`,
+  `ShopDetail{Screen,ViewModel}`, `ShopMenuGallery{Screen,ViewModel}`,
+  `ShopReport{Screen,ViewModel}`, их Koin-фабрики и тесты старого кода
+  (`EditProfileViewModelTest`, `MapViewModelParityTest`, `FeedViewModelParityTest`,
+  `FeedNearbySelectionTest`, `FavoriteMembershipObservationTest`, `ShopCheckInsTest`,
+  `ShopReportViewModelTest`, `ReviewReportPreviewTest`, `MapPrefetchTest`,
+  `FeedFiltersUiTest`). Нужные куски вынесены: `VisitedPlacesUiState`,
+  `CheckInCalendarLabels` (держит инструментальные тесты календаря).
+- Сверка (форк, чтение каждого теста) нашла три реальных пробела; закрыты тестами в
+  feature: позиция раньше каталогов не включает «рядом» и не снимает город
+  (`SearchViewModelTest`); бросающая/безымянная ошибка создания чекина оставляет
+  редактируемый черновик (`ShopCheckInCreateViewModelTest`); избранное по
+  каноническому slug при входе через алиас (`ShopDetailViewModelTest`).
+  Мелкие нетронутые: голосование за неизвестный чекин; гонка избранного с первым
+  поиском проверена в одном порядке; `onSubmitted` с lease не покрыт.
+- Не удалено: `Favorites{Screen,ViewModel}`, `SettingsScreen`/`ProfileViewModel`,
+  `CommunityScreen`/`CommunityViewModel`, `ShopChangeEditor*`, `OtherUserProfileScreen`
+  — держат чужие скриншот-тесты и `ShopMenuEditorTest`; `CheckInCalendarCard` и
+  `CheckInDiaryRow` — только инструментальные тесты календаря.
+- Прошли: Direct/Play unit, feature shop/discovery, lintDirectDebug, assemble
+  Direct/Sandbox, DEX и isolation, iOS Arm64 compile, simulator test-compile,
+  framework link. Native tests/manual UI не выполнялись.
+
+## L3, срез F — `modules/home-checkin` удалён — 2026-10-27
+
+- Потребителей не осталось: `HomeCheckInRepository` в `KoinApp` никто не получал,
+  `homeCalendarPhotos(HomeCheckIn)` не вызывалась (календарь читает
+  `feature/check-in-history`). Удалены модуль, зависимость composeApp, записи
+  `Modules.kt`, функция и два её теста в `CheckInCalendarTest`.
+- Тесты модуля (`HomeCheckInContractTest` 11, `HomeCheckInErrorsTest` 8) покрыты
+  `HomePreparation{Contract,Errors,Photos,Safety}Test` и `HomePreparationValidationTest`
+  в feature/home-check-in; статистика Home из старого репозитория нигде не
+  использовалась и в feature не переносилась.
+- **Поправка к срезу A.** Его коммит (`refactor(composeapp): remove unreachable
+  legacy feed, map…`) был красным: тесты `FeedSearchResultOrderTest` и `MapSearchTest`
+  (пришли из develop и ссылались на удалённые `FeedUiState`/`toMapShopOrNull`) не
+  компилировались. Причина — я принял код выхода уведомления фонового запуска
+  (последняя команда `grep|head`), а не Gradle. Удалены оба теста как дубли
+  (`SearchResultOrderTest`, `MapViewModelTest` в feature/discovery). Прежние
+  прогоны (срезы Home…Root host, слияния) перепроверены по логам: 0 ошибок.
+  Дальше код выхода Gradle пишется в файл и проверяется отдельно.
+- Проверено по-настоящему (код выхода Gradle 0, 0 ошибок): Direct/Play unit,
+  home-check-in data, lintDirectDebug, assemble Direct/Sandbox, DEX и isolation,
+  iOS Arm64 compile, simulator test-compile, framework link.
+
+## L3, срез B (первая часть) — читатели каталогов и фото — 2026-10-27
+
+- Новый публичный контракт `PublicDiscoveryCatalogs` (`feature/discovery/api`,
+  фабрика `createPublicDiscoveryCatalogs` в `feature/discovery/data`): города и
+  методы заваривания из тех же эндпоинтов `/api/Catalogs/*`, успех кэшируется,
+  ошибка перечитывается; `PublicDiscoveryCatalogsTest` (3).
+- Переведено с легаси `ShopRepository`/`RoasterRepository`: напитки Community
+  (`ShopCommunityDrinks` → `ShopCheckInRepository.getDrinkOptions`), города Settings
+  (`AppCityPort`), методы заваривания Home (`BrewMethodCatalogAdapter`), фото
+  обжарщика в избранном (`PublicRoasterDetails.load`). `CityPreference` теперь
+  принимает id городов, а не легаси `City`; тесты обновлены.
+- Остаётся для B: избранное кофеен (`ServerFavoriteShopsRepository` читает
+  `ShopRepository.getShopDetails`, нужен `title`, координаты и публичный адрес —
+  расширить `PublicShopDetails`), ядро избранного (`domain.feature.favorites.api`,
+  `FavoriteRepositoryImpl`, `AccountFavoritesRepository`, `LegacyFavoritesRepositoryBridge`,
+  `ServerRoasterFavorites` и Android `FavoritesModule`), `AuthRepository`
+  (`ProfileRenderer`, Apple/Android/iOS auth) — это связано со срезом C.
+  `SessionRepository` в `BaseViewModel`/Sandbox — тоже C.
+- Прошли (код выхода Gradle из файла = 0, 0 ошибок): Direct/Play unit, discovery data,
+  lintDirectDebug, assemble Direct/Sandbox, DEX и isolation, iOS Arm64 compile,
+  simulator test-compile, framework link. Мелкий сбой по пути: фикстура
+  `ServerFavoritesGraphFixture` требовала новый `PublicRoasterDetails` — исправлена.
+
+## L3, срез B (вторая часть) — избранные кофейни через публичный контракт — 2026-10-27
+
+- `PublicShopSummary` (feature/shop/api) расширен полями с дефолтами: публичный адрес
+  (`slug`, `canonicalPath`, `revision`, `isAlias`), `title`, `priceRange`, координаты,
+  `brewMethods`, `roasterPhotoUrls`; `ShopAddressDto` читает `revision`/`isAlias`.
+  Профильные потребители не менялись. `PublicShopDetailsTest` проверяет новые поля.
+- `ServerFavoriteShopsRepository` берёт карточку из `PublicShopDetails.load`, а не из
+  легаси `ShopRepository.getShopDetails`; Koin-модуль, фикстуры графа и
+  `DiscoveryAdaptersTest`/`ServerFavoriteBridgesTest` обновлены. Поведение прежнее:
+  `cityName` и раньше всегда был null; сохранение требует публичный адрес.
+- Прошли (код выхода Gradle из файла = 0, 0 ошибок): Direct/Play unit, shop и profile data,
+  lintDirectDebug, assemble Direct/Sandbox, DEX и isolation, iOS Arm64 compile,
+  simulator test-compile, framework link. По пути два красных прогона из-за фикстур
+  графа избранного (искали `PublicRoasterDetails`/`PublicShopDetails`) — исправлены.
+- Остаётся в B: ядро избранного (`domain.feature.favorites.api`, `FavoriteRepositoryImpl`,
+  `AccountFavoritesRepository`, `LegacyFavoritesRepositoryBridge`, `ServerRoasterFavorites`,
+  Android `FavoritesModule`) и `AuthRepository`/`SessionRepository` — вместе со срезом C.
+
+## L3, срез C1–C2 — мёртвое Android-избранное и Apple-расширение — 2026-10-27
+
+- C1. Удалены Android-обвязка локального избранного: `FavoritesModule`
+  (`favoritesRoomModule`, `legacyFavoritesConsumersModule`, `RoomFavoritesStorage`),
+  `AccountFavoritesRepository`, `LegacyFavoritesRepositoryBridge` (ни один production-модуль не
+  подключал их; живой путь — `serverFavoritesModule`), и их тесты: `AccountFavoritesRepositoryTest`,
+  `FavoritesModuleTest`, `LegacyFavoritesRepositoryBridgeTest`, `FavoritesWiringTest` (unit),
+  `FavoritesRoomMigrationTest`, `PersistedFavoritesTest` (инструментальные, оба Арсения).
+  Покрытие: JSON-строки/логотип/повреждённое хранилище/параллельные записи — `FavoritesRepositoryTest`
+  (feature/favorites/data); смена аккаунта и выход — `ServerFavoriteBridgesTest`.
+  **Потеря покрытия (записана для среза Room):** миграции Room v1→v2 с переносом строк избранного
+  больше нигде не проверяются; тест нужно восстановить для `core/database`.
+  Локальное хранилище feature/favorites/data (`createFavoritesRepository`, `FavoritesStorage`) теперь
+  не подключено в production, оставлено вместе со своими тестами.
+- C2. Удалено расширение `AuthRepository.signInWithApple` и `AppleLoginFlowTest` (8): все сценарии
+  (challenge → нативный токен → обмен, стадии `[ASI-CH]`/`[ASI-X]`, отмена, повтор) покрыты
+  `AppleSignInViewModelTest` и `AuthRepositoryImplTest` (feature/auth). `AppleAuth`/`AppleSignInButton`
+  (expect) остаются.
+- Поправка к плану C: в `feature/auth` выход уже есть и называется `signOut`
+  (`AuthRepositoryImplTest`: локальная очистка первой, серверный выход best-effort, ошибка очистки
+  возвращается). Шаг C3 сводится к переключению `AppProfileSignOut` с легаси `AuthRepository.logout()`
+  на него, а не к новой функции.
+- Проверено (код выхода Gradle из файла = 0, 0 ошибок): Direct/Play unit, lintDirectDebug,
+  assemble Direct/Sandbox, DEX и isolation, iOS Arm64 compile, simulator test-compile, framework link.
+
+## L3, срез C3 — выход профиля через feature/auth — 2026-10-27
+
+- `AppProfileSignOut` вызывает `AuthRepository.signOut()` из `feature/auth` вместо легаси
+  `AuthRepository.logout()`; `featureOwnProfileScreenRenderer` принимает feature-тип (Koin
+  разрешает его по типу, привязка уже была). Порядок прежний: push → выход аккаунта →
+  платформенный выход → черновики.
+- Сверка легаси `AuthRepositoryImpl.logout` и feature `signOut`: локальная очистка первой и
+  обязательной, затем `DELETE /api/Tokens` с cookie `refreshToken` (пустой токен — без cookie),
+  ошибка сервера игнорируется, ошибка очистки возвращается; отмена пробрасывается. Покрыто
+  `AuthRepositoryImplTest` (feature/auth/data: порядок, cookie, игнор серверной ошибки, отчёт об
+  ошибке очистки, выход без сессии) и `ProfileSignOutAdapterTest` (порядок адаптера, показ
+  ошибки, отмена).
+- Теперь легаси `AuthRepository.logout` не вызывает никто в production; остаются
+  `AuthRepositoryImpl`/`AuthService` для `ProfileViewModel` (держат скриншот-тесты) и refresh в
+  `CoffeePeekClient` (шаг C6).
+- Проверено (код выхода Gradle из файла = 0, 0 ошибок): Direct/Play unit, feature/auth data,
+  lintDirectDebug, assemble Direct/Sandbox, DEX и isolation, iOS Arm64 compile, simulator
+  test-compile, framework link. **Ручная проверка выхода на Android и iOS не выполнялась** (по
+  решению владельца): остаётся gate перед релизом.
+
+## L3, срез C4 — `UserSessionCleaner` вынесен из `modules/data` — 2026-10-27
+
+- `UserSessionCleaner` и платформенная очистка кэшей (`clearPlatformCaches`, android/ios actual)
+  переехали в `composeApp` (`admin.session`); у класса больше нет легаси `FavoriteRepository` и
+  `SessionRepository`: порты — `SessionStore`, `clearFavoritesCache` (серверный кэш избранного,
+  `FavoritesRepository.clearCache()`), `clearCaches` (HTTP- и image-кэши). Порядок прежний:
+  сессия → избранное → кэши (кэши очищаются всегда, первая ошибка возвращается, отмена не
+  прерывает очистку). Раньше избранному передавался id владельца, но `clearForUser` его
+  игнорировал и очищал весь кэш — поведение то же.
+- Новый порт `LocalUserDataCleanup` (`modules/data`) для легаси `AuthRepositoryImpl`;
+  `sessionCleanupModule` в `initKoin` привязывает cleaner к нему и к `LocalUserData`
+  (`UserSessionLocalUserData`) и `SessionRealtimeManager`. Из `dataModule` убраны биндинг cleaner и
+  параметр `appCacheRootPath`.
+- Тесты: `UserSessionCleanerTest` перенесён в composeApp (2 прежних сценария + «ошибка сессии
+  всё равно очищает кэши и пропускает избранное»); `AuthAdaptersTest`, легаси
+  `AuthRepositoryImplTest` и `AppleLoginPersistenceTest` (modules/data) переведены на лямбду
+  очистки с тем же порядком.
+- Проверено (код выхода Gradle из файла = 0, 0 ошибок): Direct/Play unit, modules/data unit,
+  lintDirectDebug, assemble Direct/Sandbox, DEX и isolation, iOS Arm64 compile, simulator
+  test-compile, framework link, modules/data iOS compile. Ручная проверка «выход чистит кэши»
+  не выполнялась (gate перед релизом).
+- Осталось в C: C5 (`SessionRepository` → `SessionStore`/`SessionReader`), C6 (refresh токена,
+  `CoffeePeekClient`/`AuthService`), C7 (серверное избранное `ServerFavoritesRepository`).
+
+## L3, срез C5 — алиас `SessionRepository` удалён — 2026-10-27
+
+- Удалены `modules/domain` `SessionRepository` (пустой `: SessionStore`) и `modules/data`
+  `SessionRepositoryImpl` (делегат). `dataModule` привязывает `SessionStore` напрямую к
+  `DefaultSessionStore`, `SessionReader` — к тому же экземпляру. Ссылки в 38 файлах заменены
+  механически на `SessionStore` (импорт `core.session.SessionStore`): `BaseViewModel`, легаси
+  ViewModels, Sandbox (`SandboxApplication`, `SandboxSessionRepository`), fixtures и тесты, в том
+  числе чужие (замена одного имени типа, поведение тестов не менялось). Имена вроде
+  `SandboxSessionRepository` оставлены.
+- Bridge `domain.model.Session` (typealias на `core.session.Session`) остаётся до отдельного
+  среза; комментарий обновлён.
+- Проверено (код выхода Gradle из файла = 0, 0 ошибок): Direct/Play unit, modules/data unit,
+  lintDirectDebug, assemble Direct/Sandbox, DEX и isolation, iOS Arm64 compile, simulator
+  test-compile, framework link, modules/data iOS compile. Инструментальные тесты не
+  собирались (их компиляция падает на прежних `CpImageLoadingTest`/
+  `DisplayPhotoTransparencyTest`).
+- Осталось в C: C6 (refresh токена, `CoffeePeekClient`/`AuthService` → порт в `core/network`),
+  C7 (серверное избранное `ServerFavoritesRepository`).
+
+## L3, срез C7 — серверное избранное принадлежит `feature/favorites` — 2026-10-27
+
+- `feature/favorites/domain`: `FavoriteKind`, `FavoriteAddress`, `FavoriteEntry`, порт `AccountFavorites`.
+  `feature/favorites/data`: бэкенд `/api/v1/favorites` (свои DTO, GET список, PUT/DELETE по виду и
+  экранированному slug, 204 без тела) и `RemoteAccountFavorites` (логика перенесена без изменений:
+  кэш по аккаунту, мьютекс, отмена при смене аккаунта, неудачное обновление не стирает
+  подтверждённое), фабрика `createAccountFavorites(client, sessions)`; `feature/favorites/data` теперь
+  зависит от `core/network` и `core/session`.
+- Тесты: `FavoritesBackendContractTest` (4, перенесены из `modules/network`) и
+  `AccountFavoritesTest` (перенесены из `modules/data`: смена аккаунта, наблюдатели, сбой/повтор
+  записи, параллельные правки, гость, поздний ответ старого аккаунта, напитки и записи без адреса;
+  плюс два новых: запасной путь обложки на `fullUrl`, неизвестные виды и запись без адреса).
+- composeApp: адаптеры (`ServerFavoriteShopsRepository`, `ServerFavoriteDrinksRepository`,
+  `ServerRoasterFavorites`), `UserSessionCleaner` и граф используют `AccountFavorites`; Sandbox-тест
+  читает избранное через `createAccountFavorites`. `serverFavoritesModule` привязывает
+  `AccountFavorites` для обеих платформ; зависимость `feature.favorites.data` перенесена из
+  `androidMain` в `commonMain` (иначе iOS не собирался).
+- Для оставшейся легаси-цепочки (`FavoriteRepositoryImpl` → `ShopRepositoryImpl`, `FavoritesViewModel`)
+  добавлен мост `LegacyAccountFavorites` (легаси контракт поверх `AccountFavorites`); убрать вместе с
+  этими классами. Теперь `FavoriteRepositoryImplTest` в `modules/data` проверяет адаптер на фейке.
+- Удалено: `ServerFavoritesRepository` + тест (`modules/data`), `FavoritesApiService` + DTO + контрактный
+  тест (`modules/network`), `favoritesApiService` в `CoffeePeekRepo`, биндинг в `dataModule`;
+  охранный список DEX-классов обновлён (`RemoteAccountFavorites`, `LegacyAccountFavorites`).
+- Проверено (код выхода Gradle из файла = 0, 0 ошибок): Direct/Play unit, modules/data и network unit,
+  feature/favorites/data unit, lintDirectDebug, assemble Direct/Sandbox, DEX и isolation, iOS Arm64
+  compile, simulator test-compile, framework link, favorites/data iOS compile. По пути два красных
+  прогона (iOS-зависимость и фейк в `DiscoveryAdaptersTest`) исправлены. Ручная проверка избранного не
+  выполнялась.
+- Осталось в C: C6 (refresh токена: `CoffeePeekClient`/`AuthService` → порт в `core/network`).
+
+## L3, срез C6.1–C6.2 — refresh токена в `core/network` и `feature/auth` (живой путь НЕ переключён) — 2026-10-27
+
+- C6.1. `core/network`: `SessionRefreshCoordinator(session: BearerSession)` — общий для клиентов одной сессии обмен
+  (single-flight; повтор по уже сохранённой ротации только для того же отклонённого токена; смена аккаунта
+  во время ротации отменяет и не сохраняет; отказ атомарной замены не возвращает чужие данные).
+  `configureBearerAuthentication` получила необязательные `coordinator`, `requireHttps` (по умолчанию true) и
+  `onAuthRetry` (хук для будущей аналитики запросов); с координатором работает та же логика, что у
+  легаси `SessionAuthentication` (отвечает только на отказ ещё актуального токена, без refresh-токена
+  очищает только отклонённую сессию, «отказ обмена» очищает совпавшую сессию, временный сбой сессию не трогает).
+  `SessionTokens` получил значение-равенство (хранилище отдаёт копии). `HttpClient.readCurrentSessionForRequests()`
+  перечитывает сессию на каждый запрос (иначе Ktor держит первый токен после входа/выхода/смены аккаунта).
+  `HttpClientFactory.authenticatedApi(...)` принимает эти параметры; без них поведение прежнее (12 тестов
+  `BearerAuthenticationTest` без изменений).
+- Тесты в core: перенесены 4 теста `SessionRefreshCoordinatorTest` (один обмен для API и картинок, смена
+  аккаунта, запоздалый 401, отказ атомарной замены) и 2 теста отказа refresh; новые: отказ без refresh-токена,
+  перечитывание сессии на каждый запрос, хук повтора, HTTPS только по запросу. Отличие от легаси:
+  транспорт core ожидает успех, поэтому финальный 401 приходит как `ClientRequestException`.
+- C6.2. `feature/auth/data`: `TokenRefresh` / `createTokenRefresh(plain)` — `PUT /api/Tokens` с cookie
+  `refreshToken`, 400/401/403 → `RefreshRejectedException`, иное — временный сбой; новый refresh-токен: тело →
+  cookie (с декодированием) → прежний (как в `AuthService.refresh`; при входе, наоборот, cookie главнее тела —
+  не менялось). 6 тестов.
+- НЕ перенесено (нужно в C6.3): наблюдатель запросов для аналитики (`RequestObserver`/`RequestObservation`,
+  3 теста `RequestObservationTest` остаются в `modules/network`), сборка четырёх клиентов (`CoffeePeekClient`:
+  plain/upload/image/api, UserAgent, HTTP-кэш, таймауты), адаптер `BearerSession` поверх `SessionStore`,
+  `SessionDeviceMetadataTest` (инструментальный).
+- Проверено (код выхода Gradle из файла = 0, 0 ошибок): core/network и feature/auth/data unit, modules/network и
+  modules/data unit, Direct/Play unit, lintDirectDebug, assemble Direct/Sandbox, DEX и isolation, iOS compile
+  core/network и feature/auth/data, composeApp iOS compile, simulator test-compile, framework link.
+  Живой путь не менялся, ручная проверка refresh не выполнялась.
+
+## L3, срез C6.3a–b — сборщик четырёх клиентов в `core/network` (живой путь НЕ переключён) — 2026-10-27
+
+- `core/network` получил: платформенные фабрики движков (Android OkHttp + файловый HTTP-кэш, iOS Darwin с обходом
+  кэша NSURLSession для `no-store`), `deviceUserAgent` (+ таблица моделей Apple), валидацию 5xx
+  (`ServiceUnavailableException : HttpStatusFailure`, текст прежний; 4xx остаются обычными ответами), cURL-лог с
+  редактированием секретов, наблюдатель запросов (`RequestObserver`/`RequestObservation`, категории API,
+  статус из `ResponseException` или `HttpStatusFailure`), `SessionCredentials` (load/save/replace; `BearerSession`
+  теперь расширяет его) и `ApiClients` — четыре клиента с теми же плагинами и таймаутами, что у `CoffeePeekClient`:
+  `plainClient` (UserAgent, без токена), `client` (токен, общий координатор, HTTP-кэш), `imageClient` (токен, тот же
+  координатор, без кэша, таймауты 5/10/60 с), `uploadClient` (таймауты 120/30/120 с). Один `SessionRefreshCoordinator`
+  на сессию; обмен refresh строится поверх `plainClient` (`refreshWith`); сессия читается на каждый запрос;
+  `onAuthRetry` помечает логический запрос для аналитики; фабрики движков подменяются (Sandbox/тесты).
+- Важное отличие от `HttpClientFactory.api`: легаси-клиенты не используют `expectSuccess` (4xx приходят ответом,
+  потребители проверяют статус сами), поэтому `ApiClients` строится на `HttpClient(engine)`, а не на `api()`.
+- Тесты: перенесены `DeviceUserAgentTest`, `CurlInterceptorTest`, `ServerErrorValidationTest` (под новый тип
+  исключения), `RequestObservationTest` (3 + новый для 5xx), `normalizeBaseUrl`; новый `ApiClientsTest` (9): адрес и
+  агент plain-клиента, 5xx/4xx на всех четырёх, общий обмен API+картинки, чтение сессии на запрос, upload без адреса
+  и токена, наблюдатель с повтором авторизации, отказ refresh очищает сессию. `RequestCancellationTest` относится
+  к легаси `ShopApiService` и остаётся в `modules/network`.
+- Живой путь не менялся: `CoffeePeekClient`, `SessionAuthentication` и прочее легаси остаются рабочими до C6.3d.
+- Проверено (код выхода Gradle из файла = 0, 0 ошибок): core/network и feature/auth/data unit, modules/network и
+  modules/data unit, Direct/Play unit, lintDirectDebug, assemble Direct/Sandbox, DEX и isolation, iOS compile
+  core/network (Arm64 и simulator), composeApp iOS compile, simulator test-compile, framework link. Ручная
+  проверка не выполнялась.
+- Осталось: C6.3c (`BearerSession` над `SessionStore` в composeApp + `createTokenRefresh`), C6.3d (переключение 15
+  потребителей, Sandbox и тестов с `CoffeePeekClient` на `ApiClients`, замена `ApiException` на
+  `ServiceUnavailableException` в местах, где ловят 5xx, затем удаление `CoffeePeekClient`, `SessionAuthentication`,
+  `SessionRefreshCoordinator`, `SessionTokenProvider`, `AuthResp`).
+
+## L3, срез C6.3c–d — живой путь переключён на `ApiClients`, старый транспорт удалён — 2026-10-30
+
+- C6.3c. `composeApp/session/SessionStoreCredentials` — `SessionCredentials` поверх `SessionStore`: токены отдаёт только
+  активная сессия (перед чтением прогревается кэш хранилища), сохранение берёт `userId` из access-токена и оставляет
+  прежний refresh-токен, если в ответе его нет, замена сравнивает «прочитанную» пару с текущей и ничего не делает при
+  расхождении. `di/TransportModule.kt` собирает один `ApiClients` на сессию: обмен refresh — `createTokenRefresh` из
+  `feature/auth/data`, прогрев сессии при создании (раньше его делал `SessionTokenProvider`). 7 новых тестов
+  `SessionStoreCredentialsTest` заменили `SessionTokenProviderTest`.
+- C6.3d. Все потребители (composeApp commonMain/androidMain/iosMain, Sandbox и тесты) берут `ApiClients` вместо
+  `CoffeePeekClient`; `dataModule` больше не создаёт транспорт (`CoffeePeekRepo` получает `ApiClients`, `AuthService`
+  строится из `client` и `plainClient`); наблюдатель аналитики использует `RequestObserver` из `core/network`.
+  Sandbox: клиенты без учётных данных, как и раньше (`getToken = { null }`).
+- Удалено из `modules/network`: `CoffeePeekClient` (+ android/ios фабрики), `SessionAuthentication`,
+  `SessionRefreshCoordinator`, `RequestObservation`, `DeviceUserAgent`, `CurlInterceptor`, `HttpDebugLog`; из
+  `modules/data`: `SessionTokenProvider`. Их тесты были перенесены в `core/network` и `feature/auth/data` в C6.1–C6.3b
+  (`RequestObservationTest`, `CurlInterceptorTest`, `DeviceUserAgentTest`, `ServerErrorValidationTest`,
+  `SessionRefreshCoordinatorTest`, `SessionAuthenticationFailureTest`, тест нормализации адреса).
+  `AuthResp` остался: его читает легаси `AuthService` до удаления `modules/*`.
+- Поведение: 5xx теперь приходят как `ServiceUnavailableException` (текст тот же); `AuthService.appleLogin` ловит и его,
+  чтобы по-прежнему дописывать код `[ASI-Hxxx]`. `BaseViewModel` и `ErrorHandler` показывают `message`, поэтому текст
+  для пользователя не изменился. Один тест `FeedApiContractTest` (смена сессии во время refresh) теперь ожидает
+  `CancellationException`: клиент всегда работает с общим координатором, как и в проде (раньше тест шёл по пути без него).
+- Не делалось: ручная проверка входа/refresh/выхода на устройстве и инструментальные тесты (только компиляция).
+
+## Инструментальные тесты снова компилируются — 2026-10-30
+
+- `:composeApp:compileDirectDebugAndroidTestKotlinAndroid` падал с 21 ошибкой уже до среза C6.3 (после срезов C5 и вынесения
+  медиа-конвейера). Исправлено механически: `SessionStore` (скриншот-фикстуры авторблокировки), `AndroidImageCodec` и
+  `PrefetchPhotos` из `core/media` (`DisplayPhotoTransparencyTest`, `CpImageLoadingTest`), `AuthService` из клиентов в
+  `SessionDeviceMetadataTest`. Конфигурация `friendPaths` в `composeApp/build.gradle.kts` больше не ссылается на объект
+  скрипта: раньше задача компиляции не проходила сохранение кэша конфигурации.
+- Удалён `CheckInCalendarInteractionTest` (Арсений): он проверял удалённый экран календаря `CheckInCalendarContent`
+  (срез L2 удалил его как недостижимый, этот тест тогда не заметили). Логика его трёх сценариев (выбор даты и «сегодня»,
+  навигация по месяцам, счётчики Home + кофейни, фото календаря) покрыта в `feature/check-in-history`:
+  `CombinedHistoryViewModelTest`, `ProfileActivityViewModelTest`, `HistoryCalendarPhotosTest`,
+  `HistoryCalendarPresentationTest`. **Не покрыто:** проверка кликов по accessibility-узлам календаря на устройстве;
+  новый UI-тест не создавался.
+- Задача `compileDirectDebugAndroidTestKotlinAndroid` добавлена в стандартный набор проверок.
+
+## L3, срез Room — база приложения перенесена в `core/database` — 2026-10-30
+
+- `modules/room` удалён: `CoffeePeekDatabase`, миграции 1→2→3, `SettingRepository`/`DatabaseCore`, `MyRoomRepositoryImpl`
+  (Android и iOS) и каталог экспортированных схем переехали в `core/database` с теми же пакетами `com.coffeepeek.room`,
+  поэтому потребители (20 файлов composeApp, 6 файлов `modules/data`) не менялись, кроме зависимости в `build.gradle.kts`.
+  Имя БД, таблица `setting_table` и схемы 1.json/3.json не изменились (переименование 100%, KSP воспроизвёл схему).
+  `CoffeePeekDatabase.configure()` теперь использует общий `configureDatabaseDriver()`; у `core/database` появились
+  iOS-таргеты, плагин Room, KSP для обеих платформ и сериализация.
+- Покрытие миграций восстановлено: `ApplicationDatabaseMigrationTest` (инструментальный, только компиляция) — v1 и v2 с
+  реальными identity hash открываются production-билдером без потери настроек, журнальные таблицы удалены, запись
+  переживает повторное открытие, новая установка создаёт текущую схему. Закрывает запись «Потеря покрытия» из среза C1.
+- Не сделано (следующие шаги среза): вынос настроек/города в Settings data и миграции учётных данных в `core/session`
+  (`RoomLegacyCredentialRows` пока в `modules/data`), так как это зависит от удаления `modules/data`.
+- Не проверялось на устройстве: сам тест миграций (нужен девайс).
+
+## L3, шаг 1 удаления `modules/*` — недостижимое легаси-UI и его тесты — 2026-10-30
+
+- Удалены 23 файла composeApp, не достижимых из маршрутов (Navigator ведёт во все рендереры фич), и регистрации
+  `FavoritesViewModel`/`ShopChangeEditorViewModel` в Koin: `CommunityScreen`/`CommunityViewModel`/`EditCheckInSheet`/
+  `TimelineCheckInCard`, `FavoritesScreen`/`FavoritesViewModel`, `SettingsScreen`/`ProfileViewModel`,
+  `ShopChangeEditorScreen`/`ShopChangeEditorViewModel`/`ShopChangeLabels`, старые обёртки превью избранного
+  (`FavoritesProfilePreview` в `feature/favorites/api`, `FavoritesProfilePreviewContent`, `SavedDrinkCard`; профиль уже
+  использует `FavoritesEntry.Preview`), `CheckInVisibilityControl`, `CityCatalogChips`, `DetailContent`, `SettingsList`,
+  `ShopTagIcon`, `FavoriteMembershipMapping` и три пустых утилиты (`DrawableExt`, `FlowExt`, `Transactions`).
+  Оставлены по решению: `OtherUserProfileScreen`, `PublicProfileViewModel`, `ProfileActions`.
+- Тесты. Карта «тест → фича» (по двум независимым разборам):
+  - `CommunityParityGapsTest`, `CommunityViewModelTest`, `PublicCommunityViewModelTest`, `AuthorVisibilityFeedTest` →
+    `feature/community/impl` (`CommunityViewModelTest`, `CommunityEditTest`, `CommunityRulesTest`) и `feature/community/data`.
+    Три пробела закрыты новыми тестами фичи: повтор неудачной подгрузки личной ленты, первичное наблюдение аккаунта не
+    сбрасывает выбранную ленту, сбой смены видимости не несёт серверного текста.
+  - `ProfileViewModelTest` → `OwnProfileViewModelTest`, `ProfileSignOutAdapterTest`, `SettingsPortsTest`, `CityPreferenceTest`,
+    `CityViewModelTest`, `SettingsViewModelTest`.
+  - `FavoritesViewModelTest`, `FavoriteDrinkViewModelTest`, `FavoritesProfilePreviewVisibilityTest` → `AccountFavoritesTest`,
+    `FavoriteDrinksViewModelTest`, `FavoritesPreviewPolicyTest`.
+  - `SubmissionViewModelTest` → `ChangeEditorViewModelTest` (+ тесты меню в `feature/contributions`).
+  - `TimelineCheckInPresentationTest` (подписи методов) → новый `BrewMethodLabelTest` для `methodLabel()`.
+- Удалены инструментальные тесты Арсения вместе с экранами (по решению): `CheckInLikesTest`, `AuthorBlockingMenuTest`,
+  `AuthorBlockingFlowScreenshotsTest` (+ фикстуры), `PlatformSwitchInteractionTest`, `ShopMenuEditorTest`; из смешанного
+  `PublicProfilePresentationTest` убраны 3 теста про удалённое избранное (8 тестов сохранённых экранов остались).
+  **Не покрыто (только на устройстве):** отрисовка кнопок лайка и меню автора в карточке, раскладка меню при крупном
+  шрифте, скриншоты потока блокировки автора, порядок блоков и сворачивание в редакторе меню, тумблеры видимости в тёмной
+  теме, скриншоты собственного профиля с избранным и переживание пересоздания композиции. Новые UI-тесты не создавались.
+  Формат строки рецепта в карточке ленты (`HomePreparation.details`, текст ресурсов) без теста: функция composable.
+
+## L3, шаг 2 удаления `modules/*` — два живых легаси-репозитория заменены — 2026-10-30
+
+- Фото владельцев бизнеса. `BusinessPhotoUploader` теперь собирается в `feature/business-ownership/data`
+  (`createBusinessPhotoUploader(client, uploadClient, account)`): резервирование presigned URL на `/api/Photos/shop` или
+  `/api/Photos/roaster`, проверка публичного адреса через `requirePublicUploadUrl`, PUT байтов в `uploadClient` без
+  учётных данных, возврат `storageKey` и размера, сбой любого шага — `OwnershipProblem.Unavailable`, смена или выход из
+  аккаунта во время загрузки — `SignedOut`. Легаси `PhotoRepository` в композиции больше не нужен. Новый
+  `PhotoUploadTest` (6): эндпоинты по типу бизнеса, тело резервирования и PUT байтов, пустой список без запросов,
+  приватный адрес, неверное число или пустой ключ, отказ резервирования и хранилища, смена аккаунта и выход.
+  Заголовок `Accept` не проверяется: его добавляет сам Ktor (так же в `feature/contributions`).
+- Избранные обжарщики. `ServerRoasterFavorites` берёт данные из `PublicRoasterDetails` вместо `RoasterRepository`.
+  `PublicRoasterSummary` получил `name`, `PublicRoasterDescription` — `name` (по умолчанию пусто, существующие вызовы не
+  меняются). Поведение сохранено: имя из записи избранного, иначе из каталога, иначе из деталей, иначе slug; фото и
+  счётчики из каталога, описание из деталей. Тесты `ServerRoasterFavoritesTest` и граф-фикстура переведены на фейк
+  `PublicRoasterDetails` без изменения проверок.
+- Остаток легаси-репозиториев в `composeApp`: нет (остаются только `OtherUserProfile`/`PublicProfileViewModel`, использующие
+  `UserRepository`, по решению).

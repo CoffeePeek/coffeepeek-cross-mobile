@@ -1,18 +1,15 @@
 package com.coffeepeek.api.feature.feed
 
-import com.coffeepeek.api.configureSessionAuthentication
-import com.coffeepeek.api.readCurrentSessionForRequests
 import com.coffeepeek.api.model.response.AuthResp
+import com.coffeepeek.core.network.ApiClients
+import com.coffeepeek.core.network.SessionCredentials
+import com.coffeepeek.core.network.SessionTokens
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
-import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
-import io.ktor.client.plugins.defaultRequest
 import io.ktor.client.request.get
 import io.ktor.http.*
-import io.ktor.serialization.kotlinx.json.json
 import kotlinx.coroutines.runBlocking
-import kotlinx.serialization.json.Json
 import kotlin.test.*
 
 class FeedApiContractTest {
@@ -136,7 +133,8 @@ class FeedApiContractTest {
             AuthResp("old-account-refreshed", "refresh")
         })
         try {
-            assertTrue(FeedApiService(client).getFeed(20).isFailure)
+            // The shared refresh never restores credentials another login replaced: the request is cancelled.
+            assertFailsWith<kotlinx.coroutines.CancellationException> { FeedApiService(client).getFeed(20) }
             assertNull(token)
             assertEquals(1, requests)
         } finally { client.close() }
@@ -153,11 +151,20 @@ class FeedApiContractTest {
     }
 
     private fun client(engine: MockEngine, token: () -> AuthResp? = { null }, save: (AuthResp?) -> Unit = {},
-        refresh: suspend (String) -> AuthResp = { error("Unexpected refresh") }) = HttpClient(engine) {
-        install(ContentNegotiation) { json(Json { ignoreUnknownKeys = true }) }
-        defaultRequest { url("https://api.example") }
-        configureSessionAuthentication("https://api.example", token, { expected, updated ->
-            if (token() != expected) false else { save(updated); true }
-        }, refresh)
-    }.also { it.readCurrentSessionForRequests() }
+        refresh: suspend (String) -> AuthResp = { error("Unexpected refresh") }): HttpClient {
+        fun AuthResp.tokens() = SessionTokens(accessToken, refreshToken)
+        val credentials = object : SessionCredentials {
+            override suspend fun load(): SessionTokens? = token()?.tokens()
+            override suspend fun save(tokens: SessionTokens?) = save(tokens?.let { AuthResp(it.accessToken, it.refreshToken.orEmpty()) })
+            override suspend fun replace(expected: SessionTokens, tokens: SessionTokens?): Boolean {
+                if (token()?.tokens() != expected) return false
+                save(tokens)
+                return true
+            }
+        }
+        return ApiClients("https://api.example", "build/feed-contract-cache", false, credentials,
+            refreshWith = { { refreshToken -> runCatching { refresh(refreshToken).tokens() } } },
+            apiClientFactory = { configure -> HttpClient(engine) { configure() } },
+            uploadClientFactory = { configure -> HttpClient(engine) { configure() } }).client
+    }
 }

@@ -5,11 +5,18 @@ import com.coffeepeek.admin.feature.favorites.data.ServerRoasterFavorites
 import com.coffeepeek.admin.session.ReadOnlySessions
 import com.coffeepeek.core.session.SessionReader
 import com.coffeepeek.core.session.Session
-import com.coffeepeek.domain.feature.favorites.api.*
+import com.coffeepeek.feature.favorites.domain.model.FavoriteAddress
+import com.coffeepeek.feature.favorites.domain.model.FavoriteEntry
+import com.coffeepeek.feature.favorites.domain.model.FavoriteKind
+import com.coffeepeek.feature.favorites.domain.repository.AccountFavorites
 import com.coffeepeek.domain.model.*
 import com.coffeepeek.domain.repository.RoasterRepository
-import com.coffeepeek.domain.repository.ShopRepository
+import com.coffeepeek.feature.shop.api.PublicShopDetails
+import com.coffeepeek.feature.shop.api.PublicShopSummary
 import com.coffeepeek.feature.favorites.api.FavoritesEntry
+import com.coffeepeek.feature.roaster.api.PublicRoasterDescription
+import com.coffeepeek.feature.roaster.api.PublicRoasterDetails
+import com.coffeepeek.feature.roaster.api.PublicRoasterSummary
 import com.coffeepeek.feature.favorites.domain.repository.FavoritesRepository as ShopsPort
 import com.coffeepeek.feature.favorites.domain.repository.FavoriteRoastersRepository
 import com.coffeepeek.feature.favorites.domain.repository.FavoriteDrinksRepository
@@ -29,17 +36,18 @@ internal class ServerFavoritesGraphFixture {
 
     private fun dependencies() = module {
         single<SessionReader> { sessions }
-        single<FavoritesRepository> { server }
+        single<AccountFavorites> { server }
         single<RoasterRepository> { catalogs }
-        single<ShopRepository> { FavoriteGraphShops(catalogs) }
-        single<RoasterFavorites> { ServerRoasterFavorites(server, catalogs, sessions) }
+        single<PublicRoasterDetails> { FavoriteGraphPublicRoasters(catalogs) }
+        single<PublicShopDetails> { FavoriteGraphPublicShops(catalogs) }
+        single<RoasterFavorites> { ServerRoasterFavorites(server, FavoriteGraphPublicRoasters(catalogs), sessions) }
     }
 
     fun close() = graph.close()
 }
 
-internal class FavoriteGraphServer : FavoritesRepository {
-    private val address = PublicAddress("canonical", "/coffee-shop/canonical", 1, false)
+internal class FavoriteGraphServer : AccountFavorites {
+    private val address = FavoriteAddress("canonical", "/coffee-shop/canonical", 1, false)
     val state = MutableStateFlow(Result.success(listOf(
         FavoriteEntry(FavoriteKind.CoffeeShop, address, name = "Shop"),
         FavoriteEntry(FavoriteKind.Roaster, address.copy(slug = "roast", canonicalPath = "/roasters/roast"),
@@ -57,9 +65,6 @@ internal class FavoriteGraphServer : FavoritesRepository {
         reads++
         afterRead()
     }
-
-    override suspend fun setFavorite(kind: FavoriteKind, address: PublicAddress, favorite: Boolean) =
-        setFavorite(FavoriteEntry(kind, address), favorite)
 
     override suspend fun setFavorite(entry: FavoriteEntry, favorite: Boolean): Result<Unit> {
         writes += Triple(entry.kind, entry.address?.slug ?: entry.drinkSlug, favorite)
@@ -82,17 +87,20 @@ internal class FavoriteGraphCatalogs : RoasterRepository {
         error("No submission reads")
 }
 
-private class FavoriteGraphShops(private val catalogs: FavoriteGraphCatalogs) : ShopRepository {
-    override suspend fun getShopDetails(id: String): Result<CoffeeShopDetails> {
+internal class FavoriteGraphPublicRoasters(private val catalogs: FavoriteGraphCatalogs) : PublicRoasterDetails {
+    override suspend fun summaries(): Result<List<PublicRoasterSummary>> {
+        catalogs.reads++
+        return Result.success(emptyList())
+    }
+    override suspend fun load(slug: String): Result<PublicRoasterDescription> {
         catalogs.reads++
         return Result.failure(IllegalStateException("No catalog metadata"))
     }
-    override suspend fun searchShops(filters: ShopFilters): Result<PagedResult<CoffeeShop>> = error("No search")
-    override suspend fun getMapContent(bounds: MapBounds, zoom: Float, filters: ShopFilters): Result<MapContent> = error("No map")
-    override suspend fun getCatalogs(): Result<ShopCatalogs> = error("No catalogs")
-    override suspend fun getConsumedDrinks(): Result<List<ConsumedDrinkOption>> = error("No drink catalog")
-    override suspend fun getMenuDrinks(): Result<List<CoffeeDrinkDefinition>> = error("No menu")
-    override suspend fun createShop(input: CreateShopInput): Result<Unit> = error("No create")
-    override suspend fun getMyShopSubmissions(status: ModerationStatus, page: Int, pageSize: Int): Result<PagedResult<ShopSubmission>> =
-        error("No submission reads")
+}
+
+private class FavoriteGraphPublicShops(private val catalogs: FavoriteGraphCatalogs) : PublicShopDetails {
+    override suspend fun load(slug: String): Result<PublicShopSummary> {
+        catalogs.reads++
+        return Result.failure(IllegalStateException("No catalog metadata"))
+    }
 }

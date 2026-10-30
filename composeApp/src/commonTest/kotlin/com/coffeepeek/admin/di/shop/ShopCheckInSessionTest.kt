@@ -1,7 +1,7 @@
 package com.coffeepeek.admin.di.shop
 
 import com.coffeepeek.domain.model.Session
-import com.coffeepeek.domain.repository.SessionRepository
+import com.coffeepeek.core.session.SessionStore
 import com.coffeepeek.feature.shop.domain.model.ShopCheckInCreateInput
 import com.coffeepeek.feature.shop.domain.model.ShopConsumedDrinkOption
 import com.coffeepeek.feature.shop.domain.model.ShopRating
@@ -113,7 +113,7 @@ class ShopCheckInSessionTest {
     }
 
     @Test fun failedSessionObservationCancelsBeforeAnyTransportCall() = runTest {
-        val sessions = object : SessionRepository by CheckInTestSessions() {
+        val sessions = object : SessionStore by CheckInTestSessions() {
             override fun observeSession() = flow<Session?> { throw IllegalStateException("Secure store unavailable") }
         }
         val repository = Repository()
@@ -138,7 +138,7 @@ class ShopCheckInSessionTest {
     }
 }
 
-internal class CheckInTestSessions(initial: Session? = Session("token", userId = "owner")) : SessionRepository {
+internal class CheckInTestSessions(initial: Session? = Session("token", userId = "owner")) : SessionStore {
     private val state = MutableStateFlow(initial)
     override fun peekSession() = state.value
     override fun applySession(session: Session?) { state.value = session }

@@ -15,6 +15,5 @@ interface ShopCheckInFormRenderer {
         onSubmitted: () -> Unit,
         onGoToFeed: () -> Unit,
         onOpenHistory: () -> Unit,
-        legacyContent: @Composable () -> Unit,
     )
 }

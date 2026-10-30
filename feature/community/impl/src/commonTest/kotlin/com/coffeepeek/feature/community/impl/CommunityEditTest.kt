@@ -169,6 +169,16 @@ class CommunityEditTest {
         assertTrue(vm.state.value.items.none { it.note == "Late" })
     }
 
+    @Test fun aVisibilityFailureThatIsNotAServerAnswerCarriesNoServerMessage() = runTest(dispatcher) {
+        val repo = publicRepo().apply { visibility = { _, _ -> Result.failure(IllegalStateException("socket closed: secret detail")) } }
+        val vm = model(repo); val events = events(vm)
+        vm.send(CommunityAction.ToggleVisibility("own"), this)
+        val failed = assertIs<CommunityEvent.Message>(events.single())
+        assertEquals(MessageKind.VisibilityFailed, failed.message.kind)
+        assertNull(failed.message.serverMessage)
+        assertEquals(2, vm.state.value.items.size); assertNull(vm.state.value.changingVisibilityId)
+    }
+
     @Test fun hidingAnOwnPublicPostMakesItPrivateAndRemovesItFromTheFeedAndAFailureKeepsItWithAMessage() = runTest(dispatcher) {
         var fail = true
         val repo = publicRepo().apply { visibility = { id, next ->

@@ -9,6 +9,7 @@ interface PublicRoasterDetails {
 data class PublicRoasterSummary(
     val slug: String, val photoUrl: String?, val tags: List<String>,
     val coffeeShopsCount: Int, val coffeeProductsCount: Int, val availableCoffeeProducts: Int,
+    val name: String = "",
 )
 
-data class PublicRoasterDescription(val photoUrl: String?, val about: String?)
+data class PublicRoasterDescription(val photoUrl: String?, val about: String?, val name: String = "")

@@ -161,6 +161,37 @@ class CommunityViewModelTest {
         assertTrue(analytics.events.isEmpty())
     }
 
+    @Test fun aLoadMoreFailureOnThePersonalTimelineRetriesTheSamePageWithoutDuplicates() = runTest(dispatcher) {
+        val pages = mutableListOf<Int>()
+        var fail = true
+        val repo = FakeRepository().apply { mine = { number, _ ->
+            pages += number
+            when {
+                number == 2 && fail -> { fail = false; Result.failure(IllegalStateException("Offline")) }
+                else -> Result.success(MyPostsPage(listOf(post("own-$number", slug = null)), hasMore = number < 2))
+            }
+        } }
+        val vm = model(repo)
+        vm.send(CommunityAction.SelectTimeline(CommunityTimeline.Mine), this)
+        vm.send(CommunityAction.LoadMore(), this)
+        assertEquals(2, vm.state.value.failedPage); assertEquals(TimelineError.LoadFailed, vm.state.value.error)
+        assertEquals(listOf("own-1"), vm.state.value.items.map { it.id })
+        vm.send(CommunityAction.Retry, this)
+        assertEquals(listOf("own-1", "own-2"), vm.state.value.items.map { it.id })
+        assertFalse(vm.state.value.hasMore)
+        assertEquals(listOf(1, 2, 2), pages)
+    }
+
+    @Test fun theInitialAccountObservationDoesNotRestartATimelineTheUserAlreadyChose() = runTest(dispatcher) {
+        val repo = FakeRepository().apply { mine = { number, _ -> Result.success(MyPostsPage(listOf(post("own-$number", slug = null)), hasMore = false)) } }
+        // The user picks the personal timeline before the first account observation has been processed.
+        val vm = CommunityViewModel(repo, FakeAccount("one"), FakeAnalytics(), FakeDrinks(), FakeAuthors()).also { store.put("community", it) }
+        vm.onAction(CommunityAction.SelectTimeline(CommunityTimeline.Mine))
+        runCurrent()
+        assertEquals(CommunityTimeline.Mine, vm.state.value.timeline)
+        assertEquals(listOf("own-1"), vm.state.value.items.map { it.id })
+    }
+
     @Test fun blockingIsOfferedOnlyAfterTheCanonicalOwnSlugIsKnown() = runTest(dispatcher) {
         val profile = CompletableDeferred<Result<String?>>()
         val own = post("own", slug = "me"); val other = post("other")

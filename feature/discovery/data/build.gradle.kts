@@ -13,6 +13,7 @@ android.namespace = "com.coffeepeek.feature.discovery.data"
 dependencies {
     api(project(module.feature.discovery.domain))
     api(libs.ktor.client.core)
+    implementation(project(module.feature.discovery.api))
     implementation(project(module.core.network))
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.kotlinx.coroutines.core)

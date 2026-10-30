@@ -320,6 +320,39 @@ class ShopDetailViewModelTest {
         assertFalse(viewModel.state.value.isFavorite)
     }
 
+    @Test fun aShopOpenedThroughAnAliasIsFavoritedAndUnfavoritedByItsCanonicalSlug() = runTest(dispatcher) {
+        val canonical = details().let { it.copy(overview = it.overview.copy(id = "canonical-slug")) }
+        val saved = mutableListOf<String>()
+        val removed = mutableListOf<String>()
+        val ids = MutableStateFlow(Result.success(emptySet<String>()))
+        val favorites = object : ShopFavorites {
+            override fun observeIds(): Flow<Result<Set<String>>> = ids
+            override suspend fun save(shop: ShopDetails): Result<Unit> {
+                saved += shop.overview.id; ids.value = Result.success(ids.value.getOrThrow() + shop.overview.id); return Result.success(Unit)
+            }
+            override suspend fun remove(shopId: String): Result<Unit> {
+                removed += shopId; ids.value = Result.success(ids.value.getOrThrow() - shopId); return Result.success(Unit)
+            }
+        }
+        val repository = object : ShopDetailsRepository {
+            override suspend fun getDetails(shopId: String): Result<ShopDetails> { assertEquals("alias", shopId); return Result.success(canonical) }
+        }
+        val viewModel = ShopDetailViewModel(shopId = "alias", detailsRepository = repository,
+            checkInVoteRepository = CheckInVotes(), favoritesRepository = favorites,
+            currentViewer = { Result.success(ShopViewer(true, "viewer")) }, currentDayOfWeek = { 1 }, currentMinuteOfDay = { null },
+            resumeRefreshAfter = kotlin.time.Duration.ZERO).also { store.put("alias", it) }
+        runCurrent()
+        val events = mutableListOf<ShopDetailEvent>()
+        backgroundScope.launch { viewModel.events.collect { events += it.event } }
+        viewModel.onAction(ShopDetailAction.ToggleFavorite); runCurrent()
+        assertEquals(listOf("canonical-slug"), saved)
+        assertTrue(viewModel.state.value.isFavorite)
+        viewModel.onAction(ShopDetailAction.ToggleFavorite); runCurrent()
+        assertEquals(listOf("canonical-slug"), removed)
+        assertFalse(viewModel.state.value.isFavorite)
+        assertEquals<List<ShopDetailEvent>>(listOf(ShopDetailEvent.FavoriteChanged("canonical-slug", true), ShopDetailEvent.FavoriteChanged("canonical-slug", false)), events)
+    }
+
     @Test fun guestFavoriteAsksTheAppToKeepTheIntentAcrossSignIn() = runTest(dispatcher) {
         val favorites = Favorites()
         val viewModel = viewModel(favorites = favorites, viewer = ShopViewer(false, null))
