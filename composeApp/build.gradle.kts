@@ -287,6 +287,11 @@ android {
         buildConfigField("String", "SHELF_INPAINTER_URL", "\"https://huggingface.co/andraniksargsyan/migan/resolve/main/migan_pipeline_v2.onnx\"")
     }
     packaging {
+        jniLibs {
+            // Keep every supported ABI, but compress large scanner/map libraries in the APK.
+            // Android extracts them at install time; this trades installed disk usage for download size.
+            useLegacyPackaging = true
+        }
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
