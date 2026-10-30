@@ -7,7 +7,6 @@ import androidx.compose.animation.core.rememberTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
@@ -31,8 +30,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
@@ -48,6 +45,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupPositionProvider
 import androidx.compose.ui.window.PopupProperties
+import com.coffeepeek.core.designsystem.modifier.coffeePeekLiquidGlass
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
@@ -65,6 +63,7 @@ fun CoffeePeekActionMenu(
     modifier: Modifier = Modifier,
     content: @Composable (open: () -> Unit) -> Unit,
 ) {
+    if (CoffeePeekNativeMenu(actions, modifier, content)) return
     val expanded = remember { MutableTransitionState(false) }
     val margin = with(LocalDensity.current) { CoffeePeekDimens.spacing2.roundToPx() }
     val origin = remember { MenuOrigin() }
@@ -126,7 +125,7 @@ private fun CoffeePeekActionMenuContent(
     val colors = MaterialTheme.colorScheme
     val shape = RoundedCornerShape(CoffeePeekDimens.cardRadius)
     Column(modifier.widthIn(min = 224.dp, max = 304.dp).heightIn(max = 360.dp)
-        .shadow(8.dp, shape).clip(shape).background(colors.surface).border(1.dp, colors.outlineVariant, shape)
+        .coffeePeekLiquidGlass(shape, hazeState = null, shadowElevation = 8.dp)
         .verticalScroll(rememberScrollState())) {
         actions.forEachIndexed { index, action ->
             if (index > 0) Box(Modifier.fillMaxWidth().height(1.dp).background(colors.outlineVariant))

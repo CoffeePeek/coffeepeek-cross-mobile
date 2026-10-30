@@ -20,6 +20,7 @@ fun CoffeePeekActionDialog(
     cancelLabel: String?,
     onDismiss: () -> Unit,
 ) {
+    if (CoffeePeekNativeActionDialog(title, message, actions, cancelLabel, onDismiss)) return
     Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
         CoffeePeekActionPanel(title, message, actions, cancelLabel, onDismiss,
             Modifier.padding(CoffeePeekDimens.spacing4).widthIn(max = 560.dp))

@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -19,7 +18,6 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
-import com.coffeepeek.core.designsystem.modifier.coffeePeekLiquidGlass
 import com.coffeepeek.core.designsystem.resources.Res
 import com.coffeepeek.core.designsystem.resources.coffeepeek_map_expand
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
@@ -35,8 +33,9 @@ fun CoffeePeekMapPreviewOverlay(onExpand: () -> Unit, modifier: Modifier = Modif
         .clickable(role = Role.Button, onClickLabel = description, onClick = onExpand)
         .semantics { contentDescription = description }) {
         Box(Modifier.align(Alignment.TopEnd).padding(CoffeePeekDimens.spacing2)
-            .size(CoffeePeekDimens.buttonHeight).coffeePeekLiquidGlass(CircleShape, hazeState = null),
+            .size(CoffeePeekDimens.buttonHeight),
             contentAlignment = Alignment.Center) {
+            CoffeePeekNativeControlBackground(Modifier.matchParentSize(), hazeState = null)
             Icon(CoffeePeekIcons.Expand, contentDescription = null,
                 tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(22.dp))
         }

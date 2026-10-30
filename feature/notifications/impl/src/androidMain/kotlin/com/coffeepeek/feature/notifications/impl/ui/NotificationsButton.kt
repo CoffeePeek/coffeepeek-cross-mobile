@@ -2,6 +2,7 @@ package com.coffeepeek.feature.notifications.impl.ui
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
+import com.coffeepeek.core.designsystem.component.CoffeePeekIconButton as IconButton
 import androidx.compose.runtime.*
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment

@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.material3.*
+import com.coffeepeek.core.designsystem.component.CoffeePeekTextButton as TextButton
 import androidx.compose.runtime.Composable
 import com.coffeepeek.admin.theme.CpDimens
 import com.coffeepeek.admin.ui.component.ReviewTextInput

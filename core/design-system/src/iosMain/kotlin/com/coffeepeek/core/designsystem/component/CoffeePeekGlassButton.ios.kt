@@ -65,10 +65,12 @@ actual fun CoffeePeekGlassButton(
     )
 }
 
-internal fun glassButtonConfiguration(): UIButtonConfiguration {
+internal fun glassButtonConfiguration(prominent: Boolean = false): UIButtonConfiguration {
     if ((UIDevice.currentDevice.systemVersion.substringBefore('.').toIntOrNull() ?: 0) >= 26) {
-        return UIButtonConfiguration.glassButtonConfiguration()
+        return if (prominent) UIButtonConfiguration.prominentGlassButtonConfiguration()
+        else UIButtonConfiguration.glassButtonConfiguration()
     }
+    if (prominent) return UIButtonConfiguration.filledButtonConfiguration()
     return UIButtonConfiguration.plainButtonConfiguration().apply {
         background = UIBackgroundConfiguration.clearConfiguration().apply {
             backgroundColor = UIColor.clearColor

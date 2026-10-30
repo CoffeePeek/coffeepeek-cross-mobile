@@ -2,6 +2,8 @@
 
 package com.coffeepeek.feature.coffee.impl.ui.compose
 
+import com.coffeepeek.core.designsystem.modifier.CoffeePeekGlassIcon
+
 import com.coffeepeek.feature.coffee.api.CoffeeExposure
 import com.coffeepeek.feature.coffee.api.CoffeeScreenAnalytics
 import androidx.compose.ui.backhandler.BackHandler
@@ -13,6 +15,7 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.*
+import com.coffeepeek.core.designsystem.component.CoffeePeekTextButton as TextButton
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -160,10 +163,10 @@ internal fun CoffeeDetailScreenContent(
             }
         }
         Row(Modifier.align(Alignment.TopCenter).fillMaxWidth().statusBarsPadding().padding(CoffeePeekDimens.spacing3), horizontalArrangement = Arrangement.SpaceBetween) {
-            CoffeePeekGlassIconButton({ onAction(CoffeeDetailAction.Back) }, stringResource(Res.string.coffee_back), hazeState = hazeState) {
+            CoffeePeekGlassIconButton({ onAction(CoffeeDetailAction.Back) }, stringResource(Res.string.coffee_back), hazeState = hazeState, nativeIcon = CoffeePeekGlassIcon.Back) {
                 Icon(CoffeePeekIcons.Back, null)
             }
-            CoffeePeekGlassIconButton({ onAction(CoffeeDetailAction.Share) }, stringResource(Res.string.coffee_share), enabled = details != null, hazeState = hazeState) {
+            CoffeePeekGlassIconButton({ onAction(CoffeeDetailAction.Share) }, stringResource(Res.string.coffee_share), enabled = details != null, hazeState = hazeState, nativeIcon = CoffeePeekGlassIcon.Share) {
                 Icon(CoffeePeekIcons.Share, null)
             }
         }

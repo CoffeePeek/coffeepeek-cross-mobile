@@ -2,6 +2,7 @@ package com.coffeepeek.admin.ui.screen.feed
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
+import com.coffeepeek.core.designsystem.component.CoffeePeekTextButton as TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier

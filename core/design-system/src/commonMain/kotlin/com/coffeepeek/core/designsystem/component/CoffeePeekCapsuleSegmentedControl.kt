@@ -50,6 +50,11 @@ fun <T> CoffeePeekCapsuleSegmentedControl(
     require(options.isNotEmpty()) { "Segmented control requires options" }
     require(options.distinct().size == options.size) { "Options must be unique" }
     require(selected in options) { "Selection must belong to options" }
+    if (!scrollable) {
+        CoffeePeekPlatformSegments(options.map(label), options.indexOf(selected),
+            { onSelected(options[it]) }, modifier, enabled)
+        return
+    }
     val container = modifier
         .clip(RoundedCornerShape(percent = 50))
         .background(MaterialTheme.colorScheme.surfaceVariant)
@@ -59,20 +64,20 @@ fun <T> CoffeePeekCapsuleSegmentedControl(
             contentPadding = PaddingValues(4.dp),
         ) {
             items(options) { option ->
-                Segment(label(option), option == selected, enabled, { onSelected(option) }, Modifier, labelPadding = 16.dp)
+                CoffeePeekCapsuleSegment(label(option), option == selected, enabled, { onSelected(option) }, Modifier, labelPadding = 16.dp)
             }
         }
     } else {
         Row(modifier = container.fillMaxWidth().padding(2.dp).selectableGroup()) {
             options.forEach { option ->
-                Segment(label(option), option == selected, enabled, { onSelected(option) }, Modifier.weight(1f))
+                CoffeePeekCapsuleSegment(label(option), option == selected, enabled, { onSelected(option) }, Modifier.weight(1f))
             }
         }
     }
 }
 
 @Composable
-private fun Segment(text: String, isSelected: Boolean, enabled: Boolean, onClick: () -> Unit, modifier: Modifier, labelPadding: Dp = 0.dp) {
+internal fun CoffeePeekCapsuleSegment(text: String, isSelected: Boolean, enabled: Boolean, onClick: () -> Unit, modifier: Modifier, labelPadding: Dp = 0.dp) {
     Box(
         modifier = modifier
             .heightIn(min = 48.dp)

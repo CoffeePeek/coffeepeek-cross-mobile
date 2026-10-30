@@ -50,7 +50,7 @@ import coffeepeek.composeapp.generated.resources.create_account_title
 import coffeepeek.composeapp.generated.resources.email_check_subtitle
 import coffeepeek.composeapp.generated.resources.email_step_title
 import coffeepeek.composeapp.generated.resources.registration_password_placeholder
-import androidx.compose.material3.IconButton
+import com.coffeepeek.core.designsystem.component.CoffeePeekIconButton as IconButton
 import androidx.compose.ui.text.style.TextOverflow
 import coffeepeek.composeapp.generated.resources.go_to_login
 import coffeepeek.composeapp.generated.resources.name

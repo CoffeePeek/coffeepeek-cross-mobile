@@ -14,6 +14,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.admin.theme.CpDimens
@@ -53,26 +55,9 @@ actual fun PlatformFloatingBottomNavBar(
 
 @Composable
 actual fun PlatformGlassBackButton(onClick: () -> Unit, modifier: Modifier) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = modifier
-            .height(CpDimens.buttonHeight)
-            .liquidGlass(RoundedCornerShape(percent = 50), hazeState = null, shadowElevation = 3.dp)
-            .clickable(onClick = onClick)
-            .padding(start = 12.dp, end = 16.dp),
-    ) {
-        Icon(
-            imageVector = CpIcons.ChevronLeft,
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.size(18.dp),
-        )
-        Spacer(modifier = Modifier.size(4.dp))
-        Text(
-            text = "Назад",
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurface,
-        )
+    com.coffeepeek.core.designsystem.component.CoffeePeekTonalButton(onClick, modifier) {
+        Icon(CpIcons.ChevronLeft, contentDescription = null, modifier = Modifier.size(18.dp))
+        Text("Назад", Modifier.padding(start = 4.dp))
     }
 }
 
@@ -85,13 +70,18 @@ actual fun PlatformMapControlButton(
     selected: Boolean,
     content: @Composable () -> Unit,
 ) {
-    Box(
-        modifier = modifier
-            .size(CpDimens.buttonHeight)
-            .liquidGlass(CircleShape, hazeState = null)
-            .clickable(onClick = onClick),
-        contentAlignment = Alignment.Center,
-    ) {
-        content()
-    }
+    com.coffeepeek.core.designsystem.component.CoffeePeekIconButton(
+        onClick = onClick,
+        modifier = modifier.semantics { this.contentDescription = contentDescription },
+        content = content,
+    )
+}
+
+@androidx.compose.ui.tooling.preview.PreviewLightDark
+@Composable
+private fun PlatformGlassControlsPreview() = com.coffeepeek.core.designsystem.theme.CoffeePeekTheme {
+    Row {
+            PlatformGlassBackButton({})
+            PlatformMapControlButton(GlassControlIcon.Location, {}, "Location") { Icon(CpIcons.Location, null) }
+        }
 }

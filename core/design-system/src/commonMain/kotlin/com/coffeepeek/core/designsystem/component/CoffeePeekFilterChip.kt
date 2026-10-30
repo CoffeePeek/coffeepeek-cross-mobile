@@ -1,33 +1,31 @@
 package com.coffeepeek.core.designsystem.component
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.selection.toggleable
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
-import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 /**
- * A pill that switches a filter on and off: dark with a light label when selected, outlined otherwise. A checkbox for accessibility,
- * the icon (when there is one) is always in the brand color.
+ * A glass filter pill with a tinted selected state and checkbox accessibility semantics.
  */
 @Composable
 fun CoffeePeekFilterChip(
@@ -37,18 +35,27 @@ fun CoffeePeekFilterChip(
     modifier: Modifier = Modifier,
     leadingIcon: ImageVector? = null,
 ) {
-    val shape = RoundedCornerShape(percent = 50)
-    val container = if (selected) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.surface
-    val content = if (selected) MaterialTheme.colorScheme.surface else MaterialTheme.colorScheme.onSurface
-    val border = if (selected) Color.Transparent else MaterialTheme.colorScheme.outline.copy(alpha = 0.55f)
-    Row(
-        modifier = modifier.height(CoffeePeekDimens.buttonHeight).clip(shape).background(container).border(1.dp, border, shape)
-            .toggleable(value = selected, role = Role.Checkbox, onValueChange = { onClick() }).padding(horizontal = 12.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(6.dp),
-    ) {
-        if (leadingIcon != null) Icon(leadingIcon, contentDescription = null, modifier = Modifier.size(16.dp), tint = MaterialTheme.colorScheme.primary)
-        Text(label, style = MaterialTheme.typography.labelMedium, color = content, maxLines = 1)
+    CoffeePeekGlassFilterChip(label, selected, onClick, modifier, leadingIcon)
+}
+
+@Composable
+private fun CoffeePeekGlassFilterChip(
+    label: String, selected: Boolean, onClick: () -> Unit, modifier: Modifier, leadingIcon: ImageVector?,
+) {
+    val interactions = remember { MutableInteractionSource() }
+    val pressed by interactions.collectIsPressedAsState()
+    val colors = MaterialTheme.colorScheme
+    val foreground = if (selected) colors.onPrimary else colors.onSurface
+    Box(modifier.heightIn(min = 48.dp)
+        .coffeePeekGlassPress(pressed, true)
+        .toggleable(selected, interactions, indication = null, role = Role.Checkbox, onValueChange = { onClick() })) {
+        CoffeePeekNativeControlBackground(Modifier.matchParentSize(), prominent = selected,
+            tint = if (selected) colors.primary else null, pressed = pressed)
+        Row(Modifier.padding(horizontal = 12.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            if (leadingIcon != null) Icon(leadingIcon, null, Modifier.size(18.dp), tint = foreground)
+            Text(label, color = foreground, style = MaterialTheme.typography.labelMedium, maxLines = 1)
+        }
     }
 }
 

@@ -13,6 +13,11 @@ import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.runtime.getValue
+import com.coffeepeek.core.designsystem.theme.coffeePeekUsesNativeGlass
+import com.coffeepeek.core.designsystem.modifier.CoffeePeekGlassIcon
+import com.coffeepeek.core.designsystem.modifier.LocalCoffeePeekNativeGlassPresenter
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -31,7 +36,6 @@ import com.coffeepeek.core.designsystem.resources.coffeepeek_like_add
 import com.coffeepeek.core.designsystem.resources.coffeepeek_like_remove
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
-import com.coffeepeek.core.designsystem.theme.CoffeePeekColors
 import com.coffeepeek.core.designsystem.modifier.coffeePeekLiquidGlass
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
@@ -39,7 +43,8 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 /** Glass is a compact photo badge; FloatingGlass matches neighboring glass action buttons. */
 enum class CoffeePeekLikeButtonStyle { Plain, Glass, FloatingGlass }
 
-/** Stateless toggle: callers own persistence, auth, haptics, loading and analytics.
+/** Stateless toggle: callers own persistence, auth, loading and analytics.
+ * Native presenters may supply platform selection feedback.
  * Container/shape may match a card or photo; the heart's affinity color is fixed.
  */
 @Composable
@@ -64,14 +69,24 @@ fun CoffeePeekLikeButton(
     val label = if (isLoading) requireNotNull(loadingDescription).also {
         require(it.isNotBlank()) { "Loading requires a localized description" }
     } else contentDescription
+    if (style != CoffeePeekLikeButtonStyle.Plain && LocalCoffeePeekNativeGlassPresenter.current
+            ?.IconButton(if (selected) CoffeePeekGlassIcon.FavoriteFilled else CoffeePeekGlassIcon.Favorite,
+                onClick, label, modifier.sizeIn(minWidth = 48.dp, minHeight = 48.dp),
+                enabled && !isLoading, selected, isLoading) == true) return
+    val interactions = remember { MutableInteractionSource() }
+    val pressed by interactions.collectIsPressedAsState()
     Box(modifier.sizeIn(minWidth = 48.dp, minHeight = 48.dp)
-        .toggleable(selected, interactionSource = remember { MutableInteractionSource() }, indication = null,
+        .coffeePeekGlassPress(pressed, enabled && !isLoading)
+        .toggleable(selected, interactionSource = interactions, indication = null,
             enabled = enabled && !isLoading, role = Role.Checkbox, onValueChange = { onClick() })
         .semantics {
             this.contentDescription = label
             if (isLoading) progressBarRangeInfo = ProgressBarRangeInfo.Indeterminate
         },
         contentAlignment = Alignment.Center) {
+        if (style != CoffeePeekLikeButtonStyle.Plain && coffeePeekUsesNativeGlass) {
+            CoffeePeekNativeControlBackground(Modifier.matchParentSize(), enabled = enabled && !isLoading, pressed = pressed)
+        }
         // A compact visual plate is independent of the accessible touch target.
         Box(Modifier.size(coffeePeekLikePlateSize(style, iconSize)).coffeePeekLikeBackground(style, shape)
             .then(if (style == CoffeePeekLikeButtonStyle.Plain) Modifier.background(containerColor, shape) else Modifier)
@@ -84,15 +99,16 @@ fun CoffeePeekLikeButton(
 }
 
 internal fun coffeePeekLikePlateSize(style: CoffeePeekLikeButtonStyle, iconSize: Dp): Dp =
-    maxOf(if (style == CoffeePeekLikeButtonStyle.FloatingGlass) CoffeePeekDimens.buttonHeight else 32.dp,
+    maxOf(if (style == CoffeePeekLikeButtonStyle.FloatingGlass) CoffeePeekDimens.glassControlSize else 32.dp,
         iconSize + 8.dp)
 
 @Composable
-internal fun Modifier.coffeePeekLikeBackground(style: CoffeePeekLikeButtonStyle, shape: Shape): Modifier = when (style) {
-    CoffeePeekLikeButtonStyle.Glass ->
-        coffeePeekLiquidGlass(shape, shadowElevation = 0.dp, tintColor = CoffeePeekColors.LikePhotoOverlay)
-    CoffeePeekLikeButtonStyle.FloatingGlass -> coffeePeekLiquidGlass(shape)
-    CoffeePeekLikeButtonStyle.Plain -> this
+internal fun Modifier.coffeePeekLikeBackground(style: CoffeePeekLikeButtonStyle, shape: Shape): Modifier {
+    if (coffeePeekUsesNativeGlass) return this
+    return when (style) {
+        CoffeePeekLikeButtonStyle.Glass, CoffeePeekLikeButtonStyle.FloatingGlass -> coffeePeekLiquidGlass(shape)
+        CoffeePeekLikeButtonStyle.Plain -> this
+    }
 }
 
 @Composable

@@ -59,18 +59,18 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.material3.Button
+import com.coffeepeek.core.designsystem.component.CoffeePeekFilledButton as Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import com.coffeepeek.core.designsystem.component.CoffeePeekIconButton as IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
+import com.coffeepeek.core.designsystem.component.CoffeePeekOutlinedButton as OutlinedButton
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import com.coffeepeek.core.designsystem.component.CoffeePeekTextButton as TextButton
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
@@ -605,11 +605,11 @@ private fun HeroTopActions(
     modifier: Modifier = Modifier,
     businessId: String = "", businessSlug: String = "",
 ) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(CpDimens.spacing3)
-            .heightIn(min = 48.dp),
+    androidx.compose.runtime.CompositionLocalProvider(
+        com.coffeepeek.core.designsystem.modifier.LocalCoffeePeekGlassHazeState provides hazeState,
+    ) {
+      Row(
+        modifier = modifier.fillMaxWidth().padding(CpDimens.spacing3).heightIn(min = 48.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -636,6 +636,7 @@ private fun HeroTopActions(
             onShare = onShare,
             onSuggestChange = onSuggestChange,
         )
+      }
     }
 }
 

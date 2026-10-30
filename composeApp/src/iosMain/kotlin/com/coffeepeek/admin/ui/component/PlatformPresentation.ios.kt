@@ -5,6 +5,7 @@ package com.coffeepeek.admin.ui.component
 import androidx.compose.runtime.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
+import com.coffeepeek.core.designsystem.component.CoffeePeekTextButton as TextButton
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.graphics.luminance
@@ -127,106 +128,13 @@ private fun addNativeActions(
     }
 }
 
-private class SheetDelegate(val dismissed: () -> Unit) : NSObject(), UIAdaptivePresentationControllerDelegateProtocol {
-    override fun presentationControllerDidDismiss(presentationController: UIPresentationController) = dismissed()
-}
-
 @Composable
-internal actual fun NativeModalSheet(onDismiss: () -> Unit, dismissEnabled: Boolean, content: @Composable ColumnScope.() -> Unit): Boolean {
-    // UIKit cannot fit a page sheet to arbitrary content before iOS 16.
-    val supportsContentDetent = remember {
-        (UIDevice.currentDevice.systemVersion.substringBefore('.').toIntOrNull() ?: 0) >= 16
-    }
-    if (!supportsContentDetent) return false
-    val host = LocalUIViewController.current
-    val dismiss = rememberUpdatedState(onDismiss)
-    val body = rememberUpdatedState(content)
-    val colors = MaterialTheme.colorScheme
-    val themeMode by ThemeManager.themeMode.collectAsState()
-    val heightFraction = rememberUpdatedState(LocalNativeSheetHeightFraction.current?.coerceIn(0.1f, 1f) ?: 1f)
-    val sizing = remember { nativeSheetSizing(host) }
-    val controller = remember {
-        ComposeUIViewController {
-            AppContent { NativeSheetContent(sizing, heightFraction.value, body.value) }
-        }.apply { modalPresentationStyle = UIModalPresentationPageSheet }
-    }
-    val delegate = remember { SheetDelegate { dismiss.value() } }
-    SideEffect {
-        controller.modalInPresentation = !dismissEnabled
-        controller.overrideUserInterfaceStyle = themeMode.uiKitStyle
-        controller.view.backgroundColor = colors.surface.toUIColor()
-        controller.view.tintColor = colors.primary.toUIColor()
-    }
-    NativeSheetDetents(controller, host, sizing, heightFraction, delegate)
-    NativeSheetResize(controller, sizing.contentHeight, sizing.maximumHeight, heightFraction.value)
-    PresentNativeController(controller, host)
-    return true
-}
-
-private fun nativeSheetSizing(host: UIViewController): NativeSheetSizing {
-    val window = host.view.window
-    val screenHeight = (window?.bounds ?: UIScreen.mainScreen.bounds).useContents { size.height }
-    val safeInsets = window?.safeAreaInsets?.useContents { top + bottom } ?: 0.0
-    return NativeSheetSizing((screenHeight - safeInsets).coerceAtLeast(1.0))
-}
-
-@Composable
-private fun NativeSheetContent(sizing: NativeSheetSizing, heightFraction: Float, content: @Composable ColumnScope.() -> Unit) {
-    val density = LocalDensity.current
-    Surface(Modifier.fillMaxSize()) {
-        // UIKit adds bottom safe area to the custom detent; consume it once for descendants.
-        Box(Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Bottom))) {
-            ContentSizedSheetLayout(
-                maxContentHeight = (sizing.maximumHeight * heightFraction - NativeSheetTopPadding).coerceAtLeast(1.0).dp,
-                onContentHeightChanged = { pixels ->
-                    val points = pixels / density.density + NativeSheetTopPadding
-                    if (abs(sizing.contentHeight - points) > 0.5) sizing.contentHeight = points
-                },
-                modifier = Modifier.fillMaxSize().padding(top = NativeSheetTopPadding.dp).dismissKeyboardOnBackgroundGestures(),
-                content = content,
-            )
-        }
-    }
-}
-
-@Composable
-private fun NativeSheetDetents(
-    controller: UIViewController, host: UIViewController, sizing: NativeSheetSizing,
-    heightFraction: State<Float>, delegate: SheetDelegate,
-) {
-    DisposableEffect(controller, host) {
-        controller.sheetPresentationController?.apply {
-            detents = listOf(UISheetPresentationControllerDetent.customDetentWithIdentifier("content") { context ->
-                val maximum = context?.maximumDetentValue ?: sizing.maximumHeight
-                if (maximum > 0 && abs(sizing.maximumHeight - maximum) > 0.5) sizing.maximumHeight = maximum
-                nativeSheetDetentHeight(sizing.contentHeight, maximum, heightFraction.value)
-            })
-            prefersGrabberVisible = true
-            prefersScrollingExpandsWhenScrolledToEdge = false
-            prefersEdgeAttachedInCompactHeight = true
-        }
-        controller.presentationController?.delegate = delegate
-        onDispose { controller.presentationController?.delegate = null }
-    }
-}
-
-@Composable
-private fun NativeSheetResize(controller: UIViewController, contentHeight: Double, maximumHeight: Double, heightFraction: Float) {
-    LaunchedEffect(controller, contentHeight, maximumHeight, heightFraction) {
-        if (contentHeight > 0) {
-            while (controller.presentingViewController == null) delay(16)
-            // Correct the opening detent immediately; a delayed animation moves the sheet a second time.
-            controller.sheetPresentationController?.invalidateDetents()
-        }
-    }
-}
-
-private const val NativeSheetTopPadding = 24.0
-
-private class NativeSheetSizing(maximumHeight: Double) {
-    var maximumHeight by mutableDoubleStateOf(maximumHeight)
-    var contentHeight by mutableDoubleStateOf(0.0)
-}
+internal actual fun NativeModalSheet(
+    onDismiss: () -> Unit, dismissEnabled: Boolean, content: @Composable ColumnScope.() -> Unit,
+): Boolean = com.coffeepeek.core.designsystem.component.CoffeePeekNativeModalSheet(
+    onDismiss, dismissEnabled, LocalNativeSheetHeightFraction.current,
+    Modifier.dismissKeyboardOnBackgroundGestures(), content,
+)
 
 private class ControlTarget(var changed: (UIControl) -> Unit) : NSObject() {
     @ObjCAction fun change(sender: UIControl) = changed(sender)
@@ -234,30 +142,7 @@ private class ControlTarget(var changed: (UIControl) -> Unit) : NSObject() {
 
 @Composable
 internal actual fun PlatformSwitch(checked: Boolean, onCheckedChange: ((Boolean) -> Unit)?, enabled: Boolean, modifier: Modifier) {
-    val palette = switchPalette(MaterialTheme.colorScheme.background.luminance() < .5f)
-    Switch(
-        checked = checked,
-        onCheckedChange = onCheckedChange?.let { callback ->
-            { value -> platformHaptic(HapticEvent.Selection); callback(value) }
-        },
-        enabled = enabled,
-        modifier = modifier,
-        thumbContent = { Box(Modifier.size(SwitchDefaults.IconSize)) },
-        colors = SwitchDefaults.colors(
-            checkedThumbColor = palette.checkedThumb,
-            checkedTrackColor = palette.checkedTrack,
-            uncheckedThumbColor = palette.uncheckedThumb,
-            uncheckedTrackColor = palette.uncheckedTrack,
-            checkedBorderColor = Color.Transparent,
-            uncheckedBorderColor = Color.Transparent,
-            disabledCheckedThumbColor = palette.checkedThumb,
-            disabledCheckedTrackColor = palette.checkedTrack.copy(alpha = .5f),
-            disabledUncheckedThumbColor = palette.uncheckedThumb,
-            disabledUncheckedTrackColor = palette.uncheckedTrack.copy(alpha = .5f),
-            disabledCheckedBorderColor = Color.Transparent,
-            disabledUncheckedBorderColor = Color.Transparent,
-        ),
-    )
+    com.coffeepeek.core.designsystem.component.CoffeePeekSwitch(checked, onCheckedChange?.let { callback -> { value -> platformHaptic(HapticEvent.Selection); callback(value) } }, modifier, enabled)
 }
 
 @Composable
@@ -366,3 +251,11 @@ internal actual fun NativeDatePicker(title: String, initialMillis: Long, maximum
     }
     return true
 }
+
+@Composable
+private fun NativeSwitchPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
+    PlatformSwitch(true, {})
+}
+
+@Preview @Composable private fun NativeSwitchLightPreview() = NativeSwitchPreview(false)
+@Preview @Composable private fun NativeSwitchDarkPreview() = NativeSwitchPreview(true)
