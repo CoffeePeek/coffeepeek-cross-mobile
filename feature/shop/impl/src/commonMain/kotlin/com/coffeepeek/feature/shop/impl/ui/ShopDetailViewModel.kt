@@ -280,7 +280,11 @@ internal class ShopDetailViewModel(
             emitEvent(ShopDetailEvent.FavoriteRequiresSignIn(shop, !currentState.isFavorite))
             return
         }
-        if (!currentState.favoriteAvailable || favoriteMutationJob != null) return
+        if (!currentState.favoriteAvailable) {
+            emitEvent(ShopDetailEvent.FavoriteFailed)
+            return
+        }
+        if (favoriteMutationJob != null) return
         val details = currentState.details ?: return
         val job = currentCoroutineContext().job
         favoriteMutationJob = job
