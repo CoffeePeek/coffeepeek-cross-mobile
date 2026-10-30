@@ -30,7 +30,7 @@ fun CoffeePeekLikeIcon(
     enabled: Boolean = true,
     overImage: Boolean = false,
 ) {
-    val color = coffeePeekLikeColor(selected, overImage, MaterialTheme.colorScheme.onSurfaceVariant)
+    val color = coffeePeekLikeColor(selected, overImage, MaterialTheme.colorScheme.onSurface)
     Icon(
         imageVector = if (selected) CoffeePeekIcons.FavoriteFilled else CoffeePeekIcons.Favorite,
         contentDescription = contentDescription,
