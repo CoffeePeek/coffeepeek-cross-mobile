@@ -1,5 +1,41 @@
 # Home audit implementation — 2026-10-31
 
+## #245 — photo backdrop ownership
+
+Base develop `97f0e8bf`; branch `codex/migration-home-photo-backdrop`.
+The shared shop card owns a bounded photo-only Haze source. Favorite controls
+are overlay siblings, excluded from that capture. Native iOS bypasses it and
+keeps its native presenter. Flat controls/native MapLibre overlays keep the
+readable fallback; root/menu capture is not provided to arbitrary children.
+No dependency, model, palette, typography, analytics or persistence changes.
+Private card sections are extracted to keep changed composables reviewable.
+
+Plan: paired shared previews, design-system/Discovery units, both Android
+assemblies including DEX/isolation and shared iOS KLIB; manual Sandbox favorite
+controls in both themes and a short comparable emulator gfxinfo sample.
+Baseline before change: 71 frames, 17 janky (23.94%), p50/p90/p95/p99
+21/32/34/65 ms, GPU 2/16/19/23 ms, three manual vertical/horizontal swipes.
+This is a noisy short emulator sample, not a physical-phone performance claim.
+Native iPhone visuals remain deferred by the user.
+
+Results 2026-10-31: 180 unit tests / 27 suites (132 Discovery, 48 design-system),
+zero failures/errors/skips; Sandbox/Debug assembly, DEX/isolation and DS iOS KLIB
+passed (1m37s). No IDE renderer was available; paired previews are colocated.
+Manual emulator-5554/API37/1080x2400/density420/font1.0: light/dark photo controls
+remain readable; selected/unselected fake favorite toggles work and original
+membership is restored. The source tint is visible; the flat fixture area under
+the heart does not establish optical quality on every real photograph.
+Verified same certificate and Sandbox package/Activity, updated 2600 -> 2602.
+APK SHA-256: 6a29d413b6a8baec2514cbf2365cbfa15de13ff23cc97c66457b5295112abbe2.
+Source is the base above plus this patch. Screenshots/dumps stay local.
+
+After sample: 83 frames, 6 janky (7.23%), p50/p90/p95/p99 23/38/44/97ms;
+GPU 2/16/19/4950ms (one overflow-bin outlier). Same three input gestures, but
+fresh launch/light theme and initial scroll position were not strictly controlled
+against the earlier baseline. Therefore this is exploratory cost evidence only,
+not proof of improvement, regression or physical-device smoothness. No energy
+measurement or new speculative optimization. Broader scenarios belong to #256.
+
 ## #248 — consistent Russian fallback resources
 
 Base develop `8c2a876c`; branch `codex/migration-home-resource-language`.
