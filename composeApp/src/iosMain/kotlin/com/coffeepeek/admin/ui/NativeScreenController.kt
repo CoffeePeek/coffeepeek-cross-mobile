@@ -184,6 +184,7 @@ private object IosCoffeePeekGlassPresenter : CoffeePeekNativeGlassPresenter {
         modifier: Modifier, enabled: Boolean, selected: Boolean, isLoading: Boolean): Boolean {
         val platformIcon = when (icon) {
             CoffeePeekGlassIcon.Back -> GlassControlIcon.Back
+            CoffeePeekGlassIcon.Add -> GlassControlIcon.Add
             CoffeePeekGlassIcon.Edit -> GlassControlIcon.Edit
             CoffeePeekGlassIcon.Favorite -> GlassControlIcon.Favorite
             CoffeePeekGlassIcon.FavoriteFilled -> GlassControlIcon.FavoriteFilled

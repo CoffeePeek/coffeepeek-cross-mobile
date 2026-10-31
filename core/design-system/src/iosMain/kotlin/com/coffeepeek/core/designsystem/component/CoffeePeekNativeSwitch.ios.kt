@@ -2,15 +2,14 @@
 
 package com.coffeepeek.core.designsystem.component
 
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.viewinterop.UIKitInteropProperties
-import androidx.compose.ui.viewinterop.UIKitView
+import androidx.compose.ui.viewinterop.UIKitInteropInteractionMode
 import kotlinx.cinterop.ObjCAction
 import platform.Foundation.NSSelectorFromString
 import platform.UIKit.UIControlEventValueChanged
@@ -25,12 +24,14 @@ internal actual fun CoffeePeekNativeSwitch(
     val active = rememberUpdatedState(enabled)
     val colors = MaterialTheme.colorScheme
     val target = remember { CoffeePeekSwitchTarget { value -> if (active.value) callback.value?.invoke(value) } }
-    UIKitView(
+    CoffeePeekNativeGlassView(
         factory = { UISwitch().apply {
             addTarget(target, NSSelectorFromString("changed:"), UIControlEventValueChanged)
         } },
-        modifier = modifier.size(51.dp, 48.dp),
-        properties = UIKitInteropProperties(isNativeAccessibilityEnabled = onCheckedChange != null, placedAsOverlay = false),
+        // UIKit determines its width: the iOS 26 switch is wider than the old 51-point control.
+        modifier = modifier.heightIn(min = 48.dp),
+        interactionMode = if (onCheckedChange != null) UIKitInteropInteractionMode.Cooperative() else null,
+        accessibilityEnabled = onCheckedChange != null,
         update = { control ->
             control.overrideUserInterfaceStyle = coffeePeekUserInterfaceStyle(colors.background)
             control.onTintColor = colors.primary.toUIColor()

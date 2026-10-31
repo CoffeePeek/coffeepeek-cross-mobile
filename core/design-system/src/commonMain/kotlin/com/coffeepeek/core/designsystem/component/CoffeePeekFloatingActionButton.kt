@@ -30,9 +30,10 @@ fun CoffeePeekFloatingActionButton(
     contentColor: Color = contentColorFor(containerColor),
     elevation: FloatingActionButtonElevation = FloatingActionButtonDefaults.elevation(),
     interactionSource: MutableInteractionSource? = null,
+    enabled: Boolean = true,
     content: @Composable () -> Unit,
 ) {
-    CoffeePeekGlassButtonSurface(onClick, modifier.sizeIn(minWidth = 56.dp, minHeight = 56.dp), true,
+    CoffeePeekGlassButtonSurface(onClick, modifier.sizeIn(minWidth = 56.dp, minHeight = 56.dp), enabled,
             ButtonDefaults.buttonColors(containerColor, contentColor), PaddingValues(16.dp),
             interactionSource, CoffeePeekButtonStyle.Filled, shape, null) { content() }
 }

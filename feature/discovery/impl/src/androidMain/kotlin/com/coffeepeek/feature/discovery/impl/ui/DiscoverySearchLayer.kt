@@ -9,6 +9,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import com.coffeepeek.feature.discovery.api.DiscoveryHost
 import com.coffeepeek.feature.discovery.api.DiscoveryRoasterContext
 import com.coffeepeek.feature.discovery.api.DiscoveryRoasterSlots
@@ -20,21 +21,20 @@ internal fun DiscoverySearchLayer(
     state: SearchState, ui: DiscoveryTabState, motion: DiscoveryTabMotion, host: DiscoveryHost,
     roasters: DiscoveryRoasterSlots, context: DiscoveryRoasterContext, bottomClearance: Dp,
     onAddShop: () -> Unit, onAction: (SearchAction) -> Unit,
-    checkInAction: @Composable () -> Unit,
 ) {
     host.retained(motion.searchOpacity.value > 0f) {
         Box(Modifier.fillMaxSize().graphicsLayer {
             alpha = motion.searchOpacity.value
             translationY = -size.height / 5f * (1f - motion.searchOpacity.value)
         }) {
-            SearchContent(state, host, onAddShop, bottomClearance,
+            SearchContent(state, host, onAddShop, bottomClearance + 72.dp,
                 discovery = {
                     DiscoveryContent(state, host, roasters, context, ui.list, ui.shops,
                         ui.mapExpanded, motion.expansion.value, bottomClearance, onAddShop,
                         showAllRoasters = { ui.showRoasters = true }, onAction = onAction,
                         onMapSlot = { slot, ready ->
                             ui.recordMapSlot(slot, ready, motion.discoveryProgress.value, motion.expansion.value)
-                        }, checkInAction = checkInAction)
+                        })
                 },
                 textResults = { roasters.preview(context) }, onAction = onAction,
                 hasRoasterResults = if (state.query.isNotBlank()) roasters.hasResults(context) else null,
