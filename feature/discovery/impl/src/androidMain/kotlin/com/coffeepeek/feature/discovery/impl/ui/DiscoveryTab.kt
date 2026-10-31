@@ -21,6 +21,7 @@ internal class TabCallbacks(
     val onAddShop: () -> Unit,
     val onMapExpandedChange: (Boolean) -> Unit,
     val onFocusConsumed: () -> Unit,
+    val checkInAction: @Composable () -> Unit = {},
 )
 
 /** Lifecycle adapter; layout and transient overlays belong to the stateless content. */

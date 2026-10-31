@@ -1,5 +1,34 @@
 # Home audit implementation — 2026-10-31
 
+## #250 — explicit inline check-in action
+
+Base develop `9d8a6a78`; branch `codex/migration-home-checkin-action`.
+Plan: app-owned labeled action after the shop carousel, in the landing list only.
+Remove Android Home floating add control and its obsolete extra list/feedback
+clearance. Search, full map and roaster overlay have no create action; five tabs
+stay unchanged. Check-in auth, session-keyed flow and existing `global_create`
+attempt/exposure analytics stay app-owned. No new business dependencies, resources
+reuse the existing Russian `check_in_add` (the app currently only ships Russian).
+Legacy iOS placement remains for parity #252; shared flow callback extraction
+also preserves the Coffee tab's existing FAB. Verify Discovery units, both APKs
+and DEX/isolation, manual Sandbox scroll/keyboard/cancel and narrow large text.
+
+Results 2026-10-31: 132 Discovery units passed (0 failures/errors/skips), both
+Android assemblies, DEX runtime-class and Sandbox isolation passed in 56s.
+Emulator-5554/API37, same package/Activity/signature, 2606 -> 2608 in-place;
+APK SHA-256 418fb0476910f7b5085cf7c755ed375b76a8f08dbee521d103380a5eba21b819.
+Source: base above plus this patch. Normal dark Home shows the label at y1991,
+above tabs; opening the fake check-in picker and Back succeeds. Search focus and
+typed query hide the action; IME reports input shown (this emulator uses the
+floating hardware-keyboard toolbar, so a full docked IME was not certified).
+At local 320x740dp/font2 the complete label fits, picker opens/cancels, light/dark
+contrast stays readable. Vertical scroll reaches the final roaster card above
+the tabs; its Show all target is reachable. No real account writes, device font
+changes or automated UI tests. Paired action previews use no Analytics/DI.
+Native iOS placement and runtime are tracked in #252; iPhone review is deferred.
+CI follow-up: #270 both platforms passed; #271 iOS failed one of 41 existing
+MapViewModelParityTest contracts (bounds/prefetch), diagnosis retained for #252.
+
 ## #249 — adaptive mini-map density
 
 Base develop `165e039e`; branch `codex/migration-home-map-density`.
