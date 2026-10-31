@@ -39,6 +39,7 @@ internal fun DiscoverySearchLayer(
                 textResults = { roasters.preview(context) }, onAction = onAction,
                 hasRoasterResults = if (state.query.isNotBlank()) roasters.hasResults(context) else null,
                 onAddRoaster = roasters.onAdd,
+                resultsState = ui.results,
                 headerModifier = Modifier
                     .then(if (ui.mapExpanded) Modifier.clearAndSetSemantics {} else Modifier)
                     .graphicsLayer {

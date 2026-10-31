@@ -168,7 +168,7 @@ internal actual fun PlatformRootNavigation(
             val navigation = navigations[index]
             val root = NativeScreenController(labels[index], analyticsPage = listOf("discovery", "coffees", "feed", "profile", "settings", "business_ownership")[index], isTabRoot = true) {
                 when (index) {
-                    0 -> koinInject<DiscoveryScreenRenderer>().Tab(onMapExpandedChange = {})
+                    0 -> koinInject<DiscoveryScreenRenderer>().Tab(onMapExpandedChange = {}, reselections = tabReselections.search)
                     1 -> CheckInTabContent { koinInject<CoffeeScreenRenderer>().List(tabReselections.coffee) }
                     2 -> koinInject<CommunityScreenRenderer>().Content(
                         onCreateCheckIn = { Navigator.navigate(Navigator.Screen.CreateCheckIn) },
@@ -199,6 +199,7 @@ internal actual fun PlatformRootNavigation(
         tabDelegate.onTabChanged = { saveNavigation() }
         tabDelegate.onTabReselected = { navigation ->
             tabReselections.onTabPressed(Navigator.Screen.CoffeeTab, isSelected = navigation == navigations[1])
+            tabReselections.onTabPressed(Navigator.Screen.FeedTab, isSelected = navigation == navigations[0])
         }
         tabs
     }, modifier = Modifier.fillMaxSize(), properties = UIKitInteropProperties(

@@ -21,6 +21,7 @@ internal const val MAP_ITEM_KEY = "mini-map"
 internal class DiscoveryTabState(
     val list: LazyListState,
     val shops: LazyListState,
+    val results: LazyListState,
     roasterVisibility: MutableState<Boolean>,
 ) {
     var showRoasters by roasterVisibility
@@ -57,7 +58,8 @@ internal fun rememberDiscoveryTabState(): DiscoveryTabState {
     val roasters = rememberSaveable { mutableStateOf(false) }
     val list = rememberLazyListState()
     val shops = rememberLazyListState()
-    return remember(list, shops, roasters) { DiscoveryTabState(list, shops, roasters) }
+    val results = rememberLazyListState()
+    return remember(list, shops, results, roasters) { DiscoveryTabState(list, shops, results, roasters) }
 }
 
 @Stable

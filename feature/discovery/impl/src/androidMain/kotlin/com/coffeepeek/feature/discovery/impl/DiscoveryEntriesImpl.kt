@@ -46,12 +46,13 @@ fun createDiscoveryTabEntry(
         focus: MapFocus?,
         onFocusConsumed: () -> Unit,
         checkInAction: @Composable () -> Unit,
+        reselections: kotlinx.coroutines.flow.Flow<Unit>,
     ) {
         DiscoveryTab(
             viewModel(key = "discovery-search") { SearchViewModel(repository, favorites, city, location, account, analytics) },
             viewModel(key = "discovery-map") { MapViewModel(repository, city, location, shopDetails, analytics, account, favorites) },
             host, roasters, analytics,
-            TabCallbacks(onOpenShop, onSignIn, onAddShop, onMapExpandedChange, onFocusConsumed, checkInAction),
+            TabCallbacks(onOpenShop, onSignIn, onAddShop, onMapExpandedChange, onFocusConsumed, checkInAction, reselections),
             bottomClearance, focus, modifier,
         )
     }
