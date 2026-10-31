@@ -5,6 +5,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Shapes
 import androidx.compose.material3.Typography
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import com.coffeepeek.core.designsystem.component.CoffeePeekButton
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
@@ -18,7 +19,10 @@ fun CoffeePeekPlatformTheme(
     shapes: Shapes,
     content: @Composable () -> Unit,
 ) {
-    MaterialTheme(colorScheme = colorScheme, typography = typography, shapes = shapes, content = content)
+    val opaqueGlass = LocalCoffeePeekOpaqueGlassOverride.current ?: coffeePeekPlatformOpaqueGlass()
+    CompositionLocalProvider(LocalCoffeePeekOpaqueGlass provides opaqueGlass) {
+        MaterialTheme(colorScheme = colorScheme, typography = typography, shapes = shapes, content = content)
+    }
 }
 
 @Composable

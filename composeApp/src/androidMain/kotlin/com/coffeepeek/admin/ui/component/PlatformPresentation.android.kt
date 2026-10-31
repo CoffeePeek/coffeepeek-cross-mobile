@@ -1,6 +1,8 @@
 package com.coffeepeek.admin.ui.component
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.MotionDurationScale
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.material3.*
 import com.coffeepeek.core.designsystem.component.CoffeePeekTextButton as TextButton
@@ -34,9 +36,13 @@ internal actual fun PlatformSwitch(checked: Boolean, onCheckedChange: ((Boolean)
 }
 @Composable
 internal actual fun NativeSegmentedControl(labels: List<String>, selectedIndex: Int, onSelected: (Int) -> Unit, modifier: Modifier) = false
-internal actual fun platformHaptic(event: HapticEvent) = Unit
+internal actual fun platformHaptic(event: HapticEvent) = AndroidHapticFeedback.perform(event)
 @Composable
-internal actual fun platformReduceMotion() = false
+internal actual fun platformReduceMotion(): Boolean {
+    // The window Recomposer already observes the system animator duration scale.
+    val scale = rememberCoroutineScope().coroutineContext[MotionDurationScale]
+    return scale?.scaleFactor == 0f
+}
 @Composable
 internal actual fun NativeDatePicker(title: String, initialMillis: Long, maximumMillis: Long?, timeOnly: Boolean, onConfirm: (Long) -> Unit, onDismiss: () -> Unit) = false
 

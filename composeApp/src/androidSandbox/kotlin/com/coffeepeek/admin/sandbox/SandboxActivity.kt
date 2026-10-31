@@ -15,6 +15,8 @@ import com.coffeepeek.admin.sandbox.backend.SandboxFeed
 import com.coffeepeek.admin.sandbox.backend.SandboxUpdatePolicy
 import com.coffeepeek.admin.sandbox.compose.SandboxScreen
 import com.coffeepeek.admin.sandbox.compose.SandboxResourceConfiguration
+import com.coffeepeek.admin.sandbox.compose.sandboxMotionContext
+import com.coffeepeek.admin.ui.component.AndroidHapticFeedback
 
 /** Isolated bootstrap reuses the real graph with local ports, never production services. */
 class SandboxActivity : ComponentActivity() {
@@ -23,7 +25,7 @@ class SandboxActivity : ComponentActivity() {
         if (savedInstanceState == null) com.coffeepeek.admin.notifications.openNotificationIntent(intent)
         enableEdgeToEdge()
         val fresh = savedInstanceState == null
-        setContent {
+        setContent(parent = sandboxMotionContext()) {
             val model: SandboxViewModel = viewModel()
             val sandbox = application as SandboxApplication
             // Fixtures that the app caches after its first load (the city catalog) can only be chosen at launch:
@@ -50,9 +52,21 @@ class SandboxActivity : ComponentActivity() {
                 fontScale = intent.getFloatExtra("sandbox_font_scale", 0f),
                 widthDp = intent.getIntExtra("sandbox_width_dp", 0),
                 heightDp = intent.getIntExtra("sandbox_height_dp", 0),
+                opaqueGlass = if (intent.hasExtra("sandbox_opaque_glass")) intent.getBooleanExtra("sandbox_opaque_glass", false) else null,
             ) { SandboxScreen(model, sandbox) }
         }
     }
+
+    override fun onResume() {
+        super.onResume()
+        AndroidHapticFeedback.bind(window.decorView)
+    }
+
+    override fun onPause() {
+        AndroidHapticFeedback.unbind(window.decorView)
+        super.onPause()
+    }
+
     private companion object {
         const val EXTRA_CITIES = "sandbox_cities"
         const val EXTRA_UPDATE = "sandbox_update"

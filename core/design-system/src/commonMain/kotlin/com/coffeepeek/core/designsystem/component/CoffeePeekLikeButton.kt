@@ -12,6 +12,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.runtime.getValue
@@ -36,6 +37,8 @@ import com.coffeepeek.core.designsystem.resources.coffeepeek_like_add
 import com.coffeepeek.core.designsystem.resources.coffeepeek_like_remove
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
+import com.coffeepeek.core.designsystem.theme.LocalCoffeePeekOpaqueGlass
+import com.coffeepeek.core.designsystem.theme.LocalCoffeePeekOpaqueGlassOverride
 import com.coffeepeek.core.designsystem.modifier.coffeePeekLiquidGlass
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
@@ -93,10 +96,14 @@ fun CoffeePeekLikeButton(
             .clip(shape), contentAlignment = Alignment.Center) {
             if (isLoading) CoffeePeekLoader(label, modifier = Modifier.clearAndSetSemantics {},
                 size = 18.dp, strokeWidth = 2.dp)
-            else CoffeePeekLikeIcon(selected, null, size = iconSize, enabled = enabled, overImage = overImage)
+            else CoffeePeekLikeIcon(selected, null, size = iconSize, enabled = enabled,
+                overImage = coffeePeekLikeUsesPhotoColor(overImage, style, LocalCoffeePeekOpaqueGlass.current))
         }
     }
 }
+
+internal fun coffeePeekLikeUsesPhotoColor(overImage: Boolean, style: CoffeePeekLikeButtonStyle, opaque: Boolean): Boolean =
+    overImage && (style == CoffeePeekLikeButtonStyle.Plain || !opaque)
 
 internal fun coffeePeekLikePlateSize(style: CoffeePeekLikeButtonStyle, iconSize: Dp): Dp =
     maxOf(if (style == CoffeePeekLikeButtonStyle.FloatingGlass) CoffeePeekDimens.glassControlSize else 32.dp,
@@ -121,6 +128,7 @@ private fun LikeButtonPreviewContent() {
             CoffeePeekLikeButton(true, remove, {})
             CoffeePeekLikeButton(true, remove, {}, enabled = false)
             CoffeePeekLikeButton(true, remove, {}, overImage = true)
+            CoffeePeekLikeButton(false, add, {}, overImage = true)
         }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             CoffeePeekLikeButton(true, remove, {}, overImage = true, style = CoffeePeekLikeButtonStyle.Plain)
@@ -137,3 +145,13 @@ private fun LikeButtonPreviewContent() {
 @Preview @Composable private fun CoffeePeekLikeButtonDarkPreview() = CoffeePeekTheme(darkTheme = true) {
     LikeButtonPreviewContent()
 }
+
+@Composable
+private fun CoffeePeekLikeButtonOpaquePreview(dark: Boolean) {
+    CompositionLocalProvider(LocalCoffeePeekOpaqueGlassOverride provides true) {
+        CoffeePeekTheme(darkTheme = dark) { LikeButtonPreviewContent() }
+    }
+}
+
+@Preview @Composable private fun CoffeePeekLikeButtonOpaqueLightPreview() = CoffeePeekLikeButtonOpaquePreview(false)
+@Preview @Composable private fun CoffeePeekLikeButtonOpaqueDarkPreview() = CoffeePeekLikeButtonOpaquePreview(true)
