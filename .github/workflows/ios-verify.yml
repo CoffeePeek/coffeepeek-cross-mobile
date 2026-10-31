@@ -39,7 +39,7 @@ jobs:
     runs-on: xcode-27
     timeout-minutes: 60
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-java@v6
         with:
           distribution: temurin
@@ -58,7 +58,7 @@ jobs:
       - name: Compile iPhone launch catalog for xtool
         shell: bash
         run: bash iosXtool/CoffeePeek/prepare-launch-resources.sh
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: ios-launch-resources
           path: iosXtool/CoffeePeek/.build/launch-resources/Assets.car
@@ -115,7 +115,7 @@ jobs:
               tail -n 150 "$RUNNER_TEMP/ios-ownership-tests.log"
               exit 1
             }
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: ios-build-log

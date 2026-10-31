@@ -3,7 +3,7 @@ package com.coffeepeek.admin.di.discovery
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import com.coffeepeek.admin.ui.screen.checkins.CheckInInlineAction
+import com.coffeepeek.admin.ui.screen.checkins.CheckInCreateButton
 import com.coffeepeek.admin.settings.CityPreference
 import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.ui.component.LocalFloatingNavClearance
@@ -38,7 +38,7 @@ internal class AndroidDiscoveryScreenRenderer(private val entry: DiscoveryTabEnt
                 bottomClearance = clearance,
                 focus = pendingMapFocus?.let { MapFocus(it.shopId, it.title, Coordinates(it.latitude, it.longitude)) },
                 onFocusConsumed = Navigator::consumeMapFocus,
-                checkInAction = { CheckInInlineAction(onCreateCheckIn) },
+                checkInAction = { CheckInCreateButton(onClick = onCreateCheckIn) },
                 reselections = reselections,
             )
         }

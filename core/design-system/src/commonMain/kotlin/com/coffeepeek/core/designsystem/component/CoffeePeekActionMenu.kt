@@ -61,9 +61,10 @@ data class CoffeePeekMenuAction(
 fun CoffeePeekActionMenu(
     actions: List<CoffeePeekMenuAction>,
     modifier: Modifier = Modifier,
+    enabled: Boolean = true,
     content: @Composable (open: () -> Unit) -> Unit,
 ) {
-    if (CoffeePeekNativeMenu(actions, modifier, content)) return
+    if (CoffeePeekNativeMenu(actions, modifier, enabled, content)) return
     val expanded = remember { MutableTransitionState(false) }
     val margin = with(LocalDensity.current) { CoffeePeekDimens.spacing2.roundToPx() }
     val origin = remember { MenuOrigin() }
@@ -75,10 +76,10 @@ fun CoffeePeekActionMenu(
             }
     } }
     Box(modifier) {
-        content { expanded.targetState = true }
+        content { if (enabled) expanded.targetState = true }
         if (expanded.currentState || expanded.targetState) Popup(position, onDismissRequest = { expanded.targetState = false }, properties = PopupProperties(focusable = true)) {
             CoffeePeekActionMenuContent(actions, Modifier.menuAppearance(expanded, origin)) {
-                if (expanded.targetState) {
+                if (enabled && expanded.targetState) {
                     expanded.targetState = false
                     it.onClick()
                 }

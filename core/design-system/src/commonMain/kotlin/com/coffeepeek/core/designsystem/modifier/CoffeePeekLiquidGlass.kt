@@ -39,7 +39,7 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 /** Screen-owned backdrop; a missing source uses a dense, readable glass fallback. */
 val LocalCoffeePeekGlassHazeState = compositionLocalOf<HazeState?> { null }
 
-enum class CoffeePeekGlassIcon { Back, Edit, Favorite, FavoriteFilled, Share, Close }
+enum class CoffeePeekGlassIcon { Back, Add, Edit, Favorite, FavoriteFilled, Share, Close }
 
 interface CoffeePeekNativeGlassPresenter {
     @Composable

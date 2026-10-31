@@ -34,7 +34,6 @@ internal fun DiscoveryContent(
     listState: LazyListState, shopsState: LazyListState, mapExpanded: Boolean, expansion: Float,
     bottomClearance: Dp, onAddShop: () -> Unit, showAllRoasters: () -> Unit,
     onAction: (SearchAction) -> Unit, onMapSlot: (Frame, Boolean) -> Unit,
-    checkInAction: @Composable () -> Unit = {},
 ) {
     val photos = state.visibleShops.take(PREVIEW_SHOP_COUNT).map { it.id to listOfNotNull(it.photoUrl) }
     host.photoPrefetch(shopsState, photos.takeIf { !mapExpanded }.orEmpty())
@@ -54,8 +53,7 @@ internal fun DiscoveryContent(
                 },
         ) { scrollModifier ->
             DiscoveryLandingList(state, host, roasters, context, listState, shopsState, mapExpanded,
-                bottomClearance, onAddShop, showAllRoasters, onAction, onMapSlot, miniMapHeight, scrollModifier,
-                checkInAction)
+                bottomClearance, onAddShop, showAllRoasters, onAction, onMapSlot, miniMapHeight, scrollModifier)
         }
     }
 }
@@ -66,11 +64,10 @@ private fun DiscoveryLandingList(
     listState: LazyListState, shopsState: LazyListState, mapExpanded: Boolean, bottomClearance: Dp,
     onAddShop: () -> Unit, showAllRoasters: () -> Unit, onAction: (SearchAction) -> Unit,
     onMapSlot: (Frame, Boolean) -> Unit, miniMapHeight: Dp, modifier: Modifier,
-    checkInAction: @Composable () -> Unit,
 ) {
     LazyColumn(
         state = listState, userScrollEnabled = !mapExpanded, modifier = modifier.fillMaxSize(),
-        contentPadding = PaddingValues(top = CoffeePeekDimens.spacing4, bottom = bottomClearance + CoffeePeekDimens.spacing4),
+        contentPadding = PaddingValues(top = CoffeePeekDimens.spacing4, bottom = bottomClearance + 88.dp),
         verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing4),
     ) {
         item(key = MAP_ITEM_KEY) { DiscoveryMapSlot(miniMapHeight, onMapSlot) }
@@ -85,7 +82,6 @@ private fun DiscoveryLandingList(
                 message = stringResource(R.string.discovery_refresh_error), retryLabel = stringResource(R.string.discovery_retry))
         }
         item(key = "shops-preview") { DiscoveryShopPreview(state, host, shopsState, onAddShop, onAction) }
-        item(key = "check-in") { Box(Modifier.padding(horizontal = CoffeePeekDimens.spacing4)) { checkInAction() } }
         item(key = "roasters-heading") {
             DiscoverySectionTitle(stringResource(R.string.discovery_section_roasters), showAllRoasters,
                 Modifier.padding(horizontal = CoffeePeekDimens.spacing4))

@@ -180,7 +180,7 @@ private fun PostMenu(actions: PostCardActions, enabled: Boolean, hiding: Boolean
         actions.onReport?.let { add(CoffeePeekMenuAction(stringResource(Res.string.community_report), CoffeePeekIcons.Error, onClick = it)) }
         actions.onBlock?.let { add(CoffeePeekMenuAction(stringResource(Res.string.community_block_author), CoffeePeekIcons.VisibilityOff, destructive = true, onClick = it)) }
     }
-    CoffeePeekActionMenu(items) { open ->
+    CoffeePeekActionMenu(items, enabled = enabled) { open ->
         IconButton(onClick = open, enabled = enabled) { Icon(CoffeePeekIcons.MoreHorizontal, label, tint = MaterialTheme.colorScheme.onSurfaceVariant) }
     }
 }
