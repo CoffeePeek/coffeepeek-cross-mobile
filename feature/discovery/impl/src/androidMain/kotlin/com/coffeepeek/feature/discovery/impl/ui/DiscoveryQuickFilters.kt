@@ -22,14 +22,18 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 
 @Composable
-internal fun DiscoveryQuickFilters(filters: DiscoveryFilters, canUseNearby: Boolean, onAction: (SearchAction) -> Unit) {
+internal fun DiscoveryQuickFilters(
+    filters: DiscoveryFilters, onAction: (SearchAction) -> Unit,
+    cityName: String? = null, onChangeCity: (() -> Unit)? = null,
+) {
     LazyRow(
         contentPadding = PaddingValues(horizontal = CoffeePeekDimens.spacing4, vertical = 4.dp),
         horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2),
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier.fillMaxWidth(),
     ) {
-        if (canUseNearby) item { CoffeePeekFilterChip(stringResource(R.string.discovery_quick_nearby), filters.nearbyOnly, { onAction(SearchAction.ToggleNearby) }, leadingIcon = CoffeePeekIcons.Distance) }
+        if (onChangeCity != null) item { DiscoveryCityButton(cityName, onChangeCity) }
+        item { CoffeePeekFilterChip(stringResource(R.string.discovery_quick_nearby), filters.nearbyOnly, { onAction(SearchAction.ToggleNearby) }, leadingIcon = CoffeePeekIcons.Distance) }
         item { CoffeePeekFilterChip(stringResource(R.string.discovery_quick_open), filters.openOnly, { onAction(SearchAction.ToggleOpen) }, leadingIcon = CoffeePeekIcons.Time) }
         item { CoffeePeekFilterChip(stringResource(R.string.discovery_quick_new), filters.newOnly, { onAction(SearchAction.ToggleNew) }, leadingIcon = CoffeePeekIcons.Sparkle) }
         item { CoffeePeekFilterChip(stringResource(R.string.discovery_quick_visited), filters.visitedOnly, { onAction(SearchAction.ToggleVisited) }, leadingIcon = CoffeePeekIcons.CheckCircle) }
@@ -49,6 +53,6 @@ private fun ShopKind.label() = when (this) {
 @PreviewLightDark
 @Composable
 private fun DiscoveryQuickFiltersPreview() = CoffeePeekTheme {
-    DiscoveryQuickFilters(DiscoveryFilters(openOnly = true, nearbyOnly = true), canUseNearby = true, onAction = {})
+    DiscoveryQuickFilters(DiscoveryFilters(openOnly = true), onAction = {}, cityName = "Минск", onChangeCity = {})
 }
 

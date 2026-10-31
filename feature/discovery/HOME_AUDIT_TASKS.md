@@ -1,5 +1,35 @@
 # Home audit implementation — 2026-10-31
 
+## #251 — city context and discoverable Nearby
+
+Base develop `4fe0460a`; branch `codex/migration-home-city-nearby`.
+Plan: show the current city in the existing filter row, routing to the existing
+app-owned city selector; always show Nearby. A user tap requests permission,
+then enables nearby only after valid coordinates. Denial/timeout retains city
+results with dismissible feedback; repeated taps are guarded; changing city
+cancels pending nearby and returns to city search. Preserve query, filters,
+map synchronization, permission-once policy and analytics attribution. Add
+in-memory regressions for grant/denial/timeout/city change, paired previews,
+both Android APK/DEX/isolation and manual Sandbox. No system settings changes.
+
+Results 2026-10-31: 139 Discovery tests (7 new request contracts), zero failures,
+errors or skips; both APKs with runtime DEX/isolation passed. Initial build 57s,
+feedback prioritization/analytics follow-up 7s, final shorter-copy build 6s.
+Manual emulator-5554/API37: current city visible without adding a header row;
+Minск -> Брест via the existing selector updates Home, Back retains selection.
+Nearby remains discoverable with no coordinates; the previously refused
+permission is respected, immediate failure notice appears, dismissal/repeated
+tap works and leaves the selected city/results unchanged. Restored Минск.
+Grant/invalid-position/timeout/late-response paths passed in-memory tests; no
+fresh OS permission prompt or real location fix was certified. No permission
+reset, system setting change or real backend write was used to obtain a pass.
+Normal light and local 320x740dp/font1.5 dark reviewed; the initial long error
+copy covered too much content, shortened after this observation and rechecked.
+Location feedback takes precedence over favorite feedback without dropping it.
+All captures/dumps remain ignored/local; native iOS parity is #252.
+Sandbox 2608 -> 2610, same package/Activity/signature, source base plus patch.
+Final APK SHA-256: 0f5e00fa8e91bbb25ca57896ddc53abc8a840e93aa3a6ac069a2a93417f0747e.
+
 ## #250 — explicit inline check-in action
 
 Base develop `9d8a6a78`; branch `codex/migration-home-checkin-action`.

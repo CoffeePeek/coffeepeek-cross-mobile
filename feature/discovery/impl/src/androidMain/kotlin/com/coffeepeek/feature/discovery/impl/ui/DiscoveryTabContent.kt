@@ -52,7 +52,12 @@ internal fun DiscoveryTabContent(
         DiscoveryRoasterOverlay(ui, roasters, context, reduceMotion, onAction)
         if (state.showFilters) FilterSheet(state, host, onAction)
         if (ui.mapAnchor.width > 0f || ui.mapExpanded) DiscoveryMapLayer(ui, motion, host, canvasSize, toggleMap, map)
-        if (host.isVisible() && !state.showFilters && !ui.showRoasters && !ui.mapExpanded) {
+        if (host.isVisible() && !state.showFilters && !ui.showRoasters && (state.nearbyRequested || state.locationUnavailable)) {
+            DiscoveryLocationNotice(state.nearbyRequested, { onAction(SearchAction.DismissLocationFailure) },
+                Modifier.align(Alignment.BottomCenter).padding(bottom = if (ui.mapExpanded) 24.dp else bottomClearance + 12.dp))
+        }
+        if (host.isVisible() && !state.showFilters && !ui.showRoasters && !ui.mapExpanded &&
+            !state.nearbyRequested && !state.locationUnavailable) {
             FavoriteFailureFeedback(state.favoriteFailureId, { onAction(SearchAction.DismissFavoriteFailure(it)) },
                 Modifier.align(Alignment.BottomCenter).padding(bottom = bottomClearance + 12.dp))
         }
