@@ -32,3 +32,43 @@ analytics behavior changes.
 Implementation evidence: popup menus explicitly passed `hazeState = null` while
 the fallback used only the normal translucent tint. The screenshot's underlying
 profile text therefore remained sharp and visible through menu items.
+
+## Results
+
+Implementation revision: `f637471f` (no code changes after verification).
+On 2026-10-31, 48 design-system tests in 14 suites and 60 profile tests in six
+suites executed with zero failures/errors/skips. Direct Sandbox and Direct Debug
+assembly, both packaged DEX runtime-class checks, Sandbox isolation, and
+`:core:design-system:compileKotlinIosArm64` passed. Existing preview deprecation
+and expect/actual beta warnings remain; no dependency/source-set changes.
+All 326 numeric tokens in the original contour data and animation constants
+match the restored shared implementation. The initially overbroad text comparison
+included the new KDoc and did not match; the data comparison confirms no contour
+or timing change. Existing unit suites were used; no automated UI tests added.
+
+Manual review: unlocked emulator-5554 / sdk_gphone64_x86_64, API 37, 1080x2400,
+density 420, font scale 1.0. Verified package/entry/version and same signing cert,
+then updated com.coffeepeek.sandbox in place from 2588 to 2591
+(1.1.4.2591-sandbox / SandboxActivity). APK SHA-256:
+`c1624918e7d4b32eeee1b5211b657066e92d48b0d71c4abfa0dd9371c94d60d5`.
+
+- Reproduced sharp profile text bleeding through the old menu before installing.
+  New own-profile menus blur the same content in light and dark themes; the
+  underlying avatar's color remains diffuse while foreground labels stay sharp.
+- Back and outside-tap dismissals passed. Checked menu over a feed photo and the
+  separate public-profile destination as well; both show the captured blur.
+  Sharing, blocking, logout and edit actions were not executed.
+- Home pull-to-refresh in Slow mode shows the original irregular contour in both
+  themes, preserves content during refresh and removes the loader on completion.
+  Home search/tags/map controls and bottom navigation were visually reviewed.
+- Restored Ready/Seeded, light theme and Home, with no remaining loader and the
+  original fake favorite still selected. No system settings or real data changed.
+
+Screenshots/UI dumps and build log remain local in ignored design-system build
+output. Native iOS rendering/full app build, TalkBack, large fonts/windows,
+forced-disabled blur and physical-device performance were not executed. The
+no-source fallback was reviewed through Home controls; the disabled-blur path
+uses Haze's explicit fallback tint. KLIB compilation is not an iOS device check.
+
+Haze API evidence: [1.7.1 usage](https://github.com/chrisbanes/haze/blob/1.7.1/docs/usage.md)
+and [fallback tint contract](https://github.com/chrisbanes/haze/blob/1.7.1/haze/src/commonMain/kotlin/dev/chrisbanes/haze/HazeStyle.kt).
