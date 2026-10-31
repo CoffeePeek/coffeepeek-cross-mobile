@@ -16,4 +16,5 @@
     <string name="coffeepeek_like_remove">Убрать лайк</string>
     <string name="coffeepeek_pagination_error">Не удалось загрузить следующие результаты.</string>
     <string name="coffeepeek_pagination_retry">Повторить</string>
+    <string name="coffeepeek_refresh_error">Не удалось обновить. Показаны предыдущие результаты.</string>
 </resources>

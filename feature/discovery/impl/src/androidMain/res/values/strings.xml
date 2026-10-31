@@ -81,4 +81,5 @@
     <string name="discovery_map_photo_missing">Фото %1$s отсутствует</string>
     <string name="discovery_map_collapse">Свернуть карту</string>
     <string name="discovery_pagination_error">Не удалось загрузить следующие кофейни.</string>
+    <string name="discovery_refresh_error">Не удалось обновить. Показаны предыдущие результаты.</string>
 </resources>

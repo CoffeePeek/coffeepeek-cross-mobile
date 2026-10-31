@@ -193,3 +193,63 @@ selected/unselected states retain that alignment. Roaster labels centre at
 filter, selection/reset semantics, full roaster catalog and Back passed.
 Screenshots/dumps remain local in ignored build output. Native iOS visuals,
 large fonts, narrow windows and TalkBack traversal were not run.
+
+## #239 — retained-content refresh feedback
+
+Base: `614d9d98a16432ef97185f5e1ce80b68b79c39cb` (`develop`).
+Branch: `codex/migration-home-refresh-feedback`.
+
+Both Android Discovery and the retained iOS Feed path preserve loaded shops on a
+failed refresh but render errors only for an empty list. Add a localized inline
+refresh error before retained cards, with the existing guarded Refresh action.
+Reuse the shared list retry presentation through a refresh-specific component;
+keep its polite live region, palette and native button path. Initial-load errors
+and pagination stay separate. Discovery pagination also uses localized copy,
+not an unreviewed raw server message. No navigation, data or analytics rewiring.
+
+Verification plan: ViewModel regressions for retained cards, retry, duplicate
+refresh suppression and recovery, plus legacy Feed parity and fake-backend
+contracts. Add a manual-only Sandbox fixture that succeeds on the first search,
+fails the first refresh of that query and succeeds on explicit retry. Compile
+Android Sandbox/Debug, check DEX/isolation, compile affected shared iOS code.
+Manually cover Home and search results, both themes, error/retry persistence,
+initial failure and pagination separation. UI previews are colocated; no
+automated UI tests. Native iOS visuals and larger font/window gates remain open.
+
+Results on 2026-10-31: 214 unit tests executed (116 Discovery, 45 design-system,
+53 legacy Feed/Sandbox contracts; 25 suites), zero failures/errors/skips. The
+refresh regression covers retained cards, Home/search presentation, duplicate
+requests, first-load separation and successful recovery. The fixture contract
+also verifies per-query failure isolation, pagination and resetting its mode.
+Android Direct Sandbox/Debug assembly, DEX runtime classes and Sandbox isolation
+passed. Design-system iOS Arm64 KLIB compilation executed and passed. The requested
+`composeApp:compileKotlinIosArm64` was SKIPPED by the Windows-host build; full iOS
+compilation remains a macOS CI gate, not a completed local check.
+
+Localization audit: Discovery Android resources and legacy application resources
+currently provide Russian copy; the design-system defaults support English and
+Russian. Both screen paths explicitly pass their own message/retry resources so
+an English system locale does not introduce English into the Russian screen.
+The first check run passed; a second build/test run verified these resource
+overrides. Existing preview/test warnings remain; no Studio inspection service.
+
+Manual review used unlocked `emulator-5554`, `sdk_gphone64_x86_64`, API 37,
+1080×2400, density 420, font scale 1.0. Verified matching signature and updated
+Direct Sandbox 2580 in place to `1.1.4.2582-sandbox` / 2582, package
+`com.coffeepeek.sandbox`, entry `SandboxActivity`. Source: base above plus this
+patch. APK SHA-256:
+`ce229f88c45c2d7b94ef0a930d35a685447cd06d8faf02cd43bfc741aaffb02e`.
+
+Home refresh failure retained the same shop cards and displayed the localized
+message/retry in both themes; it stayed visible until explicit retry. Recovery
+removed the message and retained the cards. A nonblank `Sandbox Cafe` search
+retained its query/card through failure and retry. `SearchFailure` still showed
+the existing initial-load error without a retained-content message. `PageFailure`
+showed a distinct localized footer, then appended cards after explicit retry.
+Screenshots/dumps remain local in ignored build output. The install briefly
+showed Android's updating screen and an early UI dump had no root; checks began
+after a settled fresh Sandbox launch. Original light theme and Seeded fixture
+were restored. No live services or UI automation tests were used; system settings
+were not changed.
+TalkBack traversal, enlarged fonts/narrow windows and native iOS visuals remain
+unexecuted gates; the reused retry component retains its polite live region.

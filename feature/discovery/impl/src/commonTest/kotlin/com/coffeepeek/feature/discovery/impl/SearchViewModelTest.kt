@@ -299,16 +299,41 @@ class SearchViewModelTest {
         repository.search = { Result.failure(DiscoveryFailure(FailureKind.Other, "Сервер занят")) }
         vm.send(SearchAction.Refresh, scope = this)
         assertEquals(SearchError("Сервер занят"), vm.now.error); assertEquals(2, vm.now.shops.size); assertFalse(vm.now.isRefreshing)
+        assertTrue(vm.now.showsRefreshError)
+        vm.send(SearchAction.ActivateSearch, scope = this)
+        assertTrue(vm.now.showsRefreshError)
         repository.search = { Result.failure(IllegalStateException("offline")) }
         vm.send(SearchAction.Refresh, scope = this)
         assertEquals(SearchError(null), vm.now.error)
         assertEquals(2, analytics.failures.size)
     }
 
+    @Test fun refreshRetryKeepsCardsSuppressesDuplicatesAndClearsTheErrorOnRecovery() = runTest(dispatcher) {
+        val vm = model()
+        val previous = vm.now.shops
+        repository.search = { Result.failure(DiscoveryFailure(FailureKind.Other)) }
+        vm.send(SearchAction.Refresh, scope = this)
+        assertTrue(vm.now.showsRefreshError)
+        val gate = CompletableDeferred<Unit>()
+        repository.search = { gate.await(); page(listOf(shop("updated"))) }
+        vm.send(SearchAction.Refresh, SearchAction.Refresh, SearchAction.LoadMore, scope = this)
+        assertEquals(listOf(1, 1, 1), repository.queries.map { it.page })
+        assertTrue(vm.now.isRefreshing)
+        assertFalse(vm.now.showsRefreshError)
+        assertEquals(previous, vm.now.shops)
+        gate.complete(Unit)
+        runCurrent()
+        assertFalse(vm.now.showsRefreshError)
+        assertNull(vm.now.error)
+        assertFalse(vm.now.isRefreshing)
+        assertEquals(listOf("updated"), vm.now.shops.map { it.id })
+    }
+
     @Test fun aFailedFirstLoadShowsTheErrorWithoutShops() = runTest(dispatcher) {
         repository.search = { Result.failure(DiscoveryFailure(FailureKind.Other)) }
         val vm = model()
         assertEquals(SearchError(null), vm.now.error); assertTrue(vm.now.shops.isEmpty()); assertFalse(vm.now.isLoading)
+        assertFalse(vm.now.showsRefreshError)
     }
 
     // ---- favorites ----

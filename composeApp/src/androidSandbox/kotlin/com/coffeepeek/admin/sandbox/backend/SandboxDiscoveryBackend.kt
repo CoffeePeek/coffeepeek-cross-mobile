@@ -16,7 +16,7 @@ import kotlin.math.sqrt
  * 47 shops in two cities with every filter, paging, nearby search by distance, map content by bounds and two zones; `Truncated` is `Paged` with a map that cuts the
  * shops and says so; `Empty` has no shops; `SearchFailure` and `MapFailure` answer 500 for the search or for the map.
  */
-internal enum class SandboxDiscovery { Seeded, Paged, Truncated, Empty, SearchFailure, PageFailure, MapFailure }
+internal enum class SandboxDiscovery { Seeded, Paged, Truncated, Empty, SearchFailure, PageFailure, RefreshFailure, MapFailure }
 
 private data class Spot(
     val slug: String, val name: String, val city: String, val type: String, val price: String, val rating: Double,
@@ -57,7 +57,12 @@ internal class SandboxDiscoveryBackend(
         private val roasterSlugs = listOf("sandbox-roaster", "sandbox-light", "sandbox-decaf")
     }
 
+    private val refreshAttempts = mutableMapOf<JsonObject, Int>()
     @Volatile var mode = SandboxDiscovery.Seeded
+        set(value) {
+            if (field != value) refreshAttempts.clear()
+            field = value
+        }
     private var pageFailureSent = false
 
     private val core = listOf(
@@ -110,6 +115,11 @@ internal class SandboxDiscoveryBackend(
         val page = input["page"]?.jsonPrimitive?.intOrNull ?: 1
         if (page == 1) pageFailureSent = false
         if (mode == SandboxDiscovery.SearchFailure) return HttpStatusCode.InternalServerError to failure(SEARCH_FAILURE)
+        if (mode == SandboxDiscovery.RefreshFailure && page == 1) {
+            val attempt = (refreshAttempts[input] ?: 0) + 1
+            refreshAttempts[input] = attempt
+            if (attempt == 2) return HttpStatusCode.InternalServerError to failure(SEARCH_FAILURE)
+        }
         if (mode == SandboxDiscovery.PageFailure && page == 2 && !pageFailureSent) {
             pageFailureSent = true
             return HttpStatusCode.InternalServerError to failure(SEARCH_FAILURE)
