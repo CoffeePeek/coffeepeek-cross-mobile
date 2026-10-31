@@ -65,6 +65,11 @@ Before installation, resolve the serial/model and lock state with `adb devices
 Inspect the APK package/version/manifest and the installed version/signature;
 record the source revision and variant. Only then install and open Sandbox:
 
+For manual resource-language checks, a fresh Sandbox launch accepts
+`--es sandbox_locale ru` or `--es sandbox_locale en`. This overrides only that
+Compose context's resource configuration and is cleared on a fresh launch without the
+extra; it does not change phone settings or advertise a translated app locale.
+
 ```shell
 adb -s DEVICE_SERIAL install -r composeApp/build/outputs/apk/direct/sandbox/composeApp-direct-sandbox.apk
 adb -s DEVICE_SERIAL shell am start -n com.coffeepeek.sandbox/com.coffeepeek.admin.sandbox.SandboxActivity

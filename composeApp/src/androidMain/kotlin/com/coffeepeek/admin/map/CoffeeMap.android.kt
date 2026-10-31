@@ -398,9 +398,11 @@ actual fun CoffeeMap(
         syncSelectionPulse(activeMap, shops.firstOrNull { it.id == selectedShopId }, animations, reduceMotion)
     }
 
+    val mapDescription = androidx.compose.ui.res.stringResource(com.coffeepeek.R.string.map_accessibility_description)
     Box(modifier = modifier) {
         AndroidView(
             modifier = Modifier.matchParentSize(),
+            update = { it.contentDescription = mapDescription },
             factory = {
                 mapView.apply {
                     getMapAsync { readyMap ->

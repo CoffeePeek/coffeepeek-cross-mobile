@@ -17,6 +17,16 @@ On iOS, `CoffeePeekNativeActionMenu` provides a glass UIKit button with an ancho
 system menu. Features supply localized labels and callbacks; glass styling and
 theme mapping reuse the same implementation as `CoffeePeekGlassButton`.
 
+## Resource language
+
+The application and Discovery currently ship Russian base copy, not a complete
+English locale. Design-system fallback copy follows that same Russian policy,
+including semantics and loading/retry messages. `values-ru` stays aligned with
+`values`; an English system language must not produce isolated English labels
+inside the Russian UI. Do not claim English support until the application,
+features and shared components all provide it. OS-owned accessibility phrases
+may still follow the device language. Features supply business-specific labels.
+
 ## Naming
 
 Shared components, supporting UI types, tokens and Kotlin source filenames use

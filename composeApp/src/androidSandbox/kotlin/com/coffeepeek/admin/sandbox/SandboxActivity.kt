@@ -14,6 +14,7 @@ import com.coffeepeek.admin.sandbox.backend.SandboxDiscovery
 import com.coffeepeek.admin.sandbox.backend.SandboxFeed
 import com.coffeepeek.admin.sandbox.backend.SandboxUpdatePolicy
 import com.coffeepeek.admin.sandbox.compose.SandboxScreen
+import com.coffeepeek.admin.sandbox.compose.SandboxResourceConfiguration
 
 /** Isolated bootstrap reuses the real graph with local ports, never production services. */
 class SandboxActivity : ComponentActivity() {
@@ -44,7 +45,7 @@ class SandboxActivity : ComponentActivity() {
                     model.fixtures(sandbox.backend.updatePolicy, sandbox.backend.cities, sandbox.backend.authPolicy, sandbox.backend.feed, sandbox.backend.contributions, sandbox.backend.discovery)
                 }
             }
-            SandboxScreen(model, sandbox)
+            SandboxResourceConfiguration(intent.getStringExtra("sandbox_locale")) { SandboxScreen(model, sandbox) }
         }
     }
     private companion object {
