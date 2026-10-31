@@ -1,5 +1,39 @@
 # Home audit implementation — 2026-10-31
 
+## #248 — consistent Russian fallback resources
+
+Base develop `8c2a876c`; branch `codex/migration-home-resource-language`.
+Actual inventory: composeApp and Discovery have Russian default resources only;
+design-system had a mixed English/Russian fallback and aligned Russian override.
+Use the existing Russian translations as the shared fallback. No English locale
+or language picker is promised; OS-owned phrases remain system-owned.
+
+Plan: compare fallback/ru keys and placeholders, compile shared resources and
+Android app, existing design-system/Discovery units and DEX/isolation; manually
+inspect Home/map semantics under ru/en Compose-context resource configurations using
+Sandbox-only launch extras (no system settings change). The actual device system
+locale stays unchanged. No TalkBack/VoiceOver audio run or iPhone review claimed.
+
+Results 2026-10-31: all 18 Russian design-system overrides match their fallback
+text and placeholders. 180 tests (132 Discovery, 48 design-system; 27 suites)
+passed with no failures/errors/skips, both Android assemblies with DEX/isolation
+and design-system iOS KLIB passed. New resource fixture initially crashed on
+startup: Activity resources had already been accessed before applyOverrideConfiguration.
+Replaced it with a fresh ContextThemeWrapper provided only to Compose. Rebuilt
+both variants and repeated manual startup successfully; the original crash is
+not counted as a passed run. The manual expanded map then exposed MapLibre's
+English default gesture description; the Android map now supplies a Russian
+resource, and both variants were rebuilt again (35s, passed).
+
+Manual: emulator-5554, API37, 1080x2400/density420/font1.0, unlocked. Home/map
+semantics inspected under Sandbox ru/en local resource contexts; expand/collapse,
+map gesture instructions, filters, favorites and location controls are Russian.
+Device system settings were not switched; this is a resource-context check,
+not TalkBack pronunciation or VoiceOver acceptance. Same signature, Sandbox
+com.coffeepeek.sandbox / SandboxActivity updated 2598 -> 2600 in place.
+Final APK SHA-256: e8a4df6c0aa7a2973483bcbb4b4f7387e974f6688284a6838f4c228941521e6e.
+Source base plus patch. Native iPhone review remains deferred by the user.
+
 ## #247 — explicit price scale mapping
 
 Base develop `856b4a85`; branch `codex/migration-home-price-scale`.
