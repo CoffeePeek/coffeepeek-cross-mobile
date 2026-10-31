@@ -15,6 +15,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.semantics.contentDescription
@@ -32,7 +33,7 @@ import dev.chrisbanes.haze.HazeTint
 import dev.chrisbanes.haze.hazeEffect
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
-/** Screen-owned backdrop; a missing source uses a translucent, readable glass fallback. */
+/** Screen-owned backdrop; a missing source uses a dense, readable glass fallback. */
 val LocalCoffeePeekGlassHazeState = compositionLocalOf<HazeState?> { null }
 
 enum class CoffeePeekGlassIcon { Back, Edit, Favorite, FavoriteFilled, Share, Close }
@@ -57,6 +58,7 @@ fun Modifier.coffeePeekLiquidGlass(
     val surface = MaterialTheme.colorScheme.surface
     val dark = surface.luminance() < 0.5f
     val tint = tintColor ?: surface.copy(alpha = if (dark) 0.64f else 0.72f)
+    val fallback = tint.compositeOver(surface.copy(alpha = 0.98f))
     val rim = Brush.verticalGradient(listOf(
         Color.White.copy(alpha = if (dark) 0.26f else 0.9f),
         MaterialTheme.colorScheme.onSurface.copy(alpha = if (dark) 0.05f else 0.09f),
@@ -69,7 +71,8 @@ fun Modifier.coffeePeekLiquidGlass(
             tint = HazeTint(tint),
             blurRadius = 24.dp,
             noiseFactor = 0f,
-        )) else Modifier.background(tint))
+            fallbackTint = HazeTint(fallback),
+        )) else Modifier.background(fallback))
         .border(0.75.dp, rim, shape)
 }
 

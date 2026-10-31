@@ -21,10 +21,10 @@ fun CoffeePeekLoader(
     size: Dp = CoffeePeekDimens.loaderDefault,
     color: Color = CoffeePeekColors.Primary,
     strokeWidth: Dp = (size / 16f).coerceAtLeast(2.dp),
-) = CoffeePeekPlatformLoader(contentDescription, modifier, size, color)
+) = CoffeePeekPlatformLoader(contentDescription, modifier, size, color, strokeWidth)
 
 @Composable
-internal expect fun CoffeePeekPlatformLoader(contentDescription: String, modifier: Modifier, size: Dp, color: Color)
+internal expect fun CoffeePeekPlatformLoader(contentDescription: String, modifier: Modifier, size: Dp, color: Color, strokeWidth: Dp)
 
 @Composable
 private fun CoffeePeekLoaderPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {

@@ -2,7 +2,7 @@ package com.coffeepeek.admin.ui.screen.main
 
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
-import dev.chrisbanes.haze.hazeSource
+import com.coffeepeek.core.designsystem.component.CoffeePeekMenuBackdrop
 import dev.chrisbanes.haze.rememberHazeState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
@@ -202,7 +202,7 @@ internal fun ComposeMainScreen(isLoggedIn: Boolean, onMapExpandedChange: (Boolea
     ProvideFloatingNavClearance(clearance = floatingClearance) {
         Box(modifier = Modifier.fillMaxSize()) {
             // Capture the visible tab once; retained search content must not keep a separate glass layer.
-            Box(Modifier.fillMaxSize().hazeSource(tabBarHaze)) {
+            CoffeePeekMenuBackdrop(Modifier.fillMaxSize(), state = tabBarHaze) {
                 feedEntry?.takeIf { it.lifecycle.currentState != Lifecycle.State.DESTROYED }?.let { entry ->
                     entry.LocalOwnersProvider(feedStateHolder) {
                         RetainedContent(visible = entry in visibleEntries) {
