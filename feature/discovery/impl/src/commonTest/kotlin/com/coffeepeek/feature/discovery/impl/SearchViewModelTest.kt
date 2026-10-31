@@ -6,6 +6,7 @@ import com.coffeepeek.feature.discovery.api.FilterAction
 import com.coffeepeek.feature.discovery.api.GeolocationOutcome
 import com.coffeepeek.feature.discovery.domain.model.*
 import com.coffeepeek.feature.discovery.impl.search.*
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
@@ -353,6 +354,7 @@ class SearchViewModelTest {
         assertTrue(vm.now.shops.first().isFavorite); assertEquals(setOf("a"), vm.now.favoriteUpdates)
         gate.complete(Result.failure(IllegalStateException("offline"))); runCurrent()
         assertFalse(vm.now.shops.first().isFavorite); assertTrue(vm.now.favoriteUpdates.isEmpty()); assertEquals(listOf("a" to true), favorites.changes)
+        assertNotNull(vm.now.favoriteFailureId)
     }
 
     @Test fun aSuccessfulFavoriteStaysAndAnotherToggleRemovesIt() = runTest(dispatcher) {
@@ -361,6 +363,7 @@ class SearchViewModelTest {
         assertTrue(vm.now.shops.first().isFavorite)
         vm.send(SearchAction.ToggleFavorite("a"), scope = this)
         assertFalse(vm.now.shops.first().isFavorite); assertEquals(listOf("a" to true, "a" to false), favorites.changes)
+        assertNull(vm.now.favoriteFailureId)
     }
 
     @Test fun aFailedFavoriteDoesNotUndoWhatTheAccountsFavoritesAlreadySay() = runTest(dispatcher) {
@@ -396,6 +399,63 @@ class SearchViewModelTest {
         runCurrent()
         assertFalse(vm.now.shops.first().isFavorite)
         assertTrue(vm.now.favoriteUpdates.isEmpty())
+        assertNull(vm.now.favoriteFailureId)
+    }
+
+    @Test fun thrownFavoriteFailureIsExplainedAndSuccessfulRetryClearsIt() = runTest(dispatcher) {
+        favorites.set = { _, _ -> throw IllegalStateException("private backend detail") }
+        val vm = model()
+        vm.send(SearchAction.ToggleFavorite("a"), scope = this)
+        assertFalse(vm.now.shops.first().isFavorite)
+        assertNotNull(vm.now.favoriteFailureId)
+        assertTrue(vm.now.favoriteUpdates.isEmpty())
+        favorites.set = { _, _ -> Result.success(Unit) }
+        vm.send(SearchAction.ToggleFavorite("a"), scope = this)
+        assertTrue(vm.now.shops.first().isFavorite)
+        assertNull(vm.now.favoriteFailureId)
+    }
+
+    @Test fun anOldDismissalCannotConsumeANewerFailure() = runTest(dispatcher) {
+        favorites.set = { _, _ -> Result.failure(IllegalStateException("offline")) }
+        val vm = model()
+        vm.send(SearchAction.ToggleFavorite("a"), scope = this)
+        val first = assertNotNull(vm.now.favoriteFailureId)
+        vm.send(SearchAction.ToggleFavorite("a"), scope = this)
+        val second = assertNotNull(vm.now.favoriteFailureId)
+        assertNotEquals(first, second)
+        vm.send(SearchAction.DismissFavoriteFailure(first), scope = this)
+        assertEquals(second, vm.now.favoriteFailureId)
+        vm.send(SearchAction.DismissFavoriteFailure(second), scope = this)
+        assertNull(vm.now.favoriteFailureId)
+    }
+
+    @Test fun changingAccountClearsAlreadyVisibleFavoriteFeedback() = runTest(dispatcher) {
+        favorites.set = { _, _ -> Result.failure(IllegalStateException("offline")) }
+        val vm = model()
+        vm.send(SearchAction.ToggleFavorite("a"), scope = this)
+        assertNotNull(vm.now.favoriteFailureId)
+        account.key.value = "another-account"
+        runCurrent()
+        assertNull(vm.now.favoriteFailureId)
+    }
+
+    @Test fun thrownCancellationDoesNotShowFailureAndReleasesTheGuard() = checkFavoriteCancellation(false)
+
+    @Test fun resultCancellationDoesNotShowFailureAndReleasesTheGuard() = checkFavoriteCancellation(true)
+
+    private fun checkFavoriteCancellation(wrapped: Boolean) = runTest(dispatcher) {
+        favorites.set = { _, _ ->
+            val cancellation = CancellationException("cancelled")
+            if (wrapped) Result.failure(cancellation) else throw cancellation
+        }
+        val vm = model()
+        vm.send(SearchAction.ToggleFavorite("a"), scope = this)
+        assertFalse(vm.now.shops.first().isFavorite)
+        assertTrue(vm.now.favoriteUpdates.isEmpty())
+        assertNull(vm.now.favoriteFailureId)
+        favorites.set = { _, _ -> Result.success(Unit) }
+        vm.send(SearchAction.ToggleFavorite("a"), scope = this)
+        assertTrue(vm.now.shops.first().isFavorite)
     }
 
     // ---- location and account ----

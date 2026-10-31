@@ -346,3 +346,56 @@ were received intact. Keep this first observation: physical/IME startup timing
 was not conclusively diagnosed by this manual run. Screenshots/dumps are local.
 Native iOS input/visual review, larger fonts, narrow windows and TalkBack remain
 unexecuted gates. No UI automation tests or live backend writes.
+
+## #240 — favorite failure feedback
+
+Base: `a340c1ee9286e4247b9d7580379ec96b8afd2e93` (`develop`).
+Branch: `codex/migration-home-favorite-feedback`.
+
+Android Discovery SearchViewModel owns the optimistic write and rollback. Add
+a typed/identified pending failure to rendering state, acknowledged by its own
+ID so an old dismissal cannot erase a newer failure. Account changes clear it;
+late old-account failures cannot publish it. Preserve authoritative observed
+favorites, per-shop duplicate guards and cancellation (including Result-wrapped
+cancellation). Keep existing composition favorite/analytics adapters and the
+retained iOS writer untouched, as this finding targets migrated Android Discovery.
+
+Reuse shared content-card/icon-button primitives for the feature-specific
+localized notice, with SnackbarHost's accessible timeout and polite live region.
+Place it above navigation and the floating add control; defer display under
+modals/map/roaster overlays or an inactive tab. No new backend calls or analytics.
+
+Verification plan: reproduce silent failure with an in-memory regression, then
+cover Result/throw failures, retry/dismissal, authoritative membership, duplicate
+writes, cancellation and account switching. Run Discovery and existing Sandbox
+contracts; assemble Sandbox/Debug with DEX/isolation. Manual-only Sandbox SaveError
+checks on Home/search, both themes, dismissal and successful retry. Native iOS
+writer/UI is outside this Android finding; enlarged fonts/windows and TalkBack
+remain separate gates. No automated UI tests or real-account writes.
+
+Results on 2026-10-31: the original focused regression executed and failed (1/1):
+rollback had no pending feedback. After the fix, 121 Discovery and 31 Sandbox
+backend contract tests executed successfully; 48 unchanged design-system tests
+were UP-TO-DATE from #244 (200 tests across the selected suites, zero final
+failures/errors/skips). Five new tests cover thrown failure/recovery, identified
+dismissal, account reset and thrown/Result cancellation. Existing tests cover
+optimism, duplicate suppression, authoritative membership and late account writes;
+assertions now check feedback too. Android Direct Sandbox/Debug assembly and
+packaged DEX/isolation passed. No new Gradle dependencies or boundary changes.
+Discovery's favorite adapter and search/gate/exposure analytics ownership are
+unchanged; tests use in-memory sources. No IDE inspection service was available.
+
+Manual verification used unlocked emulator-5554 / sdk_gphone64_x86_64, API 37,
+1080x2400, density 420, font scale 1.0. Verified identity/signature and updated
+Direct Sandbox 2586 to 2588 in place (com.coffeepeek.sandbox / SandboxActivity).
+Source: base above plus this patch. APK SHA-256:
+cb455d5ace9dbc6fabd2eaa4a925ba4099df28957cd12f83f3eaaf746c3c12f5.
+SaveError produced the localized notice and restored the selected heart on Home
+in both themes and in a nonblank Cafe search without losing its query. Repeated
+failure and explicit Close worked; no feedback after successful fake removal
+and re-add in Ready. Notice text y=1780..1886 stays above the add button and
+navigation; the close button remains reachable. Ready/Seeded, light theme, empty
+Home and original fake favorite were restored. No live writes or system settings
+changed. Screenshots/UI dumps remain in ignored local build output.
+Native iOS writer is outside this Android finding; native iOS visuals, large
+fonts/windows and TalkBack traversal remain unexecuted gates.
