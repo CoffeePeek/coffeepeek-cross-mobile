@@ -399,3 +399,16 @@ Home and original fake favorite were restored. No live writes or system settings
 changed. Screenshots/UI dumps remain in ignored local build output.
 Native iOS writer is outside this Android finding; native iOS visuals, large
 fonts/windows and TalkBack traversal remain unexecuted gates.
+
+### Final CI cross-check for this three-task batch
+
+At final review, PR #263 Android CI attempt 1 failed in
+`:composeApp:mergeExtDexPlayDebug`: D8 `OutOfMemoryError: Java heap space`, run
+41179324931. This is retained as a failed check, not relabeled successful. The
+failed job was rerun without source changes (attempt 2 still running at handoff).
+An additional local `:composeApp:assemblePlayDebug --max-workers=6` on the combined
+implementation (`89b643a2`) passed, including packaged runtime-class verification;
+external DEX merge was FROM-CACHE. Play Debug was neither installed nor launched.
+PR #261 and #262 CI are now successful on both platforms. New #263–#265 CI
+(including full macOS iOS builds) is still running; local KLIB compilation does
+not replace the full native build/visual gates.
