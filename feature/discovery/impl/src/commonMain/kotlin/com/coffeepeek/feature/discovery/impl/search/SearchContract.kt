@@ -42,8 +42,11 @@ internal data class SearchState(
     val currentPage: Int = 1,
     val totalPages: Int = 1,
     val hasMore: Boolean = false,
-    /** A position is known, so «Рядом» can be offered. */
+    /** A valid position is known; the Nearby action remains discoverable without it. */
     val canUseNearby: Boolean = false,
+    val locationPermissionRequest: Int = 0,
+    val nearbyRequested: Boolean = false,
+    val locationUnavailable: Boolean = false,
     /** Where the user is, for the distance on a card when the server sends none. */
     val userLocation: Coordinates? = null,
 ) {
@@ -81,6 +84,7 @@ internal sealed interface SearchAction {
     /** The location permission was granted or refused by the screen's effect. */
     data object LocationGranted : SearchAction
     data object LocationDenied : SearchAction
+    data object DismissLocationFailure : SearchAction
     data class SetPrice(val level: PriceLevel?) : SearchAction
     data class SetMinRating(val rating: Double?) : SearchAction
     data class ToggleCatalog(val kind: CatalogKind, val id: String) : SearchAction

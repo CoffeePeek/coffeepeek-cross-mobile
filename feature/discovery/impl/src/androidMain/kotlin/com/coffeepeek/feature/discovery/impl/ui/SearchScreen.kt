@@ -105,7 +105,7 @@ internal fun SearchContent(
             Column(Modifier.padding(top = CoffeePeekDimens.spacing3, bottom = CoffeePeekDimens.spacing2)) {
                 SearchHeader(state, host, onAction, queryFocus)
                 Spacer(Modifier.height(CoffeePeekDimens.spacing2))
-                DiscoveryQuickFilters(state.filters, state.canUseNearby, onAction)
+                DiscoveryQuickFilters(state.filters, onAction, state.selectedCity?.name, host.changeCity)
             }
             HorizontalDivider(thickness = 1.dp, color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.7f))
         }

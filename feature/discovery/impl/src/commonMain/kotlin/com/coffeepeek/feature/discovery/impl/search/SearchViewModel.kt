@@ -23,6 +23,7 @@ import com.coffeepeek.feature.discovery.domain.rules.withFavoriteMembership
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -61,6 +62,7 @@ internal class SearchViewModel(
     private var requestedText: String? = null
     private var catalogJob: Job? = null
     private var loadJob: Job? = null
+    private var locationTimeout: Job? = null
     private var searchPresented = false
     private var presentationVersion = 0L
     private var lastSearchResult: Pair<DiscoveryCriteria, Int>? = null
@@ -79,48 +81,96 @@ internal class SearchViewModel(
 
     override suspend fun handleActionInternal(action: SearchAction) {
         when (action) {
+            SearchAction.ToggleNearby -> toggleNearby()
+            SearchAction.LocationGranted -> locationGranted()
+            SearchAction.LocationDenied -> locationDenied()
+            SearchAction.DismissLocationFailure -> cancelNearbyRequest()
+            is SearchAction.ToggleFavorite -> toggleFavorite(action.shopId)
+            is SearchAction.DismissFavoriteFailure -> updateState {
+                if (favoriteFailureId == action.id) copy(favoriteFailureId = null) else this
+            }
+            is SearchAction.OpenShop -> openShop(action.shopId)
+            is SearchAction.SetKind, SearchAction.ToggleOpen, SearchAction.ToggleNew,
+            SearchAction.ToggleVisited, SearchAction.ToggleFavorites, is SearchAction.SetPrice,
+            is SearchAction.SetMinRating, is SearchAction.ToggleCatalog -> handleFilterAction(action)
+            else -> handleSearchAction(action)
+        }
+    }
+
+    private fun handleSearchAction(action: SearchAction) {
+        when (action) {
             is SearchAction.Query -> { updateState { copy(query = action.text) }; queries.tryEmit(action.text) }
             is SearchAction.PresentationChanged -> setSearchPresentation(action.active)
             SearchAction.ActivateSearch -> updateState { copy(searchActive = true) }
-            SearchAction.CancelSearch -> {
-                if (currentState.activeFilterCount > 0) clearFilters() else setQuery("")
-                updateState { copy(searchActive = false) }
-            }
+            SearchAction.CancelSearch -> cancelSearch()
             SearchAction.ToggleFilters -> toggleFilters()
             SearchAction.RetryCatalogs -> loadCatalogs()
             SearchAction.CloseFilters -> updateState { copy(showFilters = false) }
             is SearchAction.ApplyFilters -> applyFilters(action.filters)
-            is SearchAction.SetKind -> changeFilters { copy(kind = action.kind) }
-            SearchAction.ToggleOpen -> changeFilters { copy(openOnly = !openOnly) }
-            SearchAction.ToggleNew -> changeFilters { copy(newOnly = !newOnly) }
-            SearchAction.ToggleVisited -> if (guarded(DiscoveryGate.VisitedFilter)) changeFilters { copy(visitedOnly = !visitedOnly) }
-            SearchAction.ToggleFavorites -> if (guarded(DiscoveryGate.FavoritesFilter)) changeFilters { copy(favoritesOnly = !favoritesOnly) }
-            SearchAction.ToggleNearby -> toggleNearby()
-            SearchAction.LocationGranted -> location.refresh()
-            SearchAction.LocationDenied -> reportLocation(GeolocationOutcome.Unavailable)
-            is SearchAction.SetPrice -> changeFilters { copy(priceLevel = action.level) }
-            is SearchAction.SetMinRating -> changeFilters { copy(minRating = action.rating) }
-            is SearchAction.ToggleCatalog -> changeFilters {
-                when (action.kind) {
-                    CatalogKind.Roaster -> copy(roasterIds = roasterIds.toggle(action.id))
-                    CatalogKind.Bean -> copy(beanIds = beanIds.toggle(action.id))
-                    CatalogKind.Equipment -> copy(equipmentIds = equipmentIds.toggle(action.id))
-                    CatalogKind.BrewMethod -> copy(brewMethodIds = brewMethodIds.toggle(action.id))
-                    CatalogKind.Tag -> copy(tagIds = tagIds.toggle(action.id))
-                }
-            }
             SearchAction.ClearFilters -> clearFilters()
             SearchAction.ResetFilterSelections -> clearFilters(clearQuery = false)
             SearchAction.LoadMore -> loadShops(reset = false)
             SearchAction.RetryLoadMore -> if (currentState.loadMoreError != null) loadShops(reset = false, retry = true)
             SearchAction.Refresh -> if (!currentState.isRefreshing && !currentState.isLoading) loadShops(reset = true)
-            is SearchAction.ToggleFavorite -> toggleFavorite(action.shopId)
-            is SearchAction.DismissFavoriteFailure -> updateState { if (favoriteFailureId == action.id) copy(favoriteFailureId = null) else this }
-            is SearchAction.OpenShop -> {
-                analytics.shopOpened(currentState.visibleShops.indexOfFirst { it.id == action.shopId }.takeIf { it >= 0 }?.plus(1))
-                sendEvent(SearchEvent.OpenShop(action.shopId))
-            }
+            else -> error("Not a search action: $action")
         }
+    }
+
+    private suspend fun handleFilterAction(action: SearchAction) {
+        when (action) {
+            is SearchAction.SetKind -> changeFilters { copy(kind = action.kind) }
+            SearchAction.ToggleOpen -> changeFilters { copy(openOnly = !openOnly) }
+            SearchAction.ToggleNew -> changeFilters { copy(newOnly = !newOnly) }
+            SearchAction.ToggleVisited -> if (guarded(DiscoveryGate.VisitedFilter)) changeFilters { copy(visitedOnly = !visitedOnly) }
+            SearchAction.ToggleFavorites -> if (guarded(DiscoveryGate.FavoritesFilter)) changeFilters { copy(favoritesOnly = !favoritesOnly) }
+            is SearchAction.SetPrice -> changeFilters { copy(priceLevel = action.level) }
+            is SearchAction.SetMinRating -> changeFilters { copy(minRating = action.rating) }
+            is SearchAction.ToggleCatalog -> toggleCatalog(action)
+            else -> error("Not a filter action: $action")
+        }
+    }
+
+    private fun toggleCatalog(action: SearchAction.ToggleCatalog) = changeFilters {
+        when (action.kind) {
+            CatalogKind.Roaster -> copy(roasterIds = roasterIds.toggle(action.id))
+            CatalogKind.Bean -> copy(beanIds = beanIds.toggle(action.id))
+            CatalogKind.Equipment -> copy(equipmentIds = equipmentIds.toggle(action.id))
+            CatalogKind.BrewMethod -> copy(brewMethodIds = brewMethodIds.toggle(action.id))
+            CatalogKind.Tag -> copy(tagIds = tagIds.toggle(action.id))
+        }
+    }
+
+    private fun cancelSearch() {
+        cancelNearbyRequest()
+        if (currentState.activeFilterCount > 0) clearFilters() else setQuery("")
+        updateState { copy(searchActive = false) }
+    }
+
+    private suspend fun openShop(shopId: String) {
+        analytics.shopOpened(currentState.visibleShops.indexOfFirst { it.id == shopId }.takeIf { it >= 0 }?.plus(1))
+        sendEvent(SearchEvent.OpenShop(shopId))
+    }
+
+    private fun locationGranted() {
+        location.refresh()
+        if (!currentState.nearbyRequested) return
+        locationTimeout?.cancel()
+        locationTimeout = viewModelScope.launch {
+            delay(10_000)
+            if (currentState.nearbyRequested) locationDenied()
+        }
+    }
+
+    private fun locationDenied() {
+        val requested = currentState.nearbyRequested
+        reportLocation(GeolocationOutcome.Unavailable, requested)
+        cancelNearbyRequest()
+        if (requested) updateState { copy(locationUnavailable = true) }
+    }
+
+    private fun cancelNearbyRequest() {
+        locationTimeout?.cancel()
+        updateState { copy(nearbyRequested = false, locationUnavailable = false) }
     }
 
     // ---- what comes from outside ----
@@ -148,23 +198,31 @@ internal class SearchViewModel(
 
     private fun onCity(cityId: String?) {
         if (!cityReady || cityId == null || cityId == currentState.filters.cityId) return
-        updateState { copy(filters = filters.copy(cityId = cityId)) }
+        val before = currentState.filters
+        cancelNearbyRequest()
+        updateState { copy(filters = filters.copy(cityId = cityId, nearbyOnly = false)) }
+        trackChange(before)
         loadShops(reset = true)
     }
 
     private fun onLocation(point: Coordinates?) {
-        if (point == null || !point.isValid || point == origin) return
+        if (point == null || !point.isValid || (point == origin && !currentState.nearbyRequested)) return
+        val enabling = currentState.nearbyRequested
+        val before = currentState.filters
         origin = point
-        reportLocation(GeolocationOutcome.Available)
-        updateState { copy(canUseNearby = true, userLocation = point) }
+        reportLocation(GeolocationOutcome.Available, enabling)
+        cancelNearbyRequest()
+        updateState { copy(canUseNearby = true, userLocation = point,
+            filters = filters.copy(nearbyOnly = enabling || filters.nearbyOnly)) }
+        if (enabling) trackChange(before)
         if (currentState.filters.nearbyOnly) {
             updateState { copy(shops = emptyList()) }
             if (cityReady) loadShops(reset = true)
         }
     }
 
-    private fun reportLocation(outcome: GeolocationOutcome) {
-        analytics.geolocation(PLACEMENT, userTriggered = false, outcome = outcome)
+    private fun reportLocation(outcome: GeolocationOutcome, userTriggered: Boolean = false) {
+        analytics.geolocation(PLACEMENT, userTriggered = userTriggered, outcome = outcome)
     }
 
     private fun loadCatalogs() {
@@ -218,7 +276,13 @@ internal class SearchViewModel(
     }
 
     private fun toggleNearby() {
-        if (!currentState.canUseNearby) return
+        if (currentState.nearbyRequested) return
+        if (!currentState.canUseNearby) {
+            updateState { copy(nearbyRequested = true, locationUnavailable = false,
+                locationPermissionRequest = locationPermissionRequest + 1) }
+            return
+        }
+        cancelNearbyRequest()
         val before = currentState.filters
         val enabling = !before.nearbyOnly
         updateState { copy(filters = filters.copy(nearbyOnly = enabling), shops = emptyList()) }
@@ -228,6 +292,7 @@ internal class SearchViewModel(
     }
 
     private fun clearFilters(clearQuery: Boolean = true) {
+        cancelNearbyRequest()
         val before = currentState.filters.analyticsValues()
         val after = currentState.filters.clearSelections().analyticsValues()
         analytics.filtersChanged(after.keys.sorted(), changedFilterKeys(before, after), FilterAction.Reset)
