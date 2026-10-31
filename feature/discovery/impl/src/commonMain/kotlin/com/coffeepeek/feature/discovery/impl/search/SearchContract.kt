@@ -14,6 +14,8 @@ import com.coffeepeek.feature.discovery.domain.rules.visibleShops
 /** A failed search. UI uses localized copy rather than the unreviewed [serverMessage]. */
 internal data class SearchError(val serverMessage: String?)
 
+internal enum class CatalogLoadState { Loading, Ready, Failed }
+
 /** Which list of the catalogs a selection belongs to. */
 internal enum class CatalogKind { Roaster, Bean, Equipment, BrewMethod, Tag }
 
@@ -21,6 +23,7 @@ internal data class SearchState(
     /** True until an account is known to be signed in: a guest is sent to sign in for visited, favorites and the favorite toggle. */
     val isGuest: Boolean = true,
     val catalogs: DiscoveryCatalogs = DiscoveryCatalogs(),
+    val catalogLoadState: CatalogLoadState = CatalogLoadState.Loading,
     val shops: List<ShopSummary> = emptyList(),
     /** Shops whose favorite is being changed; at most one change per shop at a time. */
     val favoriteUpdates: Set<String> = emptySet(),
@@ -54,6 +57,9 @@ internal data class SearchState(
     val showsDiscovery: Boolean get() = showsDiscovery(query, searchActive, filters)
     val visibleShops: List<ShopSummary> get() = visibleShops(shops, filters)
     val selectedCity: CityEntry? get() = catalogs.cities.firstOrNull { it.id == filters.cityId }
+    val hasNoCatalogChoices: Boolean get() = with(catalogs) {
+        roasters.isEmpty() && beans.isEmpty() && equipment.isEmpty() && brewMethods.isEmpty() && tags.isEmpty()
+    }
 }
 
 internal sealed interface SearchAction {
@@ -62,6 +68,7 @@ internal sealed interface SearchAction {
     data object ActivateSearch : SearchAction
     data object CancelSearch : SearchAction
     data object ToggleFilters : SearchAction
+    data object RetryCatalogs : SearchAction
     data object CloseFilters : SearchAction
     data class ApplyFilters(val filters: DiscoveryFilters) : SearchAction
 

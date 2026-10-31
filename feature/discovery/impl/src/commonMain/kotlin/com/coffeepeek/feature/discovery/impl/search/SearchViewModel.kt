@@ -59,6 +59,7 @@ internal class SearchViewModel(
     private var favoriteFailureSequence = 0L
     private var favoriteIds: Set<String>? = null
     private var requestedText: String? = null
+    private var catalogJob: Job? = null
     private var loadJob: Job? = null
     private var searchPresented = false
     private var presentationVersion = 0L
@@ -86,6 +87,7 @@ internal class SearchViewModel(
                 updateState { copy(searchActive = false) }
             }
             SearchAction.ToggleFilters -> toggleFilters()
+            SearchAction.RetryCatalogs -> loadCatalogs()
             SearchAction.CloseFilters -> updateState { copy(showFilters = false) }
             is SearchAction.ApplyFilters -> applyFilters(action.filters)
             is SearchAction.SetKind -> changeFilters { copy(kind = action.kind) }
@@ -165,14 +167,28 @@ internal class SearchViewModel(
     }
 
     private fun loadCatalogs() {
-        viewModelScope.launch {
-            repository.catalogs().onSuccess { catalogs ->
-                val cityId = city.resolve(catalogs.cities)
-                updateState { copy(catalogs = catalogs, filters = filters.copy(cityId = cityId)) }
+        if (catalogJob?.isActive == true) return
+        updateState { copy(catalogLoadState = CatalogLoadState.Loading) }
+        catalogJob = viewModelScope.launch {
+            val initial = !cityReady
+            val beforeCity = currentState.filters.cityId
+            try {
+                applyCatalogs(repository.catalogs().getOrThrow())
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (_: Exception) {
+                updateState { copy(catalogLoadState = CatalogLoadState.Failed) }
             }
-            // A failed catalog still lets the first search start; the filter sheet asks for the catalogs again.
             cityReady = true
-            loadShops(reset = true)
+            if (initial || beforeCity != currentState.filters.cityId) loadShops(reset = true)
+        }
+    }
+
+    private suspend fun applyCatalogs(catalogs: com.coffeepeek.feature.discovery.domain.model.DiscoveryCatalogs) {
+        val cityId = currentState.filters.cityId ?: city.resolve(catalogs.cities)
+        updateState {
+            copy(catalogs = catalogs, catalogLoadState = CatalogLoadState.Ready,
+                filters = filters.copy(cityId = filters.cityId ?: cityId))
         }
     }
 
@@ -182,7 +198,7 @@ internal class SearchViewModel(
         val opening = !currentState.showFilters
         if (opening) analytics.filtersOpened()
         updateState { copy(showFilters = opening) }
-        if (opening && currentState.catalogs.cities.isEmpty() && currentState.catalogs.beans.isEmpty()) loadCatalogs()
+        if (opening && currentState.catalogLoadState == CatalogLoadState.Failed) loadCatalogs()
     }
 
     private fun applyFilters(filters: DiscoveryFilters) {

@@ -27,6 +27,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.tooling.preview.PreviewLightDark
+import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.core.designsystem.component.CoffeePeekCheckmarkRow
 import com.coffeepeek.core.designsystem.component.CoffeePeekGroupSection
 import com.coffeepeek.core.designsystem.component.CoffeePeekRowSeparator
@@ -34,6 +36,7 @@ import com.coffeepeek.core.designsystem.component.CoffeePeekSwipeDismissModalBot
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.feature.discovery.api.DiscoveryHost
 import com.coffeepeek.feature.discovery.domain.model.CatalogEntry
+import com.coffeepeek.feature.discovery.domain.model.DiscoveryFilters
 import com.coffeepeek.feature.discovery.domain.model.PriceLevel
 import com.coffeepeek.feature.discovery.domain.rules.amenityTags
 import com.coffeepeek.feature.discovery.impl.R
@@ -52,45 +55,57 @@ internal fun FilterSheet(state: SearchState, host: DiscoveryHost, onAction: (Sea
         onDismissRequest = { onAction(SearchAction.CloseFilters) },
         dismissDescription = stringResource(R.string.discovery_filters_close),
     ) {
-        // The navigation bar of prod's sheet: 48 dp, 17 sp, the title centred.
-        Box(Modifier.fillMaxWidth().height(48.dp).padding(horizontal = 4.dp)) {
-            val resetEnabled = draft.activeCount > 0
-            TextButton({ draft = draft.clearSelections() }, enabled = resetEnabled, modifier = Modifier.align(Alignment.CenterStart)) {
-                Text(
-                    stringResource(R.string.discovery_filters_reset), fontSize = 17.sp,
-                )
-            }
-            Text(
-                stringResource(R.string.discovery_filters), fontSize = 17.sp, fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.align(Alignment.Center),
-            )
-            TextButton({ onAction(SearchAction.ApplyFilters(draft)); onAction(SearchAction.CloseFilters) }, modifier = Modifier.align(Alignment.CenterEnd)) {
-                Text(stringResource(R.string.discovery_filters_done), fontSize = 17.sp, fontWeight = FontWeight.SemiBold)
-            }
+        FilterSheetHeader(draft.activeCount > 0, { draft = draft.clearSelections() }) {
+            onAction(SearchAction.ApplyFilters(draft.copy(cityId = state.filters.cityId)))
+            onAction(SearchAction.CloseFilters)
         }
         Column(
             Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()).navigationBarsPadding()
                 .padding(horizontal = CoffeePeekDimens.spacing4).padding(bottom = CoffeePeekDimens.spacing6),
             verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing6),
         ) {
-            CoffeePeekGroupSection(
-                title = stringResource(R.string.discovery_section_price),
-                trailing = host.priceHint(draft.priceLevel?.level) ?: stringResource(R.string.discovery_price_any),
-            ) {
-                host.priceSelector(draft.priceLevel?.level, { draft = draft.copy(priceLevel = PriceLevel.ofLevel(it)) }, Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
-            }
-            Selection(R.string.discovery_section_roasters, state.catalogs.roasters, draft.roasterIds, { draft = draft.copy(roasterIds = draft.roasterIds.toggle(it)) }) { entry ->
-                host.roasterAvatar(entry.name, entry.photoUrl)
-            }
-            Selection(R.string.discovery_section_beans, state.catalogs.beans, draft.beanIds, { draft = draft.copy(beanIds = draft.beanIds.toggle(it)) })
-            Selection(R.string.discovery_section_equipment, state.catalogs.equipment, draft.equipmentIds, { draft = draft.copy(equipmentIds = draft.equipmentIds.toggle(it)) })
-            Selection(R.string.discovery_section_brew_methods, state.catalogs.brewMethods, draft.brewMethodIds, { draft = draft.copy(brewMethodIds = draft.brewMethodIds.toggle(it)) }) { entry ->
-                host.brewMethodIcon(entry.name, 22.dp)
-            }
-            Selection(R.string.discovery_section_tags, amenityTags(state.catalogs.tags), draft.tagIds, { draft = draft.copy(tagIds = draft.tagIds.toggle(it)) }) { entry ->
-                host.tagIcon(entry.id)
-            }
+            FilterCatalogStatus(state) { onAction(SearchAction.RetryCatalogs) }
+            FilterSelections(state, host, draft) { draft = it }
         }
+    }
+}
+
+@Composable
+private fun FilterSheetHeader(resetEnabled: Boolean, onReset: () -> Unit, onDone: () -> Unit) {
+    Box(Modifier.fillMaxWidth().height(48.dp).padding(horizontal = 4.dp)) {
+        TextButton(onReset, enabled = resetEnabled, modifier = Modifier.align(Alignment.CenterStart)) {
+            Text(
+                stringResource(R.string.discovery_filters_reset), fontSize = 17.sp,
+            )
+        }
+        Text(
+            stringResource(R.string.discovery_filters), fontSize = 17.sp, fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.align(Alignment.Center),
+        )
+        TextButton(onDone, modifier = Modifier.align(Alignment.CenterEnd)) {
+            Text(stringResource(R.string.discovery_filters_done), fontSize = 17.sp, fontWeight = FontWeight.SemiBold)
+        }
+    }
+}
+
+@Composable
+private fun FilterSelections(state: SearchState, host: DiscoveryHost, draft: DiscoveryFilters, onDraft: (DiscoveryFilters) -> Unit) {
+    CoffeePeekGroupSection(
+        title = stringResource(R.string.discovery_section_price),
+        trailing = host.priceHint(draft.priceLevel?.level) ?: stringResource(R.string.discovery_price_any),
+    ) {
+        host.priceSelector(draft.priceLevel?.level, { onDraft(draft.copy(priceLevel = PriceLevel.ofLevel(it))) }, Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
+    }
+    Selection(R.string.discovery_section_roasters, state.catalogs.roasters, draft.roasterIds, { onDraft(draft.copy(roasterIds = draft.roasterIds.toggle(it))) }) { entry ->
+        host.roasterAvatar(entry.name, entry.photoUrl)
+    }
+    Selection(R.string.discovery_section_beans, state.catalogs.beans, draft.beanIds, { onDraft(draft.copy(beanIds = draft.beanIds.toggle(it))) })
+    Selection(R.string.discovery_section_equipment, state.catalogs.equipment, draft.equipmentIds, { onDraft(draft.copy(equipmentIds = draft.equipmentIds.toggle(it))) })
+    Selection(R.string.discovery_section_brew_methods, state.catalogs.brewMethods, draft.brewMethodIds, { onDraft(draft.copy(brewMethodIds = draft.brewMethodIds.toggle(it))) }) { entry ->
+        host.brewMethodIcon(entry.name, 22.dp)
+    }
+    Selection(R.string.discovery_section_tags, amenityTags(state.catalogs.tags), draft.tagIds, { onDraft(draft.copy(tagIds = draft.tagIds.toggle(it))) }) { entry ->
+        host.tagIcon(entry.id)
     }
 }
 
@@ -123,3 +138,9 @@ private fun Selection(title: Int, entries: List<CatalogEntry>, selected: Set<Str
 private const val COLLAPSED_ROWS = 5
 
 private fun Set<String>.toggle(id: String): Set<String> = if (id in this) this - id else this + id
+
+@PreviewLightDark
+@Composable
+private fun FilterSheetPreview() = CoffeePeekTheme {
+    FilterSheet(SearchState(), DiscoveryHost()) {}
+}

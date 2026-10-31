@@ -1,0 +1,4 @@
+<resources>
+    <string name="sandbox_discovery_catalog_failure">Ошибка фильтров</string>
+    <string name="sandbox_discovery_catalog_empty">Пустые фильтры</string>
+</resources>

@@ -1,5 +1,41 @@
 # Home audit implementation — 2026-10-31
 
+## #241 — catalog recovery
+
+Base: develop `cdc20c94`. Branch: `codex/migration-home-catalog-recovery`.
+Android Discovery owns loading/ready/failure catalog state and explicit retry.
+Retain filters/options on failure, coalesce retries and preserve cancellation;
+search stays available. Successful empty catalogs do not trigger reload on every
+sheet opening. Retried city resolution must not overwrite a filter draft on Done.
+Reuse design-system loader/retry components; preserve palette, routes and analytics.
+Legacy iOS parity is recorded under #252, not assumed from Android checks.
+
+Verification plan: catalog state/retry/concurrency/cancellation unit regressions,
+Discovery and Sandbox contracts, Direct Sandbox/Debug assemblies and DEX/isolation.
+Manual Sandbox CatalogFailure (persistent bean failure; recovery covered by contracts), CatalogEmpty,
+Slow, both themes and retained selections. No automated UI tests or live writes.
+
+Results on 2026-10-31: 126 Discovery unit tests (11 suites) and five Sandbox
+contracts passed, zero failures/errors/skips. Direct Sandbox and Direct Debug
+assemblies passed, including packaged DEX and Sandbox isolation. After correcting
+the failure fixture, its five contracts and both assemblies passed again.
+No IDE service was available. Native iOS behavior remains a #252 gate.
+
+Manual: unlocked emulator-5554 / sdk_gphone64_x86_64, API 37, 1080x2400,
+density 420, font scale 1.0. com.coffeepeek.sandbox / SandboxActivity updated
+in place from 2591 to 2594 (1.1.4.2594-sandbox), matching signature. Source is
+the base above plus this patch; final APK SHA-256:
+ec99195b3ca1e78dae3d7983317776603a93d3b20ea594783086542698511776.
+Persistent catalog error/retry is readable in light/dark; price selection survives
+retry, Done and reopening, and search still returns results. Back dismisses the
+sheet. CatalogEmpty returned empty non-roaster sections, but the existing disk
+roaster cache retained options: the fully empty message is covered by unit state
+tests/colocated preview, not claimed as device-verified. Loading is unit-tested;
+Slow loading was not captured manually. The initial finite failure fixture was
+consumed by other startup readers, so it was replaced with a persistent failure;
+successful recovery is a contract test. Restored Seeded mode; no live writes,
+data clearing or automated UI tests. Screenshots/dumps remain local and ignored.
+
 GitHub tracking: [#236](https://github.com/CoffeePeek/coffeepeek-cross-mobile/issues/236).
 The audit's 20 findings are individual issues, #237–#256. Each fix gets a focused
 migration branch and PR into `develop`; the user's request authorizes those merges.
