@@ -16,7 +16,7 @@ import kotlin.math.sqrt
  * 47 shops in two cities with every filter, paging, nearby search by distance, map content by bounds and two zones; `Truncated` is `Paged` with a map that cuts the
  * shops and says so; `Empty` has no shops; `SearchFailure` and `MapFailure` answer 500 for the search or for the map.
  */
-internal enum class SandboxDiscovery { Seeded, Paged, Truncated, Empty, SearchFailure, PageFailure, RefreshFailure, MapFailure, CatalogFailure, CatalogEmpty }
+internal enum class SandboxDiscovery { Seeded, Paged, Truncated, Empty, SearchFailure, PageFailure, RefreshFailure, MapFailure, CatalogFailure, CatalogEmpty, LongText }
 
 private data class Spot(
     val slug: String, val name: String, val city: String, val type: String, val price: String, val rating: Double,
@@ -97,6 +97,7 @@ internal class SandboxDiscoveryBackend(
     private fun spots(): List<Spot> = when {
         !populated() || mode == SandboxDiscovery.Empty -> emptyList()
         mode == SandboxDiscovery.Seeded -> core
+        mode == SandboxDiscovery.LongText -> core.map { it.copy(name = "Кофейня с собственной обжаркой на длинной городской улице") }
         else -> core + extras
     }
 
@@ -297,7 +298,7 @@ internal class SandboxDiscoveryBackend(
 
     private fun searchItem(spot: Spot, distance: Double?) = buildJsonObject {
         put("address", address(spot.slug, "/coffee-shops/${spot.slug}")); put("name", spot.name)
-        put("addressLine", "Тестовая улица"); put("coverPhoto", photo()); put("rating", spot.rating); put("checkInCount", 3)
+        put("addressLine", if (mode == SandboxDiscovery.LongText) "Проспект Независимости, 123, вход со стороны внутреннего двора" else "Тестовая улица"); put("coverPhoto", photo()); put("rating", spot.rating); put("checkInCount", 3)
         put("isOpen", spot.open); put("isVisited", spot.visited); put("isFavorite", isFavorite(spot))
         distance?.let { put("distanceMeters", it) }
         put("tags", JsonArray(spot.tags.map { catalog(it, names.getValue(it)) }))

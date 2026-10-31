@@ -26,14 +26,17 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.Density
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekColors
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
@@ -143,7 +146,8 @@ private fun ShopCardDetails(
         if (!locationSummary.isNullOrBlank()) Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(CoffeePeekIcons.Location, contentDescription = null, tint = MaterialTheme.colorScheme.coffeePeekAccentForeground, modifier = Modifier.size(14.dp))
             Spacer(Modifier.width(2.dp))
-            Text(locationSummary, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(locationSummary, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = if (LocalDensity.current.fontScale > 1.2f) 3 else 1, overflow = TextOverflow.Ellipsis)
         }
         ShopCardSummary(kindLabel, priceLevel, tag)
     }
@@ -151,6 +155,14 @@ private fun ShopCardDetails(
 
 @Composable
 private fun ShopCardTitle(title: String, statusLabel: String?, isOpen: Boolean) {
+    if (LocalDensity.current.fontScale > 1.2f) {
+        Column(verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2)) {
+            Text(title, style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                color = MaterialTheme.colorScheme.onSurface, maxLines = 3, overflow = TextOverflow.Ellipsis)
+            if (statusLabel != null) StatusBadge(statusLabel, isOpen, Modifier)
+        }
+        return
+    }
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
         Text(
             title, style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold), color = MaterialTheme.colorScheme.onSurface,
@@ -262,3 +274,18 @@ private fun ShopCardPreviewContent(darkTheme: Boolean) = CoffeePeekTheme(darkThe
 
 @Preview @Composable private fun CoffeePeekShopCardLightPreview() = ShopCardPreviewContent(darkTheme = false)
 @Preview @Composable private fun CoffeePeekShopCardDarkPreview() = ShopCardPreviewContent(darkTheme = true)
+
+@Composable
+private fun ShopCardLargePreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
+    CompositionLocalProvider(LocalDensity provides Density(LocalDensity.current.density, 2f)) {
+        CoffeePeekShopCard(
+            title = "Кофейня с собственной обжаркой на длинной улице", kindLabel = "Кофейня",
+            statusLabel = "ОТКРЫТО", isOpen = true, modifier = Modifier.width(280.dp),
+            locationSummary = "Проспект Независимости, 123, вход со стороны внутреннего двора",
+            cover = { Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surfaceVariant)) },
+        )
+    }
+}
+
+@Preview @Composable private fun CoffeePeekShopCardLargeLightPreview() = ShopCardLargePreview(false)
+@Preview @Composable private fun CoffeePeekShopCardLargeDarkPreview() = ShopCardLargePreview(true)

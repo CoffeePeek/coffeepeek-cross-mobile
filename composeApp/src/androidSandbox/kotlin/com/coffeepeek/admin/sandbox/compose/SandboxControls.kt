@@ -121,6 +121,7 @@ import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
                         SandboxDiscovery.MapFailure -> R.string.sandbox_discovery_map_failure
                         SandboxDiscovery.CatalogFailure -> R.string.sandbox_discovery_catalog_failure
                         SandboxDiscovery.CatalogEmpty -> R.string.sandbox_discovery_catalog_empty
+                        SandboxDiscovery.LongText -> R.string.sandbox_discovery_long_text
                     }
                     FilterChip(discovery == mode, { onDiscovery(mode) }, { Text(stringResource(label)) }, enabled = enabled)
                 }
