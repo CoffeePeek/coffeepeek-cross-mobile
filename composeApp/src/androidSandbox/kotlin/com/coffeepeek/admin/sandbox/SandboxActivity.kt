@@ -45,7 +45,12 @@ class SandboxActivity : ComponentActivity() {
                     model.fixtures(sandbox.backend.updatePolicy, sandbox.backend.cities, sandbox.backend.authPolicy, sandbox.backend.feed, sandbox.backend.contributions, sandbox.backend.discovery)
                 }
             }
-            SandboxResourceConfiguration(intent.getStringExtra("sandbox_locale")) { SandboxScreen(model, sandbox) }
+            SandboxResourceConfiguration(
+                language = intent.getStringExtra("sandbox_locale"),
+                fontScale = intent.getFloatExtra("sandbox_font_scale", 0f),
+                widthDp = intent.getIntExtra("sandbox_width_dp", 0),
+                heightDp = intent.getIntExtra("sandbox_height_dp", 0),
+            ) { SandboxScreen(model, sandbox) }
         }
     }
     private companion object {

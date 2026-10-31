@@ -1,5 +1,63 @@
 # Home audit implementation — 2026-10-31
 
+## #254 — large text and narrow layout
+
+Base develop `e93b53cb`; branch `codex/migration-home-adaptive-text`.
+Plan: first reproduce the risks with Sandbox-only font 1.3/1.5/2 and constrained
+320dp viewport, without changing system settings. Inspect the filter heading,
+all five navigation labels, shop title/status and long address. Then make only
+targeted owning-component layout fixes, preserving actions, touch targets,
+glass, palette and typography. Colocated light/dark previews, relevant unit
+contracts and both Android assemblies/DEX/isolation; manual Sandbox repeat.
+Native iOS Dynamic Type/VoiceOver runtime is explicitly deferred to the user.
+
+Observed before fixes: 320dp/2x split the shop-section title almost character by
+character and ellipsized all navigation captions. The first separate modal reset
+to the real device text density, so that image was not a 2x filter check. The
+filter now preserves caller density and bounds its width to the caller viewport.
+Large filter heading/actions and card title/status use separate rows; long shop
+title/address allow three lines, retaining full accessibility text.
+
+Navigation uses compact single-line captions with a 9sp lower fitting limit and
+a large long-press/hover card. Full tab titles/selection semantics are retained.
+An intermediate multiline-bar experiment consumed too much viewport and clipped
+corner text; it is not the shipped solution. This follows the compact navigation
+and large-content-viewer approach described by Apple:
+https://developer.apple.com/videos/play/wwdc2024/10074/ . The Android popup is our
+shared readable card, not a promise of native UIKit behavior. Main content keeps
+the requested scale; native iOS tab navigation is not replaced.
+
+Build history: baseline Sandbox fixture assembly passed. First fix build failed
+because PreviewLightDark has no fontScale/widthDp parameters; replaced with local
+density/width preview wrappers. Retry passed, as did both later layout builds.
+An attempted testDirectSandboxUnitTest task did not exist; the existing
+testDirectDebugUnitTest with in-memory SandboxDiscoveryMapTest passed (5 tests).
+No live Debug app was installed. 132 Discovery + 48 design-system tests passed,
+zero failures/errors/skips; both APK/DEX/isolation and DS iOS KLIB passed. The
+final compact-navigation build passed in 49s. No automated UI tests introduced.
+
+The first tooltip integration consumed the row's width and displayed only Search;
+manual review caught this before commit. An outer weighted Box now owns each
+tab's constraints; both APKs/DEX/isolation passed again (42s). All five labels,
+large Settings tooltip, automatic tooltip dismissal and normal Settings tap were
+then verified at 2x. Tooling reports the existing shared Preview deprecations
+and the compatible tooltip position-provider deprecation; no IDE service was
+available. A final whitespace-only indentation correction does not change code.
+
+Manual 2026-10-31: unlocked emulator-5554/API37, physical 1080x2400/density420,
+system font1.0 unchanged. Sandbox local 320dp width: 1.3x at 640dp height (dark),
+1.5x at 740dp (light), 2x at 740dp (dark). Home, filter headings/actions, Back/Done,
+long shop title/status/address, nav labels and scroll reviewed. Three-line cards
+may ellipsize exceptionally long copy but preserve the full semantic string.
+The Sandbox badge may overlap fixture content; the production FAB overlap is
+tracked separately in #250. Popup/modal windows use real window height, with
+filter width and text scale explicitly preserved; this is not physical device
+resizing or system accessibility acceptance. VoiceOver/Dynamic Type/TalkBack
+traversal remains unexecuted. #254 stays open only for the user's iPhone gate.
+Same certificate/package/entry, Sandbox 2602 -> 2604 in place. Final APK SHA-256:
+077e7820f2b472b025d75a5d40412b6299935c76c6fab321fee75e518e19dc5a.
+Source: base above plus this patch. Captures and raw diagnostics are local only.
+
 ## #245 — photo backdrop ownership
 
 Base develop `97f0e8bf`; branch `codex/migration-home-photo-backdrop`.

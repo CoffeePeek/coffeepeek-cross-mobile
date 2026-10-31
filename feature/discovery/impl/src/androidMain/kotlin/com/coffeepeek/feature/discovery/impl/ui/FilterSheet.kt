@@ -8,6 +8,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
@@ -18,6 +20,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import com.coffeepeek.core.designsystem.component.CoffeePeekTextButton as TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalWindowInfo
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -50,27 +58,48 @@ import com.coffeepeek.feature.discovery.impl.search.SearchState
 @Composable
 internal fun FilterSheet(state: SearchState, host: DiscoveryHost, onAction: (SearchAction) -> Unit) {
     var draft by remember { mutableStateOf(state.filters) }
+    val density = LocalDensity.current
+    val width = with(density) { LocalWindowInfo.current.containerSize.width.toDp() }
     CoffeePeekSwipeDismissModalBottomSheet(
         onDismissRequest = { onAction(SearchAction.CloseFilters) },
         dismissDescription = stringResource(R.string.discovery_filters_close),
+        modifier = Modifier.widthIn(max = width),
     ) {
-        FilterSheetHeader(draft.activeCount > 0, { draft = draft.clearSelections() }) {
-            onAction(SearchAction.ApplyFilters(draft.copy(cityId = state.filters.cityId)))
-            onAction(SearchAction.CloseFilters)
-        }
-        Column(
-            Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()).navigationBarsPadding()
-                .padding(horizontal = CoffeePeekDimens.spacing4).padding(bottom = CoffeePeekDimens.spacing6),
-            verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing6),
-        ) {
-            FilterCatalogStatus(state) { onAction(SearchAction.RetryCatalogs) }
-            FilterSelections(state, host, draft) { draft = it }
+        // A separate modal window must preserve the caller's text scale.
+        CompositionLocalProvider(LocalDensity provides density) {
+            FilterSheetHeader(draft.activeCount > 0, { draft = draft.clearSelections() }) {
+                onAction(SearchAction.ApplyFilters(draft.copy(cityId = state.filters.cityId)))
+                onAction(SearchAction.CloseFilters)
+            }
+            Column(
+                Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()).navigationBarsPadding()
+                    .padding(horizontal = CoffeePeekDimens.spacing4).padding(bottom = CoffeePeekDimens.spacing6),
+                verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing6),
+            ) {
+                FilterCatalogStatus(state) { onAction(SearchAction.RetryCatalogs) }
+                FilterSelections(state, host, draft) { draft = it }
+            }
         }
     }
 }
 
 @Composable
 private fun FilterSheetHeader(resetEnabled: Boolean, onReset: () -> Unit, onDone: () -> Unit) {
+    if (LocalDensity.current.fontScale > 1.2f) {
+        Column(Modifier.fillMaxWidth().padding(horizontal = CoffeePeekDimens.spacing4)) {
+            Text(stringResource(R.string.discovery_filters), fontSize = 17.sp, fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.align(Alignment.CenterHorizontally))
+            FlowRow(Modifier.fillMaxWidth().heightIn(min = 48.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+                TextButton(onReset, enabled = resetEnabled, contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp)) {
+                    Text(stringResource(R.string.discovery_filters_reset), fontSize = 17.sp)
+                }
+                TextButton(onDone, contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp)) {
+                    Text(stringResource(R.string.discovery_filters_done), fontSize = 17.sp, fontWeight = FontWeight.SemiBold)
+                }
+            }
+        }
+        return
+    }
     Box(Modifier.fillMaxWidth().height(48.dp).padding(horizontal = 4.dp)) {
         TextButton(onReset, enabled = resetEnabled, modifier = Modifier.align(Alignment.CenterStart)) {
             Text(
@@ -137,4 +166,12 @@ private fun Set<String>.toggle(id: String): Set<String> = if (id in this) this -
 @Composable
 private fun FilterSheetPreview() = CoffeePeekTheme {
     FilterSheet(SearchState(), DiscoveryHost()) {}
+}
+
+@PreviewLightDark
+@Composable
+private fun FilterSheetHeaderLargePreview() = CoffeePeekTheme {
+    CompositionLocalProvider(LocalDensity provides androidx.compose.ui.unit.Density(LocalDensity.current.density, 2f)) {
+        Box(Modifier.width(320.dp)) { FilterSheetHeader(true, {}, {}) }
+    }
 }
