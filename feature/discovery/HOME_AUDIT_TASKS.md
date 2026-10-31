@@ -1,5 +1,37 @@
 # Home audit implementation — 2026-10-31
 
+## #249 — adaptive mini-map density
+
+Base develop `165e039e`; branch `codex/migration-home-map-density`.
+Plan: replace the fixed 240dp preview with 30% of the available content height,
+bounded to 180–200dp. Keep its expansion target, map retention, search/quick
+filters, touch sizes and list clearance unchanged. Refresh indicator and map
+slot use the same calculated height. Paired compact preview, existing Discovery
+units and both Android APK/DEX/isolation; manual full and short Sandbox windows,
+large text, both themes, map expansion/Back and before/after content positions.
+iOS legacy parity belongs to #252; no native visual acceptance claimed here.
+
+Results 2026-10-31: first compilation rejected null in the preview's non-null
+query; corrected to an empty string. Retry passed in 37s: 132 Discovery tests,
+zero failures/errors/skips, both Android assemblies and packaged DEX/isolation.
+No additional behavior tests for a reversible dimension-only change. Existing
+unit contracts, lifecycle/analytics wiring and dependencies remain unchanged.
+
+Manual: emulator-5554/API37/1080x2400/density420, system font1.0 unchanged.
+Normal light window: map 240 -> 200dp (630 -> 525px), first card y1376 -> y1271,
+roaster heading y2094 -> y1989, 105px earlier. Short local 320x640dp window,
+font1.3/LongText: map 240 -> 180dp (630 -> 473px), first card y1465 -> y1308,
+157px earlier. Light/dark readability, horizontal filter retention, scrolling,
+map expansion hiding tabs and Back restoring all five tabs passed. The first
+dark screenshot caught the controls dialog closing; a settled capture was used
+for review. The map remains a sizeable expansion target; 48dp controls unchanged.
+No quick filters were removed without product evidence. Existing FAB overlap is
+handled by #250. Screenshots/dumps remain local; this is constrained Compose
+viewport verification, not physical window resizing or iOS runtime.
+Verified same signature/package/Activity, Sandbox 2604 -> 2606 in place.
+APK SHA-256: 99c208510d04d719b1764cc09bd77da1a20f94a723cf3680711466daf9a863c6.
+Source: base above plus this patch. No IDE rendering service was available.
+
 ## #254 — large text and narrow layout
 
 Base develop `e93b53cb`; branch `codex/migration-home-adaptive-text`.
