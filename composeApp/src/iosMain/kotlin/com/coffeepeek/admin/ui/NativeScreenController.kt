@@ -58,6 +58,7 @@ internal class NativeScreenController(
     private val analyticsVisit = com.coffeepeek.admin.analytics.correlationId("screen")
     private var analyticsVisible by mutableStateOf(false)
     private var bottomClearance by mutableStateOf(if (isTabRoot) CpDimens.iosTabBarClearanceFloor else 0.dp)
+    private var tabBarHidden = false
     private val photoUnderStatusBar = route is Navigator.Screen.ShopDetail || route is Navigator.Screen.RoasterDetail
     private val isAuthFlow = route == Navigator.Screen.Auth || route == Navigator.Screen.Register ||
         route == Navigator.Screen.ForgotPassword || route is Navigator.Screen.ResetPassword
@@ -99,7 +100,8 @@ internal class NativeScreenController(
         refreshBottomClearance()
     }
 
-    internal fun syncBottomClearance() {
+    internal fun syncBottomClearance(hidden: Boolean = tabBarHidden) {
+        tabBarHidden = hidden
         refreshBottomClearance()
     }
 
@@ -122,7 +124,7 @@ internal class NativeScreenController(
 
     private fun measuredBottomClearance(): Dp {
         val inset = view.safeAreaInsets.useContents { bottom }.dp
-        if (!isTabRoot) return inset
+        if (!isTabRoot || tabBarHidden) return inset
         return maxOf(inset, CpDimens.iosTabBarClearanceFloor)
     }
 
@@ -148,6 +150,7 @@ internal class NativeScreenController(
         SideEffect {
             overrideUserInterfaceStyle = themeMode.uiKitStyle
             view.backgroundColor = colors.background.toUIColor()
+            view.tintColor = colors.primary.toUIColor()
             setNeedsStatusBarAppearanceUpdate()
         }
         val floatingClearance = if (isTabRoot) bottomClearance else 0.dp

@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ColorScheme
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
@@ -77,14 +78,17 @@ private fun IosGlassIconButton(
 ) {
     val currentOnClick = rememberUpdatedState(onClick)
     val currentIcon = rememberUpdatedState(icon)
+    val active = rememberUpdatedState(enabled && !isLoading)
     val colors = MaterialTheme.colorScheme
     UIKitView(
         factory = {
             UIButton.buttonWithConfiguration(
                 configuration = UIButtonConfiguration.grayButtonConfiguration(),
                 primaryAction = UIAction.actionWithHandler {
-                    if (currentIcon.value == GlassControlIcon.Favorite || currentIcon.value == GlassControlIcon.FavoriteFilled) platformHaptic(HapticEvent.Selection)
-                    currentOnClick.value()
+                    if (active.value) {
+                        if (currentIcon.value.isFavorite) platformHaptic(HapticEvent.Selection)
+                        currentOnClick.value()
+                    }
                 },
             )
         },
@@ -93,26 +97,35 @@ private fun IosGlassIconButton(
         update = { button ->
             button.overrideUserInterfaceStyle = colors.uiKitStyle
             button.backgroundColor = UIColor.clearColor
-            val configuration = if (isLiquidGlassAvailable) {
-                UIButtonConfiguration.glassButtonConfiguration()
-            } else {
-                UIButtonConfiguration.grayButtonConfiguration()
-            }
-            configuration.cornerStyle = UIButtonConfigurationCornerStyleCapsule
-            configuration.image = UIImage.systemImageNamed(icon.symbol)
-            configuration.showsActivityIndicator = isLoading
-            configuration.baseForegroundColor = colors.onSurface.toUIColor()
-            if (icon == GlassControlIcon.FavoriteFilled || (icon == GlassControlIcon.Favorite && selected)) {
-                configuration.baseForegroundColor = CoffeePeekColors.Like.toUIColor()
-            } else if (selected) {
-                configuration.baseForegroundColor = colors.primary.toUIColor()
-            }
-            button.configuration = configuration
+            button.tintColor = colors.primary.toUIColor()
+            button.configuration = glassIconConfiguration(icon, selected, isLoading, colors)
             button.accessibilityLabel = contentDescription
             button.enabled = enabled && !isLoading
             button.selected = selected || icon == GlassControlIcon.FavoriteFilled
         },
     )
+}
+
+private val GlassControlIcon.isFavorite: Boolean
+    get() = this == GlassControlIcon.Favorite || this == GlassControlIcon.FavoriteFilled
+
+internal fun glassIconConfiguration(
+    icon: GlassControlIcon, selected: Boolean, isLoading: Boolean, colors: ColorScheme,
+): UIButtonConfiguration {
+    val configuration = if (isLiquidGlassAvailable) UIButtonConfiguration.glassButtonConfiguration()
+        else UIButtonConfiguration.grayButtonConfiguration()
+    return configuration.apply {
+        // Keep UIKit's selected accessibility state without its automatic blue filled style.
+        if (isLiquidGlassAvailable) automaticallyUpdateForSelection = false
+        cornerStyle = UIButtonConfigurationCornerStyleCapsule
+        image = UIImage.systemImageNamed(icon.symbol)
+        showsActivityIndicator = isLoading
+        baseForegroundColor = when {
+            icon == GlassControlIcon.FavoriteFilled || (icon.isFavorite && selected) -> CoffeePeekColors.Like
+            selected -> colors.primary
+            else -> colors.onSurface
+        }.toUIColor()
+    }
 }
 
 @Composable
@@ -131,6 +144,7 @@ actual fun PlatformGlassBackButton(onClick: () -> Unit, modifier: Modifier) {
         update = { button ->
             button.overrideUserInterfaceStyle = colors.uiKitStyle
             button.backgroundColor = UIColor.clearColor
+            button.tintColor = colors.primary.toUIColor()
             val configuration = if (isLiquidGlassAvailable) {
                 UIButtonConfiguration.glassButtonConfiguration()
             } else {

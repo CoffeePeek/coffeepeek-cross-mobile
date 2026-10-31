@@ -2,6 +2,7 @@
 
 package com.coffeepeek.core.designsystem.component
 
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -28,11 +29,15 @@ internal actual fun CoffeePeekNativeControlBackground(
                 isAccessibilityElement = false
             }
         },
-        modifier = modifier,
-        properties = UIKitInteropProperties(isNativeAccessibilityEnabled = false, placedAsOverlay = false),
+        // Match UIButton's capsule, including when a caller requests a different Android shape.
+        modifier = modifier.coffeePeekNativeUnderlayClip(CircleShape),
+        // Disabling UIButton alone does not disable the interop host's touch arbitration.
+        properties = UIKitInteropProperties(interactionMode = null,
+            isNativeAccessibilityEnabled = false, placedAsOverlay = false),
         update = { button ->
             button.overrideUserInterfaceStyle = coffeePeekUserInterfaceStyle(colors.background)
             button.backgroundColor = UIColor.clearColor
+            button.tintColor = (tint ?: colors.primary).toUIColor()
             button.configuration = glassButtonConfiguration(prominent).apply {
                 cornerStyle = UIButtonConfigurationCornerStyleCapsule
                 if (tint != null) baseBackgroundColor = tint.toUIColor()

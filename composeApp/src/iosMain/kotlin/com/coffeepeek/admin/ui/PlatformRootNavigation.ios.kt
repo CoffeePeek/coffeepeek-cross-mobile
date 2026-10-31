@@ -119,6 +119,7 @@ internal actual fun PlatformRootNavigation(
     val tabReselections = remember { MainTabReselections() }
     val navigationDelegates = remember { List(6) { NavigationDelegate() } }
     val navigations = remember { List(6) { UINavigationController() } }
+    val tabBarVisibility = remember(tabs) { NativeTabBarVisibility(tabs, navigations[0]) }
     val businessMode = koinInject<com.coffeepeek.feature.ownership.api.BusinessOwnershipEntry>().Session().businessMode
     val visibleTabIndices = remember(isLoggedIn, businessMode) { mainTabScreens(isLoggedIn, businessMode).map { requireNotNull(nativeTabIndex(it)) } }
     val restoredTab = remember { NavigationMemory.selectedTab }
@@ -127,6 +128,7 @@ internal actual fun PlatformRootNavigation(
     val pendingTab by Navigator.pendingTabSelection.collectAsState()
 
     fun saveNavigation() {
+        tabBarVisibility.sync()
         if (NavigationMemory.generation == memoryGeneration) NavigationMemory.save(tabs, navigations, visibleTabIndices)
     }
 
@@ -168,7 +170,8 @@ internal actual fun PlatformRootNavigation(
             val navigation = navigations[index]
             val root = NativeScreenController(labels[index], analyticsPage = listOf("discovery", "coffees", "feed", "profile", "settings", "business_ownership")[index], isTabRoot = true) {
                 when (index) {
-                    0 -> koinInject<DiscoveryScreenRenderer>().Tab(onMapExpandedChange = {}, reselections = tabReselections.search)
+                    0 -> koinInject<DiscoveryScreenRenderer>().Tab(
+                        onMapExpandedChange = tabBarVisibility::onMapExpandedChange, reselections = tabReselections.search)
                     1 -> CheckInTabContent { koinInject<CoffeeScreenRenderer>().List(tabReselections.coffee) }
                     2 -> koinInject<CommunityScreenRenderer>().Content(
                         onCreateCheckIn = { Navigator.navigate(Navigator.Screen.CreateCheckIn) },
@@ -225,6 +228,7 @@ internal actual fun PlatformRootNavigation(
         tabDelegate.onTabChanged = { saveNavigation() }
         tabs.overrideUserInterfaceStyle = themeMode.uiKitStyle
         tabs.view.backgroundColor = colors.background.toUIColor()
+        tabs.view.tintColor = colors.primary.toUIColor()
         tabs.tabBar.tintColor = colors.primary.toUIColor()
         tabs.tabBar.unselectedItemTintColor = colors.onSurfaceVariant.toUIColor()
         navigations.forEach { it.view.backgroundColor = colors.background.toUIColor() }
