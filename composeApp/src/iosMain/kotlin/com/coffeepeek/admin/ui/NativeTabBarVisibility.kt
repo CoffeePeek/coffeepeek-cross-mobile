@@ -2,6 +2,7 @@ package com.coffeepeek.admin.ui
 
 import platform.UIKit.UINavigationController
 import platform.UIKit.UITabBarController
+import platform.UIKit.hidesBottomBarWhenPushed
 
 /** Root composition owns tab visibility; a retained, hidden map cannot hide another tab. */
 internal class NativeTabBarVisibility(

@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ColorScheme
@@ -22,6 +23,7 @@ import com.coffeepeek.admin.theme.CpDimens
 import com.coffeepeek.admin.theme.toUIColor
 import com.coffeepeek.admin.theme.uiKitStyle
 import com.coffeepeek.core.designsystem.theme.CoffeePeekColors
+import com.coffeepeek.core.designsystem.component.coffeePeekNativeUnderlayClip
 import dev.chrisbanes.haze.HazeState
 import platform.UIKit.UIAction
 import platform.UIKit.UIButton
@@ -63,7 +65,7 @@ actual fun PlatformGlassIconButton(
     isLoading: Boolean,
     hazeState: HazeState?,
     content: @Composable () -> Unit,
-) = IosGlassIconButton(icon, onClick, contentDescription, modifier, enabled, selected, isLoading, placedAsOverlay = true)
+) = IosGlassIconButton(icon, onClick, contentDescription, modifier, enabled, selected, isLoading)
 
 @Composable
 private fun IosGlassIconButton(
@@ -74,7 +76,6 @@ private fun IosGlassIconButton(
     enabled: Boolean,
     selected: Boolean,
     isLoading: Boolean,
-    placedAsOverlay: Boolean,
 ) {
     val currentOnClick = rememberUpdatedState(onClick)
     val currentIcon = rememberUpdatedState(icon)
@@ -92,8 +93,9 @@ private fun IosGlassIconButton(
                 },
             )
         },
-        modifier = modifier.size(CpDimens.buttonHeight),
-        properties = UIKitInteropProperties(isNativeAccessibilityEnabled = true, placedAsOverlay = placedAsOverlay),
+        modifier = modifier.size(CpDimens.buttonHeight).coffeePeekNativeUnderlayClip(CircleShape),
+        // Photo/card actions must scroll beneath Compose headers, just like map controls.
+        properties = UIKitInteropProperties(isNativeAccessibilityEnabled = true, placedAsOverlay = false),
         update = { button ->
             button.overrideUserInterfaceStyle = colors.uiKitStyle
             button.backgroundColor = UIColor.clearColor
@@ -177,8 +179,6 @@ actual fun PlatformMapControlButton(
         enabled = true,
         selected = selected,
         isLoading = false,
-        // Map controls must stay below Compose headers and obey the map preview's clip.
-        placedAsOverlay = false,
     )
 }
 

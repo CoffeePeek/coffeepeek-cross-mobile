@@ -8,6 +8,7 @@ import kotlin.test.assertTrue
 import platform.UIKit.UINavigationController
 import platform.UIKit.UITabBarController
 import platform.UIKit.UIViewController
+import platform.UIKit.hidesBottomBarWhenPushed
 
 /** Native state contracts only: no window, Compose, account or application services. */
 class NativeTabBarVisibilityTest {

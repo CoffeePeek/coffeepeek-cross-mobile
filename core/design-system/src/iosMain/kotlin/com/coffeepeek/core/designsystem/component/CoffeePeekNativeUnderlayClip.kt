@@ -12,7 +12,7 @@ import androidx.compose.ui.graphics.drawscope.clipPath
  * to the control, preserving the Compose background outside its rounded edges.
  * Use a canvas clip, not an offscreen layer: Clear must reach the interop canvas.
  */
-internal fun Modifier.coffeePeekNativeUnderlayClip(shape: Shape): Modifier = drawWithCache {
+fun Modifier.coffeePeekNativeUnderlayClip(shape: Shape): Modifier = drawWithCache {
     val path = when (val outline = shape.createOutline(size, layoutDirection, this)) {
         is Outline.Rectangle -> Path().apply { addRect(outline.rect) }
         is Outline.Rounded -> Path().apply { addRoundRect(outline.roundRect) }

@@ -29,4 +29,22 @@ available; previews and Android checks do not certify UIKit behaviour.
 
 ## Results
 
-Pending implementation and checks.
+- Local code revision `13e84d1d`: `:core:design-system:compileKotlinIosArm64`
+  compiled successfully. Android `assembleDirectSandbox` and `assembleDirectDebug`
+  passed, including both packaged runtime-class checks and Sandbox isolation.
+- Design-system `testDebugUnitTest` was up-to-date: existing reports contain
+  50 tests, zero failures/errors/skips. These were reused, not re-executed.
+- `:composeApp:compileKotlinIosArm64` is skipped on Windows (MapLibre/host gate).
+  Its successful Gradle exit is **not** an iOS application compile result.
+- Further inspection found fully native photo/card icon buttons used overlay
+  placement, allowing them to escape scrolling/header clips. They now use the
+  same shaped underlay mechanism while retaining their native action handling.
+- Full iOS build and seven new non-UI contracts are tracked in
+  [PR #279](https://github.com/CoffeePeek/coffeepeek-cross-mobile/pull/279).
+  The PR's checks are the source of the final macOS CI result.
+- First macOS run `41214021568` failed compiling the app: missing import of
+  UIKit's `hidesBottomBarWhenPushed` category extension in the new visibility
+  controller. Added the explicit import to the controller and its contract test;
+  this failure is retained here separately from the subsequent verification.
+- No device run: the changes are iOS-only; Android assembly does not establish
+  UIKit rendering/touch acceptance. The iPhone matrix above remains open.
