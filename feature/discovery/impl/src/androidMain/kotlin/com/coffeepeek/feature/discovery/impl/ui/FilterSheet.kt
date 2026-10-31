@@ -58,7 +58,6 @@ internal fun FilterSheet(state: SearchState, host: DiscoveryHost, onAction: (Sea
             TextButton({ draft = draft.clearSelections() }, enabled = resetEnabled, modifier = Modifier.align(Alignment.CenterStart)) {
                 Text(
                     stringResource(R.string.discovery_filters_reset), fontSize = 17.sp,
-                    color = if (resetEnabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
                 )
             }
             Text(
@@ -66,7 +65,7 @@ internal fun FilterSheet(state: SearchState, host: DiscoveryHost, onAction: (Sea
                 color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.align(Alignment.Center),
             )
             TextButton({ onAction(SearchAction.ApplyFilters(draft)); onAction(SearchAction.CloseFilters) }, modifier = Modifier.align(Alignment.CenterEnd)) {
-                Text(stringResource(R.string.discovery_filters_done), fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.primary)
+                Text(stringResource(R.string.discovery_filters_done), fontSize = 17.sp, fontWeight = FontWeight.SemiBold)
             }
         }
         Column(

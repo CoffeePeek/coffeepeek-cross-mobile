@@ -38,6 +38,8 @@ import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekColors
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
+import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
+import com.coffeepeek.core.designsystem.theme.coffeePeekStatusForeground
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 private const val MAX_LOGOS = 3
@@ -120,7 +122,7 @@ fun CoffeePeekShopCard(
                 }
                 brewMethods?.invoke()
                 if (!locationSummary.isNullOrBlank()) Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(CoffeePeekIcons.Location, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(14.dp))
+                    Icon(CoffeePeekIcons.Location, contentDescription = null, tint = MaterialTheme.colorScheme.coffeePeekAccentForeground, modifier = Modifier.size(14.dp))
                     Spacer(Modifier.width(2.dp))
                     Text(locationSummary, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
@@ -191,13 +193,14 @@ private fun RatingBadge(text: String, count: Int) {
 @Composable
 private fun StatusBadge(label: String, isOpen: Boolean, modifier: Modifier) {
     val color = if (isOpen) CoffeePeekColors.Success else MaterialTheme.colorScheme.error
+    val foreground = MaterialTheme.colorScheme.coffeePeekStatusForeground(isOpen)
     Row(
         modifier.clip(RoundedCornerShape(CoffeePeekDimens.radiusSm)).background(color.copy(alpha = 0.14f)).padding(horizontal = CoffeePeekDimens.spacing2, vertical = 6.dp),
         horizontalArrangement = Arrangement.spacedBy(6.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Box(Modifier.size(8.dp).clip(RoundedCornerShape(50)).background(color))
-        Text(label, style = MaterialTheme.typography.labelSmall, color = color, fontWeight = FontWeight.Bold)
+        Box(Modifier.size(8.dp).clip(RoundedCornerShape(50)).background(foreground))
+        Text(label, style = MaterialTheme.typography.labelSmall, color = foreground, fontWeight = FontWeight.Bold)
     }
 }
 

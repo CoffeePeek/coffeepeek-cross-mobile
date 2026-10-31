@@ -64,6 +64,7 @@ import com.coffeepeek.core.designsystem.component.CoffeePeekRefreshError
 import com.coffeepeek.core.designsystem.component.CoffeePeekPullToRefresh
 import com.coffeepeek.core.designsystem.component.CoffeePeekCircularBackButton
 import com.coffeepeek.core.designsystem.component.CoffeePeekSearchField
+import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.feature.discovery.api.DiscoveryExposure
 import com.coffeepeek.feature.discovery.api.DiscoveryHost
@@ -137,7 +138,7 @@ private fun SearchHeader(state: SearchState, host: DiscoveryHost, onAction: (Sea
                 CoffeePeekCircularBackButton(
                     onClick = { focus.clearFocus(); onAction(SearchAction.CancelSearch) },
                     contentDescription = stringResource(R.string.discovery_search_cancel),
-                    tint = MaterialTheme.colorScheme.primary,
+                    tint = MaterialTheme.colorScheme.coffeePeekAccentForeground,
                 )
                 Spacer(Modifier.width(CoffeePeekDimens.spacing2))
             }

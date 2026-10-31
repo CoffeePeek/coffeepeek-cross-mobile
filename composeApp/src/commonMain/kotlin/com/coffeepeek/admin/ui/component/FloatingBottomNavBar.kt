@@ -38,6 +38,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.admin.theme.CoffeePeekTheme
+import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
 import com.coffeepeek.admin.ui.icons.CpIcons
 import dev.chrisbanes.haze.HazeState
 import org.jetbrains.compose.ui.tooling.preview.Preview
@@ -102,7 +103,7 @@ private fun RowScope.FloatingNavBarItem(item: FloatingNavItem) {
         .padding(horizontal = 2.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(3.dp, Alignment.CenterVertically)) {
-        Icon(item.icon, null, Modifier.size(22.dp), tint = if (item.selected) colors.primary else foreground)
+        Icon(item.icon, null, Modifier.size(22.dp), tint = if (item.selected) colors.coffeePeekAccentForeground else foreground)
         Text(item.title, color = foreground, style = MaterialTheme.typography.labelSmall,
             fontWeight = if (item.selected) FontWeight.SemiBold else FontWeight.Medium,
             maxLines = 1, overflow = TextOverflow.Ellipsis)
