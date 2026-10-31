@@ -299,3 +299,50 @@ were restored. No live services or UI automation tests were used; system setting
 were not changed.
 TalkBack traversal, enlarged fonts/narrow windows and native iOS visuals remain
 unexecuted gates; the reused retry component retains its polite live region.
+
+## #244 — shared glass search control
+
+Base: `18fd530709d10cb761b5911901cf1cf7dc7af393` (`develop`).
+Branch: `codex/migration-home-search-glass`.
+
+The remaining mismatch is the search field's opaque fill/solid border. Reuse
+CoffeePeekNativeControlBackground (Android glass approximation; iOS decorative
+UIKit glass, with Compose owning input/accessibility). Home filter/map buttons,
+add action and navigation already use their shared glass path; photo ratings
+remain content badges. HIG materials distinguish controls/navigation from content:
+https://developer.apple.com/design/human-interface-guidelines/materials.
+
+The retained iOS Feed calls CpSearchField; its NativeSearchField currently returns
+false. Delegate that fallback to the shared field, keeping the native hook and
+focus/search callbacks. Preserve text selection/IME composition via existing
+SyncedTextFieldState. Keep a 44 dp visual pill inside a stable 48 dp minimum
+input/clear target, matching the corrected filters and avoiding a height change
+when Clear appears. No data/filter/analytics changes or new module.
+
+Verification plan: existing input-state/Discovery/roaster regressions; Android
+Sandbox/Debug assembly and DEX/isolation; shared iOS KLIB compilation. Colocated
+light/dark previews include empty, populated and disabled input. Manual Sandbox
+Home/search, typing, clear, Back, horizontal filters and both themes; inspect
+clear touch target and stable geometry. Native iOS visuals/full build remain
+macOS gates; font/window/TalkBack gates remain unexecuted.
+
+Results on 2026-10-31: 187 tests (48 design-system, 116 Discovery, 23 roaster;
+27 suites), zero failures/errors/skips. Existing input regressions exercise delayed
+echo, active IME composition and external clear. Both Android APK assemblies,
+DEX/isolation checks and design-system iOS Arm64 KLIB passed. Final build also
+verified the additive keyboardOptions argument preserving legacy iOS native IME
+configuration. No Studio renderer; existing preview deprecation warnings remain.
+
+Manual: emulator-5554 / sdk_gphone64_x86_64, API 37, 1080x2400, density 420,
+font scale 1.0. Direct Sandbox updated 2584 to 2586 in place, matching certificate,
+com.coffeepeek.sandbox / SandboxActivity. Source: base above plus this patch;
+APK SHA-256: 4db4d7fa721de92cf457d073270dafb31f8b9f59b31ffb82b89e363d2ec48c65.
+Light/dark search material matches the adjacent controls. Input bounds y=170..296
+remain 126 px / 48 dp both empty and populated; Clear's clickable parent is also
+126x126 px. Typing, results, clear, Back and horizontal quick-filter scroll passed;
+light theme and empty Home restored. The first immediate ADB input after focus
+produced `andbox`; after waiting for settled focus, `Sandbox` and dark `Coffee`
+were received intact. Keep this first observation: physical/IME startup timing
+was not conclusively diagnosed by this manual run. Screenshots/dumps are local.
+Native iOS input/visual review, larger fonts, narrow windows and TalkBack remain
+unexecuted gates. No UI automation tests or live backend writes.
