@@ -9,6 +9,7 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.component.CoffeePeekFilterChip
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
@@ -24,7 +25,8 @@ import androidx.compose.ui.tooling.preview.PreviewLightDark
 internal fun DiscoveryQuickFilters(filters: DiscoveryFilters, canUseNearby: Boolean, onAction: (SearchAction) -> Unit) {
     LazyRow(
         contentPadding = PaddingValues(horizontal = CoffeePeekDimens.spacing4, vertical = 4.dp),
-        horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing1),
+        horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2),
+        verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier.fillMaxWidth(),
     ) {
         if (canUseNearby) item { CoffeePeekFilterChip(stringResource(R.string.discovery_quick_nearby), filters.nearbyOnly, { onAction(SearchAction.ToggleNearby) }, leadingIcon = CoffeePeekIcons.Distance) }
