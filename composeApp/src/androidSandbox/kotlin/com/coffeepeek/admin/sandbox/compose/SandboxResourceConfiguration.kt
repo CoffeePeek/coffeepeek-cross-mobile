@@ -25,11 +25,13 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import com.coffeepeek.R
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
+import com.coffeepeek.core.designsystem.theme.LocalCoffeePeekOpaqueGlassOverride
 
 /** Manual resource checks only: the wrapped context keeps its Activity parent and never changes device preferences. */
 @Composable
 internal fun SandboxResourceConfiguration(
     language: String?, fontScale: Float = 0f, widthDp: Int = 0, heightDp: Int = 0,
+    opaqueGlass: Boolean? = null,
     content: @Composable () -> Unit,
 ) {
     val parent = LocalContext.current
@@ -47,7 +49,8 @@ internal fun SandboxResourceConfiguration(
         }
     }
     CompositionLocalProvider(LocalContext provides context, LocalConfiguration provides context.resources.configuration,
-        LocalDensity provides Density(density.density, scale)) {
+        LocalDensity provides Density(density.density, scale),
+        LocalCoffeePeekOpaqueGlassOverride provides opaqueGlass) {
         SandboxViewport(widthDp, heightDp, content)
     }
 }

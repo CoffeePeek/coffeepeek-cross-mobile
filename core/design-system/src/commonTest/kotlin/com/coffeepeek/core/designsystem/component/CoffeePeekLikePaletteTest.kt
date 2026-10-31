@@ -47,4 +47,25 @@ class CoffeePeekLikePaletteTest {
             assertTrue((high + 0.05f) / (low + 0.05f) >= 3f)
         }
     }
+
+    @Test fun opaqueGlassKeepsBothHeartStatesReadableInBothThemes() {
+        for ((surface, neutral) in listOf(CoffeePeekColors.LightSurface to CoffeePeekColors.LightTextPrimary,
+            CoffeePeekColors.DarkSurface to CoffeePeekColors.DarkTextPrimary)) {
+            for (style in listOf(CoffeePeekLikeButtonStyle.Glass, CoffeePeekLikeButtonStyle.FloatingGlass)) {
+                for (selected in listOf(false, true)) {
+                    val overImage = coffeePeekLikeUsesPhotoColor(true, style, opaque = true)
+                    val color = coffeePeekLikeColor(selected, overImage, neutral)
+                    val high = maxOf(color.luminance(), surface.luminance())
+                    val low = minOf(color.luminance(), surface.luminance())
+                    assertTrue((high + 0.05f) / (low + 0.05f) >= 3f)
+                    assertEquals(if (selected) CoffeePeekColors.Like else neutral, color)
+                }
+            }
+        }
+    }
+
+    @Test fun opaqueGlassPreferenceDoesNotChangeHeartsDirectlyOnPhotos() {
+        assertTrue(coffeePeekLikeUsesPhotoColor(true, CoffeePeekLikeButtonStyle.Plain, opaque = true))
+        assertTrue(coffeePeekLikeUsesPhotoColor(true, CoffeePeekLikeButtonStyle.Glass, opaque = false))
+    }
 }

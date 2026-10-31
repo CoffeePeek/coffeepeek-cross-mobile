@@ -1,5 +1,74 @@
 # Home audit implementation — 2026-10-31
 
+## #253 — platform feedback and accessible glass
+
+Base develop `52b30df8`; branch `codex/migration-home-system-feedback`.
+Plan: bind Android haptics to the resumed Activity's weakly held View, using
+semantic system feedback without permission or ignore-setting flags. Read
+Compose's existing MotionDurationScale for the application's reduced-motion
+decision; do not introduce a second settings observer or multiply durations.
+Android API34+ contrast changes make shared glass opaque with a stronger edge,
+preserving the palette and ordinary appearance. API31–33 retain the dense
+fallback; no unsupported settings keys. Native iOS continues to own glass and
+accessibility, selection/notification haptics and its existing Reduce Motion
+observer. Physical iPhone review is deferred by the user.
+Verification: design-system and Discovery unit suites, both Android APKs with
+DEX/isolation checks, design-system iOS compilation, manual DirectSandbox on
+emulator-5554. Sandbox-only contrast/motion fixtures must not change device
+settings. Check light/dark glass, menus, navigation and reduced motion; tactile
+quality and actual OS toggles remain physical-device gates. After this PR merge
+stop as requested; do not start #252 or #256.
+
+Results 2026-10-31: 139 Discovery units and initially 48 design-system units
+passed; after the manual finding below, all 50 design-system units passed
+(189 unique tests total, zero failures/errors/skips). Both DirectSandbox and
+DirectDebug APKs, DEX runtime-class checks and Sandbox isolation passed first
+in 1m and again in 46s after the fix. Design-system iosArm64 KLIB compiled on
+both runs; this is not a full iOS app build or device review. Existing preview
+deprecation/test warnings remain; Android Studio MCP is unavailable.
+
+Manual emulator-5554, sdk_gphone64_x86_64/API37, 1080x2400, DirectSandbox:
+opaque light Home initially exposed a white-on-white unselected photo heart.
+Fixed the glass-only foreground and added contrast regressions for both themes
+and selection states; plain photo hearts and the gold selection color stay
+unchanged. Recheck passed. Opaque light/dark Home and profile menu are readable,
+all five tabs remain visible, menu Back returns correctly. Zero-scale Sandbox
+starts and navigates successfully using the same Compose motion context. The
+system vibrator history records Sandbox CLOCK_TICK (constant 4), flags 0,
+usage TOUCH, finished with the device's TICK fallback after the favorite tap.
+This verifies delivery, not tactile quality or the fake favorite's persistence.
+Normal glass restored after a fresh launch without accessibility extras.
+System animator-duration setting remained unset/default, haptics remained 1;
+no device settings, real account data, login or consent changed.
+
+Verified package/Activity and matching certificate; in-place Sandbox 2612 ->
+2614, source base plus this patch. Final APK SHA-256:
+e93cb7572bf87acbef155c8e75357e4e39a3e89e2d44f703e200c2be997fe2de.
+Screenshots, dumps and logs remain local/ignored. Colocated light/dark previews
+include opaque glass; preview rendering was not certified.
+
+Contract: Android Selection/CLOCK_TICK, Success/CONFIRM and Error/REJECT use
+View.performHapticFeedback on the resumed host; paused/replaced hosts drop
+queued feedback. No ignore-setting flags or vibration permission are added.
+iOS retains UISelectionFeedbackGenerator, UINotificationFeedbackGenerator and
+its live UIAccessibility Reduce Motion observer. Android's app motion decision
+reads Compose MotionDurationScale; durations are never scaled a second time.
+Android API34+ UiModeManager contrast > 0 selects opaque shared glass and a
+stronger rim. API31–33 keep ordinary blur/dense fallback because that public
+contrast API is unavailable; no Android Reduce Transparency setting is assumed.
+Native iOS materials own their OS contrast/transparency treatment.
+Actual OS-toggle delivery, physical haptics and iPhone accessibility remain
+device gates; the local rendering fixtures do not certify them. iPhone review
+was explicitly deferred by the user.
+
+References: [Android haptic feedback](https://developer.android.com/develop/ui/views/haptics/haptic-feedback),
+[UiModeManager contrast](https://developer.android.com/reference/android/app/UiModeManager#getContrast()),
+[Compose window motion context](https://github.com/androidx/androidx/blob/androidx-main/compose/ui/ui/src/androidMain/kotlin/androidx/compose/ui/platform/WindowRecomposer.android.kt).
+Related CI: #274 Android/iOS and #275 Android passed. #271 iOS contract retry
+is pending. #276 Android's first run failed at packageDirectDebug without a
+reported inner cause; failed-job retry requested, original failure retained.
+No unrelated CI refactor or #252/#256 work is included here.
+
 ## #255 — Search tab reselection
 
 Base develop `6bd9cf50`; branch `codex/migration-home-search-retap`.
