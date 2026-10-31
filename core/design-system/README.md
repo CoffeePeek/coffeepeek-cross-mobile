@@ -314,3 +314,18 @@ item, along with velocity-only flings, scrim geometry, IME and nested scrolling.
 ```
 
 Future consumers use `implementation(project(module.core.designSystem))`.
+
+### Glass backdrop ownership
+
+`CoffeePeekPhotoBackdrop` captures only its photo slot, inside explicit photo bounds.
+Overlay controls consume that local source as siblings of the captured layer;
+they never capture themselves. Shop-card favorites use this source on Android.
+Native iOS presenters own their material and bypass this Haze capture.
+This is an Android approximation, not identical iOS optical rendering.
+
+Flat header/roaster controls use the dense readable fallback. Native MapLibre
+surfaces do not supply a Compose photo source; their overlay controls retain the
+fallback until a valid map capture is available. The root capture belongs to the
+tab bar and popup-menu backdrop, not all in-window controls. A photo source must
+not cross a popup/window boundary. Missing/unsupported blur uses the existing
+nearly opaque tinted fallback without changing brand colors or touch targets.
