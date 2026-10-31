@@ -137,4 +137,5 @@
     <string name="discovery_map_card_open">Открыто</string>
     <string name="discovery_map_card_closed">Закрыто</string>
     <string name="discovery_map_truncated">Слишком много объектов — приблизьте карту</string>
+    <string name="search_clear">Очистить поиск</string>
 </resources>
