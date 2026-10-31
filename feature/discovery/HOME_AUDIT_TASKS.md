@@ -146,3 +146,50 @@ Screenshots/UI dumps/logs stay in ignored build output. TalkBack traversal,
 large fonts, narrow windows and native iOS visual review remain unexecuted gates;
 semantics inspection does not certify those. Cross-window optical blur is still
 unimplemented: this task intentionally supplies the readable fallback from #243.
+
+## #260 — Home tag sizing and alignment
+
+Base: `dce41017568df1dfbb2935d4f9bc064710245113` (`develop`).
+Branch: `codex/migration-home-tag-alignment`.
+
+The user requested this check before continuing #239. Direct Sandbox 2578 on
+2026-10-31 confirmed that quick-filter labels were about 2.5 dp above the centre
+of their 48 dp pill: the minimum-height Box placed shorter content at the top.
+Roaster tags used a different Material chip with a 32 dp visual and larger text.
+Both rows started at the correct 16 dp inset, but their gaps were 4 and 8 dp.
+
+Use the existing shared glass chip for both rows: 44 dp minimum visual height,
+48 dp minimum touch target, centred content, 14 sp labels and consistent 8 dp
+gaps. Keep scalable minimum heights, existing palette/native background, actions,
+filters and analytics. The shared RoasterTagFilters also serves the full catalog;
+verify that route. Existing paired previews cover icons, plain labels and selected
+states; roaster previews now include the actual long label. No module changes.
+
+Verification plan: existing design-system, Discovery and roaster unit tests;
+Android Direct Sandbox/Debug assembly with DEX/isolation checks, shared iOS KLIB
+compilation. Manually inspect dimensions/alignment, selected/unselected states,
+horizontal scrolling, roaster selection/reset and both themes in Direct Sandbox
+on the existing API 37 emulator. System font scale remains 1.0; enlarged-font,
+narrow-window, TalkBack traversal and native iOS visuals remain separate gates.
+No automated UI/screenshot tests or value-mirroring unit tests are introduced.
+
+Results on 2026-10-31: 183 unit tests executed (45 design-system, 115 Discovery,
+23 roaster; 26 suites), zero failures/errors/skips. Both Android assemblies,
+packaged DEX checks and Sandbox isolation passed. Design-system and roaster iOS
+Arm64 KLIB compilation passed. Existing preview deprecation warnings remain;
+Studio MCP and preview rendering were unavailable.
+
+Manual review: unlocked `emulator-5554`, `sdk_gphone64_x86_64`, API 37,
+1080×2400, density 420, font scale 1.0. Matching-signed Direct Sandbox updated
+2578 in place to `1.1.4.2580-sandbox` / 2580, `com.coffeepeek.sandbox` /
+`SandboxActivity`; source is the base above plus this patch. APK SHA-256:
+`c188a6891715bf420df4d926e8b81f71602b97a3ec4cd8f46f812f87a41cdf52`.
+
+Quick-filter text bounds changed from y=365..415 to 371..421 inside the unchanged
+y=333..459 touch target: centres now both equal 396 px. Plain/icon labels and
+selected/unselected states retain that alignment. Roaster labels centre at
+1527 px inside y=1464..1590; both rows have 126 px / 48 dp touch height and
+21 px / 8 dp gaps. Light/dark appearance, horizontal scroll to the last quick
+filter, selection/reset semantics, full roaster catalog and Back passed.
+Screenshots/dumps remain local in ignored build output. Native iOS visuals,
+large fonts, narrow windows and TalkBack traversal were not run.
