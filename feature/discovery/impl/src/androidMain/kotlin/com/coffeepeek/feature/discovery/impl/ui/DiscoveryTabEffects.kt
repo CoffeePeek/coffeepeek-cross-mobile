@@ -9,6 +9,8 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.coffeepeek.feature.discovery.api.*
 import com.coffeepeek.feature.discovery.impl.search.SearchAction
+import com.coffeepeek.feature.discovery.impl.tab.DiscoveryBackTarget
+import com.coffeepeek.feature.discovery.impl.tab.discoveryBackTarget
 
 @Composable
 internal fun DiscoveryTabEffects(
@@ -27,10 +29,16 @@ internal fun DiscoveryTabEffects(
     val focusManager = LocalFocusManager.current
     val keyboard = LocalSoftwareKeyboardController.current
     val lifecycle by LocalLifecycleOwner.current.lifecycle.currentStateFlow.collectAsStateWithLifecycle()
-    BackHandler(enabled = lifecycle.isAtLeast(Lifecycle.State.STARTED) && (ui.mapExpanded || !showDiscovery)) {
+    val backTarget = discoveryBackTarget(ui.showRoasters, ui.mapExpanded, showDiscovery)
+    BackHandler(enabled = lifecycle.isAtLeast(Lifecycle.State.STARTED) && backTarget != null) {
         focusManager.clearFocus(force = true)
         keyboard?.hide()
-        if (ui.mapExpanded) ui.mapExpanded = false else onAction(SearchAction.CancelSearch)
+        when (backTarget) {
+            DiscoveryBackTarget.Roasters -> ui.closeRoasters(onAction)
+            DiscoveryBackTarget.Map -> ui.mapExpanded = false
+            DiscoveryBackTarget.Search -> onAction(SearchAction.CancelSearch)
+            null -> Unit
+        }
     }
 }
 

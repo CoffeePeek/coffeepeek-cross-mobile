@@ -59,3 +59,47 @@ first attempt at page two, then succeeds on retry. Loading page one rearms it.
   citing the device-settings rule. No font-scale command ran; clarification was
   requested. TalkBack, narrow windows, native iOS visual review and real backend
   acceptance remain separate gates. No automated UI tests were created or run.
+
+## #238 — system Back from roasters
+
+Base: `1d53ebfdd6398e2e1b7fe53dc2517651c7c544ee` (`develop`).
+Branch: `codex/migration-home-roasters-back`.
+
+Own this fix in Discovery presentation: resolve the tab's Back target in the order
+roasters, expanded map, search, then delegate to root navigation. IME and modal
+windows keep their platform Back handling. The roaster arrow and system Back
+share the existing close/cancel operation; retain Home's list state and analytics.
+No visual, resource, dependency or root-navigation changes are planned.
+
+Verification plan: unit-test target priority for Home, roasters with/without a
+query, map and search; execute Discovery presentation tests and assemble Android
+Direct Sandbox/Debug with runtime-class/isolation checks. Manually verify blank
+and nonblank roaster queries, keyboard-first Back, arrow parity, retained scroll,
+map/search/modal dismissal and ordinary Home Back in the explicitly selected
+Direct Sandbox on the existing API 37 emulator. Native iOS is unchanged.
+
+Original failure reproduced on 2026-10-31 with Sandbox 2574: Home → all roasters →
+system Back opened `NexusLauncherActivity`. Previous PR #257's Android and iOS CI
+have now both passed.
+
+Results on 2026-10-31: all 115 Discovery presentation unit tests (10 suites,
+including six new Back-priority cases) executed and passed, with zero failures,
+errors or skips. Both Android assemblies passed packaged DEX checks; Sandbox
+isolation passed. Existing preview/BackHandler deprecation warnings remain.
+
+Manual checks used unlocked `emulator-5554`, `sdk_gphone64_x86_64`, API 37,
+1080×2400, density 420, font scale 1.0. The matching-signed Direct Sandbox APK
+updated 2574 in place to `1.1.4.2576-sandbox` / 2576; package
+`com.coffeepeek.sandbox`, entry `SandboxActivity`. Source: the base above plus
+this task's patch. APK SHA-256:
+`ac9b00cd5b2aac0f863f9c0dbdcf43b56a447e11a4e76f6d3272946a0b42edb1`.
+
+Light/dark Back from all roasters returned to Home at the same scroll position
+(roaster section bounds unchanged). With a nonblank query, the first Back hid
+the IME and retained the query/overlay; the second closed the overlay and cleared
+the query. Arrow parity, sheet-before-search dismissal, map collapse and ordinary
+Home Back to launcher also passed. Gboard's stylus onboarding appeared during
+input and was dismissed before testing IME Back; it was not an app failure.
+Screenshots, UI dumps and build logs remain local in ignored build output.
+No automated UI tests were created or run. Large fonts, narrow windows, TalkBack
+and predictive-back gesture animation remain separate device-review gates.
