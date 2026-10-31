@@ -5,5 +5,6 @@ import androidx.compose.ui.Modifier
 
 @Composable
 internal actual fun CoffeePeekNativeMenu(
-    actions: List<CoffeePeekMenuAction>, modifier: Modifier, content: @Composable (open: () -> Unit) -> Unit,
+    actions: List<CoffeePeekMenuAction>, modifier: Modifier, enabled: Boolean,
+    content: @Composable (open: () -> Unit) -> Unit,
 ): Boolean = false

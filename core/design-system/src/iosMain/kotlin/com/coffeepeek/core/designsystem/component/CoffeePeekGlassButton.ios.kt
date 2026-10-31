@@ -65,8 +65,11 @@ actual fun CoffeePeekGlassButton(
     )
 }
 
+internal val coffeePeekLiquidGlassAvailable: Boolean
+    get() = (UIDevice.currentDevice.systemVersion.substringBefore('.').toIntOrNull() ?: 0) >= 26
+
 internal fun glassButtonConfiguration(prominent: Boolean = false): UIButtonConfiguration {
-    if ((UIDevice.currentDevice.systemVersion.substringBefore('.').toIntOrNull() ?: 0) >= 26) {
+    if (coffeePeekLiquidGlassAvailable) {
         return if (prominent) UIButtonConfiguration.prominentGlassButtonConfiguration()
         else UIButtonConfiguration.glassButtonConfiguration()
     }

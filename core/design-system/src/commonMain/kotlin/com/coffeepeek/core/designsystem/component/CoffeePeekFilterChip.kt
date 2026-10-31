@@ -36,13 +36,16 @@ fun CoffeePeekFilterChip(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     leadingIcon: ImageVector? = null,
+    trailingIcon: ImageVector? = null,
 ) {
-    CoffeePeekGlassFilterChip(label, selected, onClick, modifier, leadingIcon)
+    if (CoffeePeekNativeFilterChip(label, selected, onClick, modifier, leadingIcon, trailingIcon)) return
+    CoffeePeekGlassFilterChip(label, selected, onClick, modifier, leadingIcon, trailingIcon)
 }
 
 @Composable
 private fun CoffeePeekGlassFilterChip(
-    label: String, selected: Boolean, onClick: () -> Unit, modifier: Modifier, leadingIcon: ImageVector?,
+    label: String, selected: Boolean, onClick: () -> Unit, modifier: Modifier,
+    leadingIcon: ImageVector?, trailingIcon: ImageVector?,
 ) {
     val interactions = remember { MutableInteractionSource() }
     val pressed by interactions.collectIsPressedAsState()
@@ -58,8 +61,10 @@ private fun CoffeePeekGlassFilterChip(
                 tint = if (selected) colors.primary else null, pressed = pressed)
             Row(Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
                 verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                if (leadingIcon != null) Icon(leadingIcon, null, Modifier.size(18.dp), tint = foreground)
+                if (leadingIcon != null) Icon(leadingIcon, null, Modifier.size(18.dp),
+                    tint = if (selected) foreground else colors.primary)
                 Text(label, color = foreground, style = MaterialTheme.typography.labelMedium, maxLines = 1)
+                if (trailingIcon != null) Icon(trailingIcon, null, Modifier.size(16.dp), tint = foreground)
             }
         }
     }

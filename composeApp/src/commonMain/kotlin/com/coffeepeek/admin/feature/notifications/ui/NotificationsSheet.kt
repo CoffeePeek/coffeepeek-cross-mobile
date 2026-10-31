@@ -80,8 +80,11 @@ private fun NotificationsHeader(onClose: () -> Unit) {
             Text(stringResource(Res.string.notifications_subtitle), style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
-        IconButton(onClick = onClose) {
-            Icon(CoffeePeekIcons.Close, stringResource(Res.string.notifications_close))
+        val closeDescription = stringResource(Res.string.notifications_close)
+        IconButton(onClick = onClose,
+            nativeIcon = com.coffeepeek.core.designsystem.modifier.CoffeePeekGlassIcon.Close,
+            contentDescription = closeDescription) {
+            Icon(CoffeePeekIcons.Close, closeDescription)
         }
     }
 }

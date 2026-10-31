@@ -1,4 +1,4 @@
-@file:OptIn(kotlinx.cinterop.ExperimentalForeignApi::class)
+@file:OptIn(kotlinx.cinterop.ExperimentalForeignApi::class, androidx.compose.ui.ExperimentalComposeUiApi::class)
 
 package com.coffeepeek.core.designsystem.component
 
@@ -7,6 +7,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.uikit.LocalUIViewController
 import androidx.compose.ui.unit.dp
@@ -32,7 +33,7 @@ actual fun CoffeePeekNativeModalSheet(
     val colors = MaterialTheme.colorScheme
     val sizing = remember(host) { coffeePeekSheetSizing(host) }
     val controller = remember(host) {
-        ComposeUIViewController {
+        val contentController = ComposeUIViewController(configure = { opaque = false }) {
             CoffeePeekModalComposition(locals.value) {
                 CompositionLocalProvider(
                     LocalCoffeePeekScreenInsets provides CoffeePeekScreenInsets(),
@@ -41,13 +42,14 @@ actual fun CoffeePeekNativeModalSheet(
                     CoffeePeekNativeSheetContent(sizing, fraction.value, sheetModifier.value, body.value)
                 }
             }
-        }.apply { modalPresentationStyle = UIModalPresentationPageSheet }
+        }
+        CoffeePeekGlassSheetController(contentController).apply { modalPresentationStyle = UIModalPresentationPageSheet }
     }
     val delegate = remember { CoffeePeekSheetDelegate { dismiss.value() } }
     SideEffect {
         controller.modalInPresentation = !dismissEnabled
         controller.overrideUserInterfaceStyle = coffeePeekUserInterfaceStyle(colors.background)
-        controller.view.backgroundColor = colors.surface.toUIColor()
+        controller.view.backgroundColor = UIColor.clearColor
         controller.view.tintColor = colors.primary.toUIColor()
     }
     CoffeePeekNativeSheetDetents(controller, sizing, fraction, delegate)
@@ -77,7 +79,7 @@ private fun CoffeePeekNativeSheetContent(
     sizing: CoffeePeekSheetSizing, fraction: Float, modifier: Modifier, content: @Composable ColumnScope.() -> Unit,
 ) {
     val density = LocalDensity.current
-    Surface(Modifier.fillMaxSize()) {
+    Surface(Modifier.fillMaxSize(), color = Color.Transparent) {
         Box(Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.systemBars.only(WindowInsetsSides.Bottom))) {
             CoffeePeekContentSizedSheetLayout(
                 maxContentHeight = (sizing.maximumHeight * fraction - 24.0).coerceAtLeast(1.0).dp,

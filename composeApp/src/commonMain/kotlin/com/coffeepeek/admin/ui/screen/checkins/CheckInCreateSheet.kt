@@ -14,8 +14,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.shape.CircleShape
-import com.coffeepeek.core.designsystem.component.CoffeePeekFloatingActionButton as FloatingActionButton
+import com.coffeepeek.core.designsystem.component.CoffeePeekAddButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -26,8 +25,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import coffeepeek.composeapp.generated.resources.Res
 import coffeepeek.composeapp.generated.resources.check_in_add
 import coffeepeek.composeapp.generated.resources.check_in_create_shelf_body
@@ -49,14 +46,8 @@ import androidx.compose.ui.tooling.preview.Preview
 @Composable
 internal fun CheckInCreateButton(modifier: Modifier = Modifier, onClick: () -> Unit) {
     val analyticsPage = Analytics.service?.state?.collectAsState()?.value?.page ?: "other"
-    val description = stringResource(Res.string.check_in_add)
-    FloatingActionButton(onClick = onClick, shape = CircleShape,
-        modifier = modifier.analyticsExposure("check_in", "global_create", analyticsPage)
-            .semantics(mergeDescendants = true) { contentDescription = description },
-        containerColor = MaterialTheme.colorScheme.primary,
-        contentColor = MaterialTheme.colorScheme.onPrimary) {
-        Icon(CpIcons.Add, contentDescription = null, modifier = Modifier.size(28.dp))
-    }
+    CoffeePeekAddButton(onClick, stringResource(Res.string.check_in_add),
+        modifier.analyticsExposure("check_in", "global_create", analyticsPage))
 }
 
 @Composable
