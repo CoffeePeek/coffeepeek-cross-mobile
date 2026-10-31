@@ -56,4 +56,12 @@ class NativeTabBarVisibilityTest {
         visibility.sync()
         assertTrue(tabs.tabBarHidden)
     }
+
+    @Test
+    fun disposedHostIgnoresLateMapCallbacks() {
+        visibility.dispose()
+        visibility.onMapExpandedChange(true)
+        visibility.sync()
+        assertFalse(tabs.tabBarHidden)
+    }
 }

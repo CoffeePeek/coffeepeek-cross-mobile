@@ -39,12 +39,15 @@ available; previews and Android checks do not certify UIKit behaviour.
 - Further inspection found fully native photo/card icon buttons used overlay
   placement, allowing them to escape scrolling/header clips. They now use the
   same shaped underlay mechanism while retaining their native action handling.
-- Full iOS build and seven new non-UI contracts are tracked in
+- Full iOS build and eight new non-UI contracts are tracked in
   [PR #279](https://github.com/CoffeePeek/coffeepeek-cross-mobile/pull/279).
   The PR's checks are the source of the final macOS CI result.
 - First macOS run `41214021568` failed compiling the app: missing import of
   UIKit's `hidesBottomBarWhenPushed` category extension in the new visibility
   controller. Added the explicit import to the controller and its contract test;
   this failure is retained here separately from the subsequent verification.
+- The tab-visibility callback releases its UIKit controller references when the
+  root host is disposed, preventing a new controller/content reference cycle.
+  Late callbacks from disposed content are covered by a non-UI contract.
 - No device run: the changes are iOS-only; Android assembly does not establish
   UIKit rendering/touch acceptance. The iPhone matrix above remains open.

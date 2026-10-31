@@ -278,6 +278,7 @@ internal actual fun PlatformRootNavigation(
     }
     DisposableEffect(tabs) {
         onDispose {
+            tabBarVisibility.dispose()
             tabs.delegate = null
             tabDelegate.onTabChanged = null
             tabDelegate.onTabReselected = null

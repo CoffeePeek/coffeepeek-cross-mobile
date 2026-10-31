@@ -6,9 +6,11 @@ import platform.UIKit.hidesBottomBarWhenPushed
 
 /** Root composition owns tab visibility; a retained, hidden map cannot hide another tab. */
 internal class NativeTabBarVisibility(
-    private val tabs: UITabBarController,
-    private val discoveryNavigation: UINavigationController,
+    tabs: UITabBarController,
+    discoveryNavigation: UINavigationController,
 ) {
+    private var tabs: UITabBarController? = tabs
+    private var discoveryNavigation: UINavigationController? = discoveryNavigation
     private var mapExpanded = false
 
     fun onMapExpandedChange(expanded: Boolean) {
@@ -17,6 +19,7 @@ internal class NativeTabBarVisibility(
     }
 
     fun sync() {
+        val tabs = tabs ?: return
         val navigation = tabs.selectedViewController as? UINavigationController ?: return
         val top = navigation.topViewController
         val expandedMapVisible = mapExpanded && navigation === discoveryNavigation &&
@@ -24,5 +27,11 @@ internal class NativeTabBarVisibility(
         val hidden = expandedMapVisible || top?.hidesBottomBarWhenPushed == true
         tabs.setTabBarHidden(hidden, animated = false)
         navigation.viewControllers.forEach { (it as? NativeScreenController)?.syncBottomClearance(hidden) }
+    }
+
+    fun dispose() {
+        // Root content captures this callback; break its reference back to the UIKit tree.
+        tabs = null
+        discoveryNavigation = null
     }
 }
