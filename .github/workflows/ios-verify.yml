@@ -95,6 +95,8 @@ jobs:
             --tests 'com.coffeepeek.admin.ui.NavigationDelegateTest' \
             --tests 'com.coffeepeek.admin.ui.MainTabReselectionsTest' \
             --tests 'com.coffeepeek.admin.ui.TabDelegateTest' \
+            --tests 'com.coffeepeek.admin.ui.NativeTabBarVisibilityTest' \
+            --tests 'com.coffeepeek.admin.ui.component.GlassIconConfigurationTest' \
             --tests 'com.coffeepeek.admin.di.discovery.LegacyDiscoveryMapSourceTest' \
             --tests 'com.coffeepeek.admin.ui.screen.feed.FeedMapCriteriaTest' \
             --tests 'com.coffeepeek.admin.ui.screen.map.MapViewModelParityTest' \

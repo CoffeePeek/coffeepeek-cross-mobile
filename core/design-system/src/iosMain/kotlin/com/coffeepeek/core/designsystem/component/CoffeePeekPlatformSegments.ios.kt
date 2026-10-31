@@ -4,6 +4,7 @@ package com.coffeepeek.core.designsystem.component
 
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -30,7 +31,8 @@ internal actual fun CoffeePeekPlatformSegments(
         factory = { UISegmentedControl(items = labels).apply {
             addTarget(target, NSSelectorFromString("changed:"), UIControlEventValueChanged)
         } },
-        modifier = modifier.fillMaxWidth().height(48.dp),
+        modifier = modifier.fillMaxWidth().height(48.dp)
+            .coffeePeekNativeUnderlayClip(RoundedCornerShape(percent = 50)),
         properties = UIKitInteropProperties(isNativeAccessibilityEnabled = true, placedAsOverlay = false),
         update = { control ->
             if (control.numberOfSegments.toInt() != labels.size) {
@@ -39,6 +41,7 @@ internal actual fun CoffeePeekPlatformSegments(
             } else labels.forEachIndexed { index, label -> control.setTitle(label, index.toULong()) }
             control.selectedSegmentIndex = selectedIndex.toLong()
             control.enabled = enabled
+            control.tintColor = colors.primary.toUIColor()
             control.overrideUserInterfaceStyle = coffeePeekUserInterfaceStyle(colors.background)
         },
         onRelease = { it.removeTarget(target, NSSelectorFromString("changed:"), UIControlEventValueChanged) },
