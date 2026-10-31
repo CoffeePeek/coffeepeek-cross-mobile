@@ -8,8 +8,10 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ColorScheme
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
@@ -21,6 +23,7 @@ import com.coffeepeek.admin.theme.CpDimens
 import com.coffeepeek.admin.theme.toUIColor
 import com.coffeepeek.admin.theme.uiKitStyle
 import com.coffeepeek.core.designsystem.theme.CoffeePeekColors
+import com.coffeepeek.core.designsystem.component.coffeePeekNativeUnderlayClip
 import dev.chrisbanes.haze.HazeState
 import platform.UIKit.UIAction
 import platform.UIKit.UIButton
@@ -62,7 +65,7 @@ actual fun PlatformGlassIconButton(
     isLoading: Boolean,
     hazeState: HazeState?,
     content: @Composable () -> Unit,
-) = IosGlassIconButton(icon, onClick, contentDescription, modifier, enabled, selected, isLoading, placedAsOverlay = true)
+) = IosGlassIconButton(icon, onClick, contentDescription, modifier, enabled, selected, isLoading)
 
 @Composable
 private fun IosGlassIconButton(
@@ -73,46 +76,58 @@ private fun IosGlassIconButton(
     enabled: Boolean,
     selected: Boolean,
     isLoading: Boolean,
-    placedAsOverlay: Boolean,
 ) {
     val currentOnClick = rememberUpdatedState(onClick)
     val currentIcon = rememberUpdatedState(icon)
+    val active = rememberUpdatedState(enabled && !isLoading)
     val colors = MaterialTheme.colorScheme
     UIKitView(
         factory = {
             UIButton.buttonWithConfiguration(
                 configuration = UIButtonConfiguration.grayButtonConfiguration(),
                 primaryAction = UIAction.actionWithHandler {
-                    if (currentIcon.value == GlassControlIcon.Favorite || currentIcon.value == GlassControlIcon.FavoriteFilled) platformHaptic(HapticEvent.Selection)
-                    currentOnClick.value()
+                    if (active.value) {
+                        if (currentIcon.value.isFavorite) platformHaptic(HapticEvent.Selection)
+                        currentOnClick.value()
+                    }
                 },
             )
         },
-        modifier = modifier.size(CpDimens.buttonHeight),
-        properties = UIKitInteropProperties(isNativeAccessibilityEnabled = true, placedAsOverlay = placedAsOverlay),
+        modifier = modifier.size(CpDimens.buttonHeight).coffeePeekNativeUnderlayClip(CircleShape),
+        // Photo/card actions must scroll beneath Compose headers, just like map controls.
+        properties = UIKitInteropProperties(isNativeAccessibilityEnabled = true, placedAsOverlay = false),
         update = { button ->
             button.overrideUserInterfaceStyle = colors.uiKitStyle
             button.backgroundColor = UIColor.clearColor
-            val configuration = if (isLiquidGlassAvailable) {
-                UIButtonConfiguration.glassButtonConfiguration()
-            } else {
-                UIButtonConfiguration.grayButtonConfiguration()
-            }
-            configuration.cornerStyle = UIButtonConfigurationCornerStyleCapsule
-            configuration.image = UIImage.systemImageNamed(icon.symbol)
-            configuration.showsActivityIndicator = isLoading
-            configuration.baseForegroundColor = colors.onSurface.toUIColor()
-            if (icon == GlassControlIcon.FavoriteFilled || (icon == GlassControlIcon.Favorite && selected)) {
-                configuration.baseForegroundColor = CoffeePeekColors.Like.toUIColor()
-            } else if (selected) {
-                configuration.baseForegroundColor = colors.primary.toUIColor()
-            }
-            button.configuration = configuration
+            button.tintColor = colors.primary.toUIColor()
+            button.configuration = glassIconConfiguration(icon, selected, isLoading, colors)
             button.accessibilityLabel = contentDescription
             button.enabled = enabled && !isLoading
             button.selected = selected || icon == GlassControlIcon.FavoriteFilled
         },
     )
+}
+
+private val GlassControlIcon.isFavorite: Boolean
+    get() = this == GlassControlIcon.Favorite || this == GlassControlIcon.FavoriteFilled
+
+internal fun glassIconConfiguration(
+    icon: GlassControlIcon, selected: Boolean, isLoading: Boolean, colors: ColorScheme,
+): UIButtonConfiguration {
+    val configuration = if (isLiquidGlassAvailable) UIButtonConfiguration.glassButtonConfiguration()
+        else UIButtonConfiguration.grayButtonConfiguration()
+    return configuration.apply {
+        // Keep UIKit's selected accessibility state without its automatic blue filled style.
+        if (isLiquidGlassAvailable) automaticallyUpdateForSelection = false
+        cornerStyle = UIButtonConfigurationCornerStyleCapsule
+        image = UIImage.systemImageNamed(icon.symbol)
+        showsActivityIndicator = isLoading
+        baseForegroundColor = when {
+            icon == GlassControlIcon.FavoriteFilled || (icon.isFavorite && selected) -> CoffeePeekColors.Like
+            selected -> colors.primary
+            else -> colors.onSurface
+        }.toUIColor()
+    }
 }
 
 @Composable
@@ -131,6 +146,7 @@ actual fun PlatformGlassBackButton(onClick: () -> Unit, modifier: Modifier) {
         update = { button ->
             button.overrideUserInterfaceStyle = colors.uiKitStyle
             button.backgroundColor = UIColor.clearColor
+            button.tintColor = colors.primary.toUIColor()
             val configuration = if (isLiquidGlassAvailable) {
                 UIButtonConfiguration.glassButtonConfiguration()
             } else {
@@ -163,8 +179,6 @@ actual fun PlatformMapControlButton(
         enabled = true,
         selected = selected,
         isLoading = false,
-        // Map controls must stay below Compose headers and obey the map preview's clip.
-        placedAsOverlay = false,
     )
 }
 
