@@ -37,7 +37,6 @@ import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.feature.discovery.api.DiscoveryHost
 import com.coffeepeek.feature.discovery.domain.model.CatalogEntry
 import com.coffeepeek.feature.discovery.domain.model.DiscoveryFilters
-import com.coffeepeek.feature.discovery.domain.model.PriceLevel
 import com.coffeepeek.feature.discovery.domain.rules.amenityTags
 import com.coffeepeek.feature.discovery.impl.R
 import com.coffeepeek.feature.discovery.impl.search.SearchAction
@@ -90,12 +89,7 @@ private fun FilterSheetHeader(resetEnabled: Boolean, onReset: () -> Unit, onDone
 
 @Composable
 private fun FilterSelections(state: SearchState, host: DiscoveryHost, draft: DiscoveryFilters, onDraft: (DiscoveryFilters) -> Unit) {
-    CoffeePeekGroupSection(
-        title = stringResource(R.string.discovery_section_price),
-        trailing = host.priceHint(draft.priceLevel?.level) ?: stringResource(R.string.discovery_price_any),
-    ) {
-        host.priceSelector(draft.priceLevel?.level, { onDraft(draft.copy(priceLevel = PriceLevel.ofLevel(it))) }, Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
-    }
+    PriceFilter(draft.priceLevel) { onDraft(draft.copy(priceLevel = it)) }
     Selection(R.string.discovery_section_roasters, state.catalogs.roasters, draft.roasterIds, { onDraft(draft.copy(roasterIds = draft.roasterIds.toggle(it))) }) { entry ->
         host.roasterAvatar(entry.name, entry.photoUrl)
     }
