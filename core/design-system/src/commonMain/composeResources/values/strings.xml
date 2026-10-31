@@ -17,4 +17,5 @@
     <string name="coffeepeek_like_remove">Unlike</string>
     <string name="coffeepeek_pagination_error">Could not load more results.</string>
     <string name="coffeepeek_pagination_retry">Retry</string>
+    <string name="coffeepeek_refresh_error">Could not refresh. Previous results are still shown.</string>
 </resources>

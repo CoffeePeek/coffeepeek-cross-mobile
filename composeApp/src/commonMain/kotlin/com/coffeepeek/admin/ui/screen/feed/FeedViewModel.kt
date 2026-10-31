@@ -99,6 +99,7 @@ data class FeedUiState(
     val hasMore: Boolean = false,
 ) {
     val canLoadMore: Boolean get() = hasMore && !isLoading && !isRefreshing && !isLoadingMore && error == null && !loadMoreFailed
+    val showsRefreshError: Boolean get() = error != null && visibleShops.isNotEmpty()
 
     fun showsShopsFirst(hasRoasterResults: Boolean?): Boolean =
         query.isNotBlank() && hasRoasterResults == false && visibleShops.isNotEmpty()

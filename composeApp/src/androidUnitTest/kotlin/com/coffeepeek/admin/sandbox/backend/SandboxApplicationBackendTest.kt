@@ -689,6 +689,22 @@ class SandboxApplicationBackendTest {
         assertTrue(shops.searchShops(page = 2, pageSize = 20).isFailure)
     } }
 
+    @Test fun discoveryRefreshFailurePreservesTheInitialLoadAndAllowsRetry() = runTest { fixture { backend, client ->
+        backend.discovery = SandboxDiscovery.RefreshFailure
+        val shops = ShopApiService(client.client)
+        val first = shops.searchShops(page = 1, pageSize = 20).getOrThrow()
+        assertEquals(20, first.items.size)
+        assertTrue(shops.searchShops(page = 2, pageSize = 20).isSuccess)
+        assertTrue(shops.searchShops(page = 1, pageSize = 20).isFailure)
+        assertEquals(first, shops.searchShops(page = 1, pageSize = 20).getOrThrow())
+        assertTrue(shops.searchShops(cityId = "brest").isSuccess)
+        assertTrue(shops.searchShops(cityId = "brest").isFailure)
+        backend.discovery = SandboxDiscovery.Seeded
+        backend.discovery = SandboxDiscovery.RefreshFailure
+        assertTrue(shops.searchShops(page = 1, pageSize = 20).isSuccess)
+        assertTrue(shops.searchShops(page = 1, pageSize = 20).isFailure)
+    } }
+
     @Test fun discoveryClustersUnfoldIntoTheSameShopsAtTheDetailZoom() = runTest { fixture { backend, client ->
         backend.discovery = SandboxDiscovery.Paged
         val shops = ShopApiService(client.client)

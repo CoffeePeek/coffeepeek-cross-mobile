@@ -11,7 +11,7 @@ import com.coffeepeek.feature.discovery.domain.model.ShopSummary
 import com.coffeepeek.feature.discovery.domain.rules.showsDiscovery
 import com.coffeepeek.feature.discovery.domain.rules.visibleShops
 
-/** A failed search. [serverMessage] is the server's own wording; null shows the default text. */
+/** A failed search. UI uses localized copy rather than the unreviewed [serverMessage]. */
 internal data class SearchError(val serverMessage: String?)
 
 /** Which list of the catalogs a selection belongs to. */
@@ -46,6 +46,7 @@ internal data class SearchState(
         query.isNotBlank() && hasRoasterResults == false && visibleShops.isNotEmpty()
 
     val criteria: DiscoveryCriteria get() = DiscoveryCriteria(query, filters, userLocation)
+    val showsRefreshError: Boolean get() = error != null && visibleShops.isNotEmpty()
     val canLoadMore: Boolean get() = hasMore && !isLoading && !isRefreshing && !isLoadingMore && error == null && loadMoreError == null
     val activeFilterCount: Int get() = filters.activeCount
     val showsDiscovery: Boolean get() = showsDiscovery(query, searchActive, filters)

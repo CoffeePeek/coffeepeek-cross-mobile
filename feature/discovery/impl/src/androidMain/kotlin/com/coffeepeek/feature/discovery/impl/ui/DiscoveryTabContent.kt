@@ -26,6 +26,7 @@ import com.coffeepeek.feature.discovery.api.*
 import com.coffeepeek.feature.discovery.domain.model.ShopSummary
 import com.coffeepeek.feature.discovery.impl.search.SearchAction
 import com.coffeepeek.feature.discovery.impl.search.SearchState
+import com.coffeepeek.feature.discovery.impl.search.SearchError
 
 @Composable
 internal fun DiscoveryTabContent(
@@ -74,14 +75,17 @@ private fun DiscoverySearchPresentation(
     }
 }
 
-@PreviewLightDark
 @Composable
-private fun DiscoveryTabContentPreview() = CoffeePeekTheme {
+private fun DiscoveryTabContentPreview(refreshError: Boolean = false) = CoffeePeekTheme {
     DiscoveryTabContent(
-        state = SearchState(isLoading = false, shops = listOf(ShopSummary("sandbox-cafe", "Sandbox Cafe"))),
+        state = SearchState(isLoading = false, shops = listOf(ShopSummary("sandbox-cafe", "Sandbox Cafe")),
+            error = if (refreshError) SearchError(null) else null),
         host = DiscoveryHost(suggestionIllustration = { ColorPainter(Color.Transparent) }),
         roasters = DiscoveryRoasterSlots(preview = {}, search = { _, _, _ -> }),
         analytics = NoDiscoveryAnalytics, callbacks = TabCallbacks({}, {}, {}, {}, {}),
         bottomClearance = 80.dp, focus = null, onAction = {}, onSearchPresentation = { _, _ -> },
     ) { _, _, modifier -> Box(modifier.background(MaterialTheme.colorScheme.surfaceVariant)) }
 }
+
+@PreviewLightDark @Composable private fun DiscoveryHomePreview() = DiscoveryTabContentPreview()
+@PreviewLightDark @Composable private fun DiscoveryRefreshErrorPreview() = DiscoveryTabContentPreview(refreshError = true)

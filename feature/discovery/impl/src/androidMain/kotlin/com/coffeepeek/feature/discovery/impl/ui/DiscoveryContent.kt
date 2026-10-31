@@ -13,6 +13,7 @@ import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.component.CoffeePeekPullToRefresh
+import com.coffeepeek.core.designsystem.component.CoffeePeekRefreshError
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.feature.discovery.api.*
 import com.coffeepeek.feature.discovery.impl.R
@@ -69,6 +70,10 @@ private fun DiscoveryLandingList(
                 DiscoverySectionTitle(stringResource(R.string.discovery_section_shops),
                     { onAction(SearchAction.ActivateSearch) }, Modifier.padding(horizontal = CoffeePeekDimens.spacing4))
             }
+        }
+        if (state.showsRefreshError) item(key = "refresh-error") {
+            CoffeePeekRefreshError(onRetry = { onAction(SearchAction.Refresh) },
+                message = stringResource(R.string.discovery_refresh_error), retryLabel = stringResource(R.string.discovery_retry))
         }
         item(key = "shops-preview") { DiscoveryShopPreview(state, host, shopsState, onAddShop, onAction) }
         item(key = "roasters-heading") {

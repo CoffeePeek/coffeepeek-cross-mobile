@@ -69,6 +69,7 @@
     <string name="shop_report_hint">Помогите нам сделать CoffeePeek лучше</string>
     <string name="shop_report_issue">Сообщить об ошибке</string>
     <string name="retry">Попробовать снова</string>
+    <string name="feed_refresh_error">Не удалось обновить. Показаны предыдущие результаты.</string>
     <string name="checkin_title">Отметить посещение</string>
     <string name="checkin_note_hint_private">Заметка</string>
     <string name="checkin_note_hint_public">Заметка</string>

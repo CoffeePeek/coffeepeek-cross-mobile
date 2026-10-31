@@ -193,6 +193,13 @@ class FeedViewModelParityTest {
             val state = vm.uiState.first { it.error != null }
             assertEquals("Не удалось загрузить кофейни", state.error)
             assertEquals(listOf("a"), state.shops.map { it.id }); assertFalse(state.isLoading); assertFalse(state.isRefreshing)
+            assertTrue(state.showsRefreshError)
+            fail = false
+            vm.refresh()
+            assertEquals(1, requests.receive().page)
+            val recovered = awaitShops()
+            assertFalse(recovered.showsRefreshError)
+            assertNull(recovered.error)
         }
     }
 
@@ -201,6 +208,7 @@ class FeedViewModelParityTest {
         requests.receive()
         val state = vm.uiState.first { it.error != null }
         assertTrue(state.shops.isEmpty()); assertFalse(state.isLoading)
+        assertFalse(state.showsRefreshError)
     }
 
     @Test
