@@ -1,4 +1,5 @@
 <resources>
     <string name="app_name">CoffeePeek</string>
     <string name="map_cluster_description">Кофеен в группе: %1$d. Приблизить карту</string>
+    <string name="map_accessibility_description">Карта кофеен. Перемещайте карту двумя пальцами. Сведите или разведите два пальца, чтобы изменить масштаб.</string>
 </resources>

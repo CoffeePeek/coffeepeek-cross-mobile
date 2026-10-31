@@ -21,14 +21,12 @@ import com.coffeepeek.admin.map.CoffeeMap
 import com.coffeepeek.admin.ui.component.CoffeeShopImage
 import com.coffeepeek.admin.ui.component.CoffeeShopPlaceholderImage
 import com.coffeepeek.admin.ui.component.HapticEvent
-import com.coffeepeek.admin.ui.component.PriceBeanSlider
 import com.coffeepeek.admin.ui.component.LoadErrorContent
 import com.coffeepeek.admin.ui.component.RetainedContent
 import com.coffeepeek.admin.ui.component.RoasterAvatar
 import com.coffeepeek.admin.ui.component.brewMethodIcon
 import com.coffeepeek.admin.ui.component.platformHaptic
 import com.coffeepeek.admin.ui.component.platformReduceMotion
-import com.coffeepeek.admin.ui.component.priceLevelHint
 import com.coffeepeek.admin.ui.component.shopTagIcon
 import com.coffeepeek.admin.utils.PrefetchListPhotos
 import com.coffeepeek.domain.model.CatalogItem
@@ -62,8 +60,6 @@ internal fun discoveryHost() = DiscoveryHost(
     },
     tagIcon = { slug -> Icon(shopTagIcon(slug), contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(22.dp)) },
     roasterAvatar = { name, logoUrl -> RoasterAvatar(CatalogItem(id = name, name = name, photoUrl = logoUrl)) },
-    priceSelector = { selected, onSelect, modifier -> PriceBeanSlider(selected = selected, onSelect = onSelect, showTitle = false, showHint = false, modifier = modifier) },
-    priceHint = { priceLevelHint(it) },
     roasterLogo = { _, logoUrl -> if (logoUrl != null) CoffeeShopImage(imageUrl = logoUrl, modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop, placeholderLabelSize = 5.sp) },
     suggestionIllustration = { painterResource(Res.drawable.maskot_with_magnifying_glass) },
     exposure = { modifier, exposure ->
@@ -84,6 +80,7 @@ internal fun discoveryHost() = DiscoveryHost(
     photoPrefetch = { listState, photos -> PrefetchListPhotos(listState, photos) },
     reduceMotion = { platformReduceMotion() },
     isVisible = { LocalAnalyticsVisible.current },
+    changeCity = { com.coffeepeek.admin.ui.Navigator.navigate(com.coffeepeek.admin.ui.Navigator.Screen.CitySettings) },
     mapCanvas = { state, callbacks, modifier -> DiscoveryMapCanvas(state, callbacks, modifier) },
 )
 

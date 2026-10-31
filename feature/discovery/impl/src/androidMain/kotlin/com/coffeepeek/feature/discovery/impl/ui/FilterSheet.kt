@@ -8,6 +8,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
@@ -18,6 +20,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import com.coffeepeek.core.designsystem.component.CoffeePeekTextButton as TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalWindowInfo
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -27,6 +35,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.tooling.preview.PreviewLightDark
+import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.core.designsystem.component.CoffeePeekCheckmarkRow
 import com.coffeepeek.core.designsystem.component.CoffeePeekGroupSection
 import com.coffeepeek.core.designsystem.component.CoffeePeekRowSeparator
@@ -34,7 +44,7 @@ import com.coffeepeek.core.designsystem.component.CoffeePeekSwipeDismissModalBot
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.feature.discovery.api.DiscoveryHost
 import com.coffeepeek.feature.discovery.domain.model.CatalogEntry
-import com.coffeepeek.feature.discovery.domain.model.PriceLevel
+import com.coffeepeek.feature.discovery.domain.model.DiscoveryFilters
 import com.coffeepeek.feature.discovery.domain.rules.amenityTags
 import com.coffeepeek.feature.discovery.impl.R
 import com.coffeepeek.feature.discovery.impl.search.SearchAction
@@ -48,50 +58,77 @@ import com.coffeepeek.feature.discovery.impl.search.SearchState
 @Composable
 internal fun FilterSheet(state: SearchState, host: DiscoveryHost, onAction: (SearchAction) -> Unit) {
     var draft by remember { mutableStateOf(state.filters) }
+    val density = LocalDensity.current
+    val width = with(density) { LocalWindowInfo.current.containerSize.width.toDp() }
     CoffeePeekSwipeDismissModalBottomSheet(
         onDismissRequest = { onAction(SearchAction.CloseFilters) },
         dismissDescription = stringResource(R.string.discovery_filters_close),
+        modifier = Modifier.widthIn(max = width),
     ) {
-        // The navigation bar of prod's sheet: 48 dp, 17 sp, the title centred.
-        Box(Modifier.fillMaxWidth().height(48.dp).padding(horizontal = 4.dp)) {
-            val resetEnabled = draft.activeCount > 0
-            TextButton({ draft = draft.clearSelections() }, enabled = resetEnabled, modifier = Modifier.align(Alignment.CenterStart)) {
-                Text(
-                    stringResource(R.string.discovery_filters_reset), fontSize = 17.sp,
-                    color = if (resetEnabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
-                )
+        // A separate modal window must preserve the caller's text scale.
+        CompositionLocalProvider(LocalDensity provides density) {
+            FilterSheetHeader(draft.activeCount > 0, { draft = draft.clearSelections() }) {
+                onAction(SearchAction.ApplyFilters(draft.copy(cityId = state.filters.cityId)))
+                onAction(SearchAction.CloseFilters)
             }
-            Text(
-                stringResource(R.string.discovery_filters), fontSize = 17.sp, fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.align(Alignment.Center),
-            )
-            TextButton({ onAction(SearchAction.ApplyFilters(draft)); onAction(SearchAction.CloseFilters) }, modifier = Modifier.align(Alignment.CenterEnd)) {
-                Text(stringResource(R.string.discovery_filters_done), fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.primary)
-            }
-        }
-        Column(
-            Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()).navigationBarsPadding()
-                .padding(horizontal = CoffeePeekDimens.spacing4).padding(bottom = CoffeePeekDimens.spacing6),
-            verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing6),
-        ) {
-            CoffeePeekGroupSection(
-                title = stringResource(R.string.discovery_section_price),
-                trailing = host.priceHint(draft.priceLevel?.level) ?: stringResource(R.string.discovery_price_any),
+            Column(
+                Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()).navigationBarsPadding()
+                    .padding(horizontal = CoffeePeekDimens.spacing4).padding(bottom = CoffeePeekDimens.spacing6),
+                verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing6),
             ) {
-                host.priceSelector(draft.priceLevel?.level, { draft = draft.copy(priceLevel = PriceLevel.ofLevel(it)) }, Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
-            }
-            Selection(R.string.discovery_section_roasters, state.catalogs.roasters, draft.roasterIds, { draft = draft.copy(roasterIds = draft.roasterIds.toggle(it)) }) { entry ->
-                host.roasterAvatar(entry.name, entry.photoUrl)
-            }
-            Selection(R.string.discovery_section_beans, state.catalogs.beans, draft.beanIds, { draft = draft.copy(beanIds = draft.beanIds.toggle(it)) })
-            Selection(R.string.discovery_section_equipment, state.catalogs.equipment, draft.equipmentIds, { draft = draft.copy(equipmentIds = draft.equipmentIds.toggle(it)) })
-            Selection(R.string.discovery_section_brew_methods, state.catalogs.brewMethods, draft.brewMethodIds, { draft = draft.copy(brewMethodIds = draft.brewMethodIds.toggle(it)) }) { entry ->
-                host.brewMethodIcon(entry.name, 22.dp)
-            }
-            Selection(R.string.discovery_section_tags, amenityTags(state.catalogs.tags), draft.tagIds, { draft = draft.copy(tagIds = draft.tagIds.toggle(it)) }) { entry ->
-                host.tagIcon(entry.id)
+                FilterCatalogStatus(state) { onAction(SearchAction.RetryCatalogs) }
+                FilterSelections(state, host, draft) { draft = it }
             }
         }
+    }
+}
+
+@Composable
+private fun FilterSheetHeader(resetEnabled: Boolean, onReset: () -> Unit, onDone: () -> Unit) {
+    if (LocalDensity.current.fontScale > 1.2f) {
+        Column(Modifier.fillMaxWidth().padding(horizontal = CoffeePeekDimens.spacing4)) {
+            Text(stringResource(R.string.discovery_filters), fontSize = 17.sp, fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.align(Alignment.CenterHorizontally))
+            FlowRow(Modifier.fillMaxWidth().heightIn(min = 48.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+                TextButton(onReset, enabled = resetEnabled, contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp)) {
+                    Text(stringResource(R.string.discovery_filters_reset), fontSize = 17.sp)
+                }
+                TextButton(onDone, contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp)) {
+                    Text(stringResource(R.string.discovery_filters_done), fontSize = 17.sp, fontWeight = FontWeight.SemiBold)
+                }
+            }
+        }
+        return
+    }
+    Box(Modifier.fillMaxWidth().height(48.dp).padding(horizontal = 4.dp)) {
+        TextButton(onReset, enabled = resetEnabled, modifier = Modifier.align(Alignment.CenterStart)) {
+            Text(
+                stringResource(R.string.discovery_filters_reset), fontSize = 17.sp,
+            )
+        }
+        Text(
+            stringResource(R.string.discovery_filters), fontSize = 17.sp, fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onBackground, modifier = Modifier.align(Alignment.Center),
+        )
+        TextButton(onDone, modifier = Modifier.align(Alignment.CenterEnd)) {
+            Text(stringResource(R.string.discovery_filters_done), fontSize = 17.sp, fontWeight = FontWeight.SemiBold)
+        }
+    }
+}
+
+@Composable
+private fun FilterSelections(state: SearchState, host: DiscoveryHost, draft: DiscoveryFilters, onDraft: (DiscoveryFilters) -> Unit) {
+    PriceFilter(draft.priceLevel) { onDraft(draft.copy(priceLevel = it)) }
+    Selection(R.string.discovery_section_roasters, state.catalogs.roasters, draft.roasterIds, { onDraft(draft.copy(roasterIds = draft.roasterIds.toggle(it))) }) { entry ->
+        host.roasterAvatar(entry.name, entry.photoUrl)
+    }
+    Selection(R.string.discovery_section_beans, state.catalogs.beans, draft.beanIds, { onDraft(draft.copy(beanIds = draft.beanIds.toggle(it))) })
+    Selection(R.string.discovery_section_equipment, state.catalogs.equipment, draft.equipmentIds, { onDraft(draft.copy(equipmentIds = draft.equipmentIds.toggle(it))) })
+    Selection(R.string.discovery_section_brew_methods, state.catalogs.brewMethods, draft.brewMethodIds, { onDraft(draft.copy(brewMethodIds = draft.brewMethodIds.toggle(it))) }) { entry ->
+        host.brewMethodIcon(entry.name, 22.dp)
+    }
+    Selection(R.string.discovery_section_tags, amenityTags(state.catalogs.tags), draft.tagIds, { onDraft(draft.copy(tagIds = draft.tagIds.toggle(it))) }) { entry ->
+        host.tagIcon(entry.id)
     }
 }
 
@@ -124,3 +161,17 @@ private fun Selection(title: Int, entries: List<CatalogEntry>, selected: Set<Str
 private const val COLLAPSED_ROWS = 5
 
 private fun Set<String>.toggle(id: String): Set<String> = if (id in this) this - id else this + id
+
+@PreviewLightDark
+@Composable
+private fun FilterSheetPreview() = CoffeePeekTheme {
+    FilterSheet(SearchState(), DiscoveryHost()) {}
+}
+
+@PreviewLightDark
+@Composable
+private fun FilterSheetHeaderLargePreview() = CoffeePeekTheme {
+    CompositionLocalProvider(LocalDensity provides androidx.compose.ui.unit.Density(LocalDensity.current.density, 2f)) {
+        Box(Modifier.width(320.dp)) { FilterSheetHeader(true, {}, {}) }
+    }
+}

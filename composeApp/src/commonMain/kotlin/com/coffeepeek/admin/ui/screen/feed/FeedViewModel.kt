@@ -82,6 +82,7 @@ data class FeedUiState(
     val isRefreshing: Boolean = false,
     val isLoadingMore: Boolean = false,
     val error: String? = null,
+    val loadMoreFailed: Boolean = false,
     val query: String = "",
     val searchOrigin: ShopLocation? = null,
     val isSearchActive: Boolean = false,
@@ -97,6 +98,9 @@ data class FeedUiState(
     val totalPages: Int = 1,
     val hasMore: Boolean = false,
 ) {
+    val canLoadMore: Boolean get() = hasMore && !isLoading && !isRefreshing && !isLoadingMore && error == null && !loadMoreFailed
+    val showsRefreshError: Boolean get() = error != null && visibleShops.isNotEmpty()
+
     fun showsShopsFirst(hasRoasterResults: Boolean?): Boolean =
         query.isNotBlank() && hasRoasterResults == false && visibleShops.isNotEmpty()
 
@@ -134,6 +138,7 @@ class FeedViewModel(
     private val searchAnalytics = SearchTracker(Catalog.Shops)
     private val searchVisibility = MutableStateFlow(SearchVisibility())
     private var shopsLoadJob: Job? = null
+    private var loadedFilters: ShopFilters? = null
     private data class SearchVisibility(val active: Boolean = false, val revision: Int = 0)
     private data class VisibleSearch(val attempt: SearchAttempt, val revision: Int)
 
@@ -394,6 +399,10 @@ class FeedViewModel(
         loadShops(reset = false)
     }
 
+    fun retryLoadMore() {
+        if (_uiState.value.loadMoreFailed) loadShops(reset = false, retry = true)
+    }
+
     fun refresh() {
         if (_uiState.value.isRefreshing || _uiState.value.isLoading) return
         loadShops(reset = true)
@@ -485,33 +494,35 @@ class FeedViewModel(
             "filter_keys" to after.keys.sorted(), "changed_filter_keys" to changed, "action" to "apply")
     }
 
-    private fun loadShops(reset: Boolean) {
+    private fun loadShops(reset: Boolean, retry: Boolean = false) {
         val snapshot = _uiState.value
         if (!reset) {
-            if (snapshot.isLoadingMore || !snapshot.hasMore || snapshot.isLoading || snapshot.isRefreshing) {
-                return
-            }
+            if (!snapshot.copy(loadMoreFailed = snapshot.loadMoreFailed && !retry).canLoadMore) return
+            if (loadedFilters != snapshot.filters.toShopFilters(snapshot.query, nearbyOrigin, 1, PAGE_SIZE)) return
         }
 
         shopsLoadJob?.cancel()
+        showPageLoading(reset)
         shopsLoadJob = workScope.launch { loadShopPage(reset) }
     }
 
     private suspend fun loadShopPage(reset: Boolean) {
         val page = if (reset) 1 else _uiState.value.currentPage + 1
-        showPageLoading(reset)
         val current = _uiState.value
         val search = beginSearch(current, reset)
-        val result = shopRepository.searchShops(current.filters.toShopFilters(current.query, nearbyOrigin, page, PAGE_SIZE))
+        val filters = current.filters.toShopFilters(current.query, nearbyOrigin, page, PAGE_SIZE)
+        val result = shopRepository.searchShops(filters)
         currentCoroutineContext().ensureActive()
         result.onSuccess {
+            loadedFilters = filters.copy(page = 1)
             visibleAttempt(search)?.results(it.totalCount)
             applyShopPage(it, reset)
         }.onFailure {
             if (it is CancellationException) throw it
             visibleAttempt(search)?.failed(safeAnalyticsError(it))
             _uiState.update { state ->
-                state.copy(isLoading = false, isRefreshing = false, isLoadingMore = false, error = "Не удалось загрузить кофейни")
+                state.copy(isLoading = false, isRefreshing = false, isLoadingMore = false,
+                    error = "Не удалось загрузить кофейни".takeIf { reset }, loadMoreFailed = !reset)
             }
         }
     }
@@ -534,9 +545,9 @@ class FeedViewModel(
     private fun showPageLoading(reset: Boolean) {
         _uiState.update { state ->
             when {
-                reset && state.shops.isEmpty() -> state.copy(isLoading = true, isRefreshing = false, isLoadingMore = false, error = null)
-                reset -> state.copy(isRefreshing = true, isLoading = false, isLoadingMore = false, error = null)
-                else -> state.copy(isLoadingMore = true, error = null)
+                reset && state.shops.isEmpty() -> state.copy(isLoading = true, isRefreshing = false, isLoadingMore = false, error = null, loadMoreFailed = false)
+                reset -> state.copy(isRefreshing = true, isLoading = false, isLoadingMore = false, error = null, loadMoreFailed = false)
+                else -> state.copy(isLoadingMore = true, error = null, loadMoreFailed = false)
             }
         }
     }
@@ -555,6 +566,7 @@ class FeedViewModel(
                     isRefreshing = false,
                     isLoadingMore = false,
                     error = null,
+                    loadMoreFailed = false,
                 )
             }
         }

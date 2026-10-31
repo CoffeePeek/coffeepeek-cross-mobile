@@ -14,4 +14,7 @@
     <string name="coffeepeek_rating_choose">Выбрать %1$d из 5</string>
     <string name="coffeepeek_like_add">Поставить лайк</string>
     <string name="coffeepeek_like_remove">Убрать лайк</string>
+    <string name="coffeepeek_pagination_error">Не удалось загрузить следующие результаты.</string>
+    <string name="coffeepeek_pagination_retry">Повторить</string>
+    <string name="coffeepeek_refresh_error">Не удалось обновить. Показаны предыдущие результаты.</string>
 </resources>

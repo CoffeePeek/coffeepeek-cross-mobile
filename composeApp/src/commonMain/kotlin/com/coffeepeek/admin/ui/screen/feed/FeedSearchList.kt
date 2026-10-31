@@ -18,8 +18,15 @@ import com.coffeepeek.admin.ui.component.CoffeePeekLoader
 import com.coffeepeek.admin.ui.component.CoffeePeekPullToRefresh
 import com.coffeepeek.admin.ui.component.LoadErrorContent
 import com.coffeepeek.core.designsystem.component.coffeePeekScrollContentPadding
+import com.coffeepeek.core.designsystem.component.CoffeePeekPaginationStatus
+import com.coffeepeek.core.designsystem.component.CoffeePeekRefreshError
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
+import com.coffeepeek.domain.model.CoffeeShop
 import org.jetbrains.compose.ui.tooling.preview.Preview
+import org.jetbrains.compose.resources.stringResource
+import coffeepeek.composeapp.generated.resources.Res
+import coffeepeek.composeapp.generated.resources.feed_refresh_error
+import coffeepeek.composeapp.generated.resources.retry
 
 @Composable
 internal fun FeedSearchList(state: FeedUiState, listState: LazyListState, actions: FeedScreenActions,
@@ -31,12 +38,19 @@ internal fun FeedSearchList(state: FeedUiState, listState: LazyListState, action
             verticalArrangement = Arrangement.spacedBy(CpDimens.spacing3)) {
             if (showRoasters && !shopsFirst) roasterSearchResults(roasters)
             if (showRoasters) feedShopSearchHeading(state, actions.onRefresh)
+            if (state.showsRefreshError) item(key = "refresh-error") {
+                CoffeePeekRefreshError(onRetry = actions.onRefresh,
+                    message = stringResource(Res.string.feed_refresh_error), retryLabel = stringResource(Res.string.retry))
+            }
             items(state.visibleShops, key = { it.id }) { shop ->
                 ShopCard(shop = shop, distance = formatDistance(shop.distanceMeters ?: distanceToShopMeters(location, shop.location)),
                     onClick = { actions.onOpenShop(shop) }, onToggleFavorite = { actions.onToggleFavorite(shop) })
             }
+            if (state.isLoadingMore || state.loadMoreFailed) item(key = "pagination-status") {
+                CoffeePeekPaginationStatus(state.isLoadingMore, state.loadMoreFailed, actions.onRetryLoadMore)
+            }
             if (shopsFirst) roasterSearchResults(roasters)
-            if (!state.isLoading && state.error == null) item(key = "add-missing-shop") {
+            if (!state.isLoading && state.error == null && !state.loadMoreFailed) item(key = "add-missing-shop") {
                 CatalogSuggestionCard(CatalogSuggestionKind.Shop, onAdd = actions.onAddShop)
             }
         }
@@ -71,12 +85,18 @@ private fun LazyListScope.roasterSearchResults(content: (@Composable () -> Unit)
 }
 
 @Composable
-private fun FeedSearchListPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
+private fun FeedSearchListPreview(dark: Boolean, paginationError: Boolean = false, refreshError: Boolean = false) = CoffeePeekTheme(darkTheme = dark) {
     Surface(color = MaterialTheme.colorScheme.background) {
-        FeedSearchList(FeedUiState(isLoading = false), rememberLazyListState(), FeedScreenActions(),
+        val shops = listOf(CoffeeShop("preview", "CoffeePeek", 4.5, cityName = null, priceRange = null, photoUrl = null))
+        FeedSearchList(FeedUiState(isLoading = false, shops = shops, loadMoreFailed = paginationError,
+            error = if (refreshError) "preview" else null), rememberLazyListState(), FeedScreenActions(),
             null, PaddingValues(16.dp), false, false, null)
     }
 }
 
 @Preview @Composable private fun FeedSearchListLightPreview() = FeedSearchListPreview(false)
 @Preview @Composable private fun FeedSearchListDarkPreview() = FeedSearchListPreview(true)
+@Preview @Composable private fun FeedPaginationErrorLightPreview() = FeedSearchListPreview(false, paginationError = true)
+@Preview @Composable private fun FeedPaginationErrorDarkPreview() = FeedSearchListPreview(true, paginationError = true)
+@Preview @Composable private fun FeedRefreshErrorLightPreview() = FeedSearchListPreview(false, refreshError = true)
+@Preview @Composable private fun FeedRefreshErrorDarkPreview() = FeedSearchListPreview(true, refreshError = true)

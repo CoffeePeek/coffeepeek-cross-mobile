@@ -12,6 +12,7 @@ internal data class FeedScreenActions(
     val onSelectRoasters: () -> Unit = {},
     val onRefresh: () -> Unit = {},
     val onLoadMore: () -> Unit = {},
+    val onRetryLoadMore: () -> Unit = {},
     val onOpenShop: (CoffeeShop) -> Unit = {},
     val onToggleFavorite: (CoffeeShop) -> Unit = {},
     val onAddShop: () -> Unit = {},

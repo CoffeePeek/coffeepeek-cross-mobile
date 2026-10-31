@@ -98,7 +98,9 @@ fun CoffeePeekSwipeDismissModalBottomSheet(
         // handle in content so locked sheets expose neither a click nor a dismiss action.
         dragHandle = null,
         properties = ModalBottomSheetProperties(shouldDismissOnClickOutside = dismissEnabled),
-        containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.96f),
+        // This fallback uses a separate modal window without a verified backdrop blur.
+        // Keep the surface opaque so text behind the sheet cannot bleed through.
+        containerColor = MaterialTheme.colorScheme.surface,
         shape = RoundedCornerShape(28.dp),
         tonalElevation = 0.dp,
         contentWindowInsets = contentWindowInsets,

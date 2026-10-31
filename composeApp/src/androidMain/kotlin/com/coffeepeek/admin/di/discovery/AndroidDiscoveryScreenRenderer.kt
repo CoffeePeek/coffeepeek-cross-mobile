@@ -3,9 +3,7 @@ package com.coffeepeek.admin.di.discovery
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import com.coffeepeek.admin.ui.screen.checkins.CheckInInlineAction
 import com.coffeepeek.admin.settings.CityPreference
 import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.ui.component.LocalFloatingNavClearance
@@ -23,23 +21,25 @@ import com.coffeepeek.feature.discovery.domain.model.Coordinates
 import com.coffeepeek.feature.discovery.impl.createDiscoveryTabEntry
 import com.coffeepeek.feature.favorites.domain.repository.FavoritesRepository
 import io.ktor.client.HttpClient
+import kotlinx.coroutines.flow.Flow
 
 /** Android routes the discovery tab to the migrated entry; navigation, the check-in button and the sign-in stay app-owned. */
 internal class AndroidDiscoveryScreenRenderer(private val entry: DiscoveryTabEntry) : DiscoveryScreenRenderer {
     @Composable
-    override fun Tab(onMapExpandedChange: (Boolean) -> Unit) {
+    override fun Tab(onMapExpandedChange: (Boolean) -> Unit, reselections: Flow<Unit>) {
         val pendingMapFocus by Navigator.pendingMapFocus.collectAsState()
-        var isMapExpanded by remember { mutableStateOf(false) }
         val clearance = LocalFloatingNavClearance.current
-        CheckInTabContent(showCreateButton = !isMapExpanded) {
+        CheckInTabContent(showCreateButton = false) { onCreateCheckIn ->
             entry.Content(
                 onOpenShop = { Navigator.navigate(Navigator.Screen.ShopDetail(it)) },
                 onSignIn = { Navigator.navigate(Navigator.Screen.Auth) },
                 onAddShop = { Navigator.navigate(Navigator.Screen.AddShop) },
-                onMapExpandedChange = { isMapExpanded = it; onMapExpandedChange(it) },
+                onMapExpandedChange = onMapExpandedChange,
                 bottomClearance = clearance,
                 focus = pendingMapFocus?.let { MapFocus(it.shopId, it.title, Coordinates(it.latitude, it.longitude)) },
                 onFocusConsumed = Navigator::consumeMapFocus,
+                checkInAction = { CheckInInlineAction(onCreateCheckIn) },
+                reselections = reselections,
             )
         }
     }
@@ -61,6 +61,7 @@ internal fun androidDiscoveryScreenRenderer(
             roasters.DiscoverySearch(onCancel, context.query, onQueryChange, context.selectedRoasterIds, context.favoritesOnly)
         },
         hasResults = { context -> roasters.hasDiscoveryResults(context.query, context.selectedRoasterIds, context.favoritesOnly) },
+        onAdd = { Navigator.navigate(Navigator.Screen.AddRoaster) },
     )
     return AndroidDiscoveryScreenRenderer(
         createDiscoveryTabEntry(

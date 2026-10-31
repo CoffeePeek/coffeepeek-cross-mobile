@@ -26,18 +26,23 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.Density
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekColors
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
+import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
+import com.coffeepeek.core.designsystem.theme.coffeePeekStatusForeground
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 private const val MAX_LOGOS = 3
@@ -85,65 +90,107 @@ fun CoffeePeekShopCard(
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
     ) {
         Column {
-            Box(
-                Modifier.fillMaxWidth().aspectRatio(2f)
-                    .clip(RoundedCornerShape(topStart = CoffeePeekDimens.radiusXl, topEnd = CoffeePeekDimens.radiusXl))
-                    .background(MaterialTheme.colorScheme.surfaceVariant),
-            ) {
-                cover()
-                if (isNew) NewBadge(newLabel, Modifier.align(Alignment.TopStart).padding(CoffeePeekDimens.spacing3))
-                Row(Modifier.align(Alignment.TopEnd).padding(CoffeePeekDimens.spacing1), verticalAlignment = Alignment.CenterVertically) {
-                    if (rating != null && rating > 0) RatingBadge(ratingText, ratingCount)
-                    favorite?.invoke()
-                }
-                val logos = roasterLogoCount.coerceIn(0, MAX_LOGOS)
-                if (logos > 0) Box(Modifier.align(Alignment.BottomEnd).padding(CoffeePeekDimens.spacing3).width(LogoSize + LogoStep * (logos - 1)).height(LogoSize)) {
-                    repeat(logos) { index ->
-                        Box(
-                            Modifier.offset(x = LogoStep * index).size(LogoSize).clip(CircleShape).background(MaterialTheme.colorScheme.surface.copy(alpha = 0.96f))
-                                .border(1.dp, MaterialTheme.colorScheme.outlineVariant, CircleShape),
-                            contentAlignment = Alignment.Center,
-                        ) { roasterLogo(index) }
-                    }
-                }
+            ShopCardCover(rating, ratingText, ratingCount, isNew, newLabel, cover, roasterLogoCount, roasterLogo, favorite)
+            ShopCardDetails(title, statusLabel, isOpen, locationSummary, kindLabel, priceLevel, tag, brewMethods)
+        }
+    }
+}
+
+@Composable
+private fun ShopCardCover(
+    rating: Double?, ratingText: String, ratingCount: Int, isNew: Boolean, newLabel: String,
+    cover: @Composable BoxScope.() -> Unit, roasterLogoCount: Int,
+    roasterLogo: @Composable BoxScope.(Int) -> Unit, favorite: (@Composable () -> Unit)?,
+) {
+    CoffeePeekPhotoBackdrop(
+        Modifier.fillMaxWidth().aspectRatio(2f)
+            .clip(RoundedCornerShape(topStart = CoffeePeekDimens.radiusXl, topEnd = CoffeePeekDimens.radiusXl))
+            .background(MaterialTheme.colorScheme.surfaceVariant),
+        photo = cover,
+        overlay = {
+            if (isNew) NewBadge(newLabel, Modifier.align(Alignment.TopStart).padding(CoffeePeekDimens.spacing3))
+            Row(Modifier.align(Alignment.TopEnd).padding(CoffeePeekDimens.spacing1), verticalAlignment = Alignment.CenterVertically) {
+                if (rating != null && rating > 0) RatingBadge(ratingText, ratingCount)
+                favorite?.invoke()
             }
-            Column(
-                Modifier.padding(start = CoffeePeekDimens.spacing4, top = CoffeePeekDimens.spacing3, end = CoffeePeekDimens.spacing4, bottom = CoffeePeekDimens.spacing4),
-                verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2),
-            ) {
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
-                    Text(
-                        title, style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold), color = MaterialTheme.colorScheme.onSurface,
-                        maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f),
-                    )
-                    if (statusLabel != null) StatusBadge(statusLabel, isOpen, Modifier.padding(start = CoffeePeekDimens.spacing2))
-                }
-                brewMethods?.invoke()
-                if (!locationSummary.isNullOrBlank()) Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(CoffeePeekIcons.Location, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(14.dp))
-                    Spacer(Modifier.width(2.dp))
-                    Text(locationSummary, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                }
-                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                    Row(Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        Text(kindLabel, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                        if (priceLevel != null && priceLevel > 0) {
-                            Separator()
-                            // Prod proportions: the symbol drawn at 90% of 8 dp, one dp apart.
-                            CoffeePeekBynPriceIndicators(priceLevel, iconWidth = 7.2.dp, tint = MaterialTheme.colorScheme.onSurfaceVariant, spacing = 1.dp)
-                        }
-                        if (!tag.isNullOrBlank()) {
-                            Separator()
-                            Text(
-                                tag, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1,
-                                overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false),
-                            )
-                        }
-                    }
-                    Icon(CoffeePeekIcons.ChevronRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(18.dp))
-                }
+            ShopCardLogos(roasterLogoCount, roasterLogo)
+        },
+    )
+}
+
+@Composable
+private fun BoxScope.ShopCardLogos(roasterLogoCount: Int, roasterLogo: @Composable BoxScope.(Int) -> Unit) {
+    val logos = roasterLogoCount.coerceIn(0, MAX_LOGOS)
+    if (logos > 0) Box(Modifier.align(Alignment.BottomEnd).padding(CoffeePeekDimens.spacing3).width(LogoSize + LogoStep * (logos - 1)).height(LogoSize)) {
+        repeat(logos) { index ->
+            Box(
+                Modifier.offset(x = LogoStep * index).size(LogoSize).clip(CircleShape).background(MaterialTheme.colorScheme.surface.copy(alpha = 0.96f))
+                    .border(1.dp, MaterialTheme.colorScheme.outlineVariant, CircleShape),
+                contentAlignment = Alignment.Center,
+            ) { roasterLogo(index) }
+        }
+    }
+}
+
+@Composable
+private fun ShopCardDetails(
+    title: String, statusLabel: String?, isOpen: Boolean, locationSummary: String?,
+    kindLabel: String, priceLevel: Int?, tag: String?, brewMethods: (@Composable () -> Unit)?,
+) {
+    Column(
+        Modifier.padding(start = CoffeePeekDimens.spacing4, top = CoffeePeekDimens.spacing3, end = CoffeePeekDimens.spacing4, bottom = CoffeePeekDimens.spacing4),
+        verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2),
+    ) {
+        ShopCardTitle(title, statusLabel, isOpen)
+        brewMethods?.invoke()
+        if (!locationSummary.isNullOrBlank()) Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(CoffeePeekIcons.Location, contentDescription = null, tint = MaterialTheme.colorScheme.coffeePeekAccentForeground, modifier = Modifier.size(14.dp))
+            Spacer(Modifier.width(2.dp))
+            Text(locationSummary, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = if (LocalDensity.current.fontScale > 1.2f) 3 else 1, overflow = TextOverflow.Ellipsis)
+        }
+        ShopCardSummary(kindLabel, priceLevel, tag)
+    }
+}
+
+@Composable
+private fun ShopCardTitle(title: String, statusLabel: String?, isOpen: Boolean) {
+    if (LocalDensity.current.fontScale > 1.2f) {
+        Column(verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2)) {
+            Text(title, style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                color = MaterialTheme.colorScheme.onSurface, maxLines = 3, overflow = TextOverflow.Ellipsis)
+            if (statusLabel != null) StatusBadge(statusLabel, isOpen, Modifier)
+        }
+        return
+    }
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
+        Text(
+            title, style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold), color = MaterialTheme.colorScheme.onSurface,
+            maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f),
+        )
+        if (statusLabel != null) StatusBadge(statusLabel, isOpen, Modifier.padding(start = CoffeePeekDimens.spacing2))
+    }
+}
+
+@Composable
+private fun ShopCardSummary(kindLabel: String, priceLevel: Int?, tag: String?) {
+    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        Row(Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            Text(kindLabel, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            if (priceLevel != null && priceLevel > 0) {
+                Separator()
+                // Prod proportions: the symbol drawn at 90% of 8 dp, one dp apart.
+                CoffeePeekBynPriceIndicators(priceLevel, iconWidth = 7.2.dp, tint = MaterialTheme.colorScheme.onSurfaceVariant, spacing = 1.dp)
+            }
+            if (!tag.isNullOrBlank()) {
+                Separator()
+                Text(
+                    tag, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1,
+                    overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f, fill = false),
+                )
             }
         }
+        Icon(CoffeePeekIcons.ChevronRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(18.dp))
     }
 }
 
@@ -191,13 +238,14 @@ private fun RatingBadge(text: String, count: Int) {
 @Composable
 private fun StatusBadge(label: String, isOpen: Boolean, modifier: Modifier) {
     val color = if (isOpen) CoffeePeekColors.Success else MaterialTheme.colorScheme.error
+    val foreground = MaterialTheme.colorScheme.coffeePeekStatusForeground(isOpen)
     Row(
         modifier.clip(RoundedCornerShape(CoffeePeekDimens.radiusSm)).background(color.copy(alpha = 0.14f)).padding(horizontal = CoffeePeekDimens.spacing2, vertical = 6.dp),
         horizontalArrangement = Arrangement.spacedBy(6.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Box(Modifier.size(8.dp).clip(RoundedCornerShape(50)).background(color))
-        Text(label, style = MaterialTheme.typography.labelSmall, color = color, fontWeight = FontWeight.Bold)
+        Box(Modifier.size(8.dp).clip(RoundedCornerShape(50)).background(foreground))
+        Text(label, style = MaterialTheme.typography.labelSmall, color = foreground, fontWeight = FontWeight.Bold)
     }
 }
 
@@ -214,7 +262,7 @@ private fun ShopCardPreviewContent(darkTheme: Boolean) = CoffeePeekTheme(darkThe
                 cover = { Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.primary.copy(alpha = 0.4f))) }, roasterLogoCount = 2,
                 roasterLogo = { Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.outline)) },
                 brewMethods = { Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) { CoffeePeekShopInfoChip("V60"); CoffeePeekShopInfoChip("+1") } },
-                favorite = { CoffeePeekLikeBadge(selected = true, contentDescription = "В избранном", modifier = Modifier.size(48.dp)) },
+                favorite = { CoffeePeekLikeButton(selected = true, contentDescription = "В избранном", onClick = {}, overImage = true) },
             )
             CoffeePeekShopCard(
                 title = "Закрытая кофейня с очень длинным названием для проверки обрезки", kindLabel = "Кофейня", statusLabel = "ЗАКРЫТО",
@@ -226,3 +274,18 @@ private fun ShopCardPreviewContent(darkTheme: Boolean) = CoffeePeekTheme(darkThe
 
 @Preview @Composable private fun CoffeePeekShopCardLightPreview() = ShopCardPreviewContent(darkTheme = false)
 @Preview @Composable private fun CoffeePeekShopCardDarkPreview() = ShopCardPreviewContent(darkTheme = true)
+
+@Composable
+private fun ShopCardLargePreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
+    CompositionLocalProvider(LocalDensity provides Density(LocalDensity.current.density, 2f)) {
+        CoffeePeekShopCard(
+            title = "Кофейня с собственной обжаркой на длинной улице", kindLabel = "Кофейня",
+            statusLabel = "ОТКРЫТО", isOpen = true, modifier = Modifier.width(280.dp),
+            locationSummary = "Проспект Независимости, 123, вход со стороны внутреннего двора",
+            cover = { Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surfaceVariant)) },
+        )
+    }
+}
+
+@Preview @Composable private fun CoffeePeekShopCardLargeLightPreview() = ShopCardLargePreview(false)
+@Preview @Composable private fun CoffeePeekShopCardLargeDarkPreview() = ShopCardLargePreview(true)

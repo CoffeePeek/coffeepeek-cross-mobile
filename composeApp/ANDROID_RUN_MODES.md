@@ -65,6 +65,26 @@ Before installation, resolve the serial/model and lock state with `adb devices
 Inspect the APK package/version/manifest and the installed version/signature;
 record the source revision and variant. Only then install and open Sandbox:
 
+For manual resource-language checks, a fresh Sandbox launch accepts
+`--es sandbox_locale ru` or `--es sandbox_locale en`. This overrides only that
+Compose context's resource configuration and is cleared on a fresh launch without the
+extra; it does not change phone settings or advertise a translated app locale.
+
+For manual layout review, fresh launches also accept `--ef sandbox_font_scale 1.3`
+(1.0–2.0), `--ei sandbox_width_dp 320` and `--ei sandbox_height_dp 740`.
+These constrain only Sandbox Compose content and its local window info; the
+physical window/system settings are unchanged. Dialogs are separate windows;
+verify their text scale independently. `--es sandbox_discovery LongText` supplies
+long shop titles and addresses. Omit extras on a fresh launch to restore defaults.
+
+For manual accessibility review, `--ez sandbox_opaque_glass true` selects the
+opaque high-contrast glass treatment without changing the device contrast. A
+fresh launch with `--ez sandbox_reduce_motion true` supplies a zero
+MotionDurationScale to Sandbox's lifecycle-owned Compose Recomposer; both
+Compose animations and the application's motion decision use that same scale.
+These fixtures verify rendering, not the real system-setting observer or
+physical haptic quality. Omit extras to follow system settings again.
+
 ```shell
 adb -s DEVICE_SERIAL install -r composeApp/build/outputs/apk/direct/sandbox/composeApp-direct-sandbox.apk
 adb -s DEVICE_SERIAL shell am start -n com.coffeepeek.sandbox/com.coffeepeek.admin.sandbox.SandboxActivity

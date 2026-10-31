@@ -8,6 +8,30 @@ import kotlinx.coroutines.test.runTest
 import kotlin.test.*
 
 class SandboxDiscoveryMapTest {
+    @Test fun catalogFailureRecoversWithoutBlockingSearch() = runTest {
+        val backend = SandboxBackend(byteArrayOf(1))
+        try {
+            backend.discovery = SandboxDiscovery.CatalogFailure
+            val repository = repository(backend)
+            assertTrue(repository.catalogs().isFailure)
+            assertTrue(repository.catalogs().isFailure)
+            assertTrue(repository.search(DiscoveryCriteria().searchQuery()).getOrThrow().items.isNotEmpty())
+            backend.discovery = SandboxDiscovery.Paged
+            assertTrue(repository.catalogs().getOrThrow().beans.isNotEmpty())
+        } finally { backend.close() }
+    }
+
+    @Test fun emptyCatalogIsSuccessfulAndDistinctFromFailure() = runTest {
+        val backend = SandboxBackend(byteArrayOf(1))
+        try {
+            backend.discovery = SandboxDiscovery.CatalogEmpty
+            val catalog = repository(backend).catalogs().getOrThrow()
+            assertTrue(catalog.beans.isEmpty())
+            assertTrue(catalog.brewMethods.isEmpty())
+            assertTrue(catalog.cities.isNotEmpty())
+        } finally { backend.close() }
+    }
+
     private val bounds = MapBounds(51.0, 22.0, 55.0, 29.0)
 
     private fun repository(backend: SandboxBackend): DiscoveryRepository =

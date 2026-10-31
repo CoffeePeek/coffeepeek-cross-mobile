@@ -11,6 +11,7 @@ import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import java.util.concurrent.atomic.AtomicBoolean
 import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.ui.appLinkScreen
+import com.coffeepeek.admin.ui.component.AndroidHapticFeedback
 
 class MainActivity : ComponentActivity() {
 
@@ -68,7 +69,13 @@ class MainActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
+        AndroidHapticFeedback.bind(window.decorView)
         com.coffeepeek.admin.notifications.AndroidPush.refresh()
+    }
+
+    override fun onPause() {
+        AndroidHapticFeedback.unbind(window.decorView)
+        super.onPause()
     }
 
     override fun onDestroy() {

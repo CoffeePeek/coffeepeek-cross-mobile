@@ -24,8 +24,7 @@ internal fun DiscoveryRoasterOverlay(
         exit = fadeOut(tween(if (reduceMotion) 0 else 240)) + slideOutVertically(tween(if (reduceMotion) 0 else 360)) { -it / 5 },
     ) {
         roasters.search(context, { onAction(SearchAction.Query(it)) }, {
-            onAction(SearchAction.CancelSearch)
-            ui.showRoasters = false
+            ui.closeRoasters(onAction)
         })
     }
 }

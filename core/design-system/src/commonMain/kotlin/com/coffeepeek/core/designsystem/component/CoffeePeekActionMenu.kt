@@ -125,7 +125,7 @@ private fun CoffeePeekActionMenuContent(
     val colors = MaterialTheme.colorScheme
     val shape = RoundedCornerShape(CoffeePeekDimens.cardRadius)
     Column(modifier.widthIn(min = 224.dp, max = 304.dp).heightIn(max = 360.dp)
-        .coffeePeekLiquidGlass(shape, hazeState = null, shadowElevation = 8.dp)
+        .coffeePeekLiquidGlass(shape, hazeState = LocalCoffeePeekMenuBackdrop.current, shadowElevation = 8.dp)
         .verticalScroll(rememberScrollState())) {
         actions.forEachIndexed { index, action ->
             if (index > 0) Box(Modifier.fillMaxWidth().height(1.dp).background(colors.outlineVariant))

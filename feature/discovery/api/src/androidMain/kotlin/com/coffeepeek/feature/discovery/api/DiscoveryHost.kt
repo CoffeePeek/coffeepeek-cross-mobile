@@ -30,9 +30,6 @@ class DiscoveryHost(
     val roasterLogo: @Composable (name: String, logoUrl: String?) -> Unit = { _, _ -> },
     /** The roaster's avatar in a list row (the logo above sits on a shop card). */
     val roasterAvatar: @Composable (name: String, logoUrl: String?) -> Unit = { _, _ -> },
-    /** The price level (1..4, null for any) as the application's slider, and the hint it shows beside the title. */
-    val priceSelector: @Composable (selected: Int?, onSelect: (Int?) -> Unit, modifier: Modifier) -> Unit = { _, _, _ -> },
-    val priceHint: (Int?) -> String? = { null },
     val suggestionIllustration: @Composable () -> Painter = { error("The application provides the illustration") },
     val exposure: (Modifier, DiscoveryExposure) -> Modifier = { modifier, _ -> modifier },
     val haptic: () -> Unit = {},
@@ -47,6 +44,8 @@ class DiscoveryHost(
     val mapCanvas: @Composable (state: MapCanvasState, callbacks: MapCanvasCallbacks, modifier: Modifier) -> Unit = { _, _, _ -> },
     /** Whether the retained tab is actually visible; the application supplies its existing visibility guard. */
     val isVisible: @Composable () -> Boolean = { true },
+    /** Opens the existing application city selector; no settings navigation belongs to this feature. */
+    val changeCity: () -> Unit = {},
 )
 
 /** What the roaster sections need to know about the search to filter themselves. */
@@ -60,6 +59,8 @@ class DiscoveryRoasterSlots(
     val search: @Composable (context: DiscoveryRoasterContext, onQueryChange: (String) -> Unit, onCancel: () -> Unit) -> Unit,
     /** Null while loading or unavailable; lets matching shops precede an empty roaster section. */
     val hasResults: @Composable (DiscoveryRoasterContext) -> Boolean? = { null },
+    /** Secondary contribution action after an empty text search; navigation remains app-owned. */
+    val onAdd: () -> Unit = {},
 )
 
 /**
@@ -79,5 +80,9 @@ interface DiscoveryTabEntry {
         /** A shop to bring into view on the expanded map; [onFocusConsumed] tells the caller it was taken. */
         focus: MapFocus? = null,
         onFocusConsumed: () -> Unit = {},
+        /** App-owned check-in action, placed in the landing list only; never over search, map or roasters. */
+        checkInAction: @Composable () -> Unit = {},
+        /** Transient taps on the already selected Search tab; ordinary tab changes must not emit. */
+        reselections: kotlinx.coroutines.flow.Flow<Unit> = kotlinx.coroutines.flow.emptyFlow(),
     )
 }

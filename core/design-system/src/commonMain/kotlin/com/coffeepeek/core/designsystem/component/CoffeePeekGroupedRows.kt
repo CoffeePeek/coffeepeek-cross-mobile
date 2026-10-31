@@ -46,6 +46,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.sp
+import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
 import com.coffeepeek.core.designsystem.theme.CoffeePeekColors
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
@@ -78,7 +79,7 @@ fun CoffeePeekGroupSection(
                 modifier = Modifier.weight(1f),
             ) else Spacer(Modifier.weight(1f))
             if (trailing != null) {
-                Text(text = trailing, fontSize = 13.sp, color = CoffeePeekColors.Primary)
+                Text(text = trailing, fontSize = 13.sp, color = MaterialTheme.colorScheme.coffeePeekAccentForeground)
             }
         }
         Column(
@@ -126,7 +127,7 @@ fun CoffeePeekCheckmarkRow(
             Icon(
                 imageVector = CoffeePeekIcons.Check,
                 contentDescription = null,
-                tint = CoffeePeekColors.Primary,
+                tint = MaterialTheme.colorScheme.coffeePeekAccentForeground,
                 modifier = Modifier.size(20.dp),
             )
         }
@@ -150,9 +151,9 @@ fun CoffeePeekActionRow(
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         if (icon != null) {
-            Icon(icon, contentDescription = null, tint = CoffeePeekColors.Primary, modifier = Modifier.size(20.dp))
+            Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.coffeePeekAccentForeground, modifier = Modifier.size(20.dp))
         }
-        Text(text = label, fontSize = 17.sp, color = CoffeePeekColors.Primary)
+        Text(text = label, fontSize = 17.sp, color = MaterialTheme.colorScheme.coffeePeekAccentForeground)
     }
 }
 

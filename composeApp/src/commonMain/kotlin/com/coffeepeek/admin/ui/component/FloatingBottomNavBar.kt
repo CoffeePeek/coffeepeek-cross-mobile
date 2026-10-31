@@ -7,6 +7,8 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -29,15 +31,18 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.foundation.text.TextAutoSize
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.unit.Density
+import com.coffeepeek.core.designsystem.component.CoffeePeekLargeContentViewer
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.admin.theme.CoffeePeekTheme
+import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
 import com.coffeepeek.admin.ui.icons.CpIcons
 import dev.chrisbanes.haze.HazeState
 import org.jetbrains.compose.ui.tooling.preview.Preview
@@ -63,11 +68,12 @@ fun FloatingBottomNavBar(
     modifier: Modifier = Modifier,
     hazeState: HazeState? = LocalGlassHazeState.current,
 ) {
+    val height = floatingNavBarHeight()
     Row(
         modifier = modifier.navigationBarsPadding().padding(horizontal = 16.dp)
             .padding(bottom = FloatingNavBottomMargin).fillMaxWidth()
-            .height(floatingNavBarHeight())
-            .liquidGlass(RoundedCornerShape(percent = 50), hazeState, shadowElevation = 10.dp)
+            .height(height)
+            .liquidGlass(RoundedCornerShape(32.dp), hazeState, shadowElevation = 10.dp)
             .padding(4.dp).selectableGroup(),
         horizontalArrangement = Arrangement.spacedBy(2.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -76,11 +82,8 @@ fun FloatingBottomNavBar(
     }
 }
 
-@Composable
-internal fun floatingNavBarHeight(): Dp {
-    val caption = with(LocalDensity.current) { MaterialTheme.typography.labelSmall.fontSize.toDp() }
-    return maxOf(64.dp, 22.dp + 4.dp + caption * 1.5f + 16.dp)
-}
+// HIG-style compact tab captions; larger content is available on long press.
+internal fun floatingNavBarHeight(): Dp = 64.dp
 
 val FloatingNavBottomMargin = 8.dp
 
@@ -96,29 +99,41 @@ private fun RowScope.FloatingNavBarItem(item: FloatingNavItem) {
         item.selected -> colors.onSurface.copy(alpha = 0.07f)
         else -> Color.Transparent
     }, tween(160), label = "glass-tab-highlight")
-    Column(Modifier.weight(1f).fillMaxHeight().clip(RoundedCornerShape(percent = 50))
-        .background(highlight)
-        .selectable(item.selected, interactions, indication = null, role = Role.Tab, onClick = item.onClick)
-        .padding(horizontal = 2.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(3.dp, Alignment.CenterVertically)) {
-        Icon(item.icon, null, Modifier.size(22.dp), tint = if (item.selected) colors.primary else foreground)
-        Text(item.title, color = foreground, style = MaterialTheme.typography.labelSmall,
-            fontWeight = if (item.selected) FontWeight.SemiBold else FontWeight.Medium,
-            maxLines = 1, overflow = TextOverflow.Ellipsis)
+    Box(Modifier.weight(1f).fillMaxHeight()) {
+        CoffeePeekLargeContentViewer(item.title, item.icon, Modifier.fillMaxSize()) {
+            Column(Modifier.fillMaxWidth().fillMaxHeight()
+                .background(highlight, RoundedCornerShape(24.dp))
+                .selectable(item.selected, interactions, indication = null, role = Role.Tab, onClick = item.onClick)
+                .padding(horizontal = 2.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(3.dp, Alignment.CenterVertically)) {
+                Icon(item.icon, null, Modifier.size(22.dp), tint = if (item.selected) colors.coffeePeekAccentForeground else foreground)
+                CompositionLocalProvider(LocalDensity provides Density(LocalDensity.current.density, 1f)) {
+                    Text(item.title, color = foreground, style = MaterialTheme.typography.labelSmall,
+                        fontWeight = if (item.selected) FontWeight.SemiBold else FontWeight.Medium,
+                        maxLines = 1, autoSize = TextAutoSize.StepBased(minFontSize = 9.sp,
+                            maxFontSize = MaterialTheme.typography.labelSmall.fontSize, stepSize = 0.5.sp))
+                }
+            }
+        }
     }
 }
 
 @Composable
-private fun FloatingBottomNavBarPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
-    FloatingBottomNavBar(listOf(
-        FloatingNavItem("Search", CpIcons.Search, true, {}),
-        FloatingNavItem("Coffee", CpIcons.CoffeeBean, false, {}),
-        FloatingNavItem("Feed", CpIcons.Community, false, {}),
-        FloatingNavItem("Profile", CpIcons.Profile, false, {}),
-        FloatingNavItem("Settings", CpIcons.Settings, false, {}),
-    ))
+private fun FloatingBottomNavBarPreview(dark: Boolean, scale: Float = 1f) = CoffeePeekTheme(darkTheme = dark) {
+    CompositionLocalProvider(LocalDensity provides androidx.compose.ui.unit.Density(LocalDensity.current.density, scale)) {
+        FloatingBottomNavBar(listOf(
+            FloatingNavItem("Поиск", CpIcons.Search, true, {}),
+            FloatingNavItem("Кофе", CpIcons.CoffeeBean, false, {}),
+            FloatingNavItem("Лента", CpIcons.Community, false, {}),
+            FloatingNavItem("Профиль", CpIcons.Profile, false, {}),
+            FloatingNavItem("Настройки", CpIcons.Settings, false, {}),
+        ))
+    }
 }
 
 @Preview @Composable private fun FloatingBottomNavBarLightPreview() = FloatingBottomNavBarPreview(false)
 @Preview @Composable private fun FloatingBottomNavBarDarkPreview() = FloatingBottomNavBarPreview(true)
+
+@Preview @Composable private fun FloatingBottomNavBarLargeLightPreview() = FloatingBottomNavBarPreview(false, 2f)
+@Preview @Composable private fun FloatingBottomNavBarLargeDarkPreview() = FloatingBottomNavBarPreview(true, 2f)

@@ -23,6 +23,7 @@ import com.coffeepeek.feature.discovery.domain.rules.withFavoriteMembership
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -39,7 +40,7 @@ private const val PLACEMENT = "discovery"
 /**
  * The shop search as the legacy feed kept it (the debounced query, the filters, the city, nearby, paging, the optimistic favorite), with three differences.
  * One account at a time: a change of account drops the visited and favorites filters and reloads, a guest is sent to sign in for them. A query typed in the first
- * debounce window is no longer swallowed. And a failed search shows the server's message or the default text.
+ * debounce window is no longer swallowed. Failed searches retain their error while UI presents localized retry copy.
  */
 @OptIn(FlowPreview::class)
 internal class SearchViewModel(
@@ -56,12 +57,16 @@ internal class SearchViewModel(
     private var cityReady = false
     private var accountSeen = false
     private var generation = 0L
+    private var favoriteFailureSequence = 0L
     private var favoriteIds: Set<String>? = null
     private var requestedText: String? = null
+    private var catalogJob: Job? = null
     private var loadJob: Job? = null
+    private var locationTimeout: Job? = null
     private var searchPresented = false
     private var presentationVersion = 0L
     private var lastSearchResult: Pair<DiscoveryCriteria, Int>? = null
+    private var loadedCriteria: DiscoveryCriteria? = null
 
     init {
         viewModelScope.launch { account.accountKey.distinctUntilChanged().collect(::onAccount) }
@@ -76,44 +81,96 @@ internal class SearchViewModel(
 
     override suspend fun handleActionInternal(action: SearchAction) {
         when (action) {
+            SearchAction.ToggleNearby -> toggleNearby()
+            SearchAction.LocationGranted -> locationGranted()
+            SearchAction.LocationDenied -> locationDenied()
+            SearchAction.DismissLocationFailure -> cancelNearbyRequest()
+            is SearchAction.ToggleFavorite -> toggleFavorite(action.shopId)
+            is SearchAction.DismissFavoriteFailure -> updateState {
+                if (favoriteFailureId == action.id) copy(favoriteFailureId = null) else this
+            }
+            is SearchAction.OpenShop -> openShop(action.shopId)
+            is SearchAction.SetKind, SearchAction.ToggleOpen, SearchAction.ToggleNew,
+            SearchAction.ToggleVisited, SearchAction.ToggleFavorites, is SearchAction.SetPrice,
+            is SearchAction.SetMinRating, is SearchAction.ToggleCatalog -> handleFilterAction(action)
+            else -> handleSearchAction(action)
+        }
+    }
+
+    private fun handleSearchAction(action: SearchAction) {
+        when (action) {
             is SearchAction.Query -> { updateState { copy(query = action.text) }; queries.tryEmit(action.text) }
             is SearchAction.PresentationChanged -> setSearchPresentation(action.active)
             SearchAction.ActivateSearch -> updateState { copy(searchActive = true) }
-            SearchAction.CancelSearch -> {
-                if (currentState.activeFilterCount > 0) clearFilters() else setQuery("")
-                updateState { copy(searchActive = false) }
-            }
+            SearchAction.CancelSearch -> cancelSearch()
             SearchAction.ToggleFilters -> toggleFilters()
+            SearchAction.RetryCatalogs -> loadCatalogs()
             SearchAction.CloseFilters -> updateState { copy(showFilters = false) }
             is SearchAction.ApplyFilters -> applyFilters(action.filters)
+            SearchAction.ClearFilters -> clearFilters()
+            SearchAction.ResetFilterSelections -> clearFilters(clearQuery = false)
+            SearchAction.LoadMore -> loadShops(reset = false)
+            SearchAction.RetryLoadMore -> if (currentState.loadMoreError != null) loadShops(reset = false, retry = true)
+            SearchAction.Refresh -> if (!currentState.isRefreshing && !currentState.isLoading) loadShops(reset = true)
+            else -> error("Not a search action: $action")
+        }
+    }
+
+    private suspend fun handleFilterAction(action: SearchAction) {
+        when (action) {
             is SearchAction.SetKind -> changeFilters { copy(kind = action.kind) }
             SearchAction.ToggleOpen -> changeFilters { copy(openOnly = !openOnly) }
             SearchAction.ToggleNew -> changeFilters { copy(newOnly = !newOnly) }
             SearchAction.ToggleVisited -> if (guarded(DiscoveryGate.VisitedFilter)) changeFilters { copy(visitedOnly = !visitedOnly) }
             SearchAction.ToggleFavorites -> if (guarded(DiscoveryGate.FavoritesFilter)) changeFilters { copy(favoritesOnly = !favoritesOnly) }
-            SearchAction.ToggleNearby -> toggleNearby()
-            SearchAction.LocationGranted -> location.refresh()
-            SearchAction.LocationDenied -> reportLocation(GeolocationOutcome.Unavailable)
             is SearchAction.SetPrice -> changeFilters { copy(priceLevel = action.level) }
             is SearchAction.SetMinRating -> changeFilters { copy(minRating = action.rating) }
-            is SearchAction.ToggleCatalog -> changeFilters {
-                when (action.kind) {
-                    CatalogKind.Roaster -> copy(roasterIds = roasterIds.toggle(action.id))
-                    CatalogKind.Bean -> copy(beanIds = beanIds.toggle(action.id))
-                    CatalogKind.Equipment -> copy(equipmentIds = equipmentIds.toggle(action.id))
-                    CatalogKind.BrewMethod -> copy(brewMethodIds = brewMethodIds.toggle(action.id))
-                    CatalogKind.Tag -> copy(tagIds = tagIds.toggle(action.id))
-                }
-            }
-            SearchAction.ClearFilters -> clearFilters()
-            SearchAction.LoadMore -> loadShops(reset = false)
-            SearchAction.Refresh -> if (!currentState.isRefreshing && !currentState.isLoading) loadShops(reset = true)
-            is SearchAction.ToggleFavorite -> toggleFavorite(action.shopId)
-            is SearchAction.OpenShop -> {
-                analytics.shopOpened(currentState.visibleShops.indexOfFirst { it.id == action.shopId }.takeIf { it >= 0 }?.plus(1))
-                sendEvent(SearchEvent.OpenShop(action.shopId))
-            }
+            is SearchAction.ToggleCatalog -> toggleCatalog(action)
+            else -> error("Not a filter action: $action")
         }
+    }
+
+    private fun toggleCatalog(action: SearchAction.ToggleCatalog) = changeFilters {
+        when (action.kind) {
+            CatalogKind.Roaster -> copy(roasterIds = roasterIds.toggle(action.id))
+            CatalogKind.Bean -> copy(beanIds = beanIds.toggle(action.id))
+            CatalogKind.Equipment -> copy(equipmentIds = equipmentIds.toggle(action.id))
+            CatalogKind.BrewMethod -> copy(brewMethodIds = brewMethodIds.toggle(action.id))
+            CatalogKind.Tag -> copy(tagIds = tagIds.toggle(action.id))
+        }
+    }
+
+    private fun cancelSearch() {
+        cancelNearbyRequest()
+        if (currentState.activeFilterCount > 0) clearFilters() else setQuery("")
+        updateState { copy(searchActive = false) }
+    }
+
+    private suspend fun openShop(shopId: String) {
+        analytics.shopOpened(currentState.visibleShops.indexOfFirst { it.id == shopId }.takeIf { it >= 0 }?.plus(1))
+        sendEvent(SearchEvent.OpenShop(shopId))
+    }
+
+    private fun locationGranted() {
+        location.refresh()
+        if (!currentState.nearbyRequested) return
+        locationTimeout?.cancel()
+        locationTimeout = viewModelScope.launch {
+            delay(10_000)
+            if (currentState.nearbyRequested) locationDenied()
+        }
+    }
+
+    private fun locationDenied() {
+        val requested = currentState.nearbyRequested
+        reportLocation(GeolocationOutcome.Unavailable, requested)
+        cancelNearbyRequest()
+        if (requested) updateState { copy(locationUnavailable = true) }
+    }
+
+    private fun cancelNearbyRequest() {
+        locationTimeout?.cancel()
+        updateState { copy(nearbyRequested = false, locationUnavailable = false) }
     }
 
     // ---- what comes from outside ----
@@ -128,7 +185,7 @@ internal class SearchViewModel(
         loadJob?.cancel()
         favoriteIds = null
         lastSearchResult = null
-        updateState { copy(filters = filters.copy(visitedOnly = false, favoritesOnly = false), shops = emptyList(), favoriteUpdates = emptySet()) }
+        updateState { copy(filters = filters.copy(visitedOnly = false, favoritesOnly = false), shops = emptyList(), favoriteUpdates = emptySet(), favoriteFailureId = null) }
         if (cityReady) loadShops(reset = true)
     }
 
@@ -141,34 +198,56 @@ internal class SearchViewModel(
 
     private fun onCity(cityId: String?) {
         if (!cityReady || cityId == null || cityId == currentState.filters.cityId) return
-        updateState { copy(filters = filters.copy(cityId = cityId)) }
+        val before = currentState.filters
+        cancelNearbyRequest()
+        updateState { copy(filters = filters.copy(cityId = cityId, nearbyOnly = false)) }
+        trackChange(before)
         loadShops(reset = true)
     }
 
     private fun onLocation(point: Coordinates?) {
-        if (point == null || !point.isValid || point == origin) return
+        if (point == null || !point.isValid || (point == origin && !currentState.nearbyRequested)) return
+        val enabling = currentState.nearbyRequested
+        val before = currentState.filters
         origin = point
-        reportLocation(GeolocationOutcome.Available)
-        updateState { copy(canUseNearby = true, userLocation = point) }
+        reportLocation(GeolocationOutcome.Available, enabling)
+        cancelNearbyRequest()
+        updateState { copy(canUseNearby = true, userLocation = point,
+            filters = filters.copy(nearbyOnly = enabling || filters.nearbyOnly)) }
+        if (enabling) trackChange(before)
         if (currentState.filters.nearbyOnly) {
             updateState { copy(shops = emptyList()) }
             if (cityReady) loadShops(reset = true)
         }
     }
 
-    private fun reportLocation(outcome: GeolocationOutcome) {
-        analytics.geolocation(PLACEMENT, userTriggered = false, outcome = outcome)
+    private fun reportLocation(outcome: GeolocationOutcome, userTriggered: Boolean = false) {
+        analytics.geolocation(PLACEMENT, userTriggered = userTriggered, outcome = outcome)
     }
 
     private fun loadCatalogs() {
-        viewModelScope.launch {
-            repository.catalogs().onSuccess { catalogs ->
-                val cityId = city.resolve(catalogs.cities)
-                updateState { copy(catalogs = catalogs, filters = filters.copy(cityId = cityId)) }
+        if (catalogJob?.isActive == true) return
+        updateState { copy(catalogLoadState = CatalogLoadState.Loading) }
+        catalogJob = viewModelScope.launch {
+            val initial = !cityReady
+            val beforeCity = currentState.filters.cityId
+            try {
+                applyCatalogs(repository.catalogs().getOrThrow())
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (_: Exception) {
+                updateState { copy(catalogLoadState = CatalogLoadState.Failed) }
             }
-            // A failed catalog still lets the first search start; the filter sheet asks for the catalogs again.
             cityReady = true
-            loadShops(reset = true)
+            if (initial || beforeCity != currentState.filters.cityId) loadShops(reset = true)
+        }
+    }
+
+    private suspend fun applyCatalogs(catalogs: com.coffeepeek.feature.discovery.domain.model.DiscoveryCatalogs) {
+        val cityId = currentState.filters.cityId ?: city.resolve(catalogs.cities)
+        updateState {
+            copy(catalogs = catalogs, catalogLoadState = CatalogLoadState.Ready,
+                filters = filters.copy(cityId = filters.cityId ?: cityId))
         }
     }
 
@@ -178,7 +257,7 @@ internal class SearchViewModel(
         val opening = !currentState.showFilters
         if (opening) analytics.filtersOpened()
         updateState { copy(showFilters = opening) }
-        if (opening && currentState.catalogs.cities.isEmpty() && currentState.catalogs.beans.isEmpty()) loadCatalogs()
+        if (opening && currentState.catalogLoadState == CatalogLoadState.Failed) loadCatalogs()
     }
 
     private fun applyFilters(filters: DiscoveryFilters) {
@@ -197,7 +276,13 @@ internal class SearchViewModel(
     }
 
     private fun toggleNearby() {
-        if (!currentState.canUseNearby) return
+        if (currentState.nearbyRequested) return
+        if (!currentState.canUseNearby) {
+            updateState { copy(nearbyRequested = true, locationUnavailable = false,
+                locationPermissionRequest = locationPermissionRequest + 1) }
+            return
+        }
+        cancelNearbyRequest()
         val before = currentState.filters
         val enabling = !before.nearbyOnly
         updateState { copy(filters = filters.copy(nearbyOnly = enabling), shops = emptyList()) }
@@ -206,12 +291,13 @@ internal class SearchViewModel(
         if (enabling) location.refresh()
     }
 
-    private fun clearFilters() {
+    private fun clearFilters(clearQuery: Boolean = true) {
+        cancelNearbyRequest()
         val before = currentState.filters.analyticsValues()
         val after = currentState.filters.clearSelections().analyticsValues()
         analytics.filtersChanged(after.keys.sorted(), changedFilterKeys(before, after), FilterAction.Reset)
-        queries.tryEmit("")
-        updateState { copy(query = "", filters = filters.clearSelections(), shops = if (filters.nearbyOnly) emptyList() else shops) }
+        if (clearQuery) queries.tryEmit("")
+        updateState { copy(query = if (clearQuery) "" else query, filters = filters.clearSelections(), shops = if (filters.nearbyOnly) emptyList() else shops) }
         loadShops(reset = true)
     }
 
@@ -237,16 +323,17 @@ internal class SearchViewModel(
 
     // ---- the list ----
 
-    private fun loadShops(reset: Boolean) {
+    private fun loadShops(reset: Boolean, retry: Boolean = false) {
         val snapshot = currentState
-        if (!reset && (snapshot.isLoadingMore || !snapshot.hasMore || snapshot.isLoading || snapshot.isRefreshing)) return
+        if (!reset && (!snapshot.copy(loadMoreError = if (retry) null else snapshot.loadMoreError).canLoadMore ||
+                loadedCriteria?.let(::matchesCurrentSearch) != true)) return
         loadJob?.cancel()
+        beginLoading(reset)
         val mine = generation
         loadJob = viewModelScope.launch { performSearch(reset, mine) }
     }
 
     private suspend fun performSearch(reset: Boolean, generation: Long) {
-        beginLoading(reset)
         val page = if (reset) 1 else currentState.currentPage + 1
         val criteria = currentState.criteria
         val query = criteria.searchQuery(page, PAGE_SIZE)
@@ -263,19 +350,23 @@ internal class SearchViewModel(
 
     private fun finishSearch(result: Result<Paged<ShopSummary>>, criteria: DiscoveryCriteria, reset: Boolean, run: SearchRun?) {
         result.onSuccess {
+            loadedCriteria = criteria
             if (reset) lastSearchResult = criteria to it.totalCount
             applyPage(it, reset, run)
         }.onFailure { failure ->
+            if (failure is CancellationException) throw failure
             run?.failed(failure)
-            updateState { copy(isLoading = false, isRefreshing = false, isLoadingMore = false, error = SearchError((failure as? DiscoveryFailure)?.serverMessage)) }
+            val failureMessage = SearchError((failure as? DiscoveryFailure)?.serverMessage)
+            updateState { copy(isLoading = false, isRefreshing = false, isLoadingMore = false,
+                error = failureMessage.takeIf { reset }, loadMoreError = failureMessage.takeUnless { reset }) }
         }
     }
 
     private fun beginLoading(reset: Boolean) = updateState {
         when {
-            reset && shops.isEmpty() -> copy(isLoading = true, isRefreshing = false, isLoadingMore = false, error = null)
-            reset -> copy(isRefreshing = true, isLoading = false, isLoadingMore = false, error = null)
-            else -> copy(isLoadingMore = true, error = null)
+            reset && shops.isEmpty() -> copy(isLoading = true, isRefreshing = false, isLoadingMore = false, error = null, loadMoreError = null)
+            reset -> copy(isRefreshing = true, isLoading = false, isLoadingMore = false, error = null, loadMoreError = null)
+            else -> copy(isLoadingMore = true, error = null, loadMoreError = null)
         }
     }
 
@@ -309,7 +400,7 @@ internal class SearchViewModel(
             val loaded = if (reset) result.items else shops + result.items
             copy(shops = favoriteIds?.let { withFavoriteMembership(loaded, it) } ?: loaded,
                 currentPage = result.currentPage, totalPages = result.totalPages, hasMore = result.hasMore,
-                isLoading = false, isRefreshing = false, isLoadingMore = false, error = null)
+                isLoading = false, isRefreshing = false, isLoadingMore = false, error = null, loadMoreError = null)
         }
     }
 
@@ -319,7 +410,7 @@ internal class SearchViewModel(
         if (currentState.isGuest) { sendEvent(SearchEvent.SignInRequired); return }
         val shop = currentState.shops.firstOrNull { it.id == shopId } ?: return
         val started = favoriteGuard.withLock {
-            if (shopId in currentState.favoriteUpdates) false else { updateState { copy(favoriteUpdates = favoriteUpdates + shopId) }; true }
+            if (shopId in currentState.favoriteUpdates) false else { updateState { copy(favoriteUpdates = favoriteUpdates + shopId, favoriteFailureId = null) }; true }
         }
         if (!started) return
         val generation = this.generation
@@ -331,15 +422,23 @@ internal class SearchViewModel(
 
     private suspend fun writeFavorite(shop: ShopSummary, next: Boolean, previous: Boolean, generation: Long) {
         try {
-            if (favorites.setFavorite(shop, next).isFailure) restoreFavorite(shop.id, previous, generation)
+            favorites.setFavorite(shop, next).getOrThrow()
+            currentCoroutineContext().ensureActive()
         } catch (cancelled: CancellationException) {
             restoreFavorite(shop.id, previous, generation)
             throw cancelled
         } catch (error: Exception) {
-            restoreFavorite(shop.id, previous, generation)
+            favoriteFailed(shop.id, previous, generation)
         } finally {
             favoriteGuard.withLock { if (generation == this.generation) updateState { copy(favoriteUpdates = favoriteUpdates - shop.id) } }
         }
+    }
+
+    private fun favoriteFailed(shopId: String, previous: Boolean, generation: Long) {
+        if (generation != this.generation) return
+        restoreFavorite(shopId, previous, generation)
+        val failureId = ++favoriteFailureSequence
+        updateState { copy(favoriteFailureId = failureId) }
     }
 
     /** Back to what it was, unless the favorites of the account already say otherwise: they win. */

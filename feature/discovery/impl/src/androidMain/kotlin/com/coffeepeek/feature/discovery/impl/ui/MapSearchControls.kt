@@ -47,7 +47,7 @@ internal fun MapSearchControls(
             if (onOpenFilters != null) DiscoveryFilterButton(state.filters.activeCount, { dismissInput(); onOpenFilters() })
         }
         if (onOpenFilters != null) {
-            DiscoveryQuickFilters(state.filters, state.userLocation != null, onSearchAction)
+            DiscoveryQuickFilters(state.filters, onSearchAction)
         }
         if (state.isTruncated) Box(Modifier.padding(horizontal = CoffeePeekDimens.spacing4)) { MapTruncationNotice() }
         if (state.showSuggestions) Box(Modifier.padding(horizontal = CoffeePeekDimens.spacing4)) {

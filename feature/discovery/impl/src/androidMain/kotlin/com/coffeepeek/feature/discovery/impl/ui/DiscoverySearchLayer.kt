@@ -20,6 +20,7 @@ internal fun DiscoverySearchLayer(
     state: SearchState, ui: DiscoveryTabState, motion: DiscoveryTabMotion, host: DiscoveryHost,
     roasters: DiscoveryRoasterSlots, context: DiscoveryRoasterContext, bottomClearance: Dp,
     onAddShop: () -> Unit, onAction: (SearchAction) -> Unit,
+    checkInAction: @Composable () -> Unit,
 ) {
     host.retained(motion.searchOpacity.value > 0f) {
         Box(Modifier.fillMaxSize().graphicsLayer {
@@ -33,10 +34,12 @@ internal fun DiscoverySearchLayer(
                         showAllRoasters = { ui.showRoasters = true }, onAction = onAction,
                         onMapSlot = { slot, ready ->
                             ui.recordMapSlot(slot, ready, motion.discoveryProgress.value, motion.expansion.value)
-                        })
+                        }, checkInAction = checkInAction)
                 },
                 textResults = { roasters.preview(context) }, onAction = onAction,
                 hasRoasterResults = if (state.query.isNotBlank()) roasters.hasResults(context) else null,
+                onAddRoaster = roasters.onAdd,
+                resultsState = ui.results,
                 headerModifier = Modifier
                     .then(if (ui.mapExpanded) Modifier.clearAndSetSemantics {} else Modifier)
                     .graphicsLayer {
