@@ -22,8 +22,9 @@ internal class NativeTabBarVisibility(
         val tabs = tabs ?: return
         val navigation = tabs.selectedViewController as? UINavigationController ?: return
         val top = navigation.topViewController
-        val expandedMapVisible = mapExpanded && navigation === discoveryNavigation &&
-            top === navigation.viewControllers.firstOrNull()
+        // UIKit getters may return different Kotlin wrappers for the same native controller.
+        val expandedMapVisible = mapExpanded && navigation == discoveryNavigation &&
+            top == navigation.viewControllers.firstOrNull()
         val hidden = expandedMapVisible || top?.hidesBottomBarWhenPushed == true
         tabs.setTabBarHidden(hidden, animated = false)
         navigation.viewControllers.forEach { (it as? NativeScreenController)?.syncBottomClearance(hidden) }

@@ -49,5 +49,10 @@ available; previews and Android checks do not certify UIKit behaviour.
 - The tab-visibility callback releases its UIKit controller references when the
   root host is disposed, preventing a new controller/content reference cycle.
   Late callbacks from disposed content are covered by a non-UI contract.
+- macOS run `41215749066` built the full iOS app and executed 52 native contracts:
+  49 passed, three map-visibility assertions failed; all three color contracts
+  passed. The visibility condition used Kotlin wrapper identity for UIKit
+  controllers. Replaced `===` with native object equality (`==`); the failing
+  tests are retained unchanged for the next run.
 - No device run: the changes are iOS-only; Android assembly does not establish
   UIKit rendering/touch acceptance. The iPhone matrix above remains open.
