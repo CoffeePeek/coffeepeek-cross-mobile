@@ -16,7 +16,7 @@ import kotlin.math.sqrt
  * 47 shops in two cities with every filter, paging, nearby search by distance, map content by bounds and two zones; `Truncated` is `Paged` with a map that cuts the
  * shops and says so; `Empty` has no shops; `SearchFailure` and `MapFailure` answer 500 for the search or for the map.
  */
-internal enum class SandboxDiscovery { Seeded, Paged, Truncated, Empty, SearchFailure, PageFailure, RefreshFailure, MapFailure }
+internal enum class SandboxDiscovery { Seeded, Paged, Truncated, Empty, SearchFailure, PageFailure, RefreshFailure, MapFailure, CatalogFailure, CatalogEmpty }
 
 private data class Spot(
     val slug: String, val name: String, val city: String, val type: String, val price: String, val rating: Double,
@@ -60,7 +60,9 @@ internal class SandboxDiscoveryBackend(
     private val refreshAttempts = mutableMapOf<JsonObject, Int>()
     @Volatile var mode = SandboxDiscovery.Seeded
         set(value) {
-            if (field != value) refreshAttempts.clear()
+            if (field != value) {
+                refreshAttempts.clear()
+            }
             field = value
         }
     private var pageFailureSent = false
@@ -99,6 +101,7 @@ internal class SandboxDiscoveryBackend(
     }
 
     fun handle(path: String, method: HttpMethod, request: HttpRequestData, input: JsonObject): Pair<HttpStatusCode, JsonObject>? {
+        catalogResponse(path, method)?.let { return it }
         return when {
             path == "/api/v1/coffee-shops/search" && method == HttpMethod.Post ->
                 searchResponse(input)
@@ -108,6 +111,18 @@ internal class SandboxDiscoveryBackend(
                 if (mode == SandboxDiscovery.MapFailure) HttpStatusCode.InternalServerError to failure(MAP_FAILURE) else map(request.url.parameters)
             else -> null
         }
+    }
+
+    private fun catalogResponse(path: String, method: HttpMethod): Pair<HttpStatusCode, JsonObject>? {
+        if (method != HttpMethod.Get) return null
+        if (mode == SandboxDiscovery.CatalogFailure && path == "/api/catalogs/beans") {
+            return HttpStatusCode.InternalServerError to failure("Catalog fixture failure")
+        }
+        if (mode == SandboxDiscovery.CatalogEmpty &&
+            (path.startsWith("/api/catalogs/") && path != "/api/catalogs/cities" || path == "/api/roasters")) {
+            return ok(JsonArray(emptyList()))
+        }
+        return null
     }
 
     /** Page one rearms the failure; the first attempt at page two fails, and an explicit retry succeeds. */
