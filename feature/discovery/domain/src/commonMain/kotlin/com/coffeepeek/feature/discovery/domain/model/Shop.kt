@@ -20,7 +20,7 @@ enum class ShopKind {
     val apiName: String get() = when (this) { Specialty -> "Specialty"; CoffeeBar -> "CoffeeBar"; Cafe -> "Cafe" }
 }
 
-/** The four price levels of the server; the filter and the card show them as 1 to 4 marks. */
+/** Legacy read model has four levels; current search groups Expensive and Luxury into its highest band. */
 enum class PriceLevel(val level: Int) {
     Cheap(1), Moderate(2), Expensive(3), Luxury(4);
 

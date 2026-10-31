@@ -1,5 +1,37 @@
 # Home audit implementation — 2026-10-31
 
+## #247 — explicit price scale mapping
+
+Base develop `856b4a85`; branch `codex/migration-home-price-scale`.
+Android Home filter owns the mapping: stop 0 = any/null, 1 = Cheap, 2 = Moderate,
+3 = Expensive or legacy Luxury. Source: LEGACY_INVENTORY.md's current POST API
+contract and existing data request tests; search accepts cheap/moderate/expensive.
+The audit's four-server-level assumption was a legacy read-model mismatch, not
+evidence of a fourth supported search band. Preserve the existing BYN hints and
+three groups; do not invent a fourth threshold or change the wire contract.
+Replace the legacy host slot with a shared discrete-slider primitive
+and feature-owned labels/mapping. Preserve gold active track, thin track/round
+thumb, palette and filter draft behavior. Other legacy form sliders are out of
+scope; retained iOS Home parity is tracked in #252.
+
+Plan: mapping and request contracts, Discovery/design-system tests, both Android
+assemblies with DEX/isolation, shared iOS KLIB; manual Sandbox all stops and
+reopening in both themes. Accessibility range/state semantics are inspected;
+TalkBack and iPhone device review are not claimed without execution.
+
+Results 2026-10-31: 202 tests across 28 suites (132 Discovery presentation,
+22 Discovery data, 48 design-system), zero failures/errors/skips. Both Android
+assemblies, DEX/isolation and shared design-system iOS Arm64 KLIB passed.
+Manual unlocked emulator-5554, API 37, 1080x2400/density420/font1.0: all three
+price stops and Any, visible inactive track/marks in light/dark, Done/reopen
+retains the selected highest band, price accessible label present in UI hierarchy.
+Range/selected-value semantics checked in source; TalkBack was not run.
+Direct Sandbox com.coffeepeek.sandbox / SandboxActivity 2596 -> 2598, same
+signature, in-place update. Source base plus patch; APK SHA-256:
+2ffcdb7696e6d3adb57f3431acb5619689f596c06babf67cd6b36b0603dfb526.
+No live writes, dependency changes, UI automation tests or IDE service. iPhone
+device review is deferred to the user; no native runtime acceptance claimed.
+
 ## #246 — empty search recovery
 
 Base: develop `48bbd5e9`; branch `codex/migration-home-empty-search`.
