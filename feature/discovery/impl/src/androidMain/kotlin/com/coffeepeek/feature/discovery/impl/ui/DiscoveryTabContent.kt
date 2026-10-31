@@ -45,6 +45,7 @@ internal fun DiscoveryTabContent(
     DiscoverySearchPresentation(ui, motion, host.isVisible(), onSearchPresentation)
     val context = DiscoveryRoasterContext(state.query, state.filters.roasterIds, state.filters.favoritesOnly)
     DiscoveryTabEffects(ui, state.showsDiscovery, analytics, callbacks, focus, onAction)
+    DiscoveryReselectionEffect(ui, state.showsDiscovery, callbacks.reselections, onAction)
     BoxWithConstraints(modifier.fillMaxSize().onGloballyPositioned { ui.rootOrigin = it.positionInRoot() }) {
         val canvasSize = DpSize(maxWidth, maxHeight)
         DiscoverySearchLayer(state, ui, motion, host, roasters, context, bottomClearance,

@@ -21,11 +21,12 @@ import com.coffeepeek.feature.discovery.domain.model.Coordinates
 import com.coffeepeek.feature.discovery.impl.createDiscoveryTabEntry
 import com.coffeepeek.feature.favorites.domain.repository.FavoritesRepository
 import io.ktor.client.HttpClient
+import kotlinx.coroutines.flow.Flow
 
 /** Android routes the discovery tab to the migrated entry; navigation, the check-in button and the sign-in stay app-owned. */
 internal class AndroidDiscoveryScreenRenderer(private val entry: DiscoveryTabEntry) : DiscoveryScreenRenderer {
     @Composable
-    override fun Tab(onMapExpandedChange: (Boolean) -> Unit) {
+    override fun Tab(onMapExpandedChange: (Boolean) -> Unit, reselections: Flow<Unit>) {
         val pendingMapFocus by Navigator.pendingMapFocus.collectAsState()
         val clearance = LocalFloatingNavClearance.current
         CheckInTabContent(showCreateButton = false) { onCreateCheckIn ->
@@ -38,6 +39,7 @@ internal class AndroidDiscoveryScreenRenderer(private val entry: DiscoveryTabEnt
                 focus = pendingMapFocus?.let { MapFocus(it.shopId, it.title, Coordinates(it.latitude, it.longitude)) },
                 onFocusConsumed = Navigator::consumeMapFocus,
                 checkInAction = { CheckInInlineAction(onCreateCheckIn) },
+                reselections = reselections,
             )
         }
     }

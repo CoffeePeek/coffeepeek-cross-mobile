@@ -27,6 +27,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -97,6 +98,7 @@ internal fun SearchContent(
     prefetch: Boolean = true,
     hasRoasterResults: Boolean? = null,
     onAddRoaster: () -> Unit = {},
+    resultsState: LazyListState = rememberLazyListState(),
 ) {
     val reduceMotion = host.reduceMotion()
     val queryFocus = remember { FocusRequester() }
@@ -120,7 +122,7 @@ internal fun SearchContent(
             label = "discovery-shop-list",
         ) { showsDiscovery ->
             if (showsDiscovery) discovery() else ResultsList(state, host, onAddShop, bottomClearance,
-                textResults, prefetch, hasRoasterResults, onAction, { queryFocus.requestFocus() }, onAddRoaster)
+                textResults, prefetch, hasRoasterResults, onAction, { queryFocus.requestFocus() }, onAddRoaster, resultsState)
         }
     }
 }
@@ -178,8 +180,8 @@ private fun ResultsList(
     onAction: (SearchAction) -> Unit,
     onEditQuery: () -> Unit,
     onAddRoaster: () -> Unit,
+    listState: LazyListState,
 ) {
-    val listState = rememberLazyListState()
     val shops = state.visibleShops
     val showsTextResults = textResults != null && state.query.isNotBlank() && hasRoasterResults != false
     val shopsFirst = showsTextResults && state.showsShopsFirst(hasRoasterResults)

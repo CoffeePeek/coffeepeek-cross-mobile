@@ -1,5 +1,34 @@
 # Home audit implementation — 2026-10-31
 
+## #255 — Search tab reselection
+
+Base develop `6bd9cf50`; branch `codex/migration-home-search-retap`.
+Policy: retapping the selected Search root closes roaster/map/filter layers and
+input, then scrolls the active vertical list to its start. Query, city and filter
+selections survive. Ordinary switching, no collector and host recreation never
+replay an old gesture. Five tabs and nested navigation stacks remain unchanged.
+Use the existing app-owned transient event broker, exposed through the Discovery
+entry; lifecycle-aware Android and retained legacy iOS consumers keep navigation
+outside the feature. Plan: broker unit regressions, Discovery units, both APKs
+and DEX/isolation, manual Sandbox Home/results/roasters and map Back; iPhone
+native retap/runtime is deferred by the user and stays a #252 gate.
+
+Results 2026-10-31: 139 Discovery + 5 MainTabReselections unit tests passed,
+zero failures/errors/skips. Both Android APKs and DEX/isolation passed in 1m15s.
+Existing test opt-in/unused-expression warnings retained; no IDE check claimed.
+Manual emulator-5554/API37/1080x2400: scrolled Home map was out of view, retap
+restored map bounds [42,536][1038,1061]; roaster overlay closed on retap and
+returned to Home top. Search `Sandbox` survived scroll/retap, restoring the first
+roaster heading at y536. Ordinary Coffee -> Search kept the scrolled position
+and query. Expanded map hid all tabs, system Back restored them (a hidden tab
+cannot be tapped; direct expanded-map reselection is therefore not a manual gate).
+No account writes or device settings changed. Captures/dumps local and ignored.
+Verified package/Activity/signature; Sandbox 2610 -> 2612; source base plus patch.
+APK SHA-256: f57431d81bbd7df78112f8db3fce11263ac7a9973233160a4c57076c4b8a9d4c.
+Native iOS retap adapter and legacy feed consumer are wired; physical iPhone
+review remains deferred. #272 iOS/Android CI passed, including native map
+contracts. Original #271 one-contract failure remains recorded; retry requested.
+
 ## #251 — city context and discoverable Nearby
 
 Base develop `4fe0460a`; branch `codex/migration-home-city-nearby`.
