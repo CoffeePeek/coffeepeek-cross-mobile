@@ -5,6 +5,52 @@ The audit's 20 findings are individual issues, #237–#256. Each fix gets a focu
 migration branch and PR into `develop`; the user's request authorizes those merges.
 Keep the existing brand palette and the HIG/Liquid Glass direction.
 
+## #242 — readable accent and status foregrounds
+
+Base: `d85d045da63f2d5a38d26727aa2a1c41958330f4` (`develop`).
+Branch: `codex/migration-home-accent-contrast`.
+
+Keep gold fills, selection, photo rating accents and Manrope. Separate surface
+text/thin-icon foregrounds from brand fills in the shared design system. Apply
+them to default text actions, grouped action/checkmark rows, shop location and
+status badges; remove overriding gold from both Home filter-sheet headers.
+Existing explicit destructive/custom button colors remain caller-owned. Legacy
+accent text aliases the shared role so snackbar/detail consumers stay consistent.
+No data, analytics, dependencies or navigation change.
+
+Verification plan: contrast regressions against actual light/dark surfaces and
+composited status fills (normal text >=4.5:1, WCAG 2.2 contrast-minimum); existing
+design-system/Discovery tests, Direct Sandbox/Debug assembly and DEX/isolation,
+shared iOS KLIB compilation. Manual Home/filter sheet and selection in both
+themes on the existing API 37 Sandbox. Existing paired component previews cover
+enabled/disabled actions, selected rows and open/closed cards. Native iOS visuals,
+large fonts, narrow windows and TalkBack remain separate gates.
+
+Results on 2026-10-31: 164 unit tests (48 design-system, 116 Discovery;
+24 suites), zero failures/errors/skips. Both assemblies, packaged DEX checks,
+Sandbox isolation and design-system iOS Arm64 KLIB passed. Follow-up builds
+verified preview background and the active floating-tab icon using the same role.
+No IDE service; existing preview deprecation warnings remain. Full native iOS
+compilation/visual review requires macOS; local application iOS tasks are skipped.
+
+Contrast ratios (unrounded values used by tests): accent light on white 5.43:1,
+on background 5.20:1; accent dark on dark card 9.91:1. Open/closed labels are
+checked against their 14% fills composited over each card, all >=4.5:1. Brand
+fill #EAB308 and photo badges stay unchanged. Shared callers include pagination,
+expandable descriptions, catalog suggestions and grouped selection/action rows;
+explicit custom/destructive colors are preserved. The legacy accent alias also
+serves snackbar/detail text. Guidance: https://www.w3.org/WAI/WCAG22/Understanding/contrast-minimum.html.
+
+Manual review: unlocked emulator-5554 / sdk_gphone64_x86_64, API 37, 1080x2400,
+density 420, font scale 1.0. Direct Sandbox 2582 updated in place to 2584, same
+verified signature, package com.coffeepeek.sandbox / SandboxActivity. Final APK
+SHA-256: 4fd6aa258c7518583eee231c4c7e0c8735c3550c7b68291bff369b3d8cd05cab.
+Source: base above plus this patch. Light/dark Home and filter headers, enabled/
+disabled Reset, selected row/checkmark and Cancel passed. Gold filled add/filter
+controls and photo accents remain. Initial launch dump had no root while starting;
+review began after settled state. Local screenshots/dumps remain ignored.
+Native iOS visuals, large fonts, narrow windows and TalkBack were not executed.
+
 ## #237 — explicit pagination retry
 
 Base: `33ffd3ee59f924c6a586d8ba4efda860a94e46b9` (`develop`).

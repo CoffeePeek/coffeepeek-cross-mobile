@@ -158,7 +158,7 @@ private fun SheetNavBar(
             enabled = resetEnabled,
             modifier = Modifier.align(Alignment.CenterStart),
         ) {
-            Text("Сбросить", fontSize = 17.sp, color = if (resetEnabled) CpColor.Primary else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f))
+            Text("Сбросить", fontSize = 17.sp)
         }
         Text(
             text = "Фильтры",
@@ -171,7 +171,7 @@ private fun SheetNavBar(
             onClick = onDone,
             modifier = Modifier.align(Alignment.CenterEnd),
         ) {
-            Text("Готово", fontSize = 17.sp, fontWeight = FontWeight.SemiBold, color = CpColor.Primary)
+            Text("Готово", fontSize = 17.sp, fontWeight = FontWeight.SemiBold)
         }
     }
 }

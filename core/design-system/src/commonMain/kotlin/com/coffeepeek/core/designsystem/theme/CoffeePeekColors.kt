@@ -8,7 +8,8 @@ object CoffeePeekColors {
     val Primary        = Color(0xFFEAB308)
     val PrimaryHover   = Color(0xFFFACC15)
     val PrimaryTint10  = Color(0x1AEAB308)
-    val AccentTextLight = Primary
+    // Foreground on light surfaces; Primary remains the brand fill/selection color.
+    val AccentTextLight = Color(0xFF8A6300)
     val AccentTextDark  = Color(0xFFFACC15)
     val SwitchCheckedThumbLight = Color(0xFF684900)
     val SwitchCheckedTrackDark = Color(0xFF9A7A28)
@@ -23,6 +24,9 @@ object CoffeePeekColors {
     val Error          = Color(0xFFEF4444)
     val Warning        = Color(0xFFEAB308)
     val Info           = Color(0xFF3B82F6)
+    val SuccessTextLight = Color(0xFF166534)
+    val ErrorTextLight = Color(0xFFB91C1C)
+    val ErrorTextDark = Color(0xFFFCA5A5)
     // Positive affinity has its own semantic role, using brand gold rather than error red.
     val Like           = GoldWarmHover
     val LikePhotoOverlay = Color.Black.copy(alpha = 0.80f)
