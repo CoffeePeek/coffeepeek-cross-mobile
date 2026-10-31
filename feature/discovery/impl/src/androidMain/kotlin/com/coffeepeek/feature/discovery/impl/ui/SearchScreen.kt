@@ -49,6 +49,8 @@ import com.coffeepeek.feature.discovery.domain.model.ShopSummary
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -56,7 +58,6 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.coffeepeek.core.designsystem.component.CoffeePeekCatalogSuggestionCard
 import com.coffeepeek.core.designsystem.component.CoffeePeekFilterChip
 import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
 import com.coffeepeek.core.designsystem.component.CoffeePeekPaginationStatus
@@ -74,6 +75,9 @@ import com.coffeepeek.feature.discovery.impl.search.SearchAction
 import com.coffeepeek.feature.discovery.impl.search.SearchEvent
 import com.coffeepeek.feature.discovery.impl.search.SearchState
 import com.coffeepeek.feature.discovery.impl.search.SearchViewModel
+import com.coffeepeek.feature.discovery.impl.search.emptyReason
+import com.coffeepeek.feature.discovery.impl.search.canSuggestShop
+import com.coffeepeek.feature.discovery.impl.search.hasNoSearchMatches
 
 @Composable
 internal fun SearchContent(
@@ -92,12 +96,14 @@ internal fun SearchContent(
     /** No photo prefetch while the map covers the lists. */
     prefetch: Boolean = true,
     hasRoasterResults: Boolean? = null,
+    onAddRoaster: () -> Unit = {},
 ) {
     val reduceMotion = host.reduceMotion()
+    val queryFocus = remember { FocusRequester() }
     Column(modifier.fillMaxSize()) {
         Column(headerModifier) {
             Column(Modifier.padding(top = CoffeePeekDimens.spacing3, bottom = CoffeePeekDimens.spacing2)) {
-                SearchHeader(state, host, onAction)
+                SearchHeader(state, host, onAction, queryFocus)
                 Spacer(Modifier.height(CoffeePeekDimens.spacing2))
                 DiscoveryQuickFilters(state.filters, state.canUseNearby, onAction)
             }
@@ -113,13 +119,14 @@ internal fun SearchContent(
             },
             label = "discovery-shop-list",
         ) { showsDiscovery ->
-            if (showsDiscovery) discovery() else ResultsList(state, host, onAddShop, bottomClearance, textResults, prefetch, hasRoasterResults, onAction)
+            if (showsDiscovery) discovery() else ResultsList(state, host, onAddShop, bottomClearance,
+                textResults, prefetch, hasRoasterResults, onAction, { queryFocus.requestFocus() }, onAddRoaster)
         }
     }
 }
 
 @Composable
-private fun SearchHeader(state: SearchState, host: DiscoveryHost, onAction: (SearchAction) -> Unit) {
+private fun SearchHeader(state: SearchState, host: DiscoveryHost, onAction: (SearchAction) -> Unit, queryFocus: FocusRequester) {
     val focus = LocalFocusManager.current
     // The back button shows whenever the results list replaces the home tab, also when only a filter is on.
     val searching = !state.showsDiscovery
@@ -148,7 +155,8 @@ private fun SearchHeader(state: SearchState, host: DiscoveryHost, onAction: (Sea
             onValueChange = { onAction(SearchAction.Query(it)) },
             placeholder = stringResource(R.string.discovery_search_placeholder),
             clearDescription = stringResource(R.string.discovery_search_clear),
-            modifier = host.exposure(Modifier.weight(1f).onFocusChanged { if (it.isFocused) onAction(SearchAction.ActivateSearch) }, DiscoveryExposure.Search),
+            modifier = host.exposure(Modifier.weight(1f).focusRequester(queryFocus)
+                .onFocusChanged { if (it.isFocused) onAction(SearchAction.ActivateSearch) }, DiscoveryExposure.Search),
             onSearch = { focus.clearFocus() },
         )
         Spacer(Modifier.width(CoffeePeekDimens.spacing2))
@@ -168,17 +176,19 @@ private fun ResultsList(
     prefetch: Boolean,
     hasRoasterResults: Boolean?,
     onAction: (SearchAction) -> Unit,
+    onEditQuery: () -> Unit,
+    onAddRoaster: () -> Unit,
 ) {
     val listState = rememberLazyListState()
     val shops = state.visibleShops
-    val showsTextResults = textResults != null && state.query.isNotBlank()
+    val showsTextResults = textResults != null && state.query.isNotBlank() && hasRoasterResults != false
     val shopsFirst = showsTextResults && state.showsShopsFirst(hasRoasterResults)
     // Section changes must bring the first result into view instead of retaining the old item anchor.
     LaunchedEffect(showsTextResults, shopsFirst) { listState.scrollToItem(0) }
     if (prefetch) host.photoPrefetch(listState, shops.map { it.id to listOfNotNull(it.photoUrl) })
     val nearEnd by remember { derivedStateOf { listState.layoutInfo.let { info -> (info.visibleItemsInfo.lastOrNull()?.index ?: 0) >= info.totalItemsCount - 5 } } }
     LaunchedEffect(nearEnd, state.canLoadMore, shops.size) {
-        if (nearEnd && state.canLoadMore && shops.isNotEmpty()) onAction(SearchAction.LoadMore)
+        if (nearEnd && state.canLoadMore && state.shops.isNotEmpty()) onAction(SearchAction.LoadMore)
     }
     CoffeePeekPullToRefresh(
         listState = listState,
@@ -197,7 +207,9 @@ private fun ResultsList(
             if (showsTextResults) item(key = "shops-heading") {
                 Text(stringResource(R.string.discovery_section_shops), style = MaterialTheme.typography.titleLarge)
             }
-            shopResults(state, host, onAddShop, onAction)
+            shopResults(state, host, onAddShop, onAction, onEditQuery,
+                if (state.query.isNotBlank() && hasRoasterResults == false) onAddRoaster else null,
+                state.hasNoSearchMatches(hasRoasterResults))
             if (shopsFirst) roasterResults(textResults)
         }
     }
@@ -213,6 +225,7 @@ private fun LazyListScope.roasterResults(content: (@Composable () -> Unit)?) {
 
 private fun LazyListScope.shopResults(
     state: SearchState, host: DiscoveryHost, onAddShop: () -> Unit, onAction: (SearchAction) -> Unit,
+    onEditQuery: () -> Unit, onAddRoaster: (() -> Unit)?, allResultsEmpty: Boolean,
 ) {
     val shops = state.visibleShops
     when {
@@ -224,7 +237,10 @@ private fun LazyListScope.shopResults(
         state.error != null && shops.isEmpty() -> item(key = "error") {
             host.loadError({ onAction(SearchAction.Refresh) }, Modifier.fillParentMaxSize())
         }
-        shops.isEmpty() -> item(key = "suggestion") { SuggestionCard(host, onAddShop) }
+        state.emptyReason != null -> item(key = "empty") {
+            SearchEmptyContent(requireNotNull(state.emptyReason), allResultsEmpty, state.query.isNotBlank(),
+                onEditQuery, { onAction(SearchAction.ResetFilterSelections) }, onAddShop, onAddRoaster)
+        }
         else -> shopRows(state, host, onAddShop, onAction)
     }
 }
@@ -247,18 +263,7 @@ private fun LazyListScope.shopRows(
             fallbackMessage = stringResource(R.string.discovery_pagination_error),
             retryLabel = stringResource(R.string.discovery_retry))
     }
-    if (!state.isLoading && state.error == null && state.loadMoreError == null) item(key = "suggestion") { SuggestionCard(host, onAddShop) }
-}
-
-@Composable
-private fun SuggestionCard(host: DiscoveryHost, onAddShop: () -> Unit) {
-    CoffeePeekCatalogSuggestionCard(
-        title = stringResource(R.string.discovery_suggestion_title),
-        description = stringResource(R.string.discovery_suggestion_description),
-        actionLabel = stringResource(R.string.discovery_suggestion_action),
-        illustration = host.suggestionIllustration(),
-        onAdd = onAddShop,
-    )
+    if (state.canSuggestShop) item(key = "suggestion") { SearchContributionActions(onAddShop) }
 }
 
 

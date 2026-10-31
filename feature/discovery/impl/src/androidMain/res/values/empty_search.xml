@@ -1,0 +1,12 @@
+<resources>
+    <string name="discovery_empty_catalog_title">Кофеен пока нет</string>
+    <string name="discovery_empty_catalog_body">В выбранном городе пока нет кофеен в каталоге.</string>
+    <string name="discovery_empty_query_title">Ничего не найдено</string>
+    <string name="discovery_empty_shops_title">Кофейни не найдены</string>
+    <string name="discovery_empty_query_body">Попробуйте другое название или проверьте запрос.</string>
+    <string name="discovery_empty_filters_title">Нет кофеен с такими фильтрами</string>
+    <string name="discovery_empty_filters_body">Снимите фильтры или измените запрос, чтобы расширить поиск.</string>
+    <string name="discovery_edit_query">Изменить запрос</string>
+    <string name="discovery_reset_filters">Сбросить фильтры</string>
+    <string name="discovery_add_roaster">Добавить обжарщика</string>
+</resources>

@@ -1,5 +1,33 @@
 # Home audit implementation — 2026-10-31
 
+## #246 — empty search recovery
+
+Base: develop `48bbd5e9`; branch `codex/migration-home-empty-search`.
+Android Discovery owns empty catalog/query/filter presentation and recovery.
+Known-empty roaster results no longer inject a second large contribution card;
+unknown/loading/failed roaster states retain their own rendering. Text editing
+focuses the existing field; filter reset preserves query/city and reset analytics.
+Contribution actions are compact and wait for completed shop pagination.
+Keep existing navigation, brand colors and the separate roaster destination.
+
+Plan: unit state/recovery regressions and Discovery suite, Sandbox/Debug assembly
+with DEX/isolation, manual Sandbox empty query, focus/edit, filter reset, populated
+results and pagination in both themes. Existing legacy iOS parity is tracked by
+#252. No new dependencies, automated UI tests or live writes.
+
+Results 2026-10-31: 130 Discovery tests in 12 suites, zero failures/errors/skips.
+Direct Sandbox/Debug assembled with DEX and isolation checks. Manual Sandbox
+on unlocked emulator-5554, API 37, 1080x2400/density 420/font 1.0: no-match query
+in light/dark, edit action opens the keyboard, filter-specific empty copy and
+reset retaining text, then matching shops after editing. Contribution actions
+stay secondary. Pagination prompt gating and unknown/failed roaster handling
+are covered by unit predicates; no exhaustive device pagination run is claimed.
+Package com.coffeepeek.sandbox / SandboxActivity updated 2594 -> 2596 in place,
+same signature. Source: base above plus patch; APK SHA-256:
+b87e7dd6479f59e105a0db7adc36f86d349ff79240424dc92d78ea9a4fd760d4.
+No IDE service; existing preview deprecations remain. Native iOS device checks
+are explicitly deferred to the user (2026-10-31), not counted as passed.
+
 ## #241 — catalog recovery
 
 Base: develop `cdc20c94`. Branch: `codex/migration-home-catalog-recovery`.

@@ -60,6 +60,8 @@ class DiscoveryRoasterSlots(
     val search: @Composable (context: DiscoveryRoasterContext, onQueryChange: (String) -> Unit, onCancel: () -> Unit) -> Unit,
     /** Null while loading or unavailable; lets matching shops precede an empty roaster section. */
     val hasResults: @Composable (DiscoveryRoasterContext) -> Boolean? = { null },
+    /** Secondary contribution action after an empty text search; navigation remains app-owned. */
+    val onAdd: () -> Unit = {},
 )
 
 /**

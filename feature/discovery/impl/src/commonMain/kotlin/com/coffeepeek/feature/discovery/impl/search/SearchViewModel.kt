@@ -110,6 +110,7 @@ internal class SearchViewModel(
                 }
             }
             SearchAction.ClearFilters -> clearFilters()
+            SearchAction.ResetFilterSelections -> clearFilters(clearQuery = false)
             SearchAction.LoadMore -> loadShops(reset = false)
             SearchAction.RetryLoadMore -> if (currentState.loadMoreError != null) loadShops(reset = false, retry = true)
             SearchAction.Refresh -> if (!currentState.isRefreshing && !currentState.isLoading) loadShops(reset = true)
@@ -226,12 +227,12 @@ internal class SearchViewModel(
         if (enabling) location.refresh()
     }
 
-    private fun clearFilters() {
+    private fun clearFilters(clearQuery: Boolean = true) {
         val before = currentState.filters.analyticsValues()
         val after = currentState.filters.clearSelections().analyticsValues()
         analytics.filtersChanged(after.keys.sorted(), changedFilterKeys(before, after), FilterAction.Reset)
-        queries.tryEmit("")
-        updateState { copy(query = "", filters = filters.clearSelections(), shops = if (filters.nearbyOnly) emptyList() else shops) }
+        if (clearQuery) queries.tryEmit("")
+        updateState { copy(query = if (clearQuery) "" else query, filters = filters.clearSelections(), shops = if (filters.nearbyOnly) emptyList() else shops) }
         loadShops(reset = true)
     }
 

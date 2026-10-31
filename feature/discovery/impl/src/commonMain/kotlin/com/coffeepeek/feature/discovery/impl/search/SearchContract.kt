@@ -85,6 +85,8 @@ internal sealed interface SearchAction {
     data class SetMinRating(val rating: Double?) : SearchAction
     data class ToggleCatalog(val kind: CatalogKind, val id: String) : SearchAction
     data object ClearFilters : SearchAction
+    /** Empty-result recovery keeps the text query and selected city. */
+    data object ResetFilterSelections : SearchAction
 
     data object LoadMore : SearchAction
     data object RetryLoadMore : SearchAction
