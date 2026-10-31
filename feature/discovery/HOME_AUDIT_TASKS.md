@@ -103,3 +103,46 @@ input and was dismissed before testing IME Back; it was not an app failure.
 Screenshots, UI dumps and build logs remain local in ignored build output.
 No automated UI tests were created or run. Large fonts, narrow windows, TalkBack
 and predictive-back gesture animation remain separate device-review gates.
+
+## #243 — readable modal sheet fallback
+
+Base: `e2a983e7407040ac2c358b32028d48f7cd349ee3` (`develop`).
+Branch: `codex/migration-home-sheet-readability`.
+
+The shared fallback sheet used a translucent surface in a separate modal window
+without backdrop blur, allowing sharp Home text and cards to show through.
+Restore its opaque theme surface until cross-window blur can be verified. Keep
+the existing palette, shape, gestures, insets, content and iOS native sheet path.
+The existing colocated light/dark sheet previews exercise this surface.
+
+Verification plan: execute existing design-system and filter/detent unit tests;
+assemble Direct Sandbox/Debug with DEX/isolation checks and compile iOS KLIB.
+Manually inspect light/dark filter sheets in Direct Sandbox, check Back and
+drag-to-dismiss, discard an edited filter draft, apply a draft, and verify keyboard
+and accessibility semantics. No automated UI/screenshot tests or color-value tests.
+
+Results on 2026-10-31: 45 design-system and 10 application filter/detent tests
+executed (15 suites total), zero failures, errors or skips. Android Direct
+Sandbox/Debug assembly, packaged DEX and Sandbox isolation passed; design-system
+iOS Arm64 compilation executed successfully. Existing preview deprecation
+warnings remain. Native iOS presentation still takes the original native path.
+
+Manual run: the same unlocked API 37 emulator (`emulator-5554`,
+`sdk_gphone64_x86_64`, 1080×2400, density 420, font scale 1.0). Matching-signed
+Direct Sandbox updated 2576 in place to `1.1.4.2578-sandbox` / 2578,
+`com.coffeepeek.sandbox` / `SandboxActivity`. Source: base above plus this patch.
+APK SHA-256: `eded8c4939f018010f5a27b8ef42951018edba829b1397fe88927668aa3b805b`.
+
+The original light-theme screenshot showed sharp Home labels/card silhouettes
+through the sheet. Light/dark screenshots after the fix show an opaque readable
+surface. Editing Arabica then Back discarded the draft; reopening showed no
+selection. Applying it with Done retained the checked selection on reopening.
+Back and handle drag dismissed the sheet; opening from a search with visible
+IME kept the sheet usable and Back returned to the preserved query. UI semantics
+retain the close description and checkable/checked filter states. Original light
+theme and empty search/filters were restored. No live backend writes occurred.
+
+Screenshots/UI dumps/logs stay in ignored build output. TalkBack traversal,
+large fonts, narrow windows and native iOS visual review remain unexecuted gates;
+semantics inspection does not certify those. Cross-window optical blur is still
+unimplemented: this task intentionally supplies the readable fallback from #243.
