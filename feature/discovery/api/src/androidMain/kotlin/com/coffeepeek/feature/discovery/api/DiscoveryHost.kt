@@ -78,5 +78,7 @@ interface DiscoveryTabEntry {
         /** A shop to bring into view on the expanded map; [onFocusConsumed] tells the caller it was taken. */
         focus: MapFocus? = null,
         onFocusConsumed: () -> Unit = {},
+        /** App-owned check-in action, placed in the landing list only; never over search, map or roasters. */
+        checkInAction: @Composable () -> Unit = {},
     )
 }

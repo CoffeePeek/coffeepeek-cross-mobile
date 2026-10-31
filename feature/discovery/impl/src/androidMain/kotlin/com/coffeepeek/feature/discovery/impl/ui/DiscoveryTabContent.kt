@@ -47,14 +47,14 @@ internal fun DiscoveryTabContent(
     DiscoveryTabEffects(ui, state.showsDiscovery, analytics, callbacks, focus, onAction)
     BoxWithConstraints(modifier.fillMaxSize().onGloballyPositioned { ui.rootOrigin = it.positionInRoot() }) {
         val canvasSize = DpSize(maxWidth, maxHeight)
-        DiscoverySearchLayer(state, ui, motion, host, roasters, context, bottomClearance, callbacks.onAddShop, onAction)
+        DiscoverySearchLayer(state, ui, motion, host, roasters, context, bottomClearance,
+            callbacks.onAddShop, onAction, callbacks.checkInAction)
         DiscoveryRoasterOverlay(ui, roasters, context, reduceMotion, onAction)
         if (state.showFilters) FilterSheet(state, host, onAction)
         if (ui.mapAnchor.width > 0f || ui.mapExpanded) DiscoveryMapLayer(ui, motion, host, canvasSize, toggleMap, map)
         if (host.isVisible() && !state.showFilters && !ui.showRoasters && !ui.mapExpanded) {
-            // Keep feedback above the app's 56dp add control plus its spacing, as well as navigation.
             FavoriteFailureFeedback(state.favoriteFailureId, { onAction(SearchAction.DismissFavoriteFailure(it)) },
-                Modifier.align(Alignment.BottomCenter).padding(bottom = bottomClearance + 80.dp))
+                Modifier.align(Alignment.BottomCenter).padding(bottom = bottomClearance + 12.dp))
         }
     }
 }

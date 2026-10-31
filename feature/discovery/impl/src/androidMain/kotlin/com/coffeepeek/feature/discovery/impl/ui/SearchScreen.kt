@@ -200,7 +200,7 @@ private fun ResultsList(
         LazyColumn(
             state = listState,
             modifier = scrollModifier.fillMaxSize(),
-            contentPadding = PaddingValues(start = CoffeePeekDimens.spacing4, top = CoffeePeekDimens.spacing4, end = CoffeePeekDimens.spacing4, bottom = bottomClearance + 88.dp),
+            contentPadding = PaddingValues(start = CoffeePeekDimens.spacing4, top = CoffeePeekDimens.spacing4, end = CoffeePeekDimens.spacing4, bottom = bottomClearance + CoffeePeekDimens.spacing4),
             verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3),
         ) {
             if (showsTextResults && !shopsFirst) roasterResults(textResults)

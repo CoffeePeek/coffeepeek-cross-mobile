@@ -45,11 +45,14 @@ fun createDiscoveryTabEntry(
         bottomClearance: Dp,
         focus: MapFocus?,
         onFocusConsumed: () -> Unit,
+        checkInAction: @Composable () -> Unit,
     ) {
         DiscoveryTab(
             viewModel(key = "discovery-search") { SearchViewModel(repository, favorites, city, location, account, analytics) },
             viewModel(key = "discovery-map") { MapViewModel(repository, city, location, shopDetails, analytics, account, favorites) },
-            host, roasters, analytics, TabCallbacks(onOpenShop, onSignIn, onAddShop, onMapExpandedChange, onFocusConsumed), bottomClearance, focus, modifier,
+            host, roasters, analytics,
+            TabCallbacks(onOpenShop, onSignIn, onAddShop, onMapExpandedChange, onFocusConsumed, checkInAction),
+            bottomClearance, focus, modifier,
         )
     }
 }

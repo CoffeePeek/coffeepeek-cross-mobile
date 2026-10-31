@@ -3,9 +3,7 @@ package com.coffeepeek.admin.di.discovery
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import com.coffeepeek.admin.ui.screen.checkins.CheckInInlineAction
 import com.coffeepeek.admin.settings.CityPreference
 import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.ui.component.LocalFloatingNavClearance
@@ -29,17 +27,17 @@ internal class AndroidDiscoveryScreenRenderer(private val entry: DiscoveryTabEnt
     @Composable
     override fun Tab(onMapExpandedChange: (Boolean) -> Unit) {
         val pendingMapFocus by Navigator.pendingMapFocus.collectAsState()
-        var isMapExpanded by remember { mutableStateOf(false) }
         val clearance = LocalFloatingNavClearance.current
-        CheckInTabContent(showCreateButton = !isMapExpanded) {
+        CheckInTabContent(showCreateButton = false) { onCreateCheckIn ->
             entry.Content(
                 onOpenShop = { Navigator.navigate(Navigator.Screen.ShopDetail(it)) },
                 onSignIn = { Navigator.navigate(Navigator.Screen.Auth) },
                 onAddShop = { Navigator.navigate(Navigator.Screen.AddShop) },
-                onMapExpandedChange = { isMapExpanded = it; onMapExpandedChange(it) },
+                onMapExpandedChange = onMapExpandedChange,
                 bottomClearance = clearance,
                 focus = pendingMapFocus?.let { MapFocus(it.shopId, it.title, Coordinates(it.latitude, it.longitude)) },
                 onFocusConsumed = Navigator::consumeMapFocus,
+                checkInAction = { CheckInInlineAction(onCreateCheckIn) },
             )
         }
     }
