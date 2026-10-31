@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -13,6 +14,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.ColorPainter
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -49,6 +51,11 @@ internal fun DiscoveryTabContent(
         DiscoveryRoasterOverlay(ui, roasters, context, reduceMotion, onAction)
         if (state.showFilters) FilterSheet(state, host, onAction)
         if (ui.mapAnchor.width > 0f || ui.mapExpanded) DiscoveryMapLayer(ui, motion, host, canvasSize, toggleMap, map)
+        if (host.isVisible() && !state.showFilters && !ui.showRoasters && !ui.mapExpanded) {
+            // Keep feedback above the app's 56dp add control plus its spacing, as well as navigation.
+            FavoriteFailureFeedback(state.favoriteFailureId, { onAction(SearchAction.DismissFavoriteFailure(it)) },
+                Modifier.align(Alignment.BottomCenter).padding(bottom = bottomClearance + 80.dp))
+        }
     }
 }
 

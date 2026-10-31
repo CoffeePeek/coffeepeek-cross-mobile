@@ -56,6 +56,7 @@ internal class SearchViewModel(
     private var cityReady = false
     private var accountSeen = false
     private var generation = 0L
+    private var favoriteFailureSequence = 0L
     private var favoriteIds: Set<String>? = null
     private var requestedText: String? = null
     private var loadJob: Job? = null
@@ -111,6 +112,7 @@ internal class SearchViewModel(
             SearchAction.RetryLoadMore -> if (currentState.loadMoreError != null) loadShops(reset = false, retry = true)
             SearchAction.Refresh -> if (!currentState.isRefreshing && !currentState.isLoading) loadShops(reset = true)
             is SearchAction.ToggleFavorite -> toggleFavorite(action.shopId)
+            is SearchAction.DismissFavoriteFailure -> updateState { if (favoriteFailureId == action.id) copy(favoriteFailureId = null) else this }
             is SearchAction.OpenShop -> {
                 analytics.shopOpened(currentState.visibleShops.indexOfFirst { it.id == action.shopId }.takeIf { it >= 0 }?.plus(1))
                 sendEvent(SearchEvent.OpenShop(action.shopId))
@@ -130,7 +132,7 @@ internal class SearchViewModel(
         loadJob?.cancel()
         favoriteIds = null
         lastSearchResult = null
-        updateState { copy(filters = filters.copy(visitedOnly = false, favoritesOnly = false), shops = emptyList(), favoriteUpdates = emptySet()) }
+        updateState { copy(filters = filters.copy(visitedOnly = false, favoritesOnly = false), shops = emptyList(), favoriteUpdates = emptySet(), favoriteFailureId = null) }
         if (cityReady) loadShops(reset = true)
     }
 
@@ -326,7 +328,7 @@ internal class SearchViewModel(
         if (currentState.isGuest) { sendEvent(SearchEvent.SignInRequired); return }
         val shop = currentState.shops.firstOrNull { it.id == shopId } ?: return
         val started = favoriteGuard.withLock {
-            if (shopId in currentState.favoriteUpdates) false else { updateState { copy(favoriteUpdates = favoriteUpdates + shopId) }; true }
+            if (shopId in currentState.favoriteUpdates) false else { updateState { copy(favoriteUpdates = favoriteUpdates + shopId, favoriteFailureId = null) }; true }
         }
         if (!started) return
         val generation = this.generation
@@ -338,15 +340,23 @@ internal class SearchViewModel(
 
     private suspend fun writeFavorite(shop: ShopSummary, next: Boolean, previous: Boolean, generation: Long) {
         try {
-            if (favorites.setFavorite(shop, next).isFailure) restoreFavorite(shop.id, previous, generation)
+            favorites.setFavorite(shop, next).getOrThrow()
+            currentCoroutineContext().ensureActive()
         } catch (cancelled: CancellationException) {
             restoreFavorite(shop.id, previous, generation)
             throw cancelled
         } catch (error: Exception) {
-            restoreFavorite(shop.id, previous, generation)
+            favoriteFailed(shop.id, previous, generation)
         } finally {
             favoriteGuard.withLock { if (generation == this.generation) updateState { copy(favoriteUpdates = favoriteUpdates - shop.id) } }
         }
+    }
+
+    private fun favoriteFailed(shopId: String, previous: Boolean, generation: Long) {
+        if (generation != this.generation) return
+        restoreFavorite(shopId, previous, generation)
+        val failureId = ++favoriteFailureSequence
+        updateState { copy(favoriteFailureId = failureId) }
     }
 
     /** Back to what it was, unless the favorites of the account already say otherwise: they win. */

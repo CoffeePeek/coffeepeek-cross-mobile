@@ -24,6 +24,8 @@ internal data class SearchState(
     val shops: List<ShopSummary> = emptyList(),
     /** Shops whose favorite is being changed; at most one change per shop at a time. */
     val favoriteUpdates: Set<String> = emptySet(),
+    /** Pending feedback, identified so a stale dismissal cannot consume a newer failure. */
+    val favoriteFailureId: Long? = null,
     /** The first search starts after the catalogs and the city are resolved; until then the screen stays loading so no empty state flashes. */
     val isLoading: Boolean = true,
     val isRefreshing: Boolean = false,
@@ -81,6 +83,7 @@ internal sealed interface SearchAction {
     data object RetryLoadMore : SearchAction
     data object Refresh : SearchAction
     data class ToggleFavorite(val shopId: String) : SearchAction
+    data class DismissFavoriteFailure(val id: Long) : SearchAction
     data class OpenShop(val shopId: String) : SearchAction
 }
 
