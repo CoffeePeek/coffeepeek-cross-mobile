@@ -18,7 +18,7 @@ import platform.UIKit.accessibilityLabel
 import platform.UIKit.isAccessibilityElement
 
 @Composable
-internal actual fun CoffeePeekPlatformLoader(contentDescription: String, modifier: Modifier, size: Dp, color: Color) {
+internal actual fun CoffeePeekPlatformLoader(contentDescription: String, modifier: Modifier, size: Dp, color: Color, strokeWidth: Dp) {
     val colors = MaterialTheme.colorScheme
     UIKitView(
         factory = { UIActivityIndicatorView().apply { startAnimating() } },

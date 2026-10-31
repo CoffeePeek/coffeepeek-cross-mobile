@@ -3,6 +3,7 @@ package com.coffeepeek.feature.profile.impl
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.coffeepeek.core.designsystem.component.CoffeePeekMenuBackdrop
 import com.coffeepeek.feature.profile.api.ProfileAccountPort
 import com.coffeepeek.feature.profile.api.ProfileAuthorActions
 import com.coffeepeek.feature.profile.api.ProfileAuthorVisibility
@@ -44,6 +45,8 @@ private class PublicProfileEntryImpl(
         onShare: (String) -> Unit, onOpenCheckIns: () -> Unit, checkInsOnly: Boolean, modifier: Modifier,
     ) {
         val model = viewModel(key = "public-profile:$instanceKey:$slug") { PublicProfileViewModel(slug, data, checkIns, accounts, visibility) }
-        PublicProfileScreen(slug, nickname, avatarUrl, model, authorActions, slots, onBack, onOpenShop, onOpenRoaster, onLogin, onOpenUser, onShare, onOpenCheckIns, checkInsOnly = checkInsOnly)
+        CoffeePeekMenuBackdrop(modifier) {
+            PublicProfileScreen(slug, nickname, avatarUrl, model, authorActions, slots, onBack, onOpenShop, onOpenRoaster, onLogin, onOpenUser, onShare, onOpenCheckIns, checkInsOnly = checkInsOnly)
+        }
     }
 }
