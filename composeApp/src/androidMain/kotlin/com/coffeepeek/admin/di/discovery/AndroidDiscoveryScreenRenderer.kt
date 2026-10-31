@@ -61,6 +61,7 @@ internal fun androidDiscoveryScreenRenderer(
             roasters.DiscoverySearch(onCancel, context.query, onQueryChange, context.selectedRoasterIds, context.favoritesOnly)
         },
         hasResults = { context -> roasters.hasDiscoveryResults(context.query, context.selectedRoasterIds, context.favoritesOnly) },
+        onAdd = { Navigator.navigate(Navigator.Screen.AddRoaster) },
     )
     return AndroidDiscoveryScreenRenderer(
         createDiscoveryTabEntry(
