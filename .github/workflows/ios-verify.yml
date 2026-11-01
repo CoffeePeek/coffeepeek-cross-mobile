@@ -1,5 +1,5 @@
 name: iOS device Debug build
-run-name: iPhone Debug 2641 — segment and shelf
+run-name: iPhone Debug 2642 — languages and notifications
 on:
   workflow_dispatch:
 permissions:
@@ -16,7 +16,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ef6263b024ee5b93bc531efffe51793e31f1ce1d
+          ref: 4474d9a944dda32b73ea67444871cd10ff240794
           fetch-depth: 0
       - uses: actions/setup-java@v6
         with:
@@ -52,6 +52,23 @@ jobs:
           MINIMUM_OS=$(/usr/libexec/PlistBuddy -c 'Print :MinimumOSVersion' "$APP_PATH/Info.plist")
           python3 tools/ios/fix_onnx_framework.py "$APP_PATH/Frameworks/onnxruntime.framework" \
             --deployment-target "$MINIMUM_OS" --check
+          python3 - "$APP_PATH" <<'PY'
+          import plistlib, sys
+          from pathlib import Path
+          app = Path(sys.argv[1])
+          with (app / "Info.plist").open("rb") as handle: info = plistlib.load(handle)
+          assert {"ru", "be"} <= set(info["CFBundleLocalizations"])
+          for language in ("ru", "be"):
+              assert (app / (language + ".lproj") / "InfoPlist.strings").stat().st_size > 0
+          checked = 0
+          for values in (app / "compose-resources" / "composeResources").glob("*/values"):
+              if not values.parent.name.startswith(("coffeepeek.", "com.coffeepeek.")): continue
+              for resource in values.glob("*.cvr"):
+                  assert (values.parent / "values-be" / resource.name).is_file(), str(resource)
+                  checked += 1
+          assert checked >= 40, "Missing application/feature language resources"
+          print("Verified Russian and Belarusian native purpose strings and", checked, "resource pairs")
+          PY
           mkdir -p "$RUNNER_TEMP/ios-device-artifacts"
           tar -czf "$RUNNER_TEMP/ios-device-artifacts/CoffeePeek-debug-iphoneos.tar.gz" \
             -C "$RUNNER_TEMP/ios-device-debug/Build/Products/Debug-iphoneos" CoffeePeek.app
@@ -60,14 +77,29 @@ jobs:
           shasum -a 256 CoffeePeek-debug-iphoneos.tar.gz > SHA256SUMS
       - uses: actions/upload-artifact@v7
         with:
-          name: ios-device-debug-ef6263b0
+          name: ios-device-debug-4474d9a9
           path: ${{ runner.temp }}/ios-device-artifacts/
           if-no-files-found: error
           retention-days: 3
+      - name: Run native navigation and glass configuration contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./gradlew --max-workers=6 :composeApp:iosSimulatorArm64Test \
+            --tests 'com.coffeepeek.admin.ui.NativeTabBarVisibilityTest' \
+            --tests 'com.coffeepeek.admin.ui.component.GlassIconConfigurationTest' \
+            --tests 'com.coffeepeek.admin.ui.NavigationDelegateTest' \
+            --tests 'com.coffeepeek.admin.ui.TabDelegateTest' \
+            > "$RUNNER_TEMP/ios-device-native-contracts.log" 2>&1 || {
+              tail -n 150 "$RUNNER_TEMP/ios-device-native-contracts.log"
+              exit 1
+            }
       - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: ios-device-debug-log
           path: |
             ${{ runner.temp }}/ios-device-debug.log
+            ${{ runner.temp }}/ios-device-native-contracts.log
+            composeApp/build/test-results/iosSimulatorArm64Test/
           retention-days: 3
