@@ -4,7 +4,7 @@ import androidx.compose.runtime.Composable
 import com.coffeepeek.feature.notifications.api.NotificationFeature
 import com.coffeepeek.feature.notifications.api.NotificationsEntry
 import com.coffeepeek.feature.notifications.impl.ui.NotificationsButton
-import com.coffeepeek.feature.notifications.impl.ui.NotificationSettingsScreen
+import com.coffeepeek.feature.notifications.impl.ui.NotificationPreference
 
 /** The bell and sheet over [feature]; [onSignIn] opens the sign-in flow when a signed-out user taps the button in the sheet. */
 fun createNotificationsEntry(
@@ -16,5 +16,5 @@ fun createNotificationsEntry(
     override fun Bell() = NotificationsButton(feature, onSignIn, onOpen)
 
     @Composable
-    override fun Settings(onBack: () -> Unit) = NotificationSettingsScreen(feature, onSignIn, onBack)
+    override fun Preference(label: String, description: String) = NotificationPreference(feature, onSignIn, label, description)
 }

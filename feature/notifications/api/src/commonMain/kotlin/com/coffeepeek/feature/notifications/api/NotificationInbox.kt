@@ -36,4 +36,9 @@ data class NotificationInboxState(
     val permissionGranted: Boolean = false,
     val error: NotificationInboxError? = null,
     val settingsError: NotificationSettingsError? = null,
-)
+) {
+    val canChangePushPreference: Boolean
+        get() = accountId != null && settingsLoaded && deviceAvailable && !savingSettings
+    val pushPreferenceChecked: Boolean
+        get() = accountId != null && pushEnabled && permissionGranted
+}

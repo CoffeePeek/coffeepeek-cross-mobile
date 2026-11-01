@@ -6,7 +6,6 @@
     <string name="notifications_button_unread">Уведомления: %1$d непрочитанных</string>
     <string name="notifications_badge_max">99+</string>
     <string name="notifications_push_title">Получать уведомления</string>
-    <string name="notifications_back">Назад</string>
     <string name="notifications_settings_sign_in_description">Войдите, чтобы настроить уведомления</string>
     <string name="notifications_push_unavailable">Push недоступны на этом устройстве</string>
     <string name="notifications_saving">Сохраняем…</string>

@@ -24,6 +24,10 @@ import com.coffeepeek.admin.utils.OpenInBrowser
 import com.coffeepeek.admin.utils.ShareHelper
 import com.coffeepeek.admin.utils.appReviewUrl
 import com.coffeepeek.core.designsystem.component.CoffeePeekScaffold
+import com.coffeepeek.core.designsystem.component.CoffeePeekSettingsRow
+import com.coffeepeek.core.designsystem.component.CoffeePeekSwitch
+import com.coffeepeek.core.designsystem.component.CoffeePeekIconBadgePalette
+import com.coffeepeek.admin.feature.notifications.ui.NotificationsRenderer
 import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.appupdate.impl.AppUpdateController
@@ -44,9 +48,11 @@ fun SettingsScreen(vm: ProfileViewModel = koinInject()) {
     val update by updates.state.collectAsState()
     val language by koinInject<AppLanguagePreference>().selection.collectAsState()
     val ownership = koinInject<BusinessOwnershipEntry>()
+    val notifications = koinInject<NotificationsRenderer>()
     val state = LegacySettingsState(profile.isLoggedIn, theme, cities.firstOrNull { it.id == cityId }?.name,
         language ?: AppLanguage.RUSSIAN, update.checking, update.update != null, legacyUpdateMessage(update), AppConfig.versionName)
     SettingsScreenContent(state, legacySettingsActions(updates), bottomClearance = LocalFloatingNavClearance.current,
+        notificationPreference = { label, description -> notifications.Preference(label, description) },
         accountSwitch = { ownership.AccountSwitch() })
 }
 
@@ -57,7 +63,7 @@ internal data class LegacySettingsState(
 
 internal class LegacySettingsActions(
     val addShop: () -> Unit, val addRoaster: () -> Unit, val city: () -> Unit, val theme: () -> Unit,
-    val language: () -> Unit, val notifications: () -> Unit, val policy: () -> Unit, val login: () -> Unit, val register: () -> Unit,
+    val language: () -> Unit, val policy: () -> Unit, val login: () -> Unit, val register: () -> Unit,
     val support: () -> Unit, val share: () -> Unit, val checkUpdate: () -> Unit, val review: (() -> Unit)?,
 )
 
@@ -69,7 +75,6 @@ private fun legacySettingsActions(updates: AppUpdateController): LegacySettingsA
         city = { Navigator.navigate(Navigator.Screen.CitySettings) },
         theme = { Navigator.navigate(Navigator.Screen.ThemeSettings) },
         language = { Navigator.navigate(Navigator.Screen.LanguageSettings) },
-        notifications = { Navigator.navigate(Navigator.Screen.NotificationSettings) },
         policy = { Navigator.navigate(Navigator.Screen.UsagePolicy) },
         login = { Navigator.navigate(Navigator.Screen.Auth) }, register = { Navigator.navigate(Navigator.Screen.Register) },
         support = { OpenInBrowser.openInBrowser("https://coffeepeek.by/support") },
@@ -90,6 +95,7 @@ private fun legacyUpdateMessage(state: UpdateUiState): String? {
 @Composable
 internal fun SettingsScreenContent(
     state: LegacySettingsState, actions: LegacySettingsActions, bottomClearance: Dp,
+    notificationPreference: @Composable (String, String) -> Unit,
     accountSwitch: @Composable () -> Unit = {}, copy: LegacySettingsCopy = legacySettingsCopy(state),
 ) {
     CoffeePeekScaffold(containerColor = MaterialTheme.colorScheme.background, contentWindowInsets = WindowInsets(0, 0, 0, 0)) {
@@ -104,7 +110,7 @@ internal fun SettingsScreenContent(
             accountSwitch()
             LegacySettingsAdd(copy, actions)
             Spacer(Modifier.height(CpDimens.settingsSectionSpacing))
-            LegacySettingsPreferences(state, copy, actions)
+            LegacySettingsPreferences(state, copy, actions, notificationPreference)
             Spacer(Modifier.height(CpDimens.settingsSectionSpacing))
             LegacySettingsOther(copy, actions)
             Spacer(Modifier.height(CpDimens.settingsSectionSpacing))
@@ -127,7 +133,10 @@ private fun LegacySettingsAdd(copy: LegacySettingsCopy, actions: LegacySettingsA
 }
 
 @Composable
-private fun LegacySettingsPreferences(state: LegacySettingsState, copy: LegacySettingsCopy, actions: LegacySettingsActions) {
+private fun LegacySettingsPreferences(
+    state: LegacySettingsState, copy: LegacySettingsCopy, actions: LegacySettingsActions,
+    notificationPreference: @Composable (String, String) -> Unit,
+) {
     SettingsSection(title = copy.title) {
         SettingsRow(CpIcons.Location, copy.city, copy.cityDescription, iconColors = SettingsIconPalette.Aqua,
             trailing = { LegacySettingsValue(state.cityName ?: copy.chooseCity) }, onClick = actions.city)
@@ -138,8 +147,7 @@ private fun LegacySettingsPreferences(state: LegacySettingsState, copy: LegacySe
         SettingsRow(CpIcons.Globe, copy.language, copy.languageDescription, iconColors = SettingsIconPalette.Mint,
             trailing = { LegacySettingsValue(copy.languageValue) }, onClick = actions.language)
         SettingsDivider()
-        SettingsRow(CpIcons.Notifications, copy.notifications, copy.notificationsDescription,
-            iconColors = SettingsIconPalette.Gold, onClick = actions.notifications)
+        notificationPreference(copy.notifications, copy.notificationsDescription)
     }
 }
 
@@ -248,13 +256,17 @@ private val belarusianSettingsPreviewCopy = LegacySettingsCopy(
     updates = "Абнаўленне праграмы", checking = "Правяраем абнаўленні…", checkUpdates = "Праверыць абнаўленні",
     availableUpdate = "Даступная новая версія CoffeePeek", version = "Версія 1.0",
 )
-private val settingsPreviewActions = LegacySettingsActions({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {})
+private val settingsPreviewActions = LegacySettingsActions({}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {}, {})
 
 @Composable
 private fun LegacySettingsPreview(dark: Boolean, belarusian: Boolean = false) = CoffeePeekTheme(darkTheme = dark) {
     val state = LegacySettingsState(true, ThemeMode.DARK, if (belarusian) "Мінск" else "Минск",
         if (belarusian) AppLanguage.BELARUSIAN else AppLanguage.RUSSIAN, version = "1.0")
     SettingsScreenContent(state, settingsPreviewActions, 0.dp,
+        notificationPreference = { label, description ->
+            CoffeePeekSettingsRow(CpIcons.Notifications, label, description, {}, enabled = false,
+                iconColors = CoffeePeekIconBadgePalette.Gold, trailing = { CoffeePeekSwitch(false, null, enabled = false) })
+        },
         copy = if (belarusian) belarusianSettingsPreviewCopy else russianSettingsPreviewCopy)
 }
 

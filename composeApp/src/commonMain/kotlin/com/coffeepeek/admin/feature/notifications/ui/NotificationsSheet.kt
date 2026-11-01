@@ -3,7 +3,7 @@ package com.coffeepeek.admin.feature.notifications.ui
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.*
 import com.coffeepeek.core.designsystem.component.CoffeePeekIconButton as IconButton
 import com.coffeepeek.core.designsystem.component.CoffeePeekTextButton as TextButton
@@ -20,6 +20,7 @@ import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.utils.currentUtcIsoDateTime
 import com.coffeepeek.admin.utils.utcIsoToLocalDate
 import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
+import com.coffeepeek.core.designsystem.component.CoffeePeekRowSeparator
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.feature.notifications.api.*
@@ -43,7 +44,6 @@ internal fun NotificationsContent(
         // The sheet supplies a maximum; short lists must keep their content height.
         LazyColumn(
             modifier = Modifier.weight(1f, fill = false),
-            verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3),
             contentPadding = PaddingValues(bottom = CoffeePeekDimens.spacing6),
         ) {
             if (state.accountId == null) {
@@ -114,9 +114,12 @@ private fun LazyListScope.notificationHistory(state: NotificationInboxState, onR
                 style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = CoffeePeekDimens.spacing1).semantics { heading() })
         }
-        items(entries, key = NotificationItem::id) { item ->
-            NotificationRow(item, enabled = !state.markingRead && !state.loading && !state.loadingMore,
-                onClick = { onRead(item.id) })
+        itemsIndexed(entries, key = { _, item -> item.id }) { index, item ->
+            Column {
+                NotificationRow(item, enabled = !state.markingRead && !state.loading && !state.loadingMore,
+                    onClick = { onRead(item.id) })
+                if (index < entries.lastIndex) CoffeePeekRowSeparator()
+            }
         }
     }
 }
@@ -147,9 +150,9 @@ private fun NotificationsStatus(state: NotificationInboxState, onRefresh: () -> 
 @Composable
 private fun NotificationsPreview(dark: Boolean, count: Int) = CoffeePeekTheme(darkTheme = dark) {
     val state = NotificationInboxState(accountId = "preview", settingsLoaded = true, deviceAvailable = true,
-        unreadCount = count, items = List(count) { index ->
+        unreadCount = (count + 1) / 2, items = List(count) { index ->
             NotificationItem("preview-$index", NotificationKind.ShopApproved, "Кофейня добавлена",
-                "Спасибо! Новая кофейня уже появилась на карте.", "2026-10-21T08:00:00Z", false)
+                "Спасибо! Новая кофейня уже появилась на карте.", "2026-10-21T08:00:00Z", read = index % 2 == 1)
         })
     Surface(Modifier.width(360.dp).heightIn(max = 640.dp)) {
         NotificationsContent(state, {}, {}, {}, {}, {}, {})

@@ -40,6 +40,7 @@ import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
 import com.coffeepeek.core.designsystem.component.CoffeePeekSettingsDivider
 import com.coffeepeek.core.designsystem.component.CoffeePeekSettingsRow
 import com.coffeepeek.core.designsystem.component.CoffeePeekSettingsSection
+import com.coffeepeek.core.designsystem.component.CoffeePeekSwitch
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
@@ -57,7 +58,7 @@ import com.coffeepeek.feature.settings.impl.ui.model.SettingsState
 /** Where the tab can go; supplied by the caller. */
 internal class SettingsNavigation(
     val onAddShop: () -> Unit, val onAddRoaster: () -> Unit, val onCity: () -> Unit,
-    val onTheme: () -> Unit, val onLanguage: () -> Unit, val onNotifications: () -> Unit, val onUsagePolicy: () -> Unit,
+    val onTheme: () -> Unit, val onLanguage: () -> Unit, val onUsagePolicy: () -> Unit,
     val onLogin: () -> Unit, val onRegister: () -> Unit,
 )
 
@@ -103,7 +104,7 @@ internal fun SettingsContent(
             }
             slots.accountSwitch()
             if (state.showAddRows) SettingsAddSection(navigation)
-            SettingsPreferencesSection(state, navigation)
+            SettingsPreferencesSection(state, navigation, slots.notificationPreference)
             Spacer(Modifier.height(CoffeePeekDimens.settingsSectionSpacing))
             SettingsOtherSection(navigation, external)
             Spacer(Modifier.height(CoffeePeekDimens.settingsSectionSpacing))
@@ -130,7 +131,9 @@ private fun SettingsAddSection(navigation: SettingsNavigation) {
 }
 
 @Composable
-private fun SettingsPreferencesSection(state: SettingsState, navigation: SettingsNavigation) {
+private fun SettingsPreferencesSection(
+    state: SettingsState, navigation: SettingsNavigation, notificationPreference: @Composable (String, String) -> Unit,
+) {
     CoffeePeekSettingsSection(title = stringResource(R.string.settings_section_settings)) {
         CoffeePeekSettingsRow(
             CoffeePeekIcons.Location, stringResource(R.string.settings_city_row), stringResource(R.string.settings_city_row_description),
@@ -150,11 +153,7 @@ private fun SettingsPreferencesSection(state: SettingsState, navigation: Setting
             trailing = { RowValue(stringResource(state.language.labelResource())) },
         )
         CoffeePeekSettingsDivider()
-        CoffeePeekSettingsRow(
-            CoffeePeekIcons.Notifications, stringResource(R.string.settings_notifications_title),
-            stringResource(R.string.settings_notifications_description), navigation.onNotifications,
-            iconColors = CoffeePeekIconBadgePalette.Gold,
-        )
+        notificationPreference(stringResource(R.string.settings_notifications_title), stringResource(R.string.settings_notifications_description))
     }
 }
 
@@ -237,7 +236,7 @@ private fun AppLanguage.labelResource() = when (this) {
     AppLanguage.BELARUSIAN -> R.string.settings_language_belarusian
 }
 
-private val previewNavigation = SettingsNavigation({}, {}, {}, {}, {}, {}, {}, {}, {})
+private val previewNavigation = SettingsNavigation({}, {}, {}, {}, {}, {}, {}, {})
 private val previewExternal = object : SettingsExternalActions {
     override val canRateApp = false
     override fun openSupport() = Unit
@@ -265,7 +264,13 @@ private fun SettingsStoreReviewPreview() = CoffeePeekTheme {
         StoreReviewRow(object : SettingsExternalActions by previewExternal { override val canRateApp = true })
     }
 }
-private val previewSlots = SettingsSlots(guestCard = { _, _, modifier -> Text("Войти", modifier) })
+private val previewSlots = SettingsSlots(
+    guestCard = { _, _, modifier -> Text("Войти", modifier) },
+    notificationPreference = { label, description ->
+        CoffeePeekSettingsRow(CoffeePeekIcons.Notifications, label, description, {}, enabled = false,
+            iconColors = CoffeePeekIconBadgePalette.Gold, trailing = { CoffeePeekSwitch(false, null, enabled = false) })
+    },
+)
 
 @PreviewLightDark
 @Composable

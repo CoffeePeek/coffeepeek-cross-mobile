@@ -22,14 +22,14 @@ import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as st
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
-internal fun NotificationEmptyState(signedOut: Boolean = false, onSignIn: () -> Unit = {}, description: String? = null) {
+internal fun NotificationEmptyState(signedOut: Boolean = false, onSignIn: () -> Unit = {}) {
     Column(Modifier.fillMaxWidth().padding(vertical = CoffeePeekDimens.spacing6),
         horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3)) {
         CoffeePeekIconBadge(if (signedOut) CoffeePeekIcons.Notifications else CoffeePeekIcons.Coffee, CoffeePeekIconBadgePalette.Gold)
         Text(stringResource(if (signedOut) Res.string.notifications_sign_in_title else Res.string.notifications_empty_title),
             style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold,
             modifier = Modifier.semantics { heading() })
-        Text(description ?: stringResource(if (signedOut) Res.string.notifications_sign_in_description else Res.string.notifications_empty_description),
+        Text(stringResource(if (signedOut) Res.string.notifications_sign_in_description else Res.string.notifications_empty_description),
             style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center)
         if (signedOut) CoffeePeekButton(stringResource(Res.string.login), onSignIn)

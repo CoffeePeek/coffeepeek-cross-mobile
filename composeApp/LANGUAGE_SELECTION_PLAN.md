@@ -29,13 +29,16 @@ This feature is not in that already-built parent artifact.
 - Existing native purpose strings need app-root `InfoPlist.strings` in both
   Xcode and xtool packaging. Project resource links use Swift/XcodeProj tooling,
   not manual PBX text changes. Auth diagnostic/cancellation codes are preserved.
-- Notification preferences move from both inbox sheets to a Settings leaf directly
-  below Language. It retains the existing master toggle, account, loading, retry
+- Notification preferences move from both inbox sheets to an inline Settings row
+  directly below Language. It retains the existing master toggle, account, loading, retry
   and device-permission states. Opening an inbox from its bell and a successful
   check-in call the same guarded permission offer; mounting or refreshing a list
   does not request permission. Native prior-denial/asked guards remain in force.
   An explicit first open waits for settings to load, once for that account
   generation. Closing/disposal or an account change cancels the opportunity.
+  Settings composes the application-provided notification slot through its public
+  API; it does not import notification domain/data/implementation. Inbox items are
+  flat rows with shared separators, retaining unread and action semantics.
 - Android Play bundles retain both language resource sets offline. Activity-based
   integrations use the existing activity-compose owner lookup through the locale
   context wrapper; no OAuth or real permission choice is exercised by tests.
@@ -101,7 +104,7 @@ re-read as CoffeePeek Debug 2641 on iPhone 15 / iOS 27.0.1. The separate TestFli
 2633 remains installed. The user confirmed that the thumb, rail and fasteners
 look correct in build 2641.
 
-Final static resource audit matches 2,487 production string pairs and 21
+Final static resource audit matches 2,486 production string pairs and 21
 arrays (141 items), including placeholders and attributes. Internal Sandbox
 scenario/debug-panel resources are outside this production translation scope.
 The 44 confirmed reachable legacy error/validation sites also use semantic state
@@ -117,6 +120,21 @@ executed in the retry; feature tests reused successful executions from earlier
 runs. Design-system and Settings iOS KLIB tasks were up to date from prior passes.
 Full app macOS compilation, language artifact packaging and language device
 acceptance are the remaining integration/delivery gates at this source checkpoint.
+
+After that checkpoint, the user requested an inline notification toggle instead
+of a leaf and flat notification rows separated by lines. The not-yet-delivered
+2642 iOS/Android workflows were cancelled to build the revised source together.
+The 465-test result and Play-bundle evidence belong to `4474d9a9`.
+
+Revised inline/list integration passed in 45 seconds: Android DirectDebug assembly
+and DEX runtime-class checks, plus app 217, Settings 38, Notifications 32,
+design-system 57, Shelf 58, Home Check-in 81 and Community 40 unit tests (523 in
+70 suites), zero failures/errors/skips. All seven test tasks executed in this run.
+Design-system and Settings iOS KLIB compilation executed and passed. Separate
+notification-page routes/files and their new, unshipped navigation tests were
+removed. Full application iOS compilation and physical-device review remain open.
+Existing preview-annotation/expect-actual and unrelated test style warnings were
+retained without expanding the scope.
 
 Static resource/previews and newly written contracts are not executed-test or
 device evidence. Final counts, source/build identity, device outcomes and open

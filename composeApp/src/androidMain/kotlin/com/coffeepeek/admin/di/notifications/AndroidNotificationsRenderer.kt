@@ -28,7 +28,7 @@ internal class AndroidNotificationsRenderer(
     override fun Bell() = entry.Bell()
 
     @Composable
-    override fun Settings(onBack: () -> Unit) = entry.Settings(onBack)
+    override fun Preference(label: String, description: String) = entry.Preference(label, description)
 
     @Composable
     override fun HandlePendingOpen(isLoggedIn: Boolean) {

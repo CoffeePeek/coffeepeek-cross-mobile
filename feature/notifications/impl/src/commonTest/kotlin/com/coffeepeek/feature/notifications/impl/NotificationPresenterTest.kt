@@ -125,7 +125,7 @@ class NotificationPresenterTest {
         assertTrue(feature.state.value.items.isNotEmpty())
     }
 
-    @Test fun openingNotificationSettingsRefreshesWithoutChangingThePreferenceOrReadingInboxItems() = runTest {
+    @Test fun mountingAnInlineNotificationPreferenceRefreshesWithoutChangingItOrReadingInboxItems() = runTest {
         val account = Account()
         val repository = Repository().apply { enabled = false }
         val platform = Platform()

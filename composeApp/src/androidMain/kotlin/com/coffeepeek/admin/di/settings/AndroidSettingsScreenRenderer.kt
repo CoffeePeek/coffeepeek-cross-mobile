@@ -40,7 +40,6 @@ internal class AndroidSettingsScreenRenderer(
         onCity = { Navigator.navigate(Navigator.Screen.CitySettings) },
         onTheme = { Navigator.navigate(Navigator.Screen.ThemeSettings) },
         onLanguage = { Navigator.navigate(Navigator.Screen.LanguageSettings) },
-        onNotifications = { Navigator.navigate(Navigator.Screen.NotificationSettings) },
         onUsagePolicy = { Navigator.navigate(Navigator.Screen.UsagePolicy) },
         onLogin = { Navigator.navigate(Navigator.Screen.Auth) },
         onRegister = { Navigator.navigate(Navigator.Screen.Register) },
@@ -71,6 +70,9 @@ internal fun androidSettingsScreenRenderer(
             account = AndroidSettingsAccountPort(sessions), theme = theme, language = language, cities = cities, updates = AndroidUpdateCheckPort(updates),
             external = external, appInfo = SettingsAppInfo(AppConfig.versionName),
             slots = SettingsSlots(guestCard = { onLogin, onRegister, modifier -> GuestAuthCard(onLogin, onRegister, modifier) },
+                notificationPreference = { label, description ->
+                    org.koin.compose.koinInject<com.coffeepeek.admin.feature.notifications.ui.NotificationsRenderer>().Preference(label, description)
+                },
                 accountSwitch = { org.koin.compose.koinInject<com.coffeepeek.feature.ownership.api.BusinessOwnershipEntry>().AccountSwitch() }),
         ),
         theme = createThemeEntry(theme),

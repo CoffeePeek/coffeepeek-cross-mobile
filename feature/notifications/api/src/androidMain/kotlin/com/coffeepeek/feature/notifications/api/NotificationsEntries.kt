@@ -10,7 +10,7 @@ interface NotificationsEntry {
     @Composable
     fun Bell()
 
-    /** The existing app-notification preference; the caller owns the Settings route and back action. */
+    /** The inline app-notification preference; the Settings tab supplies its label and description. */
     @Composable
-    fun Settings(onBack: () -> Unit)
+    fun Preference(label: String, description: String)
 }
