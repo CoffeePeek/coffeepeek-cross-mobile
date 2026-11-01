@@ -18,6 +18,7 @@
     <string name="history_new">Новый чекин</string>
     <string name="history_add">Добавить чекин</string>
     <string name="history_create_shop">Чекин в кофейне</string>
+    <string name="history_create_title">Создать</string>
     <string name="history_create_home">Чекин дома</string>
     <string name="history_home_title">Домашнее приготовление</string>
     <string name="history_private">Только мне</string>

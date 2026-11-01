@@ -63,9 +63,15 @@ private class CoffeePeekContentSizedColumnScope(private val column: ColumnScope)
 }
 
 /** Positive provisional height mounts content before its first measurement. */
-fun coffeePeekNativeSheetDetentHeight(contentHeight: Double, maximumHeight: Double, heightFraction: Float): Double {
+fun coffeePeekNativeSheetDetentHeight(
+    contentHeight: Double, maximumHeight: Double, heightFraction: Float, expandToMaxHeight: Boolean = false,
+): Double {
     val limit = (maximumHeight * heightFraction.coerceIn(0.1f, 1f)).coerceAtLeast(1.0)
-    return if (contentHeight > 0.0) contentHeight.coerceAtMost(limit) else limit / 2
+    return when {
+        expandToMaxHeight -> limit
+        contentHeight > 0.0 -> contentHeight.coerceAtMost(limit)
+        else -> limit / 2
+    }
 }
 
 @Composable

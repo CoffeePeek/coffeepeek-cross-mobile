@@ -1,5 +1,6 @@
 package com.coffeepeek.feature.shop.impl.ui.compose.component
 
+import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
 import com.coffeepeek.core.designsystem.component.CoffeePeekSelectField
 import com.coffeepeek.core.designsystem.component.CoffeePeekSelectOption
 
@@ -7,7 +8,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -15,6 +15,7 @@ import com.coffeepeek.core.designsystem.component.CoffeePeekTextButton as TextBu
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.semantics.error
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.intl.Locale
@@ -63,7 +64,7 @@ internal fun ShopCheckInDrinkField(
         }
         CoffeePeekSelectField(label, options, stringResource(Res.string.shop_checkin_form_drink),
             modifier = Modifier.fillMaxWidth(), enabled = enabled && !loading)
-        if (loading) CircularProgressIndicator()
+        if (loading) CoffeePeekLoader(size = 40.dp, color = MaterialTheme.colorScheme.primary, strokeWidth = 4.dp)
         if (failed) {
             Text(stringResource(Res.string.shop_checkin_form_drinks_error), color = MaterialTheme.colorScheme.error)
             TextButton(onClick = onRetry, enabled = !loading) { Text(stringResource(Res.string.shop_checkin_form_retry)) }
@@ -88,4 +89,11 @@ private fun ShopConsumedDrinkOption.displayName(language: String): String =
 }
 @Preview @Composable private fun ShopCheckInDrinkFieldDarkPreview() = CoffeePeekTheme(darkTheme = true) {
     Surface { ShopCheckInDrinkField(emptyList(), "other", "", false, true, true, true, {}, {}, {}) }
+}
+
+@Preview @Composable private fun ShopCheckInDrinkLoadingLightPreview() = CoffeePeekTheme(darkTheme = false) {
+    Surface { ShopCheckInDrinkField(emptyList(), null, null, true, false, false, false, {}, {}, {}) }
+}
+@Preview @Composable private fun ShopCheckInDrinkLoadingDarkPreview() = CoffeePeekTheme(darkTheme = true) {
+    Surface { ShopCheckInDrinkField(emptyList(), null, null, true, false, false, false, {}, {}, {}) }
 }

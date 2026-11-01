@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -31,6 +32,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.TextFieldValue
@@ -58,12 +60,15 @@ fun CoffeePeekSearchField(
     fieldHeight: Dp = SearchFieldHeight,
     shadowElevation: Dp = 0.dp,
     keyboardOptions: KeyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+    onFocusChanged: (Boolean) -> Unit = {},
 ) {
+    val touchHeight = maxOf(fieldHeight + 4.dp, CoffeePeekDimens.glassControlSize)
+    if (CoffeePeekPlatformSearchField(value, onValueChange, placeholder, clearDescription, enabled,
+            readOnly, modifier.height(touchHeight), keyboardOptions, onSearch, onFocusChanged)) return
     val focusManager = LocalFocusManager.current
     val shape = RoundedCornerShape(percent = 50)
     val field = remember { SyncedTextFieldState(value) }
     SideEffect { field.syncExternal(value) }
-    val touchHeight = maxOf(fieldHeight + 4.dp, CoffeePeekDimens.glassControlSize)
     BasicTextField(
         value = field.value,
         onValueChange = { updated ->
@@ -71,7 +76,8 @@ fun CoffeePeekSearchField(
             field.value = updated
             if (changed) onValueChange(updated.text)
         },
-        modifier = modifier.heightIn(min = touchHeight).shadow(shadowElevation, shape, clip = false),
+        modifier = modifier.heightIn(min = touchHeight).shadow(shadowElevation, shape, clip = false)
+            .onFocusChanged { onFocusChanged(it.isFocused) },
         enabled = enabled,
         readOnly = readOnly,
         singleLine = true,

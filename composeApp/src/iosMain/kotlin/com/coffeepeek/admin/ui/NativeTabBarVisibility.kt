@@ -20,6 +20,7 @@ internal class NativeTabBarVisibility(
 
     fun sync() {
         val tabs = tabs ?: return
+        (discoveryNavigation?.viewControllers?.firstOrNull() as? NativeScreenController)?.syncExpandedMap(mapExpanded)
         val navigation = tabs.selectedViewController as? UINavigationController ?: return
         val top = navigation.topViewController
         // UIKit getters may return different Kotlin wrappers for the same native controller.

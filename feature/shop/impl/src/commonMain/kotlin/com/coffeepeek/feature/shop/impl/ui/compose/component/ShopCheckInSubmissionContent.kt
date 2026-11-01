@@ -3,14 +3,15 @@ package com.coffeepeek.feature.shop.impl.ui.compose.component
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
+import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
 import com.coffeepeek.core.designsystem.component.CoffeePeekButton
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
@@ -32,7 +33,7 @@ internal fun ShopCheckInSubmissionContent(
     Column(Modifier.fillMaxWidth().semantics { liveRegion = LiveRegionMode.Polite },
         verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing4)) {
         if (submittedVisibility == null) {
-            CircularProgressIndicator()
+            CoffeePeekLoader(size = 40.dp, color = MaterialTheme.colorScheme.primary, strokeWidth = 4.dp)
             Text(stringResource(Res.string.shop_checkin_form_sending), style = MaterialTheme.typography.headlineSmall)
         } else {
             Text(stringResource(Res.string.shop_checkin_form_success), style = MaterialTheme.typography.headlineSmall)

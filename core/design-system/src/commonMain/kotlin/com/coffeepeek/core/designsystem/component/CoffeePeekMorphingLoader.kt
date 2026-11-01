@@ -115,15 +115,18 @@ fun CoffeePeekMorphingLoader(
     size: Dp = CoffeePeekDimens.loaderDefault,
     color: Color = CoffeePeekColors.Primary,
     strokeWidth: Dp = (size / 16f).coerceAtLeast(2.dp),
+    progress: Float? = null,
 ) {
     val motion = rememberLoaderMotion()
     val paths = remember { CoffeePeekLoaderPaths() }
+    val fraction = progress?.takeIf { it.isFinite() }?.coerceIn(0f, 1f)
     Canvas(modifier.size(size).semantics {
         this.contentDescription = contentDescription
-        progressBarRangeInfo = ProgressBarRangeInfo.Indeterminate
+        progressBarRangeInfo = fraction?.let { ProgressBarRangeInfo(it, 0f..1f) }
+            ?: ProgressBarRangeInfo.Indeterminate
     }) {
         paths.prepare(center, ((this.size.minDimension - strokeWidth.toPx()) / 2f).coerceAtLeast(0f),
-            motion.morph.value, motion.fill.value)
+            motion.morph.value, fraction ?: (motion.fill.value * MAX_FILL_FRACTION))
         rotate(motion.rotation.value) { drawLoader(paths, color, strokeWidth.toPx()) }
     }
 }
@@ -156,7 +159,7 @@ private class CoffeePeekLoaderPaths {
         track.setLoaderContour(center, radius, morph)
         measure.setPath(track, forceClosed = true)
         fill.reset()
-        val end = (fillProgress * MAX_FILL_FRACTION).coerceIn(0f, MAX_FILL_FRACTION)
+        val end = fillProgress.coerceIn(0f, 1f)
         if (end > 0.01f) measure.getSegment(0f, measure.length * end, fill)
     }
 }

@@ -6,6 +6,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.admin.theme.CpDimens
 import com.coffeepeek.admin.ui.component.DesignFilterChip
@@ -31,9 +32,10 @@ internal fun FeedQuickFilterBar(
     onToggleNearby: () -> Unit,
     coffeeFocusId: String?,
     onCoffeeFocusChange: (String) -> Unit,
+    horizontalPadding: Dp = CpDimens.spacing4,
 ) {
     Row(Modifier.fillMaxWidth().horizontalScroll(rememberScrollState())
-        .padding(horizontal = CpDimens.spacing4, vertical = 4.dp),
+        .padding(horizontal = horizontalPadding, vertical = 4.dp),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing1)) {
         if (showNearby) DesignFilterChip(label = "Рядом", selected = nearbyOnly,
             onClick = onToggleNearby, leadingIcon = CpIcons.Distance)

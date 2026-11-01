@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -49,6 +50,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.round
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
+import com.coffeepeek.core.designsystem.theme.LocalCoffeePeekOpaqueGlassOverride
+import dev.chrisbanes.haze.hazeSource
+import dev.chrisbanes.haze.rememberHazeState
 import com.coffeepeek.feature.shelf.api.ShelfImage
 import com.coffeepeek.feature.shelf.impl.resources.*
 import com.coffeepeek.feature.shelf.impl.ui.compose.PreviewShelfImage
@@ -66,11 +70,11 @@ private const val GHOST_FADE_MILLIS = 180
 internal fun shelfGeometry(width: Float, density: Density, rtl: Boolean): ShelfGridGeometry = with(density) {
     val gap = ShelfGap.toPx()
     val slot = (width - gap * (SHELF_COLUMNS - 1)) / SHELF_COLUMNS * SLOT_ASPECT
-    ShelfGridGeometry(width, gap, slot, slot + ShelfLedgeHeight.toPx() + ShelfRowGap.toPx(), rtl)
+    ShelfGridGeometry(width, gap, slot, slot + (ShelfLedgeHeight - ShelfLedgeOverlap).toPx() + ShelfRowGap.toPx(), rtl)
 }
 
 /**
- * Bags in rows of three, standing on ledges. A tap opens a bag; a long press lifts it to move it or to drop it on the
+ * Bags in rows of three behind frosted front rails. A tap opens a bag; a long press lifts it to move it or to drop it on the
  * finish zone. TalkBack gets the same moves and finish as custom actions.
  */
 @Composable
@@ -86,15 +90,21 @@ internal fun ShelfGrid(
         val shown = drag.order(bags.map { it.id }).mapNotNull(byId::get)
         val currentShown by rememberUpdatedState(shown)
         val haptics = LocalHapticFeedback.current
+        val backdrop = rememberHazeState()
         Box(Modifier.fillMaxWidth().height(with(density) { (geometry.rows(bags.size) * geometry.rowHeight).toDp() })
             .onGloballyPositioned { drag.gridOrigin = it.positionInRoot() }
             .shelfGestures(drag, geometry, { currentShown }, haptics, onAction)) {
-            repeat(geometry.rows(bags.size)) { row -> ShelfLedge(Modifier.offset { IntOffset(0, (row * geometry.rowHeight + geometry.slotHeight).toInt()) }) }
-            // Where the lifted bag will land, or the slot a bag in the archive box keeps until its summary is answered.
-            val ghost = drag.bagId?.let { it to drag.target } ?: drag.archiving?.let { id -> id to shown.indexOfFirst { it.id == id } }
-            ghost?.takeIf { it.second >= 0 }?.let { (id, index) -> byId[id]?.let { ShelfGhost(it, image, geometry.slot(index)) } }
-            shown.forEachIndexed { index, item ->
-                key(item.id) { ShelfGridTile(item, index, shown.size, geometry, drag, tiles, onAction, arriving = item.id == arrivingId) }
+            Box(Modifier.matchParentSize().hazeSource(backdrop)) {
+                // Only bags feed the backdrop; front rails must never capture themselves.
+                val ghost = drag.bagId?.let { it to drag.target } ?: drag.archiving?.let { id -> id to shown.indexOfFirst { it.id == id } }
+                ghost?.takeIf { it.second >= 0 }?.let { (id, index) -> byId[id]?.let { ShelfGhost(it, image, geometry.slot(index)) } }
+                shown.forEachIndexed { index, item ->
+                    key(item.id) { ShelfGridTile(item, index, shown.size, geometry, drag, tiles, onAction, arriving = item.id == arrivingId) }
+                }
+            }
+            val overlap = with(density) { ShelfLedgeOverlap.toPx() }
+            repeat(geometry.rows(bags.size)) { row ->
+                ShelfLedge(Modifier.offset { IntOffset(0, (row * geometry.rowHeight + geometry.slotHeight - overlap).toInt()) }, backdrop)
             }
         }
     }
@@ -185,11 +195,17 @@ private fun Modifier.shelfGestures(
 }
 
 @Composable
-private fun ShelfGridPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
-    Box(Modifier.background(MaterialTheme.colorScheme.background).padding(CoffeePeekDimens.spacing4)) {
-        ShelfGrid(previewShelfItems(), remember { ShelfDragState() }, rememberShelfTiles(PreviewShelfImage), PreviewShelfImage, {})
+private fun ShelfGridPreview(dark: Boolean, opaque: Boolean = false) {
+    CompositionLocalProvider(LocalCoffeePeekOpaqueGlassOverride provides opaque) {
+        CoffeePeekTheme(darkTheme = dark) {
+            Box(Modifier.background(MaterialTheme.colorScheme.background).padding(CoffeePeekDimens.spacing4)) {
+                ShelfGrid(previewShelfItems(), remember { ShelfDragState() }, rememberShelfTiles(PreviewShelfImage), PreviewShelfImage, {})
+            }
+        }
     }
 }
 
 @Preview @Composable private fun ShelfGridLightPreview() = ShelfGridPreview(false)
 @Preview @Composable private fun ShelfGridDarkPreview() = ShelfGridPreview(true)
+@Preview @Composable private fun ShelfGridOpaqueLightPreview() = ShelfGridPreview(false, true)
+@Preview @Composable private fun ShelfGridOpaqueDarkPreview() = ShelfGridPreview(true, true)

@@ -143,6 +143,7 @@
     <string name="shelf_scanner_download_body">Для первого скана нужно один раз скачать модель · %1$d МБ</string>
     <string name="shelf_scanner_download">Скачать</string>
     <string name="shelf_scanner_downloading">Готовим сканер · %1$s</string>
+    <string name="shelf_scanner_downloading_unknown">Готовим сканер…</string>
     <string name="shelf_scanner_download_failed">Не удалось скачать модель. Проверьте сеть и попробуйте ещё раз</string>
 
     <string name="shelf_scan_title">Сканируем</string>

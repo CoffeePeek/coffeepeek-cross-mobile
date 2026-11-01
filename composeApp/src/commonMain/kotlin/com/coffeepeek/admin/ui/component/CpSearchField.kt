@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -31,7 +30,7 @@ fun CpSearchField(
 ) {
     if (NativeSearchField(value, onValueChange, placeholder, onSearch, onFocusChanged, onCancelSearch, modifier.height(fieldHeight))) return
     CoffeePeekSearchField(value, onValueChange, placeholder, stringResource(Res.string.search_clear),
-        modifier = modifier.onFocusChanged { onFocusChanged(it.isFocused) }, onSearch = onSearch,
+        modifier = modifier, onSearch = onSearch, onFocusChanged = onFocusChanged,
         fieldHeight = fieldHeight, shadowElevation = shadowElevation,
         keyboardOptions = platformTextInputOptions(KeyboardOptions(imeAction = ImeAction.Search)))
 }

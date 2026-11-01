@@ -38,12 +38,14 @@ internal fun SearchEmptyContent(
         SearchEmptyReason.Query -> R.string.discovery_empty_query_body
     }
     Column(Modifier.fillMaxWidth().padding(vertical = 24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text(stringResource(title), style = MaterialTheme.typography.titleLarge)
-        Text(stringResource(description), style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        if (reason == SearchEmptyReason.Filters) {
-            CoffeePeekButton(stringResource(R.string.discovery_reset_filters), onResetFilters)
-            if (hasQuery) CoffeePeekTextButton(onEditQuery) { Text(stringResource(R.string.discovery_edit_query)) }
-        } else if (hasQuery) CoffeePeekButton(stringResource(R.string.discovery_edit_query), onEditQuery)
+        if (!allResultsEmpty) {
+            Text(stringResource(title), style = MaterialTheme.typography.titleLarge)
+            Text(stringResource(description), style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            if (reason == SearchEmptyReason.Filters) {
+                CoffeePeekButton(stringResource(R.string.discovery_reset_filters), onResetFilters)
+                if (hasQuery) CoffeePeekTextButton(onEditQuery) { Text(stringResource(R.string.discovery_edit_query)) }
+            } else if (hasQuery) CoffeePeekButton(stringResource(R.string.discovery_edit_query), onEditQuery)
+        }
         SearchContributionActions(illustration, onAddShop, onAddRoaster)
     }
 }
@@ -53,5 +55,21 @@ internal fun SearchEmptyContent(
 private fun SearchEmptyContentPreview() = CoffeePeekTheme {
     Surface {
         SearchEmptyContent(SearchEmptyReason.Query, true, true, {}, {}, {}, {}, ColorPainter(Color.LightGray))
+    }
+}
+
+@PreviewLightDark
+@Composable
+private fun FilteredGlobalEmptySearchPreview() = CoffeePeekTheme {
+    Surface {
+        SearchEmptyContent(SearchEmptyReason.Filters, true, true, {}, {}, {}, {}, ColorPainter(Color.LightGray))
+    }
+}
+
+@PreviewLightDark
+@Composable
+private fun SearchFilterRecoveryPreview() = CoffeePeekTheme {
+    Surface {
+        SearchEmptyContent(SearchEmptyReason.Filters, false, false, {}, {}, {}, null, ColorPainter(Color.LightGray))
     }
 }

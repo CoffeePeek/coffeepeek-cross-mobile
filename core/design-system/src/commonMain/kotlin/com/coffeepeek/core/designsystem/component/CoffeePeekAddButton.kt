@@ -2,12 +2,14 @@ package com.coffeepeek.core.designsystem.component
 
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.ProgressBarRangeInfo
+import androidx.compose.ui.semantics.progressBarRangeInfo
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
@@ -30,9 +32,12 @@ fun CoffeePeekAddButton(
     if (LocalCoffeePeekNativeGlassPresenter.current?.IconButton(CoffeePeekGlassIcon.Add,
             onClick, description, buttonModifier, enabled && !isLoading, isLoading = isLoading) == true) return
     CoffeePeekFloatingActionButton(onClick = onClick, enabled = enabled && !isLoading,
-        modifier = buttonModifier.semantics(mergeDescendants = true) { this.contentDescription = description },
+        modifier = buttonModifier.semantics(mergeDescendants = true) {
+            this.contentDescription = description
+            if (isLoading) progressBarRangeInfo = ProgressBarRangeInfo.Indeterminate
+        },
         containerColor = MaterialTheme.colorScheme.primary, contentColor = MaterialTheme.colorScheme.onPrimary) {
-        if (isLoading) CircularProgressIndicator(Modifier.size(24.dp),
+        if (isLoading) CoffeePeekLoader(description, modifier = Modifier.size(24.dp).clearAndSetSemantics {}, size = 24.dp,
             color = MaterialTheme.colorScheme.onPrimary, strokeWidth = 2.dp)
         else Icon(CoffeePeekIcons.Add, null, Modifier.size(28.dp))
     }
