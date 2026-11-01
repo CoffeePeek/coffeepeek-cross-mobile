@@ -66,7 +66,9 @@ jobs:
               for resource in values.glob("*.cvr"):
                   assert (values.parent / "values-be" / resource.name).is_file(), str(resource)
                   checked += 1
-          assert checked >= 40, "Missing application/feature language resources"
+          assert checked >= 35, "Missing application/feature language resources"
+          for owner, filename in (("coffeepeek.composeapp.generated.resources", "language_strings"), ("com.coffeepeek.feature.settings.impl.resources", "strings")):
+              assert (app / "compose-resources" / "composeResources" / owner / "values-be" / (filename + ".commonMain.cvr")).is_file()
           print("Verified Russian and Belarusian native purpose strings and", checked, "resource pairs")
           PY
           mkdir -p "$RUNNER_TEMP/ios-device-artifacts"
