@@ -107,7 +107,7 @@ internal fun SearchContent(
             Column(Modifier.padding(top = CoffeePeekDimens.spacing3, bottom = CoffeePeekDimens.spacing2)) {
                 SearchHeader(state, host, onAction, queryFocus)
                 Spacer(Modifier.height(CoffeePeekDimens.spacing2))
-                DiscoveryQuickFilters(state.filters, onAction, state.selectedCity?.name, host.changeCity)
+                DiscoveryQuickFilters(state.filters, onAction)
             }
             HorizontalDivider(thickness = 1.dp, color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.7f))
         }
@@ -241,7 +241,7 @@ private fun LazyListScope.shopResults(
         }
         state.emptyReason != null -> item(key = "empty") {
             SearchEmptyContent(requireNotNull(state.emptyReason), allResultsEmpty, state.query.isNotBlank(),
-                onEditQuery, { onAction(SearchAction.ResetFilterSelections) }, onAddShop, onAddRoaster)
+                onEditQuery, { onAction(SearchAction.ResetFilterSelections) }, onAddShop, onAddRoaster, host.suggestionIllustration())
         }
         else -> shopRows(state, host, onAddShop, onAction)
     }
@@ -265,7 +265,7 @@ private fun LazyListScope.shopRows(
             fallbackMessage = stringResource(R.string.discovery_pagination_error),
             retryLabel = stringResource(R.string.discovery_retry))
     }
-    if (state.canSuggestShop) item(key = "suggestion") { SearchContributionActions(onAddShop) }
+    if (state.canSuggestShop) item(key = "suggestion") { SearchContributionActions(host.suggestionIllustration(), onAddShop) }
 }
 
 

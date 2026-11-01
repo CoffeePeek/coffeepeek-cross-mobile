@@ -44,8 +44,6 @@ class DiscoveryHost(
     val mapCanvas: @Composable (state: MapCanvasState, callbacks: MapCanvasCallbacks, modifier: Modifier) -> Unit = { _, _, _ -> },
     /** Whether the retained tab is actually visible; the application supplies its existing visibility guard. */
     val isVisible: @Composable () -> Boolean = { true },
-    /** Opens the existing application city selector; no settings navigation belongs to this feature. */
-    val changeCity: () -> Unit = {},
 )
 
 /** What the roaster sections need to know about the search to filter themselves. */

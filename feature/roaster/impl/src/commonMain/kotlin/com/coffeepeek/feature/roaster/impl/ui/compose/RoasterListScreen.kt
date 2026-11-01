@@ -94,10 +94,9 @@ internal fun RoasterListScreenContent(
     modifier: Modifier = Modifier,
     bottomClearance: Dp = 0.dp,
     header: @Composable ColumnScope.() -> Unit = {},
-    emptyContent: @Composable (Modifier) -> Unit = { RoasterEmptyText(it) },
+    emptyContent: (@Composable (Modifier) -> Unit)? = null,
 ) {
     val listState = rememberLazyListState()
-    val visible = state.visibleItems
     val snackbar = remember { SnackbarHostState() }
     val message = state.message?.text()
     LaunchedEffect(message) {
@@ -119,20 +118,34 @@ internal fun RoasterListScreenContent(
         CoffeePeekPullToRefresh(listState, state.isLoading, { onAction(RoasterListAction.Refresh) },
             stringResource(Res.string.roaster_refresh), stringResource(Res.string.roaster_loading),
             modifier = Modifier.fillMaxSize().padding(padding).imePadding()) { scrollModifier ->
-            LazyColumn(
-                state = listState,
-                modifier = screen.exposure(scrollModifier.fillMaxSize(), RoasterExposure.Catalog),
-                contentPadding = PaddingValues(start = CoffeePeekDimens.spacing4, top = CoffeePeekDimens.spacing2,
-                    end = CoffeePeekDimens.spacing4, bottom = bottomClearance + 88.dp),
-                verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3),
-            ) {
-                itemsIndexed(visible, key = { index, item -> item.slug ?: "unaddressed-roaster:$index" }) { _, item ->
-                    RoasterListItemCard(item, state.isLoading, item.favoriteKey in state.favoriteKeys, onAction, onFavoriteFeedback, image, screen)
-                }
-                if (state.isLoading) item { RoasterLoadingRow() }
-                if (state.loadFailed) item { loadError { onAction(RoasterListAction.Refresh) } }
-                else if (visible.isEmpty() && !state.isLoading) item { emptyContent(Modifier) }
-            }
+            RoasterCatalogList(state, onAction, image, loadError, screen, onFavoriteFeedback,
+                listState, scrollModifier, bottomClearance, emptyContent)
+        }
+    }
+}
+
+@Composable
+private fun RoasterCatalogList(
+    state: RoasterListState, onAction: (RoasterListAction) -> Unit,
+    image: RoasterImage, loadError: RoasterLoadError, screen: RoasterScreenAnalytics,
+    onFavoriteFeedback: () -> Unit, listState: androidx.compose.foundation.lazy.LazyListState,
+    scrollModifier: Modifier, bottomClearance: Dp, emptyContent: (@Composable (Modifier) -> Unit)?,
+) {
+    val visible = state.visibleItems
+    LazyColumn(
+        state = listState,
+        modifier = screen.exposure(scrollModifier.fillMaxSize(), RoasterExposure.Catalog),
+        contentPadding = PaddingValues(start = CoffeePeekDimens.spacing4, top = CoffeePeekDimens.spacing2,
+            end = CoffeePeekDimens.spacing4, bottom = bottomClearance + 88.dp),
+        verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3),
+    ) {
+        itemsIndexed(visible, key = { index, item -> item.slug ?: "unaddressed-roaster:$index" }) { _, item ->
+            RoasterListItemCard(item, state.isLoading, item.favoriteKey in state.favoriteKeys, onAction, onFavoriteFeedback, image, screen)
+        }
+        if (state.isLoading) item { RoasterLoadingRow() }
+        if (state.loadFailed) item { loadError { onAction(RoasterListAction.Refresh) } }
+        else if (!state.isLoading && (visible.isEmpty() || emptyContent != null)) item(key = "catalog-suggestion") {
+            if (emptyContent != null) emptyContent(Modifier) else RoasterEmptyText(Modifier)
         }
     }
 }

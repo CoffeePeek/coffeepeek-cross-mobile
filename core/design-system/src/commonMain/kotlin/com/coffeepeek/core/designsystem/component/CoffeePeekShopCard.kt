@@ -225,7 +225,7 @@ private fun NewBadge(label: String, modifier: Modifier) {
 @Composable
 private fun RatingBadge(text: String, count: Int) {
     Row(
-        Modifier.clip(RoundedCornerShape(CoffeePeekDimens.radiusLg)).background(Color.Black.copy(alpha = 0.68f)).padding(horizontal = CoffeePeekDimens.spacing2, vertical = 6.dp),
+        Modifier.clip(RoundedCornerShape(CoffeePeekDimens.radiusLg)).background(CoffeePeekColors.PhotoBadgeOverlay).padding(horizontal = CoffeePeekDimens.spacing2, vertical = 6.dp),
         horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing1),
         verticalAlignment = Alignment.CenterVertically,
     ) {

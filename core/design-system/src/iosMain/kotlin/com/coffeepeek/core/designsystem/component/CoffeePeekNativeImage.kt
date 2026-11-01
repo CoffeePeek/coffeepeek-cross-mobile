@@ -31,12 +31,16 @@ import platform.UIKit.UIImageRenderingMode.UIImageRenderingModeAlwaysTemplate
 /** Keeps the actual design-system icon, including custom vectors without an SF Symbol equivalent. */
 @Composable
 internal fun coffeePeekNativeImage(vector: ImageVector): UIImage? {
-    val painter = rememberVectorPainter(vector)
+    return coffeePeekNativeImage(rememberVectorPainter(vector))
+}
+
+@Composable
+internal fun coffeePeekNativeImage(painter: Painter): UIImage? {
     val density = LocalDensity.current
     val direction = LocalLayoutDirection.current
-    var image by remember(vector, density, direction) { mutableStateOf<UIImage?>(null) }
+    var image by remember(painter, density, direction) { mutableStateOf<UIImage?>(null) }
     // Render after the vector painter's composition has been applied.
-    LaunchedEffect(vector, density, direction) {
+    LaunchedEffect(painter, density, direction) {
         image = coffeePeekRenderNativeImage(painter, density, direction)
     }
     return image

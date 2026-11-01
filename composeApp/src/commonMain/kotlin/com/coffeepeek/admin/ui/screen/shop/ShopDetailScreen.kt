@@ -73,13 +73,14 @@ import androidx.compose.material3.Text
 import com.coffeepeek.core.designsystem.component.CoffeePeekTextButton as TextButton
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
+import com.coffeepeek.core.designsystem.component.CoffeePeekPlainIconButton
+import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.IntOffset
@@ -107,6 +108,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.coffeepeek.admin.utils.utcIsoToLocalDate
 import com.coffeepeek.admin.utils.formatOneDecimal
+import coffeepeek.composeapp.generated.resources.shop_copy_phone
 import coffeepeek.composeapp.generated.resources.Res
 import coffeepeek.composeapp.generated.resources.maskot_with_book
 import coffeepeek.composeapp.generated.resources.shop_report_issue
@@ -1258,26 +1260,28 @@ private fun ShopContactRow(item: ShopContactItem) {
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.weight(1f),
         )
-        if (item.onCopy != null) {
-            IconButton(onClick = item.onCopy, modifier = Modifier.size(44.dp)) {
-                Icon(
-                    imageVector = CpIcons.Copy,
-                    contentDescription = "Скопировать номер",
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(20.dp),
-                )
-            }
-        } else {
-            Box(modifier = Modifier.size(44.dp), contentAlignment = Alignment.Center) {
-                Icon(
-                    imageVector = CpIcons.ChevronRight,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(20.dp),
-                )
-            }
+        ShopContactTrailingAction(item.onCopy)
+    }
+}
+
+@Composable
+private fun ShopContactTrailingAction(onCopy: (() -> Unit)?) {
+    if (onCopy != null) {
+        CoffeePeekPlainIconButton(onClick = onCopy) {
+            Icon(CpIcons.Copy, stringResource(Res.string.shop_copy_phone), Modifier.size(20.dp))
+        }
+    } else {
+        Box(Modifier.size(48.dp), contentAlignment = Alignment.Center) {
+            Icon(CpIcons.ChevronRight, null, Modifier.size(20.dp), MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
+}
+
+@Preview @Composable private fun ShopCopyPhoneLightPreview() = CoffeePeekTheme(darkTheme = false) {
+    ShopContactRow(ShopContactItem(CpIcons.Phone, "+375 29 123 45 67", {}, {}))
+}
+@Preview @Composable private fun ShopCopyPhoneDarkPreview() = CoffeePeekTheme(darkTheme = true) {
+    ShopContactRow(ShopContactItem(CpIcons.Phone, "+375 29 123 45 67", {}, {}))
 }
 
 @Composable
