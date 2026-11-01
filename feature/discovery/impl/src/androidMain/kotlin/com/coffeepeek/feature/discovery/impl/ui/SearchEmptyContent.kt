@@ -9,6 +9,9 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.graphics.painter.ColorPainter
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
@@ -22,7 +25,7 @@ import com.coffeepeek.feature.discovery.impl.search.SearchEmptyReason
 internal fun SearchEmptyContent(
     reason: SearchEmptyReason, allResultsEmpty: Boolean, hasQuery: Boolean,
     onEditQuery: () -> Unit, onResetFilters: () -> Unit,
-    onAddShop: () -> Unit, onAddRoaster: (() -> Unit)?,
+    onAddShop: () -> Unit, onAddRoaster: (() -> Unit)?, illustration: Painter,
 ) {
     val title = when (reason) {
         SearchEmptyReason.Catalog -> R.string.discovery_empty_catalog_title
@@ -41,15 +44,7 @@ internal fun SearchEmptyContent(
             CoffeePeekButton(stringResource(R.string.discovery_reset_filters), onResetFilters)
             if (hasQuery) CoffeePeekTextButton(onEditQuery) { Text(stringResource(R.string.discovery_edit_query)) }
         } else if (hasQuery) CoffeePeekButton(stringResource(R.string.discovery_edit_query), onEditQuery)
-        SearchContributionActions(onAddShop, onAddRoaster)
-    }
-}
-
-@Composable
-internal fun SearchContributionActions(onAddShop: () -> Unit, onAddRoaster: (() -> Unit)? = null) {
-    Column {
-        CoffeePeekTextButton(onAddShop) { Text(stringResource(R.string.discovery_suggestion_action)) }
-        if (onAddRoaster != null) CoffeePeekTextButton(onAddRoaster) { Text(stringResource(R.string.discovery_add_roaster)) }
+        SearchContributionActions(illustration, onAddShop, onAddRoaster)
     }
 }
 
@@ -57,6 +52,6 @@ internal fun SearchContributionActions(onAddShop: () -> Unit, onAddRoaster: (() 
 @Composable
 private fun SearchEmptyContentPreview() = CoffeePeekTheme {
     Surface {
-        SearchEmptyContent(SearchEmptyReason.Query, true, true, {}, {}, {}, {})
+        SearchEmptyContent(SearchEmptyReason.Query, true, true, {}, {}, {}, {}, ColorPainter(Color.LightGray))
     }
 }

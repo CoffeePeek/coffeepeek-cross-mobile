@@ -1,7 +1,7 @@
 package com.coffeepeek.feature.shop.impl.ui.compose.component
 
 import androidx.compose.material3.Icon
-import com.coffeepeek.core.designsystem.component.CoffeePeekIconButton as IconButton
+import com.coffeepeek.core.designsystem.component.CoffeePeekPlainIconButton as IconButton
 import androidx.compose.material3.MaterialTheme
 import com.coffeepeek.core.designsystem.component.CoffeePeekActionMenu
 import com.coffeepeek.core.designsystem.component.CoffeePeekMenuAction

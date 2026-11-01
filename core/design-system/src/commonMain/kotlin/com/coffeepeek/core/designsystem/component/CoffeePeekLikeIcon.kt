@@ -2,6 +2,8 @@ package com.coffeepeek.core.designsystem.component
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Box
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -31,12 +33,16 @@ fun CoffeePeekLikeIcon(
     overImage: Boolean = false,
 ) {
     val color = coffeePeekLikeColor(selected, overImage, MaterialTheme.colorScheme.onSurface)
-    Icon(
-        imageVector = if (selected) CoffeePeekIcons.FavoriteFilled else CoffeePeekIcons.Favorite,
-        contentDescription = contentDescription,
-        modifier = modifier.size(size),
-        tint = color.copy(alpha = if (enabled) 1f else 0.38f),
-    )
+    val alpha = if (enabled) 1f else 0.38f
+    Box(modifier.size(size)) {
+        Icon(if (selected) CoffeePeekIcons.FavoriteFilled else CoffeePeekIcons.Favorite,
+            contentDescription, Modifier.size(size), tint = color.copy(alpha = alpha))
+        // Bright brand gold stays recognizable on white through a contrasting outline.
+        if (selected && !overImage && MaterialTheme.colorScheme.surface.luminance() > 0.5f) {
+            Icon(CoffeePeekIcons.Favorite, null, Modifier.size(size),
+                tint = CoffeePeekColors.LikeOutline.copy(alpha = alpha))
+        }
+    }
 }
 
 internal fun coffeePeekLikeColor(selected: Boolean, overImage: Boolean, content: Color): Color = when {

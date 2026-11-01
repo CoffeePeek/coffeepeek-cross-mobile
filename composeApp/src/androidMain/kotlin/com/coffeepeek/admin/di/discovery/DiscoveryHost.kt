@@ -80,7 +80,6 @@ internal fun discoveryHost() = DiscoveryHost(
     photoPrefetch = { listState, photos -> PrefetchListPhotos(listState, photos) },
     reduceMotion = { platformReduceMotion() },
     isVisible = { LocalAnalyticsVisible.current },
-    changeCity = { com.coffeepeek.admin.ui.Navigator.navigate(com.coffeepeek.admin.ui.Navigator.Screen.CitySettings) },
     mapCanvas = { state, callbacks, modifier -> DiscoveryMapCanvas(state, callbacks, modifier) },
 )
 

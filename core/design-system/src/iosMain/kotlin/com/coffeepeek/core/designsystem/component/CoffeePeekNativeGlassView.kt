@@ -15,6 +15,8 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.viewinterop.UIKitInteropInteractionMode
 import androidx.compose.ui.viewinterop.UIKitInteropProperties
 import androidx.compose.ui.viewinterop.UIKitView
+import androidx.compose.ui.viewinterop.rememberUIKitInteropRemeasureRequester
+import androidx.compose.ui.viewinterop.remeasureRequester
 import kotlinx.cinterop.CValue
 import kotlinx.cinterop.useContents
 import platform.CoreGraphics.CGPoint
@@ -38,15 +40,24 @@ fun <T : UIView> CoffeePeekNativeGlassView(
 ) {
     val density = LocalDensity.current.density
     val clipping = remember(density) { CoffeePeekNativeOverlayClipping(density) }
+    val measurement = rememberUIKitInteropRemeasureRequester()
     UIKitView(
-        factory = { CoffeePeekNativeOverlayContainer(factory()).also { clipping.view = it } },
-        modifier = modifier.onGloballyPositioned(clipping::position),
+        // Configure text/images before UIKit's first intrinsic measurement.
+        factory = { CoffeePeekNativeOverlayContainer(factory()).also {
+            clipping.view = it
+            update(it.content as T)
+            it.invalidateIntrinsicContentSize()
+        } },
+        modifier = modifier.remeasureRequester(measurement).onGloballyPositioned(clipping::position),
         properties = UIKitInteropProperties(interactionMode = interactionMode,
             isNativeAccessibilityEnabled = accessibilityEnabled, placedAsOverlay = true),
         update = {
             clipping.view = it
+            // UIKit invalidation alone does not invalidate Compose's measurement.
+            // Refit after asynchronous icons, text, selection or Dynamic Type change.
             update(it.content as T)
             it.invalidateIntrinsicContentSize()
+            measurement.requestRemeasure()
             clipping.apply()
         },
         onRelease = {

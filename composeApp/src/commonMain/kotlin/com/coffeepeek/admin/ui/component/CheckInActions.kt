@@ -1,9 +1,11 @@
 package com.coffeepeek.admin.ui.component
 
 import androidx.compose.material3.Icon
-import com.coffeepeek.core.designsystem.component.CoffeePeekIconButton as IconButton
+import com.coffeepeek.core.designsystem.component.CoffeePeekPlainIconButton as IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
+import org.jetbrains.compose.ui.tooling.preview.Preview
 import com.coffeepeek.admin.ui.icons.CpIcons
 
 @Composable
@@ -37,4 +39,11 @@ internal fun CheckInActions(
             Icon(CpIcons.MoreHorizontal, "Действия с чекином", tint = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
+}
+
+@Preview @Composable private fun CheckInActionsLightPreview() = CoffeePeekTheme(darkTheme = false) {
+    CheckInActions(onEditClick = {}, onReportClick = {})
+}
+@Preview @Composable private fun CheckInActionsDarkPreview() = CoffeePeekTheme(darkTheme = true) {
+    CheckInActions(onEditClick = {}, onReportClick = {})
 }

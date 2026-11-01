@@ -13,6 +13,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.component.CoffeePeekFilterChip
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
+import com.coffeepeek.core.designsystem.icons.CoffeePeekMapIcon
+import com.coffeepeek.core.designsystem.icons.coffeePeekMapIconPainter
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.discovery.domain.model.DiscoveryFilters
@@ -24,7 +26,6 @@ import androidx.compose.ui.tooling.preview.PreviewLightDark
 @Composable
 internal fun DiscoveryQuickFilters(
     filters: DiscoveryFilters, onAction: (SearchAction) -> Unit,
-    cityName: String? = null, onChangeCity: (() -> Unit)? = null,
 ) {
     LazyRow(
         contentPadding = PaddingValues(horizontal = CoffeePeekDimens.spacing4, vertical = 4.dp),
@@ -32,16 +33,23 @@ internal fun DiscoveryQuickFilters(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier.fillMaxWidth(),
     ) {
-        if (onChangeCity != null) item { DiscoveryCityButton(cityName, onChangeCity) }
         item { CoffeePeekFilterChip(stringResource(R.string.discovery_quick_nearby), filters.nearbyOnly, { onAction(SearchAction.ToggleNearby) }, leadingIcon = CoffeePeekIcons.Distance) }
         item { CoffeePeekFilterChip(stringResource(R.string.discovery_quick_open), filters.openOnly, { onAction(SearchAction.ToggleOpen) }, leadingIcon = CoffeePeekIcons.Time) }
         item { CoffeePeekFilterChip(stringResource(R.string.discovery_quick_new), filters.newOnly, { onAction(SearchAction.ToggleNew) }, leadingIcon = CoffeePeekIcons.Sparkle) }
         item { CoffeePeekFilterChip(stringResource(R.string.discovery_quick_visited), filters.visitedOnly, { onAction(SearchAction.ToggleVisited) }, leadingIcon = CoffeePeekIcons.CheckCircle) }
         item { CoffeePeekFilterChip(stringResource(R.string.discovery_quick_favorites), filters.favoritesOnly, { onAction(SearchAction.ToggleFavorites) }, leadingIcon = CoffeePeekIcons.Favorite) }
         items(ShopKind.entries) { kind ->
-            CoffeePeekFilterChip(stringResource(kind.label()), filters.kind == kind, { onAction(SearchAction.SetKind(kind.takeUnless { filters.kind == it })) })
+            CoffeePeekFilterChip(stringResource(kind.label()), filters.kind == kind,
+                { onAction(SearchAction.SetKind(kind.takeUnless { filters.kind == it })) },
+                leadingPainter = coffeePeekMapIconPainter(kind.mapIcon()))
         }
     }
+}
+
+private fun ShopKind.mapIcon() = when (this) {
+    ShopKind.Specialty -> CoffeePeekMapIcon.Specialty
+    ShopKind.CoffeeBar -> CoffeePeekMapIcon.CoffeeShop
+    ShopKind.Cafe -> CoffeePeekMapIcon.Cafe
 }
 
 private fun ShopKind.label() = when (this) {
@@ -53,6 +61,6 @@ private fun ShopKind.label() = when (this) {
 @PreviewLightDark
 @Composable
 private fun DiscoveryQuickFiltersPreview() = CoffeePeekTheme {
-    DiscoveryQuickFilters(DiscoveryFilters(openOnly = true), onAction = {}, cityName = "Минск", onChangeCity = {})
+    DiscoveryQuickFilters(DiscoveryFilters(openOnly = true), onAction = {})
 }
 
