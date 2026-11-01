@@ -148,6 +148,26 @@ response is pending, and changing accounts. No IDE previews, system permission
 dialogs, OAuth flows or real notification writes have been exercised for this
 language checkpoint.
 
+## Post-merge Android test discovery correction — 2026-11-01
+
+Android CI run `41338718893` and Android Release run `41338786416` both failed
+before release packaging on the same JVM unit-test discovery error:
+`EditorRepository > initializationError`, with `Test class can only have one
+constructor`. The Belarusian summary assertion had accidentally been declared
+inside the private repository fake. Earlier class-filtered app test runs did not
+discover that fake and therefore missed the defect.
+
+Reproduced the failure locally on main source `ca75e48d` with the fake selected
+(one failing initialization, 25 seconds). Moved the existing assertion, unchanged,
+into `HomeCheckInEditorTest`; no exclusions, disabled tests or production code
+changes were added. The full unfiltered DirectDebug and PlayDebug unit suites
+then executed: 939 tests in 183 suites per variant, zero failures/errors/skips.
+The Belarusian assertion appears in the correct suite's XML, and the repository
+fake no longer appears as a test suite. Both Debug APK assemblies and packaged
+DEX runtime-class checks passed in the same 53-second Gradle invocation.
+This correction changes common unit-test ownership only; no device/app run or
+permission/account mutation was performed. Existing style/opt-in warnings remain.
+
 ## Primary API references
 
 - [JetBrains resource environment guidance](https://github.com/JetBrains/kotlin-multiplatform-dev-docs/blob/master/topics/compose/compose-resource-environment.md)

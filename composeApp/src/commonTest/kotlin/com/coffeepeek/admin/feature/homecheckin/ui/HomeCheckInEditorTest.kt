@@ -210,6 +210,14 @@ class HomeCheckInEditorTest {
     }
 
     @Test
+    fun summaryUsesPreparedBelarusianForms() {
+        val forms = listOf("памылка", "памылкі", "памылак")
+        val template = "Праверце запоўненыя палі (%1\$s)."
+        assertEquals("Праверце запоўненыя палі (3 памылкі).", homeValidationSummary(3, forms, template))
+        assertEquals("Праверце запоўненыя палі (11 памылак).", homeValidationSummary(11, forms, template))
+    }
+
+    @Test
     fun homeCreationSubmitsOriginalPhotosAndOtherFields() = runBlocking {
         val repository = EditorRepository()
         val original = HomePhotoUpload("home.jpg", "image/jpeg", byteArrayOf(1, 2))
@@ -277,11 +285,4 @@ private class EditorRepository(private val saveFailure: Throwable? = null) : Hom
     override suspend fun beanStats() = Result.success(emptyList<HomeBeanStats>())
     override suspend fun methodStats() = Result.success(emptyList<HomeMethodStats>())
     override suspend fun photo(url: String) = Result.success(byteArrayOf())
-    @Test
-    fun summaryUsesPreparedBelarusianForms() {
-        val forms = listOf("памылка", "памылкі", "памылак")
-        val template = "Праверце запоўненыя палі (%1\$s)."
-        assertEquals("Праверце запоўненыя палі (3 памылкі).", homeValidationSummary(3, forms, template))
-        assertEquals("Праверце запоўненыя палі (11 памылак).", homeValidationSummary(11, forms, template))
-    }
 }
