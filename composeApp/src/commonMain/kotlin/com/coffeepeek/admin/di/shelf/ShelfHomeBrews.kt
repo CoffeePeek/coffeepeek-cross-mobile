@@ -38,6 +38,7 @@ internal class ShelfHomeBrews(private val reader: HomePreparationShelfBagReader,
 }
 
 private fun HomePreparation.shelfBrew() = ShelfBrew(
-    id = id, preparedOn = preparedOn, method = brewMethodCode?.methodLabel(),
+    id = id, preparedOn = preparedOn, method = brewMethodCode?.takeUnless { it == "other" }?.let { it.methodLabel(it) },
+    methodCode = brewMethodCode,
     doseGrams = doseGrams?.replace(',', '.')?.toDoubleOrNull(), score = tasteScore,
 )

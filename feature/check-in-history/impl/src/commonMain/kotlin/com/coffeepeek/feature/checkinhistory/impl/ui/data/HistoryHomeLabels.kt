@@ -5,7 +5,7 @@ import com.coffeepeek.feature.checkinhistory.domain.model.HistoryModeration
 import com.coffeepeek.feature.checkinhistory.domain.model.HistoryVisibility
 import com.coffeepeek.feature.checkinhistory.domain.model.HomeHistoryEntry
 import com.coffeepeek.feature.checkinhistory.impl.resources.*
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 
 @Composable internal fun HomeHistoryEntry.visibilityLabel(): String? = when (visibility) {
     HistoryVisibility.Private -> stringResource(Res.string.history_private)

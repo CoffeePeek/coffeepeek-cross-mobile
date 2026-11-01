@@ -1,0 +1,4 @@
+<resources>
+    <string name="legacy_auth_login_network">Не ўдалося падключыцца. Праверце інтэрнэт-злучэнне</string>
+    <string name="legacy_auth_login_unknown">Не ўдалося ўвайсці. Праверце email і пароль</string>
+</resources>

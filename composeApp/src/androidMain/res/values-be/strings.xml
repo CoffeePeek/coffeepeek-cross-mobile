@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">CoffeePeek</string>
+    <string name="map_cluster_description">Кавярняў у групе: %1$d. Наблізіць карту</string>
+    <string name="map_accessibility_description">Карта кавярняў. Перамяшчайце карту двума пальцамі. Звядзіце або развядзіце два пальцы, каб змяніць маштаб.</string>
+</resources>

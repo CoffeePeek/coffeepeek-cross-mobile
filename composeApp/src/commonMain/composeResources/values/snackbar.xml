@@ -1,0 +1,4 @@
+<resources>
+    <string name="snackbar_dismiss">Скрыть сообщение</string>
+    <string name="snackbar_retrying">Повторяем…</string>
+</resources>

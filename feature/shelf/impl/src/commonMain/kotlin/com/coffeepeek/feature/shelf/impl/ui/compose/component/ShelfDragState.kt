@@ -10,7 +10,7 @@ import androidx.compose.ui.geometry.Rect
 
 internal const val SHELF_COLUMNS = 3
 
-/** Slots of the shelf grid in pixels: three equal columns; a row is a slot, its ledge and the gap below. */
+/** Three bag slots per row; the row includes the exposed rail below the bags and the gap to the next row. */
 internal data class ShelfGridGeometry(val width: Float, val gap: Float, val slotHeight: Float, val rowHeight: Float, val rtl: Boolean = false) {
     val columnWidth: Float get() = (width - gap * (SHELF_COLUMNS - 1)) / SHELF_COLUMNS
 

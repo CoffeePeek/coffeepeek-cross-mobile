@@ -22,7 +22,7 @@ import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.roaster.impl.resources.Res
 import com.coffeepeek.feature.roaster.impl.resources.roaster_detail_back
 import com.coffeepeek.feature.roaster.impl.resources.roaster_share
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable

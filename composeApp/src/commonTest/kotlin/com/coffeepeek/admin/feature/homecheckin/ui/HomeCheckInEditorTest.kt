@@ -203,10 +203,10 @@ class HomeCheckInEditorTest {
 
     @Test
     fun summaryUsesRussianPluralForms() {
-        assertEquals("Проверьте заполненные поля (1 ошибка).", homeValidationSummary(1))
-        assertEquals("Проверьте заполненные поля (3 ошибки).", homeValidationSummary(3))
-        assertEquals("Проверьте заполненные поля (5 ошибок).", homeValidationSummary(5))
-        assertEquals("Проверьте заполненные поля (11 ошибок).", homeValidationSummary(11))
+        assertEquals("Проверьте заполненные поля (1 ошибка).", homeValidationSummary(1, listOf("ошибка", "ошибки", "ошибок"), "Проверьте заполненные поля (%1\$s)."))
+        assertEquals("Проверьте заполненные поля (3 ошибки).", homeValidationSummary(3, listOf("ошибка", "ошибки", "ошибок"), "Проверьте заполненные поля (%1\$s)."))
+        assertEquals("Проверьте заполненные поля (5 ошибок).", homeValidationSummary(5, listOf("ошибка", "ошибки", "ошибок"), "Проверьте заполненные поля (%1\$s)."))
+        assertEquals("Проверьте заполненные поля (11 ошибок).", homeValidationSummary(11, listOf("ошибка", "ошибки", "ошибок"), "Проверьте заполненные поля (%1\$s)."))
     }
 
     @Test
@@ -277,4 +277,11 @@ private class EditorRepository(private val saveFailure: Throwable? = null) : Hom
     override suspend fun beanStats() = Result.success(emptyList<HomeBeanStats>())
     override suspend fun methodStats() = Result.success(emptyList<HomeMethodStats>())
     override suspend fun photo(url: String) = Result.success(byteArrayOf())
+    @Test
+    fun summaryUsesPreparedBelarusianForms() {
+        val forms = listOf("памылка", "памылкі", "памылак")
+        val template = "Праверце запоўненыя палі (%1\$s)."
+        assertEquals("Праверце запоўненыя палі (3 памылкі).", homeValidationSummary(3, forms, template))
+        assertEquals("Праверце запоўненыя палі (11 памылак).", homeValidationSummary(11, forms, template))
+    }
 }

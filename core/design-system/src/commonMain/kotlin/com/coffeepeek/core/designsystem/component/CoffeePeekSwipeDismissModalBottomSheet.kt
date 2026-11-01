@@ -57,6 +57,8 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
  * anchors must see the full dialog viewport to keep the sheet bottom-aligned.
  * [contentWindowInsets] are applied/consumed by Material once, including horizontal
  * cutouts. Material owns IME avoidance; content must not add raw system-bar padding.
+ * [expandToMaxHeight] starts a native sheet at its bounded maximum instead of fitting
+ * its content. Use it for long, scrolling panels with a stable presentation height.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -67,12 +69,14 @@ fun CoffeePeekSwipeDismissModalBottomSheet(
     dismissEnabled: Boolean = true,
     maxSheetHeightFraction: Float? = null,
     contentWindowInsets: @Composable () -> WindowInsets = { WindowInsets.safeDrawing },
+    expandToMaxHeight: Boolean = false,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     require(maxSheetHeightFraction == null || maxSheetHeightFraction > 0f && maxSheetHeightFraction <= 1f) {
         "maxSheetHeightFraction must be in (0, 1]"
     }
-    if (CoffeePeekNativeModalSheet(onDismissRequest, dismissEnabled, maxSheetHeightFraction, modifier, content)) return
+    if (CoffeePeekNativeModalSheetPresentation(onDismissRequest, dismissEnabled, maxSheetHeightFraction,
+        modifier, expandToMaxHeight, content)) return
     val scope = rememberCoroutineScope()
     val currentDismissEnabled by rememberUpdatedState(dismissEnabled)
     val currentOnDismiss by rememberUpdatedState(onDismissRequest)
@@ -171,7 +175,7 @@ private fun CoffeePeekSwipeDismissModalBottomSheetPreviewContent(darkTheme: Bool
 
 @Composable
 private fun CoffeePeekSwipeDismissModalBottomSheetBoundedPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
-    CoffeePeekSwipeDismissModalBottomSheet({}, "Dismiss sheet", maxSheetHeightFraction = 0.76f) {
+    CoffeePeekSwipeDismissModalBottomSheet({}, "Dismiss sheet", maxSheetHeightFraction = 0.8f, expandToMaxHeight = true) {
         Column(Modifier.fillMaxWidth().fillMaxHeight().verticalScroll(rememberScrollState())) {
             repeat(40) { Text("Example row $it", Modifier.padding(8.dp)) }
         }

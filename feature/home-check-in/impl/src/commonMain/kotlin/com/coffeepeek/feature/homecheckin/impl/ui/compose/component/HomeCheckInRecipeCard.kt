@@ -7,7 +7,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import androidx.compose.ui.text.font.FontWeight
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -29,7 +29,7 @@ internal fun HomeCheckInRecipeCard(entry: HomePreparation, methodLabel: String?)
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
                     Text(stringResource(Res.string.home_check_in_method), style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text(methodLabel ?: stringResource(Res.string.home_check_in_unspecified),
+                    Text(homeRecipeMethodLabel(entry, methodLabel),
                         style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
                 }
             }
@@ -66,6 +66,13 @@ private fun durationLabel(seconds: Int): String = listOfNotNull(
     if (seconds / 60 % 60 > 0) stringResource(Res.string.home_check_in_minutes, seconds / 60 % 60) else null,
     if (seconds % 60 > 0 || seconds == 0) stringResource(Res.string.home_check_in_seconds, seconds % 60) else null,
 ).joinToString(" ")
+
+@Composable
+private fun homeRecipeMethodLabel(entry: HomePreparation, label: String?): String {
+    val generic = entry.brewMethodCode == "other" && (label == null || label == entry.brewMethodCode)
+    return if (generic) stringResource(Res.string.home_check_in_method_other)
+    else label ?: stringResource(Res.string.home_check_in_unspecified)
+}
 
 @Composable private fun HomeCheckInRecipeCardPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     HomeCheckInRecipeCard(previewHomePreparation(), "Hario V60")

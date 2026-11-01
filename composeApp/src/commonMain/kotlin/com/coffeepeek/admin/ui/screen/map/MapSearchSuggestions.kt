@@ -1,5 +1,8 @@
 package com.coffeepeek.admin.ui.screen.map
 
+import coffeepeek.composeapp.generated.resources.*
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
+
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -19,13 +22,16 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
 internal fun MapSearchSuggestions(results: List<CoffeeShop>, isLoading: Boolean, failed: Boolean, onSelect: (CoffeeShop) -> Unit) {
+    val localizedLegacyMapSearchSuggestionsDiscoveryMapSearchFailed = stringResource(Res.string.legacy_map_search_suggestions_discovery_map_search_failed)
+    val localizedLegacyMapSearchSuggestionsDiscoveryMapSearchEmpty = stringResource(Res.string.legacy_map_search_suggestions_discovery_map_search_empty)
+
     Surface(Modifier.fillMaxWidth(), shape = RoundedCornerShape(CpDimens.radiusLg),
         color = MaterialTheme.colorScheme.surface, shadowElevation = 6.dp) {
         when {
             isLoading -> Box(Modifier.fillMaxWidth().height(56.dp), contentAlignment = Alignment.Center) {
                 CoffeePeekLoader(size = 24.dp)
             }
-            failed || results.isEmpty() -> Text(if (failed) "Не удалось выполнить поиск" else "Кофейни не найдены",
+            failed || results.isEmpty() -> Text(if (failed) localizedLegacyMapSearchSuggestionsDiscoveryMapSearchFailed else localizedLegacyMapSearchSuggestionsDiscoveryMapSearchEmpty,
                 style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(CpDimens.spacing4))
             else -> Column {

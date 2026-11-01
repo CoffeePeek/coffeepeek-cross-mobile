@@ -15,7 +15,7 @@ import com.coffeepeek.feature.shop.impl.resources.shop_favorite_remove
 import com.coffeepeek.feature.shop.impl.resources.shop_favorite_unavailable
 import com.coffeepeek.feature.shop.impl.resources.shop_favorite_updating
 import dev.chrisbanes.haze.HazeState
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable

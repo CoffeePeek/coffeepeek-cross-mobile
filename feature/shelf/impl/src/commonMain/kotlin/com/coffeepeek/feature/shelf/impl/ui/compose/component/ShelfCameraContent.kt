@@ -30,8 +30,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.selection.toggleable
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
+import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
 import com.coffeepeek.core.designsystem.component.CoffeePeekIconButton as IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -71,7 +71,7 @@ import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.shelf.api.ShelfCameraFocus
 import com.coffeepeek.feature.shelf.api.ShelfCameraStatus
 import com.coffeepeek.feature.shelf.impl.resources.*
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 // The camera chrome sits on a live picture in any theme, so it is white on translucent black rather than themed.
@@ -209,8 +209,8 @@ private fun ShelfShutter(ready: Boolean, capturing: Boolean, onShutter: () -> Un
             drawCircle(Color.White, radius = size.minDimension / 2 - 2.dp.toPx(), style = Stroke(4.dp.toPx()))
             drawCircle(Color.White, radius = size.minDimension / 2 - (if (capturing) 14 else 9).dp.toPx())
         }
-        // While the camera refocuses and shoots, the ring turns into a spinner.
-        if (capturing) CircularProgressIndicator(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.primary, strokeWidth = 4.dp)
+        // Show the same branded loading curve while the camera refocuses and shoots.
+        if (capturing) CoffeePeekLoader(modifier = Modifier.fillMaxSize(), size = 76.dp, color = MaterialTheme.colorScheme.primary, strokeWidth = 4.dp)
     }
 }
 
@@ -289,8 +289,8 @@ private fun ShelfCameraTips(modifier: Modifier, onClose: () -> Unit) {
 private val PreviewActions = ShelfCameraActions({}, {}, {}, { _, _ -> }, {}, {})
 
 @Composable
-private fun ShelfCameraPreview(dark: Boolean, status: ShelfCameraStatus) = CoffeePeekTheme(darkTheme = dark) {
-    ShelfCameraContent(status, torchAvailable = true, torch = false, focus = ShelfCameraFocus(0.5f, 0.45f, sharp = true), capturing = false, frozen = null,
+private fun ShelfCameraPreview(dark: Boolean, status: ShelfCameraStatus, capturing: Boolean = false) = CoffeePeekTheme(darkTheme = dark) {
+    ShelfCameraContent(status, torchAvailable = true, torch = false, focus = ShelfCameraFocus(0.5f, 0.45f, sharp = true), capturing = capturing, frozen = null,
         viewfinder = { Box(it.background(Color(0xFF3A332E))) }, actions = PreviewActions)
 }
 
@@ -298,3 +298,5 @@ private fun ShelfCameraPreview(dark: Boolean, status: ShelfCameraStatus) = Coffe
 @Preview @Composable private fun ShelfCameraDarkPreview() = ShelfCameraPreview(true, ShelfCameraStatus.Ready)
 @Preview @Composable private fun ShelfCameraDeniedLightPreview() = ShelfCameraPreview(false, ShelfCameraStatus.Denied)
 @Preview @Composable private fun ShelfCameraDeniedDarkPreview() = ShelfCameraPreview(true, ShelfCameraStatus.Denied)
+@Preview @Composable private fun ShelfCameraCapturingLightPreview() = ShelfCameraPreview(false, ShelfCameraStatus.Ready, capturing = true)
+@Preview @Composable private fun ShelfCameraCapturingDarkPreview() = ShelfCameraPreview(true, ShelfCameraStatus.Ready, capturing = true)

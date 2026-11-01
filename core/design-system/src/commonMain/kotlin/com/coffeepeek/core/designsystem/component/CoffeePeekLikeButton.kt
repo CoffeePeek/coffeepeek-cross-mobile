@@ -40,7 +40,7 @@ import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.LocalCoffeePeekOpaqueGlass
 import com.coffeepeek.core.designsystem.theme.LocalCoffeePeekOpaqueGlassOverride
 import com.coffeepeek.core.designsystem.modifier.coffeePeekLiquidGlass
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 /** PhotoBadge matches photo ratings; glass styles are reserved for floating controls. */

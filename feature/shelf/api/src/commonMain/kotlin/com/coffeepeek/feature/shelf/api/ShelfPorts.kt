@@ -76,13 +76,14 @@ fun interface ShelfCoffeeSearch {
     suspend fun search(query: String): Result<List<ShelfCoffeeOption>>
 }
 
-/** A home check-in, as a bag's card lists it: [preparedOn] is an ISO date, [method] a display name, [score] 1–5. */
+/** A home check-in: [preparedOn] is ISO, [method] is content display text, and [methodCode] preserves a known method code for UI fallback. */
 data class ShelfBrew(
     val id: String,
     val preparedOn: String,
     val method: String?,
     val doseGrams: Double?,
     val score: Int?,
+    val methodCode: String? = null,
 )
 
 /** The owner's home check-ins brewed from bag [bagId], linked by the check-in itself; the application adapts home check-ins. */

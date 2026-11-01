@@ -1,0 +1,11 @@
+<resources>
+    <string name="appupdate_play_required_unavailable">Обязательное обновление пока недоступно для вашего аккаунта Google Play. Попробуйте позже.</string>
+    <string name="appupdate_play_unavailable">Обновление пока недоступно для вашего аккаунта Google Play. Попробуйте позже.</string>
+    <string name="appupdate_play_required_install">Чтобы продолжить, установите обязательное обновление через Google Play.</string>
+    <string name="appupdate_install_failed">Не удалось установить обновление. Попробуйте ещё раз.</string>
+    <string name="appupdate_play_start_failed">Не удалось запустить обновление через Google Play. Попробуйте ещё раз.</string>
+    <string name="appupdate_download_notification_title">Обновление CoffeePeek</string>
+    <string name="appupdate_download_start_failed">Не удалось начать загрузку. Попробуйте ещё раз.</string>
+    <string name="appupdate_download_verification_failed">Не удалось скачать или проверить обновление. Попробуйте ещё раз.</string>
+    <string name="appupdate_install_permission_required">Разрешите CoffeePeek устанавливать обновления и нажмите «Установить».</string>
+</resources>

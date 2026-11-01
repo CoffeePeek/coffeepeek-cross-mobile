@@ -6,6 +6,7 @@ import dev.chrisbanes.haze.HazeState
 
 enum class GlassControlIcon {
     Back,
+    Forward,
     Add,
     Edit,
     Favorite,

@@ -1,5 +1,9 @@
 package com.coffeepeek.admin.ui.screen.map
 
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
+
+import coffeepeek.composeapp.generated.resources.*
+
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
@@ -28,9 +32,10 @@ internal fun MapShopCarousel(onOpenShop: (String) -> Unit, state: MapUiState, on
         val pager = rememberPagerState(initialPage = carouselStartPage(shops.size, selectedIndex),
             pageCount = { if (shops.size > 1) Int.MAX_VALUE else 1 })
         MapCarouselEffects(pager, shops, selected?.id, selectedIndex, onSelect)
+        val description = stringResource(Res.string.legacy_map_carousel_position, pager.currentPage % shops.size + 1, shops.size)
         HorizontalPager(pager, modifier.fillMaxWidth().semantics {
             collectionInfo = CollectionInfo(1, shops.size)
-            stateDescription = "Кофейня " + (pager.currentPage % shops.size + 1) + " из " + shops.size
+            stateDescription = description
         }, contentPadding = PaddingValues(horizontal = 36.dp), pageSpacing = 12.dp,
             userScrollEnabled = shops.size > 1, beyondViewportPageCount = 1) { page ->
             MapCarouselCard(shops[page % shops.size], state, onOpenShop, onSelect)

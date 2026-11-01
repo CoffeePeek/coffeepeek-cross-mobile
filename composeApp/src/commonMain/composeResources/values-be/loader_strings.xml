@@ -1,0 +1,4 @@
+<resources>
+    <string name="loader_loading">Загрузка</string>
+    <string name="loader_checking_updates">Правяраем абнаўленні…</string>
+</resources>

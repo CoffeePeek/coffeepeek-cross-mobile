@@ -1,5 +1,9 @@
 package com.coffeepeek.admin.ui.component
 
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
+
+import coffeepeek.composeapp.generated.resources.*
+
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.foundation.layout.ColumnScope
@@ -17,7 +21,7 @@ internal data class PlatformAction(
 internal expect fun PlatformAlert(
     title: String,
     message: String,
-    confirmLabel: String = "Понятно",
+    confirmLabel: String = stringResource(Res.string.legacy_error_dialog_shelf_camera_tips_close),
     onConfirm: () -> Unit,
     onDismiss: () -> Unit,
     cancelLabel: String? = null,

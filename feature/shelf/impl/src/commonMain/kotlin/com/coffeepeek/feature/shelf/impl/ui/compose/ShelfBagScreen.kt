@@ -41,7 +41,7 @@ import com.coffeepeek.feature.shelf.impl.ui.compose.model.ShelfBagBrews
 import com.coffeepeek.feature.shelf.impl.ui.compose.model.ShelfBagEvent
 import com.coffeepeek.feature.shelf.impl.ui.compose.model.ShelfBagState
 import com.coffeepeek.feature.shelf.domain.model.ShelfIssue
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 /** The application's home check-in form for [ShelfBrewCoffee], over the bag's screen until it closes. */

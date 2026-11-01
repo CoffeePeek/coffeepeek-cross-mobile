@@ -19,7 +19,7 @@ import com.coffeepeek.feature.shop.impl.ui.compose.ShopDetailScreen
 import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopDetailEvent
 import com.coffeepeek.feature.shop.impl.resources.Res
 import com.coffeepeek.feature.shop.impl.resources.shop_checkins_author_unknown
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 
 /** Composition supplies session-aware repositories and its local clock. No feature Koin lookup. */
 fun createShopDetailEntry(

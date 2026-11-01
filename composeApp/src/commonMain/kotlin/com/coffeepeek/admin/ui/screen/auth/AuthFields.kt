@@ -1,5 +1,8 @@
 package com.coffeepeek.admin.ui.screen.auth
 
+import coffeepeek.composeapp.generated.resources.*
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
+
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
 import androidx.compose.animation.AnimatedVisibility
@@ -51,6 +54,9 @@ fun AuthTextField(
     next: Boolean = false,
     keyboardType: KeyboardType = if (isPassword) KeyboardType.Password else KeyboardType.Email,
 ) {
+    val localizedLegacyAppTextFieldAuthHidePassword = stringResource(Res.string.legacy_app_text_field_auth_hide_password)
+    val localizedLegacyAppTextFieldAuthShowPassword = stringResource(Res.string.legacy_app_text_field_auth_show_password)
+
     var isPasswordVisible by remember { mutableStateOf(false) }
     val isError = errorText != null
     val isDark = MaterialTheme.colorScheme.background.luminance() < 0.5f
@@ -116,7 +122,7 @@ fun AuthTextField(
                     ) {
                         Icon(
                             imageVector = if (isPasswordVisible) CpIcons.VisibilityOff else CpIcons.Visibility,
-                            contentDescription = if (isPasswordVisible) "Скрыть пароль" else "Показать пароль",
+                            contentDescription = if (isPasswordVisible) localizedLegacyAppTextFieldAuthHidePassword else localizedLegacyAppTextFieldAuthShowPassword,
                             modifier = Modifier.size(20.dp),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         )

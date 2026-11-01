@@ -1,5 +1,8 @@
 package com.coffeepeek.admin.ui.screen.shopchange
 
+import coffeepeek.composeapp.generated.resources.*
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
+
 import com.coffeepeek.core.designsystem.component.coffeePeekScreenBottomPadding
 
 import com.coffeepeek.core.designsystem.component.CoffeePeekScaffold as Scaffold
@@ -62,17 +65,23 @@ import org.koin.core.parameter.parametersOf
 
 @Composable
 fun ShopChangeRequestDetailScreen(requestId: String) {
+    val localizedLegacyAddShopScreenSandboxCitiesFailure = stringResource(Res.string.legacy_add_shop_screen_sandbox_cities_failure)
+    val localizedLegacyShopChangeRequestDetailScreenContributionsRequestTitle = stringResource(Res.string.legacy_shop_change_request_detail_screen_contributions_request_title)
+    val localizedLegacyShopChangeRequestDetailScreenContributionsRequestNotFound = stringResource(Res.string.legacy_shop_change_request_detail_screen_contributions_request_not_found)
+    val localizedHistoryHomeRetry = stringResource(Res.string.history_home_retry)
+    val localizedLegacyProfileCheckInsScreenContributionsRequestOpenShop = stringResource(Res.string.legacy_profile_check_ins_screen_contributions_request_open_shop)
+
     val vm: ShopChangeRequestDetailViewModel = platformViewModel(
         parameters = { parametersOf(requestId) },
     )
     val state by vm.state.collectAsState()
 
     state.error?.let { err ->
-        PlatformAlert(title = "Ошибка", message = err, onConfirm = vm::clearError, onDismiss = vm::clearError)
+        PlatformAlert(title = localizedLegacyAddShopScreenSandboxCitiesFailure, message = err, onConfirm = vm::clearError, onDismiss = vm::clearError)
     }
 
     Scaffold(
-        topBar = { CpTopBar("Отправленная правка") },
+        topBar = { CpTopBar(localizedLegacyShopChangeRequestDetailScreenContributionsRequestTitle) },
         containerColor = MaterialTheme.colorScheme.background,
     ) { padding ->
         val request = state.request
@@ -87,13 +96,13 @@ fun ShopChangeRequestDetailScreen(requestId: String) {
                 contentAlignment = Alignment.Center,
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text("Заявка не найдена", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(localizedLegacyShopChangeRequestDetailScreenContributionsRequestNotFound, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Spacer(Modifier.height(CpDimens.spacing3))
                     Button(
                         onClick = vm::refresh,
                         modifier = Modifier.height(CpDimens.buttonHeight),
                         shape = RoundedCornerShape(percent = 50),
-                    ) { Text("Повторить") }
+                    ) { Text(localizedHistoryHomeRetry) }
                 }
             }
 
@@ -120,7 +129,7 @@ fun ShopChangeRequestDetailScreen(requestId: String) {
                 ) {
                     Icon(CpIcons.Coffee, contentDescription = null, modifier = Modifier.size(18.dp))
                     Spacer(Modifier.width(CpDimens.spacing2))
-                    Text("Открыть кофейню")
+                    Text(localizedLegacyProfileCheckInsScreenContributionsRequestOpenShop)
                 }
                 Spacer(Modifier.height(CpDimens.spacing4))
             }
@@ -148,13 +157,13 @@ private fun ChangeHeroCard(section: ShopChangeSection, status: ModerationStatus,
                 Spacer(Modifier.width(CpDimens.spacing3))
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = section.title(),
+                        text = section.localizedTitle(),
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
                     )
                     Spacer(Modifier.height(CpDimens.spacing1))
                     Text(
-                        text = section.hint(),
+                        text = section.localizedHint(),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -183,6 +192,8 @@ private fun ChangeHeroCard(section: ShopChangeSection, status: ModerationStatus,
 
 @Composable
 private fun RejectionCard(reason: String) {
+    val localizedLegacyShopChangeRequestDetailScreenContributionsRequestRejection = stringResource(Res.string.legacy_shop_change_request_detail_screen_contributions_request_rejection)
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -200,7 +211,7 @@ private fun RejectionCard(reason: String) {
         )
         Column {
             Text(
-                text = "Причина отклонения",
+                text = localizedLegacyShopChangeRequestDetailScreenContributionsRequestRejection,
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.error,
@@ -213,8 +224,14 @@ private fun RejectionCard(reason: String) {
 
 @Composable
 private fun ChangePayloadCard(section: ShopChangeSection, payload: ShopChangePayload) {
+    val localizedLegacyShopChangeRequestDetailScreenContributionsRequestPayload = stringResource(Res.string.legacy_shop_change_request_detail_screen_contributions_request_payload)
+    val localizedLegacyShopChangeRequestDetailScreenContributionsRequestSelectedTags = stringResource(Res.string.legacy_shop_change_request_detail_screen_contributions_request_selected_tags)
+    val localizedLegacyShopChangeRequestDetailScreenContributionsRequestSelectedRoasters = stringResource(Res.string.legacy_shop_change_request_detail_screen_contributions_request_selected_roasters)
+    val localizedLegacyShopChangeRequestDetailScreenContributionsRequestSelectedEquipment = stringResource(Res.string.legacy_shop_change_request_detail_screen_contributions_request_selected_equipment)
+    val localizedLegacyShopChangeRequestDetailScreenContributionsRequestSelectedBrewMethods = stringResource(Res.string.legacy_shop_change_request_detail_screen_contributions_request_selected_brew_methods)
+
     val visual = section.visual()
-    DetailCard(title = "Что отправлено", icon = visual.icon, colors = visual.colors) {
+    DetailCard(title = localizedLegacyShopChangeRequestDetailScreenContributionsRequestPayload, icon = visual.icon, colors = visual.colors) {
         when (section) {
             ShopChangeSection.Description -> DescriptionContent(payload.description)
             ShopChangeSection.Contacts -> ContactsContent(payload.contacts)
@@ -222,10 +239,10 @@ private fun ChangePayloadCard(section: ShopChangeSection, payload: ShopChangePay
                 retained = payload.photos?.retainedPhotoIds?.size ?: 0,
                 added = payload.photos?.newPhotos?.size ?: 0,
             )
-            ShopChangeSection.Tags -> CountContent("Выбрано особенностей", payload.tagIds?.size ?: 0)
-            ShopChangeSection.Roasters -> CountContent("Выбрано обжарщиков", payload.roasterIds?.size ?: 0)
-            ShopChangeSection.Equipment -> CountContent("Выбрано оборудования", payload.equipmentIds?.size ?: 0)
-            ShopChangeSection.BrewMethods -> CountContent("Выбрано методов", payload.brewMethodIds?.size ?: 0)
+            ShopChangeSection.Tags -> CountContent(localizedLegacyShopChangeRequestDetailScreenContributionsRequestSelectedTags, payload.tagIds?.size ?: 0)
+            ShopChangeSection.Roasters -> CountContent(localizedLegacyShopChangeRequestDetailScreenContributionsRequestSelectedRoasters, payload.roasterIds?.size ?: 0)
+            ShopChangeSection.Equipment -> CountContent(localizedLegacyShopChangeRequestDetailScreenContributionsRequestSelectedEquipment, payload.equipmentIds?.size ?: 0)
+            ShopChangeSection.BrewMethods -> CountContent(localizedLegacyShopChangeRequestDetailScreenContributionsRequestSelectedBrewMethods, payload.brewMethodIds?.size ?: 0)
             ShopChangeSection.Menu -> MenuContent(payload.menu)
         }
     }
@@ -264,8 +281,10 @@ private fun DetailCard(
 
 @Composable
 private fun DescriptionContent(description: String?) {
+    val localizedLegacyShopChangeRequestDetailScreenContributionsRequestDescriptionRemoved = stringResource(Res.string.legacy_shop_change_request_detail_screen_contributions_request_description_removed)
+
     Text(
-        text = description?.takeIf { it.isNotBlank() } ?: "Описание удалено",
+        text = description?.takeIf { it.isNotBlank() } ?: localizedLegacyShopChangeRequestDetailScreenContributionsRequestDescriptionRemoved,
         style = MaterialTheme.typography.bodyLarge,
         color = if (description.isNullOrBlank()) {
             MaterialTheme.colorScheme.onSurfaceVariant
@@ -275,18 +294,23 @@ private fun DescriptionContent(description: String?) {
 
 @Composable
 private fun ContactsContent(contacts: ShopChangeContacts?) {
+    val localizedLegacyShopChangeEditorScreenOwnershipPhone = stringResource(Res.string.legacy_shop_change_editor_screen_ownership_phone)
+    val localizedLegacyAddRoasterScreenContributionsRequestSite = stringResource(Res.string.legacy_add_roaster_screen_contributions_request_site)
+
     if (contacts == null) {
         EmptyPayloadText()
         return
     }
-    DetailValueRow(CpIcons.Phone, "Телефон", contacts.phoneNumber)
+    DetailValueRow(CpIcons.Phone, localizedLegacyShopChangeEditorScreenOwnershipPhone, contacts.phoneNumber)
     DetailValueRow(CpIcons.Email, "Email", contacts.email)
-    DetailValueRow(CpIcons.Globe, "Сайт", contacts.siteLink)
+    DetailValueRow(CpIcons.Globe, localizedLegacyAddRoasterScreenContributionsRequestSite, contacts.siteLink)
     DetailValueRow(CpIcons.Instagram, "Instagram", contacts.instagramLink)
 }
 
 @Composable
 private fun DetailValueRow(icon: ImageVector, label: String, value: String?) {
+    val localizedLegacyShopChangeRequestDetailScreenContributionsRequestRemoved = stringResource(Res.string.legacy_shop_change_request_detail_screen_contributions_request_removed)
+
     Row(verticalAlignment = Alignment.CenterVertically) {
         Icon(
             imageVector = icon,
@@ -298,7 +322,7 @@ private fun DetailValueRow(icon: ImageVector, label: String, value: String?) {
         Column(modifier = Modifier.weight(1f)) {
             Text(label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Text(
-                text = value?.takeIf { it.isNotBlank() } ?: "Удалено",
+                text = value?.takeIf { it.isNotBlank() } ?: localizedLegacyShopChangeRequestDetailScreenContributionsRequestRemoved,
                 style = MaterialTheme.typography.bodyMedium,
                 color = if (value.isNullOrBlank()) {
                     MaterialTheme.colorScheme.onSurfaceVariant
@@ -312,15 +336,19 @@ private fun DetailValueRow(icon: ImageVector, label: String, value: String?) {
 
 @Composable
 private fun PhotoContent(retained: Int, added: Int) {
+    val localizedLegacyShopChangeRequestDetailScreenContributionsRequestRetained = stringResource(Res.string.legacy_shop_change_request_detail_screen_contributions_request_retained)
+    val localizedLegacyShopChangeRequestDetailScreenContributionsRequestAdded = stringResource(Res.string.legacy_shop_change_request_detail_screen_contributions_request_added)
+    val localizedLegacyShopChangeRequestDetailScreenContributionsRequestGalleryNote = stringResource(Res.string.legacy_shop_change_request_detail_screen_contributions_request_gallery_note)
+
     Row(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing3),
     ) {
-        StatBlock(value = retained.toString(), label = "Сохранено", modifier = Modifier.weight(1f))
-        StatBlock(value = added.toString(), label = "Добавлено", modifier = Modifier.weight(1f))
+        StatBlock(value = retained.toString(), label = localizedLegacyShopChangeRequestDetailScreenContributionsRequestRetained, modifier = Modifier.weight(1f))
+        StatBlock(value = added.toString(), label = localizedLegacyShopChangeRequestDetailScreenContributionsRequestAdded, modifier = Modifier.weight(1f))
     }
     Text(
-        text = "Новый состав галереи применится после одобрения.",
+        text = localizedLegacyShopChangeRequestDetailScreenContributionsRequestGalleryNote,
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
@@ -328,9 +356,11 @@ private fun PhotoContent(retained: Int, added: Int) {
 
 @Composable
 private fun CountContent(label: String, count: Int) {
+    val localizedLegacyShopChangeRequestDetailScreenContributionsRequestSetNote = stringResource(Res.string.legacy_shop_change_request_detail_screen_contributions_request_set_note)
+
     StatBlock(value = count.toString(), label = label, modifier = Modifier.fillMaxWidth())
     Text(
-        text = "Новый набор применится после одобрения.",
+        text = localizedLegacyShopChangeRequestDetailScreenContributionsRequestSetNote,
         style = MaterialTheme.typography.bodySmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
@@ -338,6 +368,9 @@ private fun CountContent(label: String, count: Int) {
 
 @Composable
 private fun MenuContent(menu: ShopChangeMenu?) {
+    val localizedLegacyShopChangeRequestDetailScreenContributionsRequestMenuItems = stringResource(Res.string.legacy_shop_change_request_detail_screen_contributions_request_menu_items)
+    val localizedLegacyAddShopScreenContributionsRequestMenuPhotos = stringResource(Res.string.legacy_add_shop_screen_contributions_request_menu_photos)
+
     if (menu == null) {
         EmptyPayloadText()
         return
@@ -346,10 +379,10 @@ private fun MenuContent(menu: ShopChangeMenu?) {
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing3),
     ) {
-        StatBlock(menu.items.size.toString(), "Позиций", Modifier.weight(1f))
+        StatBlock(menu.items.size.toString(), localizedLegacyShopChangeRequestDetailScreenContributionsRequestMenuItems, Modifier.weight(1f))
         StatBlock(
             (menu.retainedPhotoIds.size + menu.newPhotos.size).toString(),
-            "Фото меню",
+            localizedLegacyAddShopScreenContributionsRequestMenuPhotos,
             Modifier.weight(1f),
         )
     }
@@ -359,7 +392,7 @@ private fun MenuContent(menu: ShopChangeMenu?) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(item.slug, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
                 val details = listOfNotNull(
-                    item.volumeMl?.let { "$it мл" },
+                    item.volumeMl?.let { stringResource(Res.string.legacy_milliliters, it) },
                     item.price?.let { "$it BYN" },
                 ).joinToString(" · ")
                 if (details.isNotEmpty()) {
@@ -394,8 +427,10 @@ private fun StatBlock(value: String, label: String, modifier: Modifier = Modifie
 
 @Composable
 private fun EmptyPayloadText() {
+    val localizedLegacyShopChangeRequestDetailScreenContributionsRequestEmpty = stringResource(Res.string.legacy_shop_change_request_detail_screen_contributions_request_empty)
+
     Text(
-        text = "В заявке нет данных для отображения.",
+        text = localizedLegacyShopChangeRequestDetailScreenContributionsRequestEmpty,
         style = MaterialTheme.typography.bodyMedium,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
@@ -441,8 +476,9 @@ private fun ModerationStatus.color(): Color = when (this) {
     ModerationStatus.Rejected -> CpColor.Error
 }
 
+@Composable
 private fun MenuItemAvailability.title() = when (this) {
-    MenuItemAvailability.Unknown -> "Не указано"
-    MenuItemAvailability.Present -> "Есть"
-    MenuItemAvailability.Absent -> "Нет"
+    MenuItemAvailability.Unknown -> stringResource(Res.string.legacy_shop_change_editor_screen_contributions_availability_unknown)
+    MenuItemAvailability.Present -> stringResource(Res.string.legacy_shop_change_editor_screen_contributions_availability_present)
+    MenuItemAvailability.Absent -> stringResource(Res.string.legacy_shop_change_editor_screen_contributions_availability_absent)
 }

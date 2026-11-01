@@ -19,7 +19,7 @@ import dev.chrisbanes.haze.HazeState
 import com.coffeepeek.feature.shop.impl.resources.Res
 import com.coffeepeek.feature.shop.impl.resources.shop_detail_share
 import com.coffeepeek.feature.shop.impl.resources.shop_detail_suggest_change
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable

@@ -2,6 +2,7 @@ package com.coffeepeek.admin.ui.screen.auth.registr
 
 import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.utils.LoadingHandler
+import com.coffeepeek.admin.utils.InputValidationIssue
 import com.coffeepeek.domain.model.AppleLoginChallenge
 import com.coffeepeek.domain.model.Session
 import com.coffeepeek.domain.repository.AuthRepository
@@ -16,9 +17,7 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 /**
- * The legacy registration view model as it behaves today: steps, email check and field errors. The texts that come from compose
- * resources (taken e-mail, the single submit message and its priority) cannot be read in a plain unit test, so they are
- * characterized from the code and on the device (see feature/auth/LEGACY_INVENTORY.md, C2 and C4).
+ * Legacy registration steps and typed field errors. Prepared copy keeps validation and failure paths independent of resource IO.
  */
 class RegisterViewModelTest {
     private class FakeAuth(var taken: Boolean = false) : AuthRepository {
@@ -45,8 +44,8 @@ class RegisterViewModelTest {
         val vm = viewModel(auth)
         try {
             vm.onEmailChange("nope")
-            vm.onContinueEmail()
-            assertEquals("Введите корректный email", vm.emailError.value)
+            vm.onContinueEmail { russianRegistrationErrorCopy }
+            assertEquals(InputValidationIssue.EmailInvalid, vm.emailError.value)
             assertEquals(RegisterStep.Email, vm.step.value)
             assertTrue(auth.emailChecks.isEmpty())
             vm.onEmailChange("nope2")
@@ -59,7 +58,7 @@ class RegisterViewModelTest {
         val vm = viewModel(auth)
         try {
             vm.onEmailChange(" person@example.com ")
-            vm.onContinueEmail()
+            vm.onContinueEmail { russianRegistrationErrorCopy }
             withTimeout(5_000) { vm.step.first { it == RegisterStep.Details } }
             idle()
             assertEquals(listOf("person@example.com"), auth.emailChecks)
@@ -68,11 +67,11 @@ class RegisterViewModelTest {
     }
 
     @Test fun anInvalidSubmitMarksTheFieldsAndSendsNothingNorSavesConsent() = runBlocking<Unit> {
-        class Case(val email: String, val password: String, val emailError: String?, val passwordError: String?)
+        class Case(val email: String, val password: String, val emailError: InputValidationIssue?, val passwordError: InputValidationIssue?)
         val cases = listOf(
-            Case("person@example.com", "short", null, "Пароль должен содержать как минимум 8 символов"),
-            Case("bad", "TestPassword123", "Введите корректный email", null),
-            Case("", "short", "Введите email", "Пароль должен содержать как минимум 8 символов"),
+            Case("person@example.com", "short", null, InputValidationIssue.PasswordTooShort(8)),
+            Case("bad", "TestPassword123", InputValidationIssue.EmailInvalid, null),
+            Case("", "short", InputValidationIssue.EmailRequired, InputValidationIssue.PasswordTooShort(8)),
         )
         for (case in cases) {
             val auth = FakeAuth()
@@ -83,7 +82,7 @@ class RegisterViewModelTest {
                 vm.onPasswordChange(case.password)
                 vm.onTermsCheckedChange(true)
                 vm.onAnalyticsCheckedChange(true)
-                vm.onRegisterClick()
+                vm.onRegisterClick { russianRegistrationErrorCopy }
                 withTimeout(5_000) {
                     vm.emailError.first { it == case.emailError }
                     vm.passwordError.first { it == case.passwordError }
@@ -102,12 +101,12 @@ class RegisterViewModelTest {
         val vm = viewModel(FakeAuth())
         try {
             vm.onNameChange("Coffee User"); vm.onEmailChange("person@example.com"); vm.onPasswordChange("1234567")
-            vm.onRegisterClick()
+            vm.onRegisterClick { russianRegistrationErrorCopy }
             withTimeout(5_000) { vm.passwordError.first { it != null } }
             idle()
-            assertEquals("Пароль должен содержать как минимум 8 символов", vm.passwordError.value)
+            assertEquals(InputValidationIssue.PasswordTooShort(8), vm.passwordError.value)
             vm.onPasswordChange("12345")
-            assertEquals("Пароль должен содержать как минимум 8 символов", vm.passwordError.value, "While an error is shown it is validated live")
+            assertEquals(InputValidationIssue.PasswordTooShort(8), vm.passwordError.value, "While an error is shown it is validated live")
             vm.onPasswordChange("12345678")
             assertNull(vm.passwordError.value, "A valid value clears it")
             vm.onPasswordChange("1234567")
@@ -120,7 +119,7 @@ class RegisterViewModelTest {
         val vm = viewModel(auth)
         try {
             vm.onEmailChange("person@example.com")
-            vm.onContinueEmail()
+            vm.onContinueEmail { russianRegistrationErrorCopy }
             withTimeout(5_000) { vm.step.first { it == RegisterStep.Details } }
             idle()
             vm.onPasswordChange("x"); vm.onBack()

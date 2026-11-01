@@ -17,7 +17,7 @@ import com.coffeepeek.feature.checkinhistory.domain.model.*
 import com.coffeepeek.feature.checkinhistory.impl.resources.*
 import com.coffeepeek.feature.checkinhistory.impl.ui.data.historyBrewMethodLabel
 import com.coffeepeek.feature.checkinhistory.impl.ui.data.visibilityLabel
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 
 @Composable
 internal fun HistoryHomeTimelineCard(entry: HomeHistoryEntry, timeLabel: String, onClick: () -> Unit) {

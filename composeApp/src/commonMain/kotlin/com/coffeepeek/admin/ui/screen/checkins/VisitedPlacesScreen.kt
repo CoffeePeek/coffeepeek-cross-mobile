@@ -1,5 +1,8 @@
 package com.coffeepeek.admin.ui.screen.checkins
 
+import coffeepeek.composeapp.generated.resources.*
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
+
 import com.coffeepeek.core.designsystem.component.coffeePeekScrollContentPadding
 
 import com.coffeepeek.core.designsystem.component.CoffeePeekScaffold as Scaffold
@@ -22,6 +25,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import com.coffeepeek.core.designsystem.component.CoffeePeekTextButton as TextButton
+import com.coffeepeek.admin.ui.component.pluralCountLabel
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -52,6 +56,12 @@ import com.coffeepeek.domain.model.CheckIn
 
 @Composable
 fun VisitedPlacesScreen(vm: VisitedPlacesViewModel = platformViewModel()) {
+    val localizedCheckinSheetTitle = stringResource(Res.string.checkin_sheet_title)
+    val localizedLegacyProfileCheckInsScreenContributionsRequestOpenShop = stringResource(Res.string.legacy_profile_check_ins_screen_contributions_request_open_shop)
+    val localizedProfileStatCheckIns = stringResource(Res.string.profile_stat_check_ins)
+    val localizedLegacyVisitedPlacesScreenCalendar = stringResource(Res.string.legacy_visited_places_screen_calendar)
+    val localizedLegacyVisitedPlacesScreenSandboxFeedTitle = stringResource(Res.string.legacy_visited_places_screen_sandbox_feed_title)
+
     val state by vm.state.collectAsState()
     var viewMode by rememberSaveable { mutableStateOf(CheckInViewMode.Calendar) }
     var photoPreview by remember { mutableStateOf<Pair<PhotoViewerImages, Int>?>(null) }
@@ -60,7 +70,7 @@ fun VisitedPlacesScreen(vm: VisitedPlacesViewModel = platformViewModel()) {
     selectedCheckIn?.let { checkIn ->
         SwipeDismissModalBottomSheet(onDismissRequest = { selectedCheckIn = null }) {
             PlatformScrollableColumn(Modifier.fillMaxWidth().weight(1f, fill = false)) {
-                Text("Чекин", style = MaterialTheme.typography.titleLarge,
+                Text(localizedCheckinSheetTitle, style = MaterialTheme.typography.titleLarge,
                     modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp))
                 CheckInDisplayCard(
                     checkIn = checkIn, fullVersion = true,
@@ -73,7 +83,7 @@ fun VisitedPlacesScreen(vm: VisitedPlacesViewModel = platformViewModel()) {
                         Navigator.navigate(Navigator.Screen.ShopDetail(checkIn.shopId))
                     },
                     modifier = Modifier.fillMaxWidth().padding(16.dp),
-                ) { Text("Открыть кофейню") }
+                ) { Text(localizedLegacyProfileCheckInsScreenContributionsRequestOpenShop) }
             }
         }
     }
@@ -87,14 +97,14 @@ fun VisitedPlacesScreen(vm: VisitedPlacesViewModel = platformViewModel()) {
     }
 
     Scaffold(
-        topBar = { CpTopBar("Чекины") },
+        topBar = { CpTopBar(localizedProfileStatCheckIns) },
         containerColor = MaterialTheme.colorScheme.background,
     ) { padding ->
         Column(Modifier.fillMaxSize().padding(padding)) {
             CapsuleSegmentedControl(
                 options = CheckInViewMode.entries,
                 selected = viewMode,
-                label = { if (it == CheckInViewMode.Calendar) "Календарь" else "Лента" },
+                label = { if (it == CheckInViewMode.Calendar) localizedLegacyVisitedPlacesScreenCalendar else localizedLegacyVisitedPlacesScreenSandboxFeedTitle },
                 onSelected = { selected ->
                     viewMode = selected
                     if (selected == CheckInViewMode.List && state.checkIns.isEmpty() && !state.isLoading) {
@@ -135,6 +145,11 @@ internal fun CheckInCalendarContent(
     onCheckInClick: (CheckIn) -> Unit,
     today: String = utcIsoToLocalDate(currentUtcIsoDateTime()),
 ) {
+    val labels = checkInCalendarLabels()
+
+    val localizedLegacyProfileCheckInsScreenHistoryDayEmpty = stringResource(Res.string.legacy_profile_check_ins_screen_history_day_empty)
+    val localizedLegacyVisitedPlacesScreenHistoryMonthEmpty = stringResource(Res.string.legacy_visited_places_screen_history_month_empty)
+
     val selectedCheckIns = remember(state.calendarCheckIns, state.selectedDate) {
         state.selectedDate?.let(state.calendarCheckIns::get).orEmpty()
             .sortedBy { it.visitedAt.ifBlank { it.createdAt } }
@@ -171,12 +186,12 @@ internal fun CheckInCalendarContent(
             item {
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(
-                        text = selectedDateTitle(state.selectedDate, includeYear = state.calendarMonth.year != calendarMonthFromIsoDate(today)?.year),
+                        text = selectedDateTitle(state.selectedDate, labels, includeYear = state.calendarMonth.year != calendarMonthFromIsoDate(today)?.year),
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onBackground,
                     )
-                    Text("${calendarWeekday(state.selectedDate)} · ${visitCount(selectedCheckIns.size)}",
+                    Text("${calendarWeekday(state.selectedDate, labels.weekdays)} · ${visitCount(selectedCheckIns.size, labels)}",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
@@ -184,7 +199,7 @@ internal fun CheckInCalendarContent(
             if (selectedCheckIns.isEmpty()) {
                 item {
                     Text(
-                        text = "В этот день чекинов не было",
+                        text = localizedLegacyProfileCheckInsScreenHistoryDayEmpty,
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -207,7 +222,7 @@ internal fun CheckInCalendarContent(
         } else {
             item {
                 Text(
-                    text = "В этом месяце пока нет чекинов",
+                    text = localizedLegacyVisitedPlacesScreenHistoryMonthEmpty,
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -222,6 +237,8 @@ private fun CheckInListContent(
     vm: VisitedPlacesViewModel,
     onPhotoClick: (PhotoViewerImages, Int) -> Unit,
 ) {
+    val localizedProfileCheckinsEmpty = stringResource(Res.string.profile_checkins_empty)
+
     val listState = rememberLazyListState()
     val shouldLoadMore by remember(state.checkIns.size, state.hasMore, state.isLoadingMore) {
         derivedStateOf {
@@ -239,7 +256,7 @@ private fun CheckInListContent(
         }
         state.error != null && state.checkIns.isEmpty() -> ErrorMessage(state.error, vm::refresh)
         state.checkIns.isEmpty() -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text("Пока нет чекинов", color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(localizedProfileCheckinsEmpty, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         else -> LazyColumn(
             modifier = Modifier.fillMaxSize(),
@@ -260,50 +277,33 @@ private fun CheckInListContent(
 
 @Composable
 private fun ErrorMessage(message: String?, onRetry: () -> Unit) {
+    val localizedLegacyAddShopScreenSandboxCitiesFailure = stringResource(Res.string.legacy_add_shop_screen_sandbox_cities_failure)
+    val localizedRetry = stringResource(Res.string.retry)
+
     Column(
         modifier = Modifier.fillMaxWidth().padding(CpDimens.spacing4),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Text(message ?: "Ошибка", color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(message ?: localizedLegacyAddShopScreenSandboxCitiesFailure, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Button(
             onClick = onRetry,
             modifier = Modifier.padding(top = CpDimens.spacing3).height(CpDimens.buttonHeight),
             shape = RoundedCornerShape(percent = 50),
         ) {
-            Text("Попробовать снова")
+            Text(localizedRetry)
         }
     }
 }
 
-private val monthNames = listOf(
-    "Январь", "Февраль", "Март", "Апрель", "Май", "Июнь",
-    "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь",
-)
+internal fun monthTitle(month: CalendarMonth, labels: CheckInCalendarLabels) = "${labels.months[month.month - 1]} ${month.year}"
 
-private val monthNamesGenitive = listOf(
-    "января", "февраля", "марта", "апреля", "мая", "июня",
-    "июля", "августа", "сентября", "октября", "ноября", "декабря",
-)
-
-internal fun monthTitle(month: CalendarMonth) = "${monthNames[month.month - 1]} ${month.year}"
-
-internal fun selectedDateTitle(date: String, includeYear: Boolean = true): String {
+internal fun selectedDateTitle(date: String, labels: CheckInCalendarLabels, includeYear: Boolean = true): String {
     val parts = date.split('-')
     val year = parts.getOrNull(0)?.toIntOrNull() ?: return date
     val month = parts.getOrNull(1)?.toIntOrNull()?.takeIf { it in 1..12 } ?: return date
     val day = parts.getOrNull(2)?.toIntOrNull() ?: return date
-    return "$day ${monthNamesGenitive[month - 1]}" + if (includeYear) " $year" else ""
+    return "$day ${labels.genitiveMonths[month - 1]}" + if (includeYear) " $year" else ""
 }
 
-internal fun visitCount(count: Int) = "$count ${plural(count, "чекин", "чекина", "чекинов")}"
-internal fun shopCount(count: Int) = "$count ${plural(count, "кофейня", "кофейни", "кофеен")}"
-
-private fun plural(value: Int, one: String, few: String, many: String): String {
-    val mod100 = value % 100
-    if (mod100 in 11..14) return many
-    return when (value % 10) {
-        1 -> one
-        2, 3, 4 -> few
-        else -> many
-    }
-}
+internal fun visitCount(count: Int, labels: CheckInCalendarLabels) = pluralCountLabel(count, labels.checkIns)
+internal fun shopCount(count: Int, labels: CheckInCalendarLabels) = pluralCountLabel(count, labels.shops)

@@ -30,7 +30,7 @@ import com.coffeepeek.feature.shop.impl.resources.shop_features_show_all_count_f
 import com.coffeepeek.feature.shop.impl.resources.shop_features_show_all_count_many
 import com.coffeepeek.feature.shop.impl.resources.shop_features_show_all_count_one
 import com.coffeepeek.feature.shop.impl.resources.shop_features_title
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 private const val PREVIEW_FEATURE_COUNT = 5

@@ -1,0 +1,14 @@
+<resources>
+    <string name="auth_email_placeholder">name@example.com</string>
+    <string name="auth_edit_email">Змяніць email</string>
+    <string name="auth_or">АБО</string>
+    <string name="auth_recovery_title">Аднаўленне пароля</string>
+    <string name="auth_recovery_description">Увядзіце email акаўнта — мы адправім спасылку для аднаўлення пароля.</string>
+    <string name="auth_recovery_sent">Калі акаўнт з гэтым email існуе, на яго адпраўлены ліст. Адкрыйце спасылку з ліста ў браўзеры і змяніце пароль на сайце. Потым вярніцеся ў праграму і ўвайдзіце з новым паролем. Праверце таксама папку «Спам».</string>
+    <string name="auth_recovery_send">Адправіць ліст</string>
+    <string name="auth_recovery_busy">Пачакайце…</string>
+    <string name="auth_recovery_login">Вярнуцца да ўваходу</string>
+    <string name="auth_recovery_another_email">Пазначыць іншы email</string>
+    <string name="auth_analytics_consent">Дазволіць аналітыку выкарыстання</string>
+    <string name="auth_analytics_description">Неабавязкова. Падзеі выкарыстання адпраўляюцца ў PostHog (ЕС), каб паляпшаць CoffeePeek. Без тэкстаў пошуку, нататак, фота і дакладных каардынат. Рашэнне можна змяніць у наладах.</string>
+</resources>

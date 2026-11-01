@@ -1,5 +1,7 @@
 package com.coffeepeek.admin.ui.screen.shop
 
+import coffeepeek.composeapp.generated.resources.*
+
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
 import com.coffeepeek.admin.ui.component.NativeDatePicker
@@ -54,7 +56,7 @@ import coffeepeek.composeapp.generated.resources.checkin_note_label
 import coffeepeek.composeapp.generated.resources.checkin_note_placeholder
 import coffeepeek.composeapp.generated.resources.checkin_photos_label
 import coffeepeek.composeapp.generated.resources.checkin_sheet_title
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import com.coffeepeek.admin.theme.CpDimens
 import com.coffeepeek.admin.ui.component.AppButton
 import com.coffeepeek.admin.ui.component.PhotoAttachmentsSection
@@ -85,6 +87,8 @@ fun CheckInBottomSheet(
     onGoToFeed: () -> Unit,
     onViewCheckIns: () -> Unit,
 ) {
+    val localizedCheckinDateLabel = stringResource(Res.string.checkin_date_label)
+
     var showDatePicker by remember { mutableStateOf(false) }
     val visitDateMillis = remember(draft.visitMillis, showDatePicker) { instantToDatePickerMillis(draft.visitMillis) }
     val todayMillis = remember(showDatePicker) { instantToDatePickerMillis(currentEpochMillis()) }
@@ -93,7 +97,7 @@ fun CheckInBottomSheet(
     val keyboardController = LocalSoftwareKeyboardController.current
 
     if (showDatePicker && !NativeDatePicker(
-        title = "Дата посещения", initialMillis = visitDateMillis, maximumMillis = todayMillis, timeOnly = false,
+        title = localizedCheckinDateLabel, initialMillis = visitDateMillis, maximumMillis = todayMillis, timeOnly = false,
         onConfirm = { onDraftChange(draft.withVisitDate(it)) }, onDismiss = { showDatePicker = false },
     )) {
         val datePickerState = rememberDatePickerState(
@@ -259,7 +263,7 @@ fun CheckInBottomSheet(
                             )
                         },
                         title = stringResource(Res.string.checkin_photos_label),
-                        hint = "Добавьте до $MAX_REVIEW_PHOTOS фото вашего визита.",
+                        hint = stringResource(Res.string.legacy_visit_photos_hint, MAX_REVIEW_PHOTOS),
                     )
                 }
 

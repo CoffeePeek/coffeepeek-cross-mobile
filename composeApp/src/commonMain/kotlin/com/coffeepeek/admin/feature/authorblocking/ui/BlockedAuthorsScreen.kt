@@ -1,5 +1,8 @@
 package com.coffeepeek.admin.feature.authorblocking.ui
 
+import coffeepeek.composeapp.generated.resources.*
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -27,18 +30,27 @@ import org.koin.compose.koinInject
 
 @Composable
 internal fun BlockedAuthorsScreen(vm: AuthorBlockingPresenter = koinInject()) {
+    val localizedLegacyBlockedAuthorsScreenBlockedAccounts = stringResource(Res.string.legacy_blocked_authors_screen_blocked_accounts)
+    val localizedProfileMenuBlockedAuthors = stringResource(Res.string.profile_menu_blocked_authors)
+    val localizedLegacyBlockedAuthorsScreenBlockedAuthorsMessage = stringResource(Res.string.legacy_blocked_authors_screen_blocked_authors_message)
+    val localizedLegacyBlockedAuthorsScreenListLoadFailed = stringResource(Res.string.legacy_blocked_authors_screen_list_load_failed)
+    val localizedHistoryHomeRetry = stringResource(Res.string.history_home_retry)
+    val localizedLegacyBlockedAuthorsScreenBlockedAuthorsEmpty = stringResource(Res.string.legacy_blocked_authors_screen_blocked_authors_empty)
+    val localizedLegacyBlockedAuthorsScreenBlockedAuthorsEmptyMessage = stringResource(Res.string.legacy_blocked_authors_screen_blocked_authors_empty_message)
+    val localizedLegacyAuthorBlockingHostProfileUnblock = stringResource(Res.string.legacy_author_blocking_host_profile_unblock)
+
     val state by vm.blocks.collectAsState()
     val prompt by vm.prompt.collectAsState()
     val colors = MaterialTheme.colorScheme
     LaunchedEffect(vm) { vm.refresh() }
     Column(Modifier.fillMaxSize().background(colors.background)) {
-        CpTopBar(title = "Блокировки")
+        CpTopBar(title = localizedLegacyBlockedAuthorsScreenBlockedAccounts)
         LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(horizontal = CpDimens.settingsPagePadding, vertical = CpDimens.spacing4),
             verticalArrangement = Arrangement.spacedBy(CpDimens.spacing3)) {
             item {
-                BasicText("Заблокированные авторы", Modifier.semantics { heading() }, style = MaterialTheme.typography.headlineSmall.copy(color = colors.onBackground))
+                BasicText(localizedProfileMenuBlockedAuthors, Modifier.semantics { heading() }, style = MaterialTheme.typography.headlineSmall.copy(color = colors.onBackground))
                 Spacer(Modifier.height(CpDimens.spacing2))
-                BasicText("Вы не видите публикации этих авторов. Разблокировка не восстанавливает подписки.", style = MaterialTheme.typography.bodyMedium.copy(color = colors.onSurfaceVariant))
+                BasicText(localizedLegacyBlockedAuthorsScreenBlockedAuthorsMessage, style = MaterialTheme.typography.bodyMedium.copy(color = colors.onSurfaceVariant))
                 Spacer(Modifier.height(CpDimens.spacing2))
             }
             when {
@@ -51,13 +63,13 @@ internal fun BlockedAuthorsScreen(vm: AuthorBlockingPresenter = koinInject()) {
                     }
                     state.error?.let { error -> item {
                         BlockedAuthorsCard {
-                            BasicText("Не удалось загрузить список", style = MaterialTheme.typography.titleMedium.copy(color = colors.onSurface))
+                            BasicText(localizedLegacyBlockedAuthorsScreenListLoadFailed, style = MaterialTheme.typography.titleMedium.copy(color = colors.onSurface))
                             BasicText(error, style = MaterialTheme.typography.bodyMedium.copy(color = colors.onSurfaceVariant))
-                            CpTextAction("Повторить", vm::refresh, Modifier.align(Alignment.Start), emphasized = true)
+                            CpTextAction(localizedHistoryHomeRetry, vm::refresh, Modifier.align(Alignment.Start), emphasized = true)
                         }
                     } }
                     if (state.ready && !state.loading && state.error == null && state.items.isEmpty()) item {
-                        CpEmptyState("Нет заблокированных авторов", "Когда вы заблокируете автора, он появится здесь.", CpIcons.VisibilityOff, Modifier.padding(top = CpDimens.spacing6))
+                        CpEmptyState(localizedLegacyBlockedAuthorsScreenBlockedAuthorsEmpty, localizedLegacyBlockedAuthorsScreenBlockedAuthorsEmptyMessage, CpIcons.VisibilityOff, Modifier.padding(top = CpDimens.spacing6))
                     }
                     items(state.items, key = { it.id }) { author ->
                         val shape = RoundedCornerShape(CpDimens.cardRadius)
@@ -73,7 +85,7 @@ internal fun BlockedAuthorsScreen(vm: AuthorBlockingPresenter = koinInject()) {
                                     author.slug?.let { BasicText("@$it", style = MaterialTheme.typography.bodySmall.copy(color = colors.onSurfaceVariant), maxLines = 1, overflow = TextOverflow.Ellipsis) }
                                 }
                             }
-                            CpTextAction("Разблокировать", enabled = prompt?.working != true,
+                            CpTextAction(localizedLegacyAuthorBlockingHostProfileUnblock, enabled = prompt?.working != true,
                                 onClick = { vm.requestUnblock(AuthorReference(author.id, author.slug, author.name, author.avatarUrl)) })
                         }
                     }

@@ -12,7 +12,7 @@ import com.coffeepeek.admin.analytics.AnalyticsOverlay
 import com.coffeepeek.admin.di.homecheckin.homeCheckInDates
 import com.coffeepeek.admin.utils.utcIsoToLocalDateTime
 import com.coffeepeek.core.designsystem.component.CoffeePeekSwipeDismissModalBottomSheet
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 
 /** One app-owned sheet; feature entries render its body without nesting another editor/detail modal. */
 @Composable

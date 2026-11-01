@@ -1,5 +1,7 @@
 package com.coffeepeek.admin.ui.component
 
+import coffeepeek.composeapp.generated.resources.*
+
 import com.coffeepeek.core.datetime.parseServerInstant
 import com.coffeepeek.core.designsystem.component.CoffeePeekLikeIcon
 
@@ -71,7 +73,8 @@ import com.coffeepeek.admin.utils.formatOneDecimal
 import coffeepeek.composeapp.generated.resources.Res
 import coffeepeek.composeapp.generated.resources.coffeepeek_legacy_choose_rating
 import coffeepeek.composeapp.generated.resources.coffeepeek_legacy_rating_description
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringArrayResource as stringArrayResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import coffeepeek.composeapp.generated.resources.checkin_rating_atmosphere
@@ -196,38 +199,44 @@ fun ReviewRatingCards(
     onPlaceRatingChange: (Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val localizedLegacyReviewContentCommunityRatingsTitle = stringResource(Res.string.legacy_review_content_community_ratings_title)
+    val localizedLegacyReviewContentCommunityRatingsHint = stringResource(Res.string.legacy_review_content_community_ratings_hint)
+    val localizedCheckinRatingCoffee = stringResource(Res.string.checkin_rating_coffee)
+    val localizedCheckinRatingService = stringResource(Res.string.checkin_rating_service)
+    val localizedLegacyReviewContentCommunityRatingAtmosphere = stringResource(Res.string.legacy_review_content_community_rating_atmosphere)
+
     Column(
         modifier = modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(CpDimens.spacing2),
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(
-                text = "Ваши оценки",
+                text = localizedLegacyReviewContentCommunityRatingsTitle,
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface,
             )
             Text(
-                text = "Нажмите на звёзды, чтобы изменить оценку",
+                text = localizedLegacyReviewContentCommunityRatingsHint,
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
         EditableRatingCard(
             image = Res.drawable.checkin_rating_coffee,
-            label = "Кофе",
+            label = localizedCheckinRatingCoffee,
             rating = coffeeRating,
             onRatingChange = onCoffeeRatingChange,
         )
         EditableRatingCard(
             image = Res.drawable.checkin_rating_service,
-            label = "Сервис",
+            label = localizedCheckinRatingService,
             rating = serviceRating,
             onRatingChange = onServiceRatingChange,
         )
         EditableRatingCard(
             image = Res.drawable.checkin_rating_atmosphere,
-            label = "Атмосфера",
+            label = localizedLegacyReviewContentCommunityRatingAtmosphere,
             rating = placeRating,
             onRatingChange = onPlaceRatingChange,
         )
@@ -273,10 +282,14 @@ internal fun EditableRatingCard(
 
 @Composable
 fun ReviewRatingSummary(rating: ReviewRating, modifier: Modifier = Modifier) {
+    val localizedCheckinRatingCoffee = stringResource(Res.string.checkin_rating_coffee)
+    val localizedCheckinRatingService = stringResource(Res.string.checkin_rating_service)
+    val localizedLegacyReviewContentCommunityRatingAtmosphere = stringResource(Res.string.legacy_review_content_community_rating_atmosphere)
+
     Row(modifier = modifier, horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing2)) {
-        RatingValue("Кофе", rating.coffee)
-        RatingValue("Сервис", rating.service)
-        RatingValue("Атмосфера", rating.place)
+        RatingValue(localizedCheckinRatingCoffee, rating.coffee)
+        RatingValue(localizedCheckinRatingService, rating.service)
+        RatingValue(localizedLegacyReviewContentCommunityRatingAtmosphere, rating.place)
     }
 }
 
@@ -367,15 +380,17 @@ fun CheckInDisplayCard(
     blurContent: Boolean = false,
     onAuthorClick: (() -> Unit)? = null,
 ) {
+    val localizedLegacyReviewContentOwnershipKindShop = stringResource(Res.string.legacy_review_content_ownership_kind_shop)
+
     val cardModifier = modifier
         .fillMaxWidth()
         .then(if (onClick != null && checkIn.shopId.isNotBlank()) Modifier.clickable(onClick = onClick) else Modifier)
 
     CheckInCard(cardModifier, blurContent) {
         CheckInHeader(checkIn = checkIn, isOwn = isOwn, onAuthorClick = onAuthorClick) {
-            CheckInActions(onEditClick = null, onReportClick = onReportClick, author = checkIn.blockableAuthor().takeUnless { isOwn })
+            CheckInActions(onEditClick = null, onReportClick = onReportClick, author = checkIn.blockableAuthor(stringResource(Res.string.legacy_author_fallback)).takeUnless { isOwn })
         }
-        CheckInHeading(checkIn.shopName.ifBlank { "Кофейня" }.takeIf { showShopName }, checkIn.rating)
+        CheckInHeading(checkIn.shopName.ifBlank { localizedLegacyReviewContentOwnershipKindShop }.takeIf { showShopName }, checkIn.rating)
         val drinkName = savedDrinkName(checkIn.drinkNameRu, checkIn.drinkNameEn, checkIn.customDrinkName, Locale.current.language)
         if (checkIn.note.isNotBlank()) {
             if (fullVersion) Text(checkIn.note, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
@@ -407,8 +422,11 @@ internal fun CheckInHeader(
     displayTimestamp: String = checkIn.createdAt,
     actions: @Composable () -> Unit,
 ) {
+    val localizedLegacyReviewContentCommunityYou = stringResource(Res.string.legacy_review_content_community_you)
+    val localizedLegacyReviewContentCommunityUser = stringResource(Res.string.legacy_review_content_community_user)
+
     val date = displayTimestamp
-    val username = checkIn.username.ifBlank { if (isOwn) "Вы" else "Пользователь" }
+    val username = checkIn.username.ifBlank { if (isOwn) localizedLegacyReviewContentCommunityYou else localizedLegacyReviewContentCommunityUser }
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
@@ -418,7 +436,7 @@ internal fun CheckInHeader(
                 .clip(RoundedCornerShape(CpDimens.radiusMd))
                 .then(if (onAuthorClick != null) Modifier.clickable(
                     role = Role.Button,
-                    onClickLabel = "Открыть профиль $username",
+                    onClickLabel = stringResource(Res.string.legacy_profile_open_named, username),
                     onClick = onAuthorClick,
                 ) else Modifier),
             verticalAlignment = Alignment.CenterVertically,
@@ -481,6 +499,12 @@ internal fun HelpfulButton(
     isHelpful: Boolean,
     onClick: (() -> Unit)?,
 ) {
+    val description = stringResource(when {
+        onClick == null -> Res.string.legacy_like_count
+        isHelpful -> Res.string.legacy_like_remove_count
+        else -> Res.string.legacy_like_add_count
+    }, helpfulCount)
+
     Row(
         modifier = Modifier
             .heightIn(min = 48.dp)
@@ -488,11 +512,7 @@ internal fun HelpfulButton(
             .clip(RoundedCornerShape(CpDimens.radiusMd))
             .then(if (onClick != null) Modifier.clickable(role = Role.Button, onClick = onClick) else Modifier)
             .semantics(mergeDescendants = true) {
-                contentDescription = when {
-                    onClick == null -> "Лайки: $helpfulCount"
-                    isHelpful -> "Убрать лайк, лайков: $helpfulCount"
-                    else -> "Поставить лайк, лайков: $helpfulCount"
-                }
+                contentDescription = description
             },
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing2),
@@ -511,6 +531,8 @@ private fun ReviewHeader(
     review: Review, onEditClick: (() -> Unit)?, onReportClick: (() -> Unit)?,
     authorPhotoUrl: String?, dateLabel: String?,
 ) {
+    val localizedLegacyReviewContentCommunityUser = stringResource(Res.string.legacy_review_content_community_user)
+
     Row(
         modifier = Modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
@@ -522,7 +544,7 @@ private fun ReviewHeader(
                 .padding(start = CpDimens.spacing3),
         ) {
             Text(
-                text = review.username.ifBlank { "Пользователь" },
+                text = review.username.ifBlank { localizedLegacyReviewContentCommunityUser },
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onSurface,
@@ -578,6 +600,9 @@ private const val REVIEW_COLLAPSED_LINES = 4
 /** Comment clamped to [REVIEW_COLLAPSED_LINES]; long ones get «Читать полностью» to expand in place. */
 @Composable
 private fun ReviewQuote(reviewId: String, comment: String, padToCollapsedLines: Boolean) {
+    val localizedLegacyGroupedListDiscoveryFiltersCollapse = stringResource(Res.string.legacy_grouped_list_discovery_filters_collapse)
+    val localizedLegacyReviewContentShopCheckinsReadMore = stringResource(Res.string.legacy_review_content_shop_checkins_read_more)
+
     var expanded by rememberSaveable(reviewId) { mutableStateOf(false) }
     var overflows by remember(comment) { mutableStateOf(false) }
     Column(modifier = Modifier.fillMaxWidth()) {
@@ -593,7 +618,7 @@ private fun ReviewQuote(reviewId: String, comment: String, padToCollapsedLines: 
         )
         if (overflows || expanded) {
             Text(
-                text = if (expanded) "Свернуть" else "Читать полностью",
+                text = if (expanded) localizedLegacyGroupedListDiscoveryFiltersCollapse else localizedLegacyReviewContentShopCheckinsReadMore,
                 style = MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.primary,
@@ -613,6 +638,7 @@ private fun ReviewQuote(reviewId: String, comment: String, padToCollapsedLines: 
 
 @Composable
 internal fun rememberReviewDisplayDate(raw: String): String {
+    val labels = reviewDateLabels()
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     val now by produceState(currentEpochMillis(), raw, lifecycle) {
         lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -622,48 +648,47 @@ internal fun rememberReviewDisplayDate(raw: String): String {
             }
         }
     }
-    return remember(raw, now) { formatReviewDisplayDate(raw, now) }
+    return remember(raw, now, labels) { formatReviewDisplayDate(raw, labels, now) }
 }
 
+internal data class ReviewDateLabels(
+    val justNow: String,
+    val ago: String,
+    val minutes: List<String>,
+    val hours: List<String>,
+    val months: List<String>,
+)
+
+@Composable
+internal fun reviewDateLabels() = ReviewDateLabels(
+    stringResource(Res.string.legacy_review_just_now),
+    stringResource(Res.string.legacy_review_ago),
+    stringArrayResource(Res.array.legacy_minute_forms),
+    stringArrayResource(Res.array.legacy_hour_forms),
+    stringArrayResource(Res.array.legacy_review_months),
+)
+
 @OptIn(ExperimentalTime::class)
-internal fun formatReviewDisplayDate(raw: String, nowMillis: Long = currentEpochMillis()): String {
-    val trimmed = raw.trim()
-    val instant = parseServerInstant(trimmed)
-    if (instant != null) {
-        val elapsed = nowMillis - instant.toEpochMilliseconds()
-        if (elapsed in 0 until 86_400_000L) {
-            val minutes = elapsed / 60_000
-            if (minutes == 0L) return "только что"
-            val count = if (minutes < 60) minutes else minutes / 60
-            val forms = if (minutes < 60) listOf("минуту", "минуты", "минут") else listOf("час", "часа", "часов")
-            val form = when {
-                count % 100 in 11L..14L -> forms[2]
-                count % 10 == 1L -> forms[0]
-                count % 10 in 2L..4L -> forms[1]
-                else -> forms[2]
-            }
-            return "$count $form назад"
-        }
+internal fun formatReviewDisplayDate(raw: String, labels: ReviewDateLabels, nowMillis: Long = currentEpochMillis()): String {
+    val instant = parseServerInstant(raw.trim())
+    val elapsed = instant?.let { nowMillis - it.toEpochMilliseconds() }
+    if (elapsed != null && elapsed in 0 until 86_400_000L) {
+        val minutes = elapsed / 60_000
+        if (minutes == 0L) return labels.justNow
+        val count = (if (minutes < 60) minutes else minutes / 60).toInt()
+        val forms = if (minutes < 60) labels.minutes else labels.hours
+        return "${pluralCountLabel(count, forms)} ${labels.ago}"
     }
+    return reviewAbsoluteDate(raw, labels.months)
+}
+
+private fun reviewAbsoluteDate(raw: String, months: List<String>): String {
     val datePart = utcIsoToLocalDate(raw)
     val parts = datePart.split('-')
     if (parts.size != 3) return datePart
-    val month = when (parts[1].toIntOrNull()) {
-        1 -> "янв."
-        2 -> "февр."
-        3 -> "мар."
-        4 -> "апр."
-        5 -> "мая"
-        6 -> "июн."
-        7 -> "июл."
-        8 -> "авг."
-        9 -> "сент."
-        10 -> "окт."
-        11 -> "нояб."
-        12 -> "дек."
-        else -> return datePart
-    }
-    return "${parts[2].trimStart('0').ifBlank { "0" }} $month ${parts[0]}"
+    val monthIndex = parts[1].toIntOrNull()?.takeIf { it in 1..12 } ?: return datePart
+    val day = parts[2].trimStart('0').ifBlank { "0" }
+    return "$day ${months[monthIndex - 1]} ${parts[0]}"
 }
 
 @Composable
@@ -694,6 +719,8 @@ fun ReviewPhotoStrip(
     if (photoUrls.isEmpty()) return
     @Composable
     fun Photo(index: Int, photoModifier: Modifier) {
+        val description = stringResource(Res.string.legacy_photo_position, index + 1, photoUrls.size)
+
         Box(
             photoModifier.clip(RoundedCornerShape(CpDimens.radiusMd))
                 .then(if (onPhotoClick != null) Modifier.clickable(role = Role.Button) {
@@ -702,7 +729,7 @@ fun ReviewPhotoStrip(
                     ), index)
                 } else Modifier)
                 .semantics(mergeDescendants = true) {
-                    contentDescription = "Фотография ${index + 1} из ${photoUrls.size}"
+                    contentDescription = description
                 },
         ) {
             CpImage(

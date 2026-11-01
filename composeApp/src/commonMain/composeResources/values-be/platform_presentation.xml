@@ -1,0 +1,6 @@
+<resources>
+    <string name="presentation_cancel">Адмена</string>
+    <string name="photo_source_title">Дадаць фота</string>
+    <string name="photo_source_gallery">Выбраць з галерэі</string>
+    <string name="photo_source_camera">Зрабіць фота</string>
+</resources>

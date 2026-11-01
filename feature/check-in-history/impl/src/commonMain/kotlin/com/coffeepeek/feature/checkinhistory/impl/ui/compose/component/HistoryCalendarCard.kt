@@ -7,6 +7,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import com.coffeepeek.core.designsystem.component.CoffeePeekIconButton as IconButton
+import com.coffeepeek.core.designsystem.modifier.CoffeePeekGlassIcon
 import com.coffeepeek.core.designsystem.component.CoffeePeekTextButton as TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -25,8 +26,8 @@ import com.coffeepeek.feature.checkinhistory.domain.model.HistoryMonth
 import com.coffeepeek.feature.checkinhistory.impl.resources.*
 import com.coffeepeek.feature.checkinhistory.impl.ui.compose.model.*
 import com.coffeepeek.feature.checkinhistory.impl.ui.data.*
-import org.jetbrains.compose.resources.stringArrayResource
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringArrayResource as stringArrayResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 
 @Composable
 internal fun HistoryCalendarCard(state: CombinedHistoryState, onAction: (CombinedHistoryAction) -> Unit,
@@ -93,11 +94,13 @@ internal fun HistoryCalendarCard(state: CombinedHistoryState, onAction: (Combine
 }
 
 @Composable private fun MonthArrow(next: Boolean, enabled: Boolean, onClick: () -> Unit) {
-    IconButton(onClick, enabled = enabled, modifier = Modifier.size(44.dp)) {
+    val description = stringResource(if (next) Res.string.history_next_month else Res.string.history_previous_month)
+    IconButton(onClick, enabled = enabled, modifier = Modifier.size(44.dp), contentDescription = description,
+        nativeIcon = if (next) CoffeePeekGlassIcon.Forward else CoffeePeekGlassIcon.Back) {
         Box(Modifier.size(34.dp).background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f), CircleShape),
             contentAlignment = Alignment.Center) {
             Icon(if (next) CoffeePeekIcons.ChevronRight else CoffeePeekIcons.ChevronLeft,
-                stringResource(if (next) Res.string.history_next_month else Res.string.history_previous_month), Modifier.size(18.dp))
+                null, Modifier.size(18.dp))
         }
     }
 }

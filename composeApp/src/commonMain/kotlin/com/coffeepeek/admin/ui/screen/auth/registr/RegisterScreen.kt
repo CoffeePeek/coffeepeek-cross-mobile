@@ -1,5 +1,10 @@
 package com.coffeepeek.admin.ui.screen.auth.registr
 
+import com.coffeepeek.admin.auth.socialLoginErrorCopy
+import androidx.compose.runtime.rememberUpdatedState
+
+import coffeepeek.composeapp.generated.resources.*
+
 import androidx.compose.runtime.getValue
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -74,6 +79,7 @@ import com.coffeepeek.admin.theme.CpColor
 import com.coffeepeek.admin.theme.CpDimens
 import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.ui.icons.CpIcons
+import com.coffeepeek.admin.ui.component.inputValidationMessage
 import com.coffeepeek.admin.ui.screen.auth.AuthFooterRow
 import com.coffeepeek.admin.ui.screen.auth.AuthHeading
 import com.coffeepeek.admin.ui.screen.auth.AuthMascot
@@ -84,7 +90,7 @@ import com.coffeepeek.admin.ui.screen.auth.AuthSocialSignInButtons
 import com.coffeepeek.admin.ui.screen.auth.AuthStepper
 import com.coffeepeek.admin.ui.screen.auth.AuthTextField
 import com.coffeepeek.admin.utils.MIN_REGISTRATION_PASSWORD_LENGTH
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import com.coffeepeek.admin.di.platformViewModel
 
 private data class RegistrationFormState(
@@ -101,38 +107,50 @@ private data class RegistrationFormState(
 object RegisterScreen {
     @Composable
     operator fun invoke(vm: RegisterViewModel = platformViewModel()) {
-        val step by vm.step.collectAsState()
-        val name by vm.name.collectAsState()
-        val email by vm.email.collectAsState()
-        val password by vm.password.collectAsState()
-        val isTermsAccepted by vm.isTermsAccepted.collectAsState()
-        val isAnalyticsAccepted by vm.isAnalyticsAccepted.collectAsState()
-        val passwordError by vm.passwordError.collectAsState()
-        val emailError by vm.emailError.collectAsState()
+        val state = registrationFormState(vm)
         val appleSigningIn by vm.appleSigningIn.collectAsState()
+        val errorCopy = rememberUpdatedState(socialLoginErrorCopy())
+        val registrationCopy = rememberUpdatedState(registrationErrorCopy())
         RegisterScreenContent(
-            state = RegistrationFormState(step, name, email, password, isTermsAccepted, isAnalyticsAccepted, passwordError, emailError),
+            state = state,
             onEmailChange = vm::onEmailChange,
             onNameChange = vm::onNameChange,
             onPasswordChange = vm::onPasswordChange,
             onTermsChange = vm::onTermsCheckedChange,
             onAnalyticsChange = vm::onAnalyticsCheckedChange,
-            onContinue = vm::onContinueEmail,
-            onRegister = vm::onRegisterClick,
+            onContinue = { vm.onContinueEmail { registrationCopy.value } },
+            onRegister = { vm.onRegisterClick { registrationCopy.value } },
             onBack = vm::onBack,
             onLogin = vm::goToLogin,
             onClose = Navigator::closeAuth,
             socialSignIn = if (AppleAuth.isSupported() || isGoogleSignInConfigured()) {
                 {
                     AuthSocialSignInButtons(
-                        onAppleClick = vm::onAppleLogin,
+                        onAppleClick = { vm.onAppleLogin { errorCopy.value } },
                         appleEnabled = !appleSigningIn,
-                        onGoogleResult = { result -> handleGoogleSignInResult(result, vm::onGoogleLogin) },
+                        onGoogleResult = { result -> handleGoogleSignInResult(result,
+                            { vm.onGoogleLogin(it) { errorCopy.value } }, { vm.onGoogleLoginError(it, errorCopy.value) }) },
                     )
                 }
             } else null,
         )
     }
+}
+
+@Composable
+private fun registrationFormState(vm: RegisterViewModel): RegistrationFormState {
+    val step by vm.step.collectAsState()
+    val name by vm.name.collectAsState()
+    val email by vm.email.collectAsState()
+    val password by vm.password.collectAsState()
+    val terms by vm.isTermsAccepted.collectAsState()
+    val analytics by vm.isAnalyticsAccepted.collectAsState()
+    val passwordError by vm.passwordError.collectAsState()
+    val emailError by vm.emailError.collectAsState()
+    val emailTaken by vm.emailTaken.collectAsState()
+    return RegistrationFormState(step, name, email, password, terms, analytics,
+        inputValidationMessage(passwordError),
+        if (emailTaken) stringResource(Res.string.email_no_exist) else inputValidationMessage(emailError))
 }
 
 @Composable
@@ -363,12 +381,16 @@ private val ColorWhite3 = Color(0x08FFFFFF)
 
 @Composable
 private fun PasswordStrengthBar(password: String) {
+    val localizedLegacyRegisterScreenAuthStrengthWeak = stringResource(Res.string.legacy_register_screen_auth_strength_weak)
+    val localizedLegacyRegisterScreenAuthStrengthMedium = stringResource(Res.string.legacy_register_screen_auth_strength_medium)
+    val localizedLegacyRegisterScreenAuthStrengthStrong = stringResource(Res.string.legacy_register_screen_auth_strength_strong)
+
     if (password.isEmpty()) return
     val score = (if (password.length >= 8) 1 else 0) +
         (if (password.any { it.isDigit() }) 1 else 0) +
         (if (password.any { it.isUpperCase() }) 1 else 0)
     val colors = listOf(CpColor.Error, CpColor.Primary, CpColor.Success)
-    val labels = listOf("слабый", "средний", "надёжный")
+    val labels = listOf(localizedLegacyRegisterScreenAuthStrengthWeak, localizedLegacyRegisterScreenAuthStrengthMedium, localizedLegacyRegisterScreenAuthStrengthStrong)
     val isDark = MaterialTheme.colorScheme.background.luminance() < 0.5f
 
     Row(

@@ -6,13 +6,14 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
 import com.coffeepeek.core.designsystem.component.CoffeePeekTextButton as TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.component.CoffeePeekButton
 import com.coffeepeek.core.designsystem.component.CoffeePeekTextField
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
@@ -51,7 +52,7 @@ import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopReviewFormAction
 import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopReviewFormMode
 import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopReviewFormState
 import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopReviewRatingKind
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 /** Stateless editor body. The caller supplies platform photo-picking callbacks. */
@@ -82,7 +83,7 @@ internal fun ShopReviewEditorContent(
             ShopReviewDraftNotice { onAction(ShopReviewFormAction.DiscardDraft) }
         }
         if (state.isLoading) {
-            CircularProgressIndicator()
+            CoffeePeekLoader(size = 40.dp, color = MaterialTheme.colorScheme.primary, strokeWidth = 4.dp)
         } else if (state.loadError) {
             Text(stringResource(Res.string.shop_review_load_failed),
                 color = MaterialTheme.colorScheme.error)
@@ -148,7 +149,7 @@ internal fun ShopReviewEditorContent(
                 Text(it.ifBlank { stringResource(Res.string.shop_review_submit_failed) },
                     color = MaterialTheme.colorScheme.error)
             }
-            if (state.isSubmitting) CircularProgressIndicator()
+            if (state.isSubmitting) CoffeePeekLoader(size = 40.dp, color = MaterialTheme.colorScheme.primary, strokeWidth = 4.dp)
             else CoffeePeekButton(
                 text = stringResource(if (state.mode == ShopReviewFormMode.Create)
                     Res.string.shop_review_submit_create else Res.string.shop_review_submit_edit),
@@ -184,3 +185,10 @@ private fun commentError(error: ShopReviewFieldError?): String? = when (error) {
         shopName = "Кофейня", header = "Хороший кофе", comment = "Очень понравился фильтр.",
         existingPhotoUrls = listOf(""), draftRestored = true), {}, {}, {}, { _, _ -> })
 }
+
+@Composable
+private fun ShopReviewLoadingPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
+    ShopReviewEditorContent(ShopReviewFormState(isLoading = true), {}, {}, {}, { _, _ -> })
+}
+@Preview @Composable private fun ShopReviewLoadingLightPreview() = ShopReviewLoadingPreview(false)
+@Preview @Composable private fun ShopReviewLoadingDarkPreview() = ShopReviewLoadingPreview(true)

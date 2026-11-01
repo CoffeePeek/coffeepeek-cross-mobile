@@ -1,5 +1,13 @@
 package com.coffeepeek.admin.ui.screen.roaster
 
+import com.coffeepeek.admin.ui.screen.contributions.ContributionFailureKind
+
+import com.coffeepeek.admin.ui.screen.contributions.ContributionFormFailure
+
+import com.coffeepeek.admin.ui.screen.contributions.ContributionFieldIssue
+
+import com.coffeepeek.admin.utils.InputValidationIssue
+
 import com.coffeepeek.admin.base.BaseViewModel
 import com.coffeepeek.admin.utils.PickedImage
 import com.coffeepeek.admin.utils.validateOptionalInstagram
@@ -29,32 +37,32 @@ data class AddRoasterUiState(
     val photos: List<PickedImage> = emptyList(),
     val isLoadingCatalogs: Boolean = true,
     val isSubmitting: Boolean = false,
-    val error: String? = null,
-    val submissionError: String? = null,
+    val error: ContributionFormFailure? = null,
+    val submissionError: ContributionFormFailure? = null,
     val result: RoasterSubmissionResult? = null,
 ) {
-    val nameError: String?
+    val nameError: ContributionFieldIssue?
         get() = when {
-            name.isBlank() -> "Введите название"
-            name.trim().length > 100 -> "Не более 100 символов"
+            name.isBlank() -> ContributionFieldIssue.NameRequired
+            name.trim().length > 100 -> ContributionFieldIssue.NameTooLong(100)
             else -> null
         }
 
-    val locationError: String?
+    val locationError: ContributionFieldIssue?
         get() = when {
-            address.isNotBlank() && selectedCity == null -> "Для адреса выберите город"
-            address.isBlank() && selectedCity != null -> "Для выбранного города укажите адрес"
+            address.isNotBlank() && selectedCity == null -> ContributionFieldIssue.CityForAddress
+            address.isBlank() && selectedCity != null -> ContributionFieldIssue.AddressForCity
             else -> null
         }
 
-    val instagramError: String?
+    val instagramError: InputValidationIssue?
         get() = if (instagram.trim().startsWith("http", ignoreCase = true)) {
             validateOptionalUrl(instagram)
         } else {
             validateOptionalInstagram(instagram)
         }
 
-    val websiteError: String? get() = validateOptionalUrl(website)
+    val websiteError: InputValidationIssue? get() = validateOptionalUrl(website)
 
     val canSubmit: Boolean
         get() = nameError == null && locationError == null &&
@@ -84,7 +92,7 @@ class AddRoasterViewModel(
                     _state.update {
                         it.copy(
                             isLoadingCatalogs = false,
-                            error = error.message ?: "Не удалось загрузить города",
+                            error = ContributionFormFailure(ContributionFailureKind.RoasterCityLoad, error.message),
                         )
                     }
                 }
@@ -141,7 +149,7 @@ class AddRoasterViewModel(
                 _state.update {
                     it.copy(
                         isSubmitting = false,
-                        submissionError = error.message?.takeIf { it.isNotBlank() } ?: "Не удалось отправить обжарщика на модерацию",
+                        submissionError = ContributionFormFailure(ContributionFailureKind.RoasterSubmit, error.message?.takeIf { it.isNotBlank() }),
                     )
                 }
             }

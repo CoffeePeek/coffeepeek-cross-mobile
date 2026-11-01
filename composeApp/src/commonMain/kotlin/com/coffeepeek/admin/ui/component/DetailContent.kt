@@ -1,5 +1,9 @@
 package com.coffeepeek.admin.ui.component
 
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
+
+import coffeepeek.composeapp.generated.resources.*
+
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -59,11 +63,11 @@ internal fun RoasterLinkRow(name: String, photoUrl: String?, onClick: (() -> Uni
         Box(Modifier.size(64.dp).clip(CircleShape)) {
             if (!photoUrl.isNullOrBlank()) CoffeeShopImage(
                 imageUrl = photoUrl,
-                contentDescription = "Фото обжарщика $name",
+                contentDescription = stringResource(Res.string.legacy_roaster_photo, name),
                 contentScale = ContentScale.Crop,
                 placeholderLabelSize = 7.sp,
                 modifier = Modifier.fillMaxSize(),
-            ) else CoffeeShopPlaceholderImage(labelSize = 7.sp, contentDescription = "Фото обжарщика $name отсутствует")
+            ) else CoffeeShopPlaceholderImage(labelSize = 7.sp, contentDescription = stringResource(Res.string.legacy_roaster_photo_missing, name))
         }
         Text(
             name,
@@ -75,7 +79,7 @@ internal fun RoasterLinkRow(name: String, photoUrl: String?, onClick: (() -> Uni
         )
         if (onClick != null) Icon(
             CpIcons.ChevronRight,
-            contentDescription = "Открыть обжарщика $name",
+            contentDescription = stringResource(Res.string.legacy_roaster_open_named, name),
             tint = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.size(18.dp),
         )

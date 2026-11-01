@@ -13,7 +13,7 @@ import com.coffeepeek.feature.shop.impl.resources.Res
 import com.coffeepeek.feature.shop.impl.resources.shop_checkins_actions
 import com.coffeepeek.feature.shop.impl.resources.shop_checkins_report
 import com.coffeepeek.feature.shop.impl.resources.shop_checkins_block_author
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable

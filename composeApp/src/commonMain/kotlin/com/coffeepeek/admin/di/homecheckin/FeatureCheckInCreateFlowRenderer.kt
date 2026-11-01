@@ -22,7 +22,7 @@ import com.coffeepeek.core.designsystem.component.CoffeePeekSwipeDismissModalBot
 import com.coffeepeek.core.session.SessionReader
 import com.coffeepeek.feature.homecheckin.api.HomeCheckInBean
 import com.coffeepeek.feature.homecheckin.api.HomeCheckInEditorEntry
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 
 /**
  * A new flow lifetime per opening. Never constructs legacy Home state or a second writer.

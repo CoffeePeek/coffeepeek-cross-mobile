@@ -1,5 +1,12 @@
 package com.coffeepeek.admin.feature.checkin.ui
 
+import com.coffeepeek.admin.ui.component.preparationMetricLabels
+
+import com.coffeepeek.admin.ui.component.PreparationMetricLabels
+
+import coffeepeek.composeapp.generated.resources.*
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
+
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -36,6 +43,8 @@ internal fun CheckInTimelineContentImpl(
     supportingContent: @Composable () -> Unit = {},
     footerActions: (@Composable () -> Unit)? = null,
 ) {
+    val localizedLegacyReviewContentOwnershipKindShop = stringResource(Res.string.legacy_review_content_ownership_kind_shop)
+
     val drinkName = savedDrinkName(checkIn.drinkNameRu, checkIn.drinkNameEn, checkIn.customDrinkName, Locale.current.language)
     Column(
         modifier = modifier.fillMaxWidth(),
@@ -44,7 +53,7 @@ internal fun CheckInTimelineContentImpl(
         CheckInHeader(checkIn, isOwn, onAuthorClick = onAuthorClick, displayTimestamp = displayTimestamp, actions = actions)
         if (checkIn.isHome) {
             checkIn.homePreparation?.let { recipe ->
-                val details = recipe.checkInDetails()
+                val details = recipe.checkInDetails(preparationMetricLabels())
                 // A shown bag is the title and carries the recipe line itself.
                 recipe.shelfBagCardUrl?.let { card ->
                     CheckInShelfBag(card, recipe.beanName, recipe.roasterName, details,
@@ -56,7 +65,7 @@ internal fun CheckInTimelineContentImpl(
                 }
             }
         } else CheckInHeading(
-            shopName = checkIn.shopName.ifBlank { "Кофейня" },
+            shopName = checkIn.shopName.ifBlank { localizedLegacyReviewContentOwnershipKindShop },
             rating = checkIn.rating,
             onShopClick = onShopClick,
         )
@@ -82,9 +91,9 @@ internal fun CheckInTimelineContentImpl(
     }
 }
 
-private fun FeedHomePreparation.checkInDetails(): String = listOfNotNull(
-    brewMethodCode?.methodLabel(),
-    doseGrams?.let { "$it г" },
-    brewDurationSeconds?.let { "$it с" },
+private fun FeedHomePreparation.checkInDetails(labels: PreparationMetricLabels): String = listOfNotNull(
+    brewMethodCode?.methodLabel(labels.otherMethod),
+    doseGrams?.let { labels.grams.replace("%1\$s", it.toString()) },
+    brewDurationSeconds?.let { labels.seconds.replace("%1\$s", it.toString()) },
     tasteScore?.let { "$it/5" },
 ).joinToString(" · ")

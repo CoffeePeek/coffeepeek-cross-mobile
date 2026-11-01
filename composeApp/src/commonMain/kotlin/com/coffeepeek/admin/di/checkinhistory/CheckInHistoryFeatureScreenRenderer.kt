@@ -1,5 +1,7 @@
 package com.coffeepeek.admin.di.checkinhistory
 
+import com.coffeepeek.admin.feature.homecheckin.ui.homeVisibilityLabels
+
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
@@ -114,7 +116,7 @@ internal class CheckInHistoryFeatureScreenRenderer(
                     val home = checkIn.toTimelineHome()
                     HistoryTimelineCheckInCard(home.toTimelineCheckIn().withShelfBag(checkIn), onClick = onOpen,
                         onPhotoClick = { images, index -> session.openPhoto(images.previews, images.originals, index) },
-                        supportingLabel = home.visibilityLabel())
+                        supportingLabel = home.visibilityLabel(homeVisibilityLabels()))
                 },
                 highQualityImage = { url, highQualityUrl, modifier, scale ->
                     CpImage(data = url, highQualityData = highQualityUrl, modifier = modifier, contentScale = scale)

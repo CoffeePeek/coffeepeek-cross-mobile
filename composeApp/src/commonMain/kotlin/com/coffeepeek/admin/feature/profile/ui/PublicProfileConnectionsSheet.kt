@@ -1,5 +1,8 @@
 package com.coffeepeek.admin.feature.profile.ui
 
+import coffeepeek.composeapp.generated.resources.*
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -35,13 +38,20 @@ internal fun PublicProfileConnectionsSheet(
     onRetry: () -> Unit,
     onUserClick: (PublicProfileConnection) -> Unit,
 ) {
+    val localizedHistoryHomeClose = stringResource(Res.string.history_home_close)
+    val localizedLegacyPublicProfileConnectionsSheetProfileOpenUser = stringResource(Res.string.legacy_public_profile_connections_sheet_profile_open_user)
+    val localizedHistoryHomeRetry = stringResource(Res.string.history_home_retry)
+    val localizedLegacyPublicProfileConnectionsSheetProfileFollowersEmpty = stringResource(Res.string.legacy_public_profile_connections_sheet_profile_followers_empty)
+    val localizedLegacyPublicProfileConnectionsSheetProfileFollowingEmpty = stringResource(Res.string.legacy_public_profile_connections_sheet_profile_following_empty)
+    val localizedProfileCheckinsMore = stringResource(Res.string.profile_checkins_more)
+
     val kind = state.connectionKind ?: return
     val kinds = listOf(PublicProfileConnectionKind.Followers, PublicProfileConnectionKind.Following)
     val listState = remember(kind) { LazyListState() }
     SwipeDismissModalBottomSheet(onDismissRequest = onDismiss, maxSheetHeightFraction = 0.9f) {
         Row(Modifier.fillMaxWidth().padding(start = 20.dp, end = 8.dp), verticalAlignment = Alignment.CenterVertically) {
             Text(kind.label(), Modifier.weight(1f), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
-            IconButton(onClick = onDismiss) { Icon(CpIcons.Close, contentDescription = "Закрыть") }
+            IconButton(onClick = onDismiss) { Icon(CpIcons.Close, contentDescription = localizedHistoryHomeClose) }
         }
         TabRow(selectedTabIndex = kinds.indexOf(kind), containerColor = MaterialTheme.colorScheme.surface) {
             kinds.forEach { tab ->
@@ -56,7 +66,7 @@ internal fun PublicProfileConnectionsSheet(
             items(state.connections, key = { it.slug }) { user ->
                 Row(
                     Modifier.fillMaxWidth().clip(MaterialTheme.shapes.medium)
-                        .clickable(enabled = user.slug.isNotBlank(), role = Role.Button, onClickLabel = "Открыть профиль", onClick = { onUserClick(user) })
+                        .clickable(enabled = user.slug.isNotBlank(), role = Role.Button, onClickLabel = localizedLegacyPublicProfileConnectionsSheetProfileOpenUser, onClick = { onUserClick(user) })
                         .padding(vertical = 12.dp, horizontal = 4.dp),
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                     verticalAlignment = Alignment.CenterVertically,
@@ -82,26 +92,27 @@ internal fun PublicProfileConnectionsSheet(
                 }
                 state.connectionsError != null -> item {
                     Column(Modifier.fillMaxWidth().padding(20.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("Не удалось загрузить ${if (kind == PublicProfileConnectionKind.Followers) "подписчиков" else "подписки"}",
+                        Text(stringResource(if (kind == PublicProfileConnectionKind.Followers) Res.string.legacy_profile_followers_error else Res.string.legacy_profile_following_error),
                             style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        TextButton(onClick = onRetry) { Text("Повторить") }
+                        TextButton(onClick = onRetry) { Text(localizedHistoryHomeRetry) }
                     }
                 }
                 state.connections.isEmpty() -> item {
                     ProfileEmptyCard(
-                        if (kind == PublicProfileConnectionKind.Followers) "Пока нет подписчиков" else "Пока нет подписок",
+                        if (kind == PublicProfileConnectionKind.Followers) localizedLegacyPublicProfileConnectionsSheetProfileFollowersEmpty else localizedLegacyPublicProfileConnectionsSheetProfileFollowingEmpty,
                         CpIcons.Community,
                     )
                 }
                 state.hasMoreConnections -> item {
-                    TextButton(onClick = onLoadMore, modifier = Modifier.fillMaxWidth()) { Text("Загрузить ещё") }
+                    TextButton(onClick = onLoadMore, modifier = Modifier.fillMaxWidth()) { Text(localizedProfileCheckinsMore) }
                 }
             }
         }
     }
 }
 
+@Composable
 private fun PublicProfileConnectionKind.label(): String = when (this) {
-    PublicProfileConnectionKind.Followers -> "Подписчики"
-    PublicProfileConnectionKind.Following -> "Подписки"
+    PublicProfileConnectionKind.Followers -> stringResource(Res.string.profile_stat_followers)
+    PublicProfileConnectionKind.Following -> stringResource(Res.string.legacy_public_profile_connections_sheet_profile_following_title)
 }

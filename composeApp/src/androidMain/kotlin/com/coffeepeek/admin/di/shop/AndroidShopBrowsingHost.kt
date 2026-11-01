@@ -26,7 +26,7 @@ import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.core.session.SessionReader
 import com.coffeepeek.feature.authorblocking.api.AuthorVisibility
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 
 /** The outer VM survives navigation/configuration; its inner feature store cannot survive account replacement. */
 @Composable

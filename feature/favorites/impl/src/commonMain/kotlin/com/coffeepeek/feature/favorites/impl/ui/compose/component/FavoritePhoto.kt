@@ -19,7 +19,7 @@ import com.coffeepeek.feature.favorites.impl.resources.favorites_photo_missing
 import io.kamel.image.KamelImage
 import io.kamel.image.asyncPainterResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 
 @Composable
 internal fun FavoritePhoto(url: String?, title: String, modifier: Modifier) {

@@ -20,6 +20,8 @@ import kotlin.test.*
 
 /** Pins the behaviour of the legacy feed that the older tests did not reach (inventory section 1, A4/A6/B1-B3/B6/C3/C5). */
 class CommunityParityGapsTest {
+    private val publicationLabels = listOf("Приватный", "На проверке", "Опубликован", "Отклонён", "Публичный", "Статус проверки неизвестен")
+
     private val post = CheckIn("post", "shop", "Shop", "Coffee", "2020-01-01T00:00:00Z",
         visitedAt = "2019-01-01T00:00:00Z", rating = ReviewRating(4, 4, 5), username = "Other",
         authorAddress = PublicAddress("other", "/users/other", 1, false), visibility = CheckInVisibility.Public,
@@ -215,12 +217,17 @@ class CommunityParityGapsTest {
     }
 
     @Test fun publicationLabelsFollowTheVisibilityAndModerationState() {
-        fun label(visibility: CheckInVisibility, state: CheckInModerationState) = post.copy(visibility = visibility, moderationState = state).publicationLabel()
+        fun label(visibility: CheckInVisibility, state: CheckInModerationState) = post.copy(visibility = visibility, moderationState = state).publicationLabel(publicationLabels)
         assertEquals("Приватный", label(CheckInVisibility.Private, CheckInModerationState.Approved))
         assertEquals("На проверке", label(CheckInVisibility.Public, CheckInModerationState.Pending))
         assertEquals("Опубликован", label(CheckInVisibility.Public, CheckInModerationState.Approved))
         assertEquals("Отклонён", label(CheckInVisibility.Public, CheckInModerationState.Rejected))
         assertEquals("Публичный", label(CheckInVisibility.Public, CheckInModerationState.NotSubmitted))
         assertEquals("Статус проверки неизвестен", label(CheckInVisibility.Public, CheckInModerationState.Unknown))
+    }
+
+    @Test fun publicationLabelsUsePreparedBelarusianCopy() {
+        val labels = listOf("Прыватны", "На праверцы", "Апублікаваны", "Адхілены", "Публічны", "Статус праверкі невядомы")
+        assertEquals("На праверцы", post.copy(visibility = CheckInVisibility.Public, moderationState = CheckInModerationState.Pending).publicationLabel(labels))
     }
 }

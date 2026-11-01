@@ -1,5 +1,8 @@
 package com.coffeepeek.admin.feature.favorites.ui
 
+import coffeepeek.composeapp.generated.resources.*
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
+
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -21,6 +24,8 @@ import com.coffeepeek.domain.feature.favorites.api.FavoriteEntry
 /** Drinks have a favorite slug, but no contracted detail route. */
 @Composable
 internal fun SavedDrinkCard(drink: FavoriteEntry, removing: Boolean, onRemove: () -> Unit) {
+    val localizedSelectDrinkLabel = stringResource(Res.string.select_drink_label)
+
     Card(
         shape = RoundedCornerShape(CpDimens.radiusXl),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
@@ -42,8 +47,8 @@ internal fun SavedDrinkCard(drink: FavoriteEntry, removing: Boolean, onRemove: (
                 ) } ?: Icon(CpIcons.Coffee, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(CpDimens.spacing1)) {
-                Text(drink.name.ifBlank { "Напиток" }, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-                Text("Напиток", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(drink.name.ifBlank { localizedSelectDrinkLabel }, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                Text(localizedSelectDrinkLabel, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             FavoriteButton(isFavorite = true, onClick = onRemove, enabled = !removing && !drink.drinkSlug.isNullOrBlank())
         }

@@ -7,7 +7,13 @@ import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withTimeout
 
-data class PlayUpdateRetryOutcome(val message: String, val canRetry: Boolean)
+sealed interface PlayUpdateRetryOutcome {
+    val canRetry: Boolean
+    data class Check(val feedback: UpdateCheckFeedback, override val canRetry: Boolean) : PlayUpdateRetryOutcome
+    data class InstallationError(val message: String) : PlayUpdateRetryOutcome {
+        override val canRetry: Boolean = true
+    }
+}
 
 /** A retry covers both the backend policy check and Google Play's response. */
 suspend fun retryPlayUpdate(controller: AppUpdateController, installer: UpdateInstaller): PlayUpdateRetryOutcome? = try {
@@ -16,16 +22,14 @@ suspend fun retryPlayUpdate(controller: AppUpdateController, installer: UpdateIn
         controller.check(manual = true)
         val policy = controller.state.first { !it.checking }
         if (policy.update == null) {
-            PlayUpdateRetryOutcome(policy.message ?: RetryFailure, policy.checkFailed)
+            PlayUpdateRetryOutcome.Check(policy.feedback ?: UpdateCheckFeedback.CheckFailed, policy.checkFailed)
         } else {
             controller.takeNativePrompt(installer.state.value)?.let(installer::download)
             val transfer = installer.state.first { it.stage != InstallationStage.Starting }
-            transfer.error?.let { PlayUpdateRetryOutcome(it, canRetry = true) }
+            transfer.error?.let { PlayUpdateRetryOutcome.InstallationError(it) }
         }
     }
 } catch (error: Exception) {
     if (error is CancellationException && error !is TimeoutCancellationException) throw error
-    PlayUpdateRetryOutcome(RetryFailure, canRetry = true)
+    PlayUpdateRetryOutcome.Check(UpdateCheckFeedback.CheckFailed, canRetry = true)
 }
-
-private const val RetryFailure = "Не удалось проверить обновления. Попробуйте позже."

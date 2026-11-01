@@ -1,5 +1,8 @@
 package com.coffeepeek.admin.feature.catalog.ui
 
+import coffeepeek.composeapp.generated.resources.*
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
+
 import com.coffeepeek.core.designsystem.component.CoffeePeekLikeIcon
 import com.coffeepeek.core.designsystem.component.CoffeePeekLikeBadge
 
@@ -54,6 +57,8 @@ internal fun ShopCardContent(
     showOpenStatus: Boolean = true,
     compact: Boolean = false,
 ) {
+    val localizedLegacyCatalogCardsNewItem = stringResource(Res.string.legacy_catalog_cards_new_item)
+
     Card(
         modifier = modifier.fillMaxWidth().clickable(enabled = shop.publicAddress != null, onClick = onClick),
         shape = RoundedCornerShape(CpDimens.radiusXl),
@@ -85,7 +90,7 @@ internal fun ShopCardContent(
                 } else {
                     CoffeeShopPlaceholderImage(
                         labelSize = 18.sp,
-                        contentDescription = "Фото ${shop.title} отсутствует",
+                        contentDescription = stringResource(Res.string.legacy_shop_photo_missing, shop.title),
                     )
                 }
                 if (shop.isNew) {
@@ -106,7 +111,7 @@ internal fun ShopCardContent(
                             modifier = Modifier.size(14.dp),
                         )
                         Text(
-                            text = "Новое",
+                            text = localizedLegacyCatalogCardsNewItem,
                             style = MaterialTheme.typography.labelSmall,
                             color = Color.White,
                             fontWeight = FontWeight.SemiBold,
@@ -186,7 +191,7 @@ internal fun ShopCardContent(
                             ) {
                                 CoffeeShopImage(
                                     imageUrl = logoUrl,
-                                    contentDescription = "Логотип обжарщика ${index + 1}",
+                                    contentDescription = stringResource(Res.string.legacy_roaster_logo_number, index + 1),
                                     contentScale = ContentScale.Crop,
                                     placeholderLabelSize = 5.sp,
                                     modifier = Modifier.fillMaxSize(),
@@ -241,7 +246,7 @@ internal fun ShopCardContent(
 
                 val locationSummary = listOfNotNull(
                     shop.address?.takeIf { it.isNotBlank() },
-                    distance?.let { "$it от вас" },
+                    distance?.let { stringResource(Res.string.legacy_distance_from_you, it) },
                 ).joinToString(" • ")
                 if (locationSummary.isNotBlank()) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -321,6 +326,9 @@ private fun CompactShopCardContent(
     onToggleFavorite: (() -> Unit)?,
     showOpenStatus: Boolean,
 ) {
+    val localizedLegacyCatalogCardsDiscoveryShopOpen = stringResource(Res.string.legacy_catalog_cards_discovery_shop_open)
+    val localizedLegacyCatalogCardsDiscoveryShopClosed = stringResource(Res.string.legacy_catalog_cards_discovery_shop_closed)
+
     Column(Modifier.fillMaxWidth()) {
         Box(
             modifier = Modifier.fillMaxWidth().aspectRatio(1.6f)
@@ -330,7 +338,7 @@ private fun CompactShopCardContent(
             if (!photo.isNullOrBlank()) CoffeeShopImage(
                 photo, contentDescription = shop.title,
                 modifier = Modifier.fillMaxSize(), placeholderLabelSize = 10.sp,
-            ) else CoffeeShopPlaceholderImage(labelSize = 10.sp, contentDescription = "Фото ${shop.title} отсутствует")
+            ) else CoffeeShopPlaceholderImage(labelSize = 10.sp, contentDescription = stringResource(Res.string.legacy_shop_photo_missing, shop.title))
             Box(Modifier.align(Alignment.TopEnd).padding(6.dp)) {
                 CatalogFavoriteControl(shop.isFavorite, onToggleFavorite, overImage = true, compact = true)
             }
@@ -361,11 +369,11 @@ private fun CompactShopCardContent(
                         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(3.dp),
                     ) {
                         Box(Modifier.size(4.dp).clip(CircleShape).background(color))
-                        Text(if (shop.isOpen) "ОТКРЫТО" else "ЗАКРЫТО", color = color, fontSize = 8.sp, lineHeight = 10.sp, fontWeight = FontWeight.Bold)
+                        Text(if (shop.isOpen) localizedLegacyCatalogCardsDiscoveryShopOpen else localizedLegacyCatalogCardsDiscoveryShopClosed, color = color, fontSize = 8.sp, lineHeight = 10.sp, fontWeight = FontWeight.Bold)
                     }
                 }
             }
-            val location = listOfNotNull(shop.address?.takeIf(String::isNotBlank), distance?.let { "$it от вас" }).joinToString(" · ")
+            val location = listOfNotNull(shop.address?.takeIf(String::isNotBlank), distance?.let { stringResource(Res.string.legacy_distance_from_you, it) }).joinToString(" · ")
             if (location.isNotBlank()) Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(2.dp)) {
                 Icon(CpIcons.Location, null, Modifier.size(10.dp), tint = CpColor.Primary)
                 Text(location, fontSize = 10.sp, lineHeight = 13.sp, color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -394,6 +402,9 @@ private fun CompactShopCardContent(
 
 @Composable
 private fun OpenStatusBadge(isOpen: Boolean, modifier: Modifier = Modifier) {
+    val localizedLegacyCatalogCardsDiscoveryShopOpen = stringResource(Res.string.legacy_catalog_cards_discovery_shop_open)
+    val localizedLegacyCatalogCardsDiscoveryShopClosed = stringResource(Res.string.legacy_catalog_cards_discovery_shop_closed)
+
     val color = if (isOpen) CpColor.Success else MaterialTheme.colorScheme.error
     Row(
         modifier = modifier
@@ -405,7 +416,7 @@ private fun OpenStatusBadge(isOpen: Boolean, modifier: Modifier = Modifier) {
     ) {
         Box(Modifier.size(8.dp).clip(RoundedCornerShape(50)).background(color))
         Text(
-            text = if (isOpen) "ОТКРЫТО" else "ЗАКРЫТО",
+            text = if (isOpen) localizedLegacyCatalogCardsDiscoveryShopOpen else localizedLegacyCatalogCardsDiscoveryShopClosed,
             style = MaterialTheme.typography.labelSmall,
             color = color,
             fontWeight = FontWeight.Bold,
@@ -459,10 +470,11 @@ private fun DetailSeparator() {
     )
 }
 
+@Composable
 private fun shopTypeLabel(type: String): String = when (type) {
     com.coffeepeek.domain.model.CoffeeShopType.SPECIALTY -> "Specialty"
-    com.coffeepeek.domain.model.CoffeeShopType.CAFE -> "Кафе"
-    else -> "Кофейня"
+    com.coffeepeek.domain.model.CoffeeShopType.CAFE -> stringResource(Res.string.legacy_shop_detail_screen_discovery_kind_cafe)
+    else -> stringResource(Res.string.legacy_review_content_ownership_kind_shop)
 }
 
 @Composable
@@ -475,6 +487,9 @@ internal fun RoasterCardContent(
     onToggleFavorite: (() -> Unit)?,
     modifier: Modifier = Modifier,
 ) {
+    val localizedProfileStatShops = stringResource(Res.string.profile_stat_shops)
+    val localizedCoffeeTabCatalog = stringResource(Res.string.coffee_tab_catalog)
+
     val photo = roaster.photoUrl?.takeIf(String::isNotBlank)
         ?: details?.photos?.firstOrNull()?.fullUrl?.takeIf(String::isNotBlank)
     val description = roaster.description?.takeIf(String::isNotBlank)
@@ -505,7 +520,7 @@ internal fun RoasterCardContent(
                             contentAlignment = Alignment.Center,
                         ) {
                             if (photo != null) CoffeeShopImage(
-                                imageUrl = photo, contentDescription = "Логотип ${roaster.name}",
+                                imageUrl = photo, contentDescription = stringResource(Res.string.legacy_roaster_logo_named, roaster.name),
                                 contentScale = ContentScale.Fit, placeholderLabelSize = 6.sp,
                                 modifier = Modifier.fillMaxSize(),
                             ) else Icon(CpIcons.Factory, null, Modifier.size(28.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -537,9 +552,9 @@ internal fun RoasterCardContent(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(6.dp),
                     ) {
-                        RoasterStat(CpIcons.Coffee, "Кофейни", roaster.coffeeShopsCount, Modifier.weight(1f))
+                        RoasterStat(CpIcons.Coffee, localizedProfileStatShops, roaster.coffeeShopsCount, Modifier.weight(1f))
                         VerticalDivider(Modifier.height(20.dp), color = MaterialTheme.colorScheme.outlineVariant)
-                        RoasterStat(CpIcons.CoffeeBean, "Каталог", roaster.coffeeProductsCount, Modifier.weight(1f))
+                        RoasterStat(CpIcons.CoffeeBean, localizedCoffeeTabCatalog, roaster.coffeeProductsCount, Modifier.weight(1f))
                     }
                 },
             ) { measurables, constraints ->
@@ -570,13 +585,16 @@ private fun CatalogFavoriteControl(
     overImage: Boolean = false,
     compact: Boolean = false,
 ) {
+    val localizedLegacyPublicProfileFavoriteCardIsFavorite = stringResource(Res.string.legacy_public_profile_favorite_card_is_favorite)
+    val localizedLegacyCatalogCardsIsNotFavorite = stringResource(Res.string.legacy_catalog_cards_is_not_favorite)
+
     if (onClick != null) {
         FavoriteButton(isFavorite = isFavorite, onClick = onClick, enabled = enabled, overImage = overImage)
     } else {
         if (overImage) {
             CoffeePeekLikeBadge(
                 selected = isFavorite,
-                contentDescription = if (isFavorite) "В избранном" else "Не в избранном",
+                contentDescription = if (isFavorite) localizedLegacyPublicProfileFavoriteCardIsFavorite else localizedLegacyCatalogCardsIsNotFavorite,
                 modifier = Modifier.size(if (compact) 32.dp else 48.dp),
             )
         } else Box(
@@ -585,7 +603,7 @@ private fun CatalogFavoriteControl(
         ) {
             CoffeePeekLikeIcon(
                 selected = isFavorite,
-                contentDescription = if (isFavorite) "В избранном" else "Не в избранном",
+                contentDescription = if (isFavorite) localizedLegacyPublicProfileFavoriteCardIsFavorite else localizedLegacyCatalogCardsIsNotFavorite,
                 overImage = overImage,
                 modifier = Modifier.size(24.dp),
             )

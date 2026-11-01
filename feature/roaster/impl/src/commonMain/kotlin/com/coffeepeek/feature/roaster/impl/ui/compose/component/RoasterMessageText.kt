@@ -1,7 +1,7 @@
 package com.coffeepeek.feature.roaster.impl.ui.compose.component
 
 import androidx.compose.runtime.Composable
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import com.coffeepeek.feature.roaster.impl.resources.Res
 import com.coffeepeek.feature.roaster.impl.resources.roaster_message_favorite_failed
 import com.coffeepeek.feature.roaster.impl.resources.roaster_message_favorites_unavailable

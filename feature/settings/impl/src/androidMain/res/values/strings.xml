@@ -1,5 +1,5 @@
 <resources>
-    <!-- Russian only, copied verbatim from the production settings screens; the city error texts are new. -->
+    <!-- Default Russian strings. Belarusian translations live in values-be. -->
     <string name="settings_back">Назад</string>
     <string name="settings_loading">Загрузка</string>
     <string name="settings_retry">Повторить</string>
@@ -11,6 +11,13 @@
     <string name="settings_theme_system">Системная</string>
     <string name="settings_theme_light">Светлая</string>
     <string name="settings_theme_dark">Тёмная</string>
+
+    <string name="settings_language_title">Язык</string>
+    <string name="settings_notifications_title">Уведомления</string>
+    <string name="settings_notifications_description">Включайте и выключайте уведомления приложения</string>
+    <string name="settings_language_row_description">Выберите язык интерфейса приложения</string>
+    <string name="settings_language_russian">Русский</string>
+    <string name="settings_language_belarusian">Беларуская</string>
 
     <string name="settings_city_title">Город</string>
     <string name="settings_city_heading">Ваш город</string>

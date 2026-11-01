@@ -1,7 +1,11 @@
 package com.coffeepeek.admin.ui.screen.auth
 
+import com.coffeepeek.admin.auth.russianSocialErrorCopy
+
 import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.utils.LoadingHandler
+import com.coffeepeek.admin.utils.InputValidationIssue
+import com.coffeepeek.feature.auth.domain.LoginFailure
 import com.coffeepeek.domain.model.AppleLoginChallenge
 import com.coffeepeek.domain.model.Session
 import com.coffeepeek.domain.repository.AuthRepository
@@ -44,8 +48,8 @@ class AuthViewModelTest {
         val vm = AuthViewModel(auth)
         try {
             vm.onLoginClick()
-            assertEquals("Введите email", vm.emailError.value)
-            assertEquals("Введите пароль", vm.passwordError.value)
+            assertEquals(InputValidationIssue.EmailRequired, vm.emailError.value)
+            assertEquals(InputValidationIssue.PasswordRequired, vm.passwordError.value)
             assertNull(vm.loginError.value)
             assertTrue(auth.logins.isEmpty())
         } finally { vm.close() }
@@ -58,8 +62,8 @@ class AuthViewModelTest {
             vm.onEmailChange("not-an-email")
             vm.onPasswordChange("123")
             vm.onLoginClick()
-            assertEquals("Введите корректный email", vm.emailError.value)
-            assertEquals("Пароль должен содержать как минимум 6 символов", vm.passwordError.value)
+            assertEquals(InputValidationIssue.EmailInvalid, vm.emailError.value)
+            assertEquals(InputValidationIssue.PasswordTooShort(6), vm.passwordError.value)
             assertTrue(auth.logins.isEmpty())
         } finally { vm.close() }
     }
@@ -83,9 +87,9 @@ class AuthViewModelTest {
 
     @Test fun failedLoginShowsTheLocalizedMessageAndStaysOnTheScreen() = runBlocking<Unit> {
         val cases = mapOf(
-            "Invalid credentials" to "Неверный email или пароль",
-            "Connection timeout" to "Не удалось подключиться. Проверьте интернет-соединение",
-            "boom" to "Не удалось войти. Проверьте email и пароль",
+            "Invalid credentials" to LoginFailure.WrongCredentials,
+            "Connection timeout" to LoginFailure.Network,
+            "boom" to LoginFailure.Unknown,
         )
         for ((message, expected) in cases) {
             val auth = FakeAuth().apply { onLogin = { _, _ -> Result.failure(IllegalStateException(message)) } }
@@ -95,9 +99,9 @@ class AuthViewModelTest {
                 vm.onEmailChange("person@example.com")
                 vm.onPasswordChange("secret1")
                 vm.onLoginClick()
-                withTimeout(5_000) { vm.loginError.first { it != null } }
+                withTimeout(5_000) { vm.loginFailure.first { it != null } }
                 idle()
-                assertEquals(expected, vm.loginError.value, message)
+                assertEquals(expected, vm.loginFailure.value, message)
                 assertFalse(navigation.isCompleted, "No navigation after a failed login")
                 navigation.cancel()
             } finally { vm.close() }
@@ -114,9 +118,9 @@ class AuthViewModelTest {
             assertNull(vm.passwordError.value)
 
             vm.onLoginClick()
-            assertEquals("Введите корректный email", vm.emailError.value)
+            assertEquals(InputValidationIssue.EmailInvalid, vm.emailError.value)
             vm.onEmailChange("still-bad")
-            assertEquals("Введите корректный email", vm.emailError.value, "While an error is shown it is validated live")
+            assertEquals(InputValidationIssue.EmailInvalid, vm.emailError.value, "While an error is shown it is validated live")
             vm.onEmailChange("good@example.com")
             assertNull(vm.emailError.value, "A valid value clears the shown error")
             vm.onEmailChange("bad-again")
@@ -126,10 +130,10 @@ class AuthViewModelTest {
 
             vm.onEmailChange("good@example.com")
             vm.onLoginClick()
-            withTimeout(5_000) { vm.loginError.first { it != null } }
+            withTimeout(5_000) { vm.loginFailure.first { it != null } }
             idle()
             vm.onPasswordChange("secret12")
-            assertNull(vm.loginError.value, "Editing clears the request error")
+            assertNull(vm.loginFailure.value, "Editing clears the request error")
         } finally { vm.close() }
     }
 
@@ -138,7 +142,7 @@ class AuthViewModelTest {
         val vm = AuthViewModel(auth)
         try {
             val navigation = mainNavigation()
-            vm.onGoogleLogin("google-token")
+            vm.onGoogleLogin("google-token") { russianSocialErrorCopy }
             withTimeout(5_000) { navigation.await() }
             idle()
             assertEquals(listOf("google-token"), auth.googleTokens)
@@ -147,11 +151,11 @@ class AuthViewModelTest {
         val failing = FakeAuth().apply { onGoogle = { Result.failure(IllegalStateException("Account with this email already exists")) } }
         val second = AuthViewModel(failing)
         try {
-            second.onGoogleLogin("token")
+            second.onGoogleLogin("token") { russianSocialErrorCopy }
             withTimeout(5_000) { second.loginError.first { it != null } }
             idle()
             assertEquals("Аккаунт с этим email уже существует. Используйте способ входа, с которым вы регистрировались.", second.loginError.value)
-            second.onGoogleLoginError("anything")
+            second.onGoogleLoginError("anything", copy = russianSocialErrorCopy)
             assertEquals("Не удалось войти через Google. Попробуйте ещё раз.", second.loginError.value)
             second.clearFieldErrors()
             assertNull(second.loginError.value)

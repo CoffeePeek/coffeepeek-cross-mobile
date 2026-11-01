@@ -5,14 +5,12 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import com.coffeepeek.core.designsystem.component.CoffeePeekTextButton as TextButton
@@ -30,7 +28,7 @@ import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.shelf.impl.resources.*
 import com.coffeepeek.feature.shelf.impl.ui.compose.model.ShelfScannerStatus
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 /** How to photograph a bag, and the camera and gallery once the scanner's models are on the phone. */
@@ -73,15 +71,22 @@ private fun ShelfScannerReadiness(scanner: ShelfScannerStatus, onDownload: () ->
             Text(stringResource(Res.string.shelf_scanner_download_body, megabytes(scanner.bytes)), color = muted)
             CoffeePeekButton(stringResource(Res.string.shelf_scanner_download), onDownload)
         }
-        is ShelfScannerStatus.Downloading -> Column(verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2)) {
-            val share = if (scanner.total > 0) scanner.done.toFloat() / scanner.total else 0f
-            Text(stringResource(Res.string.shelf_scanner_downloading, "${(share * 100).toInt()}%"), color = muted)
-            LinearProgressIndicator(progress = { share }, modifier = Modifier.fillMaxWidth())
-        }
+        is ShelfScannerStatus.Downloading -> ShelfScannerDownloadProgress(scanner)
         ShelfScannerStatus.DownloadFailed -> Column(verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2)) {
             Text(stringResource(Res.string.shelf_scanner_download_failed), color = MaterialTheme.colorScheme.error)
             CoffeePeekButton(stringResource(Res.string.shelf_scanner_download), onDownload)
         }
+    }
+}
+
+@Composable
+private fun ShelfScannerDownloadProgress(scanner: ShelfScannerStatus.Downloading) {
+    val share = scanner.total.takeIf { it > 0 }?.let { (scanner.done.toDouble() / it).toFloat().coerceIn(0f, 1f) }
+    val label = share?.let { stringResource(Res.string.shelf_scanner_downloading, "${(it * 100).toInt()}%") }
+        ?: stringResource(Res.string.shelf_scanner_downloading_unknown)
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2)) {
+        CoffeePeekLoader(label, size = 20.dp, color = MaterialTheme.colorScheme.primary, strokeWidth = 2.dp, progress = share)
+        Text(label, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 
@@ -98,3 +103,5 @@ private fun ShelfScanIntroPreview(dark: Boolean, scanner: ShelfScannerStatus) = 
 @Preview @Composable private fun ShelfScanIntroDownloadDarkPreview() = ShelfScanIntroPreview(true, ShelfScannerStatus.NeedsDownload(28_079_181))
 @Preview @Composable private fun ShelfScanIntroDownloadingLightPreview() = ShelfScanIntroPreview(false, ShelfScannerStatus.Downloading(9_000_000, 28_079_181))
 @Preview @Composable private fun ShelfScanIntroDownloadingDarkPreview() = ShelfScanIntroPreview(true, ShelfScannerStatus.Downloading(9_000_000, 28_079_181))
+@Preview @Composable private fun ShelfScanIntroUnknownDownloadLightPreview() = ShelfScanIntroPreview(false, ShelfScannerStatus.Downloading(9_000_000, 0))
+@Preview @Composable private fun ShelfScanIntroUnknownDownloadDarkPreview() = ShelfScanIntroPreview(true, ShelfScannerStatus.Downloading(9_000_000, 0))

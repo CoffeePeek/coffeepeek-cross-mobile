@@ -1,5 +1,9 @@
 package com.coffeepeek.admin.ui.component
 
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
+
+import coffeepeek.composeapp.generated.resources.*
+
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -136,7 +140,7 @@ fun SettingsDivider() {
 @Composable
 fun AppVersionFooter() {
     Text(
-        text = "Версия ${AppConfig.versionName}",
+        text = stringResource(Res.string.legacy_app_version_footer, AppConfig.versionName),
         style = MaterialTheme.typography.labelSmall,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = Modifier

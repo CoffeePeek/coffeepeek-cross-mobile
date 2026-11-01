@@ -38,7 +38,7 @@ import com.coffeepeek.feature.shop.impl.resources.shop_overview_photo_descriptio
 import com.coffeepeek.feature.shop.impl.resources.shop_overview_photo_missing
 import io.kamel.image.KamelImage
 import io.kamel.image.asyncPainterResource
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 /** Photo-only hero; title, type and address are rendered below, as in the current screen. */

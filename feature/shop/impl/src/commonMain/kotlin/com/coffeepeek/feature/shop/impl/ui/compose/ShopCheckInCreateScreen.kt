@@ -9,15 +9,16 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
 import com.coffeepeek.core.designsystem.component.CoffeePeekTextButton as TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
@@ -65,7 +66,7 @@ import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopCheckInFormEvent
 import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopCheckInFormState
 import com.coffeepeek.feature.shop.impl.ui.data.ShopCheckInDateFormatter
 import com.coffeepeek.feature.shop.impl.ui.data.ShopCheckInPhotoPicker
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 /** Runtime shell. The caller owns its lifecycle VM, platform conversions and navigation. */
@@ -136,7 +137,7 @@ internal fun ShopCheckInCreateScreenContent(
                 onFeed = { onAction(ShopCheckInFormAction.GoToFeed) },
             )
         } else if (state.isLoading) {
-            CircularProgressIndicator()
+            CoffeePeekLoader(size = 40.dp, color = MaterialTheme.colorScheme.primary, strokeWidth = 4.dp)
         } else {
             ShopCheckInFormHeader(shopName)
             ShopCheckInRatings(state.input.rating, editable) { onAction(ShopCheckInFormAction.RatingChanged(it)) }
@@ -224,10 +225,10 @@ private fun validationMessage(error: ShopCheckInValidationError?): String? = err
 
 @Composable
 private fun ShopCheckInFormPreview(dark: Boolean, uncertain: Boolean = false,
-    photosPreparing: Boolean = false, submitted: Boolean = false) = CoffeePeekTheme(darkTheme = dark) {
+    photosPreparing: Boolean = false, submitted: Boolean = false, loading: Boolean = false) = CoffeePeekTheme(darkTheme = dark) {
     val state = ShopCheckInFormState(
         input = ShopCheckInCreateInput("preview-shop", "Понравился фильтр", ShopRating(4, 4, 4), "2026-10-09T09:00:00Z"),
-        isLoading = false, deliveryUnconfirmed = uncertain, submitted = submitted,
+        isLoading = loading, deliveryUnconfirmed = uncertain, submitted = submitted,
     )
     ShopCheckInCreateScreenContent(state, "Кофейня", "9 октября 2026", 1791504000000, 1791547200000, {}, {}, {}, {}, photosPreparing = photosPreparing)
 }
@@ -240,3 +241,5 @@ private fun ShopCheckInFormPreview(dark: Boolean, uncertain: Boolean = false,
 @Preview @Composable private fun ShopCheckInUnconfirmedDarkPreview() = ShopCheckInFormPreview(true, true)
 @Preview @Composable private fun ShopCheckInPhotosPreparingLightPreview() = ShopCheckInFormPreview(false, photosPreparing = true)
 @Preview @Composable private fun ShopCheckInPhotosPreparingDarkPreview() = ShopCheckInFormPreview(true, photosPreparing = true)
+@Preview @Composable private fun ShopCheckInLoadingLightPreview() = ShopCheckInFormPreview(false, loading = true)
+@Preview @Composable private fun ShopCheckInLoadingDarkPreview() = ShopCheckInFormPreview(true, loading = true)

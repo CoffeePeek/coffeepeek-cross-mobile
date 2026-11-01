@@ -1,0 +1,4 @@
+<resources>
+    <string name="snackbar_dismiss">Схаваць паведамленне</string>
+    <string name="snackbar_retrying">Паўтараем…</string>
+</resources>

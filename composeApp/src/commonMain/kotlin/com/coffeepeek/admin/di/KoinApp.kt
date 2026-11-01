@@ -161,6 +161,7 @@ fun initKoin(
             authRendererFactory, communityRendererFactory, checkInDetailRendererFactory, contributionsRendererFactory, discoveryRendererFactory, notificationsRendererFactory,
             shelfRendererFactory),
         imageModule(),
+        com.coffeepeek.admin.di.settings.appLanguageModule(database.settingRepository),
         roasterModule(),
         com.coffeepeek.admin.di.ownership.businessOwnershipModule(),
         updateInstallerModule(),

@@ -1,0 +1,15 @@
+<resources>
+    <string name="native_date_cancel">Отмена</string>
+    <string name="native_done">Готово</string>
+    <string name="native_link_invalid">Некорректная ссылка</string>
+    <string name="native_link_open_failed">Не удалось открыть ссылку</string>
+    <string name="native_store_open_failed">Не удалось открыть App Store.</string>
+    <string name="native_photo_unavailable">Фото недоступно</string>
+    <string name="native_social_account_exists">Аккаунт с этим email уже существует. Используйте способ входа, с которым вы регистрировались.</string>
+    <string name="native_social_email_unverified">%1$s не передал подтверждённый email. Разрешите доступ к email и попробуйте ещё раз.</string>
+    <string name="native_social_network">Не удалось подключиться. Проверьте интернет-соединение</string>
+    <string name="native_social_failed">Не удалось войти через %1$s. Попробуйте ещё раз.</string>
+    <string name="native_social_code">код</string>
+    <string name="native_social_domain">домен</string>
+    <string name="native_social_oauth">OAuth</string>
+</resources>

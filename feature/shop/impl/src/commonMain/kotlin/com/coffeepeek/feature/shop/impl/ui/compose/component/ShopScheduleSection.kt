@@ -76,7 +76,7 @@ import com.coffeepeek.feature.shop.impl.resources.shop_schedule_sunday_short
 import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopScheduleStatus
 import com.coffeepeek.feature.shop.impl.ui.data.shopScheduleStatus
 import com.coffeepeek.feature.shop.impl.ui.data.formatShopScheduleTime
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 /** Day 0 is Sunday; expanded state and current day are supplied by the screen. */

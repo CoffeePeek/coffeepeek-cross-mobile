@@ -14,6 +14,9 @@ import kotlinx.cinterop.ObjCAction
 import platform.Foundation.*
 import platform.UIKit.*
 import platform.darwin.NSObject
+import coffeepeek.composeapp.generated.resources.Res
+import coffeepeek.composeapp.generated.resources.native_done
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 
 // Auth fields share the Compose design-system shape and surface on both platforms.
 @Composable
@@ -57,14 +60,18 @@ internal actual fun NativeKeyboardDoneAccessory(visible: Boolean, onDone: () -> 
     val controller = LocalUIViewController.current
     val action = rememberUpdatedState(onDone)
     val accessorySpace = LocalKeyboardAccessorySpace.current
-    DisposableEffect(controller, accessorySpace) {
+    val done = stringResource(Res.string.native_done)
+    DisposableEffect(controller, accessorySpace, done) {
         val host = controller.parentViewController?.view ?: controller.view
-        val target = DoneTarget { host.endEditing(true); action.value() }
+        val target = DoneTarget {
+            host.endEditing(true)
+            action.value()
+        }
         val toolbar = UIToolbar().apply {
             translatesAutoresizingMaskIntoConstraints = false
             items = listOf(
                 UIBarButtonItem(barButtonSystemItem = UIBarButtonSystemItem.UIBarButtonSystemItemFlexibleSpace, target = null, action = null),
-                UIBarButtonItem(title = "Готово", style = UIBarButtonItemStyle.UIBarButtonItemStyleDone, target = target, action = NSSelectorFromString("done")),
+                UIBarButtonItem(title = done, style = UIBarButtonItemStyle.UIBarButtonItemStyleDone, target = target, action = NSSelectorFromString("done")),
             )
         }
         host.addSubview(toolbar)

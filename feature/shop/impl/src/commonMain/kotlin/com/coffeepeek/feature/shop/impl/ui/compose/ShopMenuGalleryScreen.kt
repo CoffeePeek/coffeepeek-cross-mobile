@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -17,6 +16,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
 import com.coffeepeek.core.designsystem.component.CoffeePeekTopBar
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
@@ -31,7 +32,7 @@ import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopMenuGalleryAction
 import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopMenuGalleryEvent
 import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopMenuGalleryState
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
@@ -71,7 +72,7 @@ internal fun ShopMenuGalleryScreenContent(
     ) { insets ->
         Box(Modifier.fillMaxSize().padding(insets), contentAlignment = Alignment.Center) {
             when {
-                state.isLoading -> CircularProgressIndicator()
+                state.isLoading -> CoffeePeekLoader(size = 40.dp, color = MaterialTheme.colorScheme.primary, strokeWidth = 4.dp)
                 state.hasError || state.photos.isEmpty() -> GalleryMessage(state.hasError,
                     onRetry = { onAction(ShopMenuGalleryAction.Load) })
                 else -> LazyColumn(
@@ -113,4 +114,11 @@ internal fun ShopMenuGalleryScreenContent(
 
 @Preview @Composable private fun ShopMenuGalleryScreenErrorPreview() = CoffeePeekTheme(darkTheme = true) {
     ShopMenuGalleryScreenContent(ShopMenuGalleryState(isLoading = false, hasError = true), {})
+}
+
+@Preview @Composable private fun ShopMenuGalleryLoadingLightPreview() = CoffeePeekTheme(darkTheme = false) {
+    ShopMenuGalleryScreenContent(ShopMenuGalleryState(isLoading = true), {})
+}
+@Preview @Composable private fun ShopMenuGalleryLoadingDarkPreview() = CoffeePeekTheme(darkTheme = true) {
+    ShopMenuGalleryScreenContent(ShopMenuGalleryState(isLoading = true), {})
 }

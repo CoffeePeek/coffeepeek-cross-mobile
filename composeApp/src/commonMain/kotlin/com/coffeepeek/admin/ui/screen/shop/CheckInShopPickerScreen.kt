@@ -2,6 +2,9 @@
 
 package com.coffeepeek.admin.ui.screen.shop
 
+import coffeepeek.composeapp.generated.resources.*
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
+
 import com.coffeepeek.core.designsystem.component.coffeePeekScrollContentPadding
 import com.coffeepeek.core.designsystem.component.coffeePeekViewportBottomPadding
 
@@ -42,6 +45,16 @@ import com.coffeepeek.admin.ui.screen.map.MapScreen
 
 @Composable
 internal fun CheckInShopPickerScreen() {
+    val localizedLegacyCheckInShopPickerScreenChooseShop = stringResource(Res.string.legacy_check_in_shop_picker_screen_choose_shop)
+    val localizedHistoryHomeClose = stringResource(Res.string.history_home_close)
+    val localizedLegacyCheckInShopPickerScreenCloseShopPicker = stringResource(Res.string.legacy_check_in_shop_picker_screen_close_shop_picker)
+    val localizedLegacyCheckInShopPickerScreenNearMe = stringResource(Res.string.legacy_check_in_shop_picker_screen_near_me)
+    val localizedLegacyCheckInShopPickerScreenListView = stringResource(Res.string.legacy_check_in_shop_picker_screen_list_view)
+    val localizedLegacyCheckInShopPickerScreenMapView = stringResource(Res.string.legacy_check_in_shop_picker_screen_map_view)
+    val localizedLegacyCheckInShopPickerScreenSearchShops = stringResource(Res.string.legacy_check_in_shop_picker_screen_search_shops)
+    val localizedRetry = stringResource(Res.string.retry)
+    val localizedLegacyMapSearchSuggestionsDiscoveryMapSearchEmpty = stringResource(Res.string.legacy_map_search_suggestions_discovery_map_search_empty)
+
     androidx.compose.ui.backhandler.BackHandler {
         CheckInFlowHandoff.cancelFromBack()
         Navigator.popBack()
@@ -85,12 +98,12 @@ internal fun CheckInShopPickerScreen() {
         contentColor = MaterialTheme.colorScheme.onBackground,
     ) {
         Column(Modifier.fillMaxSize().coffeePeekViewportBottomPadding()) {
-            CpTopBar(title = "Выберите кофейню", onBack = null,
-                nativeAction = com.coffeepeek.admin.ui.component.NavigationBarAction("Закрыть", { CheckInFlowHandoff.take()?.cancel("close"); Navigator.popBack() }), actions = {
+            CpTopBar(title = localizedLegacyCheckInShopPickerScreenChooseShop, onBack = null,
+                nativeAction = com.coffeepeek.admin.ui.component.NavigationBarAction(localizedHistoryHomeClose, { CheckInFlowHandoff.take()?.cancel("close"); Navigator.popBack() }), actions = {
                 PlatformGlassIconButton(
                     icon = GlassControlIcon.Close,
                     onClick = { CheckInFlowHandoff.take()?.cancel("close"); Navigator.popBack() },
-                    contentDescription = "Закрыть выбор кофейни",
+                    contentDescription = localizedLegacyCheckInShopPickerScreenCloseShopPicker,
                 ) { Icon(CpIcons.Close, null, Modifier.size(20.dp), tint = MaterialTheme.colorScheme.onSurface) }
             })
             Row(
@@ -106,13 +119,13 @@ internal fun CheckInShopPickerScreen() {
                         vm.toggleNearbyOnly()
                         if (enabling) locationRefreshKey++
                     },
-                    label = "Рядом со мной",
+                    label = localizedLegacyCheckInShopPickerScreenNearMe,
                     leadingIcon = CpIcons.Location,
                 )
                 DesignFilterChip(
                     selected = showMap,
                     onClick = { focus.clearFocus(force = true); keyboard?.hide(); showMap = !showMap },
-                    label = if (showMap) "Списком" else "На карте",
+                    label = if (showMap) localizedLegacyCheckInShopPickerScreenListView else localizedLegacyCheckInShopPickerScreenMapView,
                     leadingIcon = if (showMap) CpIcons.Search else CpIcons.Map,
                 )
             }
@@ -120,7 +133,7 @@ internal fun CheckInShopPickerScreen() {
                 MapScreen(modifier = Modifier.weight(1f), onOpenShop = selectShop)
             } else {
                 CpSearchField(
-                    value = state.query, onValueChange = vm::onQueryChange, placeholder = "Поиск кофеен",
+                    value = state.query, onValueChange = vm::onQueryChange, placeholder = localizedLegacyCheckInShopPickerScreenSearchShops,
                     modifier = Modifier.fillMaxWidth().padding(horizontal = CpDimens.spacing4, vertical = CpDimens.spacing2),
                 )
                 LazyColumn(
@@ -139,10 +152,10 @@ internal fun CheckInShopPickerScreen() {
                     when {
                         state.error != null -> item {
                             Text(state.error.orEmpty(), color = MaterialTheme.colorScheme.error)
-                            TextButton(onClick = vm::refresh) { Text("Попробовать снова") }
+                            TextButton(onClick = vm::refresh) { Text(localizedRetry) }
                         }
                         shops.isEmpty() && !state.isLoading && !state.isLoadingMore && !state.hasMore -> item {
-                            Text("Кофейни не найдены", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Text(localizedLegacyMapSearchSuggestionsDiscoveryMapSearchEmpty, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
                     if (state.isLoadingMore) item { CoffeePeekLoader() }

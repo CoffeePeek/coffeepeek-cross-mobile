@@ -1,0 +1,8 @@
+<resources>
+    <string name="profile_blocks_load_failed">Не ўдалося загрузіць блакіроўкі. Паўтарыце спробу.</string>
+    <string name="profile_unavailable">Профіль недаступны</string>
+    <string name="profile_verification_failed">Не ўдалося праверыць профіль. Паспрабуйце яшчэ раз</string>
+    <string name="profile_connections_failed">Не ўдалося загрузіць карыстальнікаў</string>
+    <string name="profile_deletion_status_failed">Памылка загрузкі стану</string>
+    <string name="profile_deletion_send_failed">Не ўдалося адправіць ліст</string>
+</resources>

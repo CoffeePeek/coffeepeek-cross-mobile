@@ -36,7 +36,7 @@ import com.coffeepeek.feature.shop.impl.resources.Res
 import com.coffeepeek.feature.shop.impl.resources.shop_checkin_form_date
 import com.coffeepeek.feature.shop.impl.resources.shop_checkin_form_date_confirm
 import com.coffeepeek.feature.shop.impl.resources.shop_checkin_form_cancel
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @OptIn(ExperimentalMaterial3Api::class)

@@ -5,3 +5,5 @@ entitlementsPath: ../../iosApp/iosApp/CoffeePeek.entitlements
 resources:
   - .build/compose-resources
   - .build/launch-resources
+  - ../../iosApp/iosApp/ru.lproj
+  - ../../iosApp/iosApp/be.lproj
