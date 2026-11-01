@@ -9,6 +9,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.admin.theme.CpDimens
 import com.coffeepeek.admin.ui.component.DesignFilterChip
+import com.coffeepeek.core.designsystem.component.CoffeePeekFilterChip
+import com.coffeepeek.core.designsystem.icons.coffeePeekMapIconPainter
 import com.coffeepeek.admin.ui.icons.CpIcons
 import com.coffeepeek.admin.ui.model.COFFEE_FOCUS_OPTIONS
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
@@ -40,7 +42,8 @@ internal fun FeedQuickFilterBar(
         DesignFilterChip(label = "Уже был", selected = visitedOnly, onClick = onToggleVisited, leadingIcon = CpIcons.CheckCircle)
         DesignFilterChip(label = "Избранное", selected = favoritesOnly, onClick = onToggleFavorites, leadingIcon = CpIcons.Favorite)
         COFFEE_FOCUS_OPTIONS.forEach { option ->
-            DesignFilterChip(label = option.label, selected = coffeeFocusId == option.id, onClick = { onCoffeeFocusChange(option.id) })
+            CoffeePeekFilterChip(label = option.label, selected = coffeeFocusId == option.id,
+                onClick = { onCoffeeFocusChange(option.id) }, leadingPainter = coffeePeekMapIconPainter(option.mapIcon))
         }
     }
 }

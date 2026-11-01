@@ -7,7 +7,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.painter.Painter
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import platform.UIKit.UIAction
 import platform.UIKit.UIButton
@@ -20,7 +20,7 @@ import platform.UIKit.accessibilityLabel
 @Composable
 internal actual fun CoffeePeekNativeFilterChip(
     label: String, selected: Boolean, onClick: () -> Unit, modifier: Modifier,
-    leadingIcon: ImageVector?, trailingIcon: ImageVector?,
+    leadingIcon: Painter?, trailingIcon: Painter?,
 ): Boolean {
     if (leadingIcon != null && trailingIcon != null) return false
     val callback = rememberUpdatedState(onClick)

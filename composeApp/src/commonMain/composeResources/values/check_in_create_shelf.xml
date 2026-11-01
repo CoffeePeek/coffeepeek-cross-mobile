@@ -1,5 +1,6 @@
 <resources>
-    <string name="check_in_create_what">Что добавим?</string>
+    <string name="check_in_create_actions">Добавить</string>
+    <string name="check_in_create_shop">Чекин в кофейне</string>
+    <string name="check_in_create_home">Чекин дома</string>
     <string name="check_in_create_shelf_title">Пачку на полку</string>
-    <string name="check_in_create_shelf_body">Сфотографируйте пачку кофе</string>
 </resources>

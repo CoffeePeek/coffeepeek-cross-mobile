@@ -9,4 +9,6 @@
     <string name="discovery_edit_query">Изменить запрос</string>
     <string name="discovery_reset_filters">Сбросить фильтры</string>
     <string name="discovery_add_roaster">Добавить обжарщика</string>
+    <string name="discovery_roaster_suggestion_title">Не нашли нужного обжарщика?</string>
+    <string name="discovery_roaster_suggestion_body">Предложите добавить его в CoffeePeek — после проверки он появится в каталоге.</string>
 </resources>

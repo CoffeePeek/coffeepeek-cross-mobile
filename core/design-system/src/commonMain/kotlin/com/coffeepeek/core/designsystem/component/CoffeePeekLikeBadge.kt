@@ -10,14 +10,14 @@ import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
-/** Read-only photo marker: glass appearance without a disabled/fictional toggle. */
+/** Read-only photo marker: shared photo-badge appearance without a disabled/fictional toggle. */
 @Composable
 fun CoffeePeekLikeBadge(selected: Boolean, contentDescription: String, modifier: Modifier = Modifier) {
     Box(
         modifier = modifier,
         contentAlignment = Alignment.Center,
     ) {
-        Box(Modifier.size(32.dp).coffeePeekLikeBackground(CoffeePeekLikeButtonStyle.Glass, CircleShape),
+        Box(Modifier.size(32.dp).coffeePeekLikeBackground(CoffeePeekLikeButtonStyle.PhotoBadge, CircleShape),
             contentAlignment = Alignment.Center) {
             CoffeePeekLikeIcon(selected, contentDescription, overImage = true)
         }

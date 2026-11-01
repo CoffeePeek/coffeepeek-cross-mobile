@@ -18,10 +18,10 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
-import com.coffeepeek.core.designsystem.component.CoffeePeekIconButton as IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import com.coffeepeek.core.designsystem.component.CoffeePeekTextButton as TextButton
+import com.coffeepeek.core.designsystem.component.CoffeePeekPlainIconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -181,7 +181,7 @@ private fun PostMenu(actions: PostCardActions, enabled: Boolean, hiding: Boolean
         actions.onBlock?.let { add(CoffeePeekMenuAction(stringResource(Res.string.community_block_author), CoffeePeekIcons.VisibilityOff, destructive = true, onClick = it)) }
     }
     CoffeePeekActionMenu(items, enabled = enabled) { open ->
-        IconButton(onClick = open, enabled = enabled) { Icon(CoffeePeekIcons.MoreHorizontal, label, tint = MaterialTheme.colorScheme.onSurfaceVariant) }
+        CoffeePeekPlainIconButton(onClick = open, enabled = enabled) { Icon(CoffeePeekIcons.MoreHorizontal, label, tint = MaterialTheme.colorScheme.onSurfaceVariant) }
     }
 }
 

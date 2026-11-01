@@ -43,8 +43,8 @@ import com.coffeepeek.core.designsystem.modifier.coffeePeekLiquidGlass
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
-/** Glass is a compact photo badge; FloatingGlass matches neighboring glass action buttons. */
-enum class CoffeePeekLikeButtonStyle { Plain, Glass, FloatingGlass }
+/** PhotoBadge matches photo ratings; glass styles are reserved for floating controls. */
+enum class CoffeePeekLikeButtonStyle { Plain, PhotoBadge, Glass, FloatingGlass }
 
 /** Stateless toggle: callers own persistence, auth, loading and analytics.
  * Native presenters may supply platform selection feedback.
@@ -62,7 +62,7 @@ fun CoffeePeekLikeButton(
     iconSize: Dp = 24.dp,
     overImage: Boolean = false,
     style: CoffeePeekLikeButtonStyle = if (overImage && containerColor == Color.Transparent) {
-        CoffeePeekLikeButtonStyle.Glass
+        CoffeePeekLikeButtonStyle.PhotoBadge
     } else {
         CoffeePeekLikeButtonStyle.Plain
     },
@@ -72,7 +72,7 @@ fun CoffeePeekLikeButton(
     val label = if (isLoading) requireNotNull(loadingDescription).also {
         require(it.isNotBlank()) { "Loading requires a localized description" }
     } else contentDescription
-    if (style != CoffeePeekLikeButtonStyle.Plain && LocalCoffeePeekNativeGlassPresenter.current
+    if (style.isGlass && LocalCoffeePeekNativeGlassPresenter.current
             ?.IconButton(if (selected) CoffeePeekGlassIcon.FavoriteFilled else CoffeePeekGlassIcon.Favorite,
                 onClick, label, modifier.sizeIn(minWidth = 48.dp, minHeight = 48.dp),
                 enabled && !isLoading, selected, isLoading) == true) return
@@ -87,7 +87,7 @@ fun CoffeePeekLikeButton(
             if (isLoading) progressBarRangeInfo = ProgressBarRangeInfo.Indeterminate
         },
         contentAlignment = Alignment.Center) {
-        if (style != CoffeePeekLikeButtonStyle.Plain && coffeePeekUsesNativeGlass) {
+        if (style.isGlass && coffeePeekUsesNativeGlass) {
             CoffeePeekNativeControlBackground(Modifier.matchParentSize(), enabled = enabled && !isLoading, pressed = pressed)
         }
         // A compact visual plate is independent of the accessible touch target.
@@ -102,8 +102,11 @@ fun CoffeePeekLikeButton(
     }
 }
 
+private val CoffeePeekLikeButtonStyle.isGlass: Boolean
+    get() = this == CoffeePeekLikeButtonStyle.Glass || this == CoffeePeekLikeButtonStyle.FloatingGlass
+
 internal fun coffeePeekLikeUsesPhotoColor(overImage: Boolean, style: CoffeePeekLikeButtonStyle, opaque: Boolean): Boolean =
-    overImage && (style == CoffeePeekLikeButtonStyle.Plain || !opaque)
+    overImage && (style == CoffeePeekLikeButtonStyle.Plain || style == CoffeePeekLikeButtonStyle.PhotoBadge || !opaque)
 
 internal fun coffeePeekLikePlateSize(style: CoffeePeekLikeButtonStyle, iconSize: Dp): Dp =
     maxOf(if (style == CoffeePeekLikeButtonStyle.FloatingGlass) CoffeePeekDimens.glassControlSize else 32.dp,
@@ -111,10 +114,12 @@ internal fun coffeePeekLikePlateSize(style: CoffeePeekLikeButtonStyle, iconSize:
 
 @Composable
 internal fun Modifier.coffeePeekLikeBackground(style: CoffeePeekLikeButtonStyle, shape: Shape): Modifier {
+    if (style == CoffeePeekLikeButtonStyle.PhotoBadge) return background(
+        com.coffeepeek.core.designsystem.theme.CoffeePeekColors.PhotoBadgeOverlay, shape)
     if (coffeePeekUsesNativeGlass) return this
     return when (style) {
         CoffeePeekLikeButtonStyle.Glass, CoffeePeekLikeButtonStyle.FloatingGlass -> coffeePeekLiquidGlass(shape)
-        CoffeePeekLikeButtonStyle.Plain -> this
+        CoffeePeekLikeButtonStyle.Plain, CoffeePeekLikeButtonStyle.PhotoBadge -> this
     }
 }
 
