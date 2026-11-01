@@ -66,6 +66,15 @@ OAuth/push configuration is not production acceptance.
 - Existing Gradle/AGP and preview deprecation warnings remain outside this scope.
   No Studio MCP tool is available in this session; no IDE diagnostic pass is
   claimed.
+- A lifecycle review of the built KLIB IR confirmed that the initial Clear
+  handler captured its `CoffeePeekSearchInput` owner through a property access.
+  The handler is now created in a private factory capturing only its target
+  parameter, removing the direct view/button/action owner cycle. Intermediate
+  macOS run `41320052263` for checkpoint `31438c3d` was cancelled before an
+  installable result; the final device build must use the follow-up checkpoint.
+- Design-system iOS Arm64 compilation passed again after the lifecycle factory
+  change. Android/common sources are unchanged by that follow-up; the successful
+  Android assembly/DEX and 111 executed unit tests remain applicable.
 
 Pending: full native iOS build, source/build identity and device
 installation/startup. Manual acceptance

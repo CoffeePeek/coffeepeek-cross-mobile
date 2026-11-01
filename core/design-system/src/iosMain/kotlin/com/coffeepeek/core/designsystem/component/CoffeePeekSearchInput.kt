@@ -27,8 +27,7 @@ internal class CoffeePeekSearchInput(private val target: CoffeePeekSearchTarget)
     val field = UITextField()
     private val glass = coffeePeekGlassMaterial()
     private val searchIcon = UIImageView(UIImage.systemImageNamed("magnifyingglass"))
-    private val clear = UIButton.buttonWithConfiguration(UIButtonConfiguration.plainButtonConfiguration(),
-        UIAction.actionWithHandler { target.clear() })
+    private val clear = coffeePeekSearchClearButton(target)
 
     init {
         backgroundColor = UIColor.clearColor
@@ -98,6 +97,11 @@ internal class CoffeePeekSearchInput(private val target: CoffeePeekSearchTarget)
         }
     }
 }
+
+/** Capture the target parameter directly; capturing the input's property would retain its UIView. */
+private fun coffeePeekSearchClearButton(target: CoffeePeekSearchTarget): UIButton =
+    UIButton.buttonWithConfiguration(UIButtonConfiguration.plainButtonConfiguration(),
+        UIAction.actionWithHandler { target.clear() })
 
 private fun KeyboardCapitalization.nativeCapitalization(): UITextAutocapitalizationType = when (this) {
     KeyboardCapitalization.Characters -> UITextAutocapitalizationType.UITextAutocapitalizationTypeAllCharacters
