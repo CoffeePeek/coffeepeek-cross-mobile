@@ -1,5 +1,5 @@
 name: Android device Debug build
-run-name: Android Debug 2640 with compatible signature
+run-name: Android Debug 2642 with compatible signature
 on:
   workflow_dispatch:
 permissions:
@@ -14,7 +14,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
-          ref: 3b8fbbe1e1a56479d7a87c5db7250e84e57cb957
+          ref: 4474d9a944dda32b73ea67444871cd10ff240794
           fetch-depth: 0
       - uses: actions/setup-java@v6
         with:
@@ -70,15 +70,15 @@ jobs:
           "$ANDROID_HOME/build-tools/36.0.0/apksigner" sign \
             --ks "$RUNNER_TEMP/coffeepeek-device.jks" --ks-pass env:KEYSTORE_PASSWORD \
             --ks-key-alias "$KEY_ALIAS" --key-pass env:KEY_PASSWORD \
-            --out "$RUNNER_TEMP/android-device-artifact/CoffeePeek-debug-2640.apk" \
+            --out "$RUNNER_TEMP/android-device-artifact/CoffeePeek-debug-2642.apk" \
             composeApp/build/outputs/apk/direct/debug/composeApp-direct-debug.apk
       - name: Validate identity and unchanged Debug code
         shell: bash
         run: |
           set -euo pipefail
           ARTIFACT_DIR="$RUNNER_TEMP/android-device-artifact"
-          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --print-certs "$ARTIFACT_DIR/CoffeePeek-debug-2640.apk" > "$ARTIFACT_DIR/signature.txt"
-          "$ANDROID_HOME/build-tools/36.0.0/aapt2" dump badging "$ARTIFACT_DIR/CoffeePeek-debug-2640.apk" > "$ARTIFACT_DIR/metadata.txt"
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" verify --print-certs "$ARTIFACT_DIR/CoffeePeek-debug-2642.apk" > "$ARTIFACT_DIR/signature.txt"
+          "$ANDROID_HOME/build-tools/36.0.0/aapt2" dump badging "$ARTIFACT_DIR/CoffeePeek-debug-2642.apk" > "$ARTIFACT_DIR/metadata.txt"
           python3 - <<'PY'
           import hashlib, os, re, zipfile
           from pathlib import Path
@@ -86,19 +86,19 @@ jobs:
           cert = re.search(r'certificate SHA-256 digest: ([a-f0-9]+)', (root / 'signature.txt').read_text()).group(1)
           assert cert == '2268057d96f512ea2c45ae1a3be84255b8cc237b1d1c9fc20c5801afd412d260', 'Installed application certificate does not match'
           metadata = (root / 'metadata.txt').read_text()
-          assert "name='com.coffeepeek' versionCode='2640'" in metadata
+          assert "name='com.coffeepeek' versionCode='2642'" in metadata
           assert 'application-debuggable' in metadata, 'Expected Debug artifact'
-          with zipfile.ZipFile('composeApp/build/outputs/apk/direct/debug/composeApp-direct-debug.apk') as before, zipfile.ZipFile(root / 'CoffeePeek-debug-2640.apk') as after:
+          with zipfile.ZipFile('composeApp/build/outputs/apk/direct/debug/composeApp-direct-debug.apk') as before, zipfile.ZipFile(root / 'CoffeePeek-debug-2642.apk') as after:
               names = [n for n in before.namelist() if re.fullmatch(r'classes[0-9]*\.dex', n)]
               assert names and all(hashlib.sha256(before.read(n)).digest() == hashlib.sha256(after.read(n)).digest() for n in names)
-          print('Verified compatible certificate, Debug variant, version2640 and unchanged DEX code')
+          print('Verified compatible certificate, Debug variant, version2642 and unchanged DEX code')
           PY
           git rev-parse HEAD > "$ARTIFACT_DIR/source-revision.txt"
           cd "$ARTIFACT_DIR"
-          sha256sum CoffeePeek-debug-2640.apk > SHA256SUMS
+          sha256sum CoffeePeek-debug-2642.apk > SHA256SUMS
       - uses: actions/upload-artifact@v7
         with:
-          name: android-device-debug-3b8fbbe1
+          name: android-device-debug-4474d9a9
           path: ${{ runner.temp }}/android-device-artifact/
           if-no-files-found: error
           retention-days: 3
