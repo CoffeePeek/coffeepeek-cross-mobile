@@ -27,7 +27,6 @@ import androidx.compose.ui.tooling.preview.Preview
 internal fun NotificationsContent(
     state: NotificationInboxState,
     onClose: () -> Unit,
-    onPushChanged: (Boolean) -> Unit,
     onRead: (String) -> Unit,
     onReadAll: () -> Unit,
     onRefresh: () -> Unit,
@@ -52,7 +51,6 @@ internal fun NotificationsContent(
                     })
                 }
             } else {
-                item(key = "settings") { NotificationPushSettings(state, onPushChanged, onRefresh) }
                 if (state.items.isNotEmpty()) item(key = "actions") { NotificationsReadActions(state, onReadAll) }
                 notificationHistory(state, onRead, openingId)
                 if (state.items.isEmpty() || state.error != null) {
@@ -124,7 +122,10 @@ private fun NotificationsStatus(state: NotificationInboxState, onRefresh: () -> 
             Modifier.fillMaxWidth().padding(CoffeePeekDimens.spacing6), contentAlignment = Alignment.Center,
         ) { CoffeePeekLoader(stringResource(R.string.notifications_loading)) }
         error != null -> Column {
-            Text(error, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium)
+            Text(stringResource(when (error) {
+                NotificationInboxError.LoadFailed -> R.string.notifications_inbox_load_failed
+                NotificationInboxError.MarkReadFailed -> R.string.notifications_mark_read_failed
+            }), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium)
             TextButton(onClick = onRefresh,
                 colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onSurface)) {
                 Text(stringResource(R.string.notifications_retry))
@@ -142,7 +143,7 @@ private fun NotificationsPreview(dark: Boolean, count: Int) = CoffeePeekTheme(da
                 "Спасибо! Новая кофейня уже появилась на карте.", "2026-10-21T08:00:00Z", false, canOpen = true)
         })
     Surface(Modifier.width(360.dp).heightIn(max = 640.dp)) {
-        NotificationsContent(state, {}, {}, {}, {}, {}, {}, {})
+        NotificationsContent(state, {}, {}, {}, {}, {}, {})
     }
 }
 
@@ -152,3 +153,13 @@ private fun NotificationsPreview(dark: Boolean, count: Int) = CoffeePeekTheme(da
 @Preview @Composable private fun NotificationsListDarkPreview() = NotificationsPreview(true, 1)
 @Preview @Composable private fun NotificationsLongListLightPreview() = NotificationsPreview(false, 15)
 @Preview @Composable private fun NotificationsLongListDarkPreview() = NotificationsPreview(true, 15)
+
+@Composable
+private fun NotificationsErrorsPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
+    Column(Modifier.width(360.dp), verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing4)) {
+        NotificationInboxError.entries.forEach { NotificationsStatus(NotificationInboxState(error = it), {}) }
+    }
+}
+
+@Preview @Composable private fun NotificationsErrorsLightPreview() = NotificationsErrorsPreview(false)
+@Preview @Composable private fun NotificationsErrorsDarkPreview() = NotificationsErrorsPreview(true)

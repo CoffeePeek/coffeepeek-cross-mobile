@@ -1,6 +1,6 @@
 package com.coffeepeek.admin.feature.profile.ui
 
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import coffeepeek.composeapp.generated.resources.Res
 import coffeepeek.composeapp.generated.resources.profile_open_avatar
 import coffeepeek.composeapp.generated.resources.profile_avatar_of

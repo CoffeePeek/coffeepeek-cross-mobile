@@ -22,7 +22,7 @@ import com.coffeepeek.feature.shop.impl.resources.Res
 import com.coffeepeek.feature.shop.impl.resources.shop_type_cafe
 import com.coffeepeek.feature.shop.impl.resources.shop_type_coffee_bar
 import com.coffeepeek.feature.shop.impl.resources.shop_type_specialty
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable

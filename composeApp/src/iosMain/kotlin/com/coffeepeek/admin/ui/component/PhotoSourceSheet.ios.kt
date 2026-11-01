@@ -6,7 +6,7 @@ import androidx.compose.runtime.Composable
 import coffeepeek.composeapp.generated.resources.Res
 import coffeepeek.composeapp.generated.resources.photo_source_camera
 import coffeepeek.composeapp.generated.resources.photo_source_gallery
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import platform.UIKit.UIImagePickerController
 import platform.UIKit.UIImagePickerControllerSourceType
 

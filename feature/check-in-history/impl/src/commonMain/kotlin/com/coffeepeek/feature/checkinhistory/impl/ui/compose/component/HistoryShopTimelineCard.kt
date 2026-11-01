@@ -15,7 +15,7 @@ import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.checkinhistory.domain.model.PersonalCheckIn
 import com.coffeepeek.feature.checkinhistory.impl.resources.*
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 
 @Composable
 internal fun HistoryShopTimelineCard(entry: PersonalCheckIn, timeLabel: String, onClick: () -> Unit) {

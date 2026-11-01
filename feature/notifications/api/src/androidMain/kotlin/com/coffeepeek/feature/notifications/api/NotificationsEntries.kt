@@ -9,4 +9,8 @@ import androidx.compose.runtime.Composable
 interface NotificationsEntry {
     @Composable
     fun Bell()
+
+    /** The existing app-notification preference; the caller owns the Settings route and back action. */
+    @Composable
+    fun Settings(onBack: () -> Unit)
 }

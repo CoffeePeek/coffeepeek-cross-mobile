@@ -24,7 +24,7 @@ import com.coffeepeek.feature.shop.impl.resources.shop_price_average_value
 import com.coffeepeek.feature.shop.impl.resources.shop_price_high_value
 import com.coffeepeek.feature.shop.impl.resources.shop_price_low_value
 import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopPriceLevel
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import kotlin.math.round

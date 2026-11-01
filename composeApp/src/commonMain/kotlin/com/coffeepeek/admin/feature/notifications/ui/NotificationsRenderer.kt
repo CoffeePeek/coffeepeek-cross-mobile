@@ -8,10 +8,16 @@ interface NotificationsRenderer {
     fun Bell()
 
     @Composable
+    fun Settings(onBack: () -> Unit)
+
+    @Composable
     fun HandlePendingOpen(isLoggedIn: Boolean) = Unit
 }
 
 internal object LegacyNotificationsRenderer : NotificationsRenderer {
     @Composable
     override fun Bell() = NotificationsButton()
+
+    @Composable
+    override fun Settings(onBack: () -> Unit) = NotificationSettingsScreen(onBack = onBack)
 }

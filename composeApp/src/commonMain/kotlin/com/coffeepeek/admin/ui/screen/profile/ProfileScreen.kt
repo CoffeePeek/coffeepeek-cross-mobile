@@ -1,5 +1,8 @@
 package com.coffeepeek.admin.ui.screen.profile
 
+import coffeepeek.composeapp.generated.resources.*
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
+
 import com.coffeepeek.core.designsystem.component.CoffeePeekScaffold as Scaffold
 
 import androidx.compose.foundation.layout.*
@@ -29,6 +32,10 @@ import org.koin.core.parameter.parametersOf
 
 @Composable
 fun ProfileScreen(vm: ProfileViewModel = koinInject()) {
+    val localizedLegacyMainScreenProfileTitle = stringResource(Res.string.legacy_main_screen_profile_title)
+    val localizedFavoritesProfileTitle = stringResource(Res.string.favorites_profile_title)
+    val localizedProfileStatCheckIns = stringResource(Res.string.profile_stat_check_ins)
+
     val state by vm.uiState.collectAsState()
     LaunchedEffect(vm) {
         if (vm.uiState.value.isLoggedIn && vm.uiState.value.hasContent) vm.refreshProfile()
@@ -104,7 +111,7 @@ fun ProfileScreen(vm: ProfileViewModel = koinInject()) {
                 Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp).height(48.dp),
                 contentAlignment = Alignment.CenterStart,
             ) {
-                Text("Профиль", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
+                Text(localizedLegacyMainScreenProfileTitle, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
                 if (state.isLoggedIn) Box(Modifier.align(Alignment.CenterEnd)) { actions() }
             }
             when {
@@ -135,11 +142,11 @@ fun ProfileScreen(vm: ProfileViewModel = koinInject()) {
                         )
                     }
                     if (state.isLoggedIn) FavoritesProfilePreview(openShop, openRoaster) {
-                        TextButton(onClick = openFavorites) { Text("Избранное") }
+                        TextButton(onClick = openFavorites) { Text(localizedFavoritesProfileTitle) }
                     }
                     if (state.checkInCount > 0) TextButton(onClick = {
                         Navigator.navigate(if (state.isLoggedIn) Navigator.Screen.VisitedPlaces else Navigator.Screen.Auth)
-                    }, modifier = Modifier.padding(horizontal = 16.dp)) { Text("Чекины") }
+                    }, modifier = Modifier.padding(horizontal = 16.dp)) { Text(localizedProfileStatCheckIns) }
                     Spacer(Modifier.height(bottomPadding))
                 }
             }

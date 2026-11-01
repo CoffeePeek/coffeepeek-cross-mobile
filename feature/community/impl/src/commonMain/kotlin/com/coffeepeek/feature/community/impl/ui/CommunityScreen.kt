@@ -38,7 +38,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import org.jetbrains.compose.resources.painterResource
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import org.jetbrains.compose.ui.tooling.preview.Preview
@@ -245,6 +245,7 @@ internal fun CommunityContent(
     }
 }
 
+@Composable
 private fun postActions(
     post: CommunityPost,
     state: CommunityState,
@@ -258,13 +259,14 @@ private fun postActions(
     val isOwn = state.owns(post)
     val public = state.timeline == CommunityTimeline.Public
     val author = post.author.slug?.takeIf(String::isNotBlank)
+    val authorName = post.author.name.ifBlank { stringResource(Res.string.community_author) }
     return PostCardActions(
         onAuthor = author?.let { slug -> { callbacks.onOpenAuthor(slug, post.author.name, post.author.avatarUrl) } },
         onShop = { onAction(CommunityAction.ItemInteracted(FeedItemAction.Shop, post.id)); callbacks.onOpenShop(post.shopSlug) }
             .takeIf { post.shopSlug.isNotBlank() },
         onHelpful = { onAction(CommunityAction.ToggleHelpful(post.id)) }.takeIf { !state.isMutating && public },
         onBlock = {
-            blockActions.requestBlock(AuthorReference(post.author.id, post.author.slug, post.author.name.ifBlank { "Автор" }, post.author.avatarUrl))
+            blockActions.requestBlock(AuthorReference(post.author.id, post.author.slug, authorName, post.author.avatarUrl))
         }.takeIf { public && !isOwn && state.canBlockAuthor(post) && (!post.author.id.isNullOrBlank() || !post.author.slug.isNullOrBlank()) },
         onPhoto = { index ->
             onAction(CommunityAction.ItemInteracted(FeedItemAction.Photo, post.id))

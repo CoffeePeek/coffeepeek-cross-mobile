@@ -47,7 +47,7 @@ import com.coffeepeek.feature.shop.domain.repository.ShopCheckInVoteRepository
 import com.coffeepeek.feature.shop.domain.repository.ShopDetailsRepository
 import com.coffeepeek.feature.shop.impl.createShopDetailEntry
 import kotlinx.coroutines.launch
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import org.jetbrains.compose.resources.getString
 
 /** Feature effects are adapted to the existing application destinations/platform services, never vice versa. */

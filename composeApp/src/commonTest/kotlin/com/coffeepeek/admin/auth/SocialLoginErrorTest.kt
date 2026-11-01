@@ -3,7 +3,23 @@ package com.coffeepeek.admin.auth
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
+internal val russianSocialErrorCopy = SocialLoginErrorCopy(
+    "Аккаунт с этим email уже существует. Используйте способ входа, с которым вы регистрировались.",
+    "%1\$s не передал подтверждённый email. Разрешите доступ к email и попробуйте ещё раз.",
+    "Не удалось подключиться. Проверьте интернет-соединение",
+    "Не удалось войти через %1\$s. Попробуйте ещё раз.", "код", "домен", "OAuth",
+)
+
 class SocialLoginErrorTest {
+    private val belarusianCopy = SocialLoginErrorCopy(
+        "Уліковы запіс з гэтым email ужо існуе.", "%1\$s не перадаў пацверджаны email.",
+        "Не ўдалося падключыцца. Праверце інтэрнэт-злучэнне",
+        "Не ўдалося ўвайсці праз %1\$s. Паспрабуйце яшчэ раз.", "код", "дамен", "OAuth",
+    )
+
+    private fun socialLoginError(provider: String, message: String?) =
+        com.coffeepeek.admin.auth.socialLoginError(provider, message, russianSocialErrorCopy)
+
     @Test
     fun googleSdkDiagnosticCodeSurvivesFriendlyErrorMapping() {
         assertEquals(
@@ -145,5 +161,24 @@ class SocialLoginErrorTest {
                 socialLoginError("Apple", "[ASI-$code]"),
             )
         }
+    }
+
+    @Test
+    fun belarusianCopyKeepsMachineDiagnosticsWithoutDisplayingTheProviderText() {
+        assertEquals(
+            "Не ўдалося ўвайсці праз Apple. Паспрабуйце яшчэ раз. (код ASI-E1000; дамен com.apple.AuthenticationServices.AuthorizationError)",
+            com.coffeepeek.admin.auth.socialLoginError("Apple",
+                "Не удалось войти через Apple [ASI-E1000 D:com.apple.AuthenticationServices.AuthorizationError] private-token=secret", belarusianCopy),
+        )
+    }
+
+    @Test
+    fun belarusianClassificationUsesTheSameAccountAndNetworkRules() {
+        assertEquals("Уліковы запіс з гэтым email ужо існуе.",
+            com.coffeepeek.admin.auth.socialLoginError("Google", "email account already exists", belarusianCopy))
+        assertEquals("Не ўдалося падключыцца. Праверце інтэрнэт-злучэнне (код ASI-X)",
+            com.coffeepeek.admin.auth.socialLoginError("Apple", "network unavailable [ASI-X]", belarusianCopy))
+        assertEquals("Apple не перадаў пацверджаны email.",
+            com.coffeepeek.admin.auth.socialLoginError("Apple", "email is not verified", belarusianCopy))
     }
 }

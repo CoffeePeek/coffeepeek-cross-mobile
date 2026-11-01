@@ -1,5 +1,8 @@
 package com.coffeepeek.admin.ui.component
 
+import coffeepeek.composeapp.generated.resources.*
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
+
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -26,8 +29,11 @@ import org.jetbrains.compose.resources.painterResource
 fun LoadErrorContent(
     onRetry: () -> Unit,
     modifier: Modifier = Modifier,
-    retryLabel: String = "Попробовать снова",
+    retryLabel: String = stringResource(Res.string.retry),
 ) {
+    val localizedLegacyLoadErrorContentCommunityErrorTitle = stringResource(Res.string.legacy_load_error_content_community_error_title)
+    val localizedLegacyLoadErrorContentCommunityErrorBody = stringResource(Res.string.legacy_load_error_content_community_error_body)
+
     Column(
         modifier = modifier.fillMaxWidth().padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -41,14 +47,14 @@ fun LoadErrorContent(
         )
         Spacer(Modifier.height(16.dp))
         Text(
-            text = "Упс, что-то пошло не так",
+            text = localizedLegacyLoadErrorContentCommunityErrorTitle,
             style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.onSurface,
             textAlign = TextAlign.Center,
         )
         Spacer(Modifier.height(8.dp))
         Text(
-            text = "Сервис временно недоступен. Возможно, ведутся работы. Попробуйте чуть позже.",
+            text = localizedLegacyLoadErrorContentCommunityErrorBody,
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,

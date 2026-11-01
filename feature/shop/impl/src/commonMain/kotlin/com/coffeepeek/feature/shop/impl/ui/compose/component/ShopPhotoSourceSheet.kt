@@ -32,7 +32,7 @@ import com.coffeepeek.feature.shop.impl.resources.shop_review_photo_source_camer
 import com.coffeepeek.feature.shop.impl.resources.shop_review_photo_source_cancel
 import com.coffeepeek.feature.shop.impl.resources.shop_review_photo_source_gallery
 import com.coffeepeek.feature.shop.impl.resources.shop_review_photo_source_title
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable

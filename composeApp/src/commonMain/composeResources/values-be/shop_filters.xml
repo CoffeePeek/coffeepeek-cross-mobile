@@ -1,0 +1,13 @@
+<resources>
+    <string name="shop_filters_title">Фільтры</string>
+    <string name="shop_filters_close">Закрыць фільтры</string>
+    <string name="shop_filters_reset">Скінуць</string>
+    <string name="shop_filters_done">Гатова</string>
+    <string name="shop_filters_price">Цана</string>
+    <string name="shop_filters_any_price">Любая</string>
+    <string name="shop_filters_roasters">Абсмажчыкі</string>
+    <string name="shop_filters_beans">Зярняты</string>
+    <string name="shop_filters_equipment">Абсталяванне</string>
+    <string name="shop_filters_brew">Спосаб заварвання</string>
+    <string name="shop_filters_amenities">Асаблівасці</string>
+</resources>

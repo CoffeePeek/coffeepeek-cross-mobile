@@ -9,7 +9,7 @@ import com.coffeepeek.feature.shop.impl.resources.shop_review_new_photos
 import com.coffeepeek.feature.shop.impl.resources.shop_review_photos
 import com.coffeepeek.feature.shop.impl.resources.shop_review_new_photo_hint
 import com.coffeepeek.feature.shop.impl.resources.shop_review_photo_hint
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable

@@ -1,5 +1,8 @@
 package com.coffeepeek.admin.ui.component
 
+import coffeepeek.composeapp.generated.resources.*
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
+
 import androidx.compose.material3.Icon
 import com.coffeepeek.core.designsystem.component.CoffeePeekPlainIconButton as IconButton
 import androidx.compose.material3.MaterialTheme
@@ -18,25 +21,32 @@ internal fun CheckInActions(
     author: com.coffeepeek.feature.authorblocking.api.AuthorReference? = null,
     blockActions: com.coffeepeek.feature.authorblocking.api.AuthorBlockActions? = null,
 ) {
+    val localizedLegacyCheckInActionsCommunityBlockAuthor = stringResource(Res.string.legacy_check_in_actions_community_block_author)
+    val localizedLegacyCheckInActionsOwnershipEdit = stringResource(Res.string.legacy_check_in_actions_ownership_edit)
+    val localizedNotificationsSaving = stringResource(Res.string.notifications_saving)
+    val localizedLegacyCheckInActionsCommunityHide = stringResource(Res.string.legacy_check_in_actions_community_hide)
+    val localizedLegacyCheckInActionsCommunityReport = stringResource(Res.string.legacy_check_in_actions_community_report)
+    val localizedLegacyCheckInActionsCommunityActions = stringResource(Res.string.legacy_check_in_actions_community_actions)
+
     val blocking = blockActions ?: if (author != null) org.koin.compose.koinInject<com.coffeepeek.feature.authorblocking.api.AuthorBlockActions>() else null
     if (onEditClick == null && onReportClick == null && onHideClick == null && author == null) return
     val items = buildList {
-        if (author != null && blocking != null) add(PlatformMenuItem("block", "Заблокировать автора", enabled = enabled,
+        if (author != null && blocking != null) add(PlatformMenuItem("block", localizedLegacyCheckInActionsCommunityBlockAuthor, enabled = enabled,
             destructive = true, icon = PlatformMenuIcon.Block, onClick = { blocking.requestBlock(author) }))
         onEditClick?.let {
-            add(PlatformMenuItem("edit", "Редактировать", enabled = enabled, icon = PlatformMenuIcon.Edit, onClick = it))
+            add(PlatformMenuItem("edit", localizedLegacyCheckInActionsOwnershipEdit, enabled = enabled, icon = PlatformMenuIcon.Edit, onClick = it))
         }
         onHideClick?.let {
-            add(PlatformMenuItem("hide", if (isHiding) "Сохраняем…" else "Скрыть",
+            add(PlatformMenuItem("hide", if (isHiding) localizedNotificationsSaving else localizedLegacyCheckInActionsCommunityHide,
                 enabled = enabled && !isHiding, icon = PlatformMenuIcon.Hide, onClick = it))
         }
         onReportClick?.let {
-            add(PlatformMenuItem("report", "Пожаловаться", enabled = enabled, icon = PlatformMenuIcon.Report, onClick = it))
+            add(PlatformMenuItem("report", localizedLegacyCheckInActionsCommunityReport, enabled = enabled, icon = PlatformMenuIcon.Report, onClick = it))
         }
     }
-    PlatformMenuButton(items, contentDescription = "Действия с чекином", enabled = enabled) { openMenu ->
+    PlatformMenuButton(items, contentDescription = localizedLegacyCheckInActionsCommunityActions, enabled = enabled) { openMenu ->
         IconButton(onClick = openMenu, enabled = enabled) {
-            Icon(CpIcons.MoreHorizontal, "Действия с чекином", tint = MaterialTheme.colorScheme.onSurfaceVariant)
+            Icon(CpIcons.MoreHorizontal, localizedLegacyCheckInActionsCommunityActions, tint = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }

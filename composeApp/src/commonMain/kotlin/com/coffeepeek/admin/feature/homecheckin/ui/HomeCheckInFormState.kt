@@ -1,19 +1,13 @@
 package com.coffeepeek.admin.feature.homecheckin.ui
 
+import com.coffeepeek.admin.ui.component.pluralCountLabel
 import com.coffeepeek.legacy.homecheckin.domain.HomeCheckInField
 import com.coffeepeek.legacy.homecheckin.domain.HomeCheckInField.*
 import com.coffeepeek.legacy.homecheckin.domain.HomeCheckInInput
 import com.coffeepeek.legacy.homecheckin.domain.homeCheckInFieldErrors
 
-internal fun homeValidationSummary(count: Int): String {
-    val noun = when {
-        count % 100 in 11..14 -> "ошибок"
-        count % 10 == 1 -> "ошибка"
-        count % 10 in 2..4 -> "ошибки"
-        else -> "ошибок"
-    }
-    return "Проверьте заполненные поля ($count $noun)."
-}
+internal fun homeValidationSummary(count: Int, forms: List<String>, template: String): String =
+    template.replace("%1\$s", pluralCountLabel(count, forms))
 
 /** Keep errors on untouched fields, including failures returned by the server. */
 internal fun HomeCheckInUiState.withDraft(next: HomeCheckInInput): HomeCheckInUiState {

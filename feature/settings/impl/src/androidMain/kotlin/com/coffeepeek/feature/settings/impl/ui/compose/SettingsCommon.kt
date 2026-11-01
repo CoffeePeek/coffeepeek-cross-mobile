@@ -25,7 +25,7 @@ import com.coffeepeek.core.designsystem.component.CoffeePeekTopBar
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.feature.settings.impl.R
 
-/** Top bar, scrolling page and the page insets shared by the three leaf screens. */
+/** Top bar, scrolling page and the page insets shared by the Settings leaf screens. */
 @Composable
 internal fun SettingsPage(title: String, onBack: () -> Unit, modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) {
     Scaffold(

@@ -1,5 +1,8 @@
 package com.coffeepeek.admin.ui.screen.editprofile
 
+import coffeepeek.composeapp.generated.resources.*
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
+
 import com.coffeepeek.core.designsystem.component.CoffeePeekScaffold as Scaffold
 
 import androidx.compose.runtime.setValue
@@ -66,6 +69,16 @@ import com.coffeepeek.admin.di.platformViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EditProfileScreen(vm: EditProfileViewModel = platformViewModel()) {
+    val localizedLegacyEditProfileScreenProfileEditPhotoTitle = stringResource(Res.string.legacy_edit_profile_screen_profile_edit_photo_title)
+    val localizedLegacyAddShopScreenSandboxCitiesFailure = stringResource(Res.string.legacy_add_shop_screen_sandbox_cities_failure)
+    val localizedProfileEdit = stringResource(Res.string.profile_edit)
+    val localizedLegacyEditProfileScreenProfileEditUsernameLabel = stringResource(Res.string.legacy_edit_profile_screen_profile_edit_username_label)
+    val localizedLegacyEditProfileScreenProfileEditUsernamePlaceholder = stringResource(Res.string.legacy_edit_profile_screen_profile_edit_username_placeholder)
+    val localizedLegacyEditProfileScreenProfileEditAboutLabel = stringResource(Res.string.legacy_edit_profile_screen_profile_edit_about_label)
+    val localizedLegacyEditProfileScreenProfileEditAboutPlaceholder = stringResource(Res.string.legacy_edit_profile_screen_profile_edit_about_placeholder)
+    val localizedLegacyEditProfileScreenShopReviewSubmitEdit = stringResource(Res.string.legacy_edit_profile_screen_shop_review_submit_edit)
+    val localizedDeleteAccount = stringResource(Res.string.delete_account)
+
     val state by vm.state.collectAsState()
     var isPhotoLoading by remember { mutableStateOf(false) }
     var showAvatarSourceSheet by remember { mutableStateOf(false) }
@@ -88,13 +101,13 @@ fun EditProfileScreen(vm: EditProfileViewModel = platformViewModel()) {
                 showAvatarSourceSheet = false
                 photoPicker.takePhoto()
             },
-            title = "Фото профиля",
+            title = localizedLegacyEditProfileScreenProfileEditPhotoTitle,
         )
     }
 
     // Диалог ошибки
     state.error?.let { err ->
-        PlatformAlert(title = "Ошибка", message = err, onConfirm = vm::clearError, onDismiss = vm::clearError)
+        PlatformAlert(title = localizedLegacyAddShopScreenSandboxCitiesFailure, message = err, onConfirm = vm::clearError, onDismiss = vm::clearError)
     }
 
     if (showDeleteAccountDialog) {
@@ -112,7 +125,7 @@ fun EditProfileScreen(vm: EditProfileViewModel = platformViewModel()) {
             TopAppBar(
                 title = {
                     Text(
-                        text = "Редактировать профиль",
+                        text = localizedProfileEdit,
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
                     )
@@ -157,7 +170,7 @@ fun EditProfileScreen(vm: EditProfileViewModel = platformViewModel()) {
                 )
 
                 Column(modifier = Modifier.weight(1f)) {
-                    FieldLabel("Имя пользователя")
+                    FieldLabel(localizedLegacyEditProfileScreenProfileEditUsernameLabel)
                     CompactOutlinedTextField(
                         value = state.username,
                         onValueChange = vm::onUsernameChange,
@@ -165,7 +178,7 @@ fun EditProfileScreen(vm: EditProfileViewModel = platformViewModel()) {
                         modifier = Modifier.fillMaxWidth().height(CpDimens.buttonHeight),
                         placeholder = {
                             Text(
-                                "Ваше имя",
+                                localizedLegacyEditProfileScreenProfileEditUsernamePlaceholder,
                                 style = MaterialTheme.typography.bodyLarge,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
@@ -191,7 +204,7 @@ fun EditProfileScreen(vm: EditProfileViewModel = platformViewModel()) {
             Spacer(Modifier.height(CpDimens.spacing4))
 
             // ── О себе ───────────────────────────────────────────────────────
-            FieldLabel("О себе")
+            FieldLabel(localizedLegacyEditProfileScreenProfileEditAboutLabel)
             OutlinedTextField(
                 value = aboutField.value,
                 onValueChange = { updated ->
@@ -201,7 +214,7 @@ fun EditProfileScreen(vm: EditProfileViewModel = platformViewModel()) {
                 modifier = Modifier.fillMaxWidth(),
                 placeholder = {
                     Text(
-                        "Расскажите немного о себе…",
+                        localizedLegacyEditProfileScreenProfileEditAboutPlaceholder,
                         style = MaterialTheme.typography.bodyLarge,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -244,7 +257,7 @@ fun EditProfileScreen(vm: EditProfileViewModel = platformViewModel()) {
                         strokeWidth = 2.dp,
                     )
                 } else {
-                    Text("Сохранить изменения", style = MaterialTheme.typography.labelLarge)
+                    Text(localizedLegacyEditProfileScreenShopReviewSubmitEdit, style = MaterialTheme.typography.labelLarge)
                 }
             }
 
@@ -262,7 +275,7 @@ fun EditProfileScreen(vm: EditProfileViewModel = platformViewModel()) {
                 )
                 Spacer(Modifier.width(CpDimens.spacing2))
                 Text(
-                    text = "Удалить аккаунт",
+                    text = localizedDeleteAccount,
                     style = MaterialTheme.typography.labelLarge,
                     color = CpColor.Error,
                 )
@@ -283,12 +296,14 @@ private fun AvatarPickerSection(
     isLoading: Boolean,
     onClick: () -> Unit,
 ) {
+    val localizedLegacyEditProfileScreenProfileEditChangePhoto = stringResource(Res.string.legacy_edit_profile_screen_profile_edit_change_photo)
+
     Box(
         modifier = Modifier
             .size(104.dp)
             .clickable(
                 enabled = !isLoading,
-                onClickLabel = "Изменить фото профиля",
+                onClickLabel = localizedLegacyEditProfileScreenProfileEditChangePhoto,
                 onClick = onClick,
             ),
     ) {
@@ -404,5 +419,10 @@ private fun fieldColors() = OutlinedTextFieldDefaults.colors(
 
 @Composable
 private fun DeleteAccountDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
-    PlatformAlert(title = "Удалить аккаунт?", message = "Мы отправим ссылку на почту для подтверждения. Аккаунт останется активным, пока вы не подтвердите удаление в письме.", confirmLabel = "Удалить", onConfirm = onConfirm, onDismiss = onDismiss, cancelLabel = "Отмена", destructive = true)
+    val localizedDeleteAccountDialogTitle = stringResource(Res.string.delete_account_dialog_title)
+    val localizedLegacyEditProfileScreenProfileEditDeleteMessage = stringResource(Res.string.legacy_edit_profile_screen_profile_edit_delete_message)
+    val localizedHistoryHomeDeleteConfirm = stringResource(Res.string.history_home_delete_confirm)
+    val localizedHistoryHomeDeleteCancel = stringResource(Res.string.history_home_delete_cancel)
+
+    PlatformAlert(title = localizedDeleteAccountDialogTitle, message = localizedLegacyEditProfileScreenProfileEditDeleteMessage, confirmLabel = localizedHistoryHomeDeleteConfirm, onConfirm = onConfirm, onDismiss = onDismiss, cancelLabel = localizedHistoryHomeDeleteCancel, destructive = true)
 }

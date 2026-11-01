@@ -14,6 +14,7 @@ import platform.Foundation.NSDateFormatter
 import platform.Foundation.NSISO8601DateFormatter
 import platform.Foundation.NSISO8601DateFormatWithFractionalSeconds
 import platform.Foundation.NSLocale
+import platform.Foundation.preferredLanguages
 import platform.Foundation.NSTimeZone
 import platform.Foundation.localTimeZone
 import platform.Foundation.timeIntervalSince1970
@@ -71,7 +72,8 @@ internal actual fun utcIsoToLocalDateTime(value: String): String =
     parseUtcDate(value)?.let { dateFormatter("dd.MM.yyyy HH:mm").stringFromDate(it) } ?: value
 
 internal actual fun formatVisitDate(millis: Long): String = NSDateFormatter().run {
-    locale = NSLocale(localeIdentifier = "ru_RU")
+    val language = (NSLocale.preferredLanguages.firstOrNull() as? String)?.substringBefore('-')
+    locale = NSLocale(localeIdentifier = if (language == "be") "be" else "ru")
     dateFormat = "d MMMM yyyy"
     timeZone = NSTimeZone.timeZoneForSecondsFromGMT(0)
     stringFromDate(dateFromEpochMillis(millis))

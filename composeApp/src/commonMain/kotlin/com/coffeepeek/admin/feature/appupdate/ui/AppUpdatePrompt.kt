@@ -1,5 +1,8 @@
 package com.coffeepeek.admin.feature.appupdate.ui
 
+import coffeepeek.composeapp.generated.resources.*
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
+
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
@@ -124,6 +127,26 @@ private fun UpdateCard(
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val localizedLegacyAppUpdatePromptAppupdateTitleStarting = stringResource(Res.string.legacy_app_update_prompt_appupdate_title_starting)
+    val localizedLegacyAppUpdatePromptAppupdateTitleDownloading = stringResource(Res.string.legacy_app_update_prompt_appupdate_title_downloading)
+    val localizedLegacyAppUpdatePromptAppupdateTitleVerifying = stringResource(Res.string.legacy_app_update_prompt_appupdate_title_verifying)
+    val localizedLegacyAppUpdatePromptAppupdateTitleReady = stringResource(Res.string.legacy_app_update_prompt_appupdate_title_ready)
+    val localizedLegacyAppUpdatePromptAppupdateTitleInstalling = stringResource(Res.string.legacy_app_update_prompt_appupdate_title_installing)
+    val localizedLegacyAppUpdatePromptAppupdateTitleRequired = stringResource(Res.string.legacy_app_update_prompt_appupdate_title_required)
+    val localizedLegacyAppUpdatePromptAppupdateTitleAvailable = stringResource(Res.string.legacy_app_update_prompt_appupdate_title_available)
+    val localizedLegacyAppUpdatePromptAppupdateBodyStarting = stringResource(Res.string.legacy_app_update_prompt_appupdate_body_starting)
+    val localizedLegacyAppUpdatePromptAppupdateBodyDownloading = stringResource(Res.string.legacy_app_update_prompt_appupdate_body_downloading)
+    val localizedLegacyAppUpdatePromptAppupdateBodyVerifying = stringResource(Res.string.legacy_app_update_prompt_appupdate_body_verifying)
+    val localizedLegacyAppUpdatePromptAppupdateBodyReady = stringResource(Res.string.legacy_app_update_prompt_appupdate_body_ready)
+    val localizedLegacyAppUpdatePromptAppupdateBodyInstalling = stringResource(Res.string.legacy_app_update_prompt_appupdate_body_installing)
+    val localizedLegacyAppUpdatePromptAppupdateBodyRequired = stringResource(Res.string.legacy_app_update_prompt_appupdate_body_required)
+    val localizedLegacyAppUpdatePromptAppupdateBodyAvailable = stringResource(Res.string.legacy_app_update_prompt_appupdate_body_available)
+    val localizedHistoryHomeDeleteCancel = stringResource(Res.string.history_home_delete_cancel)
+    val localizedLegacyAppUpdatePromptAppupdateLater = stringResource(Res.string.legacy_app_update_prompt_appupdate_later)
+    val localizedLegacyAppUpdatePromptAppupdateInstall = stringResource(Res.string.legacy_app_update_prompt_appupdate_install)
+    val localizedHistoryHomeRetry = stringResource(Res.string.history_home_retry)
+    val localizedLegacyAppUpdatePromptShelfScannerDownload = stringResource(Res.string.legacy_app_update_prompt_shelf_scanner_download)
+
     Surface(
         modifier = modifier.widthIn(max = 560.dp).fillMaxWidth(),
         shape = RoundedCornerShape(24.dp),
@@ -164,24 +187,24 @@ private fun UpdateCard(
                 Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(
                         text = when (transfer.stage) {
-                            InstallationStage.Starting -> "Подготовка обновления"
-                            InstallationStage.Downloading -> "Скачиваем обновление"
-                            InstallationStage.Verifying -> "Проверяем обновление"
-                            InstallationStage.Ready -> "Готово к установке"
-                            InstallationStage.Installing -> "Устанавливаем обновление"
-                            InstallationStage.Available -> if (required) "Обновите CoffeePeek" else "Доступно обновление"
+                            InstallationStage.Starting -> localizedLegacyAppUpdatePromptAppupdateTitleStarting
+                            InstallationStage.Downloading -> localizedLegacyAppUpdatePromptAppupdateTitleDownloading
+                            InstallationStage.Verifying -> localizedLegacyAppUpdatePromptAppupdateTitleVerifying
+                            InstallationStage.Ready -> localizedLegacyAppUpdatePromptAppupdateTitleReady
+                            InstallationStage.Installing -> localizedLegacyAppUpdatePromptAppupdateTitleInstalling
+                            InstallationStage.Available -> if (required) localizedLegacyAppUpdatePromptAppupdateTitleRequired else localizedLegacyAppUpdatePromptAppupdateTitleAvailable
                         },
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold,
                     )
                     Text(
                         text = when (transfer.stage) {
-                            InstallationStage.Starting -> "Подтвердите загрузку обновления."
-                            InstallationStage.Downloading -> transfer.progress?.let { "Загружено ${(it * 100).toInt()}%" } ?: "Загрузка продолжается…"
-                            InstallationStage.Verifying -> "Проверяем версию и подпись приложения."
-                            InstallationStage.Ready -> "Обновление скачано. Можно установить."
-                            InstallationStage.Installing -> "Подтвердите установку обновления."
-                            InstallationStage.Available -> if (required) "Установите новую версию, чтобы продолжить." else "Скачайте новую версию CoffeePeek."
+                            InstallationStage.Starting -> localizedLegacyAppUpdatePromptAppupdateBodyStarting
+                            InstallationStage.Downloading -> transfer.progress?.let { stringResource(Res.string.legacy_update_downloaded_percent, (it * 100).toInt()) } ?: localizedLegacyAppUpdatePromptAppupdateBodyDownloading
+                            InstallationStage.Verifying -> localizedLegacyAppUpdatePromptAppupdateBodyVerifying
+                            InstallationStage.Ready -> localizedLegacyAppUpdatePromptAppupdateBodyReady
+                            InstallationStage.Installing -> localizedLegacyAppUpdatePromptAppupdateBodyInstalling
+                            InstallationStage.Available -> if (required) localizedLegacyAppUpdatePromptAppupdateBodyRequired else localizedLegacyAppUpdatePromptAppupdateBodyAvailable
                         },
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -198,7 +221,7 @@ private fun UpdateCard(
                         modifier = Modifier.weight(1f).heightIn(min = 48.dp),
                         shape = RoundedCornerShape(14.dp),
                         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
-                    ) { Text("Отмена", color = MaterialTheme.colorScheme.onSurface) }
+                    ) { Text(localizedHistoryHomeDeleteCancel, color = MaterialTheme.colorScheme.onSurface) }
                 } else {
                     if (!required) {
                         OutlinedButton(
@@ -207,7 +230,7 @@ private fun UpdateCard(
                             shape = RoundedCornerShape(14.dp),
                             border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
                         ) {
-                            Text("Позже", color = MaterialTheme.colorScheme.onSurface, textAlign = TextAlign.Center)
+                            Text(localizedLegacyAppUpdatePromptAppupdateLater, color = MaterialTheme.colorScheme.onSurface, textAlign = TextAlign.Center)
                         }
                     }
                     if (!transfer.busy) {
@@ -218,10 +241,10 @@ private fun UpdateCard(
                         ) {
                             Text(
                                 when {
-                                    transfer.stage == InstallationStage.Ready -> "Установить"
-                                    transfer.error != null -> "Повторить"
+                                    transfer.stage == InstallationStage.Ready -> localizedLegacyAppUpdatePromptAppupdateInstall
+                                    transfer.error != null -> localizedHistoryHomeRetry
                                     AppConfig.updatePlatform == "ios" -> "App Store"
-                                    else -> "Скачать"
+                                    else -> localizedLegacyAppUpdatePromptShelfScannerDownload
                                 },
                                 textAlign = TextAlign.Center,
                             )

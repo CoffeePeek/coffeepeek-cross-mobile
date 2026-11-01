@@ -15,7 +15,8 @@ import com.coffeepeek.admin.theme.CoffeePeekTheme
 import com.coffeepeek.core.designsystem.component.CoffeePeekSwitch
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.feature.notifications.api.NotificationInboxState
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.feature.notifications.api.NotificationSettingsError
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
@@ -40,7 +41,10 @@ internal fun NotificationPushSettings(state: NotificationInboxState, onPushChang
                 CoffeePeekSwitch(checked, null, enabled = canToggle, modifier = Modifier.clearAndSetSemantics { })
             }
             state.settingsError?.let {
-                Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                Text(stringResource(when (it) {
+                    NotificationSettingsError.LoadFailed -> Res.string.legacy_notifications_push_load_failed
+                    NotificationSettingsError.SaveFailed -> Res.string.legacy_notifications_push_save_failed
+                }), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
                 if (!state.settingsLoaded) TextButton(onClick = onRefresh,
                     colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onSurface)) {
                     Text(stringResource(Res.string.notifications_retry_settings))

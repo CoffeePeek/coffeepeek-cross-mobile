@@ -28,6 +28,9 @@ internal class AndroidNotificationsRenderer(
     override fun Bell() = entry.Bell()
 
     @Composable
+    override fun Settings(onBack: () -> Unit) = entry.Settings(onBack)
+
+    @Composable
     override fun HandlePendingOpen(isLoggedIn: Boolean) {
         val request by NotificationOpens.pending.collectAsStateWithLifecycle()
         val state by feature.state.collectAsStateWithLifecycle()

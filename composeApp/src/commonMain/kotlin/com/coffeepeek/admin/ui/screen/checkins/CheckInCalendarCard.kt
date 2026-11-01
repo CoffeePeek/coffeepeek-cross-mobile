@@ -1,5 +1,7 @@
 package com.coffeepeek.admin.ui.screen.checkins
 
+import coffeepeek.composeapp.generated.resources.*
+
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -35,7 +37,7 @@ import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import coffeepeek.composeapp.generated.resources.Res
 import coffeepeek.composeapp.generated.resources.calendar_next_month
 import coffeepeek.composeapp.generated.resources.calendar_previous_month
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
@@ -50,6 +52,16 @@ internal fun CalendarCard(
     homePhotos: Map<String, List<CalendarPhoto>> = emptyMap(),
     framed: Boolean = true,
 ) {
+    val labels = checkInCalendarLabels()
+
+    val localizedProfileWeekMonday = stringResource(Res.string.profile_week_monday)
+    val localizedProfileWeekTuesday = stringResource(Res.string.profile_week_tuesday)
+    val localizedProfileWeekWednesday = stringResource(Res.string.profile_week_wednesday)
+    val localizedProfileWeekThursday = stringResource(Res.string.profile_week_thursday)
+    val localizedProfileWeekFriday = stringResource(Res.string.profile_week_friday)
+    val localizedProfileWeekSaturday = stringResource(Res.string.profile_week_saturday)
+    val localizedProfileWeekSunday = stringResource(Res.string.profile_week_sunday)
+
     val month = state.calendarMonth
     val homeTotal = homeCounts.values.sum()
     val total = state.calendarCheckIns.values.sumOf { it.size } + homeTotal
@@ -64,7 +76,7 @@ internal fun CalendarCard(
     ) {
         Column(Modifier.padding(if (framed) 12.dp else 0.dp)) {
             Row(Modifier.fillMaxWidth().padding(start = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text(monthTitle(month), modifier = Modifier.weight(1f),
+                Text(monthTitle(month, labels), modifier = Modifier.weight(1f),
                     style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
                 MonthArrow(false, true, onPreviousMonth)
                 MonthArrow(true, state.canGoNextMonth, onNextMonth)
@@ -75,7 +87,7 @@ internal fun CalendarCard(
             }
             Spacer(Modifier.height(8.dp))
             Row(Modifier.fillMaxWidth()) {
-                listOf("Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс").forEach { day ->
+                listOf(localizedProfileWeekMonday, localizedProfileWeekTuesday, localizedProfileWeekWednesday, localizedProfileWeekThursday, localizedProfileWeekFriday, localizedProfileWeekSaturday, localizedProfileWeekSunday).forEach { day ->
                     Text(day, Modifier.weight(1f), style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
                 }
@@ -106,12 +118,17 @@ internal fun CalendarCard(
 
 @Composable
 private fun CalendarSummary(state: VisitedPlacesUiState, total: Int, shops: Int, homeTotal: Int) {
+    val labels = checkInCalendarLabels()
+
+    val localizedLegacyCheckInCalendarCardLoadingCheckIns = stringResource(Res.string.legacy_check_in_calendar_card_loading_check_ins)
+    val localizedProfileCheckinsError = stringResource(Res.string.profile_checkins_error)
+
     Text(
         when {
-            state.isCalendarLoading -> "Загрузка чекинов…"
-            state.calendarError != null -> "Не удалось загрузить чекины"
-            homeTotal > 0 -> "${visitCount(total)} · $homeTotal дома"
-            else -> "${visitCount(total)} · ${shopCount(shops)}"
+            state.isCalendarLoading -> localizedLegacyCheckInCalendarCardLoadingCheckIns
+            state.calendarError != null -> localizedProfileCheckinsError
+            homeTotal > 0 -> "${visitCount(total, labels)} · ${stringResource(Res.string.legacy_calendar_home_count, homeTotal)}"
+            else -> "${visitCount(total, labels)} · ${shopCount(shops, labels)}"
         },
         style = MaterialTheme.typography.labelMedium,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -148,10 +165,13 @@ private fun CalendarNavigationPreview(dark: Boolean) = CoffeePeekTheme(darkTheme
 
 @Composable
 private fun TodayButton(onClick: () -> Unit) {
+    val localizedLegacyCheckInCalendarCardHistoryTodayDescription = stringResource(Res.string.legacy_check_in_calendar_card_history_today_description)
+    val localizedLegacyCheckInCalendarCardShelfBrewToday = stringResource(Res.string.legacy_check_in_calendar_card_shelf_brew_today)
+
     TextButton(onClick = { platformHaptic(HapticEvent.Selection); onClick() },
         contentPadding = PaddingValues(horizontal = 8.dp), modifier = Modifier.heightIn(min = 44.dp)
-            .semantics { contentDescription = "Сегодня, показать чекины за текущую дату" }) {
-        Text("Сегодня", style = MaterialTheme.typography.labelMedium, maxLines = 1)
+            .semantics { contentDescription = localizedLegacyCheckInCalendarCardHistoryTodayDescription }) {
+        Text(localizedLegacyCheckInCalendarCardShelfBrewToday, style = MaterialTheme.typography.labelMedium, maxLines = 1)
     }
 }
 
@@ -168,9 +188,15 @@ private fun CalendarDay(
     onClick: () -> Unit,
     modifier: Modifier,
 ) {
+    val labels = checkInCalendarLabels()
+
+    val localizedLegacyCheckInCalendarCardHistorySelectDay = stringResource(Res.string.legacy_check_in_calendar_card_history_select_day)
+
     val total = checkIns.size + homeCount
-    val description = "${selectedDateTitle(date)}${if (isToday) ", сегодня" else ""}, ${visitCount(total)}" +
-        if (homeCount > 0) ", $homeCount дома" else ""
+    val todayLabel = stringResource(Res.string.legacy_calendar_today_lowercase)
+    val homeLabel = stringResource(Res.string.legacy_calendar_home_count, homeCount)
+    val description = "${selectedDateTitle(date, labels)}${if (isToday) ", $todayLabel" else ""}, ${visitCount(total, labels)}" +
+        if (homeCount > 0) ", $homeLabel" else ""
     val photo = photos.firstOrNull()
     val shape = RoundedCornerShape(12.dp)
     Box(
@@ -184,7 +210,7 @@ private fun CalendarDay(
             .then(if ((isToday && !isSelected) || (isSelected && photo != null)) {
                 Modifier.border(1.dp, MaterialTheme.colorScheme.primary, shape)
             } else Modifier)
-            .clickable(enabled = !isFuture, role = Role.Button, onClickLabel = "Выбрать дату", onClick = onClick)
+            .clickable(enabled = !isFuture, role = Role.Button, onClickLabel = localizedLegacyCheckInCalendarCardHistorySelectDay, onClick = onClick)
             .semantics(mergeDescendants = true) { contentDescription = description; selected = isSelected },
         contentAlignment = Alignment.Center,
     ) {

@@ -1,6 +1,11 @@
 package com.coffeepeek.admin.auth
 
-import com.coffeepeek.admin.utils.localizedLoginError
+import com.coffeepeek.admin.ui.screen.auth.message
+
+import com.coffeepeek.admin.ui.screen.auth.LoginFailureCopy
+
+import com.coffeepeek.feature.auth.domain.classifyLoginFailure
+
 import com.coffeepeek.api.CoffeePeekClient
 import com.coffeepeek.api.service.AuthService
 import io.ktor.client.HttpClient
@@ -22,6 +27,8 @@ import kotlin.test.assertTrue
  * `AuthService`. Documents the legacy mapping; the migrated code must keep or deliberately improve it.
  */
 class AuthTransportFailureTest {
+    private val loginCopy = LoginFailureCopy("Неверный email или пароль", "Не удалось подключиться. Проверьте интернет-соединение", "Не удалось войти. Проверьте email и пароль")
+
     @get:Rule val temporary = TemporaryFolder()
 
     private fun loginMessage(failure: () -> Throwable): Pair<String?, String> = runBlocking {
@@ -31,7 +38,7 @@ class AuthTransportFailureTest {
         try {
             val error = AuthService(client.client, client.plainClient).login("person@example.com", "secret1").exceptionOrNull()
             assertTrue(error != null, "A transport failure is a failed result")
-            error.message to localizedLoginError(error.message)
+            error.message to classifyLoginFailure(error.message).message(loginCopy)
         } finally {
             client.client.close(); client.plainClient.close(); client.uploadClient.close(); client.imageClient.close()
         }

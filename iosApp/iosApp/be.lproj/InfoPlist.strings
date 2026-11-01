@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>NSCameraUsageDescription</key>
+    <string>Камера патрэбная, каб дадаваць фатаграфіі кавярняў і водгукаў і здымаць пачкі кавы для вашай паліцы.</string>
+    <key>NSLocationWhenInUseUsageDescription</key>
+    <string>Геапазіцыя патрэбная, каб знаходзіць кавярні побач з вамі.</string>
+    <key>NSPhotoLibraryUsageDescription</key>
+    <string>Доступ да фота патрэбны, каб далучаць выявы кавярняў і водгукаў і дадаваць пачкі кавы на паліцу.</string>
+</dict>
+</plist>

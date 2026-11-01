@@ -28,7 +28,8 @@ import com.coffeepeek.core.designsystem.component.CoffeePeekNativeLoader
 import com.coffeepeek.core.designsystem.component.coffeePeekLoaderPlaceholderImage
 import coffeepeek.composeapp.generated.resources.Res
 import coffeepeek.composeapp.generated.resources.loader_loading
-import org.jetbrains.compose.resources.stringResource
+import coffeepeek.composeapp.generated.resources.navigation_back
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import dev.chrisbanes.haze.HazeState
 import platform.UIKit.UIAction
 import platform.UIKit.UIButton
@@ -166,6 +167,7 @@ private fun glassIconBaseConfiguration(icon: GlassControlIcon): UIButtonConfigur
 actual fun PlatformGlassBackButton(onClick: () -> Unit, modifier: Modifier) {
     val currentOnClick = rememberUpdatedState(onClick)
     val colors = MaterialTheme.colorScheme
+    val backLabel = stringResource(Res.string.navigation_back)
     UIKitView(
         factory = {
             UIButton.buttonWithConfiguration(
@@ -187,9 +189,9 @@ actual fun PlatformGlassBackButton(onClick: () -> Unit, modifier: Modifier) {
             configuration.cornerStyle = UIButtonConfigurationCornerStyleCapsule
             configuration.baseForegroundColor = colors.onSurface.toUIColor()
             configuration.image = UIImage.systemImageNamed(GlassControlIcon.Back.symbol)
-            configuration.title = "Назад"
+            configuration.title = backLabel
             button.configuration = configuration
-            button.accessibilityLabel = "Назад"
+            button.accessibilityLabel = backLabel
         },
     )
 }

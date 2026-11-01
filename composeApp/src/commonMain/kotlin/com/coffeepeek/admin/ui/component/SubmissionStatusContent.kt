@@ -2,6 +2,9 @@
 
 package com.coffeepeek.admin.ui.component
 
+import coffeepeek.composeapp.generated.resources.*
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
+
 import com.coffeepeek.core.designsystem.component.CoffeePeekScaffold as Scaffold
 
 import androidx.compose.animation.AnimatedContent
@@ -35,9 +38,12 @@ internal enum class SubmissionStatus { Sending, Success, Error }
 
 @Composable
 internal fun SubmissionErrorActions(onRetry: () -> Unit, onEdit: () -> Unit) {
-    AppButton("Повторить отправку", onClick = onRetry)
+    val localizedLegacySubmissionStatusContentContributionsShopRetrySend = stringResource(Res.string.legacy_submission_status_content_contributions_shop_retry_send)
+    val localizedLegacySubmissionStatusContentContributionsShopBackToForm = stringResource(Res.string.legacy_submission_status_content_contributions_shop_back_to_form)
+
+    AppButton(localizedLegacySubmissionStatusContentContributionsShopRetrySend, onClick = onRetry)
     OutlinedButton(onClick = onEdit, modifier = Modifier.fillMaxWidth().heightIn(min = CpDimens.buttonHeight)) {
-        Text("Вернуться к форме")
+        Text(localizedLegacySubmissionStatusContentContributionsShopBackToForm)
     }
 }
 

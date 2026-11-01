@@ -1,7 +1,8 @@
 package com.coffeepeek.feature.auth.impl.ui
 
-import android.app.Activity
+import android.content.Context
 import android.util.Log
+import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.BorderStroke
@@ -53,6 +54,7 @@ private const val Tag = "CoffeePeek-GoogleAuth"
 @Composable
 internal fun rememberGoogleSignIn(webClientId: String, onToken: (String) -> Unit, onFailure: (String) -> Unit): () -> Unit {
     val context = LocalContext.current
+    val currentContext = rememberUpdatedState(context)
     val currentOnToken = rememberUpdatedState(onToken)
     val currentOnFailure = rememberUpdatedState(onFailure)
     val client = remember(webClientId) {
@@ -65,24 +67,28 @@ internal fun rememberGoogleSignIn(webClientId: String, onToken: (String) -> Unit
         try {
             val account = GoogleSignIn.getSignedInAccountFromIntent(result.data).getResult(ApiException::class.java)
             val token = account.idToken
-            if (token.isNullOrBlank()) currentOnFailure.value("Не удалось получить Google token") else currentOnToken.value(token)
+            if (token.isNullOrBlank()) currentOnFailure.value(currentContext.value.getString(R.string.auth_google_token_failed)) else currentOnToken.value(token)
         } catch (e: ApiException) {
             Log.w(Tag, "signIn failed: status=${e.statusCode}", e)
-            when (e.statusCode) {
-                GoogleSignInStatusCodes.SIGN_IN_CANCELLED -> Unit
-                CommonStatusCodes.DEVELOPER_ERROR -> currentOnFailure.value("Google Sign-In: неверная конфигурация. Добавьте SHA-1 debug/release keystore и Android OAuth client (com.coffeepeek) в Google Cloud Console.")
-                GoogleSignInStatusCodes.SIGN_IN_FAILED -> currentOnFailure.value("Google Sign-In отклонён. Проверьте GOOGLE_WEB_CLIENT_ID и OAuth-клиенты в Google Cloud Console.")
-                else -> currentOnFailure.value("Google Sign-In ошибка ${e.statusCode}: ${e.message ?: "неизвестная"}")
-            }
+            googleSignInFailure(currentContext.value, e)?.let { currentOnFailure.value(it) }
         } catch (e: Exception) {
             Log.w(Tag, "signIn failed", e)
-            currentOnFailure.value(e.message ?: "Не удалось войти через Google")
+            currentOnFailure.value(e.message ?: currentContext.value.getString(R.string.auth_google_sign_in_failed))
         }
     }
-    val activity = context as? Activity
+    val activity = LocalActivity.current
     return {
-        if (activity == null) currentOnFailure.value("Activity недоступна") else launcher.launch(client.signInIntent)
+        if (activity == null) currentOnFailure.value(currentContext.value.getString(R.string.auth_google_activity_unavailable)) else launcher.launch(client.signInIntent)
     }
+}
+
+
+private fun googleSignInFailure(context: Context, error: ApiException): String? = when (error.statusCode) {
+    GoogleSignInStatusCodes.SIGN_IN_CANCELLED -> null
+    CommonStatusCodes.DEVELOPER_ERROR -> context.getString(R.string.auth_google_configuration_error)
+    GoogleSignInStatusCodes.SIGN_IN_FAILED -> context.getString(R.string.auth_google_rejected)
+    else -> context.getString(R.string.auth_google_status_error, error.statusCode,
+        error.message ?: context.getString(R.string.auth_google_unknown_error))
 }
 
 /** The white pill with the Google "G"; it bleeds into the card padding like the legacy social buttons. */

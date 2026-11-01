@@ -1,5 +1,12 @@
 package com.coffeepeek.admin.ui.screen.map
 
+import com.coffeepeek.admin.ui.component.pluralCountWord
+
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringArrayResource as stringArrayResource
+
+import coffeepeek.composeapp.generated.resources.*
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
+
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -19,6 +26,8 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
 internal fun MapZoneCard(zone: MapCoffeeZone, onShowShops: () -> Unit, onDismiss: () -> Unit, modifier: Modifier = Modifier) {
+    val localizedLegacyMapZoneCardDiscoveryMapZoneShowShops = stringResource(Res.string.legacy_map_zone_card_discovery_map_zone_show_shops)
+
     Card(modifier.fillMaxWidth(), shape = RoundedCornerShape(CpDimens.cardRadius),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)) {
@@ -27,7 +36,7 @@ internal fun MapZoneCard(zone: MapCoffeeZone, onShowShops: () -> Unit, onDismiss
             if (zone.description.isNotBlank()) Text(zone.description, style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 3, overflow = TextOverflow.Ellipsis)
             Button(onShowShops, Modifier.fillMaxWidth().height(CpDimens.buttonHeight), shape = RoundedCornerShape(percent = 50)) {
-                Text("Показать кофейни")
+                Text(localizedLegacyMapZoneCardDiscoveryMapZoneShowShops)
             }
         }
     }
@@ -35,26 +44,20 @@ internal fun MapZoneCard(zone: MapCoffeeZone, onShowShops: () -> Unit, onDismiss
 
 @Composable
 private fun MapZoneHeading(zone: MapCoffeeZone, onDismiss: () -> Unit) {
+    val localizedHistoryHomeClose = stringResource(Res.string.history_home_close)
+
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         Column(Modifier.weight(1f)) {
             Text(zone.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
             Text("${zone.shopCount} ${mapShopCountLabel(zone.shopCount)}", style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
-        IconButton(onDismiss) { Icon(CpIcons.Close, contentDescription = "Закрыть") }
+        IconButton(onDismiss) { Icon(CpIcons.Close, contentDescription = localizedHistoryHomeClose) }
     }
 }
 
-private fun mapShopCountLabel(count: Int): String {
-    val mod100 = count % 100
-    val mod10 = count % 10
-    return when {
-        mod100 in 11..14 -> "кофеен"
-        mod10 == 1 -> "кофейня"
-        mod10 in 2..4 -> "кофейни"
-        else -> "кофеен"
-    }
-}
+@Composable
+private fun mapShopCountLabel(count: Int): String = pluralCountWord(count, stringArrayResource(Res.array.legacy_shop_forms))
 
 @Composable
 private fun MapZoneCardPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {

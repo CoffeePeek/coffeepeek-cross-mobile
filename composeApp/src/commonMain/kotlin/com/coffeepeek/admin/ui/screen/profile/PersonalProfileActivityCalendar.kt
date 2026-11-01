@@ -1,5 +1,10 @@
 package com.coffeepeek.admin.ui.screen.profile
 
+import com.coffeepeek.admin.ui.screen.checkins.checkInCalendarLabels
+
+import coffeepeek.composeapp.generated.resources.*
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
+
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -96,6 +101,8 @@ internal fun PersonalProfileActivityCalendarContent(
     onOpenShop: (String) -> Unit = {},
     onOpenCheckIns: () -> Unit = {},
 ) {
+    val localizedHistoryHomeRetry = stringResource(Res.string.history_home_retry)
+
     val month = shop.calendarMonth
     val homeMonthMatches = home.month.year == month.year && home.month.month == month.month
     val loading = shop.isCalendarLoading || !homeMonthMatches || home.calendarLoading
@@ -113,7 +120,7 @@ internal fun PersonalProfileActivityCalendarContent(
             framed = false,
         )
         if (error != null && !loading) {
-            TextButton(onClick = onRetry) { Text("Повторить") }
+            TextButton(onClick = onRetry) { Text(localizedHistoryHomeRetry) }
         }
         if (!loading && error == null && shop.selectedDate != null) {
             SelectedDayCheckIns(
@@ -138,15 +145,19 @@ private fun SelectedDayCheckIns(
     onOpenShop: (String) -> Unit,
     onOpenCheckIns: () -> Unit,
 ) {
+    val labels = checkInCalendarLabels()
+
+    val localizedLegacyProfileCheckInsScreenHistoryDayEmpty = stringResource(Res.string.legacy_profile_check_ins_screen_history_day_empty)
+
     val entries = remember(shopCheckIns, homeCheckIns) { selectedDayEntries(shopCheckIns, homeCheckIns) }
     Column(Modifier.fillMaxWidth().padding(top = 20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text(selectedDateTitle(date, includeYear), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-            Text("${calendarWeekday(date)} · ${visitCount(entries.size)}", style = MaterialTheme.typography.bodyMedium,
+            Text(selectedDateTitle(date, labels, includeYear), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+            Text("${calendarWeekday(date, labels.weekdays)} · ${visitCount(entries.size, labels)}", style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         if (entries.isEmpty()) {
-            Text("В этот день чекинов не было", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(localizedLegacyProfileCheckInsScreenHistoryDayEmpty, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         } else {
             Surface(shape = RoundedCornerShape(20.dp), color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)) {
                 Column {

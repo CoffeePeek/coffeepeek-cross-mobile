@@ -1,5 +1,13 @@
 package com.coffeepeek.admin.ui.screen.addshop
 
+import com.coffeepeek.admin.ui.component.inputValidationMessage
+
+import com.coffeepeek.admin.ui.screen.contributions.contributionFailureMessage
+
+import com.coffeepeek.admin.ui.screen.contributions.contributionFieldMessage
+
+import coffeepeek.composeapp.generated.resources.*
+
 import com.coffeepeek.core.designsystem.component.CoffeePeekScaffold as Scaffold
 
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
@@ -11,7 +19,7 @@ import com.coffeepeek.core.designsystem.component.CoffeePeekSelectOption
 import coffeepeek.composeapp.generated.resources.Res
 import coffeepeek.composeapp.generated.resources.select_city_placeholder
 import coffeepeek.composeapp.generated.resources.select_city_label
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 
 import androidx.compose.runtime.getValue
 import com.coffeepeek.admin.ui.component.PlatformScrollableColumn
@@ -90,11 +98,26 @@ import com.coffeepeek.admin.di.platformViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddShopScreen(vm: AddShopViewModel = platformViewModel()) {
+    val localizedLegacyReviewContentOwnershipKindShop = stringResource(Res.string.legacy_review_content_ownership_kind_shop)
+    val localizedCatalogShopSuggestionAction = stringResource(Res.string.catalog_shop_suggestion_action)
+    val localizedLegacyAddShopScreenContributionsShopFailedTitle = stringResource(Res.string.legacy_add_shop_screen_contributions_shop_failed_title)
+    val localizedLegacyAddShopScreenContributionsShopSendingTitle = stringResource(Res.string.legacy_add_shop_screen_contributions_shop_sending_title)
+    val localizedLegacyAddShopScreenContributionsShopSendingDescription = stringResource(Res.string.legacy_add_shop_screen_contributions_shop_sending_description)
+    val localizedLegacyAddShopScreenContributionsShopStepBasic = stringResource(Res.string.legacy_add_shop_screen_contributions_shop_step_basic)
+    val localizedLegacyAddShopScreenContributionsSectionContacts = stringResource(Res.string.legacy_add_shop_screen_contributions_section_contacts)
+    val localizedLegacyPhotoAttachmentsSectionContributionsSectionPhotos = stringResource(Res.string.legacy_photo_attachments_section_contributions_section_photos)
+    val localizedShopFiltersEquipment = stringResource(Res.string.shop_filters_equipment)
+    val localizedLegacyAddShopScreenContributionsShopStepSchedule = stringResource(Res.string.legacy_add_shop_screen_contributions_shop_step_schedule)
+    val localizedLegacyAddShopScreenSandboxCitiesFailure = stringResource(Res.string.legacy_add_shop_screen_sandbox_cities_failure)
+    val localizedHistoryHomeRetry = stringResource(Res.string.history_home_retry)
+    val localizedLegacyAddShopScreenContributionsShopSubmit = stringResource(Res.string.legacy_add_shop_screen_contributions_shop_submit)
+    val localizedLegacyAddShopScreenSandboxNext = stringResource(Res.string.legacy_add_shop_screen_sandbox_next)
+
     val state by vm.state.collectAsState()
 
     if (state.isSuccess) {
         AddShopSuccessScreen(
-            name = state.name.trim().ifBlank { "Кофейня" },
+            name = state.name.trim().ifBlank { localizedLegacyReviewContentOwnershipKindShop },
             cityName = state.selectedCity?.name,
             address = state.address.trim(),
             coverPhoto = state.photos.firstOrNull()?.bytes,
@@ -106,11 +129,11 @@ fun AddShopScreen(vm: AddShopViewModel = platformViewModel()) {
     if (state.isSubmitting || state.submitError != null) {
         val failed = state.submitError != null
         SubmissionStatusScreen(
-            screenTitle = "Добавить кофейню",
+            screenTitle = localizedCatalogShopSuggestionAction,
             status = if (failed) SubmissionStatus.Error else SubmissionStatus.Sending,
-            title = if (failed) "Кофейня не отправлена" else "Отправляем кофейню…",
-            description = state.submitError?.let { "$it\n\nВведённые данные остались в форме." }
-                ?: "Отправляем информацию и фотографии на проверку",
+            title = if (failed) localizedLegacyAddShopScreenContributionsShopFailedTitle else localizedLegacyAddShopScreenContributionsShopSendingTitle,
+            description = contributionFailureMessage(state.submitError)?.let { stringResource(Res.string.legacy_submission_error_kept, it) }
+                ?: localizedLegacyAddShopScreenContributionsShopSendingDescription,
             onBack = if (failed) vm::clearSubmitError else Navigator::popBack,
         ) {
             if (failed) SubmissionErrorActions(vm::nextStep, vm::clearSubmitError)
@@ -136,11 +159,11 @@ fun AddShopScreen(vm: AddShopViewModel = platformViewModel()) {
         topBar = {
             AddShopHeader(
                 title = when (state.currentStep) {
-                    AddShopStep.BASIC    -> "Основная информация"
-                    AddShopStep.CONTACTS -> "Контакты"
-                    AddShopStep.PHOTOS   -> "Фотографии"
-                    AddShopStep.FEATURES -> "Оборудование"
-                    AddShopStep.SCHEDULE -> "Расписание"
+                    AddShopStep.BASIC    -> localizedLegacyAddShopScreenContributionsShopStepBasic
+                    AddShopStep.CONTACTS -> localizedLegacyAddShopScreenContributionsSectionContacts
+                    AddShopStep.PHOTOS   -> localizedLegacyPhotoAttachmentsSectionContributionsSectionPhotos
+                    AddShopStep.FEATURES -> localizedShopFiltersEquipment
+                    AddShopStep.SCHEDULE -> localizedLegacyAddShopScreenContributionsShopStepSchedule
                 },
                 currentIndex = state.currentStep.ordinal,
                 total = AddShopStep.entries.size,
@@ -162,13 +185,13 @@ fun AddShopScreen(vm: AddShopViewModel = platformViewModel()) {
         if (state.catalogsError != null) {
             Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(state.catalogsError ?: "Ошибка", color = MaterialTheme.colorScheme.error)
+                    Text(contributionFailureMessage(state.catalogsError) ?: localizedLegacyAddShopScreenSandboxCitiesFailure, color = MaterialTheme.colorScheme.error)
                     Spacer(Modifier.height(CpDimens.spacing3))
                     Button(
                         onClick = { vm.loadCatalogs() },
                         modifier = Modifier.height(CpDimens.buttonHeight),
                         shape = RoundedCornerShape(percent = 50),
-                    ) { Text("Повторить") }
+                    ) { Text(localizedHistoryHomeRetry) }
                 }
             }
             return@Scaffold
@@ -204,8 +227,8 @@ fun AddShopScreen(vm: AddShopViewModel = platformViewModel()) {
 
                 AppButton(
                     text = when (step) {
-                        AddShopStep.SCHEDULE -> "Отправить на модерацию"
-                        else -> "Далее"
+                        AddShopStep.SCHEDULE -> localizedLegacyAddShopScreenContributionsShopSubmit
+                        else -> localizedLegacyAddShopScreenSandboxNext
                     },
                     onClick = vm::nextStep,
                     enabled = !state.isSubmitting && when (step) {
@@ -299,27 +322,38 @@ private fun StepBasic(
     state: AddShopUiState,
     vm: AddShopViewModel,
 ) {
-    StepLegend(requiredHint = "Поля со * обязательны для заполнения")
+    val localizedLegacyAddShopScreenContributionsShopRequiredHint = stringResource(Res.string.legacy_add_shop_screen_contributions_shop_required_hint)
+    val localizedLegacyAddShopScreenContributionsShopNameLabel = stringResource(Res.string.legacy_add_shop_screen_contributions_shop_name_label)
+    val localizedLegacyAddShopScreenContributionsShopNamePlaceholder = stringResource(Res.string.legacy_add_shop_screen_contributions_shop_name_placeholder)
+    val localizedCheckinDescriptionLabel = stringResource(Res.string.checkin_description_label)
+    val localizedLegacyAddShopScreenContributionsShopDescriptionPlaceholder = stringResource(Res.string.legacy_add_shop_screen_contributions_shop_description_placeholder)
+    val localizedSelectCityLabel = stringResource(Res.string.select_city_label)
+    val localizedLegacyAddShopScreenOwnershipAddress = stringResource(Res.string.legacy_add_shop_screen_ownership_address)
+    val localizedLegacyAddShopScreenContributionsShopAddressPlaceholder = stringResource(Res.string.legacy_add_shop_screen_contributions_shop_address_placeholder)
+    val localizedLegacyAddShopScreenContributionsShopPickOnMap = stringResource(Res.string.legacy_add_shop_screen_contributions_shop_pick_on_map)
+    val localizedShopFiltersPrice = stringResource(Res.string.shop_filters_price)
+
+    StepLegend(requiredHint = localizedLegacyAddShopScreenContributionsShopRequiredHint)
     Spacer(Modifier.height(CpDimens.spacing3))
 
-    FormField(label = "Название кофейни", required = true) {
+    FormField(label = localizedLegacyAddShopScreenContributionsShopNameLabel, required = true) {
         AppOutlinedField(
             value = state.name,
             onValueChange = vm::onNameChange,
             maxLength = 55,
-            placeholder = "Например, Surf Coffee",
-            errorText = if (state.name.isNotEmpty()) state.nameError else null,
+            placeholder = localizedLegacyAddShopScreenContributionsShopNamePlaceholder,
+            errorText = if (state.name.isNotEmpty()) contributionFieldMessage(state.nameError) else null,
             counter = "${state.name.length}/55",
         )
     }
 
     Spacer(Modifier.height(CpDimens.spacing4))
 
-    FormField(label = "Описание", optional = true) {
+    FormField(label = localizedCheckinDescriptionLabel, optional = true) {
         AppOutlinedField(
             value = state.description,
             onValueChange = vm::onDescriptionChange,
-            placeholder = "Расскажите о концепции, атмосфере и фишках кофейни…",
+            placeholder = localizedLegacyAddShopScreenContributionsShopDescriptionPlaceholder,
             minLines = 3,
             maxLines = 6,
         )
@@ -327,7 +361,7 @@ private fun StepBasic(
 
     Spacer(Modifier.height(CpDimens.spacing4))
 
-    FormField(label = "Город", required = true) {
+    FormField(label = localizedSelectCityLabel, required = true) {
         when {
             state.cities.size == 1 -> {
                 SingleValueField(value = state.cities.first().name)
@@ -336,14 +370,14 @@ private fun StepBasic(
                 cities = state.cities,
                 selected = state.selectedCity,
                 onSelect = vm::onCitySelect,
-                error = if (state.selectedCity == null && state.name.isNotEmpty()) state.cityError else null,
+                error = if (state.selectedCity == null && state.name.isNotEmpty()) contributionFieldMessage(state.cityError) else null,
             )
         }
     }
 
     Spacer(Modifier.height(CpDimens.spacing4))
 
-    FormField(label = "Адрес", required = true) {
+    FormField(label = localizedLegacyAddShopScreenOwnershipAddress, required = true) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing2),
@@ -352,8 +386,8 @@ private fun StepBasic(
             AppOutlinedField(
                 value = state.address,
                 onValueChange = vm::onAddressChange,
-                placeholder = "Улица, дом, корпус",
-                errorText = if (state.address.isNotEmpty()) state.addressError else null,
+                placeholder = localizedLegacyAddShopScreenContributionsShopAddressPlaceholder,
+                errorText = if (state.address.isNotEmpty()) contributionFieldMessage(state.addressError) else null,
                 leadingIcon = CpIcons.Navigation,
                 modifier = Modifier.weight(1f),
             )
@@ -378,7 +412,7 @@ private fun StepBasic(
                     } else {
                         Icon(
                             imageVector = CpIcons.Map,
-                            contentDescription = "Выбрать на карте",
+                            contentDescription = localizedLegacyAddShopScreenContributionsShopPickOnMap,
                             modifier = Modifier.size(20.dp),
                         )
                     }
@@ -388,7 +422,7 @@ private fun StepBasic(
         state.locationHint?.let { hint ->
             Spacer(Modifier.height(CpDimens.spacing2))
             Text(
-                text = hint,
+                text = addShopLocationMessage(hint),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -401,7 +435,7 @@ private fun StepBasic(
     PriceBeanSlider(
         selected = state.priceRange,
         onSelect = vm::onPriceRangeSelect,
-        title = selectedPrice?.let { "Цена (капучино за $it)" } ?: "Цена",
+        title = selectedPrice?.let { stringResource(Res.string.legacy_shop_price_cappuccino, it) } ?: localizedShopFiltersPrice,
         showHint = false,
     )
 }
@@ -413,14 +447,17 @@ private fun StepPhotos(
     state: AddShopUiState,
     vm: AddShopViewModel,
 ) {
+    val localizedLegacyAddShopScreenContributionsShopPhotosTitle = stringResource(Res.string.legacy_add_shop_screen_contributions_shop_photos_title)
+    val localizedLegacyAddShopScreenContributionsRequestMenuPhotos = stringResource(Res.string.legacy_add_shop_screen_contributions_request_menu_photos)
+
     StepLegend(optional = true)
     PhotoAttachmentsSection(
         photos = state.photos.map { PickedImage(it.bytes, it.fileName, it.contentType) },
         maxPhotos = MAX_SHOP_PHOTOS,
         onPhotosAdded = vm::addPhotos,
         onRemovePhoto = vm::removePhoto,
-        title = "Фотографии кофейни",
-        hint = "До $MAX_SHOP_PHOTOS фотографий (необязательно). Можно выбрать несколько сразу.",
+        title = localizedLegacyAddShopScreenContributionsShopPhotosTitle,
+        hint = stringResource(Res.string.legacy_shop_photos_hint, MAX_SHOP_PHOTOS),
     )
 
     Spacer(Modifier.height(CpDimens.spacing6))
@@ -429,8 +466,8 @@ private fun StepPhotos(
         maxPhotos = MAX_MENU_PHOTOS,
         onPhotosAdded = vm::addMenuPhotos,
         onRemovePhoto = vm::removeMenuPhoto,
-        title = "Фото меню",
-        hint = "До $MAX_MENU_PHOTOS фото меню (необязательно). Не попадут в галерею кофейни.",
+        title = localizedLegacyAddShopScreenContributionsRequestMenuPhotos,
+        hint = stringResource(Res.string.legacy_shop_menu_photos_hint, MAX_MENU_PHOTOS),
     )
 }
 
@@ -440,9 +477,21 @@ private val SCHEDULE_PRESETS = listOf("08:00" to "20:00", "09:00" to "21:00", "1
 
 @Composable
 private fun StepSchedule(state: AddShopUiState, vm: AddShopViewModel) {
+    val localizedLegacyAddShopScreenContributionsShopScheduleIntro = stringResource(Res.string.legacy_add_shop_screen_contributions_shop_schedule_intro)
+    val localizedLegacyAddShopScreenContributionsShopMode = stringResource(Res.string.legacy_add_shop_screen_contributions_shop_mode)
+    val localizedLegacyAddShopScreenContributionsShopModeFooter = stringResource(Res.string.legacy_add_shop_screen_contributions_shop_mode_footer)
+    val localizedLegacyAddShopScreenContributionsShopPerDay = stringResource(Res.string.legacy_add_shop_screen_contributions_shop_per_day)
+    val localizedLegacyAddShopScreenContributionsShopHours = stringResource(Res.string.legacy_add_shop_screen_contributions_shop_hours)
+    val localizedLegacyAddShopScreenContributionsShopOpening = stringResource(Res.string.legacy_add_shop_screen_contributions_shop_opening)
+    val localizedLegacyAddShopScreenContributionsShopClosing = stringResource(Res.string.legacy_add_shop_screen_contributions_shop_closing)
+    val localizedLegacyAddShopScreenContributionsShopPresets = stringResource(Res.string.legacy_add_shop_screen_contributions_shop_presets)
+    val localizedLegacyAddShopScreenContributionsShopWorkDays = stringResource(Res.string.legacy_add_shop_screen_contributions_shop_work_days)
+    val localizedLegacyAddShopScreenContributionsShopWorkDaysFooter = stringResource(Res.string.legacy_add_shop_screen_contributions_shop_work_days_footer)
+    val localizedDiscoveryMapCardOpen = stringResource(Res.string.discovery_map_card_open)
+
     StepLegend(optional = true)
     Text(
-        text = "По умолчанию кофейня открыта каждый день.",
+        text = localizedLegacyAddShopScreenContributionsShopScheduleIntro,
         style = MaterialTheme.typography.bodyLarge,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = Modifier.padding(bottom = CpDimens.spacing4),
@@ -450,24 +499,24 @@ private fun StepSchedule(state: AddShopUiState, vm: AddShopViewModel) {
 
     Column(verticalArrangement = Arrangement.spacedBy(CpDimens.spacing6)) {
         GroupSection(
-            title = "Режим",
-            footer = "Включите, если в будни и выходные разные часы.",
+            title = localizedLegacyAddShopScreenContributionsShopMode,
+            footer = localizedLegacyAddShopScreenContributionsShopModeFooter,
         ) {
             SwitchRow(
-                label = "Разное время по дням",
+                label = localizedLegacyAddShopScreenContributionsShopPerDay,
                 checked = state.usePerDaySchedule,
                 onCheckedChange = vm::setUsePerDaySchedule,
             )
         }
 
         if (!state.usePerDaySchedule) {
-            GroupSection(title = "Часы работы") {
-                TimeStepperRow("Открытие", state.unifiedOpenTime) { vm.adjustUnifiedOpen(it) }
+            GroupSection(title = localizedLegacyAddShopScreenContributionsShopHours) {
+                TimeStepperRow(localizedLegacyAddShopScreenContributionsShopOpening, state.unifiedOpenTime) { vm.adjustUnifiedOpen(it) }
                 RowSeparator()
-                TimeStepperRow("Закрытие", state.unifiedCloseTime) { vm.adjustUnifiedClose(it) }
+                TimeStepperRow(localizedLegacyAddShopScreenContributionsShopClosing, state.unifiedCloseTime) { vm.adjustUnifiedClose(it) }
             }
 
-            GroupSection(title = "Типовые часы") {
+            GroupSection(title = localizedLegacyAddShopScreenContributionsShopPresets) {
                 SCHEDULE_PRESETS.forEachIndexed { index, (open, close) ->
                     if (index > 0) RowSeparator()
                     CheckmarkRow(
@@ -479,14 +528,14 @@ private fun StepSchedule(state: AddShopUiState, vm: AddShopViewModel) {
             }
 
             GroupSection(
-                title = "Дни работы",
-                trailing = "${7 - state.closedDays.size} из 7",
-                footer = "Снимите отметку с дней, когда кофейня закрыта.",
+                title = localizedLegacyAddShopScreenContributionsShopWorkDays,
+                trailing = stringResource(Res.string.legacy_calendar_days_count, 7 - state.closedDays.size),
+                footer = localizedLegacyAddShopScreenContributionsShopWorkDaysFooter,
             ) {
                 state.schedules.forEachIndexed { index, day ->
                     if (index > 0) RowSeparator()
                     CheckmarkRow(
-                        label = day.label,
+                        label = addShopWeekdayLabel(day.dayOfWeek),
                         checked = day.dayOfWeek !in state.closedDays,
                         onToggle = { vm.toggleClosedDay(day.dayOfWeek) },
                     )
@@ -494,9 +543,9 @@ private fun StepSchedule(state: AddShopUiState, vm: AddShopViewModel) {
             }
         } else {
             state.schedules.forEach { day ->
-                GroupSection(title = day.label) {
+                GroupSection(title = addShopWeekdayLabel(day.dayOfWeek)) {
                     SwitchRow(
-                        label = "Открыто",
+                        label = localizedDiscoveryMapCardOpen,
                         checked = !day.isClosed,
                         onCheckedChange = { open ->
                             vm.updateSchedule(day.dayOfWeek) { it.copy(isClosed = !open) }
@@ -504,9 +553,9 @@ private fun StepSchedule(state: AddShopUiState, vm: AddShopViewModel) {
                     )
                     if (!day.isClosed) {
                         RowSeparator()
-                        TimeStepperRow("Открытие", day.openTime) { vm.adjustDayOpenTime(day.dayOfWeek, it) }
+                        TimeStepperRow(localizedLegacyAddShopScreenContributionsShopOpening, day.openTime) { vm.adjustDayOpenTime(day.dayOfWeek, it) }
                         RowSeparator()
-                        TimeStepperRow("Закрытие", day.closeTime) { vm.adjustDayCloseTime(day.dayOfWeek, it) }
+                        TimeStepperRow(localizedLegacyAddShopScreenContributionsShopClosing, day.closeTime) { vm.adjustDayCloseTime(day.dayOfWeek, it) }
                     }
                 }
             }
@@ -523,8 +572,8 @@ private fun TimeStepperRow(label: String, value: String, onAdjust: (Int) -> Unit
         value = value,
         onDecrease = { onAdjust(-30) },
         onIncrease = { onAdjust(30) },
-        decreaseDescription = "$label на 30 минут раньше",
-        increaseDescription = "$label на 30 минут позже",
+        decreaseDescription = stringResource(Res.string.legacy_time_thirty_minutes_earlier, label),
+        increaseDescription = stringResource(Res.string.legacy_time_thirty_minutes_later, label),
     )
 }
 
@@ -533,6 +582,8 @@ private fun StepLegend(
     requiredHint: String? = null,
     optional: Boolean = false,
 ) {
+    val localizedLegacyAddShopScreenContributionsShopOptionalLegend = stringResource(Res.string.legacy_add_shop_screen_contributions_shop_optional_legend)
+
     when {
         requiredHint != null -> Text(
             text = requiredHint,
@@ -540,7 +591,7 @@ private fun StepLegend(
             color = MaterialTheme.colorScheme.onSurface,
         )
         optional -> Text(
-            text = "Необязательно — можно пропустить",
+            text = localizedLegacyAddShopScreenContributionsShopOptionalLegend,
             style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.SemiBold),
             color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.padding(bottom = CpDimens.spacing1),
@@ -552,54 +603,59 @@ private fun StepLegend(
 
 @Composable
 private fun StepContacts(state: AddShopUiState, vm: AddShopViewModel) {
+    val localizedLegacyAddShopScreenContributionsShopContactsIntro = stringResource(Res.string.legacy_add_shop_screen_contributions_shop_contacts_intro)
+    val localizedLegacyAddShopScreenContributionsShopPhoneLabel = stringResource(Res.string.legacy_add_shop_screen_contributions_shop_phone_label)
+    val localizedLegacyAddShopScreenContributionsShopInstagramLabel = stringResource(Res.string.legacy_add_shop_screen_contributions_shop_instagram_label)
+    val localizedLegacyAddShopScreenContributionsShopWebsiteLabel = stringResource(Res.string.legacy_add_shop_screen_contributions_shop_website_label)
+
     StepLegend(optional = true)
     Text(
-        text = "Заполните те поля, которые актуальны для вашего заведения.",
+        text = localizedLegacyAddShopScreenContributionsShopContactsIntro,
         style = MaterialTheme.typography.bodyMedium,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = Modifier.padding(bottom = CpDimens.spacing4),
     )
 
-    FormField(label = "Номер телефона", optional = true) {
+    FormField(label = localizedLegacyAddShopScreenContributionsShopPhoneLabel, optional = true) {
         AppOutlinedField(
             value = state.phone,
             onValueChange = vm::onPhoneChange,
             placeholder = "+375",
             keyboardType = KeyboardType.Phone,
-            errorText = if (state.phone.isNotEmpty()) state.phoneError else null,
+            errorText = if (state.phone.isNotEmpty()) inputValidationMessage(state.phoneError) else null,
             leadingIcon = CpIcons.Phone,
         )
     }
     Spacer(Modifier.height(CpDimens.spacing3))
-    FormField(label = "Instagram профиль", optional = true) {
+    FormField(label = localizedLegacyAddShopScreenContributionsShopInstagramLabel, optional = true) {
         AppOutlinedField(
             value = state.instagram,
             keyboardType = KeyboardType.Uri,
             onValueChange = vm::onInstagramChange,
             placeholder = "@",
-            errorText = if (state.instagram.isNotEmpty()) state.instagramError else null,
+            errorText = if (state.instagram.isNotEmpty()) inputValidationMessage(state.instagramError) else null,
             leadingIcon = CpIcons.Instagram,
         )
     }
     Spacer(Modifier.height(CpDimens.spacing3))
-    FormField(label = "Веб-сайт", optional = true) {
+    FormField(label = localizedLegacyAddShopScreenContributionsShopWebsiteLabel, optional = true) {
         AppOutlinedField(
             value = state.website,
             onValueChange = vm::onWebsiteChange,
             placeholder = "mycoffee.by",
             keyboardType = KeyboardType.Uri,
-            errorText = if (state.website.isNotEmpty()) state.websiteError else null,
+            errorText = if (state.website.isNotEmpty()) inputValidationMessage(state.websiteError) else null,
             leadingIcon = CpIcons.Globe,
         )
     }
     Spacer(Modifier.height(CpDimens.spacing3))
-    FormField(label = "Email", optional = true) {
+    FormField(label = stringResource(Res.string.step_email), optional = true) {
         AppOutlinedField(
             value = state.email,
             onValueChange = vm::onEmailChange,
             placeholder = "info@coffee.by",
             keyboardType = KeyboardType.Email,
-            errorText = if (state.email.isNotEmpty()) state.emailError else null,
+            errorText = if (state.email.isNotEmpty()) inputValidationMessage(state.emailError) else null,
             leadingIcon = CpIcons.Email,
         )
     }
@@ -609,9 +665,17 @@ private fun StepContacts(state: AddShopUiState, vm: AddShopViewModel) {
 
 @Composable
 private fun StepFeatures(state: AddShopUiState, vm: AddShopViewModel) {
+    val localizedLegacyAddShopScreenContributionsShopFeaturesIntro = stringResource(Res.string.legacy_add_shop_screen_contributions_shop_features_intro)
+    val localizedLegacyAddShopScreenContributionsShopBrewMethods = stringResource(Res.string.legacy_add_shop_screen_contributions_shop_brew_methods)
+    val localizedLegacyAddShopScreenShelfGrindBeans = stringResource(Res.string.legacy_add_shop_screen_shelf_grind_beans)
+    val localizedFavoritesRoasters = stringResource(Res.string.favorites_roasters)
+    val localizedLegacyAddShopScreenContributionsShopRoastersFooter = stringResource(Res.string.legacy_add_shop_screen_contributions_shop_roasters_footer)
+    val localizedCatalogRoasterSuggestionAction = stringResource(Res.string.catalog_roaster_suggestion_action)
+    val localizedShopFiltersEquipment = stringResource(Res.string.shop_filters_equipment)
+
     StepLegend(optional = true)
     Text(
-        text = "Отметьте то, что есть в заведении.",
+        text = localizedLegacyAddShopScreenContributionsShopFeaturesIntro,
         style = MaterialTheme.typography.bodyLarge,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
         modifier = Modifier.padding(bottom = CpDimens.spacing4),
@@ -619,7 +683,7 @@ private fun StepFeatures(state: AddShopUiState, vm: AddShopViewModel) {
 
     Column(verticalArrangement = Arrangement.spacedBy(CpDimens.spacing6)) {
         CheckmarkSection(
-            title = "Методы приготовления",
+            title = localizedLegacyAddShopScreenContributionsShopBrewMethods,
             items = state.brewMethods,
             selectedIds = state.selectedBrewMethodIds,
             onToggle = vm::toggleBrewMethod,
@@ -633,28 +697,28 @@ private fun StepFeatures(state: AddShopUiState, vm: AddShopViewModel) {
             },
         )
         CheckmarkSection(
-            title = "Зерно",
+            title = localizedLegacyAddShopScreenShelfGrindBeans,
             items = state.beans,
             selectedIds = state.selectedBeanIds,
             onToggle = vm::toggleBean,
         )
         CheckmarkSection(
-            title = "Обжарщики",
+            title = localizedFavoritesRoasters,
             items = state.roasters,
             selectedIds = state.selectedRoasterIds,
             onToggle = vm::toggleRoaster,
-            footer = "Не нашли обжарщика? Добавьте его — он появится в списке после проверки.",
+            footer = localizedLegacyAddShopScreenContributionsShopRoastersFooter,
             leading = { item -> RoasterAvatar(item) },
             extraRows = {
                 ActionRow(
-                    label = "Добавить обжарщика",
+                    label = localizedCatalogRoasterSuggestionAction,
                     icon = CpIcons.Add,
                     onClick = { Navigator.navigate(Navigator.Screen.AddRoaster) },
                 )
             },
         )
         CheckmarkSection(
-            title = "Оборудование",
+            title = localizedShopFiltersEquipment,
             items = state.equipment,
             selectedIds = state.selectedEquipmentIds,
             onToggle = vm::toggleEquipment,
@@ -671,6 +735,8 @@ private fun FormField(
     optional: Boolean = false,
     content: @Composable () -> Unit,
 ) {
+    val localizedLegacyAddShopScreenContributionsShopFieldOptional = stringResource(Res.string.legacy_add_shop_screen_contributions_shop_field_optional)
+
     Row(
         modifier = Modifier.padding(bottom = CpDimens.spacing2),
         verticalAlignment = Alignment.CenterVertically,
@@ -683,7 +749,7 @@ private fun FormField(
         )
         if (optional) {
             Text(
-                text = "необязательно",
+                text = localizedLegacyAddShopScreenContributionsShopFieldOptional,
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
             )

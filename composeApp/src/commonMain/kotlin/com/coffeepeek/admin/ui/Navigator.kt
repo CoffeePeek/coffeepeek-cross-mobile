@@ -173,6 +173,8 @@ object Navigator {
         @Serializable data class EditHomeCheckIn(val id: String) : Screen
         @Serializable data object CitySettings : Screen
         @Serializable data object ThemeSettings : Screen
+        @Serializable data object LanguageSettings : Screen
+        @Serializable data object NotificationSettings : Screen
         @Serializable data object BlockedAuthors : Screen
         @Serializable data object UsagePolicy : Screen
         @Serializable data class ShopReviews(val shopId: String) : Screen
@@ -259,6 +261,8 @@ object Navigator {
         is Screen.EditHomeCheckIn,
         is Screen.CitySettings,
         is Screen.ThemeSettings,
+        is Screen.LanguageSettings,
+        is Screen.NotificationSettings,
         is Screen.BlockedAuthors,
         is Screen.UsagePolicy -> true
         else -> false
@@ -562,6 +566,8 @@ koinInject<ContributionsScreenRenderer>().Editor(route.shopId, route.section, ro
                     }
                     composable<Screen.CitySettings> { koinInject<SettingsScreenRenderer>().City() }
                     composable<Screen.ThemeSettings> { koinInject<SettingsScreenRenderer>().Theme() }
+                    composable<Screen.LanguageSettings> { koinInject<SettingsScreenRenderer>().Language() }
+                    composable<Screen.NotificationSettings> { koinInject<com.coffeepeek.admin.feature.notifications.ui.NotificationsRenderer>().Settings(::popBack) }
                     composable<Screen.BlockedAuthors> { com.coffeepeek.admin.feature.authorblocking.ui.BlockedAuthorsScreen() }
                     composable<Screen.UsagePolicy> { koinInject<SettingsScreenRenderer>().UsagePolicy() }
             }
@@ -606,6 +612,8 @@ koinInject<ContributionsScreenRenderer>().Editor(route.shopId, route.section, ro
             is Screen.EditHomeCheckIn -> CheckInHistoryDestination(initialHomeId = screen.id)
             Screen.CitySettings -> koinInject<SettingsScreenRenderer>().City()
             Screen.ThemeSettings -> koinInject<SettingsScreenRenderer>().Theme()
+            Screen.LanguageSettings -> koinInject<SettingsScreenRenderer>().Language()
+            Screen.NotificationSettings -> koinInject<com.coffeepeek.admin.feature.notifications.ui.NotificationsRenderer>().Settings(::popBack)
             Screen.BlockedAuthors -> com.coffeepeek.admin.feature.authorblocking.ui.BlockedAuthorsScreen()
             Screen.UsagePolicy -> koinInject<SettingsScreenRenderer>().UsagePolicy()
             else -> error("Tab route must be handled by MainScreen: $screen")

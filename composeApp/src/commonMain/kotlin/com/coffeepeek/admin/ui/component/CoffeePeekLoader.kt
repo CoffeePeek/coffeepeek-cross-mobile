@@ -11,7 +11,7 @@ import com.coffeepeek.admin.theme.CpDimens
 import com.coffeepeek.core.designsystem.component.CoffeePeekMorphingLoader
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import org.jetbrains.compose.ui.tooling.preview.Preview
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import coffeepeek.composeapp.generated.resources.Res
 import coffeepeek.composeapp.generated.resources.loader_loading
 

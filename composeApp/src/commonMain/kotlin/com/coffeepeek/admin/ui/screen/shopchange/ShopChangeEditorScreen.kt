@@ -1,5 +1,12 @@
 package com.coffeepeek.admin.ui.screen.shopchange
 
+import com.coffeepeek.admin.ui.component.inputValidationMessage
+
+import com.coffeepeek.admin.ui.screen.contributions.contributionFailureMessage
+
+import coffeepeek.composeapp.generated.resources.*
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
+
 import com.coffeepeek.core.designsystem.component.CoffeePeekScaffold as Scaffold
 
 import androidx.compose.runtime.getValue
@@ -83,6 +90,24 @@ import org.jetbrains.compose.resources.painterResource
 
 @Composable
 fun ShopChangeEditorScreen(shopId: String, sectionName: String, requestId: String) {
+    val localizedLegacyShopChangeEditorScreenContributionsEditorFailedTitle = stringResource(Res.string.legacy_shop_change_editor_screen_contributions_editor_failed_title)
+    val localizedLegacyShopChangeEditorScreenContributionsEditorSentTitle = stringResource(Res.string.legacy_shop_change_editor_screen_contributions_editor_sent_title)
+    val localizedLegacyShopChangeEditorScreenContributionsEditorSavedTitle = stringResource(Res.string.legacy_shop_change_editor_screen_contributions_editor_saved_title)
+    val localizedLegacyShopChangeEditorScreenContributionsEditorSendingTitle = stringResource(Res.string.legacy_shop_change_editor_screen_contributions_editor_sending_title)
+    val localizedLegacyShopChangeEditorScreenContributionsEditorSavingTitle = stringResource(Res.string.legacy_shop_change_editor_screen_contributions_editor_saving_title)
+    val localizedLegacyShopChangeEditorScreenContributionsEditorStatusApproved = stringResource(Res.string.legacy_shop_change_editor_screen_contributions_editor_status_approved)
+    val localizedLegacyShopChangeEditorScreenContributionsEditorStatusRejected = stringResource(Res.string.legacy_shop_change_editor_screen_contributions_editor_status_rejected)
+    val localizedLegacyShopChangeEditorScreenContributionsEditorStatusPending = stringResource(Res.string.legacy_shop_change_editor_screen_contributions_editor_status_pending)
+    val localizedLegacyShopChangeEditorScreenContributionsEditorSendingDescription = stringResource(Res.string.legacy_shop_change_editor_screen_contributions_editor_sending_description)
+    val localizedLegacyMyContributionsScreenContributionsOpenRequest = stringResource(Res.string.legacy_my_contributions_screen_contributions_open_request)
+    val localizedStepDone = stringResource(Res.string.step_done)
+    val localizedLegacyAddShopScreenSandboxCitiesFailure = stringResource(Res.string.legacy_add_shop_screen_sandbox_cities_failure)
+    val localizedShopFiltersAmenities = stringResource(Res.string.shop_filters_amenities)
+    val localizedFavoritesRoasters = stringResource(Res.string.favorites_roasters)
+    val localizedLegacyShopChangeEditorScreenContributionsSectionBrewMethods = stringResource(Res.string.legacy_shop_change_editor_screen_contributions_section_brew_methods)
+    val localizedLegacyAddShopScreenContributionsShopSubmit = stringResource(Res.string.legacy_add_shop_screen_contributions_shop_submit)
+    val localizedLegacyShopChangeEditorScreenContributionsEditorSave = stringResource(Res.string.legacy_shop_change_editor_screen_contributions_editor_save)
+
     val section = remember(sectionName) {
         ShopChangeSection.entries.firstOrNull { it.name == sectionName } ?: ShopChangeSection.Description
     }
@@ -95,42 +120,42 @@ fun ShopChangeEditorScreen(shopId: String, sectionName: String, requestId: Strin
     if (state.isSubmitting || state.submissionError != null || submitted != null) {
         val failed = state.submissionError != null
         SubmissionStatusScreen(
-            screenTitle = section.title(),
+            screenTitle = section.localizedTitle(),
             status = when {
                 failed -> SubmissionStatus.Error
                 submitted != null -> SubmissionStatus.Success
                 else -> SubmissionStatus.Sending
             },
             title = when {
-                failed -> "Правка не отправлена"
-                submitted != null -> if (requestId.isBlank()) "Правка отправлена!" else "Заявка сохранена!"
-                else -> if (requestId.isBlank()) "Отправляем правку…" else "Сохраняем заявку…"
+                failed -> localizedLegacyShopChangeEditorScreenContributionsEditorFailedTitle
+                submitted != null -> if (requestId.isBlank()) localizedLegacyShopChangeEditorScreenContributionsEditorSentTitle else localizedLegacyShopChangeEditorScreenContributionsEditorSavedTitle
+                else -> if (requestId.isBlank()) localizedLegacyShopChangeEditorScreenContributionsEditorSendingTitle else localizedLegacyShopChangeEditorScreenContributionsEditorSavingTitle
             },
-            description = state.submissionError?.let { "$it\n\nВведённые данные остались в форме." } ?: when (submitted?.status) {
-                ModerationStatus.Approved -> "Изменения приняты и появятся в карточке кофейни."
-                ModerationStatus.Rejected -> "Заявка сохранена. Подробности проверки доступны в заявке."
-                ModerationStatus.Pending -> "Спасибо за помощь! После проверки изменения появятся в карточке кофейни."
-                null -> "Отправляем ваши изменения на проверку"
+            description = contributionFailureMessage(state.submissionError)?.let { stringResource(Res.string.legacy_submission_error_kept, it) } ?: when (submitted?.status) {
+                ModerationStatus.Approved -> localizedLegacyShopChangeEditorScreenContributionsEditorStatusApproved
+                ModerationStatus.Rejected -> localizedLegacyShopChangeEditorScreenContributionsEditorStatusRejected
+                ModerationStatus.Pending -> localizedLegacyShopChangeEditorScreenContributionsEditorStatusPending
+                null -> localizedLegacyShopChangeEditorScreenContributionsEditorSendingDescription
             },
             onBack = if (failed) vm::clearSubmissionError else Navigator::popBack,
         ) {
             if (failed) SubmissionErrorActions(vm::submit, vm::clearSubmissionError)
             if (submitted != null) {
-                AppButton("Посмотреть заявку", onClick = {
+                AppButton(localizedLegacyMyContributionsScreenContributionsOpenRequest, onClick = {
                     Navigator.popThenNavigate(Navigator.Screen.ShopChangeRequestDetail(submitted.id))
                 })
-                OutlinedButton(onClick = Navigator::popBack, modifier = Modifier.fillMaxWidth()) { Text("Готово") }
+                OutlinedButton(onClick = Navigator::popBack, modifier = Modifier.fillMaxWidth()) { Text(localizedStepDone) }
             }
         }
         return
     }
 
     state.error?.let { err ->
-        PlatformAlert(title = "Ошибка", message = err, onConfirm = vm::clearError, onDismiss = vm::clearError)
+        PlatformAlert(title = localizedLegacyAddShopScreenSandboxCitiesFailure, message = err, onConfirm = vm::clearError, onDismiss = vm::clearError)
     }
 
     Scaffold(
-        topBar = { CpTopBar(section.title()) },
+        topBar = { CpTopBar(section.localizedTitle()) },
         containerColor = MaterialTheme.colorScheme.background,
     ) { padding ->
         if (state.isLoading) {
@@ -164,7 +189,7 @@ fun ShopChangeEditorScreen(shopId: String, sectionName: String, requestId: Strin
                     ShopChangeSection.Contacts -> ContactsEditor(state, vm)
                     ShopChangeSection.Photos -> PhotosEditor(state, vm)
                     ShopChangeSection.Tags -> CheckmarkSection(
-                        title = "Особенности",
+                        title = localizedShopFiltersAmenities,
                         items = state.catalogTags,
                         selectedIds = state.selectedTagIds,
                         onToggle = vm::toggleTag,
@@ -179,7 +204,7 @@ fun ShopChangeEditorScreen(shopId: String, sectionName: String, requestId: Strin
                         },
                     )
                     ShopChangeSection.Roasters -> CheckmarkSection(
-                        title = "Обжарщики",
+                        title = localizedFavoritesRoasters,
                         items = state.catalogRoasters,
                         selectedIds = state.selectedRoasterIds,
                         onToggle = vm::toggleRoaster,
@@ -188,7 +213,7 @@ fun ShopChangeEditorScreen(shopId: String, sectionName: String, requestId: Strin
                     )
                     ShopChangeSection.Equipment -> CatalogEditor(state.catalogEquipment, state.selectedEquipmentIds, vm::toggleEquipment)
                     ShopChangeSection.BrewMethods -> CheckmarkSection(
-                        title = "Методы заваривания",
+                        title = localizedLegacyShopChangeEditorScreenContributionsSectionBrewMethods,
                         items = state.catalogBrewMethods,
                         selectedIds = state.selectedBrewMethodIds,
                         onToggle = vm::toggleBrewMethod,
@@ -207,7 +232,7 @@ fun ShopChangeEditorScreen(shopId: String, sectionName: String, requestId: Strin
                 Spacer(Modifier.height(CpDimens.spacing4))
             }
             AppButton(
-                text = if (requestId.isBlank()) "Отправить на модерацию" else "Сохранить заявку",
+                text = if (requestId.isBlank()) localizedLegacyAddShopScreenContributionsShopSubmit else localizedLegacyShopChangeEditorScreenContributionsEditorSave,
                 onClick = vm::submit,
                 enabled = state.canSubmit && !state.isSubmitting,
             )
@@ -218,6 +243,8 @@ fun ShopChangeEditorScreen(shopId: String, sectionName: String, requestId: Strin
 
 @Composable
 private fun DescriptionEditor(state: ShopChangeEditorUiState, vm: ShopChangeEditorViewModel) {
+    val localizedLegacyShopChangeEditorScreenContributionsEditorDescriptionPlaceholder = stringResource(Res.string.legacy_shop_change_editor_screen_contributions_editor_description_placeholder)
+
     val descriptionField = rememberSyncedTextFieldValue(state.description)
     OutlinedTextField(
         value = descriptionField.value,
@@ -227,7 +254,7 @@ private fun DescriptionEditor(state: ShopChangeEditorUiState, vm: ShopChangeEdit
         },
         keyboardOptions = platformTextInputOptions(),
         modifier = Modifier.fillMaxWidth().height(180.dp),
-        placeholder = { Text("Расскажите о кофейне") },
+        placeholder = { Text(localizedLegacyShopChangeEditorScreenContributionsEditorDescriptionPlaceholder) },
         isError = state.descriptionError != null,
         supportingText = { Text("${state.description.length}/1000") },
         shape = RoundedCornerShape(CpDimens.buttonRadius),
@@ -237,13 +264,16 @@ private fun DescriptionEditor(state: ShopChangeEditorUiState, vm: ShopChangeEdit
 
 @Composable
 private fun ContactsEditor(state: ShopChangeEditorUiState, vm: ShopChangeEditorViewModel) {
-    ContactField("Телефон", state.phone, vm::onPhoneChange, state.phoneError, KeyboardType.Phone)
+    val localizedLegacyShopChangeEditorScreenOwnershipPhone = stringResource(Res.string.legacy_shop_change_editor_screen_ownership_phone)
+    val localizedLegacyAddRoasterScreenContributionsRequestSite = stringResource(Res.string.legacy_add_roaster_screen_contributions_request_site)
+
+    ContactField(localizedLegacyShopChangeEditorScreenOwnershipPhone, state.phone, vm::onPhoneChange, inputValidationMessage(state.phoneError), KeyboardType.Phone)
     Spacer(Modifier.height(CpDimens.spacing3))
-    ContactField("Instagram", state.instagram, vm::onInstagramChange, state.instagramError, KeyboardType.Uri)
+    ContactField("Instagram", state.instagram, vm::onInstagramChange, inputValidationMessage(state.instagramError), KeyboardType.Uri)
     Spacer(Modifier.height(CpDimens.spacing3))
-    ContactField("Сайт", state.website, vm::onWebsiteChange, state.websiteError, KeyboardType.Uri)
+    ContactField(localizedLegacyAddRoasterScreenContributionsRequestSite, state.website, vm::onWebsiteChange, inputValidationMessage(state.websiteError), KeyboardType.Uri)
     Spacer(Modifier.height(CpDimens.spacing3))
-    ContactField("Email", state.email, vm::onEmailChange, state.emailError, KeyboardType.Email)
+    ContactField("Email", state.email, vm::onEmailChange, inputValidationMessage(state.emailError), KeyboardType.Email)
 }
 
 @Composable
@@ -280,13 +310,17 @@ private fun ContactField(
 
 @Composable
 private fun PhotosEditor(state: ShopChangeEditorUiState, vm: ShopChangeEditorViewModel) {
-    Text("Текущие фото", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+    val localizedLegacyShopChangeEditorScreenContributionsEditorCurrentPhotos = stringResource(Res.string.legacy_shop_change_editor_screen_contributions_editor_current_photos)
+    val localizedLegacyShopChangeEditorScreenContributionsEditorNewPhotos = stringResource(Res.string.legacy_shop_change_editor_screen_contributions_editor_new_photos)
+    val localizedLegacyShopChangeEditorScreenContributionsEditorNewPhotosHint = stringResource(Res.string.legacy_shop_change_editor_screen_contributions_editor_new_photos_hint)
+
+    Text(localizedLegacyShopChangeEditorScreenContributionsEditorCurrentPhotos, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
     Spacer(Modifier.height(CpDimens.spacing2))
     RetainedPhotoRow(state.retainedPhotos, onRemove = vm::removeRetainedPhoto)
     if (state.alreadyUploadedPhotos.isNotEmpty()) {
         Spacer(Modifier.height(CpDimens.spacing2))
         Text(
-            "Уже загружено в заявке: ${state.alreadyUploadedPhotos.size}",
+            stringResource(Res.string.legacy_shop_change_uploaded_count, state.alreadyUploadedPhotos.size),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
@@ -299,8 +333,8 @@ private fun PhotosEditor(state: ShopChangeEditorUiState, vm: ShopChangeEditorVie
             maxPhotos = remaining,
             onPhotosAdded = vm::addPhotos,
             onRemovePhoto = vm::removeNewPhoto,
-            title = "Новые фото",
-            hint = "Добавьте фото — они встанут после сохранённых.",
+            title = localizedLegacyShopChangeEditorScreenContributionsEditorNewPhotos,
+            hint = localizedLegacyShopChangeEditorScreenContributionsEditorNewPhotosHint,
         )
     }
 }
@@ -308,8 +342,11 @@ private fun PhotosEditor(state: ShopChangeEditorUiState, vm: ShopChangeEditorVie
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun RetainedPhotoRow(photos: List<ShopPhoto>, onRemove: (String) -> Unit) {
+    val localizedLegacyShopChangeEditorScreenContributionsEditorNoSavedPhotos = stringResource(Res.string.legacy_shop_change_editor_screen_contributions_editor_no_saved_photos)
+    val localizedHistoryHomeDeleteConfirm = stringResource(Res.string.history_home_delete_confirm)
+
     if (photos.isEmpty()) {
-        Text("Нет сохранённых фото", color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(localizedLegacyShopChangeEditorScreenContributionsEditorNoSavedPhotos, color = MaterialTheme.colorScheme.onSurfaceVariant)
         return
     }
     FlowRow(
@@ -340,7 +377,7 @@ private fun RetainedPhotoRow(photos: List<ShopPhoto>, onRemove: (String) -> Unit
                 ) {
                     Icon(
                         CpIcons.Close,
-                        contentDescription = "Удалить",
+                        contentDescription = localizedHistoryHomeDeleteConfirm,
                         tint = Color.White,
                         modifier = Modifier.size(14.dp),
                     )
@@ -357,8 +394,10 @@ private fun CatalogEditor(
     selected: Set<String>,
     onToggle: (String) -> Unit,
 ) {
+    val localizedLegacyShopChangeEditorScreenCatalogEmpty = stringResource(Res.string.legacy_shop_change_editor_screen_catalog_empty)
+
     if (items.isEmpty()) {
-        Text("Каталог пуст", color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(localizedLegacyShopChangeEditorScreenCatalogEmpty, color = MaterialTheme.colorScheme.onSurfaceVariant)
         return
     }
     FlowRow(horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing2)) {
@@ -385,8 +424,16 @@ private fun CatalogEditor(
 
 @Composable
 private fun MenuEditor(state: ShopChangeEditorUiState, vm: ShopChangeEditorViewModel) {
+    val localizedLegacyAddShopScreenContributionsRequestMenuPhotos = stringResource(Res.string.legacy_add_shop_screen_contributions_request_menu_photos)
+    val localizedLegacyShopChangeEditorScreenContributionsEditorNewMenuPhotos = stringResource(Res.string.legacy_shop_change_editor_screen_contributions_editor_new_menu_photos)
+    val localizedLegacyShopChangeEditorScreenContributionsEditorMenuDetails = stringResource(Res.string.legacy_shop_change_editor_screen_contributions_editor_menu_details)
+    val localizedLegacyShopChangeEditorScreenHomeCheckInOptional = stringResource(Res.string.legacy_shop_change_editor_screen_home_check_in_optional)
+    val localizedLegacyGroupedListDiscoveryFiltersCollapse = stringResource(Res.string.legacy_grouped_list_discovery_filters_collapse)
+    val localizedLegacyShopChangeEditorScreenContributionsEditorExpandMenu = stringResource(Res.string.legacy_shop_change_editor_screen_contributions_editor_expand_menu)
+    val localizedLegacyShopChangeEditorScreenContributionsEditorDrinksEmpty = stringResource(Res.string.legacy_shop_change_editor_screen_contributions_editor_drinks_empty)
+
     var expanded by rememberSaveable { mutableStateOf(false) }
-    Text("Фото меню", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+    Text(localizedLegacyAddShopScreenContributionsRequestMenuPhotos, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
     Spacer(Modifier.height(CpDimens.spacing2))
     RetainedPhotoRow(state.retainedMenuPhotos, onRemove = vm::removeRetainedMenuPhoto)
     val remaining = MAX_MENU_PHOTOS - state.retainedMenuPhotos.size - state.alreadyUploadedMenuPhotos.size
@@ -397,20 +444,20 @@ private fun MenuEditor(state: ShopChangeEditorUiState, vm: ShopChangeEditorViewM
             maxPhotos = remaining,
             onPhotosAdded = vm::addMenuPhotos,
             onRemovePhoto = vm::removeNewMenuPhoto,
-            title = "Новые фото меню",
-            hint = "До $MAX_MENU_PHOTOS фото меню, включая сохранённые.",
+            title = localizedLegacyShopChangeEditorScreenContributionsEditorNewMenuPhotos,
+            hint = stringResource(Res.string.legacy_shop_change_menu_photos_hint, MAX_MENU_PHOTOS),
         )
     }
     Spacer(Modifier.height(CpDimens.spacing5))
-    GroupSection(title = "Подробное меню", trailing = "Необязательно") {
+    GroupSection(title = localizedLegacyShopChangeEditorScreenContributionsEditorMenuDetails, trailing = localizedLegacyShopChangeEditorScreenHomeCheckInOptional) {
         ActionRow(
-            label = if (expanded) "Свернуть" else "Указать напитки и цены",
+            label = if (expanded) localizedLegacyGroupedListDiscoveryFiltersCollapse else localizedLegacyShopChangeEditorScreenContributionsEditorExpandMenu,
             onClick = { expanded = !expanded },
         )
         if (expanded) {
             if (state.menuRows.isEmpty()) {
                 Text(
-                    text = "Каталог напитков пуст",
+                    text = localizedLegacyShopChangeEditorScreenContributionsEditorDrinksEmpty,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(CpDimens.spacing4),
                 )
@@ -425,6 +472,8 @@ private fun MenuEditor(state: ShopChangeEditorUiState, vm: ShopChangeEditorViewM
 
 @Composable
 private fun MenuItemEditor(row: ShopChangeMenuRow, vm: ShopChangeEditorViewModel) {
+    val localizedLegacyShopChangeEditorScreenContributionsEditorPricePlaceholder = stringResource(Res.string.legacy_shop_change_editor_screen_contributions_editor_price_placeholder)
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -447,7 +496,7 @@ private fun MenuItemEditor(row: ShopChangeMenuRow, vm: ShopChangeEditorViewModel
             value = row.priceText,
             onValueChange = { value -> vm.updateMenuRow(row.slug) { it.copy(priceText = value) } },
             modifier = Modifier.fillMaxWidth().height(CpDimens.buttonHeight),
-            placeholder = { Text("Цена, BYN") },
+            placeholder = { Text(localizedLegacyShopChangeEditorScreenContributionsEditorPricePlaceholder) },
             singleLine = true,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
             shape = RoundedCornerShape(CpDimens.radiusMd),
@@ -461,6 +510,10 @@ private fun AvailabilityPicker(
     selected: MenuItemAvailability,
     onSelect: (MenuItemAvailability) -> Unit,
 ) {
+    val localizedLegacyShopChangeEditorScreenContributionsAvailabilityUnknown = stringResource(Res.string.legacy_shop_change_editor_screen_contributions_availability_unknown)
+    val localizedLegacyShopChangeEditorScreenContributionsAvailabilityPresent = stringResource(Res.string.legacy_shop_change_editor_screen_contributions_availability_present)
+    val localizedLegacyShopChangeEditorScreenContributionsAvailabilityAbsent = stringResource(Res.string.legacy_shop_change_editor_screen_contributions_availability_absent)
+
     val shape = RoundedCornerShape(CpDimens.radiusMd)
     Row(
         modifier = Modifier
@@ -489,9 +542,9 @@ private fun AvailabilityPicker(
             ) {
                 Text(
                     text = when (availability) {
-                        MenuItemAvailability.Unknown -> "Не указано"
-                        MenuItemAvailability.Present -> "Есть"
-                        MenuItemAvailability.Absent -> "Нет"
+                        MenuItemAvailability.Unknown -> localizedLegacyShopChangeEditorScreenContributionsAvailabilityUnknown
+                        MenuItemAvailability.Present -> localizedLegacyShopChangeEditorScreenContributionsAvailabilityPresent
+                        MenuItemAvailability.Absent -> localizedLegacyShopChangeEditorScreenContributionsAvailabilityAbsent
                     },
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,

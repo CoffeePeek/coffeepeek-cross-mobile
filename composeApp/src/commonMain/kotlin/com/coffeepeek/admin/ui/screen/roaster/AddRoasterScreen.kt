@@ -1,5 +1,13 @@
 package com.coffeepeek.admin.ui.screen.roaster
 
+import com.coffeepeek.admin.ui.component.inputValidationMessage
+
+import com.coffeepeek.admin.ui.screen.contributions.contributionFailureMessage
+
+import com.coffeepeek.admin.ui.screen.contributions.contributionFieldMessage
+
+import coffeepeek.composeapp.generated.resources.*
+
 import com.coffeepeek.core.designsystem.component.CoffeePeekScaffold as Scaffold
 
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
@@ -10,7 +18,7 @@ import com.coffeepeek.core.designsystem.component.CoffeePeekSelectField
 import com.coffeepeek.core.designsystem.component.CoffeePeekSelectOption
 import coffeepeek.composeapp.generated.resources.select_city_none
 import coffeepeek.composeapp.generated.resources.select_city_label
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 
 import androidx.compose.runtime.getValue
 import com.coffeepeek.admin.ui.component.PlatformScrollableColumn
@@ -80,6 +88,24 @@ private const val ROASTER_PHOTO_LIMIT = 5
 
 @Composable
 fun AddRoasterScreen(vm: AddRoasterViewModel = platformViewModel()) {
+    val localizedCatalogRoasterSuggestionAction = stringResource(Res.string.catalog_roaster_suggestion_action)
+    val localizedLegacyAddRoasterScreenContributionsRoasterFailedTitle = stringResource(Res.string.legacy_add_roaster_screen_contributions_roaster_failed_title)
+    val localizedLegacyAddRoasterScreenContributionsRoasterSendingTitle = stringResource(Res.string.legacy_add_roaster_screen_contributions_roaster_sending_title)
+    val localizedLegacyAddShopScreenContributionsShopSendingDescription = stringResource(Res.string.legacy_add_shop_screen_contributions_shop_sending_description)
+    val localizedLegacyAddRoasterScreenSettingsCityError = stringResource(Res.string.legacy_add_roaster_screen_settings_city_error)
+    val localizedLegacyAddRoasterScreenRoasterIntro = stringResource(Res.string.legacy_add_roaster_screen_roaster_intro)
+    val localizedLegacyAddRoasterScreenOwnershipName = stringResource(Res.string.legacy_add_roaster_screen_ownership_name)
+    val localizedLegacyAddRoasterScreenRoasterNamePlaceholder = stringResource(Res.string.legacy_add_roaster_screen_roaster_name_placeholder)
+    val localizedLegacyAddRoasterScreenRoasterAboutTitle = stringResource(Res.string.legacy_add_roaster_screen_roaster_about_title)
+    val localizedLegacyAddRoasterScreenRoasterAboutPlaceholder = stringResource(Res.string.legacy_add_roaster_screen_roaster_about_placeholder)
+    val localizedLegacyAddRoasterScreenOptionalAddress = stringResource(Res.string.legacy_add_roaster_screen_optional_address)
+    val localizedLegacyAddRoasterScreenCityAddressRequiredTogether = stringResource(Res.string.legacy_add_roaster_screen_city_address_required_together)
+    val localizedLegacyAddShopScreenOwnershipAddress = stringResource(Res.string.legacy_add_shop_screen_ownership_address)
+    val localizedLegacyAddRoasterScreenStreetHouse = stringResource(Res.string.legacy_add_roaster_screen_street_house)
+    val localizedLegacyAddRoasterScreenContributionsRequestSite = stringResource(Res.string.legacy_add_roaster_screen_contributions_request_site)
+    val localizedLegacyAddRoasterScreenRoasterPhotos = stringResource(Res.string.legacy_add_roaster_screen_roaster_photos)
+    val localizedLegacyAddShopScreenContributionsShopSubmit = stringResource(Res.string.legacy_add_shop_screen_contributions_shop_submit)
+
     val state by vm.state.collectAsState()
 
     state.result?.let { result ->
@@ -99,11 +125,11 @@ fun AddRoasterScreen(vm: AddRoasterViewModel = platformViewModel()) {
     if (state.isSubmitting || state.submissionError != null) {
         val failed = state.submissionError != null
         SubmissionStatusScreen(
-            screenTitle = "Добавить обжарщика",
+            screenTitle = localizedCatalogRoasterSuggestionAction,
             status = if (failed) SubmissionStatus.Error else SubmissionStatus.Sending,
-            title = if (failed) "Обжарщик не отправлен" else "Отправляем обжарщика…",
-            description = state.submissionError?.let { "$it\n\nВведённые данные остались в форме." }
-                ?: "Отправляем информацию и фотографии на проверку",
+            title = if (failed) localizedLegacyAddRoasterScreenContributionsRoasterFailedTitle else localizedLegacyAddRoasterScreenContributionsRoasterSendingTitle,
+            description = contributionFailureMessage(state.submissionError)?.let { stringResource(Res.string.legacy_submission_error_kept, it) }
+                ?: localizedLegacyAddShopScreenContributionsShopSendingDescription,
             onBack = if (failed) vm::clearSubmissionError else Navigator::popBack,
         ) {
             if (failed) SubmissionErrorActions(vm::submit, vm::clearSubmissionError)
@@ -111,13 +137,13 @@ fun AddRoasterScreen(vm: AddRoasterViewModel = platformViewModel()) {
         return
     }
 
-    state.error?.let { error ->
-        PlatformAlert(title = "Не удалось загрузить города", message = error, onConfirm = vm::clearError, onDismiss = vm::clearError)
+    contributionFailureMessage(state.error)?.let { error ->
+        PlatformAlert(title = localizedLegacyAddRoasterScreenSettingsCityError, message = error, onConfirm = vm::clearError, onDismiss = vm::clearError)
     }
 
     Scaffold(
         topBar = {
-            CpTopBar("Добавить обжарщика")
+            CpTopBar(localizedCatalogRoasterSuggestionAction)
         },
         containerColor = MaterialTheme.colorScheme.background,
     ) { padding ->
@@ -140,36 +166,36 @@ fun AddRoasterScreen(vm: AddRoasterViewModel = platformViewModel()) {
             verticalArrangement = Arrangement.spacedBy(CpDimens.spacing4),
         ) {
             Text(
-                text = "Расскажите об обжарщике. После проверки он появится в общем каталоге.",
+                text = localizedLegacyAddRoasterScreenRoasterIntro,
                 modifier = Modifier.padding(top = CpDimens.spacing4),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
 
             RoasterField(
-                label = "Название",
+                label = localizedLegacyAddRoasterScreenOwnershipName,
                 value = state.name,
                 onValueChange = vm::onNameChange,
                 maxLength = 100,
-                placeholder = "Например, Coffee Circus",
-                error = if (state.name.isNotEmpty()) state.nameError else null,
+                placeholder = localizedLegacyAddRoasterScreenRoasterNamePlaceholder,
+                error = if (state.name.isNotEmpty()) contributionFieldMessage(state.nameError) else null,
             )
             RoasterField(
-                label = "Об обжарщике",
+                label = localizedLegacyAddRoasterScreenRoasterAboutTitle,
                 value = state.about,
                 onValueChange = vm::onAboutChange,
-                placeholder = "История, подход к обжарке, особенности",
+                placeholder = localizedLegacyAddRoasterScreenRoasterAboutPlaceholder,
                 singleLine = false,
                 minLines = 4,
             )
 
             Text(
-                text = "Адрес (необязательно)",
+                text = localizedLegacyAddRoasterScreenOptionalAddress,
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.SemiBold,
             )
             Text(
-                text = "Город и адрес нужно указать вместе.",
+                text = localizedLegacyAddRoasterScreenCityAddressRequiredTogether,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -179,11 +205,11 @@ fun AddRoasterScreen(vm: AddRoasterViewModel = platformViewModel()) {
                 onSelect = vm::onCitySelect,
             )
             RoasterField(
-                label = "Адрес",
+                label = localizedLegacyAddShopScreenOwnershipAddress,
                 value = state.address,
                 onValueChange = vm::onAddressChange,
-                placeholder = "Улица, дом",
-                error = state.locationError,
+                placeholder = localizedLegacyAddRoasterScreenStreetHouse,
+                error = contributionFieldMessage(state.locationError),
                 leadingIcon = CpIcons.Location,
             )
 
@@ -192,16 +218,16 @@ fun AddRoasterScreen(vm: AddRoasterViewModel = platformViewModel()) {
                 value = state.instagram,
                 onValueChange = vm::onInstagramChange,
                 placeholder = "@username",
-                error = state.instagramError,
+                error = inputValidationMessage(state.instagramError),
                 leadingIcon = CpIcons.Instagram,
                 keyboardType = KeyboardType.Uri,
             )
             RoasterField(
-                label = "Сайт",
+                label = localizedLegacyAddRoasterScreenContributionsRequestSite,
                 value = state.website,
                 onValueChange = vm::onWebsiteChange,
                 placeholder = "https://example.com",
-                error = state.websiteError,
+                error = inputValidationMessage(state.websiteError),
                 leadingIcon = CpIcons.Globe,
                 keyboardType = KeyboardType.Uri,
             )
@@ -211,8 +237,8 @@ fun AddRoasterScreen(vm: AddRoasterViewModel = platformViewModel()) {
                 maxPhotos = ROASTER_PHOTO_LIMIT,
                 onPhotosAdded = vm::addPhotos,
                 onRemovePhoto = vm::removePhoto,
-                title = "Фотографии обжарщика",
-                hint = "До $ROASTER_PHOTO_LIMIT фотографий (необязательно).",
+                title = localizedLegacyAddRoasterScreenRoasterPhotos,
+                hint = stringResource(Res.string.legacy_roaster_photos_hint, ROASTER_PHOTO_LIMIT),
             )
 
             Button(
@@ -225,7 +251,7 @@ fun AddRoasterScreen(vm: AddRoasterViewModel = platformViewModel()) {
                 ),
                 shape = RoundedCornerShape(CpDimens.buttonRadius),
             ) {
-                Text("Отправить на модерацию", fontWeight = FontWeight.SemiBold)
+                Text(localizedLegacyAddShopScreenContributionsShopSubmit, fontWeight = FontWeight.SemiBold)
             }
             Spacer(Modifier.height(CpDimens.spacing8))
         }
@@ -323,6 +349,11 @@ private fun RoasterSubmittedContent(
     message: String,
     onDone: () -> Unit,
 ) {
+    val localizedStepDone = stringResource(Res.string.step_done)
+    val localizedLegacyAddRoasterScreenContributionsRoasterSuccessTitle = stringResource(Res.string.legacy_add_roaster_screen_contributions_roaster_success_title)
+    val localizedLegacyAddRoasterScreenRoasterSubmittedMessage = stringResource(Res.string.legacy_add_roaster_screen_roaster_submitted_message)
+    val localizedLegacyAddRoasterScreenRequestAcceptedAddressPending = stringResource(Res.string.legacy_add_roaster_screen_request_accepted_address_pending)
+
     LaunchedEffect(Unit) { platformHaptic(HapticEvent.Success) }
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -332,7 +363,7 @@ private fun RoasterSubmittedContent(
                     .fillMaxWidth()
                     .padding(horizontal = CpDimens.spacing4, vertical = CpDimens.spacing4),
             ) {
-                AppButton(text = "Готово", onClick = onDone)
+                AppButton(text = localizedStepDone, onClick = onDone)
             }
         },
     ) { padding ->
@@ -369,7 +400,7 @@ private fun RoasterSubmittedContent(
             }
             Spacer(Modifier.height(CpDimens.spacing4))
             Text(
-                text = "Обжарщик отправлен!",
+                text = localizedLegacyAddRoasterScreenContributionsRoasterSuccessTitle,
                 style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
                 color = MaterialTheme.colorScheme.onSurface,
                 textAlign = TextAlign.Center,
@@ -378,8 +409,8 @@ private fun RoasterSubmittedContent(
             Spacer(Modifier.height(CpDimens.spacing2))
             Text(
                 text = message.ifBlank {
-                    if (addressValidated) "Мы проверим информацию и опубликуем обжарщика в течение 24 часов."
-                    else "Заявка принята. Адрес дополнительно проверит модератор."
+                    if (addressValidated) localizedLegacyAddRoasterScreenRoasterSubmittedMessage
+                    else localizedLegacyAddRoasterScreenRequestAcceptedAddressPending
                 },
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,

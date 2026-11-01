@@ -1,5 +1,13 @@
 package com.coffeepeek.admin.utils
 
+import kotlin.test.assertEquals
+
+import com.coffeepeek.admin.ui.screen.shop.message
+
+import com.coffeepeek.admin.ui.screen.shop.CheckInDraftValidationLabels
+
+import com.coffeepeek.admin.ui.screen.shop.CheckInDraftValidationError
+
 import com.coffeepeek.admin.ui.screen.shop.CheckInDraft
 import com.coffeepeek.admin.ui.screen.shop.validationError
 import com.coffeepeek.admin.utils.PickedImage
@@ -34,5 +42,16 @@ class CheckInValidationTest {
             coffeeRating = 1, serviceRating = 5, placeRating = 5, drinkSlug = "other", customDrinkName = "а".repeat(100),
             photos = List(5) { PickedImage(byteArrayOf(1), "coffee.jpg") })
         assertNull(draft.validationError(now = 2000))
+    }
+    @Test
+    fun typedValidationPreservesSynchronousReasonsAndPreparedBelarusianCopy() {
+        val draft = CheckInDraft("shop", visitMillis = 1000)
+        val labels = CheckInDraftValidationLabels("Дата наведвання", "Ацаніце каву", "Нататка задоўгая", "Да 5 фота", com.coffeepeek.admin.ui.screen.review.ConsumedDrinkValidationLabels("Назва напою", "Толькі іншы напой"))
+        val error = draft.copy(visitMillis = 0).validationError(now = 2000)
+        assertEquals(CheckInDraftValidationError.Date, error)
+        assertEquals("Дата наведвання", error?.message(labels))
+        assertEquals(CheckInDraftValidationError.Ratings, draft.copy(coffeeRating = 0).validationError(now = 2000))
+        assertEquals(CheckInDraftValidationError.Note, draft.copy(note = "a".repeat(1001)).validationError(now = 2000))
+        assertEquals("Назва напою", CheckInDraftValidationError.Drink(com.coffeepeek.domain.model.ConsumedDrinkIssue.CustomNameLength).message(labels))
     }
 }

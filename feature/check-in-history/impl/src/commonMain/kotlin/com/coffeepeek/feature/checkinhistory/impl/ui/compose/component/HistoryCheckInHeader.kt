@@ -19,7 +19,7 @@ import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.checkinhistory.impl.resources.Res
 import com.coffeepeek.feature.checkinhistory.impl.resources.history_you
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 
 @Composable
 internal fun HistoryCheckInHeader(username: String, dateLabel: String, modifier: Modifier = Modifier,

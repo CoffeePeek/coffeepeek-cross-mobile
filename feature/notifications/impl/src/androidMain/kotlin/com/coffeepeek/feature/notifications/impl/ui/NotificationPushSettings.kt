@@ -14,6 +14,7 @@ import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.core.designsystem.component.CoffeePeekSwitch
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.feature.notifications.api.NotificationInboxState
+import com.coffeepeek.feature.notifications.api.NotificationSettingsError
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 
@@ -40,7 +41,10 @@ internal fun NotificationPushSettings(state: NotificationInboxState, onPushChang
                 CoffeePeekSwitch(checked, onPushChanged, enabled = canToggle, modifier = Modifier.semantics { contentDescription = title })
             }
             state.settingsError?.let {
-                Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                Text(stringResource(when (it) {
+                    NotificationSettingsError.LoadFailed -> R.string.notifications_push_load_failed
+                    NotificationSettingsError.SaveFailed -> R.string.notifications_push_save_failed
+                }), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
                 if (!state.settingsLoaded) TextButton(onClick = onRefresh,
                     colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onSurface)) {
                     Text(stringResource(R.string.notifications_retry_settings))
@@ -52,7 +56,12 @@ internal fun NotificationPushSettings(state: NotificationInboxState, onPushChang
 
 @Composable
 private fun NotificationPushSettingsPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
-    NotificationPushSettings(NotificationInboxState(settingsLoaded = true, deviceAvailable = true, permissionGranted = true), {}, {})
+    Column(verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing4)) {
+        NotificationPushSettings(NotificationInboxState(settingsLoaded = true, deviceAvailable = true, permissionGranted = true), {}, {})
+        NotificationPushSettings(NotificationInboxState(deviceAvailable = true, settingsError = NotificationSettingsError.LoadFailed), {}, {})
+        NotificationPushSettings(NotificationInboxState(settingsLoaded = true, deviceAvailable = true,
+            settingsError = NotificationSettingsError.SaveFailed), {}, {})
+    }
 }
 
 @Preview(widthDp = 360) @Composable private fun NotificationPushSettingsLightPreview() = NotificationPushSettingsPreview(false)

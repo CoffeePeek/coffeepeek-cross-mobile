@@ -27,7 +27,7 @@ import com.coffeepeek.core.designsystem.resources.coffeepeek_rating_description
 import com.coffeepeek.core.designsystem.resources.coffeepeek_rating_choose
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import kotlin.math.roundToInt
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 enum class CoffeePeekRatingSize(val starSize: Dp) { Small(16.dp), Medium(20.dp), Large(24.dp) }

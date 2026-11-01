@@ -8,7 +8,8 @@ class SettingsPagesTest {
     private fun page(route: String) = analyticsPage("com.coffeepeek.admin.ui.Navigator.Screen.$route")
 
     @Test fun settingsRoutesKeepTheirPages() {
-        listOf("SettingsTab", "SettingsGraph", "CitySettings", "ThemeSettings").forEach { assertEquals("settings", page(it), it) }
+        listOf("SettingsTab", "SettingsGraph", "CitySettings", "ThemeSettings", "LanguageSettings", "NotificationSettings")
+            .forEach { assertEquals("settings", page(it), it) }
         assertEquals("privacy", page("UsagePolicy"))
     }
 

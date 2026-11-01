@@ -1,5 +1,7 @@
 package com.coffeepeek.admin.ui.screen.feed
 
+import coffeepeek.composeapp.generated.resources.*
+
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -32,7 +34,7 @@ import com.coffeepeek.core.designsystem.component.CoffeePeekRefreshError
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.domain.model.CoffeeShop
 import org.jetbrains.compose.ui.tooling.preview.Preview
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import coffeepeek.composeapp.generated.resources.Res
 import coffeepeek.composeapp.generated.resources.feed_refresh_error
 import coffeepeek.composeapp.generated.resources.retry
@@ -40,6 +42,9 @@ import coffeepeek.composeapp.generated.resources.retry
 @Composable
 internal fun FeedDiscoveryList(state: FeedUiState, layout: FeedLayoutState, motion: FeedMapMotion,
     actions: FeedScreenActions, location: GeoPoint?, screenSize: Size, roasterPreview: (@Composable () -> Unit)?) {
+        val localizedProfileStatShops = stringResource(Res.string.profile_stat_shops)
+        val localizedFavoritesRoasters = stringResource(Res.string.favorites_roasters)
+
     val clearance = LocalFloatingNavClearance.current
     CoffeePeekPullToRefresh(listState = layout.discoveryListState, isRefreshing = state.isRefreshing,
         onRefresh = actions.onRefresh, modifier = Modifier.fillMaxSize()
@@ -54,7 +59,7 @@ internal fun FeedDiscoveryList(state: FeedUiState, layout: FeedLayoutState, moti
             item(key = "mini-map") { FeedMapAnchor(layout, motion, state.showDiscovery) }
             item(key = "shops-heading") {
                 Box(Modifier.analyticsExposure("shop_catalog", "discovery", "discovery")) {
-                    DiscoverySectionTitle("Кофейни", actions.onActivateSearch, Modifier.padding(horizontal = CpDimens.spacing4))
+                    DiscoverySectionTitle(localizedProfileStatShops, actions.onActivateSearch, Modifier.padding(horizontal = CpDimens.spacing4))
                 }
             }
             if (state.showsRefreshError) item(key = "refresh-error") {
@@ -64,7 +69,7 @@ internal fun FeedDiscoveryList(state: FeedUiState, layout: FeedLayoutState, moti
             item(key = "shops-preview") { FeedShopPreview(state, layout, actions, location) }
             if (roasterPreview != null) {
                 item(key = "roasters-heading") {
-                    DiscoverySectionTitle("Обжарщики", actions.onSelectRoasters, Modifier.padding(horizontal = CpDimens.spacing4))
+                    DiscoverySectionTitle(localizedFavoritesRoasters, actions.onSelectRoasters, Modifier.padding(horizontal = CpDimens.spacing4))
                 }
                 item(key = "roasters-preview") { roasterPreview() }
             }

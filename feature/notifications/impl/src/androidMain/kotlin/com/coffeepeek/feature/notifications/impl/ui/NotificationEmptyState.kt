@@ -22,14 +22,14 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 
 @Composable
-internal fun NotificationEmptyState(signedOut: Boolean = false, onSignIn: () -> Unit = {}) {
+internal fun NotificationEmptyState(signedOut: Boolean = false, onSignIn: () -> Unit = {}, description: String? = null) {
     Column(Modifier.fillMaxWidth().padding(vertical = CoffeePeekDimens.spacing6),
         horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3)) {
         CoffeePeekIconBadge(if (signedOut) CoffeePeekIcons.Notifications else CoffeePeekIcons.Coffee, CoffeePeekIconBadgePalette.Gold)
         Text(stringResource(if (signedOut) R.string.notifications_sign_in_title else R.string.notifications_empty_title),
             style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold,
             modifier = Modifier.semantics { heading() })
-        Text(stringResource(if (signedOut) R.string.notifications_sign_in_description else R.string.notifications_empty_description),
+        Text(description ?: stringResource(if (signedOut) R.string.notifications_sign_in_description else R.string.notifications_empty_description),
             style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center)
         if (signedOut) CoffeePeekButton(stringResource(R.string.notifications_sign_in), onSignIn)

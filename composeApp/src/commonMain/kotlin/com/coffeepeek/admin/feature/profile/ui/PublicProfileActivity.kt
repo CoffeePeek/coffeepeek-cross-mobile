@@ -1,5 +1,12 @@
 package com.coffeepeek.admin.feature.profile.ui
 
+import com.coffeepeek.admin.ui.component.pluralCountLabel
+
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringArrayResource as stringArrayResource
+
+import coffeepeek.composeapp.generated.resources.*
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -22,8 +29,6 @@ import com.coffeepeek.feature.profile.domain.PublicProfileActivity
 import com.coffeepeek.admin.ui.component.CoffeePeekLoader
 import com.coffeepeek.admin.ui.icons.CpIcons
 
-private val weekdayLabels = listOf("Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс")
-private val monthLabels = listOf("Январь", "Февраль", "Март", "Апрель", "Май", "Июнь", "Июль", "Август", "Сентябрь", "Октябрь", "Ноябрь", "Декабрь")
 
 @Composable
 internal fun PublicProfileActivityCalendar(
@@ -34,18 +39,25 @@ internal fun PublicProfileActivityCalendar(
     onMonthChange: ((String) -> Unit)? = null,
     onRetry: () -> Unit = {},
 ) {
+    val monthLabels = stringArrayResource(Res.array.legacy_calendar_months)
+
+    val localizedCalendarPreviousMonth = stringResource(Res.string.calendar_previous_month)
+    val localizedCalendarNextMonth = stringResource(Res.string.calendar_next_month)
+    val localizedProfileWeekError = stringResource(Res.string.profile_week_error)
+    val localizedHistoryHomeRetry = stringResource(Res.string.history_home_retry)
+
     val displayedActivity = activity?.takeIf { it.month == selectedMonth }
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(18.dp)) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            Text(profileMonthTitle(selectedMonth), Modifier.weight(1f), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
+            Text(profileMonthTitle(selectedMonth, monthLabels), Modifier.weight(1f), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
             if (onMonthChange != null) {
                 val previous = shiftProfileMonth(selectedMonth, -1)
                 val next = shiftProfileMonth(selectedMonth, 1)
                 IconButton(onClick = { previous?.let(onMonthChange) }, enabled = previous != null) {
-                    Icon(CpIcons.ChevronLeft, contentDescription = "Предыдущий месяц", modifier = Modifier.size(20.dp))
+                    Icon(CpIcons.ChevronLeft, contentDescription = localizedCalendarPreviousMonth, modifier = Modifier.size(20.dp))
                 }
                 IconButton(onClick = { next?.let(onMonthChange) }, enabled = next != null) {
-                    Icon(CpIcons.ChevronRight, contentDescription = "Следующий месяц", modifier = Modifier.size(20.dp))
+                    Icon(CpIcons.ChevronRight, contentDescription = localizedCalendarNextMonth, modifier = Modifier.size(20.dp))
                 }
             }
         }
@@ -54,8 +66,8 @@ internal fun PublicProfileActivityCalendar(
             error != null || displayedActivity == null -> Column(
                 Modifier.fillMaxWidth().padding(vertical = 20.dp), horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                Text("Не удалось загрузить активность", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                TextButton(onClick = onRetry) { Text("Повторить") }
+                Text(localizedProfileWeekError, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                TextButton(onClick = onRetry) { Text(localizedHistoryHomeRetry) }
             }
             else -> ProfileActivityMonthGrid(displayedActivity)
         }
@@ -64,10 +76,18 @@ internal fun PublicProfileActivityCalendar(
 
 @Composable
 private fun ProfileActivityMonthGrid(activity: PublicProfileActivity) {
+    val weekdayLabels = stringArrayResource(Res.array.legacy_weekdays_short)
+    val dayForms = stringArrayResource(Res.array.legacy_active_day_forms)
+    val withCheckIns = stringResource(Res.string.legacy_public_calendar_has_checkins)
+    val withoutCheckIns = stringResource(Res.string.legacy_public_calendar_no_checkins)
+
+    val localizedLegacyPublicProfileActivityProfileActivityLegend = stringResource(Res.string.legacy_public_profile_activity_profile_activity_legend)
+    val localizedLegacyPublicProfileActivityProfileActivityMinskTime = stringResource(Res.string.legacy_public_profile_activity_profile_activity_minsk_time)
+
     val month = profileMonth(activity.month)
     val activeDays = activity.activeDays.filter { it in 1..month.days }.toSet()
     Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
-        Text(activeDaysLabel(activeDays.size), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(pluralCountLabel(activeDays.size, dayForms), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             weekdayLabels.forEach { label ->
                 Text(label, Modifier.weight(1f), style = MaterialTheme.typography.labelSmall, textAlign = TextAlign.Center, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -85,7 +105,7 @@ private fun ProfileActivityMonthGrid(activity: PublicProfileActivity) {
                             Modifier.weight(1f).aspectRatio(1f)
                                 .clip(RoundedCornerShape(10.dp))
                                 .background(if (active) MaterialTheme.colorScheme.primary.copy(alpha = 0.12f) else MaterialTheme.colorScheme.surface)
-                                .clearAndSetSemantics { contentDescription = "$day, ${if (active) "есть чекины" else "нет чекинов"}" },
+                                .clearAndSetSemantics { contentDescription = "$day, ${if (active) withCheckIns else withoutCheckIns}" },
                             contentAlignment = Alignment.Center,
                         ) {
                             Text(day.toString(), style = MaterialTheme.typography.bodyMedium, fontWeight = if (active) FontWeight.SemiBold else FontWeight.Normal)
@@ -96,10 +116,10 @@ private fun ProfileActivityMonthGrid(activity: PublicProfileActivity) {
         }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
             Box(Modifier.size(7.dp).background(MaterialTheme.colorScheme.primary, CircleShape))
-            Text("Дни с чекинами", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(localizedLegacyPublicProfileActivityProfileActivityLegend, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         if (activity.timeZone == "Europe/Minsk") {
-            Text("По времени Минска", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(localizedLegacyPublicProfileActivityProfileActivityMinskTime, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }
@@ -119,7 +139,7 @@ private fun profileMonth(value: String): ProfileMonth {
     return ProfileMonth(year, month, days, (sundayFirst + 6) % 7)
 }
 
-private fun profileMonthTitle(value: String): String {
+private fun profileMonthTitle(value: String, monthLabels: List<String>): String {
     val month = profileMonth(value)
     return "${monthLabels[month.number - 1]} ${month.year}"
 }
@@ -131,9 +151,4 @@ private fun shiftProfileMonth(value: String, offset: Int): String? {
     val number = shifted % 12 + 1
     if (year !in 2000..2100) return null
     return "$year-${number.toString().padStart(2, '0')}"
-}
-
-private fun activeDaysLabel(count: Int): String {
-    val word = when { count % 100 in 11..14 -> "дней"; count % 10 == 1 -> "день"; count % 10 in 2..4 -> "дня"; else -> "дней" }
-    return "$count $word с чекинами"
 }

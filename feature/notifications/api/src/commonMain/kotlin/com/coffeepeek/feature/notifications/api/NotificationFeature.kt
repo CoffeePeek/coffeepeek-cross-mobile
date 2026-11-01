@@ -14,5 +14,7 @@ interface NotificationFeature {
     fun foreground()
     /** Called only after a new check-in has been successfully saved. */
     fun onCheckInCreated()
+    /** Explicit user opening of the inbox; shares the successful check-in permission opportunity. */
+    fun onInboxOpened()
     suspend fun beforeLogout()
 }

@@ -21,7 +21,7 @@ import com.coffeepeek.feature.shop.domain.model.ShopMenuItem
 import com.coffeepeek.feature.shop.impl.resources.Res
 import com.coffeepeek.feature.shop.impl.resources.shop_menu_byn_price_description
 import com.coffeepeek.feature.shop.impl.ui.data.formatShopMenuAmount
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable

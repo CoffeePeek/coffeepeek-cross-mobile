@@ -1,5 +1,8 @@
 package com.coffeepeek.admin.ui.screen.addshop
 
+import coffeepeek.composeapp.generated.resources.*
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -73,6 +76,14 @@ fun PickShopLocationDialog(
     onConfirm: (latitude: Double, longitude: Double, address: String) -> Unit,
     onDismiss: () -> Unit,
 ) {
+    val localizedLegacyPickShopLocationDialogAddressUnavailableMoveMap = stringResource(Res.string.legacy_pick_shop_location_dialog_address_unavailable_move_map)
+    val localizedLegacyPickShopLocationDialogMapLocation = stringResource(Res.string.legacy_pick_shop_location_dialog_map_location)
+    val localizedLegacyPickShopLocationDialogMoveMapToShop = stringResource(Res.string.legacy_pick_shop_location_dialog_move_map_to_shop)
+    val localizedLegacyPickShopLocationDialogCancelLocationPicker = stringResource(Res.string.legacy_pick_shop_location_dialog_cancel_location_picker)
+    val localizedLegacyPickShopLocationDialogDiscoveryMapMyLocation = stringResource(Res.string.legacy_pick_shop_location_dialog_discovery_map_my_location)
+    val localizedLegacyPickShopLocationDialogResolvingAddress = stringResource(Res.string.legacy_pick_shop_location_dialog_resolving_address)
+    val localizedLegacyPickShopLocationDialogMoveMapChooseLocation = stringResource(Res.string.legacy_pick_shop_location_dialog_move_map_choose_location)
+
     var cameraCenter by remember(initialPoint) {
         mutableStateOf(initialPoint)
     }
@@ -110,7 +121,7 @@ fun PickShopLocationDialog(
         resolvedPoint = point
         isResolvingAddress = false
         if (address.isNullOrBlank()) {
-            resolveError = "Не удалось определить адрес. Подвиньте карту."
+            resolveError = localizedLegacyPickShopLocationDialogAddressUnavailableMoveMap
         }
     }
 
@@ -136,7 +147,7 @@ fun PickShopLocationDialog(
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = "Точка на карте",
+                            text = localizedLegacyPickShopLocationDialogMapLocation,
                             style = MaterialTheme.typography.titleMedium,
                             color = MaterialTheme.colorScheme.onSurface,
                             modifier = Modifier.semantics { heading() },
@@ -144,7 +155,7 @@ fun PickShopLocationDialog(
                         if (!compactHeight) {
                             Spacer(Modifier.height(CpDimens.spacing1))
                             Text(
-                                text = "Переместите карту к кофейне",
+                                text = localizedLegacyPickShopLocationDialogMoveMapToShop,
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
@@ -153,9 +164,9 @@ fun PickShopLocationDialog(
                     PlatformGlassIconButton(
                         icon = GlassControlIcon.Close,
                         onClick = onDismiss,
-                        contentDescription = "Отменить выбор точки",
+                        contentDescription = localizedLegacyPickShopLocationDialogCancelLocationPicker,
                     ) {
-                        Icon(CpIcons.Close, contentDescription = "Отменить выбор точки")
+                        Icon(CpIcons.Close, contentDescription = localizedLegacyPickShopLocationDialogCancelLocationPicker)
                     }
                 }
 
@@ -185,20 +196,20 @@ fun PickShopLocationDialog(
                     PlatformMapControlButton(
                         icon = GlassControlIcon.Location,
                         onClick = { myLocationRequestKey += 1 },
-                        contentDescription = "Моё местоположение",
+                        contentDescription = localizedLegacyPickShopLocationDialogDiscoveryMapMyLocation,
                         modifier = Modifier
                             .align(Alignment.TopEnd)
                             .padding(CpDimens.spacing4),
                     ) {
-                        Icon(CpIcons.Navigation, contentDescription = "Моё местоположение")
+                        Icon(CpIcons.Navigation, contentDescription = localizedLegacyPickShopLocationDialogDiscoveryMapMyLocation)
                     }
                 }
 
                 ShopLocationConfirmationPanel(
                     addressText = when {
-                        isResolvingAddress -> "Определяем адрес…"
+                        isResolvingAddress -> localizedLegacyPickShopLocationDialogResolvingAddress
                         hasCurrentAddress -> previewAddress.orEmpty()
-                        else -> resolveError ?: "Переместите карту, чтобы выбрать точку"
+                        else -> resolveError ?: localizedLegacyPickShopLocationDialogMoveMapChooseLocation
                     },
                     isResolvingAddress = isResolvingAddress,
                     hasCurrentAddress = hasCurrentAddress,
@@ -224,6 +235,10 @@ private fun ShopLocationConfirmationPanel(
     compactHeight: Boolean,
     onConfirm: () -> Unit,
 ) {
+    val localizedLegacyPickShopLocationDialogShopAddress = stringResource(Res.string.legacy_pick_shop_location_dialog_shop_address)
+    val localizedLegacyPickShopLocationDialogSelect = stringResource(Res.string.legacy_pick_shop_location_dialog_select)
+    val localizedLegacyPickShopLocationDialogSelectLocation = stringResource(Res.string.legacy_pick_shop_location_dialog_select_location)
+
     // Reserve the same two address lines for loading, errors and the result. Changing
     // this height also resizes the native map and can trigger a new camera callback.
     val address: @Composable (Modifier) -> Unit = { modifier ->
@@ -247,7 +262,7 @@ private fun ShopLocationConfirmationPanel(
             Column(modifier = Modifier.weight(1f)) {
                 if (!compactHeight) {
                     Text(
-                        text = "Адрес кофейни",
+                        text = localizedLegacyPickShopLocationDialogShopAddress,
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -267,7 +282,7 @@ private fun ShopLocationConfirmationPanel(
     }
     val confirm: @Composable (Modifier) -> Unit = { modifier ->
         AppButton(
-            text = if (compactHeight) "Выбрать" else "Выбрать эту точку",
+            text = if (compactHeight) localizedLegacyPickShopLocationDialogSelect else localizedLegacyPickShopLocationDialogSelectLocation,
             onClick = onConfirm,
             enabled = !isResolvingAddress && hasCurrentAddress,
             modifier = modifier.testTag("shop_location_confirm"),
@@ -320,6 +335,8 @@ private val ShopLocationPinShape = GenericShape { size, _ ->
 
 @Composable
 private fun ShopLocationPin(modifier: Modifier = Modifier) {
+    val localizedLegacyPickShopLocationDialogShopLocationMarker = stringResource(Res.string.legacy_pick_shop_location_dialog_shop_location_marker)
+
     Box(
         modifier = modifier
             // Anchor the tip, rather than the icon's center, to the selected coordinate.
@@ -327,7 +344,7 @@ private fun ShopLocationPin(modifier: Modifier = Modifier) {
             .size(width = 44.dp, height = 56.dp)
             .shadow(6.dp, ShopLocationPinShape)
             .background(MaterialTheme.colorScheme.primary, ShopLocationPinShape)
-            .semantics { contentDescription = "Метка расположения кофейни" }
+            .semantics { contentDescription = localizedLegacyPickShopLocationDialogShopLocationMarker }
             .testTag("shop_location_pin"),
         contentAlignment = Alignment.TopCenter,
     ) {

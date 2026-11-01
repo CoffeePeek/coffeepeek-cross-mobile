@@ -1,5 +1,8 @@
 package com.coffeepeek.admin.ui.screen.roaster
 
+import coffeepeek.composeapp.generated.resources.*
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
+
 import com.coffeepeek.core.designsystem.component.coffeePeekScrollContentPadding
 import com.coffeepeek.core.designsystem.component.coffeePeekViewportBottomPadding
 
@@ -72,6 +75,10 @@ import org.koin.core.parameter.parametersOf
 
 @Composable
 fun RoasterDetailScreen(roasterId: String) {
+    val localizedLegacyRoasterDetailScreenContributionsLoadFailed = stringResource(Res.string.legacy_roaster_detail_screen_contributions_load_failed)
+    val localizedHistoryHomeRetry = stringResource(Res.string.history_home_retry)
+    val localizedProfileCheckinsBack = stringResource(Res.string.profile_checkins_back)
+
     val vm: RoasterDetailViewModel = platformViewModel(parameters = { parametersOf(roasterId) })
     val state by vm.state.collectAsState()
     com.coffeepeek.admin.analytics.TrackEntityDetail(com.coffeepeek.admin.analytics.Entity.Roaster, state.details != null)
@@ -107,19 +114,19 @@ fun RoasterDetailScreen(roasterId: String) {
                     verticalArrangement = Arrangement.spacedBy(CpDimens.spacing3),
                 ) {
                     Text(
-                        text = state.error ?: "Ошибка загрузки",
+                        text = state.error ?: localizedLegacyRoasterDetailScreenContributionsLoadFailed,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                     Button(
                         onClick = vm::load,
                         modifier = Modifier.height(CpDimens.buttonHeight),
                         shape = RoundedCornerShape(percent = 50),
-                    ) { Text("Повторить") }
+                    ) { Text(localizedHistoryHomeRetry) }
                     OutlinedButton(
                         onClick = Navigator::popBack,
                         modifier = Modifier.height(CpDimens.buttonHeight),
                         shape = RoundedCornerShape(percent = 50),
-                    ) { Text("Назад") }
+                    ) { Text(localizedProfileCheckinsBack) }
                 }
             }
 
@@ -146,6 +153,12 @@ private fun RoasterContent(
     onPhotoClick: (String) -> Unit,
     onShopClick: (String) -> Unit,
 ) {
+    val localizedLegacyAddRoasterScreenRoasterAboutTitle = stringResource(Res.string.legacy_add_roaster_screen_roaster_about_title)
+    val localizedLegacyAddShopScreenOwnershipAddress = stringResource(Res.string.legacy_add_shop_screen_ownership_address)
+    val localizedLegacyRoasterDetailScreenRoasterLinksTitle = stringResource(Res.string.legacy_roaster_detail_screen_roaster_links_title)
+    val localizedLegacyRoasterDetailScreenRoasterShopsTitle = stringResource(Res.string.legacy_roaster_detail_screen_roaster_shops_title)
+    val localizedLegacyRoasterDetailScreenRoasterShopsEmpty = stringResource(Res.string.legacy_roaster_detail_screen_roaster_shops_empty)
+
     LazyColumn(
         modifier = Modifier.fillMaxSize().coffeePeekViewportBottomPadding(),
         contentPadding = coffeePeekScrollContentPadding(PaddingValues(bottom = CpDimens.spacing6)),
@@ -172,7 +185,7 @@ private fun RoasterContent(
                 )
 
                 details.about?.takeIf { it.isNotBlank() }?.let { about ->
-                    RoasterSection(title = "Об обжарщике") {
+                    RoasterSection(title = localizedLegacyAddRoasterScreenRoasterAboutTitle) {
                         Text(
                             text = about,
                             style = MaterialTheme.typography.bodyLarge,
@@ -182,7 +195,7 @@ private fun RoasterContent(
                 }
 
                 details.location?.let { location ->
-                    RoasterSection(title = "Адрес") {
+                    RoasterSection(title = localizedLegacyAddShopScreenOwnershipAddress) {
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing2),
@@ -200,7 +213,7 @@ private fun RoasterContent(
                 val instagram = details.contact?.instagramLink
                 val website = details.contact?.siteLink
                 if (!instagram.isNullOrBlank() || !website.isNullOrBlank()) {
-                    RoasterSection(title = "Ссылки") {
+                    RoasterSection(title = localizedLegacyRoasterDetailScreenRoasterLinksTitle) {
                         Column(
                             modifier = Modifier.fillMaxWidth().analyticsExposure("roaster_contacts", "roaster_detail", "roaster_detail"),
                             verticalArrangement = Arrangement.spacedBy(11.dp),
@@ -227,7 +240,7 @@ private fun RoasterContent(
 
         item {
             Text(
-                text = "Где используют",
+                text = localizedLegacyRoasterDetailScreenRoasterShopsTitle,
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
                 modifier = Modifier.padding(horizontal = CpDimens.spacing4, vertical = CpDimens.spacing2).analyticsExposure("roaster_shops", "roaster_detail", "roaster_detail"),
@@ -237,7 +250,7 @@ private fun RoasterContent(
         if (details.shops.isEmpty()) {
             item {
                 Text(
-                    text = "Пока нет кофеен, которые указали этого обжарщика.",
+                    text = localizedLegacyRoasterDetailScreenRoasterShopsEmpty,
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(horizontal = CpDimens.spacing4, vertical = CpDimens.spacing3),
@@ -281,14 +294,14 @@ private fun RoasterShopCard(
                 if (photoUrl != null) {
                     CoffeeShopImage(
                         imageUrl = photoUrl,
-                        contentDescription = "Фото кофейни ${shop.name}",
+                        contentDescription = stringResource(Res.string.legacy_shop_photo, shop.name),
                         placeholderLabelSize = 9.sp,
                         modifier = Modifier.fillMaxSize(),
                     )
                 } else {
                     CoffeeShopPlaceholderImage(
                         labelSize = 9.sp,
-                        contentDescription = "Фото кофейни ${shop.name} отсутствует",
+                        contentDescription = stringResource(Res.string.legacy_shop_photo_named_missing, shop.name),
                     )
                 }
             }
@@ -302,7 +315,7 @@ private fun RoasterShopCard(
             )
             Icon(
                 imageVector = CpIcons.ChevronRight,
-                contentDescription = "Открыть кофейню ${shop.name}",
+                contentDescription = stringResource(Res.string.legacy_shop_open_named, shop.name),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
@@ -328,7 +341,7 @@ private fun RoasterHero(
         if (details.photos.isEmpty()) {
             CoffeeShopPlaceholderImage(
                 labelSize = 24.sp,
-                contentDescription = "Фотографии ${details.name} отсутствуют",
+                contentDescription = stringResource(Res.string.legacy_roaster_photos_missing, details.name),
             )
         } else {
             val pagerState = rememberPagerState(pageCount = { details.photos.size })

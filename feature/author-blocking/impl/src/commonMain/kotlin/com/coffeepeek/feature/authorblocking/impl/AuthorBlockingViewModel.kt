@@ -43,7 +43,7 @@ internal class AuthorBlockingViewModel(
                 val result = repository.setBlocked(request.author.id, request.author.slug, request.author.name, request.author.avatarUrl, request.blocked)
                 ensureActive()
                 result.onSuccess { _prompt.value = null }
-                    .onFailure { _prompt.value = request.copy(error = "Не удалось сохранить блокировку. Проверьте подключение и повторите попытку.") }
+                    .onFailure { _prompt.value = request.copy(error = AuthorBlockError.SaveFailed) }
             } finally {
                 if (!isActive) _prompt.value = null
             }

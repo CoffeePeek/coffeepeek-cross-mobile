@@ -32,7 +32,7 @@ import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopMenuGalleryAction
 import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopMenuGalleryEvent
 import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopMenuGalleryState
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable

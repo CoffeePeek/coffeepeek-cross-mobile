@@ -23,7 +23,7 @@ import com.coffeepeek.feature.favorites.impl.resources.Res
 import com.coffeepeek.feature.favorites.impl.resources.favorites_closed
 import com.coffeepeek.feature.favorites.impl.resources.favorites_open
 import org.jetbrains.compose.ui.tooling.preview.Preview
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 
 @Composable
 internal fun OpenStatusBadge(isOpen: Boolean, modifier: Modifier = Modifier) {

@@ -1,0 +1,133 @@
+<resources>
+    <string name="history_calendar_more_visits">+%1$d</string>
+    <string name="history_title">Чэкіны</string>
+    <string name="history_back">Назад</string>
+    <string name="history_all">Усе</string>
+    <string name="history_at_shop">У кавярні</string>
+    <string name="history_at_home">Дома</string>
+    <string name="history_today">Сёння</string>
+    <string name="history_today_description">Сёння, паказаць чэкіны за бягучую дату</string>
+    <string name="history_clear_date">Паказаць усе даты</string>
+    <string name="history_date_without_year">%1$d %2$s</string>
+    <string name="history_home_count">%1$d дома</string>
+    <string name="history_source_time">%1$s · %2$s</string>
+    <string name="history_more">Паказаць яшчэ</string>
+    <string name="history_close">Закрыць</string>
+    <string name="history_open_shop_action">Адкрыць кавярню</string>
+    <string name="history_new">Новы чэкін</string>
+    <string name="history_add">Дадаць чэкін</string>
+    <string name="history_create_shop">Чэкін у кавярні</string>
+    <string name="history_create_title">Стварыць</string>
+    <string name="history_create_home">Чэкін дома</string>
+    <string name="history_home_title">Хатняе прыгатаванне</string>
+    <string name="history_private">Толькі мне</string>
+    <string name="history_visible">Бачны ўсім</string>
+    <string name="history_pending">На мадэрацыі</string>
+    <string name="history_rejected">Не апублікаваны</string>
+    <string name="history_waiting_publication">Чакае публікацыі</string>
+    <string name="history_public">Публічны</string>
+    <string name="history_dose">%1$s г</string>
+    <string name="history_taste">%1$d/5</string>
+    <string name="history_details_separator">%1$s · %2$s</string>
+    <string name="history_shop_calendar_error">Не ўдалося загрузіць каляндар наведванняў кавярняў</string>
+    <string name="history_home_calendar_error">Не ўдалося загрузіць каляндар хатніх прыгатаванняў</string>
+    <string name="history_shop_timeline_error">Не ўдалося загрузіць наведванні кавярняў</string>
+    <string name="history_home_timeline_error">Не ўдалося загрузіць хатнія прыгатаванні</string>
+    <string name="history_shop_paging_error">Не ўдалося загрузіць наступныя наведванні кавярняў</string>
+    <string name="history_home_paging_error">Не ўдалося загрузіць наступныя хатнія прыгатаванні</string>
+    <string name="history_clock_error">Не ўдалося вызначыць бягучую дату. Абнавіце гісторыю</string>
+    <string name="history_retry_for">Паўтарыць: %1$s</string>
+    <string name="history_method_espresso">Эспрэса</string>
+    <string name="history_method_pour_over">Пуровер</string>
+    <string name="history_method_batch">Фільтр batch</string>
+    <string name="history_method_moka">Гейзерная кававарка</string>
+    <string name="history_method_cezve">Турка</string>
+    <string name="history_method_aeropress">Аэрапрэс</string>
+    <string name="history_method_french_press">Фрэнч-прэс</string>
+    <string name="history_method_other">Іншае</string>
+    <string name="history_method_hario">Hario V60</string>
+    <string name="history_method_chemex">Chemex</string>
+    <string name="history_method_cold_brew">Cold Brew</string>
+    <string name="history_method_batch_brew">Batch Brew</string>
+    <string name="history_method_moka_pot">Moka Pot</string>
+    <string name="history_method_cezve_turkish">Cezve (Turkish Coffee)</string>
+    <string name="history_previous_month">Папярэдні месяц</string>
+    <string name="history_next_month">Наступны месяц</string>
+    <string name="history_month_title">%1$s %2$d</string>
+    <string name="history_date_title">%1$d %2$s %3$d</string>
+    <string name="history_day_description">%1$s, %2$s</string>
+    <string name="history_day_today">%1$s, сёння</string>
+    <string name="history_select_day">Выбраць дату</string>
+    <string name="history_day_empty">У гэты дзень чэкінаў не было</string>
+    <string name="history_month_empty">У гэтым месяцы пакуль няма чэкінаў</string>
+    <string name="history_list_empty">Пакуль няма чэкінаў</string>
+    <string name="history_no_visits">Няма чэкінаў</string>
+    <string name="history_load_error">Не ўдалося загрузіць чэкіны</string>
+    <string name="history_refresh_error">Не ўдалося абнавіць чэкіны. Паказаныя раней загружаныя запісы</string>
+    <string name="history_paging_error">Не ўдалося загрузіць наступную старонку</string>
+    <string name="history_retry">Паўтарыць</string>
+    <string name="history_loading">Загрузка чэкінаў</string>
+    <string name="history_refresh">Абнавіць чэкіны</string>
+    <string name="history_sign_in_prompt">Каб убачыць свае чэкіны, увайдзіце ва ўліковы запіс</string>
+    <string name="history_sign_in">Увайсці</string>
+    <string name="history_you">Вы</string>
+    <string name="history_shop">Кавярня</string>
+    <string name="history_open_shop">Адкрыць кавярню %1$s</string>
+    <string name="history_expand_note">Чытаць цалкам</string>
+    <string name="history_collapse_note">Згарнуць</string>
+    <string name="history_photo_description">Фатаграфія %1$d з %2$d</string>
+    <string name="history_more_photos">+%1$d</string>
+    <string name="history_helpful_count">Лайкі: %1$d</string>
+    <string name="history_rating_description">Кава: %1$s, сэрвіс: %2$s, месца: %3$s. Сярэдняя адзнака %4$s з 5</string>
+    <string name="history_rating_missing">—</string>
+    <string name="history_rating_decimal">%1$d,%2$d</string>
+    <string name="history_count_label">%1$d %2$s</string>
+    <string name="history_month_counts">%1$s · %2$s</string>
+    <string-array name="history_months">
+        <item>Студзень</item>
+        <item>Люты</item>
+        <item>Сакавік</item>
+        <item>Красавік</item>
+        <item>Май</item>
+        <item>Чэрвень</item>
+        <item>Ліпень</item>
+        <item>Жнівень</item>
+        <item>Верасень</item>
+        <item>Кастрычнік</item>
+        <item>Лістапад</item>
+        <item>Снежань</item>
+    </string-array>
+    <string-array name="history_months_genitive">
+        <item>студзеня</item>
+        <item>лютага</item>
+        <item>сакавіка</item>
+        <item>красавіка</item>
+        <item>мая</item>
+        <item>чэрвеня</item>
+        <item>ліпеня</item>
+        <item>жніўня</item>
+        <item>верасня</item>
+        <item>кастрычніка</item>
+        <item>лістапада</item>
+        <item>снежня</item>
+    </string-array>
+    <string-array name="history_weekdays">
+        <item>Пн</item>
+        <item>Аў</item>
+        <item>Ср</item>
+        <item>Чц</item>
+        <item>Пт</item>
+        <item>Сб</item>
+        <item>Нд</item>
+    </string-array>
+    <string-array name="history_visit_forms">
+        <item>чэкін</item>
+        <item>чэкіна</item>
+        <item>чэкінаў</item>
+    </string-array>
+    <string-array name="history_shop_forms">
+        <item>кавярня</item>
+        <item>кавярні</item>
+        <item>кавярняў</item>
+    </string-array>
+</resources>

@@ -56,7 +56,7 @@ import com.coffeepeek.feature.favorites.impl.resources.favorites_update_error
 import com.coffeepeek.feature.favorites.impl.resources.favorites_action_error
 import com.coffeepeek.feature.favorites.impl.resources.favorites_roasters
 import org.jetbrains.compose.ui.tooling.preview.Preview
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 
 /** Runtime adapter. The entry supplies the lifecycle-owned ViewModel and navigation callbacks. */
 @Composable

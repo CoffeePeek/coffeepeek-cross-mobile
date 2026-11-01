@@ -27,7 +27,7 @@ import com.coffeepeek.feature.shop.impl.resources.shop_reviews_register
 import com.coffeepeek.feature.shop.impl.resources.shop_reviews_sign_in
 import com.coffeepeek.feature.shop.impl.resources.shop_reviews_sign_in_prompt
 import com.coffeepeek.feature.shop.impl.resources.shop_reviews_title
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable

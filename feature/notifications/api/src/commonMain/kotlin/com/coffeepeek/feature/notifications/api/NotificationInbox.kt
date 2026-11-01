@@ -16,6 +16,10 @@ data class NotificationItem(
     val canOpen: Boolean = false,
 )
 
+enum class NotificationInboxError { LoadFailed, MarkReadFailed }
+
+enum class NotificationSettingsError { LoadFailed, SaveFailed }
+
 data class NotificationInboxState(
     val accountId: String? = null,
     val generation: Long = 0,
@@ -30,6 +34,6 @@ data class NotificationInboxState(
     val savingSettings: Boolean = false,
     val deviceAvailable: Boolean = false,
     val permissionGranted: Boolean = false,
-    val error: String? = null,
-    val settingsError: String? = null,
+    val error: NotificationInboxError? = null,
+    val settingsError: NotificationSettingsError? = null,
 )

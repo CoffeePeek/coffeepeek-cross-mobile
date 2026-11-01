@@ -1,5 +1,7 @@
 package com.coffeepeek.admin.ui.screen.deleteaccount
 
+import coffeepeek.composeapp.generated.resources.*
+
 import com.coffeepeek.core.designsystem.component.CoffeePeekScaffold as Scaffold
 
 import androidx.compose.runtime.getValue
@@ -37,21 +39,26 @@ import com.coffeepeek.admin.theme.CpDimens
 import com.coffeepeek.admin.ui.component.CoffeePeekLoader
 import com.coffeepeek.admin.ui.component.CpTopBar
 import com.coffeepeek.admin.ui.screen.auth.AuthPrimaryButton
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DeleteAccountPendingScreen(
     vm: DeleteAccountPendingViewModel = platformViewModel(),
 ) {
+    val localizedLegacyAddShopScreenSandboxCitiesFailure = stringResource(Res.string.legacy_add_shop_screen_sandbox_cities_failure)
+    val localizedLegacyDeleteAccountPendingScreenProfileDeletionTitle = stringResource(Res.string.legacy_delete_account_pending_screen_profile_deletion_title)
+    val localizedLegacyDeleteAccountPendingScreenProfileDeletionConfirmNoEmail = stringResource(Res.string.legacy_delete_account_pending_screen_profile_deletion_confirm_no_email)
+    val localizedHistoryHomeClose = stringResource(Res.string.history_home_close)
+
     val state by vm.uiState.collectAsState()
 
     state.error?.let { err ->
-        PlatformAlert(title = "Ошибка", message = err, onConfirm = vm::clearError, onDismiss = vm::clearError)
+        PlatformAlert(title = localizedLegacyAddShopScreenSandboxCitiesFailure, message = err, onConfirm = vm::clearError, onDismiss = vm::clearError)
     }
 
     Scaffold(
-        topBar = { CpTopBar("Удаление аккаунта") },
+        topBar = { CpTopBar(localizedLegacyDeleteAccountPendingScreenProfileDeletionTitle) },
         containerColor = MaterialTheme.colorScheme.background,
     ) { padding ->
         if (state.isLoading) {
@@ -89,7 +96,7 @@ fun DeleteAccountPendingScreen(
             Text(
                 text = stringResource(
                     Res.string.delete_account_pending_subtitle,
-                    state.email.ifBlank { "вашу почту" },
+                    state.email.ifBlank { localizedLegacyDeleteAccountPendingScreenProfileDeletionConfirmNoEmail },
                 ),
                 style = MaterialTheme.typography.bodyMedium.copy(
                     fontSize = 14.sp,
@@ -130,7 +137,7 @@ fun DeleteAccountPendingScreen(
                 shape = RoundedCornerShape(CpDimens.buttonRadius),
             ) {
                 Text(
-                    text = "Закрыть",
+                    text = localizedHistoryHomeClose,
                     style = MaterialTheme.typography.labelLarge,
                 )
             }

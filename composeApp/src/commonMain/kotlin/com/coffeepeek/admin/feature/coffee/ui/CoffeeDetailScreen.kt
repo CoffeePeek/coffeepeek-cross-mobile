@@ -1,5 +1,8 @@
 package com.coffeepeek.admin.feature.coffee.ui
 
+import coffeepeek.composeapp.generated.resources.*
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
+
 import com.coffeepeek.core.designsystem.component.coffeePeekScrollContentPadding
 
 import com.coffeepeek.core.designsystem.component.CoffeePeekScaffold as Scaffold
@@ -46,6 +49,27 @@ import org.koin.core.parameter.parametersOf
 
 @Composable
 internal fun CoffeeDetailScreen(slug: String) {
+    val localizedRetry = stringResource(Res.string.retry)
+    val localizedLegacyCoffeeDetailScreenCoffeeOpenPhotos = stringResource(Res.string.legacy_coffee_detail_screen_coffee_open_photos)
+    val localizedLegacyCoffeeDetailScreenCoffeePhotoMissing = stringResource(Res.string.legacy_coffee_detail_screen_coffee_photo_missing)
+    val localizedLegacyGroupedListDiscoveryFiltersCollapse = stringResource(Res.string.legacy_grouped_list_discovery_filters_collapse)
+    val localizedLegacyReviewContentShopCheckinsReadMore = stringResource(Res.string.legacy_review_content_shop_checkins_read_more)
+    val localizedLegacyCoffeeDetailScreenCoffeeRoast = stringResource(Res.string.legacy_coffee_detail_screen_coffee_roast)
+    val localizedLegacyCoffeeDetailScreenCoffeeProfile = stringResource(Res.string.legacy_coffee_detail_screen_coffee_profile)
+    val localizedLegacyCoffeeDetailScreenCoffeeAcidity = stringResource(Res.string.legacy_coffee_detail_screen_coffee_acidity)
+    val localizedLegacyCoffeeDetailScreenCoffeeTaste = stringResource(Res.string.legacy_coffee_detail_screen_coffee_taste)
+    val localizedLegacyCoffeeDetailScreenCoffeeAbout = stringResource(Res.string.legacy_coffee_detail_screen_coffee_about)
+    val localizedLegacyCoffeeDetailScreenCoffeeCountry = stringResource(Res.string.legacy_coffee_detail_screen_coffee_country)
+    val localizedLegacyCoffeeDetailScreenCoffeeUnspecifiedFeminine = stringResource(Res.string.legacy_coffee_detail_screen_coffee_unspecified_feminine)
+    val localizedLegacyCoffeeDetailScreenCoffeeForm = stringResource(Res.string.legacy_coffee_detail_screen_coffee_form)
+    val localizedLegacyCoffeeDetailScreenShelfFormRoaster = stringResource(Res.string.legacy_coffee_detail_screen_shelf_form_roaster)
+    val localizedLegacyCoffeeDetailScreenCoffeeOffers = stringResource(Res.string.legacy_coffee_detail_screen_coffee_offers)
+    val localizedLegacyCoffeeDetailScreenCoffeeNoOffers = stringResource(Res.string.legacy_coffee_detail_screen_coffee_no_offers)
+    val localizedLegacyCoffeeDetailScreenCoffeeSimilar = stringResource(Res.string.legacy_coffee_detail_screen_coffee_similar)
+    val localizedLegacyCoffeeDetailScreenCoffeeRetrySimilar = stringResource(Res.string.legacy_coffee_detail_screen_coffee_retry_similar)
+    val localizedProfileCheckinsBack = stringResource(Res.string.profile_checkins_back)
+    val localizedLegacyCoffeeDetailScreenCoffeeShare = stringResource(Res.string.legacy_coffee_detail_screen_coffee_share)
+
     val vm: CoffeeDetailViewModel = platformViewModel(key = slug, parameters = { parametersOf(slug) })
     val state by vm.state.collectAsState()
     com.coffeepeek.admin.analytics.TrackEntityDetail(com.coffeepeek.admin.analytics.Entity.Coffee, state.details != null)
@@ -77,7 +101,7 @@ internal fun CoffeeDetailScreen(slug: String) {
                     verticalArrangement = Arrangement.Center, horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
                     Text(state.error.orEmpty(), color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    TextButton(onClick = vm::load, colors = actionColors) { Text("Попробовать снова") }
+                    TextButton(onClick = vm::load, colors = actionColors) { Text(localizedRetry) }
                 }
                 details != null -> LazyColumn(
                     modifier = Modifier.fillMaxSize().padding(padding),
@@ -88,14 +112,14 @@ internal fun CoffeeDetailScreen(slug: String) {
                         Box(
                             Modifier.fillMaxWidth().then(if (details.photos.isNotEmpty()) Modifier.analyticsExposure("coffee_photos", "coffee_detail", "coffee_detail") else Modifier).aspectRatio(1f)
                                 .background(MaterialTheme.colorScheme.surfaceVariant)
-                                .clickable(enabled = details.photos.isNotEmpty(), role = Role.Button, onClickLabel = "Открыть фото кофе") { Analytics.track(AnalyticsEvent.ENTITY_CONTENT_INTERACTED, "entity_type" to "coffee", "section" to "photos", "action" to "open"); showPhotos = true },
+                                .clickable(enabled = details.photos.isNotEmpty(), role = Role.Button, onClickLabel = localizedLegacyCoffeeDetailScreenCoffeeOpenPhotos) { Analytics.track(AnalyticsEvent.ENTITY_CONTENT_INTERACTED, "entity_type" to "coffee", "section" to "photos", "action" to "open"); showPhotos = true },
                         ) {
                             val photo = details.photos.firstOrNull()
                             if (photo != null) CoffeeShopImage(
                                 imageUrl = photo, contentDescription = details.coffee.name,
                                 contentScale = ContentScale.Fit,
                                 modifier = Modifier.fillMaxSize().padding(top = 56.dp, bottom = CpDimens.spacing4),
-                            ) else CoffeeShopPlaceholderImage(contentDescription = "Фото кофе отсутствует")
+                            ) else CoffeeShopPlaceholderImage(contentDescription = localizedLegacyCoffeeDetailScreenCoffeePhotoMissing)
                         }
                     }
                     item(key = "intro") {
@@ -117,14 +141,14 @@ internal fun CoffeeDetailScreen(slug: String) {
                                         onTextLayout = { if (!expandedDescription) descriptionOverflows = it.hasVisualOverflow },
                                     )
                                     if (descriptionOverflows || expandedDescription) TextButton(onClick = { expandedDescription = !expandedDescription; Analytics.track(AnalyticsEvent.ENTITY_CONTENT_INTERACTED, "entity_type" to "coffee", "section" to "description", "action" to if (expandedDescription) "open" else "close") }, colors = actionColors) {
-                                        Text(if (expandedDescription) "Свернуть" else "Читать полностью")
+                                        Text(if (expandedDescription) localizedLegacyGroupedListDiscoveryFiltersCollapse else localizedLegacyReviewContentShopCheckinsReadMore)
                                     }
                                 }
                             }
                             val traits = listOf(
-                                Triple("Обжарка", labels["roast"]?.get(details.roastLevel), CpIcons.Fire),
-                                Triple("Преобладающий профиль", details.coffee.tasteCodes.mapNotNull(tasteNames::get).takeIf { it.isNotEmpty() }?.joinToString(", "), CpIcons.Sparkle),
-                                Triple("Кислотность", labels["acidity"]?.get(details.acidity), CpIcons.Drop),
+                                Triple(localizedLegacyCoffeeDetailScreenCoffeeRoast, labels["roast"]?.get(details.roastLevel), CpIcons.Fire),
+                                Triple(localizedLegacyCoffeeDetailScreenCoffeeProfile, details.coffee.tasteCodes.mapNotNull(tasteNames::get).takeIf { it.isNotEmpty() }?.joinToString(", "), CpIcons.Sparkle),
+                                Triple(localizedLegacyCoffeeDetailScreenCoffeeAcidity, labels["acidity"]?.get(details.acidity), CpIcons.Drop),
                             )
                             FlowRow(horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing4), verticalArrangement = Arrangement.spacedBy(CpDimens.spacing4)) {
                                 traits.forEach { (label, value, icon) ->
@@ -141,7 +165,7 @@ internal fun CoffeeDetailScreen(slug: String) {
                     }
                     if (details.tasteDescriptors.isNotEmpty()) item(key = "taste") {
                         Column(Modifier.padding(horizontal = CpDimens.spacing4), verticalArrangement = Arrangement.spacedBy(CpDimens.spacing3)) {
-                            SectionTitle("Вкусовой профиль")
+                            SectionTitle(localizedLegacyCoffeeDetailScreenCoffeeTaste)
                             FlowRow(horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing2), verticalArrangement = Arrangement.spacedBy(CpDimens.spacing2)) {
                                 details.tasteDescriptors.forEach { CoffeeLabel(it) }
                             }
@@ -149,11 +173,11 @@ internal fun CoffeeDetailScreen(slug: String) {
                     }
                     item(key = "about") {
                         Column(Modifier.padding(horizontal = CpDimens.spacing4), verticalArrangement = Arrangement.spacedBy(CpDimens.spacing3)) {
-                            SectionTitle("О кофе")
+                            SectionTitle(localizedLegacyCoffeeDetailScreenCoffeeAbout)
                             FlowRow(horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing6), verticalArrangement = Arrangement.spacedBy(CpDimens.spacing3)) {
                                 listOf(
-                                    "Страна" to details.coffee.countries.joinToString(", ").ifBlank { "Не указана" },
-                                    "Форма" to (productFormLabel(details.productForm) ?: "Не указана"),
+                                    localizedLegacyCoffeeDetailScreenCoffeeCountry to details.coffee.countries.joinToString(", ").ifBlank { localizedLegacyCoffeeDetailScreenCoffeeUnspecifiedFeminine },
+                                    localizedLegacyCoffeeDetailScreenCoffeeForm to (productFormLabel(details.productForm) ?: localizedLegacyCoffeeDetailScreenCoffeeUnspecifiedFeminine),
                                 ).forEach { (label, value) ->
                                     Column(Modifier.widthIn(min = 140.dp), verticalArrangement = Arrangement.spacedBy(CpDimens.spacing1)) {
                                         Text(label, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -161,7 +185,7 @@ internal fun CoffeeDetailScreen(slug: String) {
                                     }
                                 }
                             }
-                            Text("Обжарщик", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.analyticsExposure("coffee_roaster", "coffee_detail", "coffee_detail"))
+                            Text(localizedLegacyCoffeeDetailScreenShelfFormRoaster, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.analyticsExposure("coffee_roaster", "coffee_detail", "coffee_detail"))
                             OutlinedContentCard(contentPadding = PaddingValues(0.dp)) {
                                 RoasterLinkRow(
                                     name = details.coffee.roasterName, photoUrl = details.coffee.roasterPhotoUrl,
@@ -172,9 +196,9 @@ internal fun CoffeeDetailScreen(slug: String) {
                     }
                     item(key = "offers-title") {
                         Column(Modifier.padding(horizontal = CpDimens.spacing4).analyticsExposure("coffee_offers", "coffee_detail", "coffee_detail"), verticalArrangement = Arrangement.spacedBy(CpDimens.spacing2)) {
-                            SectionTitle("Варианты покупки")
-                            details.checkedAtUtc?.let { Text("Проверено ${utcIsoToLocalDateTime(it)}", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
-                            if (details.coffee.offers.isEmpty()) Text("Предложений пока нет", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            SectionTitle(localizedLegacyCoffeeDetailScreenCoffeeOffers)
+                            details.checkedAtUtc?.let { Text(stringResource(Res.string.legacy_coffee_verified_time, utcIsoToLocalDateTime(it)), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+                            if (details.coffee.offers.isEmpty()) Text(localizedLegacyCoffeeDetailScreenCoffeeNoOffers, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                     }
                     itemsIndexed(details.coffee.offers) { _, offer ->
@@ -182,10 +206,10 @@ internal fun CoffeeDetailScreen(slug: String) {
                     }
                     if (state.similarLoading || state.similarError || state.similar.isNotEmpty()) item(key = "similar") {
                         Column(verticalArrangement = Arrangement.spacedBy(CpDimens.spacing3)) {
-                            Box(Modifier.padding(horizontal = CpDimens.spacing4).analyticsExposure("similar_coffees", "coffee_detail", "coffee_detail")) { SectionTitle("Похожие сорта") }
+                            Box(Modifier.padding(horizontal = CpDimens.spacing4).analyticsExposure("similar_coffees", "coffee_detail", "coffee_detail")) { SectionTitle(localizedLegacyCoffeeDetailScreenCoffeeSimilar) }
                             when {
                                 state.similarLoading -> Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { CoffeePeekLoader() }
-                                state.similarError -> TextButton(onClick = vm::loadSimilar, modifier = Modifier.padding(horizontal = CpDimens.spacing4), colors = actionColors) { Text("Загрузить похожие сорта") }
+                                state.similarError -> TextButton(onClick = vm::loadSimilar, modifier = Modifier.padding(horizontal = CpDimens.spacing4), colors = actionColors) { Text(localizedLegacyCoffeeDetailScreenCoffeeRetrySimilar) }
                                 else -> LazyRow(contentPadding = PaddingValues(horizontal = CpDimens.spacing4), horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing3)) {
                                     items(state.similar, key = { it.slug }) { CoffeeCard(it, tasteNames, Modifier.width(280.dp), onOpen = { Analytics.track(AnalyticsEvent.ENTITY_CONTENT_INTERACTED, "entity_type" to "coffee", "section" to "similar_coffees", "action" to "select"); DetailEntryMemory.record(Entity.Coffee, ResultSource.Related, null) }) }
                                 }
@@ -199,13 +223,13 @@ internal fun CoffeeDetailScreen(slug: String) {
             Modifier.align(Alignment.TopCenter).fillMaxWidth().statusBarsPadding().padding(CpDimens.spacing3),
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
-            PlatformGlassIconButton(GlassControlIcon.Back, Navigator::popBack, "Назад", hazeState = hazeState) {
+            PlatformGlassIconButton(GlassControlIcon.Back, Navigator::popBack, localizedProfileCheckinsBack, hazeState = hazeState) {
                 Icon(CpIcons.Back, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface)
             }
             PlatformGlassIconButton(
                 GlassControlIcon.Share,
                 onClick = { Analytics.track(AnalyticsEvent.ENTITY_CONTENT_INTERACTED, "entity_type" to "coffee", "section" to "contacts", "action" to "share"); details?.let { ShareHelper.shareText("${it.coffee.name} — https://coffeepeek.by${it.canonicalPath}") } },
-                contentDescription = "Поделиться кофе", enabled = details != null, hazeState = hazeState,
+                contentDescription = localizedLegacyCoffeeDetailScreenCoffeeShare, enabled = details != null, hazeState = hazeState,
             ) {
                 Icon(CpIcons.Share, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface)
             }
@@ -215,29 +239,46 @@ internal fun CoffeeDetailScreen(slug: String) {
 
 @Composable
 private fun CoffeeOfferCard(offer: CoffeeOffer, brewNames: Map<String, String>) {
+    val localizedLegacyCoffeeDetailScreenCoffeeInStock = stringResource(Res.string.legacy_coffee_detail_screen_coffee_in_stock)
+    val localizedLegacyCoffeeDetailScreenCoffeeOutOfStock = stringResource(Res.string.legacy_coffee_detail_screen_coffee_out_of_stock)
+    val localizedLegacyCoffeeDetailScreenCoffeePreorder = stringResource(Res.string.legacy_coffee_detail_screen_coffee_preorder)
+    val localizedLegacyCoffeeDetailScreenCoffeeAvailabilityUnknown = stringResource(Res.string.legacy_coffee_detail_screen_coffee_availability_unknown)
+    val localizedLegacyCoffeeListScreenCoffeeWeightMissing = stringResource(Res.string.legacy_coffee_list_screen_coffee_weight_missing)
+    val localizedLegacyCoffeeDetailScreenCoffeeOpenSeller = stringResource(Res.string.legacy_coffee_detail_screen_coffee_open_seller)
+    val localizedLegacyCoffeeDetailScreenCoffeeSeller = stringResource(Res.string.legacy_coffee_detail_screen_coffee_seller)
+    val localizedLegacyHomeCheckInDetailHomeCheckInUnspecified = stringResource(Res.string.legacy_home_check_in_detail_home_check_in_unspecified)
+    val localizedLegacyCoffeeDetailScreenCoffeeGrind = stringResource(Res.string.legacy_coffee_detail_screen_coffee_grind)
+    val localizedLegacyCoffeeDetailScreenCoffeeBrew = stringResource(Res.string.legacy_coffee_detail_screen_coffee_brew)
+    val localizedLegacyCoffeeDetailScreenCoffeeUnconfirmed = stringResource(Res.string.legacy_coffee_detail_screen_coffee_unconfirmed)
+    val localizedLegacyCoffeeDetailScreenCoffeeSource = stringResource(Res.string.legacy_coffee_detail_screen_coffee_source)
+    val localizedLegacyCoffeeDetailScreenCoffeeOnline = stringResource(Res.string.legacy_coffee_detail_screen_coffee_online)
+    val localizedLegacyCoffeeDetailScreenCoffeeOffline = stringResource(Res.string.legacy_coffee_detail_screen_coffee_offline)
+    val localizedLegacyCoffeeDetailScreenCoffeeBoth = stringResource(Res.string.legacy_coffee_detail_screen_coffee_both)
+    val localizedLegacyCoffeeDetailScreenCoffeeChecked = stringResource(Res.string.legacy_coffee_detail_screen_coffee_checked)
+
     OutlinedContentCard {
         Column(verticalArrangement = Arrangement.spacedBy(CpDimens.spacing4)) {
             val (availability, color) = when (offer.availability) {
-                CoffeeAvailability.InStock -> "В наличии" to CpColor.Success
-                CoffeeAvailability.OutOfStock -> "Нет в наличии" to CpColor.Error
-                CoffeeAvailability.PreOrder -> "Предзаказ" to CpColor.Warning
-                CoffeeAvailability.Unknown -> "Наличие не подтверждено" to MaterialTheme.colorScheme.onSurfaceVariant
+                CoffeeAvailability.InStock -> localizedLegacyCoffeeDetailScreenCoffeeInStock to CpColor.Success
+                CoffeeAvailability.OutOfStock -> localizedLegacyCoffeeDetailScreenCoffeeOutOfStock to CpColor.Error
+                CoffeeAvailability.PreOrder -> localizedLegacyCoffeeDetailScreenCoffeePreorder to CpColor.Warning
+                CoffeeAvailability.Unknown -> localizedLegacyCoffeeDetailScreenCoffeeAvailabilityUnknown to MaterialTheme.colorScheme.onSurfaceVariant
             }
             FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalArrangement = Arrangement.spacedBy(CpDimens.spacing2), itemVerticalAlignment = Alignment.CenterVertically) {
-                Text(offer.weightGrams?.let { "$it г" } ?: "Вес не указан", style = MaterialTheme.typography.titleMedium)
+                Text(offer.weightGrams?.let { stringResource(Res.string.legacy_grams, it.toString()) } ?: localizedLegacyCoffeeListScreenCoffeeWeightMissing, style = MaterialTheme.typography.titleMedium)
                 Row(horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing2), verticalAlignment = Alignment.CenterVertically) {
                     Box(Modifier.size(8.dp).clip(CircleShape).background(color))
                     Text(availability, style = MaterialTheme.typography.bodySmall)
                 }
             }
             CoffeePrice(offer)
-            AppButton("Перейти к продавцу", onClick = { offer.sourceUrl?.let(OpenInBrowser::openInBrowser) }, enabled = offer.sourceUrl != null)
+            AppButton(localizedLegacyCoffeeDetailScreenCoffeeOpenSeller, onClick = { offer.sourceUrl?.let(OpenInBrowser::openInBrowser) }, enabled = offer.sourceUrl != null)
             val fields = listOf(
-                "Продавец" to (offer.sellerName ?: "Не указан"),
-                "Помол" to (productFormLabel(offer.grind) ?: "Не указан"),
-                "Приготовление" to (brewNames[offer.brewPurpose] ?: "Не подтверждено"),
-                "Источник" to when (offer.availabilityScope) { "online" -> "Онлайн"; "offline" -> "В магазине"; "both" -> "Онлайн и в магазине"; else -> "Не указан" },
-            ) + listOfNotNull(offer.checkedAtUtc?.let { "Проверено" to utcIsoToLocalDateTime(it) })
+                localizedLegacyCoffeeDetailScreenCoffeeSeller to (offer.sellerName ?: localizedLegacyHomeCheckInDetailHomeCheckInUnspecified),
+                localizedLegacyCoffeeDetailScreenCoffeeGrind to (productFormLabel(offer.grind) ?: localizedLegacyHomeCheckInDetailHomeCheckInUnspecified),
+                localizedLegacyCoffeeDetailScreenCoffeeBrew to (brewNames[offer.brewPurpose] ?: localizedLegacyCoffeeDetailScreenCoffeeUnconfirmed),
+                localizedLegacyCoffeeDetailScreenCoffeeSource to when (offer.availabilityScope) { "online" -> localizedLegacyCoffeeDetailScreenCoffeeOnline; "offline" -> localizedLegacyCoffeeDetailScreenCoffeeOffline; "both" -> localizedLegacyCoffeeDetailScreenCoffeeBoth; else -> localizedLegacyHomeCheckInDetailHomeCheckInUnspecified },
+            ) + listOfNotNull(offer.checkedAtUtc?.let { localizedLegacyCoffeeDetailScreenCoffeeChecked to utcIsoToLocalDateTime(it) })
             fields.forEach { (label, value) ->
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing4)) {
                     Text(label, modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -248,16 +289,18 @@ private fun CoffeeOfferCard(offer: CoffeeOffer, brewNames: Map<String, String>) 
     }
 }
 
+@Composable
 private fun productKindLabel(code: String?): String? = when (code) {
-    "roasted_beans" -> "Обжаренный кофе"
-    "green_beans" -> "Зелёный кофе"
+    "roasted_beans" -> stringResource(Res.string.legacy_coffee_detail_screen_coffee_roasted)
+    "green_beans" -> stringResource(Res.string.legacy_coffee_detail_screen_coffee_green)
     else -> null
 }
 
+@Composable
 private fun productFormLabel(code: String?): String? = when (code) {
-    "whole_beans" -> "В зёрнах"
-    "ground" -> "Молотый"
-    "capsules" -> "Капсулы"
-    "drip_bags" -> "Дрип-пакеты"
+    "whole_beans" -> stringResource(Res.string.legacy_coffee_detail_screen_coffee_whole_beans)
+    "ground" -> stringResource(Res.string.legacy_coffee_detail_screen_shelf_grind_ground)
+    "capsules" -> stringResource(Res.string.legacy_coffee_detail_screen_coffee_capsules)
+    "drip_bags" -> stringResource(Res.string.legacy_coffee_detail_screen_coffee_drip_bags)
     else -> null
 }

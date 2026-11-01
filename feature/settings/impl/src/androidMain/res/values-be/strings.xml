@@ -1,0 +1,66 @@
+<resources>
+    <string name="settings_back">Назад</string>
+    <string name="settings_loading">Загрузка</string>
+    <string name="settings_retry">Паўтарыць</string>
+    <string name="settings_selected">Абрана</string>
+
+    <string name="settings_theme_title">Тэма</string>
+    <string name="settings_theme_heading">Выгляд</string>
+    <string name="settings_theme_description">Абярыце, як CoffeePeek будзе выглядаць на вашай прыладзе.</string>
+    <string name="settings_theme_system">Сістэмная</string>
+    <string name="settings_theme_light">Светлая</string>
+    <string name="settings_theme_dark">Цёмная</string>
+
+    <string name="settings_language_title">Мова</string>
+    <string name="settings_notifications_title">Апавяшчэнні</string>
+    <string name="settings_notifications_description">Уключайце і выключайце апавяшчэнні праграмы</string>
+    <string name="settings_language_row_description">Абярыце мову інтэрфейсу праграмы</string>
+    <string name="settings_language_russian">Русский</string>
+    <string name="settings_language_belarusian">Беларуская</string>
+
+    <string name="settings_city_title">Горад</string>
+    <string name="settings_city_heading">Ваш горад</string>
+    <string name="settings_city_description">Вызначае, якія кавярні паказваць у першую чаргу.</string>
+    <string name="settings_city_error">Не ўдалося загрузіць гарады</string>
+    <string name="settings_city_empty">Спіс гарадоў пусты</string>
+
+    <string name="settings_policy_title">Палітыка выкарыстання</string>
+    <string name="settings_policy_section">КАНФІДЭНЦЫЙНАСЦЬ</string>
+    <string name="settings_policy_analytics_title">Аналітыка выкарыстання</string>
+    <string name="settings_policy_analytics_text">З вашай згоды падзеі выкарыстання адпраўляюцца ў PostHog (ЕС), каб паляпшаць CoffeePeek. Без тэкстаў пошуку, нататак, фота і дакладных каардынат.</string>
+    <string name="settings_policy_terms_title">Правілы выкарыстання</string>
+    <string name="settings_policy_terms_description">Даведайцеся, як працуе CoffeePeek.</string>
+    <string name="settings_policy_privacy_title">Палітыка канфідэнцыйнасці</string>
+    <string name="settings_policy_privacy_description">Як мы апрацоўваем і абараняем вашы даныя.</string>
+
+    <string name="settings_tab_title">Налады</string>
+    <string name="settings_section_add">Дадаць</string>
+    <string name="settings_add_shop">Дадаць кавярню</string>
+    <string name="settings_add_shop_description">Прапанаваць новае месца для CoffeePeek</string>
+    <string name="settings_add_roaster">Дадаць абсмажчыка</string>
+    <string name="settings_add_roaster_description">Дапамажыце супольнасці адкрыць новых абсмажчыкаў</string>
+    <string name="settings_section_settings">Налады</string>
+    <string name="settings_city_row">Горад</string>
+    <string name="settings_city_row_description">Вызначае, якія кавярні паказваць у першую чаргу</string>
+    <string name="settings_city_not_selected">Абярыце</string>
+    <string name="settings_theme_row">Тэма</string>
+    <string name="settings_theme_row_description">Наладзьце выгляд праграмы</string>
+    <string name="settings_theme_value_system">Аўта</string>
+    <string name="settings_theme_value_light">Светлая</string>
+    <string name="settings_theme_value_dark">Цёмная</string>
+    <string name="settings_section_other">Іншыя налады</string>
+    <string name="settings_section_other_description">Карысныя дапаўненні, зваротная сувязь і канфідэнцыйнасць</string>
+    <string name="settings_rate_app">Ацаніць праграму</string>
+    <string name="settings_rate_app_description">Пакіньце водгук у Google Play</string>
+    <string name="settings_support">Звязацца з падтрымкай</string>
+    <string name="settings_support_description">Дапаможам з пытаннямі і праблемамі</string>
+    <string name="settings_policy_row">Палітыка выкарыстання</string>
+    <string name="settings_share">Падзяліцца</string>
+    <string name="settings_section_update">Абнаўленне праграмы</string>
+    <string name="settings_update_check">Праверыць абнаўленні</string>
+    <string name="settings_update_checking">Правяраем абнаўленні…</string>
+    <string name="settings_update_up_to_date">У вас усталявана актуальная версія</string>
+    <string name="settings_update_failed">Не ўдалося праверыць абнаўленні. Паспрабуйце пазней.</string>
+    <string name="settings_update_available">Даступная новая версія CoffeePeek</string>
+    <string name="settings_version">Версія %1$s</string>
+</resources>

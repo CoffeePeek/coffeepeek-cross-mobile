@@ -117,4 +117,5 @@
     <string name="home_check_in_error_photo_edit">Фотографии существующего чекина пока нельзя менять.</string>
     <string name="home_check_in_error_visibility">Проверьте видимость чекина.</string>
     <string name="home_check_in_error_input">Проверьте введённые данные.</string>
+    <string name="home_check_in_method_other">Другое</string>
 </resources>

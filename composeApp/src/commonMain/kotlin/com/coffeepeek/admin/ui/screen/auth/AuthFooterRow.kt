@@ -23,7 +23,7 @@ import coffeepeek.composeapp.generated.resources.create_account
 import com.coffeepeek.admin.theme.CpColor
 import com.coffeepeek.admin.ui.component.PlatformGlassBackButton
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable

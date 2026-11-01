@@ -30,7 +30,7 @@ import com.coffeepeek.feature.shelf.impl.ui.compose.previewArchiveItems
 import com.coffeepeek.feature.shelf.impl.ui.compose.model.ShelfBagItem
 import com.coffeepeek.feature.shelf.impl.ui.compose.previewToday
 import com.coffeepeek.feature.shelf.impl.ui.data.ShelfDay
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 /** A finished bag: card, name, "roaster · days on the shelf" and the rating it got. */

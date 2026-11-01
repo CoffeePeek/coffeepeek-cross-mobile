@@ -46,7 +46,7 @@ import com.coffeepeek.feature.favorites.impl.resources.favorites_roaster_logo_de
 import io.kamel.image.KamelImage
 import io.kamel.image.asyncPainterResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 
 /** Feature-owned rendering: never imports feed UI or legacy shop aggregates. */
 @Composable

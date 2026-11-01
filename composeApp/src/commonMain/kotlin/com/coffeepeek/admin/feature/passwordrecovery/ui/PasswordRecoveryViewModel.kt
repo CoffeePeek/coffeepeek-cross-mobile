@@ -15,7 +15,7 @@ internal data class PasswordRecoveryState(
     val step: RecoveryStep = RecoveryStep.Email,
     val email: String = "",
     val busy: Boolean = false,
-    val error: String? = null,
+    val error: PasswordRecoveryError? = null,
 )
 
 internal class PasswordRecoveryViewModel(
@@ -39,7 +39,7 @@ internal class PasswordRecoveryViewModel(
         if (current.busy || current.step != RecoveryStep.Email) return
         val error = validateEmailRequired(current.email)
         if (error != null) {
-            _state.update { it.copy(error = error) }
+            _state.update { it.copy(error = PasswordRecoveryError.Validation(error)) }
             return
         }
         _state.update { it.copy(busy = true, error = null) }
@@ -53,7 +53,7 @@ internal class PasswordRecoveryViewModel(
             }.onFailure {
                 _state.update { it.copy(
                     busy = false,
-                    error = "Не удалось отправить письмо. Проверьте соединение и попробуйте снова.",
+                    error = PasswordRecoveryError.SendFailed,
                 ) }
             }
         }

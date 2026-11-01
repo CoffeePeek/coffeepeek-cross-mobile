@@ -23,14 +23,15 @@ import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.feature.notifications.api.*
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
 internal fun NotificationsContent(
     state: NotificationInboxState,
     onClose: () -> Unit,
-    onPushChanged: (Boolean) -> Unit,
+    // Retained for historical callers; notification preferences now belong to the Settings destination.
+    @Suppress("UNUSED_PARAMETER") onPushChanged: (Boolean) -> Unit,
     onRead: (String) -> Unit,
     onReadAll: () -> Unit,
     onRefresh: () -> Unit,
@@ -53,7 +54,6 @@ internal fun NotificationsContent(
                     })
                 }
             } else {
-                item(key = "settings") { NotificationPushSettings(state, onPushChanged, onRefresh) }
                 if (state.items.isNotEmpty()) item(key = "actions") { NotificationsReadActions(state, onReadAll) }
                 notificationHistory(state, onRead)
                 if (state.items.isEmpty() || state.error != null) {
@@ -123,7 +123,12 @@ private fun LazyListScope.notificationHistory(state: NotificationInboxState, onR
 
 @Composable
 private fun NotificationsStatus(state: NotificationInboxState, onRefresh: () -> Unit) {
-    val error = state.error
+    val error = state.error?.let {
+        stringResource(when (it) {
+            NotificationInboxError.LoadFailed -> Res.string.legacy_notifications_inbox_load_failed
+            NotificationInboxError.MarkReadFailed -> Res.string.legacy_notifications_mark_read_failed
+        })
+    }
     when {
         state.loading && state.items.isEmpty() -> Box(
             Modifier.fillMaxWidth().padding(CoffeePeekDimens.spacing6), contentAlignment = Alignment.Center,

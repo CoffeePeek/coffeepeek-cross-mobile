@@ -61,11 +61,15 @@ internal fun utcIsoToLocalDate(value: String, zoneId: ZoneId): String =
     parseServerJavaInstant(value)?.atZone(zoneId)?.toLocalDate()?.toString()
         ?: value.substringBefore('T').ifBlank { value }
 
-private val visitDateFormatter: DateTimeFormatter =
-    DateTimeFormatter.ofPattern("d MMMM yyyy", Locale("ru"))
+private val visitDateFormatters = listOf("ru", "be").associateWith {
+    DateTimeFormatter.ofPattern("d MMMM yyyy", Locale.forLanguageTag(it))
+}
 
 internal actual fun formatVisitDate(millis: Long): String =
+    formatVisitDate(millis, Locale.getDefault().language)
+
+internal fun formatVisitDate(millis: Long, languageTag: String): String =
     Instant.ofEpochMilli(millis)
         .atZone(ZoneOffset.UTC)
         .toLocalDate()
-        .format(visitDateFormatter)
+        .format(visitDateFormatters[languageTag] ?: visitDateFormatters.getValue("ru"))

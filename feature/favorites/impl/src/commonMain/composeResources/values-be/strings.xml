@@ -1,0 +1,23 @@
+<resources>
+    <string name="favorites_title">Абранае</string>
+    <string name="favorites_back">Назад</string>
+    <string name="favorites_loading">Загрузка абранага</string>
+    <string name="favorites_load_error">Не ўдалося загрузіць абранае</string>
+    <string name="favorites_empty">Пакуль няма абранага</string>
+    <string name="favorites_drinks">Напоі</string>
+    <string name="favorites_drink">Напой</string>
+    <string name="favorites_roasters">Абсмажчыкі</string>
+    <string name="favorites_roaster_shops">Кавярні</string>
+    <string name="favorites_roaster_catalog">Каталог</string>
+    <string name="favorites_roaster_logo">Лагатып %1$s</string>
+    <string name="favorites_roaster_remove">Прыбраць з абранага: %1$s</string>
+    <string name="favorites_action_error">Не ўдалося змяніць абранае</string>
+    <string name="favorites_update_error">Не ўдалося абнавіць абранае</string>
+    <string name="favorites_retry">Паўтарыць</string>
+    <string name="favorites_remove_description">Выдаліць з абранага: %1$s</string>
+    <string name="favorites_roaster_logo_description">Лагатып абсмажчыка %1$d</string>
+    <string name="favorites_distance_from_you">%1$s ад вас</string>
+    <string name="favorites_open">АДЧЫНЕНА</string>
+    <string name="favorites_closed">ЗАЧЫНЕНА</string>
+    <string name="favorites_photo_missing">Фота %1$s адсутнічае</string>
+</resources>

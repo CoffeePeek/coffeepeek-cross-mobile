@@ -1,5 +1,8 @@
 package com.coffeepeek.admin.ui.screen.shop
 
+import coffeepeek.composeapp.generated.resources.*
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
+
 import com.coffeepeek.core.designsystem.component.coffeePeekScrollContentPadding
 
 import com.coffeepeek.core.designsystem.component.CoffeePeekScaffold as Scaffold
@@ -47,6 +50,9 @@ import org.koin.core.parameter.parametersOf
 
 @Composable
 fun ShopMenuGalleryScreen(shopId: String) {
+    val localizedShopMenuGalleryOpen = stringResource(Res.string.shop_menu_gallery_open)
+    val localizedLegacyShopMenuGalleryScreenShopMenuGalleryEmpty = stringResource(Res.string.legacy_shop_menu_gallery_screen_shop_menu_gallery_empty)
+
     val vm: ShopMenuGalleryViewModel = platformViewModel(parameters = { parametersOf(shopId) })
     val state by vm.uiState.collectAsState()
     val listState = rememberLazyListState()
@@ -64,7 +70,7 @@ fun ShopMenuGalleryScreen(shopId: String) {
     }
 
     Scaffold(
-        topBar = { CpTopBar(title = "Фотографии меню") },
+        topBar = { CpTopBar(title = localizedShopMenuGalleryOpen) },
         containerColor = MaterialTheme.colorScheme.background,
     ) { contentPadding ->
         Box(
@@ -80,7 +86,7 @@ fun ShopMenuGalleryScreen(shopId: String) {
                     onRetry = vm::load,
                 )
                 state.photos.isEmpty() -> Text(
-                    text = "Фотографий меню пока нет",
+                    text = localizedLegacyShopMenuGalleryScreenShopMenuGalleryEmpty,
                     style = MaterialTheme.typography.bodyLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -119,7 +125,7 @@ fun ShopMenuGalleryScreen(shopId: String) {
                         ) {
                             CoffeeShopImage(
                                 imageUrl = photo.fullUrl,
-                                contentDescription = "Фотография меню ${index + 1}",
+                                contentDescription = stringResource(Res.string.legacy_menu_photo_number, index + 1),
                                 contentScale = ContentScale.Fit,
                                 placeholderLabelSize = 18.sp,
                                 modifier = Modifier.fillMaxSize(),
@@ -157,6 +163,8 @@ private fun GalleryError(
     message: String,
     onRetry: () -> Unit,
 ) {
+    val localizedHistoryHomeRetry = stringResource(Res.string.history_home_retry)
+
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(CpDimens.spacing3),
@@ -172,7 +180,7 @@ private fun GalleryError(
             modifier = Modifier.height(CpDimens.buttonHeight),
             shape = RoundedCornerShape(percent = 50),
         ) {
-            Text("Повторить")
+            Text(localizedHistoryHomeRetry)
         }
     }
 }

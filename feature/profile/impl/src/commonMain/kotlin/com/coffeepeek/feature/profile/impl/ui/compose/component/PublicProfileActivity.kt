@@ -15,14 +15,18 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import com.coffeepeek.core.designsystem.component.CoffeePeekIconButton as IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
+import org.jetbrains.compose.ui.tooling.preview.Preview
 import androidx.compose.material3.Text
 import com.coffeepeek.core.designsystem.component.CoffeePeekTextButton as TextButton
 import androidx.compose.runtime.Composable
+import com.coffeepeek.feature.profile.impl.ui.model.PublicProfileError
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import org.jetbrains.compose.resources.stringArrayResource
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringArrayResource as stringArrayResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.font.FontWeight
@@ -50,7 +54,7 @@ internal fun PublicProfileActivityCalendar(
     activity: PublicProfileActivity?,
     selectedMonth: String = activity?.month.orEmpty(),
     isLoading: Boolean = false,
-    error: String? = null,
+    error: PublicProfileError? = null,
     onMonthChange: ((String) -> Unit)? = null,
     onRetry: () -> Unit = {},
 ) {
@@ -122,3 +126,11 @@ private fun ProfileActivityMonthGrid(activity: PublicProfileActivity) {
         }
     }
 }
+
+@Composable
+private fun PublicProfileActivityErrorPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
+    Surface { PublicProfileActivityCalendar(null, selectedMonth = "2026-11", error = PublicProfileError.Activity) }
+}
+
+@Preview @Composable private fun PublicProfileActivityErrorLightPreview() = PublicProfileActivityErrorPreview(false)
+@Preview @Composable private fun PublicProfileActivityErrorDarkPreview() = PublicProfileActivityErrorPreview(true)

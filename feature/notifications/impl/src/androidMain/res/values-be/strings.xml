@@ -1,0 +1,32 @@
+<resources>
+    <string name="notifications_open">Адкрыць звязаны экран</string>
+    <string name="notifications_title">Апавяшчэнні</string>
+    <string name="notifications_subtitle">Усё важнае пра вашу каву</string>
+    <string name="notifications_close">Закрыць апавяшчэнні</string>
+    <string name="notifications_button_unread">Апавяшчэнні: %1$d непрачытаных</string>
+    <string name="notifications_badge_max">99+</string>
+    <string name="notifications_push_title">Атрымліваць апавяшчэнні</string>
+    <string name="notifications_back">Назад</string>
+    <string name="notifications_settings_sign_in_description">Увайдзіце, каб наладзіць апавяшчэнні</string>
+    <string name="notifications_push_unavailable">Push недаступныя на гэтай прыладзе</string>
+    <string name="notifications_saving">Захоўваем…</string>
+    <string name="notifications_push_permission">Каб уключыць, патрэбны дазвол сістэмы</string>
+    <string name="notifications_push_description">Рашэнні, новыя кавярні і навіны</string>
+    <string name="notifications_retry_settings">Паўтарыць загрузку налад</string>
+    <string name="notifications_unread_count">Непрачытаных: %1$d</string>
+    <string name="notifications_all_read">Усё прачытана</string>
+    <string name="notifications_read_all">Прачытаць усе</string>
+    <string name="notifications_today">СЁННЯ</string>
+    <string name="notifications_earlier">РАНЕЙ</string>
+    <string name="notifications_loading">Загружаем…</string>
+    <string name="notifications_load_more">Паказаць яшчэ</string>
+    <string name="notifications_retry">Паўтарыць</string>
+    <string name="notifications_read">Прачытана</string>
+    <string name="notifications_unread">Не прачытана</string>
+    <string name="notifications_mark_read">Адзначыць прачытаным</string>
+    <string name="notifications_empty_title">Пакуль ціха</string>
+    <string name="notifications_empty_description">Новыя апавяшчэнні з’явяцца тут. Зазірніце на кубак кавы крыху пазней.</string>
+    <string name="notifications_sign_in_title">Увайдзіце ў CoffeePeek</string>
+    <string name="notifications_sign_in_description">Тут будуць рашэнні мадэрацыі, новыя кавярні і навіны.</string>
+    <string name="notifications_sign_in">Увайсці</string>
+</resources>

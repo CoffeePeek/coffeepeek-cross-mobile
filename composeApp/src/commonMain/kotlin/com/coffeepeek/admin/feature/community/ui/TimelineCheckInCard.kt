@@ -1,5 +1,10 @@
 package com.coffeepeek.admin.feature.community.ui
 
+import com.coffeepeek.admin.ui.component.PreparationMetricLabels
+
+import coffeepeek.composeapp.generated.resources.*
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
+
 import androidx.compose.material3.*
 import com.coffeepeek.core.designsystem.component.CoffeePeekTextButton as TextButton
 import androidx.compose.runtime.Composable
@@ -31,6 +36,9 @@ internal fun TimelineCheckInCard(
     onAuthorClick: (() -> Unit)? = null,
     canBlockAuthor: Boolean = !isOwn,
 ) {
+    val localizedNotificationsSaving = stringResource(Res.string.notifications_saving)
+    val localizedLegacyTimelineCheckInCardCommunityPublish = stringResource(Res.string.legacy_timeline_check_in_card_community_publish)
+
     CheckInTimelineContent(
         checkIn = checkIn,
         isOwn = isOwn,
@@ -47,11 +55,11 @@ internal fun TimelineCheckInCard(
                 onHideClick = onVisibility.takeIf { isOwn && checkIn.visibility == CheckInVisibility.Public },
                 enabled = canAct,
                 isHiding = changingVisibility,
-                author = checkIn.blockableAuthor().takeIf { isPublicTimeline && !isOwn && canBlockAuthor },
+                author = checkIn.blockableAuthor(stringResource(Res.string.legacy_author_fallback)).takeIf { isPublicTimeline && !isOwn && canBlockAuthor },
             )
         },
         supportingContent = {
-            if (!isPublicTimeline) Text(checkIn.publicationLabel(), style = MaterialTheme.typography.labelSmall,
+            if (!isPublicTimeline) Text(checkIn.publicationLabel(checkInPublicationLabels()), style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant)
             if (isOwn && checkIn.moderationState == CheckInModerationState.Rejected) checkIn.rejectionReason?.takeIf(String::isNotBlank)?.let {
                 Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
@@ -60,16 +68,16 @@ internal fun TimelineCheckInCard(
         footerActions = if (isOwn && checkIn.visibility == CheckInVisibility.Private) {
             {
                 TextButton(onClick = onVisibility, enabled = canAct) {
-                    Text(if (changingVisibility) "Сохраняем…" else "Опубликовать")
+                    Text(if (changingVisibility) localizedNotificationsSaving else localizedLegacyTimelineCheckInCardCommunityPublish)
                 }
             }
         } else null,
     )
 }
 
-internal fun FeedHomePreparation.timelineDetails(): String = listOfNotNull(
-    brewMethodCode?.methodLabel(),
-    doseGrams?.let { "$it г" },
-    brewDurationSeconds?.let { "$it с" },
+internal fun FeedHomePreparation.timelineDetails(labels: PreparationMetricLabels): String = listOfNotNull(
+    brewMethodCode?.methodLabel(labels.otherMethod),
+    doseGrams?.let { labels.grams.replace("%1\$s", it.toString()) },
+    brewDurationSeconds?.let { labels.seconds.replace("%1\$s", it.toString()) },
     tasteScore?.let { "$it/5" },
 ).joinToString(" · ")

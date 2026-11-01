@@ -19,7 +19,7 @@ import com.coffeepeek.admin.utils.CpImage
 import com.coffeepeek.core.designsystem.component.CoffeePeekPostShelfBagRow
 import com.coffeepeek.core.designsystem.component.coffeePeekPostShelfBagCardImage
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 /**

@@ -36,6 +36,8 @@ interface SettingsEntry {
         onAddRoaster: () -> Unit,
         onCity: () -> Unit,
         onTheme: () -> Unit,
+        onLanguage: () -> Unit,
+        onNotifications: () -> Unit,
         onUsagePolicy: () -> Unit,
         onLogin: () -> Unit,
         onRegister: () -> Unit,
