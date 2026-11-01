@@ -5,7 +5,12 @@ package com.coffeepeek.admin.ui
 import org.koin.compose.koinInject
 import coffeepeek.composeapp.generated.resources.Res
 import coffeepeek.composeapp.generated.resources.business_tab_title
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
+import coffeepeek.composeapp.generated.resources.navigation_search
+import coffeepeek.composeapp.generated.resources.navigation_coffee
+import coffeepeek.composeapp.generated.resources.navigation_feed
+import coffeepeek.composeapp.generated.resources.navigation_profile
+import coffeepeek.composeapp.generated.resources.navigation_settings
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.*
 import androidx.compose.material3.MaterialTheme
@@ -163,8 +168,10 @@ internal actual fun PlatformRootNavigation(
     }
 
     val businessTitle = stringResource(Res.string.business_tab_title)
+    val labels = listOf(stringResource(Res.string.navigation_search), stringResource(Res.string.navigation_coffee),
+        stringResource(Res.string.navigation_feed), stringResource(Res.string.navigation_profile),
+        stringResource(Res.string.navigation_settings), businessTitle)
     UIKitViewController(factory = {
-        val labels = listOf("Поиск", "Кофе", "Лента", "Профиль", "Настройки", businessTitle)
         val symbols = listOf("magnifyingglass", "cup.and.saucer", "person.2", "person.crop.circle", "gearshape", "building.2")
         navigations.indices.forEach { index ->
             val navigation = navigations[index]
@@ -205,7 +212,9 @@ internal actual fun PlatformRootNavigation(
             tabReselections.onTabPressed(Navigator.Screen.FeedTab, isSelected = navigation == navigations[0])
         }
         tabs
-    }, modifier = Modifier.fillMaxSize(), properties = UIKitInteropProperties(
+    }, modifier = Modifier.fillMaxSize(), update = {
+        updateNativeTabLabels(navigations, labels)
+    }, properties = UIKitInteropProperties(
         interactionMode = UIKitInteropInteractionMode.NonCooperative,
         isNativeAccessibilityEnabled = true,
         // This full-screen opaque host stays below the app's Compose overlays.
@@ -287,4 +296,11 @@ internal actual fun PlatformRootNavigation(
         }
     }
     return true
+}
+
+private fun updateNativeTabLabels(navigations: List<UINavigationController>, labels: List<String>) {
+    navigations.forEachIndexed { index, navigation ->
+        navigation.tabBarItem.title = labels[index]
+        (navigation.viewControllers.firstOrNull() as? UIViewController)?.title = labels[index]
+    }
 }

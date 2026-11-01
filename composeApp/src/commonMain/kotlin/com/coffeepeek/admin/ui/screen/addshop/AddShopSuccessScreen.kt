@@ -1,5 +1,8 @@
 package com.coffeepeek.admin.ui.screen.addshop
 
+import coffeepeek.composeapp.generated.resources.*
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
+
 import com.coffeepeek.core.designsystem.component.coffeePeekScreenBottomPadding
 
 import com.coffeepeek.core.designsystem.component.CoffeePeekScaffold as Scaffold
@@ -56,6 +59,10 @@ internal fun AddShopSuccessScreen(
     coverPhoto: ByteArray?,
     onGoHome: () -> Unit,
 ) {
+    val localizedLegacyAddShopSuccessScreenContributionsShopGoHome = stringResource(Res.string.legacy_add_shop_success_screen_contributions_shop_go_home)
+    val localizedLegacyAddShopSuccessScreenContributionsShopSuccessTitle = stringResource(Res.string.legacy_add_shop_success_screen_contributions_shop_success_title)
+    val localizedLegacyAddShopSuccessScreenContributionsShopSuccessDescription = stringResource(Res.string.legacy_add_shop_success_screen_contributions_shop_success_description)
+
     LaunchedEffect(Unit) { platformHaptic(HapticEvent.Success) }
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -66,7 +73,7 @@ internal fun AddShopSuccessScreen(
                     .padding(horizontal = CpDimens.spacing4, vertical = CpDimens.spacing4),
             ) {
                 AppButton(
-                    text = "На главную",
+                    text = localizedLegacyAddShopSuccessScreenContributionsShopGoHome,
                     onClick = onGoHome,
                 )
             }
@@ -104,7 +111,7 @@ internal fun AddShopSuccessScreen(
             }
             Spacer(Modifier.height(CpDimens.spacing4))
             Text(
-                text = "Кофейня отправлена!",
+                text = localizedLegacyAddShopSuccessScreenContributionsShopSuccessTitle,
                 style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold),
                 color = MaterialTheme.colorScheme.onSurface,
                 textAlign = TextAlign.Center,
@@ -112,7 +119,7 @@ internal fun AddShopSuccessScreen(
             )
             Spacer(Modifier.height(CpDimens.spacing2))
             Text(
-                text = "Мы проверим информацию и опубликуем вашу кофейню в течение 24 часов.",
+                text = localizedLegacyAddShopSuccessScreenContributionsShopSuccessDescription,
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,

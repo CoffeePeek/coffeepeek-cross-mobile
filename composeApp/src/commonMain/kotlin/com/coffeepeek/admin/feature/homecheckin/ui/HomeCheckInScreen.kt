@@ -1,5 +1,14 @@
 package com.coffeepeek.admin.feature.homecheckin.ui
 
+import com.coffeepeek.admin.ui.component.preparationMetricLabels
+
+import com.coffeepeek.admin.ui.component.PreparationMetricLabels
+
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringArrayResource as stringArrayResource
+
+import coffeepeek.composeapp.generated.resources.*
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
+
 import com.coffeepeek.core.designsystem.component.coffeePeekScrollContentPadding
 
 import com.coffeepeek.core.designsystem.component.CoffeePeekScaffold as Scaffold
@@ -62,18 +71,30 @@ private enum class HomeTab { History, Calendar, Statistics }
 
 @Composable
 internal fun HomeCheckInScreen(vm: HomeCheckInViewModel = platformViewModel()) {
+    val localizedHistoryHomeDeleteTitle = stringResource(Res.string.history_home_delete_title)
+    val localizedLegacyHomeCheckInScreenDeleteEntryMessage = stringResource(Res.string.legacy_home_check_in_screen_delete_entry_message)
+    val localizedHistoryHomeDeleteConfirm = stringResource(Res.string.history_home_delete_confirm)
+    val localizedHistoryHomeDeleteCancel = stringResource(Res.string.history_home_delete_cancel)
+    val localizedLegacyHomeCheckInScreenNewHomeCup = stringResource(Res.string.legacy_home_check_in_screen_new_home_cup)
+    val localizedLegacyHomeCheckInScreenEditing = stringResource(Res.string.legacy_home_check_in_screen_editing)
+    val localizedLegacyHomeCheckInDetailHomeCheckInHome = stringResource(Res.string.legacy_home_check_in_detail_home_check_in_home)
+    val localizedLegacyHomeCheckInScreenHistory = stringResource(Res.string.legacy_home_check_in_screen_history)
+    val localizedLegacyVisitedPlacesScreenCalendar = stringResource(Res.string.legacy_visited_places_screen_calendar)
+    val localizedLegacyHomeCheckInScreenStatistics = stringResource(Res.string.legacy_home_check_in_screen_statistics)
+    val localizedLegacyHomeCheckInScreenRecordBrew = stringResource(Res.string.legacy_home_check_in_screen_record_brew)
+
     val state by vm.state.collectAsState()
     var tab by remember { mutableStateOf(HomeTab.History) }
     LaunchedEffect(tab) { if (tab == HomeTab.Statistics) vm.loadStats() }
     var photoPreview by remember { mutableStateOf<Pair<PhotoViewerImages, Int>?>(null) }
     photoPreview?.let { (images, index) -> FullScreenImageDialog(images, index) { photoPreview = null } }
 
-    if (state.deleteConfirmation) PlatformAlert(title = "Удалить домашнюю запись?", message = "Она исчезнет из истории, календаря и статистики.", confirmLabel = "Удалить", onConfirm = vm::delete, onDismiss = vm::cancelDelete, cancelLabel = "Отмена", destructive = true)
+    if (state.deleteConfirmation) PlatformAlert(title = localizedHistoryHomeDeleteTitle, message = localizedLegacyHomeCheckInScreenDeleteEntryMessage, confirmLabel = localizedHistoryHomeDeleteConfirm, onConfirm = vm::delete, onDismiss = vm::cancelDelete, cancelLabel = localizedHistoryHomeDeleteCancel, destructive = true)
 
     Scaffold(topBar = {
         CpTopBar(
-            title = if (state.editing) if (state.selected == null) "Новая чашка дома" else "Редактирование"
-                else "Кофе дома",
+            title = if (state.editing) if (state.selected == null) localizedLegacyHomeCheckInScreenNewHomeCup else localizedLegacyHomeCheckInScreenEditing
+                else localizedLegacyHomeCheckInDetailHomeCheckInHome,
             onBack = if (state.editing) vm::closeEditor else if (state.selected != null) vm::closeDetail else Navigator::popBack,
             customBack = state.editing || state.selected != null,
         )
@@ -90,9 +111,9 @@ internal fun HomeCheckInScreen(vm: HomeCheckInViewModel = platformViewModel()) {
                             selected = tab == option,
                             onClick = { tab = option },
                             label = { Text(when (option) {
-                                HomeTab.History -> "История"
-                                HomeTab.Calendar -> "Календарь"
-                                HomeTab.Statistics -> "Статистика"
+                                HomeTab.History -> localizedLegacyHomeCheckInScreenHistory
+                                HomeTab.Calendar -> localizedLegacyVisitedPlacesScreenCalendar
+                                HomeTab.Statistics -> localizedLegacyHomeCheckInScreenStatistics
                             }) },
                         )
                     }
@@ -103,7 +124,7 @@ internal fun HomeCheckInScreen(vm: HomeCheckInViewModel = platformViewModel()) {
                     HomeTab.Statistics -> HomeStatistics(state, Modifier.weight(1f))
                 }
                 Button(onClick = vm::create, modifier = Modifier.fillMaxWidth().padding(16.dp)) {
-                    Text("Записать приготовление")
+                    Text(localizedLegacyHomeCheckInScreenRecordBrew)
                 }
             }
         }
@@ -112,20 +133,27 @@ internal fun HomeCheckInScreen(vm: HomeCheckInViewModel = platformViewModel()) {
 
 @Composable
 private fun HomeHistory(state: HomeCheckInUiState, vm: HomeCheckInViewModel, modifier: Modifier) {
+    val localizedLegacyHomeCheckInScreenLoadingEntry = stringResource(Res.string.legacy_home_check_in_screen_loading_entry)
+    val localizedLegacyHomeCheckInScreenNoHomeBrews = stringResource(Res.string.legacy_home_check_in_screen_no_home_brews)
+    val localizedLegacyHomeCheckInScreenBeansUnspecified = stringResource(Res.string.legacy_home_check_in_screen_beans_unspecified)
+    val localizedShopDetailLoading = stringResource(Res.string.shop_detail_loading)
+    val localizedNotificationsLoadMore = stringResource(Res.string.notifications_load_more)
+    val localizedLegacyHomeCheckInScreenOwnershipRefresh = stringResource(Res.string.legacy_home_check_in_screen_ownership_refresh)
+
     LazyColumn(modifier, contentPadding = coffeePeekScrollContentPadding(PaddingValues(16.dp)), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         if (state.selectedDate != null) item {
-            TextButton(onClick = { vm.selectDate(null) }) { Text("${state.selectedDate} · Сбросить фильтр") }
+            TextButton(onClick = { vm.selectDate(null) }) { Text(stringResource(Res.string.legacy_home_selected_date_reset, state.selectedDate.orEmpty())) }
         }
         if (state.loading) item { Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { CoffeePeekLoader() } }
         if (state.error != null) item { Text(state.error, color = MaterialTheme.colorScheme.error) }
-        if (state.detailLoading) item { Text("Загружаем запись…") }
-        if (!state.loading && state.items.isEmpty()) item { Text("Пока нет домашних приготовлений") }
+        if (state.detailLoading) item { Text(localizedLegacyHomeCheckInScreenLoadingEntry) }
+        if (!state.loading && state.items.isEmpty()) item { Text(localizedLegacyHomeCheckInScreenNoHomeBrews) }
         items(state.items, key = { it.id }) { entry ->
             Card(Modifier.fillMaxWidth().clickable { vm.open(entry.id) }) {
                 Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(entry.preparedOn, style = MaterialTheme.typography.labelMedium)
-                    Text(entry.beanName ?: "Зерно не указано", style = MaterialTheme.typography.titleMedium)
-                    Text(listOfNotNull(entry.brewMethodCode?.methodLabel(), entry.doseGrams?.let { "$it г" },
+                    Text(entry.beanName ?: localizedLegacyHomeCheckInScreenBeansUnspecified, style = MaterialTheme.typography.titleMedium)
+                    Text(listOfNotNull(entry.brewMethodCode?.methodLabel(stringResource(Res.string.select_drink_other)), entry.doseGrams?.let { stringResource(Res.string.legacy_grams, it.toString()) },
                         entry.tasteScore?.let { "$it/5" }).joinToString(" · "))
                     val note = entry.text
                     if (!note.isNullOrBlank()) Text(note, maxLines = 2)
@@ -134,16 +162,18 @@ private fun HomeHistory(state: HomeCheckInUiState, vm: HomeCheckInViewModel, mod
         }
         if (state.hasMore) item {
             OutlinedButton(onClick = vm::loadMore, enabled = !state.loadingMore, modifier = Modifier.fillMaxWidth()) {
-                Text(if (state.loadingMore) "Загрузка…" else "Показать ещё")
+                Text(if (state.loadingMore) localizedShopDetailLoading else localizedNotificationsLoadMore)
             }
         }
-        item { TextButton(onClick = vm::refresh) { Text("Обновить") } }
+        item { TextButton(onClick = vm::refresh) { Text(localizedLegacyHomeCheckInScreenOwnershipRefresh) } }
     }
 }
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun HomeCalendar(state: HomeCheckInUiState, vm: HomeCheckInViewModel, modifier: Modifier) {
+    val localizedLegacyProfileCheckInsScreenHistoryClearDate = stringResource(Res.string.legacy_profile_check_ins_screen_history_clear_date)
+
     val month = state.month
     val counts = state.calendar.associate { it.preparedOn to it.brewCount }
     LazyColumn(modifier, contentPadding = coffeePeekScrollContentPadding(PaddingValues(16.dp)), verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -157,7 +187,7 @@ private fun HomeCalendar(state: HomeCheckInUiState, vm: HomeCheckInViewModel, mo
             }
         }
         item { Row(Modifier.fillMaxWidth()) {
-            listOf("П", "В", "С", "Ч", "П", "С", "В").forEach { label ->
+            stringArrayResource(Res.array.legacy_weekdays_letters).forEach { label ->
                 Box(Modifier.weight(1f), contentAlignment = Alignment.Center) { Text(label) }
             }
         } }
@@ -178,26 +208,32 @@ private fun HomeCalendar(state: HomeCheckInUiState, vm: HomeCheckInViewModel, mo
                 }
             }
         }
-        item { Text("${state.calendar.sumOf { it.brewCount }} приготовлений за месяц") }
+        item { Text(stringResource(Res.string.legacy_home_month_brews, state.calendar.sumOf { it.brewCount })) }
         if (state.selectedDate != null) item {
-            Text("${state.selectedDate}: ${counts[state.selectedDate] ?: 0} приготовлений")
-            TextButton(onClick = { vm.selectDate(null) }) { Text("Показать все даты") }
+            Text(stringResource(Res.string.legacy_home_day_brews, state.selectedDate.orEmpty(), counts[state.selectedDate] ?: 0))
+            TextButton(onClick = { vm.selectDate(null) }) { Text(localizedLegacyProfileCheckInsScreenHistoryClearDate) }
         }
     }
 }
 
 @Composable
 private fun HomeStatistics(state: HomeCheckInUiState, modifier: Modifier) {
+    val localizedLegacyHomeCheckInScreenByBeans = stringResource(Res.string.legacy_home_check_in_screen_by_beans)
+    val localizedLegacyHomeCheckInScreenNoData = stringResource(Res.string.legacy_home_check_in_screen_no_data)
+    val localizedLegacyHomeCheckInScreenBeansUnspecified = stringResource(Res.string.legacy_home_check_in_screen_beans_unspecified)
+    val localizedLegacyHomeCheckInScreenByBrewMethod = stringResource(Res.string.legacy_home_check_in_screen_by_brew_method)
+    val localizedLegacyHomeCheckInScreenMethodUnspecified = stringResource(Res.string.legacy_home_check_in_screen_method_unspecified)
+
     LazyColumn(modifier, contentPadding = coffeePeekScrollContentPadding(PaddingValues(16.dp)), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        item { Text("По зерну", style = MaterialTheme.typography.titleMedium) }
-        if (state.beanStats.isEmpty()) item { Text("Пока нет данных") }
+        item { Text(localizedLegacyHomeCheckInScreenByBeans, style = MaterialTheme.typography.titleMedium) }
+        if (state.beanStats.isEmpty()) item { Text(localizedLegacyHomeCheckInScreenNoData) }
         items(state.beanStats) { stats ->
-            StatCard(stats.beanName ?: "Зерно не указано", stats.brewCount, stats.dosedBrewCount,
+            StatCard(stats.beanName ?: localizedLegacyHomeCheckInScreenBeansUnspecified, stats.brewCount, stats.dosedBrewCount,
                 stats.totalKnownDoseGrams, stats.ratedBrewCount, stats.averageTasteScore)
         }
-        item { Spacer(Modifier.height(12.dp)); Text("По способу", style = MaterialTheme.typography.titleMedium) }
+        item { Spacer(Modifier.height(12.dp)); Text(localizedLegacyHomeCheckInScreenByBrewMethod, style = MaterialTheme.typography.titleMedium) }
         items(state.methodStats) { stats ->
-            StatCard(stats.brewMethodCode?.methodLabel() ?: "Способ не указан", stats.brewCount,
+            StatCard(stats.brewMethodCode?.methodLabel(stringResource(Res.string.select_drink_other)) ?: localizedLegacyHomeCheckInScreenMethodUnspecified, stats.brewCount,
                 stats.dosedBrewCount, stats.totalKnownDoseGrams, stats.ratedBrewCount, stats.averageTasteScore)
         }
     }
@@ -207,14 +243,18 @@ private fun HomeStatistics(state: HomeCheckInUiState, modifier: Modifier) {
 private fun StatCard(name: String, count: Int, dosedCount: Int, dose: String, ratedCount: Int, average: Double?) {
     Card(Modifier.fillMaxWidth()) { Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Text(name, fontWeight = FontWeight.SemiBold)
-        Text("Приготовлений: $count · С известной дозой: $dosedCount")
-        Text("Всего кофе: $dose г · С оценкой: $ratedCount")
-        Text("Средняя оценка: ${average?.toString() ?: "—"}")
+        Text(stringResource(Res.string.legacy_home_stats_counts, count, dosedCount))
+        Text(stringResource(Res.string.legacy_home_stats_dose, dose.toString(), ratedCount))
+        Text(stringResource(Res.string.legacy_home_stats_rating, average?.toString() ?: "—"))
     } }
 }
 
 @Composable
 internal fun HomeTimelineCard(entry: HomeCheckIn, onClick: () -> Unit) {
+    val metricLabels = preparationMetricLabels()
+
+    val localizedLegacyHomeCheckInDetailHomeCheckInTitleFallback = stringResource(Res.string.legacy_home_check_in_detail_home_check_in_title_fallback)
+
     val accent = MaterialTheme.colorScheme.primary
     Card(
         onClick = onClick,
@@ -230,20 +270,20 @@ internal fun HomeTimelineCard(entry: HomeCheckIn, onClick: () -> Unit) {
                 itemVerticalAlignment = Alignment.CenterVertically) {
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     Icon(CpIcons.Coffee, contentDescription = null, tint = accent, modifier = Modifier.size(18.dp))
-                    Text("Дома · ${utcIsoToLocalDateTime(entry.preparedAtUtc).substringAfterLast(' ', "")}",
+                    Text(stringResource(Res.string.legacy_home_prepared_time, utcIsoToLocalDateTime(entry.preparedAtUtc).substringAfterLast(' ', "")),
                         style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
-                entry.visibilityLabel()?.let { label ->
+                entry.visibilityLabel(homeVisibilityLabels())?.let { label ->
                     Text(label, style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
-            Text(entry.beanName?.takeIf(String::isNotBlank) ?: "Домашнее приготовление",
+            Text(entry.beanName?.takeIf(String::isNotBlank) ?: localizedLegacyHomeCheckInDetailHomeCheckInTitleFallback,
                 style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold,
                 maxLines = 2, overflow = TextOverflow.Ellipsis)
             val details = listOfNotNull(
-                entry.brewMethodCode?.methodLabel(),
-                entry.doseGrams?.let(::homeDoseLabel),
+                entry.brewMethodCode?.methodLabel(stringResource(Res.string.select_drink_other)),
+                entry.doseGrams?.let { homeDoseLabel(it, metricLabels) },
             ).joinToString(" · ")
             if (details.isNotBlank()) Text(details, style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -260,14 +300,24 @@ internal fun HomeTimelineCard(entry: HomeCheckIn, onClick: () -> Unit) {
     }
 }
 
-internal fun HomeCheckIn.visibilityLabel(): String? = when (visibility) {
-    HomeCheckInVisibility.Private -> "Только мне"
+internal fun HomeCheckIn.visibilityLabel(labels: List<String>): String? = when (visibility) {
+    HomeCheckInVisibility.Private -> labels[0]
     HomeCheckInVisibility.Public -> when (moderation) {
-        HomeCheckInModeration.Approved -> "Виден всем"
-        HomeCheckInModeration.Pending -> "На модерации"
-        HomeCheckInModeration.Rejected -> "Не опубликован"
-        HomeCheckInModeration.NotSubmitted -> "Ожидает публикации"
-        HomeCheckInModeration.Unknown -> "Публичный"
+        HomeCheckInModeration.Approved -> labels[1]
+        HomeCheckInModeration.Pending -> labels[2]
+        HomeCheckInModeration.Rejected -> labels[3]
+        HomeCheckInModeration.NotSubmitted -> labels[4]
+        HomeCheckInModeration.Unknown -> labels[5]
     }
     null -> null
 }
+
+@Composable
+internal fun homeVisibilityLabels(): List<String> = listOf(
+    stringResource(Res.string.legacy_home_visibility_home_check_in_private),
+    stringResource(Res.string.legacy_home_visibility_home_check_in_public),
+    stringResource(Res.string.legacy_my_contributions_screen_contributions_tab_pending),
+    stringResource(Res.string.legacy_home_visibility_home_check_in_rejected),
+    stringResource(Res.string.legacy_home_visibility_home_check_in_not_submitted),
+    stringResource(Res.string.legacy_home_visibility_community_label_public),
+)

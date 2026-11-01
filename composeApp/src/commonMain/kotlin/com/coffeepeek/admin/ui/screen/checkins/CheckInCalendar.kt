@@ -117,10 +117,10 @@ internal fun calendarSelection(month: CalendarMonth, today: String, selected: St
     else -> null
 }
 
-internal fun calendarWeekday(date: String): String {
+internal fun calendarWeekday(date: String, weekdays: List<String>): String {
     val month = calendarMonthFromIsoDate(date) ?: return ""
     val day = date.substringAfterLast('-').toIntOrNull()?.takeIf { it in 1..daysInMonth(month.year, month.month) } ?: return ""
-    return listOf("Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота", "Воскресенье")[
+    return weekdays[
         mondayFirstDayOfWeek(month.year, month.month, day)
     ]
 }

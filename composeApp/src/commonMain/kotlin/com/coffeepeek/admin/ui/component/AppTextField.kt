@@ -1,5 +1,8 @@
 package com.coffeepeek.admin.ui.component
 
+import coffeepeek.composeapp.generated.resources.*
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
+
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
 import com.coffeepeek.admin.ui.icons.CpIcons
@@ -38,6 +41,9 @@ fun AppTextField(
     errorText: String? = null,
     modifier: Modifier = Modifier,
 ) {
+    val localizedLegacyAppTextFieldAuthHidePassword = stringResource(Res.string.legacy_app_text_field_auth_hide_password)
+    val localizedLegacyAppTextFieldAuthShowPassword = stringResource(Res.string.legacy_app_text_field_auth_show_password)
+
     var isPasswordVisible by remember { mutableStateOf(false) }
     val isError = errorText != null
 
@@ -87,7 +93,7 @@ fun AppTextField(
                             Icon(
                                 imageVector = if (isPasswordVisible) CpIcons.Visibility
                                               else CpIcons.VisibilityOff,
-                                contentDescription = if (isPasswordVisible) "Скрыть пароль" else "Показать пароль",
+                                contentDescription = if (isPasswordVisible) localizedLegacyAppTextFieldAuthHidePassword else localizedLegacyAppTextFieldAuthShowPassword,
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         }

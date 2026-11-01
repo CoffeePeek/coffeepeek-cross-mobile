@@ -1,5 +1,6 @@
 package com.coffeepeek.feature.authorblocking
 
+import com.coffeepeek.feature.authorblocking.api.AuthorBlockError
 import com.coffeepeek.feature.authorblocking.api.AuthorReference
 import com.coffeepeek.feature.authorblocking.api.AuthorBlockingPresenter
 import com.coffeepeek.feature.authorblocking.api.BlockedAuthorItem
@@ -31,7 +32,7 @@ class AuthorBlockingViewModelTest {
         val repository = FakeBlockRepository { calls++; Result.failure(IllegalStateException("Offline")) }
         val vm = AuthorBlockingViewModel(repository, sessions, backgroundScope)
         runCurrent(); vm.requestBlock(author); vm.confirm(); runCurrent()
-        assertNotNull(vm.prompt.value?.error); assertFalse(vm.prompt.value!!.working)
+        assertEquals(AuthorBlockError.SaveFailed, vm.prompt.value?.error); assertFalse(vm.prompt.value!!.working)
         vm.confirm(); runCurrent(); assertEquals(2, calls)
         sessions.switchTo("other"); runCurrent()
         assertNull(vm.prompt.value); vm.confirm(); runCurrent(); assertEquals(2, calls)

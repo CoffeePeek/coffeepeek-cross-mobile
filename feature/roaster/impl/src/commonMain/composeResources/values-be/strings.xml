@@ -1,0 +1,27 @@
+<resources>
+    <string name="roaster_loading">Загрузка</string>
+    <string name="roaster_refresh">Абнавіць абсмажчыкаў</string>
+    <string name="roaster_empty">Абсмажчыкі не знойдзены</string>
+    <string name="roaster_tag_all">Усе</string>
+    <string name="roaster_logo">Лагатып %1$s</string>
+    <string name="roaster_stat_shops">Кавярні</string>
+    <string name="roaster_stat_catalog">Каталог</string>
+    <string name="roaster_favorite_add">Дадаць у абранае</string>
+    <string name="roaster_favorite_remove">Прыбраць з абранага</string>
+    <string name="roaster_message_favorites_unavailable">Не ўдалося загрузіць абранае</string>
+    <string name="roaster_message_favorite_failed">Не ўдалося змяніць абранае</string>
+    <string name="roaster_detail_load_failed">Не ўдалося загрузіць абсмажчыка</string>
+    <string name="roaster_detail_retry">Паўтарыць</string>
+    <string name="roaster_detail_back">Назад</string>
+    <string name="roaster_about_title">Пра абсмажчыка</string>
+    <string name="roaster_address_title">Адрас</string>
+    <string name="roaster_links_title">Спасылкі</string>
+    <string name="roaster_shops_title">Дзе выкарыстоўваюць</string>
+    <string name="roaster_shops_empty">Пакуль няма кавярняў, якія ўказалі гэтага абсмажчыка.</string>
+    <string name="roaster_shop_photo">Фота кавярні %1$s</string>
+    <string name="roaster_shop_photo_missing">Фота кавярні %1$s адсутнічае</string>
+    <string name="roaster_open_shop">Адкрыць кавярню %1$s</string>
+    <string name="roaster_photos_missing">Фатаграфіі %1$s адсутнічаюць</string>
+    <string name="roaster_photo_position">%1$d / %2$d</string>
+    <string name="roaster_share">Падзяліцца</string>
+</resources>

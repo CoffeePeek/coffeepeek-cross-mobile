@@ -3,6 +3,10 @@ package com.coffeepeek.core.designsystem.component
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.toggleableState
+import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.LayoutDirection
@@ -83,12 +87,13 @@ fun CoffeePeekSettingsRow(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     iconColors: CoffeePeekIconBadgeColors = CoffeePeekIconBadgePalette.Cyan,
+    role: Role = Role.Button,
     trailing: @Composable (() -> Unit)? = null,
 ) {
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
+            .clickable(enabled = enabled, role = role, onClick = onClick)
             .padding(
                 horizontal = CoffeePeekDimens.settingsRowPaddingH,
                 vertical = CoffeePeekDimens.settingsRowPaddingV,
@@ -97,27 +102,7 @@ fun CoffeePeekSettingsRow(
     ) {
         CoffeePeekIconBadge(icon = icon, colors = iconColors)
         Spacer(Modifier.width(CoffeePeekDimens.spacing3))
-        Column(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(2.dp),
-        ) {
-            Text(
-                text = label,
-                style = MaterialTheme.typography.bodyLarge,
-                color = MaterialTheme.colorScheme.onSurface,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-            )
-            if (description != null) {
-                Text(
-                    text = description,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 3,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
-        }
+        CoffeePeekSettingsRowText(label, description, Modifier.weight(1f))
         Spacer(Modifier.width(CoffeePeekDimens.spacing2))
         if (trailing != null) {
             trailing()
@@ -131,6 +116,18 @@ fun CoffeePeekSettingsRow(
                     scaleY = 1f,
                 ),
             )
+        }
+    }
+}
+
+@Composable
+private fun CoffeePeekSettingsRowText(label: String, description: String?, modifier: Modifier) {
+    Column(modifier, verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        Text(label, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface,
+            maxLines = 1, overflow = TextOverflow.Ellipsis)
+        if (description != null) {
+            Text(description, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 3, overflow = TextOverflow.Ellipsis)
         }
     }
 }
@@ -157,3 +154,19 @@ private fun CoffeePeekSettingsListPreviewContent(darkTheme: Boolean) = CoffeePee
 
 @Preview @Composable private fun CoffeePeekSettingsListLightPreview() = CoffeePeekSettingsListPreviewContent(false)
 @Preview @Composable private fun CoffeePeekSettingsListDarkPreview() = CoffeePeekSettingsListPreviewContent(true)
+
+@Composable
+private fun CoffeePeekSettingsSwitchRolePreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
+    Surface {
+        CoffeePeekSettingsSection("Settings") {
+            listOf(false, true).forEach { checked ->
+                CoffeePeekSettingsRow(CoffeePeekIcons.Notifications, "Notifications", "App notification preference", {},
+                    modifier = Modifier.semantics { toggleableState = ToggleableState(checked) }, role = Role.Switch,
+                    trailing = { CoffeePeekSwitch(checked, null, Modifier.clearAndSetSemantics { }) })
+            }
+        }
+    }
+}
+
+@Preview @Composable private fun CoffeePeekSettingsSwitchRoleLightPreview() = CoffeePeekSettingsSwitchRolePreview(false)
+@Preview @Composable private fun CoffeePeekSettingsSwitchRoleDarkPreview() = CoffeePeekSettingsSwitchRolePreview(true)

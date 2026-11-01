@@ -28,7 +28,7 @@ import com.coffeepeek.feature.shelf.domain.model.PackModerationReason
 import com.coffeepeek.feature.shelf.impl.resources.*
 import com.coffeepeek.feature.shelf.impl.ui.compose.model.ShelfStageOutcome
 import com.coffeepeek.feature.shelf.impl.ui.compose.model.ShelfStageStatus
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 /**

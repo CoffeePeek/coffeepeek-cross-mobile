@@ -1,5 +1,10 @@
 package com.coffeepeek.admin.ui.screen.checkins
 
+import com.coffeepeek.admin.feature.homecheckin.ui.homeVisibilityLabels
+
+import coffeepeek.composeapp.generated.resources.*
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
+
 import com.coffeepeek.core.designsystem.component.coffeePeekScrollContentPadding
 
 import com.coffeepeek.core.designsystem.component.CoffeePeekScaffold as Scaffold
@@ -84,6 +89,22 @@ internal fun ProfileCheckInsScreen(
     shopVm: VisitedPlacesViewModel = platformViewModel(),
     homeVm: HomeCheckInViewModel = platformViewModel(),
 ) {
+    val labels = checkInCalendarLabels()
+
+    val localizedHistoryHomeDeleteTitle = stringResource(Res.string.history_home_delete_title)
+    val localizedHistoryHomeDeleteMessage = stringResource(Res.string.history_home_delete_message)
+    val localizedHistoryHomeDeleteConfirm = stringResource(Res.string.history_home_delete_confirm)
+    val localizedHistoryHomeDeleteCancel = stringResource(Res.string.history_home_delete_cancel)
+    val localizedLegacyProfileCheckInsScreenContributionsRequestOpenShop = stringResource(Res.string.legacy_profile_check_ins_screen_contributions_request_open_shop)
+    val localizedLegacyProfileCheckInsScreenRoasterTagAll = stringResource(Res.string.legacy_profile_check_ins_screen_roaster_tag_all)
+    val localizedLegacyProfileCheckInsScreenHistoryAtShop = stringResource(Res.string.legacy_profile_check_ins_screen_history_at_shop)
+    val localizedLegacyCheckInDiaryRowHistoryAtHome = stringResource(Res.string.legacy_check_in_diary_row_history_at_home)
+    val localizedLegacyProfileCheckInsScreenHistoryClearDate = stringResource(Res.string.legacy_profile_check_ins_screen_history_clear_date)
+    val localizedLegacyProfileCheckInsScreenHistoryDayEmpty = stringResource(Res.string.legacy_profile_check_ins_screen_history_day_empty)
+    val localizedProfileCheckinsEmpty = stringResource(Res.string.profile_checkins_empty)
+    val localizedShopDetailLoading = stringResource(Res.string.shop_detail_loading)
+    val localizedNotificationsLoadMore = stringResource(Res.string.notifications_load_more)
+
     val shop by shopVm.state.collectAsState()
     val home by homeVm.state.collectAsState()
     val today = remember { utcIsoToLocalDate(currentUtcIsoDateTime()) }
@@ -140,10 +161,10 @@ internal fun ProfileCheckInsScreen(
         (kind != ActivityKind.Shop && home.hasMore)
 
     if (home.deleteConfirmation) PlatformAlert(
-        title = "Удалить домашнюю запись?",
-        message = "Она исчезнет из истории чекинов.",
-        confirmLabel = "Удалить", onConfirm = homeVm::delete,
-        onDismiss = homeVm::cancelDelete, cancelLabel = "Отмена", destructive = true,
+        title = localizedHistoryHomeDeleteTitle,
+        message = localizedHistoryHomeDeleteMessage,
+        confirmLabel = localizedHistoryHomeDeleteConfirm, onConfirm = homeVm::delete,
+        onDismiss = homeVm::cancelDelete, cancelLabel = localizedHistoryHomeDeleteCancel, destructive = true,
     )
     photoPreview?.let { (urls, index) ->
         FullScreenImageDialog(urls, index) { photoPreview = null }
@@ -157,7 +178,7 @@ internal fun ProfileCheckInsScreen(
                 if (checkIn.shopId.isNotBlank()) TextButton(onClick = {
                     selectedShop = null
                     Navigator.navigate(Navigator.Screen.ShopDetail(checkIn.shopId))
-                }, modifier = Modifier.fillMaxWidth().padding(16.dp)) { Text("Открыть кофейню") }
+                }, modifier = Modifier.fillMaxWidth().padding(16.dp)) { Text(localizedLegacyProfileCheckInsScreenContributionsRequestOpenShop) }
             }
         }
     }
@@ -187,7 +208,7 @@ internal fun ProfileCheckInsScreen(
         },
     ) { padding ->
         CapsuleSegmentedControl(ActivityKind.entries, kind,
-            label = { when (it) { ActivityKind.All -> "Все"; ActivityKind.Shop -> "В кофейне"; ActivityKind.Home -> "Дома" } },
+            label = { when (it) { ActivityKind.All -> localizedLegacyProfileCheckInsScreenRoasterTagAll; ActivityKind.Shop -> localizedLegacyProfileCheckInsScreenHistoryAtShop; ActivityKind.Home -> localizedLegacyCheckInDiaryRowHistoryAtHome } },
             onSelected = { kind = it }, modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
         LazyColumn(Modifier.fillMaxSize(), contentPadding = coffeePeekScrollContentPadding(PaddingValues(
             start = 16.dp, end = 16.dp, top = 8.dp, bottom = 96.dp))) {
@@ -211,12 +232,12 @@ internal fun ProfileCheckInsScreen(
                 )
             }
             if (selectedDate != null) item(key = "clear-date") {
-                TextButton(onClick = { chooseDate(null) }) { Text("Показать все даты") }
+                TextButton(onClick = { chooseDate(null) }) { Text(localizedLegacyProfileCheckInsScreenHistoryClearDate) }
             }
             if (isLoading && entries.isEmpty()) item { Box(Modifier.fillMaxWidth().height(90.dp),
                 contentAlignment = Alignment.Center) { CoffeePeekLoader() } }
             if (!isLoading && entries.isEmpty()) item {
-                Text(if (selectedDate != null) "В этот день чекинов не было" else "Пока нет чекинов",
+                Text(if (selectedDate != null) localizedLegacyProfileCheckInsScreenHistoryDayEmpty else localizedProfileCheckinsEmpty,
                     modifier = Modifier.padding(vertical = 32.dp),
                     color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
@@ -225,7 +246,7 @@ internal fun ProfileCheckInsScreen(
                 val lastInDay = index == entries.lastIndex || entries[index + 1].date != entry.date
                 Column {
                     if (firstInDay) Text(
-                        selectedDateTitle(entry.date, includeYear = entry.date.take(4) != today.take(4)),
+                        selectedDateTitle(entry.date, labels, includeYear = entry.date.take(4) != today.take(4)),
                         style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold,
                         modifier = Modifier.padding(top = 24.dp, bottom = 12.dp))
                     TimelineRail(entry is ActivityEntry.Home, firstInDay, lastInDay) {
@@ -233,7 +254,7 @@ internal fun ProfileCheckInsScreen(
                             is ActivityEntry.Home -> HistoryTimelineCheckInCard(entry.value.toTimelineCheckIn(),
                                 onClick = { homeVm.open(entry.value.id) },
                                 onPhotoClick = { images, index -> photoPreview = images to index },
-                                supportingLabel = entry.value.visibilityLabel())
+                                supportingLabel = entry.value.visibilityLabel(homeVisibilityLabels()))
                             is ActivityEntry.Shop -> HistoryTimelineCheckInCard(entry.value,
                                 onClick = { selectedShop = entry.value },
                                 onPhotoClick = { images, index -> photoPreview = images to index })
@@ -259,7 +280,7 @@ internal fun ProfileCheckInsScreen(
                     if (selectedDate == null && kind != ActivityKind.Home && shop.hasMore) shopVm.loadMore()
                     if (kind != ActivityKind.Shop && home.hasMore) homeVm.loadMore()
                 }, modifier = Modifier.fillMaxWidth(), enabled = !shop.isLoadingMore && !home.loadingMore) {
-                    Text(if (shop.isLoadingMore || home.loadingMore) "Загрузка…" else "Показать ещё")
+                    Text(if (shop.isLoadingMore || home.loadingMore) localizedShopDetailLoading else localizedNotificationsLoadMore)
                 }
             }
         }
@@ -268,8 +289,10 @@ internal fun ProfileCheckInsScreen(
 
 @Composable
 private fun CheckInHistoryScaffold(onCreate: () -> Unit, content: @Composable ColumnScope.(PaddingValues) -> Unit) {
+    val localizedProfileStatCheckIns = stringResource(Res.string.profile_stat_check_ins)
+
     Scaffold(
-        topBar = { CpTopBar("Чекины") },
+        topBar = { CpTopBar(localizedProfileStatCheckIns) },
         containerColor = MaterialTheme.colorScheme.background,
         floatingActionButton = { CheckInCreateButton(onClick = onCreate) },
     ) { padding ->
@@ -318,9 +341,11 @@ internal fun TimelineRail(isHome: Boolean, firstInDay: Boolean, lastInDay: Boole
 
 @Composable
 private fun RetryMessage(message: String, onRetry: () -> Unit) {
+    val localizedHistoryHomeRetry = stringResource(Res.string.history_home_retry)
+
     Column {
         Text(message, color = MaterialTheme.colorScheme.error)
-        TextButton(onClick = onRetry) { Text("Повторить") }
+        TextButton(onClick = onRetry) { Text(localizedHistoryHomeRetry) }
     }
 }
 

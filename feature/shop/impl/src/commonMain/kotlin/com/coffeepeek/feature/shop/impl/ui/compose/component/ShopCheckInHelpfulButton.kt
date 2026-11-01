@@ -23,7 +23,7 @@ import com.coffeepeek.feature.shop.impl.resources.shop_checkins_like_count
 import com.coffeepeek.feature.shop.impl.resources.shop_checkins_like_add
 import com.coffeepeek.feature.shop.impl.resources.shop_checkins_like_remove
 import com.coffeepeek.feature.shop.impl.resources.shop_checkins_like_updating
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable

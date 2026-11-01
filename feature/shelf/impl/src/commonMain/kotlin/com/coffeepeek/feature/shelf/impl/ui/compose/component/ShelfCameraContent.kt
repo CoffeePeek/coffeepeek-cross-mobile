@@ -71,7 +71,7 @@ import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.shelf.api.ShelfCameraFocus
 import com.coffeepeek.feature.shelf.api.ShelfCameraStatus
 import com.coffeepeek.feature.shelf.impl.resources.*
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 // The camera chrome sits on a live picture in any theme, so it is white on translucent black rather than themed.

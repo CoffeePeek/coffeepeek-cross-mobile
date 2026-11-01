@@ -45,7 +45,7 @@ import com.coffeepeek.feature.shop.impl.resources.shop_review_photo_remove
 import com.coffeepeek.feature.shop.impl.resources.shop_photo_attachment_description
 import io.kamel.image.KamelImage
 import io.kamel.image.asyncPainterResource
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @OptIn(ExperimentalLayoutApi::class)

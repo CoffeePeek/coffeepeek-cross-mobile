@@ -30,7 +30,7 @@ import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.shelf.api.ShelfCoffeeOption
 import com.coffeepeek.feature.shelf.impl.resources.*
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 /** The bag's coffee: typing searches the catalogue; a chosen match links the bag, plain text becomes its own name. */

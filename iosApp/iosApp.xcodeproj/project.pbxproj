@@ -7,22 +7,23 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		A10000000000000000000012 /* CoffeePeekLaunchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000013 /* CoffeePeekLaunchView.swift */; };
-        A10000000000000000000007 /* SocialSignInProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000011 /* SocialSignInProvider.swift */; };
+		6B2031D9196667F65FD358E5 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 37A6BA4C5AAF06904D9C889E /* InfoPlist.strings */; };
 		A10000000000000000000001 /* CoffeePeekApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000001 /* CoffeePeekApp.swift */; };
-		A10000000000000000000004 /* MapLibreMapProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000009 /* MapLibreMapProvider.swift */; };
 		A10000000000000000000002 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000002 /* Assets.xcassets */; };
 		A10000000000000000000003 /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = A90000000000000000000001 /* GoogleSignIn */; };
+		A10000000000000000000004 /* ../../iosXtool/CoffeePeek/Sources/CoffeePeek/MapLibreMapProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000009 /* ../../iosXtool/CoffeePeek/Sources/CoffeePeek/MapLibreMapProvider.swift */; };
 		A10000000000000000000005 /* MapLibre in Frameworks */ = {isa = PBXBuildFile; productRef = A90000000000000000000003 /* MapLibre */; };
+		A10000000000000000000007 /* ../../iosXtool/CoffeePeek/Sources/CoffeePeek/SocialSignInProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000011 /* ../../iosXtool/CoffeePeek/Sources/CoffeePeek/SocialSignInProvider.swift */; };
 		A10000000000000000000008 /* KotlinMultiplatformLinkedPackage in Frameworks */ = {isa = PBXBuildFile; productRef = A90000000000000000000005 /* KotlinMultiplatformLinkedPackage */; };
 		A10000000000000000000009 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000012 /* GoogleService-Info.plist */; };
 		A10000000000000000000010 /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = A90000000000000000000008 /* FirebaseCore */; };
 		A10000000000000000000011 /* FirebaseMessaging in Frameworks */ = {isa = PBXBuildFile; productRef = A90000000000000000000009 /* FirebaseMessaging */; };
+		A10000000000000000000012 /* ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CoffeePeekLaunchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000013 /* ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CoffeePeekLaunchView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		A20000000000000000000013 /* CoffeePeekLaunchView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "../../iosXtool/CoffeePeek/Sources/CoffeePeek/CoffeePeekLaunchView.swift"; sourceTree = "<group>"; };
-        A20000000000000000000011 /* SocialSignInProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "../../iosXtool/CoffeePeek/Sources/CoffeePeek/SocialSignInProvider.swift"; sourceTree = "<group>"; };
+		63F9FA5248F9B32DFB6EE1B8 /* be */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = be; path = be.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		699B07C40BD723F87323A277 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		A20000000000000000000001 /* CoffeePeekApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoffeePeekApp.swift; sourceTree = "<group>"; };
 		A20000000000000000000002 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		A20000000000000000000003 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
@@ -31,8 +32,10 @@
 		A20000000000000000000006 /* Release.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Release.xcconfig; sourceTree = "<group>"; };
 		A20000000000000000000007 /* Shared.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Shared.xcconfig; sourceTree = "<group>"; };
 		A20000000000000000000008 /* Local.xcconfig.example */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Local.xcconfig.example; sourceTree = "<group>"; };
-		A20000000000000000000009 /* MapLibreMapProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "../../iosXtool/CoffeePeek/Sources/CoffeePeek/MapLibreMapProvider.swift"; sourceTree = "<group>"; };
+		A20000000000000000000009 /* ../../iosXtool/CoffeePeek/Sources/CoffeePeek/MapLibreMapProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/MapLibreMapProvider.swift; sourceTree = "<group>"; };
+		A20000000000000000000011 /* ../../iosXtool/CoffeePeek/Sources/CoffeePeek/SocialSignInProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/SocialSignInProvider.swift; sourceTree = "<group>"; };
 		A20000000000000000000012 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
+		A20000000000000000000013 /* ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CoffeePeekLaunchView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CoffeePeekLaunchView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -64,12 +67,13 @@
 			isa = PBXGroup;
 			children = (
 				A20000000000000000000001 /* CoffeePeekApp.swift */,
-				A20000000000000000000013 /* CoffeePeekLaunchView.swift */,
-                A20000000000000000000011 /* SocialSignInProvider.swift */,
-				A20000000000000000000009 /* MapLibreMapProvider.swift */,
+				A20000000000000000000013 /* ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CoffeePeekLaunchView.swift */,
+				A20000000000000000000011 /* ../../iosXtool/CoffeePeek/Sources/CoffeePeek/SocialSignInProvider.swift */,
+				A20000000000000000000009 /* ../../iosXtool/CoffeePeek/Sources/CoffeePeek/MapLibreMapProvider.swift */,
 				A20000000000000000000002 /* Assets.xcassets */,
 				A20000000000000000000003 /* Info.plist */,
 				A20000000000000000000012 /* GoogleService-Info.plist */,
+				37A6BA4C5AAF06904D9C889E /* InfoPlist.strings */,
 			);
 			path = iosApp;
 			sourceTree = "<group>";
@@ -134,24 +138,33 @@
 				TargetAttributes = {
 					A50000000000000000000001 = {
 						CreatedOnToolsVersion = 27.0;
-                        SystemCapabilities = { com.apple.AssociatedDomains = { enabled = 1; }; com.apple.SignInWithApple = { enabled = 1; }; };
+						SystemCapabilities = {
+							com.apple.AssociatedDomains = {
+								enabled = 1;
+							};
+							com.apple.SignInWithApple = {
+								enabled = 1;
+							};
+						};
 					};
 				};
 			};
 			buildConfigurationList = A80000000000000000000001 /* Build configuration list for PBXProject "iosApp" */;
 			compatibilityVersion = "Xcode 15.0";
-			developmentRegion = en;
+			developmentRegion = ru;
 			hasScannedForEncodings = 0;
 			knownRegions = (
-				en,
 				Base,
+				be,
+				en,
+				ru,
 			);
 			mainGroup = A40000000000000000000001;
 			packageReferences = (
-				A90000000000000000000006 /* XCLocalSwiftPackageReference "KotlinMultiplatformLinkedPackage" */,
 				A90000000000000000000002 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */,
 				A90000000000000000000004 /* XCRemoteSwiftPackageReference "maplibre-gl-native-distribution" */,
 				A90000000000000000000007 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
+				A90000000000000000000006 /* XCLocalSwiftPackageReference "KotlinMultiplatformLinkedPackage" */,
 			);
 			productRefGroup = A40000000000000000000004 /* Products */;
 			projectDirPath = "";
@@ -169,30 +182,13 @@
 			files = (
 				A10000000000000000000002 /* Assets.xcassets in Resources */,
 				A10000000000000000000009 /* GoogleService-Info.plist in Resources */,
+				6B2031D9196667F65FD358E5 /* InfoPlist.strings in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
-		A60000000000000000000004 /* Align ONNX Framework Minimum OS */ = {
-			isa = PBXShellScriptBuildPhase;
-			alwaysOutOfDate = 1;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-				"$(SRCROOT)/../tools/ios/fix_onnx_framework.py",
-				"$(TARGET_BUILD_DIR)/$(FRAMEWORKS_FOLDER_PATH)/onnxruntime.framework/Info.plist",
-				"$(TARGET_BUILD_DIR)/$(FRAMEWORKS_FOLDER_PATH)/onnxruntime.framework/onnxruntime",
-			);
-			name = "Align ONNX Framework Minimum OS";
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "set -eu\npython3 \"$SRCROOT/../tools/ios/fix_onnx_framework.py\" \"$TARGET_BUILD_DIR/$FRAMEWORKS_FOLDER_PATH/onnxruntime.framework\" --deployment-target \"$IPHONEOS_DEPLOYMENT_TARGET\"\n";
-		};
 		A60000000000000000000003 /* Compile Kotlin Framework */ = {
 			isa = PBXShellScriptBuildPhase;
 			alwaysOutOfDate = 1;
@@ -212,6 +208,24 @@
 			shellPath = /bin/sh;
 			shellScript = "cd \"$SRCROOT/..\"\nexport JAVA_HOME=$(/usr/libexec/java_home -v 17)\n./gradlew --build-cache :composeApp:embedAndSignAppleFrameworkForXcode --max-workers=\"${GRADLE_MAX_WORKERS:-2}\"\n";
 		};
+		A60000000000000000000004 /* Align ONNX Framework Minimum OS */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"$(SRCROOT)/../tools/ios/fix_onnx_framework.py",
+				"$(TARGET_BUILD_DIR)/$(FRAMEWORKS_FOLDER_PATH)/onnxruntime.framework/Info.plist",
+				"$(TARGET_BUILD_DIR)/$(FRAMEWORKS_FOLDER_PATH)/onnxruntime.framework/onnxruntime",
+			);
+			name = "Align ONNX Framework Minimum OS";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "set -eu\npython3 \"$SRCROOT/../tools/ios/fix_onnx_framework.py\" \"$TARGET_BUILD_DIR/$FRAMEWORKS_FOLDER_PATH/onnxruntime.framework\" --deployment-target \"$IPHONEOS_DEPLOYMENT_TARGET\"\n";
+		};
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -220,13 +234,25 @@
 			buildActionMask = 2147483647;
 			files = (
 				A10000000000000000000001 /* CoffeePeekApp.swift in Sources */,
-				A10000000000000000000012 /* CoffeePeekLaunchView.swift in Sources */,
-                A10000000000000000000007 /* SocialSignInProvider.swift in Sources */,
-				A10000000000000000000004 /* MapLibreMapProvider.swift in Sources */,
+				A10000000000000000000012 /* ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CoffeePeekLaunchView.swift in Sources */,
+				A10000000000000000000007 /* ../../iosXtool/CoffeePeek/Sources/CoffeePeek/SocialSignInProvider.swift in Sources */,
+				A10000000000000000000004 /* ../../iosXtool/CoffeePeek/Sources/CoffeePeek/MapLibreMapProvider.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXVariantGroup section */
+		37A6BA4C5AAF06904D9C889E /* InfoPlist.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				699B07C40BD723F87323A277 /* ru */,
+				63F9FA5248F9B32DFB6EE1B8 /* be */,
+			);
+			name = InfoPlist.strings;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */
 		A81000000000000000000001 /* Debug */ = {
@@ -331,21 +357,13 @@
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
-        A90000000000000000000006 /* XCLocalSwiftPackageReference "KotlinMultiplatformLinkedPackage" */ = {
-            isa = XCLocalSwiftPackageReference;
-            relativePath = KotlinMultiplatformLinkedPackage;
-        };
+		A90000000000000000000006 /* XCLocalSwiftPackageReference "KotlinMultiplatformLinkedPackage" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = KotlinMultiplatformLinkedPackage;
+		};
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCRemoteSwiftPackageReference section */
-		A90000000000000000000007 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
-			isa = XCRemoteSwiftPackageReference;
-			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
-			requirement = {
-				kind = exactVersion;
-				version = 12.19.2;
-			};
-		};
 		A90000000000000000000002 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/google/GoogleSignIn-iOS";
@@ -362,19 +380,17 @@
 				version = 6.29.0;
 			};
 		};
+		A90000000000000000000007 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
+			requirement = {
+				kind = exactVersion;
+				version = 12.19.2;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		A90000000000000000000008 /* FirebaseCore */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = A90000000000000000000007 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
-			productName = FirebaseCore;
-		};
-		A90000000000000000000009 /* FirebaseMessaging */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = A90000000000000000000007 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
-			productName = FirebaseMessaging;
-		};
 		A90000000000000000000001 /* GoogleSignIn */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = A90000000000000000000002 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */;
@@ -385,11 +401,21 @@
 			package = A90000000000000000000004 /* XCRemoteSwiftPackageReference "maplibre-gl-native-distribution" */;
 			productName = MapLibre;
 		};
-        A90000000000000000000005 /* KotlinMultiplatformLinkedPackage */ = {
-            isa = XCSwiftPackageProductDependency;
-            package = A90000000000000000000006 /* XCLocalSwiftPackageReference "KotlinMultiplatformLinkedPackage" */;
-            productName = KotlinMultiplatformLinkedPackage;
-        };
+		A90000000000000000000005 /* KotlinMultiplatformLinkedPackage */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A90000000000000000000006 /* XCLocalSwiftPackageReference */;
+			productName = KotlinMultiplatformLinkedPackage;
+		};
+		A90000000000000000000008 /* FirebaseCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A90000000000000000000007 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseCore;
+		};
+		A90000000000000000000009 /* FirebaseMessaging */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A90000000000000000000007 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
+			productName = FirebaseMessaging;
+		};
 /* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = A70000000000000000000001 /* Project object */;

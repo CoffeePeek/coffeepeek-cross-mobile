@@ -1,7 +1,7 @@
 package com.coffeepeek.feature.homecheckin.impl.ui.data
 
 import androidx.compose.runtime.Composable
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import com.coffeepeek.feature.homecheckin.domain.model.HomePreparationIssue
 import com.coffeepeek.feature.homecheckin.impl.resources.*
 

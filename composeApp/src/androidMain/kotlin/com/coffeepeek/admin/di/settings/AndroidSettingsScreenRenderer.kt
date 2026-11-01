@@ -1,6 +1,7 @@
 package com.coffeepeek.admin.di.settings
 
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
 import com.coffeepeek.admin.config.AppConfig
 import com.coffeepeek.feature.appupdate.impl.AppUpdateController
 import com.coffeepeek.admin.settings.CityPreference
@@ -11,12 +12,15 @@ import com.coffeepeek.admin.ui.screen.profile.SettingsScreenRenderer
 import com.coffeepeek.core.session.SessionReader
 import com.coffeepeek.domain.repository.ShopRepository
 import com.coffeepeek.feature.settings.api.CityEntry
+import com.coffeepeek.feature.settings.api.LanguageEntry
+import com.coffeepeek.feature.settings.api.LanguagePort
 import com.coffeepeek.feature.settings.api.SettingsAppInfo
 import com.coffeepeek.feature.settings.api.SettingsEntry
 import com.coffeepeek.feature.settings.api.SettingsSlots
 import com.coffeepeek.feature.settings.api.ThemeEntry
 import com.coffeepeek.feature.settings.api.UsagePolicyEntry
 import com.coffeepeek.feature.settings.impl.createCityEntry
+import com.coffeepeek.feature.settings.impl.createLanguageEntry
 import com.coffeepeek.feature.settings.impl.createSettingsEntry
 import com.coffeepeek.feature.settings.impl.createThemeEntry
 import com.coffeepeek.feature.settings.impl.createUsagePolicyEntry
@@ -25,6 +29,7 @@ import com.coffeepeek.feature.settings.impl.createUsagePolicyEntry
 internal class AndroidSettingsScreenRenderer(
     private val tab: SettingsEntry,
     private val theme: ThemeEntry,
+    private val language: LanguageEntry,
     private val city: CityEntry,
     private val policy: UsagePolicyEntry,
 ) : SettingsScreenRenderer {
@@ -34,6 +39,7 @@ internal class AndroidSettingsScreenRenderer(
         onAddRoaster = { Navigator.navigate(Navigator.Screen.AddRoaster) },
         onCity = { Navigator.navigate(Navigator.Screen.CitySettings) },
         onTheme = { Navigator.navigate(Navigator.Screen.ThemeSettings) },
+        onLanguage = { Navigator.navigate(Navigator.Screen.LanguageSettings) },
         onUsagePolicy = { Navigator.navigate(Navigator.Screen.UsagePolicy) },
         onLogin = { Navigator.navigate(Navigator.Screen.Auth) },
         onRegister = { Navigator.navigate(Navigator.Screen.Register) },
@@ -44,6 +50,9 @@ internal class AndroidSettingsScreenRenderer(
     override fun Theme() = theme.Content(onBack = Navigator::popBack)
 
     @Composable
+    override fun Language() = language.Content(onBack = Navigator::popBack, modifier = Modifier)
+
+    @Composable
     override fun City() = city.Content(onBack = Navigator::popBack)
 
     @Composable
@@ -51,19 +60,23 @@ internal class AndroidSettingsScreenRenderer(
 }
 
 internal fun androidSettingsScreenRenderer(
-    shops: ShopRepository, cityPreference: CityPreference, sessions: SessionReader, updates: AppUpdateController,
+    shops: ShopRepository, cityPreference: CityPreference, sessions: SessionReader, updates: AppUpdateController, language: LanguagePort,
 ): AndroidSettingsScreenRenderer {
     val theme = AndroidThemePort()
     val cities = AndroidCityPort(shops, cityPreference)
     val external = AndroidSettingsExternalActions()
     return AndroidSettingsScreenRenderer(
         tab = createSettingsEntry(
-            account = AndroidSettingsAccountPort(sessions), theme = theme, cities = cities, updates = AndroidUpdateCheckPort(updates),
+            account = AndroidSettingsAccountPort(sessions), theme = theme, language = language, cities = cities, updates = AndroidUpdateCheckPort(updates),
             external = external, appInfo = SettingsAppInfo(AppConfig.versionName),
             slots = SettingsSlots(guestCard = { onLogin, onRegister, modifier -> GuestAuthCard(onLogin, onRegister, modifier) },
+                notificationPreference = { label, description ->
+                    org.koin.compose.koinInject<com.coffeepeek.admin.feature.notifications.ui.NotificationsRenderer>().Preference(label, description)
+                },
                 accountSwitch = { org.koin.compose.koinInject<com.coffeepeek.feature.ownership.api.BusinessOwnershipEntry>().AccountSwitch() }),
         ),
         theme = createThemeEntry(theme),
+        language = createLanguageEntry(language),
         city = createCityEntry(cities),
         policy = createUsagePolicyEntry(AndroidUsageConsentPort(), external),
     )

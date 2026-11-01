@@ -19,7 +19,7 @@ import com.coffeepeek.core.designsystem.resources.coffeepeek_pagination_error
 import com.coffeepeek.core.designsystem.resources.coffeepeek_pagination_retry
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 /** A list footer that preserves loaded content and offers an explicit retry after a page fails. */

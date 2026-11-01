@@ -52,7 +52,7 @@ import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopReviewFormAction
 import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopReviewFormMode
 import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopReviewFormState
 import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopReviewRatingKind
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 /** Stateless editor body. The caller supplies platform photo-picking callbacks. */

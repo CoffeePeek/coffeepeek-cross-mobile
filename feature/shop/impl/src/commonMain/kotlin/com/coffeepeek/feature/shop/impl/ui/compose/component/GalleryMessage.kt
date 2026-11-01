@@ -15,7 +15,7 @@ import com.coffeepeek.feature.shop.impl.resources.Res
 import com.coffeepeek.feature.shop.impl.resources.shop_menu_gallery_empty
 import com.coffeepeek.feature.shop.impl.resources.shop_menu_gallery_error
 import com.coffeepeek.feature.shop.impl.resources.shop_menu_gallery_retry
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable

@@ -24,7 +24,7 @@ import com.coffeepeek.feature.shop.impl.resources.Res
 import com.coffeepeek.feature.shop.impl.resources.shop_checkin_form_public
 import com.coffeepeek.feature.shop.impl.resources.shop_checkin_form_public_hint
 import com.coffeepeek.feature.shop.impl.resources.shop_checkin_form_private_hint
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable

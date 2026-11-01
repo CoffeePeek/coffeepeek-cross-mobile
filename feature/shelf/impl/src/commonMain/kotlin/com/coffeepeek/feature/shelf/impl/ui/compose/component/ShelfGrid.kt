@@ -59,7 +59,7 @@ import com.coffeepeek.feature.shelf.impl.ui.compose.PreviewShelfImage
 import com.coffeepeek.feature.shelf.impl.ui.compose.model.ShelfAction
 import com.coffeepeek.feature.shelf.impl.ui.compose.model.ShelfBagItem
 import com.coffeepeek.feature.shelf.impl.ui.compose.previewShelfItems
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 private val ShelfGap = 16.dp

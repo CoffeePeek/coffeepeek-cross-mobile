@@ -1,12 +1,18 @@
 package com.coffeepeek.admin.feature.homecheckin.ui
 
+import com.coffeepeek.admin.ui.component.preparationMetricLabels
+
+import com.coffeepeek.admin.ui.component.PreparationMetricLabels
+
+import coffeepeek.composeapp.generated.resources.*
+
 import com.coffeepeek.admin.feature.catalog.api.methodLabel
 import com.coffeepeek.core.designsystem.component.CoffeePeekRating
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import coffeepeek.composeapp.generated.resources.Res
 import coffeepeek.composeapp.generated.resources.coffeepeek_home_taste_rating_description
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -47,6 +53,19 @@ internal fun HomeDetailContent(
     onDelete: () -> Unit,
     onPhotoClick: (PhotoViewerImages, Int) -> Unit,
 ) {
+    val metricLabels = preparationMetricLabels()
+
+    val localizedLegacyHomeCheckInDetailHomeCheckInHome = stringResource(Res.string.legacy_home_check_in_detail_home_check_in_home)
+    val localizedLegacyHomeCheckInDetailHomeCheckInTitleFallback = stringResource(Res.string.legacy_home_check_in_detail_home_check_in_title_fallback)
+    val localizedLegacyHomeCheckInDetailHomeCheckInMethod = stringResource(Res.string.legacy_home_check_in_detail_home_check_in_method)
+    val localizedLegacyHomeCheckInDetailHomeCheckInUnspecified = stringResource(Res.string.legacy_home_check_in_detail_home_check_in_unspecified)
+    val localizedLegacyHomeCheckInDetailHomeCheckInDose = stringResource(Res.string.legacy_home_check_in_detail_home_check_in_dose)
+    val localizedLegacyHomeCheckInDetailHomeCheckInDuration = stringResource(Res.string.legacy_home_check_in_detail_home_check_in_duration)
+    val localizedLegacyHomeCheckInDetailHomeCheckInRating = stringResource(Res.string.legacy_home_check_in_detail_home_check_in_rating)
+    val localizedLegacyHomeCheckInDetailHomeCheckInNote = stringResource(Res.string.legacy_home_check_in_detail_home_check_in_note)
+    val localizedLegacyCheckInActionsOwnershipEdit = stringResource(Res.string.legacy_check_in_actions_ownership_edit)
+    val localizedLegacyHomeCheckInDetailHomeCheckInDelete = stringResource(Res.string.legacy_home_check_in_detail_home_check_in_delete)
+
     val photos = entry.photos.filter { it.url.isNotBlank() }
     LazyColumn(
         modifier.fillMaxWidth(), contentPadding = PaddingValues(start = 20.dp, end = 20.dp, top = 4.dp, bottom = 24.dp),
@@ -58,10 +77,10 @@ internal fun HomeDetailContent(
                     itemVerticalAlignment = Alignment.CenterVertically) {
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                         Icon(CpIcons.Coffee, null, Modifier.size(20.dp), tint = MaterialTheme.colorScheme.primary)
-                        Text("Кофе дома", style = MaterialTheme.typography.labelLarge,
+                        Text(localizedLegacyHomeCheckInDetailHomeCheckInHome, style = MaterialTheme.typography.labelLarge,
                             color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
-                    entry.visibilityLabel()?.let { label ->
+                    entry.visibilityLabel(homeVisibilityLabels())?.let { label ->
                         Surface(shape = RoundedCornerShape(50), color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)) {
                             Row(Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
                                 verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(5.dp)) {
@@ -72,7 +91,7 @@ internal fun HomeDetailContent(
                         }
                     }
                 }
-                Text(entry.beanName?.takeIf(String::isNotBlank) ?: "Домашнее приготовление",
+                Text(entry.beanName?.takeIf(String::isNotBlank) ?: localizedLegacyHomeCheckInDetailHomeCheckInTitleFallback,
                     style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
                 val date = entry.preparedOn.split('-').reversed().joinToString(".")
                 val time = utcIsoToLocalDateTime(entry.preparedAtUtc).substringAfterLast(' ', "")
@@ -94,9 +113,9 @@ internal fun HomeDetailContent(
                             Icon(CpIcons.Coffee, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(24.dp))
                         }
                         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                            Text("Способ приготовления", style = MaterialTheme.typography.labelSmall,
+                            Text(localizedLegacyHomeCheckInDetailHomeCheckInMethod, style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant)
-                            Text(entry.brewMethodCode?.methodLabel() ?: "Не указан",
+                            Text(entry.brewMethodCode?.methodLabel(metricLabels.otherMethod) ?: localizedLegacyHomeCheckInDetailHomeCheckInUnspecified,
                                 style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
                         }
                     }
@@ -106,8 +125,8 @@ internal fun HomeDetailContent(
                     if (entry.doseGrams != null || entry.brewDurationSeconds != null) {
                         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f))
                         FlowRow(horizontalArrangement = Arrangement.spacedBy(24.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                            entry.doseGrams?.let { RecipeMetric("Кофе на приготовление", homeDoseLabel(it)) }
-                            entry.brewDurationSeconds?.let { RecipeMetric("Время заваривания", homeDurationLabel(it)) }
+                            entry.doseGrams?.let { RecipeMetric(localizedLegacyHomeCheckInDetailHomeCheckInDose, homeDoseLabel(it, metricLabels)) }
+                            entry.brewDurationSeconds?.let { RecipeMetric(localizedLegacyHomeCheckInDetailHomeCheckInDuration, homeDurationLabel(it, metricLabels)) }
                         }
                     }
                 }
@@ -116,7 +135,7 @@ internal fun HomeDetailContent(
         entry.tasteScore?.let { score -> item(key = "rating") {
             FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween,
                 verticalArrangement = Arrangement.spacedBy(8.dp), itemVerticalAlignment = Alignment.CenterVertically) {
-                Text("Оценка вкуса", style = MaterialTheme.typography.titleSmall)
+                Text(localizedLegacyHomeCheckInDetailHomeCheckInRating, style = MaterialTheme.typography.titleSmall)
                 CoffeePeekRating(score.toDouble(), starSpacing = 4.dp, valueSpacing = 10.dp,
                     valueText = "$score/5", valueStyle = MaterialTheme.typography.labelLarge,
                     contentDescription = stringResource(Res.string.coffeepeek_home_taste_rating_description, score),
@@ -130,18 +149,18 @@ internal fun HomeDetailContent(
         }
         entry.text?.takeIf(String::isNotBlank)?.let { note -> item(key = "note") {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Text("Впечатления", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                Text(localizedLegacyHomeCheckInDetailHomeCheckInNote, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
                 Text(note, style = MaterialTheme.typography.bodyLarge)
             }
         } }
         item(key = "actions") {
             Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                AppButton("Редактировать", onClick = onEdit)
+                AppButton(localizedLegacyCheckInActionsOwnershipEdit, onClick = onEdit)
                 TextButton(onClick = onDelete, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
                     colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)) {
                     Icon(CpIcons.Delete, null, Modifier.size(18.dp))
                     Spacer(Modifier.width(8.dp))
-                    Text("Удалить запись")
+                    Text(localizedLegacyHomeCheckInDetailHomeCheckInDelete)
                 }
             }
         }
@@ -159,13 +178,15 @@ private fun RecipeMetric(label: String, value: String) {
     }
 }
 
-internal fun homeDoseLabel(value: String): String =
-    (if ('.' in value) value.trimEnd('0').trimEnd('.') else value).replace('.', ',') + " г"
+internal fun homeDoseLabel(value: String, labels: PreparationMetricLabels): String {
+    val dose = (if ('.' in value) value.trimEnd('0').trimEnd('.') else value).replace('.', ',')
+    return labels.grams.replace("%1\$s", dose)
+}
 
-internal fun homeDurationLabel(seconds: Int): String = buildList {
-    if (seconds >= 3600) add("${seconds / 3600} ч")
-    if (seconds / 60 % 60 > 0) add("${seconds / 60 % 60} мин")
-    if (seconds % 60 > 0 || seconds == 0) add("${seconds % 60} с")
+internal fun homeDurationLabel(seconds: Int, labels: PreparationMetricLabels): String = buildList {
+    if (seconds >= 3600) add(labels.hours.replace("%1\$s", (seconds / 3600).toString()))
+    if (seconds / 60 % 60 > 0) add(labels.minutes.replace("%1\$s", (seconds / 60 % 60).toString()))
+    if (seconds % 60 > 0 || seconds == 0) add(labels.seconds.replace("%1\$s", (seconds % 60).toString()))
 }.joinToString(" ")
 
 @Composable private fun HomeDetailRatingPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {

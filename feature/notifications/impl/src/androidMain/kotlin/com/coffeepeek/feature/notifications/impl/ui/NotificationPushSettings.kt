@@ -1,59 +1,96 @@
 package com.coffeepeek.feature.notifications.impl.ui
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import com.coffeepeek.core.designsystem.component.CoffeePeekTextButton as TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.toggleableState
+import androidx.compose.ui.state.ToggleableState
 import com.coffeepeek.feature.notifications.impl.R
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.core.designsystem.component.CoffeePeekSwitch
+import com.coffeepeek.core.designsystem.component.CoffeePeekSettingsRow
+import com.coffeepeek.core.designsystem.component.CoffeePeekIconBadgePalette
+import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.feature.notifications.api.NotificationInboxState
+import com.coffeepeek.feature.notifications.api.NotificationSettingsError
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 
 @Composable
-internal fun NotificationPushSettings(state: NotificationInboxState, onPushChanged: (Boolean) -> Unit, onRefresh: () -> Unit) {
-    val canToggle = state.settingsLoaded && state.deviceAvailable && !state.savingSettings
-    val checked = state.pushEnabled && state.permissionGranted
-    val title = stringResource(R.string.notifications_push_title)
-    Surface(shape = RoundedCornerShape(CoffeePeekDimens.radiusLg),
-        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = .5f)) {
-        Column(Modifier.padding(CoffeePeekDimens.spacing4), verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3)) {
-            // Only the switch takes the tap; the text around it is not a button.
-            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3)) {
-                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing1)) {
-                    Text(title, style = MaterialTheme.typography.titleSmall)
-                    Text(stringResource(when {
-                        !state.deviceAvailable -> R.string.notifications_push_unavailable
-                        state.savingSettings -> R.string.notifications_saving
-                        !state.permissionGranted -> R.string.notifications_push_permission
-                        else -> R.string.notifications_push_description
-                    }), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-                CoffeePeekSwitch(checked, onPushChanged, enabled = canToggle, modifier = Modifier.semantics { contentDescription = title })
-            }
-            state.settingsError?.let {
-                Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
-                if (!state.settingsLoaded) TextButton(onClick = onRefresh,
-                    colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onSurface)) {
-                    Text(stringResource(R.string.notifications_retry_settings))
-                }
-            }
+internal fun NotificationPushSettings(
+    state: NotificationInboxState, onPushChanged: (Boolean) -> Unit, onRefresh: () -> Unit, onSignIn: () -> Unit,
+    label: String, description: String,
+) {
+    val guest = state.accountId == null
+    val checked = state.pushPreferenceChecked
+    Column {
+        CoffeePeekSettingsRow(CoffeePeekIcons.Notifications, label, notificationPreferenceDescription(state, description),
+            onClick = { if (guest) onSignIn() else onPushChanged(!checked) },
+            enabled = guest || state.canChangePushPreference, iconColors = CoffeePeekIconBadgePalette.Gold,
+            role = if (guest) Role.Button else Role.Switch,
+            modifier = if (guest) Modifier else Modifier.semantics { toggleableState = ToggleableState(checked) },
+            trailing = { CoffeePeekSwitch(checked, null, Modifier.clearAndSetSemantics { }, enabled = state.canChangePushPreference) })
+        if (!guest) NotificationPreferenceFeedback(state, onRefresh)
+    }
+}
+
+@Composable
+private fun notificationPreferenceDescription(state: NotificationInboxState, description: String): String = when {
+    state.accountId == null -> stringResource(R.string.notifications_settings_sign_in_description)
+    !state.deviceAvailable -> stringResource(R.string.notifications_push_unavailable)
+    state.savingSettings -> stringResource(R.string.notifications_saving)
+    !state.settingsLoaded -> stringResource(R.string.notifications_loading)
+    !state.permissionGranted -> stringResource(R.string.notifications_push_permission)
+    else -> description
+}
+
+@Composable
+private fun NotificationPreferenceFeedback(state: NotificationInboxState, onRefresh: () -> Unit) {
+    val error = state.settingsError ?: return
+    Column(Modifier.padding(horizontal = CoffeePeekDimens.settingsRowPaddingH, vertical = CoffeePeekDimens.spacing2)) {
+        Text(stringResource(when (error) {
+            NotificationSettingsError.LoadFailed -> R.string.notifications_push_load_failed
+            NotificationSettingsError.SaveFailed -> R.string.notifications_push_save_failed
+        }), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+        if (!state.settingsLoaded) TextButton(onClick = onRefresh,
+            colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onSurface)) {
+            Text(stringResource(R.string.notifications_retry_settings))
         }
     }
 }
 
 @Composable
 private fun NotificationPushSettingsPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
-    NotificationPushSettings(NotificationInboxState(settingsLoaded = true, deviceAvailable = true, permissionGranted = true), {}, {})
+    Column(verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing4)) {
+        val states = listOf(NotificationInboxState(),
+            NotificationInboxState(accountId = "preview", settingsLoaded = true, deviceAvailable = true, permissionGranted = true),
+            NotificationInboxState(accountId = "preview", deviceAvailable = true, settingsError = NotificationSettingsError.LoadFailed),
+            NotificationInboxState(accountId = "preview", settingsLoaded = true, deviceAvailable = true,
+                settingsError = NotificationSettingsError.SaveFailed))
+        states.forEach { state ->
+            NotificationPushSettings(state, {}, {}, {}, stringResource(R.string.notifications_title), stringResource(R.string.notifications_push_description))
+        }
+    }
 }
 
 @Preview(widthDp = 360) @Composable private fun NotificationPushSettingsLightPreview() = NotificationPushSettingsPreview(false)
 @Preview(widthDp = 360) @Composable private fun NotificationPushSettingsDarkPreview() = NotificationPushSettingsPreview(true)
+
+@Composable
+private fun NotificationPreferenceLargeTextPreview(dark: Boolean) {
+    CompositionLocalProvider(LocalDensity provides Density(LocalDensity.current.density, 2f)) {
+        NotificationPushSettingsPreview(dark)
+    }
+}
+
+@Preview(widthDp = 320) @Composable private fun NotificationPreferenceLargeTextLightPreview() = NotificationPreferenceLargeTextPreview(false)
+@Preview(widthDp = 320) @Composable private fun NotificationPreferenceLargeTextDarkPreview() = NotificationPreferenceLargeTextPreview(true)

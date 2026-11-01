@@ -3,7 +3,7 @@ package com.coffeepeek.feature.shelf.impl.ui.compose.component
 import androidx.compose.runtime.Composable
 import com.coffeepeek.core.designsystem.component.CoffeePeekDestructiveConfirmationSheet
 import com.coffeepeek.feature.shelf.impl.resources.*
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 
 /** Deletion is only for a bag added by mistake; the message points to "Закончилась" instead. */
 @Composable

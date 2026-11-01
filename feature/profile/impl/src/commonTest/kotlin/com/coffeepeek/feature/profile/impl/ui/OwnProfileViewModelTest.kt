@@ -1,5 +1,6 @@
 package com.coffeepeek.feature.profile.impl.ui
 
+import com.coffeepeek.feature.profile.impl.ui.model.OwnProfileError
 import androidx.lifecycle.ViewModelStore
 import com.coffeepeek.feature.profile.api.OwnProfile
 import com.coffeepeek.feature.profile.api.ProfileAccountPort
@@ -51,7 +52,7 @@ class OwnProfileViewModelTest {
 
     @Test fun withoutACacheItRefreshesAndAFailureWithoutContentShowsTheFixedError() = runTest(dispatcher) {
         val vm = model(Accounts("a", null).apply { load = { Result.failure(RuntimeException("net")) } }); runCurrent()
-        assertEquals("Не удалось загрузить профиль", vm.state.value.error)
+        assertEquals(OwnProfileError.LoadFailed, vm.state.value.error)
         assertFalse(vm.state.value.isLoading)
     }
 
@@ -59,7 +60,7 @@ class OwnProfileViewModelTest {
         val accounts = Accounts("a", anna).apply { load = { Result.failure(RuntimeException("net")) } }
         val vm = model(accounts); runCurrent()
         vm.onAction(OwnProfileAction.Refresh); runCurrent()
-        assertEquals("Не удалось загрузить профиль", vm.state.value.refreshError)
+        assertEquals(OwnProfileError.LoadFailed, vm.state.value.refreshError)
         assertNull(vm.state.value.error)
         assertEquals("Anna Lee", vm.state.value.profile?.userName)
     }

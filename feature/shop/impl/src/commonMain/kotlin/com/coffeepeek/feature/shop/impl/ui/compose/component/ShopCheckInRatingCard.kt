@@ -29,7 +29,7 @@ import com.coffeepeek.feature.shop.impl.resources.shop_review_coffee
 import com.coffeepeek.feature.shop.impl.resources.shop_review_rating_value
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable

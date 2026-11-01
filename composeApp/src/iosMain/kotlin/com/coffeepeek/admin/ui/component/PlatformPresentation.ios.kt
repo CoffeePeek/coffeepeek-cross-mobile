@@ -18,19 +18,22 @@ import androidx.compose.ui.viewinterop.UIKitInteropProperties
 import androidx.compose.ui.window.ComposeUIViewController
 import coffeepeek.composeapp.generated.resources.Res
 import coffeepeek.composeapp.generated.resources.presentation_cancel
+import coffeepeek.composeapp.generated.resources.native_date_cancel
+import coffeepeek.composeapp.generated.resources.native_done
 import com.coffeepeek.admin.AppContent
 import com.coffeepeek.admin.theme.switchPalette
 import com.coffeepeek.admin.theme.toUIColor
 import com.coffeepeek.admin.theme.uiKitStyle
 import com.coffeepeek.admin.theme.ThemeManager
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
+import com.coffeepeek.core.designsystem.resources.LocalCoffeePeekLanguageTag
 import kotlinx.cinterop.ObjCAction
 import kotlinx.cinterop.useContents
 import platform.Foundation.*
 import platform.UIKit.*
 import platform.darwin.NSObject
 import kotlinx.coroutines.delay
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import kotlin.math.abs
 
 internal fun UIViewController.presentationHost(): UIViewController {
@@ -219,6 +222,9 @@ internal actual fun platformReduceMotion(): Boolean {
 
 @Composable
 internal actual fun NativeDatePicker(title: String, initialMillis: Long, maximumMillis: Long?, timeOnly: Boolean, onConfirm: (Long) -> Unit, onDismiss: () -> Unit): Boolean {
+    val cancel = stringResource(Res.string.native_date_cancel)
+    val done = stringResource(Res.string.native_done)
+    val languageTag = LocalCoffeePeekLanguageTag.current
     val picker = remember { UIDatePicker().apply {
         datePickerMode = if (timeOnly) UIDatePickerMode.UIDatePickerModeTime else UIDatePickerMode.UIDatePickerModeDate
         preferredDatePickerStyle = UIDatePickerStyle.UIDatePickerStyleWheels
@@ -231,9 +237,9 @@ internal actual fun NativeDatePicker(title: String, initialMillis: Long, maximum
     // sheet. NativeTimePickerRow relies on this function handling presentation.
     SwipeDismissModalBottomSheet(onDismissRequest = onDismiss) {
         val colors = MaterialTheme.colorScheme
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            TextButton(onClick = onDismiss) { Text("Отмена") }
-            TextButton(onClick = { val millis = (picker.date.timeIntervalSince1970 * 1000).toLong(); onConfirm(if (timeOnly) millis else (millis / 86_400_000L) * 86_400_000L); onDismiss() }) { Text("Готово") }
+        NativeDatePickerActions(cancel, done, onDismiss) {
+            onConfirm(nativeDatePickerMillis(picker, timeOnly))
+            onDismiss()
         }
         PlatformScrollableColumn(Modifier.fillMaxWidth().weight(1f, fill = false)) {
             Text(title, style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(horizontal = 16.dp))
@@ -245,11 +251,25 @@ internal actual fun NativeDatePicker(title: String, initialMillis: Long, maximum
                     it.overrideUserInterfaceStyle = colors.uiKitStyle
                     it.backgroundColor = UIColor.clearColor
                     it.tintColor = colors.primary.toUIColor()
+                    it.locale = NSLocale(languageTag)
                 },
             )
         }
     }
     return true
+}
+
+@Composable
+private fun NativeDatePickerActions(cancel: String, done: String, onDismiss: () -> Unit, onDone: () -> Unit) {
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+        TextButton(onClick = onDismiss) { Text(cancel) }
+        TextButton(onClick = onDone) { Text(done) }
+    }
+}
+
+private fun nativeDatePickerMillis(picker: UIDatePicker, timeOnly: Boolean): Long {
+    val millis = (picker.date.timeIntervalSince1970 * 1000).toLong()
+    return if (timeOnly) millis else (millis / 86_400_000L) * 86_400_000L
 }
 
 @Composable
@@ -259,3 +279,11 @@ private fun NativeSwitchPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dar
 
 @Preview @Composable private fun NativeSwitchLightPreview() = NativeSwitchPreview(false)
 @Preview @Composable private fun NativeSwitchDarkPreview() = NativeSwitchPreview(true)
+
+@Composable
+private fun NativeDatePickerActionsPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
+    NativeDatePickerActions(stringResource(Res.string.native_date_cancel), stringResource(Res.string.native_done), {}, {})
+}
+
+@Preview @Composable private fun NativeDatePickerActionsLightPreview() = NativeDatePickerActionsPreview(false)
+@Preview @Composable private fun NativeDatePickerActionsDarkPreview() = NativeDatePickerActionsPreview(true)

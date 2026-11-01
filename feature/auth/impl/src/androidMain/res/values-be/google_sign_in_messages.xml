@@ -1,0 +1,9 @@
+<resources>
+    <string name="auth_google_token_failed">Не ўдалося атрымаць токен Google</string>
+    <string name="auth_google_configuration_error">Google Sign-In: няправільная канфігурацыя. Дадайце SHA-1 debug/release keystore і Android OAuth client (com.coffeepeek) у Google Cloud Console.</string>
+    <string name="auth_google_rejected">Google Sign-In адхілены. Праверце GOOGLE_WEB_CLIENT_ID і OAuth-кліенты ў Google Cloud Console.</string>
+    <string name="auth_google_status_error">Памылка Google Sign-In %1$d: %2$s</string>
+    <string name="auth_google_unknown_error">невядомая</string>
+    <string name="auth_google_sign_in_failed">Не ўдалося ўвайсці праз Google</string>
+    <string name="auth_google_activity_unavailable">Activity недаступная</string>
+</resources>

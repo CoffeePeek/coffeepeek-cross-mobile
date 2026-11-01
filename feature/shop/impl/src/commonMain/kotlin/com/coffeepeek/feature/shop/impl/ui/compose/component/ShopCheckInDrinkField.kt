@@ -30,7 +30,7 @@ import com.coffeepeek.feature.shop.impl.resources.shop_checkin_form_drink_custom
 import com.coffeepeek.feature.shop.impl.resources.shop_checkin_form_drinks_error
 import com.coffeepeek.feature.shop.impl.resources.shop_checkin_form_retry
 import com.coffeepeek.feature.shop.impl.resources.shop_checkin_form_invalid_drink
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable

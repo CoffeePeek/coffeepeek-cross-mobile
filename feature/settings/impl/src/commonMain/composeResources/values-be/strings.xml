@@ -1,0 +1,11 @@
+<resources>
+    <string name="settings_back">Назад</string>
+    <string name="settings_retry">Паўтарыць</string>
+    <string name="settings_language_title">Мова</string>
+    <string name="settings_language_heading">Мова праграмы</string>
+    <string name="settings_language_description">Абярыце мову інтэрфейсу. Выбар захаваецца пасля перазапуску.</string>
+    <string name="settings_language_russian">Русский</string>
+    <string name="settings_language_belarusian">Беларуская</string>
+    <string name="settings_language_saving">Захоўваем мову…</string>
+    <string name="settings_language_save_error">Не ўдалося захаваць мову. Паспрабуйце яшчэ раз.</string>
+</resources>

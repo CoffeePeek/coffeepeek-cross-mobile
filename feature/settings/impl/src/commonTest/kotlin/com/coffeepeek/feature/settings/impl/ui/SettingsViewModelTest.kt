@@ -2,10 +2,12 @@ package com.coffeepeek.feature.settings.impl.ui
 
 import androidx.lifecycle.ViewModelStore
 import com.coffeepeek.feature.settings.api.CityPort
+import com.coffeepeek.feature.settings.api.LanguagePort
 import com.coffeepeek.feature.settings.api.SettingsAccountPort
 import com.coffeepeek.feature.settings.api.ThemePort
 import com.coffeepeek.feature.settings.api.UpdateCheckPort
 import com.coffeepeek.feature.settings.domain.SettingsCity
+import com.coffeepeek.feature.settings.domain.AppLanguage
 import com.coffeepeek.feature.settings.domain.ThemeMode
 import com.coffeepeek.feature.settings.domain.UpdateCheckOutcome
 import com.coffeepeek.feature.settings.domain.UpdateCheckState
@@ -55,6 +57,16 @@ class SettingsViewModelTest {
         override fun set(mode: ThemeMode) { this.mode.value = mode }
     }
 
+    private class Language(initial: AppLanguage = AppLanguage.RUSSIAN) : LanguagePort {
+        val selected = MutableStateFlow(initial)
+        override fun current() = selected.value
+        override fun observe(): Flow<AppLanguage> = selected
+        override suspend fun set(language: AppLanguage): Result<Unit> {
+            selected.value = language
+            return Result.success(Unit)
+        }
+    }
+
     private class Cities(var result: Result<List<SettingsCity>>) : CityPort {
         val selected = MutableStateFlow<String?>(null)
         var loads = 0
@@ -83,12 +95,14 @@ class SettingsViewModelTest {
     }
 
     private fun model(account: Account = Account(true), theme: Theme = Theme(ThemeMode.SYSTEM), cities: Cities = Cities(Result.success(listOf(minsk, brest))),
-        updates: Updates = Updates()) = SettingsViewModel(account, theme, cities, updates).also { store.put("settings", it) }
+        updates: Updates = Updates(), language: Language = Language()) =
+        SettingsViewModel(account, theme, cities, updates, language).also { store.put("settings", it) }
 
-    @Test fun theTabStartsOnTheCurrentAccountAndThemeBeforeAnythingEmits() = runTest(dispatcher) {
-        val vm = model(Account(false), Theme(ThemeMode.DARK))
+    @Test fun theTabStartsOnTheCurrentAccountThemeAndLanguageBeforeAnythingEmits() = runTest(dispatcher) {
+        val vm = model(Account(false), Theme(ThemeMode.DARK), language = Language(AppLanguage.BELARUSIAN))
         assertFalse(vm.state.value.signedIn)
         assertEquals(ThemeMode.DARK, vm.state.value.theme)
+        assertEquals(AppLanguage.BELARUSIAN, vm.state.value.language)
         assertNull(vm.state.value.cityName)
     }
 
@@ -122,6 +136,17 @@ class SettingsViewModelTest {
         val theme = Theme(ThemeMode.SYSTEM); val vm = model(theme = theme); runCurrent()
         theme.mode.value = ThemeMode.LIGHT; runCurrent()
         assertEquals(ThemeMode.LIGHT, vm.state.value.theme)
+    }
+
+    @Test
+    fun theLanguageSummaryFollowsChangesMadeOnTheLanguageScreen() = runTest(dispatcher) {
+        val language = Language()
+        val vm = model(language = language)
+        runCurrent()
+        language.set(AppLanguage.BELARUSIAN)
+        runCurrent()
+        assertEquals(AppLanguage.BELARUSIAN, vm.state.value.language)
+        assertEquals(ThemeMode.SYSTEM, vm.state.value.theme)
     }
 
     private fun TestScope.events(vm: SettingsViewModel) =

@@ -1,5 +1,7 @@
 package com.coffeepeek.admin.ui.screen.map
 
+import coffeepeek.composeapp.generated.resources.*
+
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -15,7 +17,7 @@ import com.coffeepeek.admin.ui.component.CpSearchField
 import com.coffeepeek.admin.ui.component.GlassIconButton
 import com.coffeepeek.admin.ui.icons.CpIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
@@ -42,14 +44,17 @@ internal fun MapHeader(
 
 @Composable
 private fun MapSearchControls(query: String, actions: MapScreenActions, filterControl: (@Composable () -> Unit)?) {
+    val localizedLegacyMapHeaderDiscoveryMapCollapse = stringResource(Res.string.legacy_map_header_discovery_map_collapse)
+    val localizedLegacyMapHeaderDiscoveryMapSearchPlaceholder = stringResource(Res.string.legacy_map_header_discovery_map_search_placeholder)
+
     Row(Modifier.padding(horizontal = CpDimens.spacing4), verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing2)) {
         actions.onCollapse?.let { collapse ->
-            GlassIconButton(collapse, contentDescription = "Свернуть карту", hazeState = null) {
+            GlassIconButton(collapse, contentDescription = localizedLegacyMapHeaderDiscoveryMapCollapse, hazeState = null) {
                 Icon(CpIcons.Close, contentDescription = null, modifier = Modifier.size(22.dp))
             }
         }
-        CpSearchField(value = query, onValueChange = actions.onQueryChange, placeholder = "Поиск кофейни…",
+        CpSearchField(value = query, onValueChange = actions.onQueryChange, placeholder = localizedLegacyMapHeaderDiscoveryMapSearchPlaceholder,
             fieldHeight = CpDimens.buttonHeight, modifier = Modifier.weight(1f))
         filterControl?.invoke()
     }

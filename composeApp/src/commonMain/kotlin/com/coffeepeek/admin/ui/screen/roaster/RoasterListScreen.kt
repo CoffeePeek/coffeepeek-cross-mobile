@@ -1,5 +1,8 @@
 package com.coffeepeek.admin.ui.screen.roaster
 
+import coffeepeek.composeapp.generated.resources.*
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
+
 import com.coffeepeek.core.designsystem.component.coffeePeekScrollContentPadding
 
 import com.coffeepeek.core.designsystem.component.CoffeePeekScaffold as Scaffold
@@ -40,6 +43,8 @@ internal fun RoasterListScreen(
     favoritesOnly: Boolean = false,
     vm: RoasterListViewModel = platformViewModel(),
 ) {
+    val localizedLegacyRoasterListScreenRoasterEmpty = stringResource(Res.string.legacy_roaster_list_screen_roaster_empty)
+
     val state by vm.state.collectAsState()
     val listState = rememberLazyListState()
     val visible = state.visibleItems(query, selectedRoasterIds, favoritesOnly)
@@ -104,7 +109,7 @@ internal fun RoasterListScreen(
                 if (state.error != null) item {
                     LoadErrorContent(onRetry = vm::refresh)
                 } else if (visible.isEmpty() && !state.isLoading) item {
-                    Text("Обжарщики не найдены", modifier = Modifier.padding(24.dp), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(localizedLegacyRoasterListScreenRoasterEmpty, modifier = Modifier.padding(24.dp), color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         }
@@ -158,17 +163,19 @@ internal fun RoasterPreview(
         } else if (state.error != null) {
             LoadErrorContent(onRetry = vm::refresh)
         } else if (visible.isEmpty() && !state.isLoading) {
-            Text("Обжарщики не найдены", color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(stringResource(Res.string.legacy_roaster_list_screen_roaster_empty), color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }
 
 @Composable
 private fun RoasterTagFilters(state: RoasterListUiState, onToggle: (String) -> Unit, onClear: () -> Unit) {
+    val localizedLegacyProfileCheckInsScreenRoasterTagAll = stringResource(Res.string.legacy_profile_check_ins_screen_roaster_tag_all)
+
     if (state.availableTags.isEmpty()) return
     LazyRow(horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing2)) {
         item {
-            FilterChip(selected = state.selectedTagIds.isEmpty(), onClick = onClear, label = { Text("Все") })
+            FilterChip(selected = state.selectedTagIds.isEmpty(), onClick = onClear, label = { Text(localizedLegacyProfileCheckInsScreenRoasterTagAll) })
         }
         items(state.availableTags, key = { it.slug }) { tag ->
             FilterChip(selected = tag.slug in state.selectedTagIds, onClick = { onToggle(tag.slug) }, label = { Text(tag.name) })

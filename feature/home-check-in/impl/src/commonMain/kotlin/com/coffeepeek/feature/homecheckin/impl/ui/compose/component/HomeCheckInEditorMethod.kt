@@ -5,7 +5,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
@@ -21,7 +21,9 @@ internal fun HomeCheckInEditorMethod(
 ) {
     var expanded by remember { mutableStateOf(false) }
     val selectedMethod = methods.firstOrNull { it.code == selected || selected in it.legacyCodes }
-    val label = selectedMethod?.name ?: selected?.takeIf { error == null }?.let(formatMethod)
+    val label = selectedMethod?.name ?: selected?.takeIf { error == null }?.let {
+        if (it == "other") stringResource(Res.string.home_check_in_method_other) else formatMethod(it)
+    }
     Box {
         HomeCheckInEditorSelect(label ?: stringResource(Res.string.home_check_in_choose_method), CoffeePeekIcons.Coffee,
             stringResource(Res.string.home_check_in_method_action), enabled, error,

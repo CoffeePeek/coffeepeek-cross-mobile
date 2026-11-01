@@ -1,5 +1,8 @@
 package com.coffeepeek.admin.feature.community.ui
 
+import coffeepeek.composeapp.generated.resources.*
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
+
 import com.coffeepeek.core.designsystem.component.coffeePeekScrollContentPadding
 
 import com.coffeepeek.core.designsystem.component.CoffeePeekScaffold as Scaffold
@@ -41,6 +44,16 @@ import com.coffeepeek.domain.model.CheckInVisibility
 
 @Composable
 fun CommunityScreen(onCreateCheckIn: () -> Unit, notificationsAction: @Composable () -> Unit = {}) {
+    val localizedLegacyReviewReportScreenCommunityReportTitle = stringResource(Res.string.legacy_review_report_screen_community_report_title)
+    val localizedLegacyCommunityScreenCommunityReportPlaceholder = stringResource(Res.string.legacy_community_screen_community_report_placeholder)
+    val localizedLegacyCommunityScreenCommunityReportSending = stringResource(Res.string.legacy_community_screen_community_report_sending)
+    val localizedLegacyReviewReportScreenCommunityReportSend = stringResource(Res.string.legacy_review_report_screen_community_report_send)
+    val localizedHistoryHomeDeleteCancel = stringResource(Res.string.history_home_delete_cancel)
+    val localizedLegacyVisitedPlacesScreenSandboxFeedTitle = stringResource(Res.string.legacy_visited_places_screen_sandbox_feed_title)
+    val localizedLegacyCommunityScreenCommunityRefresh = stringResource(Res.string.legacy_community_screen_community_refresh)
+    val localizedRetry = stringResource(Res.string.retry)
+    val localizedLegacyCommunityScreenCommunityEmpty = stringResource(Res.string.legacy_community_screen_community_empty)
+
     val vm: CommunityViewModel = platformViewModel()
     val state by vm.state.collectAsState()
     TrackFeedViewed(state.firstPageCount, state.timeline == CommunityTimeline.Public)
@@ -86,11 +99,11 @@ fun CommunityScreen(onCreateCheckIn: () -> Unit, notificationsAction: @Composabl
         onDismissRequest = vm::dismissReport, dismissEnabled = !state.isReporting,
     ) {
         Column(Modifier.fillMaxWidth().padding(CpDimens.spacing4), verticalArrangement = Arrangement.spacedBy(CpDimens.spacing2)) {
-            Text("Пожаловаться на чекин", style = MaterialTheme.typography.titleLarge)
-            ReviewTextInput(state.reportText, vm::updateReport, "Опишите проблему", maxLength = 2000, isError = state.reportError != null)
+            Text(localizedLegacyReviewReportScreenCommunityReportTitle, style = MaterialTheme.typography.titleLarge)
+            ReviewTextInput(state.reportText, vm::updateReport, localizedLegacyCommunityScreenCommunityReportPlaceholder, maxLength = 2000, isError = state.reportError != null)
             state.reportError?.let { Text(it, color = MaterialTheme.colorScheme.error) }
-            TextButton(onClick = vm::submitReport, enabled = !state.isReporting) { Text(if (state.isReporting) "Отправляем…" else "Отправить") }
-            TextButton(onClick = vm::dismissReport, enabled = !state.isReporting) { Text("Отмена") }
+            TextButton(onClick = vm::submitReport, enabled = !state.isReporting) { Text(if (state.isReporting) localizedLegacyCommunityScreenCommunityReportSending else localizedLegacyReviewReportScreenCommunityReportSend) }
+            TextButton(onClick = vm::dismissReport, enabled = !state.isReporting) { Text(localizedHistoryHomeDeleteCancel) }
         }
     }
 
@@ -121,7 +134,7 @@ fun CommunityScreen(onCreateCheckIn: () -> Unit, notificationsAction: @Composabl
                     item(key = "heading", contentType = "heading") {
                         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                             Text(
-                                "Лента",
+                                localizedLegacyVisitedPlacesScreenSandboxFeedTitle,
                                 modifier = Modifier.weight(1f),
                                 style = MaterialTheme.typography.headlineMedium,
                                 fontWeight = FontWeight.Bold,
@@ -177,11 +190,11 @@ fun CommunityScreen(onCreateCheckIn: () -> Unit, notificationsAction: @Composabl
                                 state.error != null -> item(key = "error", contentType = "error") {
                                     LoadErrorContent(
                                         onRetry = vm::retry,
-                                        retryLabel = if (state.restartPagination) "Обновить ленту" else "Попробовать снова",
+                                        retryLabel = if (state.restartPagination) localizedLegacyCommunityScreenCommunityRefresh else localizedRetry,
                                     )
                                 }
                                 state.items.isEmpty() && !state.isLoading -> item(key = "empty", contentType = "empty") {
-                                    Text("Пока нет опубликованных чек-инов.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    Text(localizedLegacyCommunityScreenCommunityEmpty, color = MaterialTheme.colorScheme.onSurfaceVariant)
                                 }
                             }
                             if (state.isLoadingMore) item(key = "loading-more", contentType = "loading") {
@@ -204,12 +217,22 @@ fun CommunityScreen(onCreateCheckIn: () -> Unit, notificationsAction: @Composabl
     }
 }
 
-internal fun CheckIn.publicationLabel(): String = if (visibility == CheckInVisibility.Private) "Приватный" else when (moderationState) {
-    CheckInModerationState.Pending -> "На проверке"
-    CheckInModerationState.Approved -> "Опубликован"
-    CheckInModerationState.Rejected -> "Отклонён"
-    CheckInModerationState.NotSubmitted -> "Публичный"
-    CheckInModerationState.Unknown -> "Статус проверки неизвестен"
+internal fun CheckIn.publicationLabel(labels: List<String>): String = if (visibility == CheckInVisibility.Private) labels[0] else when (moderationState) {
+    CheckInModerationState.Pending -> labels[1]
+    CheckInModerationState.Approved -> labels[2]
+    CheckInModerationState.Rejected -> labels[3]
+    CheckInModerationState.NotSubmitted -> labels[4]
+    CheckInModerationState.Unknown -> labels[5]
 }
 
 private data class CheckInPhotoPreview(val generation: Long, val images: PhotoViewerImages, val index: Int)
+
+@Composable
+internal fun checkInPublicationLabels(): List<String> = listOf(
+    stringResource(Res.string.legacy_checkin_publication_community_label_private),
+    stringResource(Res.string.legacy_checkin_publication_community_label_pending),
+    stringResource(Res.string.legacy_checkin_publication_community_label_published),
+    stringResource(Res.string.legacy_checkin_publication_community_label_rejected),
+    stringResource(Res.string.legacy_home_visibility_community_label_public),
+    stringResource(Res.string.legacy_checkin_publication_community_label_unknown),
+)

@@ -1,0 +1,11 @@
+<resources>
+    <string name="appupdate_play_required_unavailable">Абавязковае абнаўленне пакуль недаступнае для вашага ўліковага запісу Google Play. Паспрабуйце пазней.</string>
+    <string name="appupdate_play_unavailable">Абнаўленне пакуль недаступнае для вашага ўліковага запісу Google Play. Паспрабуйце пазней.</string>
+    <string name="appupdate_play_required_install">Каб працягнуць, усталюйце абавязковае абнаўленне праз Google Play.</string>
+    <string name="appupdate_install_failed">Не ўдалося ўсталяваць абнаўленне. Паспрабуйце яшчэ раз.</string>
+    <string name="appupdate_play_start_failed">Не ўдалося запусціць абнаўленне праз Google Play. Паспрабуйце яшчэ раз.</string>
+    <string name="appupdate_download_notification_title">Абнаўленне CoffeePeek</string>
+    <string name="appupdate_download_start_failed">Не ўдалося пачаць спампоўванне. Паспрабуйце яшчэ раз.</string>
+    <string name="appupdate_download_verification_failed">Не ўдалося спампаваць або праверыць абнаўленне. Паспрабуйце яшчэ раз.</string>
+    <string name="appupdate_install_permission_required">Дазвольце CoffeePeek усталёўваць абнаўленні і націсніце «Усталяваць».</string>
+</resources>

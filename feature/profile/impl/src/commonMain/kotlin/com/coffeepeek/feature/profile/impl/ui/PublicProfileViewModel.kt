@@ -15,6 +15,7 @@ import com.coffeepeek.feature.profile.domain.PublicProfileData
 import com.coffeepeek.feature.profile.domain.PublicProfileUnavailable
 import com.coffeepeek.feature.profile.domain.isOwnPublicProfile
 import com.coffeepeek.feature.profile.domain.isValidActivityMonth
+import com.coffeepeek.feature.profile.impl.ui.model.PublicProfileError
 import com.coffeepeek.feature.profile.impl.ui.model.PublicProfileAction
 import com.coffeepeek.feature.profile.impl.ui.model.PublicProfileEvent
 import com.coffeepeek.feature.profile.impl.ui.model.PublicProfileState
@@ -175,10 +176,12 @@ internal class PublicProfileViewModel(
             isLoadingActivity = false, isLoadingConnections = false, isLoadingMoreConnections = false) }
         profileJob = viewModelScope.launch {
             if (!visibility.current().ready && visibility.refresh().isFailure) {
-                if (isCurrent(requestGeneration, requestAccount)) updateState { copy(isLoading = false, error = "Не удалось загрузить блокировки. Повторите попытку.") }
+                val message = PublicProfileError.BlocksLoad
+                if (isCurrent(requestGeneration, requestAccount)) updateState { copy(isLoading = false, error = message) }
                 return@launch
             }
             val result = data.getProfile(slug)
+            val failureMessage = if (result.exceptionOrNull() is PublicProfileUnavailable) PublicProfileError.Unavailable else PublicProfileError.Load
             currentCoroutineContext().ensureActive()
             if (!isCurrent(requestGeneration, requestAccount)) return@launch
             result.onSuccess { profile ->
@@ -196,8 +199,8 @@ internal class PublicProfileViewModel(
                 currentState.connectionKind?.let(::openConnections)
             }.onFailure { error ->
                 updateState {
-                    if (error is PublicProfileUnavailable) PublicProfileState(isLoading = false, error = "Профиль недоступен", activityMonth = activityMonth)
-                    else copy(isLoading = false, error = "Не удалось загрузить профиль")
+                    if (error is PublicProfileUnavailable) PublicProfileState(isLoading = false, error = failureMessage, activityMonth = activityMonth)
+                    else copy(isLoading = false, error = failureMessage)
                 }
             }
         }
@@ -218,6 +221,7 @@ internal class PublicProfileViewModel(
                 if (!isCurrent(requestGeneration, requestAccount)) return@launch
                 if (!ownIdentityLoaded || ownProfileAccount != requestAccount) {
                     val ownProfile = accounts.loadOwnProfile(forceRefresh = false)
+                    val failureMessage = if (ownProfile.isFailure) PublicProfileError.Verification else null
                     currentCoroutineContext().ensureActive()
                     if (!isCurrent(requestGeneration, requestAccount)) return@launch
                     ownProfile.onSuccess {
@@ -226,13 +230,14 @@ internal class PublicProfileViewModel(
                         ownAddress = it.address
                         updateOwnProfile()
                     }.onFailure {
-                        updateState { copy(isFollowLoading = false, followError = "Не удалось проверить профиль. Попробуйте ещё раз") }
+                        updateState { copy(isFollowLoading = false, followError = failureMessage) }
                         return@launch
                     }
                 }
             }
             if (isOwnProfile(profile)) { updateOwnProfile(); return@launch }
             val result = data.setFollowing(profile.slug, !current.isFollowing)
+            val failureMessage = if (result.isFailure) PublicProfileError.Follow else null
             currentCoroutineContext().ensureActive()
             if (!isCurrent(requestGeneration, requestAccount) || isOwnProfile(profile)) return@launch
             result.onSuccess { follow ->
@@ -241,7 +246,7 @@ internal class PublicProfileViewModel(
                         stats = loaded.stats.copy(followers = follow.followers)) }) }
                 currentState.connectionKind?.let(::openConnections)
             }.onFailure { error ->
-                updateState { copy(isFollowLoading = false, followError = "Не удалось изменить подписку") }
+                updateState { copy(isFollowLoading = false, followError = failureMessage) }
                 if (error is PublicProfileAuthenticationRequired) sendEvent(PublicProfileEvent.RequireLogin)
             }
         }
@@ -256,11 +261,12 @@ internal class PublicProfileViewModel(
         updateState { copy(isLoadingFavorites = true, favoritesError = null) }
         favoritesJob = viewModelScope.launch {
             val result = data.getFavorites(profile.slug)
+            val failureMessage = if (result.isFailure) PublicProfileError.Favorites else null
             currentCoroutineContext().ensureActive()
             if (!isCurrent(requestGeneration, requestAccount)) return@launch
             result.onSuccess { favorites -> updateState { copy(isLoadingFavorites = false,
                 profile = this.profile?.copy(favorites = favorites)) } }
-                .onFailure { updateState { copy(isLoadingFavorites = false, favoritesError = "Не удалось загрузить избранное") } }
+                .onFailure { updateState { copy(isLoadingFavorites = false, favoritesError = failureMessage) } }
         }
     }
 
@@ -282,10 +288,11 @@ internal class PublicProfileViewModel(
         updateState { copy(isLoadingActivity = true, activityError = null) }
         activityJob = viewModelScope.launch {
             val result = data.getActivity(profile.slug, period.take(4).toInt(), period.takeLast(2).toInt(), "Europe/Minsk")
+            val failureMessage = if (result.isFailure) PublicProfileError.Activity else null
             currentCoroutineContext().ensureActive()
             if (!isCurrent(requestGeneration, requestAccount) || activityGeneration != periodGeneration) return@launch
             result.onSuccess { activity -> updateState { copy(isLoadingActivity = false, profile = this.profile?.copy(activity = activity)) } }
-                .onFailure { updateState { copy(isLoadingActivity = false, activityError = "Не удалось загрузить активность") } }
+                .onFailure { updateState { copy(isLoadingActivity = false, activityError = failureMessage) } }
         }
     }
 
@@ -318,6 +325,7 @@ internal class PublicProfileViewModel(
         updateState { copy(isLoadingConnections = reset, isLoadingMoreConnections = !reset, connectionsError = null) }
         connectionsJob = viewModelScope.launch {
             val result = data.getConnections(profile.slug, kind, page, 20)
+            val failureMessage = if (result.isFailure) PublicProfileError.Connections else null
             currentCoroutineContext().ensureActive()
             if (!isCurrent(requestGeneration, requestAccount) || listGeneration != connectionsGeneration) return@launch
             result.onSuccess { loaded ->
@@ -325,7 +333,7 @@ internal class PublicProfileViewModel(
                 updateState { copy(connections = (if (reset) loaded.items else connections + loaded.items).distinctBy(PublicProfileConnection::slug),
                     isLoadingConnections = false, isLoadingMoreConnections = false,
                     hasMoreConnections = loaded.items.isNotEmpty() && loaded.page < 10_000 && loaded.page.toLong() * loaded.pageSize < loaded.totalCount) }
-            }.onFailure { updateState { copy(isLoadingConnections = false, isLoadingMoreConnections = false, connectionsError = "Не удалось загрузить пользователей") } }
+            }.onFailure { updateState { copy(isLoadingConnections = false, isLoadingMoreConnections = false, connectionsError = failureMessage) } }
         }
     }
 
@@ -337,13 +345,14 @@ internal class PublicProfileViewModel(
         updateState { copy(isLoadingCheckIns = reset, isLoadingMoreCheckIns = !reset, checkInsError = null) }
         checkInsJob = viewModelScope.launch {
             val result = checkIns.page(profile.slug, cursor)
+            val failureMessage = if (result.isFailure) PublicProfileError.CheckIns else null
             currentCoroutineContext().ensureActive()
             if (!isCurrent(requestGeneration, requestAccount)) return@launch
             result.onSuccess { page ->
                 nextCursor = page.nextCursor
                 updateState { copy(checkIns = (if (reset) page.items else this.checkIns + page.items).distinctBy(PublicProfileCheckIn::id),
                     hasMoreCheckIns = page.nextCursor != null, isLoadingCheckIns = false, isLoadingMoreCheckIns = false, checkInsError = null) }
-            }.onFailure { updateState { copy(isLoadingCheckIns = false, isLoadingMoreCheckIns = false, checkInsError = "Не удалось загрузить чекины") } }
+            }.onFailure { updateState { copy(isLoadingCheckIns = false, isLoadingMoreCheckIns = false, checkInsError = failureMessage) } }
         }
     }
 }

@@ -37,4 +37,12 @@ class ShelfBrewsTest {
         assertNull(item.method)
         assertEquals(ShelfDay(2026, 10, 21), item.day)
     }
+    @Test fun genericOtherIsLocalizedAtRenderingAndContentNamesArePreserved() {
+        val source = brew("1", "2026-10-21").copy(method = null, methodCode = "other")
+        val item = shelfBagBrews(250, listOf(source)).brews.single()
+        assertEquals("other", item.methodCode)
+        assertEquals("Іншае", item.methodDisplayName("Іншае", "Не пазначана"))
+        assertEquals("Другой авторский способ", item.copy(method = "Другой авторский способ").methodDisplayName("Іншае", "Не пазначана"))
+        assertEquals("Не пазначана", item.copy(methodCode = null).methodDisplayName("Іншае", "Не пазначана"))
+    }
 }

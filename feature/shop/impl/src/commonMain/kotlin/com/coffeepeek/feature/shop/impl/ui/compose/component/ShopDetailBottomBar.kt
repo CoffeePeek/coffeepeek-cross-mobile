@@ -43,7 +43,7 @@ import com.coffeepeek.feature.shop.impl.resources.shop_detail_checkin
 import com.coffeepeek.feature.shop.impl.resources.shop_detail_choose_another
 import com.coffeepeek.feature.shop.impl.resources.shop_detail_continue
 import com.coffeepeek.feature.shop.impl.resources.shop_detail_route
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.hazeSource

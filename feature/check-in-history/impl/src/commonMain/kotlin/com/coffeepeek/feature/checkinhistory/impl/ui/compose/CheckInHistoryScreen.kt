@@ -21,7 +21,7 @@ import com.coffeepeek.feature.checkinhistory.impl.resources.*
 import com.coffeepeek.feature.checkinhistory.impl.ui.CombinedHistoryViewModel
 import com.coffeepeek.feature.checkinhistory.impl.ui.compose.component.*
 import com.coffeepeek.feature.checkinhistory.impl.ui.compose.model.*
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 
 @Composable
 internal fun CheckInHistoryScreen(viewModel: CombinedHistoryViewModel, sessionGeneration: Int,

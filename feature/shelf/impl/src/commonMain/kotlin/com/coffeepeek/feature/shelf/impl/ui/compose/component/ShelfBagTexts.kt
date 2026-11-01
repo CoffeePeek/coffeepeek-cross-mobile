@@ -10,7 +10,7 @@ import com.coffeepeek.feature.shelf.impl.ui.compose.model.ShelfBagItem
 import com.coffeepeek.feature.shelf.impl.ui.compose.model.ShelfSummary
 import com.coffeepeek.feature.shelf.impl.ui.data.ShelfDay
 import org.jetbrains.compose.resources.StringResource
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 
 private val months = listOf(
     Res.string.shelf_month_1, Res.string.shelf_month_2, Res.string.shelf_month_3, Res.string.shelf_month_4,

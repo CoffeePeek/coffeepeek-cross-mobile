@@ -7,7 +7,7 @@ import com.coffeepeek.core.designsystem.resources.Res
 import com.coffeepeek.core.designsystem.resources.coffeepeek_refresh_error
 import com.coffeepeek.core.designsystem.resources.coffeepeek_pagination_retry
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 /** A refresh failure above retained content, using the shared list retry presentation. */

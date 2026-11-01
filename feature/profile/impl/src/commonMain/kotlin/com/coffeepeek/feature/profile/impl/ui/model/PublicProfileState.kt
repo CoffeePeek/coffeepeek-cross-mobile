@@ -8,29 +8,33 @@ import kotlin.time.Clock
 import kotlin.time.Duration.Companion.hours
 import kotlin.time.ExperimentalTime
 
+internal enum class PublicProfileError {
+    BlocksLoad, Unavailable, Load, Verification, Follow, Favorites, Activity, Connections, CheckIns,
+}
+
 internal data class PublicProfileState(
     val isLoading: Boolean = true,
-    val error: String? = null,
+    val error: PublicProfileError? = null,
     val profile: PublicProfile? = null,
     val checkIns: List<PublicProfileCheckIn> = emptyList(),
     val isLoadingCheckIns: Boolean = false,
     val isLoadingMoreCheckIns: Boolean = false,
-    val checkInsError: String? = null,
+    val checkInsError: PublicProfileError? = null,
     val hasMoreCheckIns: Boolean = false,
     val isOwnProfile: Boolean = false,
     val isFollowing: Boolean = false,
     val isFollowLoading: Boolean = false,
-    val followError: String? = null,
+    val followError: PublicProfileError? = null,
     val isLoadingFavorites: Boolean = false,
-    val favoritesError: String? = null,
+    val favoritesError: PublicProfileError? = null,
     val isLoadingActivity: Boolean = false,
-    val activityError: String? = null,
+    val activityError: PublicProfileError? = null,
     val activityMonth: String = currentActivityMonth(),
     val connectionKind: PublicProfileConnectionKind? = null,
     val connections: List<PublicProfileConnection> = emptyList(),
     val isLoadingConnections: Boolean = false,
     val isLoadingMoreConnections: Boolean = false,
-    val connectionsError: String? = null,
+    val connectionsError: PublicProfileError? = null,
     val hasMoreConnections: Boolean = false,
 )
 

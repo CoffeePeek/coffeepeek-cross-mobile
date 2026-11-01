@@ -26,7 +26,7 @@ import com.coffeepeek.admin.ui.component.SwipeDismissModalBottomSheet
 import com.coffeepeek.core.designsystem.component.CoffeePeekActionList
 import com.coffeepeek.core.designsystem.component.CoffeePeekMenuAction
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable

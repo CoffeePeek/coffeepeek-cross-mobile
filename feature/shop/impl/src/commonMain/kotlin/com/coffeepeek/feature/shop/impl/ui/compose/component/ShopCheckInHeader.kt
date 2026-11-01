@@ -31,7 +31,7 @@ import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import com.coffeepeek.feature.shop.impl.resources.Res
 import com.coffeepeek.feature.shop.impl.resources.shop_checkins_open_author
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 
 internal typealias ShopAuthorImage = @Composable (url: String, modifier: Modifier) -> Unit
 internal val LocalShopAuthorImage = staticCompositionLocalOf<ShopAuthorImage?> { null }

@@ -41,7 +41,7 @@ import com.coffeepeek.feature.shop.impl.ui.data.ratingSummary
 import com.coffeepeek.feature.shop.impl.ui.data.ShopCheckInRatingSummary
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable

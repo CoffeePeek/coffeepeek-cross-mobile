@@ -1,6 +1,6 @@
 package com.coffeepeek.admin.ui.screen.shop
 
-import com.coffeepeek.domain.model.validateConsumedDrink
+import com.coffeepeek.domain.model.consumedDrinkIssue
 import com.coffeepeek.admin.utils.PickedImage
 import com.coffeepeek.admin.utils.currentEpochMillis
 import com.coffeepeek.admin.utils.datePickerMillisWithLocalTime
@@ -23,12 +23,12 @@ data class CheckInDraft(
 internal fun CheckInDraft.withVisitDate(dateMillis: Long, now: Long = currentEpochMillis()): CheckInDraft =
     copy(visitMillis = datePickerMillisWithLocalTime(dateMillis, visitMillis).coerceAtMost(now))
 
-internal fun CheckInDraft.validationError(now: Long = currentEpochMillis()): String? = when {
-    visitMillis <= 0 || visitMillis > now -> "Выберите дату визита не позднее сегодняшней"
-    listOf(coffeeRating, serviceRating, placeRating).any { it !in 1..5 } -> "Оцените кофе, сервис и атмосферу"
-    note.trim().length > 1000 -> "Заметка должна быть не длиннее 1000 символов"
-    photos.size > 5 -> "Можно добавить до 5 фото"
-    else -> validateConsumedDrink(drinkSlug, customDrinkName)
+internal fun CheckInDraft.validationError(now: Long = currentEpochMillis()): CheckInDraftValidationError? = when {
+    visitMillis <= 0 || visitMillis > now -> CheckInDraftValidationError.Date
+    listOf(coffeeRating, serviceRating, placeRating).any { it !in 1..5 } -> CheckInDraftValidationError.Ratings
+    note.trim().length > 1000 -> CheckInDraftValidationError.Note
+    photos.size > 5 -> CheckInDraftValidationError.Photos
+    else -> consumedDrinkIssue(drinkSlug, customDrinkName)?.let { CheckInDraftValidationError.Drink(it) }
 }
 
 /**

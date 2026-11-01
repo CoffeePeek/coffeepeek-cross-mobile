@@ -17,7 +17,7 @@ import coffeepeek.composeapp.generated.resources.maskot_with_magnifying_glass
 import com.coffeepeek.core.designsystem.component.CoffeePeekCatalogSuggestionCard
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import org.jetbrains.compose.resources.painterResource
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 
 internal enum class CatalogSuggestionKind { Shop, Roaster }
 

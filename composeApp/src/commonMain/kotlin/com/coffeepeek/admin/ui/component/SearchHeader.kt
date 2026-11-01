@@ -1,5 +1,7 @@
 package com.coffeepeek.admin.ui.component
 
+import coffeepeek.composeapp.generated.resources.*
+
 import com.coffeepeek.admin.analytics.*
 
 import androidx.compose.animation.AnimatedVisibility
@@ -29,7 +31,7 @@ import com.coffeepeek.admin.ui.icons.CpIcons
 import coffeepeek.composeapp.generated.resources.Res
 import coffeepeek.composeapp.generated.resources.search_roasters_placeholder
 import coffeepeek.composeapp.generated.resources.search_shops_and_roasters_placeholder
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 
 @Composable
 internal fun SearchHeader(
@@ -91,6 +93,8 @@ private fun SearchHeaderControls(
 
 @Composable
 private fun SearchFilterButton(filterCount: Int, analyticsCatalog: String, analyticsScreen: String, onClick: () -> Unit) {
+    val localizedShopFiltersTitle = stringResource(Res.string.shop_filters_title)
+
     BadgedBox(badge = {
         if (filterCount > 0) Box(
             Modifier.size(22.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primary),
@@ -103,13 +107,16 @@ private fun SearchFilterButton(filterCount: Int, analyticsCatalog: String, analy
             onClick = onClick, modifier = Modifier.size(CpDimens.buttonHeight).analyticsExposure("filters", analyticsCatalog, analyticsScreen), shape = CircleShape,
             border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
         ) {
-            Icon(CpIcons.Filter, "Фильтры", tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(22.dp))
+            Icon(CpIcons.Filter, localizedShopFiltersTitle, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(22.dp))
         }
     }
 }
 
 @Composable
 private fun SearchCategories(roastersSelected: Boolean, onSelectRoasters: (Boolean) -> Unit) {
+    val localizedFavoritesRoasters = stringResource(Res.string.favorites_roasters)
+    val localizedProfileStatShops = stringResource(Res.string.profile_stat_shops)
+
     Row(
         modifier = Modifier.fillMaxWidth().selectableGroup().clip(CircleShape)
             .background(MaterialTheme.colorScheme.surfaceVariant).padding(3.dp),
@@ -129,7 +136,7 @@ private fun SearchCategories(roastersSelected: Boolean, onSelectRoasters: (Boole
                     tint = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.size(20.dp),
                 )
-                Text(if (roasters) "Обжарщики" else "Кофейни", style = MaterialTheme.typography.labelLarge)
+                Text(if (roasters) localizedFavoritesRoasters else localizedProfileStatShops, style = MaterialTheme.typography.labelLarge)
             }
         }
     }

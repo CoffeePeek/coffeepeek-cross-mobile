@@ -25,7 +25,7 @@ import com.coffeepeek.admin.utils.CpImage
 import com.coffeepeek.core.designsystem.component.CoffeePeekCard
 import com.coffeepeek.core.designsystem.text.coffeePeekPluralForm
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 
 /** One week layout for personal and public activity; callers supply only the data they may expose. */
 @Composable

@@ -34,6 +34,7 @@ import com.coffeepeek.feature.appupdate.impl.R
 import com.coffeepeek.feature.appupdate.domain.InstallationStage
 import com.coffeepeek.feature.appupdate.impl.AppUpdateController
 import com.coffeepeek.feature.appupdate.impl.PlayUpdateRetryOutcome
+import com.coffeepeek.feature.appupdate.impl.UpdateCheckFeedback
 import com.coffeepeek.feature.appupdate.impl.retryPlayUpdate
 import androidx.compose.ui.res.stringResource
 import kotlinx.coroutines.launch
@@ -71,7 +72,7 @@ internal fun UpdateInstallationEffect(
     val transfer by installer.state.collectAsState()
     var manualNoticeRequest by remember { mutableIntStateOf(0) }
     var retrying by remember { mutableStateOf(false) }
-    var retryMessage by remember { mutableStateOf<String?>(null) }
+    var retryNotice by remember { mutableStateOf<PlayUpdateRetryOutcome?>(null) }
     var retryOutcome by remember { mutableStateOf<PlayUpdateRetryOutcome?>(null) }
     var hideRetryResult by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
@@ -98,13 +99,16 @@ internal fun UpdateInstallationEffect(
     val readyMessage = stringResource(R.string.appupdate_downloaded_message)
     val restart = stringResource(R.string.appupdate_restart_action)
     val retry = stringResource(R.string.appupdate_retry_action)
-    LaunchedEffect(transfer.stage, transfer.error, required, manualNoticeRequest, retrying, retryOutcome, hideRetryResult) {
+    val outcomeMessage = retryOutcome.localizedMessage()
+    val retryNoticeMessage = retryNotice.localizedMessage()
+    LaunchedEffect(transfer.stage, transfer.error, required, manualNoticeRequest, retrying, retryOutcome, hideRetryResult,
+        outcomeMessage, retryNoticeMessage, readyMessage, restart, retry) {
         if (required && transfer.stage == InstallationStage.Ready && transfer.error == null) {
             installer.install()
         } else if (!required && !hideRetryResult) {
             val ready = transfer.stage == InstallationStage.Ready
-            val message = if (retrying) retryMessage ?: return@LaunchedEffect
-                else retryOutcome?.message ?: transfer.error ?: if (ready) readyMessage else return@LaunchedEffect
+            val message = if (retrying) retryNoticeMessage ?: return@LaunchedEffect
+                else outcomeMessage ?: transfer.error ?: if (ready) readyMessage else return@LaunchedEffect
             val action = when {
                 retrying -> retry
                 retryOutcome != null -> retry.takeIf { retryOutcome?.canRetry == true }
@@ -137,7 +141,7 @@ internal fun UpdateInstallationEffect(
             retrying,
             if (snackbar.currentSnackbarData?.visuals?.actionLabel == retry) ({
                 if (!retrying) {
-                    retryMessage = snackbar.currentSnackbarData?.visuals?.message
+                    retryNotice = retryOutcome ?: snackbar.currentSnackbarData?.visuals?.message?.let { PlayUpdateRetryOutcome.InstallationError(it) }
                     retryOutcome = null
                     hideRetryResult = false
                     retrying = true
@@ -149,4 +153,14 @@ internal fun UpdateInstallationEffect(
             }) else null,
         )
     }
+}
+
+@Composable
+private fun PlayUpdateRetryOutcome?.localizedMessage(): String? = when (this) {
+    is PlayUpdateRetryOutcome.Check -> stringResource(when (feedback) {
+        UpdateCheckFeedback.CheckFailed -> R.string.appupdate_check_failed
+        UpdateCheckFeedback.UpToDate -> R.string.appupdate_up_to_date
+    })
+    is PlayUpdateRetryOutcome.InstallationError -> message
+    null -> null
 }

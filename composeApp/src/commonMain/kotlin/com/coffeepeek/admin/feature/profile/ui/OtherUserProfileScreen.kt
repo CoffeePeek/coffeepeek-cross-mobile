@@ -1,5 +1,8 @@
 package com.coffeepeek.admin.feature.profile.ui
 
+import coffeepeek.composeapp.generated.resources.*
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
+
 import com.coffeepeek.core.designsystem.component.coffeePeekScrollContentPadding
 
 import com.coffeepeek.core.designsystem.component.CoffeePeekScaffold as Scaffold
@@ -37,8 +40,8 @@ import com.coffeepeek.admin.ui.icons.CpIcons
 import com.coffeepeek.admin.utils.ShareHelper
 import org.koin.core.parameter.parametersOf
 
-private enum class ProfileSection(val title: String) {
-    Favorites("Избранное"), CheckIns("Чекины"), Activity("Активность"),
+private enum class ProfileSection(val title: org.jetbrains.compose.resources.StringResource) {
+    Favorites(Res.string.favorites_profile_title), CheckIns(Res.string.profile_stat_check_ins), Activity(Res.string.legacy_profile_section_profile_section_activity),
 }
 
 private data class ProfilePhotos(val images: PhotoViewerImages, val index: Int = 0)
@@ -93,6 +96,25 @@ internal fun UserProfileScreen(
     checkInsOnly: Boolean = false,
     vm: PublicProfileViewModel = platformViewModel(key = slug, parameters = { parametersOf(slug) }),
 ) {
+    val localizedProfileCheckinsBack = stringResource(Res.string.profile_checkins_back)
+    val localizedLegacyMainScreenProfileTitle = stringResource(Res.string.legacy_main_screen_profile_title)
+    val localizedLegacyOtherUserProfileScreenProfileShare = stringResource(Res.string.legacy_other_user_profile_screen_profile_share)
+    val localizedLegacyOtherUserProfileScreenProfileUnblockAuthor = stringResource(Res.string.legacy_other_user_profile_screen_profile_unblock_author)
+    val localizedLegacyCheckInActionsCommunityBlockAuthor = stringResource(Res.string.legacy_check_in_actions_community_block_author)
+    val localizedLegacyOtherUserProfileScreenProfileAuthorActions = stringResource(Res.string.legacy_other_user_profile_screen_profile_author_actions)
+    val localizedLegacyOtherUserProfileScreenProfileLoadFailed = stringResource(Res.string.legacy_other_user_profile_screen_profile_load_failed)
+    val localizedRetry = stringResource(Res.string.retry)
+    val localizedProfileCheckinsBlocked = stringResource(Res.string.profile_checkins_blocked)
+    val localizedLegacyAuthorBlockingHostProfileUnblock = stringResource(Res.string.legacy_author_blocking_host_profile_unblock)
+    val localizedLegacyOtherUserProfileScreenProfileUpdateFailed = stringResource(Res.string.legacy_other_user_profile_screen_profile_update_failed)
+    val localizedLegacyOtherUserProfileScreenProfileFollowFailed = stringResource(Res.string.legacy_other_user_profile_screen_profile_follow_failed)
+    val localizedFavoritesProfileTitle = stringResource(Res.string.favorites_profile_title)
+    val localizedLegacyOtherUserProfileScreenRoasterMessageFavoritesUnavailable = stringResource(Res.string.legacy_other_user_profile_screen_roaster_message_favorites_unavailable)
+    val localizedLegacyOtherUserProfileScreenProfileFavoritesRefreshFailed = stringResource(Res.string.legacy_other_user_profile_screen_profile_favorites_refresh_failed)
+    val localizedProfileStatCheckIns = stringResource(Res.string.profile_stat_check_ins)
+    val localizedProfileCheckinsError = stringResource(Res.string.profile_checkins_error)
+    val localizedHistoryHomeClose = stringResource(Res.string.history_home_close)
+
     val state by vm.state.collectAsState()
     var section by remember(slug) { mutableStateOf<ProfileSection?>(null) }
     var photos by remember(slug) { mutableStateOf<ProfilePhotos?>(null) }
@@ -141,11 +163,11 @@ internal fun UserProfileScreen(
                 if (onBack != null) PlatformGlassIconButton(
                     icon = GlassControlIcon.Back,
                     onClick = onBack,
-                    contentDescription = "Назад",
+                    contentDescription = localizedProfileCheckinsBack,
                     modifier = Modifier.align(Alignment.CenterStart),
                 ) { Icon(CpIcons.ChevronLeft, contentDescription = null, modifier = Modifier.size(23.dp)) }
                 Text(
-                    "Профиль", Modifier.fillMaxWidth().padding(start = if (onBack == null) 0.dp else 56.dp, end = 56.dp),
+                    localizedLegacyMainScreenProfileTitle, Modifier.fillMaxWidth().padding(start = if (onBack == null) 0.dp else 56.dp, end = 56.dp),
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.SemiBold,
                     textAlign = if (onBack == null) TextAlign.Start else TextAlign.Center,
@@ -154,14 +176,14 @@ internal fun UserProfileScreen(
                     val author = com.coffeepeek.feature.authorblocking.api.AuthorReference(profile.authorId, profile.slug, profile.nickname, profile.avatarUrl)
                     val items = buildList {
                         if (!profile.isBlockedByViewer) profile.canonicalPath?.takeIf { it.startsWith("/") && !it.startsWith("//") }?.let { path ->
-                            add(com.coffeepeek.admin.ui.component.PlatformMenuItem("share", "Поделиться профилем", onClick = { ShareHelper.shareText("https://coffeepeek.by$path") }))
+                            add(com.coffeepeek.admin.ui.component.PlatformMenuItem("share", localizedLegacyOtherUserProfileScreenProfileShare, onClick = { ShareHelper.shareText("https://coffeepeek.by$path") }))
                         }
-                        add(com.coffeepeek.admin.ui.component.PlatformMenuItem("block", if (profile.isBlockedByViewer) "Разблокировать автора" else "Заблокировать автора",
+                        add(com.coffeepeek.admin.ui.component.PlatformMenuItem("block", if (profile.isBlockedByViewer) localizedLegacyOtherUserProfileScreenProfileUnblockAuthor else localizedLegacyCheckInActionsCommunityBlockAuthor,
                             icon = com.coffeepeek.admin.ui.component.PlatformMenuIcon.Block, destructive = !profile.isBlockedByViewer,
                             onClick = { if (profile.isBlockedByViewer) blocks.requestUnblock(author) else blocks.requestBlock(author) }))
                     }
-                    com.coffeepeek.admin.ui.component.PlatformMenuButton(items, "Действия с автором", Modifier.align(Alignment.CenterEnd)) { open ->
-                        IconButton(onClick = open) { Icon(CpIcons.MoreHorizontal, "Действия с автором") }
+                    com.coffeepeek.admin.ui.component.PlatformMenuButton(items, localizedLegacyOtherUserProfileScreenProfileAuthorActions, Modifier.align(Alignment.CenterEnd)) { open ->
+                        IconButton(onClick = open) { Icon(CpIcons.MoreHorizontal, localizedLegacyOtherUserProfileScreenProfileAuthorActions) }
                     }
                 } else if (topBarActions != null) Box(Modifier.align(Alignment.CenterEnd)) {
                     topBarActions()
@@ -169,7 +191,7 @@ internal fun UserProfileScreen(
                     PlatformGlassIconButton(
                         icon = GlassControlIcon.Share,
                         onClick = { ShareHelper.shareText("https://coffeepeek.by$path") },
-                        contentDescription = "Поделиться профилем",
+                        contentDescription = localizedLegacyOtherUserProfileScreenProfileShare,
                         modifier = Modifier.align(Alignment.CenterEnd),
                     ) { Icon(CpIcons.Share, contentDescription = null, modifier = Modifier.size(21.dp)) }
                 }
@@ -195,20 +217,20 @@ internal fun UserProfileScreen(
                     ) {
                         Icon(CpIcons.User, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(48.dp))
                         Text(
-                            state.error ?: "Не удалось загрузить профиль",
+                            state.error ?: localizedLegacyOtherUserProfileScreenProfileLoadFailed,
                             style = MaterialTheme.typography.titleMedium,
                             textAlign = TextAlign.Center,
                         )
-                        Button(onClick = vm::refresh) { Text("Попробовать снова") }
+                        Button(onClick = vm::refresh) { Text(localizedRetry) }
                     }
                 }
             } else if (profile.isBlockedByViewer) {
                 com.coffeepeek.admin.ui.component.CpEmptyState(
-                    title = "Автор заблокирован",
-                    message = "Публикации автора «${profile.nickname}» скрыты. Вы можете снять блокировку в любой момент.",
+                    title = localizedProfileCheckinsBlocked,
+                    message = stringResource(Res.string.legacy_profile_blocked_publications, profile.nickname),
                     icon = CpIcons.VisibilityOff,
                     modifier = Modifier.padding(top = com.coffeepeek.admin.theme.CpDimens.spacing6),
-                    actionLabel = "Разблокировать",
+                    actionLabel = localizedLegacyAuthorBlockingHostProfileUnblock,
                     onAction = { blocks.requestUnblock(com.coffeepeek.feature.authorblocking.api.AuthorReference(profile.authorId, profile.slug, profile.nickname, profile.avatarUrl)) },
                 )
             } else {
@@ -242,20 +264,20 @@ internal fun UserProfileScreen(
                                 vm.retryActivity()
                                 vm.retryCheckIns()
                             }, onCheckInsClick ?: { section = ProfileSection.CheckIns })
-                        if (state.error != null) InlineProfileError("Не удалось обновить профиль", vm::refresh)
-                        if (!viewingOwnProfile && state.followError != null) InlineProfileError("Не удалось изменить подписку", vm::toggleFollow)
+                        if (state.error != null) InlineProfileError(localizedLegacyOtherUserProfileScreenProfileUpdateFailed, vm::refresh)
+                        if (!viewingOwnProfile && state.followError != null) InlineProfileError(localizedLegacyOtherUserProfileScreenProfileFollowFailed, vm::toggleFollow)
                     }
                     if (favoritesPreview != null) favoritesPreview {
-                        ProfileSectionHeading("Избранное", onAll = onFavoritesClick ?: { section = ProfileSection.Favorites })
+                        ProfileSectionHeading(localizedFavoritesProfileTitle, onAll = onFavoritesClick ?: { section = ProfileSection.Favorites })
                     } else if (profile.favorites.isNotEmpty() || state.isLoadingFavorites || state.favoritesError != null) Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         Box(Modifier.padding(horizontal = 16.dp)) {
-                            ProfileSectionHeading("Избранное", onAll = onFavoritesClick ?: { section = ProfileSection.Favorites })
+                            ProfileSectionHeading(localizedFavoritesProfileTitle, onAll = onFavoritesClick ?: { section = ProfileSection.Favorites })
                         }
                         when {
                             state.isLoadingFavorites && profile.favorites.isEmpty() -> ProfileSectionLoader()
                             state.favoritesError != null && profile.favorites.isEmpty() ->
                                 Box(Modifier.padding(horizontal = 16.dp)) {
-                                    InlineProfileError("Не удалось загрузить избранное", vm::retryFavorites)
+                                    InlineProfileError(localizedLegacyOtherUserProfileScreenRoasterMessageFavoritesUnavailable, vm::retryFavorites)
                                 }
                             else -> {
                                 val favorites = profile.favorites.take(6)
@@ -272,21 +294,21 @@ internal fun UserProfileScreen(
                                     )
                                 }
                                 if (state.favoritesError != null) Box(Modifier.padding(horizontal = 16.dp)) {
-                                    InlineProfileError("Не удалось обновить избранное", vm::retryFavorites)
+                                    InlineProfileError(localizedLegacyOtherUserProfileScreenProfileFavoritesRefreshFailed, vm::retryFavorites)
                                 }
                             }
                         }
                     }
 
                     if (state.checkIns.isNotEmpty() || state.isLoadingCheckIns || state.checkInsError != null || ownCheckInCount > 0) Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        ProfileSectionHeading("Чекины", onAll = onCheckInsClick ?: { section = ProfileSection.CheckIns })
+                        ProfileSectionHeading(localizedProfileStatCheckIns, onAll = onCheckInsClick ?: { section = ProfileSection.CheckIns })
                         Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                             when {
                                 state.isLoadingCheckIns && state.checkIns.isEmpty() -> Box(Modifier.fillMaxWidth().height(100.dp), contentAlignment = Alignment.Center) {
                                     CoffeePeekLoader()
                                 }
                                 state.checkInsError != null && state.checkIns.isEmpty() ->
-                                    InlineProfileError("Не удалось загрузить чекины", vm::retryCheckIns)
+                                    InlineProfileError(localizedProfileCheckinsError, vm::retryCheckIns)
                                 else -> state.checkIns.take(2).forEach { checkIn ->
                                     PublicProfileCheckInCard(
                                         checkIn = checkIn,
@@ -315,8 +337,8 @@ internal fun UserProfileScreen(
         maxSheetHeightFraction = 0.9f,
     ) {
         Row(Modifier.fillMaxWidth().padding(start = 20.dp, end = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text(selectedSection.title, Modifier.weight(1f), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
-            IconButton(onClick = { section = null }) { Icon(CpIcons.Close, contentDescription = "Закрыть") }
+            Text(stringResource(selectedSection.title), Modifier.weight(1f), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
+            IconButton(onClick = { section = null }) { Icon(CpIcons.Close, contentDescription = localizedHistoryHomeClose) }
         }
         when (selectedSection) {
             ProfileSection.Favorites -> LazyColumn(
@@ -328,7 +350,7 @@ internal fun UserProfileScreen(
                     PublicProfileFavoriteCard(favorite, modifier = Modifier.fillMaxWidth(), onClick = { openFavorite(favorite) })
                 }
                 if (state.isLoadingFavorites) item { ProfileSectionLoader() }
-                else if (state.favoritesError != null) item { InlineProfileError("Не удалось загрузить избранное", vm::retryFavorites) }
+                else if (state.favoritesError != null) item { InlineProfileError(localizedLegacyOtherUserProfileScreenRoasterMessageFavoritesUnavailable, vm::retryFavorites) }
             }
             ProfileSection.CheckIns -> PublicProfileCheckInsList(
                 state, { section = null; onCoffeeShopClick(it) }, vm::retryCheckIns, vm::loadMoreCheckIns,
@@ -372,14 +394,18 @@ private fun ProfileSectionLoader() {
 
 @Composable
 private fun ProfileSectionHeading(title: String, onAll: () -> Unit) {
+    val description = stringResource(Res.string.legacy_profile_all_section, title)
+
+    val localizedLegacyProfileCheckInsScreenRoasterTagAll = stringResource(Res.string.legacy_profile_check_ins_screen_roaster_tag_all)
+
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         Text(title, Modifier.weight(1f), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
         TextButton(
             onClick = onAll,
-            modifier = Modifier.semantics { contentDescription = "Все: $title" },
+            modifier = Modifier.semantics { contentDescription = description },
             contentPadding = PaddingValues(start = 12.dp),
         ) {
-            Text("Все", color = MaterialTheme.colorScheme.secondary)
+            Text(localizedLegacyProfileCheckInsScreenRoasterTagAll, color = MaterialTheme.colorScheme.secondary)
             Spacer(Modifier.width(3.dp))
             Icon(CpIcons.ChevronRight, contentDescription = null, tint = MaterialTheme.colorScheme.secondary, modifier = Modifier.size(17.dp))
         }
@@ -388,8 +414,10 @@ private fun ProfileSectionHeading(title: String, onAll: () -> Unit) {
 
 @Composable
 private fun InlineProfileError(text: String, onRetry: () -> Unit) {
+    val localizedHistoryHomeRetry = stringResource(Res.string.history_home_retry)
+
     Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
         Text(text, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        TextButton(onClick = onRetry) { Text("Повторить") }
+        TextButton(onClick = onRetry) { Text(localizedHistoryHomeRetry) }
     }
 }

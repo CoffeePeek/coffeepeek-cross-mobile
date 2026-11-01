@@ -1,5 +1,7 @@
 package com.coffeepeek.admin.ui.screen.favorites
 
+import coffeepeek.composeapp.generated.resources.*
+
 import com.coffeepeek.core.designsystem.component.coffeePeekScrollContentPadding
 
 import com.coffeepeek.core.designsystem.component.CoffeePeekScaffold as Scaffold
@@ -42,11 +44,15 @@ import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.ui.component.CpSnackbarHost
 import com.coffeepeek.admin.ui.component.CoffeePeekLoader
 import com.coffeepeek.admin.ui.component.CpTopBar
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import org.koin.compose.koinInject
 
 @Composable
 fun FavoritesScreen(vm: FavoritesViewModel = koinInject()) {
+    val localizedFavoritesProfileTitle = stringResource(Res.string.favorites_profile_title)
+    val localizedHistoryHomeRetry = stringResource(Res.string.history_home_retry)
+    val localizedLegacyFavoritesScreenFavoritesDrinks = stringResource(Res.string.legacy_favorites_screen_favorites_drinks)
+
     val state by vm.state.collectAsState()
     val error = state.error ?: state.roasterError
     val userLocation = rememberPermittedUserLocation()
@@ -59,7 +65,7 @@ fun FavoritesScreen(vm: FavoritesViewModel = koinInject()) {
     }
 
     Scaffold(
-        topBar = { CpTopBar("Избранное") },
+        topBar = { CpTopBar(localizedFavoritesProfileTitle) },
         snackbarHost = { CpSnackbarHost(snackbarHostState) },
         containerColor = MaterialTheme.colorScheme.background,
     ) { padding ->
@@ -81,7 +87,7 @@ fun FavoritesScreen(vm: FavoritesViewModel = koinInject()) {
                         )
                         if (error != null) {
                             Spacer(Modifier.height(CpDimens.spacing3))
-                            Button(onClick = { vm.load(force = true) }) { Text("Повторить") }
+                            Button(onClick = { vm.load(force = true) }) { Text(localizedHistoryHomeRetry) }
                         }
                     }
                 }
@@ -94,7 +100,7 @@ fun FavoritesScreen(vm: FavoritesViewModel = koinInject()) {
                 error?.let { error ->
                     item(key = "error") {
                         Text(error, color = MaterialTheme.colorScheme.error)
-                        TextButton(onClick = { vm.load(force = true) }) { Text("Повторить") }
+                        TextButton(onClick = { vm.load(force = true) }) { Text(localizedHistoryHomeRetry) }
                     }
                 }
                 items(state.shops, key = { "shop:${it.shop.id}" }) { details ->
@@ -130,7 +136,7 @@ fun FavoritesScreen(vm: FavoritesViewModel = koinInject()) {
                 }
                 if (state.drinks.isNotEmpty()) {
                     item(key = "drinks_heading") {
-                        Text("Напитки", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold,
+                        Text(localizedLegacyFavoritesScreenFavoritesDrinks, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold,
                             modifier = Modifier.padding(top = CpDimens.spacing3))
                     }
                     items(state.drinks, key = { "drink:${it.id}" }) { drink ->

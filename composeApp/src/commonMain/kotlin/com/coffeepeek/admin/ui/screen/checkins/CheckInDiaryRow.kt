@@ -1,5 +1,8 @@
 package com.coffeepeek.admin.ui.screen.checkins
 
+import coffeepeek.composeapp.generated.resources.*
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -29,15 +32,19 @@ import com.coffeepeek.domain.model.savedDrinkName
 
 @Composable
 internal fun CheckInDiaryRow(checkIn: CheckIn, onClick: () -> Unit) {
+    val localizedLegacyCheckInDiaryRowOpenCheckIn = stringResource(Res.string.legacy_check_in_diary_row_open_check_in)
+    val localizedLegacyCheckInDiaryRowHistoryAtHome = stringResource(Res.string.legacy_check_in_diary_row_history_at_home)
+    val localizedLegacyReviewContentOwnershipKindShop = stringResource(Res.string.legacy_review_content_ownership_kind_shop)
+
     val drink = savedDrinkName(checkIn.drinkNameRu, checkIn.drinkNameEn, checkIn.customDrinkName, Locale.current.language)
     val time = utcIsoToLocalDateTime(checkIn.visitedAt.ifBlank { checkIn.createdAt }).substringAfterLast(' ', "")
     BoxWithConstraints(Modifier.fillMaxWidth().clickable(role = Role.Button,
-        onClickLabel = "Открыть чекин", onClick = onClick).padding(horizontal = 12.dp, vertical = 12.dp)) {
+        onClickLabel = localizedLegacyCheckInDiaryRowOpenCheckIn, onClick = onClick).padding(horizontal = 12.dp, vertical = 12.dp)) {
         val ratingBelow = maxWidth < 310.dp || LocalDensity.current.fontScale > 1.2f
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             CheckInDiaryThumbnail(checkIn, Modifier.size(56.dp))
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                Text(if (checkIn.isHome) "Дома" else checkIn.shopName.ifBlank { "Кофейня" }, style = MaterialTheme.typography.titleSmall,
+                Text(if (checkIn.isHome) localizedLegacyCheckInDiaryRowHistoryAtHome else checkIn.shopName.ifBlank { localizedLegacyReviewContentOwnershipKindShop }, style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.SemiBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
                 drink?.let { Text(it, style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 2, overflow = TextOverflow.Ellipsis) }
@@ -55,8 +62,9 @@ internal fun CheckInDiaryRow(checkIn: CheckIn, onClick: () -> Unit) {
 private fun DiaryRating(checkIn: CheckIn) {
     checkIn.rating?.let { rating ->
         val label = formatOneDecimal(rating.average).replace('.', ',')
+        val description = stringResource(Res.string.legacy_rating_out_of_five, label)
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp),
-            modifier = Modifier.semantics(mergeDescendants = true) { contentDescription = "Оценка $label из 5" }) {
+            modifier = Modifier.semantics(mergeDescendants = true) { contentDescription = description }) {
             Icon(CpIcons.StarFilled, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(18.dp))
             Text(label, style = MaterialTheme.typography.bodyMedium)
         }

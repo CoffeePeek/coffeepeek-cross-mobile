@@ -32,7 +32,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
@@ -54,6 +54,7 @@ import com.coffeepeek.feature.profile.impl.ui.compose.component.ProfileSectionLo
 import com.coffeepeek.feature.profile.impl.ui.compose.component.PublicProfileActivityCalendar
 import com.coffeepeek.feature.profile.impl.ui.compose.component.PublicProfileConnectionsSheet
 import com.coffeepeek.feature.profile.impl.ui.compose.component.PublicProfileHeader
+import com.coffeepeek.feature.profile.impl.ui.model.PublicProfileError
 import com.coffeepeek.feature.profile.impl.ui.model.PublicProfileAction
 import com.coffeepeek.feature.profile.impl.ui.model.PublicProfileEvent
 
@@ -168,7 +169,11 @@ internal fun PublicProfileScreen(
                         verticalArrangement = Arrangement.spacedBy(12.dp),
                     ) {
                         Icon(CoffeePeekIcons.User, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(48.dp))
-                        Text(state.error ?: stringResource(Res.string.profile_load_failed), style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center)
+                        Text(stringResource(when (state.error) {
+                            PublicProfileError.BlocksLoad -> Res.string.profile_blocks_load_failed
+                            PublicProfileError.Unavailable -> Res.string.profile_unavailable
+                            else -> Res.string.profile_load_failed
+                        }), style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center)
                         Button(onClick = { vm.onAction(PublicProfileAction.Refresh) }) { Text(stringResource(Res.string.profile_retry_full)) }
                     }
                 }

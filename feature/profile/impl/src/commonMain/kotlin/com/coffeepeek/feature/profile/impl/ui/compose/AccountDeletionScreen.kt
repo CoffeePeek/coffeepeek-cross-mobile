@@ -28,7 +28,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -37,10 +37,13 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.coffeepeek.core.designsystem.component.CoffeePeekButton
 import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
 import com.coffeepeek.core.designsystem.component.CoffeePeekTopBar
+import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
+import org.jetbrains.compose.ui.tooling.preview.Preview
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.feature.profile.impl.resources.*
 import com.coffeepeek.feature.profile.impl.ui.AccountDeletionViewModel
 import com.coffeepeek.feature.profile.impl.ui.model.AccountDeletionAction
+import com.coffeepeek.feature.profile.impl.ui.model.AccountDeletionError
 import com.coffeepeek.feature.profile.impl.ui.model.AccountDeletionEvent
 
 @Composable
@@ -54,15 +57,7 @@ internal fun AccountDeletionScreen(
     val sessionEnded by rememberUpdatedState(onSessionEnded)
     LaunchedEffect(vm) { vm.events.collect { event -> when (event) { AccountDeletionEvent.SessionEnded -> sessionEnded() } } }
 
-    state.error?.let { message ->
-        CoffeePeekActionDialog(
-            title = stringResource(Res.string.profile_error_title),
-            message = message,
-            actions = listOf(CoffeePeekDialogAction(stringResource(Res.string.profile_ok), { vm.onAction(AccountDeletionAction.DismissError) })),
-            cancelLabel = null,
-            onDismiss = { vm.onAction(AccountDeletionAction.DismissError) },
-        )
-    }
+    AccountDeletionErrorDialog(state.error) { vm.onAction(AccountDeletionAction.DismissError) }
 
     Scaffold(
         modifier = modifier,
@@ -119,4 +114,27 @@ internal fun AccountDeletionScreen(
             ) { Text(stringResource(Res.string.profile_close), style = MaterialTheme.typography.labelLarge) }
         }
     }
+}
+
+@Composable
+private fun AccountDeletionErrorDialog(error: AccountDeletionError?, onDismiss: () -> Unit) {
+    if (error == null) return
+    CoffeePeekActionDialog(
+        title = stringResource(Res.string.profile_error_title),
+        message = when (error) {
+            AccountDeletionError.Status -> stringResource(Res.string.profile_deletion_status_failed)
+            AccountDeletionError.Send -> stringResource(Res.string.profile_deletion_send_failed)
+            is AccountDeletionError.Server -> error.message
+        },
+        actions = listOf(CoffeePeekDialogAction(stringResource(Res.string.profile_ok), onDismiss)),
+        cancelLabel = null,
+        onDismiss = onDismiss,
+    )
+}
+
+@Preview @Composable private fun AccountDeletionErrorLightPreview() = CoffeePeekTheme(darkTheme = false) {
+    AccountDeletionErrorDialog(AccountDeletionError.Status, {})
+}
+@Preview @Composable private fun AccountDeletionErrorDarkPreview() = CoffeePeekTheme(darkTheme = true) {
+    AccountDeletionErrorDialog(AccountDeletionError.Status, {})
 }

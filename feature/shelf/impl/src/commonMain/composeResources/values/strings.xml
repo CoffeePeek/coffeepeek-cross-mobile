@@ -216,4 +216,5 @@
     <string name="shelf_error_photo_upload">Не удалось загрузить карточку. Попробуйте ещё раз</string>
     <string name="shelf_error_shelf_full">На полке уже 200 пачек</string>
     <string name="shelf_error_bean_unavailable">Этого кофе больше нет в каталоге</string>
+    <string name="shelf_brew_method_other">Другое</string>
 </resources>

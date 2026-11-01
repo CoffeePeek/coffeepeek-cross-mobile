@@ -17,6 +17,10 @@ import com.coffeepeek.admin.theme.PlatformSystemBars
 import com.coffeepeek.admin.theme.platformSystemDarkTheme
 import com.coffeepeek.admin.theme.ThemeManager
 import com.coffeepeek.admin.theme.ThemeMode
+import com.coffeepeek.admin.settings.AppLanguageEnvironment
+import com.coffeepeek.admin.settings.AppLanguagePreference
+import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
+import androidx.compose.ui.Alignment
 import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.ui.component.dismissKeyboardOnBackgroundGestures
 import com.coffeepeek.admin.utils.OrientationObserver
@@ -26,7 +30,6 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.koinInject
 
 @Composable
-@Preview
 fun App(onReady: () -> Unit = {}) {
     LaunchedEffect(Unit) {
         onReady()
@@ -46,15 +49,9 @@ fun App(onReady: () -> Unit = {}) {
 /** Shared presentation environment, also used by native iOS tab controllers. */
 @Composable
 internal fun AppContent(content: @Composable () -> Unit) {
-    val notifications = koinInject<com.coffeepeek.feature.notifications.api.NotificationFeature>()
-    androidx.lifecycle.compose.LifecycleResumeEffect(notifications) {
-        notifications.foreground()
-        val heartbeat = kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Default).launch {
-            while (true) { kotlinx.coroutines.delay(15 * 60 * 1_000L); notifications.foreground() }
-        }
-        onPauseOrDispose { heartbeat.cancel() }
-    }
+    AppForegroundNotifications()
     val kamelConfig = koinInject<KamelConfig>()
+    val language by koinInject<AppLanguagePreference>().selection.collectAsState()
     val themeMode by ThemeManager.themeMode.collectAsState()
     val isSystemDark = platformSystemDarkTheme()
 
@@ -66,12 +63,40 @@ internal fun AppContent(content: @Composable () -> Unit) {
     PlatformSystemBars(darkTheme)
 
     CoffeePeekTheme(darkTheme = darkTheme) {
-        CompositionLocalProvider(
-            LocalKamelConfig provides kamelConfig,
-            com.coffeepeek.feature.ownership.api.LocalBusinessOwnership provides koinInject<com.coffeepeek.feature.ownership.api.BusinessOwnershipEntry>(),
-            LocalContentColor provides MaterialTheme.colorScheme.onBackground,
-        ) {
-            content()
+        val selected = language
+        if (selected == null) AppLanguageLoadingContent()
+        else AppLanguageEnvironment(selected.languageTag) {
+            CompositionLocalProvider(
+                LocalKamelConfig provides kamelConfig,
+                com.coffeepeek.feature.ownership.api.LocalBusinessOwnership provides koinInject<com.coffeepeek.feature.ownership.api.BusinessOwnershipEntry>(),
+                LocalContentColor provides MaterialTheme.colorScheme.onBackground,
+                content = content,
+            )
         }
     }
 }
+
+@Composable
+private fun AppForegroundNotifications() {
+    val notifications = koinInject<com.coffeepeek.feature.notifications.api.NotificationFeature>()
+    androidx.lifecycle.compose.LifecycleResumeEffect(notifications) {
+        notifications.foreground()
+        val heartbeat = kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Default).launch {
+            while (true) {
+                kotlinx.coroutines.delay(15 * 60 * 1_000L)
+                notifications.foreground()
+            }
+        }
+        onPauseOrDispose { heartbeat.cancel() }
+    }
+}
+
+@Composable
+private fun AppLanguageLoadingContent() {
+    Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background), contentAlignment = Alignment.Center) {
+        CoffeePeekLoader()
+    }
+}
+
+@Preview @Composable private fun AppLanguageLoadingLightPreview() = CoffeePeekTheme(darkTheme = false) { AppLanguageLoadingContent() }
+@Preview @Composable private fun AppLanguageLoadingDarkPreview() = CoffeePeekTheme(darkTheme = true) { AppLanguageLoadingContent() }

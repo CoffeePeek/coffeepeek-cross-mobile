@@ -42,7 +42,7 @@ import com.coffeepeek.admin.auth.isGoogleSignInConfigured
 import com.coffeepeek.admin.theme.CpDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import org.jetbrains.compose.resources.painterResource
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 
 private val SocialButtonIconSize = 18.dp
 private val SocialButtonIconGap = 8.dp

@@ -67,7 +67,7 @@ internal class NotificationPresenter(
                 mutable.update { it.copy(pushEnabled = enabled, settingsLoaded = true, settingsError = null) }
             } catch (cancelled: CancellationException) { throw cancelled }
             catch (_: Exception) {
-                if (current(snapshot)) mutable.update { it.copy(settingsError = "Не удалось загрузить настройки push") }
+                if (current(snapshot)) mutable.update { it.copy(settingsError = NotificationSettingsError.LoadFailed) }
                 return@withLock
             }
         }
@@ -123,7 +123,7 @@ internal class NotificationPresenter(
                     unreadCount = page.unreadCount, nextCursor = page.nextCursor, loading = false, loadingMore = false) }
             } catch (cancelled: CancellationException) { throw cancelled }
             catch (_: Exception) {
-                if (current(snapshot)) mutable.update { it.copy(loading = false, loadingMore = false, error = "Не удалось загрузить уведомления") }
+                if (current(snapshot)) mutable.update { it.copy(loading = false, loadingMore = false, error = NotificationInboxError.LoadFailed) }
             } finally {
                 if (current(snapshot)) {
                     loadJob = null
@@ -150,7 +150,7 @@ internal class NotificationPresenter(
                 syncDevice()
             } catch (cancelled: CancellationException) { throw cancelled }
             catch (_: Exception) {
-                if (current(snapshot)) mutable.update { it.copy(savingSettings = false, settingsError = "Не удалось сохранить настройки push. Попробуйте ещё раз.") }
+                if (current(snapshot)) mutable.update { it.copy(savingSettings = false, settingsError = NotificationSettingsError.SaveFailed) }
             }
         }
     }
@@ -199,12 +199,16 @@ internal class NotificationPresenter(
     }
 
     private fun readFailed() {
-        mutable.update { it.copy(markingRead = false, error = "Не удалось отметить уведомления прочитанными") }
+        mutable.update { it.copy(markingRead = false, error = NotificationInboxError.MarkReadFailed) }
         // Serve any refresh queued during the write without hiding why the write failed.
         if (refreshPending) load(more = false, keepError = true)
     }
 
-    override fun onCheckInCreated() {
+    override fun onCheckInCreated() = offerPermission()
+
+    override fun onInboxOpened() = offerPermission()
+
+    private fun offerPermission() {
         val snapshot = state.value
         val device = platform.state.value
         if (snapshot.accountId != null && current(snapshot) && snapshot.settingsLoaded && snapshot.pushEnabled && device.available && !device.permissionGranted)

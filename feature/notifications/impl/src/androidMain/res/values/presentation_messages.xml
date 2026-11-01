@@ -1,0 +1,6 @@
+<resources>
+    <string name="notifications_push_load_failed">Не удалось загрузить настройки push</string>
+    <string name="notifications_inbox_load_failed">Не удалось загрузить уведомления</string>
+    <string name="notifications_push_save_failed">Не удалось сохранить настройки push. Попробуйте ещё раз.</string>
+    <string name="notifications_mark_read_failed">Не удалось отметить уведомления прочитанными</string>
+</resources>

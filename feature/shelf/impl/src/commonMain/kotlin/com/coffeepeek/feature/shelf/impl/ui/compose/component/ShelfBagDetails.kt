@@ -42,7 +42,7 @@ import com.coffeepeek.feature.shelf.impl.ui.compose.previewBrews
 import com.coffeepeek.feature.shelf.impl.ui.compose.previewShelfItems
 import com.coffeepeek.feature.shelf.impl.ui.compose.previewToday
 import com.coffeepeek.feature.shelf.impl.ui.data.ShelfDay
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 /**

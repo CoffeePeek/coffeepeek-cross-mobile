@@ -13,7 +13,7 @@ import com.coffeepeek.feature.ownership.domain.model.BusinessProfile
 import com.coffeepeek.feature.ownership.domain.model.OwnedBusiness
 import com.coffeepeek.feature.ownership.impl.resources.Res
 import com.coffeepeek.feature.ownership.impl.resources.ownership_shop_kind
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable

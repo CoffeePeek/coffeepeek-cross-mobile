@@ -1,5 +1,6 @@
 package com.coffeepeek.feature.profile.impl.ui
 
+import com.coffeepeek.feature.profile.impl.ui.model.AccountDeletionError
 import androidx.lifecycle.ViewModelStore
 import com.coffeepeek.feature.profile.api.AccountDeletionPort
 import com.coffeepeek.feature.profile.api.ProfileDeletionRequest
@@ -87,16 +88,16 @@ class AccountDeletionViewModelTest {
     @Test fun statusLoadFailureShowsItsMessageOrTheFallbackAndSendsNothing() = runTest(dispatcher) {
         val deletion = FakeDeletion(existing = Result.failure(RuntimeException()))
         val vm = model(deletion); runCurrent()
-        assertEquals("Ошибка загрузки статуса", vm.state.value.error); assertEquals(0, deletion.requests)
+        assertEquals(AccountDeletionError.Status, vm.state.value.error); assertEquals(0, deletion.requests)
         val named = model(FakeDeletion(existing = Result.failure(RuntimeException("offline")))); runCurrent()
-        assertEquals("offline", named.state.value.error)
+        assertEquals(AccountDeletionError.Server("offline"), named.state.value.error)
     }
 
     @Test fun aFailedSendShowsTheFallbackAndCanBeRetried() = runTest(dispatcher) {
         val deletion = FakeDeletion(existing = Result.success(null), created = Result.failure(RuntimeException()))
         val vm = model(deletion); runCurrent()
         vm.act(AccountDeletionAction.Send)
-        assertEquals("Не удалось отправить письмо", vm.state.value.error)
+        assertEquals(AccountDeletionError.Send, vm.state.value.error)
         assertFalse(vm.state.value.requested); assertTrue(vm.state.value.canSend)
         vm.act(AccountDeletionAction.DismissError); assertEquals(null, vm.state.value.error)
     }

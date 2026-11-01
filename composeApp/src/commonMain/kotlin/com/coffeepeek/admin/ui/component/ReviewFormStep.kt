@@ -1,5 +1,8 @@
 package com.coffeepeek.admin.ui.component
 
+import coffeepeek.composeapp.generated.resources.*
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
+
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -22,10 +25,12 @@ internal fun ReviewFormStep(
     isError: Boolean = false,
     content: @Composable () -> Unit,
 ) {
+    val localizedLegacyReviewFormStepShopCheckinFormOptional = stringResource(Res.string.legacy_review_form_step_shop_checkin_form_optional)
+
     val color = if (isError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
     Column(
         Modifier.fillMaxWidth()
-            .semantics { if (optional) stateDescription = "Необязательный пункт" }
+            .semantics { if (optional) stateDescription = localizedLegacyReviewFormStepShopCheckinFormOptional }
             .drawBehind {
                 val x = 5.dp.toPx()
                 val y = 10.dp.toPx()

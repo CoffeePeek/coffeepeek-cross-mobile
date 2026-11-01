@@ -15,7 +15,7 @@ import com.coffeepeek.admin.ui.component.SwipeDismissModalBottomSheet
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.feature.notifications.api.NotificationFeature
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.koinInject
 
@@ -23,13 +23,31 @@ import org.koin.compose.koinInject
 internal fun NotificationsButton(feature: NotificationFeature = koinInject()) {
     val state by feature.state.collectAsState()
     var open by remember { mutableStateOf(false) }
-    LaunchedEffect(state.generation) { open = false }
+    var permissionGeneration by remember { mutableStateOf<Long?>(null) }
+    val close = {
+        open = false
+        permissionGeneration = null
+    }
+    LaunchedEffect(feature, state.generation) { close() }
+    LaunchedEffect(feature, open, permissionGeneration, state.generation, state.settingsLoaded) {
+        val requested = permissionGeneration ?: return@LaunchedEffect
+        val current = feature.state.value
+        if (!open || current.generation != requested || current.accountId == null) {
+            permissionGeneration = null
+        } else if (state.generation == requested && current.settingsLoaded) {
+            permissionGeneration = null
+            feature.onInboxOpened()
+        }
+    }
     NotificationsIconButton(state.unreadCount, onClick = {
-        open = true
-        feature.refresh()
+        if (!open) {
+            permissionGeneration = feature.state.value.takeIf { it.accountId != null }?.generation
+            open = true
+            feature.refresh()
+        }
     })
-    if (open) SwipeDismissModalBottomSheet(onDismissRequest = { open = false }, maxSheetHeightFraction = .88f) {
-        NotificationsContent(state, { open = false }, feature::setPushEnabled, feature::markRead,
+    if (open) SwipeDismissModalBottomSheet(onDismissRequest = close, maxSheetHeightFraction = .88f) {
+        NotificationsContent(state, close, {}, feature::markRead,
             feature::markAllRead, feature::refresh, feature::loadMore)
     }
 }

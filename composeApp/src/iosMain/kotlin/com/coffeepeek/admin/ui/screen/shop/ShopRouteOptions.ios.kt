@@ -9,7 +9,7 @@ import coffeepeek.composeapp.generated.resources.route_yandex_maps
 import com.coffeepeek.admin.ui.component.NativeActionSheet
 import com.coffeepeek.admin.ui.component.PlatformAction
 import com.coffeepeek.admin.utils.OpenInBrowser
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 
 @Composable
 internal actual fun ShopRoutePicker(latitude: Double, longitude: Double, onDismiss: () -> Unit) {

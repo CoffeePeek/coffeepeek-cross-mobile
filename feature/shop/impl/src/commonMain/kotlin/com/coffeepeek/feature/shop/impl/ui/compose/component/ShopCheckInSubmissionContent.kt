@@ -23,7 +23,7 @@ import com.coffeepeek.feature.shop.impl.resources.shop_checkin_form_success_publ
 import com.coffeepeek.feature.shop.impl.resources.shop_checkin_form_success_private
 import com.coffeepeek.feature.shop.impl.resources.shop_checkin_form_feed
 import com.coffeepeek.feature.shop.impl.resources.shop_checkin_form_cleanup_error
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable

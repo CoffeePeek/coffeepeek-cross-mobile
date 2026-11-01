@@ -30,7 +30,7 @@ class PlayUpdateRetryTest {
         assertTrue(controller.state.value.manual)
         installer.state.value = installer.state.value.copy(stage = InstallationStage.Available, error = "Google Play недоступен")
         val result = request.await()!!
-        assertEquals("Google Play недоступен", result.message)
+        assertEquals(PlayUpdateRetryOutcome.InstallationError("Google Play недоступен"), result)
         assertTrue(result.canRetry)
     }
 
@@ -39,6 +39,7 @@ class PlayUpdateRetryTest {
         val installer = Installer()
         val result = retryPlayUpdate(controller, installer)!!
         assertTrue(result.canRetry)
+        assertEquals(PlayUpdateRetryOutcome.Check(UpdateCheckFeedback.CheckFailed, canRetry = true), result)
         assertTrue(controller.state.value.checkFailed)
         assertEquals(0, installer.downloads)
     }
@@ -47,7 +48,7 @@ class PlayUpdateRetryTest {
         val controller = AppUpdateController(Updates(version = 100), FakeEnvironment(100), backgroundScope)
         val installer = Installer()
         val result = retryPlayUpdate(controller, installer)!!
-        assertEquals("Установлена актуальная версия", result.message)
+        assertEquals(PlayUpdateRetryOutcome.Check(UpdateCheckFeedback.UpToDate, canRetry = false), result)
         assertFalse(result.canRetry)
         assertEquals(0, installer.downloads)
     }
@@ -66,7 +67,7 @@ class PlayUpdateRetryTest {
         val request = async { retryPlayUpdate(controller, Installer()) }
         runCurrent()
         advanceTimeBy(30_001)
-        assertTrue(request.await()!!.canRetry)
+        assertEquals(PlayUpdateRetryOutcome.Check(UpdateCheckFeedback.CheckFailed, canRetry = true), request.await())
     }
 
     private class Updates(val version: Long = 140, val fail: Boolean = false) : AppUpdateRepository {

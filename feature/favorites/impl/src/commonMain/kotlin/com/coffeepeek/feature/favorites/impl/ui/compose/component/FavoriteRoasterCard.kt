@@ -21,7 +21,7 @@ import com.coffeepeek.feature.favorites.impl.resources.favorites_roaster_shops
 import com.coffeepeek.feature.favorites.impl.ui.compose.favoriteExposure
 import io.kamel.image.KamelImage
 import io.kamel.image.asyncPainterResource
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 /** The design-system roaster card with this feature's texts, logo loading and the remove-from-favorites heart. */

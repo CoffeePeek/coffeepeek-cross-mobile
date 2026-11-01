@@ -1,5 +1,7 @@
 package com.coffeepeek.admin.ui.screen.feed
 
+import coffeepeek.composeapp.generated.resources.*
+
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.*
 import androidx.compose.material3.MaterialTheme
@@ -23,7 +25,7 @@ import com.coffeepeek.core.designsystem.component.CoffeePeekRefreshError
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.domain.model.CoffeeShop
 import org.jetbrains.compose.ui.tooling.preview.Preview
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import coffeepeek.composeapp.generated.resources.Res
 import coffeepeek.composeapp.generated.resources.feed_refresh_error
 import coffeepeek.composeapp.generated.resources.retry
@@ -69,7 +71,7 @@ internal fun FeedSearchError(state: FeedUiState, listState: LazyListState, paddi
 }
 
 private fun LazyListScope.feedShopSearchHeading(state: FeedUiState, refresh: () -> Unit) {
-    item(key = "shop-search-heading") { Text("Кофейни", style = MaterialTheme.typography.titleLarge) }
+    item(key = "shop-search-heading") { Text(stringResource(Res.string.profile_stat_shops), style = MaterialTheme.typography.titleLarge) }
     when {
         state.isLoading && state.shops.isEmpty() -> item(key = "shop-search-loading") {
             Box(Modifier.fillMaxWidth().padding(CpDimens.spacing4), contentAlignment = Alignment.Center) { CoffeePeekLoader() }
@@ -80,7 +82,7 @@ private fun LazyListScope.feedShopSearchHeading(state: FeedUiState, refresh: () 
 
 private fun LazyListScope.roasterSearchResults(content: (@Composable () -> Unit)?) {
     if (content == null) return
-    item(key = "roaster-search-heading") { DiscoverySectionTitle("Обжарщики", null) }
+    item(key = "roaster-search-heading") { DiscoverySectionTitle(stringResource(Res.string.favorites_roasters), null) }
     item(key = "roaster-search-results") { content() }
 }
 

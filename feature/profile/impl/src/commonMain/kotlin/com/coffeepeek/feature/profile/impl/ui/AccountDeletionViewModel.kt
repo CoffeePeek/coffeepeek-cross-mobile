@@ -6,6 +6,7 @@ import com.coffeepeek.core.presentation.MviViewModel
 import com.coffeepeek.feature.profile.api.AccountDeletionPort
 import com.coffeepeek.feature.profile.api.ProfileAccountPort
 import com.coffeepeek.feature.profile.api.ProfileDeletionRequest
+import com.coffeepeek.feature.profile.impl.ui.model.AccountDeletionError
 import com.coffeepeek.feature.profile.impl.ui.model.AccountDeletionAction
 import com.coffeepeek.feature.profile.impl.ui.model.AccountDeletionEvent
 import com.coffeepeek.feature.profile.impl.ui.model.AccountDeletionState
@@ -47,7 +48,10 @@ internal class AccountDeletionViewModel(
         updateState { copy(isSending = true, error = null) }
         deletion.request()
             .onSuccess { applyRequest(it); updateState { copy(isSending = false) } }
-            .onFailure { updateState { copy(isSending = false, error = it.message?.takeIf(String::isNotBlank) ?: SEND_FAILED) } }
+            .onFailure {
+                val message = it.message?.takeIf(String::isNotBlank)?.let { AccountDeletionError.Server(it) } ?: AccountDeletionError.Send
+                updateState { copy(isSending = false, error = message) }
+            }
     }
 
     private fun load() {
@@ -55,7 +59,8 @@ internal class AccountDeletionViewModel(
             val email = accounts.cachedOwnProfile()?.email ?: accounts.loadOwnProfile(forceRefresh = false).getOrNull()?.email.orEmpty()
             updateState { copy(email = email, isLoading = true, error = null) }
             val existing = deletion.existingRequest().getOrElse { error ->
-                updateState { copy(isLoading = false, error = error.message?.takeIf(String::isNotBlank) ?: STATUS_FAILED) }
+                val message = error.message?.takeIf(String::isNotBlank)?.let { AccountDeletionError.Server(it) } ?: AccountDeletionError.Status
+                updateState { copy(isLoading = false, error = message) }
                 return@launch
             }
             if (existing != null) applyRequest(existing)
@@ -89,8 +94,4 @@ internal class AccountDeletionViewModel(
         return now() >= availableAt
     }
 
-    private companion object {
-        const val STATUS_FAILED = "Ошибка загрузки статуса"
-        const val SEND_FAILED = "Не удалось отправить письмо"
-    }
 }

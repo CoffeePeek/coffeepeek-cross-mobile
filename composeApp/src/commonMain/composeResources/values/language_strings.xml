@@ -1,0 +1,8 @@
+<resources>
+    <string name="navigation_search">Поиск</string>
+    <string name="navigation_coffee">Кофе</string>
+    <string name="navigation_feed">Лента</string>
+    <string name="navigation_profile">Профиль</string>
+    <string name="navigation_settings">Настройки</string>
+    <string name="navigation_back">Назад</string>
+</resources>

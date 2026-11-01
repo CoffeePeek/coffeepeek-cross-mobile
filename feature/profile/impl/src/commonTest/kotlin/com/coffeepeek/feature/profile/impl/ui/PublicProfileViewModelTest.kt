@@ -1,5 +1,6 @@
 package com.coffeepeek.feature.profile.impl.ui
 
+import com.coffeepeek.feature.profile.impl.ui.model.PublicProfileError
 import androidx.lifecycle.ViewModelStore
 import com.coffeepeek.feature.profile.api.OwnProfile
 import com.coffeepeek.feature.profile.api.ProfileAccountPort
@@ -350,7 +351,7 @@ class PublicProfileViewModelTest {
         assertNull(vm.state.value.profile)
         assertTrue(vm.state.value.checkIns.isEmpty())
         assertTrue(vm.state.value.connections.isEmpty())
-        assertEquals("Профиль недоступен", vm.state.value.error)
+        assertEquals(PublicProfileError.Unavailable, vm.state.value.error)
     }
 
     @Test
@@ -380,7 +381,7 @@ class PublicProfileViewModelTest {
         assertEquals(1, visibility.refreshes)
         assertEquals(0, profileRequests)
         assertNull(vm.state.value.profile)
-        assertEquals("Не удалось загрузить блокировки. Повторите попытку.", vm.state.value.error)
+        assertEquals(PublicProfileError.BlocksLoad, vm.state.value.error)
     }
 
     private fun checkIn(id: String) = PublicProfileCheckIn(id, null, "Дома", "Кофе", null, null, "", "2026-10-15", emptyList())

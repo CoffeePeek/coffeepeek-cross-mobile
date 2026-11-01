@@ -20,7 +20,7 @@ import coffeepeek.composeapp.generated.resources.Res
 import coffeepeek.composeapp.generated.resources.checkin_public_switch_hint
 import coffeepeek.composeapp.generated.resources.checkin_public_switch_title
 import com.coffeepeek.admin.theme.CpDimens
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 
 /** Shared presentation only: each feature owns its visibility state and persistence. */
 @Composable

@@ -28,7 +28,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
@@ -312,9 +312,12 @@ private fun PostPhotoStrip(photos: PostPhotos, onPhoto: (Int) -> Unit, host: Com
 
 @Composable
 private fun HomePreparation.details(methodLabel: (String) -> String?): String {
+    val formattedMethod = brewMethodCode?.let(methodLabel)
+    val generic = brewMethodCode == "other" && (formattedMethod == null || formattedMethod == brewMethodCode)
+    val method = if (generic) stringResource(Res.string.community_drink_other) else formattedMethod
     val separator = stringResource(Res.string.community_details_separator)
     return listOfNotNull(
-        brewMethodCode?.let(methodLabel),
+        method,
         doseGrams?.let { stringResource(Res.string.community_dose, it.toString()) },
         brewDurationSeconds?.let { stringResource(Res.string.community_seconds, it) },
         tasteScore?.let { stringResource(Res.string.community_taste, it) },

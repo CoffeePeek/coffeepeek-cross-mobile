@@ -38,7 +38,7 @@ import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 private const val ROTATION_DURATION_MS = 1600

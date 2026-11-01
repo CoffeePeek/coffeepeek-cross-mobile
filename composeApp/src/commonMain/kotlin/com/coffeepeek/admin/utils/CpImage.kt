@@ -48,7 +48,7 @@ import coffeepeek.composeapp.generated.resources.Res
 import coffeepeek.composeapp.generated.resources.photo_loading
 import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
 import org.jetbrains.compose.resources.DrawableResource
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import org.koin.compose.koinInject
 
 @Composable

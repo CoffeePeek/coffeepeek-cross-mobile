@@ -1,5 +1,12 @@
 package com.coffeepeek.admin.ui.screen.contributions
 
+import com.coffeepeek.admin.ui.screen.shopchange.localizedHint
+
+import com.coffeepeek.admin.ui.screen.shopchange.localizedTitle
+
+import coffeepeek.composeapp.generated.resources.*
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
+
 import com.coffeepeek.core.designsystem.component.coffeePeekScrollContentPadding
 
 import com.coffeepeek.core.designsystem.component.CoffeePeekScaffold as Scaffold
@@ -65,6 +72,11 @@ import org.koin.core.parameter.parametersOf
 
 @Composable
 fun MyContributionsScreen(kind: ContributionKind) {
+    val tabTitles = ModerationStatus.entries.associateWith { it.tabTitle() }
+
+    val localizedLegacyAddShopScreenSandboxCitiesFailure = stringResource(Res.string.legacy_add_shop_screen_sandbox_cities_failure)
+    val localizedRetry = stringResource(Res.string.retry)
+
     val vm: MyContributionsViewModel = platformViewModel(
         key = "contributions-$kind",
         parameters = { parametersOf(kind) },
@@ -73,7 +85,7 @@ fun MyContributionsScreen(kind: ContributionKind) {
     var selectedName by rememberSaveable { mutableStateOf<String?>(null) }
 
     Scaffold(
-        topBar = { CpTopBar(kind.title) },
+        topBar = { CpTopBar(kind.localizedTitle()) },
         containerColor = MaterialTheme.colorScheme.background,
     ) { padding ->
         val tabs = state.visibleTabs
@@ -83,24 +95,24 @@ fun MyContributionsScreen(kind: ContributionKind) {
             }
             state.error != null -> Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(state.error ?: "Ошибка", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(state.error?.messageOr(stringResource(Res.string.legacy_roaster_detail_screen_contributions_load_failed)) ?: localizedLegacyAddShopScreenSandboxCitiesFailure, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Spacer(Modifier.height(CpDimens.spacing3))
                     Button(
                         onClick = vm::refresh,
                         modifier = Modifier.height(CpDimens.buttonHeight),
                         shape = RoundedCornerShape(percent = 50),
-                    ) { Text("Попробовать снова") }
+                    ) { Text(localizedRetry) }
                 }
             }
             tabs.isEmpty() -> Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
-                Text(kind.emptyText, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(kind.localizedEmptyText(), color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             else -> Column(Modifier.fillMaxSize().padding(padding)) {
                 val selected = tabs.firstOrNull { it.name == selectedName } ?: tabs.first()
                 CapsuleSegmentedControl(
                     options = tabs,
                     selected = selected,
-                    label = { status -> "${status.tabTitle()} · ${state.tabs[status]?.totalCount ?: 0}" },
+                    label = { status -> "${tabTitles.getValue(status)} · ${state.tabs[status]?.totalCount ?: 0}" },
                     onSelected = { selectedName = it.name },
                     modifier = Modifier.padding(horizontal = CpDimens.spacing4, vertical = CpDimens.spacing2),
                 )
@@ -153,6 +165,12 @@ private fun ContributionCard(
     kind: ContributionKind,
     status: ModerationStatus,
 ) {
+    val localizedLegacyMyContributionsScreenContributionsOpenRequest = stringResource(Res.string.legacy_my_contributions_screen_contributions_open_request)
+    val localizedLegacyMyContributionsScreenShelfOpenCatalog = stringResource(Res.string.legacy_my_contributions_screen_shelf_open_catalog)
+
+    val title = item.changeSection?.localizedTitle() ?: item.title
+    val subtitle = item.changeSummary?.label(contributionSummaryLabels(), item.changeSection?.localizedHint().orEmpty()) ?: item.subtitle
+    val meta = if (item.awaitingCatalogPublication) stringResource(Res.string.legacy_contribution_waiting_catalog) else item.meta
     val target = item.target
     Card(
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
@@ -173,24 +191,24 @@ private fun ContributionCard(
                 Spacer(Modifier.width(CpDimens.spacing3))
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = item.title,
+                        text = title,
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onSurface,
                         maxLines = 2,
                         overflow = TextOverflow.Ellipsis,
                     )
-                    if (!item.subtitle.isNullOrBlank()) {
+                    if (!subtitle.isNullOrBlank()) {
                         Spacer(Modifier.height(CpDimens.spacing1))
                         Text(
-                            text = item.subtitle,
+                            text = subtitle,
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             maxLines = if (kind == ContributionKind.Roasters) 3 else 2,
                             overflow = TextOverflow.Ellipsis,
                         )
                     }
-                    if (!item.meta.isNullOrBlank()) {
+                    if (!meta.isNullOrBlank()) {
                         Spacer(Modifier.height(CpDimens.spacing2))
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
@@ -203,7 +221,7 @@ private fun ContributionCard(
                                 modifier = Modifier.size(15.dp),
                             )
                             Text(
-                                text = item.meta,
+                                text = meta,
                                 style = MaterialTheme.typography.labelMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
@@ -223,7 +241,7 @@ private fun ContributionCard(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text(
-                        text = if (kind == ContributionKind.Changes) "Посмотреть заявку" else "Открыть в каталоге",
+                        text = if (kind == ContributionKind.Changes) localizedLegacyMyContributionsScreenContributionsOpenRequest else localizedLegacyMyContributionsScreenShelfOpenCatalog,
                         style = MaterialTheme.typography.labelLarge,
                         color = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.weight(1f),
@@ -242,6 +260,8 @@ private fun ContributionCard(
 
 @Composable
 private fun RejectedReason(reason: String) {
+    val localizedLegacyMyContributionsScreenContributionsRejectedTitle = stringResource(Res.string.legacy_my_contributions_screen_contributions_rejected_title)
+
     if (reason.isBlank()) return
     Row(
         modifier = Modifier
@@ -262,7 +282,7 @@ private fun RejectedReason(reason: String) {
         )
         Column {
             Text(
-                text = "Почему отклонено",
+                text = localizedLegacyMyContributionsScreenContributionsRejectedTitle,
                 style = MaterialTheme.typography.labelMedium,
                 fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.error,
@@ -329,14 +349,30 @@ private fun ModerationStatus.color(): Color = when (this) {
     ModerationStatus.Rejected -> CpColor.Error
 }
 
+@Composable
 private fun ModerationStatus.shortTitle(): String = when (this) {
-    ModerationStatus.Approved -> "Готово"
-    ModerationStatus.Pending -> "Проверяется"
-    ModerationStatus.Rejected -> "Отклонено"
+    ModerationStatus.Approved -> stringResource(Res.string.step_done)
+    ModerationStatus.Pending -> stringResource(Res.string.legacy_my_contributions_screen_contributions_status_pending)
+    ModerationStatus.Rejected -> stringResource(Res.string.legacy_my_contributions_screen_contributions_tab_rejected)
 }
 
+@Composable
 private fun ModerationStatus.tabTitle() = when (this) {
-    ModerationStatus.Approved -> "Опубликовано"
-    ModerationStatus.Pending -> "На модерации"
-    ModerationStatus.Rejected -> "Отклонено"
+    ModerationStatus.Approved -> stringResource(Res.string.legacy_my_contributions_screen_contributions_tab_approved)
+    ModerationStatus.Pending -> stringResource(Res.string.legacy_my_contributions_screen_contributions_tab_pending)
+    ModerationStatus.Rejected -> stringResource(Res.string.legacy_my_contributions_screen_contributions_tab_rejected)
+}
+
+@Composable
+private fun ContributionKind.localizedTitle(): String = when (this) {
+    ContributionKind.Shops -> stringResource(Res.string.profile_menu_submitted_shops)
+    ContributionKind.Roasters -> stringResource(Res.string.profile_menu_submitted_roasters)
+    ContributionKind.Changes -> stringResource(Res.string.legacy_contribution_changes_title)
+}
+
+@Composable
+private fun ContributionKind.localizedEmptyText(): String = when (this) {
+    ContributionKind.Shops -> stringResource(Res.string.legacy_contribution_shops_empty)
+    ContributionKind.Roasters -> stringResource(Res.string.legacy_contribution_roasters_empty)
+    ContributionKind.Changes -> stringResource(Res.string.legacy_contribution_changes_empty)
 }

@@ -3,7 +3,7 @@ package com.coffeepeek.feature.notifications.impl.ui
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.*
 import com.coffeepeek.core.designsystem.component.CoffeePeekIconButton as IconButton
 import com.coffeepeek.core.designsystem.component.CoffeePeekTextButton as TextButton
@@ -17,6 +17,7 @@ import androidx.compose.ui.unit.dp
 import com.coffeepeek.feature.notifications.impl.R
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
+import com.coffeepeek.core.designsystem.component.CoffeePeekRowSeparator
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.feature.notifications.api.*
@@ -27,7 +28,6 @@ import androidx.compose.ui.tooling.preview.Preview
 internal fun NotificationsContent(
     state: NotificationInboxState,
     onClose: () -> Unit,
-    onPushChanged: (Boolean) -> Unit,
     onRead: (String) -> Unit,
     onReadAll: () -> Unit,
     onRefresh: () -> Unit,
@@ -41,7 +41,6 @@ internal fun NotificationsContent(
         // The sheet supplies a maximum; short lists must keep their content height.
         LazyColumn(
             modifier = Modifier.weight(1f, fill = false).navigationBarsPadding(),
-            verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3),
             contentPadding = PaddingValues(bottom = CoffeePeekDimens.spacing6),
         ) {
             if (state.accountId == null) {
@@ -52,7 +51,6 @@ internal fun NotificationsContent(
                     })
                 }
             } else {
-                item(key = "settings") { NotificationPushSettings(state, onPushChanged, onRefresh) }
                 if (state.items.isNotEmpty()) item(key = "actions") { NotificationsReadActions(state, onReadAll) }
                 notificationHistory(state, onRead, openingId)
                 if (state.items.isEmpty() || state.error != null) {
@@ -109,9 +107,12 @@ private fun LazyListScope.notificationHistory(state: NotificationInboxState, onR
                 style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = CoffeePeekDimens.spacing1).semantics { heading() })
         }
-        items(entries, key = NotificationItem::id) { item ->
-            NotificationRow(item, enabled = openingId == null && !state.markingRead && !state.loading && !state.loadingMore,
-                onClick = { onRead(item.id) })
+        itemsIndexed(entries, key = { _, item -> item.id }) { index, item ->
+            Column {
+                NotificationRow(item, enabled = openingId == null && !state.markingRead && !state.loading && !state.loadingMore,
+                    onClick = { onRead(item.id) })
+                if (index < entries.lastIndex) CoffeePeekRowSeparator()
+            }
         }
     }
 }
@@ -124,7 +125,10 @@ private fun NotificationsStatus(state: NotificationInboxState, onRefresh: () -> 
             Modifier.fillMaxWidth().padding(CoffeePeekDimens.spacing6), contentAlignment = Alignment.Center,
         ) { CoffeePeekLoader(stringResource(R.string.notifications_loading)) }
         error != null -> Column {
-            Text(error, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium)
+            Text(stringResource(when (error) {
+                NotificationInboxError.LoadFailed -> R.string.notifications_inbox_load_failed
+                NotificationInboxError.MarkReadFailed -> R.string.notifications_mark_read_failed
+            }), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium)
             TextButton(onClick = onRefresh,
                 colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onSurface)) {
                 Text(stringResource(R.string.notifications_retry))
@@ -137,12 +141,12 @@ private fun NotificationsStatus(state: NotificationInboxState, onRefresh: () -> 
 @Composable
 private fun NotificationsPreview(dark: Boolean, count: Int) = CoffeePeekTheme(darkTheme = dark) {
     val state = NotificationInboxState(accountId = "preview", settingsLoaded = true, deviceAvailable = true,
-        unreadCount = count, items = List(count) { index ->
+        unreadCount = (count + 1) / 2, items = List(count) { index ->
             NotificationItem("preview-$index", NotificationKind.ShopApproved, "Кофейня добавлена",
-                "Спасибо! Новая кофейня уже появилась на карте.", "2026-10-21T08:00:00Z", false, canOpen = true)
+                "Спасибо! Новая кофейня уже появилась на карте.", "2026-10-21T08:00:00Z", read = index % 2 == 1, canOpen = true)
         })
     Surface(Modifier.width(360.dp).heightIn(max = 640.dp)) {
-        NotificationsContent(state, {}, {}, {}, {}, {}, {}, {})
+        NotificationsContent(state, {}, {}, {}, {}, {}, {})
     }
 }
 
@@ -152,3 +156,13 @@ private fun NotificationsPreview(dark: Boolean, count: Int) = CoffeePeekTheme(da
 @Preview @Composable private fun NotificationsListDarkPreview() = NotificationsPreview(true, 1)
 @Preview @Composable private fun NotificationsLongListLightPreview() = NotificationsPreview(false, 15)
 @Preview @Composable private fun NotificationsLongListDarkPreview() = NotificationsPreview(true, 15)
+
+@Composable
+private fun NotificationsErrorsPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
+    Column(Modifier.width(360.dp), verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing4)) {
+        NotificationInboxError.entries.forEach { NotificationsStatus(NotificationInboxState(error = it), {}) }
+    }
+}
+
+@Preview @Composable private fun NotificationsErrorsLightPreview() = NotificationsErrorsPreview(false)
+@Preview @Composable private fun NotificationsErrorsDarkPreview() = NotificationsErrorsPreview(true)

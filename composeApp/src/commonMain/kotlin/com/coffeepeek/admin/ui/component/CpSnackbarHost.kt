@@ -40,7 +40,7 @@ import com.coffeepeek.core.designsystem.component.CoffeePeekFilledButton
 import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
 import com.coffeepeek.core.designsystem.component.CoffeePeekPlainIconButton
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 /** Uses the existing message queue and accessible timeout, with CoffeePeek presentation. */

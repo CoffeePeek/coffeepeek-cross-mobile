@@ -49,7 +49,6 @@ kotlin {
             implementation(project(module.feature.shop.domain))
             implementation(project(module.feature.shop.data))
             implementation(project(module.feature.shop.impl))
-            implementation(project(module.feature.settings.impl))
             // The shelf's own camera: viewfinder and capture behind the ShelfCamera port.
             implementation(libs.androidx.camera.camera2)
             implementation(libs.androidx.camera.lifecycle)
@@ -98,6 +97,7 @@ kotlin {
             implementation(project(module.feature.profile.data))
             implementation(project(module.feature.settings.api))
             implementation(project(module.feature.settings.domain))
+            implementation(project(module.feature.settings.impl))
             implementation(project(module.feature.roaster.api))
             implementation(project(module.feature.roaster.domain))
             implementation(project(module.feature.roaster.data))
@@ -285,6 +285,8 @@ android {
         buildConfigField("String", "SHELF_SEGMENTER_URL", "\"https://github.com/danielgatis/rembg/releases/download/v0.0.0/u2netp.onnx\"")
         buildConfigField("String", "SHELF_INPAINTER_URL", "\"https://huggingface.co/andraniksargsyan/migan/resolve/main/migan_pipeline_v2.onnx\"")
     }
+    // Both offered languages must be available offline to the in-app picker in Play installs.
+    bundle { language { enableSplit = false } }
     packaging {
         jniLibs {
             // Keep every supported ABI, but compress large scanner/map libraries in the APK.

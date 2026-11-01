@@ -1,5 +1,9 @@
 package com.coffeepeek.admin.ui.screen.shop
 
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
+
+import coffeepeek.composeapp.generated.resources.*
+
 import com.coffeepeek.core.designsystem.component.coffeePeekScrollContentPadding
 
 import com.coffeepeek.core.designsystem.component.CoffeePeekScaffold as Scaffold
@@ -43,6 +47,9 @@ import org.koin.core.parameter.parametersOf
 fun ShopReviewsScreen(shopId: String) {
     val vm: ShopDetailViewModel = platformViewModel(parameters = { parametersOf(shopId) })
     val state by vm.uiState.collectAsState()
+    val labels = shopDetailLabels()
+    val loadError = state.loadFeedback?.message(labels) ?: state.error
+    val actionMessage = state.actionFeedback?.message(labels) ?: state.actionMessage
     val listState = rememberLazyListState()
     PrefetchListPhotos(listState, state.details?.checkIns.orEmpty()
         .take(if (state.isLoggedIn) Int.MAX_VALUE else 1)
@@ -53,14 +60,14 @@ fun ShopReviewsScreen(shopId: String) {
     preview?.let { (urls, index) ->
         FullScreenImageDialog(images = urls, initialIndex = index, onDismiss = { preview = null })
     }
-    Scaffold(topBar = { CpTopBar(title = "Чекины") }) { padding ->
+    Scaffold(topBar = { CpTopBar(title = stringResource(Res.string.profile_stat_check_ins)) }) { padding ->
         val details = state.details
         Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
             when {
                 state.isLoading && details == null -> CoffeePeekLoader()
-                details == null && state.error != null -> Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(state.error.orEmpty())
-                    Button(onClick = vm::load) { Text("Попробовать снова") }
+                details == null && loadError != null -> Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(loadError.orEmpty())
+                    Button(onClick = vm::load) { Text(stringResource(Res.string.retry)) }
                 }
                 details != null -> LazyColumn(
                     state = listState,
@@ -74,8 +81,8 @@ fun ShopReviewsScreen(shopId: String) {
                     if (details.checkIns.isNotEmpty()) item {
                         com.coffeepeek.admin.ui.component.CheckInRatingsOverview(details.checkIns, details.shop.rating, details.shop.reviewCount)
                     }
-                    state.actionMessage?.let { message -> item { Text(message) } }
-                    if (details.checkIns.isEmpty()) item { Text("Чекинов пока нет") }
+                    actionMessage?.let { message -> item { Text(message) } }
+                    if (details.checkIns.isEmpty()) item { Text(stringResource(Res.string.legacy_shop_reviews_screen_shop_checkin_list_empty)) }
                     itemsIndexed(details.checkIns, key = { _, checkIn -> checkIn.id }) { index, checkIn ->
                         val blurred = !state.isLoggedIn && index > 0
                         val own = details.ownsCheckIn(checkIn, state.currentUserId)

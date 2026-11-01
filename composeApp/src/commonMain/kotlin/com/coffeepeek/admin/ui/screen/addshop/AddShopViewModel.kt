@@ -1,5 +1,13 @@
 package com.coffeepeek.admin.ui.screen.addshop
 
+import com.coffeepeek.admin.ui.screen.contributions.ContributionFailureKind
+
+import com.coffeepeek.admin.ui.screen.contributions.ContributionFormFailure
+
+import com.coffeepeek.admin.ui.screen.contributions.ContributionFieldIssue
+
+import com.coffeepeek.admin.utils.InputValidationIssue
+
 import com.coffeepeek.admin.base.BaseViewModel
 import com.coffeepeek.admin.location.GeoPoint
 import com.coffeepeek.admin.location.PlatformLocation
@@ -32,8 +40,6 @@ enum class AddShopStep { BASIC, CONTACTS, PHOTOS, FEATURES, SCHEDULE }
 
 data class DayScheduleUi(
     val dayOfWeek: Int,
-    val label: String,
-    val shortLabel: String,
     val isClosed: Boolean = false,
     val openTime: String = "09:00",
     val closeTime: String = "21:00",
@@ -90,46 +96,36 @@ data class AddShopUiState(
     val isLoadingCatalogs: Boolean = true,
     val isResolvingAddress: Boolean = false,
     val showLocationPicker: Boolean = false,
-    val locationHint: String? = null,
+    val locationHint: AddShopLocationHint? = null,
     val isSubmitting: Boolean = false,
-    val catalogsError: String? = null,
-    val submitError: String? = null,
+    val catalogsError: ContributionFormFailure? = null,
+    val submitError: ContributionFormFailure? = null,
     val isSuccess: Boolean = false,
 ) {
     val selectedGeoPoint: GeoPoint?
         get() = if (latitude != null && longitude != null) GeoPoint(latitude, longitude) else null
 
-    val nameError: String? get() = when {
-        name.isBlank() -> "Введите название"
-        name.length > 55 -> "Не более 55 символов"
+    val nameError: ContributionFieldIssue? get() = when {
+        name.isBlank() -> ContributionFieldIssue.NameRequired
+        name.length > 55 -> ContributionFieldIssue.NameTooLong(55)
         else -> null
     }
-    val addressError: String? get() = if (address.isBlank()) "Введите адрес" else null
-    val cityError: String? get() = if (selectedCity == null) "Выберите город" else null
-    val phoneError: String? get() = validateOptionalPhone(phone)
-    val emailError: String? get() = validateOptionalEmail(email)
-    val websiteError: String? get() = validateOptionalUrl(website)
-    val instagramError: String? get() = validateOptionalInstagram(instagram)
+    val addressError: ContributionFieldIssue? get() = if (address.isBlank()) ContributionFieldIssue.AddressRequired else null
+    val cityError: ContributionFieldIssue? get() = if (selectedCity == null) ContributionFieldIssue.CityRequired else null
+    val phoneError: InputValidationIssue? get() = validateOptionalPhone(phone)
+    val emailError: InputValidationIssue? get() = validateOptionalEmail(email)
+    val websiteError: InputValidationIssue? get() = validateOptionalUrl(website)
+    val instagramError: InputValidationIssue? get() = validateOptionalInstagram(instagram)
     val step1Valid get() = nameError == null && addressError == null && cityError == null
     val contactsStepValid get() = phoneError == null && emailError == null &&
         websiteError == null && instagramError == null
 }
 
-private val weekDays = listOf(
-    1 to ("Понедельник" to "Пн"),
-    2 to ("Вторник" to "Вт"),
-    3 to ("Среда" to "Ср"),
-    4 to ("Четверг" to "Чт"),
-    5 to ("Пятница" to "Пт"),
-    6 to ("Суббота" to "Сб"),
-    0 to ("Воскресенье" to "Вс"),
-)
+private val weekDays = listOf(1, 2, 3, 4, 5, 6, 0)
 
-private fun defaultSchedules() = weekDays.map { (day, labels) ->
+private fun defaultSchedules() = weekDays.map { day ->
     DayScheduleUi(
         dayOfWeek = day,
-        label = labels.first,
-        shortLabel = labels.second,
         isClosed = false,
         openTime = "09:00",
         closeTime = "21:00",
@@ -161,7 +157,7 @@ class AddShopViewModel(
                 .onFailure { err ->
                     _state.update { it.copy(
                         isLoadingCatalogs = false,
-                        catalogsError = err.message ?: "Ошибка загрузки каталогов",
+                        catalogsError = ContributionFormFailure(ContributionFailureKind.ShopCatalogLoad, err.message),
                     ) }
                 }
         }
@@ -248,7 +244,7 @@ class AddShopViewModel(
                 _state.update {
                     it.copy(
                         isResolvingAddress = false,
-                        locationHint = "Не удалось определить местоположение. Выберите точку на карте.",
+                        locationHint = AddShopLocationHint.Unavailable,
                     )
                 }
                 return@launch
@@ -263,7 +259,7 @@ class AddShopViewModel(
                         latitude = point.latitude,
                         longitude = point.longitude,
                         isResolvingAddress = false,
-                        locationHint = "Адрес не найден. Выберите точку на карте или введите вручную.",
+                        locationHint = AddShopLocationHint.AddressMissing,
                     )
                 }
                 return@launch
@@ -289,7 +285,7 @@ class AddShopViewModel(
         _state.update {
             it.copy(
                 isResolvingAddress = false,
-                locationHint = "Разрешите доступ к геолокации или выберите адрес на карте.",
+                locationHint = AddShopLocationHint.PermissionRequired,
             )
         }
     }
@@ -365,11 +361,9 @@ class AddShopViewModel(
     fun setUsePerDaySchedule(enabled: Boolean) {
         _state.update { s ->
             if (!enabled) return@update s.copy(usePerDaySchedule = false)
-            val synced = weekDays.map { (day, labels) ->
+            val synced = weekDays.map { day ->
                 DayScheduleUi(
                     dayOfWeek = day,
-                    label = labels.first,
-                    shortLabel = labels.second,
                     isClosed = day in s.closedDays,
                     openTime = s.unifiedOpenTime,
                     closeTime = s.unifiedCloseTime,
@@ -399,7 +393,7 @@ class AddShopViewModel(
                 )
             }
         } else {
-            weekDays.map { (day, _) ->
+            weekDays.map { day ->
                 ShopSchedule(
                     dayOfWeek = day,
                     isClosed = day in state.closedDays,
@@ -498,11 +492,8 @@ class AddShopViewModel(
             }.onFailure { err ->
                 _state.update { it.copy(
                     isSubmitting = false,
-                    submitError = err.message
-                        ?.substringBefore("Expected type")
-                        ?.trim()
-                        ?.ifBlank { null }
-                        ?: "Ошибка отправки. Попробуйте выйти и войти снова.",
+                    submitError = ContributionFormFailure(ContributionFailureKind.ShopSubmit,
+                        err.message?.substringBefore("Expected type")?.trim()?.ifBlank { null }),
                 ) }
             }
         }

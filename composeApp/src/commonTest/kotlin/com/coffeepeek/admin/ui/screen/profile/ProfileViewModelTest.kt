@@ -304,6 +304,7 @@ class ProfileViewModelTest {
         override suspend fun destination(notificationId: String) = null
         override fun foreground(): Unit = error("unused")
         override fun onCheckInCreated(): Unit = error("unused")
+        override fun onInboxOpened(): Unit = error("unused")
         override suspend fun beforeLogout() = Unit
     }
 

@@ -1,0 +1,4 @@
+<resources>
+    <string name="appupdate_check_failed">Не удалось проверить обновления. Попробуйте позже.</string>
+    <string name="appupdate_up_to_date">Установлена актуальная версия</string>
+</resources>

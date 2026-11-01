@@ -1,5 +1,8 @@
 package com.coffeepeek.admin.ui.dialogs
 
+import coffeepeek.composeapp.generated.resources.*
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
+
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -34,9 +37,11 @@ object ErrorDialog {
     operator fun invoke(
         show: Boolean,
         message: String,
-        title: String = "Что-то пошло не так",
+        title: String = stringResource(Res.string.legacy_error_dialog_unexpected_error),
         onDismiss: () -> Unit
     ) {
+        val localizedLegacyErrorDialogShelfCameraTipsClose = stringResource(Res.string.legacy_error_dialog_shelf_camera_tips_close)
+
         if (show) {
             Dialog(onDismissRequest = onDismiss) {
                 Surface(
@@ -91,7 +96,7 @@ object ErrorDialog {
                             shape = RoundedCornerShape(percent = 50),
                         ) {
                             Text(
-                                text = "Понятно",
+                                text = localizedLegacyErrorDialogShelfCameraTipsClose,
                                 style = MaterialTheme.typography.labelLarge.copy(fontSize = 16.sp),
                                 modifier = Modifier.padding(vertical = 4.dp)
                             )
