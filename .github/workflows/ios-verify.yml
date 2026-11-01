@@ -1,4 +1,5 @@
 name: iOS device Debug build
+run-name: iPhone Debug 2638 — UI feedback
 on:
   workflow_dispatch:
 permissions:
@@ -15,7 +16,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: df9c3d5d8d9d7d8075b723366c1177345226bd1c
+          ref: 87587ca264822335d90d6a94a7d92161d49716c5
           fetch-depth: 0
       - uses: actions/setup-java@v6
         with:
@@ -59,7 +60,7 @@ jobs:
           shasum -a 256 CoffeePeek-debug-iphoneos.tar.gz > SHA256SUMS
       - uses: actions/upload-artifact@v7
         with:
-          name: ios-device-debug-df9c3d5d
+          name: ios-device-debug-87587ca2
           path: ${{ runner.temp }}/ios-device-artifacts/
           if-no-files-found: error
           retention-days: 3
