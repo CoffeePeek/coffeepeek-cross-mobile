@@ -19,7 +19,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.CircularProgressIndicator
+import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
 import com.coffeepeek.core.designsystem.component.CoffeePeekFilledButton as Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -147,9 +147,10 @@ private fun UpdateCard(
                     if (transfer.busy) {
                         val progress = transfer.progress
                         if (progress != null && transfer.stage == InstallationStage.Downloading) {
-                            CircularProgressIndicator(progress = { progress }, modifier = Modifier.size(36.dp), color = MaterialTheme.colorScheme.onPrimary)
+                            CoffeePeekLoader(modifier = Modifier.size(36.dp), size = 36.dp, color = MaterialTheme.colorScheme.onPrimary,
+                                strokeWidth = 4.dp, progress = progress)
                         } else {
-                            CircularProgressIndicator(modifier = Modifier.size(36.dp), color = MaterialTheme.colorScheme.onPrimary)
+                            CoffeePeekLoader(modifier = Modifier.size(36.dp), size = 36.dp, color = MaterialTheme.colorScheme.onPrimary, strokeWidth = 4.dp)
                         }
                     } else {
                         Icon(
@@ -247,3 +248,13 @@ private fun UpdateCardDarkPreview() {
         UpdateCard(true, InstallationState(stage = InstallationStage.Ready), {}, {}, {}, Modifier.padding(16.dp))
     }
 }
+
+@Composable
+private fun UpdateCardDownloadingPreview(dark: Boolean, total: Long) = CoffeePeekTheme(darkTheme = dark) {
+    UpdateCard(false, InstallationState(stage = InstallationStage.Downloading,
+        downloadedBytes = 40, totalBytes = total, canCancel = true), {}, {}, {}, Modifier.padding(16.dp))
+}
+@Preview @Composable private fun UpdateCardDownloadingLightPreview() = UpdateCardDownloadingPreview(false, 100)
+@Preview @Composable private fun UpdateCardDownloadingDarkPreview() = UpdateCardDownloadingPreview(true, 100)
+@Preview @Composable private fun UpdateCardUnknownDownloadLightPreview() = UpdateCardDownloadingPreview(false, 0)
+@Preview @Composable private fun UpdateCardUnknownDownloadDarkPreview() = UpdateCardDownloadingPreview(true, 0)

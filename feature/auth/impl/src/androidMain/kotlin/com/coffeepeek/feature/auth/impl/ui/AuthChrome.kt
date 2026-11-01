@@ -1,5 +1,10 @@
 package com.coffeepeek.feature.auth.impl.ui
 
+import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
+import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
+
+import androidx.compose.ui.tooling.preview.PreviewLightDark
+
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -29,7 +34,6 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import com.coffeepeek.core.designsystem.component.CoffeePeekFilledButton as Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import com.coffeepeek.core.designsystem.component.CoffeePeekIconButton as IconButton
@@ -312,7 +316,7 @@ internal fun AuthPrimaryButton(
         elevation = ButtonDefaults.buttonElevation(defaultElevation = 6.dp, pressedElevation = 2.dp, disabledElevation = 0.dp),
     ) {
         if (loading) {
-            CircularProgressIndicator(Modifier.size(20.dp), color = CoffeePeekColors.DarkTextOnPrimary, strokeWidth = 2.dp)
+            CoffeePeekLoader(modifier = Modifier.size(20.dp), size = 20.dp, color = CoffeePeekColors.DarkTextOnPrimary, strokeWidth = 2.dp)
         } else {
             Text(text, style = MaterialTheme.typography.labelLarge.copy(fontSize = 15.sp, fontWeight = FontWeight.SemiBold))
         }
@@ -398,4 +402,10 @@ private fun StepMarker(index: Int, activeIndex: Int) {
             )
         }
     }
+}
+
+@PreviewLightDark
+@Composable
+private fun AuthPrimaryLoadingPreview() = CoffeePeekTheme {
+    AuthPrimaryButton(stringResource(R.string.auth_register_submit), {}, loading = true)
 }

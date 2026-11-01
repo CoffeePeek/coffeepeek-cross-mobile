@@ -224,3 +224,82 @@ zero failures/errors/skips. DirectDebug assembly and packaged DEX checks passed
 in 12 seconds. No new UI tests were added or run. These source changes are later
 than `87587ca2` and are not in either `2638` artifact above; updated Android
 delivery will identify its own source and version.
+
+## Updated device delivery results
+
+- iPhone was reconnected and verified unlocked. The existing development-signed
+  Debug `2637` was updated in place to `2638` with the same application identity.
+  xtool installation completed successfully. A fresh device read confirmed Debug
+  `2638` and original TestFlight `2633` both present. No uninstall or data clearing
+  occurred. The user then confirmed that the updated Debug main screen opened.
+  This confirms startup, not complete visual or live-backend acceptance.
+- The additional Android search source checkpoint is
+  `9b23ccc2539bb83814bedfeae87ec643e7956466`. Its exact-source DirectDebug `2639`
+  rebuild passed assembly and the packaged DEX guard in 26 seconds; package,
+  debuggable flag and entry Activity were re-read from the APK.
+- Android compatible-signature build
+  [`41327987587`](https://github.com/CoffeePeek/coffeepeek-cross-mobile/actions/runs/41327987587)
+  checks out that exact checkpoint for `2639`. Pixel 9 remains disconnected;
+  the ready `2638` Android artifact was not installed. Latest Android installation
+  and startup remain pending the new artifact and selected device connection.
+
+The full `2638` macOS run completed successfully. Downloaded XML confirms 16
+executed native contracts across four suites: glass configuration 6, native tab
+visibility 5, navigation delegate 2, tab delegate 3. No failures/errors/skips.
+These cover source `87587ca2`, not the later changes below. Android `2639` CI
+also completed all build/DEX/signature/unchanged-code/cleanup checks; its artifact
+was downloaded and checksum/signature checked. Pixel 9 was still absent on the
+subsequent targeted connection check. The user was asked to reconnect it or defer
+installation; no Android update/startup is claimed.
+
+## Further device feedback: shelf, loaders and filters
+
+- The user requested doubling the transparent rail again: 20 to 40 dp. The
+  existing height-derived row and drag geometry accounts for the increase;
+  bags, 8 dp overlap, material, bevel and fasteners remain the same.
+- Inventory found 18 direct Material circular indicators and one linear download
+  indicator in 16 app-owned source files, plus native loaders in the shared iOS
+  loader, update-check row, glass buttons and operation-status banner. All now
+  render the existing CoffeePeek contour. The shared loader accepts optional
+  finite/clamped determinate progress, retaining percent labels and accessibility
+  range semantics; unknown totals remain indeterminate. Sizes, colors and request
+  guards are preserved. The scan beam is a domain-specific photo animation and
+  remains unchanged.
+- Native UIKit controls host that same Compose renderer through explicitly owned
+  child controllers, removed on disposal. No loader controller is created when
+  inactive. The transparent 24 pt image slot preserves button layout, native
+  spinners are disabled, and disabled/selected/loading accessibility is retained.
+  Independent source review found no owner capture/retain-cycle blocker and
+  confirmed scene disposal on leaving the window hierarchy in Compose 1.12.1.
+- The three active filter entries (legacy global iOS, Android Discovery, and
+  shared coffee catalogue) use a bounded 80% viewport height. Native filters
+  start with that known detent instead of provisional half-height followed by an
+  unanimated measured resize. Other sheets retain content sizing; nested sheets
+  do not inherit the flag. Existing native animation/Reduce Motion, safe insets,
+  keyboard, reset/apply/cancel and analytics are preserved. Removed duplicate
+  bottom insets from those filter bodies only. Added light/dark compact-window
+  and large-font previews and three pure height contracts.
+
+Verification: 299 executed unit/contract tests in 43 suites, zero failures,
+errors or skips (design-system 57, shelf 57, coffee 46, Discovery 139). The first
+combined run executed those suites but failed design-system iOS compilation due
+to four missing UIKit category imports in the new loader bridge. Imports were
+fixed; the retry passed in 26 seconds, reusing the already-executed test results,
+compiling design-system iOS Arm64 and assembling Android with packaged DEX checks.
+The app's `compileKotlinIosArm64` task was SKIPPED on Linux: this does not certify
+app UIKit compilation or execution. A full macOS device build and updated native
+contracts remain required. Direct standard-spinner source audit and diff checks
+pass; existing SDK/preview deprecation warnings remain outside scope.
+
+Manual gates remain: new 40 dp rails, every loader context (including native
+buttons and progress), filter entrance/scroll/close on both platforms, compact
+window/font scale 2, light/dark, accessibility and Reduce Motion. The successful
+`2638` startup does not certify these later changes. No automated UI,
+instrumented-Compose or screenshot suites were added or run.
+
+The requested Russian/Belarusian language selection will be a separate child
+checkpoint. Audit found 1801 production base strings plus 56 array items and no
+Belarusian resources, alongside active hardcoded legacy/native UI and fixed-Russian
+dates. A selector alone cannot establish full Belarusian support; resource
+translation, active hardcode extraction, locale persistence/application and native
+labels must be implemented and checked together.

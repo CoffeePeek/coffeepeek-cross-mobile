@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHost
@@ -38,6 +37,7 @@ import com.coffeepeek.admin.theme.CpColor
 import com.coffeepeek.admin.theme.CpDimens
 import com.coffeepeek.admin.ui.icons.CpIcons
 import com.coffeepeek.core.designsystem.component.CoffeePeekFilledButton
+import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
 import com.coffeepeek.core.designsystem.component.CoffeePeekPlainIconButton
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import org.jetbrains.compose.resources.stringResource
@@ -113,7 +113,7 @@ private fun SnackbarMessageAction(
         ),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing2)) {
-            if (inProgress) CircularProgressIndicator(Modifier.size(20.dp), color = colors.onPrimary, strokeWidth = 2.dp)
+            if (inProgress) CoffeePeekLoader(modifier = Modifier.size(20.dp), size = 20.dp, color = colors.onPrimary, strokeWidth = 2.dp)
             else if (icon != null) Icon(icon, contentDescription = null, modifier = Modifier.size(20.dp))
             Text(if (inProgress) stringResource(Res.string.snackbar_retrying) else label, style = MaterialTheme.typography.labelLarge)
         }

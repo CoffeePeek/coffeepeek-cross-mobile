@@ -7,11 +7,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -26,6 +26,7 @@ import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -45,6 +46,7 @@ import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.feature.discovery.api.DiscoveryHost
 import com.coffeepeek.feature.discovery.domain.model.CatalogEntry
 import com.coffeepeek.feature.discovery.domain.model.DiscoveryFilters
+import com.coffeepeek.feature.discovery.domain.model.DiscoveryCatalogs
 import com.coffeepeek.feature.discovery.domain.rules.amenityTags
 import com.coffeepeek.feature.discovery.impl.R
 import com.coffeepeek.feature.discovery.impl.search.SearchAction
@@ -64,22 +66,32 @@ internal fun FilterSheet(state: SearchState, host: DiscoveryHost, onAction: (Sea
         onDismissRequest = { onAction(SearchAction.CloseFilters) },
         dismissDescription = stringResource(R.string.discovery_filters_close),
         modifier = Modifier.widthIn(max = width),
+        maxSheetHeightFraction = 0.8f,
+        expandToMaxHeight = true,
     ) {
         // A separate modal window must preserve the caller's text scale.
         CompositionLocalProvider(LocalDensity provides density) {
-            FilterSheetHeader(draft.activeCount > 0, { draft = draft.clearSelections() }) {
+            FilterSheetContent(state, host, draft, { draft = it }, {
                 onAction(SearchAction.ApplyFilters(draft.copy(cityId = state.filters.cityId)))
                 onAction(SearchAction.CloseFilters)
-            }
-            Column(
-                Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()).navigationBarsPadding()
-                    .padding(horizontal = CoffeePeekDimens.spacing4).padding(bottom = CoffeePeekDimens.spacing6),
-                verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing6),
-            ) {
-                FilterCatalogStatus(state) { onAction(SearchAction.RetryCatalogs) }
-                FilterSelections(state, host, draft) { draft = it }
-            }
+            }, { onAction(SearchAction.RetryCatalogs) })
         }
+    }
+}
+
+@Composable
+private fun ColumnScope.FilterSheetContent(
+    state: SearchState, host: DiscoveryHost, draft: DiscoveryFilters, onDraft: (DiscoveryFilters) -> Unit,
+    onDone: () -> Unit, onRetry: () -> Unit,
+) {
+    FilterSheetHeader(draft.activeCount > 0, { onDraft(draft.clearSelections()) }, onDone)
+    Column(
+        Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState())
+            .padding(horizontal = CoffeePeekDimens.spacing4).padding(bottom = CoffeePeekDimens.spacing6),
+        verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing6),
+    ) {
+        FilterCatalogStatus(state, onRetry)
+        FilterSelections(state, host, draft, onDraft)
     }
 }
 
@@ -173,5 +185,18 @@ private fun FilterSheetPreview() = CoffeePeekTheme {
 private fun FilterSheetHeaderLargePreview() = CoffeePeekTheme {
     CompositionLocalProvider(LocalDensity provides androidx.compose.ui.unit.Density(LocalDensity.current.density, 2f)) {
         Box(Modifier.width(320.dp)) { FilterSheetHeader(true, {}, {}) }
+    }
+}
+
+@PreviewLightDark
+@Composable
+private fun FilterSheetCompactLargePreview() = CoffeePeekTheme {
+    val choices = List(8) { CatalogEntry("preview-$it", "Вариант фильтра ${it + 1}") }
+    val state = SearchState(catalogs = DiscoveryCatalogs(beans = choices, equipment = choices),
+        catalogLoadState = com.coffeepeek.feature.discovery.impl.search.CatalogLoadState.Ready)
+    CompositionLocalProvider(LocalDensity provides androidx.compose.ui.unit.Density(LocalDensity.current.density, 2f)) {
+        Surface(Modifier.width(320.dp).height(300.dp)) {
+            Column { FilterSheetContent(state, DiscoveryHost(), DiscoveryFilters(), {}, {}, {}) }
+        }
     }
 }

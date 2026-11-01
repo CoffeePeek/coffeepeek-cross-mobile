@@ -22,7 +22,8 @@ fun CoffeePeekLoader(
     color: Color = CpColor.Primary,
     strokeWidth: Dp = (size / 16f).coerceAtLeast(2.dp),
     contentDescription: String = stringResource(Res.string.loader_loading),
-) = CoffeePeekMorphingLoader(contentDescription, modifier, size, color, strokeWidth)
+    progress: Float? = null,
+) = CoffeePeekMorphingLoader(contentDescription, modifier, size, color, strokeWidth, progress)
 
 @Composable
 private fun CoffeePeekLegacyLoaderPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {

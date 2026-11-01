@@ -7,6 +7,7 @@ import com.coffeepeek.core.designsystem.theme.CoffeePeekColors
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 import platform.UIKit.UIAccessibilityTraitNotEnabled
 import platform.UIKit.UIAccessibilityTraitSelected
@@ -38,9 +39,10 @@ class GlassIconConfigurationTest {
     }
 
     @Test
-    fun loadingFavoriteKeepsSpinnerAndGold() {
+    fun loadingFavoriteReservesBrandedLoaderSlotAndKeepsGold() {
         val configuration = glassIconConfiguration(GlassControlIcon.FavoriteFilled, true, true, colors)
-        assertTrue(configuration.showsActivityIndicator)
+        assertFalse(configuration.showsActivityIndicator)
+        assertNotNull(configuration.image)
         assertEquals(CoffeePeekColors.Like.toUIColor(), configuration.baseForegroundColor)
     }
 

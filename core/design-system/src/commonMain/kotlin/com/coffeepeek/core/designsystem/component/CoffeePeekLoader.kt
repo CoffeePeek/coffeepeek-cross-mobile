@@ -21,10 +21,8 @@ fun CoffeePeekLoader(
     size: Dp = CoffeePeekDimens.loaderDefault,
     color: Color = CoffeePeekColors.Primary,
     strokeWidth: Dp = (size / 16f).coerceAtLeast(2.dp),
-) = CoffeePeekPlatformLoader(contentDescription, modifier, size, color, strokeWidth)
-
-@Composable
-internal expect fun CoffeePeekPlatformLoader(contentDescription: String, modifier: Modifier, size: Dp, color: Color, strokeWidth: Dp)
+    progress: Float? = null,
+) = CoffeePeekMorphingLoader(contentDescription, modifier, size, color, strokeWidth, progress)
 
 @Composable
 private fun CoffeePeekLoaderPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
@@ -33,3 +31,10 @@ private fun CoffeePeekLoaderPreview(dark: Boolean) = CoffeePeekTheme(darkTheme =
 
 @Preview @Composable private fun CoffeePeekLoaderLightPreview() = CoffeePeekLoaderPreview(false)
 @Preview @Composable private fun CoffeePeekLoaderDarkPreview() = CoffeePeekLoaderPreview(true)
+
+@Preview @Composable private fun CoffeePeekProgressLightPreview() = CoffeePeekTheme(darkTheme = false) {
+    Surface { CoffeePeekLoader(progress = .6f) }
+}
+@Preview @Composable private fun CoffeePeekProgressDarkPreview() = CoffeePeekTheme(darkTheme = true) {
+    Surface { CoffeePeekLoader(progress = .6f) }
+}

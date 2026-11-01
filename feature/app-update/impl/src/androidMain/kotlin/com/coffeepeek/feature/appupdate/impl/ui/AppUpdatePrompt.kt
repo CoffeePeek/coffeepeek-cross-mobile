@@ -1,5 +1,7 @@
 package com.coffeepeek.feature.appupdate.impl.ui
 
+import androidx.compose.ui.tooling.preview.PreviewLightDark
+
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
@@ -19,7 +21,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.CircularProgressIndicator
+import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
 import com.coffeepeek.core.designsystem.component.CoffeePeekFilledButton as Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -155,9 +157,10 @@ private fun UpdateCard(
                     if (transfer.busy) {
                         val progress = transfer.progress
                         if (progress != null && transfer.stage == InstallationStage.Downloading) {
-                            CircularProgressIndicator(progress = { progress }, modifier = Modifier.size(36.dp), color = MaterialTheme.colorScheme.onPrimary)
+                            CoffeePeekLoader(modifier = Modifier.size(36.dp), size = 36.dp, color = MaterialTheme.colorScheme.onPrimary,
+                                strokeWidth = 4.dp, progress = progress)
                         } else {
-                            CircularProgressIndicator(modifier = Modifier.size(36.dp), color = MaterialTheme.colorScheme.onPrimary)
+                            CoffeePeekLoader(modifier = Modifier.size(36.dp), size = 36.dp, color = MaterialTheme.colorScheme.onPrimary, strokeWidth = 4.dp)
                         }
                     } else {
                         Icon(
@@ -254,4 +257,17 @@ private fun UpdateCardDarkPreview() {
     CoffeePeekTheme(darkTheme = true) {
         UpdateCard(true, false, InstallationState(stage = InstallationStage.Ready), {}, {}, {}, Modifier.padding(16.dp))
     }
+}
+
+@PreviewLightDark
+@Composable
+private fun UpdateCardDownloadingPreview() = CoffeePeekTheme {
+    UpdateCard(false, false, InstallationState(stage = InstallationStage.Downloading,
+        downloadedBytes = 40, totalBytes = 100, canCancel = true), {}, {}, {}, Modifier.padding(16.dp))
+}
+@PreviewLightDark
+@Composable
+private fun UpdateCardUnknownDownloadPreview() = CoffeePeekTheme {
+    UpdateCard(false, false, InstallationState(stage = InstallationStage.Downloading,
+        downloadedBytes = 40, canCancel = true), {}, {}, {}, Modifier.padding(16.dp))
 }

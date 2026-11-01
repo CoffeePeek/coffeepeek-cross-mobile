@@ -31,6 +31,7 @@ actual fun CoffeePeekNativeModalSheet(
     val body = rememberUpdatedState(content)
     val locals = rememberUpdatedState(currentCompositionLocalContext)
     val fraction = rememberUpdatedState(maxHeightFraction?.coerceIn(0.1f, 1f) ?: 1f)
+    val expanded = rememberUpdatedState(LocalCoffeePeekSheetExpandToMaxHeight.current)
     val sheetModifier = rememberUpdatedState(modifier)
     val colors = MaterialTheme.colorScheme
     val sizing = remember(host) { coffeePeekSheetSizing(host) }
@@ -40,6 +41,7 @@ actual fun CoffeePeekNativeModalSheet(
                 CompositionLocalProvider(
                     LocalCoffeePeekScreenInsets provides CoffeePeekScreenInsets(),
                     LocalCoffeePeekGlassHazeState provides null,
+                    LocalCoffeePeekSheetExpandToMaxHeight provides false,
                 ) {
                     CoffeePeekNativeSheetContent(sizing, fraction.value, sheetModifier.value, body.value)
                 }
@@ -53,8 +55,8 @@ actual fun CoffeePeekNativeModalSheet(
         controller.view.backgroundColor = colors.surface.toUIColor()
         controller.view.tintColor = colors.primary.toUIColor()
     }
-    CoffeePeekNativeSheetDetents(controller, sizing, fraction, delegate)
-    CoffeePeekNativeSheetResize(controller, sizing.contentHeight, sizing.maximumHeight, fraction.value)
+    CoffeePeekNativeSheetDetents(controller, sizing, fraction, expanded, delegate)
+    CoffeePeekNativeSheetResize(controller, sizing.contentHeight, sizing.maximumHeight, fraction.value, expanded.value)
     CoffeePeekPresentNativeController(controller, host)
     return true
 }
@@ -98,14 +100,14 @@ private fun CoffeePeekNativeSheetContent(
 @Composable
 private fun CoffeePeekNativeSheetDetents(
     controller: UIViewController, sizing: CoffeePeekSheetSizing,
-    fraction: State<Float>, delegate: CoffeePeekSheetDelegate,
+    fraction: State<Float>, expanded: State<Boolean>, delegate: CoffeePeekSheetDelegate,
 ) {
     DisposableEffect(controller) {
         controller.sheetPresentationController?.apply {
             detents = listOf(UISheetPresentationControllerDetent.customDetentWithIdentifier("content") { context ->
                 val maximum = context?.maximumDetentValue ?: sizing.maximumHeight
                 if (maximum > 0 && abs(sizing.maximumHeight - maximum) > 0.5) sizing.maximumHeight = maximum
-                coffeePeekNativeSheetDetentHeight(sizing.contentHeight, maximum, fraction.value)
+                coffeePeekNativeSheetDetentHeight(sizing.contentHeight, maximum, fraction.value, expanded.value)
             })
             prefersGrabberVisible = true
             prefersScrollingExpandsWhenScrolledToEdge = false
@@ -117,9 +119,9 @@ private fun CoffeePeekNativeSheetDetents(
 }
 
 @Composable
-private fun CoffeePeekNativeSheetResize(controller: UIViewController, height: Double, maximum: Double, fraction: Float) {
-    LaunchedEffect(controller, height, maximum, fraction) {
-        if (height > 0) controller.sheetPresentationController?.invalidateDetents()
+private fun CoffeePeekNativeSheetResize(controller: UIViewController, height: Double, maximum: Double, fraction: Float, expanded: Boolean) {
+    LaunchedEffect(controller, height, maximum, fraction, expanded) {
+        if (!expanded && height > 0) controller.sheetPresentationController?.invalidateDetents()
     }
 }
 

@@ -30,7 +30,7 @@ import com.coffeepeek.core.designsystem.theme.LocalCoffeePeekOpaqueGlassOverride
 import dev.chrisbanes.haze.HazeState
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
-internal val ShelfLedgeHeight = 20.dp
+internal val ShelfLedgeHeight = 40.dp
 internal val ShelfLedgeOverlap = 8.dp
 private val ShelfLedgeShape = RoundedCornerShape(6.dp)
 

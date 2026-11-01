@@ -5,6 +5,8 @@ package com.coffeepeek.core.designsystem.component
 import androidx.compose.foundation.layout.height
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -24,6 +26,7 @@ import platform.UIKit.UIColor
 import platform.UIKit.UIDevice
 import platform.UIKit.UIImage
 import platform.UIKit.UIUserInterfaceStyle
+import platform.UIKit.UIView
 import platform.UIKit.accessibilityLabel
 import platform.UIKit.accessibilityValue
 
@@ -36,6 +39,7 @@ actual fun CoffeePeekGlassButton(
     val currentEnabled = rememberUpdatedState(enabled && !isLoading)
     val loadingLabel = if (isLoading) requireNotNull(loadingDescription) else null
     val colors = MaterialTheme.colorScheme
+    val loaderParent = remember { mutableStateOf<UIView?>(null) }
     UIKitView(
         factory = {
             UIButton.buttonWithConfiguration(glassButtonConfiguration(), UIAction.actionWithHandler {
@@ -49,20 +53,22 @@ actual fun CoffeePeekGlassButton(
             button.backgroundColor = UIColor.clearColor
             button.configuration = glassButtonConfiguration().apply {
                 title = text
-                image = when (leadingIcon) {
+                image = if (isLoading) coffeePeekLoaderPlaceholderImage() else when (leadingIcon) {
                     CoffeePeekGlassButtonIcon.Check -> UIImage.systemImageNamed("checkmark")
                     null -> null
                 }
                 imagePadding = 4.0
-                showsActivityIndicator = isLoading
+                showsActivityIndicator = false
                 cornerStyle = UIButtonConfigurationCornerStyleCapsule
                 baseForegroundColor = colors.onSurface.toUIColor()
             }
             button.accessibilityLabel = text
             button.accessibilityValue = loadingLabel
             button.enabled = currentEnabled.value
+            loaderParent.value = if (isLoading) button.imageView else null
         },
     )
+    CoffeePeekNativeLoader(loaderParent.value, colors.onSurface)
 }
 
 internal val coffeePeekLiquidGlassAvailable: Boolean

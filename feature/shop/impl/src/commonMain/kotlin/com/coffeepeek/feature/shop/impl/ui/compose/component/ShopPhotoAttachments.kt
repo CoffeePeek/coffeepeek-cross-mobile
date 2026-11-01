@@ -1,5 +1,11 @@
 package com.coffeepeek.feature.shop.impl.ui.compose.component
 
+import com.coffeepeek.feature.shop.impl.resources.shop_review_photo_hint
+
+import com.coffeepeek.feature.shop.impl.resources.shop_review_photos
+
+import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -12,7 +18,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import com.coffeepeek.core.designsystem.component.CoffeePeekIconButton as IconButton
 import androidx.compose.material3.MaterialTheme
@@ -108,7 +113,7 @@ internal fun ShopPhotoAttachments(
                     .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(CoffeePeekDimens.radiusMd))
                     .clickable(enabled = enabled && !isLoading, role = Role.Button) { sourceShown = true },
                     contentAlignment = Alignment.Center) {
-                    if (isLoading) CircularProgressIndicator()
+                    if (isLoading) CoffeePeekLoader(size = 40.dp, color = MaterialTheme.colorScheme.primary, strokeWidth = 4.dp)
                     else Icon(CoffeePeekIcons.Camera,
                         contentDescription = stringResource(Res.string.shop_review_photo_add),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(28.dp))
@@ -132,3 +137,11 @@ internal fun ShopPhotoAttachments(
 @Preview @Composable private fun ShopPhotoAttachmentsDarkPreview() = CoffeePeekTheme(darkTheme = true) {
     ShopPhotoAttachments(listOf(byteArrayOf()), false, true, "Фотографии", "Добавьте до 5 фото", 5, {}, {}, {})
 }
+
+@Composable
+private fun ShopPhotoAttachmentsLoadingPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
+    ShopPhotoAttachments(emptyList(), true, false, stringResource(Res.string.shop_review_photos),
+        stringResource(Res.string.shop_review_photo_hint, 5), 5, {}, {}, {})
+}
+@Preview @Composable private fun ShopPhotoAttachmentsLoadingLightPreview() = ShopPhotoAttachmentsLoadingPreview(false)
+@Preview @Composable private fun ShopPhotoAttachmentsLoadingDarkPreview() = ShopPhotoAttachmentsLoadingPreview(true)
