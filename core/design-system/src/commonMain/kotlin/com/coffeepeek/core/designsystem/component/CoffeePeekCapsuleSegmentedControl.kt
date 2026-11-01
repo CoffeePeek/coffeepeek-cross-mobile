@@ -3,6 +3,8 @@ package com.coffeepeek.core.designsystem.component
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.heightIn
@@ -114,8 +116,12 @@ internal fun CoffeePeekCapsuleSegment(text: String, isSelected: Boolean, enabled
 private fun CoffeePeekCapsuleSegmentedControlPreviewContent(darkTheme: Boolean) = CoffeePeekTheme(darkTheme = darkTheme) {
     var selected by remember { mutableStateOf("First") }
     Surface {
-        CoffeePeekCapsuleSegmentedControl(listOf("First", "Second"), selected, { it }, { selected = it },
-            modifier = Modifier.padding(16.dp))
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            CoffeePeekCapsuleSegmentedControl(listOf("First", "Second"), selected, { it }, { selected = it })
+            CoffeePeekCapsuleSegmentedControl(listOf("First", "Second"), "Second", { it }, {})
+            CoffeePeekCapsuleSegmentedControl(listOf("First", "Second", "Third"), "Second", { it }, {})
+            CoffeePeekCapsuleSegmentedControl(listOf("First", "Second", "Third", "Fourth"), "Fourth", { it }, {}, enabled = false)
+        }
     }
 }
 

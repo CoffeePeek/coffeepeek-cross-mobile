@@ -9,15 +9,26 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.unit.dp
 import kotlinx.cinterop.ObjCAction
 import platform.CoreGraphics.CGRectMake
+import platform.CoreGraphics.CGSizeMake
 import platform.Foundation.NSSelectorFromString
 import platform.UIKit.UIBarMetricsDefault
 import platform.UIKit.UIColor
+import platform.UIKit.UIBezierPath
+import platform.UIKit.UIControlStateDisabled
+import platform.UIKit.UIControlStateHighlighted
 import platform.UIKit.UIControlStateNormal
+import platform.UIKit.UIControlStateSelected
 import platform.UIKit.UIControlEventValueChanged
+import platform.UIKit.UIEdgeInsetsMake
+import platform.UIKit.UIGraphicsImageRenderer
+import platform.UIKit.UIGraphicsImageRendererFormat
 import platform.UIKit.UIImage
+import platform.UIKit.UIImageRenderingMode.UIImageRenderingModeAlwaysOriginal
 import platform.UIKit.UISegmentedControl
 import platform.UIKit.UIView
 import platform.darwin.NSObject
@@ -29,6 +40,9 @@ internal actual fun CoffeePeekPlatformSegments(
     val callback = rememberUpdatedState(onSelected)
     val active = rememberUpdatedState(enabled)
     val colors = MaterialTheme.colorScheme
+    val selectedBackground = remember(colors.onSurface, colors.background) {
+        coffeePeekSegmentSelectionImage(colors.onSurface, colors.background.luminance() < .5f)
+    }
     val target = remember { CoffeePeekSegmentTarget { if (active.value) callback.value(it) } }
     CoffeePeekNativeGlassView(
         factory = { CoffeePeekGlassSegments(labels, target) },
@@ -42,10 +56,34 @@ internal actual fun CoffeePeekPlatformSegments(
             control.selectedSegmentIndex = selectedIndex.toLong()
             control.enabled = enabled
             control.tintColor = colors.primary.toUIColor()
+            control.setCoffeePeekSelectionBackground(selectedBackground)
             view.overrideUserInterfaceStyle = coffeePeekUserInterfaceStyle(colors.background)
         },
         onRelease = { it.control.removeTarget(target, NSSelectorFromString("changed:"), UIControlEventValueChanged) },
     )
+}
+
+/** A custom normal background disables UIKit's default thumb; supply every selected state too. */
+private fun UISegmentedControl.setCoffeePeekSelectionBackground(image: UIImage) {
+    listOf(UIControlStateSelected, UIControlStateSelected or UIControlStateHighlighted,
+        UIControlStateSelected or UIControlStateDisabled,
+        UIControlStateSelected or UIControlStateHighlighted or UIControlStateDisabled).forEach { state ->
+        setBackgroundImage(image, state, UIBarMetricsDefault)
+    }
+}
+
+private fun coffeePeekSegmentSelectionImage(foreground: Color, dark: Boolean): UIImage {
+    val format = UIGraphicsImageRendererFormat.defaultFormat().apply { opaque = false }
+    val image = UIGraphicsImageRenderer(CGSizeMake(50.0, 48.0), format).imageWithActions {
+        val pill = UIBezierPath.bezierPathWithRoundedRect(CGRectMake(3.0, 3.0, 44.0, 42.0), 21.0)
+        foreground.copy(alpha = if (dark) .22f else .12f).toUIColor().setFill()
+        pill.fill()
+        foreground.copy(alpha = if (dark) .28f else .22f).toUIColor().setStroke()
+        pill.lineWidth = 0.75
+        pill.stroke()
+    }
+    return image.resizableImageWithCapInsets(UIEdgeInsetsMake(23.0, 24.0, 23.0, 24.0))
+        .imageWithRenderingMode(UIImageRenderingModeAlwaysOriginal)
 }
 
 /** Remove UIKit's solid track; one native glass material owns the surrounding capsule. */

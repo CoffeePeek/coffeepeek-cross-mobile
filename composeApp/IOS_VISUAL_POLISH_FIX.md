@@ -76,9 +76,95 @@ OAuth/push configuration is not production acceptance.
   change. Android/common sources are unchanged by that follow-up; the successful
   Android assembly/DEX and 111 executed unit tests remain applicable.
 
-Pending: full native iOS build, source/build identity and device
-installation/startup. Manual acceptance
-must distinguish verified checks from open gates: light/dark themes, increased
+## First native build and installation
+
+- Executable source for the first installed checkpoint:
+  `df9c3d5d8d9d7d8075b723366c1177345226bd1c`.
+  [Actions run 41321124100](https://github.com/CoffeePeek/coffeepeek-cross-mobile/actions/runs/41321124100)
+  built the complete native Swift/Kotlin Debug iPhone application and passed
+  the embedded ONNX minimum-OS check. It also executed 13 non-UI native
+  contracts across four suites, zero failures/errors/skips: native tab visibility
+  5, glass icon configuration 3, navigation delegate 2, tab delegate 3. The task
+  executed (not skipped/up-to-date); the complete CI job passed.
+- Verified archive SHA-256:
+  `e1808abd3c4d7d8251d010891293a6b35193157a5b5b30876078274b81fea037`.
+  The archive's source revision matched the final checkpoint; the executable is
+  Mach-O arm64 for iPhoneOS, version `1.1.4` / build `2637`, minimum iOS `18.0`,
+  with `CoffeePeekDebug = YES`.
+- Local installation packaging changes only the unsigned bundle identity to
+  `com.coffeepeek.debug` and display name to `CoffeePeek Debug`. xtool applies its
+  development prefix/signature. No application code or version is replaced.
+- Physical device: iPhone 15, iOS `27.0.1`, USB, Developer Mode enabled. The user
+  unlocked it for installation; no device settings/security were changed by the
+  agent. The first profile attempt failed with Apple `409` (no matching current
+  iOS devices). A retry returned device-registration `201` / `ENABLED`, then
+  signed and installed successfully. The cause of the first response is unknown.
+- Installation was re-read from the device: Debug `2637` is present alongside
+  original `com.coffeepeek` TestFlight `2633`, which remains unchanged. Neither
+  application was uninstalled or cleared. No account or favorite writes ran.
+- Command-line startup failed with `DebugserverClient.Error.unknown`. Successful
+  installation is not a startup pass; the user was asked to open Debug manually.
+  The user then confirmed that the main screen opened successfully on the phone.
+  This is a user-confirmed startup check, not a complete visual review or a
+  successful command-line launch. The subsequent device-feedback changes below
+  require a new native build; this result does not certify those later changes.
+- Android artifact identity: `com.coffeepeek`, `1.1.4.2635` / `2635`,
+  SHA-256 `bef82e390b0216a4e19975fac329132fe0fc6622c905eb9cb660bad258e674a7`.
+  It was assembled from `4e4bc39e` plus the working UI changes later committed as
+  `31438c3d`; the final lifecycle follow-up changes only iOS source. This Android
+  artifact was not installed or launched.
+
+Manual acceptance must distinguish verified checks from open gates: light/dark themes, increased
 font size, native accessibility, search/back transitions, map expand/collapse and
 push/pop/tab transitions, sheet button layers, segmented control material, shelf
 geometry and selected favorite rendering. No real-account writes are authorized.
+
+## Follow-up from the first device review
+
+The user requested seven additional corrections while reviewing Debug `2637`.
+These stay in the same UI checkpoint and will be delivered in an updated build.
+
+- Creation picker: centered resource-backed `Создать` heading and separators
+  between every option, in both actual app and history entries. The static picker
+  no longer uses the platform keyboard/IME scroll wrapper. No editor or remote
+  request was created before selecting an option. Native first-measure detent
+  sizing is retained; no unsafe off-window measure wait or animation timer is
+  introduced. Opening-speed improvement still needs device confirmation.
+- Copy notification: the actual shop path uses `CpSnackbarHost`. A one-line row
+  is now approximately 48 dp instead of 80 dp, with an accessible plain X and
+  preserved queue, timeout, dismiss, retry and loading actions.
+- Custom modal sheets: restore opaque theme-surface backgrounds on native and
+  Compose roots and remove the full-sheet blur/glass wrapper. Existing detents,
+  grabber, dismissal locks and keyboard behavior stay intact. System UIKit alert
+  dialogs use their existing separate presentation path.
+- Shop favorite: keep the native glass plate visually unselected for hearts;
+  retain gold foreground plus selected/disabled accessibility traits. Other
+  controls, including selected map buttons, retain their native visual state.
+  Add non-UI UIKit contracts for that distinction and the loading state.
+- Shop check-in CTA: restore wide shared glass `Чекин` button in both actual iOS
+  legacy and migrated shop footers. Preserve loading/auth/analytics and the shop
+  selection variant; the global creation `+` stays unchanged.
+- Coffee segments: the custom transparent normal track disables UIKit's default
+  selected thumb. Supply explicit resizable selected-state capsules while keeping
+  the real glass carrier, including highlighted/disabled combinations.
+- Shelf reference: use a frosted gray front rail, bevel/reflection, shadow and two
+  metallic fasteners, with an 8 dp overlap over bag bottoms. Preserve real data,
+  columns, slot sizes and drag callbacks; the row step accounts for that overlap.
+  A narrow shared decorative frosted-surface API owns Haze/opaque fallback and an
+  iOS-only Reduce Transparency observer; feature code owns shelf artwork.
+
+Verification for this follow-up: recompile affected modules, execute existing
+design-system/shelf/shop/history unit contracts, assemble Android Debug with DEX
+checks, compile design-system iOS locally, then build the native iPhone app and
+run the updated non-UI native contracts on macOS. Gradle remains serialized with
+at most six workers. Paired fake-state previews remain colocated; no automated
+UI/instrumented/screenshot suites are added or run. Updated device installation,
+startup and visual checks remain pending until that build is delivered.
+
+Local follow-up verification passed: 273 executed unit/contract tests across
+39 suites (design-system 54, shelf impl 57, shop impl 108, history impl 54), zero
+failures/errors/skips. All four test tasks executed. Android DirectDebug assembly
+and its packaged DEX runtime-class guard passed; design-system iOS Arm64 compiled
+the frosted surface, accessibility observer, opaque modal and selected capsules.
+The updated application UIKit selection code and its three additional native
+contracts still need the next full macOS build/test run.

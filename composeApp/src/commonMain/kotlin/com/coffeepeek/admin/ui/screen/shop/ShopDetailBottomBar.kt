@@ -15,7 +15,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.tooling.preview.Preview
 import coffeepeek.composeapp.generated.resources.Res
-import coffeepeek.composeapp.generated.resources.check_in_add
+import coffeepeek.composeapp.generated.resources.checkin_action
 import coffeepeek.composeapp.generated.resources.continue_action
 import coffeepeek.composeapp.generated.resources.shop_detail_choose_another
 import coffeepeek.composeapp.generated.resources.shop_detail_loading
@@ -24,7 +24,8 @@ import com.coffeepeek.admin.analytics.analyticsExposure
 import com.coffeepeek.admin.theme.CpDimens
 import com.coffeepeek.admin.ui.component.AppButton
 import com.coffeepeek.admin.ui.icons.CpIcons
-import com.coffeepeek.core.designsystem.component.CoffeePeekAddButton
+import com.coffeepeek.core.designsystem.component.CoffeePeekGlassButton
+import com.coffeepeek.core.designsystem.component.CoffeePeekGlassButtonIcon
 import com.coffeepeek.core.designsystem.theme.CoffeePeekColors
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import dev.chrisbanes.haze.HazeState
@@ -56,9 +57,8 @@ internal fun ShopDetailBottomBar(
                     .size(CpDimens.buttonHeight)) {
                 Icon(CpIcons.Navigation, stringResource(Res.string.shop_detail_route), Modifier.size(20.dp))
             }
-            Spacer(Modifier.weight(1f))
-            ShopCheckInButton(isCheckInLoading, onCheckIn,
-                Modifier.analyticsExposure("check_in", "shop_detail", "shop_detail"))
+            ShopCheckInButton(isCheckInLoading, onCheckIn, hazeState,
+                Modifier.weight(1f).analyticsExposure("check_in", "shop_detail", "shop_detail"))
         }
     }
 }
@@ -80,10 +80,10 @@ private fun RowScope.ShopPickerActions(loading: Boolean, onChooseAnotherShop: ()
 }
 
 @Composable
-private fun ShopCheckInButton(loading: Boolean, onClick: () -> Unit, modifier: Modifier) {
-    CoffeePeekAddButton(contentDescription = stringResource(Res.string.check_in_add), onClick = onClick,
+private fun ShopCheckInButton(loading: Boolean, onClick: () -> Unit, hazeState: HazeState?, modifier: Modifier) {
+    CoffeePeekGlassButton(text = stringResource(Res.string.checkin_action), onClick = onClick,
         isLoading = loading, loadingDescription = stringResource(Res.string.shop_detail_loading),
-        modifier = modifier)
+        leadingIcon = CoffeePeekGlassButtonIcon.Check, hazeState = hazeState, modifier = modifier)
 }
 
 @Composable
