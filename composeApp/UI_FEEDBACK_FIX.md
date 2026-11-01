@@ -71,3 +71,56 @@ Verified APK: `com.coffeepeek.sandbox`, version `1.1.4.2630-sandbox`,
 launcher `com.coffeepeek.admin.sandbox.SandboxActivity`, no INTERNET permission.
 SHA-256: `92D817E4E6C33881756A59D6FDA8A5CDD2549A31AD5D2433EF7394F9D041063C`.
 Screenshots, UI dumps and logs remain ignored under `build/ui-feedback-validation/`.
+
+
+## Add action list — 2026-11-01
+
+Follow-up scope: replace the global plus picker with direct icon/label actions:
+«Чекин в кофейне», «Чекин дома», a logical separator, «Пачку на полку».
+Remove radio selection and Continue; retain the existing native iOS sheet host,
+Android modal host, session gates, handoff callbacks and analytics. The history
+picker uses the same direct rows for its two existing check-in destinations;
+contextual shop/shelf add buttons keep their existing destinations.
+
+Reuse the design-system menu row in a grouped action list, without adding a
+second plate around each item. Labels remain in the existing Russian resources;
+light/dark previews render without production dependencies. Grouping follows
+[Apple HIG menus](https://developer.apple.com/design/human-interface-guidelines/menus).
+
+Verification plan: existing global flow/session/analytics unit contracts,
+check-in history and design-system unit suites, iOS Kotlin compilation for the
+affected shared libraries, directSandbox/directDebug assemblies and packaged DEX
+checks. Manually open/cancel all global actions in Sandbox, inspect both themes
+and larger font/narrow bounds. Physical iOS interaction remains an untested gate.
+
+Verification result (2026-11-01, working tree on `70036f89`):
+
+- 131 executed unit tests passed: design-system 54, check-in-history 54, global
+  flow 16, global flow lifecycle/store 4, creation analytics 3. No failures,
+  errors or skips. No automated UI/instrumentation tests were added or run.
+- Design-system and check-in-history implementation `compileKotlinIosArm64`
+  passed; this is library compilation, not an iOS app/device run.
+- `assembleDirectSandbox`, `assembleDirectDebug`, Sandbox isolation and both
+  packaged DEX runtime-class checks passed with `--max-workers=6`.
+- Setup failures retained locally: sandboxed Gradle could not access its wrapper
+  cache, and the first unrestricted command selected a nonexistent
+  `testDirectSandboxUnitTest`. The corrected `testDirectDebugUnitTest` command
+  passed. Existing Preview/dependency warnings remain; no Studio MCP available.
+- Manual device: `CoffeePeek_API_37`, `emulator-5554`,
+  `sdk_gphone64_x86_64`, unlocked. Checked APK package, launcher and matching
+  signing certificate before updating Sandbox in place from 2630 to 2631.
+- Verified all three global labels/icons, ordering and separator in light/dark;
+  each row opens its existing destination immediately. Opened/cancelled shop
+  selection, Home form and shelf scan introduction without saving, downloading
+  a model, taking photos or accessing a live backend. Also inspected the
+  two-action history variant and dismissal. Returned to Home, normal app bounds,
+  normal font and light theme.
+- Attempted Sandbox-only 320x740dp/font 1.3 review. Those overrides constrain the
+  app content but do not propagate into the separate modal window, so this does
+  not certify narrow-modal/large-font behavior. Large-font device review and
+  physical iOS/native sheet review remain untested; previews are provided.
+
+APK: `com.coffeepeek.sandbox`, `1.1.4.2631-sandbox`, launcher
+`com.coffeepeek.admin.sandbox.SandboxActivity`, no INTERNET permission.
+SHA-256: `FDC1FD553B1B558E1B1537CB6C8DB16DD4D2060E837365FB356FAD8B301D5B8E`.
+Logs/screenshots/dumps are local and ignored in `build/plus-menu-validation/`.

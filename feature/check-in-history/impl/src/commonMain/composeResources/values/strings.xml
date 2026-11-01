@@ -17,10 +17,8 @@
     <string name="history_open_shop_action">Открыть кофейню</string>
     <string name="history_new">Новый чекин</string>
     <string name="history_add">Добавить чекин</string>
-    <string name="history_where">Где вы пили кофе?</string>
-    <string name="history_create_shop_hint">Выбрать место и напиток</string>
-    <string name="history_create_home_hint">Записать приготовление</string>
-    <string name="history_continue">Продолжить</string>
+    <string name="history_create_shop">Чекин в кофейне</string>
+    <string name="history_create_home">Чекин дома</string>
     <string name="history_home_title">Домашнее приготовление</string>
     <string name="history_private">Только мне</string>
     <string name="history_visible">Виден всем</string>
