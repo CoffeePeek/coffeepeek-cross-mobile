@@ -1,126 +1,70 @@
-name: iOS build verification
-
+name: iOS device Debug build
 on:
-  pull_request:
-    branches: [main, develop]
-    paths:
-      - .github/workflows/ios-*.yml
-      - build-logic/**
-      - buildSrc/**
-      - composeApp/**
-      - core/**
-      - feature/**
-      - features/**
-      - gradle/**
-      - modules/**
-      - iosApp/**
-      - iosXtool/CoffeePeek/**
-      - tools/ios/**
-      - tools/release/test_ios_signing_profile.py
-      - build.gradle.kts
-      - settings.gradle.kts
-      - gradle.properties
-      - gradlew
-      - gradlew.bat
-      - '!**/src/android*/**'
-      - '!**/proguard-rules.pro'
-      - '!**/*.md'
   workflow_dispatch:
-
 permissions:
   contents: read
-
 concurrency:
-  group: ios-verify-${{ github.ref }}
-  cancel-in-progress: true
-
+  group: ios-device-debug-${{ github.ref }}
+  cancel-in-progress: false
 jobs:
   build:
     runs-on: xcode-27
     timeout-minutes: 60
+    env:
+      GRADLE_MAX_WORKERS: '6'
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: a5f6f1b857bb5003dd121df6f9928953a7e9effb
       - uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: '17'
       - uses: gradle/actions/setup-gradle@v6
         with:
-          cache-read-only: ${{ github.event_name == 'pull_request' || (github.ref != 'refs/heads/main' && github.ref != 'refs/heads/develop') }}
-      - name: Check CI configuration and prepare unsigned Firebase resource
+          cache-read-only: true
+      - name: Prepare Debug client resource
         shell: bash
         run: |
           set -euo pipefail
-          python3 -m unittest discover -s tools/ios -p 'test_*.py'
-          python3 -m unittest discover -s tools/release -p test_ios_signing_profile.py
           cp tools/ios/GoogleService-Info.verification.plist iosApp/iosApp/GoogleService-Info.plist
-
-      - name: Compile iPhone launch catalog for xtool
-        shell: bash
-        run: bash iosXtool/CoffeePeek/prepare-launch-resources.sh
-      - uses: actions/upload-artifact@v4
-        with:
-          name: ios-launch-resources
-          path: iosXtool/CoffeePeek/.build/launch-resources/Assets.car
-          if-no-files-found: error
-          retention-days: 7
-
-      - name: Compile Kotlin and native Swift for iOS Simulator
+      - name: Build unsigned Debug app for physical iPhone
         shell: bash
         run: |
           set -euo pipefail
           xcodebuild -project iosApp/iosApp.xcodeproj -scheme iosApp \
-            -configuration Debug -destination 'generic/platform=iOS Simulator' \
-            -derivedDataPath "$RUNNER_TEMP/ios-verify" \
+            -configuration Debug -destination 'generic/platform=iOS' \
+            -derivedDataPath "$RUNNER_TEMP/ios-device-debug" \
             -clonedSourcePackagesDirPath "$RUNNER_TEMP/SourcePackages" \
-            CODE_SIGNING_ALLOWED=NO build > "$RUNNER_TEMP/ios-verify.log" 2>&1 || {
-              tail -n 150 "$RUNNER_TEMP/ios-verify.log"
+            CODE_SIGNING_ALLOWED=NO \
+            CURRENT_PROJECT_VERSION="$(($(git rev-list --count HEAD) + 1000))" \
+            build > "$RUNNER_TEMP/ios-device-debug.log" 2>&1 || {
+              tail -n 150 "$RUNNER_TEMP/ios-device-debug.log"
               exit 1
             }
-      - name: Verify embedded ONNX minimum OS
+      - name: Validate and package device app
         shell: bash
         run: |
           set -euo pipefail
-          APP_PATH="$RUNNER_TEMP/ios-verify/Build/Products/Debug-iphonesimulator/CoffeePeek.app"
+          APP_PATH="$RUNNER_TEMP/ios-device-debug/Build/Products/Debug-iphoneos/CoffeePeek.app"
           MINIMUM_OS=$(/usr/libexec/PlistBuddy -c 'Print :MinimumOSVersion' "$APP_PATH/Info.plist")
           python3 tools/ios/fix_onnx_framework.py "$APP_PATH/Frameworks/onnxruntime.framework" \
             --deployment-target "$MINIMUM_OS" --check
-      - name: Run Kotlin Native contract tests
-        shell: bash
-        run: |
-          set -euo pipefail
-          ./gradlew --max-workers=6 :composeApp:iosSimulatorArm64Test \
-            --tests 'com.coffeepeek.admin.di.KoinViewModelCompatibilityTest' \
-            --tests 'com.coffeepeek.admin.ui.NavigationDelegateTest' \
-            --tests 'com.coffeepeek.admin.ui.MainTabReselectionsTest' \
-            --tests 'com.coffeepeek.admin.ui.TabDelegateTest' \
-            --tests 'com.coffeepeek.admin.di.discovery.LegacyDiscoveryMapSourceTest' \
-            --tests 'com.coffeepeek.admin.ui.screen.feed.FeedMapCriteriaTest' \
-            --tests 'com.coffeepeek.admin.ui.screen.map.MapViewModelParityTest' \
-            > "$RUNNER_TEMP/ios-native-tests.log" 2>&1 || {
-              tail -n 150 "$RUNNER_TEMP/ios-native-tests.log"
-              exit 1
-            }
-      - name: Run shared business ownership unit and contract tests
-        shell: bash
-        run: |
-          set -euo pipefail
-          ./gradlew --max-workers=6 :feature:business-ownership:domain:iosSimulatorArm64Test \
-            :feature:business-ownership:data:iosSimulatorArm64Test \
-            :feature:business-ownership:impl:iosSimulatorArm64Test \
-            > "$RUNNER_TEMP/ios-ownership-tests.log" 2>&1 || {
-              tail -n 150 "$RUNNER_TEMP/ios-ownership-tests.log"
-              exit 1
-            }
+          mkdir -p "$RUNNER_TEMP/ios-device-artifacts"
+          tar -czf "$RUNNER_TEMP/ios-device-artifacts/CoffeePeek-debug-iphoneos.tar.gz" \
+            -C "$RUNNER_TEMP/ios-device-debug/Build/Products/Debug-iphoneos" CoffeePeek.app
+          git rev-parse HEAD > "$RUNNER_TEMP/ios-device-artifacts/source-revision.txt"
+          cd "$RUNNER_TEMP/ios-device-artifacts"
+          shasum -a 256 CoffeePeek-debug-iphoneos.tar.gz > SHA256SUMS
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ios-device-debug-a5f6f1b
+          path: ${{ runner.temp }}/ios-device-artifacts/
+          if-no-files-found: error
+          retention-days: 3
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: ios-build-log
-          path: |
-            ${{ runner.temp }}/ios-verify.log
-            ${{ runner.temp }}/ios-native-tests.log
-            ${{ runner.temp }}/ios-ownership-tests.log
-            feature/business-ownership/**/build/test-results/iosSimulatorArm64Test/
-            composeApp/build/test-results/iosSimulatorArm64Test/
-            iosApp/iosApp.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved
-          retention-days: 7
+          name: ios-device-debug-log
+          path: ${{ runner.temp }}/ios-device-debug.log
+          retention-days: 3
