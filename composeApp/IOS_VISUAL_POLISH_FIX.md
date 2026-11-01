@@ -168,3 +168,59 @@ and its packaged DEX runtime-class guard passed; design-system iOS Arm64 compile
 the frosted surface, accessibility observer, opaque modal and selected capsules.
 The updated application UIKit selection code and its three additional native
 contracts still need the next full macOS build/test run.
+
+## Follow-up delivery identity
+
+The follow-up application source is `87587ca264822335d90d6a94a7d92161d49716c5`.
+The exact-source local DirectDebug rebuild passed its packaged DEX guard and
+produced `com.coffeepeek` version `1.1.4.2638` / `2638`. Its APK SHA-256 is
+`49ae19695a666bde9f20a4cb273ce9231c0ded48d279110c9d18296c4cc52ee8`.
+This local APK has the workstation Debug certificate and was not installed.
+
+The user also requested installation on the connected Android phone while iOS
+verification continues. Pixel 9 currently has normal CoffeePeek `2630`, signed
+with a different application certificate. No uninstall, clear-data, downgrade,
+or incompatible install was attempted. The user confirmed unlocking the phone;
+lock state must be checked again immediately before deployment.
+
+For a compatible in-place update, temporary build-only CI run
+[`41326626499`](https://github.com/CoffeePeek/coffeepeek-cross-mobile/actions/runs/41326626499)
+checks out the fixed source above, assembles `directDebug` with six workers, and
+signs that Debug APK with the existing application identity inside CI. It checks
+the installed certificate digest, package/version, debuggable flag and unchanged
+DEX entries before uploading the APK. Signing material stays in CI and is removed
+after use; no Release build or distribution upload is requested. Installation
+and startup are pending this artifact.
+
+Full iOS follow-up build and native contract run
+[`41325888227`](https://github.com/CoffeePeek/coffeepeek-cross-mobile/actions/runs/41325888227)
+uses the same fixed source. Updated iPhone installation and the additional native
+contracts are pending its result. The earlier `2637` startup confirmation does
+not certify `2638`.
+
+Android CI `41326626499` completed successfully, including compatible signature,
+unchanged Debug DEX and cleanup checks. Downloaded APK SHA-256:
+`63d1ff9410878484dfa779538a758f7eecb9ce46f230e2f220cf7a8b812be10f`.
+The iOS device app in run `41325888227` also built and packaged successfully;
+the updated native contracts are still running. Downloaded tar SHA-256:
+`73d3657cd577f400c84028fa333fc84ec498198961ddfc546780f4be39260a1a`.
+Both artifact checksums and fixed source identities were checked locally.
+Before installation, both previously selected USB devices were no longer visible.
+The user was asked to reconnect and unlock them. Neither update is installed yet.
+
+## Additional Android empty-search feedback
+
+The user then requested removing the redundant no-results title/body and query
+recovery button while keeping the existing two add-shop/add-roaster suggestion
+cards. The migrated Android Discovery global `allResultsEmpty` state now renders
+only those cards and retains their messages/callbacks. Separate filter recovery,
+partial results, loading and failure gates remain unchanged. The iOS legacy
+entry already uses the two suggestion cards without that extra block; it is not
+changed. Paired Android previews cover normal/global-filtered empty states and
+the independent filter recovery state.
+
+Verification: the existing `SearchEmptyStateTest` executed four contracts with
+zero failures/errors/skips. DirectDebug assembly and packaged DEX checks passed
+in 12 seconds. No new UI tests were added or run. These source changes are later
+than `87587ca2` and are not in either `2638` artifact above; updated Android
+delivery will identify its own source and version.
