@@ -19,6 +19,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.luminance
@@ -32,7 +33,8 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 
 internal val ShelfLedgeHeight = 40.dp
 internal val ShelfLedgeOverlap = 8.dp
-private val ShelfLedgeShape = RoundedCornerShape(6.dp)
+private val ShelfLedgeCornerRadius = 14.dp
+private val ShelfLedgeShape = RoundedCornerShape(ShelfLedgeCornerRadius)
 
 /** A frosted front rail: the lower part of each bag remains visible behind its glass. */
 @Composable
@@ -53,29 +55,32 @@ internal fun ShelfLedge(modifier: Modifier = Modifier, hazeState: HazeState? = n
 }
 
 private fun DrawScope.drawShelfRailBevel(dark: Boolean) {
-    val radius = CornerRadius(6.dp.toPx())
+    val radius = CornerRadius(ShelfLedgeCornerRadius.toPx())
     drawRoundRect(Brush.verticalGradient(listOf(
         Color.White.copy(alpha = if (dark) .18f else .4f), Color.White.copy(alpha = .03f),
         Color.Black.copy(alpha = if (dark) .16f else .08f),
     )), cornerRadius = radius)
-    val stroke = .75.dp.toPx()
+    val stroke = 1.dp.toPx()
     drawRoundRect(Brush.verticalGradient(listOf(Color.White.copy(alpha = .7f), Color.White.copy(alpha = .12f),
         Color.Black.copy(alpha = .22f))), topLeft = Offset(stroke / 2, stroke / 2),
         size = Size(size.width - stroke, size.height - stroke), cornerRadius = radius, style = Stroke(stroke))
-    val inset = 7.dp.toPx()
-    drawLine(Color.White.copy(alpha = .4f), Offset(inset, 1.dp.toPx()),
-        Offset(size.width - inset, 1.dp.toPx()), strokeWidth = .5.dp.toPx())
+    val inset = (ShelfLedgeCornerRadius + 2.dp).toPx()
+    drawLine(Color.White.copy(alpha = .4f), Offset(inset, 1.5.dp.toPx()),
+        Offset(size.width - inset, 1.5.dp.toPx()), strokeWidth = .5.dp.toPx())
 }
 
 private fun DrawScope.drawShelfFastener(center: Offset) {
-    val radius = 3.5.dp.toPx()
-    drawCircle(Color.Black.copy(alpha = .3f), radius + .5.dp.toPx(), center + Offset(0f, 1.dp.toPx()))
-    drawCircle(Brush.radialGradient(listOf(Color.White, Color(0xFFD4D8DA), Color(0xFF778086)),
-        center = center - Offset(radius / 2, radius / 2), radius = radius * 1.8f), radius, center)
-    drawCircle(Color.White.copy(alpha = .65f), radius, center, style = Stroke(.5.dp.toPx()))
-    drawCircle(Color.Black.copy(alpha = .16f), radius * .75f, center, style = Stroke(.4.dp.toPx()))
-    val notch = Offset(radius * .36f, -radius * .36f)
-    drawLine(Color(0xFF697176), center - notch, center + notch, strokeWidth = .65.dp.toPx())
+    val radius = 5.dp.toPx()
+    drawCircle(Color.Black.copy(alpha = .3f), radius + .5.dp.toPx(), center + Offset(0f, .75.dp.toPx()))
+    drawCircle(Color(0xFF69747D), radius, center)
+    drawCircle(Brush.linearGradient(listOf(Color(0xFFF3F6F8), Color(0xFFC5CDD3), Color(0xFF838F99)),
+        start = center - Offset(0f, radius), end = center + Offset(0f, radius)), radius - .5.dp.toPx(), center)
+    drawCircle(Color.White.copy(alpha = .7f), radius - .25.dp.toPx(), center, style = Stroke(.5.dp.toPx()))
+    val notch = Offset(3.dp.toPx(), 0f)
+    drawLine(Color(0xFF4C5861), center - notch, center + notch, strokeWidth = 1.2.dp.toPx(), cap = StrokeCap.Round)
+    val lip = Offset(0f, .75.dp.toPx())
+    drawLine(Color.White.copy(alpha = .55f), center - notch + lip, center + notch + lip,
+        strokeWidth = .4.dp.toPx(), cap = StrokeCap.Round)
 }
 
 /** Two bare rails for the empty and guest states. */

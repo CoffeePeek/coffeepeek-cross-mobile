@@ -303,3 +303,42 @@ Belarusian resources, alongside active hardcoded legacy/native UI and fixed-Russ
 dates. A selector alone cannot establish full Belarusian support; resource
 translation, active hardcode extraction, locale persistence/application and native
 labels must be implemented and checked together.
+
+
+## Build 2640 delivery and selected-pill follow-up
+
+Source `3b8fbbe1e1a56479d7a87c5db7250e84e57cb957`: full iOS run
+[41329297178](https://github.com/CoffeePeek/coffeepeek-cross-mobile/actions/runs/41329297178)
+and compatible Android Debug run
+[41329298270](https://github.com/CoffeePeek/coffeepeek-cross-mobile/actions/runs/41329298270)
+passed. Downloaded native XML confirms 16 executed contracts in four suites with
+zero failures/errors/skips. iPhone Debug was updated in place from 2638 to 2640;
+a fresh device read confirmed Debug 2640 and retained TestFlight 2633. The user
+confirmed that filters now open smoothly and scroll normally. This is a manual
+filter flow check, not complete loader, theme, font or accessibility acceptance.
+The user explicitly deferred Android installation; neither ready APK was installed.
+
+A subsequent dark-theme screenshot preserved a failure: the selected Coffee tab
+thumb still had a straight/cropped inner edge. The UIImage background is subject
+to native segment/divider geometry. The fix places a rounded, non-interactive,
+non-accessible UIView behind the native segmented control inside the existing
+single glass carrier. Native hit testing, selection, enabled state and labels
+remain owned by UISegmentedControl. Frame updates animate for selection changes,
+respect Reduce Motion, and avoid restarting on unchanged Compose updates. Disposal
+removes the target and clears its callback to release captured view references.
+
+The user also requested rounder shelf corners and clearer fasteners. Rail height
+40 dp and overlap 8 dp stay intact. Radius is now 14 dp, with matching bevel and
+highlight; fasteners are 10 dp circular metallic heads with a horizontal slot.
+No bag, row or drag/drop data geometry is changed.
+
+The narrow parent fix was isolated from unfinished language work in a managed
+worktree. The first iOS compile failed on an unnecessary category import; removing
+it produced a successful 3-second retry. Design-system iOS Arm64 compiled. Shelf
+unit results show 57 passing cases in eight suites, reused from the build cache;
+this was not a new execution of those cases. Preview declarations cover first/last
+selection, 2-4 segments, disabled state and light/dark; actual previews were not
+rendered because Studio MCP is unavailable. Android app assembly and full iPhone
+packaging for this source remain delivery gates. No automated UI/screenshot tests
+were added or run. The unchanged navigation/button contract suites passed for
+2640 and do not directly exercise this visual-only thumb/rail change.
