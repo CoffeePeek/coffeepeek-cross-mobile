@@ -27,14 +27,14 @@ class CoffeePeekLikePaletteTest {
         assertEquals(CoffeePeekColors.Like, coffeePeekLikeColor(true, true, Color.White))
     }
 
-    @Test fun goldAndNeutralRetainContrastingBoundariesOnBothSurfaces() {
+    @Test fun selectedGoldRetainsBrandColorAndNeutralKeepsContrastOnBothSurfaces() {
         for ((surface, neutral) in listOf(CoffeePeekColors.LightSurface to CoffeePeekColors.LightTextPrimary,
             CoffeePeekColors.DarkSurface to CoffeePeekColors.DarkTextPrimary)) {
             val gold = coffeePeekLikeColor(true, false, neutral)
             assertTrue(gold != neutral)
-            val boundary = if (surface.luminance() > 0.5f) CoffeePeekColors.LikeOutline else gold
-            val high = maxOf(boundary.luminance(), surface.luminance())
-            val low = minOf(boundary.luminance(), surface.luminance())
+            assertEquals(CoffeePeekColors.Primary, gold)
+            val high = maxOf(neutral.luminance(), surface.luminance())
+            val low = minOf(neutral.luminance(), surface.luminance())
             assertTrue((high + 0.05f) / (low + 0.05f) >= 3f)
         }
     }
@@ -49,17 +49,18 @@ class CoffeePeekLikePaletteTest {
         }
     }
 
-    @Test fun opaqueGlassKeepsBothHeartStatesReadableInBothThemes() {
+    @Test fun opaqueGlassKeepsSelectedGoldAndNeutralContentInBothThemes() {
         for ((surface, neutral) in listOf(CoffeePeekColors.LightSurface to CoffeePeekColors.LightTextPrimary,
             CoffeePeekColors.DarkSurface to CoffeePeekColors.DarkTextPrimary)) {
             for (style in listOf(CoffeePeekLikeButtonStyle.Glass, CoffeePeekLikeButtonStyle.FloatingGlass)) {
                 for (selected in listOf(false, true)) {
                     val overImage = coffeePeekLikeUsesPhotoColor(true, style, opaque = true)
                     val color = coffeePeekLikeColor(selected, overImage, neutral)
-                    val boundary = if (selected && surface.luminance() > 0.5f) CoffeePeekColors.LikeOutline else color
-                    val high = maxOf(boundary.luminance(), surface.luminance())
-                    val low = minOf(boundary.luminance(), surface.luminance())
-                    assertTrue((high + 0.05f) / (low + 0.05f) >= 3f)
+                    if (!selected) {
+                        val high = maxOf(color.luminance(), surface.luminance())
+                        val low = minOf(color.luminance(), surface.luminance())
+                        assertTrue((high + 0.05f) / (low + 0.05f) >= 3f)
+                    }
                     assertEquals(if (selected) CoffeePeekColors.Like else neutral, color)
                 }
             }

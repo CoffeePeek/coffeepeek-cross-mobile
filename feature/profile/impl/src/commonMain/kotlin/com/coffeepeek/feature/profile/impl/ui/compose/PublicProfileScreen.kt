@@ -275,7 +275,8 @@ internal fun PublicProfileScreen(
                     }),
                     Modifier.weight(1f), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold,
                 )
-                IconButton(onClick = { section = null }) { Icon(CoffeePeekIcons.Close, contentDescription = close) }
+                IconButton(onClick = { section = null }, nativeIcon = com.coffeepeek.core.designsystem.modifier.CoffeePeekGlassIcon.Close,
+                    contentDescription = close) { Icon(CoffeePeekIcons.Close, contentDescription = null) }
             }
             when (selectedSection) {
                 ProfileSection.Favorites -> LazyColumn(

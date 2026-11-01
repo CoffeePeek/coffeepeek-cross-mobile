@@ -1,0 +1,4 @@
+<resources>
+    <string name="calendar_previous_month">Предыдущий месяц</string>
+    <string name="calendar_next_month">Следующий месяц</string>
+</resources>

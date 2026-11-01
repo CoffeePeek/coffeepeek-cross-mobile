@@ -30,6 +30,13 @@ import com.coffeepeek.admin.ui.component.platformHaptic
 import com.coffeepeek.admin.ui.icons.CpIcons
 import com.coffeepeek.admin.utils.CpImage
 import com.coffeepeek.domain.model.CheckIn
+import com.coffeepeek.core.designsystem.modifier.CoffeePeekGlassIcon
+import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
+import coffeepeek.composeapp.generated.resources.Res
+import coffeepeek.composeapp.generated.resources.calendar_next_month
+import coffeepeek.composeapp.generated.resources.calendar_previous_month
+import org.jetbrains.compose.resources.stringResource
+import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
 internal fun CalendarCard(
@@ -113,16 +120,31 @@ private fun CalendarSummary(state: VisitedPlacesUiState, total: Int, shops: Int,
 
 @Composable
 private fun MonthArrow(next: Boolean, enabled: Boolean, onClick: () -> Unit) {
+    val description = stringResource(if (next) Res.string.calendar_next_month else Res.string.calendar_previous_month)
     IconButton(onClick = { platformHaptic(HapticEvent.Selection); onClick() }, enabled = enabled,
-        modifier = Modifier.size(44.dp)) {
+        modifier = Modifier.size(44.dp), contentDescription = description,
+        nativeIcon = if (next) CoffeePeekGlassIcon.Forward else CoffeePeekGlassIcon.Back) {
         Box(Modifier.size(34.dp).background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f), CircleShape),
             contentAlignment = Alignment.Center) {
             Icon(if (next) CpIcons.ChevronRight else CpIcons.ChevronLeft,
-                contentDescription = if (next) "Следующий месяц" else "Предыдущий месяц",
+                contentDescription = null,
                 modifier = Modifier.size(18.dp))
         }
     }
 }
+
+@Composable
+private fun CalendarNavigationPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
+    Surface {
+        Row(Modifier.padding(16.dp)) {
+            MonthArrow(false, true, {})
+            MonthArrow(true, false, {})
+        }
+    }
+}
+
+@Preview @Composable private fun CalendarNavigationLightPreview() = CalendarNavigationPreview(false)
+@Preview @Composable private fun CalendarNavigationDarkPreview() = CalendarNavigationPreview(true)
 
 @Composable
 private fun TodayButton(onClick: () -> Unit) {

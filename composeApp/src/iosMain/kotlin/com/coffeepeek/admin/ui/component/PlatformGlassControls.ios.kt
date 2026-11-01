@@ -43,6 +43,7 @@ private val isLiquidGlassAvailable: Boolean
 private val GlassControlIcon.symbol: String
     get() = when (this) {
         GlassControlIcon.Back -> "chevron.left"
+        GlassControlIcon.Forward -> "chevron.right"
         GlassControlIcon.Add -> "plus"
         GlassControlIcon.Edit -> "square.and.pencil"
         GlassControlIcon.Favorite -> "heart"

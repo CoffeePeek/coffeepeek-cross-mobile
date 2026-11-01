@@ -17,7 +17,7 @@ import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
-internal val ShelfLedgeHeight = 10.dp
+internal val ShelfLedgeHeight = 20.dp
 
 /** The board the bags stand on. */
 @Composable

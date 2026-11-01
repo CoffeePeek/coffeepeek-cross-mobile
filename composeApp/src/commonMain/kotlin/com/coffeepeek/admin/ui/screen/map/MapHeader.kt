@@ -27,20 +27,22 @@ internal fun MapHeader(
     modifier: Modifier = Modifier,
 ) {
     Column(modifier.statusBarsPadding().fillMaxWidth()
-        .padding(horizontal = CpDimens.spacing4, vertical = CpDimens.spacing3).zIndex(2f),
+        .padding(vertical = CpDimens.spacing3).zIndex(2f),
         verticalArrangement = Arrangement.spacedBy(CpDimens.spacing2)) {
         MapSearchControls(state.query, actions, filterControl)
         filterBar?.invoke()
-        if (state.isTruncated) MapTruncationNotice()
+        if (state.isTruncated) Box(Modifier.padding(horizontal = CpDimens.spacing4)) { MapTruncationNotice() }
         if (state.showSearchSuggestions) {
-            MapSearchSuggestions(state.searchResults, state.isSearchLoading, state.searchFailed, actions.onSearchSelect)
+            Box(Modifier.padding(horizontal = CpDimens.spacing4)) {
+                MapSearchSuggestions(state.searchResults, state.isSearchLoading, state.searchFailed, actions.onSearchSelect)
+            }
         }
     }
 }
 
 @Composable
 private fun MapSearchControls(query: String, actions: MapScreenActions, filterControl: (@Composable () -> Unit)?) {
-    Row(verticalAlignment = Alignment.CenterVertically,
+    Row(Modifier.padding(horizontal = CpDimens.spacing4), verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing2)) {
         actions.onCollapse?.let { collapse ->
             GlassIconButton(collapse, contentDescription = "Свернуть карту", hazeState = null) {
