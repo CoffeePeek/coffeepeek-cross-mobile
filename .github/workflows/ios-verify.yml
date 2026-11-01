@@ -15,7 +15,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: 31438c3dd6fa26d4b60a71d14092b1e39b5e9ebf
+          ref: df9c3d5d8d9d7d8075b723366c1177345226bd1c
           fetch-depth: 0
       - uses: actions/setup-java@v6
         with:
@@ -59,7 +59,7 @@ jobs:
           shasum -a 256 CoffeePeek-debug-iphoneos.tar.gz > SHA256SUMS
       - uses: actions/upload-artifact@v7
         with:
-          name: ios-device-debug-31438c3d
+          name: ios-device-debug-df9c3d5d
           path: ${{ runner.temp }}/ios-device-artifacts/
           if-no-files-found: error
           retention-days: 3
