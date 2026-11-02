@@ -1,5 +1,8 @@
 package com.coffeepeek.admin.ui
 
+import com.coffeepeek.admin.di.collections.CollectionsComposerDestination
+import com.coffeepeek.admin.di.collections.PublicCollectionDestination
+
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
 import com.coffeepeek.admin.ui.screen.checkins.CheckInHistoryDestination
@@ -165,6 +168,8 @@ object Navigator {
         @Serializable data object EditProfile : Screen
         @Serializable data object DeleteAccountPending : Screen
         @Serializable data object Favorites : Screen
+        @Serializable data object CollectionsComposer : Screen
+        @Serializable data class PublicCollection(val id: String) : Screen
         @Serializable data object VisitedPlaces : Screen
         @Serializable data object HomeCheckIns : Screen
         @Serializable data object ShelfArchive : Screen
@@ -252,6 +257,8 @@ object Navigator {
         is Screen.ReportCheckIn,
         is Screen.CheckInDetail,
         is Screen.Favorites,
+        is Screen.CollectionsComposer,
+        is Screen.PublicCollection,
         is Screen.VisitedPlaces,
         is Screen.HomeCheckIns,
         is Screen.ShelfArchive,
@@ -551,6 +558,8 @@ koinInject<ContributionsScreenRenderer>().Editor(route.shopId, route.section, ro
                     composable<Screen.EditProfile> { koinInject<AccountScreenRenderer>().EditProfile() }
                     composable<Screen.DeleteAccountPending> { koinInject<AccountScreenRenderer>().DeletionPending() }
                     composable<Screen.Favorites> { FavoritesDestination() }
+                    composable<Screen.CollectionsComposer> { CollectionsComposerDestination() }
+                    composable<Screen.PublicCollection> { backStack -> PublicCollectionDestination(backStack.toRoute<Screen.PublicCollection>().id) }
                     composable<Screen.VisitedPlaces> { CheckInHistoryDestination() }
                     composable<Screen.HomeCheckIns> { CheckInHistoryDestination() }
                     composable<Screen.ShelfArchive> { koinInject<ShelfScreenRenderer>().Archive() }
@@ -601,6 +610,8 @@ koinInject<ContributionsScreenRenderer>().Editor(route.shopId, route.section, ro
             Screen.EditProfile -> koinInject<AccountScreenRenderer>().EditProfile()
             Screen.DeleteAccountPending -> koinInject<AccountScreenRenderer>().DeletionPending()
             Screen.Favorites -> FavoritesDestination()
+            Screen.CollectionsComposer -> CollectionsComposerDestination()
+            is Screen.PublicCollection -> PublicCollectionDestination(screen.id)
             Screen.VisitedPlaces -> CheckInHistoryDestination()
             Screen.HomeCheckIns -> CheckInHistoryDestination()
             Screen.ShelfArchive -> koinInject<ShelfScreenRenderer>().Archive()

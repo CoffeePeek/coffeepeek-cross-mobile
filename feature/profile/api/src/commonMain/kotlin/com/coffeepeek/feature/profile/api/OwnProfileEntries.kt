@@ -35,6 +35,7 @@ interface OwnProfileEntry {
         onLogin: () -> Unit,
         onOpenUser: (slug: String, nickname: String, avatarUrl: String?) -> Unit,
         onOpenFavorites: () -> Unit,
+        onShareFavorites: () -> Unit,
         onOpenCheckIns: () -> Unit,
         onOpenContributions: (ProfileContribution) -> Unit,
         onOpenBlockedAuthors: () -> Unit,

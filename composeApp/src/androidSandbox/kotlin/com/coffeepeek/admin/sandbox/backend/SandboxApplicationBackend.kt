@@ -40,6 +40,7 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
     private val notificationStore = SandboxNotificationsBackend(today)
     private val discoveryStore = SandboxDiscoveryBackend({ populated }, { favorites }, ::photo, ::address, ::catalog)
     private val favorites = linkedSetOf("coffee_shop:sandbox-cafe", "roaster:sandbox-roaster", "drink:cappuccino")
+    private val collectionStore = SandboxCollectionsBackend(today, ::favoriteRows)
     private var username = "Sandbox"
     private var about = "Локальный тестовый профиль. Все действия остаются в Sandbox."
     private var populated = true
@@ -75,6 +76,7 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
         username = "Sandbox"
         about = "Локальный тестовый профиль. Все действия остаются в Sandbox."
         favorites.clear()
+        collectionStore.reset()
         if (populated) favorites += listOf("coffee_shop:sandbox-cafe", "roaster:sandbox-roaster", "drink:cappuccino")
     }
 
@@ -85,6 +87,7 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
         val path = request.url.encodedPath.lowercase()
         val method = request.method
         val input = body as? JsonObject ?: buildJsonObject {}
+        collectionStore.handle(path, method, input)?.let { return it }
         notificationStore.handle(path, method, input)?.let { return it }
         ownershipStore.handle(request, input)?.let { return it }
         if (path == "/api/v1/me/blocks" && method == HttpMethod.Get) return blockPage(request)

@@ -70,6 +70,10 @@ kotlin {
             implementation(libs.ktor.client.okhttp)
         }
         commonMain.dependencies {
+            implementation(project(module.feature.collections.api))
+            implementation(project(module.feature.collections.domain))
+            implementation(project(module.feature.collections.data))
+            implementation(project(module.feature.collections.impl))
             // Shelf, catalogue and home check-ins, composed on both platforms; the iOS scanner runs ONNX Runtime through shelf data.
             implementation(project(module.feature.shelf.api))
             implementation(project(module.feature.shelf.domain))
@@ -172,6 +176,7 @@ kotlin {
         // Test the exact sandbox transport without adding it to the live APK or requiring a new test variant.
         androidUnitTest {
             kotlin.srcDir("src/androidSandbox/kotlin/com/coffeepeek/admin/sandbox/backend")
+            kotlin.srcDir("src/androidSandbox/kotlin/com/coffeepeek/admin/sandbox/di")
             kotlin.srcDir("src/androidSandbox/kotlin/com/coffeepeek/admin/sandbox/packscan/geometry")
             kotlin.srcDir("src/androidSandbox/kotlin/com/coffeepeek/admin/sandbox/packscan/imaging")
         }

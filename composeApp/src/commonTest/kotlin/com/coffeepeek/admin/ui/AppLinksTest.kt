@@ -5,6 +5,12 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNull
 
 class AppLinksTest {
+    @Test fun routesCollectionsOnlyWithValidServerIds() {
+        val id = "123456781234123412341234567890ab"
+        assertEquals(Navigator.Screen.PublicCollection(id), appLinkScreen("https://coffeepeek.by/collections/$id"))
+        assertEquals(Navigator.Screen.Main, appLinkScreen("https://coffeepeek.by/collections/not-an-id"))
+        assertEquals(Navigator.Screen.Main, appLinkScreen("https://coffeepeek.by/collections/$id/edit"))
+    }
     @Test
     fun routesPublicProfilesWithoutTreatingNicknameAsAnId() {
         assertEquals(Navigator.Screen.UserProfile("glasha"), appLinkScreen("https://coffeepeek.by/users/glasha"))
