@@ -1,0 +1,20 @@
+<resources>
+    <string name="discovery_tag_roastery">Уласная абсмажка</string>
+    <string name="discovery_tag_beans_for_sale">Зярняты ў продажы</string>
+    <string name="discovery_tag_decaf">Без кафеіну</string>
+    <string name="discovery_tag_to_go">З сабой</string>
+    <string name="discovery_tag_plant_milk">Расліннае малако</string>
+    <string name="discovery_tag_laptop_friendly">Праца з ноўтбукам</string>
+    <string name="discovery_tag_outside_seating">Летняя тэраса</string>
+    <string name="discovery_tag_breakfasts">Сняданкі</string>
+    <string name="discovery_tag_bakery">Пякарня</string>
+    <string name="discovery_tag_confectionery">Кандытарская</string>
+    <string name="discovery_tag_pet_friendly">Можна з жывёламі</string>
+    <string name="discovery_tag_vegan">Веганскія стравы</string>
+    <string name="discovery_tag_gluten_free">Без глютэну</string>
+    <string name="discovery_brew_cold_brew">Халоднае заварванне</string>
+    <string name="discovery_brew_batch_brew">Батч-брю</string>
+    <string name="discovery_brew_espresso">Эспрэса</string>
+    <string name="discovery_brew_moka_pot">Гейзерная кава</string>
+    <string name="discovery_brew_cezve">Кава ў турцы</string>
+</resources>
