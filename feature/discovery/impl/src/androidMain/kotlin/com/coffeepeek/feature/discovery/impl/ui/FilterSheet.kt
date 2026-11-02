@@ -1,5 +1,6 @@
 package com.coffeepeek.feature.discovery.impl.ui
 
+import android.content.res.Configuration
 import androidx.compose.foundation.layout.Arrangement
 import com.coffeepeek.core.designsystem.component.CoffeePeekActionRow
 import androidx.compose.ui.unit.sp
@@ -22,6 +23,7 @@ import com.coffeepeek.core.designsystem.component.CoffeePeekTextButton as TextBu
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
@@ -37,6 +39,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.tooling.preview.PreviewLightDark
+import androidx.compose.ui.tooling.preview.Preview
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.core.designsystem.component.CoffeePeekCheckmarkRow
 import com.coffeepeek.core.designsystem.component.CoffeePeekGroupSection
@@ -61,6 +64,7 @@ import com.coffeepeek.feature.discovery.impl.search.SearchState
 internal fun FilterSheet(state: SearchState, host: DiscoveryHost, onAction: (SearchAction) -> Unit) {
     var draft by remember { mutableStateOf(state.filters) }
     val density = LocalDensity.current
+    val resources = LocalResources.current
     val width = with(density) { LocalWindowInfo.current.containerSize.width.toDp() }
     CoffeePeekSwipeDismissModalBottomSheet(
         onDismissRequest = { onAction(SearchAction.CloseFilters) },
@@ -69,8 +73,8 @@ internal fun FilterSheet(state: SearchState, host: DiscoveryHost, onAction: (Sea
         maxSheetHeightFraction = 0.8f,
         expandToMaxHeight = true,
     ) {
-        // A separate modal window must preserve the caller's text scale.
-        CompositionLocalProvider(LocalDensity provides density) {
+        // The modal window must use the caller's language and text scale.
+        CompositionLocalProvider(LocalDensity provides density, LocalResources provides resources) {
             FilterSheetContent(state, host, draft, { draft = it }, {
                 onAction(SearchAction.ApplyFilters(draft.copy(cityId = state.filters.cityId)))
                 onAction(SearchAction.CloseFilters)
@@ -136,17 +140,22 @@ private fun FilterSelections(state: SearchState, host: DiscoveryHost, draft: Dis
     }
     Selection(R.string.discovery_section_beans, state.catalogs.beans, draft.beanIds, { onDraft(draft.copy(beanIds = draft.beanIds.toggle(it))) })
     Selection(R.string.discovery_section_equipment, state.catalogs.equipment, draft.equipmentIds, { onDraft(draft.copy(equipmentIds = draft.equipmentIds.toggle(it))) })
-    Selection(R.string.discovery_section_brew_methods, state.catalogs.brewMethods, draft.brewMethodIds, { onDraft(draft.copy(brewMethodIds = draft.brewMethodIds.toggle(it))) }) { entry ->
+    Selection(R.string.discovery_section_brew_methods, state.catalogs.brewMethods, draft.brewMethodIds,
+        { onDraft(draft.copy(brewMethodIds = draft.brewMethodIds.toggle(it))) }, label = { filterBrewMethodLabel(it) }) { entry ->
         host.brewMethodIcon(entry.name, 22.dp)
     }
-    Selection(R.string.discovery_section_tags, amenityTags(state.catalogs.tags), draft.tagIds, { onDraft(draft.copy(tagIds = draft.tagIds.toggle(it))) }) { entry ->
+    Selection(R.string.discovery_section_tags, amenityTags(state.catalogs.tags), draft.tagIds,
+        { onDraft(draft.copy(tagIds = draft.tagIds.toggle(it))) }, label = { filterTagLabel(it) }) { entry ->
         host.tagIcon(entry.id)
     }
 }
 
 /** As in prod: the first five rows plus every selected one, then «Показать все (N)» / «Свернуть», and «Выбрано: N» beside the title. */
 @Composable
-private fun Selection(title: Int, entries: List<CatalogEntry>, selected: Set<String>, onToggle: (String) -> Unit, leading: (@Composable (CatalogEntry) -> Unit)? = null) {
+private fun Selection(
+    title: Int, entries: List<CatalogEntry>, selected: Set<String>, onToggle: (String) -> Unit,
+    label: @Composable (CatalogEntry) -> String = { it.name }, leading: (@Composable (CatalogEntry) -> Unit)? = null,
+) {
     if (entries.isEmpty()) return
     var expanded by remember { mutableStateOf(false) }
     val collapsible = entries.size > COLLAPSED_ROWS
@@ -158,7 +167,7 @@ private fun Selection(title: Int, entries: List<CatalogEntry>, selected: Set<Str
     ) {
         visible.forEachIndexed { index, entry ->
             if (index > 0) CoffeePeekRowSeparator()
-            CoffeePeekCheckmarkRow(entry.name, entry.id in selected, { onToggle(entry.id) }, leading = leading?.let { { it(entry) } })
+            CoffeePeekCheckmarkRow(label(entry), entry.id in selected, { onToggle(entry.id) }, leading = leading?.let { { it(entry) } })
         }
         if (collapsible) {
             CoffeePeekRowSeparator()
@@ -198,5 +207,22 @@ private fun FilterSheetCompactLargePreview() = CoffeePeekTheme {
         Surface(Modifier.width(320.dp).height(300.dp)) {
             Column { FilterSheetContent(state, DiscoveryHost(), DiscoveryFilters(), {}, {}, {}) }
         }
+    }
+}
+
+@Preview(name = "Belarusian light", locale = "be", uiMode = Configuration.UI_MODE_NIGHT_NO)
+@Preview(name = "Belarusian dark", locale = "be", uiMode = Configuration.UI_MODE_NIGHT_YES)
+@Composable
+private fun FilterSheetBelarusianPreview() = CoffeePeekTheme {
+    val catalogs = DiscoveryCatalogs(
+        brewMethods = listOf(CatalogEntry("chemex", "Chemex"), CatalogEntry("batch-brew", "Batch Brew")),
+        tags = listOf(CatalogEntry("roastery", "Roastery"), CatalogEntry("beans-for-sale", "Зерно на продажу"),
+            CatalogEntry("decaf", "Decaf"), CatalogEntry("to-go", "To Go"),
+            CatalogEntry("plan-based-milk", "Растительное молоко"), CatalogEntry("laptop-friendly", "Laptop Friendly")),
+    )
+    val state = SearchState(catalogs = catalogs,
+        catalogLoadState = com.coffeepeek.feature.discovery.impl.search.CatalogLoadState.Ready)
+    Surface(Modifier.width(360.dp).height(720.dp)) {
+        Column { FilterSheetContent(state, DiscoveryHost(), DiscoveryFilters(), {}, {}, {}) }
     }
 }

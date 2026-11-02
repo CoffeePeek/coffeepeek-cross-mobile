@@ -237,3 +237,27 @@ runtime-class and isolation checks passed (`com.coffeepeek.sandbox`,
 compilation is checked by the PR's iOS workflow; actual light/dark zoom gestures
 and label readability at the threshold remain a manual device check. No UI or
 screenshot tests were added.
+
+## Belarusian filter sheet — 2026-11-02
+
+Source: `origin/develop` `a43f96347` plus this patch, branch
+`codex/migration-filter-be-shelf-fasteners`. The Android filter window now
+receives the caller's `LocalResources` alongside its existing text-scale
+override. Its translated header, reset/done actions, section titles and
+expand/collapse labels therefore use the selected app language in the modal.
+
+Filter rows localize known catalog slugs at rendering time: all 13 current
+amenities and five descriptive brew-method names have RU/BE resources. The
+read-only public catalogs were audited on this date. Brand names and unknown
+catalog entries use their server names. Selection and request IDs remain the
+original slugs, and cached catalogs do not need another network read on a
+language change. Paired Belarusian light/dark content previews use fake state.
+
+Verification: 139 existing Discovery implementation tests / 14 suites passed
+with zero failures, errors or skips. All 121 native string keys and their
+format arguments align between RU/BE, including 18 catalog labels. Direct
+Sandbox assembly, packaged DEX and isolation checks passed
+(`com.coffeepeek.sandbox`, `1.1.5.2662-sandbox` / 2662). No app was installed
+or launched. Actual modal opening with a Belarusian app language and Russian
+system language, cached-catalog switching and font/window-size review remain
+manual Sandbox checks. No automated UI tests were introduced.
