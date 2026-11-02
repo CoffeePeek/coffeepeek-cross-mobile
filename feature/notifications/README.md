@@ -29,9 +29,13 @@ does not import notification implementation or require its DI binding in isolati
 Account/session changes clear the inbox and fence
 late responses; login and foreground entry never overwrite saved push preferences.
 
-The bell on the community feed opens a light/dark bottom sheet with one push switch,
-date groups, read/unread rows, pagination and snapshot-bounded “read all”. The history
-works with push disabled or OS authorization denied. Supported types are ShopApproved,
+The bell on the community feed opens a light/dark bottom sheet with date groups,
+read/unread rows and pagination; the push preference lives in Settings. Android's
+migrated panel and iOS's transitional panel mark a row read after it has been mostly
+visible for two continuous seconds while the app is resumed. Leaving the viewport
+or backgrounding the app resets the timer, and several visible rows are written in
+sequence. The history works with push disabled or OS authorization denied. Supported
+types are ShopApproved,
 ShopRejected, RoasterApproved, RoasterRejected, CheckInModeration, CorrectionModeration,
 NewShop, Inactivity and General; unknown future types display as General.
 
@@ -42,3 +46,10 @@ contract distinguishes published shop slugs from correction/submission IDs. Appl
 composition resolves contributions and owns cross-feature routing. Native push taps
 wait for root/session readiness and discard another account's or generation's result.
 Errors retain the sheet for retry. Deploy the additive Account endpoint before this client.
+
+## Visible-read panel verification — 2026-11-02
+
+- Source: `codex/migration-notifications-visible-read-develop` based on `origin/develop` at `4ff207f40`. Android variant: `directSandbox` (`com.coffeepeek.sandbox`). No device was selected, and no APK was installed.
+- `:feature:notifications:impl:testDebugUnitTest`: 34 tests passed, 0 failed, no retries. This includes multiple simultaneous read receipts and an account change during a pending write.
+- `:composeApp:assembleDirectSandbox`: passed with `--max-workers=6`. Sandbox isolation and packaged DEX runtime-class checks passed.
+- Paired light/dark previews remain beside both row and sheet implementations; the row previews use a long message. IDE preview rendering and manual light/dark, large text, accessibility, scroll, back and modal checks were not run. iOS compilation and live backend acceptance remain unverified.

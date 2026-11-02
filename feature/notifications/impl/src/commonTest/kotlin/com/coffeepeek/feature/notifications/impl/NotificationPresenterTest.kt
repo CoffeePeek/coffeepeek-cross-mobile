@@ -39,6 +39,47 @@ class NotificationPresenterTest {
         assertEquals("first", feature.state.value.items.single().id)
     }
 
+    @Test fun simultaneousVisibleNotificationsAreAllMarkedRead() = runTest {
+        val account = Account(); val repository = Repository()
+        val read = mutableListOf<String>()
+        val releaseFirst = CompletableDeferred<Unit>()
+        repository.page = {
+            NotificationPage(listOf("first", "second", "third").map { id ->
+                entry(id).copy(readAtUtc = if (id in read) "2026-10-21T09:00:00Z" else null)
+            }, null, 3 - read.size)
+        }
+        repository.markReadHandler = { id ->
+            if (id == "first") releaseFirst.await()
+            read += id
+        }
+        val feature = NotificationPresenter(repository, account, Platform(), backgroundScope)
+        account.user.value = "alice"; runCurrent()
+        feature.markRead("first"); runCurrent()
+        feature.markRead("second"); feature.markRead("third")
+        releaseFirst.complete(Unit); runCurrent()
+        assertEquals(listOf("first", "second", "third"), read)
+        assertEquals(0, feature.state.value.unreadCount)
+        assertTrue(feature.state.value.items.all { it.read })
+    }
+
+    @Test fun queuedReadsDoNotCrossAnAccountChange() = runTest {
+        val account = Account(); val repository = Repository()
+        val releaseFirst = CompletableDeferred<Unit>()
+        val read = mutableListOf<String>()
+        repository.markReadHandler = { id ->
+            if (id == "first") releaseFirst.await()
+            read += id
+        }
+        val feature = NotificationPresenter(repository, account, Platform(), backgroundScope)
+        account.user.value = "alice"; runCurrent()
+        feature.markRead("first"); runCurrent()
+        feature.markRead("second")
+        account.user.value = "bob"; runCurrent()
+        releaseFirst.complete(Unit); runCurrent()
+        assertFalse("second" in read)
+        assertEquals("bob", feature.state.value.accountId)
+    }
+
     @Test fun cancellationDuringDestinationLookupIsNotConvertedIntoAnUnsupportedTarget() = runTest {
         val account = Account()
         val repository = Repository()

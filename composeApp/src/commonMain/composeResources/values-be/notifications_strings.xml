@@ -1,7 +1,6 @@
 <resources>
     <string name="notifications_open_error">Не ўдалося адкрыць апавяшчэнне. Паспрабуйце яшчэ раз.</string>
     <string name="notifications_title">Апавяшчэнні</string>
-    <string name="notifications_subtitle">Усё важнае пра вашу каву</string>
     <string name="notifications_close">Закрыць апавяшчэнні</string>
     <string name="notifications_button_unread">Апавяшчэнні: %1$d непрачытаных</string>
     <string name="notifications_badge_max">99+</string>
@@ -12,9 +11,6 @@
     <string name="notifications_push_permission">Каб уключыць, патрэбны дазвол сістэмы</string>
     <string name="notifications_push_description">Рашэнні, новыя кавярні і навіны</string>
     <string name="notifications_retry_settings">Паўтарыць загрузку налад</string>
-    <string name="notifications_unread_count">Непрачытаных: %1$d</string>
-    <string name="notifications_all_read">Усё прачытана</string>
-    <string name="notifications_read_all">Прачытаць усе</string>
     <string name="notifications_today">СЁННЯ</string>
     <string name="notifications_earlier">РАНЕЙ</string>
     <string name="notifications_loading">Загружаем…</string>
