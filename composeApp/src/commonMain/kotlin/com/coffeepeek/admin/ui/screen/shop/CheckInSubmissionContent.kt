@@ -10,11 +10,14 @@ import com.coffeepeek.core.designsystem.component.CoffeePeekOutlinedButton as Ou
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import com.coffeepeek.admin.theme.CpDimens
+import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.admin.ui.component.AppButton
 import com.coffeepeek.admin.ui.component.SubmissionStatus
 import com.coffeepeek.admin.ui.component.SubmissionStatusContent
 import com.coffeepeek.domain.model.CheckInVisibility
+import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
 internal fun CheckInSubmissionContent(
@@ -22,6 +25,7 @@ internal fun CheckInSubmissionContent(
     onGoToFeed: () -> Unit,
     onViewCheckIns: () -> Unit,
 ) {
+    val sending = submittedVisibility == null
     val localizedLegacyCheckInSubmissionContentShopCheckinFormSending = stringResource(Res.string.legacy_check_in_submission_content_shop_checkin_form_sending)
     val localizedLegacyCheckInSubmissionContentShopCheckinFormSuccess = stringResource(Res.string.legacy_check_in_submission_content_shop_checkin_form_success)
     val localizedLegacyCheckInSubmissionContentSavingCoffeeMoment = stringResource(Res.string.legacy_check_in_submission_content_saving_coffee_moment)
@@ -38,8 +42,9 @@ internal fun CheckInSubmissionContent(
             CheckInVisibility.Public -> localizedLegacyCheckInSubmissionContentShopCheckinFormSuccessPublic
             else -> localizedLegacyCheckInSubmissionContentShopCheckinFormSuccessPrivate
         },
-        modifier = Modifier.fillMaxWidth().navigationBarsPadding().padding(CpDimens.spacing6),
-        fillAvailableHeight = false,
+        modifier = Modifier.fillMaxWidth().then(if (sending) Modifier.fillMaxHeight() else Modifier)
+            .navigationBarsPadding().padding(CpDimens.spacing6),
+        fillAvailableHeight = sending,
     ) {
         AppButton(localizedLegacyCheckInSubmissionContentShopCheckinFormFeed, onClick = onGoToFeed)
         OutlinedButton(
@@ -51,3 +56,10 @@ internal fun CheckInSubmissionContent(
         }
     }
 }
+
+@Composable private fun CheckInSendingPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
+    Box(Modifier.size(390.dp, 600.dp)) { CheckInSubmissionContent(null, {}, {}) }
+}
+
+@Preview @Composable private fun CheckInSendingLightPreview() = CheckInSendingPreview(false)
+@Preview @Composable private fun CheckInSendingDarkPreview() = CheckInSendingPreview(true)
