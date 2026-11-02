@@ -4,6 +4,7 @@ import coffeepeek.composeapp.generated.resources.*
 
 import com.coffeepeek.core.datetime.parseServerInstant
 import com.coffeepeek.core.designsystem.component.CoffeePeekLikeIcon
+import com.coffeepeek.core.designsystem.component.CoffeePeekPlatformCoffeeIcon
 
 import com.coffeepeek.domain.model.savedDrinkName
 import com.coffeepeek.core.designsystem.component.CoffeePeekRating
@@ -515,7 +516,7 @@ internal fun HelpfulButton(
                 contentDescription = description
             },
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing2),
+        horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing1),
     ) {
         CoffeePeekLikeIcon(isHelpful, contentDescription = null)
         Text(
@@ -525,6 +526,13 @@ internal fun HelpfulButton(
         )
     }
 }
+
+@Composable private fun HelpfulButtonPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
+    androidx.compose.material3.Surface { HelpfulButton(7, true, {}) }
+}
+
+@Preview @Composable private fun HelpfulButtonLightPreview() = HelpfulButtonPreview(false)
+@Preview @Composable private fun HelpfulButtonDarkPreview() = HelpfulButtonPreview(true)
 
 @Composable
 private fun ReviewHeader(
@@ -767,9 +775,16 @@ internal fun SavedDrinkLabel(name: String) {
         horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing1),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Icon(CpIcons.Coffee, contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(14.dp))
+        CoffeePeekPlatformCoffeeIcon(contentDescription = null, modifier = Modifier.size(20.dp),
+            tint = MaterialTheme.colorScheme.onSurfaceVariant)
         Text(name, style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
+
+@Composable private fun SavedDrinkLabelPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
+    androidx.compose.material3.Surface { SavedDrinkLabel("Батч") }
+}
+
+@Preview @Composable private fun SavedDrinkLabelLightPreview() = SavedDrinkLabelPreview(false)
+@Preview @Composable private fun SavedDrinkLabelDarkPreview() = SavedDrinkLabelPreview(true)
