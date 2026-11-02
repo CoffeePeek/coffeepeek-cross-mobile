@@ -220,3 +220,20 @@ those 90, not an additional run. Both light/dark card previews compile for
 Android; IDE rendering and runtime visual review were not performed. Existing
 Preview deprecation warnings remain. iOS production compilation and the Native
 shelf graph test are pending the PR's Xcode CI.
+
+## District labels at neighborhood scale — 2026-11-02
+
+Source: `origin/develop` `9b2357c91` plus this patch, branch
+`codex/migration-map-zone-label-zoom`. The native Android and iOS zone-label
+layers now have a minimum zoom of 13. This hides the colored district captions
+on a city-wide view; the existing maximum zoom of 15 is retained. MapLibre
+applies the scale range during camera movement and after style reloads. Zone
+geometry, shop/cluster markers and zone selection keep their existing behavior.
+
+Local verification: 14 existing map unit/contract tests / 4 suites passed,
+with zero failures, errors or skips. Direct Sandbox assembly, packaged DEX
+runtime-class and isolation checks passed (`com.coffeepeek.sandbox`,
+`1.1.4.2656-sandbox` / 2656). No app was installed or launched. Native Swift
+compilation is checked by the PR's iOS workflow; actual light/dark zoom gestures
+and label readability at the threshold remain a manual device check. No UI or
+screenshot tests were added.

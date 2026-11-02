@@ -258,6 +258,7 @@ final class MapLibreMapProvider: NSObject, IosNativeMapProvider, MLNMapViewDeleg
             label.iconImageName = NSExpression(forKeyPath: "icon")
             label.iconAllowsOverlap = NSExpression(forConstantValue: true)
             label.iconIgnoresPlacement = NSExpression(forConstantValue: true)
+            label.minimumZoomLevel = 13
             label.maximumZoomLevel = 15
             style.addLayer(label)
         }
