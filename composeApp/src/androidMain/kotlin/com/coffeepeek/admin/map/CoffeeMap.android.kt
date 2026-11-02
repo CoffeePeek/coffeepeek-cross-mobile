@@ -112,6 +112,7 @@ private const val PULSE_SOURCE = "cp-selected-pulse"
 private const val ZONE_FILL_LAYER = "cp-zones-fill"
 private const val ZONE_LINE_LAYER = "cp-zones-line"
 private const val ZONE_LABEL_LAYER = "cp-zone-labels"
+private const val ZONE_LABEL_MIN_ZOOM = 13f
 private const val ZONE_LABEL_MAX_ZOOM = 15f
 private const val PULSE_LAYER = "cp-selected-pulse"
 private const val PROP_ZONE_ID = "zoneId"
@@ -541,10 +542,11 @@ private fun addOverlayLayers(style: Style, isDarkTheme: Boolean) {
     add(
         SymbolLayer(ZONE_LABEL_LAYER, ZONE_LABEL_SOURCE).withProperties(
             iconImage(get(PROP_ICON)),
-            // Keep overview labels readable without collisions; shop pins still draw above them.
+            // District labels appear at neighborhood scale; shop pins still draw above them.
             iconAllowOverlap(true),
             iconIgnorePlacement(true),
         ).apply {
+            minZoom = ZONE_LABEL_MIN_ZOOM
             maxZoom = ZONE_LABEL_MAX_ZOOM
         },
     )
