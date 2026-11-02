@@ -48,7 +48,7 @@ internal fun NotificationsButton(feature: NotificationFeature = koinInject()) {
     })
     if (open) SwipeDismissModalBottomSheet(onDismissRequest = close, maxSheetHeightFraction = .88f) {
         NotificationsContent(state, close, {}, feature::markRead,
-            feature::markAllRead, feature::refresh, feature::loadMore)
+            feature::markRead, feature::refresh, feature::loadMore)
     }
 }
 
