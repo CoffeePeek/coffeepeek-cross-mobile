@@ -124,7 +124,7 @@ jobs:
           printf '%s' "$KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/coffeepeek-release.jks"
 
       - name: Run Android checks
-        run: ./gradlew --no-daemon testDebugUnitTest :composeApp:testDirectDebugUnitTest :composeApp:testPlayDebugUnitTest lintDebug :composeApp:lintDirectDebug :composeApp:lintPlayDebug
+        run: ./gradlew --no-daemon --max-workers=6 testDebugUnitTest :composeApp:testDirectDebugUnitTest :composeApp:testPlayDebugUnitTest lintDebug :composeApp:lintDirectDebug :composeApp:lintPlayDebug
 
       - name: Build signed release artifacts
         env:
@@ -136,11 +136,12 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          tasks=(:composeApp:assembleDirectRelease)
+          release_args=(--no-daemon --no-configuration-cache --max-workers=2
+            '-Dorg.gradle.jvmargs=-Xmx6g -Dfile.encoding=UTF-8')
+          ./gradlew "${release_args[@]}" :composeApp:assembleDirectRelease
           if [[ "$GITHUB_REF_NAME" == "main" ]]; then
-            tasks+=(:composeApp:bundlePlayRelease)
+            ./gradlew "${release_args[@]}" :composeApp:bundlePlayRelease
           fi
-          ./gradlew --no-daemon --no-configuration-cache "${tasks[@]}"
 
       - name: Prepare and verify APK metadata
         id: meta
