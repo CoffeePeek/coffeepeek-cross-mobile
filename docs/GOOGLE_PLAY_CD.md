@@ -3,7 +3,7 @@
 Workflow `.github/workflows/android-apk.yml` (`Android Release`) запускается при push в `main` или вручную из `main`.
 
 1. Запускает Android unit tests и lint.
-2. Собирает подписанные release APK и AAB одним вызовом Gradle.
+2. Последовательно собирает подписанные release APK и AAB отдельными вызовами Gradle с heap 6 GiB и двумя workers.
 3. Сохраняет APK, AAB и R8 mapping в artifacts.
 4. Независимые jobs загружают AAB с mapping в Google Play internal testing, APK на сайт и тот же APK в Firebase App Distribution.
 
@@ -29,7 +29,7 @@ Secrets: `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_AL
 
 ## Версии и повторные запуски
 
-Публичная версия Android — `1.1.1.N`, где `N` равен `versionCode`. Публичная версия iOS задаётся вручную в `iosApp/Configuration/Shared.xcconfig`: `MARKETING_VERSION = 1.1.1`. Номер сборки (`versionCode` / `CFBundleVersion`) — `BUILD_NUMBER_OFFSET + git rev-list --count HEAD`; фиксированный сдвиг `1000` сохраняет рост относительно ранее опубликованных кодов, которые считали историю всех веток. Android добавляет номер сборки к публичной версии; iOS хранит его отдельно. Повторный запуск CI для того же коммита не повышает номер. Следующий versionCode должен быть больше уже загруженного в Play. Не переписывайте историю main. При ошибке одного канала повторяйте только failed jobs.
+Публичная версия Android — `1.1.5.N`, где `N` равен `versionCode`. Публичная версия iOS задаётся вручную в `iosApp/Configuration/Shared.xcconfig`: `MARKETING_VERSION = 1.1.5`; проверка release-конфигурации требует согласовать её с Android. Номер сборки (`versionCode` / `CFBundleVersion`) — `BUILD_NUMBER_OFFSET + git rev-list --count HEAD`; фиксированный сдвиг `1000` сохраняет рост относительно ранее опубликованных кодов, которые считали историю всех веток. Android добавляет номер сборки к публичной версии; iOS хранит его отдельно. Повторный запуск CI для того же коммита не повышает номер. Следующий versionCode должен быть больше уже загруженного в Play. Не переписывайте историю main. При ошибке одного канала повторяйте только failed jobs.
 
 Production-сборки публикуются только из `main`. CI не активирует APK и не меняет серверные актуальный/минимальный коды. После доступности сборки в нужном канале администратор сохраняет политику Android/iOS на экране «Приложения». Актуальный код Android относится к Google Play; production APK выбирается отдельно в таблице релизов. Минимум Android общий для обоих каналов, поэтому его повышают только после доступности нужной сборки в обоих каналах.
 
@@ -54,6 +54,14 @@ Release tasks: `:composeApp:assembleDirectRelease :composeApp:bundlePlayRelease`
 Первичная сборка на migration-tip `90faf57c` также прошла (`1.1.0`/`1058`, 2 adapter-теста). Перед слиянием правка перенесена на `main` отдельным коммитом, чтобы не включать незавершённый стек миграций; фиксированный сдвиг сохраняет рост кода при переходе от истории всех веток к истории `HEAD`.
 
 На Windows не проверены архив/загрузка iOS и реальные установки Play/APK; Studio MCP недоступен, IDE-проверки не выполнялись. Для iOS CI проверяет обе версии в готовом архиве. Существующие предупреждения Gradle/Compose не исправлялись; серверные политики и данные аккаунтов при проверке не менялись.
+
+## Исправление релизных сборок — 2 ноября 2026
+
+На `main` `4eb219400` [Android Release](https://github.com/CoffeePeek/coffeepeek-cross-mobile/actions/runs/41412804282) прошёл unit tests/lint, затем упал в `minifyPlayReleaseWithR8` с `Java heap space` при лимите Gradle 3 GiB. Release-шаг теперь выделяет heap 6 GiB, ограничивает workers двумя и завершает процесс Direct-сборки перед запуском Play-сборки. Настройки действуют в release workflow. Основание: [Android JVM heap tuning](https://developer.android.com/build/optimize-your-build#configure-the-jvm-heap-size) и [16 GiB Linux runner для публичного репозитория](https://docs.github.com/en/actions/reference/runners/github-hosted-runners).
+
+В том же коммите [TestFlight](https://github.com/CoffeePeek/coffeepeek-cross-mobile/actions/runs/41412804325) успешно создал и проверил архив, но Apple отклонил загрузку: train 1.1.4 закрыт после одобрения этой версии. Следующие архивы используют согласованную версию 1.1.5.
+
+Локально прошли 29 существующих release unit/contract tests, проверка shell-синтаксиса изменённого шага и `assembleDirectSandbox` с проверками DEX/isolation. Версия Sandbox на исходной базе `4eb219400` с этой правкой: `1.1.5.2658-sandbox` / 2658. Подписанные Direct/Play artifacts, доставка в Play internal и загрузка iOS проверяются фактическими main workflow. Установка приложения и ручная проверка UI в эту правку не входят; серверная политика обновлений управляется отдельно.
 
 ## Согласование develop с main — 23 октября 2026
 
