@@ -1026,3 +1026,11 @@ failures or errors; Direct Sandbox assembly, isolation, and packaged DEX class
 checks passed. No device was selected or app installed. IDE previews, manual
 light/dark and large-font review, and iOS compilation/native visual review
 remain open at this local checkpoint.
+
+Sending-state follow-up: the in-flight check-in spinner and label now occupy
+the center of the sheet on both the migrated screen and the transitional iOS
+screen. The completed-success content keeps its natural height and actions.
+Paired light/dark sending previews were added. The same 108 Shop impl tests
+passed again; Direct Sandbox assembly, isolation, and packaged DEX checks
+passed. No device was selected or app installed. Native iOS compilation and
+manual sheet review, including large fonts, remain open.
