@@ -65,7 +65,7 @@ private fun NotificationSheet(feature: NotificationFeature, state: NotificationI
     ) {
         NotificationsContent(state, onClose, { id ->
             if (openingId == null) openNotification(scope, feature, state, id, { openingId = it }, onClose, onOpen)
-        }, feature::markAllRead, feature::refresh, feature::loadMore, onSignIn, openingId)
+        }, feature::markRead, feature::refresh, feature::loadMore, onSignIn, openingId)
     }
 }
 

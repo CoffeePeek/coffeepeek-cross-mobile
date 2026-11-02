@@ -1,7 +1,9 @@
 package com.coffeepeek.feature.shop.impl.ui.compose
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
@@ -17,6 +19,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.platform.LocalFocusManager
@@ -117,6 +120,10 @@ internal fun ShopCheckInCreateScreenContent(
     modifier: Modifier = Modifier,
     photosPreparing: Boolean = false,
 ) {
+    if (state.isSubmitting) {
+        ShopCheckInSendingPane(modifier)
+        return
+    }
     val scroll = rememberScrollState()
     val focus = LocalFocusManager.current
     val keyboard = LocalSoftwareKeyboardController.current
@@ -130,7 +137,7 @@ internal fun ShopCheckInCreateScreenContent(
             .padding(top = CoffeePeekDimens.spacing3, bottom = CoffeePeekDimens.spacing6),
         verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing6),
     ) {
-        if (state.isSubmitting || state.submitted) {
+        if (state.submitted) {
             ShopCheckInSubmissionContent(
                 submittedVisibility = state.input.visibility.takeIf { state.submitted },
                 cleanupFailed = state.submitted && state.draftFailed,
@@ -211,6 +218,16 @@ internal fun ShopCheckInCreateScreenContent(
 }
 
 @Composable
+private fun ShopCheckInSendingPane(modifier: Modifier) {
+    Box(
+        modifier.fillMaxSize().navigationBarsPadding().padding(horizontal = CoffeePeekDimens.spacing4),
+        contentAlignment = Alignment.Center,
+    ) {
+        ShopCheckInSubmissionContent(null, false, {})
+    }
+}
+
+@Composable
 private fun validationMessage(error: ShopCheckInValidationError?): String? = error?.let {
     stringResource(when (it) {
         ShopCheckInValidationError.InvalidShop -> Res.string.shop_checkin_form_invalid_shop
@@ -225,10 +242,12 @@ private fun validationMessage(error: ShopCheckInValidationError?): String? = err
 
 @Composable
 private fun ShopCheckInFormPreview(dark: Boolean, uncertain: Boolean = false,
-    photosPreparing: Boolean = false, submitted: Boolean = false, loading: Boolean = false) = CoffeePeekTheme(darkTheme = dark) {
+    photosPreparing: Boolean = false, submitted: Boolean = false, loading: Boolean = false,
+    submitting: Boolean = false) = CoffeePeekTheme(darkTheme = dark) {
     val state = ShopCheckInFormState(
         input = ShopCheckInCreateInput("preview-shop", "Понравился фильтр", ShopRating(4, 4, 4), "2026-10-09T09:00:00Z"),
-        isLoading = loading, deliveryUnconfirmed = uncertain, submitted = submitted,
+        isLoading = loading, isSubmitting = submitting, deliveryUnconfirmed = uncertain,
+        submitted = submitted,
     )
     ShopCheckInCreateScreenContent(state, "Кофейня", "9 октября 2026", 1791504000000, 1791547200000, {}, {}, {}, {}, photosPreparing = photosPreparing)
 }
@@ -243,3 +262,5 @@ private fun ShopCheckInFormPreview(dark: Boolean, uncertain: Boolean = false,
 @Preview @Composable private fun ShopCheckInPhotosPreparingDarkPreview() = ShopCheckInFormPreview(true, photosPreparing = true)
 @Preview @Composable private fun ShopCheckInLoadingLightPreview() = ShopCheckInFormPreview(false, loading = true)
 @Preview @Composable private fun ShopCheckInLoadingDarkPreview() = ShopCheckInFormPreview(true, loading = true)
+@Preview @Composable private fun ShopCheckInSendingLightPreview() = ShopCheckInFormPreview(false, submitting = true)
+@Preview @Composable private fun ShopCheckInSendingDarkPreview() = ShopCheckInFormPreview(true, submitting = true)

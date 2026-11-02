@@ -1008,3 +1008,29 @@ and bottom action to cohesive private components. The hero action overlay
 still shares the same list state and Haze source. Shop implementation tests:
 108 / 12 suites, zero failures or errors; Direct Sandbox assembly and packaged
 DEX class check passed. iOS native visual review remains open.
+
+## Check-in card spacing and coffee icon — 2026-11-02
+
+From `origin/develop` `9dc06599f`, align the expanded-note action with the note,
+bring the like count closer to its icon, and use the existing platform coffee
+icon in both the migrated Shop card and the transitional iOS card. The iOS
+implementation renders the `cup.and.saucer` SF Symbol; Android retains the
+shared vector. The like touch target remains 48 dp. No data or vote behavior
+changes. Paired light/dark previews cover the changed card components.
+
+Verification plan: preserve note expansion and helpful-vote actions, compile
+the affected Shop and application UI, run Shop unit tests and Sandbox APK/DEX
+guards, then inspect the card at normal and large font sizes on both platforms.
+Local verification: 108 Shop impl unit tests in 12 suites passed with no
+failures or errors; Direct Sandbox assembly, isolation, and packaged DEX class
+checks passed. No device was selected or app installed. IDE previews, manual
+light/dark and large-font review, and iOS compilation/native visual review
+remain open at this local checkpoint.
+
+Sending-state follow-up: the in-flight check-in spinner and label now occupy
+the center of the sheet on both the migrated screen and the transitional iOS
+screen. The completed-success content keeps its natural height and actions.
+Paired light/dark sending previews were added. The same 108 Shop impl tests
+passed again; Direct Sandbox assembly, isolation, and packaged DEX checks
+passed. No device was selected or app installed. Native iOS compilation and
+manual sheet review, including large fonts, remain open.

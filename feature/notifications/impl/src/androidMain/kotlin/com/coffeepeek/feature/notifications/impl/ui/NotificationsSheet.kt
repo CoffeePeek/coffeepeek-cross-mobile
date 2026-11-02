@@ -2,18 +2,26 @@ package com.coffeepeek.feature.notifications.impl.ui
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.*
 import com.coffeepeek.core.designsystem.component.CoffeePeekIconButton as IconButton
 import com.coffeepeek.core.designsystem.component.CoffeePeekTextButton as TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.repeatOnLifecycle
 import com.coffeepeek.feature.notifications.impl.R
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
@@ -23,13 +31,16 @@ import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.feature.notifications.api.*
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.distinctUntilChanged
 
 @Composable
 internal fun NotificationsContent(
     state: NotificationInboxState,
     onClose: () -> Unit,
     onRead: (String) -> Unit,
-    onReadAll: () -> Unit,
+    onSeen: (String) -> Unit,
     onRefresh: () -> Unit,
     onLoadMore: () -> Unit,
     onSignIn: () -> Unit,
@@ -38,30 +49,36 @@ internal fun NotificationsContent(
     Column(Modifier.fillMaxWidth().padding(horizontal = CoffeePeekDimens.spacing5)) {
         NotificationsHeader(onClose)
         Spacer(Modifier.height(CoffeePeekDimens.spacing4))
-        // The sheet supplies a maximum; short lists must keep their content height.
-        LazyColumn(
-            modifier = Modifier.weight(1f, fill = false).navigationBarsPadding(),
-            contentPadding = PaddingValues(bottom = CoffeePeekDimens.spacing6),
-        ) {
-            if (state.accountId == null) {
-                item(key = "sign-in") {
-                    NotificationEmptyState(signedOut = true, onSignIn = {
-                        onClose()
-                        onSignIn()
-                    })
-                }
-            } else {
-                if (state.items.isNotEmpty()) item(key = "actions") { NotificationsReadActions(state, onReadAll) }
-                notificationHistory(state, onRead, openingId)
-                if (state.items.isEmpty() || state.error != null) {
-                    item(key = "status") { NotificationsStatus(state, onRefresh) }
-                }
-                if (state.nextCursor != null && state.error == null) item(key = "load-more") {
-                    TextButton(onClick = onLoadMore, modifier = Modifier.fillMaxWidth(),
-                        colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onSurface),
-                        enabled = !state.loading && !state.loadingMore && !state.markingRead) {
-                        Text(stringResource(if (state.loadingMore) R.string.notifications_loading else R.string.notifications_load_more))
-                    }
+        NotificationsList(state, onClose, onRead, onSeen, onRefresh, onLoadMore, onSignIn,
+            openingId, Modifier.weight(1f, fill = false))
+    }
+}
+
+@Composable
+private fun NotificationsList(state: NotificationInboxState, onClose: () -> Unit,
+    onRead: (String) -> Unit, onSeen: (String) -> Unit, onRefresh: () -> Unit,
+    onLoadMore: () -> Unit, onSignIn: () -> Unit, openingId: String?, modifier: Modifier) {
+    val listState = rememberLazyListState()
+    // The sheet supplies a maximum; short lists must keep their content height.
+    LazyColumn(state = listState, modifier = modifier.navigationBarsPadding(),
+        contentPadding = PaddingValues(bottom = CoffeePeekDimens.spacing6)) {
+        if (state.accountId == null) {
+            item(key = "sign-in") {
+                NotificationEmptyState(signedOut = true, onSignIn = {
+                    onClose()
+                    onSignIn()
+                })
+            }
+        } else {
+            notificationHistory(state, onRead, onSeen, openingId, listState)
+            if (state.items.isEmpty() || state.error != null) {
+                item(key = "status") { NotificationsStatus(state, onRefresh) }
+            }
+            if (state.nextCursor != null && state.error == null) item(key = "load-more") {
+                TextButton(onClick = onLoadMore, modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onSurface),
+                    enabled = !state.loading && !state.loadingMore && !state.markingRead) {
+                    Text(stringResource(if (state.loadingMore) R.string.notifications_loading else R.string.notifications_load_more))
                 }
             }
         }
@@ -71,36 +88,16 @@ internal fun NotificationsContent(
 @Composable
 private fun NotificationsHeader(onClose: () -> Unit) {
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing1)) {
-            Text(stringResource(R.string.notifications_title), style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold, modifier = Modifier.semantics { heading() })
-            Text(stringResource(R.string.notifications_subtitle), style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant)
-        }
+        Text(stringResource(R.string.notifications_title), style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f).semantics { heading() })
         IconButton(onClick = onClose) {
             Icon(CoffeePeekIcons.Close, stringResource(R.string.notifications_close))
         }
     }
 }
 
-@Composable
-private fun NotificationsReadActions(state: NotificationInboxState, onReadAll: () -> Unit) {
-    FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween,
-        verticalArrangement = Arrangement.Center) {
-        Text(if (state.unreadCount > 0) stringResource(R.string.notifications_unread_count, state.unreadCount)
-            else stringResource(R.string.notifications_all_read), modifier = Modifier.padding(vertical = CoffeePeekDimens.spacing4),
-            style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        TextButton(onClick = onReadAll,
-            colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onSurface),
-            enabled = state.unreadCount > 0 && !state.markingRead && !state.loading && !state.loadingMore) {
-            Icon(CoffeePeekIcons.Check, null, Modifier.size(CoffeePeekDimens.spacing4))
-            Spacer(Modifier.width(CoffeePeekDimens.spacing2))
-            Text(stringResource(R.string.notifications_read_all))
-        }
-    }
-}
-
-private fun LazyListScope.notificationHistory(state: NotificationInboxState, onRead: (String) -> Unit, openingId: String?) {
+private fun LazyListScope.notificationHistory(state: NotificationInboxState, onRead: (String) -> Unit,
+    onSeen: (String) -> Unit, openingId: String?, listState: LazyListState) {
     state.items.groupBy { isToday(it.createdAtUtc) }.forEach { (isToday, entries) ->
         item(key = if (isToday) "today" else "earlier") {
             Text(stringResource(if (isToday) R.string.notifications_today else R.string.notifications_earlier),
@@ -109,12 +106,40 @@ private fun LazyListScope.notificationHistory(state: NotificationInboxState, onR
         }
         itemsIndexed(entries, key = { _, item -> item.id }) { index, item ->
             Column {
-                NotificationRow(item, enabled = openingId == null && !state.markingRead && !state.loading && !state.loadingMore,
+                NotificationSeenEffect(listState, item, state.generation, onSeen)
+                NotificationRow(item, enabled = openingId == null && !state.loading && !state.loadingMore,
                     onClick = { onRead(item.id) })
                 if (index < entries.lastIndex) CoffeePeekRowSeparator()
             }
         }
     }
+}
+
+@Composable
+private fun NotificationSeenEffect(listState: LazyListState, item: NotificationItem,
+    generation: Long, onSeen: (String) -> Unit) {
+    val currentOnSeen = rememberUpdatedState(onSeen)
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
+    LaunchedEffect(listState, item.id, item.read, generation, lifecycle) {
+        if (!item.read) lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
+            snapshotFlow { notificationMostlyVisible(listState, item.id) }
+                .distinctUntilChanged().collectLatest { visible ->
+                    if (visible) {
+                        delay(2_000)
+                        currentOnSeen.value(item.id)
+                    }
+                }
+        }
+    }
+}
+
+private fun notificationMostlyVisible(listState: LazyListState, id: String): Boolean {
+    val layout = listState.layoutInfo
+    val row = layout.visibleItemsInfo.firstOrNull { it.key == id } ?: return false
+    val visible = (minOf(row.offset + row.size, layout.viewportEndOffset) -
+        maxOf(row.offset, layout.viewportStartOffset)).coerceAtLeast(0)
+    val viewport = layout.viewportEndOffset - layout.viewportStartOffset
+    return visible > 0 && visible >= minOf(row.size, viewport) / 2
 }
 
 @Composable
