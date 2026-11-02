@@ -1245,3 +1245,32 @@ physical-device media, pinch/multitouch, TalkBack, larger fonts, other window
 sizes, real backend/persistence/analytics, release and iOS acceptance. Colocated
 IDE previews were not rendered. The task-owned read-only AVD is closed after
 saving the requested screenshots; its changes are not persisted.
+
+## iOS photo-source presentation — 2026-11-02
+
+Reported on iOS 18 or newer: in a new Home check-in, tapping Add Photo shows no
+gallery/camera source menu. The shared iOS presenter had waited for the visible
+native sheet's transition coordinator to clear before presenting the menu. A
+custom detent can keep that coordinator active during resizing, so the presenter
+now permits a visible, already presented sheet to show the source alert. Initial
+push transitions and dismissing presenters still wait. This is a platform
+presentation change; the Home form, picker, photo bytes and write contract are
+unchanged.
+
+Verification plan and result at `1445e0ec` plus this working change on
+`codex/migration-map-viewport-carousel`: preserve Gallery/Camera/Cancel behavior
+and opening from the new Home form; compile the iOS Simulator and iPhone targets,
+then assemble Android Direct Debug with its packaged DEX guard. Both iOS Kotlin
+compilations and Direct Debug assembly/DEX guard passed on 2026-11-02. The
+existing `PlatformActionSelectionTest` ran 4/4 Direct Debug unit cases with zero
+failures, errors, skips or retries; it checks selection after dismissal, one-shot
+launch and disabled actions. UIKit presentation itself has no automated runtime
+test in this environment. No device, visual, theme, font-size, accessibility,
+picker or live-backend check was run. The remaining gate is a manual iPhone check
+of menu opening, Gallery/Camera, cancel/back, light/dark and photo delivery; no
+account write is needed to check menu opening.
+
+Promotion check on `origin/develop` at `a016fc78` plus this patch (2026-11-02):
+iOS Arm64 Kotlin compilation and Android Direct Debug APK/packaged DEX guard
+passed. `PlatformActionSelectionTest` ran 4/4 with zero failures, errors, skips
+or retries. No iPhone was connected, so the manual presentation gate remains.
