@@ -7,6 +7,8 @@ import com.adamglin.phosphoricons.Regular
 import com.adamglin.phosphoricons.fill.Heart as FillHeart
 import com.adamglin.phosphoricons.fill.Star as FillStar
 import com.adamglin.phosphoricons.regular.Archive
+import com.adamglin.phosphoricons.regular.ArrowClockwise
+import com.adamglin.phosphoricons.regular.Users
 import com.adamglin.phosphoricons.regular.ArrowLeft
 import com.adamglin.phosphoricons.regular.Avocado
 import com.adamglin.phosphoricons.regular.Bell
@@ -165,4 +167,6 @@ object CoffeePeekIcons {
     val NoteEdit: ImageVector get() = PhosphorIcons.Regular.NotePencil
     val Phone: ImageVector get() = PhosphorIcons.Regular.Phone
     val Settings: ImageVector get() = PhosphorIcons.Regular.GearSix
+    val Community: ImageVector get() = PhosphorIcons.Regular.Users
+    val Retry: ImageVector get() = PhosphorIcons.Regular.ArrowClockwise
 }

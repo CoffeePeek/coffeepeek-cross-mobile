@@ -12,7 +12,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
-import com.coffeepeek.admin.theme.CoffeePeekTheme
+import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.admin.theme.PlatformSystemBars
 import com.coffeepeek.admin.theme.platformSystemDarkTheme
 import com.coffeepeek.admin.theme.ThemeManager

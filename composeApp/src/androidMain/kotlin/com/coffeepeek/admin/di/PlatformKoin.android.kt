@@ -1,7 +1,6 @@
 package com.coffeepeek.admin.di
 
 import com.coffeepeek.admin.ui.Navigator
-import com.coffeepeek.admin.ui.screen.shop.component.ShopMenuGalleryLink
 import com.coffeepeek.admin.di.collections.collectionsModule
 import com.coffeepeek.admin.di.favorites.serverFavoritesModule
 import com.coffeepeek.admin.di.shop.shopFavoriteIntent
@@ -65,10 +64,7 @@ internal fun initAndroidKoin(extraModules: List<org.koin.core.module.Module> = e
             )
         },
         shopGalleryRendererFactory = { client ->
-            FeatureShopMenuGalleryScreenRenderer(
-                createShopMenuGalleryEntry(createShopMenuGalleryRepository(client.client)),
-                legacyAction = { id -> ShopMenuGalleryLink(onOpen = { Navigator.navigate(Navigator.Screen.ShopMenuGallery(id)) }) },
-            )
+            FeatureShopMenuGalleryScreenRenderer(createShopMenuGalleryEntry(createShopMenuGalleryRepository(client.client)))
         },
         shopCheckInRendererFactory = { FeatureShopCheckInFormRenderer(get()) },
         shopDetailRendererFactory = {

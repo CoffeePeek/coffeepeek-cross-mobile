@@ -17,7 +17,7 @@ import kotlin.time.Instant
  * Keep this instance across sheet recreation. Legacy logout/clear/replacement invalidates its guard.
  */
 internal class AppShopCheckInDraftStore(
-    private val legacy: CheckInDraftStore,
+    private val drafts: CheckInDraftStore,
     private val dates: ShopCheckInDateFormatter,
 ) : ShopCheckInDraftStore {
     private var guardedDraft: CheckInDraft? = null
@@ -33,7 +33,7 @@ internal class AppShopCheckInDraftStore(
         if (ownerAccountId != null) {
             require(ownerAccountId.isNotBlank())
             if (accountId != null && accountId != ownerAccountId) {
-                legacy.clearAll()
+                drafts.clearAll()
                 guardedDraft = null
                 deliveryUnconfirmed = false
             }
@@ -49,24 +49,24 @@ internal class AppShopCheckInDraftStore(
                 }
                 if (initial.shopSlug != shopSlug) return Result.failure(IllegalArgumentException("Mismatched shop slug"))
                 return this@AppShopCheckInDraftStore.open(initial.copy(shopSlug = shopId)).map {
-                    lease = legacy.peek()
+                    lease = drafts.peek()
                     it.copy(input = it.input.copy(shopSlug = shopSlug))
                 }
             }
 
             override fun save(snapshot: ShopCheckInDraftSnapshot): Result<Unit> {
                 if ((ownerAccountId != null && accountId != ownerAccountId) ||
-                    snapshot.input.shopSlug != shopSlug || lease == null || legacy.peek() !== lease) {
+                    snapshot.input.shopSlug != shopSlug || lease == null || drafts.peek() !== lease) {
                     return Result.failure(IllegalStateException("Draft binding was replaced"))
                 }
                 return this@AppShopCheckInDraftStore.save(
                     snapshot.copy(input = snapshot.input.copy(shopSlug = shopId)),
-                ).onSuccess { lease = legacy.peek() }
+                ).onSuccess { lease = drafts.peek() }
             }
 
             override fun clear(shopSlug: String): Result<Unit> {
                 if ((ownerAccountId != null && accountId != ownerAccountId) ||
-                    shopSlug != boundSlug || lease == null || legacy.peek() !== lease) {
+                    shopSlug != boundSlug || lease == null || drafts.peek() !== lease) {
                     return Result.failure(IllegalStateException("Draft binding was replaced"))
                 }
                 return this@AppShopCheckInDraftStore.clear(shopId).onSuccess { lease = null }
@@ -75,7 +75,7 @@ internal class AppShopCheckInDraftStore(
     }
 
     override fun open(initial: ShopCheckInCreateInput): Result<ShopCheckInDraftSnapshot> = draftResult {
-        val draft = legacy.open(initial.shopSlug)
+        val draft = drafts.open(initial.shopSlug)
         if (guardedDraft !== draft) {
             deliveryUnconfirmed = false
         }
@@ -96,7 +96,7 @@ internal class AppShopCheckInDraftStore(
 
     override fun save(snapshot: ShopCheckInDraftSnapshot): Result<Unit> = draftResult {
         val input = snapshot.input
-        val current = legacy.peek()
+        val current = drafts.peek()
         check(current != null && current.shopId == input.shopSlug && guardedDraft === current) {
             "Draft was cleared or replaced; do not save stale screen state"
         }
@@ -109,15 +109,15 @@ internal class AppShopCheckInDraftStore(
             drinkName = current.drinkName.takeIf { current.drinkSlug == input.drinkSlug },
             photos = input.photos.map { PickedImage(it.bytes, it.fileName, it.contentType) },
         )
-        legacy.save(updated)
+        drafts.save(updated)
         guardedDraft = updated
         deliveryUnconfirmed = snapshot.deliveryUnconfirmed
     }
 
     override fun clear(shopSlug: String): Result<Unit> = draftResult {
         if (guardedDraft?.shopId != shopSlug) return@draftResult
-        check(legacy.peek() === guardedDraft) { "Draft was cleared or replaced; do not clear another screen's draft" }
-        legacy.clear(shopSlug)
+        check(drafts.peek() === guardedDraft) { "Draft was cleared or replaced; do not clear another screen's draft" }
+        drafts.clear(shopSlug)
         if (guardedDraft?.shopId == shopSlug) {
             guardedDraft = null
             deliveryUnconfirmed = false

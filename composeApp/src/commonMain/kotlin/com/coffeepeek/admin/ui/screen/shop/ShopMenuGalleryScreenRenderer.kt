@@ -6,8 +6,4 @@ import androidx.compose.runtime.Composable
 interface ShopMenuGalleryScreenRenderer {
     @Composable
     fun Content(shopId: String)
-
-    /** Optional legacy affordance; the migrated detail owns its menu-photo actions. */
-    @Composable
-    fun MenuGalleryAction(shopId: String) {}
 }

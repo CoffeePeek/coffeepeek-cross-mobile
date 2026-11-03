@@ -23,8 +23,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.coffeepeek.admin.theme.CpColor
-import com.coffeepeek.admin.theme.CpDimens
+import com.coffeepeek.core.designsystem.theme.CoffeePeekColors
+import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 
 /** Guest sign-in prompt card. Shared between the profile/settings guest header and the shop reviews. */
 @Composable
@@ -33,14 +33,14 @@ fun GuestAuthCard(
     onRegister: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val localizedLegacyGuestAuthCardShopCheckinsJoinPrompt = stringResource(Res.string.legacy_guest_auth_card_shop_checkins_join_prompt)
+    val localizedGuestAuthCardShopCheckinsJoinPrompt = stringResource(Res.string.guest_auth_card_shop_checkins_join_prompt)
     val localizedLogin = stringResource(Res.string.login)
-    val localizedLegacyGuestAuthCardShopCheckinsNoAccount = stringResource(Res.string.legacy_guest_auth_card_shop_checkins_no_account)
+    val localizedGuestAuthCardShopCheckinsNoAccount = stringResource(Res.string.guest_auth_card_shop_checkins_no_account)
     val localizedRegistr = stringResource(Res.string.registr)
 
     Card(
         modifier = modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(CpDimens.cardRadius),
+        shape = RoundedCornerShape(CoffeePeekDimens.cardRadius),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
         border = BorderStroke(
@@ -51,12 +51,12 @@ fun GuestAuthCard(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(CpDimens.spacing4),
+                .padding(CoffeePeekDimens.spacing4),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(CpDimens.spacing3),
+            verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3),
         ) {
             Text(
-                text = localizedLegacyGuestAuthCardShopCheckinsJoinPrompt,
+                text = localizedGuestAuthCardShopCheckinsJoinPrompt,
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurface,
                 textAlign = TextAlign.Center,
@@ -65,12 +65,12 @@ fun GuestAuthCard(
                 onClick = onLogin,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(CpDimens.buttonHeight),
+                    .height(CoffeePeekDimens.buttonHeight),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = CpColor.Primary,
-                    contentColor = CpColor.DarkTextOnPrimary,
+                    containerColor = CoffeePeekColors.Primary,
+                    contentColor = CoffeePeekColors.DarkTextOnPrimary,
                 ),
-                shape = RoundedCornerShape(CpDimens.buttonRadius),
+                shape = RoundedCornerShape(CoffeePeekDimens.buttonRadius),
             ) {
                 Text(
                     text = localizedLogin,
@@ -82,7 +82,7 @@ fun GuestAuthCard(
                 horizontalArrangement = Arrangement.Center,
             ) {
                 Text(
-                    text = localizedLegacyGuestAuthCardShopCheckinsNoAccount,
+                    text = localizedGuestAuthCardShopCheckinsNoAccount,
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

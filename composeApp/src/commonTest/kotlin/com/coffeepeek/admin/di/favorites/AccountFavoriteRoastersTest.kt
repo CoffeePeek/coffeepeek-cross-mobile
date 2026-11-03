@@ -21,7 +21,7 @@ import kotlinx.coroutines.withContext
 import kotlin.test.*
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class LegacyFavoriteRoastersRepositoryTest {
+class AccountFavoriteRoastersTest {
     private class Store : RoasterFavorites {
         val rows = MutableStateFlow<List<CatalogItem>>(emptyList())
         val removed = mutableListOf<Pair<String, String>>()
@@ -43,7 +43,7 @@ class LegacyFavoriteRoastersRepositoryTest {
         val store = Store().apply { rows.value = listOf(roaster("a").copy(photoUrl = "saved.png"),
             CatalogItem("opaque-id", "No address", slug = "not-a-public-address")) }
         val loads = mutableListOf<String>()
-        val source = LegacyFavoriteRoastersRepository(store, CheckInTestSessions()) {
+        val source = AccountFavoriteRoasters(store, CheckInTestSessions()) {
             loads += it; Result.success("fallback.png")
         }
         val emissions = mutableListOf<Result<List<FavoriteRoaster>>>()
@@ -60,7 +60,7 @@ class LegacyFavoriteRoastersRepositoryTest {
         val store = Store().apply { rows.value = (0..6).map { roaster(it.toString()) } }
         val gate = CompletableDeferred<Unit>()
         var inFlight = 0; var peak = 0
-        val source = LegacyFavoriteRoastersRepository(store, CheckInTestSessions()) { slug ->
+        val source = AccountFavoriteRoasters(store, CheckInTestSessions()) { slug ->
             inFlight++; peak = maxOf(peak, inFlight)
             try {
                 gate.await()
@@ -82,7 +82,7 @@ class LegacyFavoriteRoastersRepositoryTest {
         val sessions = CheckInTestSessions()
         val store = Store().apply { rows.value = listOf(roaster("a")) }
         val gate = CompletableDeferred<Unit>()
-        val source = LegacyFavoriteRoastersRepository(store, sessions) {
+        val source = AccountFavoriteRoasters(store, sessions) {
             withContext(NonCancellable) { gate.await() }; Result.success("private-old.png")
         }
         val emissions = mutableListOf<Result<List<FavoriteRoaster>>>()
@@ -98,7 +98,7 @@ class LegacyFavoriteRoastersRepositoryTest {
     @Test fun removalBindsOriginalOwnerAndCancellationNeverBecomesFailure() = runTest {
         val sessions = CheckInTestSessions()
         val store = Store().apply { rows.value = listOf(roaster("a").copy(photoUrl = "saved.png")) }
-        val source = LegacyFavoriteRoastersRepository(store, sessions) { error("Saved logo needs no fetch") }
+        val source = AccountFavoriteRoasters(store, sessions) { error("Saved logo needs no fetch") }
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { source.observe().collect {} }
         runCurrent()
         val failure = IllegalStateException("Disk full")
@@ -114,7 +114,7 @@ class LegacyFavoriteRoastersRepositoryTest {
     @Test fun synchronousAccountReplacementRejectsOldActionsBeforeObserverRuns() = runTest {
         val sessions = CheckInTestSessions()
         val store = Store().apply { rows.value = listOf(roaster("a").copy(photoUrl = "saved.png")) }
-        val source = LegacyFavoriteRoastersRepository(store, sessions) { error("not used") }
+        val source = AccountFavoriteRoasters(store, sessions) { error("not used") }
         backgroundScope.launch { source.observe().collect {} }
         runCurrent()
         sessions.applySession(Session("b-token", userId = "other"))
@@ -126,7 +126,7 @@ class LegacyFavoriteRoastersRepositoryTest {
         val sessions = CheckInTestSessions()
         val store = Store().apply { rows.value = listOf(roaster("a")) }
         var reads = 0
-        val source = LegacyFavoriteRoastersRepository(store, sessions) { reads++; Result.success("logo.png") }
+        val source = AccountFavoriteRoasters(store, sessions) { reads++; Result.success("logo.png") }
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { source.observe().collect {} }
         runCurrent(); assertEquals(1, reads)
         sessions.applySession(Session("renewed-token", userId = "owner")); runCurrent()
@@ -136,7 +136,7 @@ class LegacyFavoriteRoastersRepositoryTest {
     @Test fun successfulPhotoFallbackIsReusedWhenAnotherFavoriteChanges() = runTest {
         val store = Store().apply { rows.value = listOf(roaster("a")) }
         val reads = mutableListOf<String>()
-        val source = LegacyFavoriteRoastersRepository(store, CheckInTestSessions()) { slug ->
+        val source = AccountFavoriteRoasters(store, CheckInTestSessions()) { slug ->
             reads += slug; Result.success("$slug.png")
         }
         val emissions = mutableListOf<Result<List<FavoriteRoaster>>>()
@@ -161,7 +161,7 @@ class LegacyFavoriteRoastersRepositoryTest {
             }
         }
         val store = Store().apply { rows.value = listOf(roaster("a").copy(photoUrl = "saved.png")) }
-        val source = LegacyFavoriteRoastersRepository(store, sessions) { error("not used") }
+        val source = AccountFavoriteRoasters(store, sessions) { error("not used") }
         val emissions = mutableListOf<Result<List<FavoriteRoaster>>>()
         val collectorGate = CompletableDeferred<Unit>()
         backgroundScope.launch { source.observe().collect {

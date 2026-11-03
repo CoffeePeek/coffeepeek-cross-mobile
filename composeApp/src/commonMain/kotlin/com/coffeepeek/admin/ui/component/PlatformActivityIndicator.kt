@@ -7,7 +7,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import coffeepeek.composeapp.generated.resources.Res
 import coffeepeek.composeapp.generated.resources.loader_checking_updates
-import com.coffeepeek.admin.theme.CpDimens
+import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
@@ -16,7 +16,7 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 @Composable
 internal fun PlatformActivityIndicator(modifier: Modifier = Modifier) {
     CoffeePeekLoader(contentDescription = stringResource(Res.string.loader_checking_updates),
-        modifier = modifier, size = CpDimens.settingsIconSize,
+        modifier = modifier, size = CoffeePeekDimens.settingsIconSize,
         color = MaterialTheme.colorScheme.onSurfaceVariant, strokeWidth = 2.dp)
 }
 

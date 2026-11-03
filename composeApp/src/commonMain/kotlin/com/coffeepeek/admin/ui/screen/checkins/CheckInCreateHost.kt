@@ -14,7 +14,7 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.admin.analytics.Analytics
 import com.coffeepeek.admin.analytics.AnalyticsEvent
-import com.coffeepeek.admin.theme.CpDimens
+import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.ui.component.LocalFloatingNavClearance
 
@@ -45,7 +45,7 @@ internal fun BoxScope.CheckInCreateHost(
     }
     content(onCreate)
     if (showButton) {
-        CheckInCreateButton(Modifier.align(Alignment.BottomEnd).padding(end = CpDimens.spacing4, bottom = clearance + 12.dp), onClick = onCreate)
+        CheckInCreateButton(Modifier.align(Alignment.BottomEnd).padding(end = CoffeePeekDimens.spacing4, bottom = clearance + 12.dp), onClick = onCreate)
     }
     if (showCreate) CheckInCreateFlow(
         onDismiss = { showCreate = false },

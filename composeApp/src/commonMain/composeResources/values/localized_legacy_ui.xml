@@ -1,15 +1,15 @@
 <resources>
-    <string name="legacy_error_dialog_shelf_camera_tips_close">Понятно</string>
-    <string name="legacy_error_dialog_unexpected_error">Что-то пошло не так</string>
-    <string name="legacy_guest_auth_card_shop_checkins_join_prompt">Присоединяйтесь к сообществу, чтобы сохранять любимые места и делиться впечатлениями.</string>
-    <string name="legacy_guest_auth_card_shop_checkins_no_account">Нет аккаунта?</string>
-    <string name="legacy_main_screen_profile_title">Профиль</string>
-    <string name="legacy_main_screen_search">Поиск</string>
-    <string name="legacy_main_screen_settings_tab_title">Настройки</string>
-    <string name="legacy_visited_places_screen_sandbox_feed_title">Лента</string>
-    <string name="legacy_review_just_now">только что</string>
-    <string name="legacy_review_ago">назад</string>
-    <string-array name="legacy_review_months">
+    <string name="error_dialog_shelf_camera_tips_close">Понятно</string>
+    <string name="error_dialog_unexpected_error">Что-то пошло не так</string>
+    <string name="guest_auth_card_shop_checkins_join_prompt">Присоединяйтесь к сообществу, чтобы сохранять любимые места и делиться впечатлениями.</string>
+    <string name="guest_auth_card_shop_checkins_no_account">Нет аккаунта?</string>
+    <string name="main_screen_profile_title">Профиль</string>
+    <string name="main_screen_search">Поиск</string>
+    <string name="main_screen_settings_tab_title">Настройки</string>
+    <string name="visited_places_screen_sandbox_feed_title">Лента</string>
+    <string name="review_just_now">только что</string>
+    <string name="review_ago">назад</string>
+    <string-array name="review_months">
         <item>янв.</item>
         <item>февр.</item>
         <item>мар.</item>
@@ -23,20 +23,20 @@
         <item>нояб.</item>
         <item>дек.</item>
     </string-array>
-    <string-array name="legacy_minute_forms">
+    <string-array name="minute_forms">
         <item>минуту</item>
         <item>минуты</item>
         <item>минут</item>
     </string-array>
-    <string-array name="legacy_hour_forms">
+    <string-array name="hour_forms">
         <item>час</item>
         <item>часа</item>
         <item>часов</item>
     </string-array>
-    <string name="legacy_validation_visit_date">Выберите дату визита не позднее сегодняшней</string>
-    <string name="legacy_validation_visit_note">Заметка должна быть не длиннее 1000 символов</string>
-    <string name="legacy_validation_visit_photos">Можно добавить до 5 фото</string>
-    <string name="legacy_validation_visit_ratings">Оцените кофе, сервис и атмосферу</string>
-    <string name="legacy_drink_custom_name_length">Укажите название напитка: от 1 до 100 символов</string>
-    <string name="legacy_drink_custom_name_other">Название можно указать только для другого напитка</string>
+    <string name="validation_visit_date">Выберите дату визита не позднее сегодняшней</string>
+    <string name="validation_visit_note">Заметка должна быть не длиннее 1000 символов</string>
+    <string name="validation_visit_photos">Можно добавить до 5 фото</string>
+    <string name="validation_visit_ratings">Оцените кофе, сервис и атмосферу</string>
+    <string name="drink_custom_name_length">Укажите название напитка: от 1 до 100 символов</string>
+    <string name="drink_custom_name_other">Название можно указать только для другого напитка</string>
 </resources>

@@ -1,5 +1,7 @@
 package com.coffeepeek.admin.theme
 
+import com.coffeepeek.core.designsystem.theme.CoffeePeekColors
+
 import androidx.compose.ui.graphics.Color
 
 /** Shared by Material and UIKit switches; never derive the thumb from a surface/outline token. */
@@ -11,13 +13,13 @@ internal data class SwitchPalette(
 )
 
 internal fun switchPalette(dark: Boolean) = if (dark) SwitchPalette(
-    checkedThumb = CpColor.SwitchCheckedThumbDark,
-    checkedTrack = CpColor.SwitchCheckedTrackDark,
-    uncheckedThumb = CpColor.SwitchCheckedThumbDark,
-    uncheckedTrack = CpColor.DarkBorderHover,
+    checkedThumb = CoffeePeekColors.SwitchCheckedThumbDark,
+    checkedTrack = CoffeePeekColors.SwitchCheckedTrackDark,
+    uncheckedThumb = CoffeePeekColors.SwitchCheckedThumbDark,
+    uncheckedTrack = CoffeePeekColors.DarkBorderHover,
 ) else SwitchPalette(
-    checkedThumb = CpColor.SwitchCheckedThumbLight,
-    checkedTrack = CpColor.Primary,
-    uncheckedThumb = CpColor.LightTextSecondary,
-    uncheckedTrack = CpColor.LightBadge,
+    checkedThumb = CoffeePeekColors.SwitchCheckedThumbLight,
+    checkedTrack = CoffeePeekColors.Primary,
+    uncheckedThumb = CoffeePeekColors.LightTextSecondary,
+    uncheckedTrack = CoffeePeekColors.LightBadge,
 )

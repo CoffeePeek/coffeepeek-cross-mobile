@@ -63,7 +63,7 @@ import coffeepeek.composeapp.generated.resources.business_tab_title
 import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import com.coffeepeek.admin.ui.screen.profile.OwnProfileScreenRenderer
 import com.coffeepeek.admin.ui.screen.profile.SettingsScreenRenderer
-import com.coffeepeek.admin.ui.icons.CpIcons
+import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 
 data class BottomNavItem(
     val title: String,
@@ -77,11 +77,11 @@ expect fun MainScreen(isLoggedIn: Boolean, onMapExpandedChange: (Boolean) -> Uni
 
 @Composable
 internal fun ComposeMainScreen(isLoggedIn: Boolean, onMapExpandedChange: (Boolean) -> Unit) {
-    val localizedLegacyMainScreenSearch = stringResource(Res.string.legacy_main_screen_search)
+    val localizedMainScreenSearch = stringResource(Res.string.main_screen_search)
     val localizedCheckinRatingCoffee = stringResource(Res.string.checkin_rating_coffee)
-    val localizedLegacyVisitedPlacesScreenSandboxFeedTitle = stringResource(Res.string.legacy_visited_places_screen_sandbox_feed_title)
-    val localizedLegacyMainScreenProfileTitle = stringResource(Res.string.legacy_main_screen_profile_title)
-    val localizedLegacyMainScreenSettingsTabTitle = stringResource(Res.string.legacy_main_screen_settings_tab_title)
+    val localizedVisitedPlacesScreenSandboxFeedTitle = stringResource(Res.string.visited_places_screen_sandbox_feed_title)
+    val localizedMainScreenProfileTitle = stringResource(Res.string.main_screen_profile_title)
+    val localizedMainScreenSettingsTabTitle = stringResource(Res.string.main_screen_settings_tab_title)
 
     val reduceMotion = com.coffeepeek.admin.ui.component.platformReduceMotion()
     val bottomNavController = rememberNavController()
@@ -96,34 +96,34 @@ internal fun ComposeMainScreen(isLoggedIn: Boolean, onMapExpandedChange: (Boolea
     val businessMode = koinInject<com.coffeepeek.feature.ownership.api.BusinessOwnershipEntry>().Session().businessMode
     val availableTabs = mainTabScreens(isLoggedIn, businessMode)
     val items = listOf(
-        BottomNavItem(title = stringResource(Res.string.business_tab_title), icon = CpIcons.CoffeeBean, graph = Navigator.Screen.BusinessGraph, startScreen = Navigator.Screen.BusinessTab),
+        BottomNavItem(title = stringResource(Res.string.business_tab_title), icon = CoffeePeekIcons.CoffeeBean, graph = Navigator.Screen.BusinessGraph, startScreen = Navigator.Screen.BusinessTab),
         BottomNavItem(
-            title = localizedLegacyMainScreenSearch,
-            icon = CpIcons.Search,
+            title = localizedMainScreenSearch,
+            icon = CoffeePeekIcons.Search,
             graph = Navigator.Screen.FeedGraph,
             startScreen = Navigator.Screen.FeedTab,
         ),
         BottomNavItem(
             title = localizedCheckinRatingCoffee,
-            icon = CpIcons.CoffeeBean,
+            icon = CoffeePeekIcons.CoffeeBean,
             graph = Navigator.Screen.CoffeeGraph,
             startScreen = Navigator.Screen.CoffeeTab,
         ),
         BottomNavItem(
-            title = localizedLegacyVisitedPlacesScreenSandboxFeedTitle,
-            icon = CpIcons.Community,
+            title = localizedVisitedPlacesScreenSandboxFeedTitle,
+            icon = CoffeePeekIcons.Community,
             graph = Navigator.Screen.CommunityGraph,
             startScreen = Navigator.Screen.CommunityTab,
         ),
         BottomNavItem(
-            title = localizedLegacyMainScreenProfileTitle,
-            icon = CpIcons.Profile,
+            title = localizedMainScreenProfileTitle,
+            icon = CoffeePeekIcons.Profile,
             graph = Navigator.Screen.ProfileGraph,
             startScreen = Navigator.Screen.ProfileTab,
         ),
         BottomNavItem(
-            title = localizedLegacyMainScreenSettingsTabTitle,
-            icon = CpIcons.Settings,
+            title = localizedMainScreenSettingsTabTitle,
+            icon = CoffeePeekIcons.Settings,
             graph = Navigator.Screen.SettingsGraph,
             startScreen = Navigator.Screen.SettingsTab,
         ),

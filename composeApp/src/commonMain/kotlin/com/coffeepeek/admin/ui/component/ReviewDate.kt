@@ -42,11 +42,11 @@ internal data class ReviewDateLabels(
 
 @Composable
 internal fun reviewDateLabels() = ReviewDateLabels(
-    stringResource(Res.string.legacy_review_just_now),
-    stringResource(Res.string.legacy_review_ago),
-    stringArrayResource(Res.array.legacy_minute_forms),
-    stringArrayResource(Res.array.legacy_hour_forms),
-    stringArrayResource(Res.array.legacy_review_months),
+    stringResource(Res.string.review_just_now),
+    stringResource(Res.string.review_ago),
+    stringArrayResource(Res.array.minute_forms),
+    stringArrayResource(Res.array.hour_forms),
+    stringArrayResource(Res.array.review_months),
 )
 
 @OptIn(ExperimentalTime::class)

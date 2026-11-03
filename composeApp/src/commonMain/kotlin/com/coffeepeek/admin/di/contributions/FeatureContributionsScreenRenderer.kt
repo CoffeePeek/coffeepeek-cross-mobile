@@ -20,7 +20,7 @@ import com.coffeepeek.feature.contributions.impl.createChangeEditorEntry
 import com.coffeepeek.feature.contributions.impl.createChangeRequestEntry
 import com.coffeepeek.feature.contributions.impl.createContributionsListEntry
 import com.coffeepeek.feature.contributions.impl.createSuggestChangeEntry
-import com.coffeepeek.admin.ui.screen.contributions.ContributionKind as LegacyKind
+import com.coffeepeek.admin.ui.screen.contributions.ContributionKind as AppContributionKind
 import com.coffeepeek.feature.contributions.api.ContributionKind
 
 /** Routes the contribution screens to the migrated entries; navigation, the photo picker, the map and the sign-in stay app-owned. */
@@ -36,7 +36,7 @@ internal class FeatureContributionsScreenRenderer(
     private val openShop = { slug: String -> Navigator.navigate(Navigator.Screen.ShopDetail(slug)) }
 
     @Composable
-    override fun List(kind: LegacyKind) = list.Content(
+    override fun List(kind: AppContributionKind) = list.Content(
         kind = ContributionKind.valueOf(kind.name), onBack = Navigator::popBack, onSignIn = signIn, onOpenShop = openShop,
         onOpenRequest = { Navigator.navigate(Navigator.Screen.ShopChangeRequestDetail(it)) }, modifier = Modifier,
     )

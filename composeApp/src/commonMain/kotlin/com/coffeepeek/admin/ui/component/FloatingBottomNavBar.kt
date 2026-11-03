@@ -1,5 +1,7 @@
 package com.coffeepeek.admin.ui.component
 
+import com.coffeepeek.core.designsystem.modifier.LocalCoffeePeekGlassHazeState
+import com.coffeepeek.core.designsystem.modifier.coffeePeekLiquidGlass
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -41,9 +43,9 @@ import androidx.compose.ui.unit.Density
 import com.coffeepeek.core.designsystem.component.CoffeePeekLargeContentViewer
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.coffeepeek.admin.theme.CoffeePeekTheme
+import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
-import com.coffeepeek.admin.ui.icons.CpIcons
+import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import dev.chrisbanes.haze.HazeState
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
@@ -66,14 +68,14 @@ data class FloatingNavItem(
 fun FloatingBottomNavBar(
     items: List<FloatingNavItem>,
     modifier: Modifier = Modifier,
-    hazeState: HazeState? = LocalGlassHazeState.current,
+    hazeState: HazeState? = LocalCoffeePeekGlassHazeState.current,
 ) {
     val height = floatingNavBarHeight()
     Row(
         modifier = modifier.navigationBarsPadding().padding(horizontal = 16.dp)
             .padding(bottom = FloatingNavBottomMargin).fillMaxWidth()
             .height(height)
-            .liquidGlass(RoundedCornerShape(32.dp), hazeState, shadowElevation = 10.dp)
+            .coffeePeekLiquidGlass(RoundedCornerShape(32.dp), hazeState, shadowElevation = 10.dp)
             .padding(4.dp).selectableGroup(),
         horizontalArrangement = Arrangement.spacedBy(2.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -123,11 +125,11 @@ private fun RowScope.FloatingNavBarItem(item: FloatingNavItem) {
 private fun FloatingBottomNavBarPreview(dark: Boolean, scale: Float = 1f) = CoffeePeekTheme(darkTheme = dark) {
     CompositionLocalProvider(LocalDensity provides androidx.compose.ui.unit.Density(LocalDensity.current.density, scale)) {
         FloatingBottomNavBar(listOf(
-            FloatingNavItem("Поиск", CpIcons.Search, true, {}),
-            FloatingNavItem("Кофе", CpIcons.CoffeeBean, false, {}),
-            FloatingNavItem("Лента", CpIcons.Community, false, {}),
-            FloatingNavItem("Профиль", CpIcons.Profile, false, {}),
-            FloatingNavItem("Настройки", CpIcons.Settings, false, {}),
+            FloatingNavItem("Поиск", CoffeePeekIcons.Search, true, {}),
+            FloatingNavItem("Кофе", CoffeePeekIcons.CoffeeBean, false, {}),
+            FloatingNavItem("Лента", CoffeePeekIcons.Community, false, {}),
+            FloatingNavItem("Профиль", CoffeePeekIcons.Profile, false, {}),
+            FloatingNavItem("Настройки", CoffeePeekIcons.Settings, false, {}),
         ))
     }
 }

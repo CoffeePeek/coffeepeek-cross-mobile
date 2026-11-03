@@ -9,7 +9,7 @@ import coffeepeek.composeapp.generated.resources.Res
 import coffeepeek.composeapp.generated.resources.check_in_create_actions
 import com.coffeepeek.admin.analytics.Analytics
 import com.coffeepeek.admin.analytics.analyticsExposure
-import com.coffeepeek.admin.theme.CoffeePeekTheme
+import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.core.designsystem.component.CoffeePeekAddButton
 import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview

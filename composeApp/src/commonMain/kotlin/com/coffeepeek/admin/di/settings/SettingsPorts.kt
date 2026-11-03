@@ -29,26 +29,26 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
-import com.coffeepeek.admin.theme.ThemeMode as LegacyThemeMode
+import com.coffeepeek.admin.theme.ThemeMode as AppThemeMode
 import com.coffeepeek.feature.settings.domain.ThemeMode as SettingsThemeMode
 
 /** Adapter over the process-wide [ThemeManager], which the app root and the iOS shell also read. */
 internal class AppThemePort : ThemePort {
     override fun current() = ThemeManager.themeMode.value.toSettings()
     override fun observe(): Flow<SettingsThemeMode> = ThemeManager.themeMode.map { it.toSettings() }
-    override fun set(mode: SettingsThemeMode) = ThemeManager.setTheme(mode.toLegacy())
+    override fun set(mode: SettingsThemeMode) = ThemeManager.setTheme(mode.toApp())
 }
 
-internal fun LegacyThemeMode.toSettings() = when (this) {
-    LegacyThemeMode.SYSTEM -> SettingsThemeMode.SYSTEM
-    LegacyThemeMode.LIGHT -> SettingsThemeMode.LIGHT
-    LegacyThemeMode.DARK -> SettingsThemeMode.DARK
+internal fun AppThemeMode.toSettings() = when (this) {
+    AppThemeMode.SYSTEM -> SettingsThemeMode.SYSTEM
+    AppThemeMode.LIGHT -> SettingsThemeMode.LIGHT
+    AppThemeMode.DARK -> SettingsThemeMode.DARK
 }
 
-internal fun SettingsThemeMode.toLegacy() = when (this) {
-    SettingsThemeMode.SYSTEM -> LegacyThemeMode.SYSTEM
-    SettingsThemeMode.LIGHT -> LegacyThemeMode.LIGHT
-    SettingsThemeMode.DARK -> LegacyThemeMode.DARK
+internal fun SettingsThemeMode.toApp() = when (this) {
+    SettingsThemeMode.SYSTEM -> AppThemeMode.SYSTEM
+    SettingsThemeMode.LIGHT -> AppThemeMode.LIGHT
+    SettingsThemeMode.DARK -> AppThemeMode.DARK
 }
 
 /** The legacy order: load the catalog, then resolve the saved city against it (only on success). */

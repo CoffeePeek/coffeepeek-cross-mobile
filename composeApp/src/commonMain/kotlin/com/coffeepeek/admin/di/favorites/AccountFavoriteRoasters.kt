@@ -27,7 +27,7 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.sync.withPermit
 
 /** Composition bridge: the existing server favorites source and catalogue remain authoritative. */
-internal class LegacyFavoriteRoastersRepository(
+internal class AccountFavoriteRoasters(
     private val favorites: RoasterFavorites,
     private val sessions: SessionReader,
     private val loadPhoto: suspend (String) -> Result<String?>,

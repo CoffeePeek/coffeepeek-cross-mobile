@@ -23,7 +23,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.ComposeUIViewController
 import com.coffeepeek.admin.AppContent
-import com.coffeepeek.admin.theme.CpDimens
+import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.admin.theme.ThemeManager
 import com.coffeepeek.admin.theme.toUIColor
 import com.coffeepeek.admin.theme.uiKitStyle
@@ -57,7 +57,7 @@ internal class NativeScreenController(
 ) : UIViewController(nibName = null, bundle = null) {
     private val analyticsVisit = com.coffeepeek.admin.analytics.correlationId("screen")
     private var analyticsVisible by mutableStateOf(false)
-    private var bottomClearance by mutableStateOf(if (isTabRoot) CpDimens.iosTabBarClearanceFloor else 0.dp)
+    private var bottomClearance by mutableStateOf(if (isTabRoot) NavMetrics.iosTabBarClearanceFloor else 0.dp)
     private var tabBarHidden = false
     private var expandedMap by mutableStateOf(false)
     private var composeController: UIViewController? = null
@@ -136,7 +136,7 @@ internal class NativeScreenController(
     private fun measuredBottomClearance(): Dp {
         val inset = view.safeAreaInsets.useContents { bottom }.dp
         if (!isTabRoot || tabBarHidden) return inset
-        return maxOf(inset, CpDimens.iosTabBarClearanceFloor)
+        return maxOf(inset, NavMetrics.iosTabBarClearanceFloor)
     }
 
     private fun attachContent(child: UIViewController) {

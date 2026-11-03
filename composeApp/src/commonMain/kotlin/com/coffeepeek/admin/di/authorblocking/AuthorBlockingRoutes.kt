@@ -1,7 +1,9 @@
 package com.coffeepeek.admin.di.authorblocking
 
+import com.coffeepeek.admin.ui.NavMetrics
+
 import androidx.compose.runtime.Composable
-import com.coffeepeek.admin.theme.CpDimens
+import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.feature.authorblocking.api.AuthorBlockingEntry
 import org.koin.compose.koinInject
@@ -16,5 +18,5 @@ internal fun AuthorBlockingScreenRoute() {
 @Composable
 internal fun AuthorBlockingRootHost() {
     koinInject<AuthorBlockingEntry>().Host(onLogin = { Navigator.navigate(Navigator.Screen.Auth) },
-        bottomClearanceDp = CpDimens.floatingNavContentClearance.value)
+        bottomClearanceDp = NavMetrics.floatingNavContentClearance.value)
 }

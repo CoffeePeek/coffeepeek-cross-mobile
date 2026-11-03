@@ -8,8 +8,8 @@ internal data class ConsumedDrinkValidationLabels(val customNameLength: String, 
 
 @Composable
 internal fun consumedDrinkValidationLabels() = ConsumedDrinkValidationLabels(
-    stringResource(Res.string.legacy_drink_custom_name_length),
-    stringResource(Res.string.legacy_drink_custom_name_other),
+    stringResource(Res.string.drink_custom_name_length),
+    stringResource(Res.string.drink_custom_name_other),
 )
 
 internal fun ConsumedDrinkIssue.message(labels: ConsumedDrinkValidationLabels): String = when (this) {

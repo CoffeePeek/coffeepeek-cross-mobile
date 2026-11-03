@@ -19,7 +19,7 @@ internal fun serverFavoritesModule() = module {
     factory { ObserveFavoriteIdsUseCase(get()) }
     single<FavoriteRoastersRepository> {
         val roasters = get<PublicRoasterDetails>()
-        LegacyFavoriteRoastersRepository(get(), get()) { slug -> roasters.load(slug).map { it.photoUrl } }
+        AccountFavoriteRoasters(get(), get()) { slug -> roasters.load(slug).map { it.photoUrl } }
     }
     single<FavoriteDrinksRepository> { ServerFavoriteDrinksRepository(get(), get()) }
     single<FavoritesEntry> { createFavoritesEntry(get(), get(), get(), AppFavoritesScreenAnalytics) }

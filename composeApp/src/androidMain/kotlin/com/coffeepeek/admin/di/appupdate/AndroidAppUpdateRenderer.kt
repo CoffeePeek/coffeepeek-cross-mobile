@@ -1,10 +1,12 @@
 package com.coffeepeek.admin.di.appupdate
 
+import com.coffeepeek.admin.ui.NavMetrics
+
 import androidx.compose.runtime.Composable
 import com.coffeepeek.admin.feature.appupdate.ui.AppUpdateRenderer
-import com.coffeepeek.admin.theme.CpDimens
+import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.admin.ui.component.CpSnackbarHost
-import com.coffeepeek.admin.ui.icons.CpIcons
+import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.feature.appupdate.api.AndroidUpdateInstaller
 import com.coffeepeek.feature.appupdate.api.AppUpdateEntry
 import com.coffeepeek.feature.appupdate.impl.AppUpdateController
@@ -23,11 +25,11 @@ internal fun androidAppUpdateRenderer(controller: AppUpdateController, installer
             snackbarHost = { hostState, showRetryIcon, actionInProgress, onAction ->
                 CpSnackbarHost(
                     hostState = hostState,
-                    actionIcon = CpIcons.Retry.takeIf { showRetryIcon },
+                    actionIcon = CoffeePeekIcons.Retry.takeIf { showRetryIcon },
                     actionInProgress = actionInProgress,
                     onAction = onAction,
                 )
             },
-            extraBottomClearance = CpDimens.floatingNavContentClearance + CpDimens.spacing2,
+            extraBottomClearance = NavMetrics.floatingNavContentClearance + CoffeePeekDimens.spacing2,
         ),
     )

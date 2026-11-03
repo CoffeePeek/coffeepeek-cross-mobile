@@ -162,7 +162,7 @@ class ServerFavoriteBridgesTest {
             override fun observeErrors() = errors
             override suspend fun setFavorite(roaster: CatalogItem, isFavorite: Boolean): Result<Unit> = error("No write")
         }
-        val repo = LegacyFavoriteRoastersRepository(roasters, CheckInTestSessions()) { error("No photo") }
+        val repo = AccountFavoriteRoasters(roasters, CheckInTestSessions()) { error("No photo") }
         val results = mutableListOf<Result<List<com.coffeepeek.feature.favorites.domain.model.FavoriteRoaster>>>()
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { repo.observe().collect { results += it } }
         runCurrent(); errors.value = "Server unavailable"; runCurrent()

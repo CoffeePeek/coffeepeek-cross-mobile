@@ -52,8 +52,8 @@ private fun discoveryExposure(modifier: Modifier, exposure: DiscoveryExposure): 
 
 @Composable
 private fun DiscoveryMapCanvas(state: MapCanvasState, callbacks: MapCanvasCallbacks, modifier: Modifier) {
-    val shops = androidx.compose.runtime.remember(state.markers) { state.markers.map { it.toLegacy() } }
-    val zones = androidx.compose.runtime.remember(state.zones) { state.zones.map { it.toLegacy() } }
+    val shops = androidx.compose.runtime.remember(state.markers) { state.markers.map { it.toMapShop() } }
+    val zones = androidx.compose.runtime.remember(state.zones) { state.zones.map { it.toMapZone() } }
     CoffeeMap(
         shops = shops,
         clusters = state.clusters.map { cluster ->
@@ -78,12 +78,12 @@ private fun DiscoveryMapCanvas(state: MapCanvasState, callbacks: MapCanvasCallba
     )
 }
 
-private fun MapMarker.toLegacy() = MapShop(
+private fun MapMarker.toMapShop() = MapShop(
     id = id, title = title, latitude = coordinates.latitude, longitude = coordinates.longitude, primaryZoneId = zoneId,
     type = when (kind) { ShopKind.Specialty -> MapShopType.SPECIALTY; ShopKind.CoffeeBar -> MapShopType.COFFEE_BAR; ShopKind.Cafe -> MapShopType.CAFE },
 )
 
-private fun MapZone.toLegacy() = MapCoffeeZone(
+private fun MapZone.toMapZone() = MapCoffeeZone(
     id = id, name = name, description = description, color = color, latitude = center.latitude, longitude = center.longitude,
     radiusMeters = radiusMeters, shopCount = shopCount, polygon = polygon.map { it.latitude to it.longitude },
 )

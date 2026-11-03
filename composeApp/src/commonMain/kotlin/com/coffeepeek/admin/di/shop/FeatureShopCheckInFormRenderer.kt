@@ -8,7 +8,6 @@ import com.coffeepeek.feature.shop.api.ShopCheckInCreateEntry
 internal class FeatureShopCheckInFormRenderer(
     private val entry: ShopCheckInCreateEntry,
 ) : ShopCheckInFormRenderer {
-    override val usesLegacyDraft = false
 
     @Composable
     override fun Content(
