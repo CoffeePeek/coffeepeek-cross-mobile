@@ -1305,3 +1305,31 @@ and no manual modal/picker acceptance check was run.
 Promotion check with the same patch on develop `d57b7e49`: iOS Arm64 Kotlin
 compilation, Direct Debug APK/DEX guard and the same 57/57 and 81/81 unit
 suites passed with zero failures, errors or skips.
+
+## iOS picker launch after source selection — 2026-11-03
+
+The user supplied a 6.87-second iPhone recording after the presentation changes.
+It shows the Home photo source sheet opening twice; selecting Gallery dismisses
+that sheet, but the system photo picker never appears. The first symptom report
+had grouped the source menu and system picker together. The remaining failure is
+the handoff from the source sheet to `PHPickerViewController`, not source-menu
+presentation. The recording remains local outside tracked sources.
+
+The iOS `rememberPhotoPicker` previously resolved the global top controller and
+presented immediately. While the nested source sheet is dismissing, that top
+controller can be the outgoing sheet, so UIKit may discard the request. Capture
+the owning Compose controller and wait for its presented source sheet to finish
+dismissing before presenting the gallery or camera from that owner. The wait is
+cancellable with the composition and exits if the owner disappears. Other picker
+bytes, selection limits, delivery and check-in writes stay unchanged.
+
+Verification plan: compile both iOS targets, assemble Android Direct Debug with
+the packaged DEX guard, and run existing app photo-selection and Home tests.
+The remaining gate is a fresh iPhone build exercising Gallery, Camera, cancel,
+back and delivered photos without saving a live check-in. Compile-only checks
+cannot establish UIKit presentation or photo delivery on the user's phone.
+
+Result on main `67691a61` plus this patch: iOS Arm64 and Simulator Arm64 Kotlin
+compilation passed; Android Direct Debug APK and packaged DEX guard passed.
+`PlatformActionSelectionTest` ran 4/4 and Home impl tests ran 81/81, with zero
+failures, errors or skips. No iPhone build or picker runtime was tested here.
