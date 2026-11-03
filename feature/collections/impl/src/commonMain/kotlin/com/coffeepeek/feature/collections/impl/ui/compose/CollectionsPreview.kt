@@ -36,7 +36,7 @@ internal fun CollectionsPreview(state: CollectionsState, onAction: (CollectionsA
         }
         item { CollectionShareActions(state, onAction) }
         if (collection.places.isEmpty()) item { Text(stringResource(Res.string.collections_unavailable)) }
-        items(collection.places, key = { it.key }) { place ->
+        items(CollectionRules.orderedPlaces(collection.places), key = { it.key }) { place ->
             CollectionPlaceRow(place, null, !state.busy) { onAction(CollectionsAction.OpenPlace(place)) }
         }
     }

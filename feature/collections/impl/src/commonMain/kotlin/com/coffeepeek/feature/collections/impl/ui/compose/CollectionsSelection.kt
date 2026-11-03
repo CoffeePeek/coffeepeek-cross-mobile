@@ -25,7 +25,7 @@ internal fun CollectionsSelection(state: CollectionsState, onAction: (Collection
         item { CoffeePeekTextField(stringResource(Res.string.collections_name), state.title,
             { onAction(CollectionsAction.Title(it)) }, defaultTitle, enabled = !state.busy) }
         item { CollectionSelectionActions(state, onAction) }
-        items(state.places, key = { it.key }) { place ->
+        items(CollectionRules.orderedPlaces(state.places), key = { it.key }) { place ->
             CollectionPlaceRow(place, place.key in state.selected, !state.busy) { onAction(CollectionsAction.Toggle(place.key)) }
         }
         item { CoffeePeekButton(if (state.busy) stringResource(Res.string.collections_preparing) else stringResource(Res.string.collections_create),

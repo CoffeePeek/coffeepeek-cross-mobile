@@ -9,6 +9,8 @@ data class CollectionPlace(
     val photoUrl: String? = null,
     val city: String? = null,
     val address: String? = null,
+    val rating: Double? = null,
+    val checkInCount: Int? = null,
 ) {
     val key: String get() = "${kind.name}:$slug"
 }

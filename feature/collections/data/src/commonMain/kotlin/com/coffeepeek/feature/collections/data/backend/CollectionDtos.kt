@@ -9,6 +9,7 @@ import kotlinx.serialization.Serializable
 @Serializable internal data class CollectionPlaceDto(
     val kind: String, val address: CollectionAddressDto? = null, val name: String = "",
     val coverPhoto: CollectionPhotoDto? = null, val cityName: String? = null, val streetAddress: String? = null,
+    val rating: Double? = null, val checkInCount: Int? = null,
 )
 @Serializable internal data class CollectionDto(
     val id: String, val title: String, val canonicalPath: String, val items: List<CollectionPlaceDto>,

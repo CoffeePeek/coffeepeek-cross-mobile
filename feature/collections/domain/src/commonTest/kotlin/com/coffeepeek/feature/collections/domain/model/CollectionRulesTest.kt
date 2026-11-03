@@ -3,6 +3,15 @@ package com.coffeepeek.feature.collections.domain.model
 import kotlin.test.*
 
 class CollectionRulesTest {
+    @Test fun shopsPrecedeAllRoastersWithoutChangingOrderWithinEitherKindOrTheInput() {
+        val roaster = CollectionPlace(CollectionPlaceKind.Roaster, "roaster", "Roaster")
+        val shop = CollectionPlace(CollectionPlaceKind.CoffeeShop, "shop", "Shop")
+        val input = listOf(roaster, shop, roaster.copy(slug = "second-roaster"), shop.copy(slug = "second-shop"))
+        assertEquals(listOf("shop", "second-shop", "roaster", "second-roaster"), CollectionRules.orderedPlaces(input).map { it.slug })
+        assertEquals("roaster", input.first().slug)
+        assertEquals(input.size, CollectionRules.orderedPlaces(input).size)
+    }
+
     @Test fun requiresReadableTitleWithinBounds() {
         assertFalse(CollectionRules.validTitle("  "))
         assertFalse(CollectionRules.validTitle("Name\nOther"))

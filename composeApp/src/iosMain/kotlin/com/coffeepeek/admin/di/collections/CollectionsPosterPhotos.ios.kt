@@ -7,7 +7,7 @@ import io.ktor.utils.io.ByteReadChannel
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.currentCoroutineContext
 
-private val collectionPhotoDecoder = IosImageBitmapDecoder(maxDimension = 256)
+private val collectionPhotoDecoder = IosImageBitmapDecoder(maxDimension = 512)
 
 internal actual suspend fun decodeCollectionPosterPhoto(bytes: ByteArray): ImageBitmap? = try {
     collectionPhotoDecoder.decode(ByteReadChannel(bytes), ResourceConfigBuilder(currentCoroutineContext()).build())

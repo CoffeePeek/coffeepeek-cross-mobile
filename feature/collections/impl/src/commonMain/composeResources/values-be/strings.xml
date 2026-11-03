@@ -29,6 +29,9 @@
     <string name="collections_shop">Кавярня</string>
     <string name="collections_roaster">Абсмажчык</string>
     <string name="collections_count">Месцаў у падборцы: %1$d</string>
+    <string name="collections_checkins_one">%1$d чэкін</string>
+    <string name="collections_checkins_few">%1$d чэкіны</string>
+    <string name="collections_checkins_many">%1$d чэкінаў</string>
     <string name="collections_page">%1$d з %2$d</string>
     <string name="collections_previous_page">Папярэдняя выява</string>
     <string name="collections_next_page">Наступная выява</string>

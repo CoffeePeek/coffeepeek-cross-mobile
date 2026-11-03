@@ -15,6 +15,24 @@ import kotlinx.serialization.json.*
 import kotlin.test.*
 
 class CollectionsRepositoryTest {
+    @Test fun publicCardsKeepActualStatisticsAndGroupShopsBeforeRoasters() = runTest {
+        val client = client { respond("""{"data":{"id":"$id","title":"Places","canonicalPath":"$path","items":[
+            {"kind":"roaster","name":"Roaster","address":{"slug":"roaster"}},
+            {"kind":"coffee_shop","name":"Shop","address":{"slug":"shop"},"rating":4.68,"checkInCount":124,"streetAddress":"Test street"},
+            {"kind":"coffee_shop","name":"New shop","address":{"slug":"new-shop"},"rating":7,"checkInCount":-1}
+        ]}}""") }
+        try {
+            val places = createCollectionsRepository(client, client, "https://fixture.invalid", Account()).read(id).getOrThrow().places
+            assertEquals(listOf("shop", "new-shop", "roaster"), places.map { it.slug })
+            assertEquals(4.68, places.first().rating)
+            assertEquals(124, places.first().checkInCount)
+            assertEquals("Test street", places.first().address)
+            assertNull(places[1].rating)
+            assertNull(places[1].checkInCount)
+            assertNull(places.last().rating)
+        } finally { client.close() }
+    }
+
     private val id = "12345678-1234-1234-1234-1234567890ab"
     private val path = "/collections/${id.replace("-", "")}"
     private val roaster = CollectionPlace(CollectionPlaceKind.Roaster, "roaster", "Roaster")

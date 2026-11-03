@@ -1,10 +1,8 @@
 package com.coffeepeek.feature.collections.impl.ui.compose
 
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.backhandler.BackHandler
-import androidx.compose.ui.text.*
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.coffeepeek.feature.collections.api.CollectionPhotoDecoder
 import com.coffeepeek.feature.collections.domain.model.CollectionPlaceKind
@@ -25,13 +23,11 @@ internal fun CollectionsScreen(vm: CollectionsViewModel, repository: Collections
     callbacks: CollectionsCallbacks, modifier: Modifier) {
     val state by vm.state.collectAsStateWithLifecycle()
     val currentCallbacks by rememberUpdatedState(callbacks)
-    val labels by rememberUpdatedState(collectionPosterLabels(state.collection, state.format))
-    val typography by rememberUpdatedState(MaterialTheme.typography.bodyLarge)
-    val measurer = rememberTextMeasurer(cacheSize = 0)
+    val resources by rememberUpdatedState(collectionPosterResources(state.collection, state.format))
     BackHandler { vm.onAction(CollectionsAction.Back) }
     LaunchedEffect(vm) {
         vm.events.collectLatest { event ->
-            handleCollectionEvent(event, vm, repository, decodePhoto, currentCallbacks, labels, measurer, typography)
+            handleCollectionEvent(event, vm, repository, decodePhoto, currentCallbacks, resources)
         }
     }
     CollectionsScreenContent(state, vm::onAction, modifier) { collection, format, page ->
@@ -40,7 +36,7 @@ internal fun CollectionsScreen(vm: CollectionsViewModel, repository: Collections
 }
 
 private suspend fun handleCollectionEvent(event: CollectionsEvent, vm: CollectionsViewModel, repository: CollectionsRepository, decodePhoto: CollectionPhotoDecoder,
-    callbacks: CollectionsCallbacks, labels: CollectionPosterLabels, measurer: TextMeasurer, typography: TextStyle) {
+    callbacks: CollectionsCallbacks, resources: CollectionPosterResources) {
     when (event) {
         CollectionsEvent.Back -> callbacks.back()
         CollectionsEvent.SignIn -> callbacks.signIn()
@@ -49,15 +45,15 @@ private suspend fun handleCollectionEvent(event: CollectionsEvent, vm: Collectio
             else callbacks.openRoaster(event.place.slug)
         is CollectionsEvent.ShareLink -> if (vm.state.value.collection?.id == event.collection.id)
             callbacks.shareText("${event.collection.title}\n${event.collection.url}")
-        is CollectionsEvent.ExportImages -> exportAndShare(event, vm, repository, decodePhoto, callbacks, labels, measurer, typography)
+        is CollectionsEvent.ExportImages -> exportAndShare(event, vm, repository, decodePhoto, callbacks, resources)
     }
 }
 
 private suspend fun exportAndShare(event: CollectionsEvent.ExportImages, vm: CollectionsViewModel, repository: CollectionsRepository, decodePhoto: CollectionPhotoDecoder,
-    callbacks: CollectionsCallbacks, labels: CollectionPosterLabels, measurer: TextMeasurer, typography: TextStyle) {
+    callbacks: CollectionsCallbacks, resources: CollectionPosterResources) {
     var failed = false
     try {
-        val images = exportPosters(event.collection, event.format, repository, decodePhoto, labels, measurer, typography)
+        val images = exportPosters(event.collection, event.format, repository, decodePhoto, resources)
         if (vm.isCurrentExport(event.generation, event.collection.id)) {
             callbacks.shareImages(images, "${event.collection.title}\n${event.collection.url}")
         }

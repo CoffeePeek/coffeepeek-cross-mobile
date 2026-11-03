@@ -8,6 +8,9 @@ object CollectionRules {
     const val maxPlaces = 100
     const val maxTitleLength = 100
 
+    fun orderedPlaces(places: List<CollectionPlace>): List<CollectionPlace> =
+        places.sortedBy { if (it.kind == CollectionPlaceKind.CoffeeShop) 0 else 1 }
+
     fun validTitle(title: String): Boolean = title.trim().length in 1..maxTitleLength && title.none(Char::isISOControl)
 
     fun validSelection(places: List<CollectionPlace>): Boolean = places.size in 1..maxPlaces &&

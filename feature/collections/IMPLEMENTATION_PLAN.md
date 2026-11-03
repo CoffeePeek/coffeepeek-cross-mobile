@@ -1,5 +1,28 @@
 # Share favorite collections — 2026-11-02
 
+## Reference design update — 2026-11-03
+
+Use the supplied reference for exported pictures: warm dark panels, large shop
+photos, readable names, kind chips, street addresses and actual public shop
+rating/check-in totals. Roasters use a separate compact logo-first card with
+uncropped artwork. Group all shops before all roasters, stably within each kind,
+before pagination. Preserve title, count, QR/link, both formats and all members.
+Verify pure ordering/pagination contracts, optional statistics and photo bounds;
+compile Android/iOS and assemble the explicitly selected Sandbox. Manual visual
+and native share checks remain separate from unit tests. No automated UI tests.
+
+Reference update evidence, 2026-11-03, based on `4c585957` plus this feature patch:
+40 mobile unit/contract cases passed (including stable global ordering and full/
+partial page bounds in both formats). Direct Sandbox assembly, runtime-class and
+isolation checks and full shared iOS compilation passed. Backend: 25 affected
+persistence/rating cases passed; private/pending visits do not enter the public
+statistics and a later visibility change is reflected on the next read. Website:
+5 collection API/order cases, 54 server-rendered/link cases, type checks and build
+passed. Paired Chat/Story light/dark previews use synthetic data beside the
+poster; they were not rendered in the IDE. Pixel 9 was not connected today, so
+the new reference design has not been installed or visually checked on a phone.
+The earlier installed APK below predates this design update.
+
 ## Scope and ownership
 
 A user chooses saved shops/roasters, names a collection, previews it and shares its

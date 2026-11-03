@@ -40,7 +40,7 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
     private val notificationStore = SandboxNotificationsBackend(today)
     private val discoveryStore = SandboxDiscoveryBackend({ populated }, { favorites }, ::photo, ::address, ::catalog)
     private val favorites = linkedSetOf("coffee_shop:sandbox-cafe", "roaster:sandbox-roaster", "drink:cappuccino")
-    private val collectionStore = SandboxCollectionsBackend(today, ::favoriteRows)
+    private val collectionStore = SandboxCollectionsBackend(today, ::collectionFavorites)
     private var username = "Sandbox"
     private var about = "Локальный тестовый профиль. Все действия остаются в Sandbox."
     private var populated = true
@@ -491,6 +491,23 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
             add(buildJsonObject { put("code", "medium"); put("name", "Средняя"); put("sortOrder", 2) })
         } },
     ))
+    private fun collectionFavorites() = JsonArray(favoriteRows().map { value ->
+        val row = value.jsonObject
+        val kind = row["kind"]?.jsonPrimitive?.content
+        val slug = (row["address"] as? JsonObject)?.get("slug")?.jsonPrimitive?.content
+        val details = if (kind == "coffee_shop" && slug in shopNames) shop(slug!!)
+            else roasters().firstOrNull { (it["address"] as? JsonObject)?.get("slug")?.jsonPrimitive?.content == slug }
+        buildJsonObject {
+            row.forEach { (key, item) -> put(key, item) }
+            val location = details?.get("location") as? JsonObject
+            location?.get("address")?.let { put("streetAddress", it) }
+            if (kind == "coffee_shop") {
+                details?.get("rating")?.let { put("rating", it) }
+                details?.get("checkInCount")?.let { put("checkInCount", it) }
+            }
+        }
+    })
+
     private fun favoriteRows() = JsonArray(favorites.map { key ->
         val (kind, slug) = key.split(':', limit = 2)
         buildJsonObject {

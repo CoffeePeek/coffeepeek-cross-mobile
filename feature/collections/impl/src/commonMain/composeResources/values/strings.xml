@@ -29,6 +29,9 @@
     <string name="collections_shop">Кофейня</string>
     <string name="collections_roaster">Обжарщик</string>
     <string name="collections_count">Мест в подборке: %1$d</string>
+    <string name="collections_checkins_one">%1$d чекин</string>
+    <string name="collections_checkins_few">%1$d чекина</string>
+    <string name="collections_checkins_many">%1$d чекинов</string>
     <string name="collections_page">%1$d из %2$d</string>
     <string name="collections_previous_page">Предыдущая картинка</string>
     <string name="collections_next_page">Следующая картинка</string>
