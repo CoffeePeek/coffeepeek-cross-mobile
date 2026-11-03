@@ -8,9 +8,8 @@ cover photo, nullable public address, nullable drink reference, and creation tim
 Drink slugs retain underscores and do not imply a public address or detail route.
 Entries without a public address remain visible using the server's name/photo.
 
-`modules/domain/.../feature/favorites/api` publishes only the account favorites
-contract. `modules/network/.../feature/favorites` owns its transport, and
-`modules/data/.../feature/favorites` owns the server state and account isolation.
+`feature/favorites/{api,domain,data,impl}` own the account favorites contract, transport,
+server state and account isolation; the `modules/*` directories no longer exist.
 The existing shop repository is a compatibility adapter; `ServerRoasterFavorites`
 adapts the same shared state for roaster and favorites presentation, hydrating
 public metadata through the existing roaster repository. No new Gradle module

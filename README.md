@@ -75,19 +75,16 @@ CoffeePeek-Android/
 │       ├── androidMain/     MapLibre, Google Auth, Android-специфика
 │       └── iosMain/         MapLibre bridge, Keychain, PhotosUI, CoreLocation
 ├── iosApp/                  SwiftUI-оболочка и Xcode-проект
-├── modules/
-│   ├── domain/              модели и интерфейсы репозиториев
-│   ├── network/             Ktor, DTO, API-сервисы
-│   ├── data/                реализации репозиториев
-│   └── room/                SQLite (сессия, настройки)
+├── core/                    сеть, сессия, база данных, медиа, дизайн-система
+├── feature/                 по модулю api/domain/data/impl на каждую фичу
 ├── CONTRIBUTING.md          гайд для разработчиков
 ├── LOG_ISSUES.md            известные баги из logcat-анализа
 └── local.properties.example шаблон секретов
 ```
 
-**Архитектура:** `Screen → ViewModel → domain.Repository → data → network → API`
+**Архитектура:** `feature/impl (Screen → ViewModel) → feature/domain.Repository → feature/data → core/network → API`
 
-**DI:** Koin (`composeApp/.../di/KoinApp.kt`, `modules/data/.../DataModule.kt`)
+**DI:** Koin (`composeApp/.../di/KoinApp.kt`, модули фич в `composeApp/.../di/*`)
 
 **Навигация:** `composeApp/.../ui/Navigator.kt`
 

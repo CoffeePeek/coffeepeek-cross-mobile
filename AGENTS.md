@@ -9,7 +9,8 @@ Current priority (owner decision, 2026-10-25): complete the legacy exit before
 new product features. Android and iOS now select the migrated feature entries;
 that alone does not complete migration. Follow `feature/LEGACY_EXIT_PLAN.md` for
 remaining active UI/data consumers, removal order and acceptance evidence.
-The target has no `modules/`, no legacy implementation aliases, and no business
+`modules/` no longer exists (domain, data, room and network were removed on 2026-11-03).
+The target has no legacy implementation aliases and no business
 UI/state/ViewModels in `composeApp`. It contains startup, root DI, configuration
 and root navigation that calls feature entries. Root composition is not a home
 for feature cards, dialogs or presentation logic. Remove an obsolete fallback
@@ -17,18 +18,14 @@ in the checkpoint that replaces and verifies its last consumer; do not retain
 an unused fallback indefinitely. The dated Android-first notes below describe
 the transitional history, not permission to restore legacy iOS wiring.
 
-The current Gradle layout is transitional:
+The current Gradle layout:
 
 ```text
-composeApp/                 current Android/KMP application composition module
-modules/domain/             legacy shared models and repository contracts
-modules/network/            legacy HTTP infrastructure and feature API code
-modules/data/               legacy repository implementations
-modules/room/               legacy Room infrastructure and persistence
-core/                      prepared independent infrastructure/design-system
-feature/                   favorites, shop-report, shop api/domain/data/impl;
-                           Android feature slices integrated
-iosApp/                     native iOS application boundary, when present
+composeApp/                 application composition: startup, root DI, configuration, root navigation
+core/                       infrastructure: coroutines, database, datetime, design-system, media, network,
+                            presentation, session
+feature/<name>/             api, domain, data and impl per feature; strings live with their feature
+iosApp/                     native iOS application boundary
 ```
 
 Do not treat the complete target `app/`, `core/`, `feature/` layout as already

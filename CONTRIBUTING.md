@@ -65,21 +65,19 @@ Debug-сборки автоматически проверяют определ�
 ## Архитектура
 
 ```
-composeApp/           UI (Compose), ViewModel, навигация, тема, DI (Koin)
-modules/domain/       доменные модели и интерфейсы репозиториев
-modules/network/      Ktor HttpClient, DTO, *ApiService
-modules/data/         реализации репозиториев, маппинг DTO → domain
-modules/room/         SQLite (сессия, настройки)
+composeApp/           запуск, корневой DI (Koin), конфигурация, корневая навигация
+core/                 сеть (Ktor, сессия токенов), база данных, медиа, дизайн-система
+feature/<имя>/        api, domain, data, impl: экраны, ViewModel, репозитории и строки фичи
 ```
 
-**Поток:** `Screen` → `ViewModel` → `domain.Repository` → `data.*Impl` → `network.*Service` → API.
+**Поток:** `Screen` → `ViewModel` → `domain.Repository` → `data` (внутри фичи, поверх `core/network`) → API.
 
 **Ключевые точки входа:**
 
 | Что | Где |
 |-----|-----|
 | Koin, модули приложения | `composeApp/.../di/KoinApp.kt` |
-| Сеть и репозитории | `modules/data/.../DataModule.kt` |
+| Транспорт | `composeApp/.../di/TransportModule.kt` (`core/network`) |
 | Навигация | `composeApp/.../ui/Navigator.kt` |
 | Base URL | `AppConfig` / `Constants.BASE_URL` |
 | Android Application | `FPApplication.kt` |
@@ -147,12 +145,11 @@ feat: публичный чек-ин с обязательным коммент�
 
 | Задача | Куда класть код |
 |--------|-----------------|
-| Новый экран | `composeApp/.../ui/screen/` |
-| ViewModel | рядом с экраном |
-| REST endpoint | `modules/network/.../service/` + `model/` |
-| Бизнес-контракт | `modules/domain/` |
-| Маппинг и кэш | `modules/data/` |
-| Локальная БД | `modules/room/` |
+| Новый экран и его ViewModel | `feature/<имя>/impl` |
+| REST endpoint и маппинг DTO | `feature/<имя>/data` |
+| Бизнес-контракт | `feature/<имя>/domain` (порты для других фич — `api`) |
+| Строки | `feature/<имя>/impl/src/commonMain/composeResources` (`values` — русский, `values-be` — белорусский; проверка: `python3 tools/l10n/check_parity.py`) |
+| Локальная БД | `core/database` |
 | Android API (MapLibre, picker) | `composeApp/.../androidMain/` |
 | iOS API (MapKit, PhotosUI) | `composeApp/.../iosMain/` |
 

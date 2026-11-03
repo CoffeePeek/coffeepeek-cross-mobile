@@ -25,12 +25,8 @@ below describes earlier transitional ownership, not a reason to retain it.
 Current code is arranged by technical layers:
 
 ```text
-composeApp/                         UI, navigation, theme, Koin, platform glue
-modules/domain/                     models and repository interfaces
-modules/network/                    Ktor, DTOs and API services
-modules/data/                       repository implementations and mapping
-modules/room/                       Room persistence
-core/                               prepared infrastructure/design-system
+composeApp/                         startup, root DI, configuration, root navigation, platform glue
+core/                               network, session, database, media, design-system, presentation
 feature/favorites/                  api/domain/data/impl; Android screen active
 feature/shop-report/                api/domain/data/impl; Android report active
 feature/shop/                       api/domain/data/impl; Android menu gallery active

@@ -120,7 +120,7 @@ Avoid empty packages; `formatter` and `ui/data` appear only for distinct real wo
 
 ## Modules DSL
 
-Keep existing module.core.network / module.legacy.domain accessors compatible.
+Keep existing module.core.network accessors compatible (module.legacy no longer exists).
 As actual feature modules are added, introduce a feature catalog following the
 existing object-plus-instance-accessor pattern:
 
@@ -206,6 +206,8 @@ empty modules or remove the iOS legacy path before its replacement works.
    after all consumers on Android and iOS have moved.
 
 ## Pilot audit: favorites (Android screen and DI integrated)
+
+_Historical: the `modules/*` directories named below were removed on 2026-11-03._
 
 Legacy UI remains in composeApp ui/screen/favorites for iOS; Android now enters
 the new feature screen through the shared root's Favorites destination.

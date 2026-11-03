@@ -162,14 +162,14 @@ remotes и при необходимости передать изменения
 
 ### L5. Удалить modules и закончить composition boundary
 
-- [ ] После нулевых consumers удалить modules/home-checkin и modules/data.
-- [ ] Удалить modules/network/room/domain с учётом фактического графа, не
+- [x] После нулевых consumers удалить modules/home-checkin и modules/data.
+- [x] Удалить modules/network/room/domain с учётом фактического графа, не
   разрушая cache/session/БД; убрать module.legacy из Gradle/build-logic.
 - [ ] Проверить commonMain/androidMain/iosMain, Swift imports/framework exports,
   Sandbox и тестовые source sets: не осталось старых package references.
 - [ ] ComposeApp не содержит feature ViewModels/state/composables/resources;
   root navigation/startup и DI используют только feature/core API.
-- [ ] Обновить ARCHITECTURE/AGENTS/README и packaged runtime-class guards,
+- [x] Обновить ARCHITECTURE/AGENTS/README и packaged runtime-class guards,
   чтобы они проверяли новые владельцы, а не требовали удалённые классы.
 
 ## Проверка каждого среза
@@ -1704,3 +1704,22 @@ source `89778c23` + этот срез. Подробный scope/остаток �
 - `modules/network` удалён, из `Modules.kt` убраны `Legacy` и пути, из composeApp — тестовые зависимости; убраны `modules/**` из
   фильтров iOS-воркфлоу, пример в `build-logic/README.md` обновлён.
 - Проверка: весь набор зелёный; `packageDirectDebug` упал один раз при параллельных тяжёлых задачах и прошёл на свежем демоне.
+
+## L5 — зачистка `composeApp`, ресурсы, документация — 2026-11-03
+
+- Мёртвый код `composeApp` удалён по статическому разбору ссылок: сообщения входа/регистрации/формы вкладов/карточки магазина,
+  `PasswordRecoveryRepository(Impl)`, `NearbyMapShops`, `ShopDetailBottomBar`, неиспользуемые легаси `CoffeeRepository`/
+  `CoffeePicker` вместе с биндингами в `KoinApp`. Не тронут `ProfileActions` (по прежнему решению). Тесты мёртвого кода
+  (`PasswordRecoveryRepositoryTest`, `RegistrationErrorCopyTest`, `LoginFailureMessageTest`, `NearbyMapShopsTest`,
+  `CoffeeCatalogTest`) удалены после сопоставления; перенесены `carouselStartPage` (`MapCarouselStartTest`) и отмена
+  запроса сброса пароля (`AuthRepositoryImplTest`); тест Sandbox для кофе работает на `createCoffeeRepository`.
+- Что осталось в `composeApp` намеренно: интерфейсы-рендереры маршрутов (`ui/screen/*Renderer`), хост-ViewModel для
+  временной жизни презентеров (`di/*HostViewModel`, `Navigator*`), мосты роастер ↔ избранное, `CheckInCreateHost/Flow` и кнопка
+  создания, кнопки входа через соцсети (платформенные actual), `ProfileActions`, `MainScreen`.
+- Ресурсы: из `composeApp` удалено 805 из 942 неиспользуемых ключей и 32 файла (`localized_legacy_ui.xml` и др.), в других
+  модулях — 64 ключа. Динамических обращений (`allStringResources`, Swift) нет.
+- Белорусский: добавлено 155 недостающих строк и целиком `values-be` для `feature/content-report` (перевод сделан без носителя
+  языка, терминология — по существующим `values-be`: чэкін, кавярня, абсмажчык, абранае). `tools/l10n/check_parity.py`
+  проверяет, что у каждого модуля `values-be` покрывает все ключи `values` и длины массивов совпадают; в CI пока не подключён.
+- Документация: `AGENTS.md`, `ARCHITECTURE.md`, `README.md`, `CONTRIBUTING.md`, README избранного в `composeApp` и
+  `build-logic/ANDROID_RUNTIME_PACKAGING.md` описывают структуру без `modules/`.
