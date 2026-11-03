@@ -18,6 +18,7 @@ internal class CollectionsViewModel(private val repository: CollectionsRepositor
     CollectionsState(publicView = publicId != null)) {
     private var generation = 0
     private var work: Job? = null
+    private var requestedCollectionId: String? = null
 
     init {
         if (publicId != null) read(publicId)
@@ -59,6 +60,7 @@ internal class CollectionsViewModel(private val repository: CollectionsRepositor
             }.collectLatest { owner ->
                 generation++
                 work?.cancel()
+                requestedCollectionId = null
                 updateState { CollectionsState(signedIn = owner != null, loading = owner != null) }
                 if (owner != null) loadFavorites()
             }
@@ -66,6 +68,7 @@ internal class CollectionsViewModel(private val repository: CollectionsRepositor
     }
 
     private fun loadFavorites() {
+        requestedCollectionId = null
         val epoch = generation
         work?.cancel()
         updateState { copy(loading = true, failure = null, page = CollectionsPage.Selection) }
@@ -95,6 +98,7 @@ internal class CollectionsViewModel(private val repository: CollectionsRepositor
     }
 
     private fun read(id: String) {
+        requestedCollectionId = id
         val epoch = generation
         work?.cancel()
         updateState { copy(loading = true, failure = null, collection = null, page = CollectionsPage.Preview) }
@@ -107,6 +111,7 @@ internal class CollectionsViewModel(private val repository: CollectionsRepositor
 
     private fun loadLinks() {
         if (currentState.busy || !currentState.signedIn) return
+        requestedCollectionId = null
         val epoch = generation
         work?.cancel()
         updateState { copy(page = CollectionsPage.Links, loading = true, failure = null) }
@@ -168,13 +173,17 @@ internal class CollectionsViewModel(private val repository: CollectionsRepositor
             updateState { copy(busy = false, loading = false) }
         }
         if (publicId != null || currentState.page == CollectionsPage.Selection) sendEvent(CollectionsEvent.Back)
-        else updateState { copy(page = CollectionsPage.Selection, collection = null, failure = null) }
+        else {
+            requestedCollectionId = null
+            updateState { copy(page = CollectionsPage.Selection, collection = null, failure = null) }
+        }
     }
 
     private fun retry() {
-        if (currentState.busy) return
+        if (currentState.busy || currentState.loading) return
+        val requested = requestedCollectionId ?: publicId
         when {
-            publicId != null -> read(publicId)
+            currentState.page == CollectionsPage.Preview && requested != null -> read(requested)
             currentState.page == CollectionsPage.Links -> loadLinks()
             currentState.signedIn -> loadFavorites()
         }

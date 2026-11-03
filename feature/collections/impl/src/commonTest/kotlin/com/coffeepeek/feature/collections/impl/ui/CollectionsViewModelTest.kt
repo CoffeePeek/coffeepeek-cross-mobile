@@ -12,6 +12,24 @@ import kotlin.test.*
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class CollectionsViewModelTest {
+    @Test fun retryOfAFailedOwnedCollectionReadKeepsTheRequestedLinkAndDoesNotReloadFavorites() = runTest(dispatcher) {
+        val model = model()
+        runCurrent()
+        model.onAction(CollectionsAction.OpenLinks)
+        runCurrent()
+        repository.readFailure = IllegalStateException("Offline")
+        model.onAction(CollectionsAction.OpenCollection("owned"))
+        runCurrent()
+        assertEquals(CollectionsFailure.Load, model.state.value.failure)
+        repository.readFailure = null
+        model.onAction(CollectionsAction.Retry)
+        runCurrent()
+        assertEquals(listOf("owned", "owned"), repository.readIds)
+        assertEquals(1, repository.favoriteReads)
+        assertEquals(CollectionsPage.Preview, model.state.value.page)
+        assertEquals("owned", model.state.value.collection?.id)
+    }
+
     @Test fun selectAllCreatesTheEntireLargeSelectionAndClearsItWithoutAHiddenHundredItemCutoff() = runTest(dispatcher) {
         repository.places = (1..205).map { CollectionPlace(CollectionPlaceKind.CoffeeShop, "place-$it", "Place $it") }
         val model = model()
@@ -187,13 +205,18 @@ class CollectionsViewModelTest {
         var createGate: CompletableDeferred<Unit>? = null
         var createFailure: Throwable? = null
         var revokeFailure = false
+        var readFailure: Throwable? = null
+        val readIds = mutableListOf<String>()
         var favoritesBlock: (suspend () -> List<CollectionPlace>)? = null
         override suspend fun favorites(): Result<List<CollectionPlace>> { favoriteReads++; return Result.success(favoritesBlock?.invoke() ?: places) }
         override suspend fun create(title: String, places: List<CollectionPlace>): Result<SharedCollection> {
             creates++; sent = places.toList(); createGate?.await()
             return createFailure?.let { Result.failure(it) } ?: Result.success(SharedCollection("created", title, "https://coffeepeek.by", places))
         }
-        override suspend fun read(id: String) = Result.success(SharedCollection(id, "Public", "https://coffeepeek.by", places))
+        override suspend fun read(id: String): Result<SharedCollection> {
+            readIds += id
+            return readFailure?.let { Result.failure(it) } ?: Result.success(SharedCollection(id, "Public", "https://coffeepeek.by", places))
+        }
         override suspend fun mine() = Result.success(listOf(CollectionSummary("owned", "Owned", "https://coffeepeek.by", 1)))
         override suspend fun revoke(id: String): Result<Unit> { revocations++; return if (revokeFailure) Result.failure(IllegalStateException()) else Result.success(Unit) }
         override suspend fun photo(url: String): ByteArray? = null

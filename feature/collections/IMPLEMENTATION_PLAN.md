@@ -1,5 +1,20 @@
 # Share favorite collections — 2026-11-02
 
+## CI and review correction — 2026-11-03
+
+Android CI #530 failed at `mergeExtDexPlayDebug` with D8
+`OutOfMemoryError: Java heap space` under the repository's 3 GiB Gradle heap.
+The CI workflow now gives its three Android phases separate fresh Gradle
+processes with a CI-only 6 GiB heap: Direct build, Play build, then unit tests/
+lint. The worker ceiling remains six; developer `gradle.properties` is unchanged.
+Local Direct and Play builds passed under that command layout. The original
+failure is retained; full local and remote validation results follow separately.
+
+Review thread `PRRT_kwDON4AUts6zByTC` identified an owned-link retry returning
+to Favorites selection. The ViewModel now retains the requested collection ID,
+clears it on account/selection changes, and retries that read on Preview. A
+regression checks recovery on the same link without reloading private favorites.
+
 ## Composer polish and entry relocation — 2026-11-03
 
 Latest user feedback supersedes the previous entry decision: share belongs in
