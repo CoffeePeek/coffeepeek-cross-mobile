@@ -2,11 +2,11 @@ package com.coffeepeek.admin.sandbox.backend
 
 
 
-import com.coffeepeek.feature.auth.domain.classifyLoginFailure
 
 import com.coffeepeek.feature.appupdate.impl.UpdateCheckFeedback
 
 import kotlin.test.assertNotNull
+import com.coffeepeek.feature.community.data.repository.createCommunityRepository
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.Flow
@@ -24,26 +24,16 @@ import com.coffeepeek.feature.appupdate.data.AppUpdateRepositoryImpl
 import com.coffeepeek.core.network.ApiClients
 import com.coffeepeek.core.network.SessionCredentials
 import com.coffeepeek.core.network.SessionTokens
-import com.coffeepeek.feature.favorites.data.repository.createAccountFavorites
-import com.coffeepeek.feature.favorites.domain.model.FavoriteAddress
-import com.coffeepeek.feature.favorites.domain.model.FavoriteEntry
-import com.coffeepeek.feature.favorites.domain.model.FavoriteKind
-import com.coffeepeek.feature.appupdate.data.AppVersionResponse
-import com.coffeepeek.feature.appupdate.data.toUpdate
 import com.coffeepeek.feature.coffee.data.repository.createCoffeeRepository
 import com.coffeepeek.feature.coffee.domain.model.CoffeeFilters
 import com.coffeepeek.feature.profile.data.createPublicProfileData
 import com.coffeepeek.feature.profile.domain.PublicProfileConnectionKind
-import com.coffeepeek.feature.shop.data.repository.createShopCheckInRepository
 import com.coffeepeek.feature.shop.data.repository.createShopCheckInVoteRepository
 import com.coffeepeek.feature.shop.data.repository.createShopDetailsRepository
 import com.coffeepeek.feature.shop.domain.model.*
 import com.coffeepeek.core.session.Session
 import com.coffeepeek.core.session.SessionStore
 import com.coffeepeek.feature.authorblocking.api.AuthorReference
-import com.coffeepeek.feature.community.data.repository.createCommunityRepository
-import com.coffeepeek.feature.community.domain.model.CommunityFailure
-import com.coffeepeek.feature.community.domain.model.FailureKind
 import com.coffeepeek.admin.di.authorblocking.SessionAuthorBlockingAccount
 import com.coffeepeek.feature.authorblocking.impl.createAuthorBlockingFeature
 import io.ktor.client.engine.mock.MockEngine
@@ -69,31 +59,13 @@ import org.junit.rules.TemporaryFolder
 import java.time.LocalDate
 import kotlin.test.*
 
-/** Same shape as the Sandbox app's no-credential session, without its Android-only source set. */
-private class LocalSession : SessionStore {
-    private val current = MutableStateFlow<Session?>(Session("local", "local", "11111111-1111-4111-8111-111111111111"))
-    override fun peekSession() = current.value
-    override fun applySession(session: Session?) { current.value = session }
-    override fun isActiveSession(session: Session?) = session != null
-    override suspend fun getSession() = peekSession()
-    override suspend fun persistSession(session: Session?) = applySession(session)
-    override suspend fun replaceSession(expected: Session?, session: Session?) = current.compareAndSet(expected, session)
-    override suspend fun saveSession(session: Session?) = applySession(session)
-    override suspend fun warmCache() = Unit
-    override fun observeSession() = current.asStateFlow()
-    override suspend fun isLoggedIn() = current.value != null
-}
-
-private fun accountFavorites(client: ApiClients) = createAccountFavorites(client.client, LocalSession())
-private fun shopEntry(slug: String) =
-    FavoriteEntry(FavoriteKind.CoffeeShop, FavoriteAddress(slug, "/coffee-shops/$slug", 1, false))
 
 class SandboxApplicationBackendTest {
 
     @get:Rule val temporary = TemporaryFolder()
 
     @Test fun migratedOwnProfileReadsAndEditsShareOneCacheInTheLocalBackend() = runTest { fixture { _, client ->
-        val data = com.coffeepeek.feature.profile.data.repository.createProfileAccountData(client.client, client.uploadClient, LocalSession(), backgroundScope)
+        val data = com.coffeepeek.feature.profile.data.repository.createProfileAccountData(client.client, client.uploadClient, LocalSandboxSession(), backgroundScope)
         assertEquals("Sandbox", data.accounts.loadOwnProfile(false).getOrThrow().userName)
         data.edit.updateUsername("Local Tester").getOrThrow()
         data.edit.updateAbout("Local biography").getOrThrow()
@@ -120,7 +92,7 @@ class SandboxApplicationBackendTest {
     } }
 
     @Test fun publicProfileCheckInsUseMigratedReadersAndRemainPublicForOwnAndGuestProfiles() = runTest { fixture { _, client ->
-        val community = com.coffeepeek.feature.community.data.repository.createCommunityRepository(client.client, "https://sandbox.coffeepeek.invalid")
+        val community = createCommunityRepository(client.client, "https://sandbox.coffeepeek.invalid")
         val posts = com.coffeepeek.feature.community.data.repository.createPublicAuthorPosts(community)
         val reader = com.coffeepeek.feature.profile.data.repository.createPublicProfileCheckIns(posts)
         val own = reader.page("sandbox").getOrThrow()
@@ -299,7 +271,7 @@ class SandboxApplicationBackendTest {
     @OptIn(ExperimentalCoroutinesApi::class)
     @Test fun actualAuthorBlockingFeatureBlocksThroughFakeTransportAndFailureLeavesVisibilityUnchanged() = runTest { fixture { backend, client ->
         Dispatchers.setMain(UnconfinedTestDispatcher())
-        val feature = createAuthorBlockingFeature(client.client, SessionAuthorBlockingAccount(LocalSession()))
+        val feature = createAuthorBlockingFeature(client.client, SessionAuthorBlockingAccount(LocalSandboxSession()))
         try {
             val author = AuthorReference(friend, SandboxApplicationBackend.FRIEND_SLUG, SandboxApplicationBackend.FRIEND_NAME)
             withContext(Dispatchers.Default) { withTimeout(10_000) {
