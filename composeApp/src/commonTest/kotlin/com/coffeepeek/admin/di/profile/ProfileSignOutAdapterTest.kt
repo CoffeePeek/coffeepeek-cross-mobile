@@ -1,6 +1,6 @@
 package com.coffeepeek.admin.di.profile
 
-import com.coffeepeek.admin.settings.ReviewDraftStore
+import com.coffeepeek.admin.session.OldReviewDrafts
 import com.coffeepeek.admin.utils.ErrorHandler
 import com.coffeepeek.feature.auth.domain.AppleSignInChallenge
 import com.coffeepeek.feature.auth.domain.AuthRepository
@@ -56,7 +56,7 @@ class ProfileSignOutAdapterTest {
         }
     }
 
-    private fun drafts() = ReviewDraftStore(object : SettingRepository {
+    private fun drafts() = OldReviewDrafts(object : SettingRepository {
         override suspend fun save(model: Setting) = Unit
         override suspend fun read(key: String): Setting? = null
         override fun readFlow(key: String): Flow<Setting?> = emptyFlow()

@@ -8,7 +8,7 @@ import com.coffeepeek.admin.auth.GoogleAuth
 import com.coffeepeek.admin.ui.favorites.FavoritesProfilePreview
 import com.coffeepeek.feature.profile.domain.PublicProfileData
 import com.coffeepeek.feature.profile.api.PublicCheckInsPort
-import com.coffeepeek.admin.settings.ReviewDraftStore
+import com.coffeepeek.admin.session.OldReviewDrafts
 import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.core.designsystem.component.CoffeePeekLoadErrorContent
 import com.coffeepeek.admin.ui.component.LocalFloatingNavClearance
@@ -62,7 +62,7 @@ private fun ProfileContribution.toContributionKind() = when (this) {
 internal class AppProfileSignOut(
     private val notifications: NotificationFeature,
     private val auth: AuthRepository,
-    private val drafts: ReviewDraftStore,
+    private val drafts: OldReviewDrafts,
     private val platformSignOut: suspend () -> Unit = { GoogleAuth.signOut() },
 ) : ProfileSignOutPort {
     override suspend fun signOut() {
@@ -72,7 +72,7 @@ internal class AppProfileSignOut(
             ErrorHandler.showError(error.message?.takeIf(String::isNotBlank) ?: getString(Res.string.local_data_cleanup_error))
         }
         platformSignOut()
-        drafts.clearAll()
+        drafts.clear()
     }
 }
 
@@ -82,7 +82,7 @@ internal fun featureOwnProfileScreenRenderer(
     accounts: ProfileAccountPort,
     notifications: NotificationFeature,
     auth: AuthRepository,
-    drafts: ReviewDraftStore,
+    drafts: OldReviewDrafts,
     visibility: AuthorVisibility,
     blocks: AuthorBlockActions,
     activity: FeatureProfileActivityRenderer,

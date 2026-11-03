@@ -7,7 +7,7 @@ import com.coffeepeek.admin.locator.Constants
 import com.coffeepeek.admin.locator.Locator
 import com.coffeepeek.admin.theme.ThemeManager
 import com.coffeepeek.admin.settings.CityPreference
-import com.coffeepeek.admin.settings.ReviewDraftStore
+import com.coffeepeek.admin.session.OldReviewDrafts
 import com.coffeepeek.admin.feature.favorites.api.RoasterFavorites
 import com.coffeepeek.admin.feature.catalog.api.BrewMethodCatalog
 import com.coffeepeek.admin.feature.catalog.data.BrewMethodCatalogAdapter
@@ -219,6 +219,6 @@ private fun appModule(
     }
     single { CheckInDraftStore() }
     single { CityPreference(settingRepository) }
-    single { ReviewDraftStore(settingRepository) }
+    single { OldReviewDrafts(settingRepository) }
     factory { NavigatorViewModel(get()) }
 }

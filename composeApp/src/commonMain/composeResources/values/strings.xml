@@ -8,8 +8,6 @@
     <string name="shop_session_retry">Повторить</string>
     <string name="shop_share_named">Нашёл кофейню «%1$s» в CoffeePeek — загляни: %2$s</string>
     <string name="shop_phone_copied">Номер скопирован</string>
-    <string name="search_shops_and_roasters_placeholder">Поиск кофеен и обжарщиков…</string>
-    <string name="search_roasters_placeholder">Поиск обжарщиков…</string>
     <string name="entry">Вход</string>
     <string name="password">Пароль</string>
     <string name="login">Войти</string>
@@ -18,21 +16,14 @@
     <string name="registr">Зарегистрироваться</string>
     <string name="registration">Регистрация</string>
     <string name="maybe_later">Попробуйте позже!</string>
-    <string name="error_enter_email">Введите email</string>
-    <string name="error_enter_password">Введите пароль</string>
-    <string name="error_valid_email">Введите корректный email</string>
     <string name="name">Имя</string>
     <string name="enter">Войти</string>
 
-    <string name="favorites_roasters">Обжарщики</string>
     <string name="retry">Попробовать снова</string>
     <string name="checkin_rating_coffee">Кофе</string>
-    <string name="error_invalid_phone">Некорректный формат телефона</string>
-    <string name="error_invalid_instagram">Некорректный Instagram</string>
 
     <string name="local_data_cleanup_error">Локальные данные не удалось полностью очистить</string>
     <string name="shop_menu_gallery_open">Фотографии меню</string>
     <string name="photo_pick_failed">Не удалось добавить фото: %1$d</string>
     <string name="business_tab_title">Бизнес</string>
-    <string name="search_clear">Очистить поиск</string>
 </resources>

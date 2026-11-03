@@ -32,7 +32,6 @@ import androidx.test.platform.app.InstrumentationRegistry
 import com.coffeepeek.admin.MainActivity
 import com.coffeepeek.admin.theme.CoffeePeekTheme
 import com.coffeepeek.admin.ui.screen.checkins.grantCheckInFixtureStartupPermissions
-import com.coffeepeek.admin.ui.screen.checkins.CalendarMonth
 import com.coffeepeek.core.media.image.FullScreenPhotoPresence
 import com.coffeepeek.core.media.image.PhotoPermission
 import com.coffeepeek.core.media.image.PhotoAccessDenied

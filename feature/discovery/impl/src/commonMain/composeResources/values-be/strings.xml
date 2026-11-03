@@ -73,9 +73,6 @@
     <string name="discovery_refresh_error">Не ўдалося абнавіць. Паказаныя папярэднія вынікі.</string>
     <string name="discovery_favorite_failed">Не ўдалося змяніць абранае. Паспрабуйце яшчэ раз.</string>
     <string name="discovery_message_dismiss">Схаваць паведамленне</string>
-    <string name="discovery_price_low">Да 8 BYN</string>
-    <string name="discovery_price_medium">Каля 8 BYN</string>
-    <string name="discovery_price_high">Больш за 8 BYN</string>
     <string name="discovery_picker_nearby">Побач са мной</string>
     <string name="discovery_picker_title">Выберыце кавярню</string>
     <string name="discovery_picker_close">Закрыць</string>

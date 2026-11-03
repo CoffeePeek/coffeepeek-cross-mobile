@@ -1,11 +1,4 @@
 <resources>
-    <string name="legacy_app_text_field_auth_hide_password">Схаваць пароль</string>
-    <string name="legacy_app_text_field_auth_show_password">Паказаць пароль</string>
-    <string name="legacy_check_in_actions_community_actions">Дзеянні з чэкінам</string>
-    <string name="legacy_check_in_actions_community_block_author">Заблакіраваць аўтара</string>
-    <string name="legacy_check_in_actions_community_hide">Схаваць</string>
-    <string name="legacy_check_in_actions_community_report">Паскардзіцца</string>
-    <string name="legacy_check_in_actions_ownership_edit">Рэдагаваць</string>
     <string name="legacy_error_dialog_shelf_camera_tips_close">Зразумела</string>
     <string name="legacy_error_dialog_unexpected_error">Нешта пайшло не так</string>
     <string name="legacy_guest_auth_card_shop_checkins_join_prompt">Далучайцеся да супольнасці, каб захоўваць любімыя месцы і дзяліцца ўражаннямі.</string>
@@ -13,43 +6,9 @@
     <string name="legacy_main_screen_profile_title">Профіль</string>
     <string name="legacy_main_screen_search">Пошук</string>
     <string name="legacy_main_screen_settings_tab_title">Налады</string>
-    <string name="legacy_photo_attachments_section_contributions_section_photos">Фатаграфіі</string>
-    <string name="legacy_review_form_step_shop_checkin_form_optional">Неабавязковы пункт</string>
-    <string name="legacy_submission_status_content_contributions_shop_back_to_form">Вярнуцца да формы</string>
-    <string name="legacy_submission_status_content_contributions_shop_retry_send">Паўтарыць адпраўку</string>
     <string name="legacy_visited_places_screen_sandbox_feed_title">Стужка</string>
-    <string name="legacy_photo_attachments_hint">Дадайце да %1$d фота.</string>
-    <string name="legacy_photo_attachments_count">Дададзена: %1$d/%2$d</string>
     <string name="legacy_review_just_now">толькі што</string>
     <string name="legacy_review_ago">таму</string>
-    <string-array name="legacy_calendar_months">
-        <item>Студзень</item>
-        <item>Люты</item>
-        <item>Сакавік</item>
-        <item>Красавік</item>
-        <item>Май</item>
-        <item>Чэрвень</item>
-        <item>Ліпень</item>
-        <item>Жнівень</item>
-        <item>Верасень</item>
-        <item>Кастрычнік</item>
-        <item>Лістапад</item>
-        <item>Снежань</item>
-    </string-array>
-    <string-array name="legacy_calendar_months_genitive">
-        <item>студзеня</item>
-        <item>лютага</item>
-        <item>сакавіка</item>
-        <item>красавіка</item>
-        <item>мая</item>
-        <item>чэрвеня</item>
-        <item>ліпеня</item>
-        <item>жніўня</item>
-        <item>верасня</item>
-        <item>кастрычніка</item>
-        <item>лістапада</item>
-        <item>снежня</item>
-    </string-array>
     <string-array name="legacy_review_months">
         <item>студз.</item>
         <item>лют.</item>
@@ -64,15 +23,6 @@
         <item>ліст.</item>
         <item>снеж.</item>
     </string-array>
-    <string-array name="legacy_weekdays_full">
-        <item>Панядзелак</item>
-        <item>Аўторак</item>
-        <item>Серада</item>
-        <item>Чацвер</item>
-        <item>Пятніца</item>
-        <item>Субота</item>
-        <item>Нядзеля</item>
-    </string-array>
     <string-array name="legacy_minute_forms">
         <item>хвіліну</item>
         <item>хвіліны</item>
@@ -83,22 +33,10 @@
         <item>гадзіны</item>
         <item>гадзін</item>
     </string-array>
-    <string-array name="legacy_checkin_forms">
-        <item>чэкін</item>
-        <item>чэкіны</item>
-        <item>чэкінаў</item>
-    </string-array>
-    <string-array name="legacy_shop_forms">
-        <item>кавярня</item>
-        <item>кавярні</item>
-        <item>кавярняў</item>
-    </string-array>
     <string name="legacy_validation_visit_date">Выберыце дату наведвання не пазней за сённяшнюю</string>
     <string name="legacy_validation_visit_note">Нататка павінна быць не даўжэйшая за 1000 сімвалаў</string>
     <string name="legacy_validation_visit_photos">Можна дадаць да 5 фота</string>
     <string name="legacy_validation_visit_ratings">Ацаніце каву, сэрвіс і атмасферу</string>
-    <string name="legacy_input_password_length">Пароль павінен змяшчаць не менш за %1$s сімвалаў</string>
-    <string name="legacy_input_url_invalid">Укажыце дамен, напрыклад coffeepeek.by</string>
     <string name="legacy_drink_custom_name_length">Укажыце назву напою: ад 1 да 100 сімвалаў</string>
     <string name="legacy_drink_custom_name_other">Назву можна ўказаць толькі для іншага напою</string>
 </resources>

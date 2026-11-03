@@ -1,11 +1,4 @@
 <resources>
-    <string name="legacy_app_text_field_auth_hide_password">Скрыть пароль</string>
-    <string name="legacy_app_text_field_auth_show_password">Показать пароль</string>
-    <string name="legacy_check_in_actions_community_actions">Действия с чекином</string>
-    <string name="legacy_check_in_actions_community_block_author">Заблокировать автора</string>
-    <string name="legacy_check_in_actions_community_hide">Скрыть</string>
-    <string name="legacy_check_in_actions_community_report">Пожаловаться</string>
-    <string name="legacy_check_in_actions_ownership_edit">Редактировать</string>
     <string name="legacy_error_dialog_shelf_camera_tips_close">Понятно</string>
     <string name="legacy_error_dialog_unexpected_error">Что-то пошло не так</string>
     <string name="legacy_guest_auth_card_shop_checkins_join_prompt">Присоединяйтесь к сообществу, чтобы сохранять любимые места и делиться впечатлениями.</string>
@@ -13,43 +6,9 @@
     <string name="legacy_main_screen_profile_title">Профиль</string>
     <string name="legacy_main_screen_search">Поиск</string>
     <string name="legacy_main_screen_settings_tab_title">Настройки</string>
-    <string name="legacy_photo_attachments_section_contributions_section_photos">Фотографии</string>
-    <string name="legacy_review_form_step_shop_checkin_form_optional">Необязательный пункт</string>
-    <string name="legacy_submission_status_content_contributions_shop_back_to_form">Вернуться к форме</string>
-    <string name="legacy_submission_status_content_contributions_shop_retry_send">Повторить отправку</string>
     <string name="legacy_visited_places_screen_sandbox_feed_title">Лента</string>
-    <string name="legacy_photo_attachments_hint">Добавьте до %1$d фото.</string>
-    <string name="legacy_photo_attachments_count">Добавлено: %1$d/%2$d</string>
     <string name="legacy_review_just_now">только что</string>
     <string name="legacy_review_ago">назад</string>
-    <string-array name="legacy_calendar_months">
-        <item>Январь</item>
-        <item>Февраль</item>
-        <item>Март</item>
-        <item>Апрель</item>
-        <item>Май</item>
-        <item>Июнь</item>
-        <item>Июль</item>
-        <item>Август</item>
-        <item>Сентябрь</item>
-        <item>Октябрь</item>
-        <item>Ноябрь</item>
-        <item>Декабрь</item>
-    </string-array>
-    <string-array name="legacy_calendar_months_genitive">
-        <item>января</item>
-        <item>февраля</item>
-        <item>марта</item>
-        <item>апреля</item>
-        <item>мая</item>
-        <item>июня</item>
-        <item>июля</item>
-        <item>августа</item>
-        <item>сентября</item>
-        <item>октября</item>
-        <item>ноября</item>
-        <item>декабря</item>
-    </string-array>
     <string-array name="legacy_review_months">
         <item>янв.</item>
         <item>февр.</item>
@@ -64,15 +23,6 @@
         <item>нояб.</item>
         <item>дек.</item>
     </string-array>
-    <string-array name="legacy_weekdays_full">
-        <item>Понедельник</item>
-        <item>Вторник</item>
-        <item>Среда</item>
-        <item>Четверг</item>
-        <item>Пятница</item>
-        <item>Суббота</item>
-        <item>Воскресенье</item>
-    </string-array>
     <string-array name="legacy_minute_forms">
         <item>минуту</item>
         <item>минуты</item>
@@ -83,22 +33,10 @@
         <item>часа</item>
         <item>часов</item>
     </string-array>
-    <string-array name="legacy_checkin_forms">
-        <item>чекин</item>
-        <item>чекина</item>
-        <item>чекинов</item>
-    </string-array>
-    <string-array name="legacy_shop_forms">
-        <item>кофейня</item>
-        <item>кофейни</item>
-        <item>кофеен</item>
-    </string-array>
     <string name="legacy_validation_visit_date">Выберите дату визита не позднее сегодняшней</string>
     <string name="legacy_validation_visit_note">Заметка должна быть не длиннее 1000 символов</string>
     <string name="legacy_validation_visit_photos">Можно добавить до 5 фото</string>
     <string name="legacy_validation_visit_ratings">Оцените кофе, сервис и атмосферу</string>
-    <string name="legacy_input_password_length">Пароль должен содержать как минимум %1$s символов</string>
-    <string name="legacy_input_url_invalid">Укажите домен, например coffeepeek.by</string>
     <string name="legacy_drink_custom_name_length">Укажите название напитка: от 1 до 100 символов</string>
     <string name="legacy_drink_custom_name_other">Название можно указать только для другого напитка</string>
 </resources>

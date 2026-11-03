@@ -8,8 +8,6 @@
     <string name="shop_session_retry">Паўтарыць</string>
     <string name="shop_share_named">Знайшоў кавярню «%1$s» у CoffeePeek — зазірні: %2$s</string>
     <string name="shop_phone_copied">Нумар скапіяваны</string>
-    <string name="search_shops_and_roasters_placeholder">Пошук кавярняў і абсмажчыкаў…</string>
-    <string name="search_roasters_placeholder">Пошук абсмажчыкаў…</string>
     <string name="entry">Уваход</string>
     <string name="password">Пароль</string>
     <string name="login">Увайсці</string>
@@ -18,19 +16,12 @@
     <string name="registr">Зарэгістравацца</string>
     <string name="registration">Рэгістрацыя</string>
     <string name="maybe_later">Паспрабуйце пазней!</string>
-    <string name="error_enter_email">Увядзіце email</string>
-    <string name="error_enter_password">Увядзіце пароль</string>
-    <string name="error_valid_email">Увядзіце карэктны email</string>
     <string name="name">Імя</string>
     <string name="enter">Увайсці</string>
-    <string name="favorites_roasters">Абсмажчыкі</string>
     <string name="retry">Паспрабаваць зноў</string>
     <string name="checkin_rating_coffee">Кава</string>
-    <string name="error_invalid_phone">Некарэктны фармат тэлефона</string>
-    <string name="error_invalid_instagram">Некарэктны Instagram</string>
     <string name="local_data_cleanup_error">Не ўдалося цалкам ачысціць лакальныя даныя</string>
     <string name="shop_menu_gallery_open">Фатаграфіі меню</string>
     <string name="photo_pick_failed">Не ўдалося дадаць фота: %1$d</string>
     <string name="business_tab_title">Бізнес</string>
-    <string name="search_clear">Ачысціць пошук</string>
 </resources>
