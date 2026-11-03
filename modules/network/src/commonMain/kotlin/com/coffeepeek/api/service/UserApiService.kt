@@ -12,7 +12,7 @@ import com.coffeepeek.api.model.response.UserProfileDto
 import com.coffeepeek.api.model.response.PublicUserProfileDto
 import com.coffeepeek.api.model.response.PublicUserProfileResponseDto
 import com.coffeepeek.api.model.response.UsernameUpdateDto
-import com.coffeepeek.api.utils.ApiException
+import com.coffeepeek.core.network.ApiException
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.delete

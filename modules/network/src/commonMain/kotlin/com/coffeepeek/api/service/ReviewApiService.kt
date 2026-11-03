@@ -9,7 +9,7 @@ import com.coffeepeek.api.model.response.GetReviewsByUserIdResponseDto
 import com.coffeepeek.api.model.response.MyModerationReviewsPageDto
 import com.coffeepeek.api.model.request.ModerationStatusDto
 import com.coffeepeek.api.model.response.ReviewHelpfulResponseDto
-import com.coffeepeek.api.utils.ApiException
+import com.coffeepeek.core.network.ApiException
 import com.coffeepeek.api.utils.deleteResult
 import com.coffeepeek.api.utils.getResult
 import com.coffeepeek.api.utils.postResult

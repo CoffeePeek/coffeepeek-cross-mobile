@@ -8,7 +8,7 @@ import com.coffeepeek.api.model.request.ShopChangeRequestDto
 import com.coffeepeek.api.model.request.ShopChangeRequestPageDto
 import com.coffeepeek.api.model.request.ShopChangeSectionDto
 import com.coffeepeek.api.model.request.UpdateShopChangeRequestBody
-import com.coffeepeek.api.utils.ApiException
+import com.coffeepeek.core.network.ApiException
 import com.coffeepeek.api.utils.getResult
 import com.coffeepeek.api.utils.postResult
 import com.coffeepeek.api.utils.putResult

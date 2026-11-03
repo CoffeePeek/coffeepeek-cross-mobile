@@ -1,6 +1,6 @@
 package com.coffeepeek.api.service
 
-import com.coffeepeek.api.utils.ApiException
+import com.coffeepeek.core.network.ApiException
 import com.coffeepeek.api.utils.JsonExt
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.mock.MockEngine

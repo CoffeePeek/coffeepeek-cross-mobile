@@ -11,7 +11,6 @@ import com.coffeepeek.data.repository.FavoriteRepositoryImpl
 import com.coffeepeek.data.repository.PhotoRepositoryImpl
 import com.coffeepeek.data.repository.ReviewRepositoryImpl
 import com.coffeepeek.data.repository.RoasterRepositoryImpl
-import com.coffeepeek.data.session.LocalUserDataCleanup
 import com.coffeepeek.data.repository.ShopChangeRequestRepositoryImpl
 import com.coffeepeek.data.repository.ShopIssueReportRepositoryImpl
 import com.coffeepeek.data.repository.ShopRepositoryImpl

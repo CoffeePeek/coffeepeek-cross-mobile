@@ -4,7 +4,7 @@ import com.coffeepeek.api.utils.requestResult
 import com.coffeepeek.api.model.ApiResponse
 import com.coffeepeek.api.model.request.PhotoRequestDto
 import com.coffeepeek.api.model.response.GenerateUploadUrlDto
-import com.coffeepeek.api.utils.ApiException
+import com.coffeepeek.core.network.ApiException
 import com.coffeepeek.api.utils.UploadUrlValidator
 import com.coffeepeek.api.utils.postResult
 import com.coffeepeek.api.utils.setJsonBody

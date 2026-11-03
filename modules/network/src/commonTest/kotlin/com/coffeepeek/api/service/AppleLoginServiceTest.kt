@@ -3,7 +3,7 @@ package com.coffeepeek.api.service
 import com.coffeepeek.core.network.ServiceUnavailableException
 import io.ktor.client.plugins.HttpResponseValidator
 import com.coffeepeek.api.model.request.AppleLoginReq
-import com.coffeepeek.api.utils.ApiException
+import com.coffeepeek.core.network.ApiException
 import com.coffeepeek.api.utils.JsonExt
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.mock.MockEngine

@@ -7,7 +7,7 @@ import com.coffeepeek.api.model.request.RegistrationReq
 import com.coffeepeek.api.model.response.AuthResp
 import com.coffeepeek.api.model.response.AppleLoginChallengeResp
 import com.coffeepeek.api.model.request.AppleLoginReq
-import com.coffeepeek.api.utils.ApiException
+import com.coffeepeek.core.network.ApiException
 import com.coffeepeek.api.utils.requestResult
 import com.coffeepeek.core.network.RefreshRejectedException
 import com.coffeepeek.core.network.ServiceUnavailableException

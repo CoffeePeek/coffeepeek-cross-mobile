@@ -9,7 +9,7 @@ import com.coffeepeek.api.model.response.shop.RoasterDetailsDto
 import com.coffeepeek.api.model.response.shop.RoasterSummaryDto
 import com.coffeepeek.api.model.response.shop.RoasterSubmissionApiResult
 import com.coffeepeek.api.model.response.shop.RoasterSubmissionDto
-import com.coffeepeek.api.utils.ApiException
+import com.coffeepeek.core.network.ApiException
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.get

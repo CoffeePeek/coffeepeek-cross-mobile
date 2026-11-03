@@ -7,7 +7,7 @@ import com.coffeepeek.api.model.request.CreateCheckInReq
 import com.coffeepeek.api.model.request.UpdateCheckInReq
 import com.coffeepeek.api.model.response.CheckInDto
 import com.coffeepeek.api.model.response.GetUserCheckInsResponseDto
-import com.coffeepeek.api.utils.ApiException
+import com.coffeepeek.core.network.ApiException
 import com.coffeepeek.api.utils.setJsonBody
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body

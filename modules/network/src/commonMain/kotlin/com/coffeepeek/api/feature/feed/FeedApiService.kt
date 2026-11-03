@@ -2,7 +2,7 @@ package com.coffeepeek.api.feature.feed
 
 import com.coffeepeek.api.model.ApiResponse
 import com.coffeepeek.api.model.response.CheckInDto
-import com.coffeepeek.api.utils.ApiException
+import com.coffeepeek.core.network.ApiException
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.expectSuccess

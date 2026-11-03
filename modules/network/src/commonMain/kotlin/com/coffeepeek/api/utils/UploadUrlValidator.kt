@@ -1,5 +1,7 @@
 package com.coffeepeek.api.utils
 
+import com.coffeepeek.core.network.ApiException
+
 object UploadUrlValidator {
 
     fun requirePublicUploadUrl(url: String) {

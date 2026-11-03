@@ -3,7 +3,7 @@ package com.coffeepeek.api.service
 import com.coffeepeek.api.utils.requestResult
 import com.coffeepeek.api.model.ApiResponse
 import com.coffeepeek.api.model.request.CreateShopIssueReportReq
-import com.coffeepeek.api.utils.ApiException
+import com.coffeepeek.core.network.ApiException
 import com.coffeepeek.api.utils.postResult
 import com.coffeepeek.api.utils.setJsonBody
 import io.ktor.client.HttpClient

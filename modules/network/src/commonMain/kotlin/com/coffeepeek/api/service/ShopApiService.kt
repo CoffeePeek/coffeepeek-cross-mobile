@@ -16,7 +16,7 @@ import com.coffeepeek.api.model.response.shop.GetDrinksResponseDto
 import com.coffeepeek.api.model.response.shop.CoffeeDrinkDefinitionDto
 import com.coffeepeek.api.model.response.shop.GetShopsInBoundsResponseDto
 import com.coffeepeek.api.model.response.shop.ShopSearchResponseDto
-import com.coffeepeek.api.utils.ApiException
+import com.coffeepeek.core.network.ApiException
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.get

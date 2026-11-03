@@ -3,7 +3,7 @@ package com.coffeepeek.admin.base
 import androidx.lifecycle.ViewModel
 import coffeepeek.composeapp.generated.resources.Res
 import coffeepeek.composeapp.generated.resources.maybe_later
-import com.coffeepeek.api.utils.ApiException
+import com.coffeepeek.core.network.ApiException
 import com.coffeepeek.admin.utils.ErrorHandler
 import com.coffeepeek.admin.utils.LoadingHandler
 import com.coffeepeek.core.session.Session

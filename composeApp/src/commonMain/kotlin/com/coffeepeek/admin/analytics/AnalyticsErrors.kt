@@ -6,7 +6,7 @@ import kotlinx.coroutines.CancellationException
 
 internal fun safeAnalyticsError(error: Throwable): SafeAnalyticsError {
     if (error is com.coffeepeek.domain.model.CheckInOperationFailure) error.cause?.let { return safeAnalyticsError(it) }
-    val status = ((error as? ResponseException)?.response?.status?.value ?: (error as? com.coffeepeek.api.utils.ApiException)?.statusCode)?.takeIf { it in 100..599 }
+    val status = ((error as? ResponseException)?.response?.status?.value ?: (error as? com.coffeepeek.core.network.ApiException)?.statusCode)?.takeIf { it in 100..599 }
     val category = when {
         error is CancellationException -> "cancelled"
         status == 401 -> "authentication"

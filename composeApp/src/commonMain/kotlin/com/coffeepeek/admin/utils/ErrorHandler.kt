@@ -1,6 +1,6 @@
 package com.coffeepeek.admin.utils
 
-import com.coffeepeek.api.utils.ApiException
+import com.coffeepeek.core.network.ApiException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
