@@ -9,12 +9,8 @@ import com.coffeepeek.admin.theme.ThemeManager
 import com.coffeepeek.admin.settings.CityPreference
 import com.coffeepeek.admin.settings.ReviewDraftStore
 import com.coffeepeek.admin.feature.favorites.api.RoasterFavorites
-import com.coffeepeek.admin.feature.coffee.data.CoffeeRepositoryImpl
-import com.coffeepeek.admin.feature.coffee.data.CoffeePickerAdapter
-import com.coffeepeek.admin.feature.coffee.api.CoffeePicker
 import com.coffeepeek.admin.feature.catalog.api.BrewMethodCatalog
 import com.coffeepeek.admin.feature.catalog.data.BrewMethodCatalogAdapter
-import com.coffeepeek.admin.feature.coffee.domain.CoffeeRepository
 import com.coffeepeek.feature.profile.data.createPublicProfileData
 import com.coffeepeek.feature.notifications.api.NotificationFeature
 import com.coffeepeek.admin.feature.favorites.data.ServerRoasterFavorites
@@ -176,8 +172,6 @@ private fun appModule(
             com.coffeepeek.admin.di.notifications.SessionNotificationAccount(get()), com.coffeepeek.admin.notifications.NativePushBridge,
         )
     }
-    single<CoffeeRepository> { CoffeeRepositoryImpl(get<ApiClients>().plainClient) }
-    single<CoffeePicker> { CoffeePickerAdapter(get()) }
     single<BrewMethodCatalog> { BrewMethodCatalogAdapter(get()) }
     single { com.coffeepeek.feature.authorblocking.impl.createAuthorBlockingFeature(get<ApiClients>().client, com.coffeepeek.admin.di.authorblocking.SessionAuthorBlockingAccount(get())) }
     single<com.coffeepeek.feature.authorblocking.api.AuthorVisibility> { get<com.coffeepeek.feature.authorblocking.impl.AuthorBlockingFeature>().visibility }

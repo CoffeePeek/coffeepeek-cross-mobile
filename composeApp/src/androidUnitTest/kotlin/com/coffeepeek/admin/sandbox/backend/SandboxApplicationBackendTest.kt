@@ -30,8 +30,8 @@ import com.coffeepeek.feature.favorites.domain.model.FavoriteEntry
 import com.coffeepeek.feature.favorites.domain.model.FavoriteKind
 import com.coffeepeek.feature.appupdate.data.AppVersionResponse
 import com.coffeepeek.feature.appupdate.data.toUpdate
-import com.coffeepeek.admin.feature.coffee.data.CoffeeRepositoryImpl
-import com.coffeepeek.admin.feature.coffee.domain.CoffeeFilters
+import com.coffeepeek.feature.coffee.data.repository.createCoffeeRepository
+import com.coffeepeek.feature.coffee.domain.model.CoffeeFilters
 import com.coffeepeek.feature.profile.data.createPublicProfileData
 import com.coffeepeek.feature.profile.domain.PublicProfileConnectionKind
 import com.coffeepeek.feature.shop.data.repository.createShopCheckInRepository
@@ -221,7 +221,7 @@ class SandboxApplicationBackendTest {
     } }
 
     @Test fun actualCoffeeRepositoryUsesOfflineSearchFiltersOffersAndDetailContracts() = runTest { fixture { _, client ->
-        val coffee = CoffeeRepositoryImpl(client.plainClient)
+        val coffee = createCoffeeRepository(client.plainClient)
         assertEquals(listOf("Sandbox Ethiopia", "Sandbox Kenya", "Sandbox Brazil"), coffee.search("", CoffeeFilters(), 1).getOrThrow().items.map { it.name })
         assertEquals(listOf("Sandbox Kenya"), coffee.search("ken", CoffeeFilters(), 1).getOrThrow().items.map { it.name })
         assertTrue(coffee.search("not-present", CoffeeFilters(), 1).getOrThrow().items.isEmpty())
