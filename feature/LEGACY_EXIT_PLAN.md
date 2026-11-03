@@ -1591,3 +1591,33 @@ source `89778c23` + этот срез. Подробный scope/остаток �
   `PublicRoasterDetails` без изменения проверок.
 - Остаток легаси-репозиториев в `composeApp`: нет (остаются только `OtherUserProfile`/`PublicProfileViewModel`, использующие
   `UserRepository`, по решению).
+
+## L3, шаг 3 удаления `modules/*` — типы `modules/domain`, которые тянул composeApp — 2026-11-03
+
+- `Session`. Алиас `com.coffeepeek.domain.model.Session` удалён; ~30 файлов импортируют `com.coffeepeek.core.session.Session`
+  напрямую (в том числе `AuthRepository`-остаток и тесты).
+- Легаси `AuthRepository` / `AuthRepositoryImpl` / `AppleLoginChallenge` недостижимы из живого графа (вход, регистрация и выход
+  идут через `feature/auth`) и удалены вместе с биндингом в `DataModule` и двумя легаси-тестами (`AuthRepositoryImplTest`,
+  `AppleLoginPersistenceTest`). Покрытие сопоставлено с `feature/auth/data/AuthRepositoryImplTest`: вход и сохранение сессии с
+  user id, очистка локальных данных при смене пользователя/гостя, Google, отказ сервера, выход (очистка раньше запроса, сбой
+  сервера игнорируется, сбой очистки сообщается), Apple (челлендж, обмен, отказ/неполный ответ, отмена, сбой очистки).
+  `AppleLoginChallenge` теперь `data class` в `composeApp/.../auth/AppleAuth.kt`: это пара nonce/state для нативного листа Apple.
+- Модели карты. `MapBounds`, `MapShop`, `MapCluster`, `MapCoffeeZone` и константы типов пинов (`MapShopType`) принадлежат
+  холсту карты: `composeApp/.../map/MapModels.kt` (без `publicAddress`, которого холст не читал). `DiscoveryHost` по-прежнему
+  преобразует модели `feature/discovery` в модели холста. Мёртвый легаси-путь `ShopRepository.getMapContent`, `MapContent`,
+  `MapContentMapper` и его тест удалены; кластеры, невалидные кластеры и уровень детализации покрыты
+  `feature/discovery/data/DiscoveryRepositoryTest`.
+- `ShopLocation` больше не нужен composeApp: `distanceToShopMeters(user, latitude, longitude)`; тест `UserDistanceTest` только
+  переписан под новую сигнатуру, проверки те же.
+- Недостижимое легаси-UI удалено: `GroupedList`, `ReviewRatingsOverview`, `CoffeeFocusUi`, `CheckInCalendarCard`,
+  `ConsumedDrinkField`, `ShopOpeningLabel`, `ContributionSummary`. Тесты логики `ReviewAveragesTest` и `ShopOpeningLabelTest`
+  удалены вместе с кодом (покрытие: `ShopCheckInRatingSummaryTest`, `ShopSchedulePresentationTest`). Инструментальные
+  UI-тесты на удалённые экраны — по прежнему решению: `CheckInPresentationTest` (весь файл), тест
+  `longDrinkMenuHasBoundedHeightAndReachesTheLastOption` в `AnchoredMenuInteractionTest` и
+  `calendarPhotoStaysVisibleDuringPermissionRenewal` в `CpImageLoadingTest`. Модуль `androidInstrumentedTest` компилируется.
+- Остаются в `modules/domain` по решению или до шага 4 (их держат живые `modules/data` и экраны чужого профиля):
+  `UserRepository`/`UserProfile`/`AccountDeletionRequest` (OtherUserProfile, `PublicProfileViewModel`);
+  `CheckIn`, `CatalogItem`, `CoffeeShop`, `RoasterDetails`, `PublicAddress`, `ConsumedDrink*`, `Review`, `ReviewRating`,
+  `CheckInVisibility`, `FavoriteKind/Entry/FavoritesRepository` (карточки публичного профиля, таймлайн чекинов,
+  `LegacyFavoriteRoastersRepository`, мосты избранного, `RoasterPorts`) и репозитории `modules/data`. Кандидаты на удаление в
+  шаге 4 после проверки достижимости: `ReviewContent`, `CheckInCalendarPhotos`, `VisitedPlacesUiState` (держат только тесты).

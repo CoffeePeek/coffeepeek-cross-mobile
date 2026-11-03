@@ -4,7 +4,6 @@ import com.coffeepeek.admin.settings.CityPreference
 import com.coffeepeek.admin.utils.FavoriteSync
 import com.coffeepeek.core.session.Session
 import com.coffeepeek.core.session.SessionReader
-import com.coffeepeek.domain.model.City
 import com.coffeepeek.feature.shop.api.PublicShopPreviews
 import com.coffeepeek.feature.roaster.api.PublicRoasterCatalog
 import com.coffeepeek.feature.discovery.api.DiscoveryAccount
