@@ -1,7 +1,7 @@
 @file:OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 package com.coffeepeek.admin.di.shop
 
-import com.coffeepeek.domain.model.Session
+import com.coffeepeek.core.session.Session
 import com.coffeepeek.feature.favorites.domain.model.FavoriteShop
 import com.coffeepeek.feature.favorites.domain.repository.FavoritesRepository
 import com.coffeepeek.feature.shop.domain.model.ShopCoffeeDetails

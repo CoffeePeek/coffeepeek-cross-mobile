@@ -4,7 +4,7 @@ import com.coffeepeek.api.service.AuthService
 import com.coffeepeek.data.session.LocalUserDataCleanup
 import com.coffeepeek.domain.model.CoffeeShop
 import com.coffeepeek.domain.model.CoffeeShopDetails
-import com.coffeepeek.domain.model.Session
+import com.coffeepeek.core.session.Session
 import com.coffeepeek.domain.repository.FavoriteRepository
 import com.coffeepeek.core.session.SessionStore
 import io.ktor.client.HttpClient

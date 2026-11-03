@@ -6,7 +6,7 @@ import androidx.lifecycle.ViewModel
 import com.coffeepeek.admin.feature.profile.domain.*
 import com.coffeepeek.feature.profile.domain.*
 import com.coffeepeek.admin.feature.profile.domain.PublicProfileCheckIn
-import com.coffeepeek.domain.model.Session
+import com.coffeepeek.core.session.Session
 import com.coffeepeek.core.session.SessionStore
 import com.coffeepeek.domain.repository.UserRepository
 import kotlinx.coroutines.CoroutineScope

@@ -10,7 +10,7 @@ import com.coffeepeek.admin.analytics.MemoryConsent
 import com.coffeepeek.admin.analytics.RecordingTransport
 import com.coffeepeek.admin.analytics.analytics
 import com.coffeepeek.admin.di.shop.CheckInTestSessions
-import com.coffeepeek.domain.model.Session
+import com.coffeepeek.core.session.Session
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher

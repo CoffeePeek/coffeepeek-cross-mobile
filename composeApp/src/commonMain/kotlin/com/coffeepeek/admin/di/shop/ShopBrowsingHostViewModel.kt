@@ -44,7 +44,7 @@ internal class ShopBrowsingHostViewModel(
         }
     }
 
-    private fun replaceSession(value: com.coffeepeek.domain.model.Session?, observationFailed: Boolean = false) {
+    private fun replaceSession(value: com.coffeepeek.core.session.Session?, observationFailed: Boolean = false) {
         val old = mutableSession.value
         old.lease.revoke()
         old.viewModelStore.clear()

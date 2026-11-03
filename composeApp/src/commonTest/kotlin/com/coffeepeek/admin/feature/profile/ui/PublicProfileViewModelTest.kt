@@ -5,6 +5,7 @@ import com.coffeepeek.feature.profile.domain.*
 import com.coffeepeek.admin.feature.profile.domain.PublicProfileCheckInPage
 import com.coffeepeek.admin.feature.profile.domain.PublicProfileCheckIn
 import com.coffeepeek.domain.model.*
+import com.coffeepeek.core.session.Session
 import com.coffeepeek.core.session.SessionStore
 import com.coffeepeek.domain.repository.UserRepository
 import kotlinx.coroutines.*

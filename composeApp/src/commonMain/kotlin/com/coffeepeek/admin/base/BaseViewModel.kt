@@ -6,7 +6,7 @@ import coffeepeek.composeapp.generated.resources.maybe_later
 import com.coffeepeek.api.utils.ApiException
 import com.coffeepeek.admin.utils.ErrorHandler
 import com.coffeepeek.admin.utils.LoadingHandler
-import com.coffeepeek.domain.model.Session
+import com.coffeepeek.core.session.Session
 import com.coffeepeek.core.session.SessionStore
 import io.ktor.utils.io.core.Closeable
 import kotlinx.coroutines.CancellationException

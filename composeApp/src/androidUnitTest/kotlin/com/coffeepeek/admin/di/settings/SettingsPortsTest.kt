@@ -16,7 +16,7 @@ import com.coffeepeek.admin.settings.CityPreference
 import com.coffeepeek.admin.settings.FakeSettingRepository
 import com.coffeepeek.admin.theme.ThemeManager
 import com.coffeepeek.admin.utils.COFFEEPEEK_SHARE_TEXT
-import com.coffeepeek.domain.model.Session
+import com.coffeepeek.core.session.Session
 import com.coffeepeek.core.session.SessionStore
 import com.coffeepeek.feature.discovery.api.PublicCatalogOption
 import com.coffeepeek.feature.discovery.api.PublicDiscoveryCatalogs

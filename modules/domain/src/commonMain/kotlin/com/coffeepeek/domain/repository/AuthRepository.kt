@@ -1,6 +1,6 @@
 package com.coffeepeek.domain.repository
 
-import com.coffeepeek.domain.model.Session
+import com.coffeepeek.core.session.Session
 import com.coffeepeek.domain.model.AppleLoginChallenge
 
 interface AuthRepository {

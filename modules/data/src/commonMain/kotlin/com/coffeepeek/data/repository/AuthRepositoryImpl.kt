@@ -4,7 +4,7 @@ import com.coffeepeek.api.model.response.AuthResp
 import com.coffeepeek.api.service.AuthService
 import com.coffeepeek.data.session.LocalUserDataCleanup
 import com.coffeepeek.core.session.JwtUtils
-import com.coffeepeek.domain.model.Session
+import com.coffeepeek.core.session.Session
 import com.coffeepeek.domain.model.AppleLoginChallenge
 import com.coffeepeek.domain.repository.AuthRepository
 import com.coffeepeek.core.session.SessionStore

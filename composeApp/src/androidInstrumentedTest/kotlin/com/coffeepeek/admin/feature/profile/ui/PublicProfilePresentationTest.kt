@@ -50,6 +50,7 @@ import com.coffeepeek.feature.profile.domain.PublicProfileConnection
 import com.coffeepeek.feature.profile.domain.PublicProfileConnectionKind
 import com.coffeepeek.feature.profile.domain.PublicProfileConnectionsPage
 import com.coffeepeek.domain.model.*
+import com.coffeepeek.core.session.Session
 import com.coffeepeek.domain.repository.FavoriteRepository
 import com.coffeepeek.domain.repository.RoasterRepository
 import com.coffeepeek.core.session.SessionStore

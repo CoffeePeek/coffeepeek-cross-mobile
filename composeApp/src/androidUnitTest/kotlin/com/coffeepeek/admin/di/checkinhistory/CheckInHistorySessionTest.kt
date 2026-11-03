@@ -1,7 +1,7 @@
 package com.coffeepeek.admin.di.checkinhistory
 
 import com.coffeepeek.admin.di.shop.CheckInTestSessions
-import com.coffeepeek.domain.model.Session
+import com.coffeepeek.core.session.Session
 import com.coffeepeek.core.session.SessionStore
 import com.coffeepeek.feature.checkinhistory.domain.model.CheckInHistoryPage
 import com.coffeepeek.feature.checkinhistory.domain.model.HistoryPeriod

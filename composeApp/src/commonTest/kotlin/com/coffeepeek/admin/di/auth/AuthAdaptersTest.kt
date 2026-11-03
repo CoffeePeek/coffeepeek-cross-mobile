@@ -1,7 +1,7 @@
 package com.coffeepeek.admin.di.auth
 
 import com.coffeepeek.admin.session.UserSessionCleaner
-import com.coffeepeek.domain.model.Session
+import com.coffeepeek.core.session.Session
 import com.coffeepeek.core.session.SessionStore
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.runBlocking

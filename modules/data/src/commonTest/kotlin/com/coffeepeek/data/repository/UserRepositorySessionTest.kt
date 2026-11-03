@@ -2,7 +2,7 @@ package com.coffeepeek.data.repository
 
 import com.coffeepeek.api.service.PhotoApiService
 import com.coffeepeek.api.service.UserApiService
-import com.coffeepeek.domain.model.Session
+import com.coffeepeek.core.session.Session
 import com.coffeepeek.core.session.SessionStore
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.mock.MockEngine

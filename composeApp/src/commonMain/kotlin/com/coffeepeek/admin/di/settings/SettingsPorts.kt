@@ -70,7 +70,7 @@ internal class AppCityPort(
 internal class AppSettingsAccountPort(private val sessions: SessionReader) : SettingsAccountPort {
     override fun isSignedIn(): Boolean = signedIn(sessions.peekSession())
     override fun observeSignedIn(): Flow<Boolean> = sessions.observeSession().map(::signedIn).distinctUntilChanged()
-    private fun signedIn(session: com.coffeepeek.domain.model.Session?) = sessions.isActiveSession(session) && session?.userId != null
+    private fun signedIn(session: com.coffeepeek.core.session.Session?) = sessions.isActiveSession(session) && session?.userId != null
 }
 
 /** The row exists only for a signed-in user with analytics ready; the service is read when observed, as the legacy screen did. */

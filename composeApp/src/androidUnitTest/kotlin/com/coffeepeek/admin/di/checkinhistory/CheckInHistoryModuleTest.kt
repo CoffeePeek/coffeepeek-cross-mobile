@@ -38,7 +38,7 @@ class CheckInHistoryModuleTest {
             },
             refreshWith = { { Result.failure(IllegalStateException("unused")) } })
         val sessions = object : SessionStore by CheckInTestSessions() {
-            override fun peekSession(): com.coffeepeek.domain.model.Session? {
+            override fun peekSession(): com.coffeepeek.core.session.Session? {
                 sessionReads++
                 error("Resolving a graph must not open an account lease")
             }
