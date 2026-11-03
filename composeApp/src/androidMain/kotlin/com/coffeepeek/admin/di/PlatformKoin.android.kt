@@ -1,5 +1,7 @@
 package com.coffeepeek.admin.di
 
+import com.coffeepeek.admin.di.collections.collectionsModule
+
 import com.coffeepeek.admin.di.favorites.serverFavoritesModule
 import com.coffeepeek.admin.di.shop.shopFavoriteIntent
 import com.coffeepeek.admin.di.shop.shopCheckInModule
@@ -49,7 +51,7 @@ internal fun initAndroidKoin(extraModules: List<org.koin.core.module.Module> = e
             shopBrowsingModule(),
             homeCheckInModule(),
             checkInHistoryModule(),
-            coffeeModule(),
+            coffeeModule(), collectionsModule(),
             contributionsModule(),
             shelfModule(),
         ) + extraModules,
