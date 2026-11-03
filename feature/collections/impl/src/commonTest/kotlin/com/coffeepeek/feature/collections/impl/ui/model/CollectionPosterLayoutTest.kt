@@ -40,9 +40,9 @@ class CollectionPosterLayoutTest {
         }
     }
 
-    @Test fun eightRoastersFitOneChatImageAndShopsRetainReadableRows() {
-        val roasters = (1..8).map { place(it, CollectionPlaceKind.Roaster) }
-        assertEquals(8, collectionPosterLayout(roasters, CollectionPosterFormat.Chat).pages.single().size)
+    @Test fun twelveRoastersFitOneChatImageAndShopsRetainReadableRows() {
+        val roasters = (1..12).map { place(it, CollectionPlaceKind.Roaster) }
+        assertEquals(12, collectionPosterLayout(roasters, CollectionPosterFormat.Chat).pages.single().size)
         val shops = (1..7).map { place(it, CollectionPlaceKind.CoffeeShop) }
         val cards = collectionPosterLayout(shops, CollectionPosterFormat.Story).pages.single()
         assertEquals(7, cards.size)

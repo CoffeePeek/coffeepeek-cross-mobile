@@ -10,14 +10,15 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.*
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
+import com.coffeepeek.core.designsystem.component.coffeePeekImagePlaceholderPainter
 import com.coffeepeek.feature.collections.domain.model.SharedCollection
 import com.coffeepeek.feature.collections.impl.resources.*
 import com.coffeepeek.feature.collections.impl.ui.model.*
 import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 
-internal data class CollectionPosterLabels(val shop: String, val roaster: String, val brand: String,
+internal data class CollectionPosterLabels(val brand: String,
     val count: String, val pages: List<String>, val checkIns: Map<String, String>)
-internal data class CollectionPosterIcons(val shop: Painter, val roaster: Painter, val location: Painter,
+internal data class CollectionPosterIcons(val placeholder: Painter, val location: Painter,
     val star: Painter, val chevron: Painter)
 internal data class CollectionPosterResources(val labels: CollectionPosterLabels, val icons: CollectionPosterIcons,
     val measurer: TextMeasurer, val typography: TextStyle, val layout: CollectionPosterLayout)
@@ -32,11 +33,10 @@ internal fun collectionPosterResources(collection: SharedCollection?, format: Co
     val checkIns = collection?.places.orEmpty().mapNotNull { place ->
         place.checkInCount?.let { place.key to collectionCheckInLabel(it) }
     }.toMap()
-    val labels = CollectionPosterLabels(stringResource(Res.string.collections_shop), stringResource(Res.string.collections_roaster),
-        stringResource(Res.string.collections_brand),
+    val labels = CollectionPosterLabels(stringResource(Res.string.collections_brand),
         stringResource(Res.string.collections_count, count),
         (1..pages).map { stringResource(Res.string.collections_page, it, pages) }, checkIns)
-    val icons = CollectionPosterIcons(rememberVectorPainter(CoffeePeekIcons.Coffee), rememberVectorPainter(CoffeePeekIcons.Factory),
+    val icons = CollectionPosterIcons(coffeePeekImagePlaceholderPainter(darkBackground = true, density = Density(1f)),
         rememberVectorPainter(CoffeePeekIcons.Location), rememberVectorPainter(CoffeePeekIcons.StarFilled), rememberVectorPainter(CoffeePeekIcons.ChevronRight))
     return CollectionPosterResources(labels, icons, measurer, typography, layout)
 }

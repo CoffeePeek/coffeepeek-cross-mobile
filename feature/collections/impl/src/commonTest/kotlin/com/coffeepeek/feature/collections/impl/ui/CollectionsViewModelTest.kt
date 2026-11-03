@@ -12,6 +12,70 @@ import kotlin.test.*
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class CollectionsViewModelTest {
+    @Test fun reorderingPreservesSelectionAndPublishesTheChosenOrderOnlyWhenCreated() = runTest(dispatcher) {
+        val secondShop = shop.copy(slug = "second-shop")
+        val secondRoaster = roaster.copy(slug = "second-roaster")
+        repository.places = listOf(shop, secondShop, roaster, secondRoaster)
+        val model = model()
+        runCurrent()
+        model.onAction(CollectionsAction.SelectAll)
+        model.onAction(CollectionsAction.Move(secondShop.key, shop.key, false))
+        model.onAction(CollectionsAction.Move(secondRoaster.key, roaster.key, false))
+        runCurrent()
+        val expected = listOf(secondShop, shop, secondRoaster, roaster)
+        assertEquals(expected, model.state.value.places)
+        assertEquals(expected.map { it.key }.toSet(), model.state.value.selected)
+        assertEquals(0, repository.creates)
+        model.onAction(CollectionsAction.Create("Ordered"))
+        runCurrent()
+        assertEquals(expected, repository.sent)
+    }
+
+    @Test fun differentKindsMissingKeysAndDuplicateMovesCannotCorruptTheDraft() = runTest(dispatcher) {
+        val second = shop.copy(slug = "second")
+        repository.places = listOf(shop, second, roaster)
+        val model = model()
+        runCurrent()
+        model.onAction(CollectionsAction.Move(shop.key, roaster.key, true))
+        model.onAction(CollectionsAction.Move("missing", shop.key, false))
+        runCurrent()
+        assertEquals(repository.places, model.state.value.places)
+        model.onAction(CollectionsAction.Move(shop.key, second.key, true))
+        model.onAction(CollectionsAction.Move(shop.key, second.key, true))
+        runCurrent()
+        assertEquals(listOf(second, shop, roaster), model.state.value.places)
+        assertTrue(model.state.value.selected.isEmpty())
+        assertEquals(0, repository.creates)
+    }
+
+    @Test fun inFlightCreationKeepsItsCapturedOrderWhileDragEventsAreIgnored() = runTest(dispatcher) {
+        val second = shop.copy(slug = "second")
+        repository.places = listOf(shop, second)
+        repository.createGate = CompletableDeferred()
+        val model = model()
+        runCurrent()
+        publish(model)
+        runCurrent()
+        model.onAction(CollectionsAction.Move(second.key, shop.key, false))
+        runCurrent()
+        assertEquals(repository.places, model.state.value.places)
+        assertEquals(repository.places, repository.sent)
+        repository.createGate!!.complete(Unit)
+        runCurrent()
+    }
+
+    @Test fun aPublicCollectionCannotBeReorderedThroughPrivateDraftActions() = runTest(dispatcher) {
+        repository.places = listOf(shop, shop.copy(slug = "second"))
+        val model = model("public")
+        runCurrent()
+        model.onAction(CollectionsAction.Move(repository.places[1].key, shop.key, false))
+        runCurrent()
+        assertEquals(repository.places, model.state.value.collection?.places)
+        assertTrue(model.state.value.places.isEmpty())
+        assertEquals(0, repository.favoriteReads)
+        assertEquals(0, repository.creates)
+    }
+
     @Test fun retryOfAFailedOwnedCollectionReadKeepsTheRequestedLinkAndDoesNotReloadFavorites() = runTest(dispatcher) {
         val model = model()
         runCurrent()

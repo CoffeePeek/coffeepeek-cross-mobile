@@ -33,7 +33,7 @@ private fun roasterRows(places: List<CollectionPlace>, width: (CollectionPlace) 
 private fun roasterRow(items: List<Pair<CollectionPlace, Float>>): PosterRow {
     val spare = 1016f - items.sumOf { it.second.toDouble() }.toFloat() - (items.size - 1) * 16f
     val expansion = if (items.size > 1) spare / items.size else 0f
-    return PosterRow(items.map { it.first }, items.map { it.second + expansion }, 176f)
+    return PosterRow(items.map { it.first }, items.map { it.second + expansion }, 152f)
 }
 
 private fun paginateRows(rows: List<PosterRow>, bottom: Float, contentTop: Float): List<List<CollectionPosterCard>> {

@@ -37,6 +37,7 @@ import com.adamglin.phosphoricons.regular.CoffeeBean
 import com.adamglin.phosphoricons.regular.Coins
 import com.adamglin.phosphoricons.regular.Copy
 import com.adamglin.phosphoricons.regular.DotsThree
+import com.adamglin.phosphoricons.regular.DotsSixVertical
 import com.adamglin.phosphoricons.regular.Envelope
 import com.adamglin.phosphoricons.regular.InstagramLogo
 import com.adamglin.phosphoricons.regular.Eye
@@ -135,6 +136,7 @@ object CoffeePeekIcons {
     val Map: ImageVector get() = PhosphorIcons.Regular.MapTrifold
     val Menu: ImageVector get() = PhosphorIcons.Regular.ForkKnife
     val MoreHorizontal: ImageVector get() = PhosphorIcons.Regular.DotsThree
+    val DragHandle: ImageVector get() = PhosphorIcons.Regular.DotsSixVertical
     val MyLocation: ImageVector get() = Location
     val Navigation: ImageVector get() = PhosphorIcons.Regular.NavigationArrow
     val Notifications: ImageVector get() = PhosphorIcons.Regular.Bell

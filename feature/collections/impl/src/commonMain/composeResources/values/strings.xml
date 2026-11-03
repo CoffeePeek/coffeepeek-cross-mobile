@@ -44,4 +44,6 @@
     <string name="collections_open">Открыть подборку</string>
     <string name="collections_brand">COFFEEPEEK</string>
     <string name="collections_expand_poster">Открыть изображение на весь экран</string>
+    <string name="collections_move_up">Переместить выше</string>
+    <string name="collections_move_down">Переместить ниже</string>
 </resources>

@@ -24,6 +24,7 @@ internal class CollectionPosterPainter(
     private val gold = Color(0xFFEAB308)
     private val muted = Color(0xFFCDC2B7)
     private val ink = Color(0xFFF8F5F1)
+    private val detailFontSize = 22
 
     override fun DrawScope.onDraw() {
         withTransform({ scale(size.width / format.width, size.height / format.height, Offset.Zero) }) {
@@ -64,31 +65,29 @@ internal class CollectionPosterPainter(
 
     private fun DrawScope.shopCard(card: CollectionPosterCard) {
         photo(card.place, Rect(Offset(card.left + 12f, card.top + 12f), Size(296f, card.height - 24f)), false)
-        placeDetails(card, card.left + 332f, card.width - 628f, 38, 20, true)
+        val statistics = shopStatisticsWidth(card.place)
+        val width = card.width - 390f - if (statistics > 0f) statistics + 16f else 0f
+        placeDetails(card, card.left + 332f, width, 38, true)
         shopStatistics(card)
         icon(resources.icons.chevron, card.left + card.width - 44f, card.top + card.height / 2f - 14f, 28f, muted)
     }
 
     private fun DrawScope.roasterCard(card: CollectionPosterCard) {
         photo(card.place, Rect(Offset(card.left + 12f, card.top + (card.height - 128f) / 2), Size(128f, 128f)), true)
-        placeDetails(card, card.left + 156f, card.width - 196f, 30, 18, false)
+        placeDetails(card, card.left + 156f, card.width - 196f, 30, false)
         icon(resources.icons.chevron, card.left + card.width - 34f, card.top + card.height / 2f - 12f, 24f, muted)
     }
 
     private fun DrawScope.placeDetails(card: CollectionPosterCard, x: Float, width: Float,
-        titleSize: Int, chipSize: Int, shop: Boolean) {
+        titleSize: Int, shop: Boolean) {
         val title = measure(card.place.title, width, titleSize, FontWeight.Bold, 2)
         val address = listOfNotNull(card.place.city, card.place.address).filter(String::isNotBlank).joinToString(" · ")
-        val addressSize = if (shop) 22 else 20
         val addressWidth = width - if (shop) 34f else 0f
-        val location = address.takeIf(String::isNotEmpty)?.let { measure(it, addressWidth, addressSize, lines = 2) }
-        val chipHeight = chipSize + 12f
-        val height = title.size.height + 4f + chipHeight + if (location != null) 8f + maxOf(location.size.height.toFloat(), 24f) else 0f
+        val location = address.takeIf(String::isNotEmpty)?.let { measure(it, addressWidth, detailFontSize, lines = 2) }
+        val height = title.size.height + if (location != null) 8f + maxOf(location.size.height.toFloat(), 24f) else 0f
         val y = card.top + (card.height - height) / 2
         drawText(title, ink, Offset(x, y))
-        val chipY = y + title.size.height + 4f
-        kindChip(shop, x, chipY, chipSize)
-        location?.let { drawLocation(it, x, chipY + chipHeight + 8f, shop) }
+        location?.let { drawLocation(it, x, y + title.size.height + 8f, shop) }
     }
 
     private fun DrawScope.drawLocation(layout: TextLayoutResult, x: Float, y: Float, shop: Boolean) {
@@ -96,24 +95,23 @@ internal class CollectionPosterPainter(
         drawText(layout, muted, Offset(x + if (shop) 34f else 0f, y))
     }
 
-    private fun DrawScope.kindChip(shop: Boolean, x: Float, y: Float, fontSize: Int) {
-        val label = if (shop) resources.labels.shop else resources.labels.roaster
-        val labelWidth = measure(label, 400f, fontSize).size.width.toFloat()
-        val height = fontSize + 12f
-        drawRoundRect(Color(0xFF62503E).copy(alpha = 0.72f), Offset(x, y), Size(labelWidth + 48f, height), CornerRadius(height / 2))
-        icon(if (shop) resources.icons.shop else resources.icons.roaster, x + 10f, y + 5f, height - 10f, Color(0xFFE4CFAE))
-        text(label, x + 36f, y + 4f, labelWidth + 2f, fontSize, ink)
+    private fun shopStatisticsWidth(place: CollectionPlace): Float {
+        val count = resources.labels.checkIns[place.key]?.let { measure(it, 300f, detailFontSize).size.width.toFloat() } ?: 0f
+        val rating = if (place.rating?.let { it.isFinite() && it > 0.0 && it <= 5.0 } == true) 146f else 0f
+        return maxOf(count, rating)
     }
 
     private fun DrawScope.shopStatistics(card: CollectionPosterCard) {
         val rating = card.place.rating?.takeIf { it.isFinite() && it > 0.0 && it <= 5.0 }
         val checkIns = resources.labels.checkIns[card.place.key]
-        val height = (if (rating != null) 56f else 0f) + (if (checkIns != null) 30f else 0f)
+        val width = shopStatisticsWidth(card.place)
+        val countHeight = checkIns?.let { measure(it, width, detailFontSize).size.height.toFloat() } ?: 0f
+        val height = (if (rating != null) 56f else 0f) + countHeight + if (rating != null && checkIns != null) 6f else 0f
         val y = card.top + (card.height - height) / 2
         val right = card.left + card.width - 58f
         if (rating != null) ratingBadge(rating, right - 146f, y)
         checkIns?.let {
-            text("($it)", right - 224f, y + if (rating != null) 62f else 0f, 224f, 20, muted, align = TextAlign.End)
+            text(it, right - width, y + if (rating != null) 62f else 0f, width, detailFontSize, muted, align = TextAlign.End)
         }
     }
 
@@ -131,8 +129,9 @@ internal class CollectionPosterPainter(
             drawRect(if (fit) Color.White else Color(0xFF493A2D), rect.topLeft, rect.size)
             val image = photos[place.key]
             if (image != null) drawPhotoImage(image, rect, fit)
-            else icon(if (fit) resources.icons.roaster else resources.icons.shop,
-                rect.center.x - 24f, rect.center.y - 24f, 48f, if (fit) Color(0xFF79634D) else gold)
+            else withTransform({ translate(rect.left, rect.top) }) {
+                with(resources.icons.placeholder) { draw(rect.size) }
+            }
         }
     }
 

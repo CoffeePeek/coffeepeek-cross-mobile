@@ -3,12 +3,68 @@
 ## Denser exported collection layout — 2026-11-03
 
 Use the user's new reference for picture exports. Center each card's information
-block vertically, put the kind chip directly under its title, and align check-in
-counts to the rating's right edge. Keep shop photos, current statistics and full
+block vertically and align check-in counts to the rating's right edge. The latest
+feedback removes kind chips, gives names/addresses the space left by the actual
+statistics width, and uses the same detail typography for addresses and counts.
+Keep shop photos, current statistics and full
 available location fields. Roasters wrap into a compact grid with widths measured
 from their names. Add repeating COFFEEPEEK strips at both picture edges, retaining
 page numbering, with no QR artwork. The subsequent user request removes the
 printed coffeepeek.by address from the picture while keeping both brand strips.
+
+Follow-up before merging PR #301: support dragging places within each selector
+section. Collection creation must preserve that draft order without changing
+favorites or selection membership. Reject cross-kind/unknown targets and ignore
+drag actions during loading, publication or public-link viewing. Keep accessible
+move-up/down actions alongside the drag handle. Test the actual ViewModel create
+order, duplicate events, section guards and in-flight snapshot behavior.
+
+Use the implementation-only Reorderable 3.1.0 Compose Multiplatform dependency
+for animated lazy-list dragging, auto-scroll and fixed section headers:
+https://github.com/Calvin-LL/Reorderable/tree/v3.1.0
+The existing design-system photo-row drag is not a scrolling lazy list. Shared
+rows/icons remain in their current owners; feature UI assembles the gesture API,
+and the ViewModel guards ordering through the existing typed action entry. No new
+module, backend order writer or favorite mutation is introduced. Recheck unit
+contracts, Direct Debug assembly/runtime classes, RU/BE keys and manual drag in
+the explicitly selected Debug emulator before pushing the updated PR/CI head.
+
+The last user follow-up replaces missing-photo cup/factory artwork with the
+standard COFFEEPEEK image placeholder. Its painter is shared with the existing
+design-system component, including the brand resource and typography. Poster
+exports request a white fallback on their fixed dark canvas at pixel density 1;
+on-screen placeholders continue following the surrounding theme and text scale.
+
+Latest verification on 2026-11-03, working patch on `f7299ae4`:
+
+- 23 collections impl and 57 design-system unit cases passed (80 total), with
+  zero failures/errors/skips. Four new ViewModel cases verify create-order,
+  unchanged selection, duplicate/cross-kind/missing targets, in-flight creation
+  and public-link guards. All 47 RU/BE resource keys align.
+- Direct Debug assembly and packaged DEX runtime-class checks passed. The first
+  placeholder compile caught a DrawScope density-name collision; it was fixed,
+  and the successful rerun above is separate from that original failed log.
+- Manually moved a shop and a roaster above their preceding neighbors in the
+  Debug composer on Pixel 8 AVD, emulator-5580, API 37 x86_64 (16 KB pages).
+  The selected count remained 9; dragging a roaster toward a shop did not cross
+  the section boundary. These gestures change only draft order. The agent did
+  not submit Create, alter favorites, revoke links or clear application data.
+- Read-only review of an existing nine-place collection confirmed no kind
+  badges, matching address/check-in typography, reclaimed text width and both
+  brand strips. The Story fullscreen view displayed its header/footer and page
+  controls. The final Chat preview displayed the white COFFEEPEEK fallback.
+- Final Debug 1.1.5.2679, package com.coffeepeek, was updated in place with the
+  matching certificate; MainActivity was confirmed foreground. First-install
+  time remains 2026-10-20 10:23:54. Final APK SHA-256:
+  `79F97DA2B6BB9F11D219427EE332CC9B200BC1EDB19B6A620F7A203E4A52F567`.
+  Drag checks used the preceding patch APK
+  `13BB3A4680AEBE7A37D1A7B594ED07D52889BDC4CDF6DED9078DAF4ED1AF4629`;
+  the final rebuild adds only the shared placeholder and its verification.
+- No automated UI/instrumentation/screenshot tests were created or run. Manual
+  captures stay local in ignored build output. Colocated light/dark previews
+  were not rendered by an IDE. Light-theme/font-scale, screen-reader gestures,
+  edge auto-scroll and native iOS device checks remain manual release gates;
+  the updated PR head still requires macOS native compilation in CI.
 
 The URL-only follow-up was verified on 2026-11-03 as a working patch on
 `ed92d83a`: RU/BE keys align, Direct Debug assembly and packaged runtime checks
