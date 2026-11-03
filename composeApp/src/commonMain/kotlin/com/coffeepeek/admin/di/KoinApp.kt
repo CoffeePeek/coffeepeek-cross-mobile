@@ -92,9 +92,9 @@ fun initKoin(
         dataModule(
             baseUrl = Constants.BASE_URL,
             database = database,
-            platformContext = Locator.platformContext,
             registerLegacyFavorites = registerLegacyFavorites,
         ),
+        com.coffeepeek.admin.session.sessionStoreModule(database, Locator.platformContext),
         transportModule(Constants.BASE_URL, Locator.cacheFolderPath, AppConfig.isDebug),
         appModule(database.settingRepository, shopReportRendererFactory, shopGalleryRendererFactory,
             shopCheckInRendererFactory, shopDetailRendererFactory, shopCheckInListRendererFactory,

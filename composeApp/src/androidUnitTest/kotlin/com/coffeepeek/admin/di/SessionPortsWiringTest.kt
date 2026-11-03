@@ -1,7 +1,7 @@
 package com.coffeepeek.admin.di
 
 import com.coffeepeek.core.session.*
-import com.coffeepeek.data.di.dataModule
+import com.coffeepeek.admin.session.sessionStoreModule
 import com.coffeepeek.core.session.SessionStore
 import com.coffeepeek.room.DatabaseCore
 import com.coffeepeek.room.repository.SettingRepository
@@ -12,12 +12,12 @@ import org.koin.dsl.module
 import kotlin.test.*
 
 class SessionPortsWiringTest {
-    @Test fun actualDataModuleAliasesShareOneStoreWithoutReadingPlatformStorage() = runBlocking {
+    @Test fun actualSessionStoreModuleAliasesShareOneStoreWithoutReadingPlatformStorage() = runBlocking {
         val database = object : DatabaseCore {
             override val settingRepository: SettingRepository get() = error("Room must stay lazy")
         }
         val app = koinApplication {
-            modules(dataModule("https://unused.example", database), offlineStorage())
+            modules(sessionStoreModule(database, null), offlineStorage())
         }
         try {
             val reader = app.koin.get<SessionReader>()

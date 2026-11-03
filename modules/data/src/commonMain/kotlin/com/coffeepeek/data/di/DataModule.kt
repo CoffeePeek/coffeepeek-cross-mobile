@@ -1,11 +1,6 @@
 package com.coffeepeek.data.di
 
 import com.coffeepeek.api.CoffeePeekRepo
-import com.coffeepeek.core.session.DefaultSessionStore
-import com.coffeepeek.core.session.SessionReader
-import com.coffeepeek.core.session.SessionStore
-import com.coffeepeek.core.session.createPlatformSessionSecureStore
-import com.coffeepeek.data.session.RoomLegacyCredentialRows
 import com.coffeepeek.data.repository.CheckInRepositoryImpl
 import com.coffeepeek.data.repository.FavoriteRepositoryImpl
 import com.coffeepeek.data.repository.PhotoRepositoryImpl
@@ -23,9 +18,6 @@ import com.coffeepeek.domain.repository.RoasterRepository
 import com.coffeepeek.domain.repository.ShopChangeRequestRepository
 import com.coffeepeek.domain.repository.ShopIssueReportRepository
 import com.coffeepeek.domain.repository.ShopRepository
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
 import com.coffeepeek.room.DatabaseCore
 import org.koin.core.module.Module
 import org.koin.dsl.module
@@ -33,15 +25,8 @@ import org.koin.dsl.module
 fun dataModule(
     baseUrl: String,
     database: DatabaseCore,
-    platformContext: Any? = null,
     registerLegacyFavorites: Boolean = true,
 ): Module = module {
-    single { CoroutineScope(Dispatchers.Default + SupervisorJob()) }
-
-    single<com.coffeepeek.core.session.LegacyCredentialRows> { RoomLegacyCredentialRows(database.settingRepository) }
-    single { createPlatformSessionSecureStore(platformContext, get()) }
-    single<SessionStore> { DefaultSessionStore(get(), get()) }
-    single<SessionReader> { get<SessionStore>() }
     single { FileUrlResolver(baseUrl) }
     single { CoffeePeekRepo(get()) }
     single { get<CoffeePeekRepo>().authService }

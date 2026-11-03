@@ -1,7 +1,11 @@
 package com.coffeepeek.data.di
 
 import com.coffeepeek.data.repository.FavoriteRepositoryImpl
+import com.coffeepeek.core.session.DefaultSessionStore
 import com.coffeepeek.core.session.InMemorySessionSecureStore
+import com.coffeepeek.core.session.LegacyCredentialRows
+import com.coffeepeek.core.session.SessionReader
+import com.coffeepeek.core.session.SessionStore
 import com.coffeepeek.core.session.SessionSecureStore
 import com.coffeepeek.core.network.ApiClients
 import com.coffeepeek.core.network.SessionCredentials
@@ -44,6 +48,13 @@ class DataModuleFavoritesTest {
                 // The legacy favorite writer now resolves session identity as production does.
                 // This isolated JVM graph supplies a test store rather than an Android Context.
                 single<SessionSecureStore> { InMemorySessionSecureStore() }
+                single<SessionStore> {
+                    DefaultSessionStore(get(), object : LegacyCredentialRows {
+                        override suspend fun read(key: String): com.coffeepeek.core.session.SessionCredentials? = null
+                        override suspend fun delete(key: String) = Unit
+                    })
+                }
+                single<SessionReader> { get<SessionStore>() }
                 // The account favorites are provided by the application, not by this module.
                 single<FavoritesRepository> { UnusedAccountFavorites }
                 single { unusedTransport() }
