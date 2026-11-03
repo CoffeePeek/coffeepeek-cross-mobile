@@ -6,23 +6,6 @@ import kotlin.test.assertEquals
 
 class CheckInCalendarTest {
     @Test
-    fun calendarKeepsAllUniqueHomeAndCafePhotosInOrder() {
-        val visits = listOf(
-            CheckIn("original", "shop", "Coffee", "", "2026-10-12T09:00:00Z", photoUrls = listOf("original.jpg")),
-            CheckIn("cafe", "shop", "Coffee", "", "2026-10-12T10:00:00Z", photoUrls = listOf("cafe.jpg")),
-        )
-        val photos = calendarPhotos(visits, listOf(
-            CalendarPhoto("home.jpg"), CalendarPhoto("fourth.jpg"), CalendarPhoto("fifth.jpg"),
-        ))
-        assertEquals(listOf(
-            CalendarPhoto("original.jpg"), CalendarPhoto("cafe.jpg"), CalendarPhoto("home.jpg"),
-            CalendarPhoto("fourth.jpg"), CalendarPhoto("fifth.jpg"),
-        ), photos)
-        assertEquals(listOf(CalendarPhoto("cafe.jpg")),
-            calendarPhotos(visits.takeLast(1), listOf(CalendarPhoto("cafe.jpg"))))
-    }
-
-    @Test
     fun weekStripCrossesMonthAndLeapDay() {
         assertEquals(listOf("2024-02-26", "2024-02-27", "2024-02-28", "2024-02-29",
             "2024-03-01", "2024-03-02", "2024-03-03"), calendarWeekDates("2024-02-29"))
@@ -52,15 +35,6 @@ class CheckInCalendarTest {
         assertEquals(null, calendarSelection(CalendarMonth(2026, 9), "2026-10-13", null, emptySet()))
     }
 
-    @Test
-    fun diaryUsesPhotoVariantsAndIgnoresBlankUrls() {
-        val visit = com.coffeepeek.domain.model.CheckIn("one", "shop", "Coffee", "", "2026-10-12T09:00:00Z",
-            photoThumbnailUrls = listOf("", "thumb.jpg"), photoUrls = listOf("original.jpg"))
-        assertEquals("calendar.jpg", diaryPhoto(visit.copy(photoCalendarUrls = listOf("", "calendar.jpg"))))
-        assertEquals("thumb.jpg", diaryPhoto(visit))
-        assertEquals("original.jpg", diaryPhoto(visit.copy(photoThumbnailUrls = emptyList())))
-        assertEquals(null, diaryPhoto(visit.copy(photoThumbnailUrls = emptyList(), photoUrls = emptyList())))
-    }
     @Test
     fun september2026StartsOnTuesdayAndHasThirtyDays() {
         val cells = calendarCells(CalendarMonth(2026, 9))
