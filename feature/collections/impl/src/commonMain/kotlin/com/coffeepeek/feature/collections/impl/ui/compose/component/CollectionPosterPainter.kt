@@ -155,7 +155,6 @@ internal class CollectionPosterPainter(
     private fun DrawScope.footer() {
         val y = format.height - 82f
         if (resources.labels.pages.size > 1) text(resources.labels.pages.getOrElse(page) { "" }, 32f, y, 300f, 22, muted)
-        text(resources.labels.website, 716f, y, 332f, 24, gold, align = TextAlign.End)
         brandStrip(format.height - 44f)
     }
 

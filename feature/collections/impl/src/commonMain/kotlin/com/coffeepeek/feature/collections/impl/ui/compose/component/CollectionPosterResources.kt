@@ -15,7 +15,7 @@ import com.coffeepeek.feature.collections.impl.resources.*
 import com.coffeepeek.feature.collections.impl.ui.model.*
 import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 
-internal data class CollectionPosterLabels(val shop: String, val roaster: String, val brand: String, val website: String,
+internal data class CollectionPosterLabels(val shop: String, val roaster: String, val brand: String,
     val count: String, val pages: List<String>, val checkIns: Map<String, String>)
 internal data class CollectionPosterIcons(val shop: Painter, val roaster: Painter, val location: Painter,
     val star: Painter, val chevron: Painter)
@@ -33,7 +33,7 @@ internal fun collectionPosterResources(collection: SharedCollection?, format: Co
         place.checkInCount?.let { place.key to collectionCheckInLabel(it) }
     }.toMap()
     val labels = CollectionPosterLabels(stringResource(Res.string.collections_shop), stringResource(Res.string.collections_roaster),
-        stringResource(Res.string.collections_brand), stringResource(Res.string.collections_website),
+        stringResource(Res.string.collections_brand),
         stringResource(Res.string.collections_count, count),
         (1..pages).map { stringResource(Res.string.collections_page, it, pages) }, checkIns)
     val icons = CollectionPosterIcons(rememberVectorPainter(CoffeePeekIcons.Coffee), rememberVectorPainter(CoffeePeekIcons.Factory),

@@ -7,7 +7,15 @@ block vertically, put the kind chip directly under its title, and align check-in
 counts to the rating's right edge. Keep shop photos, current statistics and full
 available location fields. Roasters wrap into a compact grid with widths measured
 from their names. Add repeating COFFEEPEEK strips at both picture edges, retaining
-the website and page numbering, with no QR artwork.
+page numbering, with no QR artwork. The subsequent user request removes the
+printed coffeepeek.by address from the picture while keeping both brand strips.
+
+The URL-only follow-up was verified on 2026-11-03 as a working patch on
+`ed92d83a`: RU/BE keys align, Direct Debug assembly and packaged runtime checks
+passed. Debug 1.1.5.2678 was updated in place on Pixel 8 AVD emulator-5580 with
+the matching signature; MainActivity startup was checked. No new UI tests or
+real-account writes were introduced. Installed APK SHA-256:
+`9DF7A3CAAF2553CB07047250C2A9A8C452545AB09533BE5E3E74965185B067F5`.
 
 Collections impl owns this presentation-only change. A pure row-packing layout
 replaces fixed four/six-place pages. Preview navigation, photo preparation,
