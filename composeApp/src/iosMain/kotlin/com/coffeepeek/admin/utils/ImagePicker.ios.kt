@@ -1,4 +1,4 @@
-@file:OptIn(kotlinx.cinterop.ExperimentalForeignApi::class)
+@file:OptIn(kotlinx.cinterop.ExperimentalForeignApi::class, androidx.compose.ui.ExperimentalComposeUiApi::class)
 
 package com.coffeepeek.admin.utils
 
@@ -7,7 +7,11 @@ import com.coffeepeek.admin.theme.uiKitStyle
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.ui.uikit.LocalUIViewController
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.cinterop.addressOf
 import kotlinx.cinterop.usePinned
 import platform.Foundation.NSData
@@ -16,7 +20,6 @@ import platform.PhotosUI.PHPickerFilter
 import platform.PhotosUI.PHPickerResult
 import platform.PhotosUI.PHPickerViewController
 import platform.PhotosUI.PHPickerViewControllerDelegateProtocol
-import platform.UIKit.UIApplication
 import platform.UIKit.UIImage
 import platform.UIKit.UIImageJPEGRepresentation
 import platform.UIKit.UIImagePickerController
@@ -36,6 +39,8 @@ actual fun rememberPhotoPicker(
     isLoading: (Boolean) -> Unit,
     onPhotosPicked: (List<PickedImage>) -> Unit,
 ): PhotoPickerController {
+    val host = LocalUIViewController.current
+    val scope = rememberCoroutineScope()
     val loadingState = rememberUpdatedState(isLoading)
     val pickedState = rememberUpdatedState(onPhotosPicked)
     val delegate = remember {
@@ -46,7 +51,6 @@ actual fun rememberPhotoPicker(
     }
 
     fun presentCamera() {
-        val presenter = topViewController() ?: return
         val camera = UIImagePickerControllerSourceType.UIImagePickerControllerSourceTypeCamera
         if (!UIImagePickerController.isSourceTypeAvailable(camera)) return
         val picker = UIImagePickerController().apply {
@@ -55,11 +59,12 @@ actual fun rememberPhotoPicker(
             allowsEditing = false
             this.delegate = delegate
         }
-        presenter.presentViewController(picker, animated = true, completion = null)
+        scope.launch {
+            awaitPhotoPickerHost(host)?.presentViewController(picker, animated = true, completion = null)
+        }
     }
 
     fun presentGallery() {
-        val presenter = topViewController() ?: return
         val configuration = PHPickerConfiguration().apply {
             selectionLimit = maxSelection.coerceAtLeast(1).toLong()
             filter = PHPickerFilter.imagesFilter
@@ -68,7 +73,9 @@ actual fun rememberPhotoPicker(
             overrideUserInterfaceStyle = ThemeManager.themeMode.value.uiKitStyle
             this.delegate = delegate
         }
-        presenter.presentViewController(picker, animated = true, completion = null)
+        scope.launch {
+            awaitPhotoPickerHost(host)?.presentViewController(picker, animated = true, completion = null)
+        }
     }
 
     return remember(delegate, maxSelection) {
@@ -155,12 +162,18 @@ private fun imageDataAsJpeg(data: NSData): ByteArray? {
     return UIImageJPEGRepresentation(image, JPEG_QUALITY)?.toByteArray()
 }
 
-private fun topViewController(): UIViewController? {
-    var current = UIApplication.sharedApplication.keyWindow?.rootViewController
-    while (current?.presentedViewController != null) {
-        current = current.presentedViewController
+private suspend fun awaitPhotoPickerHost(host: UIViewController): UIViewController? {
+    // The source sheet is removed from Compose before its UIKit dismissal finishes.
+    // Presenting from that outgoing sheet silently loses the picker request.
+    delay(16)
+    val closing = host.presentedViewController
+    while (host.view.window != null && !host.isBeingDismissed()) {
+        if (host.presentedViewController == null && (closing == null || closing.view.window == null)) {
+            return host
+        }
+        delay(16)
     }
-    return current
+    return null
 }
 
 private fun NSData.toByteArray(): ByteArray {
