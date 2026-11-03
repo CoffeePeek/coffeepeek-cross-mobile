@@ -42,4 +42,7 @@
     <string name="collections_revoke_message">Подборка перестанет открываться по ссылке. Уже отправленные картинки останутся у получателей.</string>
     <string name="collections_cancel">Отмена</string>
     <string name="collections_open">Открыть подборку</string>
+    <string name="collections_brand">COFFEEPEEK</string>
+    <string name="collections_expand_poster">Открыть изображение на весь экран</string>
+    <string name="collections_website">coffeepeek.by</string>
 </resources>

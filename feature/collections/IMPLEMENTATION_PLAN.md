@@ -1,5 +1,56 @@
 # Share favorite collections — 2026-11-02
 
+## Denser exported collection layout — 2026-11-03
+
+Use the user's new reference for picture exports. Center each card's information
+block vertically, put the kind chip directly under its title, and align check-in
+counts to the rating's right edge. Keep shop photos, current statistics and full
+available location fields. Roasters wrap into a compact grid with widths measured
+from their names. Add repeating COFFEEPEEK strips at both picture edges, retaining
+the website and page numbering, with no QR artwork.
+
+Collections impl owns this presentation-only change. A pure row-packing layout
+replaces fixed four/six-place pages. Preview navigation, photo preparation,
+accessible page descriptions and PNG export consume the same measured plan.
+Check stable shops-first ordering, pagination without loss/duplicates and 2D
+bounds/non-overlap across both formats, including 205 places and long headings.
+Compile/assemble Android with packaged runtime checks, compile shared iOS, and
+review the explicitly selected directSandbox manually if Pixel 9 is available.
+No automated UI/instrumentation/screenshot tests or production writes.
+
+During manual review the user reported that Story cropped its header/footer and
+could not open fully. The thumbnail now bounds both axes before applying aspect
+ratio. Tapping opens the existing design-system photo viewer with pinch/double-tap
+zoom, close/Back and page swiping. Its generic slot entry is public by necessity;
+the feature supplies the bounded poster content rather than copying zoom logic.
+New frame/thumbnail/viewer content has colocated light/dark previews.
+
+Verification on 2026-11-03, working patch on develop `e9976ba3`:
+
+- 19 collections impl cases and 57 design-system cases passed (76 total), with
+  no failures/errors/skips. Layout cases cover both formats, 205 members,
+  variable grid widths, no overlap/loss/duplicates, eight mixed Story cards,
+  eight roasters in Chat and seven readable shop rows in Story. RU/BE keys align.
+- Direct Sandbox assembly, DEX runtime-class and isolation checks passed. The
+  first manual Chat preview displayed the new centered information/branding on
+  Pixel 8 AVD, emulator-5580, API 37 x86_64; the original Story crop report above
+  remains a failed check before the viewport fix.
+- The user explicitly switched to ordinary directDebug. Its assembly and DEX
+  runtime-class check passed. The first launch failed before application startup
+  because ignored local.properties lacked API_BASE_URL; the production endpoint
+  was configured locally and the APK rebuilt, preserving the application guard.
+- Debug `1.1.5.2677`, package com.coffeepeek, was installed in place over version
+  1092 with matching certificate SHA-256 48ad0071309c72a29cab9ab9747519c06754837d7a3066de2a7b5a8f72a08abe.
+  First-install time was retained; no uninstall, downgrade or data clearing.
+  Cold startup passed (1156 ms), and MainActivity was confirmed foreground.
+  Installed configured Debug APK SHA-256:
+  `3735E2CB6255CEDD13E006C331591AD26B36DCF92D35AB9D124588AB81294951`.
+- Post-fix fullscreen/zoom and real-collection content review remains a manual
+  gate in the chosen Debug app; no real-account collection/favorite writes were
+  performed. Native iOS compilation was SKIPPED on Windows, not executed; macOS
+  CI is still required. IDE previews were not rendered. Existing deprecations
+  were retained. Sanitized diagnostics and emulator captures stay in ignored build.
+
 ## CI and review correction — 2026-11-03
 
 Android CI #530 failed at `mergeExtDexPlayDebug` with D8
