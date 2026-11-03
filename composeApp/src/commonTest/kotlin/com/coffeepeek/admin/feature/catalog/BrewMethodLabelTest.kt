@@ -12,7 +12,7 @@ class BrewMethodLabelTest {
     }
 
     @Test
-    fun legacyCodesUseTheirRussianFallbackNames() {
+    fun previousCodesUseTheirRussianFallbackNames() {
         assertEquals("Другое", "other".methodLabel("Другое"))
         assertEquals("Пуровер", "pour_over".methodLabel("Другое"))
     }

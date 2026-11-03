@@ -21,7 +21,7 @@ class AppShopAnalyticsTest {
         assertEquals("network", failure["error_category"])
         assertTrue(sdk.events.none { "private upload URL" in it.second.toString() })
     }
-    @Test fun detailActionsUseTheLegacySchemaAndRelatedEntry() = runTest {
+    @Test fun detailActionsUseTheExistingSchemaAndRelatedEntry() = runTest {
         val sdk = startAnalytics()
         AppShopAnalytics.action(ShopActionMetric.Directions)
         AppShopAnalytics.action(ShopActionMetric.ShowOnMap)

@@ -20,7 +20,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 
 /**
- * The five-step shop form as the legacy wizard kept it. The rule over the legacy: one account at a time. A guest cannot fill the form, and a change of
+ * The five-step shop form as the previous wizard kept it. The rule over the previous: one account at a time. A guest cannot fill the form, and a change of
  * account starts an empty form, so nothing typed for one account is ever sent for another; late answers of a previous account are dropped.
  */
 internal class AddShopViewModel(

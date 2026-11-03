@@ -88,7 +88,7 @@ private fun MapZone.toMapZone() = MapCoffeeZone(
     radiusMeters = radiusMeters, shopCount = shopCount, polygon = polygon.map { it.latitude to it.longitude },
 )
 
-/** The favorite heart's exposure names the page it is on, as the legacy favorite button did. */
+/** The favorite heart's exposure names the page it is on. */
 private fun Modifier.favoriteExposure(): Modifier = composed {
     val page = com.coffeepeek.admin.analytics.Analytics.service?.state?.collectAsState()?.value?.page ?: "other"
     analyticsExposure("favorites", when (page) { "shop_detail" -> "shop_detail"; "roaster_detail" -> "roaster_card"; else -> "catalog_card" }, page)

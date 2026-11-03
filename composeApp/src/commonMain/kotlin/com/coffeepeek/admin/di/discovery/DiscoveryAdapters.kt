@@ -56,13 +56,13 @@ internal fun ShopSummary.toFavoriteShop() = FavoriteShop(
     roasterPhotoUrls = roasterLogos,
 )
 
-/** The city is shared with the settings through the legacy preference; its ids are the cities' public slugs, as in Discovery's own catalog. */
+/** The city is shared with the settings through the saved preference; its ids are the cities' public slugs, as in Discovery's own catalog. */
 internal class PreferenceDiscoveryCity(private val preference: CityPreference) : DiscoveryCity {
     override val selected: StateFlow<String?> = preference.selectedCityId
     override suspend fun resolve(cities: List<CityEntry>): String? = preference.resolve(cities.map { it.id })
 }
 
-/** Adapts only public Shop API data; no legacy repository or presentation formatter. */
+/** Adapts only public Shop API data. */
 internal class ShopDiscoveryDetails(private val shops: PublicShopPreviews) : DiscoveryShopDetails {
     override suspend fun details(shopId: String): Result<MapShopDetails> = shops.load(shopId).map { details ->
         MapShopDetails(

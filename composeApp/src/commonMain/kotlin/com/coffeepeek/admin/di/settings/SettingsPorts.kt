@@ -51,7 +51,7 @@ internal fun SettingsThemeMode.toApp() = when (this) {
     SettingsThemeMode.DARK -> AppThemeMode.DARK
 }
 
-/** The legacy order: load the catalog, then resolve the saved city against it (only on success). */
+/** Load the catalog, then resolve the saved city against it (only on success). */
 internal class AppCityPort(
     private val catalogs: PublicDiscoveryCatalogs,
     private val preference: CityPreference,
@@ -66,14 +66,14 @@ internal class AppCityPort(
     override fun select(cityId: String) = preference.select(cityId)
 }
 
-/** Signed in = an active session that has a user id, exactly what the legacy settings state used. */
+/** Signed in = an active session that has a user id. */
 internal class AppSettingsAccountPort(private val sessions: SessionReader) : SettingsAccountPort {
     override fun isSignedIn(): Boolean = signedIn(sessions.peekSession())
     override fun observeSignedIn(): Flow<Boolean> = sessions.observeSession().map(::signedIn).distinctUntilChanged()
     private fun signedIn(session: com.coffeepeek.core.session.Session?) = sessions.isActiveSession(session) && session?.userId != null
 }
 
-/** The row exists only for a signed-in user with analytics ready; the service is read when observed, as the legacy screen did. */
+/** The row exists only for a signed-in user with analytics ready; the service is read when observed. */
 internal class AppUsageConsentPort(private val service: () -> AnalyticsService? = { Analytics.service }) : UsageConsentPort {
     override fun observe(): Flow<UsageConsentState> = service()?.state
         ?.map { UsageConsentState(available = it.authReady && !it.userId.isNullOrBlank(), accepted = it.consent == AnalyticsConsent.Accepted) }

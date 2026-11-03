@@ -1,6 +1,6 @@
 package com.coffeepeek.feature.settings.domain
 
-/** The app appearance choice. The names match the persisted values of the legacy theme setting. */
+/** The app appearance choice. The names match the persisted values of the previous theme setting. */
 enum class ThemeMode { SYSTEM, LIGHT, DARK }
 
 /** A city the user can pick as the default for discovery. */

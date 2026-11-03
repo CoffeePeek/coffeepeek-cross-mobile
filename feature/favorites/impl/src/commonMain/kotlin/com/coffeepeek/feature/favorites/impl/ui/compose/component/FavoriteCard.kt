@@ -48,7 +48,7 @@ import io.kamel.image.asyncPainterResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 
-/** Feature-owned rendering: never imports feed UI or legacy shop aggregates. */
+/** Feature-owned rendering: never imports feed UI or previous shop aggregates. */
 @Composable
 internal fun FavoriteCard(
     shop: FavoriteShop,

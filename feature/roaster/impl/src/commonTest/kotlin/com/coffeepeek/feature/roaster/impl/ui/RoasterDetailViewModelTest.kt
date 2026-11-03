@@ -150,7 +150,7 @@ class RoasterDetailViewModelTest {
         assertTrue(analytics.calls.isEmpty() && events.isEmpty())
     }
 
-    @Test fun linkRulesMatchTheLegacyScreen() {
+    @Test fun linkRulesMatchThePreviousScreen() {
         assertEquals("https://instagram.com/a_b", normalizeInstagramUrl(" @a_b/ "))
         assertEquals("HTTPS://instagram.com/x", normalizeInstagramUrl("HTTPS://instagram.com/x"))
         assertEquals("https://x.example", normalizeExternalUrl(" x.example "))

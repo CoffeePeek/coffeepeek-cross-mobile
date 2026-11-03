@@ -29,7 +29,7 @@ private fun String?.orFull(full: String?): String? = this?.takeIf(String::isNotB
 
 private fun RefPhotoUrlsDto?.fullscreenOr(full: String?) = this?.fullscreen.orFull(full)
 
-/** The shop photos as the legacy details reader built them: the small variant, skipping a photo with no id or no url. */
+/** The shop photos as the previous details reader built them: the small variant, skipping a photo with no id or no url. */
 private fun List<RefPhotoDto>.shopPhotos(): List<ShopPhotoRef> = mapNotNull { photo ->
     val id = photo.id.takeIf(String::isNotBlank) ?: return@mapNotNull null
     val full = photo.urls.fullscreenOr(photo.fullUrl) ?: return@mapNotNull null

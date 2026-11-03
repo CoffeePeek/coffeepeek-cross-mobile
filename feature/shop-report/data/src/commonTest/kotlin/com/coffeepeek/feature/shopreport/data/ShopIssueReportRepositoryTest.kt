@@ -50,7 +50,7 @@ class ShopIssueReportRepositoryTest {
         }
     }
 
-    @Test fun wireCategoriesMatchLegacyContract() {
+    @Test fun wireCategoriesMatchPreviousContract() {
         ShopIssueCategory.entries.forEach { category ->
             val encoded = json.encodeToString(CreateShopIssueReportRequest("shop-1", category.toBackend(), "Details"))
             val fields = json.parseToJsonElement(encoded).jsonObject

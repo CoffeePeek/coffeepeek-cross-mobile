@@ -12,8 +12,8 @@ import kotlinx.coroutines.test.runCurrent
 import kotlin.test.fail
 
 /**
- * Legacy-vs-migrated analytics parity. A scenario is one user journey written once as a [Driver]; the
- * legacy implementation (the production reference in composeApp) and the migrated adapter each run it
+ * Reference-vs-migrated analytics parity. A scenario is one user journey written once as a [Driver]; the
+ * reference implementation (the production reference in composeApp) and the migrated adapter each run it
  * against a fresh consent-aware service, and the emitted wire events must be identical.
  *
  * Add an owner by writing its two drivers and a test that calls [assertParity]. Volatile values
@@ -45,14 +45,14 @@ internal object ParityHarness {
         }
     }
 
-    fun assertParity(scenario: String, legacy: List<WireEvent>, migrated: List<WireEvent>) {
+    fun assertParity(scenario: String, reference: List<WireEvent>, migrated: List<WireEvent>) {
         // An empty journey would "match" vacuously, e.g. when analytics consent or installation is broken.
-        if (legacy.isEmpty()) fail("Legacy reference emitted no events for \"$scenario\"; the scenario proves nothing")
-        if (legacy == migrated) return
+        if (reference.isEmpty()) fail("Reference reference emitted no events for \"$scenario\"; the scenario proves nothing")
+        if (reference == migrated) return
         fail(buildString {
             appendLine("Analytics parity broken for \"$scenario\"")
-            appendLine("legacy (${legacy.size}):")
-            legacy.forEachIndexed { i, e -> appendLine("  $i. $e") }
+            appendLine("reference (${reference.size}):")
+            reference.forEachIndexed { i, e -> appendLine("  $i. $e") }
             appendLine("migrated (${migrated.size}):")
             migrated.forEachIndexed { i, e -> appendLine("  $i. $e") }
         })

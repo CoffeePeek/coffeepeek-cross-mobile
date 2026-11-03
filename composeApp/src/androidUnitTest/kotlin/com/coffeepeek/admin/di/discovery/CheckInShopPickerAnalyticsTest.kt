@@ -34,7 +34,7 @@ class CheckInShopPickerAnalyticsTest {
         assertEquals("close", event["reason"])
     }
 
-    @Test fun backCancelsOnceWithItsLegacyReason() = runTest {
+    @Test fun backCancelsOnceWithItsExistingReason() = runTest {
         val sdk = startTracker()
         val navigation = CheckInShopPickerNavigation({ true }, {}, {})
         navigation.close(back = true)

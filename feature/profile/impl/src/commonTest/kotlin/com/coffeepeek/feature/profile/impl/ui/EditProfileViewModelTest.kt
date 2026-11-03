@@ -26,7 +26,7 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
-/** Port of the legacy `EditProfileViewModelTest`; the partial-save test flipped with the owner-approved fix. */
+/** Port of the previous `EditProfileViewModelTest`; the partial-save test flipped with the owner-approved fix. */
 @OptIn(ExperimentalCoroutinesApi::class)
 class EditProfileViewModelTest {
     private val dispatcher = StandardTestDispatcher()
@@ -140,7 +140,7 @@ class EditProfileViewModelTest {
         assertEquals(EditProfileError.About, about.state.value.error)
     }
 
-    /** Owner decision 2026-10-20: legacy re-uploaded the avatar (and the name) on retry; now finished steps are not repeated. */
+    /** Owner decision 2026-10-20: previous re-uploaded the avatar (and the name) on retry; now finished steps are not repeated. */
     @Test fun aRetryAfterALaterFailureDoesNotRepeatTheStepsThatSucceeded() = runTest(dispatcher) {
         val edit = FakeEdit(about = Result.failure(IllegalStateException("too long"))); val vm = model(edit = edit); runCurrent()
         vm.act(EditProfileAction.AvatarPicked(image())); vm.act(EditProfileAction.UsernameChanged("Boris")); vm.act(EditProfileAction.AboutChanged("New"))

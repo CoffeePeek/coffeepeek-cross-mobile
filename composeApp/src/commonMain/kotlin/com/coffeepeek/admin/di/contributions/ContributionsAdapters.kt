@@ -20,7 +20,7 @@ internal class SessionContributionsAccount(private val sessions: SessionReader) 
     override fun currentAccountKey(): String? = key(sessions.peekSession())
 }
 
-/** The forms' reference reads come from Contributions' own source; nothing here knows the legacy shop repository any more. */
+/** The forms' reference reads come from Contributions' own source. */
 internal class SourceContributionCatalogs(private val source: ContributionCatalogSource) : ContributionCatalogs {
     override suspend fun catalogs(): Result<Catalogs> = source.catalogs()
     override suspend fun shop(slug: String): Result<ShopSnapshot> = source.shop(slug)

@@ -12,7 +12,7 @@ class PersonalCheckInPhotosTest {
     private fun variant(purpose: String, path: String, type: String = "image/png", width: Int = 100) =
         """{"purpose":"$purpose","url":"$path","contentType":"$type","width":$width,"height":100,"sizeBytes":1000}"""
 
-    @Test fun absentManifestPreservesLegacyIssuedUrlsAndSignedQueries() {
+    @Test fun absentManifestPreservesPreviousIssuedUrlsAndSignedQueries() {
         val item = entry(""""photos":[{"url":"/original?signature=fixture"}],"drinkPhotoUrl":"/cutout"""")
         assertEquals(listOf("https://fixture.test/original?signature=fixture"), item.photoUrls)
         assertEquals(item.photoUrls, item.photoThumbnailUrls)

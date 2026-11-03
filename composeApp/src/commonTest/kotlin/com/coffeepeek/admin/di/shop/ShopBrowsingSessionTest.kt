@@ -38,7 +38,7 @@ class ShopBrowsingSessionTest {
         assertEquals(ShopViewer(true, "owner-slug"), ShopBrowsingSession(CheckInTestSessions()).viewer(accounts).getOrThrow())
     }
 
-    @Test fun profileFailureKeepsLegacyOwnershipFallbackButAccountReplacementRevokesResult() = runTest {
+    @Test fun profileFailureKeepsExistingOwnershipFallbackButAccountReplacementRevokesResult() = runTest {
         val accounts = viewerAccount { Result.failure(IllegalStateException("offline")) }
         assertEquals(ShopViewer(true, null), ShopBrowsingSession(CheckInTestSessions()).viewer(accounts).getOrThrow())
         val sessions = CheckInTestSessions()

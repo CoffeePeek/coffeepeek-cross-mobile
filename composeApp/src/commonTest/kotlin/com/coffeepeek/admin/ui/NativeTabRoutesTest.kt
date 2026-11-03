@@ -41,7 +41,7 @@ class NativeTabRoutesTest {
     }
 
     @Test
-    fun legacyGraphDestinationsAndTabDestinationsSelectTheSameNativeController() {
+    fun existingGraphDestinationsAndTabDestinationsSelectTheSameNativeController() {
         val graphs = listOf(Navigator.Screen.FeedGraph, Navigator.Screen.CoffeeGraph, Navigator.Screen.CommunityGraph, Navigator.Screen.ProfileGraph, Navigator.Screen.SettingsGraph)
         val tabs = listOf(Navigator.Screen.FeedTab, Navigator.Screen.CoffeeTab, Navigator.Screen.CommunityTab, Navigator.Screen.ProfileTab, Navigator.Screen.SettingsTab)
         assertEquals(5, tabs.map(::nativeTabIndex).filterNotNull().distinct().size)

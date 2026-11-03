@@ -246,7 +246,7 @@ class ContributionsRepositoryTest {
         assertEquals("Текст", body(requests("/api/ShopChangeRequests")[0]).getValue("payload").jsonObject.getValue("description").jsonPrimitive.content)
     }
 
-    @Test fun aBlankDescriptionIsSentAsNoTextAsTheLegacyFormDid() = runBlocking {
+    @Test fun aBlankDescriptionIsSentAsNoTextAsThePreviousFormDid() = runBlocking {
         reply = { HttpStatusCode.OK to created }
         repository().submitChange(ChangeDraft.Description("cafe", "   ")).getOrThrow()
         val payload = body(api.single()).getValue("payload").jsonObject

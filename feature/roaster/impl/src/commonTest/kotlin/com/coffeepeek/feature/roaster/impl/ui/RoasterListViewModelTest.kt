@@ -59,7 +59,7 @@ class RoasterListViewModelTest {
         assertEquals(setOf("a", "b"), model.state.value.favoriteKeys)
     }
 
-    @Test fun filtersMatchLegacyRulesAndTagsAreDistinctAndSorted() = runTest(dispatcher) {
+    @Test fun filtersMatchPreviousRulesAndTagsAreDistinctAndSorted() = runTest(dispatcher) {
         val repository = FakeRoasterRepository().apply { catalog = { Result.success(listOf(
             summary("a", "Alpha Roast", listOf(tag("light", 2), tag("decaf", 1))),
             summary("b", "Beta", listOf(tag("light", 2))),

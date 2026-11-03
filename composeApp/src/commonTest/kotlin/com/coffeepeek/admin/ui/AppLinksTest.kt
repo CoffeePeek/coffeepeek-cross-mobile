@@ -36,7 +36,7 @@ class AppLinksTest {
     }
 
     @Test
-    fun routesCoffeeAndLegacyShopLinks() {
+    fun routesCoffeeAndExistingShopLinks() {
         assertEquals(Navigator.Screen.CoffeeDetail("ethiopia"), appLinkScreen("https://coffeepeek.by/coffees/ethiopia"))
         assertEquals(Navigator.Screen.CoffeeDetail("ethiopia"), appLinkScreen("https://coffeepeek.by/coffees/ethiopia/?from=share#photos"))
         assertEquals(Navigator.Screen.ShopDetail("1801"), appLinkScreen("https://coffeepeek.by/shops/1801"))

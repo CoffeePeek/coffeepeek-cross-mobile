@@ -6,7 +6,7 @@ import kotlin.test.assertSame
 
 class ImageUrlResolutionTest {
     @Test
-    fun photoRouteUsesTheApiOriginWhileLegacyFileNamesKeepTheFileRoute() {
+    fun photoRouteUsesTheApiOriginWhilePreviousFileNamesKeepTheFileRoute() {
         val route = "/api/v1/check-ins/visit/photos/photo"
         assertEquals(ImageUrl(API_BASE_URL.trimEnd('/') + route), resolveImageData(route, API_BASE_URL))
         assertEquals(ImageUrl(API_BASE_URL + "api/file/photo.png"), resolveImageData("photo.png", API_BASE_URL))

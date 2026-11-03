@@ -17,7 +17,7 @@ import kotlin.test.*
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class ShopAuthorVisibilityTest {
-    @Test fun blockedIdsAndLegacySlugsAreFilteredWithoutErasingOwnHistory() = runTest {
+    @Test fun blockedIdsAndExistingSlugsAreFilteredWithoutErasingOwnHistory() = runTest {
         val visibility = Visibility(AuthorVisibilitySnapshot(blockedIds = setOf("id-a"), blockedSlugs = setOf("slug-b")))
         val a = visit("a", "id-a", "slug-a")
         val b = visit("b", null, "slug-b")

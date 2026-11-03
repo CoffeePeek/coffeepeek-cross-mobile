@@ -13,7 +13,7 @@ const val OTHER_DRINK = "other"
 
 enum class EditIssue { NoteTooLong, RatingOutOfRange, DrinkNameRequired, DrinkNameNotAllowed }
 
-/** The order the legacy form checked: note, rating, drink. */
+/** The order the previous form checked: note, rating, drink. */
 fun validateEdit(edit: PostEdit): EditIssue? = when {
     edit.text.trim().length > MAX_NOTE_LENGTH -> EditIssue.NoteTooLong
     edit.rating?.let(::outOfRange) == true -> EditIssue.RatingOutOfRange

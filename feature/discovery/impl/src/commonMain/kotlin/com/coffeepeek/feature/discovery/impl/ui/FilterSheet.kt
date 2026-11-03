@@ -70,7 +70,7 @@ import com.coffeepeek.feature.discovery.impl.search.SearchState
 
 /**
  * The sheet edits a draft: «Готово» applies it with one reload, closing it without that drops the draft. The kind of the place is a quick filter,
- * not a sheet section (as in the legacy sheet), and so is every switch; the sheet has the price, the roasters, the beans, the equipment, the brew methods
+ * not a sheet section (as in the previous sheet), and so is every switch; the sheet has the price, the roasters, the beans, the equipment, the brew methods
  * and the amenity tags.
  */
 @Composable

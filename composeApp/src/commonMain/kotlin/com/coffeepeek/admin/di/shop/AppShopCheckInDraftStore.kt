@@ -14,7 +14,7 @@ import kotlinx.coroutines.CancellationException
 import kotlin.time.Instant
 
 /** One app-owned adapter around the existing process store, not another persistent store.
- * Keep this instance across sheet recreation. Legacy logout/clear/replacement invalidates its guard.
+ * Keep this instance across sheet recreation. Logout, clear and replacement invalidate its guard.
  */
 internal class AppShopCheckInDraftStore(
     private val drafts: CheckInDraftStore,

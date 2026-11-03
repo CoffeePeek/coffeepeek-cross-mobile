@@ -21,7 +21,7 @@ internal data class RegisterState(
     /** The e-mail check answered "taken". */
     val emailTaken: Boolean = false,
     val passwordIssue: PasswordIssue? = null,
-    /** The single message a submit with invalid fields reports (the legacy priority); the button gating keeps it out of reach from the UI. */
+    /** The single message a submit with invalid fields reports (the previous priority); the button gating keeps it out of reach from the UI. */
     val reported: RegistrationIssue? = null,
     val failure: RequestFailure? = null,
     /** Why the last social sign-in failed; cleared by any edit. */

@@ -20,7 +20,7 @@ import kotlinx.coroutines.launch
 private const val PAGE_SIZE = 20
 
 /**
- * The legacy list: the first page of all three statuses is loaded together (tab visibility depends on all of them), each tab pages on its own, one
+ * The previous list: the first page of all three statuses is loaded together (tab visibility depends on all of them), each tab pages on its own, one
  * page at a time. The new rule: one account at a time. A change of account clears the lists and drops late answers; a guest is asked to sign in.
  */
 internal class ContributionsListViewModel(

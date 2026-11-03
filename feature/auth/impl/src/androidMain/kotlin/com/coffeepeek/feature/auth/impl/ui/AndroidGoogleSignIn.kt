@@ -18,7 +18,7 @@ import com.google.android.gms.common.api.CommonStatusCodes
 private const val Tag = "CoffeePeek-GoogleAuth"
 
 /**
- * The Google account chooser. A token goes to [onToken]; a failure goes to [onFailure] with the text the legacy launcher produced,
+ * The Google account chooser. A token goes to [onToken]; a failure goes to [onFailure] with the text the previous launcher produced,
  * which the domain classifier reads (the diagnostic codes of the data layer travel in it). A cancelled chooser reports nothing.
  */
 @Composable

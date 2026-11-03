@@ -54,7 +54,7 @@ internal class FeatureAccountScreenRenderer(
         )
     }
 
-    /** Legacy order: platform sign-out first, then the login redirect the root consumes on the next login-state change. */
+    /** Order: platform sign-out first, then the login redirect the root consumes on the next login-state change. */
     internal fun endSession() {
         appScope.launch { platformSignOut(); openLogin() }
     }

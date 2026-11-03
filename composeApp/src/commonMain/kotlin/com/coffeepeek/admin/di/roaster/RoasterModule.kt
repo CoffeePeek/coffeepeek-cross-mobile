@@ -19,7 +19,7 @@ import org.koin.dsl.module
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 
-/** Same persisted slot as the legacy catalogue cache, so both implementations share saved data. */
+/** The catalogue cache keeps its persisted slot, so saved data survives updates. */
 internal class SettingRoasterCatalogStore(private val settings: SettingRepository, private val key: String) : RoasterCatalogStore {
     override suspend fun read(): String? = settings.read(key)?.value?.takeIf { it.isNotBlank() && it != "null" }
     override suspend fun write(value: String) = settings.save(Setting(key, value))

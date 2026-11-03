@@ -24,7 +24,7 @@ import kotlin.test.assertTrue
 
 /**
  * What the user sees when the sign-in request itself fails (no response at all), through the real client stack and
- * `AuthService`. Documents the legacy mapping; the migrated code must keep or deliberately improve it.
+ * `AuthService`. Documents the existing mapping; the migrated code must keep or deliberately improve it.
  */
 class AuthTransportFailureTest {
     private fun loginCopy(failure: LoginFailure) = when (failure) {

@@ -16,7 +16,7 @@ import kotlinx.coroutines.flow.map
 
 /**
  * Adapts the server favorites store. Authentication gating, in-flight de-duplication, account guards and the
- * favorite analytics stay in [FavoriteInteractions], exactly as for the legacy roaster screens.
+ * favorite analytics stay in [FavoriteInteractions], as for every roaster screen.
  */
 internal class RoasterFavoritesAdapter(
     private val favorites: RoasterFavorites,

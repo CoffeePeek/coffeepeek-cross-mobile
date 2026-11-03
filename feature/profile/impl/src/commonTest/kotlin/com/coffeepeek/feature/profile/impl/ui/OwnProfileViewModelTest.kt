@@ -25,7 +25,7 @@ import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
-/** Port of the account half of the legacy `ProfileViewModelTest`. */
+/** Port of the account half of the previous `ProfileViewModelTest`. */
 @OptIn(ExperimentalCoroutinesApi::class)
 class OwnProfileViewModelTest {
     private val dispatcher = StandardTestDispatcher()

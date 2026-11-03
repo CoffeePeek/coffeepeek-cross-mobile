@@ -28,7 +28,7 @@ import kotlin.test.*
 class RoasterModuleTest {
     @get:Rule val temporary = TemporaryFolder()
 
-    @Test fun moduleBuildsPublicReadersAndRendererWithoutLegacyShopRepository() = runTest {
+    @Test fun moduleBuildsPublicReadersAndRendererWithoutExistingShopRepository() = runTest {
         val fixture = fixture()
         try {
             val koin = fixture.app.koin

@@ -29,7 +29,7 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
-/** The new repository must do what the legacy one did: same requests, same persistence order, same sign-out rules. */
+/** The new repository must do what the previous one did: same requests, same persistence order, same sign-out rules. */
 class AuthRepositoryImplTest {
     // JWT payloads {"sub":"user-a"} and {"sub":"user-b"}
     private val tokenA = "header.eyJzdWIiOiJ1c2VyLWEifQ.signature"

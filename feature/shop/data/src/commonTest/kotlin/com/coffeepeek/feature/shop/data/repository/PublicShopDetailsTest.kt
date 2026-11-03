@@ -10,7 +10,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class PublicShopDetailsTest {
-    @Test fun summaryKeepsCardCoverAndLegacyTagOrderWithoutLoadingMenuCatalog(): Unit = runBlocking {
+    @Test fun summaryKeepsCardCoverAndPreviousTagOrderWithoutLoadingMenuCatalog(): Unit = runBlocking {
         var calls = 0
         val client = HttpClientFactory(MockEngine { request ->
             assertEquals("/api/CoffeeShops/cafe", request.url.encodedPath)

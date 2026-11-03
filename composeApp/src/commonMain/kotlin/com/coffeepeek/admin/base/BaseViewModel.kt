@@ -18,7 +18,7 @@ import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.getString
 
-/** Legacy app ViewModel base; migrated features use their own lifecycle-owned state. */
+/** ViewModel base of the root navigation state; features own their lifecycle-bound state. */
 abstract class BaseViewModel : ViewModel(), Closeable {
     protected val workScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
 

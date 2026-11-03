@@ -242,7 +242,7 @@ class SandboxApplicationBackendTest {
         assertTrue(json(client.client.get("/api/v1/me/blocks") { parameter("pageSize", 100) })["items"]!!.jsonArray.isEmpty())
     } }
 
-    @Test fun slugResolvesToOpaqueAuthorIdForLegacyContent() = runTest { fixture { _, client ->
+    @Test fun slugResolvesToOpaqueAuthorIdForExistingContent() = runTest { fixture { _, client ->
         val profile = json(client.client.get("/api/Users/${SandboxApplicationBackend.FRIEND_SLUG}"))
         assertEquals(friend, profile["authorId"]!!.jsonPrimitive.content)
         assertFalse(profile["isBlockedByViewer"]!!.jsonPrimitive.boolean)

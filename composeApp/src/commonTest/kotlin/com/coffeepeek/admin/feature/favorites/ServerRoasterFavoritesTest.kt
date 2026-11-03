@@ -58,7 +58,7 @@ class ServerRoasterFavoritesTest {
         assertEquals(address, saved.address)
         favorites.setFavorite(saved.copy(id = "catalog-guid"), false).getOrThrow()
         assertEquals(Triple(FavoriteKind.Roaster, address, false), state.lastMutation)
-        assertTrue(favorites.setFavorite(CatalogItem("legacy-guid", "Legacy"), true).isFailure)
+        assertTrue(favorites.setFavorite(CatalogItem("existing-guid", "Existing"), true).isFailure)
     }
 
     @Test fun preservesRemovablePublicAddressWhenCatalogMetadataIsUnavailable() = runBlocking {

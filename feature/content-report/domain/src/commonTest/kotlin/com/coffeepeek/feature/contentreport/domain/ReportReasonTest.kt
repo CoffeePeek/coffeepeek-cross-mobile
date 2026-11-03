@@ -8,7 +8,7 @@ class ReportReasonTest {
         assertFalse(validReportReason(""))
         assertFalse(validReportReason(" \n\t "))
     }
-    @Test fun bothBoundsAndTrimmingMatchTheLegacyContract() {
+    @Test fun bothBoundsAndTrimmingMatchThePreviousContract() {
         assertTrue(validReportReason(" x "))
         assertTrue(validReportReason("  ${"x".repeat(2000)}  "))
         assertFalse(validReportReason("x".repeat(2001)))

@@ -40,7 +40,7 @@ private const val PLACEMENT = "discovery"
 internal enum class SearchPurpose { Discovery, CheckInPicker }
 
 /**
- * The shop search as the legacy feed kept it (the debounced query, the filters, the city, nearby, paging, the optimistic favorite), with three differences.
+ * The shop search as the previous feed kept it (the debounced query, the filters, the city, nearby, paging, the optimistic favorite), with three differences.
  * One account at a time: a change of account drops the visited and favorites filters and reloads, a guest is sent to sign in for them. A query typed in the first
  * debounce window is no longer swallowed. Failed searches retain their error while UI presents localized retry copy.
  */

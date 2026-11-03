@@ -1723,3 +1723,18 @@ source `89778c23` + этот срез. Подробный scope/остаток �
   Паритет `values`/`values-be` на 2026-11-03 полный; автоматической проверки в репозитории нет (скрипт сознательно не добавлен).
 - Документация: `AGENTS.md`, `ARCHITECTURE.md`, `README.md`, `CONTRIBUTING.md`, README избранного в `composeApp` и
   `build-logic/ANDROID_RUNTIME_PACKAGING.md` описывают структуру без `modules/`.
+
+## L5, вторая итерация — остатки мёртвого кода и формулировок — 2026-11-03
+
+- Удалены неиспользуемые общие компоненты и утилиты `composeApp` (`ui/component/*`, `NumberFormat`, `ReviewSync`,
+  `SizeExt`, `SizeObserver`, `ValidationUtils`, `theme/Typography.kt`, `CheckInFlowRecreation*`, `MapZoneClusters`),
+  модуль `core/coroutines`, локальное хранилище избранного, слайс записи отзывов в `feature/shop`, старые черновики
+  отзывов (`ReviewDraftStore`) — остался только `session/OldReviewDrafts`, который чистит ключи `review_draft:` при выходе.
+- `composeApp` использует токены, тему и стекло дизайн-системы напрямую; обёртки совместимости и мёртвые члены
+  интерфейсов удалены. Ключи ресурсов `legacy_*` переименованы.
+- Слово «legacy» убрано из комментариев, имён тестов и идентификаторов в `feature/*`, `core/*` и `composeApp`.
+  Остались только описания реально хранящихся старых данных: `LegacyCredentialRows`, `Migrations.kt` (таблицы журнала
+  заварок), миграционный тест базы, `useLegacyPackaging` в Gradle.
+- Тесты мёртвого кода удалены после сопоставления покрытия; перенесённое покрытие — в тестах репозиториев
+  (`ContributionCatalogSourceTest`, `ShopCheckInRepositoryTest`, `AuthRepositoryImplTest`, `DiscoveryRepositoryTest`,
+  `ContributionsRepositoryTest`) и `MapCarouselStartTest`.

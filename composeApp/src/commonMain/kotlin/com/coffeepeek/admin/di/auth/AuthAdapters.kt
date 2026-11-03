@@ -14,7 +14,7 @@ class UserSessionLocalUserData(private val cleaner: UserSessionCleaner) : LocalU
     override suspend fun clear() = cleaner.clear()
 }
 
-/** The analytics side of sign-in: the same events, properties and consent handling the legacy view models used. */
+/** The analytics side of sign-in: events, properties and consent handling. */
 class AppAuthAnalytics : AuthAnalytics {
     override fun signedIn(userId: String?, method: SignInMethod, entry: AuthEntry, email: String?) {
         signInAnalytics(

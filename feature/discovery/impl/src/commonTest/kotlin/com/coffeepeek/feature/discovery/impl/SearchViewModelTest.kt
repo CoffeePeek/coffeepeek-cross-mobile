@@ -536,7 +536,7 @@ class SearchViewModelTest {
         assertEquals(listOf("isNew"), analytics.filters.last().second)
     }
 
-    @Test fun theAnalyticsValuesFollowTheLegacyKeys() {
+    @Test fun theAnalyticsValuesFollowThePreviousKeys() {
         assertEquals(setOf("isOpen", "isNew", "visitedOnly", "favoritesOnly"), DiscoveryFilters().analyticsValues().keys)
         val all = DiscoveryFilters(
             cityId = "minsk", kind = ShopKind.CoffeeBar, openOnly = true, nearbyOnly = true, priceLevel = PriceLevel.Expensive, minRating = 4.0,

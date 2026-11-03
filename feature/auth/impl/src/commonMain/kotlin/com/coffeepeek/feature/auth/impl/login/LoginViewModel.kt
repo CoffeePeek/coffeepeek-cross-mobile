@@ -16,7 +16,7 @@ import com.coffeepeek.feature.auth.domain.validateEmail
 import com.coffeepeek.feature.auth.domain.validatePassword
 
 /**
- * E-mail sign-in as the legacy screen did it: both fields are checked at once, the e-mail is trimmed and the password sent as typed,
+ * E-mail sign-in as the previous screen did it: both fields are checked at once, the e-mail is trimmed and the password sent as typed,
  * a shown field error is validated live while it is shown, and the request error is cleared by any edit.
  */
 internal class LoginViewModel(

@@ -91,7 +91,7 @@ internal class ShopBrowsingSession(
         if (!loggedIn) return@withSession Result.success(ShopViewer(false, null))
         val profile = accounts.loadOwnProfile(forceRefresh = false)
         profile.exceptionOrNull()?.let { if (it is CancellationException) throw it }
-        // Preserve legacy fallback: personal check-in IDs can establish ownership if profile lookup fails.
+        // Fallback: personal check-in IDs can establish ownership if profile lookup fails.
         Result.success(ShopViewer(true, profile.getOrNull()?.address?.slug))
     }
 

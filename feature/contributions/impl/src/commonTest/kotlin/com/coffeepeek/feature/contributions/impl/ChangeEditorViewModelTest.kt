@@ -227,9 +227,9 @@ class ChangeEditorViewModelTest {
         assertTrue(repository.drafts.isEmpty())
     }
 
-    @Test fun aLegacyRequestDoesNotBorrowTheCurrentShopsRevision() = runTest(dispatcher) {
+    @Test fun aPreviousRequestDoesNotBorrowTheCurrentShopsRevision() = runTest(dispatcher) {
         repository.change = { Result.success(request(it, ChangeSection.Menu, ChangePayload(menu = ChangeMenu()))) }
-        val vm = model(ChangeSection.Menu, requestId = "legacy")
+        val vm = model(ChangeSection.Menu, requestId = "previous")
         assertEquals(EditorLoadError.Failed, vm.state.value.loadError)
         vm.send(ChangeEditorAction.Submit, scope = this)
         assertTrue(repository.drafts.isEmpty())

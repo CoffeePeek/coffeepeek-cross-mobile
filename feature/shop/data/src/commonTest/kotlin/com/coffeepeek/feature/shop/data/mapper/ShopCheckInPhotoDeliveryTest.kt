@@ -30,11 +30,11 @@ class ShopCheckInPhotoDeliveryTest {
         assertEquals(listOf("https://api.example/detail-a", "https://api.example/original-b?signature=issued"), visit.photoDetailUrls)
     }
 
-    @Test fun missingManifestKeepsLegacyFallbackButEmptyManifestDoesNot() {
+    @Test fun missingManifestKeepsPreviousFallbackButEmptyManifestDoesNot() {
         val visit = decode("""{"id":"visit","photos":[
-          {"url":"/legacy"}, {"url":"/empty","variants":[]}
+          {"url":"/previous"}, {"url":"/empty","variants":[]}
         ],"drinkPhotoUrl":"/cup","drinkPhotoVariants":[]}""")
-        assertEquals(listOf("https://api.example/legacy", ""), visit.photoThumbnailUrls)
+        assertEquals(listOf("https://api.example/previous", ""), visit.photoThumbnailUrls)
     }
 
 

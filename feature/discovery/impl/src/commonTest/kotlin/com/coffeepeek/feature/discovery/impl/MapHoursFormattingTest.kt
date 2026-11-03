@@ -7,7 +7,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNull
 
 class MapHoursFormattingTest {
-    @Test fun intervalRetainsLegacySpacingAndDropsSeconds() {
+    @Test fun intervalRetainsPreviousSpacingAndDropsSeconds() {
         assertEquals("09:00 – 23:30", MapOpeningHours(false, "09:00:00", "23:30:59").intervalLabel())
         assertEquals("9:00 – 21:00", MapOpeningHours(false, "9:00", "21:00").intervalLabel())
     }

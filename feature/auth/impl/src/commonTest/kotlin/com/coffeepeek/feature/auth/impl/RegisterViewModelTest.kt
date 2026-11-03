@@ -162,7 +162,7 @@ class RegisterViewModelTest {
         assertEquals(RequestFailure(null), vm.state.value.failure)
     }
 
-    @Test fun anInvalidSubmitReportsOneMessageByTheLegacyPriorityAndSendsNothing() = runTest(dispatcher) {
+    @Test fun anInvalidSubmitReportsOneMessageByThePreviousPriorityAndSendsNothing() = runTest(dispatcher) {
         val auth = FakeAuthRepository(); val analytics = FakeAnalytics(); val vm = model(auth, analytics)
         vm.onAction(RegisterAction.Submit); runCurrent()
         assertEquals(RegistrationIssue.NameRequired, vm.state.value.reported)

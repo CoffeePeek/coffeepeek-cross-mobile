@@ -112,7 +112,7 @@ private fun ShopFavorite(selected: Boolean, enabled: Boolean, host: DiscoveryHos
         }, modifier = host.exposure(Modifier, DiscoveryExposure.Favorite), enabled = enabled, overImage = true)
 }
 
-/** «350 м», «1,2 км»: the legacy wording, tenths of a kilometer with a comma whatever the locale. */
+/** «350 м», «1,2 км»: the previous wording, tenths of a kilometer with a comma whatever the locale. */
 @Composable
 internal fun distanceLabel(meters: Double): String {
     if (meters < 1000) return stringResource(Res.string.discovery_distance_meters, meters.roundToInt())

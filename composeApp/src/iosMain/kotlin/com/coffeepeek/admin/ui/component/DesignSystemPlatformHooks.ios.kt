@@ -107,7 +107,7 @@ private object IosNativePhotoSourcePresenter : CoffeePeekNativePhotoSourcePresen
         NativePhotoSourceSheet(title, onGallery, onCamera, onDismiss)
 }
 
-/** Haptics and the status-bar scroll-to-top bridge of the legacy components. */
+/** Haptics and the status-bar scroll-to-top bridge of the shared components. */
 private object IosPlatformEffects : CoffeePeekPlatformEffects {
     override fun haptic(event: CoffeePeekHaptic) = platformHaptic(
         when (event) {
@@ -121,7 +121,7 @@ private object IosPlatformEffects : CoffeePeekPlatformEffects {
     override fun ScrollToTop(state: LazyListState) = PlatformScrollToTop(state)
 }
 
-/** UIKit traits, AutoFill content types and the keyboard "Done" bar of the legacy fields. */
+/** UIKit traits, AutoFill content types and the keyboard "Done" bar of the shared fields. */
 private object IosKeyboardPresenter : CoffeePeekKeyboardPresenter {
     override fun textInputOptions(options: KeyboardOptions, role: CoffeePeekInputRole): KeyboardOptions = when (role) {
         CoffeePeekInputRole.Default -> platformTextInputOptions(options)
@@ -133,7 +133,7 @@ private object IosKeyboardPresenter : CoffeePeekKeyboardPresenter {
     override fun DoneAccessory(visible: Boolean, onDone: () -> Unit) = NativeKeyboardDoneAccessory(visible, onDone)
 }
 
-/** The UIKit glass buttons, UIMenu and spinner of the legacy controls (names of the glyph enums match). */
+/** The UIKit glass buttons, UIMenu and spinner of the shared controls (names of the glyph enums match). */
 private object IosNativeControlsPresenter : CoffeePeekNativeControlsPresenter {
     @Composable
     override fun MapControlButton(icon: CoffeePeekGlassIcon, onClick: () -> Unit, contentDescription: String, modifier: Modifier): Boolean {

@@ -30,7 +30,7 @@ class ApiEnvelopeTest {
         assertEquals(Item("a"), response.envelopeData<Item> { IllegalArgumentException(it) })
     }
 
-    @Test fun capitalizedLegacyEnvelopeFieldsRemainReadable() = runBlocking<Unit> {
+    @Test fun capitalizedPreviousEnvelopeFieldsRemainReadable() = runBlocking<Unit> {
         val http = client(HttpStatusCode.OK, """{"IsSuccess":true,"Data":{"id":"a"}}""")
         try {
             assertEquals(Item("a"), http.get("/x").envelopeData<Item> { IllegalArgumentException(it) })

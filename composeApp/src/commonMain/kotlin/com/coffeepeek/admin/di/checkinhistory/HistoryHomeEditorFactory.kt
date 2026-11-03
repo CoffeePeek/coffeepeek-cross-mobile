@@ -15,7 +15,7 @@ import com.coffeepeek.feature.homecheckin.api.HomeCheckInEditorEntry
 import com.coffeepeek.feature.homecheckin.domain.repository.HomePreparationRepository
 import com.coffeepeek.feature.homecheckin.impl.createHomeCheckInDetailEntry
 
-/** App-owned assembly; history sees neither the Home ViewModel nor a legacy writer. */
+/** App-owned assembly; history sees neither the Home ViewModel nor a second writer. */
 internal fun interface HistoryHomeEditorFactory {
     fun create(lease: CheckInHistorySession, tracker: CheckInTracker?): HistoryHomeEntries
 }

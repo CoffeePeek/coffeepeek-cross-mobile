@@ -28,7 +28,7 @@ class CityPreferenceTest {
     }
 }
 
-/** Parity tests for the stateful half of the legacy `CityPreference` (settings migration step 1). */
+/** Parity tests for the stateful half of the existing `CityPreference` (settings migration step 1). */
 class CityPreferenceStorageTest {
     private val cities = listOf("minsk", "grodno")
     private suspend fun await(condition: () -> Boolean) =

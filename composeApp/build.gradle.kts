@@ -551,7 +551,6 @@ androidComponents {
                 "com.coffeepeek.feature.shop.impl.ShopCheckInCreateApiImplKt",
                 "com.coffeepeek.admin.di.checkinhistory.CheckInHistoryModuleKt",
                 "com.coffeepeek.admin.di.checkinhistory.AppCheckInHistoryCalendar",
-                "com.coffeepeek.admin.di.homecheckin.HomeCheckInDataModuleKt",
                 "com.coffeepeek.admin.di.checkinhistory.FeatureCheckInHistoryScreenRenderer",
                 "com.coffeepeek.admin.di.checkinhistory.FeatureCheckInHistoryScreenRenderer",
                 "com.coffeepeek.admin.di.checkinhistory.CheckInHistorySession",

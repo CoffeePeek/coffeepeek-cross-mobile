@@ -27,7 +27,7 @@ import com.coffeepeek.feature.homecheckin.api.HomeCheckInEditorEntry
 import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 
 /**
- * A new flow lifetime per opening. Never constructs legacy Home state or a second writer.
+ * A new flow lifetime per opening. Never constructs Home state or a second writer.
  * The picker offers "Пачку на полку", which hands over to the shelf's scan.
  */
 internal class FeatureCheckInCreateFlowRenderer(

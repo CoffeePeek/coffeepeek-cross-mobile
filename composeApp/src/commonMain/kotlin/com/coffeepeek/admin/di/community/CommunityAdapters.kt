@@ -24,7 +24,7 @@ import com.coffeepeek.feature.community.domain.model.PostVisibility
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
-/** The account key is the user id (else the token) of an active session, null for a guest — the key the legacy feed used. */
+/** The account key is the user id (else the token) of an active session, null for a guest. */
 class SessionCommunityAccount(private val sessions: SessionReader, private val accounts: ProfileAccountPort) : CommunityAccount {
     private fun key(session: Session?): String? = if (session != null && sessions.isActiveSession(session)) session.userId ?: session.accessToken else null
     override val accountKey: Flow<String?> = sessions.observeSession().map(::key)
@@ -36,7 +36,7 @@ class ShopCommunityDrinks(private val shops: ShopCheckInRepository) : ConsumedDr
     override suspend fun load(): Result<List<DrinkOption>> = shops.getDrinkOptions().map { drinks -> drinks.map { DrinkOption(it.slug, it.nameRu, it.nameEn) } }
 }
 
-/** The feed and edit events of the legacy screen, with the same names and properties. */
+/** The feed and edit analytics events. */
 class AppCommunityAnalytics : CommunityAnalytics {
     private var tracker: CheckInTracker? = null
 

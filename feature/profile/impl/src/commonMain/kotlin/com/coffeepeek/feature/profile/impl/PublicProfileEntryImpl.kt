@@ -18,7 +18,7 @@ import kotlin.uuid.Uuid
 
 /**
  * The caller owns destination lifetime (destroy its ViewModelStore on removal), root navigation, sign-in and sharing; the app supplies
- * the account, author visibility, author actions and the legacy-rendered pieces ([ProfileSlots]). No network client is created here.
+ * the account, author visibility, author actions and the previous-rendered pieces ([ProfileSlots]). No network client is created here.
  */
 fun createPublicProfileEntry(
     data: PublicProfileData,

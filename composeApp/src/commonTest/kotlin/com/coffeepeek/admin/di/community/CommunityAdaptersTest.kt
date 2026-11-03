@@ -54,7 +54,7 @@ class CommunityAdaptersTest {
         assertEquals(listOf("cappuccino"), drinks.map { it.slug }); assertEquals("Капучино", drinks.single().nameRu); assertEquals("Cappuccino", drinks.single().nameEn)
     }
 
-    @Test fun feedEventsKeepTheLegacyNamesAndProperties() = runTest {
+    @Test fun feedEventsKeepTheExistingNamesAndProperties() = runTest {
         val sdk = startAnalytics()
         val analytics = AppCommunityAnalytics()
         analytics.feedAction(FeedAction.Refresh, FeedTrigger.Gesture)
@@ -73,7 +73,7 @@ class CommunityAdaptersTest {
         assertEquals("feed_like", sdk.events.single { it.first == "auth_gate_shown" }.second["feature"])
     }
 
-    @Test fun theEditFunnelReportsTheDiaryEditFlowLikeTheLegacyEditor() = runTest {
+    @Test fun theEditFunnelReportsTheDiaryEditFlowLikeTheExistingEditor() = runTest {
         val sdk = startAnalytics()
         val analytics = AppCommunityAnalytics()
         analytics.editOpened()

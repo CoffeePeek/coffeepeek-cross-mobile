@@ -36,10 +36,10 @@ class AndroidProfilePortsTest {
         assertFalse(ProfileAuthorVisibility.None.current().hides("a", "b"))
     }
 
-    @Test fun favoritesOpenedEmitsExactlyTheLegacyEvent() = runTest {
-        val legacy = record { Analytics.track(AnalyticsEvent.FAVORITES_OPENED, "entry_point" to "profile") }
+    @Test fun favoritesOpenedEmitsExactlyTheExistingEvent() = runTest {
+        val existing = record { Analytics.track(AnalyticsEvent.FAVORITES_OPENED, "entry_point" to "profile") }
         val migrated = record { AppProfileAnalytics.favoritesOpened() }
-        ParityHarness.assertParity("profile: open all favorites", legacy, migrated)
+        ParityHarness.assertParity("profile: open all favorites", existing, migrated)
         assertEquals(1, migrated.size)
     }
 }

@@ -13,9 +13,9 @@ import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 
-/** Server-backed favorite writes: `TrackedFavoriteInteractions` (legacy) vs `trackFavoriteMutation` (migrated). */
+/** Server-backed favorite writes: `TrackedFavoriteInteractions` (reference) vs `trackFavoriteMutation` (migrated). */
 class FavoritesAnalyticsParityTest {
-    private suspend fun TestScope.legacy(roaster: Boolean, desired: Boolean, result: Result<Unit>): List<WireEvent> {
+    private suspend fun TestScope.reference(roaster: Boolean, desired: Boolean, result: Result<Unit>): List<WireEvent> {
         val sessions = CheckInTestSessions(Session("token", userId = "fixture-owner"))
         return record {
             TrackedFavoriteInteractions(sessions, backgroundScope)
@@ -29,7 +29,7 @@ class FavoritesAnalyticsParityTest {
     }
 
     private fun scenario(name: String, roaster: Boolean, desired: Boolean, result: Result<Unit>) = runTest {
-        ParityHarness.assertParity(name, legacy(roaster, desired, result), migrated(roaster, desired, result))
+        ParityHarness.assertParity(name, reference(roaster, desired, result), migrated(roaster, desired, result))
     }
 
     @Test fun shopAdded() = scenario("shop added", roaster = false, desired = true, Result.success(Unit))

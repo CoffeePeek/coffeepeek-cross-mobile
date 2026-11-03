@@ -28,7 +28,7 @@ class AppVersionResponseTest {
             assertNull(AppVersionResponse(true, AppVersionDto(140, 120, bad)).toUpdate(), bad)
         }
         assertEquals(AppUpdate(140, 140, "https://example.com/app.apk"), AppVersionResponse(true, AppVersionDto(140, 140, "https://example.com/app.apk")).toUpdate())
-        // Characterized quirks of the legacy host check: Ktor parses these as having a host, so they are accepted.
+        // Characterized quirks of the previous host check: Ktor parses these as having a host, so they are accepted.
         for (odd in listOf("https:///app.apk", "https://")) {
             assertEquals(odd, AppVersionResponse(true, AppVersionDto(140, 120, odd)).toUpdate()?.url, odd)
         }

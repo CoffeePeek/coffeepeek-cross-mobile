@@ -32,7 +32,7 @@ import kotlin.uuid.Uuid
 
 /**
  * Construct once and call [RoasterDiscoveryEntry.Section] and [RoasterDiscoveryEntry.Search] in the same
- * ViewModel-store owner: both use one list ViewModel, like the legacy Discovery. The application supplies
+ * ViewModel-store owner: both use one list ViewModel, like the previous Discovery. The application supplies
  * data, analytics and haptics; feature owns search/empty/error content and creates no network client or navigation.
  */
 fun createRoasterDiscoveryEntry(

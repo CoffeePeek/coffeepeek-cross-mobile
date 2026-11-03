@@ -43,7 +43,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
-import com.coffeepeek.admin.theme.ThemeMode as LegacyThemeMode
+import com.coffeepeek.admin.theme.ThemeMode as AppThemeMode
 
 class SettingsPortsTest {
     private suspend fun await(condition: () -> Boolean) =
@@ -56,7 +56,7 @@ class SettingsPortsTest {
         for (mode in ThemeMode.entries) {
             port.set(mode)
             assertEquals(mode, port.current())
-            assertEquals(LegacyThemeMode.valueOf(mode.name), ThemeManager.themeMode.value)
+            assertEquals(AppThemeMode.valueOf(mode.name), ThemeManager.themeMode.value)
             assertEquals(mode, port.observe().first())
         }
         port.set(ThemeMode.SYSTEM)
@@ -223,7 +223,7 @@ class SettingsPortsTest {
         assertEquals(listOf(url), opened)
     }
 
-    @Test fun externalActionsUseTheLegacyTargets() {
+    @Test fun externalActionsUseTheExistingTargets() {
         val opened = mutableListOf<String>(); val shared = mutableListOf<String>()
         val actions = AppSettingsExternalActions(openUrl = opened::add, shareText = shared::add)
         actions.openSupport(); actions.openTerms(); actions.openPrivacy(); actions.shareApp()

@@ -64,7 +64,7 @@ interface ProfileAuthorVisibility {
     }
 }
 
-/** Profile-owned analytics. The legacy owner emitted one event; screen views come from the app's route mapping. */
+/** Profile-owned analytics. The previous owner emitted one event; screen views come from the app's route mapping. */
 interface ProfileAnalyticsPort {
     /** The "all favorites" action on the own profile: exactly one `favorites_opened {entry_point: profile}`. */
     fun favoritesOpened()

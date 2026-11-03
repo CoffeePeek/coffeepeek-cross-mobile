@@ -184,7 +184,7 @@ class ContributionCatalogSourceTest {
           "items":[{"slug":"flat","availability":"unknown"},{"slug":"latte","availability":"2","price":"4,5"},{"slug":"espresso","availability":"Present","price":3.2},{"slug":"mystery","availability":"1"}],
           "photos":[{"id":"m2","fullUrl":"https://menu-full2","sortIndex":2},{"id":"m1","urls":{"detail":"https://menu-detail","fullscreen":"https://menu-big"},"sortIndex":1},{"id":"m3"}]}}"""
 
-    @Test fun theShopSnapshotCarriesTheEditablePartsInTheLegacyShape() = runBlocking {
+    @Test fun theShopSnapshotCarriesTheEditablePartsInThePreviousShape() = runBlocking {
         defaults()
         replies["/api/CoffeeShops/cafe-slug"] = { ok(shopBody) }
         val snapshot = source().shop("cafe-slug").getOrThrow()

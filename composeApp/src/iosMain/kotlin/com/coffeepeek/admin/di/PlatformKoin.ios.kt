@@ -44,7 +44,6 @@ import com.coffeepeek.admin.locator.Locator
 actual fun initPlatformKoin() {
     initKoin(
         platformModules = listOf(contributionsModule(), serverFavoritesModule(), coffeeModule(), collectionsModule(), shopBrowsingModule(), shopCheckInModule(AppShopCheckInDateFormatter()), homeCheckInModule(), checkInHistoryModule(), contentReportModule(), iosShelfModule()),
-        // Owners move to their migrated modules one at a time; the others keep the legacy renderers.
         checkInRenderers = featureCheckInRendererFactories(),
         contentReportRendererFactory = { get<FeatureContentReportRenderer>() },
         shopReportRendererFactory = ::iosShopReportRenderer,

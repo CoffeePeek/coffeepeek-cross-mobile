@@ -9,7 +9,7 @@ import com.coffeepeek.feature.roaster.api.RoasterScreenAnalytics
 import com.coffeepeek.feature.roaster.impl.ui.model.RoasterListAction
 import com.coffeepeek.feature.roaster.impl.ui.model.RoasterListItem
 
-/** A card bound to list actions; requests its details once the list settled, like the legacy list. */
+/** A card bound to list actions; requests its details once the list settled, like the previous list. */
 @Composable
 internal fun RoasterListItemCard(
     item: RoasterListItem,

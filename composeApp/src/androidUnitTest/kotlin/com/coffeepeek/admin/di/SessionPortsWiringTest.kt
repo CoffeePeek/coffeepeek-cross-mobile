@@ -42,8 +42,8 @@ class SessionPortsWiringTest {
         }
         single<LegacyCredentialRows> {
             object : LegacyCredentialRows {
-                override suspend fun read(key: String): SessionCredentials? = error("No legacy reads")
-                override suspend fun delete(key: String) = error("No legacy deletion")
+                override suspend fun read(key: String): SessionCredentials? = error("No existing reads")
+                override suspend fun delete(key: String) = error("No existing deletion")
             }
         }
     }

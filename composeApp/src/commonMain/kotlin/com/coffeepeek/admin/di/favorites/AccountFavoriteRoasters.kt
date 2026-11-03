@@ -54,7 +54,7 @@ internal class AccountFavoriteRoasters(
                     ownerJob = launch {
                         var photos: Job? = null
                         val currentRows = MutableStateFlow<Snapshot?>(null)
-                        // Match the legacy screen's per-owner, per-observation detail cache.
+                        // Details are cached per owner and per observation.
                         val photoCache = MutableStateFlow<Map<String, String?>>(emptyMap())
                         val rowsLock = Mutex()
                         try {

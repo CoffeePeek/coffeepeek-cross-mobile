@@ -258,7 +258,7 @@ private fun SuccessStep(email: String, onGoToLogin: () -> Unit) {
     AuthPrimaryButton(text = stringResource(Res.string.auth_go_to_login), onClick = onGoToLogin)
 }
 
-/** The request error: the server's own message as the legacy dialog showed it, or the generic text of the step. */
+/** The request error: the server's own message as the previous dialog showed it, or the generic text of the step. */
 @Composable
 private fun FailureText(state: RegisterState, generic: StringResource) {
     val failure = state.failure ?: return

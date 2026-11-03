@@ -1,6 +1,6 @@
 package com.coffeepeek.feature.roaster.impl.ui.data
 
-// Link rules copied 1:1 from the legacy roaster screen.
+// Link rules copied 1:1 from the previous roaster screen.
 internal fun normalizeInstagramUrl(value: String): String {
     val trimmed = value.trim()
     if (trimmed.startsWith("http://", ignoreCase = true) || trimmed.startsWith("https://", ignoreCase = true)) return trimmed

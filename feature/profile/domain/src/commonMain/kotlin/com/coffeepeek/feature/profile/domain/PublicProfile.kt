@@ -72,7 +72,7 @@ data class PublicProfileConnectionsPage(
 class PublicProfileAuthenticationRequired : Exception("Войдите в аккаунт, чтобы подписаться")
 class PublicProfileUnavailable : Exception("Профиль недоступен")
 
-/** Canonical address of a public entity, independent of the app's legacy model. */
+/** Canonical address of a public entity, independent of the app's previous model. */
 data class ProfileAddress(val slug: String, val canonicalPath: String, val revision: Int, val isAlias: Boolean)
 
 interface PublicProfileData {

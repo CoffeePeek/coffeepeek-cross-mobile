@@ -31,7 +31,7 @@ internal class AppHomeCheckInCatalog(
         ?: Result.success(emptyList())
 }
 
-/** Hide legacy transport failures/messages at this composition boundary. */
+/** Hide transport failures and their messages at this composition boundary. */
 private fun <T> Result<T>.homeCatalogResult(): Result<T> = fold({ Result.success(it) }, { error ->
     if (error is CancellationException) throw error
     if (error is HomePreparationFailure) Result.failure(error)
@@ -46,7 +46,7 @@ private fun <T> Result<T>.homeCatalogResult(): Result<T> = fold({ Result.success
     }, statusCode = safeAnalyticsError(error).status))
 })
 
-/** Guards the prepared repository without routing writes back to the legacy Home writer. */
+/** Guards the repository so that writes keep one owner. */
 internal class AppHomeCheckInRepository(
     private val lease: CheckInHistorySession,
     private val source: HomePreparationRepository,

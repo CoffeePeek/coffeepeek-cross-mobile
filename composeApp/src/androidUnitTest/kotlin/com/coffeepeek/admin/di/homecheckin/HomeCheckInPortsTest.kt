@@ -28,7 +28,7 @@ class HomeCheckInPortsTest {
         assertEquals(listOf("query"), queries)
         val method = catalog.brewMethods().getOrThrow().single()
         assertEquals("hario-v60", method.code); assertEquals("Hario V60", method.name)
-        assertEquals(setOf("pour_over"), method.legacyCodes)
+        assertEquals(setOf("pour_over"), method.previousCodes)
     }
 
     @Test fun repositoryKeepsResultsAndTokenRenewalButRevokedLeaseNeverStartsAnotherCall() = runTest {

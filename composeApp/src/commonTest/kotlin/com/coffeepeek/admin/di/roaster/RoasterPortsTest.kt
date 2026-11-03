@@ -48,7 +48,7 @@ private class FakeFavorites : RoasterFavorites {
 class RoasterPortsTest {
     private val target = RoasterFavoriteTarget("roast", "Roast", "https://m/p", "/roasters/roast", 3, true)
 
-    @Test fun favoriteKeysUseTheLegacyRoasterFavoriteIdAndErrorsPassThrough() = runTest {
+    @Test fun favoriteKeysUseTheExistingRoasterFavoriteIdAndErrorsPassThrough() = runTest {
         val store = FakeFavorites()
         val port = RoasterFavoritesAdapter(store, backgroundScope)
         store.rows.value = listOf(
@@ -95,7 +95,7 @@ class RoasterPortsTest {
         assertFailsWith<CancellationException> { RoasterShopPhotosAdapter(PublicShopPreviews { throw CancellationException("stop") }).firstPhoto("x") }
     }
 
-    @Test fun catalogStoreUsesTheLegacyKeyAndIgnoresBlankOrNullValues() = runTest {
+    @Test fun catalogStoreUsesTheExistingKeyAndIgnoresBlankOrNullValues() = runTest {
         val settings = MemorySettings()
         val key = roasterCatalogCacheKey("https://api.example/")
         assertEquals("roaster_catalog_v1:https://api.example", key)

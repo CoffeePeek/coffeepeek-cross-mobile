@@ -18,7 +18,7 @@ class ShopMenuPresentationTest {
         assertEquals(emptyList(), groupedPresentMenuItems(listOf(drink("hidden", "Espresso", "Absent"))))
     }
 
-    @Test fun priceKeepsTwoDecimalsAndTheLegacyRoundingRule() {
+    @Test fun priceKeepsTwoDecimalsAndThePreviousRoundingRule() {
         assertEquals("5,50", formatShopMenuAmount(5.5))
         assertEquals("6,00", formatShopMenuAmount(6.0))
         assertEquals("0,00", formatShopMenuAmount(0.0))

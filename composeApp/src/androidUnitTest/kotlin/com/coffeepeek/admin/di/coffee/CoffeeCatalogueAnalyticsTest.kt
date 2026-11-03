@@ -11,9 +11,9 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.io.IOException
 import kotlin.test.*
 
-/** Adapter parity with the legacy catalogue events (see CoffeeFilterAnalyticsTest for the legacy ViewModel). */
+/** Adapter parity with the existing catalogue events (see CoffeeFilterAnalyticsTest for the existing ViewModel). */
 class CoffeeCatalogueAnalyticsTest {
-    @Test fun searchAndFilterExposureKeepsTheLegacyPlacementAndPage() {
+    @Test fun searchAndFilterExposureKeepsTheExistingPlacementAndPage() {
         assertEquals(Triple("search", "coffees", "coffees"), CoffeeExposure.Search.tracking())
         assertEquals(Triple("filters", "coffees", "coffees"), CoffeeExposure.Filters.tracking())
         assertEquals(Triple("coffee_catalog", "catalog", "coffees"), CoffeeExposure.Catalog.tracking())
@@ -29,7 +29,7 @@ class CoffeeCatalogueAnalyticsTest {
         return sdk
     }
 
-    @Test fun searchLifecycleMatchesLegacyEventsAndDeduplicatesUnchangedCriteria() = runTest {
+    @Test fun searchLifecycleMatchesExistingEventsAndDeduplicatesUnchangedCriteria() = runTest {
         val sdk = installed()
         val list = CoffeeCatalogueAnalytics.list()
         list.searchStarted("||false", "", emptyList())
@@ -61,7 +61,7 @@ class CoffeeCatalogueAnalyticsTest {
         assertEquals(listOf("roast"), sdk.events.single { it.first == "catalog_search_started" }.second["filter_keys"])
     }
 
-    @Test fun filterEventsMatchLegacyShapeAndNeverCarryValues() = runTest {
+    @Test fun filterEventsMatchExistingShapeAndNeverCarryValues() = runTest {
         val sdk = installed()
         val list = CoffeeCatalogueAnalytics.list()
         list.filtersOpened()
@@ -74,7 +74,7 @@ class CoffeeCatalogueAnalyticsTest {
         assertEquals(emptyList<String>(), applied[1]["filter_keys"]); assertEquals("reset", applied[1]["action"])
     }
 
-    @Test fun detailInteractionsUseLegacySectionAndActionNames() = runTest {
+    @Test fun detailInteractionsUseExistingSectionAndActionNames() = runTest {
         val sdk = installed()
         val detail = CoffeeCatalogueAnalytics.detail()
         detail.contentInteracted(CoffeeDetailSection.SimilarCoffees, CoffeeContentAction.Select)
