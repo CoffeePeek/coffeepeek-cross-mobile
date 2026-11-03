@@ -2,9 +2,13 @@ package com.coffeepeek.feature.collections.impl.ui.compose
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -20,45 +24,34 @@ import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as st
 @Composable
 internal fun CollectionsSelection(state: CollectionsState, onAction: (CollectionsAction) -> Unit) {
     val defaultTitle = stringResource(Res.string.collections_default_title)
-    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        item { Text(stringResource(Res.string.collections_intro), style = MaterialTheme.typography.bodyMedium) }
+    val focus = LocalFocusManager.current
+    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 96.dp)) {
         item { CoffeePeekTextField(stringResource(Res.string.collections_name), state.title,
-            { onAction(CollectionsAction.Title(it)) }, defaultTitle, enabled = !state.busy) }
-        item { CollectionSelectionActions(state, onAction) }
-        items(CollectionRules.orderedPlaces(state.places), key = { it.key }) { place ->
-            CollectionPlaceRow(place, place.key in state.selected, !state.busy) { onAction(CollectionsAction.Toggle(place.key)) }
+            { onAction(CollectionsAction.Title(it)) }, defaultTitle, enabled = !state.busy,
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done), keyboardActions = KeyboardActions(onDone = { focus.clearFocus() })) }
+        CollectionPlaceKind.entries.forEach { kind ->
+            val places = state.places.filter { it.kind == kind }
+            if (places.isNotEmpty()) item(key = "heading:$kind") {
+                Text(stringResource(if (kind == CollectionPlaceKind.CoffeeShop) Res.string.collections_shops else Res.string.collections_roasters),
+                    Modifier.padding(start = 16.dp, top = 24.dp, bottom = 8.dp), style = MaterialTheme.typography.titleSmall)
+            }
+            itemsIndexed(places, key = { _, place -> place.key }) { index, place ->
+                CollectionPlaceRow(place, place.key in state.selected, !state.busy, first = index == 0, last = index == places.lastIndex) {
+                    onAction(CollectionsAction.Toggle(place.key))
+                }
+            }
         }
-        item { CoffeePeekButton(if (state.busy) stringResource(Res.string.collections_preparing) else stringResource(Res.string.collections_create),
-            { onAction(CollectionsAction.Create(defaultTitle)) }, enabled = !state.busy && state.selected.isNotEmpty() &&
-                CollectionRules.validTitle(state.title.ifBlank { defaultTitle })) }
         if (state.places.isEmpty()) item { Text(stringResource(Res.string.collections_empty)) }
-    }
-}
-
-@Composable
-private fun CollectionSelectionActions(state: CollectionsState, onAction: (CollectionsAction) -> Unit) {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(stringResource(Res.string.collections_selected, state.selected.size, CollectionRules.maxPlaces),
-            color = MaterialTheme.colorScheme.onSurfaceVariant)
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            CoffeePeekTextButton(onClick = { onAction(CollectionsAction.SelectAll) }, enabled = !state.busy) {
-                Text(when {
-                    state.selected.isNotEmpty() -> stringResource(Res.string.collections_clear)
-                    state.places.size > CollectionRules.maxPlaces -> stringResource(Res.string.collections_select_limit, CollectionRules.maxPlaces)
-                    else -> stringResource(Res.string.collections_select_all)
-                })
-            }
-            CoffeePeekTextButton(onClick = { onAction(CollectionsAction.OpenLinks) }, enabled = !state.busy) {
-                Text(stringResource(Res.string.collections_links))
-            }
-        }
     }
 }
 
 @Composable
 private fun CollectionsSelectionPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     CollectionsSelection(CollectionsState(signedIn = true, loading = false,
-        places = listOf(CollectionPlace(CollectionPlaceKind.CoffeeShop, "sample", "Любимая кофейня"))), {})
+        selected = setOf("CoffeeShop:sample", "Roaster:roaster"), places = listOf(
+            CollectionPlace(CollectionPlaceKind.CoffeeShop, "sample", "Любимая кофейня"),
+            CollectionPlace(CollectionPlaceKind.CoffeeShop, "second", "Кофейная лаборатория"),
+            CollectionPlace(CollectionPlaceKind.Roaster, "roaster", "Любимый обжарщик"))), {})
 }
 @Preview @Composable private fun CollectionsSelectionLightPreview() = CollectionsSelectionPreview(false)
 @Preview @Composable private fun CollectionsSelectionDarkPreview() = CollectionsSelectionPreview(true)

@@ -1,5 +1,58 @@
 # Share favorite collections — 2026-11-02
 
+## Composer polish and entry relocation — 2026-11-03
+
+Latest user feedback supersedes the previous entry decision: share belongs in
+Favorites, not the profile menu. Remove QR artwork from PNGs, retain the site
+branding/page count, and keep the native message's collection URL. Collections
+impl owns the semantic-color grouped selector, format preview and pinned primary
+action. Favorites exposes a navigation event; root composition supplies the
+collection route. No favorite writes are needed. Latest feedback removes the
+place-count ceiling in mobile, Sandbox and the server request/domain validation;
+the title rule and owner-link quota are separate and unchanged.
+
+Selection now uses continuous grouped rows, inset separators and a trailing
+checkmark only when selected. Remove both explanatory paragraphs. Keep the
+select-all/clear action floating above the list at bottom trailing, independently
+of scroll; the bottom count contains only the selected quantity. Preserve all
+members when selecting/creating collections larger than the former 100-place cap.
+
+Use the current CoffeePeek scaffold, text field, segments, grouped surfaces,
+buttons and theme. Apple HIG Color/Buttons/Layout were checked on 2026-11-03:
+one prominent action, semantic light/dark colors, scalable text and accessible
+targets. Verify favorite navigation with unit tests, preserve account/cancel
+contracts, check both poster formats after QR removal, assemble Android with
+runtime-class/isolation checks and compile shared iOS code. Manual Sandbox review
+must cover light/dark, font scaling, keyboard/insets, Back and empty/error states.
+No automated UI, instrumentation or screenshot tests will be introduced.
+
+Latest polish verification, 2026-11-03:
+
+- 86 affected mobile unit/contract cases passed. A 205-place selection is sent
+  intact; grouping/pagination tests now cover counts beyond the old ceiling.
+  Server HTTP annotations/domain/store accept 125 saved places, with all 25
+  affected persistence/rating and 92 host/architecture contracts passing.
+- Android Direct Debug/Sandbox assembly and packaged runtime-class checks,
+  Sandbox isolation and full shared iOS compilation passed.
+- RU/BE resource keys align. The counter has one quantity placeholder; the two
+  removed explanations and old limit messages are absent. Static HIG design-token
+  checks passed; this is not a certification of the complete interface.
+- Pixel 9 received Direct Sandbox `1.1.5.2672-sandbox` in place and started
+  successfully. Latest grouped-list APK SHA-256:
+  `DFCA7CEFF39415E4FE467D3662F750118F9541EED7D4069D856B2E78B154C4DD`.
+  Source is the working patch on `d25fea4f`, saved by this change. Observed the new
+  Favorites share entry and created-collection preview; the user reviewed and
+  accepted the updated interface, then requested merging to develop. Screenshots
+  and UI dumps remain local in ignored build output.
+- The first manual Story preview extended below the visible area; it was then
+  constrained to the viewport without changing export dimensions. No QR drawing
+  remains. Text/URL sharing is preserved. Favorites and collection mutations in
+  this review used only the local Sandbox backend; no production writes occurred.
+
+Large-font/narrow-window coverage and native iOS share/device review remain
+release gates. The iOS legacy Favorites screen only receives a native navigation
+action with a Compose fallback; its binding, writer and list are not migrated.
+
 ## Reference design update — 2026-11-03
 
 Use the supplied reference for exported pictures: warm dark panels, large shop

@@ -5,7 +5,7 @@ import com.coffeepeek.feature.collections.domain.model.CollectionSummary
 import com.coffeepeek.feature.collections.domain.model.SharedCollection
 
 internal enum class CollectionsPage { Selection, Preview, Links }
-internal enum class CollectionsFailure { Load, Create, Revoke, Export, SelectionLimit }
+internal enum class CollectionsFailure { Load, Create, Revoke, Export }
 internal enum class CollectionPosterFormat(val width: Int, val height: Int, val perPage: Int) {
     Chat(1080, 1350, 4), Story(1080, 1920, 6)
 }

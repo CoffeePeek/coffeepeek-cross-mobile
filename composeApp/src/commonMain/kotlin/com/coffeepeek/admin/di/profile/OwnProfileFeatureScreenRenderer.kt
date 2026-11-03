@@ -43,7 +43,6 @@ internal class OwnProfileFeatureScreenRenderer(private val entry: OwnProfileEntr
                 ProfileAnalytics.favoritesOpened()
                 Navigator.navigate(Navigator.Screen.Favorites)
             },
-            onShareFavorites = { Navigator.navigate(Navigator.Screen.CollectionsComposer) },
             onOpenCheckIns = { Navigator.navigate(Navigator.Screen.VisitedPlaces) },
             onOpenContributions = { kind -> Navigator.navigate(Navigator.Screen.MyContributions(kind.toContributionKind().name)) },
             onOpenBlockedAuthors = { Navigator.navigate(Navigator.Screen.BlockedAuthors) },

@@ -38,6 +38,7 @@ internal class FavoritesViewModel(
             is FavoritesAction.OpenRoaster -> currentState.roasters.firstOrNull { it.id == action.roasterId }
                 ?.publicSlug?.takeIf(String::isNotBlank)?.let { sendEvent(FavoritesEvent.OpenRoaster(it)) }
             FavoritesAction.Back -> sendEvent(FavoritesEvent.Back)
+            FavoritesAction.Share -> if (currentState.shops.isNotEmpty() || currentState.roasters.isNotEmpty()) sendEvent(FavoritesEvent.Share)
         }
     }
 

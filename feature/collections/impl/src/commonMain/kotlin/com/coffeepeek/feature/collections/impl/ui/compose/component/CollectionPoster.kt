@@ -12,7 +12,8 @@ import com.coffeepeek.feature.collections.domain.model.*
 import com.coffeepeek.feature.collections.domain.repository.CollectionsRepository
 import com.coffeepeek.feature.collections.impl.ui.model.CollectionPosterFormat
 import com.coffeepeek.feature.collections.impl.resources.*
-import io.github.alexzhirkevich.qrose.*
+import io.github.alexzhirkevich.qrose.ImageFormat
+import io.github.alexzhirkevich.qrose.toByteArray
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import com.coffeepeek.feature.collections.api.CollectionPhotoDecoder
@@ -30,11 +31,12 @@ internal fun CollectionPoster(collection: SharedCollection, format: CollectionPo
     repository: CollectionsRepository, decodePhoto: CollectionPhotoDecoder, modifier: Modifier = Modifier) {
     val resources = collectionPosterResources(collection, format)
     key(collection, format, page, resources) {
-        val initial = remember { CollectionPosterPainter(collection, format, page, resources, QrCodePainter(collection.url)) }
+        val initial = remember { CollectionPosterPainter(collection, format, page, resources) }
         val painter by produceState<Painter>(initial) {
             value = preparePoster(collection, format, page, repository, decodePhoto, resources, 4_000L)
         }
-        Image(painter, stringResource(Res.string.collections_poster_description, collection.title),
+        val names = collectionPosterPage(collection.places, format, page).joinToString { it.title }
+        Image(painter, stringResource(Res.string.collections_poster_description, collection.title, names),
             modifier.fillMaxWidth().aspectRatio(format.width.toFloat() / format.height))
     }
 }
@@ -56,7 +58,7 @@ private suspend fun preparePoster(collection: SharedCollection, format: Collecti
     photoBudget: Long): CollectionPosterPainter {
     val places = collectionPosterPage(collection.places, format, page)
     val photos = loadPosterPhotos(places, repository, decodePhoto, photoBudget)
-    return CollectionPosterPainter(collection, format, page, resources, QrCodePainter(collection.url), photos)
+    return CollectionPosterPainter(collection, format, page, resources, photos)
 }
 
 private suspend fun loadPosterPhotos(places: List<CollectionPlace>, repository: CollectionsRepository,
@@ -84,8 +86,7 @@ private fun CollectionPosterPreview(dark: Boolean, format: CollectionPosterForma
         CollectionPlace(CollectionPlaceKind.Roaster, "roaster", "Любимый обжарщик"),
         CollectionPlace(CollectionPlaceKind.CoffeeShop, "second", "Кофейная лаборатория", address = "Кофейная улица, 6", rating = 4.5, checkInCount = 89),
         CollectionPlace(CollectionPlaceKind.Roaster, "second-roaster", "Обжарщики Минска", city = "Минск")))
-    val painter = CollectionPosterPainter(collection, format, 0, collectionPosterResources(collection, format),
-        rememberQrCodePainter(collection.url))
+    val painter = CollectionPosterPainter(collection, format, 0, collectionPosterResources(collection, format))
     Image(painter, collection.title, Modifier.width(360.dp).aspectRatio(format.width.toFloat() / format.height))
 }
 @Preview @Composable private fun CollectionPosterLightPreview() = CollectionPosterPreview(false)

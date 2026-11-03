@@ -6,6 +6,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -26,51 +28,46 @@ internal fun CollectionsPreview(state: CollectionsState, onAction: (CollectionsA
     val collection = state.collection ?: return
     var page by remember(collection.id, state.format) { mutableIntStateOf(0) }
     val pages = ((collection.places.size + state.format.perPage - 1) / state.format.perPage).coerceAtLeast(1)
-    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        item { Text(collection.title, style = MaterialTheme.typography.headlineMedium, fontWeight = FontWeight.Bold) }
-        item { Text(stringResource(Res.string.collections_count, collection.places.size)) }
-        if (collection.places.isNotEmpty() && !state.publicView) {
-            item { CollectionFormats(state, onAction) }
-            item { poster(collection, state.format, page) }
-            if (pages > 1) item { CollectionPosterPages(page, pages, !state.busy) { page = it } }
-        }
-        item { CollectionShareActions(state, onAction) }
-        if (collection.places.isEmpty()) item { Text(stringResource(Res.string.collections_unavailable)) }
-        items(CollectionRules.orderedPlaces(collection.places), key = { it.key }) { place ->
-            CollectionPlaceRow(place, null, !state.busy) { onAction(CollectionsAction.OpenPlace(place)) }
-        }
-    }
-}
-
-@Composable
-private fun CollectionFormats(state: CollectionsState, onAction: (CollectionsAction) -> Unit) {
-    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        CollectionPosterFormat.entries.forEach { format ->
-            CoffeePeekTextButton(onClick = { onAction(CollectionsAction.Format(format)) }, enabled = !state.busy) {
-                Text(stringResource(if (format == CollectionPosterFormat.Chat) Res.string.collections_format_chat else Res.string.collections_format_story),
-                    fontWeight = if (format == state.format) FontWeight.Bold else FontWeight.Normal)
+    BoxWithConstraints(Modifier.fillMaxSize()) {
+        val posterHeight = (maxHeight - if (pages > 1) 192.dp else 144.dp).coerceAtLeast(160.dp)
+        LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            item { Text(stringResource(Res.string.collections_count, collection.places.size),
+                style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+            if (collection.places.isNotEmpty()) {
+                item { CollectionFormats(state, onAction) }
+                item {
+                    Box(Modifier.fillMaxWidth().heightIn(max = posterHeight), contentAlignment = androidx.compose.ui.Alignment.Center) {
+                        Box(Modifier.clip(RoundedCornerShape(20.dp))) { poster(collection, state.format, page) }
+                    }
+                }
+                if (pages > 1) item { CollectionPosterPages(page, pages, !state.busy) { page = it } }
+            }
+            if (collection.places.isEmpty()) item { Text(stringResource(Res.string.collections_unavailable)) }
+            if (state.publicView) items(CollectionRules.orderedPlaces(collection.places), key = { it.key }) { place ->
+                CollectionPlaceRow(place, null, !state.busy) { onAction(CollectionsAction.OpenPlace(place)) }
             }
         }
     }
 }
 
 @Composable
-private fun CollectionShareActions(state: CollectionsState, onAction: (CollectionsAction) -> Unit) {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        CoffeePeekButton(stringResource(Res.string.collections_share_link), { onAction(CollectionsAction.ShareLink) }, enabled = !state.busy)
-        CoffeePeekButton(stringResource(if (state.busy) Res.string.collections_preparing else Res.string.collections_share_image),
-            { onAction(CollectionsAction.ShareImages) }, enabled = !state.busy && state.collection?.places?.isNotEmpty() == true)
-    }
+private fun CollectionFormats(state: CollectionsState, onAction: (CollectionsAction) -> Unit) {
+    val labels = listOf(stringResource(Res.string.collections_format_chat), stringResource(Res.string.collections_format_story))
+    CoffeePeekCapsuleSegmentedControl(CollectionPosterFormat.entries, state.format, { labels[it.ordinal] },
+        { onAction(CollectionsAction.Format(it)) }, Modifier.fillMaxWidth().heightIn(min = 48.dp), enabled = !state.busy)
 }
 
 @Composable
 private fun CollectionPosterPages(page: Int, total: Int, enabled: Boolean, onPage: (Int) -> Unit) {
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-        CoffeePeekIconButton(onClick = { onPage(page - 1) }, enabled = enabled && page > 0,
-            contentDescription = stringResource(Res.string.collections_previous_page)) { Icon(CoffeePeekIcons.ChevronLeft, null) }
-        Text(stringResource(Res.string.collections_page, page + 1, total))
-        CoffeePeekIconButton(onClick = { onPage(page + 1) }, enabled = enabled && page + 1 < total,
-            contentDescription = stringResource(Res.string.collections_next_page)) { Icon(CoffeePeekIcons.ChevronRight, null) }
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+        CoffeePeekPlainIconButton(onClick = { onPage(page - 1) }, enabled = enabled && page > 0) {
+            Icon(CoffeePeekIcons.ChevronLeft, stringResource(Res.string.collections_previous_page))
+        }
+        Text(stringResource(Res.string.collections_page, page + 1, total), style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant)
+        CoffeePeekPlainIconButton(onClick = { onPage(page + 1) }, enabled = enabled && page + 1 < total) {
+            Icon(CoffeePeekIcons.ChevronRight, stringResource(Res.string.collections_next_page))
+        }
     }
 }
 

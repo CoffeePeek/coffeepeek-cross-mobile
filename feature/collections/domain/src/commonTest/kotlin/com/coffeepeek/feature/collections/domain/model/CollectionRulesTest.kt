@@ -26,9 +26,9 @@ class CollectionRulesTest {
         assertFalse(CollectionRules.validSelection(emptyList()))
         assertFalse(CollectionRules.validSelection(listOf(shop.copy(slug = ""))))
     }
-    @Test fun boundsLimitOneCollectionWithoutSilentlyTruncatingSelection() {
-        val hundred = (1..100).map { CollectionPlace(CollectionPlaceKind.Roaster, "roaster-$it", "Roaster $it") }
-        assertTrue(CollectionRules.validSelection(hundred))
-        assertFalse(CollectionRules.validSelection(hundred + hundred.first().copy(slug = "extra")))
+    @Test fun aCollectionCanContainMoreThanAHundredDistinctSavedPlaces() {
+        val places = (1..205).map { CollectionPlace(CollectionPlaceKind.Roaster, "roaster-$it", "Roaster $it") }
+        assertTrue(CollectionRules.validSelection(places))
+        assertFalse(CollectionRules.validSelection(places + places.first()))
     }
 }

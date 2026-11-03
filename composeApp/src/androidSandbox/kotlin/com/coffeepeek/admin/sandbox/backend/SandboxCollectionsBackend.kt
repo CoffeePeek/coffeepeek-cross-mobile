@@ -41,7 +41,7 @@ internal class SandboxCollectionsBackend(private val today: LocalDate, private v
     }
 
     private fun selected(items: JsonArray?): List<JsonObject>? {
-        if (items == null || items.size !in 1..100) return null
+        if (items.isNullOrEmpty()) return null
         val available = favorites().map { it.jsonObject }.filter { it["kind"]?.jsonPrimitive?.content in listOf("coffee_shop", "roaster") }
             .associateBy { "${it["kind"]?.jsonPrimitive?.content}:${it["address"]?.jsonObject?.get("slug")?.jsonPrimitive?.content}" }
         val keys = items.map { value ->

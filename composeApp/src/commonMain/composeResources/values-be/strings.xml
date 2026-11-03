@@ -1,4 +1,5 @@
 <resources>
+    <string name="favorites_share_collection">Падзяліцца</string>
     <string name="profile_menu_business">Мой бізнес</string>
     <string name="coffeepeek_legacy_choose_rating">%1$s: выбраць %2$d з 5</string>
     <string name="coffeepeek_legacy_rating_description">Кава: %1$d, сэрвіс: %2$d, месца: %3$d. Сярэдняя адзнака %4$s з 5</string>

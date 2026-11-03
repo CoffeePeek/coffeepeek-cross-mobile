@@ -60,7 +60,6 @@ internal fun OwnProfileScreen(
     onLogin: () -> Unit,
     onOpenUser: (slug: String, nickname: String, avatarUrl: String?) -> Unit,
     onOpenFavorites: () -> Unit,
-    onShareFavorites: () -> Unit,
     onOpenCheckIns: () -> Unit,
     onOpenContributions: (ProfileContribution) -> Unit,
     onOpenBlockedAuthors: () -> Unit,
@@ -69,7 +68,7 @@ internal fun OwnProfileScreen(
     val state by vm.state.collectAsStateWithLifecycle()
     var showLogout by remember { mutableStateOf(false) }
     val actions: @Composable () -> Unit = {
-        OwnProfileActions(onOpenContributions, onOpenBlockedAuthors, { showLogout = true }, onShareFavorites)
+        OwnProfileActions(onOpenContributions, onOpenBlockedAuthors, { showLogout = true })
     }
     val bottomPadding = 20.dp + bottomClearance
 

@@ -21,7 +21,6 @@ internal class CollectionPosterPainter(
     private val format: CollectionPosterFormat,
     private val page: Int,
     private val resources: CollectionPosterResources,
-    private val qr: Painter,
     private val photos: Map<String, ImageBitmap> = emptyMap(),
 ) : Painter() {
     override val intrinsicSize = Size(format.width.toFloat(), format.height.toFloat())
@@ -136,12 +135,9 @@ internal class CollectionPosterPainter(
     }
 
     private fun DrawScope.footer() {
-        val y = format.height - 142f
-        drawRoundRect(Color.White, Offset(56f, y), Size(128f, 128f), CornerRadius(14f))
-        withTransform({ translate(68f, y + 12f) }) { with(qr) { draw(Size(104f, 104f)) } }
-        text(resources.labels.qrHint, 208f, y + 14f, 500f, 24, muted, lines = 2)
-        if (resources.labels.pages.size > 1) text(resources.labels.pages.getOrElse(page) { "" }, 208f, y + 88f, 400f, 22, muted)
-        text("coffeepeek.by", 758f, y + 82f, 272f, 30, gold)
+        val y = format.height - 58f
+        if (resources.labels.pages.size > 1) text(resources.labels.pages.getOrElse(page) { "" }, 56f, y + 4f, 400f, 22, muted)
+        text("coffeepeek.by", 758f, y, 272f, 30, gold)
     }
 
     private fun DrawScope.icon(painter: Painter, x: Float, y: Float, side: Float, tint: Color) {

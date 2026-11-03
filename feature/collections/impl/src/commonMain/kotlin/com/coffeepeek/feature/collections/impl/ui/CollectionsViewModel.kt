@@ -134,7 +134,6 @@ internal class CollectionsViewModel(private val repository: CollectionsRepositor
         updateState {
             when {
                 key in selected -> copy(selected = selected - key, failure = null)
-                selected.size >= CollectionRules.maxPlaces -> copy(failure = CollectionsFailure.SelectionLimit)
                 else -> copy(selected = selected + key, failure = null)
             }
         }
@@ -143,7 +142,7 @@ internal class CollectionsViewModel(private val repository: CollectionsRepositor
     private fun selectAll() {
         if (currentState.busy) return
         updateState { copy(selected = if (selected.isNotEmpty()) emptySet()
-            else places.take(CollectionRules.maxPlaces).map { it.key }.toSet(), failure = null) }
+            else places.map { it.key }.toSet(), failure = null) }
     }
 
     private suspend fun export() {

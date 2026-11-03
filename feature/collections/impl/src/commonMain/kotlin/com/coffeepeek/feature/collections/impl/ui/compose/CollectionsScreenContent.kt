@@ -3,6 +3,7 @@ package com.coffeepeek.feature.collections.impl.ui.compose
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -18,10 +19,14 @@ import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as st
 @Composable
 internal fun CollectionsScreenContent(state: CollectionsState, onAction: (CollectionsAction) -> Unit,
     modifier: Modifier = Modifier, poster: @Composable (SharedCollection, CollectionPosterFormat, Int) -> Unit = { _, _, _ -> }) {
-    CoffeePeekScaffold(modifier = modifier, topBar = {
-        CoffeePeekTopBar(if (state.publicView) state.collection?.title ?: stringResource(Res.string.collections_default_title)
-            else stringResource(Res.string.collections_title), stringResource(Res.string.collections_back), onBack = { onAction(CollectionsAction.Back) })
-    }) { padding ->
+    val footer: (@Composable () -> Unit)? = if (!state.loading && state.hasPageContent() &&
+        (state.page != CollectionsPage.Selection || state.signedIn) && state.page != CollectionsPage.Links)
+        ({ CollectionsBottomActions(state, onAction) }) else null
+    CoffeePeekScaffold(modifier = modifier, topBar = { CollectionsToolbar(state, onAction) }, bottomBar = footer,
+        floatingActionButton = {
+            if (state.page == CollectionsPage.Selection && state.signedIn && !state.loading && state.places.isNotEmpty())
+                CollectionSelectionToggle(state, onAction)
+        }) { padding ->
         Column(Modifier.fillMaxSize().padding(padding).consumeWindowInsets(padding)) {
             state.failure?.let { CollectionsProblem(it, onAction) }
             when {
@@ -52,9 +57,11 @@ private fun CollectionsProblem(failure: CollectionsFailure, onAction: (Collectio
             CollectionsFailure.Create -> Res.string.collections_create_failed
             CollectionsFailure.Revoke -> Res.string.collections_revoke_failed
             CollectionsFailure.Export -> Res.string.collections_export_failed
-            CollectionsFailure.SelectionLimit -> Res.string.collections_limit_failed
         }), color = MaterialTheme.colorScheme.error)
-        if (failure == CollectionsFailure.Load) CoffeePeekButton(stringResource(Res.string.collections_retry), { onAction(CollectionsAction.Retry) })
+        if (failure == CollectionsFailure.Load) CoffeePeekTextButton({ onAction(CollectionsAction.Retry) },
+            modifier = Modifier.heightIn(min = 48.dp), colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onSurface)) {
+            Text(stringResource(Res.string.collections_retry))
+        }
     }
 }
 

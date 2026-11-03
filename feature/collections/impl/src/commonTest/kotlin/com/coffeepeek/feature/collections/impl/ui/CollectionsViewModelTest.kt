@@ -12,6 +12,22 @@ import kotlin.test.*
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class CollectionsViewModelTest {
+    @Test fun selectAllCreatesTheEntireLargeSelectionAndClearsItWithoutAHiddenHundredItemCutoff() = runTest(dispatcher) {
+        repository.places = (1..205).map { CollectionPlace(CollectionPlaceKind.CoffeeShop, "place-$it", "Place $it") }
+        val model = model()
+        runCurrent()
+        model.onAction(CollectionsAction.SelectAll)
+        runCurrent()
+        assertEquals(205, model.state.value.selected.size)
+        model.onAction(CollectionsAction.Create("Large collection"))
+        runCurrent()
+        assertEquals(repository.places, repository.sent)
+        model.onAction(CollectionsAction.Back)
+        model.onAction(CollectionsAction.SelectAll)
+        runCurrent()
+        assertTrue(model.state.value.selected.isEmpty())
+    }
+
     private val dispatcher = StandardTestDispatcher()
     private val store = ViewModelStore()
     private val shop = CollectionPlace(CollectionPlaceKind.CoffeeShop, "same", "Shop")

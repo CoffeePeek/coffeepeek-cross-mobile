@@ -16,13 +16,13 @@ class CollectionPosterLayoutTest {
         }
     }
 
-    @Test fun fullAndPartialPagesStayBelowTheHeadingAboveTheQrAndDoNotOverlap() {
+    @Test fun fullAndPartialPagesStayBelowTheHeadingAboveTheFooterAndDoNotOverlap() {
         CollectionPosterFormat.entries.forEach { format ->
-            (1..CollectionRules.maxPlaces).forEach { count ->
+            (1..205).forEach { count ->
                 val places = (1..count).map { place(it, if (it % 2 == 0) CollectionPlaceKind.Roaster else CollectionPlaceKind.CoffeeShop) }
                 (0..count / format.perPage).forEach { page ->
                     val cards = collectionPosterCards(collectionPosterPage(places, format, page), format)
-                    assertTrue(cards.all { it.height > 0f && it.top >= 260f && it.top + it.height <= format.height - 160f + 0.01f })
+                    assertTrue(cards.all { it.height > 0f && it.top >= 260f && it.top + it.height <= format.height - 80f + 0.01f })
                     assertTrue(cards.zipWithNext().all { (first, second) -> first.top + first.height < second.top })
                 }
             }

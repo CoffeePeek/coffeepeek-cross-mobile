@@ -32,10 +32,11 @@ internal class FavoritesApiImpl(
         onBack: () -> Unit,
         distanceForCoordinates: (Double, Double) -> String?,
         onOpenRoaster: (String) -> Unit,
+        onShare: () -> Unit,
     ) {
         val vm = viewModel { FavoritesViewModel(repository, roasters, drinks) }
         CompositionLocalProvider(LocalFavoritesAnalytics provides screenAnalytics) {
-            FavoritesScreen(vm, onOpenShop, onBack, distanceForCoordinates, onOpenRoaster)
+            FavoritesScreen(vm, onOpenShop, onBack, distanceForCoordinates, onOpenRoaster, onShare)
         }
     }
 }

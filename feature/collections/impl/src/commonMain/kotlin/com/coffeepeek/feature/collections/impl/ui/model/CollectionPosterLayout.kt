@@ -12,7 +12,7 @@ internal fun collectionPosterPage(places: List<CollectionPlace>, format: Collect
 internal fun collectionPosterCards(places: List<CollectionPlace>, format: CollectionPosterFormat): List<CollectionPosterCard> {
     val heights = places.map { if (it.kind == CollectionPlaceKind.CoffeeShop) 232f else 164f }
     val gap = 16f
-    val available = format.height - 260f - 160f - gap * (places.size - 1).coerceAtLeast(0)
+    val available = format.height - 260f - 80f - gap * (places.size - 1).coerceAtLeast(0)
     val scale = minOf(1f, available / heights.sum().coerceAtLeast(1f))
     var top = 260f
     return places.mapIndexed { index, place ->

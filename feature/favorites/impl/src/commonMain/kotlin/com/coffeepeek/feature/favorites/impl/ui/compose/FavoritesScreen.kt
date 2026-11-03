@@ -42,6 +42,7 @@ import com.coffeepeek.feature.favorites.domain.model.FavoriteDrink
 import com.coffeepeek.feature.favorites.impl.ui.compose.component.FavoriteCard
 import com.coffeepeek.feature.favorites.impl.ui.compose.component.FavoriteRoasterCard
 import com.coffeepeek.feature.favorites.impl.ui.compose.component.FavoritesMessage
+import com.coffeepeek.feature.favorites.impl.ui.compose.component.FavoritesTopBar
 import com.coffeepeek.feature.favorites.impl.ui.compose.model.FavoritesAction
 import com.coffeepeek.feature.favorites.impl.ui.compose.model.FavoritesEvent
 import com.coffeepeek.feature.favorites.impl.ui.compose.model.FavoritesUiState
@@ -66,17 +67,20 @@ internal fun FavoritesScreen(
     onBack: () -> Unit,
     distanceForCoordinates: (Double, Double) -> String? = { _, _ -> null },
     onOpenRoaster: (String) -> Unit = {},
+    onShare: () -> Unit = {},
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val currentOpenShop by rememberUpdatedState(onOpenShop)
     val currentOpenRoaster by rememberUpdatedState(onOpenRoaster)
     val currentBack by rememberUpdatedState(onBack)
+    val currentShare by rememberUpdatedState(onShare)
     LaunchedEffect(viewModel) {
         viewModel.events.collect { event ->
             when (event) {
                 is FavoritesEvent.OpenShop -> currentOpenShop(event.shopId)
                 is FavoritesEvent.OpenRoaster -> currentOpenRoaster(event.publicSlug)
                 FavoritesEvent.Back -> currentBack()
+                FavoritesEvent.Share -> currentShare()
             }
         }
     }
@@ -97,8 +101,10 @@ internal fun FavoritesScreenContent(
     val snackbar = remember { SnackbarHostState() }
     val actionError = stringResource(Res.string.favorites_action_error)
     LaunchedEffect(state.actionFailed) { if (state.actionFailed) snackbar.showSnackbar(actionError) }
-    Scaffold(snackbarHost = { SnackbarHost(snackbar) }, topBar = { CoffeePeekTopBar(stringResource(Res.string.favorites_title),
-        stringResource(Res.string.favorites_back), onBack = { onAction(FavoritesAction.Back) }) }) { padding ->
+    Scaffold(snackbarHost = { SnackbarHost(snackbar) }, topBar = {
+        FavoritesTopBar(state.shops.isNotEmpty() || state.roasters.isNotEmpty(),
+            { onAction(FavoritesAction.Back) }, { onAction(FavoritesAction.Share) })
+    }) { padding ->
         Column(Modifier.fillMaxSize().padding(padding).consumeWindowInsets(padding)) {
             when {
                 (state.isLoading || state.areRoastersLoading || state.areDrinksLoading) && state.shops.isEmpty() && state.roasters.isEmpty() && state.drinks.isEmpty() -> Box(
