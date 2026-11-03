@@ -23,6 +23,14 @@ poster; they were not rendered in the IDE. Pixel 9 was not connected today, so
 the new reference design has not been installed or visually checked on a phone.
 The earlier installed APK below predates this design update.
 
+Final integration with current develop, `c274549a`, passed Direct Sandbox
+assembly/runtime-class/isolation checks and full shared application iOS
+compilation. The built Sandbox is `1.1.5.2669-sandbox`; SHA-256:
+`3C83B42BFB295956BED999D3C866CE18C6ECA9BAB1B448C2BFE39B83ACCC5350`.
+Direct Debug assembly/runtime-class checks passed on feature revision `c4abf2f8`.
+Review PRs: mobile #299, backend #376, website #35. Website CI passed; backend
+and mobile CI were still running when this evidence was recorded.
+
 ## Scope and ownership
 
 A user chooses saved shops/roasters, names a collection, previews it and shares its
@@ -90,7 +98,7 @@ Executed on 2026-11-02:
   preparation. Public reads never load private account data. Optional photos
   have bounded download, decode, concurrency and time budgets; the readable
   names/QR fallback remains available when images fail.
-- Updated Pixel 9 (`48111FDAQ001K5`) in place with Direct Sandbox
+- Updated Pixel 9 in place with Direct Sandbox
   `1.1.5.2665-sandbox`, package `com.coffeepeek.sandbox`. Signature matched the
   installed Sandbox; first-install time remained unchanged. Startup succeeded.
   Installed fix APK SHA-256:
