@@ -1,30 +1,19 @@
 package com.coffeepeek.admin.ui.screen.review
 
+import kotlin.test.Test
 import kotlin.test.assertEquals
-
-import com.coffeepeek.domain.model.consumedDrinkIssue
-
-import com.coffeepeek.domain.model.ConsumedDrinkIssue
-
-import com.coffeepeek.domain.model.validateConsumedDrink
-import com.coffeepeek.domain.model.savedDrinkName
-import kotlin.test.*
+import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 
 class ConsumedDrinkTest {
     @Test fun validatesOtherAndCatalogSelections() {
-        assertNull(validateConsumedDrink(null, null))
-        assertNull(validateConsumedDrink("cappuccino", null))
-        assertNotNull(validateConsumedDrink("cappuccino", "custom"))
-        assertNotNull(validateConsumedDrink("other", "   "))
-        assertNull(validateConsumedDrink("other", " a "))
-        assertNull(validateConsumedDrink("other", "a".repeat(100)))
-        assertNotNull(validateConsumedDrink("other", "a".repeat(101)))
-        assertEquals("Старое название", savedDrinkName("Старое название", "Old name", null))
-        assertEquals("Old name", savedDrinkName("Старое название", "Old name", null, "en"))
-        assertEquals("Старое название", savedDrinkName("Старое название", null, null, "en"))
-        assertEquals("Эспрессо-тоник", savedDrinkName("Другой", "Other", "Эспрессо-тоник"))
-        assertEquals("Эспрессо-тоник", savedDrinkName("Другой", "Other", "Эспрессо-тоник", "en"))
-        assertNull(savedDrinkName(null, null, null, "en"))
+        assertNull(consumedDrinkIssue(null, null))
+        assertNull(consumedDrinkIssue("cappuccino", null))
+        assertNotNull(consumedDrinkIssue("cappuccino", "custom"))
+        assertNotNull(consumedDrinkIssue("other", "   "))
+        assertNull(consumedDrinkIssue("other", " a "))
+        assertNull(consumedDrinkIssue("other", "a".repeat(100)))
+        assertNotNull(consumedDrinkIssue("other", "a".repeat(101)))
     }
     @Test fun typedIssueUsesPreparedBelarusianCopy() {
         val issue = consumedDrinkIssue("other", " ")

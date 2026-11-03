@@ -1,6 +1,6 @@
 package com.coffeepeek.admin.feature.favorites.api
 
-import com.coffeepeek.domain.model.CatalogItem
+import com.coffeepeek.admin.feature.favorites.api.CatalogItem
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
 

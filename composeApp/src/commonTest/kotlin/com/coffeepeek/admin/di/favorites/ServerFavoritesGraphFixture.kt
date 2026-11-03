@@ -9,8 +9,8 @@ import com.coffeepeek.feature.favorites.domain.model.FavoriteAddress
 import com.coffeepeek.feature.favorites.domain.model.FavoriteEntry
 import com.coffeepeek.feature.favorites.domain.model.FavoriteKind
 import com.coffeepeek.feature.favorites.domain.repository.AccountFavorites
-import com.coffeepeek.domain.model.*
-import com.coffeepeek.domain.repository.RoasterRepository
+import com.coffeepeek.admin.feature.favorites.api.CatalogItem
+import com.coffeepeek.admin.feature.favorites.api.PublicAddress
 import com.coffeepeek.feature.shop.api.PublicShopDetails
 import com.coffeepeek.feature.shop.api.PublicShopSummary
 import com.coffeepeek.feature.favorites.api.FavoritesEntry
@@ -37,7 +37,6 @@ internal class ServerFavoritesGraphFixture {
     private fun dependencies() = module {
         single<SessionReader> { sessions }
         single<AccountFavorites> { server }
-        single<RoasterRepository> { catalogs }
         single<PublicRoasterDetails> { FavoriteGraphPublicRoasters(catalogs) }
         single<PublicShopDetails> { FavoriteGraphPublicShops(catalogs) }
         single<RoasterFavorites> { ServerRoasterFavorites(server, FavoriteGraphPublicRoasters(catalogs), sessions) }
@@ -75,16 +74,9 @@ internal class FavoriteGraphServer : AccountFavorites {
     override fun clearCache() { clears++ }
 }
 
-internal class FavoriteGraphCatalogs : RoasterRepository {
+/** Counts the catalog reads the favorites graph makes; nothing here serves data. */
+internal class FavoriteGraphCatalogs {
     var reads = 0
-    override suspend fun getRoasters() = Result.success(emptyList<RoasterSummary>()).also { reads++ }
-    override suspend fun getRoaster(id: String): Result<RoasterDetails> {
-        reads++
-        return Result.failure(IllegalStateException("No catalog metadata"))
-    }
-    override suspend fun submitRoaster(input: CreateRoasterInput): Result<RoasterSubmissionResult> = error("No submission")
-    override suspend fun getMyRoasterSubmissions(status: ModerationStatus, page: Int, pageSize: Int): Result<PagedResult<RoasterSubmission>> =
-        error("No submission reads")
 }
 
 internal class FavoriteGraphPublicRoasters(private val catalogs: FavoriteGraphCatalogs) : PublicRoasterDetails {

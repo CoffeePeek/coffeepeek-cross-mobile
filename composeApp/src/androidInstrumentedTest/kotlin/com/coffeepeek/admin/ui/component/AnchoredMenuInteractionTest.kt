@@ -24,7 +24,6 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.coffeepeek.admin.MainActivity
 import com.coffeepeek.admin.theme.CoffeePeekTheme
-import com.coffeepeek.domain.model.ConsumedDrinkOption
 import java.io.File
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference

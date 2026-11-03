@@ -52,6 +52,6 @@ class CheckInValidationTest {
         assertEquals("Дата наведвання", error?.message(labels))
         assertEquals(CheckInDraftValidationError.Ratings, draft.copy(coffeeRating = 0).validationError(now = 2000))
         assertEquals(CheckInDraftValidationError.Note, draft.copy(note = "a".repeat(1001)).validationError(now = 2000))
-        assertEquals("Назва напою", CheckInDraftValidationError.Drink(com.coffeepeek.domain.model.ConsumedDrinkIssue.CustomNameLength).message(labels))
+        assertEquals("Назва напою", CheckInDraftValidationError.Drink(com.coffeepeek.admin.ui.screen.review.ConsumedDrinkIssue.CustomNameLength).message(labels))
     }
 }

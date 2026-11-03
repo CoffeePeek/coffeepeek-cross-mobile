@@ -2,8 +2,8 @@ package com.coffeepeek.admin.di.favorites
 
 import com.coffeepeek.admin.di.shop.CheckInTestSessions
 import com.coffeepeek.admin.feature.favorites.api.RoasterFavorites
-import com.coffeepeek.domain.model.CatalogItem
-import com.coffeepeek.domain.model.PublicAddress
+import com.coffeepeek.admin.feature.favorites.api.CatalogItem
+import com.coffeepeek.admin.feature.favorites.api.PublicAddress
 import com.coffeepeek.core.session.Session
 import com.coffeepeek.core.session.SessionStore
 import com.coffeepeek.feature.favorites.domain.model.FavoriteRoaster

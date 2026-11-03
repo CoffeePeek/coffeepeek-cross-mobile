@@ -7,7 +7,6 @@ import org.junit.Test
 import org.koin.core.context.GlobalContext
 import kotlin.test.assertIs
 import kotlin.test.assertNotNull
-import kotlin.test.assertNull
 
 /** Resolve the real Android bindings without opening UI, changing a session or sending a mutation. */
 class ServerFavoritesWiringTest {
@@ -15,7 +14,6 @@ class ServerFavoritesWiringTest {
         val graph = GlobalContext.get()
         assertIs<ServerFavoriteShopsRepository>(graph.get<FavoritesRepository>())
         assertIs<ServerFavoriteDrinksRepository>(graph.get<FavoriteDrinksRepository>())
-        assertNull(graph.getOrNull<com.coffeepeek.domain.repository.FavoriteRepository>(), "the old Room-backed writer is gone")
         assertNotNull(graph.get<FavoritesEntry>())
     }
 }

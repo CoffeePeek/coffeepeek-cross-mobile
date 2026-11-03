@@ -123,7 +123,6 @@ kotlin {
             implementation(libs.kotlinx.datetime)
             implementation(project(module.feature.favorites.domain))
             implementation(libs.posthog.kmp)
-            implementation(project(module.legacy.domain))
             implementation(project(module.legacy.network))
             implementation(project(module.core.database))
             implementation(project(module.core.network))
@@ -540,7 +539,6 @@ androidComponents {
                 "com.coffeepeek.feature.roaster.impl.RoasterEntryImplsKt",
                 "com.coffeepeek.feature.roaster.data.repository.RoasterRepositoryFactoryKt",
                 "com.coffeepeek.feature.favorites.data.repository.RemoteAccountFavorites",
-                "com.coffeepeek.admin.di.favorites.LegacyAccountFavorites",
                 "com.coffeepeek.admin.di.favorites.ServerFavoriteShopsRepository",
                 "com.coffeepeek.admin.di.favorites.ServerFavoriteDrinksRepository",
                 "com.coffeepeek.admin.di.shop.ShopCheckInModuleKt",

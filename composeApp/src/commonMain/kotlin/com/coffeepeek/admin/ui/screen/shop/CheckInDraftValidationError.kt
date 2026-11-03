@@ -6,7 +6,7 @@ import com.coffeepeek.admin.ui.screen.review.consumedDrinkValidationLabels
 
 import com.coffeepeek.admin.ui.screen.review.ConsumedDrinkValidationLabels
 
-import com.coffeepeek.domain.model.ConsumedDrinkIssue
+import com.coffeepeek.admin.ui.screen.review.ConsumedDrinkIssue
 
 import androidx.compose.runtime.Composable
 import coffeepeek.composeapp.generated.resources.*

@@ -6,7 +6,7 @@ import com.coffeepeek.admin.di.favorites.toPublicAddress
 import com.coffeepeek.feature.favorites.domain.model.FavoriteEntry
 import com.coffeepeek.feature.favorites.domain.model.FavoriteKind
 import com.coffeepeek.feature.favorites.domain.repository.AccountFavorites
-import com.coffeepeek.domain.model.CatalogItem
+import com.coffeepeek.admin.feature.favorites.api.CatalogItem
 import com.coffeepeek.feature.roaster.api.PublicRoasterDetails
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll

@@ -1,6 +1,6 @@
 package com.coffeepeek.admin.ui.screen.shop
 
-import com.coffeepeek.domain.model.consumedDrinkIssue
+import com.coffeepeek.admin.ui.screen.review.consumedDrinkIssue
 import com.coffeepeek.admin.utils.PickedImage
 import com.coffeepeek.admin.utils.currentEpochMillis
 import com.coffeepeek.admin.utils.datePickerMillisWithLocalTime

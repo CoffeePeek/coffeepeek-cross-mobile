@@ -2,7 +2,6 @@ package com.coffeepeek.admin.ui.screen.review
 
 import androidx.compose.runtime.Composable
 import coffeepeek.composeapp.generated.resources.*
-import com.coffeepeek.domain.model.ConsumedDrinkIssue
 import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 
 internal data class ConsumedDrinkValidationLabels(val customNameLength: String, val customNameOnlyForOther: String)

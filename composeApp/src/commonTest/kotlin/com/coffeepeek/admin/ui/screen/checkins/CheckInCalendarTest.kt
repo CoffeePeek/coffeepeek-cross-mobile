@@ -1,6 +1,5 @@
 package com.coffeepeek.admin.ui.screen.checkins
 
-import com.coffeepeek.domain.model.CheckIn
 import kotlin.test.Test
 import kotlin.test.assertEquals
 

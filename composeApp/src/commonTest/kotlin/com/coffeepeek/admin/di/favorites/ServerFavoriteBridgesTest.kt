@@ -6,7 +6,8 @@ import com.coffeepeek.feature.favorites.domain.model.FavoriteAddress
 import com.coffeepeek.feature.favorites.domain.model.FavoriteEntry
 import com.coffeepeek.feature.favorites.domain.model.FavoriteKind
 import com.coffeepeek.feature.favorites.domain.repository.AccountFavorites
-import com.coffeepeek.domain.model.*
+import com.coffeepeek.admin.feature.favorites.api.CatalogItem
+import com.coffeepeek.admin.feature.favorites.api.PublicAddress
 import com.coffeepeek.core.session.Session
 import com.coffeepeek.feature.favorites.domain.model.FavoriteShop
 import com.coffeepeek.feature.shop.api.PublicShopSummary

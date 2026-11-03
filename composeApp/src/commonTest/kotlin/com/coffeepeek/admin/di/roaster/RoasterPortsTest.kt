@@ -3,10 +3,10 @@
 package com.coffeepeek.admin.di.roaster
 
 import com.coffeepeek.admin.feature.favorites.api.RoasterFavorites
-import com.coffeepeek.domain.model.CatalogItem
+import com.coffeepeek.admin.feature.favorites.api.CatalogItem
 import com.coffeepeek.feature.shop.api.PublicShopPreview
 import com.coffeepeek.feature.shop.api.PublicShopPreviews
-import com.coffeepeek.domain.model.PublicAddress
+import com.coffeepeek.admin.feature.favorites.api.PublicAddress
 import com.coffeepeek.feature.roaster.api.RoasterFavoriteTarget
 import com.coffeepeek.room.model.Setting
 import com.coffeepeek.room.repository.SettingRepository

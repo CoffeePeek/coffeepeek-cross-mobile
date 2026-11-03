@@ -70,8 +70,8 @@ class RoasterModuleTest {
     }
 
     private class FakeFavorites : RoasterFavorites {
-        override fun observeFavorites() = MutableStateFlow(emptyList<com.coffeepeek.domain.model.CatalogItem>())
-        override suspend fun setFavorite(roaster: com.coffeepeek.domain.model.CatalogItem, isFavorite: Boolean) = Result.success(Unit)
+        override fun observeFavorites() = MutableStateFlow(emptyList<com.coffeepeek.admin.feature.favorites.api.CatalogItem>())
+        override suspend fun setFavorite(roaster: com.coffeepeek.admin.feature.favorites.api.CatalogItem, isFavorite: Boolean) = Result.success(Unit)
     }
 
     private class Fixture(

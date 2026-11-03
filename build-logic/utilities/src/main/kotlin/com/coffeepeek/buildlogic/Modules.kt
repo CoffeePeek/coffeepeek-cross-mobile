@@ -167,7 +167,6 @@ object Modules {
     }
 
     object Legacy {
-        const val domain = ":modules:domain"
         const val network = ":modules:network"
     }
 
@@ -188,7 +187,6 @@ object Modules {
         feature.businessOwnership.domain,
         feature.businessOwnership.data,
         feature.businessOwnership.impl,
-        legacy.domain,
         legacy.network,
         core.coroutines,
         core.network,
