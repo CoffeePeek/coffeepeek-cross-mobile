@@ -210,4 +210,18 @@
     <string name="contributions_editor_status_pending">Дзякуй за дапамогу! Пасля праверкі змены з’явяцца ў картцы кавярні.</string>
     <string name="contributions_editor_status_approved">Змены прынятыя і з’явяцца ў картцы кавярні.</string>
     <string name="contributions_editor_status_rejected">Заяўка захаваная. Падрабязнасці праверкі даступныя ў заяўцы.</string>
+    <string name="contributions_price_title">Цана</string>
+    <string name="contributions_price_cappuccino">Цана (капучына за %1$s)</string>
+    <string name="contributions_photo_count">Дададзена: %1$d/%2$d</string>
+    <string name="contributions_map_title">Кропка на карце</string>
+    <string name="contributions_map_hint">Перамясціце карту да кавярні</string>
+    <string name="contributions_map_cancel">Скасаваць выбар кропкі</string>
+    <string name="contributions_map_my_location">Маё месцазнаходжанне</string>
+    <string name="contributions_map_resolving">Вызначаем адрас…</string>
+    <string name="contributions_map_failed">Не ўдалося вызначыць адрас. Падсуньце карту.</string>
+    <string name="contributions_map_move">Перамясціце карту, каб выбраць кропку</string>
+    <string name="contributions_map_address">Адрас кавярні</string>
+    <string name="contributions_map_choose_compact">Выбраць</string>
+    <string name="contributions_map_choose">Выбраць гэту кропку</string>
+    <string name="contributions_map_pin">Метка размяшчэння кавярні</string>
 </resources>

@@ -9,7 +9,6 @@
     <string name="coffeepeek_photo_add">Дадаць фатаграфіі</string>
     <string name="coffeepeek_photo_move_earlier">Перамясціць раней</string>
     <string name="coffeepeek_photo_move_later">Перамясціць пазней</string>
-    <string name="coffeepeek_photo_close">Закрыць прагляд фатаграфій</string>
     <string name="coffeepeek_image_placeholder_brand">COFFEEPEEK</string>
     <string name="coffeepeek_rating_description">Адзнака %1$s з 5</string>
     <string name="coffeepeek_rating_choose">Выбраць %1$d з 5</string>
@@ -18,4 +17,14 @@
     <string name="coffeepeek_pagination_error">Не ўдалося загрузіць наступныя вынікі.</string>
     <string name="coffeepeek_pagination_retry">Паўтарыць</string>
     <string name="coffeepeek_refresh_error">Не ўдалося абнавіць. Паказаныя папярэднія вынікі.</string>
+    <string name="coffeepeek_photo_missing">Фота адсутнічае</string>
+    <string name="coffeepeek_load_error_title">Упс, нешта пайшло не так</string>
+    <string name="coffeepeek_load_error_message">Сервіс часова недаступны. Магчыма, вядуцца працы. Паспрабуйце крыху пазней.</string>
+    <string name="coffeepeek_load_error_retry">Паспрабаваць зноў</string>
+    <string name="coffeepeek_photo_loading">Загрузка фота…</string>
+    <string name="coffeepeek_viewer_close">Закрыць</string>
+    <string name="coffeepeek_photo_source_title">Дадаць фота</string>
+    <string name="coffeepeek_photo_source_gallery">Выбраць з галерэі</string>
+    <string name="coffeepeek_photo_source_camera">Зрабіць фота</string>
+    <string name="coffeepeek_photo_source_cancel">Адмена</string>
 </resources>

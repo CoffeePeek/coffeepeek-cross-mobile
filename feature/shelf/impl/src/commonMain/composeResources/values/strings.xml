@@ -195,11 +195,9 @@
     <string name="shelf_scan_failed">Не получилось обработать фото</string>
 
     <string name="shelf_form_ready">Готово, пачка вырезана</string>
-    <string name="shelf_form_card">Карточка пачки</string>
     <string name="shelf_form_hint">Карточка получилась, но её можно сделать чище</string>
     <string name="shelf_form_coffee">Кофе</string>
     <string name="shelf_form_coffee_hint">Название или поиск по каталогу</string>
-    <string name="shelf_form_coffee_clear">Очистить название</string>
     <string name="shelf_form_catalog_match">Из каталога CoffeePeek</string>
     <string name="shelf_form_roaster">Обжарщик</string>
     <string name="shelf_form_roasted">Дата обжарки · необязательно</string>

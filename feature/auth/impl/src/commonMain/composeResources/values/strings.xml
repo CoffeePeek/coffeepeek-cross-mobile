@@ -20,7 +20,6 @@
     <string name="auth_login_wrong_credentials">Неверный email или пароль</string>
     <string name="auth_login_network">Не удалось подключиться. Проверьте интернет-соединение</string>
     <string name="auth_login_unknown">Не удалось войти. Проверьте email и пароль</string>
-    <string name="auth_signing_in">Входим…</string>
 
     <string name="auth_recovery_title">Восстановление пароля</string>
     <string name="auth_recovery_info">Введите email аккаунта — мы отправим ссылку для восстановления пароля.</string>

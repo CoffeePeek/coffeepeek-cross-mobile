@@ -4,15 +4,11 @@
     <string name="ownership_back">Назад</string>
     <string name="ownership_login">Увайсці</string>
     <string name="ownership_login_hint">Увайдзіце, каб падаць заяўку або кіраваць сваім бізнесам.</string>
-    <string name="ownership_new_claim">Заявіць правы на бізнес</string>
     <string name="ownership_claim_title">Заяўка на валоданне</string>
     <string name="ownership_editor_title">Профіль бізнесу</string>
     <string name="ownership_claim_hint">Укажыце кантакт для сувязі і растлумачце, як можна пацвердзіць вашы паўнамоцтвы. Дадайце пацвярджальныя фатаграфіі.</string>
-    <string name="ownership_slug">Спасылка або кароткі адрас бізнесу</string>
     <string name="ownership_contact">Кантакт для сувязі</string>
     <string name="ownership_evidence">Пацвярджэнне паўнамоцтваў</string>
-    <string name="ownership_kind_shop">Кавярня</string>
-    <string name="ownership_kind_roaster">Абсмажчык</string>
     <string name="ownership_submit">Адправіць заяўку</string>
     <string name="ownership_claims">Мае заяўкі</string>
     <string name="ownership_shops">Мае кавярні</string>

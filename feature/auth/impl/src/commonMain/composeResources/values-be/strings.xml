@@ -17,7 +17,6 @@
     <string name="auth_login_wrong_credentials">Няправільны email або пароль</string>
     <string name="auth_login_network">Не ўдалося падключыцца. Праверце інтэрнэт-злучэнне</string>
     <string name="auth_login_unknown">Не ўдалося ўвайсці. Праверце email і пароль</string>
-    <string name="auth_signing_in">Уваходзім…</string>
     <string name="auth_recovery_title">Аднаўленне пароля</string>
     <string name="auth_recovery_info">Увядзіце email акаўнта — мы адправім спасылку для аднаўлення пароля.</string>
     <string name="auth_recovery_sent">Калі акаўнт з гэтым email існуе, на яго адпраўлены ліст. Адкрыйце спасылку з ліста ў браўзеры і змяніце пароль на сайце. Потым вярніцеся ў праграму і ўвайдзіце з новым паролем. Праверце таксама папку «Спам».</string>
@@ -66,4 +65,7 @@
     <string name="auth_social_diag_domain">; дамен %1$s</string>
     <string name="auth_social_diag_oauth">; OAuth %1$s</string>
     <string name="auth_social_diag">%1$s (код %2$s%3$s%4$s)</string>
+    <string name="auth_sign_in_apple">Увайсці праз Apple</string>
+    <string name="auth_social_apple_generic">Не ўдалося ўвайсці праз Apple. Паспрабуйце яшчэ раз.</string>
+    <string name="auth_social_apple_email_not_verified">Apple не перадаў пацверджаны email. Паспрабуйце яшчэ раз.</string>
 </resources>

@@ -29,7 +29,6 @@
     <string name="home_check_in_rating_description">Оценка вкуса %1$d из 5</string>
     <string name="home_check_in_photo_description">Фотография %1$d из %2$d</string>
     <string name="home_check_in_more_photos">+%1$d</string>
-    <string name="home_check_in_open_drink_photo">Открыть фото напитка</string>
     <string name="home_check_in_note">Впечатления</string>
     <string name="home_check_in_edit">Редактировать</string>
     <string name="home_check_in_delete">Удалить запись</string>
@@ -114,7 +113,6 @@
     <string name="home_check_in_add_photos">Добавить фото</string>
     <string name="home_check_in_gallery">Выбрать из галереи</string>
     <string name="home_check_in_camera">Сделать фото</string>
-    <string name="home_check_in_remove_photo">Удалить фото %1$d</string>
     <string name="home_check_in_keep_photos">Фотографии этой записи сохранятся без изменений</string>
     <string name="home_check_in_error_date">Проверьте дату и время приготовления.</string>
     <string name="home_check_in_error_future_date">Дата приготовления не может быть в будущем.</string>
@@ -131,7 +129,4 @@
     <string name="home_check_in_error_visibility">Проверьте видимость чекина.</string>
     <string name="home_check_in_error_input">Проверьте введённые данные.</string>
     <string name="home_check_in_method_other">Другое</string>
-    <string name="home_check_in_validation_summary_one">Проверьте заполненные поля (%1$d ошибка).</string>
-    <string name="home_check_in_validation_summary_few">Проверьте заполненные поля (%1$d ошибки).</string>
-    <string name="home_check_in_validation_summary_many">Проверьте заполненные поля (%1$d ошибок).</string>
 </resources>

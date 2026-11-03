@@ -24,4 +24,10 @@
     <string name="roaster_photos_missing">Фатаграфіі %1$s адсутнічаюць</string>
     <string name="roaster_photo_position">%1$d / %2$d</string>
     <string name="roaster_share">Падзяліцца</string>
+    <string name="roaster_search_placeholder">Пошук абсмажчыкаў…</string>
+    <string name="roaster_search_clear">Ачысціць пошук</string>
+    <string name="roaster_search_back">Назад</string>
+    <string name="roaster_suggestion_title">Не знайшлі патрэбнага абсмажчыка?</string>
+    <string name="roaster_suggestion_description">Прапануйце дадаць яго ў CoffeePeek — пасля праверкі ён з’явіцца ў каталогу.</string>
+    <string name="roaster_suggestion_action">Дадаць абсмажчыка</string>
 </resources>

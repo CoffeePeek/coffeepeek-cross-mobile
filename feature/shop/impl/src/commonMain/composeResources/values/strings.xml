@@ -38,13 +38,9 @@
     <string name="shop_overview_closed">Сейчас закрыто</string>
     <string name="shop_menu_title">Меню</string>
     <string name="shop_menu_no_items">Позиций меню пока нет</string>
-    <string name="shop_menu_photos">Фото меню: %1$d</string>
     <string name="shop_menu_byn_price_description">%1$s белорусских рублей</string>
     <string name="shop_menu_captured">Актуально на %1$s</string>
     <string name="shop_menu_updated">Обновлено %1$s</string>
-    <string name="shop_menu_espresso">Эспрессо</string>
-    <string name="shop_menu_filter">Фильтр</string>
-    <string name="shop_menu_other">Другое</string>
     <string name="shop_schedule_title">Часы работы</string>
     <string name="shop_schedule_expand">Показать часы работы</string>
     <string name="shop_schedule_collapse">Скрыть часы работы</string>
@@ -64,11 +60,9 @@
     <string name="shop_coffee_roasters">Обжарщики</string>
     <string name="shop_coffee_beans">Кофе</string>
     <string name="shop_coffee_equipment">Оборудование</string>
-    <string name="shop_coffee_roaster_photo">Фото обжарщика «%1$s»</string>
     <string name="shop_coffee_roaster_photo_missing">Фото обжарщика отсутствует</string>
     <string name="shop_coffee_open_roaster">Открыть обжарщика «%1$s»</string>
     <string name="shop_features_title">Особенности</string>
-    <string name="shop_features_show_all">Показать все: %1$d</string>
     <string name="shop_features_show_all_count_one">Показать все %1$d особенность</string>
     <string name="shop_features_show_all_count_few">Показать все %1$d особенности</string>
     <string name="shop_features_show_all_count_many">Показать все %1$d особенностей</string>
@@ -87,11 +81,9 @@
     <string name="shop_checkins_public_title">Чекины</string>
     <string name="shop_checkins_empty">Станьте первым, кто оставит чекин о посещении кофейни «%1$s»</string>
     <string name="shop_checkins_show_all">Все чекины</string>
-    <string name="shop_checkins_sign_in_prompt">Войдите, чтобы увидеть все чекины</string>
     <string name="shop_checkins_join_prompt">Присоединяйтесь к сообществу, чтобы сохранять любимые места и делиться впечатлениями.</string>
     <string name="shop_checkins_no_account">Нет аккаунта?</string>
     <string name="shop_checkins_author_unknown">Пользователь</string>
-    <string name="shop_checkins_helpful">Полезно: %1$d</string>
     <string name="shop_checkins_report">Пожаловаться</string>
     <string name="shop_checkins_block_author">Заблокировать автора</string>
     <string name="shop_checkins_author_self">Вы</string>
@@ -109,9 +101,7 @@
     <string name="shop_checkins_like_remove">Убрать лайк, лайков: %1$d</string>
     <string name="shop_checkins_like_updating">Обновление лайка, лайков: %1$d</string>
     <string name="shop_checkins_create">Оставить чекин</string>
-    <string name="shop_checkins_visited">Посещение: %1$s</string>
     <string name="shop_checkins_photo_description">Фото посещения %1$d из %2$d</string>
-    <string name="shop_detail_title">Кофейня</string>
     <string name="shop_detail_back">Назад</string>
     <string name="shop_detail_error">Не удалось загрузить кофейню</string>
     <string name="shop_detail_retry">Повторить</string>
@@ -174,7 +164,6 @@
     <string name="shop_checkin_form_dismiss">Закрыть форму чекина</string>
     <string name="shop_checkin_form_note">Заметка</string>
     <string name="shop_checkin_form_note_hint">Расскажите о вашем визите…</string>
-    <string name="shop_checkin_form_note_count">%1$d / 1000</string>
     <string name="shop_checkin_form_date">Дата посещения</string>
     <string name="shop_checkin_form_date_confirm">Готово</string>
     <string name="shop_checkin_form_cancel">Отмена</string>
@@ -230,10 +219,4 @@
     <string name="shop_schedule_today_closed">Сегодня выходной</string>
     <string name="shop_schedule_expanded_state">Развёрнуто</string>
     <string name="shop_schedule_collapsed_state">Свёрнуто</string>
-    <plurals name="shop_features_show_all_count">
-        <item quantity="one">Показать все %1$d особенность</item>
-        <item quantity="few">Показать все %1$d особенности</item>
-        <item quantity="many">Показать все %1$d особенностей</item>
-        <item quantity="other">Показать все %1$d особенностей</item>
-    </plurals>
 </resources>
