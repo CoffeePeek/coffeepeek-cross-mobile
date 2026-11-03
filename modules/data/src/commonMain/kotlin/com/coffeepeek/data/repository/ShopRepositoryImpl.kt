@@ -12,7 +12,6 @@ import com.coffeepeek.api.model.request.ShopSearchOriginDto
 import com.coffeepeek.api.model.request.ShopSearchRequestDto
 import com.coffeepeek.api.service.ShopApiService
 import com.coffeepeek.data.mapper.ShopMapper.toDomain
-import com.coffeepeek.data.mapper.toMapContent
 import com.coffeepeek.data.mapper.toDomain
 import com.coffeepeek.data.mapper.toDto
 import com.coffeepeek.data.util.FileUrlResolver
@@ -24,8 +23,6 @@ import com.coffeepeek.domain.model.CoffeeShop
 import com.coffeepeek.domain.model.CoffeeShopDetails
 import com.coffeepeek.domain.model.CoffeeShopType
 import com.coffeepeek.domain.model.CreateShopInput
-import com.coffeepeek.domain.model.MapBounds
-import com.coffeepeek.domain.model.MapContent
 import com.coffeepeek.domain.model.ModerationStatus
 import com.coffeepeek.domain.model.PagedResult
 import com.coffeepeek.domain.model.ShopCatalogs
@@ -162,28 +159,6 @@ class ShopRepositoryImpl(
             )
         }
     }
-
-    override suspend fun getMapContent(bounds: MapBounds, zoom: Float, filters: ShopFilters): Result<MapContent> =
-        // Match the migrated map: one finer server level keeps groups compact.
-        requestMap(bounds, (zoom + 1f).toInt().coerceIn(0, 22), filters).map { it.toMapContent(filters.coffeeFocus) }
-
-    private suspend fun requestMap(bounds: MapBounds, zoom: Int, filters: ShopFilters) =
-        shopApiService.getShopsInBounds(
-            minLat = bounds.minLat,
-            minLon = bounds.minLon,
-            maxLat = bounds.maxLat,
-            maxLon = bounds.maxLon,
-            zoom = zoom,
-            cityId = filters.cityId,
-            type = filters.coffeeFocus?.let(CoffeeShopType::toApi),
-            roasterIds = filters.roasterIds.takeIf { it.isNotEmpty() },
-            equipmentIds = filters.equipmentIds.takeIf { it.isNotEmpty() },
-            beanIds = filters.beanIds.takeIf { it.isNotEmpty() },
-            brewMethodIds = filters.brewMethodIds.takeIf { it.isNotEmpty() },
-            tagIds = filters.tagIds.takeIf { it.isNotEmpty() },
-            priceRange = filters.priceRange.toApiPriceRange(),
-            minRating = filters.minRating,
-        )
 
     override suspend fun getMyShopSubmissions(
         status: ModerationStatus,

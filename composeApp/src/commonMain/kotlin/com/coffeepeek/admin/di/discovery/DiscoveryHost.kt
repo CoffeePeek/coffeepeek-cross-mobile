@@ -16,9 +16,9 @@ import com.coffeepeek.admin.ui.component.HapticEvent
 import com.coffeepeek.admin.ui.component.RetainedContent
 import com.coffeepeek.admin.ui.component.platformHaptic
 import com.coffeepeek.admin.ui.component.platformReduceMotion
-import com.coffeepeek.domain.model.CoffeeShopType
-import com.coffeepeek.domain.model.MapCoffeeZone
-import com.coffeepeek.domain.model.MapShop
+import com.coffeepeek.admin.map.MapShopType
+import com.coffeepeek.admin.map.MapCoffeeZone
+import com.coffeepeek.admin.map.MapShop
 import com.coffeepeek.feature.discovery.api.DiscoveryExposure
 import com.coffeepeek.feature.discovery.api.DiscoveryHost
 import com.coffeepeek.feature.discovery.api.MapCanvasCallbacks
@@ -57,8 +57,8 @@ private fun DiscoveryMapCanvas(state: MapCanvasState, callbacks: MapCanvasCallba
     CoffeeMap(
         shops = shops,
         clusters = state.clusters.map { cluster ->
-            com.coffeepeek.domain.model.MapCluster(cluster.id, cluster.coordinates.latitude, cluster.coordinates.longitude, cluster.count,
-                com.coffeepeek.domain.model.MapBounds(cluster.bounds.minLat, cluster.bounds.minLon, cluster.bounds.maxLat, cluster.bounds.maxLon))
+            com.coffeepeek.admin.map.MapCluster(cluster.id, cluster.coordinates.latitude, cluster.coordinates.longitude, cluster.count,
+                com.coffeepeek.admin.map.MapBounds(cluster.bounds.minLat, cluster.bounds.minLon, cluster.bounds.maxLat, cluster.bounds.maxLon))
         },
         zones = zones,
         selectedShopId = state.selectedShopId,
@@ -80,7 +80,7 @@ private fun DiscoveryMapCanvas(state: MapCanvasState, callbacks: MapCanvasCallba
 
 private fun MapMarker.toLegacy() = MapShop(
     id = id, title = title, latitude = coordinates.latitude, longitude = coordinates.longitude, primaryZoneId = zoneId,
-    type = when (kind) { ShopKind.Specialty -> CoffeeShopType.SPECIALTY; ShopKind.CoffeeBar -> CoffeeShopType.COFFEE_BAR; ShopKind.Cafe -> CoffeeShopType.CAFE },
+    type = when (kind) { ShopKind.Specialty -> MapShopType.SPECIALTY; ShopKind.CoffeeBar -> MapShopType.COFFEE_BAR; ShopKind.Cafe -> MapShopType.CAFE },
 )
 
 private fun MapZone.toLegacy() = MapCoffeeZone(

@@ -1,6 +1,5 @@
 package com.coffeepeek.admin.map
 
-import com.coffeepeek.domain.model.MapShop
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse

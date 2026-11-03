@@ -2,8 +2,8 @@ package com.coffeepeek.admin.ui.screen.map
 
 import com.coffeepeek.admin.location.GeoPoint
 import com.coffeepeek.admin.location.distanceToShopMeters
-import com.coffeepeek.domain.model.MapBounds
-import com.coffeepeek.domain.model.MapShop
+import com.coffeepeek.admin.map.MapBounds
+import com.coffeepeek.admin.map.MapShop
 import com.coffeepeek.domain.model.ShopLocation
 import kotlin.math.PI
 import kotlin.math.cos

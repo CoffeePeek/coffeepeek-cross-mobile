@@ -1,7 +1,7 @@
 package com.coffeepeek.admin.ui.screen.map
 
 import com.coffeepeek.admin.location.GeoPoint
-import com.coffeepeek.domain.model.MapShop
+import com.coffeepeek.admin.map.MapShop
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue

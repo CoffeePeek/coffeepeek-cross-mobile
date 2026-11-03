@@ -163,52 +163,6 @@ data class ShopFilters(
     val favoritesOnly: Boolean = false,
 )
 
-data class MapBounds(
-    val minLat: Double,
-    val minLon: Double,
-    val maxLat: Double,
-    val maxLon: Double,
-)
-
-data class MapShop(
-    val id: String,
-    val title: String,
-    val latitude: Double,
-    val longitude: Double,
-    val type: String = CoffeeShopType.COFFEE_BAR,
-    val primaryZoneId: String? = null,
-    val publicAddress: PublicAddress? = null,
-)
-
-data class MapCluster(
-    val id: String,
-    val latitude: Double,
-    val longitude: Double,
-    val count: Int,
-    val bounds: MapBounds,
-)
-
-data class MapCoffeeZone(
-    val id: String,
-    val name: String,
-    val description: String,
-    val color: String? = null,
-    val latitude: Double,
-    val longitude: Double,
-    val radiusMeters: Double,
-    val shopCount: Int,
-    // (latitude, longitude); empty → draw a circle from radiusMeters
-    val polygon: List<Pair<Double, Double>> = emptyList(),
-    val publicAddress: PublicAddress? = null,
-)
-
-data class MapContent(
-    val shops: List<MapShop> = emptyList(),
-    val clusters: List<MapCluster> = emptyList(),
-    val zones: List<MapCoffeeZone> = emptyList(),
-    val isTruncated: Boolean = false,
-)
-
 object CoffeeShopType {
     const val SPECIALTY = "specialty"
     const val COFFEE_BAR = "coffee_bar"

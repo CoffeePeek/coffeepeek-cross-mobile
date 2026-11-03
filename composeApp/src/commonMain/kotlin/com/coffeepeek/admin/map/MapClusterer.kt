@@ -1,6 +1,5 @@
 package com.coffeepeek.admin.map
 
-import com.coffeepeek.domain.model.MapShop
 import kotlin.math.hypot
 
 internal const val MIN_CLUSTER_ZOOM = 15f

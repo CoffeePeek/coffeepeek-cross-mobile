@@ -1,9 +1,5 @@
 package com.coffeepeek.admin.map
 
-import com.coffeepeek.domain.model.MapBounds
-import com.coffeepeek.domain.model.MapCluster
-import com.coffeepeek.domain.model.MapCoffeeZone
-import com.coffeepeek.domain.model.MapShop
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.boolean
 import kotlinx.serialization.json.double
