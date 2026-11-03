@@ -12,8 +12,15 @@ import io.ktor.client.request.HttpRequestData
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.headersOf
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.async
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withTimeout
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -22,13 +29,15 @@ import kotlin.test.assertTrue
 
 class ContributionCatalogSourceTest {
     private val requests = mutableListOf<HttpRequestData>()
+    /** The catalogs are read in parallel on other threads; an unguarded list loses entries. */
+    private val requestsLock = Mutex()
     private val json = headersOf(HttpHeaders.ContentType, "application/json")
     private val replies = mutableMapOf<String, () -> Pair<HttpStatusCode, String>>()
     private var roasters: Result<List<CatalogOption>> = Result.success(listOf(CatalogOption("r1", "Roaster", "https://logo")))
 
     @Test fun theSnapshotKeepsThePublishedMenuRevisionWithoutInventingOne() = runBlocking {
         defaults()
-        for (revision in listOf<Long?>(null, 0L, 17L, -1L)) {
+        for (revision in listOf<Long?>(null, 0L, 17L, -1L, Long.MAX_VALUE)) {
             val field = revision?.let { ",\"inputRevision\":$it" }.orEmpty()
             replies["/api/CoffeeShops/cafe"] = { ok("""{"name":"Cafe","menu":{"items":[]$field}}""") }
             assertEquals(revision, source().shop("cafe").getOrThrow().menuInputRevision)
@@ -56,14 +65,14 @@ class ContributionCatalogSourceTest {
 
     private fun source(): ContributionCatalogSource {
         val client = HttpClientFactory(MockEngine { request ->
-            requests += request
+            requestsLock.withLock { requests += request }
             val (status, body) = replies[request.url.encodedPath]?.invoke() ?: (HttpStatusCode.NotFound to "{}")
             respond(body, status, json)
         }).api("https://api.example")
         return createContributionCatalogSource(client) { roasters }
     }
 
-    private fun count(path: String) = requests.count { it.url.encodedPath == path }
+    private fun count(path: String) = runBlocking { requestsLock.withLock { requests.count { it.url.encodedPath == path } } }
 
     @Test fun theCatalogsMapEveryListAndKeepTheRoasterLogo() = runBlocking {
         defaults()
@@ -96,6 +105,55 @@ class ContributionCatalogSourceTest {
         val results = listOf(async { source.catalogs() }, async { source.catalogs() }, async { source.catalogs() }).map { it.await() }
         assertTrue(results.all { it.isSuccess })
         assertEquals(1, count("/api/Catalogs/beans"))
+    }
+
+    @Test fun aCallerThatStopsWaitingDoesNotCancelTheSharedLoadForTheNextOne() = runBlocking {
+        withTimeout(5_000) {
+            defaults()
+            val started = CompletableDeferred<Unit>()
+            val release = CompletableDeferred<Unit>()
+            val source = gatedSource { started.complete(Unit); release.await() }
+            val first = launch { source.catalogs() }
+            started.await()
+            first.cancelAndJoin()
+            val second = async { source.catalogs() }
+            val third = async { source.catalogs() }
+            release.complete(Unit)
+            assertTrue(second.await().isSuccess)
+            assertTrue(third.await().isSuccess)
+            val afterFirstLoad = count("/api/Catalogs/beans")
+            assertTrue(source.catalogs().isSuccess)
+            assertEquals(afterFirstLoad, count("/api/Catalogs/beans"), "the finished load is kept")
+        }
+    }
+
+    @Test fun aFailedLoadIsRetriedByTheNextCallerEvenWhenNobodyWasWaiting() = runBlocking {
+        withTimeout(5_000) {
+            defaults()
+            var offline = true
+            val started = CompletableDeferred<Unit>()
+            val release = CompletableDeferred<Unit>()
+            replies["/api/Catalogs/beans"] = { if (offline) HttpStatusCode.ServiceUnavailable to """{"isSuccess":false,"message":"Offline"}""" else ok("[]") }
+            val source = gatedSource { if (offline) { started.complete(Unit); release.await() } }
+            val first = launch { source.catalogs() }
+            started.await()
+            first.cancelAndJoin()
+            release.complete(Unit)
+            // The load fails with nobody waiting; give it time to finish before the next call.
+            delay(200)
+            offline = false
+            assertTrue(source.catalogs().isSuccess)
+        }
+    }
+
+    private fun gatedSource(gate: suspend () -> Unit): ContributionCatalogSource {
+        val client = HttpClientFactory(MockEngine { request ->
+            requestsLock.withLock { requests += request }
+            gate()
+            val (status, body) = replies[request.url.encodedPath]?.invoke() ?: (HttpStatusCode.NotFound to "{}")
+            respond(body, status, json)
+        }).api("https://api.example")
+        return createContributionCatalogSource(client) { roasters }
     }
 
     @Test fun aFailingRoasterCatalogFailsTheCatalogs() = runBlocking {

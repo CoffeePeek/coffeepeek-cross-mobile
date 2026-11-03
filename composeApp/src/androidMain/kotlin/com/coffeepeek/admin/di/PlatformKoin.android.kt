@@ -47,7 +47,6 @@ actual fun initPlatformKoin() = initAndroidKoin()
 internal fun initAndroidKoin(extraModules: List<org.koin.core.module.Module> = emptyList(), analyticsEnabled: Boolean = true) {
     initKoin(
         analyticsEnabled = analyticsEnabled,
-        registerLegacyFavorites = true,
         platformModules = listOf(
             serverFavoritesModule(),
             shopCheckInModule(AndroidShopCheckInDateFormatter()),

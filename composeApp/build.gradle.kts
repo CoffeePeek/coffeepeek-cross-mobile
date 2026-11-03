@@ -124,7 +124,6 @@ kotlin {
             implementation(project(module.feature.favorites.domain))
             implementation(libs.posthog.kmp)
             implementation(project(module.legacy.domain))
-            implementation(project(module.legacy.data))
             implementation(project(module.legacy.network))
             implementation(project(module.core.database))
             implementation(project(module.core.network))
@@ -506,7 +505,6 @@ androidComponents {
                 "com.coffeepeek.feature.ownership.impl.ui.OwnershipViewModel",
                 "com.coffeepeek.api.service.CheckInApiService",
                 "com.coffeepeek.api.CoffeePeekRepo",
-                "com.coffeepeek.data.di.DataModuleKt",
                 "com.coffeepeek.admin.di.roaster.RoasterModuleKt",
                 "com.coffeepeek.admin.di.roaster.FeatureRoasterScreenRenderer",
                 "com.coffeepeek.admin.di.community.FeatureCommunityScreenRenderer",

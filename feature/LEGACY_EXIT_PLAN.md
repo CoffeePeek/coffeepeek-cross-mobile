@@ -1621,3 +1621,31 @@ source `89778c23` + этот срез. Подробный scope/остаток �
   `CheckInVisibility`, `FavoriteKind/Entry/FavoritesRepository` (карточки публичного профиля, таймлайн чекинов,
   `LegacyFavoriteRoastersRepository`, мосты избранного, `RoasterPorts`) и репозитории `modules/data`. Кандидаты на удаление в
   шаге 4 после проверки достижимости: `ReviewContent`, `CheckInCalendarPhotos`, `VisitedPlacesUiState` (держат только тесты).
+
+## L3, шаг 4 удаления `modules/*` — `modules/data` удалён — 2026-11-03
+
+- `ApiException` теперь в `core/network` (`com.coffeepeek.core.network.ApiException`), `modules/network`, `BaseViewModel` и
+  `ErrorHandler` импортируют оттуда. Мёртвый интерфейс `LocalUserDataCleanup` удалён: `UserSessionCleaner` — обычный класс.
+- Сборка хранилища сессии вынесена из `dataModule` в `composeApp/.../session/SessionStoreModule.kt` (`sessionStoreModule`:
+  scope, `LegacyCredentialRows`, защищённое хранилище, `SessionStore`/`SessionReader`). `RoomLegacyCredentialRows` переехал
+  в `composeApp/session` и читает старые строки своей `LegacyAuthRow` вместо `AuthResp` из `modules/network`;
+  `RoomLegacyCredentialRowsTest` и `SessionPortsWiringTest` переведены без изменения проверок.
+- `modules/data` удалён целиком (репозитории Shop/Review/CheckIn/Feed/Photo/Roaster/ShopChange/ShopIssueReport/Favorite/User,
+  мапперы, `LocalFavoriteShopDto`, `ScheduleTimeZone`, `FileUrlResolver`, `DataModule`, 12 тестов). Продакшен-потребителей у
+  них не было: `FavoriteRepository` на Android больше не регистрируется (`registerLegacyFavorites` убран),
+  `ServerFavoritesWiringTest` теперь проверяет, что старого Room-писателя в графе нет. Сняты `Modules.Legacy.data`, зависимость
+  composeApp и `DataModuleKt` в списке `verifyRuntimeClasses`.
+- Покрытие тестов сопоставлено по списку (read-only разбор), перенесено в тесты фич:
+  - `ContributionCatalogSourceTest`: «ушедший ждущий вызов не отменяет общую загрузку» и «сбой без ожидающих повторяется
+    следующим вызовом» (из `RoasterCatalogCacheTest`), ревизия меню `Long.MAX_VALUE` (из `ShopMenuRevisionTest`);
+  - `ShopCheckInRepositoryTest`: матрица сбоев по стадиям (резервирование, загрузка каждого фото, создание) с успешным
+    повтором (из `CheckInRepositoryContractTest`).
+  - Остальное покрыто тестами `feature/community|check-in-history|home-check-in|shop|contributions|roaster|profile`
+    (имена в обзоре сессии). Сознательно не перенесено: визит без рейтинга и текста через `/api/v1/check-ins` (единственный
+    живой путь создания — Shop, он требует рейтинг и текст), JSON старых избранных с `LocalFavoriteShopDto` (формат ушёл
+    вместе с Room-избранным), тесты `dataModule`; усечение меню до 4 фото заменено отказом на превышение (контракт `feature/contributions`).
+- `ContributionCatalogSourceTest` был нестабилен: общий список запросов дополнялся из параллельных корутин без защиты, часть
+  записей терялась. Список теперь под мьютексом (6 прогонов подряд зелёные).
+- Остаётся для шага 5: `modules/network` (живут `AuthService` и DTO для `SandboxApplicationBackendTest`/инструментальных
+  тестов) и `modules/domain` (модели `CheckIn`, `CatalogItem`, `PublicAddress`, `CoffeeShop`..., `UserRepository`/`UserProfile`
+  для `PublicProfileViewModel`, `FavoritesRepository` как мост `AccountFavoritesBridge`).

@@ -49,7 +49,6 @@ import com.coffeepeek.admin.ui.screen.review.ContentReportScreenRenderer
 import com.coffeepeek.admin.ui.screen.contributions.ContributionKind
 import com.coffeepeek.admin.ui.screen.shop.CheckInDraftStore
 import com.coffeepeek.admin.di.imageModule
-import com.coffeepeek.data.di.dataModule
 import com.coffeepeek.feature.favorites.domain.usecase.ObserveFavoriteIdsUseCase
 import org.koin.core.context.startKoin
 import org.koin.core.module.Module
@@ -57,7 +56,6 @@ import org.koin.core.scope.Scope
 import org.koin.dsl.module
 
 fun initKoin(
-    registerLegacyFavorites: Boolean = true,
     platformModules: List<Module> = emptyList(),
     shopReportRendererFactory: (ApiClients) -> ShopReportScreenRenderer,
     shopGalleryRendererFactory: (ApiClients) -> ShopMenuGalleryScreenRenderer,
@@ -89,11 +87,6 @@ fun initKoin(
     ThemeManager.initialize(database.settingRepository)
 
     val commonModules = listOf(
-        dataModule(
-            baseUrl = Constants.BASE_URL,
-            database = database,
-            registerLegacyFavorites = registerLegacyFavorites,
-        ),
         com.coffeepeek.admin.session.sessionStoreModule(database, Locator.platformContext),
         transportModule(Constants.BASE_URL, Locator.cacheFolderPath, AppConfig.isDebug),
         appModule(database.settingRepository, shopReportRendererFactory, shopGalleryRendererFactory,

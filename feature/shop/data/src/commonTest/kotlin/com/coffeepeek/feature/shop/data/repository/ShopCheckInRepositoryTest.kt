@@ -209,6 +209,56 @@ class ShopCheckInRepositoryTest {
         }
     }
 
+    @Test fun eachReservationUploadAndCreationFailureStopsThePipelineAndAllowsARetry() = runBlocking {
+        val urls = "/api/Photos/check-in"
+        val create = "/api/v1/check-ins"
+        val json = headersOf(HttpHeaders.ContentType, "application/json")
+        val targets = """{"isSuccess":true,"data":[
+            {"uploadUrl":"https://uploads.example.com/one","storageKey":"one.jpg"},
+            {"uploadUrl":"https://uploads.example.com/two","storageKey":"two.jpg"}]}"""
+        for ((stage, expectedPaths) in listOf(
+            "urls-http" to listOf(urls), "urls-rejected" to listOf(urls), "urls-count" to listOf(urls),
+            "urls-unsafe" to listOf(urls), "upload-one" to listOf(urls, "/one"),
+            "upload-two" to listOf(urls, "/one", "/two"), "create" to listOf(urls, "/one", "/two", create),
+        )) {
+            var fail = true
+            val paths = mutableListOf<String>()
+            val apiEngine = MockEngine { request ->
+                paths += request.url.encodedPath
+                when (request.url.encodedPath) {
+                    urls -> when {
+                        fail && stage == "urls-http" -> respond("", HttpStatusCode.ServiceUnavailable, json)
+                        fail && stage == "urls-rejected" -> respond("""{"isSuccess":false,"message":"Photos rejected","data":null}""", headers = json)
+                        fail && stage == "urls-count" -> respond("""{"isSuccess":true,"data":[]}""", headers = json)
+                        fail && stage == "urls-unsafe" -> respond(targets.replace("https://uploads.example.com/one", "http://127.0.0.1/one"), headers = json)
+                        else -> respond(targets, headers = json)
+                    }
+                    create -> if (fail && stage == "create")
+                        respond("""{"isSuccess":false,"message":"Limit reached","data":null}""", HttpStatusCode.TooManyRequests, json)
+                    else respond("""{"isSuccess":true,"data":{"id":"created"}}""", headers = json)
+                    else -> error("Unexpected path: ${request.url.encodedPath}")
+                }
+            }
+            val uploadEngine = MockEngine { request ->
+                val path = request.url.encodedPath
+                paths += path
+                respond("", if (fail && stage == "upload-${if (path == "/one") "one" else "two"}") HttpStatusCode.Forbidden else HttpStatusCode.OK)
+            }
+            val api = HttpClientFactory(apiEngine).api("https://example.com")
+            val upload = HttpClientFactory(uploadEngine).upload()
+            try {
+                val repository = createShopCheckInRepository(api, upload)
+                val input = validInput().copy(photos = listOf(
+                    ShopCheckInPhoto(byteArrayOf(1), "one.jpg"), ShopCheckInPhoto(byteArrayOf(2), "two.jpg")))
+                assertTrue(repository.create(input).isFailure, stage)
+                assertEquals(expectedPaths, paths, stage)
+                fail = false; paths.clear()
+                repository.create(input).getOrThrow()
+                assertEquals(listOf(urls, "/one", "/two", create), paths, stage)
+            } finally { api.close(); upload.close(); apiEngine.close(); uploadEngine.close() }
+        }
+    }
+
     @Test fun invalidInputAndUploadUrlNeverSubmitCheckIn() = runBlocking {
         val paths = mutableListOf<String>()
         val apiEngine = MockEngine { request ->
