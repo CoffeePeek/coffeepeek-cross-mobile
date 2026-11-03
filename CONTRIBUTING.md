@@ -148,7 +148,7 @@ feat: публичный чек-ин с обязательным коммент�
 | Новый экран и его ViewModel | `feature/<имя>/impl` |
 | REST endpoint и маппинг DTO | `feature/<имя>/data` |
 | Бизнес-контракт | `feature/<имя>/domain` (порты для других фич — `api`) |
-| Строки | `feature/<имя>/impl/src/commonMain/composeResources` (`values` — русский, `values-be` — белорусский; проверка: `python3 tools/l10n/check_parity.py`) |
+| Строки | `feature/<имя>/impl/src/commonMain/composeResources` (`values` — русский, `values-be` — белорусский) |
 | Локальная БД | `core/database` |
 | Android API (MapLibre, picker) | `composeApp/.../androidMain/` |
 | iOS API (MapKit, PhotosUI) | `composeApp/.../iosMain/` |
