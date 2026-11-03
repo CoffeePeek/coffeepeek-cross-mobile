@@ -1,7 +1,5 @@
 package com.coffeepeek.admin.sandbox.backend
 
-import com.coffeepeek.admin.ui.screen.auth.LoginFailureCopy
-import com.coffeepeek.admin.ui.screen.auth.message
 import com.coffeepeek.core.session.JwtUtils
 import com.coffeepeek.feature.auth.api.LocalUserData
 import com.coffeepeek.feature.auth.data.createAuthRepository
@@ -45,7 +43,6 @@ import kotlin.test.assertTrue
 
 /** The account, auth and contribution fixtures of the Sandbox server, read through the migrated feature clients. */
 class SandboxAccountFixturesTest {
-    private val loginCopy = LoginFailureCopy("Неверный email или пароль", "Не удалось подключиться. Проверьте интернет-соединение", "Не удалось войти. Проверьте email и пароль")
 
     @get:Rule val temporary = TemporaryFolder()
 
@@ -144,7 +141,7 @@ class SandboxAccountFixturesTest {
         backend.authPolicy = SandboxAuthPolicy.WrongPassword
         val rejected = auth.signIn("tester@example.com", "wrong").exceptionOrNull()
         assertNotNull(rejected)
-        assertEquals("Неверный email или пароль", classifyLoginFailure(rejected.message).message(loginCopy))
+        assertEquals(com.coffeepeek.feature.auth.domain.LoginFailure.WrongCredentials, classifyLoginFailure(rejected.message))
         assertTrue(auth.register("Tester", "new@example.com", "password1").isSuccess)
 
         backend.authPolicy = SandboxAuthPolicy.EmailTaken

@@ -1,15 +1,12 @@
 package com.coffeepeek.admin.sandbox.backend
 
-import com.coffeepeek.admin.ui.screen.auth.message
 
-import com.coffeepeek.admin.ui.screen.auth.LoginFailureCopy
 
 import com.coffeepeek.feature.auth.domain.classifyLoginFailure
 
 import com.coffeepeek.feature.appupdate.impl.UpdateCheckFeedback
 
 import kotlin.test.assertNotNull
-import com.coffeepeek.admin.feature.passwordrecovery.data.PasswordRecoveryRepositoryImpl
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.Flow
@@ -92,7 +89,6 @@ private fun shopEntry(slug: String) =
     FavoriteEntry(FavoriteKind.CoffeeShop, FavoriteAddress(slug, "/coffee-shops/$slug", 1, false))
 
 class SandboxApplicationBackendTest {
-    private val loginCopy = LoginFailureCopy("Неверный email или пароль", "Не удалось подключиться. Проверьте интернет-соединение", "Не удалось войти. Проверьте email и пароль")
 
     @get:Rule val temporary = TemporaryFolder()
 

@@ -1,9 +1,6 @@
 package com.coffeepeek.admin.utils
 
-import com.coffeepeek.admin.ui.screen.auth.message
-
-import com.coffeepeek.admin.ui.screen.auth.LoginFailureCopy
-
+import com.coffeepeek.feature.auth.domain.LoginFailure
 import com.coffeepeek.feature.auth.domain.classifyLoginFailure
 
 import com.coffeepeek.admin.ui.component.message
@@ -14,13 +11,17 @@ import kotlin.test.assertNull
 
 /** The login-side validators and the error mapping, pinned word by word before they move. */
 class AuthValidationTest {
-    private val loginCopy = LoginFailureCopy("Неверный email или пароль", "Не удалось подключиться. Проверьте интернет-соединение", "Не удалось войти. Проверьте email и пароль")
-
     private val labels = com.coffeepeek.admin.ui.component.InputValidationLabels("Введите email", "Введите корректный email", "Введите пароль", "Пароль должен содержать как минимум %1\$s символов", "Некорректный формат телефона", "Укажите домен, например coffeepeek.by", "Некорректный Instagram")
 
     private val credentials = "Неверный email или пароль"
     private val network = "Не удалось подключиться. Проверьте интернет-соединение"
     private val generic = "Не удалось войти. Проверьте email и пароль"
+
+    private fun LoginFailure.text() = when (this) {
+        LoginFailure.WrongCredentials -> credentials
+        LoginFailure.Network -> network
+        LoginFailure.Unknown -> generic
+    }
 
     @Test fun emailIsRequiredTrimmedAndMatchedAgainstASimplePattern() {
         assertEquals("Введите email", validateEmailRequired("")?.message(labels))
@@ -44,23 +45,23 @@ class AuthValidationTest {
         for (message in listOf(
             "Unauthorized", "Invalid credentials", "invalid login", "Incorrect password", "wrong password", "User not found",
             "Неверные данные", "Неправильный пароль", "Пользователь не найден",
-        )) assertEquals(credentials, classifyLoginFailure(message).message(loginCopy), message)
+        )) assertEquals(credentials, classifyLoginFailure(message).text(), message)
     }
 
     @Test fun networkLikeMessagesBecomeAConnectionHint() {
         for (message in listOf(
             "timeout", "Request timed out", "Network is unreachable", "Failed to connect to /10.0.0.1", "Socket closed",
             "Unable to resolve host", "No internet", "Сеть недоступна", "Проблемы с соединением",
-        )) assertEquals(network, classifyLoginFailure(message).message(loginCopy), message)
+        )) assertEquals(network, classifyLoginFailure(message).text(), message)
     }
 
     @Test fun credentialWordsWinOverNetworkWordsAndEverythingElseIsGeneric() {
-        assertEquals(credentials, classifyLoginFailure("Unauthorized: connection reset").message(loginCopy))
-        assertEquals(generic, classifyLoginFailure(null).message(loginCopy))
-        assertEquals(generic, classifyLoginFailure("").message(loginCopy))
-        assertEquals(generic, classifyLoginFailure("Unexpected server response").message(loginCopy))
-        assertEquals(generic, classifyLoginFailure("Internal Server Error").message(loginCopy))
+        assertEquals(credentials, classifyLoginFailure("Unauthorized: connection reset").text())
+        assertEquals(generic, classifyLoginFailure(null).text())
+        assertEquals(generic, classifyLoginFailure("").text())
+        assertEquals(generic, classifyLoginFailure("Unexpected server response").text())
+        assertEquals(generic, classifyLoginFailure("Internal Server Error").text())
         // Characterized quirk: the Russian stem is "сеть", so "Нет сети" does not match and gets the generic text.
-        assertEquals(generic, classifyLoginFailure("Нет сети").message(loginCopy))
+        assertEquals(generic, classifyLoginFailure("Нет сети").text())
     }
 }

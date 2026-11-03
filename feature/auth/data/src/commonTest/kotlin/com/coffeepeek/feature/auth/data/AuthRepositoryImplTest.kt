@@ -202,6 +202,12 @@ class AuthRepositoryImplTest {
         f.close()
     }
 
+    @Test fun aPasswordResetRequestKeepsCancellation() = runBlocking {
+        val f = Fixture(null) { _, _ -> throw CancellationException("cancel reset") }
+        assertFailsWith<CancellationException> { f.repository.requestPasswordReset("user@example.com") }
+        f.close()
+    }
+
     @Test fun aPascalCaseAppleEnvelopeIsStillAccepted() = runBlocking {
         val f = Fixture(null) { _, _ -> ok("""{"IsSuccess":true,"Data":{"accessToken":"$tokenA","refreshToken":"refresh"}}""") }
         assertEquals("user-a", f.repository.signInWithApple("challenge", "identity").getOrThrow().userId)

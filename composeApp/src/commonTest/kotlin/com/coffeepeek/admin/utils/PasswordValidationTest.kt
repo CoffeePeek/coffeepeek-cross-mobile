@@ -1,9 +1,6 @@
 package com.coffeepeek.admin.utils
 
-import com.coffeepeek.admin.ui.screen.auth.message
-
-import com.coffeepeek.admin.ui.screen.auth.LoginFailureCopy
-
+import com.coffeepeek.feature.auth.domain.LoginFailure
 import com.coffeepeek.feature.auth.domain.classifyLoginFailure
 
 import com.coffeepeek.admin.ui.component.message
@@ -13,8 +10,6 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNull
 
 class PasswordValidationTest {
-    private val loginCopy = LoginFailureCopy("Неверный email или пароль", "Не удалось подключиться. Проверьте интернет-соединение", "Не удалось войти. Проверьте email и пароль")
-
     private val labels = com.coffeepeek.admin.ui.component.InputValidationLabels("Введите email", "Введите корректный email", "Введите пароль", "Пароль должен содержать как минимум %1\$s символов", "Некорректный формат телефона", "Укажите домен, например coffeepeek.by", "Некорректный Instagram")
 
 
@@ -45,16 +40,16 @@ class PasswordValidationTest {
     @Test
     fun loginApiErrorsAreLocalized() {
         assertEquals(
-            "Неверный email или пароль",
-            classifyLoginFailure("Invalid credentials").message(loginCopy),
+            LoginFailure.WrongCredentials,
+            classifyLoginFailure("Invalid credentials"),
         )
         assertEquals(
-            "Не удалось подключиться. Проверьте интернет-соединение",
-            classifyLoginFailure("Connection timeout").message(loginCopy),
+            LoginFailure.Network,
+            classifyLoginFailure("Connection timeout"),
         )
         assertEquals(
-            "Не удалось войти. Проверьте email и пароль",
-            classifyLoginFailure("Unexpected server response").message(loginCopy),
+            LoginFailure.Unknown,
+            classifyLoginFailure("Unexpected server response"),
         )
     }
     @Test fun preparedBelarusianPasswordLengthPreservesTheConfiguredMinimum() {
