@@ -14,6 +14,8 @@ import com.google.android.gms.auth.api.signin.GoogleSignInStatusCodes
 import com.google.android.gms.common.api.ApiException
 import com.google.android.gms.common.api.CommonStatusCodes
 
+private const val GOOGLE_SIGN_IN_CANCELLED = "Вход через Google отменён"
+
 actual object GoogleAuth {
     actual fun isSupported(): Boolean = true
 

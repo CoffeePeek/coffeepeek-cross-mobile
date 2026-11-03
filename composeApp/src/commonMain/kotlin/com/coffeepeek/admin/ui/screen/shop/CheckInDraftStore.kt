@@ -20,9 +20,6 @@ data class CheckInDraft(
     val photos: List<PickedImage> = emptyList(),
 )
 
-internal fun CheckInDraft.withVisitDate(dateMillis: Long, now: Long = currentEpochMillis()): CheckInDraft =
-    copy(visitMillis = datePickerMillisWithLocalTime(dateMillis, visitMillis).coerceAtMost(now))
-
 internal fun CheckInDraft.validationError(now: Long = currentEpochMillis()): CheckInDraftValidationError? = when {
     visitMillis <= 0 || visitMillis > now -> CheckInDraftValidationError.Date
     listOf(coffeeRating, serviceRating, placeRating).any { it !in 1..5 } -> CheckInDraftValidationError.Ratings

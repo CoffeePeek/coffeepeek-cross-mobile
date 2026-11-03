@@ -2,8 +2,6 @@ package com.coffeepeek.admin.auth
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import com.coffeepeek.admin.ui.screen.auth.SocialSignInBrand
-import com.coffeepeek.admin.ui.screen.auth.SocialSignInButton
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -38,15 +36,4 @@ actual object AppleAuth {
             continuation.invokeOnCancellation { provider.cancel() }
         }
     }
-}
-
-@Composable
-actual fun AppleSignInButton(onClick: () -> Unit, modifier: Modifier, enabled: Boolean) {
-    if (!AppleAuth.isSupported()) return
-    SocialSignInButton(
-        brand = SocialSignInBrand.Apple,
-        onClick = onClick,
-        modifier = modifier,
-        enabled = enabled,
-    )
 }

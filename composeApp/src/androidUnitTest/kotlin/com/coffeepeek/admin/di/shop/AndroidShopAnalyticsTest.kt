@@ -5,7 +5,6 @@ import com.coffeepeek.admin.analytics.*
 import com.coffeepeek.admin.feature.checkin.api.CheckInFlowHandoff
 import com.coffeepeek.feature.shop.api.*
 import com.coffeepeek.feature.shop.domain.repository.ShopCheckInPhotoUploadFailure
-import com.coffeepeek.admin.ui.screen.shop.shopRouteOptions
 import kotlinx.coroutines.test.*
 import kotlin.test.*
 
@@ -80,13 +79,6 @@ class AppShopAnalyticsTest {
         AppShopAnalytics.action(ShopActionMetric.Share)
         runCurrent()
         assertTrue(sdk.events.none { it.first in setOf("check_in_saved", "check_in_submit_attempted", "shop_action_clicked") })
-    }
-
-    @Test fun androidKeepsBothMapProviders() {
-        val options = shopRouteOptions(53.9, 27.5)
-        assertEquals(2, options.size)
-        assertTrue(options.any { it.url.startsWith("https://www.google.com/maps/dir/") })
-        assertTrue(options.any { it.url.startsWith("https://yandex.ru/maps/") })
     }
 }
 

@@ -59,9 +59,8 @@ internal actual fun NativeKeyboardDoneAccessory(visible: Boolean, onDone: () -> 
     if (!visible) return
     val controller = LocalUIViewController.current
     val action = rememberUpdatedState(onDone)
-    val accessorySpace = LocalKeyboardAccessorySpace.current
     val done = stringResource(Res.string.native_done)
-    DisposableEffect(controller, accessorySpace, done) {
+    DisposableEffect(controller, done) {
         val host = controller.parentViewController?.view ?: controller.view
         val target = DoneTarget {
             host.endEditing(true)
@@ -82,9 +81,7 @@ internal actual fun NativeKeyboardDoneAccessory(visible: Boolean, onDone: () -> 
             toolbar.heightAnchor.constraintEqualToConstant(44.0),
         )
         NSLayoutConstraint.activateConstraints(constraints)
-        accessorySpace?.set(target, 44.dp)
         onDispose {
-            accessorySpace?.remove(target)
             NSLayoutConstraint.deactivateConstraints(constraints)
             toolbar.removeFromSuperview()
             toolbar.items = null
