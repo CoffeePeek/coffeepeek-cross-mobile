@@ -21,6 +21,7 @@ dependencies {
     implementation(libs.kamel)
     implementation(libs.compose.ui.backhandler)
     implementation(libs.qrose)
+    implementation(libs.reorderable)
     implementation(compose.components.resources)
     implementation(compose.components.uiToolingPreview)
     testImplementation(libs.kotlin.test)

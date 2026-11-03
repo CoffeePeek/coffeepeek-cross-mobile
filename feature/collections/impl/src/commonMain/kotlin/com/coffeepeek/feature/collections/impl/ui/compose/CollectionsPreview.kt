@@ -6,17 +6,17 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.ui.draw.clip
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.component.*
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.collections.domain.model.*
 import com.coffeepeek.feature.collections.impl.ui.compose.component.CollectionPlaceRow
+import com.coffeepeek.feature.collections.impl.ui.compose.component.collectionPosterResources
+import com.coffeepeek.feature.collections.impl.ui.compose.component.CollectionPosterThumbnail
+import com.coffeepeek.feature.collections.impl.ui.compose.component.CollectionPosterViewer
 import com.coffeepeek.feature.collections.impl.ui.model.*
 import com.coffeepeek.feature.collections.impl.resources.*
 import org.jetbrains.compose.ui.tooling.preview.Preview
@@ -27,7 +27,9 @@ internal fun CollectionsPreview(state: CollectionsState, onAction: (CollectionsA
     poster: @Composable (SharedCollection, CollectionPosterFormat, Int) -> Unit) {
     val collection = state.collection ?: return
     var page by remember(collection.id, state.format) { mutableIntStateOf(0) }
-    val pages = ((collection.places.size + state.format.perPage - 1) / state.format.perPage).coerceAtLeast(1)
+    var expanded by remember(collection.id, state.format) { mutableStateOf(false) }
+    val pages = collectionPosterResources(collection, state.format).layout.pages.size.coerceAtLeast(1)
+    val currentPage = page.coerceIn(0, pages - 1)
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val posterHeight = (maxHeight - if (pages > 1) 192.dp else 144.dp).coerceAtLeast(160.dp)
         LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -36,11 +38,9 @@ internal fun CollectionsPreview(state: CollectionsState, onAction: (CollectionsA
             if (collection.places.isNotEmpty()) {
                 item { CollectionFormats(state, onAction) }
                 item {
-                    Box(Modifier.fillMaxWidth().heightIn(max = posterHeight), contentAlignment = androidx.compose.ui.Alignment.Center) {
-                        Box(Modifier.clip(RoundedCornerShape(20.dp))) { poster(collection, state.format, page) }
-                    }
+                    CollectionPosterThumbnail(collection, state.format, currentPage, posterHeight, { expanded = true }, poster)
                 }
-                if (pages > 1) item { CollectionPosterPages(page, pages, !state.busy) { page = it } }
+                if (pages > 1) item { CollectionPosterPages(currentPage, pages, !state.busy) { page = it } }
             }
             if (collection.places.isEmpty()) item { Text(stringResource(Res.string.collections_unavailable)) }
             if (state.publicView) items(CollectionRules.orderedPlaces(collection.places), key = { it.key }) { place ->
@@ -48,6 +48,7 @@ internal fun CollectionsPreview(state: CollectionsState, onAction: (CollectionsA
             }
         }
     }
+    if (expanded) CollectionPosterViewer(collection, state.format, currentPage, { expanded = false }, poster)
 }
 
 @Composable

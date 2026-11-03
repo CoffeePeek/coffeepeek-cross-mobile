@@ -42,6 +42,7 @@ internal class CollectionsViewModel(private val repository: CollectionsRepositor
             CollectionsAction.ShareLink -> currentState.collection?.let { sendEvent(CollectionsEvent.ShareLink(it)) }
             CollectionsAction.ShareImages -> export()
             is CollectionsAction.Toggle -> toggle(action.key)
+            is CollectionsAction.Move -> move(action)
             is CollectionsAction.Title -> if (!currentState.busy) updateState { copy(title = action.value.take(CollectionRules.maxTitleLength), failure = null) }
             is CollectionsAction.Create -> create(action.defaultTitle)
             is CollectionsAction.Revoke -> revoke(action.id)
@@ -148,6 +149,15 @@ internal class CollectionsViewModel(private val repository: CollectionsRepositor
         if (currentState.busy) return
         updateState { copy(selected = if (selected.isNotEmpty()) emptySet()
             else places.map { it.key }.toSet(), failure = null) }
+    }
+
+    private fun move(action: CollectionsAction.Move) {
+        if (publicId != null || !currentState.signedIn || currentState.page != CollectionsPage.Selection ||
+            currentState.busy || currentState.loading) return
+        updateState {
+            val reordered = moveCollectionPlace(places, action.key, action.targetKey, action.after)
+            if (reordered == places) this else copy(places = reordered, failure = null)
+        }
     }
 
     private suspend fun export() {

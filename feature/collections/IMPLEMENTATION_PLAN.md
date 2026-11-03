@@ -1,5 +1,140 @@
 # Share favorite collections — 2026-11-02
 
+## Denser exported collection layout — 2026-11-03
+
+Use the user's new reference for picture exports. Center each card's information
+block vertically and align check-in counts to the rating's right edge. The latest
+feedback removes kind chips, gives names/addresses the space left by the actual
+statistics width, and uses the same detail typography for addresses and counts.
+Keep shop photos, current statistics and full
+available location fields. Roasters wrap into a compact grid with widths measured
+from their names. Add repeating COFFEEPEEK strips at both picture edges, retaining
+page numbering, with no QR artwork. The subsequent user request removes the
+printed coffeepeek.by address from the picture while keeping both brand strips.
+
+Follow-up before merging PR #301: support dragging places within each selector
+section. Collection creation must preserve that draft order without changing
+favorites or selection membership. Reject cross-kind/unknown targets and ignore
+drag actions during loading, publication or public-link viewing. Keep accessible
+move-up/down actions alongside the drag handle. Test the actual ViewModel create
+order, duplicate events, section guards and in-flight snapshot behavior.
+
+Use the implementation-only Reorderable 3.1.0 Compose Multiplatform dependency
+for animated lazy-list dragging, auto-scroll and fixed section headers:
+https://github.com/Calvin-LL/Reorderable/tree/v3.1.0
+The existing design-system photo-row drag is not a scrolling lazy list. Shared
+rows/icons remain in their current owners; feature UI assembles the gesture API,
+and the ViewModel guards ordering through the existing typed action entry. No new
+module, backend order writer or favorite mutation is introduced. Recheck unit
+contracts, Direct Debug assembly/runtime classes, RU/BE keys and manual drag in
+the explicitly selected Debug emulator before pushing the updated PR/CI head.
+
+The last user follow-up replaces missing-photo cup/factory artwork with the
+standard COFFEEPEEK image placeholder. Its painter is shared with the existing
+design-system component, including the brand resource and typography. Poster
+exports request a white fallback on their fixed dark canvas at pixel density 1;
+on-screen placeholders continue following the surrounding theme and text scale.
+
+The subsequent user clarification enlarges only the placeholder brand (18 to
+32 output pixels); names, addresses and check-ins retain their approved sizes.
+The shared painter fits the complete word inside smaller tiles without clipping.
+For more than four shops, pagination finds the densest packing achievable at a
+15% maximum height reduction, then restores as much height as that packing allows.
+This keeps small collections at 216 pixels and larger shop cards within
+183.6–216 pixels, preserving text sizes and accounting for roaster rows, heading
+height and footer space. At the default heading, five shops fit Chat at 200 pixels,
+eight fit Story at 190.2 pixels, and six shops plus three compact roasters fit Story
+at 203 pixels. Three regression cases cover these thresholds; geometry/order
+invariants now also cover long headings across 1–205 mixed places and both formats.
+Verification of this follow-up on 2026-11-03, working patch on `1b5375bf`:
+26 collections impl plus 57 design-system cases passed (83 total, no failures,
+errors or skips). Direct Debug assembly and packaged runtime-class checks passed.
+Debug 1.1.5.2680 was updated in place on the same unlocked emulator with matching
+signature, retained first-install time and MainActivity launch. APK SHA-256:
+`4414143B06FA30544C74D19F4E6780A8330DD38C86D4BAB2BC654E85B78737A3`.
+The final enlarged-placeholder/adaptive-packing visual review and updated macOS
+CI are separate gates from the preceding artifact's manual checks below.
+
+Latest verification on 2026-11-03, working patch on `f7299ae4`:
+
+- 23 collections impl and 57 design-system unit cases passed (80 total), with
+  zero failures/errors/skips. Four new ViewModel cases verify create-order,
+  unchanged selection, duplicate/cross-kind/missing targets, in-flight creation
+  and public-link guards. All 47 RU/BE resource keys align.
+- Direct Debug assembly and packaged DEX runtime-class checks passed. The first
+  placeholder compile caught a DrawScope density-name collision; it was fixed,
+  and the successful rerun above is separate from that original failed log.
+- Manually moved a shop and a roaster above their preceding neighbors in the
+  Debug composer on Pixel 8 AVD, emulator-5580, API 37 x86_64 (16 KB pages).
+  The selected count remained 9; dragging a roaster toward a shop did not cross
+  the section boundary. These gestures change only draft order. The agent did
+  not submit Create, alter favorites, revoke links or clear application data.
+- Read-only review of an existing nine-place collection confirmed no kind
+  badges, matching address/check-in typography, reclaimed text width and both
+  brand strips. The Story fullscreen view displayed its header/footer and page
+  controls. The final Chat preview displayed the white COFFEEPEEK fallback.
+- Final Debug 1.1.5.2679, package com.coffeepeek, was updated in place with the
+  matching certificate; MainActivity was confirmed foreground. First-install
+  time remains 2026-10-20 10:23:54. Final APK SHA-256:
+  `79F97DA2B6BB9F11D219427EE332CC9B200BC1EDB19B6A620F7A203E4A52F567`.
+  Drag checks used the preceding patch APK
+  `13BB3A4680AEBE7A37D1A7B594ED07D52889BDC4CDF6DED9078DAF4ED1AF4629`;
+  the final rebuild adds only the shared placeholder and its verification.
+- No automated UI/instrumentation/screenshot tests were created or run. Manual
+  captures stay local in ignored build output. Colocated light/dark previews
+  were not rendered by an IDE. Light-theme/font-scale, screen-reader gestures,
+  edge auto-scroll and native iOS device checks remain manual release gates;
+  the updated PR head still requires macOS native compilation in CI.
+
+The URL-only follow-up was verified on 2026-11-03 as a working patch on
+`ed92d83a`: RU/BE keys align, Direct Debug assembly and packaged runtime checks
+passed. Debug 1.1.5.2678 was updated in place on Pixel 8 AVD emulator-5580 with
+the matching signature; MainActivity startup was checked. No new UI tests or
+real-account writes were introduced. Installed APK SHA-256:
+`9DF7A3CAAF2553CB07047250C2A9A8C452545AB09533BE5E3E74965185B067F5`.
+
+Collections impl owns this presentation-only change. A pure row-packing layout
+replaces fixed four/six-place pages. Preview navigation, photo preparation,
+accessible page descriptions and PNG export consume the same measured plan.
+Check stable shops-first ordering, pagination without loss/duplicates and 2D
+bounds/non-overlap across both formats, including 205 places and long headings.
+Compile/assemble Android with packaged runtime checks, compile shared iOS, and
+review the explicitly selected directSandbox manually if Pixel 9 is available.
+No automated UI/instrumentation/screenshot tests or production writes.
+
+During manual review the user reported that Story cropped its header/footer and
+could not open fully. The thumbnail now bounds both axes before applying aspect
+ratio. Tapping opens the existing design-system photo viewer with pinch/double-tap
+zoom, close/Back and page swiping. Its generic slot entry is public by necessity;
+the feature supplies the bounded poster content rather than copying zoom logic.
+New frame/thumbnail/viewer content has colocated light/dark previews.
+
+Verification on 2026-11-03, working patch on develop `e9976ba3`:
+
+- 19 collections impl cases and 57 design-system cases passed (76 total), with
+  no failures/errors/skips. Layout cases cover both formats, 205 members,
+  variable grid widths, no overlap/loss/duplicates, eight mixed Story cards,
+  eight roasters in Chat and seven readable shop rows in Story. RU/BE keys align.
+- Direct Sandbox assembly, DEX runtime-class and isolation checks passed. The
+  first manual Chat preview displayed the new centered information/branding on
+  Pixel 8 AVD, emulator-5580, API 37 x86_64; the original Story crop report above
+  remains a failed check before the viewport fix.
+- The user explicitly switched to ordinary directDebug. Its assembly and DEX
+  runtime-class check passed. The first launch failed before application startup
+  because ignored local.properties lacked API_BASE_URL; the production endpoint
+  was configured locally and the APK rebuilt, preserving the application guard.
+- Debug `1.1.5.2677`, package com.coffeepeek, was installed in place over version
+  1092 with matching certificate SHA-256 48ad0071309c72a29cab9ab9747519c06754837d7a3066de2a7b5a8f72a08abe.
+  First-install time was retained; no uninstall, downgrade or data clearing.
+  Cold startup passed (1156 ms), and MainActivity was confirmed foreground.
+  Installed configured Debug APK SHA-256:
+  `3735E2CB6255CEDD13E006C331591AD26B36DCF92D35AB9D124588AB81294951`.
+- Post-fix fullscreen/zoom and real-collection content review remains a manual
+  gate in the chosen Debug app; no real-account collection/favorite writes were
+  performed. Native iOS compilation was SKIPPED on Windows, not executed; macOS
+  CI is still required. IDE previews were not rendered. Existing deprecations
+  were retained. Sanitized diagnostics and emulator captures stay in ignored build.
+
 ## CI and review correction — 2026-11-03
 
 Android CI #530 failed at `mergeExtDexPlayDebug` with D8

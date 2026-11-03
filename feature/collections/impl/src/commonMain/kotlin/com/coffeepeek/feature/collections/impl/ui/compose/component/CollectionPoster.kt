@@ -17,7 +17,6 @@ import io.github.alexzhirkevich.qrose.toByteArray
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import com.coffeepeek.feature.collections.api.CollectionPhotoDecoder
-import com.coffeepeek.feature.collections.impl.ui.model.collectionPosterPage
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
@@ -35,7 +34,7 @@ internal fun CollectionPoster(collection: SharedCollection, format: CollectionPo
         val painter by produceState<Painter>(initial) {
             value = preparePoster(collection, format, page, repository, decodePhoto, resources, 4_000L)
         }
-        val names = collectionPosterPage(collection.places, format, page).joinToString { it.title }
+        val names = resources.layout.pages.getOrElse(page) { emptyList() }.joinToString { it.place.title }
         Image(painter, stringResource(Res.string.collections_poster_description, collection.title, names),
             modifier.fillMaxWidth().aspectRatio(format.width.toFloat() / format.height))
     }
@@ -43,7 +42,7 @@ internal fun CollectionPoster(collection: SharedCollection, format: CollectionPo
 
 internal suspend fun exportPosters(collection: SharedCollection, format: CollectionPosterFormat, repository: CollectionsRepository, decodePhoto: CollectionPhotoDecoder,
     resources: CollectionPosterResources): List<ByteArray> {
-    val count = (collection.places.size + format.perPage - 1) / format.perPage
+    val count = resources.layout.pages.size
     val started = TimeSource.Monotonic.markNow()
     return (0 until count).map { page ->
         currentCoroutineContext().ensureActive()
@@ -56,7 +55,7 @@ internal suspend fun exportPosters(collection: SharedCollection, format: Collect
 private suspend fun preparePoster(collection: SharedCollection, format: CollectionPosterFormat, page: Int,
     repository: CollectionsRepository, decodePhoto: CollectionPhotoDecoder, resources: CollectionPosterResources,
     photoBudget: Long): CollectionPosterPainter {
-    val places = collectionPosterPage(collection.places, format, page)
+    val places = resources.layout.pages.getOrElse(page) { emptyList() }.map { it.place }
     val photos = loadPosterPhotos(places, repository, decodePhoto, photoBudget)
     return CollectionPosterPainter(collection, format, page, resources, photos)
 }
@@ -85,7 +84,11 @@ private fun CollectionPosterPreview(dark: Boolean, format: CollectionPosterForma
         CollectionPlace(CollectionPlaceKind.CoffeeShop, "sample", "Любимая кофейня", city = "Минск", address = "Кофейная улица, 1", rating = 4.6, checkInCount = 124),
         CollectionPlace(CollectionPlaceKind.Roaster, "roaster", "Любимый обжарщик"),
         CollectionPlace(CollectionPlaceKind.CoffeeShop, "second", "Кофейная лаборатория", address = "Кофейная улица, 6", rating = 4.5, checkInCount = 89),
-        CollectionPlace(CollectionPlaceKind.Roaster, "second-roaster", "Обжарщики Минска", city = "Минск")))
+        CollectionPlace(CollectionPlaceKind.Roaster, "second-roaster", "Обжарщики Минска", city = "Минск"),
+        CollectionPlace(CollectionPlaceKind.CoffeeShop, "third", "Территория кофе", city = "Минск", address = "Калинина, 16", rating = 4.7, checkInCount = 5),
+        CollectionPlace(CollectionPlaceKind.CoffeeShop, "fourth", "Кофеёк", address = "Партизанский проспект, 49", rating = 4.7, checkInCount = 1),
+        CollectionPlace(CollectionPlaceKind.Roaster, "third-roaster", "Sense*", city = "Минск"),
+        CollectionPlace(CollectionPlaceKind.Roaster, "fourth-roaster", "Абсмажчыкі з доўгай назвай", city = "Минск")))
     val painter = CollectionPosterPainter(collection, format, 0, collectionPosterResources(collection, format))
     Image(painter, collection.title, Modifier.width(360.dp).aspectRatio(format.width.toFloat() / format.height))
 }

@@ -42,4 +42,8 @@
     <string name="collections_revoke_message">Падборка перастане адкрывацца па спасылцы. Ужо адпраўленыя выявы застануцца ў атрымальнікаў.</string>
     <string name="collections_cancel">Скасаваць</string>
     <string name="collections_open">Адкрыць падборку</string>
+    <string name="collections_brand">COFFEEPEEK</string>
+    <string name="collections_expand_poster">Адкрыць выяву на ўвесь экран</string>
+    <string name="collections_move_up">Перамясціць вышэй</string>
+    <string name="collections_move_down">Перамясціць ніжэй</string>
 </resources>

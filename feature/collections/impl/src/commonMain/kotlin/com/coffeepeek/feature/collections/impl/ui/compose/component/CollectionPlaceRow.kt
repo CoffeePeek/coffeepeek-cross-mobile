@@ -16,6 +16,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.CustomAccessibilityAction
+import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
@@ -32,13 +34,14 @@ import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as st
 
 @Composable
 internal fun CollectionPlaceRow(place: CollectionPlace, checked: Boolean?, enabled: Boolean,
-    first: Boolean = true, last: Boolean = true, onClick: () -> Unit) {
+    first: Boolean = true, last: Boolean = true, modifier: Modifier = Modifier,
+    moveActions: List<CustomAccessibilityAction> = emptyList(), trailing: @Composable () -> Unit = {}, onClick: () -> Unit) {
     val interaction = if (checked == null) Modifier.clickable(enabled = enabled, role = Role.Button, onClick = onClick)
         else Modifier.toggleable(checked, enabled, role = Role.Checkbox, onValueChange = { onClick() })
     val shape = RoundedCornerShape(topStart = if (first) 16.dp else 0.dp, topEnd = if (first) 16.dp else 0.dp,
         bottomStart = if (last) 16.dp else 0.dp, bottomEnd = if (last) 16.dp else 0.dp)
-    Column(Modifier.fillMaxWidth().clip(shape).background(MaterialTheme.colorScheme.surface)) {
-        Row(Modifier.fillMaxWidth().heightIn(min = 76.dp).then(interaction).semantics(mergeDescendants = true) {}
+    Column(modifier.fillMaxWidth().clip(shape).background(MaterialTheme.colorScheme.surface)) {
+        Row(Modifier.fillMaxWidth().heightIn(min = 76.dp).then(interaction).semantics(mergeDescendants = true) { customActions = moveActions }
             .padding(horizontal = 16.dp, vertical = 12.dp), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
             CollectionPlacePhoto(place, Modifier.size(48.dp).clip(RoundedCornerShape(10.dp)))
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) { CollectionPlaceLabels(place, checked == null) }
@@ -46,6 +49,7 @@ internal fun CollectionPlaceRow(place: CollectionPlace, checked: Boolean?, enabl
                 if (checked) Icon(CoffeePeekIcons.Check, null, tint = MaterialTheme.colorScheme.coffeePeekAccentForeground)
             }
             else Icon(CoffeePeekIcons.ChevronRight, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+            trailing()
         }
         if (!last) HorizontalDivider(Modifier.padding(start = 76.dp, end = 16.dp), thickness = 0.5.dp,
             color = MaterialTheme.colorScheme.outline)

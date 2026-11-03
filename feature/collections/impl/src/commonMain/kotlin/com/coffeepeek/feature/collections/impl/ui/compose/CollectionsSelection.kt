@@ -3,29 +3,40 @@ package com.coffeepeek.feature.collections.impl.ui.compose
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.component.*
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.collections.domain.model.*
-import com.coffeepeek.feature.collections.impl.ui.compose.component.CollectionPlaceRow
+import com.coffeepeek.feature.collections.impl.ui.compose.component.CollectionReorderablePlaceRow
 import com.coffeepeek.feature.collections.impl.ui.model.*
 import com.coffeepeek.feature.collections.impl.resources.*
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
+import sh.calvin.reorderable.rememberReorderableLazyListState
 
 @Composable
 internal fun CollectionsSelection(state: CollectionsState, onAction: (CollectionsAction) -> Unit) {
     val defaultTitle = stringResource(Res.string.collections_default_title)
     val focus = LocalFocusManager.current
-    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 96.dp)) {
+    val lazyState = rememberLazyListState()
+    var draggingKind by remember { mutableStateOf<CollectionPlaceKind?>(null) }
+    val reorder = rememberReorderableLazyListState(lazyState, scrollThresholdPadding = PaddingValues(bottom = 96.dp)) { from, to ->
+        val source = state.places.firstOrNull { it.key == from.key }
+        val target = state.places.firstOrNull { it.key == to.key }
+        if (source != null && target != null && source.kind == target.kind)
+            onAction(CollectionsAction.Move(source.key, target.key, from.index < to.index))
+    }
+    LazyColumn(Modifier.fillMaxSize(), state = lazyState,
+        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 96.dp)) {
         item { CoffeePeekTextField(stringResource(Res.string.collections_name), state.title,
             { onAction(CollectionsAction.Title(it)) }, defaultTitle, enabled = !state.busy,
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Done), keyboardActions = KeyboardActions(onDone = { focus.clearFocus() })) }
@@ -36,9 +47,8 @@ internal fun CollectionsSelection(state: CollectionsState, onAction: (Collection
                     Modifier.padding(start = 16.dp, top = 24.dp, bottom = 8.dp), style = MaterialTheme.typography.titleSmall)
             }
             itemsIndexed(places, key = { _, place -> place.key }) { index, place ->
-                CollectionPlaceRow(place, place.key in state.selected, !state.busy, first = index == 0, last = index == places.lastIndex) {
-                    onAction(CollectionsAction.Toggle(place.key))
-                }
+                CollectionReorderablePlaceRow(places, index, place.key in state.selected, !state.busy && !state.loading,
+                    draggingKind == null || draggingKind == kind, reorder, { draggingKind = it }, onAction)
             }
         }
         if (state.places.isEmpty()) item { Text(stringResource(Res.string.collections_empty)) }

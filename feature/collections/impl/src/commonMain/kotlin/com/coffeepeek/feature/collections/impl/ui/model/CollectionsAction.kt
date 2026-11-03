@@ -11,6 +11,7 @@ internal sealed interface CollectionsAction {
     data object ShareLink : CollectionsAction
     data object ShareImages : CollectionsAction
     data class Toggle(val key: String) : CollectionsAction
+    data class Move(val key: String, val targetKey: String, val after: Boolean) : CollectionsAction
     data class Title(val value: String) : CollectionsAction
     data class Create(val defaultTitle: String) : CollectionsAction
     data class Revoke(val id: String) : CollectionsAction
