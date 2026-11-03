@@ -1,18 +1,18 @@
 package com.coffeepeek.core.designsystem.component
 
-import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import com.coffeepeek.core.designsystem.component.CoffeePeekOutlinedButton as OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -20,7 +20,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.error
 import androidx.compose.ui.semantics.semantics
@@ -55,31 +58,35 @@ fun CoffeePeekSelectField(
     coffeePeekValidateSelectOptions(options)
     val interactive = enabled && options.isNotEmpty()
     CoffeePeekSelectMenu(options, contentDescription, value, errorDescription, modifier, interactive) { openMenu ->
-        OutlinedButton(
-            onClick = openMenu,
-            enabled = interactive,
-            modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp).semantics {
-                this.contentDescription = contentDescription
-                stateDescription = value
-                errorDescription?.let { error(it) }
-            },
-            shape = RoundedCornerShape(CoffeePeekDimens.buttonRadius),
-            border = BorderStroke(1.dp, if (errorDescription != null) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.outline),
-            colors = ButtonDefaults.outlinedButtonColors(
-                containerColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.04f),
-                contentColor = MaterialTheme.colorScheme.onSurface,
-            ),
-            contentPadding = PaddingValues(horizontal = CoffeePeekDimens.spacing4, vertical = CoffeePeekDimens.buttonPaddingV),
+        val shape = RoundedCornerShape(CoffeePeekDimens.selectRadius)
+        val invalid = errorDescription != null
+        Row(
+            Modifier.fillMaxWidth().clip(shape)
+                .background(if (invalid) MaterialTheme.colorScheme.error.copy(alpha = 0.05f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.04f))
+                .border(1.dp, if (invalid) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.outline, shape)
+                .clickable(enabled = interactive, role = Role.Button, onClick = openMenu)
+                .semantics(mergeDescendants = true) {
+                    this.contentDescription = contentDescription
+                    stateDescription = value
+                    errorDescription?.let { error(it) }
+                }
+                .heightIn(min = 48.dp).padding(horizontal = CoffeePeekDimens.spacing4, vertical = CoffeePeekDimens.buttonPaddingV),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2),
         ) {
             leadingIcon?.invoke()
             Text(
                 value,
-                modifier = Modifier.weight(1f).padding(end = CoffeePeekDimens.spacing2),
+                modifier = Modifier.weight(1f),
                 style = MaterialTheme.typography.bodyLarge,
                 textAlign = TextAlign.Start,
-                color = if (isPlaceholder && interactive) MaterialTheme.colorScheme.onSurfaceVariant else androidx.compose.ui.graphics.Color.Unspecified,
+                color = when {
+                    !interactive -> MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+                    isPlaceholder -> MaterialTheme.colorScheme.onSurfaceVariant
+                    else -> MaterialTheme.colorScheme.onSurface
+                },
             )
-            Icon(CoffeePeekIcons.ChevronUpDown, null, Modifier.size(18.dp))
+            Icon(CoffeePeekIcons.ChevronUpDown, null, Modifier.size(18.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }
