@@ -148,6 +148,9 @@ class ContributionsRepositoryTest {
         assertEquals(listOf("shop/k1", "shop/k2"), sent.getValue("shopPhotos").jsonArray.map { it.jsonObject.getValue("storageKey").jsonPrimitive.content })
         assertEquals(listOf("menu/k1"), sent.getValue("menuPhotos").jsonArray.map { it.jsonObject.getValue("storageKey").jsonPrimitive.content })
         assertEquals(listOf("grinder"), sent.getValue("equipments").jsonArray.map { it.jsonPrimitive.content })
+        assertEquals(listOf("arabica"), sent.getValue("beans").jsonArray.map { it.jsonPrimitive.content })
+        assertEquals(53.9, sent.getValue("latitude").jsonPrimitive.double)
+        assertEquals(27.5, sent.getValue("longitude").jsonPrimitive.double)
         assertTrue(sent["roasters"].let { it == null || it is JsonNull })
         // 09:00-18:00 local with +03:00 is 06:00-15:00 UTC on the same days; Sunday is closed and has no intervals.
         val schedules = sent.getValue("schedules").jsonArray.map { it.jsonObject }
@@ -238,7 +241,8 @@ class ContributionsRepositoryTest {
         }
         val contacts = body(requests("/api/ShopChangeRequests")[1]).getValue("payload").jsonObject.getValue("contacts").jsonObject
         assertEquals("+375291112233", contacts.getValue("phoneNumber").jsonPrimitive.content)
-        assertTrue(contacts["email"].let { it == null || it is JsonNull })
+        // A missing contact is sent as an explicit null: that is how the server learns the value is cleared.
+        assertEquals(JsonNull, contacts["email"])
         assertEquals("Текст", body(requests("/api/ShopChangeRequests")[0]).getValue("payload").jsonObject.getValue("description").jsonPrimitive.content)
     }
 

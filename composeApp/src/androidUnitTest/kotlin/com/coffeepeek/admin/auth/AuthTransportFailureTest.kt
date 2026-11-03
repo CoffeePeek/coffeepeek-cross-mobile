@@ -5,7 +5,9 @@ import com.coffeepeek.feature.auth.domain.classifyLoginFailure
 import com.coffeepeek.core.network.ApiClients
 import com.coffeepeek.core.network.SessionCredentials
 import com.coffeepeek.core.network.SessionTokens
-import com.coffeepeek.api.service.AuthService
+import com.coffeepeek.admin.sandbox.backend.LocalSandboxSession
+import com.coffeepeek.feature.auth.api.LocalUserData
+import com.coffeepeek.feature.auth.data.createAuthRepository
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.plugins.HttpRequestTimeoutException
@@ -43,7 +45,10 @@ class AuthTransportFailureTest {
             apiClientFactory = { configure -> HttpClient(MockEngine { throw failure() }) { configure() } },
             uploadClientFactory = { configure -> HttpClient(MockEngine { throw failure() }) { configure() } })
         try {
-            val error = AuthService(client.client, client.plainClient).login("person@example.com", "secret1").exceptionOrNull()
+            val repository = createAuthRepository(client.plainClient, client.client, LocalSandboxSession(), object : LocalUserData {
+                override suspend fun clear() = Unit
+            })
+            val error = repository.signIn("person@example.com", "secret1").exceptionOrNull()
             assertTrue(error != null, "A transport failure is a failed result")
             error.message to loginCopy(classifyLoginFailure(error.message))
         } finally {

@@ -12,7 +12,6 @@ on:
       - feature/**
       - features/**
       - gradle/**
-      - modules/**
       - iosApp/**
       - iosXtool/CoffeePeek/**
       - tools/ios/**

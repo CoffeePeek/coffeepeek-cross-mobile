@@ -202,6 +202,13 @@ class AuthRepositoryImplTest {
         f.close()
     }
 
+    @Test fun aPascalCaseAppleEnvelopeIsStillAccepted() = runBlocking {
+        val f = Fixture(null) { _, _ -> ok("""{"IsSuccess":true,"Data":{"accessToken":"$tokenA","refreshToken":"refresh"}}""") }
+        assertEquals("user-a", f.repository.signInWithApple("challenge", "identity").getOrThrow().userId)
+        assertEquals(Session(tokenA, "refresh", "user-a"), f.store.peekSession())
+        f.close()
+    }
+
     @Test fun rejectedOrIncompleteAppleResponsesNeverClearOrReplaceAnAccount() = runBlocking {
         val replies = listOf("{}", "not-json", """{"isSuccess":false}""",
             """{"isSuccess":true,"data":{"accessToken":""}}""", success(tokenA, refresh = ""))

@@ -1673,3 +1673,34 @@ source `89778c23` + этот срез. Подробный scope/остаток �
   сопоставления контрактных тестов с `feature/*/data`.
 - Проверка: полный набор зелёный; `mergeExtDexDirectDebug/Sandbox` падали с `OutOfMemoryError` в D8 на длинном прогоне и
   прошли на свежем демоне (`./gradlew --stop`).
+
+## L3, шаг 6 — `modules/network` удалён, каталога `modules/` больше нет — 2026-11-03
+
+- Тесты, читавшие поддельный сервер Sandbox старыми типизированными клиентами, перенесены на клиенты фич (22 теста в трёх
+  новых классах, все проходят): `SandboxDiscoveryFixturesTest` (поиск, карта, каталоги: `createDiscoveryRepository`,
+  `createContributionCatalogSource`, `createShopDetailsRepository`, `createRoasterRepository`), `SandboxCheckInFixturesTest`
+  (история, лента, голоса, блокировки: `createCheckInHistoryRepository`, `createCommunityRepository`, `createShopCheckIn*`),
+  `SandboxAccountFixturesTest` (профиль, вход/выход, восстановление, избранное, вклады: `createProfileAccountData`,
+  `createAuthRepository`, `createContributionsRepository`). Общая обвязка — `SandboxFixtureSupport.kt`. Из
+  `SandboxApplicationBackendTest` ушли только дубли; остались 14 тестов на уже перенесённых читателях.
+  `AuthTransportFailureTest` и инструментальный `SessionDeviceMetadataTest` переведены на `createAuthRepository` и
+  `createTokenRefresh` (инструментальный проверен только компиляцией).
+- Ослаблено при переносе (поведение фикстур то же, но выражается через модели фич):
+  - радиус ближнего поиска фиксирован в репозитории (3 км); запрос с радиусом 1 км и общий счёт сделаны сырым POST;
+  - `checkInCount` магазина и `isBlockedByViewer` читаются сырыми GET, модели фич их не отдают;
+  - удаление аккаунта проверяет момент повторной отправки вместо статуса `Pending`; имя пользователя проверяется как отказ без
+    причины; невалидный магазин и роастер без адреса теперь отклоняются локально (серверная проверка адреса только сырым POST для
+    магазина); часть проверки политики обновлений осталась в тестах `feature/app-update`;
+  - сырое декодирование DTO (`CheckInHelpfulDto`, `authorId`, `kind`) заменено проверкой типизированного результата.
+- Контрактные тесты `modules/network` (20 файлов) сопоставлены с тестами фич; добавлены недостающие проверки провода:
+  `ContributionsRepositoryTest` (`beans`, `latitude`/`longitude` при создании магазина; явный `"email": null` в контактах
+  изменения — так сервер узнаёт об очистке), `DiscoveryRepositoryTest` (числа строками, зона без имени, полигон),
+  `AuthRepositoryImplTest` (PascalCase-конверт Apple).
+- Не перенесено сознательно: удалённые поля отзывов (`canCreateReview`, `existingReviewId`, `clearDrink` в запросе отзыва) —
+  пути записи отзыва нет; старая форма `userCheckIns` (`note`, `createdAt`, `fullUrl`); русские тексты ошибок для не-JSON
+  ответов создания чекина (401/403/404/413/429/503) — проверить в `ShopCheckInCreateViewModelTest`, если требование сохраняется;
+  «токен не уходит на внешний хост фото даже после 401» и «гостевая лента без Authorization» — покрыто `ApiClientsTest`
+  в `core/network`.
+- `modules/network` удалён, из `Modules.kt` убраны `Legacy` и пути, из composeApp — тестовые зависимости; убраны `modules/**` из
+  фильтров iOS-воркфлоу, пример в `build-logic/README.md` обновлён.
+- Проверка: весь набор зелёный; `packageDirectDebug` упал один раз при параллельных тяжёлых задачах и прошёл на свежем демоне.

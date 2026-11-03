@@ -4,7 +4,6 @@ package com.coffeepeek.buildlogic
 object Modules {
     const val composeApp = ":composeApp"
 
-    val legacy = Legacy
     val core = Core
     val feature = Feature
 
@@ -166,10 +165,6 @@ object Modules {
         }
     }
 
-    object Legacy {
-        const val network = ":modules:network"
-    }
-
     object Core {
         const val coroutines = ":core:coroutines"
         const val network = ":core:network"
@@ -187,7 +182,6 @@ object Modules {
         feature.businessOwnership.domain,
         feature.businessOwnership.data,
         feature.businessOwnership.impl,
-        legacy.network,
         core.coroutines,
         core.network,
         core.database,

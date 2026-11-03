@@ -35,7 +35,7 @@ Project scripts import `com.coffeepeek.buildlogic.module` and the relevant
 
 ```kotlin
 implementation(project(module.core.network))
-implementation(project(module.legacy.domain))
+implementation(project(module.feature.favorites.domain))
 ```
 
 These helpers map to `commonMainApi`, `commonMainImplementation`, and

@@ -186,8 +186,6 @@ kotlin {
         }
         androidUnitTest.dependencies {
             implementation(libs.kotlinx.coroutines.test)
-            // The Sandbox tests still read their fake server through the old typed clients; the shipped app does not.
-            implementation(project(module.legacy.network))
         }
         // Test the exact sandbox transport without adding it to the live APK or requiring a new test variant.
         androidUnitTest {
@@ -197,7 +195,6 @@ kotlin {
             kotlin.srcDir("src/androidSandbox/kotlin/com/coffeepeek/admin/sandbox/packscan/imaging")
         }
         androidInstrumentedTest.dependencies {
-            implementation(project(module.legacy.network))
             implementation(libs.kotlin.test)
             implementation(libs.androidx.compose.ui.test.junit4)
             implementation(libs.androidx.activity.compose)
