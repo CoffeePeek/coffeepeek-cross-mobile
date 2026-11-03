@@ -1,5 +1,11 @@
 package com.coffeepeek.feature.profile.impl.ui.model
 
+internal sealed interface AccountDeletionError {
+    data object Status : AccountDeletionError
+    data object Send : AccountDeletionError
+    data class Server(val message: String) : AccountDeletionError
+}
+
 internal data class AccountDeletionState(
     val email: String = "",
     val isLoading: Boolean = true,
@@ -8,7 +14,7 @@ internal data class AccountDeletionState(
     val requested: Boolean = false,
     val resendAvailable: Boolean = true,
     val resendAvailableAtUtc: String? = null,
-    val error: String? = null,
+    val error: AccountDeletionError? = null,
 ) {
     val canSend: Boolean get() = !isLoading && !isSending && (!requested || resendAvailable)
 }

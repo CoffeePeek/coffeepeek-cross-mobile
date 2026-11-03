@@ -1,0 +1,680 @@
+<resources>
+    <string name="legacy_add_roaster_screen_city_address_required_together">Город и адрес нужно указать вместе.</string>
+    <string name="legacy_add_roaster_screen_contributions_request_site">Сайт</string>
+    <string name="legacy_add_roaster_screen_contributions_roaster_failed_title">Обжарщик не отправлен</string>
+    <string name="legacy_add_roaster_screen_contributions_roaster_sending_title">Отправляем обжарщика…</string>
+    <string name="legacy_add_roaster_screen_contributions_roaster_success_title">Обжарщик отправлен!</string>
+    <string name="legacy_add_roaster_screen_optional_address">Адрес (необязательно)</string>
+    <string name="legacy_add_roaster_screen_ownership_name">Название</string>
+    <string name="legacy_add_roaster_screen_request_accepted_address_pending">Заявка принята. Адрес дополнительно проверит модератор.</string>
+    <string name="legacy_add_roaster_screen_roaster_about_placeholder">История, подход к обжарке, особенности</string>
+    <string name="legacy_add_roaster_screen_roaster_about_title">Об обжарщике</string>
+    <string name="legacy_add_roaster_screen_roaster_intro">Расскажите об обжарщике. После проверки он появится в общем каталоге.</string>
+    <string name="legacy_add_roaster_screen_roaster_name_placeholder">Например, Coffee Circus</string>
+    <string name="legacy_add_roaster_screen_roaster_photos">Фотографии обжарщика</string>
+    <string name="legacy_add_roaster_screen_roaster_submitted_message">Мы проверим информацию и опубликуем обжарщика в течение 24 часов.</string>
+    <string name="legacy_add_roaster_screen_settings_city_error">Не удалось загрузить города</string>
+    <string name="legacy_add_roaster_screen_street_house">Улица, дом</string>
+    <string name="legacy_add_shop_screen_contributions_request_menu_photos">Фото меню</string>
+    <string name="legacy_add_shop_screen_contributions_section_contacts">Контакты</string>
+    <string name="legacy_add_shop_screen_contributions_shop_address_placeholder">Улица, дом, корпус</string>
+    <string name="legacy_add_shop_screen_contributions_shop_brew_methods">Методы приготовления</string>
+    <string name="legacy_add_shop_screen_contributions_shop_closing">Закрытие</string>
+    <string name="legacy_add_shop_screen_contributions_shop_contacts_intro">Заполните те поля, которые актуальны для вашего заведения.</string>
+    <string name="legacy_add_shop_screen_contributions_shop_description_placeholder">Расскажите о концепции, атмосфере и фишках кофейни…</string>
+    <string name="legacy_add_shop_screen_contributions_shop_failed_title">Кофейня не отправлена</string>
+    <string name="legacy_add_shop_screen_contributions_shop_features_intro">Отметьте то, что есть в заведении.</string>
+    <string name="legacy_add_shop_screen_contributions_shop_field_optional">необязательно</string>
+    <string name="legacy_add_shop_screen_contributions_shop_hours">Часы работы</string>
+    <string name="legacy_add_shop_screen_contributions_shop_instagram_label">Instagram профиль</string>
+    <string name="legacy_add_shop_screen_contributions_shop_mode">Режим</string>
+    <string name="legacy_add_shop_screen_contributions_shop_mode_footer">Включите, если в будни и выходные разные часы.</string>
+    <string name="legacy_add_shop_screen_contributions_shop_name_label">Название кофейни</string>
+    <string name="legacy_add_shop_screen_contributions_shop_name_placeholder">Например, Surf Coffee</string>
+    <string name="legacy_add_shop_screen_contributions_shop_opening">Открытие</string>
+    <string name="legacy_add_shop_screen_contributions_shop_optional_legend">Необязательно — можно пропустить</string>
+    <string name="legacy_add_shop_screen_contributions_shop_per_day">Разное время по дням</string>
+    <string name="legacy_add_shop_screen_contributions_shop_phone_label">Номер телефона</string>
+    <string name="legacy_add_shop_screen_contributions_shop_photos_title">Фотографии кофейни</string>
+    <string name="legacy_add_shop_screen_contributions_shop_pick_on_map">Выбрать на карте</string>
+    <string name="legacy_add_shop_screen_contributions_shop_presets">Типовые часы</string>
+    <string name="legacy_add_shop_screen_contributions_shop_required_hint">Поля со * обязательны для заполнения</string>
+    <string name="legacy_add_shop_screen_contributions_shop_roasters_footer">Не нашли обжарщика? Добавьте его — он появится в списке после проверки.</string>
+    <string name="legacy_add_shop_screen_contributions_shop_schedule_intro">По умолчанию кофейня открыта каждый день.</string>
+    <string name="legacy_add_shop_screen_contributions_shop_sending_description">Отправляем информацию и фотографии на проверку</string>
+    <string name="legacy_add_shop_screen_contributions_shop_sending_title">Отправляем кофейню…</string>
+    <string name="legacy_add_shop_screen_contributions_shop_step_basic">Основная информация</string>
+    <string name="legacy_add_shop_screen_contributions_shop_step_schedule">Расписание</string>
+    <string name="legacy_add_shop_screen_contributions_shop_submit">Отправить на модерацию</string>
+    <string name="legacy_add_shop_screen_contributions_shop_website_label">Веб-сайт</string>
+    <string name="legacy_add_shop_screen_contributions_shop_work_days">Дни работы</string>
+    <string name="legacy_add_shop_screen_contributions_shop_work_days_footer">Снимите отметку с дней, когда кофейня закрыта.</string>
+    <string name="legacy_add_shop_screen_ownership_address">Адрес</string>
+    <string name="legacy_add_shop_screen_sandbox_cities_failure">Ошибка</string>
+    <string name="legacy_add_shop_screen_sandbox_next">Далее</string>
+    <string name="legacy_add_shop_screen_shelf_grind_beans">Зерно</string>
+    <string name="legacy_add_shop_success_screen_contributions_shop_go_home">На главную</string>
+    <string name="legacy_add_shop_success_screen_contributions_shop_success_description">Мы проверим информацию и опубликуем вашу кофейню в течение 24 часов.</string>
+    <string name="legacy_add_shop_success_screen_contributions_shop_success_title">Кофейня отправлена!</string>
+    <string name="legacy_app_text_field_auth_hide_password">Скрыть пароль</string>
+    <string name="legacy_app_text_field_auth_show_password">Показать пароль</string>
+    <string name="legacy_app_update_prompt_appupdate_body_available">Скачайте новую версию CoffeePeek.</string>
+    <string name="legacy_app_update_prompt_appupdate_body_downloading">Загрузка продолжается…</string>
+    <string name="legacy_app_update_prompt_appupdate_body_installing">Подтвердите установку обновления.</string>
+    <string name="legacy_app_update_prompt_appupdate_body_ready">Обновление скачано. Можно установить.</string>
+    <string name="legacy_app_update_prompt_appupdate_body_required">Установите новую версию, чтобы продолжить.</string>
+    <string name="legacy_app_update_prompt_appupdate_body_starting">Подтвердите загрузку обновления.</string>
+    <string name="legacy_app_update_prompt_appupdate_body_verifying">Проверяем версию и подпись приложения.</string>
+    <string name="legacy_app_update_prompt_appupdate_install">Установить</string>
+    <string name="legacy_app_update_prompt_appupdate_later">Позже</string>
+    <string name="legacy_app_update_prompt_appupdate_title_available">Доступно обновление</string>
+    <string name="legacy_app_update_prompt_appupdate_title_downloading">Скачиваем обновление</string>
+    <string name="legacy_app_update_prompt_appupdate_title_installing">Устанавливаем обновление</string>
+    <string name="legacy_app_update_prompt_appupdate_title_ready">Готово к установке</string>
+    <string name="legacy_app_update_prompt_appupdate_title_required">Обновите CoffeePeek</string>
+    <string name="legacy_app_update_prompt_appupdate_title_starting">Подготовка обновления</string>
+    <string name="legacy_app_update_prompt_appupdate_title_verifying">Проверяем обновление</string>
+    <string name="legacy_app_update_prompt_shelf_scanner_download">Скачать</string>
+    <string name="legacy_author_blocking_host_author_blocking">Блокировка авторов</string>
+    <string name="legacy_author_blocking_host_block">Заблокировать</string>
+    <string name="legacy_author_blocking_host_block_author_message">Вы перестанете видеть публикации друг друга. Подписки друг на друга будут удалены. Автор не получит уведомление.</string>
+    <string name="legacy_author_blocking_host_blocking_author">Блокируем автора…</string>
+    <string name="legacy_author_blocking_host_blocking_sign_in_message">Войдите в аккаунт, чтобы блокировки сохранялись на всех ваших устройствах.</string>
+    <string name="legacy_author_blocking_host_profile_unblock">Разблокировать</string>
+    <string name="legacy_author_blocking_host_save_failed">Не удалось сохранить</string>
+    <string name="legacy_author_blocking_host_unblock_author_message">Публикации автора снова смогут появляться в ленте. Прежние подписки не восстановятся.</string>
+    <string name="legacy_author_blocking_host_unblocking_author">Разблокируем автора…</string>
+    <string name="legacy_blocked_authors_screen_blocked_accounts">Блокировки</string>
+    <string name="legacy_blocked_authors_screen_blocked_authors_empty">Нет заблокированных авторов</string>
+    <string name="legacy_blocked_authors_screen_blocked_authors_empty_message">Когда вы заблокируете автора, он появится здесь.</string>
+    <string name="legacy_blocked_authors_screen_blocked_authors_message">Вы не видите публикации этих авторов. Разблокировка не восстанавливает подписки.</string>
+    <string name="legacy_blocked_authors_screen_list_load_failed">Не удалось загрузить список</string>
+    <string name="legacy_catalog_cards_discovery_shop_closed">ЗАКРЫТО</string>
+    <string name="legacy_catalog_cards_discovery_shop_open">ОТКРЫТО</string>
+    <string name="legacy_catalog_cards_is_not_favorite">Не в избранном</string>
+    <string name="legacy_catalog_cards_new_item">Новое</string>
+    <string name="legacy_check_in_actions_community_actions">Действия с чекином</string>
+    <string name="legacy_check_in_actions_community_block_author">Заблокировать автора</string>
+    <string name="legacy_check_in_actions_community_hide">Скрыть</string>
+    <string name="legacy_check_in_actions_community_report">Пожаловаться</string>
+    <string name="legacy_check_in_actions_ownership_edit">Редактировать</string>
+    <string name="legacy_check_in_calendar_card_history_select_day">Выбрать дату</string>
+    <string name="legacy_check_in_calendar_card_history_today_description">Сегодня, показать чекины за текущую дату</string>
+    <string name="legacy_check_in_calendar_card_loading_check_ins">Загрузка чекинов…</string>
+    <string name="legacy_check_in_calendar_card_shelf_brew_today">Сегодня</string>
+    <string name="legacy_check_in_diary_row_history_at_home">Дома</string>
+    <string name="legacy_check_in_diary_row_open_check_in">Открыть чекин</string>
+    <string name="legacy_check_in_shop_picker_screen_choose_shop">Выберите кофейню</string>
+    <string name="legacy_check_in_shop_picker_screen_close_shop_picker">Закрыть выбор кофейни</string>
+    <string name="legacy_check_in_shop_picker_screen_list_view">Списком</string>
+    <string name="legacy_check_in_shop_picker_screen_map_view">На карте</string>
+    <string name="legacy_check_in_shop_picker_screen_near_me">Рядом со мной</string>
+    <string name="legacy_check_in_shop_picker_screen_search_shops">Поиск кофеен</string>
+    <string name="legacy_check_in_submission_content_saving_coffee_moment">Сохраняем ваш кофейный момент</string>
+    <string name="legacy_check_in_submission_content_shop_checkin_form_feed">К ленте</string>
+    <string name="legacy_check_in_submission_content_shop_checkin_form_sending">Отправляем чекин…</string>
+    <string name="legacy_check_in_submission_content_shop_checkin_form_success">Чекин создан!</string>
+    <string name="legacy_check_in_submission_content_shop_checkin_form_success_private">Кофейный момент сохранён в ваших чекинах и виден только вам.</string>
+    <string name="legacy_check_in_submission_content_shop_checkin_form_success_public">Спасибо, что делитесь кофейными моментами! Чекин появится в ленте после проверки. Сейчас он доступен в ваших чекинах.</string>
+    <string name="legacy_check_in_submission_content_shop_checkins_title">Мои чекины</string>
+    <string name="legacy_coffee_detail_screen_coffee_about">О кофе</string>
+    <string name="legacy_coffee_detail_screen_coffee_acidity">Кислотность</string>
+    <string name="legacy_coffee_detail_screen_coffee_availability_unknown">Наличие не подтверждено</string>
+    <string name="legacy_coffee_detail_screen_coffee_both">Онлайн и в магазине</string>
+    <string name="legacy_coffee_detail_screen_coffee_brew">Приготовление</string>
+    <string name="legacy_coffee_detail_screen_coffee_checked">Проверено</string>
+    <string name="legacy_coffee_detail_screen_coffee_country">Страна</string>
+    <string name="legacy_coffee_detail_screen_coffee_form">Форма</string>
+    <string name="legacy_coffee_detail_screen_coffee_grind">Помол</string>
+    <string name="legacy_coffee_detail_screen_coffee_in_stock">В наличии</string>
+    <string name="legacy_coffee_detail_screen_coffee_no_offers">Предложений пока нет</string>
+    <string name="legacy_coffee_detail_screen_coffee_offers">Варианты покупки</string>
+    <string name="legacy_coffee_detail_screen_coffee_offline">В магазине</string>
+    <string name="legacy_coffee_detail_screen_coffee_online">Онлайн</string>
+    <string name="legacy_coffee_detail_screen_coffee_open_photos">Открыть фото кофе</string>
+    <string name="legacy_coffee_detail_screen_coffee_open_seller">Перейти к продавцу</string>
+    <string name="legacy_coffee_detail_screen_coffee_out_of_stock">Нет в наличии</string>
+    <string name="legacy_coffee_detail_screen_coffee_photo_missing">Фото кофе отсутствует</string>
+    <string name="legacy_coffee_detail_screen_coffee_preorder">Предзаказ</string>
+    <string name="legacy_coffee_detail_screen_coffee_profile">Преобладающий профиль</string>
+    <string name="legacy_coffee_detail_screen_coffee_retry_similar">Загрузить похожие сорта</string>
+    <string name="legacy_coffee_detail_screen_coffee_roast">Обжарка</string>
+    <string name="legacy_coffee_detail_screen_coffee_seller">Продавец</string>
+    <string name="legacy_coffee_detail_screen_coffee_share">Поделиться кофе</string>
+    <string name="legacy_coffee_detail_screen_coffee_similar">Похожие сорта</string>
+    <string name="legacy_coffee_detail_screen_coffee_source">Источник</string>
+    <string name="legacy_coffee_detail_screen_coffee_taste">Вкусовой профиль</string>
+    <string name="legacy_coffee_detail_screen_coffee_unconfirmed">Не подтверждено</string>
+    <string name="legacy_coffee_detail_screen_coffee_unspecified_feminine">Не указана</string>
+    <string name="legacy_coffee_detail_screen_shelf_form_roaster">Обжарщик</string>
+    <string name="legacy_coffee_filters_sheet_coffee_available_only">Только в наличии</string>
+    <string name="legacy_coffee_filters_sheet_coffee_filters_failed">Не удалось загрузить фильтры</string>
+    <string name="legacy_coffee_list_screen_coffee_byn">белорусских рублей</string>
+    <string name="legacy_coffee_list_screen_coffee_empty">Кофе не найден</string>
+    <string name="legacy_coffee_list_screen_coffee_empty_hint">Попробуйте изменить поиск или фильтры</string>
+    <string name="legacy_coffee_list_screen_coffee_price_missing">Цена не указана</string>
+    <string name="legacy_coffee_list_screen_coffee_search">Название кофе</string>
+    <string name="legacy_coffee_list_screen_coffee_weight_missing">Вес не указан</string>
+    <string name="legacy_coffee_shop_placeholder_image_shop_overview_photo_missing">Фото кофейни отсутствует</string>
+    <string name="legacy_coffee_shop_placeholder_image_shop_photo_loading">Фото кофейни загружается</string>
+    <string name="legacy_community_screen_community_empty">Пока нет опубликованных чек-инов.</string>
+    <string name="legacy_community_screen_community_refresh">Обновить ленту</string>
+    <string name="legacy_community_screen_community_report_placeholder">Опишите проблему</string>
+    <string name="legacy_community_screen_community_report_sending">Отправляем…</string>
+    <string name="legacy_delete_account_pending_screen_profile_deletion_confirm_no_email">вашу почту</string>
+    <string name="legacy_delete_account_pending_screen_profile_deletion_title">Удаление аккаунта</string>
+    <string name="legacy_discovery_section_title_discovery_show_all">Показать все</string>
+    <string name="legacy_edit_check_in_sheet_community_edit_kept">Кофейня, дата визита и фотографии сохранятся.</string>
+    <string name="legacy_edit_check_in_sheet_community_edit_review">После сохранения публичный чек-ин снова отправится на проверку.</string>
+    <string name="legacy_edit_check_in_sheet_community_edit_title">Редактировать чек-ин</string>
+    <string name="legacy_edit_check_in_sheet_community_note_label">Текст чек-ина</string>
+    <string name="legacy_edit_check_in_sheet_community_note_placeholder">Расскажите о визите</string>
+    <string name="legacy_edit_check_in_sheet_community_save">Сохранить</string>
+    <string name="legacy_edit_profile_screen_profile_edit_about_label">О себе</string>
+    <string name="legacy_edit_profile_screen_profile_edit_about_placeholder">Расскажите немного о себе…</string>
+    <string name="legacy_edit_profile_screen_profile_edit_change_photo">Изменить фото профиля</string>
+    <string name="legacy_edit_profile_screen_profile_edit_delete_message">Мы отправим ссылку на почту для подтверждения. Аккаунт останется активным, пока вы не подтвердите удаление в письме.</string>
+    <string name="legacy_edit_profile_screen_profile_edit_photo_title">Фото профиля</string>
+    <string name="legacy_edit_profile_screen_profile_edit_username_label">Имя пользователя</string>
+    <string name="legacy_edit_profile_screen_profile_edit_username_placeholder">Ваше имя</string>
+    <string name="legacy_edit_profile_screen_shop_review_submit_edit">Сохранить изменения</string>
+    <string name="legacy_error_dialog_shelf_camera_tips_close">Понятно</string>
+    <string name="legacy_error_dialog_unexpected_error">Что-то пошло не так</string>
+    <string name="legacy_favorites_screen_favorites_drinks">Напитки</string>
+    <string name="legacy_feed_quick_filter_bar_discovery_quick_nearby">Рядом</string>
+    <string name="legacy_feed_quick_filter_bar_discovery_quick_new">Новые</string>
+    <string name="legacy_feed_quick_filter_bar_discovery_quick_visited">Уже был</string>
+    <string name="legacy_grouped_list_decrease">Уменьшить</string>
+    <string name="legacy_grouped_list_discovery_filters_collapse">Свернуть</string>
+    <string name="legacy_grouped_list_increase">Увеличить</string>
+    <string name="legacy_guest_auth_card_shop_checkins_join_prompt">Присоединяйтесь к сообществу, чтобы сохранять любимые места и делиться впечатлениями.</string>
+    <string name="legacy_guest_auth_card_shop_checkins_no_account">Нет аккаунта?</string>
+    <string name="legacy_home_check_in_detail_home_check_in_delete">Удалить запись</string>
+    <string name="legacy_home_check_in_detail_home_check_in_dose">Кофе на приготовление</string>
+    <string name="legacy_home_check_in_detail_home_check_in_duration">Время заваривания</string>
+    <string name="legacy_home_check_in_detail_home_check_in_home">Кофе дома</string>
+    <string name="legacy_home_check_in_detail_home_check_in_method">Способ приготовления</string>
+    <string name="legacy_home_check_in_detail_home_check_in_note">Впечатления</string>
+    <string name="legacy_home_check_in_detail_home_check_in_rating">Оценка вкуса</string>
+    <string name="legacy_home_check_in_detail_home_check_in_title_fallback">Домашнее приготовление</string>
+    <string name="legacy_home_check_in_detail_home_check_in_unspecified">Не указан</string>
+    <string name="legacy_home_check_in_editor_home_check_in_back_to_editor">Назад к приготовлению</string>
+    <string name="legacy_home_check_in_editor_home_check_in_beans_empty">Зерно не найдено</string>
+    <string name="legacy_home_check_in_editor_home_check_in_beans_empty_hint">Попробуйте изменить поиск или добавьте своё зерно ниже.</string>
+    <string name="legacy_home_check_in_editor_home_check_in_beans_failed">Не удалось загрузить зерно</string>
+    <string name="legacy_home_check_in_editor_home_check_in_brew_method">Способ заваривания</string>
+    <string name="legacy_home_check_in_editor_home_check_in_choose_bean">Выбрать зерно</string>
+    <string name="legacy_home_check_in_editor_home_check_in_choose_date">Выбрать дату приготовления</string>
+    <string name="legacy_home_check_in_editor_home_check_in_custom_bean">Своё зерно</string>
+    <string name="legacy_home_check_in_editor_home_check_in_custom_bean_hint">Например, Эфиопия Иргачеффе</string>
+    <string name="legacy_home_check_in_editor_home_check_in_custom_bean_name">Название своего зерна</string>
+    <string name="legacy_home_check_in_editor_home_check_in_dose_description">Количество кофе, г</string>
+    <string name="legacy_home_check_in_editor_home_check_in_dose_hint">Например, 18</string>
+    <string name="legacy_home_check_in_editor_home_check_in_dose_label">Кофе, г</string>
+    <string name="legacy_home_check_in_editor_home_check_in_drink_hint">Например, капучино</string>
+    <string name="legacy_home_check_in_editor_home_check_in_duration_minutes">Минуты</string>
+    <string name="legacy_home_check_in_editor_home_check_in_duration_minutes_description">Минуты заваривания</string>
+    <string name="legacy_home_check_in_editor_home_check_in_duration_seconds">Секунды</string>
+    <string name="legacy_home_check_in_editor_home_check_in_duration_seconds_description">Секунды заваривания</string>
+    <string name="legacy_home_check_in_editor_home_check_in_editor_close">Закрыть форму</string>
+    <string name="legacy_home_check_in_editor_home_check_in_editor_title">Редактировать чекин</string>
+    <string name="legacy_home_check_in_editor_home_check_in_keep_photos">Фотографии этой записи сохранятся без изменений</string>
+    <string name="legacy_home_check_in_editor_home_check_in_methods_loading">Загружаем способы…</string>
+    <string name="legacy_home_check_in_editor_home_check_in_methods_retry">Не удалось загрузить. Повторить</string>
+    <string name="legacy_home_check_in_editor_home_check_in_note_hint">Какой вкус? Что хочется повторить?</string>
+    <string name="legacy_home_check_in_editor_home_check_in_photos_hint">Чашка, зерно или процесс приготовления — до 5 фото.</string>
+    <string name="legacy_home_check_in_editor_home_check_in_prepared_date">Дата приготовления</string>
+    <string name="legacy_home_check_in_editor_home_check_in_taste_question">Как получился кофе?</string>
+    <string name="legacy_home_check_in_editor_home_check_in_use_custom_bean">Использовать своё зерно</string>
+    <string name="legacy_home_check_in_editor_shelf_archive_search">Название или обжарщик</string>
+    <string name="legacy_home_check_in_error_summary_home_check_in_save_error_title">Не удалось сохранить чекин</string>
+    <string name="legacy_home_check_in_screen_beans_unspecified">Зерно не указано</string>
+    <string name="legacy_home_check_in_screen_by_beans">По зерну</string>
+    <string name="legacy_home_check_in_screen_by_brew_method">По способу</string>
+    <string name="legacy_home_check_in_screen_delete_entry_message">Она исчезнет из истории, календаря и статистики.</string>
+    <string name="legacy_home_check_in_screen_editing">Редактирование</string>
+    <string name="legacy_home_check_in_screen_history">История</string>
+    <string name="legacy_home_check_in_screen_loading_entry">Загружаем запись…</string>
+    <string name="legacy_home_check_in_screen_method_unspecified">Способ не указан</string>
+    <string name="legacy_home_check_in_screen_new_home_cup">Новая чашка дома</string>
+    <string name="legacy_home_check_in_screen_no_data">Пока нет данных</string>
+    <string name="legacy_home_check_in_screen_no_home_brews">Пока нет домашних приготовлений</string>
+    <string name="legacy_home_check_in_screen_ownership_refresh">Обновить</string>
+    <string name="legacy_home_check_in_screen_record_brew">Записать приготовление</string>
+    <string name="legacy_home_check_in_screen_statistics">Статистика</string>
+    <string name="legacy_load_error_content_community_error_body">Сервис временно недоступен. Возможно, ведутся работы. Попробуйте чуть позже.</string>
+    <string name="legacy_load_error_content_community_error_title">Упс, что-то пошло не так</string>
+    <string name="legacy_main_screen_profile_title">Профиль</string>
+    <string name="legacy_main_screen_search">Поиск</string>
+    <string name="legacy_main_screen_settings_tab_title">Настройки</string>
+    <string name="legacy_map_header_discovery_map_collapse">Свернуть карту</string>
+    <string name="legacy_map_header_discovery_map_search_placeholder">Поиск кофейни…</string>
+    <string name="legacy_map_position_controls_discovery_map_zones_hide">Скрыть зоны</string>
+    <string name="legacy_map_position_controls_discovery_map_zones_show">Показать зоны</string>
+    <string name="legacy_map_position_controls_discovery_map_zoom_in">Приблизить карту</string>
+    <string name="legacy_map_position_controls_discovery_map_zoom_out">Отдалить карту</string>
+    <string name="legacy_map_search_suggestions_discovery_map_search_empty">Кофейни не найдены</string>
+    <string name="legacy_map_search_suggestions_discovery_map_search_failed">Не удалось выполнить поиск</string>
+    <string name="legacy_map_zone_card_discovery_map_zone_show_shops">Показать кофейни</string>
+    <string name="legacy_my_contributions_screen_contributions_open_request">Посмотреть заявку</string>
+    <string name="legacy_my_contributions_screen_contributions_rejected_title">Почему отклонено</string>
+    <string name="legacy_my_contributions_screen_shelf_open_catalog">Открыть в каталоге</string>
+    <string name="legacy_other_user_profile_screen_profile_author_actions">Действия с автором</string>
+    <string name="legacy_other_user_profile_screen_profile_favorites_refresh_failed">Не удалось обновить избранное</string>
+    <string name="legacy_other_user_profile_screen_profile_follow_failed">Не удалось изменить подписку</string>
+    <string name="legacy_other_user_profile_screen_profile_load_failed">Не удалось загрузить профиль</string>
+    <string name="legacy_other_user_profile_screen_profile_share">Поделиться профилем</string>
+    <string name="legacy_other_user_profile_screen_profile_unblock_author">Разблокировать автора</string>
+    <string name="legacy_other_user_profile_screen_profile_update_failed">Не удалось обновить профиль</string>
+    <string name="legacy_other_user_profile_screen_roaster_message_favorites_unavailable">Не удалось загрузить избранное</string>
+    <string name="legacy_photo_attachments_section_contributions_section_photos">Фотографии</string>
+    <string name="legacy_pick_shop_location_dialog_address_unavailable_move_map">Не удалось определить адрес. Подвиньте карту.</string>
+    <string name="legacy_pick_shop_location_dialog_cancel_location_picker">Отменить выбор точки</string>
+    <string name="legacy_pick_shop_location_dialog_discovery_map_my_location">Моё местоположение</string>
+    <string name="legacy_pick_shop_location_dialog_map_location">Точка на карте</string>
+    <string name="legacy_pick_shop_location_dialog_move_map_choose_location">Переместите карту, чтобы выбрать точку</string>
+    <string name="legacy_pick_shop_location_dialog_move_map_to_shop">Переместите карту к кофейне</string>
+    <string name="legacy_pick_shop_location_dialog_resolving_address">Определяем адрес…</string>
+    <string name="legacy_pick_shop_location_dialog_select">Выбрать</string>
+    <string name="legacy_pick_shop_location_dialog_select_location">Выбрать эту точку</string>
+    <string name="legacy_pick_shop_location_dialog_shop_address">Адрес кофейни</string>
+    <string name="legacy_pick_shop_location_dialog_shop_location_marker">Метка расположения кофейни</string>
+    <string name="legacy_profile_check_ins_screen_contributions_request_open_shop">Открыть кофейню</string>
+    <string name="legacy_profile_check_ins_screen_history_at_shop">В кофейне</string>
+    <string name="legacy_profile_check_ins_screen_history_clear_date">Показать все даты</string>
+    <string name="legacy_profile_check_ins_screen_history_day_empty">В этот день чекинов не было</string>
+    <string name="legacy_profile_check_ins_screen_roaster_tag_all">Все</string>
+    <string name="legacy_public_profile_activity_profile_activity_legend">Дни с чекинами</string>
+    <string name="legacy_public_profile_activity_profile_activity_minsk_time">По времени Минска</string>
+    <string name="legacy_public_profile_connections_sheet_profile_followers_empty">Пока нет подписчиков</string>
+    <string name="legacy_public_profile_connections_sheet_profile_following_empty">Пока нет подписок</string>
+    <string name="legacy_public_profile_connections_sheet_profile_open_user">Открыть профиль</string>
+    <string name="legacy_public_profile_favorite_card_is_favorite">В избранном</string>
+    <string name="legacy_register_screen_auth_strength_medium">средний</string>
+    <string name="legacy_register_screen_auth_strength_strong">надёжный</string>
+    <string name="legacy_register_screen_auth_strength_weak">слабый</string>
+    <string name="legacy_review_content_community_rating_atmosphere">Атмосфера</string>
+    <string name="legacy_review_content_community_ratings_hint">Нажмите на звёзды, чтобы изменить оценку</string>
+    <string name="legacy_review_content_community_ratings_title">Ваши оценки</string>
+    <string name="legacy_review_content_community_user">Пользователь</string>
+    <string name="legacy_review_content_community_you">Вы</string>
+    <string name="legacy_review_content_ownership_kind_shop">Кофейня</string>
+    <string name="legacy_review_content_shop_checkins_read_more">Читать полностью</string>
+    <string name="legacy_review_form_step_shop_checkin_form_optional">Необязательный пункт</string>
+    <string name="legacy_review_ratings_overview_shop_checkins_aura">Аура</string>
+    <string name="legacy_review_ratings_overview_shop_checkins_rating_sample">Оценки по загруженным чекинам</string>
+    <string name="legacy_review_report_screen_check_form">Проверить форму</string>
+    <string name="legacy_review_report_screen_check_in_report_placeholder">Опишите проблему с чекином</string>
+    <string name="legacy_review_report_screen_check_in_report_question">Что не так с этим чекином?</string>
+    <string name="legacy_review_report_screen_community_report_send">Отправить</string>
+    <string name="legacy_review_report_screen_community_report_sent">Жалоба отправлена</string>
+    <string name="legacy_review_report_screen_community_report_title">Пожаловаться на чекин</string>
+    <string name="legacy_review_report_screen_demo_report_completed">Форма заполнена. Жалобы на примерные публикации не отправляются.</string>
+    <string name="legacy_review_report_screen_demo_report_message">Это пример публикации. Жалоба не будет отправлена на сервер.</string>
+    <string name="legacy_review_report_screen_report_preview">Превью жалобы</string>
+    <string name="legacy_review_report_screen_report_submitted">Спасибо. Мы проверим чекин.</string>
+    <string name="legacy_roaster_detail_screen_contributions_load_failed">Ошибка загрузки</string>
+    <string name="legacy_roaster_detail_screen_roaster_links_title">Ссылки</string>
+    <string name="legacy_roaster_detail_screen_roaster_shops_empty">Пока нет кофеен, которые указали этого обжарщика.</string>
+    <string name="legacy_roaster_detail_screen_roaster_shops_title">Где используют</string>
+    <string name="legacy_roaster_list_screen_roaster_empty">Обжарщики не найдены</string>
+    <string name="legacy_shop_change_editor_screen_catalog_empty">Каталог пуст</string>
+    <string name="legacy_shop_change_editor_screen_contributions_availability_absent">Нет</string>
+    <string name="legacy_shop_change_editor_screen_contributions_availability_present">Есть</string>
+    <string name="legacy_shop_change_editor_screen_contributions_availability_unknown">Не указано</string>
+    <string name="legacy_shop_change_editor_screen_contributions_editor_current_photos">Текущие фото</string>
+    <string name="legacy_shop_change_editor_screen_contributions_editor_description_placeholder">Расскажите о кофейне</string>
+    <string name="legacy_shop_change_editor_screen_contributions_editor_drinks_empty">Каталог напитков пуст</string>
+    <string name="legacy_shop_change_editor_screen_contributions_editor_expand_menu">Указать напитки и цены</string>
+    <string name="legacy_shop_change_editor_screen_contributions_editor_failed_title">Правка не отправлена</string>
+    <string name="legacy_shop_change_editor_screen_contributions_editor_menu_details">Подробное меню</string>
+    <string name="legacy_shop_change_editor_screen_contributions_editor_new_menu_photos">Новые фото меню</string>
+    <string name="legacy_shop_change_editor_screen_contributions_editor_new_photos">Новые фото</string>
+    <string name="legacy_shop_change_editor_screen_contributions_editor_new_photos_hint">Добавьте фото — они встанут после сохранённых.</string>
+    <string name="legacy_shop_change_editor_screen_contributions_editor_no_saved_photos">Нет сохранённых фото</string>
+    <string name="legacy_shop_change_editor_screen_contributions_editor_price_placeholder">Цена, BYN</string>
+    <string name="legacy_shop_change_editor_screen_contributions_editor_save">Сохранить заявку</string>
+    <string name="legacy_shop_change_editor_screen_contributions_editor_saved_title">Заявка сохранена!</string>
+    <string name="legacy_shop_change_editor_screen_contributions_editor_saving_title">Сохраняем заявку…</string>
+    <string name="legacy_shop_change_editor_screen_contributions_editor_sending_description">Отправляем ваши изменения на проверку</string>
+    <string name="legacy_shop_change_editor_screen_contributions_editor_sending_title">Отправляем правку…</string>
+    <string name="legacy_shop_change_editor_screen_contributions_editor_sent_title">Правка отправлена!</string>
+    <string name="legacy_shop_change_editor_screen_contributions_editor_status_approved">Изменения приняты и появятся в карточке кофейни.</string>
+    <string name="legacy_shop_change_editor_screen_contributions_editor_status_pending">Спасибо за помощь! После проверки изменения появятся в карточке кофейни.</string>
+    <string name="legacy_shop_change_editor_screen_contributions_editor_status_rejected">Заявка сохранена. Подробности проверки доступны в заявке.</string>
+    <string name="legacy_shop_change_editor_screen_contributions_section_brew_methods">Методы заваривания</string>
+    <string name="legacy_shop_change_editor_screen_home_check_in_optional">Необязательно</string>
+    <string name="legacy_shop_change_editor_screen_ownership_phone">Телефон</string>
+    <string name="legacy_shop_change_request_detail_screen_contributions_request_added">Добавлено</string>
+    <string name="legacy_shop_change_request_detail_screen_contributions_request_description_removed">Описание удалено</string>
+    <string name="legacy_shop_change_request_detail_screen_contributions_request_empty">В заявке нет данных для отображения.</string>
+    <string name="legacy_shop_change_request_detail_screen_contributions_request_gallery_note">Новый состав галереи применится после одобрения.</string>
+    <string name="legacy_shop_change_request_detail_screen_contributions_request_menu_items">Позиций</string>
+    <string name="legacy_shop_change_request_detail_screen_contributions_request_not_found">Заявка не найдена</string>
+    <string name="legacy_shop_change_request_detail_screen_contributions_request_payload">Что отправлено</string>
+    <string name="legacy_shop_change_request_detail_screen_contributions_request_rejection">Причина отклонения</string>
+    <string name="legacy_shop_change_request_detail_screen_contributions_request_removed">Удалено</string>
+    <string name="legacy_shop_change_request_detail_screen_contributions_request_retained">Сохранено</string>
+    <string name="legacy_shop_change_request_detail_screen_contributions_request_selected_brew_methods">Выбрано методов</string>
+    <string name="legacy_shop_change_request_detail_screen_contributions_request_selected_equipment">Выбрано оборудования</string>
+    <string name="legacy_shop_change_request_detail_screen_contributions_request_selected_roasters">Выбрано обжарщиков</string>
+    <string name="legacy_shop_change_request_detail_screen_contributions_request_selected_tags">Выбрано особенностей</string>
+    <string name="legacy_shop_change_request_detail_screen_contributions_request_set_note">Новый набор применится после одобрения.</string>
+    <string name="legacy_shop_change_request_detail_screen_contributions_request_title">Отправленная правка</string>
+    <string name="legacy_shop_detail_screen_belarusian_ruble">Белорусский рубль</string>
+    <string name="legacy_shop_detail_screen_community_share">Поделиться</string>
+    <string name="legacy_shop_detail_screen_contributions_section_menu">Меню</string>
+    <string name="legacy_shop_detail_screen_discovery_kind_cafe">Кафе</string>
+    <string name="legacy_shop_detail_screen_shop_checkins_show_all">Все чекины</string>
+    <string name="legacy_shop_detail_screen_shop_overview_distance">От вас</string>
+    <string name="legacy_shop_detail_screen_shop_overview_no_rating">Нет оценок</string>
+    <string name="legacy_shop_detail_screen_shop_overview_show_on_map">Показать на карте</string>
+    <string name="legacy_shop_detail_screen_shop_price_selected">Уровень стоимости этой кофейни</string>
+    <string name="legacy_shop_detail_screen_shop_price_title">Средний чек</string>
+    <string name="legacy_shop_detail_screen_shop_schedule_collapse">Скрыть часы работы</string>
+    <string name="legacy_shop_detail_screen_shop_schedule_expand">Показать часы работы</string>
+    <string name="legacy_shop_detail_screen_shop_schedule_today_closed">Сегодня выходной</string>
+    <string name="legacy_shop_menu_gallery_screen_shop_menu_gallery_empty">Фотографий меню пока нет</string>
+    <string name="legacy_shop_report_screen_shop_report_description_label">Что именно не так?</string>
+    <string name="legacy_shop_report_screen_shop_report_description_limit">До 500 символов</string>
+    <string name="legacy_shop_report_screen_shop_report_prompt">Какие данные нужно исправить?</string>
+    <string name="legacy_shop_report_screen_shop_report_thanks">Спасибо за сообщение</string>
+    <string name="legacy_shop_report_screen_shop_report_title">Сообщить о неточности</string>
+    <string name="legacy_submission_status_content_contributions_shop_back_to_form">Вернуться к форме</string>
+    <string name="legacy_submission_status_content_contributions_shop_retry_send">Повторить отправку</string>
+    <string name="legacy_suggest_shop_change_screen_contributions_suggest_heading">Что нужно обновить?</string>
+    <string name="legacy_suggest_shop_change_screen_contributions_suggest_title">Предложить правку</string>
+    <string name="legacy_timeline_check_in_card_community_publish">Опубликовать</string>
+    <string name="legacy_usage_policy_screen_analytics_policy_prefix">С вашего согласия события использования отправляются в PostHog (ЕС), </string>
+    <string name="legacy_usage_policy_screen_analytics_policy_suffix">чтобы улучшать CoffeePeek. Без текстов поиска, заметок, фото и точных координат.</string>
+    <string name="legacy_usage_policy_screen_settings_policy_analytics_title">Аналитика использования</string>
+    <string name="legacy_usage_policy_screen_settings_policy_privacy_description">Как мы обрабатываем и защищаем ваши данные.</string>
+    <string name="legacy_usage_policy_screen_settings_policy_privacy_title">Политика конфиденциальности</string>
+    <string name="legacy_usage_policy_screen_settings_policy_section">КОНФИДЕНЦИАЛЬНОСТЬ</string>
+    <string name="legacy_usage_policy_screen_settings_policy_terms_description">Узнайте, как работает CoffeePeek.</string>
+    <string name="legacy_usage_policy_screen_settings_policy_terms_title">Правила использования</string>
+    <string name="legacy_usage_policy_screen_settings_policy_title">Политика использования</string>
+    <string name="legacy_visited_places_screen_calendar">Календарь</string>
+    <string name="legacy_visited_places_screen_history_month_empty">В этом месяце пока нет чекинов</string>
+    <string name="legacy_visited_places_screen_sandbox_feed_title">Лента</string>
+    <string name="legacy_app_version_footer">Версия %1$s</string>
+    <string name="legacy_photo_attachments_hint">Добавьте до %1$d фото.</string>
+    <string name="legacy_photo_attachments_count">Добавлено: %1$d/%2$d</string>
+    <string name="legacy_roaster_photo">Фото обжарщика %1$s</string>
+    <string name="legacy_roaster_photo_missing">Фото обжарщика %1$s отсутствует</string>
+    <string name="legacy_roaster_open_named">Открыть обжарщика %1$s</string>
+    <string name="legacy_selected_count">Выбрано: %1$d</string>
+    <string name="legacy_show_all_count">Показать все (%1$d)</string>
+    <string name="legacy_checkin_ratings_summary">%1$s · Чекины: %2$d</string>
+    <string name="legacy_profile_open_named">Открыть профиль %1$s</string>
+    <string name="legacy_like_count">Лайки: %1$d</string>
+    <string name="legacy_like_remove_count">Убрать лайк, лайков: %1$d</string>
+    <string name="legacy_like_add_count">Поставить лайк, лайков: %1$d</string>
+    <string name="legacy_photo_position">Фотография %1$d из %2$d</string>
+    <string name="legacy_photo_short_position">Фото %1$d из %2$d</string>
+    <string name="legacy_submission_error_kept">%1$s\n\nВведённые данные остались в форме.</string>
+    <string name="legacy_shop_price_cappuccino">Цена (капучино за %1$s)</string>
+    <string name="legacy_shop_photos_hint">До %1$d фотографий (необязательно). Можно выбрать несколько сразу.</string>
+    <string name="legacy_shop_menu_photos_hint">До %1$d фото меню (необязательно). Не попадут в галерею кофейни.</string>
+    <string name="legacy_calendar_days_count">%1$d из 7</string>
+    <string name="legacy_time_thirty_minutes_earlier">%1$s на 30 минут раньше</string>
+    <string name="legacy_time_thirty_minutes_later">%1$s на 30 минут позже</string>
+    <string name="legacy_rating_out_of_five">Оценка %1$s из 5</string>
+    <string name="legacy_calendar_home_count">%1$d дома</string>
+    <string name="legacy_calendar_today_lowercase">сегодня</string>
+    <string name="legacy_map_carousel_position">Кофейня %1$d из %2$d</string>
+    <string name="legacy_shop_report_submitted">Мы проверим данные о «%1$s».</string>
+    <string name="legacy_shop_report_fallback_name">кофейне</string>
+    <string name="legacy_visit_photos_hint">Добавьте до %1$d фото вашего визита.</string>
+    <string name="legacy_menu_photo_number">Фотография меню %1$d</string>
+    <string name="legacy_shop_photo_missing">Фото %1$s отсутствует</string>
+    <string name="legacy_shop_open_until">Открыто до %1$s</string>
+    <string name="legacy_shop_first_checkin">Станьте первым, кто оценит и оставит чекин о своём посещении %1$s</string>
+    <string name="legacy_menu_current_on">Актуально на %1$s</string>
+    <string name="legacy_menu_updated">Обновлено %1$s</string>
+    <string name="legacy_menu_photo_position">Фотография меню %1$d из %2$d</string>
+    <string name="legacy_roaster_photos_hint">До %1$d фотографий (необязательно).</string>
+    <string name="legacy_shop_photo">Фото кофейни %1$s</string>
+    <string name="legacy_shop_photo_named_missing">Фото кофейни %1$s отсутствует</string>
+    <string name="legacy_shop_open_named">Открыть кофейню %1$s</string>
+    <string name="legacy_roaster_photos_missing">Фотографии %1$s отсутствуют</string>
+    <string name="legacy_shop_change_named">Что обновить в «%1$s»?</string>
+    <string name="legacy_shop_change_uploaded_count">Уже загружено в заявке: %1$d</string>
+    <string name="legacy_shop_change_menu_photos_hint">До %1$d фото меню, включая сохранённые.</string>
+    <string name="legacy_milliliters">%1$s мл</string>
+    <string name="legacy_grams">%1$s г</string>
+    <string name="legacy_seconds">%1$s с</string>
+    <string name="legacy_minutes">%1$s мин</string>
+    <string name="legacy_hours">%1$s ч</string>
+    <string name="legacy_block_author_named">Заблокировать автора «%1$s»?</string>
+    <string name="legacy_unblock_author_named">Разблокировать автора «%1$s»?</string>
+    <string name="legacy_profile_blocked_publications">Публикации автора «%1$s» скрыты. Вы можете снять блокировку в любой момент.</string>
+    <string name="legacy_profile_all_section">Все: %1$s</string>
+    <string name="legacy_home_selected_date_reset">%1$s · Сбросить фильтр</string>
+    <string name="legacy_home_month_brews">%1$d приготовлений за месяц</string>
+    <string name="legacy_home_day_brews">%1$s: %2$d приготовлений</string>
+    <string name="legacy_home_stats_counts">Приготовлений: %1$d · С известной дозой: %2$d</string>
+    <string name="legacy_home_stats_dose">Всего кофе: %1$s г · С оценкой: %2$d</string>
+    <string name="legacy_home_stats_rating">Средняя оценка: %1$s</string>
+    <string name="legacy_home_prepared_time">Дома · %1$s</string>
+    <string name="legacy_coffee_photo_missing">Фото %1$s отсутствует</string>
+    <string name="legacy_coffee_verified_time">Проверено %1$s</string>
+    <string name="legacy_roaster_logo_number">Логотип обжарщика %1$d</string>
+    <string name="legacy_roaster_logo_named">Логотип %1$s</string>
+    <string name="legacy_distance_from_you">%1$s от вас</string>
+    <string name="legacy_update_downloaded_percent">Загружено %1$d%%</string>
+    <string name="legacy_filter_option_number">Вариант фильтра %1$d</string>
+    <string name="legacy_review_just_now">только что</string>
+    <string name="legacy_review_ago">назад</string>
+    <string name="legacy_shop_opening_today">Откроется сегодня в %1$s</string>
+    <string name="legacy_shop_opening_tomorrow">Откроется завтра в %1$s</string>
+    <string name="legacy_shop_opening_weekday">Откроется в %1$s в %2$s</string>
+    <string name="legacy_validation_summary">Проверьте заполненные поля (%1$s).</string>
+    <string name="legacy_profile_followers_error">Не удалось загрузить подписчиков</string>
+    <string name="legacy_profile_following_error">Не удалось загрузить подписки</string>
+    <string name="legacy_shop_all_features">Показать все %1$s</string>
+    <string-array name="legacy_calendar_months">
+        <item>Январь</item>
+        <item>Февраль</item>
+        <item>Март</item>
+        <item>Апрель</item>
+        <item>Май</item>
+        <item>Июнь</item>
+        <item>Июль</item>
+        <item>Август</item>
+        <item>Сентябрь</item>
+        <item>Октябрь</item>
+        <item>Ноябрь</item>
+        <item>Декабрь</item>
+    </string-array>
+    <string-array name="legacy_calendar_months_genitive">
+        <item>января</item>
+        <item>февраля</item>
+        <item>марта</item>
+        <item>апреля</item>
+        <item>мая</item>
+        <item>июня</item>
+        <item>июля</item>
+        <item>августа</item>
+        <item>сентября</item>
+        <item>октября</item>
+        <item>ноября</item>
+        <item>декабря</item>
+    </string-array>
+    <string-array name="legacy_review_months">
+        <item>янв.</item>
+        <item>февр.</item>
+        <item>мар.</item>
+        <item>апр.</item>
+        <item>мая</item>
+        <item>июн.</item>
+        <item>июл.</item>
+        <item>авг.</item>
+        <item>сент.</item>
+        <item>окт.</item>
+        <item>нояб.</item>
+        <item>дек.</item>
+    </string-array>
+    <string-array name="legacy_weekdays_full">
+        <item>Понедельник</item>
+        <item>Вторник</item>
+        <item>Среда</item>
+        <item>Четверг</item>
+        <item>Пятница</item>
+        <item>Суббота</item>
+        <item>Воскресенье</item>
+    </string-array>
+    <string-array name="legacy_weekdays_short">
+        <item>Пн</item>
+        <item>Вт</item>
+        <item>Ср</item>
+        <item>Чт</item>
+        <item>Пт</item>
+        <item>Сб</item>
+        <item>Вс</item>
+    </string-array>
+    <string-array name="legacy_weekdays_letters">
+        <item>П</item>
+        <item>В</item>
+        <item>С</item>
+        <item>Ч</item>
+        <item>П</item>
+        <item>С</item>
+        <item>В</item>
+    </string-array>
+    <string-array name="legacy_opening_weekdays">
+        <item>вс</item>
+        <item>пн</item>
+        <item>вт</item>
+        <item>ср</item>
+        <item>чт</item>
+        <item>пт</item>
+        <item>сб</item>
+    </string-array>
+    <string-array name="legacy_minute_forms">
+        <item>минуту</item>
+        <item>минуты</item>
+        <item>минут</item>
+    </string-array>
+    <string-array name="legacy_hour_forms">
+        <item>час</item>
+        <item>часа</item>
+        <item>часов</item>
+    </string-array>
+    <string-array name="legacy_checkin_forms">
+        <item>чекин</item>
+        <item>чекина</item>
+        <item>чекинов</item>
+    </string-array>
+    <string-array name="legacy_shop_forms">
+        <item>кофейня</item>
+        <item>кофейни</item>
+        <item>кофеен</item>
+    </string-array>
+    <string-array name="legacy_feature_forms">
+        <item>особенность</item>
+        <item>особенности</item>
+        <item>особенностей</item>
+    </string-array>
+    <string-array name="legacy_active_day_forms">
+        <item>день с чекинами</item>
+        <item>дня с чекинами</item>
+        <item>дней с чекинами</item>
+    </string-array>
+    <string-array name="legacy_error_forms">
+        <item>ошибка</item>
+        <item>ошибки</item>
+        <item>ошибок</item>
+    </string-array>
+    <string name="legacy_public_calendar_has_checkins">есть чекины</string>
+    <string name="legacy_public_calendar_no_checkins">нет чекинов</string>
+    <string name="legacy_checkin_publication_community_label_pending">На проверке</string>
+    <string name="legacy_checkin_publication_community_label_private">Приватный</string>
+    <string name="legacy_checkin_publication_community_label_published">Опубликован</string>
+    <string name="legacy_checkin_publication_community_label_rejected">Отклонён</string>
+    <string name="legacy_checkin_publication_community_label_unknown">Статус проверки неизвестен</string>
+    <string name="legacy_coffee_detail_screen_coffee_capsules">Капсулы</string>
+    <string name="legacy_coffee_detail_screen_coffee_drip_bags">Дрип-пакеты</string>
+    <string name="legacy_coffee_detail_screen_coffee_green">Зелёный кофе</string>
+    <string name="legacy_coffee_detail_screen_coffee_roasted">Обжаренный кофе</string>
+    <string name="legacy_coffee_detail_screen_coffee_whole_beans">В зёрнах</string>
+    <string name="legacy_coffee_detail_screen_shelf_grind_ground">Молотый</string>
+    <string name="legacy_coffee_focus_discovery_kind_specialty">Specialty</string>
+    <string name="legacy_home_visibility_community_label_public">Публичный</string>
+    <string name="legacy_home_visibility_home_check_in_not_submitted">Ожидает публикации</string>
+    <string name="legacy_home_visibility_home_check_in_private">Только мне</string>
+    <string name="legacy_home_visibility_home_check_in_public">Виден всем</string>
+    <string name="legacy_home_visibility_home_check_in_rejected">Не опубликован</string>
+    <string name="legacy_my_contributions_screen_contributions_status_pending">Проверяется</string>
+    <string name="legacy_my_contributions_screen_contributions_tab_approved">Опубликовано</string>
+    <string name="legacy_my_contributions_screen_contributions_tab_pending">На модерации</string>
+    <string name="legacy_my_contributions_screen_contributions_tab_rejected">Отклонено</string>
+    <string name="legacy_price_bean_slider_discovery_price_cheap">До 8 BYN</string>
+    <string name="legacy_price_bean_slider_discovery_price_expensive">Больше 8 BYN</string>
+    <string name="legacy_price_bean_slider_discovery_price_moderate">Около 8 BYN</string>
+    <string name="legacy_profile_section_profile_section_activity">Активность</string>
+    <string name="legacy_public_profile_connections_sheet_profile_following_title">Подписки</string>
+    <string name="legacy_shop_change_labels_approved">Одобрено</string>
+    <string name="legacy_shop_change_labels_contributions_hint_brew_methods">Способы приготовления</string>
+    <string name="legacy_shop_change_labels_contributions_hint_contacts">Телефон, сайт, почта и Instagram</string>
+    <string name="legacy_shop_change_labels_contributions_hint_description">Текст описания заведения</string>
+    <string name="legacy_shop_change_labels_contributions_hint_equipment">Кофемашины и оборудование</string>
+    <string name="legacy_shop_change_labels_contributions_hint_menu">Фото меню, по желанию — напитки и цены</string>
+    <string name="legacy_shop_change_labels_contributions_hint_photos">Порядок и состав фотографий кофейни</string>
+    <string name="legacy_shop_change_labels_contributions_hint_roasters">С кем работает кофейня</string>
+    <string name="legacy_shop_change_labels_contributions_hint_tags">Теги и особенности</string>
+    <string name="legacy_shop_detail_screen_shop_schedule_closed">Выходной</string>
+    <string name="legacy_shop_reviews_screen_shop_checkin_list_empty">Чекинов пока нет</string>
+    <string name="legacy_author_blocking_save_failed_message">Не удалось сохранить блокировку. Проверьте подключение и повторите попытку.</string>
+    <string name="legacy_notifications_push_load_failed">Не удалось загрузить настройки push</string>
+    <string name="legacy_notifications_inbox_load_failed">Не удалось загрузить уведомления</string>
+    <string name="legacy_notifications_push_save_failed">Не удалось сохранить настройки push. Попробуйте ещё раз.</string>
+    <string name="legacy_notifications_mark_read_failed">Не удалось отметить уведомления прочитанными</string>
+    <string name="legacy_author_fallback">Автор</string>
+    <string name="legacy_contribution_changes_empty">Вы ещё не отправляли правки</string>
+    <string name="legacy_contribution_changes_title">Мои правки</string>
+    <string name="legacy_contribution_contacts">Телефон, почта, сайт и Instagram</string>
+    <string name="legacy_contribution_description_cleared">Описание очищено</string>
+    <string name="legacy_contribution_equipment">Выбрано оборудования: %1$s</string>
+    <string name="legacy_contribution_menu">Меню: %1$s позиций · %2$s новых фото</string>
+    <string name="legacy_contribution_methods">Выбрано методов: %1$s</string>
+    <string name="legacy_contribution_photos">Фото: %1$s сохранено · %2$s добавлено</string>
+    <string name="legacy_contribution_roasters">Выбрано обжарщиков: %1$s</string>
+    <string name="legacy_contribution_roasters_empty">Вы ещё не добавляли обжарщиков</string>
+    <string name="legacy_contribution_shops_empty">Вы ещё не добавляли кофейни</string>
+    <string name="legacy_contribution_tags">Выбрано особенностей: %1$s</string>
+    <string name="legacy_contribution_waiting_catalog">Скоро появится в каталоге</string>
+    <string name="legacy_validation_visit_date">Выберите дату визита не позднее сегодняшней</string>
+    <string name="legacy_validation_visit_note">Заметка должна быть не длиннее 1000 символов</string>
+    <string name="legacy_validation_visit_photos">Можно добавить до 5 фото</string>
+    <string name="legacy_validation_visit_ratings">Оцените кофе, сервис и атмосферу</string>
+    <string name="legacy_input_password_length">Пароль должен содержать как минимум %1$s символов</string>
+    <string name="legacy_input_url_invalid">Укажите домен, например coffeepeek.by</string>
+    <string name="legacy_form_name_required">Введите название</string>
+    <string name="legacy_form_name_too_long">Не более %1$s символов</string>
+    <string name="legacy_form_address_required">Введите адрес</string>
+    <string name="legacy_form_city_for_address">Для адреса выберите город</string>
+    <string name="legacy_form_address_for_city">Для выбранного города укажите адрес</string>
+    <string name="legacy_form_shop_catalog_failed">Ошибка загрузки каталогов</string>
+    <string name="legacy_form_shop_submit_failed">Ошибка отправки. Попробуйте выйти и войти снова.</string>
+    <string name="legacy_form_roaster_submit_failed">Не удалось отправить обжарщика на модерацию</string>
+    <string name="legacy_form_change_submit_failed">Не удалось отправить заявку</string>
+    <string name="legacy_location_unavailable">Не удалось определить местоположение. Выберите точку на карте.</string>
+    <string name="legacy_location_address_missing">Адрес не найден. Выберите точку на карте или введите вручную.</string>
+    <string name="legacy_location_permission_required">Разрешите доступ к геолокации или выберите адрес на карте.</string>
+    <string name="legacy_shop_blocks_load_failed">Не удалось загрузить блокировки. Повторите попытку.</string>
+    <string name="legacy_shop_signin_required">Войдите в аккаунт, чтобы создать чекин</string>
+    <string name="legacy_shop_checkin_submit_failed">Не удалось отправить чекин. Попробуйте ещё раз</string>
+    <string name="legacy_shop_favorite_change_failed">Не удалось изменить избранное</string>
+    <string name="legacy_shop_share_unnamed">Нашёл кофейню в CoffeePeek — загляни: %1$s</string>
+    <string name="legacy_report_reason_outdated_menu">Меню больше не актуально</string>
+    <string name="legacy_report_reason_shop_closed">Кофейня закрылась</string>
+    <string name="legacy_report_reason_incorrect_schedule">В расписании есть ошибка</string>
+    <string name="legacy_report_reason_incorrect_photos">Фотографии не соответствуют кофейне</string>
+    <string name="legacy_report_reason_incorrect_address">Указан неверный адрес</string>
+    <string name="legacy_report_reason_other">Другая проблема</string>
+    <string name="legacy_report_reason_required">Выберите, какие данные нужно исправить</string>
+    <string name="legacy_recovery_send_failed">Не удалось отправить письмо. Проверьте соединение и попробуйте снова.</string>
+    <string name="legacy_drink_custom_name_length">Укажите название напитка: от 1 до 100 символов</string>
+    <string name="legacy_drink_custom_name_other">Название можно указать только для другого напитка</string>
+</resources>

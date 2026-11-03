@@ -1,5 +1,8 @@
 package com.coffeepeek.admin.ui.component
 
+import coffeepeek.composeapp.generated.resources.*
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
+
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -59,10 +62,12 @@ fun CpCircularBackButton(
     modifier: Modifier = Modifier,
     tint: Color = MaterialTheme.colorScheme.onSurface,
 ) {
+    val localizedProfileCheckinsBack = stringResource(Res.string.profile_checkins_back)
+
     PlatformGlassIconButton(
         icon = GlassControlIcon.Back,
         onClick = onClick,
-        contentDescription = "Назад",
+        contentDescription = localizedProfileCheckinsBack,
         modifier = modifier,
     ) {
         Icon(

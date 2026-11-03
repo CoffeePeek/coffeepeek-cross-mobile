@@ -1,5 +1,8 @@
 package com.coffeepeek.admin.feature.profile.ui
 
+import coffeepeek.composeapp.generated.resources.*
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
+
 import com.coffeepeek.core.designsystem.component.CoffeePeekLikeBadge
 
 import androidx.compose.foundation.BorderStroke
@@ -84,6 +87,9 @@ internal fun PublicProfileFavoriteCard(
 
 @Composable
 private fun PublicDrinkFavoriteCard(favorite: PublicProfileFavorite, modifier: Modifier) {
+    val localizedLegacyPublicProfileFavoriteCardIsFavorite = stringResource(Res.string.legacy_public_profile_favorite_card_is_favorite)
+    val localizedSelectDrinkLabel = stringResource(Res.string.select_drink_label)
+
     Card(
         modifier = modifier,
         shape = RoundedCornerShape(CpDimens.radiusXl),
@@ -104,7 +110,7 @@ private fun PublicDrinkFavoriteCard(favorite: PublicProfileFavorite, modifier: M
             )
             CoffeePeekLikeBadge(
                 selected = true,
-                contentDescription = "В избранном",
+                contentDescription = localizedLegacyPublicProfileFavoriteCardIsFavorite,
                 modifier = Modifier.align(Alignment.TopEnd).padding(CpDimens.spacing3).size(40.dp),
             )
         }
@@ -113,7 +119,7 @@ private fun PublicDrinkFavoriteCard(favorite: PublicProfileFavorite, modifier: M
                 favorite.title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold,
                 maxLines = 2, overflow = TextOverflow.Ellipsis,
             )
-            Text("Напиток", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(localizedSelectDrinkLabel, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }

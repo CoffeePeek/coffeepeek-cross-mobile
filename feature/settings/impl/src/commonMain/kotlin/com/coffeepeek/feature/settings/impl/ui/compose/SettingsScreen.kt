@@ -9,7 +9,13 @@ import com.coffeepeek.feature.settings.impl.resources.settings_add_shop_descript
 import com.coffeepeek.feature.settings.impl.resources.settings_city_not_selected
 import com.coffeepeek.feature.settings.impl.resources.settings_city_row
 import com.coffeepeek.feature.settings.impl.resources.settings_city_row_description
+import com.coffeepeek.feature.settings.impl.resources.settings_language_belarusian
+import com.coffeepeek.feature.settings.impl.resources.settings_language_row_description
+import com.coffeepeek.feature.settings.impl.resources.settings_language_russian
+import com.coffeepeek.feature.settings.impl.resources.settings_language_title
 import com.coffeepeek.feature.settings.impl.resources.settings_loading
+import com.coffeepeek.feature.settings.impl.resources.settings_notifications_description
+import com.coffeepeek.feature.settings.impl.resources.settings_notifications_title
 import com.coffeepeek.feature.settings.impl.resources.settings_policy_row
 import com.coffeepeek.feature.settings.impl.resources.settings_rate_app
 import com.coffeepeek.feature.settings.impl.resources.settings_rate_app_description
@@ -53,6 +59,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import org.jetbrains.compose.resources.stringResource
@@ -69,6 +76,7 @@ import com.coffeepeek.core.designsystem.component.CoffeePeekActivityIndicator
 import com.coffeepeek.core.designsystem.component.CoffeePeekSettingsDivider
 import com.coffeepeek.core.designsystem.component.CoffeePeekSettingsRow
 import com.coffeepeek.core.designsystem.component.CoffeePeekSettingsSection
+import com.coffeepeek.core.designsystem.component.CoffeePeekSwitch
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
@@ -76,6 +84,7 @@ import com.coffeepeek.feature.settings.api.SettingsAppInfo
 import com.coffeepeek.feature.settings.api.SettingsExternalActions
 import com.coffeepeek.feature.settings.api.SettingsSlots
 import com.coffeepeek.feature.settings.domain.ThemeMode
+import com.coffeepeek.feature.settings.domain.AppLanguage
 import com.coffeepeek.feature.settings.impl.ui.SettingsViewModel
 import com.coffeepeek.feature.settings.impl.ui.model.SettingsAction
 import com.coffeepeek.feature.settings.impl.ui.model.SettingsEvent
@@ -84,7 +93,8 @@ import com.coffeepeek.feature.settings.impl.ui.model.SettingsState
 /** Where the tab can go; supplied by the caller. */
 internal class SettingsNavigation(
     val onAddShop: () -> Unit, val onAddRoaster: () -> Unit, val onCity: () -> Unit,
-    val onTheme: () -> Unit, val onUsagePolicy: () -> Unit, val onLogin: () -> Unit, val onRegister: () -> Unit,
+    val onTheme: () -> Unit, val onLanguage: () -> Unit, val onUsagePolicy: () -> Unit,
+    val onLogin: () -> Unit, val onRegister: () -> Unit,
 )
 
 @Composable
@@ -94,8 +104,8 @@ internal fun SettingsScreen(
 ) {
     val state by vm.state.collectAsStateWithLifecycle()
     val lifecycle = LocalLifecycleOwner.current.lifecycle
-    val upToDate = stringResource(Res.string.settings_update_up_to_date)
-    val failed = stringResource(Res.string.settings_update_failed)
+    val upToDate by rememberUpdatedState(stringResource(Res.string.settings_update_up_to_date))
+    val failed by rememberUpdatedState(stringResource(Res.string.settings_update_failed))
     LaunchedEffect(vm, lifecycle) {
         lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
             vm.events.collect { event ->
@@ -127,71 +137,86 @@ internal fun SettingsContent(
                 Spacer(Modifier.height(CoffeePeekDimens.settingsSectionSpacing))
             }
             slots.accountSwitch()
-            if (state.showAddRows) {
-                CoffeePeekSettingsSection(title = stringResource(Res.string.settings_section_add)) {
-                    CoffeePeekSettingsRow(
-                        CoffeePeekIcons.Add, stringResource(Res.string.settings_add_shop), stringResource(Res.string.settings_add_shop_description),
-                        navigation.onAddShop, iconColors = CoffeePeekIconBadgePalette.Gold,
-                    )
-                    CoffeePeekSettingsDivider()
-                    CoffeePeekSettingsRow(
-                        CoffeePeekIcons.CoffeeBean, stringResource(Res.string.settings_add_roaster), stringResource(Res.string.settings_add_roaster_description),
-                        navigation.onAddRoaster, iconColors = CoffeePeekIconBadgePalette.Mint,
-                    )
-                }
-                Spacer(Modifier.height(CoffeePeekDimens.settingsSectionSpacing))
-            }
-            CoffeePeekSettingsSection(title = stringResource(Res.string.settings_section_settings)) {
-                CoffeePeekSettingsRow(
-                    CoffeePeekIcons.Location, stringResource(Res.string.settings_city_row), stringResource(Res.string.settings_city_row_description),
-                    navigation.onCity, iconColors = CoffeePeekIconBadgePalette.Aqua,
-                    trailing = { RowValue(state.cityName ?: stringResource(Res.string.settings_city_not_selected)) },
-                )
-                CoffeePeekSettingsDivider()
-                CoffeePeekSettingsRow(
-                    state.theme.icon(), stringResource(Res.string.settings_theme_row), stringResource(Res.string.settings_theme_row_description),
-                    navigation.onTheme, iconColors = CoffeePeekIconBadgePalette.Violet,
-                    trailing = { RowValue(stringResource(state.theme.valueLabel())) },
-                )
-            }
+            if (state.showAddRows) SettingsAddSection(navigation)
+            SettingsPreferencesSection(state, navigation, slots.notificationPreference)
             Spacer(Modifier.height(CoffeePeekDimens.settingsSectionSpacing))
-            CoffeePeekSettingsSection(
-                title = stringResource(Res.string.settings_section_other),
-                description = stringResource(Res.string.settings_section_other_description),
-            ) {
-                CoffeePeekSettingsRow(
-                    CoffeePeekIcons.Review, stringResource(Res.string.settings_support), stringResource(Res.string.settings_support_description),
-                    external::openSupport, iconColors = CoffeePeekIconBadgePalette.Gold,
-                )
-                CoffeePeekSettingsDivider()
-                CoffeePeekSettingsRow(
-                    CoffeePeekIcons.Lock, stringResource(Res.string.settings_policy_row), null, navigation.onUsagePolicy,
-                    iconColors = CoffeePeekIconBadgePalette.Emerald,
-                )
-                CoffeePeekSettingsDivider()
-                CoffeePeekSettingsRow(
-                    CoffeePeekIcons.Share, stringResource(Res.string.settings_share), null, external::shareApp,
-                    iconColors = CoffeePeekIconBadgePalette.BrightCyan,
-                )
-                StoreReviewRow(external)
-            }
+            SettingsOtherSection(navigation, external)
+            Spacer(Modifier.height(CoffeePeekDimens.settingsSectionSpacing))
             SettingsUpdateSection(state, appInfo, onCheckForUpdates)
-            Text(
-                stringResource(Res.string.settings_version, appInfo.versionName), style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.fillMaxWidth().padding(
-                    start = CoffeePeekDimens.settingsPagePadding, top = CoffeePeekDimens.spacing4, end = CoffeePeekDimens.settingsPagePadding,
-                ),
-            )
-            Spacer(Modifier.height(CoffeePeekDimens.spacing8 + bottomClearance))
+            SettingsVersionFooter(appInfo, bottomClearance)
         }
     }
 }
 
 @Composable
-private fun SettingsUpdateSection(state: SettingsState, appInfo: SettingsAppInfo, onCheckForUpdates: () -> Unit) {
-    if (!appInfo.canCheckForUpdates) return
+private fun SettingsAddSection(navigation: SettingsNavigation) {
+    CoffeePeekSettingsSection(title = stringResource(Res.string.settings_section_add)) {
+        CoffeePeekSettingsRow(
+            CoffeePeekIcons.Add, stringResource(Res.string.settings_add_shop), stringResource(Res.string.settings_add_shop_description),
+            navigation.onAddShop, iconColors = CoffeePeekIconBadgePalette.Gold,
+        )
+        CoffeePeekSettingsDivider()
+        CoffeePeekSettingsRow(
+            CoffeePeekIcons.CoffeeBean, stringResource(Res.string.settings_add_roaster), stringResource(Res.string.settings_add_roaster_description),
+            navigation.onAddRoaster, iconColors = CoffeePeekIconBadgePalette.Mint,
+        )
+    }
     Spacer(Modifier.height(CoffeePeekDimens.settingsSectionSpacing))
+}
+
+@Composable
+private fun SettingsPreferencesSection(
+    state: SettingsState, navigation: SettingsNavigation, notificationPreference: @Composable (String, String) -> Unit,
+) {
+    CoffeePeekSettingsSection(title = stringResource(Res.string.settings_section_settings)) {
+        CoffeePeekSettingsRow(
+            CoffeePeekIcons.Location, stringResource(Res.string.settings_city_row), stringResource(Res.string.settings_city_row_description),
+            navigation.onCity, iconColors = CoffeePeekIconBadgePalette.Aqua,
+            trailing = { RowValue(state.cityName ?: stringResource(Res.string.settings_city_not_selected)) },
+        )
+        CoffeePeekSettingsDivider()
+        CoffeePeekSettingsRow(
+            state.theme.icon(), stringResource(Res.string.settings_theme_row), stringResource(Res.string.settings_theme_row_description),
+            navigation.onTheme, iconColors = CoffeePeekIconBadgePalette.Violet,
+            trailing = { RowValue(stringResource(state.theme.valueLabel())) },
+        )
+        CoffeePeekSettingsDivider()
+        CoffeePeekSettingsRow(
+            CoffeePeekIcons.Globe, stringResource(Res.string.settings_language_title), stringResource(Res.string.settings_language_row_description),
+            navigation.onLanguage, iconColors = CoffeePeekIconBadgePalette.Mint,
+            trailing = { RowValue(stringResource(state.language.labelResource())) },
+        )
+        CoffeePeekSettingsDivider()
+        notificationPreference(stringResource(Res.string.settings_notifications_title), stringResource(Res.string.settings_notifications_description))
+    }
+}
+
+@Composable
+private fun SettingsOtherSection(navigation: SettingsNavigation, external: SettingsExternalActions) {
+    CoffeePeekSettingsSection(
+        title = stringResource(Res.string.settings_section_other),
+        description = stringResource(Res.string.settings_section_other_description),
+    ) {
+        CoffeePeekSettingsRow(
+            CoffeePeekIcons.Review, stringResource(Res.string.settings_support), stringResource(Res.string.settings_support_description),
+            external::openSupport, iconColors = CoffeePeekIconBadgePalette.Gold,
+        )
+        CoffeePeekSettingsDivider()
+        CoffeePeekSettingsRow(
+            CoffeePeekIcons.Lock, stringResource(Res.string.settings_policy_row), null, navigation.onUsagePolicy,
+            iconColors = CoffeePeekIconBadgePalette.Emerald,
+        )
+        CoffeePeekSettingsDivider()
+        CoffeePeekSettingsRow(
+            CoffeePeekIcons.Share, stringResource(Res.string.settings_share), null, external::shareApp,
+            iconColors = CoffeePeekIconBadgePalette.BrightCyan,
+        )
+        StoreReviewRow(external)
+    }
+}
+
+@Composable
+private fun SettingsUpdateSection(state: SettingsState, appInfo: SettingsAppInfo, onCheckForUpdates: () -> Unit) {
     CoffeePeekSettingsSection(title = stringResource(Res.string.settings_section_update)) {
         val update = state.update
         CoffeePeekSettingsRow(
@@ -202,10 +227,22 @@ private fun SettingsUpdateSection(state: SettingsState, appInfo: SettingsAppInfo
             onCheckForUpdates,
             enabled = !state.updateBusy,
             trailing = if (state.updateBusy) {
-                { CoffeePeekActivityIndicator(stringResource(Res.string.settings_loading), size = CoffeePeekDimens.settingsIconSize) }
+                { CoffeePeekLoader(stringResource(Res.string.settings_loading), size = CoffeePeekDimens.settingsIconSize) }
             } else null,
         )
     }
+}
+
+@Composable
+private fun SettingsVersionFooter(appInfo: SettingsAppInfo, bottomClearance: Dp) {
+    Text(
+        stringResource(Res.string.settings_version, appInfo.versionName), style = MaterialTheme.typography.labelSmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.fillMaxWidth().padding(
+            start = CoffeePeekDimens.settingsPagePadding, top = CoffeePeekDimens.spacing4, end = CoffeePeekDimens.settingsPagePadding,
+        ),
+    )
+    Spacer(Modifier.height(CoffeePeekDimens.spacing8 + bottomClearance))
 }
 
 @Composable
@@ -228,7 +265,12 @@ private fun ThemeMode.valueLabel() = when (this) {
     ThemeMode.DARK -> Res.string.settings_theme_value_dark
 }
 
-private val previewNavigation = SettingsNavigation({}, {}, {}, {}, {}, {}, {})
+private fun AppLanguage.labelResource() = when (this) {
+    AppLanguage.RUSSIAN -> Res.string.settings_language_russian
+    AppLanguage.BELARUSIAN -> Res.string.settings_language_belarusian
+}
+
+private val previewNavigation = SettingsNavigation({}, {}, {}, {}, {}, {}, {}, {})
 private val previewExternal = object : SettingsExternalActions {
     override val canRateApp = false
     override fun openSupport() = Unit
@@ -256,7 +298,13 @@ private fun SettingsStoreReviewPreview() = CoffeePeekTheme {
         StoreReviewRow(object : SettingsExternalActions by previewExternal { override val canRateApp = true })
     }
 }
-private val previewSlots = SettingsSlots(guestCard = { _, _, modifier -> Text("Войти", modifier) }, notify = {})
+private val previewSlots = SettingsSlots(
+    guestCard = { _, _, modifier -> Text("Войти", modifier) },
+    notificationPreference = { label, description ->
+        CoffeePeekSettingsRow(CoffeePeekIcons.Notifications, label, description, {}, enabled = false,
+            iconColors = CoffeePeekIconBadgePalette.Gold, trailing = { CoffeePeekSwitch(false, null, enabled = false) })
+    },
+)
 
 @Preview
 @Composable

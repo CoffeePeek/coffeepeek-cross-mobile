@@ -10,6 +10,7 @@ import com.coffeepeek.core.presentation.MviViewModel
 import com.coffeepeek.feature.shop.impl.ui.data.blockableAuthor
 import com.coffeepeek.feature.shop.domain.model.ShopViewer
 import com.coffeepeek.feature.shop.domain.model.ShopCheckIn
+import com.coffeepeek.feature.shop.domain.model.ShopDetails
 import com.coffeepeek.feature.shop.domain.repository.ShopDetailsRepository
 import com.coffeepeek.feature.shop.domain.repository.ShopCheckInVoteRepository
 import com.coffeepeek.feature.shop.domain.repository.ShopFavorites
@@ -275,26 +276,14 @@ internal class ShopDetailViewModel(
     }
 
     private suspend fun toggleFavorite() {
-        if (!currentState.isLoggedIn) {
-            val shop = currentState.details?.overview?.id ?: shopId
-            emitEvent(ShopDetailEvent.FavoriteRequiresSignIn(shop, !currentState.isFavorite))
-            return
-        }
-        if (!currentState.favoriteAvailable || favoriteMutationJob != null) return
+        if (!canToggleFavorite() || favoriteMutationJob != null) return
         val details = currentState.details ?: return
         val job = currentCoroutineContext().job
         favoriteMutationJob = job
         val generation = sessionGeneration
         updateState { copy(isFavoriteLoading = true) }
         try {
-            val newValue = !currentState.isFavorite
-            val result = if (newValue) favoritesRepository.save(details)
-                else favoritesRepository.remove(details.overview.id)
-            result.getOrThrow()
-            // Membership comes from observation, including writes from other screens and logout.
-            if (generation == sessionGeneration && favoriteMutationJob === job) {
-                emitEvent(ShopDetailEvent.FavoriteChanged(details.overview.id, newValue))
-            }
+            changeFavorite(details, job, generation)
         } catch (cancelled: CancellationException) {
             throw cancelled
         } catch (_: Exception) {
@@ -304,6 +293,30 @@ internal class ShopDetailViewModel(
                 favoriteMutationJob = null
                 if (generation == sessionGeneration) updateState { copy(isFavoriteLoading = false) }
             }
+        }
+    }
+
+    private suspend fun canToggleFavorite(): Boolean {
+        if (!currentState.isLoggedIn) {
+            val shop = currentState.details?.overview?.id ?: shopId
+            emitEvent(ShopDetailEvent.FavoriteRequiresSignIn(shop, !currentState.isFavorite))
+            return false
+        }
+        if (!currentState.favoriteAvailable) {
+            emitEvent(ShopDetailEvent.FavoriteFailed)
+            return false
+        }
+        return true
+    }
+
+    private suspend fun changeFavorite(details: ShopDetails, job: Job, generation: Int) {
+        val newValue = !currentState.isFavorite
+        val result = if (newValue) favoritesRepository.save(details)
+            else favoritesRepository.remove(details.overview.id)
+        result.getOrThrow()
+        // Membership comes from observation, including writes from other screens and logout.
+        if (generation == sessionGeneration && favoriteMutationJob === job) {
+            emitEvent(ShopDetailEvent.FavoriteChanged(details.overview.id, newValue))
         }
     }
 

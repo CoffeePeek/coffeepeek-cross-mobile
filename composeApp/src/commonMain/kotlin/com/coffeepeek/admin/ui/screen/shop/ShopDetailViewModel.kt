@@ -60,7 +60,11 @@ data class ShopDetailUiState(
     val checkInDraft: CheckInDraft? = null,
     val submittedCheckInVisibility: CheckInVisibility? = null,
     val checkInError: String? = null,
+    val checkInValidationError: CheckInDraftValidationError? = null,
     val actionMessage: String? = null,
+    val actionFeedback: ShopDetailFeedback? = null,
+    val loadFeedback: ShopDetailFeedback? = null,
+    val checkInFeedback: ShopDetailFeedback? = null,
     val error: String? = null,
     val favoriteRoasterIds: Set<String> = emptySet(),
     val savingRoasterFavoriteIds: Set<String> = emptySet(),
@@ -114,13 +118,13 @@ class ShopDetailViewModel internal constructor(
             }
             .launchIn(workScope)
         roasterFavorites.observeErrors()
-            .onEach { error -> if (error != null) _uiState.update { it.copy(actionMessage = error) } }
+            .onEach { error -> if (error != null) _uiState.update { it.copy(actionMessage = error, actionFeedback = null) } }
             .launchIn(workScope)
         roasterFavorites.observeFavorites()
             .onEach { favorites -> _uiState.update { it.copy(favoriteRoasterIds = favorites.map { it.roasterFavoriteId }.toSet()) } }
             .catch { error ->
                 if (error is CancellationException) throw error
-                _uiState.update { it.copy(actionMessage = "Не удалось загрузить избранное") }
+                _uiState.update { it.copy(actionMessage = null, actionFeedback = ShopDetailFeedback.FavoritesLoadFailed) }
             }
             .launchIn(workScope)
         load()
@@ -138,7 +142,7 @@ class ShopDetailViewModel internal constructor(
     fun load() {
         loadJob?.cancel()
         loadJob = workScope.launch {
-            _uiState.update { it.copy(isLoading = true, error = null) }
+            _uiState.update { it.copy(isLoading = true, error = null, loadFeedback = null) }
             refreshDetails(showLoading = true)
         }
     }
@@ -152,7 +156,7 @@ class ShopDetailViewModel internal constructor(
             visibility.visibility.value.revision == revision
         if (!visibility.visibility.value.ready && visibility.refresh().isFailure) {
             currentCoroutineContext().ensureActive()
-            if (current()) _uiState.update { it.copy(isLoading = false, error = "Не удалось загрузить блокировки. Повторите попытку.") }
+            if (current()) _uiState.update { it.copy(isLoading = false, error = null, loadFeedback = ShopDetailFeedback.BlocksLoadFailed) }
             return
         }
         val isLoggedIn = sessionRepository.isLoggedIn()
@@ -246,7 +250,7 @@ class ShopDetailViewModel internal constructor(
                     }
                 }
                 .onFailure { e ->
-                    _uiState.update { it.copy(actionMessage = e.message, isFavoriteLoading = false) }
+                    _uiState.update { it.copy(actionMessage = e.message, actionFeedback = null, isFavoriteLoading = false) }
                 }
         } finally {
             if (loadingStarted) _uiState.update { it.copy(isFavoriteLoading = false) }
@@ -274,7 +278,7 @@ class ShopDetailViewModel internal constructor(
                 it.copy(
                     checkInDraft = draft,
                     submittedCheckInVisibility = null,
-                    checkInError = null,
+                    checkInError = null, checkInFeedback = null, checkInValidationError = null,
                 )
             }
             _uiState.update { it.copy(showCheckInSheet = true) }
@@ -305,7 +309,7 @@ class ShopDetailViewModel internal constructor(
         if (_uiState.value.isCheckInLoading) return
         checkInAnalytics?.cancel("close")
         _uiState.update {
-            it.copy(showCheckInSheet = false, submittedCheckInVisibility = null, checkInError = null,
+            it.copy(showCheckInSheet = false, submittedCheckInVisibility = null, checkInError = null, checkInFeedback = null, checkInValidationError = null,
                 checkInDraft = if (it.submittedCheckInVisibility != null) null else it.checkInDraft)
         }
     }
@@ -320,7 +324,7 @@ class ShopDetailViewModel internal constructor(
             "rating_place" to (before.placeRating != draft.placeRating), "photos" to (before.photos != draft.photos), "visibility" to (before.isPublic != draft.isPublic),
         ).filter { it.second }.forEach { checkInAnalytics?.field(it.first) }
         checkInDraftStore.save(draft)
-        _uiState.update { it.copy(checkInDraft = draft, checkInError = null) }
+        _uiState.update { it.copy(checkInDraft = draft, checkInError = null, checkInFeedback = null, checkInValidationError = null) }
     }
 
     fun checkIn(submittedDraft: CheckInDraft) {
@@ -330,24 +334,24 @@ class ShopDetailViewModel internal constructor(
         submittedDraft.validationError()?.let { error ->
             tracker?.submit()
             tracker?.validation(listOf("form"))
-            _uiState.update { it.copy(checkInError = error) }
+            _uiState.update { it.copy(checkInError = null, checkInFeedback = null, checkInValidationError = error) }
             return
         }
         val shopSlug = _uiState.value.details?.shop?.publicAddress?.slug?.takeIf(String::isNotBlank)
         if (shopSlug == null) {
             tracker?.submit()
-            _uiState.update { it.copy(checkInError = "Не удалось определить адрес кофейни") }
+            _uiState.update { it.copy(checkInError = null, checkInFeedback = ShopDetailFeedback.AddressMissing) }
             return
         }
         val draft = submittedDraft
         tracker?.submit()
         checkInDraftStore.save(draft)
-        _uiState.update { it.copy(isCheckInLoading = true, checkInDraft = draft, checkInError = null) }
+        _uiState.update { it.copy(isCheckInLoading = true, checkInDraft = draft, checkInError = null, checkInFeedback = null, checkInValidationError = null) }
         val visibility = if (draft.isPublic) CheckInVisibility.Public else CheckInVisibility.Private
         workScope.launch {
             val result = try {
                 if (!sessionRepository.isLoggedIn()) {
-                    _uiState.update { it.copy(isCheckInLoading = false, checkInError = "Войдите в аккаунт, чтобы создать чекин") }
+                    _uiState.update { it.copy(isCheckInLoading = false, checkInError = null, checkInFeedback = ShopDetailFeedback.SignInRequired) }
                     Navigator.navigate(Navigator.Screen.Auth)
                     return@launch
                 }
@@ -389,7 +393,8 @@ class ShopDetailViewModel internal constructor(
                 else tracker?.failed(if ((e as? com.coffeepeek.domain.model.CheckInOperationFailure)?.stage == com.coffeepeek.domain.model.CheckInFailureStage.PhotoUpload) CheckInStage.Photo else CheckInStage.Save, failure)
                 _uiState.update {
                     it.copy(
-                        checkInError = e.message?.takeIf(String::isNotBlank) ?: "Не удалось отправить чекин. Попробуйте ещё раз",
+                        checkInError = e.message?.takeIf(String::isNotBlank),
+                        checkInFeedback = ShopDetailFeedback.CheckInSubmitFailed.takeIf { e.message.isNullOrBlank() },
                         isCheckInLoading = false,
                     )
                 }
@@ -425,7 +430,7 @@ class ShopDetailViewModel internal constructor(
                             )
                         }
                     }
-                    .onFailure { e -> _uiState.update { it.copy(actionMessage = e.message) } }
+                    .onFailure { e -> _uiState.update { it.copy(actionMessage = e.message, actionFeedback = null) } }
             } finally {
                 _uiState.update { it.copy(helpfulId = null) }
             }
@@ -447,7 +452,7 @@ class ShopDetailViewModel internal constructor(
         val desired = id !in _uiState.value.favoriteRoasterIds
         com.coffeepeek.admin.feature.favorites.api.FavoriteInteractions.change(workScope, id, true, desired,
             action = { roasterFavorites.setFavorite(roaster, desired) },
-            completed = { result -> result.onFailure { _uiState.update { it.copy(actionMessage = "Не удалось изменить избранное") } } },
+            completed = { result -> result.onFailure { _uiState.update { it.copy(actionMessage = null, actionFeedback = ShopDetailFeedback.FavoriteChangeFailed) } } },
         )
     }
 
@@ -477,27 +482,22 @@ class ShopDetailViewModel internal constructor(
         )
     }
 
-    fun shareShop() {
+    internal fun shareShop(labels: ShopShareLabels) {
         Analytics.shopAction("share", "shop_header")
         val title = _uiState.value.details?.shop?.title?.takeIf { it.isNotBlank() }
         val path = _uiState.value.details?.shop?.publicAddress?.canonicalPath ?: return
         val shareUrl = "https://coffeepeek.by$path"
-        val text = if (title != null) {
-            "Нашёл кофейню «$title» в CoffeePeek — загляни: $shareUrl"
-        } else {
-            "Нашёл кофейню в CoffeePeek — загляни: $shareUrl"
-        }
-        ShareHelper.shareText(text)
+        ShareHelper.shareText(labels.text(title, shareUrl))
     }
 
     fun copyPhone(phone: String) {
         Analytics.shopAction("phone_copy", "shop_contacts")
         ClipboardHelper.copyText(phone)
-        _uiState.update { it.copy(actionMessage = "Номер скопирован") }
+        _uiState.update { it.copy(actionMessage = null, actionFeedback = ShopDetailFeedback.PhoneCopied) }
     }
 
     fun clearActionMessage() {
-        _uiState.update { it.copy(actionMessage = null) }
+        _uiState.update { it.copy(actionMessage = null, actionFeedback = null) }
     }
 }
 

@@ -1,5 +1,8 @@
 package com.coffeepeek.admin.ui.component
 
+import coffeepeek.composeapp.generated.resources.*
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
@@ -45,6 +48,11 @@ internal fun averageReviewRatings(reviews: List<Review>): ReviewAverages? =
 
 @Composable
 internal fun CheckInRatingsOverview(checkIns: List<CheckIn>, overallRating: Double?, checkInCount: Int) {
+    val localizedLegacyReviewRatingsOverviewShopCheckinsRatingSample = stringResource(Res.string.legacy_review_ratings_overview_shop_checkins_rating_sample)
+    val localizedCheckinRatingCoffee = stringResource(Res.string.checkin_rating_coffee)
+    val localizedCheckinRatingService = stringResource(Res.string.checkin_rating_service)
+    val localizedLegacyReviewRatingsOverviewShopCheckinsAura = stringResource(Res.string.legacy_review_ratings_overview_shop_checkins_aura)
+
     val averages = averageCheckInRatings(checkIns) ?: return
     Column(
         Modifier.fillMaxWidth().padding(vertical = CpDimens.spacing3),
@@ -53,18 +61,18 @@ internal fun CheckInRatingsOverview(checkIns: List<CheckIn>, overallRating: Doub
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Icon(CpIcons.StarFilled, null, Modifier.size(24.dp), tint = MaterialTheme.colorScheme.primary)
             Text(
-                "${formatOneDecimal(overallRating?.takeIf { it > 0 } ?: averages.overall)} · Чекины: ${maxOf(checkInCount, checkIns.size)}",
+                stringResource(Res.string.legacy_checkin_ratings_summary, formatOneDecimal(overallRating?.takeIf { it > 0 } ?: averages.overall), maxOf(checkInCount, checkIns.size)),
                 style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold,
             )
         }
         if (checkInCount > checkIns.size) Text(
-            "Оценки по загруженным чекинам", style = MaterialTheme.typography.labelSmall,
+            localizedLegacyReviewRatingsOverviewShopCheckinsRatingSample, style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         listOf(
-            Triple("Кофе", averages.coffee, Res.drawable.checkin_rating_coffee),
-            Triple("Сервис", averages.service, Res.drawable.checkin_rating_service),
-            Triple("Аура", averages.place, Res.drawable.checkin_rating_atmosphere),
+            Triple(localizedCheckinRatingCoffee, averages.coffee, Res.drawable.checkin_rating_coffee),
+            Triple(localizedCheckinRatingService, averages.service, Res.drawable.checkin_rating_service),
+            Triple(localizedLegacyReviewRatingsOverviewShopCheckinsAura, averages.place, Res.drawable.checkin_rating_atmosphere),
         ).forEach { (label, value, mascot) ->
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 Row(Modifier.width(112.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {

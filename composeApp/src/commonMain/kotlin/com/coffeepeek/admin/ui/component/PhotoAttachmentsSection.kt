@@ -1,5 +1,8 @@
 package com.coffeepeek.admin.ui.component
 
+import coffeepeek.composeapp.generated.resources.*
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -43,9 +46,12 @@ fun PhotoAttachmentsSection(
     onPhotosAdded: (List<PickedImage>) -> Unit,
     onRemovePhoto: (Int) -> Unit,
     modifier: Modifier = Modifier,
-    title: String = "Фотографии",
-    hint: String = "Добавьте до $maxPhotos фото.",
+    title: String = stringResource(Res.string.legacy_photo_attachments_section_contributions_section_photos),
+    hint: String = stringResource(Res.string.legacy_photo_attachments_hint, maxPhotos),
 ) {
+    val localizedHistoryHomeDeleteConfirm = stringResource(Res.string.history_home_delete_confirm)
+    val localizedPhotoSourceTitle = stringResource(Res.string.photo_source_title)
+
     var isPhotoLoading by remember { mutableStateOf(false) }
     var showPhotoSourceSheet by remember { mutableStateOf(false) }
     val remaining = (maxPhotos - photos.size).coerceAtLeast(1)
@@ -79,7 +85,7 @@ fun PhotoAttachmentsSection(
         )
         Spacer(Modifier.height(CpDimens.spacing2))
         Text(
-            text = "Добавлено: ${photos.size}/$maxPhotos",
+            text = stringResource(Res.string.legacy_photo_attachments_count, photos.size, maxPhotos),
             style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurface,
         )
@@ -120,7 +126,7 @@ fun PhotoAttachmentsSection(
                         ) {
                             Icon(
                                 CpIcons.Close,
-                                contentDescription = "Удалить",
+                                contentDescription = localizedHistoryHomeDeleteConfirm,
                                 tint = Color.White,
                                 modifier = Modifier.size(14.dp),
                             )
@@ -140,7 +146,7 @@ fun PhotoAttachmentsSection(
                             )
                             .clickable(
                                 enabled = !isPhotoLoading,
-                                onClickLabel = "Добавить фото",
+                                onClickLabel = localizedPhotoSourceTitle,
                                 onClick = { showPhotoSourceSheet = true },
                             ),
                         contentAlignment = Alignment.Center,
@@ -150,7 +156,7 @@ fun PhotoAttachmentsSection(
                         } else {
                             Icon(
                                 imageVector = CpIcons.Camera,
-                                contentDescription = "Добавить фото",
+                                contentDescription = localizedPhotoSourceTitle,
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.size(28.dp),
                             )

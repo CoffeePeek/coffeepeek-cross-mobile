@@ -7,6 +7,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import com.coffeepeek.admin.ui.screen.checkins.CheckInCreateButton
 import com.coffeepeek.admin.settings.CityPreference
 import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.ui.component.LocalFloatingNavClearance
@@ -25,24 +26,25 @@ import com.coffeepeek.feature.discovery.impl.createDiscoveryTabEntry
 import com.coffeepeek.feature.favorites.domain.repository.FavoritesRepository
 import io.ktor.client.HttpClient
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.Flow
 
 /** Both platforms use the migrated search; navigation, native map and global creation remain app-owned. */
 internal class FeatureDiscoveryScreenRenderer(private val entry: DiscoveryTabEntry) : DiscoveryScreenRenderer {
     @Composable
-    override fun Tab(onMapExpandedChange: (Boolean) -> Unit) {
+    override fun Tab(onMapExpandedChange: (Boolean) -> Unit, reselections: Flow<Unit>) {
         val pendingMapFocus by Navigator.pendingMapFocus.collectAsState()
-        var isMapExpanded by remember { mutableStateOf(false) }
         val clearance = LocalFloatingNavClearance.current
-        CheckInTabContent(showCreateButton = !isMapExpanded) {
+        CheckInTabContent(showCreateButton = false) { onCreateCheckIn ->
             entry.Content(
                 onOpenShop = { Navigator.navigate(Navigator.Screen.ShopDetail(it)) },
                 onSignIn = { Navigator.navigate(Navigator.Screen.Auth) },
                 onAddShop = { Navigator.navigate(Navigator.Screen.AddShop) },
-                onMapExpandedChange = { isMapExpanded = it; onMapExpandedChange(it) },
-                modifier = Modifier,
+                onMapExpandedChange = onMapExpandedChange,
                 bottomClearance = clearance,
                 focus = pendingMapFocus?.let { MapFocus(it.shopId, it.title, Coordinates(it.latitude, it.longitude)) },
                 onFocusConsumed = Navigator::consumeMapFocus,
+                checkInAction = { CheckInCreateButton(onClick = onCreateCheckIn) },
+                reselections = reselections,
             )
         }
     }

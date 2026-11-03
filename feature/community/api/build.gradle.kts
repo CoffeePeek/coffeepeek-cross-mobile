@@ -15,5 +15,5 @@ dependencies {
     api(libs.compose.runtime)
     api(compose.ui)
     api(compose.foundation)
-    api(compose.material3)
+    api(libs.compose.material3)
 }

@@ -5,6 +5,7 @@ import com.coffeepeek.core.presentation.MviViewModel
 import com.coffeepeek.feature.profile.api.OwnProfile
 import com.coffeepeek.feature.profile.api.ProfileAccountPort
 import com.coffeepeek.feature.profile.api.ProfileSignOutPort
+import com.coffeepeek.feature.profile.impl.ui.model.OwnProfileError
 import com.coffeepeek.feature.profile.impl.ui.model.OwnProfileAction
 import com.coffeepeek.feature.profile.impl.ui.model.OwnProfileEvent
 import com.coffeepeek.feature.profile.impl.ui.model.OwnProfileState
@@ -66,10 +67,11 @@ internal class OwnProfileViewModel(
                     error = if (showFullScreenLoader) null else error, refreshError = null)
             }
             accounts.loadOwnProfile(forceRefresh = true).onFailure {
+                val failureMessage = OwnProfileError.LoadFailed
                 if (accounts.activeAccount() != account || loadedForAccount != account) return@onFailure
                 updateState {
-                    if (hasContent) copy(isLoading = false, isRefreshing = false, refreshError = LOAD_FAILED)
-                    else copy(isLoading = false, isRefreshing = false, error = LOAD_FAILED)
+                    if (hasContent) copy(isLoading = false, isRefreshing = false, refreshError = failureMessage)
+                    else copy(isLoading = false, isRefreshing = false, error = failureMessage)
                 }
             }
         }
@@ -93,5 +95,4 @@ internal class OwnProfileViewModel(
         updateState { OwnProfileState(isLoading = false) }
     }
 
-    private companion object { const val LOAD_FAILED = "Не удалось загрузить профиль" }
 }

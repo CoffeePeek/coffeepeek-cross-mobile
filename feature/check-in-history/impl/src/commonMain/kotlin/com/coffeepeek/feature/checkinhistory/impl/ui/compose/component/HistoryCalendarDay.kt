@@ -22,7 +22,7 @@ import com.coffeepeek.feature.checkinhistory.domain.model.HistoryCalendarPhoto
 import com.coffeepeek.feature.checkinhistory.impl.resources.*
 import com.coffeepeek.feature.checkinhistory.impl.ui.data.historyDateTitle
 import com.coffeepeek.feature.checkinhistory.impl.ui.data.historyVisitCountLabel
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 
 @Composable
 internal fun HistoryCalendarDay(day: Int, date: String, total: Long, homeCount: Int,

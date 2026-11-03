@@ -1,5 +1,7 @@
 package com.coffeepeek.admin.ui.screen.auth.registr
 
+import com.coffeepeek.admin.auth.russianSocialErrorCopy
+
 import com.coffeepeek.domain.model.AppleLoginChallenge
 import com.coffeepeek.domain.model.Session
 import com.coffeepeek.domain.repository.AuthRepository
@@ -25,7 +27,7 @@ class RegisterAnalyticsConsentTest {
             vm.onEmailChange("person@example.invalid")
             vm.onPasswordChange("TestPassword123")
             vm.onTermsCheckedChange(true)
-            vm.onRegisterClick()
+            vm.onRegisterClick { russianRegistrationErrorCopy }
             withTimeout(5_000) { vm.step.first { it == RegisterStep.Success } }
             assertEquals("consent:false", calls.receive())
             assertEquals("register", calls.receive())
@@ -39,14 +41,14 @@ class RegisterAnalyticsConsentTest {
             vm.onEmailChange("person@example.invalid")
             vm.onAnalyticsCheckedChange(true)
             assertFalse(vm.isTermsAccepted.value)
-            vm.onContinueEmail()
+            vm.onContinueEmail { russianRegistrationErrorCopy }
             withTimeout(5_000) { vm.step.first { it == RegisterStep.Details } }
             vm.onBack()
             assertEquals(true, vm.isAnalyticsAccepted.value)
             vm.onNameChange("Coffee User")
             vm.onPasswordChange("TestPassword123")
             vm.onTermsCheckedChange(true)
-            vm.onRegisterClick()
+            vm.onRegisterClick { russianRegistrationErrorCopy }
             withTimeout(5_000) { vm.step.first { it == RegisterStep.Success } }
             assertEquals("consent:true", calls.receive())
             assertEquals("register", calls.receive())
@@ -60,12 +62,12 @@ class RegisterAnalyticsConsentTest {
         try {
             vm.onNameChange("Coffee User"); vm.onEmailChange("person@example.invalid"); vm.onPasswordChange("TestPassword123")
             vm.onTermsCheckedChange(true); vm.onAnalyticsCheckedChange(true)
-            vm.onContinueEmail()
+            vm.onContinueEmail { russianRegistrationErrorCopy }
             withTimeout(5_000) { vm.step.first { it == RegisterStep.Details } }
-            vm.onRegisterClick()
+            vm.onRegisterClick { russianRegistrationErrorCopy }
             withTimeout(5_000) { assertEquals("consent:true", calls.receive()) }
             // The request is parked in the repository: edits, a second tap and "back" must change nothing.
-            vm.onRegisterClick(); vm.onTermsCheckedChange(false); vm.onAnalyticsCheckedChange(false); vm.onBack()
+            vm.onRegisterClick { russianRegistrationErrorCopy }; vm.onTermsCheckedChange(false); vm.onAnalyticsCheckedChange(false); vm.onBack()
             assertTrue(vm.isTermsAccepted.value); assertTrue(vm.isAnalyticsAccepted.value)
             assertEquals(RegisterStep.Details, vm.step.value)
             gate.complete(Unit)
@@ -87,7 +89,7 @@ class RegisterAnalyticsConsentTest {
                 val navigation = async(start = CoroutineStart.UNDISPATCHED) {
                     Navigator.navigationEvents.first { it == Navigator.NavEvent.NavigateTo(Navigator.Screen.Main) }
                 }
-                vm.onGoogleLogin("test-token")
+                vm.onGoogleLogin("test-token") { russianSocialErrorCopy }
                 withTimeout(5_000) {
                     navigation.await()
                     assertEquals("google", calls.receive())

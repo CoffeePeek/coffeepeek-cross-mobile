@@ -1,5 +1,8 @@
 package com.coffeepeek.admin.ui.component
 
+import coffeepeek.composeapp.generated.resources.*
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -122,7 +125,7 @@ fun PriceBeanSlider(
     selected: Int?,
     onSelect: (Int?) -> Unit,
     modifier: Modifier = Modifier,
-    title: String = "Цена",
+    title: String = stringResource(Res.string.shop_filters_price),
     showTitle: Boolean = true,
     showHint: Boolean = true,
 ) {
@@ -227,10 +230,11 @@ fun PriceBeanSlider(
     }
 }
 
+@Composable
 fun priceLevelHint(selected: Int?): String? = when (selected) {
-    1 -> "До 8 BYN"
-    2 -> "Около 8 BYN"
-    3 -> "Больше 8 BYN"
+    1 -> stringResource(Res.string.legacy_price_bean_slider_discovery_price_cheap)
+    2 -> stringResource(Res.string.legacy_price_bean_slider_discovery_price_moderate)
+    3 -> stringResource(Res.string.legacy_price_bean_slider_discovery_price_expensive)
     else -> null
 }
 

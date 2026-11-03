@@ -1,5 +1,7 @@
 package com.coffeepeek.admin.ui.screen.auth
 
+import coffeepeek.composeapp.generated.resources.*
+
 import com.coffeepeek.admin.ui.component.PlatformScrollableColumn
 import com.coffeepeek.admin.ui.component.GlassControlIcon
 import com.coffeepeek.admin.ui.component.PlatformGlassIconButton
@@ -57,7 +59,7 @@ import com.coffeepeek.admin.theme.CpColor
 import com.coffeepeek.admin.theme.CpDimens
 import com.coffeepeek.admin.ui.icons.CpIcons
 import org.jetbrains.compose.resources.painterResource
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 
@@ -137,10 +139,12 @@ private fun AuthCloseButton(
     hazeState: HazeState,
     modifier: Modifier = Modifier,
 ) {
+    val localizedHistoryHomeClose = stringResource(Res.string.history_home_close)
+
     PlatformGlassIconButton(
         icon = GlassControlIcon.Close,
         onClick = onClick,
-        contentDescription = "Закрыть",
+        contentDescription = localizedHistoryHomeClose,
         hazeState = hazeState,
         modifier = modifier,
     ) {

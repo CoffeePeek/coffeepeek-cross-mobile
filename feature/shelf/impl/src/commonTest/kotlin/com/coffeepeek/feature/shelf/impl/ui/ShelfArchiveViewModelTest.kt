@@ -40,13 +40,13 @@ class ShelfArchiveViewModelTest {
     private fun TestScope.settle() { advanceTimeBy(350); runCurrent() }
 
     /** 25 finished bags, 20 per page: 24 in October, newest first, and the last one in September. */
-    private fun pages(): (Int, String?) -> Result<ShelfArchivePage> {
+    private fun pages(excluded: () -> Set<String> = { emptySet() }): (Int, String?) -> Result<ShelfArchivePage> {
         val all = (1..25).map {
             val finishedOn = if (it <= 24) "2026-10-${(26 - it).toString().padStart(2, '0')}" else "2026-09-30"
             bag("f$it", finished = true, finishedAt = "${finishedOn}T10:00:00Z")
         }
         return { page, query ->
-            val matching = all.filter { query == null || it.name!!.endsWith(query) }
+            val matching = all.filter { it.id !in excluded() && (query == null || it.name!!.endsWith(query)) }
             Result.success(ShelfArchivePage(matching.drop((page - 1) * 20).take(20), matching.size, page, 20))
         }
     }
@@ -93,7 +93,8 @@ class ShelfArchiveViewModelTest {
 
     @Test fun aBagRestoredOrDeletedOnItsScreenLeavesTheArchive() = runTest(dispatcher) {
         val handoff = ShelfBagHandoff()
-        val repository = FakeShelfRepository(emptyList()).apply { archivePages = pages() }
+        val removed = mutableSetOf<String>()
+        val repository = FakeShelfRepository(emptyList()).apply { archivePages = pages { removed } }
         val model = model(repository, handoff)
         runCurrent()
         model.onAction(ShelfArchiveAction.OpenBag("f1"))
@@ -101,14 +102,34 @@ class ShelfArchiveViewModelTest {
         assertEquals(ShelfArchiveEvent.OpenBag("f1"), model.events.first())
         assertEquals("f1", handoff.opened("f1")?.id)
 
+        removed += "f1"
         handoff.report(ShelfBagOutcome.Restored("f1"))
         runCurrent()
         assertEquals(ShelfArchiveMessage.Restored, model.state.value.message)
+        removed += "f2"
         handoff.report(ShelfBagOutcome.Deleted("f2", archived = true))
         runCurrent()
         assertEquals(ShelfArchiveMessage.Deleted, model.state.value.message)
         assertFalse(model.state.value.items.any { it.id == "f1" || it.id == "f2" })
         assertNull(handoff.outcome.value)
+    }
+
+    @Test fun restoringABagReloadsTheShiftedPageBeforeLoadingMore() = runTest(dispatcher) {
+        val handoff = ShelfBagHandoff()
+        val removed = mutableSetOf<String>()
+        val repository = FakeShelfRepository().apply { archivePages = pages { removed } }
+        val model = model(repository, handoff)
+        runCurrent()
+        assertEquals(20, model.state.value.items.size)
+        removed += "f1"
+        handoff.report(ShelfBagOutcome.Restored("f1"))
+        runCurrent()
+        assertEquals(20, model.state.value.items.size)
+        assertTrue(model.state.value.items.any { it.id == "f21" })
+        model.onAction(ShelfArchiveAction.LoadMore)
+        runCurrent()
+        assertEquals(24, model.state.value.items.size)
+        assertEquals(listOf("archive:1:", "archive:1:", "archive:2:"), repository.calls)
     }
 
     @Test fun sectionsGroupByMonthNewestFirst() = runTest(dispatcher) {

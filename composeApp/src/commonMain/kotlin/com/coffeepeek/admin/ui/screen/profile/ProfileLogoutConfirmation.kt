@@ -9,7 +9,7 @@ import coffeepeek.composeapp.generated.resources.profile_menu_logout
 import com.coffeepeek.admin.ui.component.NativeAlert
 import com.coffeepeek.core.designsystem.component.CoffeePeekDestructiveConfirmationSheet
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable

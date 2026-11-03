@@ -10,7 +10,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ColorScheme
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
@@ -21,6 +23,13 @@ import com.coffeepeek.admin.theme.CpDimens
 import com.coffeepeek.admin.theme.toUIColor
 import com.coffeepeek.admin.theme.uiKitStyle
 import com.coffeepeek.core.designsystem.theme.CoffeePeekColors
+import com.coffeepeek.core.designsystem.component.CoffeePeekNativeGlassView
+import com.coffeepeek.core.designsystem.component.CoffeePeekNativeLoader
+import com.coffeepeek.core.designsystem.component.coffeePeekLoaderPlaceholderImage
+import coffeepeek.composeapp.generated.resources.Res
+import coffeepeek.composeapp.generated.resources.loader_loading
+import coffeepeek.composeapp.generated.resources.navigation_back
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import dev.chrisbanes.haze.HazeState
 import platform.UIKit.UIAction
 import platform.UIKit.UIButton
@@ -29,7 +38,13 @@ import platform.UIKit.UIButtonConfigurationCornerStyleCapsule
 import platform.UIKit.UIColor
 import platform.UIKit.UIDevice
 import platform.UIKit.UIImage
+import platform.UIKit.UIView
+import platform.UIKit.UIAccessibilityTraitButton
+import platform.UIKit.UIAccessibilityTraitNotEnabled
+import platform.UIKit.UIAccessibilityTraitSelected
 import platform.UIKit.accessibilityLabel
+import platform.UIKit.accessibilityTraits
+import platform.UIKit.accessibilityValue
 import platform.UIKit.UITabBar
 import platform.UIKit.UITabBarDelegateProtocol
 import platform.UIKit.UITabBarItem
@@ -41,6 +56,7 @@ private val isLiquidGlassAvailable: Boolean
 private val GlassControlIcon.symbol: String
     get() = when (this) {
         GlassControlIcon.Back -> "chevron.left"
+        GlassControlIcon.Forward -> "chevron.right"
         GlassControlIcon.Add -> "plus"
         GlassControlIcon.Edit -> "square.and.pencil"
         GlassControlIcon.Favorite -> "heart"
@@ -62,7 +78,7 @@ actual fun PlatformGlassIconButton(
     isLoading: Boolean,
     hazeState: HazeState?,
     content: @Composable () -> Unit,
-) = IosGlassIconButton(icon, onClick, contentDescription, modifier, enabled, selected, isLoading, placedAsOverlay = true)
+) = IosGlassIconButton(icon, onClick, contentDescription, modifier, enabled, selected, isLoading)
 
 @Composable
 private fun IosGlassIconButton(
@@ -73,51 +89,85 @@ private fun IosGlassIconButton(
     enabled: Boolean,
     selected: Boolean,
     isLoading: Boolean,
-    placedAsOverlay: Boolean,
 ) {
     val currentOnClick = rememberUpdatedState(onClick)
     val currentIcon = rememberUpdatedState(icon)
+    val active = rememberUpdatedState(enabled && !isLoading)
     val colors = MaterialTheme.colorScheme
-    UIKitView(
+    val loaderParent = remember { mutableStateOf<UIView?>(null) }
+    val loadingLabel = if (isLoading) stringResource(Res.string.loader_loading) else null
+    CoffeePeekNativeGlassView(
         factory = {
             UIButton.buttonWithConfiguration(
                 configuration = UIButtonConfiguration.grayButtonConfiguration(),
                 primaryAction = UIAction.actionWithHandler {
-                    if (currentIcon.value == GlassControlIcon.Favorite || currentIcon.value == GlassControlIcon.FavoriteFilled) platformHaptic(HapticEvent.Selection)
-                    currentOnClick.value()
+                    if (active.value) {
+                        if (currentIcon.value.isFavorite) platformHaptic(HapticEvent.Selection)
+                        currentOnClick.value()
+                    }
                 },
             )
         },
         modifier = modifier.size(CpDimens.buttonHeight),
-        properties = UIKitInteropProperties(isNativeAccessibilityEnabled = true, placedAsOverlay = placedAsOverlay),
         update = { button ->
             button.overrideUserInterfaceStyle = colors.uiKitStyle
             button.backgroundColor = UIColor.clearColor
-            val configuration = if (isLiquidGlassAvailable) {
-                UIButtonConfiguration.glassButtonConfiguration()
-            } else {
-                UIButtonConfiguration.grayButtonConfiguration()
-            }
-            configuration.cornerStyle = UIButtonConfigurationCornerStyleCapsule
-            configuration.image = UIImage.systemImageNamed(icon.symbol)
-            configuration.showsActivityIndicator = isLoading
-            configuration.baseForegroundColor = colors.onSurface.toUIColor()
-            if (icon == GlassControlIcon.FavoriteFilled || (icon == GlassControlIcon.Favorite && selected)) {
-                configuration.baseForegroundColor = CoffeePeekColors.Like.toUIColor()
-            } else if (selected) {
-                configuration.baseForegroundColor = colors.primary.toUIColor()
-            }
-            button.configuration = configuration
+            button.tintColor = colors.primary.toUIColor()
+            button.configuration = glassIconConfiguration(icon, selected, isLoading, colors)
             button.accessibilityLabel = contentDescription
+            button.accessibilityValue = loadingLabel
             button.enabled = enabled && !isLoading
+            button.updateGlassIconSelection(icon, selected)
+            loaderParent.value = if (isLoading) button.imageView else null
         },
     )
+    CoffeePeekNativeLoader(loaderParent.value, glassIconForegroundColor(icon, selected, colors))
+}
+
+private val GlassControlIcon.isFavorite: Boolean
+    get() = this == GlassControlIcon.Favorite || this == GlassControlIcon.FavoriteFilled
+
+internal fun UIButton.updateGlassIconSelection(icon: GlassControlIcon, selected: Boolean) {
+    val logicalSelection = selected || icon == GlassControlIcon.FavoriteFilled
+    this.selected = logicalSelection && !icon.isFavorite
+    accessibilityTraits = UIAccessibilityTraitButton or
+        (if (logicalSelection) UIAccessibilityTraitSelected else 0uL) or
+        (if (!enabled) UIAccessibilityTraitNotEnabled else 0uL)
+}
+
+internal fun glassIconConfiguration(
+    icon: GlassControlIcon, selected: Boolean, isLoading: Boolean, colors: ColorScheme,
+): UIButtonConfiguration {
+    return glassIconBaseConfiguration(icon).apply {
+        // Keep UIKit's selected accessibility state without its automatic blue filled style.
+        if (isLiquidGlassAvailable) automaticallyUpdateForSelection = false
+        cornerStyle = UIButtonConfigurationCornerStyleCapsule
+        image = if (isLoading) coffeePeekLoaderPlaceholderImage() else UIImage.systemImageNamed(icon.symbol)
+        showsActivityIndicator = false
+        if (icon == GlassControlIcon.Add) baseBackgroundColor = colors.primary.toUIColor()
+        baseForegroundColor = glassIconForegroundColor(icon, selected, colors).toUIColor()
+    }
+}
+
+private fun glassIconForegroundColor(icon: GlassControlIcon, selected: Boolean, colors: ColorScheme) = when {
+    icon == GlassControlIcon.Add -> colors.onPrimary
+    icon == GlassControlIcon.FavoriteFilled || (icon.isFavorite && selected) -> CoffeePeekColors.Like
+    selected -> colors.primary
+    else -> colors.onSurface
+}
+
+private fun glassIconBaseConfiguration(icon: GlassControlIcon): UIButtonConfiguration = when {
+    isLiquidGlassAvailable && icon == GlassControlIcon.Add -> UIButtonConfiguration.prominentGlassButtonConfiguration()
+    isLiquidGlassAvailable -> UIButtonConfiguration.glassButtonConfiguration()
+    icon == GlassControlIcon.Add -> UIButtonConfiguration.filledButtonConfiguration()
+    else -> UIButtonConfiguration.grayButtonConfiguration()
 }
 
 @Composable
 actual fun PlatformGlassBackButton(onClick: () -> Unit, modifier: Modifier) {
     val currentOnClick = rememberUpdatedState(onClick)
     val colors = MaterialTheme.colorScheme
+    val backLabel = stringResource(Res.string.navigation_back)
     UIKitView(
         factory = {
             UIButton.buttonWithConfiguration(
@@ -130,6 +180,7 @@ actual fun PlatformGlassBackButton(onClick: () -> Unit, modifier: Modifier) {
         update = { button ->
             button.overrideUserInterfaceStyle = colors.uiKitStyle
             button.backgroundColor = UIColor.clearColor
+            button.tintColor = colors.primary.toUIColor()
             val configuration = if (isLiquidGlassAvailable) {
                 UIButtonConfiguration.glassButtonConfiguration()
             } else {
@@ -138,9 +189,9 @@ actual fun PlatformGlassBackButton(onClick: () -> Unit, modifier: Modifier) {
             configuration.cornerStyle = UIButtonConfigurationCornerStyleCapsule
             configuration.baseForegroundColor = colors.onSurface.toUIColor()
             configuration.image = UIImage.systemImageNamed(GlassControlIcon.Back.symbol)
-            configuration.title = "Назад"
+            configuration.title = backLabel
             button.configuration = configuration
-            button.accessibilityLabel = "Назад"
+            button.accessibilityLabel = backLabel
         },
     )
 }
@@ -162,8 +213,6 @@ actual fun PlatformMapControlButton(
         enabled = true,
         selected = selected,
         isLoading = false,
-        // Map controls must stay below Compose headers and obey the map preview's clip.
-        placedAsOverlay = false,
     )
 }
 

@@ -18,6 +18,8 @@ import io.kamel.image.KamelImage
 import io.kamel.image.asyncPainterResource
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
+import androidx.compose.ui.tooling.preview.Preview
 
 @Composable
 internal fun ShopCheckInPhotoAttachments(

@@ -28,9 +28,14 @@ import com.coffeepeek.admin.theme.ThemeManager
 import com.coffeepeek.admin.theme.toUIColor
 import com.coffeepeek.admin.theme.uiKitStyle
 import com.coffeepeek.admin.ui.component.ProvideFloatingNavClearance
+import com.coffeepeek.admin.ui.component.GlassControlIcon
+import com.coffeepeek.admin.ui.component.PlatformGlassIconButton
 import com.coffeepeek.admin.ui.component.dismissKeyboardOnBackgroundGestures
 import com.coffeepeek.core.designsystem.component.CoffeePeekScreenInsets
 import com.coffeepeek.core.designsystem.component.LocalCoffeePeekScreenInsets
+import com.coffeepeek.core.designsystem.modifier.CoffeePeekGlassIcon
+import com.coffeepeek.core.designsystem.modifier.CoffeePeekNativeGlassPresenter
+import com.coffeepeek.core.designsystem.modifier.LocalCoffeePeekNativeGlassPresenter
 import kotlinx.cinterop.useContents
 import platform.UIKit.UINavigationController
 import platform.UIKit.NSLayoutConstraint
@@ -53,10 +58,14 @@ internal class NativeScreenController(
     private val analyticsVisit = com.coffeepeek.admin.analytics.correlationId("screen")
     private var analyticsVisible by mutableStateOf(false)
     private var bottomClearance by mutableStateOf(if (isTabRoot) CpDimens.iosTabBarClearanceFloor else 0.dp)
+    private var tabBarHidden = false
+    private var expandedMap by mutableStateOf(false)
+    private var composeController: UIViewController? = null
+    private var contentTopConstraint: NSLayoutConstraint? = null
     private val photoUnderStatusBar = route is Navigator.Screen.ShopDetail || route is Navigator.Screen.RoasterDetail
     private val isAuthFlow = route == Navigator.Screen.Auth || route == Navigator.Screen.Register ||
         route == Navigator.Screen.ForgotPassword || route is Navigator.Screen.ResetPassword
-    private val extendsUnderStatusBar = photoUnderStatusBar || isAuthFlow
+    private val extendsUnderStatusBar get() = photoUnderStatusBar || isAuthFlow || expandedMap
     var handlesBackLocally = false
 
     init {
@@ -94,8 +103,17 @@ internal class NativeScreenController(
         refreshBottomClearance()
     }
 
-    internal fun syncBottomClearance() {
+    internal fun syncBottomClearance(hidden: Boolean = tabBarHidden) {
+        tabBarHidden = hidden
         refreshBottomClearance()
+    }
+
+    internal fun syncExpandedMap(expanded: Boolean) {
+        if (expandedMap == expanded) return
+        expandedMap = expanded
+        edgesForExtendedLayout = if (extendsUnderStatusBar) UIRectEdgeAll else UIRectEdgeBottom
+        updateContentTopConstraint()
+        view.setNeedsLayout()
     }
 
     private fun refreshBottomClearance() {
@@ -112,28 +130,35 @@ internal class NativeScreenController(
                 parent = parent.parentViewController
             }
         }.filterIsInstance<UINavigationController>().firstOrNull()
-        return navigation?.topViewController === this || navigation == null
+        return navigation?.topViewController == this || navigation == null
     }
 
     private fun measuredBottomClearance(): Dp {
         val inset = view.safeAreaInsets.useContents { bottom }.dp
-        if (!isTabRoot) return inset
+        if (!isTabRoot || tabBarHidden) return inset
         return maxOf(inset, CpDimens.iosTabBarClearanceFloor)
     }
 
     private fun attachContent(child: UIViewController) {
         addChildViewController(child)
+        composeController = child
         child.view.translatesAutoresizingMaskIntoConstraints = false
         child.view.clipsToBounds = true
         view.addSubview(child.view)
-        val safeArea = view.safeAreaLayoutGuide
+        updateContentTopConstraint()
         NSLayoutConstraint.activateConstraints(listOf(
-            child.view.topAnchor.constraintEqualToAnchor(if (extendsUnderStatusBar) view.topAnchor else safeArea.topAnchor),
             child.view.leadingAnchor.constraintEqualToAnchor(view.leadingAnchor),
             child.view.trailingAnchor.constraintEqualToAnchor(view.trailingAnchor),
             child.view.bottomAnchor.constraintEqualToAnchor(view.bottomAnchor),
         ))
         child.didMoveToParentViewController(this)
+    }
+
+    private fun updateContentTopConstraint() {
+        val child = composeController ?: return
+        contentTopConstraint?.active = false
+        val top = if (extendsUnderStatusBar) view.topAnchor else view.safeAreaLayoutGuide.topAnchor
+        contentTopConstraint = child.view.topAnchor.constraintEqualToAnchor(top).apply { active = true }
     }
 
     @Composable
@@ -143,6 +168,7 @@ internal class NativeScreenController(
         SideEffect {
             overrideUserInterfaceStyle = themeMode.uiKitStyle
             view.backgroundColor = colors.background.toUIColor()
+            view.tintColor = colors.primary.toUIColor()
             setNeedsStatusBarAppearanceUpdate()
         }
         val floatingClearance = if (isTabRoot) bottomClearance else 0.dp
@@ -157,6 +183,7 @@ internal class NativeScreenController(
                 .dismissKeyboardOnBackgroundGestures()) {
                 CompositionLocalProvider(
                     com.coffeepeek.admin.analytics.LocalAnalyticsVisible provides analyticsVisible,
+                    LocalCoffeePeekNativeGlassPresenter provides IosCoffeePeekGlassPresenter,
                     LocalCoffeePeekScreenInsets provides CoffeePeekScreenInsets(
                         bottom = if (isTabRoot || isAuthFlow) 0.dp else bottomClearance,
                         extendsToBottom = !isTabRoot && !isAuthFlow,
@@ -168,6 +195,25 @@ internal class NativeScreenController(
                 }
             }
         }
+    }
+}
+
+private object IosCoffeePeekGlassPresenter : CoffeePeekNativeGlassPresenter {
+    @Composable
+    override fun IconButton(icon: CoffeePeekGlassIcon, onClick: () -> Unit, contentDescription: String,
+        modifier: Modifier, enabled: Boolean, selected: Boolean, isLoading: Boolean): Boolean {
+        val platformIcon = when (icon) {
+            CoffeePeekGlassIcon.Back -> GlassControlIcon.Back
+            CoffeePeekGlassIcon.Forward -> GlassControlIcon.Forward
+            CoffeePeekGlassIcon.Add -> GlassControlIcon.Add
+            CoffeePeekGlassIcon.Edit -> GlassControlIcon.Edit
+            CoffeePeekGlassIcon.Favorite -> GlassControlIcon.Favorite
+            CoffeePeekGlassIcon.FavoriteFilled -> GlassControlIcon.FavoriteFilled
+            CoffeePeekGlassIcon.Share -> GlassControlIcon.Share
+            CoffeePeekGlassIcon.Close -> GlassControlIcon.Close
+        }
+        PlatformGlassIconButton(platformIcon, onClick, contentDescription, modifier, enabled, selected, isLoading) {}
+        return true
     }
 }
 

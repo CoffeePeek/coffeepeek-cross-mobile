@@ -2,29 +2,21 @@ package com.coffeepeek.admin.ui.screen.auth.registr
 
 import com.coffeepeek.admin.analytics.*
 
-import coffeepeek.composeapp.generated.resources.Res
-import coffeepeek.composeapp.generated.resources.email_no_exist
-import coffeepeek.composeapp.generated.resources.error_email_name
-import coffeepeek.composeapp.generated.resources.error_enter_name
-import coffeepeek.composeapp.generated.resources.error_enter_password_length
-import coffeepeek.composeapp.generated.resources.error_registr
-import coffeepeek.composeapp.generated.resources.error_term_of_user
-import coffeepeek.composeapp.generated.resources.error_valid_email
-import coffeepeek.composeapp.generated.resources.maybe_later
 import com.coffeepeek.admin.base.BaseViewModel
 import com.coffeepeek.admin.ui.Navigator
+import com.coffeepeek.admin.utils.InputValidationIssue
 import com.coffeepeek.admin.utils.MIN_REGISTRATION_PASSWORD_LENGTH
 import com.coffeepeek.admin.utils.validateEmailRequired
 import com.coffeepeek.admin.utils.validatePasswordRequired
 import com.coffeepeek.domain.repository.AuthRepository
+import com.coffeepeek.feature.auth.domain.RegistrationIssue
 import com.coffeepeek.admin.auth.signInWithApple
 import com.coffeepeek.admin.auth.socialLoginError
+import com.coffeepeek.admin.auth.SocialLoginErrorCopy
 import com.coffeepeek.admin.utils.ErrorHandler
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import org.jetbrains.compose.resources.StringResource
-import org.jetbrains.compose.resources.getString
 
 enum class RegisterStep {
     Email,
@@ -57,11 +49,13 @@ class RegisterViewModel(
     private val _isAnalyticsAccepted = MutableStateFlow(false)
     val isAnalyticsAccepted = _isAnalyticsAccepted.asStateFlow()
 
-    private val _passwordError = MutableStateFlow<String?>(null)
+    private val _passwordError = MutableStateFlow<InputValidationIssue?>(null)
     val passwordError = _passwordError.asStateFlow()
 
-    private val _emailError = MutableStateFlow<String?>(null)
+    private val _emailError = MutableStateFlow<InputValidationIssue?>(null)
     val emailError = _emailError.asStateFlow()
+    private val _emailTaken = MutableStateFlow(false)
+    val emailTaken = _emailTaken.asStateFlow()
 
     fun onNameChange(value: String) {
         _name.value = value
@@ -69,6 +63,7 @@ class RegisterViewModel(
 
     fun onEmailChange(value: String) {
         _email.value = value
+        _emailTaken.value = false
         if (_emailError.value != null) {
             _emailError.value = null
         }
@@ -106,7 +101,7 @@ class RegisterViewModel(
         }
     }
 
-    fun onContinueEmail() {
+    internal fun onContinueEmail(errorCopy: () -> RegistrationErrorCopy) {
         val currentEmail = _email.value.trim()
         val formatError = validateEmailRequired(currentEmail)
         if (formatError != null) {
@@ -115,93 +110,68 @@ class RegisterViewModel(
         }
 
         launchRequest(
-            errorMessage = Res.string.maybe_later,
+            onError = { showRequestError(it, errorCopy().checkFailed) },
         ) {
             val isTaken = authRepository.isEmailTaken(currentEmail).getOrThrow()
-            if (isTaken) {
-                _emailError.value = getString(Res.string.email_no_exist)
-                return@launchRequest
-            }
+            _emailTaken.value = isTaken
             _emailError.value = null
-            _step.value = RegisterStep.Details
+            if (!isTaken) _step.value = RegisterStep.Details
         }
     }
 
     // Set synchronously by the click, so a second tap or a consent/e-mail edit while the request runs is ignored.
     private var registering = false
 
-    fun onRegisterClick() {
+    internal fun onRegisterClick(errorCopy: () -> RegistrationErrorCopy) {
         if (registering) return
+        val form = RegisterFormSnapshot(_name.value.trim(), _email.value.trim(), _password.value,
+            _isTermsAccepted.value, _isAnalyticsAccepted.value)
+        if (!validateRegistration(form, errorCopy())) return
         registering = true
-        val analyticsAccepted = _isAnalyticsAccepted.value
         launchRequest(
             onSuccess = { _step.value = RegisterStep.Success },
-            errorMessage = Res.string.error_registr,
+            onError = { showRequestError(it, errorCopy().registrationFailed) },
         ) {
-            try { registerForm(analyticsAccepted) } finally { registering = false }
+            try { registerForm(form) } finally { registering = false }
         }
     }
 
-    private suspend fun registerForm(analyticsAccepted: Boolean) {
-        run {
-            val currentName = _name.value.trim()
-            val currentEmail = _email.value.trim()
-            val currentPassword = _password.value
-
-            var isValid = true
-            var error: StringResource = Res.string.maybe_later
-
-            if (!_isTermsAccepted.value) {
-                isValid = false
-                error = Res.string.error_term_of_user
-            }
-
-            val passwordErr = validatePasswordRequired(
-                password = currentPassword,
-                minLength = MIN_REGISTRATION_PASSWORD_LENGTH,
-            )
-            if (passwordErr != null) {
-                _passwordError.value = passwordErr
-                isValid = false
-                error = Res.string.error_enter_password_length
-            }
-
-            val emailErr = validateEmailRequired(currentEmail)
-            if (emailErr != null) {
-                _emailError.value = emailErr
-                isValid = false
-                error = if (currentEmail.isEmpty()) {
-                    Res.string.error_email_name
-                } else {
-                    Res.string.error_valid_email
-                }
-            }
-
-            if (currentName.isEmpty()) {
-                isValid = false
-                error = Res.string.error_enter_name
-            }
-
-            if (!isValid) {
-                ErrorHandler.showError(getString(error))
-                return@run
-            }
-
-            // The optional choice is separate from terms. No SDK setup is allowed before login.
-            saveAnalyticsConsent(analyticsAccepted)
-            authRepository.register(currentName, currentEmail, currentPassword).getOrThrow()
-            Analytics.service?.rememberPasswordSignUp(currentEmail)
+    private fun validateRegistration(form: RegisterFormSnapshot, copy: RegistrationErrorCopy): Boolean {
+        val passwordIssue = validatePasswordRequired(form.password, MIN_REGISTRATION_PASSWORD_LENGTH)
+        val emailIssue = validateEmailRequired(form.email)
+        _passwordError.value = passwordIssue
+        _emailError.value = emailIssue
+        val reported = when {
+            form.name.isEmpty() -> RegistrationIssue.NameRequired
+            emailIssue != null && form.email.isEmpty() -> RegistrationIssue.EmailRequired
+            emailIssue != null -> RegistrationIssue.EmailInvalid
+            passwordIssue != null -> RegistrationIssue.PasswordTooShort
+            !form.termsAccepted -> RegistrationIssue.TermsRequired
+            else -> return true
         }
+        ErrorHandler.showError(reported.message(copy))
+        return false
+    }
+
+    private suspend fun registerForm(form: RegisterFormSnapshot) {
+        // The optional choice is separate from terms. No SDK setup is allowed before login.
+        saveAnalyticsConsent(form.analyticsAccepted)
+        authRepository.register(form.name, form.email, form.password).getOrThrow()
+        Analytics.service?.rememberPasswordSignUp(form.email)
+    }
+
+    private fun showRequestError(error: Exception, fallback: String) {
+        ErrorHandler.showError(error.message?.takeIf(String::isNotBlank) ?: fallback)
     }
 
     private val _appleSigningIn = MutableStateFlow(false)
     val appleSigningIn = _appleSigningIn.asStateFlow()
 
-    fun onAppleLogin() {
+    internal fun onAppleLogin(errorCopy: () -> SocialLoginErrorCopy) {
         if (!_appleSigningIn.compareAndSet(expect = false, update = true)) return
         launchRequest(
             onSuccess = { Navigator.navigate(Navigator.Screen.Main) },
-            onError = { if (it !is CancellationException) ErrorHandler.showError(socialLoginError("Apple", it.message)) },
+            onError = { if (it !is CancellationException) ErrorHandler.showError(socialLoginError("Apple", it.message, errorCopy())) },
         ) {
             try {
                 authRepository.signInWithApple().also { signInAnalytics(it.userId, "apple", "register") }
@@ -210,10 +180,9 @@ class RegisterViewModel(
         }
     }
 
-    fun onGoogleLogin(idToken: String) {
+    internal fun onGoogleLogin(idToken: String, errorCopy: () -> SocialLoginErrorCopy) {
         launchRequest(
-            errorMessage = Res.string.maybe_later,
-            onError = { if (it !is CancellationException) ErrorHandler.showError(socialLoginError("Google", it.message)) },
+            onError = { if (it !is CancellationException) ErrorHandler.showError(socialLoginError("Google", it.message, errorCopy())) },
             onSuccess = { Navigator.navigate(Navigator.Screen.Main) },
         ) {
             authRepository.googleLogin(idToken).getOrThrow().also { signInAnalytics(it.userId, "google", "register") }
@@ -223,4 +192,12 @@ class RegisterViewModel(
     fun goToLogin() {
         Navigator.popThenNavigate(Navigator.Screen.Auth)
     }
+
+    internal fun onGoogleLoginError(message: String, copy: SocialLoginErrorCopy) {
+        ErrorHandler.showError(socialLoginError("Google", message, copy))
+    }
 }
+
+private data class RegisterFormSnapshot(
+    val name: String, val email: String, val password: String, val termsAccepted: Boolean, val analyticsAccepted: Boolean,
+)

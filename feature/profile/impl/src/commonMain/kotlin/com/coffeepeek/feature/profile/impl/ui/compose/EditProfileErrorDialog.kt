@@ -2,7 +2,7 @@ package com.coffeepeek.feature.profile.impl.ui.compose
 
 import androidx.compose.runtime.Composable
 import org.jetbrains.compose.resources.StringResource
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import com.coffeepeek.core.designsystem.component.CoffeePeekErrorDialog
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme

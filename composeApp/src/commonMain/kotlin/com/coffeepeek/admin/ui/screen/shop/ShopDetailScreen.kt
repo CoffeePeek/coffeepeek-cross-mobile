@@ -1,5 +1,11 @@
 package com.coffeepeek.admin.ui.screen.shop
 
+import com.coffeepeek.admin.ui.component.pluralCountLabel
+
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringArrayResource as stringArrayResource
+
+import coffeepeek.composeapp.generated.resources.*
+
 import com.coffeepeek.core.designsystem.component.CoffeePeekScaffold as Scaffold
 
 import com.coffeepeek.core.designsystem.component.CoffeePeekLikeIcon
@@ -44,11 +50,14 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
@@ -56,29 +65,31 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.material3.Button
+import com.coffeepeek.core.designsystem.component.CoffeePeekFilledButton as Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import com.coffeepeek.core.designsystem.component.CoffeePeekIconButton as IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
+import com.coffeepeek.core.designsystem.component.CoffeePeekOutlinedButton as OutlinedButton
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import com.coffeepeek.core.designsystem.component.CoffeePeekTextButton as TextButton
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
+import com.coffeepeek.core.designsystem.component.CoffeePeekPlainIconButton
+import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.clipToBounds
@@ -103,6 +114,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.coffeepeek.admin.utils.utcIsoToLocalDate
 import com.coffeepeek.admin.utils.formatOneDecimal
+import coffeepeek.composeapp.generated.resources.shop_copy_phone
 import coffeepeek.composeapp.generated.resources.Res
 import coffeepeek.composeapp.generated.resources.maskot_with_book
 import coffeepeek.composeapp.generated.resources.shop_report_issue
@@ -112,7 +124,7 @@ import coffeepeek.composeapp.generated.resources.checkin_error_shop_address
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import com.coffeepeek.admin.location.distanceToShopMeters
 import com.coffeepeek.admin.location.formatDistance
 import com.coffeepeek.admin.location.rememberPermittedUserLocation
@@ -161,6 +173,9 @@ private const val FeaturePreviewCount = 5
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ShopDetailScreen(shopId: String, forCheckIn: Boolean = false) {
+    val localizedLegacyAddShopScreenSandboxCitiesFailure = stringResource(Res.string.legacy_add_shop_screen_sandbox_cities_failure)
+    val localizedHistoryHomeRetry = stringResource(Res.string.history_home_retry)
+
     val vm: ShopDetailViewModel = platformViewModel(parameters = { parametersOf(shopId) })
     val menuGalleryRenderer = koinInject<ShopMenuGalleryScreenRenderer>()
     val checkInRenderer = koinInject<ShopCheckInFormRenderer>()
@@ -176,8 +191,12 @@ fun ShopDetailScreen(shopId: String, forCheckIn: Boolean = false) {
     var preview by remember { mutableStateOf<Pair<CoffeePeekPhotoViewerImages, Int>?>(null) }
     var showRoutePicker by remember { mutableStateOf(false) }
 
-    LaunchedEffect(state.actionMessage) {
-        state.actionMessage?.let { message ->
+    val feedbackLabels = shopDetailLabels()
+    val shareLabels = shopShareLabels()
+    val actionMessage = state.actionFeedback?.message(feedbackLabels) ?: state.actionMessage
+    val loadError = state.loadFeedback?.message(feedbackLabels) ?: state.error
+    LaunchedEffect(actionMessage) {
+        actionMessage?.let { message ->
             snackbarHostState.showSnackbar(message)
             vm.clearActionMessage()
         }
@@ -227,7 +246,7 @@ fun ShopDetailScreen(shopId: String, forCheckIn: Boolean = false) {
                     onSubmit = vm::checkIn,
                     placeName = state.details?.shop?.title,
                     submittedVisibility = state.submittedCheckInVisibility,
-                    submissionError = state.checkInError,
+                    submissionError = state.checkInValidationError?.message(checkInDraftValidationLabels()) ?: state.checkInFeedback?.message(feedbackLabels) ?: state.checkInError,
                     onGoToFeed = {
                         vm.dismissCheckInSheet()
                         Navigator.popThenSelectTab(Navigator.Screen.CommunityTab)
@@ -246,6 +265,7 @@ fun ShopDetailScreen(shopId: String, forCheckIn: Boolean = false) {
     val floatingActionsClearance = 72.dp
     val systemBottomInset = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
     val hazeState = rememberHazeState()
+    val listState = rememberLazyListState()
 
     Box(modifier = Modifier.fillMaxSize()) {
         Scaffold(
@@ -270,14 +290,14 @@ fun ShopDetailScreen(shopId: String, forCheckIn: Boolean = false) {
                         CoffeePeekLoader()
                     }
                 }
-                state.error != null -> {
+                loadError != null -> {
                     Box(
                         modifier = Modifier.fillMaxSize().padding(padding),
                         contentAlignment = Alignment.Center,
                     ) {
                         Column(horizontalAlignment = Alignment.CenterHorizontally) {
                             Text(
-                                text = state.error ?: "Ошибка",
+                                text = loadError ?: localizedLegacyAddShopScreenSandboxCitiesFailure,
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
@@ -289,13 +309,14 @@ fun ShopDetailScreen(shopId: String, forCheckIn: Boolean = false) {
                                 colors = ButtonDefaults.buttonColors(
                                     containerColor = MaterialTheme.colorScheme.primary,
                                 ),
-                            ) { Text("Повторить") }
+                            ) { Text(localizedHistoryHomeRetry) }
                         }
                     }
                 }
                 details != null -> {
                     ShopDetailContent(
                         details = details,
+                        listState = listState,
                         distance = distance,
                         isLoggedIn = state.isLoggedIn,
                         currentUserId = state.currentUserId,
@@ -308,16 +329,15 @@ fun ShopDetailScreen(shopId: String, forCheckIn: Boolean = false) {
                         onReviewPhotoClick = { urls, index -> preview = urls to index },
                         onReviewHelpfulClick = vm::toggleHelpful,
                         menuGalleryAction = { menuGalleryRenderer.MenuGalleryAction(shopId) },
-                        headerActions = { heroHaze ->
-                            HeroTopActions(heroHaze, Navigator::popBack, details.shop.isFavorite,
-                                state.isFavoriteLoading, vm::toggleFavorite, vm::shareShop, vm::openSuggestChange,
-                                modifier = Modifier.statusBarsPadding(), businessId = details.shop.id, businessSlug = details.shop.publicAddress?.slug.orEmpty())
-                        },
                     )
                 }
             }
         }
 
+        if (details != null && !state.isLoading && loadError == null) {
+            ShopDetailScrollingActions(details, listState, hazeState, state.isFavoriteLoading,
+                vm::toggleFavorite, { vm.shareShop(shareLabels) }, vm::openSuggestChange)
+        }
         if (details != null) {
             ShopDetailBottomBar(
                 isCheckInLoading = state.isCheckInLoading,
@@ -340,10 +360,30 @@ fun ShopDetailScreen(shopId: String, forCheckIn: Boolean = false) {
     }
 }
 
+@Composable
+private fun ShopDetailScrollingActions(
+    details: CoffeeShopDetails,
+    listState: LazyListState,
+    hazeState: HazeState,
+    isFavoriteLoading: Boolean,
+    onToggleFavorite: () -> Unit,
+    onShare: () -> Unit,
+    onSuggestChange: () -> Unit,
+) {
+    if (listState.firstVisibleItemIndex != 0) return
+    HeroTopActions(hazeState, Navigator::popBack, details.shop.isFavorite,
+        isFavoriteLoading, onToggleFavorite, onShare, onSuggestChange,
+        modifier = Modifier.statusBarsPadding().offset {
+            IntOffset(0, -listState.firstVisibleItemScrollOffset)
+        }, businessId = details.shop.id,
+        businessSlug = details.shop.publicAddress?.slug.orEmpty())
+}
+
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun ShopDetailContent(
     details: CoffeeShopDetails,
+    listState: LazyListState,
     distance: String?,
     isLoggedIn: Boolean,
     currentUserId: String? = null,
@@ -356,10 +396,7 @@ private fun ShopDetailContent(
     onReviewPhotoClick: (CoffeePeekPhotoViewerImages, Int) -> Unit = { _, _ -> },
     onReviewHelpfulClick: (String) -> Unit = {},
     menuGalleryAction: @Composable () -> Unit = {},
-    headerActions: @Composable (HazeState) -> Unit = {},
 ) {
-    // The screen source includes these controls, so the hero uses a separate blur source.
-    val heroHaze = rememberHazeState()
     val shop = details.shop
     val photos = details.photos.filter { it.isNotBlank() }.ifEmpty {
         listOfNotNull(shop.photoUrl?.takeIf { it.isNotBlank() })
@@ -369,6 +406,7 @@ private fun ShopDetailContent(
         .takeIf { it.size == photos.size } ?: photos
 
     LazyColumn(
+        state = listState,
         modifier = modifier.fillMaxSize().clipToBounds(),
         contentPadding = PaddingValues(bottom = bottomContentPadding + CpDimens.spacing4),
     ) {
@@ -394,7 +432,6 @@ private fun ShopDetailContent(
                     onPhotoClick = { url -> Analytics.track(AnalyticsEvent.SHOP_CONTENT_INTERACTED, "section" to "photos", "action" to "open"); onOpenPhotos(CoffeePeekPhotoViewerImages(photos, fullscreenPhotos), photos.indexOf(url).coerceAtLeast(0)) },
                     modifier = Modifier.hazeSource(heroHaze),
                 )
-                headerActions(heroHaze)
             }
         }
 
@@ -526,7 +563,7 @@ private fun ShopHeroImage(
                 } else {
                     CoffeeShopPlaceholderImage(
                         labelSize = 24.sp,
-                        contentDescription = "Фото $title отсутствует",
+                        contentDescription = stringResource(Res.string.legacy_shop_photo_missing, title),
                     )
                 }
             } else {
@@ -584,11 +621,13 @@ private fun HeroTopActions(
     modifier: Modifier = Modifier,
     businessId: String = "", businessSlug: String = "",
 ) {
-    Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(CpDimens.spacing3)
-            .heightIn(min = 48.dp),
+    val localizedProfileCheckinsBack = stringResource(Res.string.profile_checkins_back)
+
+    androidx.compose.runtime.CompositionLocalProvider(
+        com.coffeepeek.core.designsystem.modifier.LocalCoffeePeekGlassHazeState provides hazeState,
+    ) {
+      Row(
+        modifier = modifier.fillMaxWidth().padding(CpDimens.spacing3).heightIn(min = 48.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -598,7 +637,7 @@ private fun HeroTopActions(
             onClick = onBack,
             enabled = true,
             isLoading = false,
-            contentDescription = "Назад",
+            contentDescription = localizedProfileCheckinsBack,
         ) {
             Icon(
                 imageVector = CpIcons.Back,
@@ -615,6 +654,7 @@ private fun HeroTopActions(
             onShare = onShare,
             onSuggestChange = onSuggestChange,
         )
+      }
     }
 }
 
@@ -640,6 +680,11 @@ private fun HeroShopDetails(
     onOpenReviews: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val localizedLegacyShopDetailScreenShopOverviewShowOnMap = stringResource(Res.string.legacy_shop_detail_screen_shop_overview_show_on_map)
+    val localizedLegacyShopDetailScreenShopOverviewNoRating = stringResource(Res.string.legacy_shop_detail_screen_shop_overview_no_rating)
+    val localizedLegacyShopDetailScreenShopOverviewDistance = stringResource(Res.string.legacy_shop_detail_screen_shop_overview_distance)
+    val localizedLegacyShopDetailScreenShopPriceTitle = stringResource(Res.string.legacy_shop_detail_screen_shop_price_title)
+
     val priceLevel = priceRange?.takeIf { it.isNotBlank() }?.let(::priceRangeLevel)
     val ratingLabel = rating?.takeIf { it > 0.0 }?.let(::formatOneDecimal)
     var showPriceInfo by remember { mutableStateOf(false) }
@@ -674,7 +719,7 @@ private fun HeroShopDetails(
         }
 
         val addressLabel = address?.takeIf { it.isNotBlank() }
-            ?: if (canOpenMap) "Показать на карте" else null
+            ?: if (canOpenMap) localizedLegacyShopDetailScreenShopOverviewShowOnMap else null
         addressLabel?.let { label ->
             Row(
                 modifier = Modifier.clickable(enabled = canOpenMap, onClick = onOpenOnMap),
@@ -703,7 +748,7 @@ private fun HeroShopDetails(
             horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing2),
         ) {
             HeroInfoCard(
-                title = ratingLabel ?: "Нет оценок",
+                title = ratingLabel ?: localizedLegacyShopDetailScreenShopOverviewNoRating,
                 subtitle = reviewCountLabel(reviewCount),
                 icon = CpIcons.StarFilled,
                 iconTint = CpColor.Primary,
@@ -714,7 +759,7 @@ private fun HeroShopDetails(
             distance?.let { label ->
                 HeroInfoCard(
                     title = label,
-                    subtitle = "От вас",
+                    subtitle = localizedLegacyShopDetailScreenShopOverviewDistance,
                     icon = CpIcons.Distance,
                     iconTint = MaterialTheme.colorScheme.onSurface,
                     modifier = Modifier.weight(1f).fillMaxHeight(),
@@ -723,7 +768,7 @@ private fun HeroShopDetails(
             priceLevel?.let { level ->
                 HeroInfoCard(
                     title = priceLevelValue(level).orEmpty(),
-                    subtitle = "Средний чек",
+                    subtitle = localizedLegacyShopDetailScreenShopPriceTitle,
                     icon = CpIcons.Coins,
                     iconTint = CpColor.Primary,
                     modifier = Modifier.weight(1.2f).fillMaxHeight(),
@@ -791,6 +836,9 @@ private fun HeroInfoCard(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ShopPriceInfoSheet(selectedLevel: Int, onDismiss: () -> Unit) {
+    val localizedLegacyShopDetailScreenShopPriceTitle = stringResource(Res.string.legacy_shop_detail_screen_shop_price_title)
+    val localizedLegacyShopDetailScreenShopPriceSelected = stringResource(Res.string.legacy_shop_detail_screen_shop_price_selected)
+
     SwipeDismissModalBottomSheet(onDismissRequest = onDismiss) {
         Column(
             modifier = Modifier
@@ -799,7 +847,7 @@ private fun ShopPriceInfoSheet(selectedLevel: Int, onDismiss: () -> Unit) {
                 .padding(bottom = CpDimens.spacing6),
             verticalArrangement = Arrangement.spacedBy(CpDimens.spacing3),
         ) {
-            SectionTitle("Средний чек")
+            SectionTitle(localizedLegacyShopDetailScreenShopPriceTitle)
             for (level in 1..3) {
                 Row(
                     modifier = Modifier
@@ -820,7 +868,7 @@ private fun ShopPriceInfoSheet(selectedLevel: Int, onDismiss: () -> Unit) {
                     if (level == selectedLevel) {
                         Icon(
                             imageVector = CpIcons.Check,
-                            contentDescription = "Уровень стоимости этой кофейни",
+                            contentDescription = localizedLegacyShopDetailScreenShopPriceSelected,
                             tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(20.dp),
                         )
@@ -887,10 +935,13 @@ private fun ReportIssueSection(onReportIssue: () -> Unit) {
 
 @Composable
 private fun ShopTypeBadge(shopType: String) {
+    val localizedLegacyShopDetailScreenDiscoveryKindCafe = stringResource(Res.string.legacy_shop_detail_screen_discovery_kind_cafe)
+    val localizedLegacyReviewContentOwnershipKindShop = stringResource(Res.string.legacy_review_content_ownership_kind_shop)
+
     val label = when (shopType) {
         CoffeeShopType.SPECIALTY -> "SPECIALTY"
-        CoffeeShopType.CAFE -> "Кафе"
-        else -> "Кофейня"
+        CoffeeShopType.CAFE -> localizedLegacyShopDetailScreenDiscoveryKindCafe
+        else -> localizedLegacyReviewContentOwnershipKindShop
     }
     Surface(
         shape = CircleShape,
@@ -919,8 +970,10 @@ private fun ShopTypeBadge(shopType: String) {
 
 @Composable
 private fun PhotoCounter(current: Int, total: Int, modifier: Modifier = Modifier) {
+    val description = stringResource(Res.string.legacy_photo_short_position, current, total)
+
     Surface(
-        modifier = modifier.semantics { contentDescription = "Фото $current из $total" },
+        modifier = modifier.semantics { contentDescription = description },
         shape = CircleShape,
         color = Color.Black.copy(alpha = 0.6f),
     ) {
@@ -952,34 +1005,32 @@ private fun HeaderActionButtons(
 
 @Composable
 private fun ShopFavoriteHeroButton(hazeState: HazeState, favorite: Boolean, loading: Boolean, toggle: () -> Unit) {
+    val localizedFavoriteRemove = stringResource(Res.string.favorite_remove)
+    val localizedFavoriteAdd = stringResource(Res.string.favorite_add)
+
     HeroIconButton(icon = if (favorite) GlassControlIcon.FavoriteFilled else GlassControlIcon.Favorite,
         hazeState = hazeState, onClick = toggle,
         modifier = Modifier.analyticsExposure("favorites", "shop_detail", "shop_detail"),
         enabled = !loading, isLoading = loading,
-        contentDescription = if (favorite) "Убрать из избранного" else "Добавить в избранное") {
+        contentDescription = if (favorite) localizedFavoriteRemove else localizedFavoriteAdd) {
         CoffeePeekLikeIcon(favorite, contentDescription = null)
     }
 }
 
 @Composable
 private fun ShopShareHeroButton(hazeState: HazeState, share: () -> Unit) {
+    val localizedLegacyShopDetailScreenCommunityShare = stringResource(Res.string.legacy_shop_detail_screen_community_share)
+
     HeroIconButton(icon = GlassControlIcon.Share, hazeState = hazeState, onClick = share,
         modifier = Modifier.analyticsExposure("share", "shop_detail", "shop_detail"),
-        enabled = true, isLoading = false, contentDescription = "Поделиться") {
+        enabled = true, isLoading = false, contentDescription = localizedLegacyShopDetailScreenCommunityShare) {
         Icon(CpIcons.Share, null, tint = MaterialTheme.colorScheme.onSurface)
     }
 }
 
+@Composable
 private fun reviewCountLabel(count: Int): String {
-    val mod10 = count % 10
-    val mod100 = count % 100
-    val word = when {
-        mod100 in 11..14 -> "чекинов"
-        mod10 == 1 -> "чекин"
-        mod10 in 2..4 -> "чекина"
-        else -> "чекинов"
-    }
-    return "$count $word"
+    return pluralCountLabel(count, stringArrayResource(Res.array.legacy_checkin_forms))
 }
 
 private data class ShopFeatureItem(
@@ -1047,6 +1098,18 @@ private fun HeroIconButton(
 
 @Composable
 private fun CollapsibleScheduleSection(schedules: List<ShopSchedule>, isOpen: Boolean) {
+    val openingLabels = ShopOpeningLabels(
+        stringResource(Res.string.legacy_shop_opening_today), stringResource(Res.string.legacy_shop_opening_tomorrow),
+        stringResource(Res.string.legacy_shop_opening_weekday), stringArrayResource(Res.array.legacy_opening_weekdays),
+    )
+
+    val localizedDiscoveryMapCardOpen = stringResource(Res.string.discovery_map_card_open)
+    val localizedLegacyShopDetailScreenShopScheduleTodayClosed = stringResource(Res.string.legacy_shop_detail_screen_shop_schedule_today_closed)
+    val localizedDiscoveryMapCardClosed = stringResource(Res.string.discovery_map_card_closed)
+    val localizedLegacyAddShopScreenContributionsShopHours = stringResource(Res.string.legacy_add_shop_screen_contributions_shop_hours)
+    val localizedLegacyShopDetailScreenShopScheduleCollapse = stringResource(Res.string.legacy_shop_detail_screen_shop_schedule_collapse)
+    val localizedLegacyShopDetailScreenShopScheduleExpand = stringResource(Res.string.legacy_shop_detail_screen_shop_schedule_expand)
+
     var expanded by remember { mutableStateOf(false) }
     val chevronRotation by animateFloatAsState(
         targetValue = if (expanded) 90f else 0f,
@@ -1064,10 +1127,10 @@ private fun CollapsibleScheduleSection(schedules: List<ShopSchedule>, isOpen: Bo
         ?.intervals?.lastOrNull()?.closeTime?.let(::formatTime)
         ?.takeIf { it.isNotBlank() }
     val status = when {
-        isOpen && closingTime != null -> "Открыто до $closingTime"
-        isOpen -> "Открыто"
-        else -> nextShopOpeningLabel(schedules, currentDay, currentLocalMinuteOfDay())
-            ?: if (todaySchedule?.isClosed == true) "Сегодня выходной" else "Закрыто"
+        isOpen && closingTime != null -> stringResource(Res.string.legacy_shop_open_until, closingTime)
+        isOpen -> localizedDiscoveryMapCardOpen
+        else -> nextShopOpeningLabel(schedules, currentDay, currentLocalMinuteOfDay(), openingLabels)
+            ?: if (todaySchedule?.isClosed == true) localizedLegacyShopDetailScreenShopScheduleTodayClosed else localizedDiscoveryMapCardClosed
     }
 
     Column(
@@ -1076,7 +1139,7 @@ private fun CollapsibleScheduleSection(schedules: List<ShopSchedule>, isOpen: Bo
             .padding(horizontal = CpDimens.spacing4, vertical = CpDimens.spacing3),
         verticalArrangement = Arrangement.spacedBy(CpDimens.spacing3),
     ) {
-        SectionTitle("Часы работы")
+        SectionTitle(localizedLegacyAddShopScreenContributionsShopHours)
         OutlinedContentCard {
             Row(
                 modifier = Modifier
@@ -1106,7 +1169,7 @@ private fun CollapsibleScheduleSection(schedules: List<ShopSchedule>, isOpen: Bo
                 Spacer(Modifier.width(CpDimens.spacing2))
                 Icon(
                     imageVector = CpIcons.ChevronRight,
-                    contentDescription = if (expanded) "Скрыть часы работы" else "Показать часы работы",
+                    contentDescription = if (expanded) localizedLegacyShopDetailScreenShopScheduleCollapse else localizedLegacyShopDetailScreenShopScheduleExpand,
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.size(18.dp).rotate(chevronRotation),
                 )
@@ -1145,6 +1208,8 @@ private fun ContactsSection(
     contact: ShopContact,
     onCopyPhone: (String) -> Unit,
 ) {
+    val localizedLegacyAddShopScreenContributionsSectionContacts = stringResource(Res.string.legacy_add_shop_screen_contributions_section_contacts)
+
     val contacts = buildList {
         contact.phone?.takeIf { it.isNotBlank() }?.let { phone ->
             add(ShopContactItem(
@@ -1184,7 +1249,7 @@ private fun ContactsSection(
             .padding(horizontal = CpDimens.spacing4, vertical = CpDimens.spacing4),
         verticalArrangement = Arrangement.spacedBy(CpDimens.spacing3),
     ) {
-        SectionTitle("Контакты")
+        SectionTitle(localizedLegacyAddShopScreenContributionsSectionContacts)
         OutlinedContentCard(contentPadding = PaddingValues(0.dp)) {
             contacts.forEachIndexed { index, item ->
                 if (index > 0) {
@@ -1236,26 +1301,28 @@ private fun ShopContactRow(item: ShopContactItem) {
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.weight(1f),
         )
-        if (item.onCopy != null) {
-            IconButton(onClick = item.onCopy, modifier = Modifier.size(44.dp)) {
-                Icon(
-                    imageVector = CpIcons.Copy,
-                    contentDescription = "Скопировать номер",
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(20.dp),
-                )
-            }
-        } else {
-            Box(modifier = Modifier.size(44.dp), contentAlignment = Alignment.Center) {
-                Icon(
-                    imageVector = CpIcons.ChevronRight,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(20.dp),
-                )
-            }
+        ShopContactTrailingAction(item.onCopy)
+    }
+}
+
+@Composable
+private fun ShopContactTrailingAction(onCopy: (() -> Unit)?) {
+    if (onCopy != null) {
+        CoffeePeekPlainIconButton(onClick = onCopy) {
+            Icon(CpIcons.Copy, stringResource(Res.string.shop_copy_phone), Modifier.size(20.dp))
+        }
+    } else {
+        Box(Modifier.size(48.dp), contentAlignment = Alignment.Center) {
+            Icon(CpIcons.ChevronRight, null, Modifier.size(20.dp), MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
+}
+
+@Preview @Composable private fun ShopCopyPhoneLightPreview() = CoffeePeekTheme(darkTheme = false) {
+    ShopContactRow(ShopContactItem(CpIcons.Phone, "+375 29 123 45 67", {}, {}))
+}
+@Preview @Composable private fun ShopCopyPhoneDarkPreview() = CoffeePeekTheme(darkTheme = true) {
+    ShopContactRow(ShopContactItem(CpIcons.Phone, "+375 29 123 45 67", {}, {}))
 }
 
 @Composable
@@ -1271,6 +1338,9 @@ private fun ReviewsSection(
     onReviewPhotoClick: (CoffeePeekPhotoViewerImages, Int) -> Unit,
     onReviewHelpfulClick: (String) -> Unit,
 ) {
+    val localizedProfileStatCheckIns = stringResource(Res.string.profile_stat_check_ins)
+    val localizedLegacyShopDetailScreenShopCheckinsShowAll = stringResource(Res.string.legacy_shop_detail_screen_shop_checkins_show_all)
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -1279,10 +1349,10 @@ private fun ReviewsSection(
         verticalArrangement = Arrangement.spacedBy(CpDimens.spacing2),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-            Box(Modifier.weight(1f)) { SectionTitle("Чекины") }
+            Box(Modifier.weight(1f)) { SectionTitle(localizedProfileStatCheckIns) }
             if (checkIns.isNotEmpty()) {
                 IconButton(onClick = { Navigator.navigate(Navigator.Screen.ShopReviews(shopId)) }) {
-                    Icon(CpIcons.ChevronRight, contentDescription = "Все чекины")
+                    Icon(CpIcons.ChevronRight, contentDescription = localizedLegacyShopDetailScreenShopCheckinsShowAll)
                 }
             }
         }
@@ -1292,7 +1362,7 @@ private fun ReviewsSection(
         if (checkIns.isEmpty()) {
             EmptyMascotState(
                 mascot = Res.drawable.maskot_with_book,
-                message = "Станьте первым, кто оценит и оставит чекин о своём посещении $shopTitle",
+                message = stringResource(Res.string.legacy_shop_first_checkin, shopTitle),
             )
         } else if (!isLoggedIn) {
             BoxWithConstraints(
@@ -1375,6 +1445,9 @@ private fun ReviewsSection(
 
 @Composable
 private fun ShopFeaturesSection(features: List<ShopFeatureItem>) {
+    val localizedShopFiltersAmenities = stringResource(Res.string.shop_filters_amenities)
+    val localizedLegacyGroupedListDiscoveryFiltersCollapse = stringResource(Res.string.legacy_grouped_list_discovery_filters_collapse)
+
     var expanded by remember(features) { mutableStateOf(false) }
     val visibleFeatures = if (expanded) features else features.take(FeaturePreviewCount)
 
@@ -1385,7 +1458,7 @@ private fun ShopFeaturesSection(features: List<ShopFeatureItem>) {
             .padding(top = CpDimens.spacing6, bottom = CpDimens.spacing3),
         verticalArrangement = Arrangement.spacedBy(CpDimens.spacing3),
     ) {
-        SectionTitle("Особенности")
+        SectionTitle(localizedShopFiltersAmenities)
         OutlinedContentCard {
             Column(verticalArrangement = Arrangement.spacedBy(CpDimens.spacing1)) {
                 visibleFeatures.forEach { feature ->
@@ -1403,7 +1476,7 @@ private fun ShopFeaturesSection(features: List<ShopFeatureItem>) {
                     contentAlignment = Alignment.Center,
                 ) {
                     Text(
-                        text = if (expanded) "Свернуть" else showAllFeaturesLabel(features.size),
+                        text = if (expanded) localizedLegacyGroupedListDiscoveryFiltersCollapse else showAllFeaturesLabel(features.size),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onSurface,
@@ -1447,21 +1520,16 @@ private fun ShopFeatureRow(feature: ShopFeatureItem) {
     }
 }
 
+@Composable
 private fun showAllFeaturesLabel(count: Int): String {
-    val mod10 = count % 10
-    val mod100 = count % 100
-    val word = when {
-        mod100 in 11..14 -> "особенностей"
-        mod10 == 1 -> "особенность"
-        mod10 in 2..4 -> "особенности"
-        else -> "особенностей"
-    }
-    return "Показать все $count $word"
+    return stringResource(Res.string.legacy_shop_all_features, pluralCountLabel(count, stringArrayResource(Res.array.legacy_feature_forms)))
 }
 
 @Composable
 private fun DescriptionSection(description: String) {
-    "Описание".SectionCard({
+    val localizedCheckinDescriptionLabel = stringResource(Res.string.checkin_description_label)
+
+    localizedCheckinDescriptionLabel.SectionCard({
         Text(
             text = description,
             style = MaterialTheme.typography.bodyMedium,
@@ -1476,6 +1544,8 @@ private fun MenuSection(
     onPhotoClick: (Int) -> Unit,
     galleryAction: @Composable () -> Unit = {},
 ) {
+    val localizedLegacyShopDetailScreenContributionsSectionMenu = stringResource(Res.string.legacy_shop_detail_screen_contributions_section_menu)
+
     val capturedLabel = menu.capturedAtUtc?.let(::formatMenuDate)
     val updatedLabel = menu.updatedAtUtc?.let(::formatMenuDate)
     val groups = groupedPresentItems(menu.items)
@@ -1490,7 +1560,7 @@ private fun MenuSection(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Box(modifier = Modifier.weight(1f)) {
-                SectionTitle("Меню")
+                SectionTitle(localizedLegacyShopDetailScreenContributionsSectionMenu)
             }
             if (menu.photos.isNotEmpty()) galleryAction()
         }
@@ -1554,14 +1624,14 @@ private fun MenuFreshness(
     Column(modifier = modifier) {
         if (!capturedLabel.isNullOrBlank()) {
             Text(
-                text = "Актуально на $capturedLabel",
+                text = stringResource(Res.string.legacy_menu_current_on, capturedLabel),
                 style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp, lineHeight = 14.sp),
                 color = contentColor,
             )
         }
         if (!updatedLabel.isNullOrBlank() && updatedLabel != capturedLabel) {
             Text(
-                text = "Обновлено $updatedLabel",
+                text = stringResource(Res.string.legacy_menu_updated, updatedLabel),
                 style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp, lineHeight = 14.sp),
                 color = contentColor,
             )
@@ -1571,6 +1641,8 @@ private fun MenuFreshness(
 
 @Composable
 private fun MenuDrinkRow(item: ShopMenuItem) {
+    val localizedLegacyShopDetailScreenBelarusianRuble = stringResource(Res.string.legacy_shop_detail_screen_belarusian_ruble)
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -1598,7 +1670,7 @@ private fun MenuDrinkRow(item: ShopMenuItem) {
                     PriceBynIcon(
                         modifier = Modifier.size(16.dp),
                         tint = MaterialTheme.colorScheme.onSurface,
-                        contentDescription = "Белорусский рубль",
+                        contentDescription = localizedLegacyShopDetailScreenBelarusianRuble,
                     )
                 } else {
                     Text(
@@ -1700,6 +1772,9 @@ private fun CoffeeDetailsSection(
     equipment: List<String>,
     onRoasterClick: (String) -> Unit,
 ) {
+    val localizedCheckinRatingCoffee = stringResource(Res.string.checkin_rating_coffee)
+    val localizedShopFiltersEquipment = stringResource(Res.string.shop_filters_equipment)
+
     Column(
         modifier = Modifier
             .fillMaxWidth().analyticsExposure("shop_roasters", "shop_detail", "shop_detail")
@@ -1707,8 +1782,8 @@ private fun CoffeeDetailsSection(
         verticalArrangement = Arrangement.spacedBy(CpDimens.spacing3),
     ) {
         RoasterDetailGroup(roasters, onRoasterClick)
-        CatalogDetailGroup("Кофе", coffeeBeans)
-        CatalogDetailGroup("Оборудование", equipment)
+        CatalogDetailGroup(localizedCheckinRatingCoffee, coffeeBeans)
+        CatalogDetailGroup(localizedShopFiltersEquipment, equipment)
     }
 }
 
@@ -1717,9 +1792,11 @@ private fun RoasterDetailGroup(
     items: List<CatalogItem>,
     onRoasterClick: (String) -> Unit,
 ) {
+    val localizedFavoritesRoasters = stringResource(Res.string.favorites_roasters)
+
     if (items.isEmpty()) return
     Column(verticalArrangement = Arrangement.spacedBy(CpDimens.spacing3)) {
-        SectionTitle("Обжарщики")
+        SectionTitle(localizedFavoritesRoasters)
         OutlinedContentCard(contentPadding = PaddingValues(0.dp)) {
             items.forEachIndexed { index, item ->
                 if (index > 0) {
@@ -1892,15 +1969,10 @@ private fun prettyLinkText(value: String): String {
         .ifBlank { value }
 }
 
-private fun dayOfWeekLabel(day: Int): String = when (day) {
-    0 -> "Воскресенье"
-    1 -> "Понедельник"
-    2 -> "Вторник"
-    3 -> "Среда"
-    4 -> "Четверг"
-    5 -> "Пятница"
-    6 -> "Суббота"
-    else -> "—"
+@Composable
+private fun dayOfWeekLabel(day: Int): String {
+    val weekdays = stringArrayResource(Res.array.legacy_weekdays_full)
+    return if (day in 0..6) weekdays[(day + 6) % 7] else "—"
 }
 
 private fun formatTime(raw: String): String {
@@ -1908,8 +1980,9 @@ private fun formatTime(raw: String): String {
     return raw.split(":").take(2).joinToString(":")
 }
 
+@Composable
 private fun formatScheduleHours(schedule: ShopSchedule): String = when {
-    schedule.isClosed -> "Выходной"
+    schedule.isClosed -> stringResource(Res.string.legacy_shop_detail_screen_shop_schedule_closed)
     schedule.intervals.isEmpty() -> "—"
     else -> schedule.intervals.joinToString("\n") { interval ->
         "${formatTime(interval.openTime)} – ${formatTime(interval.closeTime)}"
@@ -1976,7 +2049,7 @@ private fun MenuPhotoStack(
     ) { page ->
             CoffeeShopImage(
                 imageUrl = photos[page],
-                contentDescription = "Фотография меню ${page + 1} из ${photos.size}",
+                contentDescription = stringResource(Res.string.legacy_menu_photo_position, page + 1, photos.size),
                 contentScale = ContentScale.Crop,
                 placeholderLabelSize = 14.sp,
                 modifier = Modifier.fillMaxSize(),

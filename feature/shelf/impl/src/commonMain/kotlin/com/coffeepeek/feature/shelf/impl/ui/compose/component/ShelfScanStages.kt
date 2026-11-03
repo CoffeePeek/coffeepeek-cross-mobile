@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -22,6 +21,7 @@ import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
+import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
@@ -44,7 +44,8 @@ internal fun ShelfScanStagesRunning(stagesDone: Set<BagScanStage>, modifier: Mod
             when {
                 stage in stagesDone -> ShelfStageRow(stage.text(passed = false), muted) { ShelfStageRing(muted, filled = true) }
                 stage == current -> ShelfStageRow(stage.text(passed = false), MaterialTheme.colorScheme.onSurface) {
-                    CircularProgressIndicator(Modifier.size(16.dp), strokeWidth = 2.dp)
+                    CoffeePeekLoader(stage.text(passed = false), modifier = Modifier.size(16.dp), size = 16.dp,
+                        color = MaterialTheme.colorScheme.primary, strokeWidth = 2.dp)
                 }
                 else -> ShelfStageRow(stage.text(passed = false), muted) { ShelfStageRing(MaterialTheme.colorScheme.outlineVariant, filled = false) }
             }

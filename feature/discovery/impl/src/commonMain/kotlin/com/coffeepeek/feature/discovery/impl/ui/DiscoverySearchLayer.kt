@@ -9,6 +9,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import com.coffeepeek.feature.discovery.api.DiscoveryHost
 import com.coffeepeek.feature.discovery.api.DiscoveryRoasterContext
 import com.coffeepeek.feature.discovery.api.DiscoveryRoasterSlots
@@ -26,7 +27,7 @@ internal fun DiscoverySearchLayer(
             alpha = motion.searchOpacity.value
             translationY = -size.height / 5f * (1f - motion.searchOpacity.value)
         }) {
-            SearchContent(state, host, onAddShop, bottomClearance,
+            SearchContent(state, host, onAddShop, bottomClearance + 72.dp,
                 discovery = {
                     DiscoveryContent(state, host, roasters, context, ui.list, ui.shops,
                         ui.mapExpanded, motion.expansion.value, bottomClearance, onAddShop,
@@ -37,6 +38,8 @@ internal fun DiscoverySearchLayer(
                 },
                 textResults = { roasters.preview(context) }, onAction = onAction,
                 hasRoasterResults = if (state.query.isNotBlank()) roasters.hasResults(context) else null,
+                onAddRoaster = roasters.onAdd,
+                resultsState = ui.results,
                 headerModifier = Modifier
                     .then(if (ui.mapExpanded) Modifier.clearAndSetSemantics {} else Modifier)
                     .graphicsLayer {

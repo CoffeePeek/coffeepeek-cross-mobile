@@ -1,0 +1,12 @@
+<resources>
+    <string name="history_home_close">Закрыць</string>
+    <string name="history_home_loading">Загрузка хатняга запісу</string>
+    <string name="history_home_saving">Захаванне хатняга запісу</string>
+    <string name="history_home_load_error">Не ўдалося загрузіць хатні запіс</string>
+    <string name="history_home_action_error">Не ўдалося выканаць дзеянне. Запіс захаваны на экране</string>
+    <string name="history_home_retry">Паўтарыць</string>
+    <string name="history_home_delete_title">Выдаліць хатні запіс?</string>
+    <string name="history_home_delete_message">Ён знікне з гісторыі чэкінаў.</string>
+    <string name="history_home_delete_confirm">Выдаліць</string>
+    <string name="history_home_delete_cancel">Адмена</string>
+</resources>

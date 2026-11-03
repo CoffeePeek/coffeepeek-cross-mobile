@@ -12,6 +12,7 @@ import androidx.compose.ui.layout.LayoutCoordinates
 import androidx.compose.ui.layout.positionInRoot
 import com.coffeepeek.feature.discovery.impl.tab.Frame
 import com.coffeepeek.feature.discovery.impl.tab.previewFrame
+import com.coffeepeek.feature.discovery.impl.search.SearchAction
 
 internal const val MAP_ITEM_KEY = "mini-map"
 
@@ -20,6 +21,7 @@ internal const val MAP_ITEM_KEY = "mini-map"
 internal class DiscoveryTabState(
     val list: LazyListState,
     val shops: LazyListState,
+    val results: LazyListState,
     roasterVisibility: MutableState<Boolean>,
 ) {
     var showRoasters by roasterVisibility
@@ -32,6 +34,11 @@ internal class DiscoveryTabState(
         val layout = list.layoutInfo
         previewFrame(mapAnchor, viewportTop, layout.visibleItemsInfo.firstOrNull { it.key == MAP_ITEM_KEY }?.offset,
             layout.beforeContentPadding)
+    }
+
+    fun closeRoasters(onAction: (SearchAction) -> Unit) {
+        onAction(SearchAction.CancelSearch)
+        showRoasters = false
     }
 
     fun recordMapSlot(slot: Frame, ready: Boolean, discoveryProgress: Float, expansion: Float) {
@@ -51,7 +58,8 @@ internal fun rememberDiscoveryTabState(): DiscoveryTabState {
     val roasters = rememberSaveable { mutableStateOf(false) }
     val list = rememberLazyListState()
     val shops = rememberLazyListState()
-    return remember(list, shops, roasters) { DiscoveryTabState(list, shops, roasters) }
+    val results = rememberLazyListState()
+    return remember(list, shops, results, roasters) { DiscoveryTabState(list, shops, results, roasters) }
 }
 
 @Stable

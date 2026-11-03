@@ -61,7 +61,7 @@ private fun FeedPaginationEffect(listState: LazyListState, state: FeedUiState, s
         derivedStateOf {
             if (showDiscovery || state.shops.isEmpty()) false else
                 (listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0) >= state.shops.size - 5 &&
-                    state.hasMore && !state.isLoadingMore && !state.isLoading && !state.isRefreshing
+                    state.canLoadMore
         }
     }
     LaunchedEffect(shouldLoadMore) { if (shouldLoadMore) loadMore() }

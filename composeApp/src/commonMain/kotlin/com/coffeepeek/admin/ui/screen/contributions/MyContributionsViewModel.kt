@@ -2,12 +2,13 @@ package com.coffeepeek.admin.ui.screen.contributions
 
 import com.coffeepeek.admin.base.BaseViewModel
 import com.coffeepeek.admin.ui.Navigator
-import com.coffeepeek.admin.ui.screen.shopchange.hint
-import com.coffeepeek.admin.ui.screen.shopchange.title
 import com.coffeepeek.admin.utils.utcIsoToLocalDateTime
 import com.coffeepeek.domain.model.ModerationStatus
 import com.coffeepeek.domain.model.PagedResult
 import com.coffeepeek.domain.model.ShopChangeSection
+import com.coffeepeek.domain.model.ShopSubmission
+import com.coffeepeek.domain.model.RoasterSubmission
+import com.coffeepeek.domain.model.ShopChangeRequest
 import com.coffeepeek.domain.repository.RoasterRepository
 import com.coffeepeek.domain.repository.ShopChangeRequestRepository
 import com.coffeepeek.domain.repository.ShopRepository
@@ -21,21 +22,19 @@ import kotlinx.coroutines.launch
 
 private const val PAGE_SIZE = 20
 
-enum class ContributionKind(val title: String, val emptyText: String) {
-    Shops("Отправленные кофейни", "Вы ещё не добавляли кофейни"),
-    Roasters("Отправленные обжарщики", "Вы ещё не добавляли обжарщиков"),
-    Changes("Мои правки", "Вы ещё не отправляли правки"),
-}
+enum class ContributionKind { Shops, Roasters, Changes }
 
 /** Tab order on screen. */
 val CONTRIBUTION_TABS = listOf(ModerationStatus.Approved, ModerationStatus.Pending, ModerationStatus.Rejected)
 
 data class ContributionItem(
     val id: String,
-    val title: String,
+    val title: String = "",
     val subtitle: String? = null,
     val meta: String? = null,
     val changeSection: ShopChangeSection? = null,
+    val changeSummary: ContributionSummary? = null,
+    val awaitingCatalogPublication: Boolean = false,
     val rejectedReason: String? = null,
     val target: Navigator.Screen? = null,
 )
@@ -50,7 +49,7 @@ data class ContributionTab(
 
 data class MyContributionsUiState(
     val isLoading: Boolean = true,
-    val error: String? = null,
+    val error: ContributionLoadError? = null,
     val tabs: Map<ModerationStatus, ContributionTab> = emptyMap(),
 ) {
     /** Only statuses that actually have items get a tab. */
@@ -79,7 +78,7 @@ class MyContributionsViewModel(
             }
             val failure = results.firstNotNullOfOrNull { it.second.exceptionOrNull() }
             if (failure != null) {
-                _state.update { it.copy(isLoading = false, error = failure.message ?: "Ошибка загрузки") }
+                _state.update { it.copy(isLoading = false, error = ContributionLoadError(failure.message)) }
                 return@launch
             }
             _state.value = MyContributionsUiState(
@@ -109,57 +108,30 @@ class MyContributionsViewModel(
         }
     }
 
-    private suspend fun fetch(status: ModerationStatus, page: Int): Result<PagedResult<ContributionItem>> =
-        when (kind) {
-            ContributionKind.Shops -> shopRepository.getMyShopSubmissions(status, page, PAGE_SIZE).mapItems {
-                ContributionItem(
-                    id = it.id,
-                    title = it.name,
-                    subtitle = it.address,
-                    // Approved but not yet created in the catalog: nothing to open yet.
-                    meta = if (it.status == ModerationStatus.Approved && it.publishedShopId == null) {
-                        "Скоро появится в каталоге"
-                    } else null,
-                    rejectedReason = it.rejectedReason,
-                    target = it.publishedShopId?.let { id -> Navigator.Screen.ShopDetail(id) },
-                )
-            }
+    private suspend fun fetch(status: ModerationStatus, page: Int): Result<PagedResult<ContributionItem>> = when (kind) {
+        ContributionKind.Shops -> shopRepository.getMyShopSubmissions(status, page, PAGE_SIZE).mapItems { it.contributionItem() }
+        ContributionKind.Roasters -> roasterRepository.getMyRoasterSubmissions(status, page, PAGE_SIZE).mapItems { it.contributionItem() }
+        ContributionKind.Changes -> changeRepository.getMine(page, PAGE_SIZE, status = status).mapItems { it.contributionItem() }
+    }
 
-            // ponytail: no link to the published roaster, ModerationRoasterDto has no published id.
-            ContributionKind.Roasters -> roasterRepository.getMyRoasterSubmissions(status, page, PAGE_SIZE).mapItems {
-                ContributionItem(
-                    id = it.id,
-                    title = it.name,
-                    subtitle = it.about,
-                    rejectedReason = it.rejectedReason,
-                )
-            }
-
-            ContributionKind.Changes -> changeRepository.getMine(page, PAGE_SIZE, status = status).mapItems {
-                ContributionItem(
-                    id = it.id,
-                    title = it.section.title(),
-                    subtitle = it.payload.summary(it.section.hint()),
-                    meta = utcIsoToLocalDateTime(it.createdAtUtc),
-                    changeSection = it.section,
-                    rejectedReason = it.rejectionReason,
-                    target = Navigator.Screen.ShopChangeRequestDetail(requestId = it.id),
-                )
-            }
-        }
 }
 
-private fun com.coffeepeek.domain.model.ShopChangePayload.summary(fallback: String): String {
-    description?.let { return it.ifBlank { "Описание очищено" } }
-    if (contacts != null) return "Телефон, почта, сайт и Instagram"
-    photos?.let { return "Фото: ${it.retainedPhotoIds.size} сохранено · ${it.newPhotos.size} добавлено" }
-    tagIds?.let { return "Выбрано особенностей: ${it.size}" }
-    roasterIds?.let { return "Выбрано обжарщиков: ${it.size}" }
-    equipmentIds?.let { return "Выбрано оборудования: ${it.size}" }
-    brewMethodIds?.let { return "Выбрано методов: ${it.size}" }
-    menu?.let { return "Меню: ${it.items.size} позиций · ${it.newPhotos.size} новых фото" }
-    return fallback
-}
+private fun ShopSubmission.contributionItem() = ContributionItem(
+    id = id, title = name, subtitle = address,
+    awaitingCatalogPublication = status == ModerationStatus.Approved && publishedShopId == null,
+    rejectedReason = rejectedReason,
+    target = publishedShopId?.let { Navigator.Screen.ShopDetail(it) },
+)
+
+private fun RoasterSubmission.contributionItem() = ContributionItem(
+    id = id, title = name, subtitle = about, rejectedReason = rejectedReason,
+)
+
+private fun ShopChangeRequest.contributionItem() = ContributionItem(
+    id = id, changeSummary = payload.contributionSummary(), meta = utcIsoToLocalDateTime(createdAtUtc),
+    changeSection = section, rejectedReason = rejectionReason,
+    target = Navigator.Screen.ShopChangeRequestDetail(requestId = id),
+)
 
 private fun <T> Result<PagedResult<T>>.mapItems(transform: (T) -> ContributionItem) =
     map { PagedResult(it.items.map(transform), it.totalCount, it.totalPages, it.currentPage) }

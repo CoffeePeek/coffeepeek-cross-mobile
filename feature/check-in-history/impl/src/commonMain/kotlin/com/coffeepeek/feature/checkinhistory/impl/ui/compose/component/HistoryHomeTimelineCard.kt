@@ -22,6 +22,7 @@ import com.coffeepeek.feature.checkinhistory.impl.ui.data.visibilityLabel
 import com.coffeepeek.feature.checkinhistory.impl.ui.data.timelinePhotos
 import com.coffeepeek.feature.checkinhistory.impl.ui.data.timelineDose
 import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 
 @Composable
 internal fun HistoryHomeTimelineCard(entry: HomeHistoryEntry, dateLabel: String, onClick: () -> Unit,

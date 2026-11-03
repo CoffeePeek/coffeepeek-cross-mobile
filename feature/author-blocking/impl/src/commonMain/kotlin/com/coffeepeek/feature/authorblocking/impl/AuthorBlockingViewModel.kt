@@ -77,7 +77,7 @@ internal class AuthorBlockingViewModel(
     }
     private fun complete(request: AuthorBlockPrompt, result: Result<Unit>) {
         result.onSuccess { clearPrompt() }.onFailure {
-            _prompt.value = request.copy(error = "Не удалось сохранить блокировку. Проверьте подключение и повторите попытку.")
+            _prompt.value = request.copy(error = AuthorBlockError.SaveFailed)
         }
     }
     override fun close() { scope.cancel() }

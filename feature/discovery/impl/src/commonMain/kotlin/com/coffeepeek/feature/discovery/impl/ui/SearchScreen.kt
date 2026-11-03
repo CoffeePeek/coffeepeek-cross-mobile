@@ -13,8 +13,11 @@ import com.coffeepeek.feature.discovery.impl.resources.discovery_quick_nearby
 import com.coffeepeek.feature.discovery.impl.resources.discovery_quick_new
 import com.coffeepeek.feature.discovery.impl.resources.discovery_quick_open
 import com.coffeepeek.feature.discovery.impl.resources.discovery_quick_visited
+import com.coffeepeek.feature.discovery.impl.resources.discovery_pagination_error
 import com.coffeepeek.feature.discovery.impl.resources.discovery_refresh
+import com.coffeepeek.feature.discovery.impl.resources.discovery_refresh_error
 import com.coffeepeek.feature.discovery.impl.resources.discovery_refreshing
+import com.coffeepeek.feature.discovery.impl.resources.discovery_retry
 import com.coffeepeek.feature.discovery.impl.resources.discovery_search_cancel
 import com.coffeepeek.feature.discovery.impl.resources.discovery_search_clear
 import com.coffeepeek.feature.discovery.impl.resources.discovery_search_placeholder
@@ -23,6 +26,7 @@ import com.coffeepeek.feature.discovery.impl.resources.discovery_section_shops
 import com.coffeepeek.feature.discovery.impl.resources.discovery_suggestion_action
 import com.coffeepeek.feature.discovery.impl.resources.discovery_suggestion_description
 import com.coffeepeek.feature.discovery.impl.resources.discovery_suggestion_title
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandHorizontally
@@ -49,13 +53,14 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import com.coffeepeek.core.designsystem.component.CoffeePeekTextButton as TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -69,6 +74,8 @@ import com.coffeepeek.feature.discovery.domain.model.ShopSummary
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalFocusManager
 import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -76,12 +83,14 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.coffeepeek.core.designsystem.component.CoffeePeekCatalogSuggestionCard
 import com.coffeepeek.core.designsystem.component.CoffeePeekFilterChip
 import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
+import com.coffeepeek.core.designsystem.component.CoffeePeekPaginationStatus
+import com.coffeepeek.core.designsystem.component.CoffeePeekRefreshError
 import com.coffeepeek.core.designsystem.component.CoffeePeekPullToRefresh
 import com.coffeepeek.core.designsystem.component.CoffeePeekCircularBackButton
 import com.coffeepeek.core.designsystem.component.CoffeePeekSearchField
+import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.feature.discovery.api.DiscoveryExposure
 import com.coffeepeek.feature.discovery.api.DiscoveryHost
@@ -92,6 +101,9 @@ import com.coffeepeek.feature.discovery.impl.search.SearchAction
 import com.coffeepeek.feature.discovery.impl.search.SearchEvent
 import com.coffeepeek.feature.discovery.impl.search.SearchState
 import com.coffeepeek.feature.discovery.impl.search.SearchViewModel
+import com.coffeepeek.feature.discovery.impl.search.emptyReason
+import com.coffeepeek.feature.discovery.impl.search.canSuggestShop
+import com.coffeepeek.feature.discovery.impl.search.hasNoSearchMatches
 
 @Composable
 internal fun SearchContent(
@@ -110,14 +122,17 @@ internal fun SearchContent(
     /** No photo prefetch while the map covers the lists. */
     prefetch: Boolean = true,
     hasRoasterResults: Boolean? = null,
+    onAddRoaster: () -> Unit = {},
+    resultsState: LazyListState = rememberLazyListState(),
 ) {
     val reduceMotion = host.reduceMotion()
+    val queryFocus = remember { FocusRequester() }
     Column(modifier.fillMaxSize()) {
         Column(headerModifier) {
             Column(Modifier.padding(top = CoffeePeekDimens.spacing3, bottom = CoffeePeekDimens.spacing2)) {
-                SearchHeader(state, host, onAction)
+                SearchHeader(state, host, onAction, queryFocus)
                 Spacer(Modifier.height(CoffeePeekDimens.spacing2))
-                DiscoveryQuickFilters(state.filters, state.canUseNearby, onAction)
+                DiscoveryQuickFilters(state.filters, onAction)
             }
             HorizontalDivider(thickness = 1.dp, color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.7f))
         }
@@ -131,13 +146,14 @@ internal fun SearchContent(
             },
             label = "discovery-shop-list",
         ) { showsDiscovery ->
-            if (showsDiscovery) discovery() else ResultsList(state, host, onAddShop, bottomClearance, textResults, prefetch, hasRoasterResults, onAction)
+            if (showsDiscovery) discovery() else ResultsList(state, host, onAddShop, bottomClearance,
+                textResults, prefetch, hasRoasterResults, onAction, { queryFocus.requestFocus() }, onAddRoaster, resultsState)
         }
     }
 }
 
 @Composable
-private fun SearchHeader(state: SearchState, host: DiscoveryHost, onAction: (SearchAction) -> Unit) {
+private fun SearchHeader(state: SearchState, host: DiscoveryHost, onAction: (SearchAction) -> Unit, queryFocus: FocusRequester) {
     val focus = LocalFocusManager.current
     // The back button shows whenever the results list replaces the home tab, also when only a filter is on.
     val searching = !state.showsDiscovery
@@ -156,7 +172,7 @@ private fun SearchHeader(state: SearchState, host: DiscoveryHost, onAction: (Sea
                 CoffeePeekCircularBackButton(
                     onClick = { focus.clearFocus(); onAction(SearchAction.CancelSearch) },
                     contentDescription = stringResource(Res.string.discovery_search_cancel),
-                    tint = MaterialTheme.colorScheme.primary,
+                    tint = MaterialTheme.colorScheme.coffeePeekAccentForeground,
                 )
                 Spacer(Modifier.width(CoffeePeekDimens.spacing2))
             }
@@ -166,7 +182,8 @@ private fun SearchHeader(state: SearchState, host: DiscoveryHost, onAction: (Sea
             onValueChange = { onAction(SearchAction.Query(it)) },
             placeholder = stringResource(Res.string.discovery_search_placeholder),
             clearDescription = stringResource(Res.string.discovery_search_clear),
-            modifier = host.exposure(Modifier.weight(1f).onFocusChanged { if (it.isFocused) onAction(SearchAction.ActivateSearch) }, DiscoveryExposure.Search),
+            modifier = host.exposure(Modifier.weight(1f).focusRequester(queryFocus)
+                .onFocusChanged { if (it.isFocused) onAction(SearchAction.ActivateSearch) }, DiscoveryExposure.Search),
             onSearch = { focus.clearFocus() },
         )
         Spacer(Modifier.width(CoffeePeekDimens.spacing2))
@@ -186,16 +203,20 @@ private fun ResultsList(
     prefetch: Boolean,
     hasRoasterResults: Boolean?,
     onAction: (SearchAction) -> Unit,
+    onEditQuery: () -> Unit,
+    onAddRoaster: () -> Unit,
+    listState: LazyListState,
 ) {
-    val listState = rememberLazyListState()
     val shops = state.visibleShops
-    val showsTextResults = textResults != null && state.query.isNotBlank()
+    val showsTextResults = textResults != null && state.query.isNotBlank() && hasRoasterResults != false
     val shopsFirst = showsTextResults && state.showsShopsFirst(hasRoasterResults)
     // Section changes must bring the first result into view instead of retaining the old item anchor.
     LaunchedEffect(showsTextResults, shopsFirst) { listState.scrollToItem(0) }
     if (prefetch) host.photoPrefetch(listState, shops.map { it.id to listOfNotNull(it.photoUrl) })
     val nearEnd by remember { derivedStateOf { listState.layoutInfo.let { info -> (info.visibleItemsInfo.lastOrNull()?.index ?: 0) >= info.totalItemsCount - 5 } } }
-    LaunchedEffect(nearEnd, state.hasMore, state.isLoadingMore, shops.size) { if (nearEnd && state.hasMore && shops.isNotEmpty()) onAction(SearchAction.LoadMore) }
+    LaunchedEffect(nearEnd, state.canLoadMore, shops.size) {
+        if (nearEnd && state.canLoadMore && state.shops.isNotEmpty()) onAction(SearchAction.LoadMore)
+    }
     CoffeePeekPullToRefresh(
         listState = listState,
         isRefreshing = state.isRefreshing,
@@ -206,14 +227,16 @@ private fun ResultsList(
         LazyColumn(
             state = listState,
             modifier = scrollModifier.fillMaxSize(),
-            contentPadding = PaddingValues(start = CoffeePeekDimens.spacing4, top = CoffeePeekDimens.spacing4, end = CoffeePeekDimens.spacing4, bottom = bottomClearance + 88.dp),
+            contentPadding = PaddingValues(start = CoffeePeekDimens.spacing4, top = CoffeePeekDimens.spacing4, end = CoffeePeekDimens.spacing4, bottom = bottomClearance + CoffeePeekDimens.spacing4),
             verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3),
         ) {
             if (showsTextResults && !shopsFirst) roasterResults(textResults)
             if (showsTextResults) item(key = "shops-heading") {
                 Text(stringResource(Res.string.discovery_section_shops), style = MaterialTheme.typography.titleLarge)
             }
-            shopResults(state, host, onAddShop, onAction)
+            shopResults(state, host, onAddShop, onAction, onEditQuery,
+                if (state.query.isNotBlank() && hasRoasterResults == false) onAddRoaster else null,
+                state.hasNoSearchMatches(hasRoasterResults))
             if (shopsFirst) roasterResults(textResults)
         }
     }
@@ -229,6 +252,7 @@ private fun LazyListScope.roasterResults(content: (@Composable () -> Unit)?) {
 
 private fun LazyListScope.shopResults(
     state: SearchState, host: DiscoveryHost, onAddShop: () -> Unit, onAction: (SearchAction) -> Unit,
+    onEditQuery: () -> Unit, onAddRoaster: (() -> Unit)?, allResultsEmpty: Boolean,
 ) {
     val shops = state.visibleShops
     when {
@@ -240,7 +264,10 @@ private fun LazyListScope.shopResults(
         state.error != null && shops.isEmpty() -> item(key = "error") {
             host.loadError({ onAction(SearchAction.Refresh) }, Modifier.fillParentMaxSize())
         }
-        shops.isEmpty() -> item(key = "suggestion") { SuggestionCard(host, onAddShop) }
+        state.emptyReason != null -> item(key = "empty") {
+            SearchEmptyContent(requireNotNull(state.emptyReason), allResultsEmpty, state.query.isNotBlank(),
+                onEditQuery, { onAction(SearchAction.ResetFilterSelections) }, onAddShop, onAddRoaster, host.suggestionIllustration())
+        }
         else -> shopRows(state, host, onAddShop, onAction)
     }
 }
@@ -248,31 +275,32 @@ private fun LazyListScope.shopResults(
 private fun LazyListScope.shopRows(
     state: SearchState, host: DiscoveryHost, onAddShop: () -> Unit, onAction: (SearchAction) -> Unit,
 ) {
+    if (state.showsRefreshError) item(key = "refresh-error") {
+        CoffeePeekRefreshError(onRetry = { onAction(SearchAction.Refresh) },
+            message = stringResource(Res.string.discovery_refresh_error), retryLabel = stringResource(Res.string.discovery_retry))
+    }
     items(state.visibleShops, key = { it.id }, contentType = { "shop" }) { shop ->
         ShopRow(shop, host, shop.id in state.favoriteUpdates, state.userLocation,
             onOpen = { onAction(SearchAction.OpenShop(shop.id)) },
             onFavorite = { onAction(SearchAction.ToggleFavorite(shop.id)) })
     }
-    if (!state.isLoading && state.error == null) item(key = "suggestion") { SuggestionCard(host, onAddShop) }
-}
-
-@Composable
-private fun SuggestionCard(host: DiscoveryHost, onAddShop: () -> Unit) {
-    CoffeePeekCatalogSuggestionCard(
-        title = stringResource(Res.string.discovery_suggestion_title),
-        description = stringResource(Res.string.discovery_suggestion_description),
-        actionLabel = stringResource(Res.string.discovery_suggestion_action),
-        illustration = host.suggestionIllustration(),
-        onAdd = onAddShop,
-    )
+    if (state.isLoadingMore || state.loadMoreError != null) item(key = "pagination-status") {
+        CoffeePeekPaginationStatus(state.isLoadingMore, state.loadMoreError != null,
+            onRetry = { onAction(SearchAction.RetryLoadMore) },
+            fallbackMessage = stringResource(Res.string.discovery_pagination_error),
+            retryLabel = stringResource(Res.string.discovery_retry))
+    }
+    if (state.canSuggestShop) item(key = "suggestion") { SearchContributionActions(host.suggestionIllustration(), onAddShop) }
 }
 
 
 @Composable
-private fun SearchContentPreview(hasRoasterResults: Boolean, dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
+private fun SearchContentPreview(hasRoasterResults: Boolean, paginationError: Boolean = false, refreshError: Boolean = false) = CoffeePeekTheme {
     androidx.compose.material3.Surface {
         SearchContent(
             state = SearchState(query = "Coffee", searchActive = true, isLoading = false,
+                error = if (refreshError) com.coffeepeek.feature.discovery.impl.search.SearchError(null) else null,
+                loadMoreError = if (paginationError) com.coffeepeek.feature.discovery.impl.search.SearchError(null) else null,
                 shops = listOf(ShopSummary("fixture-shop", "CoffeePeek", rating = 4.7, checkInCount = 12))),
             host = DiscoveryHost(suggestionIllustration = { ColorPainter(Color.Transparent) }),
             onAddShop = {}, bottomClearance = 0.dp, discovery = {}, textResults = {},
@@ -281,6 +309,7 @@ private fun SearchContentPreview(hasRoasterResults: Boolean, dark: Boolean) = Co
     }
 }
 
-@Preview @Composable private fun SearchResultsLightPreview() = SearchContentPreview(hasRoasterResults = true, dark = false)
-@Preview @Composable private fun SearchResultsDarkPreview() = SearchContentPreview(hasRoasterResults = true, dark = true)
-@Preview @Composable private fun SearchShopsFirstPreview() = SearchContentPreview(hasRoasterResults = false, dark = false)
+@Preview @Composable private fun SearchResultsPreview() = SearchContentPreview(true)
+@Preview @Composable private fun SearchShopsFirstPreview() = SearchContentPreview(false)
+@Preview @Composable private fun SearchPaginationErrorPreview() = SearchContentPreview(false, paginationError = true)
+@Preview @Composable private fun SearchRefreshErrorPreview() = SearchContentPreview(false, refreshError = true)

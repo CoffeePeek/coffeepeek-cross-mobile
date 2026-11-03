@@ -345,6 +345,7 @@ class ShopDetailViewModelTest {
         viewModel.onAction(ShopDetailAction.ToggleFavorite)
         runCurrent()
         assertEquals(1, favorites.saves)
+        assertEquals(ShopDetailEvent.FavoriteFailed, viewModel.events.first().event)
     }
 
     @Test fun externalFavoriteChangesAndLogoutClearAreObservedWithoutReloadingDetails() = runTest(dispatcher) {

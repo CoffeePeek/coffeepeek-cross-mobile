@@ -12,6 +12,8 @@ import com.coffeepeek.feature.profile.impl.resources.profile_menu_submitted_shop
 import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
 import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.component.CoffeePeekIconButton as IconButton
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import com.coffeepeek.core.designsystem.component.CoffeePeekActionMenu
 import com.coffeepeek.core.designsystem.component.CoffeePeekMenuAction
 import com.coffeepeek.core.designsystem.component.CoffeePeekMenuIcon

@@ -1,6 +1,7 @@
 package com.coffeepeek.feature.settings.api
 
 import com.coffeepeek.feature.settings.domain.SettingsCity
+import com.coffeepeek.feature.settings.domain.AppLanguage
 import com.coffeepeek.feature.settings.domain.ThemeMode
 import com.coffeepeek.feature.settings.domain.UpdateCheckOutcome
 import com.coffeepeek.feature.settings.domain.UpdateCheckState
@@ -16,6 +17,18 @@ interface ThemePort {
 
     /** Takes effect immediately and is persisted by the app. */
     fun set(mode: ThemeMode)
+}
+
+/** The app owns persistence and applies this language to its Compose and native presentation. */
+interface LanguagePort {
+    /** The restored choice, or Russian when no choice has been saved. */
+    fun current(): AppLanguage
+
+    /** Replays the current choice, then every change. */
+    fun observe(): Flow<AppLanguage>
+
+    /** Persists first, then applies and publishes the choice. A failure preserves the previous language; cancellation is rethrown. */
+    suspend fun set(language: AppLanguage): Result<Unit>
 }
 
 /** The default city for discovery. Feed and Map read the same selection and resolve it themselves. */

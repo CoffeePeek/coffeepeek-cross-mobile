@@ -1,32 +1,41 @@
 package com.coffeepeek.admin.ui.screen.shopchange
 
+import androidx.compose.runtime.Composable
+
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
+
+import coffeepeek.composeapp.generated.resources.*
+
 import com.coffeepeek.domain.model.ModerationStatus
 import com.coffeepeek.domain.model.ShopChangeSection
 
-fun ShopChangeSection.title(): String = when (this) {
-    ShopChangeSection.Photos -> "Фотографии"
-    ShopChangeSection.Contacts -> "Контакты"
-    ShopChangeSection.Description -> "Описание"
-    ShopChangeSection.Tags -> "Особенности"
-    ShopChangeSection.Roasters -> "Обжарщики"
-    ShopChangeSection.Equipment -> "Оборудование"
-    ShopChangeSection.Menu -> "Меню"
-    ShopChangeSection.BrewMethods -> "Методы заваривания"
-}
-
-fun ShopChangeSection.hint(): String = when (this) {
-    ShopChangeSection.Photos -> "Порядок и состав фотографий кофейни"
-    ShopChangeSection.Contacts -> "Телефон, сайт, почта и Instagram"
-    ShopChangeSection.Description -> "Текст описания заведения"
-    ShopChangeSection.Tags -> "Теги и особенности"
-    ShopChangeSection.Roasters -> "С кем работает кофейня"
-    ShopChangeSection.Equipment -> "Кофемашины и оборудование"
-    ShopChangeSection.Menu -> "Фото меню, по желанию — напитки и цены"
-    ShopChangeSection.BrewMethods -> "Способы приготовления"
-}
-
+@Composable
 fun ModerationStatus.title(): String = when (this) {
-    ModerationStatus.Pending -> "На модерации"
-    ModerationStatus.Approved -> "Одобрено"
-    ModerationStatus.Rejected -> "Отклонено"
+    ModerationStatus.Pending -> stringResource(Res.string.legacy_my_contributions_screen_contributions_tab_pending)
+    ModerationStatus.Approved -> stringResource(Res.string.legacy_shop_change_labels_approved)
+    ModerationStatus.Rejected -> stringResource(Res.string.legacy_my_contributions_screen_contributions_tab_rejected)
+}
+
+@Composable
+fun ShopChangeSection.localizedTitle(): String = when (this) {
+    ShopChangeSection.Photos -> stringResource(Res.string.legacy_photo_attachments_section_contributions_section_photos)
+    ShopChangeSection.Contacts -> stringResource(Res.string.legacy_add_shop_screen_contributions_section_contacts)
+    ShopChangeSection.Description -> stringResource(Res.string.checkin_description_label)
+    ShopChangeSection.Tags -> stringResource(Res.string.shop_filters_amenities)
+    ShopChangeSection.Roasters -> stringResource(Res.string.favorites_roasters)
+    ShopChangeSection.Equipment -> stringResource(Res.string.shop_filters_equipment)
+    ShopChangeSection.Menu -> stringResource(Res.string.legacy_shop_detail_screen_contributions_section_menu)
+    ShopChangeSection.BrewMethods -> stringResource(Res.string.legacy_shop_change_editor_screen_contributions_section_brew_methods)
+}
+
+@Composable
+fun ShopChangeSection.localizedHint(): String = when (this) {
+    ShopChangeSection.Photos -> stringResource(Res.string.legacy_shop_change_labels_contributions_hint_photos)
+    ShopChangeSection.Contacts -> stringResource(Res.string.legacy_shop_change_labels_contributions_hint_contacts)
+    ShopChangeSection.Description -> stringResource(Res.string.legacy_shop_change_labels_contributions_hint_description)
+    ShopChangeSection.Tags -> stringResource(Res.string.legacy_shop_change_labels_contributions_hint_tags)
+    ShopChangeSection.Roasters -> stringResource(Res.string.legacy_shop_change_labels_contributions_hint_roasters)
+    ShopChangeSection.Equipment -> stringResource(Res.string.legacy_shop_change_labels_contributions_hint_equipment)
+    ShopChangeSection.Menu -> stringResource(Res.string.legacy_shop_change_labels_contributions_hint_menu)
+    ShopChangeSection.BrewMethods -> stringResource(Res.string.legacy_shop_change_labels_contributions_hint_brew_methods)
 }

@@ -1,0 +1,26 @@
+<resources>
+    <string name="appupdate_title_starting">Падрыхтоўка абнаўлення</string>
+    <string name="appupdate_title_downloading">Спампоўваем абнаўленне</string>
+    <string name="appupdate_title_verifying">Правяраем абнаўленне</string>
+    <string name="appupdate_title_ready">Гатова да ўсталявання</string>
+    <string name="appupdate_title_installing">Усталёўваем абнаўленне</string>
+    <string name="appupdate_title_required">Абнавіце CoffeePeek</string>
+    <string name="appupdate_title_available">Даступнае абнаўленне</string>
+    <string name="appupdate_body_starting">Пацвердзіце загрузку абнаўлення.</string>
+    <string name="appupdate_body_downloading_percent">Загружана %1$d%%</string>
+    <string name="appupdate_body_downloading">Загрузка працягваецца…</string>
+    <string name="appupdate_body_verifying">Правяраем версію і подпіс праграмы.</string>
+    <string name="appupdate_body_ready">Абнаўленне спампаванае. Можна ўсталяваць.</string>
+    <string name="appupdate_body_installing">Пацвердзіце ўсталяванне абнаўлення.</string>
+    <string name="appupdate_body_required">Усталюйце новую версію, каб працягнуць.</string>
+    <string name="appupdate_body_available">Спампуйце новую версію CoffeePeek.</string>
+    <string name="appupdate_cancel">Адмена</string>
+    <string name="appupdate_later">Пазней</string>
+    <string name="appupdate_install">Усталяваць</string>
+    <string name="appupdate_retry">Паўтарыць</string>
+    <string name="appupdate_app_store">App Store</string>
+    <string name="appupdate_download">Спампаваць</string>
+    <string name="appupdate_downloaded_message">Абнаўленне загружанае. Перазапусціце праграму для ўсталявання.</string>
+    <string name="appupdate_restart_action">Перазапусціць</string>
+    <string name="appupdate_retry_action">Паўтарыць</string>
+</resources>

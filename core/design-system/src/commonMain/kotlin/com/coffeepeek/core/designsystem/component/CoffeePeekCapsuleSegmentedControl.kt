@@ -3,6 +3,8 @@ package com.coffeepeek.core.designsystem.component
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.heightIn
@@ -50,11 +52,11 @@ fun <T> CoffeePeekCapsuleSegmentedControl(
     require(options.isNotEmpty()) { "Segmented control requires options" }
     require(options.distinct().size == options.size) { "Options must be unique" }
     require(selected in options) { "Selection must belong to options" }
-    val native = LocalCoffeePeekNativeControlsPresenter.current
-    if (!scrollable && native?.SegmentedControl(
-            options.map(label), options.indexOf(selected),
-            { index -> coffeePeekSelectSegment(options, index, enabled, onSelected) }, modifier, enabled,
-        ) == true) return
+    if (!scrollable) {
+        CoffeePeekPlatformSegments(options.map(label), options.indexOf(selected),
+            { onSelected(options[it]) }, modifier, enabled)
+        return
+    }
     val container = modifier
         .clip(RoundedCornerShape(percent = 50))
         .background(MaterialTheme.colorScheme.surfaceVariant)
@@ -64,13 +66,13 @@ fun <T> CoffeePeekCapsuleSegmentedControl(
             contentPadding = PaddingValues(4.dp),
         ) {
             items(options) { option ->
-                Segment(label(option), option == selected, enabled, { onSelected(option) }, Modifier, labelPadding = 16.dp)
+                CoffeePeekCapsuleSegment(label(option), option == selected, enabled, { onSelected(option) }, Modifier, labelPadding = 16.dp)
             }
         }
     } else {
         Row(modifier = container.fillMaxWidth().padding(2.dp).selectableGroup()) {
             options.forEach { option ->
-                Segment(label(option), option == selected, enabled, { onSelected(option) }, Modifier.weight(1f))
+                CoffeePeekCapsuleSegment(label(option), option == selected, enabled, { onSelected(option) }, Modifier.weight(1f))
             }
         }
     }
@@ -82,7 +84,7 @@ internal fun <T> coffeePeekSelectSegment(options: List<T>, index: Int, enabled: 
 }
 
 @Composable
-private fun Segment(text: String, isSelected: Boolean, enabled: Boolean, onClick: () -> Unit, modifier: Modifier, labelPadding: Dp = 0.dp) {
+internal fun CoffeePeekCapsuleSegment(text: String, isSelected: Boolean, enabled: Boolean, onClick: () -> Unit, modifier: Modifier, labelPadding: Dp = 0.dp) {
     Box(
         modifier = modifier
             .heightIn(min = 48.dp)
@@ -119,8 +121,12 @@ private fun Segment(text: String, isSelected: Boolean, enabled: Boolean, onClick
 private fun CoffeePeekCapsuleSegmentedControlPreviewContent(darkTheme: Boolean) = CoffeePeekTheme(darkTheme = darkTheme) {
     var selected by remember { mutableStateOf("First") }
     Surface {
-        CoffeePeekCapsuleSegmentedControl(listOf("First", "Second"), selected, { it }, { selected = it },
-            modifier = Modifier.padding(16.dp))
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            CoffeePeekCapsuleSegmentedControl(listOf("First", "Second"), selected, { it }, { selected = it })
+            CoffeePeekCapsuleSegmentedControl(listOf("First", "Second"), "Second", { it }, {})
+            CoffeePeekCapsuleSegmentedControl(listOf("First", "Second", "Third"), "Second", { it }, {})
+            CoffeePeekCapsuleSegmentedControl(listOf("First", "Second", "Third", "Fourth"), "Fourth", { it }, {}, enabled = false)
+        }
     }
 }
 

@@ -7,6 +7,7 @@ import androidx.compose.material3.*
 import com.coffeepeek.core.designsystem.component.CoffeePeekScaffold as Scaffold
 import com.coffeepeek.core.designsystem.component.LocalCoffeePeekScreenInsets
 import com.coffeepeek.core.designsystem.component.coffeePeekScreenBottomPadding
+import com.coffeepeek.core.designsystem.component.CoffeePeekFloatingActionButton as FloatingActionButton
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.contentDescription
@@ -23,7 +24,7 @@ import com.coffeepeek.feature.checkinhistory.impl.resources.*
 import com.coffeepeek.feature.checkinhistory.impl.ui.CombinedHistoryViewModel
 import com.coffeepeek.feature.checkinhistory.impl.ui.compose.component.*
 import com.coffeepeek.feature.checkinhistory.impl.ui.compose.model.*
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 
 @Composable
 internal fun CheckInHistoryScreen(viewModel: CombinedHistoryViewModel, sessionGeneration: Int,

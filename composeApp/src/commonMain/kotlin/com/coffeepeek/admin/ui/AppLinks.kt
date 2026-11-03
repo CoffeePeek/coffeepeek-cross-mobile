@@ -21,6 +21,8 @@ internal fun appLinkScreen(link: String): Navigator.Screen? {
         "coffee-shops" -> Navigator.Screen.ShopDetail(slug)
         "roasters" -> Navigator.Screen.RoasterDetail(slug)
         "users" -> Navigator.Screen.UserProfile(slug)
+        "collections" -> if (Regex("[0-9a-fA-F]{32}|[0-9a-fA-F]{8}(-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}").matches(slug))
+            Navigator.Screen.PublicCollection(slug) else Navigator.Screen.Main
         "check-ins" -> if (CHECK_IN_ID.matches(slug)) Navigator.Screen.CheckInDetail(slug) else Navigator.Screen.Main
         else -> Navigator.Screen.Main
     }

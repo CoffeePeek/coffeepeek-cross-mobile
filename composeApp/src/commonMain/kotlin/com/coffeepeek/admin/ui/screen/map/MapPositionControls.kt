@@ -1,5 +1,8 @@
 package com.coffeepeek.admin.ui.screen.map
 
+import coffeepeek.composeapp.generated.resources.*
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -43,15 +46,19 @@ internal fun BoxScope.MapPositionControls(
 
 @Composable
 private fun MapLocationControls(showZones: Boolean, actions: MapScreenActions, modifier: Modifier) {
-    val zonesLabel = if (showZones) "Скрыть зоны" else "Показать зоны"
+    val localizedLegacyMapPositionControlsDiscoveryMapZonesHide = stringResource(Res.string.legacy_map_position_controls_discovery_map_zones_hide)
+    val localizedLegacyMapPositionControlsDiscoveryMapZonesShow = stringResource(Res.string.legacy_map_position_controls_discovery_map_zones_show)
+    val localizedLegacyPickShopLocationDialogDiscoveryMapMyLocation = stringResource(Res.string.legacy_pick_shop_location_dialog_discovery_map_my_location)
+
+    val zonesLabel = if (showZones) localizedLegacyMapPositionControlsDiscoveryMapZonesHide else localizedLegacyMapPositionControlsDiscoveryMapZonesShow
     Column(modifier, verticalArrangement = Arrangement.spacedBy(CpDimens.spacing2), horizontalAlignment = Alignment.End) {
         MapControlButton(GlassControlIcon.Zones, actions.onToggleZones, zonesLabel, selected = showZones,
             contentColor = if (showZones) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface) {
             Icon(CpIcons.Polygon, zonesLabel, Modifier.size(26.dp))
         }
-        MapControlButton(GlassControlIcon.Location, actions.onMyLocation, "Моё местоположение",
+        MapControlButton(GlassControlIcon.Location, actions.onMyLocation, localizedLegacyPickShopLocationDialogDiscoveryMapMyLocation,
             Modifier.size(CpDimens.buttonHeight + 4.dp)) {
-            Icon(CpIcons.Navigation, "Моё местоположение", Modifier.size(32.dp))
+            Icon(CpIcons.Navigation, localizedLegacyPickShopLocationDialogDiscoveryMapMyLocation, Modifier.size(32.dp))
         }
     }
 }
@@ -73,14 +80,17 @@ private fun MapControlButton(
 
 @Composable
 private fun MapZoomControl(onZoomIn: () -> Unit, onZoomOut: () -> Unit, modifier: Modifier = Modifier) {
+    val localizedLegacyMapPositionControlsDiscoveryMapZoomIn = stringResource(Res.string.legacy_map_position_controls_discovery_map_zoom_in)
+    val localizedLegacyMapPositionControlsDiscoveryMapZoomOut = stringResource(Res.string.legacy_map_position_controls_discovery_map_zoom_out)
+
     val shape = RoundedCornerShape(CpDimens.radiusLg)
     Column(modifier.width(CpDimens.buttonHeight).clip(shape)
         .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.94f))
         .border(1.dp, MaterialTheme.colorScheme.outline, shape)) {
-        MapZoomButton(CpIcons.Add, "Приблизить карту", onZoomIn,
+        MapZoomButton(CpIcons.Add, localizedLegacyMapPositionControlsDiscoveryMapZoomIn, onZoomIn,
             RoundedCornerShape(topStart = CpDimens.radiusLg, topEnd = CpDimens.radiusLg))
         HorizontalDivider(thickness = 1.dp, color = MaterialTheme.colorScheme.outline)
-        MapZoomButton(CpIcons.Minus, "Отдалить карту", onZoomOut,
+        MapZoomButton(CpIcons.Minus, localizedLegacyMapPositionControlsDiscoveryMapZoomOut, onZoomOut,
             RoundedCornerShape(bottomStart = CpDimens.radiusLg, bottomEnd = CpDimens.radiusLg))
     }
 }

@@ -41,12 +41,14 @@ import com.coffeepeek.admin.ui.screen.roaster.RoasterScreenRenderer
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.compose.koinInject
+import kotlinx.coroutines.flow.Flow
 
 /** The same discovery content is hosted by Compose navigation and native iOS tabs. */
 @Composable
-internal fun DiscoveryTabContent(onMapExpandedChange: (Boolean) -> Unit) {
+internal fun DiscoveryTabContent(onMapExpandedChange: (Boolean) -> Unit, reselections: Flow<Unit>) {
     val reduceMotion = platformReduceMotion()
     var showRoasters by rememberSaveable { mutableStateOf(false) }
+    LaunchedEffect(reselections) { reselections.collect { showRoasters = false } }
     var isMapExpanded by remember { mutableStateOf(false) }
     val feedVm: FeedViewModel = platformViewModel()
     val feedState by feedVm.uiState.collectAsState()
@@ -59,6 +61,7 @@ internal fun DiscoveryTabContent(onMapExpandedChange: (Boolean) -> Unit) {
             reduceMotion = reduceMotion,
             feedContent = {
                 DiscoveryFeedContent(feedState, feedVm, mapVm, roasters, showRoasters,
+                    reselections = reselections,
                     onSelectRoasters = { showRoasters = true },
                     onMapExpandedChange = { expanded ->
                         isMapExpanded = expanded
@@ -122,6 +125,7 @@ private fun DiscoveryFeedContent(
     showRoasters: Boolean,
     onSelectRoasters: () -> Unit,
     onMapExpandedChange: (Boolean) -> Unit,
+    reselections: Flow<Unit>,
 ) {
     FeedScreen(
         vm = feedVm,
@@ -149,6 +153,7 @@ private fun DiscoveryFeedContent(
             state.query, state.filters.roasterIds, state.filters.favoritesOnly,
         ) else null,
         onMapExpandedChange = onMapExpandedChange,
+        reselections = reselections,
     )
 }
 

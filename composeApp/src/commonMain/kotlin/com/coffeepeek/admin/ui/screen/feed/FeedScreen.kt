@@ -20,6 +20,7 @@ fun FeedScreen(
     roasterPreview: (@Composable () -> Unit)? = null,
     onMapExpandedChange: (Boolean) -> Unit = {},
     hasRoasterResults: Boolean? = null,
+    reselections: kotlinx.coroutines.flow.Flow<Unit> = kotlinx.coroutines.flow.emptyFlow(),
 ) {
     val state by vm.uiState.collectAsState()
     val layout = rememberFeedLayout()
@@ -33,6 +34,7 @@ fun FeedScreen(
     val location = FeedLocationEffects(vm, locationRefreshKey) { locationRefreshKey++ }
     val actions = feedScreenActions(vm, state, dismissInput, onSelectRoasters) { locationRefreshKey++ }
     FeedRuntimeEffects(layout, state, mapPreview != null, onMapExpandedChange, actions)
+    FeedReselectionEffect(layout, state.showDiscovery, reselections, dismissInput, vm::closeFilters)
     FeedScreenContent(state, layout, actions, location, mapPreview, roasterPreview, hasRoasterResults)
 }
 

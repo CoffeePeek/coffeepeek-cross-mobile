@@ -46,4 +46,4 @@ internal sealed interface OwnershipAction {
     data class ClaimsPage(val page: Int) : OwnershipAction
     data class RoastersPage(val page: Int) : OwnershipAction
 }
-internal enum class OwnershipEvent { Close, Login }
+internal enum class OwnershipEvent { Close, Login, ProfileSaved }

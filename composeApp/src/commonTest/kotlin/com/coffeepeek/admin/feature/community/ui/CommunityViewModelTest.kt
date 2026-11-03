@@ -18,6 +18,8 @@ import kotlinx.coroutines.withTimeout
 import kotlin.test.*
 
 class CommunityViewModelTest {
+    private val publicationLabels = listOf("Приватный", "На проверке", "Опубликован", "Отклонён", "Публичный", "Статус проверки неизвестен")
+
     private val own = CheckIn(
         "own", "coffee", "Кофейня", "Кофе", "2026-10-07T10:00:00Z", visitedAt = "2026-10-07T09:00:00Z",
         rating = ReviewRating(4, 4, 5), drinkSlug = "cappuccino", drinkNameRu = "Капучино",
@@ -82,7 +84,7 @@ class CommunityViewModelTest {
             assertEquals(server, saved.items.single())
             assertEquals(own.visitedAt, saved.items.single().visitedAt)
             assertEquals(own.photoUrls, saved.items.single().photoUrls)
-            assertEquals("На проверке", saved.items.single().publicationLabel())
+            assertEquals("На проверке", saved.items.single().publicationLabel(publicationLabels))
         } finally { vm.close() }
     }
 
@@ -114,7 +116,7 @@ class CommunityViewModelTest {
             val hidden = vm.await { it.items.single().visibility == CheckInVisibility.Private && it.changingVisibilityId == null }
             assertEquals(1, editRequests)
             assertEquals(1, hidden.items.single().contentRevision)
-            assertEquals("Приватный", hidden.items.single().publicationLabel())
+            assertEquals("Приватный", hidden.items.single().publicationLabel(publicationLabels))
         } finally { vm.close() }
     }
 

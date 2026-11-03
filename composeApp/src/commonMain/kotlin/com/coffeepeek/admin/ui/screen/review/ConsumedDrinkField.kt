@@ -14,7 +14,7 @@ import coffeepeek.composeapp.generated.resources.select_drink_other
 import coffeepeek.composeapp.generated.resources.select_drink_custom
 import coffeepeek.composeapp.generated.resources.select_drink_error
 import coffeepeek.composeapp.generated.resources.select_retry
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -22,12 +22,13 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.material3.*
+import com.coffeepeek.core.designsystem.component.CoffeePeekTextButton as TextButton
 import androidx.compose.runtime.Composable
 import com.coffeepeek.admin.theme.CpDimens
 import com.coffeepeek.admin.ui.component.ReviewTextInput
 import com.coffeepeek.domain.model.ConsumedDrinkOption
 import com.coffeepeek.domain.model.savedDrinkName
-import com.coffeepeek.domain.model.validateConsumedDrink
+import com.coffeepeek.domain.model.consumedDrinkIssue
 
 @Composable
 internal fun ConsumedDrinkField(
@@ -78,7 +79,7 @@ internal fun ConsumedDrinkField(
         if (slug == "other") {
             ReviewTextInput(value = customName.orEmpty(), onValueChange = { onChange(slug, it.take(100)) },
                 placeholder = stringResource(Res.string.select_drink_custom), singleLine = true, maxLength = 100)
-            validateConsumedDrink(slug, customName)?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+            consumedDrinkIssue(slug, customName)?.let { Text(it.message(consumedDrinkValidationLabels()), color = MaterialTheme.colorScheme.error) }
         }
     }
 }

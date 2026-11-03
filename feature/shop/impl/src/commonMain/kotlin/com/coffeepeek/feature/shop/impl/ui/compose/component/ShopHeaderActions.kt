@@ -1,5 +1,7 @@
 package com.coffeepeek.feature.shop.impl.ui.compose.component
 
+import com.coffeepeek.core.designsystem.modifier.CoffeePeekGlassIcon
+
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.material3.Icon
@@ -18,7 +20,7 @@ import dev.chrisbanes.haze.HazeState
 import com.coffeepeek.feature.shop.impl.resources.Res
 import com.coffeepeek.feature.shop.impl.resources.shop_detail_share
 import com.coffeepeek.feature.shop.impl.resources.shop_detail_suggest_change
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
@@ -40,15 +42,14 @@ internal fun ShopHeaderActions(
             favorite = { ShopFavoriteButton(isFavorite, favoriteAvailable, isFavoriteLoading, onToggleFavorite, hazeState = hazeState) },
             share = {
                 CoffeePeekGlassIconButton(onShare, stringResource(Res.string.shop_detail_share), hazeState = hazeState,
-                    modifier = Modifier.shopExposure(ShopExposure.Share)) { Icon(CoffeePeekIcons.Share, null) }
+                    modifier = Modifier.shopExposure(ShopExposure.Share), nativeIcon = CoffeePeekGlassIcon.Share) { Icon(CoffeePeekIcons.Share, null) }
             })
         return
     }
     Row(horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2),
         verticalAlignment = Alignment.CenterVertically) {
         CoffeePeekGlassIconButton(onClick = onSuggestChange,
-            contentDescription = stringResource(Res.string.shop_detail_suggest_change), hazeState = hazeState,
-            nativeIcon = CoffeePeekGlassIcon.Edit) {
+            contentDescription = stringResource(Res.string.shop_detail_suggest_change), hazeState = hazeState, nativeIcon = CoffeePeekGlassIcon.Edit) {
             Icon(CoffeePeekIcons.NoteEdit, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface)
         }
         ShopFavoriteButton(isFavorite, favoriteAvailable, isFavoriteLoading, onToggleFavorite,

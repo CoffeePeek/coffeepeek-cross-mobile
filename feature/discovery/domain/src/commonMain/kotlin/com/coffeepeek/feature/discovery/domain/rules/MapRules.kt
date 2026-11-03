@@ -4,19 +4,16 @@ import com.coffeepeek.feature.discovery.domain.model.Coordinates
 import com.coffeepeek.feature.discovery.domain.model.MapBounds
 import com.coffeepeek.feature.discovery.domain.model.MapMarker
 import kotlin.math.PI
-import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.max
 
-const val MAP_NEARBY_RADIUS_METERS = 5_000.0
-const val MAP_NEARBY_LIMIT = 10
 const val MIN_MAP_ZOOM = 3f
 const val MAX_MAP_ZOOM = 20f
 
 private const val KM_PER_DEGREE_LAT = 111.32
 private const val PREFETCH_MIN_MARGIN_KM = 3.0
 private const val PREFETCH_VIEWPORT_FRACTION = 0.5
-private const val NEARBY_DEGREE_METERS = 110_000.0
+private const val CAROUSEL_MIN_RADIUS_KM = 1.5
 
 fun clampZoom(zoom: Float): Float = zoom.coerceIn(MIN_MAP_ZOOM, MAX_MAP_ZOOM)
 
@@ -42,21 +39,36 @@ fun MapBounds.expandedForPrefetch(minMarginKm: Double = PREFETCH_MIN_MARGIN_KM):
     )
 }
 
-/** The box around [origin] that the nearby carousel asks for: [MAP_NEARBY_RADIUS_METERS] on every side. */
-fun nearbyBounds(origin: Coordinates): MapBounds {
-    val latitudeMargin = MAP_NEARBY_RADIUS_METERS / NEARBY_DEGREE_METERS
-    val longitudeMargin = latitudeMargin / cos((abs(origin.latitude) + latitudeMargin) * PI / 180).coerceAtLeast(0.01)
+/** Include shops near a tightly zoomed viewport without enlarging an already broad map view. */
+fun MapBounds.expandedForCarousel(): MapBounds {
+    if (minLon > maxLon) return this
+    val middle = center
+    val kmPerDegreeLon = KM_PER_DEGREE_LAT * cos(middle.latitude * PI / 180.0).coerceAtLeast(0.01)
+    val viewportLatRadius = (maxLat - minLat) / 2.0
+    val viewportLonRadius = (maxLon - minLon) / 2.0
+    val minimumLatRadius = CAROUSEL_MIN_RADIUS_KM / KM_PER_DEGREE_LAT
+    val minimumLonRadius = CAROUSEL_MIN_RADIUS_KM / kmPerDegreeLon
+    if (viewportLatRadius >= minimumLatRadius && viewportLonRadius >= minimumLonRadius) return this
+    val latRadius = max(viewportLatRadius, minimumLatRadius)
+    val lonRadius = max(viewportLonRadius, minimumLonRadius)
     return MapBounds(
-        (origin.latitude - latitudeMargin).coerceAtLeast(-85.0),
-        (origin.longitude - longitudeMargin).coerceAtLeast(-180.0),
-        (origin.latitude + latitudeMargin).coerceAtMost(85.0),
-        (origin.longitude + longitudeMargin).coerceAtMost(180.0),
+        minLat = (middle.latitude - latRadius).coerceAtLeast(-85.0),
+        minLon = (middle.longitude - lonRadius).coerceAtLeast(-180.0),
+        maxLat = (middle.latitude + latRadius).coerceAtMost(85.0),
+        maxLon = (middle.longitude + lonRadius).coerceAtMost(180.0),
     )
 }
 
-/** The [MAP_NEARBY_LIMIT] markers nearest to [origin] inside the radius, one per id, sorted by distance and then by id. */
-fun nearestMarkers(markers: List<MapMarker>, origin: Coordinates): List<MapMarker> =
-    markers.distinctBy { it.id }.mapNotNull { marker ->
-        val distance = distanceMeters(origin, marker.coordinates) ?: return@mapNotNull null
-        if (distance <= MAP_NEARBY_RADIUS_METERS) marker to distance else null
-    }.sortedWith(compareBy<Pair<MapMarker, Double>> { it.second }.thenBy { it.first.id }).take(MAP_NEARBY_LIMIT).map { it.first }
+/** Keep surviving visible cards in place; append newcomers nearest the viewport center. */
+fun viewportMarkers(markers: List<MapMarker>, bounds: MapBounds, previous: List<MapMarker>): List<MapMarker> {
+    val positions = previous.mapIndexed { index, marker -> marker.id to index }.toMap()
+    val viewportCenter = bounds.center
+    return markers.distinctBy { it.id }.filter { marker ->
+        val point = marker.coordinates
+        point.isValid && point.latitude in bounds.minLat..bounds.maxLat &&
+            if (bounds.minLon <= bounds.maxLon) point.longitude in bounds.minLon..bounds.maxLon
+            else point.longitude >= bounds.minLon || point.longitude <= bounds.maxLon
+    }.sortedWith(compareBy<MapMarker> { positions[it.id] ?: Int.MAX_VALUE }
+        .thenBy { distanceMeters(viewportCenter, it.coordinates) ?: Double.POSITIVE_INFINITY }
+        .thenBy { it.id })
+}

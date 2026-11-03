@@ -28,7 +28,7 @@ import com.coffeepeek.feature.ownership.impl.resources.ownership_roasters
 import com.coffeepeek.feature.ownership.impl.resources.ownership_shops
 import com.coffeepeek.feature.ownership.impl.ui.compose.model.OwnershipAction
 import com.coffeepeek.feature.ownership.impl.ui.compose.model.OwnershipState
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable

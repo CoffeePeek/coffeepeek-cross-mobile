@@ -30,6 +30,8 @@ class SettingsSlots(
     val guestCard: @Composable (onLogin: () -> Unit, onRegister: () -> Unit, modifier: Modifier) -> Unit,
     /** A short message that does not take focus (a toast on Android); shown for the update check outcome. */
     val notify: (String) -> Unit,
+    /** App composes the existing notification preference; settings owns only its place and copy. */
+    val notificationPreference: @Composable (label: String, description: String) -> Unit,
     val accountSwitch: @Composable () -> Unit = {},
 )
 
@@ -41,6 +43,7 @@ interface SettingsEntry {
         onAddRoaster: () -> Unit,
         onCity: () -> Unit,
         onTheme: () -> Unit,
+        onLanguage: () -> Unit,
         onUsagePolicy: () -> Unit,
         onLogin: () -> Unit,
         onRegister: () -> Unit,

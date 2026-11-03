@@ -1,5 +1,7 @@
 package com.coffeepeek.feature.roaster.impl.ui.compose.component
 
+import com.coffeepeek.core.designsystem.modifier.CoffeePeekGlassIcon
+
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -21,7 +23,7 @@ import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.roaster.impl.resources.Res
 import com.coffeepeek.feature.roaster.impl.resources.roaster_detail_back
 import com.coffeepeek.feature.roaster.impl.resources.roaster_share
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
@@ -46,7 +48,7 @@ internal fun RoasterDetailTopActions(
             favorite = { RoasterFavoriteHeart(isFavorite, onToggleFavorite, overImage = true, modifier = heartModifier) },
             share = {
                 val share = LocalRoasterShare.current
-                CoffeePeekGlassIconButton({ share(business.canonicalPath) }, stringResource(Res.string.roaster_share)) {
+                CoffeePeekGlassIconButton({ share(business.canonicalPath) }, stringResource(Res.string.roaster_share), nativeIcon = CoffeePeekGlassIcon.Share) {
                     Icon(CoffeePeekIcons.Share, null)
                 }
             })

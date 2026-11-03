@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -13,6 +14,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.ColorPainter
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -22,10 +24,12 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
+import com.coffeepeek.core.designsystem.component.CoffeePeekAddButton
 import com.coffeepeek.feature.discovery.api.*
 import com.coffeepeek.feature.discovery.domain.model.ShopSummary
 import com.coffeepeek.feature.discovery.impl.search.SearchAction
 import com.coffeepeek.feature.discovery.impl.search.SearchState
+import com.coffeepeek.feature.discovery.impl.search.SearchError
 
 @Composable
 internal fun DiscoveryTabContent(
@@ -42,12 +46,28 @@ internal fun DiscoveryTabContent(
     DiscoverySearchPresentation(ui, motion, host.isVisible(), onSearchPresentation)
     val context = DiscoveryRoasterContext(state.query, state.filters.roasterIds, state.filters.favoritesOnly)
     DiscoveryTabEffects(ui, state.showsDiscovery, analytics, callbacks, focus, onAction)
+    DiscoveryReselectionEffect(ui, state.showsDiscovery, callbacks.reselections, onAction)
     BoxWithConstraints(modifier.fillMaxSize().onGloballyPositioned { ui.rootOrigin = it.positionInRoot() }) {
         val canvasSize = DpSize(maxWidth, maxHeight)
-        DiscoverySearchLayer(state, ui, motion, host, roasters, context, bottomClearance, callbacks.onAddShop, onAction)
+        DiscoverySearchLayer(state, ui, motion, host, roasters, context, bottomClearance,
+            callbacks.onAddShop, onAction)
         DiscoveryRoasterOverlay(ui, roasters, context, reduceMotion, onAction)
         if (state.showFilters) FilterSheet(state, host, onAction)
         if (ui.mapAnchor.width > 0f || ui.mapExpanded) DiscoveryMapLayer(ui, motion, host, canvasSize, toggleMap, map)
+        if (host.isVisible() && !state.showFilters && !ui.showRoasters && !ui.mapExpanded && motion.expansion.value == 0f) {
+            Box(Modifier.align(Alignment.BottomEnd).padding(end = 16.dp, bottom = bottomClearance + 12.dp)) {
+                callbacks.checkInAction()
+            }
+        }
+        if (host.isVisible() && !state.showFilters && !ui.showRoasters && (state.nearbyRequested || state.locationUnavailable)) {
+            DiscoveryLocationNotice(state.nearbyRequested, { onAction(SearchAction.DismissLocationFailure) },
+                Modifier.align(Alignment.BottomCenter).padding(bottom = if (ui.mapExpanded) 24.dp else bottomClearance + 80.dp))
+        }
+        if (host.isVisible() && !state.showFilters && !ui.showRoasters && !ui.mapExpanded &&
+            !state.nearbyRequested && !state.locationUnavailable) {
+            FavoriteFailureFeedback(state.favoriteFailureId, { onAction(SearchAction.DismissFavoriteFailure(it)) },
+                Modifier.align(Alignment.BottomCenter).padding(bottom = bottomClearance + 80.dp))
+        }
     }
 }
 
@@ -75,15 +95,17 @@ private fun DiscoverySearchPresentation(
 }
 
 @Composable
-private fun DiscoveryTabContentPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
+private fun DiscoveryTabContentPreview(refreshError: Boolean = false) = CoffeePeekTheme {
     DiscoveryTabContent(
-        state = SearchState(isLoading = false, shops = listOf(ShopSummary("sandbox-cafe", "Sandbox Cafe"))),
+        state = SearchState(isLoading = false, shops = listOf(ShopSummary("sandbox-cafe", "Sandbox Cafe")),
+            error = if (refreshError) SearchError(null) else null),
         host = DiscoveryHost(suggestionIllustration = { ColorPainter(Color.Transparent) }),
         roasters = DiscoveryRoasterSlots(preview = {}, search = { _, _, _ -> }),
-        analytics = NoDiscoveryAnalytics, callbacks = TabCallbacks({}, {}, {}, {}, {}),
+        analytics = NoDiscoveryAnalytics, callbacks = TabCallbacks({}, {}, {}, {}, {},
+            checkInAction = { CoffeePeekAddButton({}, "Add check-in") }),
         bottomClearance = 80.dp, focus = null, onAction = {}, onSearchPresentation = { _, _ -> },
     ) { _, _, modifier -> Box(modifier.background(MaterialTheme.colorScheme.surfaceVariant)) }
 }
 
-@Preview @Composable private fun DiscoveryTabContentPreviewLight() = DiscoveryTabContentPreview(false)
-@Preview @Composable private fun DiscoveryTabContentPreviewDark() = DiscoveryTabContentPreview(true)
+@Preview @Composable private fun DiscoveryHomePreview() = DiscoveryTabContentPreview()
+@Preview @Composable private fun DiscoveryRefreshErrorPreview() = DiscoveryTabContentPreview(refreshError = true)

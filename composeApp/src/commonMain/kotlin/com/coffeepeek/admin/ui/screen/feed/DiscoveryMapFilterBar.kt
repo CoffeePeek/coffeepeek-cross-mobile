@@ -1,6 +1,7 @@
 package com.coffeepeek.admin.ui.screen.feed
 
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
@@ -15,6 +16,7 @@ internal fun DiscoveryMapFilterBar(state: FeedUiState, vm: FeedViewModel) {
         onToggleVisited = vm::toggleVisitedOnly, onToggleFavorites = vm::toggleFavoritesOnly,
         onToggleNearby = vm::toggleNearbyOnly, coffeeFocusId = state.filters.coffeeFocus,
         onCoffeeFocusChange = { vm.setCoffeeFocus(it.takeUnless { kind -> kind == state.filters.coffeeFocus }) },
+        horizontalPadding = 0.dp,
     )
 }
 
@@ -22,7 +24,8 @@ internal fun DiscoveryMapFilterBar(state: FeedUiState, vm: FeedViewModel) {
 private fun DiscoveryMapFilterBarPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     FeedQuickFilterBar(nearbyOnly = false, showNearby = true, openOnly = true, newOnly = false,
         visitedOnly = false, favoritesOnly = true, onToggleOpen = {}, onToggleNew = {},
-        onToggleVisited = {}, onToggleFavorites = {}, onToggleNearby = {}, coffeeFocusId = "specialty", onCoffeeFocusChange = {})
+        onToggleVisited = {}, onToggleFavorites = {}, onToggleNearby = {}, coffeeFocusId = "specialty", onCoffeeFocusChange = {},
+        horizontalPadding = 0.dp)
 }
 
 @Preview @Composable private fun DiscoveryMapFilterBarLightPreview() = DiscoveryMapFilterBarPreview(false)

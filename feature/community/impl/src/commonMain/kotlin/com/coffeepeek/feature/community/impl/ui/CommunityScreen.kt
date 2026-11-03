@@ -34,7 +34,7 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material3.Button
+import com.coffeepeek.core.designsystem.component.CoffeePeekFilledButton as Button
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import com.coffeepeek.core.designsystem.component.CoffeePeekScaffold as Scaffold
@@ -55,7 +55,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
@@ -261,6 +261,7 @@ internal fun CommunityContent(
     }
 }
 
+@Composable
 private fun postActions(
     post: CommunityPost,
     state: CommunityState,
@@ -274,13 +275,14 @@ private fun postActions(
     val isOwn = state.owns(post)
     val public = state.timeline == CommunityTimeline.Public
     val author = post.author.slug?.takeIf(String::isNotBlank)
+    val authorName = post.author.name.ifBlank { stringResource(Res.string.community_author) }
     return PostCardActions(
         onAuthor = author?.let { slug -> { callbacks.onOpenAuthor(slug, post.author.name, post.author.avatarUrl) } },
         onShop = { onAction(CommunityAction.ItemInteracted(FeedItemAction.Shop, post.id)); callbacks.onOpenShop(post.shopSlug) }
             .takeIf { post.shopSlug.isNotBlank() },
         onHelpful = { onAction(CommunityAction.ToggleHelpful(post.id)) }.takeIf { !state.isMutating && public },
         onBlock = {
-            blockActions.requestBlock(AuthorReference(post.author.id, post.author.slug, post.author.name.ifBlank { "Автор" }, post.author.avatarUrl))
+            blockActions.requestBlock(AuthorReference(post.author.id, post.author.slug, authorName, post.author.avatarUrl))
         }.takeIf { public && !isOwn && state.canBlockAuthor(post) && (!post.author.id.isNullOrBlank() || !post.author.slug.isNullOrBlank()) },
         onPhoto = { index ->
             onAction(CommunityAction.ItemInteracted(FeedItemAction.Photo, post.id))

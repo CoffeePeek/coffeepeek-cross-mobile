@@ -8,8 +8,15 @@ import kotlinx.coroutines.flow.asSharedFlow
 internal class MainTabReselections {
     private val coffeeRequests = MutableSharedFlow<Unit>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
     val coffee = coffeeRequests.asSharedFlow()
+    private val searchRequests = MutableSharedFlow<Unit>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+    val search = searchRequests.asSharedFlow()
 
     fun onTabPressed(tab: Navigator.Screen, isSelected: Boolean) {
-        if (isSelected && tab == Navigator.Screen.CoffeeTab) coffeeRequests.tryEmit(Unit)
+        if (!isSelected) return
+        when (tab) {
+            Navigator.Screen.CoffeeTab -> coffeeRequests.tryEmit(Unit)
+            Navigator.Screen.FeedTab -> searchRequests.tryEmit(Unit)
+            else -> Unit
+        }
     }
 }

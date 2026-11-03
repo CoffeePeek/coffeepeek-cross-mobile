@@ -1,8 +1,10 @@
 package com.coffeepeek.admin.ui.screen.main
 
+import coffeepeek.composeapp.generated.resources.*
+
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
-import dev.chrisbanes.haze.hazeSource
+import com.coffeepeek.core.designsystem.component.CoffeePeekMenuBackdrop
 import dev.chrisbanes.haze.rememberHazeState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.WindowInsets
@@ -58,7 +60,7 @@ import com.coffeepeek.admin.ui.screen.coffee.CoffeeScreenRenderer
 import org.koin.compose.koinInject
 import coffeepeek.composeapp.generated.resources.Res
 import coffeepeek.composeapp.generated.resources.business_tab_title
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import com.coffeepeek.admin.ui.screen.profile.OwnProfileScreenRenderer
 import com.coffeepeek.admin.ui.screen.profile.SettingsScreenRenderer
 import com.coffeepeek.admin.ui.icons.CpIcons
@@ -75,6 +77,12 @@ expect fun MainScreen(isLoggedIn: Boolean, onMapExpandedChange: (Boolean) -> Uni
 
 @Composable
 internal fun ComposeMainScreen(isLoggedIn: Boolean, onMapExpandedChange: (Boolean) -> Unit) {
+    val localizedLegacyMainScreenSearch = stringResource(Res.string.legacy_main_screen_search)
+    val localizedCheckinRatingCoffee = stringResource(Res.string.checkin_rating_coffee)
+    val localizedLegacyVisitedPlacesScreenSandboxFeedTitle = stringResource(Res.string.legacy_visited_places_screen_sandbox_feed_title)
+    val localizedLegacyMainScreenProfileTitle = stringResource(Res.string.legacy_main_screen_profile_title)
+    val localizedLegacyMainScreenSettingsTabTitle = stringResource(Res.string.legacy_main_screen_settings_tab_title)
+
     val reduceMotion = com.coffeepeek.admin.ui.component.platformReduceMotion()
     val bottomNavController = rememberNavController()
     val tabReselections = remember { MainTabReselections() }
@@ -90,31 +98,31 @@ internal fun ComposeMainScreen(isLoggedIn: Boolean, onMapExpandedChange: (Boolea
     val items = listOf(
         BottomNavItem(title = stringResource(Res.string.business_tab_title), icon = CpIcons.CoffeeBean, graph = Navigator.Screen.BusinessGraph, startScreen = Navigator.Screen.BusinessTab),
         BottomNavItem(
-            title = "Поиск",
+            title = localizedLegacyMainScreenSearch,
             icon = CpIcons.Search,
             graph = Navigator.Screen.FeedGraph,
             startScreen = Navigator.Screen.FeedTab,
         ),
         BottomNavItem(
-            title = "Кофе",
+            title = localizedCheckinRatingCoffee,
             icon = CpIcons.CoffeeBean,
             graph = Navigator.Screen.CoffeeGraph,
             startScreen = Navigator.Screen.CoffeeTab,
         ),
         BottomNavItem(
-            title = "Лента",
+            title = localizedLegacyVisitedPlacesScreenSandboxFeedTitle,
             icon = CpIcons.Community,
             graph = Navigator.Screen.CommunityGraph,
             startScreen = Navigator.Screen.CommunityTab,
         ),
         BottomNavItem(
-            title = "Профиль",
+            title = localizedLegacyMainScreenProfileTitle,
             icon = CpIcons.Profile,
             graph = Navigator.Screen.ProfileGraph,
             startScreen = Navigator.Screen.ProfileTab,
         ),
         BottomNavItem(
-            title = "Настройки",
+            title = localizedLegacyMainScreenSettingsTabTitle,
             icon = CpIcons.Settings,
             graph = Navigator.Screen.SettingsGraph,
             startScreen = Navigator.Screen.SettingsTab,
@@ -202,12 +210,13 @@ internal fun ComposeMainScreen(isLoggedIn: Boolean, onMapExpandedChange: (Boolea
     ProvideFloatingNavClearance(clearance = floatingClearance) {
         Box(modifier = Modifier.fillMaxSize()) {
             // Capture the visible tab once; retained search content must not keep a separate glass layer.
-            Box(Modifier.fillMaxSize().hazeSource(tabBarHaze)) {
+            CoffeePeekMenuBackdrop(Modifier.fillMaxSize(), state = tabBarHaze) {
                 feedEntry?.takeIf { it.lifecycle.currentState != Lifecycle.State.DESTROYED }?.let { entry ->
                     entry.LocalOwnersProvider(feedStateHolder) {
                         RetainedContent(visible = entry in visibleEntries) {
                             Box(Modifier.fillMaxSize().graphicsLayer { translationX = size.width * feedSlide }) {
-                                koinInject<DiscoveryScreenRenderer>().Tab(onMapExpandedChange = { isFeedMapExpanded = it })
+                                koinInject<DiscoveryScreenRenderer>().Tab(
+                                    onMapExpandedChange = { isFeedMapExpanded = it }, reselections = tabReselections.search)
                             }
                         }
                     }

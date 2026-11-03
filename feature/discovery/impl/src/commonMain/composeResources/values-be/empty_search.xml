@@ -1,0 +1,14 @@
+<resources>
+    <string name="discovery_empty_catalog_title">Кавярняў пакуль няма</string>
+    <string name="discovery_empty_catalog_body">У выбраным горадзе пакуль няма кавярняў у каталогу.</string>
+    <string name="discovery_empty_query_title">Нічога не знойдзена</string>
+    <string name="discovery_empty_shops_title">Кавярні не знойдзеныя</string>
+    <string name="discovery_empty_query_body">Паспрабуйце іншую назву або праверце запыт.</string>
+    <string name="discovery_empty_filters_title">Няма кавярняў з такімі фільтрамі</string>
+    <string name="discovery_empty_filters_body">Прыбярыце фільтры або змяніце запыт, каб пашырыць пошук.</string>
+    <string name="discovery_edit_query">Змяніць запыт</string>
+    <string name="discovery_reset_filters">Скінуць фільтры</string>
+    <string name="discovery_add_roaster">Дадаць абсмажчыка</string>
+    <string name="discovery_roaster_suggestion_title">Не знайшлі патрэбнага абсмажчыка?</string>
+    <string name="discovery_roaster_suggestion_body">Прапануйце дадаць яго ў CoffeePeek — пасля праверкі ён з’явіцца ў каталогу.</string>
+</resources>

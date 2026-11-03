@@ -11,7 +11,7 @@ import coffeepeek.composeapp.generated.resources.Res
 import coffeepeek.composeapp.generated.resources.favorite_add
 import coffeepeek.composeapp.generated.resources.favorite_remove
 import com.coffeepeek.core.designsystem.component.CoffeePeekLikeButton
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 
 @Composable
 internal fun FavoriteButton(

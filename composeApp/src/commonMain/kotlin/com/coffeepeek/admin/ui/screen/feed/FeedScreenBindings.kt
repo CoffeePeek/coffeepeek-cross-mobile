@@ -15,6 +15,7 @@ internal fun feedScreenActions(vm: FeedViewModel, state: FeedUiState, dismiss: (
         onSelectRoasters = selectRoasters,
         onRefresh = vm::refresh,
         onLoadMore = vm::loadMore,
+        onRetryLoadMore = vm::retryLoadMore,
         onOpenShop = { openFeedShop(vm, dismiss, it) },
         onToggleFavorite = vm::toggleFavorite,
         onAddShop = { Navigator.navigate(Navigator.Screen.AddShop) },
