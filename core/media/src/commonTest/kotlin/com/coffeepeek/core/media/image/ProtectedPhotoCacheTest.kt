@@ -50,6 +50,20 @@ class ProtectedPhotoCacheTest {
         assertFalse(PhotoCachePolicy.read(headersOf(HttpHeaders.CacheControl to listOf("private,max-age=20"), HttpHeaders.Vary to listOf("*")), 0, 0, base).stores)
     }
 
+    @Test fun ownerOnlyShelfCardUsesTheLongerPrivateLeaseButNoStoreStillForbidsReuse() = runTest {
+        val clock = Clock(base)
+        val cache = ProtectedPhotoCache(backgroundScope, clock)
+        val card = PhotoCacheKey("https://gateway.example/api/v1/shelf/bags/bag/photos/card", this)
+        val privateHeaders = headers("private, max-age=300, must-revalidate")
+        val first = cache.read(card, base + 600_000, { true }) { response(privateHeaders) }
+        assertEquals(300_000L, first.reusablePermission?.remaining(clock))
+        cache.read(card, base + 600_000, { true }) { error("fresh card should be reused") }
+        val noStore = PhotoCacheKey("https://gateway.example/api/v1/shelf/bags/bag/photos/other", this)
+        assertNull(cache.read(noStore, base + 600_000, { true }) {
+            response(headers("private, no-store"))
+        }.reusablePermission)
+    }
+
     @Test fun freshBytesReuseOnlyUntilTheOriginalDeadlineAndThen304KeepsExactBytes() = runTest {
         val clock = Clock(base)
         val cache = ProtectedPhotoCache(backgroundScope, clock)

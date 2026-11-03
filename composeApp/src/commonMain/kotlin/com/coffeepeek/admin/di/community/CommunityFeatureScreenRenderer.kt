@@ -55,7 +55,7 @@ internal class FeatureCommunityScreenRenderer(private val entry: CommunityEntry)
 internal fun communityHost() = CommunityHost(
     image = { url, highQuality, modifier, scale -> CoffeePeekImage(data = url, highQualityData = highQuality, contentScale = scale, modifier = modifier) },
     displayDate = { rememberReviewDisplayDate(it) },
-    brewMethodLabel = { it.methodLabel() },
+    brewMethodLabel = { it.methodLabel(it) },
     prefetchPhotos = { state, posts -> PrefetchListPhotos(state, posts) },
     photoViewer = { thumbnails, originals, index, onDismiss -> CoffeePeekPhotoViewer(CoffeePeekPhotoViewerImages(thumbnails, originals), index, onDismiss) },
     exposure = { modifier, kind ->

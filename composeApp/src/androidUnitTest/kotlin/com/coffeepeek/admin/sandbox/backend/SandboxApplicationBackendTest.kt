@@ -1,5 +1,13 @@
 package com.coffeepeek.admin.sandbox.backend
 
+import com.coffeepeek.admin.ui.screen.auth.message
+
+import com.coffeepeek.admin.ui.screen.auth.LoginFailureCopy
+
+import com.coffeepeek.feature.auth.domain.classifyLoginFailure
+
+import com.coffeepeek.feature.appupdate.impl.UpdateCheckFeedback
+
 import kotlin.test.assertNotNull
 import com.coffeepeek.api.service.AuthService
 import com.coffeepeek.admin.feature.passwordrecovery.data.PasswordRecoveryRepositoryImpl
@@ -91,6 +99,8 @@ private fun shopEntry(slug: String) =
     FavoriteEntry(FavoriteKind.CoffeeShop, FavoriteAddress(slug, "/coffee-shops/$slug", 1, false))
 
 class SandboxApplicationBackendTest {
+    private val loginCopy = LoginFailureCopy("Неверный email или пароль", "Не удалось подключиться. Проверьте интернет-соединение", "Не удалось войти. Проверьте email и пароль")
+
     @get:Rule val temporary = TemporaryFolder()
 
     @Test fun migratedOwnProfileReadsAndEditsShareOneCacheInTheLocalBackend() = runTest { fixture { _, client ->
@@ -558,12 +568,12 @@ class SandboxApplicationBackendTest {
 
             backend.updatePolicy = SandboxUpdatePolicy.Failure
             val automatic = check().second
-            assertFalse(automatic.showPrompt); assertNull(automatic.message)
+            assertFalse(automatic.showPrompt); assertNull(automatic.feedback)
             val manual = check(manual = true).second
-            assertTrue(manual.checkFailed); assertEquals("Не удалось проверить обновления. Попробуйте позже.", manual.message)
+            assertTrue(manual.checkFailed); assertEquals(UpdateCheckFeedback.CheckFailed, manual.feedback)
 
             backend.updatePolicy = SandboxUpdatePolicy.UpToDate
-            assertEquals("Установлена актуальная версия", check(manual = true).second.message)
+            assertEquals(UpdateCheckFeedback.UpToDate, check(manual = true).second.feedback)
         } finally { scope.cancel() }
     } }
     @Test fun accountFixturesAnswerTheRealAuthServiceAndRecoveryRepository() = runTest { fixture { backend, client ->
@@ -584,7 +594,7 @@ class SandboxApplicationBackendTest {
         backend.authPolicy = SandboxAuthPolicy.WrongPassword
         val rejected = auth.login("tester@example.com", "wrong").exceptionOrNull()
         assertNotNull(rejected)
-        assertEquals("Неверный email или пароль", com.coffeepeek.admin.utils.localizedLoginError(rejected.message))
+        assertEquals("Неверный email или пароль", classifyLoginFailure(rejected.message).message(loginCopy))
         assertTrue(auth.register("Tester", "new@example.com", "password1").isSuccess)
 
         backend.authPolicy = SandboxAuthPolicy.EmailTaken
@@ -759,6 +769,32 @@ class SandboxApplicationBackendTest {
         backend.reset(true)
         assertEquals(SandboxContributions.Seeded, backend.contributions)
         assertEquals(2, shops.getMyModerationShops(ModerationStatusDto.Approved, 1, 20).getOrThrow().totalItems)
+    } }
+
+    @Test fun discoveryPageFailureAllowsRetryAndRearmsOnRefresh() = runTest { fixture { backend, client ->
+        backend.discovery = SandboxDiscovery.PageFailure
+        val shops = ShopApiService(client.client)
+        assertEquals(20, shops.searchShops(page = 1, pageSize = 20).getOrThrow().items.size)
+        assertTrue(shops.searchShops(page = 2, pageSize = 20).isFailure)
+        assertEquals(2, shops.searchShops(page = 2, pageSize = 20).getOrThrow().currentPage)
+        shops.searchShops(page = 1, pageSize = 20).getOrThrow()
+        assertTrue(shops.searchShops(page = 2, pageSize = 20).isFailure)
+    } }
+
+    @Test fun discoveryRefreshFailurePreservesTheInitialLoadAndAllowsRetry() = runTest { fixture { backend, client ->
+        backend.discovery = SandboxDiscovery.RefreshFailure
+        val shops = ShopApiService(client.client)
+        val first = shops.searchShops(page = 1, pageSize = 20).getOrThrow()
+        assertEquals(20, first.items.size)
+        assertTrue(shops.searchShops(page = 2, pageSize = 20).isSuccess)
+        assertTrue(shops.searchShops(page = 1, pageSize = 20).isFailure)
+        assertEquals(first, shops.searchShops(page = 1, pageSize = 20).getOrThrow())
+        assertTrue(shops.searchShops(cityId = "brest").isSuccess)
+        assertTrue(shops.searchShops(cityId = "brest").isFailure)
+        backend.discovery = SandboxDiscovery.Seeded
+        backend.discovery = SandboxDiscovery.RefreshFailure
+        assertTrue(shops.searchShops(page = 1, pageSize = 20).isSuccess)
+        assertTrue(shops.searchShops(page = 1, pageSize = 20).isFailure)
     } }
 
     @Test fun discoveryClustersUnfoldIntoTheSameShopsAtTheDetailZoom() = runTest { fixture { backend, client ->

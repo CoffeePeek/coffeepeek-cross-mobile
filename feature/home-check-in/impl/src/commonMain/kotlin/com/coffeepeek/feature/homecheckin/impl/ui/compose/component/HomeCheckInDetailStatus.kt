@@ -16,10 +16,11 @@ import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_timeout
 import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_unauthorized
 import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_unavailable
 import androidx.compose.material3.*
+import com.coffeepeek.core.designsystem.component.CoffeePeekTextButton as TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics

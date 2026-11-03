@@ -18,18 +18,18 @@ import org.koin.compose.koinInject
 @Composable
 internal fun CheckInTabContent(
     showCreateButton: Boolean = true,
-    content: @Composable BoxScope.() -> Unit,
+    content: @Composable BoxScope.(onCreateCheckIn: () -> Unit) -> Unit,
 ) {
     val sessions: SessionReader = koinInject()
     val session by remember(sessions) { sessions.observeSession() }.collectAsState(sessions.peekSession())
 
     Box(Modifier.fillMaxSize()) {
-        content()
         CheckInCreateHost(
             canCreate = { sessions.isActiveSession(sessions.peekSession()) },
             resetKey = session?.userId ?: session?.accessToken,
             onShop = { Navigator.navigate(Navigator.Screen.CreateCheckIn) },
             showButton = showCreateButton,
+            content = content,
         )
     }
 }

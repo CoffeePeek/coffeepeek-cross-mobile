@@ -1,0 +1,5 @@
+<resources>
+    <string name="discovery_catalog_loading">Загружаем варианты фильтров…</string>
+    <string name="discovery_catalog_failed">Не удалось загрузить варианты фильтров. Поиск и выбранные фильтры продолжают работать.</string>
+    <string name="discovery_catalog_empty">Дополнительных вариантов фильтров пока нет.</string>
+</resources>

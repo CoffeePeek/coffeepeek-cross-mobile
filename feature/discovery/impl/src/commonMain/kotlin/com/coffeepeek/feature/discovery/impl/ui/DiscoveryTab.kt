@@ -21,6 +21,8 @@ internal class TabCallbacks(
     val onAddShop: () -> Unit,
     val onMapExpandedChange: (Boolean) -> Unit,
     val onFocusConsumed: () -> Unit,
+    val checkInAction: @Composable () -> Unit = {},
+    val reselections: kotlinx.coroutines.flow.Flow<Unit> = kotlinx.coroutines.flow.emptyFlow(),
 )
 
 /** Lifecycle adapter; layout and transient overlays belong to the stateless content. */
@@ -41,6 +43,9 @@ internal fun DiscoveryTab(
         searchViewModel.state.map { it.criteria }.distinctUntilChanged().collect { mapViewModel.onAction(MapAction.SyncCriteria(it)) }
     }
     SearchNavigationEvents(searchViewModel, callbacks)
+    host.locationPermission(state.locationPermissionRequest,
+        { searchViewModel.onAction(SearchAction.LocationGranted) },
+        { searchViewModel.onAction(SearchAction.LocationDenied) })
     DiscoveryTabContent(state, host, roasters, analytics, callbacks, bottomClearance, focus,
         searchViewModel::onAction, modifier, onSearchPresentation = { listActive, mapActive ->
             searchViewModel.onAction(SearchAction.PresentationChanged(listActive))

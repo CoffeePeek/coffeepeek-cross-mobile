@@ -11,7 +11,7 @@ import com.coffeepeek.feature.checkinhistory.impl.resources.history_rating_descr
 import com.coffeepeek.feature.checkinhistory.impl.resources.history_rating_missing
 import com.coffeepeek.feature.checkinhistory.impl.resources.history_rating_decimal
 import kotlin.math.roundToInt
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 
 @Composable
 internal fun HistoryCheckInRating(rating: HistoryRating, modifier: Modifier = Modifier) {

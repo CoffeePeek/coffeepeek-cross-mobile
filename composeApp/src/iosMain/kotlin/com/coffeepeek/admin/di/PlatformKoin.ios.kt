@@ -10,6 +10,7 @@ import com.coffeepeek.admin.di.shop.shopBrowsingModule
 import com.coffeepeek.admin.di.shop.shopCheckInModule
 import com.coffeepeek.admin.di.shop.shopFavoriteIntent
 import org.koin.core.scope.Scope
+import com.coffeepeek.admin.di.collections.collectionsModule
 import com.coffeepeek.admin.di.checkinhistory.checkInHistoryModule
 import com.coffeepeek.admin.di.contentreport.contentReportModule
 import com.coffeepeek.admin.di.contentreport.FeatureContentReportRenderer
@@ -36,16 +37,13 @@ import com.coffeepeek.admin.di.settings.featureSettingsScreenRenderer
 import com.coffeepeek.admin.utils.ErrorHandler
 import com.coffeepeek.admin.di.coffee.CoffeeShelfTab
 import com.coffeepeek.admin.di.shelf.ShelfFeatureScreenRenderer
-import com.coffeepeek.admin.di.shelf.iosShelfEnabled
-import com.coffeepeek.admin.di.shelf.iosShelfModule
 import com.coffeepeek.admin.di.shelf.shelfBrewForm
+import com.coffeepeek.admin.di.shelf.iosShelfModule
 import com.coffeepeek.admin.locator.Locator
-import com.coffeepeek.admin.ui.screen.shelf.UnsupportedShelfScreenRenderer
 
 actual fun initPlatformKoin() {
-    val shelf = iosShelfEnabled()
     initKoin(
-        platformModules = listOf(contributionsModule(), serverFavoritesModule(), coffeeModule(), shopBrowsingModule(), shopCheckInModule(AppShopCheckInDateFormatter()), homeCheckInModule(shelfEnabled = shelf), checkInHistoryModule(shelfEnabled = shelf), contentReportModule(), iosShelfModule()),
+        platformModules = listOf(contributionsModule(), serverFavoritesModule(), coffeeModule(), collectionsModule(), shopBrowsingModule(), shopCheckInModule(AppShopCheckInDateFormatter()), homeCheckInModule(), checkInHistoryModule(), contentReportModule(), iosShelfModule()),
         // Owners move to their migrated modules one at a time; the others keep the legacy renderers.
         checkInRenderers = featureCheckInRendererFactories(),
         contentReportRendererFactory = { get<FeatureContentReportRenderer>() },
@@ -61,11 +59,10 @@ actual fun initPlatformKoin() {
         checkInDetailRendererFactory = { com.coffeepeek.admin.di.community.featureCheckInDetailScreenRenderer(get(), get(), get(), get()) },
         communityRendererFactory = { featureCommunityScreenRenderer(get(), get(), get(), get(), get(), get()) },
         coffeeRendererFactory = {
-            featureCoffeeScreenRenderer(get(), CoffeeShelfTab(get(), get(), Locator.database.settingRepository).takeIf { shelf })
+            featureCoffeeScreenRenderer(get(), CoffeeShelfTab(get(), get(), Locator.database.settingRepository))
         },
         shelfRendererFactory = {
-            if (shelf) ShelfFeatureScreenRenderer(get(), Locator.database.settingRepository, shelfBrewForm(get()))
-            else UnsupportedShelfScreenRenderer
+            ShelfFeatureScreenRenderer(get(), Locator.database.settingRepository, shelfBrewForm(get()))
         },
         publicProfileRendererFactory = { featurePublicProfileScreenRenderer(get(), get(), get(), get(), get()) },
         ownProfileRendererFactory = { featureOwnProfileScreenRenderer(get(), get(), get(), get(), get(), get(), get(), get(), get()) },
@@ -91,4 +88,4 @@ private fun Scope.iosShopCheckInListRenderer() =
         visibility = get(), blockActions = get())
 
 private fun Scope.iosSettingsRenderer() =
-    featureSettingsScreenRenderer(get(), get(), get(), get(), notify = ErrorHandler::showError)
+    featureSettingsScreenRenderer(get(), get(), get(), get(), get(), notify = ErrorHandler::showError)

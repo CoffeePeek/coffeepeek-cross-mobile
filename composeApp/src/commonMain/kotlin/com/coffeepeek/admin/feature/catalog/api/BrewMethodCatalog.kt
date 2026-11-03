@@ -7,8 +7,8 @@ internal fun interface BrewMethodCatalog {
     suspend fun load(): Result<List<BrewMethodOption>>
 }
 
-/** Shared fallback labels for saved recipes when the catalog has not been loaded. */
-internal fun String.methodLabel(): String = when (this) {
+/** [otherLabel] is prepared by UI; non-rendering adapters pass the original code through. */
+internal fun String.methodLabel(otherLabel: String): String = when (this) {
     "espresso" -> "Эспрессо"
     "pour_over" -> "Пуровер"
     "batch_drip" -> "Фильтр batch"
@@ -16,7 +16,7 @@ internal fun String.methodLabel(): String = when (this) {
     "cezve" -> "Турка"
     "aeropress" -> "Аэропресс"
     "french_press" -> "Френч-пресс"
-    "other" -> "Другое"
+    "other" -> otherLabel
     "hario-v60" -> "Hario V60"
     "chemex" -> "Chemex"
     "cold-brew" -> "Cold Brew"

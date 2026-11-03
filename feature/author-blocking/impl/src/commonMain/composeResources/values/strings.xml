@@ -24,4 +24,5 @@
     <string name="author_blocking_blocking">Блокируем автора…</string>
     <string name="author_blocking_unblocking">Разблокируем автора…</string>
     <string name="author_blocking_save_failed">Не удалось сохранить</string>
+    <string name="author_blocking_save_failed_message">Не удалось сохранить блокировку. Проверьте подключение и повторите попытку.</string>
 </resources>

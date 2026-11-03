@@ -10,8 +10,8 @@ import com.coffeepeek.feature.checkinhistory.impl.resources.history_months_genit
 import com.coffeepeek.feature.checkinhistory.impl.resources.history_count_label
 import com.coffeepeek.feature.checkinhistory.impl.resources.history_visit_forms
 import com.coffeepeek.feature.checkinhistory.impl.resources.history_shop_forms
-import org.jetbrains.compose.resources.stringArrayResource
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringArrayResource as stringArrayResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import com.coffeepeek.feature.checkinhistory.impl.resources.history_date_without_year
 
 @Composable

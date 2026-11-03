@@ -52,17 +52,17 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import com.coffeepeek.core.designsystem.component.CoffeePeekTextButton as TextButton
+import com.coffeepeek.core.designsystem.component.CoffeePeekPlainIconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
@@ -214,8 +214,8 @@ private fun PostMenu(actions: PostCardActions, enabled: Boolean, hiding: Boolean
         actions.onReport?.let { add(CoffeePeekMenuAction(stringResource(Res.string.community_report), CoffeePeekIcons.Error, nativeIcon = CoffeePeekMenuIcon.Report, onClick = it)) }
         actions.onBlock?.let { add(CoffeePeekMenuAction(stringResource(Res.string.community_block_author), CoffeePeekIcons.VisibilityOff, destructive = true, nativeIcon = CoffeePeekMenuIcon.Block, onClick = it)) }
     }
-    CoffeePeekActionMenu(items, menuDescription = label, enabled = enabled) { open ->
-        IconButton(onClick = open, enabled = enabled) { Icon(CoffeePeekIcons.MoreHorizontal, label, tint = MaterialTheme.colorScheme.onSurfaceVariant) }
+    CoffeePeekActionMenu(items, enabled = enabled) { open ->
+        CoffeePeekPlainIconButton(onClick = open, enabled = enabled) { Icon(CoffeePeekIcons.MoreHorizontal, label, tint = MaterialTheme.colorScheme.onSurfaceVariant) }
     }
 }
 
@@ -348,9 +348,12 @@ private fun PostPhotoStrip(photos: PostPhotos, onPhoto: (Int) -> Unit, host: Com
 
 @Composable
 private fun HomePreparation.details(methodLabel: (String) -> String?): String {
+    val formattedMethod = brewMethodCode?.let(methodLabel)
+    val generic = brewMethodCode == "other" && (formattedMethod == null || formattedMethod == brewMethodCode)
+    val method = if (generic) stringResource(Res.string.community_drink_other) else formattedMethod
     val separator = stringResource(Res.string.community_details_separator)
     return listOfNotNull(
-        brewMethodCode?.let(methodLabel),
+        method,
         doseGrams?.let { stringResource(Res.string.community_dose, it.toString()) },
         brewDurationSeconds?.let { stringResource(Res.string.community_seconds, it) },
         tasteScore?.let { stringResource(Res.string.community_taste, it) },

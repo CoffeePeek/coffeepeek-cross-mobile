@@ -8,5 +8,8 @@ interface NotificationsRenderer {
     fun Bell()
 
     @Composable
+    fun Preference(label: String, description: String)
+
+    @Composable
     fun HandlePendingOpen(isLoggedIn: Boolean) = Unit
 }

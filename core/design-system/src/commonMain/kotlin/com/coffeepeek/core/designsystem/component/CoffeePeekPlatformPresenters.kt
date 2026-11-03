@@ -1,5 +1,6 @@
 package com.coffeepeek.core.designsystem.component
 
+import com.coffeepeek.core.designsystem.modifier.CoffeePeekGlassIcon
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.runtime.Composable
@@ -88,9 +89,6 @@ fun CoffeePeekNativeAlert(
     title: String, message: String, confirmLabel: String, onConfirm: () -> Unit, onDismiss: () -> Unit,
     cancelLabel: String? = null, destructive: Boolean = false,
 ): Boolean = LocalCoffeePeekNativeAlertPresenter.current?.Present(title, message, confirmLabel, onConfirm, onDismiss, cancelLabel, destructive) == true
-
-/** The native glyph a platform draws for a glass icon button; it replaces the Compose icon when a presenter takes over. */
-enum class CoffeePeekGlassIcon { Back, Add, Edit, Favorite, FavoriteFilled, Share, Close, Zones, Location }
 
 /** The native glyph of a menu row. */
 enum class CoffeePeekMenuIcon { Edit, Hide, Report, NoteEdit, Add, CoffeeBean, Logout, Block, Share }

@@ -39,6 +39,47 @@ class NotificationPresenterTest {
         assertEquals("first", feature.state.value.items.single().id)
     }
 
+    @Test fun simultaneousVisibleNotificationsAreAllMarkedRead() = runTest {
+        val account = Account(); val repository = Repository()
+        val read = mutableListOf<String>()
+        val releaseFirst = CompletableDeferred<Unit>()
+        repository.page = {
+            NotificationPage(listOf("first", "second", "third").map { id ->
+                entry(id).copy(readAtUtc = if (id in read) "2026-10-21T09:00:00Z" else null)
+            }, null, 3 - read.size)
+        }
+        repository.markReadHandler = { id ->
+            if (id == "first") releaseFirst.await()
+            read += id
+        }
+        val feature = NotificationPresenter(repository, account, Platform(), backgroundScope)
+        account.user.value = "alice"; runCurrent()
+        feature.markRead("first"); runCurrent()
+        feature.markRead("second"); feature.markRead("third")
+        releaseFirst.complete(Unit); runCurrent()
+        assertEquals(listOf("first", "second", "third"), read)
+        assertEquals(0, feature.state.value.unreadCount)
+        assertTrue(feature.state.value.items.all { it.read })
+    }
+
+    @Test fun queuedReadsDoNotCrossAnAccountChange() = runTest {
+        val account = Account(); val repository = Repository()
+        val releaseFirst = CompletableDeferred<Unit>()
+        val read = mutableListOf<String>()
+        repository.markReadHandler = { id ->
+            if (id == "first") releaseFirst.await()
+            read += id
+        }
+        val feature = NotificationPresenter(repository, account, Platform(), backgroundScope)
+        account.user.value = "alice"; runCurrent()
+        feature.markRead("first"); runCurrent()
+        feature.markRead("second")
+        account.user.value = "bob"; runCurrent()
+        releaseFirst.complete(Unit); runCurrent()
+        assertFalse("second" in read)
+        assertEquals("bob", feature.state.value.accountId)
+    }
+
     @Test fun cancellationDuringDestinationLookupIsNotConvertedIntoAnUnsupportedTarget() = runTest {
         val account = Account()
         val repository = Repository()
@@ -80,7 +121,7 @@ class NotificationPresenterTest {
         assertEquals(before, repository.inboxCalls)
         release.complete(Unit); runCurrent()
         assertEquals(before + 1, repository.inboxCalls)
-        assertEquals("Не удалось отметить уведомления прочитанными", feature.state.value.error)
+        assertEquals(NotificationInboxError.MarkReadFailed, feature.state.value.error)
         assertFalse(feature.state.value.markingRead)
     }
 
@@ -92,7 +133,7 @@ class NotificationPresenterTest {
         val before = repository.inboxCalls
         feature.markAllRead(); runCurrent()
         assertEquals(before, repository.inboxCalls)
-        assertEquals("Не удалось отметить уведомления прочитанными", feature.state.value.error)
+        assertEquals(NotificationInboxError.MarkReadFailed, feature.state.value.error)
     }
 
     @Test fun aRefreshQueuedForAnOldAccountIsNotServedAfterTheAccountChanged() = runTest {
@@ -120,8 +161,29 @@ class NotificationPresenterTest {
         assertTrue(repository.settingsWrites.isEmpty())
         assertEquals(0, platform.permissionRequests)
         feature.onCheckInCreated()
+        feature.onInboxOpened()
         assertEquals(0, platform.permissionRequests)
         assertTrue(feature.state.value.items.isNotEmpty())
+    }
+
+    @Test fun mountingAnInlineNotificationPreferenceRefreshesWithoutChangingItOrReadingInboxItems() = runTest {
+        val account = Account()
+        val repository = Repository().apply { enabled = false }
+        val platform = Platform()
+        platform.mutable.update { it.copy(permissionGranted = false) }
+        val feature = NotificationPresenter(repository, account, platform, backgroundScope)
+        account.user.value = "alice"
+        runCurrent()
+        val unreadBefore = feature.state.value.unreadCount
+        val itemsBefore = feature.state.value.items
+        feature.refresh()
+        runCurrent()
+        assertFalse(feature.state.value.pushEnabled)
+        assertTrue(repository.settingsWrites.isEmpty())
+        assertEquals(0, platform.permissionRequests)
+        assertEquals(0, platform.explicitPermissionRequests)
+        assertEquals(unreadBefore, feature.state.value.unreadCount)
+        assertEquals(itemsBefore, feature.state.value.items)
     }
 
     @Test fun explicitToggleRequestsPermissionAndDenialDoesNotPretendPermissionWasGranted() = runTest {
@@ -147,14 +209,14 @@ class NotificationPresenterTest {
         val feature = NotificationPresenter(repository, account, platform, backgroundScope)
         account.user.value = "alice"; runCurrent()
         assertFalse(feature.state.value.settingsLoaded)
-        assertNotNull(feature.state.value.settingsError)
+        assertEquals(NotificationSettingsError.LoadFailed, feature.state.value.settingsError)
         repository.failSettings = false
         feature.refresh(); runCurrent()
         assertTrue(feature.state.value.settingsLoaded)
         repository.failSave = true
         feature.setPushEnabled(false); runCurrent()
         assertTrue(feature.state.value.pushEnabled)
-        assertNotNull(feature.state.value.settingsError)
+        assertEquals(NotificationSettingsError.SaveFailed, feature.state.value.settingsError)
         assertFalse(feature.state.value.savingSettings)
     }
 
@@ -211,6 +273,85 @@ class NotificationPresenterTest {
         assertTrue(repository.removals > 0)
         feature.onCheckInCreated()
         assertEquals(1, platform.permissionRequests)
+    }
+
+    @Test fun inboxPermissionOpportunityIsExplicitAndBackgroundRefreshesDoNotRepeatIt() = runTest {
+        val account = Account()
+        val platform = Platform()
+        val repository = Repository()
+        platform.mutable.update { it.copy(permissionGranted = false) }
+        val feature = NotificationPresenter(repository, account, platform, backgroundScope)
+        account.user.value = "alice"
+        runCurrent()
+        feature.onInboxOpened()
+        repeat(3) {
+            feature.refresh()
+            feature.foreground()
+            runCurrent()
+        }
+        assertEquals(1, platform.permissionRequests)
+        assertEquals(0, platform.explicitPermissionRequests)
+        assertTrue(repository.settingsWrites.isEmpty())
+    }
+
+    @Test fun aGuestCannotOfferInboxPermission() = runTest {
+        val platform = Platform()
+        platform.mutable.update { it.copy(permissionGranted = false) }
+        val feature = NotificationPresenter(Repository(), Account(), platform, backgroundScope)
+        runCurrent()
+        feature.onInboxOpened()
+        assertEquals(0, platform.permissionRequests)
+    }
+
+    @Test fun anAlreadyAuthorizedUserIsNotPromptedWhenOpeningTheInbox() = runTest {
+        val account = Account()
+        val platform = Platform()
+        val feature = NotificationPresenter(Repository(), account, platform, backgroundScope)
+        account.user.value = "alice"
+        runCurrent()
+        feature.onInboxOpened()
+        assertEquals(0, platform.permissionRequests)
+    }
+
+    @Test fun anInboxOpenDoesNotGuessAnUnloadedNotificationPreference() = runTest {
+        val account = Account()
+        val repository = Repository().apply { failSettings = true }
+        val platform = Platform()
+        platform.mutable.update { it.copy(permissionGranted = false) }
+        val feature = NotificationPresenter(repository, account, platform, backgroundScope)
+        account.user.value = "alice"
+        runCurrent()
+        feature.onInboxOpened()
+        assertEquals(0, platform.permissionRequests)
+        repository.failSettings = false
+        feature.refresh()
+        runCurrent()
+        assertEquals(0, platform.permissionRequests)
+        feature.onInboxOpened()
+        assertEquals(1, platform.permissionRequests)
+    }
+
+    @Test fun anUnavailablePushPlatformDoesNotOfferInboxPermission() = runTest {
+        val account = Account()
+        val platform = Platform()
+        platform.mutable.update { it.copy(available = false, permissionGranted = false) }
+        val feature = NotificationPresenter(Repository(), account, platform, backgroundScope)
+        account.user.value = "alice"
+        runCurrent()
+        feature.onInboxOpened()
+        assertEquals(0, platform.permissionRequests)
+    }
+
+    @Test fun aStaleAccountCannotOfferInboxPermissionBeforeItsStateCollectorCatchesUp() = runTest {
+        val account = Account()
+        val platform = Platform()
+        platform.mutable.update { it.copy(permissionGranted = false) }
+        val feature = NotificationPresenter(Repository(), account, platform, backgroundScope)
+        account.user.value = "alice"
+        runCurrent()
+        account.user.value = "bob"
+        feature.onInboxOpened()
+        assertEquals(0, platform.permissionRequests)
     }
 
     @Test fun foregroundPushUpdatesInboxWithoutClosingThePanel() = runTest {

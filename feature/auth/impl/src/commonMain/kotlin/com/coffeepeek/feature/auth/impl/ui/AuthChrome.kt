@@ -1,5 +1,11 @@
 package com.coffeepeek.feature.auth.impl.ui
 
+import com.coffeepeek.feature.auth.impl.resources.auth_register_submit
+import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
+import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
+
+import org.jetbrains.compose.ui.tooling.preview.Preview
+
 import androidx.compose.animation.AnimatedVisibility
 import com.coffeepeek.feature.auth.impl.resources.Res
 import com.coffeepeek.feature.auth.impl.resources.auth_mascot_laptop
@@ -32,12 +38,11 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
+import com.coffeepeek.core.designsystem.component.CoffeePeekFilledButton as Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import com.coffeepeek.core.designsystem.component.CoffeePeekIconButton as IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
@@ -72,7 +77,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import com.coffeepeek.core.designsystem.component.CoffeePeekCompactOutlinedTextField
-import com.coffeepeek.core.designsystem.component.CoffeePeekGlassIcon
+import com.coffeepeek.core.designsystem.modifier.CoffeePeekGlassIcon
 import com.coffeepeek.core.designsystem.component.CoffeePeekInputRole
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.modifier.CoffeePeekGlassIconButton
@@ -322,7 +327,7 @@ internal fun AuthPrimaryButton(
         elevation = ButtonDefaults.buttonElevation(defaultElevation = 6.dp, pressedElevation = 2.dp, disabledElevation = 0.dp),
     ) {
         if (loading) {
-            CircularProgressIndicator(Modifier.size(20.dp), color = CoffeePeekColors.DarkTextOnPrimary, strokeWidth = 2.dp)
+            CoffeePeekLoader(modifier = Modifier.size(20.dp), size = 20.dp, color = CoffeePeekColors.DarkTextOnPrimary, strokeWidth = 2.dp)
         } else {
             Text(text, style = MaterialTheme.typography.labelLarge.copy(fontSize = 15.sp, fontWeight = FontWeight.SemiBold))
         }
@@ -408,4 +413,10 @@ private fun StepMarker(index: Int, activeIndex: Int) {
             )
         }
     }
+}
+
+@Preview
+@Composable
+private fun AuthPrimaryLoadingPreview() = CoffeePeekTheme {
+    AuthPrimaryButton(stringResource(Res.string.auth_register_submit), {}, loading = true)
 }

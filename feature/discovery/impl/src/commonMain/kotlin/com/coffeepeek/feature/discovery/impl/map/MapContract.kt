@@ -16,9 +16,8 @@ internal data class MapState(
     val cityId: String? = null,
     val filters: DiscoveryFilters = DiscoveryFilters(),
     val userLocation: Coordinates? = null,
-    /** The ten nearest shops inside five kilometers of [nearbyOrigin]; the carousel shows them while nothing else is selected. */
-    val nearby: List<MapMarker> = emptyList(),
-    val nearbyOrigin: Coordinates? = null,
+    /** Shops in the settled viewport, retaining the order of surviving cards. */
+    val carouselShops: List<MapMarker> = emptyList(),
     val markers: List<MapMarker> = emptyList(),
     val clusters: List<MapCluster> = emptyList(),
     val zones: List<MapZone> = emptyList(),
@@ -45,7 +44,7 @@ internal data class MapState(
     val camera: MapCamera? = null,
 ) {
     val criteria: DiscoveryCriteria get() = DiscoveryCriteria(query, filters, userLocation)
-    val hasCarousel: Boolean get() = selectedShop != null || nearby.isNotEmpty()
+    val hasCarousel: Boolean get() = selectedShop != null || carouselShops.isNotEmpty()
 }
 
 internal sealed interface MapAction {

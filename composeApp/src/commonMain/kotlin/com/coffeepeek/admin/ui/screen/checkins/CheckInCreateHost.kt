@@ -29,19 +29,23 @@ internal fun BoxScope.CheckInCreateHost(
     onShop: () -> Unit,
     onHomeSaved: () -> Unit = {},
     showButton: Boolean = true,
+    /** Content that places its own create action (the Search tab hides it under the map); gets the same request the floating button makes. */
+    content: @Composable BoxScope.(onCreate: () -> Unit) -> Unit = {},
 ) {
     var showCreate by rememberSaveable(resetKey) { mutableStateOf(false) }
     val clearance = LocalFloatingNavClearance.current
     val focusManager = LocalFocusManager.current
     val keyboard = LocalSoftwareKeyboardController.current
+    val onCreate = {
+        focusManager.clearFocus(force = true)
+        keyboard?.hide()
+        Analytics.track(AnalyticsEvent.CHECK_IN_START_ATTEMPTED, "source" to "global_create")
+        if (canCreate()) showCreate = true
+        else { Analytics.gate("check_in"); Navigator.navigate(Navigator.Screen.Auth) }
+    }
+    content(onCreate)
     if (showButton) {
-        CheckInCreateButton(Modifier.align(Alignment.BottomEnd).padding(end = CpDimens.spacing4, bottom = clearance + 12.dp)) {
-            focusManager.clearFocus(force = true)
-            keyboard?.hide()
-            Analytics.track(AnalyticsEvent.CHECK_IN_START_ATTEMPTED, "source" to "global_create")
-            if (canCreate()) showCreate = true
-            else { Analytics.gate("check_in"); Navigator.navigate(Navigator.Screen.Auth) }
-        }
+        CheckInCreateButton(Modifier.align(Alignment.BottomEnd).padding(end = CpDimens.spacing4, bottom = clearance + 12.dp), onClick = onCreate)
     }
     if (showCreate) CheckInCreateFlow(
         onDismiss = { showCreate = false },

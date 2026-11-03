@@ -1,81 +1,29 @@
 package com.coffeepeek.admin.ui.component
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.IconButtonDefaults
-import androidx.compose.material3.MaterialTheme
+import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
+import org.jetbrains.compose.ui.tooling.preview.Preview
+import androidx.compose.material3.Icon
+import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
+
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.compositionLocalOf
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.graphics.luminance
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.coffeepeek.admin.theme.CpDimens
+import com.coffeepeek.core.designsystem.modifier.CoffeePeekGlassIconButton
+import com.coffeepeek.core.designsystem.modifier.coffeePeekLiquidGlass as coreLiquidGlass
 import dev.chrisbanes.haze.HazeState
-import dev.chrisbanes.haze.HazeStyle
-import dev.chrisbanes.haze.HazeTint
-import dev.chrisbanes.haze.hazeEffect
 
-/**
- * Haze source for glass controls on the current screen. Null → glass falls back to a translucent
- * tint without backdrop blur (e.g. over the native map view, which Haze can't sample).
- */
-val LocalGlassHazeState = compositionLocalOf<HazeState?> { null }
+/** Legacy source compatibility; all rendering belongs to core/design-system. */
+val LocalGlassHazeState = com.coffeepeek.core.designsystem.modifier.LocalCoffeePeekGlassHazeState
 
-/**
- * iOS "Liquid Glass" material: soft shadow, backdrop blur tinted with the surface colour,
- * and a top-lit rim highlight.
- */
 @Composable
 fun Modifier.liquidGlass(
     shape: Shape,
     hazeState: HazeState? = LocalGlassHazeState.current,
     shadowElevation: Dp = 6.dp,
-): Modifier {
-    val surface = MaterialTheme.colorScheme.surface
-    val isDark = surface.luminance() < 0.5f
-    val rim = Brush.verticalGradient(
-        if (isDark) {
-            listOf(Color.White.copy(alpha = 0.28f), Color.White.copy(alpha = 0.05f))
-        } else {
-            listOf(Color.White.copy(alpha = 0.85f), Color.White.copy(alpha = 0.25f))
-        },
-    )
-    val shadowColor = Color.Black.copy(alpha = if (isDark) 0.4f else 0.16f)
-    return this
-        .shadow(shadowElevation, shape, clip = false, ambientColor = shadowColor, spotColor = shadowColor)
-        .clip(shape)
-        .then(
-            if (hazeState != null) {
-                Modifier.hazeEffect(
-                    state = hazeState,
-                    style = HazeStyle(
-                        backgroundColor = surface,
-                        tint = HazeTint(surface.copy(alpha = if (isDark) 0.38f else 0.52f)),
-                        blurRadius = 24.dp,
-                        noiseFactor = 0f,
-                    ),
-                )
-            } else {
-                Modifier.background(surface.copy(alpha = if (isDark) 0.72f else 0.78f))
-            },
-        )
-        .border(0.75.dp, rim, shape)
-}
+): Modifier = coreLiquidGlass(shape, hazeState, shadowElevation)
 
-/** Circular glass button (44dp tap target) for navigation / floating controls. */
 @Composable
 fun GlassIconButton(
     onClick: () -> Unit,
@@ -84,20 +32,12 @@ fun GlassIconButton(
     enabled: Boolean = true,
     hazeState: HazeState? = LocalGlassHazeState.current,
     content: @Composable () -> Unit,
-) {
-    Box(
-        modifier = modifier
-            .size(CpDimens.buttonHeight)
-            .liquidGlass(CircleShape, hazeState),
-        contentAlignment = Alignment.Center,
-    ) {
-        IconButton(
-            onClick = onClick,
-            enabled = enabled,
-            colors = IconButtonDefaults.iconButtonColors(contentColor = MaterialTheme.colorScheme.onSurface),
-            modifier = Modifier.semantics { this.contentDescription = contentDescription },
-        ) {
-            content()
-        }
-    }
+) = CoffeePeekGlassIconButton(onClick, contentDescription, modifier, enabled, hazeState, content = content)
+
+@Composable
+private fun LiquidGlassCompatibilityPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
+    GlassIconButton({}, "Back") { Icon(CoffeePeekIcons.ChevronLeft, null) }
 }
+
+@Preview @Composable private fun LiquidGlassCompatibilityLightPreview() = LiquidGlassCompatibilityPreview(false)
+@Preview @Composable private fun LiquidGlassCompatibilityDarkPreview() = LiquidGlassCompatibilityPreview(true)

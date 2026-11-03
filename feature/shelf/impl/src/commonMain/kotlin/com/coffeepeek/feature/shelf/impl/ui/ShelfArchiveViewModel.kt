@@ -96,5 +96,6 @@ internal class ShelfArchiveViewModel(
         } ?: return
         handoff.consumed(outcome)
         updateState { copy(items = items.filterNot { it.id == outcome.bagId }, message = message) }
+        reload(debounce = false)
     }
 }

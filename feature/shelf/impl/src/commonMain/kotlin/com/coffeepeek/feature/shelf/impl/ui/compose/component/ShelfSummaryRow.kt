@@ -7,7 +7,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import com.coffeepeek.core.designsystem.component.CoffeePeekIconButton as IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -24,7 +24,7 @@ import com.coffeepeek.feature.shelf.impl.resources.Res
 import com.coffeepeek.feature.shelf.impl.resources.shelf_archive
 import com.coffeepeek.feature.shelf.impl.resources.shelf_drag_hint
 import com.coffeepeek.feature.shelf.impl.ui.compose.model.ShelfSummary
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 /** "7 пачек · ≈ 1,9 кг · 5 обжарщиков" and the archive button; while a bag is lifted, a hint instead. */

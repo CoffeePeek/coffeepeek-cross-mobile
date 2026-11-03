@@ -1,6 +1,7 @@
 package com.coffeepeek.core.designsystem.component
 
 import androidx.compose.animation.core.animate
+import com.coffeepeek.core.designsystem.modifier.CoffeePeekGlassIcon
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -11,6 +12,7 @@ import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
+import com.coffeepeek.core.designsystem.component.CoffeePeekIconButton as IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
@@ -38,7 +40,7 @@ import com.coffeepeek.core.media.PrefetchPhotos
 import com.coffeepeek.core.media.image.FullScreenPhotoPresence
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
@@ -60,7 +62,7 @@ fun CoffeePeekPhotoViewer(images: CoffeePeekPhotoViewerImages, initialIndex: Int
 
 /** Attachment previews reuse the same gestures while retaining their caller-supplied local renderer. */
 @Composable
-internal fun CoffeePeekPhotoViewer(count: Int, initialIndex: Int, onDismiss: () -> Unit, photo: @Composable (Int, Modifier) -> Unit) {
+fun CoffeePeekPhotoViewer(count: Int, initialIndex: Int, onDismiss: () -> Unit, photo: @Composable (Int, Modifier) -> Unit) {
     val ids = remember(count) { List(count.coerceAtLeast(0)) { it.toString() } }
     PhotoGallery(CoffeePeekPhotoViewerImages(ids, ids), initialIndex, onDismiss, prefetch = false) { frame, modifier ->
         photo(frame.index, modifier)

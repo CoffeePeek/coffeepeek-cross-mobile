@@ -24,15 +24,14 @@ import com.coffeepeek.core.designsystem.component.CoffeePeekSwipeDismissModalBot
 import com.coffeepeek.core.session.SessionReader
 import com.coffeepeek.feature.homecheckin.api.HomeCheckInBean
 import com.coffeepeek.feature.homecheckin.api.HomeCheckInEditorEntry
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 
 /**
- * A new flow lifetime per opening. Never constructs legacy Home state or a second writer. With [shelfEnabled] the picker also
- * offers "Пачку на полку", which hands over to the shelf's scan.
+ * A new flow lifetime per opening. Never constructs legacy Home state or a second writer.
+ * The picker offers "Пачку на полку", which hands over to the shelf's scan.
  */
 internal class FeatureCheckInCreateFlowRenderer(
     private val sessions: SessionReader,
-    private val shelfEnabled: Boolean,
     private val picker: CheckInCreatePickerEntry = createCheckInCreatePickerEntry(),
     private val onCreated: () -> Unit = {},
     private val createEditor: (CheckInHistorySession, CheckInTracker?) -> HomeCheckInEditorEntry,
@@ -104,6 +103,6 @@ internal class FeatureCheckInCreateFlowRenderer(
         val page = Analytics.service?.state?.collectAsState()?.value?.page ?: "other"
         picker.Content(model::shop, model::home,
             Modifier.analyticsExposure("home_check_in", "check_in_type_picker", page),
-            (model::shelfBag).takeIf { shelfEnabled })
+            model::shelfBag)
     }
 }

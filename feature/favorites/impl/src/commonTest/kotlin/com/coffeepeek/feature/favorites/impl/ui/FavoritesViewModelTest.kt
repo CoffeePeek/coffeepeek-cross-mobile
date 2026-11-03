@@ -105,9 +105,11 @@ class FavoritesViewModelTest {
     @Test fun navigationIntentsBecomeOneOffEvents() = runTest(dispatcher) {
         val vm = vm(Repo()); runCurrent()
         vm.onAction(FavoritesAction.OpenShop("a"))
+        vm.onAction(FavoritesAction.Share)
         vm.onAction(FavoritesAction.Back)
         runCurrent()
         assertEquals(FavoritesEvent.OpenShop("a"), vm.events.first())
+        assertEquals(FavoritesEvent.Share, vm.events.first())
         assertEquals(FavoritesEvent.Back, vm.events.first())
     }
 
@@ -137,6 +139,28 @@ class FavoritesViewModelTest {
 
     private fun roasterVm(shops: Repo, roasters: Roasters) = FavoritesViewModel(shops, roasters)
         .also { store.put("favorites", it) }
+
+    @Test fun sharingOnlyRoastersNavigatesWithoutChangingEitherFavoritesSource() = runTest(dispatcher) {
+        val shops = Repo().apply { values.value = Result.success(emptyList()) }
+        val roasters = Roasters()
+        val vm = roasterVm(shops, roasters)
+        runCurrent()
+        vm.onAction(FavoritesAction.Share)
+        runCurrent()
+        assertEquals(FavoritesEvent.Share, vm.events.first())
+        assertEquals("saved-id", vm.state.value.roasters.single().id)
+        assertEquals(0, shops.removals)
+        assertEquals(0, roasters.removals)
+    }
+
+    @Test fun sharingAnEmptyListDoesNotQueueAComposerDestination() = runTest(dispatcher) {
+        val vm = vm(Repo().apply { values.value = Result.success(emptyList()) })
+        runCurrent()
+        vm.onAction(FavoritesAction.Share)
+        vm.onAction(FavoritesAction.Back)
+        runCurrent()
+        assertEquals(FavoritesEvent.Back, vm.events.first())
+    }
 
     @Test fun observesRoastersEvenWhenShopSourceFailsAndRecoversBothOnRetry() = runTest(dispatcher) {
         val shops = Repo().apply { values.value = Result.failure(IllegalStateException("Shop storage unavailable")) }

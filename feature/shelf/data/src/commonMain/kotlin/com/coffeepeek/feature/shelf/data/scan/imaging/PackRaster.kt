@@ -219,7 +219,7 @@ private fun flood(mask: BooleanArray, labels: IntArray, queue: IntArray, start: 
         val i = queue[head++]
         val x = i % width
         val y = i / width
-        box[0] = min(box[0], x); box[1] = min(box[1], y); box[2] = max(box[2], x + 1); box[3] = max(box[3], y + 1); box[4]++
+        box.includePixel(x, y)
         for (dy in -1..1) for (dx in -1..1) {
             if ((dx == 0 && dy == 0) || (!eight && dx != 0 && dy != 0)) continue
             val nx = x + dx
@@ -230,6 +230,14 @@ private fun flood(mask: BooleanArray, labels: IntArray, queue: IntArray, start: 
         }
     }
     return box
+}
+
+private fun IntArray.includePixel(x: Int, y: Int) {
+    this[0] = min(this[0], x)
+    this[1] = min(this[1], y)
+    this[2] = max(this[2], x + 1)
+    this[3] = max(this[3], y + 1)
+    this[4]++
 }
 
 /** Linear-interpolated percentile of [values] (like numpy's default); [q] in 0..100. */

@@ -173,6 +173,7 @@ internal class OwnershipViewModel(
         guarded { repository.save(profile, draft) }.onSuccess { updated ->
             applyProfile(updated)
             updateState { copy(saved = true) }
+            sendEvent(OwnershipEvent.ProfileSaved)
         }.onFailure(::failed)
     }
     private suspend fun back() {

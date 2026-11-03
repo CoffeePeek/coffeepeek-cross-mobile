@@ -7,13 +7,13 @@ import kotlin.test.assertEquals
 class BrewMethodLabelTest {
     @Test
     fun aRecordedMethodKeepsItsCatalogNameAndAnUnknownOneIsShownAsStored() {
-        assertEquals("Hario V60", "hario-v60".methodLabel())
-        assertEquals("future-method", "future-method".methodLabel())
+        assertEquals("Hario V60", "hario-v60".methodLabel("Другое"))
+        assertEquals("future-method", "future-method".methodLabel("Другое"))
     }
 
     @Test
     fun legacyCodesUseTheirRussianFallbackNames() {
-        assertEquals("Другое", "other".methodLabel())
-        assertEquals("Пуровер", "pour_over".methodLabel())
+        assertEquals("Другое", "other".methodLabel("Другое"))
+        assertEquals("Пуровер", "pour_over".methodLabel("Другое"))
     }
 }

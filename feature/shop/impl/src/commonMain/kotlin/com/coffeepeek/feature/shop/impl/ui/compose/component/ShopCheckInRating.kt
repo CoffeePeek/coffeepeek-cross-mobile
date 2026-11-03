@@ -8,7 +8,7 @@ import com.coffeepeek.feature.shop.domain.model.ShopRating
 import com.coffeepeek.feature.shop.impl.resources.Res
 import com.coffeepeek.feature.shop.impl.resources.shop_checkins_rating_description
 import com.coffeepeek.feature.shop.impl.ui.data.formatShopRating
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable

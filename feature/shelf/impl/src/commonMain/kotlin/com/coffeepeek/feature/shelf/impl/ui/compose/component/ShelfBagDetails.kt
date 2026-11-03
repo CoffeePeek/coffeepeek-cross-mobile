@@ -18,7 +18,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import com.coffeepeek.core.designsystem.component.CoffeePeekTextButton as TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -42,7 +42,7 @@ import com.coffeepeek.feature.shelf.impl.ui.compose.previewBrews
 import com.coffeepeek.feature.shelf.impl.ui.compose.previewShelfItems
 import com.coffeepeek.feature.shelf.impl.ui.compose.previewToday
 import com.coffeepeek.feature.shelf.impl.ui.data.ShelfDay
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 /**

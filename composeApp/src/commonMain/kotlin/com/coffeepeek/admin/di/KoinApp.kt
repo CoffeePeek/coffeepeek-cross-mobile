@@ -105,6 +105,7 @@ fun initKoin(
             shelfRendererFactory),
         com.coffeepeek.admin.session.sessionCleanupModule(Locator.cacheFolderPath, Locator.appCacheRootPath),
         imageModule(),
+        com.coffeepeek.admin.di.settings.appLanguageModule(database.settingRepository),
         roasterModule(),
         com.coffeepeek.admin.di.ownership.businessOwnershipModule(),
         updateInstallerModule(),

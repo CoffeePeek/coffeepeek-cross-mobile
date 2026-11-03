@@ -3,7 +3,7 @@ package com.coffeepeek.admin.ui.component
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
+import com.coffeepeek.core.designsystem.component.CoffeePeekFilledButton as Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.Text
@@ -16,8 +16,7 @@ import com.coffeepeek.admin.theme.CpDimens
 import com.coffeepeek.admin.theme.Theme
 import com.coffeepeek.admin.ui.icons.CpIcons
 import androidx.compose.material3.Icon as MaterialIcon
-import androidx.compose.material3.IconButton as MaterialIconButton
-
+import com.coffeepeek.core.designsystem.component.CoffeePeekIconButton as MaterialIconButton
 object Buttons {
 
 

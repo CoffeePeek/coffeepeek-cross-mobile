@@ -9,6 +9,13 @@ object Modules {
     val feature = Feature
 
     object Feature {
+        val collections = Collections
+        object Collections {
+            const val api = ":feature:collections:api"
+            const val domain = ":feature:collections:domain"
+            const val data = ":feature:collections:data"
+            const val impl = ":feature:collections:impl"
+        }
         val businessOwnership = BusinessOwnership
         object BusinessOwnership {
             const val api = ":feature:business-ownership:api"
@@ -264,6 +271,10 @@ object Modules {
         feature.shelf.domain,
         feature.shelf.data,
         feature.shelf.impl,
+        feature.collections.api,
+        feature.collections.domain,
+        feature.collections.data,
+        feature.collections.impl,
     )
 }
 

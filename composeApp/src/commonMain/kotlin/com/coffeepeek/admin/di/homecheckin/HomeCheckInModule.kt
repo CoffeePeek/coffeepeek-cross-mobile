@@ -14,8 +14,8 @@ import com.coffeepeek.feature.homecheckin.domain.repository.HomePreparationShelf
 import com.coffeepeek.admin.di.shelf.ShelfHomeCheckInBags
 import org.koin.dsl.module
 
-/** Home data is shared by history and global creation; with [shelfEnabled] its forms offer shelf bags. Resolving performs no work. */
-internal fun homeCheckInModule(shelfEnabled: Boolean, apiBaseUrl: String = Constants.BASE_URL) = module {
+/** History and global creation share Home data and shelf bags. Resolving performs no account or network work. */
+internal fun homeCheckInModule(apiBaseUrl: String = Constants.BASE_URL) = module {
     single<HomePreparationRepository> {
         val client = get<ApiClients>()
         createHomePreparationRepository(client.client, client.uploadClient, apiBaseUrl)
@@ -26,8 +26,8 @@ internal fun homeCheckInModule(shelfEnabled: Boolean, apiBaseUrl: String = Const
         val repository = get<HomePreparationRepository>()
         val picker = get<CoffeePicker>()
         val methods = get<BrewMethodCatalog>()
-        val shelfBags = if (shelfEnabled) ShelfHomeCheckInBags(get()) else null
-        FeatureCheckInCreateFlowRenderer(get(), shelfEnabled, onCreated = { get<NotificationFeature>().onCheckInCreated() }) { lease, tracker ->
+        val shelfBags = ShelfHomeCheckInBags(get())
+        FeatureCheckInCreateFlowRenderer(get(), onCreated = { get<NotificationFeature>().onCheckInCreated() }) { lease, tracker ->
             appHomeCheckInEditor(lease, repository, picker, methods, CheckInSource.Global, tracker, shelfBags)
         }
     }

@@ -6,6 +6,7 @@ import com.coffeepeek.admin.di.homecheckin.FeatureCheckInCreateFlowRenderer
 import com.coffeepeek.core.network.ApiClients
 import com.coffeepeek.core.network.SessionCredentials
 import com.coffeepeek.core.network.SessionTokens
+import com.coffeepeek.admin.di.shelf.shelfModule
 import com.coffeepeek.core.session.SessionReader
 import com.coffeepeek.core.session.SessionStore
 import com.coffeepeek.admin.feature.catalog.api.BrewMethodCatalog
@@ -18,6 +19,7 @@ import org.junit.Rule
 import org.junit.rules.TemporaryFolder
 import org.koin.dsl.koinApplication
 import org.koin.dsl.module
+import org.koin.core.Koin
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertSame
@@ -41,16 +43,7 @@ class CheckInHistoryModuleTest {
                 error("Resolving a graph must not open an account lease")
             }
         }
-        val app = koinApplication {
-            modules(module { single { client }; single<SessionStore> { sessions }; single<SessionReader> { sessions } },
-                module {
-                    single<CoffeePicker> { object : CoffeePicker {
-                        override suspend fun search(query: String) = error("Unexpected catalog read")
-                    } }
-                    single<BrewMethodCatalog> { BrewMethodCatalog { error("Unexpected methods read") } }
-                },
-                homeCheckInModule(shelfEnabled = false, apiBaseUrl = "https://fixture.invalid"), checkInHistoryModule(shelfEnabled = false, apiBaseUrl = "https://fixture.invalid"))
-        }
+        val app = historyApplication(client, sessions)
         try {
             assertSame(app.koin.get<FeatureCheckInHistoryScreenRenderer>(), app.koin.get<FeatureCheckInHistoryScreenRenderer>())
             assertSame(app.koin.get<AppCheckInHistoryCalendar>(), app.koin.get<AppCheckInHistoryCalendar>())
@@ -63,7 +56,40 @@ class CheckInHistoryModuleTest {
             assertEquals(0, sessionReads)
         } finally {
             app.close()
-            client.client.close(); client.plainClient.close(); client.uploadClient.close()
+            closeClients(client)
         }
+    }
+
+    private fun historyApplication(client: ApiClients, sessions: SessionStore) = koinApplication {
+        modules(module {
+            single { client }
+            single<SessionStore> { sessions }
+            single<SessionReader> { sessions }
+        }, historyCatalogs(), homeCheckInModule(apiBaseUrl = "https://fixture.invalid"),
+            checkInHistoryModule(apiBaseUrl = "https://fixture.invalid"),
+            shelfModule("https://fixture.invalid", context = { error("Resolving the graph must not touch Context") }))
+    }
+
+    private fun historyCatalogs() = module {
+        single<CoffeePicker> { object : CoffeePicker {
+            override suspend fun search(query: String) = error("Unexpected catalog read")
+        } }
+        single<BrewMethodCatalog> { BrewMethodCatalog { error("Unexpected methods read") } }
+    }
+
+    private fun assertHistoryGraph(koin: Koin) {
+        assertSame(koin.get<FeatureCheckInHistoryScreenRenderer>(), koin.get<FeatureCheckInHistoryScreenRenderer>())
+        assertSame(koin.get<AppCheckInHistoryCalendar>(), koin.get<AppCheckInHistoryCalendar>())
+        assertEquals(1, koin.getAll<CheckInHistoryRepository>().size)
+        assertEquals(1, koin.getAll<HomePreparationReader>().size)
+        assertSame(koin.get<HomePreparationRepository>(), koin.get<HomePreparationReader>())
+        assertEquals(1, koin.getAll<HomeHistoryReader>().size)
+        assertSame(koin.get<FeatureCheckInCreateFlowRenderer>(), koin.get<FeatureCheckInCreateFlowRenderer>())
+    }
+
+    private fun closeClients(client: ApiClients) {
+        client.client.close()
+        client.plainClient.close()
+        client.uploadClient.close()
     }
 }

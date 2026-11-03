@@ -1,0 +1,144 @@
+<resources>
+    <string name="profile_menu_business">Мой бізнес</string>
+    <string name="profile_title">Профіль</string>
+    <string name="profile_loading">Загрузка</string>
+    <string name="profile_back">Назад</string>
+    <string name="profile_close">Закрыць</string>
+    <string name="profile_retry_full">Паспрабаваць зноў</string>
+    <string name="profile_retry">Паўтарыць</string>
+    <string name="profile_load_more">Загрузіць яшчэ</string>
+    <string name="profile_load_failed">Не ўдалося загрузіць профіль</string>
+    <string name="profile_update_failed">Не ўдалося абнавіць профіль</string>
+    <string name="profile_follow_failed">Не ўдалося змяніць падпіску</string>
+    <string name="profile_open_avatar">Адкрыць аватар</string>
+    <string name="profile_avatar_of">Аватар @%1$s</string>
+    <string name="profile_follow">Падпісацца</string>
+    <string name="profile_following">Вы падпісаны</string>
+    <string name="profile_follow_description">Падпісацца на @%1$s</string>
+    <string name="profile_unfollow_description">Адпісацца ад @%1$s</string>
+    <string name="profile_stat_check_ins">Чэкіны</string>
+    <string name="profile_stat_shops">Кавярні</string>
+    <string name="profile_stat_roasters">Абсмажчыкі</string>
+    <string name="profile_stat_followers">Падпісчыкі</string>
+    <string name="profile_open_followers">Адкрыць падпісчыкаў</string>
+    <string name="profile_section_favorites">Абранае</string>
+    <string name="profile_section_check_ins">Чэкіны</string>
+    <string name="profile_section_activity">Актыўнасць</string>
+    <string name="profile_section_all">Усе</string>
+    <string name="profile_section_all_description">Усе: %1$s</string>
+    <string name="profile_favorites_failed">Не ўдалося загрузіць абранае</string>
+    <string name="profile_favorites_refresh_failed">Не ўдалося абнавіць абранае</string>
+    <string name="profile_favorites_empty">Пакуль нічога няма ў абраным</string>
+    <string name="profile_check_ins_failed">Не ўдалося загрузіць чэкіны</string>
+    <string name="profile_check_ins_empty">Пакуль няма чэкінаў</string>
+    <string name="profile_activity_failed">Не ўдалося загрузіць актыўнасць</string>
+    <string name="profile_blocked_title">Аўтар заблакіраваны</string>
+    <string name="profile_blocked_message">Публікацыі аўтара «%1$s» схаваныя. Вы можаце зняць блакіроўку ў любы момант.</string>
+    <string name="profile_unblock">Разблакіраваць</string>
+    <string name="profile_author_actions">Дзеянні з аўтарам</string>
+    <string name="profile_share">Падзяліцца профілем</string>
+    <string name="profile_block_author">Заблакіраваць аўтара</string>
+    <string name="profile_unblock_author">Разблакіраваць аўтара</string>
+    <string name="profile_followers">Падпісчыкі</string>
+    <string name="profile_following_title">Падпіскі</string>
+    <string name="profile_open_user">Адкрыць профіль</string>
+    <string name="profile_followers_failed">Не ўдалося загрузіць падпісчыкаў</string>
+    <string name="profile_following_failed">Не ўдалося загрузіць падпіскі</string>
+    <string name="profile_followers_empty">Пакуль няма падпісчыкаў</string>
+    <string name="profile_following_empty">Пакуль няма падпісак</string>
+    <string name="profile_open_activity">Адкрыць актыўнасць</string>
+    <string name="profile_previous_month">Папярэдні месяц</string>
+    <string name="profile_next_month">Наступны месяц</string>
+    <string name="profile_activity_legend">Дні з чэкінамі</string>
+    <string name="profile_activity_minsk_time">Па мінскім часе</string>
+    <string name="profile_day_active">%1$d, ёсць чэкіны</string>
+    <string name="profile_day_inactive">%1$d, няма чэкінаў</string>
+    <string name="profile_weekday_description">%1$s: %2$s</string>
+    <string name="profile_month_title">%1$s %2$d</string>
+    <string name="profile_days_with_check_ins_one">%1$d дзень з чэкінамі</string>
+    <string name="profile_days_with_check_ins_few">%1$d дні з чэкінамі</string>
+    <string name="profile_days_with_check_ins_many">%1$d дзён з чэкінамі</string>
+    <string-array name="profile_weekdays">
+        <item>Пн</item>
+        <item>Аў</item>
+        <item>Ср</item>
+        <item>Чц</item>
+        <item>Пт</item>
+        <item>Сб</item>
+        <item>Нд</item>
+    </string-array>
+    <string-array name="profile_months">
+        <item>Студзень</item>
+        <item>Люты</item>
+        <item>Сакавік</item>
+        <item>Красавік</item>
+        <item>Май</item>
+        <item>Чэрвень</item>
+        <item>Ліпень</item>
+        <item>Жнівень</item>
+        <item>Верасень</item>
+        <item>Кастрычнік</item>
+        <item>Лістапад</item>
+        <item>Снежань</item>
+    </string-array>
+    <string name="profile_edit">Рэдагаваць профіль</string>
+    <string name="profile_actions">Дзеянні з профілем</string>
+    <string name="profile_menu_shop_changes">Праўкі кавярняў</string>
+    <string name="profile_menu_submitted_shops">Адпраўленыя кавярні</string>
+    <string name="profile_menu_submitted_roasters">Адпраўленыя абсмажчыкі</string>
+    <string name="profile_menu_logout">Выйсці</string>
+    <string name="profile_menu_blocked_authors">Заблакіраваныя аўтары</string>
+    <string name="profile_logout_title">Выйсці з уліковага запісу?</string>
+    <string name="profile_logout_message">Вы ўпэўнены? Спатрэбіцца паўторны ўваход.</string>
+    <string name="profile_cancel">Адмена</string>
+    <string name="profile_own_favorites">Абранае</string>
+    <string name="profile_own_check_ins">Чэкіны</string>
+    <string name="profile_edit_title">Рэдагаваць профіль</string>
+    <string name="profile_edit_photo_title">Фота профілю</string>
+    <string name="profile_edit_change_photo">Змяніць фота профілю</string>
+    <string name="profile_edit_avatar_description">Фота профілю</string>
+    <string name="profile_edit_username_label">Імя карыстальніка</string>
+    <string name="profile_edit_username_placeholder">Ваша імя</string>
+    <string name="profile_edit_username_empty">Імя не можа быць пустым</string>
+    <string name="profile_edit_username_short">Мінімум 2 сімвалы</string>
+    <string name="profile_edit_username_long">Максімум 64 сімвалы</string>
+    <string name="profile_edit_about_label">Пра сябе</string>
+    <string name="profile_edit_about_placeholder">Раскажыце крыху пра сябе…</string>
+    <string name="profile_edit_about_long">Максімум 600 сімвалаў</string>
+    <string name="profile_edit_save">Захаваць змены</string>
+    <string name="profile_edit_saving">Захаванне</string>
+    <string name="profile_edit_confirm_username_title">Змяніць нік?</string>
+    <string name="profile_edit_confirm_username_message">Ваш новы нік — «%1$s».\n\nНік можна змяняць не больш за 3 разы на тыдзень. Захаваць змены?</string>
+    <string name="profile_edit_confirm_username_action">Змяніць нік</string>
+    <string name="profile_edit_error_title">Не ўдалося захаваць профіль</string>
+    <string name="profile_edit_error_limit_title">Ліміт змены ніка</string>
+    <string name="profile_edit_error_taken_title">Гэты нік ужо заняты</string>
+    <string name="profile_edit_error_load_title">Не ўдалося загрузіць профіль</string>
+    <string name="profile_edit_error_dismiss">Зразумела</string>
+    <string name="profile_edit_error_load">Праверце падключэнне да інтэрнэту і адкрыйце профіль яшчэ раз.</string>
+    <string name="profile_edit_error_avatar_size">Выберыце фота памерам да 5 МБ.</string>
+    <string name="profile_edit_error_avatar">Не атрымалася абнавіць фота. Праверце падключэнне да інтэрнэту і паспрабуйце яшчэ раз.</string>
+    <string name="profile_edit_error_username">Не атрымалася змяніць нік. Праверце падключэнне да інтэрнэту і паспрабуйце яшчэ раз.</string>
+    <string name="profile_edit_error_about">Не атрымалася абнавіць апісанне. Праверце падключэнне да інтэрнэту і паспрабуйце яшчэ раз.</string>
+    <string name="profile_edit_error_username_limit">Зараз змяніць нік нельга: дасягнуты ліміт змен. Паспрабуйце пазней. Пакуль можна пакінуць ранейшы нік і змяніць іншыя звесткі профілю.</string>
+    <string name="profile_edit_error_username_retry_at">Ліміт змены ніка дасягнуты. Зноў змяніць нік можна пасля %1$s.\n\nПакуль можна пакінуць ранейшы нік і змяніць іншыя звесткі профілю.</string>
+    <string name="profile_edit_error_username_taken">Выберыце іншы нік і паспрабуйце яшчэ раз.</string>
+    <string name="profile_edit_error_username_invalid">Праверце напісанне ніка і паспрабуйце яшчэ раз.</string>
+    <string name="profile_edit_error_sign_in">Увайдзіце ва ўліковы запіс яшчэ раз, каб захаваць змены.</string>
+    <string name="profile_edit_delete_account">Выдаліць уліковы запіс</string>
+    <string name="profile_edit_delete_title">Выдаліць уліковы запіс?</string>
+    <string name="profile_edit_delete_message">Мы адправім спасылку на пошту для пацвярджэння. Уліковы запіс застанецца актыўным, пакуль вы не пацвердзіце выдаленне ў лісце.</string>
+    <string name="profile_edit_delete_confirm">Выдаліць</string>
+    <string name="profile_error_title">Памылка</string>
+    <string name="profile_ok">OK</string>
+    <string name="profile_deletion_title">Выдаленне ўліковага запісу</string>
+    <string name="profile_deletion_confirm_title">Пацвердзіце выдаленне</string>
+    <string name="profile_deletion_confirm_subtitle">Мы адправім спасылку для пацвярджэння на %1$s. Уліковы запіс застанецца актыўным, пакуль вы не пацвердзіце выдаленне ў лісце.</string>
+    <string name="profile_deletion_confirm_no_email">вашу пошту</string>
+    <string name="profile_deletion_send">Адправіць ліст</string>
+    <string name="profile_deletion_sent_title">Ліст адпраўлены</string>
+    <string name="profile_deletion_sent_subtitle">Мы адправілі спасылку на %1$s. Адкрыйце ліст у браўзеры і пацвердзіце выдаленне ўліковага запісу.</string>
+    <string name="profile_deletion_wait_hint">Пасля пацвярджэння вы аўтаматычна выйдзеце з праграмы.</string>
+    <string name="profile_deletion_resend">Адправіць ліст яшчэ раз</string>
+    <string name="profile_deletion_resend_wait">Паўторная адпраўка пакуль недаступная</string>
+</resources>

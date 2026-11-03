@@ -28,6 +28,7 @@ import com.coffeepeek.feature.favorites.domain.model.FavoriteRoaster
 import com.coffeepeek.feature.favorites.impl.ui.FavoritesViewModel
 import com.coffeepeek.feature.favorites.domain.model.FavoriteDrink
 import com.coffeepeek.feature.favorites.impl.ui.compose.component.FavoritesMessage
+import com.coffeepeek.feature.favorites.impl.ui.compose.component.FavoritesTopBar
 import com.coffeepeek.feature.favorites.impl.ui.compose.model.FavoritesAction
 import com.coffeepeek.feature.favorites.impl.ui.compose.model.FavoritesEvent
 import com.coffeepeek.feature.favorites.impl.ui.compose.model.FavoritesUiState
@@ -41,7 +42,7 @@ import com.coffeepeek.feature.favorites.impl.resources.favorites_title
 import com.coffeepeek.feature.favorites.impl.resources.favorites_update_error
 import com.coffeepeek.feature.favorites.impl.resources.favorites_action_error
 import org.jetbrains.compose.ui.tooling.preview.Preview
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 
 /** Runtime adapter. The entry supplies the lifecycle-owned ViewModel and navigation callbacks. */
 @Composable
@@ -51,6 +52,7 @@ internal fun FavoritesScreen(
     onBack: () -> Unit,
     distanceForCoordinates: (Double, Double) -> String? = { _, _ -> null },
     onOpenRoaster: (String) -> Unit = {},
+    onShare: () -> Unit = {},
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     ObserveFavoritesEvents(viewModel, onOpenShop, onOpenRoaster, onBack)
@@ -63,16 +65,19 @@ internal fun ObserveFavoritesEvents(
     onOpenShop: (String) -> Unit,
     onOpenRoaster: (String) -> Unit,
     onBack: () -> Unit = {},
+    onShare: () -> Unit = {},
 ) {
     val currentOpenShop by rememberUpdatedState(onOpenShop)
     val currentOpenRoaster by rememberUpdatedState(onOpenRoaster)
     val currentBack by rememberUpdatedState(onBack)
+    val currentShare by rememberUpdatedState(onShare)
     LaunchedEffect(viewModel) {
         viewModel.events.collect { event ->
             when (event) {
                 is FavoritesEvent.OpenShop -> currentOpenShop(event.shopId)
                 is FavoritesEvent.OpenRoaster -> currentOpenRoaster(event.publicSlug)
                 FavoritesEvent.Back -> currentBack()
+                FavoritesEvent.Share -> currentShare()
             }
         }
     }
@@ -90,8 +95,10 @@ internal fun FavoritesScreenContent(
     LaunchedEffect(state.actionFailed) { if (state.actionFailed) snackbar.showSnackbar(actionError) }
     CoffeePeekScaffold(
         snackbarHost = { SnackbarHost(snackbar) },
-        topBar = { CoffeePeekTopBar(stringResource(Res.string.favorites_title),
-            stringResource(Res.string.favorites_back), onBack = { onAction(FavoritesAction.Back) }) },
+        topBar = {
+            FavoritesTopBar(state.shops.isNotEmpty() || state.roasters.isNotEmpty(),
+                { onAction(FavoritesAction.Back) }, { onAction(FavoritesAction.Share) })
+        },
     ) { padding ->
         Column(Modifier.fillMaxSize().padding(padding).consumeWindowInsets(padding)) {
             FavoritesBody(state, onAction, distanceForCoordinates)

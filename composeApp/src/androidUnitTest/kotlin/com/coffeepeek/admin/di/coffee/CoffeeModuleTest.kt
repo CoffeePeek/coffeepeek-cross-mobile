@@ -4,6 +4,12 @@ import com.coffeepeek.admin.sandbox.backend.SandboxBackend
 import com.coffeepeek.core.network.ApiClients
 import com.coffeepeek.core.network.SessionCredentials
 import com.coffeepeek.core.network.SessionTokens
+import com.coffeepeek.admin.di.homecheckin.homeCheckInModule
+import com.coffeepeek.admin.di.shelf.shelfModule
+import com.coffeepeek.admin.di.shop.CheckInTestSessions
+import com.coffeepeek.admin.settings.FakeSettingRepository
+import com.coffeepeek.core.session.SessionReader
+import com.coffeepeek.core.session.SessionStore
 import com.coffeepeek.feature.coffee.api.CoffeePicker
 import com.coffeepeek.feature.coffee.domain.model.CoffeeFilters
 import com.coffeepeek.feature.coffee.domain.repository.CoffeeRepository
@@ -28,16 +34,34 @@ class CoffeeModuleTest {
             },
             refreshWith = { { Result.failure(IllegalStateException("unused")) } },
             apiClientFactory = backend::apiClient, uploadClientFactory = backend::uploadClient)
-        val app = koinApplication { modules(module { single { client } }, coffeeModule()) }
+        val app = coffeeShelfApplication(client)
         try {
             val repository = app.koin.get<CoffeeRepository>()
             assertSame(repository, app.koin.get<CoffeeRepository>())
             assertEquals("Sandbox Ethiopia", repository.search("", CoffeeFilters(), 1).getOrThrow().items.first().name)
             val picker = app.koin.get<CoffeePicker>()
             assertEquals(listOf("sandbox-kenya"), picker.search("  Kenya ").getOrThrow().map { it.slug })
-            assertNotNull(featureCoffeeScreenRenderer(repository))
+            val shelf = CoffeeShelfTab(app.koin.get(), app.koin.get(), FakeSettingRepository())
+            assertNotNull(featureCoffeeScreenRenderer(repository, shelf))
         } finally {
-            app.close(); client.client.close(); client.plainClient.close(); client.uploadClient.close(); client.imageClient.close(); backend.close()
+            app.close()
+            closeClients(client, backend)
         }
+    }
+
+    private fun coffeeShelfApplication(client: ApiClients) = koinApplication {
+        modules(module {
+            single { client }
+            single<SessionStore> { CheckInTestSessions() }
+            single<SessionReader> { get<SessionStore>() }
+        }, coffeeModule(), homeCheckInModule(apiBaseUrl = SandboxBackend.BASE_URL),
+            shelfModule(SandboxBackend.BASE_URL, context = { error("Resolving the shelf must not touch Context") }))
+    }
+
+    private fun closeClients(client: ApiClients, backend: SandboxBackend) {
+        client.client.close()
+        client.plainClient.close()
+        client.uploadClient.close()
+        backend.close()
     }
 }

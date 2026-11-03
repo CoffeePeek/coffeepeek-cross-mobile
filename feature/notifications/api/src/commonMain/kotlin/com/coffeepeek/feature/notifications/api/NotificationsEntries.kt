@@ -9,4 +9,8 @@ import androidx.compose.runtime.Composable
 interface NotificationsEntry {
     @Composable
     fun Bell()
+
+    /** The inline app-notification preference; the Settings tab supplies its label and description. */
+    @Composable
+    fun Preference(label: String, description: String)
 }

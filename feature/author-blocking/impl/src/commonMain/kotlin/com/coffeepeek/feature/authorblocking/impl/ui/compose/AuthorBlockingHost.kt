@@ -1,5 +1,7 @@
 package com.coffeepeek.feature.authorblocking.impl.ui.compose
 
+import com.coffeepeek.feature.authorblocking.impl.resources.author_blocking_save_failed_message
+import com.coffeepeek.feature.authorblocking.api.AuthorBlockError
 import androidx.compose.runtime.*
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
@@ -35,7 +37,9 @@ internal fun AuthorBlockingHostContent(prompt: AuthorBlockPrompt?, needsLogin: B
         listOf(CoffeePeekDialogAction(stringResource(Res.string.author_blocking_login), onLogin)),
         onLoginDismiss, stringResource(Res.string.author_blocking_cancel))
     prompt?.let { current ->
-        val error = current.error
+        val error = current.error?.let {
+            when (it) { AuthorBlockError.SaveFailed -> stringResource(Res.string.author_blocking_save_failed_message) }
+        }
         when {
             current.working -> CoffeePeekOperationStatus(stringResource(if (current.blocked)
                 Res.string.author_blocking_blocking else Res.string.author_blocking_unblocking), bottomClearanceDp.dp)

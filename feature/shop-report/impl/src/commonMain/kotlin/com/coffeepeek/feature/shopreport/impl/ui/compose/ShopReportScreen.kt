@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import com.coffeepeek.core.designsystem.component.CoffeePeekScaffold as Scaffold
@@ -25,6 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
 import com.coffeepeek.core.designsystem.component.CoffeePeekButton
 import com.coffeepeek.core.designsystem.component.CoffeePeekTopBar
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
@@ -51,7 +51,7 @@ import com.coffeepeek.feature.shopreport.impl.ui.compose.model.ShopReportAction
 import com.coffeepeek.feature.shopreport.impl.ui.compose.model.ShopReportError
 import com.coffeepeek.feature.shopreport.impl.ui.compose.model.ShopReportEvent
 import com.coffeepeek.feature.shopreport.impl.ui.compose.model.ShopReportState
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
@@ -134,7 +134,7 @@ internal fun ShopReportScreenContent(
 
             Spacer(Modifier.height(CoffeePeekDimens.spacing2))
             if (state.isSubmitting) {
-                CircularProgressIndicator()
+                CoffeePeekLoader(size = 40.dp, color = MaterialTheme.colorScheme.primary, strokeWidth = 4.dp)
             } else {
                 CoffeePeekButton(stringResource(Res.string.shop_report_submit),
                     { onAction(ShopReportAction.Submit) }, enabled = state.selectedCategory != null)
@@ -170,4 +170,11 @@ private fun ShopReportError.label() = when (this) {
         ShopReportState(selectedCategory = ShopIssueCategory.ShopClosed, error = ShopReportError.SubmissionFailed),
         "Кофейня на углу", {},
     )
+}
+
+@Preview @Composable private fun ShopReportSendingLightPreview() = CoffeePeekTheme(darkTheme = false) {
+    ShopReportScreenContent(ShopReportState(selectedCategory = ShopIssueCategory.Other, isSubmitting = true), "", {})
+}
+@Preview @Composable private fun ShopReportSendingDarkPreview() = CoffeePeekTheme(darkTheme = true) {
+    ShopReportScreenContent(ShopReportState(selectedCategory = ShopIssueCategory.Other, isSubmitting = true), "", {})
 }

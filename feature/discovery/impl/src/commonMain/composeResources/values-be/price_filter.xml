@@ -1,0 +1,7 @@
+<resources>
+    <string name="discovery_price_label">Цана</string>
+    <string name="discovery_price_cheap">Да 8 BYN</string>
+    <string name="discovery_price_moderate">Каля 8 BYN</string>
+    <string name="discovery_price_expensive">Больш за 8 BYN</string>
+    <string name="discovery_price_level_description">%1$s, узровень %2$d з 3</string>
+</resources>

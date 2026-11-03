@@ -8,6 +8,7 @@ import android.widget.Toast
 import com.coffeepeek.R
 import com.coffeepeek.admin.CoffeePeekApplication
 import com.coffeepeek.admin.di.initAndroidKoin
+import com.coffeepeek.admin.sandbox.di.sandboxCollectionsModule
 import com.coffeepeek.admin.di.shelf.shelfModels
 import com.coffeepeek.admin.sandbox.backend.SandboxBackend
 import com.coffeepeek.core.network.ApiClients
@@ -37,7 +38,7 @@ internal class SandboxApplication : Application() {
             override fun startActivity(intent: Intent, options: Bundle?) = blockedExternalAction()
         })
         MapLibre.getInstance(this)
-        initAndroidKoin(analyticsEnabled = false, extraModules = listOf(module {
+        initAndroidKoin(analyticsEnabled = false, extraModules = listOf(sandboxCollectionsModule(), module {
             single<SessionStore> { sessions }
             single { ApiClients(SandboxBackend.BASE_URL, cacheDir.resolve("sandbox-http").path, false,
                 credentials = SandboxNoCredentials,

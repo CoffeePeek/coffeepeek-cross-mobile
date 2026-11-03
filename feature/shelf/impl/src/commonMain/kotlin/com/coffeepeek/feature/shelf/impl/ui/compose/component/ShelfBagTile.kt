@@ -41,7 +41,7 @@ import com.coffeepeek.feature.shelf.impl.resources.shelf_new_badge
 import com.coffeepeek.feature.shelf.impl.ui.compose.PreviewShelfImage
 import com.coffeepeek.feature.shelf.impl.ui.compose.previewShelfItems
 import com.coffeepeek.feature.shelf.impl.ui.compose.model.ShelfBagItem
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 internal val ShelfCardShape = RoundedCornerShape(4.dp)

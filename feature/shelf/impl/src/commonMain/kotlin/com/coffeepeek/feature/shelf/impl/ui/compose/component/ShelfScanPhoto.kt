@@ -41,7 +41,7 @@ import com.coffeepeek.feature.shelf.impl.resources.shelf_scan_photo
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.compose.resources.decodeToImageBitmap
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 internal val ShelfPhotoShape = RoundedCornerShape(18.dp)
