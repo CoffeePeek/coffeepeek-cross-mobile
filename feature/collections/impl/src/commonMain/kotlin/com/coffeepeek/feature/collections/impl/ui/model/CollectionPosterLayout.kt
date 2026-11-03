@@ -3,6 +3,7 @@ package com.coffeepeek.feature.collections.impl.ui.model
 import com.coffeepeek.feature.collections.domain.model.CollectionPlace
 import com.coffeepeek.feature.collections.domain.model.CollectionPlaceKind
 import com.coffeepeek.feature.collections.domain.model.CollectionRules
+import kotlin.math.floor
 
 internal data class CollectionPosterCard(val place: CollectionPlace, val left: Float, val top: Float,
     val width: Float, val height: Float)
@@ -13,9 +14,28 @@ internal fun collectionPosterLayout(places: List<CollectionPlace>, format: Colle
     contentTop: Float = 178f, roasterWidth: (CollectionPlace) -> Float = { 400f }): CollectionPosterLayout {
     val ordered = CollectionRules.orderedPlaces(places)
     val shops = ordered.filter { it.kind == CollectionPlaceKind.CoffeeShop }
-        .map { PosterRow(listOf(it), listOf(1016f), 216f) }
     val roasters = roasterRows(ordered.filter { it.kind == CollectionPlaceKind.Roaster }, roasterWidth)
-    return CollectionPosterLayout(contentTop, paginateRows(shops + roasters, format.height - 108f, contentTop))
+    val bottom = format.height - 108f
+    val height = fittedShopHeight(shops, roasters, bottom, contentTop)
+    return CollectionPosterLayout(contentTop, paginateRows(shopRows(shops, height) + roasters, bottom, contentTop))
+}
+
+private fun shopRows(shops: List<CollectionPlace>, height: Float): List<PosterRow> =
+    shops.map { PosterRow(listOf(it), listOf(1016f), height) }
+
+/** Use the largest height that preserves the packing achievable with at most 15% compression. */
+private fun fittedShopHeight(shops: List<CollectionPlace>, roasters: List<PosterRow>, bottom: Float, top: Float): Float {
+    if (shops.size <= 4) return 216f
+    val compact = paginateRows(shopRows(shops, 183.6f) + roasters, bottom, top)
+    val height = compact.mapNotNull { page ->
+        val rows = page.distinctBy(CollectionPosterCard::top)
+        val count = rows.count { it.place.kind == CollectionPlaceKind.CoffeeShop }
+        if (count == 0) null else {
+            val fixed = rows.filter { it.place.kind == CollectionPlaceKind.Roaster }.sumOf { it.height.toDouble() }.toFloat()
+            (bottom - top - fixed - (rows.size - 1) * 16f) / count
+        }
+    }.minOrNull() ?: 216f
+    return (floor(height * 10f) / 10f).coerceIn(183.6f, 216f)
 }
 
 private fun roasterRows(places: List<CollectionPlace>, width: (CollectionPlace) -> Float): List<PosterRow> {

@@ -35,6 +35,26 @@ design-system component, including the brand resource and typography. Poster
 exports request a white fallback on their fixed dark canvas at pixel density 1;
 on-screen placeholders continue following the surrounding theme and text scale.
 
+The subsequent user clarification enlarges only the placeholder brand (18 to
+32 output pixels); names, addresses and check-ins retain their approved sizes.
+The shared painter fits the complete word inside smaller tiles without clipping.
+For more than four shops, pagination finds the densest packing achievable at a
+15% maximum height reduction, then restores as much height as that packing allows.
+This keeps small collections at 216 pixels and larger shop cards within
+183.6–216 pixels, preserving text sizes and accounting for roaster rows, heading
+height and footer space. At the default heading, five shops fit Chat at 200 pixels,
+eight fit Story at 190.2 pixels, and six shops plus three compact roasters fit Story
+at 203 pixels. Three regression cases cover these thresholds; geometry/order
+invariants now also cover long headings across 1–205 mixed places and both formats.
+Verification of this follow-up on 2026-11-03, working patch on `1b5375bf`:
+26 collections impl plus 57 design-system cases passed (83 total, no failures,
+errors or skips). Direct Debug assembly and packaged runtime-class checks passed.
+Debug 1.1.5.2680 was updated in place on the same unlocked emulator with matching
+signature, retained first-install time and MainActivity launch. APK SHA-256:
+`4414143B06FA30544C74D19F4E6780A8330DD38C86D4BAB2BC654E85B78737A3`.
+The final enlarged-placeholder/adaptive-packing visual review and updated macOS
+CI are separate gates from the preceding artifact's manual checks below.
+
 Latest verification on 2026-11-03, working patch on `f7299ae4`:
 
 - 23 collections impl and 57 design-system unit cases passed (80 total), with

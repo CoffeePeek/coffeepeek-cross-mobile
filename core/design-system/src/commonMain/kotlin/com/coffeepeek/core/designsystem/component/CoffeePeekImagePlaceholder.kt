@@ -12,6 +12,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.platform.LocalDensity
@@ -71,8 +72,14 @@ private class CoffeePeekImagePlaceholderPainter(private val brand: String, priva
     override fun DrawScope.onDraw() {
         drawRect(if (darkBackground) Color.White else Color.Black)
         val label = measurer.measure(AnnotatedString(brand), style, maxLines = 1, density = textDensity)
-        drawText(label, if (darkBackground) Color.Black else Color.White,
-            Offset((size.width - label.size.width) / 2f, (size.height - label.size.height) / 2f))
+        val fitScale = minOf(1f, size.width * 0.85f / label.size.width, size.height * 0.85f / label.size.height)
+        withTransform({
+            translate(size.width / 2f, size.height / 2f)
+            scale(fitScale, fitScale, Offset.Zero)
+        }) {
+            drawText(label, if (darkBackground) Color.Black else Color.White,
+                Offset(-label.size.width / 2f, -label.size.height / 2f))
+        }
     }
 }
 

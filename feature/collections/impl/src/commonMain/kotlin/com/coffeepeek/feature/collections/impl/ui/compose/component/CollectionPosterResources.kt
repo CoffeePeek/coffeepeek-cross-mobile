@@ -36,7 +36,7 @@ internal fun collectionPosterResources(collection: SharedCollection?, format: Co
     val labels = CollectionPosterLabels(stringResource(Res.string.collections_brand),
         stringResource(Res.string.collections_count, count),
         (1..pages).map { stringResource(Res.string.collections_page, it, pages) }, checkIns)
-    val icons = CollectionPosterIcons(coffeePeekImagePlaceholderPainter(darkBackground = true, density = Density(1f)),
+    val icons = CollectionPosterIcons(coffeePeekImagePlaceholderPainter(32.sp, darkBackground = true, density = Density(1f)),
         rememberVectorPainter(CoffeePeekIcons.Location), rememberVectorPainter(CoffeePeekIcons.StarFilled), rememberVectorPainter(CoffeePeekIcons.ChevronRight))
     return CollectionPosterResources(labels, icons, measurer, typography, layout)
 }
