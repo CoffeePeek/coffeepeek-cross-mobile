@@ -1274,3 +1274,34 @@ Promotion check on `origin/develop` at `a016fc78` plus this patch (2026-11-02):
 iOS Arm64 Kotlin compilation and Android Direct Debug APK/packaged DEX guard
 passed. `PlatformActionSelectionTest` ran 4/4 with zero failures, errors, skips
 or retries. No iPhone was connected, so the manual presentation gate remains.
+
+## iOS photo-source follow-up — 2026-11-03
+
+The user reported that the menu still does not open on an iPhone. Source tracing
+found two separate presentation paths. The legacy coffee check-in photo action
+uses `PhotoSourceBottomSheet` and `NativePhotoSourceSheet`, which call the app's
+UIKit presenter fixed above. The active new Home check-in instead calls
+`HomeCheckInPhotoSource` inside the create-flow page sheet; that component calls
+`CoffeePeekSwipeDismissModalBottomSheet` and the design-system's separate
+`CoffeePeekPresentNativeController`. This presenter still waited for the parent
+sheet's transition coordinator, including during custom-detent resizing. Update
+that presenter to allow an already visible page sheet to show a child sheet while
+retaining waits for initial presentation and for another/dismissing presenter.
+
+Verification plan: preserve Gallery/Camera/Cancel actions and photo delivery;
+compile iOS Arm64 and Simulator Arm64, assemble Android Direct Debug with its
+packaged DEX guard, and run relevant existing unit tests. UIKit presentation and
+picker delivery still require a manual iPhone check in the active Home flow,
+including cancel/back, light/dark, accessibility and no account write. The
+previous passing builds are not evidence that this menu opened on a device.
+
+Initial result with the patch on main `cacaa7e44`: both iOS Kotlin targets
+compiled and Direct Debug assembled with the packaged DEX guard. The
+design-system unit suite ran 57/57
+and Home impl unit suite 81/81, with zero failures, errors or skips. Existing
+unrelated compiler warnings remain. No iPhone or iOS runtime was available,
+and no manual modal/picker acceptance check was run.
+
+Promotion check with the same patch on develop `d57b7e49`: iOS Arm64 Kotlin
+compilation, Direct Debug APK/DEX guard and the same 57/57 and 81/81 unit
+suites passed with zero failures, errors or skips.
