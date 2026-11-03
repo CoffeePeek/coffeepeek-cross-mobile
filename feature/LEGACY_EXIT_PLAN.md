@@ -1649,3 +1649,27 @@ source `89778c23` + этот срез. Подробный scope/остаток �
 - Остаётся для шага 5: `modules/network` (живут `AuthService` и DTO для `SandboxApplicationBackendTest`/инструментальных
   тестов) и `modules/domain` (модели `CheckIn`, `CatalogItem`, `PublicAddress`, `CoffeeShop`..., `UserRepository`/`UserProfile`
   для `PublicProfileViewModel`, `FavoritesRepository` как мост `AccountFavoritesBridge`).
+
+## L3, шаг 5 удаления `modules/*` — `modules/domain` удалён, `modules/network` ушёл из приложения — 2026-11-03
+
+- По решению пользователя удалён недостижимый кластер «чужой профиль» (`OtherUserProfileScreen`, `PublicProfileViewModel`,
+  `PublicProfile*`, `ProfileActions` не трогали): на него нигде нет навигации. Вместе с ним ушли каталожные карточки,
+  `CheckInTimelineContent`, `CheckInShelfBag`, карусель превью избранного, `FavoriteButton`, `PreparationMetricLabels`,
+  `PriceBeanSlider`, полоса фото календаря, `ProfileActivityWeek`, 781 строка мёртвого UI отзывов (`ReviewContent`,
+  `CheckInAuthor`). От `ReviewContent` оставлены только date-хелперы (`ui/component/ReviewDate.kt`).
+- Тесты удалённого кода: `PublicProfileViewModelTest`, `PublicProfilePresentationTest` (инструментальный),
+  `PublicProfileWeekTest` (есть одноимённый в `feature/profile`), два теста фото календаря в `CheckInCalendarTest`,
+  `authorFallbackUsesPreparedCopy…` в `ReviewDateTest`, `savedDrinkName`/`validateConsumedDrink` в `ConsumedDrinkTest`
+  (оставлены правила `consumedDrinkIssue` и локализованная подпись).
+- Живые остатки типов перенесены к потребителям: `CatalogItem`/`PublicAddress` — в
+  `feature/favorites/api/FavoriteRoasterItem.kt` (мост roaster ↔ favorites), `ConsumedDrinkIssue`/`consumedDrinkIssue` — в
+  `ui/screen/review`. Мёртвый мост `LegacyAccountFavorites` и ссылка на `CheckInOperationFailure` удалены.
+- `modules/domain` удалён целиком, `Modules.Legacy.domain` и зависимость composeApp сняты.
+- `modules/network` больше не входит в приложение: зависимость composeApp только у `androidUnitTest` и
+  `androidInstrumentedTest` (Sandbox-тест и два теста транспорта читают поддельный сервер старыми типизированными клиентами);
+  `CoffeePeekRepo` удалён, из `verifyRuntimeClasses` убраны `CoffeePeekRepo` и `CheckInApiService`.
+- Остаётся: `modules/network` как тестовая поддержка (82 файла и его 20 контрактных тестов). Удалить можно после переноса
+  `SandboxApplicationBackendTest` (887 строк), `AuthTransportFailureTest` и `SessionDeviceMetadataTest` на клиенты фич и
+  сопоставления контрактных тестов с `feature/*/data`.
+- Проверка: полный набор зелёный; `mergeExtDexDirectDebug/Sandbox` падали с `OutOfMemoryError` в D8 на длинном прогоне и
+  прошли на свежем демоне (`./gradlew --stop`).
