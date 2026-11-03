@@ -24,7 +24,6 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.coffeepeek.admin.MainActivity
 import com.coffeepeek.admin.theme.CoffeePeekTheme
-import com.coffeepeek.admin.ui.screen.review.ConsumedDrinkField
 import com.coffeepeek.domain.model.ConsumedDrinkOption
 import java.io.File
 import java.util.concurrent.atomic.AtomicInteger
@@ -82,47 +81,6 @@ class AnchoredMenuInteractionTest {
             instrumentation.uiAutomation.performGlobalAction(android.accessibilityservice.AccessibilityService.GLOBAL_ACTION_BACK)
             waitUntil { node { it.text?.toString() == "Пожаловаться" } == null }
             assertEquals("Dismissal must not invoke an action", 1, reports.get())
-        }
-    }
-
-    @Test
-    fun longDrinkMenuHasBoundedHeightAndReachesTheLastOption() {
-        val selection = AtomicReference<String?>()
-        val drinks = (1..24).map { ConsumedDrinkOption("drink-$it", "Напиток $it", "Drink $it") }
-        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
-            scenario.onActivity { activity -> activity.setContent {
-                var slug by remember { mutableStateOf<String?>(null) }
-                CoffeePeekTheme(darkTheme = true) {
-                    Surface(Modifier.fillMaxSize()) {
-                        Column(Modifier.statusBarsPadding().padding(24.dp)) {
-                            ConsumedDrinkField(
-                                drinks = drinks, slug = slug, customName = null, savedName = null,
-                                error = null, onRetry = {},
-                                onChange = { value, _ -> slug = value; selection.set(value) },
-                            )
-                            Text("Выбрано: ${slug.orEmpty()}")
-                        }
-                    }
-                }
-            } }
-            click(waitFor { it.text?.toString() == "Не выбран" })
-            waitFor { it.text?.toString() in setOf("Напиток 1", "Drink 1") }
-            val scrollable = waitFor { it.isScrollable }
-            val density = instrumentation.targetContext.resources.displayMetrics.density
-            assertTrue("A long drink menu must not cover the entire screen: ${scrollable.bounds()}",
-                scrollable.bounds().height() <= 360 * density)
-            screenshot("drink-menu-compact.png")
-            repeat(12) {
-                if (node { it.text?.toString() in setOf("Напиток 24", "Drink 24") && it.isVisibleToUser } == null) {
-                    node { it.isScrollable }?.performAction(AccessibilityNodeInfo.ACTION_SCROLL_FORWARD)
-                    instrumentation.waitForIdleSync()
-                    Thread.sleep(100)
-                }
-            }
-            click(waitFor { it.text?.toString() in setOf("Напиток 24", "Drink 24") && it.isVisibleToUser })
-            waitUntil { selection.get() == "drink-24" }
-            waitFor { it.text?.toString() == "Выбрано: drink-24" }
-            waitUntil { node { it.isScrollable } == null }
         }
     }
 

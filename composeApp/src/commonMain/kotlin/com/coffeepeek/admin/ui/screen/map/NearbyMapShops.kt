@@ -4,7 +4,6 @@ import com.coffeepeek.admin.location.GeoPoint
 import com.coffeepeek.admin.location.distanceToShopMeters
 import com.coffeepeek.admin.map.MapBounds
 import com.coffeepeek.admin.map.MapShop
-import com.coffeepeek.domain.model.ShopLocation
 import kotlin.math.PI
 import kotlin.math.cos
 
@@ -12,7 +11,7 @@ internal const val MAP_NEARBY_RADIUS_METERS = 5_000.0
 
 internal fun nearestMapShops(shops: List<MapShop>, origin: GeoPoint): List<MapShop> =
     shops.distinctBy { it.id }.mapNotNull { shop ->
-        val distance = distanceToShopMeters(origin, ShopLocation("", shop.latitude, shop.longitude))
+        val distance = distanceToShopMeters(origin, shop.latitude, shop.longitude)
             ?: return@mapNotNull null
         if (distance <= MAP_NEARBY_RADIUS_METERS) shop to distance else null
     }.sortedWith(compareBy<Pair<MapShop, Double>> { it.second }.thenBy { it.first.id })

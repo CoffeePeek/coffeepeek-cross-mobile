@@ -6,7 +6,6 @@ import com.coffeepeek.admin.location.distanceToShopMeters
 import com.coffeepeek.admin.location.formatDistance
 import com.coffeepeek.admin.location.rememberPermittedUserLocation
 import com.coffeepeek.admin.ui.Navigator
-import com.coffeepeek.domain.model.ShopLocation
 import com.coffeepeek.feature.favorites.api.FavoritesEntry
 import org.koin.compose.koinInject
 
@@ -40,4 +39,4 @@ internal fun FavoritesProfilePreview(
 
 /** Location permission and formatting belong to application composition. */
 internal fun favoriteDistanceLabel(userLocation: GeoPoint?, latitude: Double, longitude: Double): String? =
-    formatDistance(distanceToShopMeters(userLocation, ShopLocation(latitude = latitude, longitude = longitude)))
+    formatDistance(distanceToShopMeters(userLocation, latitude, longitude))
