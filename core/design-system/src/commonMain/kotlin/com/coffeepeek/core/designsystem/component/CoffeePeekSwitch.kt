@@ -22,6 +22,7 @@ fun CoffeePeekSwitch(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
 ) {
+    if (CoffeePeekNativeSwitch(checked, onCheckedChange, modifier, enabled)) return
     val palette = coffeePeekSwitchPalette(MaterialTheme.colorScheme.background.luminance() < 0.5f)
     val effects = LocalCoffeePeekPlatformEffects.current
     Switch(checked = checked,

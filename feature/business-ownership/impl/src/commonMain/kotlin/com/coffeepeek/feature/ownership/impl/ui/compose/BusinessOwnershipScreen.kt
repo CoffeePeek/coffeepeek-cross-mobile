@@ -17,7 +17,7 @@ import com.coffeepeek.feature.ownership.domain.model.*
 import com.coffeepeek.feature.ownership.impl.resources.*
 import com.coffeepeek.feature.ownership.impl.ui.OwnershipViewModel
 import com.coffeepeek.feature.ownership.impl.ui.compose.model.*
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @OptIn(androidx.compose.ui.ExperimentalComposeUiApi::class)

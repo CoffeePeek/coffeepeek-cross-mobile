@@ -105,6 +105,7 @@ class NotificationNavigationTest {
         override fun markAllRead() = Unit
         override fun foreground() = Unit
         override fun onCheckInCreated() = Unit
+        override fun onInboxOpened() = Unit
         override suspend fun beforeLogout() = Unit
     }
 

@@ -6,6 +6,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
+import com.coffeepeek.core.designsystem.component.CoffeePeekFilledIconButton as FilledIconButton
+import com.coffeepeek.core.designsystem.component.CoffeePeekOutlinedButton as OutlinedButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -29,7 +31,7 @@ import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.hazeSource
 import dev.chrisbanes.haze.rememberHazeState
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 
 @Composable
 internal fun ShopDetailBottomBar(

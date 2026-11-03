@@ -11,7 +11,7 @@ import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_duration_
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme

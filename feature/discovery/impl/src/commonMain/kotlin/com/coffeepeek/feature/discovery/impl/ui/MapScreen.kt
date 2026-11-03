@@ -19,7 +19,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
+import com.coffeepeek.core.designsystem.component.CoffeePeekFilledButton as Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -59,7 +59,6 @@ import com.coffeepeek.feature.discovery.impl.map.MapEvent
 import com.coffeepeek.feature.discovery.impl.map.MapState
 import com.coffeepeek.feature.discovery.impl.map.MapViewModel
 import com.coffeepeek.feature.discovery.impl.search.SearchAction
-import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 
 @Composable
 internal fun MapScreen(
@@ -155,7 +154,7 @@ internal fun MapContent(
         }
         MapSearchControls(state, dismissInput, onAction, onToggleExpand, onOpenFilters,
             Modifier.align(Alignment.TopCenter).statusBarsPadding().fillMaxWidth()
-                .padding(horizontal = CoffeePeekDimens.spacing4, vertical = CoffeePeekDimens.spacing3).zIndex(2f), onSearchAction)
+                .padding(vertical = CoffeePeekDimens.spacing3).zIndex(2f), onSearchAction)
         MapOverlayControls(state, host, bottomClearance, dismissInput, onAction)
     }
 }

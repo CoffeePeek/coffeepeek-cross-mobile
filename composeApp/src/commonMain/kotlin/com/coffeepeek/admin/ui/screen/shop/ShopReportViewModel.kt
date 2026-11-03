@@ -8,13 +8,13 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-enum class ShopReportReason(val title: String, val category: ShopIssueCategory) {
-    OUTDATED_MENU("Меню больше не актуально", ShopIssueCategory.OutdatedMenu),
-    SHOP_CLOSED("Кофейня закрылась", ShopIssueCategory.ShopClosed),
-    INCORRECT_SCHEDULE("В расписании есть ошибка", ShopIssueCategory.WrongOpeningHours),
-    INCORRECT_PHOTOS("Фотографии не соответствуют кофейне", ShopIssueCategory.IncorrectPhotos),
-    INCORRECT_ADDRESS("Указан неверный адрес", ShopIssueCategory.IncorrectAddress),
-    OTHER("Другая проблема", ShopIssueCategory.Other),
+enum class ShopReportReason(val category: ShopIssueCategory) {
+    OUTDATED_MENU(ShopIssueCategory.OutdatedMenu),
+    SHOP_CLOSED(ShopIssueCategory.ShopClosed),
+    INCORRECT_SCHEDULE(ShopIssueCategory.WrongOpeningHours),
+    INCORRECT_PHOTOS(ShopIssueCategory.IncorrectPhotos),
+    INCORRECT_ADDRESS(ShopIssueCategory.IncorrectAddress),
+    OTHER(ShopIssueCategory.Other),
 }
 
 data class ShopReportUiState(
@@ -23,6 +23,7 @@ data class ShopReportUiState(
     val isSubmitting: Boolean = false,
     val isSubmitted: Boolean = false,
     val error: String? = null,
+    val validation: ShopReportValidation? = null,
 )
 
 class ShopReportViewModel(
@@ -34,11 +35,11 @@ class ShopReportViewModel(
     val state = _state.asStateFlow()
 
     fun selectReason(reason: ShopReportReason) {
-        _state.update { it.copy(selectedReason = reason, error = null) }
+        _state.update { it.copy(selectedReason = reason, error = null, validation = null) }
     }
 
     fun updateComment(comment: String) {
-        _state.update { it.copy(comment = comment.take(MAX_COMMENT_LENGTH), error = null) }
+        _state.update { it.copy(comment = comment.take(MAX_COMMENT_LENGTH), error = null, validation = null) }
     }
 
     fun submit() {
@@ -46,15 +47,15 @@ class ShopReportViewModel(
         // A second tap while the first report is in flight, or after it was sent, must not send another one.
         if (current.isSubmitting || current.isSubmitted) return
         if (current.selectedReason == null) {
-            _state.update { it.copy(error = "Выберите, какие данные нужно исправить") }
+            _state.update { it.copy(validation = ShopReportValidation.ReasonRequired) }
             return
         }
         if (current.selectedReason == ShopReportReason.OTHER && current.comment.isBlank()) {
-            _state.update { it.copy(error = "Опишите проблему") }
+            _state.update { it.copy(validation = ShopReportValidation.DescriptionRequired) }
             return
         }
 
-        _state.update { it.copy(isSubmitting = true, error = null) }
+        _state.update { it.copy(isSubmitting = true, error = null, validation = null) }
         workScope.launch {
             shopIssueReportRepository.submitReport(
                 shopId = shopId,

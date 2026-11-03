@@ -35,7 +35,7 @@ internal fun MapSearchControls(
     onSearchAction: (SearchAction) -> Unit,
 ) {
     Column(modifier, verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2)) {
-        Row(verticalAlignment = Alignment.CenterVertically,
+        Row(Modifier.padding(horizontal = CoffeePeekDimens.spacing4), verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2)) {
             if (onToggleExpand != null) {
                 CoffeePeekGlassIconButton({ dismissInput(); onToggleExpand() }, stringResource(Res.string.discovery_map_collapse), hazeState = null) {
@@ -51,10 +51,12 @@ internal fun MapSearchControls(
             if (onOpenFilters != null) DiscoveryFilterButton(state.filters.activeCount, { dismissInput(); onOpenFilters() })
         }
         if (onOpenFilters != null) {
-            DiscoveryQuickFilters(state.filters, state.userLocation != null, onSearchAction)
+            DiscoveryQuickFilters(state.filters, onSearchAction)
         }
-        if (state.isTruncated) MapTruncationNotice()
-        if (state.showSuggestions) MapSuggestions(state, onSelect = { dismissInput(); onAction(MapAction.SelectSuggestion(it)) })
+        if (state.isTruncated) Box(Modifier.padding(horizontal = CoffeePeekDimens.spacing4)) { MapTruncationNotice() }
+        if (state.showSuggestions) Box(Modifier.padding(horizontal = CoffeePeekDimens.spacing4)) {
+            MapSuggestions(state, onSelect = { dismissInput(); onAction(MapAction.SelectSuggestion(it)) })
+        }
     }
 }
 

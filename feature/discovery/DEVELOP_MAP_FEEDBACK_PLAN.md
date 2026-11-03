@@ -129,3 +129,135 @@ search field. The icon and its now unused callback/resource were removed from
 both search headers. The existing map preview still opens the map through its
 expand control; this keeps a single entry point without changing the map route.
 Android Discovery/app code and iOS simulator code compiled after the removal.
+
+## Visible-map carousel and controls — 2026-10-30
+
+On fresh `develop` at `c0d5a936c`, the Android map filter row still inherited
+the search header's side padding, while the carousel used a five-kilometer GPS
+box. The row now reaches the viewport edges and retains end padding inside its
+horizontal scroller. Cards come from shops in the settled map bounds, ordered
+from the center on first load; surviving cards keep their order. The detailed
+500 ms read is independent of GPS, and late coarse replies merge its cards.
+The cyclic pager, marker selection and shared search filters remain in place.
+The Android location control now asks the existing platform reader for a fresh
+fix when its cached position is absent or stale. The attribution caption omits
+OpenFreeMap but retains OpenMapTiles and OSM.
+
+Verification on Windows: Discovery domain 14 tests / 2 suites and implementation
+101 tests / 9 suites passed without failures, errors or skips. Added regressions
+cover an absent GPS fix, more than ten visible shops, sparse and late map replies,
+and panning within a prefetched area. App Direct Debug's 888 unit/contract tests
+also passed. Direct Sandbox assembly, packaged DEX class check and isolation
+check passed. APK `com.coffeepeek.sandbox` version `1.1.3.2552-sandbox` /
+2552, SHA-256 `e5e4bb0aaab206e80e683eb0feedb2a71c014022b9daf1d4330df18168aef22`.
+The first isolated Gradle attempt stopped before tests because local SDK
+configuration was absent; the configured retry passed. No app was installed or
+launched. Chip gestures, card swipes, location permission/fix, dark/light and
+accessibility still need manual review on a selected Sandbox device. Backend
+deployment/real endpoint acceptance remains a separate release gate.
+
+### PR #223 review follow-up — 2026-10-30
+
+The detailed carousel area is invalidated when a coarse reply for another
+viewport replaces its cards. Returning to the previous area now reloads those
+cards instead of treating an empty carousel as cached. A regression covers the
+area A → area B coarse response → area A sequence before B's detailed read.
+Discovery implementation tests: 102 / 9 suites, zero failures or errors;
+Direct Sandbox assembly and packaged DEX class check passed. No device was
+selected, so the fast-pan gesture remains a manual Sandbox check.
+
+## Compact map card and nearby carousel — 2026-10-30
+
+On `develop` at `484d8710` plus this scoped patch, the Android carousel card
+uses a 64 dp photo, smaller insets, and one shared row for checkins/rating and
+distance. Its title and hours consume only the lines they need. The photo,
+title, checkins/rating, distance when available, and opening hours are retained.
+The existing light/dark previews cover short and long titles.
+
+At high zoom, a strictly visible-bounds map request can return only a few
+shops even when others are close to the map center. The detailed carousel now
+requests at least a 1.5 km radius around the viewport center, while wider
+views keep their original bounds. The cyclic pager is unchanged. A late coarse
+map response preserves nearby cards; criteria and account guards still apply.
+
+Verification on Windows: Discovery domain 15 tests / 2 suites and
+implementation 103 tests / 9 suites passed with zero failures or skips. The
+new tests cover compact-viewport expansion and preservation of three nearby
+cards after a late coarse reply. Direct Sandbox APK assembly, packaged DEX
+runtime-class and isolation checks passed. Discovery implementation compiled
+for iOS Arm64. The Sandbox APK SHA-256 is
+`00671eeb16631fb12bb5cca2e661ab2a3c745ca7a1ead96a3ad7ad47e10a08d5`.
+No device or build variant was selected for launch, so no app was installed.
+Card swipes, theme/font-size layout, and live map density still require manual
+review on a selected Sandbox device; the real backend remains a release gate.
+
+## Compact card parity for the active iOS route — 2026-10-30
+
+Source: `origin/develop` `a5f6f1b8`, branch `codex/migration-ios-shelf-map-parity`.
+Android Discovery already uses the compact feature card, while iOS still opens
+the shared legacy Discovery route. Its app-owned MapShopCard kept a 72 dp photo,
+larger spacing, separate metadata rows and two reserved lines each for title
+and hours, including when the hours label was empty.
+
+The active shared card now uses CoffeePeekCard, 64 dp photos and spacing2 insets,
+title first, a wrapping rating/distance row, and hours only when nonempty. Text
+can grow with font scale; no fixed card height is introduced. Existing photo,
+rating, opening-hours formatting, selection, navigation and analytics ownership
+are retained. Paired multiplatform previews include loading, a rated short title
+with no hours, and a long title without distance. No feature/data/domain/Gradle
+boundaries change; the broader Discovery UI migration is outside this fix.
+
+Verification plan: compile the shared content through Android directSandbox and
+the Xcode simulator build; run existing non-UI map contracts and preserve
+Android DEX/isolation checks. No device/variant is selected for a launch. Actual
+light/dark, large-font, narrow-window, swipe and accessibility review remains a
+manual Sandbox/iPhone gate. No automated UI or screenshot tests are introduced.
+
+Local result: directSandbox assembly, packaged DEX and isolation checks pass;
+the selected app unit/contract run passed 90 tests / 14 suites, with zero
+failures/errors/skips. The map subset accounts for 32 tests / 4 suites within
+those 90, not an additional run. Both light/dark card previews compile for
+Android; IDE rendering and runtime visual review were not performed. Existing
+Preview deprecation warnings remain. iOS production compilation and the Native
+shelf graph test are pending the PR's Xcode CI.
+
+## District labels at neighborhood scale — 2026-11-02
+
+Source: `origin/develop` `9b2357c91` plus this patch, branch
+`codex/migration-map-zone-label-zoom`. The native Android and iOS zone-label
+layers now have a minimum zoom of 13. This hides the colored district captions
+on a city-wide view; the existing maximum zoom of 15 is retained. MapLibre
+applies the scale range during camera movement and after style reloads. Zone
+geometry, shop/cluster markers and zone selection keep their existing behavior.
+
+Local verification: 14 existing map unit/contract tests / 4 suites passed,
+with zero failures, errors or skips. Direct Sandbox assembly, packaged DEX
+runtime-class and isolation checks passed (`com.coffeepeek.sandbox`,
+`1.1.4.2656-sandbox` / 2656). No app was installed or launched. Native Swift
+compilation is checked by the PR's iOS workflow; actual light/dark zoom gestures
+and label readability at the threshold remain a manual device check. No UI or
+screenshot tests were added.
+
+## Belarusian filter sheet — 2026-11-02
+
+Source: `origin/develop` `a43f96347` plus this patch, branch
+`codex/migration-filter-be-shelf-fasteners`. The Android filter window now
+receives the caller's `LocalResources` alongside its existing text-scale
+override. Its translated header, reset/done actions, section titles and
+expand/collapse labels therefore use the selected app language in the modal.
+
+Filter rows localize known catalog slugs at rendering time: all 13 current
+amenities and five descriptive brew-method names have RU/BE resources. The
+read-only public catalogs were audited on this date. Brand names and unknown
+catalog entries use their server names. Selection and request IDs remain the
+original slugs, and cached catalogs do not need another network read on a
+language change. Paired Belarusian light/dark content previews use fake state.
+
+Verification: 139 existing Discovery implementation tests / 14 suites passed
+with zero failures, errors or skips. All 121 native string keys and their
+format arguments align between RU/BE, including 18 catalog labels. Direct
+Sandbox assembly, packaged DEX and isolation checks passed
+(`com.coffeepeek.sandbox`, `1.1.5.2662-sandbox` / 2662). No app was installed
+or launched. Actual modal opening with a Belarusian app language and Russian
+system language, cached-catalog switching and font/window-size review remain
+manual Sandbox checks. No automated UI tests were introduced.

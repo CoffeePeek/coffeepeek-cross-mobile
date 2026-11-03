@@ -1,5 +1,6 @@
 package com.coffeepeek.admin.ui.screen.feed
 
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import com.coffeepeek.core.designsystem.component.coffeePeekScrollContentPadding
 
 import com.coffeepeek.core.designsystem.component.CoffeePeekScaffold as Scaffold
@@ -586,7 +587,7 @@ private fun FeedQuickFilterBar(
 
         COFFEE_FOCUS_OPTIONS.forEach { option ->
             DesignFilterChip(
-                label = option.label,
+                label = stringResource(option.label),
                 selected = coffeeFocusId == option.id,
                 onClick = { onCoffeeFocusChange(option.id) },
             )

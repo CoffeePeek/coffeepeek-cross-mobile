@@ -1,0 +1,8 @@
+<resources>
+    <string name="profile_blocks_load_failed">Не удалось загрузить блокировки. Повторите попытку.</string>
+    <string name="profile_unavailable">Профиль недоступен</string>
+    <string name="profile_verification_failed">Не удалось проверить профиль. Попробуйте ещё раз</string>
+    <string name="profile_connections_failed">Не удалось загрузить пользователей</string>
+    <string name="profile_deletion_status_failed">Ошибка загрузки статуса</string>
+    <string name="profile_deletion_send_failed">Не удалось отправить письмо</string>
+</resources>

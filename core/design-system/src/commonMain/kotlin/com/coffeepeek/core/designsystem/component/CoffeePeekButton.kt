@@ -8,7 +8,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
+import com.coffeepeek.core.designsystem.component.CoffeePeekFilledButton as Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Icon
@@ -33,6 +33,7 @@ fun CoffeePeekButton(
     fillWidth: Boolean = true,
     minHeight: Dp = CoffeePeekDimens.buttonHeight,
 ) {
+    if (leadingIcon == null && CoffeePeekNativePrimaryButton(text, onClick, modifier, enabled)) return
     Button(
         onClick = onClick,
         modifier = modifier

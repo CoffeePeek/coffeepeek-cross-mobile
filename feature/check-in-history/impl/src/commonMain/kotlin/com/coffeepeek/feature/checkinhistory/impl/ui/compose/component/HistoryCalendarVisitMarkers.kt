@@ -18,7 +18,7 @@ import androidx.compose.ui.unit.sp
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.checkinhistory.impl.resources.Res
 import com.coffeepeek.feature.checkinhistory.impl.resources.history_calendar_more_visits
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 
 /** The date node announces the exact total; these compact marks are decorative. */
 @Composable

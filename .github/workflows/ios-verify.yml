@@ -39,7 +39,7 @@ jobs:
     runs-on: xcode-27
     timeout-minutes: 60
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - uses: actions/setup-java@v6
         with:
           distribution: temurin
@@ -58,7 +58,7 @@ jobs:
       - name: Compile iPhone launch catalog for xtool
         shell: bash
         run: bash iosXtool/CoffeePeek/prepare-launch-resources.sh
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: ios-launch-resources
           path: iosXtool/CoffeePeek/.build/launch-resources/Assets.car
@@ -77,15 +77,26 @@ jobs:
               tail -n 150 "$RUNNER_TEMP/ios-verify.log"
               exit 1
             }
+      - name: Verify embedded ONNX minimum OS
+        shell: bash
+        run: |
+          set -euo pipefail
+          APP_PATH="$RUNNER_TEMP/ios-verify/Build/Products/Debug-iphonesimulator/CoffeePeek.app"
+          MINIMUM_OS=$(/usr/libexec/PlistBuddy -c 'Print :MinimumOSVersion' "$APP_PATH/Info.plist")
+          python3 tools/ios/fix_onnx_framework.py "$APP_PATH/Frameworks/onnxruntime.framework" \
+            --deployment-target "$MINIMUM_OS" --check
       - name: Run Kotlin Native contract tests
         shell: bash
         run: |
           set -euo pipefail
           ./gradlew --max-workers=6 :composeApp:iosSimulatorArm64Test \
             --tests 'com.coffeepeek.admin.di.KoinViewModelCompatibilityTest' \
+            --tests 'com.coffeepeek.admin.di.shelf.IosShelfModuleTest' \
             --tests 'com.coffeepeek.admin.ui.NavigationDelegateTest' \
             --tests 'com.coffeepeek.admin.ui.MainTabReselectionsTest' \
             --tests 'com.coffeepeek.admin.ui.TabDelegateTest' \
+            --tests 'com.coffeepeek.admin.ui.NativeTabBarVisibilityTest' \
+            --tests 'com.coffeepeek.admin.ui.component.GlassIconConfigurationTest' \
             --tests 'com.coffeepeek.admin.di.discovery.LegacyDiscoveryMapSourceTest' \
             --tests 'com.coffeepeek.admin.ui.screen.feed.FeedMapCriteriaTest' \
             --tests 'com.coffeepeek.admin.ui.screen.map.MapViewModelParityTest' \
@@ -104,7 +115,7 @@ jobs:
               tail -n 150 "$RUNNER_TEMP/ios-ownership-tests.log"
               exit 1
             }
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: ios-build-log

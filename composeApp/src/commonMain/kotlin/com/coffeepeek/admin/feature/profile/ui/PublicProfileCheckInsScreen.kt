@@ -16,7 +16,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import com.coffeepeek.core.designsystem.component.CoffeePeekTextButton as TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
@@ -28,7 +28,7 @@ import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
 import com.coffeepeek.core.designsystem.component.CoffeePeekTopBar
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.authorblocking.api.AuthorReference
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 
 @Composable
 internal fun PublicProfileCheckInsScreenContent(

@@ -11,6 +11,9 @@ interface SettingsScreenRenderer {
     fun Theme()
 
     @Composable
+    fun Language()
+
+    @Composable
     fun City()
 
     @Composable

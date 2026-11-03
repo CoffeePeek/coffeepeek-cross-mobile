@@ -19,15 +19,18 @@ import com.coffeepeek.core.designsystem.component.CoffeePeekLoadErrorContent
 import com.coffeepeek.feature.coffee.impl.createCoffeeListEntry
 import kotlinx.coroutines.flow.Flow
 
-/** Both platforms use migrated catalogue entries; browser, share, photos and root navigation remain app-owned. */
+/**
+ * Routes to the migrated catalogue on both platforms; root navigation, browser, share and photo viewer stay app-owned.
+ * The tab always switches between the shelf and the catalogue on both platforms.
+ */
 internal class FeatureCoffeeScreenRenderer(
     private val list: CoffeeListEntry,
     private val detail: CoffeeDetailEntry,
-    private val shelf: CoffeeShelfTab? = null,
+    private val shelf: CoffeeShelfTab,
 ) : CoffeeScreenRenderer {
     @Composable
     override fun List(scrollToTopRequests: Flow<Unit>) {
-        if (shelf == null) Catalogue(scrollToTopRequests) {} else shelf.Content { header -> Catalogue(scrollToTopRequests, header) }
+        shelf.Content { header -> Catalogue(scrollToTopRequests, header) }
     }
 
     @Composable
@@ -47,7 +50,7 @@ internal class FeatureCoffeeScreenRenderer(
     }
 }
 
-internal fun featureCoffeeScreenRenderer(repository: CoffeeRepository, shelf: CoffeeShelfTab? = null): FeatureCoffeeScreenRenderer {
+internal fun featureCoffeeScreenRenderer(repository: CoffeeRepository, shelf: CoffeeShelfTab): FeatureCoffeeScreenRenderer {
     val image: @Composable (String, String, Modifier, androidx.compose.ui.layout.ContentScale) -> Unit =
         { url, description, modifier, scale ->
             CoffeePeekBrandedImage(imageUrl = url, modifier = modifier, contentDescription = description, contentScale = scale)

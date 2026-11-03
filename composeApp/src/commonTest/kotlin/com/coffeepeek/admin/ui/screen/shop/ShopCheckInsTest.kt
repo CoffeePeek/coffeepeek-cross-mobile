@@ -18,6 +18,10 @@ import kotlinx.coroutines.withTimeout
 import kotlin.test.*
 
 class ShopCheckInsTest {
+    private fun ShopDetailUiState.checkInMessage(): String? = checkInFeedback?.message(feedbackLabels) ?: checkInError
+
+    private val feedbackLabels = ShopDetailLabels("Не удалось загрузить избранное", "Не удалось загрузить блокировки. Повторите попытку.", "Не удалось определить адрес кофейни", "Войдите в аккаунт, чтобы создать чекин", "Не удалось отправить чекин. Попробуйте ещё раз", "Не удалось изменить избранное", "Номер скопирован")
+
     private val publicVisit = CheckIn("public", "coffee", "Кофейня", "Отличный кофе", "2026-10-08T12:00:00Z",
         rating = ReviewRating(4, 5, 5), visibility = CheckInVisibility.Public, moderationState = CheckInModerationState.Approved)
     private val ownVisit = publicVisit.copy(id = "own", authorAddress = null)
@@ -284,7 +288,7 @@ class ShopCheckInsTest {
                 photos = listOf(PickedImage(byteArrayOf(1, 2, 3), "coffee.jpg")))
             vm.updateCheckInDraft(draft)
             vm.checkIn(draft)
-            val failed = withTimeout(5_000) { vm.uiState.first { it.checkInError != null && !it.isCheckInLoading } }
+            val failed = withTimeout(5_000) { vm.uiState.first { it.checkInMessage() != null && !it.isCheckInLoading } }
             assertEquals("Нет сети", failed.checkInError)
             assertEquals(draft, failed.checkInDraft)
             assertEquals(draft, store.open("coffee"))
@@ -315,7 +319,7 @@ class ShopCheckInsTest {
             )) {
                 vm.checkIn(invalid)
                 assertFalse(vm.uiState.value.isCheckInLoading)
-                assertTrue(vm.uiState.value.checkInError?.isNotBlank() == true)
+                assertNotNull(vm.uiState.value.checkInValidationError)
                 assertNull(vm.uiState.value.submittedCheckInVisibility)
             }
             assertEquals(0, creations)
@@ -325,7 +329,7 @@ class ShopCheckInsTest {
         try {
             withTimeout(5_000) { missingAddress.uiState.first { it.details != null && !it.isLoading } }
             missingAddress.checkIn(CheckInDraft("coffee", visitMillis = 1000, note = "Кофе"))
-            assertEquals("Не удалось определить адрес кофейни", missingAddress.uiState.value.checkInError)
+            assertEquals("Не удалось определить адрес кофейни", missingAddress.uiState.value.checkInMessage())
             assertFalse(missingAddress.uiState.value.isCheckInLoading)
             assertEquals(0, creations)
         } finally { missingAddress.close() }
@@ -344,8 +348,8 @@ class ShopCheckInsTest {
                     val draft = opened.checkInDraft!!.copy(note = "Сохранить", photos = listOf(PickedImage(byteArrayOf(1), "coffee.jpg")))
                     vm.updateCheckInDraft(draft)
                     vm.checkIn(draft)
-                    val failed = withTimeout(5_000) { vm.uiState.first { !it.isCheckInLoading && it.checkInError != null } }
-                    assertTrue(failed.checkInError!!.isNotBlank())
+                    val failed = withTimeout(5_000) { vm.uiState.first { !it.isCheckInLoading && it.checkInMessage() != null } }
+                    assertTrue(failed.checkInMessage()?.isNotBlank() == true)
                     assertEquals(draft, failed.checkInDraft)
                     assertTrue(failed.showCheckInSheet)
                     assertNull(failed.submittedCheckInVisibility)
@@ -367,8 +371,8 @@ class ShopCheckInsTest {
             vm.updateCheckInDraft(draft)
             signedIn = false
             vm.checkIn(draft)
-            val failed = withTimeout(5_000) { vm.uiState.first { it.checkInError != null && !it.isCheckInLoading } }
-            assertEquals("Войдите в аккаунт, чтобы создать чекин", failed.checkInError)
+            val failed = withTimeout(5_000) { vm.uiState.first { it.checkInMessage() != null && !it.isCheckInLoading } }
+            assertEquals("Войдите в аккаунт, чтобы создать чекин", failed.checkInMessage())
             assertEquals(draft, store.open("coffee"))
             assertNull(failed.submittedCheckInVisibility)
         } finally { vm.close() }
@@ -405,7 +409,7 @@ class ShopCheckInsTest {
             val opened = withTimeout(5_000) { vm.uiState.first { it.showCheckInSheet } }
             val draft = opened.checkInDraft!!.copy(note = "Кофе")
             vm.updateCheckInDraft(draft); fail = true; vm.checkIn(draft)
-            val failed = withTimeout(5_000) { vm.uiState.first { !it.isCheckInLoading && it.checkInError != null } }
+            val failed = withTimeout(5_000) { vm.uiState.first { !it.isCheckInLoading && it.checkInMessage() != null } }
             assertEquals("Не удалось проверить вход", failed.checkInError)
             assertEquals(draft, failed.checkInDraft)
             assertTrue(failed.showCheckInSheet)
@@ -436,6 +440,14 @@ class ShopCheckInsTest {
             assertEquals(listOf("coffee.jpg"), input.photos.map { it.fileName })
             assertContentEquals(original.bytes, input.photos.single().bytes)
         } finally { vm.close() }
+    }
+
+    @Test
+    fun preparedFeedbackAndShareCopyAreBelarusianWithoutChangingTheShopTitle() {
+        assertEquals("Нумар скапіяваны", ShopDetailFeedback.PhoneCopied.message(feedbackLabels.copy(phoneCopied = "Нумар скапіяваны")))
+        val share = ShopShareLabels("Кавярня «%1\$s»: %2\$s", "Кавярня: %1\$s")
+        assertEquals("Кавярня «Кава %2\$s»: https://coffeepeek.by/shop", share.text("Кава %2\$s", "https://coffeepeek.by/shop"))
+        assertEquals("Кавярня: https://coffeepeek.by/shop", share.text(null, "https://coffeepeek.by/shop"))
     }
 
     private fun viewModel(

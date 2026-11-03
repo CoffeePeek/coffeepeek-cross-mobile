@@ -1,0 +1,21 @@
+<resources>
+    <string name="coffeepeek_loading">Загрузка</string>
+    <string name="coffeepeek_actions">Дзеянні</string>
+    <string name="coffeepeek_map_expand">Разгарнуць карту на ўвесь экран</string>
+    <string name="coffeepeek_photos_manage_hint">Націсніце, каб паглядзець. Утрымлівайце і перацягвайце, каб змяняць парадак.</string>
+    <string name="coffeepeek_photo_description">Фота %1$d з %2$d</string>
+    <string name="coffeepeek_photo_position">%1$d / %2$d</string>
+    <string name="coffeepeek_photo_remove">Выдаліць фота %1$d</string>
+    <string name="coffeepeek_photo_add">Дадаць фатаграфіі</string>
+    <string name="coffeepeek_photo_move_earlier">Перамясціць раней</string>
+    <string name="coffeepeek_photo_move_later">Перамясціць пазней</string>
+    <string name="coffeepeek_photo_close">Закрыць прагляд фатаграфій</string>
+    <string name="coffeepeek_image_placeholder_brand">COFFEEPEEK</string>
+    <string name="coffeepeek_rating_description">Адзнака %1$s з 5</string>
+    <string name="coffeepeek_rating_choose">Выбраць %1$d з 5</string>
+    <string name="coffeepeek_like_add">Паставіць лайк</string>
+    <string name="coffeepeek_like_remove">Прыбраць лайк</string>
+    <string name="coffeepeek_pagination_error">Не ўдалося загрузіць наступныя вынікі.</string>
+    <string name="coffeepeek_pagination_retry">Паўтарыць</string>
+    <string name="coffeepeek_refresh_error">Не ўдалося абнавіць. Паказаныя папярэднія вынікі.</string>
+</resources>

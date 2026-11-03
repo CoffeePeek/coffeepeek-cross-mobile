@@ -1,0 +1,20 @@
+<resources>
+    <string name="discovery_tag_roastery">Roastery</string>
+    <string name="discovery_tag_beans_for_sale">Зерно на продажу</string>
+    <string name="discovery_tag_decaf">Decaf</string>
+    <string name="discovery_tag_to_go">To Go</string>
+    <string name="discovery_tag_plant_milk">Растительное молоко</string>
+    <string name="discovery_tag_laptop_friendly">Laptop Friendly</string>
+    <string name="discovery_tag_outside_seating">Летка</string>
+    <string name="discovery_tag_breakfasts">Завтраки</string>
+    <string name="discovery_tag_bakery">Bakery</string>
+    <string name="discovery_tag_confectionery">Кондитерская</string>
+    <string name="discovery_tag_pet_friendly">Pet Friendly</string>
+    <string name="discovery_tag_vegan">Vegan</string>
+    <string name="discovery_tag_gluten_free">Gluten free</string>
+    <string name="discovery_brew_cold_brew">Cold Brew</string>
+    <string name="discovery_brew_batch_brew">Batch Brew</string>
+    <string name="discovery_brew_espresso">Espresso</string>
+    <string name="discovery_brew_moka_pot">Moka Pot</string>
+    <string name="discovery_brew_cezve">Cezve (Turkish Coffee)</string>
+</resources>

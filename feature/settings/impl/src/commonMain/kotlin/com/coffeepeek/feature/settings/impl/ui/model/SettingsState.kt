@@ -1,6 +1,7 @@
 package com.coffeepeek.feature.settings.impl.ui.model
 
 import com.coffeepeek.feature.settings.domain.ThemeMode
+import com.coffeepeek.feature.settings.domain.AppLanguage
 import com.coffeepeek.feature.settings.domain.UpdateCheckState
 
 internal data class SettingsState(
@@ -11,6 +12,7 @@ internal data class SettingsState(
     val update: UpdateCheckState = UpdateCheckState(),
     /** A check the user started is in flight (kept visible for a minimum time so the loader is not a flash). */
     val manualUpdateCheck: Boolean = false,
+    val language: AppLanguage = AppLanguage.RUSSIAN,
 ) {
     /** The update row is locked and shows a loader. */
     val updateBusy: Boolean get() = update.checking || manualUpdateCheck

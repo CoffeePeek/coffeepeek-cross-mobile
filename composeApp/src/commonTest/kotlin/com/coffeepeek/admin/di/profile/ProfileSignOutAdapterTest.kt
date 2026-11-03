@@ -38,6 +38,7 @@ class ProfileSignOutAdapterTest {
             error("Sign-out must not resolve notification destinations")
         override fun foreground() = Unit
         override fun onCheckInCreated() = Unit
+        override fun onInboxOpened() = Unit
         override suspend fun beforeLogout() { events += "push" }
     }
 

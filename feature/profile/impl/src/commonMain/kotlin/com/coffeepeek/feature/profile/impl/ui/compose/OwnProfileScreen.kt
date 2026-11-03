@@ -24,7 +24,7 @@ import androidx.compose.material3.MaterialTheme
 import com.coffeepeek.core.designsystem.component.CoffeePeekScaffold as Scaffold
 import com.coffeepeek.core.designsystem.component.CoffeePeekScrollableColumn
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import com.coffeepeek.core.designsystem.component.CoffeePeekTextButton as TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -36,7 +36,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp

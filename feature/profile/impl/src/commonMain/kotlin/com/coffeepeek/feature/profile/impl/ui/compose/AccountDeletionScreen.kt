@@ -1,5 +1,8 @@
 package com.coffeepeek.feature.profile.impl.ui.compose
 
+import com.coffeepeek.core.designsystem.component.CoffeePeekActionDialog
+import com.coffeepeek.core.designsystem.component.CoffeePeekDialogAction
+
 import androidx.compose.foundation.layout.Arrangement
 import com.coffeepeek.feature.profile.impl.resources.Res
 import com.coffeepeek.feature.profile.impl.resources.profile_back
@@ -25,17 +28,20 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.AlertDialog
+import com.coffeepeek.core.designsystem.component.CoffeePeekFilledButton as Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import com.coffeepeek.core.designsystem.component.CoffeePeekTextButton as TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -44,18 +50,19 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.coffeepeek.core.designsystem.component.CoffeePeekButton
 import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
 import com.coffeepeek.core.designsystem.component.CoffeePeekTopBar
+import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
+import org.jetbrains.compose.ui.tooling.preview.Preview
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.feature.profile.impl.resources.*
 import com.coffeepeek.feature.profile.impl.ui.AccountDeletionViewModel
 import com.coffeepeek.feature.profile.impl.ui.model.AccountDeletionAction
+import com.coffeepeek.feature.profile.impl.ui.model.AccountDeletionError
 import com.coffeepeek.feature.profile.impl.ui.model.AccountDeletionEvent
 
 import com.coffeepeek.core.designsystem.component.CoffeePeekScaffold
 import com.coffeepeek.core.designsystem.component.CoffeePeekScrollableColumn
 import com.coffeepeek.core.designsystem.component.CoffeePeekErrorDialog
-import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.profile.impl.ui.model.AccountDeletionState
-import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
 internal fun AccountDeletionScreen(
@@ -72,11 +79,7 @@ internal fun AccountDeletionScreen(
 
 @Composable
 internal fun AccountDeletionScreenContent(state: AccountDeletionState, onAction: (AccountDeletionAction) -> Unit, onClose: () -> Unit, modifier: Modifier = Modifier) {
-    CoffeePeekErrorDialog(
-        show = state.error != null, message = state.error.orEmpty(),
-        title = stringResource(Res.string.profile_error_title), dismissLabel = stringResource(Res.string.profile_ok),
-        onDismiss = { onAction(AccountDeletionAction.DismissError) },
-    )
+    AccountDeletionErrorDialog(state.error) { onAction(AccountDeletionAction.DismissError) }
     CoffeePeekScaffold(
         modifier = modifier,
         topBar = { CoffeePeekTopBar(stringResource(Res.string.profile_deletion_title), stringResource(Res.string.profile_back), onBack = onClose) },
@@ -154,3 +157,26 @@ private fun AccountDeletionPreview(dark: Boolean, requested: Boolean) = CoffeePe
 @Preview @Composable private fun AccountDeletionDarkPreview() = AccountDeletionPreview(true, false)
 @Preview @Composable private fun AccountDeletionSentLightPreview() = AccountDeletionPreview(false, true)
 @Preview @Composable private fun AccountDeletionSentDarkPreview() = AccountDeletionPreview(true, true)
+
+@Composable
+private fun AccountDeletionErrorDialog(error: AccountDeletionError?, onDismiss: () -> Unit) {
+    if (error == null) return
+    CoffeePeekActionDialog(
+        title = stringResource(Res.string.profile_error_title),
+        message = when (error) {
+            AccountDeletionError.Status -> stringResource(Res.string.profile_deletion_status_failed)
+            AccountDeletionError.Send -> stringResource(Res.string.profile_deletion_send_failed)
+            is AccountDeletionError.Server -> error.message
+        },
+        actions = listOf(CoffeePeekDialogAction(stringResource(Res.string.profile_ok), onDismiss)),
+        cancelLabel = null,
+        onDismiss = onDismiss,
+    )
+}
+
+@Preview @Composable private fun AccountDeletionErrorLightPreview() = CoffeePeekTheme(darkTheme = false) {
+    AccountDeletionErrorDialog(AccountDeletionError.Status, {})
+}
+@Preview @Composable private fun AccountDeletionErrorDarkPreview() = CoffeePeekTheme(darkTheme = true) {
+    AccountDeletionErrorDialog(AccountDeletionError.Status, {})
+}

@@ -2,6 +2,10 @@
 
 package com.coffeepeek.admin.feature.passwordrecovery
 
+import com.coffeepeek.admin.feature.passwordrecovery.ui.message
+
+import com.coffeepeek.admin.feature.passwordrecovery.ui.PasswordRecoveryError
+
 import androidx.lifecycle.ViewModelStore
 import com.coffeepeek.admin.feature.passwordrecovery.domain.PasswordRecoveryRepository
 import com.coffeepeek.admin.feature.passwordrecovery.ui.PasswordRecoveryViewModel
@@ -23,6 +27,8 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class PasswordRecoveryViewModelTest {
+    private val validationLabels = com.coffeepeek.admin.ui.component.InputValidationLabels("Введите email", "Введите корректный email", "Введите пароль", "Пароль должен содержать как минимум %1\$s символов", "Некорректный формат телефона", "Укажите домен, например coffeepeek.by", "Некорректный Instagram")
+
     private val viewModels = ViewModelStore()
 
     @BeforeTest
@@ -136,5 +142,10 @@ class PasswordRecoveryViewModelTest {
             emails += email
             return response()
         }
+    }
+    @Test fun recoveryFeedbackUsesPreparedBelarusianCopy() {
+        val error = PasswordRecoveryError.Validation(com.coffeepeek.admin.utils.InputValidationIssue.EmailInvalid)
+        assertEquals("Увядзіце карэктны email", error.message(validationLabels.copy(invalidEmail = "Увядзіце карэктны email"), "Памылка адпраўкі"))
+        assertEquals("Памылка адпраўкі", PasswordRecoveryError.SendFailed.message(validationLabels, "Памылка адпраўкі"))
     }
 }

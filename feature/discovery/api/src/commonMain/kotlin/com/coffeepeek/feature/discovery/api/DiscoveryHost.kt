@@ -36,6 +36,8 @@ class DiscoveryRoasterSlots(
     val search: @Composable (context: DiscoveryRoasterContext, onQueryChange: (String) -> Unit, onCancel: () -> Unit) -> Unit,
     /** Null while loading or unavailable; lets matching shops precede an empty roaster section. */
     val hasResults: @Composable (DiscoveryRoasterContext) -> Boolean? = { null },
+    /** Secondary contribution action after an empty text search; navigation remains app-owned. */
+    val onAdd: () -> Unit = {},
 )
 
 /**
@@ -55,5 +57,9 @@ interface DiscoveryTabEntry {
         /** A shop to bring into view on the expanded map; [onFocusConsumed] tells the caller it was taken. */
         focus: MapFocus?,
         onFocusConsumed: () -> Unit,
+        /** App-owned check-in action, placed in the landing list only; never over search, map or roasters. */
+        checkInAction: @Composable () -> Unit,
+        /** Transient taps on the already selected Search tab; ordinary tab changes must not emit. */
+        reselections: kotlinx.coroutines.flow.Flow<Unit>,
     )
 }

@@ -83,7 +83,7 @@ private fun ProfileCheckInActions(onBlock: (() -> Unit)?, onReport: (() -> Unit)
         onReport?.let { add(CoffeePeekMenuAction(stringResource(Res.string.profile_check_in_report), CoffeePeekIcons.Error,
             nativeIcon = CoffeePeekMenuIcon.Report, onClick = it)) }
     }
-    CoffeePeekActionMenu(actions, menuDescription = label) { open ->
+    CoffeePeekActionMenu(actions) { open ->
         IconButton(open) { Icon(CoffeePeekIcons.MoreHorizontal, label, tint = MaterialTheme.colorScheme.onSurfaceVariant) }
     }
 }

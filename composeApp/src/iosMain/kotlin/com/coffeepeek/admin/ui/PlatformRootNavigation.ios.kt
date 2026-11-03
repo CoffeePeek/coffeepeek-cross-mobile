@@ -5,7 +5,12 @@ package com.coffeepeek.admin.ui
 import org.koin.compose.koinInject
 import coffeepeek.composeapp.generated.resources.Res
 import coffeepeek.composeapp.generated.resources.business_tab_title
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
+import coffeepeek.composeapp.generated.resources.navigation_search
+import coffeepeek.composeapp.generated.resources.navigation_coffee
+import coffeepeek.composeapp.generated.resources.navigation_feed
+import coffeepeek.composeapp.generated.resources.navigation_profile
+import coffeepeek.composeapp.generated.resources.navigation_settings
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.*
 import androidx.compose.material3.MaterialTheme
@@ -120,6 +125,7 @@ internal actual fun PlatformRootNavigation(
     val tabReselections = remember { MainTabReselections() }
     val navigationDelegates = remember { List(6) { NavigationDelegate() } }
     val navigations = remember { List(6) { UINavigationController() } }
+    val tabBarVisibility = remember(tabs) { NativeTabBarVisibility(tabs, navigations[0]) }
     val businessMode = koinInject<com.coffeepeek.feature.ownership.api.BusinessOwnershipEntry>().Session().businessMode
     val visibleTabIndices = remember(isLoggedIn, businessMode) { mainTabScreens(isLoggedIn, businessMode).map { requireNotNull(nativeTabIndex(it)) } }
     val restoredTab = remember { NavigationMemory.selectedTab }
@@ -128,6 +134,7 @@ internal actual fun PlatformRootNavigation(
     val pendingTab by Navigator.pendingTabSelection.collectAsState()
 
     fun saveNavigation() {
+        tabBarVisibility.sync()
         if (NavigationMemory.generation == memoryGeneration) NavigationMemory.save(tabs, navigations, visibleTabIndices)
     }
 
@@ -162,14 +169,17 @@ internal actual fun PlatformRootNavigation(
     }
 
     val businessTitle = stringResource(Res.string.business_tab_title)
+    val labels = listOf(stringResource(Res.string.navigation_search), stringResource(Res.string.navigation_coffee),
+        stringResource(Res.string.navigation_feed), stringResource(Res.string.navigation_profile),
+        stringResource(Res.string.navigation_settings), businessTitle)
     UIKitViewController(factory = {
-        val labels = listOf("Поиск", "Кофе", "Лента", "Профиль", "Настройки", businessTitle)
         val symbols = listOf("magnifyingglass", "cup.and.saucer", "person.2", "person.crop.circle", "gearshape", "building.2")
         navigations.indices.forEach { index ->
             val navigation = navigations[index]
             val root = NativeScreenController(labels[index], analyticsPage = listOf("discovery", "coffees", "feed", "profile", "settings", "business_ownership")[index], isTabRoot = true) {
                 when (index) {
-                    0 -> koinInject<DiscoveryScreenRenderer>().Tab(onMapExpandedChange = {})
+                    0 -> koinInject<DiscoveryScreenRenderer>().Tab(
+                        onMapExpandedChange = tabBarVisibility::onMapExpandedChange, reselections = tabReselections.search)
                     1 -> CheckInTabContent { koinInject<CoffeeScreenRenderer>().List(tabReselections.coffee) }
                     2 -> koinInject<CommunityScreenRenderer>().Content(
                         onCreateCheckIn = { Navigator.navigate(Navigator.Screen.CreateCheckIn) },
@@ -200,9 +210,12 @@ internal actual fun PlatformRootNavigation(
         tabDelegate.onTabChanged = { saveNavigation() }
         tabDelegate.onTabReselected = { navigation ->
             tabReselections.onTabPressed(Navigator.Screen.CoffeeTab, isSelected = navigation == navigations[1])
+            tabReselections.onTabPressed(Navigator.Screen.FeedTab, isSelected = navigation == navigations[0])
         }
         tabs
-    }, modifier = Modifier.fillMaxSize(), properties = UIKitInteropProperties(
+    }, modifier = Modifier.fillMaxSize(), update = {
+        updateNativeTabLabels(navigations, labels)
+    }, properties = UIKitInteropProperties(
         interactionMode = UIKitInteropInteractionMode.NonCooperative,
         isNativeAccessibilityEnabled = true,
         // This full-screen opaque host stays below the app's Compose overlays.
@@ -225,6 +238,7 @@ internal actual fun PlatformRootNavigation(
         tabDelegate.onTabChanged = { saveNavigation() }
         tabs.overrideUserInterfaceStyle = themeMode.uiKitStyle
         tabs.view.backgroundColor = colors.background.toUIColor()
+        tabs.view.tintColor = colors.primary.toUIColor()
         tabs.tabBar.tintColor = colors.primary.toUIColor()
         tabs.tabBar.unselectedItemTintColor = colors.onSurfaceVariant.toUIColor()
         navigations.forEach { it.view.backgroundColor = colors.background.toUIColor() }
@@ -274,6 +288,7 @@ internal actual fun PlatformRootNavigation(
     }
     DisposableEffect(tabs) {
         onDispose {
+            tabBarVisibility.dispose()
             tabs.delegate = null
             tabDelegate.onTabChanged = null
             tabDelegate.onTabReselected = null
@@ -282,4 +297,11 @@ internal actual fun PlatformRootNavigation(
         }
     }
     return true
+}
+
+private fun updateNativeTabLabels(navigations: List<UINavigationController>, labels: List<String>) {
+    navigations.forEachIndexed { index, navigation ->
+        navigation.tabBarItem.title = labels[index]
+        (navigation.viewControllers.firstOrNull() as? UIViewController)?.title = labels[index]
+    }
 }

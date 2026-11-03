@@ -26,6 +26,7 @@ internal class NotificationPresenter(
     private var loadJob: Job? = null
     private var settingsJob: Job? = null
     private var readJob: Job? = null
+    private val pendingReadIds = MutableStateFlow<Set<String>>(emptySet())
     private var refreshPending = false
     private fun account() = account.userId
     private fun current(snapshot: NotificationInboxState) = !loggingOut && account() == snapshot.accountId &&
@@ -35,6 +36,7 @@ internal class NotificationPresenter(
         scope.launch {
             account.observeUserId().distinctUntilChanged().collect { user ->
                 loadJob?.cancel(); settingsJob?.cancel(); readJob?.cancel()
+                pendingReadIds.value = emptySet()
                 refreshPending = false
                 loggingOut = false
                 activityAt = null
@@ -67,7 +69,7 @@ internal class NotificationPresenter(
                 mutable.update { it.copy(pushEnabled = enabled, settingsLoaded = true, settingsError = null) }
             } catch (cancelled: CancellationException) { throw cancelled }
             catch (_: Exception) {
-                if (current(snapshot)) mutable.update { it.copy(settingsError = "Не удалось загрузить настройки push") }
+                if (current(snapshot)) mutable.update { it.copy(settingsError = NotificationSettingsError.LoadFailed) }
                 return@withLock
             }
         }
@@ -123,7 +125,7 @@ internal class NotificationPresenter(
                     unreadCount = page.unreadCount, nextCursor = page.nextCursor, loading = false, loadingMore = false) }
             } catch (cancelled: CancellationException) { throw cancelled }
             catch (_: Exception) {
-                if (current(snapshot)) mutable.update { it.copy(loading = false, loadingMore = false, error = "Не удалось загрузить уведомления") }
+                if (current(snapshot)) mutable.update { it.copy(loading = false, loadingMore = false, error = NotificationInboxError.LoadFailed) }
             } finally {
                 if (current(snapshot)) {
                     loadJob = null
@@ -150,7 +152,7 @@ internal class NotificationPresenter(
                 syncDevice()
             } catch (cancelled: CancellationException) { throw cancelled }
             catch (_: Exception) {
-                if (current(snapshot)) mutable.update { it.copy(savingSettings = false, settingsError = "Не удалось сохранить настройки push. Попробуйте ещё раз.") }
+                if (current(snapshot)) mutable.update { it.copy(savingSettings = false, settingsError = NotificationSettingsError.SaveFailed) }
             }
         }
     }
@@ -168,10 +170,16 @@ internal class NotificationPresenter(
 
     private fun read(id: String?) {
         val snapshot = state.value
-        if (snapshot.accountId == null || !current(snapshot) || snapshot.markingRead) return
-        if (id == null && (snapshot.loading || snapshot.loadingMore || snapshot.unreadCount == 0)) return
+        if (snapshot.accountId == null || !current(snapshot)) return
+        if (id != null && (id.isBlank() || id.any { it in "/\\?#" || it.isISOControl() })) return
         val item = if (id == null) snapshot.items.firstOrNull() else snapshot.items.firstOrNull { it.id == id }
-        if (id == null && item == null || id != null && item?.read == true) return
+        if (id != null && item?.read == true) return
+        if (snapshot.markingRead) {
+            if (id != null) pendingReadIds.update { it + id }
+            return
+        }
+        if (id == null && (snapshot.loading || snapshot.loadingMore || snapshot.unreadCount == 0)) return
+        if (id == null && item == null) return
         val targetId = id ?: item?.id ?: return
         if (targetId.isBlank() || targetId.any { it in "/\\?#" || it.isISOControl() }) return
         mutable.update { it.copy(markingRead = true, error = null) }
@@ -183,6 +191,7 @@ internal class NotificationPresenter(
             if (id == null) repository.markAllRead(targetId) else repository.markRead(id)
             if (!current(snapshot)) return
             applyRead(id, wasLoaded)
+            drainPendingReads()
             // Reload the count: messages arriving after this snapshot must stay unread.
             refresh()
         } catch (cancelled: CancellationException) {
@@ -199,12 +208,25 @@ internal class NotificationPresenter(
     }
 
     private fun readFailed() {
-        mutable.update { it.copy(markingRead = false, error = "Не удалось отметить уведомления прочитанными") }
+        mutable.update { it.copy(markingRead = false, error = NotificationInboxError.MarkReadFailed) }
+        drainPendingReads()
         // Serve any refresh queued during the write without hiding why the write failed.
         if (refreshPending) load(more = false, keepError = true)
     }
 
-    override fun onCheckInCreated() {
+    private fun drainPendingReads() {
+        while (!state.value.markingRead) {
+            val id = pendingReadIds.value.firstOrNull() ?: return
+            pendingReadIds.update { it - id }
+            read(id)
+        }
+    }
+
+    override fun onCheckInCreated() = offerPermission()
+
+    override fun onInboxOpened() = offerPermission()
+
+    private fun offerPermission() {
         val snapshot = state.value
         val device = platform.state.value
         if (snapshot.accountId != null && current(snapshot) && snapshot.settingsLoaded && snapshot.pushEnabled && device.available && !device.permissionGranted)
@@ -214,6 +236,7 @@ internal class NotificationPresenter(
     override suspend fun beforeLogout() {
         loggingOut = true
         loadJob?.cancel(); settingsJob?.cancel(); readJob?.cancel()
+        pendingReadIds.value = emptySet()
         mutable.value = NotificationInboxState(generation = state.value.generation + 1)
         try {
             withTimeoutOrNull(3_000) { lock.withLock { if (account() != null && platform.state.value.installationId.isNotBlank()) repository.remove(platform.state.value.installationId) } }

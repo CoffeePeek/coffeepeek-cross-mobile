@@ -1,10 +1,17 @@
 package com.coffeepeek.admin.ui.screen.main
 
 import androidx.compose.runtime.Composable
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
 
 /** Application route adapter; both platforms bind migrated feature entries explicitly. */
 interface DiscoveryScreenRenderer {
     /** [onMapExpandedChange] tells the host that the map covers the screen, so it can hide the floating navigation. */
     @Composable
-    fun Tab(onMapExpandedChange: (Boolean) -> Unit)
+    fun Tab(onMapExpandedChange: (Boolean) -> Unit, reselections: Flow<Unit> = emptyFlow())
+}
+
+internal object LegacyDiscoveryScreenRenderer : DiscoveryScreenRenderer {
+    @Composable override fun Tab(onMapExpandedChange: (Boolean) -> Unit, reselections: Flow<Unit>) =
+        DiscoveryTabContent(onMapExpandedChange)
 }

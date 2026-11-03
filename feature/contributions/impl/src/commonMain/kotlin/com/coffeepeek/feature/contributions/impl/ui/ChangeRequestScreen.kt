@@ -48,8 +48,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import com.coffeepeek.core.designsystem.component.CoffeePeekScaffold as Scaffold
+import com.coffeepeek.core.designsystem.component.CoffeePeekOutlinedButton as OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import com.coffeepeek.core.designsystem.component.coffeePeekScrollContentPadding

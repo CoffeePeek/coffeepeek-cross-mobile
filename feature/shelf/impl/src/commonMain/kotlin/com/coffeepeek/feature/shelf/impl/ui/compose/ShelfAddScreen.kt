@@ -47,7 +47,7 @@ import com.coffeepeek.feature.shelf.impl.resources.*
 import com.coffeepeek.feature.shelf.impl.ui.ShelfAddViewModel
 import com.coffeepeek.feature.shelf.impl.ui.compose.component.*
 import com.coffeepeek.feature.shelf.impl.ui.compose.model.*
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 /** Lifecycle adapter: the application's camera and gallery feed photos into the model; the camera runs only on its step. */

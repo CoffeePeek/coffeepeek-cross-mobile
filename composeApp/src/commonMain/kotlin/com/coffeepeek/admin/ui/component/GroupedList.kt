@@ -2,6 +2,8 @@ package com.coffeepeek.admin.ui.component
 
 import com.coffeepeek.core.designsystem.component.CoffeePeekImagePlaceholder
 import com.coffeepeek.core.designsystem.component.CoffeePeekBrandedImage
+import coffeepeek.composeapp.generated.resources.*
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
@@ -218,6 +220,8 @@ fun CheckmarkSection(
     leading: (@Composable (CatalogItem) -> Unit)? = null,
     extraRows: (@Composable ColumnScope.() -> Unit)? = null,
 ) {
+    val localizedLegacyGroupedListDiscoveryFiltersCollapse = stringResource(Res.string.legacy_grouped_list_discovery_filters_collapse)
+
     if (items.isEmpty() && extraRows == null) return
 
     var expanded by remember { mutableStateOf(false) }
@@ -228,7 +232,7 @@ fun CheckmarkSection(
 
     GroupSection(
         title = title,
-        trailing = selectedCount.takeIf { it > 0 }?.let { "Выбрано: $it" },
+        trailing = selectedCount.takeIf { it > 0 }?.let { stringResource(Res.string.legacy_selected_count, it) },
         footer = footer,
     ) {
         visibleItems.forEachIndexed { index, item ->
@@ -243,7 +247,7 @@ fun CheckmarkSection(
         if (collapsible) {
             RowSeparator()
             ActionRow(
-                label = if (expanded) "Свернуть" else "Показать все (${items.size})",
+                label = if (expanded) localizedLegacyGroupedListDiscoveryFiltersCollapse else stringResource(Res.string.legacy_show_all_count, items.size),
                 onClick = { expanded = !expanded },
             )
         }
@@ -311,8 +315,8 @@ fun StepperRow(
     value: String,
     onDecrease: () -> Unit,
     onIncrease: () -> Unit,
-    decreaseDescription: String = "Уменьшить",
-    increaseDescription: String = "Увеличить",
+    decreaseDescription: String = stringResource(Res.string.legacy_grouped_list_decrease),
+    increaseDescription: String = stringResource(Res.string.legacy_grouped_list_increase),
 ) {
     Row(
         modifier = Modifier

@@ -1,0 +1,8 @@
+<resources>
+    <string name="catalog_shop_suggestion_title">Не знайшлі патрэбную кавярню?</string>
+    <string name="catalog_shop_suggestion_description">Прапануйце дадаць яе ў CoffeePeek — пасля праверкі яна з’явіцца ў каталогу.</string>
+    <string name="catalog_shop_suggestion_action">Дадаць кавярню</string>
+    <string name="catalog_roaster_suggestion_title">Не знайшлі патрэбнага абсмажчыка?</string>
+    <string name="catalog_roaster_suggestion_description">Прапануйце дадаць яго ў CoffeePeek — пасля праверкі ён з’явіцца ў каталогу.</string>
+    <string name="catalog_roaster_suggestion_action">Дадаць абсмажчыка</string>
+</resources>

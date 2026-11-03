@@ -1,5 +1,7 @@
 package com.coffeepeek.admin.di.checkinhistory
 
+import com.coffeepeek.admin.feature.homecheckin.ui.homeVisibilityLabels
+
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale

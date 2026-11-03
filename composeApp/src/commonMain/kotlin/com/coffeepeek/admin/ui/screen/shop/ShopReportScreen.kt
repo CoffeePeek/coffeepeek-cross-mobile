@@ -1,5 +1,8 @@
 package com.coffeepeek.admin.ui.screen.shop
 
+import coffeepeek.composeapp.generated.resources.*
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
+
 import com.coffeepeek.core.designsystem.component.coffeePeekScreenBottomPadding
 
 import com.coffeepeek.core.designsystem.component.CoffeePeekScaffold as Scaffold
@@ -53,12 +56,20 @@ import org.koin.core.parameter.parametersOf
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ShopReportScreen(shopId: String, shopTitle: String) {
+    val localizedLegacyShopReportScreenShopReportTitle = stringResource(Res.string.legacy_shop_report_screen_shop_report_title)
+    val localizedLegacyReviewContentOwnershipKindShop = stringResource(Res.string.legacy_review_content_ownership_kind_shop)
+    val localizedLegacyShopReportScreenShopReportPrompt = stringResource(Res.string.legacy_shop_report_screen_shop_report_prompt)
+    val localizedLegacyShopReportScreenShopReportDescriptionLabel = stringResource(Res.string.legacy_shop_report_screen_shop_report_description_label)
+    val localizedLegacyShopReportScreenShopReportDescriptionLimit = stringResource(Res.string.legacy_shop_report_screen_shop_report_description_limit)
+    val localizedLegacyReviewReportScreenCommunityReportSend = stringResource(Res.string.legacy_review_report_screen_community_report_send)
+
     val vm: ShopReportViewModel = platformViewModel(parameters = { parametersOf(shopId) })
     val state by vm.state.collectAsState()
+    val errorMessage = state.validation?.message(shopReportValidationLabels()) ?: state.error
 
     Scaffold(
         topBar = {
-            CpTopBar("Сообщить о неточности")
+            CpTopBar(localizedLegacyShopReportScreenShopReportTitle)
         },
         containerColor = MaterialTheme.colorScheme.background,
     ) { contentPadding ->
@@ -76,11 +87,11 @@ fun ShopReportScreen(shopId: String, shopTitle: String) {
             }
 
             Text(
-                text = shopTitle.ifBlank { "Кофейня" },
+                text = shopTitle.ifBlank { localizedLegacyReviewContentOwnershipKindShop },
                 style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.SemiBold),
             )
             Text(
-                text = "Какие данные нужно исправить?",
+                text = localizedLegacyShopReportScreenShopReportPrompt,
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
@@ -118,16 +129,16 @@ fun ShopReportScreen(shopId: String, shopTitle: String) {
                     },
                     keyboardOptions = platformTextInputOptions(),
                     modifier = Modifier.fillMaxWidth(),
-                    label = { Text("Что именно не так?") },
-                    supportingText = { Text("До 500 символов") },
+                    label = { Text(localizedLegacyShopReportScreenShopReportDescriptionLabel) },
+                    supportingText = { Text(localizedLegacyShopReportScreenShopReportDescriptionLimit) },
                     minLines = 3,
                     maxLines = 6,
-                    isError = state.error != null,
+                    isError = errorMessage != null,
                     shape = RoundedCornerShape(CpDimens.buttonRadius),
                 )
             }
 
-            state.error?.let { error ->
+            errorMessage?.let { error ->
                 Text(
                     text = error,
                     style = MaterialTheme.typography.bodySmall,
@@ -145,7 +156,7 @@ fun ShopReportScreen(shopId: String, shopTitle: String) {
                 }
             } else {
                 AppButton(
-                    text = "Отправить",
+                    text = localizedLegacyReviewReportScreenCommunityReportSend,
                     onClick = vm::submit,
                     enabled = state.selectedReason != null,
                 )
@@ -156,6 +167,9 @@ fun ShopReportScreen(shopId: String, shopTitle: String) {
 
 @Composable
 private fun ReportSubmittedContent(shopTitle: String) {
+    val localizedLegacyShopReportScreenShopReportThanks = stringResource(Res.string.legacy_shop_report_screen_shop_report_thanks)
+    val localizedStepDone = stringResource(Res.string.step_done)
+
     Spacer(Modifier.height(48.dp))
     Icon(
         imageVector = CpIcons.CheckCircle,
@@ -163,16 +177,16 @@ private fun ReportSubmittedContent(shopTitle: String) {
         tint = MaterialTheme.colorScheme.primary,
     )
     Text(
-        text = "Спасибо за сообщение",
+        text = localizedLegacyShopReportScreenShopReportThanks,
         style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.SemiBold),
     )
     Text(
-        text = "Мы проверим данные о «${shopTitle.ifBlank { "кофейне" }}».",
+        text = stringResource(Res.string.legacy_shop_report_submitted, shopTitle.ifBlank { stringResource(Res.string.legacy_shop_report_fallback_name) }),
         style = MaterialTheme.typography.bodyMedium,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
     Spacer(Modifier.height(CpDimens.spacing3))
-    AppButton(text = "Готово", onClick = Navigator::popBack)
+    AppButton(text = localizedStepDone, onClick = Navigator::popBack)
 }
 
 @Composable
@@ -191,7 +205,7 @@ private fun ReasonRow(
         horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing3),
     ) {
         Text(
-            text = reason.title,
+            text = reason.localizedTitle(),
             style = MaterialTheme.typography.bodyLarge,
             color = MaterialTheme.colorScheme.onSurface,
             modifier = Modifier.weight(1f),

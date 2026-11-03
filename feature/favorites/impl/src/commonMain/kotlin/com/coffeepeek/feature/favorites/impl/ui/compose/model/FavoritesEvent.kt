@@ -5,4 +5,5 @@ internal sealed interface FavoritesEvent {
     data class OpenShop(val shopId: String) : FavoritesEvent
     data class OpenRoaster(val publicSlug: String) : FavoritesEvent
     data object Back : FavoritesEvent
+    data object Share : FavoritesEvent
 }

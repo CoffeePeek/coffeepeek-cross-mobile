@@ -16,7 +16,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
+import com.coffeepeek.core.designsystem.component.CoffeePeekOutlinedButton as OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -42,7 +42,7 @@ import com.coffeepeek.admin.auth.isGoogleSignInConfigured
 import com.coffeepeek.admin.theme.CpDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import org.jetbrains.compose.resources.painterResource
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 
 private val SocialButtonIconSize = 18.dp
 private val SocialButtonIconGap = 8.dp

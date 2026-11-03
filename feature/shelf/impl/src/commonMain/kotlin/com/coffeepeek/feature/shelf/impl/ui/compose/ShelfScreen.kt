@@ -63,7 +63,7 @@ import com.coffeepeek.feature.shelf.impl.ui.compose.model.ShelfState
 import com.coffeepeek.feature.shelf.impl.ui.data.ShelfDay
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withTimeoutOrNull
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 /** Lifecycle adapter: the shelf loads whenever a signed-in user opens it. */

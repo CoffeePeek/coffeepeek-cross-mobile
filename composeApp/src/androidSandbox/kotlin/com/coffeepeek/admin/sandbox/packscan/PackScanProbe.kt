@@ -29,6 +29,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
+import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
 import com.coffeepeek.R
 import com.coffeepeek.admin.sandbox.packscan.geometry.PackPoint
 import com.coffeepeek.admin.sandbox.packscan.imaging.PackModeration
@@ -169,7 +170,8 @@ private fun Exception.describe(): String = message ?: javaClass.simpleName
 
 @Composable private fun PackProbeProgress(@StringRes label: Int) {
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-        CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
+        CoffeePeekLoader(stringResource(label), modifier = Modifier.size(20.dp), size = 20.dp,
+            color = MaterialTheme.colorScheme.primary, strokeWidth = 2.dp)
         Text(stringResource(label))
     }
 }

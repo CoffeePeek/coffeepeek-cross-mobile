@@ -67,7 +67,7 @@ internal fun appHomeCheckInDates() = HomeCheckInEditorDates(
     // The date comes from the server as text: one that cannot be read must not break the form.
     formatDate = { date -> civilDateMillis(date)?.let(::formatVisitDate) ?: date },
     civilDateToInstant = { date -> civilDateMillis(date)?.let(::datePickerMillisToUtcIsoInstant) ?: epochMillisToUtcIsoInstant(currentEpochMillis()) },
-    formatMethod = { it.methodLabel() },
+    formatMethod = { it.methodLabel(it) },
 )
 
 /** UTC midnight of an ISO `yyyy-MM-dd` date, or null when the text is not one. */

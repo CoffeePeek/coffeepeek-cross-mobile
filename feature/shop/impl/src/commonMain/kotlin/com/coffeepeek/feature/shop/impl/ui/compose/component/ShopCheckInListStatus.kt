@@ -4,7 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import com.coffeepeek.core.designsystem.component.CoffeePeekTextButton as TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -21,7 +21,7 @@ import com.coffeepeek.feature.shop.impl.resources.shop_checkin_list_load_error
 import com.coffeepeek.feature.shop.impl.resources.shop_checkin_list_refresh_error
 import com.coffeepeek.feature.shop.impl.resources.shop_checkin_list_vote_error
 import com.coffeepeek.feature.shop.impl.resources.shop_detail_retry
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable

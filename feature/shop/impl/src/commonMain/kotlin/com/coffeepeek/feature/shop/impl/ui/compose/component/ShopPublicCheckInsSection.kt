@@ -13,7 +13,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import com.coffeepeek.core.designsystem.component.CoffeePeekIconButton as IconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.layout.onSizeChanged
@@ -42,7 +42,7 @@ import com.coffeepeek.feature.shop.impl.ui.data.blockableAuthor
 import com.coffeepeek.feature.shop.impl.resources.Res
 import com.coffeepeek.feature.shop.impl.resources.shop_checkins_public_title
 import com.coffeepeek.feature.shop.impl.resources.shop_checkins_show_all
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable

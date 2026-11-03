@@ -21,7 +21,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import com.coffeepeek.core.designsystem.component.CoffeePeekTextButton as TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -44,7 +44,7 @@ import com.coffeepeek.feature.shelf.impl.ui.compose.model.ShelfAddAction
 import com.coffeepeek.feature.shelf.impl.ui.compose.model.ShelfAddState
 import com.coffeepeek.feature.shelf.impl.ui.compose.model.ShelfBagForm
 import com.coffeepeek.feature.shelf.impl.ui.compose.previewToday
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 private val Weights = listOf(200, 250, 500, 1000)

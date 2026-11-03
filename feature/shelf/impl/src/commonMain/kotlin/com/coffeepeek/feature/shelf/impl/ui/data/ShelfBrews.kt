@@ -21,9 +21,13 @@ internal suspend fun ShelfBrewLog.forBag(item: ShelfBagItem): ShelfBagBrews {
 internal fun shelfBagBrews(weightGrams: Int?, brews: List<ShelfBrew>): ShelfBagBrews.Loaded {
     val items = brews.sortedByDescending { it.preparedOn }.map {
         ShelfBrewItem(it.id, ShelfDay.parse(it.preparedOn), it.method?.takeIf(String::isNotBlank), it.doseGrams?.takeIf { dose -> dose > 0 },
-            it.score?.takeIf { score -> score in 1..5 })
+            it.score?.takeIf { score -> score in 1..5 }, it.methodCode)
     }
     val doses = items.mapNotNull { it.doseGrams }
     val left = weightGrams?.takeIf { doses.isNotEmpty() }?.let { (it - doses.sum()).roundToInt().coerceAtLeast(0) }
     return ShelfBagBrews.Loaded(items, left)
 }
+
+/** Content names take priority over the known client-generated generic fallback. */
+internal fun ShelfBrewItem.methodDisplayName(other: String, unspecified: String): String =
+    method ?: if (methodCode == "other") other else unspecified

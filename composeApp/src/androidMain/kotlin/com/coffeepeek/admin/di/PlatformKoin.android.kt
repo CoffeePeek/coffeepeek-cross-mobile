@@ -2,6 +2,7 @@ package com.coffeepeek.admin.di
 
 import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.ui.screen.shop.component.ShopMenuGalleryLink
+import com.coffeepeek.admin.di.collections.collectionsModule
 import com.coffeepeek.admin.di.favorites.serverFavoritesModule
 import com.coffeepeek.admin.di.shop.shopFavoriteIntent
 import com.coffeepeek.admin.di.shop.AndroidShopCheckInDateFormatter
@@ -13,7 +14,6 @@ import com.coffeepeek.admin.di.coffee.CoffeeShelfTab
 import com.coffeepeek.admin.di.shelf.ShelfFeatureScreenRenderer
 import com.coffeepeek.admin.di.shelf.shelfBrewForm
 import com.coffeepeek.admin.di.shelf.shelfModule
-import com.coffeepeek.BuildConfig
 import com.coffeepeek.admin.di.appupdate.androidAppUpdateRenderer
 import com.coffeepeek.admin.di.auth.androidAuthScreenRenderer
 import com.coffeepeek.admin.di.community.featureCommunityScreenRenderer
@@ -52,10 +52,11 @@ internal fun initAndroidKoin(extraModules: List<org.koin.core.module.Module> = e
             serverFavoritesModule(),
             shopCheckInModule(AndroidShopCheckInDateFormatter()),
             shopBrowsingModule(),
-            homeCheckInModule(BuildConfig.SHELF_ENABLED),
-            checkInHistoryModule(BuildConfig.SHELF_ENABLED),
+            homeCheckInModule(),
+            checkInHistoryModule(),
             contentReportModule(),
             coffeeModule(),
+            collectionsModule(),
             contributionsModule(),
             shelfModule(),
         ) + extraModules,
@@ -84,14 +85,14 @@ internal fun initAndroidKoin(extraModules: List<org.koin.core.module.Module> = e
         contentReportRendererFactory = { get<FeatureContentReportRenderer>() },
         // Shelf: Coffee tab switcher, «+» scan flow, and shelf screens (live API on debug/release; Sandbox uses fake backend).
         coffeeRendererFactory = {
-            featureCoffeeScreenRenderer(get(), CoffeeShelfTab(get(), get(), Locator.database.settingRepository).takeIf { BuildConfig.SHELF_ENABLED })
+            featureCoffeeScreenRenderer(get(), CoffeeShelfTab(get(), get(), Locator.database.settingRepository))
         },
         shelfRendererFactory = { ShelfFeatureScreenRenderer(get(), Locator.database.settingRepository, shelfBrewForm(get())) },
         publicProfileRendererFactory = { featurePublicProfileScreenRenderer(get(), get(), get(), get(), get()) },
         ownProfileRendererFactory = { featureOwnProfileScreenRenderer(get(), get(), get(), get(), get(), get(), get(), get(), get()) },
         accountRendererFactory = { featureAccountScreenRenderer(get(), get(), get()) },
         settingsRendererFactory = {
-            featureSettingsScreenRenderer(get(), get(), get(), get(), notify = { Toast.makeText(Locator.appContext, it, Toast.LENGTH_SHORT).show() })
+            featureSettingsScreenRenderer(get(), get(), get(), get(), get(), notify = { Toast.makeText(Locator.appContext, it, Toast.LENGTH_SHORT).show() })
         },
         appUpdateRendererFactory = { androidAppUpdateRenderer(get(), get()) },
         notificationsRendererFactory = { featureNotificationsRenderer(get(), get(), get()) },

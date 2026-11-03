@@ -1245,3 +1245,91 @@ physical-device media, pinch/multitouch, TalkBack, larger fonts, other window
 sizes, real backend/persistence/analytics, release and iOS acceptance. Colocated
 IDE previews were not rendered. The task-owned read-only AVD is closed after
 saving the requested screenshots; its changes are not persisted.
+
+## iOS photo-source presentation — 2026-11-02
+
+Reported on iOS 18 or newer: in a new Home check-in, tapping Add Photo shows no
+gallery/camera source menu. The shared iOS presenter had waited for the visible
+native sheet's transition coordinator to clear before presenting the menu. A
+custom detent can keep that coordinator active during resizing, so the presenter
+now permits a visible, already presented sheet to show the source alert. Initial
+push transitions and dismissing presenters still wait. This is a platform
+presentation change; the Home form, picker, photo bytes and write contract are
+unchanged.
+
+Verification plan and result at `1445e0ec` plus this working change on
+`codex/migration-map-viewport-carousel`: preserve Gallery/Camera/Cancel behavior
+and opening from the new Home form; compile the iOS Simulator and iPhone targets,
+then assemble Android Direct Debug with its packaged DEX guard. Both iOS Kotlin
+compilations and Direct Debug assembly/DEX guard passed on 2026-11-02. The
+existing `PlatformActionSelectionTest` ran 4/4 Direct Debug unit cases with zero
+failures, errors, skips or retries; it checks selection after dismissal, one-shot
+launch and disabled actions. UIKit presentation itself has no automated runtime
+test in this environment. No device, visual, theme, font-size, accessibility,
+picker or live-backend check was run. The remaining gate is a manual iPhone check
+of menu opening, Gallery/Camera, cancel/back, light/dark and photo delivery; no
+account write is needed to check menu opening.
+
+Promotion check on `origin/develop` at `a016fc78` plus this patch (2026-11-02):
+iOS Arm64 Kotlin compilation and Android Direct Debug APK/packaged DEX guard
+passed. `PlatformActionSelectionTest` ran 4/4 with zero failures, errors, skips
+or retries. No iPhone was connected, so the manual presentation gate remains.
+
+## iOS photo-source follow-up — 2026-11-03
+
+The user reported that the menu still does not open on an iPhone. Source tracing
+found two separate presentation paths. The legacy coffee check-in photo action
+uses `PhotoSourceBottomSheet` and `NativePhotoSourceSheet`, which call the app's
+UIKit presenter fixed above. The active new Home check-in instead calls
+`HomeCheckInPhotoSource` inside the create-flow page sheet; that component calls
+`CoffeePeekSwipeDismissModalBottomSheet` and the design-system's separate
+`CoffeePeekPresentNativeController`. This presenter still waited for the parent
+sheet's transition coordinator, including during custom-detent resizing. Update
+that presenter to allow an already visible page sheet to show a child sheet while
+retaining waits for initial presentation and for another/dismissing presenter.
+
+Verification plan: preserve Gallery/Camera/Cancel actions and photo delivery;
+compile iOS Arm64 and Simulator Arm64, assemble Android Direct Debug with its
+packaged DEX guard, and run relevant existing unit tests. UIKit presentation and
+picker delivery still require a manual iPhone check in the active Home flow,
+including cancel/back, light/dark, accessibility and no account write. The
+previous passing builds are not evidence that this menu opened on a device.
+
+Initial result with the patch on main `cacaa7e44`: both iOS Kotlin targets
+compiled and Direct Debug assembled with the packaged DEX guard. The
+design-system unit suite ran 57/57
+and Home impl unit suite 81/81, with zero failures, errors or skips. Existing
+unrelated compiler warnings remain. No iPhone or iOS runtime was available,
+and no manual modal/picker acceptance check was run.
+
+Promotion check with the same patch on develop `d57b7e49`: iOS Arm64 Kotlin
+compilation, Direct Debug APK/DEX guard and the same 57/57 and 81/81 unit
+suites passed with zero failures, errors or skips.
+
+## iOS picker launch after source selection — 2026-11-03
+
+The user supplied a 6.87-second iPhone recording after the presentation changes.
+It shows the Home photo source sheet opening twice; selecting Gallery dismisses
+that sheet, but the system photo picker never appears. The first symptom report
+had grouped the source menu and system picker together. The remaining failure is
+the handoff from the source sheet to `PHPickerViewController`, not source-menu
+presentation. The recording remains local outside tracked sources.
+
+The iOS `rememberPhotoPicker` previously resolved the global top controller and
+presented immediately. While the nested source sheet is dismissing, that top
+controller can be the outgoing sheet, so UIKit may discard the request. Capture
+the owning Compose controller and wait for its presented source sheet to finish
+dismissing before presenting the gallery or camera from that owner. The wait is
+cancellable with the composition and exits if the owner disappears. Other picker
+bytes, selection limits, delivery and check-in writes stay unchanged.
+
+Verification plan: compile both iOS targets, assemble Android Direct Debug with
+the packaged DEX guard, and run existing app photo-selection and Home tests.
+The remaining gate is a fresh iPhone build exercising Gallery, Camera, cancel,
+back and delivered photos without saving a live check-in. Compile-only checks
+cannot establish UIKit presentation or photo delivery on the user's phone.
+
+Result on main `67691a61` plus this patch: iOS Arm64 and Simulator Arm64 Kotlin
+compilation passed; Android Direct Debug APK and packaged DEX guard passed.
+`PlatformActionSelectionTest` ran 4/4 and Home impl tests ran 81/81, with zero
+failures, errors or skips. No iPhone build or picker runtime was tested here.

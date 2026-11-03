@@ -24,7 +24,7 @@ class DisabledUpdateControllerTest {
         assertFalse(controller.state.value.showPrompt)
         assertFalse(controller.state.value.checkFailed)
         assertNull(controller.state.value.update)
-        assertNull(controller.state.value.message)
+        assertNull(controller.state.value.feedback)
     }
 
     @Test fun disablingDuringARequestRejectsEvenARequiredPolicy() = runTest {

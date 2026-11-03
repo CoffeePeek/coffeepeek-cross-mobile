@@ -1,0 +1,11 @@
+<resources>
+    <string name="profile_actions">Дзеянні з профілем</string>
+    <string name="profile_menu_shop_changes">Праўкі кавярняў</string>
+    <string name="profile_menu_submitted_shops">Адпраўленыя кавярні</string>
+    <string name="profile_menu_submitted_roasters">Адпраўленыя абсмажчыкі</string>
+    <string name="profile_menu_blocked_authors">Заблакаваныя аўтары</string>
+    <string name="profile_menu_logout">Выйсці</string>
+    <string name="profile_logout_title">Выйсці з акаўнта?</string>
+    <string name="profile_logout_message">Вы ўпэўненыя? Спатрэбіцца паўторны ўваход.</string>
+    <string name="profile_cancel">Адмена</string>
+</resources>

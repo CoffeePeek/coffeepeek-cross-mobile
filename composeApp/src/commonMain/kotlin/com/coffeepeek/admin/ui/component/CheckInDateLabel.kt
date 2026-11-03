@@ -13,6 +13,7 @@ import kotlinx.coroutines.isActive
 /** Shared app date-label policy for public Shop cards and personal history. */
 @Composable
 internal fun rememberCheckInDateLabel(): (String) -> String {
+    val labels = reviewDateLabels()
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     val now by produceState(currentEpochMillis(), lifecycle) {
         lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
@@ -22,5 +23,5 @@ internal fun rememberCheckInDateLabel(): (String) -> String {
             }
         }
     }
-    return { formatReviewDisplayDate(it, now) }
+    return { formatReviewDisplayDate(it, labels, now) }
 }

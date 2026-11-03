@@ -1,6 +1,7 @@
 package com.coffeepeek.feature.appupdate.impl.installer
 
 import android.content.Context
+import com.coffeepeek.feature.appupdate.impl.R
 import android.app.Activity
 import android.content.Intent
 import android.content.IntentSender
@@ -20,7 +21,7 @@ import com.google.android.play.core.install.model.UpdateAvailability
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
-internal class PlayUpdateInstaller(context: Context, private val environment: AppUpdateEnvironment) : AndroidUpdateInstaller {
+internal class PlayUpdateInstaller(private val context: Context, private val environment: AppUpdateEnvironment) : AndroidUpdateInstaller {
     private val manager = AppUpdateManagerFactory.create(context)
     private val mutableState = MutableStateFlow(InstallationState())
     override val state = mutableState.asStateFlow()
@@ -51,14 +52,14 @@ internal class PlayUpdateInstaller(context: Context, private val environment: Ap
         updateType = if (update.isRequired(environment.versionCode ?: Long.MAX_VALUE)) AppUpdateType.IMMEDIATE else AppUpdateType.FLEXIBLE
         manager.appUpdateInfo.addOnSuccessListener { info ->
             if (info.availableVersionCode().toLong() < update.minVersionCode) {
-                failed("Обязательное обновление пока недоступно для вашего аккаунта Google Play. Попробуйте позже.")
+                failed(context.getString(R.string.appupdate_play_required_unavailable))
             } else if (info.installStatus() == InstallStatus.DOWNLOADED) {
                 mutableState.value = state.value.copy(stage = InstallationStage.Ready)
             } else if (info.updateAvailability() == UpdateAvailability.DEVELOPER_TRIGGERED_UPDATE_IN_PROGRESS) {
                 startFlow(info, AppUpdateType.IMMEDIATE)
             } else if (info.updateAvailability() == UpdateAvailability.UPDATE_AVAILABLE && info.isUpdateTypeAllowed(updateType)) {
                 startFlow(info, updateType)
-            } else failed("Обновление пока недоступно для вашего аккаунта Google Play. Попробуйте позже.")
+            } else failed(context.getString(R.string.appupdate_play_unavailable))
         }.addOnFailureListener { failed() }
     }
 
@@ -90,7 +91,7 @@ internal class PlayUpdateInstaller(context: Context, private val environment: Ap
                 if (updateType == AppUpdateType.FLEXIBLE) refresh()
             }
             Activity.RESULT_CANCELED -> {
-                if (updateType == AppUpdateType.IMMEDIATE) failed("Чтобы продолжить, установите обязательное обновление через Google Play.")
+                if (updateType == AppUpdateType.IMMEDIATE) failed(context.getString(R.string.appupdate_play_required_install))
                 else mutableState.value = state.value.copy(stage = InstallationStage.Available, error = null)
             }
             else -> failed()
@@ -100,7 +101,7 @@ internal class PlayUpdateInstaller(context: Context, private val environment: Ap
     override fun install() {
         if (state.value.stage != InstallationStage.Ready) return
         mutableState.value = state.value.copy(stage = InstallationStage.Installing, error = null)
-        manager.completeUpdate().addOnFailureListener { failed("Не удалось установить обновление. Попробуйте ещё раз.", InstallationStage.Ready) }
+        manager.completeUpdate().addOnFailureListener { failed(context.getString(R.string.appupdate_install_failed), InstallationStage.Ready) }
     }
 
     override fun installationResult() = Unit
@@ -115,7 +116,7 @@ internal class PlayUpdateInstaller(context: Context, private val environment: Ap
         } catch (_: Exception) { failed() }
     }
 
-    private fun failed(message: String = "Не удалось запустить обновление через Google Play. Попробуйте ещё раз.", stage: InstallationStage = InstallationStage.Available) {
+    private fun failed(message: String = context.getString(R.string.appupdate_play_start_failed), stage: InstallationStage = InstallationStage.Available) {
         mutableState.value = state.value.copy(stage = stage, error = message)
     }
 }

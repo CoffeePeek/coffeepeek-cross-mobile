@@ -36,15 +36,15 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
+import com.coffeepeek.core.designsystem.component.CoffeePeekFilledButton as Button
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import com.coffeepeek.core.designsystem.component.CoffeePeekIconButton as IconButton
 import androidx.compose.material3.MaterialTheme
 import com.coffeepeek.core.designsystem.component.CoffeePeekScaffold as Scaffold
 import com.coffeepeek.core.designsystem.component.CoffeePeekScrollableColumn
 import com.coffeepeek.core.designsystem.component.coffeePeekScrollContentPadding
 import com.coffeepeek.core.designsystem.component.coffeePeekViewportBottomPadding
-import com.coffeepeek.core.designsystem.component.CoffeePeekGlassIcon
+import com.coffeepeek.core.designsystem.modifier.CoffeePeekGlassIcon
 import com.coffeepeek.core.designsystem.modifier.CoffeePeekGlassIconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -57,7 +57,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
@@ -83,6 +83,7 @@ import com.coffeepeek.feature.profile.impl.ui.compose.component.PublicProfileAct
 import com.coffeepeek.feature.profile.impl.ui.compose.component.PublicProfileCheckInCard
 import com.coffeepeek.feature.profile.impl.ui.compose.component.PublicProfileFavoriteCard
 import com.coffeepeek.feature.profile.impl.ui.compose.component.PublicProfileFavoritesPreview
+import com.coffeepeek.feature.profile.impl.ui.model.PublicProfileError
 import com.coffeepeek.feature.profile.impl.ui.model.PublicProfileAction
 import com.coffeepeek.feature.profile.impl.ui.model.PublicProfileEvent
 
@@ -199,7 +200,11 @@ internal fun PublicProfileScreen(
                         verticalArrangement = Arrangement.spacedBy(12.dp),
                     ) {
                         Icon(CoffeePeekIcons.User, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(48.dp))
-                        Text(state.error ?: stringResource(Res.string.profile_load_failed), style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center)
+                        Text(stringResource(when (state.error) {
+                            PublicProfileError.BlocksLoad -> Res.string.profile_blocks_load_failed
+                            PublicProfileError.Unavailable -> Res.string.profile_unavailable
+                            else -> Res.string.profile_load_failed
+                        }), style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center)
                         Button(onClick = { vm.onAction(PublicProfileAction.Refresh) }) { Text(stringResource(Res.string.profile_retry_full)) }
                     }
                 }
@@ -313,7 +318,8 @@ internal fun PublicProfileScreen(
                     }),
                     Modifier.weight(1f), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold,
                 )
-                IconButton(onClick = { section = null }) { Icon(CoffeePeekIcons.Close, contentDescription = close) }
+                IconButton(onClick = { section = null }, nativeIcon = com.coffeepeek.core.designsystem.modifier.CoffeePeekGlassIcon.Close,
+                    contentDescription = close) { Icon(CoffeePeekIcons.Close, contentDescription = null) }
             }
             when (selectedSection) {
                 ProfileSection.Favorites -> LazyColumn(

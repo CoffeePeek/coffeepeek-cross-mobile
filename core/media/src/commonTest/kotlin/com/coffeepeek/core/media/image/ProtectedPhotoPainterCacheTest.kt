@@ -41,6 +41,16 @@ class ProtectedPhotoPainterCacheTest {
         assertNull(cache.get(url(), session))
     }
 
+    @Test fun shelfCardReusesOnlyAnExplicitlyReusableSessionGrant() {
+        val card = "https://gateway.example/api/v1/shelf/bags/bag/photos/photo"
+        val cache = ProtectedPhotoPainterCache(Clock(), { true })
+        val image = painter()
+        cache.store(card, session, image, permission())
+        assertSame(image, cache.get(card, session)?.painter)
+        cache.store(card, session, image, reusablePermission = null)
+        assertNull(cache.get(card, session))
+    }
+
     @Test fun forwardWallClockJumpAndMonotonicTimeIndependentlyRevokePainters() {
         for (useWall in listOf(false, true)) {
             val clock = Clock()

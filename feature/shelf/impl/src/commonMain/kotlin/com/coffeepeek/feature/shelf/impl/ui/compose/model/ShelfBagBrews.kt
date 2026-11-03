@@ -3,7 +3,7 @@ package com.coffeepeek.feature.shelf.impl.ui.compose.model
 import com.coffeepeek.feature.shelf.impl.ui.data.ShelfDay
 
 /** A home check-in brewed from the bag; [score] is 1–5. */
-internal data class ShelfBrewItem(val id: String, val day: ShelfDay?, val method: String?, val doseGrams: Double?, val score: Int?)
+internal data class ShelfBrewItem(val id: String, val day: ShelfDay?, val method: String?, val doseGrams: Double?, val score: Int?, val methodCode: String? = null)
 
 /** The open bag's home check-ins, for its card. */
 internal sealed interface ShelfBagBrews {

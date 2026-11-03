@@ -19,5 +19,6 @@ interface FavoritesEntry {
         /** Called only for saved shops with both coordinates; the host owns location permission and formatting. */
         distanceForCoordinates: (latitude: Double, longitude: Double) -> String?,
         onOpenRoaster: (publicSlug: String) -> Unit,
+        onShare: () -> Unit,
     )
 }

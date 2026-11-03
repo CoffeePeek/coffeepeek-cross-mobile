@@ -1,5 +1,13 @@
 package com.coffeepeek.admin.ui.contributions
 
+import com.coffeepeek.admin.ui.screen.contributions.label
+import com.coffeepeek.admin.ui.screen.contributions.message
+
+import com.coffeepeek.admin.ui.screen.contributions.ContributionLoadError
+import com.coffeepeek.admin.ui.screen.contributions.ContributionSummary
+
+import com.coffeepeek.admin.ui.screen.contributions.ContributionSummaryLabels
+
 import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.ui.screen.addshop.AddShopStep
 import com.coffeepeek.admin.ui.screen.addshop.AddShopViewModel
@@ -26,6 +34,23 @@ import kotlin.test.*
 
 /** Parity of the legacy Contributions screens' rules that the existing submission tests do not pin. */
 class ContributionsParityGapsTest {
+    private val failureLabels = com.coffeepeek.admin.ui.screen.contributions.ContributionFailureLabels("Ошибка загрузки каталогов", "Ошибка отправки. Попробуйте выйти и войти снова.", "Не удалось загрузить города", "Не удалось отправить обжарщика на модерацию", "Не удалось отправить заявку")
+
+    private val fieldLabels = com.coffeepeek.admin.ui.screen.contributions.ContributionFieldLabels("Введите название", "Не более %1\$s символов", "Введите адрес", "Выберите город", "Для адреса выберите город", "Для выбранного города укажите адрес")
+
+    private val summaryLabels = ContributionSummaryLabels(
+        "Описание очищено",
+        "Телефон, почта, сайт и Instagram",
+        "Фото: %1\$s сохранено · %2\$s добавлено",
+        "Выбрано особенностей: %1\$s",
+        "Выбрано обжарщиков: %1\$s",
+        "Выбрано оборудования: %1\$s",
+        "Выбрано методов: %1\$s",
+        "Меню: %1\$s позиций · %2\$s новых фото",
+    )
+
+    private fun ContributionItem.summaryText(): String? = changeSummary?.label(summaryLabels, "Текст описания заведения") ?: subtitle
+
     // ---- A. My contributions ----
 
     @Test fun shopListMapsPublishedWaitingAndRejectedSubmissionsAndOnlyStatusesWithItemsGetATab() = runBlocking {
@@ -49,7 +74,8 @@ class ContributionsParityGapsTest {
             assertEquals(Navigator.Screen.ShopDetail("published-slug"), approved[0].target)
             assertNull(approved[0].meta)
             assertNull(approved[1].target)
-            assertEquals("Скоро появится в каталоге", approved[1].meta)
+            assertTrue(approved[1].awaitingCatalogPublication)
+            assertFalse(approved[0].awaitingCatalogPublication)
             assertEquals("Street 1", approved[0].subtitle)
             val rejected = state.tabs.getValue(ModerationStatus.Rejected).items.single()
             assertEquals("Нет адреса", rejected.rejectedReason)
@@ -93,17 +119,17 @@ class ContributionsParityGapsTest {
         val vm = MyContributionsViewModel(ContributionKind.Changes, Shops(), Roasters(), changes)
         try {
             val items = loaded(vm).tabs.getValue(ModerationStatus.Pending).items.associateBy { it.id }
-            assertEquals("Описание очищено", items.getValue("d").subtitle)
-            assertEquals("Телефон, почта, сайт и Instagram", items.getValue("c").subtitle)
-            assertEquals("Фото: 2 сохранено · 1 добавлено", items.getValue("p").subtitle)
-            assertEquals("Выбрано особенностей: 3", items.getValue("t").subtitle)
-            assertEquals("Выбрано обжарщиков: 1", items.getValue("r").subtitle)
-            assertEquals("Выбрано оборудования: 2", items.getValue("e").subtitle)
-            assertEquals("Выбрано методов: 1", items.getValue("b").subtitle)
-            assertEquals("Меню: 1 позиций · 1 новых фото", items.getValue("m").subtitle)
-            assertEquals("Текст описания заведения", items.getValue("empty").subtitle)
+            assertEquals("Описание очищено", items.getValue("d").summaryText())
+            assertEquals("Телефон, почта, сайт и Instagram", items.getValue("c").summaryText())
+            assertEquals("Фото: 2 сохранено · 1 добавлено", items.getValue("p").summaryText())
+            assertEquals("Выбрано особенностей: 3", items.getValue("t").summaryText())
+            assertEquals("Выбрано обжарщиков: 1", items.getValue("r").summaryText())
+            assertEquals("Выбрано оборудования: 2", items.getValue("e").summaryText())
+            assertEquals("Выбрано методов: 1", items.getValue("b").summaryText())
+            assertEquals("Меню: 1 позиций · 1 новых фото", items.getValue("m").summaryText())
+            assertEquals("Текст описания заведения", items.getValue("empty").summaryText())
             val first = items.getValue("d")
-            assertEquals("Описание", first.title)
+            assertEquals("", first.title)
             assertEquals(utcIsoToLocalDateTime(created), first.meta)
             assertEquals(ShopChangeSection.Description, first.changeSection)
             assertEquals(Navigator.Screen.ShopChangeRequestDetail(requestId = "d"), first.target)
@@ -117,11 +143,11 @@ class ContributionsParityGapsTest {
         val vm = MyContributionsViewModel(ContributionKind.Shops, shops, Roasters(), Changes())
         try {
             val state = withTimeout(5_000) { vm.state.first { !it.isLoading } }
-            assertEquals("Сервер недоступен", state.error)
+            assertEquals("Сервер недоступен", state.error?.messageOr("Ошибка загрузки"))
             assertTrue(state.tabs.isEmpty())
         } finally { vm.close() }
         val silent = MyContributionsViewModel(ContributionKind.Shops, Shops().apply { submissions = { _, _ -> Result.failure(Exception()) } }, Roasters(), Changes())
-        try { assertEquals("Ошибка загрузки", withTimeout(5_000) { silent.state.first { !it.isLoading } }.error) } finally { silent.close() }
+        try { assertEquals("Ошибка загрузки", withTimeout(5_000) { silent.state.first { !it.isLoading } }.error?.messageOr("Ошибка загрузки")) } finally { silent.close() }
     }
 
     @Test fun loadMoreAppendsOnePageAtATimeAndAFailureKeepsTheLoadedItems() = runBlocking {
@@ -166,6 +192,22 @@ class ContributionsParityGapsTest {
         } finally { vm.close() }
     }
 
+    @Test fun preparedBelarusianSummaryKeepsCountsAndAuthorContent() {
+        val translated = summaryLabels.copy(photos = "Фота: %1\$s захавана · %2\$s дададзена")
+        assertEquals("Фота: 2 захавана · 1 дададзена", ContributionSummary.Photos(2, 1).label(translated, ""))
+        assertEquals("Описание пользователя", ContributionSummary.Description("Описание пользователя").label(translated, ""))
+        assertEquals("Памылка загрузкі", ContributionLoadError(null).messageOr("Памылка загрузкі"))
+        assertEquals("Сервер недоступен", ContributionLoadError("Сервер недоступен").messageOr("Памылка загрузкі"))
+    }
+
+    @Test fun preparedBelarusianFormErrorsKeepValidationAndServerText() {
+        val translated = fieldLabels.copy(cityRequired = "Выберыце горад", nameTooLong = "Не больш за %1\$s сімвалаў")
+        assertEquals("Выберыце горад", com.coffeepeek.admin.ui.screen.contributions.ContributionFieldIssue.CityRequired.message(translated))
+        assertEquals("Не больш за 55 сімвалаў", com.coffeepeek.admin.ui.screen.contributions.ContributionFieldIssue.NameTooLong(55).message(translated))
+        val failure = com.coffeepeek.admin.ui.screen.contributions.ContributionFormFailure(com.coffeepeek.admin.ui.screen.contributions.ContributionFailureKind.ShopSubmit, "Raw server message")
+        assertEquals("Raw server message", failure.message(failureLabels))
+    }
+
     // ---- B. Add shop wizard ----
 
     @Test fun nameIsCutAt55AndEachStepWaitsForItsOwnValidFields() = runBlocking {
@@ -176,7 +218,7 @@ class ContributionsParityGapsTest {
             vm.onAddressChange("Улица, 1")
             vm.nextStep()
             assertEquals(AddShopStep.BASIC, vm.state.value.currentStep)
-            assertEquals("Выберите город", vm.state.value.cityError)
+            assertEquals("Выберите город", vm.state.value.cityError?.message(fieldLabels))
             vm.onCitySelect(City("minsk", "Минск"))
             vm.nextStep()
             assertEquals(AddShopStep.CONTACTS, vm.state.value.currentStep)
@@ -304,7 +346,7 @@ class ContributionsParityGapsTest {
         }
         val vm = AddShopViewModel(shops)
         try {
-            assertEquals("Нет сети", withTimeout(5_000) { vm.state.first { !it.isLoadingCatalogs } }.catalogsError)
+            assertEquals("Нет сети", withTimeout(5_000) { vm.state.first { !it.isLoadingCatalogs } }.catalogsError?.message(failureLabels))
             vm.loadCatalogs()
             val state = withTimeout(5_000) { vm.state.first { !it.isLoadingCatalogs && it.catalogsError == null } }
             assertEquals(2, attempts); assertNull(state.catalogsError)
@@ -415,13 +457,13 @@ class ContributionsParityGapsTest {
         val vm = AddRoasterViewModel(roasters, shops)
         try {
             withTimeout(5_000) { vm.state.first { !it.isLoadingCatalogs } }
-            assertEquals("Введите название", vm.state.value.nameError)
+            assertEquals("Введите название", vm.state.value.nameError?.message(fieldLabels))
             vm.onNameChange("n".repeat(120))
             assertEquals(100, vm.state.value.name.length)
             vm.onAddressChange("Улица, 1")
-            assertEquals("Для адреса выберите город", vm.state.value.locationError); assertFalse(vm.state.value.canSubmit)
+            assertEquals("Для адреса выберите город", vm.state.value.locationError?.message(fieldLabels)); assertFalse(vm.state.value.canSubmit)
             vm.onAddressChange(""); vm.onCitySelect(City("minsk", "Минск"))
-            assertEquals("Для выбранного города укажите адрес", vm.state.value.locationError)
+            assertEquals("Для выбранного города укажите адрес", vm.state.value.locationError?.message(fieldLabels))
             vm.onAddressChange("  Улица, 1  ")
             assertNull(vm.state.value.locationError)
             vm.onInstagramChange("a"); assertNotNull(vm.state.value.instagramError)
@@ -471,7 +513,7 @@ class ContributionsParityGapsTest {
             assertFalse(vm.state.value.canSubmit)
             release.complete(Unit)
             val state = withTimeout(5_000) { vm.state.first { !it.isLoadingCatalogs } }
-            assertEquals("Города недоступны", state.error)
+            assertEquals("Города недоступны", state.error?.message(failureLabels))
             assertEquals("Roast", state.name); assertTrue(state.canSubmit)
         } finally { vm.close() }
     }

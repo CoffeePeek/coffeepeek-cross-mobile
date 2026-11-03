@@ -1,5 +1,7 @@
 package com.coffeepeek.feature.shelf.impl.ui.compose.component
 
+import com.coffeepeek.feature.shelf.impl.ui.data.methodDisplayName
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -15,7 +17,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import com.coffeepeek.core.designsystem.component.CoffeePeekTextButton as TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -38,7 +40,7 @@ import com.coffeepeek.feature.shelf.impl.ui.compose.model.ShelfBrewItem
 import com.coffeepeek.feature.shelf.impl.ui.compose.previewBrews
 import com.coffeepeek.feature.shelf.impl.ui.compose.previewToday
 import com.coffeepeek.feature.shelf.impl.ui.data.ShelfDay
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import kotlin.math.roundToInt
 
@@ -99,7 +101,7 @@ private fun ShelfBrewRow(brew: ShelfBrewItem, today: ShelfDay) {
 
 @Composable
 private fun ShelfBrewItem.title(): String {
-    val name = method ?: stringResource(Res.string.shelf_brew_untitled)
+    val name = methodDisplayName(stringResource(Res.string.shelf_brew_method_other), stringResource(Res.string.shelf_brew_untitled))
     return doseGrams?.let { "$name · ${stringResource(Res.string.shelf_brew_dose, shelfDoseText(it))}" } ?: name
 }
 
