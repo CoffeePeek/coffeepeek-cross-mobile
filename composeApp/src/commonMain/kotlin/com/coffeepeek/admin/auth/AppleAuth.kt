@@ -2,7 +2,9 @@ package com.coffeepeek.admin.auth
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import com.coffeepeek.domain.model.AppleLoginChallenge
+
+/** The server nonce and challenge id the native Apple sheet is started with. */
+data class AppleLoginChallenge(val challengeId: String, val nonce: String)
 
 expect object AppleAuth {
     fun isSupported(): Boolean

@@ -6,7 +6,6 @@ import com.coffeepeek.core.session.SessionReader
 import com.coffeepeek.core.session.SessionStore
 import com.coffeepeek.core.session.createPlatformSessionSecureStore
 import com.coffeepeek.data.session.RoomLegacyCredentialRows
-import com.coffeepeek.data.repository.AuthRepositoryImpl
 import com.coffeepeek.data.repository.CheckInRepositoryImpl
 import com.coffeepeek.data.repository.FavoriteRepositoryImpl
 import com.coffeepeek.data.repository.PhotoRepositoryImpl
@@ -17,7 +16,6 @@ import com.coffeepeek.data.repository.ShopChangeRequestRepositoryImpl
 import com.coffeepeek.data.repository.ShopIssueReportRepositoryImpl
 import com.coffeepeek.data.repository.ShopRepositoryImpl
 import com.coffeepeek.data.util.FileUrlResolver
-import com.coffeepeek.domain.repository.AuthRepository
 import com.coffeepeek.domain.repository.CheckInRepository
 import com.coffeepeek.domain.repository.FavoriteRepository
 import com.coffeepeek.domain.repository.PhotoRepository
@@ -58,7 +56,6 @@ fun dataModule(
     single { get<CoffeePeekRepo>().roasterApiService }
     single { get<CoffeePeekRepo>().shopChangeRequestApiService }
     single<PhotoRepository> { PhotoRepositoryImpl(get()) }
-    single<AuthRepository> { AuthRepositoryImpl(get(), get(), get<LocalUserDataCleanup>()) }
     if (registerLegacyFavorites) {
         single<FavoriteRepository> { FavoriteRepositoryImpl(get(), get(), get(), get()) }
     }

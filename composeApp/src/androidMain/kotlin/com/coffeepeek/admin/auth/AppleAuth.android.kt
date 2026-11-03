@@ -2,7 +2,6 @@ package com.coffeepeek.admin.auth
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import com.coffeepeek.domain.model.AppleLoginChallenge
 
 actual object AppleAuth {
     actual fun isSupported(): Boolean = false
