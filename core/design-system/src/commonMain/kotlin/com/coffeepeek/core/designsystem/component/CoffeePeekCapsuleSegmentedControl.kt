@@ -78,11 +78,6 @@ fun <T> CoffeePeekCapsuleSegmentedControl(
     }
 }
 
-/** A platform callback can arrive after its options or enabled state changed. */
-internal fun <T> coffeePeekSelectSegment(options: List<T>, index: Int, enabled: Boolean, onSelected: (T) -> Unit) {
-    if (enabled && index in options.indices) onSelected(options[index])
-}
-
 @Composable
 internal fun CoffeePeekCapsuleSegment(text: String, isSelected: Boolean, enabled: Boolean, onClick: () -> Unit, modifier: Modifier, labelPadding: Dp = 0.dp) {
     Box(

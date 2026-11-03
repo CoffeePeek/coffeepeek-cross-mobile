@@ -21,10 +21,3 @@ interface LegacyCredentialRows {
     }
 }
 
-/** For targets and tests without secure storage; nothing is persisted. */
-class InMemorySessionSecureStore(initial: SessionCredentials? = null) : SessionSecureStore {
-    private val state = MutableStateFlow(initial)
-    override suspend fun read(): SessionCredentials? = state.value
-    override suspend fun write(data: SessionCredentials?) { state.value = data }
-    override fun observe(): Flow<SessionCredentials?> = state.asStateFlow()
-}

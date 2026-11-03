@@ -63,11 +63,6 @@ internal fun HttpClientConfig<*>.configureBearerAuthentication(
     }
 }
 
-/** Call after external login/logout updates; Ktor caches loaded credentials per client. */
-fun HttpClient.clearBearerTokenCache() {
-    authProvider<BearerAuthProvider>()?.clearToken()
-}
-
 private fun SessionTokens.asBearerTokens() = BearerTokens(accessToken, refreshToken)
 
 private suspend fun refreshShared(

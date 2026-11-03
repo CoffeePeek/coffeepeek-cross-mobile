@@ -166,7 +166,6 @@ object Modules {
     }
 
     object Core {
-        const val coroutines = ":core:coroutines"
         const val network = ":core:network"
         const val database = ":core:database"
         const val designSystem = ":core:design-system"
@@ -182,7 +181,6 @@ object Modules {
         feature.businessOwnership.domain,
         feature.businessOwnership.data,
         feature.businessOwnership.impl,
-        core.coroutines,
         core.network,
         core.database,
         core.designSystem,
