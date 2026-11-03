@@ -12,7 +12,6 @@ import com.coffeepeek.feature.shop.impl.ui.data.shopExposure
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
-import com.coffeepeek.core.designsystem.component.CoffeePeekGlassIcon
 import com.coffeepeek.core.designsystem.modifier.CoffeePeekGlassIconButton
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme

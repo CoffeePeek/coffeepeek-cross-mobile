@@ -27,7 +27,6 @@ import com.coffeepeek.feature.coffee.impl.resources.coffee_taste
 import com.coffeepeek.feature.coffee.impl.resources.coffee_unspecified_feminine
 import com.coffeepeek.feature.coffee.api.CoffeeScreenAnalytics
 import com.coffeepeek.core.designsystem.component.CoffeePeekBackHandler
-import com.coffeepeek.core.designsystem.component.CoffeePeekGlassIcon
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*

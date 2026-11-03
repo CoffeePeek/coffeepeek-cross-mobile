@@ -24,11 +24,9 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
-import com.coffeepeek.core.designsystem.component.CoffeePeekGlassIcon
 import com.coffeepeek.core.designsystem.component.LocalCoffeePeekNativeControlsPresenter
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
-import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.component.CoffeePeekIconButton
 import com.coffeepeek.core.designsystem.theme.coffeePeekUsesNativeGlass
 import com.coffeepeek.core.designsystem.theme.LocalCoffeePeekOpaqueGlass
@@ -42,7 +40,7 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 /** Screen-owned backdrop; a missing source uses a dense, readable glass fallback. */
 val LocalCoffeePeekGlassHazeState = compositionLocalOf<HazeState?> { null }
 
-enum class CoffeePeekGlassIcon { Back, Forward, Add, Edit, Favorite, FavoriteFilled, Share, Close }
+enum class CoffeePeekGlassIcon { Back, Forward, Add, Edit, Favorite, FavoriteFilled, Share, Close, Zones, Location }
 
 interface CoffeePeekNativeGlassPresenter {
     @Composable

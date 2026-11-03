@@ -72,8 +72,8 @@ class CheckInHistoryModuleTest {
     }
 
     private fun assertHistoryGraph(koin: Koin) {
-        assertSame(koin.get<CheckInHistoryFeatureScreenRenderer>(), koin.get<CheckInHistoryFeatureScreenRenderer>())
-        assertSame(koin.get<CheckInHistoryCalendar>(), koin.get<CheckInHistoryCalendar>())
+        assertSame(koin.get<FeatureCheckInHistoryScreenRenderer>(), koin.get<FeatureCheckInHistoryScreenRenderer>())
+        assertSame(koin.get<AppCheckInHistoryCalendar>(), koin.get<AppCheckInHistoryCalendar>())
         assertEquals(1, koin.getAll<CheckInHistoryRepository>().size)
         assertEquals(1, koin.getAll<HomePreparationReader>().size)
         assertSame(koin.get<HomePreparationRepository>(), koin.get<HomePreparationReader>())

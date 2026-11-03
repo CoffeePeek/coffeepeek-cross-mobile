@@ -21,7 +21,6 @@ import com.coffeepeek.feature.checkinhistory.impl.resources.*
 import com.coffeepeek.feature.checkinhistory.impl.ui.data.displayName
 import com.coffeepeek.feature.checkinhistory.impl.ui.data.timelinePhotos
 import com.coffeepeek.feature.checkinhistory.impl.ui.data.completeTimelineRating
-import org.jetbrains.compose.resources.stringResource
 import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 
 @Composable

@@ -4,7 +4,6 @@ import com.coffeepeek.feature.discovery.impl.resources.Res
 import com.coffeepeek.feature.discovery.impl.resources.discovery_section_roasters
 import com.coffeepeek.feature.discovery.impl.resources.discovery_section_shops
 import com.coffeepeek.feature.discovery.impl.resources.discovery_show_all
-import com.coffeepeek.feature.discovery.impl.resources.discovery_section_shops
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme

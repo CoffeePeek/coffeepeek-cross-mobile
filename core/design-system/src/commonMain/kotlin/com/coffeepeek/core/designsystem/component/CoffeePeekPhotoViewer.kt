@@ -1,6 +1,7 @@
 package com.coffeepeek.core.designsystem.component
 
 import androidx.compose.animation.core.animate
+import com.coffeepeek.core.designsystem.modifier.CoffeePeekGlassIcon
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background

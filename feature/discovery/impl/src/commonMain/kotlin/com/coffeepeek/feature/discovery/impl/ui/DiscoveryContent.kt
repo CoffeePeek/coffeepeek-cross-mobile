@@ -7,7 +7,6 @@ import com.coffeepeek.feature.discovery.impl.resources.discovery_refreshing
 import com.coffeepeek.feature.discovery.impl.resources.discovery_retry
 import com.coffeepeek.feature.discovery.impl.resources.discovery_section_roasters
 import com.coffeepeek.feature.discovery.impl.resources.discovery_section_shops
-import com.coffeepeek.feature.discovery.impl.resources.discovery_section_roasters
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState

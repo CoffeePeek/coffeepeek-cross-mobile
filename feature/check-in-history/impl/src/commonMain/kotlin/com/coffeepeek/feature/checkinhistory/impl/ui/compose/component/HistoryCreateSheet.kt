@@ -30,7 +30,6 @@ import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.checkinhistory.impl.resources.*
 import com.coffeepeek.feature.checkinhistory.impl.ui.compose.model.HistorySource
 import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
-import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
 internal fun HistoryCreateSheet(onDismiss: () -> Unit, onCreate: (HistorySource) -> Unit, modifier: Modifier = Modifier) {

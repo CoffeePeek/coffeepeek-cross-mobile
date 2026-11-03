@@ -28,7 +28,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import com.coffeepeek.core.designsystem.component.CoffeePeekFilledButton as Button
@@ -63,9 +62,7 @@ import com.coffeepeek.feature.profile.impl.ui.model.AccountDeletionEvent
 import com.coffeepeek.core.designsystem.component.CoffeePeekScaffold
 import com.coffeepeek.core.designsystem.component.CoffeePeekScrollableColumn
 import com.coffeepeek.core.designsystem.component.CoffeePeekErrorDialog
-import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.profile.impl.ui.model.AccountDeletionState
-import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
 internal fun AccountDeletionScreen(
@@ -161,6 +158,7 @@ private fun AccountDeletionPreview(dark: Boolean, requested: Boolean) = CoffeePe
 @Preview @Composable private fun AccountDeletionSentLightPreview() = AccountDeletionPreview(false, true)
 @Preview @Composable private fun AccountDeletionSentDarkPreview() = AccountDeletionPreview(true, true)
 
+@Composable
 private fun AccountDeletionErrorDialog(error: AccountDeletionError?, onDismiss: () -> Unit) {
     if (error == null) return
     CoffeePeekActionDialog(

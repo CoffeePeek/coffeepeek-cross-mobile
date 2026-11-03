@@ -40,6 +40,7 @@ internal class FeatureDiscoveryScreenRenderer(private val entry: DiscoveryTabEnt
                 onSignIn = { Navigator.navigate(Navigator.Screen.Auth) },
                 onAddShop = { Navigator.navigate(Navigator.Screen.AddShop) },
                 onMapExpandedChange = onMapExpandedChange,
+                modifier = Modifier,
                 bottomClearance = clearance,
                 focus = pendingMapFocus?.let { MapFocus(it.shopId, it.title, Coordinates(it.latitude, it.longitude)) },
                 onFocusConsumed = Navigator::consumeMapFocus,

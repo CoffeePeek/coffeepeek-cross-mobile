@@ -39,8 +39,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import org.jetbrains.compose.resources.pluralStringResource
-import org.jetbrains.compose.resources.stringArrayResource
-import org.jetbrains.compose.resources.stringResource
 import com.coffeepeek.core.designsystem.resources.coffeePeekStringArrayResource as stringArrayResource
 import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics

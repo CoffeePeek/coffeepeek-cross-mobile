@@ -11,7 +11,6 @@ import com.coffeepeek.admin.di.shop.shopCheckInModule
 import com.coffeepeek.admin.di.shop.shopFavoriteIntent
 import org.koin.core.scope.Scope
 import com.coffeepeek.admin.di.collections.collectionsModule
-import com.coffeepeek.admin.di.checkinhistory.CheckInHistoryFeatureScreenRenderer
 import com.coffeepeek.admin.di.checkinhistory.checkInHistoryModule
 import com.coffeepeek.admin.di.contentreport.contentReportModule
 import com.coffeepeek.admin.di.contentreport.FeatureContentReportRenderer
@@ -40,7 +39,6 @@ import com.coffeepeek.admin.di.coffee.CoffeeShelfTab
 import com.coffeepeek.admin.di.shelf.ShelfFeatureScreenRenderer
 import com.coffeepeek.admin.di.shelf.shelfBrewForm
 import com.coffeepeek.admin.di.shelf.iosShelfModule
-import com.coffeepeek.admin.di.shelf.shelfBrewForm
 import com.coffeepeek.admin.locator.Locator
 
 actual fun initPlatformKoin() {
@@ -90,4 +88,4 @@ private fun Scope.iosShopCheckInListRenderer() =
         visibility = get(), blockActions = get())
 
 private fun Scope.iosSettingsRenderer() =
-    featureSettingsScreenRenderer(get(), get(), get(), get(), notify = ErrorHandler::showError)
+    featureSettingsScreenRenderer(get(), get(), get(), get(), get(), notify = ErrorHandler::showError)

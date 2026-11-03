@@ -1,9 +1,10 @@
 package com.coffeepeek.feature.auth.impl.ui
 
+import com.coffeepeek.feature.auth.impl.resources.auth_register_submit
 import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 
-import androidx.compose.ui.tooling.preview.PreviewLightDark
+import org.jetbrains.compose.ui.tooling.preview.Preview
 
 import androidx.compose.animation.AnimatedVisibility
 import com.coffeepeek.feature.auth.impl.resources.Res
@@ -76,7 +77,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import com.coffeepeek.core.designsystem.component.CoffeePeekCompactOutlinedTextField
-import com.coffeepeek.core.designsystem.component.CoffeePeekGlassIcon
+import com.coffeepeek.core.designsystem.modifier.CoffeePeekGlassIcon
 import com.coffeepeek.core.designsystem.component.CoffeePeekInputRole
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.modifier.CoffeePeekGlassIconButton
@@ -414,8 +415,8 @@ private fun StepMarker(index: Int, activeIndex: Int) {
     }
 }
 
-@PreviewLightDark
+@Preview
 @Composable
 private fun AuthPrimaryLoadingPreview() = CoffeePeekTheme {
-    AuthPrimaryButton(stringResource(R.string.auth_register_submit), {}, loading = true)
+    AuthPrimaryButton(stringResource(Res.string.auth_register_submit), {}, loading = true)
 }

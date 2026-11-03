@@ -66,7 +66,7 @@ internal class SearchViewModel(
     private var catalogJob: Job? = null
     private var loadJob: Job? = null
     private var locationTimeout: Job? = null
-    private var searchPresented = false
+    private var searchPresented = purpose == SearchPurpose.CheckInPicker
     private var presentationVersion = 0L
     private var lastSearchResult: Pair<DiscoveryCriteria, Int>? = null
     private var loadedCriteria: DiscoveryCriteria? = null
@@ -150,7 +150,7 @@ internal class SearchViewModel(
     }
 
     private suspend fun openShop(shopId: String) {
-        analytics.shopOpened(currentState.visibleShops.indexOfFirst { it.id == shopId }.takeIf { it >= 0 }?.plus(1))
+        if (purpose == SearchPurpose.Discovery) analytics.shopOpened(currentState.visibleShops.indexOfFirst { it.id == shopId }.takeIf { it >= 0 }?.plus(1))
         sendEvent(SearchEvent.OpenShop(shopId))
     }
 

@@ -1,5 +1,6 @@
 package com.coffeepeek.feature.settings.impl.ui.compose
 
+import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
 import androidx.compose.foundation.layout.Arrangement
 import com.coffeepeek.feature.settings.impl.resources.Res
 import com.coffeepeek.feature.settings.impl.resources.settings_add_roaster
@@ -300,6 +301,7 @@ private fun SettingsStoreReviewPreview() = CoffeePeekTheme {
 }
 private val previewSlots = SettingsSlots(
     guestCard = { _, _, modifier -> Text("Войти", modifier) },
+    notify = {},
     notificationPreference = { label, description ->
         CoffeePeekSettingsRow(CoffeePeekIcons.Notifications, label, description, {}, enabled = false,
             iconColors = CoffeePeekIconBadgePalette.Gold, trailing = { CoffeePeekSwitch(false, null, enabled = false) })

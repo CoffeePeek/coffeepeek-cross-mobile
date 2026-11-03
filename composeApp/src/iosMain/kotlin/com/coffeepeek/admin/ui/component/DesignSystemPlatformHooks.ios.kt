@@ -7,7 +7,7 @@ import com.coffeepeek.admin.analytics.AnalyticsOverlay
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.Modifier
-import com.coffeepeek.core.designsystem.component.CoffeePeekGlassIcon
+import com.coffeepeek.core.designsystem.modifier.CoffeePeekGlassIcon
 import com.coffeepeek.core.designsystem.component.CoffeePeekHaptic
 import com.coffeepeek.core.designsystem.component.CoffeePeekNativeControlsPresenter
 import com.coffeepeek.core.designsystem.component.CoffeePeekNativeMenuItem

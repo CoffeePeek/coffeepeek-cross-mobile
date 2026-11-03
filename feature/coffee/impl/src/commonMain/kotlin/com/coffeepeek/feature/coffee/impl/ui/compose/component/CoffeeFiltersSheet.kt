@@ -1,5 +1,7 @@
 package com.coffeepeek.feature.coffee.impl.ui.compose.component
 
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.*
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import com.coffeepeek.feature.coffee.impl.resources.Res

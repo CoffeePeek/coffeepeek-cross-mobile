@@ -59,7 +59,6 @@ import com.coffeepeek.feature.discovery.impl.map.MapEvent
 import com.coffeepeek.feature.discovery.impl.map.MapState
 import com.coffeepeek.feature.discovery.impl.map.MapViewModel
 import com.coffeepeek.feature.discovery.impl.search.SearchAction
-import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 
 @Composable
 internal fun MapScreen(

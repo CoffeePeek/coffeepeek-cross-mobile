@@ -9,9 +9,7 @@ import com.coffeepeek.feature.profile.impl.resources.profile_menu_logout
 import com.coffeepeek.feature.profile.impl.resources.profile_menu_shop_changes
 import com.coffeepeek.feature.profile.impl.resources.profile_menu_submitted_roasters
 import com.coffeepeek.feature.profile.impl.resources.profile_menu_submitted_shops
-import androidx.compose.material3.IconButton
 import androidx.compose.runtime.Composable
-import org.jetbrains.compose.resources.stringResource
 import com.coffeepeek.core.designsystem.component.CoffeePeekIconButton as IconButton
 import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import com.coffeepeek.core.designsystem.component.CoffeePeekActionMenu
@@ -38,7 +36,7 @@ internal fun OwnProfileActions(
         CoffeePeekMenuAction(stringResource(Res.string.profile_menu_logout), CoffeePeekIcons.Logout,
             destructive = true, nativeIcon = CoffeePeekMenuIcon.Logout, onClick = onLogout),
     )
-    CoffeePeekActionMenu(actions, menuDescription = stringResource(Res.string.profile_actions)) { open ->
+    CoffeePeekActionMenu(actions) { open ->
         IconButton(onClick = open) {
             Icon(CoffeePeekIcons.MoreHorizontal, stringResource(Res.string.profile_actions))
         }

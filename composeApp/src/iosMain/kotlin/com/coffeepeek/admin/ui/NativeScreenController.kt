@@ -211,6 +211,8 @@ private object IosCoffeePeekGlassPresenter : CoffeePeekNativeGlassPresenter {
             CoffeePeekGlassIcon.FavoriteFilled -> GlassControlIcon.FavoriteFilled
             CoffeePeekGlassIcon.Share -> GlassControlIcon.Share
             CoffeePeekGlassIcon.Close -> GlassControlIcon.Close
+            CoffeePeekGlassIcon.Zones -> GlassControlIcon.Zones
+            CoffeePeekGlassIcon.Location -> GlassControlIcon.Location
         }
         PlatformGlassIconButton(platformIcon, onClick, contentDescription, modifier, enabled, selected, isLoading) {}
         return true

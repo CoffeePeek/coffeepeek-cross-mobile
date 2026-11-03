@@ -1,6 +1,5 @@
 package com.coffeepeek.feature.appupdate.impl.ui
 
-import androidx.compose.ui.tooling.preview.PreviewLightDark
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -281,13 +280,13 @@ private fun UpdateCardDarkPreview() {
     }
 }
 
-@PreviewLightDark
+@Preview
 @Composable
 private fun UpdateCardDownloadingPreview() = CoffeePeekTheme {
     UpdateCard(false, false, InstallationState(stage = InstallationStage.Downloading,
         downloadedBytes = 40, totalBytes = 100, canCancel = true), {}, {}, {}, Modifier.padding(16.dp))
 }
-@PreviewLightDark
+@Preview
 @Composable
 private fun UpdateCardUnknownDownloadPreview() = CoffeePeekTheme {
     UpdateCard(false, false, InstallationState(stage = InstallationStage.Downloading,

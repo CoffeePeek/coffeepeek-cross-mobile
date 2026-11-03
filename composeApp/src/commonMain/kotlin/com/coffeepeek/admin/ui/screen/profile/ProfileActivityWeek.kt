@@ -20,7 +20,6 @@ import com.coffeepeek.core.designsystem.component.CoffeePeekActivityWeek
 import com.coffeepeek.core.designsystem.component.CoffeePeekActivityWeekLabels
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import org.jetbrains.compose.resources.pluralStringResource
-import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 

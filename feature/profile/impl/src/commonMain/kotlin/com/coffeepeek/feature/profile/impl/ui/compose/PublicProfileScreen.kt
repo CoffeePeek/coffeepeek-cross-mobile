@@ -44,7 +44,7 @@ import com.coffeepeek.core.designsystem.component.CoffeePeekScaffold as Scaffold
 import com.coffeepeek.core.designsystem.component.CoffeePeekScrollableColumn
 import com.coffeepeek.core.designsystem.component.coffeePeekScrollContentPadding
 import com.coffeepeek.core.designsystem.component.coffeePeekViewportBottomPadding
-import com.coffeepeek.core.designsystem.component.CoffeePeekGlassIcon
+import com.coffeepeek.core.designsystem.modifier.CoffeePeekGlassIcon
 import com.coffeepeek.core.designsystem.modifier.CoffeePeekGlassIconButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable

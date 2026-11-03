@@ -11,8 +11,6 @@ import com.coffeepeek.feature.notifications.impl.resources.notifications_mark_re
 import com.coffeepeek.feature.notifications.impl.resources.notifications_retry
 import com.coffeepeek.feature.notifications.impl.resources.notifications_title
 import com.coffeepeek.feature.notifications.impl.resources.notifications_today
-import com.coffeepeek.feature.notifications.impl.resources.notifications_unread_count
-import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyListScope
@@ -42,7 +40,6 @@ import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.feature.notifications.api.*
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.tooling.preview.Preview
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.distinctUntilChanged

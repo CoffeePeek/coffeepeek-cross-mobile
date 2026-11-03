@@ -13,7 +13,6 @@ import com.coffeepeek.feature.notifications.impl.resources.notifications_saving
 import androidx.compose.foundation.shape.RoundedCornerShape
 import com.coffeepeek.feature.notifications.impl.resources.notifications_settings_sign_in_description
 import com.coffeepeek.feature.notifications.impl.resources.notifications_title
-import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import com.coffeepeek.core.designsystem.component.CoffeePeekTextButton as TextButton
 import androidx.compose.runtime.Composable

@@ -38,10 +38,6 @@ import com.coffeepeek.feature.appupdate.api.AndroidUpdateInstaller
 import com.coffeepeek.feature.appupdate.api.AppUpdateEnvironment
 import com.coffeepeek.feature.appupdate.domain.InstallationStage
 import com.coffeepeek.feature.appupdate.impl.AppUpdateController
-import com.coffeepeek.feature.appupdate.impl.resources.Res
-import com.coffeepeek.feature.appupdate.impl.resources.appupdate_downloaded_message
-import com.coffeepeek.feature.appupdate.impl.resources.appupdate_restart_action
-import com.coffeepeek.feature.appupdate.impl.resources.appupdate_retry_action
 import com.coffeepeek.feature.appupdate.impl.PlayUpdateRetryOutcome
 import com.coffeepeek.feature.appupdate.impl.UpdateCheckFeedback
 import com.coffeepeek.feature.appupdate.impl.retryPlayUpdate

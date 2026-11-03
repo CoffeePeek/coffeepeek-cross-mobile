@@ -430,7 +430,6 @@ private fun ShopDetailContent(
                     onOpenOnMap = onOpenOnMap,
                     onOpenReviews = { Navigator.navigate(Navigator.Screen.ShopReviews(shop.id)) },
                     onPhotoClick = { url -> Analytics.track(AnalyticsEvent.SHOP_CONTENT_INTERACTED, "section" to "photos", "action" to "open"); onOpenPhotos(CoffeePeekPhotoViewerImages(photos, fullscreenPhotos), photos.indexOf(url).coerceAtLeast(0)) },
-                    modifier = Modifier.hazeSource(heroHaze),
                 )
             }
         }

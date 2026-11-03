@@ -14,8 +14,6 @@ import com.coffeepeek.feature.discovery.impl.resources.discovery_section_brew_me
 import com.coffeepeek.feature.discovery.impl.resources.discovery_section_equipment
 import com.coffeepeek.feature.discovery.impl.resources.discovery_section_roasters
 import com.coffeepeek.feature.discovery.impl.resources.discovery_section_tags
-import android.content.res.Configuration
-import androidx.compose.foundation.layout.Arrangement
 import com.coffeepeek.core.designsystem.component.CoffeePeekActionRow
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.text.font.FontWeight
@@ -37,7 +35,6 @@ import com.coffeepeek.core.designsystem.component.CoffeePeekTextButton as TextBu
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
@@ -54,7 +51,6 @@ import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.tooling.preview.Preview
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.core.designsystem.component.CoffeePeekCheckmarkRow
 import com.coffeepeek.core.designsystem.component.CoffeePeekGroupSection
@@ -78,7 +74,6 @@ import com.coffeepeek.feature.discovery.impl.search.SearchState
 internal fun FilterSheet(state: SearchState, host: DiscoveryHost, onAction: (SearchAction) -> Unit) {
     var draft by remember { mutableStateOf(state.filters) }
     val density = LocalDensity.current
-    val resources = LocalResources.current
     val width = with(density) { LocalWindowInfo.current.containerSize.width.toDp() }
     CoffeePeekSwipeDismissModalBottomSheet(
         onDismissRequest = { onAction(SearchAction.CloseFilters) },
@@ -87,8 +82,8 @@ internal fun FilterSheet(state: SearchState, host: DiscoveryHost, onAction: (Sea
         maxSheetHeightFraction = 0.8f,
         expandToMaxHeight = true,
     ) {
-        // The modal window must use the caller's language and text scale.
-        CompositionLocalProvider(LocalDensity provides density, LocalResources provides resources) {
+        // The modal window must use the caller's text scale.
+        CompositionLocalProvider(LocalDensity provides density) {
             FilterSheetContent(state, host, draft, { draft = it }, {
                 onAction(SearchAction.ApplyFilters(draft.copy(cityId = state.filters.cityId)))
                 onAction(SearchAction.CloseFilters)
@@ -224,8 +219,7 @@ private fun FilterSheetCompactLargePreview() = CoffeePeekTheme {
     }
 }
 
-@Preview(name = "Belarusian light", locale = "be", uiMode = Configuration.UI_MODE_NIGHT_NO)
-@Preview(name = "Belarusian dark", locale = "be", uiMode = Configuration.UI_MODE_NIGHT_YES)
+@Preview
 @Composable
 private fun FilterSheetBelarusianPreview() = CoffeePeekTheme {
     val catalogs = DiscoveryCatalogs(

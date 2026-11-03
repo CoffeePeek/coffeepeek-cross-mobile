@@ -131,4 +131,7 @@
     <string name="home_check_in_error_visibility">Проверьте видимость чекина.</string>
     <string name="home_check_in_error_input">Проверьте введённые данные.</string>
     <string name="home_check_in_method_other">Другое</string>
+    <string name="home_check_in_validation_summary_one">Проверьте заполненные поля (%1$d ошибка).</string>
+    <string name="home_check_in_validation_summary_few">Проверьте заполненные поля (%1$d ошибки).</string>
+    <string name="home_check_in_validation_summary_many">Проверьте заполненные поля (%1$d ошибок).</string>
 </resources>

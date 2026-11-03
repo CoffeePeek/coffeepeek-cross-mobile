@@ -1,7 +1,7 @@
 package com.coffeepeek.core.media
 
-import coffeepeek.composeapp.generated.resources.Res
-import coffeepeek.composeapp.generated.resources.native_photo_unavailable
+import com.coffeepeek.core.media.resources.Res
+import com.coffeepeek.core.media.resources.native_photo_unavailable
 import org.jetbrains.compose.resources.getString
 
 import io.kamel.core.DataSource

@@ -65,6 +65,7 @@ internal fun ObserveFavoritesEvents(
     onOpenShop: (String) -> Unit,
     onOpenRoaster: (String) -> Unit,
     onBack: () -> Unit = {},
+    onShare: () -> Unit = {},
 ) {
     val currentOpenShop by rememberUpdatedState(onOpenShop)
     val currentOpenRoaster by rememberUpdatedState(onOpenRoaster)

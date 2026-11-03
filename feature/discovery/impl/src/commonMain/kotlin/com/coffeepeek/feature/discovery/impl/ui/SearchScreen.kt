@@ -26,7 +26,6 @@ import com.coffeepeek.feature.discovery.impl.resources.discovery_section_shops
 import com.coffeepeek.feature.discovery.impl.resources.discovery_suggestion_action
 import com.coffeepeek.feature.discovery.impl.resources.discovery_suggestion_description
 import com.coffeepeek.feature.discovery.impl.resources.discovery_suggestion_title
-import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandHorizontally

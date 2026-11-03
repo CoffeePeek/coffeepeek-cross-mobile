@@ -23,7 +23,6 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtimeCompose)
     implementation(compose.components.resources)
     implementation(compose.components.uiToolingPreview)
-    androidImplementation(libs.androidx.compose.ui.tooling.preview)
 
     testImplementation(libs.kotlin.test)
     testImplementation(libs.kotlinx.coroutines.test)
