@@ -4,6 +4,11 @@ The active Android audit and execution order are in
 [ANDROID_REFACTORING_PLAN.md](ANDROID_REFACTORING_PLAN.md). Historical stack and
 completed-slice notes below are context, not the next-work checklist.
 
+The new [leaderboard](leaderboard/IMPLEMENTATION_PLAN.md) has shared
+api/domain/data/impl boundaries and is composed above posts in both Android's
+migrated Community entry and the retained iOS feed. Its read contract follows
+backend #362; manual device checks and backend rollout remain acceptance gates.
+
 Roasters now shares its api/domain/data/impl, Compose UI/resources and application
 adapters between Android and iOS. Common Koin activates the same renderer while
 the application retains its platform navigation, browser, haptics and photo

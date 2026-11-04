@@ -163,6 +163,7 @@ fun initKoin(
         imageModule(),
         com.coffeepeek.admin.di.settings.appLanguageModule(database.settingRepository),
         roasterModule(),
+        com.coffeepeek.admin.di.leaderboard.leaderboardModule(),
         com.coffeepeek.admin.di.ownership.businessOwnershipModule(),
         updateInstallerModule(),
     )

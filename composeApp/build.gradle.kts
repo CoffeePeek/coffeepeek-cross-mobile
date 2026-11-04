@@ -70,6 +70,10 @@ kotlin {
             implementation(libs.ktor.client.okhttp)
         }
         commonMain.dependencies {
+            implementation(project(module.feature.leaderboard.api))
+            implementation(project(module.feature.leaderboard.domain))
+            implementation(project(module.feature.leaderboard.data))
+            implementation(project(module.feature.leaderboard.impl))
             implementation(project(module.feature.collections.api))
             implementation(project(module.feature.collections.domain))
             implementation(project(module.feature.collections.data))
@@ -388,7 +392,10 @@ androidComponents.onVariants(androidComponents.selector().withBuildType("sandbox
             "com.coffeepeek.feature.ownership.impl.ui.OwnershipViewModel",
             "com.coffeepeek.admin.sandbox.backend.SandboxBackend", "com.coffeepeek.admin.sandbox.SandboxApplication",
             "com.coffeepeek.feature.homecheckin.data.repository.HomePreparationRepositoryFactoryKt",
-            "com.coffeepeek.admin.ui.Navigator"))
+            "com.coffeepeek.admin.ui.Navigator",
+            "com.coffeepeek.admin.di.leaderboard.LeaderboardModuleKt",
+            "com.coffeepeek.feature.leaderboard.impl.LeaderboardEntryImplKt",
+            "com.coffeepeek.feature.leaderboard.data.repository.LeaderboardRepositoryFactoryKt"))
     }
     val manifest = variant.artifacts.get(SingleArtifact.MERGED_MANIFEST)
     val verification = tasks.register("verify${variant.name.replaceFirstChar { it.uppercaseChar() }}Isolation") {
@@ -432,6 +439,9 @@ androidComponents {
                 "com.coffeepeek.api.CoffeePeekRepo",
                 "com.coffeepeek.data.di.DataModuleKt",
                 "com.coffeepeek.admin.di.roaster.RoasterModuleKt",
+                "com.coffeepeek.admin.di.leaderboard.LeaderboardModuleKt",
+                "com.coffeepeek.feature.leaderboard.impl.LeaderboardEntryImplKt",
+                "com.coffeepeek.feature.leaderboard.data.repository.LeaderboardRepositoryFactoryKt",
                 "com.coffeepeek.admin.di.roaster.FeatureRoasterScreenRenderer",
                 "com.coffeepeek.feature.roaster.impl.RoasterEntryImplsKt",
                 "com.coffeepeek.feature.roaster.data.repository.RoasterRepositoryFactoryKt",

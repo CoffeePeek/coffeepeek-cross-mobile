@@ -93,6 +93,7 @@ internal fun communityHost() = CommunityHost(
     },
     feedViewed = { count, isPublic -> TrackFeedViewed(count, isPublic) },
     snackbar = { state, clearance -> CpSnackbarHost(state, Modifier.padding(bottom = clearance)) },
+    abovePosts = { refreshKey, collapsed -> com.coffeepeek.admin.feature.community.ui.CommunityLeaderboard(refreshKey, collapsed) },
     share = ShareHelper::shareText,
 )
 
