@@ -385,3 +385,57 @@ no stable Coffee-page capture or dark/font/accessibility review was obtained.
 Captures remain local in ignored build outputs and contain no published account
 data. The original normal app was not replaced; no data clearing or settings
 changes were performed.
+
+### Shared control height — 2026-11-04
+
+Synced from `origin/develop` at `85caf6dc` into
+`codex/migration-segmented-control-height`. The verification below uses that
+revision plus the local height changes. Feed / Leaders and all other capsule
+controls now default to the notification button's visible 44 dp height, through
+`CoffeePeekDimens.buttonHeight`. Android's former 48 dp segment plus 8 dp track
+padding produced a 56 dp control. The shared minimum now includes those insets;
+both Android fixed and shared scrollable segments use a 36 dp inner minimum and
+can grow with text. Native iOS also receives the 44 dp outer default. The poster
+format selector's explicit 48 dp constraint is removed so it uses the same size.
+
+Verification plan: preserve labels, selection callbacks, enabled/tab semantics,
+scrolling, analytics and navigation; check existing design-system, community and
+leaderboard unit suites and assemble Direct Debug with its packaged DEX gate.
+The changed presentation layer adds no dependencies or resource strings. Paired
+colocated previews compare a capsule with a notification-sized icon button and
+cover 2x text; collection preview light/dark samples remain beside their content.
+
+Executed with JDK 21 and `--max-workers=6`: design-system 57 tests, community impl
+40, leaderboard impl 17 (114 total, zero failures/errors/skips, no test retries).
+`:composeApp:assembleDirectDebug` and `verifyDirectDebugRuntimeClasses` passed.
+The initial sandboxed command stopped before Gradle startup because the wrapper
+cache was read-only; the approved execution then completed successfully.
+Existing Preview and Gradle/KMP deprecation warnings remain.
+
+No device was selected or deployed to. Previews compiled but were not rendered
+in an IDE; manual Sandbox light/dark, large-font/narrow-window, accessibility and
+native iOS/Xcode checks remain open. No automated UI, instrumentation or screenshot
+tests were created or run; no live account operation or analytics emission was
+performed. Build diagnostics remain local outside tracked sources.
+
+### Temporarily show Feed only — 2026-11-04
+
+The user requested a presentation-only pause of leaderboard visibility. Application
+composition now supplies `CommunityHost.leaders = null`; the existing absent-slot
+path renders the Feed title and notifications action, hides the section switch
+and displays Feed even if a previous saved selection was Leaders. Leaderboard
+modules, DI, repository, entry, rendering and section-switch implementation remain
+available for later re-enabling. The common host applies to both platform entries;
+no iOS favorites binding or writer is involved.
+
+Verification plan: preserve feed content, notifications, creation/navigation and
+analytics; run existing community unit tests and Android Debug assembly with DEX
+verification. Paired Feed-only header previews were added beside CommunitySections.
+Source: `85caf6dc` plus this chat's local changes on
+`codex/migration-segmented-control-height`. Community impl: 40 tests, zero
+failures/errors/skips; Direct Debug assembly and `verifyDirectDebugRuntimeClasses`
+passed with JDK 21 and `--max-workers=6`, without retries. Existing Preview/tooling
+warnings remain. Previews compiled but were not IDE-rendered. No automated UI,
+instrumentation or screenshot tests were created or run. No device was deployed
+to or launched; manual Sandbox theme/font/window/accessibility checks and native
+iOS compilation/review remain open. Build diagnostics remain local.

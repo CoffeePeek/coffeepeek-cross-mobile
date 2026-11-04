@@ -399,3 +399,42 @@ Pixel 9/API 37, increasing version 2691 to 2702 and preserving first-install tim
 confirmed it remained alive. No data clear, uninstall, downgrade, Sandbox run or
 live-account edit was performed. Full authenticated visual acceptance remains a
 separate gate.
+
+### Immediate heart picker — 2026-11-04
+
+Verification plan: open the picker for either heart state without waiting for a
+favorite read/write; show initial/background membership loading inside it; allow
+Back/Cancel while loading without a write. Preserve authentication continuation,
+membership confirmation, account guards and confirmation-only analytics. Run
+discovery/collections presentation and application unit/contract suites, then
+Direct Debug assembly and the packaged DEX gate. Manual Sandbox theme, font/window
+size, accessibility and modal checks remain device gates.
+
+The migrated Discovery search still called the direct favorite writer, which
+loaded shop details and waited for a server write before delivering the picker.
+Its API now exposes a narrow synchronous collection-selection handoff. Android
+composition supplies the existing FavoriteCollectionsPrompt; search dispatches
+the tap before optimistic state or write handling. Guest taps use the same
+application auth continuation as the other hearts. Confirmation remains owned by
+collections and its existing account/consent-aware analytics adapter; opening or
+cancelling the picker does not emit favorite-mutation events.
+
+The root picker supplies a composition-owned ViewModelStore, cleared when the
+request leaves composition, so dismissed loads are cancelled and reopening the
+same target creates a fresh model. Membership refresh displays the shared shimmer
+inside the sheet even when cached lists are already visible. Existing load errors
+and retry stay inside the sheet. Paired light/dark refresh previews are colocated
+with the changed status component. No resources or Gradle dependencies changed.
+
+Verified source: `85caf6dc` plus this chat's local working changes on
+`codex/migration-segmented-control-height`. JDK 21, `--max-workers=6`: discovery
+impl 141 tests, collections impl 71, application Direct Debug 1,005; total 1,217,
+zero failures/errors/skips, no retries. Direct Debug assembly and
+`verifyDirectDebugRuntimeClasses` passed. Regression coverage includes both heart
+states without writes, guest handoff, an unavailable favorite source, and Back
+during a gated collection load. Existing Preview deprecation and unrelated test
+warnings remain. No automated UI, instrumented or screenshot tests were created
+or run. No device was selected, installed to or launched; previews compiled but
+were not rendered in an IDE. Manual Sandbox and native iOS review remain open;
+the iOS writer/host was not changed. Diagnostics remain local outside tracked
+sources; no real account operation or production analytics event was performed.

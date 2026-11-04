@@ -1,6 +1,7 @@
 package com.coffeepeek.admin.di.discovery
 
 import com.coffeepeek.admin.feature.community.ui.FeedSessions
+import com.coffeepeek.admin.di.collections.FavoriteCollectionsPrompt
 import com.coffeepeek.admin.utils.FavoriteSync
 import com.coffeepeek.core.session.Session
 import com.coffeepeek.domain.model.*
@@ -22,6 +23,20 @@ import kotlinx.coroutines.test.runTest
 import kotlin.test.*
 
 class DiscoveryAdaptersTest {
+    @Test fun openingCollectionsDoesNotReadOrWriteTheFavoriteRepository() = runTest {
+        val requests = mutableListOf<String>()
+        val repository = Favorites(failure = IllegalStateException("offline"), ids = flow { error("Must not await favorite ids") })
+        val prompt = object : FavoriteCollectionsPrompt {
+            override fun shop(slug: String) { requests += slug }
+            override fun roaster(slug: String) = error("Shop action expected")
+        }
+        val adapter = AppDiscoveryFavorites(repository, prompt)
+        assertTrue(adapter.selectCollections("canonical"))
+        assertEquals(listOf("canonical"), requests)
+        assertTrue(repository.saved.isEmpty())
+        assertTrue(repository.removed.isEmpty())
+    }
+
     @Test fun theAccountKeyIsTheUserIdElseTheTokenAndNullForAGuestOrAnInactiveSession() = runTest {
         val sessions = FeedSessions(null)
         val account = SessionDiscoveryAccount(sessions)

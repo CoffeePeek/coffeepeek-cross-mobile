@@ -96,6 +96,6 @@ internal fun initAndroidKoin(extraModules: List<org.koin.core.module.Module> = e
         contributionsRendererFactory = {
             androidContributionsScreenRenderer(get(), get(), get())
         },
-        discoveryRendererFactory = { androidDiscoveryScreenRenderer(get<CoffeePeekClient>().client, get(), get(), get(), get(), get()) },
+        discoveryRendererFactory = { androidDiscoveryScreenRenderer(get<CoffeePeekClient>().client, get(), get(), get(), get(), get(), get()) },
     )
 }
