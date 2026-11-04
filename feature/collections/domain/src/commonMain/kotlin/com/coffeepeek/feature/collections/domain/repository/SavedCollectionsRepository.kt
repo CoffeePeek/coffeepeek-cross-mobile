@@ -10,6 +10,8 @@ interface SavedCollectionsRepository {
     fun observeChanges(): Flow<Unit> = emptyFlow()
     /** Last successful owner read for the active account; null means no verified snapshot. */
     fun cachedMine(target: SavedCollectionTarget? = null): List<SavedCollectionSummary>? = null
+    /** Confirmed owner/target snapshot still within the cache lifetime; null requires a read before editing memberships. */
+    fun cachedFreshMine(target: SavedCollectionTarget? = null): List<SavedCollectionSummary>? = null
     /** Null means not loaded; a selection with null collectionId means explicitly hidden. */
     fun cachedFeatured(): SavedCollectionFeaturedSelection? = null
     suspend fun mine(target: SavedCollectionTarget? = null): Result<List<SavedCollectionSummary>>
@@ -22,6 +24,7 @@ interface SavedCollectionsRepository {
     suspend fun replaceItems(id: String, places: List<CollectionPlace>, revision: Long): Result<SavedCollection>
     suspend fun memberships(target: SavedCollectionTarget, collectionIds: Set<String>): Result<List<SavedCollectionSummary>>
     suspend fun changeMemberships(target: SavedCollectionTarget, added: Set<String>, removed: Set<String>): Result<List<SavedCollectionSummary>> {
+        if (added.isEmpty() && removed.isEmpty()) return Result.success(cachedMine(target).orEmpty())
         val result = mine(target)
         val lists = result.getOrNull() ?: return result
         val current = lists.filter { it.containsItem }.map { it.id }.toSet()

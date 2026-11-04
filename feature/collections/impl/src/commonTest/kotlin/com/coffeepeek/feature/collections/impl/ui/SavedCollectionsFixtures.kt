@@ -42,13 +42,20 @@ internal class SavedTestRepository : SavedCollectionsRepository {
     override fun observeChanges() = changes
     var currentOwner: () -> String? = { "first" }
     var cachedLists: List<SavedCollectionSummary>? = null
+    var cachedListsFresh = false
     var cachedFeaturedValue: SavedCollectionFeaturedSelection? = null
     private var cacheOwner: String? = "first"
     override fun cachedMine(target: SavedCollectionTarget?): List<SavedCollectionSummary>? {
         val owner = currentOwner()
-        if (owner != cacheOwner) { cacheOwner = owner; cachedLists = null; cachedFeaturedValue = null }
+        if (owner != cacheOwner) {
+            cacheOwner = owner
+            cachedLists = null
+            cachedListsFresh = false
+            cachedFeaturedValue = null
+        }
         return cachedLists
     }
+    override fun cachedFreshMine(target: SavedCollectionTarget?) = cachedMine(target)?.takeIf { cachedListsFresh }
     override fun cachedFeatured(): SavedCollectionFeaturedSelection? { cachedMine(); return cachedFeaturedValue }
     var value = privateList
     var lists = listOf(privateList.summary, publicList.summary)
@@ -61,12 +68,14 @@ internal class SavedTestRepository : SavedCollectionsRepository {
     var membershipWrites = 0
     var featureWrites = 0
     var publicReads = 0
+    var ownedReads = 0
     var sentMemberships = emptySet<String>()
     var sentTarget: SavedCollectionTarget? = null
     var uploadFailure = false
     var uploadError: Throwable? = null
     var updateFailure: Throwable? = null
     var mineFailure: Throwable? = null
+    var membershipFailure: Throwable? = null
     var featuredFailure: Throwable? = null
     var mineGate: CompletableDeferred<Unit>? = null
     var mineReads = 0
@@ -79,14 +88,23 @@ internal class SavedTestRepository : SavedCollectionsRepository {
         val result = mineFailure?.let { Result.failure(it) } ?: Result.success(lists)
         mineGate?.await()
         if (owner != currentOwner()) throw CancellationException("Account changed")
-        if (result.isSuccess) { cacheOwner = owner; cachedLists = result.getOrThrow() }
+        if (result.isSuccess) {
+            cacheOwner = owner
+            cachedLists = result.getOrThrow()
+            cachedListsFresh = true
+        }
         return result
     }
-    override suspend fun owned(id: String) = Result.success(value)
+    override suspend fun owned(id: String): Result<SavedCollection> {
+        ownedReads++
+        return Result.success(value)
+    }
     override suspend fun public(id: String): Result<SavedCollection> { publicReads++; return Result.success(publicList) }
     override suspend fun create(metadata: SavedCollectionMetadata): Result<SavedCollection> {
         creates++
         value = SavedCollection(SavedCollectionSummary("created", metadata.title.trim(), metadata.description.trim(), metadata.visibility))
+        lists = lists + value.summary
+        cachedLists = cachedLists?.plus(value.summary)
         return Result.success(value)
     }
     override suspend fun update(id: String, metadata: SavedCollectionMetadata, revision: Long): Result<SavedCollection> {
@@ -106,7 +124,11 @@ internal class SavedTestRepository : SavedCollectionsRepository {
         sentTarget = target
         sentMemberships = collectionIds
         membershipGate?.await()
-        return Result.success(lists.map { it.copy(containsItem = it.id in collectionIds) })
+        membershipFailure?.let { return Result.failure(it) }
+        lists = lists.map { it.copy(containsItem = it.id in collectionIds) }
+        cachedLists = lists
+        cachedListsFresh = true
+        return Result.success(lists)
     }
     override suspend fun delete(id: String) = Result.success(Unit)
     override suspend fun featuredId(): Result<String?> {

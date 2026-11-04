@@ -34,9 +34,11 @@ internal class HttpSavedCollectionsRepository(private val client: HttpClient, pr
 
     override fun observeChanges() = changes.asSharedFlow()
     override fun cachedMine(target: SavedCollectionTarget?) = ownerCache.peek(target)
+    override fun cachedFreshMine(target: SavedCollectionTarget?) = ownerCache.fresh(target)
     override fun cachedFeatured() = ownerCache.peekFeatured()
 
-    override suspend fun mine(target: SavedCollectionTarget?): Result<List<SavedCollectionSummary>> = loadMine(target, refresh = false)
+    override suspend fun mine(target: SavedCollectionTarget?): Result<List<SavedCollectionSummary>> =
+        cachedFreshMine(target)?.let { Result.success(it) } ?: loadMine(target, refresh = false)
 
     override suspend fun refreshMine(target: SavedCollectionTarget?): Result<List<SavedCollectionSummary>> = loadMine(target, refresh = true)
 
@@ -120,7 +122,12 @@ internal class HttpSavedCollectionsRepository(private val client: HttpClient, pr
         writeMemberships(owner, target, collectionIds).also { ownerCache.recordMemberships(owner, target, it) }
     }
 
-    override suspend fun changeMemberships(target: SavedCollectionTarget, added: Set<String>, removed: Set<String>): Result<List<SavedCollectionSummary>> = mutate { owner ->
+    override suspend fun changeMemberships(target: SavedCollectionTarget, added: Set<String>, removed: Set<String>): Result<List<SavedCollectionSummary>> {
+        if (added.isEmpty() && removed.isEmpty()) return Result.success(cachedMine(target).orEmpty())
+        return writeMembershipChanges(target, added, removed)
+    }
+
+    private suspend fun writeMembershipChanges(target: SavedCollectionTarget, added: Set<String>, removed: Set<String>) = mutate { owner ->
         val additions = added.map(::collectionId).toSet()
         val removals = removed.map(::collectionId).toSet()
         require(additions.intersect(removals).isEmpty())

@@ -8,7 +8,8 @@ import java.util.UUID
 
 /** RAM-only mutable lists. Synthetic owner headers are added only by the Sandbox composition guard. */
 internal class SandboxSavedCollectionsBackend(private val today: LocalDate, private val available: () -> JsonArray,
-    private val uploaded: (String, Long) -> Boolean) {
+    private val uploaded: (String, Long) -> Boolean, private val initialFavorites: (String) -> JsonArray,
+    private val favoritesChanged: (String, Set<String>, Set<String>) -> Unit) {
     private data class Row(val owner: String, val id: String, val title: String, val description: String,
         val visibility: String, val items: List<JsonObject>, val revision: Long = 1, val cover: JsonObject? = null,
         val isDefault: Boolean = false)
@@ -29,6 +30,15 @@ internal class SandboxSavedCollectionsBackend(private val today: LocalDate, priv
         publicRead(path, request.method)?.let { return it }
         if (!path.startsWith(ROOT)) return null
         if (owner.isNullOrBlank()) return fail(HttpStatusCode.Unauthorized)
+        val before = mutationTargets(owner, request)
+        val result = ownedRequest(owner, request, input)
+        if (result.first.isSuccess() && request.method != HttpMethod.Get)
+            favoritesChanged(owner, before + mutationTargets(owner, request, result.second), membershipKeys(owner))
+        return result
+    }
+
+    private fun ownedRequest(owner: String, request: HttpRequestData, input: JsonObject): Pair<HttpStatusCode, JsonObject> {
+        val path = request.url.encodedPath
         if (path == "$ROOT/default" && request.method == HttpMethod.Put) return ensureDefault(owner)
         if (path == "$ROOT/featured") return featured(owner, request.method, input)
         if (path.startsWith("$ROOT/membership/")) return if (request.method == HttpMethod.Put) membership(owner, path, input)
@@ -40,13 +50,49 @@ internal class SandboxSavedCollectionsBackend(private val today: LocalDate, priv
         return owned(row, request.method, parts, input)
     }
 
-    private fun ensureDefault(owner: String): Pair<HttpStatusCode, JsonObject> {
+    private fun ensureDefault(owner: String) = ok(json(defaultRow(owner)))
+
+    private fun defaultRow(owner: String): Row {
         val existing = rows.values.firstOrNull { it.owner == owner && it.isDefault }
             ?: rows.values.firstOrNull { it.owner == owner && it.title == "Избранное" }
+        if (existing?.isDefault == true) return existing
         val row = existing?.copy(isDefault = true)
             ?: Row(owner, key(UUID.randomUUID().toString()), "Избранное", "", "private", emptyList(), isDefault = true)
-        rows[row.id] = row
-        return ok(json(row))
+        val known = membershipKeys(owner)
+        val legacy = if (row.visibility == "private") initialFavorites(owner).map { it.jsonObject }
+            .filter { value(it, "kind") in listOf("coffee_shop", "roaster") && itemKey(it) !in known } else emptyList()
+        val canonical = row.copy(items = row.items + legacy)
+        rows[row.id] = canonical
+        return canonical
+    }
+
+    fun setLegacyFavorite(owner: String, kind: String, slug: String, selected: Boolean): Boolean {
+        val target = "$kind:$slug"
+        val item = (available().map { it.jsonObject } + rows.values.filter { it.owner == owner }.flatMap { it.items })
+            .firstOrNull { itemKey(it) == target } ?: return false
+        if (selected) {
+            val row = defaultRow(owner)
+            if (row.visibility == "private" && row.items.none { itemKey(it) == target })
+                rows[row.id] = row.copy(items = row.items + item, revision = row.revision + 1)
+        } else rows.values.filter { it.owner == owner && it.items.any { item -> itemKey(item) == target } }.toList().forEach { row ->
+            rows[row.id] = row.copy(items = row.items.filterNot { itemKey(it) == target }, revision = row.revision + 1)
+        }
+        favoritesChanged(owner, setOf(target), if (selected) setOf(target) else emptySet())
+        return true
+    }
+
+    private fun membershipKeys(owner: String) = rows.values.filter { it.owner == owner }.flatMap { it.items }.map(::itemKey).toSet()
+
+    private fun mutationTargets(owner: String, request: HttpRequestData, response: JsonObject? = null): Set<String> {
+        val path = request.url.encodedPath
+        if (path.startsWith("$ROOT/membership/")) return setOf(path.removePrefix("$ROOT/membership/").replace('/', ':'))
+        if (path == ROOT && request.method == HttpMethod.Post) {
+            val items = (response?.get("data") as? JsonObject)?.get("items") as? JsonArray
+            return items.orEmpty().map { itemKey(it.jsonObject) }.toSet()
+        }
+        if (request.method != HttpMethod.Delete && !(path.endsWith("/items") && request.method == HttpMethod.Put)) return emptySet()
+        val id = path.removePrefix("$ROOT/").substringBefore('/')
+        return rows[key(id)]?.takeIf { it.owner == owner }?.items.orEmpty().map(::itemKey).toSet()
     }
 
     private fun publicRead(path: String, method: HttpMethod): Pair<HttpStatusCode, JsonObject>? {

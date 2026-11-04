@@ -119,6 +119,52 @@ class SavedCollectionsRepositoryTest {
         } finally { client.close() }
     }
 
+    @Test fun emptyMembershipDeltaDoesNotReadWriteOrPublishAMutation() = runTest(dispatcher) {
+        val client = client { error("No-op must not reach HTTP") }
+        try {
+            val repository = repo(client, client)
+            var changes = 0
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { repository.observeChanges().collect { changes++ } }
+            val target = SavedCollectionTarget(CollectionPlaceKind.CoffeeShop, "shop")
+            assertTrue(repository.changeMemberships(target, emptySet(), emptySet()).getOrThrow().isEmpty())
+            runCurrent()
+            assertEquals(0, account.loads)
+            assertEquals(0, changes)
+        } finally { client.close() }
+    }
+
+    @Test fun emptyMembershipDeltaReturnsTheExistingSnapshotWithoutRefresh() = runTest(dispatcher) {
+        var reads = 0
+        val client = client(defaultEndpoint = true) {
+            reads++
+            respond(defaultList.replace("\"revision\":2", "\"revision\":2,\"isDefault\":true,\"containsItem\":true"))
+        }
+        try {
+            val repository = repo(client, client)
+            val target = SavedCollectionTarget(CollectionPlaceKind.CoffeeShop, "shop")
+            val before = repository.mine(target).getOrThrow()
+            val loads = account.loads
+            assertEquals(before, repository.changeMemberships(target, emptySet(), emptySet()).getOrThrow())
+            assertEquals(1, reads)
+            assertEquals(loads, account.loads)
+        } finally { client.close() }
+    }
+
+    @Test fun freshCacheQueryKeepsMembershipsOwnerAndTargetScoped() = runTest(dispatcher) {
+        val target = SavedCollectionTarget(CollectionPlaceKind.CoffeeShop, "shop")
+        val client = client(defaultEndpoint = true) {
+            respond(defaultList.replace("\"revision\":2", "\"revision\":2,\"isDefault\":true,\"containsItem\":true"))
+        }
+        try {
+            val repository = repo(client, client)
+            val lists = repository.mine(target).getOrThrow()
+            assertEquals(lists, repository.cachedFreshMine(target))
+            assertNull(repository.cachedFreshMine(target.copy(slug = "other")))
+            account.owner.value = "second"
+            assertNull(repository.cachedFreshMine(target))
+        } finally { client.close() }
+    }
+
     @Test fun ownerLibraryCacheIsClearedOnLogoutAndCannotCrossAccounts() = runTest(dispatcher) {
         val client = client(defaultEndpoint = true) { respond(defaultList.replace("\"revision\":2", "\"revision\":2,\"isDefault\":true")) }
         try {
