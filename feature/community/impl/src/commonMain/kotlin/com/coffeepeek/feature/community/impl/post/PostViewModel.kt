@@ -6,6 +6,7 @@ import com.coffeepeek.feature.authorblocking.api.AuthorVisibility
 import com.coffeepeek.feature.community.api.CommunityAccount
 import com.coffeepeek.feature.community.domain.model.CommunityFailure
 import com.coffeepeek.feature.community.domain.model.CommunityPost
+import com.coffeepeek.feature.community.domain.model.HelpfulVote
 import com.coffeepeek.feature.community.domain.model.FailureKind
 import com.coffeepeek.feature.community.domain.repository.CommunityRepository
 import com.coffeepeek.feature.community.domain.rules.MAX_REPORT_LENGTH
@@ -13,6 +14,7 @@ import com.coffeepeek.feature.community.domain.rules.validateReport
 import com.coffeepeek.feature.community.impl.timeline.ActionMessage
 import com.coffeepeek.feature.community.impl.timeline.MessageKind
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -29,6 +31,7 @@ internal class PostViewModel(
     private val authors: AuthorVisibility = AuthorVisibility.None,
 ) : MviViewModel<PostState, PostAction, PostEvent>(PostState()) {
     private var accountKey: String? = null
+    private var generation = 0L
     private var loadJob: Job? = null
     private var mutationJob: Job? = null
     private var profileJob: Job? = null
@@ -42,6 +45,7 @@ internal class PostViewModel(
     }
 
     private fun switchAccount(key: String?) {
+        generation++
         loadJob?.cancel(); mutationJob?.cancel(); profileJob?.cancel()
         accountKey = key
         updateState { PostState(isLoggedIn = key != null) }
@@ -60,6 +64,7 @@ internal class PostViewModel(
         authors.visibility.value.let { it.ready && it.hides(post.author.id, post.author.slug) }
 
     private fun hideBlocked() {
+        generation++
         mutationJob?.cancel()
         updateState { PostState(isLoggedIn = isLoggedIn, ownAuthorSlug = ownAuthorSlug, error = PostError.Unavailable) }
     }
@@ -103,19 +108,43 @@ internal class PostViewModel(
         if (!current.isPublished || current.isOwn || current.isMutating) return
         val key = accountKey ?: run { sendEvent(PostEvent.SignInRequested); return }
         if (!isCurrent(key)) return
-        updateState { copy(isVoting = true) }
-        mutationJob = viewModelScope.launch {
+        loadJob?.cancel()
+        updateState { copy(isVoting = true, post = post.copy(isHelpfulByCurrentUser = !post.isHelpfulByCurrentUser,
+            helpfulCount = (post.helpfulCount + if (post.isHelpfulByCurrentUser) -1 else 1).coerceAtLeast(0))) }
+        val epoch = generation
+        mutationJob = viewModelScope.launch { submitHelpful(post, key, epoch) }
+    }
+
+    private suspend fun submitHelpful(post: CommunityPost, key: String, epoch: Long) {
+        try {
             val result = repository.setHelpful(post.id, !post.isHelpfulByCurrentUser)
+            result.exceptionOrNull()?.let { if (it is CancellationException) throw it }
             currentCoroutineContext().ensureActive()
-            if (!isCurrent(key)) return@launch
-            result.onSuccess { vote ->
-                updateState { copy(isVoting = false, post = this.post?.copy(helpfulCount = vote.helpfulCount, isHelpfulByCurrentUser = vote.isHelpful)) }
-            }.onFailure { error ->
-                updateState { copy(isVoting = false) }
-                sendEvent(PostEvent.Message(ActionMessage(MessageKind.VoteFailed, (error as? CommunityFailure)?.serverMessage)))
+            if (!isCurrentVote(key, epoch, post.id)) return
+            finishHelpful(post, result.getOrNull())
+            result.exceptionOrNull()?.let { reportVoteFailure(it) }
+        } catch (cancelled: CancellationException) {
+            if (isCurrentVote(key, epoch, post.id)) finishHelpful(post, null)
+            throw cancelled
+        } catch (error: Exception) {
+            if (isCurrentVote(key, epoch, post.id)) {
+                finishHelpful(post, null)
+                reportVoteFailure(error)
             }
         }
     }
+
+    private fun isCurrentVote(key: String, epoch: Long, id: String) =
+        isCurrent(key) && epoch == generation && currentState.post?.id == id
+
+    private fun finishHelpful(original: CommunityPost, vote: HelpfulVote?) = updateState {
+        copy(isVoting = false, post = post?.copy(helpfulCount = vote?.helpfulCount ?: original.helpfulCount,
+            isHelpfulByCurrentUser = vote?.isHelpful ?: original.isHelpfulByCurrentUser))
+    }
+
+    private suspend fun reportVoteFailure(error: Throwable) = sendEvent(
+        PostEvent.Message(ActionMessage(MessageKind.VoteFailed, (error as? CommunityFailure)?.serverMessage)),
+    )
 
     private suspend fun openReport() {
         val current = currentState

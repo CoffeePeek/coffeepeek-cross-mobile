@@ -166,15 +166,19 @@ internal fun ErrorBlock(onRetry: () -> Unit, retryLabel: String, modifier: Modif
     }
 }
 
-@Composable private fun CommunityPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
+@Composable private fun CommunityPreview(dark: Boolean, pendingLike: Boolean = false) = CoffeePeekTheme(darkTheme = dark) {
+    val first = previewPost().let { if (pendingLike) it.copy(isHelpfulByCurrentUser = true, helpfulCount = it.helpfulCount + 1) else it }
     CommunityContent(
-        CommunityState(isLoggedIn = true, items = listOf(previewPost(), previewPost().copy(id = "second", note = "Вторая запись", photos = com.coffeepeek.feature.community.domain.model.PostPhotos.None))),
+        CommunityState(isLoggedIn = true, helpfulIds = if (pendingLike) setOf(first.id) else emptySet(),
+            items = listOf(first, previewPost().copy(id = "second", note = "Вторая запись", photos = com.coffeepeek.feature.community.domain.model.PostPhotos.None))),
         {}, CommunityHost(leaders = { _, _, _ -> }), object : AuthorBlockActions { override fun requestBlock(author: AuthorReference) {}; override fun requestUnblock(author: AuthorReference) {} },
         CommunityCallbacks({}, { _, _, _ -> }, {}, {}, {}, {}), SnackbarHostState(),
     )
 }
 @Preview @Composable private fun CommunityLightPreview() = CommunityPreview(false)
 @Preview @Composable private fun CommunityDarkPreview() = CommunityPreview(true)
+@Preview @Composable private fun CommunityPendingLikeLightPreview() = CommunityPreview(false, true)
+@Preview @Composable private fun CommunityPendingLikeDarkPreview() = CommunityPreview(true, true)
 
 @Composable private fun CommunityErrorPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     CommunityContent(

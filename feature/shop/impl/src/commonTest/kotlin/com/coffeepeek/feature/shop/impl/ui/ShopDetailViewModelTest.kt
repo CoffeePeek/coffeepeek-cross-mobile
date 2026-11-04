@@ -469,6 +469,8 @@ class ShopDetailViewModelTest {
         runCurrent()
         assertEquals(listOf("visit" to true), visits.calls)
         assertEquals("visit", viewModel.state.value.pendingCheckInVoteId)
+        assertTrue(viewModel.state.value.details!!.checkIns.first().isHelpfulByCurrentUser)
+        assertEquals(1, viewModel.state.value.details!!.checkIns.first().helpfulCount)
         visits.gate!!.complete(Unit)
         runCurrent()
         val voted = viewModel.state.value.details!!.checkIns.first()

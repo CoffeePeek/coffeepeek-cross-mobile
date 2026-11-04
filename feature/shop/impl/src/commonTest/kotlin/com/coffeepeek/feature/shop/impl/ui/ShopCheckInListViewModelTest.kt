@@ -266,6 +266,8 @@ class ShopCheckInListViewModelTest {
         runCurrent()
         assertEquals(listOf("first" to true), votes.calls)
         assertEquals("first", viewModel.state.value.pendingVoteId)
+        assertTrue(viewModel.state.value.checkIns.first().isHelpfulByCurrentUser)
+        assertEquals(1, viewModel.state.value.checkIns.first().helpfulCount)
         gate.complete(Unit)
         runCurrent()
         assertEquals(null, viewModel.state.value.pendingVoteId)

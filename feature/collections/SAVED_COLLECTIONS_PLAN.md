@@ -438,3 +438,33 @@ or run. No device was selected, installed to or launched; previews compiled but
 were not rendered in an IDE. Manual Sandbox and native iOS review remain open;
 the iOS writer/host was not changed. Diagnostics remain local outside tracked
 sources; no real account operation or production analytics event was performed.
+
+### Day-long picker cache — 2026-11-04
+
+The user clarified that post likes must remain optimistic and requested longer
+favorite caching. The existing owner/target library cache now reuses successful
+reads for 24 hours, measured with a monotonic clock. It is in-memory and does not
+survive process termination. Target membership timestamps are independent:
+refreshing another place does not extend an older target's validity. Confirmed
+membership and metadata writes update cached lists immediately; replacing list
+items invalidates target snapshots. Account changes keep the existing isolation.
+Verified stale cards remain available after a failed explicit refresh.
+
+`mine` uses a fresh cache; `refreshMine` explicitly bypasses it. Retry, explicit
+reload and mutation-triggered refresh use the bypass. A newly opened favorite
+picker still appears immediately and loads only missing/expired data within the
+sheet. First membership writes without a verified library read cannot mark an
+incomplete/default-less library fresh. Confirmation still rebases against current
+server membership and preserves the existing favorite-union analytics/sync flow.
+
+Base `aeb6cac3` plus changes on `codex/migration-responsive-likes-cache`:
+collections data 43, collections impl 71, community impl 46, shop impl 109 and
+application Direct Debug 1,005 tests passed (1,374 total, zero failures/errors/
+skips). Direct Debug assembly and packaged DEX checks passed. The initial missing
+default-list contract failure and successful corrected gates are recorded in
+`../community/RESPONSIVE_LIKES_PLAN.md`. Fake tests covered 24-hour expiry, forced
+refresh, independent target ages, membership writes updating the cache, account
+isolation and cancellation. No automated UI/instrumentation/screenshot tests or
+live writes were run; no device was deployed to. Existing paired loading/error
+picker previews compile; IDE rendering, manual Sandbox and native iOS checks
+remain unverified.
