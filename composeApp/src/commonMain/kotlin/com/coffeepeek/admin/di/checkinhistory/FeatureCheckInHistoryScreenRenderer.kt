@@ -7,7 +7,7 @@ import androidx.compose.ui.unit.dp
 import com.coffeepeek.admin.analytics.Analytics
 import com.coffeepeek.admin.analytics.AnalyticsOverlay
 import com.coffeepeek.admin.analytics.analyticsExposure
-import com.coffeepeek.admin.feature.checkin.api.CheckInFlowHandoff
+import com.coffeepeek.admin.di.shop.CheckInFlowHandoff
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.viewModel

@@ -1,8 +1,6 @@
 <resources>
     <string name="error_dialog_shelf_camera_tips_close">Зразумела</string>
     <string name="error_dialog_unexpected_error">Нешта пайшло не так</string>
-    <string name="guest_auth_card_shop_checkins_join_prompt">Далучайцеся да супольнасці, каб захоўваць любімыя месцы і дзяліцца ўражаннямі.</string>
-    <string name="guest_auth_card_shop_checkins_no_account">Няма ўліковага запісу?</string>
     <string name="main_screen_profile_title">Профіль</string>
     <string name="main_screen_search">Пошук</string>
     <string name="main_screen_settings_tab_title">Налады</string>
@@ -33,10 +31,6 @@
         <item>гадзіны</item>
         <item>гадзін</item>
     </string-array>
-    <string name="validation_visit_date">Выберыце дату наведвання не пазней за сённяшнюю</string>
-    <string name="validation_visit_note">Нататка павінна быць не даўжэйшая за 1000 сімвалаў</string>
-    <string name="validation_visit_photos">Можна дадаць да 5 фота</string>
-    <string name="validation_visit_ratings">Ацаніце каву, сэрвіс і атмасферу</string>
     <string name="drink_custom_name_length">Укажыце назву напою: ад 1 да 100 сімвалаў</string>
     <string name="drink_custom_name_other">Назву можна ўказаць толькі для іншага напою</string>
 </resources>

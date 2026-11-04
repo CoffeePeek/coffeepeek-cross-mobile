@@ -68,6 +68,11 @@ internal fun featurePublicProfileScreenRenderer(
 /** Platform media, formatting and routing; feature-owned card content is never injected here. */
 internal fun profileSlots(): ProfileSlots {
     return ProfileSlots(
+        featuredCollection = { slug -> ProfileFeaturedCollection(slug) },
+        shelfPreview = { slug -> ProfileShelfPreview(slug) },
+        ownerCollection = { ProfileOwnerCollection() },
+        onOpenOwnCollections = ::openProfileCollections,
+        onOwnContributions = ::openProfileContributions,
         image = { url, description, modifier -> CoffeePeekImage(data = url, modifier = modifier, contentScale = ContentScale.Crop, contentDescription = description) },
         photoViewer = { previews, originals, index, onDismiss -> CoffeePeekPhotoViewer(CoffeePeekPhotoViewerImages(previews, originals), index, onDismiss) },
         logoImage = { url, description, modifier -> CoffeePeekImage(data = url, modifier = modifier, contentScale = ContentScale.Fit, contentDescription = description) },

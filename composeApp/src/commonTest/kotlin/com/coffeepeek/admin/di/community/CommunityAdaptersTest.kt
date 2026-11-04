@@ -5,7 +5,7 @@ import com.coffeepeek.admin.analytics.*
 import com.coffeepeek.feature.shop.domain.model.ShopCheckInCreateInput
 import com.coffeepeek.feature.shop.domain.model.ShopConsumedDrinkOption
 import com.coffeepeek.feature.shop.domain.repository.ShopCheckInRepository
-import com.coffeepeek.admin.feature.community.ui.FeedSessions
+import com.coffeepeek.admin.ui.screen.community.FeedSessions
 import com.coffeepeek.core.session.Session
 import com.coffeepeek.feature.community.api.EditField
 import com.coffeepeek.feature.community.api.FeedAction

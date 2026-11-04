@@ -1,10 +1,10 @@
 package com.coffeepeek.admin.di.roaster
 
-import com.coffeepeek.admin.feature.favorites.api.FavoriteInteractions
-import com.coffeepeek.admin.feature.favorites.api.RoasterFavorites
-import com.coffeepeek.admin.feature.favorites.api.roasterFavoriteId
-import com.coffeepeek.admin.feature.favorites.api.CatalogItem
-import com.coffeepeek.admin.feature.favorites.api.PublicAddress
+import com.coffeepeek.admin.di.favorites.FavoriteInteractions
+import com.coffeepeek.admin.di.favorites.RoasterFavorites
+import com.coffeepeek.admin.di.favorites.roasterFavoriteId
+import com.coffeepeek.admin.di.favorites.CatalogItem
+import com.coffeepeek.admin.di.favorites.PublicAddress
 import com.coffeepeek.feature.shop.api.PublicShopPreviews
 import com.coffeepeek.feature.roaster.api.RoasterFavoriteTarget
 import com.coffeepeek.feature.roaster.api.RoasterFavoritesPort

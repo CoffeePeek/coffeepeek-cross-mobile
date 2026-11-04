@@ -4,7 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.coffeepeek.admin.feature.notifications.ui.NotificationsRenderer
+import com.coffeepeek.admin.ui.screen.notifications.NotificationsRenderer
 import com.coffeepeek.admin.notifications.NotificationOpens
 import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.utils.ErrorHandler

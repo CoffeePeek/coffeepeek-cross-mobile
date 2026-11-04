@@ -11,9 +11,6 @@
     <string name="entry">Вход</string>
     <string name="password">Пароль</string>
     <string name="login">Войти</string>
-    <string name="sign_in_google">Войти через Google</string>
-    <string name="sign_in_apple">Войти через Apple</string>
-    <string name="registr">Зарегистрироваться</string>
     <string name="registration">Регистрация</string>
     <string name="maybe_later">Попробуйте позже!</string>
     <string name="name">Имя</string>
@@ -23,7 +20,6 @@
     <string name="checkin_rating_coffee">Кофе</string>
 
     <string name="local_data_cleanup_error">Локальные данные не удалось полностью очистить</string>
-    <string name="shop_menu_gallery_open">Фотографии меню</string>
     <string name="photo_pick_failed">Не удалось добавить фото: %1$d</string>
     <string name="business_tab_title">Бизнес</string>
 </resources>

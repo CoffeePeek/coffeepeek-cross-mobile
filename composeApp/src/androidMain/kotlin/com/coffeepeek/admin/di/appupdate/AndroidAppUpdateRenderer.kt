@@ -3,7 +3,7 @@ package com.coffeepeek.admin.di.appupdate
 import com.coffeepeek.admin.ui.NavMetrics
 
 import androidx.compose.runtime.Composable
-import com.coffeepeek.admin.feature.appupdate.ui.AppUpdateRenderer
+import com.coffeepeek.admin.ui.screen.appupdate.AppUpdateRenderer
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.admin.ui.component.CpSnackbarHost
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons

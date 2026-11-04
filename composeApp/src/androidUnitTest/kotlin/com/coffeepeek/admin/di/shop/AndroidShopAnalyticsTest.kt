@@ -2,7 +2,6 @@
 package com.coffeepeek.admin.di.shop
 
 import com.coffeepeek.admin.analytics.*
-import com.coffeepeek.admin.feature.checkin.api.CheckInFlowHandoff
 import com.coffeepeek.feature.shop.api.*
 import com.coffeepeek.feature.shop.domain.repository.ShopCheckInPhotoUploadFailure
 import kotlinx.coroutines.test.*

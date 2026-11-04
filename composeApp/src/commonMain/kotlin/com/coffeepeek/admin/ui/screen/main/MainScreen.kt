@@ -253,9 +253,9 @@ internal fun ComposeMainScreen(isLoggedIn: Boolean, onMapExpandedChange: (Boolea
 
                     navigation<Navigator.Screen.CommunityGraph>(startDestination = Navigator.Screen.CommunityTab) {
                         composable<Navigator.Screen.CommunityTab> {
-                            koinInject<com.coffeepeek.admin.feature.community.ui.CommunityScreenRenderer>().Content(
+                            koinInject<com.coffeepeek.admin.ui.screen.community.CommunityScreenRenderer>().Content(
                                 onCreateCheckIn = { Navigator.navigate(Navigator.Screen.CreateCheckIn) },
-                                notificationsAction = { koinInject<com.coffeepeek.admin.feature.notifications.ui.NotificationsRenderer>().Bell() },
+                                notificationsAction = { koinInject<com.coffeepeek.admin.ui.screen.notifications.NotificationsRenderer>().Bell() },
                             )
                         }
                     }

@@ -2,9 +2,6 @@ package com.coffeepeek.admin.di.favorites
 
 import com.coffeepeek.admin.analytics.Entity
 
-import com.coffeepeek.admin.feature.favorites.api.RoasterFavorites
-import com.coffeepeek.admin.feature.favorites.api.roasterFavoriteId
-import com.coffeepeek.admin.feature.favorites.api.CatalogItem
 import com.coffeepeek.core.session.SessionReader
 import com.coffeepeek.feature.favorites.domain.model.FavoriteRoaster
 import com.coffeepeek.feature.favorites.domain.repository.FavoriteRoastersRepository

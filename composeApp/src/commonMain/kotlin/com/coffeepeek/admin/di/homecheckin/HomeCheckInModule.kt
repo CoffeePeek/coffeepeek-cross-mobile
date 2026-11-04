@@ -1,7 +1,7 @@
 package com.coffeepeek.admin.di.homecheckin
 
 import com.coffeepeek.admin.analytics.CheckInSource
-import com.coffeepeek.admin.feature.catalog.api.BrewMethodCatalog
+import com.coffeepeek.admin.di.catalog.BrewMethodCatalog
 import com.coffeepeek.feature.coffee.api.CoffeePicker
 import com.coffeepeek.admin.locator.Constants
 import com.coffeepeek.core.network.ApiClients

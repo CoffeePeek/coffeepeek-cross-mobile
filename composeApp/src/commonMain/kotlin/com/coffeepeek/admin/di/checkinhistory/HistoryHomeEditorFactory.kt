@@ -7,7 +7,7 @@ import com.coffeepeek.admin.di.shelf.ShelfHomeCheckInBags
 import com.coffeepeek.admin.analytics.CheckInTracker
 import com.coffeepeek.admin.di.homecheckin.AppHomeCheckInRepository
 import com.coffeepeek.admin.di.homecheckin.appHomeCheckInEditor
-import com.coffeepeek.admin.feature.catalog.api.BrewMethodCatalog
+import com.coffeepeek.admin.di.catalog.BrewMethodCatalog
 import com.coffeepeek.feature.coffee.api.CoffeePicker
 import com.coffeepeek.core.designsystem.component.CoffeePeekImage
 import com.coffeepeek.feature.homecheckin.api.HomeCheckInDetailEntry

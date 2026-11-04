@@ -1,8 +1,8 @@
 package com.coffeepeek.admin.di.collections
 
-import com.coffeepeek.admin.feature.favorites.api.RoasterFavorites
+import com.coffeepeek.admin.di.favorites.RoasterFavorites
 import com.coffeepeek.core.session.SessionReader
-import com.coffeepeek.admin.feature.favorites.api.CatalogItem
+import com.coffeepeek.admin.di.favorites.CatalogItem
 import com.coffeepeek.feature.collections.api.CollectionTarget
 import com.coffeepeek.feature.collections.api.CollectionTargetKind
 import kotlinx.coroutines.CancellationException

@@ -62,4 +62,8 @@
     <string name="settings_update_failed">Не ўдалося праверыць абнаўленні. Паспрабуйце пазней.</string>
     <string name="settings_update_available">Даступная новая версія CoffeePeek</string>
     <string name="settings_version">Версія %1$s</string>
+    <string name="settings_guest_prompt">Далучайцеся да супольнасці, каб захоўваць любімыя месцы і дзяліцца ўражаннямі.</string>
+    <string name="settings_guest_login">Увайсці</string>
+    <string name="settings_guest_no_account">Няма ўліковага запісу?</string>
+    <string name="settings_guest_register">Зарэгістравацца</string>
 </resources>

@@ -9,7 +9,7 @@ import com.coffeepeek.core.network.SessionTokens
 import com.coffeepeek.admin.di.shelf.shelfModule
 import com.coffeepeek.core.session.SessionReader
 import com.coffeepeek.core.session.SessionStore
-import com.coffeepeek.admin.feature.catalog.api.BrewMethodCatalog
+import com.coffeepeek.admin.di.catalog.BrewMethodCatalog
 import com.coffeepeek.feature.coffee.api.CoffeePicker
 import com.coffeepeek.feature.checkinhistory.domain.repository.CheckInHistoryRepository
 import com.coffeepeek.feature.checkinhistory.domain.repository.HomeHistoryReader

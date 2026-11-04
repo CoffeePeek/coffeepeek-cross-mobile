@@ -1,7 +1,7 @@
 package com.coffeepeek.admin.di.roaster
 
 import com.coffeepeek.admin.di.shop.shopBrowsingModule
-import com.coffeepeek.admin.feature.favorites.api.RoasterFavorites
+import com.coffeepeek.admin.di.favorites.RoasterFavorites
 import com.coffeepeek.admin.sandbox.backend.SandboxBackend
 import com.coffeepeek.core.network.ApiClients
 import com.coffeepeek.core.network.SessionCredentials
@@ -70,8 +70,8 @@ class RoasterModuleTest {
     }
 
     private class FakeFavorites : RoasterFavorites {
-        override fun observeFavorites() = MutableStateFlow(emptyList<com.coffeepeek.admin.feature.favorites.api.CatalogItem>())
-        override suspend fun setFavorite(roaster: com.coffeepeek.admin.feature.favorites.api.CatalogItem, isFavorite: Boolean) = Result.success(Unit)
+        override fun observeFavorites() = MutableStateFlow(emptyList<com.coffeepeek.admin.di.favorites.CatalogItem>())
+        override suspend fun setFavorite(roaster: com.coffeepeek.admin.di.favorites.CatalogItem, isFavorite: Boolean) = Result.success(Unit)
     }
 
     private class Fixture(

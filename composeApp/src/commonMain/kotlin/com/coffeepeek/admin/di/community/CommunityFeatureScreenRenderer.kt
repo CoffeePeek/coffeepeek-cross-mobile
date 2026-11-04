@@ -5,8 +5,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.foundation.layout.padding
 import com.coffeepeek.admin.analytics.TrackFeedViewed
 import com.coffeepeek.admin.analytics.analyticsExposure
-import com.coffeepeek.admin.feature.catalog.api.methodLabel
-import com.coffeepeek.admin.feature.community.ui.CommunityScreenRenderer
+import com.coffeepeek.admin.di.catalog.methodLabel
+import com.coffeepeek.admin.ui.screen.community.CommunityScreenRenderer
 import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.ui.component.CpSnackbarHost
 import com.coffeepeek.core.designsystem.component.CoffeePeekPhotoViewer

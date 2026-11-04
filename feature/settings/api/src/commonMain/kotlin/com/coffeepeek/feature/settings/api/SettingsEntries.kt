@@ -26,8 +26,6 @@ interface UsagePolicyEntry {
 
 /** App-rendered pieces of the Settings tab. */
 class SettingsSlots(
-    /** The sign-in prompt card shared with other screens (login and register actions are the tab's own callbacks). */
-    val guestCard: @Composable (onLogin: () -> Unit, onRegister: () -> Unit, modifier: Modifier) -> Unit,
     /** A short message that does not take focus (a toast on Android); shown for the update check outcome. */
     val notify: (String) -> Unit,
     /** App composes the existing notification preference; settings owns only its place and copy. */

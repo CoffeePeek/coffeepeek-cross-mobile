@@ -1,6 +1,6 @@
 package com.coffeepeek.admin.di.discovery
 
-import com.coffeepeek.admin.feature.community.ui.FeedSessions
+import com.coffeepeek.admin.ui.screen.community.FeedSessions
 import com.coffeepeek.admin.di.favorites.serverFavoriteShopsModule
 import com.coffeepeek.admin.utils.FavoriteSync
 import com.coffeepeek.core.session.Session
@@ -9,8 +9,8 @@ import com.coffeepeek.feature.favorites.domain.model.FavoriteAddress
 import com.coffeepeek.feature.favorites.domain.model.FavoriteEntry
 import com.coffeepeek.feature.favorites.domain.model.FavoriteKind
 import com.coffeepeek.feature.favorites.domain.repository.AccountFavorites
-import com.coffeepeek.admin.feature.favorites.api.CatalogItem
-import com.coffeepeek.admin.feature.favorites.api.PublicAddress
+import com.coffeepeek.admin.di.favorites.CatalogItem
+import com.coffeepeek.admin.di.favorites.PublicAddress
 import com.coffeepeek.feature.shop.api.PublicShopDetails
 import com.coffeepeek.feature.shop.api.PublicShopSummary
 import com.coffeepeek.feature.discovery.domain.model.CatalogEntry

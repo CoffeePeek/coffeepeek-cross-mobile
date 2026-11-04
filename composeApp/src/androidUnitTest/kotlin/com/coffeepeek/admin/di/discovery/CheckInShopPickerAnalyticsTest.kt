@@ -2,7 +2,7 @@
 package com.coffeepeek.admin.di.discovery
 
 import com.coffeepeek.admin.analytics.*
-import com.coffeepeek.admin.feature.checkin.api.CheckInFlowHandoff
+import com.coffeepeek.admin.di.shop.CheckInFlowHandoff
 import kotlinx.coroutines.test.*
 import kotlin.test.*
 

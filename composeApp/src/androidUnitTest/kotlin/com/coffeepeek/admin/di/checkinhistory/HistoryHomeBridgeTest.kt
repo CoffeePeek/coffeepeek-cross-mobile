@@ -3,7 +3,7 @@ package com.coffeepeek.admin.di.checkinhistory
 import androidx.lifecycle.ViewModel
 import com.coffeepeek.admin.analytics.CheckInTracker
 import com.coffeepeek.admin.di.shop.CheckInTestSessions
-import com.coffeepeek.admin.feature.catalog.api.BrewMethodCatalog
+import com.coffeepeek.admin.di.catalog.BrewMethodCatalog
 import com.coffeepeek.feature.coffee.api.CoffeePicker
 import com.coffeepeek.feature.coffee.api.CoffeePickerItem
 import com.coffeepeek.core.session.Session

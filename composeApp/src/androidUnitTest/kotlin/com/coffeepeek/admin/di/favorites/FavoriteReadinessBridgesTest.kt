@@ -1,7 +1,6 @@
 package com.coffeepeek.admin.di.favorites
 
 import com.coffeepeek.admin.di.shop.CheckInTestSessions
-import com.coffeepeek.admin.feature.favorites.data.ServerRoasterFavorites
 import com.coffeepeek.core.session.Session
 import com.coffeepeek.feature.favorites.domain.model.FavoriteAddress
 import com.coffeepeek.feature.favorites.domain.model.FavoriteEntry

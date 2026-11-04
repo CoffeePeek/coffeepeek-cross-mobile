@@ -6,7 +6,7 @@ import com.coffeepeek.admin.di.coffee.CoffeeShelfTab
 import com.coffeepeek.admin.di.checkinhistory.FeatureCheckInHistoryScreenRenderer
 import com.coffeepeek.admin.di.checkinhistory.HistoryHomeEditorFactory
 import com.coffeepeek.admin.di.checkinhistory.checkInHistoryModule
-import com.coffeepeek.admin.feature.catalog.api.BrewMethodCatalog
+import com.coffeepeek.admin.di.catalog.BrewMethodCatalog
 import com.coffeepeek.admin.di.homecheckin.FeatureCheckInCreateFlowRenderer
 import com.coffeepeek.admin.di.homecheckin.homeCheckInModule
 import com.coffeepeek.core.network.ApiClients

@@ -2,7 +2,7 @@ package com.coffeepeek.admin.di.community
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import com.coffeepeek.admin.feature.community.ui.CheckInDetailScreenRenderer
+import com.coffeepeek.admin.ui.screen.community.CheckInDetailScreenRenderer
 import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.feature.authorblocking.api.AuthorBlockActions
 import com.coffeepeek.feature.authorblocking.api.AuthorVisibility

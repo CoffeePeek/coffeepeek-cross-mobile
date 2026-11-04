@@ -1,6 +1,6 @@
 package com.coffeepeek.admin.di.contributions
 
-import com.coffeepeek.admin.feature.community.ui.FeedSessions
+import com.coffeepeek.admin.ui.screen.community.FeedSessions
 import com.coffeepeek.core.session.Session
 import com.coffeepeek.feature.contributions.domain.model.CatalogOption
 import com.coffeepeek.feature.contributions.domain.model.Catalogs

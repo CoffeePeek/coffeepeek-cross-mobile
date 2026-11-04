@@ -10,7 +10,6 @@ import com.coffeepeek.admin.ui.screen.shop.CheckInDraftValidationError
 
 import com.coffeepeek.admin.ui.screen.shop.CheckInDraft
 import com.coffeepeek.admin.ui.screen.shop.validationError
-import com.coffeepeek.admin.utils.PickedImage
 import kotlin.test.Test
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull

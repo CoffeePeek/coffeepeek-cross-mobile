@@ -11,9 +11,6 @@
     <string name="entry">Уваход</string>
     <string name="password">Пароль</string>
     <string name="login">Увайсці</string>
-    <string name="sign_in_google">Увайсці праз Google</string>
-    <string name="sign_in_apple">Увайсці праз Apple</string>
-    <string name="registr">Зарэгістравацца</string>
     <string name="registration">Рэгістрацыя</string>
     <string name="maybe_later">Паспрабуйце пазней!</string>
     <string name="name">Імя</string>
@@ -21,7 +18,6 @@
     <string name="retry">Паспрабаваць зноў</string>
     <string name="checkin_rating_coffee">Кава</string>
     <string name="local_data_cleanup_error">Не ўдалося цалкам ачысціць лакальныя даныя</string>
-    <string name="shop_menu_gallery_open">Фатаграфіі меню</string>
     <string name="photo_pick_failed">Не ўдалося дадаць фота: %1$d</string>
     <string name="business_tab_title">Бізнес</string>
 </resources>

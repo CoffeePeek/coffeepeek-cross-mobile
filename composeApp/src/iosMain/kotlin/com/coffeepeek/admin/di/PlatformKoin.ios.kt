@@ -1,7 +1,5 @@
 package com.coffeepeek.admin.di
 
-import com.coffeepeek.admin.di.FeatureShopReportScreenRenderer
-import com.coffeepeek.admin.di.FeatureShopMenuGalleryScreenRenderer
 import com.coffeepeek.admin.di.shop.AppShopCheckInDateFormatter
 import com.coffeepeek.admin.di.shop.FeatureShopCheckInFormRenderer
 import com.coffeepeek.admin.di.shop.FeatureShopDetailScreenRenderer

@@ -2,7 +2,7 @@
 
 package com.coffeepeek.admin.analytics
 
-import com.coffeepeek.admin.feature.favorites.ui.TrackedFavoriteInteractions
+import com.coffeepeek.admin.di.favorites.TrackedFavoriteInteractions
 import com.coffeepeek.core.session.Session
 import com.coffeepeek.core.session.SessionReader
 import kotlinx.coroutines.CompletableDeferred

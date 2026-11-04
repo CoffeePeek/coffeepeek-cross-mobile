@@ -1,9 +1,9 @@
 package com.coffeepeek.admin.di.collections
 
 import com.coffeepeek.admin.di.shop.CheckInTestSessions
-import com.coffeepeek.admin.feature.favorites.api.RoasterFavorites
-import com.coffeepeek.admin.feature.favorites.api.CatalogItem
-import com.coffeepeek.admin.feature.favorites.api.PublicAddress
+import com.coffeepeek.admin.di.favorites.RoasterFavorites
+import com.coffeepeek.admin.di.favorites.CatalogItem
+import com.coffeepeek.admin.di.favorites.PublicAddress
 import com.coffeepeek.core.session.Session
 import com.coffeepeek.feature.collections.api.CollectionTarget
 import com.coffeepeek.feature.collections.api.CollectionTargetKind

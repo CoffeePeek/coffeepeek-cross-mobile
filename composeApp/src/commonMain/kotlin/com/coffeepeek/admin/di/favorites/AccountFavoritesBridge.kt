@@ -1,6 +1,5 @@
 package com.coffeepeek.admin.di.favorites
 
-import com.coffeepeek.admin.feature.favorites.api.PublicAddress
 import com.coffeepeek.feature.favorites.domain.model.FavoriteAddress
 import com.coffeepeek.feature.favorites.domain.model.FavoriteEntry
 import com.coffeepeek.feature.favorites.domain.model.FavoriteKind

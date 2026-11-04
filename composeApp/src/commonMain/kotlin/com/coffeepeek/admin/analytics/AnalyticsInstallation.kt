@@ -17,8 +17,8 @@ internal fun installAnalytics(settings: SettingRepository, sessions: SessionRead
     val service = createAnalyticsService(settings, scope)
     Analytics.install(service)
     gateway.requestObserver = analyticsRequestObserver(service, sessions)
-    com.coffeepeek.admin.feature.favorites.api.FavoriteInteractions.current =
-        com.coffeepeek.admin.feature.favorites.ui.TrackedFavoriteInteractions(sessions, scope)
+    com.coffeepeek.admin.di.favorites.FavoriteInteractions.current =
+        com.coffeepeek.admin.di.favorites.TrackedFavoriteInteractions(sessions, scope)
     scope.launch { observeAnalyticsSession(service, sessions) }
 }
 

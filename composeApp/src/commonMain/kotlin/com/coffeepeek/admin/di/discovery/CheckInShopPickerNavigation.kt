@@ -1,6 +1,6 @@
 package com.coffeepeek.admin.di.discovery
 
-import com.coffeepeek.admin.feature.checkin.api.CheckInFlowHandoff
+import com.coffeepeek.admin.di.shop.CheckInFlowHandoff
 
 /** One selection/close per live destination; disposed or replaced callbacks cannot change navigation. */
 internal class CheckInShopPickerNavigation(

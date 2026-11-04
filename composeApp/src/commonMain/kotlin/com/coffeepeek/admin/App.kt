@@ -42,7 +42,7 @@ fun App(onReady: () -> Unit = {}) {
             Navigator()
             com.coffeepeek.admin.di.collections.CollectionsPickerHost()
             com.coffeepeek.admin.di.authorblocking.AuthorBlockingRootHost()
-            koinInject<com.coffeepeek.admin.feature.appupdate.ui.AppUpdateRenderer>().Prompt()
+            koinInject<com.coffeepeek.admin.ui.screen.appupdate.AppUpdateRenderer>().Prompt()
             com.coffeepeek.admin.analytics.AnalyticsPrivacy()
         }
     }

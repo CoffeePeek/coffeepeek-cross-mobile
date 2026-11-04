@@ -6,7 +6,7 @@ import com.coffeepeek.admin.analytics.Entity
 import com.coffeepeek.admin.analytics.parity.ParityHarness.record
 import com.coffeepeek.admin.di.favorites.trackFavoriteMutation
 import com.coffeepeek.admin.di.shop.CheckInTestSessions
-import com.coffeepeek.admin.feature.favorites.ui.TrackedFavoriteInteractions
+import com.coffeepeek.admin.di.favorites.TrackedFavoriteInteractions
 import com.coffeepeek.core.session.Session
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runCurrent

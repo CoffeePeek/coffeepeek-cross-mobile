@@ -2,13 +2,10 @@ package com.coffeepeek.admin.di.favorites
 
 import com.coffeepeek.admin.di.shop.CheckInTestSessions
 import com.coffeepeek.admin.di.collections.CollectionPickerRequests
-import com.coffeepeek.admin.feature.favorites.api.RoasterFavorites
 import com.coffeepeek.feature.favorites.domain.model.FavoriteAddress
 import com.coffeepeek.feature.favorites.domain.model.FavoriteEntry
 import com.coffeepeek.feature.favorites.domain.model.FavoriteKind
 import com.coffeepeek.feature.favorites.domain.repository.AccountFavorites
-import com.coffeepeek.admin.feature.favorites.api.CatalogItem
-import com.coffeepeek.admin.feature.favorites.api.PublicAddress
 import com.coffeepeek.core.session.Session
 import com.coffeepeek.feature.favorites.domain.model.FavoriteShop
 import com.coffeepeek.feature.shop.api.PublicShopSummary

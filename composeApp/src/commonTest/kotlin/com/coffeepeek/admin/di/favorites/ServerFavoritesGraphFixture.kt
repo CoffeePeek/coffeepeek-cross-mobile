@@ -1,7 +1,5 @@
 package com.coffeepeek.admin.di.favorites
 
-import com.coffeepeek.admin.feature.favorites.api.RoasterFavorites
-import com.coffeepeek.admin.feature.favorites.data.ServerRoasterFavorites
 import com.coffeepeek.admin.session.ReadOnlySessions
 import com.coffeepeek.core.session.SessionReader
 import com.coffeepeek.core.session.Session
@@ -9,8 +7,6 @@ import com.coffeepeek.feature.favorites.domain.model.FavoriteAddress
 import com.coffeepeek.feature.favorites.domain.model.FavoriteEntry
 import com.coffeepeek.feature.favorites.domain.model.FavoriteKind
 import com.coffeepeek.feature.favorites.domain.repository.AccountFavorites
-import com.coffeepeek.admin.feature.favorites.api.CatalogItem
-import com.coffeepeek.admin.feature.favorites.api.PublicAddress
 import com.coffeepeek.feature.shop.api.PublicShopDetails
 import com.coffeepeek.feature.shop.api.PublicShopSummary
 import com.coffeepeek.feature.favorites.api.FavoritesEntry

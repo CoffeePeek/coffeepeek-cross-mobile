@@ -1,6 +1,6 @@
 package com.coffeepeek.admin.di.roaster
 
-import com.coffeepeek.admin.feature.favorites.api.RoasterFavorites
+import com.coffeepeek.admin.di.favorites.RoasterFavorites
 import com.coffeepeek.admin.locator.Constants
 import com.coffeepeek.admin.locator.Locator
 import com.coffeepeek.core.network.ApiClients

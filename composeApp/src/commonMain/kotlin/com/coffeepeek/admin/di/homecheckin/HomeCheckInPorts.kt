@@ -3,8 +3,8 @@ package com.coffeepeek.admin.di.homecheckin
 import com.coffeepeek.admin.di.checkinhistory.CheckInHistorySession
 import com.coffeepeek.admin.di.shelf.ShelfHomeCheckInBags
 import com.coffeepeek.admin.analytics.safeAnalyticsError
-import com.coffeepeek.admin.feature.catalog.api.BrewMethodCatalog
-import com.coffeepeek.admin.feature.catalog.api.catalogBrewMethodSlug
+import com.coffeepeek.admin.di.catalog.BrewMethodCatalog
+import com.coffeepeek.admin.di.catalog.catalogBrewMethodSlug
 import com.coffeepeek.feature.coffee.api.CoffeePicker
 import com.coffeepeek.feature.homecheckin.domain.model.*
 import com.coffeepeek.feature.homecheckin.domain.repository.HomePreparationRepository

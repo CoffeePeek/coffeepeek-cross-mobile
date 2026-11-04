@@ -13,7 +13,7 @@ import coffeepeek.composeapp.generated.resources.check_in_create_close
 import com.coffeepeek.admin.analytics.AnalyticsOverlay
 import com.coffeepeek.admin.analytics.CheckInTracker
 import com.coffeepeek.admin.di.checkinhistory.CheckInHistorySession
-import com.coffeepeek.admin.feature.checkin.api.CheckInFlowHandoff
+import com.coffeepeek.admin.di.shop.CheckInFlowHandoff
 import com.coffeepeek.feature.homecheckin.api.CheckInCreatePickerEntry
 import com.coffeepeek.feature.homecheckin.impl.createCheckInCreatePickerEntry
 import com.coffeepeek.admin.analytics.Analytics
