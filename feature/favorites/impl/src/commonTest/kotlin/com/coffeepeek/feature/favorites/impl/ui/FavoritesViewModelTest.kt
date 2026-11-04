@@ -22,6 +22,17 @@ class FavoritesViewModelTest {
     @AfterTest fun tearDown() { store.clear(); Dispatchers.resetMain() }
     private fun vm(repo: Repo) = FavoritesViewModel(repo).also { store.put("favorites", it) }
 
+    @Test fun collectionsCanBeOpenedFromAnEmptyFavoritesListWithoutChangingMembership() = runTest(dispatcher) {
+        val repo = Repo().apply { values.value = Result.success(emptyList()) }
+        val vm = vm(repo)
+        runCurrent()
+        vm.onAction(FavoritesAction.Collections)
+        runCurrent()
+        assertEquals(FavoritesEvent.OpenCollections, vm.events.first())
+        assertEquals(0, repo.removals)
+        assertTrue(vm.state.value.shops.isEmpty())
+    }
+
     private class Repo : FavoritesRepository {
         val values = MutableStateFlow<Result<List<FavoriteShop>>>(Result.success(listOf(FavoriteShop("a", "A"))))
         var removeResult: Result<Unit> = Result.success(Unit)

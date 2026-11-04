@@ -225,7 +225,7 @@ internal fun PublicProfileScreen(
                     }
                     if (own != null) own.favoritesPreview {
                         ProfileSectionHeading(stringResource(Res.string.profile_section_favorites), onAll = own.onOpenFavorites)
-                    } else if (profile.favorites.isNotEmpty() || state.isLoadingFavorites || state.favoritesError != null) Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    } else if (viewingOwn && (profile.favorites.isNotEmpty() || state.isLoadingFavorites || state.favoritesError != null)) Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         Box(Modifier.padding(horizontal = 16.dp)) {
                             ProfileSectionHeading(stringResource(Res.string.profile_section_favorites), onAll = { section = ProfileSection.Favorites })
                         }
@@ -244,7 +244,7 @@ internal fun PublicProfileScreen(
                                 }
                             }
                         }
-                    }
+                    } else if (!viewingOwn) slots.featuredCollection(profile.slug)
 
                     if (state.checkIns.isNotEmpty() || state.isLoadingCheckIns || state.checkInsError != null || (own?.checkInCount ?: 0) > 0) Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         ProfileSectionHeading(stringResource(Res.string.profile_section_check_ins), onAll = own?.onOpenCheckIns ?: { section = ProfileSection.CheckIns })

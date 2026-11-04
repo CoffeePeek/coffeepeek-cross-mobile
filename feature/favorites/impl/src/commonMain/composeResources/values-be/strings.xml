@@ -1,4 +1,5 @@
 <resources>
+    <string name="favorites_collections">Мае падборкі</string>
     <string name="favorites_title">Абранае</string>
     <string name="favorites_share">Падзяліцца абраным</string>
     <string name="favorites_back">Назад</string>

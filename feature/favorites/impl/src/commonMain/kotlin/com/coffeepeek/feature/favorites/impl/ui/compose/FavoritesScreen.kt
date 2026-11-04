@@ -68,12 +68,14 @@ internal fun FavoritesScreen(
     distanceForCoordinates: (Double, Double) -> String? = { _, _ -> null },
     onOpenRoaster: (String) -> Unit = {},
     onShare: () -> Unit = {},
+    onOpenCollections: () -> Unit = {},
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val currentOpenShop by rememberUpdatedState(onOpenShop)
     val currentOpenRoaster by rememberUpdatedState(onOpenRoaster)
     val currentBack by rememberUpdatedState(onBack)
     val currentShare by rememberUpdatedState(onShare)
+    val currentOpenCollections by rememberUpdatedState(onOpenCollections)
     LaunchedEffect(viewModel) {
         viewModel.events.collect { event ->
             when (event) {
@@ -81,6 +83,7 @@ internal fun FavoritesScreen(
                 is FavoritesEvent.OpenRoaster -> currentOpenRoaster(event.publicSlug)
                 FavoritesEvent.Back -> currentBack()
                 FavoritesEvent.Share -> currentShare()
+                FavoritesEvent.OpenCollections -> currentOpenCollections()
             }
         }
     }
@@ -103,7 +106,7 @@ internal fun FavoritesScreenContent(
     LaunchedEffect(state.actionFailed) { if (state.actionFailed) snackbar.showSnackbar(actionError) }
     Scaffold(snackbarHost = { SnackbarHost(snackbar) }, topBar = {
         FavoritesTopBar(state.shops.isNotEmpty() || state.roasters.isNotEmpty(),
-            { onAction(FavoritesAction.Back) }, { onAction(FavoritesAction.Share) })
+            { onAction(FavoritesAction.Back) }, { onAction(FavoritesAction.Share) }, { onAction(FavoritesAction.Collections) })
     }) { padding ->
         Column(Modifier.fillMaxSize().padding(padding).consumeWindowInsets(padding)) {
             when {

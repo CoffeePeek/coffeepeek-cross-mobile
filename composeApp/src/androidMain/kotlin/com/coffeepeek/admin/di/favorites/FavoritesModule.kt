@@ -16,12 +16,21 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.map
 import org.koin.core.module.Module
 import org.koin.dsl.module
+import com.coffeepeek.admin.di.collections.CollectionPickerRequests
+import com.coffeepeek.admin.di.collections.CollectionPromptRoasterFavorites
+import com.coffeepeek.admin.feature.favorites.api.RoasterFavorites
+import com.coffeepeek.admin.feature.favorites.data.ServerRoasterFavorites
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 
 /** Active Android graph. Existing server infrastructure is shared with all legacy consumers. */
 internal fun serverFavoritesModule(): Module = module {
+    single { CollectionPickerRequests(get(), CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)) }
+    single<RoasterFavorites> { CollectionPromptRoasterFavorites(ServerRoasterFavorites(get(), get(), get()), get(), get()) }
     single<FavoritesRepository> {
         val shops = get<com.coffeepeek.domain.repository.ShopRepository>()
-        ServerFavoriteShopsRepository(get(), get(), shops::getShopDetails)
+        ServerFavoriteShopsRepository(get(), get(), get(), shops::getShopDetails)
     }
     factory { ObserveFavoriteIdsUseCase(get()) }
     single<FavoriteRoastersRepository> {

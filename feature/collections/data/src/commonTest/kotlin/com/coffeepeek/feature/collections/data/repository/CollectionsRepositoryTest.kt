@@ -15,6 +15,25 @@ import kotlinx.serialization.json.*
 import kotlin.test.*
 
 class CollectionsRepositoryTest {
+    @Test fun publicListDispatchRequiresExplicitPublicVisibilityWhileLegacySnapshotsRemainReadable() = runTest {
+        var response = body
+        val client = client { respond(response) }
+        try {
+            val repository = createCollectionsRepository(client, client, "https://fixture.invalid", Account())
+            assertEquals(SharedCollectionMode.Snapshot, repository.read(id).getOrThrow().mode)
+            val rejected = listOf("\"mode\":\"list\"", "\"mode\":\"list\",\"visibility\":null",
+                "\"mode\":\"list\",\"visibility\":\"private\"", "\"mode\":\"list\",\"visibility\":\"unknown\"",
+                "\"mode\":\"unknown\",\"visibility\":\"public\"", "\"mode\":\"snapshot\",\"visibility\":\"private\"",
+                "\"mode\":\"snapshot\",\"visibility\":\"unknown\"")
+            rejected.forEach { fields ->
+                response = body.replace("\"items\":", "$fields,\"items\":")
+                assertTrue(repository.read(id).isFailure, fields)
+            }
+            response = body.replace("\"items\":", "\"mode\":\"list\",\"visibility\":\"public\",\"items\":")
+            assertEquals(SharedCollectionMode.List, repository.read(id).getOrThrow().mode)
+        } finally { client.close() }
+    }
+
     @Test fun publicCardsKeepActualStatisticsAndGroupShopsBeforeRoasters() = runTest {
         val client = client { respond("""{"data":{"id":"$id","title":"Places","canonicalPath":"$path","items":[
             {"kind":"roaster","name":"Roaster","address":{"slug":"roaster"}},

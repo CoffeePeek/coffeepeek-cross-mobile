@@ -23,6 +23,7 @@ internal fun FavoritesDestination(entry: FavoritesEntry) {
         onBack = Navigator::popBack,
         onOpenRoaster = { slug -> Navigator.navigate(Navigator.Screen.RoasterDetail(slug)) },
         onShare = { Navigator.navigate(Navigator.Screen.CollectionsComposer) },
+        onOpenCollections = { Navigator.navigate(Navigator.Screen.CollectionsLibrary) },
         distanceForCoordinates = { latitude, longitude ->
             favoriteDistanceLabel(userLocation, latitude, longitude)
         },

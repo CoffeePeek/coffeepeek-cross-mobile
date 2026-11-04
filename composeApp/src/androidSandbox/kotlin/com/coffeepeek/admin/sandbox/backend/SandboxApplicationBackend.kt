@@ -24,7 +24,8 @@ internal enum class SandboxAuthPolicy { Works, WrongPassword, EmailTaken, Regist
 internal enum class SandboxFeed { Single, Paged, PageFailsOnce, InvalidCursor, Empty, Failure }
 
 /** Local fixture contracts for the existing app, not an alternative implementation of its UI. */
-internal class SandboxApplicationBackend(private val today: LocalDate, private val visits: MutableList<JsonObject>) {
+internal class SandboxApplicationBackend(private val today: LocalDate, private val visits: MutableList<JsonObject>,
+    uploadedCover: (String, Long) -> Boolean = { _, _ -> false }) {
     companion object {
         const val SELF_ID = "sandbox-author-self"
         const val FRIEND_ID = "sandbox-author-friend"
@@ -41,6 +42,7 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
     private val discoveryStore = SandboxDiscoveryBackend({ populated }, { favorites }, ::photo, ::address, ::catalog)
     private val favorites = linkedSetOf("coffee_shop:sandbox-cafe", "roaster:sandbox-roaster", "drink:cappuccino")
     private val collectionStore = SandboxCollectionsBackend(today, ::collectionFavorites)
+    private val savedCollections = SandboxSavedCollectionsBackend(today, ::collectionFavorites, uploadedCover)
     private var username = "Sandbox"
     private var about = "Локальный тестовый профиль. Все действия остаются в Sandbox."
     private var populated = true
@@ -77,16 +79,23 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
         about = "Локальный тестовый профиль. Все действия остаются в Sandbox."
         favorites.clear()
         collectionStore.reset()
+        savedCollections.reset()
         if (populated) favorites += listOf("coffee_shop:sandbox-cafe", "roaster:sandbox-roaster", "drink:cappuccino")
     }
 
     fun registerOwnershipEvidence(id: String) = ownershipStore.registerEvidence(id)
     fun ownershipEvidenceAvailable(claimId: String, photoId: String) = ownershipStore.evidenceAvailable(claimId, photoId)
 
+    fun reserveCollectionCovers(owner: String?, input: JsonArray) = savedCollections.reserve(owner, input)
+    fun collectionCoverKey(path: String, owner: String?) = savedCollections.coverKey(path, owner)
+
     fun handle(request: HttpRequestData, body: JsonElement?): Pair<HttpStatusCode, JsonObject>? {
         val path = request.url.encodedPath.lowercase()
         val method = request.method
         val input = body as? JsonObject ?: buildJsonObject {}
+        if (path == "/api/v1/profiles/$FRIEND_SLUG/collection" && FRIEND_ID in blocked)
+            return HttpStatusCode.NotFound to envelope(JsonNull, false)
+        savedCollections.handle(request, input)?.let { return it }
         collectionStore.handle(path, method, input)?.let { return it }
         notificationStore.handle(path, method, input)?.let { return it }
         ownershipStore.handle(request, input)?.let { return it }
@@ -152,7 +161,8 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
             return if (friend) HttpStatusCode.OK to buildJsonObject { put("data", friendProfile()); put("address", address(FRIEND_SLUG, "/users/$FRIEND_SLUG")) }
             else HttpStatusCode.OK to buildJsonObject { put("data", profile()); put("address", address("sandbox", "/users/sandbox")) }
         }
-        if (path.startsWith("/api/v1/profiles/") && path.endsWith("/favorites")) return ok(favoriteRows())
+        if (path.startsWith("/api/v1/profiles/") && path.endsWith("/favorites"))
+            return ok(if (path == "/api/v1/profiles/sandbox/favorites") favoriteRows() else JsonArray(emptyList()))
         if (path.startsWith("/api/v1/profiles/") && path.endsWith("/activity")) {
             val year = request.url.parameters["year"]?.toIntOrNull() ?: today.year
             val month = request.url.parameters["month"]?.toIntOrNull() ?: today.monthValue

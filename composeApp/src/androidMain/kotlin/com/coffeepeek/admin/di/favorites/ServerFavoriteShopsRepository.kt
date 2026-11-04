@@ -1,6 +1,7 @@
 package com.coffeepeek.admin.di.favorites
 
 import com.coffeepeek.admin.analytics.Entity
+import com.coffeepeek.admin.di.collections.CollectionPickerRequests
 
 import com.coffeepeek.domain.feature.favorites.api.FavoriteEntry
 import com.coffeepeek.domain.feature.favorites.api.FavoriteKind
@@ -19,6 +20,7 @@ import kotlinx.coroutines.sync.withPermit
 internal class ServerFavoriteShopsRepository(
     private val server: ServerFavorites,
     private val sessions: SessionReader,
+    private val pickerRequests: CollectionPickerRequests? = null,
     private val detail: suspend (String) -> Result<CoffeeShopDetails>,
 ) : FavoritesRepository {
     override fun observeIds(): Flow<Result<Set<String>>> = server.observeFavorites().map { result ->
@@ -56,12 +58,15 @@ internal class ServerFavoriteShopsRepository(
 
     private suspend fun saveUntracked(shop: FavoriteShop): Result<Unit> = resultOf {
         val account = requireNotNull(owner()) { "Sign in to save favorites" }
+        val lease = pickerRequests?.lease(account)
         val resolved = detail(shop.id).getOrThrow().shop
         requireOwner(account)
         val address = requireNotNull(resolved.publicAddress) { "Shop has no public address" }
         server.setFavorite(FavoriteEntry(FavoriteKind.CoffeeShop, address,
             name = resolved.title, coverPhotoUrl = resolved.photoUrl), true).getOrThrow()
         requireOwner(account)
+        pickerRequests?.added(lease, address.slug)
+        Unit
     }
 
     override suspend fun remove(shopId: String): Result<Unit> =

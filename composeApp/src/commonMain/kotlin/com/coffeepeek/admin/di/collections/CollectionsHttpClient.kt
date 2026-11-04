@@ -22,6 +22,10 @@ internal class CollectionsHttpClient(base: HttpClient, sessions: SessionReader, 
                 val session = sessions.peekSession()?.takeIf(sessions::isActiveSession)
                 if (session?.userId != expected || (verifyBearer && context.headers[HttpHeaders.Authorization] != "Bearer ${session.accessToken}"))
                     throw CancellationException("Collection account changed before send")
+                if (!verifyBearer) {
+                    context.headers.remove("X-CoffeePeek-Sandbox-Owner")
+                    context.headers.append("X-CoffeePeek-Sandbox-Owner", expected)
+                }
             }
         }
     }

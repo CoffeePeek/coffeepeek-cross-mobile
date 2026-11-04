@@ -48,4 +48,6 @@ class ProfileSlots(
     val checkInCard: ProfileCheckInCard,
     val photoPrefetch: ProfilePhotoPrefetch,
     val activityPreview: ProfileActivityPreview,
+    /** Only the profile's explicitly featured public collection; empty when hidden. */
+    val featuredCollection: @Composable (profileSlug: String) -> Unit = {},
 )

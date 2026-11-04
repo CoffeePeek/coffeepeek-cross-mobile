@@ -12,5 +12,6 @@ interface FavoritesEntry {
         distanceForCoordinates: (latitude: Double, longitude: Double) -> String? = { _, _ -> null },
         onOpenRoaster: (publicSlug: String) -> Unit = {},
         onShare: () -> Unit = {},
+        onOpenCollections: () -> Unit = {},
     )
 }
