@@ -9,6 +9,8 @@ import com.coffeepeek.feature.shop.domain.model.ShopCheckInVisibility
 import com.coffeepeek.feature.shop.domain.model.ShopConsumedDrinkOption
 import com.coffeepeek.feature.shop.domain.model.ShopRating
 import com.coffeepeek.feature.shop.domain.repository.ShopCheckInCreationUnconfirmed
+import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopCheckInSubmitFailure
+import com.coffeepeek.feature.shop.domain.repository.ShopCheckInRejection
 import com.coffeepeek.feature.shop.domain.repository.ShopCheckInRepository
 import com.coffeepeek.feature.shop.domain.usecase.ShopCheckInValidationError
 import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopCheckInFormAction
@@ -263,6 +265,20 @@ class ShopCheckInCreateViewModelTest {
         viewModel.onAction(ShopCheckInFormAction.TextChanged("Coffee!"))
         runCurrent()
         assertFalse(viewModel.state.value.submitFailed)
+    }
+
+    @Test fun aServerRejectionReachesTheStateWithItsStatusAndMessage() = runTest(dispatcher) {
+        val repository = Repository().apply { writeResult = Result.failure(ShopCheckInRejection(413, "Too big")) }
+        val viewModel = viewModel(repository, Drafts())
+        runCurrent()
+        viewModel.onAction(ShopCheckInFormAction.TextChanged("Coffee"))
+        viewModel.onAction(ShopCheckInFormAction.Submit)
+        runCurrent()
+        assertEquals(ShopCheckInSubmitFailure(413, "Too big"), viewModel.state.value.submitFailure)
+        repository.writeResult = Result.failure(IllegalStateException("local"))
+        viewModel.onAction(ShopCheckInFormAction.Submit)
+        runCurrent()
+        assertEquals(ShopCheckInSubmitFailure(), viewModel.state.value.submitFailure)
     }
 
     @Test fun knownRejectionKeepsDraftAndAllowsExplicitRetry() = runTest(dispatcher) {

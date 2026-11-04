@@ -183,4 +183,9 @@
     <string name="shop_schedule_today_closed">Сёння выходны</string>
     <string name="shop_schedule_expanded_state">Разгорнута</string>
     <string name="shop_schedule_collapsed_state">Згорнута</string>
+    <string name="shop_checkin_error_unauthorized">Увайдзіце ў акаўнт, каб стварыць чэкін</string>
+    <string name="shop_checkin_error_forbidden">Стварэнне чэкіна недаступнае для гэтага акаўнта</string>
+    <string name="shop_checkin_error_shop_gone">Кавярня больш недаступная. Выберыце іншую</string>
+    <string name="shop_checkin_error_photos_too_large">Фатаграфіі занадта вялікія. Паменшце іх памер</string>
+    <string name="shop_checkin_error_too_many_requests">Занадта шмат запытаў. Паспрабуйце пазней</string>
 </resources>

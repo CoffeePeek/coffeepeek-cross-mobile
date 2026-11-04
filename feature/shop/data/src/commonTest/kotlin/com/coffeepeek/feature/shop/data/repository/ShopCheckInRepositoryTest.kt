@@ -6,6 +6,7 @@ import com.coffeepeek.feature.shop.domain.model.ShopCheckInPhoto
 import com.coffeepeek.feature.shop.domain.model.ShopRating
 import com.coffeepeek.feature.shop.domain.model.ShopCheckInVisibility
 import com.coffeepeek.feature.shop.domain.repository.ShopCheckInCreationUnconfirmed
+import com.coffeepeek.feature.shop.domain.repository.ShopCheckInRejection
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
 import io.ktor.http.HttpHeaders
@@ -256,6 +257,30 @@ class ShopCheckInRepositoryTest {
                 repository.create(input).getOrThrow()
                 assertEquals(listOf(urls, "/one", "/two", create), paths, stage)
             } finally { api.close(); upload.close(); apiEngine.close(); uploadEngine.close() }
+        }
+    }
+
+    @Test fun aRejectedCreateCarriesTheStatusAndOnlyTheServersOwnMessage() = runBlocking {
+        val json = headersOf(HttpHeaders.ContentType, "application/json")
+        for ((body, expected) in listOf(
+            "<html>Error</html>" to null, "" to null,
+            """{"isSuccess":false,"message":"Limit reached","data":null}""" to "Limit reached",
+            """{"isSuccess":false,"message":"  ","data":null}""" to null,
+        )) for (status in listOf(401, 403, 404, 413, 429, 503)) {
+            val apiEngine = MockEngine { request ->
+                when (request.url.encodedPath) {
+                    "/api/v1/check-ins" -> respond(body, HttpStatusCode.fromValue(status), json)
+                    else -> error("Unexpected path: ${request.url.encodedPath}")
+                }
+            }
+            val api = HttpClientFactory(apiEngine).api("https://example.com")
+            val upload = HttpClientFactory(MockEngine { error("No photos") }).upload()
+            try {
+                val rejection = assertIs<ShopCheckInRejection>(createShopCheckInRepository(api, upload).create(validInput()).exceptionOrNull(),
+                    "$status $body")
+                assertEquals(status, rejection.status)
+                assertEquals(expected, rejection.serverMessage)
+            } finally { api.close(); upload.close(); apiEngine.close() }
         }
     }
 

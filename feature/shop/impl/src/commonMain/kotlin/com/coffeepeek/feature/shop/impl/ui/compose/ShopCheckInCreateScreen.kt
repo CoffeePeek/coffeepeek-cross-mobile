@@ -47,6 +47,11 @@ import com.coffeepeek.feature.shop.impl.resources.shop_checkin_form_history
 import com.coffeepeek.feature.shop.impl.resources.shop_checkin_form_uncertain
 import com.coffeepeek.feature.shop.impl.resources.shop_checkin_form_history_checked
 import com.coffeepeek.feature.shop.impl.resources.shop_checkin_form_draft_error
+import com.coffeepeek.feature.shop.impl.resources.shop_checkin_error_forbidden
+import com.coffeepeek.feature.shop.impl.resources.shop_checkin_error_photos_too_large
+import com.coffeepeek.feature.shop.impl.resources.shop_checkin_error_shop_gone
+import com.coffeepeek.feature.shop.impl.resources.shop_checkin_error_too_many_requests
+import com.coffeepeek.feature.shop.impl.resources.shop_checkin_error_unauthorized
 import com.coffeepeek.feature.shop.impl.resources.shop_checkin_form_submit_error
 import com.coffeepeek.feature.shop.impl.resources.shop_checkin_form_invalid_shop
 import com.coffeepeek.feature.shop.impl.resources.shop_checkin_form_invalid_date
@@ -64,6 +69,7 @@ import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopCheckInRatings
 import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopCheckInSubmissionContent
 import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopCheckInVisibilityField
 import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopCheckInPhotoAttachments
+import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopCheckInSubmitFailure
 import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopCheckInFormAction
 import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopCheckInFormEvent
 import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopCheckInFormState
@@ -192,8 +198,9 @@ internal fun ShopCheckInCreateScreenContent(
             }
             if (state.draftFailed) Text(stringResource(Res.string.shop_checkin_form_draft_error),
                 color = MaterialTheme.colorScheme.error)
-            if (state.submitFailed) Text(stringResource(Res.string.shop_checkin_form_submit_error),
-                color = MaterialTheme.colorScheme.error)
+            state.submitFailure?.let { failure ->
+                Text(submitFailureText(failure), color = MaterialTheme.colorScheme.error)
+            }
             if (state.deliveryUnconfirmed) {
                 Text(stringResource(Res.string.shop_checkin_form_uncertain),
                     modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite })
@@ -264,3 +271,14 @@ private fun ShopCheckInFormPreview(dark: Boolean, uncertain: Boolean = false,
 @Preview @Composable private fun ShopCheckInLoadingDarkPreview() = ShopCheckInFormPreview(true, loading = true)
 @Preview @Composable private fun ShopCheckInSendingLightPreview() = ShopCheckInFormPreview(false, submitting = true)
 @Preview @Composable private fun ShopCheckInSendingDarkPreview() = ShopCheckInFormPreview(true, submitting = true)
+
+/** The server's own words win; otherwise a status the user can act on, else the generic "saved, try again" text. */
+@Composable
+private fun submitFailureText(failure: ShopCheckInSubmitFailure): String = failure.serverMessage ?: stringResource(when (failure.status) {
+    401 -> Res.string.shop_checkin_error_unauthorized
+    403 -> Res.string.shop_checkin_error_forbidden
+    404 -> Res.string.shop_checkin_error_shop_gone
+    413 -> Res.string.shop_checkin_error_photos_too_large
+    429 -> Res.string.shop_checkin_error_too_many_requests
+    else -> Res.string.shop_checkin_form_submit_error
+})

@@ -4,6 +4,7 @@ import com.coffeepeek.core.network.requestResult
 import com.coffeepeek.feature.shop.domain.model.ShopConsumedDrinkOption
 import com.coffeepeek.feature.shop.domain.model.ShopRating
 import com.coffeepeek.feature.shop.domain.repository.ShopCheckInCreationUnconfirmed
+import com.coffeepeek.feature.shop.domain.repository.ShopCheckInRejection
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.expectSuccess
@@ -23,7 +24,7 @@ internal class ShopCheckInBackend(private val client: HttpClient) {
         val httpResponse = client.get("/api/catalogs/drinks")
         val response = httpResponse.body<DrinkOptionsResponse>()
         val options = response.data
-        if (!httpResponse.status.isSuccess() || !response.isSuccess || options == null) throw ShopCheckInRejected()
+        if (!httpResponse.status.isSuccess() || !response.isSuccess || options == null) throw ShopCheckInRejection(httpResponse.status.value, null)
         // The select field needs unique ids, so a repeated slug in the catalog keeps its first entry.
         options.distinctBy { it.slug }.map { ShopConsumedDrinkOption(it.slug, it.nameRu, it.nameEn) }
     }
@@ -52,11 +53,10 @@ internal class ShopCheckInBackend(private val client: HttpClient) {
         }
         if (!response.status.isSuccess()) {
             val message = response.readEnvelopeOrNull()?.message?.takeIf(String::isNotBlank)
-            throw ShopCheckInRejected(message ?: "Check-in request was rejected (${response.status.value})")
+            throw ShopCheckInRejection(response.status.value, message)
         }
         val envelope = response.readEnvelopeOrNull() ?: throw ShopCheckInCreationUnconfirmed()
-        if (!envelope.isSuccess) throw ShopCheckInRejected(envelope.message?.takeIf(String::isNotBlank)
-            ?: "Check-in request was rejected")
+        if (!envelope.isSuccess) throw ShopCheckInRejection(response.status.value, envelope.message?.takeIf(String::isNotBlank))
         if (envelope.data?.id.isNullOrBlank()) throw ShopCheckInCreationUnconfirmed()
     }
 }
@@ -113,4 +113,3 @@ private data class CreatedCheckInDto(@SerialName("id") val id: String)
 
 private fun ShopRating.toRequest() = CheckInRatingRequest(place, service, coffee)
 
-private class ShopCheckInRejected(message: String = "Check-in request was rejected") : Exception(message)
