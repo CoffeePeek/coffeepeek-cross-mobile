@@ -1,6 +1,6 @@
 package com.coffeepeek.admin.auth
 
-import android.app.Activity
+import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
@@ -43,7 +43,7 @@ actual object GoogleAuth {
         }
 
         val context = LocalContext.current
-        val activity = context as? Activity
+        val activity = LocalActivity.current
 
         val gso = remember(webClientId) {
             GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)

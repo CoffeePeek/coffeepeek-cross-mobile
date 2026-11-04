@@ -10,7 +10,7 @@ import kotlin.test.assertTrue
 
 class CoffeePeekLikePaletteTest {
     @Test fun selectedUsesGoldRatherThanErrorOrTextColor() {
-        assertEquals(CoffeePeekColors.GoldWarmHover, CoffeePeekColors.Like)
+        assertEquals(CoffeePeekColors.Primary, CoffeePeekColors.Like)
         assertEquals(CoffeePeekColors.Like, coffeePeekLikeColor(true, false, Color.White))
         assertEquals(CoffeePeekColors.Like, coffeePeekLikeColor(true, false, Color.Black))
         assertTrue(CoffeePeekColors.Like != CoffeePeekColors.Error)
@@ -27,13 +27,14 @@ class CoffeePeekLikePaletteTest {
         assertEquals(CoffeePeekColors.Like, coffeePeekLikeColor(true, true, Color.White))
     }
 
-    @Test fun goldAndNeutralRemainDistinctWithReadableSurfaceContrast() {
+    @Test fun selectedGoldRetainsBrandColorAndNeutralKeepsContrastOnBothSurfaces() {
         for ((surface, neutral) in listOf(CoffeePeekColors.LightSurface to CoffeePeekColors.LightTextPrimary,
             CoffeePeekColors.DarkSurface to CoffeePeekColors.DarkTextPrimary)) {
             val gold = coffeePeekLikeColor(true, false, neutral)
             assertTrue(gold != neutral)
-            val high = maxOf(gold.luminance(), surface.luminance())
-            val low = minOf(gold.luminance(), surface.luminance())
+            assertEquals(CoffeePeekColors.Primary, gold)
+            val high = maxOf(neutral.luminance(), surface.luminance())
+            val low = minOf(neutral.luminance(), surface.luminance())
             assertTrue((high + 0.05f) / (low + 0.05f) >= 3f)
         }
     }
@@ -46,5 +47,28 @@ class CoffeePeekLikePaletteTest {
             val low = minOf(gold.luminance(), plate.luminance())
             assertTrue((high + 0.05f) / (low + 0.05f) >= 3f)
         }
+    }
+
+    @Test fun opaqueGlassKeepsSelectedGoldAndNeutralContentInBothThemes() {
+        for ((surface, neutral) in listOf(CoffeePeekColors.LightSurface to CoffeePeekColors.LightTextPrimary,
+            CoffeePeekColors.DarkSurface to CoffeePeekColors.DarkTextPrimary)) {
+            for (style in listOf(CoffeePeekLikeButtonStyle.Glass, CoffeePeekLikeButtonStyle.FloatingGlass)) {
+                for (selected in listOf(false, true)) {
+                    val overImage = coffeePeekLikeUsesPhotoColor(true, style, opaque = true)
+                    val color = coffeePeekLikeColor(selected, overImage, neutral)
+                    if (!selected) {
+                        val high = maxOf(color.luminance(), surface.luminance())
+                        val low = minOf(color.luminance(), surface.luminance())
+                        assertTrue((high + 0.05f) / (low + 0.05f) >= 3f)
+                    }
+                    assertEquals(if (selected) CoffeePeekColors.Like else neutral, color)
+                }
+            }
+        }
+    }
+
+    @Test fun opaqueGlassPreferenceDoesNotChangeHeartsDirectlyOnPhotos() {
+        assertTrue(coffeePeekLikeUsesPhotoColor(true, CoffeePeekLikeButtonStyle.Plain, opaque = true))
+        assertTrue(coffeePeekLikeUsesPhotoColor(true, CoffeePeekLikeButtonStyle.Glass, opaque = false))
     }
 }

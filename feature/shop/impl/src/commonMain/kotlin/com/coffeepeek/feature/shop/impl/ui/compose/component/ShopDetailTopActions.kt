@@ -1,5 +1,7 @@
 package com.coffeepeek.feature.shop.impl.ui.compose.component
 
+import com.coffeepeek.core.designsystem.modifier.CoffeePeekGlassIcon
+
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -8,6 +10,8 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import com.coffeepeek.core.designsystem.modifier.LocalCoffeePeekGlassHazeState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
@@ -21,7 +25,7 @@ import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.shop.impl.resources.Res
 import com.coffeepeek.feature.shop.impl.resources.shop_detail_back
 import dev.chrisbanes.haze.HazeState
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 /** Hero-owned controls scroll with the photos; loading/error can render the same back control. */
@@ -37,21 +41,24 @@ internal fun ShopDetailTopActions(
     onShare: () -> Unit,
     modifier: Modifier = Modifier,
     hazeState: HazeState? = null,
+    favoriteSelection: Boolean = false,
 ) {
     val backScale = if (LocalLayoutDirection.current == LayoutDirection.Rtl) -1f else 1f
-    Row(modifier.fillMaxWidth().statusBarsPadding().padding(CoffeePeekDimens.spacing3),
+    CompositionLocalProvider(LocalCoffeePeekGlassHazeState provides hazeState) {
+      Row(modifier.fillMaxWidth().statusBarsPadding().padding(CoffeePeekDimens.spacing3),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically) {
         CoffeePeekGlassIconButton(onClick = onBack,
-            contentDescription = stringResource(Res.string.shop_detail_back), hazeState = hazeState) {
+            contentDescription = stringResource(Res.string.shop_detail_back), hazeState = hazeState, nativeIcon = CoffeePeekGlassIcon.Back) {
             Icon(CoffeePeekIcons.PlatformBack, contentDescription = null,
                 tint = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.scale(scaleX = backScale, scaleY = 1f))
         }
         if (showShopActions) {
             ShopHeaderActions(isFavorite, favoriteAvailable, isFavoriteLoading,
-                onSuggestChange, onToggleFavorite, onShare, hazeState)
+                onSuggestChange, onToggleFavorite, onShare, hazeState, favoriteSelection)
         }
+      }
     }
 }
 

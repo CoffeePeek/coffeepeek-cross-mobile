@@ -7,4 +7,5 @@ expect fun LocationPermissionEffect(
     requestKey: Int,
     onGranted: () -> Unit,
     onDenied: () -> Unit = {},
+    requestOnce: Boolean = false,
 )

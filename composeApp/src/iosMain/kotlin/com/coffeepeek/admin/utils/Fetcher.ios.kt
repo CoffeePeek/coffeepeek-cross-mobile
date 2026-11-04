@@ -1,5 +1,9 @@
 package com.coffeepeek.admin.utils
 
+import coffeepeek.composeapp.generated.resources.Res
+import coffeepeek.composeapp.generated.resources.native_photo_unavailable
+import org.jetbrains.compose.resources.getString
+
 import io.kamel.core.DataSource
 import io.kamel.core.Resource
 import io.kamel.core.config.ResourceConfig
@@ -45,7 +49,7 @@ actual class CustomUrlFetcher(
             if (isProtectedCheckInPhoto(data.url)) headers.append(HttpHeaders.CacheControl, "no-cache, no-store")
         }.execute { response ->
             if (isProtectedCheckInPhoto(data.url)) requirePhotoAccess(response.status.value)
-            check(response.status.value == 200) { "Фото недоступно" }
+            if (response.status.value != 200) error(getString(Res.string.native_photo_unavailable))
             if (isProtectedCheckInPhoto(data.url)) grantOnlinePhoto(data, start)
             // Kamel decodes inside its sequential map collector. Keep emit synchronous:
             // buffering the raw channel would outlive execute and close the response early.

@@ -1,5 +1,8 @@
 package com.coffeepeek.admin.ui.component
 
+import coffeepeek.composeapp.generated.resources.*
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
+
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
 import androidx.compose.foundation.gestures.draggable
@@ -177,7 +180,7 @@ private fun PhotoViewerGallery(
             imageUrl = displayUrl.orEmpty(),
             highQualityUrl = images.highQualityUrl(page, pagerState.settledPage)
                 .takeUnless { pagerState.isScrollInProgress },
-            contentDescription = "Фото ${page + 1} из ${images.previews.size}",
+            contentDescription = stringResource(Res.string.legacy_photo_short_position, page + 1, images.previews.size),
             isCurrent = isCurrent,
             onTap = onTap,
             onZoomChanged = { if (isCurrent) onZoomChanged(it) },
@@ -189,6 +192,8 @@ private fun PhotoViewerGallery(
 private fun BoxScope.PhotoViewerControls(
     page: Int, count: Int, onDismiss: () -> Unit,
 ) {
+    val localizedHistoryHomeClose = stringResource(Res.string.history_home_close)
+
     if (count > 1) {
         Text(
             text = "${page + 1} / $count",
@@ -205,7 +210,7 @@ private fun BoxScope.PhotoViewerControls(
     PlatformGlassIconButton(
         icon = GlassControlIcon.Close,
         onClick = onDismiss,
-        contentDescription = "Закрыть",
+        contentDescription = localizedHistoryHomeClose,
         modifier = Modifier
             .align(Alignment.TopEnd)
             .padding(CpDimens.spacing3),

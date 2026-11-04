@@ -1,6 +1,5 @@
 package com.coffeepeek.feature.leaderboard.impl.ui.compose.component
 
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.component.CoffeePeekCapsuleSegmentedControl
@@ -17,8 +16,6 @@ internal fun LeaderboardPeriods(selected: LeaderboardPeriod, onSelected: (Leader
     CoffeePeekCapsuleSegmentedControl(
         options = LeaderboardPeriod.entries, selected = selected,
         label = { if (it == LeaderboardPeriod.Week) week else month }, onSelected = onSelected,
-        selectedContainerColor = MaterialTheme.colorScheme.primary,
-        selectedContentColor = MaterialTheme.colorScheme.onPrimary,
         minSegmentHeight = 44.dp,
     )
 }

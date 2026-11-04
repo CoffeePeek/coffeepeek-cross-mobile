@@ -1,8 +1,15 @@
 package com.coffeepeek.admin.ui
 
+import com.coffeepeek.admin.di.collections.CollectionsComposerDestination
+import com.coffeepeek.admin.di.collections.PublicCollectionDestination
+import com.coffeepeek.admin.di.collections.CollectionsLibraryDestination
+import com.coffeepeek.admin.di.collections.CollectionEditorDestination
+import com.coffeepeek.admin.di.collections.SavedPublicCollectionDestination
+
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
 import com.coffeepeek.admin.ui.screen.checkins.CheckInHistoryDestination
+import com.coffeepeek.admin.ui.screen.shelf.ShelfScreenRenderer
 import com.coffeepeek.admin.ui.screen.shop.ShopDetailScreen
 import com.coffeepeek.admin.ui.screen.shop.ShopMenuGalleryScreen
 import com.coffeepeek.admin.ui.screen.shop.ShopReportScreen
@@ -13,6 +20,7 @@ import com.coffeepeek.admin.ui.screen.contributions.ContributionsScreenRenderer
 import com.coffeepeek.admin.ui.screen.profile.AccountScreenRenderer
 import com.coffeepeek.admin.ui.screen.profile.PublicProfileScreenRenderer
 import com.coffeepeek.admin.ui.screen.roaster.RoasterScreenRenderer
+import com.coffeepeek.admin.feature.community.ui.CheckInDetailScreenRenderer
 import com.coffeepeek.admin.ui.screen.profile.SettingsScreenRenderer
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -118,6 +126,8 @@ object Navigator {
         @Serializable data object CoffeeGraph : Screen
         @Serializable data object CommunityGraph : Screen
         @Serializable data object ProfileGraph : Screen
+        @Serializable data object BusinessGraph : Screen
+        @Serializable data object BusinessTab : Screen
         @Serializable data object SettingsGraph : Screen
 
         // Tabs
@@ -144,6 +154,7 @@ object Navigator {
         @Serializable data class ShopChangeRequestDetail(
             val requestId: String,
         ) : Screen
+        @Serializable data class MyBusiness(val kind: String? = null, val slug: String? = null, val businessId: String? = null) : Screen
         @Serializable data object AddShop : Screen
         @Serializable data object AddRoaster : Screen
         @Serializable data class RoasterDetail(val roasterId: String) : Screen
@@ -160,16 +171,27 @@ object Navigator {
         @Serializable data object EditProfile : Screen
         @Serializable data object DeleteAccountPending : Screen
         @Serializable data object Favorites : Screen
+        @Serializable data object CollectionsComposer : Screen
+        @Serializable data class PublicCollection(val id: String) : Screen
+        @Serializable data object CollectionsLibrary : Screen
+        @Serializable data class CollectionEditor(val id: String? = null) : Screen
+        @Serializable data class SavedPublicCollection(val id: String) : Screen
         @Serializable data object VisitedPlaces : Screen
         @Serializable data object HomeCheckIns : Screen
+        @Serializable data object ShelfArchive : Screen
+        @Serializable data object ShelfAddBag : Screen
+        @Serializable data class ShelfBag(val bagId: String) : Screen
         @Serializable data class EditHomeCheckIn(val id: String) : Screen
         @Serializable data object CitySettings : Screen
         @Serializable data object ThemeSettings : Screen
+        @Serializable data object LanguageSettings : Screen
         @Serializable data object BlockedAuthors : Screen
         @Serializable data object UsagePolicy : Screen
         @Serializable data class ShopReviews(val shopId: String) : Screen
         @Serializable data class ReportReview(val reviewId: String, val isPreview: Boolean = false) : Screen
         @Serializable data class ReportCheckIn(val checkInId: String) : Screen
+        /** A post opened from a shared link (coffeepeek.by/check-ins/{id}). */
+        @Serializable data class CheckInDetail(val id: String) : Screen
     }
 
     data class MapShopFocus(
@@ -227,6 +249,7 @@ object Navigator {
         is Screen.SuggestShopChange,
         is Screen.ShopChangeEditor,
         is Screen.MyContributions,
+        is Screen.MyBusiness,
         is Screen.ShopChangeRequestDetail,
         is Screen.AddShop,
         is Screen.AddRoaster,
@@ -238,12 +261,22 @@ object Navigator {
         is Screen.ShopReviews,
         is Screen.ReportReview,
         is Screen.ReportCheckIn,
+        is Screen.CheckInDetail,
         is Screen.Favorites,
+        is Screen.CollectionsComposer,
+        is Screen.PublicCollection,
+        is Screen.CollectionsLibrary,
+        is Screen.CollectionEditor,
+        is Screen.SavedPublicCollection,
         is Screen.VisitedPlaces,
         is Screen.HomeCheckIns,
+        is Screen.ShelfArchive,
+        is Screen.ShelfAddBag,
+        is Screen.ShelfBag,
         is Screen.EditHomeCheckIn,
         is Screen.CitySettings,
         is Screen.ThemeSettings,
+        is Screen.LanguageSettings,
         is Screen.BlockedAuthors,
         is Screen.UsagePolicy -> true
         else -> false
@@ -343,6 +376,7 @@ object Navigator {
         val keyboard = LocalSoftwareKeyboardController.current
         val appLink by pendingAppLink.collectAsState()
         var mainEntry by remember { mutableStateOf<NavBackStackEntry?>(null) }
+        var isMainMapExpanded by remember { mutableStateOf(false) }
         val mainStateHolder = rememberSaveableStateHolder()
         val visibleEntries by nav.visibleEntries.collectAsState()
         val currentEntry by nav.currentBackStackEntryAsState()
@@ -394,9 +428,9 @@ object Navigator {
                     RetainedContent(visible = entry in visibleEntries) {
                         // Main lives outside NavHost so its native map stays mounted during navigation.
                         Box(Modifier.fillMaxSize()
-                            .windowInsetsPadding(systemInsets.only(WindowInsetsSides.Top))
+                            .windowInsetsPadding(if (isMainMapExpanded) WindowInsets(0) else systemInsets.only(WindowInsetsSides.Top))
                             .clipToBounds().graphicsLayer { translationX = size.width * mainSlide }) {
-                            MainScreen(isLoggedIn)
+                            MainScreen(isLoggedIn, onMapExpandedChange = { isMainMapExpanded = it })
                         }
                     }
                 }
@@ -488,6 +522,9 @@ object Navigator {
                         val route = backStack.toRoute<Screen.ReportCheckIn>()
                         com.coffeepeek.admin.ui.screen.review.ReviewReportScreen(reviewId = route.checkInId, isCheckIn = true)
                     }
+                    composable<Screen.CheckInDetail> { backStack ->
+                        koinInject<CheckInDetailScreenRenderer>().Content(backStack.toRoute<Screen.CheckInDetail>().id)
+                    }
                     composable<Screen.ShopMenuGallery> { backStack ->
                         val route = backStack.toRoute<Screen.ShopMenuGallery>()
                         koinInject<ShopMenuGalleryScreenRenderer>().Content(shopId = route.shopId)
@@ -512,6 +549,9 @@ koinInject<ContributionsScreenRenderer>().Editor(route.shopId, route.section, ro
                         val route = backStack.toRoute<Screen.ShopChangeRequestDetail>()
                         koinInject<ContributionsScreenRenderer>().RequestDetail(route.requestId)
                     }
+                    composable<Screen.MyBusiness> { entry ->
+                        BusinessOwnershipRoute(entry.toRoute<Screen.MyBusiness>())
+                    }
                     composable<Screen.AddShop> { koinInject<ContributionsScreenRenderer>().AddShop() }
                     composable<Screen.AddRoaster> { koinInject<ContributionsScreenRenderer>().AddRoaster() }
                     composable<Screen.RoasterDetail> { backStack ->
@@ -527,13 +567,25 @@ koinInject<ContributionsScreenRenderer>().Editor(route.shopId, route.section, ro
                     composable<Screen.EditProfile> { koinInject<AccountScreenRenderer>().EditProfile() }
                     composable<Screen.DeleteAccountPending> { koinInject<AccountScreenRenderer>().DeletionPending() }
                     composable<Screen.Favorites> { FavoritesDestination() }
+                    composable<Screen.CollectionsComposer> { CollectionsComposerDestination() }
+                    composable<Screen.PublicCollection> { backStack -> PublicCollectionDestination(backStack.toRoute<Screen.PublicCollection>().id) }
+                    composable<Screen.CollectionsLibrary> { CollectionsLibraryDestination() }
+                    composable<Screen.CollectionEditor> { backStack -> CollectionEditorDestination(backStack.toRoute<Screen.CollectionEditor>().id) }
+                    composable<Screen.SavedPublicCollection> { backStack -> SavedPublicCollectionDestination(backStack.toRoute<Screen.SavedPublicCollection>().id) }
                     composable<Screen.VisitedPlaces> { CheckInHistoryDestination() }
                     composable<Screen.HomeCheckIns> { CheckInHistoryDestination() }
+                    composable<Screen.ShelfArchive> { koinInject<ShelfScreenRenderer>().Archive() }
+                    composable<Screen.ShelfAddBag> { koinInject<ShelfScreenRenderer>().AddBag() }
+                    composable<Screen.ShelfBag> { backStack ->
+                        val route = backStack.toRoute<Screen.ShelfBag>()
+                        koinInject<ShelfScreenRenderer>().Bag(route.bagId)
+                    }
                     composable<Screen.EditHomeCheckIn> { entry ->
                         CheckInHistoryDestination(initialHomeId = entry.toRoute<Screen.EditHomeCheckIn>().id)
                     }
                     composable<Screen.CitySettings> { koinInject<SettingsScreenRenderer>().City() }
                     composable<Screen.ThemeSettings> { koinInject<SettingsScreenRenderer>().Theme() }
+                    composable<Screen.LanguageSettings> { koinInject<SettingsScreenRenderer>().Language() }
                     composable<Screen.BlockedAuthors> { com.coffeepeek.admin.feature.authorblocking.ui.BlockedAuthorsScreen() }
                     composable<Screen.UsagePolicy> { koinInject<SettingsScreenRenderer>().UsagePolicy() }
             }
@@ -554,12 +606,14 @@ koinInject<ContributionsScreenRenderer>().Editor(route.shopId, route.section, ro
             is Screen.ShopReviews -> koinInject<ShopCheckInListScreenRenderer>().Content(screen.shopId)
             is Screen.ReportReview -> com.coffeepeek.admin.ui.screen.review.ReviewReportScreen(reviewId = screen.reviewId, isPreview = screen.isPreview)
             is Screen.ReportCheckIn -> com.coffeepeek.admin.ui.screen.review.ReviewReportScreen(reviewId = screen.checkInId, isCheckIn = true)
+            is Screen.CheckInDetail -> koinInject<CheckInDetailScreenRenderer>().Content(screen.id)
             is Screen.ShopMenuGallery -> koinInject<ShopMenuGalleryScreenRenderer>().Content(screen.shopId)
             is Screen.ReportShop -> koinInject<ShopReportScreenRenderer>().Content(screen.shopId, screen.shopTitle)
             is Screen.SuggestShopChange -> koinInject<ContributionsScreenRenderer>().Suggest(screen.shopId)
             is Screen.ShopChangeEditor -> koinInject<ContributionsScreenRenderer>().Editor(screen.shopId, screen.section, screen.requestId)
             is Screen.MyContributions -> koinInject<ContributionsScreenRenderer>().List(ContributionKind.valueOf(screen.kind))
             is Screen.ShopChangeRequestDetail -> koinInject<ContributionsScreenRenderer>().RequestDetail(screen.requestId)
+            is Screen.MyBusiness -> BusinessOwnershipRoute(screen)
             Screen.AddShop -> koinInject<ContributionsScreenRenderer>().AddShop()
             Screen.AddRoaster -> koinInject<ContributionsScreenRenderer>().AddRoaster()
             is Screen.RoasterDetail -> koinInject<RoasterScreenRenderer>().Detail(screen.roasterId)
@@ -568,11 +622,20 @@ koinInject<ContributionsScreenRenderer>().Editor(route.shopId, route.section, ro
             Screen.EditProfile -> koinInject<AccountScreenRenderer>().EditProfile()
             Screen.DeleteAccountPending -> koinInject<AccountScreenRenderer>().DeletionPending()
             Screen.Favorites -> FavoritesDestination()
+            Screen.CollectionsComposer -> CollectionsComposerDestination()
+            is Screen.PublicCollection -> PublicCollectionDestination(screen.id)
+            Screen.CollectionsLibrary -> CollectionsLibraryDestination()
+            is Screen.CollectionEditor -> CollectionEditorDestination(screen.id)
+            is Screen.SavedPublicCollection -> SavedPublicCollectionDestination(screen.id)
             Screen.VisitedPlaces -> CheckInHistoryDestination()
             Screen.HomeCheckIns -> CheckInHistoryDestination()
+            Screen.ShelfArchive -> koinInject<ShelfScreenRenderer>().Archive()
+            Screen.ShelfAddBag -> koinInject<ShelfScreenRenderer>().AddBag()
+            is Screen.ShelfBag -> koinInject<ShelfScreenRenderer>().Bag(screen.bagId)
             is Screen.EditHomeCheckIn -> CheckInHistoryDestination(initialHomeId = screen.id)
             Screen.CitySettings -> koinInject<SettingsScreenRenderer>().City()
             Screen.ThemeSettings -> koinInject<SettingsScreenRenderer>().Theme()
+            Screen.LanguageSettings -> koinInject<SettingsScreenRenderer>().Language()
             Screen.BlockedAuthors -> com.coffeepeek.admin.feature.authorblocking.ui.BlockedAuthorsScreen()
             Screen.UsagePolicy -> koinInject<SettingsScreenRenderer>().UsagePolicy()
             else -> error("Tab route must be handled by MainScreen: $screen")
@@ -596,4 +659,14 @@ koinInject<ContributionsScreenRenderer>().Editor(route.shopId, route.section, ro
     private fun PublicProfileRoute(screen: Screen.UserProfile) {
         koinInject<PublicProfileScreenRenderer>().Content(screen.slug, screen.nickname, screen.avatarUrl)
     }
+}
+
+
+@Composable
+private fun BusinessOwnershipRoute(screen: Navigator.Screen.MyBusiness) {
+    koinInject<com.coffeepeek.feature.ownership.api.BusinessOwnershipEntry>().Content(
+        onBack = Navigator::popBack,
+        onLogin = { Navigator.navigate(Navigator.Screen.Auth) },
+        initialKind = screen.kind, initialSlug = screen.slug, initialId = screen.businessId,
+    )
 }

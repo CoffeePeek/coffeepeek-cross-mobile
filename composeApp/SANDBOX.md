@@ -114,10 +114,19 @@ Not covered: moderation decisions (a submission stays pending), uploaded photo k
 
 ## Discovery fixtures
 
-`SandboxDiscoveryBackend` serves the shop search (`GET /api/CoffeeShops`), the nearby search (`POST /api/v1/coffee-shops/search`) and the map (`GET /api/Map`). Choose the fixture with the controls row «Поиск и карта» or at launch with
+API update (2026-10-26): `POST /api/v1/discovery/search` has been removed with its Gateway route, DTOs and OpenAPI schemas. `GET /api/CoffeeShops` has also been removed entirely, including its check-in picker use. All clients and fixtures now use only `POST /api/v1/coffee-shops/search`: ordinary search omits origin/radius/distance sort, nearby search sends them. GET list requests return 404. Search cards omit coordinates; map selection resolves them from the existing details endpoint.
+
+`SandboxDiscoveryBackend` serves ordinary and nearby shop search (`POST /api/v1/coffee-shops/search`) and the map (`GET /api/Map`). Choose the fixture with the controls row «Поиск и карта» or at launch with
 `--es sandbox_discovery <mode>`:
-`Seeded` (default: the two core shops and the one-marker map, as before), `Paged` (47 shops in Минск and Брест with types, price levels, ratings, open/new/visited flags, tags, roasters, brew methods, equipment and beans; every filter of the real
-requests, paging, the nearby search sorted by distance and limited to the radius, map content by bounds and filters, two zones with polygons, no clusters), `Truncated` (`Paged` whose map keeps 25 shops and sets `isTruncated`), `Empty`, `SearchFailure` (both
+`Seeded` (default: the two core shops and the one-marker map, as before), `Paged` (47 shops in Минск and Брест with types, price levels, ratings, open/new/visited flags, tags, roasters, brew methods, equipment and beans; JSON search
+filters, paging, the nearby search sorted by distance and limited to the radius, map content by bounds and filters, two zones with polygons, no clusters), `Truncated` (`Paged` whose map keeps 25 shops and sets `isTruncated`), `Empty`, `SearchFailure` (both
 searches answer 500, the map works) and `MapFailure` (the map answers 500, the searches work). Favorite flags follow the favorites of the application backend (the core cafe starts as a favorite); Reset returns the default.
 Not covered: shop details for the generated shops (only the two core shops have details, opening another one shows the not found state), server-side clusters, the real map tiles, location (the device decides), and the query semantics of the real server for lists of ids (here: any of a group, all groups together).
+
+Manual recovery fixtures: `PageFailure` fails the first request for page two and
+allows an explicit retry; loading page one rearms it. `RefreshFailure` succeeds
+on the first page-one request for each query/filter body, fails the second, then
+succeeds on later requests. Page-two reads do not consume that refresh failure.
+Switching away from `RefreshFailure` and back resets its attempts. Use Home or
+search pull-to-refresh followed by the inline retry to inspect retained cards.
 

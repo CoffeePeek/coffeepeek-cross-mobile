@@ -1,5 +1,57 @@
 # Activity leaderboard
 
+## Develop integration and review fixes — 2026-11-04
+
+Integrate PR #197 (`cfeb3d0e`) with current develop `b99c9dc6`. Resolve the
+seven content conflicts by preserving develop's shared Community source sets,
+sharing callback, collection/shelf/ownership composition and Sandbox handlers.
+The leaderboard above-posts slot now belongs to the shared Community host.
+Preserve the current platform segmented controls and their default appearance;
+forward the feature's 44dp segment minimum through the platform boundary instead
+of restoring the retired custom selected colors. Current Android glass padding
+is 4dp per side (52dp total for this feature); native iOS uses a 44dp control.
+The earlier 48dp total-height record below describes the old implementation.
+
+Fix both outstanding review findings: feed refresh clears both period caches
+even while reusing an in-flight period request, and the consumed refresh key
+lives in the lifecycle-owned ViewModel so lazy-item disposal cannot lose it.
+Two additional in-memory unit regressions cover these cases, including duplicate
+refresh suppression. No new UI tests or test Activity/APK infrastructure.
+
+Verification plan: leaderboard data/MVI and Community unit tests; selected app
+privacy-context and Sandbox HTTP contracts; Direct Debug/Sandbox assembly with
+packaged DEX/isolation checks; shared iOS Simulator Arm64 KLIB compilation.
+No app installation or device run is part of this conflict-resolution task.
+Manual UI/accessibility, native iOS runtime and live backend acceptance remain
+separate gates. Studio MCP is unavailable; no IDE diagnostics are claimed.
+
+Verification results for the merged parents above plus this checkpoint's fixes:
+
+- **BUILD SUCCESSFUL**, 5m48s, `--max-workers=6`; 2431 tasks, 1817 executed,
+  600 restored from cache, 14 up-to-date. No concurrent local Gradle builds.
+- **69 freshly executed unit/contract results**, zero failures/errors/skips:
+  leaderboard HTTP 7, leaderboard MVI 17, Community 40, application privacy
+  context 2 and Sandbox HTTP 3. Both new review regressions passed.
+- Direct Debug and Direct Sandbox APKs, both packaged DEX runtime-class checks
+  and Sandbox isolation passed. Version code 2462, `1.1.5.2462` / `com.coffeepeek`
+  and `1.1.5.2462-sandbox` / `com.coffeepeek.sandbox`; built only, not installed.
+- Leaderboard api/domain/data/impl and design-system iOS Simulator Arm64 KLIB
+  compilation passed. The application's `compileKotlinIosSimulatorArm64` task
+  was **SKIPPED on Windows**; no application KLIB/link/runtime pass is claimed.
+- The first Gradle invocation failed during task selection because it requested
+  nonexistent `testDirectSandboxUnitTest`; no tests ran in that invocation.
+  The successful run uses `testDirectDebugUnitTest` with only the two selected
+  in-memory application suites. An initial restricted wrapper invocation also
+  stopped before Gradle because its cache lock was inaccessible.
+- The diff against develop passes `git diff --check`; no conflict markers or
+  unresolved index entries remain. Existing develop-only trailing blank lines
+  in two Discovery files were left untouched. Existing AGP/Kotlin/preview and
+  manifest warnings remain; no IDE inspection or manual preview rendering ran.
+- Device: none used. No manual visual/accessibility checks, automated UI or
+  instrumented tests, live requests/writes, native iOS linking or runtime checks
+  were performed in this integration pass. Historical device records below
+  are not a verification of this merged source.
+
 ## Period-switch flicker and repeated reads — 2026-10-26
 
 Follow-up to the review of `7f318348`: the previous geometry fix did not prevent

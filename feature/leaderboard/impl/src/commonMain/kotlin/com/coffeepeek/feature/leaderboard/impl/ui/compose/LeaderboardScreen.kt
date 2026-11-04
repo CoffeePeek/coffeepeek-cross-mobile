@@ -17,11 +17,7 @@ internal fun LeaderboardScreen(vm: LeaderboardViewModel, refreshKey: Long, colla
     overlay: @Composable (content: @Composable () -> Unit) -> Unit, modifier: Modifier) {
     val state by vm.state.collectAsStateWithLifecycle()
     val openProfile by rememberUpdatedState(onOpenProfile)
-    var previousRefresh by remember { mutableLongStateOf(refreshKey) }
-    LaunchedEffect(refreshKey) {
-        if (previousRefresh != refreshKey) vm.onAction(LeaderboardAction.Refresh)
-        previousRefresh = refreshKey
-    }
+    LaunchedEffect(vm, refreshKey) { vm.onAction(LeaderboardAction.FeedRefreshed(refreshKey)) }
     LaunchedEffect(vm) {
         vm.events.collect { event ->
             if (event.generation == vm.state.value.generation) openProfile(event.slug, event.username, event.avatarUrl)

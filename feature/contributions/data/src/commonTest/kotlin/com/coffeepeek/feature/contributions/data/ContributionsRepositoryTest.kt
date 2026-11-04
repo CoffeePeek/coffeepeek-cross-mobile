@@ -75,7 +75,7 @@ class ContributionsRepositoryTest {
     @Test fun changeListSendsTheFiltersAndMapsPayloads() = runBlocking {
         reply = { HttpStatusCode.OK to """{"isSuccess":true,"data":{"items":[
             {"id":"r","shop":{"slug":"cafe"},"section":"Menu","status":"Pending","createdAtUtc":"2026-10-21T07:00:00Z",
-             "payload":{"menu":{"items":[{"slug":"latte","availability":"Present","price":6.5},{"slug":"tea","availability":"Strange"}],
+             "payload":{"menu":{"expectedInputRevision":11,"items":[{"slug":"latte","availability":"Present","price":6.5},{"slug":"tea","availability":"Strange"}],
                          "retainedPhotoIds":["m1"],"newPhotos":[{"fileName":"a.jpg","contentType":"image/jpeg","storageKey":"k","size":3}]}}}],
             "totalItems":1,"totalPages":1,"currentPage":1}}""" }
         val page = repository().changes(ModerationStatus.Pending, 1, 20, shopSlug = "cafe", section = ChangeSection.Menu).getOrThrow()
@@ -85,6 +85,7 @@ class ContributionsRepositoryTest {
         val request = page.items.single()
         assertEquals("cafe", request.shopSlug); assertEquals(ChangeSection.Menu, request.section)
         val menu = request.payload.menu!!
+        assertEquals(11L, menu.expectedInputRevision)
         assertEquals(listOf(MenuEntry("latte", Availability.Present, 6.5), MenuEntry("tea", Availability.Unknown)), menu.items)
         assertEquals(listOf("m1"), menu.retainedPhotoIds); assertEquals("k", menu.uploaded.single().storageKey)
         assertNull(request.payload.description)
@@ -224,7 +225,7 @@ class ContributionsRepositoryTest {
             ChangeDraft.Selection("cafe", ChangeSection.Equipment, listOf("grinder")) to ("Equipment" to "equipments"),
             ChangeDraft.Selection("cafe", ChangeSection.BrewMethods, listOf("v60")) to ("BrewMethods" to "brewMethods"),
             ChangeDraft.Photos("cafe", listOf("p1"), emptyList()) to ("Photos" to "photos"),
-            ChangeDraft.Menu("cafe", listOf(MenuEntry("latte", Availability.Absent)), emptyList(), emptyList()) to ("Menu" to "menu"),
+            ChangeDraft.Menu("cafe", listOf(MenuEntry("latte", Availability.Absent)), emptyList(), emptyList(), expectedInputRevision = 0) to ("Menu" to "menu"),
         )
         cases.forEachIndexed { index, (draft, expected) ->
             repository.submitChange(draft).getOrThrow()
@@ -266,10 +267,11 @@ class ContributionsRepositoryTest {
         assertEquals(listOf("old/key", "shop/k1", "shop/k2"), gallery.getValue("newPhotos").jsonArray.map { it.jsonObject.getValue("storageKey").jsonPrimitive.content })
 
         api.clear()
-        repository.submitChange(ChangeDraft.Menu("cafe", listOf(MenuEntry("latte", Availability.Present, 6.5)), listOf("m1"), listOf(photo("m.jpg")))).getOrThrow()
+        repository.submitChange(ChangeDraft.Menu("cafe", listOf(MenuEntry("latte", Availability.Present, 6.5)), listOf("m1"), listOf(photo("m.jpg")), expectedInputRevision = 17)).getOrThrow()
         assertEquals("/api/Photos/menu", api.first().url.encodedPath)
         val menu = body(requests("/api/ShopChangeRequests").single()).getValue("payload").jsonObject.getValue("menu").jsonObject
         assertEquals("Present", menu.getValue("items").jsonArray.single().jsonObject.getValue("availability").jsonPrimitive.content)
+        assertEquals(17L, menu.getValue("expectedInputRevision").jsonPrimitive.long)
         assertEquals(listOf("menu/k1"), menu.getValue("newPhotos").jsonArray.map { it.jsonObject.getValue("storageKey").jsonPrimitive.content })
     }
 
@@ -283,6 +285,33 @@ class ContributionsRepositoryTest {
         uploadStatus = HttpStatusCode.InternalServerError
         assertEquals(FailureKind.Upload, failure(repository.submitChange(ChangeDraft.Photos("cafe", emptyList(), listOf(photo("a.jpg"))))).kind)
         assertTrue(requests("/api/ShopChangeRequests").isEmpty())
+    }
+
+    @Test fun menuCreationAndEditingSendTheObservedRevision() = runBlocking {
+        reply = { HttpStatusCode.OK to created }
+        val repository = repository()
+        for (revision in listOf(0L, 17L)) {
+            val draft = ChangeDraft.Menu("cafe", listOf(MenuEntry("espresso", Availability.Present, 5.25)), emptyList(), emptyList(), expectedInputRevision = revision)
+            repository.submitChange(draft).getOrThrow()
+            repository.editChange("request", draft).getOrThrow()
+            for (sent in api.takeLast(2)) {
+                val menu = body(sent).getValue("payload").jsonObject.getValue("menu").jsonObject
+                assertEquals(revision, menu.getValue("expectedInputRevision").jsonPrimitive.long)
+                assertEquals(5.25, menu.getValue("items").jsonArray.single().jsonObject.getValue("price").jsonPrimitive.double)
+            }
+        }
+        assertEquals(listOf(HttpMethod.Post, HttpMethod.Put, HttpMethod.Post, HttpMethod.Put), api.map { it.method })
+    }
+
+    @Test fun anInvalidMenuRevisionIsRefusedBeforeUploadsOrSubmission() = runBlocking {
+        val repository = repository()
+        for (revision in listOf(null, -1L)) {
+            val draft = ChangeDraft.Menu("cafe", emptyList(), emptyList(), listOf(photo("m.jpg")), expectedInputRevision = revision)
+            assertEquals(FailureKind.Invalid, failure(repository.submitChange(draft)).kind)
+            assertEquals(FailureKind.Invalid, failure(repository.editChange("request", draft)).kind)
+        }
+        assertTrue(api.isEmpty())
+        assertTrue(puts.isEmpty())
     }
 
     @Test fun anUnknownShopOrRequestIsNotFound() = runBlocking {

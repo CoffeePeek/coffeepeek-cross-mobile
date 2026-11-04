@@ -8,9 +8,14 @@ import android.widget.Toast
 import com.coffeepeek.R
 import com.coffeepeek.admin.CoffeePeekApplication
 import com.coffeepeek.admin.di.initAndroidKoin
+import com.coffeepeek.admin.sandbox.di.sandboxCollectionsModule
+import com.coffeepeek.admin.di.shelf.shelfModels
 import com.coffeepeek.admin.sandbox.backend.SandboxBackend
 import com.coffeepeek.api.CoffeePeekClient
 import com.coffeepeek.domain.repository.SessionRepository
+import com.coffeepeek.feature.shelf.data.scan.BagScannerModelSource
+import com.coffeepeek.feature.shelf.data.scan.createAndroidBagScanner
+import com.coffeepeek.feature.shelf.domain.repository.BagScanner
 import org.koin.dsl.module
 import org.maplibre.android.MapLibre
 
@@ -25,13 +30,13 @@ internal class SandboxApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         photoBytes = sandboxImageBytes()
-        backend = SandboxBackend(photoBytes)
+        backend = SandboxBackend(photoBytes, bagCard = ::sandboxBagCardBytes)
         CoffeePeekApplication.bindContext(object : ContextWrapper(this) {
             override fun startActivity(intent: Intent) = blockedExternalAction()
             override fun startActivity(intent: Intent, options: Bundle?) = blockedExternalAction()
         })
         MapLibre.getInstance(this)
-        initAndroidKoin(analyticsEnabled = false, extraModules = listOf(module {
+        initAndroidKoin(analyticsEnabled = false, extraModules = listOf(sandboxCollectionsModule(), module {
             single<SessionRepository> { sessions }
             single { CoffeePeekClient(SandboxBackend.BASE_URL, cacheDir.resolve("sandbox-http").path, false,
                 getToken = { null }, saveToken = {}, apiClientFactory = backend::apiClient,
@@ -39,6 +44,12 @@ internal class SandboxApplication : Application() {
             single<io.kamel.core.config.KamelConfig> { sandboxImageConfig(backend.gateway) }
             single<com.coffeepeek.feature.appupdate.api.AndroidUpdateInstaller> {
                 SandboxUpdateInstaller(getString(R.string.sandbox_external_blocked))
+            }
+            single<BagScanner> {
+                // The Sandbox has no network: both models come from the files dir, pushed there with adb as for the probe.
+                val pushed = BagScannerModelSource.directory { getExternalFilesDir(null) }
+                val models = shelfModels(pushed, pushed)
+                createAndroidBagScanner({ this@SandboxApplication }, models.segmenter, models.inpainter)
             }
         }))
     }

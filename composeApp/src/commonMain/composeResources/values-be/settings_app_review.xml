@@ -1,0 +1,5 @@
+<resources>
+    <string name="settings_rate_app">Ацаніць праграму</string>
+    <string name="settings_rate_app_description">Пакіньце водгук у App Store</string>
+    <string name="settings_other_description">Карысныя дапаўненні, зваротная сувязь і прыватнасць</string>
+</resources>

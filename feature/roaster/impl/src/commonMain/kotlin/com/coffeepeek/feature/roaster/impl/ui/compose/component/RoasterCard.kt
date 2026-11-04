@@ -12,7 +12,7 @@ import com.coffeepeek.feature.roaster.impl.resources.Res
 import com.coffeepeek.feature.roaster.impl.resources.roaster_logo
 import com.coffeepeek.feature.roaster.impl.resources.roaster_stat_catalog
 import com.coffeepeek.feature.roaster.impl.resources.roaster_stat_shops
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 /** Catalogue card: the design-system card with this feature's texts, logo loading and favorite heart. */

@@ -24,7 +24,8 @@ internal enum class SandboxAuthPolicy { Works, WrongPassword, EmailTaken, Regist
 internal enum class SandboxFeed { Single, Paged, PageFailsOnce, InvalidCursor, Empty, Failure }
 
 /** Local fixture contracts for the existing app, not an alternative implementation of its UI. */
-internal class SandboxApplicationBackend(private val today: LocalDate, private val visits: MutableList<JsonObject>) {
+internal class SandboxApplicationBackend(private val today: LocalDate, private val visits: MutableList<JsonObject>,
+    uploadedCover: (String, Long) -> Boolean = { _, _ -> false }) {
     companion object {
         const val SELF_ID = "sandbox-author-self"
         const val FRIEND_ID = "sandbox-author-friend"
@@ -36,9 +37,12 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
     }
     private val shopNames = mapOf("sandbox-cafe" to "Sandbox Cafe", "sandbox-lab" to "Sandbox Lab")
     private val contributionStore = SandboxContributionsBackend(today, shopNames.keys)
+    private val ownershipStore = SandboxOwnershipBackend(today)
     private val notificationStore = SandboxNotificationsBackend(today)
     private val discoveryStore = SandboxDiscoveryBackend({ populated }, { favorites }, ::photo, ::address, ::catalog)
     private val favorites = linkedSetOf("coffee_shop:sandbox-cafe", "roaster:sandbox-roaster", "drink:cappuccino")
+    private val collectionStore = SandboxCollectionsBackend(today, ::collectionFavorites)
+    private val savedCollections = SandboxSavedCollectionsBackend(today, ::collectionFavorites, uploadedCover)
     private var username = "Sandbox"
     private var about = "Локальный тестовый профиль. Все действия остаются в Sandbox."
     private var populated = true
@@ -66,6 +70,7 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
         this.populated = populated
         contributionStore.reset(populated)
         notificationStore.reset(populated)
+        ownershipStore.reset(populated)
         discoveryStore.reset()
         others.clear(); blocked.clear(); blocksRevision++
         friendFollowing = false; deletionRequest = null
@@ -73,17 +78,36 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
         username = "Sandbox"
         about = "Локальный тестовый профиль. Все действия остаются в Sandbox."
         favorites.clear()
+        collectionStore.reset()
+        savedCollections.reset()
         if (populated) favorites += listOf("coffee_shop:sandbox-cafe", "roaster:sandbox-roaster", "drink:cappuccino")
+    }
+
+    fun registerOwnershipEvidence(id: String) = ownershipStore.registerEvidence(id)
+    fun ownershipEvidenceAvailable(claimId: String, photoId: String) = ownershipStore.evidenceAvailable(claimId, photoId)
+
+    fun reserveCollectionCovers(owner: String?, input: JsonArray) = savedCollections.reserve(owner, input)
+    fun collectionCoverKey(path: String, owner: String?) = savedCollections.coverKey(path, owner)
+
+    fun publicProfileAvailable(slug: String): Boolean = when (slug) {
+        "sandbox" -> true
+        FRIEND_SLUG -> FRIEND_ID !in blocked
+        else -> false
     }
 
     fun handle(request: HttpRequestData, body: JsonElement?): Pair<HttpStatusCode, JsonObject>? {
         val path = request.url.encodedPath.lowercase()
         val method = request.method
         val input = body as? JsonObject ?: buildJsonObject {}
+        if (path == "/api/v1/profiles/$FRIEND_SLUG/collection" && FRIEND_ID in blocked)
+            return HttpStatusCode.NotFound to envelope(JsonNull, false)
+        savedCollections.handle(request, input)?.let { return it }
+        collectionStore.handle(path, method, input)?.let { return it }
         notificationStore.handle(path, method, input)?.let { return it }
         if (path == "/api/v1/leaderboard" && method == HttpMethod.Get) {
             return sandboxLeaderboard(request, today, populated, username, FRIEND_ID !in blocked)
         }
+        ownershipStore.handle(request, input)?.let { return it }
         if (path == "/api/v1/me/blocks" && method == HttpMethod.Get) return blockPage(request)
         if (path.startsWith("/api/v1/me/blocks/") && method in listOf(HttpMethod.Put, HttpMethod.Delete)) {
             val id = path.removePrefix("/api/v1/me/blocks/")
@@ -146,7 +170,8 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
             return if (friend) HttpStatusCode.OK to buildJsonObject { put("data", friendProfile()); put("address", address(FRIEND_SLUG, "/users/$FRIEND_SLUG")) }
             else HttpStatusCode.OK to buildJsonObject { put("data", profile()); put("address", address("sandbox", "/users/sandbox")) }
         }
-        if (path.startsWith("/api/v1/profiles/") && path.endsWith("/favorites")) return ok(favoriteRows())
+        if (path.startsWith("/api/v1/profiles/") && path.endsWith("/favorites"))
+            return ok(if (path == "/api/v1/profiles/sandbox/favorites") favoriteRows() else JsonArray(emptyList()))
         if (path.startsWith("/api/v1/profiles/") && path.endsWith("/activity")) {
             val year = request.url.parameters["year"]?.toIntOrNull() ?: today.year
             val month = request.url.parameters["month"]?.toIntOrNull() ?: today.monthValue
@@ -166,10 +191,6 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
             if (method == HttpMethod.Put) favorites += key else favorites -= key
             return HttpStatusCode.NoContent to envelope(JsonNull)
         }
-        if (path == "/api/coffeeshops" && method == HttpMethod.Get) return ok(buildJsonObject {
-            put("coffeeShops", shops(request.url.parameters["q"])); put("currentPage", 1); put("totalPages", 1)
-            put("totalItems", if (populated) 2 else 0)
-        })
         if (path == "/api/v1/coffee-shops/search" && method == HttpMethod.Post) return ok(buildJsonObject {
             val query = input["q"]?.jsonPrimitive?.contentOrNull
             val filters = input["filters"] as? JsonObject ?: buildJsonObject {}
@@ -179,7 +200,7 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
                     (filters["isNew"]?.jsonPrimitive?.booleanOrNull != true || row["isNew"]?.jsonPrimitive?.boolean == true) &&
                     (filters["visitedOnly"]?.jsonPrimitive?.booleanOrNull != true || row["isVisited"]?.jsonPrimitive?.boolean == true) &&
                     (filters["favoritesOnly"]?.jsonPrimitive?.booleanOrNull != true || row["isFavorite"]?.jsonPrimitive?.boolean == true)
-            })
+            }.map { searchCard(it.jsonObject, filters["origin"] as? JsonObject) })
             put("items", items); put("totalItems", items.size); put("totalPages", 1); put("currentPage", 1)
         })
         if (path.startsWith("/api/coffeeshops/") && method == HttpMethod.Get) {
@@ -219,6 +240,8 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
             if (!populated) return null
             return coffees().firstOrNull { it["address"]!!.jsonObject["slug"]!!.jsonPrimitive.content == path.substringAfterLast('/') }?.let(::ok)
         }
+        val checkInId = path.removePrefix("/api/v1/check-ins/").takeIf { path.startsWith("/api/v1/check-ins/") && '/' !in it && it !in setOf("home", "mine") }
+        if (checkInId != null && method == HttpMethod.Get) return checkIn(checkInId)
         if (path == "/api/v1/feed") return feedPage(request)
         if (path == "/api/v1/check-ins" && method == HttpMethod.Post) {
             val shopSlug = (input["coffeeShopSlug"] as? JsonPrimitive)?.contentOrNull?.takeIf(shopNames::containsKey)
@@ -255,7 +278,14 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
     fun protectedPhotoAvailable(checkInId: String): Boolean =
         (visits + others).firstOrNull { it["id"]?.jsonPrimitive?.content == checkInId }?.let(::visible) == true
 
-    private fun feedItem(row: JsonObject) = buildJsonObject { put("publishedAtUtc", row["createdAtUtc"] ?: JsonPrimitive("${today}T07:00:00Z")); put("checkIn", row) }
+    /** Like the real read of a shared post: the account's own visit always, another author's only when published and not blocked; otherwise 404. */
+    private fun checkIn(id: String): Pair<HttpStatusCode, JsonObject> {
+        val own = visits.firstOrNull { it["id"]?.jsonPrimitive?.content == id }
+        val public = (others + generatedFeed).firstOrNull { it["id"]?.jsonPrimitive?.content == id && visible(it) && isPublished(it) }
+        return (own ?: public)?.let(::ok) ?: (HttpStatusCode.NotFound to failure("Check-in not found."))
+    }
+
+    private fun feedItem(row: JsonObject) =buildJsonObject { put("publishedAtUtc", row["createdAtUtc"] ?: JsonPrimitive("${today}T07:00:00Z")); put("checkIn", row) }
     /** Page size and cursor are validated like the real endpoint; the cursor is the offset into the visible fixtures. */
     private fun feedPage(request: HttpRequestData): Pair<HttpStatusCode, JsonObject> {
         if (feed == SandboxFeed.Failure) return HttpStatusCode.InternalServerError to failure("Не удалось загрузить ленту")
@@ -277,7 +307,7 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
         return page(all.drop(offset).take(size), if (offset + size < all.size) (offset + size).toString() else null)
     }
 
-    /** 45 public posts by the blockable friend (every third) and two other authors; every fifth is a home preparation. */
+    /** 45 public posts by the blockable friend (every third) and two other authors; every fifth is a home preparation, every tenth with its shelf bag. */
     private var generated: MutableList<JsonObject>? = null
     private val generatedFeed: MutableList<JsonObject> get() = generated ?: buildGeneratedFeed().also { generated = it }
     private fun buildGeneratedFeed(): MutableList<JsonObject> =
@@ -296,7 +326,12 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
                 putJsonObject("rating") { put("coffee", 4); put("service", 4); put("place", 5) }
                 if (home) {
                     put("kind", "Home")
-                    putJsonObject("home") { put("preparedOn", today.toString()); put("brewMethodCode", "hario-v60"); put("beanName", "Sandbox Bean $index"); put("doseGrams", 15.0); put("brewDurationSeconds", 150); put("tasteScore", 4) }
+                    putJsonObject("home") {
+                        put("preparedOn", today.toString()); put("brewMethodCode", "hario-v60"); put("beanName", "Sandbox Bean $index"); put("doseGrams", 15.0); put("brewDurationSeconds", 150); put("tasteScore", 4)
+                        // Every tenth shows its shelf bag; half of those are a catalogue coffee the card opens.
+                        if (index % 10 == 0) { put("roasterName", "Sandbox Roaster"); put("coffeeProductSlug", if (index % 20 == 0) null else "sandbox-ethiopia") }
+                    }
+                    if (index % 10 == 0) put("shelfBagPhotoUrl", "/media/sample")
                 }
             }
         }.toMutableList()
@@ -373,6 +408,12 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
         put("addedShopsCount", 0); put("addedRoastersCount", 0); put("followersCount", 0); put("isFollowing", false)
         put("address", address("sandbox", "/users/sandbox")); put("createdAtUtc", "${today}T07:00:00Z")
     }
+    private fun searchCard(row: JsonObject, origin: JsonObject?) = buildJsonObject {
+        val keys = listOf("address", "name", "city", "addressLine", "coverPhoto", "rating", "checkInCount", "isOpen", "isVisited", "isFavorite", "tags")
+        keys.forEach { key -> row[key]?.let { put(key, it) } }
+        if (origin != null) row["distanceMeters"]?.let { put("distanceMeters", it) }
+    }
+
     private fun shops(query: String?) = JsonArray(if (!populated) emptyList() else
         shopNames.keys.map(::shop).filter { query.isNullOrBlank() || it["name"].toString().contains(query, true) })
     private fun shop(slug: String) = buildJsonObject {
@@ -390,7 +431,7 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
         put("roasters", JsonArray(listOf(catalog("sandbox-roaster", "Sandbox Roaster"))))
         // Counters above stay server aggregates; only the visible cards are filtered.
         put("checkIns", JsonArray(publicVisits.filter(::visible))); put("userCheckIns", JsonArray(shopVisits))
-        putJsonObject("menu") { put("currency", "BYN"); put("photos", JsonArray(listOf(photo()))); put("items", drinks()) }
+        putJsonObject("menu") { put("inputRevision", 0); put("currency", "BYN"); put("photos", JsonArray(listOf(photo()))); put("items", drinks()) }
         putJsonArray("schedules") { (1..7).forEach { day -> add(buildJsonObject { put("dayOfWeek", day); putJsonArray("intervals") { add(buildJsonObject { put("openTime", "08:00:00"); put("closeTime", "23:00:00") }) } }) } }
     }
     // Three synthetic roasters: full data (tags, contacts, shops with and without photos), partial data, and bare.
@@ -469,6 +510,23 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
             add(buildJsonObject { put("code", "medium"); put("name", "Средняя"); put("sortOrder", 2) })
         } },
     ))
+    private fun collectionFavorites() = JsonArray(favoriteRows().map { value ->
+        val row = value.jsonObject
+        val kind = row["kind"]?.jsonPrimitive?.content
+        val slug = (row["address"] as? JsonObject)?.get("slug")?.jsonPrimitive?.content
+        val details = if (kind == "coffee_shop" && slug in shopNames) shop(slug!!)
+            else roasters().firstOrNull { (it["address"] as? JsonObject)?.get("slug")?.jsonPrimitive?.content == slug }
+        buildJsonObject {
+            row.forEach { (key, item) -> put(key, item) }
+            val location = details?.get("location") as? JsonObject
+            location?.get("address")?.let { put("streetAddress", it) }
+            if (kind == "coffee_shop") {
+                details?.get("rating")?.let { put("rating", it) }
+                details?.get("checkInCount")?.let { put("checkInCount", it) }
+            }
+        }
+    })
+
     private fun favoriteRows() = JsonArray(favorites.map { key ->
         val (kind, slug) = key.split(':', limit = 2)
         buildJsonObject {

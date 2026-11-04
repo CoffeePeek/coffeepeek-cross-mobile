@@ -30,7 +30,7 @@ class ChangeEditorViewModelTest {
     private val shop = ShopSnapshot(
         slug = "cafe", title = "Cafe", description = "Old text", contacts = Contacts(phone = "+375291112233", instagram = "https://instagram.com/cafe"),
         photos = listOf(ShopPhotoRef("p1", "u1"), ShopPhotoRef("p2", "u2")), tagIds = listOf("wifi"), roasterIds = listOf("r1"),
-        menu = listOf(MenuRow("espresso", Availability.Present, 4.5)), menuPhotos = listOf(ShopPhotoRef("m1", "mu1")),
+        menu = listOf(MenuRow("espresso", Availability.Present, 4.5)), menuPhotos = listOf(ShopPhotoRef("m1", "mu1")), menuInputRevision = 17,
     )
 
     private fun TestScope.model(section: ChangeSection, requestId: String? = null, account: FakeAccount = FakeAccount()): ChangeEditorViewModel {
@@ -104,6 +104,7 @@ class ChangeEditorViewModelTest {
         val draft = assertIs<ChangeDraft.Menu>(repository.drafts.single())
         assertEquals(listOf(MenuEntry("espresso", Availability.Present, 5.25), MenuEntry("latte", Availability.Absent, null)), draft.items)
         assertEquals(listOf("m1"), draft.retainedPhotoIds)
+        assertEquals(17L, draft.expectedInputRevision)
     }
 
     @Test fun descriptionAndContactsAreSentTrimmedAsTheirOwnDrafts() = runTest(dispatcher) {
@@ -128,11 +129,14 @@ class ChangeEditorViewModelTest {
 
     @Test fun editingTakesTheRequestsMenuAndDescription() = runTest(dispatcher) {
         repository.change = {
-            Result.success(request(it, ChangeSection.Menu, ChangePayload(menu = ChangeMenu(items = listOf(MenuEntry("latte", Availability.Present, 6.0)), retainedPhotoIds = emptyList()))))
+            Result.success(request(it, ChangeSection.Menu, ChangePayload(menu = ChangeMenu(items = listOf(MenuEntry("latte", Availability.Present, 6.0)), retainedPhotoIds = emptyList(), expectedInputRevision = 11))))
         }
         val vm = model(ChangeSection.Menu, requestId = "req")
         assertEquals(listOf(MenuRowState("espresso", "Эспрессо"), MenuRowState("latte", "Латте", Availability.Present, "6")), vm.state.value.menuRows)
         assertTrue(vm.state.value.retainedMenuPhotos.isEmpty())
+        vm.send(ChangeEditorAction.Submit, scope = this)
+        assertTrue("edit:req" in repository.requests)
+        assertEquals(11L, assertIs<ChangeDraft.Menu>(repository.drafts.single()).expectedInputRevision)
     }
 
     @Test fun aFailedLoadCanBeRetriedAndShowsTheServerMessage() = runTest(dispatcher) {
@@ -176,7 +180,7 @@ class ChangeEditorViewModelTest {
 
     @Test fun aFailedDrinksReadFailsTheMenuEditorInsteadOfShowingAnEmptyMenu() = runTest(dispatcher) {
         repository.change = {
-            Result.success(request(it, ChangeSection.Menu, ChangePayload(menu = ChangeMenu(items = listOf(MenuEntry("espresso", Availability.Present, 4.5)), retainedPhotoIds = listOf("m1")))))
+            Result.success(request(it, ChangeSection.Menu, ChangePayload(menu = ChangeMenu(items = listOf(MenuEntry("espresso", Availability.Present, 4.5)), retainedPhotoIds = listOf("m1"), expectedInputRevision = 17))))
         }
         val vm = model(ChangeSection.Menu, requestId = "req")
         catalogs.drinks = { Result.failure(ContributionFailure(FailureKind.Other, "Сервис недоступен")) }
@@ -194,7 +198,7 @@ class ChangeEditorViewModelTest {
 
     @Test fun anItemWhoseDrinkLeftTheCatalogKeepsItsRowAndIsSentAgain() = runTest(dispatcher) {
         repository.change = {
-            Result.success(request(it, ChangeSection.Menu, ChangePayload(menu = ChangeMenu(items = listOf(MenuEntry("retired", Availability.Present, 3.0)), retainedPhotoIds = emptyList()))))
+            Result.success(request(it, ChangeSection.Menu, ChangePayload(menu = ChangeMenu(items = listOf(MenuEntry("retired", Availability.Present, 3.0)), retainedPhotoIds = emptyList(), expectedInputRevision = 17))))
         }
         val vm = model(ChangeSection.Menu, requestId = "req")
         assertTrue(MenuRowState("retired", "retired", Availability.Present, "3") in vm.state.value.menuRows)
@@ -203,11 +207,43 @@ class ChangeEditorViewModelTest {
     }
 
     @Test fun aSuccessfulEmptyDrinkCatalogIsAllowedWhenTheShopHasNoMenu() = runTest(dispatcher) {
-        catalogs.shop = { Result.success(shop.copy(menu = emptyList())) }
+        catalogs.shop = { Result.success(shop.copy(menu = emptyList(), menuInputRevision = 0)) }
         catalogs.drinks = { Result.success(emptyList()) }
         val vm = ChangeEditorViewModel("cafe", ChangeSection.Menu, null, repository, catalogs, FakeAccount()).also { store.put("empty", it); runCurrent() }
         assertNull(vm.state.value.loadError); assertTrue(vm.state.value.menuRows.isEmpty())
         assertTrue(vm.state.value.canSubmit)
+        vm.send(ChangeEditorAction.Submit, scope = this)
+        assertEquals(0L, assertIs<ChangeDraft.Menu>(repository.drafts.single()).expectedInputRevision)
+    }
+
+    @Test fun aMenuWithoutAnObservedRevisionCannotBeLoadedOrSent() = runTest(dispatcher) {
+        val vm = model(ChangeSection.Menu)
+        for (revision in listOf(null, -1L)) {
+            catalogs.shop = { Result.success(shop.copy(menuInputRevision = revision)) }
+            vm.send(ChangeEditorAction.Reload, ChangeEditorAction.Submit, scope = this)
+            assertEquals(EditorLoadError.Failed, vm.state.value.loadError)
+            assertFalse(vm.state.value.canSubmit)
+        }
+        assertTrue(repository.drafts.isEmpty())
+    }
+
+    @Test fun aLegacyRequestDoesNotBorrowTheCurrentShopsRevision() = runTest(dispatcher) {
+        repository.change = { Result.success(request(it, ChangeSection.Menu, ChangePayload(menu = ChangeMenu()))) }
+        val vm = model(ChangeSection.Menu, requestId = "legacy")
+        assertEquals(EditorLoadError.Failed, vm.state.value.loadError)
+        vm.send(ChangeEditorAction.Submit, scope = this)
+        assertTrue(repository.drafts.isEmpty())
+    }
+
+    @Test fun retryingAMenuChangeKeepsItsObservedRevisionAndPrice() = runTest(dispatcher) {
+        repository.changeSubmit = { Result.failure(ContributionFailure(FailureKind.Other)) }
+        val vm = model(ChangeSection.Menu)
+        vm.send(ChangeEditorAction.SetPrice("espresso", "5,25"), ChangeEditorAction.Submit, scope = this)
+        catalogs.shop = { Result.success(shop.copy(menuInputRevision = 18)) }
+        vm.send(ChangeEditorAction.Submit, scope = this)
+        assertEquals(2, repository.drafts.size)
+        assertTrue(repository.drafts.all { (it as ChangeDraft.Menu).expectedInputRevision == 17L })
+        assertTrue(repository.drafts.all { (it as ChangeDraft.Menu).items.first().price == 5.25 })
     }
 
     @Test fun aMissingRequestIsNotFound() = runTest(dispatcher) {

@@ -23,5 +23,7 @@ data class AuthorBlockingListState(
     val error: String? = null,
 )
 
+enum class AuthorBlockError { SaveFailed }
+
 data class AuthorBlockPrompt(val author: AuthorReference, val blocked: Boolean,
-    val working: Boolean = false, val error: String? = null)
+    val working: Boolean = false, val error: AuthorBlockError? = null)

@@ -6,6 +6,7 @@ import com.coffeepeek.api.model.response.ConsumedDrinkOptionDto
 import com.coffeepeek.api.model.ApiResponse
 import com.coffeepeek.api.model.request.CreateShopReq
 import com.coffeepeek.api.model.request.ModerationStatusDto
+import com.coffeepeek.api.model.request.ShopSearchFiltersDto
 import com.coffeepeek.api.model.request.ShopSearchRequestDto
 import com.coffeepeek.api.model.response.shop.MyModerationShopsPageDto
 import com.coffeepeek.api.model.response.shop.CatalogItemDto
@@ -14,7 +15,6 @@ import com.coffeepeek.api.model.response.shop.CoffeeShopDetailsDto
 import com.coffeepeek.api.model.response.shop.GetDrinksResponseDto
 import com.coffeepeek.api.model.response.shop.CoffeeDrinkDefinitionDto
 import com.coffeepeek.api.model.response.shop.GetShopsInBoundsResponseDto
-import com.coffeepeek.api.model.response.shop.GetShopsResponseDto
 import com.coffeepeek.api.model.response.shop.ShopSearchResponseDto
 import com.coffeepeek.api.utils.ApiException
 import io.ktor.client.HttpClient
@@ -44,31 +44,25 @@ class ShopApiService(private val client: HttpClient) {
         minRating: Double? = null,
         page: Int = 1,
         pageSize: Int = 20,
-    ): Result<GetShopsResponseDto> = requestResult {
-        val response = client.get("/api/CoffeeShops") {
-            query?.let { parameter("q", it) }
-            cityId?.let { parameter("city", it) }
-            type?.let { parameter("type", it) }
-            roasterIds?.forEach { parameter("roasters", it) }
-            equipmentIds?.forEach { parameter("equipments", it) }
-            beanIds?.forEach { parameter("beans", it) }
-            brewMethodIds?.forEach { parameter("brewMethods", it) }
-            tagIds?.forEach { parameter("tags", it) }
-            priceRange?.let { parameter("priceRange", it) }
-            minRating?.let { parameter("minRating", it) }
-            parameter("page", page)
-            parameter("pageSize", pageSize)
-        }
-        val apiResponse = response.body<ApiResponse<GetShopsResponseDto>>()
-        if (!apiResponse.isSuccess || apiResponse.data == null) throw ApiException(apiResponse.message)
-        apiResponse.data
-    }
+    ): Result<ShopSearchResponseDto> = searchShops(
+        ShopSearchRequestDto(
+            filters = ShopSearchFiltersDto(
+                city = cityId, type = type, roasters = roasterIds.orEmpty(), equipments = equipmentIds.orEmpty(),
+                beans = beanIds.orEmpty(), brewMethods = brewMethodIds.orEmpty(), tags = tagIds.orEmpty(),
+                priceRange = priceRange, minRating = minRating,
+            ),
+            q = query?.trim()?.takeIf(String::isNotEmpty), page = page, pageSize = pageSize,
+        ),
+    )
 
-    suspend fun searchNearbyShops(request: ShopSearchRequestDto): Result<ShopSearchResponseDto> = requestResult {
-        val origin = request.filters.origin
-        require(origin.latitude.isFinite() && origin.latitude in -90.0..90.0)
-        require(origin.longitude.isFinite() && origin.longitude in -180.0..180.0)
-        require(request.filters.radiusKm > 0 && request.page > 0 && request.pageSize in 1..100)
+    suspend fun searchShops(request: ShopSearchRequestDto): Result<ShopSearchResponseDto> = requestResult {
+        request.filters.origin?.let { origin ->
+            require(origin.latitude.isFinite() && origin.latitude in -90.0..90.0)
+            require(origin.longitude.isFinite() && origin.longitude in -180.0..180.0)
+        }
+        require(request.page > 0 && request.pageSize in 1..100)
+        require(request.filters.radiusKm == null || request.filters.origin != null && request.filters.radiusKm in 1..100)
+        require(request.sort != "distance_asc" || request.filters.origin != null)
         val response = client.post("/api/v1/coffee-shops/search") {
             contentType(ContentType.Application.Json)
             setBody(request)

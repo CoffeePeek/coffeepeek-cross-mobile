@@ -15,12 +15,9 @@
     <string name="profile_week_retry">Повторить</string>
     <string name="profile_week_open">Открыть чекины</string>
     <string name="profile_week_day">%1$s: %2$s</string>
-    <plurals name="profile_week_count">
-        <item quantity="one">%1$d чекин</item>
-        <item quantity="few">%1$d чекина</item>
-        <item quantity="many">%1$d чекинов</item>
-        <item quantity="other">%1$d чекинов</item>
-    </plurals>
+    <string name="profile_week_count_one">%1$d чекин</string>
+    <string name="profile_week_count_few">%1$d чекина</string>
+    <string name="profile_week_count_many">%1$d чекинов</string>
     <string name="profile_week_monday">Пн</string>
     <string name="profile_week_tuesday">Вт</string>
     <string name="profile_week_wednesday">Ср</string>

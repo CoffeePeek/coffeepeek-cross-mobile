@@ -1,5 +1,8 @@
 package com.coffeepeek.admin.ui.screen.shopchange
 
+import coffeepeek.composeapp.generated.resources.*
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
+
 import com.coffeepeek.core.designsystem.component.coffeePeekScrollContentPadding
 
 import com.coffeepeek.core.designsystem.component.CoffeePeekScaffold as Scaffold
@@ -32,11 +35,14 @@ import org.koin.core.parameter.parametersOf
 
 @Composable
 fun SuggestShopChangeScreen(shopId: String) {
+    val localizedLegacySuggestShopChangeScreenContributionsSuggestTitle = stringResource(Res.string.legacy_suggest_shop_change_screen_contributions_suggest_title)
+    val localizedLegacySuggestShopChangeScreenContributionsSuggestHeading = stringResource(Res.string.legacy_suggest_shop_change_screen_contributions_suggest_heading)
+
     val vm: SuggestShopChangeViewModel = platformViewModel(parameters = { parametersOf(shopId) })
     val state by vm.state.collectAsState()
 
     Scaffold(
-        topBar = { CpTopBar("Предложить правку") },
+        topBar = { CpTopBar(localizedLegacySuggestShopChangeScreenContributionsSuggestTitle) },
         containerColor = MaterialTheme.colorScheme.background,
     ) { padding ->
         if (state.isLoading) {
@@ -52,9 +58,9 @@ fun SuggestShopChangeScreen(shopId: String) {
             item {
                 Text(
                     text = if (state.shopTitle.isBlank()) {
-                        "Что нужно обновить?"
+                        localizedLegacySuggestShopChangeScreenContributionsSuggestHeading
                     } else {
-                        "Что обновить в «${state.shopTitle}»?"
+                        stringResource(Res.string.legacy_shop_change_named, state.shopTitle)
                     },
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
@@ -68,8 +74,8 @@ fun SuggestShopChangeScreen(shopId: String) {
                         .forEachIndexed { index, section ->
                         if (index > 0) RowSeparator()
                         NavigationRow(
-                            label = section.title(),
-                            description = section.hint(),
+                            label = section.localizedTitle(),
+                            description = section.localizedHint(),
                             onClick = {
                                 Navigator.navigate(
                                     Navigator.Screen.ShopChangeEditor(

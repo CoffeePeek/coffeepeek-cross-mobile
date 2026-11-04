@@ -1,5 +1,12 @@
 package com.coffeepeek.admin.feature.checkin.ui
 
+import com.coffeepeek.admin.ui.component.preparationMetricLabels
+
+import com.coffeepeek.admin.ui.component.PreparationMetricLabels
+
+import coffeepeek.composeapp.generated.resources.*
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
+
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -9,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.intl.Locale
 import com.coffeepeek.admin.feature.catalog.api.methodLabel
 import com.coffeepeek.admin.theme.CpDimens
+import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.ui.component.CheckInHeader
 import com.coffeepeek.admin.ui.component.CheckInHeading
 import com.coffeepeek.admin.ui.component.HelpfulButton
@@ -35,6 +43,8 @@ internal fun CheckInTimelineContentImpl(
     supportingContent: @Composable () -> Unit = {},
     footerActions: (@Composable () -> Unit)? = null,
 ) {
+    val localizedLegacyReviewContentOwnershipKindShop = stringResource(Res.string.legacy_review_content_ownership_kind_shop)
+
     val drinkName = savedDrinkName(checkIn.drinkNameRu, checkIn.drinkNameEn, checkIn.customDrinkName, Locale.current.language)
     Column(
         modifier = modifier.fillMaxWidth(),
@@ -43,13 +53,19 @@ internal fun CheckInTimelineContentImpl(
         CheckInHeader(checkIn, isOwn, onAuthorClick = onAuthorClick, displayTimestamp = displayTimestamp, actions = actions)
         if (checkIn.isHome) {
             checkIn.homePreparation?.let { recipe ->
-                recipe.beanName?.takeIf(String::isNotBlank)?.let { Text(it, style = MaterialTheme.typography.titleMedium) }
-                val details = recipe.checkInDetails()
-                if (details.isNotBlank()) Text(details, style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+                val details = recipe.checkInDetails(preparationMetricLabels())
+                // A shown bag is the title and carries the recipe line itself.
+                recipe.shelfBagCardUrl?.let { card ->
+                    CheckInShelfBag(card, recipe.beanName, recipe.roasterName, details,
+                        recipe.coffeeProductSlug?.let { slug -> { Navigator.navigate(Navigator.Screen.CoffeeDetail(slug)) } })
+                } ?: run {
+                    recipe.beanName?.takeIf(String::isNotBlank)?.let { Text(it, style = MaterialTheme.typography.titleMedium) }
+                    if (details.isNotBlank()) Text(details, style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
             }
         } else CheckInHeading(
-            shopName = checkIn.shopName.ifBlank { "Кофейня" },
+            shopName = checkIn.shopName.ifBlank { localizedLegacyReviewContentOwnershipKindShop },
             rating = checkIn.rating,
             onShopClick = onShopClick,
         )
@@ -75,9 +91,9 @@ internal fun CheckInTimelineContentImpl(
     }
 }
 
-private fun FeedHomePreparation.checkInDetails(): String = listOfNotNull(
-    brewMethodCode?.methodLabel(),
-    doseGrams?.let { "$it г" },
-    brewDurationSeconds?.let { "$it с" },
+private fun FeedHomePreparation.checkInDetails(labels: PreparationMetricLabels): String = listOfNotNull(
+    brewMethodCode?.methodLabel(labels.otherMethod),
+    doseGrams?.let { labels.grams.replace("%1\$s", it.toString()) },
+    brewDurationSeconds?.let { labels.seconds.replace("%1\$s", it.toString()) },
     tasteScore?.let { "$it/5" },
 ).joinToString(" · ")

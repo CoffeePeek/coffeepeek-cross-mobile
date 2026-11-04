@@ -82,6 +82,7 @@ fun CoffeePeekCircularBackButton(
         onClick = onClick,
         contentDescription = contentDescription,
         modifier = modifier,
+        nativeIcon = com.coffeepeek.core.designsystem.modifier.CoffeePeekGlassIcon.Back,
     ) {
         Icon(
             imageVector = CoffeePeekIcons.ChevronLeft,

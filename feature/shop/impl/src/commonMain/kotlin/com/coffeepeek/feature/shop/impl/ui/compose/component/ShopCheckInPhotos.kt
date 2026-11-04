@@ -30,7 +30,7 @@ import com.coffeepeek.feature.shop.impl.resources.shop_checkins_more_photos
 import com.coffeepeek.feature.shop.impl.resources.shop_photo_unavailable
 import io.kamel.image.KamelImage
 import io.kamel.image.asyncPainterResource
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 /** At most three tiles; the third tile still opens the complete ordered album. */

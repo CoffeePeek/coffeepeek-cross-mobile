@@ -39,6 +39,8 @@ internal data class PostDto(
     val isHelpfulByCurrentUser: Boolean = false,
     val kind: String = "Shop",
     val home: HomeDto? = null,
+    val shelfBagPhotoUrl: String? = null,
+    val shelfBagPhotoVariants: List<VariantDto>? = null,
     val authorAvatarUrl: String? = null,
     val authorId: String? = null,
 )
@@ -54,6 +56,8 @@ internal data class HomeDto(
     val preparedOn: String = "",
     val brewMethodCode: String? = null,
     val beanName: String? = null,
+    val roasterName: String? = null,
+    val coffeeProductSlug: String? = null,
     val doseGrams: Double? = null,
     val brewDurationSeconds: Int? = null,
     val tasteScore: Int? = null,

@@ -11,7 +11,7 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import com.coffeepeek.core.designsystem.component.CoffeePeekTextButton as TextButton
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -27,7 +27,7 @@ import com.coffeepeek.feature.shop.impl.resources.shop_reviews_register
 import com.coffeepeek.feature.shop.impl.resources.shop_reviews_sign_in
 import com.coffeepeek.feature.shop.impl.resources.shop_reviews_sign_in_prompt
 import com.coffeepeek.feature.shop.impl.resources.shop_reviews_title
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable

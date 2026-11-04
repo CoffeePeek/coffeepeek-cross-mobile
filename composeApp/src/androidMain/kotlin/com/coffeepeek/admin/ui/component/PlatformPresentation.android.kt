@@ -1,8 +1,11 @@
 package com.coffeepeek.admin.ui.component
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.MotionDurationScale
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.material3.*
+import com.coffeepeek.core.designsystem.component.CoffeePeekTextButton as TextButton
 import androidx.compose.ui.Modifier
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
@@ -29,25 +32,22 @@ internal actual fun NativePhotoSourceSheet(title: String, onGallery: () -> Unit,
 internal actual fun NativeModalSheet(onDismiss: () -> Unit, dismissEnabled: Boolean, content: @Composable ColumnScope.() -> Unit) = false
 @Composable
 internal actual fun PlatformSwitch(checked: Boolean, onCheckedChange: ((Boolean) -> Unit)?, enabled: Boolean, modifier: Modifier) {
-    val palette = switchPalette(MaterialTheme.colorScheme.background.luminance() < .5f)
-    Switch(checked = checked, onCheckedChange = onCheckedChange, enabled = enabled, modifier = modifier,
-        // A non-null slot keeps the thumb full-size in both states.
-        thumbContent = { Box(Modifier.size(SwitchDefaults.IconSize)) },
-        colors = SwitchDefaults.colors(
-            checkedThumbColor = palette.checkedThumb, checkedTrackColor = palette.checkedTrack,
-            uncheckedThumbColor = palette.uncheckedThumb, uncheckedTrackColor = palette.uncheckedTrack,
-            checkedBorderColor = Color.Transparent, uncheckedBorderColor = Color.Transparent,
-            disabledCheckedThumbColor = palette.checkedThumb,
-            disabledCheckedTrackColor = palette.checkedTrack.copy(alpha = .5f),
-            disabledUncheckedThumbColor = palette.uncheckedThumb,
-            disabledUncheckedTrackColor = palette.uncheckedTrack.copy(alpha = .5f),
-            disabledCheckedBorderColor = Color.Transparent, disabledUncheckedBorderColor = Color.Transparent,
-        ))
+    com.coffeepeek.core.designsystem.component.CoffeePeekSwitch(checked, onCheckedChange, modifier, enabled)
 }
 @Composable
 internal actual fun NativeSegmentedControl(labels: List<String>, selectedIndex: Int, onSelected: (Int) -> Unit, modifier: Modifier) = false
-internal actual fun platformHaptic(event: HapticEvent) = Unit
+internal actual fun platformHaptic(event: HapticEvent) = AndroidHapticFeedback.perform(event)
 @Composable
-internal actual fun platformReduceMotion() = false
+internal actual fun platformReduceMotion(): Boolean {
+    // The window Recomposer already observes the system animator duration scale.
+    val scale = rememberCoroutineScope().coroutineContext[MotionDurationScale]
+    return scale?.scaleFactor == 0f
+}
 @Composable
 internal actual fun NativeDatePicker(title: String, initialMillis: Long, maximumMillis: Long?, timeOnly: Boolean, onConfirm: (Long) -> Unit, onDismiss: () -> Unit) = false
+
+@androidx.compose.ui.tooling.preview.PreviewLightDark
+@Composable
+private fun PlatformSwitchPreview() = com.coffeepeek.core.designsystem.theme.CoffeePeekTheme {
+    PlatformSwitch(true, {})
+}

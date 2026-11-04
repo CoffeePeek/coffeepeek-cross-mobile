@@ -4,6 +4,8 @@ import io.ktor.client.request.HttpRequestData
 import io.ktor.http.*
 import kotlinx.serialization.json.*
 import kotlin.math.PI
+import kotlin.math.floor
+import kotlin.math.pow
 import kotlin.math.asin
 import kotlin.math.cos
 import kotlin.math.sin
@@ -14,7 +16,7 @@ import kotlin.math.sqrt
  * 47 shops in two cities with every filter, paging, nearby search by distance, map content by bounds and two zones; `Truncated` is `Paged` with a map that cuts the
  * shops and says so; `Empty` has no shops; `SearchFailure` and `MapFailure` answer 500 for the search or for the map.
  */
-internal enum class SandboxDiscovery { Seeded, Paged, Truncated, Empty, SearchFailure, MapFailure }
+internal enum class SandboxDiscovery { Seeded, Paged, Truncated, Empty, SearchFailure, PageFailure, RefreshFailure, MapFailure, CatalogFailure, CatalogEmpty, LongText }
 
 private data class Spot(
     val slug: String, val name: String, val city: String, val type: String, val price: String, val rating: Double,
@@ -30,7 +32,7 @@ private class Query(
     val open: Boolean? = null, val new: Boolean? = null, val visitedOnly: Boolean = false, val favoritesOnly: Boolean = false,
 )
 
-/** Local fixtures for `CoffeeShops`, `coffee-shops/search` and `Map`; the favorite flags follow the favorites of the application backend. */
+/** Local fixtures for `coffee-shops/search` and `Map`; the favorite flags follow the favorites of the application backend. */
 internal class SandboxDiscoveryBackend(
     private val populated: () -> Boolean,
     private val favorites: () -> Set<String>,
@@ -55,7 +57,15 @@ internal class SandboxDiscoveryBackend(
         private val roasterSlugs = listOf("sandbox-roaster", "sandbox-light", "sandbox-decaf")
     }
 
+    private val refreshAttempts = mutableMapOf<JsonObject, Int>()
     @Volatile var mode = SandboxDiscovery.Seeded
+        set(value) {
+            if (field != value) {
+                refreshAttempts.clear()
+            }
+            field = value
+        }
+    private var pageFailureSent = false
 
     private val core = listOf(
         Spot("sandbox-cafe", "Sandbox Cafe", "minsk", "CoffeeBar", "Moderate", 4.5, open = true, new = false, visited = true, 53.9, 27.56,
@@ -84,59 +94,126 @@ internal class SandboxDiscoveryBackend(
 
     fun reset() { mode = SandboxDiscovery.Seeded }
 
-    private fun spots(): List<Spot> = if (!populated() || mode == SandboxDiscovery.Empty) emptyList() else core + extras
+    private fun spots(): List<Spot> = when {
+        !populated() || mode == SandboxDiscovery.Empty -> emptyList()
+        mode == SandboxDiscovery.Seeded -> core
+        mode == SandboxDiscovery.LongText -> core.map { it.copy(name = "Кофейня с собственной обжаркой на длинной городской улице") }
+        else -> core + extras
+    }
 
     fun handle(path: String, method: HttpMethod, request: HttpRequestData, input: JsonObject): Pair<HttpStatusCode, JsonObject>? {
-        if (mode == SandboxDiscovery.Seeded) return null
+        catalogResponse(path, method)?.let { return it }
         return when {
-            path == "/api/coffeeshops" && method == HttpMethod.Get ->
-                if (mode == SandboxDiscovery.SearchFailure) HttpStatusCode.InternalServerError to failure(SEARCH_FAILURE) else list(request.url.parameters)
             path == "/api/v1/coffee-shops/search" && method == HttpMethod.Post ->
-                if (mode == SandboxDiscovery.SearchFailure) HttpStatusCode.InternalServerError to failure(SEARCH_FAILURE) else nearby(input)
-            path == "/api/map" && method == HttpMethod.Get ->
+                searchResponse(input)
+            path == "/api/v1/coffee-shops/map" && method == HttpMethod.Post ->
+                if (mode == SandboxDiscovery.MapFailure) HttpStatusCode.InternalServerError to failure(MAP_FAILURE) else filteredMap(input)
+            path == "/api/map" && method == HttpMethod.Get && mode != SandboxDiscovery.Seeded ->
                 if (mode == SandboxDiscovery.MapFailure) HttpStatusCode.InternalServerError to failure(MAP_FAILURE) else map(request.url.parameters)
             else -> null
         }
     }
 
-    // GET /api/CoffeeShops: the plain search, filtered and paged.
-    private fun list(params: Parameters): Pair<HttpStatusCode, JsonObject> {
-        val query = Query(
-            text = params["q"], city = params["city"], type = params["type"], price = params["priceRange"], minRating = params["minRating"]?.toDoubleOrNull(),
-            tags = params.getAll("tags").orEmpty().toSet(), roasters = params.getAll("roasters").orEmpty().toSet(),
-            brewMethods = params.getAll("brewMethods").orEmpty().toSet(), equipment = params.getAll("equipments").orEmpty().toSet(),
-            beans = params.getAll("beans").orEmpty().toSet(),
-        )
-        val (items, total, pages, current) = paged(spots().filter { matches(it, query) }, params["page"], params["pageSize"])
+    private fun catalogResponse(path: String, method: HttpMethod): Pair<HttpStatusCode, JsonObject>? {
+        if (method != HttpMethod.Get) return null
+        if (mode == SandboxDiscovery.CatalogFailure && path == "/api/catalogs/beans") {
+            return HttpStatusCode.InternalServerError to failure("Catalog fixture failure")
+        }
+        if (mode == SandboxDiscovery.CatalogEmpty &&
+            (path.startsWith("/api/catalogs/") && path != "/api/catalogs/cities" || path == "/api/roasters")) {
+            return ok(JsonArray(emptyList()))
+        }
+        return null
+    }
+
+    /** Page one rearms the failure; the first attempt at page two fails, and an explicit retry succeeds. */
+    private fun searchResponse(input: JsonObject): Pair<HttpStatusCode, JsonObject> {
+        val page = input["page"]?.jsonPrimitive?.intOrNull ?: 1
+        if (page == 1) pageFailureSent = false
+        if (mode == SandboxDiscovery.SearchFailure) return HttpStatusCode.InternalServerError to failure(SEARCH_FAILURE)
+        if (mode == SandboxDiscovery.RefreshFailure && page == 1) {
+            val attempt = (refreshAttempts[input] ?: 0) + 1
+            refreshAttempts[input] = attempt
+            if (attempt == 2) return HttpStatusCode.InternalServerError to failure(SEARCH_FAILURE)
+        }
+        if (mode == SandboxDiscovery.PageFailure && page == 2 && !pageFailureSent) {
+            pageFailureSent = true
+            return HttpStatusCode.InternalServerError to failure(SEARCH_FAILURE)
+        }
+        return search(input)
+    }
+
+    private fun search(input: JsonObject): Pair<HttpStatusCode, JsonObject> {
+        invalidSelection(input)?.let { return HttpStatusCode.BadRequest to failure(it) }
+        val (items, total, pages, current) = paged(selected(input), input["page"]?.jsonPrimitive?.contentOrNull, input["pageSize"]?.jsonPrimitive?.contentOrNull)
         return ok(buildJsonObject {
-            put("coffeeShops", JsonArray(items.map { listRow(it, null) }))
+            put("items", JsonArray(items.map { (spot, meters) -> searchItem(spot, meters) }))
             put("totalItems", total); put("totalPages", pages); put("currentPage", current)
         })
     }
 
-    // POST /api/v1/coffee-shops/search: the nearby search, sorted by distance from the origin and limited to the radius.
-    private fun nearby(input: JsonObject): Pair<HttpStatusCode, JsonObject> {
-        val filters = input["filters"] as? JsonObject ?: return HttpStatusCode.BadRequest to failure("Некорректный запрос")
-        val origin = filters["origin"] as? JsonObject ?: return HttpStatusCode.BadRequest to failure("Укажите точку поиска")
-        val originLat = origin["latitude"]?.jsonPrimitive?.doubleOrNull ?: return HttpStatusCode.BadRequest to failure("Укажите точку поиска")
-        val originLon = origin["longitude"]?.jsonPrimitive?.doubleOrNull ?: return HttpStatusCode.BadRequest to failure("Укажите точку поиска")
-        val radiusMeters = (filters["radiusKm"]?.jsonPrimitive?.intOrNull ?: 3) * 1_000.0
+    private fun invalidSelection(input: JsonObject): String? {
+        val filters = input["filters"] as? JsonObject ?: buildJsonObject {}
+        val origin = filters["origin"] as? JsonObject
+        val lat = origin?.get("latitude")?.jsonPrimitive?.doubleOrNull
+        val lon = origin?.get("longitude")?.jsonPrimitive?.doubleOrNull
+        val radius = filters["radiusKm"]?.jsonPrimitive?.doubleOrNull
+        if (origin != null && (lat == null || lon == null || !lat.isFinite() || !lon.isFinite() || lat !in -90.0..90.0 || lon !in -180.0..180.0)) {
+            return "Укажите точку поиска"
+        }
+        if (radius != null && (origin == null || radius <= 0 || radius > 100) || input["sort"]?.jsonPrimitive?.contentOrNull == "distance_asc" && origin == null) {
+            return "Укажите точку поиска и радиус"
+        }
+        return null
+    }
+
+    private fun selected(input: JsonObject): List<Pair<Spot, Double?>> {
+        val filters = input["filters"] as? JsonObject ?: buildJsonObject {}
+        val origin = filters["origin"] as? JsonObject
+        return searchHits(searchQuery(input, filters), origin?.get("latitude")?.jsonPrimitive?.doubleOrNull,
+            origin?.get("longitude")?.jsonPrimitive?.doubleOrNull, filters["radiusKm"]?.jsonPrimitive?.doubleOrNull,
+            input["sort"]?.jsonPrimitive?.contentOrNull)
+    }
+
+    private fun filteredMap(input: JsonObject): Pair<HttpStatusCode, JsonObject> {
+        invalidSelection(input)?.let { return HttpStatusCode.BadRequest to failure(it) }
+        val bounds = input["bounds"] as? JsonObject
+        val minLat = bounds?.get("minLat")?.jsonPrimitive?.doubleOrNull
+        val maxLat = bounds?.get("maxLat")?.jsonPrimitive?.doubleOrNull
+        val minLon = bounds?.get("minLon")?.jsonPrimitive?.doubleOrNull
+        val maxLon = bounds?.get("maxLon")?.jsonPrimitive?.doubleOrNull
+        val zoom = input["zoom"]?.jsonPrimitive?.intOrNull
+        if (minLat == null || maxLat == null || minLon == null || maxLon == null || zoom == null || zoom !in 0..22 ||
+            !minLat.isFinite() || !maxLat.isFinite() || !minLon.isFinite() || !maxLon.isFinite() ||
+            minLat !in -90.0..90.0 || maxLat !in minLat..90.0 || minLon !in -180.0..180.0 || maxLon !in minLon..180.0)
+            return HttpStatusCode.BadRequest to failure("Укажите границы карты и масштаб")
+        val inside = selected(input).map { it.first }.filter { it.lat in minLat..maxLat && it.lon in minLon..maxLon }
+        val truncated = mode == SandboxDiscovery.Truncated && inside.size > MAP_LIMIT
+        val shown = if (truncated) inside.take(MAP_LIMIT) else inside
+        val visibleZones = zones.filter { zone -> inside.any { distance(zone.lat, zone.lon, it.lat, it.lon) <= zone.radius } }
+        return ok(mapRows(shown, zoom, visibleZones, truncated))
+    }
+
+    private fun searchQuery(input: JsonObject, filters: JsonObject): Query {
         fun ids(key: String) = (filters[key] as? JsonArray).orEmpty().mapNotNull { it.jsonPrimitive.contentOrNull }.toSet()
-        val query = Query(
+        return Query(
             text = input["q"]?.jsonPrimitive?.contentOrNull, city = filters["city"]?.jsonPrimitive?.contentOrNull, type = filters["type"]?.jsonPrimitive?.contentOrNull,
             price = filters["priceRange"]?.jsonPrimitive?.contentOrNull, minRating = filters["minRating"]?.jsonPrimitive?.doubleOrNull,
             tags = ids("tags"), roasters = ids("roasters"), brewMethods = ids("brewMethods"), equipment = ids("equipments"), beans = ids("beans"),
             open = filters["isOpen"]?.jsonPrimitive?.booleanOrNull, new = filters["isNew"]?.jsonPrimitive?.booleanOrNull,
             visitedOnly = filters["visitedOnly"]?.jsonPrimitive?.booleanOrNull == true, favoritesOnly = filters["favoritesOnly"]?.jsonPrimitive?.booleanOrNull == true,
         )
-        val found = spots().filter { matches(it, query) }
-            .map { it to distance(originLat, originLon, it.lat, it.lon) }.filter { it.second <= radiusMeters }
-            .sortedWith(compareBy<Pair<Spot, Double>> { it.second }.thenBy { it.first.slug })
-        val (items, total, pages, current) = paged(found, input["page"]?.jsonPrimitive?.contentOrNull, input["pageSize"]?.jsonPrimitive?.contentOrNull)
-        return ok(buildJsonObject {
-            put("items", JsonArray(items.map { (spot, meters) -> searchItem(spot, meters) }))
-            put("totalItems", total); put("totalPages", pages); put("currentPage", current)
-        })
+    }
+
+    private fun searchHits(query: Query, lat: Double?, lon: Double?, radius: Double?, sort: String?): List<Pair<Spot, Double?>> {
+        val found = spots().filter { matches(it, query) }.map { spot ->
+            spot to if (lat != null && lon != null) distance(lat, lon, spot.lat, spot.lon) else null
+        }.filter { radius == null || it.second?.let { meters -> meters <= radius * 1_000 } == true }
+        return when (sort ?: if (!query.text.isNullOrBlank()) "relevance" else if (lat != null) "distance_asc" else "name_asc") {
+            "distance_asc" -> found.sortedWith(compareBy<Pair<Spot, Double?>> { it.second }.thenBy { it.first.slug })
+            "rating_desc" -> found.sortedByDescending { it.first.rating }
+            else -> found.sortedBy { it.first.name }
+        }
     }
 
     // GET /api/Map: the shops and zones inside the bounds; the truncated fixture keeps only a few shops and says so.
@@ -154,23 +231,50 @@ internal class SandboxDiscoveryBackend(
         val truncated = mode == SandboxDiscovery.Truncated && inside.size > MAP_LIMIT
         val shown = if (truncated) inside.take(MAP_LIMIT) else inside
         val visibleZones = if (spots().isEmpty()) emptyList() else zones.filter { it.lat in minLat..maxLat && it.lon in minLon..maxLon }
-        return ok(buildJsonObject {
-            put("shops", JsonArray(shown.map { spot ->
-                buildJsonObject {
-                    put("address", address(spot.slug, "/coffee-shops/${spot.slug}")); put("latitude", spot.lat); put("longitude", spot.lon)
-                    put("title", spot.name); put("type", spot.type)
-                }
-            }))
-            put("clusters", JsonArray(emptyList()))
-            put("zones", JsonArray(visibleZones.map(::zoneRow)))
+        return ok(mapRows(shown, params["zoom"]?.toIntOrNull() ?: 22, visibleZones, truncated))
+    }
+
+    private fun mapRows(shown: List<Spot>, zoom: Int, visibleZones: List<Zone>, truncated: Boolean): JsonObject {
+        // Local groups exercise transitions; production grouping remains owned by the server.
+        val zoned = if (zoom <= 13) shown.groupBy { spot ->
+            visibleZones.firstOrNull { distance(it.lat, it.lon, spot.lat, spot.lon) <= it.radius }
+        } else mapOf(null to shown)
+        val unzoned = zoned[null].orEmpty()
+        val cell = 360.0 / 2.0.pow(zoom.coerceIn(0, 22))
+        val groups = if (zoom > 13) unzoned.map(::listOf) else unzoned.groupBy { floor(it.lat / cell) to floor(it.lon / cell) }.values
+        return buildJsonObject {
+            put("shops", JsonArray(groups.filter { it.size == 1 }.map { mapShop(it.single()) }))
+            put("clusters", JsonArray(groups.filter { it.size > 1 }.map(::mapCluster)))
+            put("zones", JsonArray(zoned.mapNotNull { (zone, members) -> zone?.let { zoneRow(it, members.size) } }))
             put("isTruncated", truncated)
+        }
+    }
+
+    private fun mapShop(spot: Spot) = buildJsonObject {
+        put("address", address(spot.slug, "/coffee-shops/${spot.slug}"))
+        put("latitude", spot.lat)
+        put("longitude", spot.lon)
+        put("title", spot.name)
+        put("type", spot.type)
+    }
+
+    private fun mapCluster(group: List<Spot>) = buildJsonObject {
+        put("id", group.map { it.slug }.sorted().joinToString(","))
+        put("latitude", group.map { it.lat }.average())
+        put("longitude", group.map { it.lon }.average())
+        put("count", group.size)
+        put("bounds", buildJsonObject {
+            put("minLatitude", group.minOf { it.lat })
+            put("minLongitude", group.minOf { it.lon })
+            put("maxLatitude", group.maxOf { it.lat })
+            put("maxLongitude", group.maxOf { it.lon })
         })
     }
 
     private fun matches(spot: Spot, query: Query): Boolean =
         (query.text.isNullOrBlank() || spot.name.contains(query.text.trim(), ignoreCase = true)) &&
             (query.city == null || spot.city == query.city) &&
-            (query.type == null || spot.type.equals(query.type, ignoreCase = true)) &&
+            (query.type == null || spot.type.equals(query.type.replace("-", ""), ignoreCase = true)) &&
             (query.price == null || spot.price.equals(query.price, ignoreCase = true)) &&
             (query.minRating == null || spot.rating >= query.minRating) &&
             (query.tags.isEmpty() || spot.tags.any(query.tags::contains)) &&
@@ -192,30 +296,18 @@ internal class SandboxDiscoveryBackend(
         return Page(all.drop((current - 1) * size).take(size), all.size, pages, current)
     }
 
-    private fun listRow(spot: Spot, distance: Double?) = buildJsonObject {
+    private fun searchItem(spot: Spot, distance: Double?) = buildJsonObject {
         put("address", address(spot.slug, "/coffee-shops/${spot.slug}")); put("name", spot.name)
-        put("description", "Тестовая кофейня. Данные и действия только локальные.")
-        put("city", address(spot.city, "/cities/${spot.city}")); put("rating", spot.rating); put("checkInCount", 3)
-        put("isOpen", spot.open); put("isNew", spot.new); put("isVisited", spot.visited); put("isFavorite", isFavorite(spot))
-        put("priceRange", spot.price); put("type", spot.type); put("addressLine", "Тестовая улица, ${spot.slug.substringAfterLast('-').takeWhile(Char::isDigit).ifEmpty { "1" }}")
+        put("addressLine", if (mode == SandboxDiscovery.LongText) "Проспект Независимости, 123, вход со стороны внутреннего двора" else "Тестовая улица"); put("coverPhoto", photo()); put("rating", spot.rating); put("checkInCount", 3)
+        put("isOpen", spot.open); put("isVisited", spot.visited); put("isFavorite", isFavorite(spot))
         distance?.let { put("distanceMeters", it) }
-        putJsonObject("location") { put("address", "Тестовая улица"); put("latitude", spot.lat); put("longitude", spot.lon) }
-        put("photos", JsonArray(listOf(photo()))); put("coverPhoto", photo())
-        put("roasters", JsonArray(spot.roasters.map { catalog(it, names.getValue(it)) }))
         put("tags", JsonArray(spot.tags.map { catalog(it, names.getValue(it)) }))
     }
 
-    private fun searchItem(spot: Spot, distance: Double) = buildJsonObject {
-        put("address", address(spot.slug, "/coffee-shops/${spot.slug}")); put("name", spot.name)
-        put("addressLine", "Тестовая улица"); put("coverPhoto", photo()); put("rating", spot.rating); put("checkInCount", 3)
-        put("isOpen", spot.open); put("isVisited", spot.visited); put("isFavorite", isFavorite(spot)); put("distanceMeters", distance)
-        put("tags", JsonArray(spot.tags.map { catalog(it, names.getValue(it)) }))
-    }
-
-    private fun zoneRow(zone: Zone) = buildJsonObject {
+    private fun zoneRow(zone: Zone, count: Int) = buildJsonObject {
         put("address", address(zone.slug, "/zones/${zone.slug}")); put("name", zone.name); put("description", "Район ${zone.name}")
         put("color", zone.color); put("latitude", zone.lat); put("longitude", zone.lon); put("radiusMeters", zone.radius)
-        put("shopCount", spots().count { distance(zone.lat, zone.lon, it.lat, it.lon) <= zone.radius })
+        put("shopCount", count)
         put("polygon", JsonArray((0 until 6).map { index ->
             val angle = 2 * PI * index / 6
             buildJsonObject {

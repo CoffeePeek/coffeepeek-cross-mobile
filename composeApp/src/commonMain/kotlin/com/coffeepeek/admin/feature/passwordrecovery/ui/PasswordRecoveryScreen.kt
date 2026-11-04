@@ -25,7 +25,7 @@ import com.coffeepeek.admin.ui.screen.auth.AuthPrimaryButton
 import com.coffeepeek.admin.ui.screen.auth.AuthScreenScaffold
 import com.coffeepeek.admin.ui.screen.auth.AuthTextField
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import org.koin.core.parameter.parametersOf
 
@@ -73,7 +73,7 @@ private fun PasswordRecoveryScreenContent(
             )
         }
         state.error?.let {
-            Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+            Text(passwordRecoveryMessage(it), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
         }
         if (state.step == RecoveryStep.Email) {
             AuthPrimaryButton(

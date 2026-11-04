@@ -13,12 +13,14 @@ let package = Package(
     )
   ],
   dependencies: [
+    .package(path: "subpackages/_feature_shelf_data"),
     .package(path: "subpackages/com_posthog_posthog_kmp_0_5_1")
   ],
   targets: [
     .target(
       name: "KotlinMultiplatformLinkedPackage",
       dependencies: [
+        .product(name: "_feature_shelf_data", package: "_feature_shelf_data"),
         .product(name: "com_posthog_posthog_kmp_0_5_1", package: "com_posthog_posthog_kmp_0_5_1")
       ]
     )

@@ -12,6 +12,12 @@ interface CommunityRepository {
     /** The public timeline in the server's publication order. Failures are [com.coffeepeek.feature.community.domain.model.FeedLoadException]. */
     suspend fun feed(pageSize: Int, cursor: String? = null, filters: FeedFilters = FeedFilters()): Result<FeedPage>
 
+    /**
+     * One post, as a shared link opens it. A post the viewer may not see (private, not yet approved, deleted, or by an author hidden from
+     * the viewer) fails with a [com.coffeepeek.feature.community.domain.model.CommunityFailure] of kind NotFound.
+     */
+    suspend fun postById(id: String): Result<CommunityPost>
+
     /** The signed-in user's own posts, newest first. */
     suspend fun myPosts(page: Int, pageSize: Int): Result<MyPostsPage>
 

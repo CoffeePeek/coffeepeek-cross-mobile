@@ -5,4 +5,5 @@ const val COFFEEPEEK_SHARE_TEXT =
 
 expect object ShareHelper {
     fun shareText(text: String)
+    fun shareImages(images: List<ByteArray>, text: String)
 }

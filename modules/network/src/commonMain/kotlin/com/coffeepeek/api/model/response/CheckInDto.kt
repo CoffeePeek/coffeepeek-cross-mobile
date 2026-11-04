@@ -32,6 +32,9 @@ data class CheckInDto(
     val isHelpfulByCurrentUser: Boolean = false,
     val kind: String = "Shop",
     val home: FeedHomePreparationDto? = null,
+    /** The author's copy of a shelf-bag card shown with a home check-in. */
+    val shelfBagPhotoUrl: String? = null,
+    val shelfBagPhotoVariants: List<CheckInPhotoVariantDto>? = null,
     val authorAvatarUrl: String? = null,
     val authorId: String? = null,
 )
@@ -41,6 +44,8 @@ data class FeedHomePreparationDto(
     val preparedOn: String = "",
     val brewMethodCode: String? = null,
     val beanName: String? = null,
+    val roasterName: String? = null,
+    val coffeeProductSlug: String? = null,
     val doseGrams: Double? = null,
     val brewDurationSeconds: Int? = null,
     val tasteScore: Int? = null,

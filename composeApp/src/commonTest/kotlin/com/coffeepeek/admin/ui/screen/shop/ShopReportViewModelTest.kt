@@ -37,4 +37,13 @@ class ShopReportViewModelTest {
         assertEquals(1, repository.calls)
         viewModel.close()
     }
+    @Test fun missingDescriptionStaysSemanticAndUsesPreparedCopy() {
+        val viewModel = ShopReportViewModel("shop", GatedRepository())
+        try {
+            viewModel.selectReason(ShopReportReason.OTHER)
+            viewModel.submit()
+            assertEquals(ShopReportValidation.DescriptionRequired, viewModel.state.value.validation)
+            assertEquals("Апішыце праблему", viewModel.state.value.validation?.message(ShopReportValidationLabels("Выберыце прычыну", "Апішыце праблему")))
+        } finally { viewModel.close() }
+    }
 }

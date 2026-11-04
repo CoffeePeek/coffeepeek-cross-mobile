@@ -19,10 +19,10 @@ kotlin {
             api(compose.runtime)
             api(compose.ui)
             api(compose.foundation)
-            api(compose.material3)
+            api(libs.compose.material3)
             api(libs.haze)
             implementation(libs.phosphor.icon)
-            implementation(compose.components.resources)
+            api(compose.components.resources)
             implementation(compose.components.uiToolingPreview)
         }
         commonTest.dependencies {

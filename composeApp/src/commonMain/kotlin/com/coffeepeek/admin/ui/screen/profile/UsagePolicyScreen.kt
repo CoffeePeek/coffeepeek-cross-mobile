@@ -1,5 +1,8 @@
 package com.coffeepeek.admin.ui.screen.profile
 
+import coffeepeek.composeapp.generated.resources.*
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
+
 import com.coffeepeek.core.designsystem.component.CoffeePeekScaffold as Scaffold
 
 import androidx.compose.foundation.BorderStroke
@@ -54,19 +57,25 @@ import kotlinx.coroutines.launch
 
 @Composable
 internal fun UsagePolicyScreen() {
+    val localizedLegacyUsagePolicyScreenSettingsPolicyTitle = stringResource(Res.string.legacy_usage_policy_screen_settings_policy_title)
+    val localizedLegacyUsagePolicyScreenSettingsPolicySection = stringResource(Res.string.legacy_usage_policy_screen_settings_policy_section)
+    val localizedLegacyUsagePolicyScreenSettingsPolicyAnalyticsTitle = stringResource(Res.string.legacy_usage_policy_screen_settings_policy_analytics_title)
+    val localizedLegacyUsagePolicyScreenAnalyticsPolicyPrefix = stringResource(Res.string.legacy_usage_policy_screen_analytics_policy_prefix)
+    val localizedLegacyUsagePolicyScreenAnalyticsPolicySuffix = stringResource(Res.string.legacy_usage_policy_screen_analytics_policy_suffix)
+
     val analytics = Analytics.service
     val state = analytics?.state?.collectAsState()?.value
     val scope = rememberCoroutineScope()
 
     Scaffold(
-        topBar = { CpTopBar("Политика использования") },
+        topBar = { CpTopBar(localizedLegacyUsagePolicyScreenSettingsPolicyTitle) },
         containerColor = MaterialTheme.colorScheme.background,
     ) { padding ->
         PlatformScrollableColumn(reserveBottomClearance = true, modifier = Modifier.fillMaxSize().padding(padding)) {
             Spacer(Modifier.height(CpDimens.spacing6))
             Column(Modifier.padding(horizontal = CpDimens.settingsPagePadding)) {
                 Text(
-                    text = "КОНФИДЕНЦИАЛЬНОСТЬ",
+                    text = localizedLegacyUsagePolicyScreenSettingsPolicySection,
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     letterSpacing = 1.sp,
@@ -99,15 +108,15 @@ internal fun UsagePolicyScreen() {
                             Spacer(Modifier.width(CpDimens.spacing3))
                             Column(Modifier.weight(1f)) {
                                 Text(
-                                    text = "Аналитика использования",
+                                    text = localizedLegacyUsagePolicyScreenSettingsPolicyAnalyticsTitle,
                                     style = MaterialTheme.typography.bodyLarge,
                                     fontWeight = FontWeight.Medium,
                                     color = MaterialTheme.colorScheme.onSurface,
                                 )
                                 Spacer(Modifier.height(CpDimens.spacing2))
                                 Text(
-                                    text = "С вашего согласия события использования отправляются в PostHog (ЕС), " +
-                                        "чтобы улучшать CoffeePeek. Без текстов поиска, заметок, фото и точных координат.",
+                                    text = localizedLegacyUsagePolicyScreenAnalyticsPolicyPrefix +
+                                        localizedLegacyUsagePolicyScreenAnalyticsPolicySuffix,
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 )
@@ -160,18 +169,23 @@ private fun UsagePolicyLinks(
     onOpenTerms: () -> Unit,
     onOpenPrivacy: () -> Unit,
 ) {
+    val localizedLegacyUsagePolicyScreenSettingsPolicyTermsTitle = stringResource(Res.string.legacy_usage_policy_screen_settings_policy_terms_title)
+    val localizedLegacyUsagePolicyScreenSettingsPolicyTermsDescription = stringResource(Res.string.legacy_usage_policy_screen_settings_policy_terms_description)
+    val localizedLegacyUsagePolicyScreenSettingsPolicyPrivacyTitle = stringResource(Res.string.legacy_usage_policy_screen_settings_policy_privacy_title)
+    val localizedLegacyUsagePolicyScreenSettingsPolicyPrivacyDescription = stringResource(Res.string.legacy_usage_policy_screen_settings_policy_privacy_description)
+
     UsagePolicyCard {
         UsagePolicyLinkRow(
-            title = "Правила использования",
-            description = "Узнайте, как работает CoffeePeek.",
+            title = localizedLegacyUsagePolicyScreenSettingsPolicyTermsTitle,
+            description = localizedLegacyUsagePolicyScreenSettingsPolicyTermsDescription,
             onClick = onOpenTerms,
             icon = PhosphorIcons.Regular.FileText,
             iconColors = iconColors,
         )
         SettingsDivider()
         UsagePolicyLinkRow(
-            title = "Политика конфиденциальности",
-            description = "Как мы обрабатываем и защищаем ваши данные.",
+            title = localizedLegacyUsagePolicyScreenSettingsPolicyPrivacyTitle,
+            description = localizedLegacyUsagePolicyScreenSettingsPolicyPrivacyDescription,
             onClick = onOpenPrivacy,
             icon = PhosphorIcons.Regular.Shield,
             iconColors = iconColors,

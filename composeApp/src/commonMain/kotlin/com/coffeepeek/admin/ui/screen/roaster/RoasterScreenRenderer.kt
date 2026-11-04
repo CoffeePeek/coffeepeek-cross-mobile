@@ -8,6 +8,9 @@ import androidx.compose.runtime.Composable
  */
 interface RoasterScreenRenderer {
     @Composable
+    fun hasDiscoveryResults(query: String, selectedRoasterIds: Set<String>, favoritesOnly: Boolean): Boolean? = null
+
+    @Composable
     fun DiscoverySection(query: String, selectedRoasterIds: Set<String>, favoritesOnly: Boolean)
 
     @Composable

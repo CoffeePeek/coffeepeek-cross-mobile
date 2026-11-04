@@ -1,0 +1,33 @@
+<resources>
+    <string name="profile_open_avatar">Адкрыць аватар</string>
+    <string name="profile_avatar_of">Аватар @%1$s</string>
+    <string name="profile_edit">Рэдагаваць профіль</string>
+    <string name="profile_follow">Падпісацца</string>
+    <string name="profile_following">Вы падпісаныя</string>
+    <string name="profile_follow_description">Падпісацца на @%1$s</string>
+    <string name="profile_unfollow_description">Адпісацца ад @%1$s</string>
+    <string name="profile_stat_check_ins">Чэкіны</string>
+    <string name="profile_stat_shops">Кавярні</string>
+    <string name="profile_stat_followers">Падпісчыкі</string>
+    <string name="profile_open_followers">Адкрыць падпісчыкаў</string>
+    <string name="profile_week_loading">Загрузка актыўнасці…</string>
+    <string name="profile_week_error">Не ўдалося загрузіць актыўнасць</string>
+    <string name="profile_week_retry">Паўтарыць</string>
+    <string name="profile_week_open">Адкрыць чэкіны</string>
+    <string name="profile_week_day">%1$s: %2$s</string>
+    <string name="profile_week_count_one">%1$d чэкін</string>
+    <string name="profile_week_count_few">%1$d чэкіны</string>
+    <string name="profile_week_count_many">%1$d чэкінаў</string>
+    <string name="profile_week_monday">Пн</string>
+    <string name="profile_week_tuesday">Аў</string>
+    <string name="profile_week_wednesday">Ср</string>
+    <string name="profile_week_thursday">Чц</string>
+    <string name="profile_week_friday">Пт</string>
+    <string name="profile_week_saturday">Сб</string>
+    <string name="profile_week_sunday">Нд</string>
+    <string name="profile_checkins_back">Назад</string>
+    <string name="profile_checkins_blocked">Аўтар заблакаваны</string>
+    <string name="profile_checkins_error">Не ўдалося загрузіць чэкіны</string>
+    <string name="profile_checkins_empty">Пакуль няма чэкінаў</string>
+    <string name="profile_checkins_more">Загрузіць яшчэ</string>
+</resources>

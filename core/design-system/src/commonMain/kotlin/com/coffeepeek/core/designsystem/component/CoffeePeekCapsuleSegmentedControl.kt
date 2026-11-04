@@ -3,10 +3,10 @@ package com.coffeepeek.core.designsystem.component
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -46,41 +46,38 @@ fun <T> CoffeePeekCapsuleSegmentedControl(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     scrollable: Boolean = false,
-    selectedContainerColor: Color = MaterialTheme.colorScheme.surface,
-    selectedContentColor: Color = MaterialTheme.colorScheme.onSurface,
     minSegmentHeight: Dp = 48.dp,
 ) {
     require(options.isNotEmpty()) { "Segmented control requires options" }
     require(options.distinct().size == options.size) { "Options must be unique" }
     require(selected in options) { "Selection must belong to options" }
+    if (!scrollable) {
+        CoffeePeekPlatformSegments(options.map(label), options.indexOf(selected),
+            { onSelected(options[it]) }, modifier, enabled, minSegmentHeight)
+        return
+    }
     val container = modifier
         .clip(RoundedCornerShape(percent = 50))
         .background(MaterialTheme.colorScheme.surfaceVariant)
-    if (scrollable) {
-        LazyRow(
-            modifier = container.selectableGroup(),
-            contentPadding = PaddingValues(4.dp),
-        ) {
-            items(options) { option ->
-                Segment(label(option), option == selected, enabled, { onSelected(option) }, Modifier, selectedContainerColor, selectedContentColor, minSegmentHeight, labelPadding = 16.dp)
-            }
-        }
-    } else {
-        Row(modifier = container.fillMaxWidth().padding(2.dp).selectableGroup()) {
-            options.forEach { option ->
-                Segment(label(option), option == selected, enabled, { onSelected(option) }, Modifier.weight(1f), selectedContainerColor, selectedContentColor, minSegmentHeight)
-            }
+    LazyRow(
+        modifier = container.selectableGroup(),
+        contentPadding = PaddingValues(4.dp),
+    ) {
+        items(options) { option ->
+            CoffeePeekCapsuleSegment(label(option), option == selected, enabled, { onSelected(option) },
+                Modifier, labelPadding = 16.dp, minHeight = minSegmentHeight)
         }
     }
 }
 
 @Composable
-private fun Segment(text: String, isSelected: Boolean, enabled: Boolean, onClick: () -> Unit, modifier: Modifier, selectedContainerColor: Color, selectedContentColor: Color, minHeight: Dp, labelPadding: Dp = 0.dp) {
+internal fun CoffeePeekCapsuleSegment(text: String, isSelected: Boolean, enabled: Boolean, onClick: () -> Unit,
+    modifier: Modifier, labelPadding: Dp = 0.dp, minHeight: Dp = 48.dp) {
     Box(
         modifier = modifier
             .heightIn(min = minHeight)
             .clip(RoundedCornerShape(percent = 50))
-            .background(if (isSelected) selectedContainerColor else Color.Transparent)
+            .background(if (isSelected) MaterialTheme.colorScheme.surface else Color.Transparent)
             .then(
                 if (isSelected) Modifier.border(
                     width = 1.dp,
@@ -100,7 +97,7 @@ private fun Segment(text: String, isSelected: Boolean, enabled: Boolean, onClick
         Text(
             text = text,
             style = MaterialTheme.typography.labelMedium,
-            color = if (isSelected) selectedContentColor else MaterialTheme.colorScheme.onSurfaceVariant,
+            color = if (isSelected) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
             fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
@@ -112,8 +109,13 @@ private fun Segment(text: String, isSelected: Boolean, enabled: Boolean, onClick
 private fun CoffeePeekCapsuleSegmentedControlPreviewContent(darkTheme: Boolean, compact: Boolean = false) = CoffeePeekTheme(darkTheme = darkTheme) {
     var selected by remember { mutableStateOf("First") }
     Surface {
-        CoffeePeekCapsuleSegmentedControl(listOf("First", "Second"), selected, { it }, { selected = it },
-            modifier = Modifier.padding(16.dp), minSegmentHeight = if (compact) 44.dp else 48.dp)
+        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            CoffeePeekCapsuleSegmentedControl(listOf("First", "Second"), selected, { it }, { selected = it },
+                minSegmentHeight = if (compact) 44.dp else 48.dp)
+            CoffeePeekCapsuleSegmentedControl(listOf("First", "Second"), "Second", { it }, {})
+            CoffeePeekCapsuleSegmentedControl(listOf("First", "Second", "Third"), "Second", { it }, {})
+            CoffeePeekCapsuleSegmentedControl(listOf("First", "Second", "Third", "Fourth"), "Fourth", { it }, {}, enabled = false)
+        }
     }
 }
 

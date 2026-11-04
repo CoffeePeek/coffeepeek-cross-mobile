@@ -41,6 +41,11 @@ internal fun CheckInDto.toDomain(fileUrls: FileUrlResolver): CheckIn = CheckIn(
     homePreparation = home?.takeIf { kind.equals("Home", ignoreCase = true) }?.let {
         com.coffeepeek.domain.feature.feed.FeedHomePreparation(
             it.preparedOn, it.brewMethodCode, it.beanName, it.doseGrams, it.brewDurationSeconds, it.tasteScore,
+            roasterName = it.roasterName?.takeIf(String::isNotBlank),
+            coffeeProductSlug = it.coffeeProductSlug?.takeIf(String::isNotBlank),
+            shelfBagCardUrl = fileUrls.resolveApiUrl(shelfBagPhotoUrl)?.let { original ->
+                fileUrls.resolveApiUrl(shelfBagPhotoVariants.photoUrl("thumb", original)) ?: original
+            },
         )
     },
 )

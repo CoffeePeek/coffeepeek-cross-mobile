@@ -9,7 +9,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
+import com.coffeepeek.core.designsystem.component.CoffeePeekOutlinedButton as OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -32,7 +32,7 @@ import com.coffeepeek.feature.shop.impl.resources.shop_review_photo_source_camer
 import com.coffeepeek.feature.shop.impl.resources.shop_review_photo_source_cancel
 import com.coffeepeek.feature.shop.impl.resources.shop_review_photo_source_gallery
 import com.coffeepeek.feature.shop.impl.resources.shop_review_photo_source_title
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable

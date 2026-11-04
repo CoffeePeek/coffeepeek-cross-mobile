@@ -4,7 +4,7 @@ import io.ktor.http.Headers
 import io.ktor.http.HttpHeaders
 import io.ktor.http.fromHttpToGmtDate
 
-/** Only explicit private variant policy may retain bytes; malformed metadata fails closed. */
+/** Only explicit private photo policy may retain bytes; malformed metadata fails closed. */
 internal data class PhotoCachePolicy(
     val stores: Boolean,
     val maxAgeMillis: Long,
@@ -14,7 +14,8 @@ internal data class PhotoCachePolicy(
     val allowsOnlineDisplay: Boolean = true,
 ) {
     companion object {
-        fun read(headers: Headers, requestMono: Long, responseMono: Long, responseWall: Long): PhotoCachePolicy {
+        fun read(headers: Headers, requestMono: Long, responseMono: Long, responseWall: Long,
+            maxClientFreshMillis: Long = 20_000): PhotoCachePolicy {
             val values = headers.getAll(HttpHeaders.CacheControl)?.joinToString(",") ?: return denied(online = true)
             val directives = values.split(',').map { it.trim().lowercase() }
             if (directives.any { it == "no-store" || it.startsWith("no-store=") }) return denied(online = true)
@@ -39,7 +40,7 @@ internal data class PhotoCachePolicy(
             val delay = responseMono - requestMono
             val apparentAge = (responseWall - date).coerceAtLeast(0)
             val correctedAge = age.plusSaturated(delay)
-            val online = (minOf(maxAge, 20_000) - maxOf(apparentAge, correctedAge)).coerceAtLeast(0)
+            val online = (minOf(maxAge, maxClientFreshMillis) - maxOf(apparentAge, correctedAge)).coerceAtLeast(0)
             val fresh = if (directives.any { it == "no-cache" || it.startsWith("no-cache=") }) 0 else online
             return PhotoCachePolicy(true, maxAge, fresh, true, online)
         }

@@ -1,5 +1,8 @@
 package com.coffeepeek.admin.ui.screen.auth
 
+import com.coffeepeek.admin.auth.socialLoginErrorCopy
+import androidx.compose.runtime.rememberUpdatedState
+
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.MaterialTheme
@@ -23,8 +26,9 @@ import com.coffeepeek.admin.di.platformViewModel
 import com.coffeepeek.admin.theme.CpDimens
 import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.ui.icons.CpIcons
+import com.coffeepeek.admin.ui.component.inputValidationMessage
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 private data class LoginFormState(
@@ -43,9 +47,12 @@ object AuthScreen {
         val emailError by vm.emailError.collectAsState()
         val passwordError by vm.passwordError.collectAsState()
         val loginError by vm.loginError.collectAsState()
+        val loginFailure by vm.loginFailure.collectAsState()
         val appleSigningIn by vm.appleSigningIn.collectAsState()
+        val errorCopy = rememberUpdatedState(socialLoginErrorCopy())
         AuthScreenContent(
-            state = LoginFormState(email, password, emailError, passwordError, loginError),
+            state = LoginFormState(email, password, emailError?.let { inputValidationMessage(it) },
+                passwordError?.let { inputValidationMessage(it) }, loginFailure?.let { loginFailureMessage(it) } ?: loginError),
             onEmailChange = vm::onEmailChange,
             onPasswordChange = vm::onPasswordChange,
             onLogin = vm::onLoginClick,
@@ -55,10 +62,11 @@ object AuthScreen {
             socialSignIn = if (AppleAuth.isSupported() || isGoogleSignInConfigured()) {
                 {
                     AuthSocialSignInButtons(
-                        onAppleClick = vm::onAppleLogin,
+                        onAppleClick = { vm.onAppleLogin { errorCopy.value } },
                         appleEnabled = !appleSigningIn,
                         onGoogleResult = { result ->
-                            handleGoogleSignInResult(result, vm::onGoogleLogin, vm::onGoogleLoginError)
+                            handleGoogleSignInResult(result, { vm.onGoogleLogin(it) { errorCopy.value } },
+                                { vm.onGoogleLoginError(it, errorCopy.value) })
                         },
                     )
                 }

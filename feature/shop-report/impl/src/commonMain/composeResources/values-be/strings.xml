@@ -1,0 +1,22 @@
+<resources>
+    <string name="shop_report_title">Паведаміць пра недакладнасць</string>
+    <string name="shop_report_back">Назад</string>
+    <string name="shop_report_shop_fallback">Кавярня</string>
+    <string name="shop_report_prompt">Якія звесткі трэба выправіць?</string>
+    <string name="shop_report_outdated_menu">Меню больш не актуальнае</string>
+    <string name="shop_report_shop_closed">Кавярня закрылася</string>
+    <string name="shop_report_incorrect_address">Указаны няправільны адрас</string>
+    <string name="shop_report_wrong_hours">У раскладзе ёсць памылка</string>
+    <string name="shop_report_incorrect_photos">Фатаграфіі не адпавядаюць кавярні</string>
+    <string name="shop_report_other">Іншая праблема</string>
+    <string name="shop_report_description_label">Што менавіта не так?</string>
+    <string name="shop_report_description_limit">Да 500 сімвалаў</string>
+    <string name="shop_report_category_required">Выберыце, якія звесткі трэба выправіць</string>
+    <string name="shop_report_description_required">Апішыце праблему</string>
+    <string name="shop_report_submission_failed">Не ўдалося адправіць паведамленне. Паспрабуйце яшчэ раз.</string>
+    <string name="shop_report_submit">Адправіць</string>
+    <string name="shop_report_thanks">Дзякуй за паведамленне</string>
+    <string name="shop_report_will_review">Мы праверым звесткі пра «%1$s».</string>
+    <string name="shop_report_done">Гатова</string>
+    <string name="shop_report_unconfirmed">Адказ сервера не атрыманы. Магчыма, паведамленне было адпраўлена. Паўторная адпраўка недаступная, каб пазбегнуць дубліката.</string>
+</resources>

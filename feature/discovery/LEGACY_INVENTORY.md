@@ -2,6 +2,25 @@
 
 Date: 2026-10-23. Base: `feature/contributions-audit` (stack tip, main of 2026-10-23 merged in). Read-only pass: nothing is changed in code.
 
+## API contract update — 2026-10-26
+
+`POST /api/v1/discovery/search` has been removed, including its Gateway route, DTOs and OpenAPI schemas. There are no calls to this route in this checkout. The nearby route used here is the separate `POST /api/v1/coffee-shops/search`.
+
+`GET /api/CoffeeShops` has been removed entirely, including its use by the check-in picker. Its list response and pagination are no longer an active contract. Both ordinary search and nearby search use only `POST /api/v1/coffee-shops/search`. Ordinary requests omit origin, radius and sort; nearby requests send the origin, 3 km radius and distance sort. See [the client contract](../../docs/PUBLIC_ADDRESSES.md#поиск-кофеен-изменение-контракта-от-26102026).
+
+Migrated Discovery, the legacy repository used by the check-in picker/iOS, and Sandbox now use the POST page (`data.items`) for every shop search. The GET-specific request, response DTOs and Sandbox routes are removed. Every quick filter now reloads the server search, including ordinary search, so newness and pagination no longer depend on fields absent from the POST card. Consent/account gates and analytics ownership stay with their existing view models. JSON filter enums follow the backend contract (`specialty`/`coffee-bar`/`cafe`, `cheap`/`moderate`/`expensive`); the legacy fourth price band maps to `expensive` because the API has three bands. The response omits coordinates, price, kind and newness: cards use the existing requested-kind/newness fallback, while both map view models resolve coordinates through the existing details read when a suggestion is selected. Failure keeps the suggestions available for retry; a changed query cancels the selection request.
+
+The implementation and verification records below describe the earlier contract.
+
+### Verification — 2026-10-26
+
+- Final runtime code: `905cc578`, based on develop `381c6cc2`, verified on Windows. Build `1.1.1.2462` / code `2462`; `directSandbox` package `com.coffeepeek.sandbox`, `directDebug` package `com.coffeepeek`.
+- `assembleDirectSandbox` and `assembleDirectDebug` passed, including Sandbox isolation and both packaged DEX runtime-class checks. No APK was installed or launched; no device was used.
+- Unit/contract suites: legacy network **85**, legacy data **69**, Discovery data **19**, Discovery impl **60**, selected application suites **71**: **304 passing, zero failures/errors/skips**. The application selection was `SandboxApplicationBackendTest`, `MapViewModelParityTest`, `DiscoveryAdaptersTest`, `FeedViewModelParityTest`, `FeedNearbySelectionTest`; it executes in-memory/non-UI tests through `testDirectDebugUnitTest`. Unchanged module suites were up to date in the final run after passing on the same develop-based publication branch. All Gradle runs used `--max-workers=6`, sequentially.
+- Retained initial failures: requesting `testDirectSandboxUnitTest` failed task resolution (that task does not exist; no tests ran). The first application run on the migration checkout had **71 tests / one failure**: the new positive map-selection test used a details fixture without coordinates and timed out. Its fixture was corrected; the subsequent develop-based checks and final quick-filter check passed. This was a fixture correction, not a passing retry of unchanged code.
+- Reviewed route removal, DTO containment, source sets and dependency boundaries; no Gradle dependency or domain implementation changes. Existing AGP/KMP, legacy preview and unrelated opt-in warnings remain; Android Studio inspections were unavailable.
+- Remaining gates: device startup/manual Sandbox review (themes, sizes, accessibility, map selection and back/cancel), iOS compilation/device behavior, and read-only live API contract acceptance. Fake tests and APK assembly do not certify these gates.
+
 Discovery is the **Поиск** tab: the shop search with quick filters and the full filter sheet, the discovery sections (mini map, nearby/found shops, roasters), the
 expandable map with its own search, zones and shop carousel, and the shop card that the catalogue shows. The roaster sections it hosts are already a migrated owner
 (`feature/roaster`, shared by Android and iOS); they stay a slot here.
@@ -167,7 +186,7 @@ Live search/map endpoints and their DTO details, the real MapLibre style and til
 
 - **Modules** `feature/discovery/{api,domain,data}` registered in `Modules.kt` (`impl` comes with step 3a).
 - **domain**: `ShopSummary` (the card model with the kind, the price level, the tags, the distance and the coordinates), `ShopKind`, `PriceLevel`, `Coordinates`, `DiscoveryFilters` (the same fields as the legacy filter model; `activeCount`, `clearSelections`), `ShopQuery` (text, filters, optional origin, page), `DiscoveryCatalogs`, `MapBounds`, `MapMarker`, `MapZone`, `MapContent`, `Paged`, `DiscoveryFailure` (sign-in required or other, with the server message); rules: haversine `distanceMeters`, `expandedForPrefetch` / `contains` / `center` / `nearbyBounds` / `nearestMarkers` / `clampZoom`, `visibleShops` (the local switches of the plain search), `withFavoriteMembership`, `showsDiscovery`, `searchText`; `DiscoveryRepository` (`search`, `mapContent`, `catalogs`). 11 tests.
-- **data**: `createDiscoveryRepository(client, favoriteIds, roasters)` over `GET /api/CoffeeShops` (the plain search: text, city, kind, price, rating and the id lists; **never** open/new/visited/favorites, as in the legacy code), `POST /api/v1/coffee-shops/search` (the nearby search: origin, radius 3 km, the switches), `GET /api/Map` (shops at zoom 22, zones at the visible zoom with a fallback to the shop answer; PascalCase names accepted; the server's clusters are not read), and the six catalogs. Own DTOs and mappers (no dependency on `modules/network`); every non-2xx answer is a typed failure with the server message; the catalogs are read once and kept, and a load runs in the repository's own scope so that a caller that stops waiting does not cancel the others (the legacy load did). 17 tests with a mock engine.
+- **data** (contract at this step; superseded by the 2026-10-26 update above): `createDiscoveryRepository(client, favoriteIds, roasters)` over `GET /api/CoffeeShops` (the plain search: text, city, kind, price, rating and the id lists; **never** open/new/visited/favorites, as in the legacy code), `POST /api/v1/coffee-shops/search` (the nearby search: origin, radius 3 km, the switches), `GET /api/Map` (shops at zoom 22, zones at the visible zoom with a fallback to the shop answer; PascalCase names accepted; the server's clusters are not read), and the six catalogs. Own DTOs and mappers (no dependency on `modules/network`); every non-2xx answer is a typed failure with the server message; the catalogs are read once and kept, and a load runs in the repository's own scope so that a caller that stops waiting does not cancel the others (the legacy load did). 17 tests with a mock engine.
 - **api**: the ports `DiscoveryAccount`, `DiscoveryFavorites` (ids flow, ids now, set), `DiscoveryCity` (selected flow, resolve) and `DiscoveryLocation` (current position flow, refresh). The analytics port and the Android entries come with the impl step.
 - **Decisions taken here**: the roaster list of the filters is a function the application passes (it owns that catalog and its disk cache); the favorites of the account decide the favorite flags of the plain search and a failing source counts as none; the nearby rows carry what was asked for where the server is silent (kind, new, visited) exactly as the legacy search did, which means the kind of a nearby row is the requested one or the default; a map marker without a title gets an empty title and the UI picks the text; the caller drops the city for the nearby search (the repository sends what it is given).
 - **Not covered**: live contracts (the exact answers of the real server for the nearby search and the map), the roaster catalog read, the favorites flow.
@@ -270,3 +289,47 @@ IDE tools/preview rendering were unavailable. Paired Android previews compile.
 TalkBack, alternate font/window sizes, real map/permission/backend acceptance and
 iOS runtime UI checks remain untested. No automated UI/Compose/screenshot test
 was introduced or run, and no camera, production analytics or account write occurred.
+
+## Search result priority — develop publication, 2026-10-27
+
+At the user's request, applied the search fix independently to develop
+`be7577b8`; verified code commit `7cb60f56`. Matching shops precede a confirmed
+empty roaster section, and both headings use titleLarge. Adapted the Android
+feature entry and the active retained iOS FeedScreen without importing the
+pending migration stack or map changes. The roaster owner supplies the filtered
+result status and keeps query analytics current below the lazy viewport.
+
+Windows verification: Discovery impl 69 tests/6 suites, Roaster impl 23/3,
+selected application Feed unit tests 32/4; all 124 passed with zero failures,
+errors or skips, including nine new regressions. No failing-test retries.
+DirectSandbox and DirectDebug assemblies, both packaged DEX runtime-class
+checks and Sandbox isolation passed in 2m48s, Gradle --max-workers=6.
+Builds: com.coffeepeek.sandbox 1.1.2.2478-sandbox/2478 and com.coffeepeek
+1.1.2.2478/2478. Android paired previews compile; IDE rendering was unavailable.
+No installation, device, automated UI, instrumentation or screenshot run took
+place. Manual themes/font/window/accessibility/back/cancel, native iOS runtime
+and live backend gates remain open; no production account or analytics writes.
+
+## Home header/map gap — 2026-10-27
+
+The Android overlay now adds LazyListLayoutInfo.beforeContentPadding to the
+mini-map item offset, preserving the existing 16dp list gap below the header.
+Scrolling, pinned pull-to-refresh behaviour and parking recycled map items stay
+covered by ChoreographyTest; the retained iOS path already uses the measured
+anchor including padding. No screen, resource, dependency or navigation redesign.
+
+Verified on Windows: e385cc3e + this working diff on
+codex/migration-home-map-header-spacing. Discovery impl 70 tests/6 suites,
+zero failures/errors/skips/retries. DirectSandbox/DirectDebug assemblies, both
+packaged DEX guards and Sandbox isolation passed in 2m04s, --max-workers=6;
+Sandbox com.coffeepeek.sandbox 1.1.2.2479-sandbox/2479. Existing paired tab
+previews compile; IDE rendering was unavailable. No device/install/manual
+light-dark/font/window/accessibility/expand-back review, iOS runtime or live
+backend checks were performed; no automated UI/instrumentation/screenshot tests
+were created or run, and no account or production analytics writes occurred.
+
+Develop integration: rebased onto dea72680, verified code 3b445cf0. Both APK
+assemblies, DEX guards and Sandbox isolation passed again in 1m24s; Sandbox
+1.1.2.2482-sandbox/2482. The unchanged Discovery unit task was UP-TO-DATE,
+retaining all 70 passing results (no failed-test retry). Device/iOS gates above
+remain open.

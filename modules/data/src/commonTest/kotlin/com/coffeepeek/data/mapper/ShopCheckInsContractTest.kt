@@ -1,6 +1,9 @@
 package com.coffeepeek.data.mapper
 
 import com.coffeepeek.api.service.ShopApiService
+import com.coffeepeek.api.model.response.shop.ShopSearchItemDto
+import com.coffeepeek.domain.model.ShopFilters
+import com.coffeepeek.domain.model.CoffeeShopType
 import com.coffeepeek.data.mapper.ShopMapper.toDomain
 import com.coffeepeek.data.util.FileUrlResolver
 import com.coffeepeek.domain.model.CheckInModerationState
@@ -20,6 +23,22 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class ShopCheckInsContractTest {
+    @Test
+    fun postSearchCardKeepsSlugFavoritesAndRequestedFlagsWithoutInventingLocation() {
+        val row = Json.decodeFromString<ShopSearchItemDto>(
+            """{"address":{"slug":"shop","canonicalPath":"/coffee-shops/shop","revision":1,"isAlias":false},"name":"Shop","checkInCount":"7","isOpen":true,"isFavorite":true,"addressLine":"Street"}""",
+        )
+        val shop = with(ShopMapper) { row.toDomain(emptySet(), ShopFilters(newOnly = true, visitedOnly = true, coffeeFocus = CoffeeShopType.SPECIALTY)) }
+        assertEquals("shop", shop.id)
+        assertEquals("shop", shop.publicAddress?.slug)
+        assertEquals(7, shop.reviewCount)
+        assertEquals("Street", shop.address)
+        assertEquals(CoffeeShopType.SPECIALTY, shop.type)
+        assertTrue(shop.isFavorite && shop.isOpen && shop.isNew && shop.isVisited)
+        assertNull(shop.location)
+        assertNull(shop.priceRange)
+    }
+
     @Test
     fun shopResponseReachesDomainWithPublicVisitsAndPersonalHistoryIntact() = runBlocking {
         val client = HttpClient(MockEngine { request ->

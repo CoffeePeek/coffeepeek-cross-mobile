@@ -8,7 +8,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import com.coffeepeek.core.designsystem.component.CoffeePeekIconButton as IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
@@ -30,12 +30,12 @@ import androidx.compose.ui.window.DialogProperties
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.resources.*
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 /** Image content must fit the viewport; paging and zooming never modify the attachments. */
 @Composable
-internal fun CoffeePeekPhotoViewer(
+fun CoffeePeekPhotoViewer(
     count: Int,
     initialIndex: Int,
     onDismiss: () -> Unit,
@@ -60,8 +60,10 @@ private fun PhotoViewerSurface(page: Int, count: Int, onDismiss: () -> Unit, con
         Text(stringResource(Res.string.coffeepeek_photo_position, page + 1, count),
             style = MaterialTheme.typography.labelLarge, color = Color.White,
             modifier = Modifier.align(Alignment.TopCenter).padding(16.dp))
-        IconButton(onClick = onDismiss, modifier = Modifier.align(Alignment.TopEnd).size(48.dp)) {
-            Icon(CoffeePeekIcons.Close, stringResource(Res.string.coffeepeek_photo_close), tint = Color.White)
+        IconButton(onClick = onDismiss, modifier = Modifier.align(Alignment.TopEnd).size(48.dp),
+            nativeIcon = com.coffeepeek.core.designsystem.modifier.CoffeePeekGlassIcon.Close,
+            contentDescription = stringResource(Res.string.coffeepeek_photo_close)) {
+            Icon(CoffeePeekIcons.Close, contentDescription = null)
         }
     }
 }

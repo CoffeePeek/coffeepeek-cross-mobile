@@ -13,7 +13,7 @@ import com.coffeepeek.feature.shop.impl.resources.Res
 import com.coffeepeek.feature.shop.impl.resources.shop_review_sheet_dismiss
 import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopReviewFormAction
 import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopReviewFormState
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 /** Modal shell retains the current editor height; all durable form state stays outside Compose. */

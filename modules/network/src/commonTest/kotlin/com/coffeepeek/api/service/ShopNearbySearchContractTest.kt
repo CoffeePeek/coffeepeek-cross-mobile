@@ -23,6 +23,38 @@ import kotlin.test.assertTrue
 
 class ShopNearbySearchContractTest {
     @Test
+    fun ordinarySearchUsesPostWithoutQueryOrGeolocationAndPreservesPagination() = runBlocking {
+        val client = HttpClient(MockEngine { request ->
+            assertEquals(HttpMethod.Post, request.method)
+            assertEquals("/api/v1/coffee-shops/search", request.url.encodedPath)
+            val body = Json.parseToJsonElement(request.body.toByteArray().decodeToString()).jsonObject
+            assertTrue("q" !in body && "sort" !in body)
+            val filters = body.getValue("filters").jsonObject
+            assertTrue("origin" !in filters && "radiusKm" !in filters)
+            assertEquals("minsk", filters.getValue("city").jsonPrimitive.content)
+            respond("""{"isSuccess":true,"data":{"items":[],"totalItems":21,"totalPages":2,"currentPage":2}}""",
+                headers = headersOf(HttpHeaders.ContentType, "application/json"))
+        }) { install(ContentNegotiation) { json(JsonExt.json) } }
+        try {
+            val page = ShopApiService(client).searchShops(query = "   ", cityId = "minsk", page = 2).getOrThrow()
+            assertEquals(21, page.totalItems)
+            assertEquals(2, page.currentPage)
+        } finally { client.close() }
+    }
+
+    @Test
+    fun invalidGeolocationAndPaginationNeverReachTransport() = runBlocking {
+        val client = HttpClient(MockEngine { error("Invalid request reached the network") })
+        try {
+            val api = ShopApiService(client)
+            assertTrue(api.searchShops(ShopSearchRequestDto(ShopSearchFiltersDto(radiusKm = 3), page = 1, pageSize = 20)).isFailure)
+            assertTrue(api.searchShops(ShopSearchRequestDto(ShopSearchFiltersDto(), sort = "distance_asc", page = 1, pageSize = 20)).isFailure)
+            assertTrue(api.searchShops(page = 0).isFailure)
+            assertTrue(api.searchShops(pageSize = 101).isFailure)
+        } finally { client.close() }
+    }
+
+    @Test
     fun sendsLocationAndFiltersAndReadsDiscoveryPage() = runBlocking {
         val client = HttpClient(MockEngine { request ->
             assertEquals(HttpMethod.Post, request.method)
@@ -47,14 +79,16 @@ class ShopNearbySearchContractTest {
                 headers = headersOf(HttpHeaders.ContentType, "application/json"))
         }) { install(ContentNegotiation) { json(JsonExt.json) } }
         try {
-            val result = ShopApiService(client).searchNearbyShops(
+            val result = ShopApiService(client).searchShops(
                 ShopSearchRequestDto(
                     filters = ShopSearchFiltersDto(
                         origin = ShopSearchOriginDto(53.902284, 27.561831),
+                        radiusKm = 3,
                         city = "minsk",
                         isOpen = true,
                     ),
                     q = "coffee",
+                    sort = "distance_asc",
                     page = 2,
                     pageSize = 20,
                 ),
@@ -63,10 +97,10 @@ class ShopNearbySearchContractTest {
             assertEquals(2, result.totalPages)
             assertEquals(148.0, result.items.single().distanceMeters)
             assertEquals("Wi-Fi", result.items.single().tags.single().name)
-            assertTrue(ShopApiService(client).searchNearbyShops(
-                ShopSearchRequestDto(ShopSearchFiltersDto(ShopSearchOriginDto(53.902284, 27.561831)), page = 1, pageSize = 20),
+            assertTrue(ShopApiService(client).searchShops(
+                ShopSearchRequestDto(ShopSearchFiltersDto(ShopSearchOriginDto(53.902284, 27.561831), radiusKm = 3), sort = "distance_asc", page = 1, pageSize = 20),
             ).isSuccess)
-            assertTrue(ShopApiService(client).searchNearbyShops(
+            assertTrue(ShopApiService(client).searchShops(
                 ShopSearchRequestDto(ShopSearchFiltersDto(ShopSearchOriginDto(91.0, 0.0)), page = 1, pageSize = 20),
             ).isFailure)
         } finally { client.close() }

@@ -11,11 +11,12 @@ import com.coffeepeek.core.designsystem.modifier.LocalCoffeePeekGlassHazeState
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.shop.impl.resources.Res
 import com.coffeepeek.feature.shop.impl.resources.shop_favorite_add
+import com.coffeepeek.feature.shop.impl.resources.shop_favorite_choose_collections
 import com.coffeepeek.feature.shop.impl.resources.shop_favorite_remove
 import com.coffeepeek.feature.shop.impl.resources.shop_favorite_unavailable
 import com.coffeepeek.feature.shop.impl.resources.shop_favorite_updating
 import dev.chrisbanes.haze.HazeState
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
@@ -26,14 +27,16 @@ internal fun ShopFavoriteButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     hazeState: HazeState? = null,
+    selectionMode: Boolean = false,
 ) {
     val description = stringResource(when {
+        selectionMode -> Res.string.shop_favorite_choose_collections
         !available -> Res.string.shop_favorite_unavailable
         isFavorite -> Res.string.shop_favorite_remove
         else -> Res.string.shop_favorite_add
     })
     CompositionLocalProvider(LocalCoffeePeekGlassHazeState provides hazeState) {
-        CoffeePeekLikeButton(isFavorite, description, onClick, modifier.shopExposure(ShopExposure.Favorite), enabled = available,
+        CoffeePeekLikeButton(isFavorite, description, onClick, modifier.shopExposure(ShopExposure.Favorite),
             style = CoffeePeekLikeButtonStyle.FloatingGlass, isLoading = isLoading,
             loadingDescription = stringResource(Res.string.shop_favorite_updating))
     }
@@ -53,4 +56,12 @@ internal fun ShopFavoriteButton(
 
 @Preview @Composable private fun ShopFavoriteLoadingDarkPreview() = CoffeePeekTheme(darkTheme = true) {
     ShopFavoriteButton(true, true, true, onClick = {})
+}
+
+@Preview @Composable private fun ShopFavoriteUnavailableLightPreview() = CoffeePeekTheme(darkTheme = false) {
+    ShopFavoriteButton(false, false, false, onClick = {})
+}
+
+@Preview @Composable private fun ShopFavoriteUnavailableDarkPreview() = CoffeePeekTheme(darkTheme = true) {
+    ShopFavoriteButton(false, false, false, onClick = {})
 }

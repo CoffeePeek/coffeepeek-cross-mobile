@@ -14,11 +14,13 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
+enum class UpdateCheckFeedback { CheckFailed, UpToDate }
+
 data class UpdateUiState(
     val update: AppUpdate? = null,
     val showPrompt: Boolean = false,
     val checking: Boolean = false,
-    val message: String? = null,
+    val feedback: UpdateCheckFeedback? = null,
     val manual: Boolean = false,
     val checkFailed: Boolean = false,
 )
@@ -39,28 +41,32 @@ class AppUpdateController(
 
     fun check(manual: Boolean = false) {
         if (mutableState.value.checking) return
-        mutableState.value = mutableState.value.copy(checking = true, message = null)
+        mutableState.value = mutableState.value.copy(checking = true, feedback = null)
         scope.launch {
             try {
-                val current = currentVersion
-                val policy = if (current != null) repository.fetch() else null
-                dismissed = dismissed ?: repository.dismissedVersion()
-                val available = policy?.takeIf { current != null && it.isAvailable(current) }
-                mutableState.value = UpdateUiState(
-                    update = available,
-                    showPrompt = available?.shouldPrompt(current!!, dismissed, manual) == true,
-                    manual = manual,
-                    checkFailed = manual && policy == null,
-                    message = if (manual && available == null) {
-                        if (policy == null) "Не удалось проверить обновления. Попробуйте позже." else "Установлена актуальная версия"
-                    } else null,
-                )
+                mutableState.value = checkedState(manual)
             } catch (error: Exception) {
                 if (error is CancellationException && error !is TimeoutCancellationException) throw error
                 mutableState.value = UpdateUiState(manual = manual, checkFailed = manual,
-                    message = if (manual) "Не удалось проверить обновления. Попробуйте позже." else null)
+                    feedback = if (manual) UpdateCheckFeedback.CheckFailed else null)
             }
         }
+    }
+
+    private suspend fun checkedState(manual: Boolean): UpdateUiState {
+        val current = currentVersion
+        val policy = if (current != null) repository.fetch() else null
+        dismissed = dismissed ?: repository.dismissedVersion()
+        val available = policy?.takeIf { current != null && it.isAvailable(current) }
+        return UpdateUiState(
+            update = available,
+            showPrompt = available?.shouldPrompt(current!!, dismissed, manual) == true,
+            manual = manual,
+            checkFailed = manual && policy == null,
+            feedback = if (manual && available == null) {
+                if (policy == null) UpdateCheckFeedback.CheckFailed else UpdateCheckFeedback.UpToDate
+            } else null,
+        )
     }
 
     fun takeNativePrompt(transfer: InstallationState): AppUpdate? {

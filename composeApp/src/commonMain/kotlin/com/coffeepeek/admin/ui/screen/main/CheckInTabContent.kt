@@ -30,7 +30,7 @@ import org.koin.compose.koinInject
 @Composable
 internal fun CheckInTabContent(
     showCreateButton: Boolean = true,
-    content: @Composable BoxScope.() -> Unit,
+    content: @Composable BoxScope.(onCreateCheckIn: () -> Unit) -> Unit,
 ) {
     val sessions: SessionRepository = koinInject()
     val session by remember(sessions) { sessions.observeSession() }.collectAsState(sessions.peekSession())
@@ -39,19 +39,24 @@ internal fun CheckInTabContent(
     val focusManager = LocalFocusManager.current
     val keyboard = LocalSoftwareKeyboardController.current
 
+    val onCreateCheckIn = {
+        focusManager.clearFocus(force = true)
+        keyboard?.hide()
+        Analytics.track(AnalyticsEvent.CHECK_IN_START_ATTEMPTED, "source" to "global_create")
+        if (sessions.isActiveSession(sessions.peekSession())) showCreate = true
+        else {
+            Analytics.gate("check_in")
+            Navigator.navigate(Navigator.Screen.Auth)
+        }
+    }
     Box(Modifier.fillMaxSize()) {
-        content()
+        content(onCreateCheckIn)
         if (showCreateButton) {
             CheckInCreateButton(
                 Modifier.align(Alignment.BottomEnd)
                     .padding(end = CpDimens.spacing4, bottom = clearance + 12.dp),
-            ) {
-                focusManager.clearFocus(force = true)
-                keyboard?.hide()
-                Analytics.track(AnalyticsEvent.CHECK_IN_START_ATTEMPTED, "source" to "global_create")
-                if (sessions.isActiveSession(sessions.peekSession())) showCreate = true
-                else { Analytics.gate("check_in"); Navigator.navigate(Navigator.Screen.Auth) }
-            }
+                onClick = onCreateCheckIn,
+            )
         }
     }
 

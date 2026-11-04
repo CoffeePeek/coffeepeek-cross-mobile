@@ -1,5 +1,7 @@
 package com.coffeepeek.feature.roaster.impl.ui.compose.component
 
+import com.coffeepeek.core.designsystem.modifier.CoffeePeekGlassIcon
+
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -19,7 +21,8 @@ import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.roaster.impl.resources.Res
 import com.coffeepeek.feature.roaster.impl.resources.roaster_detail_back
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.feature.roaster.impl.resources.roaster_share
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
@@ -34,11 +37,21 @@ internal fun RoasterDetailTopActions(
     Row(modifier.fillMaxWidth().statusBarsPadding().padding(CoffeePeekDimens.spacing3),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically) {
-        CoffeePeekGlassIconButton(onBack, stringResource(Res.string.roaster_detail_back)) {
+        CoffeePeekGlassIconButton(onBack, stringResource(Res.string.roaster_detail_back), nativeIcon = CoffeePeekGlassIcon.Back) {
             Icon(CoffeePeekIcons.PlatformBack, null,
                 modifier = Modifier.scale(scaleX = backScale, scaleY = 1f))
         }
-        RoasterFavoriteHeart(isFavorite, onToggleFavorite, overImage = true, modifier = heartModifier)
+        val business = LocalRoasterBusinessIdentity.current
+        val ownership = com.coffeepeek.feature.ownership.api.LocalBusinessOwnership.current
+        if (business != null && ownership != null) ownership.ProfileActions("Roaster", business.id, business.slug, {}, onOwnerEdit = {},
+            favorite = { RoasterFavoriteHeart(isFavorite, onToggleFavorite, overImage = true, modifier = heartModifier) },
+            share = {
+                val share = LocalRoasterShare.current
+                CoffeePeekGlassIconButton({ share(business.canonicalPath) }, stringResource(Res.string.roaster_share), nativeIcon = CoffeePeekGlassIcon.Share) {
+                    Icon(CoffeePeekIcons.Share, null)
+                }
+            })
+        else RoasterFavoriteHeart(isFavorite, onToggleFavorite, overImage = true, modifier = heartModifier)
     }
 }
 

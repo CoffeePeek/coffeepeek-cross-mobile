@@ -67,3 +67,30 @@ References:
 - https://developer.apple.com/documentation/uikit/uitabbarcontroller
 - https://developer.apple.com/documentation/uikit/uinavigationcontroller
 - https://kotlinlang.org/docs/multiplatform/ios-liquid-glass.html
+
+
+## Edge-back restoration — 2026-10-28
+
+The root navigation delegate restores the system interactive-pop recognizer's
+existing delegate and enabled state after each shown controller. This keeps
+edge-back available with hidden UIKit bars, including repeated detail visits.
+Root controllers disable the recognizer; transition, modal and local-back guards
+remain in shouldBegin. UIKit owns gesture progress, completion and cancellation;
+the screen's accessible Back button remains available, following
+[Apple HIG](https://developer.apple.com/design/human-interface-guidelines/gestures).
+No feature/data/DI dependencies or analytics events change.
+
+Verification target: develop `97b98ba5` plus this fix. Two non-UI Native contract
+tests cover recognizer restoration and root/stack notifications without a window,
+Compose content, account or services; the existing iOS CI filter includes them.
+Verification on Windows passed in 8m01s, Gradle --max-workers=6: iOS Arm64 and
+Simulator production compilation, Native test compilation, and DirectDebug APK
+assembly with the packaged DEX runtime-class guard. App unit tests executed:
+830 tests / 166 suites, 0 failures/errors/skips/retries. Built package
+com.coffeepeek, version 1.1.2.2484/2484, source 97b98ba5 plus this uncommitted fix.
+Existing preview/expect-actual/test opt-in warnings remain; changed Kotlin files
+have no compiler warnings. No app was installed and no account/backend/analytics
+operations were performed; IDE inspections and full Xcode build were not run.
+Manual iPhone completion/cancellation, repeated entry, previous-screen state,
+modal/editor guards, light/dark and VoiceOver remain device gates. Windows Native
+test compilation does not execute UIKit tests or confirm gesture arbitration.

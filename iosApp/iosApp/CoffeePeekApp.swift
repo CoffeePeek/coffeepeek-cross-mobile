@@ -57,13 +57,23 @@ import FirebaseMessaging
 import UserNotifications
 
 // Firebase packages and Push Notifications capability are installed on macOS; see docs/push-notifications.md.
+private enum FirebasePlist {
+    /// Installations throws if API_KEY is not 39 characters starting with `A`; the unsigned CI plist is only for compile checks.
+    static var isValidForConfigure: Bool {
+        guard let path = Bundle.main.path(forResource: "GoogleService-Info", ofType: "plist"),
+              let dict = NSDictionary(contentsOfFile: path) as? [String: Any],
+              let apiKey = dict["API_KEY"] as? String else { return false }
+        return apiKey.count == 39 && apiKey.hasPrefix("A")
+    }
+}
+
 final class PushAppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate, MessagingDelegate {
     private var account: String?
     private var resetting = false
     private var revokePending = true
 
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil) -> Bool {
-        guard Bundle.main.path(forResource: "GoogleService-Info", ofType: "plist") != nil else { return true }
+        guard FirebasePlist.isValidForConfigure else { return true }
         FirebaseApp.configure()
         Messaging.messaging().isAutoInitEnabled = false
         Messaging.messaging().delegate = self
@@ -115,7 +125,10 @@ final class PushAppDelegate: NSObject, UIApplicationDelegate, UNUserNotification
             DispatchQueue.main.async {
                 NativePushBridge.shared.updatePermission(granted: permitted)
                 if self.revokePending { self.revokeToken(); return }
-                if permitted && self.account != nil { UIApplication.shared.registerForRemoteNotifications(); self.fetchToken() }
+                if permitted && self.account != nil {
+                    UIApplication.shared.registerForRemoteNotifications()
+                    self.fetchToken()
+                }
             }
         }
     }
@@ -131,7 +144,8 @@ final class PushAppDelegate: NSObject, UIApplicationDelegate, UNUserNotification
         resetting = true
         Messaging.messaging().isAutoInitEnabled = false
         UNUserNotificationCenter.current().removeAllDeliveredNotifications()
-        Messaging.messaging().deleteToken { error in
+        // Token-only deletion requires check-in data that a fresh installation does not have.
+        Messaging.messaging().deleteData { error in
             DispatchQueue.main.async {
                 self.resetting = false
                 if error == nil { self.revokePending = false; self.foreground() }
@@ -143,7 +157,8 @@ final class PushAppDelegate: NSObject, UIApplicationDelegate, UNUserNotification
         guard !resetting, !revokePending, let user = account, Messaging.messaging().apnsToken != nil else { return }
         Messaging.messaging().token { token, _ in
             DispatchQueue.main.async {
-                if self.account == user, let token { NativePushBridge.shared.updateToken(userId: user, token: token) }
+                guard self.account == user else { return }
+                if let token, !token.isEmpty { NativePushBridge.shared.updateToken(userId: user, token: token) }
             }
         }
     }

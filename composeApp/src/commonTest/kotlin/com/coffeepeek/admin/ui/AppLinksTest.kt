@@ -5,6 +5,12 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNull
 
 class AppLinksTest {
+    @Test fun routesCollectionsOnlyWithValidServerIds() {
+        val id = "123456781234123412341234567890ab"
+        assertEquals(Navigator.Screen.PublicCollection(id), appLinkScreen("https://coffeepeek.by/collections/$id"))
+        assertEquals(Navigator.Screen.Main, appLinkScreen("https://coffeepeek.by/collections/not-an-id"))
+        assertEquals(Navigator.Screen.Main, appLinkScreen("https://coffeepeek.by/collections/$id/edit"))
+    }
     @Test
     fun routesPublicProfilesWithoutTreatingNicknameAsAnId() {
         assertEquals(Navigator.Screen.UserProfile("glasha"), appLinkScreen("https://coffeepeek.by/users/glasha"))
@@ -27,6 +33,21 @@ class AppLinksTest {
         val roaster = Navigator.Screen.RoasterDetail("roast")
         assertEquals(roaster, appLinkScreen("https://coffeepeek.by/roasters/roast"))
         assertEquals(roaster, appLinkScreen("https://coffeepeek.by/roasters/roast/?from=share#coffee"))
+    }
+
+    @Test
+    fun routesSharedPostsByTheirServerId() {
+        val id = "6966d36f-f903-ccf8-8009-1a651d0c58ad"
+        assertEquals(Navigator.Screen.CheckInDetail(id), appLinkScreen("https://coffeepeek.by/check-ins/$id"))
+        assertEquals(Navigator.Screen.CheckInDetail(id), appLinkScreen("https://coffeepeek.by/check-ins/$id/?from=share#photos"))
+    }
+
+    @Test
+    fun aPostLinkWithoutAServerIdOrWithAnActionOpensTheMainScreen() {
+        for (path in listOf("not-an-id", "6966d36f", "6966d36f-f903-ccf8-8009-1a651d0c58ad-extra", "6966d36f-f903-ccf8-8009-1a651d0c58ad/edit", "..")) {
+            val link = "https://coffeepeek.by/check-ins/$path"
+            assertEquals(Navigator.Screen.Main, appLinkScreen(link), link)
+        }
     }
 
     @Test

@@ -65,7 +65,7 @@
 
 | Операция | Запрос | Контракт |
 |---|---|---|
-| Выбор кофейни | `GET /api/CoffeeShops?page=1&pageSize=20[&q=…]`; детали `GET /api/CoffeeShops/{id}` | Для создания передавайте **`shop.publicAddress.slug`** как `coffeeShopSlug`, не ID карточки. Близлежащий поиск использует `POST /api/v1/coffee-shops/search`; карту можно открыть как альтернативу списку. |
+| Выбор кофейни | `POST /api/v1/coffee-shops/search` с `{q?,filters:{city?},page,pageSize}`; детали `GET /api/CoffeeShops/{id}` | С 26.10.2026 `GET /api/CoffeeShops` полностью удалён, включая использование для чекина. Для создания передавайте **`shop.publicAddress.slug`** как `coffeeShopSlug`, не ID карточки. Обычный поиск использует `data.items` без геолокации; для поиска рядом в тот же POST добавляются `filters.origin`, `filters.radiusKm` и `sort: "distance_asc"`. Карту можно открыть как альтернативу списку. |
 | Напитки | `GET /api/catalogs/drinks` | Массив `{slug,nameRu,nameEn}`. `slug="other"` требует `customDrinkName`; отсутствие напитка допустимо. |
 | Способы дома | `GET /api/Catalogs/brew-methods` | Используйте текущий `slug`, отправляйте в `brewMethodCode`; исторические коды оставляйте редактируемыми. |
 | Зерно дома | `POST /api/v1/coffees/search` | `{q,filters:{"availableOnly":false},page:1,pageSize:20}`; выбор отдаёт `coffeeProductSlug`, собственное зерно — `customBeanName`. При редактировании сохранённого продукта может передаваться `coffeeProductId`. |

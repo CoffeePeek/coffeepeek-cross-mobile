@@ -1,25 +1,20 @@
 package com.coffeepeek.admin.auth
 
-import com.coffeepeek.admin.utils.ErrorHandler
-
+// Internal legacy bridge token: filtered before any localized UI callback.
 internal const val GOOGLE_SIGN_IN_CANCELLED = "Вход через Google отменён"
 
 fun handleGoogleSignInResult(
     result: Result<String>,
     onSuccess: (String) -> Unit,
-    onFailure: ((String) -> Unit)? = null,
+    onFailure: (String) -> Unit,
 ) {
     result.fold(
         onSuccess = onSuccess,
         onFailure = { error ->
             if (error.message == GOOGLE_SIGN_IN_CANCELLED) return
             val message = error.message?.takeIf { it.isNotBlank() }
-                ?: "Не удалось войти через Google"
-            if (onFailure != null) {
-                onFailure(message)
-            } else {
-                ErrorHandler.showError(socialLoginError("Google", message))
-            }
+                ?: "GOOGLE_SIGN_IN_FAILED"
+            onFailure(message)
         },
     )
 }

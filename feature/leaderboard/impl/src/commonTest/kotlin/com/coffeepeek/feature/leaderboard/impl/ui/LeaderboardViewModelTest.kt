@@ -130,6 +130,43 @@ class LeaderboardViewModelTest {
             LeaderboardPeriod.Week), repository.calls)
     }
 
+    @Test fun refreshDuringUncachedPeriodLoadInvalidatesTheOtherPeriodWithoutDuplicatingTheRequest() = runTest(dispatcher) {
+        val repository = FakeLeaderboardRepository()
+        val vm = model(repository)
+        runCurrent()
+        val pending = CompletableDeferred<Result<LeaderboardPage>>()
+        repository.read = { pending.await() }
+        vm.onAction(LeaderboardAction.SelectPeriod(LeaderboardPeriod.Month))
+        runCurrent()
+        repeat(2) { vm.onAction(LeaderboardAction.Refresh) }
+        runCurrent()
+        assertEquals(listOf(LeaderboardPeriod.Week, LeaderboardPeriod.Month), repository.calls)
+        pending.complete(Result.success(page(LeaderboardPeriod.Month)))
+        runCurrent()
+        repository.read = { Result.success(page(it)) }
+        vm.onAction(LeaderboardAction.SelectPeriod(LeaderboardPeriod.Week))
+        runCurrent()
+        assertEquals(listOf(LeaderboardPeriod.Week, LeaderboardPeriod.Month, LeaderboardPeriod.Week), repository.calls)
+    }
+
+    @Test fun refreshKeySurvivesLazyItemDisposalAndConsumesEachFeedRefreshOnlyOnce() = runTest(dispatcher) {
+        val repository = FakeLeaderboardRepository()
+        val vm = model(repository)
+        vm.onAction(LeaderboardAction.FeedRefreshed(0))
+        runCurrent()
+        vm.onAction(LeaderboardAction.SelectPeriod(LeaderboardPeriod.Month))
+        runCurrent()
+        vm.onAction(LeaderboardAction.FeedRefreshed(1))
+        runCurrent()
+        vm.onAction(LeaderboardAction.FeedRefreshed(1))
+        runCurrent()
+        assertEquals(listOf(LeaderboardPeriod.Week, LeaderboardPeriod.Month, LeaderboardPeriod.Month), repository.calls)
+        vm.onAction(LeaderboardAction.SelectPeriod(LeaderboardPeriod.Week))
+        runCurrent()
+        assertEquals(listOf(LeaderboardPeriod.Week, LeaderboardPeriod.Month, LeaderboardPeriod.Month,
+            LeaderboardPeriod.Week), repository.calls)
+    }
+
     @Test fun privacyChangeInvalidatesBothCachedPeriods() = runTest(dispatcher) {
         val changes = MutableSharedFlow<Boolean>(replay = 1).apply { tryEmit(true) }
         val repository = FakeLeaderboardRepository()

@@ -1,5 +1,8 @@
 package com.coffeepeek.admin.feature.coffee.ui
 
+import coffeepeek.composeapp.generated.resources.*
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
+
 import com.coffeepeek.core.designsystem.component.coffeePeekScrollContentPadding
 
 import com.coffeepeek.core.designsystem.component.CoffeePeekScaffold as Scaffold
@@ -8,6 +11,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -43,11 +47,26 @@ import com.coffeepeek.admin.ui.component.PriceBynIcon
 import com.coffeepeek.admin.ui.component.SearchHeader
 import kotlin.math.round
 import com.coffeepeek.admin.di.platformViewModel
+import com.coffeepeek.admin.ui.component.platformReduceMotion
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.repeatOnLifecycle
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.emptyFlow
 
 @Composable
-internal fun CoffeeListScreen(vm: CoffeeListViewModel = platformViewModel()) {
+internal fun CoffeeListScreen(
+    vm: CoffeeListViewModel = platformViewModel(),
+    scrollToTopRequests: Flow<Unit> = emptyFlow(),
+) {
+    val localizedLegacyCoffeeListScreenCoffeeSearch = stringResource(Res.string.legacy_coffee_list_screen_coffee_search)
+    val localizedLegacyCoffeeListScreenCoffeeEmpty = stringResource(Res.string.legacy_coffee_list_screen_coffee_empty)
+    val localizedLegacyCoffeeListScreenCoffeeEmptyHint = stringResource(Res.string.legacy_coffee_list_screen_coffee_empty_hint)
+
     val state by vm.state.collectAsState()
     val listState = rememberLazyListState()
+    CoffeeListTabReselection(listState, scrollToTopRequests)
     var showFilters by rememberSaveable { mutableStateOf(false) }
     val clearance = LocalFloatingNavClearance.current
     val tasteNames = remember(state.filterGroups) {
@@ -83,7 +102,7 @@ internal fun CoffeeListScreen(vm: CoffeeListViewModel = platformViewModel()) {
                 SearchHeader(
                     query = state.query,
                     onQueryChange = vm::onQueryChange,
-                    placeholder = "Название кофе",
+                    placeholder = localizedLegacyCoffeeListScreenCoffeeSearch,
                     showCategories = false,
                     filterCount = state.filters.activeCount,
                     analyticsCatalog = "coffees", analyticsScreen = "coffees",
@@ -122,8 +141,8 @@ internal fun CoffeeListScreen(vm: CoffeeListViewModel = platformViewModel()) {
                     LoadErrorContent(onRetry = { if (state.isLoadMoreError) vm.loadMore() else vm.refresh() })
                 } else if (state.items.isEmpty() && !state.isLoading) item {
                     Column(Modifier.fillMaxWidth().padding(CpDimens.spacing6), horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("Кофе не найден", style = MaterialTheme.typography.titleMedium)
-                        Text("Попробуйте изменить поиск или фильтры", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(localizedLegacyCoffeeListScreenCoffeeEmpty, style = MaterialTheme.typography.titleMedium)
+                        Text(localizedLegacyCoffeeListScreenCoffeeEmptyHint, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 }
             }
@@ -132,7 +151,25 @@ internal fun CoffeeListScreen(vm: CoffeeListViewModel = platformViewModel()) {
 }
 
 @Composable
+private fun CoffeeListTabReselection(listState: LazyListState, requests: Flow<Unit>) {
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
+    val reduceMotion by rememberUpdatedState(platformReduceMotion())
+    LaunchedEffect(listState, requests, lifecycle) {
+        lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+            requests.collectLatest {
+                if (reduceMotion) listState.scrollToItem(0) else listState.animateScrollToItem(0)
+            }
+        }
+    }
+}
+
+@Composable
 internal fun CoffeeCard(coffee: Coffee, tasteNames: Map<String, String>, modifier: Modifier = Modifier, onOpen: () -> Unit = {}) {
+    val weightTemplate = stringResource(Res.string.legacy_grams)
+
+    val localizedLegacyHomeCheckInDetailHomeCheckInUnspecified = stringResource(Res.string.legacy_home_check_in_detail_home_check_in_unspecified)
+    val localizedLegacyCoffeeListScreenCoffeeWeightMissing = stringResource(Res.string.legacy_coffee_list_screen_coffee_weight_missing)
+
     val offers = remember(coffee.offers) {
         coffee.offers.distinctBy { it.weightGrams }.sortedBy { it.weightGrams ?: Int.MAX_VALUE }
     }
@@ -152,7 +189,7 @@ internal fun CoffeeCard(coffee: Coffee, tasteNames: Map<String, String>, modifie
             if (!photo.isNullOrBlank()) CoffeeShopImage(
                 imageUrl = photo, contentDescription = coffee.name,
                 contentScale = ContentScale.Fit, modifier = Modifier.matchParentSize(),
-            ) else CoffeeShopPlaceholderImage(contentDescription = "Фото ${coffee.name} отсутствует")
+            ) else CoffeeShopPlaceholderImage(contentDescription = stringResource(Res.string.legacy_coffee_photo_missing, coffee.name))
             Box(
                 Modifier.align(Alignment.BottomEnd).padding(CpDimens.spacing4).size(48.dp)
                     .shadow(3.dp, CircleShape).clip(CircleShape).background(MaterialTheme.colorScheme.surface)
@@ -190,10 +227,10 @@ internal fun CoffeeCard(coffee: Coffee, tasteNames: Map<String, String>, modifie
                 if (offers.size > 1 && offer != null) CapsuleSegmentedControl(
                     options = offers,
                     selected = offer,
-                    label = { it.weightGrams?.let { weight -> "$weight г" } ?: "Не указан" },
+                    label = { it.weightGrams?.let { weight -> weightTemplate.replace("%1\$s", weight.toString()) } ?: localizedLegacyHomeCheckInDetailHomeCheckInUnspecified },
                     onSelected = { selectedWeight = it.weightGrams },
                     modifier = Modifier.width((offers.size * 56).dp),
-                ) else CoffeeLabel(offer?.weightGrams?.let { "$it г" } ?: "Вес не указан")
+                ) else CoffeeLabel(offer?.weightGrams?.let { stringResource(Res.string.legacy_grams, it.toString()) } ?: localizedLegacyCoffeeListScreenCoffeeWeightMissing)
             }
         }
     }
@@ -201,17 +238,20 @@ internal fun CoffeeCard(coffee: Coffee, tasteNames: Map<String, String>, modifie
 
 @Composable
 internal fun CoffeePrice(offer: CoffeeOffer?) {
+    val localizedLegacyCoffeeListScreenCoffeePriceMissing = stringResource(Res.string.legacy_coffee_list_screen_coffee_price_missing)
+    val localizedLegacyCoffeeListScreenCoffeeByn = stringResource(Res.string.legacy_coffee_list_screen_coffee_byn)
+
     val price = offer?.price
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing1)) {
         Text(
-            price?.let(::formatCoffeePrice) ?: "Цена не указана",
+            price?.let(::formatCoffeePrice) ?: localizedLegacyCoffeeListScreenCoffeePriceMissing,
             style = if (price != null) MaterialTheme.typography.titleLarge else MaterialTheme.typography.bodySmall,
             fontWeight = if (price != null) FontWeight.Bold else FontWeight.Normal,
         )
         if (price != null) {
             if (offer.currency == "BYN") PriceBynIcon(
                 modifier = Modifier.size(20.dp), tint = MaterialTheme.colorScheme.onSurface,
-                contentDescription = "белорусских рублей",
+                contentDescription = localizedLegacyCoffeeListScreenCoffeeByn,
             ) else Text(offer.currency ?: "", style = MaterialTheme.typography.bodyMedium)
         }
     }

@@ -22,8 +22,8 @@ import kotlin.test.assertTrue
 /** What the check state exposes to the UI, characterized before the logic moves to a ViewModel. */
 class AppUpdateCheckBehaviourTest {
     private val url = "https://example.com/app.apk"
-    private val failure = "Не удалось проверить обновления. Попробуйте позже."
-    private val upToDate = "Установлена актуальная версия"
+    private val failure = UpdateCheckFeedback.CheckFailed
+    private val upToDate = UpdateCheckFeedback.UpToDate
 
     private class Repo(var update: AppUpdate? = null, var dismissedStored: Long? = null) : AppUpdateRepository {
         var fetches = 0
@@ -41,20 +41,20 @@ class AppUpdateCheckBehaviourTest {
 
     private fun scope() = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
-    @Test fun aManualCheckAnswersInWordsAndAnAutomaticOneStaysSilent() = runBlocking {
+    @Test fun aManualCheckExposesFeedbackAndAnAutomaticOneStaysSilent() = runBlocking {
         val scope = scope()
         try {
             val repo = Repo(AppUpdate(100, 0, url))
             val current = AppUpdateController(repo, FakeEnvironment(100), scope)
-            current.run(manual = true).let { assertEquals(upToDate, it.message); assertFalse(it.checkFailed); assertFalse(it.showPrompt); assertNull(it.update) }
-            current.run(manual = false).let { assertNull(it.message); assertFalse(it.checkFailed) }
+            current.run(manual = true).let { assertEquals(upToDate, it.feedback); assertFalse(it.checkFailed); assertFalse(it.showPrompt); assertNull(it.update) }
+            current.run(manual = false).let { assertNull(it.feedback); assertFalse(it.checkFailed) }
 
             repo.update = null
-            current.run(manual = true).let { assertEquals(failure, it.message); assertTrue(it.checkFailed); assertTrue(it.manual) }
-            current.run(manual = false).let { assertNull(it.message); assertFalse(it.checkFailed); assertFalse(it.manual) }
+            current.run(manual = true).let { assertEquals(failure, it.feedback); assertTrue(it.checkFailed); assertTrue(it.manual) }
+            current.run(manual = false).let { assertNull(it.feedback); assertFalse(it.checkFailed); assertFalse(it.manual) }
 
             repo.update = AppUpdate(140, 0, url)
-            current.run(manual = true).let { assertNull(it.message); assertTrue(it.showPrompt); assertEquals(repo.update, it.update) }
+            current.run(manual = true).let { assertNull(it.feedback); assertTrue(it.showPrompt); assertEquals(repo.update, it.update) }
         } finally { scope.cancel() }
     }
 
@@ -65,8 +65,8 @@ class AppUpdateCheckBehaviourTest {
             val state = AppUpdateController(repo, FakeEnvironment(100), scope)
             for (error in listOf<Throwable>(IllegalStateException("offline"), runCatching { withTimeout(1) { awaitCancellation() } }.exceptionOrNull()!!)) {
                 repo.fetchError = error
-                state.run(manual = true).let { assertEquals(failure, it.message); assertTrue(it.checkFailed); assertFalse(it.showPrompt) }
-                state.run(manual = false).let { assertNull(it.message); assertFalse(it.checkFailed) }
+                state.run(manual = true).let { assertEquals(failure, it.feedback); assertTrue(it.checkFailed); assertFalse(it.showPrompt) }
+                state.run(manual = false).let { assertNull(it.feedback); assertFalse(it.checkFailed) }
             }
         } finally { scope.cancel() }
     }
@@ -77,7 +77,7 @@ class AppUpdateCheckBehaviourTest {
             val repo = Repo(AppUpdate(140, 0, url))
             val state = AppUpdateController(repo, FakeEnvironment(null), scope)
             state.run(manual = false).let { assertFalse(it.showPrompt); assertNull(it.update) }
-            state.run(manual = true).let { assertEquals(failure, it.message); assertTrue(it.checkFailed) }
+            state.run(manual = true).let { assertEquals(failure, it.feedback); assertTrue(it.checkFailed) }
             assertEquals(0, repo.fetches)
         } finally { scope.cancel() }
     }

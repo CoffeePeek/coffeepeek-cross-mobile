@@ -22,7 +22,7 @@ import com.coffeepeek.feature.shopreport.impl.resources.shop_report_other
 import com.coffeepeek.feature.shopreport.impl.resources.shop_report_outdated_menu
 import com.coffeepeek.feature.shopreport.impl.resources.shop_report_shop_closed
 import com.coffeepeek.feature.shopreport.impl.resources.shop_report_wrong_hours
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable

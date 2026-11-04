@@ -6,6 +6,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.coffeepeek.feature.settings.api.CityEntry
 import com.coffeepeek.feature.settings.api.CityPort
+import com.coffeepeek.feature.settings.api.LanguagePort
 import com.coffeepeek.feature.settings.api.SettingsAccountPort
 import com.coffeepeek.feature.settings.api.SettingsAppInfo
 import com.coffeepeek.feature.settings.api.SettingsEntry
@@ -58,6 +59,7 @@ fun createUsagePolicyEntry(consent: UsageConsentPort, external: SettingsExternal
 fun createSettingsEntry(
     account: SettingsAccountPort,
     theme: ThemePort,
+    language: LanguagePort,
     cities: CityPort,
     updates: UpdateCheckPort,
     external: SettingsExternalActions,
@@ -66,12 +68,12 @@ fun createSettingsEntry(
 ): SettingsEntry = object : SettingsEntry {
     @Composable
     override fun Content(
-        onAddShop: () -> Unit, onAddRoaster: () -> Unit, onCity: () -> Unit, onTheme: () -> Unit,
+        onAddShop: () -> Unit, onAddRoaster: () -> Unit, onCity: () -> Unit, onTheme: () -> Unit, onLanguage: () -> Unit,
         onUsagePolicy: () -> Unit, onLogin: () -> Unit, onRegister: () -> Unit, modifier: Modifier, bottomClearance: Dp,
     ) {
         SettingsScreen(
-            viewModel(key = "settings-tab") { SettingsViewModel(account, theme, cities, updates) },
-            SettingsNavigation(onAddShop, onAddRoaster, onCity, onTheme, onUsagePolicy, onLogin, onRegister),
+            viewModel(key = "settings-tab") { SettingsViewModel(account, theme, cities, updates, language) },
+            SettingsNavigation(onAddShop, onAddRoaster, onCity, onTheme, onLanguage, onUsagePolicy, onLogin, onRegister),
             external, slots, appInfo, bottomClearance, modifier,
         )
     }

@@ -30,21 +30,20 @@ class DiscoveryHost(
     val roasterLogo: @Composable (name: String, logoUrl: String?) -> Unit = { _, _ -> },
     /** The roaster's avatar in a list row (the logo above sits on a shop card). */
     val roasterAvatar: @Composable (name: String, logoUrl: String?) -> Unit = { _, _ -> },
-    /** The price level (1..4, null for any) as the application's slider, and the hint it shows beside the title. */
-    val priceSelector: @Composable (selected: Int?, onSelect: (Int?) -> Unit, modifier: Modifier) -> Unit = { _, _, _ -> },
-    val priceHint: (Int?) -> String? = { null },
     val suggestionIllustration: @Composable () -> Painter = { error("The application provides the illustration") },
     val exposure: (Modifier, DiscoveryExposure) -> Modifier = { modifier, _ -> modifier },
     val haptic: () -> Unit = {},
     /** The application's map: it draws [MapCanvasState] and reports through [MapCanvasCallbacks]. */
     /** Keeps native content (the map) mounted but paused and not placed while hidden. */
     val retained: @Composable (visible: Boolean, content: @Composable () -> Unit) -> Unit = { visible, content -> if (visible) content() },
-    /** Asks for the location permission once, with the result; the effect has no UI of its own. */
-    val locationPermission: @Composable (onGranted: () -> Unit, onDenied: () -> Unit) -> Unit = { _, _ -> },
+    /** A positive key requests location after a map interaction; zero never prompts. Refusals are remembered by the host. */
+    val locationPermission: @Composable (requestKey: Int, onGranted: () -> Unit, onDenied: () -> Unit) -> Unit = { _, _, _ -> },
     /** Warms the image cache for the photos a list will show next: item id with its photo urls. */
     val photoPrefetch: @Composable (listState: LazyListState, photos: List<Pair<String, List<String>>>) -> Unit = { _, _ -> },
     val reduceMotion: @Composable () -> Boolean = { false },
     val mapCanvas: @Composable (state: MapCanvasState, callbacks: MapCanvasCallbacks, modifier: Modifier) -> Unit = { _, _, _ -> },
+    /** Whether the retained tab is actually visible; the application supplies its existing visibility guard. */
+    val isVisible: @Composable () -> Boolean = { true },
 )
 
 /** What the roaster sections need to know about the search to filter themselves. */
@@ -52,10 +51,14 @@ class DiscoveryRoasterContext(val query: String, val selectedRoasterIds: Set<Str
 
 /** The roaster owner's pieces the tab embeds; the application fills them from the roaster renderer. */
 class DiscoveryRoasterSlots(
-    /** The section under «Обжарщики» in the discovery and above the shops of a text search. */
+    /** The section under «Обжарщики» in discovery and text search. */
     val preview: @Composable (DiscoveryRoasterContext) -> Unit,
     /** The full roaster search laid over the tab; [onCancel] closes it and clears the search. */
     val search: @Composable (context: DiscoveryRoasterContext, onQueryChange: (String) -> Unit, onCancel: () -> Unit) -> Unit,
+    /** Null while loading or unavailable; lets matching shops precede an empty roaster section. */
+    val hasResults: @Composable (DiscoveryRoasterContext) -> Boolean? = { null },
+    /** Secondary contribution action after an empty text search; navigation remains app-owned. */
+    val onAdd: () -> Unit = {},
 )
 
 /**
@@ -75,5 +78,9 @@ interface DiscoveryTabEntry {
         /** A shop to bring into view on the expanded map; [onFocusConsumed] tells the caller it was taken. */
         focus: MapFocus? = null,
         onFocusConsumed: () -> Unit = {},
+        /** App-owned check-in action, placed in the landing list only; never over search, map or roasters. */
+        checkInAction: @Composable () -> Unit = {},
+        /** Transient taps on the already selected Search tab; ordinary tab changes must not emit. */
+        reselections: kotlinx.coroutines.flow.Flow<Unit> = kotlinx.coroutines.flow.emptyFlow(),
     )
 }

@@ -18,11 +18,11 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.FilledIconButton
+import com.coffeepeek.core.designsystem.component.CoffeePeekFilledIconButton as FilledIconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
+import com.coffeepeek.core.designsystem.component.CoffeePeekOutlinedButton as OutlinedButton
 import androidx.compose.material3.Text
 import com.coffeepeek.feature.shop.api.ShopExposure
 import com.coffeepeek.feature.shop.impl.ui.data.shopExposure
@@ -43,7 +43,7 @@ import com.coffeepeek.feature.shop.impl.resources.shop_detail_checkin
 import com.coffeepeek.feature.shop.impl.resources.shop_detail_choose_another
 import com.coffeepeek.feature.shop.impl.resources.shop_detail_continue
 import com.coffeepeek.feature.shop.impl.resources.shop_detail_route
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.hazeSource
@@ -72,7 +72,7 @@ internal fun ShopDetailBottomBar(
                     .size(CoffeePeekDimens.buttonHeight)) {
                 Icon(CoffeePeekIcons.Navigation, stringResource(Res.string.shop_detail_route), Modifier.size(20.dp))
             }
-            ShopCheckInButton(onCheckIn, hazeState, Modifier.weight(1f))
+            ShopCheckInAction(onCheckIn, hazeState, Modifier.weight(1f))
         }
     }
 }
@@ -94,7 +94,7 @@ private fun RowScope.ShopPickerActions(onChooseAnotherShop: () -> Unit, onCheckI
 }
 
 @Composable
-private fun ShopCheckInButton(onClick: () -> Unit, hazeState: HazeState?, modifier: Modifier) {
+private fun ShopCheckInAction(onClick: () -> Unit, hazeState: HazeState?, modifier: Modifier) {
     CoffeePeekGlassButton(text = stringResource(Res.string.shop_detail_checkin), onClick = onClick,
         leadingIcon = CoffeePeekGlassButtonIcon.Check, hazeState = hazeState,
         modifier = modifier.shopExposure(ShopExposure.CheckIn))

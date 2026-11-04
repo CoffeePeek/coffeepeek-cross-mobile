@@ -1,5 +1,8 @@
 package com.coffeepeek.admin.ui.component
 
+import coffeepeek.composeapp.generated.resources.*
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
+
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -26,7 +29,7 @@ import io.kamel.core.Resource
 fun CoffeeShopPlaceholderImage(
     modifier: Modifier = Modifier,
     labelSize: TextUnit = 18.sp,
-    contentDescription: String = "Фото кофейни отсутствует",
+    contentDescription: String = stringResource(Res.string.legacy_coffee_shop_placeholder_image_shop_overview_photo_missing),
 ) {
     val isDarkTheme = MaterialTheme.colorScheme.background.luminance() < 0.5f
     val backgroundColor = if (isDarkTheme) Color.White else Color.Black
@@ -60,6 +63,8 @@ fun CoffeeShopImage(
     contentScale: ContentScale = ContentScale.Crop,
     placeholderLabelSize: TextUnit = 18.sp,
 ) {
+    val localizedLegacyCoffeeShopPlaceholderImageShopPhotoLoading = stringResource(Res.string.legacy_coffee_shop_placeholder_image_shop_photo_loading)
+
     when (val resource = rememberCpImageResource(cpImageData(imageUrl))) {
         is Resource.Success -> Image(
             painter = resource.value,
@@ -71,7 +76,7 @@ fun CoffeeShopImage(
         is Resource.Failure -> CoffeeShopPlaceholderImage(
             modifier = modifier,
             labelSize = placeholderLabelSize,
-            contentDescription = contentDescription ?: "Фото кофейни загружается",
+            contentDescription = contentDescription ?: localizedLegacyCoffeeShopPlaceholderImageShopPhotoLoading,
         )
     }
 }

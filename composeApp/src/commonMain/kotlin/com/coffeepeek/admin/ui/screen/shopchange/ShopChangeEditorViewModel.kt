@@ -1,5 +1,11 @@
 package com.coffeepeek.admin.ui.screen.shopchange
 
+import com.coffeepeek.admin.ui.screen.contributions.ContributionFailureKind
+
+import com.coffeepeek.admin.ui.screen.contributions.ContributionFormFailure
+
+import com.coffeepeek.admin.utils.InputValidationIssue
+
 import com.coffeepeek.admin.base.BaseViewModel
 import com.coffeepeek.admin.utils.MAX_MENU_PHOTOS
 import com.coffeepeek.admin.utils.MAX_SHOP_PHOTOS
@@ -40,7 +46,7 @@ data class ShopChangeEditorUiState(
     val shopTitle: String = "",
     val isLoading: Boolean = true,
     val isSubmitting: Boolean = false,
-    val submissionError: String? = null,
+    val submissionError: ContributionFormFailure? = null,
     val submittedRequest: ShopChangeRequest? = null,
     val requestStatus: ModerationStatus? = null,
     val error: String? = null,
@@ -66,10 +72,10 @@ data class ShopChangeEditorUiState(
     val alreadyUploadedMenuPhotos: List<UploadedPhotoMeta> = emptyList(),
 ) {
     val descriptionError: String? get() = if (description.length > 1000) "Не более 1000 символов" else null
-    val phoneError: String? get() = validateOptionalPhone(phone)
-    val emailError: String? get() = validateOptionalEmail(email)
-    val websiteError: String? get() = validateOptionalUrl(website)
-    val instagramError: String? get() = validateOptionalInstagram(instagram)
+    val phoneError: InputValidationIssue? get() = validateOptionalPhone(phone)
+    val emailError: InputValidationIssue? get() = validateOptionalEmail(email)
+    val websiteError: InputValidationIssue? get() = validateOptionalUrl(website)
+    val instagramError: InputValidationIssue? get() = validateOptionalInstagram(instagram)
     val contactsValid: Boolean get() =
         phoneError == null && emailError == null && websiteError == null && instagramError == null
     val photoCount: Int get() = retainedPhotos.size + newPhotos.size + alreadyUploadedPhotos.size
@@ -236,7 +242,7 @@ class ShopChangeEditorViewModel(
                     _state.update { it.copy(isSubmitting = false, submittedRequest = request) }
                 }
                 .onFailure { e ->
-                    _state.update { it.copy(isSubmitting = false, submissionError = e.message?.takeIf { it.isNotBlank() } ?: "Не удалось отправить заявку") }
+                    _state.update { it.copy(isSubmitting = false, submissionError = ContributionFormFailure(ContributionFailureKind.ChangeSubmit, e.message?.takeIf { it.isNotBlank() })) }
                 }
         }
     }

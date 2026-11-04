@@ -4,6 +4,7 @@ import com.coffeepeek.feature.profile.domain.ProfileAddress
 import com.coffeepeek.feature.profile.domain.PublicProfileCheckInPage
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 
 /** The signed-in user's own account as the profile screens need it. Owned by the app (session and cache guards). */
 data class OwnProfile(
@@ -25,6 +26,12 @@ data class OwnProfile(
  */
 interface ProfileAccountPort {
     fun activeAccount(): String?
+
+    /** Opaque presentation-cache scope, stable for token refresh and different after account replacement or sign-out. */
+    fun cacheScope(): String? = null
+
+    /** Replays cache scope changes even when a new session has the same public account id. */
+    fun observeCacheScope(): Flow<String?> = observeActiveAccount().map { cacheScope() }
 
     /** Distinct account keys, replaying the current one. */
     fun observeActiveAccount(): Flow<String?>

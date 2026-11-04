@@ -981,3 +981,56 @@ Delivery: only this check-in task is prepared for the user-requested direct push
 to develop. Its commits are based on current origin/develop (8ac9f49a), excluding
 the unrelated predecessor documentation commit 61aad2ec. Untracked marketing
 assets and local screenshots are excluded.
+
+## Profile top controls on develop — 2026-10-30
+
+Both active shop profiles are covered: Android's migrated Shop implementation
+and iOS's transitional application screen. The four hero controls share one
+screen backdrop and follow the first list item's scroll offset; they disappear
+once that item leaves view. The owner edit button now requests the same native
+UIKit glass renderer as the adjacent favorite/share buttons on iOS through a
+narrow design-system presenter. Android and previews keep the existing Compose
+renderer. No business state, route or analytics action changed.
+
+Verification from `develop` `c0d5a936c` plus the scoped fix: Shop 108 tests /
+12 suites, ownership 18 / 2, design system 45 / 13, and app Direct Debug 888 /
+177 passed with zero failures, errors or skips. Android Direct Sandbox assembly,
+DEX class and isolation checks and Kotlin iOS Arm64 compilation passed.
+Existing paired light/dark previews compile, but native Liquid Glass rendering
+cannot be inspected on Windows. No app was installed or launched. Physical iOS
+scroll, material brightness, light/dark, large fonts, accessibility and back
+gestures remain manual gates.
+
+### PR #223 review follow-up — 2026-10-30
+
+The changed shop screen now delegates its scaffold, list sections, check-ins
+and bottom action to cohesive private components. The hero action overlay
+still shares the same list state and Haze source. Shop implementation tests:
+108 / 12 suites, zero failures or errors; Direct Sandbox assembly and packaged
+DEX class check passed. iOS native visual review remains open.
+
+## Check-in card spacing and coffee icon — 2026-11-02
+
+From `origin/develop` `9dc06599f`, align the expanded-note action with the note,
+bring the like count closer to its icon, and use the existing platform coffee
+icon in both the migrated Shop card and the transitional iOS card. The iOS
+implementation renders the `cup.and.saucer` SF Symbol; Android retains the
+shared vector. The like touch target remains 48 dp. No data or vote behavior
+changes. Paired light/dark previews cover the changed card components.
+
+Verification plan: preserve note expansion and helpful-vote actions, compile
+the affected Shop and application UI, run Shop unit tests and Sandbox APK/DEX
+guards, then inspect the card at normal and large font sizes on both platforms.
+Local verification: 108 Shop impl unit tests in 12 suites passed with no
+failures or errors; Direct Sandbox assembly, isolation, and packaged DEX class
+checks passed. No device was selected or app installed. IDE previews, manual
+light/dark and large-font review, and iOS compilation/native visual review
+remain open at this local checkpoint.
+
+Sending-state follow-up: the in-flight check-in spinner and label now occupy
+the center of the sheet on both the migrated screen and the transitional iOS
+screen. The completed-success content keeps its natural height and actions.
+Paired light/dark sending previews were added. The same 108 Shop impl tests
+passed again; Direct Sandbox assembly, isolation, and packaged DEX checks
+passed. No device was selected or app installed. Native iOS compilation and
+manual sheet review, including large fonts, remain open.

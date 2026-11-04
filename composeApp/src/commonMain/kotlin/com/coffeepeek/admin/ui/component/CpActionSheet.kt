@@ -1,5 +1,8 @@
 package com.coffeepeek.admin.ui.component
 
+import coffeepeek.composeapp.generated.resources.*
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -31,7 +34,7 @@ internal fun CpActionSheet(
     message: String,
     actions: List<PlatformAction>,
     onDismiss: () -> Unit,
-    cancelLabel: String = "Отмена",
+    cancelLabel: String = stringResource(Res.string.history_home_delete_cancel),
 ) {
     val colors = MaterialTheme.colorScheme
     val shape = RoundedCornerShape(CpDimens.cardRadius)

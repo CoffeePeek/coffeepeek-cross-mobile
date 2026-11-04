@@ -1,0 +1,11 @@
+<resources>
+    <string name="settings_back">Назад</string>
+    <string name="settings_retry">Повторить</string>
+    <string name="settings_language_title">Язык</string>
+    <string name="settings_language_heading">Язык приложения</string>
+    <string name="settings_language_description">Выберите язык интерфейса. Выбор сохранится после перезапуска.</string>
+    <string name="settings_language_russian">Русский</string>
+    <string name="settings_language_belarusian">Беларуская</string>
+    <string name="settings_language_saving">Сохраняем язык…</string>
+    <string name="settings_language_save_error">Не удалось сохранить язык. Попробуйте ещё раз.</string>
+</resources>

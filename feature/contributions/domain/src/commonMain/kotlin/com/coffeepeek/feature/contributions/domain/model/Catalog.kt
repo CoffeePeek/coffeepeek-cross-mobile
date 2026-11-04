@@ -32,4 +32,5 @@ data class ShopSnapshot(
     val brewMethodIds: List<String> = emptyList(),
     val menu: List<MenuRow> = emptyList(),
     val menuPhotos: List<ShopPhotoRef> = emptyList(),
+    val menuInputRevision: Long? = null,
 )

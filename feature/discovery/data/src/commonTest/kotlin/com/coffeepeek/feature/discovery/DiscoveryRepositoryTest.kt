@@ -42,56 +42,82 @@ class DiscoveryRepositoryTest {
     private fun params(request: HttpRequestData, name: String) = request.url.parameters.getAll(name).orEmpty()
     private val origin = Coordinates(53.9, 27.56)
 
-    // ---- the plain search ----
+    // ---- ordinary search uses the same POST without geolocation ----
 
-    @Test fun thePlainSearchSendsEveryFilterItUnderstandsAndNeverTheSwitches() = runBlocking {
-        reply = { ok("""{"coffeeShops":[],"currentPage":2,"totalItems":45,"totalPages":3}""") }
+    @Test fun ordinarySearchPostsTextCityFiltersAndPaginationWithoutGeolocation() = runBlocking {
+        reply = { ok("""{"items":[],"currentPage":2,"totalItems":45,"totalPages":3}""") }
         val filters = DiscoveryFilters(
-            cityId = "minsk", kind = ShopKind.Specialty, openOnly = true, newOnly = true, visitedOnly = true, favoritesOnly = true, priceLevel = PriceLevel.Moderate, minRating = 4.5,
+            cityId = "minsk", kind = ShopKind.Specialty, priceLevel = PriceLevel.Moderate, minRating = 4.5,
+            openOnly = true, newOnly = true, visitedOnly = true, favoritesOnly = true,
             roasterIds = setOf("r1"), beanIds = setOf("b1"), equipmentIds = setOf("e1"), brewMethodIds = setOf("m1"), tagIds = setOf("t1", "t2"),
         )
         val page = repository().search(ShopQuery("  cof  ", filters, page = 2, pageSize = 20)).getOrThrow()
         val request = requests.single()
-        assertEquals("/api/CoffeeShops", request.url.encodedPath); assertEquals(HttpMethod.Get, request.method)
-        assertEquals("cof", request.url.parameters["q"]); assertEquals("minsk", request.url.parameters["city"]); assertEquals("Specialty", request.url.parameters["type"])
-        assertEquals("Moderate", request.url.parameters["priceRange"]); assertEquals("4.5", request.url.parameters["minRating"])
-        assertEquals("2", request.url.parameters["page"]); assertEquals("20", request.url.parameters["pageSize"])
-        assertEquals(listOf("t1", "t2"), params(request, "tags")); assertEquals(listOf("r1"), params(request, "roasters")); assertEquals(listOf("b1"), params(request, "beans"))
-        assertEquals(listOf("e1"), params(request, "equipments")); assertEquals(listOf("m1"), params(request, "brewMethods"))
-        for (name in listOf("isOpen", "isNew", "visitedOnly", "favoritesOnly", "open", "new")) assertNull(request.url.parameters[name], name)
-        assertEquals(45, page.totalCount); assertEquals(3, page.totalPages); assertEquals(2, page.currentPage); assertTrue(page.hasMore)
+        assertEquals("/api/v1/coffee-shops/search", request.url.encodedPath)
+        assertEquals(HttpMethod.Post, request.method)
+        assertTrue(request.url.parameters.isEmpty())
+        val sent = body(request)
+        assertEquals("cof", sent["q"]!!.jsonPrimitive.content)
+        assertEquals(2, sent["page"]!!.jsonPrimitive.int)
+        assertEquals(20, sent["pageSize"]!!.jsonPrimitive.int)
+        assertOrdinaryFilters(sent)
+        assertEquals(Paged<ShopSummary>(emptyList(), 45, 3, 2), page)
     }
 
-    @Test fun aBlankTextAndAnEmptyFilterSendNothingExtra() = runBlocking {
-        reply = { ok("""{"coffeeShops":[]}""") }
+    private fun assertOrdinaryFilters(sent: JsonObject) {
+        assertFalse("sort" in sent)
+        val filters = sent["filters"]!!.jsonObject
+        assertFalse("origin" in filters)
+        assertFalse("radiusKm" in filters)
+        assertEquals("minsk", filters["city"]!!.jsonPrimitive.content)
+        assertEquals("specialty", filters["type"]!!.jsonPrimitive.content)
+        assertEquals("moderate", filters["priceRange"]!!.jsonPrimitive.content)
+        assertEquals(4.5, filters["minRating"]!!.jsonPrimitive.double)
+        for ((key, ids) in mapOf("roasters" to listOf("r1"), "beans" to listOf("b1"), "equipments" to listOf("e1"), "brewMethods" to listOf("m1"), "tags" to listOf("t1", "t2"))) {
+            assertEquals(ids, filters[key]!!.jsonArray.map { it.jsonPrimitive.content })
+        }
+        for (key in listOf("isOpen", "isNew", "visitedOnly", "favoritesOnly")) {
+            assertTrue(filters[key]!!.jsonPrimitive.boolean, key)
+        }
+    }
+
+    @Test fun blankTextDoesNotSendQueryOriginRadiusOrDistanceSort() = runBlocking {
+        reply = { ok("""{"items":[]}""") }
         repository().search(ShopQuery("   ")).getOrThrow()
-        assertEquals(setOf("page", "pageSize"), requests.single().url.parameters.names())
+        val sent = body(requests.single())
+        assertFalse("q" in sent)
+        assertFalse("sort" in sent)
+        assertFalse("origin" in sent["filters"]!!.jsonObject)
+        assertFalse("radiusKm" in sent["filters"]!!.jsonObject)
     }
 
-    @Test fun aRowIsMappedWithTheAccountsFavoritesAndTheBackendTags() = runBlocking {
+    private val ordinaryCards = """{"items":[
+            {"address":{"slug":"cafe"},"name":"Cafe","rating":4.5,"checkInCount":"12","isOpen":true,"isVisited":true,
+             "addressLine":"Street 1","coverPhoto":{"fullUrl":"https://img/full","urls":{"card":"https://img/card"}},
+             "tags":[{"name":"Wi-Fi"},{"name":"Pets"},{"name":"Quiet"},{"name":"Garden"}]},
+            {"address":{"slug":"bare"},"name":"Bare","rating":0,"isFavorite":true}],"totalItems":2,"totalPages":1}"""
+
+    @Test fun ordinaryCardsReadThePostResponseAndAccountOrServerFavorites() = runBlocking {
         favorites = { setOf("cafe") }
-        reply = { ok("""{"coffeeShops":[
-            {"address":{"slug":"cafe"},"name":"Cafe","rating":4.5,"checkInCount":"12","isOpen":true,"isNew":true,"isVisited":true,"isFavorite":false,
-             "priceRange":"$$","type":"Specialty","location":{"address":"Street 1","latitude":53.9,"longitude":27.56},
-             "photos":[{"fullUrl":"https://img/full","urls":{"card":"https://img/card"}}],
-             "tags":["Wi-Fi",{"name":"Pets"},{"title":" Quiet "}],"shopTags":["Wi-Fi","Garden"],
-             "roasters":[{"photoUrl":"https://logo/1"},{"photoUrl":"https://logo/1"},{"photoUrl":" "}],"brewMethods":[{"name":"V60"}],"beans":[{"name":"Arabica"}]},
-            {"address":{"slug":"bare"},"name":"Bare","rating":0,"isFavorite":true,"coffeeFocus":"3","photos":[{"fullUrl":"https://img/only"}],
-             "brewMethods":[{"name":"AeroPress"},{"name":" "}],"beans":[{"name":"Robusta"},{"name":"Blend"},{"name":"Extra"}]}],"totalItems":2,"totalPages":1}""") }
+        reply = { ok(ordinaryCards) }
         val (full, bare) = repository().search(ShopQuery()).getOrThrow().items
-        assertEquals("cafe", full.id); assertEquals(4.5, full.rating); assertEquals(12, full.checkInCount); assertEquals("Street 1", full.address)
-        assertEquals(PriceLevel.Moderate, full.priceLevel); assertEquals("https://img/card", full.photoUrl); assertEquals(ShopKind.Specialty, full.kind)
-        assertTrue(full.isOpen && full.isNew && full.isVisited && full.isFavorite)
-        assertEquals(listOf("Wi-Fi", "Pets", "Quiet"), full.tags); assertEquals(listOf("V60"), full.brewMethods); assertEquals(listOf("https://logo/1"), full.roasterLogos)
-        assertEquals(Coordinates(53.9, 27.56), full.coordinates)
-        assertEquals("bare", bare.id); assertNull(bare.rating); assertFalse(bare.isFavorite); assertEquals("https://img/only", bare.photoUrl); assertEquals(ShopKind.Cafe, bare.kind)
-        assertEquals(listOf("AeroPress", "Robusta", "Blend"), bare.tags); assertNull(bare.coordinates); assertNull(bare.priceLevel)
+        assertEquals("cafe", full.id)
+        assertEquals(4.5, full.rating)
+        assertEquals(12, full.checkInCount)
+        assertEquals("Street 1", full.address)
+        assertEquals("https://img/card", full.photoUrl)
+        assertTrue(full.isOpen && full.isVisited && full.isFavorite)
+        assertEquals(listOf("Wi-Fi", "Pets", "Quiet"), full.tags)
+        assertNull(full.coordinates)
+        assertNull(full.priceLevel)
+        assertNull(bare.rating)
+        assertTrue(bare.isFavorite)
     }
 
-    @Test fun aFailingFavoritesSourceCountsAsNoFavorites() = runBlocking {
+    @Test fun failingFavoritesSourceKeepsTheServersFavoriteFlag() = runBlocking {
         favorites = { error("offline") }
-        reply = { ok("""{"coffeeShops":[{"address":{"slug":"a"},"name":"A","isFavorite":true}]}""") }
-        assertFalse(repository().search(ShopQuery()).getOrThrow().items.single().isFavorite)
+        reply = { ok("""{"items":[{"address":{"slug":"a"},"name":"A","isFavorite":true}]}""") }
+        assertTrue(repository().search(ShopQuery()).getOrThrow().items.single().isFavorite)
     }
 
     // ---- the nearby search ----
@@ -108,7 +134,7 @@ class DiscoveryRepositoryTest {
         val sentFilters = sent["filters"]!!.jsonObject
         assertEquals(53.9, sentFilters["origin"]!!.jsonObject["latitude"]!!.jsonPrimitive.double); assertEquals(3, sentFilters["radiusKm"]!!.jsonPrimitive.int)
         assertTrue(sentFilters["isOpen"]!!.jsonPrimitive.boolean); assertTrue(sentFilters["visitedOnly"]!!.jsonPrimitive.boolean); assertFalse(sentFilters["favoritesOnly"]!!.jsonPrimitive.boolean)
-        assertEquals("Cafe", sentFilters["type"]!!.jsonPrimitive.content); assertEquals("Luxury", sentFilters["priceRange"]!!.jsonPrimitive.content)
+        assertEquals("cafe", sentFilters["type"]!!.jsonPrimitive.content); assertEquals("expensive", sentFilters["priceRange"]!!.jsonPrimitive.content)
         assertEquals(listOf("wifi"), sentFilters["tags"]!!.jsonArray.map { it.jsonPrimitive.content }); assertEquals(3.0, sentFilters["minRating"]!!.jsonPrimitive.double)
     }
 
@@ -161,48 +187,132 @@ class DiscoveryRepositoryTest {
     // ---- the map ----
 
     private fun mapAnswer(shop: String, zone: String, truncated: Boolean = false) =
-        ok("""{"shops":[$shop],"clusters":[{"id":"c","latitude":1,"longitude":1,"count":3}],"zones":[$zone],"isTruncated":$truncated}""")
+        ok("""{"shops":[$shop],"clusters":[{"id":"c","latitude":1,"longitude":1,"count":3,"bounds":{"minLatitude":0,"minLongitude":0,"maxLatitude":2,"maxLongitude":2}}],"zones":[$zone],"isTruncated":$truncated}""")
 
     private val bounds = MapBounds(53.8, 27.5, 54.0, 27.7)
 
-    @Test fun theMapAsksTwiceAndTakesTheShopsFromTheShopZoomAndTheZonesFromTheVisibleZoom() = runBlocking {
-        reply = { request ->
-            if (request.url.parameters["zoom"] == "22") mapAnswer("""{"address":{"slug":"s1"},"latitude":53.9,"longitude":27.56,"title":"Cafe","type":"Specialty","primaryZone":{"slug":"z"}}""", """{"address":{"slug":"fine"},"latitude":1,"longitude":1,"radiusMeters":1,"shopCount":1}""", truncated = true)
-            else mapAnswer("{}".let { """{"address":{"slug":"x"},"latitude":0,"longitude":0}""" }, """{"address":{"slug":"zone"},"name":"Центр","description":"d","color":"#ABC","latitude":53.9,"longitude":27.56,"radiusMeters":800,"shopCount":7,"polygon":[{"latitude":1.0,"longitude":2.0}]}""")
-        }
+    @Test fun theMapRequestsOneFinerZoomAndRetainsServerClustersAndFilters() = runBlocking {
+        reply = { mapAnswer("""{"address":{"slug":"s1"},"latitude":53.9,"longitude":27.56,"title":"Cafe","type":"Specialty","primaryZone":{"slug":"z"}}""",
+            """{"address":{"slug":"zone"},"name":"Centre","latitude":53.9,"longitude":27.56,"radiusMeters":800,"shopCount":7}""", truncated = true) }
         val filters = DiscoveryFilters(cityId = "minsk", priceLevel = PriceLevel.Cheap, minRating = 4.0, roasterIds = setOf("r"), tagIds = setOf("t"))
-        val content = repository().mapContent(bounds, 14.7f, filters).getOrThrow()
-        assertEquals(setOf("22", "14"), requests.map { it.url.parameters["zoom"] }.toSet())
-        for (request in requests) {
-            assertEquals("/api/Map", request.url.encodedPath); assertEquals("53.8", request.url.parameters["minLat"]); assertEquals("27.7", request.url.parameters["maxLon"])
-            assertEquals("minsk", request.url.parameters["city"]); assertEquals("Cheap", request.url.parameters["priceRange"]); assertEquals(listOf("r"), params(request, "roasters"))
-        }
-        assertEquals(listOf("s1"), content.markers.map { it.id }); assertEquals(Coordinates(53.9, 27.56), content.markers.single().coordinates)
-        assertEquals(ShopKind.Specialty, content.markers.single().kind); assertEquals("z", content.markers.single().zoneId); assertTrue(content.isTruncated)
-        val zone = content.zones.single()
-        assertEquals("zone", zone.id); assertEquals("Центр", zone.name); assertEquals("#ABC", zone.color); assertEquals(7, zone.shopCount); assertEquals(listOf(Coordinates(1.0, 2.0)), zone.polygon)
+        val content = repository().mapContent(bounds, 14.7f, DiscoveryCriteria(filters = filters)).getOrThrow()
+        val request = requests.single()
+        val sent = body(request)
+        assertEquals(HttpMethod.Post, request.method)
+        assertEquals(15, sent["zoom"]!!.jsonPrimitive.int)
+        assertEquals("/api/v1/coffee-shops/map", request.url.encodedPath)
+        assertEquals(53.8, sent["bounds"]!!.jsonObject["minLat"]!!.jsonPrimitive.double)
+        assertEquals("minsk", sent["filters"]!!.jsonObject["city"]!!.jsonPrimitive.content)
+        assertEquals("cheap", sent["filters"]!!.jsonObject["priceRange"]!!.jsonPrimitive.content)
+        assertEquals(listOf("r"), sent["filters"]!!.jsonObject["roasters"]!!.jsonArray.map { it.jsonPrimitive.content })
+        assertMapContent(content)
     }
 
-    @Test fun atTheShopZoomTheMapAsksOnceAndAFailedZoneRequestFallsBackToTheShopAnswer() = runBlocking {
-        reply = { mapAnswer("""{"address":{"slug":"s"},"latitude":1,"longitude":2}""", """{"address":{"slug":"own"},"latitude":1,"longitude":2,"radiusMeters":5,"shopCount":1}""") }
-        val atShopZoom = repository().mapContent(bounds, 22f, DiscoveryFilters()).getOrThrow()
-        assertEquals(1, requests.size); assertEquals(listOf("own"), atShopZoom.zones.map { it.id })
-        requests.clear()
-        reply = { request -> if (request.url.parameters["zoom"] == "22") mapAnswer("""{"address":{"slug":"s"},"latitude":1,"longitude":2}""", """{"address":{"slug":"own"},"latitude":1,"longitude":2,"radiusMeters":5,"shopCount":1}""") else HttpStatusCode.InternalServerError to "{}" }
-        assertEquals(listOf("own"), repository().mapContent(bounds, 12f, DiscoveryFilters()).getOrThrow().zones.map { it.id })
-        assertEquals(2, requests.size)
+    private fun assertMapContent(content: MapContent) {
+        assertEquals(listOf("s1"), content.markers.map { it.id })
+        assertEquals(ShopKind.Specialty, content.markers.single().kind)
+        assertEquals("z", content.markers.single().zoneId)
+        assertEquals(listOf("zone"), content.zones.map { it.id })
+        assertEquals(MapCluster("c", Coordinates(1.0, 1.0), 3, MapBounds(0.0, 0.0, 2.0, 2.0)), content.clusters.single())
+        assertTrue(content.isTruncated)
+    }
+
+    @Test fun mapCarriesEveryAdvancedSelectionIncludingMultipleAmenityTags() = runBlocking {
+        reply = { ok("""{"shops":[],"clusters":[],"zones":[]}""") }
+        val filters = DiscoveryFilters(
+            cityId = "minsk", kind = ShopKind.Specialty, priceLevel = PriceLevel.Moderate, minRating = 4.5,
+            roasterIds = setOf("r1", "r2"), beanIds = setOf("arabica"), equipmentIds = setOf("grinder"),
+            brewMethodIds = setOf("v60", "espresso"), tagIds = setOf("laptop-friendly", "wifi"),
+        )
+        repository().mapContent(bounds, 22f, DiscoveryCriteria(filters = filters)).getOrThrow()
+        val request = requests.single()
+        val sent = body(request)["filters"]!!.jsonObject
+        assertEquals("minsk", sent["city"]!!.jsonPrimitive.content)
+        assertEquals("specialty", sent["type"]!!.jsonPrimitive.content)
+        assertEquals("moderate", sent["priceRange"]!!.jsonPrimitive.content)
+        assertEquals(4.5, sent["minRating"]!!.jsonPrimitive.double)
+        val selections = mapOf(
+            "roasters" to filters.roasterIds, "beans" to filters.beanIds, "equipments" to filters.equipmentIds,
+            "brewMethods" to filters.brewMethodIds, "tags" to filters.tagIds,
+        )
+        selections.forEach { (name, ids) -> assertEquals(ids, sent[name]!!.jsonArray.map { it.jsonPrimitive.content }.toSet(), name) }
+    }
+
+    @Test fun mapDetailLevelUnfoldsCityClustersEarlierAndKeepsTheServerZoomLimits() = runBlocking {
+        reply = { ok("""{"shops":[],"clusters":[],"zones":[]}""") }
+        val cases = listOf(-2f to 0, 10f to 11, 12.9f to 13, 13f to 14, 22f to 22, 30f to 22)
+        val repository = repository()
+        for ((cameraZoom, requestZoom) in cases) {
+            repository.mapContent(bounds, cameraZoom, DiscoveryCriteria()).getOrThrow()
+            assertEquals(requestZoom, body(requests.last())["zoom"]!!.jsonPrimitive.int)
+        }
+    }
+
+    @Test fun clusterOnlyPascalCaseAnswersKeepBoundsCountsAndFallbackIdentity() = runBlocking {
+        reply = { ok("""{"Clusters":[{"Latitude":1,"Longitude":1,"Count":120,"Bounds":{"MinLatitude":0,"MinLongitude":0,"MaxLatitude":2,"MaxLongitude":2}}]}""") }
+        val content = repository().mapContent(bounds, 12f, DiscoveryCriteria()).getOrThrow()
+        assertTrue(content.markers.isEmpty())
+        assertEquals("1.0:1.0:120", content.clusters.single().id)
+        assertEquals(120, content.clusters.single().count)
+        assertEquals(MapBounds(0.0, 0.0, 2.0, 2.0), content.clusters.single().bounds)
+        assertEquals(1, requests.size)
+    }
+
+    @Test fun invalidClustersAreDroppedAndAnAnswerWithoutClustersStillWorks() = runBlocking {
+        val cluster = """{"latitude":1,"longitude":1,"count":0,"bounds":{"minLatitude":0,"minLongitude":0,"maxLatitude":2,"maxLongitude":2}}"""
+        for (invalid in listOf(cluster, cluster.replace("\"count\":0", "\"count\":2").replace("\"latitude\":1", "\"latitude\":91"))) {
+            reply = { ok("""{"clusters":[$invalid]}""") }
+            assertTrue(repository().mapContent(bounds, 12f, DiscoveryCriteria()).getOrThrow().clusters.isEmpty())
+        }
+        reply = { ok("""{"shops":[],"zones":[]}""") }
+        assertEquals(MapContent(), repository().mapContent(bounds, 22f, DiscoveryCriteria()).getOrThrow())
     }
 
     @Test fun theMapKeepsOnlyTheFocusedKindAcceptsPascalCaseAndNamesAnUntitledShopLikeProd() = runBlocking {
         reply = { ok("""{"Shops":[{"address":{"slug":"a"},"Latitude":1.0,"Longitude":2.0,"Title":" ","Type":"Cafe"},{"address":{"slug":"b"},"Latitude":3.0,"Longitude":4.0,"Title":"B","Type":"Specialty"}],"Zones":[],"IsTruncated":true}""") }
-        val content = repository().mapContent(bounds, 22f, DiscoveryFilters(kind = ShopKind.Cafe)).getOrThrow()
+        val content = repository().mapContent(bounds, 22f, DiscoveryCriteria(filters = DiscoveryFilters(kind = ShopKind.Cafe))).getOrThrow()
         assertEquals(listOf("a"), content.markers.map { it.id }); assertEquals("Кофейня", content.markers.single().title) /* a blank title is named as in prod */; assertTrue(content.isTruncated)
-        assertEquals("Cafe", requests.single().url.parameters["type"])
+        assertEquals("cafe", body(requests.single())["filters"]!!.jsonObject["type"]!!.jsonPrimitive.content)
     }
 
     @Test fun aFailedShopRequestFailsTheMapWithTheServerMessage() = runBlocking {
         reply = { HttpStatusCode.BadRequest to """{"isSuccess":false,"message":"Слишком большая область"}""" }
-        assertEquals("Слишком большая область", failure(repository().mapContent(bounds, 22f, DiscoveryFilters())).serverMessage)
+        assertEquals("Слишком большая область", failure(repository().mapContent(bounds, 22f, DiscoveryCriteria())).serverMessage)
+    }
+
+    @Test fun listAndMapSerializeExactlyTheSameSelectionAndNearbyOrigin() = runBlocking {
+        val filters = DiscoveryFilters(cityId = "minsk", kind = ShopKind.CoffeeBar, nearbyOnly = true,
+            openOnly = true, newOnly = true, visitedOnly = true, favoritesOnly = true,
+            tagIds = setOf("laptop-friendly", "wifi"), priceLevel = PriceLevel.Luxury)
+        val criteria = DiscoveryCriteria("  coffee  ", filters, origin)
+        val repository = repository()
+        reply = { ok("""{"items":[],"currentPage":1,"totalItems":0,"totalPages":0}""") }
+        repository.search(criteria.searchQuery()).getOrThrow()
+        reply = { ok("""{"shops":[],"clusters":[],"zones":[]}""") }
+        repository.mapContent(bounds, 22f, criteria).getOrThrow()
+        val list = body(requests.first())
+        val map = body(requests.last())
+        assertEquals(list["filters"], map["filters"])
+        assertEquals(list["q"], map["q"])
+        assertNearbyMapFilters(map["filters"]!!.jsonObject)
+    }
+
+    private fun assertNearbyMapFilters(sent: JsonObject) {
+        assertEquals(JsonNull, sent["city"])
+        assertEquals(3, sent["radiusKm"]!!.jsonPrimitive.int)
+        assertEquals(origin.latitude, sent["origin"]!!.jsonObject["latitude"]!!.jsonPrimitive.double)
+        listOf("isOpen", "isNew", "visitedOnly", "favoritesOnly").forEach { assertTrue(sent[it]!!.jsonPrimitive.boolean) }
+    }
+
+    @Test fun mapAuthAndUnsupportedRouteFailuresNeverFallBackToAnUnfilteredGet() = runBlocking {
+        for (status in listOf(HttpStatusCode.Unauthorized, HttpStatusCode.NotFound)) {
+            requests.clear()
+            reply = { status to """{"isSuccess":false,"message":"Недоступно"}""" }
+            val result = repository().mapContent(bounds, 14f, DiscoveryCriteria(filters = DiscoveryFilters(visitedOnly = true)))
+            assertEquals(if (status == HttpStatusCode.Unauthorized) FailureKind.SignInRequired else FailureKind.Other, failure(result).kind)
+            assertEquals(HttpMethod.Post, requests.single().method)
+            assertEquals("/api/v1/coffee-shops/map", requests.single().url.encodedPath)
+        }
     }
 
     // ---- the catalogs ----

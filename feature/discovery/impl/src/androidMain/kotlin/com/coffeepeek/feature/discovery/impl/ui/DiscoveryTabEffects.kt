@@ -9,32 +9,36 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.coffeepeek.feature.discovery.api.*
 import com.coffeepeek.feature.discovery.impl.search.SearchAction
+import com.coffeepeek.feature.discovery.impl.tab.DiscoveryBackTarget
+import com.coffeepeek.feature.discovery.impl.tab.discoveryBackTarget
 
 @Composable
 internal fun DiscoveryTabEffects(
-    ui: DiscoveryTabState, showDiscovery: Boolean, host: DiscoveryHost, analytics: DiscoveryAnalytics,
+    ui: DiscoveryTabState, showDiscovery: Boolean, analytics: DiscoveryAnalytics,
     callbacks: TabCallbacks, focus: MapFocus?, onAction: (SearchAction) -> Unit,
 ) {
     DiscoveryOverlayAnalytics(ui, analytics)
     LaunchedEffect(focus, ui.mapAnchor.width > 0f) {
         if (focus != null) {
             ui.showRoasters = false
-            onAction(SearchAction.CancelSearch)
-            if (ui.mapAnchor.width > 0f) ui.mapExpanded = true
+            ui.mapExpanded = true
         }
     }
     LaunchedEffect(ui.mapExpanded) { callbacks.onMapExpandedChange(ui.mapExpanded) }
     DisposableEffect(Unit) { onDispose { callbacks.onMapExpandedChange(false) } }
-    LaunchedEffect(showDiscovery) { if (!showDiscovery) ui.mapExpanded = false }
-    host.locationPermission({ onAction(SearchAction.LocationGranted) }, { onAction(SearchAction.LocationDenied) })
     val focusManager = LocalFocusManager.current
     val keyboard = LocalSoftwareKeyboardController.current
     val lifecycle by LocalLifecycleOwner.current.lifecycle.currentStateFlow.collectAsStateWithLifecycle()
-    BackHandler(enabled = lifecycle.isAtLeast(Lifecycle.State.STARTED) && (ui.mapExpanded || !showDiscovery)) {
+    val backTarget = discoveryBackTarget(ui.showRoasters, ui.mapExpanded, showDiscovery)
+    BackHandler(enabled = lifecycle.isAtLeast(Lifecycle.State.STARTED) && backTarget != null) {
         focusManager.clearFocus(force = true)
         keyboard?.hide()
-        onAction(SearchAction.CancelSearch)
-        ui.mapExpanded = false
+        when (backTarget) {
+            DiscoveryBackTarget.Roasters -> ui.closeRoasters(onAction)
+            DiscoveryBackTarget.Map -> ui.mapExpanded = false
+            DiscoveryBackTarget.Search -> onAction(SearchAction.CancelSearch)
+            null -> Unit
+        }
     }
 }
 

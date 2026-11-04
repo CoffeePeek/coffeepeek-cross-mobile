@@ -3,7 +3,7 @@
 package com.coffeepeek.admin.analytics.parity
 
 import com.coffeepeek.admin.analytics.parity.ParityHarness.record
-import com.coffeepeek.admin.di.coffee.AndroidCoffeeAnalytics
+import com.coffeepeek.admin.di.coffee.CoffeeCatalogueAnalytics
 import com.coffeepeek.admin.feature.coffee.domain.Coffee
 import com.coffeepeek.admin.feature.coffee.domain.CoffeeDetails
 import com.coffeepeek.admin.feature.coffee.domain.CoffeeFilterGroup
@@ -52,7 +52,7 @@ class CoffeeAnalyticsParityTest {
     }
 
     private suspend fun TestScope.migratedJourney(page: Result<CoffeePage>, open: Boolean): List<WireEvent> = record {
-        val list = AndroidCoffeeAnalytics.list()
+        val list = CoffeeCatalogueAnalytics.list()
         fun settle(count: Int?) = page.fold({ count?.let(list::resultsViewed) }, { list.searchFailed(it) })
         val count = page.getOrNull()?.let { it.totalCount ?: if (it.totalPages <= 1) it.items.size else null }
         list.searchStarted("|", "", emptyList()); settle(count)
@@ -80,7 +80,7 @@ class CoffeeAnalyticsParityTest {
     @Test fun filtersOpened() = runTest {
         val legacy = record { com.coffeepeek.admin.analytics.Analytics.track(
             com.coffeepeek.admin.analytics.AnalyticsEvent.FILTERS_OPENED, "catalog" to "coffees", "placement" to "mobile") }
-        val migrated = record { AndroidCoffeeAnalytics.list().filtersOpened() }
+        val migrated = record { CoffeeCatalogueAnalytics.list().filtersOpened() }
         ParityHarness.assertParity("filters opened", legacy, migrated)
     }
 }

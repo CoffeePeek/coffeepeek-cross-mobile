@@ -249,9 +249,10 @@ class CommunityViewModelTest {
         val analytics = FakeAnalytics(); val vm = model(repo, analytics = analytics)
         vm.send(CommunityAction.ItemInteracted(FeedItemAction.Shop, "shop"), this)
         vm.send(CommunityAction.ItemInteracted(FeedItemAction.Photo, "home"), this)
+        vm.send(CommunityAction.ItemInteracted(FeedItemAction.Share, "home"), this)
         vm.send(CommunityAction.SelectTimeline(CommunityTimeline.Mine), this)
         vm.send(CommunityAction.ItemInteracted(FeedItemAction.Photo, "shop"), this)
-        assertEquals(listOf("item:Shop:shop", "item:Photo:home"), analytics.events)
+        assertEquals(listOf("item:Shop:shop", "item:Photo:home", "item:Share:home"), analytics.events)
     }
 
     @Test fun aNotReadyBlockListIsRefreshedOnceAndTheFeedIsRequestedOnce() = runTest(dispatcher) {

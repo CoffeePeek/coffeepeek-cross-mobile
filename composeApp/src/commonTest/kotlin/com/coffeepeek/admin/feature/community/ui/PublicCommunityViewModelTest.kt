@@ -20,6 +20,8 @@ import kotlinx.coroutines.withTimeout
 import kotlin.test.*
 
 class PublicCommunityViewModelTest {
+    private val publicationLabels = listOf("Приватный", "На проверке", "Опубликован", "Отклонён", "Публичный", "Статус проверки неизвестен")
+
     private val visit = CheckIn("first", "same-shop", "Shop", "Coffee", "2020-01-01T00:00:00Z",
         visitedAt = "2019-01-01T00:00:00Z", rating = ReviewRating(4, 4, 5), username = "Me",
         authorAddress = PublicAddress("other", "/users/other", 1, false), visibility = CheckInVisibility.Public,
@@ -200,7 +202,7 @@ class PublicCommunityViewModelTest {
             assertEquals(1, edits)
             vm.selectTimeline(CommunityTimeline.Mine)
             val mine = vm.await { it.items == listOf(pending) && !it.isLoading }
-            assertTrue(mine.owns(pending)); assertEquals("На проверке", pending.publicationLabel())
+            assertTrue(mine.owns(pending)); assertEquals("На проверке", pending.publicationLabel(publicationLabels))
         } finally { vm.close() }
     }
 

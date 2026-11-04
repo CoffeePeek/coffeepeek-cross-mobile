@@ -15,19 +15,18 @@ import androidx.compose.ui.unit.sp
 import coffeepeek.composeapp.generated.resources.Res
 import coffeepeek.composeapp.generated.resources.maskot_with_magnifying_glass
 import com.coffeepeek.admin.analytics.analyticsExposure
+import com.coffeepeek.admin.analytics.LocalAnalyticsVisible
 import com.coffeepeek.admin.location.LocationPermissionEffect
 import com.coffeepeek.admin.map.CoffeeMap
 import com.coffeepeek.admin.ui.component.CoffeeShopImage
 import com.coffeepeek.admin.ui.component.CoffeeShopPlaceholderImage
 import com.coffeepeek.admin.ui.component.HapticEvent
-import com.coffeepeek.admin.ui.component.PriceBeanSlider
 import com.coffeepeek.admin.ui.component.LoadErrorContent
 import com.coffeepeek.admin.ui.component.RetainedContent
 import com.coffeepeek.admin.ui.component.RoasterAvatar
 import com.coffeepeek.admin.ui.component.brewMethodIcon
 import com.coffeepeek.admin.ui.component.platformHaptic
 import com.coffeepeek.admin.ui.component.platformReduceMotion
-import com.coffeepeek.admin.ui.component.priceLevelHint
 import com.coffeepeek.admin.ui.component.shopTagIcon
 import com.coffeepeek.admin.utils.PrefetchListPhotos
 import com.coffeepeek.domain.model.CatalogItem
@@ -61,8 +60,6 @@ internal fun discoveryHost() = DiscoveryHost(
     },
     tagIcon = { slug -> Icon(shopTagIcon(slug), contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(22.dp)) },
     roasterAvatar = { name, logoUrl -> RoasterAvatar(CatalogItem(id = name, name = name, photoUrl = logoUrl)) },
-    priceSelector = { selected, onSelect, modifier -> PriceBeanSlider(selected = selected, onSelect = onSelect, showTitle = false, showHint = false, modifier = modifier) },
-    priceHint = { priceLevelHint(it) },
     roasterLogo = { _, logoUrl -> if (logoUrl != null) CoffeeShopImage(imageUrl = logoUrl, modifier = Modifier.fillMaxSize(), contentScale = ContentScale.Crop, placeholderLabelSize = 5.sp) },
     suggestionIllustration = { painterResource(Res.drawable.maskot_with_magnifying_glass) },
     exposure = { modifier, exposure ->
@@ -77,9 +74,12 @@ internal fun discoveryHost() = DiscoveryHost(
     },
     haptic = { platformHaptic(HapticEvent.Selection) },
     retained = { visible, content -> RetainedContent(visible, content) },
-    locationPermission = { onGranted, onDenied -> LocationPermissionEffect(requestKey = 1, onGranted = onGranted, onDenied = onDenied) },
+    locationPermission = { requestKey, onGranted, onDenied ->
+        LocationPermissionEffect(requestKey, onGranted, onDenied, requestOnce = true)
+    },
     photoPrefetch = { listState, photos -> PrefetchListPhotos(listState, photos) },
     reduceMotion = { platformReduceMotion() },
+    isVisible = { LocalAnalyticsVisible.current },
     mapCanvas = { state, callbacks, modifier -> DiscoveryMapCanvas(state, callbacks, modifier) },
 )
 
@@ -89,6 +89,10 @@ private fun DiscoveryMapCanvas(state: MapCanvasState, callbacks: MapCanvasCallba
     val zones = androidx.compose.runtime.remember(state.zones) { state.zones.map { it.toLegacy() } }
     CoffeeMap(
         shops = shops,
+        clusters = state.clusters.map { cluster ->
+            com.coffeepeek.domain.model.MapCluster(cluster.id, cluster.coordinates.latitude, cluster.coordinates.longitude, cluster.count,
+                com.coffeepeek.domain.model.MapBounds(cluster.bounds.minLat, cluster.bounds.minLon, cluster.bounds.maxLat, cluster.bounds.maxLon))
+        },
         zones = zones,
         selectedShopId = state.selectedShopId,
         onBoundsChanged = { bounds, zoom -> callbacks.onBoundsChanged(MapBounds(bounds.minLat, bounds.minLon, bounds.maxLat, bounds.maxLon), zoom) },
@@ -102,7 +106,7 @@ private fun DiscoveryMapCanvas(state: MapCanvasState, callbacks: MapCanvasCallba
         myLocationRequestKey = state.myLocationRequest,
         onMyLocationFound = { latitude, longitude -> callbacks.onMyLocationFound(com.coffeepeek.feature.discovery.domain.model.Coordinates(latitude, longitude)) },
         onLocationPermissionDenied = callbacks.onLocationDenied,
-        requestLocationPermissionOnLoad = !state.isPreview,
+        requestLocationPermissionOnLoad = false,
         showAttribution = !state.isPreview,
     )
 }

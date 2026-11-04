@@ -8,7 +8,7 @@ object CpColor {
     val Primary        = Color(0xFFEAB308)
     val PrimaryHover   = Color(0xFFFACC15)
     val PrimaryTint10  = Color(0x1AEAB308)
-    val AccentTextLight = Primary
+    val AccentTextLight = com.coffeepeek.core.designsystem.theme.CoffeePeekColors.AccentTextLight
     val AccentTextDark  = Color(0xFFFACC15)
     val SwitchCheckedThumbLight = Color(0xFF684900)
     val SwitchCheckedTrackDark = Color(0xFF9A7A28)

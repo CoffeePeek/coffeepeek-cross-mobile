@@ -49,9 +49,18 @@ internal fun PostDto.toDomain(apiBaseUrl: String): CommunityPost {
         isHelpfulByCurrentUser = isHelpfulByCurrentUser,
         isHome = home,
         home = this.home?.takeIf { home }?.let {
-            HomePreparation(it.preparedOn, it.brewMethodCode, it.beanName, it.doseGrams, it.brewDurationSeconds, it.tasteScore)
+            HomePreparation(it.preparedOn, it.brewMethodCode, it.beanName, it.doseGrams, it.brewDurationSeconds, it.tasteScore,
+                roasterName = it.roasterName?.takeIf(String::isNotBlank),
+                coffeeProductSlug = it.coffeeProductSlug?.takeIf(String::isNotBlank),
+                shelfBagCardUrl = shelfBagCardUrl(apiBaseUrl))
         },
     )
+}
+
+/** The small card wants the thumbnail; the original stands in while variants are not ready. */
+private fun PostDto.shelfBagCardUrl(apiBaseUrl: String): String? {
+    val original = shelfBagPhotoUrl.resolveUrl(apiBaseUrl) ?: return null
+    return shelfBagPhotoVariants.variantUrl("thumb", original).resolveUrl(apiBaseUrl) ?: original
 }
 
 /** The feed variant of a photo. Without variants the original is used; with variants but no usable match the result is empty (as before). */

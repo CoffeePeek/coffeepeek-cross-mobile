@@ -46,11 +46,8 @@ internal object MapMarkerIcons {
     private const val RING_DEFAULT_DP = 1.1f
     private const val SELECTED_HALO_STROKE_DP = 2f
     private const val SELECTED_HALO_GAP_DP = 1.5f
-    private const val CLUSTER_STROKE_DP = 2f
-    private const val CLUSTER_TEXT_SP = 13f
+    private const val CLUSTER_TEXT_SP = 12f
 
-    private const val BRAND_PRIMARY = 0xFFEAB308.toInt()
-    private const val TEXT_ON_PRIMARY = 0xFF1A1412.toInt()
     private const val MY_LOCATION = 0xFF2563EB.toInt()
     private const val WHITE = 0xFFFFFFFF.toInt()
     private const val SHADOW = 0xFF1A1412.toInt()
@@ -83,9 +80,9 @@ internal object MapMarkerIcons {
         }
         val label = clusterCountLabel(count)
         val diameter = clusterDiameterDp(count)
-        val key = "cluster-$label-${diameter.toInt()}"
+        val key = "cluster-$label-$isDarkTheme"
         return cache.getOrPut(key) {
-            createClusterBitmap(context.applicationContext, label, diameter)
+            createClusterBitmap(context.applicationContext, label, diameter, isDarkTheme)
         }
     }
 
@@ -192,49 +189,29 @@ internal object MapMarkerIcons {
         canvas.drawCircle(center, center, ringRadius, paint)
     }
 
-    private fun createClusterBitmap(context: Context, label: String, diameterDp: Float): Bitmap {
-        val density = context.resources.displayMetrics.density
-        val px = density * RENDER_SCALE
+    private fun createClusterBitmap(context: Context, label: String, diameterDp: Float, dark: Boolean): Bitmap {
+        val px = context.resources.displayMetrics.density * RENDER_SCALE
         val size = diameterDp * px
-        val pad = 12f * px
-        val width = (size + pad * 2f).roundToInt().coerceAtLeast(1)
+        val width = (size + 8f * px).roundToInt().coerceAtLeast(1)
         val bitmap = Bitmap.createBitmap(width, width, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bitmap)
-        val cx = width / 2f
-        val cy = width / 2f
-        val radius = size / 2f
+        val center = width / 2f
+        drawPinBackground(canvas, center, size / 2f, px, false, dark)
+        drawPinRing(canvas, center, size / 2f, px, false, dark)
+        drawClusterCount(context, canvas, label, center, px, dark)
+        return bitmap
+    }
 
-        val fillPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            style = Paint.Style.FILL
-            color = ColorUtils.setAlphaComponent(BRAND_PRIMARY, (0.92f * 255).toInt())
-            setShadowLayer(10f * px, 0f, 2f * px, ColorUtils.setAlphaComponent(SHADOW, (0.35f * 255).toInt()))
-        }
-        canvas.drawCircle(cx, cy, radius, fillPaint)
-
-        val outlinePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            style = Paint.Style.STROKE
-            strokeWidth = 1f * px
-            color = ColorUtils.setAlphaComponent(SHADOW, (0.10f * 255).toInt())
-        }
-        canvas.drawCircle(cx, cy, radius, outlinePaint)
-
-        val strokePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            style = Paint.Style.STROKE
-            strokeWidth = CLUSTER_STROKE_DP * px
-            color = WHITE
-        }
-        canvas.drawCircle(cx, cy, radius - CLUSTER_STROKE_DP * px / 2f, strokePaint)
-
-        val textPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
-            color = TEXT_ON_PRIMARY
+    private fun drawClusterCount(context: Context, canvas: Canvas, label: String, center: Float, px: Float, dark: Boolean) {
+        val ink = if (dark) CoffeePeekColors.DarkTextPrimary else CoffeePeekColors.DarkSurface
+        val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+            color = ink.toArgb()
             textAlign = Paint.Align.CENTER
             textSize = CLUSTER_TEXT_SP * px
             typeface = clusterTypeface(context)
             letterSpacing = -0.02f
         }
-        val textY = cy - (textPaint.descent() + textPaint.ascent()) / 2f
-        canvas.drawText(label, cx, textY, textPaint)
-        return bitmap
+        canvas.drawText(label, center, center - (paint.descent() + paint.ascent()) / 2f, paint)
     }
 
     private fun createZoneBitmap(context: Context, label: String, isDarkTheme: Boolean, zoneColor: String): Bitmap {
@@ -327,6 +304,12 @@ private fun MapMarkerIconsPreview() {
                         modifier = Modifier.size((bitmap.width / context.resources.displayMetrics.density).dp),
                     )
                 }
+            }
+        }
+        Row {
+            listOf(2, 10, 99, 100).forEach { count ->
+                val bitmap = MapMarkerIcons.clusterBitmap(context, count, dark)
+                Image(bitmap.asImageBitmap(), null, Modifier.size((bitmap.width / context.resources.displayMetrics.density).dp))
             }
         }
     }

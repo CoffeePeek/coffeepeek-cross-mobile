@@ -52,4 +52,5 @@ data class ShopMenuDto(
     @SerialName("suggestedPriceRange") val suggestedPriceRange: String? = null,
     @SerialName("items") val items: List<ShopMenuItemDto> = emptyList(),
     @SerialName("photos") val photos: List<ShortPhotoMetadataDto> = emptyList(),
+    @SerialName("inputRevision") val inputRevision: Long? = null,
 )

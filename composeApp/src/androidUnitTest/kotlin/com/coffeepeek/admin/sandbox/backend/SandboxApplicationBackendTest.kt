@@ -1,5 +1,13 @@
 package com.coffeepeek.admin.sandbox.backend
 
+import com.coffeepeek.admin.ui.screen.auth.message
+
+import com.coffeepeek.admin.ui.screen.auth.LoginFailureCopy
+
+import com.coffeepeek.feature.auth.domain.classifyLoginFailure
+
+import com.coffeepeek.feature.appupdate.impl.UpdateCheckFeedback
+
 import kotlin.test.assertNotNull
 import com.coffeepeek.api.service.AuthService
 import com.coffeepeek.admin.feature.passwordrecovery.data.PasswordRecoveryRepositoryImpl
@@ -38,6 +46,9 @@ import com.coffeepeek.feature.shop.domain.model.*
 import com.coffeepeek.domain.model.Session
 import com.coffeepeek.domain.repository.SessionRepository
 import com.coffeepeek.feature.authorblocking.api.AuthorReference
+import com.coffeepeek.feature.community.data.repository.createCommunityRepository
+import com.coffeepeek.feature.community.domain.model.CommunityFailure
+import com.coffeepeek.feature.community.domain.model.FailureKind
 import com.coffeepeek.admin.di.authorblocking.SessionAuthorBlockingAccount
 import com.coffeepeek.feature.authorblocking.impl.createAuthorBlockingFeature
 import io.ktor.client.engine.mock.MockEngine
@@ -79,6 +90,8 @@ private class LocalSession : SessionRepository {
 }
 
 class SandboxApplicationBackendTest {
+    private val loginCopy = LoginFailureCopy("Неверный email или пароль", "Не удалось подключиться. Проверьте интернет-соединение", "Не удалось войти. Проверьте email и пароль")
+
     @get:Rule val temporary = TemporaryFolder()
     private suspend fun fixture(block: suspend (SandboxBackend, CoffeePeekClient) -> Unit) {
         val backend = SandboxBackend(byteArrayOf(1, 2, 3), today = LocalDate.parse("2026-10-18"))
@@ -95,7 +108,7 @@ class SandboxApplicationBackendTest {
         assertNotSame(client.client, client.plainClient)
         assertNotSame(client.client, client.imageClient)
         val shops = ShopApiService(client.client)
-        assertEquals(2, shops.searchShops().getOrThrow().coffeeShops.size)
+        assertEquals(2, shops.searchShops().getOrThrow().items.size)
         assertEquals("Sandbox Cafe", shops.getShopDetails("sandbox-cafe").getOrThrow().name)
         assertEquals("Минск", shops.getCities().getOrThrow().single().name)
         assertEquals("cappuccino", shops.getConsumedDrinks().getOrThrow().single().slug)
@@ -195,10 +208,10 @@ class SandboxApplicationBackendTest {
         val api = ShopApiService(client.client)
         val filters = ShopSearchFiltersDto(ShopSearchOriginDto(53.9, 27.56), favoritesOnly = true)
         val request = ShopSearchRequestDto(filters, page = 1, pageSize = 20)
-        assertEquals("Sandbox Cafe", api.searchNearbyShops(request).getOrThrow().items.single().name)
+        assertEquals("Sandbox Cafe", api.searchShops(request).getOrThrow().items.single().name)
         FavoritesApiService(client.client).setFavorite("coffee_shop", "sandbox-cafe", false).getOrThrow()
-        assertTrue(api.searchNearbyShops(request).getOrThrow().items.isEmpty())
-        assertEquals("Sandbox Lab", api.searchNearbyShops(request.copy(filters = filters.copy(favoritesOnly = false, isNew = true))).getOrThrow().items.single().name)
+        assertTrue(api.searchShops(request).getOrThrow().items.isEmpty())
+        assertEquals("Sandbox Lab", api.searchShops(request.copy(filters = filters.copy(favoritesOnly = false, isNew = true))).getOrThrow().items.single().name)
     } }
 
     @Test fun actualMigratedShopWriteUpdatesHistoryButNeverPublishesPrivateOrPendingRows() = runTest { fixture { _, client ->
@@ -291,6 +304,20 @@ class SandboxApplicationBackendTest {
         assertEquals(2, restored.helpfulCount)
     } }
 
+    @Test fun sharedPostLinksReadThroughTheRealCommunityRepositoryAndHonourBlocks() = runTest { fixture { _, client ->
+        val posts = createCommunityRepository(client.client, SandboxBackend.BASE_URL)
+        val id = SandboxApplicationBackend.FRIEND_VISIT_ID
+        assertEquals(friend, posts.postById(id).getOrThrow().author.id)
+        assertTrue(posts.postById("sandbox-feed-5").getOrThrow().isHome)
+        val own = CheckInApiService(client.client).getMyCheckIns(1, 20).getOrThrow().items.single().id
+        assertEquals(own, posts.postById(own).getOrThrow().id)
+        client.client.put("/api/v1/me/blocks/$friend")
+        assertEquals(FailureKind.NotFound, assertIs<CommunityFailure>(posts.postById(id).exceptionOrNull()).kind)
+        client.client.delete("/api/v1/me/blocks/$friend")
+        assertEquals(id, posts.postById(id).getOrThrow().id)
+        assertEquals(FailureKind.NotFound, assertIs<CommunityFailure>(posts.postById("missing").exceptionOrNull()).kind)
+    } }
+
     @Test fun unimplementedMutationsAreRejectedAndEmptyStateIsSharedAcrossSources() = runTest { fixture { backend, client ->
         assertFalse(client.client.post("/api/ModerationShops").status.isSuccess())
         val api = CheckInApiService(client.client)
@@ -300,7 +327,7 @@ class SandboxApplicationBackendTest {
         assertEquals(1, api.getMyCheckIns(1, 20).getOrThrow().items.size)
         assertTrue(ShopApiService(client.client).getShopDetails("unknown-shop").isFailure)
         backend.reset(false)
-        assertTrue(ShopApiService(client.client).searchShops().getOrThrow().coffeeShops.isEmpty())
+        assertTrue(ShopApiService(client.client).searchShops().getOrThrow().items.isEmpty())
         assertTrue(FeedApiService(client.client).getFeed(20).getOrThrow().items.isEmpty())
         assertTrue(FavoritesApiService(client.client).getFavorites().getOrThrow().isEmpty())
     } }
@@ -459,12 +486,12 @@ class SandboxApplicationBackendTest {
 
             backend.updatePolicy = SandboxUpdatePolicy.Failure
             val automatic = check().second
-            assertFalse(automatic.showPrompt); assertNull(automatic.message)
+            assertFalse(automatic.showPrompt); assertNull(automatic.feedback)
             val manual = check(manual = true).second
-            assertTrue(manual.checkFailed); assertEquals("Не удалось проверить обновления. Попробуйте позже.", manual.message)
+            assertTrue(manual.checkFailed); assertEquals(UpdateCheckFeedback.CheckFailed, manual.feedback)
 
             backend.updatePolicy = SandboxUpdatePolicy.UpToDate
-            assertEquals("Установлена актуальная версия", check(manual = true).second.message)
+            assertEquals(UpdateCheckFeedback.UpToDate, check(manual = true).second.feedback)
         } finally { scope.cancel() }
     } }
     @Test fun accountFixturesAnswerTheRealAuthServiceAndRecoveryRepository() = runTest { fixture { backend, client ->
@@ -485,7 +512,7 @@ class SandboxApplicationBackendTest {
         backend.authPolicy = SandboxAuthPolicy.WrongPassword
         val rejected = auth.login("tester@example.com", "wrong").exceptionOrNull()
         assertNotNull(rejected)
-        assertEquals("Неверный email или пароль", com.coffeepeek.admin.utils.localizedLoginError(rejected.message))
+        assertEquals("Неверный email или пароль", classifyLoginFailure(rejected.message).message(loginCopy))
         assertTrue(auth.register("Tester", "new@example.com", "password1").isSuccess)
 
         backend.authPolicy = SandboxAuthPolicy.EmailTaken
@@ -662,6 +689,56 @@ class SandboxApplicationBackendTest {
         assertEquals(2, shops.getMyModerationShops(ModerationStatusDto.Approved, 1, 20).getOrThrow().totalItems)
     } }
 
+    @Test fun discoveryPageFailureAllowsRetryAndRearmsOnRefresh() = runTest { fixture { backend, client ->
+        backend.discovery = SandboxDiscovery.PageFailure
+        val shops = ShopApiService(client.client)
+        assertEquals(20, shops.searchShops(page = 1, pageSize = 20).getOrThrow().items.size)
+        assertTrue(shops.searchShops(page = 2, pageSize = 20).isFailure)
+        assertEquals(2, shops.searchShops(page = 2, pageSize = 20).getOrThrow().currentPage)
+        shops.searchShops(page = 1, pageSize = 20).getOrThrow()
+        assertTrue(shops.searchShops(page = 2, pageSize = 20).isFailure)
+    } }
+
+    @Test fun discoveryRefreshFailurePreservesTheInitialLoadAndAllowsRetry() = runTest { fixture { backend, client ->
+        backend.discovery = SandboxDiscovery.RefreshFailure
+        val shops = ShopApiService(client.client)
+        val first = shops.searchShops(page = 1, pageSize = 20).getOrThrow()
+        assertEquals(20, first.items.size)
+        assertTrue(shops.searchShops(page = 2, pageSize = 20).isSuccess)
+        assertTrue(shops.searchShops(page = 1, pageSize = 20).isFailure)
+        assertEquals(first, shops.searchShops(page = 1, pageSize = 20).getOrThrow())
+        assertTrue(shops.searchShops(cityId = "brest").isSuccess)
+        assertTrue(shops.searchShops(cityId = "brest").isFailure)
+        backend.discovery = SandboxDiscovery.Seeded
+        backend.discovery = SandboxDiscovery.RefreshFailure
+        assertTrue(shops.searchShops(page = 1, pageSize = 20).isSuccess)
+        assertTrue(shops.searchShops(page = 1, pageSize = 20).isFailure)
+    } }
+
+    @Test fun discoveryClustersUnfoldIntoTheSameShopsAtTheDetailZoom() = runTest { fixture { backend, client ->
+        backend.discovery = SandboxDiscovery.Paged
+        val shops = ShopApiService(client.client)
+        val grouped = shops.getShopsInBounds(53.8, 27.4, 54.0, 27.7, zoom = 10, cityId = "minsk").getOrThrow()
+        val detailed = shops.getShopsInBounds(53.8, 27.4, 54.0, 27.7, zoom = 22, cityId = "minsk").getOrThrow()
+        assertTrue(grouped.clusters.isNotEmpty() || grouped.zones.isNotEmpty())
+        assertEquals(detailed.shops.size, grouped.shops.size + grouped.clusters.sumOf { it.count } + grouped.zones.sumOf { it.shopCount })
+        assertTrue(detailed.clusters.isEmpty())
+        assertTrue(grouped.clusters.all { it.bounds.minLatitude <= it.latitude && it.latitude <= it.bounds.maxLatitude })
+    } }
+
+    @Test fun shopSearchUsesOnlyPostAndDoesNotRequireLocation() = runTest { fixture { backend, client ->
+        assertEquals(HttpStatusCode.NotFound, client.client.get("/api/CoffeeShops").status)
+        val shops = ShopApiService(client.client)
+        assertTrue(shops.searchShops().getOrThrow().items.all { it.distanceMeters == null })
+        backend.discovery = SandboxDiscovery.Paged
+        val ordinary = shops.searchShops(cityId = "brest").getOrThrow()
+        assertEquals(9, ordinary.totalItems)
+        assertTrue(ordinary.items.all { it.distanceMeters == null })
+        val request = ShopSearchRequestDto(ShopSearchFiltersDto(isNew = true, favoritesOnly = true), page = 1, pageSize = 20)
+        assertTrue(shops.searchShops(request).getOrThrow().items.isEmpty())
+        assertEquals(HttpStatusCode.NotFound, client.client.get("/api/CoffeeShops").status)
+    } }
+
     @Test fun discoveryFixturesPageFilterSortAndFailThroughTheRealSearchAndMapServices() = runTest { fixture { backend, client ->
         val shops = ShopApiService(client.client)
         val minsk = listOf(53.8, 27.4, 54.0, 27.7)
@@ -672,33 +749,33 @@ class SandboxApplicationBackendTest {
         )
 
         // The default fixture is the two core shops and the one-marker map.
-        assertEquals(2, shops.searchShops().getOrThrow().coffeeShops.size)
+        assertEquals(2, shops.searchShops().getOrThrow().items.size)
 
         backend.discovery = SandboxDiscovery.Paged
         val first = shops.searchShops(page = 1, pageSize = 20).getOrThrow()
-        assertEquals(47, first.totalItems); assertEquals(3, first.totalPages); assertEquals(20, first.coffeeShops.size)
-        assertEquals(7, shops.searchShops(page = 3, pageSize = 20).getOrThrow().coffeeShops.size)
+        assertEquals(47, first.totalItems); assertEquals(3, first.totalPages); assertEquals(20, first.items.size)
+        assertEquals(7, shops.searchShops(page = 3, pageSize = 20).getOrThrow().items.size)
         assertEquals(9, shops.searchShops(cityId = "brest").getOrThrow().totalItems)
         assertEquals(11, shops.searchShops(query = "Discovery Shop 1").getOrThrow().totalItems)
         assertEquals(15, shops.searchShops(roasterIds = listOf("sandbox-decaf")).getOrThrow().totalItems)
         assertEquals(4, shops.searchShops(minRating = 4.9).getOrThrow().totalItems)
-        assertEquals(16, shops.searchShops(type = "Specialty").getOrThrow().totalItems)
+        assertEquals(16, shops.searchShops(type = "specialty").getOrThrow().totalItems)
         assertEquals(0, shops.searchShops(cityId = "brest", roasterIds = listOf("sandbox-decaf"), tagIds = listOf("none")).getOrThrow().totalItems)
 
         // The nearby search is sorted by distance, limited to the radius, paged, and follows the shared favorites.
-        val near = shops.searchNearbyShops(nearby(radiusKm = 3)).getOrThrow()
+        val near = shops.searchShops(nearby(radiusKm = 3)).getOrThrow()
         val distances = near.items.mapNotNull { it.distanceMeters }
         assertEquals(near.items.size, distances.size); assertEquals(distances.sorted(), distances); assertTrue(distances.all { it <= 3_000.0 })
-        assertTrue(shops.searchNearbyShops(nearby(radiusKm = 1)).getOrThrow().totalItems < near.totalItems)
-        val tenPerPage = shops.searchNearbyShops(nearby(radiusKm = 3, pageSize = 10)).getOrThrow()
+        assertTrue(shops.searchShops(nearby(radiusKm = 1)).getOrThrow().totalItems < near.totalItems)
+        val tenPerPage = shops.searchShops(nearby(radiusKm = 3, pageSize = 10)).getOrThrow()
         assertEquals((near.totalItems + 9) / 10, tenPerPage.totalPages); assertEquals(minOf(10, near.totalItems), tenPerPage.items.size)
-        assertEquals("Sandbox Cafe", shops.searchNearbyShops(nearby(radiusKm = 3, favoritesOnly = true)).getOrThrow().items.single().name)
+        assertEquals("Sandbox Cafe", shops.searchShops(nearby(radiusKm = 3, favoritesOnly = true)).getOrThrow().items.single().name)
         FavoritesApiService(client.client).setFavorite("coffee_shop", "discovery-3", true).getOrThrow()
-        assertEquals(2, shops.searchNearbyShops(nearby(radiusKm = 3, favoritesOnly = true)).getOrThrow().items.size)
+        assertEquals(2, shops.searchShops(nearby(radiusKm = 3, favoritesOnly = true)).getOrThrow().items.size)
 
         // The map: shops by bounds and filters, zones inside the bounds, no clusters, nothing truncated.
         val inMinsk = map(minsk)
-        assertEquals(38, inMinsk.shops.size); assertEquals(2, inMinsk.zones.size); assertTrue(inMinsk.clusters.isEmpty()); assertFalse(inMinsk.isTruncated)
+        assertEquals(38, inMinsk.shops.size); assertTrue(inMinsk.zones.isEmpty()); assertTrue(inMinsk.clusters.isEmpty()); assertFalse(inMinsk.isTruncated)
         assertEquals(9, map(brest).shops.size); assertTrue(map(brest).zones.isEmpty())
         assertTrue(map(minsk, city = "brest").shops.isEmpty())
 
@@ -708,11 +785,11 @@ class SandboxApplicationBackendTest {
 
         backend.discovery = SandboxDiscovery.Empty
         assertEquals(0, shops.searchShops().getOrThrow().totalItems)
-        assertTrue(shops.searchNearbyShops(nearby(radiusKm = 3)).getOrThrow().items.isEmpty())
+        assertTrue(shops.searchShops(nearby(radiusKm = 3)).getOrThrow().items.isEmpty())
         assertTrue(map(minsk).shops.isEmpty()); assertTrue(map(minsk).zones.isEmpty())
 
         backend.discovery = SandboxDiscovery.SearchFailure
-        assertTrue(shops.searchShops().isFailure); assertTrue(shops.searchNearbyShops(nearby(radiusKm = 3)).isFailure)
+        assertTrue(shops.searchShops().isFailure); assertTrue(shops.searchShops(nearby(radiusKm = 3)).isFailure)
         assertTrue(shops.getShopsInBounds(minsk[0], minsk[1], minsk[2], minsk[3], zoom = 22).isSuccess)
 
         backend.discovery = SandboxDiscovery.MapFailure
@@ -722,7 +799,7 @@ class SandboxApplicationBackendTest {
         backend.discovery = SandboxDiscovery.Paged
         backend.reset(true)
         assertEquals(SandboxDiscovery.Seeded, backend.discovery)
-        assertEquals(2, shops.searchShops().getOrThrow().coffeeShops.size)
+        assertEquals(2, shops.searchShops().getOrThrow().items.size)
     } }
 }
 

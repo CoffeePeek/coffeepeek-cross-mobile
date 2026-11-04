@@ -25,6 +25,11 @@ interface UsagePolicyEntry {
 class SettingsSlots(
     /** The sign-in prompt card shared with other screens (login and register actions are the tab's own callbacks). */
     val guestCard: @Composable (onLogin: () -> Unit, onRegister: () -> Unit, modifier: Modifier) -> Unit,
+    /** App composes the existing notification preference; settings owns only its place and copy. */
+    val notificationPreference: @Composable (label: String, description: String) -> Unit,
+    val accountSwitch: @Composable () -> Unit = {},
+    /** Signed-in profile collection visibility; application composes the collections API. */
+    val profileCollectionPreference: @Composable () -> Unit = {},
 )
 
 /** The Settings tab. Caller owns the tab, navigation and the floating bar clearance. */
@@ -35,6 +40,7 @@ interface SettingsEntry {
         onAddRoaster: () -> Unit,
         onCity: () -> Unit,
         onTheme: () -> Unit,
+        onLanguage: () -> Unit,
         onUsagePolicy: () -> Unit,
         onLogin: () -> Unit,
         onRegister: () -> Unit,

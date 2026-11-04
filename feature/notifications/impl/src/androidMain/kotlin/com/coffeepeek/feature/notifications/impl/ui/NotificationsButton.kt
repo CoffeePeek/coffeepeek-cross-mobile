@@ -2,6 +2,7 @@ package com.coffeepeek.feature.notifications.impl.ui
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
+import com.coffeepeek.core.designsystem.component.CoffeePeekIconButton as IconButton
 import androidx.compose.runtime.*
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
@@ -26,12 +27,30 @@ internal fun NotificationsButton(feature: NotificationFeature, onSignIn: () -> U
     onOpen: suspend (String, String, Long) -> Boolean) {
     val state by feature.state.collectAsStateWithLifecycle()
     var open by remember { mutableStateOf(false) }
-    LaunchedEffect(state.generation) { open = false }
+    var permissionGeneration by remember { mutableStateOf<Long?>(null) }
+    val close = {
+        open = false
+        permissionGeneration = null
+    }
+    LaunchedEffect(feature, state.generation) { close() }
+    LaunchedEffect(feature, open, permissionGeneration, state.generation, state.settingsLoaded) {
+        val requested = permissionGeneration ?: return@LaunchedEffect
+        val current = feature.state.value
+        if (!open || current.generation != requested || current.accountId == null) {
+            permissionGeneration = null
+        } else if (state.generation == requested && current.settingsLoaded) {
+            permissionGeneration = null
+            feature.onInboxOpened()
+        }
+    }
     NotificationsIconButton(state.unreadCount, onClick = {
-        open = true
-        feature.refresh()
+        if (!open) {
+            permissionGeneration = feature.state.value.takeIf { it.accountId != null }?.generation
+            open = true
+            feature.refresh()
+        }
     })
-    if (open) NotificationSheet(feature, state, { open = false }, onSignIn, onOpen)
+    if (open) NotificationSheet(feature, state, close, onSignIn, onOpen)
 }
 
 @Composable
@@ -44,9 +63,9 @@ private fun NotificationSheet(feature: NotificationFeature, state: NotificationI
         dismissDescription = stringResource(R.string.notifications_close),
         maxSheetHeightFraction = .88f,
     ) {
-        NotificationsContent(state, onClose, feature::setPushEnabled, { id ->
+        NotificationsContent(state, onClose, { id ->
             if (openingId == null) openNotification(scope, feature, state, id, { openingId = it }, onClose, onOpen)
-        }, feature::markAllRead, feature::refresh, feature::loadMore, onSignIn, openingId)
+        }, feature::markRead, feature::refresh, feature::loadMore, onSignIn, openingId)
     }
 }
 

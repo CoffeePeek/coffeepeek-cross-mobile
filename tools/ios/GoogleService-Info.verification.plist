@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
-<!-- Synthetic resource for unsigned compilation only; TestFlight requires its secret. -->
+<!-- Synthetic resource for unsigned compilation only; TestFlight requires a real plist. Push is skipped at launch when API_KEY fails Firebase format checks. -->
 <dict>
     <key>PROJECT_ID</key>
     <string>coffeepeek</string>

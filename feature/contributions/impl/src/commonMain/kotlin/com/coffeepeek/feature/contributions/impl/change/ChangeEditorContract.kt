@@ -51,6 +51,7 @@ internal data class ChangeEditorState(
     val equipmentIds: Set<String> = emptySet(),
     val brewMethodIds: Set<String> = emptySet(),
     val menuRows: List<MenuRowState> = emptyList(),
+    val menuInputRevision: Long? = null,
     val retainedMenuPhotos: List<ShopPhotoRef> = emptyList(),
     val newMenuPhotos: List<PendingPhoto> = emptyList(),
     val uploadedMenuPhotos: List<UploadedPhoto> = emptyList(),
@@ -75,7 +76,7 @@ internal data class ChangeEditorState(
         ChangeSection.BrewMethods -> ChangeDraft.Selection(slug, section, brewMethodIds.toList())
         ChangeSection.Menu -> ChangeDraft.Menu(
             slug, menuRows.map { MenuEntry(it.slug, it.availability, it.priceText.replace(',', '.').toDoubleOrNull()) },
-            retainedMenuPhotos.map { it.id }, newMenuPhotos, uploadedMenuPhotos,
+            retainedMenuPhotos.map { it.id }, newMenuPhotos, uploadedMenuPhotos, menuInputRevision,
         )
     }
 }

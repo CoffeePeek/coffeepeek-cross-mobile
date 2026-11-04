@@ -6,6 +6,7 @@ import com.adamglin.phosphoricons.Fill
 import com.adamglin.phosphoricons.Regular
 import com.adamglin.phosphoricons.fill.Heart as FillHeart
 import com.adamglin.phosphoricons.fill.Star as FillStar
+import com.adamglin.phosphoricons.regular.Archive
 import com.adamglin.phosphoricons.regular.ArrowLeft
 import com.adamglin.phosphoricons.regular.Avocado
 import com.adamglin.phosphoricons.regular.Bell
@@ -36,6 +37,7 @@ import com.adamglin.phosphoricons.regular.CoffeeBean
 import com.adamglin.phosphoricons.regular.Coins
 import com.adamglin.phosphoricons.regular.Copy
 import com.adamglin.phosphoricons.regular.DotsThree
+import com.adamglin.phosphoricons.regular.DotsSixVertical
 import com.adamglin.phosphoricons.regular.Envelope
 import com.adamglin.phosphoricons.regular.InstagramLogo
 import com.adamglin.phosphoricons.regular.Eye
@@ -97,6 +99,7 @@ object CoffeePeekIcons {
     val Expand: ImageVector get() = PhosphorIcons.Regular.ArrowsOutSimple
     val Minus: ImageVector get() = PhosphorIcons.Regular.Minus
     val Polygon: ImageVector get() = PhosphorIcons.Regular.Polygon
+    val Archive: ImageVector get() = PhosphorIcons.Regular.Archive
     val Back: ImageVector get() = PhosphorIcons.Regular.ArrowLeft
     val Block: ImageVector get() = PhosphorIcons.Regular.Prohibit
     val Calendar: ImageVector get() = PhosphorIcons.Regular.CalendarBlank
@@ -133,6 +136,7 @@ object CoffeePeekIcons {
     val Map: ImageVector get() = PhosphorIcons.Regular.MapTrifold
     val Menu: ImageVector get() = PhosphorIcons.Regular.ForkKnife
     val MoreHorizontal: ImageVector get() = PhosphorIcons.Regular.DotsThree
+    val DragHandle: ImageVector get() = PhosphorIcons.Regular.DotsSixVertical
     val MyLocation: ImageVector get() = Location
     val Navigation: ImageVector get() = PhosphorIcons.Regular.NavigationArrow
     val Notifications: ImageVector get() = PhosphorIcons.Regular.Bell

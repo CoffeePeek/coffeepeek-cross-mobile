@@ -24,6 +24,7 @@ internal class LeaderboardViewModel(
     private var ready = false
     private var loadJob: Job? = null
     private var revision = 0L
+    private var lastRefreshKey: Long? = null
     private val pages = mutableMapOf<LeaderboardPeriod, LeaderboardPage>()
 
     init { onAction(LeaderboardAction.ObserveContext) }
@@ -31,15 +32,25 @@ internal class LeaderboardViewModel(
     override suspend fun handleActionInternal(action: LeaderboardAction) {
         when (action) {
             LeaderboardAction.ObserveContext -> observeContext()
-            LeaderboardAction.Refresh -> if (ready && loadJob == null) {
-                pages.clear()
-                load()
-            }
+            LeaderboardAction.Refresh -> refresh()
+            is LeaderboardAction.FeedRefreshed -> refreshForKey(action.key)
             LeaderboardAction.Retry -> if (ready && !currentState.isLoading) load()
             is LeaderboardAction.SelectPeriod -> selectPeriod(action.period)
             is LeaderboardAction.SetExpanded -> updateState { copy(expanded = action.expanded) }
             is LeaderboardAction.OpenProfile -> openProfile(action.authorId)
         }
+    }
+
+    private suspend fun refresh() {
+        if (!ready) return
+        pages.clear()
+        if (loadJob == null) load()
+    }
+
+    private suspend fun refreshForKey(key: Long) {
+        val previous = lastRefreshKey
+        lastRefreshKey = key
+        if (previous != null && previous != key) refresh()
     }
 
     private suspend fun observeContext() {

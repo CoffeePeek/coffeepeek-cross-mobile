@@ -12,7 +12,7 @@ class CoffeePeekLikeButtonStyleTest {
     }
 
     @Test fun floatingGlassMatchesTheSharedGlassControl() {
-        assertEquals(CoffeePeekDimens.buttonHeight,
+        assertEquals(CoffeePeekDimens.glassControlSize,
             coffeePeekLikePlateSize(CoffeePeekLikeButtonStyle.FloatingGlass, 24.dp))
     }
 

@@ -4,9 +4,11 @@ import io.ktor.client.HttpClient
 import io.ktor.client.HttpClientConfig
 import io.ktor.client.engine.mock.*
 import io.ktor.client.request.HttpRequestData
+import io.ktor.client.request.HttpResponseData
 import io.ktor.http.*
 import io.ktor.http.content.OutgoingContent
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.serialization.json.*
 import com.coffeepeek.core.network.HttpClientFactory
 import java.io.IOException
@@ -15,9 +17,13 @@ import java.util.UUID
 
 internal enum class SandboxScenario { Ready, Slow, Offline, ServerError, SaveError, UploadError }
 
-/** Stateful HTTP fixture only. Both engines have no network delegate, even for unknown URLs. */
+/**
+ * Stateful HTTP fixture only. Both engines have no network delegate, even for unknown URLs.
+ * [bagCard] draws a fixture bag's front; without it (tests) every front is the sample image.
+ */
 internal class SandboxBackend(private val samplePhoto: ByteArray,
-    private val today: LocalDate = LocalDate.now()) {
+    private val today: LocalDate = LocalDate.now(), private val engineDispatcher: CoroutineDispatcher? = null,
+    private val bagCard: (SandboxBagCard) -> ByteArray = { samplePhoto }) {
     companion object { const val BASE_URL = "https://sandbox.coffeepeek.invalid" }
     @Volatile var scenario = SandboxScenario.Ready
     private val lock = Any()
@@ -26,7 +32,11 @@ internal class SandboxBackend(private val samplePhoto: ByteArray,
     private val images = mutableMapOf<String, ByteArray>()
     private val reservations = mutableSetOf<String>()
     private val uploaded = mutableSetOf<String>()
-    private val application = SandboxApplicationBackend(today, shopRows)
+    private val application = SandboxApplicationBackend(today, shopRows) { key, size ->
+        key in uploaded && images["/media/$key"]?.size?.toLong() == size
+    }
+    private val shelf = SandboxShelfBackend(today) { it in uploaded }
+    private val shelfProfile = SandboxShelfProfileBackend(shelf, application::publicProfileAvailable)
     /** Settings fixtures (see [SandboxApplicationBackend]); [reset] returns both to their defaults. */
     var updatePolicy: SandboxUpdatePolicy
         get() = application.updatePolicy
@@ -46,24 +56,82 @@ internal class SandboxBackend(private val samplePhoto: ByteArray,
     var contributions: SandboxContributions
         get() = application.contributions
         set(value) { application.contributions = value }
-    private fun apiEngine() = MockEngine { request ->
+    private fun apiEngine() = mockEngine { request ->
         val mode = scenario
         if (mode == SandboxScenario.Slow) delay(900)
         if (mode == SandboxScenario.Offline) throw IOException("Sandbox offline scenario")
+        if (request.url.host == "sandbox.coffeepeek.invalid" && request.url.encodedPath.startsWith("/upload/")) {
+            val accepted = synchronized(lock) { acceptUpload(request) }
+            return@mockEngine respond("", if (accepted) HttpStatusCode.OK else HttpStatusCode.BadRequest)
+        }
+        collectionCover(request, mode)?.let { (status, bytes) ->
+            return@mockEngine respond(bytes, status, headersOf(HttpHeaders.ContentType to listOf("image/jpeg"),
+                HttpHeaders.CacheControl to listOf("private, no-store")))
+        }
+        publicShelfCard(request, mode)?.let { (status, bytes) ->
+            return@mockEngine respond(bytes, status, headersOf(HttpHeaders.ContentType to listOf("image/jpeg"),
+                HttpHeaders.CacheControl to listOf("no-store"), "X-Content-Type-Options" to listOf("nosniff")))
+        }
         if (request.url.host == "sandbox.coffeepeek.invalid" && request.url.encodedPath.startsWith("/media/")) {
             val bytes = photo(request.url.toString())
-            return@MockEngine respond(bytes ?: byteArrayOf(), if (bytes == null) HttpStatusCode.NotFound else HttpStatusCode.OK,
+            return@mockEngine respond(bytes ?: byteArrayOf(), if (bytes == null) HttpStatusCode.NotFound else HttpStatusCode.OK,
                 headersOf(HttpHeaders.ContentType, "image/png"))
+        }
+        shelfCardPath.matchEntire(request.url.encodedPath)?.takeIf { request.method == HttpMethod.Get }?.let { match ->
+            val bytes = synchronized(lock) { shelfCard(mode, match.groupValues[1], match.groupValues[2]) }
+            return@mockEngine respond(bytes ?: byteArrayOf(), if (bytes == null) HttpStatusCode.NotFound else HttpStatusCode.OK,
+                headersOf(HttpHeaders.ContentType to listOf("image/jpeg"), HttpHeaders.CacheControl to listOf("private, no-store")))
         }
         protectedPhotoPath.matchEntire(request.url.encodedPath)?.takeIf { request.method == HttpMethod.Get }?.let { match ->
             val (status, headers, bytes) = synchronized(lock) { protectedPhoto(request, mode, match.groupValues[1]) }
-            return@MockEngine respond(bytes, status, headers)
+            return@mockEngine respond(bytes, status, headers)
+        }
+        if (request.url.encodedPath == "/api/Photos/ownership-evidence" && request.method == HttpMethod.Post) {
+            val id = UUID.randomUUID().toString()
+            val valid = mode != SandboxScenario.UploadError && request.body is io.ktor.client.request.forms.MultiPartFormDataContent
+            if (valid) synchronized(lock) {
+                application.registerOwnershipEvidence(id)
+                images["/ownership-evidence/$id"] = samplePhoto.copyOf()
+            }
+            return@mockEngine respond(buildJsonObject {
+                put("isSuccess", valid)
+                putJsonObject("data") { put("photoId", id); put("storageKey", "ownership-evidence/$id") }
+            }.toString(), if (valid) HttpStatusCode.OK else HttpStatusCode.BadRequest,
+                headersOf(HttpHeaders.ContentType, "application/json"))
+        }
+        ownershipEvidencePath.matchEntire(request.url.encodedPath)?.let { match ->
+            val available = application.ownershipEvidenceAvailable(match.groupValues[1], match.groupValues[2])
+            return@mockEngine respond(if (available) samplePhoto else byteArrayOf(),
+                if (available) HttpStatusCode.OK else HttpStatusCode.NotFound,
+                headersOf(HttpHeaders.ContentType to listOf("image/png"), HttpHeaders.CacheControl to listOf("private, no-store")))
         }
         synchronized(lock) { handle(request, mode) }.let { (status, payload) ->
             respond(payload.toString(), status, headersOf(HttpHeaders.ContentType, "application/json"))
         }
     }
+    private val ownershipEvidencePath = Regex("/api/owner/ownership-claims/([^/]+)/photos/([^/]+)")
+    private val collectionCoverPath = Regex("/api/v1/(saved-collections|favorite-collections)/[^/]+/cover/[^/]+")
+
+    private fun collectionCover(request: HttpRequestData, mode: SandboxScenario): Pair<HttpStatusCode, ByteArray>? {
+        if (request.url.host != "sandbox.coffeepeek.invalid") return null
+        if (request.method != HttpMethod.Get || !collectionCoverPath.matches(request.url.encodedPath)) return null
+        if (mode == SandboxScenario.ServerError) return HttpStatusCode.InternalServerError to byteArrayOf()
+        val bytes = synchronized(lock) {
+            application.collectionCoverKey(request.url.encodedPath, request.headers[SandboxSavedCollectionsBackend.OWNER])
+                ?.let { images["/media/$it"]?.copyOf() }
+        }
+        return (if (bytes == null) HttpStatusCode.NotFound else HttpStatusCode.OK) to (bytes ?: byteArrayOf())
+    }
     private val protectedPhotoPath = Regex("/api/v1/check-ins/([^/]+)/photos/[^/]+(?:/variants/[A-Za-z0-9_-]+/[1-9][0-9]*/[a-z]+\\.[a-z]+)?")
+    private val publicShelfPhotoPath = Regex("/api/v1/profiles/[^/]+/shelf/bags/[^/]+/photos/[^/]+")
+
+    private fun publicShelfCard(request: HttpRequestData, mode: SandboxScenario): Pair<HttpStatusCode, ByteArray>? {
+        if (request.url.host != "sandbox.coffeepeek.invalid" || request.method != HttpMethod.Get ||
+            !publicShelfPhotoPath.matches(request.url.encodedPath)) return null
+        if (mode == SandboxScenario.ServerError) return HttpStatusCode.InternalServerError to byteArrayOf()
+        val bytes = synchronized(lock) { shelfProfile.cardKey(request.url.encodedPath)?.let { images["/media/$it"]?.copyOf() } }
+        return (if (bytes == null) HttpStatusCode.NotFound else HttpStatusCode.OK) to (bytes ?: byteArrayOf())
+    }
     // Owner-scoped media: uncached, ETag-revalidated, and a blocked author's photo disappears (404, no existence leak).
     private fun protectedPhoto(request: HttpRequestData, mode: SandboxScenario, checkInId: String): Triple<HttpStatusCode, Headers, ByteArray> {
         val etag = "\"sandbox-photo\""
@@ -76,16 +144,30 @@ internal class SandboxBackend(private val samplePhoto: ByteArray,
                 HttpHeaders.CacheControl to listOf("private, no-cache")), images["/media/sample"] ?: byteArrayOf())
         }
     }
-    private fun uploadEngine() = MockEngine { request ->
-        val accepted = synchronized(lock) {
-            val key = request.url.encodedPath.removePrefix("/upload/")
-            val bytes = (request.body as? OutgoingContent.ByteArrayContent)?.bytes()
-            if (scenario == SandboxScenario.UploadError || request.url.host != "sandbox.coffeepeek.invalid" ||
-                request.method != HttpMethod.Put || key !in reservations || bytes == null || bytes.isEmpty() ||
-                request.headers[HttpHeaders.Authorization] != null || request.headers[HttpHeaders.Cookie] != null) false
-            else { images["/media/$key"] = bytes.copyOf(); uploaded += key; true }
-        }
+    private val shelfCardPath = Regex("${SandboxShelfBackend.ROOT}/bags/([^/]+)/photos/([^/]+)")
+    // Owner-only shelf card: gone with its bag or after a "Переснять" replacement.
+    private fun shelfCard(mode: SandboxScenario, bagId: String, photoId: String): ByteArray? =
+        if (mode == SandboxScenario.ServerError) null else shelf.cardKey(bagId, photoId)?.let { images["/media/$it"]?.copyOf() }
+    private fun mockEngine(handler: suspend MockRequestHandleScope.(HttpRequestData) -> HttpResponseData) =
+        MockEngine(MockEngineConfig().apply {
+            engineDispatcher?.let { dispatcher = it }
+            addHandler(handler)
+        })
+
+    private fun uploadEngine() = mockEngine { request ->
+        val accepted = synchronized(lock) { acceptUpload(request) }
         respond("", if (accepted) HttpStatusCode.OK else HttpStatusCode.BadRequest)
+    }
+
+    private fun acceptUpload(request: HttpRequestData): Boolean {
+        val key = request.url.encodedPath.removePrefix("/upload/")
+        val bytes = (request.body as? OutgoingContent.ByteArrayContent)?.bytes()
+        if (scenario == SandboxScenario.UploadError || request.url.host != "sandbox.coffeepeek.invalid" ||
+            request.method != HttpMethod.Put || key !in reservations || bytes == null || bytes.isEmpty() ||
+            request.headers[HttpHeaders.Authorization] != null || request.headers[HttpHeaders.Cookie] != null) return false
+        images["/media/$key"] = bytes.copyOf()
+        uploaded += key
+        return true
     }
     val gateway: HttpClient = HttpClientFactory(apiEngine()).api(BASE_URL)
     val uploader: HttpClient = HttpClientFactory(uploadEngine()).upload()
@@ -122,6 +204,9 @@ internal class SandboxBackend(private val samplePhoto: ByteArray,
             putJsonArray("photos") { add(buildJsonObject { put("url", "/media/sample"); put("sortIndex", 0) }) }
         }
         application.reset(populated)
+        shelf.reset(populated)
+        shelfProfile.reset()
+        shelf.fixtureCards.forEach { (key, front) -> images["/media/$key"] = bagCard(front) }
     }
 
     fun photo(url: String): ByteArray? = synchronized(lock) {
@@ -134,7 +219,7 @@ internal class SandboxBackend(private val samplePhoto: ByteArray,
         if (mode == SandboxScenario.ServerError) return fail(HttpStatusCode.InternalServerError)
         val path = request.url.encodedPath
         if (mode == SandboxScenario.SaveError && request.method in listOf(HttpMethod.Post, HttpMethod.Put, HttpMethod.Patch, HttpMethod.Delete) &&
-            !path.endsWith("/search") && !path.startsWith("/api/Photos/")) return fail(HttpStatusCode.ServiceUnavailable)
+            !path.endsWith("/search") && path != "/api/v1/coffee-shops/map" && !path.startsWith("/api/Photos/")) return fail(HttpStatusCode.ServiceUnavailable)
         val home = "/api/v1/check-ins/home"
         if (mode == SandboxScenario.SaveError && (path == home || path.startsWith("$home/")) &&
             request.method in listOf(HttpMethod.Post, HttpMethod.Put, HttpMethod.Delete)) return fail(HttpStatusCode.ServiceUnavailable)
@@ -151,6 +236,7 @@ internal class SandboxBackend(private val samplePhoto: ByteArray,
         }
         if (path.startsWith("/api/Photos/") && request.method == HttpMethod.Post) {
             val body = body(request) as? JsonArray ?: return fail(HttpStatusCode.BadRequest)
+            if (path == "/api/Photos/collection-cover") return reserveCollectionCovers(request, body)
             return ok(JsonArray(body.map {
                 val key = UUID.randomUUID().toString(); reservations += key
                 buildJsonObject { put("storageKey", key); put("uploadUrl", "$BASE_URL/upload/$key") }
@@ -159,7 +245,8 @@ internal class SandboxBackend(private val samplePhoto: ByteArray,
         val matching = rows.values.filter { row ->
             val date = row.getValue("preparedOn").jsonPrimitive.content
             (request.url.parameters["from"]?.let { date >= it } != false) &&
-                (request.url.parameters["to"]?.let { date <= it } != false)
+                (request.url.parameters["to"]?.let { date <= it } != false) &&
+                (request.url.parameters["shelfBagId"]?.let { row["shelfBagId"]?.jsonPrimitive?.contentOrNull == it } != false)
         }.sortedByDescending { it.getValue("preparedAtUtc").jsonPrimitive.content }
         if (request.method == HttpMethod.Get && path == "$home/calendar") return ok(JsonArray(
             matching.groupBy { it.getValue("preparedOn").jsonPrimitive.content }.map { (date, entries) ->
@@ -169,10 +256,11 @@ internal class SandboxBackend(private val samplePhoto: ByteArray,
             val page = request.url.parameters["pageNumber"]?.toIntOrNull() ?: 1
             val size = request.url.parameters["pageSize"]?.toIntOrNull() ?: 20
             if (page !in 1..10000 || size !in 1..100) return fail(HttpStatusCode.BadRequest)
-            return ok(buildJsonObject { put("totalCount", matching.size); put("items", JsonArray(matching.drop((page - 1) * size).take(size))) })
+            return ok(buildJsonObject { put("totalCount", matching.size); put("items", JsonArray(matching.drop((page - 1) * size).take(size).map(::read))) })
         }
         if (request.method == HttpMethod.Post && path == home) {
             val input = body(request) as? JsonObject ?: return fail(HttpStatusCode.BadRequest)
+            if (bagMissing(input, null)) return fail(HttpStatusCode.NotFound)
             val id = UUID.randomUUID().toString()
             val row = update(id, input, null) ?: return fail(HttpStatusCode.BadRequest)
             rows[id] = row
@@ -182,16 +270,20 @@ internal class SandboxBackend(private val samplePhoto: ByteArray,
             val id = path.removePrefix("$home/")
             val existing = rows[id] ?: return fail(HttpStatusCode.NotFound)
             return when (request.method) {
-                HttpMethod.Get -> ok(existing)
+                HttpMethod.Get -> ok(read(existing))
                 HttpMethod.Delete -> { rows.remove(id); ok(JsonNull) }
                 HttpMethod.Put -> {
                     val input = body(request) as? JsonObject ?: return fail(HttpStatusCode.BadRequest)
+                    if (bagMissing(input, existing)) return fail(HttpStatusCode.NotFound)
                     val row = update(id, input, existing) ?: return fail(HttpStatusCode.BadRequest)
                     rows[id] = row; ok(row)
                 }
                 else -> fail(HttpStatusCode.MethodNotAllowed)
             }
         }
+        val input = body(request) as? JsonObject ?: buildJsonObject {}
+        shelfProfile.handle(request, input)?.let { return it }
+        shelf.handle(path, request.method, request.url.parameters, input)?.let { return it }
         return application.handle(request, body(request)) ?: fail(HttpStatusCode.NotFound) // Never fall back to a live transport.
     }
 
@@ -199,12 +291,17 @@ internal class SandboxBackend(private val samplePhoto: ByteArray,
         val instant = input["preparedAt"]?.jsonPrimitive?.content ?: return null
         val date = input["preparedOn"]?.jsonPrimitive?.contentOrNull ?: instant.take(10)
         val photos = (input["photos"] as? JsonArray).orEmpty().map { uploadedPhoto(it) ?: return null }
+        val bag = bagBean(input, existing)
         return buildJsonObject {
             existing?.forEach { (key, value) -> put(key, value) }
-            input.forEach { (key, value) -> if (key !in setOf("photos", "drinkPhoto", "preparedAt")) put(key, value) }
+            input.forEach { (key, value) -> if (key !in setOf("photos", "drinkPhoto", "preparedAt", "showShelfBag")) put(key, value) }
             put("id", id); put("preparedOn", date); put("preparedAtUtc", instant)
             put("createdAtUtc", existing?.get("createdAtUtc") ?: JsonPrimitive(instant))
-            put("beanName", beanName(input, existing))
+            put("beanName", bag?.get("beanName") ?: beanName(input, existing))
+            put("shelfBagId", input["shelfBagId"] ?: JsonNull)
+            put("shelfBagPhoto", bagCard(id, input, existing))
+            put("roasterName", bag?.get("roasterName") ?: JsonNull)
+            bag?.let { put("coffeeProductId", it.getValue("coffeeProductId")) }
             if (input["coffeeProductSlug"]?.jsonPrimitive?.contentOrNull == "sandbox-ethiopia")
                 put("coffeeProductId", "22222222-2222-4222-8222-222222222222")
             put("drink", drink(input))
@@ -213,6 +310,37 @@ internal class SandboxBackend(private val samplePhoto: ByteArray,
             put("visibility", visibility); put("moderationState", if (visibility == "Public") "Pending" else "NotSubmitted")
         }
     }
+
+    /** Like the server: the same bag keeps the entry's snapshots, another bag supplies its current bean. */
+    private fun bagBean(input: JsonObject, existing: JsonObject?): Map<String, JsonElement>? {
+        val bagId = input["shelfBagId"]?.jsonPrimitive?.contentOrNull ?: return null
+        val kept = existing?.takeIf { it["shelfBagId"]?.jsonPrimitive?.contentOrNull == bagId }
+            ?: return shelf.bean(bagId)
+        return listOf("coffeeProductId", "beanName", "roasterName").associateWith { kept[it] ?: JsonNull }
+    }
+
+    /**
+     * Like the server: showing the same bag keeps the entry's copy of its card, otherwise a fresh copy of the bag's current
+     * card is made; hiding it, another bag or no bag drops the old copy's bytes.
+     */
+    private fun bagCard(id: String, input: JsonObject, existing: JsonObject?): JsonElement {
+        val bagId = input["shelfBagId"]?.jsonPrimitive?.contentOrNull
+        val show = bagId != null && input["showShelfBag"]?.jsonPrimitive?.booleanOrNull != false
+        val current = existing?.get("shelfBagPhoto")?.takeUnless { it is JsonNull }?.jsonObject
+        if (show && current != null && existing["shelfBagId"]?.jsonPrimitive?.contentOrNull == bagId) return current
+        current?.get("id")?.jsonPrimitive?.content?.let { images.remove("/media/$it") }
+        val bytes = bagId?.takeIf { show }?.let(shelf::cardKey)?.let { images["/media/$it"] } ?: return JsonNull
+        val copy = "bag-copy-$id-${UUID.randomUUID()}"
+        images["/media/$copy"] = bytes.copyOf()
+        return buildJsonObject { put("id", copy); put("url", "/media/$copy") }
+    }
+
+    /** The catalogue slug is resolved on every read, never stored. */
+    private fun read(row: JsonObject) = JsonObject(row + ("coffeeProductSlug" to
+        JsonPrimitive(SandboxShelfBackend.productSlug(row["coffeeProductId"]?.jsonPrimitive?.contentOrNull))))
+
+    private fun bagMissing(input: JsonObject, existing: JsonObject?): Boolean =
+        input["shelfBagId"]?.jsonPrimitive?.contentOrNull != null && bagBean(input, existing) == null
 
     private fun beanName(input: JsonObject, existing: JsonObject?): JsonElement = when {
         input["coffeeProductSlug"]?.jsonPrimitive?.contentOrNull == "sandbox-ethiopia" -> JsonPrimitive("Sandbox Ethiopia")
@@ -234,6 +362,14 @@ internal class SandboxBackend(private val samplePhoto: ByteArray,
 
     private fun body(request: HttpRequestData) = (request.body as? OutgoingContent.ByteArrayContent)?.bytes()
         ?.decodeToString()?.let { runCatching { Json.parseToJsonElement(it) }.getOrNull() }
+
+    private fun reserveCollectionCovers(request: HttpRequestData, body: JsonArray): Pair<HttpStatusCode, JsonObject> {
+        val result = application.reserveCollectionCovers(request.headers[SandboxSavedCollectionsBackend.OWNER], body)
+        if (result.first.isSuccess()) (result.second["data"] as? JsonArray)?.forEach {
+            it.jsonObject["storageKey"]?.jsonPrimitive?.contentOrNull?.let(reservations::add)
+        }
+        return result
+    }
     private fun ok(data: JsonElement) = HttpStatusCode.OK to buildJsonObject { put("isSuccess", true); put("data", data) }
     private fun fail(status: HttpStatusCode) = status to buildJsonObject { put("isSuccess", false); put("data", JsonNull) }
     fun close() { gateway.close(); uploader.close() }

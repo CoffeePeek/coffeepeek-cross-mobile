@@ -1,7 +1,7 @@
 package com.coffeepeek.admin.ui.screen.profile
 
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import com.coffeepeek.core.designsystem.component.CoffeePeekIconButton as IconButton
 import androidx.compose.runtime.Composable
 import coffeepeek.composeapp.generated.resources.Res
 import coffeepeek.composeapp.generated.resources.profile_actions
@@ -16,7 +16,7 @@ import com.coffeepeek.admin.ui.component.PlatformMenuItem
 import com.coffeepeek.admin.ui.icons.CpIcons
 import com.coffeepeek.admin.ui.screen.contributions.ContributionKind
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
-import org.jetbrains.compose.resources.stringResource
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable

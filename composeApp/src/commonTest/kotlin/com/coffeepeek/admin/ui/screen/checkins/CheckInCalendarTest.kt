@@ -51,7 +51,7 @@ class CheckInCalendarTest {
     @Test
     fun octoberReferenceStartsOnThursday() {
         assertEquals(listOf(null, null, null, 1, 2, 3, 4), calendarCells(CalendarMonth(2026, 10)).take(7))
-        assertEquals("Понедельник", calendarWeekday("2026-10-12"))
+        assertEquals("Понедельник", calendarWeekday("2026-10-12", listOf("Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота", "Воскресенье")))
     }
 
     @Test
@@ -116,5 +116,9 @@ class CheckInCalendarTest {
         assertEquals(CheckInStreak(false, false), checkInStreak(month, 4, dates))
         assertEquals(CheckInStreak(false, false), checkInStreak(month, 7, dates))
         assertEquals(CheckInStreak(false, false), checkInStreak(month, 8, dates))
+    }
+    @Test
+    fun weekdayUsesPreparedBelarusianNames() {
+        assertEquals("Панядзелак", calendarWeekday("2026-10-12", listOf("Панядзелак", "Аўторак", "Серада", "Чацвер", "Пятніца", "Субота", "Нядзеля")))
     }
 }

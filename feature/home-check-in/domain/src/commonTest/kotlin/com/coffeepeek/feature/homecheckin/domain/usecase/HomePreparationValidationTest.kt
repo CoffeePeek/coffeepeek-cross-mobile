@@ -43,6 +43,12 @@ class HomePreparationValidationTest {
         assertNotNull(errors(input.copy(customBeanName = "Custom"), editing = true)[Bean])
     }
 
+    @Test fun aShelfBagIsTheWholeBeanSelection() {
+        assertNull(errors(draft.copy(shelfBagId = "bag"))[Bean])
+        assertEquals(ConflictingBeanSelection, errors(draft.copy(shelfBagId = "bag", coffeeProductSlug = "kenya"))[Bean])
+        assertEquals(ConflictingBeanSelection, errors(draft.copy(shelfBagId = "bag", customBeanName = "Mine"))[Bean])
+    }
+
     @Test fun suppliedTextAndCustomDrinkRespectBounds() {
         assertTrue(errors(draft.copy(text = "a".repeat(1000), customBeanName = "b".repeat(250),
             drinkSlug = "other", customDrinkName = "c".repeat(100))).isEmpty())

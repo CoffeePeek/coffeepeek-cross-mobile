@@ -30,6 +30,63 @@ import kotlin.test.assertTrue
  */
 class FeedViewModelParityTest {
     @Test
+    fun explicitRetryLoadsTheFailedPageAndKeepsEarlierResults() {
+        var failed = false
+        parity(handler = { filters ->
+            if (filters.page == 2 && !failed) {
+                failed = true
+                Result.failure(IllegalStateException("offline"))
+            } else pageOf(listOf(shop("page-${filters.page}")), filters.page, pages = 2)
+        }) {
+            requests.receive()
+            awaitShops()
+            vm.loadMore()
+            assertEquals(2, requests.receive().page)
+            vm.uiState.first { it.loadMoreFailed }
+            vm.retryLoadMore()
+            assertEquals(2, requests.receive().page)
+            val loaded = vm.uiState.first { it.currentPage == 2 }
+            assertEquals(listOf("page-1", "page-2"), loaded.shops.map { it.id })
+            assertFalse(loaded.loadMoreFailed)
+            assertNull(loaded.error)
+        }
+    }
+
+    @Test
+    fun refreshClearsTheFailedPaginationAndStartsAtPageOne() = parity(handler = { filters ->
+        if (filters.page == 1) pageOf(listOf(shop("first")), pages = 2)
+        else Result.failure(IllegalStateException("offline"))
+    }) {
+        requests.receive()
+        awaitShops()
+        vm.loadMore()
+        requests.receive()
+        vm.uiState.first { it.loadMoreFailed }
+        vm.refresh()
+        assertEquals(1, requests.receive().page)
+        val loaded = awaitShops()
+        assertFalse(loaded.loadMoreFailed)
+        assertTrue(loaded.canLoadMore)
+    }
+
+    @Test
+    fun aFailedNextPageDoesNotAutomaticallyRetry() = parity(handler = { filters ->
+        if (filters.page == 1) pageOf(listOf(shop("first")), pages = 2)
+        else Result.failure(IllegalStateException("offline"))
+    }) {
+        requests.receive()
+        awaitShops()
+        vm.loadMore()
+        assertEquals(2, requests.receive().page)
+        vm.uiState.first { !it.isLoadingMore }
+        repeat(3) { vm.loadMore() }
+        settle()
+        assertNull(requests.tryReceive().getOrNull())
+        assertEquals(listOf("first"), vm.uiState.value.shops.map { it.id })
+        assertEquals(1, vm.uiState.value.currentPage)
+    }
+
+    @Test
     fun theFirstSearchWaitsForTheCatalogsAndUsesTheSavedCity() = parity(savedCity = "brest") {
         val first = requests.receive()
         assertEquals("brest", first.cityId); assertEquals(1, first.page); assertEquals(20, first.pageSize); assertNull(first.query)
@@ -136,6 +193,13 @@ class FeedViewModelParityTest {
             val state = vm.uiState.first { it.error != null }
             assertEquals("Не удалось загрузить кофейни", state.error)
             assertEquals(listOf("a"), state.shops.map { it.id }); assertFalse(state.isLoading); assertFalse(state.isRefreshing)
+            assertTrue(state.showsRefreshError)
+            fail = false
+            vm.refresh()
+            assertEquals(1, requests.receive().page)
+            val recovered = awaitShops()
+            assertFalse(recovered.showsRefreshError)
+            assertNull(recovered.error)
         }
     }
 
@@ -144,6 +208,7 @@ class FeedViewModelParityTest {
         requests.receive()
         val state = vm.uiState.first { it.error != null }
         assertTrue(state.shops.isEmpty()); assertFalse(state.isLoading)
+        assertFalse(state.showsRefreshError)
     }
 
     @Test
@@ -159,21 +224,19 @@ class FeedViewModelParityTest {
     }
 
     @Test
-    fun quickFiltersFilterTheLoadedPageLocallyAndReloadOnlyWithNearby() = parity(
-        handler = { pageOf(listOf(shop("a", favorite = true, open = true), shop("b", visited = true), shop("c", new = true))) },
-    ) {
-        requests.receive(); awaitShops()
-        vm.toggleFavoritesOnly(); vm.uiState.first { it.filters.favoritesOnly }
-        assertEquals(listOf("a"), vm.uiState.value.visibleShops.map { it.id })
-        vm.toggleFavoritesOnly(); vm.toggleVisitedOnly(); vm.uiState.first { it.filters.visitedOnly && !it.filters.favoritesOnly }
-        assertEquals(listOf("b"), vm.uiState.value.visibleShops.map { it.id })
-        vm.toggleNewOnly(); vm.toggleOpenOnly(); vm.uiState.first { it.filters.newOnly && it.filters.openOnly }
-        assertTrue(vm.uiState.value.visibleShops.isEmpty())
-        assertNull(requests.tryReceive().getOrNull())
-
-        vm.onUserLocationChanged(GeoPoint(53.9, 27.56))
-        vm.toggleNearbyOnly(); assertTrue(requests.receive().origin != null)
-        vm.toggleOpenOnly(); assertFalse(requests.receive().openOnly)
+    fun everyQuickFilterReloadsTheServerSearchWithoutLocation() = parity {
+        requests.receive()
+        awaitShops()
+        vm.toggleOpenOnly()
+        assertTrue(requests.receive().openOnly)
+        vm.toggleNewOnly()
+        assertTrue(requests.receive().newOnly)
+        vm.toggleVisitedOnly()
+        assertTrue(requests.receive().visitedOnly)
+        vm.toggleFavoritesOnly()
+        val filters = requests.receive()
+        assertTrue(filters.favoritesOnly)
+        assertNull(filters.origin)
     }
 
     @Test

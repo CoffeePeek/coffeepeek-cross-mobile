@@ -61,16 +61,25 @@ internal fun RoasterDiscoverySection(
     modifier: Modifier,
     onEvent: (RoasterListEvent) -> Unit,
 ) {
-    val state by viewModel.state.collectAsStateWithLifecycle()
+    val state = roasterDiscoveryState(viewModel, query, selectedRoasters, favoritesOnly)
     val currentEvent by rememberUpdatedState(onEvent)
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     LaunchedEffect(viewModel, lifecycle) {
         lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) { viewModel.events.collect { currentEvent(it) } }
     }
-    LaunchedEffect(query) { viewModel.onAction(RoasterListAction.QueryChanged(query)) }
-    LaunchedEffect(selectedRoasters) { viewModel.onAction(RoasterListAction.SelectedRoastersChanged(selectedRoasters)) }
-    LaunchedEffect(favoritesOnly) { viewModel.onAction(RoasterListAction.FavoritesOnlyChanged(favoritesOnly)) }
     RoasterDiscoverySectionContent(state, viewModel::onAction, image, loadError, screen, onFavoriteFeedback, modifier, emptyContent)
+}
+
+@Composable
+internal fun roasterDiscoveryState(
+    viewModel: RoasterListViewModel, query: String, selectedRoasters: Set<String>, favoritesOnly: Boolean,
+): RoasterListState {
+    val state by viewModel.state.collectAsStateWithLifecycle()
+    // Keep search state and analytics current even when the carousel is below the lazy viewport.
+    LaunchedEffect(viewModel, query) { viewModel.onAction(RoasterListAction.QueryChanged(query)) }
+    LaunchedEffect(viewModel, selectedRoasters) { viewModel.onAction(RoasterListAction.SelectedRoastersChanged(selectedRoasters)) }
+    LaunchedEffect(viewModel, favoritesOnly) { viewModel.onAction(RoasterListAction.FavoritesOnlyChanged(favoritesOnly)) }
+    return state
 }
 
 /** The Discovery carousel: same card width rule (88% clamped to 280–360dp) and at most eight cards as before. */

@@ -27,6 +27,19 @@ class CheckInPhotoVariantsTest {
     }
 
     @Test
+    fun aShownShelfBagReachesTheHomeRecipeAsItsThumbnailWithRoasterAndCatalogueSlug() {
+        val dto = Json.decodeFromString<CheckInDto>("""{"id":"home","kind":"Home",
+            "home":{"preparedOn":"2026-10-13","beanName":"Honey Bloom","roasterName":"Sibaristica","coffeeProductSlug":"honey-bloom"},
+            "shelfBagPhotoUrl":"/bag","shelfBagPhotoVariants":[{"purpose":"thumb","contentType":"image/jpeg","width":240,"height":320,"sizeBytes":9,"url":"/bag/thumb.jpg"}]}""")
+        val recipe = dto.toDomain(FileUrlResolver("https://gateway.example/")).homePreparation!!
+        assertEquals("https://gateway.example/bag/thumb.jpg", recipe.shelfBagCardUrl)
+        assertEquals("Sibaristica", recipe.roasterName)
+        assertEquals("honey-bloom", recipe.coffeeProductSlug)
+        val pending = Json.decodeFromString<CheckInDto>("""{"id":"home","kind":"Home","home":{},"shelfBagPhotoUrl":"/bag","shelfBagPhotoVariants":[]}""")
+        assertEquals("https://gateway.example/bag", pending.toDomain(FileUrlResolver("https://gateway.example/")).homePreparation?.shelfBagCardUrl)
+    }
+
+    @Test
     fun explicitPendingOrUnknownManifestKeepsGallerySlotWithoutFetchingOriginal() {
         for (variants in listOf("[]", """[{"purpose":"unknown","contentType":"image/jpeg","width":100,"height":100,"sizeBytes":1,"url":"/unknown"}]""")) {
             val dto = Json.decodeFromString<CheckInDto>("""{"id":"visit","photos":[{"url":"/original","variants":$variants}]}""")

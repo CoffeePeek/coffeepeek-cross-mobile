@@ -2,6 +2,7 @@ package com.coffeepeek.feature.appupdate.impl.installer
 
 import android.app.DownloadManager
 import android.content.Context
+import com.coffeepeek.feature.appupdate.impl.R
 import android.content.Intent
 import android.content.IntentSender
 import android.content.pm.PackageInfo
@@ -59,7 +60,7 @@ internal class ApkUpdateInstaller(private val context: Context) : AndroidUpdateI
             check(!file.exists() || file.delete())
             val id = downloads.enqueue(
                 DownloadManager.Request(uri)
-                    .setTitle("Обновление CoffeePeek")
+                    .setTitle(context.getString(R.string.appupdate_download_notification_title))
                     .setMimeType("application/vnd.android.package-archive")
                     .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE)
                     .setDestinationUri(Uri.fromFile(file)),
@@ -69,7 +70,7 @@ internal class ApkUpdateInstaller(private val context: Context) : AndroidUpdateI
             refresh()
         } catch (_: Exception) {
             cancel()
-            mutableState.value = InstallationState(update, error = "Не удалось начать загрузку. Попробуйте ещё раз.")
+            mutableState.value = InstallationState(update, error = context.getString(R.string.appupdate_download_start_failed))
         }
     }
 
@@ -119,7 +120,7 @@ internal class ApkUpdateInstaller(private val context: Context) : AndroidUpdateI
                 downloads.remove(id)
                 preferences.edit().clear().apply()
                 runCatching { apkFile(update).delete() }
-                mutableState.value = InstallationState(update, error = "Не удалось скачать или проверить обновление. Попробуйте ещё раз.")
+                mutableState.value = InstallationState(update, error = context.getString(R.string.appupdate_download_verification_failed))
             }
         }
     }
@@ -174,7 +175,7 @@ internal class ApkUpdateInstaller(private val context: Context) : AndroidUpdateI
                 }
                 mutableState.value = InstallationState(update,
                     if (verified) InstallationStage.Ready else InstallationStage.Available,
-                    error = "Не удалось установить обновление. Попробуйте ещё раз.")
+                    error = context.getString(R.string.appupdate_install_failed))
             }
         }
     }
@@ -183,7 +184,7 @@ internal class ApkUpdateInstaller(private val context: Context) : AndroidUpdateI
         if (awaitingPermission) {
             awaitingPermission = false
             if (context.packageManager.canRequestPackageInstalls()) install()
-            else mutableState.value = state.value.copy(error = "Разрешите CoffeePeek устанавливать обновления и нажмите «Установить».")
+            else mutableState.value = state.value.copy(error = context.getString(R.string.appupdate_install_permission_required))
         } else mutableState.value = state.value.copy(stage = InstallationStage.Ready)
     }
 

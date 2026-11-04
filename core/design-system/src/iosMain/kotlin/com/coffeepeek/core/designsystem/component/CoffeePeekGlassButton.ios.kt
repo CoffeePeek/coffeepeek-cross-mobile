@@ -5,6 +5,8 @@ package com.coffeepeek.core.designsystem.component
 import androidx.compose.foundation.layout.height
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -24,6 +26,7 @@ import platform.UIKit.UIColor
 import platform.UIKit.UIDevice
 import platform.UIKit.UIImage
 import platform.UIKit.UIUserInterfaceStyle
+import platform.UIKit.UIView
 import platform.UIKit.accessibilityLabel
 import platform.UIKit.accessibilityValue
 
@@ -36,6 +39,7 @@ actual fun CoffeePeekGlassButton(
     val currentEnabled = rememberUpdatedState(enabled && !isLoading)
     val loadingLabel = if (isLoading) requireNotNull(loadingDescription) else null
     val colors = MaterialTheme.colorScheme
+    val loaderParent = remember { mutableStateOf<UIView?>(null) }
     UIKitView(
         factory = {
             UIButton.buttonWithConfiguration(glassButtonConfiguration(), UIAction.actionWithHandler {
@@ -45,31 +49,37 @@ actual fun CoffeePeekGlassButton(
         modifier = modifier.height(CoffeePeekDimens.buttonHeight),
         properties = UIKitInteropProperties(isNativeAccessibilityEnabled = true, placedAsOverlay = true),
         update = { button ->
-            button.overrideUserInterfaceStyle = if (colors.background.luminance() < .5f)
-                UIUserInterfaceStyle.UIUserInterfaceStyleDark else UIUserInterfaceStyle.UIUserInterfaceStyleLight
+            button.overrideUserInterfaceStyle = coffeePeekUserInterfaceStyle(colors.background)
             button.backgroundColor = UIColor.clearColor
             button.configuration = glassButtonConfiguration().apply {
                 title = text
-                image = when (leadingIcon) {
+                image = if (isLoading) coffeePeekLoaderPlaceholderImage() else when (leadingIcon) {
                     CoffeePeekGlassButtonIcon.Check -> UIImage.systemImageNamed("checkmark")
                     null -> null
                 }
                 imagePadding = 4.0
-                showsActivityIndicator = isLoading
+                showsActivityIndicator = false
                 cornerStyle = UIButtonConfigurationCornerStyleCapsule
                 baseForegroundColor = colors.onSurface.toUIColor()
             }
             button.accessibilityLabel = text
             button.accessibilityValue = loadingLabel
             button.enabled = currentEnabled.value
+            loaderParent.value = if (isLoading) button.imageView else null
         },
     )
+    CoffeePeekNativeLoader(loaderParent.value, colors.onSurface)
 }
 
-private fun glassButtonConfiguration(): UIButtonConfiguration {
-    if ((UIDevice.currentDevice.systemVersion.substringBefore('.').toIntOrNull() ?: 0) >= 26) {
-        return UIButtonConfiguration.glassButtonConfiguration()
+internal val coffeePeekLiquidGlassAvailable: Boolean
+    get() = (UIDevice.currentDevice.systemVersion.substringBefore('.').toIntOrNull() ?: 0) >= 26
+
+internal fun glassButtonConfiguration(prominent: Boolean = false): UIButtonConfiguration {
+    if (coffeePeekLiquidGlassAvailable) {
+        return if (prominent) UIButtonConfiguration.prominentGlassButtonConfiguration()
+        else UIButtonConfiguration.glassButtonConfiguration()
     }
+    if (prominent) return UIButtonConfiguration.filledButtonConfiguration()
     return UIButtonConfiguration.plainButtonConfiguration().apply {
         background = UIBackgroundConfiguration.clearConfiguration().apply {
             backgroundColor = UIColor.clearColor
@@ -78,6 +88,10 @@ private fun glassButtonConfiguration(): UIButtonConfiguration {
     }
 }
 
-private fun Color.toUIColor(): UIColor = UIColor.colorWithRed(
+internal fun coffeePeekUserInterfaceStyle(background: Color): UIUserInterfaceStyle =
+    if (background.luminance() < .5f) UIUserInterfaceStyle.UIUserInterfaceStyleDark
+    else UIUserInterfaceStyle.UIUserInterfaceStyleLight
+
+internal fun Color.toUIColor(): UIColor = UIColor.colorWithRed(
     red.toDouble(), green.toDouble(), blue.toDouble(), alpha.toDouble(),
 )

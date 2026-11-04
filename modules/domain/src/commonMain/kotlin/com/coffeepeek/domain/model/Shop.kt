@@ -57,6 +57,7 @@ data class ShopMenu(
     val currency: String = "BYN",
     val items: List<ShopMenuItem> = emptyList(),
     val photos: List<ShopMenuPhoto> = emptyList(),
+    val inputRevision: Long? = null,
 )
 
 data class ShopMenuItem(

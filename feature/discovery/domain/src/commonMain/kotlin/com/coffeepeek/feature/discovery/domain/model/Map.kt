@@ -17,5 +17,11 @@ data class MapZone(
     val polygon: List<Coordinates> = emptyList(),
 )
 
-/** The server also sends clusters; the legacy map never used them and neither does this model. */
-data class MapContent(val markers: List<MapMarker> = emptyList(), val zones: List<MapZone> = emptyList(), val isTruncated: Boolean = false)
+data class MapCluster(val id: String, val coordinates: Coordinates, val count: Int, val bounds: MapBounds)
+
+data class MapContent(
+    val markers: List<MapMarker> = emptyList(),
+    val zones: List<MapZone> = emptyList(),
+    val isTruncated: Boolean = false,
+    val clusters: List<MapCluster> = emptyList(),
+)
