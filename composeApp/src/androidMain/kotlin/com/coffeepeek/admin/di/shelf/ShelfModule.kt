@@ -20,6 +20,7 @@ internal fun shelfModule(
     context: () -> Context = { Locator.appContext },
     models: (() -> Context) -> ShelfScannerModels = ::productionShelfModels,
 ) = module {
+    includes(shelfProfileModule(apiBaseUrl))
     single<ShelfRepository> {
         val client = get<ApiClients>()
         createShelfRepository(client.client, client.uploadClient, apiBaseUrl, SessionShelfAccount(get<SessionReader>()))

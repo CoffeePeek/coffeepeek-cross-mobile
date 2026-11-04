@@ -1,6 +1,7 @@
 package com.coffeepeek.feature.collections.data.repository
 
 import com.coffeepeek.feature.collections.data.backend.*
+import com.coffeepeek.feature.collections.data.mapper.collectionPlace
 import com.coffeepeek.feature.collections.domain.model.*
 import com.coffeepeek.feature.collections.domain.repository.CollectionsAccount
 import com.coffeepeek.feature.collections.domain.repository.CollectionsRepository
@@ -20,7 +21,7 @@ internal class HttpCollectionsRepository(private val client: HttpClient, private
     private val pinRequest: (HttpRequestBuilder, String) -> Unit) : CollectionsRepository {
     override suspend fun favorites(): Result<List<CollectionPlace>> = owned { owner ->
         envelope<List<CollectionPlaceDto>>(client.get(api("/api/v1/favorites")) { pinRequest(this, owner) })
-            .mapNotNull(::place).distinctBy(CollectionPlace::key).let(CollectionRules::orderedPlaces)
+            .mapNotNull { collectionPlace(it, apiBaseUrl) }.distinctBy(CollectionPlace::key).let(CollectionRules::orderedPlaces)
     }
 
     override suspend fun create(title: String, places: List<CollectionPlace>): Result<SharedCollection> = owned { owner ->
@@ -77,27 +78,17 @@ internal class HttpCollectionsRepository(private val client: HttpClient, private
         return checkNotNull(body.data)
     }
 
-    private fun collection(dto: CollectionDto): SharedCollection = SharedCollection(dto.id, dto.title,
-        publicUrl(dto.id, dto.canonicalPath), CollectionRules.orderedPlaces(dto.items.mapNotNull(::place)))
-
-    private fun place(dto: CollectionPlaceDto): CollectionPlace? {
-        val kind = when (dto.kind) { "coffee_shop" -> CollectionPlaceKind.CoffeeShop; "roaster" -> CollectionPlaceKind.Roaster; else -> return null }
-        val address = dto.address ?: return null
-        if (address.slug.isBlank() || address.slug.any { it == '/' || it == '\\' || it.isISOControl() } || address.slug in listOf(".", "..")) return null
-        val photo = dto.coverPhoto?.let { it.urls?.card ?: it.fullUrl }?.let(::photoUrl)
-        return CollectionPlace(kind, address.slug, dto.name.ifBlank { address.slug }, photo, dto.cityName, dto.streetAddress,
-            dto.rating?.takeIf { it.isFinite() && it > 0.0 && it <= 5.0 }, dto.checkInCount?.takeIf { it >= 0 })
+    private fun collection(dto: CollectionDto): SharedCollection {
+        check(dto.mode in setOf("snapshot", "list"))
+        check(dto.visibility == "public" || dto.mode == "snapshot" && dto.visibility == null)
+        return SharedCollection(dto.id, dto.title, publicUrl(dto.id, dto.canonicalPath),
+            CollectionRules.orderedPlaces(dto.items.mapNotNull { collectionPlace(it, apiBaseUrl) }),
+            if (dto.mode == "list") SharedCollectionMode.List else SharedCollectionMode.Snapshot)
     }
 
     private fun publicUrl(id: String, canonicalPath: String): String {
         require(canonicalPath == "/collections/${validId(id)}")
         return "https://coffeepeek.by$canonicalPath"
-    }
-
-    private fun photoUrl(raw: String): String? {
-        val value = if (raw.startsWith("/") && !raw.startsWith("//")) apiBaseUrl.trimEnd('/') + raw else raw
-        val url = runCatching { Url(value) }.getOrNull() ?: return null
-        return value.takeIf { url.protocol == URLProtocol.HTTPS && url.user == null && url.password == null }
     }
 
     private fun validId(id: String): String {

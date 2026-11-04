@@ -5,13 +5,14 @@ import com.coffeepeek.admin.location.GeoPoint
 import com.coffeepeek.admin.location.distanceToShopMeters
 import com.coffeepeek.admin.location.formatDistance
 import com.coffeepeek.admin.location.rememberPermittedUserLocation
+import com.coffeepeek.admin.di.collections.CollectionsLibraryDestination
 import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.feature.favorites.api.FavoritesEntry
 import org.koin.compose.koinInject
 
 /** Both navigation hosts use the same feature entry; platform navigation stays with the app. */
 @Composable
-internal fun FavoritesDestination() = FavoritesDestination(koinInject<FavoritesEntry>())
+internal fun FavoritesDestination() = CollectionsLibraryDestination()
 
 @Composable
 internal fun FavoritesDestination(entry: FavoritesEntry) {
@@ -20,7 +21,8 @@ internal fun FavoritesDestination(entry: FavoritesEntry) {
         onOpenShop = { Navigator.navigate(Navigator.Screen.ShopDetail(it)) },
         onBack = Navigator::popBack,
         onOpenRoaster = { Navigator.navigate(Navigator.Screen.RoasterDetail(it)) },
-        onShare = { Navigator.navigate(Navigator.Screen.CollectionsComposer) },
+        onShare = { Navigator.navigate(Navigator.Screen.CollectionsLibrary) },
+        onOpenCollections = { Navigator.navigate(Navigator.Screen.CollectionsLibrary) },
         distanceForCoordinates = { latitude, longitude -> favoriteDistanceLabel(userLocation, latitude, longitude) },
     )
 }

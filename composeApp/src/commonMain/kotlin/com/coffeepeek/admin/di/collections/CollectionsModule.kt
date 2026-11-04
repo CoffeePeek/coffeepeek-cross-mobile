@@ -5,22 +5,34 @@ import com.coffeepeek.core.network.ApiClients
 import com.coffeepeek.core.session.SessionReader
 import com.coffeepeek.feature.collections.api.CollectionsEntry
 import com.coffeepeek.feature.collections.data.repository.createCollectionsRepository
+import com.coffeepeek.feature.collections.data.repository.createSavedCollectionsRepository
 import com.coffeepeek.feature.collections.domain.repository.CollectionsAccount
 import com.coffeepeek.feature.collections.domain.repository.CollectionsRepository
+import com.coffeepeek.feature.collections.domain.repository.SavedCollectionsRepository
 import com.coffeepeek.feature.collections.impl.createCollectionsEntry
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 import org.koin.dsl.module
+import org.koin.core.module.Module
 
 internal fun collectionsModule(apiBaseUrl: String = Constants.BASE_URL) = module {
     single<CollectionsAccount> { SessionCollectionsAccount(get()) }
     single { CollectionsHttpClient(get<ApiClients>().client, get()) }
+    collectionsRepositories(apiBaseUrl)
+    single<CollectionsEntry> { createCollectionsEntry(get(), get(), get(), ::decodeCollectionPosterPhoto, collectionCoverPicker) }
+}
+
+private fun Module.collectionsRepositories(apiBaseUrl: String) {
     single<CollectionsRepository> {
         val client = get<ApiClients>()
         val owned = get<CollectionsHttpClient>()
         createCollectionsRepository(owned.client, client.plainClient, apiBaseUrl, get(), owned::pin)
     }
-    single<CollectionsEntry> { createCollectionsEntry(get(), get(), ::decodeCollectionPosterPhoto) }
+    single<SavedCollectionsRepository> {
+        val client = get<ApiClients>()
+        val owned = get<CollectionsHttpClient>()
+        createSavedCollectionsRepository(owned.client, client.plainClient, apiBaseUrl, get(), owned::pin)
+    }
 }
 
 internal class SessionCollectionsAccount(private val sessions: SessionReader) : CollectionsAccount {

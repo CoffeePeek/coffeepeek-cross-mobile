@@ -1,6 +1,7 @@
 package com.coffeepeek.admin.di.favorites
 
 import com.coffeepeek.admin.analytics.Entity
+import com.coffeepeek.admin.di.collections.CollectionPickerPrompts
 
 import com.coffeepeek.feature.favorites.domain.model.FavoriteAddress
 import com.coffeepeek.feature.favorites.domain.model.FavoriteEntry
@@ -20,6 +21,7 @@ import kotlinx.coroutines.sync.withPermit
 internal class ServerFavoriteShopsRepository(
     private val server: AccountFavorites,
     private val sessions: SessionReader,
+    private val pickerRequests: CollectionPickerPrompts? = null,
     private val detail: suspend (String) -> Result<PublicShopSummary>,
 ) : FavoritesRepository {
     override fun observeIds(): Flow<Result<Set<String>>> = server.observeFavorites().map { result ->
@@ -31,12 +33,14 @@ internal class ServerFavoriteShopsRepository(
 
     override fun observe(): Flow<Result<List<FavoriteShop>>> = channelFlow {
         var observation: Job? = null
+        var firstOwner = true
         try {
             sessions.observeSession().map { owner() }.distinctUntilChanged().collect { account ->
                 observation?.cancel()
-                send(Result.success(emptyList()))
+                if (!firstOwner || account == null) send(Result.success(emptyList()))
+                firstOwner = false
                 if (account != null) observation = launch {
-                    server.observeFavorites().collectLatest { result ->
+                    observeLoadedServerFavorites(server, sessions, account).collectLatest { result ->
                         val mapped = resultOf { mapRows(result.getOrThrow(), account) }
                         ensureActive()
                         requireOwner(account)
@@ -57,6 +61,7 @@ internal class ServerFavoriteShopsRepository(
 
     private suspend fun saveUntracked(shop: FavoriteShop): Result<Unit> = resultOf {
         val account = requireNotNull(owner()) { "Sign in to save favorites" }
+        val lease = pickerRequests?.lease(account)
         val resolved = detail(shop.id).getOrThrow()
         requireOwner(account)
         require(resolved.slug.isNotBlank()) { "Shop has no public address" }
@@ -64,6 +69,8 @@ internal class ServerFavoriteShopsRepository(
         server.setFavorite(FavoriteEntry(FavoriteKind.CoffeeShop, address,
             name = resolved.title, coverPhotoUrl = resolved.photoUrl), true).getOrThrow()
         requireOwner(account)
+        pickerRequests?.added(lease, address.slug)
+        Unit
     }
 
     override suspend fun remove(shopId: String): Result<Unit> =

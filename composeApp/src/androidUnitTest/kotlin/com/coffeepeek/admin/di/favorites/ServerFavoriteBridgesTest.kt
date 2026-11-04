@@ -1,6 +1,7 @@
 package com.coffeepeek.admin.di.favorites
 
 import com.coffeepeek.admin.di.shop.CheckInTestSessions
+import com.coffeepeek.admin.di.collections.CollectionPickerRequests
 import com.coffeepeek.admin.feature.favorites.api.RoasterFavorites
 import com.coffeepeek.feature.favorites.domain.model.FavoriteAddress
 import com.coffeepeek.feature.favorites.domain.model.FavoriteEntry
@@ -21,6 +22,8 @@ class ServerFavoriteBridgesTest {
     private val address = FavoriteAddress("canonical", "/coffee-shop/canonical", 1, false)
     private fun entry(kind: FavoriteKind = FavoriteKind.CoffeeShop) =
         FavoriteEntry(kind, address, name = "Server name", coverPhotoUrl = "https://fixture.invalid/cover")
+    private fun summary() = PublicShopSummary(null, null, null, null, 0, false, emptyList(),
+        slug = address.slug, canonicalPath = address.canonicalPath, revision = address.revision, isAlias = address.isAlias, title = "Canonical")
     private class Server : AccountFavorites {
         val state = MutableStateFlow(Result.success(emptyList<FavoriteEntry>()))
         val writes = mutableListOf<Pair<FavoriteEntry, Boolean>>()
@@ -28,6 +31,8 @@ class ServerFavoriteBridgesTest {
         var observations = 0
         var clears = 0
         var afterRead: () -> Unit = {}
+        var afterWrite: () -> Unit = {}
+        var writeResult: Result<Unit> = Result.success(Unit)
         override fun observeFavorites(): Flow<Result<List<FavoriteEntry>>> = flow {
             observations++; emitAll(state)
         }
@@ -36,9 +41,47 @@ class ServerFavoriteBridgesTest {
         }
         override suspend fun setFavorite(entry: FavoriteEntry, favorite: Boolean): Result<Unit> {
             writes += entry to favorite
-            return Result.success(Unit)
+            afterWrite()
+            return writeResult
         }
         override fun clearCache() { clears++ }
+    }
+
+    @Test fun successfulShopAdditionOpensThePickerOnlyAfterTheWriteAndCancelPreservesTheFavorite() = runTest {
+        val sessions = CheckInTestSessions()
+        val requests = CollectionPickerRequests(sessions, backgroundScope)
+        val server = Server().apply { afterWrite = { assertNull(requests.state.value) } }
+        val repo = ServerFavoriteShopsRepository(server, sessions, requests) {
+            Result.success(summary())
+        }
+        repo.save(FavoriteShop("alias", "Alias")).getOrThrow()
+        assertEquals("canonical", requests.state.value?.target?.slug)
+        requests.dismiss(assertNotNull(requests.state.value))
+        assertEquals(listOf(true), server.writes.map { it.second })
+        repo.remove("canonical").getOrThrow()
+        assertNull(requests.state.value)
+    }
+
+    @Test fun failedAdditionNeverOpensTheCollectionPicker() = runTest {
+        val sessions = CheckInTestSessions()
+        val requests = CollectionPickerRequests(sessions, backgroundScope)
+        val server = Server().apply { writeResult = Result.failure(IllegalStateException("Offline")) }
+        val repo = ServerFavoriteShopsRepository(server, sessions, requests) {
+            Result.success(summary())
+        }
+        assertTrue(repo.save(FavoriteShop("canonical", "Canonical")).isFailure)
+        assertNull(requests.state.value)
+    }
+
+    @Test fun accountReplacementAfterTheWriteCannotOpenTheOldAccountsPicker() = runTest {
+        val sessions = CheckInTestSessions()
+        val requests = CollectionPickerRequests(sessions, backgroundScope)
+        val server = Server().apply { afterWrite = { sessions.applySession(Session("other", userId = "other")) } }
+        val repo = ServerFavoriteShopsRepository(server, sessions, requests) {
+            Result.success(summary())
+        }
+        assertFailsWith<CancellationException> { repo.save(FavoriteShop("canonical", "Canonical")) }
+        assertNull(requests.state.value)
     }
 
     @Test fun serverRowsKeepCanonicalNavigationAndAddresslessFallbackWithoutAFalseRoute() = runTest {

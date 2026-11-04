@@ -201,4 +201,12 @@
     <string name="shelf_error_shelf_full">На паліцы ўжо 200 пачак</string>
     <string name="shelf_error_bean_unavailable">Гэтай кавы больш няма ў каталогу</string>
     <string name="shelf_brew_method_other">Іншае</string>
+    <string name="shelf_profile_show">Паказваць кававую паліцу</string>
+    <string name="shelf_profile_show_hint">Іншыя карыстальнікі змогуць бачыць актыўныя пачкі кавы на вашай паліцы.</string>
+    <string name="shelf_profile_title">Кававая паліца</string>
+    <string name="shelf_profile_empty">На паліцы пакуль няма кавы</string>
+    <string name="shelf_profile_open_coffee">Адкрыць каву «%1$s»</string>
+    <string name="shelf_profile_updating">Абнаўляем наладу паліцы</string>
+    <string name="shelf_profile_visibility_load_failed">Не ўдалося загрузіць наладу бачнасці паліцы.</string>
+    <string name="shelf_profile_visibility_save_failed">Не ўдалося захаваць наладу. Паспрабуйце яшчэ раз.</string>
 </resources>

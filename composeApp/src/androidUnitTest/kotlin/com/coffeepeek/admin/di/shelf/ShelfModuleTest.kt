@@ -52,6 +52,8 @@ class ShelfModuleTest {
             assertSame(app.koin.get<ShelfRepository>(), app.koin.get<ShelfRepository>())
             assertSame(app.koin.get<BagScanner>(), app.koin.get<BagScanner>())
             assertSame(app.koin.get<ShelfEntry>(), app.koin.get<ShelfEntry>())
+            assertSame(app.koin.get<com.coffeepeek.feature.shelf.api.ShelfProfileEntry>(),
+                app.koin.get<com.coffeepeek.feature.shelf.api.ShelfProfileEntry>())
             assertEquals(1, app.koin.getAll<ShelfRepository>().size)
         } finally {
             app.close()
