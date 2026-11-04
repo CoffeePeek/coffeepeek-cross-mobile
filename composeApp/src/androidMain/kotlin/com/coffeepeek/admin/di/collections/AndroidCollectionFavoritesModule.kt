@@ -11,5 +11,6 @@ import org.koin.dsl.module
 internal fun androidCollectionFavoritesModule() = module {
     single { CollectionPickerRequests(get(), CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)) }
     single<CollectionPickerPrompts> { get<CollectionPickerRequests>() }
+    single<FavoriteCollectionsPrompt> { AndroidFavoriteCollectionsPrompt(get()) }
     single<RoasterFavorites> { CollectionPromptRoasterFavorites(ServerRoasterFavorites(get(), get(), get()), get(), get()) }
 }

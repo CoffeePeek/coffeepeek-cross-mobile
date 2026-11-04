@@ -18,6 +18,13 @@ import kotlinx.coroutines.flow.MutableStateFlow
 
 internal class AccountSessions(initial: Session? = Session("token", userId = "a")) : SessionReader {
     val state = MutableStateFlow(initial)
+    private var generation = if (initial == null) 0L else 1L
+    override fun accountGeneration() = generation
+    fun apply(session: Session?) {
+        val sameAccount = state.value?.userId != null && state.value?.userId == session?.userId
+        if (!sameAccount) generation++
+        state.value = session
+    }
     override fun peekSession() = state.value
     override fun isActiveSession(session: Session?) = session != null && session.accessToken.isNotBlank()
     override fun observeSession() = state

@@ -40,14 +40,16 @@ class OwnProfileViewModelTest {
     private fun model(accounts: Accounts, signOut: ProfileSignOutPort = ProfileSignOutPort.None) =
         OwnProfileViewModel(accounts, signOut).also { store.put("own-${nextKey++}", it) }
 
-    @Test fun aCachedAccountIsShownWithoutARequest() = runTest(dispatcher) {
+    @Test fun aCachedAccountIsShownImmediatelyAndRefreshedInBackground() = runTest(dispatcher) {
         val accounts = Accounts("a", anna)
-        val vm = model(accounts); runCurrent()
+        val vm = model(accounts)
+        assertEquals("Anna Lee", vm.state.value.profile?.userName)
+        runCurrent()
         val state = vm.state.value
         assertTrue(state.isLoggedIn); assertFalse(state.isLoading)
         assertEquals("Anna Lee", state.profile?.userName)
         assertEquals("anna-lee", state.publicSlug)
-        assertEquals(0, accounts.loads)
+        assertEquals(1, accounts.loads)
     }
 
     @Test fun withoutACacheItRefreshesAndAFailureWithoutContentShowsTheFixedError() = runTest(dispatcher) {
@@ -75,13 +77,27 @@ class OwnProfileViewModelTest {
 
     @Test fun aLateFailureOfThePreviousAccountsRefreshIsIgnoredAfterASwitch() = runTest(dispatcher) {
         val gate = CompletableDeferred<Result<OwnProfile>>()
-        val accounts = Accounts("a", null).apply { load = { gate.await() } }
+        var calls = 0
+        val accounts = Accounts("a", null).apply { load = { if (++calls == 1) gate.await() else Result.success(boris) } }
         val vm = model(accounts); runCurrent()
         accounts.signIn("b"); accounts.publish(boris); runCurrent()
         gate.complete(Result.failure(RuntimeException("late"))); runCurrent()
         assertNull(vm.state.value.error)
         assertNull(vm.state.value.refreshError)
         assertEquals("Boris", vm.state.value.profile?.userName)
+    }
+
+    @Test fun sameAccountReplacementIgnoresThePreviousSessionsLateFailure() = runTest(dispatcher) {
+        val gate = CompletableDeferred<Result<OwnProfile>>()
+        var calls = 0
+        val accounts = Accounts("a", anna).apply { load = { if (++calls == 1) gate.await() else Result.success(boris) } }
+        val vm = model(accounts); runCurrent()
+        assertEquals("Anna Lee", vm.state.value.profile?.userName)
+        accounts.replaceSession(boris); runCurrent()
+        gate.complete(Result.failure(RuntimeException("old session"))); runCurrent()
+        assertEquals("Boris", vm.state.value.profile?.userName)
+        assertNull(vm.state.value.error)
+        assertNull(vm.state.value.refreshError)
     }
 
     @Test fun logoutResetsTheScreenBeforeTheAppEndsTheAccount() = runTest(dispatcher) {
@@ -97,11 +113,16 @@ class OwnProfileViewModelTest {
     private class Accounts(user: String?, own: OwnProfile?) : ProfileAccountPort {
         private val account = MutableStateFlow(user)
         private val cache = MutableStateFlow(own)
+        private var generation = 0
+        private val scope = MutableStateFlow(user?.let { "0:$it" })
         var loads = 0
         var load: suspend () -> Result<OwnProfile> = { Result.failure(IllegalStateException("none")) }
-        fun signIn(user: String?) { account.value = user }
+        fun signIn(user: String?) { generation++; account.value = user; scope.value = cacheScope() }
+        fun replaceSession(profile: OwnProfile?) { generation++; cache.value = profile; scope.value = cacheScope() }
         fun publish(value: OwnProfile?) { cache.value = value }
         override fun activeAccount() = account.value
+        override fun cacheScope(): String? = account.value?.let { "$generation:$it" }
+        override fun observeCacheScope(): Flow<String?> = scope
         override fun observeActiveAccount(): Flow<String?> = account
         override fun cachedOwnProfile() = cache.value
         override fun observeOwnProfile(): Flow<OwnProfile?> = cache

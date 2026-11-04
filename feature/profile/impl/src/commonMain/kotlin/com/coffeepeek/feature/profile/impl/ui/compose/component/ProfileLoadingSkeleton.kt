@@ -7,6 +7,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
@@ -36,12 +37,21 @@ internal fun ProfileLoadingSkeleton(modifier: Modifier = Modifier) {
 
 @Composable
 private fun ProfileLoadingHeader() {
-    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
-            CoffeePeekShimmer(Modifier.size(88.dp), shape = CircleShape)
-            CoffeePeekShimmer(Modifier.weight(1f).height(28.dp))
+    BoxWithConstraints(Modifier.fillMaxWidth()) {
+        val statsWidth = 220.dp * LocalDensity.current.fontScale
+        val inlineStats = maxWidth >= statsWidth + 68.dp
+        val avatarSize = if (inlineStats) (maxWidth - statsWidth - 12.dp).coerceIn(56.dp, 88.dp) else 88.dp
+        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically) {
+                CoffeePeekShimmer(Modifier.size(avatarSize), shape = CircleShape)
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    CoffeePeekShimmer(Modifier.fillMaxWidth(0.6f).height(28.dp))
+                    if (inlineStats) ProfileLoadingCounters()
+                }
+            }
+            if (!inlineStats) ProfileLoadingCounters()
         }
-        ProfileLoadingCounters()
     }
 }
 

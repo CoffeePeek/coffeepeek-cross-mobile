@@ -107,12 +107,29 @@ class ShopDetailViewModelTest {
         dayProvider: () -> Int = { 1 },
         minuteProvider: () -> Int? = { null },
         resumeRefreshAfter: kotlin.time.Duration = kotlin.time.Duration.ZERO,
+        selectCollectionsOnFavorite: Boolean = false,
     ): ShopDetailViewModel = ShopDetailViewModel(
         shopId = "shop-1", detailsRepository = details,
         checkInVoteRepository = checkInVotes, favoritesRepository = favorites,
         currentViewer = viewerProvider, currentDayOfWeek = dayProvider, currentMinuteOfDay = minuteProvider,
-        resumeRefreshAfter = resumeRefreshAfter)
+        resumeRefreshAfter = resumeRefreshAfter, selectCollectionsOnFavorite = selectCollectionsOnFavorite)
         .also { store.put("detail", it) }
+
+    @Test fun collectionHeartRequestsSelectionWithoutChangingFavoriteForEitherState() = runTest(dispatcher) {
+        val favorites = Favorites()
+        val model = viewModel(favorites = favorites, selectCollectionsOnFavorite = true)
+        val events = mutableListOf<ShopDetailEvent>()
+        backgroundScope.launch { model.events.collect { events += it.event } }
+        runCurrent()
+        model.onAction(ShopDetailAction.ToggleFavorite); runCurrent()
+        favorites.snapshots.value = Result.success(setOf("shop-1")); runCurrent()
+        model.onAction(ShopDetailAction.ToggleFavorite); runCurrent()
+        assertEquals(listOf<ShopDetailEvent>(ShopDetailEvent.SelectFavoriteCollections("shop-1"),
+            ShopDetailEvent.SelectFavoriteCollections("shop-1")), events)
+        assertEquals(0, favorites.saves)
+        assertEquals(0, favorites.removes)
+        assertTrue(model.state.value.isFavorite)
+    }
 
     @Test fun checkInGalleryKeepsExplicitOriginalAndRejectsGuestHiddenRows() = runTest(dispatcher) {
         val repository = DetailsRepository()

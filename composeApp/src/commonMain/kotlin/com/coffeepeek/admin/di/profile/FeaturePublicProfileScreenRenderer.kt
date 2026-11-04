@@ -20,6 +20,7 @@ import com.coffeepeek.feature.profile.api.ProfileAuthor
 import com.coffeepeek.feature.profile.api.ProfileAuthorActions
 import com.coffeepeek.feature.profile.api.ProfileSlots
 import com.coffeepeek.feature.profile.api.PublicCheckInsPort
+import com.coffeepeek.feature.profile.api.ProfileSnapshotStore
 import com.coffeepeek.feature.profile.api.PublicProfileEntry
 import com.coffeepeek.feature.profile.impl.createPublicProfileEntry
 
@@ -52,6 +53,7 @@ internal fun featurePublicProfileScreenRenderer(
     accounts: ProfileAccountPort,
     visibility: AuthorVisibility,
     blocks: AuthorBlockActions,
+    snapshots: ProfileSnapshotStore = ProfileSnapshotStore.None,
 ): FeaturePublicProfileScreenRenderer {
     val slots = profileSlots()
     return FeaturePublicProfileScreenRenderer(createPublicProfileEntry(
@@ -61,6 +63,7 @@ internal fun featurePublicProfileScreenRenderer(
         visibility = AppProfileAuthorVisibility(visibility),
         authorActions = AppProfileAuthorActions(blocks),
         slots = slots,
+        snapshots = snapshots,
     ))
 }
 
@@ -69,7 +72,7 @@ internal fun featurePublicProfileScreenRenderer(
 internal fun profileSlots(): ProfileSlots {
     return ProfileSlots(
         featuredCollection = { slug -> ProfileFeaturedCollection(slug) },
-        shelfPreview = { slug -> ProfileShelfPreview(slug) },
+        shelfPreview = { slug, ownerView -> ProfileShelfPreview(slug, ownerView) },
         ownerCollection = { ProfileOwnerCollection() },
         onOpenOwnCollections = ::openProfileCollections,
         onOwnContributions = ::openProfileContributions,

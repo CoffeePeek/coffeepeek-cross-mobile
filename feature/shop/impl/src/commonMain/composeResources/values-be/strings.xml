@@ -103,6 +103,7 @@
     <string name="shop_favorite_add">Дадаць у абранае</string>
     <string name="shop_favorite_remove">Прыбраць з абранага</string>
     <string name="shop_favorite_unavailable">Абранае недаступнае</string>
+    <string name="shop_favorite_choose_collections">Выбраць падборкі</string>
     <string name="shop_favorite_updating">Абнаўленне абранага</string>
     <string name="shop_detail_loading">Загрузка кавярні</string>
     <string name="shop_detail_refreshing">Абнаўленне звестак пра кавярню</string>

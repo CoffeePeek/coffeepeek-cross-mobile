@@ -10,5 +10,5 @@ interface ShelfProfileEntry {
 
     /** Published active bags only. [onOpenCoffee] receives a catalogue slug, never a private bag id. */
     @Composable
-    fun Preview(profileSlug: String, onOpenCoffee: (String) -> Unit, modifier: Modifier)
+    fun Preview(profileSlug: String, ownerView: Boolean, onOpenCoffee: (String) -> Unit, modifier: Modifier)
 }

@@ -2,12 +2,14 @@ package com.coffeepeek.admin.di.roaster
 
 import com.coffeepeek.admin.di.shop.shopBrowsingModule
 import com.coffeepeek.admin.di.favorites.RoasterFavorites
+import com.coffeepeek.admin.di.collections.FavoriteCollectionsPrompt
 import com.coffeepeek.admin.sandbox.backend.SandboxBackend
 import com.coffeepeek.core.network.ApiClients
 import com.coffeepeek.core.network.SessionCredentials
 import com.coffeepeek.core.network.SessionTokens
 import com.coffeepeek.feature.roaster.api.PublicRoasterCatalog
 import com.coffeepeek.feature.roaster.api.RoasterFavoritesPort
+import com.coffeepeek.feature.roaster.api.RoasterFavoriteTarget
 import com.coffeepeek.feature.roaster.api.RoasterShopPhotos
 import com.coffeepeek.feature.roaster.domain.repository.RoasterRepository
 import com.coffeepeek.feature.shop.api.PublicShopPreviews
@@ -27,6 +29,28 @@ import kotlin.test.*
 
 class RoasterModuleTest {
     @get:Rule val temporary = TemporaryFolder()
+
+    @Test fun migratedRoasterHeartOpensPickerForBothStatesWithoutFavoriteWrite() {
+        val selections = mutableListOf<String>()
+        var writes = 0
+        val favorites = object : RoasterFavorites {
+            override fun observeFavorites() = MutableStateFlow(emptyList<com.coffeepeek.admin.di.favorites.CatalogItem>())
+            override suspend fun setFavorite(roaster: com.coffeepeek.admin.di.favorites.CatalogItem, isFavorite: Boolean): Result<Unit> {
+                writes++
+                return Result.success(Unit)
+            }
+        }
+        val prompt = object : FavoriteCollectionsPrompt {
+            override fun shop(slug: String) = Unit
+            override fun roaster(slug: String) { selections += slug }
+        }
+        val adapter = RoasterFavoritesAdapter(favorites, CoroutineScope(SupervisorJob() + Dispatchers.Unconfined), prompt)
+        val target = RoasterFavoriteTarget("roaster", "Roaster", null, "/roasters/roaster", 1, false)
+        adapter.change(target, true) { error("No mutation failure") }
+        adapter.change(target, false) { error("No mutation failure") }
+        assertEquals(listOf("roaster", "roaster"), selections)
+        assertEquals(0, writes)
+    }
 
     @Test fun moduleBuildsPublicReadersAndRendererWithoutExistingShopRepository() = runTest {
         val fixture = fixture()

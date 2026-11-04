@@ -29,6 +29,10 @@ fun CoffeePeekActivityWeek(
     image: @Composable (dayIndex: Int, modifier: Modifier) -> Unit,
 ) {
     require(days.size == 7)
+    if (loading) {
+        CoffeePeekActivityWeekSkeleton(labels.loading, modifier)
+        return
+    }
     CoffeePeekCard(modifier.semantics { contentDescription = labels.open }, onClick = onClick,
         elevation = 0.dp, shape = RoundedCornerShape(20.dp),
         border = BorderStroke(0.7.dp, MaterialTheme.colorScheme.outlineVariant),
@@ -38,11 +42,26 @@ fun CoffeePeekActivityWeek(
                 CoffeePeekActivityDayCell(day, Modifier.weight(1f)) { image(index, it) }
             }
         }
-        if (loading) Text(labels.loading, Modifier.padding(top = 8.dp),
-            style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        else if (failed) Row(verticalAlignment = Alignment.CenterVertically) {
+        if (failed) Row(verticalAlignment = Alignment.CenterVertically) {
             Text(labels.error, Modifier.weight(1f), style = MaterialTheme.typography.labelSmall)
             TextButton(onClick = onRetry) { Text(labels.retry) }
+        }
+    }
+}
+
+@Composable
+private fun CoffeePeekActivityWeekSkeleton(description: String, modifier: Modifier) {
+    CoffeePeekCard(modifier.semantics { contentDescription = description }, elevation = 0.dp,
+        shape = RoundedCornerShape(20.dp), border = BorderStroke(0.7.dp, MaterialTheme.colorScheme.outlineVariant),
+        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 12.dp)) {
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            repeat(7) {
+                Column(Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    CoffeePeekShimmer(Modifier.width(18.dp).height(10.dp))
+                    CoffeePeekShimmer(Modifier.fillMaxWidth().aspectRatio(1f), RoundedCornerShape(10.dp))
+                }
+            }
         }
     }
 }
@@ -71,5 +90,13 @@ private fun CoffeePeekActivityWeekPreview(dark: Boolean) = CoffeePeekTheme(darkT
         CoffeePeekActivityWeekLabels("Open", "Loading", "Unavailable", "Retry"), false, false, {}, {}) { _, _ -> }
 }
 
+@Composable
+private fun CoffeePeekActivityWeekLoadingPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
+    CoffeePeekActivityWeek(List(7) { CoffeePeekActivityDay("${it + 1}", "Day ${it + 1}", false, false, 0) },
+        CoffeePeekActivityWeekLabels("Open", "Loading", "Unavailable", "Retry"), true, false, {}, {}) { _, _ -> }
+}
+
+@Preview @Composable private fun CoffeePeekActivityWeekLoadingLightPreview() = CoffeePeekActivityWeekLoadingPreview(false)
+@Preview @Composable private fun CoffeePeekActivityWeekLoadingDarkPreview() = CoffeePeekActivityWeekLoadingPreview(true)
 @Preview @Composable private fun CoffeePeekActivityWeekLightPreview() = CoffeePeekActivityWeekPreview(false)
 @Preview @Composable private fun CoffeePeekActivityWeekDarkPreview() = CoffeePeekActivityWeekPreview(true)

@@ -26,6 +26,7 @@ import com.coffeepeek.feature.authorblocking.api.AuthorVisibility
 import com.coffeepeek.feature.profile.api.OwnProfileEntry
 import com.coffeepeek.feature.profile.api.OwnProfileSlots
 import com.coffeepeek.feature.profile.api.ProfileSignOutPort
+import com.coffeepeek.feature.profile.api.ProfileSnapshotStore
 import com.coffeepeek.feature.profile.impl.createOwnProfileEntry
 import org.jetbrains.compose.resources.getString
 import kotlinx.coroutines.CancellationException
@@ -78,6 +79,7 @@ internal fun featureOwnProfileScreenRenderer(
     visibility: AuthorVisibility,
     blocks: AuthorBlockActions,
     activity: FeatureProfileActivityRenderer,
+    snapshots: ProfileSnapshotStore = ProfileSnapshotStore.None,
 ): FeatureOwnProfileScreenRenderer {
     return FeatureOwnProfileScreenRenderer(createOwnProfileEntry(
         data = repository,
@@ -87,6 +89,7 @@ internal fun featureOwnProfileScreenRenderer(
         visibility = AppProfileAuthorVisibility(visibility),
         authorActions = AppProfileAuthorActions(blocks),
         slots = ownProfileSlots(activity),
+        snapshots = snapshots,
     ))
 }
 

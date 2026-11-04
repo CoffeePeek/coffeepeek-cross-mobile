@@ -3,6 +3,7 @@ package com.coffeepeek.feature.shelf.impl.ui.compose
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -20,7 +21,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
+import com.coffeepeek.core.designsystem.component.CoffeePeekShimmer
 import com.coffeepeek.core.designsystem.component.CoffeePeekSwitch
 import com.coffeepeek.core.designsystem.component.CoffeePeekTextButton
 import com.coffeepeek.core.designsystem.component.CoffeePeekSettingsRow
@@ -45,13 +46,14 @@ internal fun ShelfProfileVisibilityScreen(model: ShelfProfileVisibilityViewModel
 internal fun ShelfProfileVisibilityContent(state: ShelfProfileVisibilityState,
     action: (ShelfProfileVisibilityAction) -> Unit, modifier: Modifier = Modifier) {
     val label = stringResource(Res.string.shelf_profile_show)
-    val enabled = state.signedIn && state.loaded && !state.loading && !state.busy
+    val enabled = state.signedIn && state.loaded && !state.busy
     Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        CoffeePeekSettingsRow(CoffeePeekIcons.CoffeeBean, label, stringResource(Res.string.shelf_profile_show_hint),
-            onClick = { action(ShelfProfileVisibilityAction.SetVisible(!state.visible)) }, enabled = enabled,
-            role = Role.Switch, showArrow = false,
-            modifier = Modifier.semantics { toggleableState = ToggleableState(state.visible) },
-            trailing = { CoffeePeekSwitch(state.visible, null, Modifier.clearAndSetSemantics { }, enabled) })
+        if (state.signedIn && !state.loaded) CoffeePeekShimmer(Modifier.fillMaxWidth().height(88.dp))
+        else CoffeePeekSettingsRow(CoffeePeekIcons.CoffeeBean, label, stringResource(Res.string.shelf_profile_show_hint),
+                onClick = { action(ShelfProfileVisibilityAction.SetVisible(!state.visible)) }, enabled = enabled,
+                role = Role.Switch, showArrow = false,
+                modifier = Modifier.semantics { toggleableState = ToggleableState(state.visible) },
+                trailing = { CoffeePeekSwitch(state.visible, null, Modifier.clearAndSetSemantics { }, enabled) })
         ShelfProfileVisibilityStatus(state, action)
     }
 }
@@ -59,7 +61,6 @@ internal fun ShelfProfileVisibilityContent(state: ShelfProfileVisibilityState,
 @Composable
 private fun ShelfProfileVisibilityStatus(state: ShelfProfileVisibilityState, action: (ShelfProfileVisibilityAction) -> Unit) {
     Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        if (state.loading || state.busy) CoffeePeekLoader(stringResource(Res.string.shelf_profile_updating), size = 20.dp)
         if (!state.signedIn) CoffeePeekTextButton({ action(ShelfProfileVisibilityAction.SignIn) }) {
             Text(stringResource(Res.string.shelf_sign_in))
         }
@@ -77,6 +78,7 @@ private fun ShelfProfileVisibilityStatus(state: ShelfProfileVisibilityState, act
 @Composable
 private fun ShelfProfileVisibilityPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(24.dp)) {
+        ShelfProfileVisibilityContent(ShelfProfileVisibilityState(signedIn = true, loading = true), {})
         ShelfProfileVisibilityContent(ShelfProfileVisibilityState(signedIn = true, loaded = true), {})
         ShelfProfileVisibilityContent(ShelfProfileVisibilityState(signedIn = true, loaded = true, visible = true), {})
     }

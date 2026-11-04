@@ -8,6 +8,7 @@ import com.coffeepeek.feature.profile.api.ProfileAccountPort
 import com.coffeepeek.feature.profile.api.ProfileAuthorActions
 import com.coffeepeek.feature.profile.api.ProfileAuthorVisibility
 import com.coffeepeek.feature.profile.api.ProfileSlots
+import com.coffeepeek.feature.profile.api.ProfileSnapshotStore
 import com.coffeepeek.feature.profile.api.PublicCheckInsPort
 import com.coffeepeek.feature.profile.api.PublicProfileEntry
 import com.coffeepeek.feature.profile.domain.PublicProfileData
@@ -27,7 +28,8 @@ fun createPublicProfileEntry(
     visibility: ProfileAuthorVisibility = ProfileAuthorVisibility.None,
     authorActions: ProfileAuthorActions = ProfileAuthorActions.None,
     slots: ProfileSlots,
-): PublicProfileEntry = PublicProfileEntryImpl(data, checkIns, accounts, visibility, authorActions, slots)
+    snapshots: ProfileSnapshotStore = ProfileSnapshotStore.None,
+): PublicProfileEntry = PublicProfileEntryImpl(data, checkIns, accounts, visibility, authorActions, slots, snapshots)
 
 private class PublicProfileEntryImpl(
     private val data: PublicProfileData,
@@ -36,6 +38,7 @@ private class PublicProfileEntryImpl(
     private val visibility: ProfileAuthorVisibility,
     private val authorActions: ProfileAuthorActions,
     private val slots: ProfileSlots,
+    private val snapshots: ProfileSnapshotStore,
 ) : PublicProfileEntry {
     @OptIn(ExperimentalUuidApi::class)
     private val instanceKey = Uuid.random().toString()
@@ -46,7 +49,7 @@ private class PublicProfileEntryImpl(
         onOpenRoaster: (String) -> Unit, onLogin: () -> Unit, onOpenUser: (String, String, String?) -> Unit,
         onShare: (String) -> Unit, onOpenCheckIns: () -> Unit, checkInsOnly: Boolean, modifier: Modifier,
     ) {
-        val model = viewModel(key = "public-profile:$instanceKey:$slug") { PublicProfileViewModel(slug, data, checkIns, accounts, visibility) }
+        val model = viewModel(key = "public-profile:$instanceKey:$slug") { PublicProfileViewModel(slug, data, checkIns, accounts, visibility, snapshots) }
         CoffeePeekMenuBackdrop(modifier) {
             PublicProfileScreen(slug, nickname, avatarUrl, model, authorActions, slots, onBack, onOpenShop, onOpenRoaster, onLogin, onOpenUser, onShare, onOpenCheckIns, checkInsOnly = checkInsOnly)
         }

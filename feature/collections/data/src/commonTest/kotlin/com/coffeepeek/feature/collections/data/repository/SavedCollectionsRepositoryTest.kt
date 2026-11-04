@@ -28,6 +28,109 @@ class SavedCollectionsRepositoryTest {
     private val publicBody get() = body.replace("\"private\"", "\"public\"").replace("\"items\":[]", "\"items\":[],\"canonicalPath\":\"/collections/$compactId\"")
     private val account = Account()
 
+    @Test fun successfulOwnerLibraryReadIsCachedAcrossEntryRecreationAndReplacedByRefresh() = runTest(dispatcher) {
+        var title = "Избранное"
+        var reads = 0
+        val client = client(defaultEndpoint = true) { request ->
+            assertEquals(HttpMethod.Get, request.method)
+            reads++
+            respond(defaultList.replace("Избранное", title).replace("\"revision\":2", "\"revision\":2,\"isDefault\":true"))
+        }
+        try {
+            val repository = repo(client, client)
+            assertNull(repository.cachedMine())
+            val first = repository.mine().getOrThrow()
+            assertEquals(first, repository.cachedMine())
+            title = "Переименовано"
+            assertEquals(first, repository.cachedMine())
+            val refreshed = repository.mine().getOrThrow()
+            assertEquals(refreshed, repository.cachedMine())
+            assertEquals("Переименовано", repository.cachedMine()!!.single().title)
+            assertEquals(2, reads)
+        } finally { client.close() }
+    }
+
+    @Test fun ownerLibraryCacheIsClearedOnLogoutAndCannotCrossAccounts() = runTest(dispatcher) {
+        val client = client(defaultEndpoint = true) { respond(defaultList.replace("\"revision\":2", "\"revision\":2,\"isDefault\":true")) }
+        try {
+            val repository = repo(client, client)
+            repository.mine().getOrThrow()
+            assertNotNull(repository.cachedMine())
+            account.owner.value = null
+            assertNull(repository.cachedMine())
+            account.owner.value = "second"
+            assertNull(repository.cachedMine())
+            repository.mine().getOrThrow()
+            assertNotNull(repository.cachedMine())
+            account.owner.value = "first"
+            assertNull(repository.cachedMine())
+        } finally { client.close() }
+    }
+
+    @Test fun featuredCacheDistinguishesHiddenFromUnloadedAndStaysOwnerScoped() = runTest(dispatcher) {
+        var offline = false
+        val client = featuredCacheClient { offline }
+        try {
+            val repository = repo(client, client)
+            assertNull(repository.cachedFeatured())
+            assertNull(repository.featuredId().getOrThrow())
+            assertEquals(SavedCollectionFeaturedSelection(null), repository.cachedFeatured())
+            repository.setFeatured(id).getOrThrow()
+            repository.mine().getOrThrow()
+            assertEquals(SavedCollectionFeaturedSelection(id), repository.cachedFeatured())
+            offline = true
+            assertTrue(repository.featuredId().isFailure)
+            assertEquals(SavedCollectionFeaturedSelection(id), repository.cachedFeatured())
+            account.owner.value = null
+            assertNull(repository.cachedFeatured())
+            account.owner.value = "second"
+            assertNull(repository.cachedFeatured())
+        } finally { client.close() }
+    }
+
+    @Test fun selectedCacheSurvivesUnrelatedRefreshButClearsOnPrivateOrDelete() {
+        val cache = OwnerCollectionsCache(account)
+        val selected = SavedCollectionSummary(id, "Weekend", visibility = SavedCollectionVisibility.Public)
+        cache.record("first", null, listOf(selected))
+        cache.recordFeatured("first", id)
+        cache.record("first", null, listOf(selected.copy(title = "Updated")))
+        assertEquals(SavedCollectionFeaturedSelection(id), cache.peekFeatured())
+        cache.upsert("first", selected.copy(visibility = SavedCollectionVisibility.Private))
+        assertEquals(SavedCollectionFeaturedSelection(null), cache.peekFeatured())
+        cache.recordFeatured("first", id)
+        cache.remove("first", id)
+        assertEquals(SavedCollectionFeaturedSelection(null), cache.peekFeatured())
+    }
+
+    private fun featuredCacheClient(offline: () -> Boolean) = client { request -> when (request.url.encodedPath) {
+        "/api/v1/saved-collections/featured" -> if (request.method == HttpMethod.Put) respond("{}")
+            else if (offline()) respond("{}", HttpStatusCode.InternalServerError)
+            else respond("""{"data":{"collectionId":null}}""")
+        else -> respond(defaultList.replace("\"revision\":2", "\"revision\":2,\"isDefault\":true"))
+    } }
+
+    @Test fun failedRefreshPreservesVerifiedCacheAndMutationUpdatesItsSummary() = runTest(dispatcher) {
+        var offline = false
+        val client = client(defaultEndpoint = true) { request -> when (request.method) {
+            HttpMethod.Get -> if (offline) respond("{}", HttpStatusCode.InternalServerError)
+                else respond(defaultList.replace("\"revision\":2", "\"revision\":2,\"isDefault\":true"))
+            HttpMethod.Put -> respond(defaultBody.replace("Избранное", "Edited").replace("\"revision\":2", "\"revision\":3,\"isDefault\":true"))
+            HttpMethod.Delete -> respond("", HttpStatusCode.NoContent)
+            else -> error("Unexpected request")
+        } }
+        try {
+            val repository = repo(client, client)
+            val initial = repository.mine().getOrThrow()
+            offline = true
+            assertTrue(repository.mine().isFailure)
+            assertEquals(initial, repository.cachedMine())
+            repository.update(id, SavedCollectionMetadata("Edited"), 2).getOrThrow()
+            assertEquals("Edited", repository.cachedMine()!!.single().title)
+            repository.delete(id).getOrThrow()
+            assertTrue(repository.cachedMine()!!.isEmpty())
+        } finally { client.close() }
+    }
+
     @Test fun firstOwnerReadCreatesPrivateFavoritesForRoasterMembership() = runTest(dispatcher) {
         var creates = 0
         val client = defaultRoasterClient { creates++ }

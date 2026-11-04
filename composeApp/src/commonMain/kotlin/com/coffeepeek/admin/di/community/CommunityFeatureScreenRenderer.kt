@@ -67,6 +67,7 @@ internal fun communityHost() = CommunityHost(
     },
     feedViewed = { count, isPublic -> TrackFeedViewed(count, isPublic) },
     snackbar = { state, clearance -> CpSnackbarHost(state, Modifier.padding(bottom = clearance)) },
+    abovePosts = { refreshKey, collapsed -> CommunityLeaderboard(refreshKey, collapsed) },
     share = ShareHelper::shareText,
 )
 

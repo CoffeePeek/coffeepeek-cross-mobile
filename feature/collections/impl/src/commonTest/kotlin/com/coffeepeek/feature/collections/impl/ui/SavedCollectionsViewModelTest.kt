@@ -355,7 +355,143 @@ class SavedCollectionsViewModelTest {
         assertEquals(setOf("public"), saved.sentMemberships)
     }
 
-    private fun model(mode: SavedCollectionsMode, id: String? = null) =
-        SavedCollectionsViewModel(saved, snapshots, account, mode, id, target.takeIf { mode == SavedCollectionsMode.Picker },
+    @Test fun cachedLibraryAppearsBeforeFirstCoroutineAndRefreshesWithoutBlockingLoader() = runTest(dispatcher) {
+        saved.cachedLists = listOf(privateList.summary)
+        saved.mineGate = CompletableDeferred()
+        val vm = model(SavedCollectionsMode.Library)
+        assertEquals(listOf(privateList.summary), vm.state.value.lists)
+        assertTrue(vm.state.value.listsLoaded)
+        assertFalse(vm.state.value.loading)
+        saved.lists = listOf(publicList.summary)
+        runCurrent()
+        assertTrue(vm.state.value.refreshing)
+        saved.mineGate!!.complete(Unit)
+        runCurrent()
+        assertEquals(listOf(publicList.summary), vm.state.value.lists)
+        assertFalse(vm.state.value.refreshing)
+    }
+
+    @Test fun recreatedLibraryUsesPreviousSuccessfulOwnerReadInItsFirstFrame() = runTest(dispatcher) {
+        val first = model(SavedCollectionsMode.Library)
+        runCurrent()
+        assertTrue(first.state.value.listsLoaded)
+        saved.mineGate = CompletableDeferred()
+        val reopened = model(SavedCollectionsMode.Library)
+        assertEquals(first.state.value.lists, reopened.state.value.lists)
+        assertFalse(reopened.state.value.loading)
+        assertTrue(reopened.state.value.refreshing)
+        runCurrent()
+        saved.mineGate!!.complete(Unit)
+        runCurrent()
+    }
+
+    @Test fun cachedEmptyLibrarySkipsInitialLoadingAndCanRefreshInBackground() = runTest(dispatcher) {
+        saved.cachedLists = emptyList()
+        saved.mineGate = CompletableDeferred()
+        val vm = model(SavedCollectionsMode.Library)
+        assertTrue(vm.state.value.listsLoaded)
+        assertFalse(vm.state.value.loading)
+        assertTrue(vm.state.value.lists.isEmpty())
+        runCurrent()
+        assertTrue(vm.state.value.refreshing)
+        saved.mineGate!!.complete(Unit)
+        runCurrent()
+        assertEquals(saved.lists, vm.state.value.lists)
+    }
+
+    @Test fun cachedPreferenceKeepsSelectedListDuringBackgroundRefresh() = runTest(dispatcher) {
+        saved.cachedLists = listOf(publicList.summary)
+        saved.cachedFeaturedValue = SavedCollectionFeaturedSelection("public")
+        saved.mineGate = CompletableDeferred()
+        val vm = model(SavedCollectionsMode.Preference)
+        assertEquals("public", vm.state.value.featuredId)
+        assertTrue(vm.state.value.listsLoaded)
+        assertFalse(vm.state.value.loading)
+        runCurrent()
+        assertTrue(vm.state.value.refreshing)
+        saved.mineGate!!.complete(Unit)
+        runCurrent()
+        assertEquals("public", vm.state.value.featuredId)
+    }
+
+    @Test fun cachedExplicitlyHiddenPreferenceIsReadyWithoutFalseToggleFlash() = runTest(dispatcher) {
+        saved.cachedLists = listOf(publicList.summary)
+        saved.cachedFeaturedValue = SavedCollectionFeaturedSelection(null)
+        val vm = model(SavedCollectionsMode.Preference)
+        assertNull(vm.state.value.featuredId)
+        assertTrue(vm.state.value.listsLoaded)
+        assertFalse(vm.state.value.loading)
+        assertTrue(vm.state.value.refreshing)
+    }
+
+    @Test fun listCacheWithoutFeaturedSelectionStillNeedsInitialPreferenceLoad() = runTest(dispatcher) {
+        saved.cachedLists = listOf(publicList.summary)
+        saved.mineGate = CompletableDeferred()
+        val vm = model(SavedCollectionsMode.Preference)
+        assertFalse(vm.state.value.listsLoaded)
+        assertTrue(vm.state.value.loading)
+        saved.mineGate!!.complete(Unit)
+        runCurrent()
+    }
+
+    @Test fun failedPreferenceRefreshKeepsCachedSelectionAndLists() = runTest(dispatcher) {
+        saved.cachedLists = listOf(publicList.summary)
+        saved.cachedFeaturedValue = SavedCollectionFeaturedSelection("public")
+        saved.featuredFailure = IllegalStateException("Offline")
+        val vm = model(SavedCollectionsMode.Preference)
+        runCurrent()
+        assertEquals("public", vm.state.value.featuredId)
+        assertEquals(listOf(publicList.summary), vm.state.value.lists)
+        assertTrue(vm.state.value.listsLoaded)
+        assertFalse(vm.state.value.loading)
+        assertEquals(SavedCollectionsFailure.Load, vm.state.value.failure)
+    }
+
+    @Test fun failedBackgroundRefreshKeepsCachedCardsAndReportsError() = runTest(dispatcher) {
+        saved.cachedLists = listOf(privateList.summary)
+        saved.mineFailure = IllegalStateException("Offline")
+        val vm = model(SavedCollectionsMode.Library)
+        runCurrent()
+        assertEquals(listOf(privateList.summary), vm.state.value.lists)
+        assertTrue(vm.state.value.listsLoaded)
+        assertFalse(vm.state.value.loading)
+        assertEquals(SavedCollectionsFailure.Load, vm.state.value.failure)
+        assertIs<SavedOwnerProfileContent.Lists>(savedOwnerProfileContent(vm.state.value))
+    }
+
+    @Test fun accountSwitchClearsCachedOwnerCardsDuringPendingRefresh() = runTest(dispatcher) {
+        saved.cachedLists = listOf(privateList.summary)
+        saved.mineGate = CompletableDeferred()
+        val vm = model(SavedCollectionsMode.Library)
+        runCurrent()
+        account.owner.value = "second"
+        runCurrent()
+        assertTrue(vm.state.value.lists.isEmpty())
+        assertFalse(vm.state.value.listsLoaded)
+        assertNull(saved.cachedMine())
+        account.owner.value = null
+        runCurrent()
+        assertFalse(vm.state.value.signedIn)
+        assertTrue(vm.state.value.lists.isEmpty())
+    }
+
+    @Test fun mutationDuringCachedRefreshQueuesAnotherRead() = runTest(dispatcher) {
+        saved.cachedLists = listOf(privateList.summary)
+        saved.mineGate = CompletableDeferred()
+        val vm = model(SavedCollectionsMode.Library)
+        runCurrent()
+        saved.changes.emit(Unit)
+        runCurrent()
+        saved.lists = listOf(publicList.summary)
+        saved.mineGate!!.complete(Unit)
+        runCurrent()
+        assertEquals(2, saved.mineReads)
+        assertEquals(listOf(publicList.summary), vm.state.value.lists)
+    }
+
+    private fun model(mode: SavedCollectionsMode, id: String? = null): SavedCollectionsViewModel {
+        saved.currentOwner = { account.currentId() }
+        return SavedCollectionsViewModel(saved, snapshots, account, mode, id, target.takeIf { mode == SavedCollectionsMode.Picker },
             "author".takeIf { mode == SavedCollectionsMode.Featured })
+    }
 }

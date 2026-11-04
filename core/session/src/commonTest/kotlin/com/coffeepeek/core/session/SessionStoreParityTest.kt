@@ -3,6 +3,7 @@ package com.coffeepeek.core.session
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -129,5 +130,38 @@ class SessionStoreParityTest {
         val repository = DefaultSessionStore(Store(SessionCredentials(jwt("warm"), "r")), Rows())
         repository.warmCache()
         assertEquals("warm", repository.peekSession()?.userId)
+    }
+
+    @Test fun accountGenerationTracksLoginLifetimeButNotTokenRefresh() = runTest {
+        val repository = DefaultSessionStore(Store(SessionCredentials(jwt("stored"), "r")), Rows())
+        assertEquals(0L, repository.accountGeneration())
+        val stored = repository.getSession()!!
+        val loadedGeneration = repository.accountGeneration()
+        assertEquals(1L, loadedGeneration)
+        repository.applySession(stored.copy(accessToken = "renewed"))
+        assertEquals(loadedGeneration, repository.accountGeneration())
+        repository.saveSession(null)
+        assertEquals(loadedGeneration + 1, repository.accountGeneration())
+        val loggedInAgain = Session("new-login", null, "stored")
+        repository.saveSession(loggedInAgain)
+        assertEquals(loadedGeneration + 2, repository.accountGeneration())
+        assertTrue(repository.replaceSession(loggedInAgain, loggedInAgain.copy(accessToken = "rotated")))
+        assertEquals(loadedGeneration + 2, repository.accountGeneration())
+        repository.saveSession(Session("other-login", null, "other"))
+        assertEquals(loadedGeneration + 3, repository.accountGeneration())
+    }
+
+    @Test fun aConflatedReloginWithIdenticalCredentialsStillEmitsTheNewAccountLifetime() = runTest {
+        val repository = DefaultSessionStore(Store(), Rows())
+        val session = Session("same", "r", "u")
+        repository.applySession(session)
+        val seen = mutableListOf<Long>()
+        val job = launch { repository.observeSession().collect { seen += repository.accountGeneration() } }
+        runCurrent()
+        repository.applySession(null)
+        repository.applySession(session)
+        runCurrent()
+        job.cancel()
+        assertEquals(listOf(1L, 3L), seen)
     }
 }

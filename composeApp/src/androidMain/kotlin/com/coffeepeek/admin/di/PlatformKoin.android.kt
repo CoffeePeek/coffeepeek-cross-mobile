@@ -4,7 +4,7 @@ import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.di.collections.androidCollectionFavoritesModule
 import com.coffeepeek.admin.di.collections.collectionsModule
 import com.coffeepeek.admin.di.favorites.serverFavoritesModule
-import com.coffeepeek.admin.di.shop.shopFavoriteIntent
+import com.coffeepeek.admin.di.shop.shopFavoritePickerIntent
 import com.coffeepeek.admin.di.shop.AndroidShopCheckInDateFormatter
 import com.coffeepeek.admin.di.shop.shopCheckInModule
 import com.coffeepeek.admin.di.shop.FeatureShopCheckInFormRenderer
@@ -29,6 +29,7 @@ import com.coffeepeek.admin.di.settings.featureSettingsScreenRenderer
 import com.coffeepeek.admin.di.profile.featurePublicProfileScreenRenderer
 import com.coffeepeek.admin.di.shop.FeatureShopDetailScreenRenderer
 import com.coffeepeek.admin.di.shop.FeatureShopCheckInListScreenRenderer
+import com.coffeepeek.admin.di.profile.profileSnapshotModule
 import com.coffeepeek.admin.di.shop.shopBrowsingModule
 import com.coffeepeek.admin.di.checkinhistory.checkInHistoryModule
 import com.coffeepeek.admin.di.contentreport.contentReportModule
@@ -56,9 +57,10 @@ internal fun initAndroidKoin(extraModules: List<org.koin.core.module.Module> = e
             checkInHistoryModule(),
             contentReportModule(),
             coffeeModule(),
-            collectionsModule(),
+            collectionsModule(trackPickerFavorites = true),
             contributionsModule(),
             shelfModule(),
+            profileSnapshotModule(),
         ) + extraModules,
         shopReportRendererFactory = { client ->
             FeatureShopReportScreenRenderer(
@@ -71,7 +73,7 @@ internal fun initAndroidKoin(extraModules: List<org.koin.core.module.Module> = e
         shopCheckInRendererFactory = { FeatureShopCheckInFormRenderer(get()) },
         shopDetailRendererFactory = {
             FeatureShopDetailScreenRenderer(sessions = get(), accounts = get(), details = get(), votes = get(),
-                favorites = get(), favoriteIntent = shopFavoriteIntent(get(), get(), get()), checkInForm = get(),
+                favorites = get(), favoriteIntent = shopFavoritePickerIntent(get(), get()), favoriteCollections = get(), checkInForm = get(),
                 visibility = get(), blockActions = get())
         },
         shopCheckInListRendererFactory = {
@@ -85,8 +87,8 @@ internal fun initAndroidKoin(extraModules: List<org.koin.core.module.Module> = e
             featureCoffeeScreenRenderer(get(), CoffeeShelfTab(get(), get(), Locator.database.settingRepository))
         },
         shelfRendererFactory = { ShelfFeatureScreenRenderer(get(), Locator.database.settingRepository, shelfBrewForm(get())) },
-        publicProfileRendererFactory = { featurePublicProfileScreenRenderer(get(), get(), get(), get(), get()) },
-        ownProfileRendererFactory = { featureOwnProfileScreenRenderer(get(), get(), get(), get(), get(), get(), get(), get(), get()) },
+        publicProfileRendererFactory = { featurePublicProfileScreenRenderer(get(), get(), get(), get(), get(), get()) },
+        ownProfileRendererFactory = { featureOwnProfileScreenRenderer(get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) },
         accountRendererFactory = { featureAccountScreenRenderer(get(), get(), get()) },
         settingsRendererFactory = {
             featureSettingsScreenRenderer(get(), get(), get(), get(), get(), notify = { Toast.makeText(Locator.appContext, it, Toast.LENGTH_SHORT).show() })

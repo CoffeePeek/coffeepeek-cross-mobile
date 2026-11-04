@@ -22,6 +22,7 @@
     <string name="collections_export_failed">Не ўдалося падрыхтаваць выяву. Паспрабуйце яшчэ раз.</string>
     <string name="collections_share_link">Падзяліцца спасылкай</string>
     <string name="collections_share_image">Падзяліцца выявай</string>
+    <string name="collections_share_photo">Падзяліцца фота</string>
     <string name="collections_preparing">Падрыхтоўка…</string>
     <string name="collections_format_chat">Для чатаў</string>
     <string name="collections_format_story">Для гісторый</string>
@@ -47,7 +48,8 @@
     <string name="collections_move_down">Перамясціць ніжэй</string>
     <string name="collections_library">Падборкі</string>
     <string name="collections_new_list">Новая падборка</string>
-    <string name="collections_edit_list">Рэдагаваць падборку</string>
+    <string name="collections_edit_list">Рэдагаваць</string>
+    <string name="collections_more_actions">Дзеянні з падборкай</string>
     <string name="collections_public_lists">Публічныя</string>
     <string name="collections_private_lists">Асабістыя</string>
     <string name="collections_library_empty">У вас пакуль няма падборак.</string>

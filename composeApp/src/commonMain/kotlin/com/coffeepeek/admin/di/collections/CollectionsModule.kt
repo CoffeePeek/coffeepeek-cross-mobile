@@ -15,14 +15,14 @@ import kotlinx.coroutines.flow.map
 import org.koin.dsl.module
 import org.koin.core.module.Module
 
-internal fun collectionsModule(apiBaseUrl: String = Constants.BASE_URL) = module {
+internal fun collectionsModule(apiBaseUrl: String = Constants.BASE_URL, trackPickerFavorites: Boolean = false) = module {
     single<CollectionsAccount> { SessionCollectionsAccount(get()) }
     single { CollectionsHttpClient(get<ApiClients>().client, get()) }
-    collectionsRepositories(apiBaseUrl)
+    collectionsRepositories(apiBaseUrl, trackPickerFavorites)
     single<CollectionsEntry> { createCollectionsEntry(get(), get(), get(), ::decodeCollectionPosterPhoto, collectionCoverPicker) }
 }
 
-private fun Module.collectionsRepositories(apiBaseUrl: String) {
+private fun Module.collectionsRepositories(apiBaseUrl: String, trackPickerFavorites: Boolean) {
     single<CollectionsRepository> {
         val client = get<ApiClients>()
         val owned = get<CollectionsHttpClient>()
@@ -31,7 +31,8 @@ private fun Module.collectionsRepositories(apiBaseUrl: String) {
     single<SavedCollectionsRepository> {
         val client = get<ApiClients>()
         val owned = get<CollectionsHttpClient>()
-        createSavedCollectionsRepository(owned.client, client.plainClient, apiBaseUrl, get(), owned::pin)
+        val repository = createSavedCollectionsRepository(owned.client, client.plainClient, apiBaseUrl, get(), owned::pin)
+        if (trackPickerFavorites) FavoriteMembershipAnalyticsRepository(repository, get(), get()) else repository
     }
 }
 

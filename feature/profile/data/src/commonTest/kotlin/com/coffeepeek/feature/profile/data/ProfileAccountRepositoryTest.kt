@@ -49,6 +49,23 @@ class ProfileAccountRepositoryTest {
         } finally { f.close() }
     }
 
+    @Test fun cacheScopeKeepsTokenRefreshButChangesForEveryLoginLifetime() = runTest {
+        val f = ProfileAccountFixture(backgroundScope)
+        try {
+            val first = f.data.accounts.cacheScope()
+            assertEquals("1:a", first)
+            assertTrue(!first!!.contains("token"))
+            f.sessions.apply(Session("rotated-token", null, "a"))
+            assertEquals(first, f.data.accounts.cacheScope())
+            f.sessions.apply(null)
+            assertNull(f.data.accounts.cacheScope())
+            f.sessions.apply(Session("second-login-token", null, "a"))
+            assertEquals("3:a", f.data.accounts.cacheScope())
+            f.sessions.apply(Session("other-token", null, "b"))
+            assertEquals("4:b", f.data.accounts.cacheScope())
+        } finally { f.close() }
+    }
+
     @Test fun oneSharedCacheRetainsAllProfileFieldsAndRefreshIsExplicit() = runTest {
         val f = ProfileAccountFixture(backgroundScope)
         try {

@@ -234,3 +234,168 @@ package inspection and a Direct Boot-aware resolver confirmed MainActivity is
 present, but Android reported user 0 as `BOOTING` even with boot-completed set.
 Startup and authenticated manual UI review are therefore not claimed. No
 uninstall, data clearing, device-security change or live account write occurred.
+
+### User-selected physical phone follow-up
+
+The user redirected the check to a connected Pixel 9, API 37.
+Its installed `com.coffeepeek` 1.1.5.2682 has a different signing certificate, so
+it was preserved. The existing `-PpushTestApp=true` Debug option built the same
+code checkpoint `b21be5e9` as `com.coffeepeek.pushdebug` 1.1.5.2689, using the
+normal backend, for installation alongside it. APK SHA-256:
+`221238B5E54022ACEA5E35CCBFB5F51950C6FB0017189E0A576455A89B9C5212`.
+USB disconnected during installation and the command failed; after reconnect,
+package inspection confirmed the installed version. The subsequent cold launch
+succeeded in 1013 ms and the process remained alive. A later hot launch also
+succeeded. USB disconnected again during manual screenshot capture, so full
+profile/shelf/editor visual checks are not claimed. The original phone app was
+not replaced, uninstalled, cleared or signed out. No live account write occurred.
+
+## Profile and collection re-entry follow-up — 2026-11-04
+
+The user requested this continuation directly on `develop`, split among three
+subagents, with ordinary Debug on the connected phone. Verification covers
+first-frame cached content, background refresh and refresh failure, empty versus
+unloaded snapshots, account replacement/logout, editor menu/visibility/save,
+and the profile shelf. No live account mutations are part of verification.
+
+The owner collection repository now keeps verified process-memory snapshots,
+including an explicitly loaded empty library. Library and picker ViewModels
+hydrate before their first coroutine and refresh without replacing existing
+cards with a loading screen. Successful mutations update the cached summaries;
+queued invalidation still runs after a pending refresh. The profile entry uses
+the same collection snapshot.
+
+Profile snapshots are shared by both Android profile entries and bounded to four
+profiles. Check-ins/cursor and activity survive re-entry. Session generation and
+author-visibility revision isolate the snapshots; credential refresh preserves
+the account cache, while logout/re-login or account replacement invalidates it.
+The legacy own-profile getter rechecks the active account synchronously before
+exposing cached data. Own shelf metadata is reused during refresh; public visitor
+shelves retain their existing fail-closed refresh policy. Photo bytes are not
+retained by the new profile/shelf snapshot stores.
+
+The editor uses the shared liquid glass Save button, the short edit title and
+one top-right overflow menu for available link/photo sharing and deletion.
+The public/private explanation is inside its switch control. The user's next
+correction restores the rounded shelf edge and uses flat bolt heads with one
+straight slot. Existing paired previews cover these states.
+
+The first unit run exposed two fixture assumptions: the fake collection response
+was captured before its gate, and the profile account-switch fixture returned
+the old failure for the new account's background refresh. Both fixtures now model
+separate responses while preserving their original assertions. The next run
+passed 1,480 unit/contract tests, with zero failures/skips, and both Direct Debug
+and Direct Sandbox assemblies including packaged DEX checks. A final targeted
+run remains necessary for subsequent account-scope and activity-slot changes.
+
+The week's counts/photo URLs also have one account-and-date-scoped presentation
+snapshot, cleared on logout and Koin shutdown. The profile collection preference
+retains both its library and the nullable featured-list selection, preventing a
+checked switch from flashing off on re-entry. General Android Settings no longer
+renders the profile-preferences section. The Save control now floats above the
+scrolling editor, with safe bottom clearance and no separate bottom panel.
+
+### Final regression gate
+
+The subsequent full gate passed on 2026-11-04: 1,569 unit/contract tests,
+zero failures and skips. Counts: session 23, legacy data 72, profile impl 66,
+collections data 39/impl 70, shop impl 109, roaster impl 23, shelf data 49/impl 81,
+settings impl 38 and application Direct Debug 999. Direct Debug and Direct
+Sandbox APK assembly, packaged DEX runtime-class guards and Sandbox isolation
+passed. Sandbox was built only, never installed or launched for this follow-up.
+An initial final-gate attempt stopped on a new shop test's generic-list type
+inference; an explicit event list type corrected that compile error before the
+passing full run. No automated UI/instrumentation/screenshot tests were added.
+
+Shop and roaster heart taps now open the same membership picker for either
+heart state. This includes migrated detail/list surfaces and legacy feed/search,
+favorites cards/previews and shop/roaster screens. No optimistic favorite write
+runs before the picker. Android confirmation analytics use the existing service,
+consent/account operation scope and verified before/after union; metadata edits,
+cancel and moves that keep the place favorited do not create a favorite-change
+event. The iOS writer remains unchanged.
+
+Read-only physical startup is the remaining delivery check. Full authenticated
+visual review, theme/font/window/accessibility, live account writes and native
+iOS compilation remain unverified gates. Backend develop CI is green as recorded
+in FLOW_AUDIT.md; production deployment was not performed.
+
+After the full gate, a narrow shop accessibility correction keeps the membership
+picker available while the separate favorite projection is loading/unavailable
+and labels that action as choosing collections. Shop impl 109/109 and application
+Direct Debug 999/999 passed again. Intermediate compile attempts caught a
+stateless-screen VM reference and a missing resource import; both were corrected
+before that passing run. The final phone APK is rebuilt from the committed fix.
+
+### Final physical delivery
+
+Source `8028eef5`, `directDebug -PpushTestApp=true`, package
+`com.coffeepeek.pushdebug`, version 1.1.5.2691 was built with the packaged DEX
+checks and installed in place on the user-selected Pixel 9, API 37. APK SHA-256:
+`8808B559C804E178F11053714C558790DAD3D61757F308D395F9395D4D674FBB`.
+The installed and built certificates matched; version increased from 2689 and
+first-install time remained 2026-11-04 14:26:23. The existing normal application
+was not replaced, uninstalled or cleared.
+
+The unlocked phone reported a successful cold start in 917 ms. A later process
+and foreground-activity check succeeded; a local screenshot confirms the normal
+Discovery page rendered in dark mode. USB dropped again before the scoped crash
+buffer read, so that read was interrupted rather than claimed as passed. This
+proves startup/rendering, not authenticated collection persistence or a complete
+profile/editor/theme/font/accessibility review. No live account mutation was
+performed; screenshots and device diagnostics remain in ignored local build
+outputs. Direct Sandbox assembly/isolation was verified at the preceding full
+gate and was not installed or launched.
+
+
+## Profile header and editor follow-up — 2026-11-04
+
+Scope: match the supplied profile-header reference, use the editor's full bottom
+viewport, provide the floating Save button with a real blur source, and preserve
+the shelf-visibility control on re-entry. Existing profile navigation/actions,
+zero-roaster hiding and immediate visibility saves remain intact. This work uses
+develop separately from an unrelated in-progress migration merge.
+
+The header places the name and one counter row beside the avatar, then the bio
+below. Avatar space adapts to a 320 dp window; extra-large text uses one full-width
+counter row with horizontal overflow instead of reducing the user's font scale.
+Loading geometry follows the header. Paired previews cover own/public profiles,
+320 dp, no roasters and 1.5 font scale. Font metrics of the existing Manrope labels
+fit the allocated 220 dp row at the narrow normal-size layout.
+
+The collection editor's scroll content extends behind the bottom gesture region.
+The floating Save control retains its touch-safe clearance, samples the content
+through CoffeePeekPhotoBackdrop and uses a thin theme outline on uniform light
+backgrounds. A colored-content pair of previews demonstrates its blur source.
+The immediate-save hint is removed from profile editing.
+
+Shelf visibility caches both true and false by account and session generation.
+ViewModels hydrate synchronously and revalidate in the background. The first
+uncached read uses shimmer; successful writes invalidate earlier reads so they
+cannot restore the old switch state. Unit regressions cover session changes,
+failed refresh, cached false and read/write races.
+
+The first compile attempt caught a nested-layout receiver reference and positional
+cache-constructor arguments after the new field. Both were fixed. The subsequent
+gate passed 1,272 unit/contract tests: profile impl 66, collections impl 70, shelf
+data 52/impl 85, application Direct Debug 999; zero failures/skips. Direct Debug
+assembly and packaged DEX checks passed. No automated UI/instrumented/screenshot
+tests were added. Preview rendering through the IDE was unavailable; exhaustive
+manual theme/font/window/accessibility and authenticated writes are not claimed.
+
+
+The remote develop advanced with leaderboard integration while this patch was
+being verified. The patch rebased cleanly over `1110ea12`; the repeated full gate
+passed 1,277 tests (the application suite is now 1,004), zero failures, and Direct
+Debug assembly/DEX checks. The code is published as `87383183`.
+
+On the user's immediate-update request, that source was built as
+`directDebug -PpushTestApp=true`, package `com.coffeepeek.pushdebug`, version
+1.1.5.2702, SHA-256
+`43BB4743F06F4A7F477758F457E451F1C102F5B0095D310676825BA2941D70EF`.
+The certificate matched the existing Debug. Installation succeeded in place on
+Pixel 9/API 37, increasing version 2691 to 2702 and preserving first-install time
+2026-11-04 14:26:23. Cold launch completed in 890 ms; the later process check
+confirmed it remained alive. No data clear, uninstall, downgrade, Sandbox run or
+live-account edit was performed. Full authenticated visual acceptance remains a
+separate gate.

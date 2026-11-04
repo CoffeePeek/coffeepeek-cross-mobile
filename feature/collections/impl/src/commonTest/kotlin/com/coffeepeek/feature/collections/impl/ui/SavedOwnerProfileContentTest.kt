@@ -16,13 +16,18 @@ class SavedOwnerProfileContentTest {
         assertEquals(SavedOwnerProfileContent.Empty, savedOwnerProfileContent(ready.copy(lists = emptyList())))
     }
 
-    @Test fun refreshHidesPreviouslyLoadedCollections() {
-        assertEquals(SavedOwnerProfileContent.Status, savedOwnerProfileContent(ready.copy(loading = true)))
+    @Test fun backgroundRefreshKeepsPreviouslyLoadedCollections() {
+        val content = assertIs<SavedOwnerProfileContent.Lists>(savedOwnerProfileContent(ready.copy(refreshing = true)))
+        assertEquals(ready.lists, content.values)
     }
 
-    @Test fun failedReadDoesNotExposeStaleCollections() {
-        assertEquals(SavedOwnerProfileContent.Status,
-            savedOwnerProfileContent(ready.copy(failure = SavedCollectionsFailure.Load)))
+    @Test fun failedRefreshKeepsTheVerifiedOwnerSnapshot() {
+        val content = assertIs<SavedOwnerProfileContent.Lists>(savedOwnerProfileContent(ready.copy(failure = SavedCollectionsFailure.Load)))
+        assertEquals(ready.lists, content.values)
+    }
+
+    @Test fun initialLoadWithoutVerifiedSnapshotShowsStatus() {
+        assertEquals(SavedOwnerProfileContent.Status, savedOwnerProfileContent(ready.copy(listsLoaded = false)))
     }
 
     @Test fun signedOutStateCannotRenderThePreviousOwnersCollections() {

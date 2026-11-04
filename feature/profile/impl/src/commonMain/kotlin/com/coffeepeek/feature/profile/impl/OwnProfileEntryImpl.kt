@@ -11,6 +11,7 @@ import com.coffeepeek.feature.profile.api.ProfileAuthorActions
 import com.coffeepeek.feature.profile.api.ProfileAuthorVisibility
 import com.coffeepeek.feature.profile.api.ProfileContribution
 import com.coffeepeek.feature.profile.api.ProfileSignOutPort
+import com.coffeepeek.feature.profile.api.ProfileSnapshotStore
 import com.coffeepeek.feature.profile.api.PublicCheckInsPort
 import com.coffeepeek.feature.profile.domain.PublicProfileData
 import com.coffeepeek.feature.profile.impl.ui.OwnProfileViewModel
@@ -31,7 +32,8 @@ fun createOwnProfileEntry(
     visibility: ProfileAuthorVisibility = ProfileAuthorVisibility.None,
     authorActions: ProfileAuthorActions = ProfileAuthorActions.None,
     slots: OwnProfileSlots,
-): OwnProfileEntry = OwnProfileEntryImpl(data, checkIns, accounts, signOut, visibility, authorActions, slots)
+    snapshots: ProfileSnapshotStore = ProfileSnapshotStore.None,
+): OwnProfileEntry = OwnProfileEntryImpl(data, checkIns, accounts, signOut, visibility, authorActions, slots, snapshots)
 
 private class OwnProfileEntryImpl(
     private val data: PublicProfileData,
@@ -41,6 +43,7 @@ private class OwnProfileEntryImpl(
     private val visibility: ProfileAuthorVisibility,
     private val authorActions: ProfileAuthorActions,
     private val slots: OwnProfileSlots,
+    private val snapshots: ProfileSnapshotStore,
 ) : OwnProfileEntry {
     @OptIn(ExperimentalUuidApi::class)
     private val instanceKey = Uuid.random().toString()
@@ -54,7 +57,7 @@ private class OwnProfileEntryImpl(
         val model = viewModel(key = "own-profile:$instanceKey") { OwnProfileViewModel(accounts, signOut) }
         OwnProfileScreen(
             vm = model,
-            publicModel = { slug -> viewModel(key = "own-public:$instanceKey:$slug") { PublicProfileViewModel(slug, data, checkIns, accounts, visibility) } },
+            publicModel = { slug -> viewModel(key = "own-public:$instanceKey:$slug") { PublicProfileViewModel(slug, data, checkIns, accounts, visibility, snapshots) } },
             authorActions = authorActions, slots = slots, bottomClearance = bottomClearance,
             onEditProfile = onEditProfile, onOpenShop = onOpenShop, onOpenRoaster = onOpenRoaster, onLogin = onLogin,
             onOpenUser = onOpenUser, onOpenFavorites = onOpenFavorites, onOpenCheckIns = onOpenCheckIns,

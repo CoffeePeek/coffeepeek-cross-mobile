@@ -206,7 +206,6 @@
     <string name="shelf_profile_title">Кававая паліца</string>
     <string name="shelf_profile_empty">На паліцы пакуль няма кавы</string>
     <string name="shelf_profile_open_coffee">Адкрыць каву «%1$s»</string>
-    <string name="shelf_profile_updating">Абнаўляем наладу паліцы</string>
     <string name="shelf_profile_visibility_load_failed">Не ўдалося загрузіць наладу бачнасці паліцы.</string>
     <string name="shelf_profile_visibility_save_failed">Не ўдалося захаваць наладу. Паспрабуйце яшчэ раз.</string>
 </resources>

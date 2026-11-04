@@ -16,6 +16,7 @@ internal data class ShopDetailState(
     val pendingCheckInVoteId: String? = null,
     val isFavorite: Boolean = false,
     val favoriteAvailable: Boolean = false,
+    val selectCollectionsOnFavorite: Boolean = false,
     val isFavoriteLoading: Boolean = false,
     val priceInfoVisible: Boolean = false,
 )
