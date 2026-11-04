@@ -411,8 +411,9 @@ internal class SearchViewModel(
     // ---- favorites ----
 
     private suspend fun toggleFavorite(shopId: String) {
-        if (currentState.isGuest) { sendEvent(SearchEvent.SignInRequired); return }
         val shop = currentState.shops.firstOrNull { it.id == shopId } ?: return
+        if (favorites.selectCollections(shop.id)) return
+        if (currentState.isGuest) { sendEvent(SearchEvent.SignInRequired); return }
         val started = favoriteGuard.withLock {
             if (shopId in currentState.favoriteUpdates) false else { updateState { copy(favoriteUpdates = favoriteUpdates + shopId, favoriteFailureId = null) }; true }
         }

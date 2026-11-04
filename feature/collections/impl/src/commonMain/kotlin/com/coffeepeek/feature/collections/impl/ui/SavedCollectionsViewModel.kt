@@ -27,14 +27,14 @@ internal class SavedCollectionsViewModel(private val saved: SavedCollectionsRepo
         if (mode !in setOf(SavedCollectionsMode.Library, SavedCollectionsMode.Preference)) return
         viewModelScope.launch {
             saved.observeChanges().collect {
-                if (currentState.busy || currentState.loading || currentState.refreshing) reloadPending = true else reload()
+                if (currentState.busy || currentState.loading || currentState.refreshing) reloadPending = true else reload(force = true)
             }
         }
     }
 
     override suspend fun handleActionInternal(action: SavedCollectionsAction) {
         when (action) {
-            SavedCollectionsAction.Reload -> if (!currentState.busy && !currentState.loading) reload()
+            SavedCollectionsAction.Reload -> if (!currentState.busy && !currentState.loading) reload(force = true)
             SavedCollectionsAction.Back -> back()
             SavedCollectionsAction.SignIn -> sendEvent(SavedCollectionsEvent.SignIn)
             SavedCollectionsAction.Save -> save()
@@ -91,7 +91,7 @@ internal class SavedCollectionsViewModel(private val saved: SavedCollectionsRepo
             memberships = cached?.filter { it.containsItem }?.map { it.id }?.toSet().orEmpty()) }
     }
 
-    private fun reload() {
+    private fun reload(force: Boolean = false) {
         if (mode !in setOf(SavedCollectionsMode.Public, SavedCollectionsMode.Featured) && !currentState.signedIn) return
         val epoch = generation
         reloadPending = false
@@ -101,8 +101,8 @@ internal class SavedCollectionsViewModel(private val saved: SavedCollectionsRepo
             collection = if (mode == SavedCollectionsMode.Featured) null else collection) }
         launchWork(epoch) {
             when (mode) {
-                SavedCollectionsMode.Library, SavedCollectionsMode.Picker -> loadLists(epoch)
-                SavedCollectionsMode.Preference -> loadPreference(epoch)
+                SavedCollectionsMode.Library, SavedCollectionsMode.Picker -> loadLists(epoch, force)
+                SavedCollectionsMode.Preference -> loadPreference(epoch, force)
                 SavedCollectionsMode.Editor -> loadEditor(epoch)
                 SavedCollectionsMode.Public -> loadPublic(epoch)
                 SavedCollectionsMode.Featured -> loadFeatured(epoch)
@@ -110,16 +110,16 @@ internal class SavedCollectionsViewModel(private val saved: SavedCollectionsRepo
         }
     }
 
-    private suspend fun loadLists(epoch: Int) {
-        val result = saved.mine(target).checked()
+    private suspend fun loadLists(epoch: Int, force: Boolean) {
+        val result = (if (force) saved.refreshMine(target) else saved.mine(target)).checked()
         if (epoch != generation) return
         updateState { copy(lists = result.getOrNull() ?: lists, memberships = result.getOrNull()?.filter { it.containsItem }?.map { it.id }?.toSet() ?: memberships,
             listsLoaded = result.isSuccess || listsLoaded, membershipsLoaded = result.isSuccess,
             failure = if (result.isFailure) SavedCollectionsFailure.Load else null) }
     }
 
-    private suspend fun loadPreference(epoch: Int) {
-        val lists = saved.mine().checked()
+    private suspend fun loadPreference(epoch: Int, force: Boolean) {
+        val lists = (if (force) saved.refreshMine() else saved.mine()).checked()
         val featured = saved.featuredId().checked()
         if (epoch != generation) return
         val complete = lists.isSuccess && featured.isSuccess
@@ -364,7 +364,7 @@ internal class SavedCollectionsViewModel(private val saved: SavedCollectionsRepo
     private fun finishWork(epoch: Int) {
         if (epoch != generation) return
         updateState { copy(busy = false, loading = false, refreshing = false) }
-        if (reloadPending) reload()
+        if (reloadPending) reload(force = true)
     }
 
     private fun <T> Result<T>.checked(): Result<T> = also {

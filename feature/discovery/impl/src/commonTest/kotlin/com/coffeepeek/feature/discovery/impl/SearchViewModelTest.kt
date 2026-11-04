@@ -339,6 +339,29 @@ class SearchViewModelTest {
 
     // ---- favorites ----
 
+    @Test fun bothHeartStatesOpenCollectionsWithoutOptimisticChangesOrWaitingForAWrite() = runTest(dispatcher) {
+        favorites.collectionsEnabled = true
+        favorites.flow.value = setOf("b")
+        favorites.set = { _, _ -> error("Only picker confirmation may write favorites") }
+        val vm = model()
+        vm.send(SearchAction.ToggleFavorite("a"), SearchAction.ToggleFavorite("b"), scope = this)
+        assertEquals(listOf("a", "b"), favorites.collectionRequests)
+        assertEquals(listOf(false, true), vm.now.shops.map { it.isFavorite })
+        assertTrue(vm.now.favoriteUpdates.isEmpty())
+        assertTrue(favorites.changes.isEmpty())
+        assertNull(vm.now.favoriteFailureId)
+    }
+
+    @Test fun aGuestPickerRequestUsesTheApplicationAuthContinuationWithoutAWrite() = runTest(dispatcher) {
+        account.key.value = null
+        favorites.collectionsEnabled = true
+        val vm = model()
+        vm.send(SearchAction.ToggleFavorite("a"), scope = this)
+        assertEquals(listOf("a"), favorites.collectionRequests)
+        assertFalse(vm.now.shops.first().isFavorite)
+        assertTrue(favorites.changes.isEmpty())
+    }
+
     @Test fun theFavoritesOfTheAccountDecideTheFlagsAcrossPages() = runTest(dispatcher) {
         favorites.flow.value = setOf("b"); val vm = model()
         assertEquals(listOf(false, true), vm.now.shops.map { it.isFavorite })

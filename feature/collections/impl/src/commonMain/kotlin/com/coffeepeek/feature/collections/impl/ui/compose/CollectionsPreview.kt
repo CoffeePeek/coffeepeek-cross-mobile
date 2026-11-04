@@ -55,7 +55,7 @@ internal fun CollectionsPreview(state: CollectionsState, onAction: (CollectionsA
 private fun CollectionFormats(state: CollectionsState, onAction: (CollectionsAction) -> Unit) {
     val labels = listOf(stringResource(Res.string.collections_format_chat), stringResource(Res.string.collections_format_story))
     CoffeePeekCapsuleSegmentedControl(CollectionPosterFormat.entries, state.format, { labels[it.ordinal] },
-        { onAction(CollectionsAction.Format(it)) }, Modifier.fillMaxWidth().heightIn(min = 48.dp), enabled = !state.busy)
+        { onAction(CollectionsAction.Format(it)) }, Modifier.fillMaxWidth(), enabled = !state.busy)
 }
 
 @Composable

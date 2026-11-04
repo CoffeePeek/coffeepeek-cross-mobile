@@ -76,6 +76,22 @@ class CollectionsViewModelTest {
         assertEquals(0, repository.creates)
     }
 
+    @Test fun repeatedOpenLinksKeepsTheFirstLoadActiveUntilItsReplyArrives() = runTest(dispatcher) {
+        val model = model()
+        runCurrent()
+        repository.mineGate = CompletableDeferred()
+        repeat(2) { model.onAction(CollectionsAction.OpenLinks) }
+        runCurrent()
+        assertEquals(1, repository.mineReads)
+        assertTrue(model.state.value.loading)
+        assertNull(model.state.value.failure)
+        repository.mineGate!!.complete(Unit)
+        runCurrent()
+        assertFalse(model.state.value.loading)
+        assertNull(model.state.value.failure)
+        assertEquals("owned", model.state.value.links.single().id)
+    }
+
     @Test fun retryOfAFailedOwnedCollectionReadKeepsTheRequestedLinkAndDoesNotReloadFavorites() = runTest(dispatcher) {
         val model = model()
         runCurrent()
@@ -272,6 +288,8 @@ class CollectionsViewModelTest {
         var readFailure: Throwable? = null
         val readIds = mutableListOf<String>()
         var favoritesBlock: (suspend () -> List<CollectionPlace>)? = null
+        var mineGate: CompletableDeferred<Unit>? = null
+        var mineReads = 0
         override suspend fun favorites(): Result<List<CollectionPlace>> { favoriteReads++; return Result.success(favoritesBlock?.invoke() ?: places) }
         override suspend fun create(title: String, places: List<CollectionPlace>): Result<SharedCollection> {
             creates++; sent = places.toList(); createGate?.await()
@@ -281,7 +299,11 @@ class CollectionsViewModelTest {
             readIds += id
             return readFailure?.let { Result.failure(it) } ?: Result.success(SharedCollection(id, "Public", "https://coffeepeek.by", places))
         }
-        override suspend fun mine() = Result.success(listOf(CollectionSummary("owned", "Owned", "https://coffeepeek.by", 1)))
+        override suspend fun mine(): Result<List<CollectionSummary>> {
+            mineReads++
+            mineGate?.await()
+            return Result.success(listOf(CollectionSummary("owned", "Owned", "https://coffeepeek.by", 1)))
+        }
         override suspend fun revoke(id: String): Result<Unit> { revocations++; return if (revokeFailure) Result.failure(IllegalStateException()) else Result.success(Unit) }
         override suspend fun photo(url: String): ByteArray? = null
     }

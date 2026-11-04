@@ -9,6 +9,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import com.coffeepeek.admin.ui.screen.checkins.CheckInCreateButton
 import com.coffeepeek.admin.settings.CityPreference
+import com.coffeepeek.admin.di.collections.FavoriteCollectionsPrompt
 import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.ui.component.LocalFloatingNavClearance
 import com.coffeepeek.admin.ui.screen.main.CheckInTabContent
@@ -59,8 +60,9 @@ internal fun featureDiscoveryScreenRenderer(
     cityPreference: CityPreference,
     roasters: RoasterScreenRenderer,
     scope: CoroutineScope,
+    favoriteCollections: FavoriteCollectionsPrompt?,
 ): DiscoveryScreenRenderer {
-    val favoriteAdapter = AppDiscoveryFavorites(favorites)
+    val favoriteAdapter = AppDiscoveryFavorites(favorites, favoriteCollections)
     val repository = createDiscoveryRepository(client, favoriteAdapter::favoriteIds, roasterEntries(shops))
     return FeatureDiscoveryScreenRenderer(
         createDiscoveryTabEntry(

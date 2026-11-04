@@ -58,7 +58,7 @@ internal data class CommunityState(
     val isLoadingMore: Boolean = false,
     val error: TimelineError? = null,
     val failedPage: Int? = null,
-    val helpfulId: String? = null,
+    val helpfulIds: Set<String> = emptySet(),
     /** The cursor is no longer valid: the retry starts from the first page. */
     val restartPagination: Boolean = false,
     val editing: PostEditState? = null,
@@ -74,7 +74,9 @@ internal data class CommunityState(
     val reportFailed: Boolean = false,
     val isReporting: Boolean = false,
 ) {
-    val isMutating: Boolean get() = isSaving || changingVisibilityId != null || helpfulId != null || isReporting
+    val isMutating: Boolean get() = isSaving || changingVisibilityId != null || helpfulIds.isNotEmpty() || isReporting
+    val canLike: Boolean get() = timeline == CommunityTimeline.Public && !isSaving && changingVisibilityId == null &&
+        !isReporting && editing == null && reportingId == null
     fun owns(post: CommunityPost): Boolean = ownsPost(post, isLoggedIn, timeline == CommunityTimeline.Mine, ownAuthorSlug)
     fun canBlockAuthor(post: CommunityPost): Boolean = canBlockAuthor(isLoggedIn, timeline == CommunityTimeline.Mine, ownAuthorSlug, owns(post))
 }

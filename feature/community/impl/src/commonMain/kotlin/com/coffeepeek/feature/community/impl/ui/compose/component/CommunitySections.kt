@@ -36,3 +36,10 @@ internal fun CommunitySections(leadersSelected: Boolean, onSelected: (Boolean) -
 @Preview @Composable private fun CommunitySectionsDarkPreview() = CoffeePeekTheme(darkTheme = true) {
     CommunitySections(true, {}, true, {})
 }
+
+@Preview @Composable private fun CommunityFeedOnlyLightPreview() = CoffeePeekTheme(darkTheme = false) {
+    CommunitySections(false, {}, false, {})
+}
+@Preview @Composable private fun CommunityFeedOnlyDarkPreview() = CoffeePeekTheme(darkTheme = true) {
+    CommunitySections(false, {}, false, {})
+}

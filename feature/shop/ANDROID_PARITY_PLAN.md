@@ -1034,3 +1034,15 @@ Paired light/dark sending previews were added. The same 108 Shop impl tests
 passed again; Direct Sandbox assembly, isolation, and packaged DEX checks
 passed. No device was selected or app installed. Native iOS compilation and
 manual sheet review, including large fonts, remain open.
+
+## Optimistic check-in likes — 2026-11-04
+
+Check-in preview/list hearts and counts now update before the vote request;
+confirmed counts reconcile from the server, and failure/cancellation restores the
+previous vote under the existing job/session guard. Pending writes retain a heart
+instead of a spinner. Duplicate and refresh guards stay intact. Gated unit tests
+now assert the visible optimistic count before allowing the server reply. Shop
+impl 109 tests, plus the other affected suites (1,374 total), and Direct Debug
+assembly/DEX verification passed. Initial failure and remaining manual/native
+gates are recorded in `../community/RESPONSIVE_LIKES_PLAN.md`. No device run or
+automated UI/instrumentation/screenshot test was performed.

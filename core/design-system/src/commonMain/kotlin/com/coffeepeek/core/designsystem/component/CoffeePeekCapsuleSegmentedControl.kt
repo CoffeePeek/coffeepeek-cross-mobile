@@ -6,17 +6,21 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -25,11 +29,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
+import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
+import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
@@ -37,6 +45,8 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
  * A pill of exclusive options. By default the options share the width equally (short labels). With [scrollable] every option takes the width of its label
  * (plus a horizontal padding) and the row scrolls sideways, so long labels or a large font never get squeezed; the pill then keeps a 4 dp inner padding.
  * Scrollable options retain the Compose layout.
+ * [minSegmentHeight] includes the track's inner padding and defaults to the button height.
+ * Compose segments can grow beyond that minimum to accommodate larger text.
  */
 @Composable
 fun <T> CoffeePeekCapsuleSegmentedControl(
@@ -47,7 +57,7 @@ fun <T> CoffeePeekCapsuleSegmentedControl(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     scrollable: Boolean = false,
-    minSegmentHeight: Dp = 48.dp,
+    minSegmentHeight: Dp = CoffeePeekDimens.buttonHeight,
 ) {
     require(options.isNotEmpty()) { "Segmented control requires options" }
     require(options.distinct().size == options.size) { "Options must be unique" }
@@ -64,15 +74,17 @@ fun <T> CoffeePeekCapsuleSegmentedControl(
 private fun <T> CoffeePeekScrollableSegments(options: List<T>, selected: T, label: (T) -> String,
     onSelected: (T) -> Unit, modifier: Modifier, enabled: Boolean, minSegmentHeight: Dp) {
     val container = modifier
+        .heightIn(min = minSegmentHeight)
         .clip(RoundedCornerShape(percent = 50))
         .background(MaterialTheme.colorScheme.surfaceVariant)
     LazyRow(
         modifier = container.selectableGroup(),
-        contentPadding = PaddingValues(4.dp),
+        contentPadding = PaddingValues(CoffeePeekDimens.spacing1),
     ) {
         items(options) { option ->
             CoffeePeekCapsuleSegment(label(option), option == selected, enabled, { onSelected(option) },
-                Modifier, labelPadding = 16.dp, minHeight = minSegmentHeight)
+                Modifier, labelPadding = 16.dp,
+                minHeight = (minSegmentHeight - CoffeePeekDimens.spacing1 * 2).coerceAtLeast(0.dp))
         }
     }
 }
@@ -84,7 +96,7 @@ internal fun <T> coffeePeekSelectSegment(options: List<T>, index: Int, enabled: 
 
 @Composable
 internal fun CoffeePeekCapsuleSegment(text: String, isSelected: Boolean, enabled: Boolean, onClick: () -> Unit,
-    modifier: Modifier, labelPadding: Dp = 0.dp, minHeight: Dp = 48.dp) {
+    modifier: Modifier, minHeight: Dp, labelPadding: Dp = 0.dp) {
     Box(
         modifier = modifier
             .heightIn(min = minHeight)
@@ -118,15 +130,21 @@ internal fun CoffeePeekCapsuleSegment(text: String, isSelected: Boolean, enabled
 }
 
 @Composable
-private fun CoffeePeekCapsuleSegmentedControlPreviewContent(darkTheme: Boolean, compact: Boolean = false) = CoffeePeekTheme(darkTheme = darkTheme) {
+private fun CoffeePeekCapsuleSegmentedControlPreviewContent(darkTheme: Boolean, fontScale: Float = 1f) = CoffeePeekTheme(darkTheme = darkTheme) {
     var selected by remember { mutableStateOf("First") }
-    Surface {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            CoffeePeekCapsuleSegmentedControl(listOf("First", "Second"), selected, { it }, { selected = it },
-                minSegmentHeight = if (compact) 44.dp else 48.dp)
-            CoffeePeekCapsuleSegmentedControl(listOf("First", "Second"), "Second", { it }, {})
-            CoffeePeekCapsuleSegmentedControl(listOf("First", "Second", "Third"), "Second", { it }, {})
-            CoffeePeekCapsuleSegmentedControl(listOf("First", "Second", "Third", "Fourth"), "Fourth", { it }, {}, enabled = false)
+    CompositionLocalProvider(LocalDensity provides Density(LocalDensity.current.density, fontScale)) {
+        Surface {
+            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    CoffeePeekCapsuleSegmentedControl(listOf("First", "Second"), selected, { it }, { selected = it }, Modifier.weight(1f))
+                    CoffeePeekIconButton({}, Modifier.size(CoffeePeekDimens.buttonHeight)) {
+                        Icon(CoffeePeekIcons.Notifications, null)
+                    }
+                }
+                CoffeePeekCapsuleSegmentedControl(listOf("First", "Second"), "Second", { it }, {})
+                CoffeePeekCapsuleSegmentedControl(listOf("First", "Second", "Third"), "Second", { it }, {})
+                CoffeePeekCapsuleSegmentedControl(listOf("First", "Second", "Third", "Fourth"), "Fourth", { it }, {}, enabled = false)
+            }
         }
     }
 }
@@ -144,5 +162,5 @@ private fun CoffeePeekScrollableSegmentedControlPreviewContent(darkTheme: Boolea
 @Preview @Composable private fun CoffeePeekScrollableSegmentedControlDarkPreview() = CoffeePeekScrollableSegmentedControlPreviewContent(true)
 @Preview @Composable private fun CoffeePeekCapsuleSegmentedControlLightPreview() = CoffeePeekCapsuleSegmentedControlPreviewContent(false)
 @Preview @Composable private fun CoffeePeekCapsuleSegmentedControlDarkPreview() = CoffeePeekCapsuleSegmentedControlPreviewContent(true)
-@Preview @Composable private fun CoffeePeekCompactSegmentedControlLightPreview() = CoffeePeekCapsuleSegmentedControlPreviewContent(false, true)
-@Preview @Composable private fun CoffeePeekCompactSegmentedControlDarkPreview() = CoffeePeekCapsuleSegmentedControlPreviewContent(true, true)
+@Preview @Composable private fun CoffeePeekLargeTextSegmentedControlLightPreview() = CoffeePeekCapsuleSegmentedControlPreviewContent(false, 2f)
+@Preview @Composable private fun CoffeePeekLargeTextSegmentedControlDarkPreview() = CoffeePeekCapsuleSegmentedControlPreviewContent(true, 2f)
