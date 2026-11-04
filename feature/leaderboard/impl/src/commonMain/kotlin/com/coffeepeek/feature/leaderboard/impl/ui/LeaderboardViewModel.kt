@@ -36,7 +36,6 @@ internal class LeaderboardViewModel(
             is LeaderboardAction.FeedRefreshed -> refreshForKey(action.key)
             LeaderboardAction.Retry -> if (ready && !currentState.isLoading) load()
             is LeaderboardAction.SelectPeriod -> selectPeriod(action.period)
-            is LeaderboardAction.SetExpanded -> updateState { copy(expanded = action.expanded) }
             is LeaderboardAction.OpenProfile -> openProfile(action.authorId)
         }
     }
@@ -123,7 +122,6 @@ internal class LeaderboardViewModel(
         val data = currentState.data ?: return
         val row = data.items.firstOrNull { it.authorId == authorId } ?: data.me?.takeIf { it.authorId == authorId }
         val slug = row?.authorSlug ?: return
-        updateState { copy(expanded = false) }
         sendEvent(LeaderboardEvent(slug, row.username, row.avatarUrl, currentState.generation))
     }
 }

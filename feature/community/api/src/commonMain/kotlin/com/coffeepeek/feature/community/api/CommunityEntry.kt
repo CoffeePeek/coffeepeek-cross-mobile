@@ -15,6 +15,7 @@ enum class ExposureKind { Feed, ShopPost, HomePost }
 /**
  * What the screen borrows from the application: image loading with authentication, the relative date, the brew method names, photo prefetch,
  * the full-screen photo viewer, the system share sheet, the snackbar look (it must clear the floating navigation) and the exposure/viewed analytics. Defaults keep previews and tests free of app services.
+ * [leaders] supplies independent ranking content through the application composition boundary.
  */
 class CommunityHost(
     val image: @Composable (url: String, highQualityUrl: String?, modifier: Modifier, contentScale: ContentScale) -> Unit = { _, _, _, _ -> },
@@ -25,7 +26,7 @@ class CommunityHost(
     val exposure: (Modifier, ExposureKind) -> Modifier = { modifier, _ -> modifier },
     val feedViewed: @Composable (firstPageCount: Int?, isPublic: Boolean) -> Unit = { _, _ -> },
     val snackbar: @Composable (state: SnackbarHostState, bottomClearance: Dp) -> Unit = { state, _ -> SnackbarHost(state) },
-    val abovePosts: (@Composable (refreshKey: Long, collapsed: Boolean) -> Unit)? = null,
+    val leaders: (@Composable (refreshKey: Long, bottomClearance: Dp, modifier: Modifier) -> Unit)? = null,
     val share: (text: String) -> Unit = {},
 )
 
@@ -33,7 +34,7 @@ class CommunityHost(
 class CommunityFloating(val isLoggedIn: Boolean?, val sessionGeneration: Long, val refresh: () -> Unit)
 
 /**
- * «Лента». The caller owns navigation, the check-in creation flow (the [floatingAction] slot) and the ViewModel store.
+ * «Лента / Лидеры». The caller owns navigation, the check-in creation flow (the [floatingAction] slot) and the ViewModel store.
  * [onEditHome] opens the Home editor for a home preparation; the list reloads when the user comes back.
  * [onOpenPost] opens one post on its own screen, the one a shared link opens.
  * [onOpenCoffee] opens a catalogue coffee by its current slug, from a home post's bag.

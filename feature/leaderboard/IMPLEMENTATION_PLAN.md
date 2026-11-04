@@ -281,3 +281,107 @@ leaderboard-read feature.
 Pre-existing local Android release-ABI packaging/run-mode documentation edits were
 preserved and excluded from this feature's commit; the packaging block only
 selects directRelease and does not change the verified Debug/Sandbox variants.
+
+
+## Inline community sections — 2026-11-04
+
+The user requested direct develop changes without a new PR. The active community
+route on both platforms now switches between Feed and Leaders through a fixed
+segmented header. The application supplies ranking content through CommunityHost;
+community never imports leaderboard domain/data/impl. The preview card, modal
+wrapper, overlay API and expanded-only state/action are retired. The unused
+legacy feed fallback no longer embeds the retired card. Existing test cases keep
+their period-cache, privacy and public-profile-navigation assertions, with obsolete
+modal assertions removed.
+
+Verification preserves feed scroll, editor-return refresh, pagination, independent
+ranking scroll, selected/cached week or month, account/block invalidation and
+profile navigation. Saveable content scopes retain each list on section changes;
+ranking generation changes reset its position. Feed exposures/viewed tracking and
+photo prefetch run only in the Feed subtree. Creating a check-in remains Feed-only
+and uses the existing analytics/consent flow. Ranking pulls can now refresh their
+own page, and feed pulls still invalidate cached ranking periods.
+
+The new Native style is opt-in for these fixed switches; all previous glass and
+scrollable controls retain their defaults. iOS renders UISegmentedControl with its
+system labels, selection, touch handling and native accessibility; no custom
+segment masks, thumb or background images run in this mode. Android uses the
+matching neutral track, inset selection and Tab semantics. Short noun labels and
+related in-place views follow Apple's segmented-control guidance:
+https://developer.apple.com/design/human-interface-guidelines/segmented-controls
+The long rules are replaced by one short paragraph covering 3/1/2 point weights,
+moderation/location requirements and the additions/edits/check-ins breakdown.
+Community labels match its existing Russian/Belarusian resource sets; leaderboard
+currently has the default Russian set only.
+
+Android tests: design-system 57, community impl 40, leaderboard impl 17,
+application Direct Debug 1004; total 1118, zero failures/errors/skips. Debug assembly
+and packaged DEX checks pass. KLIB artifacts were produced for design-system,
+community impl and leaderboard impl on iosSimulatorArm64, including the real UIKit
+implementation. This is not a linked Swift/iOS app or native-device visual review.
+The application iOS task was requested, but no application KLIB output was verified;
+full Xcode linking remains a separate gate. Native previews, themes/font sizes and
+VoiceOver require platform review; paired previews are colocated with components.
+Compiler reports the existing deprecated multiplatform Preview annotation; no
+repository-wide tooling migration is included.
+
+Retained initial compile failures: the current selectable API required a named
+onClick argument, and a nullable composable API property required a stable local
+reference for smart-casting. Both were fixed before the successful gates. No
+UI/instrumented/screenshot automated tests were added or run; no account write or
+synthetic analytics event was sent to production. Device delivery follows below.
+
+
+### Pixel delivery
+
+Published code checkpoint: `fd6ad74b`, directDebug with `-PpushTestApp=true`,
+package `com.coffeepeek.pushdebug`, version 1.1.5.2704. APK SHA-256:
+`63929F6EA2EB202D8D33071D36C4835EC49966B0476542EA4927F3B400430A74`.
+The certificate matched the previously installed Debug. The Pixel 9/API 37
+accepted an in-place update from 2702 with Success; the original normal app was
+not replaced and no user data was cleared.
+
+The user reported unlocking, but the immediately queried device state still
+reported SCREEN_STATE_OFF/keyguard showing. Cold startup nevertheless reported
+Status ok in 2032 ms. The local screen capture is black, so this is startup
+command evidence only: section switching, light/dark, large-font, VoiceOver and
+actual ranking/profile rendering were not visually certified. No security or
+screen-timeout setting was changed. The updated Debug remains installed for the
+user's check. Diagnostics/screenshots remain in ignored local build outputs.
+
+### One shared capsule control — 2026-11-04
+
+The user's visual review rejected the separate Native style because it differed
+from Coffee's segmented control. This supersedes the style decision above: Feed /
+Leaders and Week / Month now use the same CoffeePeekCapsuleSegmentedControl and
+default 48 dp minimum segment height as Coffee. The style enum, Android alternate
+renderer and additional iOS UIKit wrapper are removed. Existing platform capsule
+rendering, native iOS interaction/accessibility, scrollable mode, paired previews
+and Coffee's callers remain intact. No business, cache or navigation logic changed.
+
+Verification: design-system 57, community impl 40, leaderboard impl 17 and
+application Direct Debug 1004 unit tests, total 1118 with zero failures/errors/
+skips. Direct Debug assembly, including packaged DEX runtime-class checks, passed.
+The design-system, community impl and leaderboard impl iosSimulatorArm64 KLIB
+compilation also passed. Colocated light/dark previews compile; they were not
+rendered in an IDE. Existing deprecated Preview warnings remain. No automated UI,
+instrumentation or screenshot tests were added or run. Full Xcode linking and
+iOS/device theme, font-size and accessibility visual checks remain unverified.
+
+Delivery: published source `bce09927`, directDebug with `-PpushTestApp=true`,
+package `com.coffeepeek.pushdebug`, version 1.1.5.2706. APK SHA-256:
+`62B7E32189CD37FDFEB81861CA8EA7E60543A3D78114E7AA9C8FBADB0A2D6346`.
+The APK certificate matched the installed Debug; Pixel 9/API 37 accepted the
+in-place update from 2704 with Success and preserved its first-install timestamp.
+After Android's transient PackageUpdateActivity, a second start resolved to the
+application MainActivity and the process remained running. The unlocked phone
+displayed rounded section/period controls and ranking content in light theme;
+switching to Feed displayed its content and selected capsule. The screen changed
+to profile editing during subsequent navigation, and the tap opened an account
+deletion confirmation. It was dismissed with Back without confirming deletion;
+no live write was exercised. Further phone navigation was stopped for the user's
+review. Coffee comparison is established by the identical shared call/defaults;
+no stable Coffee-page capture or dark/font/accessibility review was obtained.
+Captures remain local in ignored build outputs and contain no published account
+data. The original normal app was not replaced; no data clearing or settings
+changes were performed.

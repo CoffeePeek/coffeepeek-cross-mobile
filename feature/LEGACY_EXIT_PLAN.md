@@ -1738,3 +1738,19 @@ source `89778c23` + этот срез. Подробный scope/остаток �
 - Тесты мёртвого кода удалены после сопоставления покрытия; перенесённое покрытие — в тестах репозиториев
   (`ContributionCatalogSourceTest`, `ShopCheckInRepositoryTest`, `AuthRepositoryImplTest`, `DiscoveryRepositoryTest`,
   `ContributionsRepositoryTest`) и `MapCarouselStartTest`.
+
+## L5, третья итерация — пакеты `admin.feature.*`, гостевая карточка, слияние develop — 2026-11-04
+
+- Пакеты `com.coffeepeek.admin.feature.*` в `composeApp` убраны: мосты избранного (`RoasterFavorites`, `CatalogItem`,
+  `PublicAddress`, `ServerRoasterFavorites`, отслеживание сердечек) и адаптер каталога способов заварки лежат в `di/favorites`,
+  `di/catalog`, `di/shop`; рендереры сообщества, уведомлений и обновления — в `ui/screen/*`.
+- Гостевая карточка входа перенесена в `feature/settings/impl` (`SettingsGuestCard`, свои строки ru/be), слот `guestCard` из API
+  настроек удалён.
+- В `composeApp` остаётся только композиция: рендереры маршрутов, хост-ViewModel, DI-адаптеры, корневая навигация, платформенные
+  мосты (авторизация, push, геолокация, карта, выбор фото, нативные контролы iOS) и глобальное действие создания чекина.
+  Неиспользуемых объявлений по статическому анализу нет.
+- Слоты публичного профиля (подборка, полка, мои коллекции, счётчики вкладов) после слияния develop были потеряны из-за
+  переименования файла рендерера; возвращены в `profileSlots()`.
+- Слито в стек: коллекции, полка профиля, лидерборд, кэш профиля, сегменты ленты. Подсказка выбора коллекции работает только на
+  Android; на iOS остался прежний перенос избранного после входа.
+- Тест `ProfileAccountWritesTest.readStartedBeforeEditDoesNotRollTheEditBack` стабилизирован (ожидание старта запроса).

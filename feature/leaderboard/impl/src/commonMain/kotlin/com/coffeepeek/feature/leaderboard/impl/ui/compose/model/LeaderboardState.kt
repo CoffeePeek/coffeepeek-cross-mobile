@@ -8,6 +8,5 @@ internal data class LeaderboardState(
     val data: LeaderboardPage? = null,
     val isLoading: Boolean = true,
     val loadFailed: Boolean = false,
-    val expanded: Boolean = false,
     val generation: Long = 0,
 )
