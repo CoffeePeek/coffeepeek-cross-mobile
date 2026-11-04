@@ -319,3 +319,10 @@ Read-only physical startup is the remaining delivery check. Full authenticated
 visual review, theme/font/window/accessibility, live account writes and native
 iOS compilation remain unverified gates. Backend develop CI is green as recorded
 in FLOW_AUDIT.md; production deployment was not performed.
+
+After the full gate, a narrow shop accessibility correction keeps the membership
+picker available while the separate favorite projection is loading/unavailable
+and labels that action as choosing collections. Shop impl 109/109 and application
+Direct Debug 999/999 passed again. Intermediate compile attempts caught a
+stateless-screen VM reference and a missing resource import; both were corrected
+before that passing run. The final phone APK is rebuilt from the committed fix.

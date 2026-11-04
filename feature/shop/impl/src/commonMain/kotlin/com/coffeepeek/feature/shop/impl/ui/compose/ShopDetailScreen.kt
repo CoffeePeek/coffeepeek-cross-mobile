@@ -313,7 +313,8 @@ private fun ShopDetailScrollingActions(
         ShopDetailTopActions(
             showShopActions = overview != null,
             isFavorite = state.isFavorite,
-            favoriteAvailable = state.favoriteAvailable,
+            favoriteAvailable = state.favoriteAvailable || state.selectCollectionsOnFavorite,
+            favoriteSelection = state.selectCollectionsOnFavorite,
             isFavoriteLoading = state.isFavoriteLoading,
             onBack = { onAction(ShopDetailAction.Back) },
             onSuggestChange = { onAction(ShopDetailAction.SuggestChange) },

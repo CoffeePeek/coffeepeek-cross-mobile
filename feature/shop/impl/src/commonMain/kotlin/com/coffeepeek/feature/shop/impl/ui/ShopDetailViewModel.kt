@@ -40,7 +40,7 @@ internal class ShopDetailViewModel(
     /** A quick return (share, maps, phone) keeps the loaded page; only a long absence reloads it. */
     private val resumeRefreshAfter: Duration = 2.minutes,
 ) : MviViewModel<ShopDetailState, ShopDetailAction, ShopDetailEventEnvelope>(
-    ShopDetailState(sessionGeneration = initialSessionGeneration),
+    ShopDetailState(sessionGeneration = initialSessionGeneration, selectCollectionsOnFavorite = selectCollectionsOnFavorite),
 ) {
     private var loadJob: Job? = null
     private var voteJob: Job? = null
@@ -85,7 +85,7 @@ internal class ShopDetailViewModel(
                 favoriteMutationJob = null
                 latestFavorites = null
                 refreshQueued = false
-                updateState { ShopDetailState(sessionGeneration = nextGeneration) }
+                updateState { ShopDetailState(sessionGeneration = nextGeneration, selectCollectionsOnFavorite = selectCollectionsOnFavorite) }
                 observeFavorites()
                 load()
             }
