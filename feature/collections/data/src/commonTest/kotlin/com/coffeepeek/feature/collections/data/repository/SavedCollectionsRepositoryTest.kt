@@ -126,7 +126,10 @@ class SavedCollectionsRepositoryTest {
             var changes = 0
             backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { repository.observeChanges().collect { changes++ } }
             val target = SavedCollectionTarget(CollectionPlaceKind.CoffeeShop, "shop")
-            assertTrue(repository.changeMemberships(target, emptySet(), emptySet()).getOrThrow().isEmpty())
+            val result = repository.changeMemberships(target, emptySet(), emptySet()).getOrThrow()
+            assertTrue(result.lists.isEmpty())
+            assertNull(result.isFavorite)
+            assertEquals(false, result.membershipChanged)
             runCurrent()
             assertEquals(0, account.loads)
             assertEquals(0, changes)
@@ -144,7 +147,9 @@ class SavedCollectionsRepositoryTest {
             val target = SavedCollectionTarget(CollectionPlaceKind.CoffeeShop, "shop")
             val before = repository.mine(target).getOrThrow()
             val loads = account.loads
-            assertEquals(before, repository.changeMemberships(target, emptySet(), emptySet()).getOrThrow())
+            val result = repository.changeMemberships(target, emptySet(), emptySet()).getOrThrow()
+            assertEquals(before, result.lists)
+            assertEquals(false, result.membershipChanged)
             assertEquals(1, reads)
             assertEquals(loads, account.loads)
         } finally { client.close() }

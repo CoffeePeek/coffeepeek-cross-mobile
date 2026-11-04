@@ -15,9 +15,11 @@ import com.coffeepeek.feature.collections.data.repository.createSavedCollections
 import com.coffeepeek.feature.collections.domain.model.CollectionPlaceKind
 import com.coffeepeek.feature.collections.domain.model.SavedCollectionMetadata
 import com.coffeepeek.feature.collections.domain.model.SavedCollectionTarget
+import com.coffeepeek.feature.collections.domain.model.SavedCollectionVisibility
 import com.coffeepeek.feature.collections.domain.repository.CollectionsAccount
 import io.ktor.client.plugins.HttpSend
 import io.ktor.client.plugins.plugin
+import io.ktor.client.request.put
 import io.ktor.http.HttpMethod
 import java.io.Closeable
 import java.io.IOException
@@ -35,6 +37,25 @@ class CollectionMembershipFavoriteFlowTest {
     private val dispatcher = StandardTestDispatcher()
     private val shop = SavedCollectionTarget(CollectionPlaceKind.CoffeeShop, "sandbox-cafe")
     private val roaster = SavedCollectionTarget(CollectionPlaceKind.Roaster, "sandbox-roaster")
+
+    @Test fun aStaleRemovalThatChangesNothingPreservesTheAuthoritativePrivateLegacyHeart() = runTest(dispatcher) {
+        for (target in listOf(shop, roaster)) Fixture(backgroundScope).use { fixture ->
+            val id = fixture.privateLegacyHeart(target)
+            runCurrent()
+            val sync = backgroundScope.launch { synchronizeCollectionFavorites(fixture.saved.observeChanges(), fixture.favorites) }
+            runCurrent()
+            val reads = fixture.favoriteReads
+            val result = fixture.saved.changeMemberships(target, emptySet(), setOf(id)).getOrThrow()
+            runCurrent()
+            assertTrue(result.lists.none { it.containsItem })
+            assertEquals(true, result.isFavorite)
+            assertEquals(false, result.membershipChanged)
+            assertEquals(true, fixture.favorites.cachedMembership(target.favoriteTarget()))
+            assertEquals(reads, fixture.favoriteReads)
+            if (target == shop) assertTrue(shop.slug in fixture.visibleShopIds)
+            sync.cancel()
+        }
+    }
 
     @Test fun addingANewShopUpdatesTheCardAndServerWithoutAnEagerLegacyFavoriteWrite() = runTest(dispatcher) {
         Fixture(backgroundScope).use { fixture ->
@@ -86,7 +107,9 @@ class CollectionMembershipFavoriteFlowTest {
             val before = fixture.favoriteReads
             val result = fixture.saved.changeMemberships(target, emptySet(), selected).getOrThrow()
             runCurrent()
-            assertTrue(result.none { it.containsItem })
+            assertTrue(result.lists.none { it.containsItem })
+            assertEquals(false, result.isFavorite)
+            assertEquals(true, result.membershipChanged)
             assertEquals(before, fixture.favoriteReads)
             assertEquals(false, fixture.favorites.cachedMembership(target.favoriteTarget()))
             if (target == shop) assertFalse(shop.slug in fixture.visibleShopIds)
@@ -104,7 +127,7 @@ class CollectionMembershipFavoriteFlowTest {
             fixture.saved.changeMemberships(shop, setOf(first, second), setOf(default.id)).getOrThrow()
             assertEquals(true, fixture.favorites.cachedMembership(shop.favoriteTarget()))
             val remaining = fixture.saved.changeMemberships(shop, emptySet(), setOf(first)).getOrThrow()
-            assertEquals(setOf(second), remaining.filter { it.containsItem }.map { it.id }.toSet())
+            assertEquals(setOf(second), remaining.lists.filter { it.containsItem }.map { it.id }.toSet())
             assertEquals(true, fixture.favorites.cachedMembership(shop.favoriteTarget()))
             fixture.saved.changeMemberships(shop, emptySet(), setOf(second)).getOrThrow()
             assertEquals(false, fixture.favorites.cachedMembership(shop.favoriteTarget()))
@@ -119,7 +142,7 @@ class CollectionMembershipFavoriteFlowTest {
             val first = fixture.saved.mine(shop).getOrThrow()
             runCurrent()
             val requests = fixture.requests.size
-            assertEquals(first, fixture.saved.changeMemberships(shop, emptySet(), emptySet()).getOrThrow())
+            assertEquals(first, fixture.saved.changeMemberships(shop, emptySet(), emptySet()).getOrThrow().lists)
             assertEquals(first, fixture.saved.cachedFreshMine(shop))
             assertEquals(first, fixture.saved.mine(shop).getOrThrow())
             runCurrent()
@@ -164,6 +187,18 @@ class CollectionMembershipFavoriteFlowTest {
         val requests = mutableListOf<String>()
         var rejectFavoriteReads = false
         var blockRefreshAfterWrite = false
+
+        suspend fun privateLegacyHeart(target: SavedCollectionTarget): String {
+            favorites.getFavorites().getOrThrow()
+            val list = saved.mine(target).getOrThrow().single { it.isDefault }
+            saved.update(list.id, SavedCollectionMetadata(list.title, visibility = SavedCollectionVisibility.Public), list.revision).getOrThrow()
+            saved.memberships(target, emptySet()).getOrThrow()
+            val kind = if (target.kind == CollectionPlaceKind.CoffeeShop) "coffee_shop" else "roaster"
+            backend.gateway.put("${SandboxBackend.BASE_URL}/api/v1/favorites/$kind/${target.slug}") {
+                headers.append(SandboxSavedCollectionsBackend.OWNER, owner)
+            }
+            return list.id
+        }
 
         init {
             backend.gateway.plugin(HttpSend).intercept { request ->

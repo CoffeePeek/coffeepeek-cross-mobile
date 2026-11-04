@@ -91,6 +91,16 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
     fun reserveCollectionCovers(owner: String?, input: JsonArray) = savedCollections.reserve(owner, input)
     fun collectionCoverKey(path: String, owner: String?) = savedCollections.coverKey(path, owner)
 
+    fun collectionMembershipState(request: HttpRequestData): SandboxCollectionMembershipState? {
+        val prefix = "/api/v1/saved-collections/membership/"
+        if (request.method != HttpMethod.Put || !request.url.encodedPath.startsWith(prefix)) return null
+        val owner = request.headers[SandboxSavedCollectionsBackend.OWNER]?.takeIf { it.isNotBlank() } ?: return null
+        val target = request.url.encodedPath.removePrefix(prefix).replace('/', ':')
+        val selected = savedCollections.selectedCollectionIds(owner, target)
+        val favorite = selected.isNotEmpty() || (isSandboxOwner(owner) && target in favorites)
+        return SandboxCollectionMembershipState(selected, favorite)
+    }
+
     private fun isSandboxOwner(owner: String) = owner == "sandbox" || owner == SandboxSavedCollectionsBackend.LOCAL_ACCOUNT
 
     private fun synchronizeCollectionFavorites(owner: String, affected: Set<String>, selected: Set<String>) {

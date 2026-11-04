@@ -118,33 +118,42 @@ internal class HttpSavedCollectionsRepository(private val client: HttpClient, pr
         }, true).also { ownerCache.upsert(owner, it.summary); ownerCache.dropTargets(owner) }
     }
 
-    override suspend fun memberships(target: SavedCollectionTarget, collectionIds: Set<String>): Result<List<SavedCollectionSummary>> = mutate { owner ->
-        writeMemberships(owner, target, collectionIds).also { ownerCache.recordMemberships(owner, target, it) }
-    }
+    override suspend fun memberships(target: SavedCollectionTarget, collectionIds: Set<String>): Result<List<SavedCollectionSummary>> = owned { owner ->
+        writeMemberships(owner, target, collectionIds).also { ownerCache.recordMemberships(owner, target, it.lists) }
+    }.onSuccess(::publishMembershipChange).map { it.lists }
 
-    override suspend fun changeMemberships(target: SavedCollectionTarget, added: Set<String>, removed: Set<String>): Result<List<SavedCollectionSummary>> {
-        if (added.isEmpty() && removed.isEmpty()) return Result.success(cachedMine(target).orEmpty())
+    override suspend fun changeMemberships(target: SavedCollectionTarget, added: Set<String>, removed: Set<String>): Result<SavedCollectionMembershipResult> {
+        if (added.isEmpty() && removed.isEmpty()) return Result.success(
+            SavedCollectionMembershipResult(cachedMine(target).orEmpty(), membershipChanged = false))
         return writeMembershipChanges(target, added, removed)
     }
 
-    private suspend fun writeMembershipChanges(target: SavedCollectionTarget, added: Set<String>, removed: Set<String>) = mutate { owner ->
+    private suspend fun writeMembershipChanges(target: SavedCollectionTarget, added: Set<String>, removed: Set<String>) = owned { owner ->
         val additions = added.map(::collectionId).toSet()
         val removals = removed.map(::collectionId).toSet()
         require(additions.intersect(removals).isEmpty())
         val current = readMine(owner, target).filter { it.containsItem }.map { collectionId(it.id) }.toSet()
         checkOwner(owner)
         writeMemberships(owner, target, (current + additions) - removals, additions, removals)
-            .also { ownerCache.recordMemberships(owner, target, it) }
-    }
+            .also { ownerCache.recordMemberships(owner, target, it.lists) }
+    }.onSuccess(::publishMembershipChange)
 
     private suspend fun writeMemberships(owner: String, target: SavedCollectionTarget, ids: Set<String>,
-        added: Set<String>? = null, removed: Set<String>? = null): List<SavedCollectionSummary> {
+        added: Set<String>? = null, removed: Set<String>? = null): SavedCollectionMembershipResult {
         val response = client.put(api("$path/membership/${collectionWireKind(target.kind)}/${validSlug(target.slug)}")) {
             pinRequest(this, owner)
             contentType(ContentType.Application.Json)
             setBody(SavedMembershipDto(ids.map(::collectionBodyId), added?.map(::collectionBodyId), removed?.map(::collectionBodyId)))
         }
-        return envelope<List<SavedCollectionDto>>(response).map { it.toSavedSummary(true) }
+        return SavedCollectionMembershipResult(
+            envelope<List<SavedCollectionDto>>(response).map { it.toSavedSummary(true) },
+            response.headers["X-CoffeePeek-Is-Favorite"]?.toBooleanStrictOrNull(),
+            response.headers["X-CoffeePeek-Membership-Changed"]?.toBooleanStrictOrNull(),
+        )
+    }
+
+    private fun publishMembershipChange(result: SavedCollectionMembershipResult) {
+        if (result.membershipChanged != false) changes.tryEmit(Unit)
     }
 
     override suspend fun delete(id: String): Result<Unit> = mutate { owner ->

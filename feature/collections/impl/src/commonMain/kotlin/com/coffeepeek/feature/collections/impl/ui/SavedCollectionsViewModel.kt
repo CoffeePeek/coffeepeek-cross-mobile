@@ -264,7 +264,7 @@ internal class SavedCollectionsViewModel(private val saved: SavedCollectionsRepo
             val result = saved.changeMemberships(target, added, removed).checked()
             if (epoch != generation) return@launchWork
             if (result.isSuccess) {
-                updateMemberships(result.getOrThrow())
+                updateMemberships(result.getOrThrow().lists)
                 sendEvent(SavedCollectionsEvent.Back)
             }
             else updateState { copy(failure = SavedCollectionsFailure.Membership) }

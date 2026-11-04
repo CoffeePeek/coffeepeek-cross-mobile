@@ -31,11 +31,17 @@ internal class SandboxSavedCollectionsBackend(private val today: LocalDate, priv
         if (!path.startsWith(ROOT)) return null
         if (owner.isNullOrBlank()) return fail(HttpStatusCode.Unauthorized)
         val before = mutationTargets(owner, request)
+        val target = path.takeIf { it.startsWith("$ROOT/membership/") }?.removePrefix("$ROOT/membership/")?.replace('/', ':')
+        val selection = target?.let { selectedCollectionIds(owner, it) }
         val result = ownedRequest(owner, request, input)
-        if (result.first.isSuccess() && request.method != HttpMethod.Get)
+        val changed = target == null || selection != selectedCollectionIds(owner, target)
+        if (result.first.isSuccess() && request.method != HttpMethod.Get && changed)
             favoritesChanged(owner, before + mutationTargets(owner, request, result.second), membershipKeys(owner))
         return result
     }
+
+    fun selectedCollectionIds(owner: String, target: String): Set<String> = rows.values
+        .filter { it.owner == owner && it.items.any { item -> itemKey(item) == target } }.map { it.id }.toSet()
 
     private fun ownedRequest(owner: String, request: HttpRequestData, input: JsonObject): Pair<HttpStatusCode, JsonObject> {
         val path = request.url.encodedPath

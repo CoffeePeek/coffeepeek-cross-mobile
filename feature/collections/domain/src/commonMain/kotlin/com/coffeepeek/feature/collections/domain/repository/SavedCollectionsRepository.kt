@@ -23,12 +23,13 @@ interface SavedCollectionsRepository {
     suspend fun update(id: String, metadata: SavedCollectionMetadata, revision: Long): Result<SavedCollection>
     suspend fun replaceItems(id: String, places: List<CollectionPlace>, revision: Long): Result<SavedCollection>
     suspend fun memberships(target: SavedCollectionTarget, collectionIds: Set<String>): Result<List<SavedCollectionSummary>>
-    suspend fun changeMemberships(target: SavedCollectionTarget, added: Set<String>, removed: Set<String>): Result<List<SavedCollectionSummary>> {
-        if (added.isEmpty() && removed.isEmpty()) return Result.success(cachedMine(target).orEmpty())
+    suspend fun changeMemberships(target: SavedCollectionTarget, added: Set<String>, removed: Set<String>): Result<SavedCollectionMembershipResult> {
+        if (added.isEmpty() && removed.isEmpty()) return Result.success(
+            SavedCollectionMembershipResult(cachedMine(target).orEmpty(), membershipChanged = false))
         val result = mine(target)
-        val lists = result.getOrNull() ?: return result
+        val lists = result.getOrNull() ?: return result.map { SavedCollectionMembershipResult(it) }
         val current = lists.filter { it.containsItem }.map { it.id }.toSet()
-        return memberships(target, (current + added) - removed)
+        return memberships(target, (current + added) - removed).map { SavedCollectionMembershipResult(it) }
     }
     suspend fun delete(id: String): Result<Unit>
     suspend fun featuredId(): Result<String?>

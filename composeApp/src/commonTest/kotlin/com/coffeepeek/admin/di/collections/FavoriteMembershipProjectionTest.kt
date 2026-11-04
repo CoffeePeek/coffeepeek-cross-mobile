@@ -1,5 +1,12 @@
 package com.coffeepeek.admin.di.collections
 
+import com.coffeepeek.admin.analytics.Analytics
+import com.coffeepeek.admin.analytics.AnalyticsConsent
+import com.coffeepeek.admin.analytics.AnalyticsEvent
+import com.coffeepeek.admin.analytics.AnalyticsService
+import com.coffeepeek.admin.analytics.MemoryConsent
+import com.coffeepeek.admin.analytics.RecordingTransport
+import com.coffeepeek.admin.analytics.analytics
 import com.coffeepeek.core.session.Session
 import com.coffeepeek.core.session.SessionReader
 import com.coffeepeek.domain.feature.favorites.api.*
@@ -13,6 +20,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlin.test.*
 
@@ -21,7 +29,7 @@ class FavoriteMembershipProjectionTest {
     private val target = SavedCollectionTarget(CollectionPlaceKind.CoffeeShop, "shop")
     private val membership = FavoriteTarget(FavoriteKind.CoffeeShop, "shop")
 
-    @Test fun removalAppliesTheConfirmedUnionWithoutAnyFavoriteReadOrWriter() = runTest {
+    @Test fun actualRemovalAppliesTheConfirmedFavoriteWithoutAnyReadOrWriter() = runTest {
         val saved = Saved()
         val favorites = Favorites()
         val wrapper = FavoriteMembershipAnalyticsRepository(saved, favorites, Sessions())
@@ -32,7 +40,9 @@ class FavoriteMembershipProjectionTest {
     }
 
     @Test fun remainingMembershipKeepsTheHeartWhenOnlyOneCollectionIsUnchecked() = runTest {
-        val saved = Saved().apply { result = Result.success(listOf(SavedCollectionSummary("other", "Other", containsItem = true))) }
+        val saved = Saved().apply {
+            result = Result.success(SavedCollectionMembershipResult(listOf(SavedCollectionSummary("other", "Other", containsItem = true))))
+        }
         val favorites = Favorites()
         FavoriteMembershipAnalyticsRepository(saved, favorites, Sessions())
             .changeMemberships(target, emptySet(), setOf("default")).getOrThrow()
@@ -45,7 +55,8 @@ class FavoriteMembershipProjectionTest {
         val favorites = Favorites()
         val result = FavoriteMembershipAnalyticsRepository(saved, favorites, Sessions())
             .changeMemberships(target, emptySet(), emptySet()).getOrThrow()
-        assertEquals(saved.baseline, result)
+        assertEquals(saved.baseline, result.lists)
+        assertEquals(false, result.membershipChanged)
         assertEquals(0, saved.writes)
         assertEquals(0, favorites.reads)
         assertTrue(favorites.applied.isEmpty())
@@ -86,6 +97,111 @@ class FavoriteMembershipProjectionTest {
         assertTrue(favorites.applied.isEmpty())
     }
 
+    @Test fun staleRemovalActualNoOpKeepsLegacyHeartWithoutCreditingAMutation() = runTest {
+        withAnalytics { transport, _ ->
+            val saved = Saved().apply { result = Result.success(SavedCollectionMembershipResult(emptyList(), true, false)) }
+            val favorites = Favorites()
+            FavoriteMembershipAnalyticsRepository(saved, favorites, Sessions())
+                .changeMemberships(target, emptySet(), setOf("default")).getOrThrow()
+            runCurrent()
+            assertEquals(true, favorites.member)
+            assertEquals(listOf(membership to true), favorites.applied)
+            assertEquals(listOf(AnalyticsEvent.FAVORITE_ATTEMPTED.wire), transport.events.map { it.first })
+        }
+    }
+
+    @Test fun actualLastMembershipRemovalClearsHeartAndCreditsOnlyConfirmedChange() = runTest {
+        withAnalytics { transport, _ ->
+            val favorites = Favorites()
+            FavoriteMembershipAnalyticsRepository(Saved(), favorites, Sessions())
+                .changeMemberships(target, emptySet(), setOf("default")).getOrThrow()
+            runCurrent()
+            assertEquals(false, favorites.member)
+            val changed = transport.events.single { it.first == AnalyticsEvent.FAVORITE_CHANGED.wire }
+            assertEquals(false, changed.second["is_favorite"])
+        }
+    }
+
+    @Test fun missingMetadataAndEmptyUnionDoNotInferFalseOrCreditAMutation() = runTest {
+        withAnalytics { transport, _ ->
+            val saved = Saved().apply { result = Result.success(SavedCollectionMembershipResult(emptyList())) }
+            val favorites = Favorites()
+            FavoriteMembershipAnalyticsRepository(saved, favorites, Sessions())
+                .changeMemberships(target, emptySet(), setOf("default")).getOrThrow()
+            runCurrent()
+            assertTrue(favorites.applied.isEmpty())
+            assertEquals(true, favorites.member)
+            assertEquals(listOf(AnalyticsEvent.FAVORITE_ATTEMPTED.wire), transport.events.map { it.first })
+        }
+    }
+
+    @Test fun unknownActualChangeCanUpdateTheHeartButCannotCreditAMutation() = runTest {
+        withAnalytics { transport, _ ->
+            val saved = Saved().apply { result = Result.success(SavedCollectionMembershipResult(emptyList(), isFavorite = false)) }
+            val favorites = Favorites()
+            FavoriteMembershipAnalyticsRepository(saved, favorites, Sessions())
+                .changeMemberships(target, emptySet(), setOf("default")).getOrThrow()
+            runCurrent()
+            assertEquals(false, favorites.member)
+            assertEquals(listOf(AnalyticsEvent.FAVORITE_ATTEMPTED.wire), transport.events.map { it.first })
+        }
+    }
+
+    @Test fun emptyRequestEmitsNoAnalyticsEvenWhenCollectionFlagsDisagreeWithGlobalHeart() = runTest {
+        withAnalytics { transport, _ ->
+            val saved = Saved().apply { baseline = emptyList() }
+            val favorites = Favorites()
+            FavoriteMembershipAnalyticsRepository(saved, favorites, Sessions())
+                .changeMemberships(target, emptySet(), emptySet()).getOrThrow()
+            runCurrent()
+            assertTrue(transport.events.isEmpty())
+            assertEquals(0, saved.writes)
+            assertTrue(favorites.applied.isEmpty())
+            assertEquals(true, favorites.member)
+        }
+    }
+
+    @Test fun failedWriteRetainsAttemptAndFailureAnalyticsWithoutCreditingAMutation() = runTest {
+        withAnalytics { transport, _ ->
+            val saved = Saved().apply { result = Result.failure(IllegalStateException("offline")) }
+            FavoriteMembershipAnalyticsRepository(saved, Favorites(), Sessions())
+                .changeMemberships(target, emptySet(), setOf("default"))
+            runCurrent()
+            assertEquals(listOf(AnalyticsEvent.FAVORITE_ATTEMPTED.wire, AnalyticsEvent.FAVORITE_FAILED.wire), transport.events.map { it.first })
+        }
+    }
+
+    @Test fun consentRevokedDuringWritePreventsChangedAnalyticsButKeepsConfirmedProjection() = runTest {
+        withAnalytics { transport, service ->
+            val saved = Saved().apply { gate = CompletableDeferred() }
+            val favorites = Favorites()
+            val wrapper = FavoriteMembershipAnalyticsRepository(saved, favorites, Sessions())
+            val request = async { wrapper.changeMemberships(target, emptySet(), setOf("default")) }
+            runCurrent()
+            service.setConsent(AnalyticsConsent.Declined)
+            saved.gate!!.complete(Unit)
+            request.await().getOrThrow()
+            runCurrent()
+            assertEquals(false, favorites.member)
+            assertTrue(transport.events.none { it.first == AnalyticsEvent.FAVORITE_CHANGED.wire })
+        }
+    }
+
+    private suspend fun TestScope.withAnalytics(test: suspend (RecordingTransport, AnalyticsService) -> Unit) {
+        val previous = Analytics.service
+        val transport = RecordingTransport()
+        val service = analytics(MemoryConsent(AnalyticsConsent.Accepted), transport)
+        service.setForeground(true)
+        service.restoreConsent()
+        service.syncIdentity("owner")
+        Analytics.install(service)
+        try { test(transport, service) }
+        finally {
+            service.setForeground(false)
+            previous?.let(Analytics::install)
+        }
+    }
+
     private class Sessions : SessionReader {
         var generation = 1L
         private val state = MutableStateFlow<Session?>(Session("token", userId = "owner"))
@@ -119,11 +235,13 @@ class FavoriteMembershipProjectionTest {
 
     private class Saved : SavedCollectionsRepository {
         var baseline = listOf(SavedCollectionSummary("default", "Favorites", containsItem = true))
-        var result: Result<List<SavedCollectionSummary>> = Result.success(baseline.map { it.copy(containsItem = false) })
+        var result: Result<SavedCollectionMembershipResult> = Result.success(
+            SavedCollectionMembershipResult(baseline.map { it.copy(containsItem = false) }, isFavorite = false, membershipChanged = true),
+        )
         var gate: CompletableDeferred<Unit>? = null
         var writes = 0
         override fun cachedMine(target: SavedCollectionTarget?) = baseline
-        override suspend fun changeMemberships(target: SavedCollectionTarget, added: Set<String>, removed: Set<String>): Result<List<SavedCollectionSummary>> {
+        override suspend fun changeMemberships(target: SavedCollectionTarget, added: Set<String>, removed: Set<String>): Result<SavedCollectionMembershipResult> {
             writes++
             gate?.await()
             return result
