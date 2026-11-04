@@ -89,7 +89,7 @@ class LeaderboardViewModelTest {
         assertFalse(vm.state.value.isLoading)
     }
 
-    @Test fun loadedPeriodsAndFullListReopeningDoNotRequestAgain() = runTest(dispatcher) {
+    @Test fun switchingCachedPeriodsDoesNotRequestAgain() = runTest(dispatcher) {
         val repository = FakeLeaderboardRepository()
         val vm = model(repository)
         runCurrent()
@@ -98,8 +98,7 @@ class LeaderboardViewModelTest {
         repeat(3) {
             vm.onAction(LeaderboardAction.SelectPeriod(LeaderboardPeriod.Week))
             vm.onAction(LeaderboardAction.SelectPeriod(LeaderboardPeriod.Month))
-            vm.onAction(LeaderboardAction.SetExpanded(true))
-            vm.onAction(LeaderboardAction.SetExpanded(false))
+
             runCurrent()
         }
         advanceTimeBy(60_000)
@@ -251,17 +250,15 @@ class LeaderboardViewModelTest {
         assertEquals("updated", vm.state.value.data?.items?.single()?.authorId)
         assertEquals(listOf(LeaderboardPeriod.Week, LeaderboardPeriod.Week, LeaderboardPeriod.Week), repository.calls)
     }
-    @Test fun privacyContextClearsOwnRankClosesSheetAndWaitsUntilReady() = runTest(dispatcher) {
+    @Test fun privacyContextClearsOwnRankAndWaitsUntilReady() = runTest(dispatcher) {
         val changes = MutableSharedFlow<Boolean>(replay = 1).apply { tryEmit(true) }
         val repository = FakeLeaderboardRepository()
         val vm = model(repository, changes)
         runCurrent()
-        vm.onAction(LeaderboardAction.SetExpanded(true))
-        runCurrent()
         changes.emit(false)
         runCurrent()
         assertNull(vm.state.value.data)
-        assertFalse(vm.state.value.expanded)
+
         assertEquals(1, repository.calls.size)
         changes.emit(true)
         runCurrent()
@@ -290,11 +287,9 @@ class LeaderboardViewModelTest {
         } }
         val vm = model(repository, changes)
         runCurrent()
-        vm.onAction(LeaderboardAction.SetExpanded(true))
-        runCurrent()
         changes.emit(false)
         runCurrent()
-        assertFalse(vm.state.value.expanded)
+
         repository.read = { period -> Result.success(page(period).copy(items = listOf(row("new-account")))) }
         changes.emit(true)
         runCurrent()
@@ -303,7 +298,7 @@ class LeaderboardViewModelTest {
         assertEquals("new-account", vm.state.value.data?.items?.single()?.authorId)
     }
 
-    @Test fun onlyServerPublicSlugsCanOpenProfilesAndOpeningClosesTheSheet() = runTest(dispatcher) {
+    @Test fun onlyServerPublicSlugsCanOpenProfiles() = runTest(dispatcher) {
         val repository = FakeLeaderboardRepository().apply { read = { period ->
             Result.success(page(period).copy(items = listOf(row(), row("hidden", null))))
         } }
@@ -312,12 +307,11 @@ class LeaderboardViewModelTest {
         runCurrent()
         vm.onAction(LeaderboardAction.OpenProfile("unknown"))
         vm.onAction(LeaderboardAction.OpenProfile("hidden"))
-        vm.onAction(LeaderboardAction.SetExpanded(true))
+
         vm.onAction(LeaderboardAction.OpenProfile("a"))
         runCurrent()
         assertEquals(listOf("maria"), events.map { it.slug })
         assertEquals(vm.state.value.generation, events.single().generation)
-        assertFalse(vm.state.value.expanded)
     }
 
     @Test fun initialFailureIsRetryableAndCancellationIsNotRenderedAsFailure() = runTest(dispatcher) {

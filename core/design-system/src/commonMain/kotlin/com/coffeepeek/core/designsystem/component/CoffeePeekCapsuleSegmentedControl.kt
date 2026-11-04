@@ -36,6 +36,7 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 /**
  * A pill of exclusive options. By default the options share the width equally (short labels). With [scrollable] every option takes the width of its label
  * (plus a horizontal padding) and the row scrolls sideways, so long labels or a large font never get squeezed; the pill then keeps a 4 dp inner padding.
+ * Scrollable options retain the Compose layout.
  */
 @Composable
 fun <T> CoffeePeekCapsuleSegmentedControl(
@@ -56,6 +57,12 @@ fun <T> CoffeePeekCapsuleSegmentedControl(
             { onSelected(options[it]) }, modifier, enabled, minSegmentHeight)
         return
     }
+    CoffeePeekScrollableSegments(options, selected, label, onSelected, modifier, enabled, minSegmentHeight)
+}
+
+@Composable
+private fun <T> CoffeePeekScrollableSegments(options: List<T>, selected: T, label: (T) -> String,
+    onSelected: (T) -> Unit, modifier: Modifier, enabled: Boolean, minSegmentHeight: Dp) {
     val container = modifier
         .clip(RoundedCornerShape(percent = 50))
         .background(MaterialTheme.colorScheme.surfaceVariant)
