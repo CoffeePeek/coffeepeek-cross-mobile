@@ -85,6 +85,7 @@ internal class AppAccountDeletionPort(private val users: UserRepository) : Accou
 }
 
 internal fun editProfileSlots() = EditProfileSlots(
+    displayPreferences = { ProfileDisplayPreferences() },
     image = { url, description, modifier -> CpImage(data = url, modifier = modifier, contentScale = ContentScale.Crop, contentDescription = description) },
     pickedAvatar = { image, modifier -> CpImage(data = image.bytes, modifier = modifier, contentScale = ContentScale.Crop) },
     photoPicker = { show, onDismiss, onLoading, onPicked ->

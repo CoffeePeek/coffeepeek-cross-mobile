@@ -1,6 +1,9 @@
 package com.coffeepeek.feature.collections.domain.model
 
-data class SharedCollection(val id: String, val title: String, val url: String, val places: List<CollectionPlace>)
+enum class SharedCollectionMode { Snapshot, List }
+
+data class SharedCollection(val id: String, val title: String, val url: String, val places: List<CollectionPlace>,
+    val mode: SharedCollectionMode = SharedCollectionMode.Snapshot)
 
 data class CollectionSummary(val id: String, val title: String, val url: String, val itemCount: Int)
 

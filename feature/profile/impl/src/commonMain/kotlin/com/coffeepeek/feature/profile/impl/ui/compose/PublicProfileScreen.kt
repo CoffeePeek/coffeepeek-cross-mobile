@@ -42,6 +42,7 @@ import com.coffeepeek.core.designsystem.component.CoffeePeekSwipeDismissModalBot
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.feature.profile.api.ProfileAuthor
 import com.coffeepeek.feature.profile.api.ProfileAuthorActions
+import com.coffeepeek.feature.profile.api.ProfileContribution
 import com.coffeepeek.feature.profile.api.ProfileSlots
 import com.coffeepeek.feature.profile.domain.PublicFavoriteKind
 import com.coffeepeek.feature.profile.domain.PublicProfileConnectionKind
@@ -51,6 +52,7 @@ import com.coffeepeek.feature.profile.impl.ui.PublicProfileViewModel
 import com.coffeepeek.feature.profile.impl.ui.compose.component.InlineProfileError
 import com.coffeepeek.feature.profile.impl.ui.compose.component.ProfileSectionHeading
 import com.coffeepeek.feature.profile.impl.ui.compose.component.ProfileSectionLoader
+import com.coffeepeek.feature.profile.impl.ui.compose.component.ProfileLoadingSkeleton
 import com.coffeepeek.feature.profile.impl.ui.compose.component.PublicProfileActivityCalendar
 import com.coffeepeek.feature.profile.impl.ui.compose.component.PublicProfileConnectionsSheet
 import com.coffeepeek.feature.profile.impl.ui.compose.component.PublicProfileHeader
@@ -69,6 +71,7 @@ internal class OwnProfileExtras(
     val onEditProfile: () -> Unit,
     val onOpenFavorites: () -> Unit,
     val onOpenCheckIns: () -> Unit,
+    val onOpenContributions: (ProfileContribution) -> Unit,
     val topBarActions: @Composable () -> Unit,
     val favoritesPreview: @Composable (header: @Composable () -> Unit) -> Unit,
     val checkInCount: Int,
@@ -152,18 +155,9 @@ internal fun PublicProfileScreen(
             }
 
             if (profile == null || author == null) {
-                Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    if (state.isLoading) {
-                        val hidden = visibility.hides(null, slug)
-                        PublicProfileHeader(
-                            nickname = nickname?.takeIf(String::isNotBlank) ?: slug,
-                            avatarUrl = avatarUrl.takeUnless { hidden },
-                            about = null,
-                            image = slots.image,
-                            onAvatarClick = { if (!hidden) avatarUrl?.let { photos = ProfilePhotos(listOf(it)) } },
-                        )
-                        ProfileSectionLoader(160.dp)
-                    } else Column(
+                if (state.isLoading) ProfileLoadingSkeleton()
+                else Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Column(
                         Modifier.fillMaxWidth().padding(vertical = 48.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -204,6 +198,8 @@ internal fun PublicProfileScreen(
                             onFollow = if (viewingOwn) null else ({ vm.onAction(PublicProfileAction.ToggleFollow) }),
                             onEditProfile = own?.onEditProfile,
                             stats = profile.stats,
+                            onShopsClick = if (viewingOwn) ({ (own?.onOpenContributions ?: slots.onOwnContributions)(ProfileContribution.Shops) }) else null,
+                            onRoastersClick = if (viewingOwn) ({ (own?.onOpenContributions ?: slots.onOwnContributions)(ProfileContribution.Roasters) }) else null,
                             onFollowersClick = {
                                 section = null
                                 vm.onAction(PublicProfileAction.OpenConnections(PublicProfileConnectionKind.Followers))
@@ -225,26 +221,13 @@ internal fun PublicProfileScreen(
                     }
                     if (own != null) own.favoritesPreview {
                         ProfileSectionHeading(stringResource(Res.string.profile_section_favorites), onAll = own.onOpenFavorites)
-                    } else if (profile.favorites.isNotEmpty() || state.isLoadingFavorites || state.favoritesError != null) Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Box(Modifier.padding(horizontal = 16.dp)) {
-                            ProfileSectionHeading(stringResource(Res.string.profile_section_favorites), onAll = { section = ProfileSection.Favorites })
-                        }
-                        when {
-                            state.isLoadingFavorites && profile.favorites.isEmpty() -> ProfileSectionLoader()
-                            state.favoritesError != null && profile.favorites.isEmpty() ->
-                                Box(Modifier.padding(horizontal = 16.dp)) {
-                                    InlineProfileError(stringResource(Res.string.profile_favorites_failed)) { vm.onAction(PublicProfileAction.RetryFavorites) }
-                                }
-                            else -> {
-                                slots.favoritesPreview(profile.favorites.take(6), openFavorite)
-                                if (state.favoritesError != null) {
-                                    Box(Modifier.padding(horizontal = 16.dp)) {
-                                        InlineProfileError(stringResource(Res.string.profile_favorites_refresh_failed)) { vm.onAction(PublicProfileAction.RetryFavorites) }
-                                    }
-                                }
-                            }
-                        }
-                    }
+                    } else if (viewingOwn) slots.ownerCollection {
+                        OwnProfileFavoritesPreview(state, slots, openFavorite,
+                            onAll = { section = ProfileSection.Favorites },
+                            onRetry = { vm.onAction(PublicProfileAction.RetryFavorites) })
+                    } else if (!viewingOwn) slots.featuredCollection(profile.slug)
+
+                    slots.shelfPreview(profile.slug)
 
                     if (state.checkIns.isNotEmpty() || state.isLoadingCheckIns || state.checkInsError != null || (own?.checkInCount ?: 0) > 0) Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         ProfileSectionHeading(stringResource(Res.string.profile_section_check_ins), onAll = own?.onOpenCheckIns ?: { section = ProfileSection.CheckIns })

@@ -18,4 +18,13 @@ internal data class FavoritesUiState(
     val areDrinksLoading: Boolean = false,
     val drinksLoadFailed: Boolean = false,
     val removingDrinks: Set<String> = emptySet(),
-)
+    /** First independent source results must settle before list keys can become scroll anchors. */
+    val hasSettledInitialLoad: Boolean = false,
+) {
+    val isEmpty: Boolean get() = shops.isEmpty() && roasters.isEmpty() && drinks.isEmpty()
+    val isAnyLoading: Boolean get() = isLoading || areRoastersLoading || areDrinksLoading
+    val showInitialSkeleton: Boolean get() = isAnyLoading && (!hasSettledInitialLoad || isEmpty)
+}
+
+internal fun FavoritesUiState.withSettledInitialLoad(): FavoritesUiState =
+    if (!isAnyLoading && !hasSettledInitialLoad) copy(hasSettledInitialLoad = true) else this

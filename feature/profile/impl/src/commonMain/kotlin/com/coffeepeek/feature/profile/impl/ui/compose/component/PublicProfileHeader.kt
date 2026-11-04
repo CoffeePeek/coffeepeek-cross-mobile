@@ -7,10 +7,12 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -53,7 +55,9 @@ internal fun PublicProfileHeader(
     onFollow: (() -> Unit)? = null,
     onEditProfile: (() -> Unit)? = null,
     stats: PublicProfileStats? = null,
-    onFollowersClick: () -> Unit = {},
+    onFollowersClick: (() -> Unit)? = null,
+    onShopsClick: (() -> Unit)? = null,
+    onRoastersClick: (() -> Unit)? = null,
     onAvatarClick: () -> Unit,
 ) {
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -63,7 +67,7 @@ internal fun PublicProfileHeader(
                 Text("@${nickname.trimStart('@')}", style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground,
                     maxLines = 2, overflow = TextOverflow.Ellipsis)
-                if (stats != null) ProfileStats(stats, onFollowersClick)
+                if (stats != null) ProfileStats(stats, onFollowersClick, onShopsClick, onRoastersClick)
             }
         }
         if (!about.isNullOrBlank()) Text(about, style = MaterialTheme.typography.bodyMedium,
@@ -111,36 +115,44 @@ private fun ProfileFollowButton(nickname: String, isFollowing: Boolean, enabled:
 }
 
 @Composable
-private fun ProfileStats(stats: PublicProfileStats, onFollowersClick: () -> Unit) {
-    val items = listOf(stats.checkIns to stringResource(Res.string.profile_stat_check_ins),
-        stats.coffeeShops to stringResource(Res.string.profile_stat_shops),
-        stats.followers to stringResource(Res.string.profile_stat_followers))
-    val followersLabel = stringResource(Res.string.profile_open_followers)
-    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-        items.forEachIndexed { index, (count, label) ->
-            Column(
-                Modifier.weight(1f).then(if (index == items.lastIndex) Modifier.clickable(role = Role.Button,
-                    onClickLabel = followersLabel, onClick = onFollowersClick) else Modifier).padding(vertical = 4.dp),
-                horizontalAlignment = Alignment.Start,
-            ) {
-                Text(count.toString(), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
-                Text(label, style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp, lineHeight = 14.sp),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Start)
-            }
-        }
+private fun ProfileStats(stats: PublicProfileStats, onFollowersClick: (() -> Unit)?,
+    onShopsClick: (() -> Unit)?, onRoastersClick: (() -> Unit)?) {
+    FlowRow(Modifier.fillMaxWidth(), maxItemsInEachRow = 2, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        ProfileStat(stats.checkIns, stringResource(Res.string.profile_stat_check_ins), Modifier.weight(1f))
+        ProfileStat(stats.coffeeShops, stringResource(Res.string.profile_stat_shops), Modifier.weight(1f),
+            onShopsClick, stringResource(Res.string.profile_menu_submitted_shops))
+        ProfileStat(stats.roasters, stringResource(Res.string.profile_stat_roasters), Modifier.weight(1f),
+            onRoastersClick, stringResource(Res.string.profile_menu_submitted_roasters))
+        ProfileStat(stats.followers, stringResource(Res.string.profile_stat_followers), Modifier.weight(1f),
+            onFollowersClick, stringResource(Res.string.profile_open_followers))
     }
 }
 
 @Composable
-private fun ProfileHeaderPreview(dark: Boolean) = com.coffeepeek.core.designsystem.theme.CoffeePeekTheme(darkTheme = dark) {
+private fun ProfileStat(count: Int, label: String, modifier: Modifier, onClick: (() -> Unit)? = null,
+    actionLabel: String = label) {
+    Column(modifier.heightIn(min = 48.dp).then(if (onClick == null) Modifier else
+        Modifier.clickable(role = Role.Button, onClickLabel = actionLabel, onClick = onClick)).padding(vertical = 4.dp),
+        horizontalAlignment = Alignment.Start) {
+        Text(count.toString(), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
+        Text(label, style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp, lineHeight = 14.sp),
+            color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Start)
+    }
+}
+
+@Composable
+private fun ProfileHeaderPreview(dark: Boolean, own: Boolean = true) = com.coffeepeek.core.designsystem.theme.CoffeePeekTheme(darkTheme = dark) {
     Surface(color = MaterialTheme.colorScheme.background) {
         Column(Modifier.padding(16.dp)) {
             PublicProfileHeader("goloologo", null, "Варю, пью, фоткаю…", { _, _, _ -> },
-                onEditProfile = {}, stats = PublicProfileStats(24, 6, 9, 3), onAvatarClick = {})
+                onEditProfile = if (own) ({}) else null, stats = PublicProfileStats(24, 6, 9, 3),
+                onShopsClick = if (own) ({}) else null, onRoastersClick = if (own) ({}) else null,
+                onFollowersClick = {}, onAvatarClick = {})
         }
     }
 }
 
 @Preview @Composable private fun ProfileHeaderLightPreview() = ProfileHeaderPreview(false)
 @Preview @Composable private fun ProfileHeaderDarkPreview() = ProfileHeaderPreview(true)
+@Preview @Composable private fun PublicProfileHeaderLightPreview() = ProfileHeaderPreview(false, false)
+@Preview @Composable private fun PublicProfileHeaderDarkPreview() = ProfileHeaderPreview(true, false)

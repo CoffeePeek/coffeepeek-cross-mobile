@@ -124,6 +124,10 @@ internal fun publicProfileFeatureScreenRenderer(
 /** The legacy-rendered pieces shared by the public profile and the Profile tab. */
 internal fun profileSlots(checkIns: ProfilePublicCheckIns): ProfileSlots {
     return ProfileSlots(
+        featuredCollection = { slug -> ProfileFeaturedCollection(slug) },
+        shelfPreview = { slug -> ProfileShelfPreview(slug) },
+        ownerCollection = { fallback -> ProfileOwnerCollection(fallback) },
+        onOwnContributions = ::openProfileContributions,
         image = { url, description, modifier -> CpImage(data = url, modifier = modifier, contentScale = ContentScale.Crop, contentDescription = description) },
         photoViewer = { previews, originals, index, onDismiss -> FullScreenImageDialog(PhotoViewerImages(previews, originals), index, onDismiss) },
         favoritesPreview = { favorites, onOpen ->

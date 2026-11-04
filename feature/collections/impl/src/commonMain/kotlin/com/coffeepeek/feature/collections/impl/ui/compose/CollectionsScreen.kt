@@ -6,6 +6,7 @@ import androidx.compose.ui.backhandler.BackHandler
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.coffeepeek.feature.collections.api.CollectionPhotoDecoder
 import com.coffeepeek.feature.collections.domain.model.CollectionPlaceKind
+import com.coffeepeek.feature.collections.domain.model.SharedCollectionMode
 import com.coffeepeek.feature.collections.domain.repository.CollectionsRepository
 import com.coffeepeek.feature.collections.impl.ui.CollectionsViewModel
 import com.coffeepeek.feature.collections.impl.ui.compose.component.*
@@ -20,8 +21,12 @@ internal class CollectionsCallbacks(val back: () -> Unit, val signIn: () -> Unit
 @OptIn(androidx.compose.ui.ExperimentalComposeUiApi::class)
 @Composable
 internal fun CollectionsScreen(vm: CollectionsViewModel, repository: CollectionsRepository, decodePhoto: CollectionPhotoDecoder,
-    callbacks: CollectionsCallbacks, modifier: Modifier) {
+    callbacks: CollectionsCallbacks, modifier: Modifier, savedPublic: @Composable (String) -> Unit = {}) {
     val state by vm.state.collectAsStateWithLifecycle()
+    if (state.publicView && state.collection?.mode == SharedCollectionMode.List) {
+        savedPublic(checkNotNull(state.collection).id)
+        return
+    }
     val currentCallbacks by rememberUpdatedState(callbacks)
     val resources by rememberUpdatedState(collectionPosterResources(state.collection, state.format))
     BackHandler { vm.onAction(CollectionsAction.Back) }
