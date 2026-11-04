@@ -330,3 +330,21 @@ onClick argument, and a nullable composable API property required a stable local
 reference for smart-casting. Both were fixed before the successful gates. No
 UI/instrumented/screenshot automated tests were added or run; no account write or
 synthetic analytics event was sent to production. Device delivery follows below.
+
+
+### Pixel delivery
+
+Published code checkpoint: `fd6ad74b`, directDebug with `-PpushTestApp=true`,
+package `com.coffeepeek.pushdebug`, version 1.1.5.2704. APK SHA-256:
+`63929F6EA2EB202D8D33071D36C4835EC49966B0476542EA4927F3B400430A74`.
+The certificate matched the previously installed Debug. The Pixel 9/API 37
+accepted an in-place update from 2702 with Success; the original normal app was
+not replaced and no user data was cleared.
+
+The user reported unlocking, but the immediately queried device state still
+reported SCREEN_STATE_OFF/keyguard showing. Cold startup nevertheless reported
+Status ok in 2032 ms. The local screen capture is black, so this is startup
+command evidence only: section switching, light/dark, large-font, VoiceOver and
+actual ranking/profile rendering were not visually certified. No security or
+screen-timeout setting was changed. The updated Debug remains installed for the
+user's check. Diagnostics/screenshots remain in ignored local build outputs.
