@@ -41,6 +41,7 @@ internal fun ShopDetailTopActions(
     onShare: () -> Unit,
     modifier: Modifier = Modifier,
     hazeState: HazeState? = null,
+    favoriteSelection: Boolean = false,
 ) {
     val backScale = if (LocalLayoutDirection.current == LayoutDirection.Rtl) -1f else 1f
     CompositionLocalProvider(LocalCoffeePeekGlassHazeState provides hazeState) {
@@ -55,7 +56,7 @@ internal fun ShopDetailTopActions(
         }
         if (showShopActions) {
             ShopHeaderActions(isFavorite, favoriteAvailable, isFavoriteLoading,
-                onSuggestChange, onToggleFavorite, onShare, hazeState)
+                onSuggestChange, onToggleFavorite, onShare, hazeState, favoriteSelection)
         }
       }
     }

@@ -75,17 +75,13 @@ private fun DrawScope.drawShelfRailFasteners() {
     }
 }
 
-/** A flush silver head with a recessed cross slot. */
+/** A flat silver head with one straight slot. */
 private fun DrawScope.drawShelfFastener(center: Offset, radius: Float) {
-    val edge = Offset(radius, radius)
-    val metal = Brush.linearGradient(listOf(Color(0xFFF2F4F5), Color(0xFFB5BCC1), Color(0xFFE0E5E8)),
-        start = center - edge, end = center + edge)
-    drawCircle(metal, radius, center)
+    drawCircle(Color(0xFFBCC3C7), radius, center)
     drawCircle(Color(0xFF747D84), radius, center, style = Stroke(.5.dp.toPx()))
     val slot = radius * .45f
     val slotColor = Color(0xFF687178)
     drawLine(slotColor, center - Offset(slot, 0f), center + Offset(slot, 0f), .7.dp.toPx())
-    drawLine(slotColor, center - Offset(0f, slot), center + Offset(0f, slot), .7.dp.toPx())
 }
 
 /** Two bare rails for the empty and guest states. */

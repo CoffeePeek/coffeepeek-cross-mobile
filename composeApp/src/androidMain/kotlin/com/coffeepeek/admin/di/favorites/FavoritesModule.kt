@@ -19,6 +19,8 @@ import org.koin.core.module.Module
 import org.koin.dsl.module
 import com.coffeepeek.admin.di.collections.CollectionPickerRequests
 import com.coffeepeek.admin.di.collections.CollectionPromptRoasterFavorites
+import com.coffeepeek.admin.di.collections.AndroidFavoriteCollectionsPrompt
+import com.coffeepeek.admin.di.collections.FavoriteCollectionsPrompt
 import com.coffeepeek.admin.feature.favorites.api.RoasterFavorites
 import com.coffeepeek.admin.feature.favorites.data.ServerRoasterFavorites
 import kotlinx.coroutines.CoroutineScope

@@ -10,6 +10,8 @@ internal data class SavedCollectionsState(
     val accountVersion: Int = 0,
     val signedIn: Boolean = false,
     val loading: Boolean = true,
+    val refreshing: Boolean = false,
+    val listsLoaded: Boolean = !loading,
     val busy: Boolean = false,
     val failure: SavedCollectionsFailure? = null,
     val lists: List<SavedCollectionSummary> = emptyList(),

@@ -1,5 +1,6 @@
 package com.coffeepeek.admin.di.shop
 
+import com.coffeepeek.admin.di.collections.FavoriteCollectionsPrompt
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
@@ -59,6 +60,7 @@ internal class FeatureShopDetailScreenRenderer(
     private val votes: ShopCheckInVoteRepository,
     private val favorites: FavoritesRepository,
     private val favoriteIntent: ShopFavoriteIntent,
+    private val favoriteCollections: FavoriteCollectionsPrompt? = null,
     private val checkInForm: ShopCheckInFormRenderer,
     private val visibility: com.coffeepeek.feature.authorblocking.api.AuthorVisibility,
     private val blockActions: com.coffeepeek.feature.authorblocking.api.AuthorBlockActions,
@@ -78,6 +80,7 @@ internal class FeatureShopDetailScreenRenderer(
         shopFavorites(session.lease.favorites(favorites)), currentViewer = { session.lease.viewer(accounts) },
         currentDayOfWeek = ::currentLocalDayOfWeek, currentMinuteOfDay = ::currentLocalMinuteOfDay,
         analytics = AppShopAnalytics,
+        selectCollectionsOnFavorite = favoriteCollections != null,
         authorImage = { url, modifier -> com.coffeepeek.core.designsystem.component.CoffeePeekImage(data = url, modifier = modifier) },
         checkInImage = { url, original, modifier, scale ->
             com.coffeepeek.core.designsystem.component.CoffeePeekImage(data = url, highQualityData = original, modifier = modifier, contentScale = scale)
@@ -158,6 +161,7 @@ internal class FeatureShopDetailScreenRenderer(
         scope: kotlinx.coroutines.CoroutineScope, snackbar: SnackbarHostState, copied: String,
     ) {
         when (effect) {
+            is ShopDetailEffect.SelectFavoriteCollections -> favoriteCollections?.shop(effect.shopId)
             is ShopDetailEffect.FavoriteRequiresSignIn -> {
                 favoriteIntent.remember(effect.shopId, effect.desired)
                 Navigator.navigate(Navigator.Screen.Auth)

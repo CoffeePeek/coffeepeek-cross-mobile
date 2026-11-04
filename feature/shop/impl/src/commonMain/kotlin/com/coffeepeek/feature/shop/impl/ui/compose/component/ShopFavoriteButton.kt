@@ -11,6 +11,7 @@ import com.coffeepeek.core.designsystem.modifier.LocalCoffeePeekGlassHazeState
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.shop.impl.resources.Res
 import com.coffeepeek.feature.shop.impl.resources.shop_favorite_add
+import com.coffeepeek.feature.shop.impl.resources.shop_favorite_choose_collections
 import com.coffeepeek.feature.shop.impl.resources.shop_favorite_remove
 import com.coffeepeek.feature.shop.impl.resources.shop_favorite_unavailable
 import com.coffeepeek.feature.shop.impl.resources.shop_favorite_updating
@@ -26,8 +27,10 @@ internal fun ShopFavoriteButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
     hazeState: HazeState? = null,
+    selectionMode: Boolean = false,
 ) {
     val description = stringResource(when {
+        selectionMode -> Res.string.shop_favorite_choose_collections
         !available -> Res.string.shop_favorite_unavailable
         isFavorite -> Res.string.shop_favorite_remove
         else -> Res.string.shop_favorite_add

@@ -11,8 +11,11 @@ import kotlinx.coroutines.flow.Flow
 interface ShelfAccount {
     /** The signed-in user ID, or null for a guest. */
     val owner: String?
+    /** Changes on account replacement, including a new login for the same user. */
+    val visibilityScope: String? get() = owner
     /** Emits the current owner first, then every change. */
     val owners: Flow<String?>
+    val visibilityScopes: Flow<String?> get() = owners
 }
 
 /**

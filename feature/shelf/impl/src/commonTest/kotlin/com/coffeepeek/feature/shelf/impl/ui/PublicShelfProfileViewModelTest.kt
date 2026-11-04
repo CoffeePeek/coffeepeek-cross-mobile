@@ -2,6 +2,7 @@ package com.coffeepeek.feature.shelf.impl.ui
 
 import androidx.lifecycle.ViewModelStore
 import com.coffeepeek.feature.shelf.domain.model.PublicShelf
+import com.coffeepeek.feature.shelf.domain.repository.PublicShelfSnapshot
 import com.coffeepeek.feature.shelf.impl.ui.compose.model.*
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
@@ -99,5 +100,55 @@ class PublicShelfProfileViewModelTest {
         assertNull(model.state.value.shelf)
         assertTrue(model.state.value.failed)
         assertFalse(model.state.value.loading)
+    }
+
+    @Test fun ownShelfReopensFromCacheAndKeepsItDuringAFailedBackgroundRefresh() = runTest(dispatcher) {
+        val repository = FakeShelfProfileRepository().apply {
+            cached = PublicShelfSnapshot(profileShelf())
+            publicRead = { Result.failure(IllegalStateException()) }
+        }
+        val model = PublicShelfProfileViewModel(repository, "author", ownerView = true).also { store.put("own", it) }
+        val revision = model.state.value.revision
+        assertEquals(profileShelf(), model.state.value.shelf)
+        assertFalse(model.state.value.loading)
+        runCurrent()
+        assertEquals(profileShelf(), model.state.value.shelf)
+        assertEquals(revision, model.state.value.revision)
+        assertFalse(model.state.value.loading)
+        assertTrue(model.state.value.failed)
+    }
+
+    @Test fun aCachedHiddenOwnShelfDoesNotFlashAPlaceholder() = runTest(dispatcher) {
+        val gate = CompletableDeferred<Result<PublicShelf?>>()
+        val repository = FakeShelfProfileRepository().apply {
+            cached = PublicShelfSnapshot(null)
+            publicRead = { gate.await() }
+        }
+        val model = PublicShelfProfileViewModel(repository, "author", ownerView = true).also { store.put("own", it) }
+        runCurrent()
+        assertNull(model.state.value.shelf)
+        assertFalse(model.state.value.loading)
+        assertTrue(model.state.value.refreshing)
+        gate.complete(Result.success(null))
+        runCurrent()
+        assertFalse(model.state.value.refreshing)
+    }
+
+    @Test fun ownCacheIsNeverUsedForAnotherAccountOrForPublicVisitors() = runTest(dispatcher) {
+        val gate = CompletableDeferred<Result<PublicShelf?>>()
+        val repository = FakeShelfProfileRepository().apply {
+            cached = PublicShelfSnapshot(profileShelf())
+            owners.value = "next-owner"
+            publicRead = { gate.await() }
+        }
+        val own = PublicShelfProfileViewModel(repository, "author", ownerView = true).also { store.put("own", it) }
+        assertNull(own.state.value.shelf)
+        assertTrue(own.state.value.loading)
+        repository.cachedOwner = "next-owner"
+        val public = model(repository)
+        assertNull(public.state.value.shelf)
+        assertTrue(public.state.value.loading)
+        gate.complete(Result.success(null))
+        runCurrent()
     }
 }

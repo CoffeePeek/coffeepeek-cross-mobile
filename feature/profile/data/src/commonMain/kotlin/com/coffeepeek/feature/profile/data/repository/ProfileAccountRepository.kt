@@ -31,8 +31,8 @@ internal class ProfileAccountRepository(
     private val sessions: SessionReader,
     scope: CoroutineScope,
 ) : ProfileAccountPort, ProfileEditPort, AccountDeletionPort {
-    private data class Cache(val owner: String?, val generation: Long = 0, val profile: OwnProfile? = null)
-    private val cache = MutableStateFlow(Cache(activeAccount()))
+    private data class Cache(val owner: String?, val generation: Long = 0, val profile: OwnProfile? = null, val login: Long = 0)
+    private val cache = MutableStateFlow(Cache(activeAccount(), login = sessions.accountGeneration()))
 
     init {
         scope.launch(start = CoroutineStart.UNDISPATCHED) {
@@ -42,9 +42,15 @@ internal class ProfileAccountRepository(
 
     override fun activeAccount() = key(sessions.peekSession())
     override fun observeActiveAccount() = sessions.observeSession().map(::key).distinctUntilChanged()
+
+    // Stable across token refresh, different after sign-out or account replacement, and never the token itself.
+    override fun cacheScope(): String? = sessions.peekSession()?.takeIf(sessions::isActiveSession)?.userId?.let {
+        "${sessions.accountGeneration()}:$it"
+    }
+    override fun observeCacheScope() = sessions.observeSession().map { cacheScope() }.distinctUntilChanged()
     override fun cachedOwnProfile() = synchronize(activeAccount()).profile
     override fun observeOwnProfile() = combine(cache, sessions.observeSession()) { stored, session ->
-        stored.profile.takeIf { stored.owner == key(session) }
+        stored.profile.takeIf { stored.owner == key(session) && stored.login == sessions.accountGeneration() }
     }.distinctUntilChanged()
 
     override suspend fun loadOwnProfile(forceRefresh: Boolean) = requestResult {
@@ -120,7 +126,8 @@ internal class ProfileAccountRepository(
     }
 
     private fun synchronize(owner: String?): Cache {
-        cache.update { if (it.owner == owner) it else Cache(owner, it.generation + 1) }
+        val login = sessions.accountGeneration()
+        cache.update { if (it.owner == owner && it.login == login) it else Cache(owner, it.generation + 1, login = login) }
         return cache.value
     }
 

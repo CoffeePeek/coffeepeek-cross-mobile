@@ -1,6 +1,7 @@
 package com.coffeepeek.admin.ui.screen.favorites
 
 import com.coffeepeek.admin.base.BaseViewModel
+import com.coffeepeek.admin.di.collections.FavoriteCollectionsPrompt
 import com.coffeepeek.admin.feature.favorites.api.RoasterFavorites
 import com.coffeepeek.admin.feature.favorites.api.roasterFavoriteId
 import com.coffeepeek.admin.utils.FavoriteSync
@@ -54,6 +55,7 @@ class FavoritesViewModel(
     private val roasterRepository: RoasterRepository,
     private val serverFavorites: FavoritesRepository? = null,
     private val sessions: SessionRepository? = null,
+    private val favoriteCollections: FavoriteCollectionsPrompt? = null,
 ) : BaseViewModel() {
 
     private val _state = MutableStateFlow(FavoritesUiState())
@@ -152,6 +154,7 @@ class FavoritesViewModel(
     }
 
     fun removeRoaster(roaster: CatalogItem) {
+        favoriteCollections?.let { prompt -> roaster.address?.slug?.let(prompt::roaster); return }
         val scope = favoritesScope ?: return
         com.coffeepeek.admin.feature.favorites.api.FavoriteInteractions.change(scope, roaster.roasterFavoriteId, true, false,
             action = { roasterFavorites.setFavorite(roaster, false) },
@@ -172,8 +175,9 @@ class FavoritesViewModel(
         }
     }
 
-    /** Tapping the heart on a favorites card unfavorites it and drops it from the list. */
+    /** Android opens the memberships picker; older bindings keep their original action. */
     fun removeFavorite(shop: CoffeeShop) {
+        favoriteCollections?.let { it.shop(shop.publicAddress?.slug ?: shop.id); return }
         val scope = favoritesScope ?: return
         com.coffeepeek.admin.feature.favorites.api.FavoriteInteractions.change(scope, shop.id, false, false,
             action = { favoriteRepository.removeFavorite(shop.id) },

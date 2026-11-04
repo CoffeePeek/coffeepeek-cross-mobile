@@ -12,7 +12,7 @@ internal class SavedCollectionsViewModel(private val saved: SavedCollectionsRepo
     private val snapshots: CollectionsRepository, private val account: CollectionsAccount,
     private val mode: SavedCollectionsMode, private val initialId: String? = null,
     private val target: SavedCollectionTarget? = null, private val profileSlug: String? = null) :
-    MviViewModel<SavedCollectionsState, SavedCollectionsAction, SavedCollectionsEvent>(SavedCollectionsState(mode)) {
+    MviViewModel<SavedCollectionsState, SavedCollectionsAction, SavedCollectionsEvent>(initialSavedState(saved, account, mode, target)) {
     private var generation = 0
     private var work: Job? = null
     private var reloadPending = false
@@ -27,7 +27,7 @@ internal class SavedCollectionsViewModel(private val saved: SavedCollectionsRepo
         if (mode !in setOf(SavedCollectionsMode.Library, SavedCollectionsMode.Preference)) return
         viewModelScope.launch {
             saved.observeChanges().collect {
-                if (currentState.busy || currentState.loading) reloadPending = true else reload()
+                if (currentState.busy || currentState.loading || currentState.refreshing) reloadPending = true else reload()
             }
         }
     }
@@ -63,12 +63,7 @@ internal class SavedCollectionsViewModel(private val saved: SavedCollectionsRepo
     private fun observeAccount() {
         viewModelScope.launch {
             account.identities.distinctUntilChanged().collectLatest { owner ->
-                generation++
-                reloadPending = false
-                work?.cancel()
-                clearCover()
-                sendEvent(SavedCollectionsEvent.CancelExport)
-                updateState { SavedCollectionsState(mode, accountVersion = generation, signedIn = owner != null, loading = owner != null) }
+                resetAccount(owner)
                 if (owner != null) reload()
             }
         }
@@ -79,12 +74,30 @@ internal class SavedCollectionsViewModel(private val saved: SavedCollectionsRepo
         }
     }
 
+    private suspend fun resetAccount(owner: String?) {
+        generation++
+        reloadPending = false
+        work?.cancel()
+        clearCover()
+        sendEvent(SavedCollectionsEvent.CancelExport)
+        val cached = if (mode in cachedListModes) saved.cachedMine(target)
+            .takeIf { owner != null && owner == account.currentId() } else null
+        val featured = if (mode == SavedCollectionsMode.Preference && owner != null && owner == account.currentId())
+            saved.cachedFeatured() else null
+        val ready = cached != null && (mode != SavedCollectionsMode.Preference || featured != null)
+        updateState { SavedCollectionsState(mode, accountVersion = generation, signedIn = owner != null,
+            loading = owner != null && !ready, refreshing = ready,
+            listsLoaded = ready, lists = cached.orEmpty(), featuredId = featured?.collectionId,
+            memberships = cached?.filter { it.containsItem }?.map { it.id }?.toSet().orEmpty()) }
+    }
+
     private fun reload() {
         if (mode !in setOf(SavedCollectionsMode.Public, SavedCollectionsMode.Featured) && !currentState.signedIn) return
         val epoch = generation
         reloadPending = false
         work?.cancel()
-        updateState { copy(loading = true, failure = null, membershipsLoaded = false,
+        val cached = mode in cachedListModes && currentState.listsLoaded
+        updateState { copy(loading = !cached, refreshing = cached, failure = null, membershipsLoaded = false,
             collection = if (mode == SavedCollectionsMode.Featured) null else collection) }
         launchWork(epoch) {
             when (mode) {
@@ -101,15 +114,19 @@ internal class SavedCollectionsViewModel(private val saved: SavedCollectionsRepo
         val result = saved.mine(target).checked()
         if (epoch != generation) return
         updateState { copy(lists = result.getOrNull() ?: lists, memberships = result.getOrNull()?.filter { it.containsItem }?.map { it.id }?.toSet() ?: memberships,
-            membershipsLoaded = result.isSuccess, failure = if (result.isFailure) SavedCollectionsFailure.Load else null) }
+            listsLoaded = result.isSuccess || listsLoaded, membershipsLoaded = result.isSuccess,
+            failure = if (result.isFailure) SavedCollectionsFailure.Load else null) }
     }
 
     private suspend fun loadPreference(epoch: Int) {
         val lists = saved.mine().checked()
         val featured = saved.featuredId().checked()
         if (epoch != generation) return
-        updateState { copy(lists = lists.getOrNull() ?: this.lists, featuredId = featured.getOrNull(),
-            failure = if (lists.isFailure || featured.isFailure) SavedCollectionsFailure.Load else null) }
+        val complete = lists.isSuccess && featured.isSuccess
+        updateState { copy(lists = if (complete) lists.getOrThrow() else this.lists,
+            listsLoaded = complete || listsLoaded,
+            featuredId = if (complete) featured.getOrNull() else featuredId,
+            failure = if (complete) null else SavedCollectionsFailure.Load) }
     }
 
     private suspend fun loadEditor(epoch: Int) {
@@ -346,7 +363,7 @@ internal class SavedCollectionsViewModel(private val saved: SavedCollectionsRepo
 
     private fun finishWork(epoch: Int) {
         if (epoch != generation) return
-        updateState { copy(busy = false, loading = false) }
+        updateState { copy(busy = false, loading = false, refreshing = false) }
         if (reloadPending) reload()
     }
 
@@ -358,4 +375,18 @@ internal class SavedCollectionsViewModel(private val saved: SavedCollectionsRepo
         clearCover()
         super.onCleared()
     }
+}
+
+private val cachedListModes = setOf(SavedCollectionsMode.Library, SavedCollectionsMode.Picker, SavedCollectionsMode.Preference)
+
+private fun initialSavedState(saved: SavedCollectionsRepository, account: CollectionsAccount,
+    mode: SavedCollectionsMode, target: SavedCollectionTarget?): SavedCollectionsState {
+    val owner = account.currentId()
+    val cached = if (owner != null && mode in cachedListModes) saved.cachedMine(target) else null
+    val featured = if (owner != null && mode == SavedCollectionsMode.Preference) saved.cachedFeatured() else null
+    val ready = cached != null && (mode != SavedCollectionsMode.Preference || featured != null)
+    return SavedCollectionsState(mode, signedIn = owner != null,
+        loading = mode in setOf(SavedCollectionsMode.Public, SavedCollectionsMode.Featured) || owner != null && !ready,
+        refreshing = ready, listsLoaded = ready, lists = cached.orEmpty(), featuredId = featured?.collectionId,
+        memberships = cached?.filter { it.containsItem }?.map { it.id }?.toSet().orEmpty())
 }

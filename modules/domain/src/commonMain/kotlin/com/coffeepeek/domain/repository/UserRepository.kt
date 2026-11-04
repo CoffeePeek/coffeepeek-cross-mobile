@@ -6,6 +6,8 @@ import com.coffeepeek.domain.model.UserProfile
 import kotlinx.coroutines.flow.StateFlow
 
 interface UserRepository {
+    /** Synchronous cache read that must belong to the active login lifetime. */
+    fun cachedProfile(): UserProfile? = null
     fun observeProfile(): StateFlow<UserProfile?>
 
     suspend fun refreshProfile(): Result<UserProfile>

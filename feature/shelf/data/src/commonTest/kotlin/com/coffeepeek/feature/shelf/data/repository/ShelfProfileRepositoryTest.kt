@@ -10,6 +10,7 @@ import io.ktor.http.content.OutgoingContent
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.test.*
 import kotlinx.serialization.json.*
 import kotlin.test.*
@@ -18,9 +19,12 @@ import kotlin.test.*
 class ShelfProfileRepositoryTest {
     private val dispatcher = StandardTestDispatcher()
     private val owners = MutableStateFlow<String?>("first")
+    private val sessionGeneration = MutableStateFlow(0)
     private val account = object : ShelfAccount {
         override val owner get() = owners.value
         override val owners = this@ShelfProfileRepositoryTest.owners
+        override val visibilityScope get() = owner?.let { "$it:${sessionGeneration.value}" }
+        override val visibilityScopes = combine(owners, sessionGeneration) { user, generation -> user?.let { "$it:$generation" } }
     }
     private val clients = mutableListOf<HttpClient>()
     private val requests = mutableListOf<HttpRequestData>()
@@ -46,6 +50,48 @@ class ShelfProfileRepositoryTest {
 
     @Test fun missingVisibilityDoesNotBecomeAnImplicitFalseSuccess() = runTest(dispatcher) {
         assertTrue(repository { ok("{}") }.visibility().isFailure)
+    }
+
+    @Test fun confirmedFalseAndTrueAreCachedButAFailedRefreshKeepsTheLastValue() = runTest(dispatcher) {
+        var response = """{"isVisible":false}"""
+        val repo = repository { ok(response) }
+        assertNull(repo.cachedVisibility())
+        assertFalse(repo.visibility().getOrThrow())
+        assertEquals(false, repo.cachedVisibility())
+        response = """{"isVisible":true}"""
+        assertTrue(repo.visibility().getOrThrow())
+        assertEquals(true, repo.cachedVisibility())
+        response = "{}"
+        assertTrue(repo.visibility().isFailure)
+        assertEquals(true, repo.cachedVisibility())
+    }
+
+    @Test fun aSameUserLoginInvalidatesThePreviousPreference() = runTest(dispatcher) {
+        val repo = repository { ok("""{"isVisible":true}""") }
+        repo.visibility().getOrThrow()
+        assertEquals(true, repo.cachedVisibility())
+        sessionGeneration.value++
+        assertNull(repo.cachedVisibility())
+    }
+
+    @Test fun anOlderReadCannotReplaceTheLastConfirmedWrite() = runTest(dispatcher) {
+        val gate = CompletableDeferred<Unit>()
+        var reads = 0
+        val repo = repository { request ->
+            if (request.method == HttpMethod.Put) ok("""{"isVisible":false}""")
+            else {
+                if (++reads == 2) gate.await()
+                ok("""{"isVisible":true}""")
+            }
+        }
+        repo.visibility().getOrThrow()
+        val pending = async { repo.visibility() }
+        runCurrent()
+        repo.setVisibility(false).getOrThrow()
+        assertEquals(false, repo.cachedVisibility())
+        gate.complete(Unit)
+        pending.await()
+        assertEquals(false, repo.cachedVisibility())
     }
 
     @Test fun publicProjectionAndPhotosNeverSendOwnerCredentials() = runTest(dispatcher) {
@@ -111,6 +157,58 @@ class ShelfProfileRepositoryTest {
         assertTrue(repo.photo("https://fixture.invalid$photoPath").isFailure)
         declared = false
         assertTrue(repo.photo("https://fixture.invalid$photoPath").isFailure)
+    }
+
+    @Test fun successfulProjectionIsCachedIncludingAnExplicitHiddenShelf() = runTest(dispatcher) {
+        var data = shelf(photoPath)
+        val repo = repository { ok(data) }
+        assertNull(repo.cachedPublicShelf("author"))
+        val visible = repo.publicShelf("author").getOrThrow()
+        assertEquals(visible, repo.cachedPublicShelf("author")?.shelf)
+        data = "null"
+        repo.publicShelf("author").getOrThrow()
+        assertNotNull(repo.cachedPublicShelf("author"))
+        assertNull(repo.cachedPublicShelf("author")?.shelf)
+    }
+
+    @Test fun accountChangeImmediatelyRejectsCachedAndPendingProjections() = runTest(dispatcher) {
+        val gate = CompletableDeferred<Unit>()
+        var pending = false
+        val repo = repository { if (pending) gate.await(); ok(shelf(photoPath)) }
+        repo.publicShelf("author").getOrThrow()
+        pending = true
+        val read = async { repo.publicShelf("author") }
+        runCurrent()
+        owners.value = "second"
+        assertNull(repo.cachedPublicShelf("author"))
+        gate.complete(Unit)
+        read.await()
+        assertNull(repo.cachedPublicShelf("author"))
+        owners.value = null
+        assertNull(repo.cachedPublicShelf("author"))
+    }
+
+    @Test fun visibilityWriteInvalidatesTheCacheAndLateReadsCannotRestoreIt() = runTest(dispatcher) {
+        val gate = CompletableDeferred<Unit>()
+        var reads = 0
+        val repo = repository { request ->
+            if (request.method == HttpMethod.Put) ok("""{"isVisible":false}""")
+            else {
+                val read = ++reads
+                if (read == 2) gate.await()
+                ok(if (read == 3) "null" else shelf(photoPath))
+            }
+        }
+        repo.publicShelf("author").getOrThrow()
+        val read = async { repo.publicShelf("author") }
+        runCurrent()
+        repo.setVisibility(false).getOrThrow()
+        assertNull(repo.cachedPublicShelf("author"))
+        repo.publicShelf("author").getOrThrow()
+        gate.complete(Unit)
+        read.await()
+        assertNotNull(repo.cachedPublicShelf("author"))
+        assertNull(repo.cachedPublicShelf("author")?.shelf)
     }
 
     private fun repository(handler: suspend MockRequestHandleScope.(HttpRequestData) -> HttpResponseData) =

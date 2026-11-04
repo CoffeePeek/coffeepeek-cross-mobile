@@ -15,7 +15,7 @@ import kotlinx.coroutines.test.runTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 
-class ShopFavoriteIntentTest {
+class AppliedShopFavoriteIntentTest {
     private class Favorites : FavoritesRepository {
         val saved = mutableListOf<String>()
         val removed = mutableListOf<String>()
@@ -37,7 +37,7 @@ class ShopFavoriteIntentTest {
         val sessions = CheckInTestSessions(null)
         val favorites = Favorites()
         val applied = mutableListOf<Pair<String, Boolean>>()
-        val intent = ShopFavoriteIntent(sessions, details, favorites, backgroundScope) { id, favorite -> applied += id to favorite }
+        val intent = AppliedShopFavoriteIntent(sessions, details, favorites, backgroundScope) { id, favorite -> applied += id to favorite }
         runCurrent()
         intent.remember("shop-1", true)
         runCurrent()
@@ -61,7 +61,7 @@ class ShopFavoriteIntentTest {
                 return details.getDetails(shopId)
             }
         }
-        val intent = ShopFavoriteIntent(sessions, slowDetails, favorites, backgroundScope)
+        val intent = AppliedShopFavoriteIntent(sessions, slowDetails, favorites, backgroundScope)
         runCurrent()
         intent.remember("shop-1", true)
         sessions.applySession(Session("first-token", userId = "first"))
@@ -75,7 +75,7 @@ class ShopFavoriteIntentTest {
     @Test fun nothingIsAppliedWithoutAnIntent() = runTest {
         val sessions = CheckInTestSessions(null)
         val favorites = Favorites()
-        ShopFavoriteIntent(sessions, details, favorites, backgroundScope)
+        AppliedShopFavoriteIntent(sessions, details, favorites, backgroundScope)
         runCurrent()
         sessions.applySession(Session("token", userId = "owner"))
         runCurrent()

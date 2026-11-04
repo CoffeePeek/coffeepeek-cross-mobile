@@ -3,6 +3,7 @@ package com.coffeepeek.feature.collections.impl.ui
 import com.coffeepeek.feature.collections.domain.model.*
 import com.coffeepeek.feature.collections.domain.repository.*
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.MutableSharedFlow
 
@@ -39,6 +40,16 @@ internal class SavedTestSnapshots : CollectionsRepository {
 internal class SavedTestRepository : SavedCollectionsRepository {
     val changes = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
     override fun observeChanges() = changes
+    var currentOwner: () -> String? = { "first" }
+    var cachedLists: List<SavedCollectionSummary>? = null
+    var cachedFeaturedValue: SavedCollectionFeaturedSelection? = null
+    private var cacheOwner: String? = "first"
+    override fun cachedMine(target: SavedCollectionTarget?): List<SavedCollectionSummary>? {
+        val owner = currentOwner()
+        if (owner != cacheOwner) { cacheOwner = owner; cachedLists = null; cachedFeaturedValue = null }
+        return cachedLists
+    }
+    override fun cachedFeatured(): SavedCollectionFeaturedSelection? { cachedMine(); return cachedFeaturedValue }
     var value = privateList
     var lists = listOf(privateList.summary, publicList.summary)
     var featuredValue: SavedCollection? = publicList
@@ -56,6 +67,7 @@ internal class SavedTestRepository : SavedCollectionsRepository {
     var uploadError: Throwable? = null
     var updateFailure: Throwable? = null
     var mineFailure: Throwable? = null
+    var featuredFailure: Throwable? = null
     var mineGate: CompletableDeferred<Unit>? = null
     var mineReads = 0
     var membershipGate: CompletableDeferred<Unit>? = null
@@ -63,8 +75,11 @@ internal class SavedTestRepository : SavedCollectionsRepository {
 
     override suspend fun mine(target: SavedCollectionTarget?): Result<List<SavedCollectionSummary>> {
         mineReads++
+        val owner = currentOwner()
         val result = mineFailure?.let { Result.failure(it) } ?: Result.success(lists)
         mineGate?.await()
+        if (owner != currentOwner()) throw CancellationException("Account changed")
+        if (result.isSuccess) { cacheOwner = owner; cachedLists = result.getOrThrow() }
         return result
     }
     override suspend fun owned(id: String) = Result.success(value)
@@ -94,10 +109,16 @@ internal class SavedTestRepository : SavedCollectionsRepository {
         return Result.success(lists.map { it.copy(containsItem = it.id in collectionIds) })
     }
     override suspend fun delete(id: String) = Result.success(Unit)
-    override suspend fun featuredId() = Result.success(featuredIdValue)
+    override suspend fun featuredId(): Result<String?> {
+        featuredGate?.await()
+        featuredFailure?.let { return Result.failure(it) }
+        cachedFeaturedValue = SavedCollectionFeaturedSelection(featuredIdValue)
+        return Result.success(featuredIdValue)
+    }
     override suspend fun setFeatured(id: String?): Result<Unit> {
         featureWrites++
         featuredIdValue = id
+        cachedFeaturedValue = SavedCollectionFeaturedSelection(id)
         return Result.success(Unit)
     }
     override suspend fun featured(profileSlug: String): Result<SavedCollection?> {

@@ -6,9 +6,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
@@ -48,32 +46,26 @@ fun <T> CoffeePeekCapsuleSegmentedControl(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     scrollable: Boolean = false,
+    minSegmentHeight: Dp = 48.dp,
 ) {
     require(options.isNotEmpty()) { "Segmented control requires options" }
     require(options.distinct().size == options.size) { "Options must be unique" }
     require(selected in options) { "Selection must belong to options" }
     if (!scrollable) {
         CoffeePeekPlatformSegments(options.map(label), options.indexOf(selected),
-            { onSelected(options[it]) }, modifier, enabled)
+            { onSelected(options[it]) }, modifier, enabled, minSegmentHeight)
         return
     }
     val container = modifier
         .clip(RoundedCornerShape(percent = 50))
         .background(MaterialTheme.colorScheme.surfaceVariant)
-    if (scrollable) {
-        LazyRow(
-            modifier = container.selectableGroup(),
-            contentPadding = PaddingValues(4.dp),
-        ) {
-            items(options) { option ->
-                CoffeePeekCapsuleSegment(label(option), option == selected, enabled, { onSelected(option) }, Modifier, labelPadding = 16.dp)
-            }
-        }
-    } else {
-        Row(modifier = container.fillMaxWidth().padding(2.dp).selectableGroup()) {
-            options.forEach { option ->
-                CoffeePeekCapsuleSegment(label(option), option == selected, enabled, { onSelected(option) }, Modifier.weight(1f))
-            }
+    LazyRow(
+        modifier = container.selectableGroup(),
+        contentPadding = PaddingValues(4.dp),
+    ) {
+        items(options) { option ->
+            CoffeePeekCapsuleSegment(label(option), option == selected, enabled, { onSelected(option) },
+                Modifier, labelPadding = 16.dp, minHeight = minSegmentHeight)
         }
     }
 }
@@ -84,10 +76,11 @@ internal fun <T> coffeePeekSelectSegment(options: List<T>, index: Int, enabled: 
 }
 
 @Composable
-internal fun CoffeePeekCapsuleSegment(text: String, isSelected: Boolean, enabled: Boolean, onClick: () -> Unit, modifier: Modifier, labelPadding: Dp = 0.dp) {
+internal fun CoffeePeekCapsuleSegment(text: String, isSelected: Boolean, enabled: Boolean, onClick: () -> Unit,
+    modifier: Modifier, labelPadding: Dp = 0.dp, minHeight: Dp = 48.dp) {
     Box(
         modifier = modifier
-            .heightIn(min = 48.dp)
+            .heightIn(min = minHeight)
             .clip(RoundedCornerShape(percent = 50))
             .background(if (isSelected) MaterialTheme.colorScheme.surface else Color.Transparent)
             .then(
@@ -118,11 +111,12 @@ internal fun CoffeePeekCapsuleSegment(text: String, isSelected: Boolean, enabled
 }
 
 @Composable
-private fun CoffeePeekCapsuleSegmentedControlPreviewContent(darkTheme: Boolean) = CoffeePeekTheme(darkTheme = darkTheme) {
+private fun CoffeePeekCapsuleSegmentedControlPreviewContent(darkTheme: Boolean, compact: Boolean = false) = CoffeePeekTheme(darkTheme = darkTheme) {
     var selected by remember { mutableStateOf("First") }
     Surface {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            CoffeePeekCapsuleSegmentedControl(listOf("First", "Second"), selected, { it }, { selected = it })
+            CoffeePeekCapsuleSegmentedControl(listOf("First", "Second"), selected, { it }, { selected = it },
+                minSegmentHeight = if (compact) 44.dp else 48.dp)
             CoffeePeekCapsuleSegmentedControl(listOf("First", "Second"), "Second", { it }, {})
             CoffeePeekCapsuleSegmentedControl(listOf("First", "Second", "Third"), "Second", { it }, {})
             CoffeePeekCapsuleSegmentedControl(listOf("First", "Second", "Third", "Fourth"), "Fourth", { it }, {}, enabled = false)
@@ -143,3 +137,5 @@ private fun CoffeePeekScrollableSegmentedControlPreviewContent(darkTheme: Boolea
 @Preview @Composable private fun CoffeePeekScrollableSegmentedControlDarkPreview() = CoffeePeekScrollableSegmentedControlPreviewContent(true)
 @Preview @Composable private fun CoffeePeekCapsuleSegmentedControlLightPreview() = CoffeePeekCapsuleSegmentedControlPreviewContent(false)
 @Preview @Composable private fun CoffeePeekCapsuleSegmentedControlDarkPreview() = CoffeePeekCapsuleSegmentedControlPreviewContent(true)
+@Preview @Composable private fun CoffeePeekCompactSegmentedControlLightPreview() = CoffeePeekCapsuleSegmentedControlPreviewContent(false, true)
+@Preview @Composable private fun CoffeePeekCompactSegmentedControlDarkPreview() = CoffeePeekCapsuleSegmentedControlPreviewContent(true, true)

@@ -36,10 +36,11 @@ internal class ShopDetailViewModel(
     private val currentMinuteOfDay: () -> Int? = { null },
     initialSessionGeneration: Int = 0,
     initialRefreshGeneration: Long = 0,
+    private val selectCollectionsOnFavorite: Boolean = false,
     /** A quick return (share, maps, phone) keeps the loaded page; only a long absence reloads it. */
     private val resumeRefreshAfter: Duration = 2.minutes,
 ) : MviViewModel<ShopDetailState, ShopDetailAction, ShopDetailEventEnvelope>(
-    ShopDetailState(sessionGeneration = initialSessionGeneration),
+    ShopDetailState(sessionGeneration = initialSessionGeneration, selectCollectionsOnFavorite = selectCollectionsOnFavorite),
 ) {
     private var loadJob: Job? = null
     private var voteJob: Job? = null
@@ -84,7 +85,7 @@ internal class ShopDetailViewModel(
                 favoriteMutationJob = null
                 latestFavorites = null
                 refreshQueued = false
-                updateState { ShopDetailState(sessionGeneration = nextGeneration) }
+                updateState { ShopDetailState(sessionGeneration = nextGeneration, selectCollectionsOnFavorite = selectCollectionsOnFavorite) }
                 observeFavorites()
                 load()
             }
@@ -276,6 +277,12 @@ internal class ShopDetailViewModel(
     }
 
     private suspend fun toggleFavorite() {
+        if (selectCollectionsOnFavorite) {
+            val shop = currentState.details?.overview?.id ?: return
+            if (currentState.isLoggedIn) emitEvent(ShopDetailEvent.SelectFavoriteCollections(shop))
+            else emitEvent(ShopDetailEvent.FavoriteRequiresSignIn(shop, !currentState.isFavorite))
+            return
+        }
         if (!canToggleFavorite() || favoriteMutationJob != null) return
         val details = currentState.details ?: return
         val job = currentCoroutineContext().job

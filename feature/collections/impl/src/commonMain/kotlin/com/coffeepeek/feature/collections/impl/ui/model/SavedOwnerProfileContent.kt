@@ -8,8 +8,8 @@ internal sealed interface SavedOwnerProfileContent {
     data class Lists(val values: List<SavedCollectionSummary>) : SavedOwnerProfileContent
 }
 
-/** Do not expose a previous account's collections during loading or after a failed read. */
+/** Render only a verified snapshot for the active account, including during a failed refresh. */
 internal fun savedOwnerProfileContent(state: SavedCollectionsState): SavedOwnerProfileContent {
-    if (!state.signedIn || state.loading || state.failure != null) return SavedOwnerProfileContent.Status
+    if (!state.signedIn || !state.listsLoaded) return SavedOwnerProfileContent.Status
     return if (state.lists.isEmpty()) SavedOwnerProfileContent.Empty else SavedOwnerProfileContent.Lists(state.lists)
 }
