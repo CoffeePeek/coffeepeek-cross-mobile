@@ -23,10 +23,10 @@ internal class ServerFavoriteShopsRepository(
     private val pickerRequests: CollectionPickerRequests? = null,
     private val detail: suspend (String) -> Result<CoffeeShopDetails>,
 ) : FavoritesRepository {
-    override fun observeIds(): Flow<Result<Set<String>>> = server.observeFavorites().map { result ->
+    override fun observeIds(): Flow<Result<Set<String>>> = server.observeMemberships().map { result ->
         result.exceptionOrNull()?.let { if (it is CancellationException) throw it }
         if (owner() == null) Result.success(emptySet()) else result.map { entries ->
-            entries.filter { it.kind == FavoriteKind.CoffeeShop }.mapNotNull { it.address?.slug }.toSet()
+            entries.filter { it.kind == FavoriteKind.CoffeeShop }.map { it.slug }.toSet()
         }
     }
 
