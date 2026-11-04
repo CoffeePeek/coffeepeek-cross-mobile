@@ -52,6 +52,7 @@ import com.coffeepeek.feature.profile.impl.ui.PublicProfileViewModel
 import com.coffeepeek.feature.profile.impl.ui.compose.component.InlineProfileError
 import com.coffeepeek.feature.profile.impl.ui.compose.component.ProfileSectionHeading
 import com.coffeepeek.feature.profile.impl.ui.compose.component.ProfileSectionLoader
+import com.coffeepeek.feature.profile.impl.ui.compose.component.ProfileLoadingSkeleton
 import com.coffeepeek.feature.profile.impl.ui.compose.component.PublicProfileActivityCalendar
 import com.coffeepeek.feature.profile.impl.ui.compose.component.PublicProfileConnectionsSheet
 import com.coffeepeek.feature.profile.impl.ui.compose.component.PublicProfileHeader
@@ -154,18 +155,9 @@ internal fun PublicProfileScreen(
             }
 
             if (profile == null || author == null) {
-                Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    if (state.isLoading) {
-                        val hidden = visibility.hides(null, slug)
-                        PublicProfileHeader(
-                            nickname = nickname?.takeIf(String::isNotBlank) ?: slug,
-                            avatarUrl = avatarUrl.takeUnless { hidden },
-                            about = null,
-                            image = slots.image,
-                            onAvatarClick = { if (!hidden) avatarUrl?.let { photos = ProfilePhotos(listOf(it)) } },
-                        )
-                        ProfileSectionLoader(160.dp)
-                    } else Column(
+                if (state.isLoading) ProfileLoadingSkeleton()
+                else Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Column(
                         Modifier.fillMaxWidth().padding(vertical = 48.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.spacedBy(12.dp),

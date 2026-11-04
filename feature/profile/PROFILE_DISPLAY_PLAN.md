@@ -97,3 +97,29 @@ New shelf backend/web changes are not deployed by these checks. Production
 opt-in/opt-out, media denial after hiding, account-scoped persistence, native
 compilation and the mandatory PostgreSQL migration CI gate remain acceptance
 requirements; unit/fake success does not replace them.
+
+## Initial profile shimmer — 2026-11-04
+
+The migrated own-profile fallback previously used a centered section loader,
+while the shared public-profile route showed a route-supplied avatar/name plus a
+section loader before the profile response arrived. Both actual initial-loading
+branches now render `ProfileLoadingSkeleton` using the existing shared
+`CoffeePeekShimmer` primitive. The main own-profile tab delegates to that shared
+public route once its public address is known; the no-address fallback also uses
+the new skeleton while no profile object is available.
+
+The skeleton contains only neutral avatar, nickname, counter, biography, activity
+and main-section shapes. It has no identity inputs, image loading, DI, network
+calls or interactive targets. One existing localized `profile_loading` status
+owns the accessibility announcement; decorative shapes are hidden. The RU/BE
+resource key is reused without adding hard-coded UI copy. The initial skeleton
+cannot be scrolled and owns no real-content scroll state. Cached profile refresh
+continues rendering its existing content; no resume/top-scroll effect or ViewModel,
+API, domain, persistence or account behavior was changed.
+
+Paired common light/dark previews live beside the new component. The integrating
+root must record the final Debug assembly/runtime-class checks, exact source/APK
+identity and agreed Pixel device launch. Full manual initial-loading appearance,
+Back/scroll preservation, themes/font/window sizes and reduced-motion acceptance
+remain device gates. No automated UI/instrumentation/screenshot tests or tests
+that merely duplicate the layout were added or run for this UI-only change.

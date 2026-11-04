@@ -7,6 +7,7 @@ import com.coffeepeek.feature.favorites.data.local.FavoritesStorage
 import com.coffeepeek.feature.favorites.data.repository.createFavoritesRepository
 import com.coffeepeek.feature.favorites.domain.repository.FavoritesRepository
 import com.coffeepeek.feature.favorites.domain.repository.FavoriteRoastersRepository
+import com.coffeepeek.feature.favorites.domain.repository.FavoritesAccount
 import com.coffeepeek.domain.repository.RoasterRepository
 import com.coffeepeek.feature.favorites.domain.usecase.ObserveFavoriteIdsUseCase
 import com.coffeepeek.feature.favorites.impl.createFavoritesEntry
@@ -26,6 +27,7 @@ import kotlinx.coroutines.SupervisorJob
 
 /** Active Android graph. Existing server infrastructure is shared with all legacy consumers. */
 internal fun serverFavoritesModule(): Module = module {
+    single<FavoritesAccount> { SessionFavoritesAccount(get()) }
     single { CollectionPickerRequests(get(), CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)) }
     single<RoasterFavorites> { CollectionPromptRoasterFavorites(ServerRoasterFavorites(get(), get(), get()), get(), get()) }
     single<FavoritesRepository> {
@@ -40,7 +42,7 @@ internal fun serverFavoritesModule(): Module = module {
     single<com.coffeepeek.feature.favorites.domain.repository.FavoriteDrinksRepository> {
         ServerFavoriteDrinksRepository(get(), get())
     }
-    single<FavoritesEntry> { createFavoritesEntry(get(), get(), get(), AndroidFavoritesScreenAnalytics) }
+    single<FavoritesEntry> { createFavoritesEntry(get(), get(), get(), AndroidFavoritesScreenAnalytics, account = get()) }
 }
 
 /** One repo per session/storage. Application explicitly loads this module; no global Koin start. */

@@ -32,12 +32,14 @@ internal class ServerFavoriteShopsRepository(
 
     override fun observe(): Flow<Result<List<FavoriteShop>>> = channelFlow {
         var observation: Job? = null
+        var firstOwner = true
         try {
             sessions.observeSession().map { owner() }.distinctUntilChanged().collect { account ->
                 observation?.cancel()
-                send(Result.success(emptyList()))
+                if (!firstOwner || account == null) send(Result.success(emptyList()))
+                firstOwner = false
                 if (account != null) observation = launch {
-                    server.observeFavorites().collectLatest { result ->
+                    observeLoadedServerFavorites(server, sessions, account).collectLatest { result ->
                         val mapped = resultOf { mapRows(result.getOrThrow(), account) }
                         ensureActive()
                         requireOwner(account)

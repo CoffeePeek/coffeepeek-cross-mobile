@@ -40,6 +40,7 @@ internal class LegacyFavoriteRoastersRepository(
         // A new owner must clear rows without joining non-cooperative old photo requests.
         val activeOwner = MutableStateFlow<Any?>(null)
         var ownerJob: Job? = null
+        var firstOwner = true
         try {
             sessions.observeSession()
                 .map { session -> session?.userId?.takeIf { sessions.isActiveSession(session) && it.isNotBlank() } }
@@ -49,7 +50,8 @@ internal class LegacyFavoriteRoastersRepository(
                     activeOwner.value = lease
                     ownerJob?.cancel()
                     snapshot.value = null
-                    send(Result.success(emptyList()))
+                    if (!firstOwner || owner == null) send(Result.success(emptyList()))
+                    firstOwner = false
                     if (owner == null) return@collect
                     ownerJob = launch {
                         var photos: Job? = null
