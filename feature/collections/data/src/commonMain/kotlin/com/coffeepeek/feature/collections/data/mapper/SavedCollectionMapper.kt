@@ -13,7 +13,8 @@ internal fun SavedCollectionDto.toSavedSummary(owned: Boolean): SavedCollectionS
     check(owned || visibility == SavedCollectionVisibility.Public)
     return SavedCollectionSummary(id, title, description.orEmpty(), visibility,
         coverPhoto?.let { SavedCollectionCover(it.id, owned) }, itemCount.coerceAtLeast(0), revision,
-        containsItem, isFeatured, canonicalPath?.takeIf { visibility == SavedCollectionVisibility.Public }?.let { collectionPublicUrl(id, it) })
+        containsItem, isFeatured, canonicalPath?.takeIf { visibility == SavedCollectionVisibility.Public }?.let { collectionPublicUrl(id, it) },
+        isDefault = isDefault)
 }
 
 internal fun SavedCollectionDto.toSavedCollection(owned: Boolean, apiBaseUrl: String): SavedCollection =

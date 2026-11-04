@@ -69,6 +69,19 @@ class SandboxSavedCollectionsContractTest {
         }
     }
 
+    @Test fun publishingAndRenamingTheDefaultNeverCreatesAPrivateCopy() = runTest(dispatcher) {
+        Fixture(dispatcher).use { fixture ->
+            val original = fixture.repository.mine().getOrThrow().single()
+            assertTrue(original.isDefault)
+            fixture.repository.update(original.id, SavedCollectionMetadata("Public weekend",
+                visibility = SavedCollectionVisibility.Public), original.revision).getOrThrow()
+            val after = fixture.repository.mine().getOrThrow().single()
+            assertEquals(original.id, after.id)
+            assertTrue(after.isDefault)
+            assertEquals(SavedCollectionVisibility.Public, after.visibility)
+        }
+    }
+
     @Test fun membershipUpdatesBothKindsAtomicallyWithoutChangingGlobalFavorites() = runTest(dispatcher) {
         Fixture(dispatcher).use { fixture ->
             val first = fixture.create("Private")

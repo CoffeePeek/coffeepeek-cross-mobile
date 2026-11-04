@@ -11,6 +11,7 @@ import io.ktor.http.content.OutgoingContent
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.test.*
 import kotlinx.serialization.json.*
 import kotlin.test.*
@@ -63,6 +64,81 @@ class SavedCollectionsRepositoryTest {
         try {
             assertEquals("Избранное", repo(client, client).mine().getOrThrow().single().title)
         } finally { client.close() }
+    }
+
+    @Test fun publishingDefaultFavoritesDoesNotCreateAPrivateDuplicate() = runTest(dispatcher) {
+        val client = client { request ->
+            assertEquals(HttpMethod.Get, request.method)
+            respond(defaultList.replace("\"private\"", "\"public\""))
+        }
+        try {
+            val lists = repo(client, client).mine().getOrThrow()
+            assertEquals(1, lists.size)
+            assertEquals(SavedCollectionVisibility.Public, lists.single().visibility)
+        } finally { client.close() }
+    }
+
+    @Test fun serverDefaultEnsureIsIdempotentAndReloadsTargetMembership() = runTest(dispatcher) {
+        var reads = 0
+        var ensures = 0
+        val client = client(defaultEndpoint = true) { request ->
+            when (request.method) {
+                HttpMethod.Get -> respond(if (++reads == 1) """{"data":[]}""" else
+                    defaultList.replace("\"revision\":2", "\"revision\":2,\"isDefault\":true,\"containsItem\":true"))
+                HttpMethod.Put -> { ensures++; respond(defaultBody.replace("\"revision\":2", "\"revision\":2,\"isDefault\":true")) }
+                else -> error("No generic collection creation")
+            }
+        }
+        try {
+            val list = repo(client, client).mine(SavedCollectionTarget(CollectionPlaceKind.CoffeeShop, "shop")).getOrThrow().single()
+            assertTrue(list.isDefault)
+            assertTrue(list.containsItem)
+            assertEquals(1, ensures)
+        } finally { client.close() }
+    }
+
+    @Test fun renamedPublishedDefaultKeepsItsServerIdentity() = runTest(dispatcher) {
+        val client = client(defaultEndpoint = true) { request ->
+            assertEquals(HttpMethod.Get, request.method)
+            respond(defaultList.replace("Избранное", "Weekend").replace("\"private\"", "\"public\"")
+                .replace("\"revision\":2", "\"revision\":2,\"isDefault\":true"))
+        }
+        try {
+            val list = repo(client, client).mine().getOrThrow().single()
+            assertEquals("Weekend", list.title)
+            assertTrue(list.isDefault)
+        } finally { client.close() }
+    }
+
+    @Test fun onlySuccessfulMutationsInvalidateOtherCollectionScreens() = runTest(dispatcher) {
+        val client = client { request ->
+            respond(body, if (request.method == HttpMethod.Post) HttpStatusCode.Created else HttpStatusCode.Conflict)
+        }
+        try {
+            val repository = repo(client, client)
+            var changes = 0
+            backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { repository.observeChanges().collect { changes++ } }
+            repository.create(SavedCollectionMetadata("List")).getOrThrow()
+            assertTrue(repository.update(id, SavedCollectionMetadata("Other"), 2).isFailure)
+            runCurrent()
+            assertEquals(1, changes)
+        } finally { client.close() }
+    }
+
+    @Test fun membershipChangesSendCanonicalToggleDeltasAlongsideLegacySelection() = runTest(dispatcher) {
+        val client = client { request ->
+            if (request.method == HttpMethod.Get) respond(defaultList.replace("\"revision\":2", "\"revision\":2,\"containsItem\":true"))
+            else {
+                val sent = payload(request)
+                assertTrue(sent.getValue("collectionIds").jsonArray.isEmpty())
+                assertTrue(sent.getValue("addedCollectionIds").jsonArray.isEmpty())
+                assertEquals(id, sent.getValue("removedCollectionIds").jsonArray.single().jsonPrimitive.content)
+                respond(defaultList)
+            }
+        }
+        try { repo(client, client).changeMemberships(SavedCollectionTarget(CollectionPlaceKind.Roaster, "roaster"),
+            emptySet(), setOf(compactId)).getOrThrow() }
+        finally { client.close() }
     }
 
     @Test fun changedAccountDuringListReadCannotCreateForTheNewOwner() = runTest(dispatcher) {
@@ -364,12 +440,17 @@ class SavedCollectionsRepositoryTest {
         Json.parseToJsonElement((request.body as OutgoingContent.ByteArrayContent).bytes().decodeToString()).jsonObject
 
     private fun client(validateStatus: Boolean = false,
+        defaultEndpoint: Boolean = false,
         handler: suspend MockRequestHandleScope.(io.ktor.client.request.HttpRequestData) -> io.ktor.client.request.HttpResponseData) =
         HttpClient(MockEngine) {
             expectSuccess = validateStatus
             engine {
                 dispatcher = this@SavedCollectionsRepositoryTest.dispatcher
-                addHandler(handler)
+                addHandler { request ->
+                    if (!defaultEndpoint && request.url.encodedPath.endsWith("/saved-collections/default"))
+                        respond("{}", HttpStatusCode.NotFound)
+                    else handler(request)
+                }
             }
             install(ContentNegotiation) { json(Json { ignoreUnknownKeys = true }) }
         }

@@ -10,7 +10,8 @@ import java.util.UUID
 internal class SandboxSavedCollectionsBackend(private val today: LocalDate, private val available: () -> JsonArray,
     private val uploaded: (String, Long) -> Boolean) {
     private data class Row(val owner: String, val id: String, val title: String, val description: String,
-        val visibility: String, val items: List<JsonObject>, val revision: Long = 1, val cover: JsonObject? = null)
+        val visibility: String, val items: List<JsonObject>, val revision: Long = 1, val cover: JsonObject? = null,
+        val isDefault: Boolean = false)
     private data class Reservation(val owner: String, val key: String, val size: Long, val mime: String)
     private val rows = linkedMapOf<String, Row>()
     private val featured = mutableMapOf<String, String>()
@@ -28,6 +29,7 @@ internal class SandboxSavedCollectionsBackend(private val today: LocalDate, priv
         publicRead(path, request.method)?.let { return it }
         if (!path.startsWith(ROOT)) return null
         if (owner.isNullOrBlank()) return fail(HttpStatusCode.Unauthorized)
+        if (path == "$ROOT/default" && request.method == HttpMethod.Put) return ensureDefault(owner)
         if (path == "$ROOT/featured") return featured(owner, request.method, input)
         if (path.startsWith("$ROOT/membership/")) return if (request.method == HttpMethod.Put) membership(owner, path, input)
             else fail(HttpStatusCode.MethodNotAllowed)
@@ -36,6 +38,15 @@ internal class SandboxSavedCollectionsBackend(private val today: LocalDate, priv
         val parts = path.removePrefix("$ROOT/").split('/')
         val row = rows[key(parts.first())]?.takeIf { it.owner == owner } ?: return fail(HttpStatusCode.NotFound)
         return owned(row, request.method, parts, input)
+    }
+
+    private fun ensureDefault(owner: String): Pair<HttpStatusCode, JsonObject> {
+        val existing = rows.values.firstOrNull { it.owner == owner && it.isDefault }
+            ?: rows.values.firstOrNull { it.owner == owner && it.title == "Избранное" }
+        val row = existing?.copy(isDefault = true)
+            ?: Row(owner, key(UUID.randomUUID().toString()), "Избранное", "", "private", emptyList(), isDefault = true)
+        rows[row.id] = row
+        return ok(json(row))
     }
 
     private fun publicRead(path: String, method: HttpMethod): Pair<HttpStatusCode, JsonObject>? {
@@ -98,7 +109,7 @@ internal class SandboxSavedCollectionsBackend(private val today: LocalDate, priv
     private fun membership(owner: String, path: String, input: JsonObject): Pair<HttpStatusCode, JsonObject> {
         val target = path.removePrefix("$ROOT/membership/").split('/')
         if (target.size != 2 || target[0] !in listOf("coffee_shop", "roaster")) return fail(HttpStatusCode.BadRequest)
-        val ids = (input["collectionIds"] as? JsonArray)?.map { key(it.jsonPrimitive.content) } ?: return fail(HttpStatusCode.BadRequest)
+        val ids = membershipSelection(owner, target.joinToString(":"), input) ?: return fail(HttpStatusCode.BadRequest)
         if (ids.any { rows[it]?.owner != owner } || ids.distinct().size != ids.size) return fail(HttpStatusCode.NotFound)
         val item = (available().map { it.jsonObject } + rows.values.filter { it.owner == owner }.flatMap { it.items })
             .firstOrNull { itemKey(it) == target.joinToString(":") } ?: return fail(HttpStatusCode.NotFound)
@@ -108,6 +119,18 @@ internal class SandboxSavedCollectionsBackend(private val today: LocalDate, priv
             if (items != row.items) rows[row.id] = row.copy(items = items, revision = row.revision + 1)
         }
         return ok(summaries(owner, target[0], target[1]))
+    }
+
+    private fun membershipSelection(owner: String, target: String, input: JsonObject): List<String>? {
+        val added = input["addedCollectionIds"] as? JsonArray
+        val removed = input["removedCollectionIds"] as? JsonArray
+        if ((added == null) != (removed == null)) return null
+        if (added == null || removed == null) return (input["collectionIds"] as? JsonArray)?.map { key(it.jsonPrimitive.content) }
+        val additions = added.map { key(it.jsonPrimitive.content) }.toSet()
+        val removals = removed.map { key(it.jsonPrimitive.content) }.toSet()
+        if (additions.intersect(removals).isNotEmpty() || (additions + removals).any { rows[it]?.owner != owner }) return null
+        val current = rows.values.filter { it.owner == owner && it.items.any { place -> itemKey(place) == target } }.map { it.id }.toSet()
+        return ((current + additions) - removals).toList()
     }
 
     private fun featured(owner: String, method: HttpMethod, input: JsonObject): Pair<HttpStatusCode, JsonObject> {
@@ -186,6 +209,7 @@ internal class SandboxSavedCollectionsBackend(private val today: LocalDate, priv
         put("items", JsonArray(row.items))
         put("createdAtUtc", "${today}T10:00:00Z")
         put("isFeatured", featured[row.owner] == row.id)
+        put("isDefault", row.isDefault)
         put("canonicalPath", if (row.visibility == "public") JsonPrimitive("/collections/${row.id}") else JsonNull)
         put("coverPhoto", row.cover?.let { JsonObject(it.filterKeys { key -> key == "id" }) } ?: JsonNull)
     }

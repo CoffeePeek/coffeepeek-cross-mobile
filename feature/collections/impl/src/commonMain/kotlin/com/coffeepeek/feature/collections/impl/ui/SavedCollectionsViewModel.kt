@@ -15,10 +15,21 @@ internal class SavedCollectionsViewModel(private val saved: SavedCollectionsRepo
     MviViewModel<SavedCollectionsState, SavedCollectionsAction, SavedCollectionsEvent>(SavedCollectionsState(mode)) {
     private var generation = 0
     private var work: Job? = null
+    private var reloadPending = false
 
     init {
+        observeChanges()
         if (mode == SavedCollectionsMode.Public || mode == SavedCollectionsMode.Featured) reload()
         else observeAccount()
+    }
+
+    private fun observeChanges() {
+        if (mode !in setOf(SavedCollectionsMode.Library, SavedCollectionsMode.Preference)) return
+        viewModelScope.launch {
+            saved.observeChanges().collect {
+                if (currentState.busy || currentState.loading) reloadPending = true else reload()
+            }
+        }
     }
 
     override suspend fun handleActionInternal(action: SavedCollectionsAction) {
@@ -53,6 +64,7 @@ internal class SavedCollectionsViewModel(private val saved: SavedCollectionsRepo
         viewModelScope.launch {
             account.identities.distinctUntilChanged().collectLatest { owner ->
                 generation++
+                reloadPending = false
                 work?.cancel()
                 clearCover()
                 sendEvent(SavedCollectionsEvent.CancelExport)
@@ -70,6 +82,7 @@ internal class SavedCollectionsViewModel(private val saved: SavedCollectionsRepo
     private fun reload() {
         if (mode !in setOf(SavedCollectionsMode.Public, SavedCollectionsMode.Featured) && !currentState.signedIn) return
         val epoch = generation
+        reloadPending = false
         work?.cancel()
         updateState { copy(loading = true, failure = null, membershipsLoaded = false,
             collection = if (mode == SavedCollectionsMode.Featured) null else collection) }
@@ -102,7 +115,6 @@ internal class SavedCollectionsViewModel(private val saved: SavedCollectionsRepo
     private suspend fun loadEditor(epoch: Int) {
         val id = currentState.collection?.summary?.id ?: initialId
         val detail = id?.let { saved.owned(it).checked() }
-        val favorites = snapshots.favorites().checked()
         if (epoch != generation) return
         if (detail?.isFailure == true) updateState { copy(failure = SavedCollectionsFailure.Load) }
         else {
@@ -110,9 +122,9 @@ internal class SavedCollectionsViewModel(private val saved: SavedCollectionsRepo
             clearCover()
             updateState { copy(collection = value, title = value?.summary?.title.orEmpty(), description = value?.summary?.description.orEmpty(),
                 visibility = value?.summary?.visibility ?: SavedCollectionVisibility.Private,
-                places = CollectionRules.orderedPlaces((value?.places.orEmpty() + favorites.getOrNull().orEmpty()).distinctBy { it.key }),
+                places = value?.places.orEmpty(),
                 selectedPlaces = value?.places.orEmpty().map { it.key }.toSet(), coverInput = null, uploadedCover = null, removeCover = false,
-                failure = if (favorites.isFailure) SavedCollectionsFailure.Load else null) }
+                failure = null) }
         }
     }
 
@@ -168,23 +180,21 @@ internal class SavedCollectionsViewModel(private val saved: SavedCollectionsRepo
     private fun save() {
         if (!writable() || mode != SavedCollectionsMode.Editor || !SavedCollectionRules.validMetadata(metadata())) return
         val epoch = generation
+        val editedPlaces = editedPlaces()
         updateState { copy(busy = true, failure = null) }
         launchWork(epoch) {
-            if (!ensureCreated(epoch)) return@launchWork
             val result = saveMetadata(epoch).checked()
             if (epoch != generation) return@launchWork
             val collection = result.getOrNull()
             if (collection == null) updateState { copy(failure = failureFor(result.exceptionOrNull())) }
-            else saveItems(epoch, collection)
+            else saveItems(epoch, collection, editedPlaces)
         }
     }
 
-    private suspend fun ensureCreated(epoch: Int): Boolean {
-        if (currentState.collection != null) return true
-        val result = saved.create(metadata().copy(coverUpload = null, removeCover = false)).checked()
-        if (epoch != generation) throw CancellationException("Collection account changed")
-        updateState { copy(collection = result.getOrNull(), failure = result.exceptionOrNull()?.let(::failureFor)) }
-        return result.isSuccess
+    private fun editedPlaces(): List<CollectionPlace>? {
+        val original = currentState.collection ?: return null
+        val selected = currentState.places.filter { it.key in currentState.selectedPlaces }
+        return selected.takeUnless { it.map { place -> place.key } == original.places.map { place -> place.key } }
     }
 
     private suspend fun saveMetadata(epoch: Int): Result<SavedCollection> {
@@ -196,18 +206,23 @@ internal class SavedCollectionsViewModel(private val saved: SavedCollectionsRepo
             updateState { copy(uploadedCover = upload.getOrThrow()) }
         }
         val existing = currentState.collection?.summary
-        return saved.update(checkNotNull(existing).id, metadata(), existing.revision)
+        return if (existing == null) saved.create(metadata())
+            else saved.update(existing.id, metadata(), existing.revision)
     }
 
-    private suspend fun saveItems(epoch: Int, collection: SavedCollection) {
-        val selected = currentState.places.filter { it.key in currentState.selectedPlaces }
+    private suspend fun saveItems(epoch: Int, collection: SavedCollection, editedPlaces: List<CollectionPlace>?) {
         clearCover()
         updateState { copy(collection = collection, title = collection.summary.title, description = collection.summary.description,
             visibility = collection.summary.visibility, coverInput = null, uploadedCover = null, removeCover = false) }
-        val result = if (selected.map { it.key } == collection.places.map { it.key }) Result.success(collection)
-            else saved.replaceItems(collection.summary.id, selected, collection.summary.revision).checked()
+        val result = if (editedPlaces == null) Result.success(collection)
+            else saved.replaceItems(collection.summary.id, editedPlaces, collection.summary.revision).checked()
         if (epoch != generation) return
-        updateState { copy(collection = result.getOrNull() ?: collection, failure = result.exceptionOrNull()?.let(::failureFor)) }
+        updateState {
+            val value = result.getOrNull()
+            copy(collection = value ?: collection, places = value?.places ?: places,
+                selectedPlaces = value?.places?.map { it.key }?.toSet() ?: selectedPlaces,
+                failure = result.exceptionOrNull()?.let(::failureFor))
+        }
     }
 
     private fun metadata() = SavedCollectionMetadata(currentState.title, currentState.description,
@@ -221,9 +236,12 @@ internal class SavedCollectionsViewModel(private val saved: SavedCollectionsRepo
     private fun commitMemberships() {
         if (!writable() || target == null || !currentState.membershipsLoaded) return
         val epoch = generation
+        val initial = currentState.lists.filter { it.containsItem }.map { it.id }.toSet()
+        val added = currentState.memberships - initial
+        val removed = initial - currentState.memberships
         updateState { copy(busy = true, failure = null) }
         launchWork(epoch) {
-            val result = saved.memberships(target, currentState.memberships).checked()
+            val result = saved.changeMemberships(target, added, removed).checked()
             if (epoch != generation) return@launchWork
             if (result.isSuccess) sendEvent(SavedCollectionsEvent.Back)
             else updateState { copy(failure = SavedCollectionsFailure.Membership) }
@@ -322,8 +340,14 @@ internal class SavedCollectionsViewModel(private val saved: SavedCollectionsRepo
                 throw cancelled
             }
             catch (error: Exception) { if (epoch == generation) updateState { copy(failure = failureFor(error)) } }
-            finally { if (epoch == generation) updateState { copy(busy = false, loading = false) } }
+            finally { finishWork(epoch) }
         }
+    }
+
+    private fun finishWork(epoch: Int) {
+        if (epoch != generation) return
+        updateState { copy(busy = false, loading = false) }
+        if (reloadPending) reload()
     }
 
     private fun <T> Result<T>.checked(): Result<T> = also {

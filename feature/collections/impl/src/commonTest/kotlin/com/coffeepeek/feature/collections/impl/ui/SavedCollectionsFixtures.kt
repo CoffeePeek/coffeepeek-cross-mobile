@@ -4,6 +4,7 @@ import com.coffeepeek.feature.collections.domain.model.*
 import com.coffeepeek.feature.collections.domain.repository.*
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.MutableSharedFlow
 
 internal val savedShop = CollectionPlace(CollectionPlaceKind.CoffeeShop, "shop", "Shop")
 internal val privateList = SavedCollection(SavedCollectionSummary("private", "Private", itemCount = 1), listOf(savedShop))
@@ -36,12 +37,15 @@ internal class SavedTestSnapshots : CollectionsRepository {
 }
 
 internal class SavedTestRepository : SavedCollectionsRepository {
+    val changes = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+    override fun observeChanges() = changes
     var value = privateList
     var lists = listOf(privateList.summary, publicList.summary)
     var featuredValue: SavedCollection? = publicList
     var featuredIdValue: String? = publicList.summary.id
     var creates = 0
     var updates = 0
+    var itemWrites = 0
     var uploads = 0
     var membershipWrites = 0
     var featureWrites = 0
@@ -52,11 +56,17 @@ internal class SavedTestRepository : SavedCollectionsRepository {
     var uploadError: Throwable? = null
     var updateFailure: Throwable? = null
     var mineFailure: Throwable? = null
+    var mineGate: CompletableDeferred<Unit>? = null
+    var mineReads = 0
     var membershipGate: CompletableDeferred<Unit>? = null
     var featuredGate: CompletableDeferred<Unit>? = null
 
-    override suspend fun mine(target: SavedCollectionTarget?): Result<List<SavedCollectionSummary>> =
-        mineFailure?.let { Result.failure(it) } ?: Result.success(lists)
+    override suspend fun mine(target: SavedCollectionTarget?): Result<List<SavedCollectionSummary>> {
+        mineReads++
+        val result = mineFailure?.let { Result.failure(it) } ?: Result.success(lists)
+        mineGate?.await()
+        return result
+    }
     override suspend fun owned(id: String) = Result.success(value)
     override suspend fun public(id: String): Result<SavedCollection> { publicReads++; return Result.success(publicList) }
     override suspend fun create(metadata: SavedCollectionMetadata): Result<SavedCollection> {
@@ -72,6 +82,7 @@ internal class SavedTestRepository : SavedCollectionsRepository {
         return Result.success(value)
     }
     override suspend fun replaceItems(id: String, places: List<CollectionPlace>, revision: Long): Result<SavedCollection> {
+        itemWrites++
         value = value.copy(summary = value.summary.copy(itemCount = places.size, revision = revision + 1), places = places)
         return Result.success(value)
     }

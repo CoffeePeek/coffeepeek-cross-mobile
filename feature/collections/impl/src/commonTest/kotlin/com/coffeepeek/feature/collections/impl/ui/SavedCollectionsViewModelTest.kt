@@ -31,9 +31,11 @@ class SavedCollectionsViewModelTest {
         assertTrue(vm.state.value.collection?.places.orEmpty().isEmpty())
         assertFalse(vm.state.value.hasEdits())
         assertEquals(0, snapshots.creates)
+        assertEquals(0, snapshots.favoriteReads)
+        assertEquals(0, saved.itemWrites)
     }
 
-    @Test fun coverFailureKeepsCreatedIdentityAndRetryDoesNotCreateAnotherList() = runTest(dispatcher) {
+    @Test fun coverFailureKeepsDraftWithoutCreatingAnEmptyList() = runTest(dispatcher) {
         val vm = model(SavedCollectionsMode.Editor)
         runCurrent()
         saved.uploadFailure = true
@@ -41,7 +43,8 @@ class SavedCollectionsViewModelTest {
         vm.onAction(SavedCollectionsAction.CoverPicked(cover, vm.state.value.accountVersion))
         vm.onAction(SavedCollectionsAction.Save)
         runCurrent()
-        assertEquals("created", vm.state.value.collection?.summary?.id)
+        assertNull(vm.state.value.collection)
+        assertEquals(0, saved.creates)
         assertNotNull(vm.state.value.coverInput)
         assertEquals(SavedCollectionsFailure.Save, vm.state.value.failure)
         saved.uploadFailure = false
@@ -280,7 +283,7 @@ class SavedCollectionsViewModelTest {
         assertTrue(vm.state.value.lists.isEmpty())
     }
 
-    @Test fun cancelledCoverSaveRetainsCreatedIdAndDraftWithARetryableError() = runTest(dispatcher) {
+    @Test fun cancelledCoverSaveRetainsDraftWithoutCreatingAList() = runTest(dispatcher) {
         saved.uploadError = CancellationException("Interrupted upload")
         val vm = model(SavedCollectionsMode.Editor)
         runCurrent()
@@ -288,10 +291,68 @@ class SavedCollectionsViewModelTest {
         vm.onAction(SavedCollectionsAction.CoverPicked(cover, vm.state.value.accountVersion))
         vm.onAction(SavedCollectionsAction.Save)
         runCurrent()
-        assertEquals("created", vm.state.value.collection?.summary?.id)
+        assertNull(vm.state.value.collection)
+        assertEquals(0, saved.creates)
         assertEquals(SavedCollectionsFailure.Save, vm.state.value.failure)
         assertNotNull(vm.state.value.coverInput)
         assertFalse(vm.state.value.busy)
+    }
+
+    @Test fun editorLoadsOnlyItsOwnItemsWithoutImportingFavorites() = runTest(dispatcher) {
+        val vm = model(SavedCollectionsMode.Editor, "private")
+        runCurrent()
+        assertEquals(privateList.places, vm.state.value.places)
+        assertEquals(0, snapshots.favoriteReads)
+    }
+
+    @Test fun publishingEditsTheSameListAndDoesNotReplaceItsMemberships() = runTest(dispatcher) {
+        val vm = model(SavedCollectionsMode.Editor, "private")
+        runCurrent()
+        val addedElsewhere = savedShop.copy(slug = "new-shop")
+        saved.value = privateList.copy(places = listOf(savedShop, addedElsewhere))
+        vm.onAction(SavedCollectionsAction.Visibility(SavedCollectionVisibility.Public))
+        vm.onAction(SavedCollectionsAction.Save)
+        runCurrent()
+        assertEquals("private", vm.state.value.collection?.summary?.id)
+        assertEquals(SavedCollectionVisibility.Public, vm.state.value.visibility)
+        assertEquals(listOf(savedShop, addedElsewhere), vm.state.value.places)
+        assertEquals(0, saved.creates)
+        assertEquals(0, saved.itemWrites)
+    }
+
+    @Test fun libraryMovesPublishedCollectionInsteadOfKeepingPrivateCopy() = runTest(dispatcher) {
+        val vm = model(SavedCollectionsMode.Library)
+        runCurrent()
+        saved.lists = listOf(privateList.summary.copy(visibility = SavedCollectionVisibility.Public))
+        saved.changes.emit(Unit)
+        runCurrent()
+        assertEquals(listOf("private"), vm.state.value.lists.map { it.id })
+        assertTrue(vm.state.value.lists.all { it.visibility == SavedCollectionVisibility.Public })
+    }
+
+    @Test fun mutationDuringLibraryLoadSchedulesARefreshAfterTheStaleRead() = runTest(dispatcher) {
+        saved.mineGate = CompletableDeferred()
+        val vm = model(SavedCollectionsMode.Library)
+        runCurrent()
+        saved.lists = listOf(publicList.summary)
+        saved.changes.emit(Unit)
+        runCurrent()
+        saved.mineGate!!.complete(Unit)
+        runCurrent()
+        assertEquals(listOf(publicList.summary), vm.state.value.lists)
+        assertEquals(2, saved.mineReads)
+    }
+
+    @Test fun pickerPreservesMembershipAddedElsewhereWhileItWasOpen() = runTest(dispatcher) {
+        saved.lists = listOf(privateList.summary.copy(containsItem = true), publicList.summary)
+        val vm = model(SavedCollectionsMode.Picker)
+        runCurrent()
+        vm.onAction(SavedCollectionsAction.ToggleMembership("private"))
+        runCurrent()
+        saved.lists = saved.lists.map { it.copy(containsItem = true) }
+        vm.onAction(SavedCollectionsAction.CommitMemberships)
+        runCurrent()
+        assertEquals(setOf("public"), saved.sentMemberships)
     }
 
     private fun model(mode: SavedCollectionsMode, id: String? = null) =

@@ -18,6 +18,7 @@ data class SavedCollectionSummary(
     val containsItem: Boolean = false,
     val isFeatured: Boolean = false,
     val url: String? = null,
+    val isDefault: Boolean = false,
 )
 
 data class SavedCollection(val summary: SavedCollectionSummary, val places: List<CollectionPlace> = emptyList())

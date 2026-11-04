@@ -36,17 +36,20 @@ internal fun SavedCollectionEditor(state: SavedCollectionsState, action: (SavedC
             if (state.signedIn && !state.loading) LazyColumn(Modifier.fillMaxSize(), state = lazy,
                 contentPadding = PaddingValues(16.dp)) {
                 item { SavedCollectionMetadataForm(state, action, pick, image) }
-                item { Text(stringResource(Res.string.collections_manage_places), Modifier.padding(vertical = 16.dp), style = MaterialTheme.typography.titleMedium) }
-                CollectionPlaceKind.entries.forEach { kind ->
-                    val places = state.places.filter { it.kind == kind }
-                    itemsIndexed(places, key = { _, place -> place.key }) { index, place ->
-                        CollectionReorderablePlaceRow(places, index, place.key in state.selectedPlaces, !state.busy,
-                            dragging == null || dragging == kind, reorder, { dragging = it }) { editorPlaceAction(it, action) }
+                if (state.collection != null) {
+                    item { Text(stringResource(Res.string.collections_manage_places), Modifier.padding(vertical = 16.dp),
+                        style = MaterialTheme.typography.titleMedium) }
+                    CollectionPlaceKind.entries.forEach { kind ->
+                        val places = state.places.filter { it.kind == kind }
+                        itemsIndexed(places, key = { _, place -> place.key }) { index, place ->
+                            CollectionReorderablePlaceRow(places, index, place.key in state.selectedPlaces, !state.busy,
+                                dragging == null || dragging == kind, reorder, { dragging = it }) { editorPlaceAction(it, action) }
+                        }
                     }
-                }
-                if (state.places.isEmpty()) item { Text(stringResource(Res.string.collections_saved_empty)) }
-                if (state.collection != null) item {
-                    CoffeePeekTextButton(delete, enabled = !state.busy) { Text(stringResource(Res.string.collections_delete_list), color = MaterialTheme.colorScheme.error) }
+                    if (state.places.isEmpty()) item { Text(stringResource(Res.string.collections_saved_empty)) }
+                    item { CoffeePeekTextButton(delete, enabled = !state.busy) {
+                        Text(stringResource(Res.string.collections_delete_list), color = MaterialTheme.colorScheme.error)
+                    } }
                 }
             }
         }
@@ -74,9 +77,14 @@ private fun editorPlaceAction(value: CollectionsAction, action: (SavedCollection
     }
 }
 
-@Composable private fun SavedEditorSample(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
+@Composable private fun SavedEditorSample(dark: Boolean, existing: Boolean = false) = CoffeePeekTheme(darkTheme = dark) {
+    val shop = CollectionPlace(CollectionPlaceKind.CoffeeShop, "sample", "Любимая кофейня")
+    val collection = SavedCollection(SavedCollectionSummary("sample", "Мои места", itemCount = 1), listOf(shop))
     SavedCollectionEditor(SavedCollectionsState(SavedCollectionsMode.Editor, signedIn = true, loading = false,
-        title = "Мои места", places = listOf(CollectionPlace(CollectionPlaceKind.CoffeeShop, "sample", "Любимая кофейня"))), {}, {}, {})
+        title = if (existing) "Мои места" else "", collection = collection.takeIf { existing },
+        places = listOf(shop).takeIf { existing }.orEmpty(), selectedPlaces = setOf(shop.key).takeIf { existing }.orEmpty()), {}, {}, {})
 }
 @Preview @Composable private fun SavedEditorLightPreview() = SavedEditorSample(false)
 @Preview @Composable private fun SavedEditorDarkPreview() = SavedEditorSample(true)
+@Preview @Composable private fun SavedExistingEditorLightPreview() = SavedEditorSample(false, existing = true)
+@Preview @Composable private fun SavedExistingEditorDarkPreview() = SavedEditorSample(true, existing = true)

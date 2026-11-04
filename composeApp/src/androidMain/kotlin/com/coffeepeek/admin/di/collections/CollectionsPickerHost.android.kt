@@ -8,11 +8,16 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.feature.collections.api.CollectionsEntry
+import com.coffeepeek.feature.collections.domain.repository.SavedCollectionsRepository
+import com.coffeepeek.domain.feature.favorites.api.FavoritesRepository
 import org.koin.compose.getKoin
 import org.koin.compose.koinInject
 
 @Composable
 internal actual fun CollectionsPickerHost() {
+    val collections = koinInject<SavedCollectionsRepository>()
+    val favorites = koinInject<FavoritesRepository>()
+    LaunchedEffect(collections, favorites) { synchronizeCollectionFavorites(collections.observeChanges(), favorites) }
     val requests = getKoin().getOrNull<CollectionPickerRequests>() ?: return
     val request by requests.state.collectAsStateWithLifecycle()
     request?.let { current -> key(current) {

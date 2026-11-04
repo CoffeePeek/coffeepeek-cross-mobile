@@ -196,3 +196,41 @@ collection edits, shelf and preference layout were not inspected in the live
 account. Light/dark, large font, narrow window, accessibility, modal and real
 backend write acceptance remain unverified. No automated UI or screenshot
 tests were added or run.
+
+## Collection flow follow-up — 2026-11-04
+
+The user's later instruction supersedes branch/PR defaults: this follow-up is
+implemented directly on `develop`, with no new PR. Current rules and the full
+favorites/collections audit are recorded in [FLOW_AUDIT.md](FLOW_AUDIT.md).
+The default starts private but publishing/renaming preserves its server identity.
+New collection editing no longer reads/imports global favorites. A cover failure
+keeps the draft without creating an orphan row. Unedited memberships are not
+replaced by metadata saves. Picker saves send only added/removed marks, rebased
+against a fresh read for older servers and applied atomically by the new server.
+Mutations invalidate the library/preference views and refresh heart projections;
+notifications received during loading schedule a subsequent refresh.
+
+Card captions now overlay the photo above a fading blur/gradient. The cover edit
+control sits beside the name; description and visibility follow below. Profile
+shelf section/photo loading uses the shared shimmer, with a neutral no-photo
+fallback and no visible bag names. New/existing, loading/empty and light/dark
+previews remain colocated.
+
+Android verification: collections data 34/34, impl 59/59, shelf impl 78/78 and
+selected application collection/DI contracts 24/24 passed, zero failures/skips.
+No UI/instrumentation/screenshot tests were added or run. Live account writes,
+native iOS compilation and manual theme/font/window/accessibility acceptance
+remain separate gates. Backend develop changes require deployment before the
+server uniqueness and atomic membership-delta guarantees are live.
+
+Final Direct Debug and Direct Sandbox assemblies and their packaged DEX guards
+passed; Sandbox isolation passed and it was not installed. Debug 1.1.5.2689
+(`com.coffeepeek`, APK SHA-256
+`CEB5EE3F52CFB88676030B9A6335CFEB590867618C8E67C0AF4613A0A69FA8B3`)
+was updated in place on unlocked `emulator-5554`, API 37/x86_64 with 16 KB pages.
+The certificate matched, the version increased, and first-install time remained
+2026-11-04 10:32:16. The launch command failed twice with Activity-not-found;
+package inspection and a Direct Boot-aware resolver confirmed MainActivity is
+present, but Android reported user 0 as `BOOTING` even with boot-completed set.
+Startup and authenticated manual UI review are therefore not claimed. No
+uninstall, data clearing, device-security change or live account write occurred.
