@@ -78,8 +78,10 @@ class ProfileAccountWritesTest {
         try {
             f.data.accounts.loadOwnProfile(false).getOrThrow()
             val gate = CompletableDeferred<Unit>()
-            f.handler = { gate.await(); accountResponse(profileJson()) }
+            val started = CompletableDeferred<Unit>()
+            f.handler = { started.complete(Unit); gate.await(); accountResponse(profileJson()) }
             val read = async(start = CoroutineStart.UNDISPATCHED) { f.data.accounts.loadOwnProfile(true) }
+            started.await()
             f.handler = { accountResponse("null") }
             f.data.edit.updateAbout("Edited").getOrThrow()
             gate.complete(Unit)
