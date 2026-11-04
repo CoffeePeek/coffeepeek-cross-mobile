@@ -348,3 +348,22 @@ command evidence only: section switching, light/dark, large-font, VoiceOver and
 actual ranking/profile rendering were not visually certified. No security or
 screen-timeout setting was changed. The updated Debug remains installed for the
 user's check. Diagnostics/screenshots remain in ignored local build outputs.
+
+### One shared capsule control — 2026-11-04
+
+The user's visual review rejected the separate Native style because it differed
+from Coffee's segmented control. This supersedes the style decision above: Feed /
+Leaders and Week / Month now use the same CoffeePeekCapsuleSegmentedControl and
+default 48 dp minimum segment height as Coffee. The style enum, Android alternate
+renderer and additional iOS UIKit wrapper are removed. Existing platform capsule
+rendering, native iOS interaction/accessibility, scrollable mode, paired previews
+and Coffee's callers remain intact. No business, cache or navigation logic changed.
+
+Verification: design-system 57, community impl 40, leaderboard impl 17 and
+application Direct Debug 1004 unit tests, total 1118 with zero failures/errors/
+skips. Direct Debug assembly, including packaged DEX runtime-class checks, passed.
+The design-system, community impl and leaderboard impl iosSimulatorArm64 KLIB
+compilation also passed. Colocated light/dark previews compile; they were not
+rendered in an IDE. Existing deprecated Preview warnings remain. No automated UI,
+instrumentation or screenshot tests were added or run. Full Xcode linking and
+iOS/device theme, font-size and accessibility visual checks remain unverified.

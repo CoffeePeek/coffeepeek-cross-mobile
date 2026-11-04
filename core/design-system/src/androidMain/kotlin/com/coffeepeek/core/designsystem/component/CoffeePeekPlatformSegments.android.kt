@@ -15,12 +15,7 @@ import com.coffeepeek.core.designsystem.modifier.coffeePeekLiquidGlass
 internal actual fun CoffeePeekPlatformSegments(
     labels: List<String>, selectedIndex: Int, onSelected: (Int) -> Unit, modifier: Modifier, enabled: Boolean,
     minSegmentHeight: Dp,
-    style: CoffeePeekSegmentedControlStyle,
 ) {
-    if (style == CoffeePeekSegmentedControlStyle.Native) {
-        CoffeePeekNativeSegments(labels, selectedIndex, onSelected, modifier, enabled, minSegmentHeight)
-        return
-    }
     Row(modifier.fillMaxWidth().coffeePeekLiquidGlass(RoundedCornerShape(percent = 50), shadowElevation = 0.dp)
         .padding(4.dp).selectableGroup()) {
         labels.forEachIndexed { index, label ->

@@ -11,7 +11,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.component.CoffeePeekCapsuleSegmentedControl
-import com.coffeepeek.core.designsystem.component.CoffeePeekSegmentedControlStyle
 import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.community.impl.resources.*
@@ -25,8 +24,7 @@ internal fun CommunitySections(leadersSelected: Boolean, onSelected: (Boolean) -
     Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
         if (hasLeaders) CoffeePeekCapsuleSegmentedControl(listOf(false, true), leadersSelected,
-            { if (it) leaders else feed }, onSelected, Modifier.weight(1f),
-            style = CoffeePeekSegmentedControlStyle.Native)
+            { if (it) leaders else feed }, onSelected, Modifier.weight(1f))
         else Text(feed, Modifier.weight(1f), style = MaterialTheme.typography.headlineMedium)
         headerAction()
     }

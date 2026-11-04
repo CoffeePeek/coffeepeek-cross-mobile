@@ -33,12 +33,9 @@ import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
-enum class CoffeePeekSegmentedControlStyle { Glass, Native }
-
 /**
  * A pill of exclusive options. By default the options share the width equally (short labels). With [scrollable] every option takes the width of its label
  * (plus a horizontal padding) and the row scrolls sideways, so long labels or a large font never get squeezed; the pill then keeps a 4 dp inner padding.
- * [CoffeePeekSegmentedControlStyle.Native] uses UIKit's standard fixed control on iOS and matching Android styling.
  * Scrollable options retain the Compose layout.
  */
 @Composable
@@ -51,14 +48,13 @@ fun <T> CoffeePeekCapsuleSegmentedControl(
     enabled: Boolean = true,
     scrollable: Boolean = false,
     minSegmentHeight: Dp = 48.dp,
-    style: CoffeePeekSegmentedControlStyle = CoffeePeekSegmentedControlStyle.Glass,
 ) {
     require(options.isNotEmpty()) { "Segmented control requires options" }
     require(options.distinct().size == options.size) { "Options must be unique" }
     require(selected in options) { "Selection must belong to options" }
     if (!scrollable) {
         CoffeePeekPlatformSegments(options.map(label), options.indexOf(selected),
-            { onSelected(options[it]) }, modifier, enabled, minSegmentHeight, style)
+            { onSelected(options[it]) }, modifier, enabled, minSegmentHeight)
         return
     }
     CoffeePeekScrollableSegments(options, selected, label, onSelected, modifier, enabled, minSegmentHeight)
@@ -80,22 +76,6 @@ private fun <T> CoffeePeekScrollableSegments(options: List<T>, selected: T, labe
         }
     }
 }
-
-@Composable
-private fun CoffeePeekNativeSegmentsPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
-    var selected by remember { mutableStateOf("Feed") }
-    Surface {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            CoffeePeekCapsuleSegmentedControl(listOf("Feed", "Leaders"), selected, { it }, { selected = it },
-                minSegmentHeight = 44.dp, style = CoffeePeekSegmentedControlStyle.Native)
-            CoffeePeekCapsuleSegmentedControl(listOf("Week", "Month"), "Month", { it }, {},
-                minSegmentHeight = 44.dp, style = CoffeePeekSegmentedControlStyle.Native)
-        }
-    }
-}
-
-@Preview @Composable private fun CoffeePeekSystemSegmentsLightPreview() = CoffeePeekNativeSegmentsPreview(false)
-@Preview @Composable private fun CoffeePeekSystemSegmentsDarkPreview() = CoffeePeekNativeSegmentsPreview(true)
 
 @Composable
 internal fun CoffeePeekCapsuleSegment(text: String, isSelected: Boolean, enabled: Boolean, onClick: () -> Unit,
