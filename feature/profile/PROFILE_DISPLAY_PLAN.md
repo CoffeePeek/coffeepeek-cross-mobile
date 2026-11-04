@@ -123,3 +123,29 @@ identity and agreed Pixel device launch. Full manual initial-loading appearance,
 Back/scroll preservation, themes/font/window sizes and reduced-motion acceptance
 remain device gates. No automated UI/instrumentation/screenshot tests or tests
 that merely duplicate the layout were added or run for this UI-only change.
+
+Final loading patch source:1d96c1f0fc83864ef320b3098747a0f77b6da279.
+Profile impl62 unit cases executed successfully, and Direct Debug assembly plus
+packaged DEX checks passed (1m5s, build/profile-shimmer-final-build.log).
+This follows the separate31 favorites impl and55 production-readiness/cache/
+analytics cases already recorded in the favorites plan; those passing suites
+were not repeated for this UI-only addition.
+
+Debug1.1.5.2684/code2684 was updated in place on the user-selected Pixel_8 AVD,
+emulator-5556, on2026-11-04. APK SHA-256
+44E2CAE8CC7598498212A632AB69352CD82F236CC7C13AB281A4EB07A0273ADD;
+package/launcher and signing certificate matched the prior verified installation.
+MainActivity foreground was confirmed after the update (UNKNOWN/warm launch,
+not cold). First-install time2026-11-04 09:20:28 remained unchanged. No app data,
+account, favorite membership or visibility preference was changed by the review.
+The initial profile animation itself was not captured on a cold/slow live read;
+cached refresh, themes/font/window/IME and reduced-motion review remain gates.
+
+ServerPR378 and webPR37 were explicitly approved for publication, then separately
+for merge/deployment. ServerPR CI passed the dedicated real PostgreSQL shelf
+migration case, existing saved-list/media migration cases, and strict table
+ownership after its first failed declaration check was corrected. The new table
+is declared as shelf-owned; the assertion was not relaxed. Current server main
+merge is e6da3360933a9a8c4e2e2c529c0b8c46c94a43ca; production workflow41798536619
+was still running when this evidence was recorded. WebPR37 remains sequenced
+after server health. Production readiness is not inferred from PR preview checks.
