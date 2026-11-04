@@ -80,6 +80,38 @@ class PublicProfileViewModelTest {
     private fun TestScope.events(model: PublicProfileViewModel): List<PublicProfileEvent> =
         mutableListOf<PublicProfileEvent>().also { list -> backgroundScope.launch { model.events.collect { list += it } } }
 
+    @Test fun publicViewNeverReadsOrRetainsGlobalFavoritesEvenWhenTheProfilePayloadContainsThem() = runTest(dispatcher) {
+        val favorite = PublicProfileFavorite("private", "Private favorite", PublicFavoriteKind.CoffeeShop)
+        for (account in listOf(FakeAccounts(), FakeAccounts("viewer", ownProfile("viewer")))) {
+            var reads = 0
+            val data = FakeData().apply {
+                profile = { Result.success(PublicProfile("canonical", "Author", null, null,
+                    PublicProfileStats(0, 0, 0, 0), listOf(favorite), null)) }
+                favorites = { reads++; Result.success(listOf(favorite)) }
+            }
+            val vm = model("canonical", data, account)
+            runCurrent()
+            vm.onAction(PublicProfileAction.RetryFavorites)
+            runCurrent()
+            assertEquals(0, reads)
+            assertTrue(vm.state.value.profile!!.favorites.isEmpty())
+        }
+    }
+
+    @Test fun globalFavoritesLoadOnlyAfterTheViewedProfileIsVerifiedAsOwned() = runTest(dispatcher) {
+        val gate = CompletableDeferred<OwnProfile>()
+        val accounts = FakeAccounts("owner").apply { load = { Result.success(gate.await()) } }
+        var reads = 0
+        val data = FakeData().apply { favorites = { reads++; Result.success(emptyList()) } }
+        val vm = model("canonical", data, accounts)
+        runCurrent()
+        assertEquals(0, reads)
+        gate.complete(ownProfile("canonical"))
+        runCurrent()
+        assertTrue(vm.state.value.isOwnProfile)
+        assertEquals(1, reads)
+    }
+
     @Test
     fun canonicalAuthorPaginationDeduplicatesAndFailedCursorRetryStartsAtFirstPage() = runTest(dispatcher) {
         val requests = mutableListOf<Pair<String, String?>>()
@@ -113,7 +145,7 @@ class PublicProfileViewModelTest {
             favorites = { Result.failure(IllegalStateException("Favorites unavailable")) }
             activity = { _, _ -> Result.failure(IllegalStateException("Activity unavailable")) }
         }
-        val vm = model("alias", data); runCurrent()
+        val vm = model("alias", data, FakeAccounts("owner", ownProfile("canonical"))); runCurrent()
         assertNotNull(vm.state.value.profile)
         assertNull(vm.state.value.error)
         assertNotNull(vm.state.value.favoritesError)
@@ -355,7 +387,7 @@ class PublicProfileViewModelTest {
             favorites = { Result.success(listOf(PublicProfileFavorite("drink:matcha", "Матча", PublicFavoriteKind.Drink, drinkSlug = "matcha"))) }
             checkIns = { _, _ -> Result.success(PublicProfileCheckInPage(listOf(checkIn("visible")), null)) }
         }
-        val vm = model("canonical", data); runCurrent()
+        val vm = model("canonical", data, FakeAccounts("owner", ownProfile("canonical"))); runCurrent()
         assertNotNull(vm.state.value.profile)
         assertTrue(vm.state.value.checkIns.isNotEmpty())
         assertTrue(vm.state.value.profile!!.favorites.isNotEmpty())

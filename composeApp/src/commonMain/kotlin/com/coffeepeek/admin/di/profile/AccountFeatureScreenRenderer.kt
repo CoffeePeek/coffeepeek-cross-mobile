@@ -61,6 +61,7 @@ internal class FeatureAccountScreenRenderer(
 }
 
 internal fun editProfileSlots() = EditProfileSlots(
+    displayPreferences = { ProfileDisplayPreferences() },
     image = { url, description, modifier -> CoffeePeekImage(data = url, modifier = modifier, contentScale = ContentScale.Crop, contentDescription = description) },
     pickedAvatar = { image, modifier -> CoffeePeekImage(data = image.bytes, modifier = modifier, contentScale = ContentScale.Crop) },
     photoPicker = { title, show, onDismiss, onLoading, onPicked ->

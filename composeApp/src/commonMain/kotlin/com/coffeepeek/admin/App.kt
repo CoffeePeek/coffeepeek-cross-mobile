@@ -40,6 +40,7 @@ fun App(onReady: () -> Unit = {}) {
         Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).dismissKeyboardOnBackgroundGestures()) {
             OrientationObserver.StartObserver()
             Navigator()
+            com.coffeepeek.admin.di.collections.CollectionsPickerHost()
             com.coffeepeek.admin.di.authorblocking.AuthorBlockingRootHost()
             koinInject<com.coffeepeek.admin.feature.appupdate.ui.AppUpdateRenderer>().Prompt()
             com.coffeepeek.admin.analytics.AnalyticsPrivacy()

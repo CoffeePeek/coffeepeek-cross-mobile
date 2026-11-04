@@ -78,6 +78,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
 import com.coffeepeek.core.designsystem.component.CoffeePeekTopBar
+import com.coffeepeek.core.designsystem.component.CoffeePeekGroupSection
 import com.coffeepeek.core.designsystem.component.rememberCoffeePeekSyncedText
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.component.CoffeePeekActionDialog
@@ -155,6 +156,9 @@ internal fun EditProfileScreenContent(
                 EditProfileIdentity(state, slots, photoLoading, onAction, onPickAvatar)
                 Spacer(Modifier.height(CoffeePeekDimens.spacing4))
                 EditProfileAbout(state, onAction)
+                Spacer(Modifier.height(CoffeePeekDimens.spacing4))
+                CoffeePeekGroupSection(title = stringResource(Res.string.profile_edit_display_preferences),
+                    footer = stringResource(Res.string.profile_edit_display_autosave)) { slots.displayPreferences() }
                 Spacer(Modifier.height(CoffeePeekDimens.spacing6))
                 SaveProfileButton(state) { onAction(EditProfileAction.Save) }
                 Spacer(Modifier.height(CoffeePeekDimens.spacing4))
@@ -271,14 +275,23 @@ private fun EditProfileScreenPreview(dark: Boolean) {
     CoffeePeekTheme(darkTheme = dark) {
         EditProfileScreenContent(
             state = EditProfileState(username = "coffee_lover", originalUsername = "coffee_lover", isLoading = false),
-            slots = EditProfileSlots(image = { _, _, _ -> }, pickedAvatar = { _, _ -> }, photoPicker = { _, _, _, _, _ -> }),
+            slots = EditProfileSlots(image = { _, _, _ -> }, pickedAvatar = { _, _ -> }, photoPicker = { _, _, _, _, _ -> },
+                displayPreferences = { EditProfileDisplayPreferencesPreview() }),
             photoLoading = false, onAction = {}, onBack = {}, onPickAvatar = {}, onDeleteAccount = {},
         )
     }
 }
 
-@Preview @Composable private fun EditProfileLightPreview() = EditProfileScreenPreview(false)
-@Preview @Composable private fun EditProfileDarkPreview() = EditProfileScreenPreview(true)
+@Composable
+private fun EditProfileDisplayPreferencesPreview() {
+    Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Text(stringResource(Res.string.profile_section_favorites), style = MaterialTheme.typography.bodyLarge)
+        Text(stringResource(Res.string.profile_edit_display_shelf), style = MaterialTheme.typography.bodyLarge)
+    }
+}
+
+@Preview @Composable private fun EditProfileScreenLightPreview() = EditProfileScreenPreview(false)
+@Preview @Composable private fun EditProfileScreenDarkPreview() = EditProfileScreenPreview(true)
 
 @Composable
 private fun UsernameError.message(): String = stringResource(when (this) {

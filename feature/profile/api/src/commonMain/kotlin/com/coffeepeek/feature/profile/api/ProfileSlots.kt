@@ -22,4 +22,13 @@ class ProfileSlots(
     val displayDate: @Composable (String) -> String = { it },
     val progressiveImage: @Composable (preview: String, detail: String?, modifier: Modifier) -> Unit = { preview, _, modifier -> image(preview, null, modifier) },
     val reportCheckIn: (id: String) -> Unit = {},
+    /** Only the profile's explicitly featured public collection; empty when hidden. */
+    val featuredCollection: @Composable (profileSlug: String) -> Unit = {},
+    /** Read-only shelf projection; the shelf feature hides it unless its owner explicitly enabled sharing. */
+    val shelfPreview: @Composable (profileSlug: String) -> Unit = {},
+    /** The signed-in owner's saved collections, including private lists. */
+    val ownerCollection: @Composable () -> Unit = {},
+    val onOpenOwnCollections: () -> Unit = {},
+    /** Called only while viewing the signed-in owner's counters. */
+    val onOwnContributions: (ProfileContribution) -> Unit = {},
 )

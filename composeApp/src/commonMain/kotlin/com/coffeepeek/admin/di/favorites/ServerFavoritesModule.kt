@@ -4,6 +4,7 @@ import com.coffeepeek.domain.repository.RoasterRepository
 import com.coffeepeek.feature.favorites.api.FavoritesEntry
 import com.coffeepeek.feature.favorites.domain.repository.FavoriteDrinksRepository
 import com.coffeepeek.feature.favorites.domain.repository.FavoriteRoastersRepository
+import com.coffeepeek.feature.favorites.domain.repository.FavoritesAccount
 import com.coffeepeek.feature.favorites.domain.usecase.ObserveFavoriteIdsUseCase
 import com.coffeepeek.feature.favorites.impl.createFavoritesEntry
 import org.koin.dsl.module
@@ -11,6 +12,7 @@ import org.koin.dsl.module
 /** Both platforms adapt the existing server source; local storage is never registered here. */
 internal fun serverFavoritesModule() = module {
     includes(serverFavoriteShopsModule())
+    single<FavoritesAccount> { SessionFavoritesAccount(get()) }
     factory { ObserveFavoriteIdsUseCase(get()) }
     single<FavoriteRoastersRepository> {
         val catalog = get<RoasterRepository>()
@@ -19,5 +21,5 @@ internal fun serverFavoritesModule() = module {
         }
     }
     single<FavoriteDrinksRepository> { ServerFavoriteDrinksRepository(get(), get()) }
-    single<FavoritesEntry> { createFavoritesEntry(get(), get(), get(), AppFavoritesScreenAnalytics) }
+    single<FavoritesEntry> { createFavoritesEntry(get(), get(), get(), AppFavoritesScreenAnalytics, account = get()) }
 }

@@ -13,6 +13,8 @@ import kotlinx.serialization.Serializable
 )
 @Serializable internal data class CollectionDto(
     val id: String, val title: String, val canonicalPath: String, val items: List<CollectionPlaceDto>,
+    val mode: String = "snapshot",
+    val visibility: String? = null,
 )
 @Serializable internal data class CollectionSummaryDto(val id: String, val title: String, val canonicalPath: String, val itemCount: Int)
 @Serializable internal data class CollectionSelectionDto(val kind: String, val slug: String)

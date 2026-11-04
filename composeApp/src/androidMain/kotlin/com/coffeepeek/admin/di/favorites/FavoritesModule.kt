@@ -7,6 +7,7 @@ import com.coffeepeek.feature.favorites.data.local.FavoritesStorage
 import com.coffeepeek.feature.favorites.data.repository.createFavoritesRepository
 import com.coffeepeek.feature.favorites.domain.repository.FavoritesRepository
 import com.coffeepeek.feature.favorites.domain.repository.FavoriteRoastersRepository
+import com.coffeepeek.feature.favorites.domain.repository.FavoritesAccount
 import com.coffeepeek.domain.repository.RoasterRepository
 import com.coffeepeek.feature.favorites.domain.usecase.ObserveFavoriteIdsUseCase
 import com.coffeepeek.feature.favorites.impl.createFavoritesEntry
@@ -16,6 +17,13 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.map
 import org.koin.core.module.Module
 import org.koin.dsl.module
+import com.coffeepeek.admin.di.collections.CollectionPickerRequests
+import com.coffeepeek.admin.di.collections.CollectionPromptRoasterFavorites
+import com.coffeepeek.admin.feature.favorites.api.RoasterFavorites
+import com.coffeepeek.admin.feature.favorites.data.ServerRoasterFavorites
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 
 /** One repo per session/storage. Application explicitly loads this module; no global Koin start. */
 internal fun favoritesModule(

@@ -21,14 +21,14 @@
     <string name="profile_stat_roasters">Абсмажчыкі</string>
     <string name="profile_stat_followers">Падпісчыкі</string>
     <string name="profile_open_followers">Адкрыць падпісчыкаў</string>
-    <string name="profile_section_favorites">Абранае</string>
+    <string name="profile_section_favorites">Падборкі</string>
     <string name="profile_section_check_ins">Чэкіны</string>
     <string name="profile_section_activity">Актыўнасць</string>
     <string name="profile_section_all">Усе</string>
     <string name="profile_section_all_description">Усе: %1$s</string>
-    <string name="profile_favorites_failed">Не ўдалося загрузіць абранае</string>
-    <string name="profile_favorites_refresh_failed">Не ўдалося абнавіць абранае</string>
-    <string name="profile_favorites_empty">Пакуль нічога няма ў абраным</string>
+    <string name="profile_favorites_failed">Не ўдалося загрузіць падборкі</string>
+    <string name="profile_favorites_refresh_failed">Не ўдалося абнавіць падборкі</string>
+    <string name="profile_favorites_empty">Пакуль няма падборак</string>
     <string name="profile_check_ins_failed">Не ўдалося загрузіць чэкіны</string>
     <string name="profile_check_ins_empty">Пакуль няма чэкінаў</string>
     <string name="profile_activity_failed">Не ўдалося загрузіць актыўнасць</string>
@@ -91,7 +91,7 @@
     <string name="profile_logout_title">Выйсці з уліковага запісу?</string>
     <string name="profile_logout_message">Вы ўпэўнены? Спатрэбіцца паўторны ўваход.</string>
     <string name="profile_cancel">Адмена</string>
-    <string name="profile_own_favorites">Абранае</string>
+    <string name="profile_own_favorites">Падборкі</string>
     <string name="profile_own_check_ins">Чэкіны</string>
     <string name="profile_edit_title">Рэдагаваць профіль</string>
     <string name="profile_edit_photo_title">Фота профілю</string>
@@ -141,4 +141,7 @@
     <string name="profile_deletion_wait_hint">Пасля пацвярджэння вы аўтаматычна выйдзеце з праграмы.</string>
     <string name="profile_deletion_resend">Адправіць ліст яшчэ раз</string>
     <string name="profile_deletion_resend_wait">Паўторная адпраўка пакуль недаступная</string>
+    <string name="profile_edit_display_preferences">Паказваць у профілі</string>
+    <string name="profile_edit_display_shelf">Кававая паліца</string>
+    <string name="profile_edit_display_autosave">Гэтыя налады захоўваюцца адразу.</string>
 </resources>

@@ -9,6 +9,7 @@ import com.coffeepeek.feature.favorites.api.FavoritesEntry
 import com.coffeepeek.feature.favorites.domain.repository.FavoritesRepository
 import com.coffeepeek.feature.favorites.domain.repository.FavoriteRoastersRepository
 import com.coffeepeek.feature.favorites.domain.repository.FavoriteDrinksRepository
+import com.coffeepeek.feature.favorites.domain.repository.FavoritesAccount
 import com.coffeepeek.feature.favorites.impl.ui.compose.FavoritesScreen
 import com.coffeepeek.feature.favorites.impl.ui.compose.FavoritesPreviewScreen
 import com.coffeepeek.feature.favorites.impl.ui.FavoritesViewModel
@@ -19,13 +20,15 @@ fun createFavoritesEntry(
     roasters: FavoriteRoastersRepository? = null,
     drinks: FavoriteDrinksRepository? = null,
     screenAnalytics: FavoritesScreenAnalytics = FavoritesScreenAnalytics.None,
-): FavoritesEntry = FavoritesApiImpl(repository, roasters, drinks, screenAnalytics)
+    account: FavoritesAccount? = null,
+): FavoritesEntry = FavoritesApiImpl(repository, roasters, drinks, screenAnalytics, account)
 
 internal class FavoritesApiImpl(
     private val repository: FavoritesRepository,
     private val roasters: FavoriteRoastersRepository?,
     private val drinks: FavoriteDrinksRepository? = null,
     private val screenAnalytics: FavoritesScreenAnalytics = FavoritesScreenAnalytics.None,
+    private val account: FavoritesAccount? = null,
 ) : FavoritesEntry {
     @Composable
     override fun Content(
@@ -34,10 +37,11 @@ internal class FavoritesApiImpl(
         distanceForCoordinates: (Double, Double) -> String?,
         onOpenRoaster: (String) -> Unit,
         onShare: () -> Unit,
+        onOpenCollections: () -> Unit,
     ) {
-        val vm = viewModel(key = "favorites-screen") { FavoritesViewModel(repository, roasters, drinks) }
+        val vm = viewModel(key = "favorites-screen") { FavoritesViewModel(repository, roasters, drinks, account) }
         CompositionLocalProvider(LocalFavoritesAnalytics provides screenAnalytics) {
-            FavoritesScreen(vm, onOpenShop, onBack, distanceForCoordinates, onOpenRoaster, onShare)
+            FavoritesScreen(vm, onOpenShop, onBack, distanceForCoordinates, onOpenRoaster, onShare, onOpenCollections)
         }
     }
 

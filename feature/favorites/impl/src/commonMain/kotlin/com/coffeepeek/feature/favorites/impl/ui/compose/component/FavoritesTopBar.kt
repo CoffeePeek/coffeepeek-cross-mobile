@@ -11,8 +11,11 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 
 @Composable
-internal fun FavoritesTopBar(canShare: Boolean, onBack: () -> Unit, onShare: () -> Unit) {
+internal fun FavoritesTopBar(canShare: Boolean, onBack: () -> Unit, onShare: () -> Unit, onOpenCollections: () -> Unit = {}) {
     CoffeePeekTopBar(stringResource(Res.string.favorites_title), stringResource(Res.string.favorites_back), onBack = onBack, actions = {
+        CoffeePeekPlainIconButton(onOpenCollections) {
+            Icon(CoffeePeekIcons.ListStar, stringResource(Res.string.favorites_collections))
+        }
         CoffeePeekPlainIconButton(onShare, enabled = canShare) {
             Icon(CoffeePeekIcons.Share, stringResource(Res.string.favorites_share))
         }

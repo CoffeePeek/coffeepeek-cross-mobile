@@ -155,12 +155,18 @@ internal class PublicProfileViewModel(
     }
 
     private fun updateOwnProfile() {
+        val wasOwn = currentState.isOwnProfile
         val isOwn = currentState.profile?.let(::isOwnProfile) == true
         if (isOwn) followJob?.cancel()
+        else favoritesJob?.cancel()
         updateState { copy(isOwnProfile = isOwn,
+            profile = profile?.let { if (isOwn) it else it.copy(favorites = emptyList()) },
+            isLoadingFavorites = if (isOwn) isLoadingFavorites else false,
+            favoritesError = if (isOwn) favoritesError else null,
             isFollowing = if (isOwn) false else isFollowing,
             isFollowLoading = if (isOwn) false else isFollowLoading,
             followError = if (isOwn) null else followError) }
+        if (isOwn && !wasOwn) retryFavorites()
     }
 
     private fun refresh() {
@@ -186,7 +192,7 @@ internal class PublicProfileViewModel(
             if (!isCurrent(requestGeneration, requestAccount)) return@launch
             result.onSuccess { profile ->
                 val isOwn = isOwnProfile(profile)
-                updateState { copy(isLoading = false, profile = profile, error = null,
+                updateState { copy(isLoading = false, profile = if (isOwn) profile else profile.copy(favorites = emptyList()), error = null,
                     isOwnProfile = isOwn, isFollowing = !isOwn && profile.isFollowing) }
                 if (profile.isBlockedByViewer || visibility.current().hides(profile.authorId, profile.slug)) {
                     updateState { copy(profile = profile.copy(isBlockedByViewer = true, favorites = emptyList(), activity = null),
@@ -255,7 +261,7 @@ internal class PublicProfileViewModel(
 
     private fun retryFavorites() {
         val profile = currentState.profile?.takeUnless { it.isBlockedByViewer } ?: return
-        if (currentState.isLoading) return
+        if (currentState.isLoading || !isOwnProfile(profile)) return
         favoritesJob?.cancel()
         val requestGeneration = generation
         val requestAccount = account
@@ -264,7 +270,7 @@ internal class PublicProfileViewModel(
             val result = data.getFavorites(profile.slug)
             val failureMessage = if (result.isFailure) PublicProfileError.Favorites else null
             currentCoroutineContext().ensureActive()
-            if (!isCurrent(requestGeneration, requestAccount)) return@launch
+            if (!isCurrent(requestGeneration, requestAccount) || !isOwnProfile(profile)) return@launch
             result.onSuccess { favorites -> updateState { copy(isLoadingFavorites = false,
                 profile = this.profile?.copy(favorites = favorites)) } }
                 .onFailure { updateState { copy(isLoadingFavorites = false, favoritesError = failureMessage) } }
