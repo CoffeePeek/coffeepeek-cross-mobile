@@ -29,9 +29,18 @@ internal class HttpShelfProfileRepository(
     private val base = Url(apiBaseUrl)
     private val permits = Semaphore(4)
     private val snapshots = MutableStateFlow(ShelfProfileCache())
+    private val visibilityCache = MutableStateFlow(VisibilityCache())
     override val owners get() = account.owners
+    override val visibilityScope get() = account.visibilityScope
+    override val visibilityScopes get() = account.visibilityScopes
 
     init { require(base.host.isNotBlank() && base.protocol.name in setOf("http", "https")) }
+
+    override fun cachedVisibility(): Boolean? {
+        val scope = account.visibilityScope
+        visibilityCache.update { if (it.scope == scope) it else VisibilityCache(scope, sequence = it.sequence) }
+        return visibilityCache.value.value.takeIf { scope != null && scope == account.visibilityScope }
+    }
 
     override fun cachedPublicShelf(slug: String): PublicShelfSnapshot? {
         val owner = account.owner
@@ -39,19 +48,41 @@ internal class HttpShelfProfileRepository(
         return snapshots.value.values[slug].takeIf { owner != null && owner == account.owner }
     }
 
-    override suspend fun visibility(): Result<Boolean> = owned { owner ->
-        client.get(api(VISIBILITY)) { pinRequest(this, owner); expectSuccess = false }
-            .shelfData<ShelfProfileVisibilityDto>().isVisible
+    override suspend fun visibility(): Result<Boolean> {
+        val scope = account.visibilityScope
+        val request = beginVisibilityRead(scope)
+        return owned { owner ->
+            client.get(api(VISIBILITY)) { pinRequest(this, owner); expectSuccess = false }
+                .shelfData<ShelfProfileVisibilityDto>().isVisible
+        }.onSuccess { visible ->
+            if (scope != null && scope == account.visibilityScope) visibilityCache.update { current ->
+                if (current.scope == scope && current.sequence == request) current.copy(value = visible) else current
+            }
+        }
     }
 
-    override suspend fun setVisibility(visible: Boolean): Result<Boolean> = owned { owner ->
-        client.put(api(VISIBILITY)) {
-            pinRequest(this, owner)
-            expectSuccess = false
-            contentType(ContentType.Application.Json)
-            setBody(ShelfProfileVisibilityDto(visible))
-        }.shelfData<ShelfProfileVisibilityDto>().isVisible
-    }.onSuccess { snapshots.update { ShelfProfileCache(account.owner, sequence = it.sequence) } }
+    override suspend fun setVisibility(visible: Boolean): Result<Boolean> {
+        val scope = account.visibilityScope
+        return owned { owner ->
+            client.put(api(VISIBILITY)) {
+                pinRequest(this, owner)
+                expectSuccess = false
+                contentType(ContentType.Application.Json)
+                setBody(ShelfProfileVisibilityDto(visible))
+            }.shelfData<ShelfProfileVisibilityDto>().isVisible
+        }.onSuccess { confirmed ->
+            if (scope != null && scope == account.visibilityScope) visibilityCache.update { current ->
+                val cache = current.takeIf { it.scope == scope } ?: VisibilityCache(scope, sequence = current.sequence)
+                cache.copy(value = confirmed, sequence = cache.sequence + 1)
+            }
+            snapshots.update { ShelfProfileCache(account.owner, sequence = it.sequence) }
+        }
+    }
+
+    private fun beginVisibilityRead(scope: String?): Int = visibilityCache.updateAndGet { previous ->
+        val current = previous.takeIf { it.scope == scope } ?: VisibilityCache(scope, sequence = previous.sequence)
+        current.copy(sequence = current.sequence + 1)
+    }.sequence
 
     override suspend fun publicShelf(slug: String): Result<PublicShelf?> {
         val owner = account.owner
@@ -120,15 +151,16 @@ internal class HttpShelfProfileRepository(
 
     private suspend fun <T> owned(block: suspend (String) -> T): Result<T> = shelfRequestResult {
         val owner = account.owner ?: throw ShelfFailure(ShelfIssue.SignedOut)
+        val scope = account.visibilityScope ?: throw ShelfFailure(ShelfIssue.SignedOut)
         coroutineScope {
             val operation = currentCoroutineContext().job
             val watcher = launch(start = CoroutineStart.UNDISPATCHED) {
-                account.owners.first { it != owner }
+                account.visibilityScopes.first { it != scope }
                 operation.cancel(CancellationException("Shelf profile account changed"))
             }
             try {
-                if (account.owner != owner) throw CancellationException("Shelf profile account changed")
-                block(owner).also { if (account.owner != owner) throw CancellationException("Shelf profile account changed") }
+                if (account.visibilityScope != scope) throw CancellationException("Shelf profile account changed")
+                block(owner).also { if (account.visibilityScope != scope) throw CancellationException("Shelf profile account changed") }
             } finally { watcher.cancel() }
         }
     }
@@ -150,3 +182,5 @@ internal class HttpShelfProfileRepository(
 
 private data class ShelfProfileCache(val owner: String? = null, val values: Map<String, PublicShelfSnapshot> = emptyMap(),
     val sequence: Int = 0, val latest: Map<String, Int> = emptyMap())
+
+private data class VisibilityCache(val scope: String? = null, val value: Boolean? = null, val sequence: Int = 0)

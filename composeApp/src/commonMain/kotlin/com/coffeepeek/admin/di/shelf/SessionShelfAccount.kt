@@ -11,8 +11,17 @@ internal class SessionShelfAccount(private val sessions: SessionReader) : ShelfA
     override val owner: String?
         get() = sessions.peekSession()?.takeIf(sessions::isActiveSession)?.userId?.takeIf(String::isNotBlank)
 
+    override val visibilityScope: String?
+        get() = owner?.let { "$it:${sessions.accountGeneration()}" }
+
     override val owners: Flow<String?>
         get() = sessions.observeSession()
             .map { session -> session?.takeIf(sessions::isActiveSession)?.userId?.takeIf(String::isNotBlank) }
+            .distinctUntilChanged()
+
+    override val visibilityScopes: Flow<String?>
+        get() = sessions.observeSession()
+            .map { session -> session?.takeIf(sessions::isActiveSession)?.userId?.takeIf(String::isNotBlank)
+                ?.let { "$it:${sessions.accountGeneration()}" } }
             .distinctUntilChanged()
 }

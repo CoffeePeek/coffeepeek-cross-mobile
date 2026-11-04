@@ -346,3 +346,39 @@ profile/editor/theme/font/accessibility review. No live account mutation was
 performed; screenshots and device diagnostics remain in ignored local build
 outputs. Direct Sandbox assembly/isolation was verified at the preceding full
 gate and was not installed or launched.
+
+
+## Profile header and editor follow-up — 2026-11-04
+
+Scope: match the supplied profile-header reference, use the editor's full bottom
+viewport, provide the floating Save button with a real blur source, and preserve
+the shelf-visibility control on re-entry. Existing profile navigation/actions,
+zero-roaster hiding and immediate visibility saves remain intact. This work uses
+develop separately from an unrelated in-progress migration merge.
+
+The header places the name and one counter row beside the avatar, then the bio
+below. Avatar space adapts to a 320 dp window; extra-large text uses one full-width
+counter row with horizontal overflow instead of reducing the user's font scale.
+Loading geometry follows the header. Paired previews cover own/public profiles,
+320 dp, no roasters and 1.5 font scale. Font metrics of the existing Manrope labels
+fit the allocated 220 dp row at the narrow normal-size layout.
+
+The collection editor's scroll content extends behind the bottom gesture region.
+The floating Save control retains its touch-safe clearance, samples the content
+through CoffeePeekPhotoBackdrop and uses a thin theme outline on uniform light
+backgrounds. A colored-content pair of previews demonstrates its blur source.
+The immediate-save hint is removed from profile editing.
+
+Shelf visibility caches both true and false by account and session generation.
+ViewModels hydrate synchronously and revalidate in the background. The first
+uncached read uses shimmer; successful writes invalidate earlier reads so they
+cannot restore the old switch state. Unit regressions cover session changes,
+failed refresh, cached false and read/write races.
+
+The first compile attempt caught a nested-layout receiver reference and positional
+cache-constructor arguments after the new field. Both were fixed. The subsequent
+gate passed 1,272 unit/contract tests: profile impl 66, collections impl 70, shelf
+data 52/impl 85, application Direct Debug 999; zero failures/skips. Direct Debug
+assembly and packaged DEX checks passed. No automated UI/instrumented/screenshot
+tests were added. Preview rendering through the IDE was unavailable; exhaustive
+manual theme/font/window/accessibility and authenticated writes are not claimed.

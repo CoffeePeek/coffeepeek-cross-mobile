@@ -90,7 +90,7 @@ class ShelfProfileVisibilityViewModelTest {
         assertNull(model.state.value.error)
     }
 
-    @Test fun aRefreshClearsTheOldPreferenceBeforeReadingAgain() = runTest(dispatcher) {
+    @Test fun aRefreshPreservesTheConfirmedPreferenceWhenTheRequestFails() = runTest(dispatcher) {
         val gate = CompletableDeferred<Result<Boolean>>()
         val repository = FakeShelfProfileRepository().apply { visibilityRead = { Result.success(true) } }
         val model = model(repository)
@@ -98,13 +98,73 @@ class ShelfProfileVisibilityViewModelTest {
         repository.visibilityRead = { gate.await() }
         model.onAction(ShelfProfileVisibilityAction.Refresh)
         runCurrent()
-        assertFalse(model.state.value.visible)
-        assertFalse(model.state.value.loaded)
-        assertTrue(model.state.value.loading)
+        assertTrue(model.state.value.visible)
+        assertTrue(model.state.value.loaded)
+        assertFalse(model.state.value.loading)
         gate.complete(Result.failure(IllegalStateException()))
         runCurrent()
-        assertFalse(model.state.value.visible)
+        assertTrue(model.state.value.visible)
         assertEquals(ShelfProfileVisibilityError.Load, model.state.value.error)
+    }
+
+    @Test fun aNewScreenStartsWithConfirmedTrueAndRefreshesWithoutHidingIt() = runTest(dispatcher) {
+        val gate = CompletableDeferred<Result<Boolean>>()
+        val repository = FakeShelfProfileRepository().apply { visibilityRead = { Result.success(true) } }
+        model(repository)
+        runCurrent()
+        repository.visibilityRead = { gate.await() }
+        val reopened = model(repository)
+        assertTrue(reopened.state.value.visible)
+        assertTrue(reopened.state.value.loaded)
+        runCurrent()
+        assertFalse(reopened.state.value.loading)
+        gate.complete(Result.failure(IllegalStateException()))
+        runCurrent()
+        assertTrue(reopened.state.value.visible)
+    }
+
+    @Test fun confirmedFalseIsARealCachedPreferenceOnReentry() = runTest(dispatcher) {
+        val gate = CompletableDeferred<Result<Boolean>>()
+        val repository = FakeShelfProfileRepository().apply { visibilityRead = { Result.success(false) } }
+        model(repository)
+        runCurrent()
+        repository.visibilityRead = { gate.await() }
+        val reopened = model(repository)
+        assertFalse(reopened.state.value.visible)
+        assertTrue(reopened.state.value.loaded)
+        runCurrent()
+        assertFalse(reopened.state.value.loading)
+        gate.complete(Result.success(false))
+        runCurrent()
+    }
+
+    @Test fun aTapDuringBackgroundRefreshKeepsTheLastConfirmedWrite() = runTest(dispatcher) {
+        val gate = CompletableDeferred<Result<Boolean>>()
+        val repository = FakeShelfProfileRepository()
+        val model = model(repository)
+        runCurrent()
+        repository.visibilityRead = { withContext(NonCancellable) { gate.await() } }
+        model.onAction(ShelfProfileVisibilityAction.Refresh)
+        runCurrent()
+        assertFalse(model.state.value.loading)
+        model.onAction(ShelfProfileVisibilityAction.SetVisible(true))
+        runCurrent()
+        assertTrue(model.state.value.visible)
+        gate.complete(Result.success(false))
+        runCurrent()
+        assertTrue(model.state.value.visible)
+    }
+
+    @Test fun aNewLoginForTheSameUserCannotReuseTheOldVisibility() = runTest(dispatcher) {
+        val repository = FakeShelfProfileRepository().apply { visibilityRead = { Result.success(true) } }
+        val model = model(repository)
+        runCurrent()
+        repository.visibilityRead = { Result.success(false) }
+        repository.sessionGeneration.value++
+        runCurrent()
+        assertFalse(model.state.value.visible)
+        assertTrue(model.state.value.loaded)
+        assertEquals(2, repository.visibilityReads)
     }
 
     @Test fun aLatePreviousAccountReadCannotExposeItsPreference() = runTest(dispatcher) {

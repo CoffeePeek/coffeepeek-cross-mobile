@@ -133,8 +133,9 @@ internal fun EditProfileScreenContent(
                 Spacer(Modifier.height(CoffeePeekDimens.spacing4))
                 EditProfileAbout(state, onAction)
                 Spacer(Modifier.height(CoffeePeekDimens.spacing4))
-                CoffeePeekGroupSection(title = stringResource(Res.string.profile_edit_display_preferences),
-                    footer = stringResource(Res.string.profile_edit_display_autosave)) { slots.displayPreferences() }
+                CoffeePeekGroupSection(title = stringResource(Res.string.profile_edit_display_preferences)) {
+                    slots.displayPreferences()
+                }
                 Spacer(Modifier.height(CoffeePeekDimens.spacing6))
                 SaveProfileButton(state) { onAction(EditProfileAction.Save) }
                 Spacer(Modifier.height(CoffeePeekDimens.spacing4))

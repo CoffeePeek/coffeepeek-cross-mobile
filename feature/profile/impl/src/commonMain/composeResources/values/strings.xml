@@ -140,5 +140,4 @@
     <string name="profile_deletion_resend_wait">Повторная отправка пока недоступна</string>
     <string name="profile_edit_display_preferences">Отображать в профиле</string>
     <string name="profile_edit_display_shelf">Кофейная полка</string>
-    <string name="profile_edit_display_autosave">Эти настройки сохраняются сразу.</string>
 </resources>

@@ -1,7 +1,10 @@
 package com.coffeepeek.feature.collections.impl.ui.compose
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -27,8 +30,9 @@ internal fun SavedCollectionEditor(state: SavedCollectionsState, action: (SavedC
     val reorder = rememberReorderableLazyListState(lazy) { from, to ->
         action(SavedCollectionsAction.MovePlace(from.key as String, to.key as String, from.index < to.index))
     }
-    Box(modifier.fillMaxSize()) {
-        CoffeePeekScaffold(Modifier.fillMaxSize(), topBar = { SavedEditorToolbar(state, action, delete) }) { padding ->
+    CoffeePeekPhotoBackdrop(modifier.fillMaxSize(), photo = {
+        CoffeePeekScaffold(Modifier.fillMaxSize(), topBar = { SavedEditorToolbar(state, action, delete) },
+            contentWindowInsets = WindowInsets(0)) { padding ->
             Column(Modifier.fillMaxSize().padding(padding)) {
                 SavedCollectionsStatus(state, action)
                 if (state.signedIn && !state.loading) LazyColumn(Modifier.fillMaxSize(), state = lazy,
@@ -49,8 +53,7 @@ internal fun SavedCollectionEditor(state: SavedCollectionsState, action: (SavedC
                 }
             }
         }
-        SavedEditorSaveButton(state, action, Modifier.align(Alignment.BottomCenter))
-    }
+    }, overlay = { SavedEditorSaveButton(state, action, Modifier.align(Alignment.BottomCenter)) })
 }
 
 @Composable
@@ -59,7 +62,8 @@ private fun SavedEditorSaveButton(state: SavedCollectionsState, action: (SavedCo
         enabled = state.signedIn && !state.loading && !state.busy && !state.preparingCover && CollectionRules.validTitle(state.title),
         isLoading = state.busy, loadingDescription = stringResource(Res.string.collections_preparing),
         modifier = modifier.fillMaxWidth().coffeePeekViewportBottomPadding().coffeePeekScreenBottomPadding()
-            .padding(start = 16.dp, end = 16.dp, bottom = 28.dp))
+            .padding(start = 16.dp, end = 16.dp, bottom = 28.dp)
+            .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f), RoundedCornerShape(28.dp)))
 }
 
 @Composable
@@ -114,3 +118,19 @@ private fun editorPlaceAction(value: CollectionsAction, action: (SavedCollection
 @Preview @Composable private fun SavedEditorDarkPreview() = SavedEditorSample(true)
 @Preview @Composable private fun SavedExistingEditorLightPreview() = SavedEditorSample(false, existing = true)
 @Preview @Composable private fun SavedExistingEditorDarkPreview() = SavedEditorSample(true, existing = true)
+
+@Composable private fun SavedEditorSaveBackdropPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
+    CompositionLocalProvider(LocalCoffeePeekScreenInsets provides CoffeePeekScreenInsets(24.dp, true)) {
+        CoffeePeekPhotoBackdrop(Modifier.fillMaxWidth().height(180.dp), photo = {
+            Column(Modifier.fillMaxSize()) {
+                Box(Modifier.fillMaxWidth().weight(1f).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)))
+                Box(Modifier.fillMaxWidth().weight(1f).background(MaterialTheme.colorScheme.tertiary.copy(alpha = 0.4f)))
+            }
+        }, overlay = {
+            SavedEditorSaveButton(SavedCollectionsState(SavedCollectionsMode.Editor, signedIn = true,
+                loading = false, title = "Любимые места"), {}, Modifier.align(Alignment.BottomCenter))
+        })
+    }
+}
+@Preview @Composable private fun SavedEditorSaveBackdropLightPreview() = SavedEditorSaveBackdropPreview(false)
+@Preview @Composable private fun SavedEditorSaveBackdropDarkPreview() = SavedEditorSaveBackdropPreview(true)
