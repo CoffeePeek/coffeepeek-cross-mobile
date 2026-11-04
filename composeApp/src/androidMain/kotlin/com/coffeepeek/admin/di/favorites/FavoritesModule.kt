@@ -19,6 +19,8 @@ import org.koin.core.module.Module
 import org.koin.dsl.module
 import com.coffeepeek.admin.di.collections.CollectionPickerRequests
 import com.coffeepeek.admin.di.collections.CollectionPromptRoasterFavorites
+import com.coffeepeek.admin.di.collections.AndroidFavoriteCollectionsPrompt
+import com.coffeepeek.admin.di.collections.FavoriteCollectionsPrompt
 import com.coffeepeek.admin.feature.favorites.api.RoasterFavorites
 import com.coffeepeek.admin.feature.favorites.data.ServerRoasterFavorites
 import kotlinx.coroutines.CoroutineScope
@@ -29,6 +31,7 @@ import kotlinx.coroutines.SupervisorJob
 internal fun serverFavoritesModule(): Module = module {
     single<FavoritesAccount> { SessionFavoritesAccount(get()) }
     single { CollectionPickerRequests(get(), CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)) }
+    single<FavoriteCollectionsPrompt> { AndroidFavoriteCollectionsPrompt(get()) }
     single<RoasterFavorites> { CollectionPromptRoasterFavorites(ServerRoasterFavorites(get(), get(), get()), get(), get()) }
     single<FavoritesRepository> {
         val shops = get<com.coffeepeek.domain.repository.ShopRepository>()

@@ -3,6 +3,7 @@ package com.coffeepeek.feature.shelf.impl.ui
 import com.coffeepeek.feature.shelf.domain.model.PublicShelf
 import com.coffeepeek.feature.shelf.domain.model.PublicShelfItem
 import com.coffeepeek.feature.shelf.domain.repository.ShelfProfileRepository
+import com.coffeepeek.feature.shelf.domain.repository.PublicShelfSnapshot
 import kotlinx.coroutines.flow.MutableStateFlow
 
 internal class FakeShelfProfileRepository(owner: String? = "owner") : ShelfProfileRepository {
@@ -14,6 +15,10 @@ internal class FakeShelfProfileRepository(owner: String? = "owner") : ShelfProfi
     val writes = mutableListOf<Boolean>()
     val publicSlugs = mutableListOf<String>()
     var photoCalls = 0
+    var cached: PublicShelfSnapshot? = null
+    var cachedOwner: String? = owner
+
+    override fun cachedPublicShelf(slug: String) = cached.takeIf { cachedOwner == owners.value && cachedOwner != null }
 
     override suspend fun visibility(): Result<Boolean> {
         visibilityReads++
@@ -27,7 +32,7 @@ internal class FakeShelfProfileRepository(owner: String? = "owner") : ShelfProfi
 
     override suspend fun publicShelf(slug: String): Result<PublicShelf?> {
         publicSlugs += slug
-        return publicRead(slug)
+        return publicRead(slug).onSuccess { cached = PublicShelfSnapshot(it); cachedOwner = owners.value }
     }
 
     override suspend fun photo(url: String): Result<ByteArray> {

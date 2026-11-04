@@ -20,12 +20,24 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class UserRepositorySessionTest {
+    @Test
+    fun cachedProfileIsRejectedSynchronouslyWhenLoginLifetimeChanges() = runBlocking {
+        val fixture = QueuedProfileFixture()
+        try {
+            fixture.assertTokenRefreshKeepsCache()
+            fixture.assertLogoutRejectsCacheBeforeCollectorRuns()
+            fixture.assertSameOwnerReloginFetchesAgain()
+            fixture.assertAccountSwitchFetchesAgain()
+        } finally { fixture.close() }
+    }
+
     @Test
     fun lateProfileCannotRestoreLoggedOutUserOrOverwriteNextAccount() = runBlocking {
         for (nextUserId in listOf(null, "new-user", "old-user")) {
@@ -148,10 +160,65 @@ class UserRepositorySessionTest {
     }
 }
 
+@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+private class QueuedProfileFixture {
+    val sessions = TestSessionRepository(Session("first-token", userId = "a"))
+    var requests = 0
+    val client = HttpClient(MockEngine {
+        val name = when (++requests) { 1 -> "First login"; 2 -> "Second login"; else -> "Other account" }
+        respond("""{"isSuccess":true,"message":"OK","data":{"userName":"$name","email":"x@example.com"}}""",
+            headers = headersOf(HttpHeaders.ContentType, "application/json"))
+    }) { install(ContentNegotiation) { json() } }
+    // The session collector deliberately stays queued throughout the synchronous cache checks.
+    val scope = CoroutineScope(SupervisorJob() + StandardTestDispatcher())
+    val repository = UserRepositoryImpl(UserApiService(client), PhotoRepositoryImpl(PhotoApiService(client, client)), sessions, scope)
+
+    suspend fun assertTokenRefreshKeepsCache() {
+        assertEquals("First login", repository.refreshProfile().getOrThrow().userName)
+        val firstGeneration = sessions.accountGeneration()
+        sessions.saveSession(Session("refreshed-token", userId = "a"))
+        assertEquals(firstGeneration, sessions.accountGeneration())
+        assertEquals("First login", repository.cachedProfile()?.userName)
+        assertEquals("First login", repository.getMe().getOrThrow().userName)
+        assertEquals(1, requests)
+    }
+
+    suspend fun assertLogoutRejectsCacheBeforeCollectorRuns() {
+        sessions.saveSession(null)
+        assertNull(repository.cachedProfile())
+        assertEquals("First login", repository.observeProfile().value?.userName)
+        assertTrue(repository.getMe().isFailure)
+        assertEquals(1, requests)
+    }
+
+    suspend fun assertSameOwnerReloginFetchesAgain() {
+        sessions.saveSession(Session("second-login-token", userId = "a"))
+        assertNull(repository.cachedProfile())
+        assertEquals("Second login", repository.getMe().getOrThrow().userName)
+        assertEquals(2, requests)
+    }
+
+    suspend fun assertAccountSwitchFetchesAgain() {
+        sessions.saveSession(Session("other-token", userId = "b"))
+        assertNull(repository.cachedProfile())
+        assertEquals("Other account", repository.getMe().getOrThrow().userName)
+        assertEquals(3, requests)
+    }
+
+    fun close() { scope.cancel(); client.close() }
+}
+
 private class TestSessionRepository(initial: Session?) : SessionRepository {
     private val session = MutableStateFlow(initial)
+    private var generation = if (initial == null) 0L else 1L
+    override fun accountGeneration() = generation
     override fun peekSession() = session.value
-    override fun applySession(session: Session?) { this.session.value = session }
+    override fun applySession(session: Session?) {
+        val current = this.session.value
+        val sameAccount = current?.userId != null && current.userId == session?.userId
+        if (!sameAccount) generation++
+        this.session.value = session
+    }
     override fun isActiveSession(session: Session?) = session != null
     override suspend fun getSession() = session.value
     override suspend fun persistSession(session: Session?) { applySession(session) }

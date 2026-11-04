@@ -113,6 +113,58 @@ class ShelfProfileRepositoryTest {
         assertTrue(repo.photo("https://fixture.invalid$photoPath").isFailure)
     }
 
+    @Test fun successfulProjectionIsCachedIncludingAnExplicitHiddenShelf() = runTest(dispatcher) {
+        var data = shelf(photoPath)
+        val repo = repository { ok(data) }
+        assertNull(repo.cachedPublicShelf("author"))
+        val visible = repo.publicShelf("author").getOrThrow()
+        assertEquals(visible, repo.cachedPublicShelf("author")?.shelf)
+        data = "null"
+        repo.publicShelf("author").getOrThrow()
+        assertNotNull(repo.cachedPublicShelf("author"))
+        assertNull(repo.cachedPublicShelf("author")?.shelf)
+    }
+
+    @Test fun accountChangeImmediatelyRejectsCachedAndPendingProjections() = runTest(dispatcher) {
+        val gate = CompletableDeferred<Unit>()
+        var pending = false
+        val repo = repository { if (pending) gate.await(); ok(shelf(photoPath)) }
+        repo.publicShelf("author").getOrThrow()
+        pending = true
+        val read = async { repo.publicShelf("author") }
+        runCurrent()
+        owners.value = "second"
+        assertNull(repo.cachedPublicShelf("author"))
+        gate.complete(Unit)
+        read.await()
+        assertNull(repo.cachedPublicShelf("author"))
+        owners.value = null
+        assertNull(repo.cachedPublicShelf("author"))
+    }
+
+    @Test fun visibilityWriteInvalidatesTheCacheAndLateReadsCannotRestoreIt() = runTest(dispatcher) {
+        val gate = CompletableDeferred<Unit>()
+        var reads = 0
+        val repo = repository { request ->
+            if (request.method == HttpMethod.Put) ok("""{"isVisible":false}""")
+            else {
+                val read = ++reads
+                if (read == 2) gate.await()
+                ok(if (read == 3) "null" else shelf(photoPath))
+            }
+        }
+        repo.publicShelf("author").getOrThrow()
+        val read = async { repo.publicShelf("author") }
+        runCurrent()
+        repo.setVisibility(false).getOrThrow()
+        assertNull(repo.cachedPublicShelf("author"))
+        repo.publicShelf("author").getOrThrow()
+        gate.complete(Unit)
+        read.await()
+        assertNotNull(repo.cachedPublicShelf("author"))
+        assertNull(repo.cachedPublicShelf("author")?.shelf)
+    }
+
     private fun repository(handler: suspend MockRequestHandleScope.(HttpRequestData) -> HttpResponseData) =
         createShelfProfileRepository(client(true, handler), client(false, handler), "https://fixture.invalid", account) { request, owner ->
             request.headers["X-Test-Owner"] = owner

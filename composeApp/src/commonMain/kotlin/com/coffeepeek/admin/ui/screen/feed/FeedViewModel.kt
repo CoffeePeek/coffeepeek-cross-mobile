@@ -3,6 +3,7 @@ package com.coffeepeek.admin.ui.screen.feed
 import com.coffeepeek.admin.analytics.*
 
 import com.coffeepeek.admin.base.BaseViewModel
+import com.coffeepeek.admin.di.collections.FavoriteCollectionsPrompt
 import com.coffeepeek.admin.location.GeoPoint
 import com.coffeepeek.admin.settings.CityPreference
 import com.coffeepeek.admin.ui.Navigator
@@ -126,6 +127,7 @@ class FeedViewModel(
     private val cityPreference: CityPreference,
     private val sessionRepository: SessionRepository,
     private val observeFavoriteIds: ObserveFavoriteIdsUseCase? = null,
+    private val favoriteCollections: FavoriteCollectionsPrompt? = null,
 ) : BaseViewModel() {
 
     private val _uiState = MutableStateFlow(FeedUiState())
@@ -410,6 +412,7 @@ class FeedViewModel(
 
     fun toggleFavorite(shop: CoffeeShop) {
         val current = _uiState.value.shops.firstOrNull { it.id == shop.id } ?: shop
+        favoriteCollections?.let { it.shop(current.publicAddress?.slug ?: current.id); return }
         com.coffeepeek.admin.feature.favorites.api.FavoriteInteractions.change(workScope,
             current.publicAddress?.slug ?: current.id, false, !current.isFavorite,
             action = { mutateFavorite(current) })

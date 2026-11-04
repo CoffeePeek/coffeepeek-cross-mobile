@@ -105,7 +105,6 @@ internal fun SettingsContent(
             slots.accountSwitch()
             if (state.showAddRows) SettingsAddSection(navigation)
             SettingsPreferencesSection(state, navigation, slots.notificationPreference)
-            if (state.signedIn) slots.profileCollectionPreference()
             Spacer(Modifier.height(CoffeePeekDimens.settingsSectionSpacing))
             SettingsOtherSection(navigation, external)
             Spacer(Modifier.height(CoffeePeekDimens.settingsSectionSpacing))

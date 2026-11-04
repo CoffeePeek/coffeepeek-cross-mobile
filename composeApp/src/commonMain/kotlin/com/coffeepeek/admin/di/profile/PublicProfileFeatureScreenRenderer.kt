@@ -28,6 +28,7 @@ import com.coffeepeek.feature.profile.api.ProfileAuthorActions
 import com.coffeepeek.feature.profile.api.ProfileSlots
 import com.coffeepeek.feature.profile.api.PublicCheckInsPort
 import com.coffeepeek.feature.profile.api.PublicProfileEntry
+import com.coffeepeek.feature.profile.api.ProfileSnapshotStore
 import com.coffeepeek.feature.profile.domain.PublicFavoriteKind
 import com.coffeepeek.feature.profile.domain.PublicProfileCheckIn
 import com.coffeepeek.feature.profile.domain.PublicProfileCheckInPage
@@ -107,6 +108,7 @@ internal fun publicProfileFeatureScreenRenderer(
     users: UserRepository,
     visibility: AuthorVisibility,
     blocks: AuthorBlockActions,
+    snapshots: ProfileSnapshotStore = ProfileSnapshotStore.None,
 ): PublicProfileFeatureScreenRenderer {
     val checkIns = ProfilePublicCheckIns(repository)
     val slots = profileSlots(checkIns)
@@ -117,6 +119,7 @@ internal fun publicProfileFeatureScreenRenderer(
         visibility = AppProfileAuthorVisibility(visibility),
         authorActions = AppProfileAuthorActions(blocks),
         slots = slots,
+        snapshots = snapshots,
     ))
 }
 
@@ -125,7 +128,7 @@ internal fun publicProfileFeatureScreenRenderer(
 internal fun profileSlots(checkIns: ProfilePublicCheckIns): ProfileSlots {
     return ProfileSlots(
         featuredCollection = { slug -> ProfileFeaturedCollection(slug) },
-        shelfPreview = { slug -> ProfileShelfPreview(slug) },
+        shelfPreview = { slug, ownerView -> ProfileShelfPreview(slug, ownerView) },
         ownerCollection = { ProfileOwnerCollection() },
         onOpenOwnCollections = ::openProfileCollections,
         onOwnContributions = ::openProfileContributions,

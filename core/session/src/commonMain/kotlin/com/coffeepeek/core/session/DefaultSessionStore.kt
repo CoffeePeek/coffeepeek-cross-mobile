@@ -17,12 +17,17 @@ class DefaultSessionStore(
     private val secureStore: SessionSecureStore,
     private val legacyRows: LegacyCredentialRows,
 ) : SessionStore {
-    private data class Snapshot(val revision: Long = 0, val initialized: Boolean = false, val session: Session? = null)
+    private data class Snapshot(val revision: Long = 0, val initialized: Boolean = false, val session: Session? = null,
+        val accountGeneration: Long = 0)
     private val state = MutableStateFlow(Snapshot())
     private val writer = Mutex()
     override fun peekSession(): Session? = state.value.session
+    override fun accountGeneration() = state.value.accountGeneration
     override fun applySession(session: Session?) {
-        state.update { Snapshot(it.revision + 1, true, session) }
+        state.update {
+            val sameAccount = session?.userId != null && it.session?.userId == session.userId
+            Snapshot(it.revision + 1, true, session, it.accountGeneration + if (sameAccount) 0 else 1)
+        }
     }
     override fun isActiveSession(session: Session?) = SessionAuth.isActive(session)
     override suspend fun warmCache() { getSession() }
@@ -37,7 +42,8 @@ class DefaultSessionStore(
                     legacyRows.delete(LegacyCredentialRows.API_KEYS)
                 }
             }
-            state.compareAndSet(initial, initial.copy(initialized = true, session = stored?.toSession()))
+            state.compareAndSet(initial, initial.copy(initialized = true, session = stored?.toSession(),
+                accountGeneration = initial.accountGeneration + if (stored == null) 0 else 1))
         }
         state.value.session
     }
@@ -68,7 +74,9 @@ class DefaultSessionStore(
     }
     override fun observeSession(): Flow<Session?> = flow {
         getSession()
-        emitAll(state.map { it.session }.distinctUntilChanged())
+        emitAll(state.distinctUntilChanged { old, new ->
+            old.session == new.session && old.accountGeneration == new.accountGeneration
+        }.map { it.session })
     }
     override suspend fun isLoggedIn() = isActiveSession(getSession())
     private fun SessionCredentials.toSession() = Session(accessToken, refreshToken, JwtUtils.extractUserId(accessToken))

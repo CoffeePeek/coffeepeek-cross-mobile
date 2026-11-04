@@ -9,9 +9,10 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.minutes
+import kotlin.time.TimeMark
+import kotlin.time.TimeSource
 
 /** App-owned delivery of a successful heart action to the root sheet, never a favorite writer. */
 internal class CollectionPickerRequests(private val sessions: SessionReader, private val scope: CoroutineScope) {
@@ -19,16 +20,41 @@ internal class CollectionPickerRequests(private val sessions: SessionReader, pri
     internal data class Request(val lease: Lease, val target: CollectionTarget)
     private val lock = Any()
     private var owner = activeOwner()
+    private var accountGeneration = sessions.accountGeneration()
     private var generation = 0L
+    private var afterAuth: Pair<CollectionTarget, TimeMark>? = null
     private val pending = MutableStateFlow<Request?>(null)
     private var expiry: Job? = null
     val state = pending.asStateFlow()
 
     init {
         scope.launch(start = CoroutineStart.UNDISPATCHED) {
-            sessions.observeSession().map { it?.takeIf(sessions::isActiveSession)?.userId?.takeIf(String::isNotBlank) }
-                .distinctUntilChanged().collect { updateAccount(it) }
+            sessions.observeSession().collect {
+                updateAccount()
+                resumeAfterAuth()
+            }
         }
+    }
+
+    /** Opens the same picker for selected and unselected hearts; guests resume it after authentication. */
+    fun request(target: CollectionTarget): Boolean {
+        if (target.slug.isBlank()) return true
+        val active = activeOwner()
+        if (active != null) {
+            synchronized(lock) { afterAuth = null }
+            added(lease(active), target)
+            return true
+        }
+        synchronized(lock) { afterAuth = target to TimeSource.Monotonic.markNow() }
+        if (activeOwner() != null) { resumeAfterAuth(); return true }
+        return false
+    }
+
+    private fun resumeAfterAuth() {
+        val active = activeOwner() ?: return
+        val target = synchronized(lock) { afterAuth.also { afterAuth = null } }
+            ?.takeIf { it.second.elapsedNow() < 10.minutes }?.first ?: return
+        added(lease(active), target)
     }
 
     fun lease(account: String): Lease? = synchronized(lock) {
@@ -63,8 +89,10 @@ internal class CollectionPickerRequests(private val sessions: SessionReader, pri
     }
 
     private fun updateAccount(current: String? = activeOwner()) = synchronized(lock) {
-        if (current != owner) {
+        val currentGeneration = sessions.accountGeneration()
+        if (current != owner || currentGeneration != accountGeneration) {
             owner = current
+            accountGeneration = currentGeneration
             generation++
             pending.value = null
             expiry?.cancel()

@@ -27,7 +27,9 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
+import com.coffeepeek.core.designsystem.component.CoffeePeekShimmer
+import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
+import org.jetbrains.compose.ui.tooling.preview.Preview
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.feature.profile.impl.resources.*
 
@@ -54,10 +56,19 @@ internal fun ProfileEmptyCard(text: String, icon: ImageVector) {
 
 @Composable
 internal fun ProfileSectionLoader(height: androidx.compose.ui.unit.Dp = 88.dp) {
-    Box(Modifier.fillMaxWidth().height(height), contentAlignment = Alignment.Center) {
-        CoffeePeekLoader(stringResource(Res.string.profile_loading))
+    val loading = stringResource(Res.string.profile_loading)
+    Box(Modifier.fillMaxWidth().height(height).semantics { contentDescription = loading }, contentAlignment = Alignment.Center) {
+        CoffeePeekShimmer(Modifier.fillMaxWidth().height(height))
     }
 }
+
+@Composable
+private fun ProfileSectionLoaderPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
+    Surface { ProfileSectionLoader() }
+}
+
+@Preview @Composable private fun ProfileSectionLoaderLightPreview() = ProfileSectionLoaderPreview(false)
+@Preview @Composable private fun ProfileSectionLoaderDarkPreview() = ProfileSectionLoaderPreview(true)
 
 @Composable
 internal fun ProfileSectionHeading(title: String, onAll: () -> Unit) {

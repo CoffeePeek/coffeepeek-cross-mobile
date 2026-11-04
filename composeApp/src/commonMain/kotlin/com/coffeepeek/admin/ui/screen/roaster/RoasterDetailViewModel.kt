@@ -1,6 +1,7 @@
 package com.coffeepeek.admin.ui.screen.roaster
 
 import com.coffeepeek.admin.base.BaseViewModel
+import com.coffeepeek.admin.di.collections.FavoriteCollectionsPrompt
 import com.coffeepeek.admin.feature.favorites.api.RoasterFavorites
 import com.coffeepeek.admin.feature.favorites.api.roasterFavoriteId
 import com.coffeepeek.admin.ui.Navigator
@@ -37,6 +38,7 @@ class RoasterDetailViewModel(
     private val shopRepository: ShopRepository,
     private val favorites: RoasterFavorites,
     private val sessions: SessionRepository,
+    private val favoriteCollections: FavoriteCollectionsPrompt? = null,
 ) : BaseViewModel() {
 
     private val _state = MutableStateFlow(RoasterDetailUiState())
@@ -59,6 +61,7 @@ class RoasterDetailViewModel(
         val current = _state.value
         val details = current.details ?: return
         val item = CatalogItem(id = details.id, name = details.name, photoUrl = details.photos.firstOrNull()?.fullUrl, address = details.publicAddress)
+        favoriteCollections?.let { prompt -> item.address?.slug?.let(prompt::roaster); return }
         com.coffeepeek.admin.feature.favorites.api.FavoriteInteractions.change(workScope, item.roasterFavoriteId, true, !current.isFavorite,
             action = { favorites.setFavorite(item, !current.isFavorite) },
             completed = { result -> result.onFailure { _state.update { it.copy(actionMessage = "Не удалось изменить избранное") } } },

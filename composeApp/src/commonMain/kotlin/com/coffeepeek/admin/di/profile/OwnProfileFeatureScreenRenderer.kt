@@ -27,6 +27,7 @@ import com.coffeepeek.feature.authorblocking.api.AuthorVisibility
 import com.coffeepeek.feature.profile.api.OwnProfileEntry
 import com.coffeepeek.feature.profile.api.OwnProfileSlots
 import com.coffeepeek.feature.profile.api.ProfileSignOutPort
+import com.coffeepeek.feature.profile.api.ProfileSnapshotStore
 import com.coffeepeek.feature.profile.impl.createOwnProfileEntry
 import org.jetbrains.compose.resources.getString
 
@@ -76,9 +77,22 @@ internal fun ownProfileFeatureScreenRenderer(
     drafts: ReviewDraftStore,
     visibility: AuthorVisibility,
     blocks: AuthorBlockActions,
+    snapshots: ProfileSnapshotStore = ProfileSnapshotStore.None,
 ): OwnProfileFeatureScreenRenderer {
     val checkIns = ProfilePublicCheckIns(repository)
-    val slots = OwnProfileSlots(
+    return OwnProfileFeatureScreenRenderer(createOwnProfileEntry(
+        data = repository,
+        checkIns = checkIns,
+        accounts = AppProfileAccountPort(sessions, users),
+        signOut = ProfileSignOut(notifications, auth, drafts),
+        visibility = AppProfileAuthorVisibility(visibility),
+        authorActions = AppProfileAuthorActions(blocks),
+        slots = ownProfileSlots(checkIns),
+        snapshots = snapshots,
+    ))
+}
+
+private fun ownProfileSlots(checkIns: ProfilePublicCheckIns) = OwnProfileSlots(
         shared = profileSlots(checkIns),
         favoritesPreview = { _, _, header ->
             Column {
@@ -90,13 +104,3 @@ internal fun ownProfileFeatureScreenRenderer(
         activityPreview = { onClick -> PersonalProfileActivityPreview(onClick) },
         loadError = { onRetry -> LoadErrorContent(onRetry = onRetry) },
     )
-    return OwnProfileFeatureScreenRenderer(createOwnProfileEntry(
-        data = repository,
-        checkIns = checkIns,
-        accounts = AppProfileAccountPort(sessions, users),
-        signOut = ProfileSignOut(notifications, auth, drafts),
-        visibility = AppProfileAuthorVisibility(visibility),
-        authorActions = AppProfileAuthorActions(blocks),
-        slots = slots,
-    ))
-}

@@ -37,6 +37,7 @@ import com.coffeepeek.admin.utils.ShareHelper
 import com.coffeepeek.admin.utils.currentLocalDayOfWeek
 import com.coffeepeek.admin.utils.currentLocalMinuteOfDay
 import com.coffeepeek.admin.utils.utcIsoToLocalDate
+import com.coffeepeek.admin.di.collections.FavoriteCollectionsPrompt
 import com.coffeepeek.domain.model.ShopLocation
 import com.coffeepeek.core.session.SessionReader
 import com.coffeepeek.domain.repository.UserRepository
@@ -58,6 +59,7 @@ internal class AndroidShopDetailScreenRenderer(
     private val votes: ShopCheckInVoteRepository,
     private val favorites: FavoritesRepository,
     private val favoriteIntent: ShopFavoriteIntent,
+    private val favoriteCollections: FavoriteCollectionsPrompt,
     private val checkInForm: ShopCheckInFormRenderer,
     private val visibility: com.coffeepeek.feature.authorblocking.api.AuthorVisibility,
     private val blockActions: com.coffeepeek.feature.authorblocking.api.AuthorBlockActions,
@@ -70,6 +72,7 @@ internal class AndroidShopDetailScreenRenderer(
                     shopFavorites(session.lease.favorites(favorites)), currentViewer = { session.lease.viewer(users) },
                     currentDayOfWeek = ::currentLocalDayOfWeek, currentMinuteOfDay = ::currentLocalMinuteOfDay,
                     analytics = AndroidShopAnalytics,
+                    selectCollectionsOnFavorite = true,
                     authorImage = { url, modifier -> com.coffeepeek.admin.utils.CpImage(data = url, modifier = modifier) },
                     checkInImage = { url, highQualityUrl, modifier, scale ->
                         com.coffeepeek.admin.utils.CpImage(data = url, highQualityData = highQualityUrl, modifier = modifier, contentScale = scale)
@@ -98,9 +101,10 @@ internal class AndroidShopDetailScreenRenderer(
                             ShopDetailEffect.ChooseAnotherShop -> Navigator.popThenNavigate(Navigator.Screen.CreateCheckIn)
                             ShopDetailEffect.SignIn -> Navigator.navigate(Navigator.Screen.Auth)
                             is ShopDetailEffect.FavoriteRequiresSignIn -> {
-                                favoriteIntent.remember(effect.shopId, effect.desired)
+                                favoriteIntent.remember(effect.shopId)
                                 Navigator.navigate(Navigator.Screen.Auth)
                             }
+                            is ShopDetailEffect.SelectFavoriteCollections -> favoriteCollections.shop(effect.shopId)
                             ShopDetailEffect.Register -> Navigator.navigate(Navigator.Screen.Register)
                             is ShopDetailEffect.OpenMenuGallery -> Navigator.navigate(Navigator.Screen.ShopMenuGallery(effect.shopId))
                             is ShopDetailEffect.CreateCheckIn -> form = effect.shop

@@ -26,9 +26,9 @@ private class ShelfProfileEntryImpl(private val repository: ShelfProfileReposito
     }
 
     @Composable
-    override fun Preview(profileSlug: String, onOpenCoffee: (String) -> Unit, modifier: Modifier) {
+    override fun Preview(profileSlug: String, ownerView: Boolean, onOpenCoffee: (String) -> Unit, modifier: Modifier) {
         key(this, profileSlug) {
-            val model = viewModel(key = "shelf-profile-public:$instanceKey:$profileSlug") { PublicShelfProfileViewModel(repository, profileSlug) }
+            val model = viewModel(key = "shelf-profile-public:$instanceKey:$profileSlug:$ownerView") { PublicShelfProfileViewModel(repository, profileSlug, ownerView) }
             ShelfProfilePreviewScreen(model, repository, onOpenCoffee, modifier)
         }
     }

@@ -3,6 +3,7 @@ package com.coffeepeek.feature.shelf.data.repository
 import com.coffeepeek.feature.shelf.data.backend.*
 import com.coffeepeek.feature.shelf.domain.model.*
 import com.coffeepeek.feature.shelf.domain.repository.ShelfProfileRepository
+import com.coffeepeek.feature.shelf.domain.repository.PublicShelfSnapshot
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.expectSuccess
 import io.ktor.client.request.*
@@ -11,6 +12,9 @@ import io.ktor.http.*
 import io.ktor.utils.io.readRemaining
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.updateAndGet
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
 import kotlinx.io.readByteArray
@@ -24,9 +28,16 @@ internal class HttpShelfProfileRepository(
 ) : ShelfProfileRepository {
     private val base = Url(apiBaseUrl)
     private val permits = Semaphore(4)
+    private val snapshots = MutableStateFlow(ShelfProfileCache())
     override val owners get() = account.owners
 
     init { require(base.host.isNotBlank() && base.protocol.name in setOf("http", "https")) }
+
+    override fun cachedPublicShelf(slug: String): PublicShelfSnapshot? {
+        val owner = account.owner
+        snapshots.update { if (it.owner == owner) it else ShelfProfileCache(owner, sequence = it.sequence) }
+        return snapshots.value.values[slug].takeIf { owner != null && owner == account.owner }
+    }
 
     override suspend fun visibility(): Result<Boolean> = owned { owner ->
         client.get(api(VISIBILITY)) { pinRequest(this, owner); expectSuccess = false }
@@ -40,9 +51,26 @@ internal class HttpShelfProfileRepository(
             contentType(ContentType.Application.Json)
             setBody(ShelfProfileVisibilityDto(visible))
         }.shelfData<ShelfProfileVisibilityDto>().isVisible
+    }.onSuccess { snapshots.update { ShelfProfileCache(account.owner, sequence = it.sequence) } }
+
+    override suspend fun publicShelf(slug: String): Result<PublicShelf?> {
+        val owner = account.owner
+        val request = beginPublicRead(owner, slug)
+        return readPublicShelf(slug).onSuccess { value ->
+            if (owner != null && owner == account.owner) snapshots.update { current ->
+                if (current.owner != owner || current.latest[slug] != request) current
+                else current.copy(values = (current.values + (slug to PublicShelfSnapshot(value))).toList().takeLast(8).toMap())
+            }
+        }
     }
 
-    override suspend fun publicShelf(slug: String): Result<PublicShelf?> = shelfRequestResult {
+    private fun beginPublicRead(owner: String?, slug: String): Int = snapshots.updateAndGet { previous ->
+        val current = previous.takeIf { it.owner == owner } ?: ShelfProfileCache(owner, sequence = previous.sequence)
+        val next = current.sequence + 1
+        current.copy(sequence = next, latest = (current.latest + (slug to next)).toList().takeLast(8).toMap())
+    }.sequence
+
+    private suspend fun readPublicShelf(slug: String): Result<PublicShelf?> = shelfRequestResult {
         requireValidSlug(slug)
         val response = publicClient.get(api("/api/v1/profiles/$slug/shelf")) {
             expectSuccess = false
@@ -119,3 +147,6 @@ internal class HttpShelfProfileRepository(
         val PHOTO_PATH = Regex("^/api/v1/profiles/[^/?#]+/shelf/bags/$UUID_PATTERN/photos/$UUID_PATTERN$")
     }
 }
+
+private data class ShelfProfileCache(val owner: String? = null, val values: Map<String, PublicShelfSnapshot> = emptyMap(),
+    val sequence: Int = 0, val latest: Map<String, Int> = emptyMap())

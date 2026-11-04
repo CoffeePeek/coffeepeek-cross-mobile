@@ -8,6 +8,10 @@ import kotlinx.coroutines.flow.emptyFlow
 interface SavedCollectionsRepository {
     /** Successful owner mutations invalidate account-scoped projections. */
     fun observeChanges(): Flow<Unit> = emptyFlow()
+    /** Last successful owner read for the active account; null means no verified snapshot. */
+    fun cachedMine(target: SavedCollectionTarget? = null): List<SavedCollectionSummary>? = null
+    /** Null means not loaded; a selection with null collectionId means explicitly hidden. */
+    fun cachedFeatured(): SavedCollectionFeaturedSelection? = null
     suspend fun mine(target: SavedCollectionTarget? = null): Result<List<SavedCollectionSummary>>
     suspend fun owned(id: String): Result<SavedCollection>
     suspend fun public(id: String): Result<SavedCollection>

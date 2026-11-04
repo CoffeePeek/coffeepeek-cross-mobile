@@ -1,33 +1,27 @@
 package com.coffeepeek.admin.di.shop
 
-import com.coffeepeek.admin.utils.FavoriteSync
-import com.coffeepeek.admin.di.favorites.ResumedAfterAuth
+import com.coffeepeek.admin.di.collections.CollectionPickerRequests
 import com.coffeepeek.core.session.SessionReader
-import com.coffeepeek.feature.favorites.domain.repository.FavoritesRepository
-import com.coffeepeek.feature.shop.domain.repository.ShopDetailsRepository
-import kotlinx.coroutines.CancellationException
+import com.coffeepeek.feature.collections.api.CollectionTarget
+import com.coffeepeek.feature.collections.api.CollectionTargetKind
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import kotlin.time.Duration.Companion.minutes
 import kotlin.time.TimeMark
 import kotlin.time.TimeSource
 
 /**
- * What a guest asked for with the Shop heart. Signing in resets navigation, which destroys the shop screen, so the
- * intent lives here: one short-lived entry, in memory only, applied once for the next signed-in session.
+ * What a guest asked for with the Shop heart. Signing in resets navigation; reopen the picker without writing a favorite.
  */
 internal class ShopFavoriteIntent(
     private val sessions: SessionReader,
-    private val details: ShopDetailsRepository,
-    private val favorites: FavoritesRepository,
+    private val requests: CollectionPickerRequests,
     scope: CoroutineScope,
-    private val onApplied: suspend (shopId: String, favorite: Boolean) -> Unit = { _, _ -> },
 ) {
-    private class Intent(val shopId: String, val favorite: Boolean, val markedAt: TimeMark)
+    private class Intent(val shopId: String, val markedAt: TimeMark)
 
     private val lock = Any()
     private var pending: Intent? = null
@@ -35,38 +29,21 @@ internal class ShopFavoriteIntent(
     init {
         scope.launch {
             sessions.observeSession().catch { }.collect { session ->
-                if (sessions.isActiveSession(session)) take()?.let { apply(it) }
+                if (sessions.isActiveSession(session)) take()?.let { requests.request(CollectionTarget(CollectionTargetKind.CoffeeShop, it.shopId)) }
             }
         }
     }
 
-    fun remember(shopId: String, favorite: Boolean) = synchronized(lock) {
-        pending = Intent(shopId, favorite, TimeSource.Monotonic.markNow())
+    fun remember(shopId: String) = synchronized(lock) {
+        pending = Intent(shopId, TimeSource.Monotonic.markNow())
     }
 
     private fun take(): Intent? = synchronized(lock) { pending.also { pending = null } }
         ?.takeIf { it.markedAt.elapsedNow() < TTL }
 
-    private suspend fun apply(intent: Intent) {
-        val result = try {
-            withContext(ResumedAfterAuth) {
-                if (intent.favorite) {
-                    details.getDetails(intent.shopId).fold({ favorites.save(it.toFavoriteSnapshot()) }, { Result.failure(it) })
-                } else favorites.remove(intent.shopId)
-            }
-        } catch (cancelled: CancellationException) {
-            throw cancelled
-        } catch (error: Exception) {
-            Result.failure(error)
-        }
-        if (result.isSuccess) onApplied(intent.shopId, intent.favorite)
-    }
-
     private companion object { val TTL = 10.minutes }
 }
 
 internal fun shopFavoriteIntent(
-    sessions: SessionReader, details: ShopDetailsRepository, favorites: FavoritesRepository,
-): ShopFavoriteIntent = ShopFavoriteIntent(sessions, details, favorites,
-    CoroutineScope(SupervisorJob() + Dispatchers.Default),
-    onApplied = { shopId, favorite -> FavoriteSync.notifyChanged(shopId, favorite) })
+    sessions: SessionReader, requests: CollectionPickerRequests,
+): ShopFavoriteIntent = ShopFavoriteIntent(sessions, requests, CoroutineScope(SupervisorJob() + Dispatchers.Default))
