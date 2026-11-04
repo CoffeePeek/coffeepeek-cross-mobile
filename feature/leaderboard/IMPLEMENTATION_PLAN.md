@@ -281,3 +281,52 @@ leaderboard-read feature.
 Pre-existing local Android release-ABI packaging/run-mode documentation edits were
 preserved and excluded from this feature's commit; the packaging block only
 selects directRelease and does not change the verified Debug/Sandbox variants.
+
+
+## Inline community sections — 2026-11-04
+
+The user requested direct develop changes without a new PR. The active community
+route on both platforms now switches between Feed and Leaders through a fixed
+segmented header. The application supplies ranking content through CommunityHost;
+community never imports leaderboard domain/data/impl. The preview card, modal
+wrapper, overlay API and expanded-only state/action are retired. The unused
+legacy feed fallback no longer embeds the retired card. Existing test cases keep
+their period-cache, privacy and public-profile-navigation assertions, with obsolete
+modal assertions removed.
+
+Verification preserves feed scroll, editor-return refresh, pagination, independent
+ranking scroll, selected/cached week or month, account/block invalidation and
+profile navigation. Saveable content scopes retain each list on section changes;
+ranking generation changes reset its position. Feed exposures/viewed tracking and
+photo prefetch run only in the Feed subtree. Creating a check-in remains Feed-only
+and uses the existing analytics/consent flow. Ranking pulls can now refresh their
+own page, and feed pulls still invalidate cached ranking periods.
+
+The new Native style is opt-in for these fixed switches; all previous glass and
+scrollable controls retain their defaults. iOS renders UISegmentedControl with its
+system labels, selection, touch handling and native accessibility; no custom
+segment masks, thumb or background images run in this mode. Android uses the
+matching neutral track, inset selection and Tab semantics. Short noun labels and
+related in-place views follow Apple's segmented-control guidance:
+https://developer.apple.com/design/human-interface-guidelines/segmented-controls
+The long rules are replaced by one short paragraph covering 3/1/2 point weights,
+moderation/location requirements and the additions/edits/check-ins breakdown.
+Community labels match its existing Russian/Belarusian resource sets; leaderboard
+currently has the default Russian set only.
+
+Android tests: design-system 57, community impl 40, leaderboard impl 17,
+application Direct Debug 1004; total 1118, zero failures/errors/skips. Debug assembly
+and packaged DEX checks pass. KLIB artifacts were produced for design-system,
+community impl and leaderboard impl on iosSimulatorArm64, including the real UIKit
+implementation. This is not a linked Swift/iOS app or native-device visual review.
+The application iOS task was requested, but no application KLIB output was verified;
+full Xcode linking remains a separate gate. Native previews, themes/font sizes and
+VoiceOver require platform review; paired previews are colocated with components.
+Compiler reports the existing deprecated multiplatform Preview annotation; no
+repository-wide tooling migration is included.
+
+Retained initial compile failures: the current selectable API required a named
+onClick argument, and a nullable composable API property required a stable local
+reference for smart-casting. Both were fixed before the successful gates. No
+UI/instrumented/screenshot automated tests were added or run; no account write or
+synthetic analytics event was sent to production. Device delivery follows below.

@@ -9,4 +9,5 @@ import androidx.compose.ui.unit.dp
 internal expect fun CoffeePeekPlatformSegments(
     labels: List<String>, selectedIndex: Int, onSelected: (Int) -> Unit, modifier: Modifier, enabled: Boolean,
     minSegmentHeight: Dp = 48.dp,
+    style: CoffeePeekSegmentedControlStyle = CoffeePeekSegmentedControlStyle.Glass,
 )

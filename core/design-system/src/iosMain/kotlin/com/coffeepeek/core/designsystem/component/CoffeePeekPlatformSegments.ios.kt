@@ -47,7 +47,12 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 internal actual fun CoffeePeekPlatformSegments(
     labels: List<String>, selectedIndex: Int, onSelected: (Int) -> Unit, modifier: Modifier, enabled: Boolean,
     minSegmentHeight: Dp,
+    style: CoffeePeekSegmentedControlStyle,
 ) {
+    if (style == CoffeePeekSegmentedControlStyle.Native) {
+        CoffeePeekSystemSegments(labels, selectedIndex, onSelected, modifier, enabled, minSegmentHeight)
+        return
+    }
     val callback = rememberUpdatedState(onSelected)
     val active = rememberUpdatedState(enabled)
     val colors = MaterialTheme.colorScheme
@@ -66,6 +71,51 @@ internal actual fun CoffeePeekPlatformSegments(
         },
         onRelease = { it.release() },
     )
+}
+
+/** UIKit owns the complete appearance, selection animation and accessibility tree. */
+@Composable
+private fun CoffeePeekSystemSegments(labels: List<String>, selectedIndex: Int, onSelected: (Int) -> Unit,
+    modifier: Modifier, enabled: Boolean, minHeight: Dp) {
+    val callback = rememberUpdatedState(onSelected)
+    val active = rememberUpdatedState(enabled)
+    val background = MaterialTheme.colorScheme.background
+    CoffeePeekNativeGlassView(
+        factory = { CoffeePeekSystemSegmentsView(labels) { if (active.value) callback.value(it) } },
+        modifier = modifier.fillMaxWidth().height(minHeight),
+        update = { view ->
+            val control = view.control
+            if (control.numberOfSegments.toInt() != labels.size) {
+                control.removeAllSegments()
+                labels.forEachIndexed { index, label -> control.insertSegmentWithTitle(label, index.toULong(), false) }
+            } else labels.forEachIndexed { index, label -> control.setTitle(label, index.toULong()) }
+            control.selectedSegmentIndex = selectedIndex.toLong()
+            control.enabled = enabled
+            view.overrideUserInterfaceStyle = coffeePeekUserInterfaceStyle(background)
+        },
+        onRelease = { it.release() },
+    )
+}
+
+private class CoffeePeekSystemSegmentsView(labels: List<String>, onSelected: (Int) -> Unit) : UIView(CGRectMake(0.0, 0.0, 0.0, 0.0)) {
+    val control = UISegmentedControl(items = labels)
+    private val target = CoffeePeekSegmentTarget(onSelected)
+
+    init {
+        addSubview(control)
+        control.apportionsSegmentWidthsByContent = false
+        control.addTarget(target, NSSelectorFromString("changed:"), UIControlEventValueChanged)
+    }
+
+    override fun layoutSubviews() {
+        super.layoutSubviews()
+        control.setFrame(bounds)
+    }
+
+    fun release() {
+        control.removeTarget(target, NSSelectorFromString("changed:"), UIControlEventValueChanged)
+        target.callback = null
+    }
 }
 
 /** UIKit still owns interaction and accessibility; its segment masks no longer crop the visible pill. */
