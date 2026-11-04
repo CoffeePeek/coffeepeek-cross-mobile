@@ -7,6 +7,9 @@ import com.coffeepeek.core.session.Session
 import com.coffeepeek.core.session.SessionReader
 import com.coffeepeek.feature.collections.domain.model.CollectionPlaceKind
 import com.coffeepeek.feature.collections.domain.repository.CollectionsRepository
+import com.coffeepeek.feature.collections.domain.repository.SavedCollectionsRepository
+import com.coffeepeek.feature.collections.domain.model.SavedCollectionMetadata
+import com.coffeepeek.feature.collections.domain.model.SavedCollectionVisibility
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.test.runTest
@@ -31,6 +34,12 @@ class SandboxCollectionsCompositionTest {
             assertEquals(setOf(CollectionPlaceKind.CoffeeShop, CollectionPlaceKind.Roaster), favorites.map { it.kind }.toSet())
             val collection = repository.create("Sandbox", favorites).getOrThrow()
             assertEquals(favorites.map { it.key }, collection.places.map { it.key })
+            val saved = app.koin.get<SavedCollectionsRepository>()
+            val list = saved.create(SavedCollectionMetadata("Private Sandbox")).getOrThrow()
+            val owned = saved.mine().getOrThrow()
+            assertTrue(owned.any { it.id == list.summary.id })
+            assertTrue(owned.any { it.title == "Избранное" && it.visibility == SavedCollectionVisibility.Private })
+            assertTrue(saved.public(list.summary.id).isFailure)
         } finally {
             app.close()
             close(client, backend)

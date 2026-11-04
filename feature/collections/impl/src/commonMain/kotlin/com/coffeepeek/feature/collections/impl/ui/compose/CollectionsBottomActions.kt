@@ -41,7 +41,7 @@ private fun CollectionCreateAction(state: CollectionsState, onAction: (Collectio
 private fun CollectionExportActions(state: CollectionsState, onAction: (CollectionsAction) -> Unit) {
     CoffeePeekButton(stringResource(if (state.busy) Res.string.collections_preparing else Res.string.collections_share_image),
         { onAction(CollectionsAction.ShareImages) }, enabled = !state.busy && state.collection?.places?.isNotEmpty() == true)
-    CoffeePeekTextButton({ onAction(CollectionsAction.ShareLink) }, Modifier.fillMaxWidth().heightIn(min = 48.dp), enabled = !state.busy,
+    if (state.collection?.url?.isNotBlank() == true) CoffeePeekTextButton({ onAction(CollectionsAction.ShareLink) }, Modifier.fillMaxWidth().heightIn(min = 48.dp), enabled = !state.busy,
         colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onSurface)) {
         Text(stringResource(Res.string.collections_share_link))
     }

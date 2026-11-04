@@ -33,6 +33,8 @@ class SettingsSlots(
     /** App composes the existing notification preference; settings owns only its place and copy. */
     val notificationPreference: @Composable (label: String, description: String) -> Unit,
     val accountSwitch: @Composable () -> Unit = {},
+    /** Signed-in profile collection visibility; application composes the collections API. */
+    val profileCollectionPreference: @Composable () -> Unit = {},
 )
 
 /** The Settings tab. Caller owns the tab, navigation and the floating bar clearance. */

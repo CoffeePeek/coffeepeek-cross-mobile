@@ -73,6 +73,8 @@ class IosShelfModuleTest {
         assertSame(koin.get<ShelfRepository>(), koin.get<ShelfRepository>())
         assertSame(koin.get<BagScanner>(), koin.get<BagScanner>())
         assertSame(koin.get<ShelfEntry>(), koin.get<ShelfEntry>())
+        assertSame(koin.get<com.coffeepeek.feature.shelf.api.ShelfProfileEntry>(),
+            koin.get<com.coffeepeek.feature.shelf.api.ShelfProfileEntry>())
         koin.get<CoffeePicker>()
         koin.get<HomePreparationShelfBagReader>()
         assertSame(koin.get<FeatureCheckInCreateFlowRenderer>(), koin.get<FeatureCheckInCreateFlowRenderer>())

@@ -10,6 +10,7 @@ import com.coffeepeek.admin.ui.component.GuestAuthCard
 import com.coffeepeek.admin.ui.component.LocalFloatingNavClearance
 import com.coffeepeek.admin.ui.screen.profile.SettingsScreenRenderer
 import com.coffeepeek.core.session.SessionReader
+import com.coffeepeek.admin.di.profile.ProfileDisplayPreferences
 import com.coffeepeek.domain.repository.ShopRepository
 import com.coffeepeek.feature.settings.api.CityEntry
 import com.coffeepeek.feature.settings.api.LanguageEntry
@@ -79,6 +80,7 @@ internal fun featureSettingsScreenRenderer(
                     org.koin.compose.koinInject<com.coffeepeek.admin.feature.notifications.ui.NotificationsRenderer>().Preference(label, description)
                 },
                 accountSwitch = { org.koin.compose.koinInject<com.coffeepeek.feature.ownership.api.BusinessOwnershipEntry>().AccountSwitch() },
+                profileCollectionPreference = { ProfileDisplayPreferences() },
             ),
         ),
         theme = createThemeEntry(theme),

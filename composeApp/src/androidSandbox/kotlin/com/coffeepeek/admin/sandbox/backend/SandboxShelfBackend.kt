@@ -67,6 +67,24 @@ internal class SandboxShelfBackend(private val today: LocalDate, private val upl
     fun cardKey(bagId: String, photoId: String): String? =
         find(bagId)?.get("photo")?.jsonObject?.get("id")?.jsonPrimitive?.content?.takeIf { it == photoId }
 
+    /** Minimal current active shelf, without owner-only fields or private media URLs. */
+    fun publicItems(slug: String) = JsonArray(shelf.map { publicItem(it, slug) })
+
+    /** Public aliases never reveal the fixture/upload key and are revalidated against the active current front. */
+    fun publicCardKey(bagId: String, photoId: String): String? = shelf.firstOrNull { id(it) == bagId }
+        ?.get("photo")?.let { it as? JsonObject }?.text("id")?.takeIf { publicPhotoId(it) == photoId }
+
+    private fun publicItem(row: JsonObject, slug: String) = buildJsonObject {
+        put("id", row.getValue("id"))
+        put("name", row.text("name").orEmpty())
+        put("roasterName", row["roasterName"] ?: JsonNull)
+        put("coffeeSlug", JsonPrimitive(productSlug(row.text("coffeeProductId"))))
+        val photo = (row["photo"] as? JsonObject)?.text("id")
+        put("photoUrl", JsonPrimitive(photo?.let { "/api/v1/profiles/$slug/shelf/bags/${id(row)}/photos/${publicPhotoId(it)}" }))
+    }
+
+    private fun publicPhotoId(key: String) = UUID.nameUUIDFromBytes("shelf-public:$key".toByteArray(Charsets.UTF_8)).toString()
+
     fun handle(path: String, method: HttpMethod, parameters: Parameters, input: JsonObject): Pair<HttpStatusCode, JsonObject>? {
         if (path != ROOT && !path.startsWith("$ROOT/")) return null
         return try {
