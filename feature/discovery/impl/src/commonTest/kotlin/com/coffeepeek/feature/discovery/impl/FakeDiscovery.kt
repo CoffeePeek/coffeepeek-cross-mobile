@@ -48,10 +48,17 @@ internal class FakeAccount(key: String? = "one") : DiscoveryAccount {
 }
 
 internal class FakeFavorites : DiscoveryFavorites {
+    var collectionsEnabled = false
+    val collectionRequests = mutableListOf<String>()
     val flow = MutableStateFlow<Set<String>>(emptySet())
     var set: suspend (ShopSummary, Boolean) -> Result<Unit> = { _, _ -> Result.success(Unit) }
     val changes = mutableListOf<Pair<String, Boolean>>()
     override val ids = flow
+    override fun selectCollections(shopId: String): Boolean {
+        if (!collectionsEnabled) return false
+        collectionRequests += shopId
+        return true
+    }
     override suspend fun favoriteIds() = flow.value
     override suspend fun setFavorite(shop: ShopSummary, favorite: Boolean): Result<Unit> { changes += shop.id to favorite; return set.invoke(shop, favorite) }
 }

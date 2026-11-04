@@ -18,9 +18,12 @@ import com.coffeepeek.feature.community.impl.timeline.CommunityViewModel
 import com.coffeepeek.feature.community.impl.timeline.MessageKind
 import com.coffeepeek.feature.community.impl.timeline.TimelineError
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.resetMain
@@ -193,10 +196,12 @@ class CommunityViewModelTest {
         }
         val analytics = FakeAnalytics(); val vm = model(repo, analytics = analytics); val events = events(vm)
         vm.send(CommunityAction.ToggleHelpful("other"), this)
-        assertEquals("other", vm.state.value.helpfulId)
+        assertEquals(setOf("other"), vm.state.value.helpfulIds)
+        assertTrue(vm.state.value.items.last().isHelpfulByCurrentUser)
+        assertEquals(1, vm.state.value.items.last().helpfulCount)
         vm.send(CommunityAction.ToggleHelpful("other"), this); assertEquals(1, votes) // one mutation at a time
         release.complete(HelpfulVote(true, 8)); runCurrent()
-        assertNull(vm.state.value.helpfulId)
+        assertTrue(vm.state.value.helpfulIds.isEmpty())
         assertEquals(8, vm.state.value.items.last().helpfulCount); assertTrue(vm.state.value.items.last().isHelpfulByCurrentUser)
         vm.send(CommunityAction.ToggleHelpful("other"), this) // unlike, which the fake refuses
         val message = assertIs<CommunityEvent.Message>(events.single())
@@ -216,6 +221,57 @@ class CommunityViewModelTest {
         assertEquals("own", voted); assertEquals(1, vm.state.value.items.single().helpfulCount)
     }
 
+    @Test fun aFailedLikeRestoresOnlyItsPostWhileAnotherLikeIsStillPending() = runTest(dispatcher) {
+        val first = CompletableDeferred<Result<HelpfulVote>>()
+        val second = CompletableDeferred<Result<HelpfulVote>>()
+        val repo = FakeRepository().apply {
+            feed = { _, _, _ -> Result.success(page("a", "b")) }
+            helpful = { id, _ -> if (id == "a") first.await() else second.await() }
+        }
+        val vm = model(repo)
+        vm.send(CommunityAction.ToggleHelpful("a"), this)
+        vm.send(CommunityAction.ToggleHelpful("b"), this)
+        first.complete(Result.failure(IllegalStateException("offline")))
+        runCurrent()
+        assertFalse(vm.state.value.items.first().isHelpfulByCurrentUser)
+        assertTrue(vm.state.value.items.last().isHelpfulByCurrentUser)
+        assertEquals(setOf("b"), vm.state.value.helpfulIds)
+        second.complete(Result.success(HelpfulVote(true, 6)))
+        runCurrent()
+        assertEquals(6, vm.state.value.items.last().helpfulCount)
+    }
+
+    @Test fun cancelledLikeRestoresItsPostAndReleasesThePendingGuard() = runTest(dispatcher) {
+        val repo = FakeRepository().apply {
+            feed = { _, _, _ -> Result.success(page("a")) }
+            helpful = { _, _ -> Result.failure(CancellationException("cancelled")) }
+        }
+        val vm = model(repo)
+        val events = events(vm)
+        vm.send(CommunityAction.ToggleHelpful("a"), this)
+        assertFalse(vm.state.value.items.single().isHelpfulByCurrentUser)
+        assertTrue(vm.state.value.helpfulIds.isEmpty())
+        assertTrue(events.isEmpty())
+    }
+
+    @Test fun switchingAccountsDropsEveryPendingLikeIncludingLateNonCancellableReplies() = runTest(dispatcher) {
+        val reply = CompletableDeferred<Result<HelpfulVote>>()
+        val account = FakeAccount("one")
+        val repo = FakeRepository().apply {
+            feed = { _, _, _ -> Result.success(page("a", "b")) }
+            helpful = { _, _ -> withContext(NonCancellable) { reply.await() } }
+        }
+        val vm = model(repo, account)
+        vm.send(CommunityAction.ToggleHelpful("a"), this)
+        vm.send(CommunityAction.ToggleHelpful("b"), this)
+        account.switchTo("two")
+        runCurrent()
+        reply.complete(Result.success(HelpfulVote(true, 99)))
+        runCurrent()
+        assertTrue(vm.state.value.helpfulIds.isEmpty())
+        assertTrue(vm.state.value.items.all { !it.isHelpfulByCurrentUser && it.helpfulCount == 0 })
+    }
+
     @Test fun aVoteFailureThatIsNotAServerAnswerUsesTheDefaultTextAndNeverTheRawErrorMessage() = runTest(dispatcher) {
         val repo = FakeRepository().apply {
             feed = { _, _, _ -> Result.success(page("other")) }
@@ -226,7 +282,7 @@ class CommunityViewModelTest {
         assertNull(assertIs<CommunityEvent.Message>(events.single()).message.serverMessage)
     }
 
-    @Test fun whileAMutationRunsRefreshFiltersTimelineAndAnotherVoteAreIgnored() = runTest(dispatcher) {
+    @Test fun aPendingLikeDoesNotBlockLikesOnOtherPosts() = runTest(dispatcher) {
         val release = CompletableDeferred<HelpfulVote>()
         val repo = FakeRepository().apply {
             feed = { _, _, _ -> Result.success(page("a", "b")) }
@@ -239,7 +295,8 @@ class CommunityViewModelTest {
         vm.send(CommunityAction.SelectTimeline(CommunityTimeline.Mine), this); vm.send(CommunityAction.ToggleHelpful("b"), this)
         assertEquals(requests, repo.feedRequests.size)
         assertEquals(FeedFilters(), vm.state.value.filters); assertEquals(CommunityTimeline.Public, vm.state.value.timeline)
-        assertEquals("a", vm.state.value.helpfulId)
+        assertEquals(setOf("a", "b"), vm.state.value.helpfulIds)
+        assertTrue(vm.state.value.items.all { it.isHelpfulByCurrentUser && it.helpfulCount == 1 })
         release.complete(HelpfulVote(true, 1)); runCurrent()
     }
 

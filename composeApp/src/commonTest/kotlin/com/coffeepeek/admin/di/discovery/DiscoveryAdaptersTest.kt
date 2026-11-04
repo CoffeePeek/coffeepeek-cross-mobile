@@ -1,6 +1,7 @@
 package com.coffeepeek.admin.di.discovery
 
 import com.coffeepeek.admin.feature.community.ui.FeedSessions
+import com.coffeepeek.admin.di.collections.FavoriteCollectionsPrompt
 import com.coffeepeek.admin.di.favorites.serverFavoriteShopsModule
 import com.coffeepeek.admin.utils.FavoriteSync
 import com.coffeepeek.core.session.Session
@@ -95,6 +96,20 @@ class DiscoveryAdaptersTest {
         val catalog = PublicRoasterCatalog { Result.success(listOf(PublicRoasterCatalogEntry("r", "Roaster", "logo"))) }
         assertEquals(listOf(CatalogEntry("r", "Roaster", "logo")), roasterEntries(catalog)().getOrThrow())
         assertTrue(roasterEntries(PublicRoasterCatalog { Result.failure(IllegalStateException("offline")) })().isFailure)
+    }
+
+    @Test fun openingCollectionsDoesNotReadOrWriteTheFavoriteRepository() = runTest {
+        val requests = mutableListOf<String>()
+        val repository = Favorites(failure = IllegalStateException("offline"), ids = flow { error("Must not await favorite ids") })
+        val prompt = object : FavoriteCollectionsPrompt {
+            override fun shop(slug: String) { requests += slug }
+            override fun roaster(slug: String) = error("Shop action expected")
+        }
+        val adapter = AppDiscoveryFavorites(repository, prompt)
+        assertTrue(adapter.selectCollections("canonical"))
+        assertEquals(listOf("canonical"), requests)
+        assertTrue(repository.saved.isEmpty())
+        assertTrue(repository.removed.isEmpty())
     }
 
     private class Server : ServerFavorites {

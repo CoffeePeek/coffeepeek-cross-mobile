@@ -13,6 +13,8 @@ interface SavedCollectionsRepository {
     /** Null means not loaded; a selection with null collectionId means explicitly hidden. */
     fun cachedFeatured(): SavedCollectionFeaturedSelection? = null
     suspend fun mine(target: SavedCollectionTarget? = null): Result<List<SavedCollectionSummary>>
+    /** Explicit refresh/retry bypasses the owner library cache. */
+    suspend fun refreshMine(target: SavedCollectionTarget? = null): Result<List<SavedCollectionSummary>> = mine(target)
     suspend fun owned(id: String): Result<SavedCollection>
     suspend fun public(id: String): Result<SavedCollection>
     suspend fun create(metadata: SavedCollectionMetadata): Result<SavedCollection>

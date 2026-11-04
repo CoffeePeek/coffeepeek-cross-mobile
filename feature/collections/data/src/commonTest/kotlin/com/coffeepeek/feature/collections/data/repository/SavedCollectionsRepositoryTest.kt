@@ -15,6 +15,9 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.test.*
 import kotlinx.serialization.json.*
 import kotlin.test.*
+import kotlin.time.Duration.Companion.hours
+import kotlin.time.TestTimeSource
+import kotlin.time.TimeSource
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class SavedCollectionsRepositoryTest {
@@ -43,10 +46,76 @@ class SavedCollectionsRepositoryTest {
             assertEquals(first, repository.cachedMine())
             title = "Переименовано"
             assertEquals(first, repository.cachedMine())
-            val refreshed = repository.mine().getOrThrow()
+            val refreshed = repository.refreshMine().getOrThrow()
             assertEquals(refreshed, repository.cachedMine())
             assertEquals("Переименовано", repository.cachedMine()!!.single().title)
             assertEquals(2, reads)
+        } finally { client.close() }
+    }
+
+    @Test fun pickerReadsUseTheSameAccountCacheUntilTwentyFourHoursHaveElapsed() = runTest(dispatcher) {
+        val clock = TestTimeSource()
+        var reads = 0
+        val client = client(defaultEndpoint = true) {
+            reads++
+            respond(defaultList.replace("\"revision\":2", "\"revision\":2,\"isDefault\":true"))
+        }
+        try {
+            val repository = repo(client, client, clock)
+            val target = SavedCollectionTarget(CollectionPlaceKind.CoffeeShop, "shop")
+            val first = repository.mine(target).getOrThrow()
+            clock += 23.hours
+            assertEquals(first, repository.mine(target).getOrThrow())
+            assertEquals(1, reads)
+            clock += 1.hours
+            repository.mine(target).getOrThrow()
+            assertEquals(2, reads)
+        } finally { client.close() }
+    }
+
+    @Test fun anotherTargetsRefreshDoesNotExtendOldMembershipFreshness() {
+        val clock = TestTimeSource()
+        val cache = OwnerCollectionsCache(account, clock)
+        val shop = SavedCollectionTarget(CollectionPlaceKind.CoffeeShop, "shop")
+        val roaster = SavedCollectionTarget(CollectionPlaceKind.Roaster, "roaster")
+        val lists = listOf(SavedCollectionSummary(id, "Weekend", containsItem = true))
+        cache.record("first", shop, lists)
+        clock += 23.hours
+        cache.record("first", roaster, lists)
+        clock += 1.hours
+        assertNull(cache.fresh(shop))
+        assertEquals(lists, cache.fresh(roaster))
+        assertNotNull(cache.peek(shop))
+        cache.dropTargets("first")
+        assertNull(cache.fresh(roaster))
+    }
+
+    @Test fun membershipWritesNeedAVerifiedLibraryReadBeforeTheyCanPopulateAFreshCache() {
+        val cache = OwnerCollectionsCache(account)
+        val target = SavedCollectionTarget(CollectionPlaceKind.CoffeeShop, "shop")
+        val lists = listOf(SavedCollectionSummary(id, "Weekend", containsItem = true))
+        cache.recordMemberships("first", target, lists)
+        assertNull(cache.fresh(target))
+        cache.record("first", target, lists)
+        assertEquals(lists, cache.fresh(target))
+        account.owner.value = "second"
+        cache.recordMemberships("second", target, lists)
+        assertNull(cache.fresh(target))
+    }
+
+    @Test fun successfulMembershipWriteUpdatesTheCachedPickerWithoutAnotherRead() = runTest(dispatcher) {
+        var reads = 0
+        val client = client(defaultEndpoint = true) { request ->
+            if (request.method == HttpMethod.Get) reads++
+            respond(defaultList.replace("\"revision\":2", "\"revision\":2,\"isDefault\":true,\"containsItem\":${request.method == HttpMethod.Put}"))
+        }
+        try {
+            val repository = repo(client, client)
+            val target = SavedCollectionTarget(CollectionPlaceKind.CoffeeShop, "shop")
+            assertFalse(repository.mine(target).getOrThrow().single().containsItem)
+            repository.memberships(target, setOf(id)).getOrThrow()
+            assertTrue(repository.mine(target).getOrThrow().single().containsItem)
+            assertEquals(1, reads)
         } finally { client.close() }
     }
 
@@ -122,7 +191,7 @@ class SavedCollectionsRepositoryTest {
             val repository = repo(client, client)
             val initial = repository.mine().getOrThrow()
             offline = true
-            assertTrue(repository.mine().isFailure)
+            assertTrue(repository.refreshMine().isFailure)
             assertEquals(initial, repository.cachedMine())
             repository.update(id, SavedCollectionMetadata("Edited"), 2).getOrThrow()
             assertEquals("Edited", repository.cachedMine()!!.single().title)
@@ -518,8 +587,9 @@ class SavedCollectionsRepositoryTest {
         } finally { client.close() }
     }
 
-    private fun repo(private: HttpClient, public: HttpClient) = createSavedCollectionsRepository(private, public,
-        "https://fixture.invalid", account) { builder, owner -> builder.headers["X-Test-Owner"] = owner }
+    private fun repo(private: HttpClient, public: HttpClient, timeSource: TimeSource = TimeSource.Monotonic) =
+        HttpSavedCollectionsRepository(private, public, "https://fixture.invalid", account,
+            { builder, owner -> builder.headers["X-Test-Owner"] = owner }, timeSource)
 
     private fun defaultRoasterClient(onCreate: () -> Unit) = client { request ->
         assertEquals("first", request.headers["X-Test-Owner"])

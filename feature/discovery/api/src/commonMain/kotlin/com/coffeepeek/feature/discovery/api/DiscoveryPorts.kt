@@ -16,6 +16,9 @@ interface DiscoveryAccount {
 
 /** The favorite shops of the account; the favorites owner backs it. */
 interface DiscoveryFavorites {
+    /** Opens an application-owned collection picker immediately; true means it handles this heart tap, including sign-in. */
+    fun selectCollections(shopId: String): Boolean = false
+
     /** The ids of the favorite shops, again each time they change (another screen, another device of the account). */
     val ids: Flow<Set<String>>
 

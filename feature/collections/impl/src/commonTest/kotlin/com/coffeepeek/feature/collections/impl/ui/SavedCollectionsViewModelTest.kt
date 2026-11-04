@@ -101,6 +101,25 @@ class SavedCollectionsViewModelTest {
         assertEquals(0, snapshots.favoriteReads)
     }
 
+    @Test fun aSlowPickerLoadExposesLoadingAndCanBeCancelledWithoutWriting() = runTest(dispatcher) {
+        saved.mineGate = CompletableDeferred()
+        val vm = model(SavedCollectionsMode.Picker)
+        val events = mutableListOf<SavedCollectionsEvent>()
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.events.collect { events += it } }
+        runCurrent()
+        assertTrue(vm.state.value.loading)
+        assertFalse(vm.state.value.membershipsLoaded)
+        vm.onAction(SavedCollectionsAction.CommitMemberships)
+        vm.onAction(SavedCollectionsAction.Back)
+        runCurrent()
+        assertTrue(SavedCollectionsEvent.Back in events)
+        assertEquals(0, saved.membershipWrites)
+        assertEquals(0, saved.creates)
+        saved.mineGate!!.complete(Unit)
+        runCurrent()
+        assertFalse(vm.state.value.membershipsLoaded)
+    }
+
     @Test fun membershipSelectionIsSentOnceAsAnAtomicSet() = runTest(dispatcher) {
         saved.membershipGate = CompletableDeferred()
         val vm = model(SavedCollectionsMode.Picker)

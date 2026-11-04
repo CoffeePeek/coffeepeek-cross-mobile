@@ -13,7 +13,6 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
-import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
 import com.coffeepeek.core.designsystem.component.CoffeePeekLikeIcon
 import com.coffeepeek.core.designsystem.component.CoffeePeekLikeButton
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
@@ -38,12 +37,11 @@ internal fun ShopCheckInHelpfulButton(count: Int, isHelpful: Boolean, onClick: (
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(0.dp)) {
         if (onClick != null) CoffeePeekLikeButton(isHelpful, description, onClick,
-            isLoading = isLoading, loadingDescription = description)
+            enabled = !isLoading)
         else Box(Modifier.size(48.dp).semantics {
             contentDescription = description; selected = isHelpful
         }, contentAlignment = Alignment.Center) {
-            if (isLoading) CoffeePeekLoader(description, size = 24.dp)
-            else CoffeePeekLikeIcon(isHelpful, contentDescription = null)
+            CoffeePeekLikeIcon(isHelpful, contentDescription = null)
         }
         Text(count.toString(), style = MaterialTheme.typography.bodyMedium)
     }
@@ -56,7 +54,7 @@ internal fun ShopCheckInHelpfulButton(count: Int, isHelpful: Boolean, onClick: (
     ShopCheckInHelpfulButton(4, true, {})
 }
 @Preview @Composable private fun ShopCheckInHelpfulLoadingLightPreview() = CoffeePeekTheme(darkTheme = false) {
-    ShopCheckInHelpfulButton(3, false, null, isLoading = true)
+    ShopCheckInHelpfulButton(4, true, null, isLoading = true)
 }
 @Preview @Composable private fun ShopCheckInHelpfulLoadingDarkPreview() = CoffeePeekTheme(darkTheme = true) {
     ShopCheckInHelpfulButton(4, true, null, isLoading = true)
