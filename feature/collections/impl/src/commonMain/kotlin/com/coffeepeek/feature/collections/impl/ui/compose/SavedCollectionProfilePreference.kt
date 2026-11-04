@@ -5,11 +5,13 @@ import androidx.compose.foundation.lazy.*
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.toggleableState
 import androidx.compose.ui.state.ToggleableState
@@ -30,16 +32,33 @@ internal fun SavedCollectionProfilePreference(state: SavedCollectionsState, acti
     LaunchedEffect(state.signedIn, state.accountVersion) { showing = false }
     val choose = { if (state.signedIn) showing = true else action(SavedCollectionsAction.SignIn) }
     Column(modifier) {
-        SavedProfileVisibilityRow(state) {
-            if (state.featuredId == null) choose() else action(SavedCollectionsAction.Feature(null))
+        if (state.signedIn && state.loading) SavedProfilePreferenceShimmer()
+        else {
+            SavedProfileVisibilityRow(state) {
+                if (state.featuredId == null) choose() else action(SavedCollectionsAction.Feature(null))
+            }
+            if (state.featuredId != null) {
+                CoffeePeekSettingsDivider()
+                SavedProfileSelectedRow(state, choose)
+            }
         }
-        if (state.featuredId != null) {
-            CoffeePeekSettingsDivider()
-            SavedProfileSelectedRow(state, choose)
-        }
-        if (state.failure != null || state.loading) SavedCollectionsStatus(state, action)
+        if (state.failure != null) SavedCollectionsStatus(state.copy(loading = false), action)
     }
     if (showing) SavedProfileChoice(state, action) { showing = false }
+}
+
+@Composable
+private fun SavedProfilePreferenceShimmer() {
+    val loading = stringResource(Res.string.collections_loading)
+    Row(Modifier.fillMaxWidth().semantics { contentDescription = loading }.padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        CoffeePeekShimmer(Modifier.size(44.dp))
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            CoffeePeekShimmer(Modifier.fillMaxWidth(0.75f).height(18.dp))
+            CoffeePeekShimmer(Modifier.fillMaxWidth().height(14.dp))
+        }
+        CoffeePeekShimmer(Modifier.width(52.dp).height(30.dp))
+    }
 }
 
 @Composable
@@ -99,3 +118,8 @@ private fun SavedProfileChoiceContent(state: SavedCollectionsState, choose: (Str
 @Preview @Composable private fun SavedPreferenceChoiceDarkPreview() = CoffeePeekTheme(darkTheme = true) {
     SavedProfileChoiceContent(SavedCollectionsState(SavedCollectionsMode.Preference, signedIn = true, loading = false), {}, 400.dp)
 }
+@Composable private fun SavedPreferenceLoadingSample(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
+    SavedCollectionProfilePreference(SavedCollectionsState(SavedCollectionsMode.Preference, signedIn = true), {})
+}
+@Preview @Composable private fun SavedPreferenceLoadingLightPreview() = SavedPreferenceLoadingSample(false)
+@Preview @Composable private fun SavedPreferenceLoadingDarkPreview() = SavedPreferenceLoadingSample(true)

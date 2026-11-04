@@ -4,6 +4,8 @@ import kotlinx.coroutines.flow.Flow
 
 /** Read-only view of the signed-in account: what features and their adapters need. */
 interface SessionReader {
+    /** Changes with account/login lifetime, but not credential refresh for the same account. */
+    fun accountGeneration(): Long = 0
     /** In-memory snapshot; null until the stored session is loaded or when signed out. */
     fun peekSession(): Session?
 

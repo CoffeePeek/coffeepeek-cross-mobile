@@ -7,6 +7,7 @@ internal data class PublicShelfProfileState(
     val loading: Boolean = true,
     val failed: Boolean = false,
     val revision: Int = 0,
+    val refreshing: Boolean = false,
 )
 
 internal sealed interface PublicShelfProfileAction {

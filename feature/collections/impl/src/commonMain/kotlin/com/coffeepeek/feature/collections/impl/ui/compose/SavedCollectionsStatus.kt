@@ -4,6 +4,10 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.ProgressBarRangeInfo
+import androidx.compose.ui.semantics.progressBarRangeInfo
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.component.*
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
@@ -15,7 +19,7 @@ import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as st
 @Composable
 internal fun SavedCollectionsStatus(state: SavedCollectionsState, action: (SavedCollectionsAction) -> Unit) {
     Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        if (state.loading) CoffeePeekLoader(stringResource(Res.string.collections_loading))
+        if (state.loading) SavedCollectionsLoadingStatus()
         if (!state.signedIn && state.mode !in setOf(SavedCollectionsMode.Public, SavedCollectionsMode.Featured)) {
             Text(stringResource(Res.string.collections_sign_in_hint))
             CoffeePeekButton(stringResource(Res.string.collections_sign_in), { action(SavedCollectionsAction.SignIn) })
@@ -38,9 +42,24 @@ internal fun SavedCollectionsStatus(state: SavedCollectionsState, action: (Saved
     }
 }
 
+@Composable
+private fun SavedCollectionsLoadingStatus() {
+    val loading = stringResource(Res.string.collections_loading)
+    CoffeePeekShimmer(Modifier.fillMaxWidth().height(48.dp).semantics {
+        contentDescription = loading
+        progressBarRangeInfo = ProgressBarRangeInfo.Indeterminate
+    })
+}
+
 @Preview @Composable private fun SavedCollectionsStatusLightPreview() = CoffeePeekTheme(darkTheme = false) {
     SavedCollectionsStatus(SavedCollectionsState(SavedCollectionsMode.Library, loading = false, failure = SavedCollectionsFailure.Load), {})
 }
 @Preview @Composable private fun SavedCollectionsStatusDarkPreview() = CoffeePeekTheme(darkTheme = true) {
     SavedCollectionsStatus(SavedCollectionsState(SavedCollectionsMode.Library, loading = false, failure = SavedCollectionsFailure.Load), {})
+}
+@Preview @Composable private fun SavedCollectionsLoadingLightPreview() = CoffeePeekTheme(darkTheme = false) {
+    SavedCollectionsLoadingStatus()
+}
+@Preview @Composable private fun SavedCollectionsLoadingDarkPreview() = CoffeePeekTheme(darkTheme = true) {
+    SavedCollectionsLoadingStatus()
 }

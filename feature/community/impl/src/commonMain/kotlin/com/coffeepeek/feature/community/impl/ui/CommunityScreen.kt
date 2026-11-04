@@ -46,6 +46,7 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.key
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -161,6 +162,10 @@ internal fun CommunityContent(
     floatingAction: @Composable BoxScope.(CommunityFloating) -> Unit = {},
 ) {
     val listState = rememberLazyListState()
+    var abovePostsRefresh by remember { mutableLongStateOf(0L) }
+    val abovePostsCollapsed by remember {
+        derivedStateOf { listState.firstVisibleItemIndex > 0 || listState.firstVisibleItemScrollOffset > 0 }
+    }
     // A home editor opened from a post: the list reloads when the user comes back.
     var homeEditorOpened by rememberSaveable { mutableStateOf(false) }
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
@@ -199,7 +204,10 @@ internal fun CommunityContent(
             CoffeePeekPullToRefresh(
                 listState,
                 isRefreshing = state.isLoading && state.items.isNotEmpty(),
-                onRefresh = { onAction(CommunityAction.Refresh(FeedTrigger.Gesture)) },
+                onRefresh = {
+                    onAction(CommunityAction.Refresh(FeedTrigger.Gesture))
+                    abovePostsRefresh++
+                },
                 refreshDescription = stringResource(Res.string.community_refresh),
                 loadingDescription = stringResource(Res.string.community_loading),
                 modifier = Modifier.fillMaxSize().statusBarsPadding().padding(top = padding.calculateTopPadding()),
@@ -217,6 +225,9 @@ internal fun CommunityContent(
                                 fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
                             headerAction()
                         }
+                    }
+                    host.abovePosts?.let { content ->
+                        item(key = "above-posts", contentType = "above-posts") { content(abovePostsRefresh, abovePostsCollapsed) }
                     }
                     if (state.isLoggedIn == null || (state.isLoading && state.items.isEmpty())) {
                         item(key = "loading", contentType = "loading") { CenteredLoader() }

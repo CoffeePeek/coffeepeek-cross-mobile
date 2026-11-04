@@ -1,6 +1,7 @@
 package com.coffeepeek.feature.collections.impl.ui.compose
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonDefaults
@@ -11,6 +12,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.component.*
@@ -34,11 +37,23 @@ internal fun SavedCollectionMetadataForm(state: SavedCollectionsState, action: (
                 enabled = !state.busy, modifier = Modifier.weight(1f))
         }
         SavedCollectionDescription(state, action)
-        CoffeePeekGroupSection(footer = stringResource(if (state.visibility == SavedCollectionVisibility.Public)
-            Res.string.collections_public_hint else Res.string.collections_private_hint)) {
-            CoffeePeekSwitchRow(stringResource(Res.string.collections_public_switch), state.visibility == SavedCollectionVisibility.Public,
-                { action(SavedCollectionsAction.Visibility(if (it) SavedCollectionVisibility.Public else SavedCollectionVisibility.Private)) })
+        CoffeePeekGroupSection { SavedCollectionVisibilityRow(state, action) }
+    }
+}
+
+@Composable
+private fun SavedCollectionVisibilityRow(state: SavedCollectionsState, action: (SavedCollectionsAction) -> Unit) {
+    val isPublic = state.visibility == SavedCollectionVisibility.Public
+    val hint = stringResource(if (isPublic) Res.string.collections_public_hint else Res.string.collections_private_hint)
+    Row(Modifier.fillMaxWidth().toggleable(isPublic, enabled = !state.busy, role = Role.Switch,
+        onValueChange = { action(SavedCollectionsAction.Visibility(if (it) SavedCollectionVisibility.Public else SavedCollectionVisibility.Private)) })
+        .padding(horizontal = 16.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(stringResource(Res.string.collections_public_switch), style = MaterialTheme.typography.bodyLarge)
+            Text(hint, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
+        CoffeePeekSwitch(isPublic, null, Modifier.clearAndSetSemantics { }, enabled = !state.busy)
     }
 }
 

@@ -143,5 +143,4 @@
     <string name="profile_deletion_resend_wait">Паўторная адпраўка пакуль недаступная</string>
     <string name="profile_edit_display_preferences">Паказваць у профілі</string>
     <string name="profile_edit_display_shelf">Кававая паліца</string>
-    <string name="profile_edit_display_autosave">Гэтыя налады захоўваюцца адразу.</string>
 </resources>

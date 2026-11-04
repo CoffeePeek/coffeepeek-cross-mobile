@@ -10,8 +10,8 @@ import com.coffeepeek.feature.shelf.api.ShelfProfileEntry
 import org.koin.compose.koinInject
 
 @Composable
-internal fun ProfileShelfPreview(slug: String) {
-    koinInject<ShelfProfileEntry>().Preview(slug,
+internal fun ProfileShelfPreview(slug: String, ownerView: Boolean) {
+    koinInject<ShelfProfileEntry>().Preview(slug, ownerView,
         onOpenCoffee = { Navigator.navigate(Navigator.Screen.CoffeeDetail(it)) },
         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp))
 }

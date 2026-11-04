@@ -18,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.Dp
 import kotlinx.cinterop.ObjCAction
 import kotlinx.cinterop.useContents
 import platform.CoreGraphics.CGRectMake
@@ -45,13 +46,14 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 @Composable
 internal actual fun CoffeePeekPlatformSegments(
     labels: List<String>, selectedIndex: Int, onSelected: (Int) -> Unit, modifier: Modifier, enabled: Boolean,
+    minSegmentHeight: Dp,
 ) {
     val callback = rememberUpdatedState(onSelected)
     val active = rememberUpdatedState(enabled)
     val colors = MaterialTheme.colorScheme
     CoffeePeekNativeGlassView(
         factory = { CoffeePeekGlassSegments(labels) { if (active.value) callback.value(it) } },
-        modifier = modifier.fillMaxWidth().height(48.dp),
+        modifier = modifier.fillMaxWidth().height(minSegmentHeight),
         update = { view ->
             val control = view.control
             if (control.numberOfSegments.toInt() != labels.size) {

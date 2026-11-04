@@ -1,6 +1,7 @@
 package com.coffeepeek.admin.di.roaster
 
 import com.coffeepeek.admin.feature.favorites.api.FavoriteInteractions
+import com.coffeepeek.admin.di.collections.FavoriteCollectionsPrompt
 import com.coffeepeek.admin.feature.favorites.api.RoasterFavorites
 import com.coffeepeek.admin.feature.favorites.api.roasterFavoriteId
 import com.coffeepeek.domain.model.CatalogItem
@@ -21,11 +22,13 @@ import kotlinx.coroutines.flow.map
 internal class RoasterFavoritesAdapter(
     private val favorites: RoasterFavorites,
     private val scope: CoroutineScope,
+    private val favoriteCollections: FavoriteCollectionsPrompt? = null,
 ) : RoasterFavoritesPort {
     override fun observeKeys(): Flow<Set<String>> = favorites.observeFavorites().map { rows -> rows.mapTo(mutableSetOf()) { it.roasterFavoriteId } }
     override fun observeErrors(): Flow<String?> = favorites.observeErrors()
 
     override fun change(target: RoasterFavoriteTarget, favorite: Boolean, onFailed: () -> Unit) {
+        favoriteCollections?.let { it.roaster(target.key); return }
         val item = CatalogItem(
             id = target.key, name = target.name, slug = target.key, photoUrl = target.photoUrl,
             address = PublicAddress(target.key, target.canonicalPath, target.revision, target.isAlias),

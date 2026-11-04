@@ -5,6 +5,8 @@ import androidx.compose.foundation.lazy.grid.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.component.*
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
@@ -28,6 +30,10 @@ internal fun SavedCollectionsLibrary(state: SavedCollectionsState, action: (Save
             })
     }) { padding ->
         Column(Modifier.fillMaxSize().padding(padding)) {
+            if (state.signedIn && state.loading && !state.listsLoaded) {
+                SavedCollectionsLibraryShimmer()
+                return@Column
+            }
             SavedCollectionsStatus(state, action)
             LazyVerticalGrid(GridCells.Adaptive(150.dp), contentPadding = PaddingValues(16.dp),
                 horizontalArrangement = Arrangement.spacedBy(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -45,6 +51,24 @@ internal fun SavedCollectionsLibrary(state: SavedCollectionsState, action: (Save
                 if (state.lists.isNotEmpty() && state.lists.none { it.title.contains(state.query, true) })
                     item(span = { GridItemSpan(maxLineSpan) }) { Text(stringResource(Res.string.collections_no_matches)) }
             }
+        }
+    }
+}
+
+@Composable
+private fun SavedCollectionsLibraryShimmer() {
+    val loading = stringResource(Res.string.collections_loading)
+    LazyVerticalGrid(GridCells.Adaptive(150.dp), modifier = Modifier.semantics { contentDescription = loading },
+        contentPadding = PaddingValues(16.dp),
+        horizontalArrangement = Arrangement.spacedBy(16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        item(span = { GridItemSpan(maxLineSpan) }) {
+            CoffeePeekShimmer(Modifier.fillMaxWidth().height(48.dp))
+        }
+        item(span = { GridItemSpan(maxLineSpan) }) {
+            CoffeePeekShimmer(Modifier.width(112.dp).height(24.dp))
+        }
+        items(4) {
+            CoffeePeekShimmer(Modifier.fillMaxWidth().aspectRatio(1f))
         }
     }
 }
@@ -71,3 +95,15 @@ internal fun SavedCollectionSectionTitle(visibility: SavedCollectionVisibility) 
 @Preview @Composable private fun SavedCollectionsLibraryDarkPreview() = SavedCollectionsLibrarySample(true)
 @Preview @Composable private fun SavedCollectionsPrivateOnlyLightPreview() = SavedCollectionsLibrarySample(false, includePublic = false)
 @Preview @Composable private fun SavedCollectionsPrivateOnlyDarkPreview() = SavedCollectionsLibrarySample(true, includePublic = false)
+@Composable private fun SavedCollectionsLoadingSample(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
+    SavedCollectionsLibrary(SavedCollectionsState(SavedCollectionsMode.Library, signedIn = true, loading = true), {})
+}
+@Preview @Composable private fun SavedCollectionsLoadingLightPreview() = SavedCollectionsLoadingSample(false)
+@Preview @Composable private fun SavedCollectionsLoadingDarkPreview() = SavedCollectionsLoadingSample(true)
+@Composable private fun SavedCollectionsRefreshingSample(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
+    SavedCollectionsLibrary(SavedCollectionsState(SavedCollectionsMode.Library, signedIn = true,
+        loading = false, listsLoaded = true, refreshing = true,
+        lists = listOf(SavedCollectionSummary("cached", "Избранное", itemCount = 2))), {})
+}
+@Preview @Composable private fun SavedCollectionsRefreshingLightPreview() = SavedCollectionsRefreshingSample(false)
+@Preview @Composable private fun SavedCollectionsRefreshingDarkPreview() = SavedCollectionsRefreshingSample(true)

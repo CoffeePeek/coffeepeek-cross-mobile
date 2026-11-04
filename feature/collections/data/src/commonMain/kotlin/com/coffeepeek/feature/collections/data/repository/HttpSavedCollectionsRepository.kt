@@ -28,12 +28,15 @@ internal class HttpSavedCollectionsRepository(private val client: HttpClient, pr
     private val coverRequests = Semaphore(4)
     private val defaultCreation = Mutex()
     private val changes = MutableSharedFlow<Unit>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+    private val ownerCache = OwnerCollectionsCache(account)
 
     override fun observeChanges() = changes.asSharedFlow()
+    override fun cachedMine(target: SavedCollectionTarget?) = ownerCache.peek(target)
+    override fun cachedFeatured() = ownerCache.peekFeatured()
 
     override suspend fun mine(target: SavedCollectionTarget?): Result<List<SavedCollectionSummary>> = owned { owner ->
         defaultCreation.lock()
-        try { mineWithDefault(owner, target) }
+        try { mineWithDefault(owner, target).also { ownerCache.record(owner, target, it) } }
         finally { defaultCreation.unlock() }
     }
 
@@ -83,7 +86,7 @@ internal class HttpSavedCollectionsRepository(private val client: HttpClient, pr
             pinRequest(this, owner)
             contentType(ContentType.Application.Json)
             setBody(metadata.toRequest(new = true))
-        }, true)
+        }, true).also { ownerCache.upsert(owner, it.summary) }
     }
 
     override suspend fun update(id: String, metadata: SavedCollectionMetadata, revision: Long): Result<SavedCollection> = mutate { owner ->
@@ -92,7 +95,7 @@ internal class HttpSavedCollectionsRepository(private val client: HttpClient, pr
             pinRequest(this, owner)
             contentType(ContentType.Application.Json)
             setBody(metadata.toRequest(revision))
-        }, true)
+        }, true).also { ownerCache.upsert(owner, it.summary) }
     }
 
     override suspend fun replaceItems(id: String, places: List<CollectionPlace>, revision: Long): Result<SavedCollection> = mutate { owner ->
@@ -101,11 +104,11 @@ internal class HttpSavedCollectionsRepository(private val client: HttpClient, pr
             pinRequest(this, owner)
             contentType(ContentType.Application.Json)
             setBody(SavedItemsDto(places.toSavedItems(), revision))
-        }, true)
+        }, true).also { ownerCache.upsert(owner, it.summary); ownerCache.dropTargets(owner) }
     }
 
     override suspend fun memberships(target: SavedCollectionTarget, collectionIds: Set<String>): Result<List<SavedCollectionSummary>> = mutate { owner ->
-        writeMemberships(owner, target, collectionIds)
+        writeMemberships(owner, target, collectionIds).also { ownerCache.record(owner, target, it) }
     }
 
     override suspend fun changeMemberships(target: SavedCollectionTarget, added: Set<String>, removed: Set<String>): Result<List<SavedCollectionSummary>> = mutate { owner ->
@@ -115,6 +118,7 @@ internal class HttpSavedCollectionsRepository(private val client: HttpClient, pr
         val current = readMine(owner, target).filter { it.containsItem }.map { collectionId(it.id) }.toSet()
         checkOwner(owner)
         writeMemberships(owner, target, (current + additions) - removals, additions, removals)
+            .also { ownerCache.record(owner, target, it) }
     }
 
     private suspend fun writeMemberships(owner: String, target: SavedCollectionTarget, ids: Set<String>,
@@ -129,10 +133,12 @@ internal class HttpSavedCollectionsRepository(private val client: HttpClient, pr
 
     override suspend fun delete(id: String): Result<Unit> = mutate { owner ->
         success(client.delete(api("$path/${collectionId(id)}")) { pinRequest(this, owner) })
+        ownerCache.remove(owner, id)
     }
 
     override suspend fun featuredId(): Result<String?> = owned { owner ->
         envelope<SavedFeaturedDto>(client.get(api("$path/featured")) { pinRequest(this, owner) }).collectionId
+            .also { ownerCache.recordFeatured(owner, it) }
     }
 
     override suspend fun setFeatured(id: String?): Result<Unit> = mutate { owner ->
@@ -141,6 +147,7 @@ internal class HttpSavedCollectionsRepository(private val client: HttpClient, pr
             contentType(ContentType.Application.Json)
             setBody(SavedFeaturedDto(id?.let(::collectionBodyId)))
         })
+        ownerCache.feature(owner, id)
     }
 
     override suspend fun featured(profileSlug: String): Result<SavedCollection?> = request {

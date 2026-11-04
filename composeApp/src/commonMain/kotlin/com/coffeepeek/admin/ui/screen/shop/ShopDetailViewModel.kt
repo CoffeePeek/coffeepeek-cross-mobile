@@ -4,6 +4,7 @@ import com.coffeepeek.admin.analytics.*
 
 import com.coffeepeek.domain.model.ConsumedDrinkOption
 import com.coffeepeek.admin.base.BaseViewModel
+import com.coffeepeek.admin.di.collections.FavoriteCollectionsPrompt
 import com.coffeepeek.admin.feature.favorites.api.RoasterFavorites
 import com.coffeepeek.admin.feature.favorites.api.roasterFavoriteId
 import com.coffeepeek.admin.ui.Navigator
@@ -82,6 +83,7 @@ class ShopDetailViewModel internal constructor(
     private val roasterFavorites: RoasterFavorites,
     private val visibility: AuthorVisibility = AuthorVisibility.None,
     private val onCheckInCreated: () -> Unit = {},
+    private val favoriteCollections: FavoriteCollectionsPrompt? = null,
 ) : BaseViewModel() {
 
     internal val authorVisibility = visibility.visibility
@@ -209,6 +211,7 @@ class ShopDetailViewModel internal constructor(
 
     fun toggleFavorite() {
         val details = _uiState.value.details ?: return
+        favoriteCollections?.let { it.shop(details.shop.publicAddress?.slug ?: details.shop.id); return }
         com.coffeepeek.admin.feature.favorites.api.FavoriteInteractions.change(workScope,
             details.shop.publicAddress?.slug ?: details.shop.id, false, !details.shop.isFavorite,
             action = { mutateFavorite() })
@@ -448,6 +451,7 @@ class ShopDetailViewModel internal constructor(
     }
 
     fun toggleRoasterFavorite(roaster: CatalogItem) {
+        favoriteCollections?.let { prompt -> roaster.address?.slug?.let(prompt::roaster); return }
         val id = roaster.roasterFavoriteId
         val desired = id !in _uiState.value.favoriteRoasterIds
         com.coffeepeek.admin.feature.favorites.api.FavoriteInteractions.change(workScope, id, true, desired,

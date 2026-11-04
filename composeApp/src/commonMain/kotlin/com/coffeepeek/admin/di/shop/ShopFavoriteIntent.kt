@@ -18,18 +18,23 @@ import kotlin.time.TimeSource
 import kotlin.concurrent.atomics.AtomicReference
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
 
+/** What a guest asked for with the Shop heart; the platform decides what happens once they are signed in. */
+internal interface ShopFavoriteIntent {
+    fun remember(shopId: String, favorite: Boolean)
+}
+
 /**
  * What a guest asked for with the Shop heart. Signing in resets navigation, which destroys the shop screen, so the
  * intent lives here: one short-lived entry, in memory only, applied once for the next signed-in session.
  */
 @OptIn(ExperimentalAtomicApi::class)
-internal class ShopFavoriteIntent(
+internal class AppliedShopFavoriteIntent(
     private val sessions: SessionReader,
     private val details: ShopDetailsRepository,
     private val favorites: FavoritesRepository,
     scope: CoroutineScope,
     private val onApplied: suspend (shopId: String, favorite: Boolean) -> Unit = { _, _ -> },
-) {
+) : ShopFavoriteIntent {
     private class Intent(val shopId: String, val favorite: Boolean, val markedAt: TimeMark)
 
     private val pending = AtomicReference<Intent?>(null)
@@ -45,7 +50,7 @@ internal class ShopFavoriteIntent(
         }
     }
 
-    fun remember(shopId: String, favorite: Boolean) {
+    override fun remember(shopId: String, favorite: Boolean) {
         pending.store(Intent(shopId, favorite, TimeSource.Monotonic.markNow()))
     }
 
@@ -80,6 +85,6 @@ internal class ShopFavoriteIntent(
 
 internal fun shopFavoriteIntent(
     sessions: SessionReader, details: ShopDetailsRepository, favorites: FavoritesRepository,
-): ShopFavoriteIntent = ShopFavoriteIntent(sessions, details, favorites,
+): ShopFavoriteIntent = AppliedShopFavoriteIntent(sessions, details, favorites,
     CoroutineScope(SupervisorJob() + Dispatchers.Default),
     onApplied = { shopId, favorite -> FavoriteSync.notifyChanged(shopId, favorite) })
