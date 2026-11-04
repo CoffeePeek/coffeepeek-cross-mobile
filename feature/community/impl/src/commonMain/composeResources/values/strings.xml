@@ -1,4 +1,5 @@
 <resources>
+    <string name="community_leaders">Лидеры</string>
     <!-- Russian only, copied from the production feed (Лента). -->
     <string name="community_title">Лента</string>
     <string name="community_empty">Пока нет опубликованных чек-инов.</string>

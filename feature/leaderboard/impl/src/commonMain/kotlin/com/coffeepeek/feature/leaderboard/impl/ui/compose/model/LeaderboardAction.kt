@@ -8,6 +8,5 @@ internal sealed interface LeaderboardAction {
     data class FeedRefreshed(val key: Long) : LeaderboardAction
     data object Retry : LeaderboardAction
     data class SelectPeriod(val period: LeaderboardPeriod) : LeaderboardAction
-    data class SetExpanded(val expanded: Boolean) : LeaderboardAction
     data class OpenProfile(val authorId: String) : LeaderboardAction
 }

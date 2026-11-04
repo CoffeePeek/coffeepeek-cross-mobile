@@ -58,9 +58,6 @@ fun CommunityScreen(onCreateCheckIn: () -> Unit, notificationsAction: @Composabl
     val state by vm.state.collectAsState()
     TrackFeedViewed(state.firstPageCount, state.timeline == CommunityTimeline.Public)
     val listState = rememberLazyListState()
-    val leaderboardCollapsed by remember {
-        derivedStateOf { listState.firstVisibleItemIndex > 0 || listState.firstVisibleItemScrollOffset > 0 }
-    }
     PrefetchListPhotos(listState, state.items.map { it.id to it.photoThumbnailUrls.take(3) })
     val snackbar = remember { SnackbarHostState() }
     val clearance = LocalFloatingNavClearance.current
@@ -68,7 +65,6 @@ fun CommunityScreen(onCreateCheckIn: () -> Unit, notificationsAction: @Composabl
     var displayedGeneration by rememberSaveable { mutableStateOf(state.sessionGeneration) }
     var homeEditorOpened by rememberSaveable { mutableStateOf(false) }
     var showCreate by androidx.compose.runtime.saveable.rememberSaveable { mutableStateOf(false) }
-    var leaderboardRefresh by remember { mutableLongStateOf(0L) }
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
         if (homeEditorOpened) { homeEditorOpened = false; vm.refresh() }
     }
@@ -126,7 +122,6 @@ fun CommunityScreen(onCreateCheckIn: () -> Unit, notificationsAction: @Composabl
             CoffeePeekPullToRefresh(
                 listState, isRefreshing = state.isLoading && state.items.isNotEmpty(), onRefresh = {
                     vm.refresh("gesture")
-                    leaderboardRefresh++
                 },
                 modifier = Modifier.fillMaxSize().statusBarsPadding().padding(top = padding.calculateTopPadding()),
             ) { scrollModifier ->
@@ -149,9 +144,6 @@ fun CommunityScreen(onCreateCheckIn: () -> Unit, notificationsAction: @Composabl
                             )
                             notificationsAction()
                         }
-                    }
-                    item(key = "leaderboard", contentType = "leaderboard") {
-                        CommunityLeaderboard(leaderboardRefresh, leaderboardCollapsed)
                     }
                     when {
                         state.isLoggedIn == null || (state.isLoading && state.items.isEmpty()) -> item(key = "loading", contentType = "loading") {
