@@ -89,6 +89,12 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
     fun reserveCollectionCovers(owner: String?, input: JsonArray) = savedCollections.reserve(owner, input)
     fun collectionCoverKey(path: String, owner: String?) = savedCollections.coverKey(path, owner)
 
+    fun publicProfileAvailable(slug: String): Boolean = when (slug) {
+        "sandbox" -> true
+        FRIEND_SLUG -> FRIEND_ID !in blocked
+        else -> false
+    }
+
     fun handle(request: HttpRequestData, body: JsonElement?): Pair<HttpStatusCode, JsonObject>? {
         val path = request.url.encodedPath.lowercase()
         val method = request.method

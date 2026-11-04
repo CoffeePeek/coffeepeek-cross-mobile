@@ -10,7 +10,7 @@ import com.coffeepeek.admin.ui.component.GuestAuthCard
 import com.coffeepeek.admin.ui.component.LocalFloatingNavClearance
 import com.coffeepeek.admin.ui.screen.profile.SettingsScreenRenderer
 import com.coffeepeek.core.session.SessionReader
-import com.coffeepeek.feature.collections.api.CollectionsEntry
+import com.coffeepeek.admin.di.profile.ProfileDisplayPreferences
 import com.coffeepeek.domain.repository.ShopRepository
 import com.coffeepeek.feature.settings.api.CityEntry
 import com.coffeepeek.feature.settings.api.LanguageEntry
@@ -86,7 +86,6 @@ private fun androidSettingsSlots() = SettingsSlots(
     },
     accountSwitch = { org.koin.compose.koinInject<com.coffeepeek.feature.ownership.api.BusinessOwnershipEntry>().AccountSwitch() },
     profileCollectionPreference = {
-        org.koin.compose.koinInject<CollectionsEntry>().ProfilePreference(
-            onSignIn = { Navigator.navigate(Navigator.Screen.Auth) }, modifier = Modifier)
+        ProfileDisplayPreferences()
     },
 )

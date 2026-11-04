@@ -83,4 +83,7 @@
     <string name="collections_profile_none">Не паказваць</string>
     <string name="collections_featured_title">Падборка</string>
     <string name="collections_profile_choice_hint">У профілі можна паказаць адну публічную падборку.</string>
+    <string name="collections_profile_show">Паказваць падборку</string>
+    <string name="collections_profile_choose">Выбраць падборку</string>
+    <string name="collections_profile_no_public">Стварыце публічную падборку, каб паказаць яе ў профілі.</string>
 </resources>

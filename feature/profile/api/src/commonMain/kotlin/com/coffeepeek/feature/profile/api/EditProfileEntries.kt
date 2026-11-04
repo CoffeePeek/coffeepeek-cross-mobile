@@ -13,6 +13,8 @@ class EditProfileSlots(
      * still reading the file; [onPicked] receives the single chosen image.
      */
     val photoPicker: @Composable (show: Boolean, onDismiss: () -> Unit, onLoading: (Boolean) -> Unit, onPicked: (ProfileAvatarImage) -> Unit) -> Unit,
+    /** Account-owned profile section preferences; the host supplies their state and persistence. */
+    val displayPreferences: @Composable () -> Unit = {},
 )
 
 /** "Редактировать профиль". Caller owns navigation. The form lives in the host's ViewModel store, so it survives rotation. */

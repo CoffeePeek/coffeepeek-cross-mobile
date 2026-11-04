@@ -103,6 +103,7 @@ internal fun OwnProfileScreen(
                 onShare = {}, onOpenCheckIns = onOpenCheckIns,
                 own = OwnProfileExtras(
                     onEditProfile = onEditProfile, onOpenFavorites = onOpenFavorites, onOpenCheckIns = onOpenCheckIns,
+                    onOpenContributions = onOpenContributions,
                     topBarActions = actions,
                     favoritesPreview = { header -> slots.favoritesPreview(onOpenShop, onOpenRoaster, header) },
                     checkInCount = profile.checkInCount,
@@ -135,6 +136,8 @@ internal fun OwnProfileScreen(
                             nickname = profile.userName, avatarUrl = profile.avatarUrl, about = profile.about, image = slots.shared.image,
                             onEditProfile = onEditProfile, onAvatarClick = onEditProfile,
                             stats = PublicProfileStats(profile.checkInCount, profile.addedShopsCount, profile.addedRoastersCount, profile.followersCount),
+                            onShopsClick = { onOpenContributions(ProfileContribution.Shops) },
+                            onRoastersClick = { onOpenContributions(ProfileContribution.Roasters) },
                         )
                         slots.activityPreview(onOpenCheckIns)
                         if (state.error != null || state.refreshError != null) slots.loadError { vm.onAction(OwnProfileAction.Refresh) }

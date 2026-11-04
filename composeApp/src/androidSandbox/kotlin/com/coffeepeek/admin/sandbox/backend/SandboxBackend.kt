@@ -36,6 +36,7 @@ internal class SandboxBackend(private val samplePhoto: ByteArray,
         key in uploaded && images["/media/$key"]?.size?.toLong() == size
     }
     private val shelf = SandboxShelfBackend(today) { it in uploaded }
+    private val shelfProfile = SandboxShelfProfileBackend(shelf, application::publicProfileAvailable)
     /** Settings fixtures (see [SandboxApplicationBackend]); [reset] returns both to their defaults. */
     var updatePolicy: SandboxUpdatePolicy
         get() = application.updatePolicy
@@ -66,6 +67,10 @@ internal class SandboxBackend(private val samplePhoto: ByteArray,
         collectionCover(request, mode)?.let { (status, bytes) ->
             return@mockEngine respond(bytes, status, headersOf(HttpHeaders.ContentType to listOf("image/jpeg"),
                 HttpHeaders.CacheControl to listOf("private, no-store")))
+        }
+        publicShelfCard(request, mode)?.let { (status, bytes) ->
+            return@mockEngine respond(bytes, status, headersOf(HttpHeaders.ContentType to listOf("image/jpeg"),
+                HttpHeaders.CacheControl to listOf("no-store"), "X-Content-Type-Options" to listOf("nosniff")))
         }
         if (request.url.host == "sandbox.coffeepeek.invalid" && request.url.encodedPath.startsWith("/media/")) {
             val bytes = photo(request.url.toString())
@@ -118,6 +123,15 @@ internal class SandboxBackend(private val samplePhoto: ByteArray,
         return (if (bytes == null) HttpStatusCode.NotFound else HttpStatusCode.OK) to (bytes ?: byteArrayOf())
     }
     private val protectedPhotoPath = Regex("/api/v1/check-ins/([^/]+)/photos/[^/]+(?:/variants/[A-Za-z0-9_-]+/[1-9][0-9]*/[a-z]+\\.[a-z]+)?")
+    private val publicShelfPhotoPath = Regex("/api/v1/profiles/[^/]+/shelf/bags/[^/]+/photos/[^/]+")
+
+    private fun publicShelfCard(request: HttpRequestData, mode: SandboxScenario): Pair<HttpStatusCode, ByteArray>? {
+        if (request.url.host != "sandbox.coffeepeek.invalid" || request.method != HttpMethod.Get ||
+            !publicShelfPhotoPath.matches(request.url.encodedPath)) return null
+        if (mode == SandboxScenario.ServerError) return HttpStatusCode.InternalServerError to byteArrayOf()
+        val bytes = synchronized(lock) { shelfProfile.cardKey(request.url.encodedPath)?.let { images["/media/$it"]?.copyOf() } }
+        return (if (bytes == null) HttpStatusCode.NotFound else HttpStatusCode.OK) to (bytes ?: byteArrayOf())
+    }
     // Owner-scoped media: uncached, ETag-revalidated, and a blocked author's photo disappears (404, no existence leak).
     private fun protectedPhoto(request: HttpRequestData, mode: SandboxScenario, checkInId: String): Triple<HttpStatusCode, Headers, ByteArray> {
         val etag = "\"sandbox-photo\""
@@ -191,6 +205,7 @@ internal class SandboxBackend(private val samplePhoto: ByteArray,
         }
         application.reset(populated)
         shelf.reset(populated)
+        shelfProfile.reset()
         shelf.fixtureCards.forEach { (key, front) -> images["/media/$key"] = bagCard(front) }
     }
 
@@ -266,7 +281,9 @@ internal class SandboxBackend(private val samplePhoto: ByteArray,
                 else -> fail(HttpStatusCode.MethodNotAllowed)
             }
         }
-        shelf.handle(path, request.method, request.url.parameters, body(request) as? JsonObject ?: buildJsonObject {})?.let { return it }
+        val input = body(request) as? JsonObject ?: buildJsonObject {}
+        shelfProfile.handle(request, input)?.let { return it }
+        shelf.handle(path, request.method, request.url.parameters, input)?.let { return it }
         return application.handle(request, body(request)) ?: fail(HttpStatusCode.NotFound) // Never fall back to a live transport.
     }
 

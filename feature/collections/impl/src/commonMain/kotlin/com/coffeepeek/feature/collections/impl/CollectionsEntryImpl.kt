@@ -62,6 +62,12 @@ private class CollectionsEntryImpl(private val repository: CollectionsRepository
     }
 
     @Composable
+    override fun OwnerProfile(onOpenCollection: (String) -> Unit, onSignIn: () -> Unit, fallback: @Composable () -> Unit, modifier: Modifier) {
+        SavedContent(SavedCollectionsMode.Preference, callbacks = callbacks({}, onSignIn), openCollection = onOpenCollection,
+            ownerProfileFallback = fallback, modifier = modifier)
+    }
+
+    @Composable
     override fun Featured(profileSlug: String, onOpenCollection: (String) -> Unit, modifier: Modifier) {
         SavedContent(SavedCollectionsMode.Featured, profileSlug = profileSlug, openCollection = onOpenCollection, modifier = modifier)
     }
@@ -84,11 +90,11 @@ private class CollectionsEntryImpl(private val repository: CollectionsRepository
     @Composable
     private fun SavedContent(mode: SavedCollectionsMode, id: String? = null, target: SavedCollectionTarget? = null,
         profileSlug: String? = null, callbacks: CollectionsCallbacks = callbacks(), editor: (String?) -> Unit = {},
-        openCollection: (String) -> Unit = {}, modifier: Modifier) {
-        val model = viewModel(key = "saved:$instance:$mode:$id:$target:$profileSlug") {
+        openCollection: (String) -> Unit = {}, ownerProfileFallback: (@Composable () -> Unit)? = null, modifier: Modifier) {
+        val model = viewModel(key = "saved:$instance:$mode:$id:$target:$profileSlug:${ownerProfileFallback != null}") {
             SavedCollectionsViewModel(saved, repository, account, mode, id, target, profileSlug)
         }
-        SavedCollectionsScreen(model, saved, repository, decodePhoto, coverPicker, callbacks, editor, openCollection, modifier)
+        SavedCollectionsScreen(model, saved, repository, decodePhoto, coverPicker, callbacks, editor, openCollection, modifier, ownerProfileFallback)
     }
 
     private fun callbacks(back: () -> Unit = {}, signIn: () -> Unit = {}) = CollectionsCallbacks(back, signIn, {}, {}, {}, { _, _ -> })

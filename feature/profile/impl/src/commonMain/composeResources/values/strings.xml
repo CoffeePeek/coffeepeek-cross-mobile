@@ -138,4 +138,7 @@
     <string name="profile_deletion_wait_hint">После подтверждения вы автоматически выйдете из приложения.</string>
     <string name="profile_deletion_resend">Отправить письмо ещё раз</string>
     <string name="profile_deletion_resend_wait">Повторная отправка пока недоступна</string>
+    <string name="profile_edit_display_preferences">Отображать в профиле</string>
+    <string name="profile_edit_display_shelf">Кофейная полка</string>
+    <string name="profile_edit_display_autosave">Эти настройки сохраняются сразу.</string>
 </resources>
