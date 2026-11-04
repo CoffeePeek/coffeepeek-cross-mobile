@@ -74,7 +74,7 @@ internal fun PublicProfileActivityCalendar(
             }
         }
         when {
-            isLoading -> ProfileSectionLoader(180.dp)
+            isLoading && displayedActivity == null -> ProfileSectionLoader(180.dp)
             error != null || displayedActivity == null -> Column(Modifier.fillMaxWidth().padding(vertical = 20.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(stringResource(Res.string.profile_activity_failed), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 TextButton(onClick = onRetry) { Text(stringResource(Res.string.profile_retry)) }

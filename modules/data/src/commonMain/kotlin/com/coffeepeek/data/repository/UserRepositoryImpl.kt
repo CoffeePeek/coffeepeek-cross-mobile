@@ -32,6 +32,7 @@ class UserRepositoryImpl(
     override fun observeProfile(): StateFlow<UserProfile?> = _profile.asStateFlow()
 
     private var cachedForUserId: String? = null
+    private var cachedForGeneration: Long? = null
     private val publicAvatarCache = mutableMapOf<String, String?>()
 
     init {
@@ -59,11 +60,14 @@ class UserRepositoryImpl(
         fetchAndCacheProfile()
 
     override suspend fun getMe(): Result<UserProfile> {
-        val session = sessionRepository.peekSession()
-        if (sessionRepository.isActiveSession(session) && session?.userId == cachedForUserId) {
-            _profile.value?.let { return Result.success(it) }
-        }
+        cachedProfile()?.let { return Result.success(it) }
         return refreshProfile()
+    }
+
+    override fun cachedProfile(): UserProfile? {
+        val session = sessionRepository.peekSession()
+        return _profile.value.takeIf { sessionRepository.isActiveSession(session) && session?.userId != null &&
+            session.userId == cachedForUserId && sessionRepository.accountGeneration() == cachedForGeneration }
     }
 
     override suspend fun getPublicAvatarUrl(userId: String): Result<String?> {
@@ -99,10 +103,12 @@ class UserRepositoryImpl(
      */
     private suspend fun <T> forOwnerOfTheRequest(request: suspend () -> Result<T>, apply: (T) -> Unit): Result<Unit> {
         val owner = sessionRepository.peekSession()
+        val generation = sessionRepository.accountGeneration()
         return request().fold(
             onSuccess = { value ->
                 val current = sessionRepository.peekSession()
-                if (!sessionRepository.isActiveSession(current) || current?.userId != owner?.userId) {
+                if (!sessionRepository.isActiveSession(current) || current?.userId != owner?.userId ||
+                    sessionRepository.accountGeneration() != generation) {
                     Result.failure(IllegalStateException("Сессия изменилась"))
                 } else {
                     apply(value)
@@ -130,28 +136,32 @@ class UserRepositoryImpl(
 
     private suspend fun fetchAndCacheProfile(): Result<UserProfile> {
         val session = sessionRepository.peekSession()
+        val generation = sessionRepository.accountGeneration()
         if (!sessionRepository.isActiveSession(session)) {
             clearProfile()
             return Result.failure(IllegalStateException("Сессия завершена"))
         }
         return userApiService.getMe().fold(
-            onSuccess = { dto ->
-                val current = sessionRepository.peekSession()
-                if (current?.userId != session?.userId || !sessionRepository.isActiveSession(current)) {
-                    Result.failure(IllegalStateException("Сессия изменилась"))
-                } else {
-                    val profile = dto.toUserProfile()
-                    cachedForUserId = session?.userId
-                    _profile.value = profile
-                    Result.success(profile)
-                }
-            },
-            onFailure = { Result.failure(it) },
-        )
+            onSuccess = { cacheProfile(it, session?.userId, generation) },
+            onFailure = { Result.failure(it) })
+    }
+
+    private fun cacheProfile(dto: UserProfileDto, owner: String?, generation: Long): Result<UserProfile> {
+        val current = sessionRepository.peekSession()
+        if (current?.userId != owner || !sessionRepository.isActiveSession(current) ||
+            sessionRepository.accountGeneration() != generation) {
+            return Result.failure(IllegalStateException("Сессия изменилась"))
+        }
+        val profile = dto.toUserProfile()
+        cachedForUserId = owner
+        cachedForGeneration = generation
+        _profile.value = profile
+        return Result.success(profile)
     }
 
     private fun clearProfile() {
         cachedForUserId = null
+        cachedForGeneration = null
         _profile.value = null
     }
 }

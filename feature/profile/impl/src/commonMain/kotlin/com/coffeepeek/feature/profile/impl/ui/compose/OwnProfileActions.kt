@@ -19,10 +19,6 @@ internal fun OwnProfileActions(
     val actions = listOf(
         CoffeePeekMenuAction(stringResource(Res.string.profile_menu_shop_changes), CoffeePeekIcons.NoteEdit,
             onClick = { onContributions(ProfileContribution.Changes) }),
-        CoffeePeekMenuAction(stringResource(Res.string.profile_menu_submitted_shops), CoffeePeekIcons.Add,
-            onClick = { onContributions(ProfileContribution.Shops) }),
-        CoffeePeekMenuAction(stringResource(Res.string.profile_menu_submitted_roasters), CoffeePeekIcons.CoffeeBean,
-            onClick = { onContributions(ProfileContribution.Roasters) }),
         CoffeePeekMenuAction(stringResource(Res.string.profile_menu_blocked_authors), CoffeePeekIcons.VisibilityOff,
             onClick = onBlockedAuthors),
         CoffeePeekMenuAction(stringResource(Res.string.profile_menu_logout), CoffeePeekIcons.Logout,

@@ -48,4 +48,13 @@ class ProfileSlots(
     val checkInCard: ProfileCheckInCard,
     val photoPrefetch: ProfilePhotoPrefetch,
     val activityPreview: ProfileActivityPreview,
+    /** Only the profile's explicitly featured public collection; empty when hidden. */
+    val featuredCollection: @Composable (profileSlug: String) -> Unit = {},
+    /** Read-only shelf projection; [ownerView] lets the shelf keep only the owner's own cached preview across route recreation. */
+    val shelfPreview: @Composable (profileSlug: String, ownerView: Boolean) -> Unit = { _, _ -> },
+    /** The signed-in owner's saved collections, including private lists. */
+    val ownerCollection: @Composable () -> Unit = {},
+    val onOpenOwnCollections: () -> Unit = {},
+    /** Called only while viewing the signed-in owner's counters. */
+    val onOwnContributions: (ProfileContribution) -> Unit = {},
 )

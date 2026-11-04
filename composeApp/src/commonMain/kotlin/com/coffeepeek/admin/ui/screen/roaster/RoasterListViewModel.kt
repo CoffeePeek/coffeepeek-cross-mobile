@@ -3,6 +3,7 @@ package com.coffeepeek.admin.ui.screen.roaster
 import com.coffeepeek.admin.analytics.*
 
 import com.coffeepeek.admin.base.BaseViewModel
+import com.coffeepeek.admin.di.collections.FavoriteCollectionsPrompt
 import com.coffeepeek.admin.feature.favorites.api.RoasterFavorites
 import com.coffeepeek.admin.feature.favorites.api.roasterFavoriteId
 import com.coffeepeek.admin.ui.Navigator
@@ -63,6 +64,7 @@ internal class RoasterListViewModel(
     private val roasters: RoasterRepository,
     private val favorites: RoasterFavorites,
     private val sessions: SessionRepository,
+    private val favoriteCollections: FavoriteCollectionsPrompt? = null,
 ) : BaseViewModel() {
     private val _state = MutableStateFlow(RoasterListUiState())
     val state = _state.asStateFlow()
@@ -121,6 +123,7 @@ internal class RoasterListViewModel(
     }
 
     fun toggleFavorite(item: RoasterListItem) {
+        favoriteCollections?.let { prompt -> item.catalog.address?.slug?.let(prompt::roaster); return }
         val id = item.catalog.roasterFavoriteId
         val desired = id !in _state.value.favoriteIds
         com.coffeepeek.admin.feature.favorites.api.FavoriteInteractions.change(workScope, id, true, desired,

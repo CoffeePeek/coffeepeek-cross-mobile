@@ -70,6 +70,14 @@ kotlin {
             implementation(libs.ktor.client.okhttp)
         }
         commonMain.dependencies {
+            implementation(project(module.feature.leaderboard.api))
+            implementation(project(module.feature.leaderboard.domain))
+            implementation(project(module.feature.leaderboard.data))
+            implementation(project(module.feature.leaderboard.impl))
+            implementation(project(module.feature.collections.api))
+            implementation(project(module.feature.collections.domain))
+            implementation(project(module.feature.collections.data))
+            implementation(project(module.feature.collections.impl))
             // Shelf, catalogue and home check-ins, composed on both platforms; the iOS scanner runs ONNX Runtime through shelf data.
             implementation(project(module.feature.shelf.api))
             implementation(project(module.feature.shelf.domain))
@@ -172,6 +180,7 @@ kotlin {
         // Test the exact sandbox transport without adding it to the live APK or requiring a new test variant.
         androidUnitTest {
             kotlin.srcDir("src/androidSandbox/kotlin/com/coffeepeek/admin/sandbox/backend")
+            kotlin.srcDir("src/androidSandbox/kotlin/com/coffeepeek/admin/sandbox/di")
             kotlin.srcDir("src/androidSandbox/kotlin/com/coffeepeek/admin/sandbox/packscan/geometry")
             kotlin.srcDir("src/androidSandbox/kotlin/com/coffeepeek/admin/sandbox/packscan/imaging")
         }
@@ -199,7 +208,7 @@ val appBuildNumberOffset = appVersionConfig.map { config ->
         .find(config)?.groupValues?.get(1)?.toInt() ?: error("BUILD_NUMBER_OFFSET is required")
 }
 val appVersionCode: Provider<Int> = gitCommitCount.zip(appBuildNumberOffset) { count, offset -> count + offset }
-val appVersionName: Provider<String> = appVersionCode.map { "1.1.5.$it" }
+val appVersionName: Provider<String> = appVersionCode.map { "1.1.6.$it" }
 
 tasks.register<PrintValueTask>("printVersionName") {
     group = "versioning"
@@ -383,7 +392,10 @@ androidComponents.onVariants(androidComponents.selector().withBuildType("sandbox
             "com.coffeepeek.feature.ownership.impl.ui.OwnershipViewModel",
             "com.coffeepeek.admin.sandbox.backend.SandboxBackend", "com.coffeepeek.admin.sandbox.SandboxApplication",
             "com.coffeepeek.feature.homecheckin.data.repository.HomePreparationRepositoryFactoryKt",
-            "com.coffeepeek.admin.ui.Navigator"))
+            "com.coffeepeek.admin.ui.Navigator",
+            "com.coffeepeek.admin.di.leaderboard.LeaderboardModuleKt",
+            "com.coffeepeek.feature.leaderboard.impl.LeaderboardEntryImplKt",
+            "com.coffeepeek.feature.leaderboard.data.repository.LeaderboardRepositoryFactoryKt"))
     }
     val manifest = variant.artifacts.get(SingleArtifact.MERGED_MANIFEST)
     val verification = tasks.register("verify${variant.name.replaceFirstChar { it.uppercaseChar() }}Isolation") {
@@ -427,6 +439,9 @@ androidComponents {
                 "com.coffeepeek.api.CoffeePeekRepo",
                 "com.coffeepeek.data.di.DataModuleKt",
                 "com.coffeepeek.admin.di.roaster.RoasterModuleKt",
+                "com.coffeepeek.admin.di.leaderboard.LeaderboardModuleKt",
+                "com.coffeepeek.feature.leaderboard.impl.LeaderboardEntryImplKt",
+                "com.coffeepeek.feature.leaderboard.data.repository.LeaderboardRepositoryFactoryKt",
                 "com.coffeepeek.admin.di.roaster.FeatureRoasterScreenRenderer",
                 "com.coffeepeek.feature.roaster.impl.RoasterEntryImplsKt",
                 "com.coffeepeek.feature.roaster.data.repository.RoasterRepositoryFactoryKt",

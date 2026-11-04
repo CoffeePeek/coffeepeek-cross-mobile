@@ -1,17 +1,19 @@
 package com.coffeepeek.admin.di.profile
 
 import androidx.compose.runtime.Composable
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.padding
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import coffeepeek.composeapp.generated.resources.Res
 import coffeepeek.composeapp.generated.resources.local_data_cleanup_error
 import com.coffeepeek.admin.auth.GoogleAuth
-import com.coffeepeek.admin.feature.favorites.api.FavoritesProfilePreview
 import com.coffeepeek.admin.feature.profile.domain.PublicProfileRepository
 import com.coffeepeek.admin.settings.ReviewDraftStore
 import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.ui.component.LoadErrorContent
 import com.coffeepeek.admin.ui.component.LocalFloatingNavClearance
-import com.coffeepeek.admin.ui.screen.contributions.ContributionKind
 import com.coffeepeek.admin.ui.screen.profile.OwnProfileScreenRenderer
 import com.coffeepeek.admin.ui.screen.profile.PersonalProfileActivityCalendar
 import com.coffeepeek.feature.notifications.api.NotificationFeature
@@ -24,8 +26,8 @@ import com.coffeepeek.feature.authorblocking.api.AuthorBlockActions
 import com.coffeepeek.feature.authorblocking.api.AuthorVisibility
 import com.coffeepeek.feature.profile.api.OwnProfileEntry
 import com.coffeepeek.feature.profile.api.OwnProfileSlots
-import com.coffeepeek.feature.profile.api.ProfileContribution
 import com.coffeepeek.feature.profile.api.ProfileSignOutPort
+import com.coffeepeek.feature.profile.api.ProfileSnapshotStore
 import com.coffeepeek.feature.profile.impl.createOwnProfileEntry
 import org.jetbrains.compose.resources.getString
 
@@ -39,23 +41,14 @@ internal class OwnProfileFeatureScreenRenderer(private val entry: OwnProfileEntr
             onOpenRoaster = { Navigator.navigate(Navigator.Screen.RoasterDetail(it)) },
             onLogin = { Navigator.navigate(Navigator.Screen.Auth) },
             onOpenUser = { slug, nickname, avatar -> Navigator.navigate(Navigator.Screen.UserProfile(slug, nickname, avatar)) },
-            onOpenFavorites = {
-                ProfileAnalytics.favoritesOpened()
-                Navigator.navigate(Navigator.Screen.Favorites)
-            },
+            onOpenFavorites = ::openProfileCollections,
             onOpenCheckIns = { Navigator.navigate(Navigator.Screen.VisitedPlaces) },
-            onOpenContributions = { kind -> Navigator.navigate(Navigator.Screen.MyContributions(kind.toContributionKind().name)) },
+            onOpenContributions = ::openProfileContributions,
             onOpenBlockedAuthors = { Navigator.navigate(Navigator.Screen.BlockedAuthors) },
             modifier = Modifier,
             bottomClearance = LocalFloatingNavClearance.current,
         )
     }
-}
-
-private fun ProfileContribution.toContributionKind() = when (this) {
-    ProfileContribution.Changes -> ContributionKind.Changes
-    ProfileContribution.Shops -> ContributionKind.Shops
-    ProfileContribution.Roasters -> ContributionKind.Roasters
 }
 
 /** The legacy logout order: push unregistration, server logout (failure shown), platform sign-out, then the signed-in user's local drafts. */
@@ -84,15 +77,9 @@ internal fun ownProfileFeatureScreenRenderer(
     drafts: ReviewDraftStore,
     visibility: AuthorVisibility,
     blocks: AuthorBlockActions,
+    snapshots: ProfileSnapshotStore = ProfileSnapshotStore.None,
 ): OwnProfileFeatureScreenRenderer {
     val checkIns = ProfilePublicCheckIns(repository)
-    val slots = OwnProfileSlots(
-        shared = profileSlots(checkIns),
-        favoritesPreview = { openShop, openRoaster, header -> FavoritesProfilePreview(openShop, openRoaster, header) },
-        activityCalendar = { openShop, openCheckIns -> PersonalProfileActivityCalendar(onOpenShop = openShop, onOpenCheckIns = openCheckIns) },
-        activityPreview = { onClick -> PersonalProfileActivityPreview(onClick) },
-        loadError = { onRetry -> LoadErrorContent(onRetry = onRetry) },
-    )
     return OwnProfileFeatureScreenRenderer(createOwnProfileEntry(
         data = repository,
         checkIns = checkIns,
@@ -100,6 +87,20 @@ internal fun ownProfileFeatureScreenRenderer(
         signOut = ProfileSignOut(notifications, auth, drafts),
         visibility = AppProfileAuthorVisibility(visibility),
         authorActions = AppProfileAuthorActions(blocks),
-        slots = slots,
+        slots = ownProfileSlots(checkIns),
+        snapshots = snapshots,
     ))
 }
+
+private fun ownProfileSlots(checkIns: ProfilePublicCheckIns) = OwnProfileSlots(
+        shared = profileSlots(checkIns),
+        favoritesPreview = { _, _, header ->
+            Column {
+                Box(Modifier.padding(horizontal = 16.dp)) { header() }
+                ProfileOwnerCollection()
+            }
+        },
+        activityCalendar = { openShop, openCheckIns -> PersonalProfileActivityCalendar(onOpenShop = openShop, onOpenCheckIns = openCheckIns) },
+        activityPreview = { onClick -> PersonalProfileActivityPreview(onClick) },
+        loadError = { onRetry -> LoadErrorContent(onRetry = onRetry) },
+    )

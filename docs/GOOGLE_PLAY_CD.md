@@ -29,7 +29,7 @@ Secrets: `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_AL
 
 ## Версии и повторные запуски
 
-Публичная версия Android — `1.1.5.N`, где `N` равен `versionCode`. Публичная версия iOS задаётся вручную в `iosApp/Configuration/Shared.xcconfig`: `MARKETING_VERSION = 1.1.5`; проверка release-конфигурации требует согласовать её с Android. Номер сборки (`versionCode` / `CFBundleVersion`) — `BUILD_NUMBER_OFFSET + git rev-list --count HEAD`; фиксированный сдвиг `1000` сохраняет рост относительно ранее опубликованных кодов, которые считали историю всех веток. Android добавляет номер сборки к публичной версии; iOS хранит его отдельно. Повторный запуск CI для того же коммита не повышает номер. Следующий versionCode должен быть больше уже загруженного в Play. Не переписывайте историю main. При ошибке одного канала повторяйте только failed jobs.
+Публичная версия Android — `1.1.6.N`, где `N` равен `versionCode`. Публичная версия iOS задаётся вручную в `iosApp/Configuration/Shared.xcconfig`: `MARKETING_VERSION = 1.1.6`; проверка release-конфигурации требует согласовать её с Android. Номер сборки (`versionCode` / `CFBundleVersion`) — `BUILD_NUMBER_OFFSET + git rev-list --count HEAD`; фиксированный сдвиг `1000` сохраняет рост относительно ранее опубликованных кодов, которые считали историю всех веток. Android добавляет номер сборки к публичной версии; iOS хранит его отдельно. Повторный запуск CI для того же коммита не повышает номер. Следующий versionCode должен быть больше уже загруженного в Play. Не переписывайте историю main. При ошибке одного канала повторяйте только failed jobs.
 
 Production-сборки публикуются только из `main`. CI не активирует APK и не меняет серверные актуальный/минимальный коды. После доступности сборки в нужном канале администратор сохраняет политику Android/iOS на экране «Приложения». Актуальный код Android относится к Google Play; production APK выбирается отдельно в таблице релизов. Минимум Android общий для обоих каналов, поэтому его повышают только после доступности нужной сборки в обоих каналах.
 
@@ -68,3 +68,21 @@ Release tasks: `:composeApp:assembleDirectRelease :composeApp:bundlePlayRelease`
 Объединены `develop` (`bcba3a3c`) и `main` (`3619adec`). Android использует `1.1.1.N`, где `N` равен `versionCode`; сохранены счётчик `HEAD`, сдвиг `1000`, публикация только из `main` и ручная серверная политика обновлений. Версия iOS остаётся в `MARKETING_VERSION`.
 
 Проверено до merge-коммита, на объединённых исходниках: все 28 Python release-тестов прошли без повторов; `printVersionName`/`printVersionCode` и metadata APK совпали (`1.1.1.1953` / `1953`). `assembleDirectDebug` и его проверка классов DEX прошли с `--max-workers=6`. Merge-коммит увеличит счётчик истории; номер в последующей сборке пересчитывается из её `HEAD`. Устройство не использовалось; iOS archive, установки, подпись Release и публикация в каналы не проверялись.
+
+## Подготовка 1.1.6 — 4 ноября 2026
+
+Android `1.1.6.N` и iOS `MARKETING_VERSION = 1.1.6` согласованы перед
+слиянием `develop` в `main` через PR #300. Проверенная база: `926dd8f5`
+плюс изменения в `codex/migration-release-1-1-6`. На ней Gradle напечатал
+`1.1.6.2709` / `2709`; merge-коммит увеличит номер сборки из истории HEAD.
+
+Исправлены оба замечания PR: повторный OpenLinks не отменяет текущую загрузку
+(добавлен unit-тест с задержанным ответом), iOS FavoritesDestination сохранён
+в варианте текущего main по Android-first ограничению AGENTS.md.
+
+JDK 21, `--max-workers=6`: collections impl 72 и application Direct Debug
+1005 unit/contract tests прошли (1077, без ошибок/пропусков), как и 29 Python
+release-тестов, Direct Debug assembly и DEX-проверка. UI/instrumentation/screenshot
+тесты не создавались и не запускались; устройства не использовались.
+Подписанные Android artifacts, Play/Firebase/сайт и iOS/TestFlight проверяются
+фактическими workflow после слияния. Серверная политика обновлений не менялась.

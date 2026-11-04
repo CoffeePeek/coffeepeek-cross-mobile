@@ -55,12 +55,25 @@ jobs:
         run: printf 'API_BASE_URL=https://example.com/\nGOOGLE_WEB_CLIENT_ID=\n' > local.properties
 
       - name: Test APK runtime verification
-        run: ./gradlew -p build-logic --no-daemon :build-logic-utils:test
+        run: ./gradlew -p build-logic --no-daemon --max-workers=6 :build-logic-utils:test
 
-      - name: Build and check Android
+      # Keep dex merging out of the combined build/test/lint heap. Each step gets a fresh daemon.
+      - name: Build Direct Debug
         run: >-
           ./gradlew --no-daemon --max-workers=6
+          '-Dorg.gradle.jvmargs=-Xmx6g -Dfile.encoding=UTF-8'
           :core:design-system:compileCommonMainKotlinMetadata
-          :composeApp:assembleDirectDebug :composeApp:assemblePlayDebug
+          :composeApp:assembleDirectDebug
+
+      - name: Build Play Debug
+        run: >-
+          ./gradlew --no-daemon --max-workers=6
+          '-Dorg.gradle.jvmargs=-Xmx6g -Dfile.encoding=UTF-8'
+          :composeApp:assemblePlayDebug
+
+      - name: Android unit tests and lint
+        run: >-
+          ./gradlew --no-daemon --max-workers=6
+          '-Dorg.gradle.jvmargs=-Xmx6g -Dfile.encoding=UTF-8'
           testDebugUnitTest :composeApp:testDirectDebugUnitTest :composeApp:testPlayDebugUnitTest
           lintDebug :composeApp:lintDirectDebug :composeApp:lintPlayDebug

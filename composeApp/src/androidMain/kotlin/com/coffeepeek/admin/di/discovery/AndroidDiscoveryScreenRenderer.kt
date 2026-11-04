@@ -5,6 +5,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import com.coffeepeek.admin.ui.screen.checkins.CheckInCreateButton
 import com.coffeepeek.admin.settings.CityPreference
+import com.coffeepeek.admin.di.collections.FavoriteCollectionsPrompt
 import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.ui.component.LocalFloatingNavClearance
 import com.coffeepeek.admin.ui.screen.main.CheckInTabContent
@@ -52,8 +53,9 @@ internal fun androidDiscoveryScreenRenderer(
     favorites: FavoritesRepository,
     cityPreference: CityPreference,
     roasters: RoasterScreenRenderer,
+    favoriteCollections: FavoriteCollectionsPrompt,
 ): DiscoveryScreenRenderer {
-    val favoriteAdapter = AppDiscoveryFavorites(favorites)
+    val favoriteAdapter = AppDiscoveryFavorites(favorites, favoriteCollections)
     val repository = createDiscoveryRepository(client, favoriteAdapter::favoriteIds, roasterEntries(shops))
     val slots = DiscoveryRoasterSlots(
         preview = { context -> roasters.DiscoverySection(context.query, context.selectedRoasterIds, context.favoritesOnly) },

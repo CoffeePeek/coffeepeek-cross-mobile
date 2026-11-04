@@ -23,6 +23,7 @@ import platform.Foundation.localTimeZone
  * Shelf data, scanner and screens for iOS; resolving definitions performs no network, session, file or model work.
  */
 internal fun iosShelfModule(apiBaseUrl: String = Constants.BASE_URL, modelUrl: (String) -> String = ::infoPlistString) = module {
+    includes(shelfProfileModule(apiBaseUrl))
     single<ShelfRepository> {
         val client = get<CoffeePeekClient>()
         createShelfRepository(client.client, client.uploadClient, apiBaseUrl, SessionShelfAccount(get<SessionReader>()))

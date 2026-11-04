@@ -120,7 +120,9 @@ fun CommunityScreen(onCreateCheckIn: () -> Unit, notificationsAction: @Composabl
             snackbarHost = { CpSnackbarHost(snackbar) },
         ) { padding ->
             CoffeePeekPullToRefresh(
-                listState, isRefreshing = state.isLoading && state.items.isNotEmpty(), onRefresh = { vm.refresh("gesture") },
+                listState, isRefreshing = state.isLoading && state.items.isNotEmpty(), onRefresh = {
+                    vm.refresh("gesture")
+                },
                 modifier = Modifier.fillMaxSize().statusBarsPadding().padding(top = padding.calculateTopPadding()),
             ) { scrollModifier ->
                 LazyColumn(

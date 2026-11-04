@@ -1,5 +1,7 @@
 package com.coffeepeek.admin.di
 
+import com.coffeepeek.admin.di.collections.collectionsModule
+
 import com.coffeepeek.admin.di.favorites.serverFavoritesModule
 import com.coffeepeek.admin.di.shop.shopFavoriteIntent
 import com.coffeepeek.admin.di.shop.shopCheckInModule
@@ -21,6 +23,7 @@ import com.coffeepeek.admin.di.contributions.contributionsModule
 import com.coffeepeek.admin.di.profile.accountFeatureScreenRenderer
 import com.coffeepeek.admin.di.notifications.androidNotificationsRenderer
 import com.coffeepeek.admin.di.profile.ownProfileFeatureScreenRenderer
+import com.coffeepeek.admin.di.profile.profileSnapshotModule
 import com.coffeepeek.admin.di.settings.androidSettingsScreenRenderer
 import com.coffeepeek.admin.di.profile.publicProfileFeatureScreenRenderer
 import com.coffeepeek.admin.di.shop.AndroidShopDetailScreenRenderer
@@ -49,9 +52,10 @@ internal fun initAndroidKoin(extraModules: List<org.koin.core.module.Module> = e
             shopBrowsingModule(),
             homeCheckInModule(),
             checkInHistoryModule(),
-            coffeeModule(),
+            coffeeModule(), collectionsModule(trackPickerFavorites = true),
             contributionsModule(),
             shelfModule(),
+            profileSnapshotModule(),
         ) + extraModules,
         shopReportRendererFactory = { client ->
             AndroidShopReportScreenRenderer(
@@ -66,7 +70,7 @@ internal fun initAndroidKoin(extraModules: List<org.koin.core.module.Module> = e
         shopCheckInRendererFactory = { AndroidShopCheckInFormRenderer(get()) },
         shopDetailRendererFactory = {
             AndroidShopDetailScreenRenderer(sessions = get(), users = get(), details = get(), votes = get(),
-                favorites = get(), favoriteIntent = shopFavoriteIntent(get(), get(), get()), checkInForm = get(),
+                favorites = get(), favoriteIntent = shopFavoriteIntent(get(), get()), favoriteCollections = get(), checkInForm = get(),
                 visibility = get(), blockActions = get())
         },
         shopCheckInListRendererFactory = {
@@ -80,8 +84,8 @@ internal fun initAndroidKoin(extraModules: List<org.koin.core.module.Module> = e
             coffeeCatalogueScreenRenderer(get(), CoffeeShelfTab(get(), get(), Locator.database.settingRepository))
         },
         shelfRendererFactory = { ShelfFeatureScreenRenderer(get(), Locator.database.settingRepository, shelfBrewForm(get())) },
-        publicProfileRendererFactory = { publicProfileFeatureScreenRenderer(get(), get(), get(), get(), get()) },
-        ownProfileRendererFactory = { ownProfileFeatureScreenRenderer(get(), get(), get(), get(), get(), get(), get(), get()) },
+        publicProfileRendererFactory = { publicProfileFeatureScreenRenderer(get(), get(), get(), get(), get(), get()) },
+        ownProfileRendererFactory = { ownProfileFeatureScreenRenderer(get(), get(), get(), get(), get(), get(), get(), get(), get()) },
         accountRendererFactory = { accountFeatureScreenRenderer(get(), get()) },
         settingsRendererFactory = { androidSettingsScreenRenderer(get(), get(), get(), get(), get()) },
         appUpdateRendererFactory = { androidAppUpdateRenderer(get(), get()) },
@@ -92,6 +96,6 @@ internal fun initAndroidKoin(extraModules: List<org.koin.core.module.Module> = e
         contributionsRendererFactory = {
             androidContributionsScreenRenderer(get(), get(), get())
         },
-        discoveryRendererFactory = { androidDiscoveryScreenRenderer(get<CoffeePeekClient>().client, get(), get(), get(), get(), get()) },
+        discoveryRendererFactory = { androidDiscoveryScreenRenderer(get<CoffeePeekClient>().client, get(), get(), get(), get(), get(), get()) },
     )
 }

@@ -39,12 +39,18 @@ class ProfilePortsTest {
 
     private class Sessions(initial: Session?, private val active: (Session?) -> Boolean = { it != null }) : SessionRepository {
         val state = MutableStateFlow(initial)
+        private var generation = if (initial == null) 0L else 1L
+        override fun accountGeneration() = generation
         override fun peekSession() = state.value
-        override fun applySession(session: Session?) { state.value = session }
+        override fun applySession(session: Session?) {
+            val sameAccount = state.value?.userId != null && state.value?.userId == session?.userId
+            if (!sameAccount) generation++
+            state.value = session
+        }
         override fun isActiveSession(session: Session?) = active(session)
         override suspend fun getSession() = state.value
-        override suspend fun persistSession(session: Session?) { state.value = session }
-        override suspend fun saveSession(session: Session?) { state.value = session }
+        override suspend fun persistSession(session: Session?) { applySession(session) }
+        override suspend fun saveSession(session: Session?) { applySession(session) }
         override suspend fun warmCache() = Unit
         override fun observeSession(): Flow<Session?> = state
         override suspend fun isLoggedIn() = state.value != null
@@ -52,7 +58,9 @@ class ProfilePortsTest {
 
     private class Users(cached: UserProfile?, private val profile: UserProfile) : UserRepository {
         val cache = MutableStateFlow(cached)
+        var cacheAllowed = true
         val calls = mutableListOf<String>()
+        override fun cachedProfile(): UserProfile? = cache.value.takeIf { cacheAllowed }
         override fun observeProfile(): StateFlow<UserProfile?> = cache
         override suspend fun refreshProfile(): Result<UserProfile> { calls += "refresh"; return Result.success(profile) }
         override suspend fun getMe(): Result<UserProfile> { calls += "getMe"; return Result.success(profile) }
@@ -85,6 +93,22 @@ class ProfilePortsTest {
         assertEquals(listOf("a", "b", null), seen)
     }
 
+    @Test fun cacheScopeKeepsTokenRefreshButChangesForEveryLoginLifetime() {
+        val sessions = Sessions(Session("secret-token", null, "a"))
+        val port = AppProfileAccountPort(sessions, Users(null, anna))
+        val first = port.cacheScope()
+        assertEquals("1:a", first)
+        assertFalse(first!!.contains("secret-token"))
+        sessions.applySession(Session("rotated-token", null, "a"))
+        assertEquals(first, port.cacheScope())
+        sessions.applySession(null)
+        assertNull(port.cacheScope())
+        sessions.applySession(Session("second-login-token", null, "a"))
+        assertEquals("3:a", port.cacheScope())
+        sessions.applySession(Session("other-token", null, "b"))
+        assertEquals("4:b", port.cacheScope())
+    }
+
     @Test fun ownProfileIsMappedWithItsAddressAndFollowsTheSharedCache() = runTest {
         val users = Users(null, anna)
         val port = AppProfileAccountPort(Sessions(Session("t", null, "a")), users)
@@ -96,6 +120,15 @@ class ProfilePortsTest {
         assertEquals(listOf(3, 2, 1, 4), listOf(own.checkInCount, own.addedShopsCount, own.addedRoastersCount, own.followersCount))
         assertEquals(ProfileAddress("anna", "/users/anna", 2, true), own.address)
         assertEquals(own, port.observeOwnProfile().first())
+    }
+
+    @Test fun cachedOwnProfileUsesTheSafeUserCacheInsteadOfTheObservableSnapshot() {
+        val users = Users(anna, anna)
+        val port = AppProfileAccountPort(Sessions(Session("t", null, "a")), users)
+        assertEquals("Anna", port.cachedOwnProfile()?.userName)
+        users.cacheAllowed = false
+        assertEquals("Anna", users.observeProfile().value?.userName)
+        assertNull(port.cachedOwnProfile())
     }
 
     @Test fun loadReturnsTheCacheUnlessForcedAndFallsBackToGetMeThenRefresh() = runTest {

@@ -2,6 +2,8 @@ package com.coffeepeek.feature.shop.impl.ui
 
 import com.coffeepeek.core.presentation.MviViewModel
 import com.coffeepeek.feature.shop.domain.model.ShopViewer
+import com.coffeepeek.feature.shop.domain.model.ShopCheckIn
+import com.coffeepeek.feature.shop.domain.model.ShopHelpfulVote
 import com.coffeepeek.feature.shop.domain.repository.ShopCheckInVoteRepository
 import com.coffeepeek.feature.shop.domain.repository.ShopDetailsRepository
 import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopCheckInListAction
@@ -141,29 +143,46 @@ internal class ShopCheckInListViewModel(
         val job = currentCoroutineContext().job
         val generation = sessionGeneration
         voteJob = job
-        var wasCancelled = false
         updateState { copy(pendingVoteId = checkInId, hasVoteError = false) }
+        updateCheckInVote(checkInId, ShopHelpfulVote(!checkIn.isHelpfulByCurrentUser,
+            (checkIn.helpfulCount + if (checkIn.isHelpfulByCurrentUser) -1 else 1).coerceAtLeast(0)))
+        submitCheckInVote(checkIn, job, generation)
+    }
+
+    private suspend fun submitCheckInVote(checkIn: ShopCheckIn, job: Job, generation: Int) {
+        var wasCancelled = false
         try {
-            val vote = voteRepository.setHelpful(checkInId, !checkIn.isHelpfulByCurrentUser).getOrThrow()
-            if (generation != sessionGeneration || voteJob !== job) return
-            updateState {
-                copy(checkIns = checkIns.map { item ->
-                    if (item.id == checkInId) item.copy(helpfulCount = vote.helpfulCount,
-                        isHelpfulByCurrentUser = vote.isHelpful) else item
-                })
-            }
+            val vote = voteRepository.setHelpful(checkIn.id, !checkIn.isHelpfulByCurrentUser).getOrThrow()
+            currentCoroutineContext().ensureActive()
+            if (generation == sessionGeneration && voteJob === job) updateCheckInVote(checkIn.id, vote)
         } catch (cancelled: CancellationException) {
             wasCancelled = true
+            restoreCheckInVote(checkIn, job, generation)
             throw cancelled
         } catch (_: Exception) {
-            if (generation == sessionGeneration && voteJob === job) updateState { copy(hasVoteError = true) }
+            if (restoreCheckInVote(checkIn, job, generation)) updateState { copy(hasVoteError = true) }
         } finally {
-            if (voteJob === job) {
-                voteJob = null
-                updateState { copy(pendingVoteId = null) }
-                refreshIfQueued(generation, wasCancelled)
-            }
+            finishCheckInVote(job, generation, wasCancelled)
         }
+    }
+
+    private fun updateCheckInVote(id: String, vote: ShopHelpfulVote) = updateState {
+        copy(checkIns = checkIns.map { item ->
+            if (item.id == id) item.copy(helpfulCount = vote.helpfulCount, isHelpfulByCurrentUser = vote.isHelpful) else item
+        })
+    }
+
+    private fun restoreCheckInVote(checkIn: ShopCheckIn, job: Job, generation: Int): Boolean {
+        if (generation != sessionGeneration || voteJob !== job) return false
+        updateCheckInVote(checkIn.id, ShopHelpfulVote(checkIn.isHelpfulByCurrentUser, checkIn.helpfulCount))
+        return true
+    }
+
+    private suspend fun finishCheckInVote(job: Job, generation: Int, wasCancelled: Boolean) {
+        if (voteJob !== job) return
+        voteJob = null
+        updateState { copy(pendingVoteId = null) }
+        refreshIfQueued(generation, wasCancelled)
     }
 
     private suspend fun emitEvent(event: ShopCheckInListEvent) {

@@ -15,9 +15,12 @@ import com.coffeepeek.feature.community.impl.post.PostEvent
 import com.coffeepeek.feature.community.impl.post.PostViewModel
 import com.coffeepeek.feature.community.impl.timeline.MessageKind
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.resetMain
@@ -88,6 +91,46 @@ class PostViewModelTest {
         vm.send(PostAction.ToggleHelpful, this)
         val message = assertIs<PostEvent.Message>(events.single()).message
         assertEquals(MessageKind.VoteFailed, message.kind); assertEquals("Нельзя", message.serverMessage)
+    }
+
+    @Test fun aSlowLikeIsVisibleBeforeTheServerRepliesAndFailureRestoresTheCount() = runTest(dispatcher) {
+        val reply = CompletableDeferred<Result<HelpfulVote>>()
+        val repo = repository().apply { helpful = { _, _ -> reply.await() } }
+        val vm = model(repo)
+        vm.send(PostAction.ToggleHelpful, this)
+        assertTrue(vm.state.value.post!!.isHelpfulByCurrentUser)
+        assertEquals(1, vm.state.value.post!!.helpfulCount)
+        assertTrue(vm.state.value.isVoting)
+        reply.complete(Result.failure(IllegalStateException("offline")))
+        runCurrent()
+        assertFalse(vm.state.value.post!!.isHelpfulByCurrentUser)
+        assertEquals(0, vm.state.value.post!!.helpfulCount)
+        assertFalse(vm.state.value.isVoting)
+    }
+
+    @Test fun cancelledLikeRestoresThePostWithoutReportingAnError() = runTest(dispatcher) {
+        val repo = repository().apply { helpful = { _, _ -> Result.failure(CancellationException("cancelled")) } }
+        val vm = model(repo)
+        val events = events(vm)
+        vm.send(PostAction.ToggleHelpful, this)
+        assertFalse(vm.state.value.post!!.isHelpfulByCurrentUser)
+        assertFalse(vm.state.value.isVoting)
+        assertTrue(events.isEmpty())
+    }
+
+    @Test fun aLateVoteCannotChangeAnotherAccountsPost() = runTest(dispatcher) {
+        val reply = CompletableDeferred<Result<HelpfulVote>>()
+        val account = FakeAccount("one")
+        val repo = repository().apply { helpful = { _, _ -> withContext(NonCancellable) { reply.await() } } }
+        val vm = model(repo, account)
+        vm.send(PostAction.ToggleHelpful, this)
+        account.switchTo("two")
+        runCurrent()
+        reply.complete(Result.success(HelpfulVote(true, 99)))
+        runCurrent()
+        assertFalse(vm.state.value.post!!.isHelpfulByCurrentUser)
+        assertEquals(0, vm.state.value.post!!.helpfulCount)
+        assertFalse(vm.state.value.isVoting)
     }
 
     @Test fun anOwnPostOrOneNotYetPublishedCannotBeLikedOrReported() = runTest(dispatcher) {

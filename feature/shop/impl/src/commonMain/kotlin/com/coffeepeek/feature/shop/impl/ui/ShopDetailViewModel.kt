@@ -10,6 +10,7 @@ import com.coffeepeek.core.presentation.MviViewModel
 import com.coffeepeek.feature.shop.impl.ui.data.blockableAuthor
 import com.coffeepeek.feature.shop.domain.model.ShopViewer
 import com.coffeepeek.feature.shop.domain.model.ShopCheckIn
+import com.coffeepeek.feature.shop.domain.model.ShopHelpfulVote
 import com.coffeepeek.feature.shop.domain.model.ShopDetails
 import com.coffeepeek.feature.shop.domain.repository.ShopDetailsRepository
 import com.coffeepeek.feature.shop.domain.repository.ShopCheckInVoteRepository
@@ -36,10 +37,11 @@ internal class ShopDetailViewModel(
     private val currentMinuteOfDay: () -> Int? = { null },
     initialSessionGeneration: Int = 0,
     initialRefreshGeneration: Long = 0,
+    private val selectCollectionsOnFavorite: Boolean = false,
     /** A quick return (share, maps, phone) keeps the loaded page; only a long absence reloads it. */
     private val resumeRefreshAfter: Duration = 2.minutes,
 ) : MviViewModel<ShopDetailState, ShopDetailAction, ShopDetailEventEnvelope>(
-    ShopDetailState(sessionGeneration = initialSessionGeneration),
+    ShopDetailState(sessionGeneration = initialSessionGeneration, selectCollectionsOnFavorite = selectCollectionsOnFavorite),
 ) {
     private var loadJob: Job? = null
     private var voteJob: Job? = null
@@ -84,7 +86,7 @@ internal class ShopDetailViewModel(
                 favoriteMutationJob = null
                 latestFavorites = null
                 refreshQueued = false
-                updateState { ShopDetailState(sessionGeneration = nextGeneration) }
+                updateState { ShopDetailState(sessionGeneration = nextGeneration, selectCollectionsOnFavorite = selectCollectionsOnFavorite) }
                 observeFavorites()
                 load()
             }
@@ -276,6 +278,12 @@ internal class ShopDetailViewModel(
     }
 
     private suspend fun toggleFavorite() {
+        if (selectCollectionsOnFavorite) {
+            val shop = currentState.details?.overview?.id ?: return
+            if (currentState.isLoggedIn) emitEvent(ShopDetailEvent.SelectFavoriteCollections(shop))
+            else emitEvent(ShopDetailEvent.FavoriteRequiresSignIn(shop, !currentState.isFavorite))
+            return
+        }
         if (!canToggleFavorite() || favoriteMutationJob != null) return
         val details = currentState.details ?: return
         val job = currentCoroutineContext().job
@@ -335,30 +343,46 @@ internal class ShopDetailViewModel(
         val generation = sessionGeneration
         voteJob = job
         updateState { copy(pendingCheckInVoteId = checkInId) }
+        updateCheckInVote(checkInId, ShopHelpfulVote(!checkIn.isHelpfulByCurrentUser,
+            (checkIn.helpfulCount + if (checkIn.isHelpfulByCurrentUser) -1 else 1).coerceAtLeast(0)))
+        submitCheckInVote(checkIn, job, generation)
+    }
+
+    private suspend fun submitCheckInVote(checkIn: ShopCheckIn, job: Job, generation: Int) {
         var wasCancelled = false
         try {
-            val vote = checkInVoteRepository.setHelpful(checkInId, !checkIn.isHelpfulByCurrentUser).getOrThrow()
-            if (generation != sessionGeneration || voteJob !== job) return
-            updateState {
-                val current = details ?: return@updateState this
-                copy(details = current.copy(checkIns = current.checkIns.map { item ->
-                    if (item.id == checkInId) item.copy(
-                        helpfulCount = vote.helpfulCount, isHelpfulByCurrentUser = vote.isHelpful,
-                    ) else item
-                }))
-            }
+            val vote = checkInVoteRepository.setHelpful(checkIn.id, !checkIn.isHelpfulByCurrentUser).getOrThrow()
+            currentCoroutineContext().ensureActive()
+            if (generation == sessionGeneration && voteJob === job) updateCheckInVote(checkIn.id, vote)
         } catch (cancelled: CancellationException) {
             wasCancelled = true
+            restoreCheckInVote(checkIn, job, generation)
             throw cancelled
         } catch (_: Exception) {
-            if (generation == sessionGeneration && voteJob === job) emitEvent(ShopDetailEvent.VoteFailed)
+            if (restoreCheckInVote(checkIn, job, generation)) emitEvent(ShopDetailEvent.VoteFailed)
         } finally {
-            if (voteJob === job) {
-                voteJob = null
-                if (generation == sessionGeneration) updateState { copy(pendingCheckInVoteId = null) }
-                refreshIfQueued(generation, wasCancelled)
-            }
+            finishCheckInVote(job, generation, wasCancelled)
         }
+    }
+
+    private fun updateCheckInVote(id: String, vote: ShopHelpfulVote) = updateState {
+        val current = details ?: return@updateState this
+        copy(details = current.copy(checkIns = current.checkIns.map { item ->
+            if (item.id == id) item.copy(helpfulCount = vote.helpfulCount, isHelpfulByCurrentUser = vote.isHelpful) else item
+        }))
+    }
+
+    private fun restoreCheckInVote(checkIn: ShopCheckIn, job: Job, generation: Int): Boolean {
+        if (generation != sessionGeneration || voteJob !== job) return false
+        updateCheckInVote(checkIn.id, ShopHelpfulVote(checkIn.isHelpfulByCurrentUser, checkIn.helpfulCount))
+        return true
+    }
+
+    private suspend fun finishCheckInVote(job: Job, generation: Int, wasCancelled: Boolean) {
+        if (voteJob !== job) return
+        voteJob = null
+        if (generation == sessionGeneration) updateState { copy(pendingCheckInVoteId = null) }
+        refreshIfQueued(generation, wasCancelled)
     }
 
     private suspend fun refreshIfQueued(generation: Int, wasCancelled: Boolean) {

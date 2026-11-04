@@ -17,6 +17,7 @@ import com.coffeepeek.feature.profile.domain.ProfileAddress
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.combine
 
 /** Adapter over the single session and own-profile cache, so the migrated screens cannot diverge from legacy ones. */
 internal class AppProfileAccountPort(
@@ -25,11 +26,19 @@ internal class AppProfileAccountPort(
 ) : ProfileAccountPort {
     override fun activeAccount(): String? = key(sessions.peekSession())
 
+    override fun cacheScope(): String? = sessions.peekSession()?.takeIf(sessions::isActiveSession)?.userId?.let {
+        "${sessions.accountGeneration()}:$it"
+    }
+
     override fun observeActiveAccount(): Flow<String?> = sessions.observeSession().map(::key).distinctUntilChanged()
 
-    override fun cachedOwnProfile(): OwnProfile? = users.observeProfile().value?.toOwnProfile()
+    override fun observeCacheScope(): Flow<String?> = sessions.observeSession().map { cacheScope() }.distinctUntilChanged()
 
-    override fun observeOwnProfile(): Flow<OwnProfile?> = users.observeProfile().map { it?.toOwnProfile() }
+    override fun cachedOwnProfile(): OwnProfile? = users.cachedProfile()?.toOwnProfile()
+
+    override fun observeOwnProfile(): Flow<OwnProfile?> = combine(users.observeProfile(), sessions.observeSession()) { _, _ ->
+        cachedOwnProfile()
+    }.distinctUntilChanged()
 
     override suspend fun loadOwnProfile(forceRefresh: Boolean): Result<OwnProfile> {
         if (!forceRefresh) cachedOwnProfile()?.let { return Result.success(it) }

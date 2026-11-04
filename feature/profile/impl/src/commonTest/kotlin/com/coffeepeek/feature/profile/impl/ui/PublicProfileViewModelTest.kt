@@ -6,6 +6,7 @@ import com.coffeepeek.feature.profile.api.OwnProfile
 import com.coffeepeek.feature.profile.api.ProfileAccountPort
 import com.coffeepeek.feature.profile.api.ProfileAuthorVisibility
 import com.coffeepeek.feature.profile.api.ProfileAuthorVisibilityState
+import com.coffeepeek.feature.profile.api.ProfileSnapshotStore
 import com.coffeepeek.feature.profile.api.PublicCheckInsPort
 import com.coffeepeek.feature.profile.domain.ProfileAddress
 import com.coffeepeek.feature.profile.domain.PublicFavoriteKind
@@ -24,6 +25,7 @@ import com.coffeepeek.feature.profile.domain.PublicProfileStats
 import com.coffeepeek.feature.profile.domain.PublicProfileUnavailable
 import com.coffeepeek.feature.profile.impl.ui.model.PublicProfileAction
 import com.coffeepeek.feature.profile.impl.ui.model.PublicProfileEvent
+import com.coffeepeek.feature.profile.impl.createProfileSnapshotStore
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -62,10 +64,106 @@ class PublicProfileViewModelTest {
         data: FakeData = FakeData(),
         accounts: FakeAccounts = FakeAccounts(),
         visibility: ProfileAuthorVisibility = ProfileAuthorVisibility.None,
-    ) = PublicProfileViewModel(slug, data, data, accounts, visibility).also { store.put("profile-${nextKey++}", it) }
+        snapshots: ProfileSnapshotStore = ProfileSnapshotStore.None,
+    ) = PublicProfileViewModel(slug, data, data, accounts, visibility, snapshots).also { store.put("profile-${nextKey++}", it) }
+
+    @Test
+    fun recreatedRouteShowsCompleteSnapshotBeforeRefreshAndKeepsItOnNetworkFailure() = runTest(dispatcher) {
+        val snapshots = createProfileSnapshotStore()
+        val accounts = FakeAccounts("owner", ownProfile("canonical"))
+        val data = FakeData().apply {
+            profile = { Result.success(PublicProfile("canonical", "nickname", "about", null,
+                PublicProfileStats(2, 1, 0, 17), emptyList(), null, authorId = "author")) }
+            checkIns = { _, _ -> Result.success(PublicProfileCheckInPage(listOf(checkIn("saved")), null)) }
+            activity = { year, month -> Result.success(PublicProfileActivity("$year-${month.toString().padStart(2, '0')}", setOf(2))) }
+        }
+        model(data = data, accounts = accounts, snapshots = snapshots)
+        runCurrent()
+        data.profile = { Result.failure(IllegalStateException("offline")) }
+        val again = model(data = data, accounts = accounts, snapshots = snapshots)
+        assertFalse(again.state.value.isLoading)
+        assertEquals("nickname", again.state.value.profile?.nickname)
+        assertEquals(listOf("saved"), again.state.value.checkIns.map { it.id })
+        assertEquals(setOf(2), again.state.value.profile?.activity?.activeDays)
+        runCurrent()
+        assertEquals(PublicProfileError.Load, again.state.value.error)
+        assertEquals(listOf("saved"), again.state.value.checkIns.map { it.id })
+    }
+
+    @Test
+    fun accountReplacementAndVisibilityRevisionNeverRestorePreviousSnapshot() = runTest(dispatcher) {
+        val snapshots = createProfileSnapshotStore()
+        val accounts = FakeAccounts("owner", ownProfile("canonical"))
+        val visibility = FakeVisibility()
+        val data = FakeData().apply {
+            profile = { Result.success(PublicProfile("canonical", "nickname", null, null,
+                PublicProfileStats(2, 1, 0, 17), emptyList(), null, authorId = "author")) }
+        }
+        model(data = data, accounts = accounts, visibility = visibility, snapshots = snapshots)
+        runCurrent()
+        accounts.signIn(null)
+        accounts.signIn("owner")
+        val newSession = model(data = data, accounts = accounts, visibility = visibility, snapshots = snapshots)
+        assertNull(newSession.state.value.profile)
+        visibility.publish(ProfileAuthorVisibilityState(revision = 2))
+        val revised = model(data = data, accounts = accounts, visibility = visibility, snapshots = snapshots)
+        assertNull(revised.state.value.profile)
+    }
+
+    @Test
+    fun sameAccountSessionReplacementClearsVisibleProfileBeforeRefresh() = runTest(dispatcher) {
+        val accounts = FakeAccounts("owner", ownProfile("canonical"))
+        val data = FakeData()
+        val vm = model(data = data, accounts = accounts)
+        runCurrent()
+        assertNotNull(vm.state.value.profile)
+        val next = CompletableDeferred<PublicProfile>()
+        data.profile = { Result.success(next.await()) }
+        accounts.replaceSession()
+        try {
+            runCurrent()
+            assertNull(vm.state.value.profile)
+            assertTrue(vm.state.value.isLoading)
+        } finally {
+            next.complete(PublicProfile("canonical", "nickname", null, null,
+                PublicProfileStats(2, 1, 0, 17), emptyList(), null))
+        }
+    }
 
     private fun TestScope.events(model: PublicProfileViewModel): List<PublicProfileEvent> =
         mutableListOf<PublicProfileEvent>().also { list -> backgroundScope.launch { model.events.collect { list += it } } }
+
+    @Test fun publicViewNeverReadsOrRetainsGlobalFavoritesEvenWhenTheProfilePayloadContainsThem() = runTest(dispatcher) {
+        val favorite = PublicProfileFavorite("private", "Private favorite", PublicFavoriteKind.CoffeeShop)
+        for (account in listOf(FakeAccounts(), FakeAccounts("viewer", ownProfile("viewer")))) {
+            var reads = 0
+            val data = FakeData().apply {
+                profile = { Result.success(PublicProfile("canonical", "Author", null, null,
+                    PublicProfileStats(0, 0, 0, 0), listOf(favorite), null)) }
+                favorites = { reads++; Result.success(listOf(favorite)) }
+            }
+            val vm = model("canonical", data, account)
+            runCurrent()
+            vm.onAction(PublicProfileAction.RetryFavorites)
+            runCurrent()
+            assertEquals(0, reads)
+            assertTrue(vm.state.value.profile!!.favorites.isEmpty())
+        }
+    }
+
+    @Test fun globalFavoritesLoadOnlyAfterTheViewedProfileIsVerifiedAsOwned() = runTest(dispatcher) {
+        val gate = CompletableDeferred<OwnProfile>()
+        val accounts = FakeAccounts("owner").apply { load = { Result.success(gate.await()) } }
+        var reads = 0
+        val data = FakeData().apply { favorites = { reads++; Result.success(emptyList()) } }
+        val vm = model("canonical", data, accounts)
+        runCurrent()
+        assertEquals(0, reads)
+        gate.complete(ownProfile("canonical"))
+        runCurrent()
+        assertTrue(vm.state.value.isOwnProfile)
+        assertEquals(1, reads)
+    }
 
     @Test
     fun canonicalAuthorPaginationDeduplicatesAndFailedCursorRetryStartsAtFirstPage() = runTest(dispatcher) {
@@ -100,7 +198,7 @@ class PublicProfileViewModelTest {
             favorites = { Result.failure(IllegalStateException("Favorites unavailable")) }
             activity = { _, _ -> Result.failure(IllegalStateException("Activity unavailable")) }
         }
-        val vm = model("alias", data); runCurrent()
+        val vm = model("alias", data, FakeAccounts("owner", ownProfile("canonical"))); runCurrent()
         assertNotNull(vm.state.value.profile)
         assertNull(vm.state.value.error)
         assertNotNull(vm.state.value.favoritesError)
@@ -342,7 +440,7 @@ class PublicProfileViewModelTest {
             favorites = { Result.success(listOf(PublicProfileFavorite("drink:matcha", "Матча", PublicFavoriteKind.Drink, drinkSlug = "matcha"))) }
             checkIns = { _, _ -> Result.success(PublicProfileCheckInPage(listOf(checkIn("visible")), null)) }
         }
-        val vm = model("canonical", data); runCurrent()
+        val vm = model("canonical", data, FakeAccounts("owner", ownProfile("canonical"))); runCurrent()
         assertNotNull(vm.state.value.profile)
         assertTrue(vm.state.value.checkIns.isNotEmpty())
         assertTrue(vm.state.value.profile!!.favorites.isNotEmpty())
@@ -410,10 +508,15 @@ private class FakeData : PublicProfileData, PublicCheckInsPort {
 private class FakeAccounts(user: String? = null, own: OwnProfile? = null) : ProfileAccountPort {
     private val account = MutableStateFlow(user)
     private val cache = MutableStateFlow(own)
+    private var sessionGeneration = 0
+    private val scope = MutableStateFlow(user?.let { "0:$it" })
     var load: suspend () -> Result<OwnProfile> = { Result.success(ownProfile("other-user")) }
-    fun signIn(user: String?) { account.value = user }
+    fun signIn(user: String?) { sessionGeneration++; account.value = user; scope.value = cacheScope() }
+    fun replaceSession() { sessionGeneration++; scope.value = cacheScope() }
     fun publish(value: OwnProfile?) { cache.value = value }
     override fun activeAccount() = account.value
+    override fun cacheScope(): String? = account.value?.let { "$sessionGeneration:$it" }
+    override fun observeCacheScope(): Flow<String?> = scope
     override fun observeActiveAccount(): Flow<String?> = account
     override fun cachedOwnProfile() = cache.value
     override fun observeOwnProfile(): Flow<OwnProfile?> = cache

@@ -1,0 +1,22 @@
+<resources>
+    <string name="leaderboard_refresh">Обновить рейтинг</string>
+    <string name="leaderboard_rules_summary">Баллы за одобренные действия: добавление — 3, применённая правка — 1, публичный чекин в кофейне с подтверждённой геолокацией — 2. Под итогом — добавления / правки / чекины.</string>
+    <string name="leaderboard_title">Таблица лидеров</string>
+    <string name="leaderboard_loading">Загружаем таблицу лидеров</string>
+    <string name="leaderboard_week">Неделя</string>
+    <string name="leaderboard_month">Месяц</string>
+    <string name="leaderboard_empty">В этом периоде пока нет участников</string>
+    <string name="leaderboard_error">Не удалось загрузить таблицу лидеров</string>
+    <string name="leaderboard_retry">Попробовать снова</string>
+    <string name="leaderboard_own_rank">Ваше место: %1$d</string>
+    <string name="leaderboard_rank">Место: %1$d</string>
+    <string name="leaderboard_open_profile">Открыть профиль %1$s</string>
+    <string name="leaderboard_breakdown">%1$d/%2$d/%3$d</string>
+    <string name="leaderboard_breakdown_description">Добавления: %1$d. Правки: %2$d. Чекины: %3$d.</string>
+    <plurals name="leaderboard_points">
+        <item quantity="one">%1$d балл</item>
+        <item quantity="few">%1$d балла</item>
+        <item quantity="many">%1$d баллов</item>
+        <item quantity="other">%1$d баллов</item>
+    </plurals>
+</resources>

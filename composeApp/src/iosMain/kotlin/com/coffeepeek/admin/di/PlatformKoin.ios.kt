@@ -1,5 +1,7 @@
 package com.coffeepeek.admin.di
 
+import com.coffeepeek.admin.di.collections.collectionsModule
+
 import com.coffeepeek.admin.di.checkinhistory.CheckInHistoryFeatureScreenRenderer
 import com.coffeepeek.admin.di.checkinhistory.checkInHistoryModule
 import com.coffeepeek.admin.di.coffee.CoffeeShelfTab
@@ -19,7 +21,7 @@ import com.coffeepeek.admin.locator.Locator
 
 actual fun initPlatformKoin() {
     initKoin(
-        platformModules = listOf(coffeeModule(), homeCheckInModule(), checkInHistoryModule(), iosShelfModule()),
+        platformModules = listOf(coffeeModule(), collectionsModule(), homeCheckInModule(), checkInHistoryModule(), iosShelfModule()),
         // Both platforms expose the shelf and catalogue through the same Coffee tab.
         coffeeRendererFactory = {
             coffeeCatalogueScreenRenderer(get(), CoffeeShelfTab(get(), get(), Locator.database.settingRepository))

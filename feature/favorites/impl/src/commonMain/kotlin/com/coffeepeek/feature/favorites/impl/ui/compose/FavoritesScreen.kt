@@ -1,19 +1,12 @@
 package com.coffeepeek.feature.favorites.impl.ui.compose
 
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawing
-import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -24,37 +17,27 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.text.font.FontWeight
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.coffeepeek.core.designsystem.component.CoffeePeekButton
-import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
-import com.coffeepeek.core.designsystem.component.CoffeePeekTopBar
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.favorites.domain.model.FavoriteShop
 import com.coffeepeek.feature.favorites.domain.model.FavoriteRoaster
 import com.coffeepeek.feature.favorites.impl.ui.FavoritesViewModel
-import com.coffeepeek.feature.favorites.impl.ui.compose.component.FavoriteDrinkCard
-import com.coffeepeek.feature.favorites.impl.resources.favorites_drinks
 import com.coffeepeek.feature.favorites.domain.model.FavoriteDrink
-import com.coffeepeek.feature.favorites.impl.ui.compose.component.FavoriteCard
-import com.coffeepeek.feature.favorites.impl.ui.compose.component.FavoriteRoasterCard
 import com.coffeepeek.feature.favorites.impl.ui.compose.component.FavoritesMessage
+import com.coffeepeek.feature.favorites.impl.ui.compose.component.FavoritesTopBar
+import com.coffeepeek.feature.favorites.impl.ui.compose.component.FavoritesLoadingSkeleton
 import com.coffeepeek.feature.favorites.impl.ui.compose.model.FavoritesAction
 import com.coffeepeek.feature.favorites.impl.ui.compose.model.FavoritesEvent
 import com.coffeepeek.feature.favorites.impl.ui.compose.model.FavoritesUiState
 import com.coffeepeek.feature.favorites.impl.resources.Res
-import com.coffeepeek.feature.favorites.impl.resources.favorites_back
 import com.coffeepeek.feature.favorites.impl.resources.favorites_empty
 import com.coffeepeek.feature.favorites.impl.resources.favorites_load_error
-import com.coffeepeek.feature.favorites.impl.resources.favorites_loading
 import com.coffeepeek.feature.favorites.impl.resources.favorites_retry
-import com.coffeepeek.feature.favorites.impl.resources.favorites_title
 import com.coffeepeek.feature.favorites.impl.resources.favorites_update_error
 import com.coffeepeek.feature.favorites.impl.resources.favorites_action_error
-import com.coffeepeek.feature.favorites.impl.resources.favorites_roasters
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 
@@ -66,17 +49,23 @@ internal fun FavoritesScreen(
     onBack: () -> Unit,
     distanceForCoordinates: (Double, Double) -> String? = { _, _ -> null },
     onOpenRoaster: (String) -> Unit = {},
+    onShare: () -> Unit = {},
+    onOpenCollections: () -> Unit = {},
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val currentOpenShop by rememberUpdatedState(onOpenShop)
     val currentOpenRoaster by rememberUpdatedState(onOpenRoaster)
     val currentBack by rememberUpdatedState(onBack)
+    val currentShare by rememberUpdatedState(onShare)
+    val currentOpenCollections by rememberUpdatedState(onOpenCollections)
     LaunchedEffect(viewModel) {
         viewModel.events.collect { event ->
             when (event) {
                 is FavoritesEvent.OpenShop -> currentOpenShop(event.shopId)
                 is FavoritesEvent.OpenRoaster -> currentOpenRoaster(event.publicSlug)
                 FavoritesEvent.Back -> currentBack()
+                FavoritesEvent.Share -> currentShare()
+                FavoritesEvent.OpenCollections -> currentOpenCollections()
             }
         }
     }
@@ -95,71 +84,39 @@ internal fun FavoritesScreenContent(
     distanceForCoordinates: (Double, Double) -> String? = { _, _ -> null },
 ) {
     val snackbar = remember { SnackbarHostState() }
+    val listState = rememberLazyListState()
     val actionError = stringResource(Res.string.favorites_action_error)
     LaunchedEffect(state.actionFailed) { if (state.actionFailed) snackbar.showSnackbar(actionError) }
-    Scaffold(snackbarHost = { SnackbarHost(snackbar) }, topBar = { CoffeePeekTopBar(stringResource(Res.string.favorites_title),
-        stringResource(Res.string.favorites_back), onBack = { onAction(FavoritesAction.Back) }) }) { padding ->
-        Column(Modifier.fillMaxSize().padding(padding).consumeWindowInsets(padding)) {
-            when {
-                (state.isLoading || state.areRoastersLoading || state.areDrinksLoading) && state.shops.isEmpty() && state.roasters.isEmpty() && state.drinks.isEmpty() -> Box(
-                    Modifier.fillMaxSize(), contentAlignment = Alignment.Center,
-                ) { CoffeePeekLoader(stringResource(Res.string.favorites_loading)) }
-                (state.loadFailed || state.roastersLoadFailed || state.drinksLoadFailed) && state.shops.isEmpty() && state.roasters.isEmpty() && state.drinks.isEmpty() ->
-                    FavoritesMessage(stringResource(Res.string.favorites_load_error)) {
-                        onAction(FavoritesAction.Retry)
-                    }
-                state.shops.isEmpty() && state.roasters.isEmpty() && state.drinks.isEmpty() -> FavoritesMessage(stringResource(Res.string.favorites_empty))
-                else -> {
-                    if (state.loadFailed || state.roastersLoadFailed || state.drinksLoadFailed) {
-                        Text(stringResource(Res.string.favorites_update_error), Modifier.padding(16.dp),
-                            color = MaterialTheme.colorScheme.error)
-                        CoffeePeekButton(stringResource(Res.string.favorites_retry),
-                            { onAction(FavoritesAction.Retry) },
-                            Modifier.padding(horizontal = 16.dp))
-                    }
-                    LazyColumn(
-                        Modifier.fillMaxSize().windowInsetsPadding(
-                            WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal),
-                        ),
-                        contentPadding = PaddingValues(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp),
-                    ) {
-                        items(state.shops, key = { "shop:${it.id}" }) { shop ->
-                            val distance = shop.latitude?.let { latitude ->
-                                shop.longitude?.let { longitude ->
-                                    distanceForCoordinates(latitude, longitude)
-                                }
-                            }
-                            FavoriteCard(
-                                shop = shop,
-                                removing = shop.id in state.removing,
-                                distance = distance,
-                                onOpen = { onAction(FavoritesAction.OpenShop(shop.id)) },
-                                onRemove = { onAction(FavoritesAction.Remove(shop.id)) },
-                            )
-                        }
-                        if (state.roasters.isNotEmpty()) item(key = "roasters_heading") {
-                            Text(stringResource(Res.string.favorites_roasters),
-                                style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold,
-                                modifier = Modifier.padding(top = 12.dp))
-                        }
-                        items(state.roasters, key = { "roaster:${it.id}" }) { roaster ->
-                            FavoriteRoasterCard(roaster, roaster.id in state.removingRoasters,
-                                onOpen = { onAction(FavoritesAction.OpenRoaster(roaster.id)) },
-                                onRemove = { onAction(FavoritesAction.RemoveRoaster(roaster.id)) })
-                        }
-                        if (state.drinks.isNotEmpty()) item(key = "drinks_heading") {
-                            Text(stringResource(Res.string.favorites_drinks), style = MaterialTheme.typography.headlineSmall,
-                                fontWeight = FontWeight.SemiBold, modifier = Modifier.padding(top = 12.dp))
-                        }
-                        items(state.drinks, key = { "drink:${it.id}" }) { drink ->
-                            FavoriteDrinkCard(drink, drink.id in state.removingDrinks) { onAction(FavoritesAction.RemoveDrink(drink.id)) }
-                        }
-                    }
-                }
-            }
+    Scaffold(snackbarHost = { SnackbarHost(snackbar) }, topBar = {
+        FavoritesTopBar(state.shops.isNotEmpty() || state.roasters.isNotEmpty(),
+            { onAction(FavoritesAction.Back) }, { onAction(FavoritesAction.Share) }, { onAction(FavoritesAction.Collections) })
+    }) { padding ->
+        Box(Modifier.fillMaxSize().padding(padding).consumeWindowInsets(padding)) {
+            FavoritesBody(state, onAction, distanceForCoordinates, listState)
         }
     }
+}
+
+@Composable
+private fun FavoritesBody(state: FavoritesUiState, onAction: (FavoritesAction) -> Unit,
+    distance: (Double, Double) -> String?, listState: LazyListState) {
+    when {
+        state.showInitialSkeleton -> FavoritesLoadingSkeleton()
+        state.isEmpty && (state.loadFailed || state.roastersLoadFailed || state.drinksLoadFailed) ->
+            FavoritesMessage(stringResource(Res.string.favorites_load_error)) { onAction(FavoritesAction.Retry) }
+        state.isEmpty -> FavoritesMessage(stringResource(Res.string.favorites_empty))
+        else -> Column(Modifier.fillMaxSize()) {
+            FavoritesRefreshError(state, onAction)
+            FavoritesList(state, onAction, distance, listState)
+        }
+    }
+}
+
+@Composable
+private fun FavoritesRefreshError(state: FavoritesUiState, onAction: (FavoritesAction) -> Unit) {
+    if (!state.loadFailed && !state.roastersLoadFailed && !state.drinksLoadFailed) return
+    Text(stringResource(Res.string.favorites_update_error), Modifier.padding(16.dp), color = MaterialTheme.colorScheme.error)
+    CoffeePeekButton(stringResource(Res.string.favorites_retry), { onAction(FavoritesAction.Retry) }, Modifier.padding(horizontal = 16.dp))
 }
 
 @Composable
@@ -188,6 +145,10 @@ private val previewShop = FavoriteShop(
     )), isLoading = false), true)
 @Preview @Composable private fun FavoritesLoadingLightPreview() = PreviewFavorites(FavoritesUiState(), false)
 @Preview @Composable private fun FavoritesLoadingDarkPreview() = PreviewFavorites(FavoritesUiState(), true)
+@Preview @Composable private fun FavoritesPartialInitialLightPreview() = PreviewFavorites(FavoritesUiState(
+    roasters = listOf(FavoriteRoaster("ready", "Загружен первым")), areRoastersLoading = false), false)
+@Preview @Composable private fun FavoritesPartialInitialDarkPreview() = PreviewFavorites(FavoritesUiState(
+    roasters = listOf(FavoriteRoaster("ready", "Загружен первым")), areRoastersLoading = false), true)
 @Preview @Composable private fun FavoritesEmptyLightPreview() =
     PreviewFavorites(FavoritesUiState(isLoading = false), false)
 @Preview @Composable private fun FavoritesEmptyDarkPreview() =

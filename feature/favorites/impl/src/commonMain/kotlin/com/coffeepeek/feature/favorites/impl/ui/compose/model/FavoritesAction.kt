@@ -9,4 +9,6 @@ internal sealed interface FavoritesAction {
     data class OpenRoaster(val roasterId: String) : FavoritesAction
     data class RemoveDrink(val id: String) : FavoritesAction
     data object Back : FavoritesAction
+    data object Share : FavoritesAction
+    data object Collections : FavoritesAction
 }

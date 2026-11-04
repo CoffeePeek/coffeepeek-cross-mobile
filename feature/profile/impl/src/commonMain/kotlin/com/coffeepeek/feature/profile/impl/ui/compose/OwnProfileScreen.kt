@@ -40,7 +40,8 @@ import com.coffeepeek.feature.profile.domain.PublicProfileStats
 import com.coffeepeek.feature.profile.impl.resources.*
 import com.coffeepeek.feature.profile.impl.ui.OwnProfileViewModel
 import com.coffeepeek.feature.profile.impl.ui.PublicProfileViewModel
-import com.coffeepeek.feature.profile.impl.ui.compose.component.ProfileSectionLoader
+import com.coffeepeek.feature.profile.impl.ui.compose.component.ProfileLoadingSkeleton
+import com.coffeepeek.feature.profile.impl.ui.compose.component.ProfileSectionHeading
 import com.coffeepeek.feature.profile.impl.ui.compose.component.PublicProfileHeader
 import com.coffeepeek.feature.profile.impl.ui.model.OwnProfileAction
 import com.coffeepeek.feature.profile.impl.ui.model.PublicProfileAction
@@ -103,6 +104,7 @@ internal fun OwnProfileScreen(
                 onShare = {}, onOpenCheckIns = onOpenCheckIns,
                 own = OwnProfileExtras(
                     onEditProfile = onEditProfile, onOpenFavorites = onOpenFavorites, onOpenCheckIns = onOpenCheckIns,
+                    onOpenContributions = onOpenContributions,
                     topBarActions = actions,
                     favoritesPreview = { header -> slots.favoritesPreview(onOpenShop, onOpenRoaster, header) },
                     checkInCount = profile.checkInCount,
@@ -122,7 +124,7 @@ internal fun OwnProfileScreen(
                 if (state.isLoggedIn) Box(Modifier.align(Alignment.CenterEnd)) { actions() }
             }
             when {
-                state.isLoading -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { ProfileSectionLoader(160.dp) }
+                state.isLoading && profile == null -> ProfileLoadingSkeleton()
                 state.error != null && !state.hasContent -> Box(Modifier.fillMaxSize().padding(16.dp), contentAlignment = Alignment.Center) {
                     slots.loadError { vm.onAction(OwnProfileAction.Refresh) }
                 }
@@ -135,12 +137,14 @@ internal fun OwnProfileScreen(
                             nickname = profile.userName, avatarUrl = profile.avatarUrl, about = profile.about, image = slots.shared.image,
                             onEditProfile = onEditProfile, onAvatarClick = onEditProfile,
                             stats = PublicProfileStats(profile.checkInCount, profile.addedShopsCount, profile.addedRoastersCount, profile.followersCount),
+                            onShopsClick = { onOpenContributions(ProfileContribution.Shops) },
+                            onRoastersClick = { onOpenContributions(ProfileContribution.Roasters) },
                         )
                         slots.activityPreview(onOpenCheckIns)
                         if (state.error != null || state.refreshError != null) slots.loadError { vm.onAction(OwnProfileAction.Refresh) }
                     }
                     slots.favoritesPreview(onOpenShop, onOpenRoaster) {
-                        TextButton(onClick = onOpenFavorites) { Text(stringResource(Res.string.profile_own_favorites)) }
+                        ProfileSectionHeading(stringResource(Res.string.profile_section_favorites), onAll = onOpenFavorites)
                     }
                     if (profile.checkInCount > 0) TextButton(onClick = onOpenCheckIns, modifier = Modifier.padding(horizontal = 16.dp)) { Text(stringResource(Res.string.profile_own_check_ins)) }
                     Spacer(Modifier.height(bottomPadding))

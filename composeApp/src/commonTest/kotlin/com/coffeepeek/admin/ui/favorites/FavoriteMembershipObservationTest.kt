@@ -2,6 +2,7 @@ package com.coffeepeek.admin.ui.favorites
 
 import com.coffeepeek.admin.settings.CityPreference
 import com.coffeepeek.admin.feature.favorites.api.RoasterFavorites
+import com.coffeepeek.admin.di.collections.FavoriteCollectionsPrompt
 import com.coffeepeek.admin.ui.screen.feed.FeedViewModel
 import com.coffeepeek.admin.ui.screen.shop.CheckInDraftStore
 import com.coffeepeek.admin.ui.screen.shop.ShopDetailViewModel
@@ -27,6 +28,12 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class FavoriteMembershipObservationTest {
+    private class Picker : FavoriteCollectionsPrompt {
+        val shops = mutableListOf<String>()
+        val roasters = mutableListOf<String>()
+        override fun shop(slug: String) { shops += slug }
+        override fun roaster(slug: String) { roasters += slug }
+    }
     private val shop = CoffeeShop("shop", "Shop", null, cityName = null,
         priceRange = null, photoUrl = null)
 
@@ -294,6 +301,39 @@ class FavoriteMembershipObservationTest {
                 vm.uiState.first { it.shops.singleOrNull()?.isFavorite == true && it.favoriteUpdates.isEmpty() }
             }
             assertEquals(1, writer.addCalls)
+            assertEquals(0, writer.removeCalls)
+        } finally { vm.close() }
+    }
+
+    @Test fun feedHeartOpensPickerWithoutOptimisticAddOrRemove() = runBlocking {
+        val shops = Shops()
+        val writer = FavoriteWriter()
+        val picker = Picker()
+        val vm = FeedViewModel(shops, writer, CityPreference(Settings), SignedInSessions, favoriteCollections = picker)
+        try {
+            shops.search.complete(PagedResult(listOf(shop.copy(isFavorite = true)), 1, 1, 1))
+            withTimeout(5_000) { vm.uiState.first { it.shops.singleOrNull()?.id == shop.id && !it.isLoading } }
+            vm.toggleFavorite(shop)
+            assertEquals(listOf("shop"), picker.shops)
+            assertTrue(vm.uiState.value.shops.single().isFavorite)
+            assertEquals(0, writer.addCalls)
+            assertEquals(0, writer.removeCalls)
+        } finally { vm.close() }
+    }
+
+    @Test fun detailHeartOpensPickerWithoutOptimisticMutation() = runBlocking {
+        val shops = Shops()
+        val writer = FavoriteWriter()
+        val picker = Picker()
+        val vm = ShopDetailViewModel("shop", shops, writer, CheckIns, SignedInSessions,
+            CheckInDraftStore { 0L }, Users, roasterFavorites = Roasters, favoriteCollections = picker)
+        try {
+            shops.details.complete(CoffeeShopDetails(shop.copy(isFavorite = true)))
+            withTimeout(5_000) { vm.uiState.first { it.details != null && !it.isLoading } }
+            vm.toggleFavorite()
+            assertEquals(listOf("shop"), picker.shops)
+            assertTrue(vm.uiState.value.details!!.shop.isFavorite)
+            assertEquals(0, writer.addCalls)
             assertEquals(0, writer.removeCalls)
         } finally { vm.close() }
     }

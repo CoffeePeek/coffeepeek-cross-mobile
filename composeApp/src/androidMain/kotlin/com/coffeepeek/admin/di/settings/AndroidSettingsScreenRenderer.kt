@@ -10,6 +10,7 @@ import com.coffeepeek.admin.ui.component.GuestAuthCard
 import com.coffeepeek.admin.ui.component.LocalFloatingNavClearance
 import com.coffeepeek.admin.ui.screen.profile.SettingsScreenRenderer
 import com.coffeepeek.core.session.SessionReader
+import com.coffeepeek.admin.di.profile.ProfileDisplayPreferences
 import com.coffeepeek.domain.repository.ShopRepository
 import com.coffeepeek.feature.settings.api.CityEntry
 import com.coffeepeek.feature.settings.api.LanguageEntry
@@ -69,11 +70,7 @@ internal fun androidSettingsScreenRenderer(
         tab = createSettingsEntry(
             account = AndroidSettingsAccountPort(sessions), theme = theme, language = language, cities = cities, updates = AndroidUpdateCheckPort(updates),
             external = external, appInfo = SettingsAppInfo(AppConfig.versionName),
-            slots = SettingsSlots(guestCard = { onLogin, onRegister, modifier -> GuestAuthCard(onLogin, onRegister, modifier) },
-                notificationPreference = { label, description ->
-                    org.koin.compose.koinInject<com.coffeepeek.admin.feature.notifications.ui.NotificationsRenderer>().Preference(label, description)
-                },
-                accountSwitch = { org.koin.compose.koinInject<com.coffeepeek.feature.ownership.api.BusinessOwnershipEntry>().AccountSwitch() }),
+            slots = androidSettingsSlots(),
         ),
         theme = createThemeEntry(theme),
         language = createLanguageEntry(language),
@@ -81,3 +78,14 @@ internal fun androidSettingsScreenRenderer(
         policy = createUsagePolicyEntry(AndroidUsageConsentPort(), external),
     )
 }
+
+private fun androidSettingsSlots() = SettingsSlots(
+    guestCard = { onLogin, onRegister, modifier -> GuestAuthCard(onLogin, onRegister, modifier) },
+    notificationPreference = { label, description ->
+        org.koin.compose.koinInject<com.coffeepeek.admin.feature.notifications.ui.NotificationsRenderer>().Preference(label, description)
+    },
+    accountSwitch = { org.koin.compose.koinInject<com.coffeepeek.feature.ownership.api.BusinessOwnershipEntry>().AccountSwitch() },
+    profileCollectionPreference = {
+        ProfileDisplayPreferences()
+    },
+)

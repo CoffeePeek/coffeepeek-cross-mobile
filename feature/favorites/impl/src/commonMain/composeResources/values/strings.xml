@@ -1,5 +1,7 @@
 <resources>
+    <string name="favorites_collections">Мои подборки</string>
     <string name="favorites_title">Избранное</string>
+    <string name="favorites_share">Поделиться избранным</string>
     <string name="favorites_back">Назад</string>
     <string name="favorites_loading">Загрузка избранного</string>
     <string name="favorites_load_error">Не удалось загрузить избранное</string>

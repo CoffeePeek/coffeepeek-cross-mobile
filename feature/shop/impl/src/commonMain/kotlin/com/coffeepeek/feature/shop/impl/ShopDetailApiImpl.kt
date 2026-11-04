@@ -32,8 +32,9 @@ fun createShopDetailEntry(
     authorImage: (@Composable (String, Modifier) -> Unit)? = null,
     checkInImage: (@Composable (String, String?, Modifier, androidx.compose.ui.layout.ContentScale) -> Unit)? = null,
     analytics: ShopAnalytics = ShopAnalytics.None,
+    selectCollectionsOnFavorite: Boolean = false,
 ): ShopDetailEntry = DefaultShopDetailEntry(detailsRepository, voteRepository, favoritesRepository,
-    currentViewer, currentDayOfWeek, currentMinuteOfDay, authorImage, checkInImage, analytics)
+    currentViewer, currentDayOfWeek, currentMinuteOfDay, authorImage, checkInImage, analytics, selectCollectionsOnFavorite)
 
 private class DefaultShopDetailEntry(
     private val detailsRepository: ShopDetailsRepository,
@@ -45,6 +46,7 @@ private class DefaultShopDetailEntry(
     private val authorImage: (@Composable (String, Modifier) -> Unit)?,
     private val checkInImage: (@Composable (String, String?, Modifier, androidx.compose.ui.layout.ContentScale) -> Unit)?,
     private val analytics: ShopAnalytics,
+    private val selectCollectionsOnFavorite: Boolean,
 ) : ShopDetailEntry {
     @Composable
     override fun Content(
@@ -63,7 +65,7 @@ private class DefaultShopDetailEntry(
                 checkInVoteRepository = voteRepository, favoritesRepository = favoritesRepository,
                 currentViewer = currentViewer, currentDayOfWeek = currentDayOfWeek,
                 currentMinuteOfDay = currentMinuteOfDay, initialSessionGeneration = sessionGeneration,
-                initialRefreshGeneration = refreshGeneration)
+                initialRefreshGeneration = refreshGeneration, selectCollectionsOnFavorite = selectCollectionsOnFavorite)
         }
         CompositionLocalProvider(LocalShopAnalytics provides analytics, LocalShopAuthorImage provides authorImage, LocalShopCheckInImage provides checkInImage) {
             ShopDetailScreen(viewModel = model, sessionGeneration = sessionGeneration,
@@ -81,6 +83,7 @@ private fun ShopDetailEvent.toPublicEffect(unknownAuthor: String): ShopDetailEff
     ShopDetailEvent.ChooseAnotherShop -> ShopDetailEffect.ChooseAnotherShop
     ShopDetailEvent.SignIn -> ShopDetailEffect.SignIn
     is ShopDetailEvent.FavoriteRequiresSignIn -> ShopDetailEffect.FavoriteRequiresSignIn(shopId, desired)
+    is ShopDetailEvent.SelectFavoriteCollections -> ShopDetailEffect.SelectFavoriteCollections(shopId)
     ShopDetailEvent.Register -> ShopDetailEffect.Register
     is ShopDetailEvent.OpenMenuGallery -> ShopDetailEffect.OpenMenuGallery(shopId)
     is ShopDetailEvent.CreateCheckIn -> ShopDetailEffect.CreateCheckIn(shop)

@@ -1,0 +1,96 @@
+package com.coffeepeek.feature.leaderboard.impl.ui.compose
+
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.Dp
+import com.coffeepeek.core.designsystem.component.CoffeePeekContentCard
+import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
+import com.coffeepeek.core.designsystem.component.CoffeePeekPullToRefresh
+import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
+import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
+import com.coffeepeek.feature.leaderboard.api.LeaderboardImage
+import com.coffeepeek.feature.leaderboard.domain.model.LeaderboardEntry
+import com.coffeepeek.feature.leaderboard.domain.model.LeaderboardPage
+import com.coffeepeek.feature.leaderboard.domain.model.LeaderboardPeriod
+import com.coffeepeek.feature.leaderboard.impl.resources.*
+import com.coffeepeek.feature.leaderboard.impl.ui.compose.component.LeaderboardPeriods
+import com.coffeepeek.feature.leaderboard.impl.ui.compose.component.LeaderboardRow
+import com.coffeepeek.feature.leaderboard.impl.ui.compose.component.LeaderboardStatus
+import com.coffeepeek.feature.leaderboard.impl.ui.compose.component.LeaderboardRules
+import com.coffeepeek.feature.leaderboard.impl.ui.compose.model.LeaderboardAction
+import com.coffeepeek.feature.leaderboard.impl.ui.compose.model.LeaderboardState
+import org.jetbrains.compose.resources.stringResource
+import org.jetbrains.compose.resources.pluralStringResource
+import org.jetbrains.compose.ui.tooling.preview.Preview
+
+@Composable
+internal fun LeaderboardListContent(state: LeaderboardState, onAction: (LeaderboardAction) -> Unit, image: LeaderboardImage,
+    modifier: Modifier = Modifier, bottomClearance: Dp = 0.dp) {
+    val list = rememberLazyListState()
+    var displayedGeneration by rememberSaveable { mutableLongStateOf(state.generation) }
+    LaunchedEffect(state.generation) {
+        if (displayedGeneration != state.generation) {
+            list.scrollToItem(0)
+            displayedGeneration = state.generation
+        }
+    }
+    CoffeePeekPullToRefresh(list, state.isLoading && state.data != null, { onAction(LeaderboardAction.Refresh) },
+        refreshDescription = stringResource(Res.string.leaderboard_refresh),
+        loadingDescription = stringResource(Res.string.leaderboard_loading), modifier = modifier.fillMaxSize()) { scrolling ->
+        LazyColumn(scrolling.fillMaxSize(), state = list,
+            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 8.dp, bottom = bottomClearance + 16.dp),
+            verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2)) {
+            item(key = "header") { LeaderboardListHeader(state, onAction) }
+            state.data?.me?.let { me -> item(key = "me") {
+                CoffeePeekContentCard {
+                    Text(stringResource(Res.string.leaderboard_own_rank, me.rank), style = MaterialTheme.typography.titleMedium)
+                    Text(pluralStringResource(Res.plurals.leaderboard_points, me.points, me.points))
+                }
+            } }
+            items(state.data?.items.orEmpty(), key = { "author:${it.authorId}" }) { row ->
+                Column {
+                    LeaderboardRow(row, image, { onAction(LeaderboardAction.OpenProfile(row.authorId)) }, detailed = true)
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                }
+            }
+            item(key = "status") { LeaderboardStatus(state, onAction) }
+        }
+    }
+}
+
+@Composable
+private fun LeaderboardListHeader(state: LeaderboardState, onAction: (LeaderboardAction) -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(stringResource(Res.string.leaderboard_title), style = MaterialTheme.typography.titleLarge,
+                modifier = Modifier.weight(1f))
+            if (state.isLoading && state.data != null) {
+                CoffeePeekLoader(stringResource(Res.string.leaderboard_loading), size = 16.dp)
+            }
+        }
+        LeaderboardPeriods(state.period) { onAction(LeaderboardAction.SelectPeriod(it)) }
+        LeaderboardRules()
+    }
+}
+
+@Composable
+private fun LeaderboardListPreview(dark: Boolean, refreshing: Boolean = false) = CoffeePeekTheme(darkTheme = dark) {
+    val row = LeaderboardEntry(1, "preview", "Maria", null, "maria", 21, 3, 2, 5)
+    val data = LeaderboardPage(LeaderboardPeriod.Week, "2026-10-26", "2026-11-02", "Europe/Minsk",
+        listOf(row), 1, 1, 30, row)
+    Surface { LeaderboardListContent(LeaderboardState(period = if (refreshing) LeaderboardPeriod.Month else LeaderboardPeriod.Week,
+        data = data, isLoading = refreshing), {}, { _, _ -> }) }
+}
+
+@Preview @Composable private fun LeaderboardListLightPreview() = LeaderboardListPreview(false)
+@Preview @Composable private fun LeaderboardListDarkPreview() = LeaderboardListPreview(true)
+@Preview @Composable private fun LeaderboardListRefreshingLightPreview() = LeaderboardListPreview(false, true)
+@Preview @Composable private fun LeaderboardListRefreshingDarkPreview() = LeaderboardListPreview(true, true)

@@ -28,6 +28,7 @@ import com.coffeepeek.feature.profile.api.ProfileAuthorActions
 import com.coffeepeek.feature.profile.api.ProfileSlots
 import com.coffeepeek.feature.profile.api.PublicCheckInsPort
 import com.coffeepeek.feature.profile.api.PublicProfileEntry
+import com.coffeepeek.feature.profile.api.ProfileSnapshotStore
 import com.coffeepeek.feature.profile.domain.PublicFavoriteKind
 import com.coffeepeek.feature.profile.domain.PublicProfileCheckIn
 import com.coffeepeek.feature.profile.domain.PublicProfileCheckInPage
@@ -107,6 +108,7 @@ internal fun publicProfileFeatureScreenRenderer(
     users: UserRepository,
     visibility: AuthorVisibility,
     blocks: AuthorBlockActions,
+    snapshots: ProfileSnapshotStore = ProfileSnapshotStore.None,
 ): PublicProfileFeatureScreenRenderer {
     val checkIns = ProfilePublicCheckIns(repository)
     val slots = profileSlots(checkIns)
@@ -117,6 +119,7 @@ internal fun publicProfileFeatureScreenRenderer(
         visibility = AppProfileAuthorVisibility(visibility),
         authorActions = AppProfileAuthorActions(blocks),
         slots = slots,
+        snapshots = snapshots,
     ))
 }
 
@@ -124,6 +127,11 @@ internal fun publicProfileFeatureScreenRenderer(
 /** The legacy-rendered pieces shared by the public profile and the Profile tab. */
 internal fun profileSlots(checkIns: ProfilePublicCheckIns): ProfileSlots {
     return ProfileSlots(
+        featuredCollection = { slug -> ProfileFeaturedCollection(slug) },
+        shelfPreview = { slug, ownerView -> ProfileShelfPreview(slug, ownerView) },
+        ownerCollection = { ProfileOwnerCollection() },
+        onOpenOwnCollections = ::openProfileCollections,
+        onOwnContributions = ::openProfileContributions,
         image = { url, description, modifier -> CpImage(data = url, modifier = modifier, contentScale = ContentScale.Crop, contentDescription = description) },
         photoViewer = { previews, originals, index, onDismiss -> FullScreenImageDialog(PhotoViewerImages(previews, originals), index, onDismiss) },
         favoritesPreview = { favorites, onOpen ->

@@ -163,6 +163,7 @@ fun initKoin(
         imageModule(),
         com.coffeepeek.admin.di.settings.appLanguageModule(database.settingRepository),
         roasterModule(),
+        com.coffeepeek.admin.di.leaderboard.leaderboardModule(),
         com.coffeepeek.admin.di.ownership.businessOwnershipModule(),
         updateInstallerModule(),
     )
@@ -283,9 +284,9 @@ private fun appModule(
     factory { AuthViewModel(get()) }
     factory { RegisterViewModel(get()) }
     factory { NavigatorViewModel(get()) }
-    factory { FeedViewModel(get(), get(), get(), get(), getOrNull<ObserveFavoriteIdsUseCase>()) }
+    factory { FeedViewModel(get(), get(), get(), get(), getOrNull<ObserveFavoriteIdsUseCase>(), getOrNull<com.coffeepeek.admin.di.collections.FavoriteCollectionsPrompt>()) }
     factory { com.coffeepeek.admin.feature.community.ui.CommunityViewModel(get(), get(), get(), get(), get(), get()) }
-    factory { com.coffeepeek.admin.ui.screen.roaster.RoasterListViewModel(get(), get(), get()) }
+    factory { com.coffeepeek.admin.ui.screen.roaster.RoasterListViewModel(get(), get(), get(), getOrNull<com.coffeepeek.admin.di.collections.FavoriteCollectionsPrompt>()) }
     factory {
         MapViewModel(get(), get(), com.coffeepeek.admin.di.discovery.legacyDiscoveryMapSource(get<CoffeePeekClient>().client, get(), get()),
             sessions = get(), favoriteMembership = get<FavoritesRepository>().observeFavorites().map { result ->
@@ -304,6 +305,7 @@ private fun appModule(
         roasterFavorites = get(),
         visibility = get(),
         onCheckInCreated = get<NotificationFeature>()::onCheckInCreated,
+        favoriteCollections = getOrNull<com.coffeepeek.admin.di.collections.FavoriteCollectionsPrompt>(),
     ) }
     factory { (shopId: String) -> ShopMenuGalleryViewModel(shopId, get()) }
     factory { (shopId: String) -> ShopReportViewModel(shopId, get()) }
@@ -316,10 +318,10 @@ private fun appModule(
     factory { DeleteAccountPendingViewModel(get(), get()) }
     factory { AddShopViewModel(get()) }
     factory { EditProfileViewModel(get()) }
-    single { FavoritesViewModel(get(), get(), get(), get(), sessions = get()) }
+    single { FavoritesViewModel(get(), get(), get(), get(), sessions = get(), favoriteCollections = getOrNull<com.coffeepeek.admin.di.collections.FavoriteCollectionsPrompt>()) }
     factory { (kind: ContributionKind) -> MyContributionsViewModel(kind, get(), get(), get()) }
     factory { params -> VisitedPlacesViewModel(get(), get(), params.getOrNull()) }
     factory { AddRoasterViewModel(get(), get()) }
-    factory { (roasterId: String) -> RoasterDetailViewModel(roasterId, get(), get(), get(), get()) }
+    factory { (roasterId: String) -> RoasterDetailViewModel(roasterId, get(), get(), get(), get(), getOrNull<com.coffeepeek.admin.di.collections.FavoriteCollectionsPrompt>()) }
     factory { (reviewId: String, isPreview: Boolean, isCheckIn: Boolean) -> ReviewReportViewModel(reviewId, get(), get(), isPreview, get(), isCheckIn) }
 }

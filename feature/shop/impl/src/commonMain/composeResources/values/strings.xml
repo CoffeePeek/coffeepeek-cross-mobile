@@ -122,6 +122,7 @@
     <string name="shop_favorite_add">Добавить в избранное</string>
     <string name="shop_favorite_remove">Убрать из избранного</string>
     <string name="shop_favorite_unavailable">Избранное недоступно</string>
+    <string name="shop_favorite_choose_collections">Выбрать подборки</string>
     <string name="shop_favorite_updating">Обновление избранного</string>
     <string name="shop_detail_loading">Загрузка кофейни</string>
     <string name="shop_detail_refreshing">Обновление информации о кофейне</string>

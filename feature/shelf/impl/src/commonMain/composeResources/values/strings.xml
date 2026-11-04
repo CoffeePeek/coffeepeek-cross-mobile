@@ -217,4 +217,11 @@
     <string name="shelf_error_shelf_full">На полке уже 200 пачек</string>
     <string name="shelf_error_bean_unavailable">Этого кофе больше нет в каталоге</string>
     <string name="shelf_brew_method_other">Другое</string>
+    <string name="shelf_profile_show">Показывать кофейную полку</string>
+    <string name="shelf_profile_show_hint">Другие пользователи смогут видеть активные пачки кофе на вашей полке.</string>
+    <string name="shelf_profile_title">Кофейная полка</string>
+    <string name="shelf_profile_empty">На полке пока нет кофе</string>
+    <string name="shelf_profile_open_coffee">Открыть кофе «%1$s»</string>
+    <string name="shelf_profile_visibility_load_failed">Не удалось загрузить настройку видимости полки.</string>
+    <string name="shelf_profile_visibility_save_failed">Не удалось сохранить настройку. Попробуйте ещё раз.</string>
 </resources>
