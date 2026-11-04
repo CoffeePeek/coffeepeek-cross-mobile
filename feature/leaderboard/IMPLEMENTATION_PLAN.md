@@ -367,3 +367,21 @@ compilation also passed. Colocated light/dark previews compile; they were not
 rendered in an IDE. Existing deprecated Preview warnings remain. No automated UI,
 instrumentation or screenshot tests were added or run. Full Xcode linking and
 iOS/device theme, font-size and accessibility visual checks remain unverified.
+
+Delivery: published source `bce09927`, directDebug with `-PpushTestApp=true`,
+package `com.coffeepeek.pushdebug`, version 1.1.5.2706. APK SHA-256:
+`62B7E32189CD37FDFEB81861CA8EA7E60543A3D78114E7AA9C8FBADB0A2D6346`.
+The APK certificate matched the installed Debug; Pixel 9/API 37 accepted the
+in-place update from 2704 with Success and preserved its first-install timestamp.
+After Android's transient PackageUpdateActivity, a second start resolved to the
+application MainActivity and the process remained running. The unlocked phone
+displayed rounded section/period controls and ranking content in light theme;
+switching to Feed displayed its content and selected capsule. The screen changed
+to profile editing during subsequent navigation, and the tap opened an account
+deletion confirmation. It was dismissed with Back without confirming deletion;
+no live write was exercised. Further phone navigation was stopped for the user's
+review. Coffee comparison is established by the identical shared call/defaults;
+no stable Coffee-page capture or dark/font/accessibility review was obtained.
+Captures remain local in ignored build outputs and contain no published account
+data. The original normal app was not replaced; no data clearing or settings
+changes were performed.
