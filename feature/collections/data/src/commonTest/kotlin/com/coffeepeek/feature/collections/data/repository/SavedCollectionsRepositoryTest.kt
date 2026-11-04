@@ -22,8 +22,94 @@ class SavedCollectionsRepositoryTest {
     private val coverId = "22345678-1234-1234-1234-1234567890ab"
     private val compactId get() = id.replace("-", "")
     private val body get() = """{"data":{"id":"$id","title":"Places","mode":"list","visibility":"private","revision":2,"items":[]}}"""
+    private val defaultBody get() = body.replace("\"Places\"", "\"Избранное\"")
+    private val defaultList get() = """{"data":[{"id":"$id","title":"Избранное","mode":"list","visibility":"private","revision":2}]}"""
     private val publicBody get() = body.replace("\"private\"", "\"public\"").replace("\"items\":[]", "\"items\":[],\"canonicalPath\":\"/collections/$compactId\"")
     private val account = Account()
+
+    @Test fun firstOwnerReadCreatesPrivateFavoritesForRoasterMembership() = runTest(dispatcher) {
+        var creates = 0
+        val client = defaultRoasterClient { creates++ }
+        try {
+            val target = SavedCollectionTarget(CollectionPlaceKind.Roaster, "roaster-slug")
+            val list = repo(client, client).mine(target).getOrThrow().single()
+            assertEquals(SavedCollectionVisibility.Private, list.visibility)
+            assertFalse(list.containsItem)
+            assertEquals(1, creates)
+        } finally { client.close() }
+    }
+
+    @Test fun simultaneousOwnerReadsCreateOnlyOneDefaultList() = runTest(dispatcher) {
+        var created = false
+        var creates = 0
+        val client = client { request -> when (request.method) {
+            HttpMethod.Get -> respond(if (created) defaultList else """{"data":[]}""")
+            HttpMethod.Post -> { creates++; created = true; respond(defaultBody, HttpStatusCode.Created) }
+            else -> error("Unexpected request")
+        } }
+        try {
+            val repository = repo(client, client)
+            val reads = List(2) { async { repository.mine().getOrThrow() } }
+            reads.forEach { assertEquals("Избранное", it.await().single().title) }
+            assertEquals(1, creates)
+        } finally { client.close() }
+    }
+
+    @Test fun existingPrivateFavoritesNeedsNoCreation() = runTest(dispatcher) {
+        val client = client { request ->
+            assertEquals(HttpMethod.Get, request.method)
+            respond(defaultList)
+        }
+        try {
+            assertEquals("Избранное", repo(client, client).mine().getOrThrow().single().title)
+        } finally { client.close() }
+    }
+
+    @Test fun changedAccountDuringListReadCannotCreateForTheNewOwner() = runTest(dispatcher) {
+        val gate = CompletableDeferred<Unit>()
+        var creates = 0
+        val client = client { request ->
+            if (request.method == HttpMethod.Post) { creates++; respond(defaultBody, HttpStatusCode.Created) }
+            else { gate.await(); respond("""{"data":[]}""") }
+        }
+        try {
+            val repository = repo(client, client)
+            val pending = async {
+                try { repository.mine(); null }
+                catch (cancelled: CancellationException) { cancelled }
+            }
+            runCurrent()
+            account.owner.value = "second"
+            gate.complete(Unit)
+            assertIs<CancellationException>(pending.await())
+            assertEquals(0, creates)
+        } finally { client.close() }
+    }
+
+    @Test fun conflictDuringDefaultCreationReReadsTheWinner() = runTest(dispatcher) {
+        var reads = 0
+        val client = client { request -> when (request.method) {
+            HttpMethod.Get -> respond(if (++reads == 1) """{"data":[]}""" else defaultList)
+            HttpMethod.Post -> respond("{}", HttpStatusCode.Conflict)
+            else -> error("Unexpected request")
+        } }
+        try {
+            assertEquals("Избранное", repo(client, client).mine().getOrThrow().single().title)
+            assertEquals(2, reads)
+        } finally { client.close() }
+    }
+
+    @Test fun cancelledListRequestNeverCreatesTheDefault() = runTest(dispatcher) {
+        var creates = 0
+        val client = client { request ->
+            if (request.method == HttpMethod.Post) { creates++; respond(defaultBody, HttpStatusCode.Created) }
+            else throw CancellationException("Interrupted list read")
+        }
+        try {
+            assertFailsWith<CancellationException> { repo(client, client).mine() }
+            assertEquals(0, creates)
+        } finally { client.close() }
+    }
 
     @Test fun emptyListCreationPinsOwnerAndDefaultsToPrivate() = runTest(dispatcher) {
         val client = client { request ->
@@ -129,12 +215,24 @@ class SavedCollectionsRepositoryTest {
             assertEquals(HttpMethod.Put, request.method)
             assertEquals("/api/v1/saved-collections/membership/coffee_shop/shop", request.url.encodedPath)
             assertEquals("first", request.headers["X-Test-Owner"])
-            assertEquals(listOf(compactId), payload(request).getValue("collectionIds").jsonArray.map { it.jsonPrimitive.content })
+            assertEquals(listOf(id), payload(request).getValue("collectionIds").jsonArray.map { it.jsonPrimitive.content })
             respond("""{"data":[]}""")
         }
         try {
-            assertTrue(repo(client, client).memberships(SavedCollectionTarget(CollectionPlaceKind.CoffeeShop, "shop"), setOf(id)).isSuccess)
+            assertTrue(repo(client, client).memberships(SavedCollectionTarget(CollectionPlaceKind.CoffeeShop, "shop"), setOf(compactId)).isSuccess)
             assertEquals(1, writes)
+        } finally { client.close() }
+    }
+
+    @Test fun featuredSelectionUsesHyphenatedGuidInJsonBody() = runTest(dispatcher) {
+        val client = client { request ->
+            assertEquals(HttpMethod.Put, request.method)
+            assertEquals("/api/v1/saved-collections/featured", request.url.encodedPath)
+            assertEquals(id, payload(request).getValue("collectionId").jsonPrimitive.content)
+            respond("""{"data":{"collectionId":"$id"}}""")
+        }
+        try {
+            assertTrue(repo(client, client).setFeatured(compactId).isSuccess)
         } finally { client.close() }
     }
 
@@ -243,6 +341,24 @@ class SavedCollectionsRepositoryTest {
 
     private fun repo(private: HttpClient, public: HttpClient) = createSavedCollectionsRepository(private, public,
         "https://fixture.invalid", account) { builder, owner -> builder.headers["X-Test-Owner"] = owner }
+
+    private fun defaultRoasterClient(onCreate: () -> Unit) = client { request ->
+        assertEquals("first", request.headers["X-Test-Owner"])
+        when (request.method) {
+            HttpMethod.Get -> {
+                assertEquals("roaster", request.url.parameters["kind"])
+                assertEquals("roaster-slug", request.url.parameters["slug"])
+                respond("""{"data":[]}""")
+            }
+            HttpMethod.Post -> {
+                onCreate()
+                assertEquals("private", payload(request).getValue("visibility").jsonPrimitive.content)
+                assertEquals("Избранное", payload(request).getValue("title").jsonPrimitive.content)
+                respond(defaultBody, HttpStatusCode.Created)
+            }
+            else -> error("Unexpected request")
+        }
+    }
 
     private fun payload(request: io.ktor.client.request.HttpRequestData): JsonObject =
         Json.parseToJsonElement((request.body as OutgoingContent.ByteArrayContent).bytes().decodeToString()).jsonObject

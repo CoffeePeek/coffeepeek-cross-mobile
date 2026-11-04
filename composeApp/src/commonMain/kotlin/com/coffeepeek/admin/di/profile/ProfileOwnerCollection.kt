@@ -7,9 +7,14 @@ import com.coffeepeek.feature.collections.api.CollectionsEntry
 import org.koin.compose.koinInject
 
 @Composable
-internal fun ProfileOwnerCollection(fallback: @Composable () -> Unit) {
+internal fun ProfileOwnerCollection() {
     koinInject<CollectionsEntry>().OwnerProfile(
-        onOpenCollection = { Navigator.navigate(Navigator.Screen.SavedPublicCollection(it)) },
+        onOpenCollection = { Navigator.navigate(Navigator.Screen.CollectionEditor(it)) },
         onSignIn = { Navigator.navigate(Navigator.Screen.Auth) },
-        fallback = fallback, modifier = Modifier)
+        modifier = Modifier)
+}
+
+internal fun openProfileCollections() {
+    ProfileAnalytics.favoritesOpened()
+    Navigator.navigate(Navigator.Screen.CollectionsLibrary)
 }

@@ -156,3 +156,43 @@ nonexistent public list requests return 404; these prove routing/protection only
 not successful owner reads/writes. Real-account data was not modified by agent
 checks. Authenticated owner loading and public/private end-to-end acceptance
 still require a safe, explicitly authorized test setup.
+
+## Profile and collections correction — 2026-11-04
+
+The owner profile now previews the owner's actual saved collections, including
+private ones. Its "All" route opens the grouped library. The library already
+provided one top-right create button, public/private sections that omit an empty
+public group, and sharing on individual collection pages. The default cover
+uses the first coffee shop's photo when there is no uploaded cover; the editor
+description has explicit vertical padding. A successful owner-list read now
+ensures a private `Избранное` exists. Concurrent reads are serialized within one
+repository instance, and account changes/cancellation stop creation. Server-side
+uniqueness is still needed to rule out cross-device duplicate creation.
+
+Read-only Debug diagnostics from the selected emulator found `400` responses for
+featured and membership PUTs, while collection POST and metadata/items PUTs
+succeeded. Those two JSON bodies had compact 32-character collection IDs; the
+server binds them as GUIDs in hyphenated form. The client now sends canonical
+hyphenated IDs in those bodies and retains the existing URL path format. Mock
+HTTP tests cover both request bodies. No live owner write was used to verify the
+change; authenticated production persistence remains an acceptance gate.
+
+Verification on 2026-11-04 from branch `codex/migration-profile-collections-polish`
+based on `fd62d742`: collections data 29/29, impl 54/54, profile impl 62/62,
+and shelf impl 78/78 Android unit tests passed with no skips. The first full
+application unit run completed 985 cases with two failures in old Sandbox
+fixtures that expected no default list; both fixtures were corrected and their
+focused rerun passed 7/7, with no retries. Direct Debug and Direct Sandbox APK
+assemblies passed their packaged runtime-class checks. Sandbox was not installed
+for this correction, respecting the user's ordinary Debug selection.
+
+The final committed-code Debug APK (`com.coffeepeek`, version 1.1.5.2688,
+SHA-256 `86F4EABA0DFEE610E4F1C96B7DDBA6E39B375467BCC28C271823C88271A2AACF`)
+was installed in place on `emulator-5554`, Android 17/API 37, x86_64, 16 KB
+pages. Package, launcher and certificate matched the prior install; first
+install time was preserved. MainActivity remained foreground with no fatal
+startup log. The app displayed a signed-out Settings screen, so owner profile,
+collection edits, shelf and preference layout were not inspected in the live
+account. Light/dark, large font, narrow window, accessibility, modal and real
+backend write acceptance remain unverified. No automated UI or screenshot
+tests were added or run.

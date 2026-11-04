@@ -40,7 +40,9 @@ class SandboxSavedCollectionsContractTest {
             assertEquals(0, row.summary.itemCount)
             assertTrue(fixture.repository.public(row.summary.id).isFailure)
             fixture.owner.value = "other"
-            assertTrue(fixture.repository.mine().getOrThrow().isEmpty())
+            val otherLists = fixture.repository.mine().getOrThrow()
+            assertEquals(listOf("Избранное"), otherLists.map { it.title })
+            assertTrue(otherLists.all { it.visibility == SavedCollectionVisibility.Private })
             assertTrue(fixture.repository.owned(row.summary.id).isFailure)
             fixture.owner.value = "sandbox"
             assertEquals("Description", fixture.repository.owned(row.summary.id).getOrThrow().summary.description)
@@ -76,7 +78,9 @@ class SandboxSavedCollectionsContractTest {
             for (place in places) {
                 val target = SavedCollectionTarget(place.kind, place.slug)
                 fixture.repository.memberships(target, setOf(first.summary.id, second.summary.id)).getOrThrow()
-                assertTrue(fixture.repository.mine(target).getOrThrow().all { it.containsItem })
+                val memberships = fixture.repository.mine(target).getOrThrow()
+                assertTrue(memberships.filter { it.id == first.summary.id || it.id == second.summary.id }.all { it.containsItem })
+                assertFalse(memberships.single { it.title == "Избранное" }.containsItem)
             }
             val before = fixture.repository.mine().getOrThrow()
             val target = SavedCollectionTarget(places.first().kind, places.first().slug)
@@ -110,7 +114,7 @@ class SandboxSavedCollectionsContractTest {
             assertTrue(fixture.repository.create(SavedCollectionMetadata("Wrong owner", coverUpload = upload)).isFailure)
             fixture.backend.scenario = SandboxScenario.UploadError
             assertTrue(fixture.repository.uploadCover(input).isFailure)
-            assertTrue(fixture.repository.mine().getOrThrow().isEmpty())
+            assertEquals(listOf("Избранное"), fixture.repository.mine().getOrThrow().map { it.title })
         }
     }
 }

@@ -221,10 +221,11 @@ internal fun PublicProfileScreen(
                     }
                     if (own != null) own.favoritesPreview {
                         ProfileSectionHeading(stringResource(Res.string.profile_section_favorites), onAll = own.onOpenFavorites)
-                    } else if (viewingOwn) slots.ownerCollection {
-                        OwnProfileFavoritesPreview(state, slots, openFavorite,
-                            onAll = { section = ProfileSection.Favorites },
-                            onRetry = { vm.onAction(PublicProfileAction.RetryFavorites) })
+                    } else if (viewingOwn) Column {
+                        Box(Modifier.padding(horizontal = 16.dp)) {
+                            ProfileSectionHeading(stringResource(Res.string.profile_section_favorites), onAll = slots.onOpenOwnCollections)
+                        }
+                        slots.ownerCollection()
                     } else if (!viewingOwn) slots.featuredCollection(profile.slug)
 
                     slots.shelfPreview(profile.slug)

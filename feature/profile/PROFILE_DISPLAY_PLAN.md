@@ -149,3 +149,22 @@ is declared as shelf-owned; the assertion was not relaxed. Current server main
 merge is e6da3360933a9a8c4e2e2c529c0b8c46c94a43ca; production workflow41798536619
 was still running when this evidence was recorded. WebPR37 remains sequenced
 after server health. Production readiness is not inferred from PR preview checks.
+
+## Single-row counters and collection/shelf preview — 2026-11-04
+
+Own and public profile headers now place check-ins, shops, optional roasters and
+followers in one row beneath the avatar/name. The roaster counter is hidden when
+zero. The loading skeleton follows that row. Own-profile sections read
+`Подборки`/`Падборкі`, and the owner preview renders saved collection cards,
+including private ones. The section's "All" action opens the collections
+library; tapping an owned card opens its editor. The public shelf preview draws
+one shared shelf with up to three bags and no bag-count label. Paired light/dark
+previews accompany the changed UI.
+
+The related verification, source base, device, APK hash, suite counts and
+original failed fixture rerun are recorded in
+`feature/collections/SAVED_COLLECTIONS_PLAN.md` under the correction of the
+same date. Debug startup was confirmed after an in-place update on API 37, but
+the device showed a signed-out Settings screen. Logged-in profile rendering,
+light/dark/font/window/accessibility review and live preference persistence
+remain unverified. No account setting or collection was changed for testing.

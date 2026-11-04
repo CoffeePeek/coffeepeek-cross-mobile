@@ -1,11 +1,14 @@
 package com.coffeepeek.admin.di.profile
 
 import androidx.compose.runtime.Composable
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.padding
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import coffeepeek.composeapp.generated.resources.Res
 import coffeepeek.composeapp.generated.resources.local_data_cleanup_error
 import com.coffeepeek.admin.auth.GoogleAuth
-import com.coffeepeek.admin.feature.favorites.api.FavoritesProfilePreview
 import com.coffeepeek.admin.feature.profile.domain.PublicProfileRepository
 import com.coffeepeek.admin.settings.ReviewDraftStore
 import com.coffeepeek.admin.ui.Navigator
@@ -37,10 +40,7 @@ internal class OwnProfileFeatureScreenRenderer(private val entry: OwnProfileEntr
             onOpenRoaster = { Navigator.navigate(Navigator.Screen.RoasterDetail(it)) },
             onLogin = { Navigator.navigate(Navigator.Screen.Auth) },
             onOpenUser = { slug, nickname, avatar -> Navigator.navigate(Navigator.Screen.UserProfile(slug, nickname, avatar)) },
-            onOpenFavorites = {
-                ProfileAnalytics.favoritesOpened()
-                Navigator.navigate(Navigator.Screen.Favorites)
-            },
+            onOpenFavorites = ::openProfileCollections,
             onOpenCheckIns = { Navigator.navigate(Navigator.Screen.VisitedPlaces) },
             onOpenContributions = ::openProfileContributions,
             onOpenBlockedAuthors = { Navigator.navigate(Navigator.Screen.BlockedAuthors) },
@@ -80,8 +80,11 @@ internal fun ownProfileFeatureScreenRenderer(
     val checkIns = ProfilePublicCheckIns(repository)
     val slots = OwnProfileSlots(
         shared = profileSlots(checkIns),
-        favoritesPreview = { openShop, openRoaster, header ->
-            ProfileOwnerCollection { FavoritesProfilePreview(openShop, openRoaster, header) }
+        favoritesPreview = { _, _, header ->
+            Column {
+                Box(Modifier.padding(horizontal = 16.dp)) { header() }
+                ProfileOwnerCollection()
+            }
         },
         activityCalendar = { openShop, openCheckIns -> PersonalProfileActivityCalendar(onOpenShop = openShop, onOpenCheckIns = openCheckIns) },
         activityPreview = { onClick -> PersonalProfileActivityPreview(onClick) },

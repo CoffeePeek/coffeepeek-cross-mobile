@@ -3,6 +3,7 @@ package com.coffeepeek.feature.shelf.impl.ui.compose.component
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -21,15 +22,17 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 
 @Composable
-internal fun PublicShelfBag(value: PublicShelfItem, onOpen: () -> Unit, modifier: Modifier = Modifier,
+internal fun PublicShelfBag(value: PublicShelfItem, onOpen: () -> Unit, modifier: Modifier = Modifier.width(112.dp),
+    onShelf: Boolean = false,
     photo: @Composable (Modifier) -> Unit = {
         ShelfBagPlaceholder(value.name.takeIf(String::isNotBlank) ?: stringResource(Res.string.shelf_bag_untitled), it) }) {
     val title = value.name.takeIf(String::isNotBlank) ?: stringResource(Res.string.shelf_bag_untitled)
     val openLabel = stringResource(Res.string.shelf_profile_open_coffee, title)
     val clickable = if (value.coffeeSlug.isNullOrBlank()) Modifier else
         Modifier.clickable(role = Role.Button, onClickLabel = openLabel, onClick = onOpen)
-    Column(modifier.width(112.dp).then(clickable).padding(bottom = 4.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+    Column(modifier.then(clickable).padding(bottom = 4.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
         photo(Modifier.fillMaxWidth().height(136.dp))
+        if (onShelf) Spacer(Modifier.height(36.dp))
         Text(title, style = MaterialTheme.typography.bodyMedium, maxLines = 2, overflow = TextOverflow.Ellipsis)
         value.roasterName?.takeIf(String::isNotBlank)?.let {
             Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,

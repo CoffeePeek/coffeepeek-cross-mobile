@@ -41,6 +41,7 @@ import com.coffeepeek.feature.profile.impl.resources.*
 import com.coffeepeek.feature.profile.impl.ui.OwnProfileViewModel
 import com.coffeepeek.feature.profile.impl.ui.PublicProfileViewModel
 import com.coffeepeek.feature.profile.impl.ui.compose.component.ProfileLoadingSkeleton
+import com.coffeepeek.feature.profile.impl.ui.compose.component.ProfileSectionHeading
 import com.coffeepeek.feature.profile.impl.ui.compose.component.PublicProfileHeader
 import com.coffeepeek.feature.profile.impl.ui.model.OwnProfileAction
 import com.coffeepeek.feature.profile.impl.ui.model.PublicProfileAction
@@ -143,7 +144,7 @@ internal fun OwnProfileScreen(
                         if (state.error != null || state.refreshError != null) slots.loadError { vm.onAction(OwnProfileAction.Refresh) }
                     }
                     slots.favoritesPreview(onOpenShop, onOpenRoaster) {
-                        TextButton(onClick = onOpenFavorites) { Text(stringResource(Res.string.profile_own_favorites)) }
+                        ProfileSectionHeading(stringResource(Res.string.profile_section_favorites), onAll = onOpenFavorites)
                     }
                     if (profile.checkInCount > 0) TextButton(onClick = onOpenCheckIns, modifier = Modifier.padding(horizontal = 16.dp)) { Text(stringResource(Res.string.profile_own_check_ins)) }
                     Spacer(Modifier.height(bottomPadding))

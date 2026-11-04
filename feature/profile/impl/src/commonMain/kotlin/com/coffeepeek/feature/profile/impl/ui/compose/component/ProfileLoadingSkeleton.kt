@@ -5,6 +5,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -35,26 +36,22 @@ internal fun ProfileLoadingSkeleton(modifier: Modifier = Modifier) {
 
 @Composable
 private fun ProfileLoadingHeader() {
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        CoffeePeekShimmer(Modifier.size(88.dp), shape = CircleShape)
-        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            CoffeePeekShimmer(Modifier.fillMaxWidth(0.75f).height(28.dp))
-            ProfileLoadingCounters()
+    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
+            CoffeePeekShimmer(Modifier.size(88.dp), shape = CircleShape)
+            CoffeePeekShimmer(Modifier.weight(1f).height(28.dp))
         }
+        ProfileLoadingCounters()
     }
 }
 
 @Composable
 private fun ProfileLoadingCounters() {
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        repeat(2) {
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                repeat(2) {
-                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                        CoffeePeekShimmer(Modifier.width(36.dp).height(24.dp))
-                        CoffeePeekShimmer(Modifier.fillMaxWidth(0.85f).height(12.dp))
-                    }
-                }
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        repeat(4) {
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                CoffeePeekShimmer(Modifier.width(36.dp).height(24.dp))
+                CoffeePeekShimmer(Modifier.fillMaxWidth(0.85f).height(12.dp))
             }
         }
     }

@@ -14,6 +14,7 @@ import io.ktor.utils.io.readRemaining
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withPermit
 import kotlinx.io.readByteArray
 
@@ -21,13 +22,31 @@ internal class HttpSavedCollectionsRepository(private val client: HttpClient, pr
     private val apiBaseUrl: String, private val account: CollectionsAccount,
     private val pinRequest: (HttpRequestBuilder, String) -> Unit) : SavedCollectionsRepository {
     private val coverRequests = Semaphore(4)
+    private val defaultCreation = Mutex()
 
     override suspend fun mine(target: SavedCollectionTarget?): Result<List<SavedCollectionSummary>> = owned { owner ->
+        defaultCreation.lock()
+        try { mineWithDefault(owner, target) }
+        finally { defaultCreation.unlock() }
+    }
+
+    private suspend fun mineWithDefault(owner: String, target: SavedCollectionTarget?): List<SavedCollectionSummary> {
+        val lists = readMine(owner, target)
+        checkOwner(owner)
+        if (lists.any { it.isDefaultFavorites() }) return lists
+        val result = create(SavedCollectionMetadata(DEFAULT_FAVORITES_TITLE))
+        result.getOrNull()?.let { return listOf(it.summary) + lists }
+        val error = checkNotNull(result.exceptionOrNull())
+        if (error !is SavedCollectionConflict) throw error
+        return readMine(owner, target).takeIf { current -> current.any { it.isDefaultFavorites() } } ?: throw error
+    }
+
+    private suspend fun readMine(owner: String, target: SavedCollectionTarget?): List<SavedCollectionSummary> {
         val response = client.get(api(path)) {
             pinRequest(this, owner)
             target?.let { parameter("kind", collectionWireKind(it.kind)); parameter("slug", validSlug(it.slug)) }
         }
-        envelope<List<SavedCollectionDto>>(response).map { it.toSavedSummary(true) }
+        return envelope<List<SavedCollectionDto>>(response).map { it.toSavedSummary(true) }
     }
 
     override suspend fun owned(id: String): Result<SavedCollection> = owned { owner ->
@@ -69,7 +88,7 @@ internal class HttpSavedCollectionsRepository(private val client: HttpClient, pr
         val response = client.put(api("$path/membership/${collectionWireKind(target.kind)}/${validSlug(target.slug)}")) {
             pinRequest(this, owner)
             contentType(ContentType.Application.Json)
-            setBody(SavedMembershipDto(collectionIds.map(::collectionId)))
+            setBody(SavedMembershipDto(collectionIds.map(::collectionBodyId)))
         }
         envelope<List<SavedCollectionDto>>(response).map { it.toSavedSummary(true) }
     }
@@ -86,7 +105,7 @@ internal class HttpSavedCollectionsRepository(private val client: HttpClient, pr
         success(client.put(api("$path/featured")) {
             pinRequest(this, owner)
             contentType(ContentType.Application.Json)
-            setBody(SavedFeaturedDto(id?.let(::collectionId)))
+            setBody(SavedFeaturedDto(id?.let(::collectionBodyId)))
         })
     }
 
@@ -198,5 +217,9 @@ internal class HttpSavedCollectionsRepository(private val client: HttpClient, pr
     private companion object {
         const val path = "/api/v1/saved-collections"
         const val publicPath = "/api/v1/favorite-collections"
+        const val DEFAULT_FAVORITES_TITLE = "Избранное"
     }
 }
+
+private fun SavedCollectionSummary.isDefaultFavorites(): Boolean =
+    visibility == SavedCollectionVisibility.Private && title == "Избранное"

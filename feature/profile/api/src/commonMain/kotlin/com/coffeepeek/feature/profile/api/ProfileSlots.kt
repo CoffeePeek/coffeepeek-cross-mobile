@@ -52,8 +52,9 @@ class ProfileSlots(
     val featuredCollection: @Composable (profileSlug: String) -> Unit = {},
     /** Read-only shelf projection; the shelf feature hides it unless its owner explicitly enabled sharing. */
     val shelfPreview: @Composable (profileSlug: String) -> Unit = {},
-    /** Owner preview can replace its private favorites fallback with the chosen public collection. */
-    val ownerCollection: @Composable (fallback: @Composable () -> Unit) -> Unit = { fallback -> fallback() },
+    /** The signed-in owner's saved collections, including private lists. */
+    val ownerCollection: @Composable () -> Unit = {},
+    val onOpenOwnCollections: () -> Unit = {},
     /** Called only while viewing the signed-in owner's counters. */
     val onOwnContributions: (ProfileContribution) -> Unit = {},
 )

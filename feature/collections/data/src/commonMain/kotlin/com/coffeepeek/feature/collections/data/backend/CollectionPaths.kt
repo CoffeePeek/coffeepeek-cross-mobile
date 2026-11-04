@@ -7,6 +7,13 @@ internal fun collectionId(id: String): String {
     return id.replace("-", "").lowercase()
 }
 
+/** System.Text.Json binds Guid body fields in the hyphenated D form. */
+internal fun collectionBodyId(id: String): String {
+    val compact = collectionId(id)
+    return "${compact.substring(0, 8)}-${compact.substring(8, 12)}-${compact.substring(12, 16)}-" +
+        "${compact.substring(16, 20)}-${compact.substring(20)}"
+}
+
 internal fun collectionPublicUrl(id: String, canonicalPath: String): String {
     require(canonicalPath == "/collections/${collectionId(id)}")
     return "https://coffeepeek.by$canonicalPath"

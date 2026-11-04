@@ -20,7 +20,7 @@ import kotlinx.coroutines.flow.collectLatest
 internal fun SavedCollectionsScreen(model: SavedCollectionsViewModel, saved: SavedCollectionsRepository,
     snapshots: CollectionsRepository, decode: CollectionPhotoDecoder, picker: CollectionCoverPicker,
     callbacks: CollectionsCallbacks, openEditor: (String?) -> Unit, openCollection: (String) -> Unit, modifier: Modifier,
-    ownerProfileFallback: (@Composable () -> Unit)? = null) {
+    profilePreview: Boolean = false) {
     val state by model.state.collectAsStateWithLifecycle()
     val actions = model::onAction
     val currentCallbacks by rememberUpdatedState(callbacks)
@@ -37,13 +37,12 @@ internal fun SavedCollectionsScreen(model: SavedCollectionsViewModel, saved: Sav
     }
     val image: @Composable (SavedCollectionSummary?, Modifier) -> Unit = { summary, m -> SavedCollectionCoverImage(summary, null, saved, decode, m) }
     if (state.preview) SavedCollectionPoster(state, actions, snapshots, decode, modifier)
+    else if (profilePreview) SavedCollectionOwnerProfile(state, actions, openCollection, modifier) { value, m -> image(value, m) }
     else when (state.mode) {
         SavedCollectionsMode.Library -> SavedCollectionsLibrary(state, actions, modifier) { value, m -> image(value, m) }
         SavedCollectionsMode.Editor -> SavedEditorRuntime(state, actions, saved, decode, picker, modifier)
         SavedCollectionsMode.Picker -> SavedCollectionsPicker(state, actions, modifier) { value, m -> image(value, m) }
-        SavedCollectionsMode.Preference -> if (ownerProfileFallback != null)
-            SavedCollectionOwnerProfile(state, actions, openCollection, ownerProfileFallback, modifier) { value, m -> image(value, m) }
-            else SavedCollectionProfilePreference(state, actions, modifier)
+        SavedCollectionsMode.Preference -> SavedCollectionProfilePreference(state, actions, modifier)
         SavedCollectionsMode.Public -> SavedCollectionPublicContent(state, actions, modifier) { image(state.collection?.summary, it) }
         SavedCollectionsMode.Featured -> SavedCollectionFeatured(state.collection?.summary, openCollection, modifier) { image(state.collection?.summary, it) }
     }

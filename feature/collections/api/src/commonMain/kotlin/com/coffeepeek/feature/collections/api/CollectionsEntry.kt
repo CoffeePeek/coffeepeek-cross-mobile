@@ -28,9 +28,9 @@ interface CollectionsEntry {
     @Composable
     fun ProfilePreference(onSignIn: () -> Unit, modifier: Modifier)
 
-    /** Selected public collection for the owner; [fallback] is used only after a successful opt-out read. */
+    /** Owner's private and public collections, independent of the optional featured selection. */
     @Composable
-    fun OwnerProfile(onOpenCollection: (String) -> Unit, onSignIn: () -> Unit, fallback: @Composable () -> Unit, modifier: Modifier)
+    fun OwnerProfile(onOpenCollection: (String) -> Unit, onSignIn: () -> Unit, modifier: Modifier)
 
     /** Shows only the explicitly featured public collection, or no content. */
     @Composable

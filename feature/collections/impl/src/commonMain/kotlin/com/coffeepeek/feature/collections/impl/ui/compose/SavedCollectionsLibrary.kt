@@ -62,10 +62,12 @@ internal fun SavedCollectionSectionTitle(visibility: SavedCollectionVisibility) 
         style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 8.dp))
 }
 
-@Composable private fun SavedCollectionsLibrarySample(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
+@Composable private fun SavedCollectionsLibrarySample(dark: Boolean, includePublic: Boolean = true) = CoffeePeekTheme(darkTheme = dark) {
     SavedCollectionsLibrary(SavedCollectionsState(SavedCollectionsMode.Library, signedIn = true, loading = false,
-        lists = listOf(SavedCollectionSummary("one", "Любимые кофейни", visibility = SavedCollectionVisibility.Public, itemCount = 8),
-            SavedCollectionSummary("two", "Хочу посетить", itemCount = 3))), {})
+        lists = listOfNotNull(SavedCollectionSummary("one", "Любимые кофейни", visibility = SavedCollectionVisibility.Public,
+            itemCount = 8).takeIf { includePublic }, SavedCollectionSummary("two", "Избранное", itemCount = 3))), {})
 }
 @Preview @Composable private fun SavedCollectionsLibraryLightPreview() = SavedCollectionsLibrarySample(false)
 @Preview @Composable private fun SavedCollectionsLibraryDarkPreview() = SavedCollectionsLibrarySample(true)
+@Preview @Composable private fun SavedCollectionsPrivateOnlyLightPreview() = SavedCollectionsLibrarySample(false, includePublic = false)
+@Preview @Composable private fun SavedCollectionsPrivateOnlyDarkPreview() = SavedCollectionsLibrarySample(true, includePublic = false)

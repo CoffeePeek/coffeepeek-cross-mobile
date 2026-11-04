@@ -11,6 +11,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.component.*
+import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.collections.domain.model.SavedCollectionVisibility
 import com.coffeepeek.feature.collections.impl.ui.model.*
@@ -30,7 +31,9 @@ internal fun SavedCollectionMetadataForm(state: SavedCollectionsState, action: (
             CoffeePeekCompactOutlinedTextField(state.description, { action(SavedCollectionsAction.Description(it)) },
                 Modifier.fillMaxWidth().semantics { contentDescription = description }, enabled = !state.busy,
                 singleLine = false, minLines = 3, maxLines = 6,
-                placeholder = { Text(stringResource(Res.string.collections_description_placeholder)) }, shape = RoundedCornerShape(16.dp))
+                placeholder = { Text(stringResource(Res.string.collections_description_placeholder)) },
+                shape = RoundedCornerShape(16.dp),
+                contentPadding = PaddingValues(horizontal = CoffeePeekDimens.inputPadding, vertical = 12.dp))
         }
         CoffeePeekGroupSection(footer = stringResource(if (state.visibility == SavedCollectionVisibility.Public)
             Res.string.collections_public_hint else Res.string.collections_private_hint)) {

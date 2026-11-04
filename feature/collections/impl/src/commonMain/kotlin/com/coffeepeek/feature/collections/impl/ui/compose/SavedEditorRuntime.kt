@@ -25,7 +25,8 @@ internal fun SavedEditorRuntime(state: SavedCollectionsState, action: (SavedColl
         pickerVersion = state.accountVersion
         picking = true
     }, { deleting = true }, modifier) { m ->
-        SavedCollectionCoverImage(state.collection?.summary?.takeUnless { state.removeCover }, state.coverInput, saved, decode, m)
+        SavedCollectionCoverImage(state.collection?.summary?.let { if (state.removeCover) it.copy(cover = null) else it },
+            state.coverInput, saved, decode, m)
     }
     key(state.accountVersion) {
         val version = state.accountVersion

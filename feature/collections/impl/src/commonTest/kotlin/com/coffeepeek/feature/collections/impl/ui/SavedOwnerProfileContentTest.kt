@@ -1,39 +1,31 @@
 package com.coffeepeek.feature.collections.impl.ui
 
-import com.coffeepeek.feature.collections.domain.model.SavedCollectionVisibility
 import com.coffeepeek.feature.collections.impl.ui.model.*
 import kotlin.test.*
 
 class SavedOwnerProfileContentTest {
-    private val ready = SavedCollectionsState(SavedCollectionsMode.Preference, signedIn = true, loading = false,
-        lists = listOf(publicList.summary), featuredId = publicList.summary.id)
+    private val ready = SavedCollectionsState(SavedCollectionsMode.Library, signedIn = true, loading = false,
+        lists = listOf(privateList.summary, publicList.summary))
 
-    @Test fun selectedPublicCollectionKeepsItsActualTitle() {
-        val content = assertIs<SavedOwnerProfileContent.Selected>(savedOwnerProfileContent(ready))
-        assertEquals(publicList.summary.title, content.value.title)
-        assertEquals(publicList.summary.id, content.value.id)
+    @Test fun ownerPreviewKeepsPrivateAndPublicListsInLibraryOrder() {
+        val content = assertIs<SavedOwnerProfileContent.Lists>(savedOwnerProfileContent(ready))
+        assertEquals(ready.lists, content.values)
     }
 
-    @Test fun successfulOptOutUsesTheExistingFavoritesSection() {
-        assertEquals(SavedOwnerProfileContent.Favorites, savedOwnerProfileContent(ready.copy(featuredId = null)))
+    @Test fun successfulEmptyReadShowsEmptyState() {
+        assertEquals(SavedOwnerProfileContent.Empty, savedOwnerProfileContent(ready.copy(lists = emptyList())))
     }
 
-    @Test fun refreshHidesPreviouslySelectedContentUntilItsPreferenceIsKnown() {
+    @Test fun refreshHidesPreviouslyLoadedCollections() {
         assertEquals(SavedOwnerProfileContent.Status, savedOwnerProfileContent(ready.copy(loading = true)))
     }
 
-    @Test fun failedPreferenceReadDoesNotExposeFallbackFavorites() {
+    @Test fun failedReadDoesNotExposeStaleCollections() {
         assertEquals(SavedOwnerProfileContent.Status,
-            savedOwnerProfileContent(ready.copy(featuredId = null, failure = SavedCollectionsFailure.Load)))
+            savedOwnerProfileContent(ready.copy(failure = SavedCollectionsFailure.Load)))
     }
 
-    @Test fun missingOrPrivateSelectionNeverBecomesAGlobalFavoritesFallback() {
-        assertEquals(SavedOwnerProfileContent.Status, savedOwnerProfileContent(ready.copy(lists = emptyList())))
-        assertEquals(SavedOwnerProfileContent.Status, savedOwnerProfileContent(ready.copy(
-            lists = listOf(publicList.summary.copy(visibility = SavedCollectionVisibility.Private)))))
-    }
-
-    @Test fun signedOutStateCannotRenderThePreviousOwnersSelection() {
+    @Test fun signedOutStateCannotRenderThePreviousOwnersCollections() {
         assertEquals(SavedOwnerProfileContent.Status, savedOwnerProfileContent(ready.copy(signedIn = false)))
     }
 }
