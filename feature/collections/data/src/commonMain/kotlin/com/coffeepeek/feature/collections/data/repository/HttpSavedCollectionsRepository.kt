@@ -21,22 +21,31 @@ import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.io.readByteArray
+import kotlin.time.TimeSource
 
 internal class HttpSavedCollectionsRepository(private val client: HttpClient, private val publicClient: HttpClient,
     private val apiBaseUrl: String, private val account: CollectionsAccount,
-    private val pinRequest: (HttpRequestBuilder, String) -> Unit) : SavedCollectionsRepository {
+    private val pinRequest: (HttpRequestBuilder, String) -> Unit,
+    timeSource: TimeSource = TimeSource.Monotonic) : SavedCollectionsRepository {
     private val coverRequests = Semaphore(4)
     private val defaultCreation = Mutex()
     private val changes = MutableSharedFlow<Unit>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
-    private val ownerCache = OwnerCollectionsCache(account)
+    private val ownerCache = OwnerCollectionsCache(account, timeSource)
 
     override fun observeChanges() = changes.asSharedFlow()
     override fun cachedMine(target: SavedCollectionTarget?) = ownerCache.peek(target)
     override fun cachedFeatured() = ownerCache.peekFeatured()
 
-    override suspend fun mine(target: SavedCollectionTarget?): Result<List<SavedCollectionSummary>> = owned { owner ->
+    override suspend fun mine(target: SavedCollectionTarget?): Result<List<SavedCollectionSummary>> = loadMine(target, refresh = false)
+
+    override suspend fun refreshMine(target: SavedCollectionTarget?): Result<List<SavedCollectionSummary>> = loadMine(target, refresh = true)
+
+    private suspend fun loadMine(target: SavedCollectionTarget?, refresh: Boolean): Result<List<SavedCollectionSummary>> = owned { owner ->
         defaultCreation.lock()
-        try { mineWithDefault(owner, target).also { ownerCache.record(owner, target, it) } }
+        try {
+            if (!refresh) ownerCache.fresh(target)?.let { return@owned it }
+            mineWithDefault(owner, target).also { ownerCache.record(owner, target, it) }
+        }
         finally { defaultCreation.unlock() }
     }
 
@@ -108,7 +117,7 @@ internal class HttpSavedCollectionsRepository(private val client: HttpClient, pr
     }
 
     override suspend fun memberships(target: SavedCollectionTarget, collectionIds: Set<String>): Result<List<SavedCollectionSummary>> = mutate { owner ->
-        writeMemberships(owner, target, collectionIds).also { ownerCache.record(owner, target, it) }
+        writeMemberships(owner, target, collectionIds).also { ownerCache.recordMemberships(owner, target, it) }
     }
 
     override suspend fun changeMemberships(target: SavedCollectionTarget, added: Set<String>, removed: Set<String>): Result<List<SavedCollectionSummary>> = mutate { owner ->
@@ -118,7 +127,7 @@ internal class HttpSavedCollectionsRepository(private val client: HttpClient, pr
         val current = readMine(owner, target).filter { it.containsItem }.map { collectionId(it.id) }.toSet()
         checkOwner(owner)
         writeMemberships(owner, target, (current + additions) - removals, additions, removals)
-            .also { ownerCache.record(owner, target, it) }
+            .also { ownerCache.recordMemberships(owner, target, it) }
     }
 
     private suspend fun writeMemberships(owner: String, target: SavedCollectionTarget, ids: Set<String>,

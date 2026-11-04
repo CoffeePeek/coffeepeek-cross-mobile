@@ -153,7 +153,7 @@ private fun postActions(
     return PostCardActions(
         onAuthor = author.slug?.takeIf(String::isNotBlank)?.let { slug -> { callbacks.onOpenAuthor(slug, author.name, author.avatarUrl) } },
         onShop = { callbacks.onOpenShop(post.shopSlug) }.takeIf { post.shopSlug.isNotBlank() },
-        onHelpful = { onAction(PostAction.ToggleHelpful) }.takeIf { interactive && !state.isMutating },
+        onHelpful = { onAction(PostAction.ToggleHelpful) }.takeIf { interactive && !state.isReporting },
         onBlock = { blockActions.requestBlock(AuthorReference(author.id, author.slug, author.name.ifBlank { authorFallback }, author.avatarUrl)) }
             .takeIf { state.canBlockAuthor && (!author.id.isNullOrBlank() || !author.slug.isNullOrBlank()) },
         onPhoto = { index -> onPhoto(PostPhotoPreview(post.photos.thumbnails, post.photos.originals, index)) },
@@ -193,11 +193,14 @@ private val previewBlockActions = object : AuthorBlockActions {
 
 private val previewCallbacks = PostCallbacks({}, {}, { _, _, _ -> }, {}, {})
 
-@Composable private fun PostPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
-    PostScreenContent(PostState(isLoggedIn = true, post = previewPost()), {}, CommunityHost(), previewBlockActions, previewCallbacks, SnackbarHostState())
+@Composable private fun PostPreview(dark: Boolean, pendingLike: Boolean = false) = CoffeePeekTheme(darkTheme = dark) {
+    val post = previewPost().let { if (pendingLike) it.copy(isHelpfulByCurrentUser = true, helpfulCount = it.helpfulCount + 1) else it }
+    PostScreenContent(PostState(isLoggedIn = true, post = post, isVoting = pendingLike), {}, CommunityHost(), previewBlockActions, previewCallbacks, SnackbarHostState())
 }
 @Preview @Composable private fun PostLightPreview() = PostPreview(false)
 @Preview @Composable private fun PostDarkPreview() = PostPreview(true)
+@Preview @Composable private fun PostPendingLikeLightPreview() = PostPreview(false, true)
+@Preview @Composable private fun PostPendingLikeDarkPreview() = PostPreview(true, true)
 
 @Composable private fun PostUnavailablePreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     PostScreenContent(PostState(isLoggedIn = false, error = PostError.Unavailable), {}, CommunityHost(), previewBlockActions, previewCallbacks, SnackbarHostState())

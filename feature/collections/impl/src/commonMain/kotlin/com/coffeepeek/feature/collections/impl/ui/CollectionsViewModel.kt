@@ -111,7 +111,7 @@ internal class CollectionsViewModel(private val repository: CollectionsRepositor
     }
 
     private fun loadLinks() {
-        if (currentState.busy || !currentState.signedIn) return
+        if (currentState.busy || currentState.loading || !currentState.signedIn) return
         requestedCollectionId = null
         val epoch = generation
         work?.cancel()

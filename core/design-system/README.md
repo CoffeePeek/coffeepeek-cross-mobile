@@ -276,7 +276,12 @@ version lookup and localization stay in composition. Section titles are rendered
 as supplied (callers decide uppercase); row callbacks and enabled state are explicit.
 Directional row chevrons mirror in RTL. CoffeePeekCapsuleSegmentedControl exposes tab
 selection, accepts enabled state and requires nonempty unique options with a valid
-selection. Its minimum-height targets can grow with typography.
+selection. Its default track height matches `CoffeePeekDimens.buttonHeight` (44 dp).
+Android fixed and shared scrollable tracks include their 4 dp top/bottom insets
+in that height; native iOS receives the same outer height.
+`minSegmentHeight` sizes the whole track; Compose segments can grow with typography.
+Paired previews compare the capsule with the notification-sized icon button and
+include a 2x font-scale sample.
 
 CoffeePeekLoader retains the existing animation and exposes localized indeterminate
 progress semantics; it does not start work. CoffeePeekErrorDialog requires all user-facing

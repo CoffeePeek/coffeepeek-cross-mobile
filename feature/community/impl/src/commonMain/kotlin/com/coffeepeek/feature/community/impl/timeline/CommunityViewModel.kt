@@ -13,6 +13,7 @@ import com.coffeepeek.feature.community.api.FeedItemAction
 import com.coffeepeek.feature.community.api.FeedTrigger
 import com.coffeepeek.feature.community.domain.model.CommunityFailure
 import com.coffeepeek.feature.community.domain.model.CommunityPost
+import com.coffeepeek.feature.community.domain.model.HelpfulVote
 import com.coffeepeek.feature.community.domain.model.FeedFilters
 import com.coffeepeek.feature.community.domain.model.FeedLoadException
 import com.coffeepeek.feature.community.domain.model.PostVisibility
@@ -22,6 +23,7 @@ import com.coffeepeek.feature.community.domain.rules.isWithdrawnFromPublic
 import com.coffeepeek.feature.community.domain.rules.MAX_REPORT_LENGTH
 import com.coffeepeek.feature.community.domain.rules.validateReport
 import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
@@ -47,6 +49,7 @@ internal class CommunityViewModel(
     private var accountKey: String? = null
     private var loadJob: Job? = null
     private var mutationJob: Job? = null
+    private val voteJobs = mutableMapOf<String, Job>()
     private var profileJob: Job? = null
     private var drinksJob: Job? = null
     /** The snapshot this model's own refresh published; the load continues by itself, so that snapshot must not restart it a second time. */
@@ -57,10 +60,10 @@ internal class CommunityViewModel(
             authors.visibility.drop(1).collect { snapshot ->
                 if (snapshot == ownRefreshSnapshot) { ownRefreshSnapshot = null; return@collect }
                 if (currentState.timeline != CommunityTimeline.Public) return@collect
-                loadJob?.cancel(); mutationJob?.cancel()
+                loadJob?.cancel(); mutationJob?.cancel(); cancelVotes()
                 updateState {
                     copy(items = emptyList(), publishedAt = emptyMap(), nextCursor = null, sessionGeneration = sessionGeneration + 1,
-                        isLoading = false, isLoadingMore = false, helpfulId = null, reportingId = null, isReporting = false, changingVisibilityId = null,
+                        isLoading = false, isLoadingMore = false, helpfulIds = emptySet(), reportingId = null, isReporting = false, changingVisibilityId = null,
                         hasMore = false, page = 0)
                 }
                 if (snapshot.ready) load(reset = true)
@@ -68,7 +71,7 @@ internal class CommunityViewModel(
         }
         viewModelScope.launch {
             account.accountKey.distinctUntilChanged().collect { key ->
-                loadJob?.cancel(); mutationJob?.cancel(); profileJob?.cancel(); drinksJob?.cancel()
+                loadJob?.cancel(); mutationJob?.cancel(); profileJob?.cancel(); drinksJob?.cancel(); cancelVotes()
                 accountKey = key
                 val initial = updateAndGet {
                     CommunityState(
@@ -237,27 +240,58 @@ internal class CommunityViewModel(
     private suspend fun toggleHelpful(id: String) {
         val current = currentState
         val item = current.items.firstOrNull { it.id == id } ?: return
-        if (current.timeline != CommunityTimeline.Public || current.isMutating || current.editing != null || current.reportingId != null) return
+        if (!current.canLike || id in current.helpfulIds) return
         analytics.itemInteracted(if (item.isHelpfulByCurrentUser) FeedItemAction.Unlike else FeedItemAction.Like, item.isHome)
         val key = accountKey ?: run { analytics.likeGateShown(); requestSignIn(); return }
         if (!isCurrent(key)) return
         loadJob?.cancel()
-        updateState { copy(helpfulId = id, isLoading = false, isLoadingMore = false) }
-        mutationJob = viewModelScope.launch {
-            val result = repository.setHelpful(id, !item.isHelpfulByCurrentUser)
-            currentCoroutineContext().ensureActive()
-            if (!isCurrent(key)) return@launch
-            result.onSuccess { vote ->
-                updateState {
-                    copy(helpfulId = null, items = items.map { post ->
-                        if (post.id == id) post.copy(helpfulCount = vote.helpfulCount, isHelpfulByCurrentUser = vote.isHelpful) else post
-                    })
-                }
-            }.onFailure { error ->
-                updateState { copy(helpfulId = null) }
-                sendEvent(CommunityEvent.Message(ActionMessage(MessageKind.VoteFailed, (error as? CommunityFailure)?.serverMessage)))
-            }
+        val generation = current.sessionGeneration
+        updateState {
+            copy(helpfulIds = helpfulIds + id, isLoading = false, isLoadingMore = false, items = items.map { post ->
+                if (post.id == id) post.copy(isHelpfulByCurrentUser = !post.isHelpfulByCurrentUser,
+                    helpfulCount = (post.helpfulCount + if (post.isHelpfulByCurrentUser) -1 else 1).coerceAtLeast(0)) else post
+            })
         }
+        val request = viewModelScope.launch(start = CoroutineStart.LAZY) { submitHelpful(item, key, generation) }
+        voteJobs[id] = request
+        request.start()
+    }
+
+    private suspend fun submitHelpful(original: CommunityPost, key: String, generation: Long) {
+        try {
+            val result = repository.setHelpful(original.id, !original.isHelpfulByCurrentUser)
+            result.exceptionOrNull()?.let { if (it is CancellationException) throw it }
+            currentCoroutineContext().ensureActive()
+            if (!isCurrent(key) || generation != currentState.sessionGeneration) return
+            finishHelpful(original, result.getOrNull())
+            result.exceptionOrNull()?.let { reportVoteFailure(it) }
+        } catch (cancelled: CancellationException) {
+            if (isCurrent(key) && generation == currentState.sessionGeneration) finishHelpful(original, null)
+            throw cancelled
+        } catch (error: Exception) {
+            if (isCurrent(key) && generation == currentState.sessionGeneration) {
+                finishHelpful(original, null)
+                reportVoteFailure(error)
+            }
+        } finally {
+            if (voteJobs[original.id] === currentCoroutineContext()[Job]) voteJobs.remove(original.id)
+        }
+    }
+
+    private fun finishHelpful(original: CommunityPost, vote: HelpfulVote?) = updateState {
+        copy(helpfulIds = helpfulIds - original.id, items = items.map { post ->
+            if (post.id == original.id) post.copy(helpfulCount = vote?.helpfulCount ?: original.helpfulCount,
+                isHelpfulByCurrentUser = vote?.isHelpful ?: original.isHelpfulByCurrentUser) else post
+        })
+    }
+
+    private suspend fun reportVoteFailure(error: Throwable) = sendEvent(
+        CommunityEvent.Message(ActionMessage(MessageKind.VoteFailed, (error as? CommunityFailure)?.serverMessage)),
+    )
+
+    private fun cancelVotes() {
+        voteJobs.values.toList().forEach { it.cancel() }
+        voteJobs.clear()
     }
 
     private fun edit(id: String) {

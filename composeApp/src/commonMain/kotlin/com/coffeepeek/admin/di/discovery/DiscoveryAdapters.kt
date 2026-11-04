@@ -1,5 +1,6 @@
 package com.coffeepeek.admin.di.discovery
 
+import com.coffeepeek.admin.di.collections.FavoriteCollectionsPrompt
 import com.coffeepeek.admin.settings.CityPreference
 import com.coffeepeek.admin.utils.FavoriteSync
 import com.coffeepeek.core.session.Session
@@ -32,7 +33,14 @@ internal class SessionDiscoveryAccount(private val sessions: SessionReader) : Di
 }
 
 /** The favorites of the account come from the favorites owner; a failing source keeps the last known ids. A change is announced to the screens that still listen to [FavoriteSync]. */
-internal class AppDiscoveryFavorites(private val repository: FavoritesRepository) : DiscoveryFavorites {
+internal class AppDiscoveryFavorites(private val repository: FavoritesRepository,
+    private val collections: FavoriteCollectionsPrompt? = null) : DiscoveryFavorites {
+    override fun selectCollections(shopId: String): Boolean {
+        val prompt = collections ?: return false
+        prompt.shop(shopId)
+        return true
+    }
+
     override val ids: Flow<Set<String>> = repository.observeIds().mapNotNull { it.getOrNull() }
     override suspend fun favoriteIds(): Set<String> = repository.observeIds().first().getOrDefault(emptySet())
 

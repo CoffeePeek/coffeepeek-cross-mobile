@@ -67,7 +67,8 @@ internal fun communityHost() = CommunityHost(
     },
     feedViewed = { count, isPublic -> TrackFeedViewed(count, isPublic) },
     snackbar = { state, clearance -> CpSnackbarHost(state, Modifier.padding(bottom = clearance)) },
-    leaders = { refreshKey, clearance, modifier -> CommunityLeaderboard(refreshKey, clearance, modifier) },
+    // Temporarily show only Feed; ranking implementation remains available for re-enabling.
+    leaders = null,
     share = ShareHelper::shareText,
 )
 

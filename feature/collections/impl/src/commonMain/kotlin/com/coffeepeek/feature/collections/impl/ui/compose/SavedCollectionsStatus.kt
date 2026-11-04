@@ -19,7 +19,7 @@ import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as st
 @Composable
 internal fun SavedCollectionsStatus(state: SavedCollectionsState, action: (SavedCollectionsAction) -> Unit) {
     Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        if (state.loading) SavedCollectionsLoadingStatus()
+        if (state.loading || state.mode == SavedCollectionsMode.Picker && state.refreshing) SavedCollectionsLoadingStatus()
         if (!state.signedIn && state.mode !in setOf(SavedCollectionsMode.Public, SavedCollectionsMode.Featured)) {
             Text(stringResource(Res.string.collections_sign_in_hint))
             CoffeePeekButton(stringResource(Res.string.collections_sign_in), { action(SavedCollectionsAction.SignIn) })
@@ -62,4 +62,11 @@ private fun SavedCollectionsLoadingStatus() {
 }
 @Preview @Composable private fun SavedCollectionsLoadingDarkPreview() = CoffeePeekTheme(darkTheme = true) {
     SavedCollectionsLoadingStatus()
+}
+
+@Preview @Composable private fun SavedCollectionsPickerRefreshingLightPreview() = CoffeePeekTheme(darkTheme = false) {
+    SavedCollectionsStatus(SavedCollectionsState(SavedCollectionsMode.Picker, signedIn = true, loading = false, refreshing = true), {})
+}
+@Preview @Composable private fun SavedCollectionsPickerRefreshingDarkPreview() = CoffeePeekTheme(darkTheme = true) {
+    SavedCollectionsStatus(SavedCollectionsState(SavedCollectionsMode.Picker, signedIn = true, loading = false, refreshing = true), {})
 }

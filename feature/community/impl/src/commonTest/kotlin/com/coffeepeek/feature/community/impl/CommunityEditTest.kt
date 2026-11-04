@@ -244,6 +244,6 @@ class CommunityEditTest {
         vm.send(CommunityAction.SetFilters(com.coffeepeek.feature.community.domain.model.FeedFilters(citySlug = "x")), this)
         vm.send(CommunityAction.SelectTimeline(CommunityTimeline.Mine), this)
         vm.send(CommunityAction.ToggleHelpful("other"), this)
-        assertEquals(requests, repo.feedRequests.size); assertEquals(CommunityTimeline.Public, vm.state.value.timeline); assertNull(vm.state.value.helpfulId)
+        assertEquals(requests, repo.feedRequests.size); assertEquals(CommunityTimeline.Public, vm.state.value.timeline); assertTrue(vm.state.value.helpfulIds.isEmpty())
     }
 }
