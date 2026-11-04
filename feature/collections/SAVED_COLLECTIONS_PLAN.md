@@ -382,3 +382,20 @@ data 52/impl 85, application Direct Debug 999; zero failures/skips. Direct Debug
 assembly and packaged DEX checks passed. No automated UI/instrumented/screenshot
 tests were added. Preview rendering through the IDE was unavailable; exhaustive
 manual theme/font/window/accessibility and authenticated writes are not claimed.
+
+
+The remote develop advanced with leaderboard integration while this patch was
+being verified. The patch rebased cleanly over `1110ea12`; the repeated full gate
+passed 1,277 tests (the application suite is now 1,004), zero failures, and Direct
+Debug assembly/DEX checks. The code is published as `87383183`.
+
+On the user's immediate-update request, that source was built as
+`directDebug -PpushTestApp=true`, package `com.coffeepeek.pushdebug`, version
+1.1.5.2702, SHA-256
+`43BB4743F06F4A7F477758F457E451F1C102F5B0095D310676825BA2941D70EF`.
+The certificate matched the existing Debug. Installation succeeded in place on
+Pixel 9/API 37, increasing version 2691 to 2702 and preserving first-install time
+2026-11-04 14:26:23. Cold launch completed in 890 ms; the later process check
+confirmed it remained alive. No data clear, uninstall, downgrade, Sandbox run or
+live-account edit was performed. Full authenticated visual acceptance remains a
+separate gate.
