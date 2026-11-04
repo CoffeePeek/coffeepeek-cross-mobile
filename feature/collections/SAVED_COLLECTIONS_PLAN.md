@@ -326,3 +326,23 @@ and labels that action as choosing collections. Shop impl 109/109 and applicatio
 Direct Debug 999/999 passed again. Intermediate compile attempts caught a
 stateless-screen VM reference and a missing resource import; both were corrected
 before that passing run. The final phone APK is rebuilt from the committed fix.
+
+### Final physical delivery
+
+Source `8028eef5`, `directDebug -PpushTestApp=true`, package
+`com.coffeepeek.pushdebug`, version 1.1.5.2691 was built with the packaged DEX
+checks and installed in place on the user-selected Pixel 9, API 37. APK SHA-256:
+`8808B559C804E178F11053714C558790DAD3D61757F308D395F9395D4D674FBB`.
+The installed and built certificates matched; version increased from 2689 and
+first-install time remained 2026-11-04 14:26:23. The existing normal application
+was not replaced, uninstalled or cleared.
+
+The unlocked phone reported a successful cold start in 917 ms. A later process
+and foreground-activity check succeeded; a local screenshot confirms the normal
+Discovery page rendered in dark mode. USB dropped again before the scoped crash
+buffer read, so that read was interrupted rather than claimed as passed. This
+proves startup/rendering, not authenticated collection persistence or a complete
+profile/editor/theme/font/accessibility review. No live account mutation was
+performed; screenshots and device diagnostics remain in ignored local build
+outputs. Direct Sandbox assembly/isolation was verified at the preceding full
+gate and was not installed or launched.
