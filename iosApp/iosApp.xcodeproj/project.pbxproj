@@ -108,7 +108,7 @@
 				A60000000000000000000001 /* Sources */,
 				A30000000000000000000001 /* Frameworks */,
 				A60000000000000000000002 /* Resources */,
-				A60000000000000000000004 /* Align ONNX Framework Minimum OS */,
+				A60000000000000000000005 /* Align ONNX Framework Minimum OS */,
 			);
 			buildRules = (
 			);
@@ -220,7 +220,7 @@
 			shellPath = /bin/sh;
 			shellScript = "cd \"$SRCROOT/..\"\nexport JAVA_HOME=$(/usr/libexec/java_home -v 17)\n./gradlew --build-cache :composeApp:embedAndSignAppleFrameworkForXcode --max-workers=\"${GRADLE_MAX_WORKERS}\"\n";
 		};
-		A60000000000000000000004 /* Align ONNX Framework Minimum OS */ = {
+		A60000000000000000000005 /* Align ONNX Framework Minimum OS */ = {
 			isa = PBXShellScriptBuildPhase;
 			alwaysOutOfDate = 1;
 			buildActionMask = 2147483647;
