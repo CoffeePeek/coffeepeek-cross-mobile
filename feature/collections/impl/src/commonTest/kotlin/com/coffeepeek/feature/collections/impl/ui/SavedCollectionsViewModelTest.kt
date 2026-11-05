@@ -89,6 +89,103 @@ class SavedCollectionsViewModelTest {
         assertEquals(0, saved.uploads)
     }
 
+    @Test fun freshPickerMembershipsAreReadyWithoutStartingAnotherLoad() = runTest(dispatcher) {
+        saved.cachedLists = listOf(privateList.summary.copy(containsItem = true))
+        saved.cachedListsFresh = true
+        saved.mineGate = CompletableDeferred()
+        val vm = model(SavedCollectionsMode.Picker)
+        assertTrue(vm.state.value.membershipsLoaded)
+        assertEquals(setOf("private"), vm.state.value.memberships)
+        assertFalse(vm.state.value.loading)
+        assertFalse(vm.state.value.refreshing)
+        runCurrent()
+        assertEquals(0, saved.mineReads)
+        assertEquals(0, account.loads)
+    }
+
+    @Test fun staleMembershipCardsStayDisabledUntilTheTargetIsRevalidated() = runTest(dispatcher) {
+        saved.cachedLists = listOf(privateList.summary.copy(containsItem = true))
+        saved.lists = listOf(privateList.summary)
+        saved.mineGate = CompletableDeferred()
+        val vm = model(SavedCollectionsMode.Picker)
+        assertFalse(vm.state.value.membershipsLoaded)
+        assertTrue(vm.state.value.refreshing)
+        vm.onAction(SavedCollectionsAction.CommitMemberships)
+        runCurrent()
+        assertEquals(0, saved.membershipWrites)
+        saved.mineGate!!.complete(Unit)
+        runCurrent()
+        assertTrue(vm.state.value.membershipsLoaded)
+        assertTrue(vm.state.value.memberships.isEmpty())
+    }
+
+    @Test fun doneWithoutChangesClosesWithoutLoadingReadingOrWriting() = runTest(dispatcher) {
+        val vm = model(SavedCollectionsMode.Picker)
+        val events = mutableListOf<SavedCollectionsEvent>()
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { vm.events.collect { events += it } }
+        runCurrent()
+        val reads = saved.mineReads
+        saved.mineGate = CompletableDeferred()
+        vm.onAction(SavedCollectionsAction.CommitMemberships)
+        runCurrent()
+        assertTrue(SavedCollectionsEvent.Back in events)
+        assertFalse(vm.state.value.busy)
+        assertFalse(vm.state.value.loading)
+        assertEquals(reads, saved.mineReads)
+        assertEquals(0, saved.membershipWrites)
+    }
+
+    @Test fun revertingTheDraftSelectionDoesNotPersistAnything() = runTest(dispatcher) {
+        saved.lists = listOf(privateList.summary.copy(containsItem = true))
+        val vm = model(SavedCollectionsMode.Picker)
+        runCurrent()
+        vm.onAction(SavedCollectionsAction.ToggleMembership("private"))
+        vm.onAction(SavedCollectionsAction.ToggleMembership("private"))
+        vm.onAction(SavedCollectionsAction.CommitMemberships)
+        runCurrent()
+        assertEquals(setOf("private"), vm.state.value.memberships)
+        assertEquals(1, saved.mineReads)
+        assertEquals(0, saved.membershipWrites)
+        assertFalse(vm.state.value.busy)
+    }
+
+    @Test fun confirmedRemovalUpdatesTheBaselineAndReopensFromFreshCache() = runTest(dispatcher) {
+        saved.lists = listOf(privateList.summary.copy(containsItem = true))
+        val vm = model(SavedCollectionsMode.Picker)
+        runCurrent()
+        vm.onAction(SavedCollectionsAction.ToggleMembership("private"))
+        vm.onAction(SavedCollectionsAction.CommitMemberships)
+        runCurrent()
+        assertTrue(vm.state.value.memberships.isEmpty())
+        assertFalse(vm.state.value.lists.single().containsItem)
+        val reads = saved.mineReads
+        val reopened = model(SavedCollectionsMode.Picker)
+        runCurrent()
+        assertTrue(reopened.state.value.membershipsLoaded)
+        assertTrue(reopened.state.value.memberships.isEmpty())
+        assertFalse(reopened.state.value.refreshing)
+        assertEquals(reads, saved.mineReads)
+    }
+
+    @Test fun failedMembershipWriteKeepsTheDraftAndRetryUsesTheOriginalBaseline() = runTest(dispatcher) {
+        saved.lists = listOf(privateList.summary.copy(containsItem = true))
+        saved.membershipFailure = IllegalStateException("Offline")
+        val vm = model(SavedCollectionsMode.Picker)
+        runCurrent()
+        vm.onAction(SavedCollectionsAction.ToggleMembership("private"))
+        vm.onAction(SavedCollectionsAction.CommitMemberships)
+        runCurrent()
+        assertEquals(SavedCollectionsFailure.Membership, vm.state.value.failure)
+        assertTrue(vm.state.value.memberships.isEmpty())
+        assertTrue(vm.state.value.lists.single().containsItem)
+        saved.membershipFailure = null
+        vm.onAction(SavedCollectionsAction.CommitMemberships)
+        runCurrent()
+        assertEquals(2, saved.membershipWrites)
+        assertTrue(saved.sentMemberships.isEmpty())
+        assertFalse(vm.state.value.lists.single().containsItem)
+    }
+
     @Test fun cancelDoesNotWriteMembershipOrRollbackGlobalFavorite() = runTest(dispatcher) {
         val vm = model(SavedCollectionsMode.Picker)
         runCurrent()

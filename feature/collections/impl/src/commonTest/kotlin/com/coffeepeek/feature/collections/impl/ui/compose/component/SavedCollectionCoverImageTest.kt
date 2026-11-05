@@ -11,6 +11,14 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNull
 
 class SavedCollectionCoverImageTest {
+    @Test fun anEmptyCollectionKeepsItsPlaceholderWithoutReadingDetails() = runTest {
+        val saved = SavedTestRepository()
+        assertNull(defaultShopPhotoUrl(privateList.summary.copy(itemCount = 0), saved))
+        assertNull(defaultShopPhotoUrl(publicList.summary.copy(itemCount = 0), saved))
+        assertEquals(0, saved.ownedReads)
+        assertEquals(0, saved.publicReads)
+    }
+
     @Test fun privateCoverUsesFirstShopPhotoAfterRoasters() = runTest {
         val saved = SavedTestRepository()
         saved.value = privateList.copy(places = listOf(

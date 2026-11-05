@@ -2,6 +2,9 @@ package com.coffeepeek.feature.favorites.domain.model
 
 enum class FavoriteKind { CoffeeShop, Roaster, Drink }
 
+/** Stable membership identity, independent of optional catalogue/display metadata. */
+data class FavoriteTarget(val kind: FavoriteKind, val slug: String)
+
 data class FavoriteAddress(val slug: String, val canonicalPath: String, val revision: Int, val isAlias: Boolean)
 
 /** One row of the signed-in account's server favorites. */

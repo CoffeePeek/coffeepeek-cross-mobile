@@ -5,6 +5,9 @@ import com.coffeepeek.feature.collections.data.repository.createSavedCollections
 import com.coffeepeek.feature.collections.domain.model.*
 import com.coffeepeek.feature.collections.domain.repository.CollectionsAccount
 import io.ktor.client.request.get
+import io.ktor.client.call.body
+import io.ktor.client.request.put
+import io.ktor.client.request.delete
 import io.ktor.client.plugins.expectSuccess
 import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -13,6 +16,11 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.runTest
 import kotlin.test.*
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.boolean
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class SandboxSavedCollectionsContractTest {
@@ -101,6 +109,100 @@ class SandboxSavedCollectionsContractTest {
             assertEquals(before, fixture.repository.mine().getOrThrow())
             assertEquals(places, fixture.snapshots.favorites().getOrThrow())
             assertEquals(expected, fixture.repository.owned(first.summary.id).getOrThrow().places)
+        }
+    }
+
+    @Test fun readAndMetadataDoNotImplicitlyCreateOrSeedTheDefault() = runTest(dispatcher) {
+        Fixture(dispatcher).use { fixture ->
+            val list = fixture.create("Other")
+            fixture.repository.update(list.summary.id, SavedCollectionMetadata("Renamed"), list.summary.revision).getOrThrow()
+            val response = fixture.backend.gateway.get("${SandboxBackend.BASE_URL}/api/v1/saved-collections") {
+                headers.append(SandboxSavedCollectionsBackend.OWNER, "sandbox")
+            }.body<JsonObject>()
+            val rows = response.getValue("data").jsonArray
+            assertEquals(1, rows.size)
+            assertFalse(rows.single().jsonObject.getValue("isDefault").jsonPrimitive.boolean)
+            assertEquals(2, fixture.snapshots.favorites().getOrThrow().size)
+            assertEquals(2, fixture.repository.mine().getOrThrow().single { it.isDefault }.itemCount)
+        }
+    }
+
+    @Test fun privateDefaultSeedingDoesNotDuplicatePlacesAlreadyInAnotherList() = runTest(dispatcher) {
+        Fixture(dispatcher).use { fixture ->
+            val list = fixture.create("Other")
+            val target = SavedCollectionTarget(CollectionPlaceKind.CoffeeShop, "sandbox-cafe")
+            fixture.repository.memberships(target, setOf(list.summary.id)).getOrThrow()
+            val rows = fixture.repository.mine(target).getOrThrow()
+            assertFalse(rows.single { it.isDefault }.containsItem)
+            assertTrue(rows.single { it.id == list.summary.id }.containsItem)
+        }
+    }
+
+    @Test fun adoptingAPublicDefaultKeepsPrivateLegacyHeartsOutOfItsItems() = runTest(dispatcher) {
+        Fixture(dispatcher).use { fixture ->
+            fixture.create("Избранное", SavedCollectionVisibility.Public)
+            val target = SavedCollectionTarget(CollectionPlaceKind.CoffeeShop, "sandbox-cafe")
+            val list = fixture.repository.mine(target).getOrThrow().single()
+            assertTrue(list.isDefault)
+            assertFalse(list.containsItem)
+            assertEquals(0, list.itemCount)
+            fixture.repository.changeMemberships(target, emptySet(), emptySet()).getOrThrow()
+            assertTrue(fixture.snapshots.favorites().getOrThrow().any { it.slug == target.slug })
+        }
+    }
+
+    @Test fun privateDefaultSeedsLegacyHeartsAndRemovingTheLastMembershipClearsServerFavorites() = runTest(dispatcher) {
+        Fixture(dispatcher).use { fixture ->
+            val places = fixture.snapshots.favorites().getOrThrow()
+            for (place in places) {
+                val target = SavedCollectionTarget(place.kind, place.slug)
+                val lists = fixture.repository.mine(target).getOrThrow()
+                assertTrue(lists.single { it.isDefault }.containsItem)
+                fixture.repository.changeMemberships(target, emptySet(), lists.filter { it.containsItem }.map { it.id }.toSet()).getOrThrow()
+                assertTrue(fixture.repository.cachedFreshMine(target)!!.none { it.containsItem })
+                assertTrue(fixture.snapshots.favorites().getOrThrow().none { it.key == place.key })
+            }
+        }
+    }
+
+    @Test fun aShopOutsideExistingFavoritesCanBeAddedWithoutAnEagerLegacyWrite() = runTest(dispatcher) {
+        Fixture(dispatcher).use { fixture ->
+            val target = SavedCollectionTarget(CollectionPlaceKind.CoffeeShop, "sandbox-lab")
+            assertTrue(fixture.snapshots.favorites().getOrThrow().none { it.slug == target.slug })
+            val list = fixture.repository.mine(target).getOrThrow().single { it.isDefault }
+            fixture.repository.changeMemberships(target, setOf(list.id), emptySet()).getOrThrow()
+            assertTrue(fixture.snapshots.favorites().getOrThrow().any { it.slug == target.slug })
+        }
+    }
+
+    @Test fun legacyRemovalClearsAllListsAndLegacyAddRestoresOnlyThePrivateDefault() = runTest(dispatcher) {
+        Fixture(dispatcher).use { fixture ->
+            val target = SavedCollectionTarget(CollectionPlaceKind.CoffeeShop, "sandbox-cafe")
+            val list = fixture.create()
+            fixture.repository.memberships(target, setOf(list.summary.id)).getOrThrow()
+            fixture.backend.gateway.delete("${SandboxBackend.BASE_URL}/api/v1/favorites/coffee_shop/${target.slug}") {
+                headers.append(SandboxSavedCollectionsBackend.OWNER, "sandbox")
+            }
+            assertTrue(fixture.repository.refreshMine(target).getOrThrow().none { it.containsItem })
+            fixture.backend.gateway.put("${SandboxBackend.BASE_URL}/api/v1/favorites/coffee_shop/${target.slug}") {
+                headers.append(SandboxSavedCollectionsBackend.OWNER, "sandbox")
+            }
+            assertTrue(fixture.repository.refreshMine(target).getOrThrow().single { it.containsItem }.isDefault)
+        }
+    }
+
+    @Test fun aPublicDefaultDoesNotPublishANewPrivateLegacyHeartOrLoseItOnMetadataWrites() = runTest(dispatcher) {
+        Fixture(dispatcher).use { fixture ->
+            val list = fixture.repository.mine().getOrThrow().single { it.isDefault }
+            fixture.repository.update(list.id, SavedCollectionMetadata("Public default", visibility = SavedCollectionVisibility.Public), list.revision).getOrThrow()
+            val target = SavedCollectionTarget(CollectionPlaceKind.CoffeeShop, "sandbox-lab")
+            fixture.backend.gateway.put("${SandboxBackend.BASE_URL}/api/v1/favorites/coffee_shop/${target.slug}") {
+                headers.append(SandboxSavedCollectionsBackend.OWNER, "sandbox")
+            }
+            assertTrue(fixture.repository.refreshMine(target).getOrThrow().none { it.containsItem })
+            fixture.repository.setFeatured(list.id).getOrThrow()
+            assertTrue(fixture.snapshots.favorites().getOrThrow().any { it.slug == target.slug })
+            assertTrue(fixture.repository.public(list.id).getOrThrow().places.none { it.slug == target.slug })
         }
     }
 

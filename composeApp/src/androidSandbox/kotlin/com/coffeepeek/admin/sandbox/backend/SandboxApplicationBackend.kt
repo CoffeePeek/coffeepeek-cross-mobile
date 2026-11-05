@@ -44,7 +44,9 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
     private val discoveryStore = SandboxDiscoveryBackend({ populated }, { favorites }, ::photo, ::address, ::catalog)
     private val favorites = linkedSetOf("coffee_shop:sandbox-cafe", "roaster:sandbox-roaster", "drink:cappuccino")
     private val collectionStore = SandboxCollectionsBackend(today, ::collectionFavorites)
-    private val savedCollections = SandboxSavedCollectionsBackend(today, ::collectionFavorites, uploadedCover)
+    private val savedCollections = SandboxSavedCollectionsBackend(today, ::collectionAvailable, uploadedCover,
+        initialFavorites = { owner -> if (isSandboxOwner(owner)) collectionFavorites() else JsonArray(emptyList()) },
+        favoritesChanged = ::synchronizeCollectionFavorites)
     private var username = "Sandbox"
     private var about = "Локальный тестовый профиль. Все действия остаются в Sandbox."
     private var populated = true
@@ -91,6 +93,24 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
 
     fun reserveCollectionCovers(owner: String?, input: JsonArray) = savedCollections.reserve(owner, input)
     fun collectionCoverKey(path: String, owner: String?) = savedCollections.coverKey(path, owner)
+
+    fun collectionMembershipState(request: HttpRequestData): SandboxCollectionMembershipState? {
+        val prefix = "/api/v1/saved-collections/membership/"
+        if (request.method != HttpMethod.Put || !request.url.encodedPath.startsWith(prefix)) return null
+        val owner = request.headers[SandboxSavedCollectionsBackend.OWNER]?.takeIf { it.isNotBlank() } ?: return null
+        val target = request.url.encodedPath.removePrefix(prefix).replace('/', ':')
+        val selected = savedCollections.selectedCollectionIds(owner, target)
+        val favorite = selected.isNotEmpty() || (isSandboxOwner(owner) && target in favorites)
+        return SandboxCollectionMembershipState(selected, favorite)
+    }
+
+    private fun isSandboxOwner(owner: String) = owner == "sandbox" || owner == SandboxSavedCollectionsBackend.LOCAL_ACCOUNT
+
+    private fun synchronizeCollectionFavorites(owner: String, affected: Set<String>, selected: Set<String>) {
+        if (!isSandboxOwner(owner)) return
+        favorites.removeAll(affected)
+        favorites += selected.intersect(affected)
+    }
 
     fun publicProfileAvailable(slug: String): Boolean = when (slug) {
         "sandbox" -> true
@@ -191,7 +211,11 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
             val parts = path.removePrefix("/api/v1/favorites/").split("/", limit = 2)
             if (parts.size != 2 || parts[0] !in listOf("coffee_shop", "roaster", "drink")) return null
             val key = parts.joinToString(":")
-            if (method == HttpMethod.Put) favorites += key else favorites -= key
+            if (parts[0] == "drink") {
+                if (method == HttpMethod.Put) favorites += key else favorites -= key
+            } else if (!savedCollections.setLegacyFavorite(request.headers[SandboxSavedCollectionsBackend.OWNER]
+                    ?: SandboxSavedCollectionsBackend.LOCAL_ACCOUNT, parts[0], parts[1], method == HttpMethod.Put))
+                return HttpStatusCode.NotFound to envelope(JsonNull, false)
             return HttpStatusCode.NoContent to envelope(JsonNull)
         }
         if (path == "/api/v1/coffee-shops/search" && method == HttpMethod.Post) return ok(buildJsonObject {
@@ -514,8 +538,19 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
             add(buildJsonObject { put("code", "medium"); put("name", "Средняя"); put("sortOrder", 2) })
         } },
     ))
-    private fun collectionFavorites() = JsonArray(favoriteRows().map { value ->
-        val row = value.jsonObject
+    private fun collectionFavorites() = collectionPlaces(favorites)
+
+    private fun collectionAvailable(): JsonArray {
+        val shops = shopNames.keys.map { "coffee_shop:$it" }
+        val discovery = (1..SandboxDiscoveryBackend.EXTRA_SHOPS).map { "coffee_shop:discovery-$it" }
+        val roasters = roasters().mapNotNull { value ->
+            (value["address"] as? JsonObject)?.get("slug")?.jsonPrimitive?.contentOrNull?.let { "roaster:$it" }
+        }
+        return collectionPlaces((favorites + shops + discovery + roasters).distinct())
+    }
+
+    private fun collectionPlaces(keys: Iterable<String>) = JsonArray(keys.map { key ->
+        val row = favoriteRow(key)
         val kind = row["kind"]?.jsonPrimitive?.content
         val slug = (row["address"] as? JsonObject)?.get("slug")?.jsonPrimitive?.content
         val details = if (kind == "coffee_shop" && slug in shopNames) shop(slug!!)
@@ -531,18 +566,20 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
         }
     })
 
-    private fun favoriteRows() = JsonArray(favorites.map { key ->
+    private fun favoriteRows() = JsonArray(favorites.map(::favoriteRow))
+
+    private fun favoriteRow(key: String): JsonObject {
         val (kind, slug) = key.split(':', limit = 2)
-        buildJsonObject {
+        return buildJsonObject {
             put("kind", kind); put("createdAtUtc", "${today}T07:00:00Z"); put("name", when (kind) {
-                "coffee_shop" -> "Sandbox Cafe"
+                "coffee_shop" -> shopNames[slug] ?: "Sandbox Cafe"
                 "roaster" -> roasters().firstOrNull { it["address"]!!.jsonObject["slug"]!!.jsonPrimitive.content == slug }?.get("name")?.jsonPrimitive?.content ?: "Sandbox Roaster"
                 else -> "Капучино"
             }); put("coverPhoto", photo())
             if (kind == "drink") putJsonObject("drink") { put("slug", slug) }
             else put("address", address(slug, if (kind == "roaster") "/roasters/$slug" else "/coffee-shops/$slug"))
         }
-    })
+    }
     private fun visit(id: String, shopSlug: String, input: JsonObject) = buildJsonObject {
         input.forEach { (key, value) -> if (key != "drinkPhoto") put(key, value) }
         put("id", id); put("shop", address(shopSlug, "/coffee-shops/$shopSlug")); put("shopName", shopNames.getValue(shopSlug))

@@ -59,6 +59,7 @@ private suspend fun storedCoverBytes(summary: SavedCollectionSummary, repository
 }
 
 internal suspend fun defaultShopPhotoUrl(summary: SavedCollectionSummary, repository: SavedCollectionsRepository): String? {
+    if (summary.itemCount == 0) return null
     val detail = if (summary.visibility == SavedCollectionVisibility.Private) repository.owned(summary.id)
         else repository.public(summary.id)
     val collection = detail.getOrElse { failure -> if (failure is CancellationException) throw failure else return null }

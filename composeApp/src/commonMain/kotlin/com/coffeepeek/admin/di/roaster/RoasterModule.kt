@@ -1,5 +1,6 @@
 package com.coffeepeek.admin.di.roaster
 
+import com.coffeepeek.feature.favorites.domain.repository.AccountFavorites
 import com.coffeepeek.admin.di.favorites.RoasterFavorites
 import com.coffeepeek.admin.di.collections.FavoriteCollectionsPrompt
 import com.coffeepeek.admin.locator.Constants
@@ -36,6 +37,7 @@ internal fun roasterModule(baseUrl: String = Constants.BASE_URL, settings: () ->
         createRoasterRepository(get<ApiClients>().client, baseUrl, get()) { Clock.System.now().toEpochMilliseconds() }
     }
     single<PublicRoasterCatalog> { createPublicRoasterCatalog(get()) }
-    single<RoasterFavoritesPort> { RoasterFavoritesAdapter(get<RoasterFavorites>(), get<CoroutineScope>(), getOrNull<FavoriteCollectionsPrompt>()) }
+    single<RoasterFavoritesPort> { RoasterFavoritesAdapter(get<RoasterFavorites>(), get<CoroutineScope>(),
+        getOrNull<FavoriteCollectionsPrompt>(), getOrNull<AccountFavorites>()) }
     single<RoasterShopPhotos> { RoasterShopPhotosAdapter(get<PublicShopPreviews>()) }
 }

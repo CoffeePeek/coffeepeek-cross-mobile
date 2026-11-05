@@ -9,8 +9,10 @@ import com.coffeepeek.admin.analytics.safeAnalyticsError
 import com.coffeepeek.core.session.SessionReader
 import com.coffeepeek.feature.favorites.domain.model.FavoriteEntry
 import com.coffeepeek.feature.favorites.domain.model.FavoriteKind
+import com.coffeepeek.feature.favorites.domain.model.FavoriteTarget
 import com.coffeepeek.feature.favorites.domain.repository.AccountFavorites
 import com.coffeepeek.feature.collections.domain.model.CollectionPlaceKind
+import com.coffeepeek.feature.collections.domain.model.SavedCollectionMembershipResult
 import com.coffeepeek.feature.collections.domain.model.SavedCollectionSummary
 import com.coffeepeek.feature.collections.domain.model.SavedCollectionTarget
 import com.coffeepeek.feature.collections.domain.repository.SavedCollectionsRepository
@@ -26,38 +28,50 @@ internal class FavoriteMembershipAnalyticsRepository(
     private val favorites: AccountFavorites,
     private val sessions: SessionReader,
 ) : SavedCollectionsRepository by delegate {
-    override suspend fun changeMemberships(target: SavedCollectionTarget, added: Set<String>, removed: Set<String>): Result<List<SavedCollectionSummary>> {
-        val attempt = try { prepare(target, added, removed) }
-            catch (cancelled: CancellationException) { throw cancelled }
-            catch (_: Exception) { null }
+    override suspend fun changeMemberships(target: SavedCollectionTarget, added: Set<String>, removed: Set<String>): Result<SavedCollectionMembershipResult> {
+        if (added.isEmpty() && removed.isEmpty()) return Result.success(SavedCollectionMembershipResult(delegate.cachedMine(target).orEmpty(), membershipChanged = false))
+        val lease = accountLease() ?: throw CancellationException("Collections account changed")
+        val attempt = prepareSafely(target, added, removed, lease)
+        if (lease != accountLease()) throw CancellationException("Collections account changed")
         val result = delegate.changeMemberships(target, added, removed)
         result.exceptionOrNull()?.let { if (it is CancellationException) throw it }
         currentCoroutineContext().ensureActive()
-        if (attempt != null && attempt.lease == accountLease()) try { report(attempt, target, result) }
-            catch (cancelled: CancellationException) { throw cancelled }
-            catch (_: Exception) { /* Analytics cannot turn a confirmed write into a UI failure. */ }
+        if (lease != accountLease()) throw CancellationException("Collections account changed")
+        result.onSuccess { receipt ->
+            receipt.confirmedFavorite()?.let { favorite ->
+                favorites.applyConfirmedMembership(lease.account, lease.generation, target.favoriteTarget(), favorite)
+            }
+        }
+        if (attempt != null) reportSafely(attempt, result)
         return result
     }
 
-    private suspend fun prepare(target: SavedCollectionTarget, added: Set<String>, removed: Set<String>): FavoriteAttempt? {
+    private fun prepareSafely(target: SavedCollectionTarget, added: Set<String>, removed: Set<String>, lease: FavoriteLease): FavoriteAttempt? =
+        try { prepare(target, added, removed, lease) }
+        catch (cancelled: CancellationException) { throw cancelled }
+        catch (_: Exception) { null }
+
+    private fun reportSafely(attempt: FavoriteAttempt, result: Result<SavedCollectionMembershipResult>) {
+        try { report(attempt, result) }
+        catch (cancelled: CancellationException) { throw cancelled }
+        catch (_: Exception) { /* Confirmed membership must not fail because analytics delivery failed. */ }
+    }
+
+    private fun prepare(target: SavedCollectionTarget, added: Set<String>, removed: Set<String>, lease: FavoriteLease): FavoriteAttempt? {
         val service = Analytics.service ?: return null
-        val lease = accountLease() ?: return null
-        val before = verifiedFavorite(target) ?: return null
-        val lists = delegate.cachedMine(target) ?: delegate.mine(target).also { result ->
-            result.exceptionOrNull()?.let { if (it is CancellationException) throw it }
-        }.getOrNull() ?: return null
+        val lists = delegate.cachedMine(target) ?: return null
+        val before = favorites.cachedMembership(target.favoriteTarget()) ?: return null
         if (lease != accountLease()) return null
         val desired = selectedAfterMembershipChange(lists, added, removed)
         if (before == desired) return null
-        service.syncIdentityNow(lease.substringAfter(':'))
+        service.syncIdentityNow(lease.account)
         val scope = service.operationScope()
         val entity = target.kind.entity()
         service.track(AnalyticsEvent.FAVORITE_ATTEMPTED, mapOf("entity_type" to entity.wire, "is_favorite" to desired), scope)
         return FavoriteAttempt(lease, service, scope, entity, before, TimeSource.Monotonic.markNow())
     }
 
-    private suspend fun report(attempt: FavoriteAttempt, target: SavedCollectionTarget,
-        result: Result<List<SavedCollectionSummary>>) {
+    private fun report(attempt: FavoriteAttempt, result: Result<SavedCollectionMembershipResult>) {
         val duration = attempt.started.elapsedNow().inWholeMilliseconds.coerceAtLeast(0)
         val base = mapOf("entity_type" to attempt.entity.wire, "duration_ms" to duration, "favorite_storage" to "server")
         val error = result.exceptionOrNull()
@@ -66,23 +80,23 @@ internal class FavoriteMembershipAnalyticsRepository(
             if (safe.category != "cancelled") attempt.service.track(AnalyticsEvent.FAVORITE_FAILED, base + safe.properties(), attempt.scope)
             return
         }
-        val after = verifiedFavorite(target) ?: return
+        val receipt = result.getOrNull()?.takeIf { it.membershipChanged == true } ?: return
+        val after = receipt.confirmedFavorite() ?: return
         if (attempt.lease != accountLease() || after == attempt.before) return
         attempt.service.track(AnalyticsEvent.FAVORITE_CHANGED,
             base + mapOf("is_favorite" to after, "resumed_after_auth" to false), attempt.scope)
     }
 
-    private suspend fun verifiedFavorite(target: SavedCollectionTarget): Boolean? {
-        val result = favorites.getFavorites(refresh = true)
-        result.exceptionOrNull()?.let { if (it is CancellationException) throw it }
-        return result.getOrNull()?.let { rows -> rows.any { it.matches(target) } }
-    }
-
-    private fun accountLease(): String? = sessions.peekSession()?.takeIf(sessions::isActiveSession)?.userId
-        ?.takeIf(String::isNotBlank)?.let { "${sessions.accountGeneration()}:$it" }
+    private fun accountLease(): FavoriteLease? = sessions.peekSession()?.takeIf(sessions::isActiveSession)?.userId
+        ?.takeIf(String::isNotBlank)?.let { FavoriteLease(it, sessions.accountGeneration()) }
 }
 
-private data class FavoriteAttempt(val lease: String, val service: AnalyticsService, val scope: AnalyticsScope,
+/** An existing membership proves a heart; an empty union cannot rule out legacy private favorites. */
+private fun SavedCollectionMembershipResult.confirmedFavorite(): Boolean? =
+    isFavorite ?: true.takeIf { lists.any { it.containsItem } }
+
+private data class FavoriteLease(val account: String, val generation: Long)
+private data class FavoriteAttempt(val lease: FavoriteLease, val service: AnalyticsService, val scope: AnalyticsScope,
     val entity: Entity, val before: Boolean, val started: TimeMark)
 
 internal fun selectedAfterMembershipChange(lists: List<SavedCollectionSummary>, added: Set<String>, removed: Set<String>): Boolean {
@@ -100,3 +114,7 @@ private fun CollectionPlaceKind.entity(): Entity = when (this) {
     CollectionPlaceKind.CoffeeShop -> Entity.Shop
     CollectionPlaceKind.Roaster -> Entity.Roaster
 }
+
+private fun SavedCollectionTarget.favoriteTarget() = FavoriteTarget(
+    if (kind == CollectionPlaceKind.CoffeeShop) FavoriteKind.CoffeeShop else FavoriteKind.Roaster, slug,
+)

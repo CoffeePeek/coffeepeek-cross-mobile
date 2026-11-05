@@ -64,9 +64,10 @@ internal class SavedCollectionsViewModel(private val saved: SavedCollectionsRepo
         viewModelScope.launch {
             account.identities.distinctUntilChanged().collectLatest { owner ->
                 resetAccount(owner)
-                if (owner != null) reload()
+                if (owner != null && !(mode == SavedCollectionsMode.Picker && currentState.membershipsLoaded)) reload()
             }
         }
+        if (mode == SavedCollectionsMode.Picker && currentState.membershipsLoaded) return
         viewModelScope.launch {
             try { account.loadId() }
             catch (cancelled: CancellationException) { throw cancelled }
@@ -80,15 +81,16 @@ internal class SavedCollectionsViewModel(private val saved: SavedCollectionsRepo
         work?.cancel()
         clearCover()
         sendEvent(SavedCollectionsEvent.CancelExport)
-        val cached = if (mode in cachedListModes) saved.cachedMine(target)
+        val fresh = if (mode == SavedCollectionsMode.Picker && owner != null && owner == account.currentId()) saved.cachedFreshMine(target) else null
+        val cached = fresh ?: if (mode in cachedListModes) saved.cachedMine(target)
             .takeIf { owner != null && owner == account.currentId() } else null
         val featured = if (mode == SavedCollectionsMode.Preference && owner != null && owner == account.currentId())
             saved.cachedFeatured() else null
         val ready = cached != null && (mode != SavedCollectionsMode.Preference || featured != null)
         updateState { SavedCollectionsState(mode, accountVersion = generation, signedIn = owner != null,
-            loading = owner != null && !ready, refreshing = ready,
+            loading = owner != null && !ready, refreshing = ready && fresh == null,
             listsLoaded = ready, lists = cached.orEmpty(), featuredId = featured?.collectionId,
-            memberships = cached?.filter { it.containsItem }?.map { it.id }?.toSet().orEmpty()) }
+            memberships = cached?.filter { it.containsItem }?.map { it.id }?.toSet().orEmpty(), membershipsLoaded = fresh != null) }
     }
 
     private fun reload(force: Boolean = false) {
@@ -250,19 +252,27 @@ internal class SavedCollectionsViewModel(private val saved: SavedCollectionsRepo
         updateState { copy(memberships = if (id in memberships) memberships - id else memberships + id) }
     }
 
-    private fun commitMemberships() {
+    private suspend fun commitMemberships() {
         if (!writable() || target == null || !currentState.membershipsLoaded) return
-        val epoch = generation
         val initial = currentState.lists.filter { it.containsItem }.map { it.id }.toSet()
         val added = currentState.memberships - initial
         val removed = initial - currentState.memberships
+        if (added.isEmpty() && removed.isEmpty()) return sendEvent(SavedCollectionsEvent.Back)
+        val epoch = generation
         updateState { copy(busy = true, failure = null) }
         launchWork(epoch) {
             val result = saved.changeMemberships(target, added, removed).checked()
             if (epoch != generation) return@launchWork
-            if (result.isSuccess) sendEvent(SavedCollectionsEvent.Back)
+            if (result.isSuccess) {
+                updateMemberships(result.getOrThrow().lists)
+                sendEvent(SavedCollectionsEvent.Back)
+            }
             else updateState { copy(failure = SavedCollectionsFailure.Membership) }
         }
+    }
+
+    private fun updateMemberships(lists: List<SavedCollectionSummary>) = updateState {
+        copy(lists = lists, memberships = lists.filter { it.containsItem }.map { it.id }.toSet(), membershipsLoaded = true)
     }
 
     private fun createQuick() {
@@ -382,11 +392,12 @@ private val cachedListModes = setOf(SavedCollectionsMode.Library, SavedCollectio
 private fun initialSavedState(saved: SavedCollectionsRepository, account: CollectionsAccount,
     mode: SavedCollectionsMode, target: SavedCollectionTarget?): SavedCollectionsState {
     val owner = account.currentId()
-    val cached = if (owner != null && mode in cachedListModes) saved.cachedMine(target) else null
+    val fresh = if (owner != null && mode == SavedCollectionsMode.Picker) saved.cachedFreshMine(target) else null
+    val cached = fresh ?: if (owner != null && mode in cachedListModes) saved.cachedMine(target) else null
     val featured = if (owner != null && mode == SavedCollectionsMode.Preference) saved.cachedFeatured() else null
     val ready = cached != null && (mode != SavedCollectionsMode.Preference || featured != null)
     return SavedCollectionsState(mode, signedIn = owner != null,
         loading = mode in setOf(SavedCollectionsMode.Public, SavedCollectionsMode.Featured) || owner != null && !ready,
-        refreshing = ready, listsLoaded = ready, lists = cached.orEmpty(), featuredId = featured?.collectionId,
-        memberships = cached?.filter { it.containsItem }?.map { it.id }?.toSet().orEmpty())
+        refreshing = ready && fresh == null, listsLoaded = ready, lists = cached.orEmpty(), featuredId = featured?.collectionId,
+        memberships = cached?.filter { it.containsItem }?.map { it.id }?.toSet().orEmpty(), membershipsLoaded = fresh != null)
 }

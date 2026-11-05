@@ -92,6 +92,7 @@ jobs:
             --tests 'com.coffeepeek.admin.di.KoinViewModelCompatibilityTest' \
             --tests 'com.coffeepeek.admin.AppLinkHandlingTest' \
             --tests 'com.coffeepeek.admin.ui.AppLinksTest' \
+            --tests 'com.coffeepeek.admin.di.profile.IosProfileCompositionTest' \
             --tests 'com.coffeepeek.admin.ui.NavigationDelegateTest' \
             --tests 'com.coffeepeek.admin.ui.MainTabReselectionsTest' \
             --tests 'com.coffeepeek.admin.ui.TabDelegateTest' \

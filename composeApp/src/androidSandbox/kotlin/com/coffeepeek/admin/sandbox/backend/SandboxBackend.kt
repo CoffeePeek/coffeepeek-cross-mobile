@@ -106,9 +106,23 @@ internal class SandboxBackend(private val samplePhoto: ByteArray,
                 if (available) HttpStatusCode.OK else HttpStatusCode.NotFound,
                 headersOf(HttpHeaders.ContentType to listOf("image/png"), HttpHeaders.CacheControl to listOf("private, no-store")))
         }
-        synchronized(lock) { handle(request, mode) }.let { (status, payload) ->
-            respond(payload.toString(), status, headersOf(HttpHeaders.ContentType, "application/json"))
+        synchronized(lock) { jsonResponse(request, mode) }.let { (status, payload, headers) ->
+            respond(payload.toString(), status, headers)
         }
+    }
+
+    private fun jsonResponse(request: HttpRequestData, mode: SandboxScenario): Triple<HttpStatusCode, JsonObject, Headers> {
+        val before = application.collectionMembershipState(request)
+        val (status, payload) = handle(request, mode)
+        val after = application.collectionMembershipState(request)
+        val headers = HeadersBuilder().apply {
+            append(HttpHeaders.ContentType, "application/json")
+            if (status.isSuccess() && before != null && after != null) {
+                append("X-CoffeePeek-Is-Favorite", after.isFavorite.toString())
+                append("X-CoffeePeek-Membership-Changed", (before.collectionIds != after.collectionIds).toString())
+            }
+        }
+        return Triple(status, payload, headers.build())
     }
     private val ownershipEvidencePath = Regex("/api/owner/ownership-claims/([^/]+)/photos/([^/]+)")
     private val collectionCoverPath = Regex("/api/v1/(saved-collections|favorite-collections)/[^/]+/cover/[^/]+")
