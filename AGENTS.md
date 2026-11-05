@@ -22,7 +22,7 @@ The current Gradle layout:
 
 ```text
 composeApp/                 application composition: startup, root DI, configuration, root navigation
-core/                       infrastructure: coroutines, database, datetime, design-system, media, network,
+core/                       infrastructure: database, datetime, design-system, media, network,
                             presentation, session
 feature/<name>/             api, domain, data and impl per feature; strings live with their feature
 iosApp/                     native iOS application boundary

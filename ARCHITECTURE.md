@@ -201,7 +201,6 @@ responsibilities. Examples:
 core/network          HttpClient, auth/interceptors, serialization, logging, errors
 core/database         Room factory/configuration, database bootstrap, migrations
 core/media            image transport/cache/access, decoding, resources and prefetch
-core/coroutines       dispatcher and application-scope abstractions
 core/presentation     typed MVI ViewModel base and state/action/event contract
 core/navigation       shared navigation infrastructure, if truly required
 core/design-system    theme, typography, dimensions, icons, UI primitives
