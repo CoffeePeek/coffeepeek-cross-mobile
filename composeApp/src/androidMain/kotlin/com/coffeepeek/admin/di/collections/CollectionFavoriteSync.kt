@@ -3,11 +3,11 @@ package com.coffeepeek.admin.di.collections
 import com.coffeepeek.domain.feature.favorites.api.FavoritesRepository
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.collectLatest
 
 /** A collection edit invalidates the same account's server-backed heart projection. */
 internal suspend fun synchronizeCollectionFavorites(changes: Flow<Unit>, favorites: FavoritesRepository) {
-    changes.collect {
+    changes.collectLatest {
         try {
             favorites.getFavorites(refresh = true).exceptionOrNull()?.let { failure ->
                 if (failure is CancellationException) throw failure
