@@ -1,6 +1,6 @@
 package com.coffeepeek.admin.di.shelf
 
-import com.coffeepeek.admin.feature.catalog.api.methodLabel
+import com.coffeepeek.admin.di.catalog.methodLabel
 import com.coffeepeek.feature.homecheckin.domain.model.HomePreparation
 import com.coffeepeek.feature.homecheckin.domain.repository.HomePreparationShelfBagReader
 import com.coffeepeek.feature.shelf.api.ShelfBrew

@@ -8,6 +8,8 @@ import com.coffeepeek.feature.shop.domain.model.MAX_SHOP_CHECK_IN_PHOTOS
 import com.coffeepeek.feature.shop.domain.model.ShopCheckInCreateInput
 import com.coffeepeek.feature.shop.domain.model.ShopCheckInPhoto
 import com.coffeepeek.feature.shop.domain.repository.ShopCheckInCreationUnconfirmed
+import com.coffeepeek.feature.shop.domain.repository.ShopCheckInRejection
+import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopCheckInSubmitFailure
 import com.coffeepeek.feature.shop.domain.repository.ShopCheckInRepository
 import com.coffeepeek.feature.shop.domain.usecase.validateShopCheckIn
 import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopCheckInFormAction
@@ -69,7 +71,7 @@ internal class ShopCheckInCreateViewModel(
             ShopCheckInFormAction.HistoryChecked -> {
                 if (!currentState.deliveryUnconfirmed || currentState.isSubmitting || currentState.submitted) return
                 if (saveDraft(currentState.input, unconfirmed = false)) {
-                    updateState { copy(deliveryUnconfirmed = false, submitFailed = false) }
+                    updateState { copy(deliveryUnconfirmed = false, submitFailure = null) }
                 }
             }
         }
@@ -115,7 +117,7 @@ internal class ShopCheckInCreateViewModel(
         val before = currentState.input
         val input = before.transform()
         analytics.changed(before, input)
-        updateState { copy(input = input, validationError = null, submitFailed = false) }
+        updateState { copy(input = input, validationError = null, submitFailure = null) }
         saveDraft(input, currentState.deliveryUnconfirmed)
     }
 
@@ -147,7 +149,7 @@ internal class ShopCheckInCreateViewModel(
         if (state.isLoading || state.isSubmitting || state.submitted || state.deliveryUnconfirmed) return null
         analytics.submitted()
         val validation = validateShopCheckIn(state.input, now())
-        updateState { copy(validationError = validation, submitFailed = false) }
+        updateState { copy(validationError = validation, submitFailure = null) }
         if (validation != null) {
             analytics.validationFailed()
             return null
@@ -168,7 +170,9 @@ internal class ShopCheckInCreateViewModel(
         analytics.failed(error)
         val uncertain = error is ShopCheckInCreationUnconfirmed
         val saved = if (uncertain) true else saveDraft(input, unconfirmed = false)
-        updateState { copy(deliveryUnconfirmed = uncertain || !saved, submitFailed = !uncertain) }
+        val rejection = error as? ShopCheckInRejection
+        updateState { copy(deliveryUnconfirmed = uncertain || !saved,
+            submitFailure = if (uncertain) null else ShopCheckInSubmitFailure(rejection?.status, rejection?.serverMessage)) }
     }
 }
 

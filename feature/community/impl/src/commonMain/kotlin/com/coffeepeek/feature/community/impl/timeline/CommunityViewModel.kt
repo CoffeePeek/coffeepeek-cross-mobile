@@ -36,7 +36,7 @@ import kotlinx.coroutines.launch
 private const val PAGE_SIZE = 20
 
 /**
- * The timeline as the legacy screen kept it: one account at a time (a session change resets everything and drops late answers), the public feed in
+ * The timeline as the previous screen kept it: one account at a time (a session change resets everything and drops late answers), the public feed in
  * the server's order with cursor paging, the personal timeline by page, author blocking applied on the way in, one mutation at a time.
  */
 internal class CommunityViewModel(

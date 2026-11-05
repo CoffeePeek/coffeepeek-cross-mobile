@@ -16,9 +16,9 @@ import com.coffeepeek.admin.ui.component.HapticEvent
 import com.coffeepeek.admin.ui.component.RetainedContent
 import com.coffeepeek.admin.ui.component.platformHaptic
 import com.coffeepeek.admin.ui.component.platformReduceMotion
-import com.coffeepeek.domain.model.CoffeeShopType
-import com.coffeepeek.domain.model.MapCoffeeZone
-import com.coffeepeek.domain.model.MapShop
+import com.coffeepeek.admin.map.MapShopType
+import com.coffeepeek.admin.map.MapCoffeeZone
+import com.coffeepeek.admin.map.MapShop
 import com.coffeepeek.feature.discovery.api.DiscoveryExposure
 import com.coffeepeek.feature.discovery.api.DiscoveryHost
 import com.coffeepeek.feature.discovery.api.MapCanvasCallbacks
@@ -52,13 +52,13 @@ private fun discoveryExposure(modifier: Modifier, exposure: DiscoveryExposure): 
 
 @Composable
 private fun DiscoveryMapCanvas(state: MapCanvasState, callbacks: MapCanvasCallbacks, modifier: Modifier) {
-    val shops = androidx.compose.runtime.remember(state.markers) { state.markers.map { it.toLegacy() } }
-    val zones = androidx.compose.runtime.remember(state.zones) { state.zones.map { it.toLegacy() } }
+    val shops = androidx.compose.runtime.remember(state.markers) { state.markers.map { it.toMapShop() } }
+    val zones = androidx.compose.runtime.remember(state.zones) { state.zones.map { it.toMapZone() } }
     CoffeeMap(
         shops = shops,
         clusters = state.clusters.map { cluster ->
-            com.coffeepeek.domain.model.MapCluster(cluster.id, cluster.coordinates.latitude, cluster.coordinates.longitude, cluster.count,
-                com.coffeepeek.domain.model.MapBounds(cluster.bounds.minLat, cluster.bounds.minLon, cluster.bounds.maxLat, cluster.bounds.maxLon))
+            com.coffeepeek.admin.map.MapCluster(cluster.id, cluster.coordinates.latitude, cluster.coordinates.longitude, cluster.count,
+                com.coffeepeek.admin.map.MapBounds(cluster.bounds.minLat, cluster.bounds.minLon, cluster.bounds.maxLat, cluster.bounds.maxLon))
         },
         zones = zones,
         selectedShopId = state.selectedShopId,
@@ -78,17 +78,17 @@ private fun DiscoveryMapCanvas(state: MapCanvasState, callbacks: MapCanvasCallba
     )
 }
 
-private fun MapMarker.toLegacy() = MapShop(
+private fun MapMarker.toMapShop() = MapShop(
     id = id, title = title, latitude = coordinates.latitude, longitude = coordinates.longitude, primaryZoneId = zoneId,
-    type = when (kind) { ShopKind.Specialty -> CoffeeShopType.SPECIALTY; ShopKind.CoffeeBar -> CoffeeShopType.COFFEE_BAR; ShopKind.Cafe -> CoffeeShopType.CAFE },
+    type = when (kind) { ShopKind.Specialty -> MapShopType.SPECIALTY; ShopKind.CoffeeBar -> MapShopType.COFFEE_BAR; ShopKind.Cafe -> MapShopType.CAFE },
 )
 
-private fun MapZone.toLegacy() = MapCoffeeZone(
+private fun MapZone.toMapZone() = MapCoffeeZone(
     id = id, name = name, description = description, color = color, latitude = center.latitude, longitude = center.longitude,
     radiusMeters = radiusMeters, shopCount = shopCount, polygon = polygon.map { it.latitude to it.longitude },
 )
 
-/** The favorite heart's exposure names the page it is on, as the legacy favorite button did. */
+/** The favorite heart's exposure names the page it is on. */
 private fun Modifier.favoriteExposure(): Modifier = composed {
     val page = com.coffeepeek.admin.analytics.Analytics.service?.state?.collectAsState()?.value?.page ?: "other"
     analyticsExposure("favorites", when (page) { "shop_detail" -> "shop_detail"; "roaster_detail" -> "roaster_card"; else -> "catalog_card" }, page)

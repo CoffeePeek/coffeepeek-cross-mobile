@@ -4,7 +4,7 @@ import androidx.compose.runtime.Composable
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 
-/** Platform selection only; both platforms bind feature entries, while legacy UI remains a fallback. */
+/** Platform selection only; both platforms bind feature entries. */
 interface CoffeeScreenRenderer {
     @Composable
     fun List(scrollToTopRequests: Flow<Unit> = emptyFlow())

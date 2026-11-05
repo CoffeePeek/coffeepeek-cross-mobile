@@ -1,6 +1,6 @@
 package com.coffeepeek.admin.di.shop
 
-import com.coffeepeek.domain.model.Session
+import com.coffeepeek.core.session.Session
 import com.coffeepeek.feature.authorblocking.api.AuthorBlockActions
 import com.coffeepeek.feature.authorblocking.api.AuthorReference
 import com.coffeepeek.feature.authorblocking.api.AuthorVisibility

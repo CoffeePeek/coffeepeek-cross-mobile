@@ -1,7 +1,6 @@
 package com.coffeepeek.admin.di
 
 import com.coffeepeek.admin.ui.Navigator
-import com.coffeepeek.admin.ui.screen.shop.component.ShopMenuGalleryLink
 import com.coffeepeek.admin.di.collections.androidCollectionFavoritesModule
 import com.coffeepeek.admin.di.collections.collectionsModule
 import com.coffeepeek.admin.di.favorites.serverFavoritesModule
@@ -19,7 +18,7 @@ import com.coffeepeek.admin.di.appupdate.androidAppUpdateRenderer
 import com.coffeepeek.admin.di.auth.androidAuthScreenRenderer
 import com.coffeepeek.admin.di.community.featureCommunityScreenRenderer
 import com.coffeepeek.admin.di.community.featureCheckInDetailScreenRenderer
-import com.coffeepeek.api.CoffeePeekClient
+import com.coffeepeek.core.network.ApiClients
 import com.coffeepeek.admin.di.contributions.contributionsModule
 import com.coffeepeek.admin.di.contributions.featureContributionsScreenRenderer
 import com.coffeepeek.admin.di.discovery.featureDiscoveryScreenRenderer
@@ -49,7 +48,6 @@ actual fun initPlatformKoin() = initAndroidKoin()
 internal fun initAndroidKoin(extraModules: List<org.koin.core.module.Module> = emptyList(), analyticsEnabled: Boolean = true) {
     initKoin(
         analyticsEnabled = analyticsEnabled,
-        registerLegacyFavorites = true,
         platformModules = listOf(
             serverFavoritesModule(),
             androidCollectionFavoritesModule(),
@@ -70,10 +68,7 @@ internal fun initAndroidKoin(extraModules: List<org.koin.core.module.Module> = e
             )
         },
         shopGalleryRendererFactory = { client ->
-            FeatureShopMenuGalleryScreenRenderer(
-                createShopMenuGalleryEntry(createShopMenuGalleryRepository(client.client)),
-                legacyAction = { id -> ShopMenuGalleryLink(onOpen = { Navigator.navigate(Navigator.Screen.ShopMenuGallery(id)) }) },
-            )
+            FeatureShopMenuGalleryScreenRenderer(createShopMenuGalleryEntry(createShopMenuGalleryRepository(client.client)))
         },
         shopCheckInRendererFactory = { FeatureShopCheckInFormRenderer(get()) },
         shopDetailRendererFactory = {
@@ -104,6 +99,6 @@ internal fun initAndroidKoin(extraModules: List<org.koin.core.module.Module> = e
         checkInDetailRendererFactory = { featureCheckInDetailScreenRenderer(get(), get(), get(), get()) },
         communityRendererFactory = { featureCommunityScreenRenderer(get(), get(), get(), get(), get(), get()) },
         contributionsRendererFactory = { featureContributionsScreenRenderer(get(), get(), get()) },
-        discoveryRendererFactory = { featureDiscoveryScreenRenderer(get<CoffeePeekClient>().client, get(), get(), get(), get(), get(), get(), get(), get()) },
+        discoveryRendererFactory = { featureDiscoveryScreenRenderer(get<ApiClients>().client, get(), get(), get(), get(), get(), get(), get(), get()) },
     )
 }

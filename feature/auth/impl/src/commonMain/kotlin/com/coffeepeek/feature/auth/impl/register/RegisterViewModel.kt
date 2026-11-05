@@ -17,7 +17,7 @@ import com.coffeepeek.feature.auth.domain.validatePassword
 import kotlinx.coroutines.CancellationException
 
 /**
- * Registration as the legacy screens did it: e-mail check, then name/password/terms, then the "check your mail" screen.
+ * Registration as the previous screens did it: e-mail check, then name/password/terms, then the "check your mail" screen.
  * The analytics choice is stored before the account is created and the password sign-up is remembered after it.
  */
 internal class RegisterViewModel(

@@ -22,12 +22,11 @@ import androidx.compose.ui.viewinterop.UIKitInteropInteractionMode
 import androidx.compose.ui.viewinterop.UIKitInteropProperties
 import androidx.compose.ui.viewinterop.UIKitViewController
 import com.coffeepeek.admin.ui.screen.coffee.CoffeeScreenRenderer
-import com.coffeepeek.admin.feature.community.ui.CommunityScreenRenderer
+import com.coffeepeek.admin.ui.screen.community.CommunityScreenRenderer
 import com.coffeepeek.admin.ui.Navigator.isHandledByRootNav
 import com.coffeepeek.admin.ui.screen.main.DiscoveryScreenRenderer
 import com.coffeepeek.admin.ui.screen.main.CheckInTabContent
 import com.coffeepeek.admin.ui.screen.profile.OwnProfileScreenRenderer
-import com.coffeepeek.admin.ui.screen.profile.SettingsScreen
 import com.coffeepeek.admin.ui.screen.profile.SettingsScreenRenderer
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -62,7 +61,7 @@ internal class NavigationDelegate : NSObject(), UINavigationControllerDelegatePr
         }
         val previous = previousTop as? NativeScreenController
         if (previous?.route == Navigator.Screen.CreateCheckIn && navigationController.viewControllers.none { it == previous }) {
-            com.coffeepeek.admin.feature.checkin.api.CheckInFlowHandoff.cancelFromBack()
+            com.coffeepeek.admin.di.shop.CheckInFlowHandoff.cancelFromBack()
         }
         previousTop = didShowViewController
         navigationController.viewControllers.forEach { (it as? NativeScreenController)?.syncBottomClearance() }
@@ -183,7 +182,7 @@ internal actual fun PlatformRootNavigation(
                     1 -> CheckInTabContent { koinInject<CoffeeScreenRenderer>().List(tabReselections.coffee) }
                     2 -> koinInject<CommunityScreenRenderer>().Content(
                         onCreateCheckIn = { Navigator.navigate(Navigator.Screen.CreateCheckIn) },
-                        notificationsAction = { koinInject<com.coffeepeek.admin.feature.notifications.ui.NotificationsRenderer>().Bell() },
+                        notificationsAction = { koinInject<com.coffeepeek.admin.ui.screen.notifications.NotificationsRenderer>().Bell() },
                     )
                     3 -> koinInject<OwnProfileScreenRenderer>().Content()
                     4 -> koinInject<SettingsScreenRenderer>().Tab()

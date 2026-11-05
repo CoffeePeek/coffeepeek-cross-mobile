@@ -4,8 +4,6 @@ import androidx.compose.runtime.Composable
 
 /** Platform composition selects the modal; the app keeps auth and destinations. */
 interface ShopCheckInFormRenderer {
-    val usesLegacyDraft: Boolean
-
     @Composable
     fun Content(
         shopId: String,
@@ -15,6 +13,5 @@ interface ShopCheckInFormRenderer {
         onSubmitted: () -> Unit,
         onGoToFeed: () -> Unit,
         onOpenHistory: () -> Unit,
-        legacyContent: @Composable () -> Unit,
     )
 }

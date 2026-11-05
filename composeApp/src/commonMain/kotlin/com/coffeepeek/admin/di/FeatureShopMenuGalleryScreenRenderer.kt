@@ -12,13 +12,7 @@ import com.coffeepeek.feature.shop.api.ShopMenuGalleryEntry
 
 internal class FeatureShopMenuGalleryScreenRenderer(
     private val entry: ShopMenuGalleryEntry,
-    private val legacyAction: @Composable (String) -> Unit = {},
 ) : ShopMenuGalleryScreenRenderer {
-    @Composable
-    override fun MenuGalleryAction(shopId: String) {
-        legacyAction(shopId)
-    }
-
     @Composable
     override fun Content(shopId: String) {
         var viewer by remember(shopId) { mutableStateOf<Pair<List<String>, Int>?>(null) }

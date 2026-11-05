@@ -21,7 +21,7 @@ internal data class PlatformAction(
 internal expect fun PlatformAlert(
     title: String,
     message: String,
-    confirmLabel: String = stringResource(Res.string.legacy_error_dialog_shelf_camera_tips_close),
+    confirmLabel: String = stringResource(Res.string.error_dialog_shelf_camera_tips_close),
     onConfirm: () -> Unit,
     onDismiss: () -> Unit,
     cancelLabel: String? = null,

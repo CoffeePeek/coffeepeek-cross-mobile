@@ -33,7 +33,7 @@ fun isValidPhone(value: String): Boolean = value.trim().let { it.isEmpty() || ph
 fun isValidEmail(value: String): Boolean = value.trim().let { it.isEmpty() || emailPattern.matches(it) }
 fun isValidWebsite(value: String): Boolean = value.trim().let { it.isEmpty() || urlPattern.matches(it) }
 
-/** A handle (`@name`) or a link: the legacy contacts editor accepted handles only, which rejected the links the server returns. */
+/** A handle (`@name`) or a link: the previous contacts editor accepted handles only, which rejected the links the server returns. */
 fun isValidInstagram(value: String): Boolean {
     val text = value.trim()
     if (text.isEmpty()) return true

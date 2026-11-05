@@ -7,7 +7,7 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import com.coffeepeek.admin.analytics.*
 import com.coffeepeek.admin.di.shop.ShopBrowsingHost
 import com.coffeepeek.admin.di.shop.ShopBrowsingHostSession
-import com.coffeepeek.admin.feature.checkin.api.CheckInFlowHandoff
+import com.coffeepeek.admin.di.shop.CheckInFlowHandoff
 import com.coffeepeek.admin.settings.CityPreference
 import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.ui.screen.checkins.CheckInShopPickerRenderer

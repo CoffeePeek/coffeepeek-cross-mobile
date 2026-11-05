@@ -14,7 +14,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 
 /**
- * The roaster form. The rule over the legacy: one account at a time. A guest cannot fill the form, and a change of account starts an empty form, so
+ * The roaster form. The rule over the previous: one account at a time. A guest cannot fill the form, and a change of account starts an empty form, so
  * nothing typed for one account is ever sent for another; late answers of a previous account are dropped. The city is only needed with an address.
  */
 internal class AddRoasterViewModel(
@@ -66,7 +66,7 @@ internal class AddRoasterViewModel(
 
     private fun submit() {
         val state = currentState
-        if (!state.valid || state.busy) return
+        if (!state.ready || state.busy) return
         updateState { copy(submit = RoasterSubmitState.Sending) }
         val mine = generation
         work = viewModelScope.launch {

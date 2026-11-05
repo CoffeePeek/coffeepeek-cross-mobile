@@ -1,14 +1,14 @@
 package com.coffeepeek.admin.di.roaster
 
-import com.coffeepeek.admin.feature.favorites.api.FavoriteInteractions
+import com.coffeepeek.admin.di.favorites.FavoriteInteractions
 import com.coffeepeek.admin.di.collections.FavoriteCollectionsPrompt
-import com.coffeepeek.admin.feature.favorites.api.RoasterFavorites
-import com.coffeepeek.admin.feature.favorites.api.roasterFavoriteId
-import com.coffeepeek.domain.model.CatalogItem
-import com.coffeepeek.domain.model.PublicAddress
+import com.coffeepeek.admin.di.favorites.RoasterFavorites
+import com.coffeepeek.admin.di.favorites.roasterFavoriteId
+import com.coffeepeek.admin.di.favorites.CatalogItem
+import com.coffeepeek.admin.di.favorites.PublicAddress
 import com.coffeepeek.feature.shop.api.PublicShopPreviews
-import com.coffeepeek.domain.feature.favorites.api.FavoriteKind
-import com.coffeepeek.domain.feature.favorites.api.FavoritesRepository
+import com.coffeepeek.feature.favorites.domain.model.FavoriteKind
+import com.coffeepeek.feature.favorites.domain.repository.AccountFavorites
 import com.coffeepeek.feature.roaster.api.RoasterFavoriteTarget
 import com.coffeepeek.feature.roaster.api.RoasterFavoritesPort
 import com.coffeepeek.feature.roaster.api.RoasterShopPhotos
@@ -20,13 +20,13 @@ import kotlinx.coroutines.flow.mapNotNull
 
 /**
  * Adapts the server favorites store. Authentication gating, in-flight de-duplication, account guards and the
- * favorite analytics stay in [FavoriteInteractions], exactly as for the legacy roaster screens.
+ * favorite analytics stay in [FavoriteInteractions], as for every roaster screen.
  */
 internal class RoasterFavoritesAdapter(
     private val favorites: RoasterFavorites,
     private val scope: CoroutineScope,
     private val favoriteCollections: FavoriteCollectionsPrompt? = null,
-    private val serverFavorites: FavoritesRepository? = null,
+    private val serverFavorites: AccountFavorites? = null,
 ) : RoasterFavoritesPort {
     override fun observeKeys(): Flow<Set<String>> = serverFavorites?.takeIf { favoriteCollections != null }?.observeMemberships()?.mapNotNull { result ->
         result.getOrNull()?.filter { it.kind == FavoriteKind.Roaster }?.map { it.slug }?.toSet()

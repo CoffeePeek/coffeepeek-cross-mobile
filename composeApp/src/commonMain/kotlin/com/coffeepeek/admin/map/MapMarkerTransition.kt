@@ -1,6 +1,5 @@
 package com.coffeepeek.admin.map
 
-import com.coffeepeek.domain.model.MapBounds
 
 internal const val MARKER_TRANSITION_MS = 380L
 

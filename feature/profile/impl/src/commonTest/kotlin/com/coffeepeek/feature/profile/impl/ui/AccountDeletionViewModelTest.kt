@@ -25,7 +25,7 @@ import kotlin.test.assertTrue
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 
-/** Port of the legacy `DeleteAccountPendingViewModelTest`; the open side effect flipped with the owner-approved confirmation. */
+/** Port of the previous `DeleteAccountPendingViewModelTest`; the open side effect flipped with the owner-approved confirmation. */
 @OptIn(ExperimentalCoroutinesApi::class, ExperimentalTime::class)
 class AccountDeletionViewModelTest {
     private val dispatcher = StandardTestDispatcher()

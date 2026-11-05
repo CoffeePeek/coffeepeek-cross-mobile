@@ -1,6 +1,7 @@
 package com.coffeepeek.admin.utils
 
 import com.coffeepeek.core.media.ImageUrl
+import com.coffeepeek.core.media.PrefetchPhotos
 
 import com.coffeepeek.core.designsystem.component.CoffeePeekImage
 
@@ -29,12 +30,8 @@ import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.coffeepeek.admin.MainActivity
-import com.coffeepeek.admin.theme.CoffeePeekTheme
+import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.admin.ui.screen.checkins.grantCheckInFixtureStartupPermissions
-import com.coffeepeek.admin.ui.screen.checkins.CalendarCard
-import com.coffeepeek.admin.ui.screen.checkins.CalendarMonth
-import com.coffeepeek.admin.ui.screen.checkins.CalendarPhoto
-import com.coffeepeek.admin.ui.screen.checkins.VisitedPlacesUiState
 import com.coffeepeek.core.media.image.FullScreenPhotoPresence
 import com.coffeepeek.core.media.image.PhotoPermission
 import com.coffeepeek.core.media.image.PhotoAccessDenied
@@ -72,30 +69,6 @@ class CpImageLoadingTest {
 
     @Before
     fun grantStartupPermissions() = grantCheckInFixtureStartupPermissions()
-
-    @Test
-    fun calendarPhotoStaysVisibleDuringPermissionRenewal() {
-        val loader = FixtureImages(grantMillis = 6_000, holdAfterFirst = true)
-        fun photoColor(): Int {
-            val bitmap = compose.onNodeWithContentDescription("12 октября 2026, 1 чекин", substring = true)
-                .captureToImage().asAndroidBitmap()
-            return bitmap.getPixel(bitmap.width / 2, bitmap.height / 2)
-        }
-        withImageContent(loader, content = {
-            CalendarCard(VisitedPlacesUiState(calendarMonth = CalendarMonth(2026, 10)),
-                today = "2026-10-20", onPreviousMonth = {}, onNextMonth = {}, onSelectDate = {}, onToday = {},
-                homeCounts = mapOf("2026-10-12" to 1),
-                homePhotos = mapOf("2026-10-12" to listOf(CalendarPhoto(THUMB))))
-        }) {
-            compose.waitUntil(10_000) { photoColor() == Color.BLUE }
-            compose.waitUntil(10_000) { loader.requested.size == 2 }
-            compose.waitForIdle()
-            assertEquals("Renewing access must not erase an authorized calendar thumbnail", Color.BLUE, photoColor())
-            loader.release.complete(Unit)
-            compose.waitUntil(10_000) { loader.decoded.get() == 2 }
-            compose.waitUntil(10_000) { photoColor() == Color.BLUE }
-        }
-    }
 
     @Test
     fun protectedPhotoRecoversAfterATemporaryRenewalFailure() {

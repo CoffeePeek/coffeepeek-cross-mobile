@@ -7,10 +7,10 @@ import com.coffeepeek.admin.analytics.AnalyticsService
 import com.coffeepeek.admin.analytics.Entity
 import com.coffeepeek.admin.analytics.safeAnalyticsError
 import com.coffeepeek.core.session.SessionReader
-import com.coffeepeek.domain.feature.favorites.api.FavoriteEntry
-import com.coffeepeek.domain.feature.favorites.api.FavoriteKind
-import com.coffeepeek.domain.feature.favorites.api.FavoriteTarget
-import com.coffeepeek.domain.feature.favorites.api.FavoritesRepository
+import com.coffeepeek.feature.favorites.domain.model.FavoriteEntry
+import com.coffeepeek.feature.favorites.domain.model.FavoriteKind
+import com.coffeepeek.feature.favorites.domain.model.FavoriteTarget
+import com.coffeepeek.feature.favorites.domain.repository.AccountFavorites
 import com.coffeepeek.feature.collections.domain.model.CollectionPlaceKind
 import com.coffeepeek.feature.collections.domain.model.SavedCollectionMembershipResult
 import com.coffeepeek.feature.collections.domain.model.SavedCollectionSummary
@@ -25,7 +25,7 @@ import kotlin.time.TimeSource
 /** Only a confirmed picker write can report a favorite mutation; list metadata edits are excluded. */
 internal class FavoriteMembershipAnalyticsRepository(
     private val delegate: SavedCollectionsRepository,
-    private val favorites: FavoritesRepository,
+    private val favorites: AccountFavorites,
     private val sessions: SessionReader,
 ) : SavedCollectionsRepository by delegate {
     override suspend fun changeMemberships(target: SavedCollectionTarget, added: Set<String>, removed: Set<String>): Result<SavedCollectionMembershipResult> {
@@ -105,7 +105,7 @@ internal fun selectedAfterMembershipChange(lists: List<SavedCollectionSummary>, 
 }
 
 internal fun FavoriteEntry.matches(target: SavedCollectionTarget): Boolean =
-    slug == target.slug && kind == when (target.kind) {
+    address?.slug == target.slug && kind == when (target.kind) {
         CollectionPlaceKind.CoffeeShop -> FavoriteKind.CoffeeShop
         CollectionPlaceKind.Roaster -> FavoriteKind.Roaster
     }

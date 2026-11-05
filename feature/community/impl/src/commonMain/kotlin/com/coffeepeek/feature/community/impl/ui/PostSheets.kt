@@ -248,7 +248,7 @@ internal fun ReportSheetContent(form: ReportForm, callbacks: ReportCallbacks) {
     }
 }
 
-/** A multi-line (or single-line) field with a placeholder and a hard length limit, as the legacy review input. */
+/** A multi-line (or single-line) field with a placeholder and a hard length limit, as the previous review input. */
 @Composable
 private fun TextArea(value: String, onChange: (String) -> Unit, placeholder: String, maxLength: Int, modifier: Modifier = Modifier, isError: Boolean = false, singleLine: Boolean = false) {
     val shape = if (singleLine) RoundedCornerShape(percent = 50) else RoundedCornerShape(CoffeePeekDimens.buttonRadius)

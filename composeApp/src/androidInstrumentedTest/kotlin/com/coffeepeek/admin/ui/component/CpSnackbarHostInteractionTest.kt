@@ -39,8 +39,8 @@ import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.coffeepeek.admin.MainActivity
-import com.coffeepeek.admin.theme.CoffeePeekTheme
-import com.coffeepeek.admin.ui.icons.CpIcons
+import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
+import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.admin.ui.screen.checkins.grantCheckInFixtureStartupPermissions
 import java.io.File
 import java.util.concurrent.atomic.AtomicInteger
@@ -80,7 +80,7 @@ class CpSnackbarHostInteractionTest {
                                 Button(onClick = { dark = !dark }) { Text("Сменить тему") }
                                 Button(onClick = { screenTaps.incrementAndGet() }) { Text("Проверить экран") }
                             }
-                            CpSnackbarHost(messages, Modifier.align(Alignment.BottomCenter).testTag(HOST), actionIcon = CpIcons.Retry)
+                            CpSnackbarHost(messages, Modifier.align(Alignment.BottomCenter).testTag(HOST), actionIcon = CoffeePeekIcons.Retry)
                         }
                     }
                 }
@@ -128,7 +128,7 @@ class CpSnackbarHostInteractionTest {
                                 Button(onClick = { busy = false; dark = !dark }) { Text("Завершить повтор") }
                             }
                             CpSnackbarHost(messages, Modifier.align(Alignment.BottomCenter).testTag(HOST),
-                                actionIcon = CpIcons.Retry, actionInProgress = busy,
+                                actionIcon = CoffeePeekIcons.Retry, actionInProgress = busy,
                                 onAction = { taps.incrementAndGet(); busy = true })
                         }
                     }
@@ -164,7 +164,7 @@ class CpSnackbarHostInteractionTest {
                         Button(onClick = { scope.launch {
                             result.set(messages.showSnackbar(MESSAGE, "Повторить", true, SnackbarDuration.Long))
                         } }) { Text("Показать сообщение") }
-                        CpSnackbarHost(messages, Modifier.align(Alignment.BottomCenter), actionIcon = CpIcons.Retry)
+                        CpSnackbarHost(messages, Modifier.align(Alignment.BottomCenter), actionIcon = CoffeePeekIcons.Retry)
                     }
                 }
             } }

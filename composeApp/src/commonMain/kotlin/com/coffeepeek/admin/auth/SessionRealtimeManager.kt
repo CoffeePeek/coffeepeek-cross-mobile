@@ -4,7 +4,7 @@ import coffeepeek.composeapp.generated.resources.Res
 import coffeepeek.composeapp.generated.resources.local_data_cleanup_error
 import com.coffeepeek.admin.utils.ErrorHandler
 import com.coffeepeek.admin.ui.Navigator
-import com.coffeepeek.data.session.UserSessionCleaner
+import com.coffeepeek.admin.session.UserSessionCleaner
 import com.coffeepeek.core.session.Session
 import com.coffeepeek.core.session.SessionReader
 import io.ktor.client.HttpClient
@@ -149,7 +149,7 @@ class SessionRealtimeManager(
         val reason = payload?.reason?.trim()
         activeAccessToken = null
         val cleanupFailure = try {
-            userSessionCleaner.clearLocalUserData()
+            userSessionCleaner.clear()
             null
         } catch (cancellation: kotlinx.coroutines.CancellationException) {
             throw cancellation

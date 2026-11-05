@@ -24,7 +24,7 @@ internal fun HomeCheckInEditorMethod(
     artwork: @Composable (String, Modifier) -> Unit, onSelect: (String?) -> Unit,
 ) {
     var expanded by remember { mutableStateOf(false) }
-    val selectedMethod = methods.firstOrNull { it.code == selected || selected in it.legacyCodes }
+    val selectedMethod = methods.firstOrNull { it.code == selected || selected in it.previousCodes }
     val label = selectedMethod?.name ?: selected?.takeIf { error == null }?.let {
         if (it == "other") stringResource(Res.string.home_check_in_method_other) else formatMethod(it)
     }

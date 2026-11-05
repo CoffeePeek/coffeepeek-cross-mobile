@@ -21,7 +21,7 @@ import kotlinx.coroutines.launch
 
 /**
  * The editor of one section of a shop, new or an own request that is not approved yet. It starts from the shop as it is now and, when editing, lays the
- * request's payload over it. The rule over the legacy: one account at a time. A guest sees a sign-in prompt, a change of account starts an empty
+ * request's payload over it. The rule over the previous: one account at a time. A guest sees a sign-in prompt, a change of account starts an empty
  * editor, and late answers of a previous account are dropped; a failed load or send shows the server message or a default text.
  */
 internal class ChangeEditorViewModel(

@@ -4,7 +4,7 @@ import com.coffeepeek.core.session.Session
 import com.coffeepeek.core.session.SessionReader
 import kotlinx.coroutines.flow.MutableStateFlow
 
-/** Deliberately has no legacy or writer interface: app adapters receive reads only. */
+/** Deliberately has no existing or writer interface: app adapters receive reads only. */
 internal open class ReadOnlySessions(initial: Session? = null) : SessionReader {
     val state = MutableStateFlow(initial)
     var active = true

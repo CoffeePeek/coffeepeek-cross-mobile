@@ -29,7 +29,7 @@ import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.coffeepeek.admin.MainActivity
-import com.coffeepeek.admin.theme.CoffeePeekTheme
+import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.admin.ui.screen.checkins.grantCheckInFixtureStartupPermissions
 import java.io.File
 import java.util.concurrent.atomic.AtomicInteger

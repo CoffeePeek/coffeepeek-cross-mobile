@@ -3,8 +3,8 @@ package com.coffeepeek.admin.di.homecheckin
 import com.coffeepeek.admin.di.checkinhistory.CheckInHistorySession
 import com.coffeepeek.admin.di.shelf.ShelfHomeCheckInBags
 import com.coffeepeek.admin.analytics.safeAnalyticsError
-import com.coffeepeek.admin.feature.catalog.api.BrewMethodCatalog
-import com.coffeepeek.admin.feature.catalog.api.catalogBrewMethodSlug
+import com.coffeepeek.admin.di.catalog.BrewMethodCatalog
+import com.coffeepeek.admin.di.catalog.catalogBrewMethodSlug
 import com.coffeepeek.feature.coffee.api.CoffeePicker
 import com.coffeepeek.feature.homecheckin.domain.model.*
 import com.coffeepeek.feature.homecheckin.domain.repository.HomePreparationRepository
@@ -31,7 +31,7 @@ internal class AppHomeCheckInCatalog(
         ?: Result.success(emptyList())
 }
 
-/** Hide legacy transport failures/messages at this composition boundary. */
+/** Hide transport failures and their messages at this composition boundary. */
 private fun <T> Result<T>.homeCatalogResult(): Result<T> = fold({ Result.success(it) }, { error ->
     if (error is CancellationException) throw error
     if (error is HomePreparationFailure) Result.failure(error)
@@ -46,7 +46,7 @@ private fun <T> Result<T>.homeCatalogResult(): Result<T> = fold({ Result.success
     }, statusCode = safeAnalyticsError(error).status))
 })
 
-/** Guards the prepared repository without routing writes back to the legacy Home writer. */
+/** Guards the repository so that writes keep one owner. */
 internal class AppHomeCheckInRepository(
     private val lease: CheckInHistorySession,
     private val source: HomePreparationRepository,

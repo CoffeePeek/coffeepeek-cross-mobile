@@ -134,7 +134,7 @@ internal fun SettingsContent(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = CoffeePeekDimens.settingsPagePadding, vertical = CoffeePeekDimens.spacing4),
             )
             if (state.showGuestCard) {
-                slots.guestCard(navigation.onLogin, navigation.onRegister, Modifier.padding(horizontal = CoffeePeekDimens.settingsPagePadding))
+                SettingsGuestCard(navigation.onLogin, navigation.onRegister, Modifier.padding(horizontal = CoffeePeekDimens.settingsPagePadding))
                 Spacer(Modifier.height(CoffeePeekDimens.settingsSectionSpacing))
             }
             slots.accountSwitch()
@@ -300,7 +300,6 @@ private fun SettingsStoreReviewPreview() = CoffeePeekTheme {
     }
 }
 private val previewSlots = SettingsSlots(
-    guestCard = { _, _, modifier -> Text("Войти", modifier) },
     notify = {},
     notificationPreference = { label, description ->
         CoffeePeekSettingsRow(CoffeePeekIcons.Notifications, label, description, {}, enabled = false,

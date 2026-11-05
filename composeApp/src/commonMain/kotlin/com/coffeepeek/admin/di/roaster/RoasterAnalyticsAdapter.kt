@@ -13,7 +13,7 @@ import com.coffeepeek.feature.roaster.api.RoasterExposure
 import com.coffeepeek.feature.roaster.api.RoasterListAnalytics
 import com.coffeepeek.feature.roaster.api.RoasterScreenAnalytics
 
-/** Same consent-aware trackers and event names as the legacy roaster screens, not a second analytics service. */
+/** Consent-aware trackers over the shared analytics service. */
 internal object RoasterAnalyticsAdapter : RoasterAnalytics {
     override fun list(): RoasterListAnalytics = RoasterListAnalyticsAdapter()
     override fun detail(): RoasterDetailAnalytics = RoasterDetailAnalyticsAdapter
@@ -62,7 +62,7 @@ internal object RoasterScreenAnalyticsAdapter : RoasterScreenAnalytics {
         RoasterExposure.Photos -> modifier.analyticsExposure("roaster_photos", "roaster_detail", "roaster_detail")
         RoasterExposure.Contacts -> modifier.analyticsExposure("roaster_contacts", "roaster_detail", "roaster_detail")
         RoasterExposure.Shops -> modifier.analyticsExposure("roaster_shops", "roaster_detail", "roaster_detail")
-        // The legacy favorite button chose its placement from the current page, for card and detail alike.
+        // The favorite placement follows the current page, for card and detail alike.
         RoasterExposure.FavoriteCard, RoasterExposure.FavoriteDetail -> modifier.favoriteExposure()
     }
 }

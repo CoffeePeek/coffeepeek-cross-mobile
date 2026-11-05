@@ -2,7 +2,7 @@
 
 Статус: принципы согласованы 2026-10-24; ход работ — в разделе «Статус» ниже. Основан на сверке с продом (`origin/main`) по всем владельцам: инвентарь Gradle-модулей,
 iOS-документы (`docs/IOS_NATIVE_EXPERIENCE.md`, `IOS_NATIVE_NAVIGATION.md`, `IOS_COMPOSE_INTEROP_AUDIT.md`, `IOS_MAP_PARITY.md`,
-`IOS_FEED_PHOTO_MEMORY.md`, `IOS_SETUP.md`), `feature/LEGACY_REMOVAL.md`, `feature/roaster/IOS_MIGRATION_PLAN.md`.
+`IOS_FEED_PHOTO_MEMORY.md`, `IOS_SETUP.md`), `feature/roaster/IOS_MIGRATION_PLAN.md`.
 Первоначальный инвентарь не был проверен запуском UI на симуляторе или устройстве.
 Фактически выполненные проверки последующих срезов и оставшиеся gates записаны ниже отдельно.
 

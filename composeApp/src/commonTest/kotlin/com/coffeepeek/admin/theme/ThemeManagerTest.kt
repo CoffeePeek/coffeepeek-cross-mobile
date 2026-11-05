@@ -10,7 +10,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 /**
- * Parity tests for the legacy global `ThemeManager` (settings migration step 1). It is a process-wide `object` whose `initialize`
+ * Parity tests for the existing global `ThemeManager` (settings migration step 1). It is a process-wide `object` whose `initialize`
  * runs once, so the persistence rules live in one ordered scenario; the manager uses real dispatchers, so assertions wait for their condition.
  */
 class ThemeManagerTest {

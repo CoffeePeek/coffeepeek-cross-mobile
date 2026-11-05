@@ -12,7 +12,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
-import com.coffeepeek.admin.theme.CoffeePeekTheme
+import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.admin.theme.PlatformSystemBars
 import com.coffeepeek.admin.theme.platformSystemDarkTheme
 import com.coffeepeek.admin.theme.ThemeManager
@@ -42,7 +42,7 @@ fun App(onReady: () -> Unit = {}) {
             Navigator()
             com.coffeepeek.admin.di.collections.CollectionsPickerHost()
             com.coffeepeek.admin.di.authorblocking.AuthorBlockingRootHost()
-            koinInject<com.coffeepeek.admin.feature.appupdate.ui.AppUpdateRenderer>().Prompt()
+            koinInject<com.coffeepeek.admin.ui.screen.appupdate.AppUpdateRenderer>().Prompt()
             com.coffeepeek.admin.analytics.AnalyticsPrivacy()
         }
     }

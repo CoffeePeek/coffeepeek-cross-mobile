@@ -2,8 +2,10 @@
 package com.coffeepeek.admin.di.community
 
 import com.coffeepeek.admin.analytics.*
-import com.coffeepeek.admin.feature.community.ui.FeedShops
-import com.coffeepeek.admin.feature.community.ui.FeedSessions
+import com.coffeepeek.feature.shop.domain.model.ShopCheckInCreateInput
+import com.coffeepeek.feature.shop.domain.model.ShopConsumedDrinkOption
+import com.coffeepeek.feature.shop.domain.repository.ShopCheckInRepository
+import com.coffeepeek.admin.ui.screen.community.FeedSessions
 import com.coffeepeek.core.session.Session
 import com.coffeepeek.feature.community.api.EditField
 import com.coffeepeek.feature.community.api.FeedAction
@@ -42,12 +44,17 @@ class CommunityAdaptersTest {
         assertTrue(account.ownAuthorSlug().isFailure)
     }
 
-    @Test fun theDrinkCatalogIsMappedFromTheShopRepository() = runTest {
-        val drinks = ShopCommunityDrinks(FeedShops()).load().getOrThrow()
+    private class ShopDrinks : ShopCheckInRepository {
+        override suspend fun getDrinkOptions() = Result.success(listOf(ShopConsumedDrinkOption("cappuccino", "Капучино", "Cappuccino")))
+        override suspend fun create(input: ShopCheckInCreateInput): Result<Unit> = error("Unused")
+    }
+
+    @Test fun theDrinkCatalogIsMappedFromTheShopCheckInRepository() = runTest {
+        val drinks = ShopCommunityDrinks(ShopDrinks()).load().getOrThrow()
         assertEquals(listOf("cappuccino"), drinks.map { it.slug }); assertEquals("Капучино", drinks.single().nameRu); assertEquals("Cappuccino", drinks.single().nameEn)
     }
 
-    @Test fun feedEventsKeepTheLegacyNamesAndProperties() = runTest {
+    @Test fun feedEventsKeepTheExistingNamesAndProperties() = runTest {
         val sdk = startAnalytics()
         val analytics = AppCommunityAnalytics()
         analytics.feedAction(FeedAction.Refresh, FeedTrigger.Gesture)
@@ -66,7 +73,7 @@ class CommunityAdaptersTest {
         assertEquals("feed_like", sdk.events.single { it.first == "auth_gate_shown" }.second["feature"])
     }
 
-    @Test fun theEditFunnelReportsTheDiaryEditFlowLikeTheLegacyEditor() = runTest {
+    @Test fun theEditFunnelReportsTheDiaryEditFlowLikeTheExistingEditor() = runTest {
         val sdk = startAnalytics()
         val analytics = AppCommunityAnalytics()
         analytics.editOpened()

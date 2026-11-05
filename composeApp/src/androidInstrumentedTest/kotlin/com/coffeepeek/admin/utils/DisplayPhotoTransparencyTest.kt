@@ -6,6 +6,7 @@ import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.coffeepeek.core.media.AndroidImageCodec
 import com.coffeepeek.core.media.AndroidImageCodec.toByteArray
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue

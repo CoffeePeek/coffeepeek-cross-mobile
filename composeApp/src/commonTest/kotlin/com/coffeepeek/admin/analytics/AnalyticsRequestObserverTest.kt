@@ -70,6 +70,6 @@ class AnalyticsRequestObserverTest {
         val sdk: RecordingTransport,
         val sessions: ReadOnlySessions,
         val service: AnalyticsService,
-        val observer: com.coffeepeek.api.RequestObserver,
+        val observer: com.coffeepeek.core.network.RequestObserver,
     )
 }

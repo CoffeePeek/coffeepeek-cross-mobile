@@ -1,5 +1,6 @@
 package com.coffeepeek.feature.contributions.impl.ui
 
+import com.coffeepeek.feature.contributions.impl.ui.component.ContributionShopCover
 import androidx.compose.foundation.BorderStroke
 import com.coffeepeek.feature.contributions.impl.resources.Res
 import com.coffeepeek.feature.contributions.impl.resources.contributions_mascot_happy
@@ -71,20 +72,20 @@ internal fun AddShopSuccess(state: AddShopState, host: AddShopHost, onGoHome: ()
             Spacer(Modifier.height(CoffeePeekDimens.spacing2))
             Text(stringResource(Res.string.contributions_shop_success_description), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
             Spacer(Modifier.height(CoffeePeekDimens.spacing6))
-            SentShopCard(state, host)
+            SentShopCard(state)
             Spacer(Modifier.height(CoffeePeekDimens.spacing8))
         }
     }
 }
 
 @Composable
-private fun SentShopCard(state: AddShopState, host: AddShopHost) {
+private fun SentShopCard(state: AddShopState) {
     val location = listOfNotNull(state.selectedCity?.name?.takeIf(String::isNotBlank), state.address.trim().takeIf(String::isNotBlank)).joinToString(", ")
     val shape = RoundedCornerShape(CoffeePeekDimens.cardRadius)
     CoffeePeekCard(
         shape = shape, border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant), elevation = 0.dp,
         contentPadding = androidx.compose.foundation.layout.PaddingValues(CoffeePeekDimens.spacing4),
-        header = { host.shopImage(state.photos.firstOrNull()?.bytes, Modifier.fillMaxWidth().height(120.dp).clip(RoundedCornerShape(topStart = CoffeePeekDimens.cardRadius, topEnd = CoffeePeekDimens.cardRadius))) },
+        header = { ContributionShopCover(state.photos.firstOrNull()?.bytes, Modifier.fillMaxWidth().height(120.dp).clip(RoundedCornerShape(topStart = CoffeePeekDimens.cardRadius, topEnd = CoffeePeekDimens.cardRadius))) },
     ) {
         Text(
             state.name.trim().ifBlank { stringResource(Res.string.contributions_shop_fallback_name) }, style = MaterialTheme.typography.titleMedium,

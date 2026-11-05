@@ -2,8 +2,6 @@ package com.coffeepeek.admin.map
 
 import android.content.Context
 import com.coffeepeek.R
-import com.coffeepeek.domain.model.MapCluster
-import com.coffeepeek.domain.model.MapShop
 
 internal fun mapMarkerSpecs(
     context: Context, shops: List<MapShop>, clusters: List<MapCluster>, selectedId: String?, dark: Boolean,

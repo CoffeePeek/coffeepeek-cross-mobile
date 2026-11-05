@@ -10,11 +10,11 @@ fun createPublicRoasterDetails(repository: RoasterRepository): PublicRoasterDeta
     override suspend fun summaries() = requestResult {
         repository.getRoasters().getOrThrow().mapNotNull { row ->
             row.address?.slug?.let { PublicRoasterSummary(it, row.photoUrl, row.tags.map { tag -> tag.name },
-                row.coffeeShopsCount, row.coffeeProductsCount, row.availableCoffeeProducts) }
+                row.coffeeShopsCount, row.coffeeProductsCount, row.availableCoffeeProducts, row.name) }
         }
     }
     override suspend fun load(slug: String) = requestResult {
         val details = repository.getRoaster(slug).getOrThrow()
-        PublicRoasterDescription(details.photos.firstOrNull()?.url, details.about)
+        PublicRoasterDescription(details.photos.firstOrNull()?.url, details.about, details.name)
     }
 }

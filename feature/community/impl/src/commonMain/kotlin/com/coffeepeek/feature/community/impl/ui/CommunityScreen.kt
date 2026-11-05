@@ -166,7 +166,7 @@ internal fun CenteredLoader() {
     Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.TopCenter) { CoffeePeekLoader(stringResource(Res.string.community_loading)) }
 }
 
-/** The shared "something went wrong" block: the same look and words the legacy list used for every load failure. */
+/** The shared "something went wrong" block: the same look and words the previous list used for every load failure. */
 @Composable
 internal fun ErrorBlock(onRetry: () -> Unit, retryLabel: String, modifier: Modifier = Modifier) {
     Column(modifier.fillMaxWidth().padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {

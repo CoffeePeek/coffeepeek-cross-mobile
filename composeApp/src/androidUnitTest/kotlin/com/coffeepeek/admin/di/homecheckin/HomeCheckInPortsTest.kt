@@ -2,12 +2,12 @@ package com.coffeepeek.admin.di.homecheckin
 
 import com.coffeepeek.admin.di.checkinhistory.CheckInHistorySession
 import com.coffeepeek.admin.di.shop.CheckInTestSessions
-import com.coffeepeek.admin.feature.catalog.api.BrewMethodCatalog
-import com.coffeepeek.admin.feature.catalog.api.BrewMethodOption
+import com.coffeepeek.admin.di.catalog.BrewMethodCatalog
+import com.coffeepeek.admin.di.catalog.BrewMethodOption
 import com.coffeepeek.feature.coffee.api.CoffeePicker
 import com.coffeepeek.feature.coffee.api.CoffeePickerItem
 import com.coffeepeek.admin.utils.PickedImage
-import com.coffeepeek.domain.model.Session
+import com.coffeepeek.core.session.Session
 import com.coffeepeek.feature.homecheckin.domain.model.*
 import com.coffeepeek.feature.homecheckin.domain.repository.HomePreparationRepository
 import kotlinx.coroutines.*
@@ -28,7 +28,7 @@ class HomeCheckInPortsTest {
         assertEquals(listOf("query"), queries)
         val method = catalog.brewMethods().getOrThrow().single()
         assertEquals("hario-v60", method.code); assertEquals("Hario V60", method.name)
-        assertEquals(setOf("pour_over"), method.legacyCodes)
+        assertEquals(setOf("pour_over"), method.previousCodes)
     }
 
     @Test fun repositoryKeepsResultsAndTokenRenewalButRevokedLeaseNeverStartsAnotherCall() = runTest {

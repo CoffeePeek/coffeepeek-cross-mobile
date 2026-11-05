@@ -24,7 +24,7 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class ProfileAccountRepositoryTest {
-    @Test fun ownProfileAcceptsTheCapitalizedLegacyEnvelope() = runTest {
+    @Test fun ownProfileAcceptsTheCapitalizedPreviousEnvelope() = runTest {
         val f = ProfileAccountFixture(backgroundScope)
         try {
             f.handler = { respond("""{"IsSuccess":true,"Data":${profileJson()}}""",

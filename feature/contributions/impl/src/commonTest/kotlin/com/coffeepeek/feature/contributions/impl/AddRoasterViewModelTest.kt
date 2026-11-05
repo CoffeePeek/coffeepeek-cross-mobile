@@ -109,6 +109,20 @@ class AddRoasterViewModelTest {
         assertEquals(RoasterSubmitState.Done(RoasterSubmitted("r1", "Pending", true, "Принято")), vm.state.value.submit)
     }
 
+    @Test fun aSentRoasterCannotBeSentAgainAndAFailureCanBeRetried() = runTest(dispatcher) {
+        var calls = 0
+        repository.roasterSubmit = { calls++; Result.failure(IllegalStateException("Connection lost")) }
+        val vm = model()
+        vm.send(AddRoasterAction.Name("Roast"), AddRoasterAction.Submit, scope = this)
+        assertEquals(RoasterSubmitState.Failed(null), vm.state.value.submit); assertEquals("Roast", vm.state.value.name)
+        repository.roasterSubmit = { calls++; Result.success(RoasterSubmitted("r1", "Pending", false, "Адрес проверит модератор")) }
+        vm.send(AddRoasterAction.Submit, scope = this)
+        assertEquals(RoasterSubmitState.Done(RoasterSubmitted("r1", "Pending", false, "Адрес проверит модератор")), vm.state.value.submit)
+        assertEquals(2, calls)
+        vm.send(AddRoasterAction.Submit, AddRoasterAction.Submit, scope = this)
+        assertEquals(2, calls, "nothing is sent after a success")
+    }
+
     @Test fun theCityIsSentOnlyWithTheAddress() = runTest(dispatcher) {
         withCities(minsk, brest)
         var sent: NewRoaster? = null
@@ -151,6 +165,23 @@ class AddRoasterViewModelTest {
         gate.complete(Result.success(RoasterSubmitted("r1", "Pending", false, ""))); runCurrent()
         assertEquals(RoasterSubmitState.Idle, vm.state.value.submit)
         assertEquals("", vm.state.value.name)
+    }
+
+    @Test fun theRoasterCannotBeSentWhileTheCityListLoadsAndAFailedListKeepsTheForm() = runTest(dispatcher) {
+        val release = CompletableDeferred<Result<Catalogs>>()
+        catalogs.catalogs = { release.await() }
+        val vm = model()
+        vm.send(AddRoasterAction.Name("Roast"), scope = this)
+        assertTrue(vm.state.value.citiesLoading); assertTrue(vm.state.value.valid); assertFalse(vm.state.value.ready)
+        vm.send(AddRoasterAction.Submit, scope = this)
+        assertEquals(RoasterSubmitState.Idle, vm.state.value.submit)
+        assertTrue(repository.requests.isEmpty(), "nothing is sent before the list has answered")
+
+        release.complete(Result.failure(ContributionFailure(FailureKind.Other)))
+        runCurrent()
+        assertTrue(vm.state.value.citiesFailed); assertEquals("Roast", vm.state.value.name); assertTrue(vm.state.value.ready)
+        vm.send(AddRoasterAction.Submit, scope = this)
+        assertTrue(vm.state.value.submit != RoasterSubmitState.Idle, "a failed list does not block sending")
     }
 
     @Test fun aFailedCityListCanBeRetried() = runTest(dispatcher) {

@@ -1,6 +1,8 @@
 package com.coffeepeek.admin.di.contentreport
 
-import com.coffeepeek.api.CoffeePeekClient
+import com.coffeepeek.core.network.ApiClients
+import com.coffeepeek.core.network.SessionCredentials
+import com.coffeepeek.core.network.SessionTokens
 import com.coffeepeek.core.session.SessionReader
 import com.coffeepeek.feature.contentreport.domain.repository.ContentReportRepository
 import org.junit.Rule
@@ -13,8 +15,13 @@ class ContentReportModuleTest {
     @get:Rule val temporary = TemporaryFolder()
     @Test fun constructionDoesNotReadCredentialsOrOpenAnAccountLease() {
         var credentialReads = 0
-        val client = CoffeePeekClient("https://fixture.invalid", temporary.newFolder().path, false,
-            getToken = { credentialReads++; error("Unexpected credentials") }, saveToken = { error("No writes") })
+        val client = ApiClients("https://fixture.invalid", temporary.newFolder().path, false,
+            credentials = object : SessionCredentials {
+                override suspend fun load(): SessionTokens? { credentialReads++; error("Unexpected credentials") }
+                override suspend fun save(tokens: SessionTokens?) { error("No writes") }
+                override suspend fun replace(expected: SessionTokens, tokens: SessionTokens?): Boolean = false
+            },
+            refreshWith = { { Result.failure(IllegalStateException("unused")) } })
         val sessions = object : SessionReader by ReportTestSessions() {
             override fun peekSession() = error("No account lease at graph construction")
         }

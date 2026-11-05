@@ -1,8 +1,8 @@
 package com.coffeepeek.admin.di.collections
 
 import com.coffeepeek.admin.di.shop.CheckInTestSessions
+import com.coffeepeek.core.session.Session
 import com.coffeepeek.core.session.SessionReader
-import com.coffeepeek.domain.model.Session
 import com.coffeepeek.feature.collections.api.CollectionTarget
 import com.coffeepeek.feature.collections.api.CollectionTargetKind
 import kotlinx.coroutines.ExperimentalCoroutinesApi

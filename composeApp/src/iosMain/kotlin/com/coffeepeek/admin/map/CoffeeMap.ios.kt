@@ -25,10 +25,6 @@ import com.coffeepeek.admin.location.LocationPermissionEffect
 import com.coffeepeek.admin.location.PlatformLocation
 import com.coffeepeek.admin.theme.toUIColor
 import com.coffeepeek.admin.theme.uiKitStyle
-import com.coffeepeek.domain.model.MapBounds
-import com.coffeepeek.domain.model.MapCluster
-import com.coffeepeek.domain.model.MapCoffeeZone
-import com.coffeepeek.domain.model.MapShop
 import kotlinx.coroutines.launch
 
 private const val TARGET_ZOOM = 16f

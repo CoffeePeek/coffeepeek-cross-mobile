@@ -50,7 +50,7 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
-/** Port of the legacy `PublicProfileViewModelTest`: the same account, pagination and staleness guarantees, now against ports. */
+/** Port of the previous `PublicProfileViewModelTest`: the same account, pagination and staleness guarantees, now against ports. */
 @OptIn(ExperimentalCoroutinesApi::class)
 class PublicProfileViewModelTest {
     private val dispatcher = StandardTestDispatcher()

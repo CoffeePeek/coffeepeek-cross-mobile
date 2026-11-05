@@ -2,7 +2,6 @@ package com.coffeepeek.admin.di.shop
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import com.coffeepeek.admin.feature.checkin.api.CheckInFlowHandoff
 import com.coffeepeek.admin.analytics.*
 import com.coffeepeek.feature.shop.api.*
 

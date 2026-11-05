@@ -29,7 +29,7 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
-/** The new repository must do what the legacy one did: same requests, same persistence order, same sign-out rules. */
+/** The new repository must do what the previous one did: same requests, same persistence order, same sign-out rules. */
 class AuthRepositoryImplTest {
     // JWT payloads {"sub":"user-a"} and {"sub":"user-b"}
     private val tokenA = "header.eyJzdWIiOiJ1c2VyLWEifQ.signature"
@@ -198,6 +198,19 @@ class AuthRepositoryImplTest {
         assertEquals("user-a", f.repository.signInWithApple("challenge", "identity").getOrThrow().userId)
         assertEquals(listOf("remote:plain:POST /api/Tokens/apple/login", "clear", "save:user-a"), f.log)
         assertEquals("""{"challengeId":"challenge","idToken":"identity"}""", f.requests.single().body)
+        assertEquals(Session(tokenA, "refresh", "user-a"), f.store.peekSession())
+        f.close()
+    }
+
+    @Test fun aPasswordResetRequestKeepsCancellation() = runBlocking {
+        val f = Fixture(null) { _, _ -> throw CancellationException("cancel reset") }
+        assertFailsWith<CancellationException> { f.repository.requestPasswordReset("user@example.com") }
+        f.close()
+    }
+
+    @Test fun aPascalCaseAppleEnvelopeIsStillAccepted() = runBlocking {
+        val f = Fixture(null) { _, _ -> ok("""{"IsSuccess":true,"Data":{"accessToken":"$tokenA","refreshToken":"refresh"}}""") }
+        assertEquals("user-a", f.repository.signInWithApple("challenge", "identity").getOrThrow().userId)
         assertEquals(Session(tokenA, "refresh", "user-a"), f.store.peekSession())
         f.close()
     }

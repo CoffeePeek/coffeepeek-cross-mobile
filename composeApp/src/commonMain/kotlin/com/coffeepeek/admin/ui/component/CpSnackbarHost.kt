@@ -33,9 +33,9 @@ import coffeepeek.composeapp.generated.resources.shop_session_retry
 import coffeepeek.composeapp.generated.resources.shop_session_unavailable
 import coffeepeek.composeapp.generated.resources.snackbar_dismiss
 import coffeepeek.composeapp.generated.resources.snackbar_retrying
-import com.coffeepeek.admin.theme.CpColor
-import com.coffeepeek.admin.theme.CpDimens
-import com.coffeepeek.admin.ui.icons.CpIcons
+import com.coffeepeek.core.designsystem.theme.CoffeePeekColors
+import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
+import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.component.CoffeePeekFilledButton
 import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
 import com.coffeepeek.core.designsystem.component.CoffeePeekPlainIconButton
@@ -65,18 +65,18 @@ private fun SnackbarMessageContent(
 ) {
     val colors = MaterialTheme.colorScheme
     Surface(
-        modifier = Modifier.padding(horizontal = CpDimens.spacing4, vertical = CpDimens.spacing2)
+        modifier = Modifier.padding(horizontal = CoffeePeekDimens.spacing4, vertical = CoffeePeekDimens.spacing2)
             .widthIn(max = 560.dp).fillMaxWidth().semantics { liveRegion = LiveRegionMode.Polite },
-        shape = RoundedCornerShape(CpDimens.toastRadius),
+        shape = RoundedCornerShape(CoffeePeekDimens.toastRadius),
         color = colors.surface,
         contentColor = colors.onSurface,
         border = BorderStroke(1.dp, colors.outlineVariant),
     ) {
-        Column(Modifier.padding(start = CpDimens.spacing4, end = CpDimens.spacing1,
-            bottom = if (actionLabel == null) 0.dp else CpDimens.spacing3)) {
+        Column(Modifier.padding(start = CoffeePeekDimens.spacing4, end = CoffeePeekDimens.spacing1,
+            bottom = if (actionLabel == null) 0.dp else CoffeePeekDimens.spacing3)) {
             SnackbarMessageRow(message, onDismiss)
             if (actionLabel != null) SnackbarMessageAction(actionLabel, onAction, actionIcon, actionInProgress,
-                Modifier.padding(end = CpDimens.spacing3))
+                Modifier.padding(end = CoffeePeekDimens.spacing3))
         }
     }
 }
@@ -84,14 +84,14 @@ private fun SnackbarMessageContent(
 @Composable
 private fun SnackbarMessageRow(message: String, onDismiss: () -> Unit) {
     val colors = MaterialTheme.colorScheme
-    val accent = if (colors.background.luminance() < .5f) CpColor.AccentTextDark else CpColor.AccentTextLight
+    val accent = if (colors.background.luminance() < .5f) CoffeePeekColors.AccentTextDark else CoffeePeekColors.AccentTextLight
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing2)) {
-        Icon(CpIcons.Info, contentDescription = null, tint = accent, modifier = Modifier.size(20.dp))
+        horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2)) {
+        Icon(CoffeePeekIcons.Info, contentDescription = null, tint = accent, modifier = Modifier.size(20.dp))
         Text(message, style = MaterialTheme.typography.bodyMedium,
-            color = colors.onSurface, modifier = Modifier.weight(1f).padding(vertical = CpDimens.spacing2))
+            color = colors.onSurface, modifier = Modifier.weight(1f).padding(vertical = CoffeePeekDimens.spacing2))
         CoffeePeekPlainIconButton(onClick = onDismiss) {
-            Icon(CpIcons.Close, contentDescription = stringResource(Res.string.snackbar_dismiss),
+            Icon(CoffeePeekIcons.Close, contentDescription = stringResource(Res.string.snackbar_dismiss),
                 tint = colors.onSurfaceVariant, modifier = Modifier.size(20.dp))
         }
     }
@@ -106,13 +106,13 @@ private fun SnackbarMessageAction(
         onClick = onClick,
         enabled = !inProgress,
         modifier = modifier.fillMaxWidth().heightIn(min = 48.dp),
-        shape = RoundedCornerShape(CpDimens.toastRadius),
+        shape = RoundedCornerShape(CoffeePeekDimens.toastRadius),
         colors = ButtonDefaults.buttonColors(
             containerColor = colors.primary, contentColor = colors.onPrimary,
             disabledContainerColor = colors.primary.copy(alpha = .7f), disabledContentColor = colors.onPrimary,
         ),
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing2)) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2)) {
             if (inProgress) CoffeePeekLoader(modifier = Modifier.size(20.dp), size = 20.dp, color = colors.onPrimary, strokeWidth = 2.dp)
             else if (icon != null) Icon(icon, contentDescription = null, modifier = Modifier.size(20.dp))
             Text(if (inProgress) stringResource(Res.string.snackbar_retrying) else label, style = MaterialTheme.typography.labelLarge)
@@ -122,7 +122,7 @@ private fun SnackbarMessageAction(
 
 @Composable
 private fun SnackbarMessagePreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
-    Column(Modifier.background(MaterialTheme.colorScheme.background).padding(vertical = CpDimens.spacing2)) {
+    Column(Modifier.background(MaterialTheme.colorScheme.background).padding(vertical = CoffeePeekDimens.spacing2)) {
         SnackbarMessageContent(stringResource(Res.string.shop_phone_copied), {})
         SnackbarMessageContent(stringResource(Res.string.shop_session_unavailable), {},
             actionLabel = stringResource(Res.string.shop_session_retry))

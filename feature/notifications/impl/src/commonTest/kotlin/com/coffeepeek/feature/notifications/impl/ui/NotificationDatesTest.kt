@@ -18,7 +18,7 @@ class NotificationDatesTest {
     }
 
     @Test fun aTimestampWithoutAnOffsetIsUtcAsBeforeTheMove() {
-        // The legacy parser read this as UTC: today 23 Oct in Minsk, shown as 11:00.
+        // The previous parser read this as UTC: today 23 Oct in Minsk, shown as 11:00.
         assertTrue(isToday("2026-10-23T08:00:00", LocalDate(2026, 10, 23), minsk))
         assertEquals("23.10.2026 11:00", localDateTime("2026-10-23T08:00:00", minsk))
         assertEquals("23.10.2026 11:00", localDateTime("  2026-10-23T08:00:00  ", minsk))

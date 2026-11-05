@@ -13,7 +13,7 @@ import coffeepeek.composeapp.generated.resources.check_in_create_close
 import com.coffeepeek.admin.analytics.AnalyticsOverlay
 import com.coffeepeek.admin.analytics.CheckInTracker
 import com.coffeepeek.admin.di.checkinhistory.CheckInHistorySession
-import com.coffeepeek.admin.feature.checkin.api.CheckInFlowHandoff
+import com.coffeepeek.admin.di.shop.CheckInFlowHandoff
 import com.coffeepeek.feature.homecheckin.api.CheckInCreatePickerEntry
 import com.coffeepeek.feature.homecheckin.impl.createCheckInCreatePickerEntry
 import com.coffeepeek.admin.analytics.Analytics
@@ -27,17 +27,17 @@ import com.coffeepeek.feature.homecheckin.api.HomeCheckInEditorEntry
 import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 
 /**
- * A new flow lifetime per opening. Never constructs legacy Home state or a second writer.
+ * A new flow lifetime per opening. Never constructs Home state or a second writer.
  * The picker offers "Пачку на полку", which hands over to the shelf's scan.
  */
 internal class FeatureCheckInCreateFlowRenderer(
     private val sessions: SessionReader,
     private val picker: CheckInCreatePickerEntry = createCheckInCreatePickerEntry(),
+    private val onCreated: () -> Unit = {},
     private val createEditor: (CheckInHistorySession, CheckInTracker?) -> HomeCheckInEditorEntry,
 ) : CheckInCreateFlowRenderer {
     @Composable
-    override fun Content(onDismiss: () -> Unit, onShop: () -> Unit, onHomeSaved: () -> Unit,
-        legacyContent: @Composable () -> Unit) = Flow("global-check-in-flow-store", null, onDismiss, onShop, onHomeSaved)
+    override fun Content(onDismiss: () -> Unit, onShop: () -> Unit, onHomeSaved: () -> Unit) = Flow("global-check-in-flow-store", null, onDismiss, onShop, onHomeSaved)
 
     /** The Home form straight away with [bean] already chosen: "Заварить чашку" from a shelf bag. */
     @Composable
@@ -48,7 +48,7 @@ internal class FeatureCheckInCreateFlowRenderer(
     private fun Flow(storeKey: String, homeBean: HomeCheckInBean?, onDismiss: () -> Unit, onShop: () -> Unit, onHomeSaved: () -> Unit) {
         val owner = viewModel(key = storeKey) { GlobalCheckInFlowStore() }
         GlobalCheckInFlowLifetimeEffect(owner)
-        val model = viewModel(viewModelStoreOwner = owner) { GlobalCheckInFlow(sessions, homeBean, createEditor) }
+        val model = viewModel(viewModelStoreOwner = owner) { GlobalCheckInFlow(sessions, onCreated, homeBean, createEditor) }
         val state by model.state.collectAsState()
         Completion(model, onDismiss, onShop, onHomeSaved)
         Destination(owner, model, state)

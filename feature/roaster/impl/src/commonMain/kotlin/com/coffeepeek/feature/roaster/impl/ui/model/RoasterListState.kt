@@ -6,7 +6,7 @@ import com.coffeepeek.feature.roaster.domain.model.RoasterTag
 
 internal data class RoasterListItem(val summary: RoasterSummary, val details: RoasterDetails? = null) {
     val slug: String? get() = summary.slug
-    /** Favorite identity: the public slug (the legacy catalogue id equals it). */
+    /** Favorite identity: the public slug (the previous catalogue id equals it). */
     val favoriteKey: String get() = summary.address?.slug.orEmpty()
 }
 

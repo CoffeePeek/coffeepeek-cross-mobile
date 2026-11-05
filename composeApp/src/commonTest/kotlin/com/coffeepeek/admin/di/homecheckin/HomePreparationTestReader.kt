@@ -8,7 +8,7 @@ import com.coffeepeek.feature.homecheckin.domain.model.HomePreparationPage
 import com.coffeepeek.feature.homecheckin.domain.model.HomePreparationPhoto
 import com.coffeepeek.feature.homecheckin.domain.repository.HomePreparationReader
 
-/** Read-only feature port: no legacy repository, writer, statistics or photo transport. */
+/** Read-only feature port: no existing repository, writer, statistics or photo transport. */
 internal class HomePreparationTestReader : HomePreparationReader {
     data class Query(val page: Int, val size: Int, val from: String?, val to: String?)
     val queries = mutableListOf<Query>()

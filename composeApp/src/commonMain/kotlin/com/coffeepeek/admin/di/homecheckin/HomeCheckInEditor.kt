@@ -13,8 +13,8 @@ import com.coffeepeek.admin.analytics.CheckInSource
 import com.coffeepeek.admin.analytics.CheckInTracker
 import com.coffeepeek.admin.di.checkinhistory.CheckInHistorySession
 import com.coffeepeek.admin.di.shelf.ShelfHomeCheckInBags
-import com.coffeepeek.admin.feature.catalog.api.BrewMethodCatalog
-import com.coffeepeek.admin.feature.catalog.api.methodLabel
+import com.coffeepeek.admin.di.catalog.BrewMethodCatalog
+import com.coffeepeek.admin.di.catalog.methodLabel
 import com.coffeepeek.feature.coffee.api.CoffeePicker
 import com.coffeepeek.admin.ui.component.brewMethodIcon
 import com.coffeepeek.core.designsystem.component.CoffeePeekImage

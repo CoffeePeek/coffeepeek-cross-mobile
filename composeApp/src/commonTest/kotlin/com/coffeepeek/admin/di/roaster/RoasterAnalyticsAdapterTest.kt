@@ -10,7 +10,7 @@ import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlin.test.*
 
-/** Adapter parity with the legacy roaster events (same trackers, event names and properties). */
+/** Adapter parity with the existing roaster events (same trackers, event names and properties). */
 class RoasterAnalyticsAdapterTest {
     private suspend fun TestScope.installed(): RecordingTransport {
         val sdk = RecordingTransport()
@@ -48,7 +48,7 @@ class RoasterAnalyticsAdapterTest {
         assertEquals(listOf("favoritesOnly", "roasters", "tags"), sdk.events.single { it.first == "catalog_search_started" }.second["filter_keys"])
     }
 
-    @Test fun detailInteractionsUseLegacySectionAndActionNames() = runTest {
+    @Test fun detailInteractionsUseExistingSectionAndActionNames() = runTest {
         val sdk = installed()
         val detail = RoasterAnalyticsAdapter.detail()
         detail.contentInteracted(RoasterDetailSection.Photos, RoasterContentAction.Open)

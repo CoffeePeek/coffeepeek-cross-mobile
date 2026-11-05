@@ -4,6 +4,6 @@ import com.coffeepeek.admin.config.AppConfig
 
 object Constants {
     val BASE_URL: String get() = AppConfig.baseUrl
-    /** Legacy filename — kept for existing installs. */
+    /** Kept as is so existing installs keep their database. */
     const val DB_NAME = "fp.db"
 }

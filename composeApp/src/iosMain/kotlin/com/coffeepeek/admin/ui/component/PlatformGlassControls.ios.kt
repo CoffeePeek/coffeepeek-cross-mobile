@@ -19,7 +19,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.UIKitInteropProperties
 import androidx.compose.ui.viewinterop.UIKitView
-import com.coffeepeek.admin.theme.CpDimens
+import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.admin.theme.toUIColor
 import com.coffeepeek.admin.theme.uiKitStyle
 import com.coffeepeek.core.designsystem.theme.CoffeePeekColors
@@ -108,7 +108,7 @@ private fun IosGlassIconButton(
                 },
             )
         },
-        modifier = modifier.size(CpDimens.buttonHeight),
+        modifier = modifier.size(CoffeePeekDimens.buttonHeight),
         update = { button ->
             button.overrideUserInterfaceStyle = colors.uiKitStyle
             button.backgroundColor = UIColor.clearColor
@@ -175,7 +175,7 @@ actual fun PlatformGlassBackButton(onClick: () -> Unit, modifier: Modifier) {
                 primaryAction = UIAction.actionWithHandler { currentOnClick.value() },
             )
         },
-        modifier = modifier.height(CpDimens.buttonHeight).width(104.dp),
+        modifier = modifier.height(CoffeePeekDimens.buttonHeight).width(104.dp),
         properties = UIKitInteropProperties(isNativeAccessibilityEnabled = true, placedAsOverlay = true),
         update = { button ->
             button.overrideUserInterfaceStyle = colors.uiKitStyle

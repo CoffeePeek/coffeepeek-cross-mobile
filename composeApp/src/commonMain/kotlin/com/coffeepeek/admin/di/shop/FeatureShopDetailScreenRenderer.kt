@@ -39,7 +39,6 @@ import com.coffeepeek.admin.utils.ShareHelper
 import com.coffeepeek.admin.utils.currentLocalDayOfWeek
 import com.coffeepeek.admin.utils.currentLocalMinuteOfDay
 import com.coffeepeek.admin.utils.utcIsoToLocalDate
-import com.coffeepeek.domain.model.ShopLocation
 import com.coffeepeek.core.session.SessionReader
 import com.coffeepeek.feature.profile.api.ProfileAccountPort
 import com.coffeepeek.feature.favorites.domain.repository.FavoritesRepository
@@ -100,8 +99,7 @@ internal class FeatureShopDetailScreenRenderer(
         Box(Modifier.fillMaxSize()) {
             entry.Content(shopId = shopId, sessionGeneration = session.generation, forCheckIn = forCheckIn,
                 formatCheckInDate = formatDate, formatMenuDate = ::formatShopMenuLocalDate,
-                formatDistance = { lat, lon -> formatDistance(distanceToShopMeters(location,
-                    ShopLocation(latitude = lat, longitude = lon))) },
+                formatDistance = { lat, lon -> formatDistance(distanceToShopMeters(location, lat, lon)) },
                 refreshGeneration = state.refreshGeneration,
                 onEffect = { if (session.lease.isCurrent()) handleEffect(it, state, session, shopId, scope, snackbar, copied) })
             SnackbarHost(snackbar, Modifier.align(Alignment.BottomCenter)
@@ -127,8 +125,7 @@ internal class FeatureShopDetailScreenRenderer(
                 onOpenHistory = {
                     state.form = null
                     Navigator.popThenNavigate(Navigator.Screen.VisitedPlaces)
-                },
-                legacyContent = {})
+                })
         }
     }
 

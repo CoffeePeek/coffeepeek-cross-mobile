@@ -148,7 +148,7 @@ private fun ShopKind?.searchValue(): String? = when (this) {
 private fun PriceLevel?.searchValue(): String? = when (this) {
     PriceLevel.Cheap -> "cheap"
     PriceLevel.Moderate -> "moderate"
-    // shortcut: the API has three price bands; keep legacy Luxury in expensive until the fourth UI band is retired.
+    // shortcut: the API has three price bands; keep previous Luxury in expensive until the fourth UI band is retired.
     PriceLevel.Expensive, PriceLevel.Luxury -> "expensive"
     null -> null
 }

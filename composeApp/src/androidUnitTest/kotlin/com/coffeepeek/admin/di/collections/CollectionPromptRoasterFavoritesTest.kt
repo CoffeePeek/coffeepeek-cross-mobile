@@ -1,10 +1,10 @@
 package com.coffeepeek.admin.di.collections
 
 import com.coffeepeek.admin.di.shop.CheckInTestSessions
-import com.coffeepeek.admin.feature.favorites.api.RoasterFavorites
-import com.coffeepeek.domain.model.CatalogItem
-import com.coffeepeek.domain.model.PublicAddress
-import com.coffeepeek.domain.model.Session
+import com.coffeepeek.admin.di.favorites.RoasterFavorites
+import com.coffeepeek.admin.di.favorites.CatalogItem
+import com.coffeepeek.admin.di.favorites.PublicAddress
+import com.coffeepeek.core.session.Session
 import com.coffeepeek.feature.collections.api.CollectionTarget
 import com.coffeepeek.feature.collections.api.CollectionTargetKind
 import kotlinx.coroutines.CancellationException

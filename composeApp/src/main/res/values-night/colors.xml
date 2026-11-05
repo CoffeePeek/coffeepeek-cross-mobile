@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Matches CpColor.DarkBackground -->
+    <!-- Matches CoffeePeekColors.DarkBackground -->
     <color name="splash_background">#1A1412</color>
     <bool name="light_system_bars">false</bool>
 </resources>

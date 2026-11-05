@@ -7,7 +7,7 @@ import com.coffeepeek.admin.di.shelf.ShelfHomeCheckInBags
 import com.coffeepeek.admin.analytics.CheckInTracker
 import com.coffeepeek.admin.di.homecheckin.AppHomeCheckInRepository
 import com.coffeepeek.admin.di.homecheckin.appHomeCheckInEditor
-import com.coffeepeek.admin.feature.catalog.api.BrewMethodCatalog
+import com.coffeepeek.admin.di.catalog.BrewMethodCatalog
 import com.coffeepeek.feature.coffee.api.CoffeePicker
 import com.coffeepeek.core.designsystem.component.CoffeePeekImage
 import com.coffeepeek.feature.homecheckin.api.HomeCheckInDetailEntry
@@ -15,7 +15,7 @@ import com.coffeepeek.feature.homecheckin.api.HomeCheckInEditorEntry
 import com.coffeepeek.feature.homecheckin.domain.repository.HomePreparationRepository
 import com.coffeepeek.feature.homecheckin.impl.createHomeCheckInDetailEntry
 
-/** App-owned assembly; history sees neither the Home ViewModel nor a legacy writer. */
+/** App-owned assembly; history sees neither the Home ViewModel nor a second writer. */
 internal fun interface HistoryHomeEditorFactory {
     fun create(lease: CheckInHistorySession, tracker: CheckInTracker?): HistoryHomeEntries
 }

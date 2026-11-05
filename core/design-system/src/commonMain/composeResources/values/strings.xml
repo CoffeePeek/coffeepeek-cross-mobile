@@ -15,7 +15,6 @@
     <string name="coffeepeek_photo_add">Добавить фотографии</string>
     <string name="coffeepeek_photo_move_earlier">Переместить раньше</string>
     <string name="coffeepeek_photo_move_later">Переместить позже</string>
-    <string name="coffeepeek_photo_close">Закрыть просмотр фотографий</string>
     <string name="coffeepeek_image_placeholder_brand">COFFEEPEEK</string>
     <string name="coffeepeek_rating_description">Оценка %1$s из 5</string>
     <string name="coffeepeek_rating_choose">Выбрать %1$d из 5</string>
@@ -24,4 +23,8 @@
     <string name="coffeepeek_pagination_error">Не удалось загрузить следующие результаты.</string>
     <string name="coffeepeek_pagination_retry">Повторить</string>
     <string name="coffeepeek_refresh_error">Не удалось обновить. Показаны предыдущие результаты.</string>
+    <string name="coffeepeek_photo_source_title">Добавить фото</string>
+    <string name="coffeepeek_photo_source_gallery">Выбрать из галереи</string>
+    <string name="coffeepeek_photo_source_camera">Сделать фото</string>
+    <string name="coffeepeek_photo_source_cancel">Отмена</string>
 </resources>

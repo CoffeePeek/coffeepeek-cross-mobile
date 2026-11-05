@@ -1,6 +1,6 @@
 package com.coffeepeek.admin.sandbox.compose
 
-import com.coffeepeek.admin.feature.appupdate.ui.AppUpdateRenderer
+import com.coffeepeek.admin.ui.screen.appupdate.AppUpdateRenderer
 import com.coffeepeek.feature.appupdate.impl.AppUpdateController
 import com.coffeepeek.admin.di.authorblocking.AuthorBlockingRootHost
 import androidx.compose.foundation.layout.*

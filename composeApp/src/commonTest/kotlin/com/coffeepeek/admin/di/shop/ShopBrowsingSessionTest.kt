@@ -1,6 +1,6 @@
 package com.coffeepeek.admin.di.shop
 
-import com.coffeepeek.domain.model.Session
+import com.coffeepeek.core.session.Session
 import com.coffeepeek.feature.shop.domain.model.ShopHelpfulVote
 import com.coffeepeek.feature.shop.domain.repository.ShopCheckInVoteRepository
 import com.coffeepeek.feature.shop.domain.repository.ShopDetailsRepository
@@ -38,7 +38,7 @@ class ShopBrowsingSessionTest {
         assertEquals(ShopViewer(true, "owner-slug"), ShopBrowsingSession(CheckInTestSessions()).viewer(accounts).getOrThrow())
     }
 
-    @Test fun profileFailureKeepsLegacyOwnershipFallbackButAccountReplacementRevokesResult() = runTest {
+    @Test fun profileFailureKeepsExistingOwnershipFallbackButAccountReplacementRevokesResult() = runTest {
         val accounts = viewerAccount { Result.failure(IllegalStateException("offline")) }
         assertEquals(ShopViewer(true, null), ShopBrowsingSession(CheckInTestSessions()).viewer(accounts).getOrThrow())
         val sessions = CheckInTestSessions()

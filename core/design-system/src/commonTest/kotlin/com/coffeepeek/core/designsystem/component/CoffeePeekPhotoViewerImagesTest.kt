@@ -32,7 +32,7 @@ class CoffeePeekPhotoViewerImagesTest {
         assertNull(images.displayUrl(2, 0, true))
     }
 
-    @Test fun legacyAdjacentImagesRenderOnlyWhenTheyEnterTheViewport() {
+    @Test fun previousAdjacentImagesRenderOnlyWhenTheyEnterTheViewport() {
         val urls = listOf("https://cdn.example/first.jpg", "https://cdn.example/second.jpg")
         val images = CoffeePeekPhotoViewerImages(urls)
         assertEquals(urls[1], images.displayUrl(1, 0, true))

@@ -15,9 +15,7 @@
     <string name="discovery_quick_visited">Ужо быў</string>
     <string name="discovery_quick_favorites">Абранае</string>
     <string name="discovery_quick_nearby">Побач</string>
-    <string name="discovery_section_kind">Тып установы</string>
     <string name="discovery_section_price">Цана</string>
-    <string name="discovery_section_rating">Рэйтынг</string>
     <string name="discovery_section_shops">Кавярні</string>
     <string name="discovery_show_all">Паказаць усе</string>
     <string name="discovery_section_roasters">Абсмажчыкі</string>
@@ -25,12 +23,10 @@
     <string name="discovery_section_equipment">Абсталяванне</string>
     <string name="discovery_section_brew_methods">Спосаб заварвання</string>
     <string name="discovery_section_tags">Асаблівасці</string>
-    <string name="discovery_any">Любая</string>
     <string name="discovery_kind_specialty">Спешалці</string>
     <string name="discovery_kind_coffee_bar">Кавярня</string>
     <string name="discovery_price_any">Любая</string>
     <string name="discovery_kind_cafe">Кафэ</string>
-    <string name="discovery_rating_from">ад %1$s</string>
     <string name="discovery_shop_kind_coffee_bar">Кавярня</string>
     <string name="discovery_shop_kind_cafe">Кафэ</string>
     <string name="discovery_shop_kind_specialty">Спешалці</string>
@@ -47,7 +43,6 @@
     <string name="discovery_loading">Загрузка</string>
     <string name="discovery_refresh">Пацягніце, каб абнавіць</string>
     <string name="discovery_refreshing">Абнаўленне</string>
-    <string name="discovery_load_failed">Не ўдалося загрузіць кавярні</string>
     <string name="discovery_retry">Паспрабаваць зноў</string>
     <string name="discovery_suggestion_title">Не знайшлі патрэбную кавярню?</string>
     <string name="discovery_suggestion_description">Прапануйце дадаць яе ў CoffeePeek — пасля праверкі яна з’явіцца ў каталогу.</string>
@@ -78,4 +73,14 @@
     <string name="discovery_refresh_error">Не ўдалося абнавіць. Паказаныя папярэднія вынікі.</string>
     <string name="discovery_favorite_failed">Не ўдалося змяніць абранае. Паспрабуйце яшчэ раз.</string>
     <string name="discovery_message_dismiss">Схаваць паведамленне</string>
+    <string name="discovery_picker_nearby">Побач са мной</string>
+    <string name="discovery_picker_title">Выберыце кавярню</string>
+    <string name="discovery_picker_close">Закрыць</string>
+    <string name="discovery_picker_close_description">Закрыць выбар кавярні</string>
+    <string name="discovery_picker_search">Пошук кавярняў</string>
+    <string name="discovery_picker_map">На карце</string>
+    <string name="discovery_picker_list">Спісам</string>
+    <string name="discovery_picker_retry">Паспрабаваць зноў</string>
+    <string name="discovery_picker_empty">Кавярні не знойдзены</string>
+    <string name="discovery_picker_failed">Не ўдалося загрузіць кавярні</string>
 </resources>

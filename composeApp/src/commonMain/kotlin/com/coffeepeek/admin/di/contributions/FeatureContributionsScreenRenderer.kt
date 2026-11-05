@@ -6,11 +6,11 @@ import com.coffeepeek.feature.contributions.domain.repository.ContributionsRepos
 import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.ui.screen.contributions.ContributionsScreenRenderer
 import com.coffeepeek.core.session.SessionReader
-import com.coffeepeek.domain.repository.ShopRepository
 import com.coffeepeek.feature.contributions.api.AddRoasterEntry
 import com.coffeepeek.feature.contributions.api.AddShopEntry
 import com.coffeepeek.feature.contributions.api.ChangeEditorEntry
 import com.coffeepeek.feature.contributions.api.ChangeRequestEntry
+import com.coffeepeek.feature.contributions.api.ContributionCatalogs
 import com.coffeepeek.feature.contributions.api.ContributionsListEntry
 import com.coffeepeek.feature.contributions.api.SuggestChangeEntry
 import com.coffeepeek.feature.contributions.domain.model.ChangeSection
@@ -20,7 +20,7 @@ import com.coffeepeek.feature.contributions.impl.createChangeEditorEntry
 import com.coffeepeek.feature.contributions.impl.createChangeRequestEntry
 import com.coffeepeek.feature.contributions.impl.createContributionsListEntry
 import com.coffeepeek.feature.contributions.impl.createSuggestChangeEntry
-import com.coffeepeek.admin.ui.screen.contributions.ContributionKind as LegacyKind
+import com.coffeepeek.admin.ui.screen.contributions.ContributionKind as AppContributionKind
 import com.coffeepeek.feature.contributions.api.ContributionKind
 
 /** Routes the contribution screens to the migrated entries; navigation, the photo picker, the map and the sign-in stay app-owned. */
@@ -36,7 +36,7 @@ internal class FeatureContributionsScreenRenderer(
     private val openShop = { slug: String -> Navigator.navigate(Navigator.Screen.ShopDetail(slug)) }
 
     @Composable
-    override fun List(kind: LegacyKind) = list.Content(
+    override fun List(kind: AppContributionKind) = list.Content(
         kind = ContributionKind.valueOf(kind.name), onBack = Navigator::popBack, onSignIn = signIn, onOpenShop = openShop,
         onOpenRequest = { Navigator.navigate(Navigator.Screen.ShopChangeRequestDetail(it)) }, modifier = Modifier,
     )
@@ -65,10 +65,9 @@ internal class FeatureContributionsScreenRenderer(
 }
 
 internal fun featureContributionsScreenRenderer(
-    repository: ContributionsRepository, sessions: SessionReader, shops: ShopRepository,
+    repository: ContributionsRepository, sessions: SessionReader, catalogs: ContributionCatalogs,
 ): ContributionsScreenRenderer {
     val account = SessionContributionsAccount(sessions)
-    val catalogs = ShopContributionCatalogs(shops)
     return FeatureContributionsScreenRenderer(
         list = createContributionsListEntry(repository, account),
         addShop = createAddShopEntry(repository, catalogs, AppContributionLocation(), account, addShopHost()),

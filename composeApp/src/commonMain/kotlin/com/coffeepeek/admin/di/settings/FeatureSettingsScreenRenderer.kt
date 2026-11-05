@@ -6,12 +6,10 @@ import com.coffeepeek.admin.config.AppConfig
 import com.coffeepeek.feature.appupdate.impl.AppUpdateController
 import com.coffeepeek.admin.settings.CityPreference
 import com.coffeepeek.admin.ui.Navigator
-import com.coffeepeek.admin.ui.component.GuestAuthCard
 import com.coffeepeek.admin.ui.component.LocalFloatingNavClearance
 import com.coffeepeek.admin.ui.screen.profile.SettingsScreenRenderer
 import com.coffeepeek.core.session.SessionReader
-import com.coffeepeek.admin.di.profile.ProfileDisplayPreferences
-import com.coffeepeek.domain.repository.ShopRepository
+import com.coffeepeek.feature.discovery.api.PublicDiscoveryCatalogs
 import com.coffeepeek.feature.settings.api.CityEntry
 import com.coffeepeek.feature.settings.api.LanguageEntry
 import com.coffeepeek.feature.settings.api.LanguagePort
@@ -62,25 +60,23 @@ internal class FeatureSettingsScreenRenderer(
 }
 
 internal fun featureSettingsScreenRenderer(
-    shops: ShopRepository, cityPreference: CityPreference, sessions: SessionReader, updates: AppUpdateController, language: LanguagePort,
+    catalogs: PublicDiscoveryCatalogs, cityPreference: CityPreference, sessions: SessionReader, updates: AppUpdateController, language: LanguagePort,
     /** A short message that does not take focus: a toast on Android. */
     notify: (String) -> Unit,
 ): FeatureSettingsScreenRenderer {
     val theme = AppThemePort()
-    val cities = AppCityPort(shops, cityPreference)
+    val cities = AppCityPort(catalogs, cityPreference)
     val external = AppSettingsExternalActions()
     return FeatureSettingsScreenRenderer(
         tab = createSettingsEntry(
             account = AppSettingsAccountPort(sessions), theme = theme, language = language, cities = cities, updates = AppUpdateCheckPort(updates),
             external = external, appInfo = SettingsAppInfo(AppConfig.versionName, updates.checksEnabled),
             slots = SettingsSlots(
-                guestCard = { onLogin, onRegister, modifier -> GuestAuthCard(onLogin, onRegister, modifier) },
                 notify = notify,
                 notificationPreference = { label, description ->
-                    org.koin.compose.koinInject<com.coffeepeek.admin.feature.notifications.ui.NotificationsRenderer>().Preference(label, description)
+                    org.koin.compose.koinInject<com.coffeepeek.admin.ui.screen.notifications.NotificationsRenderer>().Preference(label, description)
                 },
                 accountSwitch = { org.koin.compose.koinInject<com.coffeepeek.feature.ownership.api.BusinessOwnershipEntry>().AccountSwitch() },
-                profileCollectionPreference = { ProfileDisplayPreferences() },
             ),
         ),
         theme = createThemeEntry(theme),

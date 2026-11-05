@@ -69,4 +69,8 @@
     <string name="settings_language_description">Выберите язык интерфейса. Выбор сохранится после перезапуска.</string>
     <string name="settings_language_saving">Сохраняем язык…</string>
     <string name="settings_language_save_error">Не удалось сохранить язык. Попробуйте ещё раз.</string>
+    <string name="settings_guest_prompt">Присоединяйтесь к сообществу, чтобы сохранять любимые места и делиться впечатлениями.</string>
+    <string name="settings_guest_login">Войти</string>
+    <string name="settings_guest_no_account">Нет аккаунта?</string>
+    <string name="settings_guest_register">Зарегистрироваться</string>
 </resources>

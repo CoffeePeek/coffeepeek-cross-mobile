@@ -51,7 +51,7 @@ import com.coffeepeek.feature.contributions.impl.change.SuggestChangeViewModel
 
 internal class SuggestCallbacks(val onBack: () -> Unit, val onSignIn: () -> Unit, val onPickSection: (ChangeSection) -> Unit)
 
-/** The legacy list left the equipment out although the editor supports it; the list keeps that. */
+/** The previous list left the equipment out although the editor supports it; the list keeps that. */
 private val offered = ChangeSection.entries.filterNot { it == ChangeSection.Equipment }
 
 @Composable

@@ -34,7 +34,7 @@ class DiscoveryAnalyticsTest {
         assertTrue(sdk.events.none { "private" in it.second.toString() })
     }
 
-    @Test fun filtersLocationAndMapKeepTheirLegacyProperties() = runTest {
+    @Test fun filtersLocationAndMapKeepTheirExistingProperties() = runTest {
         val sdk = installDiscoveryAnalytics()
         val port = AppDiscoveryAnalytics()
         port.filtersChanged(listOf("city"), listOf("city"), FilterAction.Reset)

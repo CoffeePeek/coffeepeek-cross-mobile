@@ -1,6 +1,8 @@
 package com.coffeepeek.admin.di.shelf
 
-import com.coffeepeek.api.CoffeePeekClient
+import com.coffeepeek.core.network.ApiClients
+import com.coffeepeek.core.network.SessionCredentials
+import com.coffeepeek.core.network.SessionTokens
 import com.coffeepeek.core.session.Session
 import com.coffeepeek.core.session.SessionReader
 import com.coffeepeek.feature.coffee.api.CoffeePicker
@@ -21,8 +23,13 @@ class ShelfModuleTest {
     @get:Rule val temporary = TemporaryFolder()
 
     @Test fun graphResolvesLazilyWithoutSessionsCredentialsContextOrModels() {
-        val client = CoffeePeekClient("https://fixture.invalid", temporary.newFolder("cache").path, false,
-            getToken = { error("Unexpected credentials read") }, saveToken = { error("Unexpected credentials write") })
+        val client = ApiClients("https://fixture.invalid", temporary.newFolder("cache").path, false,
+            credentials = object : SessionCredentials {
+                override suspend fun load(): SessionTokens? { error("Unexpected credentials read") }
+                override suspend fun save(tokens: SessionTokens?) { error("Unexpected credentials write") }
+                override suspend fun replace(expected: SessionTokens, tokens: SessionTokens?): Boolean = false
+            },
+            refreshWith = { { Result.failure(IllegalStateException("unused")) } })
         val sessions = object : SessionReader {
             override fun peekSession(): Session? = error("Resolving the graph must not read the session")
             override fun isActiveSession(session: Session?): Boolean = error("Unexpected session check")

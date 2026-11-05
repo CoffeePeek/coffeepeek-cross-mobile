@@ -1,7 +1,7 @@
 package com.coffeepeek.admin.di.appupdate
 
 import androidx.compose.runtime.Composable
-import com.coffeepeek.admin.feature.appupdate.ui.AppUpdateRenderer
+import com.coffeepeek.admin.ui.screen.appupdate.AppUpdateRenderer
 import com.coffeepeek.feature.appupdate.api.AppUpdateEntry
 import com.coffeepeek.feature.appupdate.domain.UpdateInstaller
 import com.coffeepeek.feature.appupdate.impl.AppUpdateController

@@ -2,9 +2,8 @@ package com.coffeepeek.admin.ui.screen.checkins
 
 import androidx.compose.runtime.Composable
 
-/** Platform composition selects Home without eagerly constructing the shared legacy ViewModel. */
+/** The global check-in creation flow; the feature owns Home form state. */
 interface CheckInCreateFlowRenderer {
     @Composable
-    fun Content(onDismiss: () -> Unit, onShop: () -> Unit, onHomeSaved: () -> Unit,
-        legacyContent: @Composable () -> Unit)
+    fun Content(onDismiss: () -> Unit, onShop: () -> Unit, onHomeSaved: () -> Unit)
 }

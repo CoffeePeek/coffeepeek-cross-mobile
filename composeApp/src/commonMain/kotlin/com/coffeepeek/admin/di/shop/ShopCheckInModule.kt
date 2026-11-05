@@ -1,7 +1,7 @@
 package com.coffeepeek.admin.di.shop
 
 import com.coffeepeek.admin.ui.screen.shop.CheckInDraftStore
-import com.coffeepeek.api.CoffeePeekClient
+import com.coffeepeek.core.network.ApiClients
 import com.coffeepeek.feature.notifications.api.NotificationFeature
 import com.coffeepeek.feature.shop.api.ShopCheckInCreateEntry
 import com.coffeepeek.feature.shop.data.repository.createShopCheckInRepository
@@ -16,7 +16,7 @@ internal fun shopCheckInModule(dates: ShopCheckInDateFormatter) = module {
     single { AppShopCheckInDraftStore(get<CheckInDraftStore>(), get()) }
     single<ShopCheckInPhotoPicker> { AppShopCheckInPhotoPicker() }
     single<ShopCheckInRepository> {
-        val client = get<CoffeePeekClient>()
+        val client = get<ApiClients>()
         createShopCheckInRepository(apiClient = client.client, uploadClient = client.uploadClient)
     }
     single<ShopCheckInCreateEntry> {

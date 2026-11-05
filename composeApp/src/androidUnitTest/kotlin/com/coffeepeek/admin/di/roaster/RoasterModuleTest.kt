@@ -1,10 +1,12 @@
 package com.coffeepeek.admin.di.roaster
 
 import com.coffeepeek.admin.di.shop.shopBrowsingModule
-import com.coffeepeek.admin.feature.favorites.api.RoasterFavorites
+import com.coffeepeek.admin.di.favorites.RoasterFavorites
 import com.coffeepeek.admin.di.collections.FavoriteCollectionsPrompt
 import com.coffeepeek.admin.sandbox.backend.SandboxBackend
-import com.coffeepeek.api.CoffeePeekClient
+import com.coffeepeek.core.network.ApiClients
+import com.coffeepeek.core.network.SessionCredentials
+import com.coffeepeek.core.network.SessionTokens
 import com.coffeepeek.feature.roaster.api.PublicRoasterCatalog
 import com.coffeepeek.feature.roaster.api.RoasterFavoritesPort
 import com.coffeepeek.feature.roaster.api.RoasterFavoriteTarget
@@ -32,8 +34,8 @@ class RoasterModuleTest {
         val selections = mutableListOf<String>()
         var writes = 0
         val favorites = object : RoasterFavorites {
-            override fun observeFavorites() = MutableStateFlow(emptyList<com.coffeepeek.domain.model.CatalogItem>())
-            override suspend fun setFavorite(roaster: com.coffeepeek.domain.model.CatalogItem, isFavorite: Boolean): Result<Unit> {
+            override fun observeFavorites() = MutableStateFlow(emptyList<com.coffeepeek.admin.di.favorites.CatalogItem>())
+            override suspend fun setFavorite(roaster: com.coffeepeek.admin.di.favorites.CatalogItem, isFavorite: Boolean): Result<Unit> {
                 writes++
                 return Result.success(Unit)
             }
@@ -50,7 +52,7 @@ class RoasterModuleTest {
         assertEquals(0, writes)
     }
 
-    @Test fun moduleBuildsPublicReadersAndRendererWithoutLegacyShopRepository() = runTest {
+    @Test fun moduleBuildsPublicReadersAndRendererWithoutExistingShopRepository() = runTest {
         val fixture = fixture()
         try {
             val koin = fixture.app.koin
@@ -71,8 +73,13 @@ class RoasterModuleTest {
 
     private fun fixture(): Fixture {
         val backend = SandboxBackend(byteArrayOf(1), today = LocalDate.parse("2026-10-18"))
-        val client = CoffeePeekClient(SandboxBackend.BASE_URL, temporary.newFolder().path, false,
-            getToken = { null }, saveToken = { error("No credential writes") },
+        val client = ApiClients(SandboxBackend.BASE_URL, temporary.newFolder().path, false,
+            credentials = object : SessionCredentials {
+                override suspend fun load(): SessionTokens? { return null }
+                override suspend fun save(tokens: SessionTokens?) { error("No credential writes") }
+                override suspend fun replace(expected: SessionTokens, tokens: SessionTokens?): Boolean = false
+            },
+            refreshWith = { { Result.failure(IllegalStateException("unused")) } },
             apiClientFactory = backend::apiClient, uploadClientFactory = backend::uploadClient)
         val settings = MemorySettings()
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
@@ -87,12 +94,12 @@ class RoasterModuleTest {
     }
 
     private class FakeFavorites : RoasterFavorites {
-        override fun observeFavorites() = MutableStateFlow(emptyList<com.coffeepeek.domain.model.CatalogItem>())
-        override suspend fun setFavorite(roaster: com.coffeepeek.domain.model.CatalogItem, isFavorite: Boolean) = Result.success(Unit)
+        override fun observeFavorites() = MutableStateFlow(emptyList<com.coffeepeek.admin.di.favorites.CatalogItem>())
+        override suspend fun setFavorite(roaster: com.coffeepeek.admin.di.favorites.CatalogItem, isFavorite: Boolean) = Result.success(Unit)
     }
 
     private class Fixture(
-        val backend: SandboxBackend, val client: CoffeePeekClient, val settings: MemorySettings,
+        val backend: SandboxBackend, val client: ApiClients, val settings: MemorySettings,
         val scope: CoroutineScope, val app: KoinApplication,
     ) {
         fun close() {

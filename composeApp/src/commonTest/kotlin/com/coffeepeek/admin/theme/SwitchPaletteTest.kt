@@ -1,5 +1,7 @@
 package com.coffeepeek.admin.theme
 
+import com.coffeepeek.core.designsystem.theme.CoffeePeekColors
+
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.luminance
@@ -11,7 +13,7 @@ class SwitchPaletteTest {
     fun thumbRemainsDistinctFromTrackInBothThemesAndStates() {
         for (dark in listOf(false, true)) {
             val palette = switchPalette(dark)
-            val surface = if (dark) CpColor.DarkSurface else CpColor.LightSurface
+            val surface = if (dark) CoffeePeekColors.DarkSurface else CoffeePeekColors.LightSurface
             for ((thumb, track) in listOf(palette.checkedThumb to palette.checkedTrack,
                 palette.uncheckedThumb to palette.uncheckedTrack)) {
                 for (enabled in listOf(false, true)) {

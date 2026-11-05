@@ -7,7 +7,7 @@ import com.coffeepeek.admin.theme.applyPersistedNightModeEarly
 import com.coffeepeek.admin.auth.SessionRealtimeManager
 import com.coffeepeek.admin.config.AppConfig
 import com.coffeepeek.admin.di.initPlatformKoin
-import com.coffeepeek.api.CoffeePeekClient
+import com.coffeepeek.core.network.ApiClients
 import com.coffeepeek.core.session.SessionReader
 import org.maplibre.android.MapLibre
 import io.kamel.core.config.KamelConfig
@@ -51,7 +51,7 @@ class CoffeePeekApplication : Application() {
         sessionRealtimeManager = SessionRealtimeManager(
             sessionRepository = sessions,
             userSessionCleaner = koin.get(),
-            httpClient = koin.get<CoffeePeekClient>().client,
+            httpClient = koin.get<ApiClients>().client,
             baseUrl = AppConfig.baseUrl,
         ).also { manager -> manager.start() }
     }

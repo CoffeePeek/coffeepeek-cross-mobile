@@ -17,7 +17,7 @@ class AuthorBlockRepositoryTest {
     private fun author(id: String, slug: String = id) = """{"authorId":"$id","userName":"Author $id","address":{"slug":"$slug"}}"""
     private fun scope() = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
 
-    @Test fun loadsEveryPageAndResolvesLegacySlugBeforeBlocking(): Unit = runBlocking {
+    @Test fun loadsEveryPageAndResolvesPreviousSlugBeforeBlocking(): Unit = runBlocking {
         val methods = mutableListOf<String>()
         val client = HttpClientFactory(MockEngine { request ->
             methods += "${request.method.value} ${request.url.encodedPath}"

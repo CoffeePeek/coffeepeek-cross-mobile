@@ -1,5 +1,6 @@
 package com.coffeepeek.feature.contributions.impl.ui
 
+import com.coffeepeek.feature.contributions.impl.ui.component.ContributionPriceSelector
 import androidx.compose.foundation.layout.Arrangement
 import com.coffeepeek.feature.contributions.impl.resources.Res
 import com.coffeepeek.feature.contributions.impl.resources.contributions_loading
@@ -59,7 +60,7 @@ import com.coffeepeek.feature.contributions.impl.shop.AddShopState
 import com.coffeepeek.feature.contributions.impl.shop.LocationHint
 
 @Composable
-internal fun StepBasic(state: AddShopState, host: AddShopHost, onAction: (AddShopAction) -> Unit) {
+internal fun StepBasic(state: AddShopState, onAction: (AddShopAction) -> Unit) {
     RequiredLegend()
     Spacer(Modifier.height(CoffeePeekDimens.spacing3))
     val issues = state.basicsIssues
@@ -83,7 +84,7 @@ internal fun StepBasic(state: AddShopState, host: AddShopHost, onAction: (AddSho
     Spacer(Modifier.height(CoffeePeekDimens.spacing4))
     FormField(stringResource(Res.string.contributions_shop_address_label), required = true) { AddressRow(state, onAction) }
     Spacer(Modifier.height(CoffeePeekDimens.spacing4))
-    host.priceSelector(state.priceRange) { onAction(AddShopAction.Price(it)) }
+    ContributionPriceSelector(state.priceRange) { onAction(AddShopAction.Price(it)) }
 }
 
 @Composable
