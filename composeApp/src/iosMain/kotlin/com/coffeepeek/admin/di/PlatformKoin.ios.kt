@@ -14,14 +14,25 @@ import com.coffeepeek.admin.di.homecheckin.homeCheckInModule
 import com.coffeepeek.admin.di.profile.accountFeatureScreenRenderer
 import com.coffeepeek.admin.di.profile.ownProfileFeatureScreenRenderer
 import com.coffeepeek.admin.di.profile.publicProfileFeatureScreenRenderer
+import com.coffeepeek.admin.di.profile.profileSnapshotModule
 import com.coffeepeek.admin.di.shelf.ShelfFeatureScreenRenderer
 import com.coffeepeek.admin.di.shelf.shelfBrewForm
 import com.coffeepeek.admin.di.shelf.iosShelfModule
 import com.coffeepeek.admin.locator.Locator
+import com.coffeepeek.admin.locator.Constants
+
+internal fun iosPlatformModules(apiBaseUrl: String = Constants.BASE_URL) = listOf(
+    coffeeModule(),
+    collectionsModule(apiBaseUrl),
+    homeCheckInModule(apiBaseUrl),
+    checkInHistoryModule(apiBaseUrl),
+    iosShelfModule(apiBaseUrl),
+    profileSnapshotModule(),
+)
 
 actual fun initPlatformKoin() {
     initKoin(
-        platformModules = listOf(coffeeModule(), collectionsModule(), homeCheckInModule(), checkInHistoryModule(), iosShelfModule()),
+        platformModules = iosPlatformModules(),
         // Both platforms expose the shelf and catalogue through the same Coffee tab.
         coffeeRendererFactory = {
             coffeeCatalogueScreenRenderer(get(), CoffeeShelfTab(get(), get(), Locator.database.settingRepository))
