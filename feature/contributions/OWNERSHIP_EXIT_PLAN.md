@@ -188,7 +188,6 @@ Android and iOS already call the feature entries through root renderers.
 
 ## Parity and verification
 
-Legacy behavior reference: [LEGACY_INVENTORY.md](LEGACY_INVENTORY.md).
 Root routes and analytics page mapping are unchanged: MyContributions and
 ShopChangeRequestDetail map to contributions; SuggestShopChange/ShopChangeEditor/
 AddShop map to shop_edit. Legacy forms had no feature-owned event tracker. This

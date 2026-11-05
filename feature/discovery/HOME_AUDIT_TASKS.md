@@ -321,7 +321,7 @@ Source base plus patch. Native iPhone review remains deferred by the user.
 
 Base develop `856b4a85`; branch `codex/migration-home-price-scale`.
 Android Home filter owns the mapping: stop 0 = any/null, 1 = Cheap, 2 = Moderate,
-3 = Expensive or legacy Luxury. Source: LEGACY_INVENTORY.md's current POST API
+3 = Expensive or legacy Luxury. Source: the current POST API
 contract and existing data request tests; search accepts cheap/moderate/expensive.
 The audit's four-server-level assumption was a legacy read-model mismatch, not
 evidence of a fourth supported search band. Preserve the existing BYN hints and

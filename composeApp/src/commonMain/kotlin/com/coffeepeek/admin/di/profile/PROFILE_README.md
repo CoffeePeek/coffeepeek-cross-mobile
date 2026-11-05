@@ -1,7 +1,7 @@
 # Public profiles
 
 Profile models, the `PublicProfileData` contract and the HTTP data layer now live in
-`feature/profile/{domain,data}` (migration step 2, see `feature/profile/LEGACY_INVENTORY.md`). This package keeps the UI, the
+`feature/profile/{domain,data}` (migration step 2). This package keeps the UI, the
 check-in list (it still uses the legacy timeline `CheckIn`) and the adapters that answer the profile's ports from legacy
 repositories. Root composition owns its routes and DI. HTTP DTOs stay in the data module.
 

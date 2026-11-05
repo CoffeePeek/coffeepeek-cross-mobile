@@ -50,7 +50,7 @@ root hosts; нельзя ни считать всё активным, ни уд�
 Activity UI, FeatureCheckInHistoryScreenRenderer — HistoryTimelineCheckInCard.
 KoinApp сохраняет Legacy* defaults, dataModule строит старые writers/readers.
 core/database пока содержит только конфигурацию драйвера, не готовую замену
-DatabaseCore. Старый LEGACY_REMOVAL.md — исторический снимок 2026-10-21.
+DatabaseCore. Старый документ LEGACY_REMOVAL.md (исторический снимок 2026-10-21) удалён.
 
 ## Точка остановки — 2026-10-27
 
@@ -1758,3 +1758,14 @@ source `89778c23` + этот срез. Подробный scope/остаток �
   несёт `ShopCheckInSubmitFailure`, экран показывает слово сервера, иначе текст по статусу (401, 403, 404, 413, 429; ru и be),
   иначе общий «данные сохранены». Для 503 и прочих статусов остаётся общий текст формы (он сообщает, что черновик сохранён),
   а не прежнее «Попробуйте позже». Тесты: `ShopCheckInRepositoryTest`, `ShopCheckInCreateViewModelTest`.
+
+## L5, четвёртая итерация — остатки документации и ресурсов — 2026-11-05
+
+- Удалены `LEGACY_INVENTORY.md` (семь фич) и `LEGACY_REMOVAL.md` (описания и снимок уже удалённого кода); ссылки на них в планах убраны.
+  Остаются `LEGACY_EXIT_PLAN.md` (журнал) и `LEGACY_PARITY_AUDIT.md` (решения владельца об осознанных отличиях).
+- `localized_legacy_ui.xml` переименован в `app_ui_strings.xml` (ru/be): строки заголовков вкладок, диалога ошибки и относительного времени
+  принадлежат приложению.
+- Удалены слот `SettingsSlots.profileCollectionPreference` (develop убрал его из Настроек, строка переехала в редактирование профиля)
+  и 7 неиспользуемых строк (`collections_*`, `profile_*`).
+- Слово «legacy» в коде осталось только в описаниях старых данных (`RoomLegacyCredentialRows`, миграции базы) и в сообщениях про
+  «старые приватные избранные» на сервере (сандбокс и тесты коллекций).
