@@ -11,6 +11,7 @@ import com.coffeepeek.api.service.ShopApiService
 import com.coffeepeek.data.repository.FavoriteRepositoryImpl
 import com.coffeepeek.data.util.FileUrlResolver
 import com.coffeepeek.domain.feature.favorites.api.FavoriteKind
+import com.coffeepeek.domain.feature.favorites.api.FavoriteTarget
 import com.coffeepeek.domain.model.PublicAddress
 import com.coffeepeek.domain.model.Session
 import com.coffeepeek.domain.repository.SessionRepository
@@ -43,6 +44,41 @@ import kotlin.test.assertTrue
 import kotlin.test.assertNull
 
 class ServerFavoritesRepositoryTest {
+    @Test fun confirmedAdditionDuringAnOldReadFetchesItsMetadataBeforeReturningAReadyList() = runBlocking {
+        val server = FavoriteServer()
+        try {
+            val repository = server.repository()
+            val (started, release) = server.blockFirstRead()
+            val read = async { repository.getFavorites() }
+            started.await()
+            server.seed(listOf(favoriteDto("new")))
+            assertTrue(repository.applyConfirmedMembership("alice", 0L, FavoriteTarget(FavoriteKind.Roaster, "new"), true))
+            release.complete(Unit)
+            val rows = read.await().getOrThrow()
+            assertEquals(listOf("new"), rows.map { it.slug })
+            assertEquals(rows, repository.getFavorites().getOrThrow())
+            assertEquals(2, server.methods.count { it == HttpMethod.Get })
+        } finally { server.client.close() }
+    }
+
+    @Test fun failedMetadataFollowUpKeepsConfirmedKeysAndDoesNotCacheAnIncompleteSuccess() = runBlocking {
+        val server = FavoriteServer()
+        try {
+            server.seed(listOf(favoriteDto("known")))
+            val repository = server.repository()
+            val (started, release) = server.blockFirstRead()
+            val read = async { repository.getFavorites() }
+            started.await()
+            repository.applyConfirmedMembership("alice", 0L, FavoriteTarget(FavoriteKind.Roaster, "new"), true)
+            server.failReads = true
+            release.complete(Unit)
+            assertTrue(read.await().isFailure)
+            assertTrue(repository.cachedMembership(FavoriteTarget(FavoriteKind.Roaster, "known"))!!)
+            assertTrue(repository.cachedMembership(FavoriteTarget(FavoriteKind.Roaster, "new"))!!)
+            assertTrue(repository.getFavorites().isFailure)
+        } finally { server.client.close() }
+    }
+
     @Test fun observersClearPreviousAccountsListBeforeLoadingTheNextAccountsFavorites() = runBlocking {
         val server = FavoriteServer()
         val updates = Channel<List<String>>(Channel.UNLIMITED)
@@ -151,6 +187,22 @@ class ServerFavoritesRepositoryTest {
 
     private fun address(slug: String) = PublicAddress(slug, "/roasters/$slug", 1, false)
 
+    private fun favoriteDto(slug: String) = FavoriteEntryDto("roaster", PublicAddressDto(slug, "/roasters/$slug", 1, false),
+        "2026-10-15T10:00:00Z", slug)
+
+    private fun FavoriteServer.blockFirstRead(): Pair<CompletableDeferred<Unit>, CompletableDeferred<Unit>> {
+        val started = CompletableDeferred<Unit>()
+        val release = CompletableDeferred<Unit>()
+        var reads = 0
+        beforeRead = {
+            if (reads++ == 0) {
+                started.complete(Unit)
+                release.await()
+            }
+        }
+        return started to release
+    }
+
     @Test fun restoresDrinksAndUnaddressedObjectsWithoutKindCollisionsOrFakeAddresses() = runBlocking {
         val server = FavoriteServer()
         try {
@@ -208,6 +260,8 @@ private class FavoriteServer {
     val sessions = FavoriteSessions()
     val methods = mutableListOf<HttpMethod>()
     var failMutations = false
+    var failReads = false
+    var beforeRead: (suspend () -> Unit)? = null
     var beforeMutation: (suspend () -> Unit)? = null
     private val accounts = mutableMapOf<String, List<FavoriteEntryDto>>()
     fun seed(items: List<FavoriteEntryDto>) { accounts[requireNotNull(sessions.peekSession()?.userId)] = items }
@@ -218,7 +272,10 @@ private class FavoriteServer {
         if (request.url.encodedPath.startsWith("/api/CoffeeShops/")) {
             respond("""{"isSuccess":false,"data":null}""", HttpStatusCode.NotFound, headersOf(HttpHeaders.ContentType, "application/json"))
         } else if (request.method == HttpMethod.Get) {
-            respond(Json.encodeToString(ApiResponse(isSuccess = true, data = current)), headers = headersOf(HttpHeaders.ContentType, "application/json"))
+            val failedRead = failReads
+            beforeRead?.invoke()
+            if (failedRead) respond("", HttpStatusCode.ServiceUnavailable)
+            else respond(Json.encodeToString(ApiResponse(isSuccess = true, data = current)), headers = headersOf(HttpHeaders.ContentType, "application/json"))
         } else if (failMutations) {
             respond("", HttpStatusCode.ServiceUnavailable)
         } else {

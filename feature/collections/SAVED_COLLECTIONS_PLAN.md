@@ -468,3 +468,11 @@ isolation and cancellation. No automated UI/instrumentation/screenshot tests or
 live writes were run; no device was deployed to. Existing paired loading/error
 picker previews compile; IDE rendering, manual Sandbox and native iOS checks
 remain unverified.
+
+### Membership consistency audit — 2026-11-04
+
+The follow-up [membership flow audit](MEMBERSHIP_FLOW_AUDIT.md) records the
+reproduced server/client defects, no-op and cache corrections, confirmed card
+projection, privacy rules, backend-first publication dependency and verification
+evidence. It supersedes any assumption above that client fake tests alone
+established the deployed server's membership/favorite consistency.

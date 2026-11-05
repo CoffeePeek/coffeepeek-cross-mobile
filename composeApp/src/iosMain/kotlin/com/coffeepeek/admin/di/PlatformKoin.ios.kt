@@ -36,14 +36,30 @@ import com.coffeepeek.admin.di.notifications.featureNotificationsRenderer
 import com.coffeepeek.admin.di.settings.featureSettingsScreenRenderer
 import com.coffeepeek.admin.utils.ErrorHandler
 import com.coffeepeek.admin.di.coffee.CoffeeShelfTab
+import com.coffeepeek.admin.di.profile.profileSnapshotModule
 import com.coffeepeek.admin.di.shelf.ShelfFeatureScreenRenderer
 import com.coffeepeek.admin.di.shelf.shelfBrewForm
 import com.coffeepeek.admin.di.shelf.iosShelfModule
 import com.coffeepeek.admin.locator.Locator
+import com.coffeepeek.admin.locator.Constants
+
+internal fun iosPlatformModules(apiBaseUrl: String = Constants.BASE_URL) = listOf(
+    contributionsModule(),
+    serverFavoritesModule(),
+    coffeeModule(),
+    collectionsModule(apiBaseUrl),
+    shopBrowsingModule(),
+    shopCheckInModule(AppShopCheckInDateFormatter()),
+    homeCheckInModule(apiBaseUrl),
+    checkInHistoryModule(apiBaseUrl),
+    contentReportModule(),
+    iosShelfModule(apiBaseUrl),
+    profileSnapshotModule(),
+)
 
 actual fun initPlatformKoin() {
     initKoin(
-        platformModules = listOf(contributionsModule(), serverFavoritesModule(), coffeeModule(), collectionsModule(), shopBrowsingModule(), shopCheckInModule(AppShopCheckInDateFormatter()), homeCheckInModule(), checkInHistoryModule(), contentReportModule(), iosShelfModule()),
+        platformModules = iosPlatformModules(),
         // Owners move to their migrated modules one at a time; the others keep the legacy renderers.
         checkInRenderers = featureCheckInRendererFactories(),
         contentReportRendererFactory = { get<FeatureContentReportRenderer>() },

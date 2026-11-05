@@ -33,6 +33,7 @@ internal fun roasterModule(baseUrl: String = Constants.BASE_URL, settings: () ->
     single<RoasterRepository> {
         createRoasterRepository(get<CoffeePeekClient>().client, baseUrl, get()) { Clock.System.now().toEpochMilliseconds() }
     }
-    single<RoasterFavoritesPort> { RoasterFavoritesAdapter(get<RoasterFavorites>(), get<CoroutineScope>(), getOrNull<FavoriteCollectionsPrompt>()) }
+    single<RoasterFavoritesPort> { RoasterFavoritesAdapter(get<RoasterFavorites>(), get<CoroutineScope>(),
+        getOrNull<FavoriteCollectionsPrompt>(), getOrNull<com.coffeepeek.domain.feature.favorites.api.FavoritesRepository>()) }
     single<RoasterShopPhotos> { RoasterShopPhotosAdapter(get<ShopRepository>()) }
 }

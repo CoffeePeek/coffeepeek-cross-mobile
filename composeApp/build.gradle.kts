@@ -232,7 +232,7 @@ val appBuildNumberOffset = appVersionConfig.map { config ->
         .find(config)?.groupValues?.get(1)?.toInt() ?: error("BUILD_NUMBER_OFFSET is required")
 }
 val appVersionCode: Provider<Int> = gitCommitCount.zip(appBuildNumberOffset) { count, offset -> count + offset }
-val appVersionName: Provider<String> = appVersionCode.map { "1.1.6.$it" }
+val appVersionName: Provider<String> = appVersionCode.map { "1.1.7.$it" }
 
 tasks.register<PrintValueTask>("printVersionName") {
     group = "versioning"
