@@ -17,6 +17,7 @@ import com.coffeepeek.feature.profile.domain.PublicProfileData
 import com.coffeepeek.feature.profile.impl.ui.OwnProfileViewModel
 import com.coffeepeek.feature.profile.impl.ui.PublicProfileViewModel
 import com.coffeepeek.feature.profile.impl.ui.compose.OwnProfileScreen
+import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
 /**
@@ -44,6 +45,7 @@ private class OwnProfileEntryImpl(
     private val slots: OwnProfileSlots,
     private val snapshots: ProfileSnapshotStore,
 ) : OwnProfileEntry {
+    @OptIn(ExperimentalUuidApi::class)
     private val instanceKey = Uuid.random().toString()
 
     @Composable

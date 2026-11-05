@@ -1,0 +1,771 @@
+# Полный выход из legacy
+
+Статус: в работе. Решение владельца от 2026-10-25. База `029a572a`,
+ветка `feat/ios-build-foundation`, PR #195 → develop.
+Вариант для кофейни отложен; новые продуктовые возможности не добавляем.
+
+## Условие завершения
+
+Переключённые маршруты — промежуточный результат. Миграция закончена, когда:
+
+- Android и iOS используют только feature entries, без старых экранов,
+  ViewModel, карточек, бизнес-слотов, репозиториев и моделей из composeApp/modules.
+- В composeApp остаются запуск, конфигурация платформы, root DI и корневая
+  навигация с вызовами публичных feature entries. Корневой setContent/host —
+  сборка приложения; экранов, карточек, диалогов и feature state там нет.
+- Общие UI/ресурсы/платформенные визуальные примитивы принадлежат
+  core/design-system; бизнес-UI, включая модальные варианты, — feature/*/impl.
+- `modules/` и `module.legacy.*` удалены, прямых/транзитивных ссылок нет.
+- Не осталось typealias/обёрток, которые называют старую реализацию новой.
+- Существующие данные, серверное избранное, consent, аналитика, session guards
+  и native поведение сохранены. Обновление не очищает локальную БД/Keychain.
+
+Нативная оболочка iosApp, lifecycle и SDK-провайдеры не являются устаревшими
+экранами. Они остаются платформенной границей. Из composeApp реализации общих
+платформенных сервисов также уходят в подходящий core; бизнес-часть карты —
+в Discovery. Новый глобальный core/common/utils и новая app-модель не нужны.
+
+## Подтверждённый остаток, 2026-10-25
+
+Подсчёт импортов только production commonMain/androidMain/iosMain composeApp:
+
+| Legacy package | Файлов-потребителей | Примеры реальных зависимостей |
+| --- | ---: | --- |
+| com.coffeepeek.domain | 115 | ShopRepository, CheckIn, CatalogItem, UserRepository, SessionRepository, City |
+| com.coffeepeek.data | 3 | KoinApp/dataModule, AuthAdapters/UserSessionCleaner, SessionRealtimeManager |
+| com.coffeepeek.api | 18 | CoffeePeekClient, ApiException, RequestObservation |
+| com.coffeepeek.room | 10 | SettingRepository, DatabaseCore, MyRoomRepositoryImpl |
+| com.coffeepeek.legacy.homecheckin | 11 | прежние календарь/история/Home readers |
+
+Один файл может быть в нескольких строках. Это инвентарь ссылок, не число
+активных экранов. Включая тесты, потребителей соответственно 209/7/28/26/24.
+Файлов с @Composable в production composeApp: commonMain 231, androidMain 27,
+iosMain 28. Здесь смешаны недостижимый UI, активные вставки, инфраструктура и
+root hosts; нельзя ни считать всё активным, ни удалять по одному этому признаку.
+
+Основные feature renderers уже выбраны в PlatformKoin.ios.kt и native tabs.
+Но FeaturePublicProfileScreenRenderer вызывает app-owned favorite/check-in/
+Activity UI, FeatureCheckInHistoryScreenRenderer — HistoryTimelineCheckInCard.
+KoinApp сохраняет Legacy* defaults, dataModule строит старые writers/readers.
+core/database пока содержит только конфигурацию драйвера, не готовую замену
+DatabaseCore. Старый LEGACY_REMOVAL.md — исторический снимок 2026-10-21.
+
+## Очерёдность срезов
+
+### L1. Убрать бизнес-UI из активных app slots
+
+- [x] Profile UI: публичное избранное, публичная недельная Activity, карточки
+  чекинов; на публичном профиле никогда не подключать личный reader.
+  Избранное/неделя — первый срез; карточки — второй. Public check-in reader
+  заменён в третьем срезе L3, enrichment/own-account ports — в четвёртом.
+  Недостижимые старые UI/VM/test consumers остаются отдельным L4.
+- [x] History/Profile: один владелец общей геометрии чекина через
+  существующие DS primitives; без преобразования обратно в legacy CheckIn.
+- [ ] Discovery/catalog и создание чекина: бизнес-UI/состояние только в impl.
+- [x] Author blocking: экран/host из composeApp в feature/author-blocking/impl;
+  Android/Sandbox и видимый native iOS controller вызывают feature entry.
+  Ручная приёмка native prompts остаётся открытой в шестом срезе.
+- [ ] Root tabs/check-in creation host: root оставляет routing, содержимое —
+  feature entries. Вкладка Coffee не должна зависеть от legacy CheckInTabContent.
+
+Не переносим весь composeApp/ui в feature одним каталогом. Каждая вставка
+переходит к владельцу, её ресурсы и paired previews — вместе с ней. Общая
+геометрия карточек/календаря уже есть в core/design-system и переиспользуется.
+
+### L2. Убрать app-owned инфраструктурный UI и сервисы
+
+- [x] Владение CpImage, prefetch, original/preview contracts, viewer перенесено
+  в core/media и design-system; старые реализации и aliases удалены.
+- [ ] Ручная приёмка общего media pipeline/viewer на Android/iOS: темы,
+  жесты, safe area, фон/возврат, отзыв доступа и private фото. Сборки и unit
+  contracts не заменяют эту проверку; подробности пятого среза ниже.
+- [ ] Нативные sheets/alerts/keyboard/headers/glass/theme/иконки: реализации
+  в core/design-system; composeApp только устанавливает платформенные зависимости.
+- [ ] Даты/форматирование, browser/share/maps/photo picker: узкие платформенные
+  порты у действительного core/feature владельца; не общий мешок helpers.
+- [ ] Analytics SDK/session/consent infrastructure: core с существующим сервисом;
+  определения бизнес-событий — features, routing/exposure ownership не дублируется.
+
+Новые core-модули создаются только при конкретной общей ответственности и
+проверенных consumers; описываем зависимости, API, скрытую реализацию и причину,
+почему существующего модуля недостаточно. Это не массовое создание api/data/domain.
+
+### L3. Заменить активные legacy data adapters
+
+- [x] Public profile check-ins — profile data через read-only community API,
+  без старого PublicProfileRepository/FeedRepository/CheckIn projection.
+- [x] Public favorites enrichment и own-account ports — feature data,
+  без старых ShopRepository/RoasterRepository/UserRepository в активном graph
+  Profile. Четвёртый срез также переключает identity readers Shop/Community;
+  старые UI/VM/test consumers остаются отдельной задачей L4.
+- [ ] Shop/catalog/roaster/favorites readers и caches — соответствующие feature
+  repositories; composition соединяет только узкие api-контракты.
+- [ ] Auth cleanup/refresh/realtime — core SessionStore и feature ports;
+  ни SessionRepository alias, ни старого UserSessionCleaner в активном graph.
+- [ ] CoffeePeekClient: transport/cache/diagnostics/auth infrastructure —
+  core/network; feature endpoints/DTO — feature data. AuthService не остаётся
+  зависимостью core: refresh business exchange поставляется через порт.
+- [ ] Room: driver/schema infrastructure — core/database; настройки/город —
+  Settings data, credentials migration — core/session, feature entities —
+  своим data. Сохраняем имя БД/таблицы и проверяем migration без data clearing.
+
+### L4. Удалить недостижимые экраны и запасной graph
+
+- [ ] Полный список production, Sandbox, previews, tests и native callers для
+  каждого Legacy*Renderer; проверить обе платформы, все deep links и modal entry.
+- [x] Удалить legacy renderer defaults из initKoin, заменить обязательными
+  актуальными factories. Нельзя незаметно откатиться при пропущенном binding.
+  Удалены 21 Legacy*Renderer; CheckInRendererFactories требует все три factories.
+- [ ] Удалить старые экраны/ViewModel/старые app business packages и их DI.
+- [ ] Полезные unit/contract regressions перенести к новым владельцам; не
+  выбрасывать проверки ради сборки и не удалять тесты других авторов вслепую.
+- [ ] Удалить совместимые wrappers/aliases только после последнего consumer.
+
+Удаление идёт в том же срезе, где последний consumer заменён и проверен;
+не копим бесконечный fallback. Ручная проверка затронутого пути записывается
+отдельно от compile/unit доказательств. Непроверенные live-интеграции не
+объявляем исправными и не прикрываем ими сохранение активного старого пути.
+
+### L5. Удалить modules и закончить composition boundary
+
+- [ ] После нулевых consumers удалить modules/home-checkin и modules/data.
+- [ ] Удалить modules/network/room/domain с учётом фактического графа, не
+  разрушая cache/session/БД; убрать module.legacy из Gradle/build-logic.
+- [ ] Проверить commonMain/androidMain/iosMain, Swift imports/framework exports,
+  Sandbox и тестовые source sets: не осталось старых package references.
+- [ ] ComposeApp не содержит feature ViewModels/state/composables/resources;
+  root navigation/startup и DI используют только feature/core API.
+- [ ] Обновить ARCHITECTURE/AGENTS/README и packaged runtime-class guards,
+  чтобы они проверяли новые владельцы, а не требовали удалённые классы.
+
+## Проверка каждого среза
+
+Сохранить семантику/действия/аналитику до изменения; записать затронутые слои и
+сценарии. Unit/contract tests по поведению, Android Debug/Sandbox assembly с
+DEX guards, iOS compile/framework link и при необходимости полный Xcode build.
+Gradle последовательно, --max-workers=6. Новых UI/instrumented/screenshot suites
+и test Activities не создаём. UI — paired previews и согласованная ручная проверка.
+Никаких установок, действий с аккаунтом или серверных записей без отдельного
+согласованного запуска. Пользовательские local pbx changes сохраняем.
+
+Начальный инвентарь — source audit, не новый прогон сборок. Новые результаты
+каждого L-среза записываются здесь с source identity, failures/retries и gates.
+
+## Первый срез L1/L4 — 2026-10-25
+
+База 029a572a + текущие изменения. Новых веток/PR пока нет, работа остаётся
+продолжением незавершённой миграции #195. План роли кофейни отложен.
+
+- PublicProfileActivityPreview теперь в profile/impl с чистой подготовкой
+  ISO-недели/Minsk dates/числа чекинов и thumbnail sources. UI использует
+  CoffeePeekActivityWeek, не старый ProfileActivityWeek/CalendarWeek.
+- Публичные favorite cards/carousel теперь в profile/impl и используют
+  CoffeePeekShopCard/RoasterCard/Card/StackedCardCarousel/LikeBadge. Старые
+  CatalogItem/CoffeeShop/PublicAddress для их отрисовки не конструируются.
+  Маркеры избранного только читают состояние автора, не пишут состояние зрителя.
+- ProfileSlots больше не содержит favoritesPreview/favoriteCard/activityPreview.
+  Media crop/fit остаётся узким платформенным портом; перенос самого CpImage и
+  оставшейся карточки чекина ещё не выполнен. Paired previews рядом с UI;
+  поддерживаемый locale Profile по-прежнему русский.
+- Из common graph удалены 21 Legacy*Renderer и значения по умолчанию для
+  соответствующих factories. Два non-UI DI-теста сохранены с неотрисовываемыми
+  doubles вместо зависимости от прежних экранов.
+- Удалены девять больше не вызываемых старых экранов: AppUpdate prompt,
+  Auth, Register, PasswordRecovery, Coffee list/detail, Theme, City и UsagePolicy.
+  Также удалён недостижимый CoffeeDetailViewModel; из root DI убраны пять
+  устаревших ViewModel factories и неиспользуемая recovery repository binding.
+  Проверены Kotlin/Swift callers. Studio call hierarchy AppUpdatePrompt
+  не нашёл callers; для SettingsScreen нашёл существующий сторонний
+  AuthorBlockingFlowScreenshotsTest, поэтому этот экран и чужой тест здесь
+  не удалены и UI-suite не запускался. Это отдельный оставшийся consumer,
+  его требуется перевести при очистке Settings/author-blocking.
+
+Промежуточная проверка переноса Profile до удаления fallback:
+65 unit tests / 7 suites, 0 failures/errors/skips; Android Debug/Sandbox
+с runtime-class guards/isolation, iOS Arm64 compile, Simulator framework link
+и common Native test compile прошли. Пять новых unit regressions покрывают
+часовой пояс, переходы месяца/года, leap day, fallback counts и thumbnails.
+Native tests только скомпилированы, UI вручную ещё не проверен. Studio inspection
+двух новых UI-файлов не сообщила ошибок, но timedOut=true: полного IDE заключения нет.
+Первый прогон после удаления экранов выявил test compile dependency на
+formatCoffeePrice из старого CoffeeListScreen. Четыре assertion перенесены к
+уже существующему feature/coffee/impl formatter, filter draft assertions
+сохранены на месте. Старый UI/helper обратно не добавлялся.
+Повторный объединённый прогон прошёл: **138 tests / 17 suites**, 0 failures/errors/skips
+(app subset 26 / 5, Profile impl 65 / 7, Coffee impl 47 / 5); Android Debug/Sandbox
+и runtime/isolation guards, iOS Arm64 compile, Simulator framework link и common
+Native test compile успешны. Неизменённые suites могут быть UP-TO-DATE; Native
+tests не исполнялись. Заключительный прогон после снятия неиспользуемых DI
+bindings также прошёл с теми же 138 tests / 17 suites. Предыдущий compile failure
+сохранён выше; повторный успех его не отменяет. Полный Xcode app build в этом
+срезе не запускался. Сохранились прежние preview/expect-actual/bundle-ID warnings.
+
+APK SHA-256 окончательного среза:
+Debug `cc7641aa767dac418c89147eb8751c649c945e0bd64f47aedf2f995596dc482b`;
+Sandbox `9f0f7e166177ba7843c652fae6076004755433c2ecb0576f8719883294188c7b`.
+
+Ни приложение, ни Sandbox не устанавливались/не запускались. Данные, аккаунты,
+backend и пользовательские local pbx изменения не затронуты. Цель полного
+legacy exit не объявлена достигнутой: следующие L1–L5 пункты остаются открыты.
+
+## Второй срез L1/L4: карточки чекинов — 2026-10-26
+
+База fb750d83 + этот checkpoint, тот же незавершённый PR #195. Свежие
+origin/develop и origin/main проверены fetch: новых отсутствующих в HEAD
+коммитов нет. Локальный project.pbxproj пользователя не включается в срез.
+
+Что изменено:
+
+- Удалены app-injected shopTimelineContent/homeTimelineContent и их composition
+  locals. History рисует Shop/Home в своём impl прямо из PersonalCheckIn и
+  HomeHistoryEntry. Reverse adapters в старые CheckIn/HomeCheckIn удалены.
+- ProfileSlots больше не принимает checkInCard. Profile impl владеет полным
+  content и block/report menu; никаких Koin вызовов внутри карточки. Формат даты,
+  media и переход на ReportCheckIn остаются узкими app ports до L2/L3.
+- PublicProfileCheckIn получил явные author/createdAt/scores/drink/home/affinity/
+  detail-photo поля. Stateless projection из ещё существующего public feed reader
+  сохраняет их за один проход, без хранения старых записей для повторного UI lookup.
+  RememberedCheckIns и его storage-only тесты удалены; сценарии сохранности
+  представления заменены regressions на self-contained feature rows.
+- В core/design-system общие CoffeePeekTimelineContent/Header/Footer,
+  CoffeePeekPhotoStrip/Sources и CoffeePeekTimelineRail. Они не знают feature
+  моделей/репозиториев/аккаунтов и не выполняют IO. Сохранены header 44 dp,
+  single photo 2:1, коллаж 4:3, +N, footer с названием напитка справа и read-only
+  affinity без ripple. CoffeePeekDrinkLabel получил Compact вариант 14 dp;
+  исходный Regular сохраняет прежние размеры. Paired previews colocated.
+- Photo sources snapshot/alignment общий: отсутствие варианта и явный blank
+  различаются; в list доступен preview → detail, viewer получает aligned
+  originals. Невалидные/неизвестные album indices отбрасываются. Личная история
+  открывает фото отдельным MVI intent, с source-prefixed key, session envelope и
+  существующей app lease проверкой. Нажатие на фото не открывает detail sheet.
+- Сохранены visitedAt/preparedAt timestamps для личной истории и createdAt для
+  публичного card header, custom/localized drink preference, Home recipe,
+  visibility label и отсутствие придуманных нулевых category scores.
+- Гостю и владельцу карточки Profile не предлагается чужой block/report menu.
+  Signed-in state отслеживает смену аккаунта, в том числе logout; существующие
+  write-side guards остаются у владельцев действий.
+- Удалены больше не вызываемые старые ProfileScreen, ProfileCheckInsScreen и
+  HistoryTimelineCheckInCard. Их Kotlin/Swift callers проверены; Studio call
+  hierarchy подтверждал единственный старый caller последней карточки.
+  У существующего стороннего CheckInPresentationTest заменены только import и
+  вызов TimelineRail на перенесённый DS компонент. Новых UI-тестов/hosts нет;
+  существующий UI-suite не запускался. Старый публичный Profile UI ещё нужен
+  другим сторонним tests; его удаление требует отдельного переноса consumers.
+
+Проверки:
+
+- Production compile Android DirectDebug и iOS Arm64 прошёл до финального
+  удаления освободившихся экранов. Первый unit run остановился на отсутствии
+  HomeHistoryPhoto import в новом тесте; import исправлен, повторный набор прошёл.
+- Финальный unit/contract набор: **263 tests / 42 suites**, 0 failures/errors/skips:
+  design-system 50 / 14; Profile impl 66 / 7; History impl 82 / 8;
+  app subset 65 / 13. Неизменённые tasks могут быть UP-TO-DATE; эти counts не
+  суммируются с первым checkpoint. Перенесены полезные adapter regressions:
+  даты, recipe, thumbnail/detail/original alignment; добавлены unit проверки
+  источников фото, их snapshot, двух album с одинаковым id, неверных индексов,
+  session delivery и видимости действий после logout. Unit-only, без сети.
+- Android DirectDebug/Sandbox assembly прошли, включая packaged runtime-class
+  guards и Sandbox isolation. iOS Arm64 production compile, Simulator Debug
+  framework link и app common Native test compile прошли. Дополнительно прошла
+  compileTestKotlinIosSimulatorArm64 для design-system, Profile impl и History
+  impl. Native tests не исполнялись. Gradle последовательно, --max-workers=6.
+- Studio MCP get_file_problems завершился без ошибок для CoffeePeekPhotoStrip,
+  PublicProfileCheckInCard и HistoryHomeTimelineCard. Это не preview rendering.
+- APK SHA-256: Debug `a009257ed3157660784ca79ef1e31394a8de3b1e71fa344c525bde2dbb3bf79d`;
+  Sandbox `1e8c8406c9d110f00395a7ec292e910023047a816ed5f7c14e47c461679ae753`.
+
+Полный Xcode build и ручная визуальная приёмка этого среза пока не выполнены.
+Ничего не устанавливалось/не запускалось, реальные аккаунты и данные не менялись.
+Live backend/OAuth/push/analytics acceptance этим не подтверждены.
+
+Следующий остаток: активный public profile data reader/favorite enrichment и
+прочие app data adapters, затем media infrastructure. Старые экраны/VM/тестовые
+потребители удаляются по последнему consumer; modules/ ещё не готовы к удалению.
+
+## Третий срез L3: публичные чекины профиля — 2026-10-26
+
+База `790834bc` + этот checkpoint, тот же незавершённый PR #195 → develop.
+Fetch origin/develop и origin/main не обнаружил отсутствующих в HEAD коммитов.
+Пользовательский local project.pbxproj сохранён отдельно и не входит в срез.
+
+Владелец и границы:
+
+- `community/api` публикует узкий read-only `PublicAuthorPosts` с отдельной
+  проекцией данных; чужие domain models, DTO, transport и mutation API через
+  неё не передаются. `community/data` адаптирует уже существующий repository,
+  повторно используя feed backend, URL/variant mapper и ошибки пагинации.
+  Новый endpoint, HTTP client, cache или Gradle module не создаётся.
+- `profile/data` реализует существующий `PublicCheckInsPort` и владеет
+  фильтрацией/преобразованием в self-contained `PublicProfileCheckIn`.
+  Зависимости добавлены на собственный api и `community/api`; импортов чужих
+  domain/data/impl нет. Community не зависит от Profile, граф ацикличен.
+- Android/iOS composition получает готовые `PublicProfileData` и
+  `PublicCheckInsPort`, соединяет factories и передаёт их feature entry.
+  Удалены `AppPublicProfileRepository`, `AppPublicCheckIns`,
+  `PublicCheckInProjection` и root binding старого PublicProfileViewModel.
+  Прежняя UI/model/repository-interface поверхность, ещё используемая чужими
+  тестами, не удалялась; она не подключается к активным feature entries.
+- Единственный оставшийся класс бывшего app repository-файла выделен в
+  `LegacyPublicProfileFavoriteDetails.kt`: это прежнее enrichment через старые
+  каталоги, без новой логики или алиаса на новый reader. Его regression сохранён.
+
+Сохраняемое поведение и unit evidence:
+
+- Чтение только `/api/v1/feed`, authorSlug, pageSize=20, opaque cursor и no-store;
+  private/mine endpoints для публичного профиля не вызываются, включая свой.
+  Профиль дополнительно отбрасывает чужого/неизвестного автора и всё, кроме
+  Public + Approved. Неизвестные значения состояния остаются закрытыми.
+  Полностью отфильтрованная страница сохраняет nextCursor.
+- Сохранены порядок публикации, visited/prepared/created даты, Home kind/recipe,
+  имена напитков, category scores, likes, author/avatar и original/thumb/detail
+  alignment. Явный blank thumbnail не заменяется оригиналом; отсутствие variants
+  и detail fallback по-прежнему обрабатывает существующий community mapper.
+- Ошибка reader передаётся без подмены, cursor restart flag сохраняется,
+  CancellationException пробрасывается. Existing profile/session/visibility
+  guards не менялись; feature rows не нуждаются в обратном legacy lookup.
+- Старые projection/reader assertions перенесены к реальным новым владельцам.
+  Добавлен non-UI app contract через фактические community/profile factories и
+  локальный Sandbox backend: свой профиль, другой автор и пустой результат.
+  Сервер/аккаунт/аналитика не используются. Это не ручной запуск Sandbox.
+
+Проверки:
+
+- Первый запуск Gradle в ограниченном окружении остановился до задач на доступе
+  к wrapper lock в ~/.gradle. Повтор с доступом к локальному Gradle cache дошёл
+  до новых unit tests и выявил пропущенный начальный cursor; default `null`
+  добавлен в существующий PublicCheckInsPort. Исходные логи сохранены локально.
+- Финальный объединённый прогон успешен: **188 tests / 23 suites**,
+  0 failures/errors/skips: Community data 20 / 3; Profile data 18 / 2;
+  Profile impl 66 / 7; app subset 84 / 11. Неизменённые tasks могут быть
+  UP-TO-DATE; результаты не суммируются с прошлым checkpoint.
+- Android DirectDebug и DirectSandbox assembly успешны, включая оба packaged
+  DEX runtime-class guards и Sandbox isolation. Ничего не устанавливалось.
+- iOS Arm64 production compile и Simulator Debug framework link прошли.
+  Community data, Profile data и app common tests для iOS Simulator
+  скомпилированы; Native tests не исполнялись. Gradle последовательно,
+  --max-workers=6. Полный Xcode app build не запускался.
+- Studio inspection нового PublicAuthorPosts API завершился без ошибок.
+  Диагностика Profile data пока сообщает unresolved community import после
+  добавления Gradle dependencies: IDE graph требует синхронизации; это не
+  объявляется чистой IDE-проверкой. CLI Gradle компилирует этот код на обеих
+  платформах. Прежние preview/expect-actual/test opt-in warnings сохранены.
+- APK SHA-256: Debug `8955ea0e7e5ca77d149e6f7529bfd98dcfcde035e739191c7fd6a5261110fb1c`;
+  Sandbox `ed594cb7d5cfeb5a90f546cb91f5befbc2b0e4a802fc49bceb0c4d6879e93265`.
+
+UI, analytics ownership, session policy и platform media в этом срезе не
+менялись. Ручная visual/live-backend/OAuth/push/analytics приёмка не проводилась;
+новых автоматизированных UI/инструментальных tests/hosts нет.
+Следующий остаток Profile: legacy favorite enrichment и own-account reader;
+затем media ports и недостижимые legacy UI/test consumers. Modules пока не удаляем.
+
+## Четвёртый срез L3: избранное и собственный аккаунт — 2026-10-26
+
+База `6607ce83` + этот checkpoint, тот же открытый PR #195 → develop.
+Fetch origin/develop и origin/main: отсутствующих в HEAD коммитов нет.
+Локальный пользовательский project.pbxproj остаётся вне checkpoint (48+/41−).
+
+Public favorites:
+
+- Shop/Roaster api публикуют read-only проекции карточек; только их api доступны
+  Profile data, без импортов чужих domain/data/impl. Shop data переиспользует
+  существующий details backend, не запрашивает меню и не отдаёт personal rows
+  или favorite state. Сохранены card → full cover, tags + shopTags, порядок,
+  distinct, fallback brewMethods/beans и ограничение трёх тегов.
+- Roaster data проецирует существующий repository, с тем же memory/persistent
+  catalog cache и ключом; второго каталога/кэша нет. Сохранены фото, описания,
+  теги и все три счётчика. Root соединяет factories, а Profile data переводит
+  public projections в собственные favorite details. Новый Gradle module не нужен.
+- Удалён LegacyPublicProfileFavoriteDetails из composeApp. Неуспешное optional
+  enrichment сохраняет исходный favorite, отмена пробрасывается. Серверное
+  избранное зрителя не читается, не записывается и не очищается этими readers.
+
+Own account:
+
+- `createProfileAccountData` в Profile data возвращает уже существующие
+  ProfileAccountPort/ProfileEditPort/AccountDeletionPort, связанные одним
+  внутренним repository/cache. HttpClient, отдельный credential-free upload
+  client, core SessionReader и app lifetime scope предоставляет composition.
+  Domain не получает platform/network/DI зависимости.
+- Владелец кэша — active user ID, при его отсутствии token (прежний контракт
+  порта). Наблюдаемый logout/replacement увеличивает generation и очищает кэш;
+  обычное обновление токена того же ID сохраняет его. Peek проверяется и перед
+  выдачей cached profile, поэтому задержка observer не выдаёт прежнего владельца.
+  Поздние reads/writes отвергаются; read, начатый до удачного edit, не откатывает
+  изменённый кэш. Profile fields/canonical address и forceRefresh сохранены.
+- Profile, public identity, редактирование и deletion получают новые ports.
+  Shop viewer и Community ownAuthorSlug подключены к тому же кэшу через
+  Profile api: Shop использует обычное чтение, Community сохраняет refresh.
+  Сохраняется fallback определения владельца чекинов при недоступном профиле;
+  guest Shop не читает профиль.
+- Username/about PATCH обновляют этот общий кэш. Сохранены отдельные причины
+  username failures и retry instant; server prose не уходит в username UI.
+  Avatar: `/api/Photos/avatar` → проверка public presigned URL → PUT байтов через
+  отдельный upload client → PATCH `{uploadedPhoto: ...}` → refresh профиля.
+  Владелец проверяется между шагами: смена аккаунта/отмена/ошибка PUT не дают
+  отправить avatar PATCH следующему аккаунту. Нового общего media сервиса нет;
+  перенос загрузчика/viewer остаётся L2, endpoint аватара принадлежит Profile.
+- Deletion по-прежнему лишь создаёт e-mail request и не завершает сессию.
+  Existing 404/not-found — null, server retry instant и его PascalCase alias
+  сохранены. DTO/запросы скрыты в data. UI confirmation/session-end routing и
+  порядок logout не изменены.
+- Общий core/network ApiEnvelope получил decode-only aliases IsSuccess/Message/
+  Data, которые принимал старый API. Нижний регистр остаётся основным; отдельный
+  второй envelope/parser для Profile не создавался. Compatibility и error prose
+  проверяются unit tests, включая реальную цепочку загрузки OwnProfile.
+
+Снятие legacy:
+
+- Удалены AppProfileAccountPort, AppProfileEditPort, AppAccountDeletionPort и
+  app username failure mapper. Убраны UserRepository binding из dataModule и
+  пять недостижимых VM bindings (Profile/Edit/Deletion/ShopDetail/старый Community).
+  Их старые Kotlin/Swift screen callers проверены: активные routes идут через
+  обязательные feature renderers. Удалён DeleteAccountPendingScreen без callers.
+- UserRepositoryImpl ещё нужен прежнему UserRepositorySessionTest; старые
+  интерфейс/модели/VM также используются оставшимися tests/legacy UI. Они не
+  подключены к новой цепочке и не объявляются полностью удалёнными. Их тестовые
+  потребители и useful regressions требуют переноса в L4; modules ещё остаются.
+- Unit regressions старых app ports/username mapper/favorite adapter перенесены
+  к feature data, с дополнениями для реальных HTTP contracts и owner races.
+  Остальные app logout/visibility/analytics и Community regressions сохранены;
+  чужие UI/instrumented suites не удалялись и не запускались.
+
+Проверки:
+
+- Первый Android/iOS production compile прошёл (45s). Первый unit/contract набор
+  — **259 tests / 42 suites**, 0 failures/errors/skips. Первая упаковка Android
+  и iOS compilation/link также прошли (2m). Сверка legacy response contract после
+  этого обнаружила поддержку PascalCase envelope; aliases и regressions добавлены
+  до финального прогона, промежуточная сборка не является окончательным артефактом.
+- Итоговый объединённый прогон прошёл (3m06s): **302 tests / 50 suites**,
+  0 failures/errors/skips: core/network 40 / 8; Profile data 42 / 7; Shop data
+  43 / 14; Roaster data 14 / 1; Profile impl 66 / 7; app subset 97 / 13.
+  Counts не суммируются между прогонами; неизменённые tasks могут быть UP-TO-DATE.
+- Оба Android APK assembled с packaged DEX runtime-class guards и Sandbox
+  isolation. iOS Arm64 production compile и Debug Simulator framework link
+  успешны. Общие tests core/network, Profile/Shop/Roaster data и app для iOS
+  Simulator скомпилированы, Native tests не исполнялись. Полного Xcode app build
+  не было. Gradle последовательно, --max-workers=6.
+- Unit evidence: field/address mapping и один cache, cache/refresh/account keys,
+  смена пользователя/повторный вход/rotation, stale reads/writes, read-before-edit,
+  cancellation, deletion contracts, avatar metadata/байты/URL/header isolation и
+  запрет следующего шага после смены аккаунта, typed username errors, optional
+  enrichment, card cover/tag parity, Shop ownership fallback и guest guard.
+  App contracts вызывают фактические factories через локальный fake backend;
+  это не live backend или ручная UI-приёмка.
+- Studio inspections двух новых Shop/Roaster API-файлов завершились без ошибок.
+  Profile backend inspection пока показывает unresolved UsernameChangeFailure
+  после новых Gradle edges; IDE graph требует sync. Полной чистой IDE-диагностики
+  не заявляем; Android/Native CLI compile успешны. Прежние preview/expect-actual/
+  test opt-in warnings остались.
+- Финальные APK SHA-256: Debug `e356d3fcc557ece73e0dc8c482aad49e9c12884d0e2e95cbbae0d63fa1f92f75`;
+  Sandbox `db62e8fb9fe0825885b921fb921c26a2801cc3077a859bc80f5dc77b390c7917`.
+
+Ничего не устанавливалось и не запускалось на устройствах; production SDK/events,
+аккаунты, локальные данные, камера и backend writes не затронуты. Никаких новых
+UI tests/hosts. Визуальные компоненты, тексты экранов и previews не менялись.
+Ручные UI/OAuth/push/analytics/persistence gates остаются непроверенными.
+Дальше — L2 media и оставшиеся app business slots, затем L4 consumers/старые
+реализации и общий transport/session/storage остаток L3/L5. Полный exit ещё не завершён.
+
+## Пятый срез L2: общий media pipeline — 2026-10-26
+
+База `7a7b0283` + этот checkpoint, PR #195 → develop остаётся открытым.
+Повторный fetch origin/develop и origin/main по запросу владельца: оба refs
+уже являются предками HEAD, отсутствующих коммитов и merge conflicts нет.
+Дополнительное слияние не нужно. Пользовательский project.pbxproj (48+/41−)
+сохранён вне среза. Это один инфраструктурный перенос: число затронутых путей
+включает moves и замену импортов у существующих consumers на обеих платформах.
+
+Владение и удаление старых реализаций:
+
+- Новый `core/media` владеет transport, public/private byte/painter caches,
+  сроками разрешений, session/visibility invalidation, platform decoding,
+  URL resolution и ограниченным prefetch. Он зависит от core/session,
+  Ktor/coroutines, Compose/Kamel/lifecycle и платформенных codecs, но не от
+  application, features, legacy, design-system или Koin. Отдельный Gradle
+  boundary запрещает прежнюю обратную зависимость общих картинок от приложения;
+  публичная поверхность/consumers/риски описаны в core/media/README.md.
+- В core/media перенесены Fetcher, ImageFetcherFactory, PlatformImageConfig,
+  protected image pipeline, iOS ImageIO/Skia decoder и Android bitmap codec.
+  CustomUrl/Fetcher переименованы в ImageUrl/Fetcher, BitmapUtil — в
+  AndroidImageCodec. Не осталось старых alias, wrapper или второй копии loader.
+  Feature-specific photo upload endpoints этим переносом не менялись.
+- `CoffeePeekImage`, `CoffeePeekPhotoViewerImages` и единый
+  `CoffeePeekPhotoViewer` принадлежат design-system. Старые CpImage,
+  FullScreenImageDialog, PhotoViewerImages и PlatformFullScreenDialog удалены.
+  Старый простой DS viewer заменён общей реализацией: attachments сохраняют
+  свой photo slot и используют те же gestures/controls без фиктивных HTTP URLs.
+  Общий full-screen dialog также в design-system; paired light/dark previews
+  находятся рядом с компонентами, тексты loading/close принадлежат DS resources.
+- Root DI предоставляет существующие HTTP clients, SessionReader, API origin
+  и visibility flow. AppContent устанавливает environment и platform hooks
+  аналитического occlusion/reduce motion. SDK и Koin не попали в core/media.
+  Sandbox использует прежний локальный fake client, без default real HTTP
+  fetcher. Production и native callers переключены на новые компоненты.
+
+Сохраняемые контракты:
+
+- Private grant/ETag/304/TTL и cache bounds, смена владельца и mutation/block
+  invalidation остаются в одном pipeline. Истёкший или отозванный painter не
+  выдаётся; память сохранённого composable resource остаётся наблюдаемой,
+  включая результат decode после первого кадра. Cancellation не подавляется.
+- Preview-first, foreground и 50% visibility gate, delayed detail upgrade,
+  приоритет открытой галереи и bounded prefetch сохранены. До шести кандидатов,
+  глобально два запроса, без speculative private originals. URL storage keys
+  по-прежнему идут через /api/file, API photo routes — через API origin.
+- У viewer сохранены preview/original alignment, текущая/видимая страница,
+  neighboring previews без offscreen painter retention, original-on-zoom,
+  pinch/pan/double-tap, swipe-down dismiss, safeDrawing и reduce-motion dismissal.
+  Изменения gallery UI требуют ручной визуальной приёмки; compile/unit evidence
+  не доказывает поведение жестов или platform dialog rendering.
+- Android alpha/EXIF и bounded decode, iOS ImageIO downsampling/alpha/Skia и
+  lifetime возвращаемого byte channel перенесены с прежними реализациями.
+  Unit/native regressions переехали к владельцам, вместо зависимости от app
+  Constants используют явную тестовую конфигурацию. Новых UI cases/hosts нет.
+
+Проверки и ограничения:
+
+- Первый compile остановился на пропущенном Resource import в перенесённом
+  ImagePrefetch. Import исправлен; успешный повтор (2m15s) выполнил 125 unit
+  tests / 25 suites: media 68 / 10, design-system 57 / 15; 0 failures/errors/
+  skips. Android app production compile и iOS Arm64 compile прошли.
+- Финальный объединённый прогон успешен (6m26s): **161 tests / 29 suites**,
+  0 failures/errors/skips: media 68 / 10, design-system 57 / 15, app subset
+  36 / 4 (image projection, photo picker contract, renderer factories, local
+  Sandbox backend). Неизменённые unit tasks UP-TO-DATE; counts не суммируются
+  с первым прогоном. Gradle последовательно, --max-workers=6.
+- Android DirectDebug/DirectSandbox assembled, оба packaged DEX runtime-class
+  guards и Sandbox isolation прошли. Guards дополнены новыми media/DS classes.
+  Debug Simulator framework linked; common Native tests media, design-system
+  и app скомпилированы, но не исполнялись. Прежние preview/expect-actual/test
+  opt-in и bundle-ID inference warnings сохранены, не скрыты.
+- APK SHA-256: Debug `ed872e2b64543ea344bc295836a7307c8eda0314ee2326e769377d4e9774ac22`;
+  Sandbox `fd02b7b297b0c3d09b121e9e89837690788d92710fc2ee81f46627dd99f9866c`.
+- Чужие существующие UI suites сохранены; исправлены ссылки на перемещённые
+  символы. Для их доступа к прежним internal symbols добавлена только compile
+  friend metadata, без расширения production API. Автоматическая проверка
+  разрешений отклонила запрос на compilation instrumentation/UI sources;
+  отвергнутая задача не выполнялась и не повторялась. Metadata/source
+  compatibility этих suites остаётся непроверенной, UI tests не запускались.
+- Studio inspection CoffeePeekImage показала unresolved imports нового media
+  module до Gradle sync IDE. Чистая IDE-диагностика/preview rendering не заявлены;
+  CLI evidence и IDE sync — разные проверки.
+- Установок и запусков на устройстве, полного Xcode app build, Native test
+  execution, реальных account/backend writes, камеры и отправки analytics не
+  было. Ручные темы/шрифты/окна/accessibility/back/cancel/private-photo gates
+  открыты. Настройки и данные телефона не менялись.
+
+Следующий срез: оставшиеся активные app business slots, начиная с author-blocking
+screen/host; затем shared platform UI/services и L3 transport/session/storage.
+Modules и недостижимые старые screens/VM/test consumers ещё не готовы к полному
+удалению. Media code ownership завершён, полная миграция — нет.
+
+## Шестой срез L1: Author blocking UI — 2026-10-26
+
+База `e067afbd`, тот же незавершённый PR #195 → develop. Нового business feature
+или Gradle module нет: уже существующий Author-blocking impl получил свой общий
+Compose UI и ресурсы, api — минимальный AuthorBlockingEntry. Composition передаёт
+существующий singleton presenter, callbacks back/login/register и clearance;
+нового repository, HTTP client, mutation scope или DI внутри UI нет.
+
+Перенос и поведение:
+
+- BlockedAuthorsScreen/Content и AuthorBlockingHost/Content находятся в
+  impl/ui/compose; строки — в default Russian resources. Других переводов
+  прежнего app UI не было; переводы не заявляются. Список, guest/login/register,
+  loading/error/retry/empty, avatar/name/slug, unblock и working guards сохранены.
+  Превью парные light/dark, colocated, с фиктивными состояниями и без Koin/IO.
+- Общие ActionSheet/TextAction/OperationStatus/EmptyState перенесены в DS с
+  прежними границами, cancel group, pressed opacity без ripple и nonmodal
+  progress. CpActionSheet/CpTextAction/CpOperationStatus/CpEmptyState удалены,
+  последние production callers переключены. Avatar выделен из существующей
+  timeline геометрии и используется также списком и прежним ReviewAvatar;
+  letter fallback/44dp/цвета сохранены. Бизнес-тексты остаются в feature.
+- iOS presenter hooks адаптируют прежние NativeActionSheet/OperationStatus;
+  native platform реализации пока остаются открытым L2, не считаются удалёнными.
+  Сохраняется dismissBeforeAction=false, destructive block, ordinary unblock,
+  отдельная отмена, native error/retry alert и доступный progress. Android
+  использует тот же DS renderer. Дублирующей feature-native реализации нет.
+- Оба root navigation пути и Android Sandbox вызывают api entry. Обнаружено,
+  что прежний Host существовал только в App(), а native controllers используют
+  AppContent без него. NativeScreenController теперь устанавливает entry.Host
+  только когда controller видим; скрытые tab/back-stack controllers не должны
+  одновременно показывать одну и ту же глобальную confirmation. Вложенные
+  native sheets не получают ещё один Host через AppContent.
+- Существующие события/маршрутная аналитика проверены: у блокировок нет отдельных
+  business events, BlockedAuthors по-прежнему имеет page=other (existing unit
+  contract). Root screenShown/visit ownership и consent/session SDK не менялись;
+  feature не получила второй analytics service и не отправляла тестовые events.
+- В presenter исправлены две границы account смены: confirmation проверяет
+  владельца перед запуском и перед фактическим вызовом repository; первый
+  account emission больше не теряет replacement через drop(1). Отмена старой
+  mutation не может закрыть новый prompt. Session/visibility repository guards,
+  endpoints/DTO, reconciliation при timeout и cache invalidation не менялись.
+  Четыре unit regression покрывают до/после confirm, задержанный observer и
+  задержанный cancellation cleanup. Не создаётся автоматическая mutation после login.
+
+Проверки до синхронизации develop:
+
+- Первый compile завершился тремя ошибками переноса: lifecycle-effect argument,
+  nullable smart cast из api и loader accessibility argument. Все исправлены;
+  повтор Android/iOS production compile и unit tests успешен (58s).
+- Объединённый прогон (3m11s): **110 tests / 21 suites**, 0 failures/errors/skips:
+  Author-blocking impl 8 / 1, data 7 / 1, DS 57 / 15, app subset 38 / 4.
+  Неизменённые tasks могут быть UP-TO-DATE; результаты не суммируются.
+- Debug/Sandbox assembly, оба packaged DEX guards с AuthorBlockingEntry и
+  factory class, Sandbox isolation прошли. iOS Arm64 production compile,
+  Debug Simulator framework link и common Native test compile impl/data/app
+  успешны. Native tests не исполнялись; Gradle последовательно, --max-workers=6.
+- Studio inspection api entry пока видит unresolved Compose imports после
+  изменения module graph — требуется IDE Gradle sync. CLI compiler прошёл на
+  обеих платформах; чистые IDE/preview checks не заявляются.
+- Существующие чужие UI sources сохранены, только ссылки направлены на api/DS.
+  UI/instrumentation/screenshot tests не создавались, не компилировались и не
+  запускались. Нового test Activity/APK infrastructure нет. Установок, запусков,
+  реальных account writes, camera/backend mutations и production analytics нет.
+- Полный Xcode app build, ручная native activation/one-host проверка, обе темы,
+  шрифты/окна/accessibility, cancel/retry/foreground и работа с реальной сессией
+  остаются отдельными gates. Перенос UI ownership не объявляется этой приёмкой.
+
+Во время проверки develop обновился до `381c6cc2`: merge #199 с map density и
+обновление discovery search contract. Этот срез сохраняется отдельно перед
+слиянием; прежние APK не являются артефактами объединённой ветки. Результат
+слияния и повторные проверки фиксируются следующим checkpoint ниже.
+Пользовательский project.pbxproj сохранён вне среза (48+/41−).
+
+## Синхронизация develop после шестого среза — 2026-10-26
+
+Author-blocking checkpoint: `332420b8`; merge: `d791d5e1`, parent develop
+`381c6cc2`. Включены map density/animations/status-bar expansion из PR #199
+и обновление discovery search contract. Main `16724b7e` уже в истории ветки.
+
+Разрешены два содержательных конфликта:
+
+- DiscoveryMap API сохраняет canvasSize для платформенного размера iOS map
+  container и добавляет clusters из develop. Оба поля остаются отдельными.
+- Общий feature MapContent передаёт и canvasSize, и canvasClusters(isPreview),
+  не возвращаясь к Android-only экрану. Composition адаптирует clusters в
+  прежний native canvas; iOS renderer и свойственная ему политика размеров
+  сохранены. Изменения root nav/status-bar expansion объединены автоматически
+  с новым AuthorBlockingScreenRoute; ни один маршрут не восстановлен в legacy.
+
+Новый MapContentMapper в legacy data и его тест пришли из develop для
+сохранявшегося на том родительском checkpoint iOS consumer. В нашей ветке iOS
+по-прежнему использует migrated entries. Это не разрешение добавлять новые
+business implementations в modules; удаление недостижимых readers остаётся L4.
+
+Повторная проверка объединённого дерева `d791d5e1` успешна (3m04s):
+
+- **230 unit/contract tests / 37 suites**, 0 failures/errors/skips:
+  Author-blocking impl 8 / 1 и data 7 / 1; DS 57 / 15; Discovery data 19 / 1
+  и impl 63 / 6; retained MapContentMapper 2 / 1; app subset 74 / 12.
+  App включает session/author bridge, page mapping, native action selection,
+  map clustering/transitions/native payload и локальный Sandbox backend.
+  Неизменённые tasks могут быть UP-TO-DATE; это один набор, не сумма запусков.
+- DirectDebug/DirectSandbox assembly, оба packaged DEX runtime-class guards
+  и Sandbox isolation успешны. iOS Arm64 production compile, Debug Simulator
+  framework link и common Native test compilation Author-blocking/Discovery
+  data/impl и app успешны. Native tests не исполнялись; Gradle последовательно,
+  --max-workers=6. После слияния нет новых ошибок compilation/test retries.
+- APK SHA-256: Debug `49887ebb5acd7aeffb6e195b86f73c7f52aeae0c728fa8405aa8a8a78105189d`;
+  Sandbox `919ba78d8602fd1b6422954a874fc2d1dc8850e9e8fd7613f94fb10d5d23dcfe`.
+- `git diff --check` проходит, unmerged paths нет; fetched develop целиком
+  является предком HEAD. Пользовательский Xcode project diff остаётся 48+/41−
+  и не включён в коммиты. Прежние preview/expect-actual/opt-in/bundle-ID
+  warnings сохранены. UI suites и новые test hosts не запускались/не создавались.
+
+Ручные device/native Swift runtime gates map checkpoint не переисполнялись и
+не объявляются закрытыми чужой исторической проверкой Pixel 9. Полного Xcode
+app build не было: Kotlin framework link не компилирует Swift renderer.
+Установок и действий с реальными данными не было.
+
+Следующий остаток L1: Discovery/catalog/create slots и root tab содержимое.
+Затем — оставшиеся общие platform services, L3 transport/session/storage и
+удаление последних legacy consumers L4. Полный legacy exit ещё не завершён.
+
+## Синхронизация develop: единый POST поиска — 2026-10-26
+
+Parent checkpoint #195 обновлён первым: merge `5eefd288` включает develop
+`21d9ee9a` (POST migration + quick-filter reload + verification). После проверки
+этот parent передаётся в дочерний #201; новая реализация поиска поверх готового
+исправления не создаётся. Main `16724b7e` уже в истории.
+
+- Обычный и nearby поиск используют POST /api/v1/coffee-shops/search; без origin
+  radius/sort опущены, с origin — distance_asc и 3 км. Обновлены DTO/mapper,
+  строковые type/price значения, quick-filter reload, карта без координат в
+  search row и локальные Sandbox fixtures. Removed GET/старый discovery POST
+  не восстанавливаются. Это код develop, а не новая feature в legacy modules.
+- Автоматическое слияние не оставило конфликтов, но потеряло Coordinates import
+  в ранее перенесённом DiscoveryAdapters: первый прогон упал на compile Debug/
+  Sandbox. Import восстановлен в composition, domain зависимости не расширены.
+  Исходный failure сохранён, не замещён записью успешного повтора.
+- Повтор (1m06s): **178 unit/contract tests / 23 suites**, 0 failures/errors/skips:
+  Discovery data 19 / 1, impl 66 / 6; legacy network contracts 8 / 2, data
+  mapper contracts 4 / 2; app subset 81 / 12. Неизменённые tasks могут быть
+  UP-TO-DATE. Оба Android APK и runtime-class guards/Sandbox isolation прошли;
+  iOS Arm64 production compile прошёл. Simulator link на parent не повторялся.
+- Parent APK SHA-256: Debug `c283eae1b153d2cbb4e7dee2dcfa61904cdf5208db8faf8ff0943037184ad427`;
+  Sandbox `70e1059da81792ac013c680a0d2f12ac7f6049dfbd46ec46a8702a31a4df765d`.
+- Gradle последовательно, --max-workers=6. Никаких app/device запусков, account
+  writes, UI/instrumentation tests или новых test hosts. Полный Xcode/Swift build,
+  Native execution и live backend acceptance этим прогоном не подтверждены.
+  Пользовательский project.pbxproj сохраняется вне коммитов (48+/41−).
+
+## Parent #195: конфликты с develop — 2026-10-26
+
+Develop `063f4c5b` добавил Community post links/share и отложенное разрешение
+геопозиции Discovery. Сначала обновляется parent #195, затем child #201.
+Конфликтующие перемещения Android → commonMain разрешены с сохранением новых
+возможностей develop и общих migrated entries; старые renderer defaults не возвращены.
+
+- Post entry/screen/resources находятся в Community commonMain; обе платформы
+  явно поставляют feature renderer. Внешние ссылки iOS по-прежнему оставлены
+  сайту, как в develop; внутриприкладной маршрут не использует unsupported fallback.
+  Native меню сохраняет enabled/session gate, добавлены Share glyphs на обеих
+  платформах; анимация общего popup из develop сохранена.
+- JVM-only форматирование share-текста заменено общим Kotlin с одноразовой
+  подстановкой: пользовательские `%2$s`/`%3$s` не интерпретируются как шаблон.
+  Два unit-теста проверяют текст, порядок analytics callback и private gating.
+- Discovery permission request key сохранён; picker адаптирован к новому
+  контракту с прежним запросом геопозиции при открытии выбора кофейни.
+- Первый compile выявил пропущенный request key picker, второй — отсутствующий
+  Share branch Android menu. Оба исправлены. Следующий прогон был прерван при
+  framework link; он не записан успешным. Финальный повтор (2m19s) успешен.
+- **312 unit/contract tests / 44 suites**, 0 failures/errors/skips: Community
+  data/domain/impl 22/12/42, Discovery impl 71, DS 57, app subset 108.
+  Неизменённые tasks могут быть UP-TO-DATE; результаты прогонов не суммируются.
+  DirectDebug/DirectSandbox APK, DEX guards и Sandbox isolation прошли;
+  iOS Arm64 production compile, Simulator framework link и common Native
+  Community impl test compilation прошли. Native tests не исполнялись.
+- Studio PostCard inspection вернула timeout без найденных ошибок — неполная
+  проверка. Manual links/share/native menus/location acceptance, темы и полный
+  Xcode app build остаются gates. Gradle последовательно, --max-workers=6;
+  UI/instrumentation tests/hosts не создавались и не запускались. Никаких
+  установок приложений, account writes или production telemetry.
+  Пользовательский project.pbxproj (48+/41−) исключён из merge commit.
+
+## Parent #195: Android CI metadata repair — 2026-10-26
+
+GitHub Android CI run `40374896381`, job `121755150974`, source `8843e5af`,
+failed at `:core:media:compileCommonMainKotlinMetadata`: concrete expect
+ImageUrlFetcher inherited Fetcher<ImageUrl> without declaring its required
+members. Android/iOS target compilation alone had not exercised this separate
+metadata gate. iOS build verification for the same revision succeeded.
+
+The common expect contract now explicitly declares inputDataKClass, source,
+isSupported and fetch. Existing Android/iOS implementations mark those same
+members actual override. Clients, HTTP/permissions/session/cache policy and
+decoder behavior are unchanged; no dependency upgrade or CI bypass is used.
+
+- Targeted metadata compile (media and DS), media unit contracts and media
+  iOS Arm64 compile passed (22s).
+- The complete Android CI command then passed locally (3m03s): DS common
+  metadata, DirectDebug/PlayDebug assembly and DEX guards, aggregate
+  testDebugUnitTest plus app Direct/Play unit suites, all lintDebug tasks plus
+  app Direct/Play lint. Unchanged tasks may be cached/up-to-date.
+- No UI/instrumentation/screenshot suites, test hosts, app launches, production
+  requests/analytics or account writes. The repair was isolated from unfinished
+  Contributions work; local user Xcode/config files are not committed. The
+  exact published revision still needs its new GitHub run before CI is called green.
+- Shared Kotlin changes must include common metadata compilation in local
+  verification; target assembly/Native compile cannot stand in for it.

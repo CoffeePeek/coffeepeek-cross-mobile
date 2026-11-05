@@ -1,5 +1,7 @@
 package com.coffeepeek.feature.checkinhistory.impl.ui
 
+import com.coffeepeek.feature.checkinhistory.domain.model.HomeHistoryPhoto
+
 import androidx.lifecycle.ViewModelStore
 import com.coffeepeek.feature.checkinhistory.domain.model.CheckInHistoryPage
 import com.coffeepeek.feature.checkinhistory.domain.model.HistoryAddress
@@ -736,6 +738,41 @@ class CombinedHistoryViewModelTest {
         vm.onAction(CombinedHistoryAction.LoadMore)
         assertEquals(2, vm.state.value.homes.page)
         assertFalse(vm.state.value.homes.isLoadingMore)
+    }
+
+    @Test fun timelinePhotosKeepShopAndHomeAlbumsSeparateWithoutOpeningDetails() = runTest(dispatcher) {
+        val shop = shop("same").copy(photoUrls = listOf("shop-original"), photoThumbnailUrls = listOf(""), photoDetailUrls = listOf("shop-detail"))
+        val home = home("same").copy(photos = listOf(HomeHistoryPhoto("photo", "home-original", "home-preview", "home-detail")))
+        val shops = Shops().apply { pageResult = { Result.success(CheckInHistoryPage(listOf(shop), 1, it, 20)) } }
+        val homes = Homes().apply { pageResult = { page, _ -> Result.success(homePage(page, home)) } }
+        val model = vm(shops, homes)
+        val events = mutableListOf<CheckInHistoryEventEnvelope>()
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { model.events.toList(events) }
+        runCurrent()
+        model.onAction(CombinedHistoryAction.OpenEntryPhoto("shop:same", 0))
+        model.onAction(CombinedHistoryAction.OpenEntryPhoto("home:same", 0))
+        runCurrent()
+        assertEquals(listOf(CheckInHistoryEvent.OpenPhoto(listOf(""), 0, listOf("shop-original")),
+            CheckInHistoryEvent.OpenPhoto(listOf("home-preview"), 0, listOf("home-original"))), events.map { it.event })
+        assertNull(model.state.value.selectedShop)
+        assertTrue(events.none { it.isDeliverableTo(1, true) || it.isDeliverableTo(0, false) })
+    }
+
+    @Test fun timelinePhotoActionsRejectUnknownRowsInvalidIndicesAndLoggedOutState() = runTest(dispatcher) {
+        val shops = Shops().apply { pageResult = { Result.success(CheckInHistoryPage(listOf(shop("photo").copy(photoUrls = listOf("original"))), 1, it, 20)) } }
+        val model = vm(shops)
+        val events = mutableListOf<CheckInHistoryEventEnvelope>()
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { model.events.toList(events) }
+        runCurrent()
+        listOf("shop:missing" to 0, "shop:photo" to -1, "shop:photo" to 1).forEach { (key, index) ->
+            model.onAction(CombinedHistoryAction.OpenEntryPhoto(key, index))
+        }
+        runCurrent()
+        model.onAction(CombinedHistoryAction.SessionChanged(1, false))
+        runCurrent()
+        model.onAction(CombinedHistoryAction.OpenEntryPhoto("shop:photo", 0))
+        runCurrent()
+        assertTrue(events.isEmpty())
     }
 
     @Test fun photoViewerOpensOnTheThumbnailAlreadyShown() = runTest(dispatcher) {

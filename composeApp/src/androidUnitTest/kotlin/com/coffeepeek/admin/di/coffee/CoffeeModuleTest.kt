@@ -34,7 +34,7 @@ class CoffeeModuleTest {
             val picker = app.koin.get<CoffeePicker>()
             assertEquals(listOf("sandbox-kenya"), picker.search("  Kenya ").getOrThrow().map { it.slug })
             val shelf = CoffeeShelfTab(app.koin.get(), app.koin.get(), FakeSettingRepository())
-            assertNotNull(coffeeCatalogueScreenRenderer(repository, shelf))
+            assertNotNull(featureCoffeeScreenRenderer(repository, shelf))
         } finally {
             app.close()
             closeClients(client, backend)

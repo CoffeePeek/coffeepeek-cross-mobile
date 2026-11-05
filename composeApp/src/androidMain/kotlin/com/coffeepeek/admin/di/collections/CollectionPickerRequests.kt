@@ -15,9 +15,8 @@ import kotlin.time.TimeMark
 import kotlin.time.TimeSource
 
 /** App-owned delivery of a successful heart action to the root sheet, never a favorite writer. */
-internal class CollectionPickerRequests(private val sessions: SessionReader, private val scope: CoroutineScope) {
-    internal data class Lease(val owner: String, val generation: Long)
-    internal data class Request(val lease: Lease, val target: CollectionTarget)
+internal class CollectionPickerRequests(private val sessions: SessionReader, private val scope: CoroutineScope) : CollectionPickerPrompts {
+    internal data class Request(val lease: CollectionPickerLease, val target: CollectionTarget)
     private val lock = Any()
     private var owner = activeOwner()
     private var accountGeneration = sessions.accountGeneration()
@@ -57,14 +56,14 @@ internal class CollectionPickerRequests(private val sessions: SessionReader, pri
         added(lease(active), target)
     }
 
-    fun lease(account: String): Lease? = synchronized(lock) {
+    override fun lease(account: String): CollectionPickerLease? = synchronized(lock) {
         updateAccount()
-        if (owner == account) Lease(account, generation) else null
+        if (owner == account) CollectionPickerLease(account, generation) else null
     }
 
-    fun added(lease: Lease?, slug: String) = added(lease, CollectionTarget(CollectionTargetKind.CoffeeShop, slug))
+    override fun added(lease: CollectionPickerLease?, slug: String) = added(lease, CollectionTarget(CollectionTargetKind.CoffeeShop, slug))
 
-    fun added(lease: Lease?, target: CollectionTarget): Unit = synchronized(lock) {
+    fun added(lease: CollectionPickerLease?, target: CollectionTarget): Unit = synchronized(lock) {
         updateAccount()
         if (lease == null || owner != lease.owner || generation != lease.generation || target.slug.isBlank()) return@synchronized
         if (pending.value?.let { it.lease == lease && it.target == target } == true) return@synchronized

@@ -27,7 +27,7 @@ internal fun homeCheckInModule(apiBaseUrl: String = Constants.BASE_URL) = module
         val methods = get<BrewMethodCatalog>()
         val shelfBags = ShelfHomeCheckInBags(get())
         FeatureCheckInCreateFlowRenderer(get()) { lease, tracker ->
-            homeCheckInEditor(lease, repository, picker, methods, CheckInSource.Global, tracker, shelfBags)
+            appHomeCheckInEditor(lease, repository, picker, methods, CheckInSource.Global, tracker, shelfBags)
         }
     }
 }

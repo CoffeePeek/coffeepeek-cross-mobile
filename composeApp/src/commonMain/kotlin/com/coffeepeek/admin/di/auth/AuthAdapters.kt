@@ -22,6 +22,7 @@ class AppAuthAnalytics : AuthAnalytics {
             method = when (method) {
                 SignInMethod.Password -> "password"
                 SignInMethod.Google -> "google"
+                SignInMethod.Apple -> "apple"
             },
             entry = when (entry) {
                 AuthEntry.Login -> "login"

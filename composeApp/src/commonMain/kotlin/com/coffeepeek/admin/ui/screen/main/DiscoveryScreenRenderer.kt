@@ -4,7 +4,7 @@ import androidx.compose.runtime.Composable
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.emptyFlow
 
-/** Platform selection only. iOS and shared code keep the legacy discovery tab; Android composes the migrated entry. */
+/** Application route adapter; both platforms bind migrated feature entries explicitly. */
 interface DiscoveryScreenRenderer {
     /** [onMapExpandedChange] tells the host that the map covers the screen, so it can hide the floating navigation. */
     @Composable

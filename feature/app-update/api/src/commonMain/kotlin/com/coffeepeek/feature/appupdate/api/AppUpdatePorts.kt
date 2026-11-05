@@ -2,6 +2,9 @@ package com.coffeepeek.feature.appupdate.api
 
 /** What the app tells the update feature about itself. */
 interface AppUpdateEnvironment {
+    /** Whether this installed build can be updated through its configured distribution channel. */
+    val checksEnabled: Boolean get() = true
+
     /** The installed version code, or null when the build does not know it (then no update is ever offered). */
     val versionCode: Long?
 

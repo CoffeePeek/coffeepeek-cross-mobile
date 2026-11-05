@@ -12,9 +12,10 @@ import org.koin.dsl.module
 internal fun checkInHistoryModule(apiBaseUrl: String = Constants.BASE_URL) = module {
     single<CheckInHistoryRepository> { createCheckInHistoryRepository(get<CoffeePeekClient>().client, apiBaseUrl) }
     single<HomeHistoryReader> { HomeHistoryReaderAdapter(get()) }
-    single { deviceCheckInHistoryCalendar() }
+    single { AppCheckInHistoryCalendar() }
     single<HistoryHomeEditorFactory> {
         historyHomeEditorFactory(get(), get(), get(), ShelfHomeCheckInBags(get()))
     }
-    single { CheckInHistoryFeatureScreenRenderer(get(), get(), get(), get(), get()) }
+    single { FeatureCheckInHistoryScreenRenderer(get(), get(), get(), get(), get()) }
+    single { FeatureProfileActivityRenderer(get(), get(), get(), get()) }
 }

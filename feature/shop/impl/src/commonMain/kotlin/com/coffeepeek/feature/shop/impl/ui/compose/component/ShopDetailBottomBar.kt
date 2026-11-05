@@ -12,7 +12,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.navigationBarsPadding
+import com.coffeepeek.core.designsystem.component.coffeePeekViewportBottomPadding
+import com.coffeepeek.core.designsystem.component.coffeePeekScreenBottomPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -59,7 +60,7 @@ internal fun ShopDetailBottomBar(
     modifier: Modifier = Modifier,
     hazeState: HazeState? = null,
 ) {
-    Row(modifier.fillMaxWidth().navigationBarsPadding().padding(CoffeePeekDimens.spacing3),
+    Row(modifier.fillMaxWidth().coffeePeekViewportBottomPadding().coffeePeekScreenBottomPadding().padding(CoffeePeekDimens.spacing3),
         horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2),
         verticalAlignment = Alignment.CenterVertically) {
         if (forCheckIn) ShopPickerActions(onChooseAnotherShop, onCheckIn)

@@ -1,4 +1,6 @@
 <resources>
+    <string name="contribution_price_title">Цена</string>
+    <string name="contribution_price_cappuccino">Цена (капучино за %1$s)</string>
     <string name="favorites_share_collection">Поделиться</string>
     <string name="profile_menu_business">Мой бизнес</string>
     <string name="coffeepeek_legacy_choose_rating">%1$s: выбрать %2$d из 5</string>

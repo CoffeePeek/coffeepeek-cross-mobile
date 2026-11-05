@@ -4,6 +4,13 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 
 class CoffeePriceFormattingTest {
+    @Test fun precisionRegressionsFromTheRetiredAppScreenRemainCovered() {
+        assertEquals("45", formatCoffeePrice(45.0))
+        assertEquals("18.7", formatCoffeePrice(18.7))
+        assertEquals("22.99", formatCoffeePrice(22.99))
+        assertEquals("0.05", formatCoffeePrice(0.05))
+    }
+
     @Test fun integersDoNotGainFractionDigits() {
         assertEquals("0", formatCoffeePrice(0.0))
         assertEquals("24", formatCoffeePrice(24.0))

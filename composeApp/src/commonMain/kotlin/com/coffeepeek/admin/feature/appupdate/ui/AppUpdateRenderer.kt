@@ -2,13 +2,8 @@ package com.coffeepeek.admin.feature.appupdate.ui
 
 import androidx.compose.runtime.Composable
 
-/** Platform selection only. iOS keeps the legacy prompt; Android composes the migrated entry. */
+/** Application route adapter; both platforms bind migrated feature entries explicitly. */
 interface AppUpdateRenderer {
     @Composable
     fun Prompt()
-}
-
-internal object LegacyAppUpdateRenderer : AppUpdateRenderer {
-    @Composable
-    override fun Prompt() = AppUpdatePrompt()
 }

@@ -37,6 +37,8 @@ private const val PAGE_SIZE = 20
 private const val QUERY_DEBOUNCE_MS = 400L
 private const val PLACEMENT = "discovery"
 
+internal enum class SearchPurpose { Discovery, CheckInPicker }
+
 /**
  * The shop search as the legacy feed kept it (the debounced query, the filters, the city, nearby, paging, the optimistic favorite), with three differences.
  * One account at a time: a change of account drops the visited and favorites filters and reloads, a guest is sent to sign in for them. A query typed in the first
@@ -50,6 +52,7 @@ internal class SearchViewModel(
     private val location: DiscoveryLocation,
     private val account: DiscoveryAccount,
     private val analytics: DiscoveryAnalytics,
+    private val purpose: SearchPurpose = SearchPurpose.Discovery,
 ) : MviViewModel<SearchState, SearchAction, SearchEvent>(SearchState()) {
     private val queries = MutableSharedFlow<String>(extraBufferCapacity = 64)
     private val favoriteGuard = Mutex()
@@ -63,7 +66,7 @@ internal class SearchViewModel(
     private var catalogJob: Job? = null
     private var loadJob: Job? = null
     private var locationTimeout: Job? = null
-    private var searchPresented = false
+    private var searchPresented = purpose == SearchPurpose.CheckInPicker
     private var presentationVersion = 0L
     private var lastSearchResult: Pair<DiscoveryCriteria, Int>? = null
     private var loadedCriteria: DiscoveryCriteria? = null
@@ -147,7 +150,7 @@ internal class SearchViewModel(
     }
 
     private suspend fun openShop(shopId: String) {
-        analytics.shopOpened(currentState.visibleShops.indexOfFirst { it.id == shopId }.takeIf { it >= 0 }?.plus(1))
+        if (purpose == SearchPurpose.Discovery) analytics.shopOpened(currentState.visibleShops.indexOfFirst { it.id == shopId }.takeIf { it >= 0 }?.plus(1))
         sendEvent(SearchEvent.OpenShop(shopId))
     }
 
@@ -208,12 +211,13 @@ internal class SearchViewModel(
     private fun onLocation(point: Coordinates?) {
         if (point == null || !point.isValid || (point == origin && !currentState.nearbyRequested)) return
         val enabling = currentState.nearbyRequested
+        val selectNearby = origin == null && purpose == SearchPurpose.CheckInPicker
         val before = currentState.filters
         origin = point
         reportLocation(GeolocationOutcome.Available, enabling)
         cancelNearbyRequest()
         updateState { copy(canUseNearby = true, userLocation = point,
-            filters = filters.copy(nearbyOnly = enabling || filters.nearbyOnly)) }
+            filters = filters.copy(nearbyOnly = enabling || selectNearby || filters.nearbyOnly)) }
         if (enabling) trackChange(before)
         if (currentState.filters.nearbyOnly) {
             updateState { copy(shops = emptyList()) }
@@ -222,7 +226,7 @@ internal class SearchViewModel(
     }
 
     private fun reportLocation(outcome: GeolocationOutcome, userTriggered: Boolean = false) {
-        analytics.geolocation(PLACEMENT, userTriggered = userTriggered, outcome = outcome)
+        if (purpose == SearchPurpose.Discovery) analytics.geolocation(PLACEMENT, userTriggered = userTriggered, outcome = outcome)
     }
 
     private fun loadCatalogs() {

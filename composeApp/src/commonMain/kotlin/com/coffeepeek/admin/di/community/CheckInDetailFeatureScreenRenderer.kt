@@ -11,8 +11,8 @@ import com.coffeepeek.feature.community.api.CommunityPostEntry
 import com.coffeepeek.feature.community.domain.repository.CommunityRepository
 import com.coffeepeek.feature.community.impl.createCommunityPostEntry
 
-/** Posts and shared post links open in the migrated entry, with the feed's images, dates and photo viewer. */
-internal class CheckInDetailFeatureScreenRenderer(private val entry: CommunityPostEntry) : CheckInDetailScreenRenderer {
+/** Opens shared post links in the migrated entry, with the feed's images, dates and photo viewer. */
+internal class FeatureCheckInDetailScreenRenderer(private val entry: CommunityPostEntry) : CheckInDetailScreenRenderer {
     @Composable
     override fun Content(id: String) {
         entry.Content(
@@ -27,8 +27,8 @@ internal class CheckInDetailFeatureScreenRenderer(private val entry: CommunityPo
     }
 }
 
-internal fun checkInDetailFeatureScreenRenderer(
+internal fun featureCheckInDetailScreenRenderer(
     repository: CommunityRepository, account: CommunityAccount, visibility: AuthorVisibility, blockActions: AuthorBlockActions,
-): CheckInDetailScreenRenderer = CheckInDetailFeatureScreenRenderer(
+): CheckInDetailScreenRenderer = FeatureCheckInDetailScreenRenderer(
     createCommunityPostEntry(repository, account, visibility, blockActions, communityHost()),
 )

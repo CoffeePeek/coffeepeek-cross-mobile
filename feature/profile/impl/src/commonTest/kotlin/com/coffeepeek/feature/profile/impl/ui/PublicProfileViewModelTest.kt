@@ -130,6 +130,19 @@ class PublicProfileViewModelTest {
         }
     }
 
+    @Test fun checkInActionAvailabilityTracksTheAccountInsteadOfSurvivingLogout() = runTest(dispatcher) {
+        val accounts = FakeAccounts()
+        val model = model(accounts = accounts)
+        runCurrent()
+        assertFalse(model.state.value.isSignedIn)
+        accounts.signIn("viewer")
+        runCurrent()
+        assertTrue(model.state.value.isSignedIn)
+        accounts.signIn(null)
+        runCurrent()
+        assertFalse(model.state.value.isSignedIn)
+    }
+
     private fun TestScope.events(model: PublicProfileViewModel): List<PublicProfileEvent> =
         mutableListOf<PublicProfileEvent>().also { list -> backgroundScope.launch { model.events.collect { list += it } } }
 

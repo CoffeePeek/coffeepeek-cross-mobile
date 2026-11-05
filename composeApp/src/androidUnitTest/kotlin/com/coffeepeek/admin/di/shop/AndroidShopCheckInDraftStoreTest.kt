@@ -15,14 +15,14 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import kotlin.test.assertFailsWith
 
-class AndroidShopCheckInDraftStoreTest {
+class AppShopCheckInDraftStoreTest {
     private val now = Instant.parse("2026-10-09T12:00:00Z").toEpochMilli()
     private val dates = AndroidShopCheckInDateFormatter({ ZoneId.of("Europe/Minsk") }, { now })
     private fun initial(shop: String = "shop") = ShopCheckInCreateInput(shop, "", ShopRating(4, 4, 4), dates.visitInstant(now))
 
     @Test fun closedModalDraftNeverMovesToAnotherAccount() {
         val legacy = CheckInDraftStore { now }
-        val adapter = AndroidShopCheckInDraftStore(legacy, dates)
+        val adapter = AppShopCheckInDraftStore(legacy, dates)
         val old = adapter.forShop("internal-id", "public-address", "first-account")
         val snapshot = old.open(initial("public-address")).getOrThrow()
         old.save(snapshot.copy(input = snapshot.input.copy(text = "Private note"), deliveryUnconfirmed = true)).getOrThrow()
@@ -38,7 +38,7 @@ class AndroidShopCheckInDraftStoreTest {
 
     @Test fun sameAccountReopeningKeepsTheInputAndUncertaintyGuard() {
         val legacy = CheckInDraftStore { now }
-        val adapter = AndroidShopCheckInDraftStore(legacy, dates)
+        val adapter = AppShopCheckInDraftStore(legacy, dates)
         val old = adapter.forShop("internal-id", "public-address", "owner")
         val snapshot = old.open(initial("public-address")).getOrThrow()
         old.save(snapshot.copy(input = snapshot.input.copy(text = "Retain note"), deliveryUnconfirmed = true)).getOrThrow()
@@ -54,7 +54,7 @@ class AndroidShopCheckInDraftStoreTest {
             customDrinkName = "Тоник", drinkName = "Другое",
             photos = listOf(PickedImage(byteArrayOf(1, 2), "visit.png", "image/png")))
         legacy.save(draft)
-        val adapter = AndroidShopCheckInDraftStore(legacy, dates)
+        val adapter = AppShopCheckInDraftStore(legacy, dates)
         val restored = adapter.open(initial()).getOrThrow().input
         assertEquals("Фильтр", restored.text)
         assertEquals(ShopRating(coffee = 5, service = 3, place = 4), restored.rating)
@@ -69,7 +69,7 @@ class AndroidShopCheckInDraftStoreTest {
 
     @Test fun keepsDeliveryGuardOnReopenButResetsItAfterLogoutAndShopReplacement() {
         val legacy = CheckInDraftStore { now }
-        val adapter = AndroidShopCheckInDraftStore(legacy, dates)
+        val adapter = AppShopCheckInDraftStore(legacy, dates)
         val first = adapter.open(initial()).getOrThrow()
         adapter.save(first.copy(deliveryUnconfirmed = true)).getOrThrow()
         assertTrue(adapter.open(initial()).getOrThrow().deliveryUnconfirmed)
@@ -82,7 +82,7 @@ class AndroidShopCheckInDraftStoreTest {
 
     @Test fun staleSaveAndCleanupCannotRecreateOrEraseAnotherDraft() {
         val legacy = CheckInDraftStore { now }
-        val adapter = AndroidShopCheckInDraftStore(legacy, dates)
+        val adapter = AppShopCheckInDraftStore(legacy, dates)
         val stale = adapter.open(initial()).getOrThrow()
         legacy.clearAll()
         assertTrue(adapter.save(stale).isFailure)
@@ -95,7 +95,7 @@ class AndroidShopCheckInDraftStoreTest {
 
     @Test fun clearingSuccessfulSubmissionUsesTheSameStoreAndNextOpenHasDefaults() {
         val legacy = CheckInDraftStore { now }
-        val adapter = AndroidShopCheckInDraftStore(legacy, dates)
+        val adapter = AppShopCheckInDraftStore(legacy, dates)
         adapter.save(adapter.open(initial()).getOrThrow().copy(deliveryUnconfirmed = true)).getOrThrow()
         adapter.clear("shop").getOrThrow()
         assertEquals(null, legacy.peek())
@@ -111,7 +111,7 @@ class AndroidShopCheckInDraftStoreTest {
             val formatter = AndroidShopCheckInDateFormatter({ ZoneId.of(zone) }, { now })
             assertEquals(selected, formatter.pickerMillis(formatter.visitInstant(selected)))
             val legacy = CheckInDraftStore { now }
-            val adapter = AndroidShopCheckInDraftStore(legacy, formatter)
+            val adapter = AppShopCheckInDraftStore(legacy, formatter)
             val first = adapter.open(initial()).getOrThrow()
             adapter.save(first.copy(input = first.input.copy(visitedAtIso = formatter.visitInstant(selected)))).getOrThrow()
             assertEquals(Instant.parse(formatter.visitInstant(selected)).toEpochMilli(), legacy.peek()!!.visitMillis)
@@ -134,7 +134,7 @@ class AndroidShopCheckInDraftStoreTest {
 
     @Test fun cancellationIsNotConvertedIntoStorageFailure() {
         val legacy = CheckInDraftStore { throw CancellationException("cancel") }
-        assertFailsWith<CancellationException> { AndroidShopCheckInDraftStore(legacy, dates).open(initial()) }
+        assertFailsWith<CancellationException> { AppShopCheckInDraftStore(legacy, dates).open(initial()) }
     }
 
     @Test fun dateChangeKeepsLocalVisitTimeAndRoundTripKeepsTheExactInstant() {
@@ -142,7 +142,7 @@ class AndroidShopCheckInDraftStoreTest {
         val selected = Instant.parse("2026-06-15T00:00:00Z").toEpochMilli()
         assertEquals("2026-06-15T12:34:56.789Z", dates.visitInstant(selected, reference))
         val legacy = CheckInDraftStore { now }
-        val adapter = AndroidShopCheckInDraftStore(legacy, dates)
+        val adapter = AppShopCheckInDraftStore(legacy, dates)
         val first = adapter.open(initial()).getOrThrow()
         val input = first.input.copy(visitedAtIso = reference)
         adapter.save(first.copy(input = input)).getOrThrow()
@@ -160,7 +160,7 @@ class AndroidShopCheckInDraftStoreTest {
     @Test fun bindingPreservesInternalDraftKeyAndUsesPublicSlugForTransport() {
         val legacy = CheckInDraftStore { now }
         legacy.save(legacy.open("internal-id").copy(note = "Existing draft"))
-        val adapter = AndroidShopCheckInDraftStore(legacy, dates)
+        val adapter = AppShopCheckInDraftStore(legacy, dates)
         val binding = adapter.forShop("internal-id", "public-address")
         val snapshot = binding.open(initial("public-address")).getOrThrow()
         assertEquals("Existing draft", snapshot.input.text)
@@ -175,7 +175,7 @@ class AndroidShopCheckInDraftStoreTest {
 
     @Test fun oldBindingCannotOverwriteReplacementEvenAfterItWasOpenedByNewBinding() {
         val legacy = CheckInDraftStore { now }
-        val adapter = AndroidShopCheckInDraftStore(legacy, dates)
+        val adapter = AppShopCheckInDraftStore(legacy, dates)
         val old = adapter.forShop("internal-id", "public-address")
         val stale = old.open(initial("public-address")).getOrThrow()
         legacy.clearAll()
@@ -189,7 +189,7 @@ class AndroidShopCheckInDraftStoreTest {
 
     @Test fun bindingRejectsWrongSlugWithoutOpeningOrClearingDraft() {
         val legacy = CheckInDraftStore { now }
-        val binding = AndroidShopCheckInDraftStore(legacy, dates).forShop("internal-id", "public-address")
+        val binding = AppShopCheckInDraftStore(legacy, dates).forShop("internal-id", "public-address")
         assertTrue(binding.open(initial("wrong-address")).isFailure)
         assertEquals(null, legacy.peek())
         binding.open(initial("public-address")).getOrThrow()
@@ -199,7 +199,7 @@ class AndroidShopCheckInDraftStoreTest {
 
     @Test fun originalPhotosSurviveModalReopenButNeverAccountReplacement() {
         val legacy = CheckInDraftStore { now }
-        val adapter = AndroidShopCheckInDraftStore(legacy, dates)
+        val adapter = AppShopCheckInDraftStore(legacy, dates)
         val binding = adapter.forShop("internal-id", "public-address", "owner")
         val first = binding.open(initial("public-address")).getOrThrow()
         val original = ShopCheckInPhoto(byteArrayOf(1, 2), "visit.jpg")
@@ -216,7 +216,7 @@ class AndroidShopCheckInDraftStoreTest {
 
     @Test fun legacyClearInvalidatesOriginalPhotoDraft() {
         val legacy = CheckInDraftStore { now }
-        val adapter = AndroidShopCheckInDraftStore(legacy, dates)
+        val adapter = AppShopCheckInDraftStore(legacy, dates)
         val first = adapter.open(initial()).getOrThrow()
         adapter.save(first.copy(input = first.input.copy(photos = listOf(ShopCheckInPhoto(byteArrayOf(1), "visit.jpg"))))).getOrThrow()
         legacy.clearAll()

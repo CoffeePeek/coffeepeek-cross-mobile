@@ -30,6 +30,7 @@ import platform.CoreFoundation.kCFTypeDictionaryValueCallBacks
 import platform.Security.SecItemAdd
 import platform.Security.SecItemCopyMatching
 import platform.Security.SecItemDelete
+import platform.Security.errSecItemNotFound
 import platform.Security.errSecSuccess
 import platform.Security.kSecAttrAccount
 import platform.Security.kSecAttrAccessible
@@ -42,13 +43,18 @@ import platform.Security.kSecMatchLimitOne
 import platform.Security.kSecReturnData
 import platform.Security.kSecValueData
 
+/** A delete succeeded when the item is gone: removed now, or not there to begin with. */
+internal fun keychainDeleteSucceeded(status: Int): Boolean = status == errSecSuccess || status == errSecItemNotFound
+
 private class IosKeychainSessionStore : SessionSecureStore {
     private val state = MutableStateFlow(readFromKeychain())
 
     override suspend fun read(): SessionCredentials? = state.value ?: readFromKeychain().also { state.value = it }
 
     override suspend fun write(data: SessionCredentials?) {
-        baseQuery().useAndRelease { query -> SecItemDelete(query) }
+        val deleteStatus = baseQuery().useAndRelease { query -> SecItemDelete(query) }
+        // A failed removal must not be reported as a completed logout: the old item would be read again after a restart.
+        if (data == null) check(keychainDeleteSucceeded(deleteStatus)) { "Unable to remove secure session from Keychain" }
 
         if (data != null) {
             val bytes = SessionJson.encodeToString(data).encodeToByteArray()

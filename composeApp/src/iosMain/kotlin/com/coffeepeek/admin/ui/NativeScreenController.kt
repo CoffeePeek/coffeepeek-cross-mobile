@@ -190,6 +190,8 @@ internal class NativeScreenController(
                     ),
                 ) {
                     content()
+                    // Native tabs keep multiple controllers alive; only the visible one presents prompts.
+                    if (analyticsVisible) com.coffeepeek.admin.di.authorblocking.AuthorBlockingRootHost()
                 }
             }
         }
@@ -209,6 +211,8 @@ private object IosCoffeePeekGlassPresenter : CoffeePeekNativeGlassPresenter {
             CoffeePeekGlassIcon.FavoriteFilled -> GlassControlIcon.FavoriteFilled
             CoffeePeekGlassIcon.Share -> GlassControlIcon.Share
             CoffeePeekGlassIcon.Close -> GlassControlIcon.Close
+            CoffeePeekGlassIcon.Zones -> GlassControlIcon.Zones
+            CoffeePeekGlassIcon.Location -> GlassControlIcon.Location
         }
         PlatformGlassIconButton(platformIcon, onClick, contentDescription, modifier, enabled, selected, isLoading) {}
         return true

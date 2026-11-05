@@ -8,7 +8,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
+import com.coffeepeek.core.designsystem.component.CoffeePeekScaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -53,6 +53,23 @@ internal fun FavoritesScreen(
     onOpenCollections: () -> Unit = {},
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    ObserveFavoritesEvents(viewModel, onOpenShop, onOpenRoaster, onBack, onShare, onOpenCollections)
+    FavoritesScreenContent(
+        state = state,
+        onAction = viewModel::onAction,
+        distanceForCoordinates = distanceForCoordinates,
+    )
+}
+
+@Composable
+internal fun ObserveFavoritesEvents(
+    viewModel: FavoritesViewModel,
+    onOpenShop: (String) -> Unit,
+    onOpenRoaster: (String) -> Unit,
+    onBack: () -> Unit = {},
+    onShare: () -> Unit = {},
+    onOpenCollections: () -> Unit = {},
+) {
     val currentOpenShop by rememberUpdatedState(onOpenShop)
     val currentOpenRoaster by rememberUpdatedState(onOpenRoaster)
     val currentBack by rememberUpdatedState(onBack)
@@ -69,11 +86,6 @@ internal fun FavoritesScreen(
             }
         }
     }
-    FavoritesScreenContent(
-        state = state,
-        onAction = viewModel::onAction,
-        distanceForCoordinates = distanceForCoordinates,
-    )
 }
 
 /** Stateless content: no ViewModel, DI, network or persistence access. */
@@ -87,7 +99,7 @@ internal fun FavoritesScreenContent(
     val listState = rememberLazyListState()
     val actionError = stringResource(Res.string.favorites_action_error)
     LaunchedEffect(state.actionFailed) { if (state.actionFailed) snackbar.showSnackbar(actionError) }
-    Scaffold(snackbarHost = { SnackbarHost(snackbar) }, topBar = {
+    CoffeePeekScaffold(snackbarHost = { SnackbarHost(snackbar) }, topBar = {
         FavoritesTopBar(state.shops.isNotEmpty() || state.roasters.isNotEmpty(),
             { onAction(FavoritesAction.Back) }, { onAction(FavoritesAction.Share) }, { onAction(FavoritesAction.Collections) })
     }) { padding ->

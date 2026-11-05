@@ -1,5 +1,6 @@
 package com.coffeepeek.admin.ui.screen.profile
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -10,24 +11,25 @@ import com.coffeepeek.core.designsystem.component.CoffeePeekTextButton as TextBu
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.layout.ContentScale
 import coffeepeek.composeapp.generated.resources.*
 import com.coffeepeek.admin.ui.screen.checkins.CalendarPhoto
 import com.coffeepeek.admin.ui.screen.checkins.CalendarWeek
-import com.coffeepeek.admin.utils.CpImage
 import com.coffeepeek.core.designsystem.component.CoffeePeekCard
+import com.coffeepeek.core.designsystem.component.CoffeePeekImage
 import com.coffeepeek.core.designsystem.component.CoffeePeekShimmer
-import com.coffeepeek.core.designsystem.text.coffeePeekPluralForm
+import com.coffeepeek.core.designsystem.component.CoffeePeekActivityDay
+import com.coffeepeek.core.designsystem.component.CoffeePeekActivityWeek
+import com.coffeepeek.core.designsystem.component.CoffeePeekActivityWeekLabels
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
+import org.jetbrains.compose.resources.pluralStringResource
+import org.jetbrains.compose.ui.tooling.preview.Preview
 import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 
-/** One week layout for personal and public activity; callers supply only the data they may expose. */
+/** Compatibility adapter for legacy/public callers; shared week geometry lives in design-system. */
 @Composable
 internal fun ProfileActivityWeek(
     week: CalendarWeek, counts: Map<String, Int>, photos: Map<String, List<CalendarPhoto>>,
@@ -39,21 +41,17 @@ internal fun ProfileActivityWeek(
     }
     val labels = listOf(Res.string.profile_week_monday, Res.string.profile_week_tuesday, Res.string.profile_week_wednesday,
         Res.string.profile_week_thursday, Res.string.profile_week_friday, Res.string.profile_week_saturday, Res.string.profile_week_sunday)
-    val openLabel = stringResource(Res.string.profile_week_open)
-    CoffeePeekCard(
-        modifier = Modifier.semantics { contentDescription = openLabel }, onClick = onClick,
-        elevation = 0.dp, shape = RoundedCornerShape(20.dp),
-        contentPadding = PaddingValues(horizontal = 10.dp, vertical = 12.dp),
-    ) {
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-            week.dates.forEachIndexed { index, date ->
-                ProfileWeekDay(date, stringResource(labels[index]), counts[date] ?: 0, photos[date].orEmpty(),
-                    isToday = date == week.today, modifier = Modifier.weight(1f))
-            }
-        }
-        if (failed) Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(stringResource(Res.string.profile_week_error), Modifier.weight(1f), style = MaterialTheme.typography.labelSmall)
-            TextButton(onClick = onRetry) { Text(stringResource(Res.string.profile_week_retry)) }
+    val days = week.dates.mapIndexed { index, date ->
+        val count = counts[date] ?: 0
+        CoffeePeekActivityDay(stringResource(labels[index]),
+            stringResource(Res.string.profile_week_day, date, pluralStringResource(Res.plurals.profile_week_count, count, count)),
+            date == week.today, count > 0, photos[date].orEmpty().size)
+    }
+    CoffeePeekActivityWeek(days, CoffeePeekActivityWeekLabels(stringResource(Res.string.profile_week_open),
+        stringResource(Res.string.profile_week_loading), stringResource(Res.string.profile_week_error),
+        stringResource(Res.string.profile_week_retry)), loading, failed, onClick, onRetry) { index, modifier ->
+        photos[week.dates[index]].orEmpty().firstOrNull()?.let { photo ->
+            CoffeePeekImage(data = photo.url, modifier = modifier, contentScale = ContentScale.Crop)
         }
     }
 }
@@ -62,7 +60,7 @@ internal fun ProfileActivityWeek(
 private fun ProfileActivityWeekShimmer() {
     val loading = stringResource(Res.string.profile_week_loading)
     CoffeePeekCard(modifier = Modifier.semantics { contentDescription = loading }, elevation = 0.dp,
-        shape = RoundedCornerShape(20.dp),
+        shape = RoundedCornerShape(20.dp), border = BorderStroke(0.7.dp, MaterialTheme.colorScheme.outlineVariant),
         contentPadding = PaddingValues(horizontal = 10.dp, vertical = 12.dp)) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
             repeat(7) {
@@ -72,28 +70,6 @@ private fun ProfileActivityWeekShimmer() {
                     CoffeePeekShimmer(Modifier.fillMaxWidth().aspectRatio(1f), RoundedCornerShape(10.dp))
                 }
             }
-        }
-    }
-}
-
-@Composable
-private fun ProfileWeekDay(date: String, label: String, count: Int, photos: List<CalendarPhoto>,
-    isToday: Boolean, modifier: Modifier) {
-    val visits = stringResource(coffeePeekPluralForm(count, Res.string.profile_week_count_one,
-        Res.string.profile_week_count_few, Res.string.profile_week_count_many), count)
-    val description = stringResource(Res.string.profile_week_day, date, visits)
-    Column(modifier.semantics(mergeDescendants = true) { contentDescription = description },
-        horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        Text(label, style = MaterialTheme.typography.labelSmall,
-            color = if (isToday) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)
-        Box(Modifier.fillMaxWidth().aspectRatio(1f).clip(RoundedCornerShape(10.dp)), contentAlignment = Alignment.Center) {
-            if (photos.isNotEmpty()) {
-                CpImage(data = photos.first().url, modifier = Modifier.fillMaxSize().clearAndSetSemantics {}, contentScale = ContentScale.Crop)
-                if (photos.size > 1) Text("+${photos.size - 1}",
-                    Modifier.align(Alignment.BottomEnd).background(MaterialTheme.colorScheme.surface.copy(alpha = 0.9f)).padding(horizontal = 3.dp),
-                    style = MaterialTheme.typography.labelSmall)
-            } else Box(Modifier.size(8.dp).background(if (count > 0) MaterialTheme.colorScheme.primary
-                else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f), CircleShape))
         }
     }
 }

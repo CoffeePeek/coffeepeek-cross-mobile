@@ -1,5 +1,13 @@
 # Community (the «Лента» tab) — legacy-first inventory and plan — 2026-10-22
 
+> iOS follow-up, 2026-10-24 (PR #195): both platforms now bind the shared
+> FeatureCommunityScreenRenderer, and the native iOS feed tab calls its renderer
+> instead of the legacy screen directly. Existing media/analytics/account ports
+> are reused; global create and Home edit still go through their current app routes.
+> The Android-only/legacy-iOS wiring statements below are historical checkpoints.
+> See [IOS_MIGRATION_PLAN.md](../IOS_MIGRATION_PLAN.md) for 175 passing unit/contract
+> checks, Android/Native compile/link and the still-open manual iOS acceptance.
+
 Method: the rule in [ANDROID_REFACTORING_PLAN.md](../ANDROID_REFACTORING_PLAN.md#legacy-first-parity-gate-mandatory-for-every-owner), format as in [../auth/LEGACY_INVENTORY.md](../auth/LEGACY_INVENTORY.md).
 Read-only analysis of the legacy code on `feature/community-inventory` (stacked on #136): no code changed, Gradle not run, nothing tried on a device. `CommunityViewModel`, `CommunityScreen`,
 `TimelineCheckInCard`, `EditCheckInSheet`, `FeedRepositoryImpl`, `CheckInRepositoryImpl`, `CheckInTimelineContentImpl` were read line by line; the three test files were only listed by test name.

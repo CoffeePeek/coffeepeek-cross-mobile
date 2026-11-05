@@ -15,7 +15,7 @@ class HomeCheckInTrackerAnalyticsTest {
         try {
             val inherited = CheckInTracker(CheckInKind.Undecided, CheckInSource.Global)
             inherited.kind(CheckInKind.Home)
-            val adapter = HomeCheckInTrackerAnalytics({ true }, false, CheckInSource.Global, inherited)
+            val adapter = AppHomeCheckInAnalytics({ true }, false, CheckInSource.Global, inherited)
             adapter.record(HomeCheckInEditorMetric.Opened); adapter.record(HomeCheckInEditorMetric.Opened)
             adapter.record(HomeCheckInEditorMetric.FieldChanged(HomePreparationField.Note))
             adapter.record(HomeCheckInEditorMetric.FieldChanged(HomePreparationField.Note))
@@ -38,7 +38,7 @@ class HomeCheckInTrackerAnalyticsTest {
         val service = analytics(MemoryConsent(AnalyticsConsent.Accepted), sdk)
         service.setForeground(true); service.restoreConsent(); service.syncIdentity("fixture-owner"); Analytics.install(service)
         try {
-            val adapter = HomeCheckInTrackerAnalytics({ true }, true, CheckInSource.Diary)
+            val adapter = AppHomeCheckInAnalytics({ true }, true, CheckInSource.Diary)
             adapter.record(HomeCheckInEditorMetric.Opened)
             adapter.record(HomeCheckInEditorMetric.Submitted)
             adapter.record(HomeCheckInEditorMetric.Validation(setOf(HomePreparationField.Bean), true))
@@ -57,7 +57,7 @@ class HomeCheckInTrackerAnalyticsTest {
         val service = analytics(MemoryConsent(AnalyticsConsent.Accepted), sdk)
         service.setForeground(true); service.restoreConsent(); service.syncIdentity("fixture-owner"); Analytics.install(service)
         try {
-            val adapter = HomeCheckInTrackerAnalytics({ true }, false, CheckInSource.Direct)
+            val adapter = AppHomeCheckInAnalytics({ true }, false, CheckInSource.Direct)
             adapter.record(HomeCheckInEditorMetric.Opened)
             adapter.record(HomeCheckInEditorMetric.Failed(HomeCheckInEditorStage.Bean, HomePreparationIssue.RequestFailed, 422))
             adapter.record(HomeCheckInEditorMetric.Failed(HomeCheckInEditorStage.Bean, HomePreparationIssue.RequestFailed)); runCurrent()
@@ -74,7 +74,7 @@ class HomeCheckInTrackerAnalyticsTest {
         val service = analytics(MemoryConsent(AnalyticsConsent.Declined), sdk)
         service.setForeground(true); service.restoreConsent(); service.syncIdentity("fixture-owner"); Analytics.install(service)
         try {
-            val adapter = HomeCheckInTrackerAnalytics({ true }, false, CheckInSource.Direct)
+            val adapter = AppHomeCheckInAnalytics({ true }, false, CheckInSource.Direct)
             adapter.record(HomeCheckInEditorMetric.Opened)
             service.setConsent(AnalyticsConsent.Accepted)
             adapter.record(HomeCheckInEditorMetric.Submitted)
@@ -89,14 +89,14 @@ class HomeCheckInTrackerAnalyticsTest {
         service.setForeground(true); service.restoreConsent(); service.syncIdentity("fixture-owner"); Analytics.install(service)
         try {
             var current = true
-            val adapter = HomeCheckInTrackerAnalytics({ current }, false, CheckInSource.Direct)
+            val adapter = AppHomeCheckInAnalytics({ current }, false, CheckInSource.Direct)
             adapter.record(HomeCheckInEditorMetric.Opened); runCurrent()
             val before = sdk.events.toList()
             current = false
             adapter.record(HomeCheckInEditorMetric.Saved(HomePreparationVisibility.Private, false))
             adapter.record(HomeCheckInEditorMetric.Cancelled); runCurrent()
             assertEquals(before, sdk.events)
-            val closed = HomeCheckInTrackerAnalytics({ true }, false, CheckInSource.Direct)
+            val closed = AppHomeCheckInAnalytics({ true }, false, CheckInSource.Direct)
             closed.record(HomeCheckInEditorMetric.Opened)
             closed.record(HomeCheckInEditorMetric.Cancelled); closed.record(HomeCheckInEditorMetric.Cancelled)
             closed.record(HomeCheckInEditorMetric.Submitted); runCurrent()

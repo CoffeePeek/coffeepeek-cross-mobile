@@ -8,7 +8,7 @@ interface LocalUserData {
     suspend fun clear()
 }
 
-enum class SignInMethod { Password, Google }
+enum class SignInMethod { Password, Google, Apple }
 
 /** The screen the sign-in started from, as the analytics event reports it. */
 enum class AuthEntry { Login, Register }
@@ -27,4 +27,13 @@ interface AuthAnalytics {
 /** Android Google sign-in: the web client id of the OAuth project. A blank id hides the Google button. */
 interface GoogleSignInConfig {
     val webClientId: String
+}
+
+/**
+ * The platform's Google account chooser. [rememberSignIn] returns the action that opens it: a token goes to [onToken],
+ * a failure to [onFailure] (a cancelled chooser reports nothing). A platform without one passes null and the button is hidden.
+ */
+interface GoogleSignInLauncher {
+    @androidx.compose.runtime.Composable
+    fun rememberSignIn(onToken: (String) -> Unit, onFailure: (String) -> Unit): () -> Unit
 }

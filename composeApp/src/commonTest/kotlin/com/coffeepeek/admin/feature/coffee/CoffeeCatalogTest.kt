@@ -4,7 +4,6 @@ import com.coffeepeek.admin.feature.coffee.data.CoffeeRepositoryImpl
 import com.coffeepeek.admin.feature.coffee.domain.CoffeeFilters
 import com.coffeepeek.admin.feature.coffee.domain.CoffeeAvailability
 import com.coffeepeek.admin.feature.coffee.domain.CoffeeOffer
-import com.coffeepeek.admin.feature.coffee.ui.formatCoffeePrice
 import com.coffeepeek.core.network.HttpClientFactory
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
@@ -171,15 +170,11 @@ class CoffeeCatalogTest {
     }
 
     @Test
-    fun filterDraftAndPricePrecision() {
+    fun filterDraftKeepsTheOriginalAndTogglesASelection() {
         val original = CoffeeFilters(availableOnly = true)
         val selected = original.toggle("taste", "tropical")
         assertEquals(2, selected.activeCount)
         assertEquals(original, selected.toggle("taste", "tropical"))
         assertFalse(original.values.containsKey("taste"))
-        assertEquals("45", formatCoffeePrice(45.0))
-        assertEquals("18.7", formatCoffeePrice(18.7))
-        assertEquals("22.99", formatCoffeePrice(22.99))
-        assertEquals("0.05", formatCoffeePrice(0.05))
     }
 }

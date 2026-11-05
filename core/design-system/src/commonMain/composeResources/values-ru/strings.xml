@@ -1,4 +1,6 @@
 <resources>
+    <string name="coffeepeek_photo_loading">Загрузка фото…</string>
+    <string name="coffeepeek_viewer_close">Закрыть</string>
     <string name="coffeepeek_loading">Загрузка</string>
     <string name="coffeepeek_actions">Действия</string>
     <string name="coffeepeek_map_expand">Развернуть карту на весь экран</string>

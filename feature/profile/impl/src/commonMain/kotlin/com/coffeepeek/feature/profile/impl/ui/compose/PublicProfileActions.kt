@@ -1,12 +1,18 @@
 package com.coffeepeek.feature.profile.impl.ui.compose
 
 import androidx.compose.material3.Icon
-import com.coffeepeek.core.designsystem.component.CoffeePeekIconButton as IconButton
-import androidx.compose.runtime.Composable
-import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
+import com.coffeepeek.feature.profile.impl.resources.Res
+import com.coffeepeek.feature.profile.impl.resources.profile_author_actions
+import com.coffeepeek.feature.profile.impl.resources.profile_block_author
+import com.coffeepeek.feature.profile.impl.resources.profile_share
+import com.coffeepeek.feature.profile.impl.resources.profile_unblock_author
+import androidx.compose.runtime.Composable
+import com.coffeepeek.core.designsystem.component.CoffeePeekIconButton as IconButton
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import com.coffeepeek.core.designsystem.component.CoffeePeekActionMenu
 import com.coffeepeek.core.designsystem.component.CoffeePeekMenuAction
+import com.coffeepeek.core.designsystem.component.CoffeePeekMenuIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.profile.impl.resources.*
@@ -17,7 +23,7 @@ internal fun PublicProfileActions(isBlocked: Boolean, onShare: (() -> Unit)?, on
     val blockLabel = stringResource(if (isBlocked) Res.string.profile_unblock_author else Res.string.profile_block_author)
     val actions = buildList {
         if (!isBlocked && onShare != null) add(CoffeePeekMenuAction(shareLabel, CoffeePeekIcons.Share, onClick = onShare))
-        add(CoffeePeekMenuAction(blockLabel, CoffeePeekIcons.Block, destructive = !isBlocked, onClick = onBlock))
+        add(CoffeePeekMenuAction(blockLabel, CoffeePeekIcons.Block, destructive = !isBlocked, nativeIcon = CoffeePeekMenuIcon.Block, onClick = onBlock))
     }
     CoffeePeekActionMenu(actions) { open ->
         IconButton(onClick = open) {

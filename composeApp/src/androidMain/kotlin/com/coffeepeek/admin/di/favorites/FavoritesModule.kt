@@ -27,27 +27,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 
-/** Active Android graph. Existing server infrastructure is shared with all legacy consumers. */
-internal fun serverFavoritesModule(): Module = module {
-    single<FavoritesAccount> { SessionFavoritesAccount(get()) }
-    single { CollectionPickerRequests(get(), CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)) }
-    single<FavoriteCollectionsPrompt> { AndroidFavoriteCollectionsPrompt(get()) }
-    single<RoasterFavorites> { CollectionPromptRoasterFavorites(ServerRoasterFavorites(get(), get(), get()), get(), get()) }
-    single<FavoritesRepository> {
-        val shops = get<com.coffeepeek.domain.repository.ShopRepository>()
-        ServerFavoriteShopsRepository(get(), get(), get(), shops::getShopDetails)
-    }
-    factory { ObserveFavoriteIdsUseCase(get()) }
-    single<FavoriteRoastersRepository> {
-        val catalog = get<RoasterRepository>()
-        LegacyFavoriteRoastersRepository(get(), get()) { slug -> catalog.getRoaster(slug).map { it.photos.firstOrNull()?.fullUrl } }
-    }
-    single<com.coffeepeek.feature.favorites.domain.repository.FavoriteDrinksRepository> {
-        ServerFavoriteDrinksRepository(get(), get())
-    }
-    single<FavoritesEntry> { createFavoritesEntry(get(), get(), get(), AndroidFavoritesScreenAnalytics, account = get()) }
-}
-
 /** One repo per session/storage. Application explicitly loads this module; no global Koin start. */
 internal fun favoritesModule(
     storage: FavoritesStorage,

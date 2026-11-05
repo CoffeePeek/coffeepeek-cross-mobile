@@ -51,6 +51,11 @@ Core references are available but not automatically added to the application.
 Native targets while enabling the Compose compiler only for Android. Its UI,
 design-system and public Android entry dependencies use `androidImplementation`
 and `androidApi`; common ViewModels do not acquire Compose or Android dependencies.
+A module whose Compose UI is already in `commonMain` (`feature:shop`, `shop-report`, `favorites`, `roaster`, `check-in-history`
+impl) applies `com.coffeepeek.kmp.shared-library` together with `com.coffeepeek.kmp.android-compose-library`: Native targets
+plus the Compose compiler for every target. A module whose UI is still in `androidMain` stays on the Android-only compiler
+variant above, because the Compose compiler needs the Compose runtime on every target it runs for. Such a module switches to
+the pair when its UI moves to `commonMain` (iOS migration plan, `feature/IOS_MIGRATION_PLAN.md`).
 Convention-based library test APKs use `testOptions.targetSdk = Config.TARGET_SDK`
 to exercise the current app's Android behaviour instead of AGP's minSdk default.
 This is test-only policy; it does not set or change any production application SDK.

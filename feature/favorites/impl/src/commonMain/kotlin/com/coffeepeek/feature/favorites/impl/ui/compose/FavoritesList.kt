@@ -8,6 +8,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.coffeepeek.core.designsystem.component.coffeePeekScrollContentPadding
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.favorites.domain.model.FavoriteRoaster
 import com.coffeepeek.feature.favorites.domain.model.FavoriteShop
@@ -23,7 +24,7 @@ import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as st
 internal fun FavoritesList(state: FavoritesUiState, onAction: (FavoritesAction) -> Unit,
     distance: (Double, Double) -> String?, listState: LazyListState) {
     LazyColumn(Modifier.fillMaxSize().windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal)),
-        state = listState, contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        state = listState, contentPadding = coffeePeekScrollContentPadding(PaddingValues(16.dp)), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         favoriteShops(state, onAction, distance)
         favoriteRoasters(state, onAction)
         favoriteDrinks(state, onAction)

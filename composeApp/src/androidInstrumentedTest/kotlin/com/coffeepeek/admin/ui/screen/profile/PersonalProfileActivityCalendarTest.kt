@@ -45,7 +45,7 @@ import com.coffeepeek.admin.ui.component.SwipeDismissModalBottomSheet
 import com.coffeepeek.admin.ui.screen.checkins.CalendarMonth
 import com.coffeepeek.admin.ui.screen.checkins.VisitedPlacesUiState
 import com.coffeepeek.admin.ui.screen.checkins.grantCheckInFixtureStartupPermissions
-import com.coffeepeek.admin.utils.CustomUrl
+import com.coffeepeek.core.media.ImageUrl
 import com.coffeepeek.domain.model.CheckIn
 import com.coffeepeek.legacy.homecheckin.domain.HomeCalendarDay
 import com.coffeepeek.legacy.homecheckin.domain.HomeCheckIn
@@ -104,11 +104,11 @@ class PersonalProfileActivityCalendarTest {
         )
         val imageConfig = KamelConfig {
             takeFrom(KamelConfig.Default)
-            fetcher(object : Fetcher<CustomUrl> {
-                override val inputDataKClass = CustomUrl::class
+            fetcher(object : Fetcher<ImageUrl> {
+                override val inputDataKClass = ImageUrl::class
                 override val source = DataSource.Disk
-                override val CustomUrl.isSupported get() = url in fixtures
-                override fun fetch(data: CustomUrl, resourceConfig: ResourceConfig) = flow {
+                override val ImageUrl.isSupported get() = url in fixtures
+                override fun fetch(data: ImageUrl, resourceConfig: ResourceConfig) = flow {
                     requestedPhotos += data.url
                     emit(Resource.Success(ByteReadChannel(fixtures.getValue(data.url)), source))
                 }

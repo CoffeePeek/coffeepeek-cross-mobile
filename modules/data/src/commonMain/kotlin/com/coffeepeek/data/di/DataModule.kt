@@ -18,7 +18,6 @@ import com.coffeepeek.data.repository.SessionRepositoryImpl
 import com.coffeepeek.data.repository.ShopChangeRequestRepositoryImpl
 import com.coffeepeek.data.repository.ShopIssueReportRepositoryImpl
 import com.coffeepeek.data.repository.ShopRepositoryImpl
-import com.coffeepeek.data.repository.UserRepositoryImpl
 import com.coffeepeek.data.session.UserSessionCleaner
 import com.coffeepeek.data.util.FileUrlResolver
 import com.coffeepeek.core.session.JwtUtils
@@ -32,7 +31,6 @@ import com.coffeepeek.domain.repository.SessionRepository
 import com.coffeepeek.domain.repository.ShopChangeRequestRepository
 import com.coffeepeek.domain.repository.ShopIssueReportRepository
 import com.coffeepeek.domain.repository.ShopRepository
-import com.coffeepeek.domain.repository.UserRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -120,7 +118,6 @@ fun dataModule(
         single<FavoriteRepository> { FavoriteRepositoryImpl(get(), get(), get(), get()) }
     }
     single<ShopRepository> { ShopRepositoryImpl(get(), get(), get(), get(), get()) }
-    single<UserRepository> { UserRepositoryImpl(get(), get(), get(), get()) }
     single<ReviewRepository> { ReviewRepositoryImpl(get(), get(), get()) }
     single<CheckInRepository> { CheckInRepositoryImpl(get(), get(), get()) }
     single<com.coffeepeek.domain.feature.feed.FeedRepository> { com.coffeepeek.data.feature.feed.FeedRepositoryImpl(get(), get()) }

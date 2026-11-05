@@ -59,6 +59,7 @@ fun CoffeePeekPullToRefresh(
     val enabledNow by rememberUpdatedState(enabled)
     val listNow by rememberUpdatedState(listState)
     val refreshNow by rememberUpdatedState(onRefresh)
+    val effects = LocalCoffeePeekPlatformEffects.current
     fun atTop() = listNow.firstVisibleItemIndex == 0 && listNow.firstVisibleItemScrollOffset == 0
     fun allowed() = enabledNow && !refreshingNow
 
@@ -66,7 +67,10 @@ fun CoffeePeekPullToRefresh(
         object : NestedScrollConnection {
             override fun onPostScroll(consumed: Offset, available: Offset, source: NestedScrollSource): Offset {
                 if (source != NestedScrollSource.UserInput) return Offset.Zero
-                return Offset(0f, gesture.pull(available.y, atTop(), allowed()))
+                val before = gesture.offset
+                val consumed = gesture.pull(available.y, atTop(), allowed())
+                if (before < thresholdPx && gesture.offset >= thresholdPx) effects?.haptic(CoffeePeekHaptic.Selection)
+                return Offset(0f, consumed)
             }
 
             override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
@@ -101,6 +105,7 @@ fun CoffeePeekPullToRefresh(
         }
     }) {
         content(Modifier.nestedScroll(connection).offset { IntOffset(0, offset.roundToInt()) })
+        effects?.ScrollToTop(listState)
         if (isRefreshing || offset > 0f) {
             val progress = (offset / thresholdPx).coerceIn(0f, 1f)
             Box(

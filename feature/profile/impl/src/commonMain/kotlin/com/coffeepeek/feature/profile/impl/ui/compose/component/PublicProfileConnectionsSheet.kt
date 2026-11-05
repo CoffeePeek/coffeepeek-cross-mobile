@@ -1,6 +1,17 @@
 package com.coffeepeek.feature.profile.impl.ui.compose.component
 
 import androidx.compose.foundation.background
+import com.coffeepeek.feature.profile.impl.resources.Res
+import com.coffeepeek.feature.profile.impl.resources.profile_close
+import com.coffeepeek.feature.profile.impl.resources.profile_followers
+import com.coffeepeek.feature.profile.impl.resources.profile_followers_empty
+import com.coffeepeek.feature.profile.impl.resources.profile_followers_failed
+import com.coffeepeek.feature.profile.impl.resources.profile_following_empty
+import com.coffeepeek.feature.profile.impl.resources.profile_following_failed
+import com.coffeepeek.feature.profile.impl.resources.profile_following_title
+import com.coffeepeek.feature.profile.impl.resources.profile_load_more
+import com.coffeepeek.feature.profile.impl.resources.profile_open_user
+import com.coffeepeek.feature.profile.impl.resources.profile_retry
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box

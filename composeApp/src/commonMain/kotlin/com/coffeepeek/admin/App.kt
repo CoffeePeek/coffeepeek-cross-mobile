@@ -22,6 +22,7 @@ import com.coffeepeek.admin.settings.AppLanguagePreference
 import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
 import androidx.compose.ui.Alignment
 import com.coffeepeek.admin.ui.Navigator
+import com.coffeepeek.admin.ui.component.ProvideDesignSystemPlatformHooks
 import com.coffeepeek.admin.ui.component.dismissKeyboardOnBackgroundGestures
 import com.coffeepeek.admin.utils.OrientationObserver
 import io.kamel.core.config.KamelConfig
@@ -40,7 +41,7 @@ fun App(onReady: () -> Unit = {}) {
             OrientationObserver.StartObserver()
             Navigator()
             com.coffeepeek.admin.di.collections.CollectionsPickerHost()
-            com.coffeepeek.admin.feature.authorblocking.ui.AuthorBlockingHost()
+            com.coffeepeek.admin.di.authorblocking.AuthorBlockingRootHost()
             koinInject<com.coffeepeek.admin.feature.appupdate.ui.AppUpdateRenderer>().Prompt()
             com.coffeepeek.admin.analytics.AnalyticsPrivacy()
         }
@@ -71,8 +72,9 @@ internal fun AppContent(content: @Composable () -> Unit) {
                 LocalKamelConfig provides kamelConfig,
                 com.coffeepeek.feature.ownership.api.LocalBusinessOwnership provides koinInject<com.coffeepeek.feature.ownership.api.BusinessOwnershipEntry>(),
                 LocalContentColor provides MaterialTheme.colorScheme.onBackground,
-                content = content,
-            )
+            ) {
+                ProvideDesignSystemPlatformHooks { com.coffeepeek.admin.di.media.ProvideImageEnvironment(content) }
+            }
         }
     }
 }

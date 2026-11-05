@@ -9,8 +9,16 @@ import kotlinx.coroutines.runBlocking
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
+import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 class AppUpdateAdaptersTest {
+    @Test fun localIosDebugCannotCheckStoreUpdatesWhilePublishedBuildsAndAndroidKeepTheirChannels() {
+        assertFalse(appUpdateChecksEnabled("ios", debug = true))
+        assertTrue(appUpdateChecksEnabled("ios", debug = false))
+        assertTrue(appUpdateChecksEnabled("android", debug = true))
+        assertTrue(appUpdateChecksEnabled("android", debug = false))
+    }
     private class Settings : SettingRepository {
         val rows = mutableMapOf<String, String>()
         override suspend fun save(model: Setting) { rows[model.key] = model.value }

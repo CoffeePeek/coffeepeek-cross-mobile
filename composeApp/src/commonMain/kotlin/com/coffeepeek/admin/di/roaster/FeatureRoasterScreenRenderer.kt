@@ -6,7 +6,7 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.ui.component.CoffeeShopImage
-import com.coffeepeek.admin.ui.component.FullScreenImageDialog
+import com.coffeepeek.core.designsystem.component.CoffeePeekPhotoViewer
 import com.coffeepeek.admin.ui.component.HapticEvent
 import com.coffeepeek.admin.ui.component.LoadErrorContent
 import com.coffeepeek.admin.ui.component.LocalFloatingNavClearance
@@ -86,6 +86,6 @@ internal fun roasterScreenRenderer(
             emptyContent = { modifier -> CatalogSuggestionCard(CatalogSuggestionKind.Roaster,
                 onAdd = { Navigator.navigate(Navigator.Screen.AddRoaster) }, modifier = modifier) }, onFavoriteFeedback = feedback),
         createRoasterDetailEntry(repository, favorites, shopPhotos, RoasterAnalyticsAdapter, RoasterScreenAnalyticsAdapter, image,
-            photoViewer = { url, onDismiss -> FullScreenImageDialog(imageUrl = url, onDismiss = onDismiss) }, onFavoriteFeedback = feedback),
+            photoViewer = { url, onDismiss -> CoffeePeekPhotoViewer(imageUrl = url, onDismiss = onDismiss) }, onFavoriteFeedback = feedback),
     )
 }

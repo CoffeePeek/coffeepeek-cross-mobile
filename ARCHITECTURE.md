@@ -11,6 +11,15 @@ dependencies — not the maximum number of modules or classes.
 This document describes the target and the migration rules. The actual Gradle
 configuration is authoritative for the current state.
 
+Owner clarification, 2026-10-25: migration is complete only with zero legacy
+consumers and removal of `modules/`, not merely when new routes are selected.
+`composeApp` keeps startup, root DI, platform configuration and root navigation;
+business UI, presentation state and ViewModels belong to feature implementations.
+Reusable UI and platform infrastructure belong to the appropriate core owner.
+Active legacy slots, adapters and removal checkpoints are tracked in
+[feature/LEGACY_EXIT_PLAN.md](feature/LEGACY_EXIT_PLAN.md). The layout snapshot
+below describes earlier transitional ownership, not a reason to retain it.
+
 ## Current and target states
 
 Current code is arranged by technical layers:
@@ -209,11 +218,18 @@ responsibilities. Examples:
 ```text
 core/network          HttpClient, auth/interceptors, serialization, logging, errors
 core/database         Room factory/configuration, database bootstrap, migrations
+core/media            image transport/cache/access, decoding, resources and prefetch
 core/coroutines       dispatcher and application-scope abstractions
 core/presentation     typed MVI ViewModel base and state/action/event contract
 core/navigation       shared navigation infrastructure, if truly required
 core/design-system    theme, typography, dimensions, icons, UI primitives
 ```
+
+Image infrastructure lives in `core/media`; design-system owns image rendering
+and the shared photo viewer. Root composition supplies the existing clients,
+SessionReader, API origin and platform/analytics hooks. Media never depends on
+design-system, features, legacy models, application configuration or Koin.
+See `core/media/README.md` for the public boundary and migration risks.
 
 Design-system Kotlin components, UI types, tokens and source files use the
 `CoffeePeek` prefix: `CoffeePeekButton`, `CoffeePeekTextField`, `CoffeePeekIcons`

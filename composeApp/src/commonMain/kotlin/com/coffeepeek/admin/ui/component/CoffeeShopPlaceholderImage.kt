@@ -21,8 +21,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.sp
-import com.coffeepeek.admin.utils.cpImageData
-import com.coffeepeek.admin.utils.rememberCpImageResource
+import com.coffeepeek.core.media.image.rememberImageResource
 import io.kamel.core.Resource
 
 @Composable
@@ -65,7 +64,7 @@ fun CoffeeShopImage(
 ) {
     val localizedLegacyCoffeeShopPlaceholderImageShopPhotoLoading = stringResource(Res.string.legacy_coffee_shop_placeholder_image_shop_photo_loading)
 
-    when (val resource = rememberCpImageResource(cpImageData(imageUrl))) {
+    when (val resource = rememberImageResource(imageUrl)) {
         is Resource.Success -> Image(
             painter = resource.value,
             contentDescription = contentDescription,

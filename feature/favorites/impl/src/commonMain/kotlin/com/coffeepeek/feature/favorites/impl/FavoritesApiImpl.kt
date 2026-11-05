@@ -11,6 +11,7 @@ import com.coffeepeek.feature.favorites.domain.repository.FavoriteRoastersReposi
 import com.coffeepeek.feature.favorites.domain.repository.FavoriteDrinksRepository
 import com.coffeepeek.feature.favorites.domain.repository.FavoritesAccount
 import com.coffeepeek.feature.favorites.impl.ui.compose.FavoritesScreen
+import com.coffeepeek.feature.favorites.impl.ui.compose.FavoritesPreviewScreen
 import com.coffeepeek.feature.favorites.impl.ui.FavoritesViewModel
 
 /** Manual construction: UI does not fetch anything from Koin or application globals. */
@@ -38,9 +39,22 @@ internal class FavoritesApiImpl(
         onShare: () -> Unit,
         onOpenCollections: () -> Unit,
     ) {
-        val vm = viewModel { FavoritesViewModel(repository, roasters, drinks, account) }
+        val vm = viewModel(key = "favorites-screen") { FavoritesViewModel(repository, roasters, drinks, account) }
         CompositionLocalProvider(LocalFavoritesAnalytics provides screenAnalytics) {
             FavoritesScreen(vm, onOpenShop, onBack, distanceForCoordinates, onOpenRoaster, onShare, onOpenCollections)
+        }
+    }
+
+    @Composable
+    override fun Preview(
+        onOpenShop: (String) -> Unit,
+        onOpenRoaster: (String) -> Unit,
+        distanceForCoordinates: (Double, Double) -> String?,
+        header: @Composable () -> Unit,
+    ) {
+        val vm = viewModel(key = "favorites-profile-preview") { FavoritesViewModel(repository, roasters, drinks) }
+        CompositionLocalProvider(LocalFavoritesAnalytics provides screenAnalytics) {
+            FavoritesPreviewScreen(vm, onOpenShop, onOpenRoaster, distanceForCoordinates, header)
         }
     }
 }

@@ -124,7 +124,7 @@ internal class PublicProfileViewModel(
     private fun start() {
         viewModelScope.launch {
             visibility.observe().drop(1).collect {
-                updateState { PublicProfileState(activityMonth = activityMonth) }
+                updateState { PublicProfileState(activityMonth = activityMonth, isSignedIn = accounts.activeAccount() != null) }
                 refresh()
             }
         }
@@ -148,7 +148,7 @@ internal class PublicProfileViewModel(
         ownProfileAccount = null
         ownIdentityLoaded = false
         ownAddress = null
-        updateState { PublicProfileState(activityMonth = activityMonth) }
+        updateState { PublicProfileState(activityMonth = activityMonth, isSignedIn = accounts.activeAccount() != null) }
         refresh()
         loadOwnProfile(forceRefresh = true)
     }
@@ -235,7 +235,8 @@ internal class PublicProfileViewModel(
         val accessFailure = if (!visibility.current().ready) visibility.refresh().isFailure else false
         if (accessFailure || !visibility.current().ready) {
             if (isCurrent(requestGeneration, requestAccount)) updateState {
-                PublicProfileState(isLoading = false, error = PublicProfileError.BlocksLoad, activityMonth = activityMonth)
+                PublicProfileState(isLoading = false, error = PublicProfileError.BlocksLoad, activityMonth = activityMonth,
+                    isSignedIn = accounts.activeAccount() != null)
             }
             return
         }
@@ -263,7 +264,8 @@ internal class PublicProfileViewModel(
     private fun applyProfileFailure(error: Throwable) {
         val message = if (error is PublicProfileUnavailable) PublicProfileError.Unavailable else PublicProfileError.Load
         updateState {
-            if (error is PublicProfileUnavailable) PublicProfileState(isLoading = false, error = message, activityMonth = activityMonth)
+            if (error is PublicProfileUnavailable) PublicProfileState(isLoading = false, error = message, activityMonth = activityMonth,
+                isSignedIn = accounts.activeAccount() != null)
             else copy(isLoading = false, error = message)
         }
         if (error is PublicProfileUnavailable) snapshots.clear()
@@ -432,13 +434,13 @@ private fun cachedState(
     slug: String, accounts: ProfileAccountPort, visibility: ProfileAuthorVisibility, snapshots: ProfileSnapshotStore,
 ): PublicProfileState {
     val account = accounts.activeAccount()
-    val saved = cachedSnapshot(slug, accounts, visibility, snapshots) ?: return PublicProfileState()
+    val saved = cachedSnapshot(slug, accounts, visibility, snapshots) ?: return PublicProfileState(isSignedIn = account != null)
     val profile = saved.profile
     val own = account != null && accounts.cachedOwnProfile()?.address?.let { isOwnPublicProfile(it, profile) } == true
     val visible = if (own) profile else profile.copy(favorites = emptyList())
     return PublicProfileState(isLoading = false, profile = visible, checkIns = saved.checkIns,
         hasMoreCheckIns = saved.nextCheckInCursor != null, activityMonth = saved.activityMonth,
-        isOwnProfile = own, isFollowing = !own && visible.isFollowing)
+        isOwnProfile = own, isFollowing = !own && visible.isFollowing, isSignedIn = account != null)
 }
 
 private fun cachedSnapshot(

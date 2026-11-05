@@ -58,7 +58,7 @@ class CollectionPickerRequestsTest {
     @Test fun guestOrDifferentAccountCannotCreateARequest() = runTest {
         val requests = CollectionPickerRequests(CheckInTestSessions(null), backgroundScope)
         assertNull(requests.lease("owner"))
-        requests.added(CollectionPickerRequests.Lease("owner", 0), "canonical")
+        requests.added(CollectionPickerLease("owner", 0), "canonical")
         assertNull(requests.state.value)
     }
 

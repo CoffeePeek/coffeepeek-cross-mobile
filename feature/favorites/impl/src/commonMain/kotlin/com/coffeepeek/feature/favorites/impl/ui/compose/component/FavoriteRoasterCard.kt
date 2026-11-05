@@ -31,9 +31,11 @@ internal fun FavoriteRoasterCard(
     removing: Boolean,
     onOpen: () -> Unit,
     onRemove: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     val photo = roaster.photoUrl?.takeIf(String::isNotBlank)
     CoffeePeekRoasterCard(
+        modifier = modifier,
         name = roaster.title,
         description = roaster.description,
         shopsCount = roaster.coffeeShopsCount,

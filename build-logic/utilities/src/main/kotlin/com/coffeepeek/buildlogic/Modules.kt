@@ -82,6 +82,13 @@ object Modules {
 
         val favorites = Favorites
         val shopReport = ShopReport
+        val contentReport = ContentReport
+        object ContentReport {
+            const val api = ":feature:content-report:api"
+            const val domain = ":feature:content-report:domain"
+            const val data = ":feature:content-report:data"
+            const val impl = ":feature:content-report:impl"
+        }
         object Favorites {
             const val api = ":feature:favorites:api"
             const val domain = ":feature:favorites:domain"
@@ -182,6 +189,7 @@ object Modules {
         const val presentation = ":core:presentation"
         const val datetime = ":core:datetime"
         const val session = ":core:session"
+        const val media = ":core:media"
     }
 
     val all: List<String> = listOf(
@@ -202,6 +210,7 @@ object Modules {
         core.presentation,
         core.datetime,
         core.session,
+        core.media,
         feature.favorites.api,
         feature.favorites.domain,
         feature.favorites.data,
@@ -210,6 +219,10 @@ object Modules {
         feature.shopReport.domain,
         feature.shopReport.data,
         feature.shopReport.impl,
+        feature.contentReport.api,
+        feature.contentReport.domain,
+        feature.contentReport.data,
+        feature.contentReport.impl,
         feature.shop.api,
         feature.shop.domain,
         feature.shop.data,

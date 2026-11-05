@@ -46,6 +46,17 @@ GOOGLE_REVERSED_CLIENT_ID = com.googleusercontent.apps.000000000000-xxxxxxxx
 
 Без Google OAuth приложение полностью запускается, а Google-кнопка скрыта. Email/password вход продолжает работать.
 
+Debug собирается без `iosApp/iosApp/GoogleService-Info.plist`: Firebase push в
+этом случае недоступен. Если настоящий локальный файл добавлен, он копируется
+в приложение и push можно проверять отдельно. В Debug Google-вход отключён
+независимо от заполненных OAuth ID. Для Release Firebase-файл обязателен;
+он не добавляется в Git.
+
+В локальном iOS Debug отключены проверка обновлений App Store, баннер и пункт
+ручной проверки в настройках. Локальный номер сборки может быть меньше
+опубликованного и не означает, что разработчику нужно обновиться через магазин.
+Номера версий не подменяются; в iOS Release серверная политика обновлений работает.
+
 Для Google Sign-In нужны два OAuth client ID из одного Google Cloud проекта:
 
 1. iOS client ID для bundle id `com.coffeepeek`;
@@ -143,6 +154,13 @@ open iosApp/iosApp.xcodeproj
 4. нажмите `Run` или `⌘R`.
 
 Xcode сам вызывает Gradle task `:composeApp:embedAndSignAppleFrameworkForXcode`, собирает Kotlin framework и затем SwiftUI-приложение. Первый запуск может занять несколько минут; повторные сборки используют кэш.
+
+Лимит Gradle workers задан Xcode-настройкой `GRADLE_MAX_WORKERS = 6` в
+`Configuration/Shared.xcconfig`. Для локального изменения укажите положительное
+число в `Local.xcconfig`; TestFlight workflow передаёт `GRADLE_MAX_WORKERS=1`
+как build setting. Не используйте shell-default вида `${GRADLE_MAX_WORKERS:-2}`
+в аргументах Gradle внутри Build Phase: KMP-плагин IDE может преобразовать его в
+пустой `--max-workers=`.
 
 В Xcode 27 отдельного `Simulator.app` может не быть: устройства открываются через `Window → Devices and Simulators` / Device Hub. Для сборки это не имеет значения.
 

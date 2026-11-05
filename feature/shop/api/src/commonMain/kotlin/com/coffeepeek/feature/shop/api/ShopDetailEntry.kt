@@ -13,6 +13,6 @@ interface ShopDetailEntry {
         formatMenuDate: (String) -> String,
         formatDistance: (latitude: Double, longitude: Double) -> String?,
         onEffect: (ShopDetailEffect) -> Unit,
-        refreshGeneration: Long = 0,
+        refreshGeneration: Long,
     )
 }

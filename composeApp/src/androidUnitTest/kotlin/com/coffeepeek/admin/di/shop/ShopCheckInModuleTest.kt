@@ -35,14 +35,14 @@ class ShopCheckInModuleTest {
                 single { drafts }
                 single<SessionRepository> { CheckInTestSessions() }
                 single<SessionReader> { get<SessionRepository>() }
-            }, shopCheckInModule(), shopBrowsingModule(fileBaseUrl = "https://fixture.invalid"))
+            }, shopCheckInModule(AndroidShopCheckInDateFormatter()), shopBrowsingModule(fileBaseUrl = "https://fixture.invalid"))
         }
         try {
             assertSame(app.koin.get<ShopCheckInCreateEntry>(), app.koin.get<ShopCheckInCreateEntry>())
             assertEquals(1, app.koin.getAll<ShopCheckInRepository>().size)
             assertEquals(1, app.koin.getAll<ShopDetailsRepository>().size)
             assertEquals(1, app.koin.getAll<ShopCheckInVoteRepository>().size)
-            assertSame(app.koin.get<AndroidShopCheckInDraftStore>(), app.koin.get<AndroidShopCheckInDraftStore>())
+            assertSame(app.koin.get<AppShopCheckInDraftStore>(), app.koin.get<AppShopCheckInDraftStore>())
             assertNotNull(app.koin.get<ShopCheckInDateFormatter>())
             assertNotNull(app.koin.get<ShopCheckInPhotoPicker>())
             assertSame(existing, drafts.peek())

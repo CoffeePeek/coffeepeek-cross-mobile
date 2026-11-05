@@ -8,7 +8,7 @@ import com.coffeepeek.feature.homecheckin.impl.ui.data.HomeCheckInPhotoPicker
 import com.coffeepeek.feature.homecheckin.impl.ui.data.HomeCheckInPhotoPickerController
 
 /** Reuses the existing URI/JPEG/camera-permission pipeline, scoped to each launcher request. */
-internal class HomeCheckInAppPhotoPicker : HomeCheckInPhotoPicker {
+internal class AppHomeCheckInPhotoPicker : HomeCheckInPhotoPicker {
     private class Request(val gallery: Boolean, val limit: Int, val deliver: (List<HomePreparationUpload>) -> Unit)
 
     @Composable override fun rememberController(): HomeCheckInPhotoPickerController {

@@ -14,7 +14,7 @@ import com.coffeepeek.admin.feature.homecheckin.ui.HomeEditor
 import com.coffeepeek.admin.ui.component.SwipeDismissModalBottomSheet
 import org.koin.compose.koinInject
 
-/** Platform-selected global flow. Resolve legacy form state only inside the shared/iOS fallback. */
+/** Platform-selected global flow. Resolve legacy form state only inside the explicit fallback. */
 @Composable
 internal fun CheckInCreateFlow(
     onDismiss: () -> Unit,

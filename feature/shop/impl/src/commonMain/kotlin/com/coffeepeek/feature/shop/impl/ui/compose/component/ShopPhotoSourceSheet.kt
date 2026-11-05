@@ -21,6 +21,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.component.CoffeePeekIconBadgePalette
+import com.coffeepeek.core.designsystem.component.CoffeePeekNativePhotoSource
 import com.coffeepeek.core.designsystem.component.CoffeePeekSettingsRow
 import com.coffeepeek.core.designsystem.component.CoffeePeekSettingsDivider
 import com.coffeepeek.core.designsystem.component.CoffeePeekSwipeDismissModalBottomSheet
@@ -41,6 +42,7 @@ internal fun ShopPhotoSourceSheet(
     onGallery: () -> Unit,
     onCamera: () -> Unit,
 ) {
+    if (CoffeePeekNativePhotoSource(stringResource(Res.string.shop_review_photo_source_title), onGallery, onCamera, onDismiss)) return
     CoffeePeekSwipeDismissModalBottomSheet(
         onDismissRequest = onDismiss,
         dismissDescription = stringResource(Res.string.shop_review_photo_source_cancel),

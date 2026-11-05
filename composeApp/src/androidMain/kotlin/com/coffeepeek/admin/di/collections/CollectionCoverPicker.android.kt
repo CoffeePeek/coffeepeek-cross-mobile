@@ -1,12 +1,12 @@
 package com.coffeepeek.admin.di.collections
 
 import android.graphics.Bitmap
-import com.coffeepeek.admin.utils.BitmapUtil
-import com.coffeepeek.admin.utils.BitmapUtil.changeSize
+import com.coffeepeek.core.media.AndroidImageCodec
+import com.coffeepeek.core.media.AndroidImageCodec.changeSize
 import java.io.ByteArrayOutputStream
 
 internal actual suspend fun prepareCollectionCover(bytes: ByteArray): ByteArray {
-    val decoded = BitmapUtil.decodeOrientedBitmap(bytes, decodeMaxSide = 2560)
+    val decoded = AndroidImageCodec.decodeOrientedBitmap(bytes, decodeMaxSide = 2560)
     val sized = decoded.changeSize(1280)
     try {
         for (quality in 90 downTo 40 step 10) {

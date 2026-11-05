@@ -1,5 +1,9 @@
 package com.coffeepeek.admin.ui.component
 
+import com.coffeepeek.core.designsystem.component.CoffeePeekPhotoViewerImages
+
+import com.coffeepeek.core.designsystem.component.CoffeePeekPhotoViewer
+
 import android.graphics.Bitmap
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.ScrollState
@@ -51,11 +55,11 @@ import io.kamel.core.fetcher.Fetcher
 import io.kamel.image.config.LocalKamelConfig
 import io.ktor.http.Url
 import io.ktor.utils.io.ByteReadChannel
-import com.coffeepeek.admin.utils.CustomUrl
-import com.coffeepeek.admin.utils.CpImage
-import com.coffeepeek.admin.utils.image.PhotoPermission
-import com.coffeepeek.admin.utils.image.ProtectedPhotoSession
-import com.coffeepeek.admin.utils.image.SystemPhotoCacheClock
+import com.coffeepeek.core.media.ImageUrl
+import com.coffeepeek.core.designsystem.component.CoffeePeekImage
+import com.coffeepeek.core.media.image.PhotoPermission
+import com.coffeepeek.core.media.image.ProtectedPhotoSession
+import com.coffeepeek.core.media.image.SystemPhotoCacheClock
 import java.util.concurrent.CopyOnWriteArrayList
 import java.io.File
 import java.util.concurrent.atomic.AtomicInteger
@@ -154,7 +158,7 @@ class FullScreenImageDialogTest {
     fun protectedViewerLeafCarriesScopeAndRevokesItsDecodedPainterOnInvalidation() {
         val loader = FixtureImages(pending = false, pendingAfterFirst = true)
         val url = "https://viewer-fixture.invalid/api/v1/check-ins/visit/photos/scoped/variants/source/1/detail.png"
-        withViewer(loader, listOf(url), images = PhotoViewerImages(listOf(url), listOf(url))) {
+        withViewer(loader, listOf(url), images = CoffeePeekPhotoViewerImages(listOf(url), listOf(url))) {
             compose.onNodeWithText(OPEN).performClick()
             compose.waitUntil(10_000) { loader.requested.size == 1 && loader.active.get() == 0 }
             assertNotNull(loader.inputs.single().permissionScope)
@@ -175,7 +179,7 @@ class FullScreenImageDialogTest {
     fun protectedViewerLeafRemovesDecodedPainterAtItsPermissionDeadline() {
         val loader = FixtureImages(pending = false, pendingAfterFirst = true, grantMillis = 10_000)
         val url = "https://viewer-fixture.invalid/api/v1/check-ins/visit/photos/expiry/variants/source/1/detail.png"
-        withViewer(loader, listOf(url), images = PhotoViewerImages(listOf(url), listOf(url))) {
+        withViewer(loader, listOf(url), images = CoffeePeekPhotoViewerImages(listOf(url), listOf(url))) {
             compose.onNodeWithText(OPEN).performClick()
             compose.waitUntil(10_000) { loader.requested.size == 1 && loader.active.get() == 0 }
             compose.waitForIdle()
@@ -192,7 +196,7 @@ class FullScreenImageDialogTest {
     fun pendingHomeViewerAutomaticallyLoadsItsOriginalWithoutAnExtraAction() {
         val loader = FixtureImages(pending = false)
         val original = "https://viewer-fixture.invalid/api/v1/check-ins/home/photos/drink"
-        withViewer(loader, listOf(""), images = PhotoViewerImages(listOf(""), listOf(original))) {
+        withViewer(loader, listOf(""), images = CoffeePeekPhotoViewerImages(listOf(""), listOf(original))) {
             compose.onNodeWithText(OPEN).performClick()
             compose.onNodeWithText("Открыть оригинал").assertDoesNotExist()
             compose.waitUntil(10_000) { loader.requested.size == 1 && loader.active.get() == 0 }
@@ -252,7 +256,7 @@ class FullScreenImageDialogTest {
         val originals = List(3) { "https://viewer-fixture.invalid/api/v1/check-ins/visit/photos/pending-neighbor-$it" }
         val previews = listOf("${originals[0]}/variants/source/1/detail.png", "",
             "${originals[2]}/variants/source/1/detail.png")
-        withViewer(loader, previews, images = PhotoViewerImages(previews, originals)) {
+        withViewer(loader, previews, images = CoffeePeekPhotoViewerImages(previews, originals)) {
             compose.onNodeWithText(OPEN).performClick()
             compose.waitUntil(10_000) { loader.requested.isNotEmpty() && loader.active.get() == 0 }
             compose.waitForIdle()
@@ -332,7 +336,7 @@ class FullScreenImageDialogTest {
         loader: FixtureImages,
         urls: List<String>,
         initialIndex: Int = 0,
-        images: PhotoViewerImages = PhotoViewerImages(urls),
+        images: CoffeePeekPhotoViewerImages = CoffeePeekPhotoViewerImages(urls),
         warmPreview: Boolean = false,
         block: (ViewerFixture) -> Unit,
     ) {
@@ -347,7 +351,7 @@ class FullScreenImageDialogTest {
                                 Column(Modifier.fillMaxSize().statusBarsPadding()) {
                                     Button(onClick = { shown.value = true }) { Text(OPEN) }
                                     Button(onClick = { fixture.clicks.incrementAndGet() }) { Text(PROBE) }
-                                    if (warmPreview && !shown.value) CpImage(images.previews.first(),
+                                    if (warmPreview && !shown.value) CoffeePeekImage(images.previews.first(),
                                         modifier = Modifier.fillMaxWidth().height(80.dp))
                                     val scroll = rememberScrollState()
                                     fixture.scroll.set(scroll)
@@ -355,7 +359,7 @@ class FullScreenImageDialogTest {
                                         repeat(40) { index -> Text("Пост $index", Modifier.height(48.dp)) }
                                     }
                                 }
-                                if (shown.value) FullScreenImageDialog(images, initialIndex) { shown.value = false }
+                                if (shown.value) CoffeePeekPhotoViewer(images, initialIndex) { shown.value = false }
                             }
                         }
                     }
@@ -394,17 +398,17 @@ class FullScreenImageDialogTest {
         private val failingUrls: Set<String> = emptySet(),
     ) {
         val requested = CopyOnWriteArrayList<String>()
-        val inputs = CopyOnWriteArrayList<CustomUrl>()
+        val inputs = CopyOnWriteArrayList<ImageUrl>()
         val active = AtomicInteger()
         val cancelled = AtomicInteger()
         val release = CompletableDeferred<Unit>()
         val config = KamelConfig {
             // Fully local pipeline: no HTTP client, shared cache, or external fixture files.
-            fetcher(object : Fetcher<CustomUrl> {
-                override val inputDataKClass = CustomUrl::class
+            fetcher(object : Fetcher<ImageUrl> {
+                override val inputDataKClass = ImageUrl::class
                 override val source = DataSource.Disk
-                override val CustomUrl.isSupported get() = Url(url).host == "viewer-fixture.invalid"
-                override fun fetch(data: CustomUrl, resourceConfig: ResourceConfig) = flow {
+                override val ImageUrl.isSupported get() = Url(url).host == "viewer-fixture.invalid"
+                override fun fetch(data: ImageUrl, resourceConfig: ResourceConfig) = flow {
                     inputs += data
                     requested += data.url
                     val waits = pending || (pendingAfterFirst && requested.size > 1)

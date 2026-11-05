@@ -1,6 +1,6 @@
 package com.coffeepeek.admin.di.leaderboard
 
-import com.coffeepeek.admin.utils.CpImage
+import com.coffeepeek.core.designsystem.component.CoffeePeekImage
 import com.coffeepeek.api.CoffeePeekClient
 import com.coffeepeek.core.session.SessionReader
 import com.coffeepeek.feature.authorblocking.api.AuthorVisibility
@@ -17,7 +17,7 @@ internal fun leaderboardModule() = module {
     single<LeaderboardRepository> { createLeaderboardRepository(get<CoffeePeekClient>().client) }
     single<LeaderboardEntry> {
         createLeaderboardEntry(get(), leaderboardContextChanges(get(), get())) { url, modifier ->
-            CpImage(data = url, modifier = modifier)
+            CoffeePeekImage(data = url, modifier = modifier)
         }
     }
 }

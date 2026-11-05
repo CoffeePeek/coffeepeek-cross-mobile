@@ -78,7 +78,7 @@ import com.coffeepeek.admin.ui.component.rememberSyncedTextFieldValue
 import com.coffeepeek.admin.ui.component.limitTextLength
 import com.coffeepeek.admin.ui.component.updateFromInput
 import com.coffeepeek.admin.ui.icons.CpIcons
-import com.coffeepeek.admin.utils.CpImage
+import com.coffeepeek.core.designsystem.component.CoffeePeekImage
 import com.coffeepeek.admin.utils.MAX_MENU_PHOTOS
 import com.coffeepeek.admin.utils.MAX_SHOP_PHOTOS
 import com.coffeepeek.domain.model.CatalogItem
@@ -356,7 +356,7 @@ private fun RetainedPhotoRow(photos: List<ShopPhoto>, onRemove: (String) -> Unit
         photos.forEach { photo ->
             val shape = RoundedCornerShape(CpDimens.radiusMd)
             Box(modifier = Modifier.size(96.dp)) {
-                CpImage(
+                CoffeePeekImage(
                     data = photo.previewUrl,
                     contentDescription = null,
                     modifier = Modifier
