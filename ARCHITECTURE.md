@@ -16,28 +16,14 @@ consumers and removal of `modules/`, not merely when new routes are selected.
 `composeApp` keeps startup, root DI, platform configuration and root navigation;
 business UI, presentation state and ViewModels belong to feature implementations.
 Reusable UI and platform infrastructure belong to the appropriate core owner.
-Active legacy slots, adapters and removal checkpoints are tracked in
-[feature/LEGACY_EXIT_PLAN.md](feature/LEGACY_EXIT_PLAN.md). The layout snapshot
-below describes earlier transitional ownership, not a reason to retain it.
+The migration log is in [feature/LEGACY_EXIT_PLAN.md](feature/LEGACY_EXIT_PLAN.md).
 
-## Current and target states
+## Current state
 
-Current code is arranged by technical layers:
+The current layout of the repository, including what is shared and what is platform-specific, is described in
+[docs/PROJECT_STRUCTURE.md](docs/PROJECT_STRUCTURE.md). It replaces the earlier transitional layout snapshot that stood here.
 
-```text
-composeApp/                         startup, root DI, configuration, root navigation, platform glue
-core/                               network, session, database, media, design-system, presentation
-feature/favorites/                  api/domain/data/impl; Android screen active
-feature/shop-report/                api/domain/data/impl; Android report active
-feature/shop/                       api/domain/data/impl; Android menu gallery active
-feature/check-in-history/           api/domain/data/impl; Android combined history active
-feature/home-check-in/              pure domain/data and Android detail/editor api/impl;
-                                   active in Android history/global creation; profile/iOS legacy
-feature/coffee/                     api/domain/data/impl picker, MVI and Android UI prepared;
-                                   current catalogue screens/DI still in composeApp
-feature/roaster/                    shared api/domain/data/impl and Compose UI;
-                                   common application composition selects Android/iOS entries
-```
+## Target ownership
 
 Target ownership is feature-based:
 
