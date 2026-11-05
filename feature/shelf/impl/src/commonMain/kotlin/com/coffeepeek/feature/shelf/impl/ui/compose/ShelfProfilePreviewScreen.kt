@@ -26,6 +26,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.coffeepeek.core.designsystem.component.CoffeePeekShimmer
+import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.shelf.domain.model.PublicShelf
 import com.coffeepeek.feature.shelf.domain.model.PublicShelfItem
@@ -35,11 +36,15 @@ import com.coffeepeek.feature.shelf.impl.ui.PublicShelfProfileViewModel
 import com.coffeepeek.feature.shelf.impl.ui.compose.component.PublicShelfBag
 import com.coffeepeek.feature.shelf.impl.ui.compose.component.ShelfPublicPhotoFallback
 import com.coffeepeek.feature.shelf.impl.ui.compose.component.ShelfLedge
+import com.coffeepeek.feature.shelf.impl.ui.compose.component.ShelfLedgeHeight
 import com.coffeepeek.feature.shelf.impl.ui.compose.component.ShelfLedgeOverlap
 import com.coffeepeek.feature.shelf.impl.ui.compose.component.ShelfPublicPhoto
+import com.coffeepeek.feature.shelf.impl.ui.compose.component.SHELF_COLUMNS
 import com.coffeepeek.feature.shelf.impl.ui.compose.model.*
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
+
+private val ShelfProfileBagHeight = 136.dp
 
 @Composable
 internal fun ShelfProfilePreviewScreen(model: PublicShelfProfileViewModel, repository: ShelfProfileRepository,
@@ -87,16 +92,26 @@ private fun ShelfProfileLoadingContent(modifier: Modifier) {
 @Composable
 private fun ShelfProfileBags(items: List<PublicShelfItem>, onOpen: (PublicShelfItem) -> Unit,
     photo: @Composable (PublicShelfItem, Modifier) -> Unit) {
-    Box(Modifier.fillMaxWidth().height(168.dp)) {
+    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing6)) {
+        items.chunked(SHELF_COLUMNS).forEach { row ->
+            ShelfProfileBagRow(row, onOpen, photo)
+        }
+    }
+}
+
+@Composable
+private fun ShelfProfileBagRow(items: List<PublicShelfItem>, onOpen: (PublicShelfItem) -> Unit,
+    photo: @Composable (PublicShelfItem, Modifier) -> Unit) {
+    Box(Modifier.fillMaxWidth().height(ShelfProfileBagHeight + ShelfLedgeHeight - ShelfLedgeOverlap)) {
+        ShelfLedge(Modifier.offset(y = ShelfProfileBagHeight - ShelfLedgeOverlap))
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            repeat(3) { index ->
+            repeat(SHELF_COLUMNS) { index ->
                 val item = items.getOrNull(index)
                 if (item == null) Spacer(Modifier.weight(1f)) else PublicShelfBag(item, { onOpen(item) }, Modifier.weight(1f)) {
                     photo(item, it)
                 }
             }
         }
-        ShelfLedge(Modifier.offset(y = 136.dp - ShelfLedgeOverlap))
     }
 }
 
@@ -107,6 +122,9 @@ private fun ShelfProfilePreviewSample(dark: Boolean, bagCount: Int = 3) = Coffee
         PublicShelfItem("two", "Бразилия", "Coffee roaster", null, null),
         PublicShelfItem("three", "Колумбия", null, null, null),
         PublicShelfItem("four", "Кения", null, null, null),
+        PublicShelfItem("five", "Гватемала", "Coffee roaster", "guatemala", null),
+        PublicShelfItem("six", "Руанда", null, "rwanda", null),
+        PublicShelfItem("seven", "Коста-Рика", "Sense", "costa-rica", null),
     )
     ShelfProfilePreviewContent(PublicShelf(bags.take(bagCount), bagCount), {})
 }
@@ -117,6 +135,8 @@ private fun ShelfProfilePreviewSample(dark: Boolean, bagCount: Int = 3) = Coffee
 @Preview @Composable private fun ShelfProfileSingleBagDark() = ShelfProfilePreviewSample(true, 1)
 @Preview @Composable private fun ShelfProfileOverflowLight() = ShelfProfilePreviewSample(false, 4)
 @Preview @Composable private fun ShelfProfileOverflowDark() = ShelfProfilePreviewSample(true, 4)
+@Preview @Composable private fun ShelfProfileMultipleRowsLight() = ShelfProfilePreviewSample(false, 7)
+@Preview @Composable private fun ShelfProfileMultipleRowsDark() = ShelfProfilePreviewSample(true, 7)
 
 @Composable
 private fun ShelfProfileStatusSample(dark: Boolean, loading: Boolean) = CoffeePeekTheme(darkTheme = dark) {

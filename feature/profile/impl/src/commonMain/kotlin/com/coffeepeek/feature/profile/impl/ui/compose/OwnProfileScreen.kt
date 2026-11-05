@@ -1,43 +1,15 @@
 package com.coffeepeek.feature.profile.impl.ui.compose
 
-import androidx.compose.foundation.layout.Arrangement
-import com.coffeepeek.feature.profile.impl.resources.Res
-import com.coffeepeek.feature.profile.impl.resources.profile_cancel
-import com.coffeepeek.feature.profile.impl.resources.profile_logout_message
-import com.coffeepeek.feature.profile.impl.resources.profile_logout_title
-import com.coffeepeek.feature.profile.impl.resources.profile_menu_logout
-import com.coffeepeek.feature.profile.impl.resources.profile_own_check_ins
-import com.coffeepeek.feature.profile.impl.resources.profile_own_favorites
-import com.coffeepeek.feature.profile.impl.resources.profile_title
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.MaterialTheme
-import com.coffeepeek.core.designsystem.component.CoffeePeekScaffold as Scaffold
-import com.coffeepeek.core.designsystem.component.CoffeePeekScrollableColumn
-import androidx.compose.material3.Text
-import com.coffeepeek.core.designsystem.component.CoffeePeekTextButton as TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
 import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -45,18 +17,27 @@ import com.coffeepeek.core.designsystem.component.CoffeePeekDestructiveConfirmat
 import com.coffeepeek.feature.profile.api.OwnProfileSlots
 import com.coffeepeek.feature.profile.api.ProfileAuthorActions
 import com.coffeepeek.feature.profile.api.ProfileContribution
-import com.coffeepeek.feature.profile.domain.PublicProfileStats
 import com.coffeepeek.feature.profile.impl.resources.*
 import com.coffeepeek.feature.profile.impl.ui.OwnProfileViewModel
 import com.coffeepeek.feature.profile.impl.ui.PublicProfileViewModel
-import com.coffeepeek.feature.profile.impl.ui.compose.component.ProfileLoadingSkeleton
-import com.coffeepeek.feature.profile.impl.ui.compose.component.ProfileSectionHeading
-import com.coffeepeek.feature.profile.impl.ui.compose.component.PublicProfileHeader
 import com.coffeepeek.feature.profile.impl.ui.model.OwnProfileAction
+import com.coffeepeek.feature.profile.impl.ui.model.OwnProfileState
 import com.coffeepeek.feature.profile.impl.ui.model.PublicProfileAction
 import kotlinx.coroutines.flow.drop
 
-/** The Profile tab: the owner's public profile with owner actions, or a plain summary when the account has no public address. */
+internal class OwnProfileCallbacks(
+    val editProfile: () -> Unit,
+    val openShop: (String) -> Unit,
+    val openRoaster: (String) -> Unit,
+    val login: () -> Unit,
+    val openUser: (String, String, String?) -> Unit,
+    val openFavorites: () -> Unit,
+    val openCheckIns: () -> Unit,
+    val openContributions: (ProfileContribution) -> Unit,
+    val openBlockedAuthors: () -> Unit,
+)
+
+/** Lifecycle adapter for the owner profile; root navigation remains with its caller. */
 @Composable
 internal fun OwnProfileScreen(
     vm: OwnProfileViewModel,
@@ -77,88 +58,70 @@ internal fun OwnProfileScreen(
 ) {
     val state by vm.state.collectAsStateWithLifecycle()
     var showLogout by remember { mutableStateOf(false) }
+    val callbacks = OwnProfileCallbacks(onEditProfile, onOpenShop, onOpenRoaster, onLogin, onOpenUser,
+        onOpenFavorites, onOpenCheckIns, onOpenContributions, onOpenBlockedAuthors)
     val actions: @Composable () -> Unit = {
-        OwnProfileActions(onOpenContributions, onOpenBlockedAuthors, { showLogout = true })
+        OwnProfileActions(callbacks.editProfile, callbacks.openContributions, callbacks.openBlockedAuthors) { showLogout = true }
     }
     val bottomPadding = 20.dp + bottomClearance
-
-    if (showLogout) CoffeePeekDestructiveConfirmationSheet(
-        title = stringResource(Res.string.profile_logout_title),
-        message = stringResource(Res.string.profile_logout_message),
-        confirmLabel = stringResource(Res.string.profile_menu_logout),
-        cancelLabel = stringResource(Res.string.profile_cancel),
-        onConfirm = { showLogout = false; vm.onAction(OwnProfileAction.Logout) },
-        onDismiss = { showLogout = false },
-    )
-
+    if (showLogout) OwnProfileLogoutConfirmation(
+        onConfirm = { showLogout = false; vm.onAction(OwnProfileAction.Logout) }, onDismiss = { showLogout = false })
     val slug = state.publicSlug
     val profile = state.profile
     if (state.isLoggedIn && slug != null && profile != null) {
         key(slug) {
-            val publicVm = publicModel(slug)
-            LaunchedEffect(publicVm) {
-                // The tab owns the cached account: a name, bio, avatar, address or counter change reloads the public page.
-                snapshotFlow {
-                    state.profile?.let {
-                        listOf(it.address, it.userName, it.about, it.avatarUrl, it.checkInCount, it.addedShopsCount, it.addedRoastersCount, it.followersCount)
-                    }
-                }
-                    .drop(1)
-                    .collect { publicVm.onAction(PublicProfileAction.Refresh) }
-            }
-            PublicProfileScreen(
-                slug = slug, nickname = profile.userName, avatarUrl = profile.avatarUrl,
-                vm = publicVm, authorActions = authorActions, slots = slots.shared,
-                onBack = null, onOpenShop = onOpenShop, onOpenRoaster = onOpenRoaster, onLogin = onLogin, onOpenUser = onOpenUser,
-                onShare = {}, onOpenCheckIns = onOpenCheckIns,
-                own = OwnProfileExtras(
-                    onEditProfile = onEditProfile, onOpenFavorites = onOpenFavorites, onOpenCheckIns = onOpenCheckIns,
-                    onOpenContributions = onOpenContributions,
-                    topBarActions = actions,
-                    favoritesPreview = { header -> slots.favoritesPreview(onOpenShop, onOpenRoaster, header) },
-                    checkInCount = profile.checkInCount,
-                    activityCalendar = slots.activityCalendar,
-                    activityPreview = slots.activityPreview,
-                    bottomContentPadding = bottomPadding,
-                ),
-            )
+            OwnPublicProfileContent(state, publicModel(slug), authorActions, slots, callbacks, actions, bottomPadding)
         }
-        return
+    } else {
+        OwnProfileFallbackScreen(state, slots, callbacks, actions, bottomPadding) { vm.onAction(OwnProfileAction.Refresh) }
     }
+}
 
-    Scaffold(containerColor = MaterialTheme.colorScheme.background, contentWindowInsets = WindowInsets(0, 0, 0, 0)) { innerPadding ->
-        Column(Modifier.fillMaxSize().padding(innerPadding).statusBarsPadding()) {
-            Box(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp).height(48.dp), contentAlignment = Alignment.CenterStart) {
-                Text(stringResource(Res.string.profile_title), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
-                if (state.isLoggedIn) Box(Modifier.align(Alignment.CenterEnd)) { actions() }
-            }
-            when {
-                state.isLoading && profile == null -> ProfileLoadingSkeleton()
-                state.error != null && !state.hasContent -> Box(Modifier.fillMaxSize().padding(16.dp), contentAlignment = Alignment.Center) {
-                    slots.loadError { vm.onAction(OwnProfileAction.Refresh) }
-                }
-                profile != null -> CoffeePeekScrollableColumn(
-                    Modifier.fillMaxWidth(),
-                    verticalArrangement = Arrangement.spacedBy(12.dp),
-                ) {
-                    Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                        PublicProfileHeader(
-                            nickname = profile.userName, avatarUrl = profile.avatarUrl, about = profile.about, image = slots.shared.image,
-                            onEditProfile = onEditProfile, onAvatarClick = onEditProfile,
-                            stats = PublicProfileStats(profile.checkInCount, profile.addedShopsCount, profile.addedRoastersCount, profile.followersCount),
-                            onShopsClick = { onOpenContributions(ProfileContribution.Shops) },
-                            onRoastersClick = { onOpenContributions(ProfileContribution.Roasters) },
-                        )
-                        slots.activityPreview(onOpenCheckIns)
-                        if (state.error != null || state.refreshError != null) slots.loadError { vm.onAction(OwnProfileAction.Refresh) }
-                    }
-                    slots.favoritesPreview(onOpenShop, onOpenRoaster) {
-                        ProfileSectionHeading(stringResource(Res.string.profile_section_favorites), onAll = onOpenFavorites)
-                    }
-                    if (profile.checkInCount > 0) TextButton(onClick = onOpenCheckIns, modifier = Modifier.padding(horizontal = 16.dp)) { Text(stringResource(Res.string.profile_own_check_ins)) }
-                    Spacer(Modifier.height(bottomPadding))
-                }
+@Composable
+private fun OwnPublicProfileContent(
+    state: OwnProfileState, publicVm: PublicProfileViewModel, authorActions: ProfileAuthorActions,
+    slots: OwnProfileSlots, callbacks: OwnProfileCallbacks, actions: @Composable () -> Unit, bottomPadding: Dp,
+) {
+    val profile = state.profile ?: return
+    val slug = state.publicSlug ?: return
+    ObserveOwnProfileChanges(state, publicVm)
+    PublicProfileScreen(
+        slug = slug, nickname = profile.userName, avatarUrl = profile.avatarUrl,
+        vm = publicVm, authorActions = authorActions, slots = slots.shared, onBack = null,
+        onOpenShop = callbacks.openShop, onOpenRoaster = callbacks.openRoaster, onLogin = callbacks.login,
+        onOpenUser = callbacks.openUser, onShare = {}, onOpenCheckIns = callbacks.openCheckIns,
+        own = OwnProfileExtras(
+            onOpenFavorites = callbacks.openFavorites, onOpenCheckIns = callbacks.openCheckIns,
+            onOpenContributions = callbacks.openContributions, topBarActions = actions,
+            favoritesPreview = { header -> slots.favoritesPreview(callbacks.openShop, callbacks.openRoaster, header) },
+            checkInCount = profile.checkInCount, activityPreview = slots.activityPreview,
+            bottomContentPadding = bottomPadding,
+        ),
+    )
+}
+
+@Composable
+private fun ObserveOwnProfileChanges(state: OwnProfileState, publicVm: PublicProfileViewModel) {
+    val profile by rememberUpdatedState(state.profile)
+    LaunchedEffect(publicVm) {
+        snapshotFlow {
+            profile?.let {
+                listOf(it.address, it.userName, it.about, it.avatarUrl, it.checkInCount,
+                    it.addedShopsCount, it.addedRoastersCount, it.followersCount)
             }
         }
+            .drop(1)
+            .collect { publicVm.onAction(PublicProfileAction.Refresh) }
     }
+}
+
+@Composable
+private fun OwnProfileLogoutConfirmation(onConfirm: () -> Unit, onDismiss: () -> Unit) {
+    CoffeePeekDestructiveConfirmationSheet(
+        title = stringResource(Res.string.profile_logout_title),
+        message = stringResource(Res.string.profile_logout_message),
+        confirmLabel = stringResource(Res.string.profile_menu_logout),
+        cancelLabel = stringResource(Res.string.profile_cancel),
+        onConfirm = onConfirm, onDismiss = onDismiss,
+    )
 }
