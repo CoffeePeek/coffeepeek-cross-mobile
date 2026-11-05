@@ -26,6 +26,8 @@
 
     <string name="profile_section_favorites">Подборки</string>
     <string name="profile_section_check_ins">Чекины</string>
+    <string name="profile_section_shelf">Полка</string>
+    <string name="profile_shelf_address_required">Чтобы показать полку здесь, настройте адрес профиля</string>
     <string name="profile_section_activity">Активность</string>
     <string name="profile_section_all">Все</string>
     <string name="profile_section_all_description">Все: %1$s</string>

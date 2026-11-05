@@ -1,6 +1,5 @@
 package com.coffeepeek.admin.ui.screen.profile
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
@@ -44,7 +43,6 @@ internal fun ProfileActivityWeek(
     CoffeePeekCard(
         modifier = Modifier.semantics { contentDescription = openLabel }, onClick = onClick,
         elevation = 0.dp, shape = RoundedCornerShape(20.dp),
-        border = BorderStroke(0.7.dp, MaterialTheme.colorScheme.outlineVariant),
         contentPadding = PaddingValues(horizontal = 10.dp, vertical = 12.dp),
     ) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -64,7 +62,7 @@ internal fun ProfileActivityWeek(
 private fun ProfileActivityWeekShimmer() {
     val loading = stringResource(Res.string.profile_week_loading)
     CoffeePeekCard(modifier = Modifier.semantics { contentDescription = loading }, elevation = 0.dp,
-        shape = RoundedCornerShape(20.dp), border = BorderStroke(0.7.dp, MaterialTheme.colorScheme.outlineVariant),
+        shape = RoundedCornerShape(20.dp),
         contentPadding = PaddingValues(horizontal = 10.dp, vertical = 12.dp)) {
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
             repeat(7) {

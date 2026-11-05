@@ -97,8 +97,8 @@ internal fun ShelfScreenContent(
         Column(Modifier.fillMaxSize()) {
             Column(Modifier.fillMaxWidth().statusBarsPadding().padding(horizontal = CoffeePeekDimens.spacing4).padding(top = CoffeePeekDimens.spacing3)) {
                 header()
-                ShelfSummaryRow(state.summary.takeIf { signedIn && state.loaded }, drag.active,
-                    { onAction(ShelfAction.OpenArchive) }.takeIf { signedIn })
+                ShelfHeader(onArchive = { onAction(ShelfAction.OpenArchive) }.takeIf { signedIn })
+                ShelfSummaryRow(state.summary.takeIf { signedIn && state.loaded }, drag.active)
             }
             ShelfBody(state, signedIn, drag, tiles, image, onAction, bottomClearance, Modifier.weight(1f))
         }

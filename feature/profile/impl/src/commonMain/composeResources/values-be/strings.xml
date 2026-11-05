@@ -23,6 +23,8 @@
     <string name="profile_open_followers">Адкрыць падпісчыкаў</string>
     <string name="profile_section_favorites">Падборкі</string>
     <string name="profile_section_check_ins">Чэкіны</string>
+    <string name="profile_section_shelf">Паліца</string>
+    <string name="profile_shelf_address_required">Каб паказаць тут паліцу, наладзьце адрас профілю</string>
     <string name="profile_section_activity">Актыўнасць</string>
     <string name="profile_section_all">Усе</string>
     <string name="profile_section_all_description">Усе: %1$s</string>
