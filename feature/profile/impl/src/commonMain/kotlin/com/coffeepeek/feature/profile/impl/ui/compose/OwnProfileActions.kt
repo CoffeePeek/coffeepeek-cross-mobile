@@ -22,9 +22,12 @@ import com.coffeepeek.feature.profile.impl.resources.*
 
 @Composable
 internal fun OwnProfileActions(
-    onContributions: (ProfileContribution) -> Unit, onBlockedAuthors: () -> Unit, onLogout: () -> Unit,
+    onEditProfile: () -> Unit, onContributions: (ProfileContribution) -> Unit,
+    onBlockedAuthors: () -> Unit, onLogout: () -> Unit,
 ) {
     val actions = listOf(
+        CoffeePeekMenuAction(stringResource(Res.string.profile_edit), CoffeePeekIcons.Edit,
+            onClick = onEditProfile),
         CoffeePeekMenuAction(stringResource(Res.string.profile_menu_shop_changes), CoffeePeekIcons.NoteEdit,
             nativeIcon = CoffeePeekMenuIcon.NoteEdit, onClick = { onContributions(ProfileContribution.Changes) }),
         CoffeePeekMenuAction(stringResource(Res.string.profile_menu_submitted_shops), CoffeePeekIcons.Add,
@@ -45,7 +48,7 @@ internal fun OwnProfileActions(
 
 @Composable
 private fun OwnProfileActionsPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
-    OwnProfileActions({}, {}, {})
+    OwnProfileActions({}, {}, {}, {})
 }
 
 @Preview @Composable private fun OwnProfileActionsLightPreview() = OwnProfileActionsPreview(false)
