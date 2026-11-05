@@ -32,9 +32,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.ButtonDefaults
-import com.coffeepeek.core.designsystem.component.CoffeePeekFilledIconButton as FilledIconButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import com.coffeepeek.core.designsystem.component.CoffeePeekOutlinedButton as OutlinedButton
 import androidx.compose.material3.Text
@@ -57,7 +54,6 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekColors
 import com.coffeepeek.feature.profile.api.ProfileImage
 import com.coffeepeek.feature.profile.domain.PublicProfileStats
@@ -72,7 +68,6 @@ internal fun PublicProfileHeader(
     isFollowing: Boolean = false,
     followEnabled: Boolean = true,
     onFollow: (() -> Unit)? = null,
-    onEditProfile: (() -> Unit)? = null,
     stats: PublicProfileStats? = null,
     onFollowersClick: (() -> Unit)? = null,
     onShopsClick: (() -> Unit)? = null,
@@ -87,7 +82,7 @@ internal fun PublicProfileHeader(
         Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalAlignment = Alignment.CenterVertically) {
-                ProfileAvatar(nickname, avatarUrl, image, onEditProfile, onAvatarClick, avatarSize)
+                ProfileAvatar(nickname, avatarUrl, image, onAvatarClick, avatarSize)
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text("@${nickname.trimStart('@')}", style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground,
@@ -107,26 +102,19 @@ internal fun PublicProfileHeader(
 
 @Composable
 private fun ProfileAvatar(nickname: String, avatarUrl: String?, image: ProfileImage,
-    onEditProfile: (() -> Unit)?, onAvatarClick: () -> Unit, size: Dp) {
-    Box(Modifier.size(size)) {
-        Box(
-            Modifier.fillMaxSize().clip(CircleShape)
-                .background(Brush.linearGradient(listOf(CoffeePeekColors.GoldWarm, CoffeePeekColors.Primary)))
-                .then(if (!avatarUrl.isNullOrBlank()) Modifier.clickable(role = Role.Button,
-                    onClickLabel = stringResource(Res.string.profile_open_avatar), onClick = onAvatarClick) else Modifier),
-            contentAlignment = Alignment.Center,
-        ) {
-            Text(nickname.trimStart('@').take(1).uppercase().ifBlank { "?" },
-                style = MaterialTheme.typography.headlineLarge, color = CoffeePeekColors.LightTextOnPrimary,
-                fontWeight = FontWeight.SemiBold)
-            if (!avatarUrl.isNullOrBlank()) image(avatarUrl,
-                stringResource(Res.string.profile_avatar_of, nickname.trimStart('@')), Modifier.fillMaxSize())
-        }
-        if (onEditProfile != null) FilledIconButton(
-            onClick = onEditProfile, modifier = Modifier.align(Alignment.BottomEnd).size(36.dp),
-            colors = IconButtonDefaults.filledIconButtonColors(
-                containerColor = MaterialTheme.colorScheme.surface, contentColor = MaterialTheme.colorScheme.onSurface),
-        ) { Icon(CoffeePeekIcons.Edit, stringResource(Res.string.profile_edit), Modifier.size(18.dp)) }
+    onAvatarClick: () -> Unit, size: Dp) {
+    Box(
+        Modifier.size(size).clip(CircleShape)
+            .background(Brush.linearGradient(listOf(CoffeePeekColors.GoldWarm, CoffeePeekColors.Primary)))
+            .then(if (!avatarUrl.isNullOrBlank()) Modifier.clickable(role = Role.Button,
+                onClickLabel = stringResource(Res.string.profile_open_avatar), onClick = onAvatarClick) else Modifier),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(nickname.trimStart('@').take(1).uppercase().ifBlank { "?" },
+            style = MaterialTheme.typography.headlineLarge, color = CoffeePeekColors.LightTextOnPrimary,
+            fontWeight = FontWeight.SemiBold)
+        if (!avatarUrl.isNullOrBlank()) image(avatarUrl,
+            stringResource(Res.string.profile_avatar_of, nickname.trimStart('@')), Modifier.fillMaxSize())
     }
 }
 
@@ -184,7 +172,7 @@ private fun ProfileHeaderPreview(dark: Boolean, own: Boolean = true, width: Dp =
         Surface(Modifier.width(width), color = MaterialTheme.colorScheme.background) {
             Column(Modifier.padding(16.dp)) {
                 PublicProfileHeader("Arsen", null, "Фоткаю, пью, варю… Ладно, шучу, не варю", { _, _, _ -> },
-                    onEditProfile = if (own) ({}) else null, stats = PublicProfileStats(19, 27, roasters, 1),
+                    stats = PublicProfileStats(19, 27, roasters, 1),
                     onShopsClick = if (own) ({}) else null, onRoastersClick = if (own) ({}) else null,
                     onFollowersClick = {}, onAvatarClick = {})
             }

@@ -51,8 +51,6 @@ import androidx.compose.ui.unit.round
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.core.designsystem.theme.LocalCoffeePeekOpaqueGlassOverride
-import dev.chrisbanes.haze.hazeSource
-import dev.chrisbanes.haze.rememberHazeState
 import com.coffeepeek.feature.shelf.api.ShelfImage
 import com.coffeepeek.feature.shelf.impl.resources.*
 import com.coffeepeek.feature.shelf.impl.ui.compose.PreviewShelfImage
@@ -74,7 +72,7 @@ internal fun shelfGeometry(width: Float, density: Density, rtl: Boolean): ShelfG
 }
 
 /**
- * Bags in rows of three behind frosted front rails. A tap opens a bag; a long press lifts it to move it or to drop it on the
+ * Bags in rows of three on light timber beams. A tap opens a bag; a long press lifts it to move it or to drop it on the
  * finish zone. TalkBack gets the same moves and finish as custom actions.
  */
 @Composable
@@ -90,21 +88,17 @@ internal fun ShelfGrid(
         val shown = drag.order(bags.map { it.id }).mapNotNull(byId::get)
         val currentShown by rememberUpdatedState(shown)
         val haptics = LocalHapticFeedback.current
-        val backdrop = rememberHazeState()
         Box(Modifier.fillMaxWidth().height(with(density) { (geometry.rows(bags.size) * geometry.rowHeight).toDp() })
             .onGloballyPositioned { drag.gridOrigin = it.positionInRoot() }
             .shelfGestures(drag, geometry, { currentShown }, haptics, onAction)) {
-            Box(Modifier.matchParentSize().hazeSource(backdrop)) {
-                // Only bags feed the backdrop; front rails must never capture themselves.
-                val ghost = drag.bagId?.let { it to drag.target } ?: drag.archiving?.let { id -> id to shown.indexOfFirst { it.id == id } }
-                ghost?.takeIf { it.second >= 0 }?.let { (id, index) -> byId[id]?.let { ShelfGhost(it, image, geometry.slot(index)) } }
-                shown.forEachIndexed { index, item ->
-                    key(item.id) { ShelfGridTile(item, index, shown.size, geometry, drag, tiles, onAction, arriving = item.id == arrivingId) }
-                }
-            }
             val overlap = with(density) { ShelfLedgeOverlap.toPx() }
             repeat(geometry.rows(bags.size)) { row ->
-                ShelfLedge(Modifier.offset { IntOffset(0, (row * geometry.rowHeight + geometry.slotHeight - overlap).toInt()) }, backdrop)
+                ShelfLedge(Modifier.offset { IntOffset(0, (row * geometry.rowHeight + geometry.slotHeight - overlap).toInt()) })
+            }
+            val ghost = drag.bagId?.let { it to drag.target } ?: drag.archiving?.let { id -> id to shown.indexOfFirst { it.id == id } }
+            ghost?.takeIf { it.second >= 0 }?.let { (id, index) -> byId[id]?.let { ShelfGhost(it, image, geometry.slot(index)) } }
+            shown.forEachIndexed { index, item ->
+                key(item.id) { ShelfGridTile(item, index, shown.size, geometry, drag, tiles, onAction, arriving = item.id == arrivingId) }
             }
         }
     }
