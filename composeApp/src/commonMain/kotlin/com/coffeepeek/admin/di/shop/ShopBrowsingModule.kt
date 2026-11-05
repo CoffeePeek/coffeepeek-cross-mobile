@@ -4,6 +4,8 @@ import com.coffeepeek.admin.locator.Constants
 import com.coffeepeek.api.CoffeePeekClient
 import com.coffeepeek.feature.shop.data.repository.createShopCheckInVoteRepository
 import com.coffeepeek.feature.shop.data.repository.createShopDetailsRepository
+import com.coffeepeek.feature.shop.api.PublicShopPreviews
+import com.coffeepeek.feature.shop.data.repository.createPublicShopPreviews
 import com.coffeepeek.feature.shop.domain.repository.ShopCheckInVoteRepository
 import com.coffeepeek.feature.shop.domain.repository.ShopDetailsRepository
 import kotlin.time.Clock
@@ -15,7 +17,10 @@ import org.koin.dsl.module
 internal fun shopBrowsingModule(fileBaseUrl: String = Constants.BASE_URL) = module {
     single<ShopDetailsRepository> {
         createShopDetailsRepository(get<CoffeePeekClient>().client, fileBaseUrl,
-            utcOffsetMinutes = { TimeZone.currentSystemDefault().offsetAt(Clock.System.now()).totalSeconds / 60 })
+            utcOffsetMinutes = ::currentShopUtcOffsetMinutes)
     }
+    single<PublicShopPreviews> { createPublicShopPreviews(get<CoffeePeekClient>().client, ::currentShopUtcOffsetMinutes) }
     single<ShopCheckInVoteRepository> { createShopCheckInVoteRepository(get<CoffeePeekClient>().client) }
 }
+
+private fun currentShopUtcOffsetMinutes() = TimeZone.currentSystemDefault().offsetAt(Clock.System.now()).totalSeconds / 60

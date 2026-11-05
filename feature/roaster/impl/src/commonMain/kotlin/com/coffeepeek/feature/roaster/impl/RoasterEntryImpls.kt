@@ -1,6 +1,11 @@
 package com.coffeepeek.feature.roaster.impl
 
-import androidx.compose.foundation.layout.ColumnScope
+import com.coffeepeek.core.designsystem.component.CoffeePeekLoadErrorContent
+import com.coffeepeek.core.designsystem.component.CoffeePeekBrandedImage
+import com.coffeepeek.core.designsystem.component.CoffeePeekPhotoViewer
+import com.coffeepeek.feature.roaster.impl.ui.compose.component.RoasterCatalogSuggestion
+import com.coffeepeek.feature.roaster.impl.ui.compose.component.RoasterSearchHeader
+
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.key
 import androidx.compose.ui.Modifier
@@ -10,9 +15,8 @@ import com.coffeepeek.feature.roaster.api.RoasterAnalytics
 import com.coffeepeek.feature.roaster.api.RoasterDetailEntry
 import com.coffeepeek.feature.roaster.api.RoasterDiscoveryEntry
 import com.coffeepeek.feature.roaster.api.RoasterFavoritesPort
-import com.coffeepeek.feature.roaster.api.RoasterImage
-import com.coffeepeek.feature.roaster.api.RoasterLoadError
-import com.coffeepeek.feature.roaster.api.RoasterPhotoViewer
+import com.coffeepeek.feature.roaster.impl.ui.compose.model.RoasterImage
+import com.coffeepeek.feature.roaster.impl.ui.compose.model.RoasterPhotoViewer
 import com.coffeepeek.feature.roaster.api.RoasterScreenAnalytics
 import com.coffeepeek.feature.roaster.api.RoasterShopPhotos
 import com.coffeepeek.feature.roaster.domain.repository.RoasterRepository
@@ -28,31 +32,26 @@ import kotlin.uuid.Uuid
 
 /**
  * Construct once and call [RoasterDiscoveryEntry.Section] and [RoasterDiscoveryEntry.Search] in the same
- * ViewModel-store owner: both use one list ViewModel, like the legacy Discovery. The application supplies the image
- * loader, error/empty content, analytics and haptics; no network client or navigation is created here.
+ * ViewModel-store owner: both use one list ViewModel, like the legacy Discovery. The application supplies
+ * data, analytics and haptics; feature owns search/empty/error content and creates no network client or navigation.
  */
 fun createRoasterDiscoveryEntry(
     repository: RoasterRepository,
     favorites: RoasterFavoritesPort = RoasterFavoritesPort.None,
     analytics: RoasterAnalytics = RoasterAnalytics.None,
     screenAnalytics: RoasterScreenAnalytics = RoasterScreenAnalytics.None,
-    image: RoasterImage,
-    loadError: RoasterLoadError,
-    emptyContent: @Composable (Modifier) -> Unit,
     onFavoriteFeedback: () -> Unit = {},
-): RoasterDiscoveryEntry = RoasterDiscoveryApiImpl(repository, favorites, analytics, screenAnalytics, image, loadError, emptyContent, onFavoriteFeedback)
+): RoasterDiscoveryEntry = RoasterDiscoveryApiImpl(repository, favorites, analytics, screenAnalytics, roasterImage(), onFavoriteFeedback)
 
-/** Caller owns the photo viewer, navigation and browser; destroy the destination's ViewModelStore on removal. */
+/** Caller owns navigation/browser and destination lifetime; shared visuals are assembled inside the feature. */
 fun createRoasterDetailEntry(
     repository: RoasterRepository,
     favorites: RoasterFavoritesPort = RoasterFavoritesPort.None,
     shopPhotos: RoasterShopPhotos = RoasterShopPhotos.None,
     analytics: RoasterAnalytics = RoasterAnalytics.None,
     screenAnalytics: RoasterScreenAnalytics = RoasterScreenAnalytics.None,
-    image: RoasterImage,
-    photoViewer: RoasterPhotoViewer,
     onFavoriteFeedback: () -> Unit = {},
-): RoasterDetailEntry = RoasterDetailApiImpl(repository, favorites, shopPhotos, analytics, screenAnalytics, image, photoViewer, onFavoriteFeedback)
+): RoasterDetailEntry = RoasterDetailApiImpl(repository, favorites, shopPhotos, analytics, screenAnalytics, roasterImage(), { url, dismiss -> CoffeePeekPhotoViewer(url, dismiss) }, onFavoriteFeedback)
 
 private class RoasterDiscoveryApiImpl(
     private val repository: RoasterRepository,
@@ -60,8 +59,6 @@ private class RoasterDiscoveryApiImpl(
     private val analytics: RoasterAnalytics,
     private val screenAnalytics: RoasterScreenAnalytics,
     private val image: RoasterImage,
-    private val loadError: RoasterLoadError,
-    private val emptyContent: @Composable (Modifier) -> Unit,
     private val onFavoriteFeedback: () -> Unit,
 ) : RoasterDiscoveryEntry {
     private val instanceKey = Uuid.random().toString()
@@ -78,23 +75,30 @@ private class RoasterDiscoveryApiImpl(
 
     @Composable
     override fun Section(query: String, selectedRoasters: Set<String>, favoritesOnly: Boolean,
-        onOpenRoaster: (String) -> Unit, modifier: Modifier) {
+        onOpenRoaster: (String) -> Unit, onAddRoaster: () -> Unit, modifier: Modifier) {
         key(this) {
-            RoasterDiscoverySection(model(), query, selectedRoasters, favoritesOnly, image, loadError, emptyContent, screenAnalytics,
+            RoasterDiscoverySection(model(), query, selectedRoasters, favoritesOnly, image, { CoffeePeekLoadErrorContent(it) }, { RoasterCatalogSuggestion(onAddRoaster, it) }, screenAnalytics,
                 onFavoriteFeedback, modifier) { event -> when (event) { is RoasterListEvent.OpenRoaster -> onOpenRoaster(event.slug) } }
         }
     }
 
     @Composable
     override fun Search(query: String, selectedRoasters: Set<String>, favoritesOnly: Boolean,
-        onOpenRoaster: (String) -> Unit, modifier: Modifier, bottomClearance: Dp, header: @Composable ColumnScope.() -> Unit) {
+        onOpenRoaster: (String) -> Unit, onAddRoaster: () -> Unit, onQueryChange: (String) -> Unit,
+        onCancel: () -> Unit, modifier: Modifier, bottomClearance: Dp) {
         key(this) {
-            RoasterListScreen(model(), query, selectedRoasters, favoritesOnly, image, loadError, emptyContent, screenAnalytics,
-                onFavoriteFeedback, bottomClearance, modifier, header) { event ->
+            RoasterListScreen(model(), query, selectedRoasters, favoritesOnly, image, { CoffeePeekLoadErrorContent(it) }, { RoasterCatalogSuggestion(onAddRoaster, it) }, screenAnalytics,
+                onFavoriteFeedback, bottomClearance, modifier,
+                header = { RoasterSearchHeader(query, onQueryChange, onCancel, screenAnalytics) }) { event ->
                 when (event) { is RoasterListEvent.OpenRoaster -> onOpenRoaster(event.slug) }
             }
         }
     }
+}
+
+/** Both entries share the core/media pipeline configured once by application composition. */
+private fun roasterImage(): RoasterImage = { url, description, modifier, scale, labelSize ->
+    CoffeePeekBrandedImage(url, modifier, description, scale, labelSize)
 }
 
 private class RoasterDetailApiImpl(

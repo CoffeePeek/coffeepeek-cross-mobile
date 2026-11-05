@@ -62,8 +62,8 @@ import com.coffeepeek.admin.theme.CpDimens
 import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.ui.component.CpSnackbarHost
 import com.coffeepeek.admin.ui.component.CoffeePeekLoader
-import com.coffeepeek.admin.ui.component.CoffeeShopImage
-import com.coffeepeek.admin.ui.component.CoffeeShopPlaceholderImage
+import com.coffeepeek.core.designsystem.component.CoffeePeekBrandedImage
+import com.coffeepeek.core.designsystem.component.CoffeePeekImagePlaceholder
 import com.coffeepeek.core.designsystem.component.CoffeePeekPhotoViewer
 import com.coffeepeek.admin.ui.component.FavoriteButton
 import com.coffeepeek.admin.ui.icons.CpIcons
@@ -292,14 +292,14 @@ private fun RoasterShopCard(
             ) {
                 val photoUrl = shop.photoUrl?.takeIf(String::isNotBlank)
                 if (photoUrl != null) {
-                    CoffeeShopImage(
+                    CoffeePeekBrandedImage(
                         imageUrl = photoUrl,
                         contentDescription = stringResource(Res.string.legacy_shop_photo, shop.name),
                         placeholderLabelSize = 9.sp,
                         modifier = Modifier.fillMaxSize(),
                     )
                 } else {
-                    CoffeeShopPlaceholderImage(
+                    CoffeePeekImagePlaceholder(
                         labelSize = 9.sp,
                         contentDescription = stringResource(Res.string.legacy_shop_photo_named_missing, shop.name),
                     )
@@ -339,7 +339,7 @@ private fun RoasterHero(
             .background(MaterialTheme.colorScheme.surfaceVariant),
     ) {
         if (details.photos.isEmpty()) {
-            CoffeeShopPlaceholderImage(
+            CoffeePeekImagePlaceholder(
                 labelSize = 24.sp,
                 contentDescription = stringResource(Res.string.legacy_roaster_photos_missing, details.name),
             )
@@ -350,7 +350,7 @@ private fun RoasterHero(
                 modifier = Modifier.fillMaxSize(),
             ) { page ->
                 val photo = details.photos[page]
-                CoffeeShopImage(
+                CoffeePeekBrandedImage(
                     imageUrl = photo.fullUrl,
                     contentDescription = details.name,
                     contentScale = ContentScale.Crop,

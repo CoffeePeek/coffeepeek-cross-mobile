@@ -1,5 +1,9 @@
 package com.coffeepeek.feature.discovery.impl.ui
 
+import com.coffeepeek.core.designsystem.component.CoffeePeekLoadErrorContent
+import com.coffeepeek.core.designsystem.icons.CoffeePeekIllustrations
+import org.jetbrains.compose.resources.painterResource
+
 import com.coffeepeek.feature.discovery.impl.resources.Res
 import com.coffeepeek.feature.discovery.impl.resources.discovery_loading
 import com.coffeepeek.feature.discovery.impl.resources.discovery_suggestion_title
@@ -35,12 +39,12 @@ internal fun DiscoveryShopPreview(
         state.isLoading && shops.isEmpty() -> Box(Modifier.fillMaxWidth().padding(CoffeePeekDimens.spacing4), contentAlignment = Alignment.Center) {
             CoffeePeekLoader(stringResource(Res.string.discovery_loading))
         }
-        state.error != null && shops.isEmpty() -> host.loadError({ onAction(SearchAction.Refresh) }, Modifier)
+        state.error != null && shops.isEmpty() -> CoffeePeekLoadErrorContent({ onAction(SearchAction.Refresh) }, Modifier)
         shops.isEmpty() -> CoffeePeekCatalogSuggestionCard(
             title = stringResource(Res.string.discovery_suggestion_title),
             description = stringResource(Res.string.discovery_suggestion_description),
             actionLabel = stringResource(Res.string.discovery_suggestion_action),
-            illustration = host.suggestionIllustration(), onAdd = onAddShop,
+            illustration = painterResource(CoffeePeekIllustrations.CatalogSearch), onAdd = onAddShop,
             modifier = Modifier.padding(horizontal = CoffeePeekDimens.spacing4),
         )
         else -> LazyRow(

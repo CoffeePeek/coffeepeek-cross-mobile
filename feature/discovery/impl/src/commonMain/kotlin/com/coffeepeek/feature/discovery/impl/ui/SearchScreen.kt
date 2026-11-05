@@ -1,5 +1,9 @@
 package com.coffeepeek.feature.discovery.impl.ui
 
+import com.coffeepeek.core.media.PrefetchListPhotos
+import com.coffeepeek.core.designsystem.component.CoffeePeekLoadErrorContent
+import com.coffeepeek.core.designsystem.icons.CoffeePeekIllustrations
+import org.jetbrains.compose.resources.painterResource
 import androidx.compose.animation.AnimatedContent
 import com.coffeepeek.feature.discovery.impl.resources.Res
 import com.coffeepeek.feature.discovery.impl.resources.discovery_filters
@@ -211,7 +215,7 @@ private fun ResultsList(
     val shopsFirst = showsTextResults && state.showsShopsFirst(hasRoasterResults)
     // Section changes must bring the first result into view instead of retaining the old item anchor.
     LaunchedEffect(showsTextResults, shopsFirst) { listState.scrollToItem(0) }
-    if (prefetch) host.photoPrefetch(listState, shops.map { it.id to listOfNotNull(it.photoUrl) })
+    if (prefetch) PrefetchListPhotos(listState, shops.map { it.id to listOfNotNull(it.photoUrl) })
     val nearEnd by remember { derivedStateOf { listState.layoutInfo.let { info -> (info.visibleItemsInfo.lastOrNull()?.index ?: 0) >= info.totalItemsCount - 5 } } }
     LaunchedEffect(nearEnd, state.canLoadMore, shops.size) {
         if (nearEnd && state.canLoadMore && state.shops.isNotEmpty()) onAction(SearchAction.LoadMore)
@@ -261,11 +265,11 @@ private fun LazyListScope.shopResults(
             }
         }
         state.error != null && shops.isEmpty() -> item(key = "error") {
-            host.loadError({ onAction(SearchAction.Refresh) }, Modifier.fillParentMaxSize())
+            CoffeePeekLoadErrorContent({ onAction(SearchAction.Refresh) }, Modifier.fillParentMaxSize())
         }
         state.emptyReason != null -> item(key = "empty") {
             SearchEmptyContent(requireNotNull(state.emptyReason), allResultsEmpty, state.query.isNotBlank(),
-                onEditQuery, { onAction(SearchAction.ResetFilterSelections) }, onAddShop, onAddRoaster, host.suggestionIllustration())
+                onEditQuery, { onAction(SearchAction.ResetFilterSelections) }, onAddShop, onAddRoaster, painterResource(CoffeePeekIllustrations.CatalogSearch))
         }
         else -> shopRows(state, host, onAddShop, onAction)
     }
@@ -289,7 +293,7 @@ private fun LazyListScope.shopRows(
             fallbackMessage = stringResource(Res.string.discovery_pagination_error),
             retryLabel = stringResource(Res.string.discovery_retry))
     }
-    if (state.canSuggestShop) item(key = "suggestion") { SearchContributionActions(host.suggestionIllustration(), onAddShop) }
+    if (state.canSuggestShop) item(key = "suggestion") { SearchContributionActions(painterResource(CoffeePeekIllustrations.CatalogSearch), onAddShop) }
 }
 
 
@@ -301,7 +305,7 @@ private fun SearchContentPreview(hasRoasterResults: Boolean, paginationError: Bo
                 error = if (refreshError) com.coffeepeek.feature.discovery.impl.search.SearchError(null) else null,
                 loadMoreError = if (paginationError) com.coffeepeek.feature.discovery.impl.search.SearchError(null) else null,
                 shops = listOf(ShopSummary("fixture-shop", "CoffeePeek", rating = 4.7, checkInCount = 12))),
-            host = DiscoveryHost(suggestionIllustration = { ColorPainter(Color.Transparent) }),
+            host = DiscoveryHost(),
             onAddShop = {}, bottomClearance = 0.dp, discovery = {}, textResults = {},
             hasRoasterResults = hasRoasterResults, onAction = {},
         )

@@ -1,5 +1,8 @@
 package com.coffeepeek.feature.discovery.impl.ui
 
+import com.coffeepeek.feature.discovery.impl.ui.compose.component.DiscoveryRoasterAvatar
+import com.coffeepeek.feature.discovery.impl.ui.compose.component.DiscoveryBrewMethodIcon
+import com.coffeepeek.feature.discovery.impl.ui.compose.component.DiscoveryTagIcon
 import androidx.compose.foundation.layout.Arrangement
 import com.coffeepeek.feature.discovery.impl.resources.Res
 import com.coffeepeek.feature.discovery.impl.resources.discovery_filters
@@ -145,17 +148,17 @@ private fun FilterSheetHeader(resetEnabled: Boolean, onReset: () -> Unit, onDone
 private fun FilterSelections(state: SearchState, host: DiscoveryHost, draft: DiscoveryFilters, onDraft: (DiscoveryFilters) -> Unit) {
     PriceFilter(draft.priceLevel) { onDraft(draft.copy(priceLevel = it)) }
     Selection(Res.string.discovery_section_roasters, state.catalogs.roasters, draft.roasterIds, { onDraft(draft.copy(roasterIds = draft.roasterIds.toggle(it))) }) { entry ->
-        host.roasterAvatar(entry.name, entry.photoUrl)
+        DiscoveryRoasterAvatar(entry.name, entry.photoUrl)
     }
     Selection(Res.string.discovery_section_beans, state.catalogs.beans, draft.beanIds, { onDraft(draft.copy(beanIds = draft.beanIds.toggle(it))) })
     Selection(Res.string.discovery_section_equipment, state.catalogs.equipment, draft.equipmentIds, { onDraft(draft.copy(equipmentIds = draft.equipmentIds.toggle(it))) })
     Selection(Res.string.discovery_section_brew_methods, state.catalogs.brewMethods, draft.brewMethodIds,
         { onDraft(draft.copy(brewMethodIds = draft.brewMethodIds.toggle(it))) }, label = { filterBrewMethodLabel(it) }) { entry ->
-        host.brewMethodIcon(entry.name, 22.dp)
+        DiscoveryBrewMethodIcon(entry.name, 22.dp)
     }
     Selection(Res.string.discovery_section_tags, amenityTags(state.catalogs.tags), draft.tagIds,
         { onDraft(draft.copy(tagIds = draft.tagIds.toggle(it))) }, label = { filterTagLabel(it) }) { entry ->
-        host.tagIcon(entry.id)
+        DiscoveryTagIcon(entry.id)
     }
 }
 

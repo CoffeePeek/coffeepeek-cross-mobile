@@ -13,7 +13,7 @@ import com.coffeepeek.feature.profile.domain.PublicProfileData
 import com.coffeepeek.feature.profile.api.PublicCheckInsPort
 import com.coffeepeek.admin.settings.ReviewDraftStore
 import com.coffeepeek.admin.ui.Navigator
-import com.coffeepeek.admin.ui.component.LoadErrorContent
+import com.coffeepeek.core.designsystem.component.CoffeePeekLoadErrorContent
 import com.coffeepeek.admin.ui.component.LocalFloatingNavClearance
 import com.coffeepeek.admin.ui.screen.profile.OwnProfileScreenRenderer
 import com.coffeepeek.admin.di.checkinhistory.FeatureProfileActivityRenderer
@@ -103,5 +103,5 @@ private fun ownProfileSlots(activity: FeatureProfileActivityRenderer) = OwnProfi
     },
     activityCalendar = { openShop, openCheckIns -> activity.Calendar(openShop, openCheckIns) },
     activityPreview = { onClick -> activity.Week(onClick) },
-    loadError = { onRetry -> LoadErrorContent(onRetry = onRetry) },
+    loadError = { onRetry -> CoffeePeekLoadErrorContent(onRetry = onRetry) },
 )

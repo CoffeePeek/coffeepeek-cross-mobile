@@ -27,7 +27,7 @@ import com.coffeepeek.admin.feature.catalog.api.ShopCard
 import com.coffeepeek.feature.profile.domain.PublicFavoriteKind
 import com.coffeepeek.feature.profile.domain.PublicProfileFavorite
 import com.coffeepeek.admin.theme.CpDimens
-import com.coffeepeek.admin.ui.component.CoffeeShopImage
+import com.coffeepeek.core.designsystem.component.CoffeePeekBrandedImage
 import com.coffeepeek.admin.ui.icons.CpIcons
 import com.coffeepeek.domain.model.CatalogItem
 import com.coffeepeek.domain.model.CoffeeShop
@@ -101,7 +101,7 @@ private fun PublicDrinkFavoriteCard(favorite: PublicProfileFavorite, modifier: M
             modifier = Modifier.fillMaxWidth().aspectRatio(2f).background(MaterialTheme.colorScheme.surfaceVariant),
             contentAlignment = Alignment.Center,
         ) {
-            if (!favorite.imageUrl.isNullOrBlank()) CoffeeShopImage(
+            if (!favorite.imageUrl.isNullOrBlank()) CoffeePeekBrandedImage(
                 imageUrl = favorite.imageUrl!!, contentDescription = favorite.title,
                 contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize(),
             ) else Icon(

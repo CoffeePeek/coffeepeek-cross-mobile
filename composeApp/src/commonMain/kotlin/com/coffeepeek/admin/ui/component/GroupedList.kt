@@ -1,5 +1,7 @@
 package com.coffeepeek.admin.ui.component
 
+import com.coffeepeek.core.designsystem.component.CoffeePeekImagePlaceholder
+import com.coffeepeek.core.designsystem.component.CoffeePeekBrandedImage
 import coffeepeek.composeapp.generated.resources.*
 import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 
@@ -265,7 +267,7 @@ fun RoasterAvatar(item: CatalogItem) {
     ) {
         val photoUrl = item.photoUrl?.takeIf(String::isNotBlank)
         if (photoUrl != null) {
-            CoffeeShopImage(
+            CoffeePeekBrandedImage(
                 imageUrl = photoUrl,
                 contentDescription = item.name,
                 contentScale = ContentScale.Crop,
@@ -273,7 +275,7 @@ fun RoasterAvatar(item: CatalogItem) {
                 modifier = Modifier.fillMaxSize(),
             )
         } else {
-            CoffeeShopPlaceholderImage(
+            CoffeePeekImagePlaceholder(
                 labelSize = 6.sp,
                 contentDescription = item.name,
             )

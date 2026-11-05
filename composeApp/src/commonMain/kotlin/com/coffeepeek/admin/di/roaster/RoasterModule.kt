@@ -5,7 +5,9 @@ import com.coffeepeek.admin.di.collections.FavoriteCollectionsPrompt
 import com.coffeepeek.admin.locator.Constants
 import com.coffeepeek.admin.locator.Locator
 import com.coffeepeek.api.CoffeePeekClient
-import com.coffeepeek.domain.repository.ShopRepository
+import com.coffeepeek.feature.shop.api.PublicShopPreviews
+import com.coffeepeek.feature.roaster.api.PublicRoasterCatalog
+import com.coffeepeek.feature.roaster.data.repository.createPublicRoasterCatalog
 import com.coffeepeek.feature.roaster.api.RoasterFavoritesPort
 import com.coffeepeek.feature.roaster.api.RoasterShopPhotos
 import com.coffeepeek.feature.roaster.data.repository.RoasterCatalogStore
@@ -33,7 +35,8 @@ internal fun roasterModule(baseUrl: String = Constants.BASE_URL, settings: () ->
     single<RoasterRepository> {
         createRoasterRepository(get<CoffeePeekClient>().client, baseUrl, get()) { Clock.System.now().toEpochMilliseconds() }
     }
+    single<PublicRoasterCatalog> { createPublicRoasterCatalog(get()) }
     single<RoasterFavoritesPort> { RoasterFavoritesAdapter(get<RoasterFavorites>(), get<CoroutineScope>(),
         getOrNull<FavoriteCollectionsPrompt>(), getOrNull<com.coffeepeek.domain.feature.favorites.api.FavoritesRepository>()) }
-    single<RoasterShopPhotos> { RoasterShopPhotosAdapter(get<ShopRepository>()) }
+    single<RoasterShopPhotos> { RoasterShopPhotosAdapter(get<PublicShopPreviews>()) }
 }

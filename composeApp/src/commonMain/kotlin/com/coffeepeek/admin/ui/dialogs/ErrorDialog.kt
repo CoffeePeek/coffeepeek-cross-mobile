@@ -1,5 +1,6 @@
 package com.coffeepeek.admin.ui.dialogs
 
+import com.coffeepeek.core.designsystem.icons.CoffeePeekIllustrations
 import coffeepeek.composeapp.generated.resources.*
 import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 
@@ -27,7 +28,6 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import com.coffeepeek.admin.theme.CpDimens
 import coffeepeek.composeapp.generated.resources.Res
-import coffeepeek.composeapp.generated.resources.maskot_astonishment
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
@@ -57,7 +57,7 @@ object ErrorDialog {
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Image(
-                            painter = painterResource(Res.drawable.maskot_astonishment),
+                            painter = painterResource(CoffeePeekIllustrations.LoadError),
                             contentDescription = null,
                             contentScale = ContentScale.Fit,
                             modifier = Modifier.size(96.dp),

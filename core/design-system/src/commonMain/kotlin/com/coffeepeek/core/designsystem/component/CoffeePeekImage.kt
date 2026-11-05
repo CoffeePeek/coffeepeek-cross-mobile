@@ -36,6 +36,7 @@ fun CoffeePeekImage(
     data: Any, placeholder: DrawableResource? = null, error: DrawableResource? = null,
     contentScale: ContentScale = ContentScale.Crop, modifier: Modifier = Modifier, contentDescription: String? = null,
     alignment: Alignment = Alignment.Center, highQualityData: Any? = null, upgradeDelayMillis: Long = 1_500L, showLoader: Boolean = false,
+    placeholderContent: (@Composable (Modifier) -> Unit)? = null,
 ) {
     val base = LocalImageEnvironment.current.apiBaseUrl
     val preview = resolveImageData(data, base)
@@ -43,7 +44,7 @@ fun CoffeePeekImage(
     var visible by remember(preview, detail) { mutableStateOf(false) }
     val result = rememberProgressiveImageResult(preview, detail, upgradeDelayMillis, visible)
     val observed = modifier.imageVisibility(detail != null && upgradeDelayMillis > 0) { visible = it }
-    CoffeePeekImageContent(result, placeholder, error, showLoader, contentScale, observed, contentDescription, alignment)
+    CoffeePeekImageContent(result, placeholder, error, showLoader, contentScale, observed, contentDescription, alignment, placeholderContent)
 }
 
 @Composable
@@ -71,6 +72,7 @@ private fun rememberProgressiveImageResult(preview: Any, detail: Any?, upgradeDe
 private fun CoffeePeekImageContent(
     result: Resource<Painter>, placeholder: DrawableResource?, error: DrawableResource?, loader: Boolean,
     scale: ContentScale, modifier: Modifier, description: String?, alignment: Alignment,
+    placeholderContent: (@Composable (Modifier) -> Unit)?,
 ) {
     val loading = placeholder?.let { painterResource(it) }
         ?: ColorPainter(MaterialTheme.colorScheme.surfaceVariant.let { if (loader) it.copy(alpha = 0.3f) else it })
@@ -79,10 +81,15 @@ private fun CoffeePeekImageContent(
         is Resource.Failure -> error?.let { painterResource(it) } ?: loading
         is Resource.Loading -> loading
     }
+    val content: @Composable () -> Unit = {
+        val usePlaceholder = result is Resource.Loading || result is Resource.Failure && error == null
+        if (usePlaceholder && placeholderContent != null) placeholderContent(modifier)
+        else Image(painter, description, modifier, contentScale = scale, alignment = alignment)
+    }
     if (loader) Box(contentAlignment = Alignment.Center) {
-        Image(painter, description, modifier, contentScale = scale, alignment = alignment)
+        content()
         if (result is Resource.Loading) CoffeePeekLoader(stringResource(Res.string.coffeepeek_photo_loading))
-    } else Image(painter, description, modifier, contentScale = scale, alignment = alignment)
+    } else content()
 }
 
 private fun Modifier.imageVisibility(enabled: Boolean, onVisible: (Boolean) -> Unit): Modifier = if (!enabled) this else

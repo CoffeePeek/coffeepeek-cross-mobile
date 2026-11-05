@@ -13,5 +13,5 @@ interface DiscoveryScreenRenderer {
 
 internal object LegacyDiscoveryScreenRenderer : DiscoveryScreenRenderer {
     @Composable override fun Tab(onMapExpandedChange: (Boolean) -> Unit, reselections: Flow<Unit>) =
-        DiscoveryTabContent(onMapExpandedChange, reselections)
+        DiscoveryTabContent(onMapExpandedChange)
 }

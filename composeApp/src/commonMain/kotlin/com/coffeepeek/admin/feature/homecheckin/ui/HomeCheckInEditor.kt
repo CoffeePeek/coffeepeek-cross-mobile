@@ -1,5 +1,6 @@
 package com.coffeepeek.admin.feature.homecheckin.ui
 
+import com.coffeepeek.core.designsystem.icons.CoffeePeekIllustrations
 import com.coffeepeek.core.designsystem.resources.coffeePeekStringArrayResource as stringArrayResource
 
 import coffeepeek.composeapp.generated.resources.*
@@ -67,7 +68,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import coffeepeek.composeapp.generated.resources.Res
 import coffeepeek.composeapp.generated.resources.checkin_rating_coffee
-import coffeepeek.composeapp.generated.resources.maskot_with_magnifying_glass
 import com.coffeepeek.admin.feature.catalog.api.BrewMethodOption
 import com.coffeepeek.admin.feature.coffee.api.CoffeePickerItem
 import com.coffeepeek.admin.theme.CpDimens
@@ -390,7 +390,7 @@ private fun HomeBeanPicker(state: HomeCheckInUiState, onQueryChange: (String) ->
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.spacedBy(CpDimens.spacing3),
                 ) {
-                    Image(painterResource(Res.drawable.maskot_with_magnifying_glass), null, Modifier.size(120.dp))
+                    Image(painterResource(CoffeePeekIllustrations.CatalogSearch), null, Modifier.size(120.dp))
                     Text(localizedLegacyHomeCheckInEditorHomeCheckInBeansEmpty, style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center)
                     Text(localizedLegacyHomeCheckInEditorHomeCheckInBeansEmptyHint,
                         style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant,

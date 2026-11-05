@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="discovery_price_low">До 8 BYN</string>
+    <string name="discovery_price_medium">Около 8 BYN</string>
+    <string name="discovery_price_high">Больше 8 BYN</string>
     <string name="discovery_picker_nearby">Рядом со мной</string>
     <string name="discovery_picker_title">Выберите кофейню</string>
     <string name="discovery_picker_close">Закрыть</string>

@@ -1,5 +1,7 @@
 package com.coffeepeek.feature.discovery.impl.ui
 
+import com.coffeepeek.core.media.PrefetchListPhotos
+
 import com.coffeepeek.feature.discovery.impl.resources.Res
 import com.coffeepeek.feature.discovery.impl.resources.discovery_refresh
 import com.coffeepeek.feature.discovery.impl.resources.discovery_refresh_error
@@ -42,7 +44,7 @@ internal fun DiscoveryContent(
     onAction: (SearchAction) -> Unit, onMapSlot: (Frame, Boolean) -> Unit,
 ) {
     val photos = state.visibleShops.take(PREVIEW_SHOP_COUNT).map { it.id to listOfNotNull(it.photoUrl) }
-    host.photoPrefetch(shopsState, photos.takeIf { !mapExpanded }.orEmpty())
+    PrefetchListPhotos(shopsState, photos.takeIf { !mapExpanded }.orEmpty())
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val miniMapHeight = (maxHeight * 0.3f).coerceIn(180.dp, 200.dp)
         CoffeePeekPullToRefresh(

@@ -99,7 +99,7 @@ private fun DiscoveryTabContentPreview(refreshError: Boolean = false) = CoffeePe
     DiscoveryTabContent(
         state = SearchState(isLoading = false, shops = listOf(ShopSummary("sandbox-cafe", "Sandbox Cafe")),
             error = if (refreshError) SearchError(null) else null),
-        host = DiscoveryHost(suggestionIllustration = { ColorPainter(Color.Transparent) }),
+        host = DiscoveryHost(),
         roasters = DiscoveryRoasterSlots(preview = {}, search = { _, _, _ -> }),
         analytics = NoDiscoveryAnalytics, callbacks = TabCallbacks({}, {}, {}, {}, {},
             checkInAction = { CoffeePeekAddButton({}, "Add check-in") }),

@@ -7,8 +7,10 @@ import com.coffeepeek.feature.discovery.domain.model.MapCluster
 import com.coffeepeek.feature.discovery.domain.model.MapMarker
 import com.coffeepeek.feature.discovery.domain.model.MapZone
 
-/** What the card of the selected shop shows besides the marker; the Shop owner backs it and the application formats the hours. */
-data class MapShopDetails(val photoUrl: String?, val rating: Double?, val reviewCount: Int, val isOpen: Boolean, val hours: String?, val coordinates: Coordinates? = null)
+/** Public enrichment from the Shop owner; Discovery formats the hours in its presentation layer. */
+data class MapShopDetails(val photoUrl: String?, val rating: Double?, val reviewCount: Int, val isOpen: Boolean, val hours: MapOpeningHours?, val coordinates: Coordinates? = null)
+
+data class MapOpeningHours(val isClosed: Boolean, val openTime: String? = null, val closeTime: String? = null)
 
 interface DiscoveryShopDetails {
     suspend fun details(shopId: String): Result<MapShopDetails>
