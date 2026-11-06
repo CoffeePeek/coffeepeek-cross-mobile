@@ -114,21 +114,8 @@ internal fun ShopDetailScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val changed = com.coffeepeek.feature.ownership.api.LocalBusinessOwnership.current?.ProfileChanges() ?: 0L
     LaunchedEffect(changed) { if (changed > 0) viewModel.onAction(ShopDetailAction.Retry) }
-    val currentOnEvent by rememberUpdatedState(onEvent)
-    val currentGeneration by rememberUpdatedState(sessionGeneration)
-    val favoriteError by rememberUpdatedState(stringResource(Res.string.shop_detail_favorite_error))
-    val voteError by rememberUpdatedState(stringResource(Res.string.shop_checkin_list_vote_error))
     val snackbarHostState = remember { SnackbarHostState() }
-    LaunchedEffect(viewModel, sessionGeneration) {
-        viewModel.events.collect { envelope ->
-            if (envelope.sessionGeneration != currentGeneration) return@collect
-            when (val event = envelope.event) {
-                ShopDetailEvent.FavoriteFailed -> launch { snackbarHostState.showSnackbar(favoriteError) }
-                ShopDetailEvent.VoteFailed -> launch { snackbarHostState.showSnackbar(voteError) }
-                else -> currentOnEvent(event)
-            }
-        }
-    }
+    ObserveShopDetailEvents(viewModel, sessionGeneration, snackbarHostState, onEvent)
     LaunchedEffect(viewModel, sessionGeneration) {
         viewModel.onAction(ShopDetailAction.SessionChanged(sessionGeneration))
     }
@@ -155,6 +142,29 @@ internal fun ShopDetailScreen(
             viewModel.onAction(action)
         }, distance, forCheckIn,
             formatCheckInDate, formatMenuDate, snackbarHostState)
+    }
+}
+
+@Composable
+private fun ObserveShopDetailEvents(
+    viewModel: ShopDetailViewModel,
+    sessionGeneration: Int,
+    snackbarHostState: SnackbarHostState,
+    onEvent: (ShopDetailEvent) -> Unit,
+) {
+    val currentOnEvent by rememberUpdatedState(onEvent)
+    val currentGeneration by rememberUpdatedState(sessionGeneration)
+    val favoriteError by rememberUpdatedState(stringResource(Res.string.shop_detail_favorite_error))
+    val voteError by rememberUpdatedState(stringResource(Res.string.shop_checkin_list_vote_error))
+    LaunchedEffect(viewModel, sessionGeneration) {
+        viewModel.events.collect { envelope ->
+            if (envelope.sessionGeneration != currentGeneration) return@collect
+            when (val event = envelope.event) {
+                ShopDetailEvent.FavoriteFailed -> launch { snackbarHostState.showSnackbar(favoriteError) }
+                ShopDetailEvent.VoteFailed -> launch { snackbarHostState.showSnackbar(voteError) }
+                else -> currentOnEvent(event)
+            }
+        }
     }
 }
 
