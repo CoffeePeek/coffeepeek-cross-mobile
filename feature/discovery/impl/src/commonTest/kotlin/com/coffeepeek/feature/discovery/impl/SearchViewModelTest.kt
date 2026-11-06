@@ -130,6 +130,28 @@ class SearchViewModelTest {
         assertEquals(ShopKind.Cafe, repository.queries.last().filters.kind); assertEquals(PriceLevel.Cheap, repository.queries.last().filters.priceLevel); assertEquals(4.0, repository.queries.last().filters.minRating)
     }
 
+    @Test fun aGuestCanSearchWithQuickChipsButNeedsSignInForAdvancedFilters() = runTest(dispatcher) {
+        account.key.value = null
+        val vm = model()
+        val event = async(start = CoroutineStart.UNDISPATCHED) { vm.events.first() }
+
+        vm.send(SearchAction.ToggleFilters, scope = this)
+        assertEquals(SearchEvent.SignInRequired, event.await())
+        assertEquals(listOf(DiscoveryGate.AdvancedFilters), analytics.gates)
+        assertFalse(vm.now.showFilters)
+        assertEquals(0, analytics.filtersOpened)
+
+        vm.send(SearchAction.ApplyFilters(DiscoveryFilters(openOnly = true)), scope = this)
+        assertFalse(vm.now.filters.openOnly)
+        assertEquals(1, repository.queries.size)
+
+        vm.send(SearchAction.ToggleOpen, SearchAction.Query("Coffee"), scope = this)
+        advanceTimeBy(401)
+        runCurrent()
+        assertTrue(repository.queries.last().filters.openOnly)
+        assertEquals("Coffee", repository.queries.last().text)
+    }
+
     @Test fun aGuestGetsTheSignInEventAndTheGateForVisitedAndFavoritesAndNothingChanges() = runTest(dispatcher) {
         account.key.value = null
         val vm = model()

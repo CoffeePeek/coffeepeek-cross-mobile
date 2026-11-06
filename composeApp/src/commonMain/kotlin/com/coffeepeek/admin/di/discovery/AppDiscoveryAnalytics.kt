@@ -48,7 +48,11 @@ internal class AppDiscoveryAnalytics : DiscoveryAnalytics {
     }
 
     override fun gateShown(gate: DiscoveryGate) {
-        Analytics.gate(if (gate == DiscoveryGate.VisitedFilter) "visited_filter" else "favorites_filter")
+        Analytics.gate(when (gate) {
+            DiscoveryGate.VisitedFilter -> "visited_filter"
+            DiscoveryGate.FavoritesFilter -> "favorites_filter"
+            DiscoveryGate.AdvancedFilters -> "discovery_filters"
+        })
     }
 
     override fun geolocation(placement: String, userTriggered: Boolean, outcome: GeolocationOutcome) {

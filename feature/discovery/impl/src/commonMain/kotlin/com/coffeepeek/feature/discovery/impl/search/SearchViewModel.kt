@@ -100,7 +100,7 @@ internal class SearchViewModel(
         }
     }
 
-    private fun handleSearchAction(action: SearchAction) {
+    private suspend fun handleSearchAction(action: SearchAction) {
         when (action) {
             is SearchAction.Query -> { updateState { copy(query = action.text) }; queries.tryEmit(action.text) }
             is SearchAction.PresentationChanged -> setSearchPresentation(action.active)
@@ -181,7 +181,7 @@ internal class SearchViewModel(
     private fun onAccount(key: String?) {
         val first = !accountSeen
         accountSeen = true
-        updateState { copy(isGuest = key == null) }
+        updateState { copy(isGuest = key == null, showFilters = key != null && showFilters) }
         if (first) return
         // Another account's visited and favorites are not this account's: the filters go, the page is read again.
         generation++
@@ -257,14 +257,16 @@ internal class SearchViewModel(
 
     // ---- filters ----
 
-    private fun toggleFilters() {
+    private suspend fun toggleFilters() {
         val opening = !currentState.showFilters
+        if (opening && purpose == SearchPurpose.Discovery && !guarded(DiscoveryGate.AdvancedFilters)) return
         if (opening) analytics.filtersOpened()
         updateState { copy(showFilters = opening) }
         if (opening && currentState.catalogLoadState == CatalogLoadState.Failed) loadCatalogs()
     }
 
     private fun applyFilters(filters: DiscoveryFilters) {
+        if (purpose == SearchPurpose.Discovery && account.currentAccountKey() == null) return
         val before = currentState.filters.analyticsValues()
         val after = filters.analyticsValues()
         analytics.filtersChanged(after.keys.sorted(), changedFilterKeys(before, after), FilterAction.Apply)
@@ -319,7 +321,7 @@ internal class SearchViewModel(
 
     /** A guest cannot use this switch: the gate is reported and the sign-in screen asked for. */
     private suspend fun guarded(gate: DiscoveryGate): Boolean {
-        if (!currentState.isGuest) return true
+        if (account.currentAccountKey() != null) return true
         analytics.gateShown(gate)
         sendEvent(SearchEvent.SignInRequired)
         return false

@@ -8,8 +8,8 @@ interface SearchRun {
 
 enum class FilterAction { Apply, Reset }
 
-/** The two features that need an account and send a guest to sign in. */
-enum class DiscoveryGate { VisitedFilter, FavoritesFilter }
+/** Search features that send a guest to sign in. */
+enum class DiscoveryGate { VisitedFilter, FavoritesFilter, AdvancedFilters }
 
 /** Where a geolocation answer was asked and what it was. */
 enum class GeolocationOutcome { Available, Unavailable }

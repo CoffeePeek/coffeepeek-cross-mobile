@@ -5,3 +5,10 @@ internal fun existingProfileIndex(stack: List<Navigator.Screen?>, destination: N
     if (destination !is Navigator.Screen.UserProfile || destination.slug.isBlank()) return -1
     return stack.indexOfLast { it is Navigator.Screen.UserProfile && it.slug == destination.slug }
 }
+
+internal fun Navigator.Screen.profileDestination(isLoggedIn: Boolean): Navigator.Screen =
+    if (!isLoggedIn && (this is Navigator.Screen.UserProfile || this is Navigator.Screen.UserCheckIns)) {
+        Navigator.Screen.Auth
+    } else {
+        this
+    }

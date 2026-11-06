@@ -60,7 +60,7 @@ fun initKoin(
     checkInRenderers: CheckInRendererFactories,
     contentReportRendererFactory: Scope.() -> ContentReportScreenRenderer,
     coffeeRendererFactory: Scope.() -> CoffeeScreenRenderer,
-    roasterRendererFactory: Scope.() -> RoasterScreenRenderer = { roasterScreenRenderer(get(), get(), get()) },
+    roasterRendererFactory: Scope.() -> RoasterScreenRenderer = { roasterScreenRenderer(get(), get(), get(), get()) },
     publicProfileRendererFactory: Scope.() -> PublicProfileScreenRenderer,
     ownProfileRendererFactory: Scope.() -> OwnProfileScreenRenderer,
     accountRendererFactory: Scope.() -> AccountScreenRenderer,

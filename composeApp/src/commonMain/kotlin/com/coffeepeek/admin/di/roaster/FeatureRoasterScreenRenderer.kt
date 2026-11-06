@@ -8,6 +8,7 @@ import com.coffeepeek.admin.ui.component.LocalFloatingNavClearance
 import com.coffeepeek.admin.ui.component.platformHaptic
 import com.coffeepeek.admin.ui.screen.roaster.RoasterScreenRenderer
 import com.coffeepeek.admin.utils.OpenInBrowser
+import com.coffeepeek.core.session.SessionReader
 import com.coffeepeek.feature.roaster.api.RoasterDetailEntry
 import com.coffeepeek.feature.roaster.api.RoasterDiscoveryEntry
 import com.coffeepeek.feature.roaster.api.RoasterFavoritesPort
@@ -20,6 +21,7 @@ import com.coffeepeek.feature.roaster.impl.createRoasterDiscoveryEntry
 internal class FeatureRoasterScreenRenderer(
     private val discovery: RoasterDiscoveryEntry,
     private val detail: RoasterDetailEntry,
+    private val sessions: SessionReader,
 ) : RoasterScreenRenderer {
     @Composable
     override fun hasDiscoveryResults(query: String, selectedRoasterIds: Set<String>, favoritesOnly: Boolean): Boolean? =
@@ -48,13 +50,22 @@ internal class FeatureRoasterScreenRenderer(
 
     private fun addRoaster() = Navigator.navigate(Navigator.Screen.AddRoaster)
 
-    private fun openRoaster(slug: String) = Navigator.navigate(Navigator.Screen.RoasterDetail(slug))
+    private fun openRoaster(slug: String) {
+        val session = sessions.peekSession()
+        val destination = if (session != null && sessions.isActiveSession(session)) {
+            Navigator.Screen.RoasterDetail(slug)
+        } else {
+            Navigator.Screen.Auth
+        }
+        Navigator.navigate(destination)
+    }
 }
 
 internal fun roasterScreenRenderer(
     repository: RoasterRepository,
     favorites: RoasterFavoritesPort,
     shopPhotos: RoasterShopPhotos,
+    sessions: SessionReader,
 ): FeatureRoasterScreenRenderer {
     val feedback = { platformHaptic(HapticEvent.Selection) }
     return FeatureRoasterScreenRenderer(
@@ -62,5 +73,6 @@ internal fun roasterScreenRenderer(
             onFavoriteFeedback = feedback),
         createRoasterDetailEntry(repository, favorites, shopPhotos, RoasterAnalyticsAdapter, RoasterScreenAnalyticsAdapter,
             onFavoriteFeedback = feedback),
+        sessions,
     )
 }
