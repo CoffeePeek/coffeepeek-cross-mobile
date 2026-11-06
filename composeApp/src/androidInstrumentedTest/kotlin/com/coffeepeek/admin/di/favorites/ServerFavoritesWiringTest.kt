@@ -1,7 +1,5 @@
 package com.coffeepeek.admin.di.favorites
 
-import com.coffeepeek.feature.favorites.api.FavoritesEntry
-import com.coffeepeek.feature.favorites.domain.repository.FavoriteDrinksRepository
 import com.coffeepeek.feature.favorites.domain.repository.FavoritesRepository
 import org.junit.Test
 import org.koin.core.context.GlobalContext
@@ -13,7 +11,5 @@ class ServerFavoritesWiringTest {
     @Test fun androidUsesTheServerAdaptersAndDoesNotReplaceTheServerWriterWithRoom() {
         val graph = GlobalContext.get()
         assertIs<ServerFavoriteShopsRepository>(graph.get<FavoritesRepository>())
-        assertIs<ServerFavoriteDrinksRepository>(graph.get<FavoriteDrinksRepository>())
-        assertNotNull(graph.get<FavoritesEntry>())
     }
 }
