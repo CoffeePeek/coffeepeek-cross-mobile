@@ -20,7 +20,6 @@ internal fun BusinessProfileEditor(state: OwnershipState, action: (OwnershipActi
     BusinessGallery(state, action, image, picker)
     CoffeePeekButton(stringResource(Res.string.ownership_save), { action(OwnershipAction.AskSave) },
         enabled = state.dirty && !state.busy && !state.reloadRequired)
-    CoffeePeekButton(stringResource(Res.string.ownership_reload), { action(OwnershipAction.AskReload) }, enabled = !state.busy)
 }
 @Composable
 private fun BusinessProfileFields(draft: ProfileDraft, kind: BusinessKind, busy: Boolean, action: (OwnershipAction) -> Unit) {

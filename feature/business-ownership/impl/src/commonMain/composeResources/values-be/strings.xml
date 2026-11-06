@@ -41,7 +41,6 @@
     <string name="ownership_discard_title">Замяніць незахаваны чарнавік?</string>
     <string name="ownership_discard_hint">Уведзеныя змены будуць страчаныя. Захаваны профіль застанецца на серверы.</string>
     <string name="ownership_discard">Працягнуць</string>
-    <string name="ownership_reload">Загрузіць профіль нанова</string>
     <string name="ownership_saved">Профіль захаваны</string>
     <string name="ownership_error_unavailable">Не ўдалося загрузіць або захаваць звесткі. Праверце злучэнне і паўтарыце запыт.</string>
     <string name="ownership_error_signedout">Увайдзіце зноў, каб працягнуць.</string>

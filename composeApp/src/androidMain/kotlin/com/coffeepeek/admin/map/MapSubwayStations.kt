@@ -44,7 +44,7 @@ internal fun addSubwayStations(style: Style, metrics: DisplayMetrics, dark: Bool
             textHaloColor(if (dark) "#1A1412" else "#FAF8F5"),
             textHaloWidth(1.2f),
         )
-    stations.minZoom = 14f
+    stations.minZoom = 12f
     style.addLayer(stations)
 }
 
