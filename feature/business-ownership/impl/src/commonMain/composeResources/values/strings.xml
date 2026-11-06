@@ -62,4 +62,9 @@
     <string name="ownership_switch_business">Перейти на бизнес аккаунт</string>
     <string name="ownership_switch_personal">Перейти на личный аккаунт</string>
     <string name="ownership_evidence_photos">Фото подтверждения полномочий</string>
+    <string name="ownership_checkin_qr_action">QR для чекина</string>
+    <string name="ownership_checkin_qr_hint">Сканируйте, чтобы открыть форму чекина в этой кофейне.</string>
+    <string name="ownership_checkin_qr_description">QR-код для чекина в кофейне %1$s</string>
+    <string name="ownership_checkin_qr_share">Поделиться PNG</string>
+    <string name="ownership_checkin_qr_error">Не удалось подготовить QR-код. Попробуйте ещё раз.</string>
 </resources>

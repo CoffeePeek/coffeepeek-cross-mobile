@@ -33,6 +33,9 @@ import com.coffeepeek.feature.shop.impl.ui.data.trackShopAction
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.remember
@@ -106,6 +109,7 @@ internal fun ShopDetailScreen(
     formatCheckInDate: (String) -> String = { it.take(10) },
     formatMenuDate: (String) -> String = ::formatShopMenuDate,
     refreshGeneration: Long = 0,
+    openCheckIn: Boolean = false,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val changed = com.coffeepeek.feature.ownership.api.LocalBusinessOwnership.current?.ProfileChanges() ?: 0L
@@ -136,6 +140,10 @@ internal fun ShopDetailScreen(
         ?: ShopDetailState(sessionGeneration = sessionGeneration)
     val analytics = LocalShopAnalytics.current
     analytics.TrackDetail(visibleState.details != null)
+    OpenLinkedCheckIn(openCheckIn, visibleState.isLoggedIn && visibleState.details != null) {
+        trackShopAction(ShopDetailAction.OpenCheckIn, visibleState, analytics)
+        viewModel.onAction(ShopDetailAction.OpenCheckIn)
+    }
     val overview = visibleState.details?.overview
     val latitude = overview?.latitude
     val longitude = overview?.longitude
@@ -147,6 +155,17 @@ internal fun ShopDetailScreen(
             viewModel.onAction(action)
         }, distance, forCheckIn,
             formatCheckInDate, formatMenuDate, snackbarHostState)
+    }
+}
+
+@Composable
+private fun OpenLinkedCheckIn(requested: Boolean, ready: Boolean, onOpen: () -> Unit) {
+    var opened by rememberSaveable { mutableStateOf(false) }
+    LaunchedEffect(requested, ready) {
+        if (requested && ready && !opened) {
+            opened = true
+            onOpen()
+        }
     }
 }
 

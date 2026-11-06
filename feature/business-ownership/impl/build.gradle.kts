@@ -17,6 +17,7 @@ dependencies {
     implementation(project(":core:presentation"))
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.datetime)
+    implementation(libs.qrose)
     implementation(libs.compose.ui.backhandler)
     implementation(libs.androidx.lifecycle.viewmodelCompose)
     implementation(libs.androidx.lifecycle.runtimeCompose)
