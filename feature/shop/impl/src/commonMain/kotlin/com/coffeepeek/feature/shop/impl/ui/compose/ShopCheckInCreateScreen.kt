@@ -31,6 +31,7 @@ import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.coffeepeek.core.designsystem.component.CoffeePeekButton
+import com.coffeepeek.core.designsystem.component.CoffeePeekDestructiveConfirmationSheet
 import com.coffeepeek.core.designsystem.component.CoffeePeekFormStep
 import com.coffeepeek.core.designsystem.component.CoffeePeekSwipeDismissModalBottomSheet
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
@@ -47,6 +48,10 @@ import com.coffeepeek.feature.shop.impl.resources.shop_checkin_form_history
 import com.coffeepeek.feature.shop.impl.resources.shop_checkin_form_uncertain
 import com.coffeepeek.feature.shop.impl.resources.shop_checkin_form_history_checked
 import com.coffeepeek.feature.shop.impl.resources.shop_checkin_form_draft_error
+import com.coffeepeek.feature.shop.impl.resources.shop_checkin_discard
+import com.coffeepeek.feature.shop.impl.resources.shop_checkin_discard_title
+import com.coffeepeek.feature.shop.impl.resources.shop_checkin_discard_message
+import com.coffeepeek.feature.shop.impl.resources.shop_checkin_discard_cancel
 import com.coffeepeek.feature.shop.impl.resources.shop_checkin_error_forbidden
 import com.coffeepeek.feature.shop.impl.resources.shop_checkin_error_photos_too_large
 import com.coffeepeek.feature.shop.impl.resources.shop_checkin_error_shop_gone
@@ -94,7 +99,7 @@ internal fun ShopCheckInCreateScreen(
     CoffeePeekSwipeDismissModalBottomSheet(
         onDismissRequest = { viewModel.onAction(ShopCheckInFormAction.Dismiss) },
         dismissDescription = stringResource(Res.string.shop_checkin_form_dismiss),
-        dismissEnabled = !state.isSubmitting,
+        dismissEnabled = !state.isSubmitting && !state.isDiscarding,
         maxSheetHeightFraction = if (state.submitted) null else 0.76f,
     ) {
         ShopCheckInCreateScreenContent(
@@ -108,6 +113,16 @@ internal fun ShopCheckInCreateScreen(
             modifier = if (state.submitted) Modifier else Modifier.fillMaxHeight(),
             photosPreparing = picker.isPreparing,
         )
+        if (state.confirmDiscard) {
+            CoffeePeekDestructiveConfirmationSheet(
+                title = stringResource(Res.string.shop_checkin_discard_title),
+                message = stringResource(Res.string.shop_checkin_discard_message),
+                confirmLabel = stringResource(Res.string.shop_checkin_discard),
+                cancelLabel = stringResource(Res.string.shop_checkin_discard_cancel),
+                onConfirm = { viewModel.onAction(ShopCheckInFormAction.Discard) },
+                onDismiss = { viewModel.onAction(ShopCheckInFormAction.CancelDiscard) },
+            )
+        }
     }
 }
 
@@ -136,7 +151,8 @@ internal fun ShopCheckInCreateScreenContent(
     LaunchedEffect(scroll.isScrollInProgress) {
         if (scroll.isScrollInProgress) { keyboard?.hide(); focus.clearFocus() }
     }
-    val editable = !state.isLoading && !state.isSubmitting && !state.submitted && !state.deliveryUnconfirmed && !photosPreparing
+    val editable = !state.isLoading && !state.isSubmitting && !state.isDiscarding &&
+        !state.submitted && !state.deliveryUnconfirmed && !photosPreparing
     Column(
         modifier.fillMaxWidth().testTag("shop-checkin-form").verticalScroll(scroll)
             .imePadding().navigationBarsPadding().padding(horizontal = CoffeePeekDimens.spacing4)
@@ -220,6 +236,11 @@ internal fun ShopCheckInCreateScreenContent(
                     onAction(ShopCheckInFormAction.Submit)
                 },
             )
+            if (state.hasDraft) {
+                TextButton(onClick = { onAction(ShopCheckInFormAction.AskDiscard) }, enabled = !state.isDiscarding) {
+                    Text(stringResource(Res.string.shop_checkin_discard), color = MaterialTheme.colorScheme.error)
+                }
+            }
         }
     }
 }
@@ -254,7 +275,7 @@ private fun ShopCheckInFormPreview(dark: Boolean, uncertain: Boolean = false,
     val state = ShopCheckInFormState(
         input = ShopCheckInCreateInput("preview-shop", "Понравился фильтр", ShopRating(4, 4, 4), "2026-10-09T09:00:00Z"),
         isLoading = loading, isSubmitting = submitting, deliveryUnconfirmed = uncertain,
-        submitted = submitted,
+        submitted = submitted, hasDraft = !loading && !submitted,
     )
     ShopCheckInCreateScreenContent(state, "Кофейня", "9 октября 2026", 1791504000000, 1791547200000, {}, {}, {}, {}, photosPreparing = photosPreparing)
 }

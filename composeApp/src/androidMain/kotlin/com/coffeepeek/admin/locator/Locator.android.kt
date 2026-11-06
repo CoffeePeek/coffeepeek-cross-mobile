@@ -15,6 +15,9 @@ actual object Locator {
     actual val appCacheRootPath: String
         get() = appContext.cacheDir.absolutePath
 
+    actual val appFilesRootPath: String
+        get() = appContext.noBackupFilesDir.absolutePath
+
     actual val platformContext: Any?
         get() = appContext
 
