@@ -151,6 +151,7 @@ internal fun RegisterContent(
     AuthScaffold(
         onClose = onClose,
         modifier = modifier,
+        edgeToEdge = true,
         mascotRes = if (done) Res.drawable.auth_mascot_happy else Res.drawable.auth_mascot_laptop,
     ) {
         when (state.step) {

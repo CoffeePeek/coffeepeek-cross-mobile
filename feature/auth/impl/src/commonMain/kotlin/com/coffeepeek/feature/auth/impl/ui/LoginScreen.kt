@@ -96,7 +96,7 @@ internal fun LoginContent(
     modifier: Modifier = Modifier,
     onApple: (() -> Unit)? = null,
 ) {
-    AuthScaffold(onClose = onClose, modifier = modifier) {
+    AuthScaffold(onClose = onClose, modifier = modifier, edgeToEdge = true) {
         AuthHeading(stringResource(Res.string.auth_login_title), stringResource(Res.string.auth_login_subtitle))
         if (onGoogle != null || onApple != null) {
             SocialSignInButtons(onGoogle, onApple, !state.signingIn)

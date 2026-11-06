@@ -420,6 +420,9 @@ object Navigator {
         val shopPhotoUnderStatusBar = currentEntry?.destination?.let {
             it.hasRoute<Screen.ShopDetail>() || it.hasRoute<Screen.RoasterDetail>()
         } == true
+        val authUnderSystemBars = currentEntry?.destination?.let {
+            it.hasRoute<Screen.Auth>() || it.hasRoute<Screen.Register>()
+        } == true
         val systemInsets = WindowInsets.systemBars.union(WindowInsets.displayCutout)
         val darkTheme = MaterialTheme.colorScheme.background.luminance() < 0.5f
         PlatformSystemBars(darkTheme, lightStatusBarIcons = shopPhotoUnderStatusBar || darkTheme)
@@ -441,7 +444,8 @@ object Navigator {
                 navController = nav,
                 startDestination = Screen.Main,
                 modifier = Modifier.fillMaxSize().windowInsetsPadding(
-                    if (shopPhotoUnderStatusBar) WindowInsets(0) else systemInsets.only(WindowInsetsSides.Top),
+                    if (shopPhotoUnderStatusBar || authUnderSystemBars) WindowInsets(0)
+                    else systemInsets.only(WindowInsetsSides.Top),
                 ).clipToBounds(),
                 enterTransition = {
                     slideIntoContainer(

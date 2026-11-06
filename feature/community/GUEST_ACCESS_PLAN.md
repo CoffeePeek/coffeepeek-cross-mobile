@@ -11,3 +11,9 @@ This slice starts from `develop` at `3374e91bd428faccee46f900bf853a818adb0470`.
 - Android CI assembles both Debug flavors, checks packaged runtime classes, runs unit tests and runs lint. The focused regressions cover guest search and public profile routing.
 - The feed includes paired light and dark previews. Manual verification uses `directSandbox` on an agreed device. Check the sticky button, long posts, large text, screen reader focus, Back from login, and signed-in pagination.
 - Local verification on 2026-11-06 was limited to source and wiring review. The Windows checkout could not fetch the baseline. No app was installed or launched. Live backend and iOS device acceptance remain separate.
+
+## Map labels and auth layout
+
+- The Android and iOS MapLibre adapters use the existing OpenFreeMap vector source. Only subway stations appear as an M badge, from zoom 14. The basemap handles collisions. Manual review should cover Minsk at zoom 12 through 16, light and dark styles, zones and coffee pins.
+- Login and registration draw behind the system bars. The close button stays below the top inset and the scroll content can clear the bottom inset or keyboard. Check login, all registration steps, back navigation, short windows and large fonts in Sandbox.
+- The guest-only revision `3a464e49` passed [Android CI](https://github.com/CoffeePeek/coffeepeek-cross-mobile/actions/runs/42181028869), including both Debug flavors, unit tests and lint. The map and auth changes require a fresh build on both platforms.

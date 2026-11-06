@@ -297,6 +297,7 @@ actual fun CoffeeMap(
         activeMap.setStyle(styleBuilder) { style ->
             styleGeneration += 1
             applyCoffeePeekMapStyle(style, isDarkTheme)
+            addSubwayStations(style, appContext.resources.displayMetrics, isDarkTheme)
             addOverlayLayers(style, isDarkTheme)
             if (!initialCameraApplied) {
                 val location = context.lastKnownLocation()
