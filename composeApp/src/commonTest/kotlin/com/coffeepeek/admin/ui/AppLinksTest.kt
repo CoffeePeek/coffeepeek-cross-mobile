@@ -29,6 +29,28 @@ class AppLinksTest {
     }
 
     @Test
+    fun exportedQrRoundTripsAndRoutesGuestsToTheMatchingSignIn() {
+        val slug = "кава-42"
+        val destination = Navigator.Screen.ShopDetail(slug, openCheckIn = true)
+
+        assertEquals(destination, appLinkScreen(checkNotNull(shopCheckInLink(slug))))
+        assertEquals(destination, destination.appLinkDestination(isLoggedIn = true))
+        assertEquals(Navigator.Screen.ShopCheckInSignIn(slug), destination.appLinkDestination(isLoggedIn = false))
+        assertEquals(Navigator.Screen.ShopDetail(slug), Navigator.Screen.ShopDetail(slug).appLinkDestination(isLoggedIn = false))
+    }
+
+    @Test
+    fun onlyAnExplicitShopCheckInQueryOpensTheForm() {
+        val shop = "https://coffeepeek.by/coffee-shops/marks"
+        val regular = Navigator.Screen.ShopDetail("marks")
+        assertEquals(regular, appLinkScreen("$shop?checkin=0"))
+        assertEquals(regular, appLinkScreen("$shop?checkin=1&checkin=0"))
+        assertEquals(Navigator.Screen.RoasterDetail("roast"), appLinkScreen("https://coffeepeek.by/roasters/roast?checkin=1"))
+        assertNull(shopCheckInLink("../marks"))
+        assertNull(shopCheckInLink(""))
+    }
+
+    @Test
     fun routesRoasters() {
         val roaster = Navigator.Screen.RoasterDetail("roast")
         assertEquals(roaster, appLinkScreen("https://coffeepeek.by/roasters/roast"))

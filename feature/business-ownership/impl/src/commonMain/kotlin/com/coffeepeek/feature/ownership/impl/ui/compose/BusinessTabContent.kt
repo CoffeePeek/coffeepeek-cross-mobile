@@ -1,6 +1,7 @@
 package com.coffeepeek.feature.ownership.impl.ui.compose
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -19,6 +20,7 @@ import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.ownership.api.OwnershipImage
 import com.coffeepeek.feature.ownership.domain.model.BusinessKind
 import com.coffeepeek.feature.ownership.domain.model.BusinessPage
+import com.coffeepeek.feature.ownership.domain.model.BusinessProfile
 import com.coffeepeek.feature.ownership.domain.model.OwnedBusiness
 import com.coffeepeek.feature.ownership.impl.resources.Res
 import com.coffeepeek.feature.ownership.impl.resources.ownership_business
@@ -33,7 +35,8 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
 internal fun BusinessTabContent(state: OwnershipState, action: (OwnershipAction) -> Unit,
-    image: OwnershipImage, open: (BusinessKind, String) -> Unit) {
+    image: OwnershipImage, checkInLink: (String) -> String?, shareQr: (ByteArray, String) -> Unit,
+    open: (BusinessKind, String) -> Unit) {
     val listState = rememberLazyListState()
     CoffeePeekPullToRefresh(listState, state.loading, { action(OwnershipAction.Refresh) },
         stringResource(Res.string.ownership_refresh), stringResource(Res.string.ownership_loading),
@@ -41,19 +44,20 @@ internal fun BusinessTabContent(state: OwnershipState, action: (OwnershipAction)
         LazyColumn(Modifier.fillMaxSize().then(scrollModifier), state = listState,
             contentPadding = PaddingValues(start = 16.dp, top = 16.dp, end = 16.dp, bottom = 116.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            businessTabItems(state, action, image, open)
+            businessTabItems(state, action, image, checkInLink, shareQr, open)
         }
     }
 }
 
 private fun LazyListScope.businessTabItems(state: OwnershipState, action: (OwnershipAction) -> Unit,
-    image: OwnershipImage, open: (BusinessKind, String) -> Unit) {
+    image: OwnershipImage, checkInLink: (String) -> String?, shareQr: (ByteArray, String) -> Unit,
+    open: (BusinessKind, String) -> Unit) {
     item { Text(stringResource(Res.string.ownership_business), style = MaterialTheme.typography.headlineLarge) }
     if (state.saved || state.problem != null || state.busy) item { OwnershipFeedback(state, action) }
     item { Text(stringResource(Res.string.ownership_shops), style = MaterialTheme.typography.titleLarge) }
     items(state.shops, key = { "shop:${it.id}" }) { business ->
-        BusinessShopCard(business, state.cardProfiles[BusinessKind.CoffeeShop to business.id], image,
-            onClick = { open(BusinessKind.CoffeeShop, business.id) })
+        BusinessShopItem(business, state.cardProfiles[BusinessKind.CoffeeShop to business.id],
+            image, business.slug?.let(checkInLink), shareQr) { open(BusinessKind.CoffeeShop, business.id) }
     }
     val roasters = state.roasters?.items.orEmpty()
     if (roasters.isNotEmpty()) {
@@ -68,12 +72,22 @@ private fun LazyListScope.businessTabItems(state: OwnershipState, action: (Owner
     }
 }
 
+@Composable
+private fun BusinessShopItem(business: OwnedBusiness, profile: BusinessProfile?, image: OwnershipImage,
+    qrLink: String?, shareQr: (ByteArray, String) -> Unit, onOpen: () -> Unit) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        BusinessShopCard(business, profile, image, onClick = onOpen)
+        if (qrLink != null) OwnershipCheckInQrAction(business.name, qrLink, shareQr)
+    }
+}
+
 @Composable private fun BusinessTabPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
-    val shop = OwnedBusiness("shop", BusinessKind.CoffeeShop, "Why Knot?")
+    val shop = OwnedBusiness("shop", BusinessKind.CoffeeShop, "Why Knot?", slug = "preview-shop")
     val roaster = OwnedBusiness("roaster", BusinessKind.Roaster, "CoffeePeek Roasters")
     BusinessTabContent(OwnershipState(account = "preview", shops = listOf(shop),
         roasters = BusinessPage(listOf(roaster), 1, 1, 20)), {},
-        { _, _, modifier, _ -> CoffeePeekImagePlaceholder(modifier) }, { _, _ -> })
+        { _, _, modifier, _ -> CoffeePeekImagePlaceholder(modifier) },
+        { "https://coffeepeek.by/coffee-shops/$it?checkin=1" }, { _, _ -> }, { _, _ -> })
 }
 
 @Preview @Composable private fun BusinessTabLightPreview() = BusinessTabPreview(false)
