@@ -153,6 +153,10 @@
     <string name="shop_checkin_form_uncertain">Не удалось подтвердить создание. Сначала проверьте историю чекинов, чтобы не отправить посещение повторно.</string>
     <string name="shop_checkin_form_history_checked">Проверил историю — чекин не создан</string>
     <string name="shop_checkin_form_draft_error">Не удалось сохранить черновик. Отправка недоступна, пока не сохранена защита от повтора.</string>
+    <string name="shop_checkin_discard">Удалить черновик</string>
+    <string name="shop_checkin_discard_title">Удалить черновик чекина?</string>
+    <string name="shop_checkin_discard_message">Текст, оценки и добавленные фотографии будут удалены из черновика.</string>
+    <string name="shop_checkin_discard_cancel">Оставить черновик</string>
     <string name="shop_checkin_form_submit_error">Не удалось отправить чекин. Введённые данные сохранены.</string>
     <string name="shop_checkin_form_invalid_shop">Не удалось определить кофейню</string>
     <string name="shop_checkin_form_invalid_date">Выберите дату визита не позднее сегодняшней</string>

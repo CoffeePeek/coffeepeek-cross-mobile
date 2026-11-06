@@ -1,6 +1,5 @@
 package com.coffeepeek.admin.di.shop
 
-import com.coffeepeek.admin.ui.screen.shop.CheckInDraftStore
 import com.coffeepeek.core.network.ApiClients
 import com.coffeepeek.core.network.SessionCredentials
 import com.coffeepeek.core.network.SessionTokens
@@ -18,6 +17,7 @@ import org.koin.dsl.koinApplication
 import org.koin.dsl.module
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertSame
 
@@ -33,16 +33,14 @@ class ShopCheckInModuleTest {
                 override suspend fun replace(expected: SessionTokens, tokens: SessionTokens?): Boolean = false
             },
             refreshWith = { { Result.failure(IllegalStateException("unused")) } })
-        val drafts = CheckInDraftStore { 1791547200000 }
-        val existing = drafts.open("internal-id").copy(note = "Retained draft")
-        drafts.save(existing)
+        val draftFolder = temporary.root.resolve("drafts")
         val app = koinApplication {
             modules(module {
                 single { client }
-                single { drafts }
                 single<SessionStore> { CheckInTestSessions() }
                 single<SessionReader> { get<SessionStore>() }
-            }, shopCheckInModule(AndroidShopCheckInDateFormatter()), shopBrowsingModule(fileBaseUrl = "https://fixture.invalid"))
+            }, shopCheckInModule(AndroidShopCheckInDateFormatter(), draftPath = { draftFolder.path }),
+                shopBrowsingModule(fileBaseUrl = "https://fixture.invalid"))
         }
         try {
             assertSame(app.koin.get<ShopCheckInCreateEntry>(), app.koin.get<ShopCheckInCreateEntry>())
@@ -52,7 +50,7 @@ class ShopCheckInModuleTest {
             assertSame(app.koin.get<AppShopCheckInDraftStore>(), app.koin.get<AppShopCheckInDraftStore>())
             assertNotNull(app.koin.get<ShopCheckInDateFormatter>())
             assertNotNull(app.koin.get<ShopCheckInPhotoPicker>())
-            assertSame(existing, drafts.peek())
+            assertFalse(draftFolder.exists())
             assertEquals(0, credentialReads)
         } finally {
             app.close()

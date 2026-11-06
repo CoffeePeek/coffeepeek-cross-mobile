@@ -44,7 +44,7 @@ private class DefaultShopCheckInCreateEntry(
         onOpenHistory: () -> Unit,
     ) {
         // Each modal opening gets a fresh lifecycle VM, not the completed VM of
-        // the underlying nav entry. Disposal cancels work; the process draft survives.
+        // the underlying nav entry. The saved draft is independent of this ViewModel.
         val owner = remember(shopId, shopSlug) {
             object : ViewModelStoreOwner { override val viewModelStore = ViewModelStore() }
         }

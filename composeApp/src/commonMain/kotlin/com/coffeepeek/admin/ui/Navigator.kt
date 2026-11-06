@@ -61,7 +61,6 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
-import com.coffeepeek.admin.ui.screen.shop.CheckInDraftStore
 import org.koin.compose.koinInject
 import com.coffeepeek.admin.ui.dialogs.ErrorDialog
 import com.coffeepeek.admin.ui.dialogs.LoadingDialog
@@ -330,7 +329,6 @@ object Navigator {
         val isLoggedIn by vm.isLoggedIn.collectAsState()
         var previousLoginState by remember { mutableStateOf<Boolean?>(null) }
         var navigationGeneration by remember { mutableIntStateOf(0) }
-        val checkInDrafts: CheckInDraftStore = koinInject()
 
         ErrorDialog(
             show = errorMessage != null,
@@ -347,7 +345,6 @@ object Navigator {
             if (loggedIn) {
                 checkInSignInHandoff.take()?.let { pendingAppLink.compareAndSet(null, it) }
             } else {
-                checkInDrafts.clearAll()
                 ErrorHandler.clearError()
                 LoadingHandler.clearLoading()
                 if (_openLoginAfterSessionEnd.value) {

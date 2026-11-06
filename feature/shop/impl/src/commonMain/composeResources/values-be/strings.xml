@@ -153,6 +153,10 @@
     <string name="shop_checkin_form_uncertain">Не ўдалося пацвердзіць стварэнне. Спачатку праверце гісторыю чэкінаў, каб не адправіць наведванне паўторна.</string>
     <string name="shop_checkin_form_history_checked">Гісторыя праверана — чэкін не створаны</string>
     <string name="shop_checkin_form_draft_error">Не ўдалося захаваць чарнавік. Адпраўка недаступная, пакуль не захавана абарона ад паўтору.</string>
+    <string name="shop_checkin_discard">Выдаліць чарнавік</string>
+    <string name="shop_checkin_discard_title">Выдаліць чарнавік чакіну?</string>
+    <string name="shop_checkin_discard_message">Тэкст, ацэнкі і дададзеныя фотаздымкі будуць выдалены з чарнавіка.</string>
+    <string name="shop_checkin_discard_cancel">Пакінуць чарнавік</string>
     <string name="shop_checkin_form_submit_error">Не ўдалося адправіць чэкін. Уведзеныя звесткі захаваныя.</string>
     <string name="shop_checkin_form_invalid_shop">Не ўдалося вызначыць кавярню</string>
     <string name="shop_checkin_form_invalid_date">Выберыце дату візіту не пазнейшую за сённяшнюю</string>
