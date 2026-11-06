@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.HorizontalDivider
@@ -34,6 +35,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
+import com.coffeepeek.core.designsystem.component.CoffeePeekButton
 import com.coffeepeek.core.designsystem.component.CoffeePeekPullToRefresh
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
@@ -59,8 +61,9 @@ internal fun CommunityFeedContent(state: CommunityState, onAction: (CommunityAct
     snackbar: SnackbarHostState, bottomClearance: Dp, onRefreshed: () -> Unit,
     floatingAction: @Composable BoxScope.(CommunityFloating) -> Unit) {
     val listState = rememberLazyListState()
+    val guest = state.isLoggedIn == false
+    val posts = if (guest) state.items.take(2) else state.items
     var preview by remember { mutableStateOf<PhotoPreview?>(null) }
-    var displayedGeneration by rememberSaveable { mutableStateOf(state.sessionGeneration) }
     var homeEditorOpened by rememberSaveable { mutableStateOf(false) }
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
         if (homeEditorOpened) {
@@ -68,16 +71,10 @@ internal fun CommunityFeedContent(state: CommunityState, onAction: (CommunityAct
             onAction(CommunityAction.Refresh())
         }
     }
-    LaunchedEffect(state.sessionGeneration) {
-        if (displayedGeneration != state.sessionGeneration) {
-            preview = null
-            listState.scrollToItem(0)
-            displayedGeneration = state.sessionGeneration
-        }
-    }
+    ResetFeedOnSessionChange(state.sessionGeneration, listState) { preview = null }
     host.feedViewed(state.firstPageCount, state.timeline == CommunityTimeline.Public)
-    host.prefetchPhotos(listState, state.items.map { it.id to it.photos.thumbnails.take(3) })
-    CommunityPagination(state, listState, onAction)
+    host.prefetchPhotos(listState, posts.map { it.id to it.photos.thumbnails.take(3) })
+    if (!guest) CommunityPagination(state, listState, onAction)
     preview?.takeIf { it.generation == state.sessionGeneration }?.let {
         host.photoViewer(it.thumbnails, it.originals, it.index) { preview = null }
     }
@@ -85,18 +82,51 @@ internal fun CommunityFeedContent(state: CommunityState, onAction: (CommunityAct
     if (state.reportingId != null) ReportSheet(state.reportForm(), reportCallbacks(onAction))
     val sharer = postSharer(host)
     Box(Modifier.fillMaxSize()) {
-        CommunityFeedList(state, listState, onAction, host, snackbar, bottomClearance, onRefreshed) { index, post ->
-            CommunityFeedPost(index, post, state, host, postActions(post, state, onAction, callbacks, blockActions,
-                sharer, { homeEditorOpened = true }) { thumbnails, originals, photoIndex ->
-                preview = PhotoPreview(state.sessionGeneration, thumbnails, originals, photoIndex)
-            })
+        CommunityFeedList(state, posts, listState, onAction, host, snackbar, bottomClearance, onRefreshed) { index, post ->
+            if (guest && index > 0) {
+                CommunityGuestTeaser(post, host, callbacks.onSignIn)
+            } else {
+                CommunityFeedPost(index, post, state, host, postActions(post, state, onAction, callbacks, blockActions,
+                    sharer, { homeEditorOpened = true }) { thumbnails, originals, photoIndex ->
+                    preview = PhotoPreview(state.sessionGeneration, thumbnails, originals, photoIndex)
+                })
+            }
         }
-        floatingAction(CommunityFloating(state.isLoggedIn, state.sessionGeneration) { onAction(CommunityAction.Refresh()) })
+        if (guest && posts.isNotEmpty()) {
+            GuestFeedSignInButton(bottomClearance, callbacks.onSignIn)
+        } else {
+            floatingAction(CommunityFloating(state.isLoggedIn, state.sessionGeneration) { onAction(CommunityAction.Refresh()) })
+        }
     }
 }
 
 @Composable
-private fun CommunityPagination(state: CommunityState, listState: androidx.compose.foundation.lazy.LazyListState,
+private fun BoxScope.GuestFeedSignInButton(bottomClearance: Dp, onSignIn: () -> Unit) {
+    CoffeePeekButton(
+        text = stringResource(Res.string.community_sign_in_to_read),
+        onClick = onSignIn,
+        modifier = Modifier.align(Alignment.BottomCenter).padding(
+            start = CoffeePeekDimens.spacing4,
+            end = CoffeePeekDimens.spacing4,
+            bottom = bottomClearance + CoffeePeekDimens.spacing3,
+        ),
+    )
+}
+
+@Composable
+private fun ResetFeedOnSessionChange(generation: Long, listState: LazyListState, closePreview: () -> Unit) {
+    var displayedGeneration by rememberSaveable { mutableStateOf(generation) }
+    LaunchedEffect(generation) {
+        if (displayedGeneration != generation) {
+            closePreview()
+            listState.scrollToItem(0)
+            displayedGeneration = generation
+        }
+    }
+}
+
+@Composable
+private fun CommunityPagination(state: CommunityState, listState: LazyListState,
     onAction: (CommunityAction) -> Unit) {
     val loadMore by remember(state.items.size, state.hasMore, state.isLoading, state.isLoadingMore, state.error, state.isMutating) {
         derivedStateOf {
@@ -108,7 +138,7 @@ private fun CommunityPagination(state: CommunityState, listState: androidx.compo
 }
 
 @Composable
-private fun CommunityFeedList(state: CommunityState, listState: androidx.compose.foundation.lazy.LazyListState,
+private fun CommunityFeedList(state: CommunityState, posts: List<CommunityPost>, listState: LazyListState,
     onAction: (CommunityAction) -> Unit, host: CommunityHost, snackbar: SnackbarHostState, bottomClearance: Dp,
     onRefreshed: () -> Unit, post: @Composable (Int, CommunityPost) -> Unit) {
     Scaffold(containerColor = MaterialTheme.colorScheme.background, contentWindowInsets = WindowInsets(0),
@@ -128,7 +158,7 @@ private fun CommunityFeedList(state: CommunityState, listState: androidx.compose
                 if (state.isLoggedIn == null || (state.isLoading && state.items.isEmpty())) {
                     item(key = "loading") { CenteredLoader() }
                 } else {
-                    itemsIndexed(state.items, key = { _, item -> item.id },
+                    itemsIndexed(posts, key = { _, item -> item.id },
                         contentType = { _, item -> if (item.isHome) "home-post" else "shop-post" }) { index, item -> post(index, item) }
                     communityFeedStatus(state, onAction)
                 }
@@ -206,8 +236,9 @@ private fun postActions(
 }
 
 @Composable
-private fun CommunityFeedPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
-    CommunityFeedContent(CommunityState(isLoggedIn = true, items = listOf(previewPost())), {}, CommunityHost(),
+private fun CommunityFeedPreview(dark: Boolean, guest: Boolean = false) = CoffeePeekTheme(darkTheme = dark) {
+    val posts = listOf(previewPost(), previewPost().copy(id = "second"))
+    CommunityFeedContent(CommunityState(isLoggedIn = !guest, items = posts), {}, CommunityHost(),
         object : AuthorBlockActions {
             override fun requestBlock(author: AuthorReference) = Unit
             override fun requestUnblock(author: AuthorReference) = Unit
@@ -215,3 +246,5 @@ private fun CommunityFeedPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = da
 }
 @Preview @Composable private fun CommunityFeedLightPreview() = CommunityFeedPreview(false)
 @Preview @Composable private fun CommunityFeedDarkPreview() = CommunityFeedPreview(true)
+@Preview @Composable private fun CommunityGuestFeedLightPreview() = CommunityFeedPreview(false, guest = true)
+@Preview @Composable private fun CommunityGuestFeedDarkPreview() = CommunityFeedPreview(true, guest = true)

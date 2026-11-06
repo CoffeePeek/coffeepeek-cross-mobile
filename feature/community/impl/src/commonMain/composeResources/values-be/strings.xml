@@ -1,6 +1,7 @@
 <resources>
     <string name="community_leaders">Лідары</string>
     <string name="community_title">Стужка</string>
+    <string name="community_sign_in_to_read">Увайсці, каб чытаць стужку</string>
     <string name="community_empty">Пакуль няма апублікаваных чэкінаў.</string>
     <string name="community_refresh">Абнавіць стужку</string>
     <string name="community_loading">Загрузка</string>

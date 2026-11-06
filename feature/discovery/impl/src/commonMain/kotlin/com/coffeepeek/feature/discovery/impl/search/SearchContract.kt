@@ -20,7 +20,7 @@ internal enum class CatalogLoadState { Loading, Ready, Failed }
 internal enum class CatalogKind { Roaster, Bean, Equipment, BrewMethod, Tag }
 
 internal data class SearchState(
-    /** True until an account is known to be signed in: a guest is sent to sign in for visited, favorites and the favorite toggle. */
+    /** True until an account is known to be signed in. */
     val isGuest: Boolean = true,
     val catalogs: DiscoveryCatalogs = DiscoveryCatalogs(),
     val catalogLoadState: CatalogLoadState = CatalogLoadState.Loading,

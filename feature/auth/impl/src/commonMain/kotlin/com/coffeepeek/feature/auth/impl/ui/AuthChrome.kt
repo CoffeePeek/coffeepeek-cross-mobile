@@ -22,17 +22,22 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.windowInsetsBottomHeight
+import androidx.compose.foundation.layout.windowInsetsTopHeight
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -104,59 +109,70 @@ internal fun AuthScaffold(
     modifier: Modifier = Modifier,
     mascot: Boolean = true,
     mascotRes: DrawableResource = Res.drawable.auth_mascot_laptop,
+    edgeToEdge: Boolean = false,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val isDark = MaterialTheme.colorScheme.background.luminance() < 0.5f
     val background = if (isDark) CoffeePeekColors.DarkBackground else AuthLightBackground
-    val cardBackground = if (isDark) AuthCardDark else CoffeePeekColors.LightSurface
-    val cardBorder = if (isDark) CoffeePeekColors.DarkBorder else CoffeePeekColors.LightBorder
-    val mascotOverlap = 40.dp
-    val mascotTopGap = 12.dp
-    val cardTopInset = if (mascot) mascotTopGap + MascotSize - mascotOverlap else CoffeePeekDimens.spacing6
     val haze = rememberHazeState()
+    val formInsets = if (edgeToEdge) Modifier else Modifier.statusBarsPadding().navigationBarsPadding()
 
     Box(modifier.fillMaxSize().background(background)) {
         Box(Modifier.fillMaxSize().hazeSource(haze)) {
             AmbientBackground(isDark)
             Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .statusBarsPadding()
-                    .navigationBarsPadding()
+                modifier = Modifier.fillMaxSize().then(formInsets)
                     .padding(horizontal = CoffeePeekDimens.spacing4, vertical = CoffeePeekDimens.spacing5)
-                    .imePadding()
-                    .verticalScroll(rememberScrollState()),
+                    .imePadding().verticalScroll(rememberScrollState()),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
+                if (edgeToEdge) Spacer(Modifier.windowInsetsTopHeight(WindowInsets.statusBars))
                 Spacer(Modifier.height(CoffeePeekDimens.spacing4))
                 Wordmark()
-                Box(Modifier.widthIn(max = 460.dp).fillMaxWidth()) {
-                    Column(
-                        modifier = Modifier
-                            .padding(top = cardTopInset)
-                            .fillMaxWidth()
-                            .clip(RoundedCornerShape(CardRadius))
-                            .background(cardBackground)
-                            .border(1.dp, cardBorder, RoundedCornerShape(CardRadius))
-                            .padding(start = AuthCardPadding, end = AuthCardPadding, top = if (mascot) 48.dp else AuthCardPadding, bottom = AuthCardPadding),
-                        verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing4),
-                        content = content,
-                    )
-                    if (mascot) {
-                        androidx.compose.foundation.Image(
-                            painter = painterResource(mascotRes),
-                            contentDescription = null,
-                            contentScale = ContentScale.Fit,
-                            modifier = Modifier.align(Alignment.TopCenter).padding(top = mascotTopGap).size(MascotSize).zIndex(1f),
-                        )
-                    }
-                }
+                AuthFormCard(isDark, mascot, mascotRes, content)
                 Spacer(Modifier.height(CoffeePeekDimens.spacing8))
+                if (edgeToEdge) Spacer(Modifier.windowInsetsBottomHeight(WindowInsets.navigationBars))
             }
         }
         CloseButton(onClose, haze, Modifier.align(Alignment.TopStart).statusBarsPadding().padding(top = 20.dp, start = 20.dp).zIndex(2f))
     }
 }
+
+@Composable
+private fun AuthFormCard(isDark: Boolean, mascot: Boolean, mascotRes: DrawableResource, content: @Composable ColumnScope.() -> Unit) {
+    val cardBackground = if (isDark) AuthCardDark else CoffeePeekColors.LightSurface
+    val cardBorder = if (isDark) CoffeePeekColors.DarkBorder else CoffeePeekColors.LightBorder
+    val mascotTopGap = 12.dp
+    val cardTopInset = if (mascot) mascotTopGap + MascotSize - 40.dp else CoffeePeekDimens.spacing6
+    Box(Modifier.widthIn(max = 460.dp).fillMaxWidth()) {
+        Column(
+            modifier = Modifier.padding(top = cardTopInset).fillMaxWidth()
+                .clip(RoundedCornerShape(CardRadius)).background(cardBackground)
+                .border(1.dp, cardBorder, RoundedCornerShape(CardRadius))
+                .padding(start = AuthCardPadding, end = AuthCardPadding, top = if (mascot) 48.dp else AuthCardPadding, bottom = AuthCardPadding),
+            verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing4),
+            content = content,
+        )
+        if (mascot) {
+            androidx.compose.foundation.Image(
+                painter = painterResource(mascotRes),
+                contentDescription = null,
+                contentScale = ContentScale.Fit,
+                modifier = Modifier.align(Alignment.TopCenter).padding(top = mascotTopGap).size(MascotSize).zIndex(1f),
+            )
+        }
+    }
+}
+
+@Composable
+private fun AuthEdgeToEdgePreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
+    AuthScaffold(onClose = {}, edgeToEdge = true) {
+        AuthPrimaryButton(stringResource(Res.string.auth_register_submit), {})
+    }
+}
+
+@Preview @Composable private fun AuthEdgeToEdgeLightPreview() = AuthEdgeToEdgePreview(false)
+@Preview @Composable private fun AuthEdgeToEdgeDarkPreview() = AuthEdgeToEdgePreview(true)
 
 @Composable
 private fun CloseButton(onClick: () -> Unit, haze: HazeState, modifier: Modifier) {

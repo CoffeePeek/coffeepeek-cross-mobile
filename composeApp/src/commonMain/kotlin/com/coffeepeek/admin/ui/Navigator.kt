@@ -81,6 +81,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
@@ -361,16 +362,21 @@ object Navigator {
     @Composable
     private fun BaseNavigator(isLoggedIn: Boolean) {
         koinInject<com.coffeepeek.admin.ui.screen.notifications.NotificationsRenderer>().HandlePendingOpen(isLoggedIn)
-        val nativeAppLink by pendingAppLink.collectAsState()
-        if (PlatformRootNavigation(isLoggedIn, navigationEvents, nativeAppLink,
-            { pendingAppLink.compareAndSet(nativeAppLink, null) },
+        val appLink by pendingAppLink.collectAsState()
+        val sessionEvents = remember(isLoggedIn) {
+            navigationEvents.map { event ->
+                if (event is NavEvent.NavigateTo) event.copy(screen = event.screen.profileDestination(isLoggedIn))
+                else event
+            }
+        }
+        if (PlatformRootNavigation(isLoggedIn, sessionEvents, appLink?.profileDestination(isLoggedIn),
+            { pendingAppLink.compareAndSet(appLink, null) },
             { screen, login -> RootScreen(screen, login, isLoggedIn) },
         )) return
 
         val nav = rememberNavController()
         val focusManager = LocalFocusManager.current
         val keyboard = LocalSoftwareKeyboardController.current
-        val appLink by pendingAppLink.collectAsState()
         var mainEntry by remember { mutableStateOf<NavBackStackEntry?>(null) }
         var isMainMapExpanded by remember { mutableStateOf(false) }
         val mainStateHolder = rememberSaveableStateHolder()
@@ -389,7 +395,7 @@ object Navigator {
 
         LaunchedEffect(appLink) {
             val screen = appLink ?: return@LaunchedEffect
-            nav.navigate(screen) {
+            nav.navigate(screen.profileDestination(isLoggedIn)) {
                 launchSingleTop = true
                 popUpTo<Screen.Main>()
             }
@@ -397,7 +403,7 @@ object Navigator {
         }
 
         LaunchedEffect(Unit) {
-            navigationEvents.onEach { event ->
+            sessionEvents.onEach { event ->
                 when (event) {
                     is NavEvent.PopBack -> nav.popBackStack()
                     is NavEvent.NavigateUp -> nav.navigateUp()
@@ -413,6 +419,9 @@ object Navigator {
 
         val shopPhotoUnderStatusBar = currentEntry?.destination?.let {
             it.hasRoute<Screen.ShopDetail>() || it.hasRoute<Screen.RoasterDetail>()
+        } == true
+        val authUnderSystemBars = currentEntry?.destination?.let {
+            it.hasRoute<Screen.Auth>() || it.hasRoute<Screen.Register>()
         } == true
         val systemInsets = WindowInsets.systemBars.union(WindowInsets.displayCutout)
         val darkTheme = MaterialTheme.colorScheme.background.luminance() < 0.5f
@@ -435,7 +444,8 @@ object Navigator {
                 navController = nav,
                 startDestination = Screen.Main,
                 modifier = Modifier.fillMaxSize().windowInsetsPadding(
-                    if (shopPhotoUnderStatusBar) WindowInsets(0) else systemInsets.only(WindowInsetsSides.Top),
+                    if (shopPhotoUnderStatusBar || authUnderSystemBars) WindowInsets(0)
+                    else systemInsets.only(WindowInsetsSides.Top),
                 ).clipToBounds(),
                 enterTransition = {
                     slideIntoContainer(

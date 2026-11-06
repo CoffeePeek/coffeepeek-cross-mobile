@@ -7,6 +7,8 @@ import com.coffeepeek.admin.sandbox.backend.SandboxBackend
 import com.coffeepeek.core.network.ApiClients
 import com.coffeepeek.core.network.SessionCredentials
 import com.coffeepeek.core.network.SessionTokens
+import com.coffeepeek.core.session.Session
+import com.coffeepeek.core.session.SessionReader
 import com.coffeepeek.feature.roaster.api.PublicRoasterCatalog
 import com.coffeepeek.feature.roaster.api.RoasterFavoritesPort
 import com.coffeepeek.feature.roaster.api.RoasterFavoriteTarget
@@ -18,6 +20,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import org.junit.Rule
 import org.junit.rules.TemporaryFolder
@@ -67,7 +70,7 @@ class RoasterModuleTest {
             assertNotNull(photo)
             assertEquals(photo, koin.get<RoasterShopPhotos>().firstPhoto("sandbox-cafe"))
             assertIs<RoasterFavoritesPort>(koin.get<RoasterFavoritesPort>())
-            assertNotNull(roasterScreenRenderer(repository, koin.get(), koin.get()))
+            assertNotNull(roasterScreenRenderer(repository, koin.get(), koin.get(), koin.get()))
         } finally { fixture.close() }
     }
 
@@ -87,10 +90,18 @@ class RoasterModuleTest {
             modules(module {
                 single { client }
                 single<RoasterFavorites> { FakeFavorites() }
+                single<SessionReader> { GuestSession }
                 single { scope }
             }, roasterModule(SandboxBackend.BASE_URL) { settings }, shopBrowsingModule(SandboxBackend.BASE_URL))
         }
         return Fixture(backend, client, settings, scope, app)
+    }
+
+    private object GuestSession : SessionReader {
+        override fun peekSession() = null
+        override fun isActiveSession(session: Session?) = false
+        override fun observeSession() = flowOf(null)
+        override suspend fun getSession() = null
     }
 
     private class FakeFavorites : RoasterFavorites {
