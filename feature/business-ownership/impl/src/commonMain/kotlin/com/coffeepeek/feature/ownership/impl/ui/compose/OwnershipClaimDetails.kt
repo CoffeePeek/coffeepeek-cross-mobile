@@ -27,17 +27,19 @@ internal fun OwnershipClaimDetails(claim: OwnershipClaim, image: OwnershipImage 
         Text(claim.contact)
         Text(stringResource(Res.string.ownership_evidence), fontWeight = FontWeight.SemiBold)
         Text(claim.evidence)
-        Text(stringResource(Res.string.ownership_claim_created), fontWeight = FontWeight.SemiBold)
-        Text(claim.createdAt)
+        formatOwnershipClaimDate(claim.createdAt)?.let { createdAt ->
+            Text(stringResource(Res.string.ownership_claim_created), fontWeight = FontWeight.SemiBold)
+            Text(createdAt)
+        }
     }
     claim.evidencePhotos.forEach { photo -> image(null, photo.bytes, Modifier.fillMaxWidth().height(160.dp), ContentScale.Fit) }
     if (claim.status != ClaimStatus.Pending) CoffeePeekContentCard {
         Text(stringResource(Res.string.ownership_decision), fontWeight = FontWeight.SemiBold)
         Text(claim.decisionReason ?: stringResource(Res.string.ownership_no_reason))
-        claim.reviewedAt?.let { Text(it) }
+        claim.reviewedAt?.let { formatOwnershipClaimDate(it) }?.let { Text(it) }
     }
 }
 private fun previewClaim() = OwnershipClaim("claim", BusinessKind.Roaster, "business", "Пример обжарщика", "example",
-    "owner@example.test", "Представитель бизнеса", ClaimStatus.Approved, "2026-10-28", null, "2026-10-28", false)
+    "owner@example.test", "Представитель бизнеса", ClaimStatus.Approved, "2026-11-06T09:42:55.0752117Z", null, "2026-11-06T11:30:00Z", false)
 @Preview @Composable private fun OwnershipClaimDetailsLightPreview() = CoffeePeekTheme(darkTheme = false) { OwnershipClaimDetails(previewClaim()) }
 @Preview @Composable private fun OwnershipClaimDetailsDarkPreview() = CoffeePeekTheme(darkTheme = true) { OwnershipClaimDetails(previewClaim()) }

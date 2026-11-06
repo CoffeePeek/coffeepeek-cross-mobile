@@ -447,7 +447,7 @@ final class MapLibreMapProvider: NSObject, IosNativeMapProvider, MLNMapViewDeleg
         let stations = MLNSymbolStyleLayer(identifier: "cp-subway-stations", source: source)
         stations.sourceLayerIdentifier = "poi"
         stations.predicate = NSPredicate(format: "subclass == %@", "subway")
-        stations.minimumZoomLevel = 14
+        stations.minimumZoomLevel = 12
         stations.iconImageName = NSExpression(forConstantValue: icon)
         stations.text = NSExpression(forKeyPath: "name")
         stations.textFontNames = NSExpression(forConstantValue: ["Noto Sans Regular"])

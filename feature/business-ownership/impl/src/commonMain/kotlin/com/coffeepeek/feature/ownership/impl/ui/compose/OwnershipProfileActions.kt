@@ -21,6 +21,7 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 @Composable
 internal fun OwnershipProfileActions(owner: Boolean, suggest: () -> Unit, edit: () -> Unit,
     favorite: @Composable () -> Unit, share: @Composable () -> Unit,
+    isSignedIn: () -> Boolean, onLogin: () -> Unit,
     roaster: Boolean = false, claim: @Composable (dismiss: () -> Unit) -> Unit) {
     var applying by remember { mutableStateOf(false) }
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -35,15 +36,15 @@ internal fun OwnershipProfileActions(owner: Boolean, suggest: () -> Unit, edit: 
             representativeLabel = stringResource(if (roaster) Res.string.ownership_representative_roaster else Res.string.ownership_representative),
             actionsLabel = stringResource(Res.string.ownership_actions),
             onEdit = suggest,
-            onRepresentative = { applying = true },
+            onRepresentative = { if (isSignedIn()) applying = true else onLogin() },
         )
     }
     if (applying) claim { applying = false }
 }
 @Composable private fun OwnershipProfileActionsPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     Column {
-        OwnershipProfileActions(false, {}, {}, {}, {}, claim = {})
-        OwnershipProfileActions(true, {}, {}, {}, {}, claim = {})
+        OwnershipProfileActions(false, {}, {}, {}, {}, isSignedIn = { false }, onLogin = {}, claim = {})
+        OwnershipProfileActions(true, {}, {}, {}, {}, isSignedIn = { true }, onLogin = {}, claim = {})
     }
 }
 @Preview @Composable private fun OwnershipProfileActionsLightPreview() = OwnershipProfileActionsPreview(false)

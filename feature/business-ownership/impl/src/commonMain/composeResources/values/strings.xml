@@ -41,7 +41,6 @@
     <string name="ownership_discard_title">Заменить несохранённый черновик?</string>
     <string name="ownership_discard_hint">Введённые изменения будут потеряны. Сохранённый профиль останется на сервере.</string>
     <string name="ownership_discard">Продолжить</string>
-    <string name="ownership_reload">Перечитать профиль</string>
     <string name="ownership_saved">Профиль сохранён</string>
     <string name="ownership_error_unavailable">Не удалось загрузить или сохранить данные. Проверьте соединение и повторите запрос.</string>
     <string name="ownership_error_signedout">Войдите снова, чтобы продолжить.</string>
