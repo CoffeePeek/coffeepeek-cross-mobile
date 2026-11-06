@@ -5,6 +5,8 @@ interface CheckInHistoryCalendarSnapshot {
     val today: String
     val zoneId: String
     fun monthPeriod(year: Int, month: Int): CheckInHistoryDateBounds
+    /** Local civil boundaries converted separately, so weeks crossing DST keep their real duration. */
+    fun datePeriod(fromDate: String, toExclusiveDate: String): CheckInHistoryDateBounds
     fun localDate(instant: String): String?
 }
 

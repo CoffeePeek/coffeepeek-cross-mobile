@@ -75,11 +75,11 @@ internal fun ShelfBagScreenContent(
     val snackbar = remember { SnackbarHostState() }
     ShelfBagFailureEffect(state.failure, snackbar, onAction)
     CoffeePeekScaffold(modifier, snackbarHost = { SnackbarHost(snackbar) }, topBar = {
-        CoffeePeekTopBar("", stringResource(Res.string.shelf_bag_back), onBack = { onAction(ShelfBagAction.Back) }) {
+        CoffeePeekTopBar("", stringResource(Res.string.shelf_bag_back), onBack = { onAction(ShelfBagAction.Back) }, actions = {
             if (state.bag != null) IconButton({ menu = true }) {
                 Icon(CoffeePeekIcons.MoreHorizontal, stringResource(Res.string.shelf_bag_more), tint = MaterialTheme.colorScheme.onSurface)
             }
-        }
+        })
     }, bottomBar = { if (state.bag != null) ShelfBagMainButton(state, canBrew, onAction) }) { padding ->
         ShelfBagBody(state, image, onAction, Modifier.padding(padding))
     }

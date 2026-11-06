@@ -14,7 +14,7 @@ import kotlin.test.assertSame
 import kotlin.test.assertTrue
 
 class DesignTokensTest {
-    @Test fun sharedDimensionsKeepLegacyValues() {
+    @Test fun sharedDimensionsKeepPreviousValues() {
         assertEquals(44.dp, CoffeePeekDimens.controlHeight)
         assertEquals(22.dp, CoffeePeekDimens.buttonRadius)
         assertEquals(16.dp, CoffeePeekDimens.radiusLg)

@@ -107,7 +107,7 @@ private val loaderContours = loaderContourRadii.map { radii ->
     }
 }
 
-/** The original CoffeePeek contour animation, also retained by legacy Compose screens. */
+/** The original CoffeePeek contour animation, also retained by previous Compose screens. */
 @Composable
 fun CoffeePeekMorphingLoader(
     contentDescription: String = stringResource(Res.string.coffeepeek_loading),

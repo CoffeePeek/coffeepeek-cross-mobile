@@ -450,7 +450,7 @@ class ShopCheckInListViewModelTest {
 
         fun details(): ShopDetails {
             val checkIns = listOf(checkIn("first", "other", 5), checkIn("second", "viewer", 4),
-                checkIn("third", "legacy-owner-id", 3))
+                checkIn("third", "previous-owner-id", 3))
             return ShopDetails(
                 overview = ShopOverview(id = "shop", title = "Coffee", description = null, address = null,
                     latitude = null, longitude = null, rating = 4.0, reviewCount = 3, isOpen = true, photos = emptyList()),

@@ -3,7 +3,7 @@
 Goal: nothing in `feature/*`, `core/*` or migrated app code depends on the legacy
 `com.coffeepeek.domain.repository.SessionRepository` / `model.Session`, so that
 `modules/domain`, `modules/data` and `modules/network` can later be deleted in one sweep
-([LEGACY_REMOVAL.md](LEGACY_REMOVAL.md) section D, step 1). No product behaviour changes.
+(step 1 of the session replacement). No product behaviour changes.
 Inventory taken 2026-10-21 at `feature/legacy-consolidation`.
 
 ## 1. What exists today

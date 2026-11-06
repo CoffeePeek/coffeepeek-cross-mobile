@@ -1,4 +1,5 @@
 import com.coffeepeek.buildlogic.module
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import com.coffeepeek.buildlogic.VerifyApkRuntimeClassesTask
 import com.android.build.api.artifact.SingleArtifact
 import com.coffeepeek.config.Config
@@ -17,6 +18,17 @@ plugins {
 }
 
 if (file("google-services.json").isFile) apply(plugin = "com.google.gms.google-services")
+
+// Existing external UI regressions retain compile-only access to moved internals.
+// No test cases, Activity, APK host or instrumentation execution are added.
+val mediaTestBuildDirectory = project(":core:media").layout.buildDirectory
+tasks.withType<KotlinCompile>().configureEach {
+    if (name.endsWith("AndroidTestKotlinAndroid")) {
+        // A local value keeps the filter free of script references, which the configuration cache cannot store.
+        val mediaBuildPath = mediaTestBuildDirectory.get().asFile.toPath()
+        friendPaths.from(libraries.filter { it.toPath().startsWith(mediaBuildPath) })
+    }
+}
 
 kotlin {
     androidTarget {
@@ -39,21 +51,10 @@ kotlin {
 
     sourceSets {
         androidMain.dependencies {
-            implementation(project(module.feature.favorites.api))
-            implementation(project(module.feature.favorites.data))
-            implementation(project(module.feature.favorites.impl))
-            implementation(project(module.feature.shopReport.api))
-            implementation(project(module.feature.shopReport.data))
-            implementation(project(module.feature.shopReport.impl))
-            implementation(project(module.feature.shop.api))
-            implementation(project(module.feature.shop.domain))
-            implementation(project(module.feature.shop.data))
-            implementation(project(module.feature.shop.impl))
             // The shelf's own camera: viewfinder and capture behind the ShelfCamera port.
             implementation(libs.androidx.camera.camera2)
             implementation(libs.androidx.camera.lifecycle)
             implementation(libs.androidx.camera.view)
-            implementation(project(module.core.coroutines))
             implementation(libs.androidx.activity.compose)
             implementation(libs.androidx.concurrent.futures)
             implementation(libs.androidx.appcompat)
@@ -70,6 +71,23 @@ kotlin {
             implementation(libs.ktor.client.okhttp)
         }
         commonMain.dependencies {
+            implementation(project(module.feature.favorites.api))
+            implementation(project(module.feature.favorites.impl))
+            implementation(project(module.feature.homePreparation.impl))
+            implementation(project(module.feature.homePreparation.data))
+            implementation(project(module.feature.homePreparation.domain))
+            implementation(project(module.feature.homePreparation.api))
+            implementation(project(module.feature.checkInHistory.impl))
+            implementation(project(module.feature.checkInHistory.data))
+            implementation(project(module.feature.checkInHistory.domain))
+            implementation(project(module.feature.checkInHistory.api))
+            implementation(project(module.feature.shop.impl))
+            implementation(project(module.feature.shop.data))
+            implementation(project(module.feature.shop.domain))
+            implementation(project(module.feature.shop.api))
+            implementation(project(module.feature.shopReport.impl))
+            implementation(project(module.feature.shopReport.data))
+            implementation(project(module.feature.shopReport.api))
             implementation(project(module.feature.leaderboard.api))
             implementation(project(module.feature.leaderboard.domain))
             implementation(project(module.feature.leaderboard.data))
@@ -87,15 +105,7 @@ kotlin {
             implementation(project(module.feature.coffee.domain))
             implementation(project(module.feature.coffee.data))
             implementation(project(module.feature.coffee.impl))
-            implementation(project(module.feature.checkInHistory.api))
-            implementation(project(module.feature.checkInHistory.domain))
-            implementation(project(module.feature.checkInHistory.data))
-            implementation(project(module.feature.checkInHistory.impl))
             implementation(project(module.feature.profile.impl))
-            implementation(project(module.feature.homePreparation.api))
-            implementation(project(module.feature.homePreparation.domain))
-            implementation(project(module.feature.homePreparation.data))
-            implementation(project(module.feature.homePreparation.impl))
             implementation(project(module.feature.businessOwnership.api))
             implementation(project(module.feature.businessOwnership.domain))
             implementation(project(module.feature.businessOwnership.data))
@@ -113,20 +123,21 @@ kotlin {
             implementation(project(module.core.designSystem))
             implementation(project(module.core.session))
             implementation(project(module.core.datetime))
+            implementation(libs.kotlinx.datetime)
             implementation(project(module.feature.favorites.domain))
             implementation(libs.posthog.kmp)
-            implementation(project(module.legacy.domain))
-            implementation(project(module.legacy.data))
-            implementation(project(module.legacy.network))
-            implementation(project(module.legacy.room))
+            implementation(project(module.core.database))
             implementation(project(module.core.network))
-            implementation(project(module.legacy.homeCheckIn))
             implementation(project(module.feature.appUpdate.api))
             implementation(project(module.feature.auth.api))
             implementation(project(module.feature.community.api))
             implementation(project(module.feature.community.domain))
             implementation(project(module.feature.community.data))
             implementation(project(module.feature.community.impl))
+            implementation(project(module.feature.contentReport.api))
+            implementation(project(module.feature.contentReport.domain))
+            implementation(project(module.feature.contentReport.data))
+            implementation(project(module.feature.contentReport.impl))
             implementation(project(module.feature.contributions.api))
             implementation(project(module.feature.contributions.domain))
             implementation(project(module.feature.contributions.data))
@@ -134,6 +145,7 @@ kotlin {
             implementation(project(module.feature.discovery.api))
             implementation(project(module.feature.discovery.domain))
             implementation(project(module.feature.discovery.data))
+            implementation(project(module.feature.favorites.data))
             implementation(project(module.feature.discovery.impl))
             implementation(project(module.feature.auth.domain))
             implementation(project(module.feature.auth.data))
@@ -165,6 +177,7 @@ kotlin {
             implementation(libs.ktor.client.websockets)
             implementation(libs.kotlinx.serialization.json)
             implementation(libs.kamel)
+            implementation(project(module.core.media))
             implementation(libs.koin.core)
             implementation(libs.koin.compose)
             implementation(libs.koin.compose.viewmodel)
@@ -387,6 +400,34 @@ androidComponents.onVariants(androidComponents.selector().withBuildType("sandbox
     val runtimeVerification = tasks.register<VerifyApkRuntimeClassesTask>("verify${variant.name.replaceFirstChar { it.uppercaseChar() }}RuntimeClasses") {
         apkDirectory.set(variant.artifacts.get(SingleArtifact.APK))
         requiredClasses.set(listOf("com.coffeepeek.admin.sandbox.SandboxActivity",
+            "com.coffeepeek.feature.favorites.impl.FavoritesApiImplKt",
+            "com.coffeepeek.admin.di.favorites.ServerFavoritesModuleKt",
+            "com.coffeepeek.core.session.SessionReader",
+            "com.coffeepeek.core.session.SessionStore",
+            "com.coffeepeek.core.media.ImageUrlFetcher",
+            "com.coffeepeek.core.media.ImageEnvironment",
+            "com.coffeepeek.core.designsystem.component.CoffeePeekImageKt",
+            "com.coffeepeek.core.designsystem.component.CoffeePeekPhotoViewerKt",
+            "com.coffeepeek.core.designsystem.component.CoffeePeekBrandedImageKt",
+            "com.coffeepeek.core.designsystem.component.CoffeePeekLoadErrorContentKt",
+            "com.coffeepeek.core.designsystem.component.CoffeePeekPriceLevelSliderKt",
+            "com.coffeepeek.feature.shop.api.PublicShopPreviews",
+            "com.coffeepeek.feature.shop.api.PublicShopPreview",
+            "com.coffeepeek.feature.shop.data.repository.PublicShopPreviewsFactoryKt",
+            "com.coffeepeek.feature.roaster.api.PublicRoasterCatalog",
+            "com.coffeepeek.feature.roaster.data.repository.PublicRoasterCatalogFactoryKt",
+            "com.coffeepeek.feature.discovery.api.MapOpeningHours",
+            "com.coffeepeek.core.designsystem.component.CoffeePeekPhotoSourceSheetKt",
+            "com.coffeepeek.core.designsystem.component.CoffeePeekMapControlButtonKt",
+            "com.coffeepeek.feature.contributions.api.ContributionPhotoPicker",
+            "com.coffeepeek.feature.contributions.api.ContributionMapCanvas",
+            "com.coffeepeek.feature.contributions.impl.AddShopEntryImplKt",
+            "com.coffeepeek.feature.contributions.impl.AddRoasterEntryImplKt",
+            "com.coffeepeek.feature.contributions.impl.ChangeEditorEntryImplKt",
+            "com.coffeepeek.feature.contributions.impl.ui.map.ContributionMapPickerKt",
+            "com.coffeepeek.admin.di.contributions.AppContributionPhotoPicker",
+            "com.coffeepeek.feature.authorblocking.api.AuthorBlockingEntry",
+            "com.coffeepeek.feature.authorblocking.impl.AuthorBlockingApiImplKt",
             "com.coffeepeek.admin.di.ownership.BusinessOwnershipModuleKt",
             "com.coffeepeek.feature.ownership.impl.BusinessOwnershipEntryImplKt",
             "com.coffeepeek.feature.ownership.impl.ui.OwnershipViewModel",
@@ -432,32 +473,96 @@ androidComponents {
             apkDirectory.set(variant.artifacts.get(SingleArtifact.APK))
             forbiddenClassPrefixes.set(listOf("com.coffeepeek.admin.sandbox.", "io.ktor.client.engine.mock."))
             requiredClasses.set(listOf(
+                "com.coffeepeek.feature.favorites.api.FavoritesEntry",
+                "com.coffeepeek.feature.favorites.impl.FavoritesApiImplKt",
+                "com.coffeepeek.admin.di.favorites.ServerFavoritesModuleKt",
+                "com.coffeepeek.core.session.SessionReader",
+                "com.coffeepeek.core.session.SessionStore",
+                "com.coffeepeek.core.media.ImageUrlFetcher",
+                "com.coffeepeek.core.media.ImageEnvironment",
+                "com.coffeepeek.core.designsystem.component.CoffeePeekImageKt",
+                "com.coffeepeek.core.designsystem.component.CoffeePeekPhotoViewerKt",
+                "com.coffeepeek.core.designsystem.component.CoffeePeekBrandedImageKt",
+                "com.coffeepeek.core.designsystem.component.CoffeePeekLoadErrorContentKt",
+                "com.coffeepeek.core.designsystem.component.CoffeePeekPriceLevelSliderKt",
+                "com.coffeepeek.feature.shop.api.PublicShopPreviews",
+                "com.coffeepeek.feature.shop.api.PublicShopPreview",
+                "com.coffeepeek.feature.shop.data.repository.PublicShopPreviewsFactoryKt",
+                "com.coffeepeek.feature.roaster.api.PublicRoasterCatalog",
+                "com.coffeepeek.feature.roaster.data.repository.PublicRoasterCatalogFactoryKt",
+                "com.coffeepeek.feature.discovery.api.MapOpeningHours",
+                "com.coffeepeek.core.designsystem.component.CoffeePeekPhotoSourceSheetKt",
+                "com.coffeepeek.core.designsystem.component.CoffeePeekMapControlButtonKt",
+                "com.coffeepeek.feature.contributions.api.ContributionPhotoPicker",
+                "com.coffeepeek.feature.contributions.api.ContributionMapCanvas",
+                "com.coffeepeek.feature.contributions.impl.AddShopEntryImplKt",
+                "com.coffeepeek.feature.contributions.impl.AddRoasterEntryImplKt",
+                "com.coffeepeek.feature.contributions.impl.ChangeEditorEntryImplKt",
+                "com.coffeepeek.feature.contributions.impl.ui.map.ContributionMapPickerKt",
+                "com.coffeepeek.admin.di.contributions.AppContributionPhotoPicker",
+                "com.coffeepeek.feature.authorblocking.api.AuthorBlockingEntry",
+                "com.coffeepeek.feature.authorblocking.impl.AuthorBlockingApiImplKt",
+                "com.coffeepeek.core.session.DefaultSessionStore",
+                "com.coffeepeek.admin.auth.SessionRealtimeManager",
                 "com.coffeepeek.admin.di.ownership.BusinessOwnershipModuleKt",
                 "com.coffeepeek.feature.ownership.impl.BusinessOwnershipEntryImplKt",
                 "com.coffeepeek.feature.ownership.impl.ui.OwnershipViewModel",
-                "com.coffeepeek.api.service.CheckInApiService",
-                "com.coffeepeek.api.CoffeePeekRepo",
-                "com.coffeepeek.data.di.DataModuleKt",
                 "com.coffeepeek.admin.di.roaster.RoasterModuleKt",
                 "com.coffeepeek.admin.di.leaderboard.LeaderboardModuleKt",
                 "com.coffeepeek.feature.leaderboard.impl.LeaderboardEntryImplKt",
                 "com.coffeepeek.feature.leaderboard.data.repository.LeaderboardRepositoryFactoryKt",
                 "com.coffeepeek.admin.di.roaster.FeatureRoasterScreenRenderer",
+                "com.coffeepeek.admin.di.community.FeatureCommunityScreenRenderer",
+                "com.coffeepeek.admin.di.community.CommunityFeatureScreenRendererKt",
+                "com.coffeepeek.feature.community.impl.CommunityEntryImplKt",
+                "com.coffeepeek.admin.di.discovery.FeatureDiscoveryScreenRenderer",
+                "com.coffeepeek.admin.di.discovery.FeatureDiscoveryScreenRendererKt",
+                "com.coffeepeek.feature.discovery.impl.DiscoveryEntriesImplKt",
+                "com.coffeepeek.feature.discovery.api.CheckInShopPickerEntry",
+                "com.coffeepeek.feature.contentreport.api.ContentReportEntry",
+                "com.coffeepeek.feature.contentreport.data.repository.ContentReportRepositoryFactoryKt",
+                "com.coffeepeek.feature.contentreport.impl.ContentReportApiImplKt",
+                "com.coffeepeek.admin.di.contentreport.FeatureContentReportRenderer",
+                "com.coffeepeek.feature.checkinhistory.api.ProfileActivityEntry",
+                "com.coffeepeek.feature.checkinhistory.impl.ProfileActivityApiImplKt",
+                "com.coffeepeek.admin.di.checkinhistory.FeatureProfileActivityRenderer",
+                "com.coffeepeek.core.designsystem.component.CoffeePeekActivityWeekKt",
+                "com.coffeepeek.feature.discovery.impl.CheckInShopPickerApiImplKt",
+                "com.coffeepeek.admin.di.discovery.FeatureCheckInShopPickerRenderer",
+                "com.coffeepeek.admin.di.discovery.CheckInShopPickerNavigation",
+                "com.coffeepeek.admin.di.favorites.ServerFavoriteShopsRepository",
+                "com.coffeepeek.admin.di.coffee.FeatureCoffeeScreenRenderer",
+                "com.coffeepeek.admin.di.coffee.CoffeeCatalogueScreenRendererKt",
+                "com.coffeepeek.admin.di.coffee.CoffeeModuleKt",
+                "com.coffeepeek.feature.coffee.impl.CoffeeListApiImplKt",
+                "com.coffeepeek.feature.coffee.impl.CoffeeDetailApiImplKt",
+                "com.coffeepeek.admin.di.profile.FeatureOwnProfileScreenRenderer",
+                "com.coffeepeek.admin.di.profile.FeaturePublicProfileScreenRenderer",
+                "com.coffeepeek.admin.di.profile.FeatureAccountScreenRenderer",
+                "com.coffeepeek.feature.profile.impl.OwnProfileEntryImplKt",
+                "com.coffeepeek.feature.profile.impl.PublicProfileEntryImplKt",
+                "com.coffeepeek.feature.profile.impl.EditProfileEntryImplKt",
                 "com.coffeepeek.feature.roaster.impl.RoasterEntryImplsKt",
                 "com.coffeepeek.feature.roaster.data.repository.RoasterRepositoryFactoryKt",
-                "com.coffeepeek.data.feature.favorites.ServerFavoritesRepository",
+                "com.coffeepeek.feature.favorites.data.repository.RemoteAccountFavorites",
                 "com.coffeepeek.admin.di.favorites.ServerFavoriteShopsRepository",
                 "com.coffeepeek.admin.di.favorites.ServerFavoriteDrinksRepository",
                 "com.coffeepeek.admin.di.shop.ShopCheckInModuleKt",
-                "com.coffeepeek.admin.di.shop.AndroidShopCheckInFormRenderer",
-                "com.coffeepeek.admin.di.shop.AndroidSessionShopCheckInEntry",
-                "com.coffeepeek.admin.di.shop.AndroidShopCheckInSession",
+                "com.coffeepeek.admin.di.shop.FeatureShopCheckInFormRenderer",
+                "com.coffeepeek.admin.di.shop.FeatureShopDetailScreenRenderer",
+                "com.coffeepeek.admin.di.shop.FeatureShopCheckInListScreenRenderer",
+                "com.coffeepeek.admin.di.FeatureShopReportScreenRenderer",
+                "com.coffeepeek.admin.di.FeatureShopMenuGalleryScreenRenderer",
+                "com.coffeepeek.admin.di.shop.SessionShopCheckInEntry",
+                "com.coffeepeek.admin.di.shop.ShopCheckInSession",
                 "com.coffeepeek.feature.shop.api.ShopCheckInCreateEntry",
                 "com.coffeepeek.feature.shop.domain.repository.ShopCheckInRepository",
                 "com.coffeepeek.feature.shop.data.repository.ShopCheckInRepositoryFactoryKt",
                 "com.coffeepeek.feature.shop.impl.ShopCheckInCreateApiImplKt",
                 "com.coffeepeek.admin.di.checkinhistory.CheckInHistoryModuleKt",
-                "com.coffeepeek.admin.di.checkinhistory.CheckInHistoryFeatureScreenRenderer",
+                "com.coffeepeek.admin.di.checkinhistory.AppCheckInHistoryCalendar",
+                "com.coffeepeek.admin.di.checkinhistory.FeatureCheckInHistoryScreenRenderer",
+                "com.coffeepeek.admin.di.checkinhistory.FeatureCheckInHistoryScreenRenderer",
                 "com.coffeepeek.admin.di.checkinhistory.CheckInHistorySession",
                 "com.coffeepeek.admin.di.checkinhistory.HistoryHomeBridge",
                 "com.coffeepeek.admin.di.checkinhistory.HistoryHomeEditorFactoryKt",
@@ -475,8 +580,19 @@ androidComponents {
                 "com.coffeepeek.feature.homecheckin.impl.HomeCheckInApiImplKt",
                 "com.coffeepeek.feature.homecheckin.impl.ui.HomeCheckInEditorViewModel",
                 "com.coffeepeek.admin.di.homecheckin.HomeCheckInEditorKt",
-                "com.coffeepeek.admin.di.homecheckin.HomeCheckInAppRepository",
-                "com.coffeepeek.admin.di.homecheckin.HomeCheckInAppPhotoPicker",
+                "com.coffeepeek.admin.di.homecheckin.AppHomeCheckInRepository",
+                "com.coffeepeek.admin.di.homecheckin.AppHomeCheckInPhotoPicker",
+                "com.coffeepeek.admin.ui.screen.checkins.CheckInCreateFlowRenderer",
+                "com.coffeepeek.admin.di.homecheckin.HomeCheckInModuleKt",
+                "com.coffeepeek.admin.di.homecheckin.FeatureCheckInCreateFlowRenderer",
+                "com.coffeepeek.admin.di.CheckInRendererFactories",
+                "com.coffeepeek.admin.di.CheckInRendererFactoriesKt",
+                "com.coffeepeek.admin.di.homecheckin.GlobalCheckInFlow",
+                "com.coffeepeek.feature.homecheckin.api.CheckInCreatePickerEntry",
+                "com.coffeepeek.feature.homecheckin.impl.CheckInCreatePickerApiImplKt",
+                "com.coffeepeek.admin.di.homecheckin.HomeCheckInEditorKt",
+                "com.coffeepeek.admin.di.homecheckin.AppHomeCheckInRepository",
+                "com.coffeepeek.admin.di.homecheckin.AppHomeCheckInPhotoPicker",
                 "com.coffeepeek.admin.ui.screen.checkins.CheckInCreateFlowRenderer",
                 "com.coffeepeek.admin.di.homecheckin.HomeCheckInModuleKt",
                 "com.coffeepeek.admin.di.homecheckin.FeatureCheckInCreateFlowRenderer",

@@ -1,17 +1,12 @@
 package com.coffeepeek.admin.di.collections
 
 import androidx.compose.ui.graphics.asSkiaBitmap
-import com.coffeepeek.admin.utils.image.IosImageBitmapDecoder
-import io.kamel.core.config.ResourceConfigBuilder
-import io.ktor.utils.io.ByteReadChannel
-import kotlinx.coroutines.currentCoroutineContext
+import com.coffeepeek.core.media.decodeBoundedBitmap
 import org.jetbrains.skia.EncodedImageFormat
 import org.jetbrains.skia.Image
 
-private val collectionCoverDecoder = IosImageBitmapDecoder(maxDimension = 1280)
-
 internal actual suspend fun prepareCollectionCover(bytes: ByteArray): ByteArray {
-    val bitmap = collectionCoverDecoder.decode(ByteReadChannel(bytes), ResourceConfigBuilder(currentCoroutineContext()).build())
+    val bitmap = decodeBoundedBitmap(bytes, maxDimension = 1280) ?: error("Collection cover cannot be decoded")
     val image = Image.makeFromBitmap(bitmap.asSkiaBitmap())
     try {
         for (quality in 90 downTo 40 step 10) {

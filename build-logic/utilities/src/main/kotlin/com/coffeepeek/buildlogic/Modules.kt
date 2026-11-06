@@ -4,7 +4,6 @@ package com.coffeepeek.buildlogic
 object Modules {
     const val composeApp = ":composeApp"
 
-    val legacy = Legacy
     val core = Core
     val feature = Feature
 
@@ -82,6 +81,13 @@ object Modules {
 
         val favorites = Favorites
         val shopReport = ShopReport
+        val contentReport = ContentReport
+        object ContentReport {
+            const val api = ":feature:content-report:api"
+            const val domain = ":feature:content-report:domain"
+            const val data = ":feature:content-report:data"
+            const val impl = ":feature:content-report:impl"
+        }
         object Favorites {
             const val api = ":feature:favorites:api"
             const val domain = ":feature:favorites:domain"
@@ -166,22 +172,14 @@ object Modules {
         }
     }
 
-    object Legacy {
-        const val domain = ":modules:domain"
-        const val data = ":modules:data"
-        const val network = ":modules:network"
-        const val room = ":modules:room"
-        const val homeCheckIn = ":modules:home-checkin"
-    }
-
     object Core {
-        const val coroutines = ":core:coroutines"
         const val network = ":core:network"
         const val database = ":core:database"
         const val designSystem = ":core:design-system"
         const val presentation = ":core:presentation"
         const val datetime = ":core:datetime"
         const val session = ":core:session"
+        const val media = ":core:media"
     }
 
     val all: List<String> = listOf(
@@ -190,18 +188,13 @@ object Modules {
         feature.businessOwnership.domain,
         feature.businessOwnership.data,
         feature.businessOwnership.impl,
-        legacy.domain,
-        legacy.data,
-        legacy.network,
-        legacy.room,
-        legacy.homeCheckIn,
-        core.coroutines,
         core.network,
         core.database,
         core.designSystem,
         core.presentation,
         core.datetime,
         core.session,
+        core.media,
         feature.favorites.api,
         feature.favorites.domain,
         feature.favorites.data,
@@ -210,6 +203,10 @@ object Modules {
         feature.shopReport.domain,
         feature.shopReport.data,
         feature.shopReport.impl,
+        feature.contentReport.api,
+        feature.contentReport.domain,
+        feature.contentReport.data,
+        feature.contentReport.impl,
         feature.shop.api,
         feature.shop.domain,
         feature.shop.data,

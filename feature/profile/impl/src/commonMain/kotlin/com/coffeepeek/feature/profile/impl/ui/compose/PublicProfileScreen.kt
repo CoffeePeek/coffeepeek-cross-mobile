@@ -119,9 +119,7 @@ private fun PublicProfileConnections(state: PublicProfileState, slots: ProfileSl
 private fun PublicProfileScreenPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     val profile = PublicProfile("coffeepeek", "coffeepeek", "Кофейные заметки", null,
         PublicProfileStats(0, 2, 1, 4), emptyList(), null)
-    val slots = ProfileSlots(image = { _, _, _ -> }, photoViewer = { _, _, _, _ -> },
-        favoritesPreview = { _, _ -> }, favoriteCard = { _, _, _ -> }, checkInCard = { _, _, _, _, _ -> },
-        photoPrefetch = { _, _ -> }, activityPreview = { _, _, _, _, _, _, _ -> Text("•••••••") })
+    val slots = ProfileSlots(image = { _, _, _ -> }, photoViewer = { _, _, _, _ -> }, photoPrefetch = { _, _ -> })
     PublicProfileScreenContent(PublicProfileState(isLoading = false, profile = profile), false,
         ProfileAuthorActions.None, slots, PublicProfileCallbacks(null, {}, { _, _, _ -> }, {}, {}, {}, { _, _, _ -> }))
 }

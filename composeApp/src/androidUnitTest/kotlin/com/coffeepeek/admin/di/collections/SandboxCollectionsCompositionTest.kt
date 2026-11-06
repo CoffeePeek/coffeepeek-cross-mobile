@@ -2,7 +2,9 @@ package com.coffeepeek.admin.di.collections
 
 import com.coffeepeek.admin.sandbox.backend.SandboxBackend
 import com.coffeepeek.admin.sandbox.di.sandboxCollectionsModule
-import com.coffeepeek.api.CoffeePeekClient
+import com.coffeepeek.core.network.ApiClients
+import com.coffeepeek.core.network.SessionCredentials
+import com.coffeepeek.core.network.SessionTokens
 import com.coffeepeek.core.session.Session
 import com.coffeepeek.core.session.SessionReader
 import com.coffeepeek.feature.collections.domain.model.CollectionPlaceKind
@@ -58,18 +60,23 @@ class SandboxCollectionsCompositionTest {
         }
     }
 
-    private fun client(backend: SandboxBackend) = CoffeePeekClient(SandboxBackend.BASE_URL, temporary.newFolder().path, false,
-        getToken = { null }, saveToken = {}, apiClientFactory = backend::apiClient, uploadClientFactory = backend::uploadClient)
+    private fun client(backend: SandboxBackend) = ApiClients(SandboxBackend.BASE_URL, temporary.newFolder().path, false,
+        credentials = object : SessionCredentials {
+            override suspend fun load(): SessionTokens? = null
+            override suspend fun save(tokens: SessionTokens?) = Unit
+            override suspend fun replace(expected: SessionTokens, tokens: SessionTokens?): Boolean = false
+        },
+        refreshWith = { { Result.failure(IllegalStateException("unused")) } },
+        apiClientFactory = backend::apiClient, uploadClientFactory = backend::uploadClient)
 
-    private fun seed(client: CoffeePeekClient) = module {
+    private fun seed(client: ApiClients) = module {
         single { client }
         single<SessionReader> { Sessions() }
     }
 
-    private fun close(client: CoffeePeekClient, backend: SandboxBackend) {
+    private fun close(client: ApiClients, backend: SandboxBackend) {
         client.client.close()
         client.plainClient.close()
-        client.imageClient.close()
         client.uploadClient.close()
         backend.close()
     }

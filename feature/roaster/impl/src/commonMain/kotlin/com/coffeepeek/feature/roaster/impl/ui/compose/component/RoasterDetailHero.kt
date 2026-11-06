@@ -33,7 +33,7 @@ import com.coffeepeek.feature.roaster.domain.model.RoasterPhoto
 import com.coffeepeek.feature.roaster.impl.resources.Res
 import com.coffeepeek.feature.roaster.impl.resources.roaster_photo_position
 import com.coffeepeek.feature.roaster.impl.resources.roaster_photos_missing
-import com.coffeepeek.feature.roaster.api.RoasterImage
+import com.coffeepeek.feature.roaster.impl.ui.compose.model.RoasterImage
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable

@@ -42,7 +42,6 @@
     <string name="collections_revoke_title">Отключить эту ссылку?</string>
     <string name="collections_revoke_message">Подборка перестанет открываться по ссылке. Уже отправленные картинки останутся у получателей.</string>
     <string name="collections_cancel">Отмена</string>
-    <string name="collections_open">Открыть подборку</string>
     <string name="collections_brand">COFFEEPEEK</string>
     <string name="collections_expand_poster">Открыть изображение на весь экран</string>
     <string name="collections_move_up">Переместить выше</string>
@@ -63,7 +62,6 @@
     <string name="collections_public_switch">Публичная подборка</string>
     <string name="collections_private_hint">Личная подборка доступна только вам.</string>
     <string name="collections_public_hint">Публичную подборку можно открыть по ссылке.</string>
-    <string name="collections_cover">Обложка</string>
     <string name="collections_change_cover">Изменить обложку</string>
     <string name="collections_remove_cover">Удалить обложку</string>
     <string name="collections_save">Сохранить</string>
@@ -83,7 +81,6 @@
     <string name="collections_delete_failed">Не удалось удалить подборку. Попробуйте ещё раз.</string>
     <string name="collections_profile_list">Подборка в профиле</string>
     <string name="collections_profile_none">Не показывать</string>
-    <string name="collections_featured_title">Подборка</string>
     <string name="collections_profile_choice_hint">В профиле можно показать одну публичную подборку.</string>
     <string name="collections_profile_show">Показывать подборку</string>
     <string name="collections_profile_choose">Выбрать подборку</string>

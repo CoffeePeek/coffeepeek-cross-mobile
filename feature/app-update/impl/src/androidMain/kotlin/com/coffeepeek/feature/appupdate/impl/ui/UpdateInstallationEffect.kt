@@ -1,5 +1,11 @@
 package com.coffeepeek.feature.appupdate.impl.ui
 
+import com.coffeepeek.feature.appupdate.impl.resources.Res
+import com.coffeepeek.feature.appupdate.impl.resources.appupdate_check_failed
+import com.coffeepeek.feature.appupdate.impl.resources.appupdate_downloaded_message
+import com.coffeepeek.feature.appupdate.impl.resources.appupdate_restart_action
+import com.coffeepeek.feature.appupdate.impl.resources.appupdate_retry_action
+import com.coffeepeek.feature.appupdate.impl.resources.appupdate_up_to_date
 import android.app.Activity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.IntentSenderRequest
@@ -30,13 +36,12 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import com.coffeepeek.feature.appupdate.api.AndroidUpdateInstaller
 import com.coffeepeek.feature.appupdate.api.AppUpdateEnvironment
-import com.coffeepeek.feature.appupdate.impl.R
 import com.coffeepeek.feature.appupdate.domain.InstallationStage
 import com.coffeepeek.feature.appupdate.impl.AppUpdateController
 import com.coffeepeek.feature.appupdate.impl.PlayUpdateRetryOutcome
 import com.coffeepeek.feature.appupdate.impl.UpdateCheckFeedback
 import com.coffeepeek.feature.appupdate.impl.retryPlayUpdate
-import androidx.compose.ui.res.stringResource
+import org.jetbrains.compose.resources.stringResource
 import kotlinx.coroutines.launch
 
 /** Presentation of the app's snackbar: [showRetryIcon] puts the retry icon on the action and [onAction] overrides its click. */
@@ -96,9 +101,9 @@ internal fun UpdateInstallationEffect(
 
     val required = (policy.update ?: transfer.update)?.isRequired(environment.versionCode ?: Long.MAX_VALUE) == true
     val snackbar = remember { SnackbarHostState() }
-    val readyMessage = stringResource(R.string.appupdate_downloaded_message)
-    val restart = stringResource(R.string.appupdate_restart_action)
-    val retry = stringResource(R.string.appupdate_retry_action)
+    val readyMessage = stringResource(Res.string.appupdate_downloaded_message)
+    val restart = stringResource(Res.string.appupdate_restart_action)
+    val retry = stringResource(Res.string.appupdate_retry_action)
     val outcomeMessage = retryOutcome.localizedMessage()
     val retryNoticeMessage = retryNotice.localizedMessage()
     LaunchedEffect(transfer.stage, transfer.error, required, manualNoticeRequest, retrying, retryOutcome, hideRetryResult,
@@ -158,8 +163,8 @@ internal fun UpdateInstallationEffect(
 @Composable
 private fun PlayUpdateRetryOutcome?.localizedMessage(): String? = when (this) {
     is PlayUpdateRetryOutcome.Check -> stringResource(when (feedback) {
-        UpdateCheckFeedback.CheckFailed -> R.string.appupdate_check_failed
-        UpdateCheckFeedback.UpToDate -> R.string.appupdate_up_to_date
+        UpdateCheckFeedback.CheckFailed -> Res.string.appupdate_check_failed
+        UpdateCheckFeedback.UpToDate -> Res.string.appupdate_up_to_date
     })
     is PlayUpdateRetryOutcome.InstallationError -> message
     null -> null

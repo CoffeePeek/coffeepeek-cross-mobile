@@ -52,7 +52,7 @@ class CommunityRepositoryTest {
         val first = page.entries.first().post
         assertEquals("anna", first.author.slug); assertEquals("a-1", first.author.id); assertEquals("cafe", first.shopSlug)
         assertEquals(PostRating(4, 4, 5), first.rating); assertEquals(PostVisibility.Public, first.visibility); assertEquals(PostModeration.Approved, first.moderation)
-        assertEquals("Second", page.entries.last().post.note) // the legacy "note" alias
+        assertEquals("Second", page.entries.last().post.note) // the previous "note" alias
         assertEquals(PostVisibility.Private, page.entries.last().post.visibility)
     }
 

@@ -1,5 +1,6 @@
 package com.coffeepeek.admin.ui.component
 
+import com.coffeepeek.core.designsystem.modifier.LocalCoffeePeekGlassHazeState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import dev.chrisbanes.haze.HazeState
@@ -27,7 +28,7 @@ expect fun PlatformGlassIconButton(
     enabled: Boolean = true,
     selected: Boolean = false,
     isLoading: Boolean = false,
-    hazeState: HazeState? = LocalGlassHazeState.current,
+    hazeState: HazeState? = LocalCoffeePeekGlassHazeState.current,
     content: @Composable () -> Unit,
 )
 
@@ -35,7 +36,7 @@ expect fun PlatformGlassIconButton(
 expect fun PlatformFloatingBottomNavBar(
     items: List<FloatingNavItem>,
     modifier: Modifier = Modifier,
-    hazeState: HazeState? = LocalGlassHazeState.current,
+    hazeState: HazeState? = LocalCoffeePeekGlassHazeState.current,
 )
 
 @Composable

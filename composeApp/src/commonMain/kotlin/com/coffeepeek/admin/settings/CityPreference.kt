@@ -1,6 +1,5 @@
 package com.coffeepeek.admin.settings
 
-import com.coffeepeek.domain.model.City
 import com.coffeepeek.room.model.Setting
 import com.coffeepeek.room.repository.SettingRepository
 import kotlinx.coroutines.CoroutineScope
@@ -21,9 +20,9 @@ class CityPreference(
 
     val selectedCityId: StateFlow<String?> = _selectedCityId.asStateFlow()
 
-    suspend fun resolve(cities: List<City>): String? {
+    suspend fun resolve(cityIds: List<String>): String? {
         val savedCityId = _selectedCityId.value ?: settingRepository.read(SELECTED_CITY_KEY)?.value
-        val resolvedCityId = resolveSelectedCityId(savedCityId, cities)
+        val resolvedCityId = resolveSelectedCityId(savedCityId, cityIds)
         _selectedCityId.value = resolvedCityId
 
         if (resolvedCityId != null && resolvedCityId != savedCityId) {
@@ -41,5 +40,5 @@ class CityPreference(
     }
 }
 
-internal fun resolveSelectedCityId(savedCityId: String?, cities: List<City>): String? =
-    savedCityId?.takeIf { id -> cities.any { it.id == id } } ?: cities.firstOrNull()?.id
+internal fun resolveSelectedCityId(savedCityId: String?, cityIds: List<String>): String? =
+    savedCityId?.takeIf { it in cityIds } ?: cityIds.firstOrNull()

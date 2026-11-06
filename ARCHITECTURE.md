@@ -11,28 +11,19 @@ dependencies — not the maximum number of modules or classes.
 This document describes the target and the migration rules. The actual Gradle
 configuration is authoritative for the current state.
 
-## Current and target states
+Owner clarification, 2026-10-25: migration is complete only with zero legacy
+consumers and removal of `modules/`, not merely when new routes are selected.
+`composeApp` keeps startup, root DI, platform configuration and root navigation;
+business UI, presentation state and ViewModels belong to feature implementations.
+Reusable UI and platform infrastructure belong to the appropriate core owner.
+The migration log is in [feature/LEGACY_EXIT_PLAN.md](feature/LEGACY_EXIT_PLAN.md).
 
-Current code is arranged by technical layers:
+## Current state
 
-```text
-composeApp/                         UI, navigation, theme, Koin, platform glue
-modules/domain/                     models and repository interfaces
-modules/network/                    Ktor, DTOs and API services
-modules/data/                       repository implementations and mapping
-modules/room/                       Room persistence
-core/                               prepared infrastructure/design-system
-feature/favorites/                  api/domain/data/impl; Android screen active
-feature/shop-report/                api/domain/data/impl; Android report active
-feature/shop/                       api/domain/data/impl; Android menu gallery active
-feature/check-in-history/           api/domain/data/impl; Android combined history active
-feature/home-check-in/              pure domain/data and Android detail/editor api/impl;
-                                   active in Android history/global creation; profile/iOS legacy
-feature/coffee/                     api/domain/data/impl picker, MVI and Android UI prepared;
-                                   current catalogue screens/DI still in composeApp
-feature/roaster/                    shared api/domain/data/impl and Compose UI;
-                                   common application composition selects Android/iOS entries
-```
+The current layout of the repository, including what is shared and what is platform-specific, is described in
+[docs/PROJECT_STRUCTURE.md](docs/PROJECT_STRUCTURE.md). It replaces the earlier transitional layout snapshot that stood here.
+
+## Target ownership
 
 Target ownership is feature-based:
 
@@ -209,11 +200,17 @@ responsibilities. Examples:
 ```text
 core/network          HttpClient, auth/interceptors, serialization, logging, errors
 core/database         Room factory/configuration, database bootstrap, migrations
-core/coroutines       dispatcher and application-scope abstractions
+core/media            image transport/cache/access, decoding, resources and prefetch
 core/presentation     typed MVI ViewModel base and state/action/event contract
 core/navigation       shared navigation infrastructure, if truly required
 core/design-system    theme, typography, dimensions, icons, UI primitives
 ```
+
+Image infrastructure lives in `core/media`; design-system owns image rendering
+and the shared photo viewer. Root composition supplies the existing clients,
+SessionReader, API origin and platform/analytics hooks. Media never depends on
+design-system, features, legacy models, application configuration or Koin.
+See `core/media/README.md` for the public boundary and migration risks.
 
 Design-system Kotlin components, UI types, tokens and source files use the
 `CoffeePeek` prefix: `CoffeePeekButton`, `CoffeePeekTextField`, `CoffeePeekIcons`

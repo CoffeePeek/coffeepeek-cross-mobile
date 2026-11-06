@@ -1,8 +1,18 @@
 package com.coffeepeek.feature.coffee.impl.ui.compose.component
 
-import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.layout.*
+import org.jetbrains.compose.ui.tooling.preview.Preview
+import com.coffeepeek.feature.coffee.impl.resources.Res
+import com.coffeepeek.feature.coffee.impl.resources.coffee_available_only
+import com.coffeepeek.feature.coffee.impl.resources.coffee_close_filters
+import com.coffeepeek.feature.coffee.impl.resources.coffee_done
+import com.coffeepeek.feature.coffee.impl.resources.coffee_filters
+import com.coffeepeek.feature.coffee.impl.resources.coffee_filters_failed
+import com.coffeepeek.feature.coffee.impl.resources.coffee_loading
+import com.coffeepeek.feature.coffee.impl.resources.coffee_reset
+import com.coffeepeek.feature.coffee.impl.resources.coffee_retry
 import androidx.compose.material3.*
 import com.coffeepeek.core.designsystem.component.CoffeePeekTextButton as TextButton
 import androidx.compose.runtime.Composable
@@ -13,7 +23,6 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Density
 import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import androidx.compose.ui.text.style.TextAlign
-import org.jetbrains.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.component.*
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens

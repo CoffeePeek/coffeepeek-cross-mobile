@@ -127,7 +127,7 @@ private class RemoteContributionsRepository(
     private suspend fun payloadOf(draft: ChangeDraft): PayloadDto {
         if (draft.issue() != null) throw ContributionFailure(FailureKind.Invalid)
         return when (draft) {
-            // A blank description is sent as no text, as the legacy form did.
+            // A blank description is sent as no text, as the previous form did.
             is ChangeDraft.Description -> PayloadDto(description = draft.text.trim().takeIf(String::isNotEmpty))
             is ChangeDraft.ContactsChange -> PayloadDto(contacts = draft.contacts.toDto())
             is ChangeDraft.Photos -> PayloadDto(

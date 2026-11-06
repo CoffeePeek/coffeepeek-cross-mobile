@@ -1,6 +1,6 @@
 package com.coffeepeek.admin.ui.screen.shop
 
-import com.coffeepeek.domain.model.consumedDrinkIssue
+import com.coffeepeek.admin.ui.screen.review.consumedDrinkIssue
 import com.coffeepeek.admin.utils.PickedImage
 import com.coffeepeek.admin.utils.currentEpochMillis
 import com.coffeepeek.admin.utils.datePickerMillisWithLocalTime
@@ -19,9 +19,6 @@ data class CheckInDraft(
     val coffeeRating: Int = 4,
     val photos: List<PickedImage> = emptyList(),
 )
-
-internal fun CheckInDraft.withVisitDate(dateMillis: Long, now: Long = currentEpochMillis()): CheckInDraft =
-    copy(visitMillis = datePickerMillisWithLocalTime(dateMillis, visitMillis).coerceAtMost(now))
 
 internal fun CheckInDraft.validationError(now: Long = currentEpochMillis()): CheckInDraftValidationError? = when {
     visitMillis <= 0 || visitMillis > now -> CheckInDraftValidationError.Date

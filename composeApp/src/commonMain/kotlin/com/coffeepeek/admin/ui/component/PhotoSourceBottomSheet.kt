@@ -28,8 +28,8 @@ import coffeepeek.composeapp.generated.resources.photo_source_camera
 import coffeepeek.composeapp.generated.resources.photo_source_gallery
 import coffeepeek.composeapp.generated.resources.photo_source_title
 import coffeepeek.composeapp.generated.resources.presentation_cancel
-import com.coffeepeek.admin.theme.CpDimens
-import com.coffeepeek.admin.ui.icons.CpIcons
+import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
+import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
@@ -55,8 +55,8 @@ private fun PhotoSourceContent(title: String, onGallery: () -> Unit, onCamera: (
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Bold,
             modifier = Modifier.padding(
-                horizontal = CpDimens.spacing4,
-                vertical = CpDimens.spacing2,
+                horizontal = CoffeePeekDimens.spacing4,
+                vertical = CoffeePeekDimens.spacing2,
             ),
         )
         PhotoSourceRows(onGallery, onCamera)
@@ -65,7 +65,7 @@ private fun PhotoSourceContent(title: String, onGallery: () -> Unit, onCamera: (
             modifier = Modifier
                 .fillMaxWidth()
                 .navigationBarsPadding()
-                .padding(CpDimens.spacing2),
+                .padding(CoffeePeekDimens.spacing2),
         ) {
             Text(stringResource(Res.string.presentation_cancel), style = MaterialTheme.typography.labelLarge)
         }
@@ -76,16 +76,16 @@ private fun PhotoSourceContent(title: String, onGallery: () -> Unit, onCamera: (
 private fun PhotoSourceRows(onGallery: () -> Unit, onCamera: () -> Unit) {
     Column(
         modifier = Modifier
-            .padding(horizontal = CpDimens.spacing4)
-            .clip(RoundedCornerShape(CpDimens.radius2xl))
+            .padding(horizontal = CoffeePeekDimens.spacing4)
+            .clip(RoundedCornerShape(CoffeePeekDimens.radius2xl))
             .background(MaterialTheme.colorScheme.surfaceVariant),
     ) {
-        PhotoSourceRow(CpIcons.Gallery, stringResource(Res.string.photo_source_gallery), onGallery)
+        PhotoSourceRow(CoffeePeekIcons.Gallery, stringResource(Res.string.photo_source_gallery), onGallery)
         HorizontalDivider(
             color = MaterialTheme.colorScheme.outlineVariant,
             modifier = Modifier.padding(start = 56.dp),
         )
-        PhotoSourceRow(CpIcons.Camera, stringResource(Res.string.photo_source_camera), onCamera)
+        PhotoSourceRow(CoffeePeekIcons.Camera, stringResource(Res.string.photo_source_camera), onCamera)
     }
 }
 
@@ -108,9 +108,9 @@ private fun PhotoSourceRow(
             .fillMaxWidth()
             .height(56.dp)
             .clickable(onClickLabel = title, onClick = onClick)
-            .padding(horizontal = CpDimens.spacing4),
+            .padding(horizontal = CoffeePeekDimens.spacing4),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing3),
+        horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3),
     ) {
         Icon(
             imageVector = icon,

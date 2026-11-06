@@ -3,11 +3,11 @@ package com.coffeepeek.admin.base
 import androidx.lifecycle.ViewModel
 import coffeepeek.composeapp.generated.resources.Res
 import coffeepeek.composeapp.generated.resources.maybe_later
-import com.coffeepeek.api.utils.ApiException
+import com.coffeepeek.core.network.ApiException
 import com.coffeepeek.admin.utils.ErrorHandler
 import com.coffeepeek.admin.utils.LoadingHandler
-import com.coffeepeek.domain.model.Session
-import com.coffeepeek.domain.repository.SessionRepository
+import com.coffeepeek.core.session.Session
+import com.coffeepeek.core.session.SessionStore
 import io.ktor.utils.io.core.Closeable
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -18,7 +18,7 @@ import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.getString
 
-/** Legacy app ViewModel base; migrated features use their own lifecycle-owned state. */
+/** ViewModel base of the root navigation state; features own their lifecycle-bound state. */
 abstract class BaseViewModel : ViewModel(), Closeable {
     protected val workScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
 
@@ -27,7 +27,7 @@ abstract class BaseViewModel : ViewModel(), Closeable {
     }
 
     /** Возвращает сессию или сбрасывает её и закрывает доступ к защищённым экранам. */
-    protected suspend fun requireAuthSession(sessionRepository: SessionRepository): Session? {
+    protected suspend fun requireAuthSession(sessionRepository: SessionStore): Session? {
         val session = sessionRepository.getSession()
         if (!sessionRepository.isActiveSession(session)) {
             sessionRepository.saveSession(null)

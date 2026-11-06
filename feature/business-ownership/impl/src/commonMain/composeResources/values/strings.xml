@@ -4,15 +4,11 @@
     <string name="ownership_back">Назад</string>
     <string name="ownership_login">Войти</string>
     <string name="ownership_login_hint">Войдите, чтобы подать заявку или управлять своим бизнесом.</string>
-    <string name="ownership_new_claim">Заявить права на бизнес</string>
     <string name="ownership_claim_title">Заявка на владение</string>
     <string name="ownership_editor_title">Профиль бизнеса</string>
     <string name="ownership_claim_hint">Укажите контакт для связи и объясните, как можно подтвердить ваши полномочия. Приложите подтверждающие фотографии.</string>
-    <string name="ownership_slug">Ссылка или короткий адрес бизнеса</string>
     <string name="ownership_contact">Контакт для связи</string>
     <string name="ownership_evidence">Подтверждение полномочий</string>
-    <string name="ownership_kind_shop">Кофейня</string>
-    <string name="ownership_kind_roaster">Обжарщик</string>
     <string name="ownership_submit">Отправить заявку</string>
     <string name="ownership_claims">Мои заявки</string>
     <string name="ownership_shops">Мои кофейни</string>
@@ -45,7 +41,6 @@
     <string name="ownership_discard_title">Заменить несохранённый черновик?</string>
     <string name="ownership_discard_hint">Введённые изменения будут потеряны. Сохранённый профиль останется на сервере.</string>
     <string name="ownership_discard">Продолжить</string>
-    <string name="ownership_reload">Перечитать профиль</string>
     <string name="ownership_saved">Профиль сохранён</string>
     <string name="ownership_error_unavailable">Не удалось загрузить или сохранить данные. Проверьте соединение и повторите запрос.</string>
     <string name="ownership_error_signedout">Войдите снова, чтобы продолжить.</string>

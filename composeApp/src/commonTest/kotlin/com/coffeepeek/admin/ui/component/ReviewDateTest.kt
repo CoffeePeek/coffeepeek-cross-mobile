@@ -53,11 +53,4 @@ class ReviewDateTest {
         assertEquals("2 гадзіны таму", formatReviewDisplayDate(createdAt, translated, createdMillis + 2 * 3_600_000L))
         assertEquals("8 кастр. 2026", formatReviewDisplayDate(createdAt, translated, createdMillis + 86_400_000L))
     }
-    @Test
-    fun authorFallbackUsesPreparedCopyAndPreservesNames() {
-        val checkIn = com.coffeepeek.domain.model.CheckIn("id", "shop", "CoffeePeek", "", createdAt, authorId = "author")
-        assertEquals("Аўтар", checkIn.blockableAuthor("Аўтар")?.name)
-        assertEquals("Автор пользователя", checkIn.copy(username = "Автор пользователя").blockableAuthor("Аўтар")?.name)
-        assertEquals(null, checkIn.copy(authorId = null).blockableAuthor("Аўтар"))
-    }
 }

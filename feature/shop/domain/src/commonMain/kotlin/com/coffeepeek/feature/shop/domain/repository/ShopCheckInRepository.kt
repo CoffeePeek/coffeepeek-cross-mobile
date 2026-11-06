@@ -14,3 +14,7 @@ class ShopCheckInCreationUnconfirmed(cause: Throwable? = null) :
 
 /** A photo failed before the check-in creation request was started. */
 class ShopCheckInPhotoUploadFailure(cause: Throwable) : Exception("Photo upload failed", cause)
+
+/** The server refused the check-in. [status] is the HTTP status; [serverMessage] is the server's own text when it sent one. */
+class ShopCheckInRejection(val status: Int, val serverMessage: String?) :
+    Exception(serverMessage ?: "Check-in request was rejected ($status)")

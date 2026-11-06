@@ -8,20 +8,20 @@ interface SearchRun {
 
 enum class FilterAction { Apply, Reset }
 
-/** The two features that need an account and send a guest to sign in. */
-enum class DiscoveryGate { VisitedFilter, FavoritesFilter }
+/** Search features that send a guest to sign in. */
+enum class DiscoveryGate { VisitedFilter, FavoritesFilter, AdvancedFilters }
 
 /** Where a geolocation answer was asked and what it was. */
 enum class GeolocationOutcome { Available, Unavailable }
 
-/** The full-screen parts of the tab: the legacy `screen_shown` named them `discovery`, `roasters` and `map`. */
+/** The full-screen parts of the tab: the previous `screen_shown` named them `discovery`, `roasters` and `map`. */
 enum class DiscoveryOverlay { Discovery, Roasters, Map }
 
-/** What the user did on the map, as the legacy `map_interaction` event named it. */
+/** What the user did on the map, as the previous `map_interaction` event named it. */
 enum class MapInteraction { MarkerSelected, SearchSelected, Zoomed, ZonesToggled, Loaded, LoadFailed, NearbyLoaded, NearbyFailed, Expanded, Collapsed }
 
 /**
- * What Discovery reports. The application maps it to its analytics with the event names and properties of the legacy screens; the owner knows no vendor.
+ * What Discovery reports. The application maps it to its analytics with the event names and properties of the previous screens; the owner knows no vendor.
  * [criteria] identifies a search: the same criteria again (a refresh) is not a new search. [filterKeys] are the property keys of the filters in use (`city`, `type`, `isOpen`, ...), [changedKeys] the ones whose value changed.
  */
 interface DiscoveryAnalytics {

@@ -27,7 +27,7 @@ internal fun OwnershipFeedback(state: OwnershipState, action: (OwnershipAction) 
                 state.destination == OwnershipDestination.Editor && state.profile != null -> OwnershipAction.AskSave
                 else -> OwnershipAction.Refresh
             }
-            CoffeePeekButton(stringResource(if (retry == OwnershipAction.AskReload) Res.string.ownership_reload else Res.string.ownership_retry),
+            CoffeePeekButton(stringResource(Res.string.ownership_retry),
                 { action(retry) }, enabled = !state.busy && !state.loading)
         }
     }

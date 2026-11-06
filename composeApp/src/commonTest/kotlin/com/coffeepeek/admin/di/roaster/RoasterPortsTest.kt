@@ -2,12 +2,11 @@
 
 package com.coffeepeek.admin.di.roaster
 
-import com.coffeepeek.admin.feature.favorites.api.RoasterFavorites
-import com.coffeepeek.domain.model.CatalogItem
-import com.coffeepeek.domain.model.CoffeeShop
-import com.coffeepeek.domain.model.CoffeeShopDetails
-import com.coffeepeek.domain.repository.ShopRepository
-import com.coffeepeek.domain.model.PublicAddress
+import com.coffeepeek.admin.di.favorites.RoasterFavorites
+import com.coffeepeek.admin.di.favorites.CatalogItem
+import com.coffeepeek.feature.shop.api.PublicShopPreview
+import com.coffeepeek.feature.shop.api.PublicShopPreviews
+import com.coffeepeek.admin.di.favorites.PublicAddress
 import com.coffeepeek.feature.roaster.api.RoasterFavoriteTarget
 import com.coffeepeek.room.model.Setting
 import com.coffeepeek.room.repository.SettingRepository
@@ -46,21 +45,10 @@ private class FakeFavorites : RoasterFavorites {
     override suspend fun setFavorite(roaster: CatalogItem, isFavorite: Boolean): Result<Unit> { calls += roaster to isFavorite; return result }
 }
 
-private class FakeShops(private val details: suspend (String) -> Result<CoffeeShopDetails>) : ShopRepository {
-    override suspend fun getShopDetails(id: String) = details(id)
-    override suspend fun searchShops(filters: com.coffeepeek.domain.model.ShopFilters) = TODO()
-    override suspend fun getMapContent(bounds: com.coffeepeek.domain.model.MapBounds, zoom: Float, filters: com.coffeepeek.domain.model.ShopFilters) = TODO()
-    override suspend fun getCatalogs() = TODO()
-    override suspend fun getConsumedDrinks() = TODO()
-    override suspend fun getMenuDrinks() = TODO()
-    override suspend fun createShop(input: com.coffeepeek.domain.model.CreateShopInput) = TODO()
-    override suspend fun getMyShopSubmissions(status: com.coffeepeek.domain.model.ModerationStatus, page: Int, pageSize: Int) = TODO()
-}
-
 class RoasterPortsTest {
     private val target = RoasterFavoriteTarget("roast", "Roast", "https://m/p", "/roasters/roast", 3, true)
 
-    @Test fun favoriteKeysUseTheLegacyRoasterFavoriteIdAndErrorsPassThrough() = runTest {
+    @Test fun favoriteKeysUseTheExistingRoasterFavoriteIdAndErrorsPassThrough() = runTest {
         val store = FakeFavorites()
         val port = RoasterFavoritesAdapter(store, backgroundScope)
         store.rows.value = listOf(
@@ -89,24 +77,25 @@ class RoasterPortsTest {
         assertEquals(false, store.calls.last().second)
     }
 
-    @Test fun shopPhotoUsesFirstNonBlankPhotoThenShopPhotoAndNeverThrows() = runTest {
-        fun shop(photoUrl: String?) = CoffeeShop(id = "s", title = "Shop", rating = null, cityName = null, priceRange = null, photoUrl = photoUrl)
-        fun details(photos: List<String>, shopPhoto: String? = null) = CoffeeShopDetails(shop = shop(shopPhoto), photos = photos)
+    @Test fun shopPhotoReadsPublicDetailVariantAndFailsSoftlyButPreservesCancellation() = runTest {
+        fun preview(photo: String?) = PublicShopPreview("cover", photo, null, 0, false, null, null)
         val shops = mapOf(
-            "photos" to Result.success(details(listOf(" ", "https://m/hero", "https://m/other"))),
-            "cover" to Result.success(details(emptyList(), "https://m/cover")),
-            "blank" to Result.success(details(listOf(""), " ")),
+            "photos" to Result.success(preview("https://m/hero")),
+            "cover" to Result.success(preview("https://m/cover")),
+            "blank" to Result.success(preview(" ")),
             "failed" to Result.failure(IllegalStateException("net")),
+            "cancelled" to Result.failure(CancellationException("stop")),
         )
-        val adapter = RoasterShopPhotosAdapter(FakeShops { shops.getValue(it) })
+        val adapter = RoasterShopPhotosAdapter(PublicShopPreviews { shops.getValue(it) })
         assertEquals("https://m/hero", adapter.firstPhoto("photos"))
         assertEquals("https://m/cover", adapter.firstPhoto("cover"))
         assertNull(adapter.firstPhoto("blank"))
         assertNull(adapter.firstPhoto("failed"))
-        assertFailsWith<CancellationException> { RoasterShopPhotosAdapter(FakeShops { throw CancellationException("stop") }).firstPhoto("x") }
+        assertFailsWith<CancellationException> { adapter.firstPhoto("cancelled") }
+        assertFailsWith<CancellationException> { RoasterShopPhotosAdapter(PublicShopPreviews { throw CancellationException("stop") }).firstPhoto("x") }
     }
 
-    @Test fun catalogStoreUsesTheLegacyKeyAndIgnoresBlankOrNullValues() = runTest {
+    @Test fun catalogStoreUsesTheExistingKeyAndIgnoresBlankOrNullValues() = runTest {
         val settings = MemorySettings()
         val key = roasterCatalogCacheKey("https://api.example/")
         assertEquals("roaster_catalog_v1:https://api.example", key)

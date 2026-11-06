@@ -59,6 +59,7 @@ fun CoffeePeekSearchField(
     onSearch: () -> Unit = {},
     fieldHeight: Dp = SearchFieldHeight,
     shadowElevation: Dp = 0.dp,
+    clearButtonSize: Dp = CoffeePeekDimens.glassControlSize,
     keyboardOptions: KeyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
     onFocusChanged: (Boolean) -> Unit = {},
 ) {
@@ -89,7 +90,7 @@ fun CoffeePeekSearchField(
             Box(contentAlignment = Alignment.Center) {
                 CoffeePeekNativeControlBackground(Modifier.matchParentSize().padding(vertical = 2.dp), enabled = enabled)
                 SearchFieldContents(field.value.text, placeholder, clearDescription, enabled && !readOnly,
-                    touchHeight, innerTextField) {
+                    touchHeight, clearButtonSize, innerTextField) {
                     field.value = TextFieldValue("")
                     onValueChange("")
                 }
@@ -101,7 +102,7 @@ fun CoffeePeekSearchField(
 @Composable
 private fun SearchFieldContents(
     text: String, placeholder: String, clearDescription: String, canClear: Boolean,
-    touchHeight: Dp, innerTextField: @Composable () -> Unit, onClear: () -> Unit,
+    touchHeight: Dp, clearButtonSize: Dp, innerTextField: @Composable () -> Unit, onClear: () -> Unit,
 ) {
     Row(Modifier.fillMaxWidth().heightIn(min = touchHeight).padding(start = 12.dp, end = 4.dp),
         verticalAlignment = Alignment.CenterVertically) {
@@ -112,13 +113,13 @@ private fun SearchFieldContents(
                 color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1)
             innerTextField()
         }
-        if (text.isNotEmpty()) SearchClearButton(clearDescription, canClear, onClear)
+        if (text.isNotEmpty()) SearchClearButton(clearDescription, clearButtonSize, canClear, onClear)
     }
 }
 
 @Composable
-private fun SearchClearButton(description: String, enabled: Boolean, onClear: () -> Unit) {
-    Box(Modifier.size(CoffeePeekDimens.glassControlSize).clip(CircleShape)
+private fun SearchClearButton(description: String, size: Dp, enabled: Boolean, onClear: () -> Unit) {
+    Box(Modifier.size(size).clip(CircleShape)
         .clickable(enabled = enabled, role = Role.Button, onClick = onClear), contentAlignment = Alignment.Center) {
         Icon(CoffeePeekIcons.Close, description, Modifier.size(18.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
     }

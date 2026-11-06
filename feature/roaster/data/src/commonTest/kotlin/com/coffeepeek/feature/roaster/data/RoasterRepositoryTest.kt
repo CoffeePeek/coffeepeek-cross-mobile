@@ -37,7 +37,7 @@ private class MemoryStore(var value: String? = null, var failWrites: Boolean = f
 }
 
 class RoasterRepositoryTest {
-    @Test fun listMapsSummaryWithLegacyPhotoPriorityTagOrderAndFlexibleCounters() = runTest {
+    @Test fun listMapsSummaryWithPreviousPhotoPriorityTagOrderAndFlexibleCounters() = runTest {
         withRepository(MockEngine { respond(catalog, headers = json) }) { repository, _ ->
             val roaster = repository.getRoasters().getOrThrow().single()
             assertEquals("roast", roaster.slug)
@@ -89,7 +89,7 @@ class RoasterRepositoryTest {
             HttpMethod.Get to "/api/roasters/with%20space%2Fslash"), seen)
     }
 
-    @Test fun detailMapsLocationContactPhotosAndShopsLikeLegacy() = runTest {
+    @Test fun detailMapsLocationContactPhotosAndShopsLikePrevious() = runTest {
         withRepository(MockEngine { respond(detail, headers = json) }, files = "https://files.example") { repository, _ ->
             val details = repository.getRoaster("roast").getOrThrow()
             assertEquals("roast", details.id)
@@ -216,7 +216,7 @@ class RoasterRepositoryTest {
         } finally { client.close(); engine.close() }
     }
 
-    @Test fun legacyShapedSavedCatalogIsReadAndStoreFailuresNeverHideData() = runTest {
+    @Test fun previousShapedSavedCatalogIsReadAndStoreFailuresNeverHideData() = runTest {
         val saved = """{"savedAtMs":1000,"items":[{"address":{"slug":"old","canonicalPath":"/roasters/old","revision":0,"isAlias":false},
           "name":"Old","photoUrl":null,"coverPhoto":null,"tags":null,"coffeeShopsCount":1,"coffeeProductsCount":2,"availableCoffeeProducts":3}]}"""
         var requests = 0

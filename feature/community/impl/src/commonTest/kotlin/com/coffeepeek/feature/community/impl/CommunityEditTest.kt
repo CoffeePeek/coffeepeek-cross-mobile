@@ -38,7 +38,7 @@ import kotlin.test.assertIs
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
-/** Editing, hiding and reporting: the second half of the legacy timeline behaviour. */
+/** Editing, hiding and reporting: the second half of the previous timeline behaviour. */
 @OptIn(ExperimentalCoroutinesApi::class)
 class CommunityEditTest {
     private val dispatcher = StandardTestDispatcher()
@@ -81,7 +81,7 @@ class CommunityEditTest {
         vm.send(CommunityAction.OpenReport("other"), this); assertNull(vm.state.value.reportingId) // not while editing
     }
 
-    @Test fun changesReportTheirFieldInTheLegacyOrderAndCancelClosesTheEditor() = runTest(dispatcher) {
+    @Test fun changesReportTheirFieldInThePreviousOrderAndCancelClosesTheEditor() = runTest(dispatcher) {
         val analytics = FakeAnalytics(); val vm = model(publicRepo(), analytics = analytics)
         vm.send(CommunityAction.Edit("own"), this)
         vm.send(CommunityAction.EditText("Changed"), this); vm.send(CommunityAction.EditText("Changed"), this) // no change, no event
@@ -167,6 +167,16 @@ class CommunityEditTest {
         assertNull(vm.state.value.editing); assertTrue(vm.state.value.drinks.isEmpty()); assertFalse(vm.state.value.isSaving)
         release.complete(Unit); runCurrent()
         assertTrue(vm.state.value.items.none { it.note == "Late" })
+    }
+
+    @Test fun aVisibilityFailureThatIsNotAServerAnswerCarriesNoServerMessage() = runTest(dispatcher) {
+        val repo = publicRepo().apply { visibility = { _, _ -> Result.failure(IllegalStateException("socket closed: secret detail")) } }
+        val vm = model(repo); val events = events(vm)
+        vm.send(CommunityAction.ToggleVisibility("own"), this)
+        val failed = assertIs<CommunityEvent.Message>(events.single())
+        assertEquals(MessageKind.VisibilityFailed, failed.message.kind)
+        assertNull(failed.message.serverMessage)
+        assertEquals(2, vm.state.value.items.size); assertNull(vm.state.value.changingVisibilityId)
     }
 
     @Test fun hidingAnOwnPublicPostMakesItPrivateAndRemovesItFromTheFeedAndAFailureKeepsItWithAMessage() = runTest(dispatcher) {

@@ -1,5 +1,9 @@
 package com.coffeepeek.feature.homecheckin.impl.ui.compose.component
 
+import com.coffeepeek.feature.homecheckin.impl.resources.Res
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_photos
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_photos_hint
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_photos_count
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -35,9 +39,11 @@ internal fun HomeCheckInEditorPhotos(
     }
 }
 
-@Composable private fun HomeCheckInEditorPhotosPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
+@Composable
+private fun HomeCheckInEditorPhotosPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     val photos = List(4) { HomePreparationUpload("photo-$it.jpg", "image/jpeg", byteArrayOf()) }
     Surface { HomeCheckInEditorPhotos(photos, true, false, { _, modifier, _ -> Box(modifier) }, {}, {}, { _, _ -> }) }
 }
-@Preview @Composable private fun HomeCheckInEditorPhotosLightPreview() = HomeCheckInEditorPhotosPreview(false)
-@Preview @Composable private fun HomeCheckInEditorPhotosDarkPreview() = HomeCheckInEditorPhotosPreview(true)
+
+@Preview @Composable private fun HomeCheckInEditorPhotosPreviewLight() = HomeCheckInEditorPhotosPreview(false)
+@Preview @Composable private fun HomeCheckInEditorPhotosPreviewDark() = HomeCheckInEditorPhotosPreview(true)

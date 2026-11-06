@@ -26,7 +26,6 @@ import androidx.compose.ui.unit.dp
 import androidx.core.graphics.ColorUtils
 import com.coffeepeek.R
 import com.coffeepeek.core.designsystem.theme.CoffeePeekColors
-import com.coffeepeek.domain.model.CoffeeShopType
 import kotlin.math.roundToInt
 
 internal enum class MapPinVisual {
@@ -76,7 +75,7 @@ internal object MapMarkerIcons {
 
     fun clusterBitmap(context: Context, count: Int, isDarkTheme: Boolean): Bitmap {
         if (clusterUsesShopPoint(count)) {
-            return pinBitmap(context, CoffeeShopType.SPECIALTY, MapPinVisual.Default, isDarkTheme)
+            return pinBitmap(context, MapShopType.SPECIALTY, MapPinVisual.Default, isDarkTheme)
         }
         val label = clusterCountLabel(count)
         val diameter = clusterDiameterDp(count)
@@ -134,8 +133,8 @@ internal object MapMarkerIcons {
     }
 
     private fun pinIcon(type: String): Int = when (type) {
-        CoffeeShopType.SPECIALTY -> R.drawable.map_coffeepeek_bean
-        CoffeeShopType.CAFE -> R.drawable.map_fork_knife
+        MapShopType.SPECIALTY -> R.drawable.map_coffeepeek_bean
+        MapShopType.CAFE -> R.drawable.map_fork_knife
         else -> R.drawable.map_cup_fill
     }
 
@@ -296,7 +295,7 @@ private fun MapMarkerIconsPreview() {
     Column(Modifier.background(background)) {
         listOf(MapPinVisual.Default, MapPinVisual.Selected).forEach { visual ->
             Row {
-                listOf(CoffeeShopType.SPECIALTY, CoffeeShopType.COFFEE_BAR, CoffeeShopType.CAFE).forEach { type ->
+                listOf(MapShopType.SPECIALTY, MapShopType.COFFEE_BAR, MapShopType.CAFE).forEach { type ->
                     val bitmap = MapMarkerIcons.pinBitmap(context, type, visual, dark)
                     Image(
                         bitmap = bitmap.asImageBitmap(),

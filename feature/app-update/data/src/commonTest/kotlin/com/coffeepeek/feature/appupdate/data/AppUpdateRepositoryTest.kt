@@ -18,7 +18,7 @@ import kotlin.test.assertFailsWith
 import kotlin.test.assertNull
 
 /** (Real time: the repository applies a 10 s timeout, which virtual time would trip while the mock engine answers on its own threads.)
- * The HTTP contract and the dismissed-version storage of the update check, as the legacy code implements them. */
+ * The HTTP contract and the dismissed-version storage of the update check, as the previous code implements them. */
 class AppUpdateRepositoryTest {
     private class Store : DismissedUpdateStore {
         var stored: Long? = null

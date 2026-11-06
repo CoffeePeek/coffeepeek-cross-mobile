@@ -14,7 +14,7 @@ import com.coffeepeek.feature.roaster.domain.model.RoasterShop
 import com.coffeepeek.feature.roaster.domain.model.RoasterSummary
 import com.coffeepeek.feature.roaster.domain.model.RoasterTag
 
-/** Resolves photo storage keys against the configured file host, exactly like the legacy catalogue. */
+/** Resolves photo storage keys against the configured file host, exactly like the previous catalogue. */
 internal class RoasterFileUrlResolver(private val baseUrl: String) {
     fun resolve(storageKey: String?, fullUrl: String? = null): String? {
         fullUrl?.trim()?.takeIf(String::isNotBlank)?.let { return it }
@@ -63,7 +63,7 @@ internal fun RoasterDetailsDto.toDomain(files: RoasterFileUrlResolver): RoasterD
     photos = photos.sortedBy { it.sortIndex }.mapNotNull { photo ->
         files.resolve(photo.storageKey, photo.fullUrl)?.let { RoasterPhoto(photo.id, it, photo.sortIndex) }
     },
-    // Legacy behaviour: shop thumbnails use the cover photo's full URL; the app enriches missing ones separately.
+    // Previous behaviour: shop thumbnails use the cover photo's full URL; the app enriches missing ones separately.
     shops = shops.map { RoasterShop(it.address.slug.orEmpty(), it.name, it.coverPhoto.fullUrlOrNull(), it.address.toAddress()) },
 )
 

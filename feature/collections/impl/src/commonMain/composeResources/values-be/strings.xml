@@ -42,7 +42,6 @@
     <string name="collections_revoke_title">Адключыць гэтую спасылку?</string>
     <string name="collections_revoke_message">Падборка перастане адкрывацца па спасылцы. Ужо адпраўленыя выявы застануцца ў атрымальнікаў.</string>
     <string name="collections_cancel">Скасаваць</string>
-    <string name="collections_open">Адкрыць падборку</string>
     <string name="collections_brand">COFFEEPEEK</string>
     <string name="collections_expand_poster">Адкрыць выяву на ўвесь экран</string>
     <string name="collections_move_up">Перамясціць вышэй</string>
@@ -63,7 +62,6 @@
     <string name="collections_public_switch">Публічная падборка</string>
     <string name="collections_private_hint">Асабістая падборка даступная толькі вам.</string>
     <string name="collections_public_hint">Публічную падборку можна адкрыць па спасылцы.</string>
-    <string name="collections_cover">Вокладка</string>
     <string name="collections_change_cover">Змяніць вокладку</string>
     <string name="collections_remove_cover">Выдаліць вокладку</string>
     <string name="collections_save">Захаваць</string>
@@ -83,7 +81,6 @@
     <string name="collections_delete_failed">Не ўдалося выдаліць падборку. Паспрабуйце яшчэ раз.</string>
     <string name="collections_profile_list">Падборка ў профілі</string>
     <string name="collections_profile_none">Не паказваць</string>
-    <string name="collections_featured_title">Падборка</string>
     <string name="collections_profile_choice_hint">У профілі можна паказаць адну публічную падборку.</string>
     <string name="collections_profile_show">Паказваць падборку</string>
     <string name="collections_profile_choose">Выбраць падборку</string>

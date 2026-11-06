@@ -1,13 +1,22 @@
 package com.coffeepeek.feature.homecheckin.impl.ui.compose.component
 
 import androidx.compose.foundation.layout.*
+import org.jetbrains.compose.ui.tooling.preview.Preview
+import com.coffeepeek.feature.homecheckin.impl.resources.Res
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_home
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_not_submitted
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_pending
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_private
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_public
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_rejected
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_title_fallback
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_unknown_moderation
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
-import org.jetbrains.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme

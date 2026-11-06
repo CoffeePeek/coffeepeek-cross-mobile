@@ -1,7 +1,7 @@
 package com.coffeepeek.feature.roaster.impl.ui.compose
 
-import com.coffeepeek.feature.roaster.api.RoasterImage
-import com.coffeepeek.feature.roaster.api.RoasterPhotoViewer
+import com.coffeepeek.feature.roaster.impl.ui.compose.model.RoasterImage
+import com.coffeepeek.feature.roaster.impl.ui.compose.model.RoasterPhotoViewer
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -107,7 +107,7 @@ internal fun RoasterDetailScreenContent(
     }
     state.previewPhotoUrl?.let { photoViewer(it) { onAction(RoasterDetailAction.ClosePhoto) } }
     val details = state.details
-    // Zero insets: the hero runs edge-to-edge like the legacy screen and pads its own controls.
+    // Zero insets: the hero runs edge-to-edge like the previous screen and pads its own controls.
     Scaffold(modifier, snackbarHost = { SnackbarHost(snackbar, Modifier.navigationBarsPadding()) },
         containerColor = MaterialTheme.colorScheme.background, contentWindowInsets = WindowInsets(0)) {
         when {

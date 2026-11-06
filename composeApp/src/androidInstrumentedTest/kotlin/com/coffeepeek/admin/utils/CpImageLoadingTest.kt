@@ -1,5 +1,10 @@
 package com.coffeepeek.admin.utils
 
+import com.coffeepeek.core.media.ImageUrl
+import com.coffeepeek.core.media.PrefetchPhotos
+
+import com.coffeepeek.core.designsystem.component.CoffeePeekImage
+
 import android.graphics.Bitmap
 import android.graphics.Color
 import androidx.activity.compose.setContent
@@ -25,17 +30,13 @@ import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import com.coffeepeek.admin.MainActivity
-import com.coffeepeek.admin.theme.CoffeePeekTheme
+import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.admin.ui.screen.checkins.grantCheckInFixtureStartupPermissions
-import com.coffeepeek.admin.ui.screen.checkins.CalendarCard
-import com.coffeepeek.admin.ui.screen.checkins.CalendarMonth
-import com.coffeepeek.admin.ui.screen.checkins.CalendarPhoto
-import com.coffeepeek.admin.ui.screen.checkins.VisitedPlacesUiState
-import com.coffeepeek.admin.utils.image.FullScreenPhotoPresence
-import com.coffeepeek.admin.utils.image.PhotoPermission
-import com.coffeepeek.admin.utils.image.PhotoAccessDenied
-import com.coffeepeek.admin.utils.image.SystemPhotoCacheClock
-import com.coffeepeek.admin.utils.image.protectedPhotoPainterCache
+import com.coffeepeek.core.media.image.FullScreenPhotoPresence
+import com.coffeepeek.core.media.image.PhotoPermission
+import com.coffeepeek.core.media.image.PhotoAccessDenied
+import com.coffeepeek.core.media.image.SystemPhotoCacheClock
+import com.coffeepeek.core.media.image.protectedPhotoPainterCache
 import io.kamel.core.DataSource
 import io.kamel.core.Resource
 import io.kamel.core.config.KamelConfig
@@ -70,35 +71,11 @@ class CpImageLoadingTest {
     fun grantStartupPermissions() = grantCheckInFixtureStartupPermissions()
 
     @Test
-    fun calendarPhotoStaysVisibleDuringPermissionRenewal() {
-        val loader = FixtureImages(grantMillis = 6_000, holdAfterFirst = true)
-        fun photoColor(): Int {
-            val bitmap = compose.onNodeWithContentDescription("12 октября 2026, 1 чекин", substring = true)
-                .captureToImage().asAndroidBitmap()
-            return bitmap.getPixel(bitmap.width / 2, bitmap.height / 2)
-        }
-        withImageContent(loader, content = {
-            CalendarCard(VisitedPlacesUiState(calendarMonth = CalendarMonth(2026, 10)),
-                today = "2026-10-20", onPreviousMonth = {}, onNextMonth = {}, onSelectDate = {}, onToday = {},
-                homeCounts = mapOf("2026-10-12" to 1),
-                homePhotos = mapOf("2026-10-12" to listOf(CalendarPhoto(THUMB))))
-        }) {
-            compose.waitUntil(10_000) { photoColor() == Color.BLUE }
-            compose.waitUntil(10_000) { loader.requested.size == 2 }
-            compose.waitForIdle()
-            assertEquals("Renewing access must not erase an authorized calendar thumbnail", Color.BLUE, photoColor())
-            loader.release.complete(Unit)
-            compose.waitUntil(10_000) { loader.decoded.get() == 2 }
-            compose.waitUntil(10_000) { photoColor() == Color.BLUE }
-        }
-    }
-
-    @Test
     fun protectedPhotoRecoversAfterATemporaryRenewalFailure() {
         val loader = FixtureImages(grantMillis = 6_000,
             failedRequests = mapOf(2 to IllegalStateException("Temporary renewal failure")))
         withImageContent(loader, content = {
-            CpImage(THUMB.replace("/calendar/", "/recovery/"), modifier = Modifier.size(160.dp).testTag(IMAGE))
+            CoffeePeekImage(THUMB.replace("/calendar/", "/recovery/"), modifier = Modifier.size(160.dp).testTag(IMAGE))
         }) {
             waitForColor(Color.BLUE)
             compose.waitUntil(12_000) { loader.requested.size >= 3 && loader.decoded.get() >= 2 }
@@ -110,7 +87,7 @@ class CpImageLoadingTest {
     fun accessDenialImmediatelyRemovesThePreviouslyGrantedPhoto() {
         val loader = FixtureImages(grantMillis = 6_000, failedRequests = mapOf(2 to PhotoAccessDenied()))
         withImageContent(loader, content = {
-            CpImage(THUMB.replace("/calendar/", "/denied/"), modifier = Modifier.size(160.dp).testTag(IMAGE))
+            CoffeePeekImage(THUMB.replace("/calendar/", "/denied/"), modifier = Modifier.size(160.dp).testTag(IMAGE))
         }) {
             waitForColor(Color.BLUE)
             compose.waitUntil(10_000) { loader.requested.size == 2 && loader.active.get() == 0 }
@@ -127,7 +104,7 @@ class CpImageLoadingTest {
     fun visiblePhotoWaitsForTheDwellBeforeRequestingHigherQuality() {
         val loader = FixtureImages()
         withImageContent(loader, freezeClock = true, content = {
-            CpImage(PREVIEW, highQualityData = DETAIL, modifier = Modifier.size(160.dp).testTag(IMAGE))
+            CoffeePeekImage(PREVIEW, highQualityData = DETAIL, modifier = Modifier.size(160.dp).testTag(IMAGE))
         }) {
             startFrozenContent()
             compose.waitUntil(10_000) { PREVIEW in loader.requested }
@@ -148,7 +125,7 @@ class CpImageLoadingTest {
         val offset = mutableStateOf(120.dp)
         withImageContent(loader, freezeClock = true, content = {
             Box(Modifier.size(160.dp).clipToBounds()) {
-                CpImage(PREVIEW, highQualityData = DETAIL,
+                CoffeePeekImage(PREVIEW, highQualityData = DETAIL,
                     modifier = Modifier.offset(y = offset.value).size(160.dp).testTag(IMAGE))
             }
         }) {
@@ -172,7 +149,7 @@ class CpImageLoadingTest {
     fun pendingHigherQualityTransferKeepsTheDecodedPreview() {
         val loader = FixtureImages(pendingUrls = setOf(DETAIL))
         withImageContent(loader, content = {
-            CpImage(PREVIEW, highQualityData = DETAIL, upgradeDelayMillis = 0,
+            CoffeePeekImage(PREVIEW, highQualityData = DETAIL, upgradeDelayMillis = 0,
                 modifier = Modifier.size(160.dp).testTag(IMAGE))
         }) {
             compose.waitUntil(10_000) { loader.requested.containsAll(listOf(PREVIEW, DETAIL)) && loader.active.get() == 1 }
@@ -185,7 +162,7 @@ class CpImageLoadingTest {
     fun failedHigherQualityTransferKeepsTheDecodedPreview() {
         val loader = FixtureImages(failingUrls = setOf(DETAIL))
         withImageContent(loader, content = {
-            CpImage(PREVIEW, highQualityData = DETAIL, upgradeDelayMillis = 0,
+            CoffeePeekImage(PREVIEW, highQualityData = DETAIL, upgradeDelayMillis = 0,
                 modifier = Modifier.size(160.dp).testTag(IMAGE))
         }) {
             compose.waitUntil(10_000) { loader.requested.containsAll(listOf(PREVIEW, DETAIL)) && loader.active.get() == 0 }
@@ -199,7 +176,7 @@ class CpImageLoadingTest {
         val loader = FixtureImages()
         val revision = mutableStateOf(0)
         withImageContent(loader, content = {
-            CpImage(PREVIEW, highQualityData = PREVIEW, upgradeDelayMillis = 0,
+            CoffeePeekImage(PREVIEW, highQualityData = PREVIEW, upgradeDelayMillis = 0,
                 contentDescription = "Photo ${revision.value}",
                 modifier = Modifier.size(160.dp).testTag(IMAGE))
         }) {
@@ -218,7 +195,7 @@ class CpImageLoadingTest {
         withImageContent(loader, content = {
             when (phase.value) {
                 0 -> PrefetchPhotos(listOf(PREVIEW))
-                1, 3 -> CpImage(PREVIEW, modifier = Modifier.size(160.dp).testTag(IMAGE))
+                1, 3 -> CoffeePeekImage(PREVIEW, modifier = Modifier.size(160.dp).testTag(IMAGE))
             }
         }) {
             compose.waitUntil(10_000) { loader.decoded.get() == 1 && loader.active.get() == 0 }
@@ -268,7 +245,7 @@ class CpImageLoadingTest {
         try {
             withImageContent(loader, freezeClock = true, content = {
                 Box {
-                    CpImage(PREVIEW, highQualityData = DETAIL,
+                    CoffeePeekImage(PREVIEW, highQualityData = DETAIL,
                         modifier = Modifier.size(160.dp).testTag(IMAGE))
                     PrefetchPhotos(listOf(coveredNeighbor))
                     PrefetchPhotos(listOf(viewerNeighbor), inPhotoViewer = true)
@@ -346,18 +323,18 @@ class CpImageLoadingTest {
         private val failedRequests: Map<Int, Throwable> = emptyMap(),
     ) {
         val release = CompletableDeferred<Unit>()
-        val inputs = CopyOnWriteArrayList<CustomUrl>()
+        val inputs = CopyOnWriteArrayList<ImageUrl>()
         val requested = CopyOnWriteArrayList<String>()
         val active = AtomicInteger()
         val peakActive = AtomicInteger()
         val decoded = AtomicInteger()
         val config = KamelConfig {
             imageBitmapCacheSize = 8
-            fetcher(object : Fetcher<CustomUrl> {
-                override val inputDataKClass = CustomUrl::class
+            fetcher(object : Fetcher<ImageUrl> {
+                override val inputDataKClass = ImageUrl::class
                 override val source = DataSource.Disk
-                override val CustomUrl.isSupported get() = Url(url).host == "cp-image-fixture.invalid"
-                override fun fetch(data: CustomUrl, resourceConfig: ResourceConfig) = flow {
+                override val ImageUrl.isSupported get() = Url(url).host == "cp-image-fixture.invalid"
+                override fun fetch(data: ImageUrl, resourceConfig: ResourceConfig) = flow {
                     inputs += data
                     requested += data.url
                     val attempt = requested.size

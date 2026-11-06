@@ -62,7 +62,16 @@ private class OwnershipEntry(
         val state by access.state.collectAsState()
         val businessKind = BusinessKind.valueOf(kind)
         val editorId = if ("$kind:$id" in state.ownedIdentities || "$kind:$slug" in state.ownedIdentities) access.editorId(businessKind, id, slug) else null
-        OwnershipProfileActions(editorId != null, onSuggest, { editorId?.let { onOwnerEdit(); onEdit(kind, it) } }, favorite, share, businessKind == BusinessKind.Roaster) { dismiss ->
+        OwnershipProfileActions(
+            owner = editorId != null,
+            suggest = onSuggest,
+            edit = { editorId?.let { onOwnerEdit(); onEdit(kind, it) } },
+            favorite = favorite,
+            share = share,
+            isSignedIn = { account.current() != null },
+            onLogin = onLogin,
+            roaster = businessKind == BusinessKind.Roaster,
+        ) { dismiss ->
             OwnershipClaimSheet(repository, account, businessKind, slug, image, picker, dismiss, onLogin)
         }
     }

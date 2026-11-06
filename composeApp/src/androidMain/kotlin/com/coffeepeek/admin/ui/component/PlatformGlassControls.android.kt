@@ -1,5 +1,6 @@
 package com.coffeepeek.admin.ui.component
 
+import com.coffeepeek.core.designsystem.modifier.CoffeePeekGlassIconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -18,8 +19,8 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.coffeepeek.admin.theme.CpDimens
-import com.coffeepeek.admin.ui.icons.CpIcons
+import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
+import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import dev.chrisbanes.haze.HazeState
 
 @Composable
@@ -34,7 +35,7 @@ actual fun PlatformGlassIconButton(
     hazeState: HazeState?,
     content: @Composable () -> Unit,
 ) {
-    GlassIconButton(
+    CoffeePeekGlassIconButton(
         onClick = onClick,
         contentDescription = contentDescription,
         modifier = modifier,
@@ -56,7 +57,7 @@ actual fun PlatformFloatingBottomNavBar(
 @Composable
 actual fun PlatformGlassBackButton(onClick: () -> Unit, modifier: Modifier) {
     com.coffeepeek.core.designsystem.component.CoffeePeekTonalButton(onClick, modifier) {
-        Icon(CpIcons.ChevronLeft, contentDescription = null, modifier = Modifier.size(18.dp))
+        Icon(CoffeePeekIcons.ChevronLeft, contentDescription = null, modifier = Modifier.size(18.dp))
         Text("Назад", Modifier.padding(start = 4.dp))
     }
 }
@@ -82,6 +83,6 @@ actual fun PlatformMapControlButton(
 private fun PlatformGlassControlsPreview() = com.coffeepeek.core.designsystem.theme.CoffeePeekTheme {
     Row {
             PlatformGlassBackButton({})
-            PlatformMapControlButton(GlassControlIcon.Location, {}, "Location") { Icon(CpIcons.Location, null) }
+            PlatformMapControlButton(GlassControlIcon.Location, {}, "Location") { Icon(CoffeePeekIcons.Location, null) }
         }
 }

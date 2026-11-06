@@ -39,7 +39,13 @@ class AppUpdateController(
     val state = mutableState.asStateFlow()
     private var dismissed: Long? = null
 
+    val checksEnabled: Boolean get() = environment.checksEnabled
+
     fun check(manual: Boolean = false) {
+        if (!checksEnabled) {
+            mutableState.value = UpdateUiState(manual = manual)
+            return
+        }
         if (mutableState.value.checking) return
         mutableState.value = mutableState.value.copy(checking = true, feedback = null)
         scope.launch {
@@ -56,6 +62,7 @@ class AppUpdateController(
     private suspend fun checkedState(manual: Boolean): UpdateUiState {
         val current = currentVersion
         val policy = if (current != null) repository.fetch() else null
+        if (!checksEnabled) return UpdateUiState(manual = manual)
         dismissed = dismissed ?: repository.dismissedVersion()
         val available = policy?.takeIf { current != null && it.isAvailable(current) }
         return UpdateUiState(
@@ -70,6 +77,7 @@ class AppUpdateController(
     }
 
     fun takeNativePrompt(transfer: InstallationState): AppUpdate? {
+        if (!checksEnabled) return null
         val pending = mutableState.value
         if (!pending.showPrompt) return null
         mutableState.value = pending.copy(showPrompt = false)
@@ -79,6 +87,7 @@ class AppUpdateController(
     }
 
     fun dismiss() {
+        if (!checksEnabled) return
         val update = mutableState.value.update ?: return
         if (update.isRequired(currentVersion ?: return)) return
         dismissed = update.versionCode

@@ -10,17 +10,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
 import com.coffeepeek.admin.ui.screen.checkins.CheckInHistoryDestination
 import com.coffeepeek.admin.ui.screen.shelf.ShelfScreenRenderer
-import com.coffeepeek.admin.ui.screen.shop.ShopDetailScreen
-import com.coffeepeek.admin.ui.screen.shop.ShopMenuGalleryScreen
-import com.coffeepeek.admin.ui.screen.shop.ShopReportScreen
-import com.coffeepeek.admin.ui.screen.favorites.FavoritesScreen
 import com.coffeepeek.admin.ui.favorites.FavoritesDestination
 import com.coffeepeek.admin.ui.screen.contributions.ContributionKind
 import com.coffeepeek.admin.ui.screen.contributions.ContributionsScreenRenderer
 import com.coffeepeek.admin.ui.screen.profile.AccountScreenRenderer
 import com.coffeepeek.admin.ui.screen.profile.PublicProfileScreenRenderer
 import com.coffeepeek.admin.ui.screen.roaster.RoasterScreenRenderer
-import com.coffeepeek.admin.feature.community.ui.CheckInDetailScreenRenderer
+import com.coffeepeek.admin.ui.screen.community.CheckInDetailScreenRenderer
 import com.coffeepeek.admin.ui.screen.profile.SettingsScreenRenderer
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -85,6 +81,7 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
@@ -364,17 +361,22 @@ object Navigator {
 
     @Composable
     private fun BaseNavigator(isLoggedIn: Boolean) {
-        koinInject<com.coffeepeek.admin.feature.notifications.ui.NotificationsRenderer>().HandlePendingOpen(isLoggedIn)
-        val nativeAppLink by pendingAppLink.collectAsState()
-        if (PlatformRootNavigation(isLoggedIn, navigationEvents, nativeAppLink,
-            { pendingAppLink.compareAndSet(nativeAppLink, null) },
+        koinInject<com.coffeepeek.admin.ui.screen.notifications.NotificationsRenderer>().HandlePendingOpen(isLoggedIn)
+        val appLink by pendingAppLink.collectAsState()
+        val sessionEvents = remember(isLoggedIn) {
+            navigationEvents.map { event ->
+                if (event is NavEvent.NavigateTo) event.copy(screen = event.screen.profileDestination(isLoggedIn))
+                else event
+            }
+        }
+        if (PlatformRootNavigation(isLoggedIn, sessionEvents, appLink?.profileDestination(isLoggedIn),
+            { pendingAppLink.compareAndSet(appLink, null) },
             { screen, login -> RootScreen(screen, login, isLoggedIn) },
         )) return
 
         val nav = rememberNavController()
         val focusManager = LocalFocusManager.current
         val keyboard = LocalSoftwareKeyboardController.current
-        val appLink by pendingAppLink.collectAsState()
         var mainEntry by remember { mutableStateOf<NavBackStackEntry?>(null) }
         var isMainMapExpanded by remember { mutableStateOf(false) }
         val mainStateHolder = rememberSaveableStateHolder()
@@ -393,7 +395,7 @@ object Navigator {
 
         LaunchedEffect(appLink) {
             val screen = appLink ?: return@LaunchedEffect
-            nav.navigate(screen) {
+            nav.navigate(screen.profileDestination(isLoggedIn)) {
                 launchSingleTop = true
                 popUpTo<Screen.Main>()
             }
@@ -401,7 +403,7 @@ object Navigator {
         }
 
         LaunchedEffect(Unit) {
-            navigationEvents.onEach { event ->
+            sessionEvents.onEach { event ->
                 when (event) {
                     is NavEvent.PopBack -> nav.popBackStack()
                     is NavEvent.NavigateUp -> nav.navigateUp()
@@ -417,6 +419,9 @@ object Navigator {
 
         val shopPhotoUnderStatusBar = currentEntry?.destination?.let {
             it.hasRoute<Screen.ShopDetail>() || it.hasRoute<Screen.RoasterDetail>()
+        } == true
+        val authUnderSystemBars = currentEntry?.destination?.let {
+            it.hasRoute<Screen.Auth>() || it.hasRoute<Screen.Register>()
         } == true
         val systemInsets = WindowInsets.systemBars.union(WindowInsets.displayCutout)
         val darkTheme = MaterialTheme.colorScheme.background.luminance() < 0.5f
@@ -439,7 +444,8 @@ object Navigator {
                 navController = nav,
                 startDestination = Screen.Main,
                 modifier = Modifier.fillMaxSize().windowInsetsPadding(
-                    if (shopPhotoUnderStatusBar) WindowInsets(0) else systemInsets.only(WindowInsetsSides.Top),
+                    if (shopPhotoUnderStatusBar || authUnderSystemBars) WindowInsets(0)
+                    else systemInsets.only(WindowInsetsSides.Top),
                 ).clipToBounds(),
                 enterTransition = {
                     slideIntoContainer(
@@ -504,7 +510,7 @@ object Navigator {
                         koinInject<ShopDetailScreenRenderer>().Content(shopId = route.shopId, forCheckIn = route.forCheckIn)
                     }
                     composable<Screen.CreateCheckIn> {
-                        com.coffeepeek.admin.ui.screen.shop.CheckInShopPickerScreen()
+                        org.koin.compose.koinInject<com.coffeepeek.admin.ui.screen.checkins.CheckInShopPickerRenderer>().Content()
                     }
                     composable<Screen.CoffeeDetail> { backStack ->
                         val route = backStack.toRoute<Screen.CoffeeDetail>()
@@ -516,11 +522,11 @@ object Navigator {
                     }
                     composable<Screen.ReportReview> { backStack ->
                         val route = backStack.toRoute<Screen.ReportReview>()
-                        com.coffeepeek.admin.ui.screen.review.ReviewReportScreen(reviewId = route.reviewId, isPreview = route.isPreview)
+                        org.koin.compose.koinInject<com.coffeepeek.admin.ui.screen.review.ContentReportScreenRenderer>().Content(route.reviewId, false, route.isPreview)
                     }
                     composable<Screen.ReportCheckIn> { backStack ->
                         val route = backStack.toRoute<Screen.ReportCheckIn>()
-                        com.coffeepeek.admin.ui.screen.review.ReviewReportScreen(reviewId = route.checkInId, isCheckIn = true)
+                        org.koin.compose.koinInject<com.coffeepeek.admin.ui.screen.review.ContentReportScreenRenderer>().Content(route.checkInId, true, false)
                     }
                     composable<Screen.CheckInDetail> { backStack ->
                         koinInject<CheckInDetailScreenRenderer>().Content(backStack.toRoute<Screen.CheckInDetail>().id)
@@ -586,7 +592,7 @@ koinInject<ContributionsScreenRenderer>().Editor(route.shopId, route.section, ro
                     composable<Screen.CitySettings> { koinInject<SettingsScreenRenderer>().City() }
                     composable<Screen.ThemeSettings> { koinInject<SettingsScreenRenderer>().Theme() }
                     composable<Screen.LanguageSettings> { koinInject<SettingsScreenRenderer>().Language() }
-                    composable<Screen.BlockedAuthors> { com.coffeepeek.admin.feature.authorblocking.ui.BlockedAuthorsScreen() }
+                    composable<Screen.BlockedAuthors> { com.coffeepeek.admin.di.authorblocking.AuthorBlockingScreenRoute() }
                     composable<Screen.UsagePolicy> { koinInject<SettingsScreenRenderer>().UsagePolicy() }
             }
         }
@@ -601,11 +607,11 @@ koinInject<ContributionsScreenRenderer>().Editor(route.shopId, route.section, ro
             is Screen.ForgotPassword -> koinInject<AuthScreenRenderer>().Recovery(initialEmail = screen.email, onClose = ::popBack, onBackToLogin = resetToLogin)
             is Screen.ResetPassword -> LaunchedEffect(Unit) { resetToLogin() }
             is Screen.ShopDetail -> koinInject<ShopDetailScreenRenderer>().Content(screen.shopId, screen.forCheckIn)
-            Screen.CreateCheckIn -> com.coffeepeek.admin.ui.screen.shop.CheckInShopPickerScreen()
+            Screen.CreateCheckIn -> org.koin.compose.koinInject<com.coffeepeek.admin.ui.screen.checkins.CheckInShopPickerRenderer>().Content()
             is Screen.CoffeeDetail -> koinInject<CoffeeScreenRenderer>().Detail(screen.slug)
             is Screen.ShopReviews -> koinInject<ShopCheckInListScreenRenderer>().Content(screen.shopId)
-            is Screen.ReportReview -> com.coffeepeek.admin.ui.screen.review.ReviewReportScreen(reviewId = screen.reviewId, isPreview = screen.isPreview)
-            is Screen.ReportCheckIn -> com.coffeepeek.admin.ui.screen.review.ReviewReportScreen(reviewId = screen.checkInId, isCheckIn = true)
+            is Screen.ReportReview -> org.koin.compose.koinInject<com.coffeepeek.admin.ui.screen.review.ContentReportScreenRenderer>().Content(screen.reviewId, false, screen.isPreview)
+            is Screen.ReportCheckIn -> org.koin.compose.koinInject<com.coffeepeek.admin.ui.screen.review.ContentReportScreenRenderer>().Content(screen.checkInId, true, false)
             is Screen.CheckInDetail -> koinInject<CheckInDetailScreenRenderer>().Content(screen.id)
             is Screen.ShopMenuGallery -> koinInject<ShopMenuGalleryScreenRenderer>().Content(screen.shopId)
             is Screen.ReportShop -> koinInject<ShopReportScreenRenderer>().Content(screen.shopId, screen.shopTitle)
@@ -636,7 +642,7 @@ koinInject<ContributionsScreenRenderer>().Editor(route.shopId, route.section, ro
             Screen.CitySettings -> koinInject<SettingsScreenRenderer>().City()
             Screen.ThemeSettings -> koinInject<SettingsScreenRenderer>().Theme()
             Screen.LanguageSettings -> koinInject<SettingsScreenRenderer>().Language()
-            Screen.BlockedAuthors -> com.coffeepeek.admin.feature.authorblocking.ui.BlockedAuthorsScreen()
+            Screen.BlockedAuthors -> com.coffeepeek.admin.di.authorblocking.AuthorBlockingScreenRoute()
             Screen.UsagePolicy -> koinInject<SettingsScreenRenderer>().UsagePolicy()
             else -> error("Tab route must be handled by MainScreen: $screen")
         }
@@ -657,7 +663,7 @@ koinInject<ContributionsScreenRenderer>().Editor(route.shopId, route.section, ro
 
     @Composable
     private fun PublicProfileRoute(screen: Screen.UserProfile) {
-        koinInject<PublicProfileScreenRenderer>().Content(screen.slug, screen.nickname, screen.avatarUrl)
+        koinInject<PublicProfileScreenRenderer>().Content(screen.slug, screen.nickname, screen.avatarUrl, checkInsOnly = false)
     }
 }
 

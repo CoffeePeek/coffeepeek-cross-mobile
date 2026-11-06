@@ -1,13 +1,13 @@
-import com.coffeepeek.buildlogic.androidApi
 import com.coffeepeek.buildlogic.api
 
 plugins {
-    id("com.coffeepeek.kmp.shared-android-compose-library")
+    id("com.coffeepeek.kmp.shared-library")
+    id("com.coffeepeek.kmp.android-compose-library")
 }
 
 android.namespace = "com.coffeepeek.feature.notifications.api"
 
 dependencies {
     api(libs.kotlinx.coroutines.core)
-    androidApi(libs.compose.runtime)
+    api(libs.compose.runtime)
 }

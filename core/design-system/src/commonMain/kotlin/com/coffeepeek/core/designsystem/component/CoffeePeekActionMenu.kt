@@ -17,6 +17,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -42,6 +43,8 @@ data class CoffeePeekMenuAction(
     val label: String,
     val icon: ImageVector,
     val destructive: Boolean = false,
+    /** The glyph a native menu draws for this row; none draws the row without one. */
+    val nativeIcon: CoffeePeekMenuIcon? = null,
     val onClick: () -> Unit,
 )
 
@@ -54,6 +57,7 @@ fun CoffeePeekActionMenu(
 ) {
     if (CoffeePeekNativeMenu(actions, modifier, enabled, content)) return
     val expanded = remember { MutableTransitionState(false) }
+    LaunchedEffect(enabled) { if (!enabled) expanded.targetState = false }
     val margin = with(LocalDensity.current) { CoffeePeekDimens.spacing2.roundToPx() }
     val origin = remember { MenuOrigin() }
     val position = remember(margin) { object : PopupPositionProvider {

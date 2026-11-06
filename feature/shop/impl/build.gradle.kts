@@ -5,6 +5,7 @@ import com.coffeepeek.buildlogic.module
 import com.coffeepeek.buildlogic.testImplementation
 
 plugins {
+    id("com.coffeepeek.kmp.shared-library")
     id("com.coffeepeek.kmp.android-compose-library")
 }
 

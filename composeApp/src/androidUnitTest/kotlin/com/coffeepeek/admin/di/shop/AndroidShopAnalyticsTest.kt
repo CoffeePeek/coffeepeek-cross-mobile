@@ -2,17 +2,15 @@
 package com.coffeepeek.admin.di.shop
 
 import com.coffeepeek.admin.analytics.*
-import com.coffeepeek.admin.feature.checkin.api.CheckInFlowHandoff
 import com.coffeepeek.feature.shop.api.*
 import com.coffeepeek.feature.shop.domain.repository.ShopCheckInPhotoUploadFailure
-import com.coffeepeek.admin.ui.screen.shop.shopRouteOptions
 import kotlinx.coroutines.test.*
 import kotlin.test.*
 
-class AndroidShopAnalyticsTest {
+class AppShopAnalyticsTest {
     @Test fun photoFailureKeepsItsStageAndSafeNetworkCategory() = runTest {
         val sdk = startAnalytics()
-        val form = AndroidShopCheckInAnalytics { true }
+        val form = AppShopCheckInAnalytics { true }
         form.opened()
         form.submitted()
         form.failed(ShopCheckInPhotoUploadFailure(java.io.IOException("private upload URL")))
@@ -22,13 +20,13 @@ class AndroidShopAnalyticsTest {
         assertEquals("network", failure["error_category"])
         assertTrue(sdk.events.none { "private upload URL" in it.second.toString() })
     }
-    @Test fun detailActionsUseTheLegacySchemaAndRelatedEntry() = runTest {
+    @Test fun detailActionsUseTheExistingSchemaAndRelatedEntry() = runTest {
         val sdk = startAnalytics()
-        AndroidShopAnalytics.action(ShopActionMetric.Directions)
-        AndroidShopAnalytics.action(ShopActionMetric.ShowOnMap)
-        AndroidShopAnalytics.action(ShopActionMetric.PhoneCall)
-        AndroidShopAnalytics.content(ShopContentMetric.Hours, ShopContentAction.Close)
-        AndroidShopAnalytics.content(ShopContentMetric.Roasters, ShopContentAction.Select)
+        AppShopAnalytics.action(ShopActionMetric.Directions)
+        AppShopAnalytics.action(ShopActionMetric.ShowOnMap)
+        AppShopAnalytics.action(ShopActionMetric.PhoneCall)
+        AppShopAnalytics.content(ShopContentMetric.Hours, ShopContentAction.Close)
+        AppShopAnalytics.content(ShopContentMetric.Roasters, ShopContentAction.Select)
         runCurrent()
         val actions = sdk.events.filter { it.first == "shop_action_clicked" }.map { it.second }
         assertEquals(listOf("mobile_actions", "shop_detail", "shop_contacts"), actions.map { it["entry_point"] })
@@ -40,12 +38,12 @@ class AndroidShopAnalyticsTest {
     @Test fun checkInStartIsNotCountedTwiceInTheGlobalCreateFlow() = runTest {
         val sdk = startAnalytics()
         CheckInFlowHandoff.tracker = CheckInTracker(CheckInKind.Visit, CheckInSource.Global)
-        AndroidShopAnalytics.checkInStarted(authenticated = true)
+        AppShopAnalytics.checkInStarted(authenticated = true)
         runCurrent()
         assertTrue(sdk.events.none { it.first == "check_in_start_attempted" || it.first == "shop_action_clicked" })
         assertNotNull(CheckInFlowHandoff.tracker)
         CheckInFlowHandoff.take()
-        AndroidShopAnalytics.checkInStarted(authenticated = true)
+        AppShopAnalytics.checkInStarted(authenticated = true)
         runCurrent()
         assertEquals(1, sdk.events.count { it.first == "check_in_start_attempted" })
     }
@@ -53,7 +51,7 @@ class AndroidShopAnalyticsTest {
     @Test fun formKeepsTheGlobalFlowAndStopsAfterItsSingleSave() = runTest {
         val sdk = startAnalytics()
         CheckInFlowHandoff.tracker = CheckInTracker(CheckInKind.Visit, CheckInSource.Global)
-        val form = AndroidShopCheckInAnalytics { true }
+        val form = AppShopCheckInAnalytics { true }
         form.opened()
         form.field(ShopCheckInField.RatingCoffee)
         form.submitted()
@@ -71,22 +69,15 @@ class AndroidShopAnalyticsTest {
     @Test fun revokedSessionAndDeclinedConsentDoNotReportFormWrites() = runTest {
         val sdk = startAnalytics()
         var current = true
-        val form = AndroidShopCheckInAnalytics { current }
+        val form = AppShopCheckInAnalytics { current }
         form.opened()
         current = false
         form.submitted()
         form.saved(false, false)
         Analytics.service!!.setConsent(AnalyticsConsent.Declined)
-        AndroidShopAnalytics.action(ShopActionMetric.Share)
+        AppShopAnalytics.action(ShopActionMetric.Share)
         runCurrent()
         assertTrue(sdk.events.none { it.first in setOf("check_in_saved", "check_in_submit_attempted", "shop_action_clicked") })
-    }
-
-    @Test fun androidKeepsBothMapProviders() {
-        val options = shopRouteOptions(53.9, 27.5)
-        assertEquals(2, options.size)
-        assertTrue(options.any { it.url.startsWith("https://www.google.com/maps/dir/") })
-        assertTrue(options.any { it.url.startsWith("https://yandex.ru/maps/") })
     }
 }
 

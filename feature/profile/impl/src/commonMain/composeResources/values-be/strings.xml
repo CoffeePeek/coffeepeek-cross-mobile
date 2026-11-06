@@ -1,5 +1,4 @@
 <resources>
-    <string name="profile_menu_business">Мой бізнес</string>
     <string name="profile_title">Профіль</string>
     <string name="profile_loading">Загрузка</string>
     <string name="profile_back">Назад</string>
@@ -28,9 +27,6 @@
     <string name="profile_section_activity">Актыўнасць</string>
     <string name="profile_section_all">Усе</string>
     <string name="profile_section_all_description">Усе: %1$s</string>
-    <string name="profile_favorites_failed">Не ўдалося загрузіць падборкі</string>
-    <string name="profile_favorites_refresh_failed">Не ўдалося абнавіць падборкі</string>
-    <string name="profile_favorites_empty">Пакуль няма падборак</string>
     <string name="profile_check_ins_failed">Не ўдалося загрузіць чэкіны</string>
     <string name="profile_check_ins_empty">Пакуль няма чэкінаў</string>
     <string name="profile_activity_failed">Не ўдалося загрузіць актыўнасць</string>
@@ -48,18 +44,13 @@
     <string name="profile_following_failed">Не ўдалося загрузіць падпіскі</string>
     <string name="profile_followers_empty">Пакуль няма падпісчыкаў</string>
     <string name="profile_following_empty">Пакуль няма падпісак</string>
-    <string name="profile_open_activity">Адкрыць актыўнасць</string>
     <string name="profile_previous_month">Папярэдні месяц</string>
     <string name="profile_next_month">Наступны месяц</string>
     <string name="profile_activity_legend">Дні з чэкінамі</string>
     <string name="profile_activity_minsk_time">Па мінскім часе</string>
     <string name="profile_day_active">%1$d, ёсць чэкіны</string>
     <string name="profile_day_inactive">%1$d, няма чэкінаў</string>
-    <string name="profile_weekday_description">%1$s: %2$s</string>
     <string name="profile_month_title">%1$s %2$d</string>
-    <string name="profile_days_with_check_ins_one">%1$d дзень з чэкінамі</string>
-    <string name="profile_days_with_check_ins_few">%1$d дні з чэкінамі</string>
-    <string name="profile_days_with_check_ins_many">%1$d дзён з чэкінамі</string>
     <string-array name="profile_weekdays">
         <item>Пн</item>
         <item>Аў</item>
@@ -93,8 +84,6 @@
     <string name="profile_logout_title">Выйсці з уліковага запісу?</string>
     <string name="profile_logout_message">Вы ўпэўнены? Спатрэбіцца паўторны ўваход.</string>
     <string name="profile_cancel">Адмена</string>
-    <string name="profile_own_favorites">Падборкі</string>
-    <string name="profile_own_check_ins">Чэкіны</string>
     <string name="profile_edit_title">Рэдагаваць профіль</string>
     <string name="profile_edit_photo_title">Фота профілю</string>
     <string name="profile_edit_change_photo">Змяніць фота профілю</string>
@@ -143,6 +132,53 @@
     <string name="profile_deletion_wait_hint">Пасля пацвярджэння вы аўтаматычна выйдзеце з праграмы.</string>
     <string name="profile_deletion_resend">Адправіць ліст яшчэ раз</string>
     <string name="profile_deletion_resend_wait">Паўторная адпраўка пакуль недаступная</string>
+    <string name="profile_check_in_likes">Лайкі: %1$d</string>
+    <string name="profile_check_in_rating">Кава: %1$d, сэрвіс: %2$d, атмасфера: %3$d. Сярэдняя адзнака: %4$s з 5</string>
+    <string name="profile_check_in_photo">Фатаграфія %1$d з %2$d</string>
+    <string name="profile_check_in_actions">Дзеянні з чэкінам</string>
+    <string name="profile_check_in_report">Паскардзіцца</string>
+    <string name="profile_check_in_dose">%1$s г</string>
+    <string name="profile_check_in_seconds">%1$d с</string>
+    <string name="profile_check_in_taste">%1$d/5</string>
+    <string name="profile_check_in_separator">·</string>
+    <string name="profile_brew_espresso">Эспрэса</string>
+    <string name="profile_brew_pour_over">Пуровер</string>
+    <string name="profile_brew_batch">Фільтр batch</string>
+    <string name="profile_brew_moka">Гейзерная кававарка</string>
+    <string name="profile_brew_cezve">Турка</string>
+    <string name="profile_brew_aeropress">Аэрапрэс</string>
+    <string name="profile_brew_french_press">Френч-прэс</string>
+    <string name="profile_brew_other">Іншае</string>
+    <string name="profile_brew_hario">Hario V60</string>
+    <string name="profile_brew_chemex">Chemex</string>
+    <string name="profile_brew_cold">Cold Brew</string>
+    <string name="profile_brew_batch_brew">Batch Brew</string>
+    <string name="profile_brew_moka_pot">Moka Pot</string>
+    <string name="profile_brew_turkish">Cezve (Turkish Coffee)</string>
+    <string name="profile_week_loading">Загрузка актыўнасці…</string>
+    <string name="profile_week_error">Не ўдалося загрузіць актыўнасць</string>
+    <string name="profile_week_open">Адкрыць чэкіны</string>
+    <string name="profile_week_day">%1$s: %2$s</string>
+    <plurals name="profile_week_count">
+        <item quantity="one">%1$d чэкін</item>
+        <item quantity="few">%1$d чэкіны</item>
+        <item quantity="many">%1$d чэкінаў</item>
+        <item quantity="other">%1$d чэкіна</item>
+    </plurals>
+    <string name="profile_favorite_shop">Кавярня</string>
+    <string name="profile_favorite_shops">Кавярні</string>
+    <string name="profile_favorite_catalog">Каталог</string>
+    <string name="profile_favorite_drink">Напой</string>
+    <string name="profile_favorite_saved">У абраным</string>
+    <string name="profile_favorite_open">АДКРЫТА</string>
+    <string name="profile_favorite_closed">ЗАКРЫТА</string>
+    <string name="profile_favorite_no_photo">Фота %1$s адсутнічае</string>
+    <plurals name="profile_days_with_check_ins">
+        <item quantity="one">%1$d дзень з чэкінамі</item>
+        <item quantity="few">%1$d дні з чэкінамі</item>
+        <item quantity="many">%1$d дзён з чэкінамі</item>
+        <item quantity="other">%1$d дня з чэкінамі</item>
+    </plurals>
     <string name="profile_edit_display_preferences">Паказваць у профілі</string>
     <string name="profile_edit_display_shelf">Кававая паліца</string>
 </resources>

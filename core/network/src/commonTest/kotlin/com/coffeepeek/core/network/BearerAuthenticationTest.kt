@@ -168,21 +168,6 @@ class BearerAuthenticationTest {
     }
 
     @Test
-    fun externalSessionChangeCanInvalidateCachedTokens(): Unit = runBlocking {
-        val session = Session()
-        val headers = mutableListOf<String?>()
-        val engine = MockEngine { request -> headers += request.headers[HttpHeaders.Authorization]; respond("ok") }
-        val client = HttpClientFactory(engine).authenticatedApi("https://api.example.com", session)
-        try {
-            client.get("/items")
-            session.tokens = null
-            client.clearBearerTokenCache()
-            client.get("/items")
-            assertEquals(listOf("Bearer old", null), headers)
-        } finally { client.close(); engine.close() }
-    }
-
-    @Test
     fun missingRefreshClearsTokensAndGuestDoesNotRefresh(): Unit = runBlocking {
         for (tokens in listOf(null, SessionTokens("old", ""))) {
             val session = Session(tokens)

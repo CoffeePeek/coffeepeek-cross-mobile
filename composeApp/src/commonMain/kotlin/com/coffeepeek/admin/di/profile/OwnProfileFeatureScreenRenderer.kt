@@ -9,19 +9,18 @@ import androidx.compose.ui.unit.dp
 import coffeepeek.composeapp.generated.resources.Res
 import coffeepeek.composeapp.generated.resources.local_data_cleanup_error
 import com.coffeepeek.admin.auth.GoogleAuth
-import com.coffeepeek.admin.feature.profile.domain.PublicProfileRepository
-import com.coffeepeek.admin.settings.ReviewDraftStore
+import com.coffeepeek.feature.profile.domain.PublicProfileData
+import com.coffeepeek.feature.profile.api.PublicCheckInsPort
+import com.coffeepeek.admin.session.OldReviewDrafts
 import com.coffeepeek.admin.ui.Navigator
-import com.coffeepeek.admin.ui.component.LoadErrorContent
+import com.coffeepeek.core.designsystem.component.CoffeePeekLoadErrorContent
 import com.coffeepeek.admin.ui.component.LocalFloatingNavClearance
 import com.coffeepeek.admin.ui.screen.profile.OwnProfileScreenRenderer
-import com.coffeepeek.admin.ui.screen.profile.PersonalProfileActivityCalendar
+import com.coffeepeek.admin.di.checkinhistory.FeatureProfileActivityRenderer
 import com.coffeepeek.feature.notifications.api.NotificationFeature
-import com.coffeepeek.admin.ui.screen.profile.PersonalProfileActivityPreview
 import com.coffeepeek.admin.utils.ErrorHandler
-import com.coffeepeek.domain.repository.AuthRepository
-import com.coffeepeek.core.session.SessionReader
-import com.coffeepeek.domain.repository.UserRepository
+import com.coffeepeek.feature.auth.domain.AuthRepository
+import com.coffeepeek.feature.profile.api.ProfileAccountPort
 import com.coffeepeek.feature.authorblocking.api.AuthorBlockActions
 import com.coffeepeek.feature.authorblocking.api.AuthorVisibility
 import com.coffeepeek.feature.profile.api.OwnProfileEntry
@@ -30,9 +29,10 @@ import com.coffeepeek.feature.profile.api.ProfileSignOutPort
 import com.coffeepeek.feature.profile.api.ProfileSnapshotStore
 import com.coffeepeek.feature.profile.impl.createOwnProfileEntry
 import org.jetbrains.compose.resources.getString
+import kotlinx.coroutines.CancellationException
 
-/** Android routes the Profile tab to the migrated entry; navigation, analytics, sign-out and legacy-rendered pieces stay app-owned. */
-internal class OwnProfileFeatureScreenRenderer(private val entry: OwnProfileEntry) : OwnProfileScreenRenderer {
+/** Both platforms use the feature Profile tab; navigation, native integrations and shared slots remain app-owned. */
+internal class FeatureOwnProfileScreenRenderer(private val entry: OwnProfileEntry) : OwnProfileScreenRenderer {
     @Composable
     override fun Content() {
         entry.Content(
@@ -51,56 +51,57 @@ internal class OwnProfileFeatureScreenRenderer(private val entry: OwnProfileEntr
     }
 }
 
-/** The legacy logout order: push unregistration, server logout (failure shown), platform sign-out, then the signed-in user's local drafts. */
-internal class ProfileSignOut(
+/** The sign-out order: push unregistration, account sign-out (a local cleanup failure is shown), platform sign-out, then the signed-in user's local drafts. */
+internal class AppProfileSignOut(
     private val notifications: NotificationFeature,
     private val auth: AuthRepository,
-    private val drafts: ReviewDraftStore,
+    private val drafts: OldReviewDrafts,
     private val platformSignOut: suspend () -> Unit = { GoogleAuth.signOut() },
 ) : ProfileSignOutPort {
     override suspend fun signOut() {
         notifications.beforeLogout()
-        auth.logout().onFailure { error ->
+        auth.signOut().onFailure { error ->
+            if (error is CancellationException) throw error
             ErrorHandler.showError(error.message?.takeIf(String::isNotBlank) ?: getString(Res.string.local_data_cleanup_error))
         }
         platformSignOut()
-        drafts.clearAll()
+        drafts.clear()
     }
 }
 
-internal fun ownProfileFeatureScreenRenderer(
-    repository: PublicProfileRepository,
-    sessions: SessionReader,
-    users: UserRepository,
+internal fun featureOwnProfileScreenRenderer(
+    repository: PublicProfileData,
+    checkIns: PublicCheckInsPort,
+    accounts: ProfileAccountPort,
     notifications: NotificationFeature,
     auth: AuthRepository,
-    drafts: ReviewDraftStore,
+    drafts: OldReviewDrafts,
     visibility: AuthorVisibility,
     blocks: AuthorBlockActions,
+    activity: FeatureProfileActivityRenderer,
     snapshots: ProfileSnapshotStore = ProfileSnapshotStore.None,
-): OwnProfileFeatureScreenRenderer {
-    val checkIns = ProfilePublicCheckIns(repository)
-    return OwnProfileFeatureScreenRenderer(createOwnProfileEntry(
+): FeatureOwnProfileScreenRenderer {
+    return FeatureOwnProfileScreenRenderer(createOwnProfileEntry(
         data = repository,
         checkIns = checkIns,
-        accounts = AppProfileAccountPort(sessions, users),
-        signOut = ProfileSignOut(notifications, auth, drafts),
+        accounts = accounts,
+        signOut = AppProfileSignOut(notifications, auth, drafts),
         visibility = AppProfileAuthorVisibility(visibility),
         authorActions = AppProfileAuthorActions(blocks),
-        slots = ownProfileSlots(checkIns),
+        slots = ownProfileSlots(activity),
         snapshots = snapshots,
     ))
 }
 
-private fun ownProfileSlots(checkIns: ProfilePublicCheckIns) = OwnProfileSlots(
-        shared = profileSlots(checkIns),
-        favoritesPreview = { _, _, header ->
-            Column {
-                Box(Modifier.padding(horizontal = 16.dp)) { header() }
-                ProfileOwnerCollection()
-            }
-        },
-        activityCalendar = { openShop, openCheckIns -> PersonalProfileActivityCalendar(onOpenShop = openShop, onOpenCheckIns = openCheckIns) },
-        activityPreview = { onClick -> PersonalProfileActivityPreview(onClick) },
-        loadError = { onRetry -> LoadErrorContent(onRetry = onRetry) },
-    )
+private fun ownProfileSlots(activity: FeatureProfileActivityRenderer) = OwnProfileSlots(
+    shared = profileSlots(),
+    favoritesPreview = { _, _, header ->
+        Column {
+            Box(Modifier.padding(horizontal = 16.dp)) { header() }
+            ProfileOwnerCollection()
+        }
+    },
+    activityCalendar = { openShop, openCheckIns -> activity.Calendar(openShop, openCheckIns) },
+    activityPreview = { onClick -> activity.Week(onClick) },
+    loadError = { onRetry -> CoffeePeekLoadErrorContent(onRetry = onRetry) },
+)

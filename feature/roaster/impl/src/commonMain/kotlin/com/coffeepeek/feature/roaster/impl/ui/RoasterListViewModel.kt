@@ -134,7 +134,7 @@ internal class RoasterListViewModel(
         sendEvent(RoasterListEvent.OpenRoaster(slug))
     }
 
-    /** Same 350 ms settle delay as the legacy screen, so typing does not report every keystroke. */
+    /** Same 350 ms settle delay as the previous screen, so typing does not report every keystroke. */
     private suspend fun scheduleReport() {
         reportJob?.cancel()
         val job = currentCoroutineContext().job

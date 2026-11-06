@@ -35,6 +35,7 @@ internal class SandboxBackend(private val samplePhoto: ByteArray,
     private val application = SandboxApplicationBackend(today, shopRows) { key, size ->
         key in uploaded && images["/media/$key"]?.size?.toLong() == size
     }
+    val contentReportCount get() = synchronized(lock) { application.submittedReports.size }
     private val shelf = SandboxShelfBackend(today) { it in uploaded }
     private val shelfProfile = SandboxShelfProfileBackend(shelf, application::publicProfileAvailable)
     /** Settings fixtures (see [SandboxApplicationBackend]); [reset] returns both to their defaults. */

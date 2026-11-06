@@ -1,9 +1,11 @@
 package com.coffeepeek.admin.di.shop
 
 import com.coffeepeek.admin.ui.screen.shop.CheckInDraftStore
-import com.coffeepeek.api.CoffeePeekClient
+import com.coffeepeek.core.network.ApiClients
+import com.coffeepeek.core.network.SessionCredentials
+import com.coffeepeek.core.network.SessionTokens
 import com.coffeepeek.core.session.SessionReader
-import com.coffeepeek.domain.repository.SessionRepository
+import com.coffeepeek.core.session.SessionStore
 import com.coffeepeek.feature.shop.api.ShopCheckInCreateEntry
 import com.coffeepeek.feature.shop.domain.repository.ShopCheckInRepository
 import com.coffeepeek.feature.shop.domain.repository.ShopDetailsRepository
@@ -24,8 +26,13 @@ class ShopCheckInModuleTest {
 
     @Test fun resolvesOneGraphWithoutOpeningDraftOrReadingCredentials() {
         var credentialReads = 0
-        val client = CoffeePeekClient("https://fixture.invalid", temporary.newFolder("cache").path, false,
-            getToken = { credentialReads++; null }, saveToken = { error("Unexpected credentials write") })
+        val client = ApiClients("https://fixture.invalid", temporary.newFolder("cache").path, false,
+            credentials = object : SessionCredentials {
+                override suspend fun load(): SessionTokens? { credentialReads++; return null }
+                override suspend fun save(tokens: SessionTokens?) { error("Unexpected credentials write") }
+                override suspend fun replace(expected: SessionTokens, tokens: SessionTokens?): Boolean = false
+            },
+            refreshWith = { { Result.failure(IllegalStateException("unused")) } })
         val drafts = CheckInDraftStore { 1791547200000 }
         val existing = drafts.open("internal-id").copy(note = "Retained draft")
         drafts.save(existing)
@@ -33,16 +40,16 @@ class ShopCheckInModuleTest {
             modules(module {
                 single { client }
                 single { drafts }
-                single<SessionRepository> { CheckInTestSessions() }
-                single<SessionReader> { get<SessionRepository>() }
-            }, shopCheckInModule(), shopBrowsingModule(fileBaseUrl = "https://fixture.invalid"))
+                single<SessionStore> { CheckInTestSessions() }
+                single<SessionReader> { get<SessionStore>() }
+            }, shopCheckInModule(AndroidShopCheckInDateFormatter()), shopBrowsingModule(fileBaseUrl = "https://fixture.invalid"))
         }
         try {
             assertSame(app.koin.get<ShopCheckInCreateEntry>(), app.koin.get<ShopCheckInCreateEntry>())
             assertEquals(1, app.koin.getAll<ShopCheckInRepository>().size)
             assertEquals(1, app.koin.getAll<ShopDetailsRepository>().size)
             assertEquals(1, app.koin.getAll<ShopCheckInVoteRepository>().size)
-            assertSame(app.koin.get<AndroidShopCheckInDraftStore>(), app.koin.get<AndroidShopCheckInDraftStore>())
+            assertSame(app.koin.get<AppShopCheckInDraftStore>(), app.koin.get<AppShopCheckInDraftStore>())
             assertNotNull(app.koin.get<ShopCheckInDateFormatter>())
             assertNotNull(app.koin.get<ShopCheckInPhotoPicker>())
             assertSame(existing, drafts.peek())

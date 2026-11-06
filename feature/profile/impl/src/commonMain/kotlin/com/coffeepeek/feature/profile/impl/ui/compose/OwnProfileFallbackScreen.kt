@@ -127,9 +127,7 @@ private fun OwnProfileFallbackShelf(onEditProfile: () -> Unit) {
 
 @Composable
 private fun OwnProfileFallbackPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
-    val shared = ProfileSlots(image = { _, _, _ -> }, photoViewer = { _, _, _, _ -> },
-        favoritesPreview = { _, _ -> }, favoriteCard = { _, _, _ -> }, checkInCard = { _, _, _, _, _ -> },
-        photoPrefetch = { _, _ -> }, activityPreview = { _, _, _, _, _, _, _ -> })
+    val shared = ProfileSlots(image = { _, _, _ -> }, photoViewer = { _, _, _, _ -> }, photoPrefetch = { _, _ -> })
     val slots = OwnProfileSlots(shared, favoritesPreview = { _, _, header -> header() },
         activityCalendar = { _, _ -> }, activityPreview = { Text(stringResource(Res.string.profile_section_activity)) }, loadError = {})
     val callbacks = OwnProfileCallbacks({}, {}, {}, {}, { _, _, _ -> }, {}, {}, {}, {})

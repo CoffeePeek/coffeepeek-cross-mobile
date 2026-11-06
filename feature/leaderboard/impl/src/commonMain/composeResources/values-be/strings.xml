@@ -1,0 +1,28 @@
+<resources>
+    <string name="leaderboard_title">Табліца лідараў</string>
+    <string name="leaderboard_loading">Загружаем табліцу лідараў</string>
+    <string name="leaderboard_all">Усе</string>
+    <string name="leaderboard_week">Тыдзень</string>
+    <string name="leaderboard_month">Месяц</string>
+    <string name="leaderboard_empty">У гэтым перыядзе пакуль няма ўдзельнікаў</string>
+    <string name="leaderboard_error">Не ўдалося загрузіць табліцу лідараў</string>
+    <string name="leaderboard_retry">Паспрабаваць зноў</string>
+    <string name="leaderboard_close">Закрыць</string>
+    <string name="leaderboard_own_rank">Ваша месца: %1$d</string>
+    <string name="leaderboard_rank">Месца: %1$d</string>
+    <string name="leaderboard_open_profile">Адкрыць профіль %1$s</string>
+    <string name="leaderboard_breakdown">%1$d/%2$d/%3$d</string>
+    <string name="leaderboard_breakdown_description">Даданні: %1$d. Праўкі: %2$d. Чэкіны: %3$d.</string>
+    <string name="leaderboard_rules_title">Як уладкавана табліца лідараў</string>
+    <string name="leaderboard_rules_ranking">Тут паказаны 30 удзельнікаў з найбольшай колькасцю балаў за абраны тыдзень або месяц. Пры роўным выніку ўдзельнікі дзеляць месца: напрыклад, 1, 1, 3. Ваша месца і балы паказаны асобна, нават калі вы не ўвайшлі ў топ‑30.</string>
+    <string name="leaderboard_rules_counts">Лічбы пад балами — колькасць дзеянняў у такім парадку: даданні / праўкі / чэкіны. Напрыклад, 4/3/6 — гэта 4 ухваленыя даданні кавярні або абсмажчыка, 3 ужытыя праўкі кавярні і 6 залічаных чэкінаў.</string>
+    <string name="leaderboard_rules_points">Адно даданне прыносіць 3 балы, адна ужытая праўка — 1 бал, адзін залічаны чэкін — 2 балы. Таму вынік 4/3/6 дае 27 балаў. Вялікая лічба паказвае агульны вынік у балах, а лічбы пад ёй — колькасць дзеянняў.</string>
+    <string name="leaderboard_rules_eligibility">Чэкін залічваецца пасля ўхвалення, калі ён публічны, зроблены ў кавярні і пацверджаны свежай геалакацыяй у межах 50 м. Хатнія, прыватныя, адхіленыя і выдаленыя чэкіны балаў не даюць. Вынік можа змяніцца пасля мадэрацыі. Адміністратары і мадэратары ў рэйтынгу не ўдзельнічаюць.</string>
+    <string name="leaderboard_rules_periods">Тыдзень пачынаецца ў панядзелак, месяц — з першага ліку. Перыяды лічацца па гадзінным поясе Europe/Minsk. Гісторыя за мінулыя перыяды не замарожваецца: здыманне або аднаўленне заліку змяняе вынік таго перыяду, у якім дзеянне было ўпершыню залічана.</string>
+    <plurals name="leaderboard_points">
+        <item quantity="one">%1$d бал</item>
+        <item quantity="few">%1$d балы</item>
+        <item quantity="many">%1$d балаў</item>
+        <item quantity="other">%1$d балу</item>
+    </plurals>
+</resources>

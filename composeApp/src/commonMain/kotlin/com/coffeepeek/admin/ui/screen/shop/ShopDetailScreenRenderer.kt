@@ -7,8 +7,3 @@ interface ShopDetailScreenRenderer {
     @Composable
     fun Content(shopId: String, forCheckIn: Boolean)
 }
-
-internal object LegacyShopDetailScreenRenderer : ShopDetailScreenRenderer {
-    @Composable
-    override fun Content(shopId: String, forCheckIn: Boolean) = ShopDetailScreen(shopId, forCheckIn)
-}

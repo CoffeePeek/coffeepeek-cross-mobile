@@ -130,6 +130,28 @@ class SearchViewModelTest {
         assertEquals(ShopKind.Cafe, repository.queries.last().filters.kind); assertEquals(PriceLevel.Cheap, repository.queries.last().filters.priceLevel); assertEquals(4.0, repository.queries.last().filters.minRating)
     }
 
+    @Test fun aGuestCanSearchWithQuickChipsButNeedsSignInForAdvancedFilters() = runTest(dispatcher) {
+        account.key.value = null
+        val vm = model()
+        val event = async(start = CoroutineStart.UNDISPATCHED) { vm.events.first() }
+
+        vm.send(SearchAction.ToggleFilters, scope = this)
+        assertEquals(SearchEvent.SignInRequired, event.await())
+        assertEquals(listOf(DiscoveryGate.AdvancedFilters), analytics.gates)
+        assertFalse(vm.now.showFilters)
+        assertEquals(0, analytics.filtersOpened)
+
+        vm.send(SearchAction.ApplyFilters(DiscoveryFilters(openOnly = true)), scope = this)
+        assertFalse(vm.now.filters.openOnly)
+        assertEquals(1, repository.queries.size)
+
+        vm.send(SearchAction.ToggleOpen, SearchAction.Query("Coffee"), scope = this)
+        advanceTimeBy(401)
+        runCurrent()
+        assertTrue(repository.queries.last().filters.openOnly)
+        assertEquals("Coffee", repository.queries.last().text)
+    }
+
     @Test fun aGuestGetsTheSignInEventAndTheGateForVisitedAndFavoritesAndNothingChanges() = runTest(dispatcher) {
         account.key.value = null
         val vm = model()
@@ -514,6 +536,18 @@ class SearchViewModelTest {
         assertTrue(vm.now.canUseNearby); assertSame(shown, vm.now.shops); assertEquals(1, repository.queries.size)
     }
 
+    @Test fun aPositionThatArrivesBeforeTheCatalogsKeepsTheFirstSearchInTheCityWithoutNearby() = runTest(dispatcher) {
+        val gate = CompletableDeferred<Result<DiscoveryCatalogs>>()
+        repository.catalogs = { gate.await() }
+        val vm = model()
+        location.flow.value = here; runCurrent()
+        assertTrue(repository.queries.isEmpty())
+        gate.complete(Result.success(DiscoveryCatalogs(cities = listOf(minskCity, brestCity)))); runCurrent()
+        val query = repository.queries.single()
+        assertEquals("minsk", query.filters.cityId); assertNull(query.origin)
+        assertFalse(vm.now.filters.nearbyOnly); assertFalse(vm.now.isLoading)
+    }
+
     @Test fun aChangeOfAccountDropsVisitedAndFavoritesAndReloadsAndALateAnswerIsIgnored() = runTest(dispatcher) {
         val late = CompletableDeferred<Unit>()
         val vm = model()
@@ -547,7 +581,7 @@ class SearchViewModelTest {
         assertEquals(listOf("isNew"), analytics.filters.last().second)
     }
 
-    @Test fun theAnalyticsValuesFollowTheLegacyKeys() {
+    @Test fun theAnalyticsValuesFollowThePreviousKeys() {
         assertEquals(setOf("isOpen", "isNew", "visitedOnly", "favoritesOnly"), DiscoveryFilters().analyticsValues().keys)
         val all = DiscoveryFilters(
             cityId = "minsk", kind = ShopKind.CoffeeBar, openOnly = true, nearbyOnly = true, priceLevel = PriceLevel.Expensive, minRating = 4.0,

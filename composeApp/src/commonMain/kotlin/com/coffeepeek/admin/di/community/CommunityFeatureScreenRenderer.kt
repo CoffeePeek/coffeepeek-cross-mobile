@@ -1,37 +1,23 @@
 package com.coffeepeek.admin.di.community
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.BoxScope
-import com.coffeepeek.admin.analytics.Analytics
-import com.coffeepeek.admin.analytics.AnalyticsEvent
 import com.coffeepeek.admin.analytics.TrackFeedViewed
 import com.coffeepeek.admin.analytics.analyticsExposure
-import com.coffeepeek.admin.feature.catalog.api.methodLabel
-import com.coffeepeek.admin.feature.community.ui.CommunityScreenRenderer
-import com.coffeepeek.admin.theme.CpDimens
+import com.coffeepeek.admin.di.catalog.methodLabel
+import com.coffeepeek.admin.ui.screen.community.CommunityScreenRenderer
 import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.ui.component.CpSnackbarHost
-import com.coffeepeek.admin.ui.component.FullScreenImageDialog
+import com.coffeepeek.core.designsystem.component.CoffeePeekPhotoViewer
 import com.coffeepeek.admin.ui.component.LocalFloatingNavClearance
-import com.coffeepeek.admin.ui.component.PhotoViewerImages
+import com.coffeepeek.core.designsystem.component.CoffeePeekPhotoViewerImages
 import com.coffeepeek.admin.ui.component.rememberReviewDisplayDate
-import com.coffeepeek.admin.ui.screen.checkins.CheckInCreateButton
-import com.coffeepeek.admin.ui.screen.checkins.CheckInCreateFlow
-import com.coffeepeek.admin.utils.CpImage
-import com.coffeepeek.admin.utils.PrefetchListPhotos
+import com.coffeepeek.admin.ui.screen.checkins.CheckInCreateHost
+import com.coffeepeek.core.designsystem.component.CoffeePeekImage
+import com.coffeepeek.core.media.PrefetchListPhotos
 import com.coffeepeek.admin.utils.ShareHelper
 import com.coffeepeek.feature.community.api.CommunityEntry
-import com.coffeepeek.feature.community.api.CommunityFloating
 import com.coffeepeek.feature.community.api.CommunityHost
 import com.coffeepeek.feature.community.api.ExposureKind
 import com.coffeepeek.feature.community.impl.createCommunityEntry
@@ -42,8 +28,8 @@ import com.coffeepeek.feature.community.api.CommunityAnalytics
 import com.coffeepeek.feature.community.api.ConsumedDrinks
 import com.coffeepeek.feature.community.domain.repository.CommunityRepository
 
-/** The feed tab is the migrated entry on both platforms; navigation, images, the photo viewer, analytics trackers and the creation flow stay app-owned. */
-internal class CommunityFeatureScreenRenderer(private val entry: CommunityEntry) : CommunityScreenRenderer {
+/** Both platforms use one migrated feed; navigation, protected media, analytics and the global creation flow remain app-owned. */
+internal class FeatureCommunityScreenRenderer(private val entry: CommunityEntry) : CommunityScreenRenderer {
     @Composable
     override fun Content(onCreateCheckIn: () -> Unit, notificationsAction: @Composable () -> Unit) {
         entry.Content(
@@ -56,34 +42,22 @@ internal class CommunityFeatureScreenRenderer(private val entry: CommunityEntry)
             modifier = Modifier,
             headerAction = notificationsAction,
             bottomClearance = LocalFloatingNavClearance.current,
-            floatingAction = { floating -> CreateAction(floating, onCreateCheckIn) },
+            floatingAction = { floating ->
+                CheckInCreateHost(
+                    canCreate = { floating.isLoggedIn == true }, resetKey = floating.sessionGeneration,
+                    onShop = onCreateCheckIn, onHomeSaved = floating.refresh,
+                )
+            },
         )
     }
 }
 
-/** The legacy create button: a guest is sent to sign in, a signed-in user gets the global creation flow, which closes with the account scope. */
-@Composable
-private fun BoxScope.CreateAction(floating: CommunityFloating, onCreateCheckIn: () -> Unit) {
-    var showCreate by rememberSaveable { mutableStateOf(false) }
-    LaunchedEffect(floating.sessionGeneration) { showCreate = false }
-    if (showCreate) CheckInCreateFlow(
-        onDismiss = { showCreate = false },
-        onShop = { showCreate = false; onCreateCheckIn() },
-        onHomeSaved = floating.refresh,
-    )
-    CheckInCreateButton(Modifier.align(Alignment.BottomEnd).padding(end = CpDimens.spacing4, bottom = LocalFloatingNavClearance.current + 12.dp)) {
-        Analytics.track(AnalyticsEvent.CHECK_IN_START_ATTEMPTED, "source" to "global_create")
-        if (floating.isLoggedIn == true) showCreate = true
-        else { Analytics.gate("check_in"); Navigator.navigate(Navigator.Screen.Auth) }
-    }
-}
-
 internal fun communityHost() = CommunityHost(
-    image = { url, highQuality, modifier, scale -> CpImage(data = url, highQualityData = highQuality, contentScale = scale, modifier = modifier) },
+    image = { url, highQuality, modifier, scale -> CoffeePeekImage(data = url, highQualityData = highQuality, contentScale = scale, modifier = modifier) },
     displayDate = { rememberReviewDisplayDate(it) },
     brewMethodLabel = { it.methodLabel(it) },
     prefetchPhotos = { state, posts -> PrefetchListPhotos(state, posts) },
-    photoViewer = { thumbnails, originals, index, onDismiss -> FullScreenImageDialog(PhotoViewerImages(thumbnails, originals), index, onDismiss) },
+    photoViewer = { thumbnails, originals, index, onDismiss -> CoffeePeekPhotoViewer(CoffeePeekPhotoViewerImages(thumbnails, originals), index, onDismiss) },
     exposure = { modifier, kind ->
         when (kind) {
             ExposureKind.Feed -> modifier.analyticsExposure("feed", "feed", "feed")
@@ -98,9 +72,9 @@ internal fun communityHost() = CommunityHost(
     share = ShareHelper::shareText,
 )
 
-internal fun communityFeatureScreenRenderer(
+internal fun featureCommunityScreenRenderer(
     repository: CommunityRepository, account: CommunityAccount, analytics: CommunityAnalytics, drinks: ConsumedDrinks,
     visibility: AuthorVisibility, blockActions: AuthorBlockActions,
-): CommunityScreenRenderer = CommunityFeatureScreenRenderer(
+): CommunityScreenRenderer = FeatureCommunityScreenRenderer(
     createCommunityEntry(repository, account, analytics, drinks, visibility, blockActions, communityHost()),
 )

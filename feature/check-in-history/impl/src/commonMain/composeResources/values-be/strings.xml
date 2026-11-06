@@ -10,16 +10,13 @@
     <string name="history_clear_date">Паказаць усе даты</string>
     <string name="history_date_without_year">%1$d %2$s</string>
     <string name="history_home_count">%1$d дома</string>
-    <string name="history_source_time">%1$s · %2$s</string>
     <string name="history_more">Паказаць яшчэ</string>
     <string name="history_close">Закрыць</string>
     <string name="history_open_shop_action">Адкрыць кавярню</string>
-    <string name="history_new">Новы чэкін</string>
     <string name="history_add">Дадаць чэкін</string>
     <string name="history_create_shop">Чэкін у кавярні</string>
     <string name="history_create_title">Стварыць</string>
     <string name="history_create_home">Чэкін дома</string>
-    <string name="history_home_title">Хатняе прыгатаванне</string>
     <string name="history_private">Толькі мне</string>
     <string name="history_visible">Бачны ўсім</string>
     <string name="history_pending">На мадэрацыі</string>
@@ -28,7 +25,6 @@
     <string name="history_public">Публічны</string>
     <string name="history_dose">%1$s г</string>
     <string name="history_taste">%1$d/5</string>
-    <string name="history_details_separator">%1$s · %2$s</string>
     <string name="history_shop_calendar_error">Не ўдалося загрузіць каляндар наведванняў кавярняў</string>
     <string name="history_home_calendar_error">Не ўдалося загрузіць каляндар хатніх прыгатаванняў</string>
     <string name="history_shop_timeline_error">Не ўдалося загрузіць наведванні кавярняў</string>
@@ -59,12 +55,7 @@
     <string name="history_day_today">%1$s, сёння</string>
     <string name="history_select_day">Выбраць дату</string>
     <string name="history_day_empty">У гэты дзень чэкінаў не было</string>
-    <string name="history_month_empty">У гэтым месяцы пакуль няма чэкінаў</string>
     <string name="history_list_empty">Пакуль няма чэкінаў</string>
-    <string name="history_no_visits">Няма чэкінаў</string>
-    <string name="history_load_error">Не ўдалося загрузіць чэкіны</string>
-    <string name="history_refresh_error">Не ўдалося абнавіць чэкіны. Паказаныя раней загружаныя запісы</string>
-    <string name="history_paging_error">Не ўдалося загрузіць наступную старонку</string>
     <string name="history_retry">Паўтарыць</string>
     <string name="history_loading">Загрузка чэкінаў</string>
     <string name="history_refresh">Абнавіць чэкіны</string>
@@ -72,9 +63,6 @@
     <string name="history_sign_in">Увайсці</string>
     <string name="history_you">Вы</string>
     <string name="history_shop">Кавярня</string>
-    <string name="history_open_shop">Адкрыць кавярню %1$s</string>
-    <string name="history_expand_note">Чытаць цалкам</string>
-    <string name="history_collapse_note">Згарнуць</string>
     <string name="history_photo_description">Фатаграфія %1$d з %2$d</string>
     <string name="history_more_photos">+%1$d</string>
     <string name="history_helpful_count">Лайкі: %1$d</string>
@@ -130,4 +118,22 @@
         <item>кавярні</item>
         <item>кавярняў</item>
     </string-array>
+    <string-array name="history_weekday_names">
+        <item>Панядзелак</item>
+        <item>Аўторак</item>
+        <item>Серада</item>
+        <item>Чацвер</item>
+        <item>Пятніца</item>
+        <item>Субота</item>
+        <item>Нядзеля</item>
+    </string-array>
+    <string name="history_activity_loading">Загрузка актыўнасці…</string>
+    <string name="history_activity_failed">Не ўдалося загрузіць актыўнасць</string>
+    <string name="history_activity_open">Адкрыць чэкіны</string>
+    <string name="history_activity_day">%1$s: %2$s</string>
+    <string name="history_activity_empty_day">У гэты дзень чэкінаў не было</string>
+    <string name="history_activity_day_summary">%1$s · %2$s</string>
+    <string name="history_activity_at_home">Дома</string>
+    <string name="history_seconds">%1$d с</string>
+    <string name="history_recipe_separator">·</string>
 </resources>

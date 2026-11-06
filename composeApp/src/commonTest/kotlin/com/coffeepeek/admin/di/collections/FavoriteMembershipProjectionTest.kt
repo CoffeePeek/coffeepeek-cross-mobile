@@ -9,8 +9,8 @@ import com.coffeepeek.admin.analytics.RecordingTransport
 import com.coffeepeek.admin.analytics.analytics
 import com.coffeepeek.core.session.Session
 import com.coffeepeek.core.session.SessionReader
-import com.coffeepeek.domain.feature.favorites.api.*
-import com.coffeepeek.domain.model.PublicAddress
+import com.coffeepeek.feature.favorites.domain.model.*
+import com.coffeepeek.feature.favorites.domain.repository.AccountFavorites
 import com.coffeepeek.feature.collections.domain.model.*
 import com.coffeepeek.feature.collections.domain.repository.SavedCollectionsRepository
 import kotlinx.coroutines.CancellationException
@@ -212,7 +212,7 @@ class FavoriteMembershipProjectionTest {
         override suspend fun getSession() = state.value
     }
 
-    private class Favorites : FavoritesRepository {
+    private class Favorites : AccountFavorites {
         var reads = 0
         var member: Boolean? = true
         val applied = mutableListOf<Pair<FavoriteTarget, Boolean>>()
@@ -222,7 +222,7 @@ class FavoriteMembershipProjectionTest {
             error("Metadata reads must not delay confirmation")
         }
         override fun cachedMembership(target: FavoriteTarget) = member
-        override suspend fun setFavorite(kind: FavoriteKind, address: PublicAddress, favorite: Boolean) = error("Projection never writes favorites")
+        override suspend fun setFavorite(entry: FavoriteEntry, favorite: Boolean) = error("Projection never writes favorites")
         override fun applyConfirmedMembership(expectedAccount: String, expectedGeneration: Long, target: FavoriteTarget, favorite: Boolean): Boolean {
             assertEquals("owner", expectedAccount)
             assertEquals(1L, expectedGeneration)

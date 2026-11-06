@@ -21,7 +21,7 @@ class CommunityRulesTest {
     ) = CommunityPost(id, "shop", "Shop", PostAuthor("author-$id", slug, "Name", null), note, "2026-10-07T10:00:00Z", "", PostPhotos.None,
         PostRating(4, 4, 5), null, visibility, moderation, 0, null, 0, false, false, null)
 
-    @Test fun editIsCheckedInTheLegacyOrderNoteThenRatingThenDrink() {
+    @Test fun editIsCheckedInThePreviousOrderNoteThenRatingThenDrink() {
         assertNull(validateEdit(PostEdit("ok")))
         assertEquals(EditIssue.NoteTooLong, validateEdit(PostEdit("x".repeat(1001), PostRating(0, 0, 0), "other", null)))
         assertNull(validateEdit(PostEdit(" " + "x".repeat(1000) + " ")))

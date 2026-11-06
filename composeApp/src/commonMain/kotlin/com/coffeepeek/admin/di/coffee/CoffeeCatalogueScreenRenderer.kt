@@ -1,11 +1,10 @@
 package com.coffeepeek.admin.di.coffee
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import com.coffeepeek.admin.ui.Navigator
-import com.coffeepeek.admin.ui.component.CoffeeShopImage
-import com.coffeepeek.admin.ui.component.FullScreenImageDialog
+import com.coffeepeek.core.designsystem.component.CoffeePeekBrandedImage
+import com.coffeepeek.core.designsystem.component.CoffeePeekPhotoViewer
 import com.coffeepeek.admin.ui.component.LocalFloatingNavClearance
 import com.coffeepeek.admin.ui.component.platformReduceMotion
 import com.coffeepeek.admin.ui.screen.coffee.CoffeeScreenRenderer
@@ -16,7 +15,7 @@ import com.coffeepeek.feature.coffee.api.CoffeeDetailEntry
 import com.coffeepeek.feature.coffee.api.CoffeeListEntry
 import com.coffeepeek.feature.coffee.domain.repository.CoffeeRepository
 import com.coffeepeek.feature.coffee.impl.createCoffeeDetailEntry
-import com.coffeepeek.admin.ui.component.LoadErrorContent
+import com.coffeepeek.core.designsystem.component.CoffeePeekLoadErrorContent
 import com.coffeepeek.feature.coffee.impl.createCoffeeListEntry
 import kotlinx.coroutines.flow.Flow
 
@@ -24,7 +23,7 @@ import kotlinx.coroutines.flow.Flow
  * Routes to the migrated catalogue on both platforms; root navigation, browser, share and photo viewer stay app-owned.
  * The tab always switches between the shelf and the catalogue on both platforms.
  */
-internal class CoffeeCatalogueScreenRenderer(
+internal class FeatureCoffeeScreenRenderer(
     private val list: CoffeeListEntry,
     private val detail: CoffeeDetailEntry,
     private val shelf: CoffeeShelfTab,
@@ -51,15 +50,15 @@ internal class CoffeeCatalogueScreenRenderer(
     }
 }
 
-internal fun coffeeCatalogueScreenRenderer(repository: CoffeeRepository, shelf: CoffeeShelfTab): CoffeeCatalogueScreenRenderer {
+internal fun featureCoffeeScreenRenderer(repository: CoffeeRepository, shelf: CoffeeShelfTab): FeatureCoffeeScreenRenderer {
     val image: @Composable (String, String, Modifier, androidx.compose.ui.layout.ContentScale) -> Unit =
         { url, description, modifier, scale ->
-            CoffeeShopImage(imageUrl = url, modifier = modifier, contentDescription = description, contentScale = scale)
+            CoffeePeekBrandedImage(imageUrl = url, modifier = modifier, contentDescription = description, contentScale = scale)
         }
-    return CoffeeCatalogueScreenRenderer(
-        createCoffeeListEntry(repository, CoffeeCatalogueAnalytics, CoffeeCatalogueScreenAnalytics, image) { onRetry -> LoadErrorContent(onRetry) },
+    return FeatureCoffeeScreenRenderer(
+        createCoffeeListEntry(repository, CoffeeCatalogueAnalytics, CoffeeCatalogueScreenAnalytics, image) { onRetry -> CoffeePeekLoadErrorContent(onRetry) },
         createCoffeeDetailEntry(repository, image,
-            { urls, index, onDismiss -> FullScreenImageDialog(urls, index, onDismiss = onDismiss) },
+            { urls, index, onDismiss -> CoffeePeekPhotoViewer(urls, index, onDismiss = onDismiss) },
             ::utcIsoToLocalDateTime, CoffeeCatalogueAnalytics, CoffeeCatalogueScreenAnalytics),
         shelf,
     )

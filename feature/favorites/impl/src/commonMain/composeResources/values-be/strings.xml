@@ -22,4 +22,5 @@
     <string name="favorites_open">АДЧЫНЕНА</string>
     <string name="favorites_closed">ЗАЧЫНЕНА</string>
     <string name="favorites_photo_missing">Фота %1$s адсутнічае</string>
+    <string name="favorites_dismiss">Закрыць</string>
 </resources>

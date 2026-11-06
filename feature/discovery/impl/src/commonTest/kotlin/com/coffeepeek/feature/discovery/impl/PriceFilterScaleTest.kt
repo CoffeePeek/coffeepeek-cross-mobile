@@ -14,7 +14,7 @@ class PriceFilterScaleTest {
         priceFilterStops.forEachIndexed { index, price -> assertEquals(index, priceFilterStop(price)) }
     }
 
-    @Test fun legacyLuxuryDisplaysAndReappliesAsTheSupportedHighestSearchBand() {
+    @Test fun previousLuxuryDisplaysAndReappliesAsTheSupportedHighestSearchBand() {
         assertEquals(3, priceFilterStop(PriceLevel.Luxury))
         assertEquals(PriceLevel.Expensive, priceFilterStops[priceFilterStop(PriceLevel.Luxury)])
         assertEquals(priceFilterStop(PriceLevel.Expensive), priceFilterStop(PriceLevel.Luxury))

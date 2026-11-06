@@ -1,5 +1,16 @@
 # Feature migration: API / implementation
 
+The current priority is the full [legacy exit](LEGACY_EXIT_PLAN.md): remove
+remaining active app UI/data adapters, obsolete screens and `modules/`.
+Selecting feature routes alone is not migration completion.
+
+Current iOS activation and remaining gates are recorded in
+[IOS_MIGRATION_PLAN.md](IOS_MIGRATION_PLAN.md). The 2026-10-25 content-report
+checkpoint adds a populated api/domain/data/impl owner for existing CheckIn/Review
+report routes; see [content-report/README.md](content-report/README.md) for module
+responsibilities, dependency/consumer rules and compatibility limits. The dated
+Android-first snapshots below are historical, not a current module count or iOS status.
+
 The active Android audit and execution order are in
 [ANDROID_REFACTORING_PLAN.md](ANDROID_REFACTORING_PLAN.md). Historical stack and
 completed-slice notes below are context, not the next-work checklist.
@@ -114,7 +125,7 @@ Avoid empty packages; `formatter` and `ui/data` appear only for distinct real wo
 
 ## Modules DSL
 
-Keep existing module.core.network / module.legacy.domain accessors compatible.
+Keep existing module.core.network accessors compatible (module.legacy no longer exists).
 As actual feature modules are added, introduce a feature catalog following the
 existing object-plus-instance-accessor pattern:
 
@@ -200,6 +211,8 @@ empty modules or remove the iOS legacy path before its replacement works.
    after all consumers on Android and iOS have moved.
 
 ## Pilot audit: favorites (Android screen and DI integrated)
+
+_Historical: the `modules/*` directories named below were removed on 2026-11-03._
 
 Legacy UI remains in composeApp ui/screen/favorites for iOS; Android now enters
 the new feature screen through the shared root's Favorites destination.
