@@ -129,8 +129,12 @@ still owns its root back stack and cross-feature routing.
   including nested blocks, but not the signature. Never pack statements onto
   one line to evade the limit. Extract cohesive, named components/helpers in
   their owning module. Apply this to new/substantively changed functions, not
-  a mechanical repository-wide rewrite. Keep this rule in documentation/review;
-  do not introduce a lint/build limit without a separate request.
+  a mechanical repository-wide rewrite. The limit is enforced by the root
+  `verifyFunctionBodyLimits` Gradle task (CI and `check`-adjacent runs): it
+  counts bodies the same way and fails on new or grown violations not recorded
+  in `function-body-limits-baseline.conf`. The baseline freezes pre-existing
+  debt only — shrink or remove entries by refactoring, never extend it by hand;
+  regenerate after a refactor with `:generateFunctionBodyLimitsBaseline`.
 
 - Prefix reusable design-system components, supporting UI types, tokens and their
   Kotlin source files with `CoffeePeek` (for example `CoffeePeekButton.kt`,
