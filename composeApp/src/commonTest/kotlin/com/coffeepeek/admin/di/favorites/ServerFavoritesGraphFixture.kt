@@ -9,13 +9,11 @@ import com.coffeepeek.feature.favorites.domain.model.FavoriteKind
 import com.coffeepeek.feature.favorites.domain.repository.AccountFavorites
 import com.coffeepeek.feature.shop.api.PublicShopDetails
 import com.coffeepeek.feature.shop.api.PublicShopSummary
-import com.coffeepeek.feature.favorites.api.FavoritesEntry
 import com.coffeepeek.feature.roaster.api.PublicRoasterDescription
 import com.coffeepeek.feature.roaster.api.PublicRoasterDetails
 import com.coffeepeek.feature.roaster.api.PublicRoasterSummary
 import com.coffeepeek.feature.favorites.domain.repository.FavoritesRepository as ShopsPort
 import com.coffeepeek.feature.favorites.domain.repository.FavoriteRoastersRepository
-import com.coffeepeek.feature.favorites.domain.repository.FavoriteDrinksRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import org.koin.dsl.koinApplication
 import org.koin.dsl.module
@@ -25,10 +23,8 @@ internal class ServerFavoritesGraphFixture {
     val server = FavoriteGraphServer()
     val catalogs = FavoriteGraphCatalogs()
     val graph = koinApplication { modules(serverFavoritesModule(), dependencies()) }
-    val entry get() = graph.koin.get<FavoritesEntry>()
     val shops get() = graph.koin.get<ShopsPort>()
     val roasters get() = graph.koin.get<FavoriteRoastersRepository>()
-    val drinks get() = graph.koin.get<FavoriteDrinksRepository>()
 
     private fun dependencies() = module {
         single<SessionReader> { sessions }
@@ -47,7 +43,6 @@ internal class FavoriteGraphServer : AccountFavorites {
         FavoriteEntry(FavoriteKind.CoffeeShop, address, name = "Shop"),
         FavoriteEntry(FavoriteKind.Roaster, address.copy(slug = "roast", canonicalPath = "/roasters/roast"),
             name = "Roaster", coverPhotoUrl = "https://fixture.invalid/logo"),
-        FavoriteEntry(FavoriteKind.Drink, drinkSlug = "latte", name = "Latte"),
     )))
     var reads = 0
     var observations = 0

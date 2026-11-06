@@ -48,27 +48,12 @@ class FavoriteReadinessBridgesTest {
         assertEquals("Server saved", results.single().getOrThrow().single().title)
     }
 
-    @Test fun aTechnicalDrinkEmptyWaitsForTheActualServerRead() = runTest {
-        val server = PendingServer(listOf(entry(FavoriteKind.Drink)))
-        val gate = CompletableDeferred<Unit>()
-        server.beforeRead = { gate.await() }
-        val source = ServerFavoriteDrinksRepository(server, CheckInTestSessions())
-        val results = record(source.observe())
-        runCurrent()
-        assertTrue(results.isEmpty())
-        gate.complete(Unit)
-        runCurrent()
-        assertEquals("Server saved", results.single().getOrThrow().single().title)
-    }
-
     @Test fun anActuallyEmptyServerListSettlesNormally() = runTest {
         val server = PendingServer(emptyList())
         val sessions = CheckInTestSessions()
         val shops = ServerFavoriteShopsRepository(server, sessions) { error("Empty list has no details") }
-        val drinks = ServerFavoriteDrinksRepository(server, sessions)
         val roasters = AccountFavoriteRoasters(ServerRoasterFavorites(server, catalogue(), sessions), sessions) { error("No photo") }
         assertTrue(shops.observe().first().getOrThrow().isEmpty())
-        assertTrue(drinks.observe().first().getOrThrow().isEmpty())
         assertTrue(roasters.observe().first().getOrThrow().isEmpty())
     }
 
@@ -125,22 +110,6 @@ class FavoriteReadinessBridgesTest {
         server.signals.value = Result.success(emptyList())
         server.actual = Result.failure(CancellationException("Read cancelled"))
         assertFailsWith<CancellationException> { observeLoadedServerFavorites(server, sessions).first() }
-    }
-
-    @Test fun logoutClearsDrinksBeforeANonCooperativeOldReadCompletes() = runTest {
-        val server = PendingServer(listOf(entry(FavoriteKind.Drink)))
-        val gate = CompletableDeferred<Unit>()
-        val sessions = CheckInTestSessions()
-        server.beforeRead = { withContext(NonCancellable) { gate.await() } }
-        val results = record(ServerFavoriteDrinksRepository(server, sessions).observe())
-        runCurrent()
-        assertTrue(results.isEmpty())
-        sessions.applySession(null)
-        runCurrent()
-        assertTrue(results.last().getOrThrow().isEmpty())
-        gate.complete(Unit)
-        runCurrent()
-        assertTrue(results.all { it.getOrNull()?.isEmpty() == true })
     }
 
     @Test fun commonRoasterReadRetainsImmediateOwnerRevocationForLegacyConsumers() = runTest {

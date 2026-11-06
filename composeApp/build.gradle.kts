@@ -71,8 +71,6 @@ kotlin {
             implementation(libs.ktor.client.okhttp)
         }
         commonMain.dependencies {
-            implementation(project(module.feature.favorites.api))
-            implementation(project(module.feature.favorites.impl))
             implementation(project(module.feature.homePreparation.impl))
             implementation(project(module.feature.homePreparation.data))
             implementation(project(module.feature.homePreparation.domain))
@@ -282,7 +280,7 @@ val postHogProjectToken = providers.environmentVariable("POSTHOG_PROJECT_TOKEN")
 
 android {
     namespace = Config.APPLICATION_ID
-    // Navigation 3 1.2.0 in the Android-only favorites feature requires API 37.
+    // compileSdk stays at 37 (above targetSdk) for modern AndroidX/UI behaviour; lower only with a dependency audit.
     compileSdk = 37
 
     buildFeatures {
@@ -400,7 +398,6 @@ androidComponents.onVariants(androidComponents.selector().withBuildType("sandbox
     val runtimeVerification = tasks.register<VerifyApkRuntimeClassesTask>("verify${variant.name.replaceFirstChar { it.uppercaseChar() }}RuntimeClasses") {
         apkDirectory.set(variant.artifacts.get(SingleArtifact.APK))
         requiredClasses.set(listOf("com.coffeepeek.admin.sandbox.SandboxActivity",
-            "com.coffeepeek.feature.favorites.impl.FavoritesApiImplKt",
             "com.coffeepeek.admin.di.favorites.ServerFavoritesModuleKt",
             "com.coffeepeek.core.session.SessionReader",
             "com.coffeepeek.core.session.SessionStore",
@@ -473,9 +470,7 @@ androidComponents {
             apkDirectory.set(variant.artifacts.get(SingleArtifact.APK))
             forbiddenClassPrefixes.set(listOf("com.coffeepeek.admin.sandbox.", "io.ktor.client.engine.mock."))
             requiredClasses.set(listOf(
-                "com.coffeepeek.feature.favorites.api.FavoritesEntry",
-                "com.coffeepeek.feature.favorites.impl.FavoritesApiImplKt",
-                "com.coffeepeek.admin.di.favorites.ServerFavoritesModuleKt",
+                    "com.coffeepeek.admin.di.favorites.ServerFavoritesModuleKt",
                 "com.coffeepeek.core.session.SessionReader",
                 "com.coffeepeek.core.session.SessionStore",
                 "com.coffeepeek.core.media.ImageUrlFetcher",
@@ -546,8 +541,7 @@ androidComponents {
                 "com.coffeepeek.feature.roaster.data.repository.RoasterRepositoryFactoryKt",
                 "com.coffeepeek.feature.favorites.data.repository.RemoteAccountFavorites",
                 "com.coffeepeek.admin.di.favorites.ServerFavoriteShopsRepository",
-                "com.coffeepeek.admin.di.favorites.ServerFavoriteDrinksRepository",
-                "com.coffeepeek.admin.di.shop.ShopCheckInModuleKt",
+                    "com.coffeepeek.admin.di.shop.ShopCheckInModuleKt",
                 "com.coffeepeek.admin.di.shop.FeatureShopCheckInFormRenderer",
                 "com.coffeepeek.admin.di.shop.FeatureShopDetailScreenRenderer",
                 "com.coffeepeek.admin.di.shop.FeatureShopCheckInListScreenRenderer",

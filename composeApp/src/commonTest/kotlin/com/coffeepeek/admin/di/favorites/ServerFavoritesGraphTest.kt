@@ -9,13 +9,11 @@ import kotlin.test.*
 
 /** Actual shared production module; no copied definitions, platform storage, UI or HTTP. */
 class ServerFavoritesGraphTest {
-    @Test fun graphResolvesAllKindsAndEntryWithoutOpeningReaders() {
+    @Test fun graphResolvesAllKindsWithoutOpeningReaders() {
         val fixture = ServerFavoritesGraphFixture()
         try {
-            assertNotNull(fixture.entry)
             assertSame(fixture.shops, fixture.shops)
             assertSame(fixture.roasters, fixture.roasters)
-            assertSame(fixture.drinks, fixture.drinks)
             assertEquals(0, fixture.server.reads)
             assertEquals(0, fixture.server.observations)
             assertEquals(0, fixture.catalogs.reads)
@@ -23,22 +21,18 @@ class ServerFavoritesGraphTest {
         } finally { fixture.close() }
     }
 
-    @Test fun allThreeKindsReadAndRemoveThroughTheSameExistingServerSource() = runTest {
+    @Test fun favoriteKindsReadAndRemoveThroughTheSameExistingServerSource() = runTest {
         val fixture = ServerFavoritesGraphFixture()
         try {
             val shop = fixture.shops.observe().first { it.getOrNull()?.isNotEmpty() == true }.getOrThrow().single()
             val roaster = fixture.roasters.observe().first { it.getOrNull()?.isNotEmpty() == true }.getOrThrow().single()
-            val drink = fixture.drinks.observe().first().getOrThrow().single()
             assertEquals("canonical", shop.publicSlug)
             assertEquals("roast", roaster.publicSlug)
-            assertEquals("Latte", drink.title)
             fixture.shops.remove(shop.id).getOrThrow()
             fixture.roasters.remove(roaster.id).getOrThrow()
-            fixture.drinks.remove(drink.id).getOrThrow()
             assertEquals(listOf<Triple<FavoriteKind, String?, Boolean>>(
                 Triple(FavoriteKind.CoffeeShop, "canonical", false),
                 Triple(FavoriteKind.Roaster, "roast", false),
-                Triple(FavoriteKind.Drink, "latte", false),
             ), fixture.server.writes)
         } finally { fixture.close() }
     }

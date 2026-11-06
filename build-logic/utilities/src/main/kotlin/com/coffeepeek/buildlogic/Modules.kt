@@ -89,10 +89,8 @@ object Modules {
             const val impl = ":feature:content-report:impl"
         }
         object Favorites {
-            const val api = ":feature:favorites:api"
             const val domain = ":feature:favorites:domain"
             const val data = ":feature:favorites:data"
-            const val impl = ":feature:favorites:impl"
         }
         object ShopReport {
             const val api = ":feature:shop-report:api"
@@ -195,10 +193,8 @@ object Modules {
         core.datetime,
         core.session,
         core.media,
-        feature.favorites.api,
         feature.favorites.domain,
         feature.favorites.data,
-        feature.favorites.impl,
         feature.shopReport.api,
         feature.shopReport.domain,
         feature.shopReport.data,
