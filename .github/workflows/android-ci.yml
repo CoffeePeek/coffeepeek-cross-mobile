@@ -57,6 +57,9 @@ jobs:
       - name: Test APK runtime verification
         run: ./gradlew -p build-logic --no-daemon --max-workers=6 :build-logic-utils:test
 
+      - name: Function body limits (AGENTS.md 40/20)
+        run: ./gradlew --no-daemon --max-workers=6 :verifyFunctionBodyLimits
+
       # Keep dex merging out of the combined build/test/lint heap. Each step gets a fresh daemon.
       - name: Build Direct Debug
         run: >-
