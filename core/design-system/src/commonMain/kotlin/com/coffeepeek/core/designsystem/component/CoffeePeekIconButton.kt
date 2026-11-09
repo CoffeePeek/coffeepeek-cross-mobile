@@ -47,6 +47,7 @@ fun CoffeePeekIconButton(
     nativeIcon: CoffeePeekGlassIcon? = null,
     contentDescription: String? = null,
     hazeState: HazeState? = LocalCoffeePeekGlassHazeState.current,
+    glass: Boolean = true,
     content: @Composable () -> Unit,
 ) {
     if (nativeIcon != null && contentDescription != null && LocalCoffeePeekNativeGlassPresenter.current
@@ -63,7 +64,7 @@ fun CoffeePeekIconButton(
             .clickable(interactions, indication = null, enabled = enabled, role = Role.Button, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
-        CoffeePeekNativeControlBackground(Modifier.matchParentSize(), prominent,
+        if (glass) CoffeePeekNativeControlBackground(Modifier.matchParentSize(), prominent,
             background.takeIf { it.isSpecified && it.alpha > 0f }, enabled, pressed, shape, hazeState)
         CompositionLocalProvider(LocalContentColor provides if (enabled) colors.contentColor else colors.disabledContentColor) {
             content()
