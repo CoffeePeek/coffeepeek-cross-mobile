@@ -5,7 +5,6 @@ import com.coffeepeek.core.presentation.MviViewModel
 import com.coffeepeek.feature.shelf.domain.repository.ShelfRepository
 import com.coffeepeek.feature.shelf.impl.ui.compose.model.ShelfArchiveAction
 import com.coffeepeek.feature.shelf.impl.ui.compose.model.ShelfArchiveEvent
-import com.coffeepeek.feature.shelf.impl.ui.compose.model.ShelfArchiveMessage
 import com.coffeepeek.feature.shelf.impl.ui.compose.model.ShelfArchiveState
 import com.coffeepeek.feature.shelf.impl.ui.data.ShelfCalendar
 import kotlinx.coroutines.Job
@@ -39,7 +38,6 @@ internal class ShelfArchiveViewModel(
             ShelfArchiveAction.Retry -> if (currentState.loadMoreFailed) loadMore() else reload(debounce = false)
             ShelfArchiveAction.LoadMore -> loadMore()
             is ShelfArchiveAction.OpenBag -> openBag(action.id)
-            ShelfArchiveAction.DismissMessage -> updateState { copy(message = null) }
             ShelfArchiveAction.Back -> sendEvent(ShelfArchiveEvent.Back)
         }
     }
@@ -89,13 +87,9 @@ internal class ShelfArchiveViewModel(
     }
 
     private fun bagOutcome(outcome: ShelfBagOutcome) {
-        val message = when (outcome) {
-            is ShelfBagOutcome.Restored -> ShelfArchiveMessage.Restored
-            is ShelfBagOutcome.Deleted -> ShelfArchiveMessage.Deleted.takeIf { outcome.archived }
-            is ShelfBagOutcome.Finished -> null
-        } ?: return
+        if (outcome is ShelfBagOutcome.Finished || outcome is ShelfBagOutcome.Deleted && !outcome.archived) return
         handoff.consumed(outcome)
-        updateState { copy(items = items.filterNot { it.id == outcome.bagId }, message = message) }
+        updateState { copy(items = items.filterNot { it.id == outcome.bagId }) }
         reload(debounce = false)
     }
 }

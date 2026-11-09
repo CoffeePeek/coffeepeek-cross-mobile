@@ -74,11 +74,8 @@
     <string name="shelf_delete_title">Выдаліць пачку?</string>
     <string name="shelf_delete_message">Пачка знікне з паліцы і з архіва. Калі кава скончылася, лепш прыбярыце яе ў архіў.</string>
     <string name="shelf_finished_message">Прыбралі ў архіў</string>
-    <string name="shelf_added_message">Пачка на паліцы</string>
     <string name="shelf_new_badge">НОВАЯ</string>
     <string name="shelf_undo">Адмяніць</string>
-    <string name="shelf_deleted">Пачка выдалена</string>
-    <string name="shelf_restored">Пачка зноў на паліцы</string>
     <string name="shelf_error_offline">Няма сеткі. Паспрабуйце яшчэ раз</string>
     <string name="shelf_error_stale">Паліца змянілася на іншай прыладзе, паказваем актуальную</string>
     <string name="shelf_error_not_found">Гэтай пачкі ўжо няма</string>

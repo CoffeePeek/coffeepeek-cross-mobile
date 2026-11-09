@@ -12,6 +12,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
@@ -126,14 +127,22 @@ class ShelfViewModelTest {
         assertEquals(listOf("finish:a:null:null"), repository.calls)
     }
 
-    @Test fun anArrivalIsMarkedAnnouncedAndThenCleared() = runTest(dispatcher) {
+    @Test fun anArrivalIsHighlightedSilentlyForFiveSecondsFromItsFirstPresentation() = runTest(dispatcher) {
         val model = model(FakeShelfRepository(listOf(bag("new"), bag("a"))))
         runCurrent()
         arrivals.arrived("new")
         runCurrent()
         assertEquals("new", model.state.value.arrivingId)
-        assertEquals(ShelfMessage.Added, model.state.value.message)
-        model.onAction(ShelfAction.ArrivalShown("new"))
+        assertNull(model.state.value.message)
+        advanceTimeBy(5_000)
+        assertEquals("new", model.state.value.arrivingId)
+        model.onAction(ShelfAction.ArrivalPresented("new"))
+        runCurrent()
+        advanceTimeBy(4_999)
+        model.onAction(ShelfAction.ArrivalPresented("new"))
+        runCurrent()
+        assertEquals("new", model.state.value.arrivingId)
+        advanceTimeBy(1)
         runCurrent()
         assertNull(model.state.value.arrivingId)
         assertNull(arrivals.arriving.value)
@@ -160,9 +169,12 @@ class ShelfViewModelTest {
         assertEquals(ShelfMessage.Finished("a", 0), model.state.value.message)
         assertNull(handoff.outcome.value)
 
+        model.onAction(ShelfAction.DismissMessage)
+        runCurrent()
         handoff.report(ShelfBagOutcome.Deleted("b", archived = false))
         runCurrent()
-        assertEquals(ShelfMessage.Deleted, model.state.value.message)
+        assertNull(model.state.value.message)
+        assertNull(handoff.outcome.value)
 
         // Restoring and deleting archived bags are the archive's to report.
         val restored = ShelfBagOutcome.Restored("x")

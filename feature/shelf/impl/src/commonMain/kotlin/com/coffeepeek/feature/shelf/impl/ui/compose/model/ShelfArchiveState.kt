@@ -13,7 +13,6 @@ internal data class ShelfArchiveState(
     val loadingMore: Boolean = false,
     val loadFailed: Boolean = false,
     val loadMoreFailed: Boolean = false,
-    val message: ShelfArchiveMessage? = null,
 ) {
     /** Month groups in loading order; a bag without a finish date joins the group before it. */
     val sections: List<ShelfArchiveSection>
@@ -27,8 +26,3 @@ internal data class ShelfArchiveState(
 }
 
 internal data class ShelfArchiveSection(val year: Int, val month: Int, val items: List<ShelfBagItem>)
-
-internal sealed interface ShelfArchiveMessage {
-    data object Restored : ShelfArchiveMessage
-    data object Deleted : ShelfArchiveMessage
-}
