@@ -45,7 +45,22 @@ jobs:
           java-version: '17'
       - uses: gradle/actions/setup-gradle@v6
         with:
-          cache-read-only: ${{ github.event_name == 'pull_request' || (github.ref != 'refs/heads/main' && github.ref != 'refs/heads/develop') }}
+          # Same-repo PRs write caches so follow-up pushes reuse their outputs; forks stay read-only.
+          cache-read-only: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork }}
+      - name: Cache Kotlin/Native toolchain and dependency klibs
+        uses: actions/cache@v4
+        with:
+          path: ~/.konan
+          key: konan-${{ runner.os }}-${{ hashFiles('gradle/libs.versions.toml') }}
+          restore-keys: konan-${{ runner.os }}-
+      - name: Cache Swift Package Manager checkouts
+        uses: actions/cache@v4
+        with:
+          # xcodebuild checkouts plus the Gradle-side SPM artifacts (onnxruntime pod archive).
+          path: |
+            ~/SourcePackages
+            build/kotlin/swiftPMCheckouts
+          key: spm-${{ runner.os }}-${{ hashFiles('iosApp/iosApp.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved', 'feature/shelf/data/ShelfOnnxRuntime/Package.swift') }}
       - name: Check CI configuration and prepare unsigned Firebase resource
         shell: bash
         run: |
@@ -68,10 +83,10 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          xcodebuild -project iosApp/iosApp.xcodeproj -scheme iosApp \
+            xcodebuild -project iosApp/iosApp.xcodeproj -scheme iosApp \
             -configuration Debug -destination 'generic/platform=iOS Simulator' \
             -derivedDataPath "$RUNNER_TEMP/ios-verify" \
-            -clonedSourcePackagesDirPath "$RUNNER_TEMP/SourcePackages" \
+            -clonedSourcePackagesDirPath "$HOME/SourcePackages" \
             CODE_SIGNING_ALLOWED=NO build > "$RUNNER_TEMP/ios-verify.log" 2>&1 || {
               tail -n 150 "$RUNNER_TEMP/ios-verify.log"
               exit 1
