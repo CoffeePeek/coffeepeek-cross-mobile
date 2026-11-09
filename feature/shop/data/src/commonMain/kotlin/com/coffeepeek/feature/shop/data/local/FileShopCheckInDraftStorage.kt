@@ -7,6 +7,7 @@ import com.coffeepeek.feature.shop.domain.model.ShopRating
 import com.coffeepeek.feature.shop.domain.repository.SavedShopCheckInDraft
 import com.coffeepeek.feature.shop.domain.repository.ShopCheckInDraftStorage
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
