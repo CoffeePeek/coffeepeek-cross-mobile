@@ -60,7 +60,7 @@ jobs:
           path: |
             ~/SourcePackages
             build/kotlin/swiftPMCheckouts
-          key: spm-${{ runner.os }}-${{ hashFiles('iosApp/iosApp.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved', 'feature/shelf/data/ShelfOnnxRuntime/Package.swift') }}
+          key: spm-xcode-${{ runner.os }}-${{ hashFiles('iosApp/iosApp.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved', 'feature/shelf/data/ShelfOnnxRuntime/Package.swift') }}
       - name: Check CI configuration and prepare unsigned Firebase resource
         shell: bash
         run: |
@@ -83,10 +83,11 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-            xcodebuild -project iosApp/iosApp.xcodeproj -scheme iosApp \
+          xcodebuild -project iosApp/iosApp.xcodeproj -scheme iosApp \
             -configuration Debug -destination 'generic/platform=iOS Simulator' \
             -derivedDataPath "$RUNNER_TEMP/ios-verify" \
             -clonedSourcePackagesDirPath "$HOME/SourcePackages" \
+            -showBuildTimingSummary \
             CODE_SIGNING_ALLOWED=NO build > "$RUNNER_TEMP/ios-verify.log" 2>&1 || {
               tail -n 150 "$RUNNER_TEMP/ios-verify.log"
               exit 1
@@ -99,6 +100,42 @@ jobs:
           MINIMUM_OS=$(/usr/libexec/PlistBuddy -c 'Print :MinimumOSVersion' "$APP_PATH/Info.plist")
           python3 tools/ios/fix_onnx_framework.py "$APP_PATH/Frameworks/onnxruntime.framework" \
             --deployment-target "$MINIMUM_OS" --check
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: ios-build-log
+          path: |
+            ${{ runner.temp }}/ios-verify.log
+            iosApp/iosApp.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved
+          retention-days: 7
+
+  # Runs next to the app build instead of after it: the K/N test binaries compile on their
+  # own runner, so the wall time is max(build, tests) rather than their sum.
+  kotlin-native-tests:
+    runs-on: xcode-27
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v6
+        with:
+          # Same-repo PRs write caches so follow-up pushes reuse their outputs; forks stay read-only.
+          cache-read-only: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork }}
+      - name: Cache Kotlin/Native toolchain and dependency klibs
+        uses: actions/cache@v4
+        with:
+          path: ~/.konan
+          key: konan-${{ runner.os }}-${{ hashFiles('gradle/libs.versions.toml') }}
+          restore-keys: konan-${{ runner.os }}-
+      - name: Cache Swift Package Manager checkouts
+        uses: actions/cache@v4
+        with:
+          # The Gradle-side SPM artifacts (onnxruntime pod archive) used by iosMain compilation.
+          path: build/kotlin/swiftPMCheckouts
+          key: spm-gradle-${{ runner.os }}-${{ hashFiles('iosApp/iosApp.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved', 'feature/shelf/data/ShelfOnnxRuntime/Package.swift') }}
       - name: Run Kotlin Native contract tests
         shell: bash
         run: |
@@ -132,12 +169,10 @@ jobs:
       - uses: actions/upload-artifact@v7
         if: always()
         with:
-          name: ios-build-log
+          name: ios-tests-log
           path: |
-            ${{ runner.temp }}/ios-verify.log
             ${{ runner.temp }}/ios-native-tests.log
             ${{ runner.temp }}/ios-ownership-tests.log
             feature/business-ownership/**/build/test-results/iosSimulatorArm64Test/
             composeApp/build/test-results/iosSimulatorArm64Test/
-            iosApp/iosApp.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved
           retention-days: 7
