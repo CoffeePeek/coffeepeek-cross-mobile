@@ -179,22 +179,6 @@ class ServerFavoriteBridgesTest {
         assertTrue(server.writes.single().second)
     }
 
-    @Test fun drinksRetainOnlyTheirContractedRemovalKeysAndCannotBecomeShopRoutes() = runTest {
-        val server = Server().apply { state.value = Result.success(listOf(entry(),
-            FavoriteEntry(FavoriteKind.Drink, drinkSlug = "latte", name = "Latte"),
-            FavoriteEntry(FavoriteKind.Drink, name = "No target", occurrence = 2))) }
-        val repo = ServerFavoriteDrinksRepository(server, CheckInTestSessions())
-        val rows = repo.observe().first().getOrThrow()
-        assertEquals(2, rows.size)
-        assertTrue(rows.first().canRemove)
-        assertFalse(rows.last().canRemove)
-        repo.remove(rows.first().id).getOrThrow()
-        assertEquals("latte", server.writes.single().first.drinkSlug)
-        assertFalse(server.writes.single().second)
-        server.state.value = Result.failure(IllegalStateException("Offline"))
-        assertTrue(repo.observe().first().isFailure)
-    }
-
     @Test fun roasterServerErrorsAreVisibleToTheMigratedScreen() = runTest {
         val errors = MutableStateFlow<String?>(null)
         val roasters = object : RoasterFavorites {

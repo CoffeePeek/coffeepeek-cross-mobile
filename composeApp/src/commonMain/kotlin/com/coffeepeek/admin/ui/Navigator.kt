@@ -11,7 +11,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
 import com.coffeepeek.admin.ui.screen.checkins.CheckInHistoryDestination
 import com.coffeepeek.admin.ui.screen.shelf.ShelfScreenRenderer
-import com.coffeepeek.admin.ui.favorites.FavoritesDestination
 import com.coffeepeek.admin.ui.screen.contributions.ContributionKind
 import com.coffeepeek.admin.ui.screen.contributions.ContributionsScreenRenderer
 import com.coffeepeek.admin.ui.screen.profile.AccountScreenRenderer
@@ -172,7 +171,6 @@ object Navigator {
         ) : Screen
         @Serializable data object EditProfile : Screen
         @Serializable data object DeleteAccountPending : Screen
-        @Serializable data object Favorites : Screen
         @Serializable data object CollectionsComposer : Screen
         @Serializable data class PublicCollection(val id: String) : Screen
         @Serializable data object CollectionsLibrary : Screen
@@ -269,7 +267,6 @@ object Navigator {
         is Screen.ReportReview,
         is Screen.ReportCheckIn,
         is Screen.CheckInDetail,
-        is Screen.Favorites,
         is Screen.CollectionsComposer,
         is Screen.PublicCollection,
         is Screen.CollectionsLibrary,
@@ -606,7 +603,6 @@ koinInject<ContributionsScreenRenderer>().Editor(route.shopId, route.section, ro
                     }
                     composable<Screen.EditProfile> { koinInject<AccountScreenRenderer>().EditProfile() }
                     composable<Screen.DeleteAccountPending> { koinInject<AccountScreenRenderer>().DeletionPending() }
-                    composable<Screen.Favorites> { FavoritesDestination() }
                     composable<Screen.CollectionsComposer> { CollectionsComposerDestination() }
                     composable<Screen.PublicCollection> { backStack -> PublicCollectionDestination(backStack.toRoute<Screen.PublicCollection>().id) }
                     composable<Screen.CollectionsLibrary> { CollectionsLibraryDestination() }
@@ -662,7 +658,6 @@ koinInject<ContributionsScreenRenderer>().Editor(route.shopId, route.section, ro
             is Screen.UserCheckIns -> PublicCheckInsRoute(screen)
             Screen.EditProfile -> koinInject<AccountScreenRenderer>().EditProfile()
             Screen.DeleteAccountPending -> koinInject<AccountScreenRenderer>().DeletionPending()
-            Screen.Favorites -> FavoritesDestination()
             Screen.CollectionsComposer -> CollectionsComposerDestination()
             is Screen.PublicCollection -> PublicCollectionDestination(screen.id)
             Screen.CollectionsLibrary -> CollectionsLibraryDestination()
