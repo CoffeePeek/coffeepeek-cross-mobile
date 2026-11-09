@@ -1,6 +1,5 @@
 package com.coffeepeek.feature.coffee.impl.ui.compose.component
 
-import androidx.compose.foundation.BorderStroke
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import com.coffeepeek.feature.coffee.impl.resources.Res
 import com.coffeepeek.feature.coffee.impl.resources.coffee_clear_search
@@ -11,7 +10,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.*
-import com.coffeepeek.core.designsystem.component.CoffeePeekOutlinedIconButton as OutlinedIconButton
+import com.coffeepeek.core.designsystem.component.CoffeePeekIconButton as IconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -38,10 +37,9 @@ internal fun CoffeeSearchHeader(query: String, filterCount: Int, onQueryChange: 
                 Text(filterCount.toString(), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onPrimary)
             }
         }) {
-            OutlinedIconButton(onFilters, screen.exposure(Modifier.size(CoffeePeekDimens.buttonHeight), CoffeeExposure.Filters), shape = CircleShape,
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)) {
+            IconButton(onFilters, screen.exposure(Modifier, CoffeeExposure.Filters)) {
                 Icon(CoffeePeekIcons.Filter, if (filterCount > 0) stringResource(Res.string.coffee_filters_count, filterCount)
-                    else stringResource(Res.string.coffee_filters), tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(22.dp))
+                else stringResource(Res.string.coffee_filters), tint = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
     }

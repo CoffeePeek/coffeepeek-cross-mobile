@@ -109,7 +109,8 @@ private fun photoMoveActions(index: Int, count: Int, enabled: Boolean, onMove: (
 @Composable
 private fun PhotoRemoveButton(index: Int, enabled: Boolean, onRemove: () -> Unit, modifier: Modifier, simple: Boolean) {
     val offset = if (simple) 18.dp else 16.dp
-    IconButton(onClick = onRemove, enabled = enabled, modifier = modifier.offset(x = offset, y = -offset).size(48.dp)) {
+    IconButton(onClick = onRemove, enabled = enabled, glass = false,
+        modifier = modifier.offset(x = offset, y = -offset).size(48.dp)) {
         Icon(CoffeePeekIcons.Close, stringResource(Res.string.coffeepeek_photo_remove, index + 1),
             Modifier.size(24.dp).background(Color.Black.copy(alpha = 0.75f), RoundedCornerShape(50))
                 .border(1.5.dp, Color.White, RoundedCornerShape(50)).padding(if (simple) 5.dp else 4.dp), tint = Color.White)
