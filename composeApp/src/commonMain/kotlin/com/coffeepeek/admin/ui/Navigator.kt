@@ -5,6 +5,7 @@ import com.coffeepeek.admin.di.collections.PublicCollectionDestination
 import com.coffeepeek.admin.di.collections.CollectionsLibraryDestination
 import com.coffeepeek.admin.di.collections.CollectionEditorDestination
 import com.coffeepeek.admin.di.collections.SavedPublicCollectionDestination
+import com.coffeepeek.admin.di.homecheckin.GuestCheckInOnboardingHost
 
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
@@ -210,9 +211,12 @@ object Navigator {
 
     private val _openLoginAfterSessionEnd = MutableStateFlow(false)
     private val pendingAppLink = MutableStateFlow<Screen?>(null)
+    // Keep the guide out of an app-link launch after the destination consumes the pending route.
+    private val hasOpenedAppLink = MutableStateFlow(false)
     private val checkInSignInHandoff = ShopCheckInSignInHandoff()
 
     internal fun openAppLink(screen: Screen) {
+        hasOpenedAppLink.value = true
         pendingAppLink.value = screen
     }
 
@@ -340,9 +344,11 @@ object Navigator {
             if (previousLoginState != null && previousLoginState != loggedIn) {
                 clearPlatformNavigationState()
                 navigationGeneration++
+                if (!loggedIn) hasOpenedAppLink.value = false
             }
             previousLoginState = loggedIn
             if (loggedIn) {
+                vm.guestOnboardingDismissed = false
                 checkInSignInHandoff.take()?.let { pendingAppLink.compareAndSet(null, it) }
             } else {
                 ErrorHandler.clearError()
@@ -355,13 +361,32 @@ object Navigator {
             }
         }
 
+        NavigationContent(vm, isLoggedIn, previousLoginState, navigationGeneration, loading)
+    }
+
+    @Composable
+    private fun NavigationContent(
+        vm: NavigatorViewModel,
+        isLoggedIn: Boolean?,
+        previousLoginState: Boolean?,
+        generation: Int,
+        loading: Boolean,
+    ) {
+        val openedAppLink by hasOpenedAppLink.collectAsState()
         Box(modifier = Modifier.fillMaxSize()) {
             if (isLoggedIn != null) {
-                key(navigationGeneration, isLoggedIn) {
-                    BaseNavigator(isLoggedIn = isLoggedIn == true)
+                key(generation, isLoggedIn) {
+                    BaseNavigator(isLoggedIn)
                 }
             }
             LoadingDialog(show = loading)
+            if (isLoggedIn == false && previousLoginState == false && !openedAppLink && !vm.guestOnboardingDismissed) {
+                GuestCheckInOnboardingHost { destination ->
+                    if (vm.guestOnboardingDismissed) return@GuestCheckInOnboardingHost
+                    vm.guestOnboardingDismissed = true
+                    destination?.let(::navigate)
+                }
+            }
         }
     }
 
