@@ -65,11 +65,11 @@ internal class FeatureShopDetailScreenRenderer(
     private val blockActions: com.coffeepeek.feature.authorblocking.api.AuthorBlockActions,
 ) : ShopDetailScreenRenderer {
     @Composable
-    override fun Content(shopId: String, forCheckIn: Boolean) {
+    override fun Content(shopId: String, forCheckIn: Boolean, openCheckIn: Boolean) {
         ShopBrowsingHost("shop-detail:$shopId", sessions, visibility) { session ->
             val entry = remember(session) { createEntry(session) }
             val state = rememberShopDetailHostState()
-            DetailContent(entry, state, session, shopId, forCheckIn)
+            DetailContent(entry, state, session, shopId, forCheckIn, openCheckIn)
             Overlays(state, session)
         }
     }
@@ -89,7 +89,7 @@ internal class FeatureShopDetailScreenRenderer(
     @Composable
     private fun DetailContent(
         entry: com.coffeepeek.feature.shop.api.ShopDetailEntry, state: ShopDetailHostState,
-        session: ShopBrowsingHostSession, shopId: String, forCheckIn: Boolean,
+        session: ShopBrowsingHostSession, shopId: String, forCheckIn: Boolean, openCheckIn: Boolean,
     ) {
         val location = rememberPermittedUserLocation()
         val formatDate = rememberCheckInDateLabel()
@@ -100,7 +100,7 @@ internal class FeatureShopDetailScreenRenderer(
             entry.Content(shopId = shopId, sessionGeneration = session.generation, forCheckIn = forCheckIn,
                 formatCheckInDate = formatDate, formatMenuDate = ::formatShopMenuLocalDate,
                 formatDistance = { lat, lon -> formatDistance(distanceToShopMeters(location, lat, lon)) },
-                refreshGeneration = state.refreshGeneration,
+                refreshGeneration = state.refreshGeneration, openCheckIn = openCheckIn,
                 onEffect = { if (session.lease.isCurrent()) handleEffect(it, state, session, shopId, scope, snackbar, copied) })
             SnackbarHost(snackbar, Modifier.align(Alignment.BottomCenter)
                 .coffeePeekViewportBottomPadding().coffeePeekScreenBottomPadding().padding(bottom = 72.dp))

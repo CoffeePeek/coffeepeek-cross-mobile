@@ -7,11 +7,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.coffeepeek.admin.di.shop.AppShopCheckInDraftStore
 import com.coffeepeek.admin.settings.CityPreference
 import com.coffeepeek.admin.di.collections.FavoriteCollectionsPrompt
 import com.coffeepeek.admin.ui.Navigator
-import com.coffeepeek.admin.ui.screen.checkins.CheckInCreateButton
 import com.coffeepeek.admin.ui.component.LocalFloatingNavClearance
+import com.coffeepeek.admin.ui.screen.checkins.CheckInCreateButton
 import com.coffeepeek.admin.ui.screen.main.CheckInTabContent
 import com.coffeepeek.admin.ui.screen.main.DiscoveryScreenRenderer
 import com.coffeepeek.admin.ui.screen.roaster.RoasterScreenRenderer
@@ -29,6 +31,12 @@ import com.coffeepeek.feature.favorites.domain.repository.FavoritesRepository
 import io.ktor.client.HttpClient
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
+import org.koin.compose.koinInject
 
 /** Both platforms use the migrated search; navigation, native map and global creation remain app-owned. */
 internal class FeatureDiscoveryScreenRenderer(private val entry: DiscoveryTabEntry) : DiscoveryScreenRenderer {
@@ -36,6 +44,7 @@ internal class FeatureDiscoveryScreenRenderer(private val entry: DiscoveryTabEnt
     override fun Tab(onMapExpandedChange: (Boolean) -> Unit, reselections: Flow<Unit>) {
         val pendingMapFocus by Navigator.pendingMapFocus.collectAsState()
         val clearance = LocalFloatingNavClearance.current
+        val resumeCheckIn = checkInResumeAction()
         CheckInTabContent(showCreateButton = false) { onCreateCheckIn ->
             entry.Content(
                 onOpenShop = { Navigator.navigate(Navigator.Screen.ShopDetail(it)) },
@@ -48,7 +57,33 @@ internal class FeatureDiscoveryScreenRenderer(private val entry: DiscoveryTabEnt
                 onFocusConsumed = Navigator::consumeMapFocus,
                 checkInAction = { CheckInCreateButton(onClick = onCreateCheckIn) },
                 reselections = reselections,
+                onContinueCheckIn = resumeCheckIn,
             )
+        }
+    }
+}
+
+@OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+@Composable
+private fun checkInResumeAction(): (() -> Unit)? {
+    val sessions = koinInject<SessionReader>()
+    val drafts = koinInject<AppShopCheckInDraftStore>()
+    val destination by remember(sessions, drafts) {
+        sessions.observeSession()
+            .map { it?.takeIf(sessions::isActiveSession)?.userId }
+            .distinctUntilChanged()
+            .flatMapLatest { owner ->
+                if (owner == null) flowOf(null)
+                else drafts.observeLatestShop(owner).map { slug -> slug?.let { owner to it } }.catch { emit(null) }
+            }
+    }.collectAsStateWithLifecycle(initialValue = null)
+    val (owner, slug) = destination ?: return null
+    val session = sessions.peekSession()
+    if (session?.userId != owner || !sessions.isActiveSession(session)) return null
+    return {
+        val current = sessions.peekSession()
+        if (current?.userId == owner && sessions.isActiveSession(current)) {
+            Navigator.navigate(Navigator.Screen.ShopDetail(slug, openCheckIn = true))
         }
     }
 }

@@ -1,4 +1,5 @@
 <resources>
+    <string name="discovery_continue_checkin">Працягнуць чакін</string>
     <string name="discovery_search_placeholder">Пошук кавярняў і абсмажчыкаў…</string>
     <string name="discovery_search_clear">Ачысціць пошук</string>
     <string name="discovery_search_cancel">Адмена</string>

@@ -2,16 +2,16 @@ package com.coffeepeek.feature.shop.impl.ui.data
 
 import com.coffeepeek.feature.shop.domain.model.ShopCheckInCreateInput
 
-/** App composition adapts the existing one-shop, process-lifetime draft store. */
+/** Operations are bound to the account and shop that opened the form. */
 interface ShopCheckInDraftStore {
-    fun open(initial: ShopCheckInCreateInput): Result<ShopCheckInDraftSnapshot>
-    fun save(snapshot: ShopCheckInDraftSnapshot): Result<Unit>
-    fun clear(shopSlug: String): Result<Unit>
+    suspend fun open(initial: ShopCheckInCreateInput): Result<ShopCheckInDraftSnapshot>
+    suspend fun save(snapshot: ShopCheckInDraftSnapshot): Result<Unit>
+    suspend fun clear(shopSlug: String): Result<Unit>
 }
 
 data class ShopCheckInDraftSnapshot(
     val input: ShopCheckInCreateInput,
-    /** Retained across sheet recreation; an uncertain write must not silently become retryable. */
+    /** An uncertain submission must not become retryable after the process is restarted. */
     val deliveryUnconfirmed: Boolean = false,
-    /** Explicit opt-out belongs to the current first photo and survives modal recreation. */
+    val exists: Boolean = false,
 )

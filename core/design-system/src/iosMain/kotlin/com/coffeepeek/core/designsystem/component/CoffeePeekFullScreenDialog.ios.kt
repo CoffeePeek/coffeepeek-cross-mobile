@@ -6,7 +6,11 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 
 @Composable
-actual fun CoffeePeekFullScreenDialog(onDismiss: () -> Unit, content: @Composable () -> Unit) {
+actual fun CoffeePeekFullScreenDialog(
+    onDismiss: () -> Unit,
+    darkSystemBarIcons: Boolean?,
+    content: @Composable () -> Unit,
+) {
     Dialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(

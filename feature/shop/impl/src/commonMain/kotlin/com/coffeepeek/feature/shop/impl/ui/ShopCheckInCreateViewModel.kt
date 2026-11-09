@@ -62,14 +62,21 @@ internal class ShopCheckInCreateViewModel(
             }
             is ShopCheckInFormAction.MovePhoto -> movePhoto(action.from, action.to)
             ShopCheckInFormAction.Submit -> submit()
-            ShopCheckInFormAction.Dismiss -> if (!currentState.isSubmitting) {
+            ShopCheckInFormAction.Dismiss -> if (!currentState.isSubmitting && !currentState.isDiscarding) {
                 analytics.cancelled()
                 sendEvent(ShopCheckInFormEvent.Dismiss)
             }
+            ShopCheckInFormAction.AskDiscard -> if (currentState.hasDraft && !currentState.submitted &&
+                !currentState.isSubmitting && !currentState.isDiscarding) {
+                updateState { copy(confirmDiscard = true) }
+            }
+            ShopCheckInFormAction.CancelDiscard -> updateState { copy(confirmDiscard = false) }
+            ShopCheckInFormAction.Discard -> discard()
             ShopCheckInFormAction.OpenHistory -> if (!currentState.isSubmitting) sendEvent(ShopCheckInFormEvent.OpenHistory)
             ShopCheckInFormAction.GoToFeed -> if (currentState.submitted && !currentState.isSubmitting) sendEvent(ShopCheckInFormEvent.GoToFeed)
             ShopCheckInFormAction.HistoryChecked -> {
-                if (!currentState.deliveryUnconfirmed || currentState.isSubmitting || currentState.submitted) return
+                if (!currentState.deliveryUnconfirmed || currentState.isSubmitting || currentState.submitted ||
+                    currentState.isDiscarding || currentState.confirmDiscard) return
                 if (saveDraft(currentState.input, unconfirmed = false)) {
                     updateState { copy(deliveryUnconfirmed = false, submitFailure = null) }
                 }
@@ -84,6 +91,7 @@ internal class ShopCheckInCreateViewModel(
         val snapshot = result.getOrNull()?.takeIf { it.input.shopSlug == initial.shopSlug }
         updateState { copy(input = snapshot?.input ?: input,
             deliveryUnconfirmed = snapshot?.deliveryUnconfirmed == true,
+            hasDraft = snapshot?.exists == true,
             isLoading = false, draftFailed = result.isFailure || snapshot == null) }
         loadDrinks()
     }
@@ -102,7 +110,7 @@ internal class ShopCheckInCreateViewModel(
         } finally { updateState { copy(drinksLoading = false) } }
     }
 
-    private fun movePhoto(from: Int, to: Int) {
+    private suspend fun movePhoto(from: Int, to: Int) {
         val photos = currentState.input.photos
         if (from !in photos.indices || to !in photos.indices || from == to) return
         edit {
@@ -112,28 +120,43 @@ internal class ShopCheckInCreateViewModel(
         }
     }
 
-    private fun edit(transform: ShopCheckInCreateInput.() -> ShopCheckInCreateInput) {
+    private suspend fun edit(transform: ShopCheckInCreateInput.() -> ShopCheckInCreateInput) {
         if (!canEdit()) return
         val before = currentState.input
         val input = before.transform()
+        if (before == input) return
         analytics.changed(before, input)
         updateState { copy(input = input, validationError = null, submitFailure = null) }
         saveDraft(input, currentState.deliveryUnconfirmed)
     }
 
-    private fun canEdit(): Boolean = !currentState.isLoading && !currentState.isSubmitting &&
-        !currentState.submitted && !currentState.deliveryUnconfirmed
+    private fun canEdit(): Boolean = !currentState.isLoading && !currentState.isSubmitting && !currentState.isDiscarding &&
+        !currentState.submitted && !currentState.deliveryUnconfirmed && !currentState.confirmDiscard
 
-    private fun saveDraft(input: ShopCheckInCreateInput, unconfirmed: Boolean): Boolean {
+    private suspend fun saveDraft(input: ShopCheckInCreateInput, unconfirmed: Boolean): Boolean {
         val result = draftResult { drafts.save(ShopCheckInDraftSnapshot(input, unconfirmed)) }
-        updateState { copy(draftFailed = result.isFailure) }
+        updateState { copy(hasDraft = hasDraft || result.isSuccess,
+            draftFailed = if (this.input == input) result.isFailure else draftFailed) }
         return result.isSuccess
+    }
+
+    private suspend fun discard() {
+        if (!currentState.confirmDiscard || currentState.isSubmitting || currentState.isDiscarding) return
+        updateState { copy(confirmDiscard = false, isDiscarding = true) }
+        val result = draftResult { drafts.clear(initial.shopSlug) }
+        updateState { copy(isDiscarding = false, hasDraft = result.isFailure, draftFailed = result.isFailure) }
+        if (result.isSuccess) {
+            analytics.cancelled()
+            sendEvent(ShopCheckInFormEvent.Dismiss)
+        }
     }
 
     private suspend fun submit() {
         val input = prepareSubmission() ?: return
         updateState { copy(isSubmitting = true) }
         try {
+            // Persist the delivery guard before any request; never silently repeat an uncertain write.
+            if (!saveDraft(input, unconfirmed = true)) return
             repository.create(input).getOrThrow()
             completeSubmission(input)
         } catch (cancelled: CancellationException) {
@@ -146,7 +169,7 @@ internal class ShopCheckInCreateViewModel(
 
     private fun prepareSubmission(): ShopCheckInCreateInput? {
         val state = currentState
-        if (state.isLoading || state.isSubmitting || state.submitted || state.deliveryUnconfirmed) return null
+        if (!canEdit()) return null
         analytics.submitted()
         val validation = validateShopCheckIn(state.input, now())
         updateState { copy(validationError = validation, submitFailure = null) }
@@ -154,8 +177,7 @@ internal class ShopCheckInCreateViewModel(
             analytics.validationFailed()
             return null
         }
-        // Persist the delivery guard before any request; never silently repeat an uncertain write.
-        return state.input.takeIf { saveDraft(it, unconfirmed = true) }
+        return state.input
     }
 
     private suspend fun completeSubmission(input: ShopCheckInCreateInput) {
@@ -166,7 +188,7 @@ internal class ShopCheckInCreateViewModel(
         sendEvent(ShopCheckInFormEvent.Submitted(input.visibility))
     }
 
-    private fun failSubmission(input: ShopCheckInCreateInput, error: Exception) {
+    private suspend fun failSubmission(input: ShopCheckInCreateInput, error: Exception) {
         analytics.failed(error)
         val uncertain = error is ShopCheckInCreationUnconfirmed
         val saved = if (uncertain) true else saveDraft(input, unconfirmed = false)
@@ -176,7 +198,7 @@ internal class ShopCheckInCreateViewModel(
     }
 }
 
-private fun <T> draftResult(block: () -> Result<T>): Result<T> {
+private suspend fun <T> draftResult(block: suspend () -> Result<T>): Result<T> {
     val result = try { block() } catch (cancelled: CancellationException) { throw cancelled }
         catch (error: Exception) { Result.failure(error) }
     result.exceptionOrNull()?.let { if (it is CancellationException) throw it }

@@ -64,6 +64,7 @@ internal class NativeScreenController(
     private var contentTopConstraint: NSLayoutConstraint? = null
     private val photoUnderStatusBar = route is Navigator.Screen.ShopDetail || route is Navigator.Screen.RoasterDetail
     private val isAuthFlow = route == Navigator.Screen.Auth || route == Navigator.Screen.Register ||
+        route is Navigator.Screen.ShopCheckInSignIn ||
         route == Navigator.Screen.ForgotPassword || route is Navigator.Screen.ResetPassword
     private val extendsUnderStatusBar get() = photoUnderStatusBar || isAuthFlow || expandedMap
     var handlesBackLocally = false

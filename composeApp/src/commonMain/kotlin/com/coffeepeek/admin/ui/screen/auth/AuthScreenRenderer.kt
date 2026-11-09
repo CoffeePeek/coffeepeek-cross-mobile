@@ -11,5 +11,8 @@ interface AuthScreenRenderer {
     fun Register()
 
     @Composable
+    fun CheckInLogin(onClose: () -> Unit)
+
+    @Composable
     fun Recovery(initialEmail: String, onClose: () -> Unit, onBackToLogin: () -> Unit)
 }
