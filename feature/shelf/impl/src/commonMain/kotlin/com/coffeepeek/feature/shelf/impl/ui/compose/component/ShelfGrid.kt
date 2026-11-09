@@ -119,9 +119,10 @@ private fun ShelfGridTile(
     LaunchedEffect(slot, away) { if (away) position.snapTo(slot) else position.animateTo(slot) }
     if (away) return
     val size = with(LocalDensity.current) { geometry.columnWidth.toDp() to geometry.slotHeight.toDp() }
+    val landing = if (arriving) Modifier.shelfLanding(arrival, fall) else Modifier
     tiles.Tile(item, Modifier
         .offset { position.value }
-        .shelfLanding(arrival, fall)
+        .then(landing)
         .size(size.first, size.second)
         .shelfTileSemantics(item.id, index, count, onAction), highlighted = arriving)
 }

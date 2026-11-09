@@ -145,16 +145,15 @@ private fun ShelfShelves(
     ShelfAutoScroll(drag, scroll) { viewport[0] }
     LaunchedEffect(bags) { drag.settled() }
     LaunchedEffect(drag.settling) { if (drag.settling != null) { delay(1_000); drag.settled() } }
-    // The new bag stays marked for a moment after it lands; the top of the shelf is where it stands.
-    LaunchedEffect(arrivingId) {
-        if (arrivingId == null) return@LaunchedEffect
+    val visibleArrival = arrivingId?.takeIf { id -> bags.any { it.id == id } }
+    LaunchedEffect(visibleArrival) {
+        if (visibleArrival == null) return@LaunchedEffect
+        onAction(ShelfAction.ArrivalPresented(visibleArrival))
         scroll.animateScrollTo(0)
-        delay(ARRIVAL_SHOWN_MILLIS)
-        onAction(ShelfAction.ArrivalShown(arrivingId))
     }
     Box(modifier.fillMaxSize().onGloballyPositioned { viewport[0] = it.boundsInRoot() }.verticalScroll(scroll)
         .padding(horizontal = CoffeePeekDimens.spacing4).padding(top = CoffeePeekDimens.spacing4, bottom = bottomClearance + 96.dp)) {
-        ShelfGrid(bags, drag, tiles, image, onAction, arrivingId = arrivingId)
+        ShelfGrid(bags, drag, tiles, image, onAction, arrivingId = visibleArrival)
     }
 }
 
@@ -206,9 +205,6 @@ private fun ShelfMessageEffect(message: ShelfMessage?, snackbar: SnackbarHostSta
     val text = when (message) {
         null -> null
         is ShelfMessage.Finished -> stringResource(Res.string.shelf_finished_message)
-        ShelfMessage.Added -> stringResource(Res.string.shelf_added_message)
-        ShelfMessage.Restored -> stringResource(Res.string.shelf_restored)
-        ShelfMessage.Deleted -> stringResource(Res.string.shelf_deleted)
         is ShelfMessage.Failed -> message.issue.text()
     }
     val undo = stringResource(Res.string.shelf_undo)
@@ -234,7 +230,6 @@ private fun ShelfFinishSummary(state: ShelfState, image: ShelfImage, onAction: (
         onDismiss = { onDismissed(item.id); onAction(ShelfAction.CancelFinish) })
 }
 
-private const val ARRIVAL_SHOWN_MILLIS = 4_000L
 // Only a fallback: a confirmed finish removes the bag from the shelf at once, before the server answers.
 private const val ARCHIVE_RETURN_DELAY_MILLIS = 400L
 

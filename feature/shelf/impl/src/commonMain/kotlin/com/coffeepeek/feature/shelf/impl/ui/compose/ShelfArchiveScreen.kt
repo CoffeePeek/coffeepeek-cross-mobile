@@ -13,8 +13,6 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -45,7 +43,6 @@ import com.coffeepeek.feature.shelf.impl.ui.ShelfArchiveViewModel
 import com.coffeepeek.feature.shelf.impl.ui.compose.component.*
 import com.coffeepeek.feature.shelf.impl.ui.compose.model.ShelfArchiveAction
 import com.coffeepeek.feature.shelf.impl.ui.compose.model.ShelfArchiveEvent
-import com.coffeepeek.feature.shelf.impl.ui.compose.model.ShelfArchiveMessage
 import com.coffeepeek.feature.shelf.impl.ui.compose.model.ShelfArchiveState
 import com.coffeepeek.feature.shelf.impl.ui.compose.model.ShelfBagItem
 import com.coffeepeek.feature.shelf.impl.ui.data.ShelfDay
@@ -65,9 +62,7 @@ internal fun ShelfArchiveScreen(viewModel: ShelfArchiveViewModel, image: ShelfIm
 
 @Composable
 internal fun ShelfArchiveScreenContent(state: ShelfArchiveState, onAction: (ShelfArchiveAction) -> Unit, image: ShelfImage, modifier: Modifier = Modifier) {
-    val snackbar = remember { SnackbarHostState() }
-    ShelfArchiveMessageEffect(state.message, snackbar, onAction)
-    CoffeePeekScaffold(modifier, snackbarHost = { SnackbarHost(snackbar) }, topBar = {
+    CoffeePeekScaffold(modifier, topBar = {
         Column {
             CoffeePeekTopBar(stringResource(Res.string.shelf_archive), stringResource(Res.string.shelf_archive_back),
                 onBack = { onAction(ShelfArchiveAction.Back) })
@@ -136,21 +131,6 @@ private fun ShelfArchiveEmpty(searching: Boolean) {
         Text(stringResource(title), style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center)
         if (!searching) Text(stringResource(Res.string.shelf_archive_empty_hint), style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
-    }
-}
-
-@Composable
-private fun ShelfArchiveMessageEffect(message: ShelfArchiveMessage?, snackbar: SnackbarHostState, onAction: (ShelfArchiveAction) -> Unit) {
-    val text = when (message) {
-        null -> null
-        ShelfArchiveMessage.Restored -> stringResource(Res.string.shelf_restored)
-        ShelfArchiveMessage.Deleted -> stringResource(Res.string.shelf_deleted)
-    }
-    val currentAction by rememberUpdatedState(onAction)
-    LaunchedEffect(message) {
-        if (text == null) return@LaunchedEffect
-        snackbar.showSnackbar(text)
-        currentAction(ShelfArchiveAction.DismissMessage)
     }
 }
 

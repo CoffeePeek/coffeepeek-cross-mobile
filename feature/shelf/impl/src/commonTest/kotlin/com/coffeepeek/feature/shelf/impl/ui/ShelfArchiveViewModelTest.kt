@@ -6,7 +6,6 @@ import com.coffeepeek.feature.shelf.domain.model.ShelfFailure
 import com.coffeepeek.feature.shelf.domain.model.ShelfIssue
 import com.coffeepeek.feature.shelf.impl.ui.compose.model.ShelfArchiveAction
 import com.coffeepeek.feature.shelf.impl.ui.compose.model.ShelfArchiveEvent
-import com.coffeepeek.feature.shelf.impl.ui.compose.model.ShelfArchiveMessage
 import com.coffeepeek.feature.shelf.impl.ui.compose.model.ShelfArchiveSection
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -105,11 +104,10 @@ class ShelfArchiveViewModelTest {
         removed += "f1"
         handoff.report(ShelfBagOutcome.Restored("f1"))
         runCurrent()
-        assertEquals(ShelfArchiveMessage.Restored, model.state.value.message)
+        assertFalse(model.state.value.items.any { it.id == "f1" })
         removed += "f2"
         handoff.report(ShelfBagOutcome.Deleted("f2", archived = true))
         runCurrent()
-        assertEquals(ShelfArchiveMessage.Deleted, model.state.value.message)
         assertFalse(model.state.value.items.any { it.id == "f1" || it.id == "f2" })
         assertNull(handoff.outcome.value)
     }

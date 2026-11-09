@@ -5,6 +5,5 @@ internal sealed interface ShelfArchiveAction {
     data object Retry : ShelfArchiveAction
     data object LoadMore : ShelfArchiveAction
     data class OpenBag(val id: String) : ShelfArchiveAction
-    data object DismissMessage : ShelfArchiveAction
     data object Back : ShelfArchiveAction
 }
