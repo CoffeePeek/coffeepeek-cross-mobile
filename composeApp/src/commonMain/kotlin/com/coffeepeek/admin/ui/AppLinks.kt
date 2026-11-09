@@ -1,6 +1,7 @@
 package com.coffeepeek.admin.ui
 
 import io.ktor.http.Url
+import io.ktor.http.encodeURLPathPart
 
 internal fun appLinkScreen(link: String): Navigator.Screen? {
     val url = runCatching { Url(link) }.getOrNull() ?: return null
@@ -10,18 +11,17 @@ internal fun appLinkScreen(link: String): Navigator.Screen? {
 
     if (url.encodedPath.trimEnd('/') == "/reset-password") return null
 
-    return appLinkDetail(url.segments)
+    val openCheckIn = url.parameters.getAll("checkin") == listOf("1")
+    return appLinkDetail(url.segments, openCheckIn)
 }
 
-private fun appLinkDetail(path: List<String>): Navigator.Screen {
+private fun appLinkDetail(path: List<String>, openCheckIn: Boolean): Navigator.Screen {
     if (path.size != 2) return Navigator.Screen.Main
     val slug = path[1]
-    if (slug.isBlank() || slug.any { it == '/' || it == '\\' || it.isISOControl() } || slug in listOf(".", "..")) {
-        return Navigator.Screen.Main
-    }
+    if (!validAppLinkSlug(slug)) return Navigator.Screen.Main
 
     return when (path[0]) {
-        "coffee-shops", "shops" -> Navigator.Screen.ShopDetail(slug)
+        "coffee-shops", "shops" -> Navigator.Screen.ShopDetail(slug, openCheckIn = openCheckIn)
         "roasters" -> Navigator.Screen.RoasterDetail(slug)
         "coffees" -> Navigator.Screen.CoffeeDetail(slug)
         "users" -> Navigator.Screen.UserProfile(slug)
@@ -31,6 +31,18 @@ private fun appLinkDetail(path: List<String>): Navigator.Screen {
         else -> Navigator.Screen.Main
     }
 }
+
+internal fun shopCheckInLink(slug: String): String? {
+    if (slug.length > 200 || !validAppLinkSlug(slug)) return null
+    return "https://coffeepeek.by/coffee-shops/${slug.encodeURLPathPart()}?checkin=1"
+}
+
+internal fun Navigator.Screen.appLinkDestination(isLoggedIn: Boolean): Navigator.Screen =
+    if (this is Navigator.Screen.ShopDetail && openCheckIn && !isLoggedIn) Navigator.Screen.ShopCheckInSignIn(shopId)
+    else profileDestination(isLoggedIn)
+
+private fun validAppLinkSlug(slug: String): Boolean =
+    slug.isNotBlank() && slug !in listOf(".", "..") && slug.none { it == '/' || it == '\\' || it.isISOControl() }
 
 /** Post links carry the server's GUID; anything else is not a post the API could return. */
 private val CHECK_IN_ID = Regex("[0-9a-fA-F]{8}(-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}")

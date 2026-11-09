@@ -58,6 +58,7 @@ private class DefaultShopDetailEntry(
         formatDistance: (Double, Double) -> String?,
         onEffect: (ShopDetailEffect) -> Unit,
         refreshGeneration: Long,
+        openCheckIn: Boolean,
     ) {
         val unknownAuthor = stringResource(Res.string.shop_checkins_author_unknown)
         val model = viewModel(key = "shop-detail:$shopId") {
@@ -71,7 +72,7 @@ private class DefaultShopDetailEntry(
             ShopDetailScreen(viewModel = model, sessionGeneration = sessionGeneration,
                 formatDistance = formatDistance, forCheckIn = forCheckIn,
                 formatCheckInDate = formatCheckInDate, formatMenuDate = formatMenuDate,
-                refreshGeneration = refreshGeneration, onEvent = { event ->
+                refreshGeneration = refreshGeneration, openCheckIn = openCheckIn, onEvent = { event ->
                     event.toPublicEffect(unknownAuthor)?.let(onEffect)
                 })
         }

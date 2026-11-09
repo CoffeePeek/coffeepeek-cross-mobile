@@ -61,5 +61,6 @@ interface DiscoveryTabEntry {
         checkInAction: @Composable () -> Unit,
         /** Transient taps on the already selected Search tab; ordinary tab changes must not emit. */
         reselections: kotlinx.coroutines.flow.Flow<Unit>,
+        onContinueCheckIn: (() -> Unit)? = null,
     )
 }

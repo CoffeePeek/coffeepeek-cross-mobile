@@ -43,7 +43,6 @@ import com.coffeepeek.admin.ui.screen.checkins.CheckInHistoryScreenRenderer
 import com.coffeepeek.admin.ui.screen.checkins.CheckInCreateFlowRenderer
 import com.coffeepeek.admin.ui.screen.review.ContentReportScreenRenderer
 import com.coffeepeek.admin.ui.screen.contributions.ContributionKind
-import com.coffeepeek.admin.ui.screen.shop.CheckInDraftStore
 import com.coffeepeek.feature.favorites.domain.usecase.ObserveFavoriteIdsUseCase
 import org.koin.core.context.startKoin
 import org.koin.core.module.Module
@@ -217,7 +216,6 @@ private fun appModule(
         val gateway = get<ApiClients>()
         createImageUrlFetcher(gateway.client, gateway.imageClient)
     }
-    single { CheckInDraftStore() }
     single { CityPreference(settingRepository) }
     single { OldReviewDrafts(settingRepository) }
     factory { NavigatorViewModel(get()) }

@@ -18,6 +18,9 @@ internal sealed interface ShopCheckInFormAction {
     data class MovePhoto(val from: Int, val to: Int) : ShopCheckInFormAction
     data object Submit : ShopCheckInFormAction
     data object Dismiss : ShopCheckInFormAction
+    data object AskDiscard : ShopCheckInFormAction
+    data object CancelDiscard : ShopCheckInFormAction
+    data object Discard : ShopCheckInFormAction
     data object OpenHistory : ShopCheckInFormAction
     data object GoToFeed : ShopCheckInFormAction
     /** Explicit user confirmation after checking history, never an automatic network retry. */
