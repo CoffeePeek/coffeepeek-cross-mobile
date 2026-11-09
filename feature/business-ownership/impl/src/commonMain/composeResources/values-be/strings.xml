@@ -62,4 +62,9 @@
     <string name="ownership_switch_business">Перайсці на бізнес-уліковы запіс</string>
     <string name="ownership_switch_personal">Перайсці на асабісты ўліковы запіс</string>
     <string name="ownership_evidence_photos">Фота пацвярджэння паўнамоцтваў</string>
+    <string name="ownership_checkin_qr_action">QR для чакіну</string>
+    <string name="ownership_checkin_qr_hint">Адсканіруйце, каб адкрыць форму чакіну ў гэтай кавярні.</string>
+    <string name="ownership_checkin_qr_description">QR-код для чакіну ў кавярні %1$s</string>
+    <string name="ownership_checkin_qr_share">Падзяліцца PNG</string>
+    <string name="ownership_checkin_qr_error">Не ўдалося падрыхтаваць QR-код. Паспрабуйце яшчэ раз.</string>
 </resources>

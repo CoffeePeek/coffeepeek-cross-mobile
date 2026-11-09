@@ -17,6 +17,10 @@ actual object Locator {
         directoryPath(NSCachesDirectory, "CoffeePeek")
     }
 
+    actual val appFilesRootPath: String by lazy {
+        directoryPath(NSApplicationSupportDirectory, "CoffeePeek")
+    }
+
     actual val cacheFolderPath: String by lazy {
         ensureDirectory("$appCacheRootPath/http")
     }
@@ -24,8 +28,7 @@ actual object Locator {
     actual val platformContext: Any? = null
 
     actual val database: DatabaseCore by lazy {
-        val supportPath = directoryPath(NSApplicationSupportDirectory, "CoffeePeek")
-        MyRoomRepositoryImpl("$supportPath/${Constants.DB_NAME}")
+        MyRoomRepositoryImpl("$appFilesRootPath/${Constants.DB_NAME}")
     }
 
     private fun directoryPath(directory: ULong, child: String): String {

@@ -16,14 +16,17 @@ import com.coffeepeek.feature.ownership.impl.ui.compose.model.OwnershipEvent
 fun createBusinessOwnershipEntry(
     repository: BusinessOwnershipRepository, account: OwnershipAccount,
     image: OwnershipImage, picker: OwnershipPhotoPicker, backHandler: OwnershipBackHandler,
+    checkInLink: (String) -> String?, shareCheckInQr: (ByteArray, String) -> Unit,
     onEdit: (String, String) -> Unit = { _, _ -> },
     onOpenBusiness: (String, String) -> Unit = { _, _ -> },
     onLogin: () -> Unit = {},
-): BusinessOwnershipEntry = OwnershipEntry(repository, account, image, picker, backHandler, onEdit, onOpenBusiness, onLogin)
+): BusinessOwnershipEntry = OwnershipEntry(repository, account, image, picker, backHandler, checkInLink, shareCheckInQr, onEdit, onOpenBusiness, onLogin)
 
 private class OwnershipEntry(
     private val repository: BusinessOwnershipRepository, private val account: OwnershipAccount,
     private val image: OwnershipImage, private val picker: OwnershipPhotoPicker, private val backHandler: OwnershipBackHandler,
+    private val checkInLink: (String) -> String?,
+    private val shareCheckInQr: (ByteArray, String) -> Unit,
     private val onEdit: (String, String) -> Unit,
     private val onOpenBusiness: (String, String) -> Unit,
     private val onLogin: () -> Unit,
@@ -51,7 +54,7 @@ private class OwnershipEntry(
     @Composable override fun Tab() {
         val model = viewModel(key = "business-tab") { OwnershipViewModel(repository, account, businessTab = true) }
         val state by model.state.collectAsState()
-        BusinessTabContent(state, model::onAction, image) { kind, id ->
+        BusinessTabContent(state, model::onAction, image, checkInLink, shareCheckInQr) { kind, id ->
             val business = (state.shops + state.roasters?.items.orEmpty()).firstOrNull { it.kind == kind && it.id == id }
             val slug = business?.slug
             if (slug.isNullOrBlank()) onEdit(kind.name, id) else onOpenBusiness(kind.name, slug)

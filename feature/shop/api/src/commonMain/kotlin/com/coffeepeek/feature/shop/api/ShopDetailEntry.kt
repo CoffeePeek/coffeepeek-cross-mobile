@@ -14,5 +14,6 @@ interface ShopDetailEntry {
         formatDistance: (latitude: Double, longitude: Double) -> String?,
         onEffect: (ShopDetailEffect) -> Unit,
         refreshGeneration: Long,
+        openCheckIn: Boolean = false,
     )
 }

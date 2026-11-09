@@ -34,6 +34,7 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlin.time.Instant
 
@@ -62,16 +63,16 @@ class ShopCheckInCreateViewModelTest {
         var snapshot: ShopCheckInDraftSnapshot? = null
         var saveFails = false
         var clearFails = false
-        override fun open(initial: ShopCheckInCreateInput): Result<ShopCheckInDraftSnapshot> {
+        override suspend fun open(initial: ShopCheckInCreateInput): Result<ShopCheckInDraftSnapshot> {
             if (snapshot?.input?.shopSlug != initial.shopSlug) snapshot = ShopCheckInDraftSnapshot(initial)
             return Result.success(snapshot!!)
         }
-        override fun save(snapshot: ShopCheckInDraftSnapshot): Result<Unit> {
+        override suspend fun save(snapshot: ShopCheckInDraftSnapshot): Result<Unit> {
             if (saveFails) return Result.failure(IllegalStateException("storage"))
-            this.snapshot = snapshot
+            this.snapshot = snapshot.copy(exists = true)
             return Result.success(Unit)
         }
-        override fun clear(shopSlug: String): Result<Unit> {
+        override suspend fun clear(shopSlug: String): Result<Unit> {
             if (clearFails) return Result.failure(IllegalStateException("cleanup"))
             if (snapshot?.input?.shopSlug == shopSlug) snapshot = null
             return Result.success(Unit)
@@ -218,6 +219,25 @@ class ShopCheckInCreateViewModelTest {
         runCurrent()
         assertFalse(viewModel.state.value.drinksFailed)
         assertEquals(2, repository.drinkCalls)
+    }
+
+    @Test fun draftIsDeletedOnlyAfterDiscardConfirmation() = runTest(dispatcher) {
+        val drafts = Drafts()
+        val viewModel = viewModel(drafts = drafts)
+        runCurrent()
+        viewModel.onAction(ShopCheckInFormAction.TextChanged("Keep until confirmed"))
+        viewModel.onAction(ShopCheckInFormAction.AskDiscard)
+        runCurrent()
+        assertTrue(viewModel.state.value.confirmDiscard)
+        viewModel.onAction(ShopCheckInFormAction.CancelDiscard)
+        runCurrent()
+        assertFalse(viewModel.state.value.confirmDiscard)
+        assertEquals("Keep until confirmed", drafts.snapshot?.input?.text)
+        viewModel.onAction(ShopCheckInFormAction.AskDiscard)
+        viewModel.onAction(ShopCheckInFormAction.Discard)
+        runCurrent()
+        assertEquals(ShopCheckInFormEvent.Dismiss, viewModel.events.first())
+        assertNull(drafts.snapshot)
     }
 
     @Test fun pendingWriteGuardsRepeatedSubmitEditingAndDismissal() = runTest(dispatcher) {

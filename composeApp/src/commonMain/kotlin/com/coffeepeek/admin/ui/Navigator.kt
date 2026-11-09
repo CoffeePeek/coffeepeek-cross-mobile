@@ -33,6 +33,7 @@ import androidx.compose.foundation.layout.union
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.key
@@ -60,11 +61,11 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
-import com.coffeepeek.admin.ui.screen.shop.CheckInDraftStore
 import org.koin.compose.koinInject
 import com.coffeepeek.admin.ui.dialogs.ErrorDialog
 import com.coffeepeek.admin.ui.dialogs.LoadingDialog
 import com.coffeepeek.admin.ui.screen.auth.AuthScreenRenderer
+import com.coffeepeek.core.session.SessionReader
 import com.coffeepeek.admin.ui.screen.main.MainScreen
 import com.coffeepeek.admin.ui.component.RetainedContent
 import com.coffeepeek.admin.ui.screen.shop.ShopDetailScreenRenderer
@@ -135,7 +136,10 @@ object Navigator {
         @Serializable data object SettingsTab : Screen
 
         // Inner screens (add here + in the graph in MainScreen)
-        @Serializable data class ShopDetail(val shopId: String, val forCheckIn: Boolean = false) : Screen
+        @Serializable data class ShopDetail(
+            val shopId: String, val forCheckIn: Boolean = false, val openCheckIn: Boolean = false,
+        ) : Screen
+        @Serializable data class ShopCheckInSignIn(val shopId: String) : Screen
         @Serializable data object CreateCheckIn : Screen
         @Serializable data class CoffeeDetail(val slug: String) : Screen
         @Serializable data class ShopMenuGallery(val shopId: String) : Screen
@@ -206,6 +210,7 @@ object Navigator {
 
     private val _openLoginAfterSessionEnd = MutableStateFlow(false)
     private val pendingAppLink = MutableStateFlow<Screen?>(null)
+    private val checkInSignInHandoff = ShopCheckInSignInHandoff()
 
     internal fun openAppLink(screen: Screen) {
         pendingAppLink.value = screen
@@ -239,6 +244,7 @@ object Navigator {
         is Screen.ResetPassword,
         is Screen.Main,
         is Screen.ShopDetail,
+        is Screen.ShopCheckInSignIn,
         is Screen.CreateCheckIn,
         is Screen.CoffeeDetail,
         is Screen.ShopMenuGallery,
@@ -323,7 +329,6 @@ object Navigator {
         val isLoggedIn by vm.isLoggedIn.collectAsState()
         var previousLoginState by remember { mutableStateOf<Boolean?>(null) }
         var navigationGeneration by remember { mutableIntStateOf(0) }
-        val checkInDrafts: CheckInDraftStore = koinInject()
 
         ErrorDialog(
             show = errorMessage != null,
@@ -337,8 +342,9 @@ object Navigator {
                 navigationGeneration++
             }
             previousLoginState = loggedIn
-            if (!loggedIn) {
-                checkInDrafts.clearAll()
+            if (loggedIn) {
+                checkInSignInHandoff.take()?.let { pendingAppLink.compareAndSet(null, it) }
+            } else {
                 ErrorHandler.clearError()
                 LoadingHandler.clearLoading()
                 if (_openLoginAfterSessionEnd.value) {
@@ -369,7 +375,7 @@ object Navigator {
                 else event
             }
         }
-        if (PlatformRootNavigation(isLoggedIn, sessionEvents, appLink?.profileDestination(isLoggedIn),
+        if (PlatformRootNavigation(isLoggedIn, sessionEvents, appLink?.appLinkDestination(isLoggedIn),
             { pendingAppLink.compareAndSet(appLink, null) },
             { screen, login -> RootScreen(screen, login, isLoggedIn) },
         )) return
@@ -395,7 +401,7 @@ object Navigator {
 
         LaunchedEffect(appLink) {
             val screen = appLink ?: return@LaunchedEffect
-            nav.navigate(screen.profileDestination(isLoggedIn)) {
+            nav.navigate(screen.appLinkDestination(isLoggedIn)) {
                 launchSingleTop = true
                 popUpTo<Screen.Main>()
             }
@@ -421,7 +427,7 @@ object Navigator {
             it.hasRoute<Screen.ShopDetail>() || it.hasRoute<Screen.RoasterDetail>()
         } == true
         val authUnderSystemBars = currentEntry?.destination?.let {
-            it.hasRoute<Screen.Auth>() || it.hasRoute<Screen.Register>()
+            it.hasRoute<Screen.Auth>() || it.hasRoute<Screen.Register>() || it.hasRoute<Screen.ShopCheckInSignIn>()
         } == true
         val systemInsets = WindowInsets.systemBars.union(WindowInsets.displayCutout)
         val darkTheme = MaterialTheme.colorScheme.background.luminance() < 0.5f
@@ -486,6 +492,9 @@ object Navigator {
             ) {
                     composable<Screen.Auth> { koinInject<AuthScreenRenderer>().Login() }
                     composable<Screen.Register> { koinInject<AuthScreenRenderer>().Register() }
+                    composable<Screen.ShopCheckInSignIn> { backStack ->
+                        ShopCheckInSignInRoute(backStack.toRoute<Screen.ShopCheckInSignIn>().shopId)
+                    }
                     composable<Screen.ForgotPassword> { backStack ->
                         koinInject<AuthScreenRenderer>().Recovery(
                             initialEmail = backStack.toRoute<Screen.ForgotPassword>().email,
@@ -507,7 +516,7 @@ object Navigator {
                     }
                     composable<Screen.ShopDetail> { backStack ->
                         val route = backStack.toRoute<Screen.ShopDetail>()
-                        koinInject<ShopDetailScreenRenderer>().Content(shopId = route.shopId, forCheckIn = route.forCheckIn)
+                        koinInject<ShopDetailScreenRenderer>().Content(route.shopId, route.forCheckIn, route.openCheckIn)
                     }
                     composable<Screen.CreateCheckIn> {
                         org.koin.compose.koinInject<com.coffeepeek.admin.ui.screen.checkins.CheckInShopPickerRenderer>().Content()
@@ -606,7 +615,8 @@ koinInject<ContributionsScreenRenderer>().Editor(route.shopId, route.section, ro
             Screen.Register -> koinInject<AuthScreenRenderer>().Register()
             is Screen.ForgotPassword -> koinInject<AuthScreenRenderer>().Recovery(initialEmail = screen.email, onClose = ::popBack, onBackToLogin = resetToLogin)
             is Screen.ResetPassword -> LaunchedEffect(Unit) { resetToLogin() }
-            is Screen.ShopDetail -> koinInject<ShopDetailScreenRenderer>().Content(screen.shopId, screen.forCheckIn)
+            is Screen.ShopDetail -> koinInject<ShopDetailScreenRenderer>().Content(screen.shopId, screen.forCheckIn, screen.openCheckIn)
+            is Screen.ShopCheckInSignIn -> ShopCheckInSignInRoute(screen.shopId)
             Screen.CreateCheckIn -> org.koin.compose.koinInject<com.coffeepeek.admin.ui.screen.checkins.CheckInShopPickerRenderer>().Content()
             is Screen.CoffeeDetail -> koinInject<CoffeeScreenRenderer>().Detail(screen.slug)
             is Screen.ShopReviews -> koinInject<ShopCheckInListScreenRenderer>().Content(screen.shopId)
@@ -646,6 +656,22 @@ koinInject<ContributionsScreenRenderer>().Editor(route.shopId, route.section, ro
             Screen.UsagePolicy -> koinInject<SettingsScreenRenderer>().UsagePolicy()
             else -> error("Tab route must be handled by MainScreen: $screen")
         }
+    }
+
+    @Composable
+    private fun ShopCheckInSignInRoute(shopId: String) {
+        val sessions = koinInject<SessionReader>()
+        val request = remember(shopId) { ShopCheckInSignInHandoff.Request(shopId) }
+        DisposableEffect(request, sessions) {
+            checkInSignInHandoff.begin(request)
+            onDispose {
+                if (!sessions.isActiveSession(sessions.peekSession())) checkInSignInHandoff.cancel(request)
+            }
+        }
+        koinInject<AuthScreenRenderer>().CheckInLogin(onClose = {
+            checkInSignInHandoff.cancel(request)
+            popBack()
+        })
     }
 
     private fun NavHostController.navigateFromRoot(screen: Screen) {

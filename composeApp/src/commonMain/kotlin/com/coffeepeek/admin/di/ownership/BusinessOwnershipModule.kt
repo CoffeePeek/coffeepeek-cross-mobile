@@ -2,6 +2,8 @@ package com.coffeepeek.admin.di.ownership
 
 import androidx.compose.runtime.Composable
 import com.coffeepeek.admin.ui.component.NativeNavigationBar
+import com.coffeepeek.admin.ui.shopCheckInLink
+import com.coffeepeek.admin.utils.ShareHelper
 import com.coffeepeek.admin.utils.rememberPhotoPicker
 import com.coffeepeek.core.network.ApiClients
 import com.coffeepeek.core.designsystem.component.CoffeePeekImage
@@ -22,6 +24,8 @@ internal fun businessOwnershipModule() = module {
     single<BusinessOwnershipEntry> {
         createBusinessOwnershipEntry(get(), get(), ownershipImage, ownershipPicker,
             backHandler = { back -> NativeNavigationBar("", back, customBack = true, action = null) },
+            checkInLink = ::shopCheckInLink,
+            shareCheckInQr = { png, name -> ShareHelper.shareImages(listOf(png), name) },
             onEdit = { kind, id -> com.coffeepeek.admin.ui.Navigator.navigate(com.coffeepeek.admin.ui.Navigator.Screen.MyBusiness(kind = kind, businessId = id)) },
             onLogin = { com.coffeepeek.admin.ui.Navigator.navigate(com.coffeepeek.admin.ui.Navigator.Screen.Auth) },
             onOpenBusiness = { kind, slug ->

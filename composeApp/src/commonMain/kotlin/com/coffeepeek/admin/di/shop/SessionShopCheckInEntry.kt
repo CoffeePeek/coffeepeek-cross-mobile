@@ -37,7 +37,7 @@ internal class SessionShopCheckInEntry(
     ) {
         val lease = remember(shopId, shopSlug) { ShopCheckInSession(sessions, repository, onCheckInCreated) }
         val boundDrafts = remember(lease) {
-            if (lease.isCurrent()) drafts.forShop(shopId, shopSlug, lease.userId) else null
+            if (lease.isCurrent()) drafts.forShop(shopId, shopSlug, checkNotNull(lease.userId)) else null
         }
         DisposableEffect(lease) { onDispose { lease.revoke() } }
         val session by remember(sessions) {
@@ -50,8 +50,6 @@ internal class SessionShopCheckInEntry(
         if (boundDrafts == null || !lease.isCurrent(session) || !lease.isCurrent()) {
             LaunchedEffect(lease) {
                 lease.revoke()
-                // Only this binding's draft can be cleared; a replacement stays intact.
-                boundDrafts?.clear(shopSlug)
                 onDismiss()
             }
             return

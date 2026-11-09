@@ -1,11 +1,14 @@
 package com.coffeepeek.feature.discovery.impl.ui
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
@@ -25,11 +28,15 @@ import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.core.designsystem.component.CoffeePeekAddButton
+import com.coffeepeek.core.designsystem.component.CoffeePeekFilledButton
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource
 import com.coffeepeek.feature.discovery.api.*
 import com.coffeepeek.feature.discovery.domain.model.ShopSummary
 import com.coffeepeek.feature.discovery.impl.search.SearchAction
 import com.coffeepeek.feature.discovery.impl.search.SearchState
 import com.coffeepeek.feature.discovery.impl.search.SearchError
+import com.coffeepeek.feature.discovery.impl.resources.Res
+import com.coffeepeek.feature.discovery.impl.resources.discovery_continue_checkin
 
 @Composable
 internal fun DiscoveryTabContent(
@@ -55,9 +62,8 @@ internal fun DiscoveryTabContent(
         if (state.showFilters) FilterSheet(state, host, onAction)
         if (ui.mapAnchor.width > 0f || ui.mapExpanded) DiscoveryMapLayer(ui, motion, host, canvasSize, toggleMap, map)
         if (host.isVisible() && !state.showFilters && !ui.showRoasters && !ui.mapExpanded && motion.expansion.value == 0f) {
-            Box(Modifier.align(Alignment.BottomEnd).padding(end = 16.dp, bottom = bottomClearance + 12.dp)) {
-                callbacks.checkInAction()
-            }
+            DiscoveryCheckInActions(callbacks,
+                Modifier.align(Alignment.BottomEnd).padding(horizontal = 16.dp).padding(bottom = bottomClearance + 12.dp))
         }
         if (host.isVisible() && !state.showFilters && !ui.showRoasters && (state.nearbyRequested || state.locationUnavailable)) {
             DiscoveryLocationNotice(state.nearbyRequested, { onAction(SearchAction.DismissLocationFailure) },
@@ -68,6 +74,18 @@ internal fun DiscoveryTabContent(
             FavoriteFailureFeedback(state.favoriteFailureId, { onAction(SearchAction.DismissFavoriteFailure(it)) },
                 Modifier.align(Alignment.BottomCenter).padding(bottom = bottomClearance + 80.dp))
         }
+    }
+}
+
+@Composable
+private fun DiscoveryCheckInActions(callbacks: TabCallbacks, modifier: Modifier = Modifier) {
+    Row(modifier, horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+        callbacks.onContinueCheckIn?.let { resume ->
+            CoffeePeekFilledButton(onClick = resume) {
+                Text(coffeePeekStringResource(Res.string.discovery_continue_checkin))
+            }
+        }
+        callbacks.checkInAction()
     }
 }
 
@@ -95,17 +113,19 @@ private fun DiscoverySearchPresentation(
 }
 
 @Composable
-private fun DiscoveryTabContentPreview(refreshError: Boolean = false) = CoffeePeekTheme {
+private fun DiscoveryTabContentPreview(refreshError: Boolean = false, darkTheme: Boolean = false) = CoffeePeekTheme(darkTheme = darkTheme) {
     DiscoveryTabContent(
         state = SearchState(isLoading = false, shops = listOf(ShopSummary("sandbox-cafe", "Sandbox Cafe")),
             error = if (refreshError) SearchError(null) else null),
         host = DiscoveryHost(),
         roasters = DiscoveryRoasterSlots(preview = {}, search = { _, _, _ -> }),
         analytics = NoDiscoveryAnalytics, callbacks = TabCallbacks({}, {}, {}, {}, {},
-            checkInAction = { CoffeePeekAddButton({}, "Add check-in") }),
+            checkInAction = { CoffeePeekAddButton({}, "Add check-in") },
+            onContinueCheckIn = if (refreshError) null else ({})),
         bottomClearance = 80.dp, focus = null, onAction = {}, onSearchPresentation = { _, _ -> },
     ) { _, _, modifier -> Box(modifier.background(MaterialTheme.colorScheme.surfaceVariant)) }
 }
 
 @Preview @Composable private fun DiscoveryHomePreview() = DiscoveryTabContentPreview()
+@Preview @Composable private fun DiscoveryHomeDarkPreview() = DiscoveryTabContentPreview(darkTheme = true)
 @Preview @Composable private fun DiscoveryRefreshErrorPreview() = DiscoveryTabContentPreview(refreshError = true)
