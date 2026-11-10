@@ -15,6 +15,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
@@ -111,8 +112,10 @@ private fun PhotoRemoveButton(index: Int, enabled: Boolean, onRemove: () -> Unit
     val offset = if (simple) 18.dp else 16.dp
     IconButton(onClick = onRemove, enabled = enabled, glass = false,
         modifier = modifier.offset(x = offset, y = -offset).size(48.dp)) {
+        // With the glass backdrop off, the badge itself carries the disabled affordance.
         Icon(CoffeePeekIcons.Close, stringResource(Res.string.coffeepeek_photo_remove, index + 1),
-            Modifier.size(24.dp).background(Color.Black.copy(alpha = 0.75f), RoundedCornerShape(50))
+            Modifier.size(24.dp).alpha(if (enabled) 1f else 0.45f)
+                .background(Color.Black.copy(alpha = 0.75f), RoundedCornerShape(50))
                 .border(1.5.dp, Color.White, RoundedCornerShape(50)).padding(if (simple) 5.dp else 4.dp), tint = Color.White)
     }
 }

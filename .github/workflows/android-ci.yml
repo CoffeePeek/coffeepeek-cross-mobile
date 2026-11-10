@@ -3,6 +3,9 @@ name: Android CI
 on:
   pull_request:
     branches: [main, develop]
+  push:
+    # Seed default-branch-scope Gradle caches so PR branches restore them on their first push.
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -10,7 +13,9 @@ permissions:
 
 concurrency:
   group: android-ci-${{ github.ref }}
-  cancel-in-progress: true
+  # Pushes to main seed default-branch caches; cancelling mid-run would skip cache
+  # saves, so they queue. PR runs still cancel superseded ones.
+  cancel-in-progress: ${{ github.event_name != 'push' }}
 
 jobs:
   build-apk:
