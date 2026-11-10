@@ -353,13 +353,14 @@ internal fun AuthPrimaryButton(
 /** The secondary action under the primary button: a text link at the end of a row at least 48 dp high. */
 @Composable
 internal fun AuthFooterRow(text: String, onClick: () -> Unit, modifier: Modifier = Modifier) {
-    Row(modifier.fillMaxWidth().heightIn(min = 48.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+    Row(modifier.fillMaxWidth().heightIn(min = 48.dp).clip(RoundedCornerShape(8.dp))
+        .clickable(onClick = onClick), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
         Spacer(Modifier.size(1.dp))
         Text(
             text = text,
             style = MaterialTheme.typography.labelMedium.copy(fontSize = 13.sp, fontWeight = FontWeight.SemiBold),
             color = CoffeePeekColors.Primary,
-            modifier = Modifier.clip(RoundedCornerShape(8.dp)).clickable(onClick = onClick).padding(vertical = 8.dp),
+            modifier = Modifier.padding(vertical = 8.dp),
         )
     }
 }

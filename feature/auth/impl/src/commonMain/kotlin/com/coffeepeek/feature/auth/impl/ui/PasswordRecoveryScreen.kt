@@ -74,6 +74,7 @@ internal fun PasswordRecoveryContent(
                 placeholder = stringResource(Res.string.auth_email_placeholder),
                 label = stringResource(Res.string.auth_email_label),
                 leadingIcon = CoffeePeekIcons.Email,
+                enabled = !state.busy,
             )
         }
         state.error?.let { error ->

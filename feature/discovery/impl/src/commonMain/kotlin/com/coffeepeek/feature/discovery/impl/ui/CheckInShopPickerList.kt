@@ -63,7 +63,7 @@ private fun PickerListErrorPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = 
 private fun PickerListStatus(state: SearchState, retry: () -> Unit) {
     when {
         state.error != null -> {
-            Text(state.error.serverMessage ?: stringResource(Res.string.discovery_picker_failed), color = MaterialTheme.colorScheme.error)
+            Text(stringResource(Res.string.discovery_picker_failed), color = MaterialTheme.colorScheme.error)
             TextButton(onClick = retry) { Text(stringResource(Res.string.discovery_picker_retry)) }
         }
         state.visibleShops.isEmpty() && !state.isLoading && !state.isLoadingMore && !state.hasMore ->

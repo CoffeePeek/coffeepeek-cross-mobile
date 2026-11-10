@@ -70,6 +70,7 @@ internal class MapViewModel(
     private var queryJob: Job? = null
     private var detailsJob: Job? = null
     private var pauseJob: Job? = null
+    private var pauseGeneration = 0
     private var permissionRequestPending = false
     private var locateAfterPermission = false
     private var accountSeen = false
@@ -478,13 +479,15 @@ internal class MapViewModel(
 
     private fun pauseBounds(durationMs: Long) {
         cancelViewportLoads()
+        val generation = ++pauseGeneration
         pauseJob?.cancel()
         pauseJob = viewModelScope.launch {
             suppressBounds = true
             try {
                 delay(durationMs)
             } finally {
-                suppressBounds = false
+                // A newer pause owns the flag now; the cancelled run must not release it.
+                if (generation == pauseGeneration) suppressBounds = false
             }
             // Camera moves during the pause were only recorded: load where the camera ended up.
             val bounds = currentState.pendingBounds ?: return@launch

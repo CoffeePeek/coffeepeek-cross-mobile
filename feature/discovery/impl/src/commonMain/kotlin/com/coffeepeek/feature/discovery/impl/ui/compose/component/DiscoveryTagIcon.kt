@@ -11,7 +11,7 @@ import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
-internal fun discoveryTagArtwork(slug: String?): ImageVector = when (slug?.trim()?.lowercase()) {
+internal fun discoveryTagArtwork(slug: String?): ImageVector = when (slug?.trim()?.lowercase()?.replace('_', '-')) {
     "roastery" -> CoffeePeekIcons.Factory
     "beans-for-sale" -> CoffeePeekIcons.ShoppingBag
     "decaf" -> CoffeePeekIcons.CoffeeBean
