@@ -1,7 +1,7 @@
 package com.coffeepeek.feature.auth.impl.ui
 
-import android.app.Activity
 import android.util.Log
+import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
@@ -50,7 +50,7 @@ internal fun rememberGoogleSignIn(webClientId: String, onToken: (String) -> Unit
             currentOnFailure.value(e.message ?: "Не удалось войти через Google")
         }
     }
-    val activity = context as? Activity
+    val activity = LocalActivity.current
     return {
         if (activity == null) currentOnFailure.value("Activity недоступна") else launcher.launch(client.signInIntent)
     }
