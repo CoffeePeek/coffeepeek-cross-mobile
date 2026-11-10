@@ -13,6 +13,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -101,7 +107,8 @@ private fun LanguageOption(name: String, selected: Boolean, enabled: Boolean, on
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(name, Modifier.weight(1f), style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
-        if (selected) {
+        AnimatedVisibility(selected, enter = fadeIn(tween(160)) + scaleIn(initialScale = 0.7f),
+            exit = fadeOut(tween(120))) {
             Icon(CoffeePeekIcons.Check, contentDescription = null, tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(CoffeePeekDimens.settingsIconSize))
         }

@@ -18,6 +18,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.runtime.getValue
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
@@ -53,7 +57,9 @@ private fun CoffeePeekUnderlineTab(text: String, selected: Boolean, onClick: () 
             style = MaterialTheme.typography.bodyMedium, textAlign = TextAlign.Center,
             color = if (selected) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
             fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal)
-        if (selected) Box(Modifier.align(Alignment.BottomCenter).fillMaxWidth().height(3.dp)
+        val indicator by animateFloatAsState(if (selected) 1f else 0f, tween(180), label = "tab-indicator")
+        Box(Modifier.align(Alignment.BottomCenter).fillMaxWidth().height(3.dp)
+            .graphicsLayer { alpha = indicator; scaleX = indicator }
             .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(topStart = 2.dp, topEnd = 2.dp)))
     }
 }

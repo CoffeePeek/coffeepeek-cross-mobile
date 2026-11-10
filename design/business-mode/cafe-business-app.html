@@ -1,0 +1,1720 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#1A1412">
+  <title>CoffeePeek — режим кофейни · прототип</title>
+  <style>
+    /* Шрифт бренда — Manrope (локальные woff2, как в core/design-system/theme/CoffeePeekFonts.kt) */
+    @font-face {
+      font-family: 'Manrope'; font-style: normal; font-weight: 200 800; font-display: swap;
+      src: url('fonts/manrope-cyrillic.woff2') format('woff2');
+      unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116;
+    }
+    @font-face {
+      font-family: 'Manrope'; font-style: normal; font-weight: 200 800; font-display: swap;
+      src: url('fonts/manrope-latin.woff2') format('woff2');
+      unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+    }
+
+    /* Токены — из core/design-system/theme/CoffeePeekColors.kt */
+    :root {
+      color-scheme: dark;
+      --page: #1A1412;            /* DarkBackground */
+      --surface: #2D241F;         /* DarkSurface / Card */
+      --badge: #2D241F;           /* DarkBadge */
+      --line: #3D2F28;            /* DarkBorder */
+      --subtle: #3D2F28;          /* DarkBorderSubtle */
+      --hover: #4A3D35;           /* DarkBorderHover */
+      --text: #FFFFFF;            /* DarkTextPrimary */
+      --muted: #A39E93;           /* DarkTextSecondary */
+      --accent: #EAB308;          /* Primary */
+      --accent-hover: #FACC15;    /* PrimaryHover */
+      --accent-ink: #1A1412;      /* DarkTextOnPrimary */
+      --accent-text: #FACC15;     /* coffeePeekAccentForeground (dark) */
+      --red: #EF4444;             /* Error */
+      --success: #22C55E;         /* Success */
+      --success-text: #22C55E;    /* в тёмной теме — Success */
+      --divider: rgba(255,255,255,.14);
+      --glass: rgba(45,36,31,.64);        /* стекло: surface 64% */
+      --rim: rgba(255,255,255,.14);       /* rim стеклянных контролов */
+      --highlight: rgba(255,255,255,.07); /* подсветка выбранной вкладки */
+      --switch-on: #9A7A28;               /* SwitchCheckedTrackDark */
+      --switch-on-thumb: #FFF7D6;         /* SwitchCheckedThumbDark */
+      --switch-off: #4A3D35;
+      --switch-off-thumb: #C4BEB6;
+      --shadow: 0 18px 48px rgba(0,0,0,.45);
+    }
+    [data-theme="light"] {
+      color-scheme: light;
+      --page: #FAFAF9;            /* LightBackground */
+      --surface: #FFFFFF;         /* LightSurface / Card */
+      --badge: #F3F4F6;           /* LightBadge */
+      --line: #E7E5E4;            /* LightBorder */
+      --subtle: #E5E1DA;          /* LightBorderSubtle */
+      --hover: #D1D5DB;           /* LightBorderHover */
+      --text: #1C1917;            /* LightTextPrimary */
+      --muted: #78716C;           /* LightTextSecondary */
+      --accent: #EAB308;
+      --accent-hover: #FACC15;
+      --accent-ink: #1A1412;      /* LightTextOnPrimary */
+      --accent-text: #8A6300;     /* coffeePeekAccentForeground (light) */
+      --red: #EF4444;
+      --success: #22C55E;
+      --success-text: #166534;    /* SuccessTextLight */
+      --divider: rgba(28,25,23,.14);
+      --glass: rgba(255,255,255,.72);     /* стекло: surface 72% */
+      --rim: rgba(28,25,23,.10);
+      --highlight: rgba(28,25,23,.07);
+      --switch-on: #EAB308;
+      --switch-on-thumb: #684900;         /* SwitchCheckedThumbLight */
+      --switch-off: #F3F4F6;
+      --switch-off-thumb: #78716C;
+      --shadow: 0 18px 48px rgba(32,24,13,.12);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; min-height: 100vh; color: var(--text); background: var(--page);
+      font: 16px/1.5 Manrope, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      transition: background .2s, color .2s;
+    }
+    button, input, textarea, select { font: inherit; }
+    button { color: inherit; }
+    .ic { width: 22px; height: 22px; fill: currentColor; display: block; }
+
+    .workspace { max-width: 1180px; margin: 0 auto; padding: 34px 28px 52px; }
+    .workspace-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 26px; }
+    .brand { display: flex; align-items: center; gap: 12px; font-weight: 800; font-size: 20px; }
+    .bean { width: 38px; height: 38px; border-radius: 14px; display:grid; place-items:center; color:var(--accent-ink); background:var(--accent); }
+    .bean .ic { width: 24px; height: 24px; }
+    .eyebrow { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .08em; font-weight: 600; }
+    .head-actions { display:flex; align-items:center; gap:10px; }
+    .quiet-button { display:inline-flex; align-items:center; gap:8px; border:1px solid var(--line); background:var(--surface); border-radius:22px; padding:10px 16px; font-weight:600; cursor:pointer; }
+    .quiet-button:hover { border-color:var(--accent); }
+    .quiet-button .ic { width:18px; height:18px; color:var(--accent-text); }
+    .layout { display:grid; grid-template-columns: minmax(0, 1fr) 390px; gap:36px; align-items:start; }
+    .intro { position:sticky; top:28px; padding:22px 4px; max-width:620px; }
+    h1 { margin:10px 0 14px; font-size: clamp(30px, 4vw, 44px); line-height:1.15; font-weight:800; }
+    .intro p { max-width:560px; color:var(--muted); font-size:16px; }
+    .screen-picker { display:flex; flex-wrap:wrap; gap:9px; margin:27px 0 24px; }
+    .screen-picker button { padding:10px 16px; border:1px solid var(--line); border-radius:999px; background:var(--glass); color:var(--muted); font-size:14px; font-weight:500; cursor:pointer; }
+    .screen-picker button.active { color:var(--accent-ink); background:var(--accent); border-color:var(--accent); font-weight:600; }
+    .principles { display:grid; gap:10px; margin:24px 0; }
+    .principle { display:flex; align-items:flex-start; gap:11px; padding:16px; border:1px solid var(--subtle); border-radius:16px; background:var(--surface); }
+    .principle b { display:block; margin-bottom:2px; font-size:16px; }
+    .principle span { color:var(--muted); font-size:13px; }
+    .check { color:var(--accent-text); font-weight:800; font-size:18px; }
+    .prototype-note { padding:13px 16px; border-left:3px solid var(--accent); border-radius:0 12px 12px 0; background:var(--surface); color:var(--muted); font-size:13px; }
+    .device-wrap { position:relative; }
+    .device { width:390px; min-height:820px; max-height:min(860px, calc(100vh - 42px)); overflow:hidden; position:sticky; top:18px; border:8px solid #292623; border-radius:42px; background:var(--page); box-shadow:var(--shadow); }
+    .device:before { content:""; position:absolute; z-index:4; top:8px; left:50%; transform:translateX(-50%); width:92px; height:23px; background:#171512; border-radius:18px; }
+    .status { height:43px; padding:14px 21px 0; display:flex; justify-content:space-between; font-size:11px; font-weight:600; color:var(--muted); }
+    .app-screen { display:none; height:calc(min(860px, 100vh - 58px) - 65px); min-height:755px; overflow:auto; padding-bottom:96px; scrollbar-width:none; }
+    .app-screen::-webkit-scrollbar { display:none; }
+    .app-screen.active { display:block; animation:appear .16s ease-out; }
+    @keyframes appear { from {opacity:.6; transform:translateY(4px)} to {opacity:1; transform:none} }
+
+    /* Верхняя панель: фон = фон приложения (CoffeePeekTopBar), назад — стеклянный круг 44 */
+    .topbar { display:flex; align-items:center; justify-content:space-between; gap:10px; padding:12px 16px 8px; }
+    .topbar h2 { margin:0; font-size:20px; font-weight:600; }
+    .topbar-main h2 { font-size:30px; font-weight:800; letter-spacing:-.01em; }
+    .topbar .subtle { color:var(--muted); font-size:13px; }
+    .topbar-main { flex:1; min-width:0; }
+    .back, .icon-button { flex:none; width:44px; height:44px; border-radius:50%; display:grid; place-items:center; background:var(--glass); border:1px solid var(--rim); color:var(--text); cursor:pointer; backdrop-filter:blur(24px); }
+    .back .ic, .icon-button .ic { width:20px; height:20px; }
+    .content { padding:8px 16px 22px; }
+    .section-head { display:flex; align-items:center; justify-content:space-between; gap:8px; margin:22px 0 12px; }
+    .section-head h3 { margin:0; font-size:22px; font-weight:700; }
+    .group-title { font-size:14px; text-transform:uppercase; letter-spacing:.06em; color:var(--muted); font-weight:600; margin:22px 2px 10px; }
+    .text-link { border:0; background:none; color:var(--accent-text); font-weight:600; font-size:15px; padding:5px; cursor:pointer; }
+    .text-link .ic { width:18px; height:18px; }
+
+    /* Карточки: ContentCard 24 / ShopCard 20, граница outlineVariant */
+    .hero-card { overflow:hidden; border:1px solid var(--subtle); border-radius:28px; background:var(--surface); }
+    .cover { height:174px; position:relative; display:flex; align-items:flex-end; padding:16px; background:linear-gradient(155deg,#78604c,#3e3026 55%,#211a16); }
+    .cover:before { content:""; position:absolute; inset:0; opacity:.55; background:radial-gradient(ellipse at 30% 20%,#eed2a055,transparent 44%),linear-gradient(125deg,transparent 35%,#09080755 36% 38%,transparent 39%); }
+    .cover-label { position:relative; border-radius:16px; background:rgba(0,0,0,.68); color:#fff; padding:6px 10px; font-size:12px; font-weight:600; display:inline-flex; align-items:center; gap:5px; backdrop-filter:blur(8px); }
+    .cover-label .ic { width:14px; height:14px; }
+    .hero-body { padding:16px; }
+    .name-line { display:flex; justify-content:space-between; align-items:flex-start; gap:10px; }
+    .name-line h3 { margin:0; font-size:20px; font-weight:700; }
+    .pill { flex:none; display:inline-flex; align-items:center; gap:5px; border-radius:8px; padding:4px 8px; font-size:12px; }
+    .pill .ic { width:14px; height:14px; }
+    .pill.success { background:color-mix(in srgb, var(--success) 14%, transparent); color:var(--success-text); font-weight:700; text-transform:uppercase; letter-spacing:.04em; font-size:11px; }
+    .pill.kind { background:var(--badge); border:1px solid var(--subtle); color:var(--muted); font-weight:600; text-transform:uppercase; letter-spacing:.04em; font-size:11px; }
+    .address { display:flex; align-items:center; gap:5px; margin:7px 0 14px; color:var(--muted); font-size:12px; }
+    .address .ic { width:14px; height:14px; color:var(--accent-text); }
+    .metrics { display:grid; grid-template-columns:repeat(3,1fr); gap:7px; }
+    .metric { display:flex; flex-direction:column; align-items:center; gap:1px; padding:9px 8px; border:1px solid var(--subtle); border-radius:16px; background:var(--badge); text-align:center; }
+    .metric b { display:flex; align-items:center; gap:4px; font-size:14px; }
+    .metric .ic { width:14px; height:14px; color:var(--accent); }
+    .metric span { color:var(--muted); font-size:11px; }
+    .action-row { display:flex; gap:9px; margin-top:16px; }
+
+    /* Кнопки: CoffeePeekButton — пилюля 22, высота 44, labelLarge 16/600 */
+    .primary, .secondary { display:flex; justify-content:center; align-items:center; gap:8px; min-height:48px; border-radius:24px; padding:10px 16px; cursor:pointer; font-weight:600; font-size:16px; }
+    .primary { flex:1; border:0; background:var(--accent); color:var(--accent-ink); }
+    .primary:hover { background:var(--accent-hover); }
+    .secondary { border:1px solid var(--line); background:var(--glass); color:var(--text); }
+    .secondary:hover { border-color:var(--accent); }
+    .secondary .ic, .primary .ic { width:20px; height:20px; }
+
+    .stats { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; }
+    .stat { padding:13px 11px; border:1px solid var(--subtle); border-radius:16px; background:var(--surface); }
+    .stat strong { display:block; font-size:20px; font-weight:700; }
+    .stat span { color:var(--muted); font-size:12px; font-weight:500; }
+
+    .post-card { padding:16px; border:1px solid var(--subtle); border-radius:20px; background:var(--surface); margin-bottom:10px; }
+    .post-top { display:flex; justify-content:space-between; align-items:center; gap:10px; color:var(--muted); font-size:12px; font-weight:500; }
+    .post-type { color:var(--accent-text); font-weight:700; }
+    .post-card h4 { margin:10px 0 5px; font-size:16px; font-weight:600; }
+    .post-card p { margin:0; color:var(--muted); font-size:13px; }
+    .post-photo { height:110px; margin-top:12px; border-radius:16px; background:linear-gradient(135deg,#b98e59,#493225 48%,#251b16); }
+
+    .empty-state { padding:24px 16px; border-radius:20px; text-align:center; color:var(--muted); font-size:14px; }
+    .empty-icon { width:64px; height:64px; margin:0 auto 12px; border-radius:50%; display:grid; place-items:center; background:color-mix(in srgb, var(--accent) 12%, transparent); color:var(--muted); }
+    .empty-icon .ic { width:32px; height:32px; }
+    .empty-state b { display:block; color:var(--text); margin-bottom:4px; font-size:20px; font-weight:600; }
+
+    /* Поля: пилюля 22, высота 44, фон surface, граница outline; label 14/500 */
+    .field-label { display:block; margin:14px 0 6px; color:var(--muted); font-size:14px; font-weight:500; }
+    .field { width:100%; min-height:44px; padding:10px 16px; border:1px solid var(--line); border-radius:22px; background:var(--surface); color:var(--text); font-size:16px; outline:none; }
+    .field::placeholder { color:var(--muted); opacity:.85; }
+    .field:focus { border-color:var(--accent); box-shadow:inset 0 0 0 1px var(--accent); }
+    textarea.field { resize:vertical; min-height:110px; }
+    select.field { min-height:56px; border-radius:16px; }
+    .photo-add { width:100%; min-height:110px; display:grid; place-items:center; gap:6px; border:1px dashed var(--line); border-radius:16px; background:var(--surface); color:var(--muted); cursor:pointer; font-size:14px; }
+    .photo-add:hover { border-color:var(--accent); color:var(--accent-text); }
+    .photo-add .ic { width:20px; height:20px; margin:0 auto; }
+
+    .choice { display:flex; align-items:flex-start; gap:12px; padding:14px 16px; border:1px solid var(--subtle); border-radius:16px; background:var(--surface); margin:10px 0; cursor:pointer; font:inherit; text-align:left; width:auto; }
+    .choice.selected { border-color:var(--accent); box-shadow:inset 0 0 0 1px var(--accent); }
+    .radio { width:18px; height:18px; flex:none; border:1.5px solid var(--muted); border-radius:50%; margin-top:2px; }
+    .choice.selected .radio { border:5px solid var(--accent); }
+    .choice b { display:block; font-size:16px; }
+    .choice span { display:block; color:var(--muted); font-size:13px; margin-top:3px; }
+
+    /* Настройки: секции — карточка 16 с границей, строки с бейджем иконки 40/12 */
+    .settings-card { border:1px solid var(--subtle); border-radius:20px; background:var(--surface); overflow:hidden; }
+    .settings-row { display:flex; justify-content:space-between; align-items:center; gap:12px; padding:12px 16px; }
+    .settings-row + .settings-row { border-top:1px solid var(--divider); }
+    .settings-row .row-main { display:flex; align-items:center; gap:12px; min-width:0; }
+    .icon-badge { flex:none; width:40px; height:40px; border-radius:12px; display:grid; place-items:center; }
+    .icon-badge .ic { width:22px; height:22px; }
+    .ib-gold { background:color-mix(in srgb, #CA8A04 20%, transparent); color:#CA8A04; }
+    .ib-cyan { background:color-mix(in srgb, #42AFC2 20%, transparent); color:#42AFC2; }
+    .ib-mint { background:color-mix(in srgb, #5CB66A 20%, transparent); color:#5CB66A; }
+    .ib-violet { background:color-mix(in srgb, #8B5CF6 20%, transparent); color:#8B5CF6; }
+    .ib-rose { background:color-mix(in srgb, #F43F5E 20%, transparent); color:#F43F5E; }
+    [data-theme="light"] .ib-gold { background:#FEF3C7; }
+    [data-theme="light"] .ib-cyan { background:#D3EFFA; }
+    [data-theme="light"] .ib-mint { background:#ECFAED; }
+    [data-theme="light"] .ib-violet { background:#F5F3FF; }
+    [data-theme="light"] .ib-rose { background:#FFF1F2; }
+    .settings-row b { display:block; font-size:16px; font-weight:600; }
+    .settings-row small { display:block; color:var(--muted); font-size:13px; margin-top:2px; }
+    .chevron { color:var(--muted); flex:none; }
+    .chevron .ic { width:20px; height:20px; }
+
+    /* Switch: M3 52x32, цвета CoffeePeekSwitch */
+    .switch { flex:none; width:52px; height:32px; border-radius:99px; background:var(--switch-on); padding:4px; border:0; cursor:pointer; }
+    .switch:after { content:""; display:block; width:24px; height:24px; border-radius:50%; background:var(--switch-on-thumb); margin-left:auto; transition:.15s; }
+    .switch.off { background:var(--switch-off); }
+    .switch.off:after { background:var(--switch-off-thumb); margin-left:0; }
+
+    /* Нижняя навигация: плавающая стеклянная капсула (FloatingBottomNavBar) */
+    .nav { position:absolute; z-index:3; left:16px; right:16px; bottom:8px; height:64px; display:grid; grid-template-columns:repeat(5,1fr); gap:2px; padding:4px; border-radius:32px; border:1px solid var(--rim); background:var(--glass); backdrop-filter:blur(24px); box-shadow:0 10px 24px rgba(0,0,0,.12); }
+    .nav button { border:0; background:none; border-radius:24px; display:grid; justify-items:center; align-content:center; gap:3px; font-size:11px; font-weight:500; padding:6px 0; } color:var(--text); cursor:pointer; padding:6px 0; }
+    .nav button .ic { width:22px; height:22px; }
+    .nav button.active { background:color-mix(in srgb, var(--text) 10%, transparent); }
+    .nav button.active .ic { color:var(--accent); }
+    .nav button.active { color:var(--accent-text); font-weight:700; }
+
+
+    /* Открытые посты ленты (как в приложении — без карточек) */
+    .ptabs { display:flex; gap:24px; border-bottom:1px solid var(--divider); margin:14px 0 4px; }
+    .ptab { border:0; background:none; padding:10px 2px 12px; font-size:15px; font-weight:600; color:var(--muted); border-bottom:2px solid transparent; cursor:pointer; }
+    .ptab.active { color:var(--text); border-bottom-color:var(--accent); }
+    .pstats { display:flex; gap:28px; margin:16px 2px 4px; }
+    .pstats b { display:block; font-size:24px; font-weight:800; }
+    .pstats span { color:var(--muted); font-size:12px; }
+    /* Сегменты «На полке / Архив» (как Капсула-сегменты в приложении) */
+    .caps { display:grid; grid-template-columns:1fr 1fr; background:var(--surface); border:1px solid var(--subtle); border-radius:999px; padding:4px; gap:4px; margin:8px 0 14px; }
+    .caps button { border:0; background:none; border-radius:999px; padding:10px; font-weight:600; font-size:14px; color:var(--muted); cursor:pointer; }
+    .caps button.active { background:var(--hover); color:var(--text); }
+    .shelf-card { border:1px solid var(--subtle); border-radius:20px; background:var(--surface); overflow:hidden; margin-bottom:12px; }
+    .shelf-photo { height:150px; background:linear-gradient(135deg,#c9977a,#8a5f4a 55%,#4a352a); position:relative; }
+    .shelf-photo .brand-chip { position:absolute; right:12px; bottom:-16px; width:44px; height:44px; border-radius:50%; background:var(--surface); border:1px solid var(--subtle); display:grid; place-items:center; color:var(--accent-text); font-size:10px; font-weight:700; }
+    .shelf-body { padding:14px 16px 16px; }
+    .shelf-body b { display:block; font-size:18px; font-weight:700; }
+    .shelf-body .origin { color:var(--muted); font-size:13px; margin:2px 0 8px; }
+    .shelf-tags { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:10px; }
+    .shelf-tags span { border:1px solid var(--subtle); background:var(--badge); color:var(--muted); border-radius:999px; padding:3px 9px; font-size:11px; font-weight:500; }
+    .shelf-foot { display:flex; justify-content:space-between; align-items:center; }
+    .shelf-foot .when { color:var(--muted); font-size:12px; }
+    .shelf-card.archived { opacity:.62; }
+    /* Шторка заказа и строки заказов обжарщика */
+    .sheet-wrap { position:absolute; inset:0; z-index:7; display:grid; }
+    .sheet-back { position:absolute; inset:0; background:rgba(0,0,0,.5); }
+    .sheet { position:relative; margin-top:auto; background:var(--surface); border-radius:24px 24px 0 0; padding:18px 16px 20px; box-shadow:0 -12px 32px rgba(0,0,0,.35); }
+    .sheet b { display:block; font-size:20px; font-weight:700; }
+    .sheet .origin { color:var(--muted); font-size:13px; margin:2px 0 14px; }
+    .seg { display:grid; grid-template-columns:1fr 1fr; background:var(--badge); border:1px solid var(--subtle); border-radius:999px; padding:3px; gap:3px; margin-bottom:14px; }
+    .seg button { border:0; background:none; border-radius:999px; padding:9px; font-weight:600; font-size:14px; color:var(--muted); cursor:pointer; }
+    .seg button.active { background:var(--hover); color:var(--text); }
+    .sheet-row { display:flex; justify-content:space-between; align-items:center; gap:10px; padding:11px 2px; font-size:14px; border-bottom:1px solid var(--divider); }
+    .sheet-row:last-of-type { border-bottom:0; }
+    .sheet-row b { font-size:16px; }
+    .sheet .primary { width:100%; margin-top:12px; }
+    .order-card { padding:14px 16px; border:1px solid var(--subtle); border-radius:20px; background:var(--surface); margin-bottom:10px; }
+    .order-top { display:flex; align-items:center; gap:11px; }
+    .order-main { flex:1; min-width:0; }
+    .order-main b { display:block; font-size:15px; font-weight:600; }
+    .order-main small { display:block; color:var(--muted); font-size:12px; margin-top:1px; }
+    .order-item { display:flex; justify-content:space-between; align-items:center; margin:10px 0 12px; font-size:14px; color:var(--text); }
+    .order-item .price { font-weight:700; }
+    .pill.status-new { background:color-mix(in srgb, var(--accent) 14%, transparent); color:var(--accent-text); font-weight:700; text-transform:uppercase; letter-spacing:.04em; font-size:11px; }
+    .pill.status-work { background:color-mix(in srgb, #3B82F6 14%, transparent); color:#60A5FA; font-weight:700; text-transform:uppercase; letter-spacing:.04em; font-size:11px; }
+    .pill.status-ready { background:color-mix(in srgb, var(--success) 14%, transparent); color:var(--success-text); font-weight:700; text-transform:uppercase; letter-spacing:.04em; font-size:11px; }
+    .btn-sm { min-height:38px; border-radius:19px; padding:7px 16px; font-size:14px; }
+    .feed-post { padding:6px 0 20px; border-bottom:1px solid var(--divider); }
+    .feed-post:last-child { border-bottom:0; }
+    .post-head { display:flex; align-items:center; gap:11px; }
+    .avatar { flex:none; width:44px; height:44px; border-radius:50%; display:grid; place-items:center; background:#D8CCBD; color:#1A1412; font-weight:700; font-size:17px; }
+    .post-head b { display:block; font-size:15px; font-weight:600; }
+    .post-head small { display:block; color:var(--muted); font-size:12px; }
+    .post-head .who { min-width:0; flex:1; }
+    .feed-cafe { margin:12px 0 2px; font-size:24px; font-weight:700; }
+    .stars { display:flex; align-items:center; gap:3px; margin:6px 0 4px; }
+    .stars .ic { width:18px; height:18px; color:var(--accent); }
+    .stars .ic.off { color:var(--line); }
+    .stars small { color:var(--muted); font-size:13px; margin-left:6px; }
+    .feed-text { margin:6px 0 0; font-size:16px; line-height:1.55; color:var(--text); }
+    .photo-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:14px 0 2px; }
+    .photo-grid div { height:150px; border-radius:16px; background:var(--hover); }
+    .post-footer { display:flex; justify-content:space-between; align-items:center; margin-top:12px; font-size:14px; }
+    .post-footer .like { display:inline-flex; align-items:center; gap:7px; color:var(--text); }
+    .post-footer .like .ic { width:20px; height:20px; }
+    .post-footer .drink { display:inline-flex; align-items:center; gap:6px; color:var(--muted); font-size:13px; }
+    .post-footer .drink .ic { width:16px; height:16px; }
+
+    /* Обложка карточки кофейни на всю ширину + плавающие кнопки */
+    .cover-hero { position:relative; height:250px; background:linear-gradient(155deg,#78604c,#3e3026 55%,#211a16); }
+    .cover-hero:before { content:""; position:absolute; inset:0; opacity:.5; background:radial-gradient(ellipse at 30% 20%,#eed2a055,transparent 44%),linear-gradient(125deg,transparent 35%,#09080755 36% 38%,transparent 39%); }
+    .cover-hero .float-actions { position:absolute; z-index:2; top:12px; left:12px; right:12px; display:flex; justify-content:space-between; gap:8px; }
+    .cover-hero .float-actions .grp { display:flex; gap:8px; }
+    .cover-hero .count { position:absolute; right:14px; bottom:12px; border-radius:999px; background:rgba(0,0,0,.68); color:#fff; padding:5px 10px; font-size:11px; font-weight:600; }
+    .pill.specialty { border:1px solid color-mix(in srgb, var(--accent) 55%, transparent); color:var(--accent-text); background:transparent; font-weight:700; }
+    .cafe-title { font-size:30px; font-weight:800; letter-spacing:-.01em; }
+
+    /* Чипы-метрики карточки кофейни */
+    .metric-chips { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin:14px 0 4px; }
+    .chip-metric { display:flex; align-items:center; gap:8px; padding:10px 12px; border-radius:16px; background:var(--surface); border:1px solid var(--subtle); }
+    .chip-metric .ic { flex:none; width:18px; height:18px; color:var(--accent-text); }
+    .chip-metric b { display:block; font-size:14px; font-weight:700; white-space:nowrap; }
+    .chip-metric span { display:block; color:var(--muted); font-size:10px; white-space:nowrap; }
+
+    /* Меню и контакты — карточки со строками */
+    .rows-card { border:1px solid var(--subtle); border-radius:20px; background:var(--surface); overflow:hidden; }
+    .rows-card .row { display:flex; justify-content:space-between; align-items:center; gap:10px; padding:11px 16px; font-size:15px; }
+    .rows-card .row + .row { border-top:1px solid var(--divider); }
+    .rows-card .row .price { color:var(--text); font-weight:500; }
+
+    /* Плавающая панель действий и FAB */
+    .action-bar { position:sticky; bottom:84px; z-index:3; display:flex; align-items:center; gap:12px; padding:8px 0 2px; }
+    .action-bar .round { flex:none; width:52px; height:52px; border-radius:50%; border:0; background:var(--accent); color:var(--accent-ink); display:grid; place-items:center; cursor:pointer; box-shadow:0 8px 20px rgba(0,0,0,.3); }
+    .action-bar .round .ic { width:22px; height:22px; }
+    .action-bar .wide { flex:1; min-height:52px; border-radius:26px; border:1px solid var(--rim); background:var(--glass); backdrop-filter:blur(24px); color:var(--text); font-weight:600; font-size:16px; display:flex; align-items:center; justify-content:center; gap:8px; cursor:pointer; }
+    .action-bar .wide .ic { width:20px; height:20px; }
+    .fab { position:sticky; bottom:84px; z-index:3; margin:10px 4px 0 auto; width:56px; height:56px; border-radius:50%; border:0; background:var(--accent); color:var(--accent-ink); display:grid; place-items:center; cursor:pointer; box-shadow:0 8px 20px rgba(0,0,0,.3); }
+    .fab .ic { width:24px; height:24px; }
+    /* Полка в двух ролях, предзаказ, лояльность */
+    .pill.brew { background:color-mix(in srgb, #42AFC2 16%, transparent); color:#42AFC2; font-weight:700; text-transform:uppercase; letter-spacing:.04em; font-size:11px; }
+    .pill.sell { background:color-mix(in srgb, var(--accent) 14%, transparent); color:var(--accent-text); font-weight:700; text-transform:uppercase; letter-spacing:.04em; font-size:11px; }
+    .price-tag { font-weight:700; color:var(--text); white-space:nowrap; }
+    .price-tag small { color:var(--muted); font-weight:500; }
+    .group-caption { display:flex; align-items:center; gap:6px; color:var(--muted); font-size:12px; font-weight:600; text-transform:uppercase; letter-spacing:.06em; margin:14px 2px 8px; }
+    .group-caption .ic { width:14px; height:14px; color:var(--accent-text); }
+    .avail-banner { display:flex; gap:12px; align-items:flex-start; padding:14px 16px; border-radius:20px; margin-top:12px; }
+    .avail-banner.busy { background:color-mix(in srgb, var(--accent) 10%, var(--surface)); color:var(--text); }
+    .avail-banner.off { background:var(--surface); border:1px solid var(--subtle); color:var(--text); }
+    .avail-banner p { margin:2px 0 0; color:var(--muted); font-size:13px; }
+    .qr-box { width:190px; height:190px; margin:14px auto; padding:12px; background:#fff; border-radius:18px; display:grid; place-items:center; }
+    .qr-box svg { width:100%; height:100%; }
+    .order-number { font-size:34px; font-weight:800; color:var(--accent); text-align:center; letter-spacing:.02em; }
+    .code-hint { text-align:center; color:var(--muted); font-size:13px; margin-bottom:14px; }
+    .steps { display:flex; gap:6px; justify-content:center; margin:12px 0 4px; }
+    .steps .pill { pointer-events:none; }
+    .steps .pill.done { background:color-mix(in srgb, var(--success) 14%, transparent); color:var(--success-text); }
+    .demo-row { display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin:10px 0 2px; }
+    .demo-row .eyebrow { width:100%; margin-bottom:2px; }
+    .demo-chip { border:1px solid var(--line); background:var(--glass); color:var(--muted); border-radius:999px; padding:6px 11px; font-size:12px; font-weight:500; cursor:pointer; }
+    .demo-chip.active { background:var(--accent); border-color:var(--accent); color:var(--accent-ink); font-weight:600; }
+    .stepper { display:inline-flex; align-items:center; gap:0; border:1px solid var(--subtle); background:var(--badge); border-radius:999px; overflow:hidden; }
+    .stepper button { width:34px; height:32px; border:0; background:none; color:var(--text); font-size:17px; cursor:pointer; }
+    .stepper b { min-width:30px; text-align:center; font-size:14px; }
+    .qty-one { color:var(--muted); }
+    .scheme-preview { border-radius:20px; background:color-mix(in srgb, var(--accent) 10%, var(--surface)); padding:18px 16px; text-align:center; margin:12px 0; }
+    .scheme-preview b { display:block; font-size:19px; font-weight:700; }
+    .scheme-preview span { color:var(--muted); font-size:12px; }
+    .loyal-id { display:flex; justify-content:center; gap:7px; align-items:center; color:var(--muted); font-size:13px; margin-top:6px; }
+    /* Пользовательская полка: пачки на деревянной планке */
+    .plank-row { display:flex; gap:34px; align-items:flex-end; padding:0 12px; }
+    .bag-unit { display:grid; justify-items:center; }
+    .bag { position:relative; width:84px; height:106px; border-radius:9px 9px 6px 6px; box-shadow: inset 0 -10px 16px rgba(0,0,0,.30), inset 0 10px 8px -8px rgba(255,255,255,.38), 0 6px 14px rgba(0,0,0,.35); }
+    .bag::before { content:""; position:absolute; left:0; right:0; top:0; height:9px; border-radius:9px 9px 0 0; background:linear-gradient(180deg, rgba(0,0,0,.32), rgba(0,0,0,0)); }
+    .bag-label { position:absolute; left:8px; right:8px; top:20px; background:#f6f0e6; color:#221d18; border-radius:4px; padding:5px 3px 6px; text-align:center; }
+    .bag-label b { display:block; font-size:9px; font-weight:800; line-height:1.2; letter-spacing:.02em; }
+    .bag-label small { display:block; font-size:7px; color:#6d6459; font-weight:700; margin-top:1px; text-transform:uppercase; letter-spacing:.04em; }
+    .plank { height:13px; border-radius:4px; background:linear-gradient(180deg,#e8cda0,#c99a63 45%,#96683a); box-shadow:0 12px 22px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.5); margin-bottom:52px; }
+    .shelf-counter { color:var(--muted); font-size:13px; margin:-6px 2px 10px; }
+    .shelf-section { margin-bottom:6px; }
+    .bag-unit { position:relative; }
+    .hang { position:absolute; top:100%; left:50%; transform:translateX(-50%); padding-top:20px; width:70px; text-align:center; }
+    .hang::before { content:""; position:absolute; top:0; left:50%; transform:translateX(-50%); width:2px; height:13px; background:linear-gradient(180deg,#a89478,#8a7a62); }
+    .hang .tag { display:inline-block; position:relative; background:#f6f0e6; color:#221d18; border-radius:6px; padding:7px 9px 6px; box-shadow:0 6px 12px rgba(0,0,0,.32); transform:rotate(-1.6deg); }
+    .hang .tag::before { content:""; position:absolute; top:3px; left:50%; transform:translateX(-50%); width:5px; height:5px; border-radius:50%; background:var(--page); box-shadow:inset 0 0 0 1.5px #b5ab9c; }
+    .hang .tag b { display:block; font-size:10px; font-weight:800; line-height:1.2; margin-top:3px; white-space:nowrap; }
+    .hang .tag small { display:block; font-size:8px; color:#6d6459; font-weight:600; margin-top:1px; white-space:nowrap; }
+    .hang .tag .price { display:block; font-style:normal; font-size:13px; font-weight:800; color:#8a6300; white-space:nowrap; }
+    .hang .tag .warn { display:inline-block; font-style:normal; font-size:8px; font-weight:800; color:#c0392b; text-transform:uppercase; letter-spacing:.05em; margin-top:2px; }
+    /* Вход/регистрация в стиле приложения */
+    .auth-shell { padding:0 16px; }
+    .auth-x { width:44px; height:44px; border-radius:50%; border:1px solid var(--rim); background:var(--glass); color:var(--text); display:grid; place-items:center; cursor:pointer; }
+    .auth-logo { text-align:center; font-size:22px; font-weight:800; letter-spacing:-.01em; }
+    .auth-logo b { color:var(--accent); font-weight:800; }
+    .auth-mascot { display:grid; place-items:center; margin:6px 0 -34px; position:relative; z-index:2; }
+    .auth-mascot .ic { width:76px; height:76px; color:var(--accent); filter:drop-shadow(0 8px 14px rgba(0,0,0,.4)); }
+    .auth-card { border:1px solid var(--rim); background:var(--glass); backdrop-filter:blur(24px); border-radius:28px; padding:20px 18px 18px; }
+    .auth-steps { display:flex; align-items:flex-start; justify-content:center; gap:0; margin:2px 0 14px; }
+    .auth-steps .st { display:grid; justify-items:center; gap:5px; width:96px; position:relative; }
+    .auth-steps .st span { width:26px; height:26px; border-radius:50%; display:grid; place-items:center; font-size:12px; font-weight:700; color:var(--muted); border:1.5px solid var(--line); background:var(--surface); }
+    .auth-steps .st small { font-size:11px; color:var(--muted); }
+    .auth-steps .st.active span { background:var(--accent); border-color:var(--accent); color:var(--accent-ink); }
+    .auth-steps .st.active small { color:var(--text); font-weight:600; }
+    .auth-steps .st:not(:last-child)::after { content:""; position:absolute; top:13px; left:60%; width:80%; height:1.5px; background:var(--line); }
+    .auth-steps .st.active:not(:last-child)::after, .auth-steps .st.done::after { background:var(--accent); }
+    .field-wrap { position:relative; margin-bottom:10px; }
+    .field-wrap .ic { position:absolute; left:15px; top:50%; transform:translateY(-50%); width:18px; height:18px; color:var(--accent-text); pointer-events:none; }
+    .field-wrap .field { padding-left:44px; }
+    .field-wrap .eye { left:auto; right:14px; color:var(--muted); }
+    .field-wrap .eye { pointer-events:auto; cursor:pointer; }
+    .auth-link { display:block; text-align:right; margin:2px 2px 12px; }
+    .auth-alt { text-align:right; margin-top:12px; }
+    /* Фильтр ленты */
+    .fchips { display:flex; gap:8px; padding:2px 16px 10px; }
+    .fchip { border:1px solid var(--line); background:var(--glass); color:var(--text); border-radius:999px; padding:8px 15px; font-size:13px; font-weight:500; cursor:pointer; }
+    .fchip.active { background:var(--accent); border-color:var(--accent); color:var(--accent-ink); font-weight:600; }
+    /* Drag-корзина обжарщика */
+    .fab { position:sticky; }
+    .fab.drag-over { outline:2.5px dashed var(--accent); outline-offset:5px; }
+    .fab .mini-badge { position:absolute; top:-4px; right:-4px; min-width:22px; height:22px; border-radius:11px; background:var(--text); color:var(--page); font-size:12px; font-weight:800; display:grid; place-items:center; border:2px solid var(--page); }
+    .bag.dragging { opacity:.55; }
+    .bag.sm { width:64px; height:82px; }
+    .bag.sm .bag-label { top:14px; left:6px; right:6px; padding:4px 2px 5px; }
+    .bag.sm .bag-label b { font-size:7.5px; }
+    .bag.sm .bag-label small { font-size:6px; }
+    .panel-group { margin:16px 0 4px; display:flex; align-items:center; gap:7px; }
+    .panel-group .dot { width:8px; height:8px; border-radius:50%; background:var(--accent); }
+    .panel-group span { font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.1em; color:var(--muted); }
+    .nav-c { position:absolute; z-index:3; left:16px; right:16px; bottom:8px; height:64px; display:grid; grid-template-columns:repeat(5,1fr); gap:2px; padding:4px; border-radius:32px; border:1px solid var(--rim); background:var(--glass); backdrop-filter:blur(24px); box-shadow:0 10px 24px rgba(0,0,0,.12); }
+    .nav-c button { border:0; background:none; border-radius:24px; display:grid; justify-items:center; align-content:center; gap:3px; font-size:11px; font-weight:500; color:var(--text); cursor:pointer; padding:6px 0; }
+    .nav-c button .ic { width:22px; height:22px; }
+    .nav-c button.active { background:color-mix(in srgb, var(--text) 10%, transparent); }
+    .nav-c button.active .ic { color:var(--accent); }
+    .nav-c button.active { color:var(--accent-text); font-weight:700; }
+    .persona-switch { display:flex; gap:8px; margin:18px 0 6px; }
+    .persona-btn { flex:1; border:1px solid var(--line); background:var(--glass); color:var(--muted); border-radius:999px; padding:11px 0; font-size:13px; font-weight:600; cursor:pointer; transition:.15s; }
+    .persona-btn.active { background:var(--accent); border-color:var(--accent); color:var(--accent-ink); font-weight:700; }
+    /* Клиент: поиск, карта, чекины */
+    .search-row { display:flex; gap:10px; padding:10px 16px 10px; }
+    .search-row .field { flex:1; border-radius:22px; }
+    .filters-row { display:flex; gap:8px; padding:2px 16px 12px; overflow-x:auto; scrollbar-width:none; }
+    .filters-row::-webkit-scrollbar { display:none; }
+    .filter-pill { flex:none; display:inline-flex; align-items:center; gap:6px; border:1px solid var(--line); background:var(--glass); color:var(--text); border-radius:999px; padding:9px 14px; font-size:13px; font-weight:500; cursor:pointer; }
+    .filter-pill .ic { width:15px; height:15px; color:var(--accent); }
+    .filter-pill.active { background:var(--accent); border-color:var(--accent); color:var(--accent-ink); }
+    .filter-pill.active .ic { color:var(--accent-ink); }
+    .map-card { margin:0 16px 18px; height:150px; border-radius:22px; background:linear-gradient(160deg,#3a3230,#241f1c 60%,#1a1512); position:relative; overflow:hidden; }
+    .map-card:after { content:""; position:absolute; inset:0; background:
+      linear-gradient(90deg,transparent 48%,#ffffff0d 49%,transparent 50%),
+      linear-gradient(0deg,transparent 30%,#ffffff08 31%,transparent 32%),
+      linear-gradient(35deg,transparent 55%,#ffffff09 56%,transparent 58%); }
+    .map-dot { position:absolute; left:50%; top:50%; width:16px; height:16px; border-radius:50%; background:var(--accent); border:4px solid #2f66d0; box-shadow:0 0 0 6px #2f66d033; transform:translate(-50%,-50%); }
+    .map-card .expand { position:absolute; right:12px; top:12px; width:38px; height:38px; border-radius:50%; border:1px solid var(--rim); background:var(--glass); color:var(--text); display:grid; place-items:center; cursor:pointer; }
+    .map-card .expand .ic { width:16px; height:16px; }
+    .hscroll { display:flex; gap:12px; overflow-x:auto; padding:0 16px 4px; scrollbar-width:none; }
+    .hscroll::-webkit-scrollbar { display:none; }
+    .shop-card { flex:none; width:250px; border:1px solid var(--subtle); border-radius:20px; background:var(--surface); overflow:hidden; cursor:pointer; }
+    .shop-photo { height:130px; position:relative; background:linear-gradient(160deg,#8a6f52,#4a3a2c); }
+    .shop-photo .rate { position:absolute; left:10px; top:10px; border-radius:16px; background:rgba(0,0,0,.68); color:#fff; padding:5px 8px; font-size:11px; font-weight:600; display:inline-flex; align-items:center; gap:4px; }
+    .shop-photo .rate .ic { width:13px; height:13px; color:var(--accent); }
+    .shop-photo .fav { position:absolute; right:10px; top:10px; width:32px; height:32px; border-radius:50%; background:rgba(0,0,0,.45); color:#fff; display:grid; place-items:center; }
+    .shop-photo .fav .ic { width:16px; height:16px; }
+    .shop-body { padding:12px 14px 14px; }
+    .shop-body .nm { display:flex; align-items:center; gap:8px; }
+    .shop-body .nm b { font-size:16px; font-weight:700; }
+    .shop-body .closed { background:color-mix(in srgb, var(--red) 14%, transparent); color:var(--red); border-radius:8px; padding:3px 8px; font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:.04em; display:inline-flex; align-items:center; gap:4px; }
+    .shop-body .closed:before { content:""; width:6px; height:6px; border-radius:50%; background:var(--red); }
+    .shop-body .addr { display:flex; align-items:center; gap:5px; color:var(--muted); font-size:12px; margin:6px 0 8px; }
+    .shop-body .addr .ic { width:13px; height:13px; }
+    .shop-body .kind { display:flex; justify-content:space-between; align-items:center; color:var(--muted); font-size:12px; }
+    .roaster-card { flex:none; width:280px; border:1px solid var(--subtle); border-radius:20px; background:var(--surface); padding:14px; display:flex; gap:12px; cursor:pointer; }
+    .roaster-card .logo { flex:none; width:52px; height:52px; border-radius:14px; display:grid; place-items:center; font-size:10px; font-weight:800; text-align:center; color:#fff; }
+    .roaster-card b { font-size:16px; font-weight:700; display:block; }
+    .roaster-card p { margin:3px 0 8px; color:var(--muted); font-size:12px; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+    .roaster-card .stats { display:flex; gap:14px; color:var(--muted); font-size:12px; }
+    .roaster-card .stats b { font-size:12px; color:var(--text); display:inline; margin-right:3px; }
+    .rating-bars { border:1px solid var(--subtle); border-radius:20px; background:var(--surface); padding:14px 16px; }
+    .rating-bars .head { display:flex; align-items:center; gap:7px; font-size:15px; font-weight:700; margin-bottom:10px; }
+    .rating-bars .head .ic { width:16px; height:16px; color:var(--accent); }
+    .rbar { display:grid; grid-template-columns:64px 1fr 30px; align-items:center; gap:10px; margin:7px 0; font-size:13px; color:var(--muted); }
+    .rbar .track { height:5px; border-radius:3px; background:var(--hover); overflow:hidden; }
+    .rbar .track i { display:block; height:100%; background:var(--accent); border-radius:3px; }
+    .rbar .val { text-align:right; color:var(--text); font-weight:600; }
+    .checkin-bar { position:sticky; bottom:84px; z-index:3; display:flex; align-items:center; gap:12px; padding:8px 0 2px; }
+    .checkin-bar .round { flex:none; width:52px; height:52px; border-radius:50%; border:0; background:var(--accent); color:var(--accent-ink); display:grid; place-items:center; cursor:pointer; box-shadow:0 8px 20px rgba(0,0,0,.3); }
+    .checkin-bar .wide { flex:1; min-height:52px; border-radius:26px; border:1px solid var(--rim); background:var(--glass); backdrop-filter:blur(24px); color:var(--text); font-weight:600; font-size:16px; display:flex; align-items:center; justify-content:center; gap:8px; cursor:pointer; }
+    .checkin-bar .wide .ic { width:20px; height:20px; }
+    .star-row { display:flex; gap:6px; }
+    .star-row .ic { width:24px; height:24px; }
+    .toast { position:absolute; z-index:6; left:50%; bottom:88px; transform:translate(-50%,10px); opacity:0; pointer-events:none; padding:12px 16px; border-radius:12px; background:var(--text); color:var(--page); font-size:13px; font-weight:500; white-space:nowrap; transition:.2s; }
+    .toast.show { transform:translate(-50%,0); opacity:1; }
+    .divider { height:1px; background:var(--divider); margin:18px 0; }
+    .legal { color:var(--muted); font-size:12px; text-align:center; margin-top:13px; }
+    @media (max-width:800px) {
+      .workspace { padding:18px 14px 30px; }
+      .workspace-head { margin-bottom:14px; }
+      .layout { display:flex; flex-direction:column; gap:12px; }
+      .intro { position:static; padding:6px 2px; width:100%; max-width:none; }
+      .intro h1 { font-size:28px; }
+      .intro p { font-size:14px; }
+      .principles, .prototype-note { display:none; }
+      .screen-picker { margin:15px 0; flex-wrap:nowrap; overflow:auto; padding-bottom:4px; }
+      .screen-picker button { white-space:nowrap; }
+      .device-wrap { width:100%; display:flex; justify-content:center; }
+      .device { position:relative; top:auto; width:min(100%,390px); max-height:none; min-height:780px; }
+      .app-screen { height:740px; min-height:740px; }
+    }
+    @media (max-width:390px) { .device { border-width:5px; border-radius:34px; } .app-screen { min-height:750px; } }
+  </style>
+</head>
+<body data-theme="dark">
+  <!-- Спрайт иконок Phosphor (MIT), как CoffeePeekIcons -->
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+    <symbol id="i-star-fill" viewBox="0 0 256 256"><path d="M234.29,114.85l-45,38.83L203,211.75a16.4,16.4,0,0,1-24.5,17.82L128,198.49,77.47,229.57A16.4,16.4,0,0,1,53,211.75l13.76-58.07-45-38.83A16.46,16.46,0,0,1,31.08,86l59-4.76,22.76-55.08a16.36,16.36,0,0,1,30.27,0l22.75,55.08,59,4.76a16.46,16.46,0,0,1,9.37,28.86Z"/></symbol>
+    <symbol id="i-bell" viewBox="0 0 256 256"><path d="M221.8,175.94C216.25,166.38,208,139.33,208,104a80,80,0,1,0-160,0c0,35.34-8.26,62.38-13.81,71.94A16,16,0,0,0,48,200H88.81a40,40,0,0,0,78.38,0H208a16,16,0,0,0,13.8-24.06ZM128,216a24,24,0,0,1-22.62-16h45.24A24,24,0,0,1,128,216ZM48,184c7.7-13.24,16-43.92,16-80a64,64,0,1,1,128,0c0,36.05,8.28,66.73,16,80Z"/></symbol>
+    <symbol id="i-bookmark" viewBox="0 0 256 256"><path d="M184,32H72A16,16,0,0,0,56,48V224a8,8,0,0,0,12.24,6.78L128,193.43l59.77,37.35A8,8,0,0,0,200,224V48A16,16,0,0,0,184,32Zm0,16V161.57l-51.77-32.35a8,8,0,0,0-8.48,0L72,161.56V48ZM132.23,177.22a8,8,0,0,0-8.48,0L72,209.57V180.43l56-35,56,35v29.14Z"/></symbol>
+    <symbol id="i-buildings" viewBox="0 0 256 256"><path d="M240,208H224V96a16,16,0,0,0-16-16H144V32a16,16,0,0,0-24.88-13.32L39.12,72A16,16,0,0,0,32,85.34V208H16a8,8,0,0,0,0,16H240a8,8,0,0,0,0-16ZM208,96V208H144V96ZM48,85.34,128,32V208H48ZM112,112v16a8,8,0,0,1-16,0V112a8,8,0,1,1,16,0Zm-32,0v16a8,8,0,0,1-16,0V112a8,8,0,1,1,16,0Zm0,56v16a8,8,0,0,1-16,0V168a8,8,0,0,1,16,0Zm32,0v16a8,8,0,0,1-16,0V168a8,8,0,0,1,16,0Z"/></symbol>
+    <symbol id="i-caret-left" viewBox="0 0 256 256"><path d="M165.66,202.34a8,8,0,0,1-11.32,11.32l-80-80a8,8,0,0,1,0-11.32l80-80a8,8,0,0,1,11.32,11.32L91.31,128Z"/></symbol>
+    <symbol id="i-caret-right" viewBox="0 0 256 256"><path d="M181.66,133.66l-80,80a8,8,0,0,1-11.32-11.32L164.69,128,90.34,53.66a8,8,0,0,1,11.32-11.32l80,80A8,8,0,0,1,181.66,133.66Z"/></symbol>
+    <symbol id="i-check-circle" viewBox="0 0 256 256"><path d="M173.66,98.34a8,8,0,0,1,0,11.32l-56,56a8,8,0,0,1-11.32,0l-24-24a8,8,0,0,1,11.32-11.32L112,148.69l50.34-50.35A8,8,0,0,1,173.66,98.34ZM232,128A104,104,0,1,1,128,24,104.11,104.11,0,0,1,232,128Zm-16,0a88,88,0,1,0-88,88A88.1,88.1,0,0,0,216,128Z"/></symbol>
+    <symbol id="i-check" viewBox="0 0 256 256"><path d="M229.66,77.66l-128,128a8,8,0,0,1-11.32,0l-56-56a8,8,0,0,1,11.32-11.32L96,188.69,218.34,66.34a8,8,0,0,1,11.32,11.32Z"/></symbol>
+    <symbol id="i-coffee" viewBox="0 0 256 256"><path d="M80,56V24a8,8,0,0,1,16,0V56a8,8,0,0,1-16,0Zm40,8a8,8,0,0,0,8-8V24a8,8,0,0,0-16,0V56A8,8,0,0,0,120,64Zm32,0a8,8,0,0,0,8-8V24a8,8,0,0,0-16,0V56A8,8,0,0,0,152,64Zm96,56v8a40,40,0,0,1-37.51,39.91,96.59,96.59,0,0,1-27,40.09H208a8,8,0,0,1,0,16H32a8,8,0,0,1,0-16H56.54A96.3,96.3,0,0,1,24,136V88a8,8,0,0,1,8-8H208A40,40,0,0,1,248,120ZM200,96H40v40a80.27,80.27,0,0,0,45.12,72h69.76A80.27,80.27,0,0,0,200,136Zm32,24a24,24,0,0,0-16-22.62V136a95.78,95.78,0,0,1-1.2,15A24,24,0,0,0,232,128Z"/></symbol>
+    <symbol id="i-dots-three" viewBox="0 0 256 256"><path d="M140,128a12,12,0,1,1-12-12A12,12,0,0,1,140,128Zm56-12a12,12,0,1,0,12,12A12,12,0,0,0,196,116ZM60,116a12,12,0,1,0,12,12A12,12,0,0,0,60,116Z"/></symbol>
+    <symbol id="i-eye" viewBox="0 0 256 256"><path d="M247.31,124.76c-.35-.79-8.82-19.58-27.65-38.41C194.57,61.26,162.88,48,128,48S61.43,61.26,36.34,86.35C17.51,105.18,9,124,8.69,124.76a8,8,0,0,0,0,6.5c.35.79,8.82,19.57,27.65,38.4C61.43,194.74,93.12,208,128,208s66.57-13.26,91.66-38.34c18.83-18.83,27.3-37.61,27.65-38.4A8,8,0,0,0,247.31,124.76ZM128,192c-30.78,0-57.67-11.19-79.93-33.25A133.47,133.47,0,0,1,25,128,133.33,133.33,0,0,1,48.07,97.25C70.33,75.19,97.22,64,128,64s57.67,11.19,79.93,33.25A133.46,133.46,0,0,1,231.05,128C223.84,141.46,192.43,192,128,192Zm0-112a48,48,0,1,0,48,48A48.05,48.05,0,0,0,128,80Zm0,80a32,32,0,1,1,32-32A32,32,0,0,1,128,160Z"/></symbol>
+    <symbol id="i-gear-six" viewBox="0 0 256 256"><path d="M128,80a48,48,0,1,0,48,48A48.05,48.05,0,0,0,128,80Zm0,80a32,32,0,1,1,32-32A32,32,0,0,1,128,160Zm109.94-52.79a8,8,0,0,0-3.89-5.4l-29.83-17-.12-33.62a8,8,0,0,0-2.83-6.08,111.91,111.91,0,0,0-36.72-20.67,8,8,0,0,0-6.46.59L128,41.85,97.88,25a8,8,0,0,0-6.47-.6A112.1,112.1,0,0,0,54.73,45.15a8,8,0,0,0-2.83,6.07l-.15,33.65-29.83,17a8,8,0,0,0-3.89,5.4,106.47,106.47,0,0,0,0,41.56,8,8,0,0,0,3.89,5.4l29.83,17,.12,33.62a8,8,0,0,0,2.83,6.08,111.91,111.91,0,0,0,36.72,20.67,8,8,0,0,0,6.46-.59L128,214.15,158.12,231a7.91,7.91,0,0,0,3.9,1,8.09,8.09,0,0,0,2.57-.42,112.1,112.1,0,0,0,36.68-20.73,8,8,0,0,0,2.83-6.07l.15-33.65,29.83-17a8,8,0,0,0,3.89-5.4A106.47,106.47,0,0,0,237.94,107.21Zm-15,34.91-28.57,16.25a8,8,0,0,0-3,3c-.58,1-1.19,2.06-1.81,3.06a7.94,7.94,0,0,0-1.22,4.21l-.15,32.25a95.89,95.89,0,0,1-25.37,14.3L134,199.13a8,8,0,0,0-3.91-1h-.19c-1.21,0-2.43,0-3.64,0a8.08,8.08,0,0,0-4.1,1l-28.84,16.1A96,96,0,0,1,67.88,201l-.11-32.2a8,8,0,0,0-1.22-4.22c-.62-1-1.23-2-1.8-3.06a8.09,8.09,0,0,0-3-3.06l-28.6-16.29a90.49,90.49,0,0,1,0-28.26L61.67,97.63a8,8,0,0,0,3-3c.58-1,1.19-2.06,1.81-3.06a7.94,7.94,0,0,0,1.22-4.21l.15-32.25a95.89,95.89,0,0,1,25.37-14.3L122,56.87a8,8,0,0,0,4.1,1c1.21,0,2.43,0,3.64,0a8.08,8.08,0,0,0,4.1-1l28.84-16.1A96,96,0,0,1,188.12,55l.11,32.2a8,8,0,0,0,1.22,4.22c.62,1,1.23,2,1.8,3.06a8.09,8.09,0,0,0,3,3.06l28.6,16.29A90.49,90.49,0,0,1,222.9,142.12Z"/></symbol>
+    <symbol id="i-map-pin" viewBox="0 0 256 256"><path d="M128,64a40,40,0,1,0,40,40A40,40,0,0,0,128,64Zm0,64a24,24,0,1,1,24-24A24,24,0,0,1,128,128Zm0-112a88.1,88.1,0,0,0-88,88c0,31.4,14.51,64.68,42,96.25a254.19,254.19,0,0,0,41.45,38.3,8,8,0,0,0,9.18,0A254.19,254.19,0,0,0,174,200.25c27.45-31.57,42-64.85,42-96.25A88.1,88.1,0,0,0,128,16Zm0,206c-16.53-13-72-60.75-72-118a72,72,0,0,1,144,0C200,161.23,144.53,209,128,222Z"/></symbol>
+    <symbol id="i-moon" viewBox="0 0 256 256"><path d="M233.54,142.23a8,8,0,0,0-8-2,88.08,88.08,0,0,1-109.8-109.8,8,8,0,0,0-10-10,104.84,104.84,0,0,0-52.91,37A104,104,0,0,0,136,224a103.09,103.09,0,0,0,62.52-20.88,104.84,104.84,0,0,0,37-52.91A8,8,0,0,0,233.54,142.23ZM188.9,190.34A88,88,0,0,1,65.66,67.11a89,89,0,0,1,31.4-26A106,106,0,0,0,96,56,104.11,104.11,0,0,0,200,160a106,106,0,0,0,14.92-1.06A89,89,0,0,1,188.9,190.34Z"/></symbol>
+    <symbol id="i-newspaper" viewBox="0 0 256 256"><path d="M88,112a8,8,0,0,1,8-8h80a8,8,0,0,1,0,16H96A8,8,0,0,1,88,112Zm8,40h80a8,8,0,0,0,0-16H96a8,8,0,0,0,0,16ZM232,64V184a24,24,0,0,1-24,24H32A24,24,0,0,1,8,184.11V88a8,8,0,0,1,16,0v96a8,8,0,0,0,16,0V64A16,16,0,0,1,56,48H216A16,16,0,0,1,232,64Zm-16,0H56V184a23.84,23.84,0,0,1-1.37,8H208a8,8,0,0,0,8-8Z"/></symbol>
+    <symbol id="i-pencil-simple" viewBox="0 0 256 256"><path d="M227.31,73.37,182.63,28.68a16,16,0,0,0-22.63,0L36.69,152A15.86,15.86,0,0,0,32,163.31V208a16,16,0,0,0,16,16H92.69A15.86,15.86,0,0,0,104,219.31L227.31,96a16,16,0,0,0,0-22.63ZM92.69,208H48V163.31l88-88L180.69,120ZM192,108.68,147.31,64l24-24L216,84.68Z"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 256 256"><path d="M224,128a8,8,0,0,1-8,8H136v80a8,8,0,0,1-16,0V136H40a8,8,0,0,1,0-16h80V40a8,8,0,0,1,16,0v80h80A8,8,0,0,1,224,128Z"/></symbol>
+    <symbol id="i-share-network" viewBox="0 0 256 256"><path d="M176,160a39.89,39.89,0,0,0-28.62,12.09l-46.1-29.63a39.8,39.8,0,0,0,0-28.92l46.1-29.63a40,40,0,1,0-8.66-13.45l-46.1,29.63a40,40,0,1,0,0,55.82l46.1,29.63A40,40,0,1,0,176,160Zm0-128a24,24,0,1,1-24,24A24,24,0,0,1,176,32ZM64,152a24,24,0,1,1,24-24A24,24,0,0,1,64,152Zm112,72a24,24,0,1,1,24-24A24,24,0,0,1,176,224Z"/></symbol>
+    <symbol id="i-sparkle" viewBox="0 0 256 256"><path d="M197.58,129.06,146,110l-19-51.62a15.92,15.92,0,0,0-29.88,0L78,110l-51.62,19a15.92,15.92,0,0,0,0,29.88L78,178l19,51.62a15.92,15.92,0,0,0,29.88,0L146,178l51.62-19a15.92,15.92,0,0,0,0-29.88ZM137,164.22a8,8,0,0,0-4.74,4.74L112,223.85,91.78,169A8,8,0,0,0,87,164.22L32.15,144,87,123.78A8,8,0,0,0,91.78,119L112,64.15,132.22,119a8,8,0,0,0,4.74,4.74L191.85,144ZM144,40a8,8,0,0,1,8-8h16V16a8,8,0,0,1,16,0V32h16a8,8,0,0,1,0,16H184V64a8,8,0,0,1-16,0V48H152A8,8,0,0,1,144,40ZM248,88a8,8,0,0,1-8,8h-8v8a8,8,0,0,1-16,0V96h-8a8,8,0,0,1,0-16h8V72a8,8,0,0,1,16,0v8h8A8,8,0,0,1,248,88Z"/></symbol>
+    <symbol id="i-sun" viewBox="0 0 256 256"><path d="M120,40V16a8,8,0,0,1,16,0V40a8,8,0,0,1-16,0Zm72,88a64,64,0,1,1-64-64A64.07,64.07,0,0,1,192,128Zm-16,0a48,48,0,1,0-48,48A48.05,48.05,0,0,0,176,128ZM58.34,69.66A8,8,0,0,0,69.66,58.34l-16-16A8,8,0,0,0,42.34,53.66Zm0,116.68-16,16a8,8,0,0,0,11.32,11.32l16-16a8,8,0,0,0-11.32-11.32ZM192,72a8,8,0,0,0,5.66-2.34l16-16a8,8,0,0,0-11.32-11.32l-16,16A8,8,0,0,0,192,72Zm5.66,114.34a8,8,0,0,0-11.32,11.32l16,16a8,8,0,0,0,11.32-11.32ZM48,128a8,8,0,0,0-8-8H16a8,8,0,0,0,0,16H40A8,8,0,0,0,48,128Zm80,80a8,8,0,0,0-8,8v24a8,8,0,0,0,16,0V216A8,8,0,0,0,128,208Zm112-88H216a8,8,0,0,0,0,16h24a8,8,0,0,0,0-16Z"/></symbol>
+    <symbol id="i-user" viewBox="0 0 256 256"><path d="M230.92,212c-15.23-26.33-38.7-45.21-66.09-54.16a72,72,0,1,0-73.66,0C63.78,166.78,40.31,185.66,25.08,212a8,8,0,1,0,13.85,8c18.84-32.56,52.14-52,89.07-52s70.23,19.44,89.07,52a8,8,0,1,0,13.85-8ZM72,96a56,56,0,1,1,56,56A56.06,56.06,0,0,1,72,96Z"/></symbol>
+    <symbol id="i-users" viewBox="0 0 256 256"><path d="M117.25,157.92a60,60,0,1,0-66.5,0A95.83,95.83,0,0,0,3.53,195.63a8,8,0,1,0,13.4,8.74,80,80,0,0,1,134.14,0,8,8,0,0,0,13.4-8.74A95.83,95.83,0,0,0,117.25,157.92ZM40,108a44,44,0,1,1,44,44A44.05,44.05,0,0,1,40,108Zm210.14,98.7a8,8,0,0,1-11.07-2.33A79.83,79.83,0,0,0,172,168a8,8,0,0,1,0-16,44,44,0,1,0-16.34-84.87,8,8,0,1,1-5.94-14.85,60,60,0,0,1,55.53,105.64,95.83,95.83,0,0,1,47.22,37.71A8,8,0,0,1,250.14,206.7Z"/></symbol>
+    <symbol id="i-globe" viewBox="0 0 256 256"><path d="M128,24h0A104,104,0,1,0,232,128,104.12,104.12,0,0,0,128,24Zm88,104a87.61,87.61,0,0,1-3.33,24H174.16a157.44,157.44,0,0,0,0-48h38.51A87.61,87.61,0,0,1,216,128ZM102,168H154a115.11,115.11,0,0,1-26,45A115.27,115.27,0,0,1,102,168Zm-3.9-16a140.84,140.84,0,0,1,0-48h59.88a140.84,140.84,0,0,1,0,48ZM40,128a87.61,87.61,0,0,1,3.33-24H81.84a157.44,157.44,0,0,0,0,48H43.33A87.61,87.61,0,0,1,40,128ZM154,88H102a115.11,115.11,0,0,1,26-45A115.27,115.27,0,0,1,154,88Zm52.33,0H170.71a135.28,135.28,0,0,0-22.3-45.6A88.29,88.29,0,0,1,206.37,88ZM107.59,42.4A135.28,135.28,0,0,0,85.29,88H49.63A88.29,88.29,0,0,1,107.59,42.4ZM49.63,168H85.29a135.28,135.28,0,0,0,22.3,45.6A88.29,88.29,0,0,1,49.63,168Zm98.78,45.6a135.28,135.28,0,0,0,22.3-45.6h35.66A88.29,88.29,0,0,1,148.41,213.6Z"/></symbol>
+    <symbol id="i-sign-out" viewBox="0 0 256 256"><path d="M120,216a8,8,0,0,1-8,8H48a8,8,0,0,1-8-8V40a8,8,0,0,1,8-8h64a8,8,0,0,1,0,16H56V208h56A8,8,0,0,1,120,216Zm109.66-93.66-40-40a8,8,0,0,0-11.32,11.32L204.69,120H112a8,8,0,0,0,0,16h92.69l-26.35,26.34a8,8,0,0,0,11.32,11.32l40-40A8,8,0,0,0,229.66,122.34Z"/></symbol>
+    <symbol id="i-magnifying-glass" viewBox="0 0 256 256"><path d="M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z"/></symbol>
+    <symbol id="i-user-circle" viewBox="0 0 256 256"><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24ZM74.08,197.5a64,64,0,0,1,107.84,0,87.83,87.83,0,0,1-107.84,0ZM96,120a32,32,0,1,1,32,32A32,32,0,0,1,96,120Zm97.76,66.41a79.66,79.66,0,0,0-36.06-28.75,48,48,0,1,0-59.4,0,79.66,79.66,0,0,0-36.06,28.75,88,88,0,1,1,131.52,0Z"/></symbol>
+    <symbol id="i-star" viewBox="0 0 256 256"><path d="M239.18,97.26A16.38,16.38,0,0,0,224.92,86l-59-4.76L143.14,26.15a16.36,16.36,0,0,0-30.27,0L90.11,81.23,31.08,86a16.46,16.46,0,0,0-9.37,28.86l45,38.83L53,211.75a16.38,16.38,0,0,0,24.5,17.82L128,198.49l50.53,31.08A16.4,16.4,0,0,0,203,211.75l-13.76-58.07,45-38.83A16.43,16.43,0,0,0,239.18,97.26Zm-15.34,5.47-48.7,42a8,8,0,0,0-2.56,7.91l14.88,62.8a.37.37,0,0,1-.17.48c-.18.14-.23.11-.38,0l-54.72-33.65a8,8,0,0,0-8.38,0L69.09,215.94c-.15.09-.19.12-.38,0a.37.37,0,0,1-.17-.48l14.88-62.8a8,8,0,0,0-2.56-7.91l-48.7-42c-.12-.1-.23-.19-.13-.5s.18-.27.33-.29l63.92-5.16A8,8,0,0,0,103,91.86l24.62-59.61c.08-.17.11-.25.35-.25s.27.08.35.25L153,91.86a8,8,0,0,0,6.75,4.92l63.92,5.16c.15,0,.24,0,.33.29S224,102.63,223.84,102.73Z"/></symbol>
+    <symbol id="i-heart" viewBox="0 0 256 256"><path d="M178,40c-20.65,0-38.73,8.88-50,23.89C116.73,48.88,98.65,40,78,40a62.07,62.07,0,0,0-62,62c0,70,103.79,126.66,108.21,129a8,8,0,0,0,7.58,0C136.21,228.66,240,172,240,102A62.07,62.07,0,0,0,178,40ZM128,214.8C109.74,204.16,32,155.69,32,102A46.06,46.06,0,0,1,78,56c19.45,0,35.78,10.36,42.6,27a8,8,0,0,0,14.8,0c6.82-16.67,23.15-27,42.6-27a46.06,46.06,0,0,1,46,46C224,155.61,146.24,204.15,128,214.8Z"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 256 256"><path d="M208,80H176V56a48,48,0,0,0-96,0V80H48A16,16,0,0,0,32,96V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V96A16,16,0,0,0,208,80ZM96,56a32,32,0,0,1,64,0V80H96ZM208,208H48V96H208V208Zm-68-56a12,12,0,1,1-12-12A12,12,0,0,1,140,152Z"/></symbol>
+    <symbol id="i-info" viewBox="0 0 256 256"><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm16-40a8,8,0,0,1-8,8,16,16,0,0,1-16-16V128a8,8,0,0,1,0-16,16,16,0,0,1,16,16v40A8,8,0,0,1,144,176ZM112,84a12,12,0,1,1,12,12A12,12,0,0,1,112,84Z"/></symbol>
+    <symbol id="i-chat-centered-text" viewBox="0 0 256 256"><path d="M88,104a8,8,0,0,1,8-8h64a8,8,0,0,1,0,16H96A8,8,0,0,1,88,104Zm8,40h64a8,8,0,0,0,0-16H96a8,8,0,0,0,0,16ZM232,56V184a16,16,0,0,1-16,16H155.57l-13.68,23.94a16,16,0,0,1-27.78,0L100.43,200H40a16,16,0,0,1-16-16V56A16,16,0,0,1,40,40H216A16,16,0,0,1,232,56Zm-16,0H40V184h65.07a8,8,0,0,1,7,4l16,28,16-28a8,8,0,0,1,7-4H216Z"/></symbol>
+    <symbol id="i-coffee-bean" viewBox="0 0 256 256"><path d="M211.75,44.25C195,27.47,170.37,20.79,142.46,25.44c-26.91,4.49-53.87,19.09-75.9,41.12s-36.63,49-41.12,75.9c-4.65,27.91,2,52.51,18.81,69.29C57.54,225.05,75.75,232,96.62,232a103.66,103.66,0,0,0,16.92-1.44c26.91-4.49,53.87-19.09,75.9-41.12s36.63-49,41.12-75.9C235.21,85.63,228.53,61,211.75,44.25ZM77.87,77.87C102.56,53.19,133,39.93,159.15,39.93a62.26,62.26,0,0,1,29,6.67A108.48,108.48,0,0,0,157.1,63.54c-19.2,15.16-31.63,36.32-36.94,62.89-9.72,48.58-44.7,65.18-67.48,70.84C28.71,168.76,39.4,116.35,77.87,77.87ZM178.13,178.13c-34.69,34.68-80.71,46.78-110.32,31.27A108.72,108.72,0,0,0,98.9,192.46c19.2-15.16,31.63-36.32,36.94-62.89,9.72-48.58,44.7-65.18,67.48-70.84C227.29,87.24,216.6,139.65,178.13,178.13Z"/></symbol>
+    <symbol id="i-package" viewBox="0 0 256 256"><path d="M223.68,66.15,135.68,18a15.88,15.88,0,0,0-15.36,0l-88,48.17a16,16,0,0,0-8.32,14v95.64a16,16,0,0,0,8.32,14l88,48.17a15.88,15.88,0,0,0,15.36,0l88-48.17a16,16,0,0,0,8.32-14V80.18A16,16,0,0,0,223.68,66.15ZM128,32l80.34,44-29.77,16.3-80.35-44ZM128,120,47.66,76l33.9-18.56,80.34,44ZM40,90l80,43.78v85.79L40,175.82Zm176,85.78h0l-80,43.79V133.82l32-17.51V152a8,8,0,0,0,16,0V107.55L216,90v85.77Z"/></symbol>
+        <symbol id="i-clock" viewBox="0 0 256 256"><path d="M128,24A104,104,0,1,0,232,128,104.11,104.11,0,0,0,128,24Zm0,192a88,88,0,1,1,88-88A88.1,88.1,0,0,1,128,216Zm64-88a8,8,0,0,1-8,8H128a8,8,0,0,1-8-8V72a8,8,0,0,1,16,0v48h48A8,8,0,0,1,192,128Z"/></symbol>
+        <symbol id="i-shopping-bag" viewBox="0 0 256 256"><path d="M216,40H40A16,16,0,0,0,24,56V200a16,16,0,0,0,16,16H216a16,16,0,0,0,16-16V56A16,16,0,0,0,216,40Zm0,160H40V56H216V200ZM176,88a48,48,0,0,1-96,0,8,8,0,0,1,16,0,32,32,0,0,0,64,0,8,8,0,0,1,16,0Z"/></symbol>
+        <symbol id="i-envelope" viewBox="0 0 256 256"><path d="M224,48H32a8,8,0,0,0-8,8V192a16,16,0,0,0,16,16H216a16,16,0,0,0,16-16V56A8,8,0,0,0,224,48ZM203.43,64,128,133.15,52.57,64ZM216,192H40V74.19l82.59,75.71a8,8,0,0,0,10.82,0L216,74.19V192Z"/></symbol>
+        <symbol id="i-x" viewBox="0 0 256 256"><path d="M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z"/></symbol>
+        <symbol id="i-qr-code" viewBox="0 0 256 256"><path d="M104,40H56A16,16,0,0,0,40,56v48a16,16,0,0,0,16,16h48a16,16,0,0,0,16-16V56A16,16,0,0,0,104,40Zm0,64H56V56h48v48Zm0,32H56a16,16,0,0,0-16,16v48a16,16,0,0,0,16,16h48a16,16,0,0,0,16-16V152A16,16,0,0,0,104,136Zm0,64H56V152h48v48ZM200,40H152a16,16,0,0,0-16,16v48a16,16,0,0,0,16,16h48a16,16,0,0,0,16-16V56A16,16,0,0,0,200,40Zm0,64H152V56h48v48Zm-64,72V144a8,8,0,0,1,16,0v32a8,8,0,0,1-16,0Zm80-16a8,8,0,0,1-8,8H184v40a8,8,0,0,1-8,8H144a8,8,0,0,1,0-16h24V144a8,8,0,0,1,16,0v8h24A8,8,0,0,1,216,160Zm0,32v16a8,8,0,0,1-16,0V192a8,8,0,0,1,16,0Z"/></symbol>
+        <symbol id="i-filter" viewBox="0 0 256 256"><path d="M40,88H73a32,32,0,0,0,62,0h81a8,8,0,0,0,0-16H135a32,32,0,0,0-62,0H40a8,8,0,0,0,0,16Zm64-24A16,16,0,1,1,88,80,16,16,0,0,1,104,64ZM216,168H199a32,32,0,0,0-62,0H40a8,8,0,0,0,0,16h97a32,32,0,0,0,62,0h17a8,8,0,0,0,0-16Zm-48,24a16,16,0,1,1,16-16A16,16,0,0,1,168,192Z"/></symbol>
+        <symbol id="i-expand" viewBox="0 0 256 256"><path d="M216,48V96a8,8,0,0,1-16,0V67.31l-42.34,42.35a8,8,0,0,1-11.32-11.32L188.69,56H160a8,8,0,0,1,0-16h48A8,8,0,0,1,216,48ZM98.34,146.34,56,188.69V160a8,8,0,0,0-16,0v48a8,8,0,0,0,8,8H96a8,8,0,0,0,0-16H67.31l42.35-42.34a8,8,0,0,0-11.32-11.32ZM208,152a8,8,0,0,0-8,8v28.69l-42.34-42.35a8,8,0,0,0-11.32,11.32L188.69,200H160a8,8,0,0,0,0,16h48a8,8,0,0,0,8-8V160A8,8,0,0,0,208,152ZM67.31,56H96a8,8,0,0,0,0-16H48a8,8,0,0,0-8,8V96a8,8,0,0,0,16,0V67.31l42.34,42.35a8,8,0,0,0,11.32-11.32Z"/></symbol>
+        <symbol id="i-calendar" viewBox="0 0 256 256"><path d="M208,32H184V24a8,8,0,0,0-16,0v8H88V24a8,8,0,0,0-16,0v8H48A16,16,0,0,0,32,48V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V48A16,16,0,0,0,208,32ZM72,48v8a8,8,0,0,0,16,0V48h80v8a8,8,0,0,0,16,0V48h24V80H48V48ZM208,208H48V96H208V208Zm-96-88v64a8,8,0,0,1-16,0V132.94l-4.42,2.22a8,8,0,0,1-7.16-14.32l16-8A8,8,0,0,1,112,120Zm59.16,30.45L152,176h16a8,8,0,0,1,0,16H136a8,8,0,0,1-6.4-12.8l28.78-38.37A8,8,0,1,0,145.07,132a8,8,0,1,1-13.85-8A24,24,0,0,1,176,136,23.76,23.76,0,0,1,171.16,150.45Z"/></symbol>
+        <symbol id="i-note-edit" viewBox="0 0 256 256"><path d="M229.66,58.34l-32-32a8,8,0,0,0-11.32,0l-96,96A8,8,0,0,0,88,128v32a8,8,0,0,0,8,8h32a8,8,0,0,0,5.66-2.34l96-96A8,8,0,0,0,229.66,58.34ZM124.69,152H104V131.31l64-64L188.69,88ZM200,76.69,179.31,56,192,43.31,212.69,64ZM224,128v80a16,16,0,0,1-16,16H48a16,16,0,0,1-16-16V48A16,16,0,0,1,48,32h80a8,8,0,0,1,0,16H48V208H208V128a8,8,0,0,1,16,0Z"/></symbol>
+        <symbol id="i-calendar" viewBox="0 0 256 256"><path d="M208,32H184V24a8,8,0,0,0-16,0v8H88V24a8,8,0,0,0-16,0v8H48A16,16,0,0,0,32,48V208a16,16,0,0,0,16,16H208a16,16,0,0,0,16-16V48A16,16,0,0,0,208,32ZM72,48v8a8,8,0,0,0,16,0V48h80v8a8,8,0,0,0,16,0V48h24V80H48V48ZM208,208H48V96H208V208Zm-96-88v64a8,8,0,0,1-16,0V132.94l-4.42,2.22a8,8,0,0,1-7.16-14.32l16-8A8,8,0,0,1,112,120Zm59.16,30.45L152,176h16a8,8,0,0,1,0,16H136a8,8,0,0,1-6.4-12.8l28.78-38.37A8,8,0,1,0,145.07,132a8,8,0,1,1-13.85-8A24,24,0,0,1,176,136,23.76,23.76,0,0,1,171.16,150.45Z"/></symbol>
+        <symbol id="i-note-edit" viewBox="0 0 256 256"><path d="M229.66,58.34l-32-32a8,8,0,0,0-11.32,0l-96,96A8,8,0,0,0,88,128v32a8,8,0,0,0,8,8h32a8,8,0,0,0,5.66-2.34l96-96A8,8,0,0,0,229.66,58.34ZM124.69,152H104V131.31l64-64L188.69,88ZM200,76.69,179.31,56,192,43.31,212.69,64ZM224,128v80a16,16,0,0,1-16,16H48a16,16,0,0,1-16-16V48A16,16,0,0,1,48,32h80a8,8,0,0,1,0,16H48V208H208V128a8,8,0,0,1,16,0Z"/></symbol>
+        <symbol id="i-phone" viewBox="0 0 256 256"><path d="M222.37,158.46l-47.11-21.11-.13-.06a16,16,0,0,0-15.17,1.4,8.12,8.12,0,0,0-.75.56L134.87,160c-15.42-7.49-31.34-23.29-38.83-38.51l20.78-24.71c.2-.25.39-.5.57-.77a16,16,0,0,0,1.32-15.06l0-.12L97.54,33.64a16,16,0,0,0-16.62-9.52A56.26,56.26,0,0,0,32,80c0,79.4,64.6,144,144,144a56.26,56.26,0,0,0,55.88-48.92A16,16,0,0,0,222.37,158.46ZM176,208A128.14,128.14,0,0,1,48,80,40.2,40.2,0,0,1,82.87,40a.61.61,0,0,0,0,.12l21,47L83.2,111.86a6.13,6.13,0,0,0-.57.77,16,16,0,0,0-1,15.7c9.06,18.53,27.73,37.06,46.46,46.11a16,16,0,0,0,15.75-1.14,8.44,8.44,0,0,0,.74-.56L168.89,152l47,21.05h0s.08,0,.11,0A40.21,40.21,0,0,1,176,208Z"/></symbol>
+    <symbol id="m-mascot" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M12 1.5C7 1.5 4.5 5.5 4.5 11.5C4.5 13.2 3 13.6 3 15C3 16.5 4 17.3 5.3 17.5C5.9 19.3 6.7 20.3 7.8 21L7.1 22.8H10.7L11 21.8H13L13.3 22.8H16.9L16.2 21C17.3 20.3 18.1 19.3 18.7 17.5C20 17.3 21 16.5 21 15C21 13.6 19.5 13.2 19.5 11.5C19.5 5.5 17 1.5 12 1.5ZM11.1 1.5C12.4 4 12.4 5.4 11.6 7.2C11.1 8.3 11.2 9.5 11.9 10.5C12.3 8.8 13.4 7.8 13.8 6.3C14.3 4.8 13.8 3 12.7 1.5ZM9.5 8.5A1.5 1.5 0 1 1 6.5 8.5A1.5 1.5 0 1 1 9.5 8.5ZM17.5 8.5A1.5 1.5 0 1 1 14.5 8.5A1.5 1.5 0 1 1 17.5 8.5ZM15.2 11.34C17.4 12.74 16.7 15.88 14.3 18.22C11.96 20.56 9.68 20.94 8.42 19.16C7.16 17.38 7.94 14.78 10.02 12.8C12.06 10.82 13.92 10.52 15.2 11.34Z"/><path fill-rule="evenodd" d="M14.9 12C16.5 13.1 15.8 15.7 13.7 17.8C11.6 19.9 9.8 20.1 8.9 18.8C8 17.5 8.6 15.2 10.5 13.4C12.3 11.6 13.8 11.3 14.9 12ZM14.9 12C13.3 13.5 13.6 14.3 12.4 15.6C11.6 16.4 10.4 16.9 8.9 18.8L9.7 19.4C11.1 17.9 12.8 17.5 13.5 16.4C14.5 14.9 14 13.8 15.5 12.6Z"/><path d="M6.2 14.3C7.1 14.5 7.6 14.6 8.4 14.6H9.2C9.8 14.6 9.8 15.9 9.2 15.9H8.1C7.1 15.9 6.5 15.7 6 15.4ZM17.8 13.9C17.1 14.1 16.6 14.3 15.8 14.3H15.2C14.5 14.3 14.5 15.6 15.2 15.6H16C17 15.6 17.6 15.3 18 15Z"/></symbol>
+  </svg>
+
+  <main class="workspace">
+    <header class="workspace-head">
+      <div class="brand"><span class="bean"><svg class="ic"><use href="#m-mascot"/></svg></span><span>CoffeePeek <span class="eyebrow">· концепт</span></span></div>
+      <div class="head-actions">
+        <button class="quiet-button" id="themeButton" aria-label="Переключить тему">
+          <svg class="ic" id="themeIconSun" style="display:none"><use href="#i-sun"/></svg>
+          <svg class="ic" id="themeIconMoon"><use href="#i-moon"/></svg>
+          Тема
+        </button>
+      </div>
+    </header>
+    <div class="layout">
+      <section class="intro">
+        <div class="eyebrow">Интерактивный концепт</div>
+        <h1>CoffeePeek глазами клиента, кофейни и обжарщика</h1>
+        <p>Одно приложение — три роли. Клиент смотрит кофейни, ведёт свою полку и делает предзаказы. Кофейня показывает витрину, принимает предзаказы и настраивает лояльность. Обжарщик продаёт зерно и получает заказы. Переключайте категории слева — навигация в «телефоне» меняется вместе с ролью.</p>
+        <div class="persona-switch" role="group" aria-label="Тип профиля">
+          <button class="persona-btn active" data-persona="client" onclick="switchPersona('client')">Клиент</button>
+          <button class="persona-btn" data-persona="cafe" onclick="switchPersona('cafe')">Кофейня</button>
+          <button class="persona-btn" data-persona="roaster" onclick="switchPersona('roaster')">Обжарщик</button>
+        </div>
+        <nav class="screen-picker" aria-label="Экраны прототипа">
+          <div class="persona-screens" data-persona="client">
+            <button data-screen="role" data-mode="client">Регистрация и вход</button>
+            <button data-screen="login" data-mode="client">Вход в аккаунт</button>
+            <button data-screen="u-search" data-mode="client">Поиск</button>
+            <button data-screen="cafe" data-mode="client">Карточка кофейни</button>
+            <button data-screen="checkin" data-mode="client">Чекин</button>
+            <button data-screen="u-shelf" data-mode="client">Моя полка</button>
+            <button data-screen="feed" data-mode="client">Лента</button>
+            <button data-screen="preorder" data-mode="client">Предзаказ</button>
+            <button data-screen="preorder-code" data-mode="client">Код выдачи</button>
+            <button data-screen="qr" data-mode="client">Мой QR</button>
+            <button data-screen="u-profile" data-mode="client">Профиль</button>
+            <button data-screen="settings" data-mode="client">Настройки</button>
+          </div>
+          <div class="persona-screens" data-persona="cafe" style="display:none">
+            <button data-screen="business" data-mode="cafe">Мои кофейни</button>
+            <button data-screen="cafe" data-mode="cafe">Страница кофейни</button>
+            <button data-screen="shelf" data-mode="cafe">Полка кофе</button>
+            <button data-screen="cpreorders" data-mode="cafe">Предзаказы</button>
+            <button data-screen="loyalty" data-mode="cafe">Лояльность</button>
+            <button data-screen="feed" data-mode="cafe">Лента</button>
+            <button data-screen="profile" data-mode="cafe">Профиль</button>
+            <button data-screen="settings" data-mode="cafe">Настройки</button>
+            <div class="demo-row" role="group" aria-label="Демо состояния предзаказа">
+              <span class="eyebrow">Предзаказ у Happy Coffee</span>
+              <button class="demo-chip active" id="demoOn" onclick="setPreorder('on')">Доступен</button>
+              <button class="demo-chip" id="demoBusy" onclick="setPreorder('busy')">Высокая загрузка</button>
+              <button class="demo-chip" id="demoOff" onclick="setPreorder('off')">Отключён</button>
+            </div>
+          </div>
+          <div class="persona-screens" data-persona="roaster" style="display:none">
+            <button data-screen="r-shelf" data-mode="roaster">Полка зерна</button>
+            <button data-screen="r-orders" data-mode="roaster">Заказы</button>
+            <button data-screen="feed" data-mode="roaster">Лента</button>
+            <button data-screen="profile" data-mode="roaster">Профиль</button>
+            <button data-screen="settings" data-mode="roaster">Настройки</button>
+          </div>
+        </nav>
+        <div class="principles">
+          <div class="principle"><span class="check">✓</span><div><b>Права зависят от подтверждённого владения</b><span>Выбор роли не открывает редактирование чужих кофеен.</span></div></div>
+          <div class="principle"><span class="check">✓</span><div><b>Публикации отделены от чекинов</b><span>У кофейни свой формат новостей, меню и событий.</span></div></div>
+          <div class="principle"><span class="check">✓</span><div><b>Личный режим остаётся доступен</b><span>Пользователь переключается между личным и бизнес-разделом.</span></div></div>
+        </div>
+        <div class="prototype-note">Это визуальная концепция, а не готовая спецификация. Текущие серверные права и возможность публикаций нужно согласовать отдельно.</div>
+      </section>
+
+      <div class="device-wrap">
+        <section class="device" aria-label="Макет приложения CoffeePeek">
+          <div class="status"><span>9:41</span><span>●●●　 Wi-Fi　 100%</span></div>
+
+          <section class="app-screen active" id="screen-role">
+            <div class="topbar"><button class="auth-x" onclick="toast('Закрытие — в приложении возврат на старт')" aria-label="Закрыть"><svg class="ic"><use href="#i-x"/></svg></button><div class="auth-logo" style="flex:1">Coffee<b>Peek</b></div><span style="width:44px"></span></div>
+            <div class="auth-shell">
+              <div class="auth-mascot"><svg class="ic"><use href="#m-mascot"/></svg></div>
+              <div class="auth-card">
+                <div class="auth-steps">
+                  <div class="st active"><span>1</span><small>Выбор</small></div>
+                  <div class="st"><span>2</span><small>Регистрация</small></div>
+                  <div class="st"><span>3</span><small>Готово</small></div>
+                </div>
+                <h2 style="font-size:24px;font-weight:700;margin:0 0 6px">Вход или регистрация</h2>
+                <p style="color:var(--muted);font-size:14px;margin:0 0 14px">Выберите, как вы будете пользоваться CoffeePeek.</p>
+                <div class="choice selected" data-choice="coffee" style="padding:11px 14px;margin:8px 0"><svg class="ic" style="width:20px;height:20px;color:var(--accent-text);flex:none;margin-top:2px"><use href="#i-user-circle"/></svg><div><b>Клиент</b><span>Кофейни, лента, полка и лояльность</span></div></div>
+                <div class="choice" data-choice="business" style="padding:11px 14px;margin:8px 0"><svg class="ic" style="width:20px;height:20px;color:var(--accent-text);flex:none;margin-top:2px"><use href="#i-buildings"/></svg><div><b>Кофейня</b><span>Витрина, предзаказы и лояльность</span></div></div>
+                <div class="choice" data-choice="roaster" style="padding:11px 14px;margin:8px 0"><svg class="ic" style="width:20px;height:20px;color:var(--accent-text);flex:none;margin-top:2px"><use href="#i-coffee-bean"/></svg><div><b>Обжарщик</b><span>Зерно в продаже и заказы</span></div></div>
+                <div style="height:14px"></div>
+                <button class="primary" style="width:100%" onclick="goFromRole()">Продолжить</button>
+                <div class="auth-alt"><button class="text-link" onclick="showScreen('login')">Уже есть аккаунт? Войти</button></div>
+              </div>
+              <div class="legal">Продолжая, вы принимаете условия использования CoffeePeek.</div>
+            </div>
+          </section>
+
+          <section class="app-screen" id="screen-login">
+            <div class="topbar"><button class="auth-x" onclick="showScreen('role')" aria-label="Закрыть"><svg class="ic"><use href="#i-x"/></svg></button><div class="auth-logo" style="flex:1">Coffee<b>Peek</b></div><span style="width:44px"></span></div>
+            <div class="auth-shell">
+              <div class="auth-mascot"><svg class="ic" style="width:64px;height:64px"><use href="#m-mascot"/></svg></div>
+              <div class="auth-card">
+                <h2 style="font-size:24px;font-weight:700;margin:0 0 6px">Вход в аккаунт</h2>
+                <p style="color:var(--muted);font-size:14px;margin:0 0 14px">Войдите в свой аккаунт CoffeePeek.</p>
+                <label class="field-label" style="margin-top:0">Email</label>
+                <div class="field-wrap"><svg class="ic"><use href="#i-envelope"/></svg><input class="field" placeholder="name@example.com"></div>
+                <label class="field-label">Пароль</label>
+                <div class="field-wrap"><svg class="ic"><use href="#i-lock"/></svg><input class="field" type="password" placeholder="Пароль"><svg class="ic eye" onclick="toast('Показ пароля')" aria-label="Показать пароль"><use href="#i-eye"/></svg></div>
+                <div class="auth-link"><button class="text-link" onclick="toast('Восстановление пароля')">Забыли пароль?</button></div>
+                <button class="primary" style="width:100%" onclick="toast('В реальном приложении откроется личный режим'); showScreen('business')">Войти</button>
+                <div class="auth-alt"><button class="text-link" onclick="showScreen('role')">Создать аккаунт</button></div>
+              </div>
+            </div>
+          </section>
+
+          <section class="app-screen" id="screen-claim">
+            <div class="topbar"><button class="back" onclick="showScreen('role')" aria-label="Назад"><svg class="ic"><use href="#i-caret-left"/></svg></button><span class="subtle" id="claimStep">Регистрация кофейни · шаг 2 из 3</span></div>
+            <div class="content">
+              <div class="eyebrow">Представительство</div>
+              <h2 style="font-size:24px;line-height:1.2;margin:7px 0 8px;font-weight:700" id="claimTitle">Найдите свою кофейню</h2>
+              <p style="color:var(--muted);margin:0 0 16px;font-size:14px" id="claimHint">Выберите заведение из CoffeePeek. После заявки команда проверит, что вы представляете эту кофейню.</p>
+              <input class="field" id="claimSearch" placeholder="Название или адрес кофейни">
+              <div class="section-head"><h3>Подходящие места</h3></div>
+              <span id="claimCafeList" style="display:contents">
+              <button class="choice selected" style="width:100%" onclick="selectClaim(this)"><span class="radio"></span><div><b>Happy Coffee</b><span>просп. Машерова, 12 · Минск</span></div></button>
+              <button class="choice" style="width:100%" onclick="selectClaim(this)"><span class="radio"></span><div><b>1801 кофе</b><span>пр. Независимости, 95 · Минск</span></div></button>
+              </span>
+              <span id="claimRoastList" style="display:none">
+              <button class="choice selected" style="width:100%" onclick="selectClaim(this)"><span class="radio"></span><div><b>Manufactura</b><span>ул. Промышленная, 9 · Минск</span></div></button>
+              <button class="choice" style="width:100%" onclick="selectClaim(this)"><span class="radio"></span><div><b>The Welder Catherine</b><span>ул. Октябрьская, 16 · Минск</span></div></button>
+              </span>
+              <button class="text-link" style="padding-left:0" onclick="toast('Форма добавления нового места')">Не нашли кофейню? Предложить новую</button>
+              <div class="divider"></div>
+              <label class="field-label">Как с вами связаться</label><input class="field" placeholder="Телефон или рабочая почта">
+              <label class="field-label">Подтвердите связь с кофейней</label><textarea class="field" style="min-height:82px" placeholder="Ваша роль и удобный способ подтвердить представительство"></textarea>
+              <label class="field-label">Подтверждающие материалы · до 3 фото</label><button class="photo-add" onclick="toast('Выбор подтверждающих фото')"><span><svg class="ic"><use href="#i-plus"/></svg></span>Добавить фото или документ</button>
+              <div style="height:16px"></div><button class="primary" style="width:100%" onclick="toast('Заявка отправлена на проверку')">Отправить заявку</button>
+              <div class="legal">Пока заявка проверяется, редактирование страницы недоступно.</div>
+            </div>
+          </section>
+
+          <section class="app-screen" id="screen-feed">
+            <div class="topbar"><div class="topbar-main"><h2>Лента</h2></div><button class="icon-button" style="position:relative" onclick="toast('Уведомления')" aria-label="Уведомления"><svg class="ic"><use href="#i-bell"/></svg><span style="position:absolute;top:-2px;right:-2px;min-width:18px;height:18px;border-radius:9px;background:var(--accent);color:var(--accent-ink);font-size:11px;font-weight:700;display:grid;place-items:center">9</span></button></div>
+            <div class="fchips" role="group" aria-label="Фильтр ленты">
+              <button class="fchip active" data-feed="all" onclick="filterFeed('all')">Все</button>
+              <button class="fchip" data-feed="news" onclick="filterFeed('news')">Новости</button>
+              <button class="fchip" data-feed="checkin" onclick="filterFeed('checkin')">Чекины</button>
+            </div>
+            <div class="content" style="padding-top:0">
+              <div class="feed-post" data-kind="checkin">
+                <div class="post-head">
+                  <span class="avatar">К</span>
+                  <div class="who"><b>ksenia10.01.2003</b><small>23 минуты назад</small></div>
+                  <button class="text-link" onclick="toast('Действия чекина')" aria-label="Действия"><svg class="ic" style="width:20px;height:20px"><use href="#i-dots-three"/></svg></button>
+                </div>
+                <div class="feed-cafe"><button class="text-link" style="font-size:24px;font-weight:700;color:var(--text);padding:0" onclick="toast('Карточка другой кофейни — только просмотр')">Синяя птица</button></div>
+                <div class="stars"><svg class="ic"><use href="#i-star-fill"/></svg><svg class="ic"><use href="#i-star-fill"/></svg><svg class="ic"><use href="#i-star-fill"/></svg><svg class="ic"><use href="#i-star-fill"/></svg><svg class="ic off"><use href="#i-star"/></svg><small>3.7</small></div>
+                <p class="feed-text">красивый интерьер, ватрушки вкусные, но цена прям оверрайс, очень медленное обслуживание</p>
+                <div class="photo-grid"><div></div><div></div></div>
+                <div class="post-footer">
+                  <span class="like"><svg class="ic"><use href="#i-heart"/></svg>0</span>
+                  <span class="drink"><svg class="ic"><use href="#i-coffee"/></svg>Капучино</span>
+                </div>
+              </div>
+              <div class="feed-post" data-kind="checkin">
+                <div class="post-head">
+                  <span class="avatar">Д</span>
+                  <div class="who"><b>Дария</b><small>1 час назад</small></div>
+                  <button class="text-link" onclick="toast('Действия чекина')" aria-label="Действия"><svg class="ic" style="width:20px;height:20px"><use href="#i-dots-three"/></svg></button>
+                </div>
+                <div class="feed-cafe"><button class="text-link" style="font-size:24px;font-weight:700;color:var(--text);padding:0" onclick="showScreen('cafe')">Happy Coffee</button></div>
+                <div class="stars"><svg class="ic"><use href="#i-star-fill"/></svg><svg class="ic"><use href="#i-star-fill"/></svg><svg class="ic"><use href="#i-star-fill"/></svg><svg class="ic"><use href="#i-star-fill"/></svg><svg class="ic"><use href="#i-star-fill"/></svg><small>5.0</small></div>
+                <p class="feed-text">Часто прихожу посидеть поработать или просто отдохнуть. Спешелти кофе от локальных обжарщиков, завтраки весь день.</p>
+                <div class="photo-grid"><div></div></div>
+                <div class="post-footer">
+                  <span class="like"><svg class="ic"><use href="#i-heart"/></svg>4</span>
+                  <span class="drink"><svg class="ic"><use href="#i-coffee"/></svg>Латте</span>
+                </div>
+              </div>
+              <div class="feed-post" data-kind="news">
+                <div class="post-head">
+                  <span class="icon-badge ib-gold" style="width:44px;height:44px;border-radius:50%"><svg class="ic" style="width:22px;height:22px"><use href="#i-buildings"/></svg></span>
+                  <div class="who"><b>1801 кофе</b><small>публикация кофейни · 3 ч назад</small></div>
+                  <button class="text-link" onclick="toast('Действия публикации')" aria-label="Действия"><svg class="ic" style="width:20px;height:20px"><use href="#i-dots-three"/></svg></button>
+                </div>
+                <div class="feed-cafe">Второй фильтр за полцены</div>
+                <p class="feed-text">По будням с 14:00 до 18:00. Успейте попробовать новый урожай из Эфиопии.</p>
+                <div class="post-footer">
+                  <span class="like"><svg class="ic"><use href="#i-heart"/></svg>12</span>
+                  <span class="drink"><svg class="ic" style="color:var(--accent-text)"><use href="#i-sparkle"/></svg>АКЦИЯ</span>
+                </div>
+              </div>
+              <button class="fab" id="feedFab" onclick="showScreen('compose')" aria-label="Новая публикация"><svg class="ic"><use href="#i-plus"/></svg></button>
+            </div>
+          </section>
+
+<section class="app-screen" id="screen-shelf">
+            <div class="topbar"><div class="topbar-main"><h2>Полка кофе</h2><div class="subtle">Happy Coffee</div></div><button class="icon-button" onclick="toast('Откроется каталог и форма добавления')" aria-label="Добавить кофе"><svg class="ic"><use href="#i-plus"/></svg></button></div>
+            <div class="content" style="padding-top:0">
+              <div class="caps">
+                <button class="active" data-shelf="on" onclick="switchShelf('on')">На полке</button>
+                <button data-shelf="arch" onclick="switchShelf('arch')">Архив</button>
+              </div>
+              <div id="shelf-on">
+                <div class="post-card" style="display:flex;gap:12px;align-items:flex-start;background:color-mix(in srgb, var(--accent) 8%, var(--surface))"><span class="icon-badge ib-gold" style="width:36px;height:36px;border-radius:11px"><svg class="ic" style="width:19px;height:19px"><use href="#i-info"/></svg></span><div><b style="font-size:14px">Пометьте каждую позицию</b><p style="margin:2px 0 0;color:var(--muted);font-size:13px">«Варим» — гости видят сорт в карточке кофейни. «В продаже» — зерно можно купить, добавьте ценник.</p></div></div>
+                <div class="shelf-section">
+                  <div class="group-caption"><svg class="ic"><use href="#i-coffee"/></svg>На чём варим</div>
+                  <div class="plank-row">
+                    <div class="bag-unit">
+                      <div class="bag" style="background:linear-gradient(160deg,#c9a36b,#a87f4b)" onclick="toast('Ethiopia Guji — редактирование позиции')"><span class="bag-label"><b>ETHIOPIA</b><small>KOF · guji</small></span></div>
+                      
+                    </div>
+                    <div class="bag-unit">
+                      <div class="bag" style="background:linear-gradient(160deg,#8a7460,#5f4c3a)" onclick="toast('Colombia Huila — редактирование позиции')"><span class="bag-label"><b>COLOMBIA</b><small>welder · huila</small></span></div>
+                      
+                    </div>
+                  </div>
+                  <div class="plank"></div>
+                </div>
+                <div class="shelf-section">
+                  <div class="group-caption"><svg class="ic"><use href="#i-shopping-bag"/></svg>В продаже</div>
+                  <div class="plank-row">
+                    <div class="bag-unit">
+                      <div class="bag" style="background:linear-gradient(160deg,#dba1a9,#b76e79)" onclick="toast('Brazil Sul de Minas — редактирование позиции')"><span class="bag-label"><b>BRAZIL</b><small>manufactura</small></span></div>
+                      <div class="hang"><span class="tag"><i class="price">24,10 Б</i></span></div>
+                    </div>
+                    <div class="bag-unit">
+                      <div class="bag" style="width:62px;height:80px;background:linear-gradient(160deg,#e8e4da,#c9c2b2);opacity:.72" onclick="toast('Позиция добавлена — заполните карточку и ценник')"><span class="bag-label"><b>НОВАЯ</b><small>без цены</small></span></div>
+                      
+                    </div>
+                  </div>
+                  <div class="plank"></div>
+                </div>
+                <div style="height:2px"></div>
+                <button class="secondary" style="width:100%" onclick="toast('Выберите: сорт на варку или зерно в продажу')"><svg class="ic"><use href="#i-plus"/></svg>Добавить позицию на полку</button>
+                <div style="height:12px"></div>
+                <div id="shelf-arch" style="display:none">
+                <div class="shelf-card archived">
+                  <div class="shelf-photo" style="background:linear-gradient(135deg,#8d7d92,#4e4453 55%,#241f26)"><span class="brand-chip">M.</span></div>
+                  <div class="shelf-body">
+                    <b>Kenya AA</b>
+                    <div class="origin">Manufactura · Кения</div>
+                    <div class="shelf-tags"><span>Смородина</span><span>Фильтр</span></div>
+                    <div class="shelf-foot"><span class="when">Снят с полки 12.10</span></div>
+                  </div>
+                </div>
+                <div class="empty-state" style="padding:16px"><div class="empty-icon" style="width:52px;height:52px"><svg class="ic" style="width:26px;height:26px"><use href="#i-coffee-bean"/></svg></div><b style="font-size:16px">Снятые сорта видят только вы</b>Гости видят только то, что сейчас на полке.</div>
+              </div>
+            </div>
+          </section>
+
+          <section class="app-screen" id="screen-r-shelf">
+            <div class="topbar"><div class="topbar-main"><h2>Полка</h2><div class="subtle">Manufactura · зерно в продаже</div></div><button class="icon-button" onclick="toast('Новый сорт зерна')" aria-label="Добавить"><svg class="ic"><use href="#i-plus"/></svg></button></div>
+            <div class="content" style="padding-top:0">
+              <div class="shelf-counter">3 сорта · перетащите пачку в корзину</div>
+              <div class="shelf-section">
+                <div class="plank-row">
+                  <div class="bag-unit">
+                    <div class="bag" style="background:linear-gradient(160deg,#dba1a9,#b76e79)" draggable="true" ondragstart="dragBean(event, 'Brazil Sul de Minas')"><span class="bag-label"><b>BRAZIL</b><small>manufactura</small></span></div>
+                    <div class="hang"><span class="tag"><i class="price">24,10 Б</i></span></div>
+                  </div>
+                  <div class="bag-unit">
+                    <div class="bag" style="background:linear-gradient(160deg,#c9a36b,#a87f4b)" draggable="true" ondragstart="dragBean(event, 'Ethiopia Guji')"><span class="bag-label"><b>ETHIOPIA</b><small>guji</small></span></div>
+                    <div class="hang"><span class="tag"><i class="price">27,50 Б</i></span></div>
+                  </div>
+                  <div class="bag-unit">
+                    <div class="bag" style="background:linear-gradient(160deg,#2f2f34,#17171a)"><span class="bag-label"><b>KENYA</b><small>aa</small></span></div>
+                    
+                  </div>
+                </div>
+                <div class="plank"></div>
+              </div>
+              <div style="height:14px"></div>
+            </div>
+          </section>
+
+          <section class="app-screen" id="screen-r-orders">
+            <div class="topbar"><div class="topbar-main"><h2>Заказы</h2><div class="subtle">Manufactura</div></div><span class="pill status-new">1 новый</span></div>
+            <div class="content" style="padding-top:0">
+              <div class="order-card">
+                <div class="order-top"><span class="avatar">М</span><div class="order-main"><b>Мария</b><small>сегодня, 14:20 · самовывоз</small></div><span class="pill status-new">Новый</span></div>
+                <div class="order-item"><span>Brazil Sul de Minas · 250 г</span><span class="price">24,10 Б</span></div>
+                <div style="display:flex;gap:9px"><button class="primary btn-sm" style="flex:1" onclick="this.closest('.order-card').querySelector('.pill').className='pill status-work';this.closest('.order-card').querySelector('.pill').textContent='Принят';toast('Заказ принят — покупателю отправлено уведомление')">Принять заказ</button></div>
+              </div>
+              <div class="order-card">
+                <div class="order-top"><span class="avatar">Д</span><div class="order-main"><b>Дмитрий</b><small>вчера, 19:05 · самовывоз</small></div><span class="pill status-work">Собирается</span></div>
+                <div class="order-item"><span>Ethiopia Guji · 1000 г</span><span class="price">98,00 Б</span></div>
+                <div style="display:flex;gap:9px"><button class="secondary btn-sm" style="flex:1" onclick="this.closest('.order-card').querySelector('.pill').className='pill status-ready';this.closest('.order-card').querySelector('.pill').textContent='Готов к выдаче';toast('Покупателю отправлено уведомление о готовности')">Готов к выдаче</button></div>
+              </div>
+              <div class="order-card">
+                <div class="order-top"><span class="avatar">А</span><div class="order-main"><b>Анна</b><small>сегодня, 11:40 · самовывоз</small></div><span class="pill status-ready">Готов к выдаче</span></div>
+                <div class="order-item"><span>Kenya AA · 250 г</span><span class="price">31,00 Б</span></div>
+                <div class="post-top"><span style="color:var(--muted);font-size:13px">Код: <b style="color:var(--text)">#B3-07</b> · QR у покупателя</span></div>
+              </div>
+              <div class="legal" style="text-align:left">Порядок статусов: Новый → Собирается → Готов к выдаче. Покупатель получает уведомление на каждом шаге.</div>
+            </div>
+          </section>
+
+          <section class="app-screen" id="screen-r-cafepage">
+            <div class="cover-hero" style="height:210px">
+              <div class="float-actions">
+                <button class="back" onclick="showScreen('r-shelf')" aria-label="Назад"><svg class="ic"><use href="#i-caret-left"/></svg></button>
+                <div class="grp">
+                  <button class="icon-button" onclick="toast('Ссылка скопирована')" aria-label="Поделиться"><svg class="ic"><use href="#i-share-network"/></svg></button>
+                </div>
+              </div>
+              <span class="count">Обжарщик</span>
+            </div>
+            <div class="content" style="padding-top:12px">
+              <div class="name-line"><h3 class="cafe-title">Manufactura</h3><span class="pill specialty"><svg class="ic"><use href="#i-coffee-bean"/></svg>Зерно</span></div>
+              <div class="address"><svg class="ic"><use href="#i-map-pin"/></svg>ул. Промышленная, 9 · Минск</div>
+              <div class="metric-chips">
+                <div class="chip-metric"><svg class="ic"><use href="#i-star-fill"/></svg><span><b>4.9</b><span>рейтинг</span></span></div>
+                <div class="chip-metric"><svg class="ic"><use href="#i-coffee-bean"/></svg><span><b>12</b><span>сортов</span></span></div>
+                <div class="chip-metric"><svg class="ic"><use href="#i-package"/></svg><span><b>Самовывоз</b><span>после 12:00</span></span></div>
+              </div>
+              <div class="section-head"><h3>Кофе в продаже</h3></div>
+              <div class="order-card" style="display:flex;gap:14px;align-items:center">
+                <div class="bag sm" style="background:linear-gradient(160deg,#dba1a9,#b76e79);flex:none;cursor:grab" draggable="true" ondragstart="dragBean(event, 'Brazil Sul de Minas')" title="Перетащите в корзину"><span class="bag-label"><b>BRAZIL</b><small>250 г</small></span></div>
+                <div style="flex:1;min-width:0">
+                  <b style="display:block;font-size:16px">Brazil Sul de Minas</b>
+                  <small style="color:var(--muted);font-size:12px;display:block;margin:2px 0 10px">Бразилия · шоколад, орехи</small>
+                  <div style="display:flex;gap:9px;align-items:center"><button class="primary btn-sm" style="flex:1" onclick="openOrder('Brazil Sul de Minas', '24,10 Б', '89,00 Б')">Заказать</button><button class="secondary btn-sm" style="flex:none" onclick="toast('Подробнее о сорте')">250 г · 24,10 Б</button></div>
+                </div>
+              </div>
+              <div class="order-card" style="display:flex;gap:14px;align-items:center">
+                <div class="bag sm" style="background:linear-gradient(160deg,#c9a36b,#a87f4b);flex:none;cursor:grab" draggable="true" ondragstart="dragBean(event, 'Ethiopia Guji')" title="Перетащите в корзину"><span class="bag-label"><b>ETHIOPIA</b><small>250 г</small></span></div>
+                <div style="flex:1;min-width:0">
+                  <b style="display:block;font-size:16px">Ethiopia Guji</b>
+                  <small style="color:var(--muted);font-size:12px;display:block;margin:2px 0 10px">Эфиопия · цветы, бергамот</small>
+                  <div style="display:flex;gap:9px;align-items:center"><button class="primary btn-sm" style="flex:1" onclick="openOrder('Ethiopia Guji', '27,50 Б', '98,00 Б')">Заказать</button><button class="secondary btn-sm" style="flex:none" onclick="toast('Подробнее о сорте')">250 г · 27,50 Б</button></div>
+                </div>
+              </div>
+              <p style="color:var(--muted);font-size:12px;margin:10px 2px 0">Перетащите пачку в корзину ↓ — соберите заказ из нескольких сортов.</p>
+              <button class="fab" id="beanCartFAB" ondragover="event.preventDefault(); this.classList.add('drag-over')" ondragleave="this.classList.remove('drag-over')" ondrop="dropBean(event)" onclick="showBeanCart()" aria-label="Корзина зерна"><svg class="ic"><use href="#i-shopping-bag"/></svg><span class="mini-badge" id="beanCartCount" style="display:none">0</span></button>
+              <div class="post-card" style="display:flex;gap:12px;align-items:flex-start"><span class="icon-badge ib-gold" style="width:36px;height:36px;border-radius:11px"><svg class="ic" style="width:19px;height:19px"><use href="#i-info"/></svg></span><div><b style="font-size:14px">Без перехода на сайт</b><p style="margin:2px 0 0;color:var(--muted);font-size:13px">Заказ оформляется в CoffeePeek: обжарщик получает заявку, покупатель — уведомления о готовности.</p></div></div>
+            </div>
+          </section>
+
+          <section class="app-screen" id="screen-preorder">
+            <div class="topbar"><button class="back" onclick="goBack('cafe')" aria-label="Назад"><svg class="ic"><use href="#i-caret-left"/></svg></button><h2 style="flex:1;margin-left:4px">Предзаказ</h2><span class="subtle">Happy Coffee · к приходу</span></div>
+            <div class="content" style="padding-top:0">
+              <div class="post-card" style="display:flex;gap:12px;align-items:flex-start;background:color-mix(in srgb, var(--accent) 8%, var(--surface))"><span class="icon-badge ib-gold" style="width:36px;height:36px;border-radius:11px"><svg class="ic" style="width:19px;height:19px"><use href="#i-time"/></svg></span><div><b style="font-size:14px">Готово к вашему приходу</b><p style="margin:2px 0 0;color:var(--muted);font-size:13px">Соберите заказ — на кассе покажете код выдачи. Обычно готово через 20–30 минут.</p></div></div>
+              <div class="section-head"><h3>Напитки</h3></div>
+              <div class="rows-card" id="preorderItems"></div>
+              <div class="section-head"><h3>Десерты</h3></div>
+              <div class="rows-card" id="preorderSnacks"></div>
+              <div class="divider"></div>
+              <div class="sheet-row"><span style="color:var(--muted)">Позиции</span><b id="cartCount">0</b></div>
+              <div class="sheet-row"><span style="color:var(--muted)">Итого</span><b id="cartTotal">0,00 Б</b></div>
+              <div class="sheet-row"><span style="color:var(--muted)">Готовность</span><span style="color:var(--muted)">~ 25 минут</span></div>
+              <div style="height:14px"></div>
+              <button class="primary" style="width:100%" onclick="submitPreorder()">Оформить предзаказ</button>
+              <div class="legal">Отмена бесплатна до начала приготовления.</div>
+            </div>
+          </section>
+
+          <section class="app-screen" id="screen-preorder-code">
+            <div class="topbar"><button class="back" onclick="goBack('cafe')" aria-label="Назад"><svg class="ic"><use href="#i-caret-left"/></svg></button><h2 style="flex:1;margin-left:4px">Код выдачи</h2><span class="subtle">Happy Coffee</span></div>
+            <div class="content" style="padding-top:4px">
+              <div class="qr-box"><svg id="qrPreorder" viewBox="0 0 21 21" shape-rendering="crispEdges"></svg></div>
+              <div class="order-number" id="preorderNumber">#42</div>
+              <div class="code-hint">Покажите QR на кассе или назовите номер</div>
+              <div class="steps"><span class="pill done"><svg class="ic"><use href="#i-check"/></svg>Принят</span><span class="pill kind" id="stepCooking">Готовится</span><span class="pill kind" id="stepReady">Готов</span></div>
+              <div class="rows-card" style="margin-top:14px">
+                <div class="row"><span style="display:inline-flex;align-items:center;gap:8px"><svg class="ic" style="width:16px;height:16px;color:var(--muted)"><use href="#i-map-pin"/></svg>Happy Coffee</span><span style="color:var(--muted);font-size:13px">просп. Машерова, 12</span></div>
+                <div class="row"><span style="display:inline-flex;align-items:center;gap:8px"><svg class="ic" style="width:16px;height:16px;color:var(--muted)"><use href="#i-clock"/></svg>Готовность</span><span id="codeReadyTime" style="color:var(--text);font-weight:600">~ 15:40</span></div>
+                <div class="row"><span style="display:inline-flex;align-items:center;gap:8px"><svg class="ic" style="width:16px;height:16px;color:var(--muted)"><use href="#i-shopping-bag"/></svg>Состав</span><span id="codeItems" style="color:var(--muted);font-size:13px;text-align:right">Латте ×1</span></div>
+                <div class="row"><span style="color:var(--muted)">Итого к оплате</span><span class="price-tag" id="codeTotal">8,50 Б</span></div>
+              </div>
+              <div class="legal">Заказ виден кофейне в разделе «Предзаказы».</div>
+            </div>
+          </section>
+
+<section class="app-screen" id="screen-checkin">
+            <div class="topbar"><button class="back" onclick="goBack('cafe')" aria-label="Назад"><svg class="ic"><use href="#i-caret-left"/></svg></button><h2 style="flex:1;margin-left:4px">Чекин</h2><span class="subtle" style="display:inline-flex;align-items:center;gap:4px"><svg class="ic" style="width:13px;height:13px"><use href="#i-map-pin"/></svg>Кофеёк</span></div>
+            <div class="content" style="padding-top:0">
+              <div class="section-head" style="margin-top:6px"><h3>Ваши оценки</h3></div>
+              <p style="color:var(--muted);font-size:13px;margin:0 2px 10px">Нажмите на звёзды, чтобы изменить оценку</p>
+              <div class="rating-bars" style="margin-bottom:10px">
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0"><span style="font-size:15px;font-weight:700">Кофе</span><span class="star-row"><svg class="ic"><use href="#i-star-fill"/></svg><svg class="ic"><use href="#i-star-fill"/></svg><svg class="ic"><use href="#i-star-fill"/></svg><svg class="ic"><use href="#i-star-fill"/></svg><svg class="ic" style="color:var(--line)"><use href="#i-star"/></svg></span></div>
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-top:1px solid var(--divider)"><span style="font-size:15px;font-weight:700">Сервис</span><span class="star-row"><svg class="ic"><use href="#i-star-fill"/></svg><svg class="ic"><use href="#i-star-fill"/></svg><svg class="ic"><use href="#i-star-fill"/></svg><svg class="ic"><use href="#i-star-fill"/></svg><svg class="ic" style="color:var(--line)"><use href="#i-star"/></svg></span></div>
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0"><span style="font-size:15px;font-weight:700">Атмосфера</span><span class="star-row"><svg class="ic"><use href="#i-star-fill"/></svg><svg class="ic"><use href="#i-star-fill"/></svg><svg class="ic"><use href="#i-star-fill"/></svg><svg class="ic"><use href="#i-star-fill"/></svg><svg class="ic" style="color:var(--line)"><use href="#i-star"/></svg></span></div>
+              </div>
+              <div class="group-caption"><svg class="ic"><use href="#i-clock"/></svg>Дата посещения</div>
+              <div class="rows-card"><div class="row"><span style="display:inline-flex;align-items:center;gap:9px"><svg class="ic" style="width:17px;height:17px;color:var(--muted)"><use href="#i-calendar"/></svg>7 ноября 2026</span><span class="chevron"><svg class="ic"><use href="#i-caret-right"/></svg></span></div></div>
+              <div class="group-caption"><svg class="ic"><use href="#i-note-edit"/></svg>Заметка</div>
+              <textarea class="field" style="min-height:96px" placeholder="Расскажите о вашем визите..."></textarea>
+              <div style="height:14px"></div>
+              <button class="primary" style="width:100%" onclick="showScreen('cafe'); toast('Чекин сохранён — 4.8 по трём оценкам')">Сохранить чекин</button>
+              <div class="legal">Чекин появится в ленте и в вашем профиле.</div>
+            </div>
+          </section>
+
+                    <section class="app-screen" id="screen-cpreorders">
+            <div class="topbar"><div class="topbar-main"><h2>Предзаказы</h2><div class="subtle">Happy Coffee · сегодня</div></div><span class="pill status-new">2 новых</span></div>
+            <div class="content" style="padding-top:0">
+              <div class="post-card" style="display:flex;gap:12px;align-items:flex-start;background:color-mix(in srgb, var(--accent) 8%, var(--surface))"><span class="icon-badge ib-gold" style="width:36px;height:36px;border-radius:11px"><svg class="ic" style="width:19px;height:19px"><use href="#i-package"/></svg></span><div><b style="font-size:14px">Как получать заказы</b><p style="margin:2px 0 0;color:var(--muted);font-size:13px">Каждый заказ приходит уведомлением. Покупатель показывает QR или называет номер — сверьте код и выдайте.</p></div></div>
+              <div class="order-card">
+                <div class="order-top"><span class="avatar">М</span><div class="order-main"><b>#42 · Мария</b><small>заберёт к 15:40</small></div><span class="pill status-new">Новый</span></div>
+                <div class="order-item"><span>Латте ×1 · Круассан ×1</span><span class="price">13,00 Б</span></div>
+                <div style="display:flex;gap:9px"><button class="primary btn-sm" style="flex:1" onclick="this.closest('.order-card').querySelector('.pill').className='pill status-ready';this.closest('.order-card').querySelector('.pill').textContent='Выдан';toast('Код #42 подтверждён — заказ выдан')">Подтвердить выдачу</button></div>
+              </div>
+              <div class="order-card">
+                <div class="order-top"><span class="avatar">Д</span><div class="order-main"><b>#43 · Дмитрий</b><small>заберёт к 16:10</small></div><span class="pill status-work">Готовится</span></div>
+                <div class="order-item"><span>Флэт уайт ×2</span><span class="price">17,00 Б</span></div>
+                <div style="display:flex;gap:9px"><button class="secondary btn-sm" style="flex:1" onclick="toast('Готово — покупателю отправлен код')">Готово</button></div>
+              </div>
+              <div class="section-head"><h3>Настройки приёма</h3></div>
+              <div class="settings-card">
+                <div class="settings-row"><div class="row-main"><span class="icon-badge ib-mint"><svg class="ic"><use href="#i-time"/></svg></span><div><b>Приём предзаказов</b><small>Сейчас: включён</small></div></div><button class="switch" onclick="const off = this.classList.toggle('off'); setPreorder(off ? 'busy' : 'on'); toast(off ? 'Приём приостановлен: высокая загрузка' : 'Приём предзаказов включён')" aria-label="Приём предзаказов"></button></div>
+                <div class="settings-row"><div class="row-main"><span class="icon-badge ib-rose"><svg class="ic"><use href="#i-moon"/></svg></span><div><b>Высокая загрузка</b><small>Гостю: «предзаказ недоступен»</small></div></div><button class="demo-chip" onclick="setPreorder('busy'); toast('Гостю показываем: высокая загрузка')">Поставить</button></div>
+                <div class="settings-row"><div class="row-main"><span class="icon-badge ib-rose"><svg class="ic"><use href="#i-block"/></svg></span><div><b>Отключить навсегда</b><small>Убрать предзаказ из карточки</small></div></div><button class="demo-chip" onclick="setPreorder('off'); toast('Предзаказ отключён навсегда')">Отключить</button></div>
+              </div>
+            </div>
+          </section>
+
+          <section class="app-screen" id="screen-loyalty">
+            <div class="topbar"><div class="topbar-main"><h2>Лояльность</h2><div class="subtle">Happy Coffee</div></div><span class="pill success"><svg class="ic"><use href="#i-check"/></svg>Активна</span></div>
+            <div class="content" style="padding-top:0">
+              <div class="post-card" style="display:flex;gap:12px;align-items:flex-start"><span class="icon-badge ib-violet" style="width:36px;height:36px;border-radius:11px"><svg class="ic" style="width:19px;height:19px"><use href="#i-sparkle"/></svg></span><div><b style="font-size:14px">Ваша собственная схема</b><p style="margin:2px 0 0;color:var(--muted);font-size:13px">У гостя один QR на все кофейни-партнёры — единый ID. Какую скидку и за что давать, решаете только вы.</p></div></div>
+              <div class="caps">
+                <button class="active" id="schemeFree" onclick="switchScheme('free')">N-й бесплатно</button>
+                <button id="schemePct" onclick="switchScheme('pct')">Скидка на N-е</button>
+              </div>
+              <div class="scheme-preview"><b id="loyaltyPreview">Каждый 8-й кофе — бесплатно</b><span>Гость увидит прогресс в своём QR</span></div>
+              <div class="settings-card">
+                <div class="settings-row"><div class="row-main"><div><b id="loyaltyNLabel">Каждый N-й напиток</b><small id="loyaltyNDesc">Сколько посещений до награды</small></div></div><span class="stepper"><button onclick="changeN(-1)">−</button><b id="loyaltyN">8</b><button onclick="changeN(1)">+</button></span></div>
+                <div class="settings-row" id="loyaltyPctRow" style="display:none"><div class="row-main"><div><b>Размер скидки</b><small>Применяется к наградному визиту</small></div></div><span class="stepper"><button onclick="changePct(-10)">−</button><b id="loyaltyPct">50%</b><button onclick="changePct(10)">+</button></span></div>
+                <div class="settings-row"><div class="row-main"><span class="icon-badge ib-cyan"><svg class="ic"><use href="#i-user-circle"/></svg></span><div><b>Считать по QR гостя</b><small>Отметка на кассе: скан кода посетителя</small></div></div><button class="switch" onclick="this.classList.toggle('off')" aria-label="Считать по QR"></button></div>
+              </div>
+              <div style="height:14px"></div>
+              <button class="primary" style="width:100%" onclick="toast('Схема лояльности сохранена')">Сохранить схему</button>
+              <div class="legal">Схема действует только в Happy Coffee.</div>
+            </div>
+          </section>
+
+          <section class="app-screen" id="screen-qr">
+            <div class="topbar"><div class="topbar-main"><h2>Мой QR</h2><div class="subtle">Личный код CoffeePeek</div></div></div>
+            <div class="content" style="padding-top:4px">
+              <div class="qr-box"><svg id="qrUser" viewBox="0 0 21 21" shape-rendering="crispEdges"></svg></div>
+              <div class="loyal-id"><svg class="ic" style="width:15px;height:15px"><use href="#i-user-circle"/></svg>Единый ID · <b style="color:var(--text);font-weight:700">CP-7741-2290</b></div>
+              <p style="text-align:center;color:var(--muted);font-size:13px;margin:10px 24px">Один код для всех кофеен-партнёров: отметки о посещениях и скидки каждая кофейня ведёт по своей схеме.</p>
+              <div class="section-head"><h3>Мои схемы</h3></div>
+              <div class="settings-card">
+                <div class="settings-row"><div class="row-main"><span class="bean" style="width:40px;height:40px;border-radius:12px;font-size:14px;font-weight:700">H</span><div><b>Happy Coffee</b><small>Каждый 8-й кофе — бесплатно · 5 из 8</small></div></div><span class="pill success">5/8</span></div>
+                <div class="settings-row"><div class="row-main"><span class="bean" style="width:40px;height:40px;border-radius:12px;font-size:14px;font-weight:700;background:var(--hover);color:var(--text)">1</span><div><b>1801 кофе</b><small>Скидка 10% на каждый 5-й визит · 2 из 5</small></div></div><span class="pill kind">2/5</span></div>
+              </div>
+              <div class="legal">Отметка ставится сканированием вашего QR на кассе.</div>
+            </div>
+          </section>
+
+<section class="app-screen" id="screen-u-search">
+            <div class="search-row">
+              <input class="field" placeholder="Поиск кофеен и обжарщиков...">
+              <button class="icon-button" style="position:relative" onclick="toast('Фильтры поиска')" aria-label="Фильтры"><svg class="ic"><use href="#i-filter"/></svg><span style="position:absolute;top:-3px;right:-3px;min-width:18px;height:18px;border-radius:9px;background:var(--accent);color:var(--accent-ink);font-size:11px;font-weight:700;display:grid;place-items:center">1</span></button>
+            </div>
+            <div class="filters-row">
+              <button class="filter-pill active" onclick="this.parentElement.querySelectorAll('.filter-pill').forEach(x=>x.classList.remove('active'));this.classList.add('active')"><svg class="ic"><use href="#i-map-pin"/></svg>Рядом</button>
+              <button class="filter-pill" onclick="this.parentElement.querySelectorAll('.filter-pill').forEach(x=>x.classList.remove('active'));this.classList.add('active')"><svg class="ic"><use href="#i-clock"/></svg>Открыто</button>
+              <button class="filter-pill" onclick="this.parentElement.querySelectorAll('.filter-pill').forEach(x=>x.classList.remove('active'));this.classList.add('active')"><svg class="ic"><use href="#i-sparkle"/></svg>Новые</button>
+              <button class="filter-pill" onclick="this.parentElement.querySelectorAll('.filter-pill').forEach(x=>x.classList.remove('active'));this.classList.add('active')"><svg class="ic"><use href="#i-check-circle"/></svg>Уже был</button>
+            </div>
+            <div class="map-card"><span class="map-dot"></span><button class="expand" onclick="toast('Карта на весь экран')" aria-label="Раскрыть карту"><svg class="ic"><use href="#i-expand"/></svg></button></div>
+            <div class="section-head" style="margin-top:6px"><h3>Кофейни</h3><button class="text-link" onclick="showScreen('cafe')">Показать все ›</button></div>
+            <div class="hscroll">
+              <div class="shop-card" onclick="showScreen('cafe')">
+                <div class="shop-photo"><span class="rate"><svg class="ic"><use href="#i-star-fill"/></svg>4.9 (8)</span><span class="fav"><svg class="ic"><use href="#i-heart"/></svg></span></div>
+                <div class="shop-body"><div class="nm"><b>Кофеёк</b><span class="closed">Закрыто</span></div><div class="addr"><svg class="ic"><use href="#i-map-pin"/></svg>ул. Сурганова 36</div><div class="kind"><span>Кофейня</span><svg class="ic" style="width:15px;height:15px"><use href="#i-caret-right"/></svg></div></div>
+              </div>
+              <div class="shop-card" onclick="toast('Мроя — карточка кофейни')">
+                <div class="shop-photo" style="background:linear-gradient(160deg,#7d9a8c,#42584d)"><span class="rate"><svg class="ic"><use href="#i-star-fill"/></svg>4.8 (4)</span><span class="fav"><svg class="ic"><use href="#i-heart"/></svg></span></div>
+                <div class="shop-body"><div class="nm"><b>Мроя</b><span class="closed">Закрыто</span></div><div class="addr"><svg class="ic"><use href="#i-map-pin"/></svg>просп. Независимости, 43</div><div class="kind"><span>Кофейня</span><svg class="ic" style="width:15px;height:15px"><use href="#i-caret-right"/></svg></div></div>
+              </div>
+            </div>
+            <div class="section-head"><h3>Обжарщики</h3><button class="text-link" onclick="showScreen('r-cafepage')">Показать все ›</button></div>
+            <div class="hscroll">
+              <div class="roaster-card" onclick="showScreen('r-cafepage')">
+                <span class="logo" style="background:linear-gradient(160deg,#5c5470,#3a3448)">ROAST</span>
+                <div style="flex:1;min-width:0"><b>Roast</b><p>Белорусская обжарка из Минска, работающая с кофе с 2010 года. Обжаривает зерно на ростерах IMF...</p><div class="stats"><span><b>28</b>Кофейни</span><span><b>44</b>Каталог</span></div></div>
+              </div>
+              <div class="roaster-card" onclick="toast('Single Step — карточка обжарщика')">
+                <span class="logo" style="background:linear-gradient(160deg,#3d5a9e,#27407a)">SINGLE STEP</span>
+                <div style="flex:1;min-width:0"><b>Single Step</b><p>Микрообжарка из Гродно. Спешелти-лоты и ежемесячные дегустации...</p><div class="stats"><span><b>10</b>Кофейни</span><span><b>18</b>Каталог</span></div></div>
+              </div>
+            </div>
+            <button class="fab" onclick="toast('Добавить кофейню или обжарщика')" aria-label="Добавить"><svg class="ic"><use href="#i-plus"/></svg></button>
+          </section>
+
+                    <section class="app-screen" id="screen-u-shelf">
+            <div class="topbar"><div class="topbar-main"><h2>Кофейная полка</h2></div><button class="icon-button" onclick="toast('Архив пачек')" aria-label="Архив"><svg class="ic"><use href="#i-package"/></svg></button></div>
+            <div class="content" style="padding-top:0">
+              <div class="caps"><button class="active" id="segMine" onclick="switchUserShelf('mine')">Моя полка</button><button id="segCatalog" onclick="switchUserShelf('catalog')">Каталог</button></div>
+              <div id="shelfMineWrap"><div class="shelf-counter">6 пачек</div>
+              <div class="plank-row">
+                <div class="bag-unit"><div class="bag" style="background:linear-gradient(160deg,#3d5a9e,#27407a)" onclick="toast('Single Step — пачка из полки')"><span class="bag-label"><b>SINGLE STEP</b><small>filter</small></span></div></div>
+                <div class="bag-unit"><div class="bag" style="background:linear-gradient(160deg,#c9a36b,#a87f4b)" onclick="toast('Уганда — пачка из полки')"><span class="bag-label"><b>УГАНДА</b><small>local roasters</small></span></div></div>
+                <div class="bag-unit"><div class="bag" style="background:linear-gradient(160deg,#d8b98c,#b8935f)" onclick="toast('Punch Blend — пачка из полки')"><span class="bag-label"><b>PUNCH BLEND</b><small> espresso</small></span></div></div>
+              </div>
+              <div class="plank"></div>
+              <div style="height:14px"></div>
+              <div class="plank-row">
+                <div class="bag-unit"><div class="bag" style="background:linear-gradient(160deg,#b9925f,#8f6a3d)" onclick="toast('Никарагуа — пачка из полки')"><span class="bag-label"><b>НИКАРАГУА</b><small>local roasters</small></span></div></div>
+                <div class="bag-unit"><div class="bag" style="background:linear-gradient(160deg,#e8e4da,#c9c2b2)" onclick="toast('Как в детстве — пачка из полки')"><span class="bag-label"><b>КАК В ДЕТСТВЕ</b><small>filter</small></span></div></div>
+                <div class="bag-unit"><div class="bag" style="background:linear-gradient(160deg,#2f2f34,#17171a)" onclick="toast('Бурунди — пачка из полки')"><span class="bag-label"><b>БУРУНДИ</b><small>промыв фермент</small></span></div></div>
+              </div>
+              <div class="plank"></div>
+              <div style="height:12px"></div>
+              <p style="color:var(--muted);font-size:12px;margin:0 2px 12px">Когда пачка заканчивается — она уходит в архив полки.</p>
+              </div>
+              <div id="shelfCatalogWrap" style="display:none">
+                <input class="field" style="margin-bottom:12px" placeholder="Название кофе">
+                <div class="order-card" style="display:flex;gap:14px;align-items:center">
+                  <div class="bag sm" style="background:linear-gradient(160deg,#dba1a9,#b76e79);flex:none"><span class="bag-label"><b>BRAZIL</b><small>250 г</small></span></div>
+                  <div style="flex:1;min-width:0"><b style="font-size:16px;display:block">Brazil Sul de Minas</b><small style="color:var(--muted);font-size:12px;display:block;margin:2px 0 8px">Бразилия</small><span class="pill kind" style="margin-right:5px">Шоколад</span></div>
+                  <div style="text-align:right"><span class="price-tag" style="display:block;font-size:15px">24,10 Б</span><span class="stepper" style="margin-top:6px"><button onclick="toast('250 г')">250 г</button><button onclick="toast('1000 г')">1000 г</button></span></div>
+                </div>
+                <div class="order-card" style="display:flex;gap:14px;align-items:center">
+                  <div class="bag sm" style="background:linear-gradient(160deg,#c9a36b,#a87f4b);flex:none"><span class="bag-label"><b>ETHIOPIA</b><small>250 г</small></span></div>
+                  <div style="flex:1;min-width:0"><b style="font-size:16px;display:block">Ethiopia Guji</b><small style="color:var(--muted);font-size:12px;display:block;margin:2px 0 8px">Эфиопия</small><span class="pill kind" style="margin-right:5px">Цветы</span></div>
+                  <div style="text-align:right"><span class="price-tag" style="display:block;font-size:15px">27,50 Б</span><span class="stepper" style="margin-top:6px"><button onclick="toast('250 г')">250 г</button><button onclick="toast('1000 г')">1000 г</button></span></div>
+                </div>
+                <div class="empty-state" style="padding:16px"><div class="empty-icon" style="width:52px;height:52px"><svg class="ic" style="width:26px;height:26px"><use href="#i-coffee-bean"/></svg></div><b style="font-size:15px">Каталог всех обжарщиков</b>Найдите зерно и добавьте на полку.</div>
+              </div>
+              <button class="fab" onclick="toast('Сканирование пачки')" aria-label="Добавить пачку"><svg class="ic"><use href="#i-plus"/></svg></button>
+            </div>
+          </section>
+
+          <section class="app-screen" id="screen-u-profile">
+            <div class="topbar"><div class="topbar-main"><h2>Профиль</h2></div><button class="icon-button" onclick="showScreen('qr')" aria-label="Мой QR"><svg class="ic"><use href="#i-qr-code"/></svg></button></div>
+            <div class="content" style="padding-top:0">
+              <div style="display:flex;align-items:center;gap:14px;margin-top:8px">
+                <span class="avatar" style="width:68px;height:68px;font-size:26px;background:linear-gradient(140deg,#e8b64c,#d99a2b);position:relative">А<span class="icon-badge ib-cyan" style="position:absolute;right:-2px;bottom:-2px;width:22px;height:22px;border-radius:50%" onclick="toast('Редактирование профиля')"><svg class="ic" style="width:12px;height:12px"><use href="#i-pencil-simple"/></svg></span></span>
+                <div><b style="font-size:22px;font-weight:800;display:block">@Мотвый</b><span style="color:var(--muted);font-size:13px">Анастасия · Минск</span></div>
+              </div>
+              <div class="pstats">
+                <span><b>1</b><span>чекины</span></span>
+                <span><b>0</b><span>кофейни</span></span>
+                <span><b>0</b><span>подписчики</span></span>
+              </div>
+              <div class="hero-card" style="margin-top:12px">
+                <div class="hero-body" style="padding:14px 16px">
+                  <div style="display:flex;justify-content:space-between;color:var(--muted);font-size:12px;font-weight:600"><span>Пн</span><span>Вт</span><span>Ср</span><span style="color:var(--accent)">Чт</span><span>Пт</span><span>Сб</span><span>Вс</span></div>
+                  <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px"><span class="qty-one">·</span><span class="qty-one">·</span><span class="qty-one">·</span><span style="width:26px;height:26px;border-radius:8px;background:linear-gradient(140deg,#c9a36b,#a87f4b);display:inline-block"></span><span class="qty-one">·</span><span class="qty-one">·</span><span class="qty-one">·</span></div>
+                </div>
+              </div>
+              <div class="ptabs">
+                <button class="ptab active">Чекины</button>
+                <button class="ptab" onclick="toast('Подборки')">Подборки</button>
+                <button class="ptab" onclick="showScreen('u-shelf')">Полка</button>
+              </div>
+              <div class="section-head" style="margin-top:14px"><h3>Чекины</h3><button class="text-link" onclick="showScreen('u-checkins')">Все ›</button></div>
+              <p style="color:var(--muted);font-size:14px;margin:0 2px 6px">Пока нет чекинов</p>
+              <div class="legal" style="text-align:left;margin-top:16px">Личный QR — кнопка в шапке: покажите его в кофейне-партнёре для отметки лояльности.</div>
+            </div>
+          </section>
+
+                    <section class="app-screen" id="screen-business">
+            <div class="topbar"><div class="topbar-main"><h2>Мои кофейни</h2><div class="subtle">Бизнес-режим</div></div><button class="icon-button" onclick="toast('Уведомления появятся здесь')" aria-label="Уведомления"><svg class="ic"><use href="#i-bell"/></svg></button></div>
+            <div class="content" style="padding-top:0">
+              <div class="hero-card" style="margin-top:8px">
+                <div class="cover" style="border-radius:0"><span class="cover-label" style="position:absolute;top:12px;left:12px;bottom:auto"><svg class="ic"><use href="#i-check-circle"/></svg>Представитель подтверждён</span><span class="cover-label" style="position:absolute;top:12px;right:12px;bottom:auto;left:auto"><svg class="ic" style="color:var(--accent)"><use href="#i-star-fill"/></svg>4.8 (86)</span></div>
+                <div class="hero-body" style="padding:14px 16px 16px">
+                  <div class="name-line"><h3 style="font-size:20px">Happy Coffee</h3><span class="pill success"><svg class="ic"><use href="#i-check"/></svg>Подтверждена</span></div>
+                  <div class="address"><svg class="ic"><use href="#i-map-pin"/></svg>просп. Машерова, 12 · Минск</div>
+                  <div class="post-top" style="margin-top:10px"><span style="color:var(--muted);font-size:13px">Кофейня</span><button class="text-link" onclick="showScreen('cafe')" aria-label="Открыть"><svg class="ic" style="width:18px;height:18px;color:var(--muted)"><use href="#i-caret-right"/></svg></button></div>
+                </div>
+              </div>
+              <div class="section-head"><h3>Быстрые действия</h3></div>
+              <div class="action-row" style="margin-top:0"><button class="secondary" style="flex:1" onclick="showScreen('compose')"><svg class="ic"><use href="#i-plus"/></svg>Новая публикация</button><button class="secondary" style="flex:none;width:48px;padding:0" onclick="showScreen('cafe')" aria-label="Редактировать"><svg class="ic"><use href="#i-pencil-simple"/></svg></button></div>
+              <div class="section-head"><h3>Последняя публикация</h3><button class="text-link" onclick="showScreen('profile')">Все ›</button></div>
+              <article class="post-card"><div class="post-top"><span class="post-type">НОВОСТЬ</span><span>Сегодня · 10:30</span></div><h4>Новый сезонный напиток</h4><p>Попробуйте латте с мёдом и кардамоном — уже в меню.</p><div class="post-photo"></div></article>
+              <button class="text-link" style="margin-top:12px" onclick="toast('Откроется форма подключения кофейни')">＋ Подключить ещё одну кофейню</button>
+            </div>
+          </section>
+
+<section class="app-screen" id="screen-u-checkins">
+            <div class="topbar"><button class="back" onclick="goBack('u-profile')" aria-label="Назад"><svg class="ic"><use href="#i-caret-left"/></svg></button><h2 style="flex:1;margin-left:4px">Чекины</h2></div>
+            <div class="content" style="padding-top:0">
+              <div class="caps"><button class="active" onclick="toast('Все чекины')">Все</button><button onclick="toast('Чекины в кофейне')">В кофейне</button><button onclick="toast('Чекины дома')">Дома</button></div>
+              <div class="hero-card">
+                <div class="hero-body" style="padding:16px">
+                  <div style="display:flex;justify-content:space-between;align-items:center"><b style="font-size:16px">Ноябрь 2026</b><span style="display:flex;gap:6px"><button class="icon-button" style="width:32px;height:32px" onclick="toast('Октябрь')" aria-label="Назад"><svg class="ic" style="width:14px;height:14px"><use href="#i-caret-left"/></svg></button><button class="icon-button" style="width:32px;height:32px" onclick="toast('Декабрь')" aria-label="Вперёд"><svg class="ic" style="width:14px;height:14px"><use href="#i-caret-right"/></svg></button></span></div>
+                  <div style="color:var(--muted);font-size:12px;margin:4px 0 10px">1 чекин · 1 кофейня <span style="color:var(--accent-text);font-weight:600;margin-left:8px">Сегодня</span></div>
+                  <div style="display:flex;justify-content:space-between;color:var(--muted);font-size:11px;font-weight:600"><span>Пн</span><span>Вт</span><span>Ср</span><span>Чт</span><span>Пт</span><span style="color:var(--accent-text)">Сб</span><span>Вс</span></div>
+                  <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px">
+                    <span style="color:var(--muted);font-size:12px">1</span>
+                    <span style="width:26px;height:26px;border-radius:8px;background:linear-gradient(140deg,#c9a36b,#a87f4b)"></span>
+                    <span style="width:26px;height:26px;border-radius:8px;background:linear-gradient(140deg,#dba1a9,#b76e79)"></span>
+                    <span style="color:var(--muted);font-size:12px">5</span>
+                    <span style="color:var(--muted);font-size:12px">6</span>
+                    <span style="width:30px;height:30px;border-radius:9px;border:1.5px solid var(--accent);display:grid;place-items:center;color:var(--accent);font-size:13px;font-weight:700">7</span>
+                    <span style="color:var(--muted);font-size:12px">8</span>
+                  </div>
+                </div>
+              </div>
+              <div class="group-caption"><span style="width:7px;height:7px;border-radius:50%;background:var(--accent);display:inline-block"></span>7 ноября</div>
+              <div class="rows-card">
+                <div class="row"><span style="display:inline-flex;align-items:center;gap:10px"><span class="avatar" style="width:38px;height:38px;font-size:14px">M</span><span><b style="font-size:14px;display:block">Maria</b><small style="color:var(--muted);font-size:11px">7 часов назад</small></span></span></div>
+                <div class="row" style="display:block"><b style="font-size:15px">Мроя</b><div class="stars" style="margin:4px 0 2px"><svg class="ic"><use href="#i-star-fill"/></svg><svg class="ic"><use href="#i-star-fill"/></svg><svg class="ic"><use href="#i-star-fill"/></svg><svg class="ic"><use href="#i-star-fill"/></svg><svg class="ic"><use href="#i-star-fill"/></svg><small>5.0</small></div><p style="margin:0;color:var(--text);font-size:13px">воронка Yankee sierra Эфиопия, вкусно, негорько, насыщенно. лайк)</p></div>
+              </div>
+              <button class="fab" onclick="showScreen('checkin')" aria-label="Новый чекин"><svg class="ic"><use href="#i-plus"/></svg></button>
+            </div>
+          </section>
+
+          <section class="app-screen" id="screen-checkin">
+            <div class="topbar"><button class="back" onclick="goBack('cafe')" aria-label="Назад"><svg class="ic"><use href="#i-caret-left"/></svg></button><h2 style="flex:1;margin-left:4px">Чекин</h2><span class="subtle" style="display:inline-flex;align-items:center;gap:4px"><svg class="ic" style="width:13px;height:13px"><use href="#i-map-pin"/></svg>Кофеёк</span></div>
+            <div class="content" style="padding-top:0">
+              <div class="section-head" style="margin-top:6px"><h3>Ваши оценки</h3></div>
+              <p style="color:var(--muted);font-size:13px;margin:0 2px 10px">Нажмите на звёзды, чтобы изменить оценку</p>
+              <div class="rating-bars" style="margin-bottom:10px">
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0"><span style="font-size:15px;font-weight:700">Кофе</span><span class="star-row"><svg class="ic"><use href="#i-star-fill"/></svg><svg class="ic"><use href="#i-star-fill"/></svg><svg class="ic"><use href="#i-star-fill"/></svg><svg class="ic"><use href="#i-star-fill"/></svg><svg class="ic" style="color:var(--line)"><use href="#i-star"/></svg></span></div>
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-top:1px solid var(--divider)"><span style="font-size:15px;font-weight:700">Сервис</span><span class="star-row"><svg class="ic"><use href="#i-star-fill"/></svg><svg class="ic"><use href="#i-star-fill"/></svg><svg class="ic"><use href="#i-star-fill"/></svg><svg class="ic"><use href="#i-star-fill"/></svg><svg class="ic" style="color:var(--line)"><use href="#i-star"/></svg></span></div>
+                <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0"><span style="font-size:15px;font-weight:700">Атмосфера</span><span class="star-row"><svg class="ic"><use href="#i-star-fill"/></svg><svg class="ic"><use href="#i-star-fill"/></svg><svg class="ic"><use href="#i-star-fill"/></svg><svg class="ic"><use href="#i-star-fill"/></svg><svg class="ic" style="color:var(--line)"><use href="#i-star"/></svg></span></div>
+              </div>
+              <div class="group-caption"><svg class="ic"><use href="#i-calendar"/></svg>Дата посещения</div>
+              <div class="rows-card"><div class="row"><span style="display:inline-flex;align-items:center;gap:9px"><svg class="ic" style="width:17px;height:17px;color:var(--muted)"><use href="#i-calendar"/></svg>7 ноября 2026</span><span class="chevron"><svg class="ic"><use href="#i-caret-right"/></svg></span></div></div>
+              <div class="group-caption"><svg class="ic"><use href="#i-note-edit"/></svg>Заметка</div>
+              <textarea class="field" style="min-height:96px" placeholder="Расскажите о вашем визите..."></textarea>
+              <div style="height:14px"></div>
+              <button class="primary" style="width:100%" onclick="showScreen('cafe'); toast('Чекин сохранён — 4.8 по трём оценкам')">Сохранить чекин</button>
+              <div class="legal">Чекин появится в ленте и в вашем профиле.</div>
+            </div>
+          </section>
+
+          <section class="app-screen" id="screen-cafe">
+            <div class="cover-hero">
+              <div class="float-actions">
+                <button class="back" onclick="showScreen('business')" aria-label="Назад"><svg class="ic"><use href="#i-caret-left"/></svg></button>
+                <div class="grp">
+                  <button class="icon-button" onclick="toast('Добавлено в избранное')" aria-label="Избранное"><svg class="ic"><use href="#i-heart"/></svg></button>
+                  <button class="icon-button" onclick="toast('Ссылка скопирована')" aria-label="Поделиться"><svg class="ic"><use href="#i-share-network"/></svg></button>
+                  <button class="icon-button" onclick="toast('Ещё действия')" aria-label="Ещё"><svg class="ic"><use href="#i-dots-three"/></svg></button>
+                </div>
+              </div>
+              <span class="count">1/1</span>
+            </div>
+            <div class="content" style="padding-top:12px">
+              <div class="name-line"><h3 class="cafe-title">Happy Coffee</h3><span class="pill specialty"><svg class="ic"><use href="#i-coffee"/></svg>Specialty</span></div>
+              <div class="address"><svg class="ic"><use href="#i-map-pin"/></svg>просп. Машерова, 12</div>
+              <div class="metric-chips">
+                <button class="chip-metric" style="text-align:left" onclick="toast('Чекины кофейни')"><svg class="ic"><use href="#i-star-fill"/></svg><span><b>4.8</b><span>86 оценок</span></span></button>
+                <div class="chip-metric"><svg class="ic"><use href="#i-map-pin"/></svg><span><b>до 22:00</b><span>открыто</span></span></div>
+                <div class="chip-metric"><svg class="ic"><use href="#i-coffee"/></svg><span><b>&lt; 8 BYN</b><span>средний чек</span></span></div>
+              </div>
+              <div id="preorderBusy" class="avail-banner busy" style="display:none"><span class="icon-badge ib-gold" style="width:36px;height:36px;border-radius:11px"><svg class="ic" style="width:19px;height:19px"><use href="#i-time"/></svg></span><div><b style="font-size:14px">Предзаказ недоступен: высокая загрузка</b><p>Кофейня временно приостановила предзаказ. Загляните позже.</p></div></div>
+              <div id="preorderOff" class="avail-banner off" style="display:none"><span class="icon-badge ib-cyan" style="width:36px;height:36px;border-radius:11px"><svg class="ic" style="width:19px;height:19px"><use href="#i-info"/></svg></span><div><b style="font-size:14px">Предзаказ недоступен</b><p>Эта кофейня не работает с предзаказом.</p></div></div>
+              <div class="section-head"><h3>Полка кофе</h3><button class="text-link" onclick="toast('Вся полка кофейни')">Все ›</button></div>
+              <div class="group-caption"><svg class="ic"><use href="#i-coffee"/></svg>На чём варим</div>
+              <div class="rows-card">
+                <div class="row"><span>Ethiopia Guji · <span style="color:var(--muted)">KOF</span></span><span style="color:var(--muted);font-size:12px">фильтр</span></div>
+                <div class="row"><span>Colombia Huila · <span style="color:var(--muted)">Welder</span></span><span style="color:var(--muted);font-size:12px">эспрессо</span></div>
+              </div>
+              <div class="group-caption"><svg class="ic"><use href="#i-shopping-bag"/></svg>Можно купить с собой</div>
+              <div class="rows-card">
+                <div class="row"><span>Brazil Sul de Minas · <span style="color:var(--muted)">Manufactura</span></span><span class="price-tag">24,10 Б <small>/ 250 г</small></span></div>
+                <div class="row"><span>Ethiopia Guji · <span style="color:var(--muted)">KOF</span></span><span class="price-tag">27,50 Б <small>/ 250 г</small></span></div>
+              </div>
+              <p style="color:var(--muted);font-size:12px;margin:8px 2px 0">Зёрна в продаже выдаёт та же полка кофейни: помечайте позиции как «варим» или «в продаже».</p>
+              <div class="section-head"><h3>Меню</h3><button class="text-link preorder-entry" onclick="showScreen('preorder')">Предзаказать ›</button></div>
+              <div class="rows-card">
+                <div class="row"><span>Эспрессо</span><span class="price">7,00 Б</span></div>
+                <div class="row"><span>Американо</span><span class="price">7,00 Б</span></div>
+                <div class="row"><span>Латте</span><span class="price">8,50 Б</span></div>
+                <div class="row"><span>Флэт уайт</span><span class="price">8,50 Б</span></div>
+                <div class="row"><span>Раф</span><span class="price">9,00 Б</span></div>
+                <div class="row"><span>Батч</span><span class="price">8,50 Б</span></div>
+              </div>
+              <div class="section-head"><h3>Чекины</h3><span class="text-link" style="cursor:pointer" onclick="toast('Все чекины кофейни')"><svg class="ic" style="width:20px;height:20px;vertical-align:-4px"><use href="#i-caret-right"/></svg></span></div>
+              <div class="rating-bars">
+                <div class="head"><svg class="ic"><use href="#i-star-fill"/></svg>4.8 · Чекины: 10</div>
+                <div class="rbar"><span>Кофе</span><span class="track"><i style="width:94%"></i></span><span class="val">4.7</span></div>
+                <div class="rbar"><span>Сервис</span><span class="track"><i style="width:98%"></i></span><span class="val">4.9</span></div>
+                <div class="rbar"><span>Аура</span><span class="track"><i style="width:100%"></i></span><span class="val">5.0</span></div>
+              </div>
+              <div class="feed-post" style="padding-bottom:14px">
+                <div class="post-head"><span class="avatar" style="width:38px;height:38px;font-size:14px">F</span><div class="who"><b>fedosenko</b><small>1 ноября 2026</small></div></div>
+                <div class="stars"><svg class="ic"><use href="#i-star-fill"/></svg><svg class="ic"><use href="#i-star-fill"/></svg><svg class="ic"><use href="#i-star-fill"/></svg><svg class="ic"><use href="#i-star-fill"/></svg><svg class="ic"><use href="#i-star-fill"/></svg><small>5.0</small></div>
+                <p class="feed-text" style="font-size:14px">Обожаю это место и атмосферно, очень вкусное кофе и я бы рекомендовала вам попробовать нутелловый раф (для сладкоечек)</p>
+                <div class="photo-grid" style="grid-template-columns:1fr 1fr"><div style="height:110px"></div><div style="height:110px"></div></div>
+                <div class="post-footer"><span class="like"><svg class="ic"><use href="#i-heart"/></svg>9</span><span class="drink"><svg class="ic"><use href="#i-coffee"/></svg>Латте</span></div>
+              </div>
+              <div class="avail-banner off" style="margin-bottom:16px"><span class="icon-badge ib-cyan" style="width:36px;height:36px;border-radius:11px"><svg class="ic" style="width:19px;height:19px"><use href="#i-info"/></svg></span><div><b style="font-size:14px">Заметили ошибку в информации о кофейне?</b><p>Помогите нам сделать CoffeePeek лучше</p></div></div>
+              <div class="checkin-bar">
+                <button class="round" onclick="toast('Маршрут до кофейни')" aria-label="Маршрут"><svg class="ic"><use href="#i-map-pin"/></svg></button>
+                <button class="wide" onclick="showScreen('checkin')"><svg class="ic"><use href="#i-check"/></svg>Чекин</button>
+              </div>
+              <div class="section-head"><h3>Чекины</h3><span class="text-link" style="cursor:pointer" onclick="toast('Все чекины кофейни')"><svg class="ic" style="width:20px;height:20px;vertical-align:-4px"><use href="#i-caret-right"/></svg></span></div>
+              <div class="rating-bars">
+                <div class="head"><svg class="ic"><use href="#i-star-fill"/></svg>4.8 · Чекины: 10</div>
+                <div class="rbar"><span>Кофе</span><span class="track"><i style="width:94%"></i></span><span class="val">4.7</span></div>
+                <div class="rbar"><span>Сервис</span><span class="track"><i style="width:98%"></i></span><span class="val">4.9</span></div>
+                <div class="rbar"><span>Аура</span><span class="track"><i style="width:100%"></i></span><span class="val">5.0</span></div>
+              </div>
+              <div class="feed-post" style="padding-bottom:14px">
+                <div class="post-head"><span class="avatar" style="width:38px;height:38px;font-size:14px">F</span><div class="who"><b>fedosenko</b><small>1 ноября 2026</small></div></div>
+                <div class="stars"><svg class="ic"><use href="#i-star-fill"/></svg><svg class="ic"><use href="#i-star-fill"/></svg><svg class="ic"><use href="#i-star-fill"/></svg><svg class="ic"><use href="#i-star-fill"/></svg><svg class="ic"><use href="#i-star-fill"/></svg><small>5.0</small></div>
+                <p class="feed-text" style="font-size:14px">Обожаю это место и атмосферно, очень вкусное кофе и я бы рекомендовала вам попробовать нутелловый раф (для сладкоечек)</p>
+                <div class="photo-grid" style="grid-template-columns:1fr 1fr"><div style="height:110px"></div><div style="height:110px"></div></div>
+                <div class="post-footer"><span class="like"><svg class="ic"><use href="#i-heart"/></svg>9</span><span class="drink"><svg class="ic"><use href="#i-coffee"/></svg>Латте</span></div>
+              </div>
+              <div class="avail-banner off" style="margin-bottom:16px"><span class="icon-badge ib-cyan" style="width:36px;height:36px;border-radius:11px"><svg class="ic" style="width:19px;height:19px"><use href="#i-info"/></svg></span><div><b style="font-size:14px">Заметили ошибку в информации о кофейне?</b><p>Помогите нам сделать CoffeePeek лучше</p></div></div>
+              <div class="checkin-bar">
+                <button class="round" onclick="toast('Маршрут до кофейни')" aria-label="Маршрут"><svg class="ic"><use href="#i-map-pin"/></svg></button>
+                <button class="wide" onclick="showScreen('checkin')"><svg class="ic"><use href="#i-check"/></svg>Чекин</button>
+              </div>
+              <div class="section-head"><h3>Контакты</h3></div>
+              <div class="rows-card">
+                <div class="row"><span style="display:inline-flex;align-items:center;gap:9px"><svg class="ic" style="width:18px;height:18px;color:var(--muted)"><use href="#i-bell"/></svg>+375 44 569-94-34</span><svg class="ic" style="width:18px;height:18px;color:var(--muted)"><use href="#i-share-network"/></svg></div>
+                <div class="row"><span style="display:inline-flex;align-items:center;gap:9px"><svg class="ic" style="width:18px;height:18px;color:var(--muted)"><use href="#i-globe"/></svg>@happy_coffee</span><span class="chevron"><svg class="ic"><use href="#i-caret-right"/></svg></span></div>
+              </div>
+              <button class="secondary preorder-entry" style="width:100%;margin-bottom:16px" onclick="showScreen('preorder')"><svg class="ic"><use href="#i-time"/></svg>Предзаказать к приходу</button>
+              <div class="section-head"><h3>Новости кофейни</h3><button class="text-link" onclick="showScreen('profile')">Все ›</button></div>
+              <div class="feed-post" style="border-bottom:0;padding-bottom:4px">
+                <div class="post-head">
+                  <span class="icon-badge ib-gold" style="width:44px;height:44px;border-radius:50%"><svg class="ic" style="width:22px;height:22px"><use href="#i-buildings"/></svg></span>
+                  <div class="who"><b>Happy Coffee</b><small>публикация · сегодня, 10:30</small></div>
+                  <button class="text-link" onclick="toast('Действия публикации')" aria-label="Действия"><svg class="ic" style="width:20px;height:20px"><use href="#i-dots-three"/></svg></button>
+                </div>
+                <div class="feed-cafe">Новый сезонный напиток</div>
+                <p class="feed-text">Попробуйте латте с мёдом и кардамоном — уже в меню.</p>
+              </div>
+            </div>
+          </section>
+
+                    <section class="app-screen" id="screen-profile">
+            <div class="topbar"><div class="topbar-main"><h2>Профиль</h2></div><span class="pill success"><svg class="ic"><use href="#i-check"/></svg>Проверен</span></div>
+            <div class="content" style="padding-top:0">
+              <div style="display:flex;align-items:center;gap:14px;margin-top:8px">
+                <span class="bean" style="width:72px;height:72px;border-radius:50%"><svg class="ic" style="width:40px;height:40px"><use href="#m-mascot"/></svg></span>
+                <div><b style="font-size:22px;font-weight:800;display:block">Happy Coffee</b><span style="color:var(--muted);font-size:13px">@happy_coffee · Кофейня</span></div>
+              </div>
+              <div class="pstats">
+                <span><b>3</b><span>публикации</span></span>
+                <span><b>1.2k</b><span>просмотры</span></span>
+                <span><b>18</b><span>сохранения</span></span>
+              </div>
+              <div class="ptabs">
+                <button class="ptab active">Публикации</button>
+                <button class="ptab" onclick="toast('Черновики появятся здесь')">Черновики</button>
+              </div>
+              <div class="section-head" style="margin-top:14px"><h3>Публикации</h3><button class="text-link" onclick="showScreen('compose')">＋ Создать</button></div>
+              <article class="post-card"><div class="post-top"><span class="post-type" id="profCard1Type">НОВОСТЬ</span><span>Сегодня · 10:30</span></div><h4 id="profCard1Title">Новый сезонный напиток</h4><p id="profCard1Text">Попробуйте латте с мёдом и кардамоном — уже в меню.</p><div class="post-photo"></div><div class="post-top" style="margin-top:11px"><span style="display:inline-flex;align-items:center;gap:5px"><svg class="ic" style="width:14px;height:14px"><use href="#i-eye"/></svg>1 248 просмотров</span><button class="text-link" onclick="toast('Действия публикации')" aria-label="Действия"><svg class="ic" style="width:18px;height:18px"><use href="#i-dots-three"/></svg></button></div></article>
+              <article class="post-card"><div class="post-top"><span class="post-type" id="profCard2Type">СОБЫТИЕ</span><span>До 30 октября</span></div><h4 id="profCard2Title">Каппинг в эту субботу</h4><p id="profCard2Text">Знакомимся с новым урожаем из Эфиопии. Запись у бариста.</p><div class="post-top" style="margin-top:11px"><span style="display:inline-flex;align-items:center;gap:5px"><svg class="ic" style="width:14px;height:14px"><use href="#i-eye"/></svg>684 просмотра</span><button class="text-link" onclick="toast('Действия публикации')" aria-label="Действия"><svg class="ic" style="width:18px;height:18px"><use href="#i-dots-three"/></svg></button></div></article>
+              <div class="empty-state" style="padding:14px 16px"><div class="empty-icon" style="width:52px;height:52px"><svg class="ic" style="width:26px;height:26px"><use href="#i-bookmark"/></svg></div><b style="font-size:16px">Завершённые</b>Срок действия можно задать при создании.</div>
+            </div>
+          </section>
+
+          <section class="app-screen" id="screen-compose">
+            <div class="topbar"><button class="back" onclick="showScreen('profile')" aria-label="Назад"><svg class="ic"><use href="#i-caret-left"/></svg></button><h2 style="flex:1;margin-left:4px">Новая публикация</h2><span class="subtle">Черновик</span></div>
+            <div class="content">
+              <label class="field-label" id="composeAuthorLabel">Кофейня</label><select class="field" id="composeAuthor"><option>Happy Coffee</option></select>
+              <label class="field-label">Тип публикации</label><select class="field" id="composeType"><option>Новость</option><option>Событие</option><option>Обновление меню</option><option>Акция</option></select>
+              <label class="field-label">Заголовок</label><input class="field" id="postTitle" placeholder="Например, новое меню уже здесь">
+              <label class="field-label">Текст</label><textarea class="field" id="postText" placeholder="Расскажите гостям, что нового..."></textarea>
+              <label class="field-label">Фотография · необязательно</label><button class="photo-add" onclick="toast('Выбор фото в рабочем приложении')"><span><svg class="ic"><use href="#i-plus"/></svg></span>Добавить фотографию</button>
+              <label class="field-label">Показывать публикацию</label><select class="field"><option>Пока не скрыть вручную</option><option>1 день</option><option>7 дней</option><option>До выбранной даты</option></select>
+              <div class="divider"></div><button class="primary" style="width:100%" onclick="publishPost()">Опубликовать</button><button class="secondary" style="width:100%;margin-top:9px" onclick="toast('Черновик сохранён')">Сохранить черновик</button>
+              <div class="legal" id="composeLegal">Публикация будет размещена от имени Happy Coffee.</div>
+            </div>
+          </section>
+
+          <section class="app-screen" id="screen-settings">
+            <div class="topbar"><div class="topbar-main"><h2>Настройки</h2><div class="subtle">Бизнес-аккаунт</div></div><span class="pill success"><svg class="ic"><use href="#i-check"/></svg>Проверен</span></div>
+            <div class="content">
+              <div class="hero-card"><div class="hero-body" style="display:flex;align-items:center;gap:13px"><span class="bean" style="width:48px;height:48px;border-radius:50%"><svg class="ic" style="width:28px;height:28px"><use href="#m-mascot"/></svg></span><div><b style="font-size:16px">Happy Coffee</b><div class="subtle" style="color:var(--muted);font-size:13px">Представитель · Минск</div></div><button class="text-link" style="margin-left:auto" onclick="showScreen('business')">Открыть</button></div></div>
+              <div class="group-title">Добавить</div>
+              <div class="settings-card">
+                <div class="settings-row"><div class="row-main"><span class="icon-badge ib-gold"><svg class="ic"><use href="#i-plus"/></svg></span><div><b>Добавить кофейню</b><small>Подключить ещё одно заведение</small></div></div><span class="chevron"><svg class="ic"><use href="#i-caret-right"/></svg></span></div>
+                <div class="settings-row" id="rowAddRoaster" style="display:none"><div class="row-main"><span class="icon-badge ib-mint"><svg class="ic"><use href="#i-coffee-bean"/></svg></span><div><b>Добавить обжарщика</b><small>Открыть новых обжарщиков</small></div></div><span class="chevron"><svg class="ic"><use href="#i-caret-right"/></svg></span></div>
+                <div class="settings-row" id="rowMyQr" style="display:none"><div class="row-main"><span class="icon-badge ib-cyan"><svg class="ic"><use href="#i-qr-code"/></svg></span><div><b>Личный QR</b><small>Лояльность в кофейнях-партнёрах</small></div></div><span class="chevron"><svg class="ic"><use href="#i-caret-right"/></svg></span></div>
+              </div>
+              <div class="group-title">Настройки</div>
+              <div class="settings-card">
+                <div class="settings-row"><div class="row-main"><span class="icon-badge ib-cyan"><svg class="ic"><use href="#i-map-pin"/></svg></span><div><b>Город</b><small>Какие кофейни показывать в первую очередь</small></div></div><span class="chevron" style="color:var(--muted);font-size:14px">Минск&nbsp;&nbsp;›</span></div>
+                <div class="settings-row"><div class="row-main"><span class="icon-badge ib-violet"><svg class="ic"><use href="#i-sun"/></svg></span><div><b>Тема</b><small>Настройте внешний вид приложения</small></div></div><span class="chevron" style="color:var(--muted);font-size:14px">Тёмная&nbsp;&nbsp;›</span></div>
+                <div class="settings-row"><div class="row-main"><span class="icon-badge ib-mint"><svg class="ic"><use href="#i-globe"/></svg></span><div><b>Язык</b><small>Выберите язык интерфейса</small></div></div><span class="chevron" style="color:var(--muted);font-size:14px">Русский&nbsp;&nbsp;›</span></div>
+                <div class="settings-row"><div class="row-main"><span class="icon-badge ib-gold"><svg class="ic"><use href="#i-bell"/></svg></span><div><b>Уведомления</b><small>Ответы, активность и публикации</small></div></div><button class="switch" onclick="this.classList.toggle('off')" aria-label="Переключить уведомления"></button></div>
+              </div>
+              <div class="group-title">Аккаунт</div>
+              <div class="settings-card">
+                <div class="settings-row"><div class="row-main"><span class="icon-badge ib-cyan"><svg class="ic"><use href="#i-user"/></svg></span><div><b>Личные данные</b><small>Имя, почта и безопасность</small></div></div><span class="chevron"><svg class="ic"><use href="#i-caret-right"/></svg></span></div>
+                <div class="settings-row" id="rowSwitchMode"><div class="row-main"><span class="icon-badge ib-violet"><svg class="ic"><use href="#i-users"/></svg></span><div><b>Переключиться в личный режим</b><small>Избранное, чекины и история</small></div></div><button class="secondary" style="min-height:36px;padding:6px 14px;font-size:14px;border-radius:18px" onclick="toast('Личный режим выбран')">Перейти</button></div>
+                <div class="settings-row"><div class="row-main"><span class="icon-badge ib-rose"><svg class="ic"><use href="#i-sign-out"/></svg></span><div><b>Выйти из аккаунта</b><small>Бизнес-режим будет выключен</small></div></div><span class="chevron"><svg class="ic"><use href="#i-caret-right"/></svg></span></div>
+              </div>
+              <div class="group-title">Другие настройки</div>
+              <div style="color:var(--muted);font-size:14px;margin:-4px 2px 10px">Полезные дополнения, обратная связь и конфиденциальность</div>
+              <div class="settings-card">
+                <div class="settings-row"><div class="row-main"><span class="icon-badge ib-gold"><svg class="ic"><use href="#i-chat-centered-text"/></svg></span><div><b>Связаться с поддержкой</b><small>Поможем с вопросами и проблемами</small></div></div><span class="chevron"><svg class="ic"><use href="#i-caret-right"/></svg></span></div>
+                <div class="settings-row"><div class="row-main"><span class="icon-badge ib-cyan"><svg class="ic"><use href="#i-lock"/></svg></span><div><b>Политика использования</b><small>Условия и конфиденциальность</small></div></div><span class="chevron"><svg class="ic"><use href="#i-caret-right"/></svg></span></div>
+                <div class="settings-row"><div class="row-main"><span class="icon-badge ib-cyan"><svg class="ic"><use href="#i-share-network"/></svg></span><div><b>Поделиться</b><small>Расскажите о CoffeePeek</small></div></div><span class="chevron"><svg class="ic"><use href="#i-caret-right"/></svg></span></div>
+              </div>
+              <div class="group-title">Обновление приложения</div>
+              <div class="settings-card">
+                <div class="settings-row"><div class="row-main"><span class="icon-badge ib-cyan"><svg class="ic"><use href="#i-info"/></svg></span><div><b>Проверить обновления</b><small>Версия 1.1.7.2881</small></div></div><span class="chevron"><svg class="ic"><use href="#i-caret-right"/></svg></span></div>
+              </div>
+              <div style="color:var(--muted);font-size:13px;margin:12px 2px 0">Версия 1.1.7.2881</div>
+            </div>
+          </section>
+
+          <nav class="nav" aria-label="Навигация приложения">
+            <button data-tab="feed" onclick="showScreen('feed')"><svg class="ic"><use href="#i-users"/></svg><span>Лента</span></button>
+            <button data-tab="shelf" onclick="showScreen('shelf')"><svg class="ic"><use href="#i-coffee-bean"/></svg><span>Полка</span></button>
+            <button data-tab="business" class="active" onclick="showScreen('business')"><svg class="ic"><use href="#i-buildings"/></svg><span>Кофейни</span></button>
+            <button data-tab="profile" onclick="showScreen('profile')"><svg class="ic"><use href="#i-user-circle"/></svg><span>Профиль</span></button>
+            <button data-tab="settings" onclick="showScreen('settings')"><svg class="ic"><use href="#i-gear-six"/></svg><span>Настройки</span></button>
+          </nav>
+<div class="sheet-wrap" id="orderSheet" style="display:none">
+            <div class="sheet-back" onclick="closeOrder()"></div>
+            <div class="sheet">
+              <b id="orderName">Brazil Sul de Minas</b>
+              <div class="origin">Manufactura · Бразилия</div>
+              <div class="seg">
+                <button class="active" id="w250" onclick="setW('250')">250 г</button>
+                <button id="w1000" onclick="setW('1000')">1000 г</button>
+              </div>
+              <div class="sheet-row"><span>Цена</span><b id="orderPrice">24,10 Б</b></div>
+              <div class="sheet-row"><span>Самовывоз</span><span style="color:var(--muted)">ул. Промышленная, 9 · после 12:00</span></div>
+              <button class="primary" onclick="submitOrder()">Оформить заказ</button>
+              <div class="legal" style="margin-top:10px">Обжарщик получит уведомление в приложении и письмо на почту. Оплата при получении.</div>
+            </div>
+          </div>
+<nav class="nav nav-r" aria-label="Навигация обжарщика" style="display:none">
+            <button data-tab="feed" onclick="showScreen('feed')"><svg class="ic"><use href="#i-users"/></svg><span>Лента</span></button>
+            <button data-tab="r-shelf" class="active" onclick="showScreen('r-shelf')"><svg class="ic"><use href="#i-coffee-bean"/></svg><span>Полка</span></button>
+            <button data-tab="r-orders" onclick="showScreen('r-orders')"><svg class="ic"><use href="#i-package"/></svg><span>Заказы</span></button>
+            <button data-tab="profile" onclick="showScreen('profile')"><svg class="ic"><use href="#i-user-circle"/></svg><span>Профиль</span></button>
+            <button data-tab="settings" onclick="showScreen('settings')"><svg class="ic"><use href="#i-gear-six"/></svg><span>Настройки</span></button>
+          </nav>
+<nav class="nav-c" aria-label="Навигация клиента" style="display:none">
+            <button data-tab="u-search" onclick="navMode='client'; showScreen('u-search')"><svg class="ic"><use href="#i-magnifying-glass"/></svg><span>Поиск</span></button>
+            <button data-tab="u-shelf" onclick="navMode='client'; showScreen('u-shelf')"><svg class="ic"><use href="#i-coffee-bean"/></svg><span>Кофе</span></button>
+            <button data-tab="feed" onclick="navMode='client'; showScreen('feed')"><svg class="ic"><use href="#i-users"/></svg><span>Лента</span></button>
+            <button data-tab="u-profile" onclick="navMode='client'; showScreen('u-profile')"><svg class="ic"><use href="#i-user-circle"/></svg><span>Профиль</span></button>
+            <button data-tab="settings" onclick="navMode='client'; showScreen('settings')"><svg class="ic"><use href="#i-gear-six"/></svg><span>Настройки</span></button>
+          </nav>
+          <div class="toast" id="toast"></div>
+        </section>
+      </div>
+    </div>
+  </main>
+  <script>
+    const screenHistory = [];
+    let currentScreen = 'role';
+    function goBack(fallback) { showScreen(screenHistory.pop() || fallback, true); }
+    const screenNames = ['role','login','claim','u-search','u-shelf','u-profile','checkin','u-checkins','feed','shelf','business','cafe','profile','compose','settings','r-shelf','r-orders','r-cafepage','preorder','preorder-code','cpreorders','loyalty','qr'];
+    let navMode = 'cafe';
+    function showScreen(name, isBack) {
+      if (!screenNames.includes(name)) return;
+      if (currentScreen && currentScreen !== name && !isBack) {
+        screenHistory.push(currentScreen);
+        if (screenHistory.length > 24) screenHistory.shift();
+      }
+      currentScreen = name;
+      document.querySelectorAll('.app-screen').forEach(el => el.classList.toggle('active', el.id === `screen-${name}`));
+      document.querySelectorAll('.screen-picker button').forEach(el => el.classList.toggle('active', el.dataset.screen === name));
+      document.querySelectorAll('.nav button, .nav-c button, .nav-r button').forEach(el => el.classList.toggle('active', el.dataset.tab === name || (name === 'cafe' && el.dataset.tab === 'business') || (name === 'r-cafepage' && el.dataset.tab === 'r-shelf') || (name === 'compose' && el.dataset.tab === 'profile')));
+      if (name === 'settings') applySettingsMode();
+      if (name === 'compose') applyComposeMode();
+      if (name === 'feed') { const fab = document.getElementById('feedFab'); if (fab) fab.style.display = navMode === 'client' ? 'none' : ''; }
+      if (name === 'preorder') renderPreorder();
+      document.querySelector(`#screen-${name}`).scrollTop = 0;
+      if (['r-shelf','r-orders','r-cafepage'].includes(name)) navMode = 'roaster';
+      if (['cafe','preorder','preorder-code','cpreorders','loyalty','shelf','business'].includes(name)) navMode = 'cafe';
+      const noNav = name === 'role' || name === 'login' || name === 'claim' || name === 'preorder' || name === 'preorder-code' || name === 'qr' || name === 'cafe' || name === 'r-cafepage' || name === 'cpreorders' || name === 'loyalty';
+      if (['cafe','preorder','preorder-code'].includes(name) && navMode === 'roaster') navMode = 'cafe';
+      if (['u-search','u-shelf','u-profile','checkin','u-checkins','qr'].includes(name)) navMode = 'client';
+      if (['shelf','business','cpreorders','loyalty'].includes(name)) navMode = 'cafe';
+      if (['r-shelf','r-orders'].includes(name)) navMode = 'roaster';
+      document.querySelector('.nav').style.display = (noNav || navMode !== 'cafe') ? 'none' : '';
+      document.querySelector('.nav-c').style.display = (noNav || navMode !== 'client') ? 'none' : '';
+      document.querySelector('.nav-r').style.display = (noNav || navMode !== 'roaster') ? 'none' : '';
+      if (name === 'profile') applyProfileMode();
+    }
+    function applyComposeMode() {
+      const author = document.getElementById('composeAuthor');
+      const types = document.getElementById('composeType');
+      if (navMode === 'roaster') {
+        document.getElementById('composeAuthorLabel').textContent = 'Обжарщик';
+        author.innerHTML = '<option>Manufactura</option>';
+        types.innerHTML = '<option>Новинка зерна</option><option>Новость</option><option>Дегустация</option><option>Акция</option>';
+        document.getElementById('postTitle').placeholder = 'Например, Kenya AA снова на полке';
+        document.getElementById('postText').placeholder = 'Расскажите о зерне: происхождение, вкус, обжарка...';
+        document.getElementById('composeLegal').textContent = 'Публикация будет размещена от имени Manufactura.';
+      } else {
+        document.getElementById('composeAuthorLabel').textContent = 'Кофейня';
+        author.innerHTML = '<option>Happy Coffee</option>';
+        types.innerHTML = '<option>Новость</option><option>Событие</option><option>Обновление меню</option><option>Акция</option>';
+        document.getElementById('postTitle').placeholder = 'Например, новое меню уже здесь';
+        document.getElementById('postText').placeholder = 'Расскажите гостям, что нового...';
+        document.getElementById('composeLegal').textContent = 'Публикация будет размещена от имени Happy Coffee.';
+      }
+    }
+    function applySettingsMode() {
+      const hero = document.querySelector('#screen-settings .hero-body');
+      const isClient = navMode === 'client', isRoaster = navMode === 'roaster';
+      hero.querySelector('b').textContent = isClient ? '@Мотвый' : isRoaster ? 'Manufactura' : 'Happy Coffee';
+      hero.querySelector('.subtle').textContent = isClient ? 'Клиент · Минск' : isRoaster ? 'Представитель · Минск' : 'Представитель · Минск';
+      const addRoaster = document.getElementById('rowAddRoaster');
+      if (addRoaster) addRoaster.style.display = isClient ? '' : 'none';
+      const qrRow = document.getElementById('rowMyQr');
+      if (qrRow) qrRow.style.display = isClient ? '' : 'none';
+      const switchRow = document.getElementById('rowSwitchMode');
+      if (switchRow) switchRow.style.display = isClient ? 'none' : '';
+      const heroBean = hero.querySelector('.bean');
+      if (heroBean && isClient) { heroBean.style.borderRadius = '50%'; heroBean.querySelector('svg use').setAttribute('href', '#i-user-circle'); }
+      else if (heroBean) { heroBean.style.borderRadius = ''; heroBean.querySelector('svg use').setAttribute('href', '#m-mascot'); }
+      const open = hero.querySelector('.text-link');
+      if (open) open.style.display = isClient ? 'none' : '';
+    }
+    function applyProfileMode() {
+      const roaster = navMode === 'roaster';
+      document.querySelector('#screen-profile .bean svg use').setAttribute('href', roaster ? '#i-coffee-bean' : '#m-mascot');
+      const nameEl = document.querySelector('#screen-profile .pstats').previousElementSibling.querySelector('b');
+      const subEl = document.querySelector('#screen-profile .pstats').previousElementSibling.querySelector('span:last-child');
+      if (roaster) {
+        nameEl.textContent = 'Manufactura'; subEl.textContent = '@manufactura · Обжарщик';
+        document.getElementById('profCard1Type').textContent = 'НОВИНКА ЗЕРНА';
+        document.getElementById('profCard1Title').textContent = 'Kenya AA снова на полке';
+        document.getElementById('profCard1Text').textContent = 'Свежая обжарка Кении: смородина и ягоды. 250 г и 1000 г — в продаже.';
+        document.getElementById('profCard2Type').textContent = 'ДЕГУСТАЦИЯ';
+        document.getElementById('profCard2Title').textContent = 'Публичный каппинг на производстве';
+        document.getElementById('profCard2Text').textContent = 'Суббота, 15:00 — пробуем три сорта нового урожая. Запись в CoffeePeek.';
+      } else {
+        nameEl.textContent = 'Happy Coffee'; subEl.textContent = '@happy_coffee · Кофейня';
+        document.getElementById('profCard1Type').textContent = 'НОВОСТЬ';
+        document.getElementById('profCard1Title').textContent = 'Новый сезонный напиток';
+        document.getElementById('profCard1Text').textContent = 'Попробуйте латте с мёдом и кардамоном — уже в меню.';
+        document.getElementById('profCard2Type').textContent = 'СОБЫТИЕ';
+        document.getElementById('profCard2Title').textContent = 'Каппинг в эту субботу';
+        document.getElementById('profCard2Text').textContent = 'Знакомимся с новым урожаем из Эфиопии. Запись у бариста.';
+      }
+    }
+    function openClaim(kind) {
+      const roaster = kind === 'roaster';
+      document.getElementById('claimStep').textContent = roaster ? 'Регистрация обжарщика · шаг 2 из 3' : 'Регистрация кофейни · шаг 2 из 3';
+      document.getElementById('claimTitle').textContent = roaster ? 'Подтвердите обжарщика' : 'Найдите свою кофейню';
+      document.getElementById('claimHint').textContent = roaster
+        ? 'Выберите свой профиль обжарщика. После заявки команда проверит связь с производством.'
+        : 'Выберите заведение из CoffeePeek. После заявки команда проверит, что вы представляете эту кофейню.';
+      document.getElementById('claimSearch').placeholder = roaster ? 'Название обжарщика' : 'Название или адрес кофейни';
+      document.getElementById('claimCafeList').style.display = roaster ? 'none' : 'contents';
+      document.getElementById('claimRoastList').style.display = roaster ? 'contents' : 'none';
+      showScreen('claim');
+    }
+    let orderP250 = '24,10 Б', orderP1000 = '89,00 Б';
+    function openOrder(name, p250, p1000) {
+      orderP250 = p250; orderP1000 = p1000;
+      document.getElementById('orderName').textContent = name;
+      document.getElementById('orderPrice').textContent = p250;
+      document.getElementById('w250').classList.add('active');
+      document.getElementById('w1000').classList.remove('active');
+      document.getElementById('orderSheet').style.display = 'grid';
+    }
+    function setW(w) {
+      document.getElementById('w250').classList.toggle('active', w === '250');
+      document.getElementById('w1000').classList.toggle('active', w === '1000');
+      document.getElementById('orderPrice').textContent = w === '250' ? orderP250 : orderP1000;
+    }
+    function submitOrder() {
+      closeOrder();
+      toast('Заказ оформлен — обжарщик получил уведомление');
+    }
+    function closeOrder() { document.getElementById('orderSheet').style.display = 'none'; }
+    const personaHome = { client: 'feed', cafe: 'business', roaster: 'r-shelf' };
+    function switchUserShelf(mode) {
+      document.getElementById('segMine').classList.toggle('active', mode === 'mine');
+      document.getElementById('segCatalog').classList.toggle('active', mode === 'catalog');
+      document.getElementById('shelfMineWrap').style.display = mode === 'mine' ? '' : 'none';
+      document.getElementById('shelfCatalogWrap').style.display = mode === 'catalog' ? '' : 'none';
+    }
+    function switchPersona(persona) {
+      document.querySelectorAll('.persona-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.persona === persona));
+      document.querySelectorAll('.persona-screens').forEach(box => box.style.display = box.dataset.persona === persona ? '' : 'none');
+      navMode = persona;
+      showScreen(personaHome[persona]);
+    }
+    document.querySelectorAll('.screen-picker button').forEach(button => button.addEventListener('click', () => { if (button.dataset.mode) navMode = button.dataset.mode; showScreen(button.dataset.screen); }));
+    document.querySelector('#screen-role')?.classList.add('active');
+    showScreen('feed');
+    document.querySelectorAll('#screen-role .choice').forEach(choice => choice.addEventListener('click', () => {
+      document.querySelectorAll('#screen-role .choice').forEach(item => item.classList.toggle('selected', item === choice));
+    }));
+    function selectClaim(button) {
+      document.querySelectorAll('#screen-claim .choice').forEach(item => item.classList.toggle('selected', item === button));
+    }
+    document.getElementById('themeButton').addEventListener('click', () => {
+      const light = document.body.dataset.theme !== 'light';
+      document.body.dataset.theme = light ? 'light' : 'dark';
+      document.getElementById('themeIconSun').style.display = light ? '' : 'none';
+      document.getElementById('themeIconMoon').style.display = light ? 'none' : '';
+    });
+    let toastTimer;
+    function toast(message) {
+      const el = document.getElementById('toast'); el.textContent = message; el.classList.add('show');
+      clearTimeout(toastTimer); toastTimer = setTimeout(() => el.classList.remove('show'), 1900);
+    }
+    function switchShelf(mode) {
+      document.querySelectorAll('.caps button').forEach(b => b.classList.toggle('active', b.dataset.shelf === mode));
+      document.getElementById('shelf-on').style.display = mode === 'on' ? '' : 'none';
+      document.getElementById('shelf-arch').style.display = mode === 'arch' ? '' : 'none';
+    }
+    // ── Предзаказ: демо-состояния у кофейни ──
+    let preorderState = 'on';
+    function setPreorder(state) {
+      preorderState = state;
+      document.getElementById('preorderBusy').style.display = state === 'busy' ? '' : 'none';
+      document.getElementById('preorderOff').style.display = state === 'off' ? '' : 'none';
+      document.querySelectorAll('.preorder-entry').forEach(el => el.style.display = state === 'on' ? '' : 'none');
+      const chips = { on: 'demoOn', busy: 'demoBusy', off: 'demoOff' };
+      Object.entries(chips).forEach(([key, id]) => document.getElementById(id)?.classList.toggle('active', key === state));
+      if (state !== 'on') showScreen('cafe');
+    }
+
+    // ── Корзина предзаказа ──
+    const MENU = [
+      { id: 'latte', name: 'Латте', price: 8.50, group: 'preorderItems' },
+      { id: 'cappuccino', name: 'Капучино', price: 8.00, group: 'preorderItems' },
+      { id: 'flat', name: 'Флэт уайт', price: 8.50, group: 'preorderItems' },
+      { id: 'raf', name: 'Раф', price: 9.00, group: 'preorderItems' },
+      { id: 'batch', name: 'Батч', price: 8.50, group: 'preorderItems' },
+      { id: 'croissant', name: 'Круассан', price: 4.50, group: 'preorderSnacks' },
+      { id: 'cheesecake', name: 'Чизкейк', price: 7.00, group: 'preorderSnacks' },
+    ];
+    const cart = {};
+    const byn = v => v.toFixed(2).replace('.', ',') + ' Б';
+    function renderPreorder() {
+      ['preorderItems', 'preorderSnacks'].forEach(group => {
+        const host = document.getElementById(group); host.innerHTML = '';
+        MENU.filter(item => item.group === group).forEach(item => {
+          const row = document.createElement('div'); row.className = 'row';
+          const left = document.createElement('span');
+          left.innerHTML = '<span>' + item.name + '</span><span class="qty-one" style="margin-left:8px">' + byn(item.price) + '</span>';
+          left.style.cssText = 'display:inline-flex;align-items:baseline;gap:0';
+          const stepper = document.createElement('span'); stepper.className = 'stepper';
+          const minus = document.createElement('button'); minus.textContent = '−'; minus.onclick = () => changeQty(item.id, -1);
+          const value = document.createElement('b'); value.id = 'qty-' + item.id; value.textContent = cart[item.id] || 0;
+          const plus = document.createElement('button'); plus.textContent = '+'; plus.onclick = () => changeQty(item.id, 1);
+          stepper.append(minus, value, plus);
+          row.append(left, stepper); host.append(row);
+        });
+      });
+      updateCart();
+    }
+    function changeQty(id, delta) {
+      cart[id] = Math.max(0, (cart[id] || 0) + delta);
+      document.getElementById('qty-' + id).textContent = cart[id];
+      updateCart();
+    }
+    function updateCart() {
+      let count = 0, total = 0;
+      MENU.forEach(item => { count += cart[item.id] || 0; total += (cart[item.id] || 0) * item.price; });
+      document.getElementById('cartCount').textContent = count;
+      document.getElementById('cartTotal').textContent = byn(total);
+    }
+    function submitPreorder() {
+      const ordered = MENU.filter(item => cart[item.id] > 0);
+      if (!ordered.length) { toast('Добавьте хотя бы одну позицию'); return; }
+      const number = '#' + (40 + Math.floor(Math.random() * 15));
+      const ready = new Date(Date.now() + 25 * 60000);
+      const hhmm = String(ready.getHours()).padStart(2, '0') + ':' + String(ready.getMinutes()).padStart(2, '0');
+      document.getElementById('preorderNumber').textContent = number;
+      document.getElementById('codeReadyTime').textContent = '~ ' + hhmm;
+      document.getElementById('codeItems').textContent = ordered.map(item => item.name + ' ×' + cart[item.id]).join(' · ');
+      let total = 0; ordered.forEach(item => total += cart[item.id] * item.price);
+      document.getElementById('codeTotal').textContent = byn(total);
+      drawQR('qrPreorder', 'CP-7741-2290:' + number);
+      ordered.forEach(item => cart[item.id] = 0);
+      showScreen('preorder-code');
+      toast('Предзаказ отправлен — кофейня получила уведомление');
+    }
+
+    // ── Псевдо-QR: детерминированная сетка по строке-сиду ──
+    function drawQR(id, seed) {
+      const svg = document.getElementById(id); if (!svg) return;
+      let hash = 2166136261;
+      for (const ch of seed) { hash ^= ch.charCodeAt(0); hash = Math.imul(hash, 16777619); }
+      const rand = () => { hash = Math.imul(hash ^ (hash >>> 13), 1274126177); return ((hash >>> 0) / 4294967296); };
+      const size = 21, cell = 1;
+      const filled = Array.from({ length: size }, () => Array.from({ length: size }, () => rand() > 0.52));
+      const finder = (r, c) => {
+        if (r > size - 8 && c > size - 8) return false;
+        for (const [fr, fc] of [[0, 0], [0, size - 7], [size - 7, 0]]) {
+          const dr = r - fr, dc = c - fc;
+          if (dr >= 0 && dr < 7 && dc >= 0 && dc < 7) {
+            const ring = Math.max(Math.abs(dr - 3), Math.abs(dc - 3));
+            return ring !== 2;
+          }
+        }
+        return false;
+      };
+      let out = '';
+      for (let r = 0; r < size; r++) for (let c = 0; c < size; c++) {
+        if (finder(r, c) || filled[r][c]) out += '<rect x="' + (c * cell) + '" y="' + (r * cell) + '" width="' + cell + '" height="' + cell + '"/>';
+      }
+      svg.innerHTML = out;
+      svg.setAttribute('fill', '#111');
+    }
+    drawQR('qrUser', 'CP-7741-2290');
+
+    // ── Конструктор лояльности ──
+    let scheme = 'free', loyaltyN = 8, loyaltyPct = 50;
+    function switchScheme(mode) {
+      scheme = mode;
+      document.getElementById('schemeFree').classList.toggle('active', mode === 'free');
+      document.getElementById('schemePct').classList.toggle('active', mode === 'pct');
+      document.getElementById('loyaltyPctRow').style.display = mode === 'pct' ? '' : 'none';
+      document.getElementById('loyaltyNLabel').textContent = mode === 'free' ? 'Каждый N-й напиток' : 'Скидка на N-е посещение';
+      updateLoyaltyPreview();
+    }
+    function changeN(delta) { loyaltyN = Math.min(20, Math.max(3, loyaltyN + delta)); document.getElementById('loyaltyN').textContent = loyaltyN; updateLoyaltyPreview(); }
+    function changePct(delta) { loyaltyPct = Math.min(50, Math.max(10, loyaltyPct + delta)); document.getElementById('loyaltyPct').textContent = loyaltyPct + '%'; updateLoyaltyPreview(); }
+    function updateLoyaltyPreview() {
+      document.getElementById('loyaltyPreview').textContent = scheme === 'free'
+        ? 'Каждый ' + loyaltyN + '-й кофе — бесплатно'
+        : 'Скидка ' + loyaltyPct + '% на каждый ' + loyaltyN + '-й визит';
+    }
+
+    function filterFeed(kind) {
+      document.querySelectorAll('.fchip').forEach(chip => chip.classList.toggle('active', chip.dataset.feed === kind));
+      document.querySelectorAll('#screen-feed .feed-post').forEach(post => {
+        post.style.display = (kind === 'all' || post.dataset.kind === kind) ? '' : 'none';
+      });
+    }
+
+    // ── Корзина зерна обжарщика: drag&drop ──
+    const beanCartItems = [];
+    function dragBean(e, name) {
+      e.dataTransfer.setData('text/plain', name);
+      e.dataTransfer.effectAllowed = 'copy';
+      e.currentTarget.classList.add('dragging');
+    }
+    function dropBean(e) {
+      e.preventDefault();
+      const fab = document.getElementById('beanCartFAB');
+      fab.classList.remove('drag-over');
+      const name = e.dataTransfer.getData('text/plain') || 'Зерно';
+      beanCartItems.push(name);
+      const badge = document.getElementById('beanCartCount');
+      badge.style.display = '';
+      badge.textContent = beanCartItems.length;
+      toast(name + ' — в корзине (' + beanCartItems.length + ')');
+    }
+    function showBeanCart() {
+      toast(beanCartItems.length ? 'В корзине: ' + beanCartItems.join(', ') : 'Корзина пуста — перетащите пачки из полки');
+    }
+
+    function goFromRole() {
+      const sel = document.querySelector('#screen-role .choice.selected');
+      const role = sel ? sel.dataset.choice : 'coffee';
+      if (role === 'business') openClaim('cafe');
+      else if (role === 'roaster') openClaim('roaster');
+      else { showScreen('business'); toast('В реальном приложении откроется личный режим'); }
+    }
+    function publishPost() {
+      const title = document.getElementById('postTitle').value.trim();
+      const text = document.getElementById('postText').value.trim();
+      if (!title || !text) { toast('Добавьте заголовок и текст'); return; }
+      const card = document.createElement('article'); card.className = 'post-card';
+      const kind = (document.getElementById('composeType').value || 'Новость').toUpperCase();
+      card.innerHTML = `<div class="post-top"><span class="post-type">${kind}</span><span>Только что</span></div><h4></h4><p></p>`;
+      card.querySelector('h4').textContent = title; card.querySelector('p').textContent = text;
+      document.querySelector('#screen-profile .content').insertBefore(card, document.querySelector('#screen-profile .section-head'));
+      document.getElementById('postTitle').value = ''; document.getElementById('postText').value = '';
+      showScreen('profile'); toast('Публикация добавлена в прототип');
+    }
+  </script>
+</body>
+</html>

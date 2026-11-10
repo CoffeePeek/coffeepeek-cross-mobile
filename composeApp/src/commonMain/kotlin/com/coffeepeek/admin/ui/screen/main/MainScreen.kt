@@ -128,8 +128,9 @@ internal fun ComposeMainScreen(isLoggedIn: Boolean, onMapExpandedChange: (Boolea
         if (previousBusinessMode == businessMode) return@LaunchedEffect
         previousBusinessMode = businessMode
         bottomNavController.navigate(if (businessMode) Navigator.Screen.BusinessGraph else Navigator.Screen.FeedGraph) {
-            popUpTo(bottomNavController.graph.id) { inclusive = true }
+            popUpTo(bottomNavController.graph.id) { inclusive = true; saveState = true }
             launchSingleTop = true
+            restoreState = true
         }
     }
     LaunchedEffect(availableRoutes) {
@@ -306,6 +307,7 @@ private fun AnimatedContentTransitionScope<NavBackStackEntry>.tabDirection() =
     }
 
 private fun NavDestination.tabIndex(): Int = when {
+    hasRoute<Navigator.Screen.BusinessTab>() -> 0
     hasRoute<Navigator.Screen.FeedTab>() -> 0
     hasRoute<Navigator.Screen.CommunityTab>() -> 2
     hasRoute<Navigator.Screen.ProfileTab>() -> 3

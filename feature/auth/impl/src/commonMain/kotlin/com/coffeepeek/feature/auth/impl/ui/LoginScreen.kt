@@ -22,6 +22,12 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.rememberUpdatedState
@@ -104,8 +110,9 @@ internal fun LoginContent(
         }
         LoginFields(state, onEmail, onPassword)
         SocialFailureText(state.socialFailure)
-        state.failure?.let { failure ->
-            Text(text = loginFailureText(failure), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+        AnimatedVisibility(visible = state.failure != null, enter = fadeIn(tween(160)) + expandVertically(),
+            exit = fadeOut(tween(120)) + shrinkVertically()) {
+            Text(text = loginFailureText(requireNotNull(state.failure)), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
         }
         AuthFooterRow(text = stringResource(Res.string.auth_forgot_password), onClick = onForgotPassword)
         AuthPrimaryButton(text = stringResource(Res.string.auth_login), onClick = onSubmit, loading = state.signingIn)

@@ -124,7 +124,9 @@ internal class PublicProfileViewModel(
     private fun start() {
         viewModelScope.launch {
             visibility.observe().drop(1).collect {
-                updateState { PublicProfileState(activityMonth = activityMonth, isSignedIn = accounts.activeAccount() != null) }
+                // Stale-while-revalidate: a revision bump (e.g. blocking someone else) must not
+                // wipe the loaded profile; refresh() decides whether it stays reachable.
+                updateState { copy(isSignedIn = accounts.activeAccount() != null) }
                 refresh()
             }
         }

@@ -4,6 +4,7 @@ import com.coffeepeek.room.model.Setting
 import com.coffeepeek.room.repository.SettingRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -20,22 +21,26 @@ class CityPreference(
 
     val selectedCityId: StateFlow<String?> = _selectedCityId.asStateFlow()
 
-    suspend fun resolve(cityIds: List<String>): String? {
+    suspend fun resolve(cityIds: List<String>): String? = try {
         val savedCityId = _selectedCityId.value ?: settingRepository.read(SELECTED_CITY_KEY)?.value
         val resolvedCityId = resolveSelectedCityId(savedCityId, cityIds)
         _selectedCityId.value = resolvedCityId
-
-        if (resolvedCityId != null && resolvedCityId != savedCityId) {
+        // Persist the bootstrap choice only: a saved city that is temporarily absent from a
+        // glitched catalog keeps its persisted value instead of being rewritten to the first entry.
+        if (savedCityId == null && resolvedCityId != null) {
             settingRepository.save(Setting(SELECTED_CITY_KEY, resolvedCityId))
         }
-        return resolvedCityId
-    }
+        resolvedCityId
+    } catch (cancelled: CancellationException) { throw cancelled }
+    catch (_: Exception) { null }
 
     fun select(cityId: String) {
         if (cityId.isBlank() || cityId == _selectedCityId.value) return
         _selectedCityId.value = cityId
         scope.launch {
-            settingRepository.save(Setting(SELECTED_CITY_KEY, cityId))
+            try { settingRepository.save(Setting(SELECTED_CITY_KEY, cityId)) }
+            catch (cancelled: CancellationException) { throw cancelled }
+            catch (_: Exception) { }
         }
     }
 }

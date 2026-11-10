@@ -192,8 +192,8 @@ internal class NotificationPresenter(
             if (!current(snapshot)) return
             applyRead(id, wasLoaded)
             drainPendingReads()
-            // Reload the count: messages arriving after this snapshot must stay unread.
-            refresh()
+            // The unread flags and the count are updated locally; a full reload here would
+            // collapse the loaded pages and jerk the list.
         } catch (cancelled: CancellationException) {
             throw cancelled
         } catch (_: Exception) {

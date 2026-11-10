@@ -1,8 +1,10 @@
 package com.coffeepeek.feature.contributions.impl.ui
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
 import org.jetbrains.compose.ui.tooling.preview.Preview
-import com.coffeepeek.feature.contributions.impl.resources.Res
+import com.coffeepeek.feature.contributions.impl.resources.*
 import com.coffeepeek.feature.contributions.impl.resources.contributions_back
 import com.coffeepeek.feature.contributions.impl.resources.contributions_load_failed
 import com.coffeepeek.feature.contributions.impl.resources.contributions_loading
@@ -37,6 +39,7 @@ import org.jetbrains.compose.resources.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.coffeepeek.core.designsystem.component.CoffeePeekButton
 import com.coffeepeek.core.designsystem.component.CoffeePeekCapsuleSegmentedControl
+import com.coffeepeek.core.designsystem.component.CoffeePeekTextButton
 import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
 import com.coffeepeek.core.designsystem.component.CoffeePeekTopBar
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
@@ -123,7 +126,7 @@ private fun Tabs(state: ContributionsListState, selected: ModerationStatus, kind
 private fun ContributionList(kind: ContributionKind, status: ModerationStatus, tab: TabState, callbacks: ListCallbacks, onLoadMore: () -> Unit) {
     val listState = rememberLazyListState()
     val nearEnd by remember(tab) {
-        derivedStateOf { (listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0) >= tab.items.size - 3 && tab.hasMore && !tab.isLoadingMore }
+        derivedStateOf { (listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0) >= tab.items.size - 3 && tab.hasMore && !tab.isLoadingMore && !tab.loadMoreFailed }
     }
     LaunchedEffect(nearEnd) { if (nearEnd) onLoadMore() }
     LazyColumn(
@@ -137,6 +140,11 @@ private fun ContributionList(kind: ContributionKind, status: ModerationStatus, t
                     is ContributionTarget.Request -> callbacks.onOpenRequest(target.id)
                 }
             })
+        }
+        if (tab.loadMoreFailed) item(key = "load-more-failed") {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
+                CoffeePeekTextButton({ onLoadMore() }) { Text(stringResource(Res.string.contributions_load_more_failed)) }
+            }
         }
     }
 }

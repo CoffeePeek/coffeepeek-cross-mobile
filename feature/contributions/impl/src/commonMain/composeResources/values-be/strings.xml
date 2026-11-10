@@ -3,6 +3,7 @@
     <string name="contributions_loading">Загрузка</string>
     <string name="contributions_load_failed">Памылка загрузкі</string>
     <string name="contributions_retry">Паспрабаваць зноў</string>
+    <string name="contributions_load_more_failed">Не ўдалося загрузіць. Паспрабаваць зноў</string>
     <string name="contributions_sign_in_prompt">Увайдзіце, каб убачыць адпраўленае</string>
     <string name="contributions_sign_in">Увайсці</string>
     <string name="contributions_title_shops">Адпраўленыя кавярні</string>

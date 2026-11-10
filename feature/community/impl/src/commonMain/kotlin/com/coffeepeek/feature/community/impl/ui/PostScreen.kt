@@ -97,7 +97,8 @@ internal fun PostScreenContent(
     modifier: Modifier = Modifier,
 ) {
     var preview by remember { mutableStateOf<PostPhotoPreview?>(null) }
-    preview?.let { host.photoViewer(it.thumbnails, it.originals, it.index) { preview = null } }
+    preview?.takeIf { state.post != null && state.error == null }
+        ?.let { host.photoViewer(it.thumbnails, it.originals, it.index) { preview = null } }
     if (state.isReportOpen) ReportSheet(state.reportForm(), postReportCallbacks(onAction))
     val authorFallback = stringResource(Res.string.community_user)
     val sharer = postSharer(host)

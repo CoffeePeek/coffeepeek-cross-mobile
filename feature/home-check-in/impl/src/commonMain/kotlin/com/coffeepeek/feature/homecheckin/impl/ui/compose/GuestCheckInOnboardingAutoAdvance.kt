@@ -29,6 +29,7 @@ internal fun GuestCheckInOnboardingAutoAdvance(pager: PagerState) {
 private suspend fun advanceOnboardingPages(pager: PagerState) = coroutineScope {
     val scrolling = snapshotFlow { pager.isScrollInProgress }
     while (isActive) {
+        if (pager.currentPage >= pager.pageCount - 1) return@coroutineScope
         scrolling.first { !it }
         val userScrolled = withTimeoutOrNull(2_000) { scrolling.first { it } } != null
         if (userScrolled || pager.isScrollInProgress) continue

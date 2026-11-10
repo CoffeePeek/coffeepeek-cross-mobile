@@ -42,10 +42,13 @@ class CityPreferenceStorageTest {
         assertEquals(emptyList(), settings.saves)
     }
 
-    @Test fun aMissingOrRemovedCityFallsBackToTheFirstOneAndThatIsPersisted() = runTest {
+    @Test fun aMissingOrRemovedCityFallsBackInMemoryWithoutRewritingTheSavedChoice() = runTest {
+        // A transient catalog without the saved city must not rewrite the persisted choice.
         val settings = FakeSettingRepository(mapOf("selected_city_id" to "removed"))
-        assertEquals("minsk", CityPreference(settings).resolve(cities))
-        assertEquals("minsk", settings.valueOf("selected_city_id"))
+        val preference = CityPreference(settings)
+        assertEquals("minsk", preference.resolve(cities))
+        assertEquals("minsk", preference.selectedCityId.value)
+        assertEquals("removed", settings.valueOf("selected_city_id"))
 
         val fresh = FakeSettingRepository()
         assertEquals("minsk", CityPreference(fresh).resolve(cities))

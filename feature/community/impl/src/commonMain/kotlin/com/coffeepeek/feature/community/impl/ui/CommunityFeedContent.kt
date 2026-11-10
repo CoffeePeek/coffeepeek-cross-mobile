@@ -82,7 +82,7 @@ internal fun CommunityFeedContent(state: CommunityState, onAction: (CommunityAct
     if (state.reportingId != null) ReportSheet(state.reportForm(), reportCallbacks(onAction))
     val sharer = postSharer(host)
     Box(Modifier.fillMaxSize()) {
-        CommunityFeedList(state, posts, listState, onAction, host, snackbar, bottomClearance, onRefreshed) { index, post ->
+        CommunityFeedList(state, posts, listState, onAction, host, snackbar, bottomClearance, onRefreshed, guest, callbacks.onSignIn) { index, post ->
             if (guest && index > 0) {
                 CommunityGuestTeaser(post, host, callbacks.onSignIn)
             } else {
@@ -140,7 +140,7 @@ private fun CommunityPagination(state: CommunityState, listState: LazyListState,
 @Composable
 private fun CommunityFeedList(state: CommunityState, posts: List<CommunityPost>, listState: LazyListState,
     onAction: (CommunityAction) -> Unit, host: CommunityHost, snackbar: SnackbarHostState, bottomClearance: Dp,
-    onRefreshed: () -> Unit, post: @Composable (Int, CommunityPost) -> Unit) {
+    onRefreshed: () -> Unit, guest: Boolean, onSignIn: () -> Unit, post: @Composable (Int, CommunityPost) -> Unit) {
     Scaffold(containerColor = MaterialTheme.colorScheme.background, contentWindowInsets = WindowInsets(0),
         snackbarHost = { host.snackbar(snackbar, bottomClearance) }) { padding ->
         CoffeePeekPullToRefresh(listState, isRefreshing = state.isLoading && state.items.isNotEmpty(),
@@ -160,7 +160,7 @@ private fun CommunityFeedList(state: CommunityState, posts: List<CommunityPost>,
                 } else {
                     itemsIndexed(posts, key = { _, item -> item.id },
                         contentType = { _, item -> if (item.isHome) "home-post" else "shop-post" }) { index, item -> post(index, item) }
-                    communityFeedStatus(state, onAction)
+                    communityFeedStatus(state, guest, onSignIn, onAction)
                 }
             }
         }
@@ -168,7 +168,7 @@ private fun CommunityFeedList(state: CommunityState, posts: List<CommunityPost>,
 }
 
 private fun androidx.compose.foundation.lazy.LazyListScope.communityFeedStatus(state: CommunityState,
-    onAction: (CommunityAction) -> Unit) {
+    guest: Boolean, onSignIn: () -> Unit, onAction: (CommunityAction) -> Unit) {
     when {
         state.error != null -> item(key = "error") {
             ErrorBlock({ onAction(CommunityAction.Retry) }, stringResource(
@@ -176,6 +176,7 @@ private fun androidx.compose.foundation.lazy.LazyListScope.communityFeedStatus(s
         }
         state.items.isEmpty() && !state.isLoading -> item(key = "empty") {
             Text(stringResource(Res.string.community_empty), color = MaterialTheme.colorScheme.onSurfaceVariant)
+            if (guest) CoffeePeekButton(stringResource(Res.string.community_sign_in_to_read), onSignIn)
         }
     }
     if (state.isLoadingMore) item(key = "loading-more") { CenteredLoader() }

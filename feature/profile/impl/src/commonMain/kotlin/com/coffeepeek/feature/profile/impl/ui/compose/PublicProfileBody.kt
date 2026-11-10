@@ -71,7 +71,7 @@ private fun PublicProfileUnavailable(state: PublicProfileState, visibilityPendin
 }
 
 @Composable
-private fun PublicProfileBlocked(profile: PublicProfile, authorActions: ProfileAuthorActions) {
+internal fun PublicProfileBlocked(profile: PublicProfile, authorActions: ProfileAuthorActions) {
     val author = ProfileAuthor(profile.authorId, profile.slug, profile.nickname, profile.avatarUrl)
     Column(Modifier.fillMaxWidth().padding(horizontal = 32.dp, vertical = 48.dp),
         horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -162,6 +162,9 @@ private fun PublicProfileCheckInPreview(state: PublicProfileState, profile: Publ
     val author = ProfileAuthor(profile.authorId, profile.slug, profile.nickname, profile.avatarUrl)
     Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         ProfileSectionHeading(stringResource(Res.string.profile_section_check_ins), onAll = callbacks.onOpenCheckIns)
+        if (state.checkInsError != null && state.checkIns.isNotEmpty()) {
+            InlineProfileError(stringResource(Res.string.profile_check_ins_failed)) { callbacks.onAction(PublicProfileAction.RetryCheckIns) }
+        }
         when {
             state.isLoadingCheckIns && state.checkIns.isEmpty() -> ProfileSectionLoader(100.dp)
             state.checkInsError != null && state.checkIns.isEmpty() ->
