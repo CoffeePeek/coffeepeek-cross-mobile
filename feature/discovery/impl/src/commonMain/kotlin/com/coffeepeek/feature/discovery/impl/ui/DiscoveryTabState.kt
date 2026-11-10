@@ -73,7 +73,7 @@ internal class DiscoveryTabMotion(
 internal fun discoveryTabMotion(ui: DiscoveryTabState, showDiscovery: Boolean, reduceMotion: Boolean): DiscoveryTabMotion {
     val search = animateFloatAsState(if (ui.showRoasters) 0f else 1f,
         tween(if (reduceMotion) 0 else 360), label = "discovery-roaster-list")
-    val progress = animateFloatAsState(if (showDiscovery) 1f else 0f,
+    val progress = animateFloatAsState(if (showDiscovery && !ui.showRoasters) 1f else 0f,
         tween(if (reduceMotion) 0 else 360), label = "discovery-map-slide")
     val expansion = animateFloatAsState(if (ui.mapExpanded) 1f else 0f,
         tween(if (reduceMotion) 0 else 420, easing = FastOutSlowInEasing), label = "discovery-map-expansion")

@@ -825,3 +825,21 @@ external DEX merge was FROM-CACHE. Play Debug was neither installed nor launched
 PR #261 and #262 CI are now successful on both platforms. New #263–#265 CI
 (including full macOS iOS builds) is still running; local KLIB compilation does
 not replace the full native build/visual gates.
+
+## Mini-map visibility in the roaster catalog
+
+On 2026-11-10, starting from `d9be67264`, the Discovery map transition was tied
+to the roaster overlay. The map uses its existing slide and retained layout,
+so closing the catalog can restore the preview at the saved Home scroll position.
+
+Gradle compiled Discovery for Android and compiled its unit tests. Its test
+worker could not connect over loopback. The same compiled tests passed when
+run directly with JUnit 4.13.2 (152 tests in 17 suites, zero failures).
+The 1.1.8 Direct Sandbox and Direct Debug Kotlin builds compiled. The first
+assembly attempt failed because Gradle's Java workers could not connect over
+loopback and the debug signing lock was outside the writable workspace.
+Signing validation passed on retry with a temporary debug key. The Java worker
+connection still failed, leaving APK assembly and packaged DEX checks open.
+ADB could not start, so the Direct Sandbox visual check remains open. Check
+opening and closing the catalog in light and dark themes, at a scroll position
+where the mini-map is still visible, and verify iOS native map placement too.

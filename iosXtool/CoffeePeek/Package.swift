@@ -13,7 +13,7 @@ let composeFrameworkDirectory = packageDirectory
 let package = Package(
     name: "CoffeePeek",
     platforms: [
-        .iOS("18.0"),
+        .iOS("17.0"),
         .macOS(.v14),
     ],
     products: [

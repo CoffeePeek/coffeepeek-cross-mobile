@@ -352,6 +352,8 @@ jobs:
           [[ "$(/usr/libexec/PlistBuddy -c 'Print :CoffeePeekDebug' "$INFO_PLIST")" == 'NO' ]]
           APP_PATH="${INFO_PLIST%/Info.plist}"
           MINIMUM_OS=$(/usr/libexec/PlistBuddy -c 'Print :MinimumOSVersion' "$INFO_PLIST")
+          EXPECTED_MINIMUM_OS=$(sed -n 's/^IPHONEOS_DEPLOYMENT_TARGET = //p' iosApp/Configuration/Shared.xcconfig)
+          [[ "$MINIMUM_OS" == "$EXPECTED_MINIMUM_OS" ]]
           python3 tools/ios/fix_onnx_framework.py "$APP_PATH/Frameworks/onnxruntime.framework" \
             --deployment-target "$MINIMUM_OS" --check
           codesign --verify --deep --strict "$APP_PATH"
