@@ -121,7 +121,6 @@ object Navigator {
 
         // Graphs
         @Serializable data object FeedGraph : Screen
-        @Serializable data object CoffeeGraph : Screen
         @Serializable data object CommunityGraph : Screen
         @Serializable data object ProfileGraph : Screen
         @Serializable data object BusinessGraph : Screen
@@ -130,7 +129,6 @@ object Navigator {
 
         // Tabs
         @Serializable data object FeedTab : Screen
-        @Serializable data object CoffeeTab : Screen
         @Serializable data object CommunityTab : Screen
         @Serializable data object ProfileTab : Screen
         @Serializable data object SettingsTab : Screen
@@ -206,6 +204,23 @@ object Navigator {
 
     private val _pendingTabSelection = MutableStateFlow<Screen?>(null)
     val pendingTabSelection = _pendingTabSelection.asStateFlow()
+
+    private val _pendingProfileShelf = MutableStateFlow(false)
+    val pendingProfileShelf = _pendingProfileShelf.asStateFlow()
+
+    fun consumeProfileShelf() {
+        _pendingProfileShelf.value = false
+    }
+
+    private fun clearSessionNavigationRequests() {
+        hasOpenedAppLink.value = false
+        consumeProfileShelf()
+    }
+
+    fun returnToProfileShelf() {
+        _pendingProfileShelf.value = true
+        popThenSelectTab(Screen.ProfileTab)
+    }
 
     private val _openLoginAfterSessionEnd = MutableStateFlow(false)
     private val pendingAppLink = MutableStateFlow<Screen?>(null)
@@ -341,7 +356,7 @@ object Navigator {
             if (previousLoginState != null && previousLoginState != loggedIn) {
                 clearPlatformNavigationState()
                 navigationGeneration++
-                if (!loggedIn) hasOpenedAppLink.value = false
+                if (!loggedIn) clearSessionNavigationRequests()
             }
             previousLoginState = loggedIn
             if (loggedIn) {

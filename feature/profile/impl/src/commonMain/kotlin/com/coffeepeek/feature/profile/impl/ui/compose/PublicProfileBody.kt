@@ -10,8 +10,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -90,20 +88,20 @@ private fun PublicProfileBlocked(profile: PublicProfile, authorActions: ProfileA
 @Composable
 private fun PublicProfileLoadedContent(state: PublicProfileState, profile: PublicProfile, viewingOwn: Boolean,
     authorActions: ProfileAuthorActions, slots: ProfileSlots, callbacks: PublicProfileCallbacks, own: OwnProfileExtras?) {
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())
-        .then(if (own == null) Modifier.navigationBarsPadding() else Modifier),
-        verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Spacer(Modifier.height(2.dp))
+    ProfileContentTabs(
+        profile.slug,
+        checkIns = { PublicProfileCheckInPreview(state, profile, viewingOwn, authorActions, slots, callbacks) },
+        collections = { PublicProfileCollections(profile, viewingOwn, slots, own) },
+        shelf = { slots.shelfPreview(profile.slug, viewingOwn) },
+        modifier = Modifier.fillMaxSize().then(if (own == null) Modifier.navigationBarsPadding() else Modifier),
+        ownerShelf = own?.shelf, bottomPadding = own?.bottomContentPadding ?: 20.dp,
+    ) {
         Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Spacer(Modifier.height(2.dp))
             PublicProfileIdentity(state, profile, viewingOwn, slots, callbacks, own)
             PublicProfileWeek(state, profile, slots, callbacks, own)
             PublicProfileRefreshErrors(state, viewingOwn, callbacks.onAction)
         }
-        ProfileContentTabs(profile.slug,
-            checkIns = { PublicProfileCheckInPreview(state, profile, viewingOwn, authorActions, slots, callbacks) },
-            collections = { PublicProfileCollections(profile, viewingOwn, slots, own) },
-            shelf = { slots.shelfPreview(profile.slug, viewingOwn) })
-        Spacer(Modifier.height(own?.bottomContentPadding ?: 20.dp))
     }
 }
 

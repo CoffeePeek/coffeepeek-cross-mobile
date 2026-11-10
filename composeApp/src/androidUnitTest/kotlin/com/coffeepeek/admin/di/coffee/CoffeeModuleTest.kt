@@ -7,7 +7,6 @@ import com.coffeepeek.core.network.SessionTokens
 import com.coffeepeek.admin.di.homecheckin.homeCheckInModule
 import com.coffeepeek.admin.di.shelf.shelfModule
 import com.coffeepeek.admin.di.shop.CheckInTestSessions
-import com.coffeepeek.admin.settings.FakeSettingRepository
 import com.coffeepeek.core.session.SessionReader
 import com.coffeepeek.core.session.SessionStore
 import com.coffeepeek.feature.coffee.api.CoffeePicker
@@ -41,8 +40,7 @@ class CoffeeModuleTest {
             assertEquals("Sandbox Ethiopia", repository.search("", CoffeeFilters(), 1).getOrThrow().items.first().name)
             val picker = app.koin.get<CoffeePicker>()
             assertEquals(listOf("sandbox-kenya"), picker.search("  Kenya ").getOrThrow().map { it.slug })
-            val shelf = CoffeeShelfTab(app.koin.get(), app.koin.get(), FakeSettingRepository())
-            assertNotNull(featureCoffeeScreenRenderer(repository, shelf))
+            assertNotNull(featureCoffeeScreenRenderer(repository))
         } finally {
             app.close()
             closeClients(client, backend)

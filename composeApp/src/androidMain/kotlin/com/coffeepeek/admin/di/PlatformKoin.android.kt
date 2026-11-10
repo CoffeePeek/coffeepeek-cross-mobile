@@ -10,7 +10,6 @@ import com.coffeepeek.admin.di.shop.shopCheckInModule
 import com.coffeepeek.admin.di.shop.FeatureShopCheckInFormRenderer
 import com.coffeepeek.admin.di.coffee.featureCoffeeScreenRenderer
 import com.coffeepeek.admin.di.coffee.coffeeModule
-import com.coffeepeek.admin.di.coffee.CoffeeShelfTab
 import com.coffeepeek.admin.di.shelf.ShelfFeatureScreenRenderer
 import com.coffeepeek.admin.di.shelf.shelfBrewForm
 import com.coffeepeek.admin.di.shelf.shelfModule
@@ -84,9 +83,9 @@ internal fun initAndroidKoin(extraModules: List<org.koin.core.module.Module> = e
         contentReportRendererFactory = { get<FeatureContentReportRenderer>() },
         // Shelf: Coffee tab switcher, «+» scan flow, and shelf screens (live API on debug/release; Sandbox uses fake backend).
         coffeeRendererFactory = {
-            featureCoffeeScreenRenderer(get(), CoffeeShelfTab(get(), get(), Locator.database.settingRepository))
+            featureCoffeeScreenRenderer(get())
         },
-        shelfRendererFactory = { ShelfFeatureScreenRenderer(get(), Locator.database.settingRepository, shelfBrewForm(get())) },
+        shelfRendererFactory = { ShelfFeatureScreenRenderer(get(), shelfBrewForm(get())) },
         publicProfileRendererFactory = { featurePublicProfileScreenRenderer(get(), get(), get(), get(), get(), get()) },
         ownProfileRendererFactory = { featureOwnProfileScreenRenderer(get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) },
         accountRendererFactory = { featureAccountScreenRenderer(get(), get(), get()) },

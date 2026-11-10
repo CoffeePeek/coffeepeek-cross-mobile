@@ -1,4 +1,5 @@
 <resources>
+    <string name="shelf_settings">Налады кававай паліцы</string>
     <string name="shelf_loading">Загружаем паліцу</string>
     <string name="shelf_load_failed">Не ўдалося загрузіць паліцу</string>
     <string name="shelf_retry">Паўтарыць</string>
@@ -20,7 +21,6 @@
     <string name="shelf_weeks_many">%1$d тыдняў</string>
     <string name="shelf_empty_title">Тут будзе ваша кава</string>
     <string name="shelf_empty_body">Сфатаграфуйце пачку — яна стане на паліцу, а калі скончыцца, пяройдзе ў архіў</string>
-    <string name="shelf_browse_catalog">Паглядзець каталог</string>
     <string name="shelf_guest_title">Збярыце сваю паліцу</string>
     <string name="shelf_guest_body">Увайдзіце, каб захоўваць пачкі кавы і гісторыю пакупак</string>
     <string name="shelf_sign_in">Увайсці</string>

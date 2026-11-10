@@ -52,7 +52,6 @@ internal class ShelfViewModel(
             ShelfAction.DismissMessage -> updateState { copy(message = null) }
             is ShelfAction.ArrivalPresented -> arrivalPresented(action.id)
             ShelfAction.OpenArchive -> sendEvent(ShelfEvent.OpenArchive)
-            ShelfAction.BrowseCatalog -> sendEvent(ShelfEvent.BrowseCatalog)
             ShelfAction.SignIn -> sendEvent(ShelfEvent.SignIn)
             ShelfAction.AddBag -> sendEvent(ShelfEvent.AddBag)
         }

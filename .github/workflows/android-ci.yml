@@ -20,7 +20,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
         with:
-          fetch-depth: 0
+          fetch-depth: 1
 
       - name: Set up JetBrains Runtime 21
         uses: actions/setup-java@v6
@@ -31,7 +31,8 @@ jobs:
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v6
         with:
-          cache-read-only: ${{ github.event_name == 'pull_request' || (github.ref != 'refs/heads/main' && github.ref != 'refs/heads/develop') }}
+          # Same-repo PRs write caches so follow-up pushes reuse their outputs; forks stay read-only.
+          cache-read-only: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork }}
 
       - name: Install Android 37 SDK components
         shell: bash

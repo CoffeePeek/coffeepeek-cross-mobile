@@ -14,7 +14,8 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
@@ -70,7 +71,7 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 @Composable
 internal fun ShelfScreen(
     viewModel: ShelfViewModel, signedIn: Boolean, image: ShelfImage, bottomClearance: Dp, modifier: Modifier,
-    header: @Composable ColumnScope.() -> Unit, onEvent: (ShelfEvent) -> Unit,
+    header: @Composable ColumnScope.() -> Unit, visibilitySettings: @Composable () -> Unit, onEvent: (ShelfEvent) -> Unit,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val currentEvent by rememberUpdatedState(onEvent)
@@ -79,13 +80,14 @@ internal fun ShelfScreen(
         lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) { viewModel.events.collect { currentEvent(it) } }
     }
     LaunchedEffect(viewModel, signedIn) { if (signedIn) viewModel.onAction(ShelfAction.Refresh) }
-    ShelfScreenContent(state, signedIn, viewModel::onAction, image, modifier, bottomClearance, header)
+    ShelfScreenContent(state, signedIn, viewModel::onAction, image, modifier, bottomClearance, header, visibilitySettings)
 }
 
 @Composable
 internal fun ShelfScreenContent(
     state: ShelfState, signedIn: Boolean, onAction: (ShelfAction) -> Unit, image: ShelfImage,
     modifier: Modifier = Modifier, bottomClearance: Dp = 0.dp, header: @Composable ColumnScope.() -> Unit = {},
+    visibilitySettings: @Composable () -> Unit = {},
 ) {
     val drag = remember { ShelfDragState() }
     val tiles = rememberShelfTiles(image)
@@ -94,14 +96,7 @@ internal fun ShelfScreenContent(
     ShelfMessageEffect(state.message, snackbar, onAction)
     ShelfArchiveDropEffect(drag, state)
     Box(modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
-        Column(Modifier.fillMaxSize()) {
-            Column(Modifier.fillMaxWidth().statusBarsPadding().padding(horizontal = CoffeePeekDimens.spacing4).padding(top = CoffeePeekDimens.spacing3)) {
-                header()
-                ShelfHeader(onArchive = { onAction(ShelfAction.OpenArchive) }.takeIf { signedIn })
-                ShelfSummaryRow(state.summary.takeIf { signedIn && state.loaded }, drag.active)
-            }
-            ShelfBody(state, signedIn, drag, tiles, image, onAction, bottomClearance, Modifier.weight(1f))
-        }
+        ShelfScrollContent(state, signedIn, drag, tiles, image, onAction, bottomClearance, header, visibilitySettings)
         AnimatedVisibility(drag.active, Modifier.align(Alignment.BottomCenter), enter = slideInVertically { it / 2 } + fadeIn(),
             exit = slideOutVertically { it / 2 } + fadeOut()) {
             ShelfFinishZone(drag.overZone, Modifier.padding(horizontal = CoffeePeekDimens.spacing4).padding(bottom = bottomClearance + CoffeePeekDimens.spacing3)
@@ -114,47 +109,65 @@ internal fun ShelfScreenContent(
 }
 
 @Composable
+private fun ShelfScrollContent(
+    state: ShelfState, signedIn: Boolean, drag: ShelfDragState, tiles: ShelfTiles, image: ShelfImage,
+    onAction: (ShelfAction) -> Unit, bottomClearance: Dp,
+    header: @Composable ColumnScope.() -> Unit, visibilitySettings: @Composable () -> Unit,
+) {
+    val scroll = rememberScrollState()
+    val viewport = remember { arrayOfNulls<Rect>(1) }
+    ShelfAutoScroll(drag, scroll) { viewport[0] }
+    Column(Modifier.fillMaxSize().onGloballyPositioned { viewport[0] = it.boundsInRoot() }.verticalScroll(scroll)
+        .padding(bottom = bottomClearance + 96.dp)) {
+        header()
+        Column(Modifier.padding(horizontal = CoffeePeekDimens.spacing4).padding(top = CoffeePeekDimens.spacing3)) {
+            ShelfHeader({ onAction(ShelfAction.OpenArchive) }.takeIf { signedIn },
+                visibilitySettings = visibilitySettings.takeIf { signedIn })
+            ShelfSummaryRow(state.summary.takeIf { signedIn && state.loaded }, drag.active)
+            ShelfBody(state, signedIn, drag, tiles, image, onAction)
+        }
+    }
+}
+
+@Composable
 private fun ShelfBody(
     state: ShelfState, signedIn: Boolean, drag: ShelfDragState, tiles: ShelfTiles, image: ShelfImage,
-    onAction: (ShelfAction) -> Unit, bottomClearance: Dp, modifier: Modifier,
+    onAction: (ShelfAction) -> Unit,
 ) {
-    val scrolling = Modifier.fillMaxSize().verticalScroll(rememberScrollState())
-        .padding(horizontal = CoffeePeekDimens.spacing4).padding(bottom = bottomClearance + 96.dp)
+    val width = Modifier.fillMaxWidth()
     when {
         !signedIn -> ShelfInvitation(stringResource(Res.string.shelf_guest_title), stringResource(Res.string.shelf_guest_body),
-            stringResource(Res.string.shelf_sign_in), { onAction(ShelfAction.SignIn) }, modifier.then(scrolling))
+            stringResource(Res.string.shelf_sign_in), { onAction(ShelfAction.SignIn) }, width)
         !state.loaded && state.loadFailed -> ShelfLoadError(stringResource(Res.string.shelf_load_failed),
-            { onAction(ShelfAction.Refresh) }, modifier.then(scrolling))
-        !state.loaded -> Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            { onAction(ShelfAction.Refresh) }, width)
+        !state.loaded -> Box(width.padding(vertical = 24.dp), contentAlignment = Alignment.Center) {
             CoffeePeekLoader(stringResource(Res.string.shelf_loading))
         }
         state.bags.isEmpty() -> ShelfInvitation(stringResource(Res.string.shelf_empty_title), stringResource(Res.string.shelf_empty_body),
-            stringResource(Res.string.shelf_scan_bag), { onAction(ShelfAction.AddBag) }, modifier.then(scrolling),
-            stringResource(Res.string.shelf_browse_catalog)) { onAction(ShelfAction.BrowseCatalog) }
-        else -> ShelfShelves(state.bags, state.arrivingId, drag, tiles, image, onAction, bottomClearance, modifier)
+            stringResource(Res.string.shelf_scan_bag), { onAction(ShelfAction.AddBag) }, width)
+        else -> ShelfShelves(state.bags, state.arrivingId, drag, tiles, image, onAction)
     }
 }
 
 @Composable
 private fun ShelfShelves(
     bags: List<ShelfBagItem>, arrivingId: String?, drag: ShelfDragState, tiles: ShelfTiles, image: ShelfImage,
-    onAction: (ShelfAction) -> Unit, bottomClearance: Dp, modifier: Modifier,
+    onAction: (ShelfAction) -> Unit,
 ) {
-    val scroll = rememberScrollState()
-    val viewport = remember { arrayOfNulls<Rect>(1) }
-    ShelfAutoScroll(drag, scroll) { viewport[0] }
+    val arrivalTarget = remember { BringIntoViewRequester() }
+    val rowHeight = with(LocalDensity.current) { 160.dp.toPx() }
     LaunchedEffect(bags) { drag.settled() }
     LaunchedEffect(drag.settling) { if (drag.settling != null) { delay(1_000); drag.settled() } }
     val visibleArrival = arrivingId?.takeIf { id -> bags.any { it.id == id } }
     LaunchedEffect(visibleArrival) {
         if (visibleArrival == null) return@LaunchedEffect
         onAction(ShelfAction.ArrivalPresented(visibleArrival))
-        scroll.animateScrollTo(0)
+        withFrameNanos { }
+        arrivalTarget.bringIntoView(Rect(0f, 0f, 1f, rowHeight))
     }
-    Box(modifier.fillMaxSize().onGloballyPositioned { viewport[0] = it.boundsInRoot() }.verticalScroll(scroll)
-        .padding(horizontal = CoffeePeekDimens.spacing4).padding(top = CoffeePeekDimens.spacing4, bottom = bottomClearance + 96.dp)) {
-        ShelfGrid(bags, drag, tiles, image, onAction, arrivingId = visibleArrival)
-    }
+    ShelfGrid(bags, drag, tiles, image, onAction,
+        modifier = Modifier.padding(top = CoffeePeekDimens.spacing4).bringIntoViewRequester(arrivalTarget),
+        arrivingId = visibleArrival)
 }
 
 /** Scrolls the shelf while a lifted bag is held near the top or bottom edge. */

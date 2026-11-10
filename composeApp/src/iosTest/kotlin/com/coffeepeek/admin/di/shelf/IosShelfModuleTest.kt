@@ -2,7 +2,6 @@ package com.coffeepeek.admin.di.shelf
 
 import com.coffeepeek.admin.di.coffee.coffeeModule
 import com.coffeepeek.admin.di.coffee.featureCoffeeScreenRenderer
-import com.coffeepeek.admin.di.coffee.CoffeeShelfTab
 import com.coffeepeek.admin.di.checkinhistory.FeatureCheckInHistoryScreenRenderer
 import com.coffeepeek.admin.di.checkinhistory.HistoryHomeEditorFactory
 import com.coffeepeek.admin.di.checkinhistory.checkInHistoryModule
@@ -12,7 +11,6 @@ import com.coffeepeek.admin.di.homecheckin.homeCheckInModule
 import com.coffeepeek.core.network.ApiClients
 import com.coffeepeek.core.network.SessionCredentials
 import com.coffeepeek.core.network.SessionTokens
-import com.coffeepeek.admin.settings.FakeSettingRepository
 import com.coffeepeek.core.session.Session
 import com.coffeepeek.core.session.SessionReader
 import com.coffeepeek.feature.coffee.api.CoffeePicker
@@ -98,8 +96,7 @@ class IosShelfModuleTest {
         assertSame(koin.get<FeatureCheckInCreateFlowRenderer>(), koin.get<FeatureCheckInCreateFlowRenderer>())
         assertSame(koin.get<HistoryHomeEditorFactory>(), koin.get<HistoryHomeEditorFactory>())
         assertSame(koin.get<FeatureCheckInHistoryScreenRenderer>(), koin.get<FeatureCheckInHistoryScreenRenderer>())
-        val shelf = CoffeeShelfTab(koin.get(), koin.get(), FakeSettingRepository())
-        assertNotNull(featureCoffeeScreenRenderer(koin.get(), shelf))
+        assertNotNull(featureCoffeeScreenRenderer(koin.get()))
     }
 
     @Test fun theTimeZoneOffsetFollowsTheDevice() {

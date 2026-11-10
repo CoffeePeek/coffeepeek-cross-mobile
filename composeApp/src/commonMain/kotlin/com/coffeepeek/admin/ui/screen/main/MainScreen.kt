@@ -24,6 +24,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveableStateHolder
@@ -56,7 +57,6 @@ import com.coffeepeek.admin.ui.component.FloatingNavBottomMargin
 import com.coffeepeek.admin.ui.component.FloatingNavItem
 import com.coffeepeek.admin.ui.component.RetainedContent
 import com.coffeepeek.admin.ui.component.ProvideFloatingNavClearance
-import com.coffeepeek.admin.ui.screen.coffee.CoffeeScreenRenderer
 import org.koin.compose.koinInject
 import coffeepeek.composeapp.generated.resources.Res
 import coffeepeek.composeapp.generated.resources.business_tab_title
@@ -78,13 +78,12 @@ expect fun MainScreen(isLoggedIn: Boolean, onMapExpandedChange: (Boolean) -> Uni
 @Composable
 internal fun ComposeMainScreen(isLoggedIn: Boolean, onMapExpandedChange: (Boolean) -> Unit) {
     val localizedMainScreenSearch = stringResource(Res.string.main_screen_search)
-    val localizedCheckinRatingCoffee = stringResource(Res.string.checkin_rating_coffee)
     val localizedVisitedPlacesScreenSandboxFeedTitle = stringResource(Res.string.visited_places_screen_sandbox_feed_title)
     val localizedMainScreenProfileTitle = stringResource(Res.string.main_screen_profile_title)
     val localizedMainScreenSettingsTabTitle = stringResource(Res.string.main_screen_settings_tab_title)
 
     val reduceMotion = com.coffeepeek.admin.ui.component.platformReduceMotion()
-    val bottomNavController = rememberNavController()
+    val bottomNavController = key("profile-shelf-tabs") { rememberNavController() }
     val tabReselections = remember { MainTabReselections() }
     val analyticsEntry by bottomNavController.currentBackStackEntryAsState()
     com.coffeepeek.admin.analytics.TrackNavigationScreen(analyticsEntry)
@@ -102,12 +101,6 @@ internal fun ComposeMainScreen(isLoggedIn: Boolean, onMapExpandedChange: (Boolea
             icon = CoffeePeekIcons.Search,
             graph = Navigator.Screen.FeedGraph,
             startScreen = Navigator.Screen.FeedTab,
-        ),
-        BottomNavItem(
-            title = localizedCheckinRatingCoffee,
-            icon = CoffeePeekIcons.CoffeeBean,
-            graph = Navigator.Screen.CoffeeGraph,
-            startScreen = Navigator.Screen.CoffeeTab,
         ),
         BottomNavItem(
             title = localizedVisitedPlacesScreenSandboxFeedTitle,
@@ -245,12 +238,6 @@ internal fun ComposeMainScreen(isLoggedIn: Boolean, onMapExpandedChange: (Boolea
                         }
                     }
 
-                    navigation<Navigator.Screen.CoffeeGraph>(startDestination = Navigator.Screen.CoffeeTab) {
-                        composable<Navigator.Screen.CoffeeTab> {
-                            CheckInTabContent { koinInject<CoffeeScreenRenderer>().List(tabReselections.coffee) }
-                        }
-                    }
-
                     navigation<Navigator.Screen.CommunityGraph>(startDestination = Navigator.Screen.CommunityTab) {
                         composable<Navigator.Screen.CommunityTab> {
                             koinInject<com.coffeepeek.admin.ui.screen.community.CommunityScreenRenderer>().Content(
@@ -320,7 +307,6 @@ private fun AnimatedContentTransitionScope<NavBackStackEntry>.tabDirection() =
 
 private fun NavDestination.tabIndex(): Int = when {
     hasRoute<Navigator.Screen.FeedTab>() -> 0
-    hasRoute<Navigator.Screen.CoffeeTab>() -> 1
     hasRoute<Navigator.Screen.CommunityTab>() -> 2
     hasRoute<Navigator.Screen.ProfileTab>() -> 3
     else -> 4

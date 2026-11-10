@@ -65,15 +65,15 @@ private class ShelfApiImpl(
 
     @Composable
     override fun Shelf(
-        signedIn: Boolean, onOpenArchive: () -> Unit, onBrowseCatalog: () -> Unit, onSignIn: () -> Unit, onAddBag: () -> Unit,
+        signedIn: Boolean, onOpenArchive: () -> Unit, onSignIn: () -> Unit, onAddBag: () -> Unit,
         onOpenBag: (String) -> Unit, modifier: Modifier, bottomClearance: Dp, header: @Composable ColumnScope.() -> Unit,
+        visibilitySettings: @Composable () -> Unit,
     ) {
         key(this) {
             val model = viewModel(key = "shelf:$instanceKey") { ShelfViewModel(repository, calendar, arrivals, bags) }
-            ShelfScreen(model, signedIn, ports.image, bottomClearance, modifier, header) { event ->
+            ShelfScreen(model, signedIn, ports.image, bottomClearance, modifier, header, visibilitySettings) { event ->
                 when (event) {
                     ShelfEvent.OpenArchive -> onOpenArchive()
-                    ShelfEvent.BrowseCatalog -> onBrowseCatalog()
                     ShelfEvent.SignIn -> onSignIn()
                     ShelfEvent.AddBag -> onAddBag()
                     is ShelfEvent.OpenBag -> onOpenBag(event.id)

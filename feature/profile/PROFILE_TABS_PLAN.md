@@ -103,3 +103,26 @@ the existing 85 Shelf tests again and passed Android/iOS shared compilation,
 Sandbox assembly and DEX/isolation checks. See `../shelf/LIGHT_TIMBER_PLAN.md`
 for the final artifact identity; the 266-result profile integration above was
 completed before that scoped shelf layout correction.
+
+## Editable owner shelf — 2026-11-10
+
+The personal navigation now opens the editable shelf in the owner profile.
+The shelf retains scanning, drag and drop, archive and undo. Saving a bag
+opens the Shelf section. Its visibility setting lives on the shelf and the
+standalone Coffee tab has been removed.
+
+Verified on Windows against `c8ffe801` with source tree `e073246b`.
+Both APKs passed packaged DEX verification and Sandbox passed isolation.
+The function body check reported zero new violations. Direct JUnit passed
+72 profile tests, 85 shelf tests and 18 app tests across 23 suites.
+The first build stalled after Sandbox compilation. An alternate JVM
+invocation could not connect to a Gradle daemon. The in-process retry passed.
+
+| Variant | Package | Local build | APK SHA-256 |
+|---|---|---|---|
+| `directSandbox` | `com.coffeepeek.sandbox` | `1.1.7.2895-sandbox` | `481b253adbd5c684a3e376db51592251b9c766d6531cd94965ab51ffd6680ef4` |
+| `directDebug` | `com.coffeepeek` | `1.1.7.2895` | `8c458da9326060ec3d378e0762d5c10bc9e6b34a5c7a1581abdbf1c80e946df1` |
+
+No device was used. Manual light and dark checks of profile tabs, scan
+return, dragging, archive undo and visibility remain open, as does the
+native iOS build.

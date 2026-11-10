@@ -33,7 +33,6 @@ import com.coffeepeek.core.network.ApiClients
 import com.coffeepeek.admin.di.notifications.featureNotificationsRenderer
 import com.coffeepeek.admin.di.settings.featureSettingsScreenRenderer
 import com.coffeepeek.admin.utils.ErrorHandler
-import com.coffeepeek.admin.di.coffee.CoffeeShelfTab
 import com.coffeepeek.admin.di.profile.profileSnapshotModule
 import com.coffeepeek.admin.di.shelf.ShelfFeatureScreenRenderer
 import com.coffeepeek.admin.di.shelf.shelfBrewForm
@@ -72,10 +71,10 @@ actual fun initPlatformKoin() {
         checkInDetailRendererFactory = { com.coffeepeek.admin.di.community.featureCheckInDetailScreenRenderer(get(), get(), get(), get()) },
         communityRendererFactory = { featureCommunityScreenRenderer(get(), get(), get(), get(), get(), get()) },
         coffeeRendererFactory = {
-            featureCoffeeScreenRenderer(get(), CoffeeShelfTab(get(), get(), Locator.database.settingRepository))
+            featureCoffeeScreenRenderer(get())
         },
         shelfRendererFactory = {
-            ShelfFeatureScreenRenderer(get(), Locator.database.settingRepository, shelfBrewForm(get()))
+            ShelfFeatureScreenRenderer(get(), shelfBrewForm(get()))
         },
         publicProfileRendererFactory = { featurePublicProfileScreenRenderer(get(), get(), get(), get(), get()) },
         ownProfileRendererFactory = { featureOwnProfileScreenRenderer(get(), get(), get(), get(), get(), get(), get(), get(), get()) },

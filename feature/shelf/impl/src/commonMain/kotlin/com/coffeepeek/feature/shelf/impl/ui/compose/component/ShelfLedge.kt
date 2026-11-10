@@ -9,7 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.GenericShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -33,17 +33,7 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 
 internal val ShelfLedgeHeight = 18.dp
 internal val ShelfLedgeOverlap = 8.dp
-private val ShelfLedgeShape = GenericShape { size, _ ->
-    val depth = size.height * (ShelfLedgeOverlap / ShelfLedgeHeight)
-    val inset = minOf(depth, size.width / 2)
-    moveTo(inset, 0f)
-    lineTo(size.width - inset, 0f)
-    lineTo(size.width, depth)
-    lineTo(size.width, size.height)
-    lineTo(0f, size.height)
-    lineTo(0f, depth)
-    close()
-}
+private val ShelfLedgeShape = RoundedCornerShape(ShelfLedgeHeight / 2)
 
 /** A light oak board with a receding top plane; bag bottoms meet its front edge. */
 @Composable
