@@ -1,10 +1,15 @@
 package com.coffeepeek.admin.di.favorites
 
 import com.coffeepeek.admin.di.shop.CheckInTestSessions
-import com.coffeepeek.admin.feature.favorites.data.ServerRoasterFavorites
-import com.coffeepeek.domain.feature.favorites.api.*
-import com.coffeepeek.domain.model.*
-import com.coffeepeek.domain.repository.RoasterRepository
+import com.coffeepeek.core.session.Session
+import com.coffeepeek.feature.favorites.domain.model.FavoriteAddress
+import com.coffeepeek.feature.favorites.domain.model.FavoriteEntry
+import com.coffeepeek.feature.favorites.domain.model.FavoriteKind
+import com.coffeepeek.feature.favorites.domain.repository.AccountFavorites
+import com.coffeepeek.feature.roaster.api.PublicRoasterDescription
+import com.coffeepeek.feature.roaster.api.PublicRoasterDetails
+import com.coffeepeek.feature.roaster.api.PublicRoasterSummary
+import com.coffeepeek.feature.shop.api.PublicShopSummary
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.test.*
@@ -12,7 +17,7 @@ import kotlin.test.*
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class FavoriteReadinessBridgesTest {
-    private val address = PublicAddress("canonical", "/coffee-shop/canonical", 1, false)
+    private val address = FavoriteAddress("canonical", "/coffee-shop/canonical", 1, false)
 
     @Test fun aTechnicalShopEmptyDoesNotSettleBeforeActualCardsAreHydrated() = runTest {
         val server = PendingServer(listOf(entry(FavoriteKind.CoffeeShop)))
@@ -34,20 +39,7 @@ class FavoriteReadinessBridgesTest {
         val gate = CompletableDeferred<Unit>()
         val sessions = CheckInTestSessions()
         val favorites = ServerRoasterFavorites(server, catalogue { gate.await() }, sessions)
-        val source = LegacyFavoriteRoastersRepository(favorites, sessions) { error("Saved photo requires no fallback") }
-        val results = record(source.observe())
-        runCurrent()
-        assertTrue(results.isEmpty())
-        gate.complete(Unit)
-        runCurrent()
-        assertEquals("Server saved", results.single().getOrThrow().single().title)
-    }
-
-    @Test fun aTechnicalDrinkEmptyWaitsForTheActualServerRead() = runTest {
-        val server = PendingServer(listOf(entry(FavoriteKind.Drink)))
-        val gate = CompletableDeferred<Unit>()
-        server.beforeRead = { gate.await() }
-        val source = ServerFavoriteDrinksRepository(server, CheckInTestSessions())
+        val source = AccountFavoriteRoasters(favorites, sessions) { error("Saved photo requires no fallback") }
         val results = record(source.observe())
         runCurrent()
         assertTrue(results.isEmpty())
@@ -60,10 +52,8 @@ class FavoriteReadinessBridgesTest {
         val server = PendingServer(emptyList())
         val sessions = CheckInTestSessions()
         val shops = ServerFavoriteShopsRepository(server, sessions) { error("Empty list has no details") }
-        val drinks = ServerFavoriteDrinksRepository(server, sessions)
-        val roasters = LegacyFavoriteRoastersRepository(ServerRoasterFavorites(server, catalogue(), sessions), sessions) { error("No photo") }
+        val roasters = AccountFavoriteRoasters(ServerRoasterFavorites(server, catalogue(), sessions), sessions) { error("No photo") }
         assertTrue(shops.observe().first().getOrThrow().isEmpty())
-        assertTrue(drinks.observe().first().getOrThrow().isEmpty())
         assertTrue(roasters.observe().first().getOrThrow().isEmpty())
     }
 
@@ -122,22 +112,6 @@ class FavoriteReadinessBridgesTest {
         assertFailsWith<CancellationException> { observeLoadedServerFavorites(server, sessions).first() }
     }
 
-    @Test fun logoutClearsDrinksBeforeANonCooperativeOldReadCompletes() = runTest {
-        val server = PendingServer(listOf(entry(FavoriteKind.Drink)))
-        val gate = CompletableDeferred<Unit>()
-        val sessions = CheckInTestSessions()
-        server.beforeRead = { withContext(NonCancellable) { gate.await() } }
-        val results = record(ServerFavoriteDrinksRepository(server, sessions).observe())
-        runCurrent()
-        assertTrue(results.isEmpty())
-        sessions.applySession(null)
-        runCurrent()
-        assertTrue(results.last().getOrThrow().isEmpty())
-        gate.complete(Unit)
-        runCurrent()
-        assertTrue(results.all { it.getOrNull()?.isEmpty() == true })
-    }
-
     @Test fun commonRoasterReadRetainsImmediateOwnerRevocationForLegacyConsumers() = runTest {
         val server = PendingServer(listOf(entry(FavoriteKind.Roaster)))
         val gate = CompletableDeferred<Unit>()
@@ -171,24 +145,22 @@ class FavoriteReadinessBridgesTest {
     private fun entry(kind: FavoriteKind) = FavoriteEntry(kind, address.takeUnless { kind == FavoriteKind.Drink },
         drinkSlug = "latte".takeIf { kind == FavoriteKind.Drink }, name = "Server saved", coverPhotoUrl = "https://fixture.invalid/card")
 
-    private fun details() = CoffeeShopDetails(CoffeeShop("canonical", "Details", null, cityName = null,
-        priceRange = null, photoUrl = null, publicAddress = address))
+    private fun details() = PublicShopSummary(null, null, null, null, 0, false, emptyList(),
+        slug = address.slug, canonicalPath = address.canonicalPath, revision = address.revision, isAlias = address.isAlias, title = "Details")
 
-    private fun catalogue(beforeRead: suspend () -> Unit = {}) = object : RoasterRepository {
-        override suspend fun getRoasters(): Result<List<RoasterSummary>> {
+    private fun catalogue(beforeRead: suspend () -> Unit = {}) = object : PublicRoasterDetails {
+        override suspend fun summaries(): Result<List<PublicRoasterSummary>> {
             beforeRead()
-            return Result.success(listOf(RoasterSummary(address, "Catalogue", photoUrl = "https://fixture.invalid/logo")))
+            return Result.success(listOf(PublicRoasterSummary(address.slug, "https://fixture.invalid/logo", emptyList(), 0, 0, 0, "Catalogue")))
         }
-        override suspend fun getRoaster(id: String): Result<RoasterDetails> = error("Catalogue already contains saved roaster")
-        override suspend fun submitRoaster(input: CreateRoasterInput): Result<RoasterSubmissionResult> = error("No write")
-        override suspend fun getMyRoasterSubmissions(status: ModerationStatus, page: Int, pageSize: Int): Result<PagedResult<RoasterSubmission>> = error("No write")
+        override suspend fun load(slug: String): Result<PublicRoasterDescription> = error("Catalogue already contains saved roaster")
     }
 
     private fun <T> TestScope.record(flow: Flow<T>): MutableList<T> = mutableListOf<T>().also { values ->
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { flow.collect { values += it } }
     }
 
-    private class PendingServer(items: List<FavoriteEntry>) : FavoritesRepository {
+    private class PendingServer(items: List<FavoriteEntry>) : AccountFavorites {
         val signals = MutableStateFlow<Result<List<FavoriteEntry>>>(Result.success(emptyList()))
         var actual = Result.success(items)
         var reads = 0
@@ -200,7 +172,7 @@ class FavoriteReadinessBridgesTest {
             beforeRead()
             return captured
         }
-        override suspend fun setFavorite(kind: FavoriteKind, address: PublicAddress, favorite: Boolean): Result<Unit> = error("No write")
+        override suspend fun setFavorite(entry: FavoriteEntry, favorite: Boolean): Result<Unit> = error("No write")
         override fun clearCache() = Unit
     }
 }

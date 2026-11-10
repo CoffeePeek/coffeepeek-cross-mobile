@@ -10,7 +10,11 @@ import com.coffeepeek.feature.shelf.impl.ui.compose.model.ShelfEvent
 import com.coffeepeek.feature.shelf.impl.ui.compose.model.ShelfMessage
 import com.coffeepeek.feature.shelf.impl.ui.compose.model.ShelfState
 import com.coffeepeek.feature.shelf.impl.ui.data.ShelfCalendar
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+
+private const val ARRIVAL_HIGHLIGHT_MILLIS = 5_000L
 
 /**
  * Renders the repository's shelf snapshot, which already shows moves and finishes optimistically and rolls them back
@@ -24,6 +28,7 @@ internal class ShelfViewModel(
     private val handoff: ShelfBagHandoff,
 ) : MviViewModel<ShelfState, ShelfAction, ShelfEvent>(ShelfState(today = calendar.today())) {
     private val busyBags = mutableSetOf<String>()
+    private var arrivalHighlight: Job? = null
 
     init {
         viewModelScope.launch {
@@ -31,9 +36,7 @@ internal class ShelfViewModel(
                 updateState { copy(bags = bags.orEmpty().map(calendar::item), loaded = bags != null, today = calendar.today()) }
             }
         }
-        viewModelScope.launch {
-            arrivals.arriving.collect { id -> if (id != null) updateState { copy(arrivingId = id, message = ShelfMessage.Added) } }
-        }
+        viewModelScope.launch { observeArrivals() }
         viewModelScope.launch { handoff.outcome.collect { it?.let(::bagOutcome) } }
     }
 
@@ -47,9 +50,8 @@ internal class ShelfViewModel(
             is ShelfAction.Finish -> finish(action)
             is ShelfAction.UndoFinish -> undoFinish(action.id, action.position)
             ShelfAction.DismissMessage -> updateState { copy(message = null) }
-            is ShelfAction.ArrivalShown -> arrivalShown(action.id)
+            is ShelfAction.ArrivalPresented -> arrivalPresented(action.id)
             ShelfAction.OpenArchive -> sendEvent(ShelfEvent.OpenArchive)
-            ShelfAction.BrowseCatalog -> sendEvent(ShelfEvent.BrowseCatalog)
             ShelfAction.SignIn -> sendEvent(ShelfEvent.SignIn)
             ShelfAction.AddBag -> sendEvent(ShelfEvent.AddBag)
         }
@@ -62,15 +64,13 @@ internal class ShelfViewModel(
         sendEvent(ShelfEvent.OpenBag(id))
     }
 
-    /** A bag finished or deleted on its own screen is reported here, a finish with its undo. */
+    /** Shelf finishes offer undo. Deletions are reflected in the repository snapshot. */
     private fun bagOutcome(outcome: ShelfBagOutcome) {
-        val message = when (outcome) {
-            is ShelfBagOutcome.Finished -> ShelfMessage.Finished(outcome.bagId, outcome.position)
-            is ShelfBagOutcome.Deleted -> ShelfMessage.Deleted.takeUnless { outcome.archived }
-            is ShelfBagOutcome.Restored -> null
-        } ?: return
+        if (outcome is ShelfBagOutcome.Restored || outcome is ShelfBagOutcome.Deleted && outcome.archived) return
         handoff.consumed(outcome)
-        updateState { copy(message = message) }
+        if (outcome is ShelfBagOutcome.Finished) {
+            updateState { copy(message = ShelfMessage.Finished(outcome.bagId, outcome.position)) }
+        }
     }
 
     private suspend fun refresh() {
@@ -104,9 +104,19 @@ internal class ShelfViewModel(
         }
     }
 
-    private fun arrivalShown(id: String) {
-        arrivals.shown(id)
-        updateState { copy(arrivingId = arrivingId.takeUnless { it == id }) }
+    private suspend fun observeArrivals() {
+        arrivals.arriving.collect { id ->
+            arrivalHighlight?.cancel()
+            updateState { copy(arrivingId = id) }
+        }
+    }
+
+    private fun arrivalPresented(id: String) {
+        if (arrivals.arriving.value != id || arrivalHighlight?.isActive == true) return
+        arrivalHighlight = viewModelScope.launch {
+            delay(ARRIVAL_HIGHLIGHT_MILLIS)
+            arrivals.shown(id)
+        }
     }
 
     private suspend fun undoFinish(id: String, position: Int) {

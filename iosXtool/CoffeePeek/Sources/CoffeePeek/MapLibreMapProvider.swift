@@ -73,6 +73,7 @@ final class MapLibreMapProvider: NSObject, IosNativeMapProvider, MLNMapViewDeleg
         guard let map = mapView as? CoffeeMapView else { return }
         let dark = map.content?.dark ?? false
         applyPalette(style, dark: dark)
+        addSubwayStations(style, dark: dark)
         map.zoneImageNames.removeAll()
         if let state = map.content { syncZones(map, style: style, state: state) }
         map.applyPendingCamera()
@@ -436,6 +437,42 @@ final class MapLibreMapProvider: NSObject, IosNativeMapProvider, MLNMapViewDeleg
             path.lineWidth = 1.5
             path.stroke()
             text.draw(at: CGPoint(x: rect.minX + 8, y: rect.midY - measured.height / 2), withAttributes: attributes)
+        }
+    }
+
+    private func addSubwayStations(_ style: MLNStyle, dark: Bool) {
+        guard let source = style.source(withIdentifier: "openmaptiles") as? MLNVectorTileSource else { return }
+        let icon = "cp-subway-badge"
+        style.setImage(subwayBadge(), forName: icon)
+        let stations = MLNSymbolStyleLayer(identifier: "cp-subway-stations", source: source)
+        stations.sourceLayerIdentifier = "poi"
+        stations.predicate = NSPredicate(format: "subclass == %@", "subway")
+        stations.minimumZoomLevel = 12
+        stations.iconImageName = NSExpression(forConstantValue: icon)
+        stations.text = NSExpression(forKeyPath: "name")
+        stations.textFontNames = NSExpression(forConstantValue: ["Noto Sans Regular"])
+        stations.textFontSize = NSExpression(forConstantValue: 12)
+        stations.textOffset = NSExpression(forConstantValue: NSValue(cgVector: CGVector(dx: 0, dy: 1.2)))
+        stations.textOptional = NSExpression(forConstantValue: true)
+        stations.textColor = NSExpression(forConstantValue: UIColor(hex: dark ? "#AAC9E0" : "#365872"))
+        stations.textHaloColor = NSExpression(forConstantValue: UIColor(hex: dark ? "#1A1412" : "#FAF8F5"))
+        stations.textHaloWidth = NSExpression(forConstantValue: 1.2)
+        style.addLayer(stations)
+    }
+
+    private func subwayBadge() -> UIImage {
+        let size = CGSize(width: 18, height: 18)
+        return UIGraphicsImageRenderer(size: size).image { context in
+            context.cgContext.setFillColor(UIColor(hex: "#446984").cgColor)
+            context.cgContext.fillEllipse(in: CGRect(x: 0.5, y: 0.5, width: 17, height: 17))
+            let glyph = "M" as NSString
+            let attributes: [NSAttributedString.Key: Any] = [
+                .font: UIFont.boldSystemFont(ofSize: 12),
+                .foregroundColor: UIColor.white,
+            ]
+            let bounds = glyph.size(withAttributes: attributes)
+            glyph.draw(at: CGPoint(x: (size.width - bounds.width) / 2, y: (size.height - bounds.height) / 2),
+                       withAttributes: attributes)
         }
     }
 

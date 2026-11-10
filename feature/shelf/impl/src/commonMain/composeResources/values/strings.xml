@@ -1,4 +1,5 @@
 <resources>
+    <string name="shelf_settings">Настройки кофейной полки</string>
     <!-- The shelf UI currently has Russian text only. -->
     <string name="shelf_loading">Загружаем полку</string>
     <string name="shelf_load_failed">Не удалось загрузить полку</string>
@@ -22,7 +23,6 @@
 
     <string name="shelf_empty_title">Здесь будет ваш кофе</string>
     <string name="shelf_empty_body">Сфотографируйте пачку — она встанет на полку, а когда закончится, уйдёт в архив</string>
-    <string name="shelf_browse_catalog">Посмотреть каталог</string>
     <string name="shelf_guest_title">Соберите свою полку</string>
     <string name="shelf_guest_body">Войдите, чтобы хранить пачки кофе и историю покупок</string>
     <string name="shelf_sign_in">Войти</string>
@@ -81,11 +81,8 @@
     <string name="shelf_delete_message">Пачка исчезнет с полки и из архива. Если кофе закончился, лучше уберите её в архив.</string>
 
     <string name="shelf_finished_message">Убрали в архив</string>
-    <string name="shelf_added_message">Пачка на полке</string>
     <string name="shelf_new_badge">НОВАЯ</string>
     <string name="shelf_undo">Отменить</string>
-    <string name="shelf_deleted">Пачка удалена</string>
-    <string name="shelf_restored">Пачка снова на полке</string>
     <string name="shelf_error_offline">Нет сети. Попробуйте ещё раз</string>
     <string name="shelf_error_stale">Полка изменилась на другом устройстве, показываем актуальную</string>
     <string name="shelf_error_not_found">Этой пачки уже нет</string>
@@ -195,11 +192,9 @@
     <string name="shelf_scan_failed">Не получилось обработать фото</string>
 
     <string name="shelf_form_ready">Готово, пачка вырезана</string>
-    <string name="shelf_form_card">Карточка пачки</string>
     <string name="shelf_form_hint">Карточка получилась, но её можно сделать чище</string>
     <string name="shelf_form_coffee">Кофе</string>
     <string name="shelf_form_coffee_hint">Название или поиск по каталогу</string>
-    <string name="shelf_form_coffee_clear">Очистить название</string>
     <string name="shelf_form_catalog_match">Из каталога CoffeePeek</string>
     <string name="shelf_form_roaster">Обжарщик</string>
     <string name="shelf_form_roasted">Дата обжарки · необязательно</string>

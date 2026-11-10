@@ -21,6 +21,7 @@ import kotlinx.coroutines.launch
  */
 internal class GlobalCheckInFlow(
     sessions: SessionReader,
+    private val onCreated: () -> Unit = {},
     val homeBean: HomeCheckInBean? = null,
     private val createEditor: (CheckInHistorySession, CheckInTracker?) -> HomeCheckInEditorEntry,
 ) : ViewModel() {
@@ -79,6 +80,7 @@ internal class GlobalCheckInFlow(
         // Accepted save is terminal even while the outer sheet still reports busy.
         tracker = null
         mutableState.value = GlobalCheckInDestination.Closed(GlobalCheckInOutcome.Saved)
+        onCreated()
     }
 
     /** Terminal callback is consumed once while STARTED, with the latest caller and lease. */

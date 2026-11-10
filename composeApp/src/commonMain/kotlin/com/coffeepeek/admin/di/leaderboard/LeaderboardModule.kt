@@ -1,7 +1,7 @@
 package com.coffeepeek.admin.di.leaderboard
 
-import com.coffeepeek.admin.utils.CpImage
-import com.coffeepeek.api.CoffeePeekClient
+import com.coffeepeek.core.designsystem.component.CoffeePeekImage
+import com.coffeepeek.core.network.ApiClients
 import com.coffeepeek.core.session.SessionReader
 import com.coffeepeek.feature.authorblocking.api.AuthorVisibility
 import com.coffeepeek.feature.leaderboard.api.LeaderboardEntry
@@ -14,10 +14,10 @@ import kotlinx.coroutines.flow.map
 import org.koin.dsl.module
 
 internal fun leaderboardModule() = module {
-    single<LeaderboardRepository> { createLeaderboardRepository(get<CoffeePeekClient>().client) }
+    single<LeaderboardRepository> { createLeaderboardRepository(get<ApiClients>().client) }
     single<LeaderboardEntry> {
         createLeaderboardEntry(get(), leaderboardContextChanges(get(), get())) { url, modifier ->
-            CpImage(data = url, modifier = modifier)
+            CoffeePeekImage(data = url, modifier = modifier)
         }
     }
 }

@@ -6,7 +6,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import com.coffeepeek.domain.model.ShopLocation
 import kotlin.math.PI
 import kotlin.math.asin
 import kotlin.math.cos
@@ -29,10 +28,10 @@ internal fun rememberPermittedUserLocation(refreshKey: Int = 0): GeoPoint? {
     return location
 }
 
-internal fun distanceToShopMeters(userLocation: GeoPoint?, shopLocation: ShopLocation?): Double? {
+internal fun distanceToShopMeters(userLocation: GeoPoint?, latitude: Double?, longitude: Double?): Double? {
     val from = userLocation ?: return null
-    val toLatitude = shopLocation?.latitude ?: return null
-    val toLongitude = shopLocation.longitude ?: return null
+    val toLatitude = latitude ?: return null
+    val toLongitude = longitude ?: return null
     if (!from.latitude.isValidLatitude() || !from.longitude.isValidLongitude()) return null
     if (!toLatitude.isValidLatitude() || !toLongitude.isValidLongitude()) return null
 

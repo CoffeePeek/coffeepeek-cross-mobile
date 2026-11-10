@@ -29,7 +29,7 @@ enum class FeedItemAction { Open, Shop, Photo, Like, Unlike, Share, Coffee }
 
 enum class EditField { Note, Rating, Drink }
 
-/** The events of the timeline, with the names and properties of the legacy screen; the application maps them to its SDK. */
+/** The events of the timeline, with the names and properties of the previous screen; the application maps them to its SDK. */
 interface CommunityAnalytics {
     /** Only the public timeline reports feed events; the caller checks that. */
     fun feedAction(action: FeedAction, trigger: FeedTrigger)

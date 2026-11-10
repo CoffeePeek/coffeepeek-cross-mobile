@@ -9,7 +9,7 @@ enum class ShopKind {
     Specialty, CoffeeBar, Cafe;
 
     companion object {
-        /** The server sends a name or a number; anything else is the default kind, as the legacy catalogue did. */
+        /** The server sends a name or a number; anything else is the default kind, as the previous catalogue did. */
         fun fromApi(raw: String?): ShopKind = when (raw?.trim()?.lowercase()) {
             "1", "specialty" -> Specialty
             "3", "cafe" -> Cafe
@@ -20,7 +20,7 @@ enum class ShopKind {
     val apiName: String get() = when (this) { Specialty -> "Specialty"; CoffeeBar -> "CoffeeBar"; Cafe -> "Cafe" }
 }
 
-/** Legacy read model has four levels; current search groups Expensive and Luxury into its highest band. */
+/** Previous read model has four levels; current search groups Expensive and Luxury into its highest band. */
 enum class PriceLevel(val level: Int) {
     Cheap(1), Moderate(2), Expensive(3), Luxury(4);
 

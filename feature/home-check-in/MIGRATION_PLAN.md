@@ -1333,3 +1333,82 @@ Result on main `67691a61` plus this patch: iOS Arm64 and Simulator Arm64 Kotlin
 compilation passed; Android Direct Debug APK and packaged DEX guard passed.
 `PlatformActionSelectionTest` ran 4/4 and Home impl tests ran 81/81, with zero
 failures, errors or skips. No iPhone build or picker runtime was tested here.
+
+## Guest check-in onboarding — 2026-11-09
+
+The root offers the shared guide on each ordinary launch as a guest and when
+signing out. Active sessions and launches from app links bypass it. Dismissal
+lives in the navigation ViewModel for the current guest session. Continuing as
+a guest keeps the existing root destination. The two authentication actions
+open sign-in and registration.
+The five supplied posters introduce CoffeePeek, shop discovery, venue details,
+check-ins, and favorites in that order. The pager fits each full poster in the
+available area, with a localized title and description underneath. The posters
+contain Russian text and the controls follow the app theme. Swiping and tapping
+the dots wrap between the first and last posters in either direction. Dots
+interpolate width and color from the page offset. The next page advances after
+two idle seconds while the onboarding is resumed. A manual swipe or dot jump
+restarts the idle interval.
+
+Verification on `d9be67264` plus the working tree changes. Both preference
+unit tests passed in an isolated JVM run. The Android feature UI and root
+adapter compiled separately against cached Android dependencies and generated-
+style resource accessors. Both locale XML files had matching onboarding keys.
+The initial command-line Android build stopped before compilation because Gradle
+could not connect to its daemon. The previous four-page screenshot revision
+built as Direct Debug. Its APK contained all eight images, 125 required runtime
+class definitions, and three checked onboarding definitions in DEX.
+
+Poster revision on `d9be67264` plus the working tree, 2026-11-09. Checked the
+five packaged source images against their originals, verified the page order
+and nine matching onboarding string keys across both locales, and compiled the
+updated screen and previews with the Compose compiler against cached Android
+dependencies and temporary resource accessors. The existing preview annotation
+deprecation warning remains. Direct Sandbox assembly stopped before compilation
+because the CLI could not connect to the Gradle daemon. APK and DEX inspection,
+unit test reruns, and manual device and iOS runtime checks remain pending for
+this revision.
+
+Carousel follow-up on `d9be67264` plus the working tree, 2026-11-09. Isolated
+Android Kotlin compilation of the updated UI and previews passed. Verified
+all 14 onboarding string keys in both locales and ran 105 nearest-page
+comparisons plus two explicit boundary cases against the compiled selector.
+Direct Sandbox assembly again stopped before compilation at the Gradle daemon
+connection. Timing, swipe and indicator rendering require the manual gate.
+
+Artwork refresh on `d9be67264` plus the working tree, 2026-11-09. Matched all
+five new source images to the existing slide resources and verified the JPEGs
+retain their full frame and proportions. Direct Sandbox assembly stopped at the
+Gradle daemon connection. On-device rendering remains pending.
+
+Visibility follow-up on the same revision, 2026-11-09. The Direct Debug APK
+contained the five refreshed assets and still read the v2 acknowledgement. The
+updated guide uses v3 for both the persisted preference and the saveable
+dismissal state. The composition adapter compiled against cached Android
+dependencies and the isolated JUnit run passed all three preference tests,
+including a previously acknowledged v2. The rebuilt Direct Debug APK contains
+the v3 preference, all five current assets, 125 required runtime classes and
+the three checked onboarding class definitions. Direct Sandbox assembly stopped
+at the Gradle daemon connection, and ADB could not connect to its server. The
+device check remains pending.
+
+Guest-session follow-up on the same revision, 2026-11-09. Removed the persistent
+acknowledgement and reduced each carousel indicator cell from 48 to 24 dp wide.
+The updated navigation sources and onboarding UI compiled against cached Android
+dependencies. Direct Sandbox assembly stopped at the Gradle daemon connection.
+The guest relaunch, sign-out, and indicator layout checks remain pending on a
+device.
+
+Artwork and window-insets follow-up, 2026-11-09. Replaced all five posters with
+the supplied full-frame images. The footer owns the bottom safe-area padding,
+combining host and dialog insets by maximum. The top inset has a separate
+surface, and Android sets icon appearance on the dialog window. Isolated
+Android compilation passed for the onboarding, the shared dialog, and its
+photo-viewer caller. The light and dark preview fixtures include a bottom
+inset. Direct Sandbox assembly stopped at the Gradle daemon connection.
+System-bar appearance and footer placement remain to be verified on devices.
+
+Manual gates on Android Direct Sandbox and iOS cover first guest launch,
+continuing as a guest, both authentication actions, guest relaunch, sign-out, signed-in launch,
+shop and QR links, two-second autoplay, swiping and tapping across the loop,
+screen reader order, themes and large text.

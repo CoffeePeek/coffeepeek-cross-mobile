@@ -102,7 +102,7 @@ internal fun ShopCheckInDto.toDomain(files: ShopFileUrlResolver): ShopCheckIn? {
     )
 }
 
-/** Missing manifest is legacy; an explicit empty/unsupported manifest must not fetch an original inline. */
+/** Missing manifest is previous; an explicit empty/unsupported manifest must not fetch an original inline. */
 private fun List<ShopCheckInPhotoVariantDto>?.photoUrl(purpose: String, original: String): String {
     if (this == null) return original
     val supported = filter { it.purpose == purpose && it.width > 0 && it.height > 0 && it.sizeBytes > 0 && it.url.isNotBlank() }

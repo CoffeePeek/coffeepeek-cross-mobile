@@ -10,8 +10,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -35,6 +33,8 @@ import com.coffeepeek.feature.profile.impl.ui.compose.component.InlineProfileErr
 import com.coffeepeek.feature.profile.impl.ui.compose.component.ProfileLoadingSkeleton
 import com.coffeepeek.feature.profile.impl.ui.compose.component.ProfileSectionHeading
 import com.coffeepeek.feature.profile.impl.ui.compose.component.ProfileSectionLoader
+import com.coffeepeek.feature.profile.impl.ui.compose.component.PublicProfileActivityPreview
+import com.coffeepeek.feature.profile.impl.ui.compose.component.PublicProfileCheckInCard
 import com.coffeepeek.feature.profile.impl.ui.compose.component.PublicProfileHeader
 import com.coffeepeek.feature.profile.impl.ui.model.PublicProfileAction
 import com.coffeepeek.feature.profile.impl.ui.model.PublicProfileError
@@ -47,7 +47,7 @@ internal fun PublicProfileBody(state: PublicProfileState, visibilityPending: Boo
     when {
         profile == null -> PublicProfileUnavailable(state, visibilityPending) { callbacks.onAction(PublicProfileAction.Refresh) }
         profile.isBlockedByViewer -> PublicProfileBlocked(profile, authorActions)
-        else -> PublicProfileLoadedContent(state, profile, viewingOwn, slots, callbacks, own)
+        else -> PublicProfileLoadedContent(state, profile, viewingOwn, authorActions, slots, callbacks, own)
     }
 }
 
@@ -87,21 +87,21 @@ private fun PublicProfileBlocked(profile: PublicProfile, authorActions: ProfileA
 
 @Composable
 private fun PublicProfileLoadedContent(state: PublicProfileState, profile: PublicProfile, viewingOwn: Boolean,
-    slots: ProfileSlots, callbacks: PublicProfileCallbacks, own: OwnProfileExtras?) {
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())
-        .then(if (own == null) Modifier.navigationBarsPadding() else Modifier),
-        verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Spacer(Modifier.height(2.dp))
+    authorActions: ProfileAuthorActions, slots: ProfileSlots, callbacks: PublicProfileCallbacks, own: OwnProfileExtras?) {
+    ProfileContentTabs(
+        profile.slug,
+        checkIns = { PublicProfileCheckInPreview(state, profile, viewingOwn, authorActions, slots, callbacks) },
+        collections = { PublicProfileCollections(profile, viewingOwn, slots, own) },
+        shelf = { slots.shelfPreview(profile.slug, viewingOwn) },
+        modifier = Modifier.fillMaxSize().then(if (own == null) Modifier.navigationBarsPadding() else Modifier),
+        ownerShelf = own?.shelf, bottomPadding = own?.bottomContentPadding ?: 20.dp,
+    ) {
         Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Spacer(Modifier.height(2.dp))
             PublicProfileIdentity(state, profile, viewingOwn, slots, callbacks, own)
             PublicProfileWeek(state, profile, slots, callbacks, own)
             PublicProfileRefreshErrors(state, viewingOwn, callbacks.onAction)
         }
-        ProfileContentTabs(profile.slug,
-            checkIns = { PublicProfileCheckInPreview(state, profile, viewingOwn, slots, callbacks) },
-            collections = { PublicProfileCollections(profile, viewingOwn, slots, own) },
-            shelf = { slots.shelfPreview(profile.slug, viewingOwn) })
-        Spacer(Modifier.height(own?.bottomContentPadding ?: 20.dp))
     }
 }
 
@@ -123,9 +123,9 @@ private fun PublicProfileIdentity(state: PublicProfileState, profile: PublicProf
 private fun PublicProfileWeek(state: PublicProfileState, profile: PublicProfile, slots: ProfileSlots,
     callbacks: PublicProfileCallbacks, own: OwnProfileExtras?) {
     if (own != null) own.activityPreview(callbacks.onOpenCheckIns)
-    else slots.activityPreview(profile.slug, profile.activity, state.checkIns,
+    else PublicProfileActivityPreview(profile.slug, profile.activity, state.checkIns,
         (state.isLoadingActivity && profile.activity == null) || (state.isLoadingCheckIns && state.checkIns.isEmpty()),
-        state.activityError != null || state.checkInsError != null,
+        state.activityError != null || state.checkInsError != null, slots.image,
         {
             callbacks.onAction(PublicProfileAction.RetryActivity)
             callbacks.onAction(PublicProfileAction.RetryCheckIns)
@@ -158,7 +158,7 @@ private fun PublicProfileCollections(profile: PublicProfile, viewingOwn: Boolean
 
 @Composable
 private fun PublicProfileCheckInPreview(state: PublicProfileState, profile: PublicProfile, viewingOwn: Boolean,
-    slots: ProfileSlots, callbacks: PublicProfileCallbacks) {
+    authorActions: ProfileAuthorActions, slots: ProfileSlots, callbacks: PublicProfileCallbacks) {
     val author = ProfileAuthor(profile.authorId, profile.slug, profile.nickname, profile.avatarUrl)
     Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         ProfileSectionHeading(stringResource(Res.string.profile_section_check_ins), onAll = callbacks.onOpenCheckIns)
@@ -169,8 +169,12 @@ private fun PublicProfileCheckInPreview(state: PublicProfileState, profile: Publ
             state.checkIns.isEmpty() -> Text(stringResource(Res.string.profile_check_ins_empty),
                 style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             else -> state.checkIns.take(2).forEach { checkIn ->
-                slots.checkInCard(checkIn, author, viewingOwn,
-                    checkIn.coffeeShopSlug?.takeIf(String::isNotBlank)?.let { shop -> { callbacks.onOpenShop(shop) } }, callbacks.onPhotoClick)
+                val allowActions = state.isSignedIn && !viewingOwn
+                PublicProfileCheckInCard(checkIn, author, slots,
+                    checkIn.coffeeShopSlug?.takeIf(String::isNotBlank)?.let { shop -> { callbacks.onOpenShop(shop) } },
+                    callbacks.onPhotoClick,
+                    onBlock = if (allowActions) ({ authorActions.requestBlock(author) }) else null,
+                    onReport = if (allowActions) ({ slots.reportCheckIn(checkIn.id) }) else null)
             }
         }
     }

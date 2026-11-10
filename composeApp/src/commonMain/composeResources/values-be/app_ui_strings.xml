@@ -1,0 +1,36 @@
+<resources>
+    <string name="error_dialog_shelf_camera_tips_close">Зразумела</string>
+    <string name="error_dialog_unexpected_error">Нешта пайшло не так</string>
+    <string name="main_screen_profile_title">Профіль</string>
+    <string name="main_screen_search">Пошук</string>
+    <string name="main_screen_settings_tab_title">Налады</string>
+    <string name="visited_places_screen_sandbox_feed_title">Стужка</string>
+    <string name="review_just_now">толькі што</string>
+    <string name="review_ago">таму</string>
+    <string-array name="review_months">
+        <item>студз.</item>
+        <item>лют.</item>
+        <item>сак.</item>
+        <item>крас.</item>
+        <item>мая</item>
+        <item>чэрв.</item>
+        <item>ліп.</item>
+        <item>жн.</item>
+        <item>вер.</item>
+        <item>кастр.</item>
+        <item>ліст.</item>
+        <item>снеж.</item>
+    </string-array>
+    <string-array name="minute_forms">
+        <item>хвіліну</item>
+        <item>хвіліны</item>
+        <item>хвілін</item>
+    </string-array>
+    <string-array name="hour_forms">
+        <item>гадзіну</item>
+        <item>гадзіны</item>
+        <item>гадзін</item>
+    </string-array>
+    <string name="drink_custom_name_length">Укажыце назву напою: ад 1 да 100 сімвалаў</string>
+    <string name="drink_custom_name_other">Назву можна ўказаць толькі для іншага напою</string>
+</resources>

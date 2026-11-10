@@ -321,7 +321,7 @@ Source base plus patch. Native iPhone review remains deferred by the user.
 
 Base develop `856b4a85`; branch `codex/migration-home-price-scale`.
 Android Home filter owns the mapping: stop 0 = any/null, 1 = Cheap, 2 = Moderate,
-3 = Expensive or legacy Luxury. Source: LEGACY_INVENTORY.md's current POST API
+3 = Expensive or legacy Luxury. Source: the current POST API
 contract and existing data request tests; search accepts cheap/moderate/expensive.
 The audit's four-server-level assumption was a legacy read-model mismatch, not
 evidence of a fourth supported search band. Preserve the existing BYN hints and
@@ -825,3 +825,21 @@ external DEX merge was FROM-CACHE. Play Debug was neither installed nor launched
 PR #261 and #262 CI are now successful on both platforms. New #263–#265 CI
 (including full macOS iOS builds) is still running; local KLIB compilation does
 not replace the full native build/visual gates.
+
+## Mini-map visibility in the roaster catalog
+
+On 2026-11-10, starting from `d9be67264`, the Discovery map transition was tied
+to the roaster overlay. The map uses its existing slide and retained layout,
+so closing the catalog can restore the preview at the saved Home scroll position.
+
+Gradle compiled Discovery for Android and compiled its unit tests. Its test
+worker could not connect over loopback. The same compiled tests passed when
+run directly with JUnit 4.13.2 (152 tests in 17 suites, zero failures).
+The 1.1.8 Direct Sandbox and Direct Debug Kotlin builds compiled. The first
+assembly attempt failed because Gradle's Java workers could not connect over
+loopback and the debug signing lock was outside the writable workspace.
+Signing validation passed on retry with a temporary debug key. The Java worker
+connection still failed, leaving APK assembly and packaged DEX checks open.
+ADB could not start, so the Direct Sandbox visual check remains open. Check
+opening and closing the catalog in light and dark themes, at a scroll position
+where the mini-map is still visible, and verify iOS native map placement too.

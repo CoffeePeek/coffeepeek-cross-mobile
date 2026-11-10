@@ -1,5 +1,18 @@
 # Coffee catalogue — Android-first migration
 
+## iOS activation checkpoint — 2026-10-25
+
+PR #195 now binds the shared FeatureCoffeeScreenRenderer and CoffeeModule on iOS;
+the native Coffee tab and existing detail route use the migrated entries. The
+existing plain client, server contracts, gallery, navigation and analytics ports
+are reused. DS capsules delegate to the existing UIKit weight selector, including
+the surface underlay correction described below; source and native previews now
+live in NativeSegmentedControl.ios.kt. Android keeps its shared renderer.
+See [IOS_MIGRATION_PLAN.md](../IOS_MIGRATION_PLAN.md) for 132 passing unit/contract
+checks, Android Debug/Sandbox and Native compile/link, the initial Native
+source-set failure and the remaining manual iPhone acceptance gates.
+The Android-only wiring statements in older checkpoints below are historical.
+
 ## Circular roaster logo follow-up — 2026-10-23
 
 The follow-up Android screenshots extend the logo requirement to both platforms.

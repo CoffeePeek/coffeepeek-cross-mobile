@@ -44,7 +44,7 @@ import com.coffeepeek.feature.shelf.impl.ui.compose.model.ShelfBagItem
 import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
-internal val ShelfCardShape = RoundedCornerShape(4.dp)
+internal val ShelfCardShape = RoundedCornerShape(8.dp)
 
 /**
  * A bag: its card at the card's own proportions, as large as fits and placed at [alignment], with rounded corners and a

@@ -1,16 +1,19 @@
+@file:OptIn(kotlinx.serialization.ExperimentalSerializationApi::class)
+
 package com.coffeepeek.core.network
 
 import io.ktor.client.call.body
 import io.ktor.client.statement.HttpResponse
 import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonNames
 
 /** The server's response envelope; `data` is read as the type each call expects. */
 @Serializable
 data class ApiEnvelope<T>(
-    val isSuccess: Boolean = false,
-    val message: String? = null,
-    val data: T? = null,
+    @JsonNames("IsSuccess") val isSuccess: Boolean = false,
+    @JsonNames("Message") val message: String? = null,
+    @JsonNames("Data") val data: T? = null,
 )
 
 /** The message the server put into an error response, or null when the body is not an envelope or the message is blank. Cancellation passes through. */

@@ -46,6 +46,17 @@ GOOGLE_REVERSED_CLIENT_ID = com.googleusercontent.apps.000000000000-xxxxxxxx
 
 Без Google OAuth приложение полностью запускается, а Google-кнопка скрыта. Email/password вход продолжает работать.
 
+Debug собирается без `iosApp/iosApp/GoogleService-Info.plist`: Firebase push в
+этом случае недоступен. Если настоящий локальный файл добавлен, он копируется
+в приложение и push можно проверять отдельно. В Debug Google-вход отключён
+независимо от заполненных OAuth ID. Для Release Firebase-файл обязателен;
+он не добавляется в Git.
+
+В локальном iOS Debug отключены проверка обновлений App Store, баннер и пункт
+ручной проверки в настройках. Локальный номер сборки может быть меньше
+опубликованного и не означает, что разработчику нужно обновиться через магазин.
+Номера версий не подменяются; в iOS Release серверная политика обновлений работает.
+
 Для Google Sign-In нужны два OAuth client ID из одного Google Cloud проекта:
 
 1. iOS client ID для bundle id `com.coffeepeek`;
@@ -143,6 +154,13 @@ open iosApp/iosApp.xcodeproj
 4. нажмите `Run` или `⌘R`.
 
 Xcode сам вызывает Gradle task `:composeApp:embedAndSignAppleFrameworkForXcode`, собирает Kotlin framework и затем SwiftUI-приложение. Первый запуск может занять несколько минут; повторные сборки используют кэш.
+
+Лимит Gradle workers задан Xcode-настройкой `GRADLE_MAX_WORKERS = 6` в
+`Configuration/Shared.xcconfig`. Для локального изменения укажите положительное
+число в `Local.xcconfig`; TestFlight workflow передаёт `GRADLE_MAX_WORKERS=1`
+как build setting. Не используйте shell-default вида `${GRADLE_MAX_WORKERS:-2}`
+в аргументах Gradle внутри Build Phase: KMP-плагин IDE может преобразовать его в
+пустой `--max-workers=`.
 
 В Xcode 27 отдельного `Simulator.app` может не быть: устройства открываются через `Window → Devices and Simulators` / Device Hub. Для сборки это не имеет значения.
 
@@ -257,7 +275,9 @@ CoffeePeek → TestFlight. Чтобы новые сборки автоматич
 ## Universal Links: открытие ссылок CoffeePeek
 
 Приложение объявляет Associated Domains для `applinks:coffeepeek.by` и обрабатывает
-главную страницу, `/coffee-shops/{slug}`, `/roasters/{slug}` и `/users/{slug}`.
+главную страницу, `/coffee-shops/{slug}`, `/shops/{id}`, `/roasters/{slug}`,
+`/coffees/{slug}`, `/users/{slug}` и `/check-ins/{id}`. Экран отдельного поста
+использует общий `CommunityPostEntry`, подключённый в iOS composition.
 Ссылки сброса пароля остаются на сайте.
 
 Для TestFlight и App Store нужны настройки на обеих сторонах:
@@ -268,20 +288,25 @@ CoffeePeek → TestFlight. Чтобы новые сборки автоматич
 2. Разместите JSON ниже по адресу
    `https://coffeepeek.by/.well-known/apple-app-site-association` с HTTP 200,
    `Content-Type: application/json`, без перенаправлений и HTML-подстановки SPA.
-   Замените `APPLICATION_IDENTIFIER_FROM_PROFILE` точным значением
-   `Entitlements.application-identifier` из профиля подписи; в текущем CI это
-   `<Apple Team ID>.com.coffeepeek`. Шаблон с незаменённым значением не работает.
+   App ID текущей подписанной сборки — `JJ7867S6PS.com.coffeepeek`.
+   При смене Apple-команды сверяйте его с `Entitlements.application-identifier`
+   из профиля подписи. Файл сайта хранится в репозитории `coffeepeek-cross-web`:
+   `coffee-peek/public/.well-known/apple-app-site-association`; Vercel отдаёт
+   его напрямую также по `/apple-app-site-association`.
 
 ```json
 {
   "applinks": {
     "details": [{
-      "appIDs": ["APPLICATION_IDENTIFIER_FROM_PROFILE"],
+      "appIDs": ["JJ7867S6PS.com.coffeepeek"],
       "components": [
         {"/": "/"},
         {"/": "/coffee-shops/*"},
+        {"/": "/shops/*"},
         {"/": "/roasters/*"},
-        {"/": "/users/*"}
+        {"/": "/users/*"},
+        {"/": "/coffees/*"},
+        {"/": "/check-ins/*"}
       ]
     }]
   }
@@ -293,6 +318,25 @@ CoffeePeek → TestFlight. Чтобы новые сборки автоматич
 Обновление кэша Apple может занимать время; ввод адреса в строку Safari не заменяет
 эту проверку. Требования Apple:
 [Supporting Associated Domains](https://developer.apple.com/documentation/xcode/supporting-associated-domains).
+
+Проверка 2026-10-27: `codex/migration-ios-all-public-links`, приложение `732210b2`
+(родитель синхронизирован до `0041e728`),
+сайт `16d2916` ([PR #32](https://github.com/CoffeePeek/coffeepeek-cross-web/pull/32)).
+План: проверить маршруты всех публичных карточек, iOS-приём ссылки на пост,
+сохранение веб-восстановления пароля, сборку приложения и HTTP-контракт AASA.
+Выполнены 21 unit/contract-проверка приложения (9 маршрутов, 5 native tab routes,
+7 community adapters) и 9 проверок поста/шеринга; ошибок нет. После обновления
+родителя 21 проверка приложения повторена успешно; это повтор из-за изменения
+исходников, не retry падения.
+`assembleDirectDebug` и `verifyDirectDebugRuntimeClasses` прошли; APK не
+устанавливался. Последний manifest пересобран после добавления новых путей.
+Kotlin для iOS Arm64 и iOS Simulator tests скомпилирован на Windows;
+это не выполнение native-тестов или Xcode-сборка. Их запуск включён в `ios-verify`.
+Сайт: 49 server/hosting-тестов, TypeScript и production build прошли;
+оба production-адреса AASA после публикации отвечают HTTP 200, JSON, без redirect.
+Исходный HTTP 404 исправлен на сайте, но CDN Apple ещё возвращал закэшированный
+`SWCERR00101`/404 при проверке. iPhone, cold/warm launch и переходы из Notes
+не проверялись; нужны обновлённая подписанная сборка и обновление кэша Apple.
 
 ## Проверка из Terminal
 

@@ -13,7 +13,7 @@ class HomePreparationPhotosTest {
     private fun variant(purpose: String, path: String, type: String = "image/png", width: Int = 100) =
         """{"purpose":"$purpose","url":"$path","contentType":"$type","width":$width,"height":100,"sizeBytes":1000}"""
 
-    @Test fun absentManifestsAndLegacyCutoutStringsKeepIssuedSignedOriginals() {
+    @Test fun absentManifestsAndPreviousCutoutStringsKeepIssuedSignedOriginals() {
         val item = entry(""""photos":[{"id":"p","fullUrl":"/original?signature=fixture"}],"drinkPhoto":"/cutout"""")
         val photo = item.photos.single()
         assertEquals("https://fixture.invalid/original?signature=fixture", photo.url)

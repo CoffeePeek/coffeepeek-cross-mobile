@@ -162,7 +162,7 @@ class RegisterViewModelTest {
         assertEquals(RequestFailure(null), vm.state.value.failure)
     }
 
-    @Test fun anInvalidSubmitReportsOneMessageByTheLegacyPriorityAndSendsNothing() = runTest(dispatcher) {
+    @Test fun anInvalidSubmitReportsOneMessageByThePreviousPriorityAndSendsNothing() = runTest(dispatcher) {
         val auth = FakeAuthRepository(); val analytics = FakeAnalytics(); val vm = model(auth, analytics)
         vm.onAction(RegisterAction.Submit); runCurrent()
         assertEquals(RegistrationIssue.NameRequired, vm.state.value.reported)
@@ -202,6 +202,7 @@ class RegisterViewModelTest {
         assertEquals(listOf("id-token"), auth.googleTokens)
         assertEquals<List<List<Any?>>>(listOf(listOf("google-user", SignInMethod.Google, AuthEntry.Register, null)), analytics.signedIn)
         assertEquals(listOf<RegisterEvent>(RegisterEvent.SignedIn), events)
+        assertTrue(analytics.consents.isEmpty())
         assertFalse(vm.state.value.busy)
     }
 

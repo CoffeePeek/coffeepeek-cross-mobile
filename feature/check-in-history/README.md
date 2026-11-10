@@ -1,5 +1,30 @@
 # Combined personal check-in history — Android-first migration
 
+## iOS history activation — 2026-10-25
+
+The combined personal-history route now uses migrated feature entries on iOS,
+including its Home detail/editor overlays and common account/date/photo adapters.
+Global creation and Profile Activity are now activated as separate feature entries.
+Legacy fallback remains until acceptance. Current checks and device/server gates:
+[iOS migration plan](../IOS_MIGRATION_PLAN.md). Older notes below are historical.
+
+## Profile Activity activation — 2026-10-25
+
+`ProfileActivityEntry` owns the personal month sheet and current-week preview on
+Android and iOS. These are read-only surfaces, independent of the full timeline:
+no shop timeline pages, no writers, and no Home editor is constructed. Month/week
+models use the same revocable history adapters in separate child stores; only
+the app owns navigation, image loading, time labels and the root session.
+The public profile calendar remains in Profile and never receives these private readers.
+
+Activity reads Shop's exclusive instant period and Home's inclusive civil range;
+Home pages are exhausted and deduplicated for the selected-day diary. Calendar
+counts/photos use the existing Home calendar contract. A zone snapshot converts
+both week boundaries independently (including DST). Late cancelled reads and
+events from a previously disposed sheet are rejected. One shared feature calendar
+supports framed history and frameless Activity; a generic design-system week card
+also serves legacy/public preview adapters. Legacy entries stay for fallback only.
+
 ## Current status — Android route activated, 2026-10-16
 
 All three existing Android routes now resolve the migrated combined entry:

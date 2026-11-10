@@ -13,8 +13,8 @@ class BusinessOwnershipNavigationTest {
     }
     @Test fun businessModeHasExactlyTwoTabsOnBothPlatforms() {
         assertEquals(listOf(Navigator.Screen.BusinessTab, Navigator.Screen.SettingsTab), mainTabScreens(true, true))
-        assertEquals(5, nativeTabIndex(Navigator.Screen.BusinessTab))
-        assertEquals(4, nativeTabIndex(Navigator.Screen.SettingsTab))
+        assertEquals(4, nativeTabIndex(Navigator.Screen.BusinessTab))
+        assertEquals(3, nativeTabIndex(Navigator.Screen.SettingsTab))
         assertFalse(Navigator.Screen.BusinessTab in mainTabScreens(false, true))
     }
     @Test fun ownerEditorRouteRetainsBusinessIdentity() {

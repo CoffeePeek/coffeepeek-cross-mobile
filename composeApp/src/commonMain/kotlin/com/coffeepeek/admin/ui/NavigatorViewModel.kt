@@ -1,15 +1,20 @@
 package com.coffeepeek.admin.ui
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import com.coffeepeek.admin.base.BaseViewModel
-import com.coffeepeek.domain.repository.SessionRepository
+import com.coffeepeek.core.session.SessionReader
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 
 class NavigatorViewModel(
-    private val sessionRepository: SessionRepository,
+    private val sessionRepository: SessionReader,
 ) : BaseViewModel() {
+
+    internal var guestOnboardingDismissed by mutableStateOf(false)
 
     val isLoggedIn: StateFlow<Boolean?> = sessionRepository.observeSession()
         .map { session -> sessionRepository.isActiveSession(session) }

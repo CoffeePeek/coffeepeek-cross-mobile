@@ -813,3 +813,17 @@ corners, and all four repository resources are identical. An earlier passing
 build used the first supplied image; the final tests/build were repeated with
 the replacement supplied without a border. Asset-file inspection passed; native
 launch rendering in both themes and an iOS archive remain device/macOS gates.
+
+## iOS installation minimum for 1.1.8 - 2026-11-10
+
+Lowered the Xcode and xtool application targets from iOS 18.0 to 17.0, including
+the xtool plist and asset catalog compiler. The existing iOS CI builds now
+compare the built app's minimum OS with the shared configuration before checking
+the embedded ONNX framework.
+
+Windows verification for the 1.1.8 working tree passed 16 iOS configuration and
+ONNX tests and four release versioning tests using Python 3.10. The first run
+could not create writable temporary fixtures with Python 3.14. Git Bash failed
+to start in the retry, so the five xtool shell contracts still need CI. Xcode
+archive verification and installation and launch on iOS 17 and 18 require macOS
+CI and device checks.

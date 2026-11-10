@@ -217,6 +217,27 @@ class DiscoveryRepositoryTest {
         assertTrue(content.isTruncated)
     }
 
+    @Test fun theMapReadsNumbersSentAsStringsAndAZoneWithoutANameOrWithAPolygon() = runBlocking {
+        reply = { ok("""{"shops":[],"clusters":[{"id":null,"latitude":"53.9","longitude":"27.56","count":"18",
+            "bounds":{"minLatitude":"53.87","minLongitude":"27.51","maxLatitude":"53.93","maxLongitude":"27.62"}}],
+            "zones":[{"address":{"slug":"z1"},"name":null,"description":null,"color":"#F66151","latitude":"53.89","longitude":"27.57",
+            "radiusMeters":"500","shopCount":"7","polygon":[{"latitude":"53.88","longitude":"27.56"},{"latitude":"53.90","longitude":"27.56"},{"latitude":"53.89","longitude":"27.58"}]}],
+            "isTruncated":null}""") }
+        val content = repository().mapContent(bounds, 14f, DiscoveryCriteria()).getOrThrow()
+        val cluster = content.clusters.single()
+        assertEquals(18, cluster.count)
+        assertEquals(MapBounds(53.87, 27.51, 53.93, 27.62), cluster.bounds)
+        val zone = content.zones.single()
+        assertEquals("z1", zone.id)
+        assertEquals("", zone.name)
+        assertEquals("#F66151", zone.color)
+        assertEquals(7, zone.shopCount)
+        assertEquals(500.0, zone.radiusMeters)
+        assertEquals(3, zone.polygon.size)
+        assertEquals(53.90, zone.polygon[1].latitude)
+        assertFalse(content.isTruncated)
+    }
+
     @Test fun mapCarriesEveryAdvancedSelectionIncludingMultipleAmenityTags() = runBlocking {
         reply = { ok("""{"shops":[],"clusters":[],"zones":[]}""") }
         val filters = DiscoveryFilters(

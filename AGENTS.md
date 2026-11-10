@@ -5,18 +5,27 @@ detailed source of truth; this file is the operating checklist.
 
 ## Current state and migration
 
-The current Gradle layout is transitional:
+Current priority (owner decision, 2026-10-25): complete the legacy exit before
+new product features. Android and iOS now select the migrated feature entries;
+that alone does not complete migration. Follow `feature/LEGACY_EXIT_PLAN.md` for
+remaining active UI/data consumers, removal order and acceptance evidence.
+`modules/` no longer exists (domain, data, room and network were removed on 2026-11-03).
+The target has no legacy implementation aliases and no business
+UI/state/ViewModels in `composeApp`. It contains startup, root DI, configuration
+and root navigation that calls feature entries. Root composition is not a home
+for feature cards, dialogs or presentation logic. Remove an obsolete fallback
+in the checkpoint that replaces and verifies its last consumer; do not retain
+an unused fallback indefinitely. The dated Android-first notes below describe
+the transitional history, not permission to restore legacy iOS wiring.
+
+The current Gradle layout:
 
 ```text
-composeApp/                 current Android/KMP application composition module
-modules/domain/             legacy shared models and repository contracts
-modules/network/            legacy HTTP infrastructure and feature API code
-modules/data/               legacy repository implementations
-modules/room/               legacy Room infrastructure and persistence
-core/                      prepared independent infrastructure/design-system
-feature/                   favorites, shop-report, shop api/domain/data/impl;
-                           Android feature slices integrated
-iosApp/                     native iOS application boundary, when present
+composeApp/                 application composition: startup, root DI, configuration, root navigation
+core/                       infrastructure: database, datetime, design-system, media, network,
+                            presentation, session
+feature/<name>/             api, domain, data and impl per feature; strings live with their feature
+iosApp/                     native iOS application boundary
 ```
 
 Do not treat the complete target `app/`, `core/`, `feature/` layout as already
@@ -120,8 +129,12 @@ still owns its root back stack and cross-feature routing.
   including nested blocks, but not the signature. Never pack statements onto
   one line to evade the limit. Extract cohesive, named components/helpers in
   their owning module. Apply this to new/substantively changed functions, not
-  a mechanical repository-wide rewrite. Keep this rule in documentation/review;
-  do not introduce a lint/build limit without a separate request.
+  a mechanical repository-wide rewrite. The limit is enforced by the root
+  `verifyFunctionBodyLimits` Gradle task (CI and `check`-adjacent runs): it
+  counts bodies the same way and fails on new or grown violations not recorded
+  in `function-body-limits-baseline.conf`. The baseline freezes pre-existing
+  debt only — shrink or remove entries by refactoring, never extend it by hand;
+  regenerate after a refactor with `:generateFunctionBodyLimitsBaseline`.
 
 - Prefix reusable design-system components, supporting UI types, tokens and their
   Kotlin source files with `CoffeePeek` (for example `CoffeePeekButton.kt`,

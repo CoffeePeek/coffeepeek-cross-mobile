@@ -12,7 +12,7 @@
         <string>be</string>
     </array>
     <key>MinimumOSVersion</key>
-    <string>18.0</string>
+    <string>17.0</string>
     <key>ITSAppUsesNonExemptEncryption</key>
     <false/>
     <key>UIDeviceFamily</key>

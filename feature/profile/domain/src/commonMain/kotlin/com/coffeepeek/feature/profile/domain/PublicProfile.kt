@@ -72,7 +72,7 @@ data class PublicProfileConnectionsPage(
 class PublicProfileAuthenticationRequired : Exception("Войдите в аккаунт, чтобы подписаться")
 class PublicProfileUnavailable : Exception("Профиль недоступен")
 
-/** Canonical address of a public entity, independent of the app's legacy model. */
+/** Canonical address of a public entity, independent of the app's previous model. */
 data class ProfileAddress(val slug: String, val canonicalPath: String, val revision: Int, val isAlias: Boolean)
 
 interface PublicProfileData {
@@ -117,6 +117,16 @@ data class PublicProfileCheckIn(
     val photoUrls: List<String>,
     /** Small previews for lists; equals [photoUrls] when the server sends no thumbnails. */
     val photoPreviewUrls: List<String> = photoUrls,
+    val createdAt: String = occurredAt,
+    val authorName: String = "",
+    val authorAvatarUrl: String? = null,
+    val scores: PublicCheckInScores? = null,
+    val drink: PublicCheckInDrink? = null,
+    val isHome: Boolean = false,
+    val preparation: PublicCheckInPreparation? = null,
+    val helpfulCount: Int = 0,
+    val isHelpfulByCurrentUser: Boolean = false,
+    val photoDetailUrls: List<String>? = null,
 )
 
 data class PublicProfileCheckInPage(

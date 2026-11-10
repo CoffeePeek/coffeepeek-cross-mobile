@@ -12,7 +12,7 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
-import com.coffeepeek.admin.theme.CoffeePeekTheme
+import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.admin.theme.PlatformSystemBars
 import com.coffeepeek.admin.theme.platformSystemDarkTheme
 import com.coffeepeek.admin.theme.ThemeManager
@@ -22,6 +22,7 @@ import com.coffeepeek.admin.settings.AppLanguagePreference
 import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
 import androidx.compose.ui.Alignment
 import com.coffeepeek.admin.ui.Navigator
+import com.coffeepeek.admin.ui.component.ProvideDesignSystemPlatformHooks
 import com.coffeepeek.admin.ui.component.dismissKeyboardOnBackgroundGestures
 import com.coffeepeek.admin.utils.OrientationObserver
 import io.kamel.core.config.KamelConfig
@@ -40,8 +41,8 @@ fun App(onReady: () -> Unit = {}) {
             OrientationObserver.StartObserver()
             Navigator()
             com.coffeepeek.admin.di.collections.CollectionsPickerHost()
-            com.coffeepeek.admin.feature.authorblocking.ui.AuthorBlockingHost()
-            koinInject<com.coffeepeek.admin.feature.appupdate.ui.AppUpdateRenderer>().Prompt()
+            com.coffeepeek.admin.di.authorblocking.AuthorBlockingRootHost()
+            koinInject<com.coffeepeek.admin.ui.screen.appupdate.AppUpdateRenderer>().Prompt()
             com.coffeepeek.admin.analytics.AnalyticsPrivacy()
         }
     }
@@ -71,8 +72,9 @@ internal fun AppContent(content: @Composable () -> Unit) {
                 LocalKamelConfig provides kamelConfig,
                 com.coffeepeek.feature.ownership.api.LocalBusinessOwnership provides koinInject<com.coffeepeek.feature.ownership.api.BusinessOwnershipEntry>(),
                 LocalContentColor provides MaterialTheme.colorScheme.onBackground,
-                content = content,
-            )
+            ) {
+                ProvideDesignSystemPlatformHooks { com.coffeepeek.admin.di.media.ProvideImageEnvironment(content) }
+            }
         }
     }
 }

@@ -6,6 +6,7 @@ import com.coffeepeek.core.session.Session
 import com.coffeepeek.core.session.SessionStore
 import com.coffeepeek.feature.auth.api.LocalUserData
 import com.coffeepeek.feature.auth.domain.AuthRepository
+import com.coffeepeek.feature.auth.domain.AppleSignInChallenge
 import com.coffeepeek.feature.auth.domain.SignedInAccount
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
@@ -34,6 +35,13 @@ internal class AuthRepositoryImpl(
     private val sessions: SessionStore,
     private val localUserData: LocalUserData,
 ) : AuthRepository {
+    override suspend fun beginAppleSignIn(): Result<AppleSignInChallenge> = requestResult {
+        AppleAuthBackend(plain).challenge()
+    }
+
+    override suspend fun signInWithApple(challengeId: String, idToken: String): Result<SignedInAccount> = requestResult {
+        persist(AppleAuthBackend(plain).signIn(challengeId, idToken))
+    }
 
     override suspend fun signIn(email: String, password: String): Result<SignedInAccount> = requestResult {
         val response = plain.post("/api/Tokens") {

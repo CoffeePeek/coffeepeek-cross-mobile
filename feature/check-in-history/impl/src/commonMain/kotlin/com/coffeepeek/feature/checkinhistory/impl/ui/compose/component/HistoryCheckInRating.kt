@@ -1,8 +1,8 @@
 package com.coffeepeek.feature.checkinhistory.impl.ui.compose.component
 
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
 import org.jetbrains.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.Modifier
 import com.coffeepeek.core.designsystem.component.CoffeePeekRating
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.checkinhistory.domain.model.HistoryRating

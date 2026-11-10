@@ -14,7 +14,7 @@ import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.doubleOrNull
 import kotlinx.serialization.json.intOrNull
 
-// Wire representations of the existing endpoints. Names are identical to the legacy DTOs, so a catalog cached
+// Wire representations of the existing endpoints. Names are identical to the previous DTOs, so a catalog cached
 // by either implementation can be read by the other. Never exposed by the factory.
 @Serializable
 internal data class RoasterEnvelopeDto<T>(

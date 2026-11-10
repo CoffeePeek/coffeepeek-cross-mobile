@@ -5,6 +5,19 @@ import kotlin.test.assertEquals
 
 class ProfileNavigationTest {
     @Test
+    fun guestOpensLoginForPublicProfileAndItsCheckIns() {
+        val profile = Navigator.Screen.UserProfile("anna")
+        val checkIns = Navigator.Screen.UserCheckIns("anna")
+        val shop = Navigator.Screen.ShopDetail("shop")
+
+        assertEquals(Navigator.Screen.Auth, profile.profileDestination(isLoggedIn = false))
+        assertEquals(Navigator.Screen.Auth, checkIns.profileDestination(isLoggedIn = false))
+        assertEquals(shop, shop.profileDestination(isLoggedIn = false))
+        assertEquals(profile, profile.profileDestination(isLoggedIn = true))
+        assertEquals(checkIns, checkIns.profileDestination(isLoggedIn = true))
+    }
+
+    @Test
     fun repeatedProfileUsesItsAddressDespiteDifferentDisplayMetadata() {
         val original = Navigator.Screen.UserProfile("anna", "Anna", "old-avatar")
         val stack = listOf(Navigator.Screen.Main, original, Navigator.Screen.ShopDetail("shop"))

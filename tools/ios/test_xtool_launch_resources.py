@@ -55,7 +55,7 @@ class XtoolLaunchResourcesTest(unittest.TestCase):
 
     def test_compiles_original_catalog_for_iphone_with_both_appearances(self):
         self.mock_compiler('[[ "$1 $2 $3 $4" == "--sdk iphoneos actool --compile" ]]\n'
-                           '[[ "$6 $7 $8 $9 ${10} ${11}" == "--platform iphoneos --minimum-deployment-target 18.0 --target-device iphone" ]]\n'
+                           '[[ "$6 $7 $8 $9 ${10} ${11}" == "--platform iphoneos --minimum-deployment-target 17.0 --target-device iphone" ]]\n'
                            '[[ "${12}" == */iosApp/iosApp/Assets.xcassets ]]\n'
                            'printf compiled > "$5/Assets.car"\n')
         result = self.run_script()

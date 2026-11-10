@@ -2,10 +2,13 @@ package com.coffeepeek.admin.di.favorites
 
 import com.coffeepeek.admin.di.shop.CheckInTestSessions
 import com.coffeepeek.admin.di.collections.CollectionPickerRequests
-import com.coffeepeek.admin.feature.favorites.api.RoasterFavorites
-import com.coffeepeek.domain.feature.favorites.api.*
-import com.coffeepeek.domain.model.*
+import com.coffeepeek.feature.favorites.domain.model.FavoriteAddress
+import com.coffeepeek.feature.favorites.domain.model.FavoriteEntry
+import com.coffeepeek.feature.favorites.domain.model.FavoriteKind
+import com.coffeepeek.feature.favorites.domain.repository.AccountFavorites
+import com.coffeepeek.core.session.Session
 import com.coffeepeek.feature.favorites.domain.model.FavoriteShop
+import com.coffeepeek.feature.shop.api.PublicShopSummary
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.test.*
@@ -13,10 +16,12 @@ import kotlin.test.*
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class ServerFavoriteBridgesTest {
-    private val address = PublicAddress("canonical", "/coffee-shop/canonical", 1, false)
+    private val address = FavoriteAddress("canonical", "/coffee-shop/canonical", 1, false)
     private fun entry(kind: FavoriteKind = FavoriteKind.CoffeeShop) =
         FavoriteEntry(kind, address, name = "Server name", coverPhotoUrl = "https://fixture.invalid/cover")
-    private class Server : FavoritesRepository {
+    private fun summary() = PublicShopSummary(null, null, null, null, 0, false, emptyList(),
+        slug = address.slug, canonicalPath = address.canonicalPath, revision = address.revision, isAlias = address.isAlias, title = "Canonical")
+    private class Server : AccountFavorites {
         val state = MutableStateFlow(Result.success(emptyList<FavoriteEntry>()))
         val writes = mutableListOf<Pair<FavoriteEntry, Boolean>>()
         var reads = 0
@@ -31,8 +36,6 @@ class ServerFavoriteBridgesTest {
         override suspend fun getFavorites(refresh: Boolean): Result<List<FavoriteEntry>> {
             reads++; return state.value.also { afterRead() }
         }
-        override suspend fun setFavorite(kind: FavoriteKind, address: PublicAddress, favorite: Boolean) =
-            setFavorite(FavoriteEntry(kind, address), favorite)
         override suspend fun setFavorite(entry: FavoriteEntry, favorite: Boolean): Result<Unit> {
             writes += entry to favorite
             afterWrite()
@@ -46,8 +49,7 @@ class ServerFavoriteBridgesTest {
         val requests = CollectionPickerRequests(sessions, backgroundScope)
         val server = Server().apply { afterWrite = { assertNull(requests.state.value) } }
         val repo = ServerFavoriteShopsRepository(server, sessions, requests) {
-            Result.success(CoffeeShopDetails(CoffeeShop("guid", "Canonical", null,
-                cityName = null, priceRange = null, photoUrl = null, publicAddress = address)))
+            Result.success(summary())
         }
         repo.save(FavoriteShop("alias", "Alias")).getOrThrow()
         assertEquals("canonical", requests.state.value?.target?.slug)
@@ -62,8 +64,7 @@ class ServerFavoriteBridgesTest {
         val requests = CollectionPickerRequests(sessions, backgroundScope)
         val server = Server().apply { writeResult = Result.failure(IllegalStateException("Offline")) }
         val repo = ServerFavoriteShopsRepository(server, sessions, requests) {
-            Result.success(CoffeeShopDetails(CoffeeShop("canonical", "Canonical", null,
-                cityName = null, priceRange = null, photoUrl = null, publicAddress = address)))
+            Result.success(summary())
         }
         assertTrue(repo.save(FavoriteShop("canonical", "Canonical")).isFailure)
         assertNull(requests.state.value)
@@ -74,8 +75,7 @@ class ServerFavoriteBridgesTest {
         val requests = CollectionPickerRequests(sessions, backgroundScope)
         val server = Server().apply { afterWrite = { sessions.applySession(Session("other", userId = "other")) } }
         val repo = ServerFavoriteShopsRepository(server, sessions, requests) {
-            Result.success(CoffeeShopDetails(CoffeeShop("canonical", "Canonical", null,
-                cityName = null, priceRange = null, photoUrl = null, publicAddress = address)))
+            Result.success(summary())
         }
         assertFailsWith<CancellationException> { repo.save(FavoriteShop("canonical", "Canonical")) }
         assertNull(requests.state.value)
@@ -123,6 +123,9 @@ class ServerFavoriteBridgesTest {
         assertEquals(0, server.reads)
     }
 
+    private fun summary(title: String) = PublicShopSummary(null, null, null, null, 0, false, emptyList(),
+        slug = address.slug, canonicalPath = address.canonicalPath, revision = address.revision, isAlias = address.isAlias, title = title)
+
     @Test fun accountReplacementClearsImmediatelyAndRejectsNonCooperativeDetail() = runTest {
         val sessions = CheckInTestSessions()
         val server = Server().apply { state.value = Result.success(listOf(entry())) }
@@ -130,8 +133,7 @@ class ServerFavoriteBridgesTest {
         val gate = CompletableDeferred<Unit>()
         val repo = ServerFavoriteShopsRepository(server, sessions) {
             withContext(NonCancellable) { started.complete(Unit); gate.await() }
-            Result.success(CoffeeShopDetails(CoffeeShop("canonical", "Private old row", null,
-                cityName = null, priceRange = null, photoUrl = null, publicAddress = address)))
+            Result.success(summary("Private old row"))
         }
         val results = mutableListOf<Result<List<FavoriteShop>>>()
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { repo.observe().collect { results += it } }
@@ -169,29 +171,12 @@ class ServerFavoriteBridgesTest {
         val server = Server()
         val repo = ServerFavoriteShopsRepository(server, CheckInTestSessions()) {
             assertEquals("old-alias", it)
-            Result.success(CoffeeShopDetails(CoffeeShop("guid", "Canonical title", null,
-                cityName = null, priceRange = null, photoUrl = null, publicAddress = address)))
+            Result.success(summary("Canonical title"))
         }
         repo.save(FavoriteShop("old-alias", "Old title")).getOrThrow()
         assertEquals(address, server.writes.single().first.address)
         assertEquals("Canonical title", server.writes.single().first.name)
         assertTrue(server.writes.single().second)
-    }
-
-    @Test fun drinksRetainOnlyTheirContractedRemovalKeysAndCannotBecomeShopRoutes() = runTest {
-        val server = Server().apply { state.value = Result.success(listOf(entry(),
-            FavoriteEntry(FavoriteKind.Drink, drinkSlug = "latte", name = "Latte"),
-            FavoriteEntry(FavoriteKind.Drink, name = "No target", occurrence = 2))) }
-        val repo = ServerFavoriteDrinksRepository(server, CheckInTestSessions())
-        val rows = repo.observe().first().getOrThrow()
-        assertEquals(2, rows.size)
-        assertTrue(rows.first().canRemove)
-        assertFalse(rows.last().canRemove)
-        repo.remove(rows.first().id).getOrThrow()
-        assertEquals("latte", server.writes.single().first.drinkSlug)
-        assertFalse(server.writes.single().second)
-        server.state.value = Result.failure(IllegalStateException("Offline"))
-        assertTrue(repo.observe().first().isFailure)
     }
 
     @Test fun roasterServerErrorsAreVisibleToTheMigratedScreen() = runTest {
@@ -201,7 +186,7 @@ class ServerFavoriteBridgesTest {
             override fun observeErrors() = errors
             override suspend fun setFavorite(roaster: CatalogItem, isFavorite: Boolean): Result<Unit> = error("No write")
         }
-        val repo = LegacyFavoriteRoastersRepository(roasters, CheckInTestSessions()) { error("No photo") }
+        val repo = AccountFavoriteRoasters(roasters, CheckInTestSessions()) { error("No photo") }
         val results = mutableListOf<Result<List<com.coffeepeek.feature.favorites.domain.model.FavoriteRoaster>>>()
         backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { repo.observe().collect { results += it } }
         runCurrent(); errors.value = "Server unavailable"; runCurrent()

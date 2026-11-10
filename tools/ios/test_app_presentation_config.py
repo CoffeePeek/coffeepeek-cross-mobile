@@ -16,11 +16,11 @@ class AppPresentationConfigTest(unittest.TestCase):
         config = (ROOT / "build-logic/utilities/src/main/kotlin/com/coffeepeek/config/Config.kt").read_text()
         self.assertEqual(re.search(r"const val MIN_SDK = (\d+)", config).group(1), "31")
         xcode = (ROOT / "iosApp/Configuration/Shared.xcconfig").read_text()
-        self.assertEqual(re.search(r"IPHONEOS_DEPLOYMENT_TARGET = ([\d.]+)", xcode).group(1), "18.0")
+        self.assertEqual(re.search(r"IPHONEOS_DEPLOYMENT_TARGET = ([\d.]+)", xcode).group(1), "17.0")
         package = (ROOT / "iosXtool/CoffeePeek/Package.swift").read_text()
-        self.assertEqual(re.search(r'\.iOS\("([\d.]+)"\)', package).group(1), "18.0")
+        self.assertEqual(re.search(r'\.iOS\("([\d.]+)"\)', package).group(1), "17.0")
         info = plistlib.loads((ROOT / "iosXtool/CoffeePeek/Info.plist").read_bytes())
-        self.assertEqual(info["MinimumOSVersion"], "18.0")
+        self.assertEqual(info["MinimumOSVersion"], "17.0")
 
     def test_both_ios_launchers_support_only_upright_portrait(self):
         for path in ("iosApp/iosApp/Info.plist", "iosXtool/CoffeePeek/Info.plist"):

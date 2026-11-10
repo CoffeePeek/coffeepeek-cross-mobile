@@ -21,7 +21,6 @@ internal fun analyticsPage(route: String?): String = when (route?.substringBefor
     "Auth", "ForgotPassword", "ResetPassword" -> "login"
     "Register" -> "register"
     "FeedTab", "FeedGraph" -> "discovery"
-    "CoffeeTab", "CoffeeGraph" -> "coffees"
     "CommunityTab", "CommunityGraph" -> "feed"
     "ProfileTab", "ProfileGraph" -> "profile"
     "UserProfile", "UserCheckIns" -> "user_profile"

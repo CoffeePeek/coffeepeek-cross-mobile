@@ -4,15 +4,11 @@
     <string name="ownership_back">Назад</string>
     <string name="ownership_login">Увайсці</string>
     <string name="ownership_login_hint">Увайдзіце, каб падаць заяўку або кіраваць сваім бізнесам.</string>
-    <string name="ownership_new_claim">Заявіць правы на бізнес</string>
     <string name="ownership_claim_title">Заяўка на валоданне</string>
     <string name="ownership_editor_title">Профіль бізнесу</string>
     <string name="ownership_claim_hint">Укажыце кантакт для сувязі і растлумачце, як можна пацвердзіць вашы паўнамоцтвы. Дадайце пацвярджальныя фатаграфіі.</string>
-    <string name="ownership_slug">Спасылка або кароткі адрас бізнесу</string>
     <string name="ownership_contact">Кантакт для сувязі</string>
     <string name="ownership_evidence">Пацвярджэнне паўнамоцтваў</string>
-    <string name="ownership_kind_shop">Кавярня</string>
-    <string name="ownership_kind_roaster">Абсмажчык</string>
     <string name="ownership_submit">Адправіць заяўку</string>
     <string name="ownership_claims">Мае заяўкі</string>
     <string name="ownership_shops">Мае кавярні</string>
@@ -45,7 +41,6 @@
     <string name="ownership_discard_title">Замяніць незахаваны чарнавік?</string>
     <string name="ownership_discard_hint">Уведзеныя змены будуць страчаныя. Захаваны профіль застанецца на серверы.</string>
     <string name="ownership_discard">Працягнуць</string>
-    <string name="ownership_reload">Загрузіць профіль нанова</string>
     <string name="ownership_saved">Профіль захаваны</string>
     <string name="ownership_error_unavailable">Не ўдалося загрузіць або захаваць звесткі. Праверце злучэнне і паўтарыце запыт.</string>
     <string name="ownership_error_signedout">Увайдзіце зноў, каб працягнуць.</string>
@@ -67,4 +62,9 @@
     <string name="ownership_switch_business">Перайсці на бізнес-уліковы запіс</string>
     <string name="ownership_switch_personal">Перайсці на асабісты ўліковы запіс</string>
     <string name="ownership_evidence_photos">Фота пацвярджэння паўнамоцтваў</string>
+    <string name="ownership_checkin_qr_action">QR для чакіну</string>
+    <string name="ownership_checkin_qr_hint">Адсканіруйце, каб адкрыць форму чакіну ў гэтай кавярні.</string>
+    <string name="ownership_checkin_qr_description">QR-код для чакіну ў кавярні %1$s</string>
+    <string name="ownership_checkin_qr_share">Падзяліцца PNG</string>
+    <string name="ownership_checkin_qr_error">Не ўдалося падрыхтаваць QR-код. Паспрабуйце яшчэ раз.</string>
 </resources>

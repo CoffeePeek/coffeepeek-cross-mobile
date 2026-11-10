@@ -27,8 +27,8 @@ import androidx.compose.ui.unit.*
 import androidx.compose.ui.window.Popup
 import androidx.compose.ui.window.PopupPositionProvider
 import androidx.compose.ui.window.PopupProperties
-import com.coffeepeek.admin.theme.CpDimens
-import com.coffeepeek.admin.ui.icons.CpIcons
+import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
+import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 
 @Composable
 internal actual fun PlatformMenuButton(
@@ -37,8 +37,8 @@ internal actual fun PlatformMenuButton(
 ) {
     var expanded by remember { mutableStateOf(false) }
     val colors = MaterialTheme.colorScheme
-    val shape = RoundedCornerShape(CpDimens.cardRadius)
-    val margin = with(LocalDensity.current) { CpDimens.spacing2.roundToPx() }
+    val shape = RoundedCornerShape(CoffeePeekDimens.cardRadius)
+    val margin = with(LocalDensity.current) { CoffeePeekDimens.spacing2.roundToPx() }
     val position = remember(margin) { object : PopupPositionProvider {
         override fun calculatePosition(anchorBounds: IntRect, windowSize: IntSize, layoutDirection: LayoutDirection, popupContentSize: IntSize): IntOffset {
             val x = if (layoutDirection == LayoutDirection.Ltr) anchorBounds.right - popupContentSize.width else anchorBounds.left
@@ -59,27 +59,28 @@ internal actual fun PlatformMenuButton(
                     val interaction = remember(item.id) { MutableInteractionSource() }
                     val pressed by interaction.collectIsPressedAsState()
                     val tint = if (item.destructive) colors.error else colors.onSurface
-                    Row(Modifier.fillMaxWidth().heightIn(min = CpDimens.controlHeight).graphicsLayer { alpha = if (!item.enabled) .4f else if (pressed) .55f else 1f }
+                    Row(Modifier.fillMaxWidth().heightIn(min = CoffeePeekDimens.controlHeight).graphicsLayer { alpha = if (!item.enabled) .4f else if (pressed) .55f else 1f }
                         .clickable(interactionSource = interaction, indication = null, enabled = item.enabled, role = Role.Button) { expanded = false; item.onClick() }
                         .semantics { item.selected?.let { selected = it } }
-                        .padding(horizontal = CpDimens.spacing4, vertical = CpDimens.spacing3), verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(CpDimens.spacing3)) {
+                        .padding(horizontal = CoffeePeekDimens.spacing4, vertical = CoffeePeekDimens.spacing3), verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3)) {
                         val icon = when {
-                            item.selected == true -> CpIcons.Check
+                            item.selected == true -> CoffeePeekIcons.Check
                             item.selected == false -> null
                             else -> when (item.icon) {
-                                PlatformMenuIcon.Edit -> CpIcons.Edit
-                                PlatformMenuIcon.Hide, PlatformMenuIcon.Block -> CpIcons.VisibilityOff
-                                PlatformMenuIcon.Report -> CpIcons.Error
-                                PlatformMenuIcon.NoteEdit -> CpIcons.NoteEdit
-                                PlatformMenuIcon.Add -> CpIcons.Add
-                                PlatformMenuIcon.CoffeeBean -> CpIcons.CoffeeBean
-                                PlatformMenuIcon.Logout -> CpIcons.Logout
+                                PlatformMenuIcon.Edit -> CoffeePeekIcons.Edit
+                                PlatformMenuIcon.Hide, PlatformMenuIcon.Block -> CoffeePeekIcons.VisibilityOff
+                                PlatformMenuIcon.Report -> CoffeePeekIcons.Error
+                                PlatformMenuIcon.NoteEdit -> CoffeePeekIcons.NoteEdit
+                                PlatformMenuIcon.Add -> CoffeePeekIcons.Add
+                                PlatformMenuIcon.CoffeeBean -> CoffeePeekIcons.CoffeeBean
+                                PlatformMenuIcon.Logout -> CoffeePeekIcons.Logout
+                                PlatformMenuIcon.Share -> CoffeePeekIcons.Share
                                 null -> null
                             }
                         }
-                        if (icon != null) Image(icon, null, Modifier.size(CpDimens.settingsIconSize), colorFilter = ColorFilter.tint(tint))
-                        else if (item.selected != null) Spacer(Modifier.size(CpDimens.settingsIconSize))
+                        if (icon != null) Image(icon, null, Modifier.size(CoffeePeekDimens.settingsIconSize), colorFilter = ColorFilter.tint(tint))
+                        else if (item.selected != null) Spacer(Modifier.size(CoffeePeekDimens.settingsIconSize))
                         BasicText(item.title, style = MaterialTheme.typography.bodyLarge.copy(color = tint))
                     }
                 }

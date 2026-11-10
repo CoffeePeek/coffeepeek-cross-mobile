@@ -23,6 +23,12 @@ kotlin {
             implementation(libs.ktor.client.auth)
             implementation(libs.ktor.serialization.kotlinx.json)
         }
+        androidMain.dependencies {
+            implementation(libs.ktor.client.okhttp)
+        }
+        iosMain.dependencies {
+            implementation(libs.ktor.client.darwin)
+        }
         commonTest.dependencies {
             implementation(libs.kotlin.test)
             implementation("io.ktor:ktor-client-mock:${libs.versions.ktor.get()}")
@@ -33,6 +39,7 @@ kotlin {
 android {
     namespace = "${Config.APPLICATION_ID}.core.network"
     compileSdk = Config.COMPILE_SDK
+    defaultConfig { minSdk = Config.MIN_SDK }
     compileOptions {
         sourceCompatibility = Config.JAVA_VERSION
         targetCompatibility = Config.JAVA_VERSION

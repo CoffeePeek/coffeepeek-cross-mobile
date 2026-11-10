@@ -25,7 +25,7 @@ class ShopScheduleMapperTest {
         assertTrue(emptyList<ShopScheduleDto>().toLocalSchedules(180).isEmpty())
     }
 
-    @Test fun malformedTimeKeepsOriginalValueAsLegacyConverterDoes() {
+    @Test fun malformedTimeKeepsOriginalValueAsPreviousConverterDoes() {
         val schedules = listOf(
             ShopScheduleDto(
                 dayOfWeek = JsonPrimitive(4),

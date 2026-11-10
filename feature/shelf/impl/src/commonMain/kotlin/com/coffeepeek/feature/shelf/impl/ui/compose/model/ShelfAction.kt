@@ -9,9 +9,8 @@ internal sealed interface ShelfAction {
     data class Finish(val id: String, val rating: Int?, val buyAgain: Boolean?) : ShelfAction
     data class UndoFinish(val id: String, val position: Int) : ShelfAction
     data object DismissMessage : ShelfAction
-    data class ArrivalShown(val id: String) : ShelfAction
+    data class ArrivalPresented(val id: String) : ShelfAction
     data object OpenArchive : ShelfAction
-    data object BrowseCatalog : ShelfAction
     data object SignIn : ShelfAction
     data object AddBag : ShelfAction
 }

@@ -1,4 +1,3 @@
-import com.coffeepeek.buildlogic.androidImplementation
 import com.coffeepeek.buildlogic.api
 import com.coffeepeek.buildlogic.implementation
 import com.coffeepeek.buildlogic.module
@@ -24,7 +23,6 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtimeCompose)
     implementation(compose.components.resources)
     implementation(compose.components.uiToolingPreview)
-    androidImplementation(libs.androidx.compose.ui.tooling.preview)
 
     testImplementation(libs.kotlin.test)
     testImplementation(libs.kotlinx.coroutines.test)

@@ -139,7 +139,7 @@ class ShopDetailsRepositoryTest {
         }
     }
 
-    @Test fun mapsHeaderFieldsAndPhotoVariantsWithoutLoadingLegacyModels() = runBlocking {
+    @Test fun mapsHeaderFieldsAndPhotoVariantsWithoutLoadingPreviousModels() = runBlocking {
         val engine = MockEngine {
             respond("""{
               "isSuccess":true,

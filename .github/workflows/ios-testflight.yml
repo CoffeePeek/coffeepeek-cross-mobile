@@ -12,7 +12,6 @@ on:
       - feature/**
       - features/**
       - gradle/**
-      - modules/**
       - iosApp/**
       - iosXtool/CoffeePeek/Sources/**
       - tools/ios/**
@@ -317,7 +316,6 @@ jobs:
         env:
           APPSTORE_API_KEY_ID: ${{ secrets.APPSTORE_API_KEY_ID }}
           APPSTORE_ISSUER_ID: ${{ secrets.APPSTORE_ISSUER_ID }}
-          GRADLE_MAX_WORKERS: '1'
         run: |
           set -euo pipefail
           # Kotlin/Native links the release framework in a separate JVM.
@@ -336,6 +334,7 @@ jobs:
             -authenticationKeyPath "$RUNNER_TEMP/AuthKey_${APPSTORE_API_KEY_ID}.p8" \
             -authenticationKeyID "$APPSTORE_API_KEY_ID" \
             -authenticationKeyIssuerID "$APPSTORE_ISSUER_ID" \
+            GRADLE_MAX_WORKERS=1 \
             DEVELOPMENT_TEAM="$APPLE_TEAM_ID" \
             CODE_SIGN_STYLE=Manual
 
@@ -353,6 +352,8 @@ jobs:
           [[ "$(/usr/libexec/PlistBuddy -c 'Print :CoffeePeekDebug' "$INFO_PLIST")" == 'NO' ]]
           APP_PATH="${INFO_PLIST%/Info.plist}"
           MINIMUM_OS=$(/usr/libexec/PlistBuddy -c 'Print :MinimumOSVersion' "$INFO_PLIST")
+          EXPECTED_MINIMUM_OS=$(sed -n 's/^IPHONEOS_DEPLOYMENT_TARGET = //p' iosApp/Configuration/Shared.xcconfig)
+          [[ "$MINIMUM_OS" == "$EXPECTED_MINIMUM_OS" ]]
           python3 tools/ios/fix_onnx_framework.py "$APP_PATH/Frameworks/onnxruntime.framework" \
             --deployment-target "$MINIMUM_OS" --check
           codesign --verify --deep --strict "$APP_PATH"

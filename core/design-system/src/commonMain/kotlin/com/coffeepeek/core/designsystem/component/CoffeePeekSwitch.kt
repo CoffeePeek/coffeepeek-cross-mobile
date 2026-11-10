@@ -24,7 +24,10 @@ fun CoffeePeekSwitch(
 ) {
     if (CoffeePeekNativeSwitch(checked, onCheckedChange, modifier, enabled)) return
     val palette = coffeePeekSwitchPalette(MaterialTheme.colorScheme.background.luminance() < 0.5f)
-    Switch(checked = checked, onCheckedChange = onCheckedChange, enabled = enabled, modifier = modifier,
+    val effects = LocalCoffeePeekPlatformEffects.current
+    Switch(checked = checked,
+        onCheckedChange = onCheckedChange?.let { callback -> { value -> effects?.haptic(CoffeePeekHaptic.Selection); callback(value) } },
+        enabled = enabled, modifier = modifier,
         thumbContent = { Box(Modifier.size(SwitchDefaults.IconSize)) },
         colors = SwitchDefaults.colors(
             checkedThumbColor = palette.checkedThumb, checkedTrackColor = palette.checkedTrack,

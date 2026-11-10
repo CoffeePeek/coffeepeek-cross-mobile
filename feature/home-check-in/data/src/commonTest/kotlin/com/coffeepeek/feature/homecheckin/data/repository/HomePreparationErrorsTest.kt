@@ -18,7 +18,7 @@ import kotlin.test.*
 class HomePreparationErrorsTest {
     private val draft = HomePreparationInput("2026-09-20T10:00:00Z")
 
-    @Test fun serverFieldKeysAndLegacyMessagesBecomeTypedIssues() = runBlocking {
+    @Test fun serverFieldKeysAndPreviousMessagesBecomeTypedIssues() = runBlocking {
         val error = failure(HttpStatusCode.BadRequest, """{
             "errorCode":"VALIDATION_FAILED","message":"Validation failed",
             "errors":{"DoseGrams":["DoseGrams must be between 0.01 and 10000 with at most two decimal places."],

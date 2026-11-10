@@ -14,6 +14,7 @@ internal enum class PublicProfileError {
 
 internal data class PublicProfileState(
     val isLoading: Boolean = true,
+    val isSignedIn: Boolean = false,
     val error: PublicProfileError? = null,
     val profile: PublicProfile? = null,
     val checkIns: List<PublicProfileCheckIn> = emptyList(),

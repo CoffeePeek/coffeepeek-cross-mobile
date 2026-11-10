@@ -13,14 +13,14 @@ class AnalyticsParityHarnessTest {
     @Test fun differentPropertyValueFails() {
         val drifted = listOf(WireEvent("favorite_changed", mapOf("entity_type" to "coffee_shop", "is_favorite" to true)))
         val error = assertFailsWith<AssertionError> { ParityHarness.assertParity("drift", base, drifted) }
-        assertTrue("legacy (1)" in error.message.orEmpty() && "migrated (1)" in error.message.orEmpty())
+        assertTrue("reference (1)" in error.message.orEmpty() && "migrated (1)" in error.message.orEmpty())
     }
 
     @Test fun missingEventFails() {
         assertFailsWith<AssertionError> { ParityHarness.assertParity("missing", base, emptyList()) }
     }
 
-    @Test fun silentLegacyReferenceFails() {
+    @Test fun silentReferenceReferenceFails() {
         assertFailsWith<AssertionError> { ParityHarness.assertParity("silent", emptyList(), emptyList()) }
     }
 }

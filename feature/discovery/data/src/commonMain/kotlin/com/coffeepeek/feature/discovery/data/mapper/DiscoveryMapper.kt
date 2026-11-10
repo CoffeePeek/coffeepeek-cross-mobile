@@ -12,7 +12,7 @@ import com.coffeepeek.feature.discovery.domain.model.ShopSummary
 private const val TAG_LIMIT = 3
 
 /**
- * A row of the shop search. The server omits the kind and the new flag, so the row carries what was asked for, as the legacy search did: [requestedKind], and
+ * A row of the shop search. The server omits the kind and the new flag, so the row carries what was asked for, as the previous search did: [requestedKind], and
  * the requested visited and new switches that the server applied.
  */
 internal fun ShopSearchRowDto.toDomain(favorites: Set<String>, requestedKind: ShopKind?, visitedAsked: Boolean, newAsked: Boolean) = ShopSummary(

@@ -50,7 +50,7 @@ import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
-/** Port of the legacy `PublicProfileViewModelTest`: the same account, pagination and staleness guarantees, now against ports. */
+/** Port of the previous `PublicProfileViewModelTest`: the same account, pagination and staleness guarantees, now against ports. */
 @OptIn(ExperimentalCoroutinesApi::class)
 class PublicProfileViewModelTest {
     private val dispatcher = StandardTestDispatcher()
@@ -128,6 +128,19 @@ class PublicProfileViewModelTest {
             next.complete(PublicProfile("canonical", "nickname", null, null,
                 PublicProfileStats(2, 1, 0, 17), emptyList(), null))
         }
+    }
+
+    @Test fun checkInActionAvailabilityTracksTheAccountInsteadOfSurvivingLogout() = runTest(dispatcher) {
+        val accounts = FakeAccounts()
+        val model = model(accounts = accounts)
+        runCurrent()
+        assertFalse(model.state.value.isSignedIn)
+        accounts.signIn("viewer")
+        runCurrent()
+        assertTrue(model.state.value.isSignedIn)
+        accounts.signIn(null)
+        runCurrent()
+        assertFalse(model.state.value.isSignedIn)
     }
 
     private fun TestScope.events(model: PublicProfileViewModel): List<PublicProfileEvent> =

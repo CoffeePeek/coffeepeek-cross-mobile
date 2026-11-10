@@ -18,7 +18,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 /**
- * The tab's read-only summary: signed-in flag, theme, language, selected city name and the update row. Like the legacy tab it loads the city catalog when
+ * The tab's read-only summary: signed-in flag, theme, language, selected city name and the update row. Like the previous tab it loads the city catalog when
  * it is created (which also resolves the saved city), and loads it again when the selection points at a city it does not know yet, for example
  * after the city screen got the catalog on a retry.
  */
@@ -77,6 +77,7 @@ internal class SettingsViewModel(
                 UpdateCheckOutcome.UpToDate -> sendEvent(SettingsEvent.UpToDate)
                 UpdateCheckOutcome.Failed -> sendEvent(SettingsEvent.UpdateCheckFailed)
                 UpdateCheckOutcome.Available -> Unit
+                UpdateCheckOutcome.Disabled -> Unit
             }
         } finally {
             updateState { copy(manualUpdateCheck = false) }

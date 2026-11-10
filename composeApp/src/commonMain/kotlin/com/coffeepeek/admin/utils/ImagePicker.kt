@@ -3,8 +3,6 @@ package com.coffeepeek.admin.utils
 import androidx.compose.runtime.Composable
 
 const val MAX_SHOP_PHOTOS = 10
-const val MAX_REVIEW_PHOTOS = 5
-const val MAX_MENU_PHOTOS = 4
 
 data class PickedImage(
     val bytes: ByteArray,

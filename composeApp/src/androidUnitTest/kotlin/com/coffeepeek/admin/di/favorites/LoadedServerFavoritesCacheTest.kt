@@ -1,8 +1,7 @@
 package com.coffeepeek.admin.di.favorites
 
 import com.coffeepeek.admin.di.shop.CheckInTestSessions
-import com.coffeepeek.api.feature.favorites.FavoritesApiService
-import com.coffeepeek.data.feature.favorites.ServerFavoritesRepository
+import com.coffeepeek.feature.favorites.data.repository.createAccountFavorites
 import com.coffeepeek.core.network.configureApiTransport
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.mock.MockEngine
@@ -31,7 +30,7 @@ class LoadedServerFavoritesCacheTest {
         val client = client { sends++; gate.await() }
         try {
             val sessions = CheckInTestSessions()
-            val source = ServerFavoritesRepository(FavoritesApiService(client), sessions)
+            val source = createAccountFavorites(client, sessions)
             val subscriptions = List(3) { async { observeLoadedServerFavorites(source, sessions).first().getOrThrow() } }
             runCurrent()
             assertEquals(1, sends)

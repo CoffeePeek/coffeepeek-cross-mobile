@@ -1,11 +1,11 @@
 PRODUCT_NAME = CoffeePeek
 PRODUCT_BUNDLE_IDENTIFIER = com.coffeepeek
 CODE_SIGN_ENTITLEMENTS = iosApp/CoffeePeek.entitlements
-MARKETING_VERSION = 1.1.7
+MARKETING_VERSION = 1.1.8
 // Preserve published build codes when counting only the current branch history.
 BUILD_NUMBER_OFFSET = 1000
 CURRENT_PROJECT_VERSION = 1
-IPHONEOS_DEPLOYMENT_TARGET = 18.0
+IPHONEOS_DEPLOYMENT_TARGET = 17.0
 EXCLUDED_ARCHS[sdk=iphonesimulator*] = x86_64
 
 // xcconfig treats // as a comment, so $() keeps the URL intact.
@@ -21,5 +21,8 @@ SHELF_INPAINTER_URL = https:/$()/huggingface.co/andraniksargsyan/migan/resolve/m
 // Explicit local opt-in for analytics in Debug builds.
 POSTHOG_ENABLE_DEV = NO
 POSTHOG_PROJECT_TOKEN =
+
+// A build setting lets both Xcode and the KMP IDE resolve the argument before Gradle starts.
+GRADLE_MAX_WORKERS = 6
 
 #include? "Local.xcconfig"

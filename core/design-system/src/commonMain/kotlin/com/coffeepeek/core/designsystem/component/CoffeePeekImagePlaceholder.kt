@@ -32,6 +32,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.coffeepeek.core.designsystem.resources.Res
 import com.coffeepeek.core.designsystem.resources.coffeepeek_image_placeholder_brand
+import com.coffeepeek.core.designsystem.resources.coffeepeek_photo_missing
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
@@ -41,7 +42,7 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 fun CoffeePeekImagePlaceholder(
     modifier: Modifier = Modifier,
     labelSize: TextUnit = 18.sp,
-    contentDescription: String? = null,
+    contentDescription: String? = stringResource(Res.string.coffeepeek_photo_missing),
 ) {
     val brand = stringResource(Res.string.coffeepeek_image_placeholder_brand)
     val painter = coffeePeekImagePlaceholderPainter(labelSize)

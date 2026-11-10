@@ -11,7 +11,7 @@ import com.coffeepeek.feature.coffee.api.CoffeeExposure
 import com.coffeepeek.feature.coffee.api.CoffeeListAnalytics
 import com.coffeepeek.feature.coffee.api.CoffeeScreenAnalytics
 
-/** Same consent-aware trackers and event names as the legacy catalogue screens, not a second analytics service. */
+/** Consent-aware trackers over the shared analytics service. */
 internal object CoffeeCatalogueAnalytics : CoffeeAnalytics {
     override fun list(): CoffeeListAnalytics = CoffeeCatalogueListAnalytics()
     override fun detail(): CoffeeDetailAnalytics = CoffeeCatalogueDetailAnalytics

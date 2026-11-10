@@ -43,10 +43,6 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.coffeepeek.admin.location.PlatformLocation
-import com.coffeepeek.domain.model.MapBounds
-import com.coffeepeek.domain.model.MapCluster
-import com.coffeepeek.domain.model.MapCoffeeZone
-import com.coffeepeek.domain.model.MapShop
 import org.maplibre.android.MapLibre
 import org.maplibre.android.annotations.IconFactory
 import org.maplibre.android.annotations.Marker
@@ -301,6 +297,7 @@ actual fun CoffeeMap(
         activeMap.setStyle(styleBuilder) { style ->
             styleGeneration += 1
             applyCoffeePeekMapStyle(style, isDarkTheme)
+            addSubwayStations(style, appContext.resources.displayMetrics, isDarkTheme)
             addOverlayLayers(style, isDarkTheme)
             if (!initialCameraApplied) {
                 val location = context.lastKnownLocation()

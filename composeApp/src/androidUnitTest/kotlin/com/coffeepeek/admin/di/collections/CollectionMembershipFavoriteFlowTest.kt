@@ -6,11 +6,10 @@ import com.coffeepeek.admin.di.shop.CheckInTestSessions
 import com.coffeepeek.admin.sandbox.backend.SandboxBackend
 import com.coffeepeek.admin.sandbox.backend.SandboxScenario
 import com.coffeepeek.admin.sandbox.backend.SandboxSavedCollectionsBackend
-import com.coffeepeek.api.feature.favorites.FavoritesApiService
-import com.coffeepeek.data.feature.favorites.ServerFavoritesRepository
-import com.coffeepeek.domain.feature.favorites.api.FavoriteKind
-import com.coffeepeek.domain.feature.favorites.api.FavoriteTarget
-import com.coffeepeek.domain.model.Session
+import com.coffeepeek.core.session.Session
+import com.coffeepeek.feature.favorites.data.repository.createAccountFavorites
+import com.coffeepeek.feature.favorites.domain.model.FavoriteKind
+import com.coffeepeek.feature.favorites.domain.model.FavoriteTarget
 import com.coffeepeek.feature.collections.data.repository.createSavedCollectionsRepository
 import com.coffeepeek.feature.collections.domain.model.CollectionPlaceKind
 import com.coffeepeek.feature.collections.domain.model.SavedCollectionMetadata
@@ -170,7 +169,7 @@ class CollectionMembershipFavoriteFlowTest {
         val backend = SandboxBackend(byteArrayOf(1), engineDispatcher = dispatcher)
         private val owner = SandboxSavedCollectionsBackend.LOCAL_ACCOUNT
         private val sessions = CheckInTestSessions(Session("sandbox-only", userId = owner))
-        val favorites = ServerFavoritesRepository(FavoritesApiService(backend.gateway), sessions)
+        val favorites = createAccountFavorites(backend.gateway, sessions)
         private val account = object : CollectionsAccount {
             override val identities = MutableStateFlow<String?>(owner)
             override fun currentId() = owner

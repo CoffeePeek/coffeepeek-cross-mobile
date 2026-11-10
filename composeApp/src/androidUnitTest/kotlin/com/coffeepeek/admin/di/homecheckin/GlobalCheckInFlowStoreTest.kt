@@ -81,6 +81,25 @@ class GlobalCheckInFlowStoreTest {
         assertFalse(flow.canAccess())
     }
 
+    @Test fun acceptedCreateAsksForNotificationsOnceAndCancelNever() = runTest(dispatcher) {
+        var created = 0
+        val flow = GlobalCheckInFlow(CheckInTestSessions(), onCreated = { created++ }) { _, _ -> Entry() }
+        owner.viewModelStore.put("flow", flow)
+        flow.home()
+        val cancelled = assertIs<GlobalCheckInDestination.Home>(flow.state.value)
+        flow.cancel(cancelled)
+        assertEquals(0, created)
+        val second = GlobalCheckInFlow(CheckInTestSessions(), onCreated = { created++ }) { _, _ -> Entry() }
+        owner.viewModelStore.put("flow2", second)
+        second.home()
+        val home = assertIs<GlobalCheckInDestination.Home>(second.state.value)
+        second.saved(home, " ")
+        assertEquals(0, created)
+        second.saved(home, "created")
+        second.saved(home, "created")
+        assertEquals(1, created)
+    }
+
     private class Entry : HomeCheckInEditorEntry {
         @Composable override fun Content(preparationId: String?, sessionGeneration: Int, accessAllowed: Boolean,
             onClose: () -> Unit, onSaved: (String, Boolean) -> Unit, onDismissAllowedChange: (Boolean) -> Unit,

@@ -120,3 +120,15 @@ cleared. Direct Sandbox assembly, DEX class and isolation checks and ownership
 Kotlin iOS Arm64 compilation passed. No device was selected or app installed;
 manual return to shop/roaster details, light/dark and native iOS review remain
 open. No real profile write was made.
+
+## Guest claim entry and timestamps
+
+The representative action checks the current session at the moment of the tap.
+A guest goes directly to login. A signed-in user opens the existing claim sheet.
+Claim details show submitted and reviewed timestamps in device time, down to the
+minute. Earlier date-only records keep their dates.
+
+Android Debug assembly and the ownership unit suite run in CI. Manual Sandbox
+checks should cover both themes, guest login and back, and signed-in submission
+and review dates. The profile editor hides the standalone reload button and
+keeps the confirmed recovery action in the error card. A device check has not been run in this workspace.

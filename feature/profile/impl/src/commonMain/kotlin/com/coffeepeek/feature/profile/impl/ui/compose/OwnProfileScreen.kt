@@ -95,7 +95,7 @@ private fun OwnPublicProfileContent(
             onOpenContributions = callbacks.openContributions, topBarActions = actions,
             favoritesPreview = { header -> slots.favoritesPreview(callbacks.openShop, callbacks.openRoaster, header) },
             checkInCount = profile.checkInCount, activityPreview = slots.activityPreview,
-            bottomContentPadding = bottomPadding,
+            bottomContentPadding = bottomPadding, shelf = slots.shelf,
         ),
     )
 }

@@ -13,7 +13,7 @@ import androidx.compose.ui.unit.Dp
  */
 interface ShelfEntry {
     /**
-     * The shelf inside the Coffee tab. [header] is the app's content above the shelf (the "Моя полка / Каталог" switch);
+     * The shelf inside the owner's profile. [header] is the app's content above the shelf (the profile header and section selector);
      * a guest ([signedIn] false) sees empty shelves and an invitation to sign in. [onAddBag] opens the scan from the empty shelf
      * and [onOpenBag] the [Bag] screen of a tapped bag.
      */
@@ -21,13 +21,13 @@ interface ShelfEntry {
     fun Shelf(
         signedIn: Boolean,
         onOpenArchive: () -> Unit,
-        onBrowseCatalog: () -> Unit,
         onSignIn: () -> Unit,
         onAddBag: () -> Unit,
         onOpenBag: (bagId: String) -> Unit,
         modifier: Modifier,
         bottomClearance: Dp,
         header: @Composable ColumnScope.() -> Unit,
+        visibilitySettings: @Composable () -> Unit,
     )
 
     /** Finished bags as a full-screen destination; [onOpenBag] as on the shelf. */

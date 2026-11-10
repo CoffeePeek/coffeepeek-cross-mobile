@@ -36,5 +36,9 @@ gradlePlugin {
             id = "com.coffeepeek.kmp.shared-android-compose-library"
             implementationClass = "com.coffeepeek.buildlogic.KmpSharedAndroidComposeLibraryPlugin"
         }
+        register("functionBodyLimits") {
+            id = "com.coffeepeek.function-body-limits"
+            implementationClass = "com.coffeepeek.buildlogic.FunctionBodyLimitsPlugin"
+        }
     }
 }

@@ -7,7 +7,7 @@ import kotlinx.serialization.json.intOrNull
 
 /**
  * The server sends counters and indexes as a number, a numeric string or a decimal (`3`, `"3"`, `3.0`). This reads all of them as an Int, like the
- * legacy FlexibleInt serializer; anything else (null, text, an object) is null.
+ * previous FlexibleInt serializer; anything else (null, text, an object) is null.
  */
 fun JsonElement?.flexibleIntOrNull(): Int? {
     val primitive = this as? JsonPrimitive ?: return null

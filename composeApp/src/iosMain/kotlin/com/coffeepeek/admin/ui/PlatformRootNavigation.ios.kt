@@ -7,7 +7,6 @@ import coffeepeek.composeapp.generated.resources.Res
 import coffeepeek.composeapp.generated.resources.business_tab_title
 import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import coffeepeek.composeapp.generated.resources.navigation_search
-import coffeepeek.composeapp.generated.resources.navigation_coffee
 import coffeepeek.composeapp.generated.resources.navigation_feed
 import coffeepeek.composeapp.generated.resources.navigation_profile
 import coffeepeek.composeapp.generated.resources.navigation_settings
@@ -21,13 +20,11 @@ import com.coffeepeek.admin.theme.ThemeManager
 import androidx.compose.ui.viewinterop.UIKitInteropInteractionMode
 import androidx.compose.ui.viewinterop.UIKitInteropProperties
 import androidx.compose.ui.viewinterop.UIKitViewController
-import com.coffeepeek.admin.ui.screen.coffee.CoffeeScreenRenderer
-import com.coffeepeek.admin.feature.community.ui.CommunityScreenRenderer
+import com.coffeepeek.admin.ui.screen.community.CommunityScreenRenderer
 import com.coffeepeek.admin.ui.Navigator.isHandledByRootNav
 import com.coffeepeek.admin.ui.screen.main.DiscoveryScreenRenderer
-import com.coffeepeek.admin.ui.screen.main.CheckInTabContent
 import com.coffeepeek.admin.ui.screen.profile.OwnProfileScreenRenderer
-import com.coffeepeek.admin.ui.screen.profile.SettingsScreen
+import com.coffeepeek.admin.ui.screen.profile.SettingsScreenRenderer
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
@@ -61,7 +58,7 @@ internal class NavigationDelegate : NSObject(), UINavigationControllerDelegatePr
         }
         val previous = previousTop as? NativeScreenController
         if (previous?.route == Navigator.Screen.CreateCheckIn && navigationController.viewControllers.none { it == previous }) {
-            com.coffeepeek.admin.feature.checkin.api.CheckInFlowHandoff.cancelFromBack()
+            com.coffeepeek.admin.di.shop.CheckInFlowHandoff.cancelFromBack()
         }
         previousTop = didShowViewController
         navigationController.viewControllers.forEach { (it as? NativeScreenController)?.syncBottomClearance() }
@@ -92,7 +89,7 @@ internal class TabDelegate : NSObject(), UITabBarControllerDelegateProtocol {
 private object NavigationMemory {
     var generation = 0
     var selectedTab = 0
-    var stacks: List<List<Navigator.Screen>> = List(6) { emptyList() }
+    var stacks: List<List<Navigator.Screen>> = List(5) { emptyList() }
 
     fun save(tabs: UITabBarController, navigations: List<UINavigationController>, visibleTabIndices: List<Int>) {
         selectedTab = visibleTabIndices[tabs.selectedIndex.toInt().coerceIn(visibleTabIndices.indices)]
@@ -104,7 +101,7 @@ private object NavigationMemory {
     fun clear() {
         generation++
         selectedTab = 0
-        stacks = List(6) { emptyList() }
+        stacks = List(5) { emptyList() }
     }
 }
 
@@ -122,8 +119,8 @@ internal actual fun PlatformRootNavigation(
     val tabs = remember { UITabBarController() }
     val tabDelegate = remember { TabDelegate() }
     val tabReselections = remember { MainTabReselections() }
-    val navigationDelegates = remember { List(6) { NavigationDelegate() } }
-    val navigations = remember { List(6) { UINavigationController() } }
+    val navigationDelegates = remember { List(5) { NavigationDelegate() } }
+    val navigations = remember { List(5) { UINavigationController() } }
     val tabBarVisibility = remember(tabs) { NativeTabBarVisibility(tabs, navigations[0]) }
     val businessMode = koinInject<com.coffeepeek.feature.ownership.api.BusinessOwnershipEntry>().Session().businessMode
     val visibleTabIndices = remember(isLoggedIn, businessMode) { mainTabScreens(isLoggedIn, businessMode).map { requireNotNull(nativeTabIndex(it)) } }
@@ -168,25 +165,24 @@ internal actual fun PlatformRootNavigation(
     }
 
     val businessTitle = stringResource(Res.string.business_tab_title)
-    val labels = listOf(stringResource(Res.string.navigation_search), stringResource(Res.string.navigation_coffee),
+    val labels = listOf(stringResource(Res.string.navigation_search),
         stringResource(Res.string.navigation_feed), stringResource(Res.string.navigation_profile),
         stringResource(Res.string.navigation_settings), businessTitle)
     UIKitViewController(factory = {
-        val symbols = listOf("magnifyingglass", "cup.and.saucer", "person.2", "person.crop.circle", "gearshape", "building.2")
+        val symbols = listOf("magnifyingglass", "person.2", "person.crop.circle", "gearshape", "building.2")
         navigations.indices.forEach { index ->
             val navigation = navigations[index]
-            val root = NativeScreenController(labels[index], analyticsPage = listOf("discovery", "coffees", "feed", "profile", "settings", "business_ownership")[index], isTabRoot = true) {
+            val root = NativeScreenController(labels[index], analyticsPage = listOf("discovery", "feed", "profile", "settings", "business_ownership")[index], isTabRoot = true) {
                 when (index) {
                     0 -> koinInject<DiscoveryScreenRenderer>().Tab(
                         onMapExpandedChange = tabBarVisibility::onMapExpandedChange, reselections = tabReselections.search)
-                    1 -> CheckInTabContent { koinInject<CoffeeScreenRenderer>().List(tabReselections.coffee) }
-                    2 -> koinInject<CommunityScreenRenderer>().Content(
+                    1 -> koinInject<CommunityScreenRenderer>().Content(
                         onCreateCheckIn = { Navigator.navigate(Navigator.Screen.CreateCheckIn) },
-                        notificationsAction = { koinInject<com.coffeepeek.admin.feature.notifications.ui.NotificationsRenderer>().Bell() },
+                        notificationsAction = { koinInject<com.coffeepeek.admin.ui.screen.notifications.NotificationsRenderer>().Bell() },
                     )
-                    3 -> koinInject<OwnProfileScreenRenderer>().Content()
-                    4 -> SettingsScreen()
-                    5 -> koinInject<com.coffeepeek.feature.ownership.api.BusinessOwnershipEntry>().Tab()
+                    2 -> koinInject<OwnProfileScreenRenderer>().Content()
+                    3 -> koinInject<SettingsScreenRenderer>().Tab()
+                    4 -> koinInject<com.coffeepeek.feature.ownership.api.BusinessOwnershipEntry>().Tab()
                 }
             }
             navigation.setNavigationBarHidden(true, false)
@@ -208,7 +204,6 @@ internal actual fun PlatformRootNavigation(
         tabs.delegate = tabDelegate
         tabDelegate.onTabChanged = { saveNavigation() }
         tabDelegate.onTabReselected = { navigation ->
-            tabReselections.onTabPressed(Navigator.Screen.CoffeeTab, isSelected = navigation == navigations[1])
             tabReselections.onTabPressed(Navigator.Screen.FeedTab, isSelected = navigation == navigations[0])
         }
         tabs

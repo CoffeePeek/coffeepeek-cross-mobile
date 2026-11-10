@@ -1,16 +1,16 @@
 package com.coffeepeek.admin.di.shelf
 
 import com.coffeepeek.admin.di.coffee.coffeeModule
-import com.coffeepeek.admin.di.coffee.coffeeCatalogueScreenRenderer
-import com.coffeepeek.admin.di.coffee.CoffeeShelfTab
-import com.coffeepeek.admin.di.checkinhistory.CheckInHistoryFeatureScreenRenderer
+import com.coffeepeek.admin.di.coffee.featureCoffeeScreenRenderer
+import com.coffeepeek.admin.di.checkinhistory.FeatureCheckInHistoryScreenRenderer
 import com.coffeepeek.admin.di.checkinhistory.HistoryHomeEditorFactory
 import com.coffeepeek.admin.di.checkinhistory.checkInHistoryModule
-import com.coffeepeek.admin.feature.catalog.api.BrewMethodCatalog
+import com.coffeepeek.admin.di.catalog.BrewMethodCatalog
 import com.coffeepeek.admin.di.homecheckin.FeatureCheckInCreateFlowRenderer
 import com.coffeepeek.admin.di.homecheckin.homeCheckInModule
-import com.coffeepeek.api.CoffeePeekClient
-import com.coffeepeek.admin.settings.FakeSettingRepository
+import com.coffeepeek.core.network.ApiClients
+import com.coffeepeek.core.network.SessionCredentials
+import com.coffeepeek.core.network.SessionTokens
 import com.coffeepeek.core.session.Session
 import com.coffeepeek.core.session.SessionReader
 import com.coffeepeek.feature.coffee.api.CoffeePicker
@@ -31,7 +31,19 @@ import kotlin.test.assertNotNull
 
 class IosShelfModuleTest {
     @Test fun graphResolvesLazilyWithoutSessionsCredentialsOrModels() {
-        val client = shelfClient()
+        val client = ApiClients("https://fixture.invalid", "${NSTemporaryDirectory()}shelf-${NSUUID().UUIDString}", false,
+            credentials = object : SessionCredentials {
+                override suspend fun load(): SessionTokens? { error("Unexpected credentials read") }
+                override suspend fun save(tokens: SessionTokens?) { error("Unexpected credentials write") }
+                override suspend fun replace(expected: SessionTokens, tokens: SessionTokens?): Boolean = false
+            },
+            refreshWith = { { Result.failure(IllegalStateException("unused")) } })
+        val sessions = object : SessionReader {
+            override fun peekSession(): Session? = error("Resolving the graph must not read the session")
+            override fun isActiveSession(session: Session?): Boolean = error("Unexpected session check")
+            override fun observeSession(): Flow<Session?> = error("Unexpected session observation")
+            override suspend fun getSession(): Session? = error("Unexpected session load")
+        }
         val requested = mutableListOf<String>()
         val app = shelfApplication(client, requested)
         try {
@@ -42,12 +54,16 @@ class IosShelfModuleTest {
             client.client.close()
             client.plainClient.close()
             client.uploadClient.close()
-            client.imageClient.close()
         }
     }
 
-    private fun shelfClient() = CoffeePeekClient("https://fixture.invalid", "${NSTemporaryDirectory()}shelf-${NSUUID().UUIDString}", false,
-        getToken = { error("Unexpected credentials read") }, saveToken = { error("Unexpected credentials write") })
+    private fun shelfClient() = ApiClients("https://fixture.invalid", "${NSTemporaryDirectory()}shelf-${NSUUID().UUIDString}", false,
+        credentials = object : SessionCredentials {
+            override suspend fun load(): SessionTokens? { error("Unexpected credentials read") }
+            override suspend fun save(tokens: SessionTokens?) { error("Unexpected credentials write") }
+            override suspend fun replace(expected: SessionTokens, tokens: SessionTokens?): Boolean = false
+        },
+        refreshWith = { { Result.failure(IllegalStateException("unused")) } })
 
     private fun unreadSessions() = object : SessionReader {
         override fun peekSession(): Session? = error("Resolving the graph must not read the session")
@@ -56,7 +72,7 @@ class IosShelfModuleTest {
         override suspend fun getSession(): Session? = error("Unexpected session load")
     }
 
-    private fun shelfApplication(client: CoffeePeekClient, requested: MutableList<String>) = koinApplication {
+    private fun shelfApplication(client: ApiClients, requested: MutableList<String>) = koinApplication {
         modules(module {
             single { client }
             single<SessionReader> { unreadSessions() }
@@ -79,9 +95,8 @@ class IosShelfModuleTest {
         koin.get<HomePreparationShelfBagReader>()
         assertSame(koin.get<FeatureCheckInCreateFlowRenderer>(), koin.get<FeatureCheckInCreateFlowRenderer>())
         assertSame(koin.get<HistoryHomeEditorFactory>(), koin.get<HistoryHomeEditorFactory>())
-        assertSame(koin.get<CheckInHistoryFeatureScreenRenderer>(), koin.get<CheckInHistoryFeatureScreenRenderer>())
-        val shelf = CoffeeShelfTab(koin.get(), koin.get(), FakeSettingRepository())
-        assertNotNull(coffeeCatalogueScreenRenderer(koin.get(), shelf))
+        assertSame(koin.get<FeatureCheckInHistoryScreenRenderer>(), koin.get<FeatureCheckInHistoryScreenRenderer>())
+        assertNotNull(featureCoffeeScreenRenderer(koin.get()))
     }
 
     @Test fun theTimeZoneOffsetFollowsTheDevice() {

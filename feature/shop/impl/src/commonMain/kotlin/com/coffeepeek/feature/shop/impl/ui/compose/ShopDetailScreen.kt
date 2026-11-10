@@ -14,6 +14,9 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import com.coffeepeek.core.designsystem.component.LocalCoffeePeekScreenInsets
+import com.coffeepeek.core.designsystem.component.coffeePeekViewportBottomPadding
+import com.coffeepeek.core.designsystem.component.coffeePeekScreenBottomPadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -21,7 +24,8 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
+import com.coffeepeek.core.designsystem.component.CoffeePeekScaffold as Scaffold
+import com.coffeepeek.core.designsystem.component.coffeePeekScrollContentPadding
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import com.coffeepeek.feature.shop.impl.ui.data.LocalShopAnalytics
@@ -29,6 +33,9 @@ import com.coffeepeek.feature.shop.impl.ui.data.trackShopAction
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.remember
@@ -102,25 +109,13 @@ internal fun ShopDetailScreen(
     formatCheckInDate: (String) -> String = { it.take(10) },
     formatMenuDate: (String) -> String = ::formatShopMenuDate,
     refreshGeneration: Long = 0,
+    openCheckIn: Boolean = false,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val changed = com.coffeepeek.feature.ownership.api.LocalBusinessOwnership.current?.ProfileChanges() ?: 0L
     LaunchedEffect(changed) { if (changed > 0) viewModel.onAction(ShopDetailAction.Retry) }
-    val currentOnEvent by rememberUpdatedState(onEvent)
-    val currentGeneration by rememberUpdatedState(sessionGeneration)
-    val favoriteError by rememberUpdatedState(stringResource(Res.string.shop_detail_favorite_error))
-    val voteError by rememberUpdatedState(stringResource(Res.string.shop_checkin_list_vote_error))
     val snackbarHostState = remember { SnackbarHostState() }
-    LaunchedEffect(viewModel, sessionGeneration) {
-        viewModel.events.collect { envelope ->
-            if (envelope.sessionGeneration != currentGeneration) return@collect
-            when (val event = envelope.event) {
-                ShopDetailEvent.FavoriteFailed -> launch { snackbarHostState.showSnackbar(favoriteError) }
-                ShopDetailEvent.VoteFailed -> launch { snackbarHostState.showSnackbar(voteError) }
-                else -> currentOnEvent(event)
-            }
-        }
-    }
+    ObserveShopDetailEvents(viewModel, sessionGeneration, snackbarHostState, onEvent)
     LaunchedEffect(viewModel, sessionGeneration) {
         viewModel.onAction(ShopDetailAction.SessionChanged(sessionGeneration))
     }
@@ -132,6 +127,10 @@ internal fun ShopDetailScreen(
         ?: ShopDetailState(sessionGeneration = sessionGeneration)
     val analytics = LocalShopAnalytics.current
     analytics.TrackDetail(visibleState.details != null)
+    OpenLinkedCheckIn(openCheckIn, visibleState.isLoggedIn && visibleState.details != null) {
+        trackShopAction(ShopDetailAction.OpenCheckIn, visibleState, analytics)
+        viewModel.onAction(ShopDetailAction.OpenCheckIn)
+    }
     val overview = visibleState.details?.overview
     val latitude = overview?.latitude
     val longitude = overview?.longitude
@@ -143,6 +142,40 @@ internal fun ShopDetailScreen(
             viewModel.onAction(action)
         }, distance, forCheckIn,
             formatCheckInDate, formatMenuDate, snackbarHostState)
+    }
+}
+
+@Composable
+private fun ObserveShopDetailEvents(
+    viewModel: ShopDetailViewModel,
+    sessionGeneration: Int,
+    snackbarHostState: SnackbarHostState,
+    onEvent: (ShopDetailEvent) -> Unit,
+) {
+    val currentOnEvent by rememberUpdatedState(onEvent)
+    val currentGeneration by rememberUpdatedState(sessionGeneration)
+    val favoriteError by rememberUpdatedState(stringResource(Res.string.shop_detail_favorite_error))
+    val voteError by rememberUpdatedState(stringResource(Res.string.shop_checkin_list_vote_error))
+    LaunchedEffect(viewModel, sessionGeneration) {
+        viewModel.events.collect { envelope ->
+            if (envelope.sessionGeneration != currentGeneration) return@collect
+            when (val event = envelope.event) {
+                ShopDetailEvent.FavoriteFailed -> launch { snackbarHostState.showSnackbar(favoriteError) }
+                ShopDetailEvent.VoteFailed -> launch { snackbarHostState.showSnackbar(voteError) }
+                else -> currentOnEvent(event)
+            }
+        }
+    }
+}
+
+@Composable
+private fun OpenLinkedCheckIn(requested: Boolean, ready: Boolean, onOpen: () -> Unit) {
+    var opened by rememberSaveable { mutableStateOf(false) }
+    LaunchedEffect(requested, ready) {
+        if (requested && ready && !opened) {
+            opened = true
+            onOpen()
+        }
     }
 }
 

@@ -19,7 +19,6 @@
     <string name="home_check_in_rating_description">Адзнака смаку %1$d з 5</string>
     <string name="home_check_in_photo_description">Фатаграфія %1$d з %2$d</string>
     <string name="home_check_in_more_photos">+%1$d</string>
-    <string name="home_check_in_open_drink_photo">Адкрыць фота напою</string>
     <string name="home_check_in_note">Уражанні</string>
     <string name="home_check_in_edit">Рэдагаваць</string>
     <string name="home_check_in_delete">Выдаліць запіс</string>
@@ -46,9 +45,6 @@
     <string name="home_check_in_saving">Захоўваем…</string>
     <string name="home_check_in_save_failed">Не ўдалося захаваць чэкін. Праверце звесткі і паспрабуйце яшчэ раз.</string>
     <string name="home_check_in_save_error_title">Не ўдалося захаваць чэкін</string>
-    <string name="home_check_in_validation_summary_one">Праверце запоўненыя палі (%1$d памылка).</string>
-    <string name="home_check_in_validation_summary_few">Праверце запоўненыя палі (%1$d памылкі).</string>
-    <string name="home_check_in_validation_summary_many">Праверце запоўненыя палі (%1$d памылак).</string>
     <string name="home_check_in_save_unauthorized">Сеанс скончыўся. Увайдзіце ва ўліковы запіс і захавайце чэкін зноў.</string>
     <string name="home_check_in_save_forbidden">Няма доступу да гэтага запісу. Праверце, у які ўліковы запіс вы ўвайшлі.</string>
     <string name="home_check_in_photo_upload_failed">Не ўдалося загрузіць фота. Паспрабуйце яшчэ раз.</string>
@@ -101,7 +97,6 @@
     <string name="home_check_in_add_photos">Дадаць фота</string>
     <string name="home_check_in_gallery">Выбраць з галерэі</string>
     <string name="home_check_in_camera">Зрабіць фота</string>
-    <string name="home_check_in_remove_photo">Выдаліць фота %1$d</string>
     <string name="home_check_in_keep_photos">Фатаграфіі гэтага запісу захаваюцца без змен</string>
     <string name="home_check_in_error_date">Праверце дату і час прыгатавання.</string>
     <string name="home_check_in_error_future_date">Дата прыгатавання не можа быць у будучыні.</string>
@@ -118,4 +113,34 @@
     <string name="home_check_in_error_visibility">Праверце бачнасць чэкіна.</string>
     <string name="home_check_in_error_input">Праверце ўведзеныя звесткі.</string>
     <string name="home_check_in_method_other">Іншае</string>
+    <string name="home_check_in_create_title">Новы чэкін</string>
+    <string name="home_check_in_create_prompt">Дзе вы пілі каву?</string>
+    <string name="home_check_in_create_shop">У кавярні</string>
+    <string name="home_check_in_create_shop_hint">Выбраць месца і напой</string>
+    <string name="home_check_in_create_home">Дома</string>
+    <string name="home_check_in_create_home_hint">Запісаць прыгатаванне</string>
+    <string name="home_check_in_create_what">Што дадамо?</string>
+    <string name="home_check_in_create_shelf_title">Пачак на паліцу</string>
+    <string name="home_check_in_create_shelf_body">Сфатаграфуйце пачак кавы</string>
+    <string name="home_check_in_create_continue">Працягнуць</string>
+    <string name="home_check_in_onboarding_cover_title">Адкрывай сваю каву</string>
+    <string name="home_check_in_onboarding_poster_cover">Знаходзь новыя месцы, каштуй каву і запісвай, што спадабалася.</string>
+    <string name="home_check_in_onboarding_discovery_title">350+ правераных кавярняў</string>
+    <string name="home_check_in_onboarding_poster_discovery">Глядзі на карце, што побач і якія кавярні адкрыты.</string>
+    <string name="home_check_in_onboarding_atmosphere_title">Адчуй атмасферу</string>
+    <string name="home_check_in_onboarding_poster_atmosphere">Глядзі фота, водгукі і гадзіны працы перад візітам.</string>
+    <string name="home_check_in_onboarding_check_ins_title">Дзяліся ўражаннямі</string>
+    <string name="home_check_in_onboarding_poster_check_ins">Пакідай чэкіны з ацэнкамі, нататкамі і фатаграфіямі.</string>
+    <string name="home_check_in_onboarding_favorites_title">Захоўвай любімае</string>
+    <string name="home_check_in_onboarding_poster_favorites">Збірай падборкі кавярняў і дадавай зерне на кававую паліцу.</string>
+    <string name="home_check_in_onboarding_register">Стварыць акаўнт</string>
+    <string name="home_check_in_onboarding_sign_in">Увайсці</string>
+    <string name="home_check_in_onboarding_guest">Працягнуць як госць</string>
+    <string name="home_check_in_onboarding_step">Крок %1$d з %2$d</string>
+    <plurals name="home_check_in_validation_summary">
+        <item quantity="one">Праверце запоўненыя палі (%1$d памылка).</item>
+        <item quantity="few">Праверце запоўненыя палі (%1$d памылкі).</item>
+        <item quantity="many">Праверце запоўненыя палі (%1$d памылак).</item>
+        <item quantity="other">Праверце запоўненыя палі (%1$d памылкі).</item>
+    </plurals>
 </resources>

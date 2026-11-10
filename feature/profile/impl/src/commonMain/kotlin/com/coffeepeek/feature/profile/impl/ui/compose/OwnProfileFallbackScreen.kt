@@ -3,15 +3,12 @@ package com.coffeepeek.feature.profile.impl.ui.compose
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -76,23 +73,22 @@ private fun OwnProfileFallbackContent(
     bottomPadding: Dp, onRetry: () -> Unit, onPhoto: (String) -> Unit,
 ) {
     val profile = state.profile ?: return
-    Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    ProfileContentTabs(
+        stateKey = "own:${profile.email}",
+        checkIns = { OwnProfileFallbackCheckIns(profile.checkInCount, callbacks.openCheckIns) },
+        collections = {
+            slots.favoritesPreview(callbacks.openShop, callbacks.openRoaster) {
+                ProfileSectionHeading(stringResource(Res.string.profile_section_favorites), callbacks.openFavorites)
+            }
+        },
+        shelf = { OwnProfileFallbackShelf(callbacks.editProfile) },
+        modifier = Modifier.fillMaxSize(), ownerShelf = slots.shelf, bottomPadding = bottomPadding,
+    ) {
         Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             OwnProfileFallbackHeader(profile, slots, callbacks, onPhoto)
             slots.activityPreview(callbacks.openCheckIns)
             if (state.error != null || state.refreshError != null) slots.loadError(onRetry)
         }
-        ProfileContentTabs(
-            stateKey = "own:${profile.email}",
-            checkIns = { OwnProfileFallbackCheckIns(profile.checkInCount, callbacks.openCheckIns) },
-            collections = {
-                slots.favoritesPreview(callbacks.openShop, callbacks.openRoaster) {
-                    ProfileSectionHeading(stringResource(Res.string.profile_section_favorites), callbacks.openFavorites)
-                }
-            },
-            shelf = { OwnProfileFallbackShelf(callbacks.editProfile) },
-        )
-        Spacer(Modifier.height(bottomPadding))
     }
 }
 
@@ -127,9 +123,7 @@ private fun OwnProfileFallbackShelf(onEditProfile: () -> Unit) {
 
 @Composable
 private fun OwnProfileFallbackPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
-    val shared = ProfileSlots(image = { _, _, _ -> }, photoViewer = { _, _, _, _ -> },
-        favoritesPreview = { _, _ -> }, favoriteCard = { _, _, _ -> }, checkInCard = { _, _, _, _, _ -> },
-        photoPrefetch = { _, _ -> }, activityPreview = { _, _, _, _, _, _, _ -> })
+    val shared = ProfileSlots(image = { _, _, _ -> }, photoViewer = { _, _, _, _ -> }, photoPrefetch = { _, _ -> })
     val slots = OwnProfileSlots(shared, favoritesPreview = { _, _, header -> header() },
         activityCalendar = { _, _ -> }, activityPreview = { Text(stringResource(Res.string.profile_section_activity)) }, loadError = {})
     val callbacks = OwnProfileCallbacks({}, {}, {}, {}, { _, _, _ -> }, {}, {}, {}, {})

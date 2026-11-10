@@ -1,5 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string-array name="history_weekday_names"><item>Понедельник</item><item>Вторник</item><item>Среда</item><item>Четверг</item><item>Пятница</item><item>Суббота</item><item>Воскресенье</item></string-array>
+    <string name="history_activity_loading">Загрузка активности…</string>
+    <string name="history_activity_failed">Не удалось загрузить активность</string>
+    <string name="history_activity_open">Открыть чекины</string>
+    <string name="history_activity_day">%1$s: %2$s</string>
+    <string name="history_activity_empty_day">В этот день чекинов не было</string>
+    <string name="history_activity_day_summary">%1$s · %2$s</string>
+    <string name="history_activity_at_home">Дома</string>
     <string name="history_calendar_more_visits">+%1$d</string>
     <string name="history_title">Чекины</string>
     <string name="history_back">Назад</string>
@@ -11,16 +19,13 @@
     <string name="history_clear_date">Показать все даты</string>
     <string name="history_date_without_year">%1$d %2$s</string>
     <string name="history_home_count">%1$d дома</string>
-    <string name="history_source_time">%1$s · %2$s</string>
     <string name="history_more">Показать ещё</string>
     <string name="history_close">Закрыть</string>
     <string name="history_open_shop_action">Открыть кофейню</string>
-    <string name="history_new">Новый чекин</string>
     <string name="history_add">Добавить чекин</string>
     <string name="history_create_shop">Чекин в кофейне</string>
     <string name="history_create_title">Создать</string>
     <string name="history_create_home">Чекин дома</string>
-    <string name="history_home_title">Домашнее приготовление</string>
     <string name="history_private">Только мне</string>
     <string name="history_visible">Виден всем</string>
     <string name="history_pending">На модерации</string>
@@ -28,8 +33,9 @@
     <string name="history_waiting_publication">Ожидает публикации</string>
     <string name="history_public">Публичный</string>
     <string name="history_dose">%1$s г</string>
+    <string name="history_seconds">%1$d с</string>
+    <string name="history_recipe_separator"> · </string>
     <string name="history_taste">%1$d/5</string>
-    <string name="history_details_separator">%1$s · %2$s</string>
     <string name="history_shop_calendar_error">Не удалось загрузить календарь посещений кофеен</string>
     <string name="history_home_calendar_error">Не удалось загрузить календарь домашних приготовлений</string>
     <string name="history_shop_timeline_error">Не удалось загрузить посещения кофеен</string>
@@ -60,12 +66,7 @@
     <string name="history_day_today">%1$s, сегодня</string>
     <string name="history_select_day">Выбрать дату</string>
     <string name="history_day_empty">В этот день чекинов не было</string>
-    <string name="history_month_empty">В этом месяце пока нет чекинов</string>
     <string name="history_list_empty">Пока нет чекинов</string>
-    <string name="history_no_visits">Нет чекинов</string>
-    <string name="history_load_error">Не удалось загрузить чекины</string>
-    <string name="history_refresh_error">Не удалось обновить чекины. Показаны ранее загруженные записи</string>
-    <string name="history_paging_error">Не удалось загрузить следующую страницу</string>
     <string name="history_retry">Повторить</string>
     <string name="history_loading">Загрузка чекинов</string>
     <string name="history_refresh">Обновить чекины</string>
@@ -73,9 +74,6 @@
     <string name="history_sign_in">Войти</string>
     <string name="history_you">Вы</string>
     <string name="history_shop">Кофейня</string>
-    <string name="history_open_shop">Открыть кофейню %1$s</string>
-    <string name="history_expand_note">Читать полностью</string>
-    <string name="history_collapse_note">Свернуть</string>
     <string name="history_photo_description">Фотография %1$d из %2$d</string>
     <string name="history_more_photos">+%1$d</string>
     <string name="history_helpful_count">Лайки: %1$d</string>

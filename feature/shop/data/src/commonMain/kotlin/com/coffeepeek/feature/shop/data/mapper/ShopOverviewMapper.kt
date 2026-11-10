@@ -36,7 +36,7 @@ internal fun ShopDetailsDto.toOverview(): ShopOverview = ShopOverview(
     },
 )
 
-private fun kotlinx.serialization.json.JsonElement?.toPriceRangeLabel(): String? =
+internal fun kotlinx.serialization.json.JsonElement?.toPriceRangeLabel(): String? =
     when ((this as? JsonPrimitive)?.contentOrNull?.trim()?.lowercase()) {
         "1", "cheap", "$" -> "$"
         "2", "moderate", "$$" -> "$$"

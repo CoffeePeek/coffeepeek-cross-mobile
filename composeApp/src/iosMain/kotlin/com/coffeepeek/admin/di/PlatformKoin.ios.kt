@@ -1,19 +1,38 @@
 package com.coffeepeek.admin.di
 
+import com.coffeepeek.admin.di.shop.AppShopCheckInDateFormatter
+import com.coffeepeek.admin.di.shop.FeatureShopCheckInFormRenderer
+import com.coffeepeek.admin.di.shop.FeatureShopDetailScreenRenderer
+import com.coffeepeek.admin.di.shop.FeatureShopCheckInListScreenRenderer
+import com.coffeepeek.admin.di.shop.shopBrowsingModule
+import com.coffeepeek.admin.di.shop.shopCheckInModule
+import com.coffeepeek.admin.di.shop.shopFavoriteIntent
+import org.koin.core.scope.Scope
 import com.coffeepeek.admin.di.collections.collectionsModule
-
-import com.coffeepeek.admin.di.checkinhistory.CheckInHistoryFeatureScreenRenderer
 import com.coffeepeek.admin.di.checkinhistory.checkInHistoryModule
-import com.coffeepeek.admin.di.coffee.CoffeeShelfTab
-import com.coffeepeek.admin.di.coffee.coffeeCatalogueScreenRenderer
-import com.coffeepeek.admin.di.coffee.coffeeModule
-import com.coffeepeek.admin.di.community.checkInDetailFeatureScreenRenderer
-import com.coffeepeek.admin.di.community.communityFeatureScreenRenderer
-import com.coffeepeek.admin.di.homecheckin.FeatureCheckInCreateFlowRenderer
+import com.coffeepeek.admin.di.contentreport.contentReportModule
+import com.coffeepeek.admin.di.contentreport.FeatureContentReportRenderer
 import com.coffeepeek.admin.di.homecheckin.homeCheckInModule
-import com.coffeepeek.admin.di.profile.accountFeatureScreenRenderer
-import com.coffeepeek.admin.di.profile.ownProfileFeatureScreenRenderer
-import com.coffeepeek.admin.di.profile.publicProfileFeatureScreenRenderer
+import com.coffeepeek.feature.shopreport.data.repository.createShopIssueReportRepository
+import com.coffeepeek.feature.shopreport.impl.createShopReportEntry
+import com.coffeepeek.feature.shop.data.repository.createShopMenuGalleryRepository
+import com.coffeepeek.feature.shop.impl.createShopMenuGalleryEntry
+import com.coffeepeek.admin.di.appupdate.featureAppUpdateRenderer
+import com.coffeepeek.admin.di.contributions.contributionsModule
+import com.coffeepeek.admin.di.contributions.featureContributionsScreenRenderer
+import com.coffeepeek.admin.di.auth.iosAuthScreenRenderer
+import com.coffeepeek.admin.di.community.featureCommunityScreenRenderer
+import com.coffeepeek.admin.di.coffee.coffeeModule
+import com.coffeepeek.admin.di.coffee.featureCoffeeScreenRenderer
+import com.coffeepeek.admin.di.profile.featureAccountScreenRenderer
+import com.coffeepeek.admin.di.profile.featureOwnProfileScreenRenderer
+import com.coffeepeek.admin.di.profile.featurePublicProfileScreenRenderer
+import com.coffeepeek.admin.di.discovery.featureDiscoveryScreenRenderer
+import com.coffeepeek.admin.di.favorites.serverFavoritesModule
+import com.coffeepeek.core.network.ApiClients
+import com.coffeepeek.admin.di.notifications.featureNotificationsRenderer
+import com.coffeepeek.admin.di.settings.featureSettingsScreenRenderer
+import com.coffeepeek.admin.utils.ErrorHandler
 import com.coffeepeek.admin.di.profile.profileSnapshotModule
 import com.coffeepeek.admin.di.shelf.ShelfFeatureScreenRenderer
 import com.coffeepeek.admin.di.shelf.shelfBrewForm
@@ -22,10 +41,15 @@ import com.coffeepeek.admin.locator.Locator
 import com.coffeepeek.admin.locator.Constants
 
 internal fun iosPlatformModules(apiBaseUrl: String = Constants.BASE_URL) = listOf(
+    contributionsModule(),
+    serverFavoritesModule(),
     coffeeModule(),
     collectionsModule(apiBaseUrl),
+    shopBrowsingModule(),
+    shopCheckInModule(AppShopCheckInDateFormatter()),
     homeCheckInModule(apiBaseUrl),
     checkInHistoryModule(apiBaseUrl),
+    contentReportModule(),
     iosShelfModule(apiBaseUrl),
     profileSnapshotModule(),
 )
@@ -33,22 +57,47 @@ internal fun iosPlatformModules(apiBaseUrl: String = Constants.BASE_URL) = listO
 actual fun initPlatformKoin() {
     initKoin(
         platformModules = iosPlatformModules(),
-        // Both platforms expose the shelf and catalogue through the same Coffee tab.
+        checkInRenderers = featureCheckInRendererFactories(),
+        contentReportRendererFactory = { get<FeatureContentReportRenderer>() },
+        shopReportRendererFactory = ::iosShopReportRenderer,
+        shopGalleryRendererFactory = ::iosShopGalleryRenderer,
+        shopCheckInRendererFactory = { FeatureShopCheckInFormRenderer(get()) },
+        shopDetailRendererFactory = { iosShopDetailRenderer() },
+        shopCheckInListRendererFactory = { iosShopCheckInListRenderer() },
+        settingsRendererFactory = { iosSettingsRenderer() },
+        appUpdateRendererFactory = { featureAppUpdateRenderer(get(), get()) },
+        notificationsRendererFactory = { featureNotificationsRenderer(get(), get(), get()) },
+        authRendererFactory = { iosAuthScreenRenderer(get(), get()) },
+        checkInDetailRendererFactory = { com.coffeepeek.admin.di.community.featureCheckInDetailScreenRenderer(get(), get(), get(), get()) },
+        communityRendererFactory = { featureCommunityScreenRenderer(get(), get(), get(), get(), get(), get()) },
         coffeeRendererFactory = {
-            coffeeCatalogueScreenRenderer(get(), CoffeeShelfTab(get(), get(), Locator.database.settingRepository))
+            featureCoffeeScreenRenderer(get())
         },
-        // The "+" sheet offers a visit, a home check-in or a bag to scan.
-        checkInCreateFlowRendererFactory = { get<FeatureCheckInCreateFlowRenderer>() },
-        // Profiles, their edit screens and the check-in history are the migrated profile and history features.
-        checkInHistoryRendererFactory = { get<CheckInHistoryFeatureScreenRenderer>() },
-        publicProfileRendererFactory = { publicProfileFeatureScreenRenderer(get(), get(), get(), get(), get()) },
-        ownProfileRendererFactory = { ownProfileFeatureScreenRenderer(get(), get(), get(), get(), get(), get(), get(), get()) },
-        accountRendererFactory = { accountFeatureScreenRenderer(get(), get()) },
-        // The feed and a post's own screen are the migrated community entries, home posts with their bag cards included.
-        communityRendererFactory = { communityFeatureScreenRenderer(get(), get(), get(), get(), get(), get()) },
-        checkInDetailRendererFactory = { checkInDetailFeatureScreenRenderer(get(), get(), get(), get()) },
         shelfRendererFactory = {
-            ShelfFeatureScreenRenderer(get(), Locator.database.settingRepository, shelfBrewForm(get()))
+            ShelfFeatureScreenRenderer(get(), shelfBrewForm(get()))
         },
+        publicProfileRendererFactory = { featurePublicProfileScreenRenderer(get(), get(), get(), get(), get()) },
+        ownProfileRendererFactory = { featureOwnProfileScreenRenderer(get(), get(), get(), get(), get(), get(), get(), get(), get()) },
+        contributionsRendererFactory = { featureContributionsScreenRenderer(get(), get(), get()) },
+        accountRendererFactory = { featureAccountScreenRenderer(get(), get(), get()) },
+        discoveryRendererFactory = { featureDiscoveryScreenRenderer(get<ApiClients>().client, get(), get(), get(), get(), get(), get(), get(), getOrNull()) },
     )
 }
+
+private fun iosShopReportRenderer(client: ApiClients) =
+    FeatureShopReportScreenRenderer(createShopReportEntry(createShopIssueReportRepository(client.client)))
+
+private fun iosShopGalleryRenderer(client: ApiClients) =
+    FeatureShopMenuGalleryScreenRenderer(createShopMenuGalleryEntry(createShopMenuGalleryRepository(client.client)))
+
+private fun Scope.iosShopDetailRenderer() =
+    FeatureShopDetailScreenRenderer(sessions = get(), accounts = get(), details = get(), votes = get(),
+        favorites = get(), favoriteIntent = shopFavoriteIntent(get(), get(), get()), checkInForm = get(),
+        visibility = get(), blockActions = get())
+
+private fun Scope.iosShopCheckInListRenderer() =
+    FeatureShopCheckInListScreenRenderer(sessions = get(), accounts = get(), details = get(), votes = get(),
+        visibility = get(), blockActions = get())
+
+private fun Scope.iosSettingsRenderer() =
+    featureSettingsScreenRenderer(get(), get(), get(), get(), get(), notify = ErrorHandler::showError)

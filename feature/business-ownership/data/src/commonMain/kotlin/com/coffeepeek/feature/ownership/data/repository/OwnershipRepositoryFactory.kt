@@ -9,6 +9,18 @@ import io.ktor.client.HttpClient
 import io.ktor.client.plugins.ResponseException
 import kotlinx.coroutines.CancellationException
 
+/** Stores new gallery photos through presigned URLs; the owner must stay signed in while they upload. */
+fun createBusinessPhotoUploader(client: HttpClient, uploadClient: HttpClient, account: OwnershipAccount): BusinessPhotoUploader =
+    object : BusinessPhotoUploader {
+        private val backend = PhotoUploadBackend(client, uploadClient)
+        override suspend fun upload(kind: BusinessKind, photos: List<BusinessPhoto>): Result<List<BusinessPhoto>> = requestResult {
+            val owner = account.current() ?: throw OwnershipFailure(OwnershipProblem.SignedOut)
+            val uploaded = backend.upload(kind, photos)
+            if (owner != account.current()) throw OwnershipFailure(OwnershipProblem.SignedOut)
+            uploaded
+        }
+    }
+
 fun createBusinessOwnershipRepository(client: HttpClient, uploader: BusinessPhotoUploader, account: OwnershipAccount): BusinessOwnershipRepository =
     OwnershipRepository(OwnershipBackend(client), uploader, account)
 

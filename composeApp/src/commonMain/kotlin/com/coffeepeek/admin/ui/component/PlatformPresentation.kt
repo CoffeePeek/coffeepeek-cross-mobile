@@ -21,7 +21,7 @@ internal data class PlatformAction(
 internal expect fun PlatformAlert(
     title: String,
     message: String,
-    confirmLabel: String = stringResource(Res.string.legacy_error_dialog_shelf_camera_tips_close),
+    confirmLabel: String = stringResource(Res.string.error_dialog_shelf_camera_tips_close),
     onConfirm: () -> Unit,
     onDismiss: () -> Unit,
     cancelLabel: String? = null,
@@ -59,7 +59,7 @@ internal expect fun NativeModalSheet(
 internal expect fun PlatformSwitch(checked: Boolean, onCheckedChange: ((Boolean) -> Unit)?, enabled: Boolean = true, modifier: Modifier = Modifier)
 
 @Composable
-internal expect fun NativeSegmentedControl(labels: List<String>, selectedIndex: Int, onSelected: (Int) -> Unit, modifier: Modifier): Boolean
+internal expect fun NativeSegmentedControl(labels: List<String>, selectedIndex: Int, onSelected: (Int) -> Unit, modifier: Modifier, enabled: Boolean = true): Boolean
 
 internal enum class HapticEvent { Selection, Success, Error }
 internal expect fun platformHaptic(event: HapticEvent)

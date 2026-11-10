@@ -1,7 +1,7 @@
 package com.coffeepeek.admin.di.shelf
 
 import com.coffeepeek.admin.di.session.SessionPinnedHttpClient
-import com.coffeepeek.api.CoffeePeekClient
+import com.coffeepeek.core.network.ApiClients
 import com.coffeepeek.core.session.SessionReader
 import com.coffeepeek.feature.shelf.api.ShelfProfileEntry
 import com.coffeepeek.feature.shelf.data.repository.createShelfProfileRepository
@@ -19,10 +19,10 @@ internal class ShelfProfileHttpClient(base: HttpClient, sessions: SessionReader,
 
 /** Separate from scanner/owner shelf construction; resolving a profile never starts model work. */
 internal fun shelfProfileModule(apiBaseUrl: String) = module {
-    single { ShelfProfileHttpClient(get<CoffeePeekClient>().client, get()) }
+    single { ShelfProfileHttpClient(get<ApiClients>().client, get()) }
     single<ShelfProfileRepository> {
         val bound = get<ShelfProfileHttpClient>()
-        createShelfProfileRepository(bound.client, get<CoffeePeekClient>().plainClient, apiBaseUrl,
+        createShelfProfileRepository(bound.client, get<ApiClients>().plainClient, apiBaseUrl,
             SessionShelfAccount(get()), bound::pin)
     }
     single<ShelfProfileEntry> { createShelfProfileEntry(get()) }

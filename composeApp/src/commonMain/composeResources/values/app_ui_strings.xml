@@ -1,0 +1,36 @@
+<resources>
+    <string name="error_dialog_shelf_camera_tips_close">Понятно</string>
+    <string name="error_dialog_unexpected_error">Что-то пошло не так</string>
+    <string name="main_screen_profile_title">Профиль</string>
+    <string name="main_screen_search">Поиск</string>
+    <string name="main_screen_settings_tab_title">Настройки</string>
+    <string name="visited_places_screen_sandbox_feed_title">Лента</string>
+    <string name="review_just_now">только что</string>
+    <string name="review_ago">назад</string>
+    <string-array name="review_months">
+        <item>янв.</item>
+        <item>февр.</item>
+        <item>мар.</item>
+        <item>апр.</item>
+        <item>мая</item>
+        <item>июн.</item>
+        <item>июл.</item>
+        <item>авг.</item>
+        <item>сент.</item>
+        <item>окт.</item>
+        <item>нояб.</item>
+        <item>дек.</item>
+    </string-array>
+    <string-array name="minute_forms">
+        <item>минуту</item>
+        <item>минуты</item>
+        <item>минут</item>
+    </string-array>
+    <string-array name="hour_forms">
+        <item>час</item>
+        <item>часа</item>
+        <item>часов</item>
+    </string-array>
+    <string name="drink_custom_name_length">Укажите название напитка: от 1 до 100 символов</string>
+    <string name="drink_custom_name_other">Название можно указать только для другого напитка</string>
+</resources>

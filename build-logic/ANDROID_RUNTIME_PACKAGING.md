@@ -15,7 +15,7 @@ to release APKs.
 
 On 2026-10-08, `CheckInApiService` and its generated classes existed in the Kotlin
 compiler output and runtime JAR, but 14 of those files were missing from
-`modules/network/build/intermediates/runtime_library_classes_dir/debug/`.
+`modules/network/build/intermediates/runtime_library_classes_dir/debug/` (the module has since been removed; the same applies to any library module such as `core/network`).
 The freshly assembled Direct APK also lacked the service's DEX definition,
 despite a successful build. The library dependency was already present in the
 application's common source set; changing Koin registration or adding a duplicate
@@ -25,7 +25,7 @@ Rebuilding the generated network/app outputs without build-cache reuse restored
 the missing class:
 
 ```shell
-./gradlew --no-daemon :modules:network:clean :composeApp:clean \
+./gradlew --no-daemon :core:network:clean :composeApp:clean \
   :composeApp:assembleDirectDebug :composeApp:assemblePlayDebug --no-build-cache
 ```
 

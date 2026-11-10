@@ -1,6 +1,5 @@
 package com.coffeepeek.admin.location
 
-import com.coffeepeek.domain.model.ShopLocation
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -11,7 +10,7 @@ class UserDistanceTest {
     fun calculatesGreatCircleDistance() {
         val distance = distanceToShopMeters(
             userLocation = GeoPoint(latitude = 0.0, longitude = 0.0),
-            shopLocation = ShopLocation(latitude = 0.0, longitude = 1.0),
+            latitude = 0.0, longitude = 1.0,
         )
 
         assertEquals(expected = 111_195.0, actual = distance ?: 0.0, absoluteTolerance = 1.0)
@@ -19,9 +18,9 @@ class UserDistanceTest {
 
     @Test
     fun skipsDistanceWhenCoordinatesAreMissingOrInvalid() {
-        assertNull(distanceToShopMeters(null, ShopLocation(latitude = 1.0, longitude = 1.0)))
-        assertNull(distanceToShopMeters(GeoPoint(1.0, 1.0), ShopLocation(latitude = null, longitude = 1.0)))
-        assertNull(distanceToShopMeters(GeoPoint(91.0, 1.0), ShopLocation(latitude = 1.0, longitude = 1.0)))
+        assertNull(distanceToShopMeters(null, 1.0, 1.0))
+        assertNull(distanceToShopMeters(GeoPoint(1.0, 1.0), null, 1.0))
+        assertNull(distanceToShopMeters(GeoPoint(91.0, 1.0), 1.0, 1.0))
     }
 
     @Test

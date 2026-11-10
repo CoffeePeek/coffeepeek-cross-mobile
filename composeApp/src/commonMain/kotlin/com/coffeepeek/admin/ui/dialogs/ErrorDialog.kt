@@ -1,5 +1,6 @@
 package com.coffeepeek.admin.ui.dialogs
 
+import com.coffeepeek.core.designsystem.icons.CoffeePeekIllustrations
 import coffeepeek.composeapp.generated.resources.*
 import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 
@@ -25,9 +26,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
-import com.coffeepeek.admin.theme.CpDimens
+import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import coffeepeek.composeapp.generated.resources.Res
-import coffeepeek.composeapp.generated.resources.maskot_astonishment
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
@@ -37,10 +37,10 @@ object ErrorDialog {
     operator fun invoke(
         show: Boolean,
         message: String,
-        title: String = stringResource(Res.string.legacy_error_dialog_unexpected_error),
+        title: String = stringResource(Res.string.error_dialog_unexpected_error),
         onDismiss: () -> Unit
     ) {
-        val localizedLegacyErrorDialogShelfCameraTipsClose = stringResource(Res.string.legacy_error_dialog_shelf_camera_tips_close)
+        val localizedErrorDialogShelfCameraTipsClose = stringResource(Res.string.error_dialog_shelf_camera_tips_close)
 
         if (show) {
             Dialog(onDismissRequest = onDismiss) {
@@ -57,7 +57,7 @@ object ErrorDialog {
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Image(
-                            painter = painterResource(Res.drawable.maskot_astonishment),
+                            painter = painterResource(CoffeePeekIllustrations.LoadError),
                             contentDescription = null,
                             contentScale = ContentScale.Fit,
                             modifier = Modifier.size(96.dp),
@@ -88,7 +88,7 @@ object ErrorDialog {
 
                         Button(
                             onClick = onDismiss,
-                            modifier = Modifier.fillMaxWidth().height(CpDimens.buttonHeight),
+                            modifier = Modifier.fillMaxWidth().height(CoffeePeekDimens.buttonHeight),
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = MaterialTheme.colorScheme.primary,
                                 contentColor   = MaterialTheme.colorScheme.onPrimary,
@@ -96,7 +96,7 @@ object ErrorDialog {
                             shape = RoundedCornerShape(percent = 50),
                         ) {
                             Text(
-                                text = localizedLegacyErrorDialogShelfCameraTipsClose,
+                                text = localizedErrorDialogShelfCameraTipsClose,
                                 style = MaterialTheme.typography.labelLarge.copy(fontSize = 16.sp),
                                 modifier = Modifier.padding(vertical = 4.dp)
                             )

@@ -2,7 +2,7 @@ package com.coffeepeek.feature.authorblocking.api
 
 import kotlinx.coroutines.flow.StateFlow
 
-/** Presentation-only entry point for the temporary application-owned Cp UI renderer. */
+/** Shared list and confirmation state; application composition owns this presenter's lifetime. */
 interface AuthorBlockingPresenter : AuthorBlockActions, AutoCloseable {
     val blocks: StateFlow<AuthorBlockingListState>
     val prompt: StateFlow<AuthorBlockPrompt?>

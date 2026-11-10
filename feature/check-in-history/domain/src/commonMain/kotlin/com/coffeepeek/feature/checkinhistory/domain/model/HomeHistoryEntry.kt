@@ -1,6 +1,6 @@
 package com.coffeepeek.feature.checkinhistory.domain.model
 
-/** History-owned snapshot: never depends on another feature's domain or legacy models. */
+/** History-owned snapshot: never depends on another feature's domain or previous models. */
 data class HomeHistoryEntry(
     val id: String,
     val preparedOn: String,

@@ -25,7 +25,7 @@ interface RoasterCatalogStore {
 
 /**
  * The application owns/configures the client and the store. The store scopes the cache (normally per API host,
- * under the legacy `roaster_catalog_v1:<host>` key); the persisted JSON is shape-compatible with the legacy cache.
+ * under the previous `roaster_catalog_v1:<host>` key); the persisted JSON is shape-compatible with the previous cache.
  */
 fun createRoasterRepository(
     client: HttpClient,

@@ -9,6 +9,8 @@ import com.coffeepeek.feature.shop.domain.model.ShopCheckInVisibility
 import com.coffeepeek.feature.shop.domain.model.ShopConsumedDrinkOption
 import com.coffeepeek.feature.shop.domain.model.ShopRating
 import com.coffeepeek.feature.shop.domain.repository.ShopCheckInCreationUnconfirmed
+import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopCheckInSubmitFailure
+import com.coffeepeek.feature.shop.domain.repository.ShopCheckInRejection
 import com.coffeepeek.feature.shop.domain.repository.ShopCheckInRepository
 import com.coffeepeek.feature.shop.domain.usecase.ShopCheckInValidationError
 import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopCheckInFormAction
@@ -32,6 +34,7 @@ import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 import kotlin.time.Instant
 
@@ -48,27 +51,28 @@ class ShopCheckInCreateViewModelTest {
     private class Repository : ShopCheckInRepository {
         val writes = mutableListOf<ShopCheckInCreateInput>()
         var writeResult: Result<Unit> = Result.success(Unit)
+        var writeThrows: Throwable? = null
         var drinkResult: Result<List<ShopConsumedDrinkOption>> = Result.success(listOf(ShopConsumedDrinkOption("filter", "Фильтр", "Filter")))
         var gate: CompletableDeferred<Unit>? = null
         var drinkCalls = 0
         override suspend fun getDrinkOptions(): Result<List<ShopConsumedDrinkOption>> { drinkCalls++; return drinkResult }
-        override suspend fun create(input: ShopCheckInCreateInput): Result<Unit> { writes += input; gate?.await(); return writeResult }
+        override suspend fun create(input: ShopCheckInCreateInput): Result<Unit> { writes += input; gate?.await(); writeThrows?.let { throw it }; return writeResult }
     }
 
     private class Drafts : ShopCheckInDraftStore {
         var snapshot: ShopCheckInDraftSnapshot? = null
         var saveFails = false
         var clearFails = false
-        override fun open(initial: ShopCheckInCreateInput): Result<ShopCheckInDraftSnapshot> {
+        override suspend fun open(initial: ShopCheckInCreateInput): Result<ShopCheckInDraftSnapshot> {
             if (snapshot?.input?.shopSlug != initial.shopSlug) snapshot = ShopCheckInDraftSnapshot(initial)
             return Result.success(snapshot!!)
         }
-        override fun save(snapshot: ShopCheckInDraftSnapshot): Result<Unit> {
+        override suspend fun save(snapshot: ShopCheckInDraftSnapshot): Result<Unit> {
             if (saveFails) return Result.failure(IllegalStateException("storage"))
-            this.snapshot = snapshot
+            this.snapshot = snapshot.copy(exists = true)
             return Result.success(Unit)
         }
-        override fun clear(shopSlug: String): Result<Unit> {
+        override suspend fun clear(shopSlug: String): Result<Unit> {
             if (clearFails) return Result.failure(IllegalStateException("cleanup"))
             if (snapshot?.input?.shopSlug == shopSlug) snapshot = null
             return Result.success(Unit)
@@ -217,6 +221,25 @@ class ShopCheckInCreateViewModelTest {
         assertEquals(2, repository.drinkCalls)
     }
 
+    @Test fun draftIsDeletedOnlyAfterDiscardConfirmation() = runTest(dispatcher) {
+        val drafts = Drafts()
+        val viewModel = viewModel(drafts = drafts)
+        runCurrent()
+        viewModel.onAction(ShopCheckInFormAction.TextChanged("Keep until confirmed"))
+        viewModel.onAction(ShopCheckInFormAction.AskDiscard)
+        runCurrent()
+        assertTrue(viewModel.state.value.confirmDiscard)
+        viewModel.onAction(ShopCheckInFormAction.CancelDiscard)
+        runCurrent()
+        assertFalse(viewModel.state.value.confirmDiscard)
+        assertEquals("Keep until confirmed", drafts.snapshot?.input?.text)
+        viewModel.onAction(ShopCheckInFormAction.AskDiscard)
+        viewModel.onAction(ShopCheckInFormAction.Discard)
+        runCurrent()
+        assertEquals(ShopCheckInFormEvent.Dismiss, viewModel.events.first())
+        assertNull(drafts.snapshot)
+    }
+
     @Test fun pendingWriteGuardsRepeatedSubmitEditingAndDismissal() = runTest(dispatcher) {
         val repository = Repository().apply { gate = CompletableDeferred() }
         val viewModel = viewModel(repository)
@@ -238,6 +261,44 @@ class ShopCheckInCreateViewModelTest {
         viewModel.onAction(ShopCheckInFormAction.Submit)
         runCurrent()
         assertEquals(1, repository.writes.size)
+    }
+
+    @Test fun aThrowingOrMessagelessFailureRestoresAnEditableDraftAndCanRetry() = runTest(dispatcher) {
+        val repository = Repository().apply { writeThrows = IllegalStateException("boom") }
+        val drafts = Drafts()
+        val viewModel = viewModel(repository, drafts)
+        runCurrent()
+        viewModel.onAction(ShopCheckInFormAction.TextChanged("Coffee"))
+        viewModel.onAction(ShopCheckInFormAction.Submit)
+        runCurrent()
+        assertTrue(viewModel.state.value.submitFailed)
+        assertFalse(viewModel.state.value.isSubmitting)
+        assertEquals("Coffee", drafts.snapshot!!.input.text)
+        repository.writeThrows = null
+        repository.writeResult = Result.failure(IllegalStateException())
+        viewModel.onAction(ShopCheckInFormAction.Submit)
+        runCurrent()
+        assertTrue(viewModel.state.value.submitFailed)
+        assertFalse(viewModel.state.value.isSubmitting)
+        assertEquals("Coffee", drafts.snapshot!!.input.text)
+        assertEquals(2, repository.writes.size)
+        viewModel.onAction(ShopCheckInFormAction.TextChanged("Coffee!"))
+        runCurrent()
+        assertFalse(viewModel.state.value.submitFailed)
+    }
+
+    @Test fun aServerRejectionReachesTheStateWithItsStatusAndMessage() = runTest(dispatcher) {
+        val repository = Repository().apply { writeResult = Result.failure(ShopCheckInRejection(413, "Too big")) }
+        val viewModel = viewModel(repository, Drafts())
+        runCurrent()
+        viewModel.onAction(ShopCheckInFormAction.TextChanged("Coffee"))
+        viewModel.onAction(ShopCheckInFormAction.Submit)
+        runCurrent()
+        assertEquals(ShopCheckInSubmitFailure(413, "Too big"), viewModel.state.value.submitFailure)
+        repository.writeResult = Result.failure(IllegalStateException("local"))
+        viewModel.onAction(ShopCheckInFormAction.Submit)
+        runCurrent()
+        assertEquals(ShopCheckInSubmitFailure(), viewModel.state.value.submitFailure)
     }
 
     @Test fun knownRejectionKeepsDraftAndAllowsExplicitRetry() = runTest(dispatcher) {

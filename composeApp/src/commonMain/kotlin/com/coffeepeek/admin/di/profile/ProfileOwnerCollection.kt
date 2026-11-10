@@ -15,6 +15,6 @@ internal fun ProfileOwnerCollection() {
 }
 
 internal fun openProfileCollections() {
-    ProfileAnalytics.favoritesOpened()
+    AppProfileAnalytics.favoritesOpened()
     Navigator.navigate(Navigator.Screen.CollectionsLibrary)
 }

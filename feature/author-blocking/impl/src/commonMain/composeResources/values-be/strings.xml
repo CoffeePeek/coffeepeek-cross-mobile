@@ -1,0 +1,28 @@
+<resources>
+    <string name="author_blocking_save_failed_message">Не ўдалося захаваць блакіроўку. Праверце падключэнне і паўтарыце спробу.</string>
+    <string name="author_blocking_title">Блакіроўкі</string>
+    <string name="author_blocking_back">Назад</string>
+    <string name="author_blocking_heading">Заблакіраваныя аўтары</string>
+    <string name="author_blocking_description">Вы не бачыце публікацый гэтых аўтараў. Разблакіроўка не аднаўляе падпіскі.</string>
+    <string name="author_blocking_list_failed">Не ўдалося загрузіць спіс</string>
+    <string name="author_blocking_loading">Загрузка</string>
+    <string name="author_blocking_retry">Паўтарыць</string>
+    <string name="author_blocking_empty_title">Няма заблакіраваных аўтараў</string>
+    <string name="author_blocking_empty_message">Калі вы заблакіруеце аўтара, ён з’явіцца тут.</string>
+    <string name="author_blocking_unblock">Разблакіраваць</string>
+    <string name="author_blocking_block">Заблакіраваць</string>
+    <string name="author_blocking_cancel">Адмена</string>
+    <string name="author_blocking_login_title">Блакіроўка аўтараў</string>
+    <string name="author_blocking_login_message">Увайдзіце ў акаўнт, каб блакіроўкі захоўваліся на ўсіх вашых прыладах.</string>
+    <string name="author_blocking_login">Увайсці</string>
+    <string name="author_blocking_guest_message">Далучайцеся да супольнасці, каб захоўваць любімыя месцы і дзяліцца ўражаннямі.</string>
+    <string name="author_blocking_no_account">Няма акаўнта?</string>
+    <string name="author_blocking_register">Зарэгістравацца</string>
+    <string name="author_blocking_block_title">Заблакіраваць аўтара «%1$s»?</string>
+    <string name="author_blocking_unblock_title">Разблакіраваць аўтара «%1$s»?</string>
+    <string name="author_blocking_block_message">Вы перастанеце бачыць публікацыі адзін аднаго. Падпіскі адзін на аднаго будуць выдалены. Аўтар не атрымае апавяшчэнне.</string>
+    <string name="author_blocking_unblock_message">Публікацыі аўтара зноў змогуць з’яўляцца ў стужцы. Ранейшыя падпіскі не аднавяцца.</string>
+    <string name="author_blocking_blocking">Блакіруем аўтара…</string>
+    <string name="author_blocking_unblocking">Разблакіруем аўтара…</string>
+    <string name="author_blocking_save_failed">Не ўдалося захаваць</string>
+</resources>

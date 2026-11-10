@@ -1,4 +1,5 @@
 <resources>
+    <string name="shelf_settings">Налады кававай паліцы</string>
     <string name="shelf_loading">Загружаем паліцу</string>
     <string name="shelf_load_failed">Не ўдалося загрузіць паліцу</string>
     <string name="shelf_retry">Паўтарыць</string>
@@ -20,7 +21,6 @@
     <string name="shelf_weeks_many">%1$d тыдняў</string>
     <string name="shelf_empty_title">Тут будзе ваша кава</string>
     <string name="shelf_empty_body">Сфатаграфуйце пачку — яна стане на паліцу, а калі скончыцца, пяройдзе ў архіў</string>
-    <string name="shelf_browse_catalog">Паглядзець каталог</string>
     <string name="shelf_guest_title">Збярыце сваю паліцу</string>
     <string name="shelf_guest_body">Увайдзіце, каб захоўваць пачкі кавы і гісторыю пакупак</string>
     <string name="shelf_sign_in">Увайсці</string>
@@ -74,11 +74,8 @@
     <string name="shelf_delete_title">Выдаліць пачку?</string>
     <string name="shelf_delete_message">Пачка знікне з паліцы і з архіва. Калі кава скончылася, лепш прыбярыце яе ў архіў.</string>
     <string name="shelf_finished_message">Прыбралі ў архіў</string>
-    <string name="shelf_added_message">Пачка на паліцы</string>
     <string name="shelf_new_badge">НОВАЯ</string>
     <string name="shelf_undo">Адмяніць</string>
-    <string name="shelf_deleted">Пачка выдалена</string>
-    <string name="shelf_restored">Пачка зноў на паліцы</string>
     <string name="shelf_error_offline">Няма сеткі. Паспрабуйце яшчэ раз</string>
     <string name="shelf_error_stale">Паліца змянілася на іншай прыладзе, паказваем актуальную</string>
     <string name="shelf_error_not_found">Гэтай пачкі ўжо няма</string>
@@ -182,11 +179,9 @@
     <string name="shelf_scan_failed_model">Сканер не гатовы. Паспрабуйце яшчэ раз</string>
     <string name="shelf_scan_failed">Не атрымалася апрацаваць фота</string>
     <string name="shelf_form_ready">Гатова, пачка выразана</string>
-    <string name="shelf_form_card">Картка пачкі</string>
     <string name="shelf_form_hint">Картка атрымалася, але яе можна зрабіць чысцейшай</string>
     <string name="shelf_form_coffee">Кава</string>
     <string name="shelf_form_coffee_hint">Назва або пошук па каталогу</string>
-    <string name="shelf_form_coffee_clear">Ачысціць назву</string>
     <string name="shelf_form_catalog_match">З каталога CoffeePeek</string>
     <string name="shelf_form_roaster">Абсмажчык</string>
     <string name="shelf_form_roasted">Дата абсмажвання · неабавязкова</string>

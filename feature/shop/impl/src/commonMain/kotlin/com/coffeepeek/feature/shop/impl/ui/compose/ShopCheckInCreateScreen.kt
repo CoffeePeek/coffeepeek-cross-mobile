@@ -31,6 +31,7 @@ import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.coffeepeek.core.designsystem.component.CoffeePeekButton
+import com.coffeepeek.core.designsystem.component.CoffeePeekDestructiveConfirmationSheet
 import com.coffeepeek.core.designsystem.component.CoffeePeekFormStep
 import com.coffeepeek.core.designsystem.component.CoffeePeekSwipeDismissModalBottomSheet
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
@@ -47,6 +48,15 @@ import com.coffeepeek.feature.shop.impl.resources.shop_checkin_form_history
 import com.coffeepeek.feature.shop.impl.resources.shop_checkin_form_uncertain
 import com.coffeepeek.feature.shop.impl.resources.shop_checkin_form_history_checked
 import com.coffeepeek.feature.shop.impl.resources.shop_checkin_form_draft_error
+import com.coffeepeek.feature.shop.impl.resources.shop_checkin_discard
+import com.coffeepeek.feature.shop.impl.resources.shop_checkin_discard_title
+import com.coffeepeek.feature.shop.impl.resources.shop_checkin_discard_message
+import com.coffeepeek.feature.shop.impl.resources.shop_checkin_discard_cancel
+import com.coffeepeek.feature.shop.impl.resources.shop_checkin_error_forbidden
+import com.coffeepeek.feature.shop.impl.resources.shop_checkin_error_photos_too_large
+import com.coffeepeek.feature.shop.impl.resources.shop_checkin_error_shop_gone
+import com.coffeepeek.feature.shop.impl.resources.shop_checkin_error_too_many_requests
+import com.coffeepeek.feature.shop.impl.resources.shop_checkin_error_unauthorized
 import com.coffeepeek.feature.shop.impl.resources.shop_checkin_form_submit_error
 import com.coffeepeek.feature.shop.impl.resources.shop_checkin_form_invalid_shop
 import com.coffeepeek.feature.shop.impl.resources.shop_checkin_form_invalid_date
@@ -64,6 +74,7 @@ import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopCheckInRatings
 import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopCheckInSubmissionContent
 import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopCheckInVisibilityField
 import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopCheckInPhotoAttachments
+import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopCheckInSubmitFailure
 import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopCheckInFormAction
 import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopCheckInFormEvent
 import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopCheckInFormState
@@ -88,7 +99,7 @@ internal fun ShopCheckInCreateScreen(
     CoffeePeekSwipeDismissModalBottomSheet(
         onDismissRequest = { viewModel.onAction(ShopCheckInFormAction.Dismiss) },
         dismissDescription = stringResource(Res.string.shop_checkin_form_dismiss),
-        dismissEnabled = !state.isSubmitting,
+        dismissEnabled = !state.isSubmitting && !state.isDiscarding,
         maxSheetHeightFraction = if (state.submitted) null else 0.76f,
     ) {
         ShopCheckInCreateScreenContent(
@@ -102,6 +113,16 @@ internal fun ShopCheckInCreateScreen(
             modifier = if (state.submitted) Modifier else Modifier.fillMaxHeight(),
             photosPreparing = picker.isPreparing,
         )
+        if (state.confirmDiscard) {
+            CoffeePeekDestructiveConfirmationSheet(
+                title = stringResource(Res.string.shop_checkin_discard_title),
+                message = stringResource(Res.string.shop_checkin_discard_message),
+                confirmLabel = stringResource(Res.string.shop_checkin_discard),
+                cancelLabel = stringResource(Res.string.shop_checkin_discard_cancel),
+                onConfirm = { viewModel.onAction(ShopCheckInFormAction.Discard) },
+                onDismiss = { viewModel.onAction(ShopCheckInFormAction.CancelDiscard) },
+            )
+        }
     }
 }
 
@@ -130,7 +151,8 @@ internal fun ShopCheckInCreateScreenContent(
     LaunchedEffect(scroll.isScrollInProgress) {
         if (scroll.isScrollInProgress) { keyboard?.hide(); focus.clearFocus() }
     }
-    val editable = !state.isLoading && !state.isSubmitting && !state.submitted && !state.deliveryUnconfirmed && !photosPreparing
+    val editable = !state.isLoading && !state.isSubmitting && !state.isDiscarding &&
+        !state.submitted && !state.deliveryUnconfirmed && !photosPreparing
     Column(
         modifier.fillMaxWidth().testTag("shop-checkin-form").verticalScroll(scroll)
             .imePadding().navigationBarsPadding().padding(horizontal = CoffeePeekDimens.spacing4)
@@ -192,8 +214,9 @@ internal fun ShopCheckInCreateScreenContent(
             }
             if (state.draftFailed) Text(stringResource(Res.string.shop_checkin_form_draft_error),
                 color = MaterialTheme.colorScheme.error)
-            if (state.submitFailed) Text(stringResource(Res.string.shop_checkin_form_submit_error),
-                color = MaterialTheme.colorScheme.error)
+            state.submitFailure?.let { failure ->
+                Text(submitFailureText(failure), color = MaterialTheme.colorScheme.error)
+            }
             if (state.deliveryUnconfirmed) {
                 Text(stringResource(Res.string.shop_checkin_form_uncertain),
                     modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite })
@@ -213,6 +236,11 @@ internal fun ShopCheckInCreateScreenContent(
                     onAction(ShopCheckInFormAction.Submit)
                 },
             )
+            if (state.hasDraft) {
+                TextButton(onClick = { onAction(ShopCheckInFormAction.AskDiscard) }, enabled = !state.isDiscarding) {
+                    Text(stringResource(Res.string.shop_checkin_discard), color = MaterialTheme.colorScheme.error)
+                }
+            }
         }
     }
 }
@@ -247,7 +275,7 @@ private fun ShopCheckInFormPreview(dark: Boolean, uncertain: Boolean = false,
     val state = ShopCheckInFormState(
         input = ShopCheckInCreateInput("preview-shop", "Понравился фильтр", ShopRating(4, 4, 4), "2026-10-09T09:00:00Z"),
         isLoading = loading, isSubmitting = submitting, deliveryUnconfirmed = uncertain,
-        submitted = submitted,
+        submitted = submitted, hasDraft = !loading && !submitted,
     )
     ShopCheckInCreateScreenContent(state, "Кофейня", "9 октября 2026", 1791504000000, 1791547200000, {}, {}, {}, {}, photosPreparing = photosPreparing)
 }
@@ -264,3 +292,14 @@ private fun ShopCheckInFormPreview(dark: Boolean, uncertain: Boolean = false,
 @Preview @Composable private fun ShopCheckInLoadingDarkPreview() = ShopCheckInFormPreview(true, loading = true)
 @Preview @Composable private fun ShopCheckInSendingLightPreview() = ShopCheckInFormPreview(false, submitting = true)
 @Preview @Composable private fun ShopCheckInSendingDarkPreview() = ShopCheckInFormPreview(true, submitting = true)
+
+/** The server's own words win; otherwise a status the user can act on, else the generic "saved, try again" text. */
+@Composable
+private fun submitFailureText(failure: ShopCheckInSubmitFailure): String = failure.serverMessage ?: stringResource(when (failure.status) {
+    401 -> Res.string.shop_checkin_error_unauthorized
+    403 -> Res.string.shop_checkin_error_forbidden
+    404 -> Res.string.shop_checkin_error_shop_gone
+    413 -> Res.string.shop_checkin_error_photos_too_large
+    429 -> Res.string.shop_checkin_error_too_many_requests
+    else -> Res.string.shop_checkin_form_submit_error
+})

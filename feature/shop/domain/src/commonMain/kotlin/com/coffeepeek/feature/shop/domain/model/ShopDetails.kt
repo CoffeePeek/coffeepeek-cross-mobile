@@ -32,7 +32,7 @@ data class ShopMenuItem(
     val volumeMl: Int?,
 )
 
-/** Day 0 is Sunday, matching the current API and legacy application model. */
+/** Day 0 is Sunday, matching the current API and previous application model. */
 data class ShopSchedule(
     val dayOfWeek: Int,
     val isClosed: Boolean,

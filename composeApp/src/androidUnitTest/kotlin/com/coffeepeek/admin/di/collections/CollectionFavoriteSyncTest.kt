@@ -1,9 +1,9 @@
 package com.coffeepeek.admin.di.collections
 
-import com.coffeepeek.domain.feature.favorites.api.FavoriteEntry
-import com.coffeepeek.domain.feature.favorites.api.FavoriteKind
-import com.coffeepeek.domain.feature.favorites.api.FavoritesRepository
-import com.coffeepeek.domain.model.PublicAddress
+import com.coffeepeek.feature.favorites.domain.model.FavoriteEntry
+import com.coffeepeek.feature.favorites.domain.model.FavoriteKind
+import com.coffeepeek.feature.favorites.domain.repository.AccountFavorites
+import com.coffeepeek.admin.di.favorites.PublicAddress
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CancellationException
@@ -45,7 +45,7 @@ class CollectionFavoriteSyncTest {
         assertTrue(favorites.refresh)
     }
 
-    private class FavoriteProjection : FavoritesRepository {
+    private class FavoriteProjection : AccountFavorites {
         var reads = 0
         var refresh = false
         var fail = true
@@ -59,7 +59,7 @@ class CollectionFavoriteSyncTest {
             catch (cancelled: CancellationException) { cancelledFirstRead = true; throw cancelled }
             return if (fail) Result.failure(IllegalStateException("Offline")) else Result.success(emptyList())
         }
-        override suspend fun setFavorite(kind: FavoriteKind, address: PublicAddress, favorite: Boolean) = error("Read only")
+        override suspend fun setFavorite(entry: FavoriteEntry, favorite: Boolean) = error("Read only")
         override fun clearCache() = Unit
     }
 }

@@ -12,7 +12,7 @@ if [[ $# -gt 0 ]]; then
 elif command -v xcrun >/dev/null 2>&1; then
   rm -f "$resources_dir/Assets.car"
   xcrun --sdk iphoneos actool --compile "$resources_dir" \
-    --platform iphoneos --minimum-deployment-target 18.0 --target-device iphone \
+    --platform iphoneos --minimum-deployment-target 17.0 --target-device iphone \
     "$repo_dir/iosApp/iosApp/Assets.xcassets"
 fi
 
