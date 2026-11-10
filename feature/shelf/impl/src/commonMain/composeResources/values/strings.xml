@@ -1,4 +1,5 @@
 <resources>
+    <string name="shelf_settings">Настройки кофейной полки</string>
     <!-- The shelf UI currently has Russian text only. -->
     <string name="shelf_loading">Загружаем полку</string>
     <string name="shelf_load_failed">Не удалось загрузить полку</string>
@@ -22,7 +23,6 @@
 
     <string name="shelf_empty_title">Здесь будет ваш кофе</string>
     <string name="shelf_empty_body">Сфотографируйте пачку — она встанет на полку, а когда закончится, уйдёт в архив</string>
-    <string name="shelf_browse_catalog">Посмотреть каталог</string>
     <string name="shelf_guest_title">Соберите свою полку</string>
     <string name="shelf_guest_body">Войдите, чтобы хранить пачки кофе и историю покупок</string>
     <string name="shelf_sign_in">Войти</string>

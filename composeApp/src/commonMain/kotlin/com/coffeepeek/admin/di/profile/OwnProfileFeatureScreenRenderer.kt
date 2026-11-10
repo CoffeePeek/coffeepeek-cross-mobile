@@ -1,6 +1,7 @@
 package com.coffeepeek.admin.di.profile
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
@@ -25,6 +26,7 @@ import com.coffeepeek.feature.authorblocking.api.AuthorBlockActions
 import com.coffeepeek.feature.authorblocking.api.AuthorVisibility
 import com.coffeepeek.feature.profile.api.OwnProfileEntry
 import com.coffeepeek.feature.profile.api.OwnProfileSlots
+import com.coffeepeek.feature.profile.api.OwnProfileShelf
 import com.coffeepeek.feature.profile.api.ProfileSignOutPort
 import com.coffeepeek.feature.profile.api.ProfileSnapshotStore
 import com.coffeepeek.feature.profile.impl.createOwnProfileEntry
@@ -104,4 +106,9 @@ private fun ownProfileSlots(activity: FeatureProfileActivityRenderer) = OwnProfi
     activityCalendar = { openShop, openCheckIns -> activity.Calendar(openShop, openCheckIns) },
     activityPreview = { onClick -> activity.Week(onClick) },
     loadError = { onRetry -> CoffeePeekLoadErrorContent(onRetry = onRetry) },
+    shelf = OwnProfileShelf(
+        content = { modifier, header -> ProfileOwnShelf(modifier, header) },
+        openRequested = { Navigator.pendingProfileShelf.collectAsState().value },
+        onOpened = Navigator::consumeProfileShelf,
+    ),
 )

@@ -6,6 +6,13 @@ import androidx.compose.ui.unit.Dp
 
 enum class ProfileContribution { Changes, Shops, Roasters }
 
+/** Editable shelf supplied by the app to the owner's profile sections. */
+class OwnProfileShelf(
+    val content: @Composable (Modifier, @Composable () -> Unit) -> Unit,
+    val openRequested: @Composable () -> Boolean,
+    val onOpened: () -> Unit,
+)
+
 /** App-rendered pieces that only the owner's own profile shows. */
 class OwnProfileSlots(
     val shared: ProfileSlots,
@@ -20,6 +27,7 @@ class OwnProfileSlots(
     val activityPreview: @Composable (onClick: () -> Unit) -> Unit,
     /** Mascot error content with a retry action. */
     val loadError: @Composable (onRetry: () -> Unit) -> Unit,
+    val shelf: OwnProfileShelf? = null,
 )
 
 /** The Profile tab. Caller owns the tab, navigation, sign-in and the floating bar clearance. *

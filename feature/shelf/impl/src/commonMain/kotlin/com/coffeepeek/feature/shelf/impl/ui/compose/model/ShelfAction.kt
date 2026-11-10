@@ -11,7 +11,6 @@ internal sealed interface ShelfAction {
     data object DismissMessage : ShelfAction
     data class ArrivalPresented(val id: String) : ShelfAction
     data object OpenArchive : ShelfAction
-    data object BrowseCatalog : ShelfAction
     data object SignIn : ShelfAction
     data object AddBag : ShelfAction
 }
