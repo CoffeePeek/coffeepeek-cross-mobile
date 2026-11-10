@@ -124,3 +124,115 @@ PR `fix/ui-feedback-fixes`; разделы 5–6 — очереди на буд�
   early-return в native presenter) — iOS даёт собственный отклик.
 - Локальная сборка iOS: падение `dumpXcodebuildArgs` — битый кэш SPM-артефакта
   onnxruntime; лечение `rm -rf build/kotlin/swiftPMCheckouts build/kotlin/swiftSyntheticPackages build/kotlin/swiftPMXcodeDumps`.
+
+---
+
+## 7. Полный аудит по зонам (2026-11-10, дефект-хантинг субагентами)
+
+Приложение разбито на 8 зон, каждая проверена отдельным агентом по UI/VM-слою
+(разделы 1–6 этого файла исключены из отчётов). Все находки подтверждены по
+окружению (вызывающие, платформенные actual, DI). Скриншоты состояний —
+локально в `~/StudioProjects/coffeepeek-ui-evidence/`. Краткий шортлист — в
+конце раздела.
+
+### 7.1 Shop: детали + чекин
+
+1. **[BUG]** Ошибка голоса «полезно» невидима: тап по сердцу карточки ниже вьюпорта — оптимистичное состояние тихо откатывается, `hasVoteError` рендерится статусом вверху списка за кадром — ShopCheckInListViewModel.kt:163 + ShopCheckInListScreen.kt:119. Фикс: снекбар или inline у карточки, как в ShopDetailScreen.kt:163.
+2. **[BUG]** Сбой записи драфта парализует форму: submit требует guard-драфт (159), редактирование блокировано при `deliveryUnconfirmed` (133), выхода «отправить без драфта» нет; определённый HTTP-отказ (400/403) помечается «доставка не подтверждена» (196) — ShopCheckInCreateViewModel.kt. Фикс: разделить флаги, дать отправку без guard-драфта.
+3. **[BUG]** Названия напитков в меню не локализуются: всегда `nameRu` (ShopMenuDrinkRow.kt:32) при locale-выборе в карточках (ShopCheckInCard.kt:65) и поле напитка. Фикс: общий locale-выбор имени.
+4. **[UX]** Блок «рейтинг + чекины» исчезает целиком при `summary == null` (`?: return` — ShopCheckInRatingsOverview.kt:53), хотя серверный overallRating/count есть. Фикс: строка без категорийных полос.
+5. **[UX/ANIM]** Список чекинов полностью перезагружается на каждый ON_RESUME (`isLoading=true` — ShopCheckInListViewModel.kt:43,100) — строка-спиннер дёргает контент. Фикс: окно свежести + `isLoading = !hasLoaded`, как в разделе 2.
+6. **[UX]** Заметка/«свой напиток» молча обрезаются (`take(1000)`/`take(100)` — ShopCheckInCreateViewModel.kt:47,55) без maxLength и счётчика — ввод «перестаёт работать». Фикс: maxLength + счётчик.
+7. **[ANIM]** Полноэкранные loading→content→error без переходов: ShopCheckInListScreen.kt:104, ShopMenuGalleryScreen.kt:75 (не вошли в раздел 4). Фикс: Crossfade.
+8. **[BUG]** Шторка источника фото мгновенно закрывается при достижении лимита/подготовке снимков (`if ... photos.size < MAX` — ShopCheckInPhotoAttachments.kt:29). Фикс: держать шторку, блокировать пункты.
+
+### 7.2 Discovery: карта и поиск
+
+1. **[BUG]** Nearby: таймаут 10с меньше худшего пути фикса (до ~12с: PlatformLocation.android.kt:26-52) — запрос молча роняется, пришедший фикс не применяется, аналитика ложно рапортует Unavailable — SearchViewModel.kt:157-165. Фикс: не ронять, пока `location.refresh()` в полёте.
+2. **[BUG]** Гонка `suppressBounds` при повторной паузе: `finally` старой job сбрасывает флаг посреди новой — запросы вьюпорта уходят во время анимации камеры — MapViewModel.kt:479-494. Фикс: токен поколений вместо булева.
+3. **[BUG]** Карточка на карте дублирует «Закрыто · Закрыто» (DiscoveryMapShopCard.kt:85-95 + PublicShopPreviewMapper.kt:26-28). Фикс: при isClosed — только статус.
+4. **[BUG]** Иконки тегов: рассинхрон нормализации `_`→`-` между artwork-маппингом (DiscoveryTagIcon.kt:14-29) и ярлыками фильтров (FilterCatalogLabels.kt:61) — to-go/laptop/pet падают в заглушку. Фикс: общая нормализация.
+5. **[BUG]** Пикер чекина показывает сырой serverMessage вопреки контракту SearchError (CheckInShopPickerList.kt:66 против SearchContract.kt:14). Фикс: локализованная копия.
+6. **[UX]** Тупик гео: один отказ навсегда отключает Nearby (persистентный «asked» — DiscoveryHost.kt:36-38, LocationPermissionEffect.android.kt:44), в уведомлении нет пути в настройки. Фикс: soft/hard denial + действие «открыть настройки».
+7. **[UX]** Ввод в поиске мгновенно стирает маркеры/карусель до прихода новых (MapViewModel.kt:211-226). Фикс: держать прежние маркеры.
+8. **[UX]** Карта: нет loading/error/empty состояний контента вьюпорта (MapState.isLoading не рендерится — MapViewModel.kt:271,320). Фикс: error+Retry как в поиске.
+
+### 7.3 Community: лента и посты
+
+1. **[BUG]** Пустая thumbnail ломает fallback фото: `""` подставляется как есть — вечный лоадер (PostCard.kt:336; контракт допускает `""` — PostMapper.kt:38). Фикс: `takeIf(String::isNotBlank) ?: originals`.
+2. **[BUG]** Лента даёт лайкать собственный пост (CommunityFeedContent.kt:216 без `!isOwn` + CommunityViewModel.kt:242 без owns-гварда) — оптимистичный флип → отказ сервера → снекбар; на пост-экране корректно скрыто. Фикс: гвард.
+3. **[A11Y]** Гостевой тизер невидим для TalkBack: `clearAndSetSemantics {}` вычищает и пост, и оверлей с кнопкой входа (CommunityGuestTeaser.kt:23). Фикс: merged-узел с Role.Button.
+4. **[BUG]** Вьюер фото переживает исчезновение поста (блокировка/смена аккаунта) — PostScreen.kt:99-100. Фикс: закрывать preview при post==null/error.
+5. **[UX]** Голосование в полёте: без индикации, повторный тап молча игнорится (CommunityViewModel.kt:243), блокирует pull-to-refresh (:162) и меню всех карточек (CommunityFeedContent.kt:193). Фикс: прогресс на сердце, не блокировать прочее.
+6. **[BUG]** Тап лайка отменяет in-flight loadMore → потерянный ответ, двойной запрос и дубль аналитики (CommunityViewModel.kt:247). Фикс: мержить ответ, не трогая голосуемые посты.
+7. **[UX]** Пустая лента у гостя без CTA входа и без стилевого empty-блока (CommunityFeedContent.kt:95,177). Фикс: styled empty + вход.
+8. **[ANIM]** Мгновенная подмена loader↔контент↔error в ленте (CommunityFeedContent.kt:158-164). Фикс: AnimatedContent на статусах.
+
+### 7.4 Profile + история чекинов
+
+1. **[BUG]** Любая смена visibility-ревизии стирает загруженный профиль (PublicProfileViewModel.kt:126-129): полный скелетон, шит подписчиков закрывается — даже если ревизия не касается этого автора. Фикс: stale-while-revalidate, скрывать только при `hides(автор)`.
+2. **[BUG]** Чекин с нечитаемым timestamp всплывает наверх дневника (`sortedBy { parseServerInstant }` — null первым; ProfileActivityState.kt:14). Фикс: переиспользовать compareHistoryMoments.
+3. **[BUG]** Фото календаря парсят мгновенья мимо `parseServerInstant` (Instant.parse на offset-less строках — HistoryCalendarPhotos.kt:22) — старое фото вместо нового. Фикс: parseServerInstant.
+4. **[UX]** Ошибка загрузки редактирования профиля оставляет пустую несохраняемую форму без retry (EditProfileViewModel.kt:50, VM живёт по key). Фикс: error-state с retry.
+5. **[BUG]** В шапке календаря при фильтре «Дома» — «0 кофеен» (HistoryCalendarCard.kt:62-64,75). Фикс: фильтровать фразу по источнику.
+6. **[UX]** Экран «все чекины» заблокированного автора = голая строка вместо карточки блокировки (PublicProfileCheckInsScreen.kt:56 против PublicProfileBody.kt:74-86). Фикс: переиспользовать PublicProfileBlocked.
+7. **[UX]** Ошибка перезагрузки ленты чекинов невидима при непустом списке (PublicProfileBody.kt:166). Фикс: inline-ошибка независимо от пустоты.
+8. **[ANIM]** Подпись месяца «счётчики ↔ Загрузка» — мгновенная подмена (HistoryCalendarCard.kt:71-76). Фикс: Crossfade.
+
+### 7.5 Shelf: полка и сканер
+
+1. **[BUG]** Ошибка съёмки не видна на шаге камеры и «выстреливает» снекбаром при следующем успешном скане (ShelfAddScreen.kt:97-102,121,72). Фикс: эффект на уровень экрана / сразу Retake.
+2. **[BUG]** Публичный профиль: скелетон-флэш на каждый ON_RESUME — полный сброс через `initialShelfState` (PublicShelfProfileViewModel.kt:31 + ShelfProfilePreviewScreen.kt:54,56). Фикс: stale-while-revalidate, ревизия только при смене данных.
+3. **[BUG]** Finish/UndoFinish молча глотаются при параллельной записи «busy» пачки (ShelfViewModel.kt:129-132) — шторка закрыта, подтверждения нет. Фикс: очередь на пачку.
+4. **[BUG]** Offline при рестарте показывается как «Пачка не найдена» без ретрая (ShelfBagViewModel.kt:36-38). Фикс: различать Offline/NotFound + «Повторить».
+5. **[UX]** Архив: повторный поиск без индикатора — мгновенная подмена результатов (ShelfArchiveViewModel.kt:55-62). Фикс: linear-progress/crossfade.
+6. **[UX]** Поиск кофе в форме пачки: ни loading, ни error, ни retry (ShelfAddViewModel.kt:130-133, ShelfCoffeeField.kt:45). Фикс: спиннер + «Не удалось · Повторить».
+7. **[BUG]** iOS-сканер не ловит OutOfMemoryError — краш вместо «Переснять» (IosBagScanner.kt:52-60; Android-версия ловит — AndroidBagScanner.kt:44). Фикс: зеркальный catch.
+8. **[BUG]** Подлёт новой пачки: bringIntoView с зашитым 160.dp вместо реального rowHeight (ShelfScreen.kt:158,166 против ShelfGrid.kt:68-71) — низ «НОВАЯ» пачки за краем. Фикс: высота из geometry.
+
+### 7.6 Auth + Settings
+
+1. **[BUG]** Транзиентный каталог городов молча перезаписывает сохранённый город в БД (CityPreference.kt:43-44,28-29) — задевает и discovery (DiscoveryAdapters.kt:70). Фикс: fallback только in-memory.
+2. **[BUG]** Сбой хранилища при загрузке городов крэшит приложение (SettingsPorts.kt:61-64: `resolve` внутри `Result.map` не ловит исключения; Room без обработки; select — launch без handler). Фикс: обернуть в CityPreference (образец AppLanguagePreference.kt:47-58); то же в ThemeManager.kt:47.
+3. **[BUG]** «Проверить обновления» мёртвая там, где проверки выключены: фейковый спиннер 700мс и ноль обратной связи (SettingsScreen.kt:220-235, AppUpdateAdapters.kt:18, `canCheckForUpdates` нигде не читается). Фикс: скрыть/дизейблить или тост на Disabled.
+4. **[UX]** После сбоя каталога строка города навсегда «Не выбран» при сохранённом городе (SettingsViewModel.kt:91 — onSuccess без onFailure; улика `before/settings_offline.png`). Фикс: имя из id + ретрай на возврате.
+5. **[UX]** Восстановление пароля: поле активно, но ввод молча игнорируется при busy (PasswordRecoveryScreen.kt:71-77 без `enabled`; на login/register дизейблятся). Фикс: `enabled = !busy`.
+6. **[UX]** Кнопка «Отправить» восстановления не использует штатный loading-спиннер (PasswordRecoveryScreen.kt:83-87). Фикс: `loading = state.busy`.
+7. **[A11Y]** «Забыли пароль?»/«Создать аккаунт»: кликабелен только текст ~34dp, 48dp-строка не кликабельна (AuthChrome.kt:356-364). Фикс: clickable на строку.
+8. **[ANIM]** Регистрация: шаги, маскот и strength-бар мгновенной подменой (RegisterScreen.kt:155-161,353-355). Фикс: AnimatedContent + animateContentSize.
+
+### 7.7 Collections + Contributions
+
+1. **[BUG]** Пагинация заявок: бесшумный вечный retry-цикл (ошибка проглочена, LaunchedEffect перезапускает — ContributionsListViewModel.kt:99 + Screen.kt:125-128). Фикс: футер «Не удалось · Повторить».
+2. **[BUG]** AddShop/AddRoaster: описание не ограничено лимитом 1000 (AddShopViewModel.kt:59, AddRoasterViewModel.kt:43; ChangeEditor ограничивает) — отказ сервера на 5-м шаге. Фикс: take + счётчик + isSendable().
+3. **[BUG]** 409 в редакторе подборки: «Повторить» молча стирает несохранённые правки (SavedCollectionsStatus.kt:36 → reload(force=true)). Фикс: диалог потери правок или ребейз правок.
+4. **[BUG]** Обложки библиотеки: N+1 detail-запросов на карточку без кастомной обложки, без кэша (SavedCollectionCoverImage.kt:33-67 + HttpSavedCollectionsRepository.kt:86). Фикс: URL в summary / кэш по (id, revision).
+5. **[BUG]** Публичная подборка: двойная загрузка одного id (CollectionsScreen.kt:26-29 + CollectionsEntryImpl.kt:94). Фикс: передать загруженное или один VM.
+6. **[UX]** Выход из редакторов теряет несохранённые правки без подтверждения (SavedCollectionsScreen.kt:31, ChangeEditorScreen.kt:121). Фикс: destructive-confirmation при hasEdits().
+7. **[ANIM]** Пикер: мгновенная подмена шторки на quick-create (SavedCollectionsPicker.kt:31-34). Фикс: AnimatedContent.
+8. **[UX]** Список заявок не обновляется никогда, кроме ошибки (нет pull-to-refresh/ON_RESUME — ContributionsListScreen.kt:85). Фикс: PTR + reload на resume.
+
+### 7.8 Roaster / Coffee / Home-check-in / Business / прочее
+
+1. **[BUG]** Сетевой сбой при resume молча выкидывает из бизнес-режима (`catch (_: Exception) { reset() }` — OwnershipAccess.kt:39): таб сброшен на Feed, кнопки редактирования исчезли, без сообщения. Фикс: stale-while-revalidate + поверхностить.
+2. **[BUG]** Тогл бизнес-режима уничтожает состояние всех табов: `popUpTo(inclusive)` без saveState (MainScreen.kt:130-133 против :141-146). Фикс: saveState/restoreState.
+3. **[BUG]** Кнопка «к продавцу» открывает сырой URL: пустая строка (enabled при `!= null` — CoffeeOfferCard.kt:62), `intent://` → краш (CoffeeDetailViewModel.kt:66-68; обжарщики нормализуют — RoasterLinks.kt:11). Фикс: нормализация + безопасный open.
+4. **[BUG]** Авто-«прочитано» схлопывает подгруженные страницы инбокса: точечный markRead → полный refresh → `items` = первая страница (NotificationPresenter.kt:196,124). Фикс: обновлять только unreadCount/флаги.
+5. **[BUG]** Тап по push у гостя молча проглатывается (FeatureNotificationsRenderer.kt:37-46 — consume без действия). Фикс: редирект в Auth.
+6. **[UX]** Переключение в бизнес-режим без busy-индикатора, фейл не доходит до UI (OwnershipAccountSwitch.kt:22, OwnershipAccess.kt:41-51). Фикс: busy в строке + снекбар.
+7. **[BUG]** Диалог публикации: «Отмена» мертва во время сохранения (гвард busy глотает CancelConfirmation — BusinessOwnershipScreen.kt:97). Фикс: пропускать Cancel мимо гарда.
+8. **[UX]** Префетч деталей карточки обжарщика фейлится навсегда и молча (RoasterListViewModel.kt:110-115) — карточка без описания/фото без retry. Фикс: per-item failed + retry.
+9. **[BUG]** AppLink `?checkin=1&checkin=1`/`checkin=true` теряет флаг (сравнение `getAll == listOf("1")` — AppLinks.kt:14). Фикс: `firstOrNull() == "1"`.
+
+### 7.9 Шортлист «топ по влиянию» (из раздела 7)
+
+1. Тихий выкид из бизнес-режима на каждый resume при сетевом сбое (7.8.1).
+2. Паралич формы чекина при сбое записи драфта + ложный «не подтверждено» (7.1.2).
+3. Стирание загруженного профиля при смене visibility-ревизии (7.4.1).
+4. Город молча перезаписывается в БД / крэш на сбое хранилища (7.6.1-2).
+5. Лайк собственного поста в ленте → отказ сервера (7.3.2).
+6. Схлопывание страниц инбокса при авто-«прочитано» (7.8.4).
+7. Вечный retry-цикл пагинации заявок (7.7.1).
+8. Краш на кнопке «к продавцу» с битым URL (7.8.3).
+9. «Повторить» в редакторе подборки стирает правки (7.7.3).
+10. 409-скелетон публичной полки при возврате (7.5.2).
