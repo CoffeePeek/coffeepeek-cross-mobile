@@ -296,12 +296,16 @@ private fun HelpfulButton(count: Int, helpful: Boolean, onClick: (() -> Unit)?) 
     }
     Row(
         Modifier.heightIn(min = 48.dp).widthIn(min = 48.dp).clip(RoundedCornerShape(CoffeePeekDimens.radiusMd))
-            .then(if (onClick != null) Modifier.clickable(role = Role.Button, onClick = onClick) else Modifier)
             .semantics(mergeDescendants = true) { contentDescription = description },
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2),
     ) {
-        CoffeePeekLikeIcon(helpful, contentDescription = null)
+        // The ripple belongs to the heart alone; the row only widens the touch target.
+        Box(Modifier.size(44.dp).clip(CircleShape)
+            .then(if (onClick != null) Modifier.clickable(role = Role.Button, onClick = onClick) else Modifier),
+            contentAlignment = Alignment.Center) {
+            CoffeePeekLikeIcon(helpful, contentDescription = null)
+        }
         Text(count.toString(), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface)
     }
 }

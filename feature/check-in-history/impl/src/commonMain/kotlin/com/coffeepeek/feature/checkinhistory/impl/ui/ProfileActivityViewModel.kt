@@ -101,7 +101,8 @@ internal class ProfileActivityViewModel(
     }
 
     private fun loadShop(context: CheckInHistoryCalendarSnapshot, range: HomeHistoryDateRange) {
-        updateCalendar { copy(shopCalendar = shopCalendar.copy(isLoading = true, hasError = false)) }
+        // A background refresh (on resume) keeps the loaded week visible instead of flashing the skeleton.
+        updateCalendar { copy(shopCalendar = shopCalendar.copy(isLoading = !shopCalendar.hasLoaded, hasError = false)) }
         read(load = {
             val bounds = context.datePeriod(range.from, shiftActivityDate(range.to, 1))
             shops.period(HistoryPeriod(bounds.fromInclusive, bounds.toExclusive)).getOrThrow().distinctBy { it.id }
@@ -112,7 +113,7 @@ internal class ProfileActivityViewModel(
     }
 
     private fun loadHome(range: HomeHistoryDateRange) {
-        updateCalendar { copy(homeCalendar = homeCalendar.copy(isLoading = true, hasError = false)) }
+        updateCalendar { copy(homeCalendar = homeCalendar.copy(isLoading = !homeCalendar.hasLoaded, hasError = false)) }
         read(load = {
             val days = homes.calendar(range).getOrThrow().filter { it.preparedOn in range.from..range.to }
             check(days.distinctBy { it.preparedOn }.size == days.size)

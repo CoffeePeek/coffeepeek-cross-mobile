@@ -75,7 +75,8 @@ internal class ShelfViewModel(
 
     private suspend fun refresh() {
         if (currentState.loading) return
-        updateState { copy(loading = true, loadFailed = false) }
+        // An already loaded shelf refreshes silently; the spinner is only for the first load.
+        updateState { copy(loading = !loaded, loadFailed = false) }
         val failure = repository.refresh().exceptionOrNull()
         val issue = failure?.let(::issueOf)
         updateState {
