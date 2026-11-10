@@ -4,14 +4,20 @@ package com.coffeepeek.admin.di.roaster
 
 import com.coffeepeek.admin.di.favorites.RoasterFavorites
 import com.coffeepeek.admin.di.favorites.CatalogItem
+import com.coffeepeek.admin.di.collections.FavoriteCollectionsPrompt
 import com.coffeepeek.feature.shop.api.PublicShopPreview
 import com.coffeepeek.feature.shop.api.PublicShopPreviews
 import com.coffeepeek.admin.di.favorites.PublicAddress
+import com.coffeepeek.feature.favorites.domain.model.FavoriteEntry
+import com.coffeepeek.feature.favorites.domain.model.FavoriteKind
+import com.coffeepeek.feature.favorites.domain.model.FavoriteTarget
+import com.coffeepeek.feature.favorites.domain.repository.AccountFavorites
 import com.coffeepeek.feature.roaster.api.RoasterFavoriteTarget
 import com.coffeepeek.room.model.Setting
 import com.coffeepeek.room.repository.SettingRepository
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -43,6 +49,20 @@ private class FakeFavorites : RoasterFavorites {
     override fun observeFavorites() = rows
     override fun observeErrors(): Flow<String?> = errors
     override suspend fun setFavorite(roaster: CatalogItem, isFavorite: Boolean): Result<Unit> { calls += roaster to isFavorite; return result }
+}
+
+private class PromptNoop : FavoriteCollectionsPrompt {
+    override fun shop(slug: String) {}
+    override fun roaster(slug: String) {}
+}
+
+private class FakeAccountFavorites : AccountFavorites {
+    val memberships = MutableStateFlow<Result<Set<FavoriteTarget>>>(Result.success(emptySet()))
+    override fun observeFavorites(): Flow<Result<List<FavoriteEntry>>> = MutableStateFlow(Result.success(emptyList()))
+    override fun observeMemberships(): Flow<Result<Set<FavoriteTarget>>> = memberships
+    override suspend fun getFavorites(refresh: Boolean) = Result.success(emptyList<FavoriteEntry>())
+    override suspend fun setFavorite(entry: FavoriteEntry, favorite: Boolean) = Result.success(Unit)
+    override fun clearCache() {}
 }
 
 class RoasterPortsTest {
@@ -93,6 +113,26 @@ class RoasterPortsTest {
         assertNull(adapter.firstPhoto("failed"))
         assertFailsWith<CancellationException> { adapter.firstPhoto("cancelled") }
         assertFailsWith<CancellationException> { RoasterShopPhotosAdapter(PublicShopPreviews { throw CancellationException("stop") }).firstPhoto("x") }
+    }
+
+    @Test fun membershipFailuresSurfaceAnErrorAndTheNextSuccessKeysKeepFlowing() = runTest {
+        val serverFavorites = FakeAccountFavorites()
+        val port = RoasterFavoritesAdapter(FakeFavorites(), backgroundScope, PromptNoop(), serverFavorites)
+        val seen = async { port.observeErrors().first() }
+        val keysSeen = mutableListOf<Set<String>>()
+        val keysJob = launch { port.observeKeys().collect { keysSeen += it } }
+        runCurrent() // the collectors subscribe before the hot flows emit
+        serverFavorites.memberships.value = Result.success(setOf(FavoriteTarget(FavoriteKind.Roaster, "a")))
+        runCurrent()
+        assertEquals(setOf("a"), keysSeen.last())
+        serverFavorites.memberships.value = Result.failure(IllegalStateException("net"))
+        runCurrent()
+        assertEquals("Не удалось обновить избранное", seen.await())
+        assertEquals(setOf("a"), keysSeen.last()) // the failure keeps the last known keys
+        serverFavorites.memberships.value = Result.success(setOf(FavoriteTarget(FavoriteKind.Roaster, "b")))
+        runCurrent()
+        keysJob.cancel()
+        assertEquals(setOf("b"), keysSeen.last())
     }
 
     @Test fun catalogStoreUsesTheExistingKeyAndIgnoresBlankOrNullValues() = runTest {

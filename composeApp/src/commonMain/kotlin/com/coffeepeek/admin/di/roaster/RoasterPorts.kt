@@ -14,9 +14,12 @@ import com.coffeepeek.feature.roaster.api.RoasterFavoritesPort
 import com.coffeepeek.feature.roaster.api.RoasterShopPhotos
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
+import kotlinx.coroutines.flow.merge
 
 /**
  * Adapts the server favorites store. Authentication gating, in-flight de-duplication, account guards and the
@@ -28,10 +31,17 @@ internal class RoasterFavoritesAdapter(
     private val favoriteCollections: FavoriteCollectionsPrompt? = null,
     private val serverFavorites: AccountFavorites? = null,
 ) : RoasterFavoritesPort {
+    private val membershipErrors = MutableSharedFlow<String?>(extraBufferCapacity = 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+
     override fun observeKeys(): Flow<Set<String>> = serverFavorites?.takeIf { favoriteCollections != null }?.observeMemberships()?.mapNotNull { result ->
-        result.getOrNull()?.filter { it.kind == FavoriteKind.Roaster }?.map { it.slug }?.toSet()
+        val memberships = result.getOrElse { failure ->
+            if (failure is CancellationException) throw failure
+            membershipErrors.tryEmit("Не удалось обновить избранное")
+            return@mapNotNull null // keep the last known keys instead of blanking the hearts
+        }
+        memberships.filter { it.kind == FavoriteKind.Roaster }.map { it.slug }.toSet()
     } ?: favorites.observeFavorites().map { rows -> rows.mapTo(mutableSetOf()) { it.roasterFavoriteId } }
-    override fun observeErrors(): Flow<String?> = favorites.observeErrors()
+    override fun observeErrors(): Flow<String?> = merge(favorites.observeErrors(), membershipErrors)
 
     override fun change(target: RoasterFavoriteTarget, favorite: Boolean, onFailed: () -> Unit) {
         favoriteCollections?.let { it.roaster(target.key); return }
