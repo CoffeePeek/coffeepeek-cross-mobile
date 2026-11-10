@@ -3,6 +3,9 @@ name: Android CI
 on:
   pull_request:
     branches: [main, develop]
+  push:
+    # Seed default-branch-scope Gradle caches so PR branches restore them on their first push.
+    branches: [main]
   workflow_dispatch:
 
 permissions:

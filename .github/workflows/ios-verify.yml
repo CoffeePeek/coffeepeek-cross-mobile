@@ -24,6 +24,11 @@ on:
       - '!**/src/android*/**'
       - '!**/proguard-rules.pro'
       - '!**/*.md'
+  push:
+    # Runs the verification on main so its Gradle/konan/SPM caches land in the
+    # default-branch scope, which every PR branch can restore: a first push of a
+    # new PR starts warm instead of paying the full cold K/N compilation.
+    branches: [main]
   workflow_dispatch:
 
 permissions:
