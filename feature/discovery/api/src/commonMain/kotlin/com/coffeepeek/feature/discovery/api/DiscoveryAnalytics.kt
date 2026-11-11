@@ -18,7 +18,7 @@ enum class GeolocationOutcome { Available, Unavailable }
 enum class DiscoveryOverlay { Discovery, Roasters, Map }
 
 /** What the user did on the map, as the previous `map_interaction` event named it. */
-enum class MapInteraction { MarkerSelected, SearchSelected, Zoomed, ZonesToggled, Loaded, LoadFailed, NearbyLoaded, NearbyFailed, Expanded, Collapsed }
+enum class MapInteraction { MarkerSelected, SearchSelected, Zoomed, ZonesToggled, Loaded, LoadFailed, NearbyLoaded, NearbyFailed, Expanded, Collapsed, HeatmapToggled, HeatmapLoaded, HeatmapFailed }
 
 /**
  * What Discovery reports. The application maps it to its analytics with the event names and properties of the previous screens; the owner knows no vendor.

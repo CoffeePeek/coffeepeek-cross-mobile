@@ -75,6 +75,7 @@ private fun DiscoveryMapCanvas(state: MapCanvasState, callbacks: MapCanvasCallba
         onLocationPermissionDenied = callbacks.onLocationDenied,
         requestLocationPermissionOnLoad = false,
         showAttribution = !state.isPreview,
+        heatmap = state.heatmap.map { com.coffeepeek.admin.map.MapHeatPoint(it.coordinates.latitude, it.coordinates.longitude, it.weight) },
     )
 }
 

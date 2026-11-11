@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="discovery_heatmap_show">Показать тепловую карту чекинов</string>
+    <string name="discovery_heatmap_hide">Скрыть тепловую карту чекинов</string>
+</resources>

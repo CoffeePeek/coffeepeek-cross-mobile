@@ -18,22 +18,43 @@ internal fun nativeMapStateJson(
     selectedShopId: String?,
     isDarkTheme: Boolean,
     showAttribution: Boolean,
+    heatmap: List<MapHeatPoint> = emptyList(),
 ): String = buildJsonObject {
     put("selectedShopId", selectedShopId?.let(::JsonPrimitive) ?: JsonNull)
     put("dark", isDarkTheme)
     put("showAttribution", showAttribution)
-    put("shops", buildJsonArray {
-        shops.forEach { shop -> add(buildJsonObject {
+    put("heatmap", heatmapJson(heatmap))
+    put("shops", shopsJson(shops, selectedShopId))
+    put("clusters", clustersJson(clusters))
+    put("zones", zonesJson(zones, isDarkTheme))
+}.toString()
+
+private fun heatmapJson(points: List<MapHeatPoint>) = buildJsonArray {
+    points.forEach { point ->
+        add(buildJsonObject {
+            put("lat", point.latitude)
+            put("lon", point.longitude)
+            put("weight", point.weight)
+        })
+    }
+}
+
+private fun shopsJson(shops: List<MapShop>, selectedShopId: String?) = buildJsonArray {
+    shops.forEach { shop ->
+        add(buildJsonObject {
             put("id", shop.id)
             put("title", shop.title)
             put("lat", shop.latitude)
             put("lon", shop.longitude)
             put("type", shop.type)
             put("selected", shop.id == selectedShopId)
-        }) }
-    })
-    put("clusters", buildJsonArray {
-        clusters.forEach { cluster -> add(buildJsonObject {
+        })
+    }
+}
+
+private fun clustersJson(clusters: List<MapCluster>) = buildJsonArray {
+    clusters.forEach { cluster ->
+        add(buildJsonObject {
             put("id", cluster.id)
             put("lat", cluster.latitude)
             put("lon", cluster.longitude)
@@ -44,10 +65,13 @@ internal fun nativeMapStateJson(
                 put("maxLat", cluster.bounds.maxLat)
                 put("maxLon", cluster.bounds.maxLon)
             })
-        }) }
-    })
-    put("zones", buildJsonArray {
-        zones.forEach { zone -> add(buildJsonObject {
+        })
+    }
+}
+
+private fun zonesJson(zones: List<MapCoffeeZone>, isDarkTheme: Boolean) = buildJsonArray {
+    zones.forEach { zone ->
+        add(buildJsonObject {
             put("id", zone.id)
             put("name", zone.name)
             put("color", zoneColorForMap(zone.color, isDarkTheme))
@@ -56,12 +80,15 @@ internal fun nativeMapStateJson(
             put("count", zone.shopCount)
             put("polygon", buildJsonArray {
                 mapZoneOutline(zone).forEach { (lat, lon) ->
-                    add(buildJsonArray { add(lat); add(lon) })
+                    add(buildJsonArray {
+                        add(lat)
+                        add(lon)
+                    })
                 }
             })
-        }) }
-    })
-}.toString()
+        })
+    }
+}
 
 /** Closed latitude/longitude ring, with the same radius fallback on both platforms. */
 internal fun mapZoneOutline(zone: MapCoffeeZone): List<Pair<Double, Double>> {

@@ -4,6 +4,7 @@ import com.coffeepeek.feature.discovery.api.MapCamera
 import com.coffeepeek.feature.discovery.api.MapFocus
 import com.coffeepeek.feature.discovery.api.MapShopDetails
 import com.coffeepeek.feature.discovery.domain.model.DiscoveryCriteria
+import com.coffeepeek.feature.discovery.domain.model.CheckInHeatmap
 import com.coffeepeek.feature.discovery.domain.model.DiscoveryFilters
 import com.coffeepeek.feature.discovery.domain.model.Coordinates
 import com.coffeepeek.feature.discovery.domain.model.MapBounds
@@ -23,6 +24,10 @@ internal data class MapState(
     val zones: List<MapZone> = emptyList(),
     val zoneGroups: List<MapZone> = emptyList(),
     val showZones: Boolean = true,
+    val showHeatmap: Boolean = false,
+    val heatmap: CheckInHeatmap = CheckInHeatmap(),
+    val isHeatmapLoading: Boolean = false,
+    val heatmapFailed: Boolean = false,
     val selectedShop: MapMarker? = null,
     val selectedZone: MapZone? = null,
     val details: MapShopDetails? = null,
@@ -55,6 +60,7 @@ internal sealed interface MapAction {
     data object ShowZoneShops : MapAction
     data object ClearZone : MapAction
     data object ToggleZones : MapAction
+    data object ToggleHeatmap : MapAction
     data class SyncCriteria(val criteria: DiscoveryCriteria) : MapAction
     data class PresentationChanged(val active: Boolean) : MapAction
     data class SelectSuggestion(val shopId: String) : MapAction
