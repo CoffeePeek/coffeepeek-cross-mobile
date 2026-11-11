@@ -5,6 +5,7 @@ package com.coffeepeek.admin.ui
 import kotlin.test.Test
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
+import platform.UIKit.UIDevice
 import platform.UIKit.UINavigationController
 import platform.UIKit.UITabBarController
 import platform.UIKit.UIViewController
@@ -20,9 +21,9 @@ class NativeTabBarVisibilityTest {
     @Test
     fun expandingAndClosingMapHidesAndRestoresTabs() {
         visibility.onMapExpandedChange(true)
-        assertTrue(tabs.tabBarHidden)
+        assertTrue(tabBarHidden)
         visibility.onMapExpandedChange(false)
-        assertFalse(tabs.tabBarHidden)
+        assertFalse(tabBarHidden)
     }
 
     @Test
@@ -30,20 +31,20 @@ class NativeTabBarVisibilityTest {
         visibility.onMapExpandedChange(true)
         tabs.selectedViewController = profile
         visibility.sync()
-        assertFalse(tabs.tabBarHidden)
+        assertFalse(tabBarHidden)
         tabs.selectedViewController = discovery
         visibility.sync()
-        assertTrue(tabs.tabBarHidden)
+        assertTrue(tabBarHidden)
     }
 
     @Test
     fun mapCallbackCannotShowBarOverPushedDetail() {
         discovery.pushViewController(UIViewController().apply { hidesBottomBarWhenPushed = true }, false)
         visibility.onMapExpandedChange(false)
-        assertTrue(tabs.tabBarHidden)
+        assertTrue(tabBarHidden)
         discovery.popToRootViewControllerAnimated(false)
         visibility.sync()
-        assertFalse(tabs.tabBarHidden)
+        assertFalse(tabBarHidden)
     }
 
     @Test
@@ -51,10 +52,10 @@ class NativeTabBarVisibilityTest {
         visibility.onMapExpandedChange(true)
         discovery.pushViewController(UIViewController().apply { hidesBottomBarWhenPushed = true }, false)
         visibility.sync()
-        assertTrue(tabs.tabBarHidden)
+        assertTrue(tabBarHidden)
         discovery.popToRootViewControllerAnimated(false)
         visibility.sync()
-        assertTrue(tabs.tabBarHidden)
+        assertTrue(tabBarHidden)
     }
 
     @Test
@@ -62,6 +63,13 @@ class NativeTabBarVisibilityTest {
         visibility.dispose()
         visibility.onMapExpandedChange(true)
         visibility.sync()
-        assertFalse(tabs.tabBarHidden)
+        assertFalse(tabBarHidden)
     }
+
+    private val tabBarHidden: Boolean
+        get() = if ((UIDevice.currentDevice.systemVersion.substringBefore('.').toIntOrNull() ?: 0) >= 18) {
+            tabs.tabBarHidden
+        } else {
+            tabs.tabBar.hidden
+        }
 }
