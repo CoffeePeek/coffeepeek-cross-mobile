@@ -24,14 +24,23 @@ on:
       - '!**/src/android*/**'
       - '!**/proguard-rules.pro'
       - '!**/*.md'
+  push:
+    # Runs the verification on main so its Gradle/konan/SPM caches land in the
+    # default-branch scope, which every PR branch can restore: a first push of a
+    # new PR starts warm instead of paying the full cold K/N compilation.
+    branches: [main]
   workflow_dispatch:
 
 permissions:
   contents: read
+  # Cache self-healing: allows deleting a poisoned SPM cache entry (gh cache delete).
+  actions: write
 
 concurrency:
   group: ios-verify-${{ github.ref }}
-  cancel-in-progress: true
+  # Pushes to main seed default-branch caches; cancelling one mid-run would skip
+  # its cache saves, so they queue instead. PR runs still cancel superseded ones.
+  cancel-in-progress: ${{ github.event_name != 'push' }}
 
 jobs:
   build:
@@ -61,6 +70,21 @@ jobs:
             ~/SourcePackages
             build/kotlin/swiftPMCheckouts
           key: spm-xcode-${{ runner.os }}-${{ hashFiles('iosApp/iosApp.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved', 'feature/shelf/data/ShelfOnnxRuntime/Package.swift') }}
+      - name: Validate cached SPM artifacts (onnxruntime)
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SPM_CACHE_KEY_PREFIX: spm-xcode-
+        run: |
+          set -euo pipefail
+          CHECKOUTS=build/kotlin/swiftPMCheckouts
+          if [ ! -d "$CHECKOUTS" ]; then echo "no restored checkouts — cold run"; exit 0; fi
+          BIN=$(find "$CHECKOUTS" -type f -path '*onnxruntime.xcframework/ios-arm64_x86_64-simulator/onnxruntime.framework/onnxruntime' | head -1)
+          if [ -n "$BIN" ]; then echo "cached onnxruntime simulator binary OK"; exit 0; fi
+          echo "::warning::Cached SPM checkouts are incomplete — dropping them and the cache entry"
+          rm -rf "$CHECKOUTS"
+          KEY=$(gh cache list --key "$SPM_CACHE_KEY_PREFIX" --json key --jq '.[0].key' || true)
+          if [ -n "${KEY:-}" ]; then gh cache delete "$KEY" || true; fi
       - name: Check CI configuration and prepare unsigned Firebase resource
         shell: bash
         run: |
@@ -92,7 +116,7 @@ jobs:
               tail -n 150 "$RUNNER_TEMP/ios-verify.log"
               exit 1
             }
-      - name: Verify app and embedded ONNX minimum OS
+      - name: Verify iOS binary compatibility
         shell: bash
         run: |
           set -euo pipefail
@@ -102,6 +126,7 @@ jobs:
           [[ "$MINIMUM_OS" == "$EXPECTED_MINIMUM_OS" ]]
           python3 tools/ios/fix_onnx_framework.py "$APP_PATH/Frameworks/onnxruntime.framework" \
             --deployment-target "$MINIMUM_OS" --check
+          bash tools/ios/verify_liquid_glass_imports.sh "$APP_PATH"
       - uses: actions/upload-artifact@v7
         if: always()
         with:
@@ -138,6 +163,21 @@ jobs:
           # The Gradle-side SPM artifacts (onnxruntime pod archive) used by iosMain compilation.
           path: build/kotlin/swiftPMCheckouts
           key: spm-gradle-${{ runner.os }}-${{ hashFiles('iosApp/iosApp.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved', 'feature/shelf/data/ShelfOnnxRuntime/Package.swift') }}
+      - name: Validate cached SPM artifacts (onnxruntime)
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SPM_CACHE_KEY_PREFIX: spm-gradle-
+        run: |
+          set -euo pipefail
+          CHECKOUTS=build/kotlin/swiftPMCheckouts
+          if [ ! -d "$CHECKOUTS" ]; then echo "no restored checkouts — cold run"; exit 0; fi
+          BIN=$(find "$CHECKOUTS" -type f -path '*onnxruntime.xcframework/ios-arm64_x86_64-simulator/onnxruntime.framework/onnxruntime' | head -1)
+          if [ -n "$BIN" ]; then echo "cached onnxruntime simulator binary OK"; exit 0; fi
+          echo "::warning::Cached SPM checkouts are incomplete — dropping them and the cache entry"
+          rm -rf "$CHECKOUTS"
+          KEY=$(gh cache list --key "$SPM_CACHE_KEY_PREFIX" --json key --jq '.[0].key' || true)
+          if [ -n "${KEY:-}" ]; then gh cache delete "$KEY" || true; fi
       - name: Run Kotlin Native contract tests
         shell: bash
         run: |

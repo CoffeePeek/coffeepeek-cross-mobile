@@ -18,6 +18,7 @@
 		A10000000000000000000010 /* FirebaseCore in Frameworks */ = {isa = PBXBuildFile; productRef = A90000000000000000000008 /* FirebaseCore */; };
 		A10000000000000000000011 /* FirebaseMessaging in Frameworks */ = {isa = PBXBuildFile; productRef = A90000000000000000000009 /* FirebaseMessaging */; };
 		A10000000000000000000012 /* ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CoffeePeekLaunchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000013 /* ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CoffeePeekLaunchView.swift */; };
+		A10000000000000000000013 /* CoffeePeekNativeGlass.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000014 /* CoffeePeekNativeGlass.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -35,6 +36,7 @@
 		A20000000000000000000011 /* ../../iosXtool/CoffeePeek/Sources/CoffeePeek/SocialSignInProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/SocialSignInProvider.swift; sourceTree = "<group>"; };
 		A20000000000000000000012 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		A20000000000000000000013 /* ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CoffeePeekLaunchView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CoffeePeekLaunchView.swift; sourceTree = "<group>"; };
+		A20000000000000000000014 /* CoffeePeekNativeGlass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CoffeePeekNativeGlass.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CoffeePeekNativeGlass.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -66,6 +68,7 @@
 			isa = PBXGroup;
 			children = (
 				A20000000000000000000001 /* CoffeePeekApp.swift */,
+				A20000000000000000000014 /* CoffeePeekNativeGlass.swift */,
 				A20000000000000000000013 /* ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CoffeePeekLaunchView.swift */,
 				A20000000000000000000011 /* ../../iosXtool/CoffeePeek/Sources/CoffeePeek/SocialSignInProvider.swift */,
 				A20000000000000000000009 /* ../../iosXtool/CoffeePeek/Sources/CoffeePeek/MapLibreMapProvider.swift */,
@@ -246,6 +249,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				A10000000000000000000001 /* CoffeePeekApp.swift in Sources */,
+				A10000000000000000000013 /* CoffeePeekNativeGlass.swift in Sources */,
 				A10000000000000000000012 /* ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CoffeePeekLaunchView.swift in Sources */,
 				A10000000000000000000007 /* ../../iosXtool/CoffeePeek/Sources/CoffeePeek/SocialSignInProvider.swift in Sources */,
 				A10000000000000000000004 /* ../../iosXtool/CoffeePeek/Sources/CoffeePeek/MapLibreMapProvider.swift in Sources */,

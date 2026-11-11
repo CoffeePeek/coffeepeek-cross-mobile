@@ -1,5 +1,8 @@
+@file:OptIn(kotlinx.cinterop.ExperimentalForeignApi::class)
+
 package com.coffeepeek.admin.ui
 
+import platform.Foundation.NSSelectorFromString
 import platform.UIKit.UINavigationController
 import platform.UIKit.UITabBarController
 import platform.UIKit.hidesBottomBarWhenPushed
@@ -27,7 +30,11 @@ internal class NativeTabBarVisibility(
         val expandedMapVisible = mapExpanded && navigation == discoveryNavigation &&
             top == navigation.viewControllers.firstOrNull()
         val hidden = expandedMapVisible || top?.hidesBottomBarWhenPushed == true
-        tabs.setTabBarHidden(hidden, animated = false)
+        if (tabs.respondsToSelector(NSSelectorFromString("setTabBarHidden:animated:"))) {
+            tabs.setTabBarHidden(hidden, animated = false)
+        } else {
+            tabs.tabBar.hidden = hidden
+        }
         navigation.viewControllers.forEach { (it as? NativeScreenController)?.syncBottomClearance(hidden) }
     }
 

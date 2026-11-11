@@ -52,6 +52,7 @@ import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import com.coffeepeek.feature.discovery.api.MapCanvasCallbacks
 import com.coffeepeek.feature.discovery.impl.map.canvasClusters
+import com.coffeepeek.feature.discovery.impl.map.canvasHeatmap
 import com.coffeepeek.feature.discovery.api.MapCanvasState
 import com.coffeepeek.feature.discovery.api.MapFocus
 import com.coffeepeek.feature.discovery.impl.map.MapAction
@@ -142,6 +143,7 @@ internal fun MapContent(
                 state.markers, if (state.showZones && !isPreview) state.zones else emptyList(), state.selectedShop?.id, state.camera, state.myLocationRequest, isPreview,
                 canvasSize = canvasSize,
                 clusters = state.canvasClusters(isPreview),
+                heatmap = state.canvasHeatmap(isPreview),
             ),
             canvasCallbacks,
             Modifier.align(Alignment.Center).then(if (isPreview) Modifier.clearAndSetSemantics {} else Modifier),
@@ -161,7 +163,12 @@ internal fun MapContent(
 
 @Preview
 @Composable
-private fun MapContentPreview() = CoffeePeekTheme {
+private fun MapContentPreview() = MapContentPreviewContent(false)
+
+@Preview @Composable private fun MapContentDarkPreview() = MapContentPreviewContent(true)
+
+@Composable
+private fun MapContentPreviewContent(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     MapContent(MapState(isTruncated = true), DiscoveryHost(), MapCanvasCallbacks({ _, _ -> }, {}, {}, {}, {}, {}),
         0.dp, {}, {}, onOpenFilters = {}, onSearchAction = {})
 }

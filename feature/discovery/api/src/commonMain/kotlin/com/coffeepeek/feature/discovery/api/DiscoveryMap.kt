@@ -21,6 +21,9 @@ data class MapFocus(val shopId: String, val title: String, val coordinates: Coor
 
 data class MapCamera(val target: Coordinates, val zoom: Float)
 
+/** A weighted point for a native heatmap layer; the feature owns the intensity scale. */
+data class MapHeatPoint(val coordinates: Coordinates, val weight: Double)
+
 /** What the map canvas (the application's map: MapLibre, the native iOS map) draws and obeys. */
 data class MapCanvasState(
     val markers: List<MapMarker>,
@@ -35,6 +38,7 @@ data class MapCanvasState(
     /** Android keeps the full canvas during expansion; iOS bounds its native UIView to the visible container. The host owns this policy. */
     val canvasSize: DpSize? = null,
     val clusters: List<MapCluster> = emptyList(),
+    val heatmap: List<MapHeatPoint> = emptyList(),
 )
 
 class MapCanvasCallbacks(

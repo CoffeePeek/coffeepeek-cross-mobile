@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="discovery_heatmap_show">Паказаць цеплавую карту чэкінаў</string>
+    <string name="discovery_heatmap_hide">Схаваць цеплавую карту чэкінаў</string>
+</resources>
