@@ -1,6 +1,7 @@
 package com.coffeepeek.feature.discovery.domain.repository
 
 import com.coffeepeek.feature.discovery.domain.model.DiscoveryCatalogs
+import com.coffeepeek.feature.discovery.domain.model.CheckInHeatmap
 import com.coffeepeek.feature.discovery.domain.model.DiscoveryCriteria
 import com.coffeepeek.feature.discovery.domain.model.MapBounds
 import com.coffeepeek.feature.discovery.domain.model.MapContent
@@ -15,6 +16,9 @@ interface DiscoveryRepository {
 
     /** The same shop selection as search, grouped for the visible map at [zoom]. */
     suspend fun mapContent(bounds: MapBounds, zoom: Float, criteria: DiscoveryCriteria): Result<MapContent>
+
+    /** Public CoffeePeek visit totals for shops matching the viewport, search and filters. */
+    suspend fun checkInHeatmap(bounds: MapBounds, criteria: DiscoveryCriteria): Result<CheckInHeatmap>
 
     /** The lists the filters choose from, read once and kept. */
     suspend fun catalogs(): Result<DiscoveryCatalogs>

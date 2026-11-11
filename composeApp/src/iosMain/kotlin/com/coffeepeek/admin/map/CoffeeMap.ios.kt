@@ -53,6 +53,7 @@ actual fun CoffeeMap(
     requestLocationPermissionOnLoad: Boolean,
     showAttribution: Boolean,
     onCameraCenterChanged: (Double, Double) -> Unit,
+    heatmap: List<MapHeatPoint>,
 ) {
     val boundsCallback = rememberUpdatedState(onBoundsChanged)
     val shopCallback = rememberUpdatedState(onShopClick)
@@ -81,6 +82,7 @@ actual fun CoffeeMap(
         requestLocationPermissionOnLoad = requestLocationPermissionOnLoad,
         showAttribution = showAttribution,
         onCameraCenterChanged = onCameraCenterChanged,
+        heatmap = heatmap,
     )
 }
 
@@ -105,6 +107,7 @@ private fun NativeMapContent(
     requestLocationPermissionOnLoad: Boolean,
     showAttribution: Boolean,
     onCameraCenterChanged: (Double, Double) -> Unit,
+    heatmap: List<MapHeatPoint>,
 ) {
     val boundsCallback = rememberUpdatedState(onBoundsChanged)
     val centerCallback = rememberUpdatedState(onCameraCenterChanged)
@@ -185,7 +188,7 @@ private fun NativeMapContent(
                 mapView.overrideUserInterfaceStyle = colors.uiKitStyle
                 session.attach(mapView)
                 session.updateContent(
-                    shops, clusters, zones, selectedShopId, isDarkTheme, showAttribution, showsUserLocation,
+                    shops, clusters, zones, selectedShopId, isDarkTheme, showAttribution, showsUserLocation, heatmap,
                 )
             },
         )
@@ -222,11 +225,12 @@ private class NativeMapSession(
         isDarkTheme: Boolean,
         showAttribution: Boolean,
         showsUserLocation: Boolean,
+        heatmap: List<MapHeatPoint>,
     ) {
         mapView?.let { view ->
             provider.updateMapView(
                 mapView = view,
-                stateJson = nativeMapStateJson(shops, clusters, zones, selectedShopId, isDarkTheme, showAttribution),
+                stateJson = nativeMapStateJson(shops, clusters, zones, selectedShopId, isDarkTheme, showAttribution, heatmap),
                 showsUserLocation = showsUserLocation,
                 callbacks = this,
             )

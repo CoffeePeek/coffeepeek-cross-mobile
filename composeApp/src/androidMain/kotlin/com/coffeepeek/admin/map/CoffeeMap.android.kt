@@ -150,6 +150,7 @@ actual fun CoffeeMap(
     requestLocationPermissionOnLoad: Boolean,
     showAttribution: Boolean,
     onCameraCenterChanged: (Double, Double) -> Unit,
+    heatmap: List<MapHeatPoint>,
 ) {
     val styleOverride = LocalMapStyleOverride.current
     val context = LocalContext.current
@@ -368,21 +369,10 @@ actual fun CoffeeMap(
         val position = currentLocation ?: return@LaunchedEffect
         if (styleGeneration == 0) return@LaunchedEffect
 
-        val marker = currentLocationMarker
-        if (marker == null) {
-            currentLocationMarker = activeMap.addMarker(
-                MarkerOptions()
-                    .position(position)
-                    .icon(
-                        IconFactory.getInstance(appContext)
-                            .fromBitmap(MapMarkerIcons.myLocationBitmap(appContext)),
-                    ),
-            )
-        } else {
-            marker.position = position
-            activeMap.updateMarker(marker)
-        }
+        currentLocationMarker = updateLocationMarker(activeMap, appContext, position, currentLocationMarker)
     }
+
+    MapHeatmapEffect(map, styleGeneration, heatmap)
 
     LaunchedEffect(shops, clusters, zones, selectedShopId, isDarkTheme, styleGeneration, map) {
         val activeMap = map ?: return@LaunchedEffect
@@ -436,6 +426,16 @@ private val locationPermissions = arrayOf(
     Manifest.permission.ACCESS_FINE_LOCATION,
     Manifest.permission.ACCESS_COARSE_LOCATION,
 )
+
+private fun updateLocationMarker(map: MapLibreMap, context: Context, position: LatLng, marker: Marker?): Marker {
+    if (marker != null) {
+        marker.position = position
+        map.updateMarker(marker)
+        return marker
+    }
+    val icon = IconFactory.getInstance(context).fromBitmap(MapMarkerIcons.myLocationBitmap(context))
+    return map.addMarker(MarkerOptions().position(position).icon(icon))
+}
 
 private fun Context.hasLocationPermission(): Boolean =
     ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
