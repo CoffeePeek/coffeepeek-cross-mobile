@@ -356,6 +356,7 @@ jobs:
           [[ "$MINIMUM_OS" == "$EXPECTED_MINIMUM_OS" ]]
           python3 tools/ios/fix_onnx_framework.py "$APP_PATH/Frameworks/onnxruntime.framework" \
             --deployment-target "$MINIMUM_OS" --check
+          bash tools/ios/verify_liquid_glass_imports.sh "$APP_PATH"
           codesign --verify --deep --strict "$APP_PATH"
 
       - name: Upload to App Store Connect
