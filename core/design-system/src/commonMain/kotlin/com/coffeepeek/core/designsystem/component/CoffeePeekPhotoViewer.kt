@@ -84,7 +84,9 @@ private fun PhotoGallery(
     LocalCoffeePeekPhotoViewerPlatform.current.overlay()
     val pager = rememberPagerState(initialPage = initialIndex.coerceIn(0, images.previews.lastIndex), pageCount = { images.previews.size })
     if (prefetch) PrefetchPhotos(images.adjacentPreviewUrls(pager.currentPage), inPhotoViewer = true)
-    CoffeePeekFullScreenDialog(onDismiss) { PhotoViewerContent(images, pager, onDismiss, photo) }
+    CoffeePeekFullScreenDialog(onDismiss, darkSystemBarIcons = false) {
+        PhotoViewerContent(images, pager, onDismiss, photo)
+    }
 }
 
 private class ViewerDismissState {
