@@ -198,9 +198,7 @@ internal actual fun PlatformRootNavigation(
             navigation.delegate = navigationDelegates[index]
             navigation.interactivePopGestureRecognizer?.delegate = navigationDelegates[index]
         }
-        tabs.setViewControllers(visibleTabIndices.map(navigations::get), false)
-        tabs.selectedIndex = visibleTabIndices.indexOf(restoredTab).coerceAtLeast(0).toULong()
-        tabs.customizableViewControllers = null
+        tabs.installRootTabs(visibleTabIndices.map(navigations::get), visibleTabIndices.indexOf(restoredTab).coerceAtLeast(0))
         tabs.delegate = tabDelegate
         tabDelegate.onTabChanged = { saveNavigation() }
         tabDelegate.onTabReselected = { navigation ->

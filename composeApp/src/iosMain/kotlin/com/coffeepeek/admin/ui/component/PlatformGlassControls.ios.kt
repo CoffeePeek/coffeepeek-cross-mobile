@@ -22,9 +22,11 @@ import androidx.compose.ui.viewinterop.UIKitView
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.admin.theme.toUIColor
 import com.coffeepeek.admin.theme.uiKitStyle
+import com.coffeepeek.admin.ui.applyMaterialBeforeLiquidGlass
 import com.coffeepeek.core.designsystem.theme.CoffeePeekColors
 import com.coffeepeek.core.designsystem.component.CoffeePeekNativeGlassView
 import com.coffeepeek.core.designsystem.component.CoffeePeekNativeLoader
+import com.coffeepeek.core.designsystem.component.coffeePeekGlassButtonConfiguration
 import com.coffeepeek.core.designsystem.component.coffeePeekLoaderPlaceholderImage
 import coffeepeek.composeapp.generated.resources.Res
 import coffeepeek.composeapp.generated.resources.loader_loading
@@ -99,7 +101,7 @@ private fun IosGlassIconButton(
     CoffeePeekNativeGlassView(
         factory = {
             UIButton.buttonWithConfiguration(
-                configuration = UIButtonConfiguration.grayButtonConfiguration(),
+                configuration = coffeePeekGlassButtonConfiguration(prominent = currentIcon.value == GlassControlIcon.Add),
                 primaryAction = UIAction.actionWithHandler {
                     if (active.value) {
                         if (currentIcon.value.isFavorite) platformHaptic(HapticEvent.Selection)
@@ -138,7 +140,7 @@ internal fun UIButton.updateGlassIconSelection(icon: GlassControlIcon, selected:
 internal fun glassIconConfiguration(
     icon: GlassControlIcon, selected: Boolean, isLoading: Boolean, colors: ColorScheme,
 ): UIButtonConfiguration {
-    return glassIconBaseConfiguration(icon).apply {
+    return coffeePeekGlassButtonConfiguration(prominent = icon == GlassControlIcon.Add).apply {
         // Keep UIKit's selected accessibility state without its automatic blue filled style.
         if (isLiquidGlassAvailable) automaticallyUpdateForSelection = false
         cornerStyle = UIButtonConfigurationCornerStyleCapsule
@@ -156,13 +158,6 @@ private fun glassIconForegroundColor(icon: GlassControlIcon, selected: Boolean, 
     else -> colors.onSurface
 }
 
-private fun glassIconBaseConfiguration(icon: GlassControlIcon): UIButtonConfiguration = when {
-    isLiquidGlassAvailable && icon == GlassControlIcon.Add -> UIButtonConfiguration.prominentGlassButtonConfiguration()
-    isLiquidGlassAvailable -> UIButtonConfiguration.glassButtonConfiguration()
-    icon == GlassControlIcon.Add -> UIButtonConfiguration.filledButtonConfiguration()
-    else -> UIButtonConfiguration.grayButtonConfiguration()
-}
-
 @Composable
 actual fun PlatformGlassBackButton(onClick: () -> Unit, modifier: Modifier) {
     val currentOnClick = rememberUpdatedState(onClick)
@@ -171,7 +166,7 @@ actual fun PlatformGlassBackButton(onClick: () -> Unit, modifier: Modifier) {
     UIKitView(
         factory = {
             UIButton.buttonWithConfiguration(
-                configuration = UIButtonConfiguration.grayButtonConfiguration(),
+                configuration = coffeePeekGlassButtonConfiguration(),
                 primaryAction = UIAction.actionWithHandler { currentOnClick.value() },
             )
         },
@@ -181,11 +176,7 @@ actual fun PlatformGlassBackButton(onClick: () -> Unit, modifier: Modifier) {
             button.overrideUserInterfaceStyle = colors.uiKitStyle
             button.backgroundColor = UIColor.clearColor
             button.tintColor = colors.primary.toUIColor()
-            val configuration = if (isLiquidGlassAvailable) {
-                UIButtonConfiguration.glassButtonConfiguration()
-            } else {
-                UIButtonConfiguration.grayButtonConfiguration()
-            }
+            val configuration = coffeePeekGlassButtonConfiguration()
             configuration.cornerStyle = UIButtonConfigurationCornerStyleCapsule
             configuration.baseForegroundColor = colors.onSurface.toUIColor()
             configuration.image = UIImage.systemImageNamed(GlassControlIcon.Back.symbol)
@@ -231,6 +222,7 @@ actual fun PlatformFloatingBottomNavBar(
     UIKitView(
         factory = {
             UITabBar().apply {
+                applyMaterialBeforeLiquidGlass()
                 this.delegate = delegate
             }
         },

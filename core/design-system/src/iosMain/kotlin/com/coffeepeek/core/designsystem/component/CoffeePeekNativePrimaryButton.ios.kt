@@ -24,13 +24,13 @@ internal actual fun CoffeePeekNativePrimaryButton(
     val active = rememberUpdatedState(enabled)
     val colors = MaterialTheme.colorScheme
     UIKitView(
-        factory = { UIButton.buttonWithConfiguration(glassButtonConfiguration(prominent = true),
+        factory = { UIButton.buttonWithConfiguration(coffeePeekGlassButtonConfiguration(prominent = true),
             UIAction.actionWithHandler { if (active.value) callback.value() }) },
         modifier = modifier.fillMaxWidth().heightIn(min = 48.dp),
         properties = UIKitInteropProperties(isNativeAccessibilityEnabled = true, placedAsOverlay = true),
         update = { button ->
             button.overrideUserInterfaceStyle = coffeePeekUserInterfaceStyle(colors.background)
-            button.configuration = glassButtonConfiguration(prominent = true).apply {
+            button.configuration = coffeePeekGlassButtonConfiguration(prominent = true).apply {
                 title = text
                 cornerStyle = UIButtonConfigurationCornerStyleCapsule
                 baseBackgroundColor = colors.primary.toUIColor()
