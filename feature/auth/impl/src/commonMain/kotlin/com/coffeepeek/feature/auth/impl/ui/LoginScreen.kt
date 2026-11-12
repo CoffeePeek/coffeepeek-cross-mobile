@@ -10,6 +10,7 @@ import com.coffeepeek.feature.auth.impl.resources.auth_email_placeholder
 import com.coffeepeek.feature.auth.impl.resources.auth_email_required
 import com.coffeepeek.feature.auth.impl.resources.auth_forgot_password
 import com.coffeepeek.feature.auth.impl.resources.auth_login
+import com.coffeepeek.feature.auth.impl.resources.auth_login_email_not_confirmed
 import com.coffeepeek.feature.auth.impl.resources.auth_login_network
 import com.coffeepeek.feature.auth.impl.resources.auth_login_subtitle
 import com.coffeepeek.feature.auth.impl.resources.auth_login_title
@@ -154,6 +155,7 @@ internal fun passwordError(issue: PasswordIssue): String = when (issue) {
 private fun loginFailureText(failure: LoginFailure): String = stringResource(
     when (failure) {
         LoginFailure.WrongCredentials -> Res.string.auth_login_wrong_credentials
+        LoginFailure.EmailNotConfirmed -> Res.string.auth_login_email_not_confirmed
         LoginFailure.Network -> Res.string.auth_login_network
         LoginFailure.Unknown -> Res.string.auth_login_unknown
     },
@@ -161,7 +163,7 @@ private fun loginFailureText(failure: LoginFailure): String = stringResource(
 
 @Composable
 private fun LoginPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
-    LoginContent(LoginState(email = "name@example.com", emailIssue = EmailIssue.Invalid), {}, {}, {}, {}, {}, {}, onGoogle = {}, onApple = {})
+    LoginContent(LoginState(email = "name@example.com", failure = LoginFailure.EmailNotConfirmed), {}, {}, {}, {}, {}, {}, onGoogle = {}, onApple = {})
 }
 
 @Preview @Composable private fun LoginLightPreview() = LoginPreview(false)

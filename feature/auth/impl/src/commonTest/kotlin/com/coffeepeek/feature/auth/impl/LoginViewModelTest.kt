@@ -74,6 +74,7 @@ class LoginViewModelTest {
     @Test fun aFailureIsClassifiedStaysOnTheScreenAndSendsNoEvent() = runTest(dispatcher) {
         val cases = mapOf(
             "Invalid credentials" to LoginFailure.WrongCredentials,
+            "Email is not confirmed" to LoginFailure.EmailNotConfirmed,
             "Connection timeout" to LoginFailure.Network,
             "boom" to LoginFailure.Unknown,
         )

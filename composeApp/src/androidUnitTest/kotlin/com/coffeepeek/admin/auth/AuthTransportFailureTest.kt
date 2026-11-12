@@ -29,8 +29,9 @@ import kotlin.test.assertTrue
 class AuthTransportFailureTest {
     private fun loginCopy(failure: LoginFailure) = when (failure) {
         LoginFailure.WrongCredentials -> "Неверный email или пароль"
+        LoginFailure.EmailNotConfirmed -> "Подтвердите почту по ссылке из письма и войдите снова. Если письма нет, проверьте папку «Спам»."
         LoginFailure.Network -> "Не удалось подключиться. Проверьте интернет-соединение"
-        LoginFailure.Unknown -> "Не удалось войти. Проверьте email и пароль"
+        LoginFailure.Unknown -> "Не удалось войти. Попробуйте ещё раз."
     }
 
     @get:Rule val temporary = TemporaryFolder()
@@ -58,7 +59,7 @@ class AuthTransportFailureTest {
 
     @Test fun transportFailuresReachTheUserAsWordedHere() {
         val network = "Не удалось подключиться. Проверьте интернет-соединение"
-        val generic = "Не удалось войти. Проверьте email и пароль"
+        val generic = "Не удалось войти. Попробуйте ещё раз."
         val cases = linkedMapOf<String, Pair<() -> Throwable, String>>(
             "I/O failure" to ({ IOException("Sandbox offline scenario") } to generic),
             "unknown host" to ({ UnknownHostException("api.example") } to generic),
