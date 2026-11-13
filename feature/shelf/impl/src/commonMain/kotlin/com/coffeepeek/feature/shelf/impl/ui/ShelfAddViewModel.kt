@@ -13,6 +13,7 @@ import com.coffeepeek.feature.shelf.impl.ui.compose.model.*
 import com.coffeepeek.feature.shelf.impl.ui.compose.model.ShelfScannerStatus.*
 import com.coffeepeek.feature.shelf.impl.ui.data.ShelfCalendar
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -38,9 +39,14 @@ internal class ShelfAddViewModel(
 
     init {
         viewModelScope.launch {
-            val readiness = scanner.readiness()
-            if (readiness is BagScannerReadiness.NeedsDownload) updateState { copy(scanner = NeedsDownload(readiness.downloadBytes)) }
-            else ready()
+            val readiness = try { scanner.readiness() } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (_: Exception) { null }
+            when (readiness) {
+                is BagScannerReadiness.NeedsDownload -> updateState { copy(scanner = NeedsDownload(readiness.downloadBytes)) }
+                BagScannerReadiness.Ready -> ready()
+                null -> updateState { copy(scanner = DownloadFailed) }
+            }
         }
     }
 
@@ -72,44 +78,75 @@ internal class ShelfAddViewModel(
             else -> return
         }
         updateState { copy(scanner = Downloading(0, total)) }
-        val result = scanner.prepare { done, all ->
+        val result = try { scanner.prepare { done, all ->
             // A few hundred updates are enough for a progress bar; one per buffer would be thousands.
             updateState {
                 val shown = scanner as? Downloading
                 if (shown == null || (done - shown.done) * 200 < all && done != all) this else copy(scanner = Downloading(done, all))
             }
-        }
+        } } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (failure: Exception) { Result.failure(failure) }
+        result.exceptionOrNull()?.let { if (it is CancellationException) throw it }
         if (result.isSuccess) ready() else updateState { copy(scanner = DownloadFailed) }
     }
 
-    /** The camera opens as soon as the scanner can run, as from the "+" sheet straight to the viewfinder. */
-    private fun ready() = updateState { copy(scanner = Ready, step = if (step == ShelfAddStep.Intro) ShelfAddStep.Camera else step) }
+    /** A prepared scanner resumes the exact photo chosen before preparation. */
+    private fun ready() {
+        updateState { copy(scanner = Ready) }
+        currentState.photo?.takeIf { currentState.step == ShelfAddStep.Preparing }?.let(::scanReady)
+    }
 
     private fun openCamera() {
         val state = currentState
-        if (state.scanner != Ready || state.saving || state.step == ShelfAddStep.Camera) return
-        beforeCamera = state.step.takeIf { state.photo != null && it != ShelfAddStep.Scanning && it != ShelfAddStep.Revealing }
+        if (state.saving || state.step == ShelfAddStep.Camera) return
+        beforeCamera = state.step.takeIf { it != ShelfAddStep.Scanning && it != ShelfAddStep.Revealing } ?: ShelfAddStep.Intro
         updateState { copy(step = ShelfAddStep.Camera) }
     }
 
     private suspend fun closeCamera() {
         if (currentState.step != ShelfAddStep.Camera) return
-        val back = beforeCamera ?: return sendEvent(ShelfAddEvent.Close)
+        val back = beforeCamera ?: ShelfAddStep.Intro
+        beforeCamera = null
         updateState { copy(step = back) }
+        if (back == ShelfAddStep.Preparing && currentState.scanner == Ready) currentState.photo?.let(::scanReady)
     }
 
     private fun scan(photo: ShelfPhoto) {
-        if (currentState.scanner != Ready || currentState.saving) return
+        if (currentState.saving) return
         scan?.cancel()
-        updateState { copy(step = ShelfAddStep.Scanning, photo = photo, stagesDone = emptySet(), liveFrame = null, result = null, failure = null) }
+        updateState { copy(step = if (scanner == Ready) ShelfAddStep.Scanning else ShelfAddStep.Preparing,
+            photo = photo, stagesDone = emptySet(), liveFrame = null, result = null, failure = null, cardLanding = false) }
+        if (currentState.scanner == Ready) scanReady(photo)
+    }
+
+    private fun scanReady(photo: ShelfPhoto) {
+        if (currentState.photo !== photo || currentState.step !in setOf(ShelfAddStep.Scanning, ShelfAddStep.Preparing)) return
+        updateState { copy(step = ShelfAddStep.Scanning, stagesDone = emptySet(), liveFrame = null, result = null, failure = null) }
         scan = viewModelScope.launch {
             val outcome = scanner.scan(photo.bytes,
                 onStage = { stage -> updateState { if (this.photo === photo) copy(stagesDone = stagesDone + stage) else this } },
                 onFront = { frame -> updateState { if (this.photo === photo) copy(liveFrame = frame) else this } })
-            updateState { if (this.photo === photo) withOutcome(outcome) else this }
+            outcome.exceptionOrNull()?.let { if (it is CancellationException) throw it }
+            completeScan(photo, outcome)
             // The peel animation ends the reveal; should it never finish (an undecodable card), the form opens anyway.
             delay(REVEAL_LIMIT_MILLIS)
             updateState { if (this.photo === photo) revealed() else this }
+        }
+    }
+
+    private suspend fun completeScan(photo: ShelfPhoto, outcome: Result<BagScanResult>) {
+        val missing = (outcome.exceptionOrNull() as? BagScanFailure)?.issue == BagScanIssue.ModelMissing
+        val readiness = if (missing) try { scanner.readiness() } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (_: Exception) { null } else null
+        updateState {
+            when {
+                this.photo !== photo -> this
+                readiness is BagScannerReadiness.NeedsDownload -> copy(step = ShelfAddStep.Preparing,
+                    scanner = NeedsDownload(readiness.downloadBytes), failure = BagScanIssue.ModelMissing)
+                else -> withOutcome(outcome)
+            }
         }
     }
 
@@ -150,7 +187,9 @@ internal class ShelfAddViewModel(
             updateState { copy(saving = false, confirmDuplicate = true) }
             return
         }
-        repository.add(details, card)
+        val saved = repository.add(details, card)
+        saved.exceptionOrNull()?.let { if (it is CancellationException) throw it }
+        saved
             .onSuccess { bag ->
                 arrivals.arrived(bag.id)
                 updateState { copy(saving = false) }

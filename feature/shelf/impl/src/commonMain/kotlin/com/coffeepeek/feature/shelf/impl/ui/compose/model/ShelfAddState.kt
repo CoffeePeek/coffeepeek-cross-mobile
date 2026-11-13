@@ -9,9 +9,9 @@ import com.coffeepeek.feature.shelf.impl.ui.data.ShelfDay
  * Get the scanner ready, take or pick a photo, watch it being scanned, then either retake it or see the card peel off the
  * photo ([Revealing]) and fill in the bag.
  */
-internal enum class ShelfAddStep { Intro, Camera, Scanning, Revealing, Retake, Form }
+internal enum class ShelfAddStep { Intro, Camera, Preparing, Scanning, Revealing, Retake, Form }
 
-/** The scanner's models: U2-Net-p is bundled, MI-GAN is downloaded once before the first scan. */
+/** The scanner's models are prepared only when a selected photo needs automatic processing. */
 internal sealed interface ShelfScannerStatus {
     data object Checking : ShelfScannerStatus
     data object Ready : ShelfScannerStatus
