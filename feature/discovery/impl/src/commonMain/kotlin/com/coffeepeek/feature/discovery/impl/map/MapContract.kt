@@ -34,6 +34,7 @@ internal data class MapState(
     val cardDetails: Map<String, MapShopDetails> = emptyMap(),
     val isLoadingDetails: Boolean = false,
     val isLoading: Boolean = false,
+    val viewportFailed: Boolean = false,
     val query: String = "",
     val suggestions: List<ShopSummary> = emptyList(),
     val isSearchLoading: Boolean = false,
@@ -66,6 +67,7 @@ internal sealed interface MapAction {
     data class SelectSuggestion(val shopId: String) : MapAction
     data object RequestMyLocation : MapAction
     data object Interact : MapAction
+    data object RetryViewport : MapAction
     data object LocationGranted : MapAction
     data class MyLocationFound(val point: Coordinates) : MapAction
     data object LocationDenied : MapAction

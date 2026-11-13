@@ -22,7 +22,8 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 /** Authenticated custom-cover bytes stay in this feature; shop photos use the public image loader. */
 @Composable
 internal fun SavedCollectionCoverImage(summary: SavedCollectionSummary?, input: CollectionCoverInput?,
-    repository: SavedCollectionsRepository, decode: CollectionPhotoDecoder, modifier: Modifier) {
+    repository: SavedCollectionsRepository, decode: CollectionPhotoDecoder, modifier: Modifier,
+    resolvedUrls: MutableMap<String, String> = mutableMapOf()) {
     var image by remember(summary?.id, summary?.revision, summary?.itemCount, summary?.cover, input) { mutableStateOf<ImageBitmap?>(null) }
     var photoUrl by remember(summary?.id, summary?.revision, summary?.itemCount, summary?.cover, input) { mutableStateOf<String?>(null) }
     LaunchedEffect(summary?.id, summary?.revision, summary?.itemCount, summary?.cover, input) {
@@ -58,12 +59,19 @@ private suspend fun storedCoverBytes(summary: SavedCollectionSummary, repository
     return result.getOrNull()
 }
 
-internal suspend fun defaultShopPhotoUrl(summary: SavedCollectionSummary, repository: SavedCollectionsRepository): String? {
+internal suspend fun defaultShopPhotoUrl(summary: SavedCollectionSummary, repository: SavedCollectionsRepository,
+    resolvedUrls: MutableMap<String, String> = mutableMapOf()): String? {
     if (summary.itemCount == 0) return null
+    // Screen-scoped dedupe for the heavy detail fetch: one request per (id, revision) per screen.
+    val cacheKey = "${summary.id}:${summary.revision}"
+    resolvedUrls[cacheKey]?.let { return it }
     val detail = if (summary.visibility == SavedCollectionVisibility.Private) repository.owned(summary.id)
         else repository.public(summary.id)
     val collection = detail.getOrElse { failure -> if (failure is CancellationException) throw failure else return null }
-    return collection.places.firstOrNull { it.kind == CollectionPlaceKind.CoffeeShop }?.photoUrl?.takeIf(String::isNotBlank)
+    val url = collection.places.firstOrNull { it.kind == CollectionPlaceKind.CoffeeShop }?.photoUrl?.takeIf(String::isNotBlank)
+        ?: return null
+    resolvedUrls[cacheKey] = url
+    return url
 }
 
 @Composable

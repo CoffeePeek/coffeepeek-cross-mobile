@@ -99,6 +99,9 @@ internal class MapViewModel(
             is MapAction.SelectSuggestion -> selectSuggestion(action.shopId)
             MapAction.Interact -> requestLocationPermission()
             MapAction.RequestMyLocation -> requestLocationPermission(locate = true)
+            MapAction.RetryViewport -> currentState.pendingBounds?.let { bounds ->
+                onBoundsChanged(bounds, currentState.pendingZoom ?: currentState.activeZoom ?: return)
+            }
             MapAction.LocationGranted -> onLocationGranted()
             is MapAction.MyLocationFound -> onMyLocationFound(action.point)
             MapAction.LocationDenied -> onLocationDenied()
@@ -280,7 +283,7 @@ internal class MapViewModel(
         loadedArea = null
         boundsJob = viewModelScope.launch {
             delay(BOUNDS_DEBOUNCE_MS)
-            updateState { copy(isLoading = true, activeBounds = bounds, activeZoom = zoom) }
+            updateState { copy(isLoading = true, viewportFailed = false, activeBounds = bounds, activeZoom = zoom) }
             requestBounds(bounds.expandedForPrefetch(), zoom, currentState.criteria)
         }
     }
@@ -299,7 +302,7 @@ internal class MapViewModel(
             applyContent(content, criteria.filters.cityId)
         }.onFailure {
             analytics.mapInteracted(MapInteraction.LoadFailed, durationMs = started.elapsedNow().inWholeMilliseconds)
-            updateState { copy(isLoading = false) }
+            updateState { copy(isLoading = false, viewportFailed = true) }
         }
     }
 
