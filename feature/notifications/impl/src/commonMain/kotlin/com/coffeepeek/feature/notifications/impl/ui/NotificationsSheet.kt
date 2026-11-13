@@ -35,6 +35,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
 import com.coffeepeek.core.designsystem.component.CoffeePeekRowSeparator
+import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.feature.notifications.api.*
@@ -100,7 +101,7 @@ private fun NotificationsHeader(onClose: () -> Unit) {
         Text(stringResource(Res.string.notifications_title), style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f).semantics { heading() })
         IconButton(onClick = onClose) {
-            Icon(CoffeePeekIcons.Close, stringResource(Res.string.notifications_close))
+            CoffeePeekIcon(CoffeePeekIcons.Close, stringResource(Res.string.notifications_close))
         }
     }
 }

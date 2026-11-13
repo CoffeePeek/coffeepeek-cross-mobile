@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -18,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.component.CoffeePeekContentCard
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
@@ -35,14 +35,14 @@ internal fun ShopReportIssueSection(onReport: () -> Unit, modifier: Modifier = M
             .heightIn(min = 56.dp).padding(CoffeePeekDimens.spacing4),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3)) {
-            Icon(CoffeePeekIcons.Info, null, Modifier.size(24.dp))
+            CoffeePeekIcon(CoffeePeekIcons.Info, null, Modifier.size(24.dp))
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing1)) {
                 Text(stringResource(Res.string.shop_report_prompt), style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.SemiBold)
                 Text(stringResource(Res.string.shop_report_hint), style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
-            Icon(CoffeePeekIcons.ChevronRight, null, Modifier.size(20.dp),
+            CoffeePeekIcon(CoffeePeekIcons.ChevronRight, null, Modifier.size(20.dp),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }

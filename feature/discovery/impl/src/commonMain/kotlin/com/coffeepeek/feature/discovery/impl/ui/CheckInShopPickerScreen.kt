@@ -130,7 +130,7 @@ private fun PickerHeader(onClose: () -> Unit) {
         actions = {
             CoffeePeekGlassIconButton(onClick = onClose,
                 contentDescription = stringResource(Res.string.discovery_picker_close_description)) {
-                Icon(CoffeePeekIcons.Close, null, Modifier.size(20.dp), tint = MaterialTheme.colorScheme.onSurface)
+                CoffeePeekIcon(CoffeePeekIcons.Close, null, Modifier.size(20.dp), tint = MaterialTheme.colorScheme.onSurface)
             }
         })
 }

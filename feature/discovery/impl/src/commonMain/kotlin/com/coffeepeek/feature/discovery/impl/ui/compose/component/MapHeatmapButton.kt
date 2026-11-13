@@ -1,13 +1,13 @@
 package com.coffeepeek.feature.discovery.impl.ui.compose.component
 
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.unit.dp
+import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.modifier.CoffeePeekGlassIconButton
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
@@ -23,7 +23,7 @@ internal fun MapHeatmapButton(enabled: Boolean, onClick: () -> Unit) {
         stringResource(if (enabled) Res.string.discovery_heatmap_hide else Res.string.discovery_heatmap_show),
         Modifier.semantics { selected = enabled },
     ) {
-        Icon(CoffeePeekIcons.Fire, null, Modifier.size(26.dp),
+        CoffeePeekIcon(CoffeePeekIcons.Fire, null, Modifier.size(26.dp),
             tint = if (enabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface)
     }
 }

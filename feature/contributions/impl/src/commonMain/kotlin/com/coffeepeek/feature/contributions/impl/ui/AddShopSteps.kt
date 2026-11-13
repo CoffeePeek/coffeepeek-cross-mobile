@@ -33,7 +33,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import com.coffeepeek.core.designsystem.component.CoffeePeekFilledIconButton as FilledIconButton
-import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.MaterialTheme
@@ -49,6 +48,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
+import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.feature.contributions.api.AddShopHost
@@ -114,7 +114,7 @@ private fun MapButton(resolving: Boolean, onClick: () -> Unit) {
             ),
         ) {
             if (resolving) CoffeePeekLoader(stringResource(Res.string.contributions_loading), Modifier.size(18.dp), strokeWidth = 2.dp)
-            else Icon(CoffeePeekIcons.Map, stringResource(Res.string.contributions_shop_pick_on_map), Modifier.size(20.dp))
+            else CoffeePeekIcon(CoffeePeekIcons.Map, stringResource(Res.string.contributions_shop_pick_on_map), Modifier.size(20.dp))
         }
     }
 }

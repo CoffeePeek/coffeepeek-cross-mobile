@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -62,12 +61,12 @@ private fun CollectionFormats(state: CollectionsState, onAction: (CollectionsAct
 private fun CollectionPosterPages(page: Int, total: Int, enabled: Boolean, onPage: (Int) -> Unit) {
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
         CoffeePeekPlainIconButton(onClick = { onPage(page - 1) }, enabled = enabled && page > 0) {
-            Icon(CoffeePeekIcons.ChevronLeft, stringResource(Res.string.collections_previous_page))
+            CoffeePeekIcon(CoffeePeekIcons.ChevronLeft, stringResource(Res.string.collections_previous_page))
         }
         Text(stringResource(Res.string.collections_page, page + 1, total), style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant)
         CoffeePeekPlainIconButton(onClick = { onPage(page + 1) }, enabled = enabled && page + 1 < total) {
-            Icon(CoffeePeekIcons.ChevronRight, stringResource(Res.string.collections_next_page))
+            CoffeePeekIcon(CoffeePeekIcons.ChevronRight, stringResource(Res.string.collections_next_page))
         }
     }
 }

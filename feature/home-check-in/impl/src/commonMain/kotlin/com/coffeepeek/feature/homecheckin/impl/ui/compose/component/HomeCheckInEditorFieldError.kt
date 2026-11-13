@@ -14,6 +14,7 @@ import androidx.compose.ui.graphics.luminance
 import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import androidx.compose.ui.semantics.*
 import androidx.compose.ui.unit.dp
+import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 
@@ -23,7 +24,7 @@ internal fun HomeCheckInEditorFieldError(message: String) {
         lerp(MaterialTheme.colorScheme.error, Color.White, 0.3f) else MaterialTheme.colorScheme.error
     Row(Modifier.fillMaxWidth().semantics { liveRegion = LiveRegionMode.Polite },
         horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.Top) {
-        Icon(CoffeePeekIcons.Error, null, Modifier.size(18.dp), tint = color)
+        CoffeePeekIcon(CoffeePeekIcons.Error, null, Modifier.size(18.dp), tint = color)
         Text(message, style = MaterialTheme.typography.bodySmall, color = color)
     }
 }

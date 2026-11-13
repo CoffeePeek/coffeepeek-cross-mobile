@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -17,6 +16,7 @@ import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.component.CoffeePeekIconButton
 import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
+import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.feature.profile.api.ProfileAuthor
 import com.coffeepeek.feature.profile.api.ProfileAuthorActions
@@ -31,7 +31,7 @@ internal fun PublicProfileTopBar(profile: PublicProfile?, viewingOwn: Boolean, o
     authorActions: ProfileAuthorActions, callbacks: PublicProfileCallbacks) {
     Box(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp).height(48.dp), contentAlignment = Alignment.Center) {
         if (callbacks.onBack != null) CoffeePeekIconButton(callbacks.onBack, Modifier.align(Alignment.CenterStart)) {
-            Icon(CoffeePeekIcons.ChevronLeft, stringResource(Res.string.profile_back), Modifier.size(23.dp))
+            CoffeePeekIcon(CoffeePeekIcons.ChevronLeft, stringResource(Res.string.profile_back), Modifier.size(23.dp))
         }
         Text(stringResource(Res.string.profile_title),
             Modifier.fillMaxWidth().padding(start = if (callbacks.onBack == null) 0.dp else 56.dp, end = 56.dp),
@@ -57,7 +57,7 @@ private fun PublicProfileTopBarActions(profile: PublicProfile?, viewingOwn: Bool
     if (!viewingOwn) PublicProfileActions(profile.isBlockedByViewer, share,
         { if (profile.isBlockedByViewer) authorActions.requestUnblock(author) else authorActions.requestBlock(author) })
     else if (share != null) CoffeePeekIconButton(share) {
-        Icon(CoffeePeekIcons.Share, stringResource(Res.string.profile_share), Modifier.size(21.dp))
+        CoffeePeekIcon(CoffeePeekIcons.Share, stringResource(Res.string.profile_share), Modifier.size(21.dp))
     }
 }
 

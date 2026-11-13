@@ -21,7 +21,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import com.coffeepeek.feature.shop.api.ShopExposure
@@ -39,6 +38,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
@@ -121,10 +121,10 @@ private fun ScheduleHeader(status: String, expanded: Boolean, onToggle: () -> Un
             role = Role.Button, onClickLabel = toggleLabel, onClick = onToggle),
         horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing4),
         verticalAlignment = Alignment.CenterVertically) {
-        Icon(CoffeePeekIcons.Time, null, Modifier.size(24.dp))
+        CoffeePeekIcon(CoffeePeekIcons.Time, null, Modifier.size(24.dp))
         Text(status, Modifier.weight(1f), style = MaterialTheme.typography.bodyLarge,
             fontWeight = FontWeight.Medium, maxLines = 2, overflow = TextOverflow.Ellipsis)
-        Icon(CoffeePeekIcons.ChevronRight, null, Modifier.size(18.dp).rotate(rotation),
+        CoffeePeekIcon(CoffeePeekIcons.ChevronRight, null, Modifier.size(18.dp).rotate(rotation),
             tint = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
