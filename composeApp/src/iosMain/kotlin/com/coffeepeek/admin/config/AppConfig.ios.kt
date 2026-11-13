@@ -8,6 +8,7 @@ actual object AppConfig {
         get() = iosUpdateVersionCode(bundleString("CFBundleVersion"))
     actual val updatePlatform: String = "ios"
     actual val updateChannel: String? = null
+    actual val storeReviewsEnabled: Boolean = true
     actual val versionName: String
         get() = bundleString("CFBundleShortVersionString").ifBlank { "1.1.2" }
 

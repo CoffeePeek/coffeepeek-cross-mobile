@@ -51,6 +51,7 @@ internal fun DiscoveryTabContent(
     val context = DiscoveryRoasterContext(state.query, state.filters.roasterIds, state.filters.favoritesOnly)
     DiscoveryTabEffects(ui, state.showsDiscovery, analytics, callbacks, focus, onAction)
     DiscoveryReselectionEffect(ui, state.showsDiscovery, callbacks.reselections, onAction)
+    if (host.isVisible() && focus == null && isIdleDiscovery(state, ui, motion)) host.onIdle()
     BoxWithConstraints(modifier.fillMaxSize().onGloballyPositioned { ui.rootOrigin = it.positionInRoot() }) {
         val canvasSize = DpSize(maxWidth, maxHeight)
         DiscoverySearchLayer(state, ui, motion, host, roasters, context, bottomClearance,
@@ -74,6 +75,12 @@ internal fun DiscoveryTabContent(
         }
     }
 }
+
+private fun isIdleDiscovery(state: SearchState, ui: DiscoveryTabState, motion: DiscoveryTabMotion): Boolean =
+    state.showsDiscovery && !state.isLoading && !state.isRefreshing && state.error == null &&
+        !state.showFilters && !state.nearbyRequested && !state.locationUnavailable &&
+        !ui.showRoasters && !ui.mapExpanded && motion.expansion.value == 0f &&
+        !ui.list.isScrollInProgress && !ui.shops.isScrollInProgress
 
 @Composable
 private fun DiscoveryContinueCheckIn(onContinue: () -> Unit, modifier: Modifier = Modifier) {
