@@ -5,6 +5,7 @@ import com.coffeepeek.core.presentation.MviViewModel
 import com.coffeepeek.feature.discovery.api.DiscoveryAccount
 import com.coffeepeek.feature.discovery.api.DiscoveryAnalytics
 import com.coffeepeek.feature.discovery.api.DiscoveryCity
+import com.coffeepeek.feature.discovery.api.DiscoveryCitySelection
 import com.coffeepeek.feature.discovery.api.DiscoveryFavorites
 import com.coffeepeek.feature.discovery.api.DiscoveryGate
 import com.coffeepeek.feature.discovery.api.DiscoveryLocation
@@ -233,13 +234,14 @@ internal class SearchViewModel(
         if (changed && currentState.filters.favoritesOnly && cityReady) loadShops(reset = true)
     }
 
-    private fun onCity(cityId: String?) {
-        if (!cityReady || cityId == null || cityId == currentState.filters.cityId) return
+    private fun onCity(selection: DiscoveryCitySelection?) {
+        if (!cityReady || selection == null) return
+        val beforeQuery = currentState.criteria.searchQuery()
         val before = currentState.filters
-        cancelNearbyRequest()
-        updateState { copy(filters = filters.copy(cityId = cityId, nearbyOnly = false)) }
-        trackChange(before)
-        loadShops(reset = true)
+        if (selection.manual) cancelNearbyRequest()
+        updateState { copy(filters = filters.copy(cityId = selection.id, nearbyOnly = filters.nearbyOnly && !selection.manual)) }
+        if (selection.manual) trackChange(before)
+        if (beforeQuery != currentState.criteria.searchQuery()) loadShops(reset = true)
     }
 
     private fun onLocation(point: Coordinates?) {
@@ -281,10 +283,11 @@ internal class SearchViewModel(
     }
 
     private suspend fun applyCatalogs(catalogs: com.coffeepeek.feature.discovery.domain.model.DiscoveryCatalogs) {
-        val cityId = currentState.filters.cityId ?: city.resolve(catalogs.cities)
+        val resolvedCityId = city.resolve(catalogs.cities)
+        val cityId = city.selected.value?.id?.takeIf { id -> catalogs.cities.any { it.id == id } } ?: resolvedCityId
         updateState {
             copy(catalogs = catalogs, catalogLoadState = CatalogLoadState.Ready,
-                filters = filters.copy(cityId = filters.cityId ?: cityId))
+                filters = filters.copy(cityId = cityId))
         }
     }
 

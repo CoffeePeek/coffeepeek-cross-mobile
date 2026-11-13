@@ -56,14 +56,14 @@ internal class AppCityPort(
     private val catalogs: PublicDiscoveryCatalogs,
     private val preference: CityPreference,
 ) : CityPort {
-    override fun observeSelectedCityId(): Flow<String?> = preference.selectedCityId
+    override fun observeSelectedCityId(): Flow<String?> = preference.selected.map { it?.id }.distinctUntilChanged()
 
     override suspend fun loadCities(): Result<List<SettingsCity>> = catalogs.cities().map { cities ->
         preference.resolve(cities.map { it.id })
         cities.map { SettingsCity(it.id, it.name) }
     }
 
-    override fun select(cityId: String) = preference.select(cityId)
+    override suspend fun select(cityId: String) = preference.select(cityId)
 }
 
 /** Signed in = an active session that has a user id. */
