@@ -58,21 +58,12 @@ private suspend fun storedCoverBytes(summary: SavedCollectionSummary, repository
     return result.getOrNull()
 }
 
-/** Shared cache of resolved first-photo URLs: library grids call this once per card, and the
- * detail request behind it is heavy enough that a repeat per composition is worth avoiding. */
-private val resolvedShopPhotoUrls = mutableMapOf<String, String>()
-
 internal suspend fun defaultShopPhotoUrl(summary: SavedCollectionSummary, repository: SavedCollectionsRepository): String? {
     if (summary.itemCount == 0) return null
-    val cacheKey = "${summary.id}:${summary.revision}"
-    resolvedShopPhotoUrls[cacheKey]?.let { return it }
     val detail = if (summary.visibility == SavedCollectionVisibility.Private) repository.owned(summary.id)
         else repository.public(summary.id)
     val collection = detail.getOrElse { failure -> if (failure is CancellationException) throw failure else return null }
-    val url = collection.places.firstOrNull { it.kind == CollectionPlaceKind.CoffeeShop }?.photoUrl?.takeIf(String::isNotBlank)
-        ?: return null
-    resolvedShopPhotoUrls[cacheKey] = url
-    return url
+    return collection.places.firstOrNull { it.kind == CollectionPlaceKind.CoffeeShop }?.photoUrl?.takeIf(String::isNotBlank)
 }
 
 @Composable
