@@ -1,0 +1,5 @@
+<resources>
+    <string name="auth_back">Назад</string>
+    <string name="auth_login_no_account">Нет аккаунта?</string>
+    <string name="auth_login_register">Зарегистрироваться</string>
+</resources>

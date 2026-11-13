@@ -5,13 +5,13 @@ import com.coffeepeek.feature.auth.domain.PasswordIssue
 import com.coffeepeek.feature.auth.domain.RegistrationIssue
 import com.coffeepeek.feature.auth.domain.SocialFailure
 
-internal enum class RegisterStep { Email, Details, Success }
+internal enum class RegisterStep { Form, Success }
 
 /** A failed request: the server's own message when there was one, otherwise the screen shows its generic text. */
-internal data class RequestFailure(val message: String?)
+internal data class RequestFailure(val message: String?, val checkingEmail: Boolean = false)
 
 internal data class RegisterState(
-    val step: RegisterStep = RegisterStep.Email,
+    val step: RegisterStep = RegisterStep.Form,
     val name: String = "",
     val email: String = "",
     val password: String = "",
@@ -36,8 +36,6 @@ internal sealed interface RegisterAction {
     data class PasswordChanged(val value: String) : RegisterAction
     data class TermsChanged(val checked: Boolean) : RegisterAction
     data class AnalyticsChanged(val checked: Boolean) : RegisterAction
-    data object ContinueWithEmail : RegisterAction
-    data object ChangeEmail : RegisterAction
     data object Submit : RegisterAction
     data object AppleSignIn : RegisterAction
     data class GoogleToken(val idToken: String) : RegisterAction

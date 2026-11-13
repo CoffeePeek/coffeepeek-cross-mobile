@@ -1,9 +1,17 @@
 package com.coffeepeek.feature.auth.impl.ui
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material3.ButtonDefaults
 import com.coffeepeek.feature.auth.api.GoogleSignInLauncher
 import com.coffeepeek.feature.auth.impl.resources.Res
-import com.coffeepeek.feature.auth.impl.resources.auth_create_account
 import com.coffeepeek.feature.auth.impl.resources.auth_email_invalid
 import com.coffeepeek.feature.auth.impl.resources.auth_email_label
 import com.coffeepeek.feature.auth.impl.resources.auth_email_placeholder
@@ -12,29 +20,41 @@ import com.coffeepeek.feature.auth.impl.resources.auth_forgot_password
 import com.coffeepeek.feature.auth.impl.resources.auth_login
 import com.coffeepeek.feature.auth.impl.resources.auth_login_email_not_confirmed
 import com.coffeepeek.feature.auth.impl.resources.auth_login_network
-import com.coffeepeek.feature.auth.impl.resources.auth_login_subtitle
+import com.coffeepeek.feature.auth.impl.resources.auth_login_no_account
+import com.coffeepeek.feature.auth.impl.resources.auth_login_register
 import com.coffeepeek.feature.auth.impl.resources.auth_login_title
 import com.coffeepeek.feature.auth.impl.resources.auth_login_unknown
 import com.coffeepeek.feature.auth.impl.resources.auth_login_wrong_credentials
 import com.coffeepeek.feature.auth.impl.resources.auth_password_label
 import com.coffeepeek.feature.auth.impl.resources.auth_password_required
 import com.coffeepeek.feature.auth.impl.resources.auth_password_too_short
-import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextAlign
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
-import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
-import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
+import com.coffeepeek.core.designsystem.component.CoffeePeekTextButton
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.auth.domain.EmailIssue
 import com.coffeepeek.feature.auth.domain.LoginFailure
@@ -97,46 +117,97 @@ internal fun LoginContent(
     modifier: Modifier = Modifier,
     onApple: (() -> Unit)? = null,
 ) {
-    AuthScaffold(onClose = onClose, modifier = modifier, edgeToEdge = true) {
-        AuthHeading(stringResource(Res.string.auth_login_title), stringResource(Res.string.auth_login_subtitle))
+    val focus = LocalFocusManager.current
+    val keyboard = LocalSoftwareKeyboardController.current
+    val submit: () -> Unit = {
+        if (!state.signingIn) {
+            focus.clearFocus()
+            keyboard?.hide()
+            onSubmit()
+        }
+    }
+    AuthScaffold(stringResource(Res.string.auth_login_title), onClose, modifier) {
+        LoginFields(state, onEmail, onPassword, submit, onForgotPassword)
+        LoginFailureMessage(state.failure)
+        AuthPrimaryButton(text = stringResource(Res.string.auth_login), onClick = submit, loading = state.signingIn)
+        LoginRegistrationPrompt(onCreateAccount, enabled = !state.signingIn)
         if (onGoogle != null || onApple != null) {
-            SocialSignInButtons(onGoogle, onApple, !state.signingIn)
             AuthOrDivider()
+            SocialSignInButtons(onGoogle, onApple, !state.signingIn)
+            SocialFailureText(state.socialFailure)
         }
-        LoginFields(state, onEmail, onPassword)
-        SocialFailureText(state.socialFailure)
-        state.failure?.let { failure ->
-            Text(text = loginFailureText(failure), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
-        }
-        AuthFooterRow(text = stringResource(Res.string.auth_forgot_password), onClick = onForgotPassword)
-        AuthPrimaryButton(text = stringResource(Res.string.auth_login), onClick = onSubmit, loading = state.signingIn)
-        AuthFooterRow(text = stringResource(Res.string.auth_create_account), onClick = onCreateAccount)
     }
 }
 
 @Composable
-private fun LoginFields(state: LoginState, onEmail: (String) -> Unit, onPassword: (String) -> Unit) {
-    Column(verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing4)) {
+private fun LoginRegistrationPrompt(onRegister: () -> Unit, enabled: Boolean) {
+    val colors = MaterialTheme.colorScheme
+    FlowRow(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.Center,
+        itemVerticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = stringResource(Res.string.auth_login_no_account),
+            style = MaterialTheme.typography.bodyMedium,
+            color = colors.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+        )
+        CoffeePeekTextButton(
+            onClick = onRegister,
+            enabled = enabled,
+            colors = ButtonDefaults.textButtonColors(contentColor = colors.onSurface),
+        ) {
+            Text(
+                text = stringResource(Res.string.auth_login_register),
+                style = MaterialTheme.typography.labelLarge,
+                textAlign = TextAlign.Center,
+            )
+        }
+    }
+}
+
+@Composable
+private fun LoginFields(
+    state: LoginState, onEmail: (String) -> Unit, onPassword: (String) -> Unit, onSubmit: () -> Unit,
+    onForgotPassword: () -> Unit,
+) {
+    val password = remember { FocusRequester() }
+    val enabled = !state.signingIn
+    Column {
         AuthTextField(
             label = stringResource(Res.string.auth_email_label),
             value = state.email,
             onValueChange = onEmail,
             placeholder = stringResource(Res.string.auth_email_placeholder),
-            leadingIcon = CoffeePeekIcons.Email,
             errorText = state.emailIssue?.let { emailError(it) },
             next = true,
-            enabled = !state.signingIn,
+            enabled = enabled,
+            onNext = { password.requestFocus() },
         )
         AuthTextField(
             label = stringResource(Res.string.auth_password_label),
             value = state.password,
             onValueChange = onPassword,
             placeholder = stringResource(Res.string.auth_password_label),
-            leadingIcon = CoffeePeekIcons.Lock,
+            fieldModifier = Modifier.focusRequester(password),
             isPassword = true,
             errorText = state.passwordIssue?.let { passwordError(it) },
-            enabled = !state.signingIn,
+            enabled = enabled,
+            onDone = onSubmit,
+            labelAction = { AuthFieldLabelLink(stringResource(Res.string.auth_forgot_password), onForgotPassword, enabled) },
         )
+    }
+}
+
+@Composable
+private fun LoginFailureMessage(failure: LoginFailure?) {
+    val failureText = failure?.let { loginFailureText(it) }
+    AnimatedVisibility(visible = failureText != null, enter = expandVertically() + fadeIn(), exit = shrinkVertically() + fadeOut()) {
+        var lastFailureText by remember { mutableStateOf(failureText.orEmpty()) }
+        SideEffect { if (failureText != null) lastFailureText = failureText }
+        Text(failureText ?: lastFailureText, Modifier.semantics { liveRegion = LiveRegionMode.Polite },
+            style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
     }
 }
 
@@ -162,9 +233,15 @@ private fun loginFailureText(failure: LoginFailure): String = stringResource(
 )
 
 @Composable
-private fun LoginPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
-    LoginContent(LoginState(email = "name@example.com", failure = LoginFailure.EmailNotConfirmed), {}, {}, {}, {}, {}, {}, onGoogle = {}, onApple = {})
+private fun LoginPreview(dark: Boolean, state: LoginState = LoginState(), showSocial: Boolean = false) =
+    CoffeePeekTheme(darkTheme = dark) {
+    LoginContent(state, {}, {}, {}, {}, {}, {}, onGoogle = if (showSocial) ({}) else null,
+        onApple = if (showSocial) ({}) else null)
 }
 
 @Preview @Composable private fun LoginLightPreview() = LoginPreview(false)
 @Preview @Composable private fun LoginDarkPreview() = LoginPreview(true)
+@Preview @Composable private fun LoginFailureLightPreview() =
+    LoginPreview(false, LoginState(email = "name@example.com", failure = LoginFailure.EmailNotConfirmed), showSocial = true)
+@Preview @Composable private fun LoginFailureDarkPreview() =
+    LoginPreview(true, LoginState(email = "name@example.com", failure = LoginFailure.EmailNotConfirmed), showSocial = true)

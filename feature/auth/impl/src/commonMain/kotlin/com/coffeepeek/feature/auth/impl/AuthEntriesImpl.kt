@@ -42,7 +42,7 @@ fun createPasswordRecoveryEntry(repository: AuthRepository): PasswordRecoveryEnt
     }
 }
 
-/** «Регистрация»: e-mail check, details, "check your mail". */
+/** «Регистрация»: account form followed by email confirmation. */
 fun createRegisterEntry(repository: AuthRepository, analytics: AuthAnalytics, google: GoogleSignInLauncher?, apple: AppleAuthorizer? = null): RegisterEntry = object : RegisterEntry {
     @Composable
     override fun Content(onClose: () -> Unit, onGoToLogin: () -> Unit, onSignedIn: () -> Unit, modifier: Modifier) {
