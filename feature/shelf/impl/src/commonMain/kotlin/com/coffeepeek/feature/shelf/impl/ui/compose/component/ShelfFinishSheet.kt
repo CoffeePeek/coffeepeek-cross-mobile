@@ -14,7 +14,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import com.coffeepeek.core.designsystem.component.CoffeePeekTextButton as TextButton
@@ -40,6 +39,7 @@ import com.coffeepeek.core.designsystem.component.CoffeePeekButton
 import com.coffeepeek.core.designsystem.component.CoffeePeekRating
 import com.coffeepeek.core.designsystem.component.CoffeePeekRatingSize
 import com.coffeepeek.core.designsystem.component.CoffeePeekSwipeDismissModalBottomSheet
+import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
@@ -122,7 +122,7 @@ private fun ShelfVerdictChip(
     Row(modifier.heightIn(min = 52.dp).clip(CircleShape).background(fill).border(1.5.dp, color.copy(alpha = if (selected) 1f else 0.45f), CircleShape)
         .toggleable(selected, role = Role.Checkbox) { onClick() }.padding(horizontal = CoffeePeekDimens.spacing3),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2, Alignment.CenterHorizontally)) {
-        Icon(icon, null, Modifier.size(20.dp), tint = if (selected) onColor else color)
+        CoffeePeekIcon(icon, null, Modifier.size(20.dp), tint = if (selected) onColor else color)
         Text(text, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, color = content, maxLines = 1,
             overflow = TextOverflow.Ellipsis)
     }

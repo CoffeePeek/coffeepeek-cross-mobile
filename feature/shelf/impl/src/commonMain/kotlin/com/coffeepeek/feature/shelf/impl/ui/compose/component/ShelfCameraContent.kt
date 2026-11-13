@@ -30,7 +30,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.selection.toggleable
-import androidx.compose.material3.Icon
 import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
 import com.coffeepeek.core.designsystem.component.CoffeePeekIconButton as IconButton
 import androidx.compose.material3.MaterialTheme
@@ -65,6 +64,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.coffeepeek.core.designsystem.component.CoffeePeekButton
+import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
@@ -140,7 +140,7 @@ private fun ShelfFocusRing(focus: ShelfCameraFocus) {
 private fun ShelfCameraTopBar(onClose: () -> Unit, onTips: () -> Unit) {
     Row(Modifier.fillMaxWidth().padding(horizontal = CoffeePeekDimens.spacing2), verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween) {
-        IconButton(onClose) { Icon(CoffeePeekIcons.Close, stringResource(Res.string.shelf_camera_close), tint = Color.White) }
+        IconButton(onClose) { CoffeePeekIcon(CoffeePeekIcons.Close, stringResource(Res.string.shelf_camera_close), tint = Color.White) }
         TextButton(onTips) { Text(stringResource(Res.string.shelf_camera_how), color = Color.White, fontWeight = FontWeight.SemiBold) }
     }
 }
@@ -200,7 +200,7 @@ private fun ShelfCameraShutterBar(ready: Boolean, capturing: Boolean, torchAvail
         val gallery = stringResource(Res.string.shelf_camera_gallery)
         Box(Modifier.size(48.dp).clip(RoundedCornerShape(12.dp)).border(2.dp, Color.White.copy(alpha = 0.7f), RoundedCornerShape(12.dp))
             .background(Scrim).clickable(role = Role.Button, onClickLabel = gallery, onClick = actions.onGallery),
-            contentAlignment = Alignment.Center) { Icon(CoffeePeekIcons.Gallery, gallery, tint = Color.White) }
+            contentAlignment = Alignment.Center) { CoffeePeekIcon(CoffeePeekIcons.Gallery, gallery, tint = Color.White) }
         ShelfShutter(ready, capturing, actions.onShutter)
         ShelfTorchButton(torchAvailable, torch, actions.onTorch)
     }
@@ -285,7 +285,7 @@ private fun ShelfCameraTips(modifier: Modifier, onClose: () -> Unit) {
             Text(stringResource(Res.string.shelf_camera_how), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
             listOf(Res.string.shelf_scan_tip_whole, Res.string.shelf_scan_tip_straight, Res.string.shelf_scan_tip_clean).forEach {
                 Row(horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2), verticalAlignment = Alignment.CenterVertically) {
-                    Icon(CoffeePeekIcons.CheckCircle, null, Modifier.size(20.dp), tint = MaterialTheme.colorScheme.primary)
+                    CoffeePeekIcon(CoffeePeekIcons.CheckCircle, null, Modifier.size(20.dp), tint = MaterialTheme.colorScheme.primary)
                     Text(stringResource(it), style = MaterialTheme.typography.bodyMedium)
                 }
             }

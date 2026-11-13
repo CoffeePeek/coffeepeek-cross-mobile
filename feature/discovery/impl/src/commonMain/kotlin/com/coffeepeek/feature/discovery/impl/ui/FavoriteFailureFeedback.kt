@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
@@ -26,6 +25,7 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.component.CoffeePeekContentCard
 import com.coffeepeek.core.designsystem.component.CoffeePeekIconButton
+import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 
@@ -52,7 +52,7 @@ private fun FavoriteFailureNotice(message: String, onDismiss: () -> Unit) {
             Text(message, Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurface)
             CoffeePeekIconButton(onDismiss) {
-                Icon(CoffeePeekIcons.Close, stringResource(Res.string.discovery_message_dismiss), Modifier.size(20.dp))
+                CoffeePeekIcon(CoffeePeekIcons.Close, stringResource(Res.string.discovery_message_dismiss), Modifier.size(20.dp))
             }
         }
     }

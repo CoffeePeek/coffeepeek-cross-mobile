@@ -4,7 +4,6 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -52,7 +51,7 @@ fun CoffeePeekCatalogSuggestionCard(
         }
         Spacer(Modifier.height(CoffeePeekDimens.spacing2))
         TextButton(onAdd, contentPadding = PaddingValues(horizontal = 0.dp, vertical = CoffeePeekDimens.spacing2)) {
-            Icon(CoffeePeekIcons.Add, contentDescription = null, Modifier.size(20.dp))
+            CoffeePeekIcon(CoffeePeekIcons.Add, contentDescription = null, Modifier.size(20.dp))
             Spacer(Modifier.width(CoffeePeekDimens.spacing2))
             Text(actionLabel)
         }

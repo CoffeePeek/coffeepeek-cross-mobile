@@ -20,7 +20,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import com.coffeepeek.core.designsystem.component.CoffeePeekScaffold as Scaffold
 import androidx.compose.material3.Surface
@@ -42,6 +41,7 @@ import com.coffeepeek.core.designsystem.component.CoffeePeekGroupSection
 import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
 import com.coffeepeek.core.designsystem.component.CoffeePeekRowSeparator
 import com.coffeepeek.core.designsystem.component.CoffeePeekTopBar
+import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
@@ -99,7 +99,7 @@ private fun SectionRow(section: ChangeSection, onPick: (ChangeSection) -> Unit) 
             Text(section.title(), style = MaterialTheme.typography.bodyLarge)
             Text(section.hint(), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
-        Icon(CoffeePeekIcons.ChevronRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp))
+        CoffeePeekIcon(CoffeePeekIcons.ChevronRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp))
     }
 }
 

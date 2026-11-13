@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -32,7 +31,7 @@ fun CoffeePeekLikeIcon(
 ) {
     val color = coffeePeekLikeColor(selected, overImage, MaterialTheme.colorScheme.onSurface)
     val alpha = if (enabled) 1f else 0.38f
-    Icon(if (selected) CoffeePeekIcons.FavoriteFilled else CoffeePeekIcons.Favorite,
+    CoffeePeekIcon(if (selected) CoffeePeekIcons.FavoriteFilled else CoffeePeekIcons.Favorite,
         contentDescription, modifier.size(size), tint = color.copy(alpha = alpha))
 }
 

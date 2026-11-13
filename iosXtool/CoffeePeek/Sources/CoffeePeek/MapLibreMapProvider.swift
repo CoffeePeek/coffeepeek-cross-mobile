@@ -1,6 +1,5 @@
 import ComposeApp
 import Foundation
-import CoreText
 import MapLibre
 import UIKit
 
@@ -15,7 +14,6 @@ final class MapLibreMapProvider: NSObject, IosNativeMapProvider, MLNMapViewDeleg
     private static let zoneLine = "cp-zones-line"
     private static let zoneLabels = "cp-zone-labels"
     private let images = NSCache<NSString, UIImage>()
-    private var clusterFont: UIFont?
 
     func createMapView() -> UIView {
         let map = CoffeeMapView(frame: .zero, styleURL: Self.lightStyle)
@@ -424,26 +422,9 @@ final class MapLibreMapProvider: NSObject, IosNativeMapProvider, MLNMapViewDeleg
         return image
     }
 
-    private func clusterTypeface() -> UIFont {
-        if let clusterFont { return clusterFont }
-        let root = Bundle.main.bundlePath
-        let directories = [root + "/compose-resources", root, root + "/Frameworks/ComposeApp.framework"]
-        let paths = directories.map { $0 + "/composeResources/coffeepeek.composeapp.generated.resources/font/manrope_extrabold.ttf" }
-        var loaded: UIFont?
-        if let path = paths.first(where: { FileManager.default.fileExists(atPath: $0) }),
-           let provider = CGDataProvider(url: URL(fileURLWithPath: path) as CFURL), let font = CGFont(provider),
-           let name = font.postScriptName {
-            CTFontManagerRegisterGraphicsFont(font, nil)
-            loaded = UIFont(name: name as String, size: 12)
-        }
-        let result = loaded ?? UIFont.systemFont(ofSize: 12, weight: .heavy)
-        clusterFont = result
-        return result
-    }
-
     private func drawClusterCount(_ label: String, side: CGFloat, dark: Bool) {
         let attributes: [NSAttributedString.Key: Any] = [
-            .font: clusterTypeface(),
+            .font: UIFont.systemFont(ofSize: 12, weight: .heavy),
             .foregroundColor: UIColor(hex: dark ? "#FFFFFF" : "#2D241F"), .kern: -0.24,
         ]
         let text = label as NSString

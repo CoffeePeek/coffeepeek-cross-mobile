@@ -4,7 +4,6 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -71,7 +70,7 @@ private fun ProfileDrinkFavorite(item: PublicProfileFavorite, image: ProfileImag
             Box(Modifier.fillMaxWidth().aspectRatio(2f).background(MaterialTheme.colorScheme.surfaceVariant),
                 contentAlignment = Alignment.Center) {
                 if (!item.imageUrl.isNullOrBlank()) image(item.imageUrl!!, item.title, Modifier.fillMaxSize())
-                else Icon(CoffeePeekIcons.Coffee, null, Modifier.size(48.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                else CoffeePeekIcon(CoffeePeekIcons.Coffee, null, Modifier.size(48.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
                 CoffeePeekLikeBadge(true, stringResource(Res.string.profile_favorite_saved),
                     Modifier.align(Alignment.TopEnd).padding(CoffeePeekDimens.spacing3).size(40.dp))
             }

@@ -3,7 +3,6 @@ package com.coffeepeek.core.designsystem.modifier
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.MaterialTheme
@@ -25,6 +24,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.component.LocalCoffeePeekNativeControlsPresenter
+import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.core.designsystem.component.CoffeePeekIconButton
@@ -112,7 +112,7 @@ private fun CoffeePeekGlassIconButtonPreviewContent(darkTheme: Boolean, opaque: 
         CoffeePeekTheme(darkTheme = darkTheme) {
             Surface {
                 CoffeePeekGlassIconButton({}, contentDescription = "Close", hazeState = null) {
-                    Icon(CoffeePeekIcons.Close, contentDescription = null)
+                    CoffeePeekIcon(CoffeePeekIcons.Close, contentDescription = null)
                 }
             }
         }

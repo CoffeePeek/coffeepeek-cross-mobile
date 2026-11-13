@@ -20,7 +20,6 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.windowInsetsStartWidth
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -90,7 +89,7 @@ fun CoffeePeekCircularBackButton(
         modifier = modifier,
         nativeIcon = com.coffeepeek.core.designsystem.modifier.CoffeePeekGlassIcon.Back,
     ) {
-        Icon(
+        CoffeePeekIcon(
             imageVector = CoffeePeekIcons.ChevronLeft,
             contentDescription = null,
             tint = tint,

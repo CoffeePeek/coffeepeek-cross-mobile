@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -22,6 +21,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.component.CoffeePeekIconButton
 import com.coffeepeek.core.designsystem.component.CoffeePeekSwipeDismissModalBottomSheet
+import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
@@ -43,7 +43,7 @@ internal fun ShelfHeader(
             style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
         if (visibilitySettings != null) ShelfSettingsButton(visibilitySettings)
         if (onArchive != null) CoffeePeekIconButton(onArchive) {
-            Icon(CoffeePeekIcons.Archive, stringResource(Res.string.shelf_archive), tint = MaterialTheme.colorScheme.onSurface)
+            CoffeePeekIcon(CoffeePeekIcons.Archive, stringResource(Res.string.shelf_archive), tint = MaterialTheme.colorScheme.onSurface)
         }
     }
 }
@@ -53,7 +53,7 @@ private fun ShelfSettingsButton(content: @Composable () -> Unit) {
     var open by rememberSaveable { mutableStateOf(false) }
     val label = stringResource(Res.string.shelf_settings)
     CoffeePeekIconButton({ open = true }) {
-        Icon(CoffeePeekIcons.Settings, label, tint = MaterialTheme.colorScheme.onSurface)
+        CoffeePeekIcon(CoffeePeekIcons.Settings, label, tint = MaterialTheme.colorScheme.onSurface)
     }
     if (open) CoffeePeekSwipeDismissModalBottomSheet(
         onDismissRequest = { open = false }, dismissDescription = stringResource(Res.string.shelf_cancel),

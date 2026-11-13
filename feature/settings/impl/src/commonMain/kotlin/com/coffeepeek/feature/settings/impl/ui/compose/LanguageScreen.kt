@@ -8,7 +8,6 @@ import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -26,6 +25,7 @@ import com.coffeepeek.core.designsystem.component.CoffeePeekRefreshError
 import com.coffeepeek.core.designsystem.component.CoffeePeekScaffold
 import com.coffeepeek.core.designsystem.component.CoffeePeekTopBar
 import com.coffeepeek.core.designsystem.component.coffeePeekScrollContentPadding
+import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
@@ -102,7 +102,7 @@ private fun LanguageOption(name: String, selected: Boolean, enabled: Boolean, on
     ) {
         Text(name, Modifier.weight(1f), style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
         if (selected) {
-            Icon(CoffeePeekIcons.Check, contentDescription = null, tint = MaterialTheme.colorScheme.primary,
+            CoffeePeekIcon(CoffeePeekIcons.Check, contentDescription = null, tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(CoffeePeekDimens.settingsIconSize))
         }
     }

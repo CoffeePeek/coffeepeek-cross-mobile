@@ -6,7 +6,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Icon
 import com.coffeepeek.core.designsystem.component.CoffeePeekIconButton as IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -113,7 +112,7 @@ private fun PhotoRemoveButton(index: Int, enabled: Boolean, onRemove: () -> Unit
     IconButton(onClick = onRemove, enabled = enabled, glass = false,
         modifier = modifier.offset(x = offset, y = -offset).size(48.dp)) {
         // With the glass backdrop off, the badge itself carries the disabled affordance.
-        Icon(CoffeePeekIcons.Close, stringResource(Res.string.coffeepeek_photo_remove, index + 1),
+        CoffeePeekIcon(CoffeePeekIcons.Close, stringResource(Res.string.coffeepeek_photo_remove, index + 1),
             Modifier.size(24.dp).alpha(if (enabled) 1f else 0.45f)
                 .background(Color.Black.copy(alpha = 0.75f), RoundedCornerShape(50))
                 .border(1.5.dp, Color.White, RoundedCornerShape(50)).padding(if (simple) 5.dp else 4.dp), tint = Color.White)

@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
@@ -35,6 +34,7 @@ import com.coffeepeek.core.designsystem.component.CoffeePeekDestructiveConfirmat
 import com.coffeepeek.core.designsystem.component.CoffeePeekBackHandler
 import com.coffeepeek.core.designsystem.component.CoffeePeekScaffold
 import com.coffeepeek.core.designsystem.component.CoffeePeekTopBar
+import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.modifier.CoffeePeekGlassIconButton
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
@@ -213,7 +213,7 @@ private fun ShopCheckInEditorTopBar(state: ShopCheckInFormState, onAction: (Shop
                     contentDescription = stringResource(Res.string.shop_checkin_discard),
                     enabled = !state.isDiscarding,
                 ) {
-                    Icon(CoffeePeekIcons.Delete, contentDescription = null, modifier = Modifier.size(20.dp))
+                    CoffeePeekIcon(CoffeePeekIcons.Delete, contentDescription = null, modifier = Modifier.size(20.dp))
                 }
             }
         },
