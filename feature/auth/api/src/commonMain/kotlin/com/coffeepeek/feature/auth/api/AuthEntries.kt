@@ -21,7 +21,7 @@ interface PasswordRecoveryEntry {
     fun Content(initialEmail: String, onClose: () -> Unit, onBackToLogin: () -> Unit, modifier: Modifier)
 }
 
-/** «Регистрация»: three steps in one destination. [onGoToLogin] serves both the footer link and the final button; [onSignedIn] is a Google sign-up. */
+/** «Регистрация»: account form and email confirmation. [onGoToLogin] serves both screens; [onSignedIn] is social sign-up. */
 interface RegisterEntry {
     @Composable
     fun Content(onClose: () -> Unit, onGoToLogin: () -> Unit, onSignedIn: () -> Unit, modifier: Modifier)

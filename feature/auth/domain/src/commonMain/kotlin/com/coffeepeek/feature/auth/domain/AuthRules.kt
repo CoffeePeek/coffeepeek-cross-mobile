@@ -26,10 +26,7 @@ fun validatePassword(password: String, minLength: Int): PasswordIssue? = when {
     else -> null
 }
 
-/** The first registration step can be submitted as soon as something is typed. */
-fun canContinueWithEmail(email: String): Boolean = email.isNotBlank()
-
-/** The submit button of the details step is enabled only when this holds. */
+/** The name, password length and required consent must permit registration before enabling submit. */
 fun canSubmitRegistration(name: String, password: String, termsAccepted: Boolean): Boolean =
     name.trim().length >= MIN_REGISTRATION_NAME_LENGTH && password.length >= MIN_REGISTRATION_PASSWORD_LENGTH && termsAccepted
 
@@ -59,7 +56,7 @@ data class RegistrationCheck(
 fun checkRegistration(name: String, email: String, password: String, termsAccepted: Boolean) = RegistrationCheck(
     email = validateEmail(email.trim()),
     password = validatePassword(password, MIN_REGISTRATION_PASSWORD_LENGTH),
-    nameMissing = name.trim().isEmpty(),
+    nameMissing = name.trim().length < MIN_REGISTRATION_NAME_LENGTH,
     termsMissing = !termsAccepted,
 )
 
