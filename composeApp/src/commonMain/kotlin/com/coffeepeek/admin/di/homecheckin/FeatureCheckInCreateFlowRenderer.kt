@@ -1,6 +1,6 @@
 package com.coffeepeek.admin.di.homecheckin
 
-import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.Lifecycle
@@ -86,14 +86,17 @@ internal class FeatureCheckInCreateFlowRenderer(
         val home = destination as? GlobalCheckInDestination.Home
         val dismissAllowed = home?.dismissAllowed?.collectAsState()?.value ?: true
         AnalyticsOverlay {
-            CoffeePeekSwipeDismissModalBottomSheet({ model.cancel(destination) }, stringResource(Res.string.check_in_create_close),
-                dismissEnabled = dismissAllowed, maxSheetHeightFraction = if (home != null) 0.9f else null) {
+            if (home != null) HomeCheckInFullScreenDialog({ if (dismissAllowed) model.cancel(home) }) {
+                CompositionLocalProvider(LocalViewModelStoreOwner provides owner) {
+                    home.entry.Content(null, 0, model.canAccess(), { model.cancel(home) },
+                        { id, _ -> model.saved(home, id) }, { model.setDismissAllowed(home, it) },
+                        Modifier.fillMaxSize(), bean = model.homeBean)
+                }
+            } else CoffeePeekSwipeDismissModalBottomSheet({ model.cancel(destination) },
+                stringResource(Res.string.check_in_create_close)) {
                 // UIKit sheets have their own Compose root; bind the flow store inside their body.
                 CompositionLocalProvider(LocalViewModelStoreOwner provides owner) {
-                    if (home == null) Picker(model)
-                    else home.entry.Content(null, 0, model.canAccess(), { model.cancel(home) },
-                        { id, _ -> model.saved(home, id) }, { model.setDismissAllowed(home, it) },
-                        Modifier.weight(1f).fillMaxWidth(), bean = model.homeBean)
+                    Picker(model)
                 }
             }
         }

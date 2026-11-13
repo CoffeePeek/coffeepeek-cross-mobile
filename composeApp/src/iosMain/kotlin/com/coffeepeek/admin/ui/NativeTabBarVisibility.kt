@@ -11,9 +11,11 @@ import platform.UIKit.hidesBottomBarWhenPushed
 internal class NativeTabBarVisibility(
     tabs: UITabBarController,
     discoveryNavigation: UINavigationController,
+    visibilityChanged: (Boolean) -> Unit = {},
 ) {
     private var tabs: UITabBarController? = tabs
     private var discoveryNavigation: UINavigationController? = discoveryNavigation
+    private var onVisibilityChanged: ((Boolean) -> Unit)? = visibilityChanged
     private var mapExpanded = false
 
     fun onMapExpandedChange(expanded: Boolean) {
@@ -30,6 +32,7 @@ internal class NativeTabBarVisibility(
         val expandedMapVisible = mapExpanded && navigation == discoveryNavigation &&
             top == navigation.viewControllers.firstOrNull()
         val hidden = expandedMapVisible || top?.hidesBottomBarWhenPushed == true
+        onVisibilityChanged?.invoke(!hidden)
         if (tabs.respondsToSelector(NSSelectorFromString("setTabBarHidden:animated:"))) {
             tabs.setTabBarHidden(hidden, animated = false)
         } else {
@@ -42,5 +45,6 @@ internal class NativeTabBarVisibility(
         // Root content captures this callback; break its reference back to the UIKit tree.
         tabs = null
         discoveryNavigation = null
+        onVisibilityChanged = null
     }
 }

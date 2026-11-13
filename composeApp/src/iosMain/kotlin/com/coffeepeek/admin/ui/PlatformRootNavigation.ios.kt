@@ -10,6 +10,7 @@ import coffeepeek.composeapp.generated.resources.navigation_search
 import coffeepeek.composeapp.generated.resources.navigation_feed
 import coffeepeek.composeapp.generated.resources.navigation_profile
 import coffeepeek.composeapp.generated.resources.navigation_settings
+import coffeepeek.composeapp.generated.resources.check_in_create_actions
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.*
 import androidx.compose.material3.MaterialTheme
@@ -25,6 +26,9 @@ import com.coffeepeek.admin.ui.Navigator.isHandledByRootNav
 import com.coffeepeek.admin.ui.screen.main.DiscoveryScreenRenderer
 import com.coffeepeek.admin.ui.screen.profile.OwnProfileScreenRenderer
 import com.coffeepeek.admin.ui.screen.profile.SettingsScreenRenderer
+import com.coffeepeek.admin.ui.screen.checkins.CheckInCreateHost
+import com.coffeepeek.admin.analytics.TrackNativeCreateActionExposure
+import com.coffeepeek.core.session.SessionReader
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
@@ -69,9 +73,15 @@ internal class NavigationDelegate : NSObject(), UINavigationControllerDelegatePr
 internal class TabDelegate : NSObject(), UITabBarControllerDelegateProtocol {
     var onTabChanged: (() -> Unit)? = null
     var onTabReselected: ((UIViewController) -> Unit)? = null
+    var createNavigation: UINavigationController? = null
+    var onCreateRequested: (() -> Unit)? = null
     @ObjCSignatureOverride
     override fun tabBarController(tabBarController: UITabBarController, shouldSelectViewController: UIViewController): Boolean {
         tabBarController.view.endEditing(true)
+        if (shouldSelectViewController == createNavigation) {
+            onCreateRequested?.invoke()
+            return false
+        }
         val navigation = shouldSelectViewController as? UINavigationController
         if (navigation != null && tabBarController.selectedViewController == navigation && navigation.viewControllers.size == 1) {
             onTabReselected?.invoke(navigation)
@@ -88,22 +98,29 @@ internal class TabDelegate : NSObject(), UITabBarControllerDelegateProtocol {
 /** Keeps the visible UIKit stack when SwiftUI recreates the Compose host on foregrounding. */
 private object NavigationMemory {
     var generation = 0
-    var selectedTab = 0
-    var stacks: List<List<Navigator.Screen>> = List(5) { emptyList() }
+    private var saved = SavedNavigation()
 
-    fun save(tabs: UITabBarController, navigations: List<UINavigationController>, visibleTabIndices: List<Int>) {
-        selectedTab = visibleTabIndices[tabs.selectedIndex.toInt().coerceIn(visibleTabIndices.indices)]
-        stacks = navigations.map { navigation ->
+    fun restore(isLoggedIn: Boolean) = saved.takeIf { it.isLoggedIn == isLoggedIn } ?: SavedNavigation()
+
+    fun save(tabs: UITabBarController, navigations: List<UINavigationController>, visibleTabIndices: List<Int>, isLoggedIn: Boolean) {
+        val selectedTab = visibleTabIndices[tabs.selectedIndex.toInt().coerceIn(visibleTabIndices.indices)]
+        val stacks = navigations.map { navigation ->
             navigation.viewControllers.drop(1).mapNotNull { (it as? NativeScreenController)?.route }
         }
+        saved = SavedNavigation(isLoggedIn, selectedTab, stacks)
     }
 
     fun clear() {
         generation++
-        selectedTab = 0
-        stacks = List(5) { emptyList() }
+        saved = SavedNavigation()
     }
 }
+
+private data class SavedNavigation(
+    val isLoggedIn: Boolean? = null,
+    val selectedTab: Int = 0,
+    val stacks: List<List<Navigator.Screen>> = List(5) { emptyList() },
+)
 
 internal actual fun clearPlatformNavigationState() = NavigationMemory.clear()
 
@@ -121,17 +138,20 @@ internal actual fun PlatformRootNavigation(
     val tabReselections = remember { MainTabReselections() }
     val navigationDelegates = remember { List(5) { NavigationDelegate() } }
     val navigations = remember { List(5) { UINavigationController() } }
-    val tabBarVisibility = remember(tabs) { NativeTabBarVisibility(tabs, navigations[0]) }
+    val createNavigation = remember { UINavigationController(rootViewController = UIViewController()) }
+    var createVisible by remember { mutableStateOf(false) }
+    val tabBarVisibility = remember(tabs) { NativeTabBarVisibility(tabs, navigations[0]) { createVisible = it } }
     val businessMode = koinInject<com.coffeepeek.feature.ownership.api.BusinessOwnershipEntry>().Session().businessMode
-    val visibleTabIndices = remember(isLoggedIn, businessMode) { mainTabScreens(isLoggedIn, businessMode).map { requireNotNull(nativeTabIndex(it)) } }
-    val restoredTab = remember { NavigationMemory.selectedTab }
-    val restoredStacks = remember { NavigationMemory.stacks }
+    val visibleTabIndices = remember(isLoggedIn, businessMode) { nativeRootTabIndices(isLoggedIn, businessMode) }
+    val restoredNavigation = remember { NavigationMemory.restore(isLoggedIn) }
     val memoryGeneration = remember { NavigationMemory.generation }
     val pendingTab by Navigator.pendingTabSelection.collectAsState()
+    var refreshCommunity by remember { mutableStateOf<(() -> Unit)?>(null) }
+    NativeCreateAction(tabDelegate, refreshCommunity, createVisible)
 
     fun saveNavigation() {
         tabBarVisibility.sync()
-        if (NavigationMemory.generation == memoryGeneration) NavigationMemory.save(tabs, navigations, visibleTabIndices)
+        if (NavigationMemory.generation == memoryGeneration) NavigationMemory.save(tabs, navigations, visibleTabIndices, isLoggedIn)
     }
 
     suspend fun navigate(block: () -> Unit) = transitions.withLock {
@@ -165,6 +185,7 @@ internal actual fun PlatformRootNavigation(
     }
 
     val businessTitle = stringResource(Res.string.business_tab_title)
+    val createTitle = stringResource(Res.string.check_in_create_actions)
     val labels = listOf(stringResource(Res.string.navigation_search),
         stringResource(Res.string.navigation_feed), stringResource(Res.string.navigation_profile),
         stringResource(Res.string.navigation_settings), businessTitle)
@@ -173,21 +194,11 @@ internal actual fun PlatformRootNavigation(
         navigations.indices.forEach { index ->
             val navigation = navigations[index]
             val root = NativeScreenController(labels[index], analyticsPage = listOf("discovery", "feed", "profile", "settings", "business_ownership")[index], isTabRoot = true) {
-                when (index) {
-                    0 -> koinInject<DiscoveryScreenRenderer>().Tab(
-                        onMapExpandedChange = tabBarVisibility::onMapExpandedChange, reselections = tabReselections.search)
-                    1 -> koinInject<CommunityScreenRenderer>().Content(
-                        onCreateCheckIn = { Navigator.navigate(Navigator.Screen.CreateCheckIn) },
-                        notificationsAction = { koinInject<com.coffeepeek.admin.ui.screen.notifications.NotificationsRenderer>().Bell() },
-                    )
-                    2 -> koinInject<OwnProfileScreenRenderer>().Content()
-                    3 -> koinInject<SettingsScreenRenderer>().Tab()
-                    4 -> koinInject<com.coffeepeek.feature.ownership.api.BusinessOwnershipEntry>().Tab()
-                }
+                NativeRootTabContent(index, isLoggedIn, tabBarVisibility, tabReselections) { refreshCommunity = it }
             }
             navigation.setNavigationBarHidden(true, false)
             navigation.setViewControllers(
-                listOf(root) + restoredStacks[index].map { screen ->
+                listOf(root) + restoredNavigation.stacks[index].map { screen ->
                     controller(screen).apply { hidesBottomBarWhenPushed = true }
                 },
                 false,
@@ -198,8 +209,9 @@ internal actual fun PlatformRootNavigation(
             navigation.delegate = navigationDelegates[index]
             navigation.interactivePopGestureRecognizer?.delegate = navigationDelegates[index]
         }
-        tabs.installRootTabs(visibleTabIndices.map(navigations::get), visibleTabIndices.indexOf(restoredTab).coerceAtLeast(0))
+        installRootTabsWithCreate(tabs, navigations, createNavigation, visibleTabIndices, restoredNavigation.selectedTab, createTitle)
         tabs.delegate = tabDelegate
+        tabDelegate.createNavigation = createNavigation
         tabDelegate.onTabChanged = { saveNavigation() }
         tabDelegate.onTabReselected = { navigation ->
             tabReselections.onTabPressed(Navigator.Screen.FeedTab, isSelected = navigation == navigations[0])
@@ -207,19 +219,21 @@ internal actual fun PlatformRootNavigation(
         tabs
     }, modifier = Modifier.fillMaxSize(), update = {
         updateNativeTabLabels(navigations, labels)
+        createNavigation.tabBarItem.title = createTitle
     }, properties = UIKitInteropProperties(
         interactionMode = UIKitInteropInteractionMode.NonCooperative,
         isNativeAccessibilityEnabled = true,
         // This full-screen opaque host stays below the app's Compose overlays.
         placedAsOverlay = false,
     ))
+    SideEffect { tabBarVisibility.sync() }
 
     var previousTabIndices by remember { mutableStateOf(visibleTabIndices) }
     LaunchedEffect(visibleTabIndices) {
         if (previousTabIndices == visibleTabIndices) return@LaunchedEffect
         previousTabIndices = visibleTabIndices
         navigations.forEach { it.popToRootViewControllerAnimated(false) }
-        tabs.setViewControllers(visibleTabIndices.map(navigations::get), false)
+        tabs.setViewControllers(visibleTabIndices.map { if (it == 5) createNavigation else navigations[it] }, false)
         tabs.selectedIndex = 0u
         saveNavigation()
     }
@@ -284,11 +298,52 @@ internal actual fun PlatformRootNavigation(
             tabs.delegate = null
             tabDelegate.onTabChanged = null
             tabDelegate.onTabReselected = null
+            tabDelegate.onCreateRequested = null
+            tabDelegate.createNavigation = null
             navigations.forEach { it.delegate = null; it.interactivePopGestureRecognizer?.delegate = null }
             navigationDelegates.forEach { it.navigation = null; it.onStackChanged = null }
         }
     }
     return true
+}
+
+private fun nativeRootTabIndices(isLoggedIn: Boolean, businessMode: Boolean): List<Int> =
+    mainTabScreens(isLoggedIn, businessMode).map { requireNotNull(nativeTabIndex(it)) }
+        .toMutableList().apply { add((size + 1) / 2, 5) }
+
+private fun installRootTabsWithCreate(tabs: UITabBarController, navigations: List<UINavigationController>,
+    createNavigation: UINavigationController, indices: List<Int>, restoredTab: Int, title: String) {
+    createNavigation.tabBarItem = UITabBarItem(title = title, image = UIImage.systemImageNamed("plus"), tag = 5L)
+    tabs.installRootTabs(indices.map { if (it == 5) createNavigation else navigations[it] },
+        indices.indexOf(restoredTab).coerceAtLeast(0))
+}
+
+@Composable
+private fun NativeCreateAction(tabDelegate: TabDelegate, refreshCommunity: (() -> Unit)?, visible: Boolean) {
+    val sessions: SessionReader = koinInject()
+    val session by remember(sessions) { sessions.observeSession() }.collectAsState(sessions.peekSession())
+    TrackNativeCreateActionExposure(visible)
+    CheckInCreateHost(
+        canCreate = { sessions.isActiveSession(sessions.peekSession()) },
+        resetKey = session?.userId ?: session?.accessToken,
+        onShop = { Navigator.navigate(Navigator.Screen.CreateCheckIn) },
+        onHomeSaved = { refreshCommunity?.invoke() },
+    ) { onCreate -> SideEffect { tabDelegate.onCreateRequested = onCreate } }
+}
+
+@Composable
+private fun NativeRootTabContent(index: Int, isLoggedIn: Boolean, visibility: NativeTabBarVisibility,
+    reselections: MainTabReselections, onRefreshChange: ((() -> Unit)?) -> Unit) {
+    when (index) {
+        0 -> koinInject<DiscoveryScreenRenderer>().Tab(
+            onMapExpandedChange = visibility::onMapExpandedChange, reselections = reselections.search)
+        1 -> koinInject<CommunityScreenRenderer>().Content(
+            notificationsAction = { koinInject<com.coffeepeek.admin.ui.screen.notifications.NotificationsRenderer>().Bell() },
+            onRefreshChange = onRefreshChange)
+        2 -> koinInject<OwnProfileScreenRenderer>().Content(isLoggedIn)
+        3 -> koinInject<SettingsScreenRenderer>().Tab()
+        4 -> koinInject<com.coffeepeek.feature.ownership.api.BusinessOwnershipEntry>().Tab()
+    }
 }
 
 private fun updateNativeTabLabels(navigations: List<UINavigationController>, labels: List<String>) {

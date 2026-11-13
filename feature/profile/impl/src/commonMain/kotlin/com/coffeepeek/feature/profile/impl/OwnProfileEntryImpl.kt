@@ -16,6 +16,7 @@ import com.coffeepeek.feature.profile.api.PublicCheckInsPort
 import com.coffeepeek.feature.profile.domain.PublicProfileData
 import com.coffeepeek.feature.profile.impl.ui.OwnProfileViewModel
 import com.coffeepeek.feature.profile.impl.ui.PublicProfileViewModel
+import com.coffeepeek.feature.profile.impl.ui.compose.GuestProfileScreen
 import com.coffeepeek.feature.profile.impl.ui.compose.OwnProfileScreen
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
@@ -33,7 +34,9 @@ fun createOwnProfileEntry(
     authorActions: ProfileAuthorActions = ProfileAuthorActions.None,
     slots: OwnProfileSlots,
     snapshots: ProfileSnapshotStore = ProfileSnapshotStore.None,
-): OwnProfileEntry = OwnProfileEntryImpl(data, checkIns, accounts, signOut, visibility, authorActions, slots, snapshots)
+): OwnProfileEntry {
+    return OwnProfileEntryImpl(data, checkIns, accounts, signOut, visibility, authorActions, slots, snapshots)
+}
 
 private class OwnProfileEntryImpl(
     private val data: PublicProfileData,
@@ -47,6 +50,10 @@ private class OwnProfileEntryImpl(
 ) : OwnProfileEntry {
     @OptIn(ExperimentalUuidApi::class)
     private val instanceKey = Uuid.random().toString()
+
+    @Composable
+    override fun GuestContent(bottomClearance: Dp, accountPrompt: @Composable () -> Unit) =
+        GuestProfileScreen(bottomClearance, accountPrompt)
 
     @Composable
     override fun Content(

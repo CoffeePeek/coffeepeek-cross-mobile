@@ -3,7 +3,6 @@ package com.coffeepeek.feature.shop.api
 /** Application-owned navigation/platform actions. No feature ViewModels or backend models escape. */
 sealed interface ShopDetailEffect {
     data object Back : ShopDetailEffect
-    data object ChooseAnotherShop : ShopDetailEffect
     data object SignIn : ShopDetailEffect
     data object Register : ShopDetailEffect
     /** A guest asked for a favorite; the app keeps the intent across sign-in, which resets navigation. */

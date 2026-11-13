@@ -75,6 +75,7 @@
     <string name="discovery_favorite_failed">Не ўдалося змяніць абранае. Паспрабуйце яшчэ раз.</string>
     <string name="discovery_message_dismiss">Схаваць паведамленне</string>
     <string name="discovery_picker_nearby">Побач са мной</string>
+    <string name="discovery_picker_recent">Нядаўнія кавярні</string>
     <string name="discovery_picker_title">Выберыце кавярню</string>
     <string name="discovery_picker_close">Закрыць</string>
     <string name="discovery_picker_close_description">Закрыць выбар кавярні</string>

@@ -17,6 +17,7 @@ import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.core.designsystem.component.CoffeePeekLoadErrorContent
 import com.coffeepeek.admin.ui.component.LocalFloatingNavClearance
 import com.coffeepeek.admin.ui.screen.profile.OwnProfileScreenRenderer
+import com.coffeepeek.admin.ui.screen.profile.SettingsScreenRenderer
 import com.coffeepeek.admin.di.checkinhistory.FeatureProfileActivityRenderer
 import com.coffeepeek.feature.notifications.api.NotificationFeature
 import com.coffeepeek.admin.utils.ErrorHandler
@@ -32,11 +33,19 @@ import com.coffeepeek.feature.profile.api.ProfileSnapshotStore
 import com.coffeepeek.feature.profile.impl.createOwnProfileEntry
 import org.jetbrains.compose.resources.getString
 import kotlinx.coroutines.CancellationException
+import org.koin.compose.koinInject
 
 /** Both platforms use the feature Profile tab; navigation, native integrations and shared slots remain app-owned. */
 internal class FeatureOwnProfileScreenRenderer(private val entry: OwnProfileEntry) : OwnProfileScreenRenderer {
     @Composable
-    override fun Content() {
+    override fun Content(isLoggedIn: Boolean) {
+        if (isLoggedIn) SignedInContent() else entry.GuestContent(LocalFloatingNavClearance.current) {
+            koinInject<SettingsScreenRenderer>().GuestCard()
+        }
+    }
+
+    @Composable
+    private fun SignedInContent() {
         entry.Content(
             onEditProfile = { Navigator.navigate(Navigator.Screen.EditProfile) },
             onOpenShop = { Navigator.navigate(Navigator.Screen.ShopDetail(it)) },

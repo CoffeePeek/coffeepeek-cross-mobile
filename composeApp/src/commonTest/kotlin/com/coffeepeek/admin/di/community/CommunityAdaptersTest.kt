@@ -46,7 +46,7 @@ class CommunityAdaptersTest {
 
     private class ShopDrinks : ShopCheckInRepository {
         override suspend fun getDrinkOptions() = Result.success(listOf(ShopConsumedDrinkOption("cappuccino", "Капучино", "Cappuccino")))
-        override suspend fun create(input: ShopCheckInCreateInput): Result<Unit> = error("Unused")
+        override suspend fun create(input: ShopCheckInCreateInput): Result<String> = error("Unused")
     }
 
     @Test fun theDrinkCatalogIsMappedFromTheShopCheckInRepository() = runTest {

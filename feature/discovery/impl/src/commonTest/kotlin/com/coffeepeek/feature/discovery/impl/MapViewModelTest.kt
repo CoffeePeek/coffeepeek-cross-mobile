@@ -39,8 +39,14 @@ class MapViewModelTest {
     private val view = MapBounds(53.88, 27.50, 53.92, 27.60)
     private val here = Coordinates(53.9, 27.56)
 
-    private fun TestScope.model(): MapViewModel =
-        MapViewModel(repository, city, location, details, analytics, FakeAccount(), FakeFavorites()).also { store.put("map", it); it.onAction(MapAction.PresentationChanged(true)); runCurrent() }
+    private fun TestScope.model(requestLocationOnMapInteraction: Boolean = true): MapViewModel {
+        val model = MapViewModel(repository, city, location, details, analytics, FakeAccount(), FakeFavorites(),
+            requestLocationOnMapInteraction)
+        store.put("map", model)
+        model.onAction(MapAction.PresentationChanged(true))
+        runCurrent()
+        return model
+    }
 
     private fun TestScope.settle() { advanceTimeBy(300); runCurrent() }
     private fun MapViewModel.send(vararg actions: MapAction, scope: TestScope) { actions.forEach { onAction(it); scope.runCurrent() } }
@@ -342,6 +348,16 @@ class MapViewModelTest {
         assertEquals(14f, vm.now.camera?.zoom)
         assertEquals(0, vm.now.myLocationRequest)
         assertEquals(listOf(Triple("map", true, GeolocationOutcome.Unavailable)), analytics.geolocations)
+    }
+
+    @Test fun pickerMapZoomAndPanDoNotAskUntilTheUserRequestsTheirLocation() = runTest(dispatcher) {
+        val vm = model(requestLocationOnMapInteraction = false)
+        vm.send(MapAction.BoundsChanged(view, 14f), MapAction.Interact, MapAction.ZoomIn, scope = this)
+        assertEquals(0, vm.now.locationPermissionRequest)
+        assertEquals(15f, vm.now.camera?.zoom)
+        vm.send(MapAction.RequestMyLocation, MapAction.LocationGranted, scope = this)
+        assertEquals(1, vm.now.locationPermissionRequest)
+        assertEquals(1, vm.now.myLocationRequest)
     }
 
     @Test fun eitherZoomButtonCanBeTheFirstPermissionTrigger() = runTest(dispatcher) {

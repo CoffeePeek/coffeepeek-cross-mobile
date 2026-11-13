@@ -249,7 +249,7 @@ actual fun PlatformFloatingBottomNavBar(
 }
 
 private val FloatingNavItem.iconSymbol: String
-    get() = when (title) {
+    get() = if (isAction) "plus" else when (title) {
         "Поиск" -> "magnifyingglass"
         "Кофе" -> "leaf"
         "Лента" -> "person.2"

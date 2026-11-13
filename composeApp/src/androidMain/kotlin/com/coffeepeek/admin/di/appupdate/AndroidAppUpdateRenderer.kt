@@ -3,6 +3,7 @@ package com.coffeepeek.admin.di.appupdate
 import com.coffeepeek.admin.ui.NavMetrics
 
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.unit.dp
 import com.coffeepeek.admin.ui.screen.appupdate.AppUpdateRenderer
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.admin.ui.component.CpSnackbarHost
@@ -30,6 +31,9 @@ internal fun androidAppUpdateRenderer(controller: AppUpdateController, installer
                     onAction = onAction,
                 )
             },
-            extraBottomClearance = NavMetrics.floatingNavContentClearance + CoffeePeekDimens.spacing2,
+            extraBottomClearance = maxOf(
+                NavMetrics.floatingNavContentClearance + CoffeePeekDimens.spacing2,
+                NavMetrics.floatingNavClearance(0.dp),
+            ),
         ),
     )
