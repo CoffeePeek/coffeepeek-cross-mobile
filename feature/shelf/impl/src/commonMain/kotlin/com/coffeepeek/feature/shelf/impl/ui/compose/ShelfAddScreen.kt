@@ -111,7 +111,6 @@ internal fun ShelfAddScreenContent(
     /** The step this content shows; while a screen fades out it keeps its own step. */
     step: ShelfAddStep = state.step,
 ) {
-    BackHandler(step == ShelfAddStep.ManualCrop) { onAction(ShelfAddAction.CancelManualCrop) }
     val snackbar = remember { SnackbarHostState() }
     ShelfAddMessageEffect(state.message, snackbar, onAction)
     var origin by remember { mutableStateOf(Offset.Zero) }
@@ -119,9 +118,8 @@ internal fun ShelfAddScreenContent(
     var cardBounds by remember { mutableStateOf<Rect?>(null) }
     Box(modifier.fillMaxSize().onGloballyPositioned { origin = it.positionInRoot() }) {
         CoffeePeekScaffold(Modifier.fillMaxSize(), snackbarHost = { SnackbarHost(snackbar) }, topBar = {
-            CoffeePeekTopBar(stringResource(Res.string.shelf_add_title),
-                stringResource(if (step == ShelfAddStep.ManualCrop) Res.string.shelf_manual_crop_back else Res.string.shelf_add_close),
-                onBack = { onAction(if (step == ShelfAddStep.ManualCrop) ShelfAddAction.CancelManualCrop else ShelfAddAction.Close) })
+            CoffeePeekTopBar(stringResource(Res.string.shelf_add_title), stringResource(Res.string.shelf_add_close),
+                onBack = { onAction(ShelfAddAction.Close) })
         }) { padding ->
             ShelfAddStepBody(state, step, onAction, onGallery, Modifier.padding(padding), { photoBounds = it }, { cardBounds = it })
         }
@@ -144,13 +142,11 @@ private fun ShelfAddStepBody(
     when {
         step == ShelfAddStep.Intro || photo == null -> ShelfScanIntro(openCamera, onGallery, modifier)
         step == ShelfAddStep.Preparing -> ShelfScanPreparation(photo.bytes, state.scanner,
-            { onAction(ShelfAddAction.DownloadScanner) }, { onAction(ShelfAddAction.StartManualCrop) }, openCamera, onGallery, modifier)
-        step == ShelfAddStep.ManualCrop -> ShelfManualCrop(photo.bytes, state.cropBounds, state.cropping,
-            { onAction(ShelfAddAction.ApplyManualCrop(it)) }, { onAction(ShelfAddAction.CancelManualCrop) }, modifier)
+            { onAction(ShelfAddAction.DownloadScanner) }, openCamera, onGallery, modifier)
         step == ShelfAddStep.Scanning || step == ShelfAddStep.Revealing -> ShelfScanProgress(photo.bytes, state.stagesDone,
             state.liveFrame ?: state.result?.frame, revealing = step == ShelfAddStep.Revealing, onPhotoBounds, modifier)
         step == ShelfAddStep.Retake -> ShelfScanRetake(photo.bytes, state.result?.frame, state.stageOutcomes(), state.failure,
-            openCamera, onGallery, { onAction(ShelfAddAction.StartManualCrop) }, modifier)
+            openCamera, onGallery, modifier)
         else -> ShelfBagFormContent(state, onAction, openCamera, modifier, onCardBounds)
     }
 }

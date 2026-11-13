@@ -8,7 +8,6 @@ import com.coffeepeek.feature.shelf.domain.repository.BagScanner
 import com.coffeepeek.feature.shelf.domain.repository.ShelfRepository
 import com.coffeepeek.feature.shelf.impl.ui.data.ShelfCalendar
 import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
@@ -43,11 +42,9 @@ internal class FakeShelfRepository(bags: List<ShelfBag>? = null) : ShelfReposito
     }
 
     val added = mutableListOf<ShelfBagDetails>()
-    val addedCards = mutableListOf<ShelfBagCard?>()
 
     override suspend fun add(details: ShelfBagDetails, card: ShelfBagCard?): Result<ShelfBag> = write("add") {
         added += details
-        addedCards += card
         bag("new").copy(coffeeProductSlug = (details.bean as? ShelfBean.Catalog)?.slug).also { shelfState.value = listOf(it) + shelfState.value.orEmpty() }
     }
     override suspend fun update(id: String, details: ShelfBagDetails, card: ShelfBagCard?): Result<ShelfBag> = error("Not used by these screens")
@@ -86,7 +83,6 @@ internal class FakeBagScanner(var readiness: BagScannerReadiness = BagScannerRea
     var result: Result<BagScanResult> = Result.success(scanResult(PackModerationStatus.Accepted))
     var prepareResult: Result<Unit> = Result.success(Unit)
     var prepareGate: (suspend () -> Unit)? = null
-    var cancelledPreparations = 0
     var gate: (suspend () -> Unit)? = null
     var scans = 0
     val scannedPhotos = mutableListOf<ByteArray>()
@@ -94,10 +90,7 @@ internal class FakeBagScanner(var readiness: BagScannerReadiness = BagScannerRea
     override suspend fun readiness() = readiness
 
     override suspend fun prepare(onProgress: (downloaded: Long, total: Long) -> Unit): Result<Unit> {
-        try { prepareGate?.invoke() } catch (cancelled: CancellationException) {
-            cancelledPreparations++
-            throw cancelled
-        }
+        prepareGate?.invoke()
         onProgress(50, 100)
         onProgress(100, 100)
         return prepareResult.onSuccess { readiness = BagScannerReadiness.Ready }

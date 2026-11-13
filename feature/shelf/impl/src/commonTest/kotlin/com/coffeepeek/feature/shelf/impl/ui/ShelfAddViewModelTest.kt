@@ -6,7 +6,6 @@ import com.coffeepeek.feature.shelf.api.ShelfCoffeeSearch
 import com.coffeepeek.feature.shelf.api.ShelfPhoto
 import com.coffeepeek.feature.shelf.domain.model.*
 import com.coffeepeek.feature.shelf.domain.repository.BagScanner
-import com.coffeepeek.feature.shelf.domain.repository.BagPhotoCropper
 import com.coffeepeek.feature.shelf.impl.ui.compose.model.*
 import com.coffeepeek.feature.shelf.impl.ui.data.ShelfDay
 import kotlinx.coroutines.CompletableDeferred
@@ -36,15 +35,13 @@ class ShelfAddViewModelTest {
     private val catalog = listOf(ShelfCoffeeOption("kenya", "Кения Ньери", "River Roasters"))
     private val searches = mutableListOf<String>()
     private val coffees = ShelfCoffeeSearch { query -> searches += query; Result.success(catalog) }
-    private val cropped = ManualBagCrop(ShelfBagCard(byteArrayOf(42), "image/jpeg", "bag.jpg"), 400, 600)
-    private val cropper = BagPhotoCropper { _, _ -> Result.success(cropped) }
     @BeforeTest fun setUp() { Dispatchers.setMain(dispatcher) }
     @AfterTest fun tearDown() { store.clear(); Dispatchers.resetMain() }
 
     private fun model(
         repository: FakeShelfRepository = FakeShelfRepository(emptyList()), scanner: FakeBagScanner = FakeBagScanner(),
         arrivals: ShelfArrivals = ShelfArrivals(),
-    ) = ShelfAddViewModel(repository, scanner, cropper, coffees, arrivals, testCalendar()).also { store.put("add-${nextKey++}", it) }
+    ) = ShelfAddViewModel(repository, scanner, coffees, arrivals, testCalendar()).also { store.put("add-${nextKey++}", it) }
 
     /** Picks a photo and lets an accepted card finish peeling off. */
     private fun TestScope.photo(model: ShelfAddViewModel) {
@@ -103,44 +100,23 @@ class ShelfAddViewModelTest {
         assertEquals(ShelfAddStep.Intro, model.state.value.step)
     }
 
-    @Test fun failedDownloadCanBeRetried() = runTest(dispatcher) {
+    @Test fun failedDownloadKeepsThePhotoAndRetryScansIt() = runTest(dispatcher) {
         val scanner = FakeBagScanner(BagScannerReadiness.NeedsDownload(100)).apply { prepareResult = Result.failure(BagScanFailure(BagScanIssue.ModelDownload)) }
         val model = model(scanner = scanner)
-        runCurrent()
-        model.onAction(ShelfAddAction.DownloadScanner)
-        runCurrent()
-        assertEquals(ShelfScannerStatus.DownloadFailed, model.state.value.scanner)
-        scanner.prepareResult = Result.success(Unit)
-        model.onAction(ShelfAddAction.DownloadScanner)
-        runCurrent()
-        assertEquals(ShelfScannerStatus.Ready, model.state.value.scanner)
-    }
-
-    @Test fun failedPreparationKeepsThePhotoAndManualCropCanSaveIt() = runTest(dispatcher) {
-        val scanner = FakeBagScanner(BagScannerReadiness.NeedsDownload(33_000_000)).apply {
-            prepareResult = Result.failure(BagScanFailure(BagScanIssue.ModelDownload))
-        }
-        val repository = FakeShelfRepository(emptyList())
-        val model = model(repository, scanner)
         runCurrent()
         val picked = ShelfPhoto(byteArrayOf(7, 8), fromCamera = false)
         model.onAction(ShelfAddAction.PhotoPicked(picked))
         model.onAction(ShelfAddAction.DownloadScanner)
         runCurrent()
         assertEquals(ShelfScannerStatus.DownloadFailed, model.state.value.scanner)
+        assertEquals(ShelfAddStep.Preparing, model.state.value.step)
         assertTrue(model.state.value.photo === picked)
         assertEquals(0, scanner.scans)
-        model.onAction(ShelfAddAction.StartManualCrop)
+        scanner.prepareResult = Result.success(Unit)
+        model.onAction(ShelfAddAction.DownloadScanner)
         runCurrent()
-        assertEquals(ShelfAddStep.ManualCrop, model.state.value.step)
-        model.onAction(ShelfAddAction.ApplyManualCrop(BagCropBounds.Default))
-        runCurrent()
-        assertEquals(ShelfAddStep.Form, model.state.value.step)
-        assertNull(model.state.value.result)
-        assertEquals(cropped, model.state.value.manualCrop)
-        model.onAction(ShelfAddAction.Save(later = true))
-        runCurrent()
-        assertTrue(repository.addedCards.single() === cropped.card)
+        assertEquals(ShelfScannerStatus.Ready, model.state.value.scanner)
+        assertTrue(scanner.scannedPhotos.single() === picked.bytes)
     }
 
     @Test fun closingCameraAfterPreparationResumesTheSelectedPhoto() = runTest(dispatcher) {
@@ -163,45 +139,23 @@ class ShelfAddViewModelTest {
         assertTrue(scanner.scannedPhotos.single() === picked.bytes)
     }
 
-    @Test fun choosingManualCropStopsTheOngoingDownload() = runTest(dispatcher) {
-        val gate = CompletableDeferred<Unit>()
-        val scanner = FakeBagScanner(BagScannerReadiness.NeedsDownload(33)).apply { prepareGate = { gate.await() } }
+    @Test fun missingModelDuringScanReturnsTheSelectedPhotoToPreparation() = runTest(dispatcher) {
+        val scanner = FakeBagScanner().apply { result = Result.failure(BagScanFailure(BagScanIssue.ModelMissing)) }
         val model = model(scanner = scanner)
         runCurrent()
-        model.onAction(ShelfAddAction.PhotoPicked(ShelfPhoto(byteArrayOf(4), fromCamera = false)))
-        model.onAction(ShelfAddAction.DownloadScanner)
-        runCurrent()
-        assertTrue(model.state.value.scanner is ShelfScannerStatus.Downloading)
-        model.onAction(ShelfAddAction.StartManualCrop)
-        runCurrent()
-        assertEquals(1, scanner.cancelledPreparations)
-        assertEquals(ShelfScannerStatus.NeedsDownload(33), model.state.value.scanner)
-        assertEquals(ShelfAddStep.ManualCrop, model.state.value.step)
-        assertEquals(0, scanner.scans)
-    }
-
-    @Test fun manualCropUsesSelectedBoundsAndCanBeCancelled() = runTest(dispatcher) {
-        val used = mutableListOf<Pair<ByteArray, BagCropBounds>>()
-        val cropper = BagPhotoCropper { bytes, bounds -> used += bytes to bounds; Result.success(cropped) }
-        val model = ShelfAddViewModel(FakeShelfRepository(emptyList()), FakeBagScanner(BagScannerReadiness.NeedsDownload(33)),
-            cropper, coffees, ShelfArrivals(), testCalendar()).also { store.put("crop", it) }
-        runCurrent()
+        scanner.readiness = BagScannerReadiness.NeedsDownload(42)
         val picked = ShelfPhoto(byteArrayOf(9), fromCamera = true)
         model.onAction(ShelfAddAction.PhotoPicked(picked))
-        model.onAction(ShelfAddAction.StartManualCrop)
-        runCurrent()
-        model.onAction(ShelfAddAction.CancelManualCrop)
         runCurrent()
         assertEquals(ShelfAddStep.Preparing, model.state.value.step)
-        model.onAction(ShelfAddAction.StartManualCrop)
-        val bounds = BagCropBounds(0.2f, 0.1f, 0.7f, 0.8f)
-        model.onAction(ShelfAddAction.CropChanged(bounds))
-        model.onAction(ShelfAddAction.ApplyManualCrop(bounds))
+        assertEquals(ShelfScannerStatus.NeedsDownload(42), model.state.value.scanner)
+        scanner.result = Result.success(scanResult(PackModerationStatus.Accepted))
+        model.onAction(ShelfAddAction.DownloadScanner)
         runCurrent()
-        assertEquals(1, used.size)
-        assertTrue(used.single().first === picked.bytes)
-        assertEquals(bounds, used.single().second)
+        assertEquals(2, scanner.scans)
+        assertTrue(scanner.scannedPhotos.all { it === picked.bytes })
     }
+
 
     @Test fun stagesTickOffAndAnAcceptedScanOpensTheForm() = runTest(dispatcher) {
         val gate = CompletableDeferred<Unit>()
@@ -233,7 +187,7 @@ class ShelfAddViewModelTest {
                 return Result.success(scanResult(PackModerationStatus.Accepted))
             }
         }
-        val model = ShelfAddViewModel(FakeShelfRepository(emptyList()), scanner, cropper, coffees, ShelfArrivals(), testCalendar()).also { store.put("frame", it) }
+        val model = ShelfAddViewModel(FakeShelfRepository(emptyList()), scanner, coffees, ShelfArrivals(), testCalendar()).also { store.put("frame", it) }
         runCurrent()
         model.onAction(ShelfAddAction.PhotoPicked(ShelfPhoto(byteArrayOf(1), fromCamera = false)))
         runCurrent()

@@ -8,8 +8,6 @@ import com.coffeepeek.feature.shelf.api.ShelfTimeZone
 import com.coffeepeek.feature.shelf.data.repository.createShelfRepository
 import com.coffeepeek.feature.shelf.data.scan.IosBagScannerModel
 import com.coffeepeek.feature.shelf.data.scan.createIosBagScanner
-import com.coffeepeek.feature.shelf.data.scan.createIosBagPhotoCropper
-import com.coffeepeek.feature.shelf.domain.repository.BagPhotoCropper
 import com.coffeepeek.feature.shelf.domain.repository.BagScanner
 import com.coffeepeek.feature.shelf.domain.repository.ShelfRepository
 import com.coffeepeek.feature.shelf.impl.ShelfPorts
@@ -37,10 +35,9 @@ internal fun iosShelfModule(apiBaseUrl: String = Constants.BASE_URL, modelUrl: (
             IosBagScannerModel(INPAINTER_FILE, INPAINTER_BYTES, INPAINTER_SHA256, modelUrl("ShelfInpainterURL")),
         )
     }
-    single<BagPhotoCropper> { createIosBagPhotoCropper() }
     single<ShelfEntry> {
         val brews = ShelfHomeBrews(get(), SessionShelfAccount(get()))
-        createShelfEntry(get(), ShelfPorts(get(), get(), ShelfCatalogSearch(get()), ShelfCardImage, IosShelfGallery, IosShelfCamera,
+        createShelfEntry(get(), ShelfPorts(get(), ShelfCatalogSearch(get()), ShelfCardImage, IosShelfGallery, IosShelfCamera,
             IosShelfTimeZone, brews))
     }
 }

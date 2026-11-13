@@ -7,7 +7,6 @@ import com.coffeepeek.feature.shelf.api.ShelfCoffeeSearch
 import com.coffeepeek.feature.shelf.api.ShelfPhoto
 import com.coffeepeek.feature.shelf.domain.model.*
 import com.coffeepeek.feature.shelf.domain.repository.BagScanner
-import com.coffeepeek.feature.shelf.domain.repository.BagPhotoCropper
 import com.coffeepeek.feature.shelf.domain.repository.ShelfRepository
 import com.coffeepeek.feature.shelf.domain.usecase.SHELF_TEXT_LIMIT
 import com.coffeepeek.feature.shelf.impl.ui.compose.model.*
@@ -15,8 +14,6 @@ import com.coffeepeek.feature.shelf.impl.ui.compose.model.ShelfScannerStatus.*
 import com.coffeepeek.feature.shelf.impl.ui.data.ShelfCalendar
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.cancelAndJoin
-import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -30,7 +27,6 @@ private const val REVEAL_LIMIT_MILLIS = 2_500L
 internal class ShelfAddViewModel(
     private val repository: ShelfRepository,
     private val scanner: BagScanner,
-    private val cropper: BagPhotoCropper,
     private val coffees: ShelfCoffeeSearch,
     private val arrivals: ShelfArrivals,
     calendar: ShelfCalendar,
@@ -40,8 +36,6 @@ internal class ShelfAddViewModel(
     private var search: Job? = null
     private var laterAfterConfirm = false
     private var beforeCamera: ShelfAddStep? = null
-    private var beforeManualCrop: ShelfAddStep? = null
-    private var prepareJob: Job? = null
 
     init {
         viewModelScope.launch {
@@ -65,8 +59,6 @@ internal class ShelfAddViewModel(
             ShelfAddAction.CardLanded -> updateState { copy(cardLanding = false) }
             is ShelfAddAction.PhotoPicked -> scan(action.photo)
             ShelfAddAction.PhotoFailed -> updateState { copy(message = ShelfAddMessage.PhotoUnreadable) }
-            ShelfAddAction.StartManualCrop, ShelfAddAction.CancelManualCrop,
-            is ShelfAddAction.CropChanged, is ShelfAddAction.ApplyManualCrop -> manualAction(action)
             is ShelfAddAction.QueryChanged -> queryChanged(action.query)
             is ShelfAddAction.CoffeeChosen -> coffeeChosen(action.option)
             is ShelfAddAction.RoasterChanged, is ShelfAddAction.WeightChosen, is ShelfAddAction.GrindChosen,
@@ -86,8 +78,6 @@ internal class ShelfAddViewModel(
             else -> return
         }
         updateState { copy(scanner = Downloading(0, total)) }
-        val job = currentCoroutineContext()[Job]
-        prepareJob = job
         val result = try { scanner.prepare { done, all ->
             // A few hundred updates are enough for a progress bar; one per buffer would be thousands.
             updateState {
@@ -97,7 +87,6 @@ internal class ShelfAddViewModel(
         } } catch (cancelled: CancellationException) {
             throw cancelled
         } catch (failure: Exception) { Result.failure(failure) }
-        finally { if (prepareJob === job) prepareJob = null }
         result.exceptionOrNull()?.let { if (it is CancellationException) throw it }
         if (result.isSuccess) ready() else updateState { copy(scanner = DownloadFailed) }
     }
@@ -127,83 +116,37 @@ internal class ShelfAddViewModel(
         if (currentState.saving) return
         scan?.cancel()
         updateState { copy(step = if (scanner == Ready) ShelfAddStep.Scanning else ShelfAddStep.Preparing,
-            photo = photo, stagesDone = emptySet(), liveFrame = null, result = null, manualCrop = null,
-            cropping = false, failure = null, cardLanding = false) }
+            photo = photo, stagesDone = emptySet(), liveFrame = null, result = null, failure = null, cardLanding = false) }
         if (currentState.scanner == Ready) scanReady(photo)
     }
 
     private fun scanReady(photo: ShelfPhoto) {
         if (currentState.photo !== photo || currentState.step !in setOf(ShelfAddStep.Scanning, ShelfAddStep.Preparing)) return
-        updateState { copy(step = ShelfAddStep.Scanning) }
+        updateState { copy(step = ShelfAddStep.Scanning, stagesDone = emptySet(), liveFrame = null, result = null, failure = null) }
         scan = viewModelScope.launch {
             val outcome = scanner.scan(photo.bytes,
                 onStage = { stage -> updateState { if (this.photo === photo) copy(stagesDone = stagesDone + stage) else this } },
                 onFront = { frame -> updateState { if (this.photo === photo) copy(liveFrame = frame) else this } })
             outcome.exceptionOrNull()?.let { if (it is CancellationException) throw it }
-            updateState { if (this.photo === photo) withOutcome(outcome) else this }
+            completeScan(photo, outcome)
             // The peel animation ends the reveal; should it never finish (an undecodable card), the form opens anyway.
             delay(REVEAL_LIMIT_MILLIS)
             updateState { if (this.photo === photo) revealed() else this }
         }
     }
 
-    private suspend fun startManualCrop() {
-        val state = currentState
-        if (state.photo == null || state.saving || state.step !in setOf(ShelfAddStep.Preparing, ShelfAddStep.Retake)) return
-        scan?.cancel()
-        beforeManualCrop = state.step
-        updateState { copy(step = ShelfAddStep.ManualCrop, cropBounds = BagCropBounds.Default, cropping = false) }
-        val preparing = prepareJob
-        if (preparing != null) {
-            preparing.cancelAndJoin()
-            refreshScannerReadiness()
-        }
-    }
-
-    private suspend fun refreshScannerReadiness() {
-        val readiness = try { scanner.readiness() } catch (cancelled: CancellationException) {
+    private suspend fun completeScan(photo: ShelfPhoto, outcome: Result<BagScanResult>) {
+        val missing = (outcome.exceptionOrNull() as? BagScanFailure)?.issue == BagScanIssue.ModelMissing
+        val readiness = if (missing) try { scanner.readiness() } catch (cancelled: CancellationException) {
             throw cancelled
-        } catch (_: Exception) { null }
+        } catch (_: Exception) { null } else null
         updateState {
-            copy(scanner = when (readiness) {
-                BagScannerReadiness.Ready -> Ready
-                is BagScannerReadiness.NeedsDownload -> NeedsDownload(readiness.downloadBytes)
-                null -> DownloadFailed
-            })
-        }
-    }
-
-    private suspend fun manualAction(action: ShelfAddAction) {
-        when (action) {
-            ShelfAddAction.StartManualCrop -> startManualCrop()
-            ShelfAddAction.CancelManualCrop -> cancelManualCrop()
-            is ShelfAddAction.CropChanged -> updateState {
-                if (step == ShelfAddStep.ManualCrop && action.bounds.isValid()) copy(cropBounds = action.bounds) else this
+            when {
+                this.photo !== photo -> this
+                readiness is BagScannerReadiness.NeedsDownload -> copy(step = ShelfAddStep.Preparing,
+                    scanner = NeedsDownload(readiness.downloadBytes), failure = BagScanIssue.ModelMissing)
+                else -> withOutcome(outcome)
             }
-            is ShelfAddAction.ApplyManualCrop -> applyManualCrop(action.bounds)
-            else -> Unit
-        }
-    }
-
-    private fun cancelManualCrop() {
-        if (currentState.step != ShelfAddStep.ManualCrop) return
-        val back = beforeManualCrop ?: ShelfAddStep.Preparing
-        beforeManualCrop = null
-        updateState { copy(step = back) }
-        if (back == ShelfAddStep.Preparing && currentState.scanner == Ready) currentState.photo?.let(::scanReady)
-    }
-
-    private suspend fun applyManualCrop(bounds: BagCropBounds) {
-        val state = currentState
-        val photo = state.photo ?: return
-        if (state.step != ShelfAddStep.ManualCrop || state.cropping || !bounds.isValid()) return
-        updateState { copy(cropping = true, cropBounds = bounds) }
-        val result = cropper.crop(photo.bytes, bounds)
-        result.exceptionOrNull()?.let { if (it is CancellationException) throw it }
-        updateState {
-            if (this.photo !== photo || step != ShelfAddStep.ManualCrop) this
-            else result.fold({ copy(manualCrop = it, result = null, failure = null, cropping = false, step = ShelfAddStep.Form) },
-                { copy(cropping = false, message = ShelfAddMessage.PhotoUnreadable) })
         }
     }
 
@@ -234,7 +177,7 @@ internal class ShelfAddViewModel(
 
     private suspend fun save(later: Boolean, confirmed: Boolean) {
         val state = currentState
-        val card = state.card ?: return
+        val card = state.result?.card ?: return
         if (state.saving) return
         val details = if (later) ShelfBagDetails() else state.form.details()
         val slug = (details.bean as? ShelfBean.Catalog)?.slug

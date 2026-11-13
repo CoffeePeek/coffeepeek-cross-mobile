@@ -28,10 +28,10 @@ import com.coffeepeek.feature.shelf.impl.ui.compose.model.ShelfScannerStatus
 import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
-/** Keeps the chosen photo in view while preparing the scanner or offering a manual crop. */
+/** Keeps the chosen photo in view while preparing or retrying the scanner. */
 @Composable
 internal fun ShelfScanPreparation(
-    photo: ByteArray, scanner: ShelfScannerStatus, onPrepare: () -> Unit, onManual: () -> Unit,
+    photo: ByteArray, scanner: ShelfScannerStatus, onPrepare: () -> Unit,
     onCamera: () -> Unit, onGallery: () -> Unit, modifier: Modifier = Modifier,
 ) {
     Column(modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(CoffeePeekDimens.spacing4),
@@ -42,7 +42,6 @@ internal fun ShelfScanPreparation(
         Text(stringResource(Res.string.shelf_prepare_body), style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant)
         ShelfPreparationStatus(scanner, onPrepare)
-        ShelfSecondaryButton(stringResource(Res.string.shelf_manual_crop_action), onManual)
         ShelfSecondaryButton(stringResource(Res.string.shelf_retake_gallery), onGallery)
         ShelfSecondaryButton(stringResource(Res.string.shelf_retake_camera), onCamera)
     }
@@ -78,7 +77,7 @@ private fun megabytes(bytes: Long): Int = ((bytes + 999_999) / 1_000_000).toInt(
 
 @Composable
 private fun ShelfPreparationPreview(dark: Boolean, scanner: ShelfScannerStatus) = CoffeePeekTheme(darkTheme = dark) {
-    ShelfScanPreparation(byteArrayOf(), scanner, {}, {}, {}, {}, Modifier.background(MaterialTheme.colorScheme.background))
+    ShelfScanPreparation(byteArrayOf(), scanner, {}, {}, {}, Modifier.background(MaterialTheme.colorScheme.background))
 }
 
 @Preview @Composable private fun ShelfPreparationLightPreview() = ShelfPreparationPreview(false, ShelfScannerStatus.NeedsDownload(33_000_000))

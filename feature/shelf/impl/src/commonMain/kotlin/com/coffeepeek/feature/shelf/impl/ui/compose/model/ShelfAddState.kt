@@ -9,7 +9,7 @@ import com.coffeepeek.feature.shelf.impl.ui.data.ShelfDay
  * Get the scanner ready, take or pick a photo, watch it being scanned, then either retake it or see the card peel off the
  * photo ([Revealing]) and fill in the bag.
  */
-internal enum class ShelfAddStep { Intro, Camera, Preparing, ManualCrop, Scanning, Revealing, Retake, Form }
+internal enum class ShelfAddStep { Intro, Camera, Preparing, Scanning, Revealing, Retake, Form }
 
 /** The scanner's models are prepared only when a selected photo needs automatic processing. */
 internal sealed interface ShelfScannerStatus {
@@ -53,9 +53,6 @@ internal data class ShelfAddState(
     /** The found front, outlined on the photo while the rest of the scan runs. */
     val liveFrame: BagScanFrame? = null,
     val result: BagScanResult? = null,
-    val manualCrop: ManualBagCrop? = null,
-    val cropBounds: BagCropBounds = BagCropBounds.Default,
-    val cropping: Boolean = false,
     val failure: BagScanIssue? = null,
     val form: ShelfBagForm = ShelfBagForm(),
     val options: List<ShelfCoffeeOption> = emptyList(),
@@ -65,10 +62,6 @@ internal data class ShelfAddState(
     val cardLanding: Boolean = false,
     val message: ShelfAddMessage? = null,
 ) {
-    val card: ShelfBagCard? get() = manualCrop?.card ?: result?.card
-    val cardWidth: Int get() = manualCrop?.width ?: result?.cardWidth ?: 0
-    val cardHeight: Int get() = manualCrop?.height ?: result?.cardHeight ?: 0
-
     /** Advice that does not block saving ("Принято с подсказкой"). */
     val hints: List<PackModerationReason>
         get() = result?.moderation?.takeIf { it.status == PackModerationStatus.AcceptedWithHint }?.reasons.orEmpty()

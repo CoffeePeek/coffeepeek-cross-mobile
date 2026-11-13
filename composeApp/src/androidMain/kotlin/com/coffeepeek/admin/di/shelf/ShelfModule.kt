@@ -8,8 +8,6 @@ import com.coffeepeek.core.session.SessionReader
 import com.coffeepeek.feature.shelf.api.ShelfEntry
 import com.coffeepeek.feature.shelf.data.repository.createShelfRepository
 import com.coffeepeek.feature.shelf.data.scan.createAndroidBagScanner
-import com.coffeepeek.feature.shelf.data.scan.createAndroidBagPhotoCropper
-import com.coffeepeek.feature.shelf.domain.repository.BagPhotoCropper
 import com.coffeepeek.feature.shelf.domain.repository.BagScanner
 import com.coffeepeek.feature.shelf.domain.repository.ShelfRepository
 import com.coffeepeek.feature.shelf.impl.ShelfPorts
@@ -31,10 +29,9 @@ internal fun shelfModule(
         val chosen = models(context)
         createAndroidBagScanner(context, chosen.segmenter, chosen.inpainter)
     }
-    single<BagPhotoCropper> { createAndroidBagPhotoCropper() }
     single<ShelfEntry> {
         val brews = ShelfHomeBrews(get(), SessionShelfAccount(get()))
-        createShelfEntry(get(), ShelfPorts(get(), get(), ShelfCatalogSearch(get()), ShelfCardImage, AndroidShelfGallery, AndroidShelfCamera,
+        createShelfEntry(get(), ShelfPorts(get(), ShelfCatalogSearch(get()), ShelfCardImage, AndroidShelfGallery, AndroidShelfCamera,
             AndroidShelfTimeZone, brews))
     }
 }

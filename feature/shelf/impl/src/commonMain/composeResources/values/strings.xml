@@ -130,23 +130,12 @@
     <string name="shelf_add_title">Новая пачка</string>
     <string name="shelf_add_close">Закрыть</string>
     <string name="shelf_scan_intro_title">Добавьте фото пачки</string>
-    <string name="shelf_scan_intro_body">Исходное фото остаётся на телефоне. После сохранения на сервер отправятся обработанное или обрезанное изображение пачки и данные карточки.</string>
+    <string name="shelf_scan_intro_body">Исходное фото остаётся на телефоне. После сохранения на сервер отправятся обработанное изображение пачки и данные карточки.</string>
     <string name="shelf_scan_example_before">Обычное фото</string>
     <string name="shelf_scan_example_after">Пачка на полке</string>
-    <string name="shelf_scan_example_accessibility">Схема: фото пачки обрезается, а карточка встаёт на полку</string>
+    <string name="shelf_scan_example_accessibility">Схема: фото пачки обрабатывается, а карточка встаёт на полку</string>
     <string name="shelf_prepare_title">Фото выбрано</string>
-    <string name="shelf_prepare_body">Можно подготовить сканер для автоматической обработки или обрезать фото вручную.</string>
-    <string name="shelf_manual_crop_action">Обрезать вручную</string>
-    <string name="shelf_manual_crop_title">Обрезать фото</string>
-    <string name="shelf_manual_crop_hint">Передвиньте рамку или настройте её края ниже, чтобы оставить только лицевую сторону пачки.</string>
-    <string name="shelf_manual_crop_accessibility">Рамка ручной обрезки фотографии пачки</string>
-    <string name="shelf_manual_crop_confirm">Готово</string>
-    <string name="shelf_manual_crop_back">Назад к фото</string>
-    <string name="shelf_manual_crop_working">Обрезаем фото…</string>
-    <string name="shelf_crop_left">Левый край</string>
-    <string name="shelf_crop_right">Правый край</string>
-    <string name="shelf_crop_top">Верхний край</string>
-    <string name="shelf_crop_bottom">Нижний край</string>
+    <string name="shelf_prepare_body">Подготовьте сканер для автоматической обработки. После загрузки продолжим с этим фото.</string>
     <string name="shelf_scan_tip_whole">Пачка целиком, лицевой стороной</string>
     <string name="shelf_scan_tip_straight">Ровно, без сильного наклона</string>
     <string name="shelf_scan_tip_clean">Без рук, зёрен и бликов на пачке</string>
@@ -157,7 +146,7 @@
     <string name="shelf_scanner_prepare">Подготовить сканер · %1$d МБ</string>
     <string name="shelf_scanner_downloading">Готовим сканер · %1$s</string>
     <string name="shelf_scanner_downloading_unknown">Готовим сканер…</string>
-    <string name="shelf_scanner_download_failed">Не удалось подготовить сканер. Проверьте сеть или обрежьте фото вручную.</string>
+    <string name="shelf_scanner_download_failed">Не удалось подготовить сканер. Проверьте сеть и попробуйте ещё раз.</string>
 
     <string name="shelf_scan_title">Сканируем</string>
     <string name="shelf_scan_stage_found">Нашли пачку</string>
