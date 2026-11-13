@@ -138,7 +138,7 @@
     <string name="shop_photo_attachment_description">Выбранае фота %1$d</string>
     <string name="shop_checkin_form_public">Зрабіць публічным</string>
     <string name="shop_checkin_form_public_hint">У стужцы пасля мадэрацыі. Без публікацыі — толькі вам.</string>
-    <string name="shop_checkin_form_submit">Захаваць чэкін</string>
+    <string name="shop_checkin_form_submit">Апублікаваць</string>
     <string name="shop_checkin_form_change_shop">Змяніць</string>
     <string name="shop_checkin_today">Сёння</string>
     <string name="shop_checkin_form_sending">Адпраўляем чэкін…</string>

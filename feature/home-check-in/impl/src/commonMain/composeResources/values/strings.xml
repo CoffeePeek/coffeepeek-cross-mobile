@@ -61,7 +61,7 @@
     <string name="home_check_in_delete_failed">Не удалось подтвердить удаление. Обновите запись перед повторной попыткой.</string>
     <string name="home_check_in_editor_title">Редактировать чекин</string>
     <string name="home_check_in_editor_close">Закрыть форму</string>
-    <string name="home_check_in_save">Сохранить чекин</string>
+    <string name="home_check_in_save">Опубликовать</string>
     <string name="home_check_in_saving">Сохраняем…</string>
     <string name="home_check_in_save_failed">Не удалось сохранить чекин. Проверьте данные и попробуйте ещё раз.</string>
     <string name="home_check_in_save_error_title">Не удалось сохранить чекин</string>
@@ -77,8 +77,7 @@
     <string name="home_check_in_optional">Необязательно</string>
     <string name="home_check_in_public_title">Сделать публичным</string>
     <string name="home_check_in_public_hint">В ленте после модерации. Без публикации — только вам.</string>
-    <string name="home_check_in_recipe_expand">Добавить рецепт</string>
-    <string name="home_check_in_recipe_title">Рецепт</string>
+    <string name="home_check_in_recipe_title">Дополнительно</string>
     <string name="home_check_in_recipe_collapsed">Свёрнут</string>
     <string name="home_check_in_recipe_expanded">Развёрнут</string>
     <string name="home_check_in_saved_private">Сохранено только для вас</string>

@@ -9,6 +9,7 @@ import com.coffeepeek.feature.discovery.domain.model.PriceLevel
 import com.coffeepeek.feature.discovery.domain.model.ShopKind
 import com.coffeepeek.feature.discovery.domain.model.ShopSummary
 import com.coffeepeek.feature.discovery.domain.rules.showsDiscovery
+import com.coffeepeek.feature.discovery.domain.rules.searchText
 import com.coffeepeek.feature.discovery.domain.rules.visibleShops
 
 /** A failed search. UI uses localized copy rather than the unreviewed [serverMessage]. */
@@ -49,6 +50,9 @@ internal data class SearchState(
     val locationUnavailable: Boolean = false,
     /** Where the user is, for the distance on a card when the server sends none. */
     val userLocation: Coordinates? = null,
+    /** The picker keeps one accepted result snapshot while a new query is loading. */
+    val pickerResultCriteria: DiscoveryCriteria? = null,
+    val pickerRecentShops: List<ShopSummary> = emptyList(),
 ) {
     fun showsShopsFirst(hasRoasterResults: Boolean?): Boolean =
         query.isNotBlank() && hasRoasterResults == false && visibleShops.isNotEmpty()
@@ -64,6 +68,9 @@ internal data class SearchState(
         roasters.isEmpty() && beans.isEmpty() && equipment.isEmpty() && brewMethods.isEmpty() && tags.isEmpty()
     }
 }
+
+internal fun DiscoveryCriteria.matchesPickerQuery(other: DiscoveryCriteria): Boolean =
+    searchQuery().copy(text = searchText(text)) == other.searchQuery().copy(text = searchText(other.text))
 
 internal sealed interface SearchAction {
     data class Query(val text: String) : SearchAction

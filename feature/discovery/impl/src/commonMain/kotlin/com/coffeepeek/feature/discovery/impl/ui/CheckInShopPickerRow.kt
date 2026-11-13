@@ -26,11 +26,11 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 
 /** A choice of place, with only the details needed to identify its branch. */
 @Composable
-internal fun CheckInShopPickerRow(shop: ShopSummary, location: Coordinates?, onClick: () -> Unit) {
+internal fun CheckInShopPickerRow(shop: ShopSummary, location: Coordinates?, modifier: Modifier = Modifier, onClick: () -> Unit) {
     val distance = shop.distanceMeters ?: location?.let { user ->
         shop.coordinates?.let { distanceMeters(user, it) }
     }
-    CoffeePeekCard(onClick = onClick, elevation = 0.dp,
+    CoffeePeekCard(modifier = modifier, onClick = onClick, elevation = 0.dp,
         contentPadding = androidx.compose.foundation.layout.PaddingValues(CoffeePeekDimens.spacing3)) {
         Row(verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3)) {
@@ -57,10 +57,10 @@ internal fun CheckInShopPickerRow(shop: ShopSummary, location: Coordinates?, onC
 
 @Preview @Composable private fun CheckInShopPickerRowLightPreview() = CoffeePeekTheme(darkTheme = false) {
     CheckInShopPickerRow(ShopSummary("shop", "The Coffee Room", address = "ул. Петра Мстиславца, 20",
-        distanceMeters = 850.0), null, {})
+        distanceMeters = 850.0), null, onClick = {})
 }
 
 @Preview @Composable private fun CheckInShopPickerRowDarkPreview() = CoffeePeekTheme(darkTheme = true) {
     CheckInShopPickerRow(ShopSummary("shop", "The Coffee Room", address = "ул. Петра Мстиславца, 20",
-        distanceMeters = 850.0), null, {})
+        distanceMeters = 850.0), null, onClick = {})
 }

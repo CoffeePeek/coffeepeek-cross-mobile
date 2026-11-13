@@ -20,12 +20,12 @@ fun createCheckInShopPickerEntry(
     override fun Content(onBack: () -> Unit, onClose: () -> Unit, onSelectShop: (String) -> Unit,
         onSignIn: () -> Unit, modifier: Modifier) {
         val search = viewModel(key = "check-in-shop-search") {
-            SearchViewModel(repository, favorites, city, location, account, analytics, SearchPurpose.CheckInPicker)
+            SearchViewModel(repository, favorites, city, location, account, analytics, SearchPurpose.CheckInPicker, recentShops)
         }
         val map = viewModel(key = "check-in-shop-map") {
             MapViewModel(repository, city, location, details, analytics, account, favorites,
                 requestLocationOnMapInteraction = false)
         }
-        CheckInShopPickerScreen(search, map, host, recentShops, onBack, onClose, onSelectShop, onSignIn, modifier)
+        CheckInShopPickerScreen(search, map, host, onBack, onClose, onSelectShop, onSignIn, modifier)
     }
 }

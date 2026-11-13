@@ -1,14 +1,19 @@
 package com.coffeepeek.feature.discovery.impl
 
 import androidx.lifecycle.ViewModelStore
+import com.coffeepeek.feature.discovery.api.DiscoveryRecentShops
 import com.coffeepeek.feature.discovery.domain.model.Coordinates
+import com.coffeepeek.feature.discovery.domain.model.ShopSummary
 import com.coffeepeek.feature.discovery.impl.search.*
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.*
+import kotlinx.coroutines.withContext
 import kotlin.test.*
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -28,9 +33,9 @@ class CheckInShopSearchTest {
         Dispatchers.resetMain()
     }
 
-    private fun TestScope.model(): SearchViewModel {
+    private fun TestScope.model(recentShops: DiscoveryRecentShops? = null): SearchViewModel {
         val model = SearchViewModel(repository, favorites, FakeCity("brest"), location, account,
-            analytics, SearchPurpose.CheckInPicker)
+            analytics, SearchPurpose.CheckInPicker, recentShops = recentShops)
         store.put("picker", model)
         runCurrent()
         return model
@@ -143,5 +148,124 @@ class CheckInShopSearchTest {
         runCurrent()
         assertEquals(SearchEvent.SignInRequired, event.await())
         assertTrue(favorites.changes.isEmpty())
+    }
+
+    @Test fun obsoleteResponseDuringDebounceKeepsRowsAndReturningToItsQueryReloadsOnce() = runTest(dispatcher) {
+        val stale = CompletableDeferred<Unit>()
+        val latest = CompletableDeferred<Unit>()
+        var coffeeRequests = 0
+        repository.search = { query ->
+            if (query.text?.trim() != "coffee") page(listOf(shop("city")))
+            else if (++coffeeRequests == 1) {
+                stale.await()
+                page(listOf(shop("stale")))
+            } else {
+                latest.await()
+                page(listOf(shop("current")))
+            }
+        }
+        val model = model()
+        model.onAction(SearchAction.Query("coffee"))
+        runCurrent()
+        finishDebounce()
+        model.onAction(SearchAction.Query("tea"))
+        runCurrent()
+        stale.complete(Unit)
+        runCurrent()
+        assertPickerRows(model, "", "city")
+        model.onAction(SearchAction.Query(" coffee "))
+        runCurrent()
+        finishDebounce()
+        assertPickerRows(model, "", "city")
+        latest.complete(Unit)
+        runCurrent()
+        assertPickerRows(model, "coffee", "current")
+        assertEquals(listOf("", "coffee", "coffee"), repository.queries.map { it.text?.trim() })
+    }
+
+    @Test fun newNearbyLocationKeepsCityRowsUntilItAcceptsTheCurrentOrigin() = runTest(dispatcher) {
+        val old = CompletableDeferred<Unit>()
+        val latest = CompletableDeferred<Unit>()
+        val moved = Coordinates(53.91, 27.57)
+        repository.search = { query ->
+            when (query.origin) {
+                here -> withContext(NonCancellable) {
+                    old.await()
+                    page(listOf(shop("old-nearby")))
+                }
+                moved -> {
+                    latest.await()
+                    page(listOf(shop("current-nearby")))
+                }
+                else -> page(listOf(shop("city")))
+            }
+        }
+        location.flow.value = here
+        val model = model()
+        model.onAction(SearchAction.ToggleNearby)
+        runCurrent()
+        location.flow.value = moved
+        runCurrent()
+        old.complete(Unit)
+        runCurrent()
+        assertPickerRows(model, "", "city")
+        assertNull(model.state.value.pickerResultCriteria?.searchQuery()?.origin)
+        latest.complete(Unit)
+        runCurrent()
+        assertPickerRows(model, "", "current-nearby")
+        assertEquals(moved, model.state.value.pickerResultCriteria?.origin)
+        assertEquals(0, model.state.value.locationPermissionRequest)
+        assertEquals(listOf(null, here, moved), repository.queries.map { it.origin })
+    }
+
+    @Test fun surroundingWhitespaceKeepsAcceptedResultsAndAllowsPagination() = runTest(dispatcher) {
+        repository.search = { query ->
+            page(listOf(shop("page-${query.page}")), current = query.page, pages = 2)
+        }
+        val model = model()
+        model.onAction(SearchAction.Query("coffee"))
+        runCurrent()
+        finishDebounce()
+        model.onAction(SearchAction.Query(" coffee "))
+        runCurrent()
+        finishDebounce()
+        val state = model.state.value
+        assertTrue(assertNotNull(state.pickerResultCriteria).matchesPickerQuery(state.criteria))
+        assertEquals(listOf("", "coffee"), repository.queries.map { it.text?.trim() })
+        assertTrue(state.canLoadMore)
+        model.onAction(SearchAction.LoadMore)
+        runCurrent()
+        assertEquals(listOf("page-1", "page-2"), model.state.value.shops.map { it.id })
+        assertEquals(2, repository.queries.last().page)
+    }
+
+    @Test fun signedInRecentsAreClearedAndLatePreviousAccountResponseIsIgnored() = runTest(dispatcher) {
+        val old = CompletableDeferred<List<ShopSummary>>()
+        val owners = mutableListOf<String>()
+        val model = model(DiscoveryRecentShops {
+            val owner = checkNotNull(account.key.value)
+            owners += owner
+            Result.success(if (owner == "one") withContext(NonCancellable) { old.await() } else listOf(shop(owner)))
+        })
+        account.key.value = "two"
+        runCurrent()
+        assertEquals(listOf("two"), model.state.value.pickerRecentShops.map { it.id })
+        old.complete(listOf(shop("one")))
+        runCurrent()
+        assertEquals(listOf("two"), model.state.value.pickerRecentShops.map { it.id })
+        account.key.value = null
+        runCurrent()
+        assertTrue(model.state.value.pickerRecentShops.isEmpty())
+        assertEquals(listOf("one", "two"), owners)
+    }
+
+    private fun TestScope.finishDebounce() {
+        advanceTimeBy(401)
+        runCurrent()
+    }
+
+    private fun assertPickerRows(model: SearchViewModel, text: String, id: String) {
+        assertEquals(listOf(id), model.state.value.shops.map { it.id })
+        assertEquals(text, model.state.value.pickerResultCriteria?.text?.trim())
     }
 }
