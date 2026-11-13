@@ -17,7 +17,8 @@ plugins {
     id("com.google.gms.google-services") version "4.5.0" apply false
 }
 
-if (file("google-services.json").isFile) apply(plugin = "com.google.gms.google-services")
+if (listOf("google-services.json", "src/debug/google-services.json", "src/release/google-services.json")
+        .any { file(it).isFile }) apply(plugin = "com.google.gms.google-services")
 
 // Existing external UI regressions retain compile-only access to moved internals.
 // No test cases, Activity, APK host or instrumentation execution are added.
@@ -287,9 +288,6 @@ android {
     buildFeatures {
         buildConfig = true
     }
-    if (providers.gradleProperty("pushTestApp").orNull == "true") {
-        buildTypes.getByName("debug") { applicationIdSuffix = ".pushdebug" }
-    }
 
     defaultConfig {
         applicationId = Config.APPLICATION_ID
@@ -341,6 +339,10 @@ android {
     }
     buildTypes {
         getByName("debug") {
+            applicationIdSuffix = ".debug"
+            versionNameSuffix = "-debug"
+            // Distribution uses a stable signing key; local builds keep the usual debug key.
+            signingConfig = signingConfigs.findByName("release") ?: signingConfigs.getByName("debug")
             // Normal backend/session, but no release OAuth flow in debug builds.
             buildConfigField("String", "GOOGLE_WEB_CLIENT_ID", "\"\"")
         }
@@ -348,6 +350,7 @@ android {
             initWith(getByName("debug"))
             applicationIdSuffix = ".sandbox"
             versionNameSuffix = "-sandbox"
+            signingConfig = signingConfigs.getByName("debug")
             matchingFallbacks += "debug"
             buildConfigField("boolean", "APK_UPDATES_ENABLED", "false")
             buildConfigField("String", "API_BASE_URL", "\"https://sandbox.coffeepeek.invalid\"")
