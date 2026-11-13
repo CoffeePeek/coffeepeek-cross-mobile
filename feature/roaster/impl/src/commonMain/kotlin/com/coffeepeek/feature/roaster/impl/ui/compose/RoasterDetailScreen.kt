@@ -19,7 +19,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
@@ -40,6 +39,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
+import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
@@ -167,7 +167,7 @@ private fun RoasterDetailContent(
                 details.location?.let { location ->
                     RoasterSection(stringResource(Res.string.roaster_address_title)) {
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2)) {
-                            Icon(CoffeePeekIcons.Location, null, tint = MaterialTheme.colorScheme.primary)
+                            CoffeePeekIcon(CoffeePeekIcons.Location, null, tint = MaterialTheme.colorScheme.primary)
                             Text(location.address, style = MaterialTheme.typography.bodyLarge)
                         }
                     }

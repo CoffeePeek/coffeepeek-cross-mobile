@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import com.coffeepeek.core.designsystem.component.CoffeePeekScaffold as Scaffold
 import com.coffeepeek.core.designsystem.component.CoffeePeekOutlinedButton as OutlinedButton
@@ -38,6 +37,7 @@ import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.component.CoffeePeekButton
 import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
 import com.coffeepeek.core.designsystem.component.CoffeePeekTopBar
+import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 
@@ -74,7 +74,7 @@ internal fun SubmissionStatusScreen(
                 horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center,
             ) {
                 if (status == SubmissionStatus.Sending) CoffeePeekLoader(stringResource(Res.string.contributions_loading), size = 88.dp)
-                else Icon(CoffeePeekIcons.Error, contentDescription = null, modifier = Modifier.size(88.dp), tint = MaterialTheme.colorScheme.error)
+                else CoffeePeekIcon(CoffeePeekIcons.Error, contentDescription = null, modifier = Modifier.size(88.dp), tint = MaterialTheme.colorScheme.error)
                 Spacer(Modifier.height(CoffeePeekDimens.spacing4))
                 Text(title, style = MaterialTheme.typography.headlineSmall, textAlign = TextAlign.Center)
                 Spacer(Modifier.height(CoffeePeekDimens.spacing4))

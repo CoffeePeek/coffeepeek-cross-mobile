@@ -22,7 +22,7 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Icon
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -37,6 +37,7 @@ import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.component.CoffeePeekButton
 import com.coffeepeek.core.designsystem.component.CoffeePeekIconButton
 import com.coffeepeek.core.designsystem.component.CoffeePeekOutlinedButton
+import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
@@ -107,7 +108,7 @@ internal fun GuestCheckInOnboardingContent(
                     tint = colors.surfaceVariant,
                     contentDescription = stringResource(Res.string.home_check_in_onboarding_guest),
                 ) {
-                    Icon(CoffeePeekIcons.Close, contentDescription = null)
+                    CoffeePeekIcon(CoffeePeekIcons.Close, contentDescription = null)
                 }
             }
             GuestCheckInOnboardingIndicator(pager)
@@ -152,8 +153,13 @@ private fun GuestCheckInOnboardingActions(onRegister: () -> Unit, onSignIn: () -
                     .padding(horizontal = CoffeePeekDimens.spacing4, vertical = CoffeePeekDimens.spacing3),
                 verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2),
             ) {
-                CoffeePeekButton(stringResource(Res.string.home_check_in_onboarding_register), onRegister)
-                CoffeePeekOutlinedButton(onSignIn, Modifier.fillMaxWidth().heightIn(min = CoffeePeekDimens.buttonHeight)) {
+                CoffeePeekButton(stringResource(Res.string.home_check_in_onboarding_register), onRegister, useGlass = false)
+                CoffeePeekOutlinedButton(
+                    onSignIn,
+                    Modifier.fillMaxWidth().heightIn(min = CoffeePeekDimens.buttonHeight),
+                    colors = ButtonDefaults.outlinedButtonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                    useGlass = false,
+                ) {
                     Text(stringResource(Res.string.home_check_in_onboarding_sign_in), color = MaterialTheme.colorScheme.onSurface)
                 }
             }

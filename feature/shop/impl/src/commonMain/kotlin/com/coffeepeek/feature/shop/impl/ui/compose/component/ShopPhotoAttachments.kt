@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Icon
 import com.coffeepeek.core.designsystem.component.CoffeePeekIconButton as IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -34,6 +33,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
+import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
@@ -101,7 +101,7 @@ internal fun ShopPhotoAttachments(
                         .border(1.5.dp, Color.White, RoundedCornerShape(50))
                         .clickable(enabled = enabled, role = Role.Button) { onRemove(index) },
                         contentAlignment = Alignment.Center) {
-                        Icon(CoffeePeekIcons.Close,
+                        CoffeePeekIcon(CoffeePeekIcons.Close,
                             contentDescription = stringResource(Res.string.shop_review_photo_remove, index + 1),
                             tint = Color.White, modifier = Modifier.size(14.dp))
                     }
@@ -114,7 +114,7 @@ internal fun ShopPhotoAttachments(
                     .clickable(enabled = enabled && !isLoading, role = Role.Button) { sourceShown = true },
                     contentAlignment = Alignment.Center) {
                     if (isLoading) CoffeePeekLoader(size = 40.dp, color = MaterialTheme.colorScheme.primary, strokeWidth = 4.dp)
-                    else Icon(CoffeePeekIcons.Camera,
+                    else CoffeePeekIcon(CoffeePeekIcons.Camera,
                         contentDescription = stringResource(Res.string.shop_review_photo_add),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(28.dp))
                 }

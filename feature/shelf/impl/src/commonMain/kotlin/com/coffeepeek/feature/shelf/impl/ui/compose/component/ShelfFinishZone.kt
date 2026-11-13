@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -34,6 +33,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.reducedMotionDuration
@@ -70,7 +70,7 @@ internal fun ShelfFinishZone(highlighted: Boolean, modifier: Modifier = Modifier
         .heightIn(min = 88.dp).padding(horizontal = CoffeePeekDimens.spacing4, vertical = CoffeePeekDimens.spacing3)
         .semantics(mergeDescendants = true) { liveRegion = LiveRegionMode.Polite },
         horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(2.dp, Alignment.CenterVertically)) {
-        Icon(CoffeePeekIcons.Archive, null, Modifier.size(24.dp), tint = colors.error)
+        CoffeePeekIcon(CoffeePeekIcons.Archive, null, Modifier.size(24.dp), tint = colors.error)
         Text(stringResource(Res.string.shelf_finish_zone), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.ExtraBold,
             color = colors.error)
         Text(stringResource(Res.string.shelf_finish_zone_hint), style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold,

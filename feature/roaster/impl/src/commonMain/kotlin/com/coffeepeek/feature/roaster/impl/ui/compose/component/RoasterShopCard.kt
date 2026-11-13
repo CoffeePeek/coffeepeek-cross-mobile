@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -26,6 +25,7 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.coffeepeek.core.designsystem.component.CoffeePeekImagePlaceholder
+import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
@@ -56,7 +56,7 @@ internal fun RoasterShopCard(shop: RoasterShop, onClick: () -> Unit, image: Roas
             Text(shop.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold,
                 maxLines = 2, overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.weight(1f).padding(horizontal = CoffeePeekDimens.spacing3))
-            Icon(CoffeePeekIcons.ChevronRight, contentDescription = stringResource(Res.string.roaster_open_shop, shop.name),
+            CoffeePeekIcon(CoffeePeekIcons.ChevronRight, contentDescription = stringResource(Res.string.roaster_open_shop, shop.name),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }

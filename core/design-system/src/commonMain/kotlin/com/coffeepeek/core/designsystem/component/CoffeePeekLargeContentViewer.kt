@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TooltipBox
@@ -51,7 +50,7 @@ fun CoffeePeekLargeContentViewer(
 private fun LargeContentCard(label: String, icon: ImageVector) {
     CoffeePeekContentCard(Modifier.widthIn(max = 280.dp)) {
         Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Icon(icon, null, Modifier.size(48.dp), tint = MaterialTheme.colorScheme.onSurface)
+            CoffeePeekIcon(icon, null, Modifier.size(48.dp), tint = MaterialTheme.colorScheme.onSurface)
             Text(label, style = MaterialTheme.typography.titleLarge, textAlign = TextAlign.Center)
         }
     }

@@ -3,13 +3,13 @@ package com.coffeepeek.feature.ownership.impl.ui.compose
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.unit.dp
+import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.modifier.CoffeePeekGlassIconButton
 import com.coffeepeek.core.designsystem.modifier.CoffeePeekGlassIcon
@@ -27,7 +27,7 @@ internal fun OwnershipProfileActions(owner: Boolean, suggest: () -> Unit, edit: 
     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         if (owner) CoffeePeekGlassIconButton(edit, stringResource(Res.string.ownership_edit),
             nativeIcon = CoffeePeekGlassIcon.Edit) {
-            Icon(CoffeePeekIcons.NoteEdit, null)
+            CoffeePeekIcon(CoffeePeekIcons.NoteEdit, null)
         }
         favorite()
         share()

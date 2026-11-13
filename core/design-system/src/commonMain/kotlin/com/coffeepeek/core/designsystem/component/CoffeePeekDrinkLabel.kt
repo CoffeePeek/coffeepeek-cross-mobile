@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -36,7 +35,7 @@ fun CoffeePeekDrinkLabel(
     Row(modifier.widthIn(max = 200.dp), verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(if (compact) CoffeePeekDimens.spacing1 else CoffeePeekDimens.spacing2)) {
         Box(Modifier.size(iconSize), contentAlignment = Alignment.Center) {
-            if (imageContent == null) Icon(CoffeePeekIcons.Coffee, null, Modifier.size(if (compact) iconSize else 24.dp),
+            if (imageContent == null) CoffeePeekIcon(CoffeePeekIcons.Coffee, null, Modifier.size(if (compact) iconSize else 24.dp),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant)
             else imageContent(Modifier.size(iconSize))
         }

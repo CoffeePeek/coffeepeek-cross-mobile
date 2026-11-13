@@ -47,7 +47,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import com.coffeepeek.core.designsystem.component.CoffeePeekFilledButton as Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -80,6 +79,7 @@ import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
 import com.coffeepeek.core.designsystem.component.CoffeePeekTopBar
 import com.coffeepeek.core.designsystem.component.CoffeePeekGroupSection
 import com.coffeepeek.core.designsystem.component.rememberCoffeePeekSyncedText
+import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.component.CoffeePeekActionDialog
 import com.coffeepeek.core.designsystem.component.CoffeePeekDialogAction
@@ -264,7 +264,7 @@ private fun SaveProfileButton(state: EditProfileState, onClick: () -> Unit) {
 @Composable
 private fun DeleteAccountButton(enabled: Boolean, onClick: () -> Unit) {
     TextButton(onClick = onClick, modifier = Modifier.fillMaxWidth(), enabled = enabled) {
-        Icon(CoffeePeekIcons.Delete, contentDescription = null, tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(18.dp))
+        CoffeePeekIcon(CoffeePeekIcons.Delete, contentDescription = null, tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(18.dp))
         Spacer(Modifier.width(CoffeePeekDimens.spacing2))
         Text(stringResource(Res.string.profile_edit_delete_account), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.error)
     }
@@ -340,7 +340,7 @@ private fun AvatarPicker(state: EditProfileState, slots: EditProfileSlots, loadi
             Modifier.align(Alignment.BottomEnd).size(32.dp).clip(CircleShape).background(MaterialTheme.colorScheme.surface)
                 .border(1.dp, MaterialTheme.colorScheme.outlineVariant, CircleShape),
             contentAlignment = Alignment.Center,
-        ) { Icon(CoffeePeekIcons.Camera, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(16.dp)) }
+        ) { CoffeePeekIcon(CoffeePeekIcons.Camera, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(16.dp)) }
     }
 }
 

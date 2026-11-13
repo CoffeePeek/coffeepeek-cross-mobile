@@ -20,6 +20,7 @@ import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.unit.Density
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.core.designsystem.component.CoffeePeekSwipeDismissModalBottomSheet
+import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.feature.notifications.api.NotificationFeature
@@ -101,7 +102,7 @@ private fun NotificationsIconButton(unreadCount: Int, onClick: () -> Unit) {
     Box(Modifier.sizeIn(minWidth = CoffeePeekDimens.spacing12, minHeight = CoffeePeekDimens.spacing12)) {
         IconButton(onClick = onClick, modifier = Modifier.align(Alignment.Center).size(CoffeePeekDimens.buttonHeight),
             colors = IconButtonDefaults.iconButtonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
-            Icon(CoffeePeekIcons.Notifications, contentDescription = if (unreadCount > 0)
+            CoffeePeekIcon(CoffeePeekIcons.Notifications, contentDescription = if (unreadCount > 0)
                 stringResource(Res.string.notifications_button_unread, unreadCount) else stringResource(Res.string.notifications_title))
         }
         // A sibling stays outside the circular IconButton's clip and inside the button's bounds.

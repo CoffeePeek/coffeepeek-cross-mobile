@@ -68,7 +68,7 @@ private fun MapShopRating(details: MapShopDetails?) {
     val rating = details?.rating
     Row(verticalAlignment = Alignment.CenterVertically) {
         if (rating != null && rating > 0) {
-            Icon(CoffeePeekIcons.StarFilled, null, Modifier.size(14.dp), tint = MaterialTheme.colorScheme.primary)
+            CoffeePeekIcon(CoffeePeekIcons.StarFilled, null, Modifier.size(14.dp), tint = MaterialTheme.colorScheme.primary)
             Spacer(Modifier.width(4.dp))
             Text(oneDecimal(rating), style = MaterialTheme.typography.labelMedium)
             if (details.reviewCount > 0) Text(" (${details.reviewCount})", style = MaterialTheme.typography.labelSmall,

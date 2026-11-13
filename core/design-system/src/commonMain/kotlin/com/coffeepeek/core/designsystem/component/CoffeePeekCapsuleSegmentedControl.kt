@@ -16,7 +16,6 @@ import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -137,7 +136,7 @@ private fun CoffeePeekCapsuleSegmentedControlPreviewContent(darkTheme: Boolean, 
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     CoffeePeekCapsuleSegmentedControl(listOf("First", "Second"), selected, { it }, { selected = it }, Modifier.weight(1f))
                     CoffeePeekIconButton({}, Modifier.size(CoffeePeekDimens.buttonHeight)) {
-                        Icon(CoffeePeekIcons.Notifications, null)
+                        CoffeePeekIcon(CoffeePeekIcons.Notifications, null)
                     }
                 }
                 CoffeePeekCapsuleSegmentedControl(listOf("First", "Second"), "Second", { it }, {})
