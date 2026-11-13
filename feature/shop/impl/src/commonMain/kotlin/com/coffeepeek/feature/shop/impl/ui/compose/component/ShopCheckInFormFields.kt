@@ -12,7 +12,7 @@ import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopCheckInFormAction
 import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopCheckInFormState
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
-/** One scrollable sequence: place and date, then the visit and optional detail. */
+/** One scrollable sequence: place and date, then the visit details. */
 @Composable
 internal fun ShopCheckInFormFields(
     state: ShopCheckInFormState, shopName: String, shopAddress: String?, visitLabel: String,
@@ -24,7 +24,7 @@ internal fun ShopCheckInFormFields(
         ShopCheckInFormHeader(shopName, shopAddress, editable, onChangeShop)
         ShopCheckInDateField(visitLabel, selectedVisitMillis, nowMillis, editable, onVisitDate)
         ShopCheckInDrinkInput(state, editable, onAction)
-        ShopCheckInCoffeeRating(state.input.rating, editable) {
+        ShopCheckInRatings(state.input.rating, editable) {
             onAction(ShopCheckInFormAction.RatingChanged(it))
         }
         ShopCheckInNoteField(state.input.text, editable,
@@ -36,9 +36,6 @@ internal fun ShopCheckInFormFields(
             onMove = { from, to -> onAction(ShopCheckInFormAction.MovePhoto(from, to)) },
             onRemove = { onAction(ShopCheckInFormAction.RemovePhoto(it)) },
             onGallery = onGallery, onCamera = onCamera)
-        ShopCheckInAdditionalRatings(state.input.rating, editable) {
-            onAction(ShopCheckInFormAction.RatingChanged(it))
-        }
     }
 }
 

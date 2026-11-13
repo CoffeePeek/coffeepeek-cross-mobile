@@ -121,7 +121,6 @@
     <string name="shop_review_photo_source_cancel">Отмена</string>
     <string name="shop_checkin_form_title">Чекин</string>
     <string name="shop_checkin_form_ratings">Ваши оценки</string>
-    <string name="shop_checkin_form_ratings_hint">Нажмите на звёзды, чтобы изменить оценку</string>
     <string name="shop_checkin_form_dismiss">Закрыть форму чекина</string>
     <string name="shop_checkin_form_note">Заметка</string>
     <string name="shop_checkin_form_note_hint">Расскажите о вашем визите…</string>
@@ -142,7 +141,6 @@
     <string name="shop_checkin_form_submit">Сохранить чекин</string>
     <string name="shop_checkin_form_change_shop">Изменить</string>
     <string name="shop_checkin_today">Сегодня</string>
-    <string name="shop_checkin_additional_ratings">Сервис и атмосфера · по желанию</string>
     <string name="shop_checkin_form_sending">Отправляем чекин…</string>
     <string name="shop_checkin_form_success_pending">Сохранено · публикация уточняется</string>
     <string name="shop_checkin_form_success_waiting">Ожидает публикации</string>
