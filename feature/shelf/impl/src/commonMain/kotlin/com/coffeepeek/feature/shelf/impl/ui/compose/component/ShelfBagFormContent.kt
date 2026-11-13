@@ -58,9 +58,8 @@ internal fun ShelfBagFormContent(
     val form = state.form
     Column(modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(CoffeePeekDimens.spacing4),
         verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3)) {
-        val result = state.result
-        val aspect = result?.let { it.cardWidth.toFloat() / it.cardHeight.coerceAtLeast(1) }?.takeIf { it > 0f } ?: 0.75f
-        ShelfFormCard(result?.card?.bytes, aspect, hidden = state.cardLanding, onCardBounds, onRetake)
+        val aspect = (state.cardWidth.toFloat() / state.cardHeight.coerceAtLeast(1)).takeIf { it > 0f } ?: 0.75f
+        ShelfFormCard(state.card?.bytes, aspect, hidden = state.cardLanding, onCardBounds, onRetake)
         if (state.hints.isNotEmpty()) ShelfScanHints(state.hints, onRetake)
         ShelfCoffeeField(form.query, form.coffee, state.options, { onAction(ShelfAddAction.QueryChanged(it)) },
             { onAction(ShelfAddAction.CoffeeChosen(it)) })

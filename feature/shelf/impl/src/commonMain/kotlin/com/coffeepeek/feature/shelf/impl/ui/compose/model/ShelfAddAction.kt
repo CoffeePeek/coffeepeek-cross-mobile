@@ -2,6 +2,7 @@ package com.coffeepeek.feature.shelf.impl.ui.compose.model
 
 import com.coffeepeek.feature.shelf.api.ShelfCoffeeOption
 import com.coffeepeek.feature.shelf.api.ShelfPhoto
+import com.coffeepeek.feature.shelf.domain.model.BagCropBounds
 import com.coffeepeek.feature.shelf.domain.model.ShelfGrind
 import com.coffeepeek.feature.shelf.domain.model.ShelfRoastPurpose
 import com.coffeepeek.feature.shelf.impl.ui.data.ShelfDay
@@ -9,13 +10,17 @@ import com.coffeepeek.feature.shelf.impl.ui.data.ShelfDay
 internal sealed interface ShelfAddAction {
     data object DownloadScanner : ShelfAddAction
     data object OpenCamera : ShelfAddAction
-    /** Back from the camera: to the scan it was opened from, or out of the flow. */
+    /** Back from the camera to the photo actions or the step it was opened from. */
     data object CloseCamera : ShelfAddAction
     /** The card has finished peeling off the photo. */
     data object RevealFinished : ShelfAddAction
     data object CardLanded : ShelfAddAction
     data class PhotoPicked(val photo: ShelfPhoto) : ShelfAddAction
     data object PhotoFailed : ShelfAddAction
+    data object StartManualCrop : ShelfAddAction
+    data object CancelManualCrop : ShelfAddAction
+    data class CropChanged(val bounds: BagCropBounds) : ShelfAddAction
+    data class ApplyManualCrop(val bounds: BagCropBounds) : ShelfAddAction
     data class QueryChanged(val query: String) : ShelfAddAction
     data class CoffeeChosen(val option: ShelfCoffeeOption) : ShelfAddAction
     data class RoasterChanged(val roaster: String) : ShelfAddAction

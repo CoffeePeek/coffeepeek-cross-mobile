@@ -15,6 +15,7 @@ import com.coffeepeek.feature.shelf.api.ShelfCamera
 import com.coffeepeek.feature.shelf.api.ShelfGalleryPicker
 import com.coffeepeek.feature.shelf.api.ShelfTimeZone
 import com.coffeepeek.feature.shelf.domain.repository.BagScanner
+import com.coffeepeek.feature.shelf.domain.repository.BagPhotoCropper
 import com.coffeepeek.feature.shelf.domain.repository.ShelfRepository
 import com.coffeepeek.feature.shelf.impl.ui.ShelfAddViewModel
 import com.coffeepeek.feature.shelf.impl.ui.ShelfArrivals
@@ -38,6 +39,7 @@ import kotlin.uuid.Uuid
 /** What the shelf needs from the platform and the application; none of it is touched until a screen is shown. */
 class ShelfPorts(
     val scanner: BagScanner,
+    val cropper: BagPhotoCropper,
     val coffees: ShelfCoffeeSearch,
     val image: ShelfImage,
     val gallery: ShelfGalleryPicker,
@@ -114,7 +116,9 @@ private class ShelfApiImpl(
     @Composable
     override fun AddBag(onSaved: () -> Unit, onClose: () -> Unit, modifier: Modifier) {
         key(this) {
-            val model = viewModel(key = "shelf-add:$instanceKey") { ShelfAddViewModel(repository, ports.scanner, ports.coffees, arrivals, calendar) }
+            val model = viewModel(key = "shelf-add:$instanceKey") {
+                ShelfAddViewModel(repository, ports.scanner, ports.cropper, ports.coffees, arrivals, calendar)
+            }
             ShelfAddScreen(model, ports.gallery, ports.camera, modifier) { event ->
                 when (event) {
                     ShelfAddEvent.Saved -> onSaved()

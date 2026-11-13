@@ -160,6 +160,14 @@ private fun ShelfCameraGuide(modifier: Modifier) {
         val arm = 26.dp.toPx()
         val radius = 10.dp.toPx()
         val stroke = Stroke(3.dp.toPx(), cap = StrokeCap.Round)
+        val bag = Path().apply {
+            moveTo(size.width * 0.3f, size.height * 0.18f)
+            lineTo(size.width * 0.7f, size.height * 0.18f)
+            lineTo(size.width * 0.74f, size.height * 0.82f)
+            lineTo(size.width * 0.26f, size.height * 0.82f)
+            close()
+        }
+        drawPath(bag, Color.White.copy(alpha = 0.28f), style = Stroke(1.5.dp.toPx()))
         listOf(Offset(0f, 0f) to Offset(1f, 1f), Offset(size.width, 0f) to Offset(-1f, 1f),
             Offset(size.width, size.height) to Offset(-1f, -1f), Offset(0f, size.height) to Offset(1f, -1f)).forEach { (corner, inward) ->
             val path = Path().apply {

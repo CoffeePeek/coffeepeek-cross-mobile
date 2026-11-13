@@ -38,7 +38,7 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 @Composable
 internal fun ShelfScanRetake(
     photo: ByteArray, frame: BagScanFrame?, outcomes: List<ShelfStageOutcome>, failure: BagScanIssue?,
-    onCamera: () -> Unit, onGallery: () -> Unit, modifier: Modifier = Modifier,
+    onCamera: () -> Unit, onGallery: () -> Unit, onManual: () -> Unit, modifier: Modifier = Modifier,
 ) {
     Column(modifier.fillMaxSize().padding(CoffeePeekDimens.spacing4), verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2)) {
         ShelfScanPhoto(photo, frame, Modifier.fillMaxWidth().weight(1f), frameColor = MaterialTheme.colorScheme.error)
@@ -51,6 +51,7 @@ internal fun ShelfScanRetake(
         CoffeePeekButton(stringResource(Res.string.shelf_retake_camera), onCamera, Modifier.padding(top = CoffeePeekDimens.spacing2),
             leadingIcon = { Icon(CoffeePeekIcons.Camera, null) })
         ShelfSecondaryButton(stringResource(Res.string.shelf_retake_gallery), onGallery)
+        ShelfSecondaryButton(stringResource(Res.string.shelf_manual_crop_action), onManual)
     }
 }
 
@@ -61,7 +62,7 @@ private fun ShelfScanRetakePreview(dark: Boolean) = CoffeePeekTheme(darkTheme = 
         ShelfStageOutcome(BagScanStage.Front, ShelfStageStatus.Done, emptyList()),
         ShelfStageOutcome(BagScanStage.Repair, ShelfStageStatus.Failed, listOf(PackModerationReason.ObjectsOnBag)),
         ShelfStageOutcome(BagScanStage.Soften, ShelfStageStatus.Done, emptyList()),
-    ), null, {}, {}, Modifier.background(MaterialTheme.colorScheme.background))
+    ), null, {}, {}, {}, Modifier.background(MaterialTheme.colorScheme.background))
 }
 
 @Preview @Composable private fun ShelfScanRetakeLightPreview() = ShelfScanRetakePreview(false)
