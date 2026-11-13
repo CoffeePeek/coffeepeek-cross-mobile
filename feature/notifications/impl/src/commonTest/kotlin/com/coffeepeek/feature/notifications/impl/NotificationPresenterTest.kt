@@ -249,16 +249,18 @@ class NotificationPresenterTest {
         assertEquals(listOf("current"), feature.state.value.items.map { it.id })
     }
 
-    @Test fun markAllUsesDisplayedSnapshotAndRefreshesUnreadArrivals() = runTest {
+    @Test fun markAllUsesTheDisplayedSnapshotWithoutCollapsingLoadedPages() = runTest {
         val account = Account(); val repository = Repository()
         val feature = NotificationPresenter(repository, account, Platform(), backgroundScope)
         account.user.value = "alice"; runCurrent()
-        repository.page = { NotificationPage(listOf(entry("new"), entry("first").copy(readAtUtc = "2026-10-21T09:00:00Z")), null, 1) }
+        val callsBefore = repository.inboxCalls
         feature.markAllRead(); runCurrent()
         assertEquals(listOf("first"), repository.readThrough)
-        assertEquals(1, feature.state.value.unreadCount)
-        assertFalse(feature.state.value.items.first().read)
-        assertTrue(feature.state.value.items.last().read)
+        // The flags are applied locally; the loaded pages stay in place instead of a full reload.
+        assertEquals(callsBefore, repository.inboxCalls)
+        assertEquals(0, feature.state.value.unreadCount)
+        assertEquals(1, feature.state.value.items.size)
+        assertTrue(feature.state.value.items.single().read)
     }
 
     @Test fun permissionRevocationRemovesDeviceAndActivityIsThrottled() = runTest {
