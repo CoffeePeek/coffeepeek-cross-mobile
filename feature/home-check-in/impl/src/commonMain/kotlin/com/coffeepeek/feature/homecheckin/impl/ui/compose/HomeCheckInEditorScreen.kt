@@ -57,6 +57,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import com.coffeepeek.core.designsystem.component.CoffeePeekButton
 import com.coffeepeek.core.designsystem.component.CoffeePeekFormStep
 import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
+import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.text.coffeePeekPluralForm
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
@@ -194,7 +195,7 @@ private fun HomeCheckInEditorHeader(state: HomeCheckInEditorState, onClose: () -
         Text(stringResource(if (state.entry == null) Res.string.home_check_in_home else Res.string.home_check_in_editor_title),
             Modifier.weight(1f), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
         IconButton(onClick = onClose, enabled = !state.isSaving, modifier = Modifier.size(44.dp)) {
-            Icon(CoffeePeekIcons.Close, stringResource(Res.string.home_check_in_editor_close), Modifier.size(20.dp))
+            CoffeePeekIcon(CoffeePeekIcons.Close, stringResource(Res.string.home_check_in_editor_close), Modifier.size(20.dp))
         }
     }
 }
@@ -241,8 +242,8 @@ private fun HomeCheckInEditorFooter(state: HomeCheckInEditorState, enabled: Bool
 
 /** Fixture ports only; real artwork/decoding will come from application composition. */
 internal fun previewHomeEditorMedia() = HomeCheckInEditorMedia(
-    { Icon(CoffeePeekIcons.Coffee, null, it) }, { Icon(CoffeePeekIcons.Search, null, it) },
-    { _, modifier -> Icon(CoffeePeekIcons.Coffee, null, modifier, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
+    { CoffeePeekIcon(CoffeePeekIcons.Coffee, null, it) }, { CoffeePeekIcon(CoffeePeekIcons.Search, null, it) },
+    { _, modifier -> CoffeePeekIcon(CoffeePeekIcons.Coffee, null, modifier, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
     { _, modifier, _ -> Box(modifier) },
 )
 

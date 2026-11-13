@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonColors
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.LocalContentColor
@@ -74,7 +73,7 @@ fun CoffeePeekIconButton(
 
 @Composable
 private fun CoffeePeekIconButtonPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
-    CoffeePeekIconButton({}) { Icon(CoffeePeekIcons.Share, "Share", Modifier.size(24.dp)) }
+    CoffeePeekIconButton({}) { CoffeePeekIcon(CoffeePeekIcons.Share, "Share", Modifier.size(24.dp)) }
 }
 
 @Preview @Composable private fun CoffeePeekIconButtonLightPreview() = CoffeePeekIconButtonPreview(false)

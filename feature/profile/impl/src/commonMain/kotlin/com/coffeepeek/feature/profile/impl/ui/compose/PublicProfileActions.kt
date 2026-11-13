@@ -1,6 +1,5 @@
 package com.coffeepeek.feature.profile.impl.ui.compose
 
-import androidx.compose.material3.Icon
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import com.coffeepeek.feature.profile.impl.resources.Res
 import com.coffeepeek.feature.profile.impl.resources.profile_author_actions
@@ -13,6 +12,7 @@ import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as st
 import com.coffeepeek.core.designsystem.component.CoffeePeekActionMenu
 import com.coffeepeek.core.designsystem.component.CoffeePeekMenuAction
 import com.coffeepeek.core.designsystem.component.CoffeePeekMenuIcon
+import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.profile.impl.resources.*
@@ -27,7 +27,7 @@ internal fun PublicProfileActions(isBlocked: Boolean, onShare: (() -> Unit)?, on
     }
     CoffeePeekActionMenu(actions) { open ->
         IconButton(onClick = open) {
-            Icon(CoffeePeekIcons.MoreHorizontal, stringResource(Res.string.profile_author_actions))
+            CoffeePeekIcon(CoffeePeekIcons.MoreHorizontal, stringResource(Res.string.profile_author_actions))
         }
     }
 }

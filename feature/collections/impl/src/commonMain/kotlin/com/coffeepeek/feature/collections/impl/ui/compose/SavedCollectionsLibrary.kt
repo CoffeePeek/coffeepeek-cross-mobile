@@ -25,7 +25,7 @@ internal fun SavedCollectionsLibrary(state: SavedCollectionsState, action: (Save
         CoffeePeekTopBar(stringResource(Res.string.collections_library), stringResource(Res.string.collections_back),
             onBack = { action(SavedCollectionsAction.Back) }, actions = {
                 CoffeePeekPlainIconButton({ action(SavedCollectionsAction.OpenEditor(null)) }, enabled = state.signedIn && !state.busy) {
-                    Icon(CoffeePeekIcons.Add, stringResource(Res.string.collections_new_list))
+                    CoffeePeekIcon(CoffeePeekIcons.Add, stringResource(Res.string.collections_new_list))
                 }
             })
     }) { padding ->

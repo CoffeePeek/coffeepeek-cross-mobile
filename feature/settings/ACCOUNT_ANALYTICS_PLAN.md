@@ -34,8 +34,10 @@ A previous explicit server choice wins over social initialization and local impo
 
 ## Verification plan and evidence
 
-Mobile source: child of 31b678b5f, branch codex/migration-analytics-account-preference.
-Backend: isolated worktree, base 4be05cf1, branch codex/analytics-account-preference.
+Mobile source: child of 31b678b5f, branch codex/migration-analytics-account-preference;
+updated with develop 88492a79f before final verification.
+Backend: isolated worktree, initial base 4be05cf1, branch codex/analytics-account-preference;
+updated with main 80da3704 (.NET 11) and regenerated the unpublished migration.
 Environment: Windows, 2026-11-13. Studio MCP unavailable; shell diagnostics only.
 Behavior: default-on after server resolution, explicit false roundtrip/reinstall,
 account switching, delayed responses, offline pending choices, cancellation,
@@ -57,6 +59,17 @@ legacy import, registration and preserved sign-in events.
   generated removal for AnalyticsService.reconcile is retained; unrelated baseline
   drift is excluded. Final repository hygiene checks continued on 2026-11-14.
   No test failure was hidden by retry.
+- After updating both parents: mobile results remain 778/778; backend domain
+  247/247, application 240/240, persistence/controller/generated handlers 9/9.
+  EF again reports no pending model changes; the migration adds only two columns.
+- First merged Android build failed while packing the DEX task's build-cache entry
+  (missing file mode). Retry with --no-build-cache passed both assemblies, runtime
+  class checks, Sandbox isolation and function limits (0 new). A sandboxed wrapper
+  attempt was denied access to the external Gradle cache before tasks started;
+  the approved retry used the normal cache location. No device run took place.
+- Mobile verification used the current checkout, which also contains unrelated
+  pending local delivery/build configuration edits. Those edits are excluded from
+  this PR. Backend verification used the isolated worktree.
 
 Not verified: actual PostgreSQL migration execution, live backend/PostHog ingestion,
 real OAuth, iOS/Xcode build, or manual device UI. No instrumented Compose/screenshot

@@ -183,10 +183,10 @@ internal fun CoffeeDetailScreenContent(
         }
         Row(Modifier.align(Alignment.TopCenter).fillMaxWidth().statusBarsPadding().padding(CoffeePeekDimens.spacing3), horizontalArrangement = Arrangement.SpaceBetween) {
             CoffeePeekGlassIconButton({ onAction(CoffeeDetailAction.Back) }, stringResource(Res.string.coffee_back), hazeState = hazeState, nativeIcon = CoffeePeekGlassIcon.Back) {
-                Icon(CoffeePeekIcons.Back, null)
+                CoffeePeekIcon(CoffeePeekIcons.Back, null)
             }
             CoffeePeekGlassIconButton({ onAction(CoffeeDetailAction.Share) }, stringResource(Res.string.coffee_share), enabled = details != null, hazeState = hazeState, nativeIcon = CoffeePeekGlassIcon.Share) {
-                Icon(CoffeePeekIcons.Share, null)
+                CoffeePeekIcon(CoffeePeekIcons.Share, null)
             }
         }
     }

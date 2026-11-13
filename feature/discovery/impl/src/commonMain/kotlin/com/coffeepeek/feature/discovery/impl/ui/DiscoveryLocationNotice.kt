@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -27,6 +26,7 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.platform.LocalDensity
 import com.coffeepeek.core.designsystem.component.CoffeePeekContentCard
 import com.coffeepeek.core.designsystem.component.CoffeePeekIconButton
+import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 
@@ -38,7 +38,7 @@ internal fun DiscoveryLocationNotice(pending: Boolean, onDismiss: () -> Unit, mo
             Text(stringResource(if (pending) Res.string.discovery_location_pending else Res.string.discovery_location_unavailable),
                 Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface)
             CoffeePeekIconButton(onDismiss) {
-                Icon(CoffeePeekIcons.Close, stringResource(Res.string.discovery_message_dismiss), Modifier.size(20.dp))
+                CoffeePeekIcon(CoffeePeekIcons.Close, stringResource(Res.string.discovery_message_dismiss), Modifier.size(20.dp))
             }
         }
     }
