@@ -91,6 +91,7 @@ import com.coffeepeek.feature.profile.api.ProfileAvatarImage
 import com.coffeepeek.feature.profile.impl.resources.*
 import com.coffeepeek.feature.profile.impl.ui.EditProfileViewModel
 import com.coffeepeek.feature.profile.impl.ui.model.EditProfileAction
+import com.coffeepeek.feature.profile.impl.ui.model.EditProfileError
 import com.coffeepeek.feature.profile.impl.ui.model.EditProfileEvent
 import com.coffeepeek.feature.profile.impl.ui.model.EditProfileState
 import com.coffeepeek.feature.profile.impl.ui.model.UsernameError
@@ -150,6 +151,17 @@ internal fun EditProfileScreenContent(
         if (state.isLoading) {
             Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
                 CoffeePeekLoader(stringResource(Res.string.profile_loading))
+            }
+        } else if (state.error == EditProfileError.Load) {
+            Column(Modifier.fillMaxSize().padding(padding).padding(CoffeePeekDimens.spacing4),
+                verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3),
+                horizontalAlignment = Alignment.CenterHorizontally) {
+                Spacer(Modifier.weight(1f))
+                Text(stringResource(Res.string.profile_load_failed), color = MaterialTheme.colorScheme.error)
+                Button({ onAction(EditProfileAction.Reload) }) {
+                    Text(stringResource(Res.string.profile_retry))
+                }
+                Spacer(Modifier.weight(1f))
             }
         } else {
             CoffeePeekScrollableColumn(Modifier.fillMaxSize().padding(padding).padding(CoffeePeekDimens.spacing4), reserveBottomClearance = true) {

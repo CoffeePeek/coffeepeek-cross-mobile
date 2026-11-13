@@ -63,7 +63,7 @@ internal fun ShelfBagFormContent(
         ShelfFormCard(result?.card?.bytes, aspect, hidden = state.cardLanding, onCardBounds, onRetake)
         if (state.hints.isNotEmpty()) ShelfScanHints(state.hints, onRetake)
         ShelfCoffeeField(form.query, form.coffee, state.options, { onAction(ShelfAddAction.QueryChanged(it)) },
-            { onAction(ShelfAddAction.CoffeeChosen(it)) })
+            { onAction(ShelfAddAction.CoffeeChosen(it)) }, searching = state.searching, searchFailed = state.searchFailed)
         CoffeePeekTextField(stringResource(Res.string.shelf_form_roaster), form.roaster, { onAction(ShelfAddAction.RoasterChanged(it)) }, "")
         ShelfTraitChips(form, onAction)
         ShelfRoastDateField(form.roastedOn, state.today, { onAction(ShelfAddAction.RoastDateChosen(it)) })

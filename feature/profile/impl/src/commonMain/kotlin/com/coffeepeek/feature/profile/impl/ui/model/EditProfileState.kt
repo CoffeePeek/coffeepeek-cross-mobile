@@ -45,6 +45,7 @@ internal sealed interface EditProfileAction {
     data class AboutChanged(val value: String) : EditProfileAction
     data class AvatarPicked(val image: ProfileAvatarImage) : EditProfileAction
     data object DismissError : EditProfileAction
+    data object Reload : EditProfileAction
     data object ConfirmUsernameChange : EditProfileAction
     data object CancelUsernameChange : EditProfileAction
     data object Save : EditProfileAction

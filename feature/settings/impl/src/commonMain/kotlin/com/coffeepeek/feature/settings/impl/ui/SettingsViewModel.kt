@@ -51,6 +51,11 @@ internal class SettingsViewModel(
         viewModelScope.launch { loadCities() }
     }
 
+    /** The settings tab re-entering is the natural retry after a failed catalog load. */
+    fun onScreenShown() {
+        if (currentState.cityName == null && cities.isEmpty() && !loading) viewModelScope.launch { loadCities() }
+    }
+
     override suspend fun handleActionInternal(action: SettingsAction) {
         when (action) {
             SettingsAction.CheckForUpdates -> checkForUpdates()

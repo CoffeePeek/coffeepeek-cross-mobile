@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -38,10 +39,14 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 internal fun ShelfCoffeeField(
     query: String, coffee: ShelfCoffeeOption?, options: List<ShelfCoffeeOption>,
     onQuery: (String) -> Unit, onChoose: (ShelfCoffeeOption) -> Unit, modifier: Modifier = Modifier,
+    searching: Boolean = false, searchFailed: Boolean = false,
 ) {
     Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing1)) {
         CoffeePeekTextField(stringResource(Res.string.shelf_form_coffee), query, onQuery, stringResource(Res.string.shelf_form_coffee_hint),
             leadingIcon = CoffeePeekIcons.Search)
+        if (searching) CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
+        if (searchFailed) Text(stringResource(Res.string.shelf_form_coffee_failed),
+            color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
         if (coffee != null) ShelfCatalogMatch(coffee)
         options.forEach { option -> ShelfCoffeeOptionRow(option) { onChoose(option) } }
     }

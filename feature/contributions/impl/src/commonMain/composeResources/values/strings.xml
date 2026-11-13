@@ -4,6 +4,7 @@
     <string name="contributions_loading">Загрузка</string>
     <string name="contributions_load_failed">Ошибка загрузки</string>
     <string name="contributions_retry">Попробовать снова</string>
+    <string name="contributions_refreshing">Обновляем…</string>
     <string name="contributions_load_more_failed">Не удалось загрузить. Повторить</string>
     <string name="contributions_sign_in_prompt">Войдите, чтобы увидеть отправленное</string>
     <string name="contributions_sign_in">Войти</string>

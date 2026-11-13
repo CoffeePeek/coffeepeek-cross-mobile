@@ -191,8 +191,27 @@ internal class MapViewModel(
         if (criteria == currentState.criteria) return
         val selectionChanged = criteria.text != currentState.query || criteria.filters != currentState.filters ||
             criteria.filters.nearbyOnly && criteria.origin != currentState.userLocation
+        val textOnly = criteria.filters == currentState.filters && criteria.origin == currentState.userLocation &&
+            criteria.text != currentState.query
         updateState { copy(query = criteria.text, filters = criteria.filters, cityId = criteria.filters.cityId, userLocation = criteria.origin) }
-        if (selectionChanged) invalidateSelection()
+        if (!selectionChanged) return
+        if (textOnly) refreshForTextQuery() else invalidateSelection()
+    }
+
+    /** A text-only query change keeps the current markers: a blank flash per keystroke is worse
+     * than briefly stale pins; they are replaced when the response lands. */
+    private fun refreshForTextQuery() {
+        cancelViewportLoads()
+        queryJob?.cancel()
+        detailsJob?.cancel()
+        selectionVersion++
+        loadedArea = null
+        carouselArea = null
+        zonesCityId = null
+        updateState { copy(zones = emptyList(), zoneGroups = emptyList(), carouselShops = emptyList(),
+            selectedShop = null, selectedZone = null, details = null, isLoadingDetails = false, isTruncated = false) }
+        loadSuggestions()
+        if (!suppressBounds) searchCurrentArea()
     }
 
     private fun onAccount(key: String?) {

@@ -96,6 +96,8 @@ private fun ShelfBagBody(state: ShelfBagState, image: ShelfImage, onAction: (She
             onRetryBrews = { onAction(ShelfBagAction.RetryBrews) }, modifier = modifier)
         state.missing -> ShelfInvitation(stringResource(Res.string.shelf_bag_missing_title), stringResource(Res.string.shelf_bag_missing_body),
             stringResource(Res.string.shelf_bag_back), { onAction(ShelfBagAction.Back) }, modifier.padding(CoffeePeekDimens.spacing4))
+        state.loadFailed -> ShelfInvitation(stringResource(Res.string.shelf_bag_offline_title), stringResource(Res.string.shelf_bag_offline_body),
+            stringResource(Res.string.shelf_bag_retry), { onAction(ShelfBagAction.Retry) }, modifier.padding(CoffeePeekDimens.spacing4))
         else -> Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CoffeePeekLoader(stringResource(Res.string.shelf_loading)) }
     }
 }

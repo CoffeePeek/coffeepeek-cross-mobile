@@ -56,6 +56,9 @@
     <string name="shelf_cancel">Адмена</string>
     <string name="shelf_bag_left">засталося %1$s</string>
     <string name="shelf_bag_back">Назад</string>
+    <string name="shelf_bag_offline_title">Не ўдалося загрузіць пачку</string>
+    <string name="shelf_bag_offline_body">Праверце падключэнне да сеткі і паспрабуйце яшчэ раз</string>
+    <string name="shelf_bag_retry">Паўтарыць</string>
     <string name="shelf_bag_missing_title">Гэтай пачкі ўжо няма</string>
     <string name="shelf_bag_missing_body">Яна скончылася або выдалена. Знайдзіце яе ў архіве або на паліцы</string>
     <string name="shelf_brew_action">Заварыць кубак</string>
@@ -182,6 +185,7 @@
     <string name="shelf_form_hint">Картка атрымалася, але яе можна зрабіць чысцейшай</string>
     <string name="shelf_form_coffee">Кава</string>
     <string name="shelf_form_coffee_hint">Назва або пошук па каталогу</string>
+    <string name="shelf_form_coffee_failed">Не ўдалося знайсці каву. Паўтарыце запыт</string>
     <string name="shelf_form_catalog_match">З каталога CoffeePeek</string>
     <string name="shelf_form_roaster">Абсмажчык</string>
     <string name="shelf_form_roasted">Дата абсмажвання · неабавязкова</string>
