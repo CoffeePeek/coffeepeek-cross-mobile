@@ -41,6 +41,7 @@ import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
+import com.coffeepeek.core.designsystem.theme.reducedMotionDuration
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.feature.shop.domain.model.ScheduleInterval
 import com.coffeepeek.feature.shop.domain.model.ShopSchedule
@@ -100,8 +101,8 @@ internal fun ShopScheduleSection(
             Column(Modifier.padding(CoffeePeekDimens.spacing4)) {
                 ScheduleHeader(status, expanded, onToggle)
                 AnimatedVisibility(expanded,
-                    enter = expandVertically(tween(250), expandFrom = Alignment.Top) + fadeIn(tween(180)),
-                    exit = shrinkVertically(tween(250), shrinkTowards = Alignment.Top) + fadeOut(tween(150))) {
+                    enter = expandVertically(tween(reducedMotionDuration(250)), expandFrom = Alignment.Top) + fadeIn(tween(reducedMotionDuration(180))),
+                    exit = shrinkVertically(tween(reducedMotionDuration(250)), shrinkTowards = Alignment.Top) + fadeOut(tween(reducedMotionDuration(150)))) {
                     ScheduleDays(schedules)
                 }
             }
@@ -114,7 +115,7 @@ private fun ScheduleHeader(status: String, expanded: Boolean, onToggle: () -> Un
     val toggleLabel = stringResource(if (expanded) Res.string.shop_schedule_collapse else Res.string.shop_schedule_expand)
     val expansionState = stringResource(if (expanded) Res.string.shop_schedule_expanded_state
         else Res.string.shop_schedule_collapsed_state)
-    val rotation by animateFloatAsState(if (expanded) 90f else 0f, tween(250))
+    val rotation by animateFloatAsState(if (expanded) 90f else 0f, tween(reducedMotionDuration(250)))
     Row(Modifier.fillMaxWidth().heightIn(min = 44.dp)
         .semantics { stateDescription = expansionState }
         .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null,

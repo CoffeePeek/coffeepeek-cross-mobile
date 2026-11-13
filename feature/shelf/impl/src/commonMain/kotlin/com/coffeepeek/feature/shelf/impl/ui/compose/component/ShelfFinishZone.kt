@@ -3,6 +3,7 @@ package com.coffeepeek.feature.shelf.impl.ui.compose.component
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
@@ -60,7 +61,8 @@ internal fun ShelfFinishZone(highlighted: Boolean, modifier: Modifier = Modifier
     LaunchedEffect(highlighted) { if (highlighted) haptics.performHapticFeedback(HapticFeedbackType.GestureThresholdActivate) }
     // The spec's 14 % of the warning red over the screen background; deeper while the bag is over the zone.
     val tint = if (highlighted) 0.26f else 0.14f
-    val fill by animateColorAsState(colors.error.copy(alpha = tint).compositeOver(colors.background), label = "zone fill")
+    val fill by animateColorAsState(colors.error.copy(alpha = tint).compositeOver(colors.background),
+        animationSpec = tween(reducedMotionDuration(220)), label = "zone fill")
     val scale by animateFloatAsState(if (highlighted) 1.04f else 1f,
         if (coffeePeekReduceMotion()) snap() else spring(Spring.DampingRatioMediumBouncy, Spring.StiffnessMedium),
         label = "zone scale")
