@@ -60,7 +60,7 @@ private suspend fun storedCoverBytes(summary: SavedCollectionSummary, repository
 
 /** Shared cache of resolved first-photo URLs: library grids call this once per card, and the
  * detail request behind it is heavy enough that a repeat per composition is worth avoiding. */
-private val resolvedShopPhotoUrls = java.util.concurrent.ConcurrentHashMap<String, String>()
+private val resolvedShopPhotoUrls = mutableMapOf<String, String>()
 
 internal suspend fun defaultShopPhotoUrl(summary: SavedCollectionSummary, repository: SavedCollectionsRepository): String? {
     if (summary.itemCount == 0) return null
