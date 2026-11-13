@@ -46,12 +46,12 @@
     <string name="home_check_in_save_forbidden">Няма доступу да гэтага запісу. Праверце, у які ўліковы запіс вы ўвайшлі.</string>
     <string name="home_check_in_photo_upload_failed">Не ўдалося загрузіць фота. Паспрабуйце яшчэ раз.</string>
     <string name="home_check_in_optional">Неабавязкова</string>
-    <string name="home_check_in_public_title">Хто ўбачыць</string>
-    <string name="home_check_in_audience_everyone">Усе</string>
-    <string name="home_check_in_audience_only_me">Толькі я</string>
-    <string name="home_check_in_public_hint">Публічны чэкін з’явіцца ў стужцы пасля мадэрацыі. Схаваны бачны толькі вам.</string>
+    <string name="home_check_in_public_title">Зрабіць публічным</string>
+    <string name="home_check_in_public_hint">У стужцы пасля мадэрацыі. Без публікацыі — толькі вам.</string>
     <string name="home_check_in_recipe_expand">Дадаць рэцэпт</string>
-    <string name="home_check_in_recipe_collapse">Схаваць рэцэпт</string>
+    <string name="home_check_in_recipe_title">Рэцэпт</string>
+    <string name="home_check_in_recipe_collapsed">Згорнуты</string>
+    <string name="home_check_in_recipe_expanded">Разгорнуты</string>
     <string name="home_check_in_saved_private">Захавана толькі для вас</string>
     <string name="home_check_in_saved_pending">Захавана, чакае публікацыі</string>
     <string name="home_check_in_saved_published">Апублікавана</string>

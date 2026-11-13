@@ -36,29 +36,41 @@ class CheckInShopSearchTest {
         return model
     }
 
-    @Test fun firstValidPositionSelectsNearbyAndIgnoresTheCity() = runTest(dispatcher) {
+    @Test fun openingAndReceivingTheFirstPositionKeepsTheCityWithoutPermissionRequest() = runTest(dispatcher) {
         val model = model()
         assertFalse(model.state.value.filters.nearbyOnly)
         location.flow.value = here
         runCurrent()
-        assertTrue(model.state.value.filters.nearbyOnly)
-        assertEquals(here, repository.queries.last().origin)
-        assertNull(repository.queries.last().filters.cityId)
-        assertEquals("brest", model.state.value.filters.cityId)
+        assertEquals(here, model.state.value.userLocation)
+        assertFalse(model.state.value.filters.nearbyOnly)
+        assertEquals(0, model.state.value.locationPermissionRequest)
+        assertNull(repository.queries.single().origin)
+        assertEquals("brest", repository.queries.single().filters.cityId)
         assertTrue(analytics.filters.isEmpty())
     }
 
-    @Test fun cachedPositionAlsoSelectsNearbyBeforeFirstSearch() = runTest(dispatcher) {
+    @Test fun cachedPositionIsAvailableWithoutSelectingNearby() = runTest(dispatcher) {
         location.flow.value = here
         val model = model()
         assertTrue(model.state.value.canUseNearby)
-        assertTrue(repository.queries.all { it.origin == here && it.filters.cityId == null })
-        assertEquals(1, repository.queries.size)
+        assertFalse(model.state.value.filters.nearbyOnly)
+        assertEquals(0, model.state.value.locationPermissionRequest)
+        assertEquals("brest", repository.queries.single().filters.cityId)
+        assertNull(repository.queries.single().origin)
+        model.onAction(SearchAction.ToggleNearby)
+        runCurrent()
+        assertTrue(model.state.value.filters.nearbyOnly)
+        assertEquals(0, model.state.value.locationPermissionRequest)
+        assertEquals(here, repository.queries.last().origin)
+        assertNull(repository.queries.last().filters.cityId)
     }
 
     @Test fun furtherPositionsDoNotUndoTheUsersNearbyChoice() = runTest(dispatcher) {
         location.flow.value = here
         val model = model()
+        model.onAction(SearchAction.ToggleNearby)
+        runCurrent()
+        assertTrue(model.state.value.filters.nearbyOnly)
         model.onAction(SearchAction.ToggleNearby)
         runCurrent()
         val requests = repository.queries.size
@@ -67,21 +79,41 @@ class CheckInShopSearchTest {
         assertFalse(model.state.value.filters.nearbyOnly)
         assertEquals(requests, repository.queries.size)
         assertEquals("brest", repository.queries.last().filters.cityId)
-        assertEquals(1, analytics.filters.size)
+        assertEquals(2, analytics.filters.size)
     }
 
     @Test fun deniedOrInvalidLocationKeepsCitySearchWithoutDiscoveryGeoEvents() = runTest(dispatcher) {
         val model = model()
+        val cityShops = model.state.value.shops
+        model.onAction(SearchAction.ToggleNearby)
+        runCurrent()
+        assertEquals(1, model.state.value.locationPermissionRequest)
+        assertTrue(model.state.value.nearbyRequested)
         location.flow.value = Coordinates(91.0, 27.0)
         model.onAction(SearchAction.LocationDenied)
         runCurrent()
         assertFalse(model.state.value.canUseNearby)
         assertFalse(model.state.value.filters.nearbyOnly)
+        assertTrue(model.state.value.locationUnavailable)
+        assertSame(cityShops, model.state.value.shops)
         assertEquals("brest", repository.queries.single().filters.cityId)
         assertTrue(analytics.geolocations.isEmpty())
+    }
+
+    @Test fun explicitNearbyWaitsForTheGrantedPosition() = runTest(dispatcher) {
+        val model = model()
+        model.onAction(SearchAction.ToggleNearby)
+        runCurrent()
         model.onAction(SearchAction.LocationGranted)
         runCurrent()
+        assertEquals(1, model.state.value.locationPermissionRequest)
         assertEquals(1, location.refreshes)
+        assertFalse(model.state.value.filters.nearbyOnly)
+        location.flow.value = here
+        runCurrent()
+        assertTrue(model.state.value.filters.nearbyOnly)
+        assertEquals(here, repository.queries.last().origin)
+        assertNull(repository.queries.last().filters.cityId)
     }
 
     @Test fun pickerReturnsPublicSlugWithoutAddingDiscoveryOpenAnalytics() = runTest(dispatcher) {
@@ -98,6 +130,8 @@ class CheckInShopSearchTest {
         account.key.value = null
         location.flow.value = here
         val model = model()
+        model.onAction(SearchAction.ToggleNearby)
+        runCurrent()
         model.onAction(SearchAction.Query("coffee"))
         runCurrent()
         advanceTimeBy(401)

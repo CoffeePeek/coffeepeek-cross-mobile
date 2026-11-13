@@ -22,7 +22,10 @@ fun createCheckInShopPickerEntry(
         val search = viewModel(key = "check-in-shop-search") {
             SearchViewModel(repository, favorites, city, location, account, analytics, SearchPurpose.CheckInPicker)
         }
-        val map = viewModel(key = "check-in-shop-map") { MapViewModel(repository, city, location, details, analytics, account, favorites) }
+        val map = viewModel(key = "check-in-shop-map") {
+            MapViewModel(repository, city, location, details, analytics, account, favorites,
+                requestLocationOnMapInteraction = false)
+        }
         CheckInShopPickerScreen(search, map, host, recentShops, onBack, onClose, onSelectShop, onSignIn, modifier)
     }
 }

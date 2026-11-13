@@ -29,7 +29,7 @@ internal fun CheckInShopPickerList(
     onAction: (SearchAction) -> Unit, list: LazyListState, modifier: Modifier,
 ) {
     val shops = state.visibleShops
-    val recent = recentShops.takeIf { state.query.isBlank() }.orEmpty()
+    val recent = recentShops.takeIf { state.query.isBlank() && !state.filters.nearbyOnly }.orEmpty()
     val remaining = shops.filterNot { shop -> recent.any { it.id == shop.id } }
     val nearEnd by remember { derivedStateOf {
         (list.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0) >= list.layoutInfo.totalItemsCount - 3

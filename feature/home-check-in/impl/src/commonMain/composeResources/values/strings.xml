@@ -75,12 +75,12 @@
     <string name="home_check_in_save_forbidden">Нет доступа к этой записи. Проверьте, в какой аккаунт вы вошли.</string>
     <string name="home_check_in_photo_upload_failed">Не удалось загрузить фото. Попробуйте ещё раз.</string>
     <string name="home_check_in_optional">Необязательно</string>
-    <string name="home_check_in_public_title">Кто увидит</string>
-    <string name="home_check_in_audience_everyone">Все</string>
-    <string name="home_check_in_audience_only_me">Только я</string>
-    <string name="home_check_in_public_hint">Публичный чекин появится в ленте после модерации. Скрытый виден только вам.</string>
+    <string name="home_check_in_public_title">Сделать публичным</string>
+    <string name="home_check_in_public_hint">В ленте после модерации. Без публикации — только вам.</string>
     <string name="home_check_in_recipe_expand">Добавить рецепт</string>
-    <string name="home_check_in_recipe_collapse">Скрыть рецепт</string>
+    <string name="home_check_in_recipe_title">Рецепт</string>
+    <string name="home_check_in_recipe_collapsed">Свёрнут</string>
+    <string name="home_check_in_recipe_expanded">Развёрнут</string>
     <string name="home_check_in_saved_private">Сохранено только для вас</string>
     <string name="home_check_in_saved_pending">Сохранено, ожидает публикации</string>
     <string name="home_check_in_saved_published">Опубликовано</string>

@@ -33,6 +33,7 @@ internal fun MapSearchControls(
     state: MapState, dismissInput: () -> Unit, onAction: (MapAction) -> Unit,
     onToggleExpand: (() -> Unit)?, onOpenFilters: (() -> Unit)?, modifier: Modifier = Modifier,
     onSearchAction: (SearchAction) -> Unit,
+    belowSearch: @Composable () -> Unit = {},
 ) {
     Column(modifier, verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2)) {
         Row(Modifier.padding(horizontal = CoffeePeekDimens.spacing4), verticalAlignment = Alignment.CenterVertically,
@@ -53,6 +54,7 @@ internal fun MapSearchControls(
         if (onOpenFilters != null) {
             DiscoveryQuickFilters(state.filters, onSearchAction)
         }
+        belowSearch()
         if (state.isTruncated) Box(Modifier.padding(horizontal = CoffeePeekDimens.spacing4)) { MapTruncationNotice() }
         if (state.showSuggestions) Box(Modifier.padding(horizontal = CoffeePeekDimens.spacing4)) {
             MapSuggestions(state, onSelect = { dismissInput(); onAction(MapAction.SelectSuggestion(it)) })

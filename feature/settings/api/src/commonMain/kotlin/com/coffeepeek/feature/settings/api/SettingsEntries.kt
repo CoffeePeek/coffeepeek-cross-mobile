@@ -35,6 +35,10 @@ class SettingsSlots(
 
 /** The Settings tab. Caller owns the tab, navigation and the floating bar clearance. */
 interface SettingsEntry {
+    /** The same sign-in and registration prompt used by the Settings tab. */
+    @Composable
+    fun GuestCard(onLogin: () -> Unit, onRegister: () -> Unit)
+
     @Composable
     fun Content(
         onAddShop: () -> Unit,

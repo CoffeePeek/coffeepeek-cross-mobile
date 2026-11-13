@@ -137,6 +137,7 @@ internal fun HomeCheckInEditorScreenContent(
     val enabled = state.isReady && !state.isLoading && !state.isSaving
     val draft = state.draft
     var showDatePicker by rememberSaveable { mutableStateOf(false) }
+    var recipeExpanded by rememberSaveable(state.entry?.id) { mutableStateOf<Boolean?>(null) }
     fun dispatch(action: HomeCheckInEditorAction) {
         focus.clearFocus(force = true); keyboard?.hide(); onAction(action)
     }
@@ -165,8 +166,8 @@ internal fun HomeCheckInEditorScreenContent(
                 HomeCheckInEditorPrimaryFields(state, enabled, formatDate, media, pickerLoading, onAction,
                     { focus.clearFocus(); keyboard?.hide(); showDatePicker = true },
                     { focus.clearFocus(); keyboard?.hide(); onAddPhotos(it) })
-                HomeCheckInEditorRecipeFields(state, enabled, formatMethod, media, onAction,
-                    { dispatch(HomeCheckInEditorAction.OpenBeanPicker) })
+                HomeCheckInEditorRecipeFields(state, enabled, formatMethod, media, onAction, recipeExpanded,
+                    { recipeExpanded = it }, { dispatch(HomeCheckInEditorAction.OpenBeanPicker) })
             }
             HomeCheckInEditorFooter(state, enabled && !pickerLoading, onAction,
                 { onBeforeSave(); dispatch(HomeCheckInEditorAction.Save) })

@@ -1,23 +1,36 @@
 package com.coffeepeek.feature.homecheckin.impl.ui.compose.component
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.Surface
 import com.coffeepeek.core.designsystem.component.CoffeePeekTextButton as TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.unit.LayoutDirection
+import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import androidx.compose.ui.text.input.KeyboardType
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import com.coffeepeek.feature.homecheckin.domain.model.HomePreparationField
+import com.coffeepeek.feature.homecheckin.domain.model.HomePreparationInput
 import com.coffeepeek.feature.homecheckin.impl.resources.*
 import com.coffeepeek.feature.homecheckin.impl.ui.compose.model.HomeCheckInEditorAction
 import com.coffeepeek.feature.homecheckin.impl.ui.compose.model.HomeCheckInEditorState
@@ -31,25 +44,49 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 internal fun HomeCheckInEditorRecipeFields(
     state: HomeCheckInEditorState, enabled: Boolean, formatMethod: (String) -> String,
     media: HomeCheckInEditorMedia, onAction: (HomeCheckInEditorAction) -> Unit,
-    onOpenBean: () -> Unit,
+    expanded: Boolean?, onExpandedChange: (Boolean) -> Unit, onOpenBean: () -> Unit,
 ) {
-    val draft = state.draft
-    val hasError = state.fieldErrors.keys.any { it in setOf(HomePreparationField.Method,
-        HomePreparationField.Bean, HomePreparationField.Dose, HomePreparationField.Duration) }
-    var expanded by rememberSaveable(state.entry?.id, state.isReady) {
-        mutableStateOf(draft.brewMethodCode != null || draft.shelfBagId != null || draft.customBeanName != null ||
-            draft.doseGrams != null || draft.brewDurationSeconds != null)
+    val hasRecipe = state.draft.hasRecipe()
+    val hasError = state.fieldErrors.keys.any { it in recipeFields }
+    val visible = expanded ?: (hasRecipe || hasError)
+    LaunchedEffect(hasError, state.saveAttempt) {
+        if (hasError) onExpandedChange(true)
     }
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        TextButton(onClick = { expanded = !expanded }) {
-            Text(stringResource(if (expanded || hasError) Res.string.home_check_in_recipe_collapse
-                else Res.string.home_check_in_recipe_expand))
-        }
-        if (expanded || hasError) {
+    Column(verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3)) {
+        HomeCheckInRecipeDisclosure(hasRecipe, visible, enabled) { onExpandedChange(!visible) }
+        if (visible) {
             HomeCheckInRecipeMethod(state, enabled, formatMethod, media, onAction)
             HomeCheckInRecipeBean(state, enabled, media, onAction, onOpenBean)
             HomeCheckInRecipeAmounts(state, enabled, onAction)
         }
+    }
+}
+
+private val recipeFields = setOf(
+    HomePreparationField.Method, HomePreparationField.Bean, HomePreparationField.Dose, HomePreparationField.Duration,
+)
+
+private fun HomePreparationInput.hasRecipe(): Boolean =
+    brewMethodCode != null || coffeeProductSlug != null || coffeeProductId != null || shelfBagId != null ||
+        customBeanName != null || doseGrams != null || brewDurationSeconds != null
+
+@Composable
+private fun HomeCheckInRecipeDisclosure(hasRecipe: Boolean, expanded: Boolean, enabled: Boolean, onClick: () -> Unit) {
+    val label = stringResource(if (hasRecipe) Res.string.home_check_in_recipe_title else Res.string.home_check_in_recipe_expand)
+    val description = stringResource(if (expanded) Res.string.home_check_in_recipe_expanded
+        else Res.string.home_check_in_recipe_collapsed)
+    val direction = if (!expanded && LocalLayoutDirection.current == LayoutDirection.Rtl) -1f else 1f
+    Row(
+        Modifier.fillMaxWidth().heightIn(min = CoffeePeekDimens.controlHeight)
+            .semantics { stateDescription = description }
+            .clickable(enabled = enabled, role = Role.Button, onClick = onClick),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2),
+    ) {
+        Icon(if (expanded) CoffeePeekIcons.ChevronDown else CoffeePeekIcons.ChevronRight,
+            contentDescription = null, modifier = Modifier.size(18.dp).scale(scaleX = direction, scaleY = 1f),
+            tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text(label, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
     }
 }
 
@@ -98,11 +135,14 @@ private fun HomeCheckInRecipeAmounts(state: HomeCheckInEditorState, enabled: Boo
     }
 }
 
-@Composable private fun HomeEditorRecipePreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
+@Composable private fun HomeEditorRecipePreview(dark: Boolean, expanded: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     Surface { Column(Modifier.padding(16.dp)) {
-        HomeCheckInEditorRecipeFields(previewHomeEditorState(), true, { it }, previewHomeEditorMedia(), {}, {})
+        HomeCheckInEditorRecipeFields(previewHomeEditorState(), true, { it }, previewHomeEditorMedia(), {},
+            expanded, {}, {})
     } }
 }
 
-@Preview @Composable private fun HomeEditorRecipeLightPreview() = HomeEditorRecipePreview(false)
-@Preview @Composable private fun HomeEditorRecipeDarkPreview() = HomeEditorRecipePreview(true)
+@Preview @Composable private fun HomeEditorRecipeLightPreview() = HomeEditorRecipePreview(false, false)
+@Preview @Composable private fun HomeEditorRecipeDarkPreview() = HomeEditorRecipePreview(true, false)
+@Preview @Composable private fun HomeEditorRecipeExpandedLightPreview() = HomeEditorRecipePreview(false, true)
+@Preview @Composable private fun HomeEditorRecipeExpandedDarkPreview() = HomeEditorRecipePreview(true, true)
