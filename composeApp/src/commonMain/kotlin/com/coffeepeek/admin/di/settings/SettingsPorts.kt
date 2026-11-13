@@ -76,7 +76,7 @@ internal class AppSettingsAccountPort(private val sessions: SessionReader) : Set
 /** The row exists only for a signed-in user with analytics ready; the service is read when observed. */
 internal class AppUsageConsentPort(private val service: () -> AnalyticsService? = { Analytics.service }) : UsageConsentPort {
     override fun observe(): Flow<UsageConsentState> = service()?.state
-        ?.map { UsageConsentState(available = it.authReady && !it.userId.isNullOrBlank(), accepted = it.consent == AnalyticsConsent.Accepted) }
+        ?.map { UsageConsentState(available = it.authReady && !it.userId.isNullOrBlank(), accepted = it.consent == AnalyticsConsent.Accepted, syncFailed = it.preferenceSyncFailed) }
         ?.distinctUntilChanged()
         ?: flowOf(UsageConsentState.Unavailable)
 

@@ -39,8 +39,8 @@
     <string name="auth_terms_link">условия использования</string>
     <string name="auth_terms_and">и даю согласие на</string>
     <string name="auth_privacy_link">обработку персональных данных</string>
-    <string name="auth_analytics_title">Разрешить аналитику использования</string>
-    <string name="auth_analytics_description">Необязательно. События использования отправляются в PostHog (ЕС), чтобы улучшать CoffeePeek. Без текстов поиска, заметок, фото и точных координат. Решение можно изменить в настройках.</string>
+    <string name="auth_analytics_title">Аналитика использования</string>
+    <string name="auth_analytics_description">Включена по умолчанию. События использования отправляются в PostHog (ЕС), чтобы улучшать CoffeePeek. Без текстов поиска, заметок, фото и точных координат. Можно отключить здесь или в настройках. Выбор сохраняется в аккаунте.</string>
     <string name="auth_register_submit">Создать аккаунт</string>
     <string name="auth_register_success_title">Проверьте почту</string>
     <string name="auth_register_success_subtitle">Мы отправили ссылку на %1$s. Перейдите по ссылке чтобы активировать аккаунт. Ссылка действует 10 минут.</string>

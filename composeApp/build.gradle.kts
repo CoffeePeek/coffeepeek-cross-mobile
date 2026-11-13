@@ -113,6 +113,7 @@ kotlin {
             implementation(project(module.feature.profile.data))
             implementation(project(module.feature.settings.api))
             implementation(project(module.feature.settings.domain))
+            implementation(project(module.feature.settings.data))
             implementation(project(module.feature.settings.impl))
             implementation(project(module.feature.roaster.api))
             implementation(project(module.feature.roaster.domain))
