@@ -8,8 +8,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
@@ -33,6 +35,8 @@ import com.coffeepeek.core.designsystem.component.CoffeePeekDestructiveConfirmat
 import com.coffeepeek.core.designsystem.component.CoffeePeekBackHandler
 import com.coffeepeek.core.designsystem.component.CoffeePeekScaffold
 import com.coffeepeek.core.designsystem.component.CoffeePeekTopBar
+import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
+import com.coffeepeek.core.designsystem.modifier.CoffeePeekGlassIconButton
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.feature.shop.domain.model.ShopCheckInCreateInput
@@ -102,9 +106,7 @@ internal fun ShopCheckInCreateScreen(
     CoffeePeekScaffold(
         modifier = Modifier.fillMaxSize().imePadding(),
         contentWindowInsets = androidx.compose.foundation.layout.WindowInsets(0),
-        topBar = { CoffeePeekTopBar(stringResource(Res.string.shop_checkin_form_title),
-            stringResource(Res.string.shop_checkin_form_dismiss),
-            onBack = { viewModel.onAction(ShopCheckInFormAction.Dismiss) }) },
+        topBar = { ShopCheckInEditorTopBar(state, viewModel::onAction) },
         bottomBar = { if (!state.submitted && !state.isSubmitting) ShopCheckInSaveBar(
             state, picker.isPreparing, viewModel::onAction) },
     ) { insets ->
@@ -196,10 +198,26 @@ private fun ShopCheckInFeedback(state: ShopCheckInFormState, onAction: (ShopChec
             Text(stringResource(Res.string.shop_checkin_form_history_checked))
         }
     }
-    if (state.hasDraft) TextButton(onClick = { onAction(ShopCheckInFormAction.AskDiscard) },
-        enabled = !state.isDiscarding) {
-        Text(stringResource(Res.string.shop_checkin_discard), color = MaterialTheme.colorScheme.error)
-    }
+}
+
+@Composable
+private fun ShopCheckInEditorTopBar(state: ShopCheckInFormState, onAction: (ShopCheckInFormAction) -> Unit) {
+    CoffeePeekTopBar(
+        title = stringResource(Res.string.shop_checkin_form_title),
+        backDescription = stringResource(Res.string.shop_checkin_form_dismiss),
+        onBack = { onAction(ShopCheckInFormAction.Dismiss) },
+        actions = {
+            if (state.hasDraft && !state.isLoading && !state.isSubmitting && !state.submitted) {
+                CoffeePeekGlassIconButton(
+                    onClick = { onAction(ShopCheckInFormAction.AskDiscard) },
+                    contentDescription = stringResource(Res.string.shop_checkin_discard),
+                    enabled = !state.isDiscarding,
+                ) {
+                    Icon(CoffeePeekIcons.Delete, contentDescription = null, modifier = Modifier.size(20.dp))
+                }
+            }
+        },
+    )
 }
 
 @Composable
@@ -247,7 +265,7 @@ private fun ShopCheckInFormPreview(dark: Boolean, uncertain: Boolean = false,
         submitted = submitted, hasDraft = !loading && !submitted,
     )
     CoffeePeekScaffold(
-        topBar = { CoffeePeekTopBar("Чекин", "Закрыть", onBack = {}) },
+        topBar = { ShopCheckInEditorTopBar(state, {}) },
         bottomBar = { if (!state.submitted && !state.isSubmitting) ShopCheckInSaveBar(state, photosPreparing, {}) },
     ) { insets ->
         ShopCheckInCreateScreenContent(state, "The Coffee Room", "ул. Петра Мстиславца, 20",

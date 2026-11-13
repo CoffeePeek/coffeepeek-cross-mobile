@@ -121,7 +121,6 @@
     <string name="shop_review_photo_source_cancel">Адмена</string>
     <string name="shop_checkin_form_title">Чэкін</string>
     <string name="shop_checkin_form_ratings">Вашы адзнакі</string>
-    <string name="shop_checkin_form_ratings_hint">Націсніце на зоркі, каб змяніць адзнаку</string>
     <string name="shop_checkin_form_dismiss">Закрыць форму чэкіна</string>
     <string name="shop_checkin_form_note">Нататка</string>
     <string name="shop_checkin_form_note_hint">Раскажыце пра ваш візіт…</string>
@@ -142,7 +141,6 @@
     <string name="shop_checkin_form_submit">Захаваць чэкін</string>
     <string name="shop_checkin_form_change_shop">Змяніць</string>
     <string name="shop_checkin_today">Сёння</string>
-    <string name="shop_checkin_additional_ratings">Сэрвіс і атмасфера · па жаданні</string>
     <string name="shop_checkin_form_sending">Адпраўляем чэкін…</string>
     <string name="shop_checkin_form_success_pending">Захавана · публікацыя ўдакладняецца</string>
     <string name="shop_checkin_form_success_waiting">Чакае публікацыі</string>

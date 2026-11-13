@@ -1,13 +1,18 @@
 package com.coffeepeek.feature.homecheckin.impl.ui.compose.component
 
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -15,12 +20,19 @@ import androidx.compose.material3.Surface
 import com.coffeepeek.core.designsystem.component.CoffeePeekTextButton as TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalLayoutDirection
-import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.LayoutDirection
@@ -49,13 +61,23 @@ internal fun HomeCheckInEditorRecipeFields(
     val hasRecipe = state.draft.hasRecipe()
     val hasError = state.fieldErrors.keys.any { it in recipeFields }
     val visible = expanded ?: (hasRecipe || hasError)
+    val focus = LocalFocusManager.current
+    val keyboard = LocalSoftwareKeyboardController.current
+    var revealMethod by remember { mutableStateOf(false) }
     LaunchedEffect(hasError, state.saveAttempt) {
         if (hasError) onExpandedChange(true)
     }
     Column(verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3)) {
-        HomeCheckInRecipeDisclosure(hasRecipe, visible, enabled) { onExpandedChange(!visible) }
+        HomeCheckInRecipeDisclosure(hasRecipe, visible, enabled) {
+            focus.clearFocus()
+            keyboard?.hide()
+            revealMethod = !visible
+            onExpandedChange(!visible)
+        }
         if (visible) {
-            HomeCheckInRecipeMethod(state, enabled, formatMethod, media, onAction)
+            HomeCheckInRecipeStart(revealMethod, { revealMethod = false }) {
+                HomeCheckInRecipeMethod(state, enabled, formatMethod, media, onAction)
+            }
             HomeCheckInRecipeBean(state, enabled, media, onAction, onOpenBean)
             HomeCheckInRecipeAmounts(state, enabled, onAction)
         }
@@ -76,18 +98,39 @@ private fun HomeCheckInRecipeDisclosure(hasRecipe: Boolean, expanded: Boolean, e
     val description = stringResource(if (expanded) Res.string.home_check_in_recipe_expanded
         else Res.string.home_check_in_recipe_collapsed)
     val direction = if (!expanded && LocalLayoutDirection.current == LayoutDirection.Rtl) -1f else 1f
-    Row(
-        Modifier.fillMaxWidth().heightIn(min = CoffeePeekDimens.controlHeight)
-            .semantics { stateDescription = description }
-            .clickable(enabled = enabled, role = Role.Button, onClick = onClick),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2),
+    val interactions = remember { MutableInteractionSource() }
+    val pressed by interactions.collectIsPressedAsState()
+    TextButton(
+        onClick = onClick,
+        modifier = Modifier.fillMaxWidth().heightIn(min = CoffeePeekDimens.controlHeight)
+            .clip(CircleShape)
+            .graphicsLayer { alpha = if (!enabled) 0.4f else if (pressed) 0.6f else 1f }
+            .semantics { stateDescription = description },
+        enabled = enabled,
+        shape = CircleShape,
+        contentPadding = PaddingValues(horizontal = CoffeePeekDimens.spacing3, vertical = CoffeePeekDimens.spacing2),
+        interactionSource = interactions,
     ) {
         Icon(if (expanded) CoffeePeekIcons.ChevronDown else CoffeePeekIcons.ChevronRight,
-            contentDescription = null, modifier = Modifier.size(18.dp).scale(scaleX = direction, scaleY = 1f),
+            contentDescription = null, modifier = Modifier.padding(end = CoffeePeekDimens.spacing2)
+                .size(18.dp).scale(scaleX = direction, scaleY = 1f),
             tint = MaterialTheme.colorScheme.onSurfaceVariant)
-        Text(label, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onSurface)
+        Text(label, modifier = Modifier.weight(1f), style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onSurface)
     }
+}
+
+@Composable
+private fun HomeCheckInRecipeStart(reveal: Boolean, onRevealHandled: () -> Unit, content: @Composable () -> Unit) {
+    val requester = remember { BringIntoViewRequester() }
+    var placed by remember { mutableStateOf(false) }
+    LaunchedEffect(placed) {
+        if (placed && reveal) {
+            onRevealHandled()
+            requester.bringIntoView()
+        }
+    }
+    Box(Modifier.bringIntoViewRequester(requester).onGloballyPositioned { placed = true }) { content() }
 }
 
 @Composable
