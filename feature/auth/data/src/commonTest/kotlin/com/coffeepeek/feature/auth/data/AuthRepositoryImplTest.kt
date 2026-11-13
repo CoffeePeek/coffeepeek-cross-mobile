@@ -120,12 +120,15 @@ class AuthRepositoryImplTest {
     }
 
     @Test fun registrationNormalizesTheEmailAndReportsARejection() = runBlocking {
-        val f = Fixture(null) { _, _ -> ok("""{"isSuccess":true,"data":null}""") }
-        assertTrue(f.repository.register("Coffee User", " USER@Example.com ", "password1").isSuccess)
-        assertEquals("""{"email":"user@example.com","password":"password1","userName":"Coffee User"}""", f.requests.single().body)
+        for (enabled in listOf(true, false)) {
+            val f = Fixture(null) { _, _ -> ok("""{"isSuccess":true,"data":null}""") }
+            assertTrue(f.repository.register("Coffee User", " USER@Example.com ", "password1", enabled).isSuccess)
+            assertEquals("""{"email":"user@example.com","password":"password1","userName":"Coffee User","analyticsEnabled":$enabled}""", f.requests.single().body)
+            f.close()
+        }
         val rejected = Fixture(null) { _, _ -> ok("""{"isSuccess":false,"message":"Email already registered"}""") }
         assertEquals("Email already registered", rejected.repository.register("Coffee User", "user@example.com", "password1").exceptionOrNull()?.message)
-        f.close(); rejected.close()
+        rejected.close()
     }
 
     @Test fun passwordLoginDistinguishesTheTwoUnauthorizedResponses() = runBlocking {
