@@ -13,7 +13,6 @@ import com.coffeepeek.feature.community.impl.resources.community_drink_none
 import com.coffeepeek.feature.community.impl.resources.community_drink_other
 import com.coffeepeek.feature.community.impl.resources.community_drink_retry
 import com.coffeepeek.feature.community.impl.resources.community_edit_kept
-import com.coffeepeek.feature.community.impl.resources.community_edit_review
 import com.coffeepeek.feature.community.impl.resources.community_edit_save_failed
 import com.coffeepeek.feature.community.impl.resources.community_edit_title
 import com.coffeepeek.feature.community.impl.resources.community_issue_drink_not_allowed
@@ -97,28 +96,30 @@ import com.coffeepeek.feature.community.impl.timeline.PostEditState
 @Composable
 internal fun EditSheet(state: CommunityState, onAction: (CommunityAction) -> Unit) {
     val edit = state.editing ?: return
-    CoffeePeekSwipeDismissModalBottomSheet(onDismissRequest = { onAction(CommunityAction.DismissEdit) },
-        dismissDescription = stringResource(Res.string.community_close), dismissEnabled = !state.isSaving) {
-        EditSheetContent(edit, state.drinks, state.drinksFailed, state.isSaving, state.source().visibility == PostVisibility.Public, onAction)
+    PostEditorSheet(edit, state.drinks, state.drinksFailed, state.isSaving, timelineEditorCallbacks(onAction))
+}
+
+@Composable
+internal fun PostEditorSheet(edit: PostEditState, drinks: List<DrinkOption>, failed: Boolean, saving: Boolean, callbacks: PostEditorCallbacks) {
+    CoffeePeekSwipeDismissModalBottomSheet(onDismissRequest = callbacks.onDismiss,
+        dismissDescription = stringResource(Res.string.community_close), dismissEnabled = !saving) {
+        EditSheetContent(edit, drinks, failed, saving, callbacks)
     }
 }
 
-private fun CommunityState.source() = editing!!.source
-
 @Composable
-internal fun EditSheetContent(edit: PostEditState, drinks: List<DrinkOption>, drinksFailed: Boolean, saving: Boolean, public: Boolean, onAction: (CommunityAction) -> Unit) {
+internal fun EditSheetContent(edit: PostEditState, drinks: List<DrinkOption>, drinksFailed: Boolean, saving: Boolean, callbacks: PostEditorCallbacks) {
     Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(CoffeePeekDimens.spacing4), verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3)) {
         Text(stringResource(Res.string.community_edit_title), style = MaterialTheme.typography.headlineSmall)
         Text(edit.source.shopName.ifBlank { stringResource(Res.string.community_shop_default) }, style = MaterialTheme.typography.titleMedium)
         Text(stringResource(Res.string.community_edit_kept), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        if (public) Text(stringResource(Res.string.community_edit_review), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        RatingCards(edit.rating) { onAction(CommunityAction.EditRating(it)) }
+        RatingCards(edit.rating, callbacks.onRating)
         Text(stringResource(Res.string.community_note_label), style = MaterialTheme.typography.labelMedium)
-        TextArea(edit.text, { onAction(CommunityAction.EditText(it)) }, stringResource(Res.string.community_note_placeholder), MAX_NOTE_LENGTH, isError = edit.error != null)
-        DrinkField(edit, drinks, drinksFailed, onAction)
+        TextArea(edit.text, callbacks.onText, stringResource(Res.string.community_note_placeholder), MAX_NOTE_LENGTH, isError = edit.error != null)
+        DrinkField(edit, drinks, drinksFailed, callbacks)
         edit.error?.let { Text(editErrorText(it), color = MaterialTheme.colorScheme.error) }
-        CoffeePeekButton(stringResource(if (saving) Res.string.community_saving else Res.string.community_save), { onAction(CommunityAction.SaveEdit) }, Modifier.fillMaxWidth(), enabled = !saving)
-        TextButton({ onAction(CommunityAction.DismissEdit) }, Modifier.fillMaxWidth(), enabled = !saving) { Text(stringResource(Res.string.community_cancel)) }
+        CoffeePeekButton(stringResource(if (saving) Res.string.community_saving else Res.string.community_save), callbacks.onSave, Modifier.fillMaxWidth(), enabled = !saving)
+        TextButton(callbacks.onDismiss, Modifier.fillMaxWidth(), enabled = !saving) { Text(stringResource(Res.string.community_cancel)) }
     }
 }
 
@@ -167,7 +168,7 @@ private fun RatingCard(image: DrawableResource, label: String, value: Int, onCha
 }
 
 @Composable
-private fun DrinkField(edit: PostEditState, drinks: List<DrinkOption>, failed: Boolean, onAction: (CommunityAction) -> Unit) {
+private fun DrinkField(edit: PostEditState, drinks: List<DrinkOption>, failed: Boolean, callbacks: PostEditorCallbacks) {
     val language = Locale.current.language
     fun DrinkOption.title() = if (language == "en") nameEn.ifBlank { nameRu } else nameRu.ifBlank { nameEn }
     val slug = edit.drinkSlug
@@ -185,11 +186,11 @@ private fun DrinkField(edit: PostEditState, drinks: List<DrinkOption>, failed: B
         else -> savedName ?: selected?.title() ?: slug
     }
     val options = buildList {
-        add(CoffeePeekSelectOption("none", none, selected = slug == null) { onAction(CommunityAction.EditDrink(null, null)) })
+        add(CoffeePeekSelectOption("none", none, selected = slug == null) { callbacks.onDrink(null, null) })
         if (slug != null && selected == null) add(CoffeePeekSelectOption("saved:$slug", label, selected = true) { })
         drinks.forEach { drink ->
             add(CoffeePeekSelectOption("drink:${drink.slug}", drink.title(), selected = drink.slug == slug) {
-                if (drink.slug != slug) onAction(CommunityAction.EditDrink(drink.slug, if (drink.slug == OTHER_DRINK) "" else null))
+                if (drink.slug != slug) callbacks.onDrink(drink.slug, if (drink.slug == OTHER_DRINK) "" else null)
             })
         }
     }
@@ -199,10 +200,10 @@ private fun DrinkField(edit: PostEditState, drinks: List<DrinkOption>, failed: B
         CoffeePeekSelectField(label, options, title, Modifier.fillMaxWidth())
         if (failed) {
             Text(stringResource(Res.string.community_drink_error), color = MaterialTheme.colorScheme.error)
-            TextButton({ onAction(CommunityAction.LoadDrinks) }) { Text(stringResource(Res.string.community_drink_retry)) }
+            TextButton(callbacks.onReloadDrinks) { Text(stringResource(Res.string.community_drink_retry)) }
         }
         if (slug == OTHER_DRINK) {
-            TextArea(edit.customDrinkName.orEmpty(), { onAction(CommunityAction.EditDrink(slug, it.take(MAX_DRINK_NAME_LENGTH))) },
+            TextArea(edit.customDrinkName.orEmpty(), { callbacks.onDrink(slug, it.take(MAX_DRINK_NAME_LENGTH)) },
                 stringResource(Res.string.community_drink_custom), MAX_DRINK_NAME_LENGTH, singleLine = true)
         }
     }
@@ -275,7 +276,7 @@ private fun TextArea(value: String, onChange: (String) -> Unit, placeholder: Str
 
 @Composable private fun EditSheetPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     androidx.compose.material3.Surface {
-        EditSheetContent(PostEditState(previewPost()), listOf(DrinkOption("cappuccino", "Капучино", "Cappuccino")), false, false, true, {})
+        EditSheetContent(PostEditState(previewPost()), listOf(DrinkOption("cappuccino", "Капучино", "Cappuccino")), false, false, timelineEditorCallbacks({}))
     }
 }
 @Preview @Composable private fun EditSheetLightPreview() = EditSheetPreview(false)

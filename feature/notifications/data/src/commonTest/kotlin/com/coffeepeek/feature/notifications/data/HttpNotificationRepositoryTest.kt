@@ -52,6 +52,7 @@ class HttpNotificationRepositoryTest {
     @Test fun destinationUsesTheOwnedNotificationEndpointAndPreservesItsCurrentPublicSlug(): Unit = runBlocking {
         val client = HttpClientFactory(MockEngine { request ->
             assertEquals("/api/v1/me/notifications/notice/destination", request.url.encodedPath)
+            assertEquals("true", request.url.parameters["supportsCheckInPost"])
             respond("""{"kind":"Shop","value":"renamed-cafe"}""",
                 headers = headersOf(HttpHeaders.ContentType, "application/json"))
         }).api("https://api.example")

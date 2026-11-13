@@ -70,6 +70,18 @@ internal class CombinedHistoryViewModel private constructor(
 
     init { require(initialContentGeneration >= 0); loadVisible() }
 
+    private suspend fun openSelectedShop() {
+        val slug = currentState.selectedShop?.entry?.shop?.slug?.takeIf(String::isNotBlank) ?: return
+        updateState { copy(selectedShopKey = null) }
+        emit(CheckInHistoryEvent.OpenShop(slug))
+    }
+
+    private suspend fun openSelectedCheckIn() {
+        val id = currentState.selectedShop?.entry?.id?.takeIf(String::isNotBlank) ?: return
+        updateState { copy(selectedShopKey = null) }
+        emit(CheckInHistoryEvent.OpenCheckIn(id))
+    }
+
     override suspend fun handleActionInternal(action: CombinedHistoryAction) {
         when (action) {
             CombinedHistoryAction.Back -> emit(CheckInHistoryEvent.Back)
@@ -80,11 +92,8 @@ internal class CombinedHistoryViewModel private constructor(
                 null -> Unit
             }
             CombinedHistoryAction.DismissShop -> updateState { copy(selectedShopKey = null) }
-            CombinedHistoryAction.OpenSelectedShop -> currentState.selectedShop?.entry?.shop?.slug
-                ?.takeIf(String::isNotBlank)?.let { slug ->
-                    updateState { copy(selectedShopKey = null) }
-                    emit(CheckInHistoryEvent.OpenShop(slug))
-                }
+            CombinedHistoryAction.OpenSelectedCheckIn -> openSelectedCheckIn()
+            CombinedHistoryAction.OpenSelectedShop -> openSelectedShop()
             is CombinedHistoryAction.OpenEntryPhoto -> openEntryPhoto(action.key, action.index)
             is CombinedHistoryAction.OpenPhoto -> currentState.selectedShop?.entry?.let { entry ->
                 val originals = entry.photoUrls

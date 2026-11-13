@@ -64,7 +64,7 @@ internal fun CheckInHistoryScreenContent(state: CombinedHistoryState, onAction: 
                 modalContent {
                     HistoryShopDetailSheet(entry, formatCheckInDate(entry.createdAt),
                         { onAction(CombinedHistoryAction.DismissShop) }, { onAction(CombinedHistoryAction.OpenSelectedShop) },
-                        { onAction(CombinedHistoryAction.OpenPhoto(it)) }, imageContent)
+                        { onAction(CombinedHistoryAction.OpenSelectedCheckIn) }, { onAction(CombinedHistoryAction.OpenPhoto(it)) }, imageContent)
                 }
             }
             if (state.showCreate) modalContent {

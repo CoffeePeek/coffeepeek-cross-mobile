@@ -10,7 +10,7 @@ import kotlinx.serialization.json.JsonNames
 internal data class FeedPageDto(val items: List<FeedItemDto> = emptyList(), val nextCursor: String? = null)
 
 @Serializable
-internal data class FeedItemDto(val publishedAtUtc: String = "", val checkIn: PostDto)
+internal data class FeedItemDto(val publishedAtUtc: String? = null, val checkIn: PostDto, val feedPositionAtUtc: String? = null)
 
 @Serializable
 internal data class MyPostsDto(val items: List<PostDto> = emptyList(), val totalCount: JsonElement? = null)

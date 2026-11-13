@@ -1,8 +1,10 @@
 package com.coffeepeek.feature.community.domain.model
 
-data class FeedFilters(val citySlug: String? = null, val coffeeShopSlug: String? = null, val authorSlug: String? = null)
+data class FeedFilters(val citySlug: String? = null, val coffeeShopSlug: String? = null, val authorSlug: String? = null,
+    val includeOwnPending: Boolean = false)
 
-data class FeedEntry(val publishedAtUtc: String, val post: CommunityPost)
+data class FeedEntry(val publishedAtUtc: String?, val post: CommunityPost,
+    val feedPositionAtUtc: String = publishedAtUtc.orEmpty())
 
 /** [nextCursor] is opaque; null means the last page. */
 data class FeedPage(val entries: List<FeedEntry>, val nextCursor: String?)

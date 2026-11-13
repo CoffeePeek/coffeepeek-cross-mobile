@@ -164,7 +164,6 @@ internal fun ShopCheckInCreateScreenContent(
                 submittedVisibility = state.input.visibility.takeIf { state.submitted },
                 cleanupFailed = state.submitted && state.draftFailed,
                 onFeed = { onAction(ShopCheckInFormAction.GoToFeed) },
-                publication = state.publication,
             )
         } else if (state.isLoading) {
             CoffeePeekLoader(size = 40.dp, color = MaterialTheme.colorScheme.primary, strokeWidth = 4.dp)

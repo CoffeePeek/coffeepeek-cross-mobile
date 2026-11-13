@@ -64,6 +64,25 @@ class SandboxApplicationBackendTest {
 
     @get:Rule val temporary = TemporaryFolder()
 
+    @Test fun pendingHomeAppearsOnlyInOwnersPersonalFeedAndCanBeReadById() = runTest { fixture { _, clients ->
+        val client = clients.client
+        val base = SandboxBackend.BASE_URL
+        val created = json(client.post(base + "/api/v1/check-ins/home") {
+            contentType(ContentType.Application.Json)
+            setBody("""{"preparedAt":"2026-11-14T09:00:00Z","preparedOn":"2026-11-14","visibility":"Public","photos":[]}""")
+        })
+        val id = created.getValue("id").jsonPrimitive.content
+        val guest = json(client.get(base + "/api/v1/feed?includeOwnPending=true"))
+        val owner = json(client.get(base + "/api/v1/feed?includeOwnPending=true") {
+            header(SandboxSavedCollectionsBackend.OWNER, SandboxSavedCollectionsBackend.LOCAL_ACCOUNT)
+        })
+        assertTrue(guest.getValue("items").jsonArray.none { it.jsonObject["checkIn"]?.jsonObject?.get("id") == JsonPrimitive(id) })
+        val item = owner.getValue("items").jsonArray.single { it.jsonObject["checkIn"]?.jsonObject?.get("id") == JsonPrimitive(id) }.jsonObject
+        assertEquals(JsonNull, item["publishedAtUtc"]); assertNotNull(item["feedPositionAtUtc"])
+        val post = createCommunityRepository(client, base).postById(id).getOrThrow()
+        assertTrue(post.isHome); assertEquals(com.coffeepeek.feature.community.domain.model.PostModeration.Pending, post.moderation)
+    } }
+
     @Test fun migratedOwnProfileReadsAndEditsShareOneCacheInTheLocalBackend() = runTest { fixture { _, client ->
         val data = com.coffeepeek.feature.profile.data.repository.createProfileAccountData(client.client, client.uploadClient, LocalSandboxSession(), backgroundScope)
         assertEquals("Sandbox", data.accounts.loadOwnProfile(false).getOrThrow().userName)

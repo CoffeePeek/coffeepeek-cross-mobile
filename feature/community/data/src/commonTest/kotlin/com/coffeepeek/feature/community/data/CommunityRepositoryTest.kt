@@ -33,10 +33,24 @@ class CommunityRepositoryTest {
     private val json = headersOf(HttpHeaders.ContentType, "application/json")
     private fun repository(engine: MockEngine) = createCommunityRepository(HttpClientFactory(engine).api("https://api.example"), "https://api.example/")
 
+    @Test fun personalFeedOptsInAndKeepsPendingSeparateFromPublicationTime() = runBlocking {
+        val engine = MockEngine { request ->
+            assertEquals("true", request.url.parameters["includeOwnPending"])
+            respond("""{"isSuccess":true,"data":{"items":[{"publishedAtUtc":null,"feedPositionAtUtc":"2026-11-14T09:00:00Z",
+                "checkIn":{"id":"own","visibility":"Public","moderationState":"Pending","author":{"slug":"me"}}}]}}""",
+                headers = json)
+        }
+        val item = repository(engine).feed(20, null, FeedFilters(includeOwnPending = true)).getOrThrow().entries.single()
+        assertNull(item.publishedAtUtc)
+        assertEquals("2026-11-14T09:00:00Z", item.feedPositionAtUtc)
+        assertEquals(PostModeration.Pending, item.post.moderation)
+    }
+
     @Test fun feedSendsCursorFiltersAndNoStoreAndKeepsThePublicationOrder() = runBlocking {
         val engine = MockEngine { request ->
             assertEquals(HttpMethod.Get, request.method)
             assertEquals("/api/v1/feed", request.url.encodedPath)
+            assertNull(request.url.parameters["includeOwnPending"])
             assertEquals("20", request.url.parameters["pageSize"]); assertEquals("cur", request.url.parameters["cursor"])
             assertEquals("minsk", request.url.parameters["citySlug"]); assertEquals("cafe", request.url.parameters["coffeeShopSlug"]); assertEquals("anna", request.url.parameters["authorSlug"])
             assertEquals("no-store", request.headers[HttpHeaders.CacheControl])

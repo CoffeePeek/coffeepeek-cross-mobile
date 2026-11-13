@@ -36,7 +36,7 @@ class ShopCheckInModuleTest {
             refreshWith = { { Result.failure(IllegalStateException("unused")) } })
         val draftFolder = temporary.root.resolve("drafts")
         val app = koinApplication {
-            modules(module {
+            modules(com.coffeepeek.admin.di.community.communityWritesTestModule(), module {
                 single { client }
                 single<SessionStore> { CheckInTestSessions() }
                 single<SessionReader> { get<SessionStore>() }

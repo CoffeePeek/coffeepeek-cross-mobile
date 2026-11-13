@@ -5,6 +5,7 @@ internal sealed interface CombinedHistoryAction {
     data object SignIn : CombinedHistoryAction
     data class OpenEntry(val key: String) : CombinedHistoryAction
     data object DismissShop : CombinedHistoryAction
+    data object OpenSelectedCheckIn : CombinedHistoryAction
     data object OpenSelectedShop : CombinedHistoryAction
     data class OpenPhoto(val index: Int) : CombinedHistoryAction
     data class OpenEntryPhoto(val key: String, val index: Int) : CombinedHistoryAction

@@ -20,6 +20,8 @@ fun createCommunityPostEntry(
     visibility: AuthorVisibility,
     blockActions: AuthorBlockActions,
     host: CommunityHost,
+    analytics: com.coffeepeek.feature.community.api.CommunityAnalytics,
+    drinks: com.coffeepeek.feature.community.api.ConsumedDrinks,
 ): CommunityPostEntry = object : CommunityPostEntry {
     @Composable
     override fun Content(
@@ -28,12 +30,13 @@ fun createCommunityPostEntry(
         onSignIn: () -> Unit,
         onOpenAuthor: (String, String, String?) -> Unit,
         onOpenShop: (String) -> Unit,
+        onEditHome: (String) -> Unit,
         onOpenCoffee: (String) -> Unit,
         modifier: Modifier,
     ) {
         PostScreen(
-            viewModel(key = "community-post:$postId") { PostViewModel(postId, repository, account, visibility) },
-            host, blockActions, PostCallbacks(onBack, onSignIn, onOpenAuthor, onOpenShop, onOpenCoffee), modifier,
+            viewModel(key = "community-post:$postId") { PostViewModel(postId, repository, account, visibility, analytics, drinks) },
+            host, blockActions, PostCallbacks(onBack, onSignIn, onOpenAuthor, onOpenShop, onOpenCoffee, onEditHome), modifier,
         )
     }
 }

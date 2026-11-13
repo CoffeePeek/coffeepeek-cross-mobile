@@ -62,6 +62,7 @@ internal class PostCallbacks(
     val onOpenAuthor: (slug: String, name: String, avatarUrl: String?) -> Unit,
     val onOpenShop: (slug: String) -> Unit,
     val onOpenCoffee: (slug: String) -> Unit,
+    val onEditHome: (String) -> Unit = {},
 )
 
 private class PostPhotoPreview(val thumbnails: List<String>, val originals: List<String>, val index: Int)
@@ -83,6 +84,10 @@ internal fun PostScreen(vm: PostViewModel, host: CommunityHost, blockActions: Au
             }
         }
     }
+    androidx.lifecycle.compose.LifecycleResumeEffect(vm) {
+        vm.onAction(PostAction.Reload)
+        onPauseOrDispose { }
+    }
     PostScreenContent(state, vm::onAction, host, blockActions, callbacks, snackbar, modifier)
 }
 
@@ -98,6 +103,7 @@ internal fun PostScreenContent(
 ) {
     var preview by remember { mutableStateOf<PostPhotoPreview?>(null) }
     preview?.let { host.photoViewer(it.thumbnails, it.originals, it.index) { preview = null } }
+    state.editing?.let { PostEditorSheet(it, state.drinks, state.drinksFailed, state.isSaving, postEditorCallbacks(onAction)) }
     if (state.isReportOpen) ReportSheet(state.reportForm(), postReportCallbacks(onAction))
     val authorFallback = stringResource(Res.string.community_user)
     val sharer = postSharer(host)
@@ -126,8 +132,8 @@ private fun PostBody(post: CommunityPost, state: PostState, host: CommunityHost,
             PostCard(
                 post = post,
                 isOwn = state.isOwn,
-                // The owner of a private or unapproved post sees its publication state, as in their own timeline.
-                publicTimeline = !state.isOwn || state.isPublished,
+                // Owners see the same audience label before and after approval, as in their history.
+                publicTimeline = !state.isOwn,
                 showHelpfulCount = state.isPublished || post.helpfulCount > 0,
                 enabled = !state.isMutating,
                 actions = actions,
@@ -159,6 +165,7 @@ private fun postActions(
         onPhoto = { index -> onPhoto(PostPhotoPreview(post.photos.thumbnails, post.photos.originals, index)) },
         onReport = { onAction(PostAction.OpenReport) }.takeIf { interactive },
         onShare = sharer.action(post),
+        onEdit = { if (post.isHome) callbacks.onEditHome(post.id) else onAction(PostAction.Edit) }.takeIf { state.isOwn },
         onCoffee = post.home?.coffeeProductSlug?.let { slug -> { callbacks.onOpenCoffee(slug) } },
     )
 }

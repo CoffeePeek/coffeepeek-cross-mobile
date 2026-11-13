@@ -33,6 +33,10 @@ internal fun HistoryCheckInCard(checkIn: PersonalCheckIn, dateLabel: String,
                 style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
             checkIn.rating?.let { HistoryCheckInRating(it) }
             HistoryCheckInNote(checkIn.note)
+            if (checkIn.moderation == HistoryModeration.Rejected) Text(
+                checkIn.rejectionReason?.takeIf(String::isNotBlank) ?: stringResource(Res.string.history_rejection_fallback),
+                style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.error,
+            )
             HistoryCheckInPhotos(checkIn.photoThumbnailUrls ?: checkIn.photoUrls, onOpenPhoto, imageContent = imageContent,
                 originalUrls = checkIn.photoUrls, detailUrls = checkIn.photoDetailUrls)
             if (checkIn.visibility == HistoryVisibility.Public || checkIn.helpfulCount > 0) {
