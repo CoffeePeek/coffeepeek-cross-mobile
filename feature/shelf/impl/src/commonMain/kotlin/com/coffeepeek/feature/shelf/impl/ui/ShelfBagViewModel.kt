@@ -5,6 +5,8 @@ import com.coffeepeek.core.presentation.MviViewModel
 import com.coffeepeek.feature.shelf.api.ShelfBrewCoffee
 import com.coffeepeek.feature.shelf.api.ShelfBrewLog
 import com.coffeepeek.feature.shelf.domain.model.ShelfBag
+import com.coffeepeek.feature.shelf.domain.model.ShelfFailure
+import com.coffeepeek.feature.shelf.domain.model.ShelfIssue
 import com.coffeepeek.feature.shelf.domain.repository.ShelfRepository
 import com.coffeepeek.feature.shelf.impl.ui.compose.model.ShelfBagAction
 import com.coffeepeek.feature.shelf.impl.ui.compose.model.ShelfBagBrews
@@ -44,8 +46,11 @@ internal class ShelfBagViewModel(
         val issue = result.exceptionOrNull()?.let {
             (it as? com.coffeepeek.feature.shelf.domain.model.ShelfFailure)?.issue
         }
-        updateState { copy(missing = issue == com.coffeepeek.feature.shelf.domain.model.ShelfIssue.NotFound,
-            loadFailed = issue != null && issue != com.coffeepeek.feature.shelf.domain.model.ShelfIssue.NotFound) }
+        when {
+            // Offline/load trouble shows a retry; "gone" is decided by the shelf flow instead.
+            issue != null && issue != ShelfIssue.NotFound -> updateState { copy(loadFailed = true, missing = false) }
+            issue == ShelfIssue.NotFound -> updateState { copy(missing = true) }
+        }
     }
 
     override suspend fun handleActionInternal(action: ShelfBagAction) {
@@ -75,8 +80,9 @@ internal class ShelfBagViewModel(
         val found = bags?.firstOrNull { it.id == bagId }
         val first = currentState.bag == null
         when {
-            found != null -> updateState { copy(bag = calendar.item(found), missing = false, today = calendar.today()) }
-            bags != null && first -> updateState { copy(missing = true) }
+            found != null -> updateState { copy(bag = calendar.item(found), missing = false, loadFailed = false, today = calendar.today()) }
+            // A failed load must not read as "the bag is gone": offline shows a retry instead.
+            bags != null && first && !currentState.loadFailed -> updateState { copy(missing = true) }
         }
         if (found != null && first) loadBrews()
     }
