@@ -3,13 +3,14 @@ package com.coffeepeek.feature.auth.impl.ui
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
@@ -33,16 +34,16 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.component.CoffeePeekCompactOutlinedTextField
+import com.coffeepeek.core.designsystem.component.CoffeePeekIconButton
 import com.coffeepeek.core.designsystem.component.CoffeePeekInputRole
+import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
 import com.coffeepeek.feature.auth.impl.resources.Res
 import com.coffeepeek.feature.auth.impl.resources.auth_forgot_password
 import com.coffeepeek.feature.auth.impl.resources.auth_hide_password
-import com.coffeepeek.feature.auth.impl.resources.auth_password_hide
 import com.coffeepeek.feature.auth.impl.resources.auth_password_label
-import com.coffeepeek.feature.auth.impl.resources.auth_password_show
 import com.coffeepeek.feature.auth.impl.resources.auth_password_required
 import com.coffeepeek.feature.auth.impl.resources.auth_show_password
 import org.jetbrains.compose.resources.stringResource
@@ -73,7 +74,7 @@ internal fun AuthTextField(
         CoffeePeekCompactOutlinedTextField(
             value = value,
             onValueChange = onValueChange,
-            modifier = fieldModifier.fillMaxWidth().heightIn(min = 56.dp).semantics {
+            modifier = fieldModifier.fillMaxWidth().heightIn(min = CoffeePeekDimens.inputMinHeight).semantics {
                 contentDescription = label
                 contentType = authAutofillType(isPassword, text, newPassword)
             },
@@ -82,7 +83,6 @@ internal fun AuthTextField(
             isError = errorText != null,
             errorDescription = errorText,
             textStyle = MaterialTheme.typography.bodyLarge,
-            contentPadding = PaddingValues(horizontal = CoffeePeekDimens.inputPadding, vertical = CoffeePeekDimens.spacing1),
             colors = authFieldColors(),
             placeholder = { Text(placeholder, maxLines = 1, overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.clearAndSetSemantics {}) },
@@ -117,13 +117,18 @@ private fun AuthFieldLabel(label: String, isError: Boolean, action: (@Composable
 
 @Composable
 private fun AuthPasswordVisibility(visible: Boolean, enabled: Boolean, onClick: () -> Unit) {
-    AuthLink(
-        text = stringResource(if (visible) Res.string.auth_password_hide else Res.string.auth_password_show),
+    CoffeePeekIconButton(
         onClick = onClick,
         enabled = enabled,
-        modifier = Modifier.padding(end = CoffeePeekDimens.spacing1),
-        accessibilityLabel = stringResource(if (visible) Res.string.auth_hide_password else Res.string.auth_show_password),
-    )
+        glass = false,
+        contentDescription = stringResource(if (visible) Res.string.auth_hide_password else Res.string.auth_show_password),
+    ) {
+        Icon(
+            imageVector = if (visible) CoffeePeekIcons.VisibilityOff else CoffeePeekIcons.Visibility,
+            contentDescription = null,
+            modifier = Modifier.size(20.dp),
+        )
+    }
 }
 
 private fun authKeyboardOptions(isPassword: Boolean, text: Boolean, next: Boolean): KeyboardOptions = KeyboardOptions(
@@ -156,7 +161,7 @@ private fun authFieldColors() = OutlinedTextFieldDefaults.colors(
 @Composable
 private fun AuthTextFieldPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     val label = stringResource(Res.string.auth_password_label)
-    AuthTextField("", {}, label, label = label, isPassword = true,
+    AuthTextField(if (dark) "example-password" else "", {}, label, label = label, isPassword = true,
         errorText = if (dark) null else stringResource(Res.string.auth_password_required),
         labelAction = { AuthFieldLabelLink(stringResource(Res.string.auth_forgot_password), {}) })
 }

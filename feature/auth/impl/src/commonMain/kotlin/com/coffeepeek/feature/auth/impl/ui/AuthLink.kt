@@ -3,15 +3,11 @@ package com.coffeepeek.feature.auth.impl.ui
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.semantics.clearAndSetSemantics
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
@@ -22,28 +18,6 @@ import com.coffeepeek.feature.auth.impl.resources.Res
 import com.coffeepeek.feature.auth.impl.resources.auth_forgot_password
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
-
-@Composable
-internal fun AuthLink(
-    text: String,
-    onClick: () -> Unit,
-    enabled: Boolean = true,
-    modifier: Modifier = Modifier,
-    accessibilityLabel: String? = null,
-) {
-    CoffeePeekTextButton(
-        onClick = onClick,
-        modifier = if (accessibilityLabel == null) modifier else modifier.semantics {
-            contentDescription = accessibilityLabel
-        },
-        enabled = enabled,
-        shape = RoundedCornerShape(CoffeePeekDimens.radiusMd),
-        contentPadding = PaddingValues(horizontal = CoffeePeekDimens.spacing1),
-    ) {
-        Text(text, if (accessibilityLabel == null) Modifier else Modifier.clearAndSetSemantics {},
-            textAlign = TextAlign.Center, textDecoration = TextDecoration.Underline)
-    }
-}
 
 /** The touch area extends above the caption so the text can sit directly over the field. */
 @Composable

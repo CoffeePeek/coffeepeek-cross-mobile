@@ -21,8 +21,8 @@ import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
 import com.coffeepeek.feature.auth.impl.resources.Res
-import com.coffeepeek.feature.auth.impl.resources.auth_create_account
-import com.coffeepeek.feature.auth.impl.resources.auth_login_no_account
+import com.coffeepeek.feature.auth.impl.resources.auth_already_have_account
+import com.coffeepeek.feature.auth.impl.resources.auth_login
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
@@ -51,7 +51,7 @@ internal fun AuthFooterRow(
 
 @Composable
 private fun AuthFooterPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
-    AuthFooterRow(stringResource(Res.string.auth_create_account), {}, prompt = stringResource(Res.string.auth_login_no_account))
+    AuthFooterRow(stringResource(Res.string.auth_login), {}, prompt = stringResource(Res.string.auth_already_have_account))
 }
 
 @Preview @Composable private fun AuthFooterLightPreview() = AuthFooterPreview(false)

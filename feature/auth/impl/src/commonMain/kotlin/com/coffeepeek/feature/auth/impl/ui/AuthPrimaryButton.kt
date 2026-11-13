@@ -1,7 +1,6 @@
 package com.coffeepeek.feature.auth.impl.ui
 
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -12,7 +11,6 @@ import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.component.CoffeePeekFilledButton
 import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
 import com.coffeepeek.core.designsystem.theme.CoffeePeekColors
-import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.auth.impl.resources.Res
 import com.coffeepeek.feature.auth.impl.resources.auth_login
@@ -32,7 +30,7 @@ internal fun AuthPrimaryButton(
     CoffeePeekFilledButton(
         onClick = onClick,
         enabled = enabled && !loading,
-        modifier = modifier.fillMaxWidth().heightIn(min = CoffeePeekDimens.glassControlSize),
+        modifier = modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.small,
         colors = ButtonDefaults.buttonColors(containerColor = gold, contentColor = onGold,
             disabledContainerColor = gold.copy(alpha = if (loading) 1f else 0.5f),

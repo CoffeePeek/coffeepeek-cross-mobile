@@ -5,10 +5,13 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material3.ButtonDefaults
 import com.coffeepeek.feature.auth.api.GoogleSignInLauncher
 import com.coffeepeek.feature.auth.impl.resources.Res
-import com.coffeepeek.feature.auth.impl.resources.auth_create_account
 import com.coffeepeek.feature.auth.impl.resources.auth_email_invalid
 import com.coffeepeek.feature.auth.impl.resources.auth_email_label
 import com.coffeepeek.feature.auth.impl.resources.auth_email_placeholder
@@ -18,6 +21,7 @@ import com.coffeepeek.feature.auth.impl.resources.auth_login
 import com.coffeepeek.feature.auth.impl.resources.auth_login_email_not_confirmed
 import com.coffeepeek.feature.auth.impl.resources.auth_login_network
 import com.coffeepeek.feature.auth.impl.resources.auth_login_no_account
+import com.coffeepeek.feature.auth.impl.resources.auth_login_register
 import com.coffeepeek.feature.auth.impl.resources.auth_login_title
 import com.coffeepeek.feature.auth.impl.resources.auth_login_unknown
 import com.coffeepeek.feature.auth.impl.resources.auth_login_wrong_credentials
@@ -34,6 +38,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
@@ -42,12 +47,14 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextAlign
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
+import com.coffeepeek.core.designsystem.component.CoffeePeekTextButton
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.auth.domain.EmailIssue
 import com.coffeepeek.feature.auth.domain.LoginFailure
@@ -123,12 +130,39 @@ internal fun LoginContent(
         LoginFields(state, onEmail, onPassword, submit, onForgotPassword)
         LoginFailureMessage(state.failure)
         AuthPrimaryButton(text = stringResource(Res.string.auth_login), onClick = submit, loading = state.signingIn)
-        AuthFooterRow(text = stringResource(Res.string.auth_create_account), onClick = onCreateAccount,
-            prompt = stringResource(Res.string.auth_login_no_account), enabled = !state.signingIn)
+        LoginRegistrationPrompt(onCreateAccount, enabled = !state.signingIn)
         if (onGoogle != null || onApple != null) {
             AuthOrDivider()
             SocialSignInButtons(onGoogle, onApple, !state.signingIn)
             SocialFailureText(state.socialFailure)
+        }
+    }
+}
+
+@Composable
+private fun LoginRegistrationPrompt(onRegister: () -> Unit, enabled: Boolean) {
+    val colors = MaterialTheme.colorScheme
+    FlowRow(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.Center,
+        itemVerticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = stringResource(Res.string.auth_login_no_account),
+            style = MaterialTheme.typography.bodyMedium,
+            color = colors.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+        )
+        CoffeePeekTextButton(
+            onClick = onRegister,
+            enabled = enabled,
+            colors = ButtonDefaults.textButtonColors(contentColor = colors.onSurface),
+        ) {
+            Text(
+                text = stringResource(Res.string.auth_login_register),
+                style = MaterialTheme.typography.labelLarge,
+                textAlign = TextAlign.Center,
+            )
         }
     }
 }

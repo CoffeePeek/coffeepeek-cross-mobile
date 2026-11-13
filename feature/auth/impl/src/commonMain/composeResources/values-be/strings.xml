@@ -13,7 +13,6 @@
     <string name="auth_login_subtitle">Увайдзіце ў свой акаўнт CoffeePeek.</string>
     <string name="auth_forgot_password">Забылі пароль?</string>
     <string name="auth_login">Увайсці</string>
-    <string name="auth_create_account">Стварыць акаўнт</string>
     <string name="auth_login_wrong_credentials">Няправільны email або пароль</string>
     <string name="auth_login_email_not_confirmed">Пацвердзіце пошту па спасылцы з ліста і ўвайдзіце зноў. Калі ліста няма, праверце папку «Спам».</string>
     <string name="auth_login_network">Не ўдалося падключыцца. Праверце інтэрнэт-злучэнне</string>
