@@ -313,10 +313,31 @@ PR `fix/ui-feedback-fixes`; разделы 5–6 — очереди на буд�
   элементами списка (communityFeedStatus) без изменений.
 - Оба экрана: компиляция + testDebugUnitTest зелёные; emulator-смоук перед пушем.
 
+### Волна 7 (2026-11-14) — добитые отложенные пункты
+
+- **7.2.6 гео-тупик:** `LocationPermissionEffect` получил `onPermanentlyDenied`
+  (Android: системный диалог больше не покажется; iOS: denied = permanent),
+  `DiscoveryHost.openLocationSettings` открывает системную страницу приложения
+  (expect/actual, `CoffeePeekApplication.context` / `openSettingsURLString`).
+  Плашка геолокации получила кнопку «Настройки» — discovery, пикер чекина и карта.
+- **7.6.4 город:** сбой перезагрузки каталога больше не стирает имя
+  сохранённого города (последнее разрешённое имя хранится по id);
+  ретрай на возврате уже был.
+- **§4.1 CoffeeDetail:** статус-развилка loader/error/content через `Crossfade`
+  (инт-ключ + `currentDetails?.let { details -> … }` — тело LazyColumn не тронуто).
+- **§5 хвосты reduceMotion:** корневые переходы Navigator (300ms), шаги
+  ShelfAdd (320ms fade), шаги AddShop (slide 320ms), раскрытие заметки чекина
+  (animateContentSize 200ms), snap-back шторки (160ms). AuthChrome/AddShop:154
+  из аудита не существуют больше — auth-экраны уже с AnimatedVisibility.
+- Проверено: 7.4.4 (retry профиля), 7.5.6 (поиск кофе), 7.6.3 («Проверить
+  обновления» скрыт при canCheckForUpdates=false) — закрыты в прежних волнах.
+- NearbyRequestTest обновлён под 15с-таймаут (перестал соответствовать волне 5).
+
 ### Осталось (осознанно отложено)
 
-- 7.2.1 Nearby-таймаут, 7.2.6 гео-тупик, 7.2.7 стирание маркеров при вводе,
-  7.2.8 error-состояния карты — нужен продуктовый сценарий геолокации.
+- 7.3.5/7.3.6 голосование in-flight — рискованно, отдельный PR.
+- 7.7.4 N+1 на слое репозитория, 7.7.5 двойная загрузка публичной подборки —
+  архитектурно, не в этом PR.
 - 7.4.1 visibility-refresh профиля — частично (стале-ревизия), полный
   stale-while-revalidate требует ревизии модели.
 - 7.4.4 retry редактирования профиля, 7.5.x очередь busy-пачек, offline-экран

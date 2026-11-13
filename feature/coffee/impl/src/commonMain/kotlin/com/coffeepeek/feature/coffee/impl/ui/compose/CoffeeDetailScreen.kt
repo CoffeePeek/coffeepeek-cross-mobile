@@ -27,6 +27,8 @@ import com.coffeepeek.feature.coffee.impl.resources.coffee_taste
 import com.coffeepeek.feature.coffee.impl.resources.coffee_unspecified_feminine
 import com.coffeepeek.feature.coffee.api.CoffeeScreenAnalytics
 import com.coffeepeek.core.designsystem.component.CoffeePeekBackHandler
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -37,6 +39,7 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.*
 import com.coffeepeek.core.designsystem.component.CoffeePeekTextButton as TextButton
 import androidx.compose.runtime.*
+import com.coffeepeek.core.designsystem.theme.reducedMotionDuration
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
@@ -96,17 +99,23 @@ internal fun CoffeeDetailScreenContent(
 ) {
     screen.TrackDetail(loaded = state.details != null)
     val details = state.details
+    val currentDetails = details
     val hazeState = rememberHazeState()
     val labels = remember(state.filterGroups) { state.filterGroups.associate { group -> group.code to group.options.associate { it.code to it.name } } }
     if (state.arePhotosOpen && details != null) galleryContent(details.photos, 0) { onAction(CoffeeDetailAction.ClosePhotos) }
     Box(modifier.fillMaxSize()) {
         Scaffold(modifier = Modifier.hazeSource(hazeState), containerColor = MaterialTheme.colorScheme.background) { padding ->
-            when {
-                state.isLoading -> Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
-                    CoffeePeekLoader(stringResource(Res.string.coffee_loading))
-                }
-                state.loadFailed -> CoffeeLoadError({ onAction(CoffeeDetailAction.Retry) }, Modifier.fillMaxSize().padding(padding))
-                details != null -> LazyColumn(Modifier.fillMaxSize().padding(padding).testTag("coffee-detail-list"), contentPadding = coffeePeekScrollContentPadding(PaddingValues(bottom = CoffeePeekDimens.spacing6)),
+            Crossfade(targetState = when {
+                state.isLoading -> 0
+                state.loadFailed -> 1
+                else -> 2
+            }, animationSpec = tween(reducedMotionDuration(220)), label = "coffee-detail-status") { status ->
+                when (status) {
+                    0 -> Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
+                        CoffeePeekLoader(stringResource(Res.string.coffee_loading))
+                    }
+                    1 -> CoffeeLoadError({ onAction(CoffeeDetailAction.Retry) }, Modifier.fillMaxSize().padding(padding))
+                    else -> currentDetails?.let { details -> LazyColumn(Modifier.fillMaxSize().padding(padding).testTag("coffee-detail-list"), contentPadding = coffeePeekScrollContentPadding(PaddingValues(bottom = CoffeePeekDimens.spacing6)),
                     verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing6)) {
                     item(key = "photo") {
                         val photosDescription = stringResource(Res.string.coffee_open_photos)
@@ -178,8 +187,10 @@ internal fun CoffeeDetailScreenContent(
                             }
                         }
                     }
+                    }
                 }
             }
+        }
         }
         Row(Modifier.align(Alignment.TopCenter).fillMaxWidth().statusBarsPadding().padding(CoffeePeekDimens.spacing3), horizontalArrangement = Arrangement.SpaceBetween) {
             CoffeePeekGlassIconButton({ onAction(CoffeeDetailAction.Back) }, stringResource(Res.string.coffee_back), hazeState = hazeState, nativeIcon = CoffeePeekGlassIcon.Back) {

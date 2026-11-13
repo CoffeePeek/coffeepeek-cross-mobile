@@ -1,5 +1,6 @@
 package com.coffeepeek.admin.ui
 
+import com.coffeepeek.core.designsystem.theme.reducedMotionDuration
 import com.coffeepeek.admin.di.collections.CollectionsComposerDestination
 import com.coffeepeek.admin.di.collections.PublicCollectionDestination
 import com.coffeepeek.admin.di.collections.CollectionsLibraryDestination
@@ -485,6 +486,7 @@ object Navigator {
                     }
                 }
             }
+            val rootNavDuration = reducedMotionDuration(ROOT_NAV_ANIMATION_DURATION_MS)
             NavHost(
                 navController = nav,
                 startDestination = Screen.Main,
@@ -496,7 +498,7 @@ object Navigator {
                     slideIntoContainer(
                         towards = AnimatedContentTransitionScope.SlideDirection.Left,
                         animationSpec = tween(
-                            durationMillis = ROOT_NAV_ANIMATION_DURATION_MS,
+                            durationMillis = rootNavDuration,
                             easing = FastOutSlowInEasing,
                         ),
                     )
@@ -505,7 +507,7 @@ object Navigator {
                     slideOutOfContainer(
                         towards = AnimatedContentTransitionScope.SlideDirection.Left,
                         animationSpec = tween(
-                            durationMillis = ROOT_NAV_ANIMATION_DURATION_MS,
+                            durationMillis = rootNavDuration,
                             easing = FastOutSlowInEasing,
                         ),
                     )
@@ -514,7 +516,7 @@ object Navigator {
                     slideIntoContainer(
                         towards = AnimatedContentTransitionScope.SlideDirection.Right,
                         animationSpec = tween(
-                            durationMillis = ROOT_NAV_ANIMATION_DURATION_MS,
+                            durationMillis = rootNavDuration,
                             easing = FastOutSlowInEasing,
                         ),
                     )
@@ -523,7 +525,7 @@ object Navigator {
                     slideOutOfContainer(
                         towards = AnimatedContentTransitionScope.SlideDirection.Right,
                         animationSpec = tween(
-                            durationMillis = ROOT_NAV_ANIMATION_DURATION_MS,
+                            durationMillis = rootNavDuration,
                             easing = FastOutSlowInEasing,
                         ),
                     )

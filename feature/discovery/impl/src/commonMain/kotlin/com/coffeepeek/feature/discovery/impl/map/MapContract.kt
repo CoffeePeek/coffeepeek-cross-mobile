@@ -35,6 +35,8 @@ internal data class MapState(
     val isLoadingDetails: Boolean = false,
     val isLoading: Boolean = false,
     val viewportFailed: Boolean = false,
+    /** The system will not ask for the location permission again; the notice offers «Настройки». */
+    val locationSettingsNeeded: Boolean = false,
     val query: String = "",
     val suggestions: List<ShopSummary> = emptyList(),
     val isSearchLoading: Boolean = false,
@@ -71,6 +73,9 @@ internal sealed interface MapAction {
     data object LocationGranted : MapAction
     data class MyLocationFound(val point: Coordinates) : MapAction
     data object LocationDenied : MapAction
+    /** The system will not prompt again; the notice's only way out is the app settings screen. */
+    data object LocationPermanentlyDenied : MapAction
+    data object DismissLocationSettings : MapAction
     data object ZoomIn : MapAction
     data object ZoomOut : MapAction
     data class Focus(val focus: MapFocus) : MapAction

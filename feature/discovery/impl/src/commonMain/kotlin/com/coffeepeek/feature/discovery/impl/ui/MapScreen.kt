@@ -94,6 +94,7 @@ internal fun MapScreen(
         state.locationPermissionRequest,
         { viewModel.onAction(MapAction.LocationGranted) },
         { viewModel.onAction(MapAction.LocationDenied) },
+        { viewModel.onAction(MapAction.LocationPermanentlyDenied) },
     )
     val focusManager = LocalFocusManager.current
     val keyboard = LocalSoftwareKeyboardController.current
@@ -173,6 +174,11 @@ internal fun MapContent(
         if (state.viewportFailed && state.markers.isEmpty()) {
             MapViewportError({ onAction(MapAction.RetryViewport) },
                 Modifier.align(Alignment.TopCenter).statusBarsPadding().padding(top = 76.dp).zIndex(2f))
+        }
+        if (state.locationSettingsNeeded) {
+            DiscoveryLocationNotice(false, { onAction(MapAction.DismissLocationSettings) },
+                onOpenSettings = host.openLocationSettings,
+                modifier = Modifier.align(Alignment.TopCenter).statusBarsPadding().padding(top = 76.dp).zIndex(2f))
         }
         MapOverlayControls(state, host, bottomClearance, dismissInput, onAction)
     }

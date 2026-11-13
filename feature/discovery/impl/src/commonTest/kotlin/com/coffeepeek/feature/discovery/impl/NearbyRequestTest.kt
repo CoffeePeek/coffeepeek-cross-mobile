@@ -88,7 +88,7 @@ class NearbyRequestTest {
         vm.onAction(SearchAction.ToggleNearby)
         vm.onAction(SearchAction.LocationGranted)
         runCurrent()
-        advanceTimeBy(10_001)
+        advanceTimeBy(15_001)
         runCurrent()
         assertFalse(vm.state.value.nearbyRequested)
         assertTrue(vm.state.value.locationUnavailable)

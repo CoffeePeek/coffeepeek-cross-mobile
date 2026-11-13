@@ -101,6 +101,7 @@ internal class SearchViewModel(
             SearchAction.ToggleNearby -> toggleNearby()
             SearchAction.LocationGranted -> locationGranted()
             SearchAction.LocationDenied -> locationDenied()
+            SearchAction.LocationPermanentlyDenied -> locationPermanentlyDenied()
             SearchAction.DismissLocationFailure -> cancelNearbyRequest()
             is SearchAction.ToggleFavorite -> toggleFavorite(action.shopId)
             is SearchAction.DismissFavoriteFailure -> updateState {
@@ -188,9 +189,15 @@ internal class SearchViewModel(
         if (requested) updateState { copy(locationUnavailable = true) }
     }
 
+    /** The system will not prompt again; the notice's only way out is the app settings screen. */
+    private fun locationPermanentlyDenied() {
+        locationDenied()
+        updateState { copy(locationSettingsNeeded = true) }
+    }
+
     private fun cancelNearbyRequest() {
         locationTimeout?.cancel()
-        updateState { copy(nearbyRequested = false, locationUnavailable = false) }
+        updateState { copy(nearbyRequested = false, locationUnavailable = false, locationSettingsNeeded = false) }
     }
 
     // ---- what comes from outside ----

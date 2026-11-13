@@ -17,8 +17,11 @@ class DiscoveryHost(
     /** The application's map: it draws [MapCanvasState] and reports through [MapCanvasCallbacks]. */
     /** Keeps native content (the map) mounted but paused and not placed while hidden. */
     val retained: @Composable (visible: Boolean, content: @Composable () -> Unit) -> Unit = { visible, content -> if (visible) content() },
-    /** A positive key requests location after a map interaction; zero never prompts. Refusals are remembered by the host. */
-    val locationPermission: @Composable (requestKey: Int, onGranted: () -> Unit, onDenied: () -> Unit) -> Unit = { _, _, _ -> },
+    /** A positive key requests location after a map interaction; zero never prompts. Refusals are remembered by the host.
+     *  [onPermanentlyDenied] fires when the system will not ask again and the user must visit the app settings. */
+    val locationPermission: @Composable (requestKey: Int, onGranted: () -> Unit, onDenied: () -> Unit, onPermanentlyDenied: () -> Unit) -> Unit = { _, _, _, _ -> },
+    /** Opens the system screen where the location permission can be re-enabled, for the permanent-denial dead end. */
+    val openLocationSettings: () -> Unit = {},
     val reduceMotion: @Composable () -> Boolean = { false },
     val mapCanvas: @Composable (state: MapCanvasState, callbacks: MapCanvasCallbacks, modifier: Modifier) -> Unit = { _, _, _ -> },
     /** Whether the retained tab is actually visible; the application supplies its existing visibility guard. */

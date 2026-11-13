@@ -105,6 +105,8 @@ internal class MapViewModel(
             MapAction.LocationGranted -> onLocationGranted()
             is MapAction.MyLocationFound -> onMyLocationFound(action.point)
             MapAction.LocationDenied -> onLocationDenied()
+            MapAction.LocationPermanentlyDenied -> { onLocationDenied(); updateState { copy(locationSettingsNeeded = true) } }
+            MapAction.DismissLocationSettings -> updateState { copy(locationSettingsNeeded = false) }
             MapAction.ZoomIn -> changeZoom(1f)
             MapAction.ZoomOut -> changeZoom(-1f)
             is MapAction.Focus -> focusOnShop(action.focus.let { MapMarker(it.shopId, it.title, it.coordinates) })
@@ -157,6 +159,7 @@ internal class MapViewModel(
 
     private fun onLocationGranted() {
         permissionRequestPending = false
+        updateState { copy(locationSettingsNeeded = false) }
         location.refresh()
         if (locateAfterPermission) updateState { copy(myLocationRequest = myLocationRequest + 1) }
         else analytics.geolocation(PLACEMENT, userTriggered = true, outcome = GeolocationOutcome.Available)

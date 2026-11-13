@@ -34,6 +34,7 @@ internal class SettingsViewModel(
 ) {
     private var cities: List<SettingsCity> = emptyList()
     private var selectedId: String? = null
+    private var lastName: Pair<String?, String>? = null
     private var loading = false
 
     init {
@@ -100,8 +101,10 @@ internal class SettingsViewModel(
     }
 
     private fun publishCity() {
-        val name = cities.firstOrNull { it.id == selectedId }?.name
-        updateState { copy(cityName = name) }
+        val resolved = cities.firstOrNull { it.id == selectedId }?.name
+        // A failed catalog reload must not wipe the name of the city the user actually picked.
+        if (resolved != null) lastName = selectedId to resolved
+        updateState { copy(cityName = resolved ?: lastName?.takeIf { it.first == selectedId }?.second) }
     }
 }
 

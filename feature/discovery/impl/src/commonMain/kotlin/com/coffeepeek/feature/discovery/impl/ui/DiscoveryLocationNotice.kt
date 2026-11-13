@@ -3,6 +3,7 @@ package com.coffeepeek.feature.discovery.impl.ui
 import com.coffeepeek.feature.discovery.impl.resources.Res
 import com.coffeepeek.feature.discovery.impl.resources.discovery_location_pending
 import com.coffeepeek.feature.discovery.impl.resources.discovery_location_unavailable
+import com.coffeepeek.feature.discovery.impl.resources.discovery_location_open_settings
 import com.coffeepeek.feature.discovery.impl.resources.discovery_message_dismiss
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -26,17 +27,24 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.platform.LocalDensity
 import com.coffeepeek.core.designsystem.component.CoffeePeekContentCard
 import com.coffeepeek.core.designsystem.component.CoffeePeekIconButton
+import com.coffeepeek.core.designsystem.component.CoffeePeekTextButton
 import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 
 @Composable
-internal fun DiscoveryLocationNotice(pending: Boolean, onDismiss: () -> Unit, modifier: Modifier = Modifier) {
+internal fun DiscoveryLocationNotice(pending: Boolean, onDismiss: () -> Unit, modifier: Modifier = Modifier,
+    onOpenSettings: (() -> Unit)? = null) {
     CoffeePeekContentCard(modifier.padding(horizontal = 16.dp).semantics { liveRegion = LiveRegionMode.Polite },
         contentPadding = PaddingValues(start = 16.dp, end = 8.dp, top = 8.dp, bottom = 8.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(stringResource(if (pending) Res.string.discovery_location_pending else Res.string.discovery_location_unavailable),
                 Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface)
+            if (onOpenSettings != null) {
+                CoffeePeekTextButton(onOpenSettings) {
+                    Text(stringResource(Res.string.discovery_location_open_settings), style = MaterialTheme.typography.labelLarge)
+                }
+            }
             CoffeePeekIconButton(onDismiss) {
                 CoffeePeekIcon(CoffeePeekIcons.Close, stringResource(Res.string.discovery_message_dismiss), Modifier.size(20.dp))
             }
@@ -46,6 +54,10 @@ internal fun DiscoveryLocationNotice(pending: Boolean, onDismiss: () -> Unit, mo
 
 @Preview @Composable private fun DiscoveryLocationNoticePreview() = CoffeePeekTheme {
     DiscoveryLocationNotice(false, {})
+}
+
+@Preview @Composable private fun DiscoveryLocationNoticeSettingsPreview() = CoffeePeekTheme {
+    DiscoveryLocationNotice(false, {}, onOpenSettings = {})
 }
 
 @Preview @Composable private fun DiscoveryLocationNoticeLargePreview() = CoffeePeekTheme {

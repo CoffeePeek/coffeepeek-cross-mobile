@@ -1,11 +1,13 @@
 package com.coffeepeek.feature.shop.impl.ui.compose.component
 
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import com.coffeepeek.core.designsystem.theme.reducedMotionDuration
 import com.coffeepeek.core.designsystem.component.CoffeePeekTextButton as TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -31,7 +33,8 @@ internal fun ShopCheckInNote(checkInId: String, note: String, modifier: Modifier
     Column(modifier.fillMaxWidth()) {
         Text(note, style = MaterialTheme.typography.bodyLarge,
             maxLines = if (fullVersion || expanded) Int.MAX_VALUE else 4,
-            overflow = TextOverflow.Ellipsis, modifier = Modifier.animateContentSize(),
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.animateContentSize(tween(reducedMotionDuration(200))),
             onTextLayout = { if (!expanded && !fullVersion) overflows = it.hasVisualOverflow })
         if (!fullVersion && (overflows || expanded)) TextButton(
             onClick = { expanded = !expanded }, contentPadding = PaddingValues(0.dp)) {
