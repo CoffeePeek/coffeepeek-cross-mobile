@@ -96,7 +96,48 @@ internal val RootMainSlideSpec = tween<Float>(
     easing = FastOutSlowInEasing,
 )
 
+
 object Navigator {
+
+/** The root navigation host: slide transitions honor the reduce-motion setting in one place. */
+@Composable
+private fun RootNavHost(
+    nav: NavHostController,
+    modifier: Modifier,
+    builder: androidx.navigation.NavGraphBuilder.() -> Unit,
+) {
+    val rootNavDuration = reducedMotionDuration(ROOT_NAV_ANIMATION_DURATION_MS)
+    NavHost(
+        navController = nav,
+        startDestination = Screen.Main,
+        modifier = modifier,
+        enterTransition = {
+            slideIntoContainer(
+                towards = AnimatedContentTransitionScope.SlideDirection.Left,
+                animationSpec = tween(durationMillis = rootNavDuration, easing = FastOutSlowInEasing),
+            )
+        },
+        exitTransition = {
+            slideOutOfContainer(
+                towards = AnimatedContentTransitionScope.SlideDirection.Left,
+                animationSpec = tween(durationMillis = rootNavDuration, easing = FastOutSlowInEasing),
+            )
+        },
+        popEnterTransition = {
+            slideIntoContainer(
+                towards = AnimatedContentTransitionScope.SlideDirection.Right,
+                animationSpec = tween(durationMillis = rootNavDuration, easing = FastOutSlowInEasing),
+            )
+        },
+        popExitTransition = {
+            slideOutOfContainer(
+                towards = AnimatedContentTransitionScope.SlideDirection.Right,
+                animationSpec = tween(durationMillis = rootNavDuration, easing = FastOutSlowInEasing),
+            )
+        },
+        builder = builder,
+    )
+}
 
     private val navigatorScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
 
@@ -486,50 +527,12 @@ object Navigator {
                     }
                 }
             }
-            val rootNavDuration = reducedMotionDuration(ROOT_NAV_ANIMATION_DURATION_MS)
-            NavHost(
-                navController = nav,
-                startDestination = Screen.Main,
-                modifier = Modifier.fillMaxSize().windowInsetsPadding(
+            RootNavHost(
+                nav,
+                Modifier.fillMaxSize().windowInsetsPadding(
                     if (shopPhotoUnderStatusBar || authUnderSystemBars) WindowInsets(0)
                     else systemInsets.only(WindowInsetsSides.Top),
                 ).clipToBounds(),
-                enterTransition = {
-                    slideIntoContainer(
-                        towards = AnimatedContentTransitionScope.SlideDirection.Left,
-                        animationSpec = tween(
-                            durationMillis = rootNavDuration,
-                            easing = FastOutSlowInEasing,
-                        ),
-                    )
-                },
-                exitTransition = {
-                    slideOutOfContainer(
-                        towards = AnimatedContentTransitionScope.SlideDirection.Left,
-                        animationSpec = tween(
-                            durationMillis = rootNavDuration,
-                            easing = FastOutSlowInEasing,
-                        ),
-                    )
-                },
-                popEnterTransition = {
-                    slideIntoContainer(
-                        towards = AnimatedContentTransitionScope.SlideDirection.Right,
-                        animationSpec = tween(
-                            durationMillis = rootNavDuration,
-                            easing = FastOutSlowInEasing,
-                        ),
-                    )
-                },
-                popExitTransition = {
-                    slideOutOfContainer(
-                        towards = AnimatedContentTransitionScope.SlideDirection.Right,
-                        animationSpec = tween(
-                            durationMillis = rootNavDuration,
-                            easing = FastOutSlowInEasing,
-                        ),
-                    )
-                },
             ) {
                     composable<Screen.Auth> { koinInject<AuthScreenRenderer>().Login() }
                     composable<Screen.Register> { koinInject<AuthScreenRenderer>().Register() }

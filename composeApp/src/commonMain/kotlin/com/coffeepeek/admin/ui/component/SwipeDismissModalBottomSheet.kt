@@ -106,14 +106,7 @@ fun SwipeDismissModalBottomSheet(
                         },
                     ),
                 contentAlignment = Alignment.Center,
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(width = 36.dp, height = 4.dp)
-                        .clip(RoundedCornerShape(999.dp))
-                        .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.45f)),
-                )
-            }
+            ) { SheetDragHandle() }
         },
         containerColor = MaterialTheme.colorScheme.surface,
         // Native iOS sheets return above; the fallback must also protect horizontal
@@ -130,5 +123,15 @@ fun SwipeDismissModalBottomSheet(
                 trackedContent()
             }
         },
+    )
+}
+
+@Composable
+private fun SheetDragHandle() {
+    Box(
+        modifier = Modifier
+            .size(width = 36.dp, height = 4.dp)
+            .clip(RoundedCornerShape(999.dp))
+            .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.45f)),
     )
 }

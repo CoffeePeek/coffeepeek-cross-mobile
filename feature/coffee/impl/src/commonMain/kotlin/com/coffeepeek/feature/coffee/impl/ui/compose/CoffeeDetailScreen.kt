@@ -173,19 +173,7 @@ internal fun CoffeeDetailScreenContent(
                         }
                     }
                     if (state.similarLoading || state.similarFailed || state.similar.isNotEmpty()) item(key = "similar") {
-                        Column(verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3)) {
-                            Box(screen.exposure(Modifier, CoffeeExposure.SimilarCoffees).padding(horizontal = CoffeePeekDimens.spacing4)) { SectionTitle(stringResource(Res.string.coffee_similar)) }
-                            when {
-                                state.similarLoading -> Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { CoffeePeekLoader(stringResource(Res.string.coffee_loading)) }
-                                state.similarFailed -> TextButton({ onAction(CoffeeDetailAction.RetrySimilar) }, Modifier.padding(horizontal = CoffeePeekDimens.spacing4)) {
-                                    Text(stringResource(Res.string.coffee_retry_similar))
-                                }
-                                else -> LazyRow(contentPadding = PaddingValues(horizontal = CoffeePeekDimens.spacing4), horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3)) {
-                                    items(state.similar, key = { it.slug }) { coffee -> CoffeeCard(coffee, labels["taste"].orEmpty(),
-                                        { onAction(CoffeeDetailAction.OpenSimilar(coffee.slug)) }, imageContent, Modifier.width(280.dp)) }
-                                }
-                            }
-                        }
+                        CoffeeDetailSimilarItem(state, screen, labels, imageContent) { onAction(it) }
                     }
                     }
                 }
@@ -198,6 +186,33 @@ internal fun CoffeeDetailScreenContent(
             }
             CoffeePeekGlassIconButton({ onAction(CoffeeDetailAction.Share) }, stringResource(Res.string.coffee_share), enabled = details != null, hazeState = hazeState, nativeIcon = CoffeePeekGlassIcon.Share) {
                 CoffeePeekIcon(CoffeePeekIcons.Share, null)
+            }
+        }
+    }
+}
+
+
+@Composable
+private fun CoffeeDetailSimilarItem(
+    state: CoffeeDetailState, screen: CoffeeScreenAnalytics, labels: Map<String, Map<String, String>>,
+    imageContent: @Composable (String, String, Modifier, ContentScale) -> Unit, onAction: (CoffeeDetailAction) -> Unit,
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3)) {
+        Box(screen.exposure(Modifier, CoffeeExposure.SimilarCoffees).padding(horizontal = CoffeePeekDimens.spacing4)) {
+            SectionTitle(stringResource(Res.string.coffee_similar))
+        }
+        when {
+            state.similarLoading -> Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                CoffeePeekLoader(stringResource(Res.string.coffee_loading))
+            }
+            state.similarFailed -> TextButton({ onAction(CoffeeDetailAction.RetrySimilar) },
+                Modifier.padding(horizontal = CoffeePeekDimens.spacing4)) {
+                Text(stringResource(Res.string.coffee_retry_similar))
+            }
+            else -> LazyRow(contentPadding = PaddingValues(horizontal = CoffeePeekDimens.spacing4),
+                horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3)) {
+                items(state.similar, key = { it.slug }) { coffee -> CoffeeCard(coffee, labels["taste"].orEmpty(),
+                    { onAction(CoffeeDetailAction.OpenSimilar(coffee.slug)) }, imageContent, Modifier.width(280.dp)) }
             }
         }
     }
