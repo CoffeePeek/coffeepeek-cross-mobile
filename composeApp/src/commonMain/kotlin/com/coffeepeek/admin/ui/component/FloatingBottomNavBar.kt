@@ -78,6 +78,7 @@ import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.modifier.LocalCoffeePeekGlassHazeState
 import com.coffeepeek.core.designsystem.modifier.coffeePeekLiquidGlass
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
+import com.coffeepeek.core.designsystem.theme.reducedMotionDuration
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
 import dev.chrisbanes.haze.HazeState
@@ -163,7 +164,7 @@ private fun FloatingNavBarItem(item: FloatingNavItem, selection: State<Float>, m
     val pressed by interactions.collectIsPressedAsState()
     val colors = MaterialTheme.colorScheme
     val highlight by animateColorAsState(if (pressed) colors.onSurface.copy(alpha = 0.12f) else Color.Transparent,
-        tween(160), label = "glass-tab-press")
+        tween(reducedMotionDuration(160)), label = "glass-tab-press")
     Box(modifier.then(item.modifier)) {
         CoffeePeekLargeContentViewer(item.title, item.icon, Modifier.fillMaxSize()) {
             Box(Modifier.fillMaxSize()
