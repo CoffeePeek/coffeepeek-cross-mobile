@@ -1,6 +1,7 @@
 package com.coffeepeek.admin.di.shop
 
 import com.coffeepeek.core.network.ApiClients
+import com.coffeepeek.admin.di.checkinhistory.checkInHistoryModule
 import com.coffeepeek.core.network.SessionCredentials
 import com.coffeepeek.core.network.SessionTokens
 import com.coffeepeek.core.session.SessionReader
@@ -39,7 +40,8 @@ class ShopCheckInModuleTest {
                 single { client }
                 single<SessionStore> { CheckInTestSessions() }
                 single<SessionReader> { get<SessionStore>() }
-            }, shopCheckInModule(AndroidShopCheckInDateFormatter(), draftPath = { draftFolder.path }),
+            }, checkInHistoryModule("https://fixture.invalid"),
+                shopCheckInModule(AndroidShopCheckInDateFormatter(), draftPath = { draftFolder.path }),
                 shopBrowsingModule(fileBaseUrl = "https://fixture.invalid"))
         }
         try {

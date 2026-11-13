@@ -46,6 +46,31 @@ internal class HomeCheckInEditorViewModel(
             return
         }
         if (currentState.isClosed || currentState.isAccessRevoked) return
+        dispatchAction(action)
+    }
+
+    private suspend fun dispatchAction(action: HomeCheckInEditorAction) {
+        when (action) {
+            HomeCheckInEditorAction.Initialize, HomeCheckInEditorAction.RetryDetail,
+            HomeCheckInEditorAction.RetryMethods -> handleLoadAction(action)
+            is HomeCheckInEditorAction.DateChosen, is HomeCheckInEditorAction.MethodChanged,
+            is HomeCheckInEditorAction.DoseChanged, is HomeCheckInEditorAction.DurationChanged,
+            is HomeCheckInEditorAction.TasteRatingTapped, is HomeCheckInEditorAction.NoteChanged,
+            is HomeCheckInEditorAction.DrinkNameChanged, is HomeCheckInEditorAction.VisibilityChanged -> handleFieldAction(action)
+            HomeCheckInEditorAction.OpenBeanPicker, HomeCheckInEditorAction.LoadShelfBags,
+            HomeCheckInEditorAction.ResolveShelfBagCard, HomeCheckInEditorAction.CloseBeanPicker,
+            is HomeCheckInEditorAction.BeanQueryChanged, HomeCheckInEditorAction.SearchBeans -> handleBeanSearchAction(action)
+            is HomeCheckInEditorAction.ShelfBagSelected, is HomeCheckInEditorAction.ShowShelfBagChanged,
+            is HomeCheckInEditorAction.BeanSelected, is HomeCheckInEditorAction.CustomBeanChosen -> handleBeanSelectionAction(action)
+            is HomeCheckInEditorAction.PhotosAdded, is HomeCheckInEditorAction.RemovePhoto,
+            is HomeCheckInEditorAction.MovePhoto -> handlePhotoAction(action)
+            HomeCheckInEditorAction.Save, HomeCheckInEditorAction.FinishSaved,
+            HomeCheckInEditorAction.Close -> handleCompletionAction(action)
+            HomeCheckInEditorAction.RevokeAccess -> Unit
+        }
+    }
+
+    private suspend fun handleLoadAction(action: HomeCheckInEditorAction) {
         when (action) {
             HomeCheckInEditorAction.Initialize -> if (!initialized) {
                 initialized = true
@@ -58,10 +83,13 @@ internal class HomeCheckInEditorViewModel(
             }
             HomeCheckInEditorAction.RetryDetail -> if (initialized) loadDetail()
             HomeCheckInEditorAction.RetryMethods -> loadMethods()
-            is HomeCheckInEditorAction.DateChosen -> edit {
-                // A picker selecting the same civil day must not replace the recorded time with midnight.
-                if (preparedOn == action.civilDate) this else copy(preparedOn = action.civilDate, preparedAt = action.preparedAt)
-            }
+            else -> Unit
+        }
+    }
+
+    private fun handleFieldAction(action: HomeCheckInEditorAction) {
+        when (action) {
+            is HomeCheckInEditorAction.DateChosen -> changeDate(action)
             is HomeCheckInEditorAction.MethodChanged -> edit { copy(brewMethodCode = action.code) }
             is HomeCheckInEditorAction.DoseChanged -> edit { copy(doseGrams = action.value.replace(',', '.').ifBlank { null }) }
             is HomeCheckInEditorAction.DurationChanged -> edit { copy(brewDurationSeconds = action.seconds) }
@@ -69,11 +97,24 @@ internal class HomeCheckInEditorViewModel(
                 copy(tasteScore = action.score.takeUnless { it == tasteScore })
             }
             is HomeCheckInEditorAction.NoteChanged -> edit { copy(text = action.value.take(1000).ifBlank { null }) }
-            is HomeCheckInEditorAction.DrinkNameChanged -> edit {
-                val name = action.value.take(100).ifBlank { null }
-                copy(drinkSlug = "other".takeIf { name != null }, customDrinkName = name)
-            }
+            is HomeCheckInEditorAction.DrinkNameChanged -> changeDrinkName(action.value)
             is HomeCheckInEditorAction.VisibilityChanged -> edit { copy(visibility = action.value) }
+            else -> Unit
+        }
+    }
+
+    private fun changeDate(action: HomeCheckInEditorAction.DateChosen) = edit {
+        // Selecting the same day must keep the original time and offset.
+        if (preparedOn == action.civilDate) this else copy(preparedOn = action.civilDate, preparedAt = action.preparedAt)
+    }
+
+    private fun changeDrinkName(value: String) = edit {
+        val name = value.take(100).ifBlank { null }
+        copy(drinkSlug = "other".takeIf { name != null }, customDrinkName = name)
+    }
+
+    private suspend fun handleBeanSearchAction(action: HomeCheckInEditorAction) {
+        when (action) {
             HomeCheckInEditorAction.OpenBeanPicker -> if (canEdit()) {
                 track(HomeCheckInEditorMetric.BeanPickerOpened)
                 updateState { copy(isBeanPickerOpen = true) }
@@ -81,42 +122,68 @@ internal class HomeCheckInEditorViewModel(
                 searchBeans(debounce = false)
             }
             HomeCheckInEditorAction.LoadShelfBags -> if (canEdit() && currentState.isBeanPickerOpen) loadShelfBags()
-            is HomeCheckInEditorAction.ShelfBagSelected -> if (canEdit() && currentState.isBeanPickerOpen) {
-                currentState.shelfBags.firstOrNull { it.id == action.id }?.let { bag ->
-                    edit { copy(shelfBagId = bag.id, coffeeProductSlug = null, coffeeProductId = null, customBeanName = null,
-                        showShelfBag = true) }
-                    updateState { copy(beanSelectionName = bag.name, shelfBagCardUrl = bag.imageUrl) }
-                    closeBeanPicker()
-                }
-            }
             HomeCheckInEditorAction.ResolveShelfBagCard -> if (canEdit()) resolveShelfBagCard()
+            HomeCheckInEditorAction.CloseBeanPicker -> if (canEdit()) closeBeanPicker()
+            is HomeCheckInEditorAction.BeanQueryChanged -> changeBeanQuery(action.value)
+            HomeCheckInEditorAction.SearchBeans -> retryBeanSearch()
+            else -> Unit
+        }
+    }
+
+    private suspend fun changeBeanQuery(value: String) {
+        if (!canEdit() || !currentState.isBeanPickerOpen) return
+        track(HomeCheckInEditorMetric.BeanPickerOpened)
+        track(HomeCheckInEditorMetric.FieldChanged(HomePreparationField.Bean))
+        updateState { copy(beanQuery = value.take(100)) }
+        searchBeans(debounce = true)
+    }
+
+    private suspend fun retryBeanSearch() {
+        if (!canEdit() || !currentState.isBeanPickerOpen) return
+        track(HomeCheckInEditorMetric.Retry(HomeCheckInEditorStage.Bean))
+        searchBeans(debounce = false)
+    }
+
+    private fun handleBeanSelectionAction(action: HomeCheckInEditorAction) {
+        when (action) {
+            is HomeCheckInEditorAction.ShelfBagSelected -> selectShelfBag(action.id)
             is HomeCheckInEditorAction.ShowShelfBagChanged -> if (currentState.shelfBagCardUrl != null) edit {
                 copy(showShelfBag = action.show)
             }
-            HomeCheckInEditorAction.CloseBeanPicker -> if (canEdit()) closeBeanPicker()
-            is HomeCheckInEditorAction.BeanQueryChanged -> if (canEdit() && currentState.isBeanPickerOpen) {
-                track(HomeCheckInEditorMetric.BeanPickerOpened)
-                track(HomeCheckInEditorMetric.FieldChanged(HomePreparationField.Bean))
-                updateState { copy(beanQuery = action.value.take(100)) }
-                searchBeans(debounce = true)
-            }
-            HomeCheckInEditorAction.SearchBeans -> if (canEdit() && currentState.isBeanPickerOpen) {
-                track(HomeCheckInEditorMetric.Retry(HomeCheckInEditorStage.Bean))
-                searchBeans(debounce = false)
-            }
-            is HomeCheckInEditorAction.BeanSelected -> if (canEdit() && currentState.isBeanPickerOpen) {
-                currentState.beans.firstOrNull { it.slug == action.slug }?.let { bean ->
-                    edit { copy(coffeeProductSlug = bean.slug, coffeeProductId = null, customBeanName = null, shelfBagId = null) }
-                    updateState { copy(beanSelectionName = bean.name) }
-                    closeBeanPicker()
-                }
-            }
-            is HomeCheckInEditorAction.CustomBeanChosen -> if (canEdit() && currentState.isBeanPickerOpen) {
-                if (action.name.isBlank()) return
-                edit { copy(coffeeProductSlug = null, coffeeProductId = null, shelfBagId = null,
-                    customBeanName = action.name.trim().take(250).ifBlank { null }) }
-                closeBeanPicker()
-            }
+            is HomeCheckInEditorAction.BeanSelected -> selectBean(action.slug)
+            is HomeCheckInEditorAction.CustomBeanChosen -> selectCustomBean(action.name)
+            else -> Unit
+        }
+    }
+
+    private fun selectShelfBag(id: String) {
+        if (!canEdit() || !currentState.isBeanPickerOpen) return
+        currentState.shelfBags.firstOrNull { it.id == id }?.let { bag ->
+            edit { copy(shelfBagId = bag.id, coffeeProductSlug = null, coffeeProductId = null,
+                customBeanName = null, showShelfBag = true) }
+            updateState { copy(beanSelectionName = bag.name, shelfBagCardUrl = bag.imageUrl) }
+            closeBeanPicker()
+        }
+    }
+
+    private fun selectBean(slug: String) {
+        if (!canEdit() || !currentState.isBeanPickerOpen) return
+        currentState.beans.firstOrNull { it.slug == slug }?.let { bean ->
+            edit { copy(coffeeProductSlug = bean.slug, coffeeProductId = null, customBeanName = null, shelfBagId = null) }
+            updateState { copy(beanSelectionName = bean.name) }
+            closeBeanPicker()
+        }
+    }
+
+    private fun selectCustomBean(name: String) {
+        if (!canEdit() || !currentState.isBeanPickerOpen || name.isBlank()) return
+        edit { copy(coffeeProductSlug = null, coffeeProductId = null, shelfBagId = null,
+            customBeanName = name.trim().take(250).ifBlank { null }) }
+        closeBeanPicker()
+    }
+
+    private fun handlePhotoAction(action: HomeCheckInEditorAction) {
+        when (action) {
             is HomeCheckInEditorAction.PhotosAdded -> if (preparationId == null) edit {
                 val remaining = (5 - photos.size).coerceAtLeast(0)
                 copy(photos = photos + action.photos.take(remaining).map { it.copy(bytes = it.bytes.copyOf()) })
@@ -125,14 +192,24 @@ internal class HomeCheckInEditorViewModel(
                 copy(photos = photos.filterIndexed { index, _ -> index != action.index })
             }
             is HomeCheckInEditorAction.MovePhoto -> movePhoto(action.from, action.to)
+            else -> Unit
+        }
+    }
+
+    private suspend fun handleCompletionAction(action: HomeCheckInEditorAction) {
+        when (action) {
             HomeCheckInEditorAction.Save -> save()
+            HomeCheckInEditorAction.FinishSaved -> finishSaved()
             HomeCheckInEditorAction.Close -> if (saveJob == null) {
-                track(HomeCheckInEditorMetric.Cancelled)
-                invalidateWork()
-                updateState { HomeCheckInEditorState(isClosed = true) }
-                emit(HomeCheckInEditorEvent.Close)
+                if (currentState.savedEntry != null) finishSaved()
+                else {
+                    track(HomeCheckInEditorMetric.Cancelled)
+                    invalidateWork()
+                    updateState { HomeCheckInEditorState(isClosed = true) }
+                    emit(HomeCheckInEditorEvent.Close)
+                }
             }
-            HomeCheckInEditorAction.RevokeAccess -> Unit
+            else -> Unit
         }
     }
 
@@ -140,7 +217,15 @@ internal class HomeCheckInEditorViewModel(
         envelope.sessionGeneration == sessionGeneration && envelope.revision == revision
 
     private fun canEdit() = currentState.isReady && !currentState.isLoading && !currentState.isSaving &&
-        !currentState.isClosed && !currentState.isAccessRevoked
+        currentState.savedEntry == null && !currentState.isClosed && !currentState.isAccessRevoked
+
+    private suspend fun finishSaved() {
+        val snapshot = currentState
+        val saved = snapshot.savedEntry ?: return
+        revision++
+        updateState { HomeCheckInEditorState(isClosed = true) }
+        emit(HomeCheckInEditorEvent.Saved(saved.id, snapshot.savedVisibilityUnconfirmed))
+    }
 
 
     private fun movePhoto(from: Int, to: Int) {
@@ -272,7 +357,7 @@ internal class HomeCheckInEditorViewModel(
         if (!canEdit() || snapshot.isBeanPickerOpen) return
         track(HomeCheckInEditorMetric.Submitted)
         val errors = homePreparationFieldErrors(snapshot.draft, preparationId != null, now())
-        updateState { copy(fieldErrors = errors, saveIssue = null, failedOperation = null) }
+        recordSaveValidation(errors)
         if (errors.isNotEmpty()) {
             track(HomeCheckInEditorMetric.Validation(errors.keys, server = false))
             return
@@ -293,9 +378,8 @@ internal class HomeCheckInEditorViewModel(
             // An accepted write must not become a second create while waiting for navigation.
             revision++
             cancelAuxiliaryWork()
-            updateState { HomeCheckInEditorState(isClosed = true) }
+            updateState { copy(savedEntry = entry, savedVisibilityUnconfirmed = unconfirmed, isSaving = false) }
             track(HomeCheckInEditorMetric.Saved(entry.visibility, entry.photos.isNotEmpty()))
-            emit(HomeCheckInEditorEvent.Saved(entry.id, unconfirmed))
         } catch (cancelled: CancellationException) { throw cancelled }
         catch (error: Exception) {
             if (!canAccess()) { revokeAccess(); return }
@@ -313,6 +397,11 @@ internal class HomeCheckInEditorViewModel(
         } finally {
             if (saveJob === job) { saveJob = null; updateState { copy(isSaving = false) } }
         }
+    }
+
+    private fun recordSaveValidation(errors: Map<HomePreparationField, HomePreparationIssue>) {
+        updateState { copy(fieldErrors = errors, saveIssue = null, failedOperation = null,
+            saveAttempt = saveAttempt + if (errors.isNotEmpty()) 1 else 0) }
     }
 
     private suspend fun emit(event: HomeCheckInEditorEvent) {
@@ -340,7 +429,8 @@ internal class HomeCheckInEditorViewModel(
     }
 
     override fun onCleared() {
-        if (!currentState.isClosed && !currentState.isAccessRevoked) track(HomeCheckInEditorMetric.Cancelled)
+        if (!currentState.isClosed && !currentState.isAccessRevoked && currentState.savedEntry == null)
+            track(HomeCheckInEditorMetric.Cancelled)
         revokeAccess()
         super.onCleared()
     }

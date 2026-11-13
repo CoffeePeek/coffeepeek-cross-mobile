@@ -18,6 +18,7 @@ import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as st
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.component.CoffeePeekPhotoAttachments
+import com.coffeepeek.core.designsystem.component.CoffeePeekTextButton as TextButton
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.homecheckin.domain.model.HomePreparationUpload
 import com.coffeepeek.feature.homecheckin.impl.resources.*
@@ -30,12 +31,17 @@ internal fun HomeCheckInEditorPhotos(
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Text(stringResource(Res.string.home_check_in_photos), style = MaterialTheme.typography.labelLarge)
-        Text(stringResource(Res.string.home_check_in_photos_hint), style = MaterialTheme.typography.bodySmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant)
-        Text(stringResource(Res.string.home_check_in_photos_count, photos.size), style = MaterialTheme.typography.labelMedium)
-        CoffeePeekPhotoAttachments(photos, enabled, pickerLoading, 5, onMove, onRemove, { onAdd(5 - photos.size) },
-            photo = { upload, modifier, scale -> photo(upload, modifier, scale == ContentScale.Fit) },
-            modifier = Modifier.padding(bottom = 8.dp))
+        if (photos.isEmpty()) {
+            TextButton(onClick = { onAdd(5) }, enabled = enabled && !pickerLoading) {
+                Text(stringResource(Res.string.home_check_in_add_photos))
+            }
+        } else {
+            Text(stringResource(Res.string.home_check_in_photos_count, photos.size), style = MaterialTheme.typography.labelMedium)
+            CoffeePeekPhotoAttachments(photos, enabled, pickerLoading, 5, onMove, onRemove,
+                { onAdd(5 - photos.size) },
+                photo = { upload, modifier, scale -> photo(upload, modifier, scale == ContentScale.Fit) },
+                modifier = Modifier.padding(bottom = 8.dp))
+        }
     }
 }
 
@@ -47,3 +53,10 @@ private fun HomeCheckInEditorPhotosPreview(dark: Boolean) = CoffeePeekTheme(dark
 
 @Preview @Composable private fun HomeCheckInEditorPhotosPreviewLight() = HomeCheckInEditorPhotosPreview(false)
 @Preview @Composable private fun HomeCheckInEditorPhotosPreviewDark() = HomeCheckInEditorPhotosPreview(true)
+
+@Composable private fun HomeCheckInEditorEmptyPhotosPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
+    Surface { HomeCheckInEditorPhotos(emptyList(), true, false, { _, modifier, _ -> Box(modifier) }, {}, {}, { _, _ -> }) }
+}
+
+@Preview @Composable private fun HomeCheckInEditorEmptyPhotosLightPreview() = HomeCheckInEditorEmptyPhotosPreview(false)
+@Preview @Composable private fun HomeCheckInEditorEmptyPhotosDarkPreview() = HomeCheckInEditorEmptyPhotosPreview(true)

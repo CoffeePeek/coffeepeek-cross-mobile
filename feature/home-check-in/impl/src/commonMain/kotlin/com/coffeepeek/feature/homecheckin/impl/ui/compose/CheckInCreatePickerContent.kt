@@ -1,15 +1,19 @@
 package com.coffeepeek.feature.homecheckin.impl.ui.compose
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
-import com.coffeepeek.core.designsystem.component.CoffeePeekButton
+import androidx.compose.ui.unit.dp
+import com.coffeepeek.core.designsystem.component.CoffeePeekCard
+import com.coffeepeek.core.designsystem.component.CoffeePeekIconBadge
+import com.coffeepeek.core.designsystem.component.CoffeePeekIconBadgePalette
 import com.coffeepeek.core.designsystem.component.CoffeePeekScrollableColumn
-import com.coffeepeek.core.designsystem.component.CoffeePeekSelectionCard
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
@@ -17,20 +21,17 @@ import com.coffeepeek.feature.homecheckin.impl.resources.*
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
-internal enum class CheckInCreateChoice { Shop, Home, ShelfBag }
-
-/** Type choice only; the app owns authentication, the modal and navigation. */
+/** Each choice starts its flow immediately; the app owns authentication and navigation. */
 @Composable
 internal fun CheckInCreatePickerContent(
-    choice: CheckInCreateChoice, onSelect: (CheckInCreateChoice) -> Unit, onContinue: () -> Unit,
-    modifier: Modifier = Modifier, shelfAvailable: Boolean = false,
+    onShop: () -> Unit, onHome: () -> Unit, onShelfBag: (() -> Unit)?, modifier: Modifier = Modifier,
 ) {
     CoffeePeekScrollableColumn(
         modifier.fillMaxWidth().padding(horizontal = CoffeePeekDimens.spacing4).padding(bottom = CoffeePeekDimens.spacing6),
         verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3),
     ) {
         Column(verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing1)) {
-            if (shelfAvailable) Text(stringResource(Res.string.home_check_in_create_what),
+            if (onShelfBag != null) Text(stringResource(Res.string.home_check_in_create_what),
                 style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
             else {
                 Text(stringResource(Res.string.home_check_in_create_title),
@@ -39,33 +40,46 @@ internal fun CheckInCreatePickerContent(
                     style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
-        Column(Modifier.selectableGroup(), verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2)) {
-            CoffeePeekSelectionCard(stringResource(Res.string.home_check_in_create_shop),
-                stringResource(Res.string.home_check_in_create_shop_hint), CoffeePeekIcons.Location,
-                choice == CheckInCreateChoice.Shop, { onSelect(CheckInCreateChoice.Shop) })
-            CoffeePeekSelectionCard(stringResource(Res.string.home_check_in_create_home),
-                stringResource(Res.string.home_check_in_create_home_hint), CoffeePeekIcons.Coffee,
-                choice == CheckInCreateChoice.Home, { onSelect(CheckInCreateChoice.Home) })
-            if (shelfAvailable) CoffeePeekSelectionCard(stringResource(Res.string.home_check_in_create_shelf_title),
-                stringResource(Res.string.home_check_in_create_shelf_body), CoffeePeekIcons.Camera,
-                choice == CheckInCreateChoice.ShelfBag, { onSelect(CheckInCreateChoice.ShelfBag) })
+        Column(verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2)) {
+            CheckInCreateOption(stringResource(Res.string.home_check_in_create_shop),
+                stringResource(Res.string.home_check_in_create_shop_hint), CoffeePeekIcons.Location, onShop)
+            CheckInCreateOption(stringResource(Res.string.home_check_in_create_home),
+                stringResource(Res.string.home_check_in_create_home_hint), CoffeePeekIcons.Coffee, onHome)
+            if (onShelfBag != null) CheckInCreateOption(stringResource(Res.string.home_check_in_create_shelf_title),
+                stringResource(Res.string.home_check_in_create_shelf_body), CoffeePeekIcons.Camera, onShelfBag)
         }
-        CoffeePeekButton(stringResource(Res.string.home_check_in_create_continue), onContinue)
+    }
+}
+
+@Composable
+private fun CheckInCreateOption(title: String, description: String, icon: ImageVector, onClick: () -> Unit) {
+    CoffeePeekCard(onClick = onClick, elevation = 0.dp,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
+        contentPadding = PaddingValues(CoffeePeekDimens.spacing3)) {
+        Row(verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3)) {
+            CoffeePeekIconBadge(icon, CoffeePeekIconBadgePalette.Gold)
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing1)) {
+                Text(title, style = MaterialTheme.typography.labelLarge)
+                Text(description, style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        }
     }
 }
 
 @Preview @Composable private fun CheckInCreatePickerLightPreview() = CoffeePeekTheme(darkTheme = false) {
-    CheckInCreatePickerContent(CheckInCreateChoice.Shop, {}, {})
+    CheckInCreatePickerContent({}, {}, null)
 }
 
 @Preview @Composable private fun CheckInCreatePickerDarkPreview() = CoffeePeekTheme(darkTheme = true) {
-    CheckInCreatePickerContent(CheckInCreateChoice.Home, {}, {})
+    CheckInCreatePickerContent({}, {}, null)
 }
 
 @Preview @Composable private fun CheckInCreatePickerShelfLightPreview() = CoffeePeekTheme(darkTheme = false) {
-    CheckInCreatePickerContent(CheckInCreateChoice.ShelfBag, {}, {}, shelfAvailable = true)
+    CheckInCreatePickerContent({}, {}, {})
 }
 
 @Preview @Composable private fun CheckInCreatePickerShelfDarkPreview() = CoffeePeekTheme(darkTheme = true) {
-    CheckInCreatePickerContent(CheckInCreateChoice.ShelfBag, {}, {}, shelfAvailable = true)
+    CheckInCreatePickerContent({}, {}, {})
 }

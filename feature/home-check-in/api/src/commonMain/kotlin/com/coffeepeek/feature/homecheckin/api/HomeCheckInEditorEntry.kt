@@ -4,7 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 
 /**
- * Form body for an app-owned destination/sheet, without root navigation or another form sheet.
+ * Form body for an app-owned full-screen editor destination, without root navigation or another modal.
  * Null ID creates; any non-null ID edits that exact record (including an invalid/blank ID).
  * Caller provides a destination-owned ViewModelStoreOwner, retained across Activity recreation
  * and cleared on final close/replacement. Reopening must use a fresh store.

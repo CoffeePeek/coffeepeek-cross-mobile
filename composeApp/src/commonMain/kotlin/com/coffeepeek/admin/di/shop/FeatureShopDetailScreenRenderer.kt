@@ -65,11 +65,11 @@ internal class FeatureShopDetailScreenRenderer(
     private val blockActions: com.coffeepeek.feature.authorblocking.api.AuthorBlockActions,
 ) : ShopDetailScreenRenderer {
     @Composable
-    override fun Content(shopId: String, forCheckIn: Boolean, openCheckIn: Boolean) {
+    override fun Content(shopId: String, openCheckIn: Boolean) {
         ShopBrowsingHost("shop-detail:$shopId", sessions, visibility) { session ->
             val entry = remember(session) { createEntry(session) }
             val state = rememberShopDetailHostState()
-            DetailContent(entry, state, session, shopId, forCheckIn, openCheckIn)
+            DetailContent(entry, state, session, shopId, openCheckIn)
             Overlays(state, session)
         }
     }
@@ -89,7 +89,7 @@ internal class FeatureShopDetailScreenRenderer(
     @Composable
     private fun DetailContent(
         entry: com.coffeepeek.feature.shop.api.ShopDetailEntry, state: ShopDetailHostState,
-        session: ShopBrowsingHostSession, shopId: String, forCheckIn: Boolean, openCheckIn: Boolean,
+        session: ShopBrowsingHostSession, shopId: String, openCheckIn: Boolean,
     ) {
         val location = rememberPermittedUserLocation()
         val formatDate = rememberCheckInDateLabel()
@@ -97,7 +97,7 @@ internal class FeatureShopDetailScreenRenderer(
         val snackbar = remember { SnackbarHostState() }
         val copied = stringResource(Res.string.shop_phone_copied)
         Box(Modifier.fillMaxSize()) {
-            entry.Content(shopId = shopId, sessionGeneration = session.generation, forCheckIn = forCheckIn,
+            entry.Content(shopId = shopId, sessionGeneration = session.generation,
                 formatCheckInDate = formatDate, formatMenuDate = ::formatShopMenuLocalDate,
                 formatDistance = { lat, lon -> formatDistance(distanceToShopMeters(location, lat, lon)) },
                 refreshGeneration = state.refreshGeneration, openCheckIn = openCheckIn,
@@ -116,7 +116,9 @@ internal class FeatureShopDetailScreenRenderer(
         state.route?.let { ShopRoutePicker(it.latitude, it.longitude, onDismiss = { state.route = null }) }
         state.form?.let { shop ->
             checkInForm.Content(shopId = shop.shopId, shopSlug = shop.shopSlug, shopName = shop.shopName,
+                shopAddress = shop.shopAddress,
                 onDismiss = { state.form = null },
+                onChangeShop = { state.form = null; Navigator.popThenNavigate(Navigator.Screen.CreateCheckIn) },
                 onSubmitted = { if (session.lease.isCurrent()) state.refreshGeneration++ },
                 onGoToFeed = {
                     state.form = null
@@ -135,7 +137,6 @@ internal class FeatureShopDetailScreenRenderer(
     ) {
         when (effect) {
             ShopDetailEffect.Back -> Navigator.popBack()
-            ShopDetailEffect.ChooseAnotherShop -> Navigator.popThenNavigate(Navigator.Screen.CreateCheckIn)
             ShopDetailEffect.SignIn -> Navigator.navigate(Navigator.Screen.Auth)
             ShopDetailEffect.Register -> Navigator.navigate(Navigator.Screen.Register)
             is ShopDetailEffect.OpenMenuGallery -> Navigator.navigate(Navigator.Screen.ShopMenuGallery(effect.shopId))
@@ -207,6 +208,8 @@ internal fun formatShopMenuLocalDate(raw: String): String {
 }
 
 private val shopFormContextSaver = listSaver<ShopDetailContext?, String>(
-    save = { shop -> shop?.let { listOf(it.shopId, it.shopSlug, it.shopName) }.orEmpty() },
-    restore = { values -> values.takeIf { it.size == 3 }?.let { ShopDetailContext(it[0], it[1], it[2]) } },
+    save = { shop -> shop?.let { listOf(it.shopId, it.shopSlug, it.shopName, it.shopAddress.orEmpty()) }.orEmpty() },
+    restore = { values -> values.takeIf { it.size == 4 }?.let {
+        ShopDetailContext(it[0], it[1], it[2], it[3].ifBlank { null })
+    } },
 )

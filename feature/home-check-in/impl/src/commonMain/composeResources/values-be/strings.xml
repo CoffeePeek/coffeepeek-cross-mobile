@@ -1,9 +1,6 @@
 <resources>
     <string name="home_check_in_home">Кава дома</string>
     <string name="home_check_in_title_fallback">Хатняе прыгатаванне</string>
-    <string name="home_check_in_private">Толькі мне</string>
-    <string name="home_check_in_public">Бачны ўсім</string>
-    <string name="home_check_in_pending">На мадэрацыі</string>
     <string name="home_check_in_rejected">Не апублікаваны</string>
     <string name="home_check_in_not_submitted">Чакае публікацыі</string>
     <string name="home_check_in_unknown_moderation">Публічны</string>
@@ -49,8 +46,17 @@
     <string name="home_check_in_save_forbidden">Няма доступу да гэтага запісу. Праверце, у які ўліковы запіс вы ўвайшлі.</string>
     <string name="home_check_in_photo_upload_failed">Не ўдалося загрузіць фота. Паспрабуйце яшчэ раз.</string>
     <string name="home_check_in_optional">Неабавязкова</string>
-    <string name="home_check_in_public_title">Зрабіць публічным</string>
+    <string name="home_check_in_public_title">Хто ўбачыць</string>
+    <string name="home_check_in_audience_everyone">Усе</string>
+    <string name="home_check_in_audience_only_me">Толькі я</string>
     <string name="home_check_in_public_hint">Публічны чэкін з’явіцца ў стужцы пасля мадэрацыі. Схаваны бачны толькі вам.</string>
+    <string name="home_check_in_recipe_expand">Дадаць рэцэпт</string>
+    <string name="home_check_in_recipe_collapse">Схаваць рэцэпт</string>
+    <string name="home_check_in_saved_private">Захавана толькі для вас</string>
+    <string name="home_check_in_saved_pending">Захавана, чакае публікацыі</string>
+    <string name="home_check_in_saved_published">Апублікавана</string>
+    <string name="home_check_in_saved_unknown">Чэкін захаваны. Статус публікацыі ўдакладняецца</string>
+    <string name="home_check_in_saved_visibility_changed">Налада аўдыторыі не пацвердзілася. Праверце запіс.</string>
     <string name="home_check_in_taste_question">Як атрымалася кава?</string>
     <string name="home_check_in_choose_rating">Як атрымалася кава?: выбраць %1$d з 5</string>
     <string name="home_check_in_prepared_date">Дата прыгатавання</string>
@@ -122,7 +128,6 @@
     <string name="home_check_in_create_what">Што дадамо?</string>
     <string name="home_check_in_create_shelf_title">Пачак на паліцу</string>
     <string name="home_check_in_create_shelf_body">Сфатаграфуйце пачак кавы</string>
-    <string name="home_check_in_create_continue">Працягнуць</string>
     <string name="home_check_in_onboarding_cover_title">Адкрывай сваю каву</string>
     <string name="home_check_in_onboarding_poster_cover">Знаходзь новыя месцы, каштуй каву і запісвай, што спадабалася.</string>
     <string name="home_check_in_onboarding_discovery_title">350+ правераных кавярняў</string>

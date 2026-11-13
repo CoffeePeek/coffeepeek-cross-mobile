@@ -57,6 +57,8 @@ import com.coffeepeek.admin.ui.component.FloatingNavBottomMargin
 import com.coffeepeek.admin.ui.component.FloatingNavItem
 import com.coffeepeek.admin.ui.component.RetainedContent
 import com.coffeepeek.admin.ui.component.ProvideFloatingNavClearance
+import com.coffeepeek.admin.ui.screen.checkins.CheckInCreateHost
+import com.coffeepeek.core.session.SessionReader
 import org.koin.compose.koinInject
 import coffeepeek.composeapp.generated.resources.Res
 import coffeepeek.composeapp.generated.resources.business_tab_title
@@ -64,6 +66,9 @@ import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as st
 import com.coffeepeek.admin.ui.screen.profile.OwnProfileScreenRenderer
 import com.coffeepeek.admin.ui.screen.profile.SettingsScreenRenderer
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
+import com.coffeepeek.admin.analytics.Analytics
+import com.coffeepeek.admin.analytics.analyticsExposure
+import coffeepeek.composeapp.generated.resources.check_in_create_actions
 
 data class BottomNavItem(
     val title: String,
@@ -77,11 +82,6 @@ expect fun MainScreen(isLoggedIn: Boolean, onMapExpandedChange: (Boolean) -> Uni
 
 @Composable
 internal fun ComposeMainScreen(isLoggedIn: Boolean, onMapExpandedChange: (Boolean) -> Unit) {
-    val localizedMainScreenSearch = stringResource(Res.string.main_screen_search)
-    val localizedVisitedPlacesScreenSandboxFeedTitle = stringResource(Res.string.visited_places_screen_sandbox_feed_title)
-    val localizedMainScreenProfileTitle = stringResource(Res.string.main_screen_profile_title)
-    val localizedMainScreenSettingsTabTitle = stringResource(Res.string.main_screen_settings_tab_title)
-
     val reduceMotion = com.coffeepeek.admin.ui.component.platformReduceMotion()
     val bottomNavController = key("profile-shelf-tabs") { rememberNavController() }
     val tabReselections = remember { MainTabReselections() }
@@ -94,33 +94,7 @@ internal fun ComposeMainScreen(isLoggedIn: Boolean, onMapExpandedChange: (Boolea
 
     val businessMode = koinInject<com.coffeepeek.feature.ownership.api.BusinessOwnershipEntry>().Session().businessMode
     val availableTabs = mainTabScreens(isLoggedIn, businessMode)
-    val items = listOf(
-        BottomNavItem(title = stringResource(Res.string.business_tab_title), icon = CoffeePeekIcons.CoffeeBean, graph = Navigator.Screen.BusinessGraph, startScreen = Navigator.Screen.BusinessTab),
-        BottomNavItem(
-            title = localizedMainScreenSearch,
-            icon = CoffeePeekIcons.Search,
-            graph = Navigator.Screen.FeedGraph,
-            startScreen = Navigator.Screen.FeedTab,
-        ),
-        BottomNavItem(
-            title = localizedVisitedPlacesScreenSandboxFeedTitle,
-            icon = CoffeePeekIcons.Community,
-            graph = Navigator.Screen.CommunityGraph,
-            startScreen = Navigator.Screen.CommunityTab,
-        ),
-        BottomNavItem(
-            title = localizedMainScreenProfileTitle,
-            icon = CoffeePeekIcons.Profile,
-            graph = Navigator.Screen.ProfileGraph,
-            startScreen = Navigator.Screen.ProfileTab,
-        ),
-        BottomNavItem(
-            title = localizedMainScreenSettingsTabTitle,
-            icon = CoffeePeekIcons.Settings,
-            graph = Navigator.Screen.SettingsGraph,
-            startScreen = Navigator.Screen.SettingsTab,
-        ),
-    ).filter { it.startScreen in availableTabs }
+    val items = mainBottomNavItems(availableTabs)
     val availableRoutes = items.flatMap { listOf(it.graph, it.startScreen) }
 
     var previousBusinessMode by remember { mutableStateOf(businessMode) }
@@ -199,8 +173,16 @@ internal fun ComposeMainScreen(isLoggedIn: Boolean, onMapExpandedChange: (Boolea
     val tabBarHaze = rememberHazeState()
     var feedEntry by remember { mutableStateOf<NavBackStackEntry?>(null) }
     val feedStateHolder = rememberSaveableStateHolder()
+    val sessions: SessionReader = koinInject()
+    val session by remember(sessions) { sessions.observeSession() }.collectAsState(sessions.peekSession())
+    var refreshCommunity by remember { mutableStateOf<(() -> Unit)?>(null) }
 
-    ProvideFloatingNavClearance(clearance = floatingClearance) {
+    CheckInCreateHost(
+        canCreate = { sessions.isActiveSession(sessions.peekSession()) },
+        resetKey = session?.userId ?: session?.accessToken,
+        onShop = { Navigator.navigate(Navigator.Screen.CreateCheckIn) },
+        onHomeSaved = { refreshCommunity?.invoke() },
+    ) { onCreate -> ProvideFloatingNavClearance(clearance = floatingClearance) {
         Box(modifier = Modifier.fillMaxSize()) {
             // Capture the visible tab once; retained search content must not keep a separate glass layer.
             CoffeePeekMenuBackdrop(Modifier.fillMaxSize(), state = tabBarHaze) {
@@ -241,8 +223,8 @@ internal fun ComposeMainScreen(isLoggedIn: Boolean, onMapExpandedChange: (Boolea
                     navigation<Navigator.Screen.CommunityGraph>(startDestination = Navigator.Screen.CommunityTab) {
                         composable<Navigator.Screen.CommunityTab> {
                             koinInject<com.coffeepeek.admin.ui.screen.community.CommunityScreenRenderer>().Content(
-                                onCreateCheckIn = { Navigator.navigate(Navigator.Screen.CreateCheckIn) },
                                 notificationsAction = { koinInject<com.coffeepeek.admin.ui.screen.notifications.NotificationsRenderer>().Bell() },
+                                onRefreshChange = { refreshCommunity = it },
                             )
                         }
                     }
@@ -268,6 +250,7 @@ internal fun ComposeMainScreen(isLoggedIn: Boolean, onMapExpandedChange: (Boolea
                 exit = fadeOut(tween(if (reduceMotion) 0 else 250)) + slideOutVertically(tween(if (reduceMotion) 0 else 360)) { it },
                 modifier = Modifier.align(Alignment.BottomCenter),
             ) {
+                val actionItem = createNavItem(onCreate)
                 PlatformFloatingBottomNavBar(
                     items = items.map { item ->
                         val isSelected = currentDestination?.hierarchy?.any { destination ->
@@ -289,13 +272,38 @@ internal fun ComposeMainScreen(isLoggedIn: Boolean, onMapExpandedChange: (Boolea
                                 }
                             },
                         )
-                    },
+                    }.toMutableList().apply { add((size + 1) / 2, actionItem) },
                     // Android Compose glass uses a translucent tint over the native map.
                     hazeState = tabBarHaze.takeUnless { isExpandedMapVisible },
                 )
             }
         }
     }
+    }
+}
+
+@Composable
+private fun mainBottomNavItems(availableTabs: List<Navigator.Screen>): List<BottomNavItem> = listOf(
+    BottomNavItem(stringResource(Res.string.business_tab_title), CoffeePeekIcons.CoffeeBean,
+        Navigator.Screen.BusinessGraph, Navigator.Screen.BusinessTab),
+    BottomNavItem(stringResource(Res.string.main_screen_search), CoffeePeekIcons.Search,
+        Navigator.Screen.FeedGraph, Navigator.Screen.FeedTab),
+    BottomNavItem(stringResource(Res.string.visited_places_screen_sandbox_feed_title), CoffeePeekIcons.Community,
+        Navigator.Screen.CommunityGraph, Navigator.Screen.CommunityTab),
+    BottomNavItem(stringResource(Res.string.main_screen_profile_title), CoffeePeekIcons.Profile,
+        Navigator.Screen.ProfileGraph, Navigator.Screen.ProfileTab),
+    BottomNavItem(stringResource(Res.string.main_screen_settings_tab_title), CoffeePeekIcons.Settings,
+        Navigator.Screen.SettingsGraph, Navigator.Screen.SettingsTab),
+).filter { it.startScreen in availableTabs }
+
+@Composable
+private fun createNavItem(onCreate: () -> Unit): FloatingNavItem {
+    val page = Analytics.service?.state?.collectAsState()?.value?.page ?: "other"
+    return FloatingNavItem(
+        title = stringResource(Res.string.check_in_create_actions), icon = CoffeePeekIcons.Add,
+        selected = false, onClick = onCreate, isAction = true,
+        modifier = Modifier.analyticsExposure("check_in", "global_create", page),
+    )
 }
 
 private fun AnimatedContentTransitionScope<NavBackStackEntry>.tabDirection() =

@@ -1,39 +1,29 @@
 package com.coffeepeek.admin.ui.screen.checkins
 
-import androidx.compose.foundation.layout.BoxScope
-import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.unit.dp
 import com.coffeepeek.admin.analytics.Analytics
 import com.coffeepeek.admin.analytics.AnalyticsEvent
-import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.admin.ui.Navigator
-import com.coffeepeek.admin.ui.component.LocalFloatingNavClearance
 
 /**
  * The one global create action: a guest is sent to sign in, a signed-in user gets the creation flow.
- * [resetKey] closes an open flow when the account scope changes. Position is explicit: Scaffold's own FAB inset would add another 16 dp.
+ * [resetKey] closes an open flow when the account scope changes.
  */
 @Composable
-internal fun BoxScope.CheckInCreateHost(
+internal fun CheckInCreateHost(
     canCreate: () -> Boolean,
     resetKey: Any?,
     onShop: () -> Unit,
     onHomeSaved: () -> Unit = {},
-    showButton: Boolean = true,
-    /** Content that places its own create action (the Search tab hides it under the map); gets the same request the floating button makes. */
-    content: @Composable BoxScope.(onCreate: () -> Unit) -> Unit = {},
+    content: @Composable (onCreate: () -> Unit) -> Unit,
 ) {
     var showCreate by rememberSaveable(resetKey) { mutableStateOf(false) }
-    val clearance = LocalFloatingNavClearance.current
     val focusManager = LocalFocusManager.current
     val keyboard = LocalSoftwareKeyboardController.current
     val onCreate = {
@@ -44,9 +34,6 @@ internal fun BoxScope.CheckInCreateHost(
         else { Analytics.gate("check_in"); Navigator.navigate(Navigator.Screen.Auth) }
     }
     content(onCreate)
-    if (showButton) {
-        CheckInCreateButton(Modifier.align(Alignment.BottomEnd).padding(end = CoffeePeekDimens.spacing4, bottom = clearance + 12.dp), onClick = onCreate)
-    }
     if (showCreate) CheckInCreateFlow(
         onDismiss = { showCreate = false },
         onShop = { showCreate = false; onShop() },

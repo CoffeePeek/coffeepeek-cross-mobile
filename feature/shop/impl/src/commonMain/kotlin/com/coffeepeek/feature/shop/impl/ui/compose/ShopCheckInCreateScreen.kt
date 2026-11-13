@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
@@ -30,10 +29,10 @@ import androidx.compose.ui.semantics.error
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.coffeepeek.core.designsystem.component.CoffeePeekButton
 import com.coffeepeek.core.designsystem.component.CoffeePeekDestructiveConfirmationSheet
-import com.coffeepeek.core.designsystem.component.CoffeePeekFormStep
-import com.coffeepeek.core.designsystem.component.CoffeePeekSwipeDismissModalBottomSheet
+import com.coffeepeek.core.designsystem.component.CoffeePeekBackHandler
+import com.coffeepeek.core.designsystem.component.CoffeePeekScaffold
+import com.coffeepeek.core.designsystem.component.CoffeePeekTopBar
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.feature.shop.domain.model.ShopCheckInCreateInput
@@ -42,8 +41,7 @@ import com.coffeepeek.feature.shop.domain.usecase.ShopCheckInValidationError
 import com.coffeepeek.feature.shop.impl.resources.Res
 import com.coffeepeek.feature.shop.impl.resources.shop_checkin_form_dismiss
 import com.coffeepeek.feature.shop.impl.resources.shop_checkin_form_title
-import com.coffeepeek.feature.shop.impl.resources.shop_checkin_form_optional
-import com.coffeepeek.feature.shop.impl.resources.shop_checkin_form_submit
+import com.coffeepeek.feature.shop.impl.resources.shop_checkin_today
 import com.coffeepeek.feature.shop.impl.resources.shop_checkin_form_history
 import com.coffeepeek.feature.shop.impl.resources.shop_checkin_form_uncertain
 import com.coffeepeek.feature.shop.impl.resources.shop_checkin_form_history_checked
@@ -66,14 +64,10 @@ import com.coffeepeek.feature.shop.impl.resources.shop_checkin_form_invalid_rati
 import com.coffeepeek.feature.shop.impl.resources.shop_checkin_form_invalid_photos
 import com.coffeepeek.feature.shop.impl.resources.shop_checkin_form_invalid_photo
 import com.coffeepeek.feature.shop.impl.ui.ShopCheckInCreateViewModel
-import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopCheckInDateField
-import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopCheckInFormHeader
-import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopCheckInDrinkField
-import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopCheckInNoteField
-import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopCheckInRatings
+import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopCheckInFormFields
+import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopCheckInSaveBar
+import com.coffeepeek.feature.shop.impl.ui.compose.component.isEditable
 import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopCheckInSubmissionContent
-import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopCheckInVisibilityField
-import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopCheckInPhotoAttachments
 import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopCheckInSubmitFailure
 import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopCheckInFormAction
 import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopCheckInFormEvent
@@ -88,42 +82,45 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 internal fun ShopCheckInCreateScreen(
     viewModel: ShopCheckInCreateViewModel,
     shopName: String,
+    shopAddress: String?,
     dates: ShopCheckInDateFormatter,
     photos: ShopCheckInPhotoPicker,
+    onChangeShop: () -> Unit,
     onEvent: (ShopCheckInFormEvent) -> Unit,
 ) {
     val picker = photos.rememberController()
     val state by viewModel.state.collectAsStateWithLifecycle()
+    val visitMillis = dates.pickerMillis(state.input.visitedAtIso)
+    val todayMillis = dates.nowMillis()
+    val visitLabel = if (visitMillis == todayMillis) stringResource(Res.string.shop_checkin_today)
+        else dates.label(state.input.visitedAtIso)
     val currentOnEvent by rememberUpdatedState(onEvent)
     LaunchedEffect(viewModel) { viewModel.events.collect { currentOnEvent(it) } }
-    CoffeePeekSwipeDismissModalBottomSheet(
-        onDismissRequest = { viewModel.onAction(ShopCheckInFormAction.Dismiss) },
-        dismissDescription = stringResource(Res.string.shop_checkin_form_dismiss),
-        dismissEnabled = !state.isSubmitting && !state.isDiscarding,
-        maxSheetHeightFraction = if (state.submitted) null else 0.76f,
-    ) {
-        ShopCheckInCreateScreenContent(
-            state = state, shopName = shopName,
-            visitLabel = dates.label(state.input.visitedAtIso),
-            selectedVisitMillis = dates.pickerMillis(state.input.visitedAtIso), nowMillis = dates.nowMillis(),
-            onAction = viewModel::onAction,
-            onVisitDate = { viewModel.onAction(ShopCheckInFormAction.VisitDateChanged(dates.visitInstant(it, state.input.visitedAtIso))) },
-            onGallery = { remaining -> picker.pickFromGallery(remaining) { viewModel.onAction(ShopCheckInFormAction.PhotosAdded(it)) } },
-            onCamera = { picker.takePhoto { viewModel.onAction(ShopCheckInFormAction.PhotosAdded(it)) } },
-            modifier = if (state.submitted) Modifier else Modifier.fillMaxHeight(),
-            photosPreparing = picker.isPreparing,
-        )
-        if (state.confirmDiscard) {
-            CoffeePeekDestructiveConfirmationSheet(
-                title = stringResource(Res.string.shop_checkin_discard_title),
-                message = stringResource(Res.string.shop_checkin_discard_message),
-                confirmLabel = stringResource(Res.string.shop_checkin_discard),
-                cancelLabel = stringResource(Res.string.shop_checkin_discard_cancel),
-                onConfirm = { viewModel.onAction(ShopCheckInFormAction.Discard) },
-                onDismiss = { viewModel.onAction(ShopCheckInFormAction.CancelDiscard) },
-            )
+    CoffeePeekBackHandler(enabled = !state.isSubmitting && !state.isDiscarding) {
+        viewModel.onAction(ShopCheckInFormAction.Dismiss)
+    }
+    CoffeePeekScaffold(
+        modifier = Modifier.fillMaxSize().imePadding(),
+        contentWindowInsets = androidx.compose.foundation.layout.WindowInsets(0),
+        topBar = { CoffeePeekTopBar(stringResource(Res.string.shop_checkin_form_title),
+            stringResource(Res.string.shop_checkin_form_dismiss),
+            onBack = { viewModel.onAction(ShopCheckInFormAction.Dismiss) }) },
+        bottomBar = { if (!state.submitted && !state.isSubmitting) ShopCheckInSaveBar(
+            state, picker.isPreparing, viewModel::onAction) },
+    ) { insets ->
+        Box(Modifier.fillMaxSize().padding(insets)) {
+            ShopCheckInCreateScreenContent(
+                state = state, shopName = shopName, shopAddress = shopAddress,
+                visitLabel = visitLabel,
+                selectedVisitMillis = visitMillis, nowMillis = todayMillis,
+                onAction = viewModel::onAction, onChangeShop = onChangeShop,
+                onVisitDate = { viewModel.onAction(ShopCheckInFormAction.VisitDateChanged(dates.visitInstant(it, state.input.visitedAtIso))) },
+                onGallery = { remaining -> picker.pickFromGallery(remaining) { viewModel.onAction(ShopCheckInFormAction.PhotosAdded(it)) } },
+                onCamera = { picker.takePhoto { viewModel.onAction(ShopCheckInFormAction.PhotosAdded(it)) } },
+                modifier = Modifier.fillMaxSize(), photosPreparing = picker.isPreparing)
         }
     }
+    if (state.confirmDiscard) ShopCheckInDiscardConfirmation(viewModel::onAction)
 }
 
 /** Previewable body: no DI, ViewModel, platform picker or network lookup. */
@@ -131,10 +128,12 @@ internal fun ShopCheckInCreateScreen(
 internal fun ShopCheckInCreateScreenContent(
     state: ShopCheckInFormState,
     shopName: String,
+    shopAddress: String?,
     visitLabel: String,
     selectedVisitMillis: Long?,
     nowMillis: Long,
     onAction: (ShopCheckInFormAction) -> Unit,
+    onChangeShop: () -> Unit,
     onVisitDate: (Long) -> Unit,
     onGallery: (Int) -> Unit,
     onCamera: () -> Unit,
@@ -151,11 +150,10 @@ internal fun ShopCheckInCreateScreenContent(
     LaunchedEffect(scroll.isScrollInProgress) {
         if (scroll.isScrollInProgress) { keyboard?.hide(); focus.clearFocus() }
     }
-    val editable = !state.isLoading && !state.isSubmitting && !state.isDiscarding &&
-        !state.submitted && !state.deliveryUnconfirmed && !photosPreparing
+    val editable = state.isEditable(photosPreparing)
     Column(
         modifier.fillMaxWidth().testTag("shop-checkin-form").verticalScroll(scroll)
-            .imePadding().navigationBarsPadding().padding(horizontal = CoffeePeekDimens.spacing4)
+            .padding(horizontal = CoffeePeekDimens.spacing4)
             .padding(top = CoffeePeekDimens.spacing3, bottom = CoffeePeekDimens.spacing6),
         verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing6),
     ) {
@@ -164,85 +162,56 @@ internal fun ShopCheckInCreateScreenContent(
                 submittedVisibility = state.input.visibility.takeIf { state.submitted },
                 cleanupFailed = state.submitted && state.draftFailed,
                 onFeed = { onAction(ShopCheckInFormAction.GoToFeed) },
+                publication = state.publication,
             )
         } else if (state.isLoading) {
             CoffeePeekLoader(size = 40.dp, color = MaterialTheme.colorScheme.primary, strokeWidth = 4.dp)
         } else {
-            ShopCheckInFormHeader(shopName)
-            ShopCheckInRatings(state.input.rating, editable) { onAction(ShopCheckInFormAction.RatingChanged(it)) }
-            val optionalDescription = stringResource(Res.string.shop_checkin_form_optional)
-            Column {
-              CoffeePeekFormStep(isError = state.validationError == ShopCheckInValidationError.InvalidVisitDate) {
-                ShopCheckInDateField(visitLabel, selectedVisitMillis, nowMillis, editable, onVisitDate)
-              }
-              CoffeePeekFormStep(optional = true, optionalDescription = optionalDescription,
-                  isError = state.validationError == ShopCheckInValidationError.InvalidNote) {
-                ShopCheckInNoteField(state.input.text, editable,
-                state.validationError == ShopCheckInValidationError.InvalidNote) {
-                onAction(ShopCheckInFormAction.TextChanged(it))
-                }
-              }
-              CoffeePeekFormStep(optional = true, optionalDescription = optionalDescription,
-                  isError = state.validationError in listOf(ShopCheckInValidationError.TooManyPhotos, ShopCheckInValidationError.InvalidPhoto)) {
-                ShopCheckInPhotoAttachments(
-                    photos = state.input.photos.map { it.bytes }, isLoading = photosPreparing, enabled = editable,
-                    onMove = { from, to -> onAction(ShopCheckInFormAction.MovePhoto(from, to)) },
-                    onRemove = { onAction(ShopCheckInFormAction.RemovePhoto(it)) },
-                    onGallery = onGallery, onCamera = onCamera,
-                )
-              }
-              CoffeePeekFormStep(optional = true, optionalDescription = optionalDescription,
-                  isError = state.validationError == ShopCheckInValidationError.InvalidDrink) {
-                ShopCheckInDrinkField(
-                    state.drinks, state.input.drinkSlug, state.input.customDrinkName,
-                    state.drinksLoading, state.drinksFailed, editable,
-                    state.validationError == ShopCheckInValidationError.InvalidDrink,
-                    { onAction(ShopCheckInFormAction.RetryDrinks) },
-                    { onAction(ShopCheckInFormAction.DrinkChanged(it)) },
-                    { onAction(ShopCheckInFormAction.CustomDrinkChanged(it)) },
-                )
-              }
-              CoffeePeekFormStep(optional = true, last = true, optionalDescription = optionalDescription) {
-                ShopCheckInVisibilityField(state.input.visibility, editable) {
-                    onAction(ShopCheckInFormAction.VisibilityChanged(it))
-                }
-              }
-            }
-            validationMessage(state.validationError)?.let { message ->
-                Text(message, color = MaterialTheme.colorScheme.error,
-                    modifier = Modifier.semantics { error(message); liveRegion = LiveRegionMode.Polite })
-            }
-            if (state.draftFailed) Text(stringResource(Res.string.shop_checkin_form_draft_error),
-                color = MaterialTheme.colorScheme.error)
-            state.submitFailure?.let { failure ->
-                Text(submitFailureText(failure), color = MaterialTheme.colorScheme.error)
-            }
-            if (state.deliveryUnconfirmed) {
-                Text(stringResource(Res.string.shop_checkin_form_uncertain),
-                    modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite })
-                TextButton(onClick = { onAction(ShopCheckInFormAction.OpenHistory) }) {
-                    Text(stringResource(Res.string.shop_checkin_form_history))
-                }
-                TextButton(onClick = { onAction(ShopCheckInFormAction.HistoryChecked) }) {
-                    Text(stringResource(Res.string.shop_checkin_form_history_checked))
-                }
-            }
-            CoffeePeekButton(
-                text = stringResource(Res.string.shop_checkin_form_submit),
-                enabled = editable,
-                onClick = {
-                    keyboard?.hide()
-                    focus.clearFocus(force = true)
-                    onAction(ShopCheckInFormAction.Submit)
-                },
-            )
-            if (state.hasDraft) {
-                TextButton(onClick = { onAction(ShopCheckInFormAction.AskDiscard) }, enabled = !state.isDiscarding) {
-                    Text(stringResource(Res.string.shop_checkin_discard), color = MaterialTheme.colorScheme.error)
-                }
-            }
+            ShopCheckInFormFields(state, shopName, shopAddress, visitLabel,
+                selectedVisitMillis, nowMillis, editable, photosPreparing,
+                onAction, onChangeShop, onVisitDate, onGallery, onCamera)
+            ShopCheckInFeedback(state, onAction)
         }
     }
+}
+
+@Composable
+private fun ShopCheckInFeedback(state: ShopCheckInFormState, onAction: (ShopCheckInFormAction) -> Unit) {
+    validationMessage(state.validationError)?.let { message ->
+        Text(message, color = MaterialTheme.colorScheme.error,
+            modifier = Modifier.semantics { error(message); liveRegion = LiveRegionMode.Polite })
+    }
+    if (state.draftFailed) Text(stringResource(Res.string.shop_checkin_form_draft_error),
+        color = MaterialTheme.colorScheme.error)
+    state.submitFailure?.let { failure ->
+        Text(submitFailureText(failure), color = MaterialTheme.colorScheme.error)
+    }
+    if (state.deliveryUnconfirmed) {
+        Text(stringResource(Res.string.shop_checkin_form_uncertain),
+            modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite })
+        TextButton(onClick = { onAction(ShopCheckInFormAction.OpenHistory) }) {
+            Text(stringResource(Res.string.shop_checkin_form_history))
+        }
+        TextButton(onClick = { onAction(ShopCheckInFormAction.HistoryChecked) }) {
+            Text(stringResource(Res.string.shop_checkin_form_history_checked))
+        }
+    }
+    if (state.hasDraft) TextButton(onClick = { onAction(ShopCheckInFormAction.AskDiscard) },
+        enabled = !state.isDiscarding) {
+        Text(stringResource(Res.string.shop_checkin_discard), color = MaterialTheme.colorScheme.error)
+    }
+}
+
+@Composable
+private fun ShopCheckInDiscardConfirmation(onAction: (ShopCheckInFormAction) -> Unit) {
+    CoffeePeekDestructiveConfirmationSheet(
+        title = stringResource(Res.string.shop_checkin_discard_title),
+        message = stringResource(Res.string.shop_checkin_discard_message),
+        confirmLabel = stringResource(Res.string.shop_checkin_discard),
+        cancelLabel = stringResource(Res.string.shop_checkin_discard_cancel),
+        onConfirm = { onAction(ShopCheckInFormAction.Discard) },
+        onDismiss = { onAction(ShopCheckInFormAction.CancelDiscard) },
+    )
 }
 
 @Composable
@@ -277,7 +246,14 @@ private fun ShopCheckInFormPreview(dark: Boolean, uncertain: Boolean = false,
         isLoading = loading, isSubmitting = submitting, deliveryUnconfirmed = uncertain,
         submitted = submitted, hasDraft = !loading && !submitted,
     )
-    ShopCheckInCreateScreenContent(state, "Кофейня", "9 октября 2026", 1791504000000, 1791547200000, {}, {}, {}, {}, photosPreparing = photosPreparing)
+    CoffeePeekScaffold(
+        topBar = { CoffeePeekTopBar("Чекин", "Закрыть", onBack = {}) },
+        bottomBar = { if (!state.submitted && !state.isSubmitting) ShopCheckInSaveBar(state, photosPreparing, {}) },
+    ) { insets ->
+        ShopCheckInCreateScreenContent(state, "The Coffee Room", "ул. Петра Мстиславца, 20",
+            "9 октября 2026", 1791504000000, 1791547200000, {}, {}, {}, {}, {},
+            modifier = Modifier.padding(insets), photosPreparing = photosPreparing)
+    }
 }
 
 @Preview @Composable private fun ShopCheckInFormLightPreview() = ShopCheckInFormPreview(false)

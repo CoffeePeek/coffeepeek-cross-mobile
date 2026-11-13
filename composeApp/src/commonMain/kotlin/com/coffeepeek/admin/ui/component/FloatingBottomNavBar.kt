@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
@@ -61,6 +62,8 @@ data class FloatingNavItem(
     val icon: ImageVector,
     val selected: Boolean,
     val onClick: () -> Unit,
+    val isAction: Boolean = false,
+    val modifier: Modifier = Modifier,
 )
 
 /** Compact glass navigation on Android; iOS uses its native UITabBarController. */
@@ -101,15 +104,22 @@ private fun RowScope.FloatingNavBarItem(item: FloatingNavItem) {
         item.selected -> colors.onSurface.copy(alpha = 0.07f)
         else -> Color.Transparent
     }, tween(160), label = "glass-tab-highlight")
-    Box(Modifier.weight(1f).fillMaxHeight()) {
+    Box(item.modifier.weight(1f).fillMaxHeight()) {
         CoffeePeekLargeContentViewer(item.title, item.icon, Modifier.fillMaxSize()) {
             Column(Modifier.fillMaxWidth().fillMaxHeight()
                 .background(highlight, RoundedCornerShape(24.dp))
-                .selectable(item.selected, interactions, indication = null, role = Role.Tab, onClick = item.onClick)
+                .then(if (item.isAction) Modifier.clickable(interactions, indication = null,
+                    role = Role.Button, onClick = item.onClick)
+                    else Modifier.selectable(item.selected, interactions, indication = null,
+                        role = Role.Tab, onClick = item.onClick))
                 .padding(horizontal = 2.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(3.dp, Alignment.CenterVertically)) {
-                Icon(item.icon, null, Modifier.size(22.dp), tint = if (item.selected) colors.coffeePeekAccentForeground else foreground)
+                Icon(item.icon, null, Modifier.size(22.dp), tint = when {
+                    item.isAction -> colors.coffeePeekAccentForeground
+                    item.selected -> colors.coffeePeekAccentForeground
+                    else -> foreground
+                })
                 CompositionLocalProvider(LocalDensity provides Density(LocalDensity.current.density, 1f)) {
                     Text(item.title, color = foreground, style = MaterialTheme.typography.labelSmall,
                         fontWeight = if (item.selected) FontWeight.SemiBold else FontWeight.Medium,
@@ -126,8 +136,8 @@ private fun FloatingBottomNavBarPreview(dark: Boolean, scale: Float = 1f) = Coff
     CompositionLocalProvider(LocalDensity provides androidx.compose.ui.unit.Density(LocalDensity.current.density, scale)) {
         FloatingBottomNavBar(listOf(
             FloatingNavItem("Поиск", CoffeePeekIcons.Search, true, {}),
-            FloatingNavItem("Кофе", CoffeePeekIcons.CoffeeBean, false, {}),
             FloatingNavItem("Лента", CoffeePeekIcons.Community, false, {}),
+            FloatingNavItem("Добавить", CoffeePeekIcons.Add, false, {}, isAction = true),
             FloatingNavItem("Профиль", CoffeePeekIcons.Profile, false, {}),
             FloatingNavItem("Настройки", CoffeePeekIcons.Settings, false, {}),
         ))

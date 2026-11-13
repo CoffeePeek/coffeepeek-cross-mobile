@@ -8,7 +8,6 @@
     <string name="home_check_in_create_what">Что добавим?</string>
     <string name="home_check_in_create_shelf_title">Пачку на полку</string>
     <string name="home_check_in_create_shelf_body">Сфотографируйте пачку кофе</string>
-    <string name="home_check_in_create_continue">Продолжить</string>
     <string name="home_check_in_onboarding_cover_title">Открывай свой кофе</string>
     <string name="home_check_in_onboarding_poster_cover">Находи новые места, пробуй кофе и записывай, что понравилось.</string>
     <string name="home_check_in_onboarding_discovery_title">350+ проверенных кофеен</string>
@@ -25,9 +24,6 @@
     <string name="home_check_in_onboarding_step">Шаг %1$d из %2$d</string>
     <string name="home_check_in_home">Кофе дома</string>
     <string name="home_check_in_title_fallback">Домашнее приготовление</string>
-    <string name="home_check_in_private">Только мне</string>
-    <string name="home_check_in_public">Виден всем</string>
-    <string name="home_check_in_pending">На модерации</string>
     <string name="home_check_in_rejected">Не опубликован</string>
     <string name="home_check_in_not_submitted">Ожидает публикации</string>
     <string name="home_check_in_unknown_moderation">Публичный</string>
@@ -79,8 +75,17 @@
     <string name="home_check_in_save_forbidden">Нет доступа к этой записи. Проверьте, в какой аккаунт вы вошли.</string>
     <string name="home_check_in_photo_upload_failed">Не удалось загрузить фото. Попробуйте ещё раз.</string>
     <string name="home_check_in_optional">Необязательно</string>
-    <string name="home_check_in_public_title">Сделать публичным</string>
+    <string name="home_check_in_public_title">Кто увидит</string>
+    <string name="home_check_in_audience_everyone">Все</string>
+    <string name="home_check_in_audience_only_me">Только я</string>
     <string name="home_check_in_public_hint">Публичный чекин появится в ленте после модерации. Скрытый виден только вам.</string>
+    <string name="home_check_in_recipe_expand">Добавить рецепт</string>
+    <string name="home_check_in_recipe_collapse">Скрыть рецепт</string>
+    <string name="home_check_in_saved_private">Сохранено только для вас</string>
+    <string name="home_check_in_saved_pending">Сохранено, ожидает публикации</string>
+    <string name="home_check_in_saved_published">Опубликовано</string>
+    <string name="home_check_in_saved_unknown">Чекин сохранён. Статус публикации уточняется</string>
+    <string name="home_check_in_saved_visibility_changed">Настройка аудитории не подтвердилась. Проверьте запись.</string>
     <string name="home_check_in_taste_question">Как получился кофе?</string>
     <string name="home_check_in_choose_rating">Как получился кофе?: выбрать %1$d из 5</string>
     <string name="home_check_in_prepared_date">Дата приготовления</string>

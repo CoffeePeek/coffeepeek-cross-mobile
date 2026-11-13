@@ -25,15 +25,22 @@ import com.coffeepeek.feature.discovery.impl.search.*
 import com.coffeepeek.feature.discovery.impl.resources.*
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
+import kotlinx.coroutines.CancellationException
 
 @Composable
 internal fun CheckInShopPickerScreen(
-    search: SearchViewModel, map: MapViewModel, host: DiscoveryHost, onBack: () -> Unit,
+    search: SearchViewModel, map: MapViewModel, host: DiscoveryHost,
+    recentShops: com.coffeepeek.feature.discovery.api.DiscoveryRecentShops, onBack: () -> Unit,
     onClose: () -> Unit, onSelect: (String) -> Unit, onSignIn: () -> Unit, modifier: Modifier,
 ) {
     val state by search.state.collectAsStateWithLifecycle()
     val select by rememberUpdatedState(onSelect)
     val signIn by rememberUpdatedState(onSignIn)
+    val recent by produceState(emptyList<ShopSummary>(), recentShops) {
+        val result = recentShops.load()
+        result.exceptionOrNull()?.let { if (it is CancellationException) throw it }
+        value = result.getOrNull().orEmpty()
+    }
     var showMap by rememberSaveable { mutableStateOf(false) }
     host.locationPermission(1, { search.onAction(SearchAction.LocationGranted) }, { search.onAction(SearchAction.LocationDenied) })
     LaunchedEffect(search) {
@@ -45,7 +52,7 @@ internal fun CheckInShopPickerScreen(
         }
     }
     CoffeePeekBackHandler(onBack = onBack)
-    CheckInShopPickerContent(state, host, showMap, { showMap = it }, search::onAction, onClose, modifier) { mapModifier ->
+    CheckInShopPickerContent(state, host, showMap, { showMap = it }, search::onAction, onClose, modifier, recent) { mapModifier ->
         MapScreen(map, host, select, 0.dp, null, {}, mapModifier, onOpenFilters = {}, onSearchAction = search::onAction)
     }
 }
@@ -54,6 +61,7 @@ internal fun CheckInShopPickerScreen(
 internal fun CheckInShopPickerContent(
     state: SearchState, host: DiscoveryHost, showMap: Boolean, onShowMap: (Boolean) -> Unit,
     onAction: (SearchAction) -> Unit, onClose: () -> Unit, modifier: Modifier = Modifier,
+    recentShops: List<ShopSummary> = emptyList(),
     mapContent: @Composable (Modifier) -> Unit = {},
 ) {
     val focus = LocalFocusManager.current
@@ -71,7 +79,7 @@ internal fun CheckInShopPickerContent(
                     placeholder = stringResource(Res.string.discovery_picker_search),
                     clearDescription = stringResource(Res.string.discovery_search_clear),
                     modifier = Modifier.fillMaxWidth().padding(horizontal = CoffeePeekDimens.spacing4, vertical = CoffeePeekDimens.spacing2))
-                CheckInShopPickerList(state, host, onAction, list, Modifier.weight(1f))
+                CheckInShopPickerList(state, recentShops, onAction, list, Modifier.weight(1f))
             }
         }
     }

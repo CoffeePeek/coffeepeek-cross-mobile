@@ -27,7 +27,7 @@ private class DefaultShopCheckInRepository(
 ) : ShopCheckInRepository {
     override suspend fun getDrinkOptions(): Result<List<ShopConsumedDrinkOption>> = backend.getDrinkOptions()
 
-    override suspend fun create(input: ShopCheckInCreateInput): Result<Unit> = requestResult {
+    override suspend fun create(input: ShopCheckInCreateInput): Result<String> = requestResult {
         val error = validateShopCheckIn(input)
         require(error == null) { "Invalid check-in input: $error" }
         val uploaded = photos.upload(input.photos.map {

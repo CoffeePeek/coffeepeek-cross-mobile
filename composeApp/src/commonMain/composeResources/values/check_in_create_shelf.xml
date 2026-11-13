@@ -1,3 +1,4 @@
 <resources>
     <string name="check_in_create_actions">Добавить</string>
+    <string name="check_in_shop_unavailable">Не удалось открыть кофейню. Попробуйте ещё раз.</string>
 </resources>

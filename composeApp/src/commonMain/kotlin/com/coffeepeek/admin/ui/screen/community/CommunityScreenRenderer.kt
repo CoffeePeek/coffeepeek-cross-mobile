@@ -5,5 +5,8 @@ import androidx.compose.runtime.Composable
 /** Application route adapter; both platforms bind migrated feature entries explicitly. */
 interface CommunityScreenRenderer {
     @Composable
-    fun Content(onCreateCheckIn: () -> Unit, notificationsAction: @Composable () -> Unit)
+    fun Content(
+        notificationsAction: @Composable () -> Unit,
+        onRefreshChange: ((() -> Unit)?) -> Unit,
+    )
 }

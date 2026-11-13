@@ -21,7 +21,6 @@ internal class TabCallbacks(
     val onAddShop: () -> Unit,
     val onMapExpandedChange: (Boolean) -> Unit,
     val onFocusConsumed: () -> Unit,
-    val checkInAction: @Composable () -> Unit = {},
     val reselections: kotlinx.coroutines.flow.Flow<Unit> = kotlinx.coroutines.flow.emptyFlow(),
     val onContinueCheckIn: (() -> Unit)? = null,
 )

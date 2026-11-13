@@ -1,6 +1,7 @@
 package com.coffeepeek.admin.di.shop
 
 import com.coffeepeek.admin.locator.Constants
+import com.coffeepeek.admin.ui.screen.shop.ShopCheckInEditorRenderer
 import com.coffeepeek.core.network.ApiClients
 import com.coffeepeek.feature.shop.data.repository.createShopCheckInVoteRepository
 import com.coffeepeek.feature.shop.data.repository.createShopDetailsRepository
@@ -21,6 +22,7 @@ internal fun shopBrowsingModule(fileBaseUrl: String = Constants.BASE_URL) = modu
     }
     single<PublicShopPreviews> { createPublicShopPreviews(get<ApiClients>().client, ::currentShopUtcOffsetMinutes) }
     single<ShopCheckInVoteRepository> { createShopCheckInVoteRepository(get<ApiClients>().client) }
+    single<ShopCheckInEditorRenderer> { FeatureShopCheckInEditorRenderer(get(), get(), get()) }
 }
 
 private fun currentShopUtcOffsetMinutes() = TimeZone.currentSystemDefault().offsetAt(Clock.System.now()).totalSeconds / 60

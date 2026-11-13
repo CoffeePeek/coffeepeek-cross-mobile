@@ -14,6 +14,7 @@ fun createCheckInShopPickerEntry(
     repository: DiscoveryRepository, favorites: DiscoveryFavorites, city: DiscoveryCity,
     location: DiscoveryLocation, account: DiscoveryAccount, details: DiscoveryShopDetails,
     analytics: DiscoveryAnalytics, host: DiscoveryHost,
+    recentShops: DiscoveryRecentShops,
 ): CheckInShopPickerEntry = object : CheckInShopPickerEntry {
     @Composable
     override fun Content(onBack: () -> Unit, onClose: () -> Unit, onSelectShop: (String) -> Unit,
@@ -22,6 +23,6 @@ fun createCheckInShopPickerEntry(
             SearchViewModel(repository, favorites, city, location, account, analytics, SearchPurpose.CheckInPicker)
         }
         val map = viewModel(key = "check-in-shop-map") { MapViewModel(repository, city, location, details, analytics, account, favorites) }
-        CheckInShopPickerScreen(search, map, host, onBack, onClose, onSelectShop, onSignIn, modifier)
+        CheckInShopPickerScreen(search, map, host, recentShops, onBack, onClose, onSelectShop, onSignIn, modifier)
     }
 }

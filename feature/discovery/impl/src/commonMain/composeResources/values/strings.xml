@@ -2,6 +2,7 @@
 <resources>
     <string name="discovery_continue_checkin">Продолжить чекин</string>
     <string name="discovery_picker_nearby">Рядом со мной</string>
+    <string name="discovery_picker_recent">Недавние кофейни</string>
     <string name="discovery_picker_title">Выберите кофейню</string>
     <string name="discovery_picker_close">Закрыть</string>
     <string name="discovery_picker_close_description">Закрыть выбор кофейни</string>
