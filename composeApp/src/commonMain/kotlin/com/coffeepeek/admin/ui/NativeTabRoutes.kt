@@ -8,7 +8,7 @@ internal fun mainTabScreens(isLoggedIn: Boolean, businessMode: Boolean = false):
     }
     add(Navigator.Screen.FeedTab)
     add(Navigator.Screen.CommunityTab)
-    if (isLoggedIn) add(Navigator.Screen.ProfileTab)
+    add(Navigator.Screen.ProfileTab)
     add(Navigator.Screen.SettingsTab)
 }
 

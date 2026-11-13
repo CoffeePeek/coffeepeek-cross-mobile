@@ -1,5 +1,8 @@
 package com.coffeepeek.feature.community.impl.ui
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.Image
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import com.coffeepeek.feature.community.impl.resources.Res
@@ -29,12 +32,14 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.lazy.rememberLazyListState
 import com.coffeepeek.core.designsystem.component.CoffeePeekFilledButton as Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.mutableLongStateOf
@@ -149,13 +154,21 @@ internal fun CommunityContent(
     val leaders = host.leaders
     Column(modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).statusBarsPadding()
         .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal))) {
-        CommunitySections(leadersSelected, onSelectLeaders, leaders != null, headerAction)
-        Box(Modifier.weight(1f)) {
-            if (leadersSelected && leaders != null) savedContent.SaveableStateProvider("leaders") {
-                leaders.invoke(refreshKey, bottomClearance, Modifier.fillMaxSize())
-            } else savedContent.SaveableStateProvider("feed") {
+        if (leadersSelected && leaders != null) savedContent.SaveableStateProvider("leaders") {
+            CommunitySections(true, onSelectLeaders, true, headerAction)
+            leaders.invoke(refreshKey, bottomClearance, Modifier.weight(1f).fillMaxSize())
+        } else savedContent.SaveableStateProvider("feed") {
+            val listState = rememberLazyListState()
+            val headerVisible by remember(listState) {
+                derivedStateOf { !listState.canScrollBackward || !listState.lastScrolledForward }
+            }
+            AnimatedVisibility(state.items.isEmpty() || headerVisible,
+                enter = expandVertically(expandFrom = Alignment.Top), exit = shrinkVertically(shrinkTowards = Alignment.Top)) {
+                CommunitySections(false, onSelectLeaders, leaders != null, headerAction)
+            }
+            Box(Modifier.weight(1f)) {
                 CommunityFeedContent(state, onAction, host, blockActions, callbacks, snackbar,
-                    bottomClearance, { refreshKey++ }, floatingAction)
+                    bottomClearance, listState, { refreshKey++ }, floatingAction)
             }
         }
     }

@@ -24,7 +24,7 @@ internal fun shopCheckInModule(
         createShopCheckInRepository(apiClient = client.client, uploadClient = client.uploadClient)
     }
     single<ShopCheckInCreateEntry> {
-        SessionShopCheckInEntry(sessions = get(), repository = get(), drafts = get(), dates = get(),
+        SessionShopCheckInEntry(sessions = get(), repository = get(), history = get(), drafts = get(), dates = get(),
             photos = get(), onCheckInCreated = { get<NotificationFeature>().onCheckInCreated() })
     }
 }

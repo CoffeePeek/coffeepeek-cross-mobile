@@ -827,3 +827,33 @@ could not create writable temporary fixtures with Python 3.14. Git Bash failed
 to start in the retry, so the five xtool shell contracts still need CI. Xcode
 archive verification and installation and launch on iOS 17 and 18 require macOS
 CI and device checks.
+
+## iOS launch compatibility - 2026-11-11
+
+The supplied replay shows repeated exits at the splash screen on reported iOS
+18. The 1.1.8 upload revision `6416e1448` directly references iOS 26 glass
+classes from Kotlin/Native. A strong import of either class can stop the
+process before the Kotlin availability check. Both Swift launchers now install
+the same glass factory on iOS 26 and later. The design system uses its rounded
+blur fallback on iOS 17 and 18. CI checks both the linked simulator app and
+the signed device archive for strong imports of the two UIKit classes.
+
+The broader source audit compared native imports and UIKit call sites with
+iOS SDK availability. It also found that root navigation called
+`setTabBarHidden:animated:` on iOS 17, where that selector is unavailable.
+Root navigation now uses the tab bar view's `hidden` property on iOS 17.
+The existing five native tab visibility contracts can assert either path.
+The inspected 1.1.9 simulator build log has a linker warning for the ICU data
+object tagged iOS Simulator 18.5. The prior 1.1.8 device archive log only reports
+an ONNX object tagged iOS 15.1 during a dependency link targeting iOS 15.0.
+
+Windows verification at `3e5784430` plus the fix passed 21 iOS configuration
+and tooling tests, Android Direct Debug assembly and packaged DEX verification,
+and the function body limit check. The design-system Kotlin sources compiled
+for iOS device and simulator. Gradle skipped the app, shelf data and app iOS
+test compilation on Windows. The binary guard passed six cases with synthetic
+symbol output. Xcode compilation, the native tab contracts and the binary
+import check on a real build remain pending. Device checks still include
+cold launches on iOS 17 and 18, tab visibility on iOS 17 and 18, and search and
+segmented controls on iOS 18 and 26. The affected device's exact OS build, app
+build, and crash report are pending.

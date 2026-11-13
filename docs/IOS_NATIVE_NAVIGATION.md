@@ -32,10 +32,12 @@ the migration, ownership, and device verification requirements.
 ## Appearance and limits
 
 On Android, the bar keeps its Compose appearance from `LiquidGlass.kt`. On
-iOS, `UITabBar` and UIKit glass buttons use system materials. The iOS 26
-appearance therefore follows the OS, while older iOS versions use standard
-UIKit gray button configurations. Transparent UIKit controls are placed above
-the Compose surface so their backgrounds show the screen beneath them. Opaque
+iOS 26 and later, UIKit supplies the native Liquid Glass tab bar. On iOS 17
+and 18, the root `UITabBar` uses `UIBlurEffect.Style.systemMaterial` for both
+its standard and scroll edge appearances so scrolling content has a material
+behind the tab labels. Glass icon buttons on those versions share the same
+material. Prominent buttons use their accent fill. Transparent UIKit controls
+are placed above the Compose surface so their backgrounds show the screen beneath them. Opaque
 map and root controller hosts remain below Compose overlays. Theme and content
 color are propagated explicitly; see [the interop audit](IOS_COMPOSE_INTEROP_AUDIT.md).
 The tab controller owns the bottom safe area at its natural height. Detail
@@ -48,6 +50,11 @@ handled by each tab's UIKit navigation controller. See
 [the staged migration plan](ios-native-ui-migration.md) for remaining work.
 
 ## Verification and deployment
+
+On 2026-11-12, at `c5b498e0f` plus the tab material patch, the Kotlin/Native
+tab setup compiled as KLIBs for device and simulator. The function body limit
+check passed. Linking and visual checks still require Xcode. Scroll Settings in
+both themes on iOS 18 and confirm the native glass appearance on iOS 26.
 
 Historical checks before the native interaction migration passed:
 

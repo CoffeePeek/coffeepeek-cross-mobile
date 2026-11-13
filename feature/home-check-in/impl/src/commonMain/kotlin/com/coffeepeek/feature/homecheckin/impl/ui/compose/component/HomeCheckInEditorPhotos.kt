@@ -20,7 +20,6 @@ import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.component.CoffeePeekPhotoAttachments
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.homecheckin.domain.model.HomePreparationUpload
-import com.coffeepeek.feature.homecheckin.impl.resources.*
 
 @Composable
 internal fun HomeCheckInEditorPhotos(
@@ -47,3 +46,10 @@ private fun HomeCheckInEditorPhotosPreview(dark: Boolean) = CoffeePeekTheme(dark
 
 @Preview @Composable private fun HomeCheckInEditorPhotosPreviewLight() = HomeCheckInEditorPhotosPreview(false)
 @Preview @Composable private fun HomeCheckInEditorPhotosPreviewDark() = HomeCheckInEditorPhotosPreview(true)
+
+@Composable private fun HomeCheckInEditorEmptyPhotosPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
+    Surface { HomeCheckInEditorPhotos(emptyList(), true, false, { _, modifier, _ -> Box(modifier) }, {}, {}, { _, _ -> }) }
+}
+
+@Preview @Composable private fun HomeCheckInEditorEmptyPhotosLightPreview() = HomeCheckInEditorEmptyPhotosPreview(false)
+@Preview @Composable private fun HomeCheckInEditorEmptyPhotosDarkPreview() = HomeCheckInEditorEmptyPhotosPreview(true)

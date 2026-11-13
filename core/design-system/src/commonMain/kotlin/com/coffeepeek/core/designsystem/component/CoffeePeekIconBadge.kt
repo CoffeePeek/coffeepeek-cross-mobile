@@ -17,10 +17,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
+import com.coffeepeek.core.designsystem.icons.CoffeePeekMapIcon
+import com.coffeepeek.core.designsystem.icons.coffeePeekMapIconPainter
 import androidx.compose.ui.unit.dp
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
@@ -83,6 +87,16 @@ fun CoffeePeekIconBadge(
     modifier: Modifier = Modifier,
     contentDescription: String? = null,
 ) {
+    CoffeePeekIconBadge(rememberVectorPainter(icon), colors, modifier, contentDescription)
+}
+
+@Composable
+fun CoffeePeekIconBadge(
+    painter: Painter,
+    colors: CoffeePeekIconBadgeColors,
+    modifier: Modifier = Modifier,
+    contentDescription: String? = null,
+) {
     // Derive dark-theme colors from the icon hue instead of a second palette
     // table — the pale light backgrounds read as near-white blocks on a dark surface.
     val isDark = MaterialTheme.colorScheme.surface.luminance() < 0.5f
@@ -96,7 +110,7 @@ fun CoffeePeekIconBadge(
         contentAlignment = Alignment.Center,
     ) {
         Icon(
-            imageVector = icon,
+            painter = painter,
             contentDescription = contentDescription,
             tint = iconTint,
             modifier = Modifier.size(CoffeePeekDimens.settingsIconSize),
@@ -109,7 +123,7 @@ private fun CoffeePeekIconBadgePreviewContent(darkTheme: Boolean) = CoffeePeekTh
     Surface {
         Row(Modifier.padding(16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             CoffeePeekIconBadge(CoffeePeekIcons.Settings, CoffeePeekIconBadgePalette.Cyan, contentDescription = "Cyan badge")
-            CoffeePeekIconBadge(CoffeePeekIcons.Settings, CoffeePeekIconBadgePalette.Gold, contentDescription = "Gold badge")
+            CoffeePeekIconBadge(coffeePeekMapIconPainter(CoffeePeekMapIcon.CoffeeShop), CoffeePeekIconBadgePalette.Gold)
         }
     }
 }

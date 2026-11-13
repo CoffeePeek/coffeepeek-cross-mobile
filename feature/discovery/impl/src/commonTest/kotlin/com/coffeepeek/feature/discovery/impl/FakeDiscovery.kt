@@ -25,6 +25,12 @@ internal val minskCity = CityEntry("minsk", "Минск")
 internal val brestCity = CityEntry("brest", "Брест")
 
 internal class FakeRepository : DiscoveryRepository {
+    var heatmap: suspend (MapBounds, DiscoveryCriteria) -> Result<CheckInHeatmap> = { _, _ -> Result.success(CheckInHeatmap()) }
+    val heatmapRequests = mutableListOf<Pair<MapBounds, DiscoveryCriteria>>()
+    override suspend fun checkInHeatmap(bounds: MapBounds, criteria: DiscoveryCriteria): Result<CheckInHeatmap> {
+        heatmapRequests += bounds to criteria
+        return heatmap(bounds, criteria)
+    }
     var search: suspend (ShopQuery) -> Result<Paged<ShopSummary>> = { page(listOf(shop("a"), shop("b"))) }
     var catalogs: suspend () -> Result<DiscoveryCatalogs> = { Result.success(DiscoveryCatalogs(cities = listOf(minskCity, brestCity))) }
     val queries = mutableListOf<ShopQuery>()

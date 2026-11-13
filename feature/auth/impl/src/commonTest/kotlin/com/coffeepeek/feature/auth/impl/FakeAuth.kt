@@ -30,6 +30,7 @@ internal class FakeAuthRepository : AuthRepository {
     val emailChecks = mutableListOf<String>()
     var register: Result<Unit> = Result.success(Unit)
     var emailTaken: Result<Boolean> = Result.success(false)
+    var emailCheckGate: CompletableDeferred<Unit>? = null
     var onRegister: () -> Unit = {}
     var signIn: Result<SignedInAccount> = Result.success(SignedInAccount("user-1"))
     var reset: Result<Unit> = Result.success(Unit)
@@ -64,7 +65,7 @@ internal class FakeAuthRepository : AuthRepository {
 
     override suspend fun isEmailTaken(email: String): Result<Boolean> {
         emailChecks += email
-        gate?.await()
+        emailCheckGate?.await()
         return emailTaken
     }
 

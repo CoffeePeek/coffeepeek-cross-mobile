@@ -58,7 +58,7 @@ private class HomeCheckInEditorApiImpl(
         val state by model.state.collectAsStateWithLifecycle()
         val allowed = accessAllowed && canAccess()
         val canPick = { allowed && canAccess() && model.state.value.let {
-            preparationId == null && it.isReady && !it.isSaving && !it.isClosed && !it.isAccessRevoked
+            preparationId == null && it.isReady && !it.isSaving && it.savedEntry == null && !it.isClosed && !it.isAccessRevoked
         } }
         val currentCanPick by rememberUpdatedState(canPick)
         val delivery = remember(model) { HomeCheckInPhotoDelivery({ currentCanPick() }) {

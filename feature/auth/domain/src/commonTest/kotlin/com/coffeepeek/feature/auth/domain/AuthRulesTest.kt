@@ -27,12 +27,6 @@ class AuthRulesTest {
         assertNull(validatePassword("12345678", MIN_REGISTRATION_PASSWORD_LENGTH))
     }
 
-    @Test fun theEmailStepContinuesAsSoonAsSomethingIsTyped() {
-        assertFalse(canContinueWithEmail(""))
-        assertFalse(canContinueWithEmail("   "))
-        assertTrue(canContinueWithEmail("x"))
-    }
-
     @Test fun theRegistrationSubmitNeedsAShortNameALongPasswordAndTheTerms() {
         assertTrue(canSubmitRegistration("Al", "12345678", true))
         assertTrue(canSubmitRegistration(" Al ", "12345678", true))
@@ -53,6 +47,7 @@ class AuthRulesTest {
             Case("Coffee User", "", "short", false, RegistrationIssue.EmailRequired),
             Case("", "", "short", false, RegistrationIssue.NameRequired),
             Case("", "person@example.com", "TestPassword123", true, RegistrationIssue.NameRequired),
+            Case(" A ", "person@example.com", "TestPassword123", true, RegistrationIssue.NameRequired),
             Case("   ", "bad", "TestPassword123", true, RegistrationIssue.NameRequired),
             Case("Coffee User", "bad", "TestPassword123", true, RegistrationIssue.EmailInvalid),
         )

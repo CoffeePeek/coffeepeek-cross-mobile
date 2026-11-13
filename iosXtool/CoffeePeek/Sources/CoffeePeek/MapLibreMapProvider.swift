@@ -54,6 +54,9 @@ final class MapLibreMapProvider: NSObject, IosNativeMapProvider, MLNMapViewDeleg
             map.styleURL = desiredStyle
         }
         syncAnnotations(map, state: state, previous: previous)
+        if let style = map.style, previous?.heatmap != state.heatmap {
+            syncHeatmap(style, points: state.heatmap)
+        }
         if let style = map.style, previous?.zones != state.zones || previous?.dark != state.dark {
             syncZones(map, style: style, state: state)
         }
@@ -76,6 +79,7 @@ final class MapLibreMapProvider: NSObject, IosNativeMapProvider, MLNMapViewDeleg
         addSubwayStations(style, dark: dark)
         map.zoneImageNames.removeAll()
         if let state = map.content { syncZones(map, style: style, state: state) }
+        if let state = map.content { syncHeatmap(style, points: state.heatmap) }
         map.applyPendingCamera()
         map.reportBounds()
     }
@@ -89,6 +93,35 @@ final class MapLibreMapProvider: NSObject, IosNativeMapProvider, MLNMapViewDeleg
         for key in Array(map.points.keys) where !keys.contains(key) {
             retire(key, map: map, clusters: state.clusters, animate: animate)
         }
+    }
+
+    private func syncHeatmap(_ style: MLNStyle, points: [HeatPointState]) {
+        let shapes = points.map { point -> MLNPointFeature in
+            let feature = MLNPointFeature()
+            feature.coordinate = CLLocationCoordinate2D(latitude: point.lat, longitude: point.lon)
+            feature.attributes = ["weight": point.weight]
+            return feature
+        }
+        let source = updateSource("cp-check-in-heatmap", shapes: shapes, style: style)
+        guard style.layer(withIdentifier: "cp-check-in-heatmap-layer") == nil else { return }
+        let layer = MLNHeatmapStyleLayer(identifier: "cp-check-in-heatmap-layer", source: source)
+        layer.heatmapWeight = NSExpression(forKeyPath: "weight")
+        layer.heatmapRadius = NSExpression(forConstantValue: 32)
+        layer.heatmapIntensity = NSExpression(forConstantValue: 1)
+        layer.heatmapOpacity = NSExpression(forConstantValue: 0.8)
+        layer.heatmapColor = heatmapColors()
+        style.addLayer(layer)
+    }
+
+    private func heatmapColors() -> NSExpression {
+        let stops: [NSNumber: UIColor] = [
+            0: UIColor(red: 71 / 255.0, green: 183 / 255.0, blue: 199 / 255.0, alpha: 0),
+            0.2: UIColor(red: 71 / 255.0, green: 183 / 255.0, blue: 199 / 255.0, alpha: 1),
+            0.45: UIColor(red: 228 / 255.0, green: 184 / 255.0, blue: 84 / 255.0, alpha: 1),
+            0.7: UIColor(red: 228 / 255.0, green: 119 / 255.0, blue: 50 / 255.0, alpha: 1),
+            1: UIColor(red: 200 / 255.0, green: 62 / 255.0, blue: 54 / 255.0, alpha: 1),
+        ]
+        return NSExpression(format: "FUNCTION($heatmapDensity, 'mgl_interpolateWithCurveType:parameters:stops:', 'linear', NIL, %@)", stops)
     }
 
     private func syncShop(_ shop: ShopState, map: CoffeeMapView, state: MapState,
@@ -745,6 +778,13 @@ private struct MapState: Decodable {
     let shops: [ShopState]
     let clusters: [ClusterState]
     let zones: [ZoneState]
+    let heatmap: [HeatPointState]
+}
+
+private struct HeatPointState: Decodable, Equatable {
+    let lat: Double
+    let lon: Double
+    let weight: Double
 }
 
 private struct ShopState: Decodable {

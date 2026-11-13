@@ -289,6 +289,29 @@ that source root; no clean IDE inspection is claimed. Import/sync, expanded
 font/window/accessibility coverage, unsupported remote lifecycles and live
 server/media/release acceptance remain gates, not inferred from this walkthrough.
 
+### Full-screen dialog system bars (2026-11-12)
+
+Built `directSandbox` 1.1.10.2931-sandbox from `c5b498e0f` plus the dialog
+patch. Assembly, Sandbox isolation, packaged DEX checks and
+`verifyFunctionBodyLimits` passed. The final APK SHA-256 starts with
+`4d459d89adf5`.
+
+Manual portrait checks on Pixel 7 AVDs, Android 15 (API 35) and 16 (API 36):
+
+- Guest onboarding kept close, registration and sign-in clear of system bars
+  in light theme with gestures and dark theme with three-button navigation.
+  Sign-in opened on API 35 and registration opened on API 36.
+- The map picker kept close and confirm clear of system bars in three-button
+  mode. Confirm returned the fixture address on both APIs.
+- The first light-theme photo check exposed dark system icons over the dark
+  scrim. After rebuilding, light icons were visible with gestures on API 35
+  and three buttons on API 36. Close returned to the feed on both.
+
+The first Android 16 launch was interrupted by an emulator System UI ANR.
+The retry reached Sandbox and the checks above passed. Screenshots remain
+outside Git. Physical devices, landscape and Play release diagnostics were
+outside this verification.
+
 ## Return to feature refactoring
 
 After this host is verified, first rerun the remaining Home/history acceptance

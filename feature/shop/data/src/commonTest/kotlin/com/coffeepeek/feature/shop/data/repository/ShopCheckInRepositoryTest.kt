@@ -200,7 +200,7 @@ class ShopCheckInRepositoryTest {
                 text = " A good visit ", rating = ShopRating(5, 4, 5),
                 photos = listOf(ShopCheckInPhoto(byteArrayOf(1, 2), "visit.jpg")),
             )
-            assertTrue(createShopCheckInRepository(apiClient, uploadClient).create(input).isSuccess)
+            assertEquals("visit-1", createShopCheckInRepository(apiClient, uploadClient).create(input).getOrThrow())
             assertEquals(listOf("url", "upload", "check-in"), steps)
         } finally {
             apiClient.close()

@@ -29,7 +29,7 @@ internal fun analyticsPage(route: String?): String = when (route?.substringBefor
     "ShopDetail", "ShopMenuGallery", "ShopReviews" -> "shop_detail"
     "CoffeeDetail" -> "coffee_detail"
     "RoasterDetail" -> "roaster_detail"
-    "CreateCheckIn" -> "check_in_create"
+    "CreateCheckIn", "ShopCheckInEditor" -> "check_in_create"
     "EditHomeCheckIn" -> "check_in_edit"
     "VisitedPlaces", "HomeCheckIns" -> "my_check_ins"
     "EditProfile", "DeleteAccountPending", "Favorites" -> "profile"
@@ -108,6 +108,27 @@ internal fun Modifier.analyticsExposure(feature: String, placement: String, page
         val clippedHeight = (minOf(bounds.bottom, window.containerSize.height.toFloat()) - maxOf(bounds.top, 0f)).coerceAtLeast(0f)
         val area = coordinates.size.width.toFloat() * coordinates.size.height
         fraction = if (area > 0) (clippedWidth * clippedHeight / area).coerceIn(0f, 1f) else 0f
+    }
+}
+
+/** Native UIKit tab items have no Compose coordinates; the tab-bar host reports visibility. */
+@Composable
+internal fun TrackNativeCreateActionExposure(visible: Boolean) {
+    val service = Analytics.service ?: return
+    val state by service.state.collectAsState()
+    val lifecycle by LocalLifecycleOwner.current.lifecycle.currentStateFlow.collectAsState()
+    val unobscured = LocalAnalyticsUnobscured.current
+    val ownerVisible = LocalAnalyticsVisible.current
+    val overlay = LocalAnalyticsOverlay.current
+    val eligible = visible && ownerVisible && unobscured && state.ready && state.foreground &&
+        lifecycle == Lifecycle.State.RESUMED && (state.overlays.isEmpty() || state.overlays.lastOrNull() == overlay)
+    LaunchedEffect(eligible, state.generation, state.visit, state.visitSequence) {
+        if (!eligible) return@LaunchedEffect
+        delay(500)
+        val visit = "${state.generation}:${state.visit}:${state.visitSequence}"
+        exposures.report(visit, "check_in", "global_create", 1f, state.foreground, unobscured, 500) {
+            service.track(AnalyticsEvent.FEATURE_EXPOSED, mapOf("feature" to "check_in", "placement" to "global_create"))
+        }
     }
 }
 

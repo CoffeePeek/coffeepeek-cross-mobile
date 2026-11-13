@@ -5,5 +5,5 @@ import androidx.compose.runtime.Composable
 /** Application route adapter; both platforms bind migrated feature entries explicitly. */
 interface OwnProfileScreenRenderer {
     @Composable
-    fun Content()
+    fun Content(isLoggedIn: Boolean)
 }

@@ -43,7 +43,7 @@ fun CoffeePeekNativeActionMenu(
         properties = UIKitInteropProperties(isNativeAccessibilityEnabled = true, placedAsOverlay = true),
         update = { button ->
             button.overrideUserInterfaceStyle = coffeePeekUserInterfaceStyle(colors.background)
-            button.configuration = glassButtonConfiguration().apply {
+            button.configuration = coffeePeekGlassButtonConfiguration().apply {
                 cornerStyle = UIButtonConfigurationCornerStyleCapsule
                 image = UIImage.systemImageNamed("ellipsis")
                 baseForegroundColor = colors.onSurface.toUIColor()

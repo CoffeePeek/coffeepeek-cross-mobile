@@ -96,16 +96,19 @@ internal fun HomeCheckInEditorScreen(
         if (!accessAllowed) viewModel.onAction(HomeCheckInEditorAction.RevokeAccess)
     }
     val visible = if (accessAllowed) state else HomeCheckInEditorState(isAccessRevoked = true)
-    LaunchedEffect(visible.isSaving) { currentDismiss(!visible.isSaving) }
+    LaunchedEffect(visible.isSaving, visible.savedEntry, visible.saveAttempt) {
+        currentDismiss(!visible.isSaving && visible.savedEntry == null)
+    }
     CoffeePeekBackHandler(enabled = !visible.isClosed) {
         when {
             visible.isAccessRevoked -> currentEvent(HomeCheckInEditorEvent.Close)
+            visible.savedEntry != null -> viewModel.onAction(HomeCheckInEditorAction.FinishSaved)
             visible.isBeanPickerOpen -> viewModel.onAction(HomeCheckInEditorAction.CloseBeanPicker)
             else -> viewModel.onAction(HomeCheckInEditorAction.Close)
         }
     }
     HomeCheckInEditorScreenContent(visible, viewModel::onAction, today, formatDate, dateToInstant, formatMethod,
-        media, pickerLoading, onAddPhotos, modifier)
+        media, pickerLoading, onAddPhotos, modifier, onBeforeSave = { currentDismiss(false) })
 }
 
 /** Body only. The caller owns the full-screen/modal container and its navigation/system-bar insets. */
@@ -121,13 +124,20 @@ internal fun HomeCheckInEditorScreenContent(
     pickerLoading: Boolean,
     onAddPhotos: (remaining: Int) -> Unit,
     modifier: Modifier = Modifier,
+    onBeforeSave: () -> Unit = {},
 ) {
     if (state.isClosed || state.isAccessRevoked) return
+    state.savedEntry?.let { saved ->
+        HomeCheckInSavedContent(saved, state.savedVisibilityUnconfirmed,
+            { onAction(HomeCheckInEditorAction.FinishSaved) }, modifier)
+        return
+    }
     val focus = LocalFocusManager.current
     val keyboard = LocalSoftwareKeyboardController.current
     val enabled = state.isReady && !state.isLoading && !state.isSaving
     val draft = state.draft
     var showDatePicker by rememberSaveable { mutableStateOf(false) }
+    var recipeExpanded by rememberSaveable(state.entry?.id) { mutableStateOf<Boolean?>(null) }
     fun dispatch(action: HomeCheckInEditorAction) {
         focus.clearFocus(force = true); keyboard?.hide(); onAction(action)
     }
@@ -141,128 +151,88 @@ internal fun HomeCheckInEditorScreenContent(
     // Android IME space is consumed once, around header, scroll body and save footer together.
     Box(Modifier.imePadding().then(modifier)) {
         if (state.isBeanPickerOpen && enabled) {
-            HomeCheckInBeanPicker(state, { action ->
-                when (action) {
-                    is HomeCheckInEditorAction.BeanQueryChanged, HomeCheckInEditorAction.SearchBeans -> onAction(action)
-                    else -> dispatch(action)
-                }
-            }, media.emptyBeanArtwork, media.shelfBagImage)
+            HomeCheckInEditorBeanPickerContent(state, media, onAction, ::dispatch)
             return@Box
         }
         Column(Modifier.fillMaxSize()) {
-            Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp).padding(bottom = 16.dp),
-                verticalAlignment = Alignment.CenterVertically) {
-                Text(stringResource(if (state.entry == null) Res.string.home_check_in_home else Res.string.home_check_in_editor_title),
-                    Modifier.weight(1f), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-                IconButton(onClick = { dispatch(HomeCheckInEditorAction.Close) }, enabled = !state.isSaving,
-                    modifier = Modifier.size(44.dp)) {
-                    Icon(CoffeePeekIcons.Close, stringResource(Res.string.home_check_in_editor_close), Modifier.size(20.dp))
-                }
-            }
+            HomeCheckInEditorHeader(state, { dispatch(HomeCheckInEditorAction.Close) })
             if (!state.isReady) {
-                Column(Modifier.weight(1f).fillMaxWidth().padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                    if (state.isLoading) CoffeePeekLoader(stringResource(Res.string.home_check_in_loading))
-                    state.loadIssue?.let {
-                        Text(if (it == HomePreparationIssue.RequestFailed || it == HomePreparationIssue.InvalidResponse)
-                            stringResource(Res.string.home_check_in_load_failed) else it.editorText(),
-                            color = MaterialTheme.colorScheme.error, modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite })
-                        TextButton(onClick = { onAction(HomeCheckInEditorAction.RetryDetail) }, enabled = !state.isLoading) {
-                            Text(stringResource(Res.string.home_check_in_retry))
-                        }
-                    }
-                }
+                HomeCheckInEditorLoadStatus(state, { onAction(HomeCheckInEditorAction.RetryDetail) }, Modifier.weight(1f))
                 return@Column
             }
-            val saveText = state.saveIssue?.editorText()
-            val photoUploadText = stringResource(Res.string.home_check_in_photo_upload_failed)
-            val summary = if (state.fieldErrors.isNotEmpty()) pluralStringResource(Res.plurals.home_check_in_validation_summary,
-                    state.fieldErrors.size, state.fieldErrors.size)
-                // Production reported any failed photo upload with one clear message, whatever the transport reason.
-                else if (state.saveIssue != null && state.failedOperation == HomePreparationOperation.PhotoUpload) photoUploadText
-                else saveText
-            summary?.let { HomeCheckInEditorErrorSummary(it, Modifier.padding(horizontal = 16.dp).padding(bottom = 16.dp)) }
-            Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(24.dp)) {
-                HomeCheckInEditorVisibility(draft.visibility == HomePreparationVisibility.Public, enabled) {
-                    onAction(HomeCheckInEditorAction.VisibilityChanged(if (it) HomePreparationVisibility.Public else HomePreparationVisibility.Private))
-                }
-                state.fieldErrors[HomePreparationField.Visibility]?.let { HomeCheckInEditorFieldError(it.editorText()) }
-                HomeCheckInEditorField("", state.fieldErrors[HomePreparationField.Rating]?.editorText()) {
-                    HomeCheckInEditorRating(draft.tasteScore, enabled, media.ratingArtwork) {
-                        onAction(HomeCheckInEditorAction.TasteRatingTapped(it))
-                    }
-                }
-                Column {
-                    @Composable fun Step(field: HomePreparationField, label: String, last: Boolean = false,
-                        content: @Composable (String?) -> Unit) {
-                        val error = state.fieldErrors[field]?.editorText()
-                        CoffeePeekFormStep(optional = field != HomePreparationField.Date, last = last,
-                            isError = error != null, optionalDescription = stringResource(Res.string.home_check_in_optional)) {
-                            HomeCheckInEditorField(label, error) { content(error) }
-                        }
-                    }
-                    Step(HomePreparationField.Date, stringResource(Res.string.home_check_in_prepared_date)) { error ->
-                        HomeCheckInEditorSelect(formatDate(draft.preparedOn.orEmpty()), CoffeePeekIcons.Calendar,
-                            stringResource(Res.string.home_check_in_choose_date), enabled, error) {
-                            focus.clearFocus(); keyboard?.hide(); showDatePicker = true
-                        }
-                    }
-                    Step(HomePreparationField.Method, stringResource(Res.string.home_check_in_brew_method)) { error ->
-                        HomeCheckInEditorMethod(draft.brewMethodCode, state.methods, enabled && !state.methodsLoading,
-                            error, formatMethod, media.methodArtwork, { onAction(HomeCheckInEditorAction.MethodChanged(it)) })
-                        if (state.methodsLoading) Text(stringResource(Res.string.home_check_in_methods_loading), style = MaterialTheme.typography.bodySmall)
-                        if (state.methodsIssue != null) TextButton(onClick = { onAction(HomeCheckInEditorAction.RetryMethods) }, enabled = enabled) {
-                            Text(stringResource(Res.string.home_check_in_methods_retry))
-                        }
-                    }
-                    Step(HomePreparationField.Bean, stringResource(Res.string.home_check_in_bean)) { error ->
-                        HomeCheckInEditorSelect(draft.customBeanName ?: state.beanSelectionName ?: stringResource(Res.string.home_check_in_choose_bean),
-                            CoffeePeekIcons.CoffeeBean, stringResource(Res.string.home_check_in_choose_bean), enabled, error) {
-                            dispatch(HomeCheckInEditorAction.OpenBeanPicker)
-                        }
-                        state.shelfBagCardUrl?.takeIf { draft.shelfBagId != null }?.let { card ->
-                            HomeCheckInEditorShelfBag(card, draft.showShelfBag, enabled, media.shelfBagImage) {
-                                onAction(HomeCheckInEditorAction.ShowShelfBagChanged(it))
-                            }
-                        }
-                    }
-                    Step(HomePreparationField.Dose, stringResource(Res.string.home_check_in_dose_label)) { error ->
-                        HomeCheckInEditorInput(draft.doseGrams.orEmpty(), { onAction(HomeCheckInEditorAction.DoseChanged(it)) },
-                            stringResource(Res.string.home_check_in_dose_description), stringResource(Res.string.home_check_in_dose_hint),
-                            enabled, error, keyboardType = KeyboardType.Decimal, maxLength = 8)
-                    }
-                    val durationError = state.fieldErrors[HomePreparationField.Duration]?.editorText()
-                    CoffeePeekFormStep(optional = true, isError = durationError != null,
-                        optionalDescription = stringResource(Res.string.home_check_in_optional)) {
-                        HomeCheckInEditorDuration(draft.brewDurationSeconds, enabled, durationError) { onAction(HomeCheckInEditorAction.DurationChanged(it)) }
-                    }
-                    Step(HomePreparationField.Note, stringResource(Res.string.home_check_in_editor_note)) { error ->
-                        HomeCheckInEditorInput(draft.text.orEmpty(), { onAction(HomeCheckInEditorAction.NoteChanged(it)) },
-                            stringResource(Res.string.home_check_in_editor_note), stringResource(Res.string.home_check_in_note_hint),
-                            enabled, error, multiline = true, maxLength = 1000)
-                    }
-                    Step(HomePreparationField.Drink, stringResource(Res.string.home_check_in_drink)) { error ->
-                        HomeCheckInEditorInput(draft.customDrinkName ?: state.entry?.drinkName.takeIf { draft.drinkSlug != null }.orEmpty(),
-                            { onAction(HomeCheckInEditorAction.DrinkNameChanged(it)) }, stringResource(Res.string.home_check_in_drink),
-                            stringResource(Res.string.home_check_in_drink_hint), enabled, error, maxLength = 100)
-                    }
-                    Step(HomePreparationField.Photos, "", last = true) {
-                        if (state.entry != null) Text(stringResource(Res.string.home_check_in_keep_photos),
-                            style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        else {
-                            HomeCheckInEditorPhotos(draft.photos, enabled, pickerLoading, media.photo, {
-                                focus.clearFocus(); keyboard?.hide(); onAddPhotos(it)
-                            }, { onAction(HomeCheckInEditorAction.RemovePhoto(it)) },
-                                { from, to -> onAction(HomeCheckInEditorAction.MovePhoto(from, to)) })
-                        }
-                    }
-                }
+            HomeCheckInEditorSaveError(state)
+            Column(Modifier.weight(1f).fillMaxWidth().verticalScroll(rememberScrollState())
+                .padding(horizontal = 16.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(24.dp)) {
+                HomeCheckInEditorPrimaryFields(state, enabled, formatDate, media, pickerLoading, onAction,
+                    { focus.clearFocus(); keyboard?.hide(); showDatePicker = true },
+                    { focus.clearFocus(); keyboard?.hide(); onAddPhotos(it) })
+                HomeCheckInEditorRecipeFields(state, enabled, formatMethod, media, onAction, recipeExpanded,
+                    { recipeExpanded = it }, { dispatch(HomeCheckInEditorAction.OpenBeanPicker) })
             }
-            Column(Modifier.fillMaxWidth().padding(16.dp)) {
-                CoffeePeekButton(stringResource(if (state.isSaving) Res.string.home_check_in_saving else Res.string.home_check_in_save),
-                    { dispatch(HomeCheckInEditorAction.Save) }, enabled = enabled && !pickerLoading)
+            HomeCheckInEditorFooter(state, enabled && !pickerLoading, onAction,
+                { onBeforeSave(); dispatch(HomeCheckInEditorAction.Save) })
+        }
+    }
+}
+
+@Composable
+private fun HomeCheckInEditorBeanPickerContent(state: HomeCheckInEditorState, media: HomeCheckInEditorMedia,
+    onAction: (HomeCheckInEditorAction) -> Unit, dispatch: (HomeCheckInEditorAction) -> Unit) {
+    HomeCheckInBeanPicker(state, { action ->
+        when (action) {
+            is HomeCheckInEditorAction.BeanQueryChanged, HomeCheckInEditorAction.SearchBeans -> onAction(action)
+            else -> dispatch(action)
+        }
+    }, media.emptyBeanArtwork, media.shelfBagImage)
+}
+
+@Composable
+private fun HomeCheckInEditorHeader(state: HomeCheckInEditorState, onClose: () -> Unit) {
+    Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp).padding(bottom = 16.dp),
+        verticalAlignment = Alignment.CenterVertically) {
+        Text(stringResource(if (state.entry == null) Res.string.home_check_in_home else Res.string.home_check_in_editor_title),
+            Modifier.weight(1f), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+        IconButton(onClick = onClose, enabled = !state.isSaving, modifier = Modifier.size(44.dp)) {
+            Icon(CoffeePeekIcons.Close, stringResource(Res.string.home_check_in_editor_close), Modifier.size(20.dp))
+        }
+    }
+}
+
+@Composable
+private fun HomeCheckInEditorLoadStatus(state: HomeCheckInEditorState, onRetry: () -> Unit, modifier: Modifier) {
+    Column(modifier.fillMaxWidth().padding(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+        if (state.isLoading) CoffeePeekLoader(stringResource(Res.string.home_check_in_loading))
+        state.loadIssue?.let {
+            Text(if (it == HomePreparationIssue.RequestFailed || it == HomePreparationIssue.InvalidResponse)
+                stringResource(Res.string.home_check_in_load_failed) else it.editorText(),
+                color = MaterialTheme.colorScheme.error, modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite })
+            TextButton(onClick = onRetry, enabled = !state.isLoading) {
+                Text(stringResource(Res.string.home_check_in_retry))
             }
         }
+    }
+}
+
+@Composable
+private fun HomeCheckInEditorSaveError(state: HomeCheckInEditorState) {
+    val summary = if (state.fieldErrors.isNotEmpty()) pluralStringResource(Res.plurals.home_check_in_validation_summary,
+        state.fieldErrors.size, state.fieldErrors.size)
+    else if (state.saveIssue != null && state.failedOperation == HomePreparationOperation.PhotoUpload)
+        stringResource(Res.string.home_check_in_photo_upload_failed)
+    else state.saveIssue?.editorText()
+    summary?.let { HomeCheckInEditorErrorSummary(it, Modifier.padding(horizontal = 16.dp).padding(bottom = 16.dp)) }
+}
+
+@Composable
+private fun HomeCheckInEditorFooter(state: HomeCheckInEditorState, enabled: Boolean,
+    onAction: (HomeCheckInEditorAction) -> Unit, onSave: () -> Unit) {
+    Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        HomeCheckInEditorVisibility(state.draft.visibility == HomePreparationVisibility.Public, enabled) {
+            onAction(HomeCheckInEditorAction.VisibilityChanged(if (it) HomePreparationVisibility.Public else HomePreparationVisibility.Private))
+        }
+        state.fieldErrors[HomePreparationField.Visibility]?.let { HomeCheckInEditorFieldError(it.editorText()) }
+        CoffeePeekButton(stringResource(if (state.isSaving) Res.string.home_check_in_saving else Res.string.home_check_in_save),
+            onSave, enabled = enabled)
     }
 }
 

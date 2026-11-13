@@ -5,5 +5,5 @@ import androidx.compose.runtime.Composable
 /** Platform selection only; root navigation and feature business rules remain with their owners. */
 interface ShopDetailScreenRenderer {
     @Composable
-    fun Content(shopId: String, forCheckIn: Boolean, openCheckIn: Boolean = false)
+    fun Content(shopId: String, openCheckIn: Boolean = false)
 }

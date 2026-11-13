@@ -9,7 +9,7 @@ import com.coffeepeek.feature.shelf.impl.ui.data.ShelfDay
 internal sealed interface ShelfAddAction {
     data object DownloadScanner : ShelfAddAction
     data object OpenCamera : ShelfAddAction
-    /** Back from the camera: to the scan it was opened from, or out of the flow. */
+    /** Back from the camera to the photo actions or the step it was opened from. */
     data object CloseCamera : ShelfAddAction
     /** The card has finished peeling off the photo. */
     data object RevealFinished : ShelfAddAction

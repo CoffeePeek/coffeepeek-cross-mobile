@@ -11,6 +11,7 @@ import com.coffeepeek.feature.discovery.data.mapper.toCatalogEntry
 import com.coffeepeek.feature.discovery.data.mapper.toContent
 import com.coffeepeek.feature.discovery.data.mapper.toDomain
 import com.coffeepeek.feature.discovery.domain.model.CatalogEntry
+import com.coffeepeek.feature.discovery.domain.model.CheckInHeatmap
 import com.coffeepeek.feature.discovery.domain.model.DiscoveryCatalogs
 import com.coffeepeek.feature.discovery.domain.model.DiscoveryFailure
 import com.coffeepeek.feature.discovery.domain.model.DiscoveryFilters
@@ -47,13 +48,16 @@ fun createDiscoveryRepository(
     client: HttpClient,
     favoriteIds: suspend () -> Set<String>,
     roasters: suspend () -> Result<List<CatalogEntry>>,
-): DiscoveryRepository = RemoteDiscoveryRepository(DiscoveryBackend(client), favoriteIds, roasters)
+): DiscoveryRepository {
+    return RemoteDiscoveryRepository(DiscoveryBackend(client), favoriteIds, roasters)
+}
 
 private class RemoteDiscoveryRepository(
     private val backend: DiscoveryBackend,
     private val favoriteIds: suspend () -> Set<String>,
     private val roasters: suspend () -> Result<List<CatalogEntry>>,
 ) : DiscoveryRepository {
+    private val heatmap = DiscoveryHeatmapReader(backend)
     // The catalogs are read once and kept; a load runs in this scope so that a caller that stops waiting does not cancel the others.
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private val catalogsMutex = Mutex()
@@ -104,6 +108,16 @@ private class RemoteDiscoveryRepository(
                 result.getOrNull()?.let { cachedCatalogs = it }
             }
         }
+    }
+
+    override suspend fun checkInHeatmap(bounds: MapBounds, criteria: DiscoveryCriteria): Result<CheckInHeatmap> = requestResult {
+        val query = criteria.searchQuery()
+        val filters = query.filters.toRequest(query.origin?.let { OriginDto(it.latitude, it.longitude) })
+        val text = searchText(query.text.orEmpty())
+        heatmap.load(
+            ShopMapRequestDto(text.orEmpty(), filters, MapBoundsDto(bounds.minLat, bounds.minLon, bounds.maxLat, bounds.maxLon), SHOP_ZOOM),
+            ShopSearchRequestDto(filters, page = 1, pageSize = MAX_PAGE_SIZE, q = text),
+        )
     }
 
     private suspend fun fetchCatalogs(): Result<DiscoveryCatalogs> = requestResult {

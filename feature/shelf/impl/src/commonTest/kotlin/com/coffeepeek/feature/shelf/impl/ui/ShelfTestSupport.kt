@@ -82,12 +82,15 @@ internal class FakeShelfRepository(bags: List<ShelfBag>? = null) : ShelfReposito
 internal class FakeBagScanner(var readiness: BagScannerReadiness = BagScannerReadiness.Ready) : BagScanner {
     var result: Result<BagScanResult> = Result.success(scanResult(PackModerationStatus.Accepted))
     var prepareResult: Result<Unit> = Result.success(Unit)
+    var prepareGate: (suspend () -> Unit)? = null
     var gate: (suspend () -> Unit)? = null
     var scans = 0
+    val scannedPhotos = mutableListOf<ByteArray>()
 
     override suspend fun readiness() = readiness
 
     override suspend fun prepare(onProgress: (downloaded: Long, total: Long) -> Unit): Result<Unit> {
+        prepareGate?.invoke()
         onProgress(50, 100)
         onProgress(100, 100)
         return prepareResult.onSuccess { readiness = BagScannerReadiness.Ready }
@@ -95,6 +98,7 @@ internal class FakeBagScanner(var readiness: BagScannerReadiness = BagScannerRea
 
     override suspend fun scan(photo: ByteArray, onStage: (BagScanStage) -> Unit, onFront: (BagScanFrame) -> Unit): Result<BagScanResult> {
         scans++
+        scannedPhotos += photo
         onStage(BagScanStage.Segmentation)
         gate?.invoke()
         BagScanStage.entries.drop(1).forEach(onStage)

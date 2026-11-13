@@ -33,9 +33,10 @@ internal fun MapSearchControls(
     state: MapState, dismissInput: () -> Unit, onAction: (MapAction) -> Unit,
     onToggleExpand: (() -> Unit)?, onOpenFilters: (() -> Unit)?, modifier: Modifier = Modifier,
     onSearchAction: (SearchAction) -> Unit,
+    showSearchField: Boolean = true,
 ) {
     Column(modifier, verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2)) {
-        Row(Modifier.padding(horizontal = CoffeePeekDimens.spacing4), verticalAlignment = Alignment.CenterVertically,
+        if (showSearchField) Row(Modifier.padding(horizontal = CoffeePeekDimens.spacing4), verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2)) {
             if (onToggleExpand != null) {
                 CoffeePeekGlassIconButton({ dismissInput(); onToggleExpand() }, stringResource(Res.string.discovery_map_collapse), hazeState = null) {
@@ -71,7 +72,12 @@ private fun MapTruncationNotice() {
 
 @Preview
 @Composable
-private fun MapSearchControlsPreview() = CoffeePeekTheme {
+private fun MapSearchControlsPreview() = MapSearchControlsPreviewContent(false)
+
+@Preview @Composable private fun MapSearchControlsDarkPreview() = MapSearchControlsPreviewContent(true)
+
+@Composable
+private fun MapSearchControlsPreviewContent(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     MapSearchControls(MapState(filters = DiscoveryFilters(tagIds = setOf("laptop-friendly")), isTruncated = true),
         {}, {}, {}, {}, onSearchAction = {})
 }

@@ -10,7 +10,7 @@ class ShopCheckInSignInHandoffTest {
         val handoff = ShopCheckInSignInHandoff()
         handoff.begin(ShopCheckInSignInHandoff.Request("marks"))
 
-        assertEquals(Navigator.Screen.ShopDetail("marks", openCheckIn = true), handoff.take())
+        assertEquals(Navigator.Screen.ShopCheckInEditor("marks"), handoff.take())
         assertNull(handoff.take())
     }
 
@@ -32,6 +32,6 @@ class ShopCheckInSignInHandoffTest {
         handoff.begin(ShopCheckInSignInHandoff.Request("marks"))
         handoff.cancel(older)
 
-        assertEquals(Navigator.Screen.ShopDetail("marks", openCheckIn = true), handoff.take())
+        assertEquals(Navigator.Screen.ShopCheckInEditor("marks"), handoff.take())
     }
 }

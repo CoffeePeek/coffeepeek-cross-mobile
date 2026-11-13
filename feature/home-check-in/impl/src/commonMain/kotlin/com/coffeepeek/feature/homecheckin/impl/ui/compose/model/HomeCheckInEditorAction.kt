@@ -31,6 +31,7 @@ internal sealed interface HomeCheckInEditorAction {
     data class RemovePhoto(val index: Int) : HomeCheckInEditorAction
     data class MovePhoto(val from: Int, val to: Int) : HomeCheckInEditorAction
     data object Save : HomeCheckInEditorAction
+    data object FinishSaved : HomeCheckInEditorAction
     data object Close : HomeCheckInEditorAction
     data object RevokeAccess : HomeCheckInEditorAction
 }

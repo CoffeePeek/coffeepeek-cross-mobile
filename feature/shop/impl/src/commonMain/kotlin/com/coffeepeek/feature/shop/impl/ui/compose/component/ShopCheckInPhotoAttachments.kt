@@ -63,5 +63,5 @@ private fun AttachmentImage(bytes: ByteArray, modifier: Modifier, scale: Content
     ShopCheckInPhotoAttachments(emptyList(), false, true, { _, _ -> }, {}, {}, {})
 }
 @Preview @Composable private fun ShopCheckInPhotoAttachmentsDarkPreview() = CoffeePeekTheme(darkTheme = true) {
-    ShopCheckInPhotoAttachments(List(4) { byteArrayOf() }, false, true, { _, _ -> }, {}, {}, {})
+    ShopCheckInPhotoAttachments(emptyList(), false, true, { _, _ -> }, {}, {}, {})
 }

@@ -36,6 +36,9 @@ class OwnProfileSlots(
  */
 interface OwnProfileEntry {
     @Composable
+    fun GuestContent(bottomClearance: Dp, accountPrompt: @Composable () -> Unit)
+
+    @Composable
     fun Content(
         onEditProfile: () -> Unit,
         onOpenShop: (slug: String) -> Unit,

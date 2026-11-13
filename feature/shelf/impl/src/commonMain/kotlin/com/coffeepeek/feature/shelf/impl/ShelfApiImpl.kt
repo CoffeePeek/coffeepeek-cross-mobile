@@ -114,7 +114,9 @@ private class ShelfApiImpl(
     @Composable
     override fun AddBag(onSaved: () -> Unit, onClose: () -> Unit, modifier: Modifier) {
         key(this) {
-            val model = viewModel(key = "shelf-add:$instanceKey") { ShelfAddViewModel(repository, ports.scanner, ports.coffees, arrivals, calendar) }
+            val model = viewModel(key = "shelf-add:$instanceKey") {
+                ShelfAddViewModel(repository, ports.scanner, ports.coffees, arrivals, calendar)
+            }
             ShelfAddScreen(model, ports.gallery, ports.camera, modifier) { event ->
                 when (event) {
                     ShelfAddEvent.Saved -> onSaved()

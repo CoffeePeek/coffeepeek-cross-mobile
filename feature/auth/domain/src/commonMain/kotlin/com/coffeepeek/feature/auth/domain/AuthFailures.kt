@@ -1,7 +1,7 @@
 package com.coffeepeek.feature.auth.domain
 
-/** How a failed e-mail sign-in is told to the user. The classification works on the message text, as it always did. */
-enum class LoginFailure { WrongCredentials, Network, Unknown }
+/** How a failed e-mail sign-in is told to the user. */
+enum class LoginFailure { WrongCredentials, EmailNotConfirmed, Network, Unknown }
 
 private val credentialWords = listOf(
     "unauthorized", "invalid credential", "invalid login", "incorrect password", "wrong password", "user not found",
@@ -10,8 +10,9 @@ private val credentialWords = listOf(
 private val networkWords = listOf("timeout", "timed out", "network", "connect", "socket", "host", "internet", "сеть", "соединен")
 
 fun classifyLoginFailure(message: String?): LoginFailure {
-    val normalized = message.orEmpty().lowercase()
+    val normalized = message.orEmpty().trim().lowercase()
     return when {
+        normalized == "email is not confirmed" -> LoginFailure.EmailNotConfirmed
         credentialWords.any(normalized::contains) -> LoginFailure.WrongCredentials
         networkWords.any(normalized::contains) -> LoginFailure.Network
         else -> LoginFailure.Unknown

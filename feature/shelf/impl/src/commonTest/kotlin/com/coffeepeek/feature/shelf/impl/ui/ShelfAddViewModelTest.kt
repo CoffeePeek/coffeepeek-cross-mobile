@@ -51,23 +51,32 @@ class ShelfAddViewModelTest {
         runCurrent()
     }
 
-    @Test fun downloadsTheScannerBeforeTheCameraOpens() = runTest(dispatcher) {
+    @Test fun selectedPhotoWaitsForScannerThenTheSamePhotoIsScanned() = runTest(dispatcher) {
         val scanner = FakeBagScanner(BagScannerReadiness.NeedsDownload(28_000_000))
         val model = model(scanner = scanner)
         runCurrent()
         assertEquals(ShelfScannerStatus.NeedsDownload(28_000_000), model.state.value.scanner)
-        photo(model)
+        val picked = ShelfPhoto(byteArrayOf(1, 2, 3), fromCamera = false)
+        model.onAction(ShelfAddAction.PhotoPicked(picked))
+        runCurrent()
         assertEquals(0, scanner.scans)
+        assertEquals(ShelfAddStep.Preparing, model.state.value.step)
+        assertTrue(model.state.value.photo === picked)
 
         model.onAction(ShelfAddAction.DownloadScanner)
         runCurrent()
         assertEquals(ShelfScannerStatus.Ready, model.state.value.scanner)
-        assertEquals(ShelfAddStep.Camera, model.state.value.step)
+        assertEquals(1, scanner.scans)
+        assertTrue(scanner.scannedPhotos.single() === picked.bytes)
+        assertEquals(ShelfAddStep.Revealing, model.state.value.step)
     }
 
     @Test fun theCameraOpensAtOnceAndBackReturnsWhereItCameFrom() = runTest(dispatcher) {
         val scanner = FakeBagScanner()
         val model = model(scanner = scanner)
+        runCurrent()
+        assertEquals(ShelfAddStep.Intro, model.state.value.step)
+        model.onAction(ShelfAddAction.OpenCamera)
         runCurrent()
         assertEquals(ShelfAddStep.Camera, model.state.value.step)
 
@@ -81,26 +90,72 @@ class ShelfAddViewModelTest {
         assertEquals(ShelfAddStep.Retake, model.state.value.step)
     }
 
-    @Test fun closingTheFirstCameraLeavesTheFlow() = runTest(dispatcher) {
+    @Test fun closingTheFirstCameraReturnsToPhotoActions() = runTest(dispatcher) {
         val model = model()
+        runCurrent()
+        model.onAction(ShelfAddAction.OpenCamera)
         runCurrent()
         model.onAction(ShelfAddAction.CloseCamera)
         runCurrent()
-        assertEquals(ShelfAddEvent.Close, model.events.first())
+        assertEquals(ShelfAddStep.Intro, model.state.value.step)
     }
 
-    @Test fun failedDownloadCanBeRetried() = runTest(dispatcher) {
+    @Test fun failedDownloadKeepsThePhotoAndRetryScansIt() = runTest(dispatcher) {
         val scanner = FakeBagScanner(BagScannerReadiness.NeedsDownload(100)).apply { prepareResult = Result.failure(BagScanFailure(BagScanIssue.ModelDownload)) }
         val model = model(scanner = scanner)
         runCurrent()
+        val picked = ShelfPhoto(byteArrayOf(7, 8), fromCamera = false)
+        model.onAction(ShelfAddAction.PhotoPicked(picked))
         model.onAction(ShelfAddAction.DownloadScanner)
         runCurrent()
         assertEquals(ShelfScannerStatus.DownloadFailed, model.state.value.scanner)
+        assertEquals(ShelfAddStep.Preparing, model.state.value.step)
+        assertTrue(model.state.value.photo === picked)
+        assertEquals(0, scanner.scans)
         scanner.prepareResult = Result.success(Unit)
         model.onAction(ShelfAddAction.DownloadScanner)
         runCurrent()
         assertEquals(ShelfScannerStatus.Ready, model.state.value.scanner)
+        assertTrue(scanner.scannedPhotos.single() === picked.bytes)
     }
+
+    @Test fun closingCameraAfterPreparationResumesTheSelectedPhoto() = runTest(dispatcher) {
+        val gate = CompletableDeferred<Unit>()
+        val scanner = FakeBagScanner(BagScannerReadiness.NeedsDownload(33)).apply { prepareGate = { gate.await() } }
+        val model = model(scanner = scanner)
+        runCurrent()
+        val picked = ShelfPhoto(byteArrayOf(5), fromCamera = false)
+        model.onAction(ShelfAddAction.PhotoPicked(picked))
+        model.onAction(ShelfAddAction.DownloadScanner)
+        runCurrent()
+        model.onAction(ShelfAddAction.OpenCamera)
+        runCurrent()
+        gate.complete(Unit)
+        runCurrent()
+        assertEquals(ShelfAddStep.Camera, model.state.value.step)
+        model.onAction(ShelfAddAction.CloseCamera)
+        runCurrent()
+        assertEquals(1, scanner.scans)
+        assertTrue(scanner.scannedPhotos.single() === picked.bytes)
+    }
+
+    @Test fun missingModelDuringScanReturnsTheSelectedPhotoToPreparation() = runTest(dispatcher) {
+        val scanner = FakeBagScanner().apply { result = Result.failure(BagScanFailure(BagScanIssue.ModelMissing)) }
+        val model = model(scanner = scanner)
+        runCurrent()
+        scanner.readiness = BagScannerReadiness.NeedsDownload(42)
+        val picked = ShelfPhoto(byteArrayOf(9), fromCamera = true)
+        model.onAction(ShelfAddAction.PhotoPicked(picked))
+        runCurrent()
+        assertEquals(ShelfAddStep.Preparing, model.state.value.step)
+        assertEquals(ShelfScannerStatus.NeedsDownload(42), model.state.value.scanner)
+        scanner.result = Result.success(scanResult(PackModerationStatus.Accepted))
+        model.onAction(ShelfAddAction.DownloadScanner)
+        runCurrent()
+        assertEquals(2, scanner.scans)
+        assertTrue(scanner.scannedPhotos.all { it === picked.bytes })
+    }
+
 
     @Test fun stagesTickOffAndAnAcceptedScanOpensTheForm() = runTest(dispatcher) {
         val gate = CompletableDeferred<Unit>()

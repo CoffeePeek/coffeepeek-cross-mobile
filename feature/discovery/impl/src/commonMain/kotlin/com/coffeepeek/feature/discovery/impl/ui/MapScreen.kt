@@ -52,6 +52,7 @@ import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import com.coffeepeek.feature.discovery.api.MapCanvasCallbacks
 import com.coffeepeek.feature.discovery.impl.map.canvasClusters
+import com.coffeepeek.feature.discovery.impl.map.canvasHeatmap
 import com.coffeepeek.feature.discovery.api.MapCanvasState
 import com.coffeepeek.feature.discovery.api.MapFocus
 import com.coffeepeek.feature.discovery.impl.map.MapAction
@@ -74,8 +75,9 @@ internal fun MapScreen(
     onToggleExpand: (() -> Unit)? = null,
     /** The canvas keeps this size while its container animates, so the map is not resized (and redrawn) on every frame. */
     canvasSize: DpSize? = null,
-    onOpenFilters: () -> Unit,
+    onOpenFilters: (() -> Unit)?,
     onSearchAction: (SearchAction) -> Unit,
+    showSearchField: Boolean = true,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     host.locationPermission(
@@ -102,7 +104,8 @@ internal fun MapScreen(
         }
     }
     val mapModifier = if (isPreview) modifier else modifier.mapInteraction { viewModel.onAction(MapAction.Interact) }
-    MapContent(state, host, callbacks, bottomClearance, dismissInput, viewModel::onAction, mapModifier, isPreview, toggleExpand, canvasSize, onOpenFilters, onSearchAction)
+    MapContent(state, host, callbacks, bottomClearance, dismissInput, viewModel::onAction, mapModifier,
+        isPreview, toggleExpand, canvasSize, onOpenFilters, onSearchAction, showSearchField)
 }
 
 @Composable
@@ -133,8 +136,9 @@ internal fun MapContent(
     isPreview: Boolean = false,
     onToggleExpand: (() -> Unit)? = null,
     canvasSize: DpSize? = null,
-    onOpenFilters: () -> Unit,
+    onOpenFilters: (() -> Unit)?,
     onSearchAction: (SearchAction) -> Unit,
+    showSearchField: Boolean = true,
 ) {
     Box(host.exposure(modifier.fillMaxSize(), if (isPreview) DiscoveryExposure.MapPreview else DiscoveryExposure.MapFull)) {
         host.mapCanvas(
@@ -142,6 +146,7 @@ internal fun MapContent(
                 state.markers, if (state.showZones && !isPreview) state.zones else emptyList(), state.selectedShop?.id, state.camera, state.myLocationRequest, isPreview,
                 canvasSize = canvasSize,
                 clusters = state.canvasClusters(isPreview),
+                heatmap = state.canvasHeatmap(isPreview),
             ),
             canvasCallbacks,
             Modifier.align(Alignment.Center).then(if (isPreview) Modifier.clearAndSetSemantics {} else Modifier),
@@ -154,14 +159,19 @@ internal fun MapContent(
         }
         MapSearchControls(state, dismissInput, onAction, onToggleExpand, onOpenFilters,
             Modifier.align(Alignment.TopCenter).statusBarsPadding().fillMaxWidth()
-                .padding(vertical = CoffeePeekDimens.spacing3).zIndex(2f), onSearchAction)
+                .padding(vertical = CoffeePeekDimens.spacing3).zIndex(2f), onSearchAction, showSearchField)
         MapOverlayControls(state, host, bottomClearance, dismissInput, onAction)
     }
 }
 
 @Preview
 @Composable
-private fun MapContentPreview() = CoffeePeekTheme {
+private fun MapContentPreview() = MapContentPreviewContent(false)
+
+@Preview @Composable private fun MapContentDarkPreview() = MapContentPreviewContent(true)
+
+@Composable
+private fun MapContentPreviewContent(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     MapContent(MapState(isTruncated = true), DiscoveryHost(), MapCanvasCallbacks({ _, _ -> }, {}, {}, {}, {}, {}),
         0.dp, {}, {}, onOpenFilters = {}, onSearchAction = {})
 }
