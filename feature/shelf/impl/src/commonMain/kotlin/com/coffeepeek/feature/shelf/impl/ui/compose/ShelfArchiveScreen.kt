@@ -12,6 +12,7 @@ import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -80,6 +81,10 @@ private fun ShelfArchiveList(state: ShelfArchiveState, onAction: (ShelfArchiveAc
     val retry = { onAction(ShelfArchiveAction.Retry) }
     LazyColumn(modifier.fillMaxSize(), listState,
         contentPadding = coffeePeekScrollContentPadding(PaddingValues(horizontal = CoffeePeekDimens.spacing4, vertical = CoffeePeekDimens.spacing2))) {
+        // A refresh over existing results keeps them on screen; the thin bar is the only sign of work.
+        if (state.loading && state.items.isNotEmpty()) item(key = "reload-hint") {
+            LinearProgressIndicator(Modifier.fillMaxWidth(), color = MaterialTheme.colorScheme.primary)
+        }
         when {
             state.loadFailed -> item(key = "error") { ShelfLoadError(stringResource(Res.string.shelf_archive_failed), retry) }
             state.loading && state.items.isEmpty() -> item(key = "loading") { ShelfArchiveLoader() }
