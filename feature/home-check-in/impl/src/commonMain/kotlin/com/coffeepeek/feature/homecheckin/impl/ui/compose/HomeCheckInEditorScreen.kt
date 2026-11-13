@@ -41,6 +41,7 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import org.jetbrains.compose.resources.pluralStringResource
@@ -226,6 +227,8 @@ private fun HomeCheckInEditorSaveError(state: HomeCheckInEditorState) {
 @Composable
 private fun HomeCheckInEditorFooter(state: HomeCheckInEditorState, enabled: Boolean,
     onAction: (HomeCheckInEditorAction) -> Unit, onSave: () -> Unit) {
+    // Leave the available height to the form while typing, including in iOS full-screen dialogs.
+    if (WindowInsets.ime.getBottom(LocalDensity.current) > 0) return
     Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         HomeCheckInEditorVisibility(state.draft.visibility == HomePreparationVisibility.Public, enabled) {
             onAction(HomeCheckInEditorAction.VisibilityChanged(if (it) HomePreparationVisibility.Public else HomePreparationVisibility.Private))

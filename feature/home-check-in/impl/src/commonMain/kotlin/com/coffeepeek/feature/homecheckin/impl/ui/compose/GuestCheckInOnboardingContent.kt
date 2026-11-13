@@ -23,6 +23,7 @@ import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -152,8 +153,13 @@ private fun GuestCheckInOnboardingActions(onRegister: () -> Unit, onSignIn: () -
                     .padding(horizontal = CoffeePeekDimens.spacing4, vertical = CoffeePeekDimens.spacing3),
                 verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2),
             ) {
-                CoffeePeekButton(stringResource(Res.string.home_check_in_onboarding_register), onRegister)
-                CoffeePeekOutlinedButton(onSignIn, Modifier.fillMaxWidth().heightIn(min = CoffeePeekDimens.buttonHeight)) {
+                CoffeePeekButton(stringResource(Res.string.home_check_in_onboarding_register), onRegister, useGlass = false)
+                CoffeePeekOutlinedButton(
+                    onSignIn,
+                    Modifier.fillMaxWidth().heightIn(min = CoffeePeekDimens.buttonHeight),
+                    colors = ButtonDefaults.outlinedButtonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                    useGlass = false,
+                ) {
                     Text(stringResource(Res.string.home_check_in_onboarding_sign_in), color = MaterialTheme.colorScheme.onSurface)
                 }
             }
