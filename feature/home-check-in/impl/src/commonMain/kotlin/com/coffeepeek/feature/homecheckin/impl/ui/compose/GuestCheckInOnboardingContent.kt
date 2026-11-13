@@ -1,6 +1,9 @@
 package com.coffeepeek.feature.homecheckin.impl.ui.compose
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -27,8 +30,14 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.semantics.CollectionInfo
 import androidx.compose.ui.semantics.collectionInfo
 import androidx.compose.ui.semantics.semantics
@@ -87,7 +96,9 @@ internal fun GuestCheckInOnboardingContent(
     pager: PagerState = rememberOnboardingPager(),
     hostInsets: WindowInsets = WindowInsets(0, 0, 0, 0),
 ) {
-    GuestCheckInOnboardingAutoAdvance(pager)
+    // A long press freezes the autoplay where it is, like holding a story.
+    var held by remember { mutableStateOf(false) }
+    GuestCheckInOnboardingAutoAdvance(pager, held)
     val colors = MaterialTheme.colorScheme
     val insets = hostInsets.union(WindowInsets.safeDrawing).union(WindowInsets.safeContent.only(WindowInsetsSides.Bottom))
     Column(
@@ -101,7 +112,7 @@ internal fun GuestCheckInOnboardingContent(
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Box(Modifier.weight(1f).fillMaxWidth()) {
-                GuestCheckInOnboardingPager(pager)
+                GuestCheckInOnboardingPager(pager, onHold = { held = it })
                 CoffeePeekIconButton(
                     onClick = onContinueAsGuest,
                     modifier = Modifier.align(Alignment.TopEnd).padding(CoffeePeekDimens.spacing2),
@@ -118,17 +129,27 @@ internal fun GuestCheckInOnboardingContent(
 }
 
 @Composable
-private fun GuestCheckInOnboardingPager(pager: PagerState) {
+private fun GuestCheckInOnboardingPager(pager: PagerState, onHold: (Boolean) -> Unit) {
     val pages = GuestCheckInOnboardingPage.entries
     val position = stringResource(Res.string.home_check_in_onboarding_step, pager.currentPage % pages.size + 1, pages.size)
     HorizontalPager(
         pager,
-        Modifier.fillMaxSize().semantics {
+        Modifier.fillMaxSize().onboardingHold(onHold).semantics {
             collectionInfo = CollectionInfo(1, pages.size)
             stateDescription = position
         },
     ) { page ->
         GuestCheckInOnboardingSlide(pages[page % pages.size])
+    }
+}
+
+/** Observes press-and-hold over the pager without consuming any pointer events. */
+private fun Modifier.onboardingHold(onHold: (Boolean) -> Unit) = pointerInput(Unit) {
+    awaitEachGesture {
+        awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
+        onHold(true)
+        waitForUpOrCancellation(PointerEventPass.Initial)
+        onHold(false)
     }
 }
 

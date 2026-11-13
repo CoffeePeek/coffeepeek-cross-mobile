@@ -16,21 +16,24 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
 
 @Composable
-internal fun GuestCheckInOnboardingAutoAdvance(pager: PagerState) {
+internal fun GuestCheckInOnboardingAutoAdvance(pager: PagerState, held: Boolean = false) {
     if (LocalInspectionMode.current) return
     val lifecycle = LocalLifecycleOwner.current.lifecycle
-    LaunchedEffect(lifecycle, pager) {
+    // Restarting on [held] both freezes the countdown mid-hold and starts it over on release,
+    // like a story: the slide never advances while the finger is down.
+    LaunchedEffect(lifecycle, pager, held) {
         lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
-            advanceOnboardingPages(pager)
+            advanceOnboardingPages(pager, held)
         }
     }
 }
 
-private suspend fun advanceOnboardingPages(pager: PagerState) = coroutineScope {
+private suspend fun advanceOnboardingPages(pager: PagerState, held: Boolean) = coroutineScope {
     val scrolling = snapshotFlow { pager.isScrollInProgress }
+    val paused = snapshotFlow { held || pager.isScrollInProgress }
     while (isActive) {
         if (pager.currentPage >= pager.pageCount - 1) return@coroutineScope
-        scrolling.first { !it }
+        paused.first { !it }
         val userScrolled = withTimeoutOrNull(2_000) { scrolling.first { it } } != null
         if (userScrolled || pager.isScrollInProgress) continue
 
