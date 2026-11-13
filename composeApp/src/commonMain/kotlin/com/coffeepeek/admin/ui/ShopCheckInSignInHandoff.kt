@@ -17,6 +17,6 @@ internal class ShopCheckInSignInHandoff {
         pending.compareAndSet(request, null)
     }
 
-    fun take(): Navigator.Screen.ShopDetail? =
-        pending.getAndUpdate { null }?.let { Navigator.Screen.ShopDetail(it.shopId, openCheckIn = true) }
+    fun take(): Navigator.Screen.ShopCheckInEditor? =
+        pending.getAndUpdate { null }?.let { Navigator.Screen.ShopCheckInEditor(it.shopId) }
 }

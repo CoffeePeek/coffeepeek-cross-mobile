@@ -37,7 +37,6 @@ import platform.UIKit.UIGraphicsImageRendererFormat
 import platform.UIKit.UISegmentedControl
 import platform.UIKit.UIUserInterfaceLayoutDirection
 import platform.UIKit.UIView
-import platform.UIKit.animateWithDuration
 import platform.UIKit.isAccessibilityElement
 import platform.darwin.NSObject
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme

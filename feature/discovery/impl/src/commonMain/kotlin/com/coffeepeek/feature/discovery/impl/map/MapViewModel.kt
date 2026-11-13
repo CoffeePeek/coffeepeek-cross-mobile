@@ -57,6 +57,7 @@ internal class MapViewModel(
     private val analytics: DiscoveryAnalytics,
     private val account: DiscoveryAccount,
     favorites: DiscoveryFavorites,
+    private val requestLocationOnMapInteraction: Boolean = true,
 ) : MviViewModel<MapState, MapAction, MapEvent>(MapState()) {
     private var cityReady = false
     private var zonesCityId: String? = null
@@ -143,6 +144,7 @@ internal class MapViewModel(
     // ---- what comes from outside ----
 
     private fun requestLocationPermission(locate: Boolean = false) {
+        if (!locate && !requestLocationOnMapInteraction) return
         if (locate) locateAfterPermission = true
         if (permissionRequestPending || (!locate && currentState.locationPermissionRequest > 0)) return
         permissionRequestPending = true

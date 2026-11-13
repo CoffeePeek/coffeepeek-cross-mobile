@@ -91,7 +91,6 @@ internal class ShopDetailViewModel(
                 load()
             }
             ShopDetailAction.Back -> emitEvent(ShopDetailEvent.Back)
-            ShopDetailAction.ChooseAnotherShop -> emitEvent(ShopDetailEvent.ChooseAnotherShop)
             ShopDetailAction.ReportShop -> {
                 val context = detailContext() ?: return
                 if (currentState.isLoggedIn) {
@@ -400,6 +399,6 @@ internal class ShopDetailViewModel(
     private fun detailContext(): ShopDetailContext? {
         val overview = currentState.details?.overview ?: return null
         // The current details API maps address.slug to overview.id; it exposes no separate numeric/GUID ID.
-        return overview.id.takeIf(String::isNotBlank)?.let { ShopDetailContext(shopId, it, overview.title) }
+        return overview.id.takeIf(String::isNotBlank)?.let { ShopDetailContext(shopId, it, overview.title, overview.address) }
     }
 }

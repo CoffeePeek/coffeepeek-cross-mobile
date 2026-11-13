@@ -5,4 +5,5 @@ data class ShopDetailContext(
     val shopId: String,
     val shopSlug: String,
     val shopName: String,
+    val shopAddress: String? = null,
 )

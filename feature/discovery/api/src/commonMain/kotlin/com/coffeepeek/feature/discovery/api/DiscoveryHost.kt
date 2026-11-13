@@ -50,15 +50,13 @@ interface DiscoveryTabEntry {
         onOpenShop: (slug: String) -> Unit,
         onSignIn: () -> Unit,
         onAddShop: () -> Unit,
-        /** Tells the host that the map covers the screen, so it can hide the floating navigation and the create button. */
+        /** Tells the host that the map covers the screen, so it can hide the floating navigation. */
         onMapExpandedChange: (Boolean) -> Unit,
         modifier: Modifier,
         bottomClearance: Dp,
         /** A shop to bring into view on the expanded map; [onFocusConsumed] tells the caller it was taken. */
         focus: MapFocus?,
         onFocusConsumed: () -> Unit,
-        /** App-owned check-in action, placed in the landing list only; never over search, map or roasters. */
-        checkInAction: @Composable () -> Unit,
         /** Transient taps on the already selected Search tab; ordinary tab changes must not emit. */
         reselections: kotlinx.coroutines.flow.Flow<Unit>,
         onContinueCheckIn: (() -> Unit)? = null,

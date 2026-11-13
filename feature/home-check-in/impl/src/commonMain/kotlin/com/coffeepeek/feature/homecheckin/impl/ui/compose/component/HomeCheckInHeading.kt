@@ -5,9 +5,9 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 import com.coffeepeek.feature.homecheckin.impl.resources.Res
 import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_home
 import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_not_submitted
-import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_pending
-import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_private
-import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_public
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_saved_pending
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_saved_private
+import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_saved_published
 import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_rejected
 import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_title_fallback
 import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_unknown_moderation
@@ -54,11 +54,11 @@ internal fun HomeCheckInHeading(entry: HomePreparation, dateLabel: String) {
     }
 }
 
-private fun HomePreparation.visibilityLabelResource(): StringResource? = when (visibility) {
-    HomePreparationVisibility.Private -> Res.string.home_check_in_private
+internal fun HomePreparation.visibilityLabelResource(): StringResource? = when (visibility) {
+    HomePreparationVisibility.Private -> Res.string.home_check_in_saved_private
     HomePreparationVisibility.Public -> when (moderation) {
-        HomePreparationModeration.Approved -> Res.string.home_check_in_public
-        HomePreparationModeration.Pending -> Res.string.home_check_in_pending
+        HomePreparationModeration.Approved -> Res.string.home_check_in_saved_published
+        HomePreparationModeration.Pending -> Res.string.home_check_in_saved_pending
         HomePreparationModeration.Rejected -> Res.string.home_check_in_rejected
         HomePreparationModeration.NotSubmitted -> Res.string.home_check_in_not_submitted
         HomePreparationModeration.Unknown -> Res.string.home_check_in_unknown_moderation

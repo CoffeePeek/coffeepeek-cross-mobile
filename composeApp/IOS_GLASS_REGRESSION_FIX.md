@@ -56,3 +56,16 @@ available; previews and Android checks do not certify UIKit behaviour.
   tests are retained unchanged for the next run.
 - No device run: the changes are iOS-only; Android assembly does not establish
   UIKit rendering/touch acceptance. The iPhone matrix above remains open.
+
+## iOS 17 and 18 material fallback (2026-11-12)
+
+On `c5b498e0f` plus the material changes, UIKit search and segmented controls,
+standard glass buttons and both tab bar hosts share `UIBlurEffect.Style.systemMaterial`.
+Navigation, map and favorite icon buttons now use the design system's glass
+button configuration. Prominent controls use the accent fill on older iOS.
+
+Both design system iOS KLIB builds and `verifyFunctionBodyLimits` passed. The
+shared UIKit material and tab bar setup also compiled together for device and
+simulator. Visual checks on iOS 17/18 still need to cover tabs and buttons over
+scrolling text or photos, search, segments, menus, and map controls in both
+themes. Check the same controls with native Liquid Glass on iOS 26.

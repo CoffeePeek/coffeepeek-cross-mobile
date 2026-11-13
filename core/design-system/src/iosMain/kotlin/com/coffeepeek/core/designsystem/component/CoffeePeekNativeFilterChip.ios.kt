@@ -27,14 +27,14 @@ internal actual fun CoffeePeekNativeFilterChip(
     val colors = MaterialTheme.colorScheme
     val image = (leadingIcon ?: trailingIcon)?.let { coffeePeekNativeImage(it) }
     CoffeePeekNativeGlassView(
-        factory = { UIButton.buttonWithConfiguration(glassButtonConfiguration(),
+        factory = { UIButton.buttonWithConfiguration(coffeePeekGlassButtonConfiguration(),
             UIAction.actionWithHandler { callback.value() }) },
         modifier = modifier.heightIn(min = CoffeePeekDimens.glassControlSize),
         update = { button ->
             button.overrideUserInterfaceStyle = coffeePeekUserInterfaceStyle(colors.background)
             button.backgroundColor = UIColor.clearColor
             button.tintColor = colors.primary.toUIColor()
-            button.configuration = glassButtonConfiguration(prominent = selected).apply {
+            button.configuration = coffeePeekGlassButtonConfiguration(prominent = selected).apply {
                 title = label
                 this.image = image?.imageWithTintColor(
                     (if (selected) colors.onPrimary else colors.primary).toUIColor(), UIImageRenderingModeAlwaysOriginal)

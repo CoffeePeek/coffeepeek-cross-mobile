@@ -8,6 +8,9 @@ interface SettingsScreenRenderer {
     fun Tab()
 
     @Composable
+    fun GuestCard()
+
+    @Composable
     fun Theme()
 
     @Composable

@@ -14,7 +14,9 @@ internal class FeatureShopCheckInFormRenderer(
         shopId: String,
         shopSlug: String?,
         shopName: String,
+        shopAddress: String?,
         onDismiss: () -> Unit,
+        onChangeShop: () -> Unit,
         onSubmitted: () -> Unit,
         onGoToFeed: () -> Unit,
         onOpenHistory: () -> Unit,
@@ -23,6 +25,7 @@ internal class FeatureShopCheckInFormRenderer(
             LaunchedEffect(Unit) { onDismiss() }
             return
         }
-        entry.Content(shopId, shopSlug, shopName, onDismiss, onSubmitted, onGoToFeed, onOpenHistory)
+        entry.Content(shopId, shopSlug, shopName, shopAddress, onDismiss, onChangeShop,
+            onSubmitted, onGoToFeed, onOpenHistory)
     }
 }

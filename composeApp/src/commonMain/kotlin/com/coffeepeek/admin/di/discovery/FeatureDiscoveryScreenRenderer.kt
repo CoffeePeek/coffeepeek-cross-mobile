@@ -13,8 +13,6 @@ import com.coffeepeek.admin.settings.CityPreference
 import com.coffeepeek.admin.di.collections.FavoriteCollectionsPrompt
 import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.ui.component.LocalFloatingNavClearance
-import com.coffeepeek.admin.ui.screen.checkins.CheckInCreateButton
-import com.coffeepeek.admin.ui.screen.main.CheckInTabContent
 import com.coffeepeek.admin.ui.screen.main.DiscoveryScreenRenderer
 import com.coffeepeek.admin.ui.screen.roaster.RoasterScreenRenderer
 import com.coffeepeek.core.session.SessionReader
@@ -38,28 +36,25 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import org.koin.compose.koinInject
 
-/** Both platforms use the migrated search; navigation, native map and global creation remain app-owned. */
+/** Both platforms use the migrated search; navigation and native map remain app-owned. */
 internal class FeatureDiscoveryScreenRenderer(private val entry: DiscoveryTabEntry) : DiscoveryScreenRenderer {
     @Composable
     override fun Tab(onMapExpandedChange: (Boolean) -> Unit, reselections: Flow<Unit>) {
         val pendingMapFocus by Navigator.pendingMapFocus.collectAsState()
         val clearance = LocalFloatingNavClearance.current
         val resumeCheckIn = checkInResumeAction()
-        CheckInTabContent(showCreateButton = false) { onCreateCheckIn ->
-            entry.Content(
-                onOpenShop = { Navigator.navigate(Navigator.Screen.ShopDetail(it)) },
-                onSignIn = { Navigator.navigate(Navigator.Screen.Auth) },
-                onAddShop = { Navigator.navigate(Navigator.Screen.AddShop) },
-                onMapExpandedChange = onMapExpandedChange,
-                modifier = Modifier,
-                bottomClearance = clearance,
-                focus = pendingMapFocus?.let { MapFocus(it.shopId, it.title, Coordinates(it.latitude, it.longitude)) },
-                onFocusConsumed = Navigator::consumeMapFocus,
-                checkInAction = { CheckInCreateButton(onClick = onCreateCheckIn) },
-                reselections = reselections,
-                onContinueCheckIn = resumeCheckIn,
-            )
-        }
+        entry.Content(
+            onOpenShop = { Navigator.navigate(Navigator.Screen.ShopDetail(it)) },
+            onSignIn = { Navigator.navigate(Navigator.Screen.Auth) },
+            onAddShop = { Navigator.navigate(Navigator.Screen.AddShop) },
+            onMapExpandedChange = onMapExpandedChange,
+            modifier = Modifier,
+            bottomClearance = clearance,
+            focus = pendingMapFocus?.let { MapFocus(it.shopId, it.title, Coordinates(it.latitude, it.longitude)) },
+            onFocusConsumed = Navigator::consumeMapFocus,
+            reselections = reselections,
+            onContinueCheckIn = resumeCheckIn,
+        )
     }
 }
 
@@ -83,7 +78,7 @@ private fun checkInResumeAction(): (() -> Unit)? {
     return {
         val current = sessions.peekSession()
         if (current?.userId == owner && sessions.isActiveSession(current)) {
-            Navigator.navigate(Navigator.Screen.ShopDetail(slug, openCheckIn = true))
+            Navigator.navigate(Navigator.Screen.ShopCheckInEditor(slug))
         }
     }
 }

@@ -52,7 +52,6 @@ private class DefaultShopDetailEntry(
     override fun Content(
         shopId: String,
         sessionGeneration: Int,
-        forCheckIn: Boolean,
         formatCheckInDate: (String) -> String,
         formatMenuDate: (String) -> String,
         formatDistance: (Double, Double) -> String?,
@@ -70,7 +69,7 @@ private class DefaultShopDetailEntry(
         }
         CompositionLocalProvider(LocalShopAnalytics provides analytics, LocalShopAuthorImage provides authorImage, LocalShopCheckInImage provides checkInImage) {
             ShopDetailScreen(viewModel = model, sessionGeneration = sessionGeneration,
-                formatDistance = formatDistance, forCheckIn = forCheckIn,
+                formatDistance = formatDistance,
                 formatCheckInDate = formatCheckInDate, formatMenuDate = formatMenuDate,
                 refreshGeneration = refreshGeneration, openCheckIn = openCheckIn, onEvent = { event ->
                     event.toPublicEffect(unknownAuthor)?.let(onEffect)
@@ -81,7 +80,6 @@ private class DefaultShopDetailEntry(
 
 private fun ShopDetailEvent.toPublicEffect(unknownAuthor: String): ShopDetailEffect? = when (this) {
     ShopDetailEvent.Back -> ShopDetailEffect.Back
-    ShopDetailEvent.ChooseAnotherShop -> ShopDetailEffect.ChooseAnotherShop
     ShopDetailEvent.SignIn -> ShopDetailEffect.SignIn
     is ShopDetailEvent.FavoriteRequiresSignIn -> ShopDetailEffect.FavoriteRequiresSignIn(shopId, desired)
     is ShopDetailEvent.SelectFavoriteCollections -> ShopDetailEffect.SelectFavoriteCollections(shopId)

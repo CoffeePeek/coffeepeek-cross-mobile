@@ -15,7 +15,6 @@ internal sealed interface ShopDetailEvent {
     data object VoteFailed : ShopDetailEvent
     data object FavoriteFailed : ShopDetailEvent
     data class CreateCheckIn(val shop: ShopDetailContext) : ShopDetailEvent
-    data object ChooseAnotherShop : ShopDetailEvent
     data class ReportShop(val shop: ShopDetailContext) : ShopDetailEvent
     data class OpenCheckIns(val shopId: String) : ShopDetailEvent
     data class ReportCheckIn(val checkInId: String) : ShopDetailEvent

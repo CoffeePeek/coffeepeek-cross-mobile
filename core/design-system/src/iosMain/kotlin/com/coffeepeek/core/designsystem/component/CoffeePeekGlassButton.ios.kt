@@ -16,14 +16,9 @@ import androidx.compose.ui.viewinterop.UIKitView
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import dev.chrisbanes.haze.HazeState
 import platform.UIKit.UIAction
-import platform.UIKit.UIBackgroundConfiguration
-import platform.UIKit.UIBlurEffect
-import platform.UIKit.UIBlurEffectStyle
 import platform.UIKit.UIButton
-import platform.UIKit.UIButtonConfiguration
 import platform.UIKit.UIButtonConfigurationCornerStyleCapsule
 import platform.UIKit.UIColor
-import platform.UIKit.UIDevice
 import platform.UIKit.UIImage
 import platform.UIKit.UIUserInterfaceStyle
 import platform.UIKit.UIView
@@ -42,7 +37,7 @@ actual fun CoffeePeekGlassButton(
     val loaderParent = remember { mutableStateOf<UIView?>(null) }
     UIKitView(
         factory = {
-            UIButton.buttonWithConfiguration(glassButtonConfiguration(), UIAction.actionWithHandler {
+            UIButton.buttonWithConfiguration(coffeePeekGlassButtonConfiguration(), UIAction.actionWithHandler {
                 if (currentEnabled.value) currentOnClick.value()
             })
         },
@@ -51,7 +46,7 @@ actual fun CoffeePeekGlassButton(
         update = { button ->
             button.overrideUserInterfaceStyle = coffeePeekUserInterfaceStyle(colors.background)
             button.backgroundColor = UIColor.clearColor
-            button.configuration = glassButtonConfiguration().apply {
+            button.configuration = coffeePeekGlassButtonConfiguration().apply {
                 title = text
                 image = if (isLoading) coffeePeekLoaderPlaceholderImage() else when (leadingIcon) {
                     CoffeePeekGlassButtonIcon.Check -> UIImage.systemImageNamed("checkmark")
@@ -69,23 +64,6 @@ actual fun CoffeePeekGlassButton(
         },
     )
     CoffeePeekNativeLoader(loaderParent.value, colors.onSurface)
-}
-
-internal val coffeePeekLiquidGlassAvailable: Boolean
-    get() = (UIDevice.currentDevice.systemVersion.substringBefore('.').toIntOrNull() ?: 0) >= 26
-
-internal fun glassButtonConfiguration(prominent: Boolean = false): UIButtonConfiguration {
-    if (coffeePeekLiquidGlassAvailable) {
-        return if (prominent) UIButtonConfiguration.prominentGlassButtonConfiguration()
-        else UIButtonConfiguration.glassButtonConfiguration()
-    }
-    if (prominent) return UIButtonConfiguration.filledButtonConfiguration()
-    return UIButtonConfiguration.plainButtonConfiguration().apply {
-        background = UIBackgroundConfiguration.clearConfiguration().apply {
-            backgroundColor = UIColor.clearColor
-            visualEffect = UIBlurEffect.effectWithStyle(UIBlurEffectStyle.UIBlurEffectStyleRegular)
-        }
-    }
 }
 
 internal fun coffeePeekUserInterfaceStyle(background: Color): UIUserInterfaceStyle =

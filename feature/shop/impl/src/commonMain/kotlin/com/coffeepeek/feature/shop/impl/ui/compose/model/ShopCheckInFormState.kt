@@ -2,6 +2,7 @@ package com.coffeepeek.feature.shop.impl.ui.compose.model
 
 import com.coffeepeek.feature.shop.domain.model.ShopCheckInCreateInput
 import com.coffeepeek.feature.shop.domain.model.ShopConsumedDrinkOption
+import com.coffeepeek.feature.shop.domain.model.ShopCheckInPublication
 import com.coffeepeek.feature.shop.domain.usecase.ShopCheckInValidationError
 
 internal data class ShopCheckInFormState(
@@ -16,6 +17,7 @@ internal data class ShopCheckInFormState(
     val drinksFailed: Boolean = false,
     val isSubmitting: Boolean = false,
     val submitted: Boolean = false,
+    val publication: ShopCheckInPublication = ShopCheckInPublication.Unknown,
     val deliveryUnconfirmed: Boolean = false,
     val submitFailure: ShopCheckInSubmitFailure? = null,
     val validationError: ShopCheckInValidationError? = null,

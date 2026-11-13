@@ -8,6 +8,8 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import com.coffeepeek.core.session.SessionReader
+import com.coffeepeek.admin.di.checkinhistory.CheckInHistorySession
+import com.coffeepeek.feature.checkinhistory.domain.repository.CheckInHistoryRepository
 import com.coffeepeek.feature.shop.api.ShopCheckInCreateEntry
 import com.coffeepeek.feature.shop.domain.repository.ShopCheckInRepository
 import com.coffeepeek.feature.shop.impl.createShopCheckInCreateEntry
@@ -20,6 +22,7 @@ import kotlinx.coroutines.flow.catch
 internal class SessionShopCheckInEntry(
     private val sessions: SessionReader,
     private val repository: ShopCheckInRepository,
+    private val history: CheckInHistoryRepository,
     private val drafts: AppShopCheckInDraftStore,
     private val dates: ShopCheckInDateFormatter,
     private val photos: ShopCheckInPhotoPicker,
@@ -30,16 +33,19 @@ internal class SessionShopCheckInEntry(
         shopId: String,
         shopSlug: String,
         shopName: String,
+        shopAddress: String?,
         onDismiss: () -> Unit,
+        onChangeShop: () -> Unit,
         onSubmitted: () -> Unit,
         onGoToFeed: () -> Unit,
         onOpenHistory: () -> Unit,
     ) {
         val lease = remember(shopId, shopSlug) { ShopCheckInSession(sessions, repository, onCheckInCreated) }
+        val historyLease = remember(lease) { CheckInHistorySession(sessions) }
         val boundDrafts = remember(lease) {
             if (lease.isCurrent()) drafts.forShop(shopId, shopSlug, checkNotNull(lease.userId)) else null
         }
-        DisposableEffect(lease) { onDispose { lease.revoke() } }
+        DisposableEffect(lease, historyLease) { onDispose { lease.revoke(); historyLease.revoke() } }
         val session by remember(sessions) {
             sessions.observeSession().catch { error ->
                 if (error is CancellationException) throw error
@@ -56,11 +62,13 @@ internal class SessionShopCheckInEntry(
         }
         val entry = remember(lease) {
             createShopCheckInCreateEntry(lease, { _, _ -> boundDrafts }, dates, photos,
-                analytics = { AppShopCheckInAnalytics(lease::isCurrent) })
+                analytics = { AppShopCheckInAnalytics(lease::isCurrent) },
+                publication = HistoryShopCheckInPublicationReader(historyLease.bind(history)))
         }
         AnalyticsOverlay { entry.Content(
-            shopId, shopSlug, shopName,
+            shopId, shopSlug, shopName, shopAddress,
             onDismiss = onDismiss,
+            onChangeShop = onChangeShop,
             onSubmitted = { if (lease.isCurrent()) onSubmitted() },
             onGoToFeed = { if (lease.isCurrent()) onGoToFeed() },
             onOpenHistory = { if (lease.isCurrent()) onOpenHistory() },
