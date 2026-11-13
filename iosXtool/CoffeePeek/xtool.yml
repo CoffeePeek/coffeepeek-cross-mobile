@@ -7,3 +7,4 @@ resources:
   - .build/launch-resources
   - ../../iosApp/iosApp/ru.lproj
   - ../../iosApp/iosApp/be.lproj
+  - ../../iosApp/iosApp/PrivacyInfo.xcprivacy

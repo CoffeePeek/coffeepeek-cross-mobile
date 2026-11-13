@@ -19,6 +19,7 @@
 		A10000000000000000000011 /* FirebaseMessaging in Frameworks */ = {isa = PBXBuildFile; productRef = A90000000000000000000009 /* FirebaseMessaging */; };
 		A10000000000000000000012 /* ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CoffeePeekLaunchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000013 /* ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CoffeePeekLaunchView.swift */; };
 		A10000000000000000000013 /* CoffeePeekNativeGlass.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000014 /* CoffeePeekNativeGlass.swift */; };
+		A10000000000000000000014 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000015 /* PrivacyInfo.xcprivacy */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -37,6 +38,7 @@
 		A20000000000000000000012 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		A20000000000000000000013 /* ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CoffeePeekLaunchView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CoffeePeekLaunchView.swift; sourceTree = "<group>"; };
 		A20000000000000000000014 /* CoffeePeekNativeGlass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CoffeePeekNativeGlass.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CoffeePeekNativeGlass.swift; sourceTree = "<group>"; };
+		A20000000000000000000015 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -74,6 +76,7 @@
 				A20000000000000000000009 /* ../../iosXtool/CoffeePeek/Sources/CoffeePeek/MapLibreMapProvider.swift */,
 				A20000000000000000000002 /* Assets.xcassets */,
 				A20000000000000000000003 /* Info.plist */,
+				A20000000000000000000015 /* PrivacyInfo.xcprivacy */,
 				A20000000000000000000012 /* GoogleService-Info.plist */,
 				37A6BA4C5AAF06904D9C889E /* InfoPlist.strings */,
 			);
@@ -186,6 +189,7 @@
 				A10000000000000000000002 /* Assets.xcassets in Resources */,
 				A10000000000000000000009 /* GoogleService-Info.plist in Resources */,
 				6B2031D9196667F65FD358E5 /* InfoPlist.strings in Resources */,
+				A10000000000000000000014 /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

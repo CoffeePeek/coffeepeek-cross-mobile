@@ -14,4 +14,5 @@ actual object AppConfig {
     actual val versionName: String = BuildConfig.VERSION_NAME
     actual val baseUrl: String = BuildConfig.API_BASE_URL
     actual val isDebug: Boolean = BuildConfig.DEBUG
+    actual val storeReviewsEnabled: Boolean = BuildConfig.FLAVOR == "play" && BuildConfig.BUILD_TYPE != "sandbox"
 }
