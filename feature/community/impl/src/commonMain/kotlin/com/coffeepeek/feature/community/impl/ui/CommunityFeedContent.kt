@@ -58,9 +58,8 @@ private class PhotoPreview(val generation: Long, val thumbnails: List<String>, v
 @Composable
 internal fun CommunityFeedContent(state: CommunityState, onAction: (CommunityAction) -> Unit,
     host: CommunityHost, blockActions: AuthorBlockActions, callbacks: CommunityCallbacks,
-    snackbar: SnackbarHostState, bottomClearance: Dp, onRefreshed: () -> Unit,
+    snackbar: SnackbarHostState, bottomClearance: Dp, listState: LazyListState, onRefreshed: () -> Unit,
     floatingAction: @Composable BoxScope.(CommunityFloating) -> Unit) {
-    val listState = rememberLazyListState()
     val guest = state.isLoggedIn == false
     val posts = if (guest) state.items.take(2) else state.items
     var preview by remember { mutableStateOf<PhotoPreview?>(null) }
@@ -242,7 +241,7 @@ private fun CommunityFeedPreview(dark: Boolean, guest: Boolean = false) = Coffee
         object : AuthorBlockActions {
             override fun requestBlock(author: AuthorReference) = Unit
             override fun requestUnblock(author: AuthorReference) = Unit
-        }, CommunityCallbacks({}, { _, _, _ -> }, {}, {}, {}, {}), SnackbarHostState(), 0.dp, {}, {})
+        }, CommunityCallbacks({}, { _, _, _ -> }, {}, {}, {}, {}), SnackbarHostState(), 0.dp, rememberLazyListState(), {}, {})
 }
 @Preview @Composable private fun CommunityFeedLightPreview() = CommunityFeedPreview(false)
 @Preview @Composable private fun CommunityFeedDarkPreview() = CommunityFeedPreview(true)

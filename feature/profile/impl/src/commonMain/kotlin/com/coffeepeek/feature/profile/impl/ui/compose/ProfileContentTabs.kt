@@ -13,7 +13,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.movableContentOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -51,10 +53,16 @@ internal fun ProfileContentTabs(
     }
     val scroll = rememberScrollState()
     val select: (ProfileContentTab) -> Unit = { selectedName = it.name }
+    // The editable shelf owns its scroll container. Move the header with its calendar state and effects.
+    val tabHeader = remember(stateKey) {
+        movableContentOf { tab: ProfileContentTab, onSelect: (ProfileContentTab) -> Unit, content: @Composable () -> Unit ->
+            ProfileTabHeader(tab, onSelect, content)
+        }
+    }
     if (selected == ProfileContentTab.Shelf && ownerShelf != null) {
-        ownerShelf.content(modifier) { ProfileTabHeader(selected, select, header) }
+        ownerShelf.content(modifier) { tabHeader(selected, select, header) }
     } else Column(modifier.fillMaxWidth().verticalScroll(scroll), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        ProfileTabHeader(selected, select, header)
+        tabHeader(selected, select, header)
         when (selected) {
             ProfileContentTab.CheckIns -> checkIns()
             ProfileContentTab.Collections -> collections()
@@ -82,7 +90,15 @@ private fun ProfileContentTabsPreview(dark: Boolean) = CoffeePeekTheme(darkTheme
     Surface {
         ProfileContentTabs("preview", { Text(stringResource(Res.string.profile_section_check_ins)) },
             { Text(stringResource(Res.string.profile_section_favorites)) },
-            { Text(stringResource(Res.string.profile_section_shelf)) }) {
+            shelf = {}, ownerShelf = OwnProfileShelf(
+                content = { modifier, header ->
+                    Column(modifier.verticalScroll(rememberScrollState())) {
+                        header()
+                        Text(stringResource(Res.string.profile_section_shelf))
+                    }
+                },
+                openRequested = { false }, onOpened = {},
+            )) {
             Text(stringResource(Res.string.profile_title), Modifier.padding(horizontal = 16.dp))
         }
     }
