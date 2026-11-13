@@ -19,13 +19,18 @@ import com.coffeepeek.core.designsystem.modifier.CoffeePeekGlassIconButton
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.discovery.api.DiscoveryHost
+import com.coffeepeek.feature.discovery.api.MapCanvasCallbacks
 import com.coffeepeek.feature.discovery.domain.model.ShopSummary
+import com.coffeepeek.feature.discovery.impl.map.MapAction
+import com.coffeepeek.feature.discovery.impl.map.MapState
 import com.coffeepeek.feature.discovery.impl.map.MapViewModel
 import com.coffeepeek.feature.discovery.impl.search.*
 import com.coffeepeek.feature.discovery.impl.resources.*
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 
 @Composable
 internal fun CheckInShopPickerScreen(
@@ -42,7 +47,15 @@ internal fun CheckInShopPickerScreen(
         value = result.getOrNull().orEmpty()
     }
     var showMap by rememberSaveable { mutableStateOf(false) }
-    host.locationPermission(1, { search.onAction(SearchAction.LocationGranted) }, { search.onAction(SearchAction.LocationDenied) })
+    host.locationPermission(state.locationPermissionRequest,
+        { search.onAction(SearchAction.LocationGranted) }, { search.onAction(SearchAction.LocationDenied) })
+    LaunchedEffect(search, map) {
+        search.state.map { it.criteria }.distinctUntilChanged().collect { map.onAction(MapAction.SyncCriteria(it)) }
+    }
+    LaunchedEffect(search, map, showMap) {
+        search.onAction(SearchAction.PresentationChanged(!showMap))
+        map.onAction(MapAction.PresentationChanged(showMap))
+    }
     LaunchedEffect(search) {
         search.events.collect { event ->
             when (event) {
@@ -52,33 +65,43 @@ internal fun CheckInShopPickerScreen(
         }
     }
     CoffeePeekBackHandler(onBack = onBack)
-    CheckInShopPickerContent(state, host, showMap, { showMap = it }, search::onAction, onClose, modifier, recent) { mapModifier ->
-        MapScreen(map, host, select, 0.dp, null, {}, mapModifier, onOpenFilters = {}, onSearchAction = search::onAction)
+    CheckInShopPickerContent(state, showMap, { showMap = it }, search::onAction, onClose, modifier, recent) { mapModifier, filters ->
+        MapScreen(map, host, select, 0.dp, null, {}, mapModifier,
+            onOpenFilters = null, onSearchAction = search::onAction, belowSearch = filters)
     }
 }
 
 @Composable
 internal fun CheckInShopPickerContent(
-    state: SearchState, host: DiscoveryHost, showMap: Boolean, onShowMap: (Boolean) -> Unit,
+    state: SearchState, showMap: Boolean, onShowMap: (Boolean) -> Unit,
     onAction: (SearchAction) -> Unit, onClose: () -> Unit, modifier: Modifier = Modifier,
     recentShops: List<ShopSummary> = emptyList(),
-    mapContent: @Composable (Modifier) -> Unit = {},
+    mapContent: @Composable (Modifier, @Composable () -> Unit) -> Unit = { _, _ -> },
 ) {
     val focus = LocalFocusManager.current
     val keyboard = LocalSoftwareKeyboardController.current
     val list = rememberLazyListState()
     LaunchedEffect(state.query, state.filters.nearbyOnly) { list.scrollToItem(0) }
-    val dismissInput = { focus.clearFocus(force = true); keyboard?.hide(); Unit }
+    val filters: @Composable () -> Unit = {
+        PickerFilters(state, showMap, { visible ->
+            focus.clearFocus(force = true)
+            keyboard?.hide()
+            onShowMap(visible)
+        }, onAction)
+        if (state.nearbyRequested || state.locationUnavailable) {
+            DiscoveryLocationNotice(state.nearbyRequested, { onAction(SearchAction.DismissLocationFailure) })
+        }
+    }
     Scaffold(modifier = modifier, topBar = { PickerHeader(onClose) },
         containerColor = MaterialTheme.colorScheme.background) { insets ->
         Column(Modifier.fillMaxSize().padding(insets).consumeWindowInsets(insets)) {
-            PickerFilters(state, showMap, { dismissInput(); onShowMap(it) }, onAction)
-            if (showMap) mapContent(Modifier.weight(1f))
+            if (showMap) mapContent(Modifier.weight(1f), filters)
             else {
                 CoffeePeekSearchField(state.query, { onAction(SearchAction.Query(it)) },
                     placeholder = stringResource(Res.string.discovery_picker_search),
                     clearDescription = stringResource(Res.string.discovery_search_clear),
                     modifier = Modifier.fillMaxWidth().padding(horizontal = CoffeePeekDimens.spacing4, vertical = CoffeePeekDimens.spacing2))
+                filters()
                 CheckInShopPickerList(state, recentShops, onAction, list, Modifier.weight(1f))
             }
         }
@@ -103,10 +126,10 @@ private fun PickerFilters(state: SearchState, showMap: Boolean, onShowMap: (Bool
     Row(Modifier.fillMaxWidth().padding(horizontal = CoffeePeekDimens.spacing4)
         .horizontalScroll(rememberScrollState()).padding(vertical = CoffeePeekDimens.spacing2),
         horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2)) {
-        if (state.canUseNearby) CoffeePeekFilterChip(
+        CoffeePeekFilterChip(
             selected = state.filters.nearbyOnly && !showMap, onClick = {
                 onShowMap(false)
-                onAction(SearchAction.ToggleNearby)
+                if (!showMap || !state.filters.nearbyOnly) onAction(SearchAction.ToggleNearby)
             }, label = stringResource(Res.string.discovery_picker_nearby), leadingIcon = CoffeePeekIcons.Location)
         CoffeePeekFilterChip(selected = showMap, onClick = { onShowMap(!showMap) },
             label = stringResource(if (showMap) Res.string.discovery_picker_list else Res.string.discovery_picker_map),
@@ -115,11 +138,15 @@ private fun PickerFilters(state: SearchState, showMap: Boolean, onShowMap: (Bool
 }
 
 @Composable
-private fun CheckInShopPickerPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
-    CheckInShopPickerContent(SearchState(isLoading = false, canUseNearby = true,
-        shops = listOf(ShopSummary(id = "preview", title = "CoffeePeek", rating = 4.7))),
-        DiscoveryHost(), false, {}, {}, {})
+private fun CheckInShopPickerPreview(dark: Boolean, showMap: Boolean = false) = CoffeePeekTheme(darkTheme = dark) {
+    val state = SearchState(isLoading = false, shops = listOf(ShopSummary(id = "preview", title = "CoffeePeek")))
+    CheckInShopPickerContent(state, showMap, {}, {}, {}) { mapModifier, filters ->
+        MapContent(MapState(), DiscoveryHost(), MapCanvasCallbacks({ _, _ -> }, {}, {}, {}, {}, {}),
+            0.dp, {}, {}, mapModifier, onOpenFilters = null, onSearchAction = {}, belowSearch = filters)
+    }
 }
 
 @Preview @Composable private fun CheckInShopPickerLightPreview() = CheckInShopPickerPreview(false)
 @Preview @Composable private fun CheckInShopPickerDarkPreview() = CheckInShopPickerPreview(true)
+@Preview @Composable private fun CheckInShopPickerMapLightPreview() = CheckInShopPickerPreview(false, showMap = true)
+@Preview @Composable private fun CheckInShopPickerMapDarkPreview() = CheckInShopPickerPreview(true, showMap = true)

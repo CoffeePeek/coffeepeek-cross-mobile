@@ -23,6 +23,7 @@ import com.coffeepeek.feature.settings.impl.ui.ThemeViewModel
 import com.coffeepeek.feature.settings.impl.ui.UsagePolicyViewModel
 import com.coffeepeek.feature.settings.impl.ui.compose.CityScreen
 import com.coffeepeek.feature.settings.impl.ui.compose.SettingsNavigation
+import com.coffeepeek.feature.settings.impl.ui.compose.SettingsGuestCard
 import com.coffeepeek.feature.settings.impl.ui.compose.SettingsScreen
 import com.coffeepeek.feature.settings.impl.ui.compose.ThemeScreen
 import com.coffeepeek.feature.settings.impl.ui.compose.UsagePolicyScreen
@@ -66,6 +67,9 @@ fun createSettingsEntry(
     appInfo: SettingsAppInfo,
     slots: SettingsSlots,
 ): SettingsEntry = object : SettingsEntry {
+    @Composable
+    override fun GuestCard(onLogin: () -> Unit, onRegister: () -> Unit) = SettingsGuestCard(onLogin, onRegister)
+
     @Composable
     override fun Content(
         onAddShop: () -> Unit, onAddRoaster: () -> Unit, onCity: () -> Unit, onTheme: () -> Unit, onLanguage: () -> Unit,

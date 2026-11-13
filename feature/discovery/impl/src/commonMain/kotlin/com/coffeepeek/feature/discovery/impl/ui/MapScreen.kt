@@ -75,8 +75,9 @@ internal fun MapScreen(
     onToggleExpand: (() -> Unit)? = null,
     /** The canvas keeps this size while its container animates, so the map is not resized (and redrawn) on every frame. */
     canvasSize: DpSize? = null,
-    onOpenFilters: () -> Unit,
+    onOpenFilters: (() -> Unit)?,
     onSearchAction: (SearchAction) -> Unit,
+    belowSearch: @Composable () -> Unit = {},
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     host.locationPermission(
@@ -103,7 +104,8 @@ internal fun MapScreen(
         }
     }
     val mapModifier = if (isPreview) modifier else modifier.mapInteraction { viewModel.onAction(MapAction.Interact) }
-    MapContent(state, host, callbacks, bottomClearance, dismissInput, viewModel::onAction, mapModifier, isPreview, toggleExpand, canvasSize, onOpenFilters, onSearchAction)
+    MapContent(state, host, callbacks, bottomClearance, dismissInput, viewModel::onAction, mapModifier,
+        isPreview, toggleExpand, canvasSize, onOpenFilters, onSearchAction, belowSearch)
 }
 
 @Composable
@@ -134,8 +136,9 @@ internal fun MapContent(
     isPreview: Boolean = false,
     onToggleExpand: (() -> Unit)? = null,
     canvasSize: DpSize? = null,
-    onOpenFilters: () -> Unit,
+    onOpenFilters: (() -> Unit)?,
     onSearchAction: (SearchAction) -> Unit,
+    belowSearch: @Composable () -> Unit = {},
 ) {
     Box(host.exposure(modifier.fillMaxSize(), if (isPreview) DiscoveryExposure.MapPreview else DiscoveryExposure.MapFull)) {
         host.mapCanvas(
@@ -156,7 +159,7 @@ internal fun MapContent(
         }
         MapSearchControls(state, dismissInput, onAction, onToggleExpand, onOpenFilters,
             Modifier.align(Alignment.TopCenter).statusBarsPadding().fillMaxWidth()
-                .padding(vertical = CoffeePeekDimens.spacing3).zIndex(2f), onSearchAction)
+                .padding(vertical = CoffeePeekDimens.spacing3).zIndex(2f), onSearchAction, belowSearch)
         MapOverlayControls(state, host, bottomClearance, dismissInput, onAction)
     }
 }

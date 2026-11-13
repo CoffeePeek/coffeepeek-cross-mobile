@@ -32,6 +32,9 @@ internal class FeatureSettingsScreenRenderer(
     private val city: CityEntry,
     private val policy: UsagePolicyEntry,
 ) : SettingsScreenRenderer {
+    private val openLogin = { Navigator.navigate(Navigator.Screen.Auth) }
+    private val openRegistration = { Navigator.navigate(Navigator.Screen.Register) }
+
     @Composable
     override fun Tab() = tab.Content(
         onAddShop = { Navigator.navigate(Navigator.Screen.AddShop) },
@@ -40,11 +43,14 @@ internal class FeatureSettingsScreenRenderer(
         onTheme = { Navigator.navigate(Navigator.Screen.ThemeSettings) },
         onLanguage = { Navigator.navigate(Navigator.Screen.LanguageSettings) },
         onUsagePolicy = { Navigator.navigate(Navigator.Screen.UsagePolicy) },
-        onLogin = { Navigator.navigate(Navigator.Screen.Auth) },
-        onRegister = { Navigator.navigate(Navigator.Screen.Register) },
+        onLogin = openLogin,
+        onRegister = openRegistration,
         modifier = Modifier,
         bottomClearance = LocalFloatingNavClearance.current,
     )
+
+    @Composable
+    override fun GuestCard() = tab.GuestCard(onLogin = openLogin, onRegister = openRegistration)
 
     @Composable
     override fun Theme() = theme.Content(onBack = Navigator::popBack, modifier = Modifier)

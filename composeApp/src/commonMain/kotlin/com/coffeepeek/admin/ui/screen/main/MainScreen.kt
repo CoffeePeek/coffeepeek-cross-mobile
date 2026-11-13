@@ -92,7 +92,8 @@ internal fun ComposeMainScreen(isLoggedIn: Boolean, onMapExpandedChange: (Boolea
     var isFeedMapExpanded by remember { mutableStateOf(false) }
     val pendingTabSelection by Navigator.pendingTabSelection.collectAsState()
 
-    val businessMode = koinInject<com.coffeepeek.feature.ownership.api.BusinessOwnershipEntry>().Session().businessMode
+    val business = koinInject<com.coffeepeek.feature.ownership.api.BusinessOwnershipEntry>().Session()
+    val businessMode = isLoggedIn && business.businessMode
     val availableTabs = mainTabScreens(isLoggedIn, businessMode)
     val items = mainBottomNavItems(availableTabs)
     val availableRoutes = items.flatMap { listOf(it.graph, it.startScreen) }
@@ -146,14 +147,6 @@ internal fun ComposeMainScreen(isLoggedIn: Boolean, onMapExpandedChange: (Boolea
 
     val navBackStackEntry by bottomNavController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
-    LaunchedEffect(currentDestination, isLoggedIn) {
-        if (!isLoggedIn && currentDestination?.hasRoute<Navigator.Screen.ProfileTab>() == true) {
-            bottomNavController.navigate(Navigator.Screen.FeedGraph) {
-                popUpTo(bottomNavController.graph.findStartDestination().id)
-                launchSingleTop = true
-            }
-        }
-    }
     val visibleEntries by bottomNavController.visibleEntries.collectAsState()
     val feedSlide by animateFloatAsState(
         targetValue = if (currentDestination == null || currentDestination.hasRoute<Navigator.Screen.FeedTab>()) 0f else -1f,
@@ -230,7 +223,7 @@ internal fun ComposeMainScreen(isLoggedIn: Boolean, onMapExpandedChange: (Boolea
                     }
 
                     navigation<Navigator.Screen.ProfileGraph>(startDestination = Navigator.Screen.ProfileTab) {
-                        composable<Navigator.Screen.ProfileTab> { if (isLoggedIn) koinInject<OwnProfileScreenRenderer>().Content() }
+                        composable<Navigator.Screen.ProfileTab> { koinInject<OwnProfileScreenRenderer>().Content(isLoggedIn) }
                     }
 
                     navigation<Navigator.Screen.BusinessGraph>(startDestination = Navigator.Screen.BusinessTab) {

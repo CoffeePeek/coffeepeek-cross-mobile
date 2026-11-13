@@ -2,21 +2,27 @@ package com.coffeepeek.feature.shop.impl.ui.compose.component
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import com.coffeepeek.core.designsystem.component.CoffeePeekCapsuleSegmentedControl
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.text.font.FontWeight
+import com.coffeepeek.core.designsystem.component.CoffeePeekSwitch
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.shop.domain.model.ShopCheckInVisibility
 import com.coffeepeek.feature.shop.impl.resources.Res
-import com.coffeepeek.feature.shop.impl.resources.shop_checkin_audience
-import com.coffeepeek.feature.shop.impl.resources.shop_checkin_audience_all
-import com.coffeepeek.feature.shop.impl.resources.shop_checkin_audience_only_me
+import com.coffeepeek.feature.shop.impl.resources.shop_checkin_form_public
 import com.coffeepeek.feature.shop.impl.resources.shop_checkin_form_public_hint
-import com.coffeepeek.feature.shop.impl.resources.shop_checkin_form_private_hint
 import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
@@ -24,17 +30,23 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 internal fun ShopCheckInVisibilityField(
     visibility: ShopCheckInVisibility, enabled: Boolean, onChange: (ShopCheckInVisibility) -> Unit,
 ) {
-    val all = stringResource(Res.string.shop_checkin_audience_all)
-    val onlyMe = stringResource(Res.string.shop_checkin_audience_only_me)
-    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2)) {
-        Text(stringResource(Res.string.shop_checkin_audience), style = MaterialTheme.typography.titleSmall)
-        CoffeePeekCapsuleSegmentedControl(
-            options = listOf(ShopCheckInVisibility.Public, ShopCheckInVisibility.Private),
-            selected = visibility, label = { if (it == ShopCheckInVisibility.Public) all else onlyMe },
-            onSelected = onChange, modifier = Modifier.fillMaxWidth(), enabled = enabled)
-        Text(stringResource(if (visibility == ShopCheckInVisibility.Public)
-            Res.string.shop_checkin_form_public_hint else Res.string.shop_checkin_form_private_hint),
-            style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    val isPublic = visibility == ShopCheckInVisibility.Public
+    Row(
+        Modifier.fillMaxWidth().heightIn(min = CoffeePeekDimens.controlHeight).toggleable(
+            value = isPublic, enabled = enabled, role = Role.Switch,
+            onValueChange = { onChange(if (it) ShopCheckInVisibility.Public else ShopCheckInVisibility.Private) },
+        ),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing1)) {
+            Text(stringResource(Res.string.shop_checkin_form_public), style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold)
+            Text(stringResource(Res.string.shop_checkin_form_public_hint), style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        Spacer(Modifier.width(CoffeePeekDimens.spacing3))
+        CoffeePeekSwitch(checked = isPublic, onCheckedChange = null, enabled = enabled,
+            modifier = Modifier.clearAndSetSemantics {})
     }
 }
 

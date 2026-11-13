@@ -6,20 +6,28 @@ import kotlin.test.assertNull
 
 class NativeTabRoutesTest {
     @Test
-    fun guestTabsExcludeProfileButPreserveSettingsIdentity() {
+    fun guestTabsIncludeProfileAndPreserveNativeTabIdentities() {
+        val guest = mainTabScreens(isLoggedIn = false)
         assertEquals(
-            listOf(Navigator.Screen.FeedTab, Navigator.Screen.CommunityTab, Navigator.Screen.SettingsTab),
-            mainTabScreens(isLoggedIn = false),
+            listOf(Navigator.Screen.FeedTab, Navigator.Screen.CommunityTab, Navigator.Screen.ProfileTab, Navigator.Screen.SettingsTab),
+            guest,
         )
-        assertEquals(3, nativeTabIndex(mainTabScreens(isLoggedIn = false).last()))
+        assertEquals(listOf(0, 1, 2, 3), guest.map(::nativeTabIndex))
+        assertEquals(guest, mainTabScreens(isLoggedIn = true))
     }
 
     @Test
-    fun authenticatedTabsRestoreProfileWithoutChangingOtherTabIdentities() {
-        val authenticated = mainTabScreens(isLoggedIn = true)
-        assertEquals(4, authenticated.size)
-        assertEquals(Navigator.Screen.ProfileTab, authenticated[2])
-        assertEquals(mainTabScreens(isLoggedIn = false), authenticated.filterNot { it == Navigator.Screen.ProfileTab })
+    fun guestProfileTabStaysSelectableThroughRootNavigation() {
+        listOf(Navigator.Screen.ProfileGraph, Navigator.Screen.ProfileTab).forEach { route ->
+            assertEquals(route, route.profileDestination(isLoggedIn = false))
+        }
+    }
+
+    @Test
+    fun businessTabsRequireAnAuthenticatedSession() {
+        assertEquals(mainTabScreens(isLoggedIn = false), mainTabScreens(isLoggedIn = false, businessMode = true))
+        assertEquals(listOf(Navigator.Screen.BusinessTab, Navigator.Screen.SettingsTab),
+            mainTabScreens(isLoggedIn = true, businessMode = true))
     }
 
     @Test

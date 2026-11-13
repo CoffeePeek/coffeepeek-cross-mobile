@@ -12,12 +12,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.shape.RoundedCornerShape
 import com.coffeepeek.core.designsystem.component.CoffeePeekBrandedImage
 import com.coffeepeek.core.designsystem.component.CoffeePeekCard
-import com.coffeepeek.core.designsystem.component.CoffeePeekIconBadge
-import com.coffeepeek.core.designsystem.component.CoffeePeekIconBadgePalette
-import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
+import com.coffeepeek.core.designsystem.component.CoffeePeekImagePlaceholder
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.discovery.domain.model.Coordinates
@@ -36,10 +35,9 @@ internal fun CheckInShopPickerRow(shop: ShopSummary, location: Coordinates?, onC
         Row(verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3)) {
             val photo = shop.photoUrl
-            if (photo.isNullOrBlank()) CoffeePeekIconBadge(CoffeePeekIcons.Location,
-                CoffeePeekIconBadgePalette.Gold, Modifier.size(56.dp))
-            else CoffeePeekBrandedImage(photo, Modifier.size(56.dp)
-                .clip(RoundedCornerShape(CoffeePeekDimens.radiusSm)), shop.title)
+            val thumbnail = Modifier.size(56.dp).clip(RoundedCornerShape(CoffeePeekDimens.radiusSm))
+            if (photo.isNullOrBlank()) CoffeePeekImagePlaceholder(thumbnail, labelSize = 7.sp)
+            else CoffeePeekBrandedImage(photo, thumbnail, shop.title, placeholderLabelSize = 7.sp)
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(shop.title, style = MaterialTheme.typography.titleSmall,
                     maxLines = 1, overflow = TextOverflow.Ellipsis)

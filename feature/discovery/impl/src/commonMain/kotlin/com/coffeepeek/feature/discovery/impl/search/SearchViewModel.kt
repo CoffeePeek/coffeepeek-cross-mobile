@@ -211,13 +211,12 @@ internal class SearchViewModel(
     private fun onLocation(point: Coordinates?) {
         if (point == null || !point.isValid || (point == origin && !currentState.nearbyRequested)) return
         val enabling = currentState.nearbyRequested
-        val selectNearby = origin == null && purpose == SearchPurpose.CheckInPicker
         val before = currentState.filters
         origin = point
         reportLocation(GeolocationOutcome.Available, enabling)
         cancelNearbyRequest()
         updateState { copy(canUseNearby = true, userLocation = point,
-            filters = filters.copy(nearbyOnly = enabling || selectNearby || filters.nearbyOnly)) }
+            filters = filters.copy(nearbyOnly = enabling || filters.nearbyOnly)) }
         if (enabling) trackChange(before)
         if (currentState.filters.nearbyOnly) {
             updateState { copy(shops = emptyList()) }
