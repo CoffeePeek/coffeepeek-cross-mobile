@@ -1,5 +1,7 @@
 package com.coffeepeek.feature.community.impl.ui
 
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -39,6 +41,7 @@ import com.coffeepeek.core.designsystem.component.CoffeePeekButton
 import com.coffeepeek.core.designsystem.component.CoffeePeekPullToRefresh
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
+import com.coffeepeek.core.designsystem.theme.reducedMotionDuration
 import com.coffeepeek.feature.authorblocking.api.AuthorBlockActions
 import com.coffeepeek.feature.authorblocking.api.AuthorReference
 import com.coffeepeek.feature.community.api.CommunityFloating
@@ -142,21 +145,22 @@ private fun CommunityFeedList(state: CommunityState, posts: List<CommunityPost>,
     onRefreshed: () -> Unit, guest: Boolean, onSignIn: () -> Unit, post: @Composable (Int, CommunityPost) -> Unit) {
     Scaffold(containerColor = MaterialTheme.colorScheme.background, contentWindowInsets = WindowInsets(0),
         snackbarHost = { host.snackbar(snackbar, bottomClearance) }) { padding ->
-        CoffeePeekPullToRefresh(listState, isRefreshing = state.isLoading && state.items.isNotEmpty(),
-            onRefresh = {
-                onAction(CommunityAction.Refresh(FeedTrigger.Gesture))
-                onRefreshed()
-            },
-            refreshDescription = stringResource(Res.string.community_refresh),
-            loadingDescription = stringResource(Res.string.community_loading),
-            modifier = Modifier.fillMaxSize().padding(top = padding.calculateTopPadding())) { scrollModifier ->
-            LazyColumn(state = listState, modifier = host.exposure(scrollModifier.fillMaxSize(), ExposureKind.Feed),
-                contentPadding = PaddingValues(start = CoffeePeekDimens.spacing4, end = CoffeePeekDimens.spacing4,
-                    top = CoffeePeekDimens.spacing2, bottom = bottomClearance + 88.dp),
-                verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3)) {
-                if (state.isLoggedIn == null || (state.isLoading && state.items.isEmpty())) {
-                    item(key = "loading") { CenteredLoader() }
-                } else {
+        Crossfade(targetState = state.isLoggedIn == null || (state.isLoading && state.items.isEmpty()),
+            animationSpec = tween(reducedMotionDuration(220)), label = "feed-load-status") { loading ->
+            if (loading) {
+                Box(Modifier.fillMaxSize().padding(top = padding.calculateTopPadding())) { CenteredLoader() }
+            } else CoffeePeekPullToRefresh(listState, isRefreshing = state.isLoading && state.items.isNotEmpty(),
+                onRefresh = {
+                    onAction(CommunityAction.Refresh(FeedTrigger.Gesture))
+                    onRefreshed()
+                },
+                refreshDescription = stringResource(Res.string.community_refresh),
+                loadingDescription = stringResource(Res.string.community_loading),
+                modifier = Modifier.fillMaxSize().padding(top = padding.calculateTopPadding())) { scrollModifier ->
+                LazyColumn(state = listState, modifier = host.exposure(scrollModifier.fillMaxSize(), ExposureKind.Feed),
+                    contentPadding = PaddingValues(start = CoffeePeekDimens.spacing4, end = CoffeePeekDimens.spacing4,
+                        top = CoffeePeekDimens.spacing2, bottom = bottomClearance + 88.dp),
+                    verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3)) {
                     itemsIndexed(posts, key = { _, item -> item.id },
                         contentType = { _, item -> if (item.isHome) "home-post" else "shop-post" }) { index, item -> post(index, item) }
                     communityFeedStatus(state, guest, onSignIn, onAction)

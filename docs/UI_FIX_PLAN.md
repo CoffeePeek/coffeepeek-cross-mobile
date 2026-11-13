@@ -303,6 +303,16 @@ PR `fix/ui-feedback-fixes`; разделы 5–6 — очереди на буд�
   один detail-запрос на (id, revision) за открытие библиотеки; N+1 устранён
   без изменения контрактов репозитория (тесты контрактов зелёные).
 
+### Волна 6 (2026-11-14) — crossfade-хвосты §4.1
+
+- **ShopCheckInListScreen:** loader↔контент через `Crossfade(hasLoaded)`
+  с `tween(reducedMotionDuration(220))`; retry-статус остался в первой ветке.
+- **CommunityFeedContent:** loader↔лента через `Crossfade` вокруг
+  pull-to-refresh; инт-ключ ветки (loading), LazyColumn внутри второй ветки —
+  listState хоистится, скролл не теряется. Пагинация/error/empty остались
+  элементами списка (communityFeedStatus) без изменений.
+- Оба экрана: компиляция + testDebugUnitTest зелёные; emulator-смоук перед пушем.
+
 ### Осталось (осознанно отложено)
 
 - 7.2.1 Nearby-таймаут, 7.2.6 гео-тупик, 7.2.7 стирание маркеров при вводе,

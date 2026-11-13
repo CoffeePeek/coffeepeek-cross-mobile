@@ -1,5 +1,7 @@
 package com.coffeepeek.feature.shop.impl.ui.compose
 
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Box
@@ -33,6 +35,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.coffeepeek.core.designsystem.component.CoffeePeekTopBar
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
+import com.coffeepeek.core.designsystem.theme.reducedMotionDuration
 import com.coffeepeek.feature.shop.impl.resources.Res
 import com.coffeepeek.feature.shop.impl.resources.shop_checkin_list_title
 import com.coffeepeek.feature.shop.impl.resources.shop_checkin_list_empty
@@ -105,15 +108,18 @@ internal fun ShopCheckInListScreenContent(
         containerColor = MaterialTheme.colorScheme.background,
     ) { insets ->
         Box(Modifier.fillMaxSize().padding(insets).consumeWindowInsets(insets), contentAlignment = Alignment.Center) {
-            if (!state.hasLoaded) {
-                ShopCheckInListStatus(state.isLoading, false, state.hasLoadError, false,
-                    onRetry = { onAction(ShopCheckInListAction.Retry) },
-                    modifier = Modifier.padding(CoffeePeekDimens.spacing6))
-            } else Column(Modifier.fillMaxSize()) {
+            Crossfade(targetState = state.hasLoaded,
+                animationSpec = tween(reducedMotionDuration(220)), label = "checkin-list-status") { loaded ->
+                if (!loaded) {
+                    ShopCheckInListStatus(state.isLoading, false, state.hasLoadError, false,
+                        onRetry = { onAction(ShopCheckInListAction.Retry) },
+                        modifier = Modifier.padding(CoffeePeekDimens.spacing6))
+                } else Column(Modifier.fillMaxSize()) {
                 if (state.hasVoteError) Text(stringResource(Res.string.shop_checkin_list_vote_error),
                     color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall,
                     modifier = Modifier.fillMaxWidth().padding(horizontal = CoffeePeekDimens.spacing4, vertical = CoffeePeekDimens.spacing1))
                 ShopCheckInListItems(state, listState, formatCheckInDate, onAction)
+                }
             }
         }
     }
