@@ -52,8 +52,7 @@ import com.coffeepeek.admin.ui.MainTabReselections
 import com.coffeepeek.admin.ui.Navigator.isHandledByRootNav
 import com.coffeepeek.admin.ui.mainTabScreens
 import com.coffeepeek.admin.ui.component.PlatformFloatingBottomNavBar
-import com.coffeepeek.admin.ui.component.floatingNavBarHeight
-import com.coffeepeek.admin.ui.component.FloatingNavBottomMargin
+import com.coffeepeek.admin.ui.NavMetrics
 import com.coffeepeek.admin.ui.component.FloatingNavItem
 import com.coffeepeek.admin.ui.component.RetainedContent
 import com.coffeepeek.admin.ui.component.ProvideFloatingNavClearance
@@ -161,8 +160,7 @@ internal fun ComposeMainScreen(isLoggedIn: Boolean, onMapExpandedChange: (Boolea
         currentDestination?.hasRoute<Navigator.Screen.FeedTab>() == true
     LaunchedEffect(isExpandedMapVisible) { onMapExpandedChange(isExpandedMapVisible) }
     val systemBottomInset = WindowInsets.navigationBars.asPaddingValues().calculateBottomPadding()
-    val floatingClearance = systemBottomInset +
-        if (isExpandedMapVisible) 0.dp else floatingNavBarHeight() + FloatingNavBottomMargin
+    val floatingClearance = if (isExpandedMapVisible) systemBottomInset else NavMetrics.floatingNavClearance(systemBottomInset)
     val tabBarHaze = rememberHazeState()
     var feedEntry by remember { mutableStateOf<NavBackStackEntry?>(null) }
     val feedStateHolder = rememberSaveableStateHolder()
