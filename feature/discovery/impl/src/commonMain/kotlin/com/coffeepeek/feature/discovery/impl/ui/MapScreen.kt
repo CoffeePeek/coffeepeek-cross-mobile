@@ -77,7 +77,7 @@ internal fun MapScreen(
     canvasSize: DpSize? = null,
     onOpenFilters: (() -> Unit)?,
     onSearchAction: (SearchAction) -> Unit,
-    belowSearch: @Composable () -> Unit = {},
+    showSearchField: Boolean = true,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     host.locationPermission(
@@ -105,7 +105,7 @@ internal fun MapScreen(
     }
     val mapModifier = if (isPreview) modifier else modifier.mapInteraction { viewModel.onAction(MapAction.Interact) }
     MapContent(state, host, callbacks, bottomClearance, dismissInput, viewModel::onAction, mapModifier,
-        isPreview, toggleExpand, canvasSize, onOpenFilters, onSearchAction, belowSearch)
+        isPreview, toggleExpand, canvasSize, onOpenFilters, onSearchAction, showSearchField)
 }
 
 @Composable
@@ -138,7 +138,7 @@ internal fun MapContent(
     canvasSize: DpSize? = null,
     onOpenFilters: (() -> Unit)?,
     onSearchAction: (SearchAction) -> Unit,
-    belowSearch: @Composable () -> Unit = {},
+    showSearchField: Boolean = true,
 ) {
     Box(host.exposure(modifier.fillMaxSize(), if (isPreview) DiscoveryExposure.MapPreview else DiscoveryExposure.MapFull)) {
         host.mapCanvas(
@@ -159,7 +159,7 @@ internal fun MapContent(
         }
         MapSearchControls(state, dismissInput, onAction, onToggleExpand, onOpenFilters,
             Modifier.align(Alignment.TopCenter).statusBarsPadding().fillMaxWidth()
-                .padding(vertical = CoffeePeekDimens.spacing3).zIndex(2f), onSearchAction, belowSearch)
+                .padding(vertical = CoffeePeekDimens.spacing3).zIndex(2f), onSearchAction, showSearchField)
         MapOverlayControls(state, host, bottomClearance, dismissInput, onAction)
     }
 }

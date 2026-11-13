@@ -38,7 +38,7 @@
     <string name="home_check_in_delete_failed">Не ўдалося пацвердзіць выдаленне. Абнавіце запіс перад паўторнай спробай.</string>
     <string name="home_check_in_editor_title">Рэдагаваць чэкін</string>
     <string name="home_check_in_editor_close">Закрыць форму</string>
-    <string name="home_check_in_save">Захаваць чэкін</string>
+    <string name="home_check_in_save">Апублікаваць</string>
     <string name="home_check_in_saving">Захоўваем…</string>
     <string name="home_check_in_save_failed">Не ўдалося захаваць чэкін. Праверце звесткі і паспрабуйце яшчэ раз.</string>
     <string name="home_check_in_save_error_title">Не ўдалося захаваць чэкін</string>
@@ -48,8 +48,7 @@
     <string name="home_check_in_optional">Неабавязкова</string>
     <string name="home_check_in_public_title">Зрабіць публічным</string>
     <string name="home_check_in_public_hint">У стужцы пасля мадэрацыі. Без публікацыі — толькі вам.</string>
-    <string name="home_check_in_recipe_expand">Дадаць рэцэпт</string>
-    <string name="home_check_in_recipe_title">Рэцэпт</string>
+    <string name="home_check_in_recipe_title">Дадаткова</string>
     <string name="home_check_in_recipe_collapsed">Згорнуты</string>
     <string name="home_check_in_recipe_expanded">Разгорнуты</string>
     <string name="home_check_in_saved_private">Захавана толькі для вас</string>

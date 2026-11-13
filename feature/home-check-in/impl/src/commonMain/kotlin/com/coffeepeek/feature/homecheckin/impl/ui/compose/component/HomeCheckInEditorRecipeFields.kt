@@ -1,5 +1,13 @@
 package com.coffeepeek.feature.homecheckin.impl.ui.compose.component
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.updateTransition
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
@@ -24,10 +32,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameNanos
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalFocusManager
@@ -52,34 +61,46 @@ import com.coffeepeek.feature.homecheckin.impl.ui.compose.previewHomeEditorMedia
 import com.coffeepeek.feature.homecheckin.impl.ui.compose.previewHomeEditorState
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
+private const val RecipeAnimationMillis = 250
+
 @Composable
 internal fun HomeCheckInEditorRecipeFields(
     state: HomeCheckInEditorState, enabled: Boolean, formatMethod: (String) -> String,
     media: HomeCheckInEditorMedia, onAction: (HomeCheckInEditorAction) -> Unit,
     expanded: Boolean?, onExpandedChange: (Boolean) -> Unit, onOpenBean: () -> Unit,
 ) {
-    val hasRecipe = state.draft.hasRecipe()
     val hasError = state.fieldErrors.keys.any { it in recipeFields }
-    val visible = expanded ?: (hasRecipe || hasError)
+    val visible = expanded ?: (state.draft.hasRecipe() || hasError)
+    val disclosure = updateTransition(visible, label = "home-recipe")
+    val rightToLeft = LocalLayoutDirection.current == LayoutDirection.Rtl
+    val rotation by disclosure.animateFloat(transitionSpec = { tween(RecipeAnimationMillis) }, label = "recipe-chevron") {
+        when {
+            it -> 90f
+            rightToLeft -> 180f
+            else -> 0f
+        }
+    }
     val focus = LocalFocusManager.current
     val keyboard = LocalSoftwareKeyboardController.current
     var revealMethod by remember { mutableStateOf(false) }
     LaunchedEffect(hasError, state.saveAttempt) {
         if (hasError) onExpandedChange(true)
     }
-    Column(verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3)) {
-        HomeCheckInRecipeDisclosure(hasRecipe, visible, enabled) {
+    Column {
+        HomeCheckInRecipeDisclosure(visible, rotation, enabled) {
             focus.clearFocus()
             keyboard?.hide()
             revealMethod = !visible
             onExpandedChange(!visible)
         }
-        if (visible) {
-            HomeCheckInRecipeStart(revealMethod, { revealMethod = false }) {
-                HomeCheckInRecipeMethod(state, enabled, formatMethod, media, onAction)
-            }
-            HomeCheckInRecipeBean(state, enabled, media, onAction, onOpenBean)
-            HomeCheckInRecipeAmounts(state, enabled, onAction)
+        disclosure.AnimatedVisibility(
+            visible = { it },
+            enter = expandVertically(tween(RecipeAnimationMillis), expandFrom = Alignment.Top) + fadeIn(tween(180)),
+            exit = shrinkVertically(tween(RecipeAnimationMillis), shrinkTowards = Alignment.Top) + fadeOut(tween(150)),
+        ) {
+            val reveal = revealMethod && visible && disclosure.currentState && !disclosure.isRunning
+            HomeCheckInRecipeContent(state, enabled && visible, formatMethod, media, onAction, onOpenBean,
+                reveal, { revealMethod = false })
         }
     }
 }
@@ -93,11 +114,9 @@ private fun HomePreparationInput.hasRecipe(): Boolean =
         customBeanName != null || doseGrams != null || brewDurationSeconds != null
 
 @Composable
-private fun HomeCheckInRecipeDisclosure(hasRecipe: Boolean, expanded: Boolean, enabled: Boolean, onClick: () -> Unit) {
-    val label = stringResource(if (hasRecipe) Res.string.home_check_in_recipe_title else Res.string.home_check_in_recipe_expand)
+private fun HomeCheckInRecipeDisclosure(expanded: Boolean, rotation: Float, enabled: Boolean, onClick: () -> Unit) {
     val description = stringResource(if (expanded) Res.string.home_check_in_recipe_expanded
         else Res.string.home_check_in_recipe_collapsed)
-    val direction = if (!expanded && LocalLayoutDirection.current == LayoutDirection.Rtl) -1f else 1f
     val interactions = remember { MutableInteractionSource() }
     val pressed by interactions.collectIsPressedAsState()
     TextButton(
@@ -111,12 +130,28 @@ private fun HomeCheckInRecipeDisclosure(hasRecipe: Boolean, expanded: Boolean, e
         contentPadding = PaddingValues(horizontal = CoffeePeekDimens.spacing3, vertical = CoffeePeekDimens.spacing2),
         interactionSource = interactions,
     ) {
-        Icon(if (expanded) CoffeePeekIcons.ChevronDown else CoffeePeekIcons.ChevronRight,
+        Icon(CoffeePeekIcons.ChevronRight,
             contentDescription = null, modifier = Modifier.padding(end = CoffeePeekDimens.spacing2)
-                .size(18.dp).scale(scaleX = direction, scaleY = 1f),
+                .size(18.dp).graphicsLayer { rotationZ = rotation },
             tint = MaterialTheme.colorScheme.onSurfaceVariant)
-        Text(label, modifier = Modifier.weight(1f), style = MaterialTheme.typography.titleMedium,
+        Text(stringResource(Res.string.home_check_in_recipe_title),
+            modifier = Modifier.weight(1f), style = MaterialTheme.typography.titleMedium,
             color = MaterialTheme.colorScheme.onSurface)
+    }
+}
+
+@Composable
+private fun HomeCheckInRecipeContent(
+    state: HomeCheckInEditorState, enabled: Boolean, formatMethod: (String) -> String,
+    media: HomeCheckInEditorMedia, onAction: (HomeCheckInEditorAction) -> Unit, onOpenBean: () -> Unit,
+    reveal: Boolean, onRevealHandled: () -> Unit,
+) {
+    Column(Modifier.padding(top = CoffeePeekDimens.spacing3), Arrangement.spacedBy(CoffeePeekDimens.spacing3)) {
+        HomeCheckInRecipeStart(reveal, onRevealHandled) {
+            HomeCheckInRecipeMethod(state, enabled, formatMethod, media, onAction)
+        }
+        HomeCheckInRecipeBean(state, enabled, media, onAction, onOpenBean)
+        HomeCheckInRecipeAmounts(state, enabled, onAction)
     }
 }
 
@@ -124,10 +159,11 @@ private fun HomeCheckInRecipeDisclosure(hasRecipe: Boolean, expanded: Boolean, e
 private fun HomeCheckInRecipeStart(reveal: Boolean, onRevealHandled: () -> Unit, content: @Composable () -> Unit) {
     val requester = remember { BringIntoViewRequester() }
     var placed by remember { mutableStateOf(false) }
-    LaunchedEffect(placed) {
+    LaunchedEffect(placed, reveal) {
         if (placed && reveal) {
-            onRevealHandled()
+            withFrameNanos { }
             requester.bringIntoView()
+            onRevealHandled()
         }
     }
     Box(Modifier.bringIntoViewRequester(requester).onGloballyPositioned { placed = true }) { content() }
@@ -179,9 +215,10 @@ private fun HomeCheckInRecipeAmounts(state: HomeCheckInEditorState, enabled: Boo
 }
 
 @Composable private fun HomeEditorRecipePreview(dark: Boolean, expanded: Boolean) = CoffeePeekTheme(darkTheme = dark) {
+    var visible by remember { mutableStateOf(expanded) }
     Surface { Column(Modifier.padding(16.dp)) {
         HomeCheckInEditorRecipeFields(previewHomeEditorState(), true, { it }, previewHomeEditorMedia(), {},
-            expanded, {}, {})
+            visible, { visible = it }, {})
     } }
 }
 
