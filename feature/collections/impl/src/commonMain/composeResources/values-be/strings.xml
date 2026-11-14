@@ -42,9 +42,6 @@
     <string name="collections_revoke_title">Адключыць гэтую спасылку?</string>
     <string name="collections_revoke_message">Падборка перастане адкрывацца па спасылцы. Ужо адпраўленыя выявы застануцца ў атрымальнікаў.</string>
     <string name="collections_cancel">Скасаваць</string>
-    <string name="collections_reload_title">Перазагрузіць падборку?</string>
-    <string name="collections_reload_message">Незахаваныя змены будуць страчаны: сервер вярнуў навейшую версію падборкі.</string>
-    <string name="collections_reload_confirm">Перазагрузіць</string>
     <string name="collections_brand">COFFEEPEEK</string>
     <string name="collections_expand_poster">Адкрыць выяву на ўвесь экран</string>
     <string name="collections_move_up">Перамясціць вышэй</string>

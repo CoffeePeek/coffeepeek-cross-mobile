@@ -16,7 +16,7 @@ internal data class RegisterState(
     val email: String = "",
     val password: String = "",
     val termsAccepted: Boolean = false,
-    val analyticsAccepted: Boolean = true,
+    val analyticsAccepted: Boolean = false,
     val emailIssue: EmailIssue? = null,
     /** The e-mail check answered "taken". */
     val emailTaken: Boolean = false,

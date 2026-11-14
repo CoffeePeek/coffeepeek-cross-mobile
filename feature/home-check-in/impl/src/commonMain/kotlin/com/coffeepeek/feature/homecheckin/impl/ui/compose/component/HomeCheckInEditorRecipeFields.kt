@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.Surface
@@ -47,7 +48,6 @@ import androidx.compose.ui.unit.LayoutDirection
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import androidx.compose.ui.text.input.KeyboardType
-import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import com.coffeepeek.feature.homecheckin.domain.model.HomePreparationField
@@ -130,7 +130,7 @@ private fun HomeCheckInRecipeDisclosure(expanded: Boolean, rotation: Float, enab
         contentPadding = PaddingValues(horizontal = CoffeePeekDimens.spacing3, vertical = CoffeePeekDimens.spacing2),
         interactionSource = interactions,
     ) {
-        CoffeePeekIcon(CoffeePeekIcons.ChevronRight,
+        Icon(CoffeePeekIcons.ChevronRight,
             contentDescription = null, modifier = Modifier.padding(end = CoffeePeekDimens.spacing2)
                 .size(18.dp).graphicsLayer { rotationZ = rotation },
             tint = MaterialTheme.colorScheme.onSurfaceVariant)

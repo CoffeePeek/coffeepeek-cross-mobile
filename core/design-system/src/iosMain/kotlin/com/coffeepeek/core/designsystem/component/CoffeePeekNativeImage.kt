@@ -31,8 +31,6 @@ import platform.UIKit.UIImageRenderingMode.UIImageRenderingModeAlwaysTemplate
 /** Keeps the actual design-system icon, including custom vectors without an SF Symbol equivalent. */
 @Composable
 internal fun coffeePeekNativeImage(vector: ImageVector): UIImage? {
-    val symbol = remember(vector) { coffeePeekSystemImage(vector) }
-    if (symbol != null) return symbol
     return coffeePeekNativeImage(rememberVectorPainter(vector))
 }
 

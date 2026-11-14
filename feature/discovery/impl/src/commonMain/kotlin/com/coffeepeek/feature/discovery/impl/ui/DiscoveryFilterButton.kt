@@ -8,6 +8,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -16,7 +17,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.unit.dp
-import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.modifier.CoffeePeekGlassIconButton
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
@@ -29,7 +29,7 @@ internal fun DiscoveryFilterButton(count: Int, onClick: () -> Unit, modifier: Mo
     val description = if (count > 0) stringResource(Res.string.discovery_filters_active, count) else stringResource(Res.string.discovery_filters)
     Box(modifier.size(CoffeePeekDimens.buttonHeight + 8.dp), contentAlignment = Alignment.Center) {
         CoffeePeekGlassIconButton(onClick, description, hazeState = null) {
-            CoffeePeekIcon(CoffeePeekIcons.Filter, null, modifier = Modifier.size(22.dp))
+            Icon(CoffeePeekIcons.Filter, null, modifier = Modifier.size(22.dp))
         }
         if (count > 0) Box(
             Modifier.align(Alignment.TopEnd).size(22.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primary)

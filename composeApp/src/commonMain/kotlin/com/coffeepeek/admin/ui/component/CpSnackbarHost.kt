@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -34,7 +35,6 @@ import coffeepeek.composeapp.generated.resources.snackbar_dismiss
 import coffeepeek.composeapp.generated.resources.snackbar_retrying
 import com.coffeepeek.core.designsystem.theme.CoffeePeekColors
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
-import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.component.CoffeePeekFilledButton
 import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
@@ -87,11 +87,11 @@ private fun SnackbarMessageRow(message: String, onDismiss: () -> Unit) {
     val accent = if (colors.background.luminance() < .5f) CoffeePeekColors.AccentTextDark else CoffeePeekColors.AccentTextLight
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2)) {
-        CoffeePeekIcon(CoffeePeekIcons.Info, contentDescription = null, tint = accent, modifier = Modifier.size(20.dp))
+        Icon(CoffeePeekIcons.Info, contentDescription = null, tint = accent, modifier = Modifier.size(20.dp))
         Text(message, style = MaterialTheme.typography.bodyMedium,
             color = colors.onSurface, modifier = Modifier.weight(1f).padding(vertical = CoffeePeekDimens.spacing2))
         CoffeePeekPlainIconButton(onClick = onDismiss) {
-            CoffeePeekIcon(CoffeePeekIcons.Close, contentDescription = stringResource(Res.string.snackbar_dismiss),
+            Icon(CoffeePeekIcons.Close, contentDescription = stringResource(Res.string.snackbar_dismiss),
                 tint = colors.onSurfaceVariant, modifier = Modifier.size(20.dp))
         }
     }
@@ -114,7 +114,7 @@ private fun SnackbarMessageAction(
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2)) {
             if (inProgress) CoffeePeekLoader(modifier = Modifier.size(20.dp), size = 20.dp, color = colors.onPrimary, strokeWidth = 2.dp)
-            else if (icon != null) CoffeePeekIcon(icon, contentDescription = null, modifier = Modifier.size(20.dp))
+            else if (icon != null) Icon(icon, contentDescription = null, modifier = Modifier.size(20.dp))
             Text(if (inProgress) stringResource(Res.string.snackbar_retrying) else label, style = MaterialTheme.typography.labelLarge)
         }
     }

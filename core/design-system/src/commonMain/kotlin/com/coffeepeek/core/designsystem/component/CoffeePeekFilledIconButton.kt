@@ -3,6 +3,7 @@ package com.coffeepeek.core.designsystem.component
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonColors
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.runtime.Composable
@@ -29,8 +30,8 @@ fun CoffeePeekFilledIconButton(
 @Composable
 private fun CoffeePeekFilledIconButtonPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     Column {
-        CoffeePeekFilledIconButton({}) { CoffeePeekIcon(CoffeePeekIcons.Add, "Add") }
-        CoffeePeekFilledIconButton({}, enabled = false) { CoffeePeekIcon(CoffeePeekIcons.Add, "Add") }
+        CoffeePeekFilledIconButton({}) { Icon(CoffeePeekIcons.Add, "Add") }
+        CoffeePeekFilledIconButton({}, enabled = false) { Icon(CoffeePeekIcons.Add, "Add") }
     }
 }
 

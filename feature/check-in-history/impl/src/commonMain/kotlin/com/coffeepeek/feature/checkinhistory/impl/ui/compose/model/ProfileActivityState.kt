@@ -1,7 +1,6 @@
 package com.coffeepeek.feature.checkinhistory.impl.ui.compose.model
 
 import com.coffeepeek.core.datetime.parseServerInstant
-import kotlin.time.Instant
 import com.coffeepeek.feature.checkinhistory.impl.ui.data.activityWeekDates
 
 internal data class ProfileActivityState(val calendar: CombinedHistoryState) {
@@ -12,9 +11,8 @@ internal data class ProfileActivityState(val calendar: CombinedHistoryState) {
     val selectedRows: List<HistoryTimelineItem> get() {
         val day = calendar.selectedDate ?: return emptyList()
         val shops = calendar.shopCalendar.content[day].orEmpty()
-            .sortedBy { parseServerInstant(it.timestamp) ?: Instant.DISTANT_FUTURE }
-        val homes = calendar.homes.items.filter { it.date == day }
-            .sortedBy { parseServerInstant(it.timestamp) ?: Instant.DISTANT_FUTURE }
+            .sortedBy { parseServerInstant(it.timestamp) }
+        val homes = calendar.homes.items.filter { it.date == day }.sortedBy { parseServerInstant(it.timestamp) }
         return shops + homes
     }
 }

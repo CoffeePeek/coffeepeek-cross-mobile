@@ -45,7 +45,6 @@ internal class OwnershipViewModel(
     override suspend fun handleActionInternal(action: OwnershipAction) {
         if (action == OwnershipAction.Login) return sendEvent(OwnershipEvent.Login)
         if (action == OwnershipAction.Back) return back()
-        if (action == OwnershipAction.CancelConfirmation) return dispatch(action)
         if (account.current() == null || currentState.busy || currentState.loading) return
         val job = coroutineContext.job
         operations.add(job)

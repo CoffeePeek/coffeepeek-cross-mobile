@@ -3,8 +3,6 @@ package com.coffeepeek.feature.shelf.impl.ui.compose.component
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -14,6 +12,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -35,11 +34,8 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
-import com.coffeepeek.core.designsystem.theme.coffeePeekReduceMotion
-import com.coffeepeek.core.designsystem.theme.reducedMotionDuration
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.shelf.impl.resources.Res
 import com.coffeepeek.feature.shelf.impl.resources.shelf_finish_zone
@@ -61,10 +57,8 @@ internal fun ShelfFinishZone(highlighted: Boolean, modifier: Modifier = Modifier
     LaunchedEffect(highlighted) { if (highlighted) haptics.performHapticFeedback(HapticFeedbackType.GestureThresholdActivate) }
     // The spec's 14 % of the warning red over the screen background; deeper while the bag is over the zone.
     val tint = if (highlighted) 0.26f else 0.14f
-    val fill by animateColorAsState(colors.error.copy(alpha = tint).compositeOver(colors.background),
-        animationSpec = tween(reducedMotionDuration(220)), label = "zone fill")
-    val scale by animateFloatAsState(if (highlighted) 1.04f else 1f,
-        if (coffeePeekReduceMotion()) snap() else spring(Spring.DampingRatioMediumBouncy, Spring.StiffnessMedium),
+    val fill by animateColorAsState(colors.error.copy(alpha = tint).compositeOver(colors.background), label = "zone fill")
+    val scale by animateFloatAsState(if (highlighted) 1.04f else 1f, spring(Spring.DampingRatioMediumBouncy, Spring.StiffnessMedium),
         label = "zone scale")
     Column(modifier.fillMaxWidth().graphicsLayer { scaleX = scale; scaleY = scale }.background(fill, ZoneShape)
         .drawBehind {
@@ -75,7 +69,7 @@ internal fun ShelfFinishZone(highlighted: Boolean, modifier: Modifier = Modifier
         .heightIn(min = 88.dp).padding(horizontal = CoffeePeekDimens.spacing4, vertical = CoffeePeekDimens.spacing3)
         .semantics(mergeDescendants = true) { liveRegion = LiveRegionMode.Polite },
         horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(2.dp, Alignment.CenterVertically)) {
-        CoffeePeekIcon(CoffeePeekIcons.Archive, null, Modifier.size(24.dp), tint = colors.error)
+        Icon(CoffeePeekIcons.Archive, null, Modifier.size(24.dp), tint = colors.error)
         Text(stringResource(Res.string.shelf_finish_zone), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.ExtraBold,
             color = colors.error)
         Text(stringResource(Res.string.shelf_finish_zone_hint), style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.SemiBold,

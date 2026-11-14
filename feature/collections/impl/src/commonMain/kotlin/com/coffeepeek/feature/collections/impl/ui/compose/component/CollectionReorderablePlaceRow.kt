@@ -3,6 +3,7 @@ package com.coffeepeek.feature.collections.impl.ui.compose.component
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -11,7 +12,6 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.unit.dp
-import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.collections.domain.model.*
@@ -39,7 +39,7 @@ internal fun LazyItemScope.CollectionReorderablePlaceRow(places: List<Collection
 @Composable
 private fun CollectionDragHandle(modifier: Modifier) {
     Box(Modifier.size(48.dp).then(modifier).clearAndSetSemantics {}, contentAlignment = Alignment.Center) {
-        CoffeePeekIcon(CoffeePeekIcons.DragHandle, null, Modifier.size(24.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        Icon(CoffeePeekIcons.DragHandle, null, Modifier.size(24.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 

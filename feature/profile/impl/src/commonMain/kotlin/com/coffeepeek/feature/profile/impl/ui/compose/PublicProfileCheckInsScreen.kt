@@ -53,8 +53,7 @@ internal fun PublicProfileCheckInsScreenContent(
     ) { padding ->
         Column(Modifier.fillMaxSize().padding(padding).coffeePeekViewportBottomPadding()) {
             when {
-                state.profile?.isBlockedByViewer == true -> PublicProfileBlocked(
-                    checkNotNull(state.profile), authorActions)
+                state.profile?.isBlockedByViewer == true -> Text(stringResource(Res.string.profile_blocked_title), Modifier.padding(16.dp))
                 state.profile == null && state.isLoading -> ProfileSectionLoader(160.dp)
                 state.profile == null -> InlineProfileError(stringResource(Res.string.profile_load_failed), onRetry)
                 else -> PublicProfileCheckInsList(state, slots, onOpenShop, onRetry, onLoadMore, onPhotoClick, authorActions = authorActions)

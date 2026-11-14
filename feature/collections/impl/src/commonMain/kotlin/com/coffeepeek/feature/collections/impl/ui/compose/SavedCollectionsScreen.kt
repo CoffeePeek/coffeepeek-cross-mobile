@@ -35,10 +35,7 @@ internal fun SavedCollectionsScreen(model: SavedCollectionsViewModel, saved: Sav
             handleSavedEvent(event, model, snapshots, decode, currentCallbacks, currentEditor, resources)
         }
     }
-    val coverUrls = remember { mutableMapOf<String, String>() }
-    val image: @Composable (SavedCollectionSummary?, Modifier) -> Unit = { summary, m ->
-        SavedCollectionCoverImage(summary, null, saved, decode, m, coverUrls)
-    }
+    val image: @Composable (SavedCollectionSummary?, Modifier) -> Unit = { summary, m -> SavedCollectionCoverImage(summary, null, saved, decode, m) }
     if (state.preview) SavedCollectionPoster(state, actions, snapshots, decode, modifier)
     else if (profilePreview) SavedCollectionOwnerProfile(state, actions, openCollection, modifier) { value, m -> image(value, m) }
     else when (state.mode) {

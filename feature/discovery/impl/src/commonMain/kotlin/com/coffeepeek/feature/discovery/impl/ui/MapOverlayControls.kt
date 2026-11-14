@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
@@ -26,7 +27,6 @@ import androidx.compose.ui.Modifier
 import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.modifier.CoffeePeekGlassIconButton
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
@@ -87,10 +87,10 @@ private fun androidx.compose.foundation.layout.BoxScope.MapPositionControls(stat
         MapHeatmapButton(state.showHeatmap) { onAction(MapAction.ToggleHeatmap) }
         val zones = stringResource(if (state.showZones) Res.string.discovery_map_zones_hide else Res.string.discovery_map_zones_show)
         CoffeePeekGlassIconButton({ onAction(MapAction.ToggleZones) }, zones) {
-            CoffeePeekIcon(CoffeePeekIcons.Polygon, null, Modifier.size(26.dp), tint = if (state.showZones) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface)
+            Icon(CoffeePeekIcons.Polygon, null, Modifier.size(26.dp), tint = if (state.showZones) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface)
         }
         CoffeePeekGlassIconButton({ onAction(MapAction.RequestMyLocation) }, stringResource(Res.string.discovery_map_my_location), Modifier.size(CoffeePeekDimens.buttonHeight + 4.dp)) {
-            CoffeePeekIcon(CoffeePeekIcons.Navigation, null, Modifier.size(32.dp))
+            Icon(CoffeePeekIcons.Navigation, null, Modifier.size(32.dp))
         }
     }
 }

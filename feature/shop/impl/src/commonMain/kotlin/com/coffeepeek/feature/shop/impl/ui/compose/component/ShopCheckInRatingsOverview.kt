@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -21,7 +22,6 @@ import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
@@ -50,23 +50,21 @@ internal fun ShopCheckInRatingsOverview(checkIns: List<ShopCheckIn>, overallRati
     summary: ShopCheckInRatingSummary? = checkIns.ratingSummary(),
     sampleSize: Int = checkIns.size,
 ) {
-    val averages = summary
+    val averages = summary ?: return
     Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3)) {
         Row(verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2)) {
-            CoffeePeekIcon(CoffeePeekIcons.StarFilled, null, Modifier.size(24.dp), tint = MaterialTheme.colorScheme.primary)
+            Icon(CoffeePeekIcons.StarFilled, null, Modifier.size(24.dp), tint = MaterialTheme.colorScheme.primary)
             Text(stringResource(Res.string.shop_checkins_rating_summary,
-                formatShopRating(overallRating?.takeIf { it > 0 && it.isFinite() } ?: averages?.overall ?: 0.0),
+                formatShopRating(overallRating?.takeIf { it > 0 && it.isFinite() } ?: averages.overall),
                 maxOf(checkInCount, sampleSize)),
                 style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
         }
         if (checkInCount > sampleSize) Text(stringResource(Res.string.shop_checkins_rating_sample),
             style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        if (averages != null) {
-            RatingRow(stringResource(Res.string.shop_review_coffee), averages.coffee, Res.drawable.shop_checkin_rating_coffee)
-            RatingRow(stringResource(Res.string.shop_review_service), averages.service, Res.drawable.shop_checkin_rating_service)
-            RatingRow(stringResource(Res.string.shop_checkins_aura), averages.place, Res.drawable.shop_checkin_rating_atmosphere)
-        }
+        RatingRow(stringResource(Res.string.shop_review_coffee), averages.coffee, Res.drawable.shop_checkin_rating_coffee)
+        RatingRow(stringResource(Res.string.shop_review_service), averages.service, Res.drawable.shop_checkin_rating_service)
+        RatingRow(stringResource(Res.string.shop_checkins_aura), averages.place, Res.drawable.shop_checkin_rating_atmosphere)
     }
 }
 

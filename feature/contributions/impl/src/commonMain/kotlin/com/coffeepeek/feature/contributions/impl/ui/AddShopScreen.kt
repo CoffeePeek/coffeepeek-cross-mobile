@@ -1,9 +1,7 @@
 package com.coffeepeek.feature.contributions.impl.ui
 
-import androidx.compose.animation.core.tween
 import androidx.compose.animation.AnimatedContent
 import org.jetbrains.compose.ui.tooling.preview.Preview
-import com.coffeepeek.core.designsystem.theme.reducedMotionDuration
 import com.coffeepeek.feature.contributions.impl.resources.Res
 import com.coffeepeek.feature.contributions.impl.resources.contributions_back
 import com.coffeepeek.feature.contributions.impl.resources.contributions_loading
@@ -153,13 +151,11 @@ private fun FormHeader(step: AddShopStep, onBack: () -> Unit, onAction: (AddShop
 
 @Composable
 private fun StepContent(state: AddShopState, host: AddShopHost, callbacks: AddShopCallbacks, onAction: (AddShopAction) -> Unit, modifier: Modifier) {
-    val stepDuration = reducedMotionDuration(320)
     AnimatedContent(
         targetState = state.step, modifier = modifier,
         transitionSpec = {
             val forward = targetState.ordinal > initialState.ordinal
-            slideInHorizontally(tween(stepDuration)) { if (forward) it else -it } togetherWith
-                slideOutHorizontally(tween(stepDuration)) { if (forward) -it else it }
+            slideInHorizontally { if (forward) it else -it } togetherWith slideOutHorizontally { if (forward) -it else it }
         },
         label = "add-shop-step",
     ) { step ->

@@ -22,6 +22,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
 import com.coffeepeek.core.designsystem.component.CoffeePeekFilledButton as Button
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import com.coffeepeek.core.designsystem.component.CoffeePeekOutlinedButton as OutlinedButton
 import androidx.compose.material3.Surface
@@ -47,7 +48,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.LifecycleEventEffect
-import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.appupdate.api.AppUpdateEnvironment
@@ -184,7 +184,7 @@ private fun UpdateCard(
                             CoffeePeekLoader(modifier = Modifier.size(36.dp), size = 36.dp, color = MaterialTheme.colorScheme.onPrimary, strokeWidth = 4.dp)
                         }
                     } else {
-                        CoffeePeekIcon(
+                        Icon(
                             imageVector = if (transfer.stage == InstallationStage.Ready) CoffeePeekIcons.Check else CoffeePeekIcons.Coffee,
                             contentDescription = null,
                             tint = MaterialTheme.colorScheme.onPrimary,

@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.selection.toggleable
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -18,6 +19,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
@@ -42,8 +44,8 @@ fun CoffeePeekFilterChip(
     trailingIcon: ImageVector? = null,
     leadingPainter: Painter? = null,
 ) {
-    val leading = leadingPainter ?: leadingIcon?.let { coffeePeekIconPainter(it) }
-    val trailing = trailingIcon?.let { coffeePeekIconPainter(it) }
+    val leading = leadingPainter ?: leadingIcon?.let { rememberVectorPainter(it) }
+    val trailing = trailingIcon?.let { rememberVectorPainter(it) }
     if (CoffeePeekNativeFilterChip(label, selected, onClick, modifier, leading, trailing)) return
     CoffeePeekGlassFilterChip(label, selected, onClick, modifier, leading, trailing)
 }
@@ -67,10 +69,10 @@ private fun CoffeePeekGlassFilterChip(
                 tint = if (selected) colors.primary else null, pressed = pressed)
             Row(Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
                 verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                if (leadingIcon != null) CoffeePeekIcon(leadingIcon, null, Modifier.size(18.dp),
+                if (leadingIcon != null) Icon(leadingIcon, null, Modifier.size(18.dp),
                     tint = if (selected) foreground else colors.primary)
                 Text(label, color = foreground, style = MaterialTheme.typography.labelMedium, maxLines = 1)
-                if (trailingIcon != null) CoffeePeekIcon(trailingIcon, null, Modifier.size(16.dp), tint = foreground)
+                if (trailingIcon != null) Icon(trailingIcon, null, Modifier.size(16.dp), tint = foreground)
             }
         }
     }

@@ -11,7 +11,7 @@ internal fun appLinkScreen(link: String): Navigator.Screen? {
 
     if (url.encodedPath.trimEnd('/') == "/reset-password") return null
 
-    val openCheckIn = url.parameters.getAll("checkin")?.firstOrNull() == "1"
+    val openCheckIn = url.parameters.getAll("checkin") == listOf("1")
     return appLinkDetail(url.segments, openCheckIn)
 }
 

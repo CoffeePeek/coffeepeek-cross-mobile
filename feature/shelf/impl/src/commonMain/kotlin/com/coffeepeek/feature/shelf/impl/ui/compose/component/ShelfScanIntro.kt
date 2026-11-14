@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -15,7 +16,6 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import com.coffeepeek.core.designsystem.component.CoffeePeekButton
-import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
@@ -34,7 +34,7 @@ internal fun ShelfScanIntro(onCamera: () -> Unit, onGallery: () -> Unit, modifie
         Text(stringResource(Res.string.shelf_scan_intro_body), style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant)
         CoffeePeekButton(stringResource(Res.string.shelf_scan_camera), onCamera,
-            leadingIcon = { CoffeePeekIcon(CoffeePeekIcons.Camera, null) })
+            leadingIcon = { Icon(CoffeePeekIcons.Camera, null) })
         ShelfSecondaryButton(stringResource(Res.string.shelf_scan_gallery), onGallery)
     }
 }

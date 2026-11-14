@@ -20,17 +20,14 @@ actual fun LocationPermissionEffect(
     requestKey: Int,
     onGranted: () -> Unit,
     onDenied: () -> Unit,
-    onPermanentlyDenied: () -> Unit,
     requestOnce: Boolean,
 ) {
     val grantedState = rememberUpdatedState(onGranted)
     val deniedState = rememberUpdatedState(onDenied)
-    // iOS has no transient denial: once the user refuses, only Settings can undo it.
-    val permanentlyDeniedState = rememberUpdatedState(onPermanentlyDenied)
     val delegate = remember {
         LocationPermissionDelegate(
             onGranted = { grantedState.value() },
-            onDenied = { permanentlyDeniedState.value() },
+            onDenied = { deniedState.value() },
         )
     }
     val manager = remember { CLLocationManager() }
@@ -46,7 +43,7 @@ actual fun LocationPermissionEffect(
             kCLAuthorizationStatusAuthorizedAlways,
             kCLAuthorizationStatusAuthorizedWhenInUse -> grantedState.value()
             kCLAuthorizationStatusDenied,
-            kCLAuthorizationStatusRestricted -> permanentlyDeniedState.value()
+            kCLAuthorizationStatusRestricted -> deniedState.value()
             kCLAuthorizationStatusNotDetermined -> manager.requestWhenInUseAuthorization()
             else -> deniedState.value()
         }

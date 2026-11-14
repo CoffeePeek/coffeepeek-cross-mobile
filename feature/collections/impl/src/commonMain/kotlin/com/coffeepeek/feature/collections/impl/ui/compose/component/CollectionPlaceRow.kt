@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -21,7 +22,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
-import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.component.CoffeePeekImagePlaceholder
 import androidx.compose.ui.unit.sp
@@ -46,9 +46,9 @@ internal fun CollectionPlaceRow(place: CollectionPlace, checked: Boolean?, enabl
             CollectionPlacePhoto(place, Modifier.size(48.dp).clip(RoundedCornerShape(10.dp)))
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) { CollectionPlaceLabels(place, checked == null) }
             if (checked != null) Box(Modifier.size(24.dp)) {
-                if (checked) CoffeePeekIcon(CoffeePeekIcons.Check, null, tint = MaterialTheme.colorScheme.coffeePeekAccentForeground)
+                if (checked) Icon(CoffeePeekIcons.Check, null, tint = MaterialTheme.colorScheme.coffeePeekAccentForeground)
             }
-            else CoffeePeekIcon(CoffeePeekIcons.ChevronRight, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
+            else Icon(CoffeePeekIcons.ChevronRight, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
             trailing()
         }
         if (!last) HorizontalDivider(Modifier.padding(start = 76.dp, end = 16.dp), thickness = 0.5.dp,

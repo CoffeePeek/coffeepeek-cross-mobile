@@ -3,7 +3,6 @@ package com.coffeepeek.feature.shelf.impl.ui.compose.model
 internal sealed interface ShelfBagAction {
     data object Back : ShelfBagAction
     data object RetryBrews : ShelfBagAction
-    data object Retry : ShelfBagAction
     data object OpenCoffee : ShelfBagAction
     data object Brew : ShelfBagAction
     data class BrewClosed(val saved: Boolean) : ShelfBagAction

@@ -8,8 +8,8 @@ During the original independent preparation phase, the app had no dependency
 on this library. Migrated consumers now use it, so both resource owners may
 temporarily be packaged until the remaining legacy consumers are replaced.
 
-Public UI surface: CoffeePeekFontFamily (the iOS system font or Android Manrope),
-CoffeePeekTheme with a platform default and explicit override, and
+Public UI surface: CoffeePeekFontFamily (Composable FontFamily containing Manrope),
+CoffeePeekTheme with packaged Manrope default and explicit override, and
 coffeePeekTypography(FontFamily). Kotlin API names use the CoffeePeek prefix;
 font files, internal resource names and license text retain their original names.
 Compose resource runtime is an implementation dependency; generated Res and

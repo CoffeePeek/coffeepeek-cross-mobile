@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -16,7 +17,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.LayoutDirection
-import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.icons.PlatformBack
 import com.coffeepeek.core.designsystem.modifier.CoffeePeekGlassIconButton
@@ -50,7 +50,7 @@ internal fun ShopDetailTopActions(
         verticalAlignment = Alignment.CenterVertically) {
         CoffeePeekGlassIconButton(onClick = onBack,
             contentDescription = stringResource(Res.string.shop_detail_back), hazeState = hazeState, nativeIcon = CoffeePeekGlassIcon.Back) {
-            CoffeePeekIcon(CoffeePeekIcons.PlatformBack, contentDescription = null,
+            Icon(CoffeePeekIcons.PlatformBack, contentDescription = null,
                 tint = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.scale(scaleX = backScale, scaleY = 1f))
         }

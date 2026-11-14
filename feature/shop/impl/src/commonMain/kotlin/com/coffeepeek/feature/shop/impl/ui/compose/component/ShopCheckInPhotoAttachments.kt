@@ -26,7 +26,7 @@ internal fun ShopCheckInPhotoAttachments(
     onGallery: (Int) -> Unit, onCamera: () -> Unit,
 ) {
     var sourceShown by remember { mutableStateOf(false) }
-    if (sourceShown && enabled && !isLoading) ShopPhotoSourceSheet(
+    if (sourceShown && enabled && !isLoading && photos.size < MAX_SHOP_CHECK_IN_PHOTOS) ShopPhotoSourceSheet(
         onDismiss = { sourceShown = false },
         onGallery = {
             sourceShown = false

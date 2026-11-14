@@ -44,10 +44,10 @@ class ProfileSignOutAdapterTest {
 
     private fun auth(logout: Result<Unit>) = object : AuthRepository {
         override suspend fun signIn(email: String, password: String): Result<SignedInAccount> = error("unused")
-        override suspend fun signInWithGoogle(idToken: String, analyticsEnabled: Boolean?): Result<SignedInAccount> = error("unused")
+        override suspend fun signInWithGoogle(idToken: String): Result<SignedInAccount> = error("unused")
         override suspend fun beginAppleSignIn(): Result<AppleSignInChallenge> = error("unused")
-        override suspend fun signInWithApple(challengeId: String, idToken: String, analyticsEnabled: Boolean?): Result<SignedInAccount> = error("unused")
-        override suspend fun register(userName: String, email: String, password: String, analyticsEnabled: Boolean): Result<Unit> = error("unused")
+        override suspend fun signInWithApple(challengeId: String, idToken: String): Result<SignedInAccount> = error("unused")
+        override suspend fun register(userName: String, email: String, password: String): Result<Unit> = error("unused")
         override suspend fun isEmailTaken(email: String): Result<Boolean> = error("unused")
         override suspend fun requestPasswordReset(email: String): Result<Unit> = error("unused")
         override suspend fun signOut(): Result<Unit> {

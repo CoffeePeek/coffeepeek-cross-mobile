@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -17,7 +18,6 @@ import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.component.CoffeePeekButton
-import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
@@ -32,7 +32,7 @@ internal fun HomeCheckInSavedContent(entry: HomePreparation, visibilityUnconfirm
     Box(modifier.fillMaxSize().padding(24.dp), contentAlignment = Alignment.Center) {
         Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(20.dp)) {
-            CoffeePeekIcon(CoffeePeekIcons.CheckCircle, null, tint = MaterialTheme.colorScheme.primary)
+            Icon(CoffeePeekIcons.CheckCircle, null, tint = MaterialTheme.colorScheme.primary)
             Text(stringResource(entry.visibilityLabelResource() ?: Res.string.home_check_in_saved_unknown),
                 style = MaterialTheme.typography.headlineSmall,
                 modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite })

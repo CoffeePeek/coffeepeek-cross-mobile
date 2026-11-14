@@ -843,28 +843,3 @@ connection still failed, leaving APK assembly and packaged DEX checks open.
 ADB could not start, so the Direct Sandbox visual check remains open. Check
 opening and closing the catalog in light and dark themes, at a scroll position
 where the mini-map is still visible, and verify iOS native map placement too.
-
-## Автовыбор ближайшего города — 2026-11-14
-
-- Поиск, карта и выбор кофейни для чекина используют общую геопозицию и
-  выбранный город. Сравнение выполняется на устройстве после получения
-  позиции и каталога, в любом порядке. Текущий API отдаёт slug и название,
-  поэтому Discovery подставляет известные центры городов из GeoNames.
-  Города без известных координат доступны для ручного выбора.
-- Ручной выбор, сделанный в этой версии, имеет приоритет после перезапуска.
-  Старая запись `selected_city_id` служит исходным городом, поскольку
-  в ней исторически хранился и первый город каталога, и ручной выбор.
-  При первом получении координат такой город может обновиться.
-- Windows, ветка `codex/migration-discovery-nearest-city`, база `a4a1017d1`
-  с рабочими правками. Собраны Direct Debug `1.2.0.2948-debug`
-  и Direct Sandbox `1.2.0.2948-sandbox`. Проверки DEX обоих APK и
-  изоляции Sandbox прошли. Первая проверка лимитов после объединения DI
-  нашла рост `appModule`; после выноса регистраций проверка прошла.
-- JVM: 930 тестов в 179 наборах, без ошибок, падений и пропусков.
-  Discovery domain/data/impl — 16/36/174, Settings impl — 42,
-  composeApp Direct Debug — 662. Покрыты задержка каталога или позиции,
-  ручной выбор после перезапуска, невалидные координаты и режим «Рядом».
-- Discovery domain/data/impl и Settings impl скомпилированы для iOS Arm64.
-  Gradle пропустил сборку iOS-приложения на Windows из-за SwiftPM-зависимости
-  Shelf. Подключённых Android-устройств не было. Запуск на устройстве,
-  ручная проверка Sandbox и проверка реального каталога остались открыты.

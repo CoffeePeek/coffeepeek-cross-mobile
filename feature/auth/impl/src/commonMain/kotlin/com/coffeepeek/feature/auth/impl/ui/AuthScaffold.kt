@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -30,7 +31,6 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.component.CoffeePeekPlainIconButton
 import com.coffeepeek.core.designsystem.component.CoffeePeekScrollableColumn
-import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
@@ -86,7 +86,7 @@ private fun AuthTopBar(title: String, onClose: () -> Unit, closeIcon: Boolean) {
 private fun AuthBackButton(onClose: () -> Unit, closeIcon: Boolean) {
     val mirror = !closeIcon && LocalLayoutDirection.current == LayoutDirection.Rtl
     CoffeePeekPlainIconButton(onClose) {
-        CoffeePeekIcon(
+        Icon(
             imageVector = if (closeIcon) CoffeePeekIcons.Close else CoffeePeekIcons.ChevronLeft,
             contentDescription = stringResource(if (closeIcon) Res.string.auth_close else Res.string.auth_back),
             tint = MaterialTheme.colorScheme.onSurface,

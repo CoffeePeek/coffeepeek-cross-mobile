@@ -1,22 +1,10 @@
 package com.coffeepeek.feature.discovery.impl.ui
 
-import androidx.compose.animation.Crossfade
-import androidx.compose.animation.core.tween
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.TextButton
-import androidx.compose.ui.semantics.LiveRegionMode
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.semantics.liveRegion
-import androidx.compose.ui.unit.dp
-import com.coffeepeek.core.designsystem.component.CoffeePeekContentCard
 import androidx.compose.foundation.layout.Arrangement
 import com.coffeepeek.feature.discovery.impl.resources.Res
 import com.coffeepeek.feature.discovery.impl.resources.discovery_map_collapse
 import com.coffeepeek.feature.discovery.impl.resources.discovery_map_my_location
 import com.coffeepeek.feature.discovery.impl.resources.discovery_map_search_placeholder
-import com.coffeepeek.feature.discovery.impl.resources.discovery_map_load_failed
-import com.coffeepeek.feature.discovery.impl.resources.discovery_map_retry
 import com.coffeepeek.feature.discovery.impl.resources.discovery_map_truncated
 import com.coffeepeek.feature.discovery.impl.resources.discovery_map_zones_hide
 import com.coffeepeek.feature.discovery.impl.resources.discovery_map_zones_show
@@ -32,6 +20,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import com.coffeepeek.core.designsystem.component.CoffeePeekFilledButton as Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -49,6 +38,7 @@ import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.coffeepeek.core.designsystem.component.CoffeePeekSearchField
@@ -94,7 +84,6 @@ internal fun MapScreen(
         state.locationPermissionRequest,
         { viewModel.onAction(MapAction.LocationGranted) },
         { viewModel.onAction(MapAction.LocationDenied) },
-        { viewModel.onAction(MapAction.LocationPermanentlyDenied) },
     )
     val focusManager = LocalFocusManager.current
     val keyboard = LocalSoftwareKeyboardController.current
@@ -171,15 +160,6 @@ internal fun MapContent(
         MapSearchControls(state, dismissInput, onAction, onToggleExpand, onOpenFilters,
             Modifier.align(Alignment.TopCenter).statusBarsPadding().fillMaxWidth()
                 .padding(vertical = CoffeePeekDimens.spacing3).zIndex(2f), onSearchAction, showSearchField)
-        if (state.viewportFailed && state.markers.isEmpty()) {
-            MapViewportError({ onAction(MapAction.RetryViewport) },
-                Modifier.align(Alignment.TopCenter).statusBarsPadding().padding(top = 76.dp).zIndex(2f))
-        }
-        if (state.locationSettingsNeeded) {
-            DiscoveryLocationNotice(false, { onAction(MapAction.DismissLocationSettings) },
-                onOpenSettings = host.openLocationSettings,
-                modifier = Modifier.align(Alignment.TopCenter).statusBarsPadding().padding(top = 76.dp).zIndex(2f))
-        }
         MapOverlayControls(state, host, bottomClearance, dismissInput, onAction)
     }
 }
@@ -189,21 +169,6 @@ internal fun MapContent(
 private fun MapContentPreview() = MapContentPreviewContent(false)
 
 @Preview @Composable private fun MapContentDarkPreview() = MapContentPreviewContent(true)
-
-@Composable
-private fun MapViewportError(onRetry: () -> Unit, modifier: Modifier = Modifier) {
-    CoffeePeekContentCard(modifier.padding(horizontal = 16.dp).semantics { liveRegion = LiveRegionMode.Polite },
-        contentPadding = PaddingValues(start = 16.dp, end = 8.dp, top = 8.dp, bottom = 8.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(stringResource(Res.string.discovery_map_load_failed), Modifier.weight(1f),
-                style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface)
-            TextButton(onClick = onRetry,
-                colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onSurface)) {
-                Text(stringResource(Res.string.discovery_map_retry))
-            }
-        }
-    }
-}
 
 @Composable
 private fun MapContentPreviewContent(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {

@@ -51,7 +51,7 @@ internal fun ActivityDiaryRow(row: HistoryTimelineItem, image: HistoryImageConte
                 if (ratingBelow) ActivityRating(row)
             }
             if (!ratingBelow) ActivityRating(row)
-            CoffeePeekIcon(CoffeePeekIcons.ChevronRight, null, Modifier.size(16.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+            Icon(CoffeePeekIcons.ChevronRight, null, Modifier.size(16.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }
@@ -66,7 +66,7 @@ private fun ActivityThumbnail(row: HistoryTimelineItem, image: HistoryImageConte
     if (photo != null) image(photo, modifier.clip(RoundedCornerShape(10.dp)), ContentScale.Crop)
     else Box(modifier.background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f), RoundedCornerShape(10.dp)),
         contentAlignment = Alignment.Center) {
-        CoffeePeekIcon(CoffeePeekIcons.Coffee, null, Modifier.fillMaxSize(0.5f), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        Icon(CoffeePeekIcons.Coffee, null, Modifier.fillMaxSize(0.5f), tint = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 

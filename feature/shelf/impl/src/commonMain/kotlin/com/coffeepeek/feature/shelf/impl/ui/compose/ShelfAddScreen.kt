@@ -37,7 +37,6 @@ import com.coffeepeek.core.designsystem.component.CoffeePeekDialogAction
 import com.coffeepeek.core.designsystem.component.CoffeePeekScaffold
 import com.coffeepeek.core.designsystem.component.CoffeePeekTopBar
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
-import com.coffeepeek.core.designsystem.theme.reducedMotionDuration
 import com.coffeepeek.feature.shelf.api.ShelfPhoto
 import com.coffeepeek.feature.shelf.api.ShelfCamera
 import com.coffeepeek.feature.shelf.api.ShelfGalleryPicker
@@ -61,8 +60,7 @@ internal fun ShelfAddScreen(
         lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) { viewModel.events.collect { currentEvent(it) } }
     }
     val openGallery = gallery({ viewModel.onAction(ShelfAddAction.PhotoPicked(it)) }, { viewModel.onAction(ShelfAddAction.PhotoFailed) })
-    val stepDuration = reducedMotionDuration(320)
-    AnimatedContent(state.step, modifier, transitionSpec = { fadeIn(tween(stepDuration)) togetherWith fadeOut(tween(stepDuration)) },
+    AnimatedContent(state.step, modifier, transitionSpec = { fadeIn(tween(320)) togetherWith fadeOut(tween(320)) },
         contentKey = { it.screen }, label = "shelf-add") { step ->
         when (step) {
             ShelfAddStep.Camera -> ShelfCameraStep(camera, openGallery, viewModel::onAction, Modifier)

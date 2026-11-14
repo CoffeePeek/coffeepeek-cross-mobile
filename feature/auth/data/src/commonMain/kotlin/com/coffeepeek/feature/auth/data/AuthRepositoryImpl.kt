@@ -39,8 +39,8 @@ internal class AuthRepositoryImpl(
         AppleAuthBackend(plain).challenge()
     }
 
-    override suspend fun signInWithApple(challengeId: String, idToken: String, analyticsEnabled: Boolean?): Result<SignedInAccount> = requestResult {
-        persist(AppleAuthBackend(plain).signIn(challengeId, idToken, analyticsEnabled))
+    override suspend fun signInWithApple(challengeId: String, idToken: String): Result<SignedInAccount> = requestResult {
+        persist(AppleAuthBackend(plain).signIn(challengeId, idToken))
     }
 
     override suspend fun signIn(email: String, password: String): Result<SignedInAccount> = requestResult {
@@ -51,18 +51,18 @@ internal class AuthRepositoryImpl(
         persist(response.tokens())
     }
 
-    override suspend fun signInWithGoogle(idToken: String, analyticsEnabled: Boolean?): Result<SignedInAccount> = requestResult {
+    override suspend fun signInWithGoogle(idToken: String): Result<SignedInAccount> = requestResult {
         val response = plain.post("/api/Tokens/google/login") {
             contentType(ContentType.Application.Json)
-            setBody(GoogleLoginRequest(idToken, analyticsEnabled))
+            setBody(GoogleLoginRequest(idToken))
         }
         persist(response.tokens())
     }
 
-    override suspend fun register(userName: String, email: String, password: String, analyticsEnabled: Boolean): Result<Unit> = requestResult {
+    override suspend fun register(userName: String, email: String, password: String): Result<Unit> = requestResult {
         val response = plain.post("/api/Users") {
             contentType(ContentType.Application.Json)
-            setBody(RegistrationRequest(email.trim().lowercase(), password, userName, analyticsEnabled))
+            setBody(RegistrationRequest(email.trim().lowercase(), password, userName))
         }
         val envelope = response.body<Envelope<JsonElement>>()
         if (!envelope.isSuccess) throw AuthApiException(envelope.message)

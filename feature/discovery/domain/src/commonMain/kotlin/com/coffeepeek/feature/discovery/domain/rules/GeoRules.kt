@@ -1,6 +1,5 @@
 package com.coffeepeek.feature.discovery.domain.rules
 
-import com.coffeepeek.feature.discovery.domain.model.CityEntry
 import com.coffeepeek.feature.discovery.domain.model.Coordinates
 import kotlin.math.PI
 import kotlin.math.asin
@@ -21,9 +20,3 @@ fun distanceMeters(from: Coordinates?, to: Coordinates?): Double? {
 }
 
 private fun Double.toRadians(): Double = this * PI / 180.0
-
-/** Selects the closest catalog city with a known center, keeping catalog order for ties. */
-fun nearestCityId(cities: List<CityEntry>, position: Coordinates?): String? = cities
-    .mapNotNull { city -> distanceMeters(position, city.center)?.let { city.id to it } }
-    .minByOrNull { (_, distance) -> distance }
-    ?.first

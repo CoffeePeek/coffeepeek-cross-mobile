@@ -6,7 +6,6 @@ import com.coffeepeek.feature.discovery.api.DiscoveryAnalytics
 import com.coffeepeek.feature.discovery.api.DiscoveryAccount
 import com.coffeepeek.feature.discovery.api.DiscoveryFavorites
 import com.coffeepeek.feature.discovery.api.DiscoveryCity
-import com.coffeepeek.feature.discovery.api.DiscoveryCitySelection
 import com.coffeepeek.feature.discovery.api.DiscoveryLocation
 import com.coffeepeek.feature.discovery.api.DiscoveryShopDetails
 import com.coffeepeek.feature.discovery.api.GeolocationOutcome
@@ -73,7 +72,6 @@ internal class MapViewModel(
     private var queryJob: Job? = null
     private var detailsJob: Job? = null
     private var pauseJob: Job? = null
-    private var pauseGeneration = 0
     private var permissionRequestPending = false
     private var locateAfterPermission = false
     private var accountSeen = false
@@ -100,14 +98,9 @@ internal class MapViewModel(
             is MapAction.SelectSuggestion -> selectSuggestion(action.shopId)
             MapAction.Interact -> requestLocationPermission()
             MapAction.RequestMyLocation -> requestLocationPermission(locate = true)
-            MapAction.RetryViewport -> currentState.pendingBounds?.let { bounds ->
-                onBoundsChanged(bounds, currentState.pendingZoom ?: currentState.activeZoom ?: return)
-            }
             MapAction.LocationGranted -> onLocationGranted()
             is MapAction.MyLocationFound -> onMyLocationFound(action.point)
             MapAction.LocationDenied -> onLocationDenied()
-            MapAction.LocationPermanentlyDenied -> { onLocationDenied(); updateState { copy(locationSettingsNeeded = true) } }
-            MapAction.DismissLocationSettings -> updateState { copy(locationSettingsNeeded = false) }
             MapAction.ZoomIn -> changeZoom(1f)
             MapAction.ZoomOut -> changeZoom(-1f)
             is MapAction.Focus -> focusOnShop(action.focus.let { MapMarker(it.shopId, it.title, it.coordinates) })
@@ -160,7 +153,6 @@ internal class MapViewModel(
 
     private fun onLocationGranted() {
         permissionRequestPending = false
-        updateState { copy(locationSettingsNeeded = false) }
         location.refresh()
         if (locateAfterPermission) updateState { copy(myLocationRequest = myLocationRequest + 1) }
         else analytics.geolocation(PLACEMENT, userTriggered = true, outcome = GeolocationOutcome.Available)
@@ -173,8 +165,7 @@ internal class MapViewModel(
         analytics.geolocation(PLACEMENT, userTriggered = currentState.locationPermissionRequest > 0, outcome = GeolocationOutcome.Unavailable)
     }
 
-    private fun onCity(selection: DiscoveryCitySelection?) {
-        val cityId = selection?.id
+    private fun onCity(cityId: String?) {
         if (criteriaSupplied || !cityReady || cityId == null || cityId == currentState.cityId) return
         syncCriteria(currentState.criteria.copy(filters = currentState.filters.copy(cityId = cityId)))
     }
@@ -183,8 +174,7 @@ internal class MapViewModel(
         viewModelScope.launch {
             repository.catalogs().onSuccess { catalogs ->
                 if (!criteriaSupplied) {
-                    val resolvedCityId = city.resolve(catalogs.cities)
-                    val cityId = city.selected.value?.id ?: resolvedCityId
+                    val cityId = city.resolve(catalogs.cities)
                     if (!criteriaSupplied) updateState { copy(cityId = cityId, filters = filters.copy(cityId = cityId)) }
                 }
             }
@@ -207,27 +197,8 @@ internal class MapViewModel(
         if (criteria == currentState.criteria) return
         val selectionChanged = criteria.text != currentState.query || criteria.filters != currentState.filters ||
             criteria.filters.nearbyOnly && criteria.origin != currentState.userLocation
-        val textOnly = criteria.filters == currentState.filters && criteria.origin == currentState.userLocation &&
-            criteria.text != currentState.query
         updateState { copy(query = criteria.text, filters = criteria.filters, cityId = criteria.filters.cityId, userLocation = criteria.origin) }
-        if (!selectionChanged) return
-        if (textOnly) refreshForTextQuery() else invalidateSelection()
-    }
-
-    /** A text-only query change keeps the current markers: a blank flash per keystroke is worse
-     * than briefly stale pins; they are replaced when the response lands. */
-    private fun refreshForTextQuery() {
-        cancelViewportLoads()
-        queryJob?.cancel()
-        detailsJob?.cancel()
-        selectionVersion++
-        loadedArea = null
-        carouselArea = null
-        zonesCityId = null
-        updateState { copy(zones = emptyList(), zoneGroups = emptyList(), carouselShops = emptyList(),
-            selectedShop = null, selectedZone = null, details = null, isLoadingDetails = false, isTruncated = false) }
-        loadSuggestions()
-        if (!suppressBounds) searchCurrentArea()
+        if (selectionChanged) invalidateSelection()
     }
 
     private fun onAccount(key: String?) {
@@ -289,7 +260,7 @@ internal class MapViewModel(
         loadedArea = null
         boundsJob = viewModelScope.launch {
             delay(BOUNDS_DEBOUNCE_MS)
-            updateState { copy(isLoading = true, viewportFailed = false, activeBounds = bounds, activeZoom = zoom) }
+            updateState { copy(isLoading = true, activeBounds = bounds, activeZoom = zoom) }
             requestBounds(bounds.expandedForPrefetch(), zoom, currentState.criteria)
         }
     }
@@ -308,7 +279,7 @@ internal class MapViewModel(
             applyContent(content, criteria.filters.cityId)
         }.onFailure {
             analytics.mapInteracted(MapInteraction.LoadFailed, durationMs = started.elapsedNow().inWholeMilliseconds)
-            updateState { copy(isLoading = false, viewportFailed = true) }
+            updateState { copy(isLoading = false) }
         }
     }
 
@@ -372,9 +343,7 @@ internal class MapViewModel(
     }
 
     private fun onMyLocationFound(point: Coordinates) {
-        if (!point.isValid) return
         analytics.geolocation(PLACEMENT, userTriggered = currentState.myLocationRequest > 0, outcome = GeolocationOutcome.Available)
-        location.updateFromMap(point)
         changeUserLocation(point)
         moveCamera(point, MY_LOCATION_ZOOM, PAUSE_AFTER_MOVE_MS)
     }
@@ -564,15 +533,13 @@ internal class MapViewModel(
 
     private fun pauseBounds(durationMs: Long) {
         cancelViewportLoads(clearHeatmap = false)
-        val generation = ++pauseGeneration
         pauseJob?.cancel()
         pauseJob = viewModelScope.launch {
             suppressBounds = true
             try {
                 delay(durationMs)
             } finally {
-                // A newer pause owns the flag now; the cancelled run must not release it.
-                if (generation == pauseGeneration) suppressBounds = false
+                suppressBounds = false
             }
             // Camera moves during the pause were only recorded: load where the camera ended up.
             val bounds = currentState.pendingBounds ?: return@launch

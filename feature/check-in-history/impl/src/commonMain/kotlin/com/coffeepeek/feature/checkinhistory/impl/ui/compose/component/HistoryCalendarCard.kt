@@ -20,7 +20,6 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.checkinhistory.domain.model.HistoryMonth
@@ -73,12 +72,7 @@ private fun HistoryCalendarHeader(state: CombinedHistoryState, select: (Combined
             state.filter.includes(HistorySource.Home) && state.homeCalendar.isLoading
         Text(if (loading) stringResource(Res.string.history_loading) else
             stringResource(Res.string.history_month_counts, historyVisitCountLabel(state.calendarCounts.values.sum()),
-                when {
-                    state.filter.includes(HistorySource.Home) && !state.filter.includes(HistorySource.Shop) ->
-                        stringResource(Res.string.history_home_count, homes)
-                    homes > 0 -> stringResource(Res.string.history_home_count, homes)
-                    else -> historyShopCountLabel(shops)
-                }),
+                if (homes > 0) stringResource(Res.string.history_home_count, homes) else historyShopCountLabel(shops)),
             Modifier.weight(1f), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         val todayLabel = stringResource(Res.string.history_today_description)
         TextButton(onClick = { select(CombinedHistoryAction.Today) }, contentPadding = PaddingValues(horizontal = 8.dp),
@@ -113,7 +107,7 @@ private fun HistoryCalendarGrid(state: CombinedHistoryState, select: (CombinedHi
         nativeIcon = if (next) CoffeePeekGlassIcon.Forward else CoffeePeekGlassIcon.Back) {
         Box(Modifier.size(34.dp).background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f), CircleShape),
             contentAlignment = Alignment.Center) {
-            CoffeePeekIcon(if (next) CoffeePeekIcons.ChevronRight else CoffeePeekIcons.ChevronLeft,
+            Icon(if (next) CoffeePeekIcons.ChevronRight else CoffeePeekIcons.ChevronLeft,
                 null, Modifier.size(18.dp))
         }
     }

@@ -19,9 +19,9 @@ class RoasterMembershipProjectionTest {
         val roaster = FavoriteTarget(FavoriteKind.Roaster, "same")
         val server = Server(setOf(shop, roaster))
         val adapter = RoasterFavoritesAdapter(catalogue, backgroundScope, prompt, server)
-        assertEquals(setOf("same"), adapter.observeKeys().first().getOrThrow())
+        assertEquals(setOf("same"), adapter.observeKeys().first())
         server.memberships.value = Result.success(setOf(shop))
-        assertTrue(adapter.observeKeys().first().getOrThrow().isEmpty())
+        assertTrue(adapter.observeKeys().first().isEmpty())
     }
 
     private val catalogue = object : RoasterFavorites {

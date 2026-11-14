@@ -11,7 +11,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.component.CoffeePeekButton
 import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
-import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
@@ -43,7 +42,7 @@ private fun AddressSummary(state: ContributionMapUiState, compact: Boolean, modi
     Row(modifier.heightIn(min = CoffeePeekDimens.controlHeight).semantics(mergeDescendants = true) { liveRegion = LiveRegionMode.Polite },
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3)) {
         if (state.isResolving) CoffeePeekLoader(stringResource(Res.string.contributions_map_resolving), modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
-        else CoffeePeekIcon(CoffeePeekIcons.Location, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(24.dp))
+        else Icon(CoffeePeekIcons.Location, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(24.dp))
         Column(Modifier.weight(1f)) {
             if (!compact) {
                 Text(stringResource(Res.string.contributions_map_address), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)

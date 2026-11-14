@@ -4,7 +4,6 @@ import com.coffeepeek.feature.discovery.domain.model.CityEntry
 import com.coffeepeek.feature.discovery.domain.model.Coordinates
 import com.coffeepeek.feature.discovery.domain.model.ShopSummary
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.StateFlow
 
 /** Who is signed in. The application backs it with its session. */
 interface DiscoveryAccount {
@@ -30,24 +29,20 @@ interface DiscoveryFavorites {
     suspend fun setFavorite(shop: ShopSummary, favorite: Boolean): Result<Unit>
 }
 
-data class DiscoveryCitySelection(val id: String, val manual: Boolean)
-
-/** The active city, shared with settings and updated when the catalog or location is available. */
+/** The city the user chose, shared with the settings. */
 interface DiscoveryCity {
-    val selected: StateFlow<DiscoveryCitySelection?>
+    /** The saved city id; emits again when another screen changes it. */
+    val selected: Flow<String?>
 
-    /** Resolves against the available cities and returns null for an empty catalog. */
+    /** The saved city when it is among [cities], else the first one; the result is saved. Null without cities. */
     suspend fun resolve(cities: List<CityEntry>): String?
 }
 
 /** Where the user is. It reads the position only while the permission is granted and never asks for it: the screen asks through its own effect. */
 interface DiscoveryLocation {
     /** The last known position while the permission is granted, else null. */
-    val current: StateFlow<Coordinates?>
+    val current: Flow<Coordinates?>
 
     /** Asks the platform for a fresh position, e.g. after the permission was granted or the user switched «Рядом» on. */
     fun refresh()
-
-    /** Publishes a position obtained by the native map's location action. */
-    fun updateFromMap(point: Coordinates)
 }

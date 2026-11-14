@@ -352,8 +352,7 @@ class DiscoveryRepositoryTest {
         reply = ::catalogReply
         val repository = repository()
         val catalogs = repository.catalogs().getOrThrow()
-        assertEquals(listOf(CityEntry("minsk", "Минск", Coordinates(53.900, 27.567)),
-            CityEntry("brest", "Брест", Coordinates(52.109, 23.717))), catalogs.cities)
+        assertEquals(listOf(CityEntry("minsk", "Минск"), CityEntry("brest", "Брест")), catalogs.cities)
         assertEquals(listOf(CatalogEntry("arabica", "Арабика")), catalogs.beans); assertEquals(listOf(CatalogEntry("grinder", "Кофемолка")), catalogs.equipment)
         assertEquals(listOf(CatalogEntry("v60", "V60")), catalogs.brewMethods); assertEquals(listOf(CatalogEntry("wifi", "Wi-Fi"), CatalogEntry("nameless", "")), catalogs.tags)
         assertEquals(listOf(CatalogEntry("roast", "Roaster", "https://logo")), catalogs.roasters)

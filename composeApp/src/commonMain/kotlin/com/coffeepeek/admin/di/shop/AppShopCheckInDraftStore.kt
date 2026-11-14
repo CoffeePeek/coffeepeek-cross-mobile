@@ -38,8 +38,8 @@ internal class AppShopCheckInDraftStore(
 
         override suspend fun open(initial: ShopCheckInCreateInput) = operation {
             require(initial.shopSlug == shopSlug)
-            leases[key] = token
             val saved = storage.read(accountId, shopId)
+            leases[key] = token
             ShopCheckInDraftSnapshot(
                 saved?.input?.copy(shopSlug = shopSlug) ?: initial,
                 saved?.deliveryUnconfirmed == true,

@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <string name="debug_app_name" translatable="false">CoffeePeek Debug</string>
-    <!-- CoffeePeekColors.GoldWarm; fixed in both light and dark launcher themes. -->
-    <color name="debug_launcher_background">#D4A84B</color>
-</resources>

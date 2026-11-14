@@ -12,7 +12,6 @@ import androidx.compose.ui.Modifier
 import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.component.CoffeePeekButton
-import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.homecheckin.impl.resources.*
@@ -23,7 +22,7 @@ internal fun HomeCheckInDetailActions(enabled: Boolean, onEdit: () -> Unit, onDe
         CoffeePeekButton(stringResource(Res.string.home_check_in_edit), onEdit, enabled = enabled)
         TextButton(onClick = onDelete, enabled = enabled, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
             colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)) {
-            CoffeePeekIcon(CoffeePeekIcons.Delete, null, Modifier.size(18.dp))
+            Icon(CoffeePeekIcons.Delete, null, Modifier.size(18.dp))
             Spacer(Modifier.width(8.dp))
             Text(stringResource(Res.string.home_check_in_delete))
         }

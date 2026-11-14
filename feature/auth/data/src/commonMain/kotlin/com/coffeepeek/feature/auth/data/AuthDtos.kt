@@ -24,14 +24,13 @@ internal data class TokensDto(
 internal data class LoginRequest(@SerialName("email") val email: String, @SerialName("password") val password: String)
 
 @Serializable
-internal data class GoogleLoginRequest(@SerialName("idToken") val idToken: String, val analyticsEnabled: Boolean? = null)
+internal data class GoogleLoginRequest(@SerialName("idToken") val idToken: String)
 
 @Serializable
 internal data class RegistrationRequest(
     @SerialName("email") val email: String,
     @SerialName("password") val password: String,
     @SerialName("userName") val userName: String,
-    @SerialName("analyticsEnabled") val analyticsEnabled: Boolean,
 )
 
 @Serializable

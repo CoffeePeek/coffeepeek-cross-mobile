@@ -10,24 +10,17 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.community.api.CommunityHost
 import com.coffeepeek.feature.community.domain.model.CommunityPost
-import com.coffeepeek.feature.community.impl.resources.*
-import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
 internal fun CommunityGuestTeaser(post: CommunityPost, host: CommunityHost, onSignIn: () -> Unit) {
-    val onSignInLabel = stringResource(Res.string.community_sign_in_to_read)
     val background = MaterialTheme.colorScheme.background
-    Box(Modifier.fillMaxWidth().heightIn(max = 320.dp).clipToBounds()
-        .clickable(onClickLabel = onSignInLabel) { onSignIn() }
-        .semantics(mergeDescendants = true) { contentDescription = onSignInLabel }) {
+    Box(Modifier.fillMaxWidth().heightIn(max = 320.dp).clipToBounds().clearAndSetSemantics {}) {
         PostCard(
             post = post,
             isOwn = false,

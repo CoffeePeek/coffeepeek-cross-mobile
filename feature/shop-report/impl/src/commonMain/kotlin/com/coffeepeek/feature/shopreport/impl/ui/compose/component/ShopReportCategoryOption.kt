@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -18,7 +19,6 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
-import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
@@ -42,7 +42,7 @@ internal fun ShopReportCategoryOption(
             color = MaterialTheme.colorScheme.onSurface)
         // A check is visual feedback for a single selection, not an independent checkbox.
         Box(Modifier.size(24.dp), contentAlignment = Alignment.Center) {
-            if (selected) CoffeePeekIcon(CoffeePeekIcons.Check, null, Modifier.size(20.dp),
+            if (selected) Icon(CoffeePeekIcons.Check, null, Modifier.size(20.dp),
                 tint = MaterialTheme.colorScheme.primary)
         }
     }

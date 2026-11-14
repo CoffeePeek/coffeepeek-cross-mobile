@@ -1,8 +1,6 @@
 package com.coffeepeek.feature.shop.impl.ui.compose
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.animation.Crossfade
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -74,14 +72,9 @@ internal fun ShopMenuGalleryScreenContent(
         containerColor = MaterialTheme.colorScheme.background,
     ) { insets ->
         Box(Modifier.fillMaxSize().padding(insets), contentAlignment = Alignment.Center) {
-            Crossfade(targetState = when {
-                state.isLoading -> 0
-                state.hasError || state.photos.isEmpty() -> 1
-                else -> 2
-            }, animationSpec = tween(220), label = "gallery-status") { status ->
-            when (status) {
-                0 -> CoffeePeekLoader(size = 40.dp, color = MaterialTheme.colorScheme.primary, strokeWidth = 4.dp)
-                1 -> GalleryMessage(state.hasError,
+            when {
+                state.isLoading -> CoffeePeekLoader(size = 40.dp, color = MaterialTheme.colorScheme.primary, strokeWidth = 4.dp)
+                state.hasError || state.photos.isEmpty() -> GalleryMessage(state.hasError,
                     onRetry = { onAction(ShopMenuGalleryAction.Load) })
                 else -> LazyColumn(
                     modifier = Modifier.fillMaxSize(),
@@ -106,7 +99,6 @@ internal fun ShopMenuGalleryScreenContent(
                     }
                 }
             }
-        }
         }
     }
 }

@@ -1,11 +1,11 @@
 package com.coffeepeek.feature.shop.impl.ui.compose.component
 
+import androidx.compose.material3.Icon
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.icons.CoffeePeekBrewIcons
-import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.shop.domain.model.ShopFeature
@@ -26,7 +26,7 @@ internal fun ShopFeatureIcon(feature: ShopFeature, modifier: Modifier = Modifier
                 CoffeePeekBrewIcons.CoffeeMachine
             else -> CoffeePeekBrewIcons.Coffee
         }
-        CoffeePeekIcon(painterResource(resource), null, modifier)
+        Icon(painterResource(resource), null, modifier)
     } else {
         val icon = when (feature.slug?.trim()?.lowercase()) {
             "roastery" -> CoffeePeekIcons.Factory
@@ -44,7 +44,7 @@ internal fun ShopFeatureIcon(feature: ShopFeature, modifier: Modifier = Modifier
             "gluten-free" -> CoffeePeekIcons.GrainsSlash
             else -> CoffeePeekIcons.ListStar
         }
-        CoffeePeekIcon(icon, null, modifier)
+        Icon(icon, null, modifier)
     }
 }
 

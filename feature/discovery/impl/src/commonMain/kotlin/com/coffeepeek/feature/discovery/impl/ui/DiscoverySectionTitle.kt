@@ -5,6 +5,7 @@ import com.coffeepeek.feature.discovery.impl.resources.discovery_section_roaster
 import com.coffeepeek.feature.discovery.impl.resources.discovery_section_shops
 import com.coffeepeek.feature.discovery.impl.resources.discovery_show_all
 import androidx.compose.foundation.layout.*
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import com.coffeepeek.core.designsystem.component.CoffeePeekTextButton as TextButton
@@ -16,7 +17,6 @@ import androidx.compose.ui.platform.LocalDensity
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
@@ -40,7 +40,7 @@ internal fun DiscoverySectionTitle(title: String, onShowAll: () -> Unit, modifie
 private fun ShowAllAction(onClick: () -> Unit, modifier: Modifier = Modifier) {
     TextButton(onClick, modifier) {
         Text(stringResource(Res.string.discovery_show_all))
-        CoffeePeekIcon(CoffeePeekIcons.ChevronRight, null, Modifier.padding(start = CoffeePeekDimens.spacing1).size(16.dp))
+        Icon(CoffeePeekIcons.ChevronRight, null, Modifier.padding(start = CoffeePeekDimens.spacing1).size(16.dp))
     }
 }
 

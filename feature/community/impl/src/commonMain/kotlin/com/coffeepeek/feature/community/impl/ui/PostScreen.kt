@@ -10,8 +10,6 @@ import com.coffeepeek.feature.community.impl.resources.community_mascot_error
 import com.coffeepeek.feature.community.impl.resources.community_back
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.animation.Crossfade
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -99,8 +97,7 @@ internal fun PostScreenContent(
     modifier: Modifier = Modifier,
 ) {
     var preview by remember { mutableStateOf<PostPhotoPreview?>(null) }
-    preview?.takeIf { state.post != null && state.error == null }
-        ?.let { host.photoViewer(it.thumbnails, it.originals, it.index) { preview = null } }
+    preview?.let { host.photoViewer(it.thumbnails, it.originals, it.index) { preview = null } }
     if (state.isReportOpen) ReportSheet(state.reportForm(), postReportCallbacks(onAction))
     val authorFallback = stringResource(Res.string.community_user)
     val sharer = postSharer(host)
@@ -111,18 +108,11 @@ internal fun PostScreenContent(
     ) { padding ->
         Box(Modifier.fillMaxSize().padding(padding)) {
             val post = state.post
-            Crossfade(targetState = when {
-                post != null -> 0
-                state.error == PostError.Unavailable -> 1
-                state.error == PostError.Failed -> 2
-                else -> 3
-            }, animationSpec = tween(220), label = "post-status") { status ->
-                when (status) {
-                    0 -> PostBody(state.post!!, state, host, postActions(state.post!!, state, onAction, callbacks, blockActions, authorFallback, sharer) { preview = it })
-                    1 -> PostUnavailable()
-                    2 -> ErrorBlock(onRetry = { onAction(PostAction.Retry) }, retryLabel = stringResource(Res.string.community_retry))
-                    else -> CenteredLoader()
-                }
+            when {
+                post != null -> PostBody(post, state, host, postActions(post, state, onAction, callbacks, blockActions, authorFallback, sharer) { preview = it })
+                state.error == PostError.Unavailable -> PostUnavailable()
+                state.error == PostError.Failed -> ErrorBlock(onRetry = { onAction(PostAction.Retry) }, retryLabel = stringResource(Res.string.community_retry))
+                else -> CenteredLoader()
             }
         }
     }

@@ -17,6 +17,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -105,7 +106,7 @@ private fun SearchFieldContents(
 ) {
     Row(Modifier.fillMaxWidth().heightIn(min = touchHeight).padding(start = 12.dp, end = 4.dp),
         verticalAlignment = Alignment.CenterVertically) {
-        CoffeePeekIcon(CoffeePeekIcons.Search, null, Modifier.size(20.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        Icon(CoffeePeekIcons.Search, null, Modifier.size(20.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
         Spacer(Modifier.width(8.dp))
         Box(Modifier.weight(1f), contentAlignment = Alignment.CenterStart) {
             if (text.isEmpty()) Text(placeholder, style = MaterialTheme.typography.bodyLarge,
@@ -120,7 +121,7 @@ private fun SearchFieldContents(
 private fun SearchClearButton(description: String, size: Dp, enabled: Boolean, onClear: () -> Unit) {
     Box(Modifier.size(size).clip(CircleShape)
         .clickable(enabled = enabled, role = Role.Button, onClick = onClear), contentAlignment = Alignment.Center) {
-        CoffeePeekIcon(CoffeePeekIcons.Close, description, Modifier.size(18.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        Icon(CoffeePeekIcons.Close, description, Modifier.size(18.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 

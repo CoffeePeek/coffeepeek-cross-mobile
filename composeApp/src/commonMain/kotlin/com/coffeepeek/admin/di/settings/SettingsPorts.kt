@@ -56,14 +56,14 @@ internal class AppCityPort(
     private val catalogs: PublicDiscoveryCatalogs,
     private val preference: CityPreference,
 ) : CityPort {
-    override fun observeSelectedCityId(): Flow<String?> = preference.selected.map { it?.id }.distinctUntilChanged()
+    override fun observeSelectedCityId(): Flow<String?> = preference.selectedCityId
 
     override suspend fun loadCities(): Result<List<SettingsCity>> = catalogs.cities().map { cities ->
         preference.resolve(cities.map { it.id })
         cities.map { SettingsCity(it.id, it.name) }
     }
 
-    override suspend fun select(cityId: String) = preference.select(cityId)
+    override fun select(cityId: String) = preference.select(cityId)
 }
 
 /** Signed in = an active session that has a user id. */
@@ -76,7 +76,7 @@ internal class AppSettingsAccountPort(private val sessions: SessionReader) : Set
 /** The row exists only for a signed-in user with analytics ready; the service is read when observed. */
 internal class AppUsageConsentPort(private val service: () -> AnalyticsService? = { Analytics.service }) : UsageConsentPort {
     override fun observe(): Flow<UsageConsentState> = service()?.state
-        ?.map { UsageConsentState(available = it.authReady && !it.userId.isNullOrBlank(), accepted = it.consent == AnalyticsConsent.Accepted, syncFailed = it.preferenceSyncFailed) }
+        ?.map { UsageConsentState(available = it.authReady && !it.userId.isNullOrBlank(), accepted = it.consent == AnalyticsConsent.Accepted) }
         ?.distinctUntilChanged()
         ?: flowOf(UsageConsentState.Unavailable)
 

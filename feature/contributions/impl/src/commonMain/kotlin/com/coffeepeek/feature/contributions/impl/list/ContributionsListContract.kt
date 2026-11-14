@@ -34,7 +34,6 @@ internal data class TabState(
     val page: Int = 0,
     val hasMore: Boolean = false,
     val isLoadingMore: Boolean = false,
-    val loadMoreFailed: Boolean = false,
 )
 
 internal enum class ListError { SignInRequired, LoadFailed }

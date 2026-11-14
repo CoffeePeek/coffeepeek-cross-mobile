@@ -8,7 +8,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.painter.Painter
-import com.coffeepeek.core.designsystem.component.coffeePeekIconPainter
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.component.CoffeePeekCard
@@ -45,11 +45,11 @@ internal fun CheckInCreatePickerContent(
         }
         Column(verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2)) {
             CheckInCreateOption(stringResource(Res.string.home_check_in_create_shop),
-                stringResource(Res.string.home_check_in_create_shop_hint), coffeePeekIconPainter(CoffeePeekIcons.Location), onShop)
+                stringResource(Res.string.home_check_in_create_shop_hint), rememberVectorPainter(CoffeePeekIcons.Location), onShop)
             CheckInCreateOption(stringResource(Res.string.home_check_in_create_home),
                 stringResource(Res.string.home_check_in_create_home_hint), coffeePeekMapIconPainter(CoffeePeekMapIcon.CoffeeShop), onHome)
             if (onShelfBag != null) CheckInCreateOption(stringResource(Res.string.home_check_in_create_shelf_title),
-                stringResource(Res.string.home_check_in_create_shelf_body), coffeePeekIconPainter(CoffeePeekIcons.Camera), onShelfBag)
+                stringResource(Res.string.home_check_in_create_shelf_body), rememberVectorPainter(CoffeePeekIcons.Camera), onShelfBag)
         }
     }
 }

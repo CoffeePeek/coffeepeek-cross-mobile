@@ -19,7 +19,7 @@ internal class FakeAuthRepository : AuthRepository {
         return challenge
     }
 
-    override suspend fun signInWithApple(challengeId: String, idToken: String, analyticsEnabled: Boolean?): Result<SignedInAccount> {
+    override suspend fun signInWithApple(challengeId: String, idToken: String): Result<SignedInAccount> {
         appleTokens += challengeId to idToken
         gate?.await()
         return apple
@@ -51,12 +51,12 @@ internal class FakeAuthRepository : AuthRepository {
     val googleTokens = mutableListOf<String>()
     var google: Result<SignedInAccount> = Result.success(SignedInAccount("google-user"))
 
-    override suspend fun signInWithGoogle(idToken: String, analyticsEnabled: Boolean?): Result<SignedInAccount> {
+    override suspend fun signInWithGoogle(idToken: String): Result<SignedInAccount> {
         googleTokens += idToken
         gate?.await()
         return google
     }
-    override suspend fun register(userName: String, email: String, password: String, analyticsEnabled: Boolean): Result<Unit> {
+    override suspend fun register(userName: String, email: String, password: String): Result<Unit> {
         registrations += listOf(userName, email, password)
         onRegister()
         gate?.await()

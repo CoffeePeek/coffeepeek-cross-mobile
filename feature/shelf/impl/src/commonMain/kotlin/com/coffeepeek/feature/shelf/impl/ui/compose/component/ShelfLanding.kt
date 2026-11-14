@@ -6,8 +6,6 @@ import androidx.compose.animation.core.Easing
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
-import com.coffeepeek.core.designsystem.theme.coffeePeekReduceMotion
-import com.coffeepeek.core.designsystem.theme.reducedMotionDuration
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -24,13 +22,9 @@ internal class ShelfLanding(val fall: Animatable<Float, AnimationVector1D>, val 
 @Composable
 internal fun rememberShelfLanding(key: Any, landing: Boolean, onLanded: () -> Unit = {}): ShelfLanding {
     val landed by rememberUpdatedState(onLanded)
-    val reduceMotion = coffeePeekReduceMotion()
     val state = remember(key) { ShelfLanding(Animatable(if (landing) 0f else 1f), Animatable(0f)) }
     LaunchedEffect(key, landing) {
         if (!landing || state.fall.value >= 1f) return@LaunchedEffect
-        if (reduceMotion) {
-            state.fall.snapTo(1f); state.squash.snapTo(0f); landed(); return@LaunchedEffect
-        }
         // Falls like a dropped thing (speeding up) and stops dead with its bottom in place.
         state.fall.animateTo(1f, tween(480, easing = Easing { it * it }))
         // The top keeps going a little: squashed by 10 % of the height and wider in the middle, then springs back.

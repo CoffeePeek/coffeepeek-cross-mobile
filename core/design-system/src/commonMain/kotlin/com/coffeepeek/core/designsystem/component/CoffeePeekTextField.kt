@@ -12,6 +12,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.material3.Icon
 import com.coffeepeek.core.designsystem.component.CoffeePeekIconButton as IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -92,7 +93,7 @@ fun CoffeePeekTextField(
             ),
             leadingIcon = if (leadingIcon != null) {
                 {
-                    CoffeePeekIcon(
+                    Icon(
                         imageVector = leadingIcon,
                         contentDescription = null,
                         tint = if (isError) MaterialTheme.colorScheme.error
@@ -107,7 +108,7 @@ fun CoffeePeekTextField(
                             onClick = { onPasswordVisibilityChange(!passwordVisible) },
                             enabled = enabled && !readOnly,
                         ) {
-                            CoffeePeekIcon(
+                            Icon(
                                 imageVector = if (passwordVisible) CoffeePeekIcons.Visibility
                                               else CoffeePeekIcons.VisibilityOff,
                                 contentDescription = passwordToggleDescription,
@@ -116,7 +117,7 @@ fun CoffeePeekTextField(
                         }
                     }
                     isError -> {
-                        CoffeePeekIcon(
+                        Icon(
                             imageVector = CoffeePeekIcons.Error,
                             contentDescription = null,
                             tint = MaterialTheme.colorScheme.error,

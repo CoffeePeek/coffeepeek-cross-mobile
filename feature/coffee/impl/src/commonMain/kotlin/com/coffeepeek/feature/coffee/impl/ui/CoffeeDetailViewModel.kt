@@ -63,7 +63,9 @@ internal class CoffeeDetailViewModel(
                 analytics.similarOpened()
                 sendEvent(CoffeeDetailEvent.OpenCoffee(action.slug))
             }
-            is CoffeeDetailAction.OpenSeller -> openSeller(action.offerIndex)
+            is CoffeeDetailAction.OpenSeller -> currentState.details?.coffee?.offers?.getOrNull(action.offerIndex)?.sourceUrl?.let {
+                sendEvent(CoffeeDetailEvent.OpenSeller(it))
+            }
             CoffeeDetailAction.Share -> currentState.details?.let {
                 analytics.contentInteracted(CoffeeDetailSection.Contacts, CoffeeContentAction.Share)
                 sendEvent(CoffeeDetailEvent.Share(it.coffee.name, it.canonicalPath))
@@ -138,22 +140,5 @@ internal class CoffeeDetailViewModel(
         loadRevision++; similarRevision++
         loadJob?.cancel(); similarJob?.cancel()
         super.onCleared()
-    }
-
-    private suspend fun openSeller(offerIndex: Int) {
-        normalizeOfferUrl(currentState.details?.coffee?.offers?.getOrNull(offerIndex)?.sourceUrl)?.let {
-            sendEvent(CoffeeDetailEvent.OpenSeller(it))
-        }
-    }
-
-    private companion object {
-        /** Sellers hand over arbitrary strings; only a usable http(s) address may leave the feature. */
-        fun normalizeOfferUrl(value: String?): String? = value?.trim()?.takeIf(String::isNotBlank)?.let { raw ->
-            when {
-                raw.startsWith("http://", ignoreCase = true) || raw.startsWith("https://", ignoreCase = true) -> raw
-                raw.contains("://") -> null
-                else -> "https://$raw"
-            }
-        }
     }
 }

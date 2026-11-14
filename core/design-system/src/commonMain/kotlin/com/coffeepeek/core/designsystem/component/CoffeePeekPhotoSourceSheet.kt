@@ -52,7 +52,7 @@ private fun PhotoSourceRow(icon: ImageVector, title: String, onClick: () -> Unit
     Row(Modifier.fillMaxWidth().height(56.dp).clickable(role = Role.Button, onClickLabel = title, onClick = onClick)
         .padding(horizontal = CoffeePeekDimens.spacing4), verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3)) {
-        CoffeePeekIcon(icon, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(22.dp))
+        Icon(icon, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(22.dp))
         Text(title, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
     }
 }

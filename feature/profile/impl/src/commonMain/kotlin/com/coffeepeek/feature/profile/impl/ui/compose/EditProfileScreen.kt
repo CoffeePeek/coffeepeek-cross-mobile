@@ -47,6 +47,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import com.coffeepeek.core.designsystem.component.CoffeePeekFilledButton as Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
@@ -79,7 +80,6 @@ import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
 import com.coffeepeek.core.designsystem.component.CoffeePeekTopBar
 import com.coffeepeek.core.designsystem.component.CoffeePeekGroupSection
 import com.coffeepeek.core.designsystem.component.rememberCoffeePeekSyncedText
-import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.component.CoffeePeekActionDialog
 import com.coffeepeek.core.designsystem.component.CoffeePeekDialogAction
@@ -91,7 +91,6 @@ import com.coffeepeek.feature.profile.api.ProfileAvatarImage
 import com.coffeepeek.feature.profile.impl.resources.*
 import com.coffeepeek.feature.profile.impl.ui.EditProfileViewModel
 import com.coffeepeek.feature.profile.impl.ui.model.EditProfileAction
-import com.coffeepeek.feature.profile.impl.ui.model.EditProfileError
 import com.coffeepeek.feature.profile.impl.ui.model.EditProfileEvent
 import com.coffeepeek.feature.profile.impl.ui.model.EditProfileState
 import com.coffeepeek.feature.profile.impl.ui.model.UsernameError
@@ -151,17 +150,6 @@ internal fun EditProfileScreenContent(
         if (state.isLoading) {
             Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
                 CoffeePeekLoader(stringResource(Res.string.profile_loading))
-            }
-        } else if (state.error == EditProfileError.Load) {
-            Column(Modifier.fillMaxSize().padding(padding).padding(CoffeePeekDimens.spacing4),
-                verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3),
-                horizontalAlignment = Alignment.CenterHorizontally) {
-                Spacer(Modifier.weight(1f))
-                Text(stringResource(Res.string.profile_load_failed), color = MaterialTheme.colorScheme.error)
-                Button({ onAction(EditProfileAction.Reload) }) {
-                    Text(stringResource(Res.string.profile_retry))
-                }
-                Spacer(Modifier.weight(1f))
             }
         } else {
             CoffeePeekScrollableColumn(Modifier.fillMaxSize().padding(padding).padding(CoffeePeekDimens.spacing4), reserveBottomClearance = true) {
@@ -264,7 +252,7 @@ private fun SaveProfileButton(state: EditProfileState, onClick: () -> Unit) {
 @Composable
 private fun DeleteAccountButton(enabled: Boolean, onClick: () -> Unit) {
     TextButton(onClick = onClick, modifier = Modifier.fillMaxWidth(), enabled = enabled) {
-        CoffeePeekIcon(CoffeePeekIcons.Delete, contentDescription = null, tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(18.dp))
+        Icon(CoffeePeekIcons.Delete, contentDescription = null, tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(18.dp))
         Spacer(Modifier.width(CoffeePeekDimens.spacing2))
         Text(stringResource(Res.string.profile_edit_delete_account), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.error)
     }
@@ -340,7 +328,7 @@ private fun AvatarPicker(state: EditProfileState, slots: EditProfileSlots, loadi
             Modifier.align(Alignment.BottomEnd).size(32.dp).clip(CircleShape).background(MaterialTheme.colorScheme.surface)
                 .border(1.dp, MaterialTheme.colorScheme.outlineVariant, CircleShape),
             contentAlignment = Alignment.Center,
-        ) { CoffeePeekIcon(CoffeePeekIcons.Camera, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(16.dp)) }
+        ) { Icon(CoffeePeekIcons.Camera, contentDescription = null, tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(16.dp)) }
     }
 }
 

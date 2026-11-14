@@ -34,8 +34,8 @@
     <string name="auth_terms_link">умовы выкарыстання</string>
     <string name="auth_terms_and">і даю згоду на</string>
     <string name="auth_privacy_link">апрацоўку персанальных даных</string>
-    <string name="auth_analytics_title">Аналітыка выкарыстання</string>
-    <string name="auth_analytics_description">Уключана па змаўчанні. Падзеі выкарыстання адпраўляюцца ў PostHog (ЕС), каб паляпшаць CoffeePeek. Без тэкстаў пошуку, нататак, фота і дакладных каардынат. Можна адключыць тут або ў наладах. Выбар захоўваецца ва ўліковым запісе.</string>
+    <string name="auth_analytics_title">Дазволіць аналітыку выкарыстання</string>
+    <string name="auth_analytics_description">Неабавязкова. Падзеі выкарыстання адпраўляюцца ў PostHog (ЕС), каб паляпшаць CoffeePeek. Без тэкстаў пошуку, нататак, фота і дакладных каардынат. Рашэнне можна змяніць у наладах.</string>
     <string name="auth_register_submit">Стварыць акаўнт</string>
     <string name="auth_register_success_title">Праверце пошту</string>
     <string name="auth_register_success_subtitle">Мы адправілі спасылку на %1$s. Перайдзіце па спасылцы, каб актываваць акаўнт. Спасылка дзейнічае 10 хвілін.</string>

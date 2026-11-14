@@ -12,15 +12,11 @@ import androidx.compose.runtime.*
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.animation.scaleOut
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.unit.Density
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.core.designsystem.component.CoffeePeekSwipeDismissModalBottomSheet
-import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.feature.notifications.api.NotificationFeature
@@ -102,16 +98,13 @@ private fun NotificationsIconButton(unreadCount: Int, onClick: () -> Unit) {
     Box(Modifier.sizeIn(minWidth = CoffeePeekDimens.spacing12, minHeight = CoffeePeekDimens.spacing12)) {
         IconButton(onClick = onClick, modifier = Modifier.align(Alignment.Center).size(CoffeePeekDimens.buttonHeight),
             colors = IconButtonDefaults.iconButtonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)) {
-            CoffeePeekIcon(CoffeePeekIcons.Notifications, contentDescription = if (unreadCount > 0)
+            Icon(CoffeePeekIcons.Notifications, contentDescription = if (unreadCount > 0)
                 stringResource(Res.string.notifications_button_unread, unreadCount) else stringResource(Res.string.notifications_title))
         }
         // A sibling stays outside the circular IconButton's clip and inside the button's bounds.
-        AnimatedVisibility(visible = unreadCount > 0, enter = scaleIn(initialScale = 0.6f),
-            exit = scaleOut(targetScale = 0.6f), modifier = Modifier.align(Alignment.TopEnd)) {
-            Badge(modifier = Modifier.clearAndSetSemantics { },
-                containerColor = MaterialTheme.colorScheme.primary, contentColor = MaterialTheme.colorScheme.onPrimary) {
-                Text(if (unreadCount > 99) stringResource(Res.string.notifications_badge_max) else unreadCount.toString(), maxLines = 1)
-            }
+        if (unreadCount > 0) Badge(modifier = Modifier.align(Alignment.TopEnd).clearAndSetSemantics { },
+            containerColor = MaterialTheme.colorScheme.primary, contentColor = MaterialTheme.colorScheme.onPrimary) {
+            Text(if (unreadCount > 99) stringResource(Res.string.notifications_badge_max) else unreadCount.toString(), maxLines = 1)
         }
     }
 }

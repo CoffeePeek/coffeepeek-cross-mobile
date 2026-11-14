@@ -42,7 +42,7 @@ class CityViewModelTest {
             result.onSuccess { list -> if (selected.value == null) selected.value = list.firstOrNull()?.id }
             return result
         }
-        override suspend fun select(cityId: String) { selections += cityId; selected.value = cityId }
+        override fun select(cityId: String) { selections += cityId; selected.value = cityId }
     }
 
     private fun model(port: FakeCities) = CityViewModel(port).also { store.put("city", it) }

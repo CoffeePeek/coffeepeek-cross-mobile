@@ -1,6 +1,5 @@
 package com.coffeepeek.admin.analytics
 
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.Channel
@@ -29,13 +28,12 @@ internal data class AnalyticsState(
     val visitSequence: Long = 0,
     val foreground: Boolean = false,
     val ready: Boolean = false,
-    val preferenceSyncFailed: Boolean = false,
     val overlays: List<String> = emptyList(),
 )
 
 internal interface AnalyticsConsentStore {
-    suspend fun read(userId: String?): AnalyticsConsent
-    suspend fun write(userId: String?, consent: AnalyticsConsent)
+    suspend fun read(): AnalyticsConsent
+    suspend fun write(consent: AnalyticsConsent)
 }
 
 /** SDK calls belong to the adapter, never to feature UI or domain. */
@@ -65,7 +63,6 @@ internal class AnalyticsService(
     private var sdkUser: String? = null
     private var sdkGeneration = -1L
     private var sdkRevision = 0L
-    private var failedChoice: Command.SaveConsent? = null
     private var lastScreen = ""
     private var queueAge = TimeSource.Monotonic.markNow()
     // Correlation only: never persisted or included in event properties.
@@ -79,20 +76,24 @@ internal class AnalyticsService(
                     when (command) {
                         is Command.Reconcile -> reconcile()
                         is Command.Pause -> { if (active) erase(command.resetIdentity); reconcile() }
-                        is Command.Expire -> expireAndRetry()
+                        is Command.Expire -> if (active && queueAge.elapsedNow().inWholeMinutes >= 60) { erase(false); reconcile() }
                         is Command.Event -> {
                             if (command.generation == state.value.generation && allowed()) {
                                 reconcile()
                                 if (active) transport.capture(command.name, command.properties)
                             }
                         }
-                        is Command.SaveConsent -> { saveConsent(command); reconcile() }
-                        is Command.SignIn -> completeSignIn(command)
+                        is Command.SaveConsent -> {
+                            // Revocation is already effective in memory, even if persistence fails.
+                            store.write(command.consent)
+                            mutableState.update { if (it.consentRevision == command.revision) it.copy(consentPersisted = true) else it }
+                            if (command.consent == AnalyticsConsent.Declined) erase()
+                            reconcile()
+                        }
                     }
-                } catch (cancelled: CancellationException) {
-                    throw cancelled
                 } catch (_: Exception) {
-                    preferenceFailed(command)
+                    runCatching { erase() }
+                    mutableState.update { it.copy(ready = false, consent = if (command is Command.SaveConsent) AnalyticsConsent.Declined else it.consent) }
                 } finally {
                     if (command is Command.Event) pending.update { (it - 1).coerceAtLeast(0) }
                     command.done?.complete(Unit)
@@ -107,55 +108,20 @@ internal class AnalyticsService(
         }
     }
 
-    suspend fun restoreConsent() = reconcileAndWait()
-
-    private suspend fun restoreAccountPreference() {
-        val snapshot = state.value
-        if (snapshot.restored) return
-        val consent = store.read(snapshot.userId)
-        mutableState.update {
-            if (it.generation == snapshot.generation && it.consentRevision == snapshot.consentRevision)
-                it.copy(consent = consent, restored = true, consentPersisted = true, preferenceSyncFailed = false)
-            else it
-        }
-    }
-
-    private suspend fun saveConsent(command: Command.SaveConsent) {
-        if (state.value.userId != command.userId) return
-        // Revocation is already effective in memory. Failed writes remain pending in the account store.
-        store.write(command.userId, command.consent)
-        mutableState.update {
-            if (it.userId == command.userId && it.consentRevision == command.revision)
-                it.copy(consentPersisted = true, preferenceSyncFailed = false)
-            else it
-        }
-        failedChoice = null
-        if (command.consent == AnalyticsConsent.Declined) erase()
-    }
-
-    private fun preferenceFailed(command: Command) {
-        runCatching { erase() }
-        mutableState.update { current ->
-            if (command is Command.SaveConsent && current.consentRevision == command.revision) {
-                failedChoice = command
-                current.copy(ready = false, consent = AnalyticsConsent.Declined, preferenceSyncFailed = true)
-            } else current.copy(ready = false, preferenceSyncFailed = current.preferenceSyncFailed || !current.restored)
-        }
-    }
-
-    private suspend fun expireAndRetry() {
-        if (active && queueAge.elapsedNow().inWholeMinutes >= 60) erase(false)
-        if (state.value.foreground) reconcile()
+    suspend fun restoreConsent() {
+        val consent = runCatching { store.read() }.getOrDefault(AnalyticsConsent.Unknown)
+        mutableState.update { if (it.restored) it else it.copy(consent = consent, restored = true, consentPersisted = true) }
+        reconcileAndWait()
     }
 
     suspend fun setConsent(consent: AnalyticsConsent) {
         if (consent == AnalyticsConsent.Unknown) return
         if (consent == AnalyticsConsent.Declined) passwordSignUp.value = null
         val snapshot = mutableState.updateAndGet { it.copy(consent = consent, restored = true, consentPersisted = false,
-            consentRevision = it.consentRevision + 1, generation = it.generation + 1, ready = false, preferenceSyncFailed = false) }
+            consentRevision = it.consentRevision + 1, generation = it.generation + 1, ready = false) }
         if (consent == AnalyticsConsent.Declined) runCatching { transport.stopDelivery() }
         val done = CompletableDeferred<Unit>()
-        commands.send(Command.SaveConsent(snapshot.userId, consent, snapshot.consentRevision, done))
+        commands.send(Command.SaveConsent(consent, snapshot.consentRevision, done))
         done.await()
     }
 
@@ -170,10 +136,7 @@ internal class AnalyticsService(
             val changed = it.userId != userId || it.authReady == authRestoring
             it.copy(userId = userId, authReady = !authRestoring,
                 generation = if (changed) it.generation + 1 else it.generation,
-                ready = if (changed) false else it.ready,
-                consent = if (changed) AnalyticsConsent.Unknown else it.consent,
-                restored = if (changed) false else it.restored,
-                consentPersisted = if (changed) false else it.consentPersisted)
+                ready = if (changed) false else it.ready)
         }
         if (previous != null && previous != userId) {
             runCatching { transport.stopDelivery() }
@@ -183,12 +146,7 @@ internal class AnalyticsService(
 
     fun setForeground(foreground: Boolean) {
         if (state.value.foreground == foreground) return
-        mutableState.update {
-            val reload = foreground && it.userId != null
-            it.copy(foreground = foreground, ready = false,
-                restored = if (reload) false else it.restored,
-                consentPersisted = if (reload) false else it.consentPersisted)
-        }
+        mutableState.update { it.copy(foreground = foreground, ready = if (foreground) it.ready else false) }
         if (!foreground) {
             runCatching { transport.stopDelivery() }
             commands.trySend(Command.Pause(false))
@@ -206,18 +164,6 @@ internal class AnalyticsService(
     }
 
     fun operationScope(page: String = state.value.page) = AnalyticsScope(state.value.generation, page.takeIf { it in pageTypes } ?: "other")
-
-    fun signedIn(userId: String, method: String, entry: String, email: String?) {
-        syncIdentityNow(userId)
-        commands.trySend(Command.SignIn(userId, method, entry, email, state.value.generation))
-    }
-
-    private suspend fun completeSignIn(command: Command.SignIn) {
-        if (command.userId != state.value.userId || command.generation != state.value.generation) return
-        reconcile()
-        completePasswordSignUp(command.email.takeIf { command.method == "password" })
-        track(AnalyticsEvent.SIGN_IN_COMPLETED, mapOf("method" to command.method, "entry_point" to command.entry))
-    }
 
     fun rememberPasswordSignUp(email: String) {
         passwordSignUp.value = if (enabled && state.value.consent == AnalyticsConsent.Accepted &&
@@ -264,9 +210,7 @@ internal class AnalyticsService(
         done.await()
     }
 
-    private suspend fun reconcile() {
-        failedChoice?.takeIf { it.userId == state.value.userId && it.revision == state.value.consentRevision }?.let { saveConsent(it) }
-        restoreAccountPreference()
+    private fun reconcile() {
         val current = state.value
         if (!allowed()) {
             if (active) erase(resetIdentity = current.consent != AnalyticsConsent.Accepted || !current.authReady)
@@ -274,31 +218,25 @@ internal class AnalyticsService(
         }
         // Collection starts only after login; an identified account must never be linked to another.
         if (active && sdkUser != null && sdkUser != current.userId) erase()
-        if (!active) startTransport(current)
+        if (!active) {
+            sdkGeneration = current.generation
+            val revision = ++sdkRevision
+            transport.start({ allowed() && revision == sdkRevision && sdkGeneration == state.value.generation }, current.userId)
+            active = true
+            queueAge = TimeSource.Monotonic.markNow()
+            sdkUser = null
+        }
         if (sdkUser != current.userId) {
             current.userId?.let(transport::identify)
             sdkUser = current.userId
         }
         sdkGeneration = current.generation
         mutableState.update { it.copy(ready = true) }
-        recordScreen(current)
-    }
-
-    private fun recordScreen(current: AnalyticsState) {
         val screenKey = "${current.generation}:${current.visit}:${current.visitSequence}:${current.page}"
         if (current.visit.isNotEmpty() && screenKey != lastScreen) {
             transport.screen(current.page, envelope(current, current.page))
             lastScreen = screenKey
         }
-    }
-
-    private fun startTransport(current: AnalyticsState) {
-        sdkGeneration = current.generation
-        val revision = ++sdkRevision
-        transport.start({ allowed() && revision == sdkRevision && sdkGeneration == state.value.generation }, current.userId)
-        active = true
-        queueAge = TimeSource.Monotonic.markNow()
-        sdkUser = null
     }
 
     private fun erase(resetIdentity: Boolean = true) {
@@ -311,11 +249,10 @@ internal class AnalyticsService(
     }
 
     private sealed class Command(open val done: CompletableDeferred<Unit>? = null) {
-        data class SignIn(val userId: String, val method: String, val entry: String, val email: String?, val generation: Long) : Command()
         data object Expire : Command()
         data class Pause(val resetIdentity: Boolean) : Command()
         data class Reconcile(override val done: CompletableDeferred<Unit>? = null) : Command(done)
-        data class SaveConsent(val userId: String?, val consent: AnalyticsConsent, val revision: Long, override val done: CompletableDeferred<Unit>) : Command(done)
+        data class SaveConsent(val consent: AnalyticsConsent, val revision: Long, override val done: CompletableDeferred<Unit>) : Command(done)
         data class Event(val name: String, val properties: Map<String, Any>, val generation: Long) : Command()
     }
 }

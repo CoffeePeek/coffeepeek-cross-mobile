@@ -34,7 +34,6 @@ internal class SettingsViewModel(
 ) {
     private var cities: List<SettingsCity> = emptyList()
     private var selectedId: String? = null
-    private var lastName: Pair<String?, String>? = null
     private var loading = false
 
     init {
@@ -50,11 +49,6 @@ internal class SettingsViewModel(
             }
         }
         viewModelScope.launch { loadCities() }
-    }
-
-    /** The settings tab re-entering is the natural retry after a failed catalog load. */
-    fun onScreenShown() {
-        if (currentState.cityName == null && cities.isEmpty() && !loading) viewModelScope.launch { loadCities() }
     }
 
     override suspend fun handleActionInternal(action: SettingsAction) {
@@ -101,10 +95,8 @@ internal class SettingsViewModel(
     }
 
     private fun publishCity() {
-        val resolved = cities.firstOrNull { it.id == selectedId }?.name
-        // A failed catalog reload must not wipe the name of the city the user actually picked.
-        if (resolved != null) lastName = selectedId to resolved
-        updateState { copy(cityName = resolved ?: lastName?.takeIf { it.first == selectedId }?.second) }
+        val name = cities.firstOrNull { it.id == selectedId }?.name
+        updateState { copy(cityName = name) }
     }
 }
 

@@ -80,8 +80,9 @@ internal class ShopCheckInCreateViewModel(
             ShopCheckInFormAction.HistoryChecked -> {
                 if (!currentState.deliveryUnconfirmed || currentState.isSubmitting || currentState.submitted ||
                     currentState.isDiscarding || currentState.confirmDiscard) return
-                val saved = saveDraft(currentState.input, unconfirmed = false)
-                updateState { copy(deliveryUnconfirmed = false, submitFailure = null, draftFailed = !saved) }
+                if (saveDraft(currentState.input, unconfirmed = false)) {
+                    updateState { copy(deliveryUnconfirmed = false, submitFailure = null) }
+                }
             }
         }
     }
@@ -158,9 +159,8 @@ internal class ShopCheckInCreateViewModel(
         updateState { copy(isSubmitting = true) }
         var createdId: String? = null
         try {
-            // Persist the delivery guard before any request. A broken storage must not block
-            // the submission itself; the uncertain outcome stays visible only in this session.
-            saveDraft(input, unconfirmed = true)
+            // Persist the delivery guard before any request; never silently repeat an uncertain write.
+            if (!saveDraft(input, unconfirmed = true)) return
             createdId = repository.create(input).getOrThrow()
             completeSubmission(input)
         } catch (cancelled: CancellationException) {
@@ -208,7 +208,7 @@ internal class ShopCheckInCreateViewModel(
         val uncertain = error is ShopCheckInCreationUnconfirmed
         val saved = if (uncertain) true else saveDraft(input, unconfirmed = false)
         val rejection = error as? ShopCheckInRejection
-        updateState { copy(deliveryUnconfirmed = uncertain, draftFailed = !saved,
+        updateState { copy(deliveryUnconfirmed = uncertain || !saved,
             submitFailure = if (uncertain) null else ShopCheckInSubmitFailure(rejection?.status, rejection?.serverMessage)) }
     }
 }

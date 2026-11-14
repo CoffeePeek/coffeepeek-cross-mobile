@@ -13,7 +13,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import androidx.compose.ui.unit.dp
-import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.homecheckin.impl.ui.data.HomeCheckInBrewMethod
@@ -42,7 +41,7 @@ internal fun HomeCheckInEditorMethod(
                 DropdownMenuItem(text = { Text(method.name, style = MaterialTheme.typography.bodyMedium) },
                     onClick = { expanded = false; onSelect(method.code) },
                     leadingIcon = { artwork(method.name, Modifier.size(24.dp)) },
-                    trailingIcon = { if (selectedMethod == method) CoffeePeekIcon(CoffeePeekIcons.Check, null, Modifier.size(18.dp)) })
+                    trailingIcon = { if (selectedMethod == method) Icon(CoffeePeekIcons.Check, null, Modifier.size(18.dp)) })
             }
         }
     }
@@ -50,7 +49,7 @@ internal fun HomeCheckInEditorMethod(
 
 @Composable private fun HomeCheckInEditorMethodPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     Surface { HomeCheckInEditorMethod("hario-v60", listOf(HomeCheckInBrewMethod("hario-v60", "Hario V60")),
-        true, null, { it }, { _, modifier -> CoffeePeekIcon(CoffeePeekIcons.Coffee, null, modifier) }, {}) }
+        true, null, { it }, { _, modifier -> Icon(CoffeePeekIcons.Coffee, null, modifier) }, {}) }
 }
 @Preview @Composable private fun HomeCheckInEditorMethodLightPreview() = HomeCheckInEditorMethodPreview(false)
 @Preview @Composable private fun HomeCheckInEditorMethodDarkPreview() = HomeCheckInEditorMethodPreview(true)

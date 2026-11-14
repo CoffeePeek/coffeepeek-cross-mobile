@@ -48,8 +48,6 @@ internal data class SearchState(
     val locationPermissionRequest: Int = 0,
     val nearbyRequested: Boolean = false,
     val locationUnavailable: Boolean = false,
-    /** The permission cannot be granted without leaving the app; the notice offers «Настройки». */
-    val locationSettingsNeeded: Boolean = false,
     /** Where the user is, for the distance on a card when the server sends none. */
     val userLocation: Coordinates? = null,
     /** The picker keeps one accepted result snapshot while a new query is loading. */
@@ -93,8 +91,6 @@ internal sealed interface SearchAction {
     /** The location permission was granted or refused by the screen's effect. */
     data object LocationGranted : SearchAction
     data object LocationDenied : SearchAction
-    /** The system will not ask again; only the app settings can re-enable the permission. */
-    data object LocationPermanentlyDenied : SearchAction
     data object DismissLocationFailure : SearchAction
     data class SetPrice(val level: PriceLevel?) : SearchAction
     data class SetMinRating(val rating: Double?) : SearchAction

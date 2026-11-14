@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -17,7 +18,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.component.CoffeePeekShimmer
-import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.shelf.domain.model.PublicShelfItem
@@ -53,7 +53,7 @@ internal fun ShelfPublicPhoto(item: PublicShelfItem, load: suspend (String) -> R
 internal fun ShelfPublicPhotoFallback(modifier: Modifier = Modifier) {
     Box(modifier.clip(RoundedCornerShape(4.dp)).background(MaterialTheme.colorScheme.surfaceVariant)
         .clearAndSetSemantics {}, contentAlignment = Alignment.Center) {
-        CoffeePeekIcon(CoffeePeekIcons.Photo, contentDescription = null, modifier = Modifier.size(24.dp),
+        Icon(CoffeePeekIcons.Photo, contentDescription = null, modifier = Modifier.size(24.dp),
             tint = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }

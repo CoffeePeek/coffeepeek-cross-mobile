@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
@@ -35,7 +36,6 @@ import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.component.CoffeePeekCompactOutlinedTextField
 import com.coffeepeek.core.designsystem.component.CoffeePeekIconButton
 import com.coffeepeek.core.designsystem.component.CoffeePeekInputRole
-import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
@@ -123,7 +123,7 @@ private fun AuthPasswordVisibility(visible: Boolean, enabled: Boolean, onClick: 
         glass = false,
         contentDescription = stringResource(if (visible) Res.string.auth_hide_password else Res.string.auth_show_password),
     ) {
-        CoffeePeekIcon(
+        Icon(
             imageVector = if (visible) CoffeePeekIcons.VisibilityOff else CoffeePeekIcons.Visibility,
             contentDescription = null,
             modifier = Modifier.size(20.dp),

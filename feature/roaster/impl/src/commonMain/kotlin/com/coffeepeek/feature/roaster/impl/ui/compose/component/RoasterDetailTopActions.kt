@@ -7,13 +7,13 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.LayoutDirection
-import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.icons.PlatformBack
 import com.coffeepeek.core.designsystem.modifier.CoffeePeekGlassIconButton
@@ -38,7 +38,7 @@ internal fun RoasterDetailTopActions(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically) {
         CoffeePeekGlassIconButton(onBack, stringResource(Res.string.roaster_detail_back), nativeIcon = CoffeePeekGlassIcon.Back) {
-            CoffeePeekIcon(CoffeePeekIcons.PlatformBack, null,
+            Icon(CoffeePeekIcons.PlatformBack, null,
                 modifier = Modifier.scale(scaleX = backScale, scaleY = 1f))
         }
         val business = LocalRoasterBusinessIdentity.current
@@ -48,7 +48,7 @@ internal fun RoasterDetailTopActions(
             share = {
                 val share = LocalRoasterShare.current
                 CoffeePeekGlassIconButton({ share(business.canonicalPath) }, stringResource(Res.string.roaster_share), nativeIcon = CoffeePeekGlassIcon.Share) {
-                    CoffeePeekIcon(CoffeePeekIcons.Share, null)
+                    Icon(CoffeePeekIcons.Share, null)
                 }
             })
         else RoasterFavoriteHeart(isFavorite, onToggleFavorite, overImage = true, modifier = heartModifier)

@@ -70,7 +70,7 @@ internal fun ShopCheckInDrinkField(
             TextButton(onClick = onRetry, enabled = !loading) { Text(stringResource(Res.string.shop_checkin_form_retry)) }
         }
         if (slug == "other") OutlinedTextField(
-            value = customName.orEmpty(), onValueChange = { onCustomName(it.take(100)) }, enabled = enabled,
+            value = customName.orEmpty(), onValueChange = onCustomName, enabled = enabled,
             isError = invalid, singleLine = true, modifier = Modifier.fillMaxWidth().semantics {
                 if (invalid) error(errorMessage)
             },

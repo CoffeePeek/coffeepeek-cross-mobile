@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -18,6 +19,7 @@ import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
@@ -85,7 +87,7 @@ fun CoffeePeekIconBadge(
     modifier: Modifier = Modifier,
     contentDescription: String? = null,
 ) {
-    CoffeePeekIconBadge(coffeePeekIconPainter(icon), colors, modifier, contentDescription)
+    CoffeePeekIconBadge(rememberVectorPainter(icon), colors, modifier, contentDescription)
 }
 
 @Composable
@@ -107,7 +109,7 @@ fun CoffeePeekIconBadge(
             .background(background),
         contentAlignment = Alignment.Center,
     ) {
-        CoffeePeekIcon(
+        Icon(
             painter = painter,
             contentDescription = contentDescription,
             tint = iconTint,

@@ -37,7 +37,7 @@ internal class RegisterViewModel(
             is RegisterAction.AnalyticsChanged -> updateState { copy(analyticsAccepted = action.checked) }
             RegisterAction.Submit -> submit()
             RegisterAction.AppleSignIn -> appleSignIn()
-            is RegisterAction.GoogleToken -> socialSignIn(SignInMethod.Google, SocialProvider.Google) { repository.signInWithGoogle(action.idToken, currentState.analyticsAccepted) }
+            is RegisterAction.GoogleToken -> socialSignIn(SignInMethod.Google, SocialProvider.Google) { repository.signInWithGoogle(action.idToken) }
             is RegisterAction.GoogleFailed -> googleFailed(action.message)
         }
     }
@@ -96,7 +96,7 @@ internal class RegisterViewModel(
 
     private suspend fun register(name: String, email: String, form: RegisterState) {
         analytics.saveAnalyticsConsent(form.analyticsAccepted)
-        repository.register(name, email, form.password, form.analyticsAccepted).fold(
+        repository.register(name, email, form.password).fold(
             onSuccess = {
                 analytics.passwordSignUpCompleted(email)
                 updateState { copy(step = RegisterStep.Success, email = email, password = "") }
@@ -107,7 +107,7 @@ internal class RegisterViewModel(
 
     private suspend fun appleSignIn() {
         val authorizer = apple ?: return
-        socialSignIn(SignInMethod.Apple, SocialProvider.Apple) { signInWithApple(repository, authorizer, currentState.analyticsAccepted) }
+        socialSignIn(SignInMethod.Apple, SocialProvider.Apple) { signInWithApple(repository, authorizer) }
     }
 
     private suspend fun socialSignIn(method: SignInMethod, provider: SocialProvider, request: suspend () -> Result<SignedInAccount>) {

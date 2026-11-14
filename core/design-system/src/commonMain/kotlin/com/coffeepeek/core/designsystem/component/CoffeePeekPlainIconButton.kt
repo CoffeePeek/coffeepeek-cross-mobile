@@ -6,6 +6,7 @@ import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.sizeIn
+import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -41,7 +42,7 @@ fun CoffeePeekPlainIconButton(
 
 @Composable
 private fun PlainIconPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
-    CoffeePeekPlainIconButton({}) { CoffeePeekIcon(CoffeePeekIcons.MoreHorizontal, "Actions", Modifier.size(24.dp)) }
+    CoffeePeekPlainIconButton({}) { Icon(CoffeePeekIcons.MoreHorizontal, "Actions", Modifier.size(24.dp)) }
 }
 
 @Preview @Composable private fun PlainIconLightPreview() = PlainIconPreview(false)

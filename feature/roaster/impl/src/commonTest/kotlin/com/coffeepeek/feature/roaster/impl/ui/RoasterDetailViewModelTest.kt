@@ -15,7 +15,6 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.NonCancellable
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
@@ -62,17 +61,6 @@ class RoasterDetailViewModelTest {
         assertEquals(listOf("roast"), repository.detailCalls)
         favorites.keys.value = emptySet(); runCurrent()
         assertFalse(model.state.value.isFavorite)
-    }
-
-    @Test fun firstMembershipFailureUsesTheLocalizedMessageAndCanRecover() = runTest(dispatcher) {
-        val results = MutableStateFlow<Result<Set<String>>>(Result.failure(IllegalStateException("initial")))
-        val model = model(favorites = FakeFavorites().apply { keysFlow = results })
-        runCurrent()
-        assertEquals("roast", model.state.value.details?.id)
-        assertEquals(RoasterMessage.FavoritesUnavailable, model.state.value.message)
-        results.value = Result.success(setOf("roast"))
-        runCurrent()
-        assertTrue(model.state.value.isFavorite)
     }
 
     @Test fun favoriteToggleSendsSlugTargetWithFirstPhotoAndReportsFailure() = runTest(dispatcher) {

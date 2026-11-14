@@ -34,8 +34,8 @@ the `CoffeePeek` prefix. Examples: `CoffeePeekButton.kt`, `CoffeePeekTextField`,
 `CoffeePeekTopBar`, `CoffeePeekIcons`, `CoffeePeekDimens`, `CoffeePeekColors`.
 Ordinary functions/Modifier extensions follow lower camel case:
 `coffeePeekTypography`, `coffeePeekLiquidGlass`; the glass composition local is
-`LocalCoffeePeekGlassHazeState`. The platform font family is exposed as
-`CoffeePeekFontFamily`; Manrope binaries, resource identifiers and license text keep
+`LocalCoffeePeekGlassHazeState`. The packaged Manrope family is exposed as
+`CoffeePeekFontFamily`; font binaries, resource identifiers and license text keep
 their original names. Legacy application components are separate and unchanged;
 feature-owned UI keeps its feature name. No old-name forwarding aliases are added.
 Consumer imports, colocated previews and test source now use the renamed API;
@@ -46,16 +46,13 @@ Android feature implementation is ready, as requested.
 
 `theme/`: shared palette/dimensions, light/dark Material theme and typography.
 Auth-specific decoration and application header/bottom-navigation metrics remain
-outside core. CoffeePeekTheme defaults to the iOS system font (SF Pro for Latin and
-Cyrillic) or the six packaged Manrope weights on Android. Callers can still pass
-an explicit FontFamily. The generated
+outside core. CoffeePeekTheme now defaults to the six packaged Manrope weights,
+while allowing explicit FontFamily overrides for callers/tests. The generated
 resource accessors are internal to design-system, with no app-resource dependency.
 Legacy font copies remain in composeApp until consumer integration.
 
-`icons/`: Phosphor-backed `CoffeePeekIcons` facade, including intentional aliases.
-`CoffeePeekIcon` and native controls resolve shared interface icons to SF Symbols
-on iOS when a system equivalent is available. The shared vectors cover Android,
-missing symbols and specialty artwork. Feature mappings stay with feature presentation.
+`icons/`: existing Phosphor-backed `CoffeePeekIcons` facade, including intentional aliases.
+Feature mappings (brew methods, prices and ratings) stay with feature presentation.
 
 `component/`: CoffeePeekButton and generic grouped section/checkmark/action/switch/stepper
 rows. The CatalogItem-based CheckmarkSection is deliberately excluded. Stepper

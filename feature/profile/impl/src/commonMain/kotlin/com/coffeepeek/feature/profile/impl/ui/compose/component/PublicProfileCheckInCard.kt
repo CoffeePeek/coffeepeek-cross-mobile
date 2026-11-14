@@ -84,7 +84,7 @@ private fun ProfileCheckInActions(onBlock: (() -> Unit)?, onReport: (() -> Unit)
             nativeIcon = CoffeePeekMenuIcon.Report, onClick = it)) }
     }
     CoffeePeekActionMenu(actions) { open ->
-        IconButton(open) { CoffeePeekIcon(CoffeePeekIcons.MoreHorizontal, label, tint = MaterialTheme.colorScheme.onSurfaceVariant) }
+        IconButton(open) { Icon(CoffeePeekIcons.MoreHorizontal, label, tint = MaterialTheme.colorScheme.onSurfaceVariant) }
     }
 }
 

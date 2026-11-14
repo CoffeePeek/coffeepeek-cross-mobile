@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -35,7 +36,7 @@ fun CoffeePeekMapPreviewOverlay(onExpand: () -> Unit, modifier: Modifier = Modif
             .size(CoffeePeekDimens.buttonHeight),
             contentAlignment = Alignment.Center) {
             CoffeePeekNativeControlBackground(Modifier.matchParentSize(), hazeState = null)
-            CoffeePeekIcon(CoffeePeekIcons.Expand, contentDescription = null,
+            Icon(CoffeePeekIcons.Expand, contentDescription = null,
                 tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(22.dp))
         }
     }

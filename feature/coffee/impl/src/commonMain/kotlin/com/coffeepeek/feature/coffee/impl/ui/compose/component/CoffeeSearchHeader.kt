@@ -18,7 +18,6 @@ import androidx.compose.ui.draw.clip
 import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.component.CoffeePeekSearchField
-import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
@@ -39,7 +38,7 @@ internal fun CoffeeSearchHeader(query: String, filterCount: Int, onQueryChange: 
             }
         }) {
             IconButton(onFilters, screen.exposure(Modifier, CoffeeExposure.Filters)) {
-                CoffeePeekIcon(CoffeePeekIcons.Filter, if (filterCount > 0) stringResource(Res.string.coffee_filters_count, filterCount)
+                Icon(CoffeePeekIcons.Filter, if (filterCount > 0) stringResource(Res.string.coffee_filters_count, filterCount)
                 else stringResource(Res.string.coffee_filters), tint = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }

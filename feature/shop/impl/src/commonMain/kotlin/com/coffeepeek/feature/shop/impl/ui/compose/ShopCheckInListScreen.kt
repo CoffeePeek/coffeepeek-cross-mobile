@@ -1,9 +1,6 @@
 package com.coffeepeek.feature.shop.impl.ui.compose
 
-import androidx.compose.animation.Crossfade
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
@@ -16,7 +13,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.MaterialTheme
@@ -35,12 +31,10 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.coffeepeek.core.designsystem.component.CoffeePeekTopBar
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
-import com.coffeepeek.core.designsystem.theme.reducedMotionDuration
 import com.coffeepeek.feature.shop.impl.resources.Res
 import com.coffeepeek.feature.shop.impl.resources.shop_checkin_list_title
 import com.coffeepeek.feature.shop.impl.resources.shop_checkin_list_empty
 import com.coffeepeek.feature.shop.impl.resources.shop_detail_back
-import com.coffeepeek.feature.shop.impl.resources.shop_checkin_list_vote_error
 import com.coffeepeek.feature.shop.impl.ui.ShopCheckInListViewModel
 import com.coffeepeek.feature.shop.impl.ui.compose.component.LocalShopPhotoPrefetch
 import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopCheckInCard
@@ -53,7 +47,6 @@ import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopCheckInListAction
 import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopCheckInListEvent
 import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopCheckInListState
 import com.coffeepeek.feature.shop.impl.ui.data.ratingSummary
-import com.coffeepeek.feature.shop.domain.model.ShopCheckIn
 import com.coffeepeek.feature.shop.impl.ui.data.blockableAuthor
 import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
@@ -108,76 +101,57 @@ internal fun ShopCheckInListScreenContent(
         containerColor = MaterialTheme.colorScheme.background,
     ) { insets ->
         Box(Modifier.fillMaxSize().padding(insets).consumeWindowInsets(insets), contentAlignment = Alignment.Center) {
-            Crossfade(targetState = state.hasLoaded,
-                animationSpec = tween(reducedMotionDuration(220)), label = "checkin-list-status") { loaded ->
-                if (!loaded) {
-                    ShopCheckInListStatus(state.isLoading, false, state.hasLoadError, false,
-                        onRetry = { onAction(ShopCheckInListAction.Retry) },
-                        modifier = Modifier.padding(CoffeePeekDimens.spacing6))
-                } else Column(Modifier.fillMaxSize()) {
-                if (state.hasVoteError) Text(stringResource(Res.string.shop_checkin_list_vote_error),
-                    color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall,
-                    modifier = Modifier.fillMaxWidth().padding(horizontal = CoffeePeekDimens.spacing4, vertical = CoffeePeekDimens.spacing1))
-                ShopCheckInListItems(state, listState, formatCheckInDate, onAction)
+            if (!state.hasLoaded) {
+                ShopCheckInListStatus(state.isLoading, false, state.hasLoadError, false,
+                    onRetry = { onAction(ShopCheckInListAction.Retry) },
+                    modifier = Modifier.padding(CoffeePeekDimens.spacing6))
+            } else LazyColumn(
+                state = listState,
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = coffeePeekScrollContentPadding(PaddingValues(CoffeePeekDimens.spacing4)),
+                verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3),
+            ) {
+                item(key = "shop-title") { Text(state.shopTitle, style = MaterialTheme.typography.titleLarge) }
+                item(key = "ratings") {
+                    ShopCheckInRatingsOverview(emptyList(), state.overallRating, state.checkInCount,
+                        summary = state.ratingSummary, sampleSize = state.ratingSampleSize)
+                }
+                if (state.isLoading || state.hasLoadError || state.hasVoteError) item(key = "status") {
+                    ShopCheckInListStatus(state.isLoading, true, state.hasLoadError, state.hasVoteError,
+                        onRetry = { onAction(ShopCheckInListAction.Retry) }, modifier = Modifier.fillMaxWidth())
+                }
+                if (state.checkIns.isEmpty()) item(key = "empty") {
+                    Text(stringResource(Res.string.shop_checkin_list_empty),
+                        style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+                itemsIndexed(state.checkIns, key = { index, checkIn -> "check-in:${checkIn.id}:$index" }) { _, checkIn ->
+                    val isOwn = state.owns(checkIn)
+                    ShopCheckInCard(checkIn,
+                        onOpenPhoto = { _, index -> onAction(ShopCheckInListAction.OpenPhoto(checkIn.id, index)) },
+                        showAuthor = true, showHelpful = true, isOwn = isOwn,
+                        isVoting = state.pendingVoteId == checkIn.id,
+                        onVote = if (state.pendingVoteId != null || state.isLoading) null
+                            else { { onAction(ShopCheckInListAction.ToggleHelpful(checkIn.id)) } },
+                        onReport = if (isOwn) null else { { onAction(ShopCheckInListAction.Report(checkIn.id)) } },
+                        onBlockAuthor = checkIn.blockableAuthor(isOwn, state.isLoggedIn, state.currentUserId)
+                            ?.takeUnless { state.isLoading }?.let {
+                                { onAction(ShopCheckInListAction.BlockAuthor(checkIn.id)) }
+                            },
+                        onOpenAuthor = checkIn.authorSlug?.takeIf(String::isNotBlank)?.let {
+                            { onAction(ShopCheckInListAction.OpenAuthor(checkIn.id)) }
+                        },
+                        dateLabel = formatCheckInDate(checkIn.createdAt), fullVersion = true)
+                }
+                if (!state.isLoggedIn && state.checkIns.isNotEmpty()) item(key = "guest-prompt") {
+                    ShopCheckInGuestPrompt({ onAction(ShopCheckInListAction.SignIn) },
+                        { onAction(ShopCheckInListAction.Register) })
+                }
+                items(state.hiddenCheckInCount, key = { "hidden:$it" }) {
+                    ShopCheckInGuestPlaceholder(Modifier.fillMaxWidth())
                 }
             }
         }
     }
-}
-
-@Composable
-private fun ShopCheckInListItems(state: ShopCheckInListState, listState: LazyListState,
-    formatCheckInDate: (String) -> String, onAction: (ShopCheckInListAction) -> Unit) {
-    LazyColumn(
-        state = listState,
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = coffeePeekScrollContentPadding(PaddingValues(CoffeePeekDimens.spacing4)),
-        verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3),
-    ) {
-        item(key = "shop-title") { Text(state.shopTitle, style = MaterialTheme.typography.titleLarge) }
-        item(key = "ratings") {
-            ShopCheckInRatingsOverview(emptyList(), state.overallRating, state.checkInCount,
-                summary = state.ratingSummary, sampleSize = state.ratingSampleSize)
-        }
-        if (state.isLoading || state.hasLoadError) item(key = "status") {
-            ShopCheckInListStatus(state.isLoading, true, state.hasLoadError, state.hasVoteError,
-                onRetry = { onAction(ShopCheckInListAction.Retry) }, modifier = Modifier.fillMaxWidth())
-        }
-        if (state.checkIns.isEmpty()) item(key = "empty") {
-            Text(stringResource(Res.string.shop_checkin_list_empty),
-                style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        }
-        itemsIndexed(state.checkIns, key = { index, checkIn -> "check-in:${checkIn.id}:$index" }) { _, checkIn ->
-            ShopCheckInListCard(state, checkIn, formatCheckInDate(checkIn.createdAt), onAction)
-        }
-        if (!state.isLoggedIn && state.checkIns.isNotEmpty()) item(key = "guest-prompt") {
-            ShopCheckInGuestPrompt({ onAction(ShopCheckInListAction.SignIn) },
-                { onAction(ShopCheckInListAction.Register) })
-        }
-        items(state.hiddenCheckInCount, key = { "hidden:$it" }) {
-            ShopCheckInGuestPlaceholder(Modifier.fillMaxWidth())
-        }
-    }
-}
-
-@Composable
-private fun ShopCheckInListCard(state: ShopCheckInListState, checkIn: ShopCheckIn, dateLabel: String,
-    onAction: (ShopCheckInListAction) -> Unit) {
-    val isOwn = state.owns(checkIn)
-    ShopCheckInCard(checkIn,
-        onOpenPhoto = { _, index -> onAction(ShopCheckInListAction.OpenPhoto(checkIn.id, index)) },
-        showAuthor = true, showHelpful = true, isOwn = isOwn,
-        isVoting = state.pendingVoteId == checkIn.id,
-        onVote = if (state.pendingVoteId != null || state.isLoading) null
-            else { { onAction(ShopCheckInListAction.ToggleHelpful(checkIn.id)) } },
-        onReport = if (isOwn) null else { { onAction(ShopCheckInListAction.Report(checkIn.id)) } },
-        onBlockAuthor = checkIn.blockableAuthor(isOwn, state.isLoggedIn, state.currentUserId)
-            ?.takeUnless { state.isLoading }?.let {
-                { onAction(ShopCheckInListAction.BlockAuthor(checkIn.id)) }
-            },
-        onOpenAuthor = checkIn.authorSlug?.takeIf(String::isNotBlank)?.let {
-            { onAction(ShopCheckInListAction.OpenAuthor(checkIn.id)) }
-        })
 }
 
 private fun previewCheckInListState(guest: Boolean = false): ShopCheckInListState {

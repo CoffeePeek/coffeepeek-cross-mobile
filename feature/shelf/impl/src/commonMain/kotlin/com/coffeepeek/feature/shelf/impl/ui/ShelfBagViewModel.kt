@@ -5,8 +5,6 @@ import com.coffeepeek.core.presentation.MviViewModel
 import com.coffeepeek.feature.shelf.api.ShelfBrewCoffee
 import com.coffeepeek.feature.shelf.api.ShelfBrewLog
 import com.coffeepeek.feature.shelf.domain.model.ShelfBag
-import com.coffeepeek.feature.shelf.domain.model.ShelfFailure
-import com.coffeepeek.feature.shelf.domain.model.ShelfIssue
 import com.coffeepeek.feature.shelf.domain.repository.ShelfRepository
 import com.coffeepeek.feature.shelf.impl.ui.compose.model.ShelfBagAction
 import com.coffeepeek.feature.shelf.impl.ui.compose.model.ShelfBagBrews
@@ -35,21 +33,8 @@ internal class ShelfBagViewModel(
     init {
         loadBrews()
         viewModelScope.launch { repository.shelf.collect(::shelfChanged) }
-        if (currentState.bag == null) viewModelScope.launch { loadMissing() }
-
-    }
-
-    /** The first load failed: the bag may still exist, so offline shows a retry instead of "missing". */
-    private suspend fun loadMissing() {
-        val result = repository.refresh()
-        if (currentState.bag != null) return
-        val issue = result.exceptionOrNull()?.let {
-            (it as? com.coffeepeek.feature.shelf.domain.model.ShelfFailure)?.issue
-        }
-        when {
-            // Offline/load trouble shows a retry; "gone" is decided by the shelf flow instead.
-            issue != null && issue != ShelfIssue.NotFound -> updateState { copy(loadFailed = true, missing = false) }
-            issue == ShelfIssue.NotFound -> updateState { copy(missing = true) }
+        if (currentState.bag == null) viewModelScope.launch {
+            if (repository.refresh().isFailure && currentState.bag == null) updateState { copy(missing = true) }
         }
     }
 
@@ -57,7 +42,6 @@ internal class ShelfBagViewModel(
         when (action) {
             ShelfBagAction.Back -> sendEvent(ShelfBagEvent.Back)
             ShelfBagAction.RetryBrews -> loadBrews()
-            ShelfBagAction.Retry -> if (currentState.bag == null) loadMissing()
             ShelfBagAction.OpenCoffee -> currentState.bag?.bag?.coffeeProductSlug?.let { sendEvent(ShelfBagEvent.OpenCoffee(it)) }
             ShelfBagAction.Brew -> currentState.bag?.bag?.let { bag ->
                 updateState { copy(brewing = ShelfBrewCoffee(bag.coffeeProductSlug, bag.name?.trim()?.takeIf(String::isNotEmpty), bag.id)) }
@@ -80,9 +64,8 @@ internal class ShelfBagViewModel(
         val found = bags?.firstOrNull { it.id == bagId }
         val first = currentState.bag == null
         when {
-            found != null -> updateState { copy(bag = calendar.item(found), missing = false, loadFailed = false, today = calendar.today()) }
-            // A failed load must not read as "the bag is gone": offline shows a retry instead.
-            bags != null && first && !currentState.loadFailed -> updateState { copy(missing = true) }
+            found != null -> updateState { copy(bag = calendar.item(found), missing = false, today = calendar.today()) }
+            bags != null && first -> updateState { copy(missing = true) }
         }
         if (found != null && first) loadBrews()
     }

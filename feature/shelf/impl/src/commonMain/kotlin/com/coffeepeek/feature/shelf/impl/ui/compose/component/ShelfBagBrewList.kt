@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import com.coffeepeek.core.designsystem.component.CoffeePeekTextButton as TextButton
@@ -29,7 +30,6 @@ import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
 import com.coffeepeek.core.designsystem.component.CoffeePeekRating
 import com.coffeepeek.core.designsystem.component.CoffeePeekRatingDisplay
 import com.coffeepeek.core.designsystem.component.CoffeePeekRatingSize
-import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.text.coffeePeekPluralForm
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
@@ -92,7 +92,7 @@ private fun ShelfBrewRow(brew: ShelfBrewItem, today: ShelfDay) {
         CoffeePeekInfoItem(brew.title(), brew.day?.let { shelfBrewDayText(it, today) }.orEmpty(), Modifier.weight(1f)) {
             Box(Modifier.size(36.dp).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.14f), CircleShape),
                 contentAlignment = Alignment.Center) {
-                CoffeePeekIcon(CoffeePeekIcons.Coffee, null, Modifier.size(18.dp), tint = MaterialTheme.colorScheme.primary)
+                Icon(CoffeePeekIcons.Coffee, null, Modifier.size(18.dp), tint = MaterialTheme.colorScheme.primary)
             }
         }
         brew.score?.let { CoffeePeekRating(it.toDouble(), size = CoffeePeekRatingSize.Small, display = CoffeePeekRatingDisplay.Compact) }

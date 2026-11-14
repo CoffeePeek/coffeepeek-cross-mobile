@@ -6,10 +6,10 @@ import com.coffeepeek.feature.auth.domain.SignedInAccount
 import kotlinx.coroutines.CancellationException
 
 /** One challenge per attempt; no cached nonce or token, and native cancellation never becomes a failed sign-in. */
-internal suspend fun signInWithApple(repository: AuthRepository, authorizer: AppleAuthorizer, analyticsEnabled: Boolean? = null): Result<SignedInAccount> = try {
+internal suspend fun signInWithApple(repository: AuthRepository, authorizer: AppleAuthorizer): Result<SignedInAccount> = try {
     val challenge = appleStep("CH") { repository.beginAppleSignIn().getOrThrow() }
     val token = authorizer.authorize(challenge.nonce, challenge.challengeId)
-    Result.success(appleStep("X") { repository.signInWithApple(challenge.challengeId, token, analyticsEnabled).getOrThrow() })
+    Result.success(appleStep("X") { repository.signInWithApple(challenge.challengeId, token).getOrThrow() })
 } catch (cancelled: CancellationException) {
     throw cancelled
 } catch (failure: Exception) {

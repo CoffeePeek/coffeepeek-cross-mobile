@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -20,7 +21,6 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
@@ -45,14 +45,14 @@ internal fun ShopOverviewInfoCard(
             horizontalArrangement = Arrangement.spacedBy(6.dp),
             verticalAlignment = Alignment.CenterVertically) {
             // Product decision: all three information-card icons keep the brand accent.
-            CoffeePeekIcon(icon, null, Modifier.size(18.dp), tint = MaterialTheme.colorScheme.primary)
+            Icon(icon, null, Modifier.size(18.dp), tint = MaterialTheme.colorScheme.primary)
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(title, style = MaterialTheme.typography.labelMedium, maxLines = 2,
                     overflow = TextOverflow.Ellipsis)
                 Text(subtitle, style = MaterialTheme.typography.labelSmall, maxLines = 2,
                     overflow = TextOverflow.Ellipsis, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
-            if (showChevron) CoffeePeekIcon(CoffeePeekIcons.ChevronRight, null, Modifier.size(12.dp),
+            if (showChevron) Icon(CoffeePeekIcons.ChevronRight, null, Modifier.size(12.dp),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }

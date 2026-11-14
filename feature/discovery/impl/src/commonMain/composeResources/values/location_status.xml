@@ -1,5 +1,4 @@
 <resources>
     <string name="discovery_location_pending">Определяем местоположение…</string>
     <string name="discovery_location_unavailable">Нет геолокации. Разрешите её в настройках или выберите город.</string>
-    <string name="discovery_location_open_settings">Настройки</string>
 </resources>

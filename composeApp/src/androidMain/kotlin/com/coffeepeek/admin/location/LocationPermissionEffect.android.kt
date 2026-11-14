@@ -21,14 +21,12 @@ actual fun LocationPermissionEffect(
     requestKey: Int,
     onGranted: () -> Unit,
     onDenied: () -> Unit,
-    onPermanentlyDenied: () -> Unit,
     requestOnce: Boolean,
 ) {
     val context = LocalContext.current
     val preferences = remember(context) { context.getSharedPreferences("location_permission", Context.MODE_PRIVATE) }
     val onGrantedState = rememberUpdatedState(onGranted)
     val onDeniedState = rememberUpdatedState(onDenied)
-    val onPermanentlyDeniedState = rememberUpdatedState(onPermanentlyDenied)
     var requestInFlight by rememberSaveable { mutableStateOf(false) }
 
     val launcher = rememberLauncherForActivityResult(
@@ -55,8 +53,7 @@ actual fun LocationPermissionEffect(
         if (fineGranted || coarseGranted) {
             onGrantedState.value()
         } else if (requestOnce && preferences.getBoolean("asked", false)) {
-            // The system dialog will not show again this session; only the settings screen can fix it.
-            onPermanentlyDeniedState.value()
+            onDeniedState.value()
         } else {
             if (requestOnce) preferences.edit().putBoolean("asked", true).apply()
             requestInFlight = true

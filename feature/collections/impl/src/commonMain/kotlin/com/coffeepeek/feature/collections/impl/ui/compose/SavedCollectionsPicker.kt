@@ -67,11 +67,11 @@ private fun SavedPickerContent(state: SavedCollectionsState, action: (SavedColle
 @Composable
 private fun SavedPickerToolbar(state: SavedCollectionsState, action: (SavedCollectionsAction) -> Unit) {
     Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp), verticalAlignment = Alignment.CenterVertically) {
-        CoffeePeekPlainIconButton({ action(SavedCollectionsAction.Back) }) { CoffeePeekIcon(CoffeePeekIcons.Close, stringResource(Res.string.collections_cancel)) }
+        CoffeePeekPlainIconButton({ action(SavedCollectionsAction.Back) }) { Icon(CoffeePeekIcons.Close, stringResource(Res.string.collections_cancel)) }
         Text(stringResource(Res.string.collections_save_to_list), Modifier.weight(1f), style = MaterialTheme.typography.titleMedium)
         CoffeePeekPlainIconButton({ action(SavedCollectionsAction.QuickTitle("")) },
             enabled = state.signedIn && !state.busy && !state.loading && state.membershipsLoaded) {
-            CoffeePeekIcon(CoffeePeekIcons.Add, stringResource(Res.string.collections_new_list))
+            Icon(CoffeePeekIcons.Add, stringResource(Res.string.collections_new_list))
         }
     }
 }
@@ -88,7 +88,7 @@ internal fun SavedMembershipRow(value: SavedCollectionSummary, checked: Boolean,
                 Text(stringResource(Res.string.collections_saved_count, value.itemCount), style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
-            Box(Modifier.size(24.dp)) { if (checked) CoffeePeekIcon(CoffeePeekIcons.Check, null, tint = MaterialTheme.colorScheme.primary) }
+            Box(Modifier.size(24.dp)) { if (checked) Icon(CoffeePeekIcons.Check, null, tint = MaterialTheme.colorScheme.primary) }
         }
         CoffeePeekRowSeparator()
     }

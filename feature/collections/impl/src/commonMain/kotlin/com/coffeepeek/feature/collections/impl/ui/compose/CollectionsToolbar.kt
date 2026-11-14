@@ -1,9 +1,9 @@
 package com.coffeepeek.feature.collections.impl.ui.compose
 
+import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import com.coffeepeek.core.designsystem.component.CoffeePeekPlainIconButton
 import com.coffeepeek.core.designsystem.component.CoffeePeekTopBar
-import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.collections.impl.resources.*
@@ -21,7 +21,7 @@ internal fun CollectionsToolbar(state: CollectionsState, onAction: (CollectionsA
     CoffeePeekTopBar(title, stringResource(Res.string.collections_back), onBack = { onAction(CollectionsAction.Back) }, actions = {
         if (state.signedIn && !state.publicView && state.page == CollectionsPage.Selection) {
             CoffeePeekPlainIconButton({ onAction(CollectionsAction.OpenLinks) }, enabled = !state.busy && !state.loading) {
-                CoffeePeekIcon(CoffeePeekIcons.ListStar, stringResource(Res.string.collections_links))
+                Icon(CoffeePeekIcons.ListStar, stringResource(Res.string.collections_links))
             }
         }
     })

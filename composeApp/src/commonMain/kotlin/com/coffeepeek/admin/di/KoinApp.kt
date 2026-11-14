@@ -6,7 +6,7 @@ import com.coffeepeek.admin.config.AppConfig
 import com.coffeepeek.admin.locator.Constants
 import com.coffeepeek.admin.locator.Locator
 import com.coffeepeek.admin.theme.ThemeManager
-import com.coffeepeek.admin.di.discovery.registerDiscoveryCity
+import com.coffeepeek.admin.settings.CityPreference
 import com.coffeepeek.admin.session.OldReviewDrafts
 import com.coffeepeek.admin.di.favorites.RoasterFavorites
 import com.coffeepeek.admin.di.catalog.BrewMethodCatalog
@@ -216,7 +216,7 @@ private fun appModule(
         val gateway = get<ApiClients>()
         createImageUrlFetcher(gateway.client, gateway.imageClient)
     }
-    registerDiscoveryCity(settingRepository)
+    single { CityPreference(settingRepository) }
     single { OldReviewDrafts(settingRepository) }
     factory { NavigatorViewModel(get()) }
 }

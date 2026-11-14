@@ -47,6 +47,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -67,7 +68,6 @@ import com.coffeepeek.core.designsystem.component.CoffeePeekActionRow
 import com.coffeepeek.core.designsystem.component.CoffeePeekCapsuleSegmentedControl
 import com.coffeepeek.core.designsystem.component.CoffeePeekGroupSection
 import com.coffeepeek.core.designsystem.component.CoffeePeekRowSeparator
-import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.feature.contributions.api.ChangeEditorHost
@@ -244,7 +244,7 @@ private fun SavedPhotos(photos: List<ShopPhotoRef>, onRemove: (String) -> Unit) 
                     Modifier.align(Alignment.TopEnd).offset(x = 6.dp, y = (-6).dp).size(24.dp).clip(CircleShape).background(Color.Black.copy(alpha = 0.75f))
                         .clickable { onRemove(photo.id) },
                     contentAlignment = Alignment.Center,
-                ) { CoffeePeekIcon(CoffeePeekIcons.Close, stringResource(Res.string.contributions_editor_remove), tint = Color.White, modifier = Modifier.size(14.dp)) }
+                ) { Icon(CoffeePeekIcons.Close, stringResource(Res.string.contributions_editor_remove), tint = Color.White, modifier = Modifier.size(14.dp)) }
             }
         }
     }

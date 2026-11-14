@@ -17,7 +17,7 @@ import com.coffeepeek.feature.roaster.domain.repository.RoasterRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.asStateFlow
 
 internal class FakeRoasterRepository : RoasterRepository {
     var catalogCalls = 0
@@ -33,8 +33,8 @@ internal class FakeFavorites : RoasterFavoritesPort {
     val errors = MutableSharedFlow<String?>(extraBufferCapacity = 8)
     val changes = mutableListOf<Pair<RoasterFavoriteTarget, Boolean>>()
     var failChange = false
-    var keysFlow: Flow<Result<Set<String>>> = keys.map { Result.success(it) }
-    override fun observeKeys(): Flow<Result<Set<String>>> = keysFlow
+    var keysFlow: Flow<Set<String>> = keys.asStateFlow()
+    override fun observeKeys(): Flow<Set<String>> = keysFlow
     override fun observeErrors(): Flow<String?> = errors
     override fun change(target: RoasterFavoriteTarget, favorite: Boolean, onFailed: () -> Unit) {
         changes += target to favorite

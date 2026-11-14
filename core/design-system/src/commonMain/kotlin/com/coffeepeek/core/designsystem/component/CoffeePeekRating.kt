@@ -3,6 +3,7 @@ package com.coffeepeek.core.designsystem.component
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -66,7 +67,7 @@ fun CoffeePeekRating(
     Row(modifier.then(behavior), verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(valueSpacing)) {
         if (display == CoffeePeekRatingDisplay.Compact) {
-            CoffeePeekIcon(CoffeePeekIcons.StarFilled, null, Modifier.size(size.starSize), tint = activeColor)
+            Icon(CoffeePeekIcons.StarFilled, null, Modifier.size(size.starSize), tint = activeColor)
         } else Row(if (onRatingChange == null) Modifier else Modifier.weight(1f),
             horizontalArrangement = Arrangement.spacedBy(starSpacing), verticalAlignment = Alignment.CenterVertically) {
             repeat(5) { index ->
@@ -91,8 +92,8 @@ fun CoffeePeekRating(
 private fun CoffeePeekRatingStar(fill: Float, starSize: Dp, active: Color, inactive: Color) {
     val rtl = LocalLayoutDirection.current == LayoutDirection.Rtl
     Box(Modifier.size(starSize)) {
-        CoffeePeekIcon(CoffeePeekIcons.StarOutline, null, Modifier.fillMaxSize(), tint = inactive)
-        if (fill > 0f) CoffeePeekIcon(CoffeePeekIcons.StarFilled, null,
+        Icon(CoffeePeekIcons.StarOutline, null, Modifier.fillMaxSize(), tint = inactive)
+        if (fill > 0f) Icon(CoffeePeekIcons.StarFilled, null,
             Modifier.fillMaxSize().drawWithContent {
                 val boundary = this.size.width * fill
                 clipRect(left = if (rtl) this.size.width - boundary else 0f,

@@ -50,7 +50,7 @@ private fun MapPickerHeader(compact: Boolean, onDismiss: () -> Unit) {
             }
         }
         val cancel = stringResource(Res.string.contributions_map_cancel)
-        CoffeePeekGlassIconButton(onDismiss, cancel, nativeIcon = CoffeePeekGlassIcon.Close) { CoffeePeekIcon(CoffeePeekIcons.Close, cancel) }
+        CoffeePeekGlassIconButton(onDismiss, cancel, nativeIcon = CoffeePeekGlassIcon.Close) { Icon(CoffeePeekIcons.Close, cancel) }
     }
 }
 
@@ -63,7 +63,7 @@ private fun MapPickerViewport(state: ContributionMapUiState, canvas: Contributio
         ContributionLocationPin(Modifier.align(Alignment.Center))
         val location = stringResource(Res.string.contributions_map_my_location)
         CoffeePeekMapControlButton(CoffeePeekGlassIcon.Location, onLocation, location,
-            Modifier.align(Alignment.TopEnd).padding(CoffeePeekDimens.spacing4)) { CoffeePeekIcon(CoffeePeekIcons.Navigation, location) }
+            Modifier.align(Alignment.TopEnd).padding(CoffeePeekDimens.spacing4)) { Icon(CoffeePeekIcons.Navigation, location) }
     }
 }
 

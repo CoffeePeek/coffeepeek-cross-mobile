@@ -28,8 +28,8 @@ internal class AppleAuthBackend(private val client: HttpClient) {
         return AppleSignInChallenge(data.challengeId, data.nonce)
     }
 
-    suspend fun signIn(challengeId: String, idToken: String, analyticsEnabled: Boolean? = null): TokensDto {
-        val response = loginResponse(AppleLoginRequest(challengeId, idToken, analyticsEnabled))
+    suspend fun signIn(challengeId: String, idToken: String): TokensDto {
+        val response = loginResponse(AppleLoginRequest(challengeId, idToken))
         val envelope = try { response.body<Envelope<AppleTokensDto>>() }
         catch (cancelled: CancellationException) { throw cancelled }
         catch (_: ContentConvertException) { null }
@@ -62,7 +62,7 @@ internal class AppleAuthBackend(private val client: HttpClient) {
 private data class AppleChallengeDto(val challengeId: String, val nonce: String)
 
 @Serializable
-private data class AppleLoginRequest(val challengeId: String, val idToken: String, val analyticsEnabled: Boolean? = null)
+private data class AppleLoginRequest(val challengeId: String, val idToken: String)
 
 @Serializable
 private data class AppleTokensDto(val accessToken: String? = null, val refreshToken: String? = null)

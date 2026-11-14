@@ -9,7 +9,6 @@ import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.scrollBy
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxSize
@@ -37,8 +36,6 @@ import androidx.compose.ui.layout.boundsInRoot
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
-import androidx.compose.ui.unit.LayoutDirection
-import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
@@ -48,7 +45,6 @@ import androidx.lifecycle.repeatOnLifecycle
 import com.coffeepeek.core.designsystem.component.CoffeePeekImagePlaceholder
 import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
-import com.coffeepeek.core.designsystem.theme.reducedMotionDuration
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.shelf.api.ShelfImage
 import com.coffeepeek.feature.shelf.domain.model.ShelfBag
@@ -159,11 +155,7 @@ private fun ShelfShelves(
     onAction: (ShelfAction) -> Unit,
 ) {
     val arrivalTarget = remember { BringIntoViewRequester() }
-    BoxWithConstraints {
-        val density = LocalDensity.current
-        val geometry = shelfGeometry(with(density) { maxWidth.toPx() }, density,
-            LocalLayoutDirection.current == LayoutDirection.Rtl)
-        val rowHeight = geometry.rowHeight
+    val rowHeight = with(LocalDensity.current) { 160.dp.toPx() }
     LaunchedEffect(bags) { drag.settled() }
     LaunchedEffect(drag.settling) { if (drag.settling != null) { delay(1_000); drag.settled() } }
     val visibleArrival = arrivingId?.takeIf { id -> bags.any { it.id == id } }
@@ -176,7 +168,6 @@ private fun ShelfShelves(
     ShelfGrid(bags, drag, tiles, image, onAction,
         modifier = Modifier.padding(top = CoffeePeekDimens.spacing4).bringIntoViewRequester(arrivalTarget),
         arrivingId = visibleArrival)
-    }
 }
 
 /** Scrolls the shelf while a lifted bag is held near the top or bottom edge. */

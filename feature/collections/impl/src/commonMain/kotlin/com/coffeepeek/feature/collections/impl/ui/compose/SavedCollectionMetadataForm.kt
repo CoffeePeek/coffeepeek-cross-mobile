@@ -3,6 +3,7 @@ package com.coffeepeek.feature.collections.impl.ui.compose
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -67,7 +68,7 @@ private fun SavedCollectionCoverEditor(state: SavedCollectionsState, action: (Sa
                 colors = IconButtonDefaults.iconButtonColors(containerColor = MaterialTheme.colorScheme.surface,
                     contentColor = MaterialTheme.colorScheme.onSurface),
                 contentDescription = stringResource(Res.string.collections_change_cover), hazeState = null) {
-                CoffeePeekIcon(CoffeePeekIcons.Edit, null, Modifier.size(20.dp))
+                Icon(CoffeePeekIcons.Edit, null, Modifier.size(20.dp))
             }
         }
         if (state.coverInput != null || state.collection?.summary?.cover != null && !state.removeCover)

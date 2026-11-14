@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -21,7 +22,6 @@ import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
-import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
@@ -84,7 +84,7 @@ private fun ShelfStageRow(text: String, color: Color, icon: @Composable () -> Un
 }
 
 @Composable
-private fun ShelfStageIcon(icon: ImageVector, tint: Color) = CoffeePeekIcon(icon, null, tint = tint)
+private fun ShelfStageIcon(icon: ImageVector, tint: Color) = Icon(icon, null, tint = tint)
 
 /** A ring, with a dot inside once the stage has run. */
 @Composable

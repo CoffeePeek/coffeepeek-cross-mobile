@@ -2,6 +2,8 @@ package com.coffeepeek.feature.settings.impl.ui.compose
 
 import androidx.compose.foundation.clickable
 import com.coffeepeek.feature.settings.impl.resources.Res
+import com.coffeepeek.feature.settings.impl.resources.settings_policy_analytics_text
+import com.coffeepeek.feature.settings.impl.resources.settings_policy_analytics_title
 import com.coffeepeek.feature.settings.impl.resources.settings_policy_privacy_description
 import com.coffeepeek.feature.settings.impl.resources.settings_policy_privacy_title
 import com.coffeepeek.feature.settings.impl.resources.settings_policy_section
@@ -16,6 +18,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -28,13 +32,14 @@ import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.coffeepeek.core.designsystem.component.CoffeePeekIconBadge
 import com.coffeepeek.core.designsystem.component.CoffeePeekIconBadgeColors
+import com.coffeepeek.core.designsystem.component.CoffeePeekSwitch
 import com.coffeepeek.core.designsystem.component.CoffeePeekSettingsDivider
-import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
@@ -63,7 +68,25 @@ internal fun UsagePolicyContent(
             )
             Spacer(Modifier.height(CoffeePeekDimens.spacing2))
             if (consent.available) {
-                UsageAnalyticsCard(consent, onConsent, iconColors)
+                SettingsCard(Modifier.toggleable(value = consent.accepted, role = Role.Switch, onValueChange = onConsent)) {
+                    Row(Modifier.padding(CoffeePeekDimens.settingsRowPaddingH), verticalAlignment = Alignment.Top) {
+                        CoffeePeekIconBadge(CoffeePeekIcons.Shield, iconColors)
+                        Spacer(Modifier.width(CoffeePeekDimens.spacing3))
+                        Column(Modifier.weight(1f)) {
+                            Text(
+                                stringResource(Res.string.settings_policy_analytics_title), style = MaterialTheme.typography.bodyLarge,
+                                fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurface,
+                            )
+                            Spacer(Modifier.height(CoffeePeekDimens.spacing2))
+                            Text(
+                                stringResource(Res.string.settings_policy_analytics_text), style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                        Spacer(Modifier.width(CoffeePeekDimens.spacing3))
+                        CoffeePeekSwitch(consent.accepted, null, Modifier.align(Alignment.CenterVertically).clearAndSetSemantics { })
+                    }
+                }
                 Spacer(Modifier.height(CoffeePeekDimens.settingsSectionSpacing))
             }
             SettingsCard {
@@ -88,7 +111,7 @@ private fun PolicyLink(title: StringResource, description: StringResource, icon:
             Text(stringResource(description), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         Spacer(Modifier.width(CoffeePeekDimens.spacing2))
-        CoffeePeekIcon(CoffeePeekIcons.ChevronRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(CoffeePeekDimens.settingsIconSize))
+        Icon(CoffeePeekIcons.ChevronRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(CoffeePeekDimens.settingsIconSize))
     }
 }
 
@@ -101,9 +124,3 @@ private fun UsagePolicyPreview() = CoffeePeekTheme {
 @Preview
 @Composable
 private fun UsagePolicyGuestPreview() = CoffeePeekTheme { Surface { UsagePolicyContent(UsageConsentState.Unavailable, {}, {}, {}, {}) } }
-
-@Preview
-@Composable
-private fun UsagePolicyDarkPreview() = CoffeePeekTheme(darkTheme = true) {
-    Surface { UsagePolicyContent(UsageConsentState(available = true, accepted = true), {}, {}, {}, {}) }
-}

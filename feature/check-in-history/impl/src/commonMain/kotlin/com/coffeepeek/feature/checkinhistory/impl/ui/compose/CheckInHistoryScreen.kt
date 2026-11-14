@@ -17,7 +17,6 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.coffeepeek.core.designsystem.component.CoffeePeekTopBar
-import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.checkinhistory.domain.model.HistoryMonth
@@ -82,7 +81,7 @@ internal fun CheckInHistoryScreenContent(state: CombinedHistoryState, onAction: 
                     FloatingActionButton({ onAction(CombinedHistoryAction.ShowCreate) }, shape = CircleShape,
                         modifier = createButtonModifier.coffeePeekScreenBottomPadding().semantics(mergeDescendants = true) { contentDescription = description },
                         containerColor = MaterialTheme.colorScheme.primary, contentColor = MaterialTheme.colorScheme.onPrimary) {
-                        CoffeePeekIcon(CoffeePeekIcons.Add, contentDescription = null, modifier = Modifier.size(28.dp))
+                        Icon(CoffeePeekIcons.Add, contentDescription = null, modifier = Modifier.size(28.dp))
                     }
                 }
             }, containerColor = MaterialTheme.colorScheme.background) { insets ->

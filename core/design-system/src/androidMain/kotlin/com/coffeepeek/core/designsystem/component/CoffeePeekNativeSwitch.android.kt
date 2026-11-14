@@ -5,7 +5,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
-import com.coffeepeek.core.designsystem.theme.reducedMotionDuration
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
@@ -32,8 +31,8 @@ internal actual fun CoffeePeekNativeSwitch(
     val colors = MaterialTheme.colorScheme
     val palette = coffeePeekSwitchPalette(colors.background.luminance() < 0.5f)
     val track by animateColorAsState(if (checked) palette.checkedTrack else colors.onSurface.copy(alpha = 0.16f),
-        tween(reducedMotionDuration(180)), label = "glass-switch-track")
-    val thumbOffset by animateDpAsState(if (checked) 20.dp else 0.dp, tween(reducedMotionDuration(180)), label = "glass-switch-thumb")
+        tween(180), label = "glass-switch-track")
+    val thumbOffset by animateDpAsState(if (checked) 20.dp else 0.dp, tween(180), label = "glass-switch-thumb")
     Box(modifier.sizeIn(minWidth = 51.dp, minHeight = 48.dp).alpha(if (enabled) 1f else 0.45f)
         .then(onCheckedChange?.let { Modifier.toggleable(checked, enabled = enabled, role = Role.Switch, onValueChange = it) }
             ?: Modifier), contentAlignment = Alignment.Center) {

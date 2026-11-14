@@ -114,7 +114,7 @@ class ShelfViewModelTest {
         assertEquals(listOf("move:a:1"), repository.calls)
     }
 
-    @Test fun aSecondWriteToTheSameBagWaitsOutAndThenRuns() = runTest(dispatcher) {
+    @Test fun aSecondWriteToTheSameBagWaitsOut() = runTest(dispatcher) {
         val gate = CompletableDeferred<Unit>()
         val repository = FakeShelfRepository(listOf(bag("a"), bag("b"))).apply { this.gate = { gate.await() } }
         val model = model(repository)
@@ -122,10 +122,9 @@ class ShelfViewModelTest {
         model.onAction(ShelfAction.Finish("a", null, null))
         model.onAction(ShelfAction.UndoFinish("a", 0))
         runCurrent()
-        // The writes serialize per bag: the undo runs right after the finish lands.
         gate.complete(Unit)
         runCurrent()
-        assertEquals(listOf("finish:a:null:null", "restore:a:0"), repository.calls)
+        assertEquals(listOf("finish:a:null:null"), repository.calls)
     }
 
     @Test fun anArrivalIsHighlightedSilentlyForFiveSecondsFromItsFirstPresentation() = runTest(dispatcher) {

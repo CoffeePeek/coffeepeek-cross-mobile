@@ -1,22 +1,26 @@
 package com.coffeepeek.admin.di.discovery
 
 import com.coffeepeek.admin.di.collections.FavoriteCollectionsPrompt
+import com.coffeepeek.admin.settings.CityPreference
 import com.coffeepeek.admin.utils.FavoriteSync
 import com.coffeepeek.core.session.Session
 import com.coffeepeek.core.session.SessionReader
 import com.coffeepeek.feature.shop.api.PublicShopPreviews
 import com.coffeepeek.feature.roaster.api.PublicRoasterCatalog
 import com.coffeepeek.feature.discovery.api.DiscoveryAccount
+import com.coffeepeek.feature.discovery.api.DiscoveryCity
 import com.coffeepeek.feature.discovery.api.DiscoveryFavorites
 import com.coffeepeek.feature.discovery.api.DiscoveryShopDetails
 import com.coffeepeek.feature.discovery.api.MapShopDetails
 import com.coffeepeek.feature.discovery.api.MapOpeningHours
 import com.coffeepeek.feature.discovery.domain.model.CatalogEntry
 import com.coffeepeek.feature.discovery.domain.model.Coordinates
+import com.coffeepeek.feature.discovery.domain.model.CityEntry
 import com.coffeepeek.feature.discovery.domain.model.ShopSummary
 import com.coffeepeek.feature.favorites.domain.model.FavoriteShop
 import com.coffeepeek.feature.favorites.domain.repository.FavoritesRepository
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.mapNotNull
@@ -59,6 +63,12 @@ internal fun ShopSummary.toFavoriteShop() = FavoriteShop(
     brewMethods = brewMethods,
     roasterPhotoUrls = roasterLogos,
 )
+
+/** The city is shared with the settings through the saved preference; its ids are the cities' public slugs, as in Discovery's own catalog. */
+internal class PreferenceDiscoveryCity(private val preference: CityPreference) : DiscoveryCity {
+    override val selected: StateFlow<String?> = preference.selectedCityId
+    override suspend fun resolve(cities: List<CityEntry>): String? = preference.resolve(cities.map { it.id })
+}
 
 /** Adapts only public Shop API data. */
 internal class ShopDiscoveryDetails(private val shops: PublicShopPreviews) : DiscoveryShopDetails {

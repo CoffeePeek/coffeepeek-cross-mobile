@@ -1,7 +1,5 @@
 package com.coffeepeek.feature.notifications.impl.ui
 
-import androidx.compose.animation.Crossfade
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.*
 import com.coffeepeek.feature.notifications.impl.resources.Res
 import com.coffeepeek.feature.notifications.impl.resources.notifications_close
@@ -37,10 +35,8 @@ import androidx.lifecycle.repeatOnLifecycle
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
 import com.coffeepeek.core.designsystem.component.CoffeePeekRowSeparator
-import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
-import com.coffeepeek.core.designsystem.theme.reducedMotionDuration
 import com.coffeepeek.feature.notifications.api.*
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
@@ -104,7 +100,7 @@ private fun NotificationsHeader(onClose: () -> Unit) {
         Text(stringResource(Res.string.notifications_title), style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f).semantics { heading() })
         IconButton(onClick = onClose) {
-            CoffeePeekIcon(CoffeePeekIcons.Close, stringResource(Res.string.notifications_close))
+            Icon(CoffeePeekIcons.Close, stringResource(Res.string.notifications_close))
         }
     }
 }
@@ -158,32 +154,21 @@ private fun notificationMostlyVisible(listState: LazyListState, id: String): Boo
 @Composable
 private fun NotificationsStatus(state: NotificationInboxState, onRefresh: () -> Unit) {
     val error = state.error
-    Crossfade(targetState = when {
-        state.loading && state.items.isEmpty() -> 0
-        error != null -> 1
-        else -> 2
-    }, animationSpec = tween(reducedMotionDuration(220)), label = "notifications-status") { status ->
-        when (status) {
-            0 -> Box(
-                Modifier.fillMaxWidth().padding(CoffeePeekDimens.spacing6), contentAlignment = Alignment.Center,
-            ) { CoffeePeekLoader(stringResource(Res.string.notifications_loading)) }
-            1 -> error?.let { currentError ->
-                Column {
-                    Text(
-                        stringResource(when (currentError) {
-                            NotificationInboxError.LoadFailed -> Res.string.notifications_inbox_load_failed
-                            NotificationInboxError.MarkReadFailed -> Res.string.notifications_mark_read_failed
-                        }),
-                        color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium,
-                    )
-                    TextButton(
-                        onClick = onRefresh,
-                        colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onSurface),
-                    ) { Text(stringResource(Res.string.notifications_retry)) }
-                }
+    when {
+        state.loading && state.items.isEmpty() -> Box(
+            Modifier.fillMaxWidth().padding(CoffeePeekDimens.spacing6), contentAlignment = Alignment.Center,
+        ) { CoffeePeekLoader(stringResource(Res.string.notifications_loading)) }
+        error != null -> Column {
+            Text(stringResource(when (error) {
+                NotificationInboxError.LoadFailed -> Res.string.notifications_inbox_load_failed
+                NotificationInboxError.MarkReadFailed -> Res.string.notifications_mark_read_failed
+            }), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium)
+            TextButton(onClick = onRefresh,
+                colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onSurface)) {
+                Text(stringResource(Res.string.notifications_retry))
             }
-            else -> NotificationEmptyState()
         }
+        state.items.isEmpty() -> NotificationEmptyState()
     }
 }
 

@@ -159,17 +159,13 @@ internal class ShelfAddViewModel(
 
     private fun queryChanged(query: String) {
         val limited = query.take(SHELF_TEXT_LIMIT)
-        updateState { copy(form = form.copy(query = limited, coffee = null), options = emptyList(),
-            searchFailed = false, searching = limited.trim().length >= 2) }
+        updateState { copy(form = form.copy(query = limited, coffee = null), options = emptyList()) }
         search?.cancel()
         if (limited.trim().length < 2) return
         search = viewModelScope.launch {
             delay(searchDelayMillis)
-            val result = coffees.search(limited.trim())
-            updateState {
-                if (form.query != limited || form.coffee != null) this
-                else copy(searching = false, searchFailed = result.isFailure,
-                    options = result.getOrDefault(emptyList()).take(5))
+            coffees.search(limited.trim()).onSuccess { found ->
+                updateState { if (form.query == limited && form.coffee == null) copy(options = found.take(5)) else this }
             }
         }
     }

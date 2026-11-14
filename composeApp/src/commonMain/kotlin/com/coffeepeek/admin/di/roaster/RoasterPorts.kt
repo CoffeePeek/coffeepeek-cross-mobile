@@ -16,6 +16,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapNotNull
 
 /**
  * Adapts the server favorites store. Authentication gating, in-flight de-duplication, account guards and the
@@ -27,17 +28,9 @@ internal class RoasterFavoritesAdapter(
     private val favoriteCollections: FavoriteCollectionsPrompt? = null,
     private val serverFavorites: AccountFavorites? = null,
 ) : RoasterFavoritesPort {
-    override fun observeKeys(): Flow<Result<Set<String>>> {
-        val server = serverFavorites?.takeIf { favoriteCollections != null }
-        if (server == null) return favorites.observeFavorites().map { rows ->
-            Result.success(rows.mapTo(mutableSetOf()) { it.roasterFavoriteId })
-        }
-        return server.observeMemberships().map { result ->
-            result.exceptionOrNull()?.let { if (it is CancellationException) throw it }
-            result.map { memberships -> memberships.filter { it.kind == FavoriteKind.Roaster }.map { it.slug }.toSet() }
-        }
-    }
-
+    override fun observeKeys(): Flow<Set<String>> = serverFavorites?.takeIf { favoriteCollections != null }?.observeMemberships()?.mapNotNull { result ->
+        result.getOrNull()?.filter { it.kind == FavoriteKind.Roaster }?.map { it.slug }?.toSet()
+    } ?: favorites.observeFavorites().map { rows -> rows.mapTo(mutableSetOf()) { it.roasterFavoriteId } }
     override fun observeErrors(): Flow<String?> = favorites.observeErrors()
 
     override fun change(target: RoasterFavoriteTarget, favorite: Boolean, onFailed: () -> Unit) {

@@ -51,7 +51,7 @@ import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.graphics.vector.ImageVector
-import com.coffeepeek.core.designsystem.component.coffeePeekIconPainter
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.semantics.Role
@@ -78,7 +78,6 @@ import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.modifier.LocalCoffeePeekGlassHazeState
 import com.coffeepeek.core.designsystem.modifier.coffeePeekLiquidGlass
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
-import com.coffeepeek.core.designsystem.theme.reducedMotionDuration
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
 import dev.chrisbanes.haze.HazeState
@@ -164,7 +163,7 @@ private fun FloatingNavBarItem(item: FloatingNavItem, selection: State<Float>, m
     val pressed by interactions.collectIsPressedAsState()
     val colors = MaterialTheme.colorScheme
     val highlight by animateColorAsState(if (pressed) colors.onSurface.copy(alpha = 0.12f) else Color.Transparent,
-        tween(reducedMotionDuration(160)), label = "glass-tab-press")
+        tween(160), label = "glass-tab-press")
     Box(modifier.then(item.modifier)) {
         CoffeePeekLargeContentViewer(item.title, item.icon, Modifier.fillMaxSize()) {
             Box(Modifier.fillMaxSize()
@@ -184,7 +183,7 @@ private fun FloatingNavBarItem(item: FloatingNavItem, selection: State<Float>, m
 private fun FloatingNavBarCaption(item: FloatingNavItem, selection: State<Float>) {
     val colors = MaterialTheme.colorScheme
     val accent = colors.coffeePeekAccentForeground
-    val icon = coffeePeekIconPainter(item.icon)
+    val icon = rememberVectorPainter(item.icon)
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val (inactive, active) = rememberNavCaptions(item.title, constraints.maxWidth)
         Canvas(Modifier.fillMaxSize()) {

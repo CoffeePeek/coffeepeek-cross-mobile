@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -33,7 +34,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.coffeepeek.core.designsystem.component.CoffeePeekIconBadge
 import com.coffeepeek.core.designsystem.component.CoffeePeekIconBadgeColors
 import com.coffeepeek.core.designsystem.component.CoffeePeekIconBadgePalette
-import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
@@ -72,7 +72,7 @@ private fun ThemeOption(mode: ThemeMode, selected: Boolean, onClick: () -> Unit)
         CoffeePeekIconBadge(mode.icon(), mode.iconColors())
         Spacer(Modifier.size(CoffeePeekDimens.spacing3))
         Text(stringResource(mode.title()), Modifier.weight(1f), style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
-        if (selected) CoffeePeekIcon(
+        if (selected) Icon(
             CoffeePeekIcons.Check, contentDescription = stringResource(Res.string.settings_selected),
             tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(CoffeePeekDimens.settingsIconSize),
         )

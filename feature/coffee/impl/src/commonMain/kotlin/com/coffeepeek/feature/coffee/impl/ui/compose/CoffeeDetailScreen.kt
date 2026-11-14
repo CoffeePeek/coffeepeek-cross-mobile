@@ -27,8 +27,6 @@ import com.coffeepeek.feature.coffee.impl.resources.coffee_taste
 import com.coffeepeek.feature.coffee.impl.resources.coffee_unspecified_feminine
 import com.coffeepeek.feature.coffee.api.CoffeeScreenAnalytics
 import com.coffeepeek.core.designsystem.component.CoffeePeekBackHandler
-import androidx.compose.animation.Crossfade
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -39,7 +37,6 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.*
 import com.coffeepeek.core.designsystem.component.CoffeePeekTextButton as TextButton
 import androidx.compose.runtime.*
-import com.coffeepeek.core.designsystem.theme.reducedMotionDuration
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
@@ -99,23 +96,17 @@ internal fun CoffeeDetailScreenContent(
 ) {
     screen.TrackDetail(loaded = state.details != null)
     val details = state.details
-    val currentDetails = details
     val hazeState = rememberHazeState()
     val labels = remember(state.filterGroups) { state.filterGroups.associate { group -> group.code to group.options.associate { it.code to it.name } } }
     if (state.arePhotosOpen && details != null) galleryContent(details.photos, 0) { onAction(CoffeeDetailAction.ClosePhotos) }
     Box(modifier.fillMaxSize()) {
         Scaffold(modifier = Modifier.hazeSource(hazeState), containerColor = MaterialTheme.colorScheme.background) { padding ->
-            Crossfade(targetState = when {
-                state.isLoading -> 0
-                state.loadFailed -> 1
-                else -> 2
-            }, animationSpec = tween(reducedMotionDuration(220)), label = "coffee-detail-status") { status ->
-                when (status) {
-                    0 -> Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
-                        CoffeePeekLoader(stringResource(Res.string.coffee_loading))
-                    }
-                    1 -> CoffeeLoadError({ onAction(CoffeeDetailAction.Retry) }, Modifier.fillMaxSize().padding(padding))
-                    else -> currentDetails?.let { details -> LazyColumn(Modifier.fillMaxSize().padding(padding).testTag("coffee-detail-list"), contentPadding = coffeePeekScrollContentPadding(PaddingValues(bottom = CoffeePeekDimens.spacing6)),
+            when {
+                state.isLoading -> Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
+                    CoffeePeekLoader(stringResource(Res.string.coffee_loading))
+                }
+                state.loadFailed -> CoffeeLoadError({ onAction(CoffeeDetailAction.Retry) }, Modifier.fillMaxSize().padding(padding))
+                details != null -> LazyColumn(Modifier.fillMaxSize().padding(padding).testTag("coffee-detail-list"), contentPadding = coffeePeekScrollContentPadding(PaddingValues(bottom = CoffeePeekDimens.spacing6)),
                     verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing6)) {
                     item(key = "photo") {
                         val photosDescription = stringResource(Res.string.coffee_open_photos)
@@ -173,46 +164,29 @@ internal fun CoffeeDetailScreenContent(
                         }
                     }
                     if (state.similarLoading || state.similarFailed || state.similar.isNotEmpty()) item(key = "similar") {
-                        CoffeeDetailSimilarItem(state, screen, labels, imageContent) { onAction(it) }
-                    }
+                        Column(verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3)) {
+                            Box(screen.exposure(Modifier, CoffeeExposure.SimilarCoffees).padding(horizontal = CoffeePeekDimens.spacing4)) { SectionTitle(stringResource(Res.string.coffee_similar)) }
+                            when {
+                                state.similarLoading -> Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { CoffeePeekLoader(stringResource(Res.string.coffee_loading)) }
+                                state.similarFailed -> TextButton({ onAction(CoffeeDetailAction.RetrySimilar) }, Modifier.padding(horizontal = CoffeePeekDimens.spacing4)) {
+                                    Text(stringResource(Res.string.coffee_retry_similar))
+                                }
+                                else -> LazyRow(contentPadding = PaddingValues(horizontal = CoffeePeekDimens.spacing4), horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3)) {
+                                    items(state.similar, key = { it.slug }) { coffee -> CoffeeCard(coffee, labels["taste"].orEmpty(),
+                                        { onAction(CoffeeDetailAction.OpenSimilar(coffee.slug)) }, imageContent, Modifier.width(280.dp)) }
+                                }
+                            }
+                        }
                     }
                 }
             }
         }
-        }
         Row(Modifier.align(Alignment.TopCenter).fillMaxWidth().statusBarsPadding().padding(CoffeePeekDimens.spacing3), horizontalArrangement = Arrangement.SpaceBetween) {
             CoffeePeekGlassIconButton({ onAction(CoffeeDetailAction.Back) }, stringResource(Res.string.coffee_back), hazeState = hazeState, nativeIcon = CoffeePeekGlassIcon.Back) {
-                CoffeePeekIcon(CoffeePeekIcons.Back, null)
+                Icon(CoffeePeekIcons.Back, null)
             }
             CoffeePeekGlassIconButton({ onAction(CoffeeDetailAction.Share) }, stringResource(Res.string.coffee_share), enabled = details != null, hazeState = hazeState, nativeIcon = CoffeePeekGlassIcon.Share) {
-                CoffeePeekIcon(CoffeePeekIcons.Share, null)
-            }
-        }
-    }
-}
-
-
-@Composable
-private fun CoffeeDetailSimilarItem(
-    state: CoffeeDetailState, screen: CoffeeScreenAnalytics, labels: Map<String, Map<String, String>>,
-    imageContent: @Composable (String, String, Modifier, ContentScale) -> Unit, onAction: (CoffeeDetailAction) -> Unit,
-) {
-    Column(verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3)) {
-        Box(screen.exposure(Modifier, CoffeeExposure.SimilarCoffees).padding(horizontal = CoffeePeekDimens.spacing4)) {
-            SectionTitle(stringResource(Res.string.coffee_similar))
-        }
-        when {
-            state.similarLoading -> Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                CoffeePeekLoader(stringResource(Res.string.coffee_loading))
-            }
-            state.similarFailed -> TextButton({ onAction(CoffeeDetailAction.RetrySimilar) },
-                Modifier.padding(horizontal = CoffeePeekDimens.spacing4)) {
-                Text(stringResource(Res.string.coffee_retry_similar))
-            }
-            else -> LazyRow(contentPadding = PaddingValues(horizontal = CoffeePeekDimens.spacing4),
-                horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3)) {
-                items(state.similar, key = { it.slug }) { coffee -> CoffeeCard(coffee, labels["taste"].orEmpty(),
-                    { onAction(CoffeeDetailAction.OpenSimilar(coffee.slug)) }, imageContent, Modifier.width(280.dp)) }
+                Icon(CoffeePeekIcons.Share, null)
             }
         }
     }

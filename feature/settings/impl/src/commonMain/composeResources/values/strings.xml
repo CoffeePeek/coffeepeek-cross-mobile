@@ -28,7 +28,7 @@
     <string name="settings_policy_title">Политика использования</string>
     <string name="settings_policy_section">КОНФИДЕНЦИАЛЬНОСТЬ</string>
     <string name="settings_policy_analytics_title">Аналитика использования</string>
-    <string name="settings_policy_analytics_text">Аналитика включена по умолчанию. События использования отправляются в PostHog (ЕС), чтобы улучшать CoffeePeek. Без текстов поиска, заметок, фото и точных координат. Выбор сохраняется в аккаунте и восстанавливается после входа.</string>
+    <string name="settings_policy_analytics_text">С вашего согласия события использования отправляются в PostHog (ЕС), чтобы улучшать CoffeePeek. Без текстов поиска, заметок, фото и точных координат.</string>
     <string name="settings_policy_terms_title">Правила использования</string>
     <string name="settings_policy_terms_description">Узнайте, как работает CoffeePeek.</string>
     <string name="settings_policy_privacy_title">Политика конфиденциальности</string>
@@ -73,5 +73,4 @@
     <string name="settings_guest_login">Войти</string>
     <string name="settings_guest_no_account">Нет аккаунта?</string>
     <string name="settings_guest_register">Зарегистрироваться</string>
-    <string name="settings_analytics_sync_failed">Не удалось сохранить настройку в аккаунте. Аналитика выключена на этом устройстве. Повторим синхронизацию автоматически.</string>
 </resources>

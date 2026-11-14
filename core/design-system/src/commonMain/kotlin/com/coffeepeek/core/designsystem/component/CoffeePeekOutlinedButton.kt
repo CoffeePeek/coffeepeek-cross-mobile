@@ -30,14 +30,8 @@ fun CoffeePeekOutlinedButton(
     border: BorderStroke? = ButtonDefaults.outlinedButtonBorder(enabled),
     contentPadding: PaddingValues = ButtonDefaults.ContentPadding,
     interactionSource: MutableInteractionSource? = null,
-    useGlass: Boolean = true,
     content: @Composable RowScope.() -> Unit,
 ) {
-    if (!useGlass) {
-        androidx.compose.material3.OutlinedButton(onClick, modifier, enabled, shape, colors, elevation,
-            border, contentPadding, interactionSource, content)
-        return
-    }
     CoffeePeekGlassButtonSurface(onClick, modifier, enabled, colors, contentPadding,
         interactionSource, CoffeePeekButtonStyle.Outlined, shape, border, content)
 }
@@ -47,8 +41,6 @@ private fun CoffeePeekOutlinedButtonPreview(dark: Boolean) = CoffeePeekTheme(dar
     Column {
         CoffeePeekOutlinedButton({}) { Text("Continue") }
         CoffeePeekOutlinedButton({}, enabled = false) { Text("Continue") }
-        CoffeePeekOutlinedButton({}, useGlass = false) { Text("Continue") }
-        CoffeePeekOutlinedButton({}, enabled = false, useGlass = false) { Text("Continue") }
         val colors = ButtonDefaults.outlinedButtonColors(
             containerColor = MaterialTheme.colorScheme.primary,
             contentColor = MaterialTheme.colorScheme.onPrimary,

@@ -192,12 +192,11 @@ permission. Check the installed app signing certificate before updating: never u
 an existing app to resolve a signing mismatch without the owner's approval. The test
 uses a local database/account, independent of production credentials and sessions.
 
-Debug now always uses the isolated package `com.coffeepeek.debug`; the old
-`-PpushTestApp=true` override is retired. Supply its registered Firebase Android
-client configuration (project coffeepeek) in `composeApp/src/debug/google-services.json`
-or alongside the `com.coffeepeek` client in the root config. Debug does not replace
-Prod or use its local data. Local and Firebase-distributed Debug can use different
-signing keys; do not uninstall either to work around a signature mismatch.
+If the installed app uses another signing key, use `-PpushTestApp=true` for an
+isolated debug package `com.coffeepeek.pushdebug`. Supply the matching Firebase Android
+client configuration (project coffeepeek, display name CoffeePeek Push Test) in the local
+google-services.json alongside the normal com.coffeepeek client. Install/launch this
+package separately; it does not replace the existing app or use its local data.
 
 ## Inbox presentation follow-up — 2026-10-21
 

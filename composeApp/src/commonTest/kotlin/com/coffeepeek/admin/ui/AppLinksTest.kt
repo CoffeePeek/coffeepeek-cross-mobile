@@ -44,7 +44,7 @@ class AppLinksTest {
         val shop = "https://coffeepeek.by/coffee-shops/marks"
         val regular = Navigator.Screen.ShopDetail("marks")
         assertEquals(regular, appLinkScreen("$shop?checkin=0"))
-        assertEquals(regular, appLinkScreen("$shop?checkin=0&checkin=0"))
+        assertEquals(regular, appLinkScreen("$shop?checkin=1&checkin=0"))
         assertEquals(Navigator.Screen.RoasterDetail("roast"), appLinkScreen("https://coffeepeek.by/roasters/roast?checkin=1"))
         assertNull(shopCheckInLink("../marks"))
         assertNull(shopCheckInLink(""))

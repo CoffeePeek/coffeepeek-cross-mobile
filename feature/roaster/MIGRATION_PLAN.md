@@ -330,18 +330,3 @@ Record outcome per item in this section (date, build, pass/fail, notes). Failure
 Open gaps from the legacy-first audit: R1–R4 (medium: R1 detail insets). Full table and verification status: [LEGACY_PARITY_AUDIT.md](../LEGACY_PARITY_AUDIT.md).
 
 Fixes applied 2026-10-20 and owner decisions on intentional differences: see the "Fixes applied" and "Intentional differences" sections of [LEGACY_PARITY_AUDIT.md](../LEGACY_PARITY_AUDIT.md). Device verification is still open.
-
-## Favorite membership read failures — 2026-11-14
-
-PR #326 delivers membership failures through the same observation as favorite
-keys. Both screens use the existing Russian and Belarusian error resources,
-keep the last successful keys on failure, and accept the next successful
-result. The tests cover a failure on first subscription, recovery, and
-preservation of coroutine cancellation.
-
-Windows, PR branch updated to `develop` `982ac2aeb`, tested from
-`6307b4e1d` with the follow-up changes. Direct Debug `1.2.0.2997-debug`
-assembled and passed packaged DEX verification. The function body check
-passed. JVM tests passed in composeApp (668 tests, 149 suites) and Roaster impl
-(25 tests, 3 suites), with zero failures or skips. Android Studio tools were
-unavailable. Device, visual, and live-backend checks remain open.

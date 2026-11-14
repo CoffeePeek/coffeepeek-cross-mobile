@@ -8,6 +8,7 @@ import com.coffeepeek.feature.discovery.impl.resources.discovery_map_truncated
 import com.coffeepeek.feature.discovery.impl.resources.discovery_search_clear
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -16,7 +17,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.component.CoffeePeekSearchField
-import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.modifier.CoffeePeekGlassIconButton
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
@@ -40,7 +40,7 @@ internal fun MapSearchControls(
             horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2)) {
             if (onToggleExpand != null) {
                 CoffeePeekGlassIconButton({ dismissInput(); onToggleExpand() }, stringResource(Res.string.discovery_map_collapse), hazeState = null) {
-                    CoffeePeekIcon(CoffeePeekIcons.Close, null, Modifier.size(22.dp))
+                    Icon(CoffeePeekIcons.Close, null, Modifier.size(22.dp))
                 }
             }
             CoffeePeekSearchField(

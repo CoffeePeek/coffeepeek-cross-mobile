@@ -90,7 +90,7 @@ class MapViewModelTest {
         answer = listOf(zone("z2"))
         vm.send(MapAction.BoundsChanged(view, 15f), scope = this); settle()
         assertEquals(setOf("z1", "z2"), vm.now.zones.map { it.id }.toSet())
-        city.select("brest"); runCurrent(); settle()
+        city.flow.value = "brest"; runCurrent(); settle()
         assertEquals(listOf("z2"), vm.now.zones.map { it.id })
     }
 

@@ -32,17 +32,6 @@ class DiscoveryRulesTest {
         assertEquals(111_195.0, oneDegreeOfLatitude, 100.0)
     }
 
-    @Test fun nearestCityUsesDistanceAndSkipsUnknownOrInvalidCenters() {
-        val brest = CityEntry("brest", "Брест", Coordinates(52.109, 23.717))
-        val cities = listOf(CityEntry("minsk", "Минск", minsk), CityEntry("other", "Other"),
-            CityEntry("invalid", "Invalid", Coordinates(91.0, 0.0)), brest)
-        assertEquals("brest", nearestCityId(cities, Coordinates(52.14, 23.76)))
-        assertEquals("minsk", nearestCityId(cities, minsk))
-        assertNull(nearestCityId(cities, null))
-        assertNull(nearestCityId(cities, Coordinates(Double.NaN, 0.0)))
-        assertNull(nearestCityId(cities.subList(1, 3), minsk))
-    }
-
     @Test fun theBadgeCountsSwitchesLevelsAndSelectedIdsButNotTheCity() {
         assertEquals(0, DiscoveryFilters(cityId = "minsk").activeCount)
         val filters = DiscoveryFilters(

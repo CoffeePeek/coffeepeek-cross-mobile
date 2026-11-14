@@ -110,7 +110,7 @@ private fun PickerListErrorPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = 
 private fun LazyListScope.pickerListStatus(state: SearchState, empty: Boolean, isPending: Boolean, onAction: (SearchAction) -> Unit) {
     when {
         state.error != null -> item(key = "search-error") {
-            Text(stringResource(Res.string.discovery_picker_failed), color = MaterialTheme.colorScheme.error)
+            Text(state.error.serverMessage ?: stringResource(Res.string.discovery_picker_failed), color = MaterialTheme.colorScheme.error)
             CoffeePeekTextButton(onClick = { onAction(SearchAction.Refresh) }) { Text(stringResource(Res.string.discovery_picker_retry)) }
         }
         empty && (state.isLoading || state.isRefreshing || isPending) -> item(key = "search-loading") {

@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -19,7 +20,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.component.CoffeePeekFilledButton
-import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import com.coffeepeek.feature.profile.api.ProfileAuthor
@@ -59,7 +59,7 @@ private fun PublicProfileUnavailable(state: PublicProfileState, visibilityPendin
     }
     Column(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 68.dp),
         horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        CoffeePeekIcon(CoffeePeekIcons.User, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant,
+        Icon(CoffeePeekIcons.User, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.size(48.dp))
         Text(stringResource(when (state.error) {
             PublicProfileError.BlocksLoad -> Res.string.profile_blocks_load_failed
@@ -71,11 +71,11 @@ private fun PublicProfileUnavailable(state: PublicProfileState, visibilityPendin
 }
 
 @Composable
-internal fun PublicProfileBlocked(profile: PublicProfile, authorActions: ProfileAuthorActions) {
+private fun PublicProfileBlocked(profile: PublicProfile, authorActions: ProfileAuthorActions) {
     val author = ProfileAuthor(profile.authorId, profile.slug, profile.nickname, profile.avatarUrl)
     Column(Modifier.fillMaxWidth().padding(horizontal = 32.dp, vertical = 48.dp),
         horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        CoffeePeekIcon(CoffeePeekIcons.VisibilityOff, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant,
+        Icon(CoffeePeekIcons.VisibilityOff, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.size(48.dp))
         Text(stringResource(Res.string.profile_blocked_title), style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center)
@@ -162,9 +162,6 @@ private fun PublicProfileCheckInPreview(state: PublicProfileState, profile: Publ
     val author = ProfileAuthor(profile.authorId, profile.slug, profile.nickname, profile.avatarUrl)
     Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         ProfileSectionHeading(stringResource(Res.string.profile_section_check_ins), onAll = callbacks.onOpenCheckIns)
-        if (state.checkInsError != null && state.checkIns.isNotEmpty()) {
-            InlineProfileError(stringResource(Res.string.profile_check_ins_failed)) { callbacks.onAction(PublicProfileAction.RetryCheckIns) }
-        }
         when {
             state.isLoadingCheckIns && state.checkIns.isEmpty() -> ProfileSectionLoader(100.dp)
             state.checkInsError != null && state.checkIns.isEmpty() ->

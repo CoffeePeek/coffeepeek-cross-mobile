@@ -1,9 +1,6 @@
 package com.coffeepeek.feature.homecheckin.impl.ui.compose
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.awaitEachGesture
-import androidx.compose.foundation.gestures.awaitFirstDown
-import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -25,19 +22,13 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.pointer.PointerEventPass
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.semantics.CollectionInfo
 import androidx.compose.ui.semantics.collectionInfo
 import androidx.compose.ui.semantics.semantics
@@ -46,7 +37,6 @@ import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.component.CoffeePeekButton
 import com.coffeepeek.core.designsystem.component.CoffeePeekIconButton
 import com.coffeepeek.core.designsystem.component.CoffeePeekOutlinedButton
-import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
@@ -96,9 +86,7 @@ internal fun GuestCheckInOnboardingContent(
     pager: PagerState = rememberOnboardingPager(),
     hostInsets: WindowInsets = WindowInsets(0, 0, 0, 0),
 ) {
-    // A long press freezes the autoplay where it is, like holding a story.
-    var held by remember { mutableStateOf(false) }
-    GuestCheckInOnboardingAutoAdvance(pager, held)
+    GuestCheckInOnboardingAutoAdvance(pager)
     val colors = MaterialTheme.colorScheme
     val insets = hostInsets.union(WindowInsets.safeDrawing).union(WindowInsets.safeContent.only(WindowInsetsSides.Bottom))
     Column(
@@ -112,14 +100,14 @@ internal fun GuestCheckInOnboardingContent(
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Box(Modifier.weight(1f).fillMaxWidth()) {
-                GuestCheckInOnboardingPager(pager, onHold = { held = it })
+                GuestCheckInOnboardingPager(pager)
                 CoffeePeekIconButton(
                     onClick = onContinueAsGuest,
                     modifier = Modifier.align(Alignment.TopEnd).padding(CoffeePeekDimens.spacing2),
                     tint = colors.surfaceVariant,
                     contentDescription = stringResource(Res.string.home_check_in_onboarding_guest),
                 ) {
-                    CoffeePeekIcon(CoffeePeekIcons.Close, contentDescription = null)
+                    Icon(CoffeePeekIcons.Close, contentDescription = null)
                 }
             }
             GuestCheckInOnboardingIndicator(pager)
@@ -129,27 +117,17 @@ internal fun GuestCheckInOnboardingContent(
 }
 
 @Composable
-private fun GuestCheckInOnboardingPager(pager: PagerState, onHold: (Boolean) -> Unit) {
+private fun GuestCheckInOnboardingPager(pager: PagerState) {
     val pages = GuestCheckInOnboardingPage.entries
     val position = stringResource(Res.string.home_check_in_onboarding_step, pager.currentPage % pages.size + 1, pages.size)
     HorizontalPager(
         pager,
-        Modifier.fillMaxSize().onboardingHold(onHold).semantics {
+        Modifier.fillMaxSize().semantics {
             collectionInfo = CollectionInfo(1, pages.size)
             stateDescription = position
         },
     ) { page ->
         GuestCheckInOnboardingSlide(pages[page % pages.size])
-    }
-}
-
-/** Observes press-and-hold over the pager without consuming any pointer events. */
-private fun Modifier.onboardingHold(onHold: (Boolean) -> Unit) = pointerInput(Unit) {
-    awaitEachGesture {
-        awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
-        onHold(true)
-        waitForUpOrCancellation(PointerEventPass.Initial)
-        onHold(false)
     }
 }
 
@@ -174,13 +152,8 @@ private fun GuestCheckInOnboardingActions(onRegister: () -> Unit, onSignIn: () -
                     .padding(horizontal = CoffeePeekDimens.spacing4, vertical = CoffeePeekDimens.spacing3),
                 verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2),
             ) {
-                CoffeePeekButton(stringResource(Res.string.home_check_in_onboarding_register), onRegister, useGlass = false)
-                CoffeePeekOutlinedButton(
-                    onSignIn,
-                    Modifier.fillMaxWidth().heightIn(min = CoffeePeekDimens.buttonHeight),
-                    colors = ButtonDefaults.outlinedButtonColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-                    useGlass = false,
-                ) {
+                CoffeePeekButton(stringResource(Res.string.home_check_in_onboarding_register), onRegister)
+                CoffeePeekOutlinedButton(onSignIn, Modifier.fillMaxWidth().heightIn(min = CoffeePeekDimens.buttonHeight)) {
                     Text(stringResource(Res.string.home_check_in_onboarding_sign_in), color = MaterialTheme.colorScheme.onSurface)
                 }
             }

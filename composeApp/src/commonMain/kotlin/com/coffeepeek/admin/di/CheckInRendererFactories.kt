@@ -19,7 +19,5 @@ class CheckInRendererFactories(
 internal fun featureCheckInRendererFactories() = CheckInRendererFactories(
     history = { get<FeatureCheckInHistoryScreenRenderer>() },
     create = { get<FeatureCheckInCreateFlowRenderer>() },
-    shopPicker = {
-        FeatureCheckInShopPickerRenderer(get<ApiClients>().client, get(), get(), get(), get(), get(), get(), get(), get())
-    },
+    shopPicker = { FeatureCheckInShopPickerRenderer(get<ApiClients>().client, get(), get(), get(), get(), get(), get(), get()) },
 )

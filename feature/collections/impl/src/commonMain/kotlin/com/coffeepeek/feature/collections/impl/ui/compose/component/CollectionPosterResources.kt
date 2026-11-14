@@ -3,7 +3,7 @@ package com.coffeepeek.feature.collections.impl.ui.compose.component
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.graphics.painter.Painter
-import com.coffeepeek.core.designsystem.component.coffeePeekIconPainter
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.text.*
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -37,7 +37,7 @@ internal fun collectionPosterResources(collection: SharedCollection?, format: Co
         stringResource(Res.string.collections_count, count),
         (1..pages).map { stringResource(Res.string.collections_page, it, pages) }, checkIns)
     val icons = CollectionPosterIcons(coffeePeekImagePlaceholderPainter(32.sp, darkBackground = true, density = Density(1f)),
-        coffeePeekIconPainter(CoffeePeekIcons.Location), coffeePeekIconPainter(CoffeePeekIcons.StarFilled), coffeePeekIconPainter(CoffeePeekIcons.ChevronRight))
+        rememberVectorPainter(CoffeePeekIcons.Location), rememberVectorPainter(CoffeePeekIcons.StarFilled), rememberVectorPainter(CoffeePeekIcons.ChevronRight))
     return CollectionPosterResources(labels, icons, measurer, typography, layout)
 }
 

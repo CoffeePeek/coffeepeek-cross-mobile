@@ -51,7 +51,6 @@ internal fun DiscoveryTabContent(
     val context = DiscoveryRoasterContext(state.query, state.filters.roasterIds, state.filters.favoritesOnly)
     DiscoveryTabEffects(ui, state.showsDiscovery, analytics, callbacks, focus, onAction)
     DiscoveryReselectionEffect(ui, state.showsDiscovery, callbacks.reselections, onAction)
-    if (host.isVisible() && focus == null && isIdleDiscovery(state, ui, motion)) host.onIdle()
     BoxWithConstraints(modifier.fillMaxSize().onGloballyPositioned { ui.rootOrigin = it.positionInRoot() }) {
         val canvasSize = DpSize(maxWidth, maxHeight)
         DiscoverySearchLayer(state, ui, motion, host, roasters, context, bottomClearance,
@@ -64,25 +63,17 @@ internal fun DiscoveryTabContent(
             DiscoveryContinueCheckIn(callbacks.onContinueCheckIn,
                 Modifier.align(Alignment.BottomEnd).padding(horizontal = 16.dp).padding(bottom = bottomClearance + 12.dp))
         }
-        if (host.isVisible() && !state.showFilters && !ui.showRoasters &&
-            (state.nearbyRequested || state.locationUnavailable || state.locationSettingsNeeded)) {
+        if (host.isVisible() && !state.showFilters && !ui.showRoasters && (state.nearbyRequested || state.locationUnavailable)) {
             DiscoveryLocationNotice(state.nearbyRequested, { onAction(SearchAction.DismissLocationFailure) },
-                onOpenSettings = if (state.locationSettingsNeeded) host.openLocationSettings else null,
-                modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = if (ui.mapExpanded) 24.dp else bottomClearance + 80.dp))
+                Modifier.align(Alignment.BottomCenter).padding(bottom = if (ui.mapExpanded) 24.dp else bottomClearance + 80.dp))
         }
         if (host.isVisible() && !state.showFilters && !ui.showRoasters && !ui.mapExpanded &&
-            !state.nearbyRequested && !state.locationUnavailable && !state.locationSettingsNeeded) {
+            !state.nearbyRequested && !state.locationUnavailable) {
             FavoriteFailureFeedback(state.favoriteFailureId, { onAction(SearchAction.DismissFavoriteFailure(it)) },
                 Modifier.align(Alignment.BottomCenter).padding(bottom = bottomClearance + 80.dp))
         }
     }
 }
-
-private fun isIdleDiscovery(state: SearchState, ui: DiscoveryTabState, motion: DiscoveryTabMotion): Boolean =
-    state.showsDiscovery && !state.isLoading && !state.isRefreshing && state.error == null &&
-        !state.showFilters && !state.nearbyRequested && !state.locationUnavailable &&
-        !state.locationSettingsNeeded && !ui.showRoasters && !ui.mapExpanded && motion.expansion.value == 0f &&
-        !ui.list.isScrollInProgress && !ui.shops.isScrollInProgress
 
 @Composable
 private fun DiscoveryContinueCheckIn(onContinue: () -> Unit, modifier: Modifier = Modifier) {

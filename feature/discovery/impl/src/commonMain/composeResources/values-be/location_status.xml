@@ -1,5 +1,4 @@
 <resources>
     <string name="discovery_location_pending">Вызначаем месцазнаходжанне…</string>
     <string name="discovery_location_unavailable">Няма геалакацыі. Дазвольце яе ў наладах або выберыце горад.</string>
-    <string name="discovery_location_open_settings">Налады</string>
 </resources>

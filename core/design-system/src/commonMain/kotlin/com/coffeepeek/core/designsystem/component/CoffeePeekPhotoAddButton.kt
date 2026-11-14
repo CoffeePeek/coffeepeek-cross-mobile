@@ -6,6 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -29,7 +30,7 @@ internal fun CoffeePeekPhotoAddButton(enabled: Boolean, isLoading: Boolean, onAd
         .border(1.dp, MaterialTheme.colorScheme.outline, shape)
         .clickable(enabled = enabled, role = Role.Button, onClick = onAdd), contentAlignment = Alignment.Center) {
         if (isLoading) CoffeePeekLoader(description, size = 20.dp)
-        else CoffeePeekIcon(CoffeePeekIcons.Camera, description, Modifier.size(28.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        else Icon(CoffeePeekIcons.Camera, description, Modifier.size(28.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 

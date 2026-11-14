@@ -1,7 +1,6 @@
 package com.coffeepeek.admin.ui.component
 
 import androidx.compose.runtime.setValue
-import com.coffeepeek.core.designsystem.theme.reducedMotionDuration
 import androidx.compose.runtime.getValue
 import androidx.compose.animation.core.animate
 import androidx.compose.animation.core.tween
@@ -70,7 +69,6 @@ fun SwipeDismissModalBottomSheet(
     }
     val dismissDistance = with(density) { 72.dp.toPx() }
     val dismissVelocity = with(density) { 900.dp.toPx() }
-    val sheetSnapDuration = reducedMotionDuration(160)
     var dragOffset by remember { mutableFloatStateOf(0f) }
     val dragState = rememberDraggableState { delta ->
         dragOffset = (dragOffset + delta).coerceAtLeast(0f)
@@ -100,13 +98,20 @@ fun SwipeDismissModalBottomSheet(
                                 animate(
                                     initialValue = dragOffset,
                                     targetValue = 0f,
-                                    animationSpec = tween(durationMillis = sheetSnapDuration),
+                                    animationSpec = tween(durationMillis = 160),
                                 ) { value, _ -> dragOffset = value }
                             }
                         },
                     ),
                 contentAlignment = Alignment.Center,
-            ) { SheetDragHandle() }
+            ) {
+                Box(
+                    modifier = Modifier
+                        .size(width = 36.dp, height = 4.dp)
+                        .clip(RoundedCornerShape(999.dp))
+                        .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.45f)),
+                )
+            }
         },
         containerColor = MaterialTheme.colorScheme.surface,
         // Native iOS sheets return above; the fallback must also protect horizontal
@@ -123,15 +128,5 @@ fun SwipeDismissModalBottomSheet(
                 trackedContent()
             }
         },
-    )
-}
-
-@Composable
-private fun SheetDragHandle() {
-    Box(
-        modifier = Modifier
-            .size(width = 36.dp, height = 4.dp)
-            .clip(RoundedCornerShape(999.dp))
-            .background(MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.45f)),
     )
 }

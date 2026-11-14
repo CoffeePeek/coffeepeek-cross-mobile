@@ -30,8 +30,6 @@ import com.coffeepeek.feature.contributions.impl.resources.contributions_shop_su
 import com.coffeepeek.feature.contributions.impl.resources.contributions_sign_in
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.animation.Crossfade
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.consumeWindowInsets
@@ -66,7 +64,6 @@ import com.coffeepeek.core.designsystem.component.CoffeePeekButton
 import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
 import com.coffeepeek.core.designsystem.component.CoffeePeekTopBar
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
-import com.coffeepeek.core.designsystem.theme.reducedMotionDuration
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.contributions.api.ChangeEditorHost
 import com.coffeepeek.feature.contributions.domain.model.ChangeRequest
@@ -92,38 +89,24 @@ internal fun ChangeEditorContent(
 ) {
     val title = state.section.title()
     val submit = state.submit
-    val done = submit as? EditorSubmit.Done
-    val failed = submit as? EditorSubmit.Failed
-    Crossfade(targetState = when {
-        state.signedIn == false -> 0
-        done != null -> 1
-        submit == EditorSubmit.Sending -> 2
-        failed != null -> 3
-        else -> 4
-    }, animationSpec = tween(reducedMotionDuration(220)), label = "editor-status") { status ->
-        when (status) {
-            0 -> FormSignInPrompt(title, stringResource(Res.string.contributions_editor_sign_in_prompt), callbacks.onBack, callbacks.onSignIn, modifier)
-            1 -> done?.let { completed ->
-                EditorSuccess(title, completed.request, editing, host, callbacks, modifier)
-            }
-            2 -> SubmissionStatusScreen(
+    when {
+        state.signedIn == false -> FormSignInPrompt(title, stringResource(Res.string.contributions_editor_sign_in_prompt), callbacks.onBack, callbacks.onSignIn, modifier)
+        submit is EditorSubmit.Done -> EditorSuccess(title, submit.request, editing, host, callbacks, modifier)
+        submit == EditorSubmit.Sending -> SubmissionStatusScreen(
             title, SubmissionStatus.Sending, stringResource(if (editing) Res.string.contributions_editor_saving_title else Res.string.contributions_editor_sending_title),
             stringResource(Res.string.contributions_editor_sending_description), callbacks.onBack, host.feedback, modifier,
         )
-            3 -> failed?.let { failedSubmit ->
-                SubmissionStatusScreen(
-                title, SubmissionStatus.Error, stringResource(Res.string.contributions_editor_failed_title),
-                "${failedSubmit.serverMessage ?: stringResource(Res.string.contributions_editor_failed_default)}\n\n${stringResource(Res.string.contributions_shop_failed_kept)}",
-                { onAction(ChangeEditorAction.DismissFailure) }, host.feedback, modifier,
-            ) {
-                SubmissionErrorActions(
-                    stringResource(Res.string.contributions_shop_retry_send), stringResource(Res.string.contributions_shop_back_to_form),
-                    { onAction(ChangeEditorAction.Submit) }, { onAction(ChangeEditorAction.DismissFailure) },
-                )
-            }
-            }
-        else -> ChangeEditorForm(state, editing, host, callbacks, onAction, modifier)
+        submit is EditorSubmit.Failed -> SubmissionStatusScreen(
+            title, SubmissionStatus.Error, stringResource(Res.string.contributions_editor_failed_title),
+            "${submit.serverMessage ?: stringResource(Res.string.contributions_editor_failed_default)}\n\n${stringResource(Res.string.contributions_shop_failed_kept)}",
+            { onAction(ChangeEditorAction.DismissFailure) }, host.feedback, modifier,
+        ) {
+            SubmissionErrorActions(
+                stringResource(Res.string.contributions_shop_retry_send), stringResource(Res.string.contributions_shop_back_to_form),
+                { onAction(ChangeEditorAction.Submit) }, { onAction(ChangeEditorAction.DismissFailure) },
+            )
         }
+        else -> ChangeEditorForm(state, editing, host, callbacks, onAction, modifier)
     }
 }
 
