@@ -1,5 +1,7 @@
 package com.coffeepeek.core.designsystem.component
 
+import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -53,8 +55,8 @@ private fun CoffeePeekUnderlineTab(text: String, selected: Boolean, onClick: () 
             style = MaterialTheme.typography.bodyMedium, textAlign = TextAlign.Center,
             color = if (selected) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
             fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Normal)
-        if (selected) Box(Modifier.align(Alignment.BottomCenter).fillMaxWidth().height(3.dp)
-            .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(topStart = 2.dp, topEnd = 2.dp)))
+        if (selected) Box(Modifier.align(Alignment.BottomCenter).fillMaxWidth().height(2.dp)
+            .background(MaterialTheme.colorScheme.coffeePeekAccentForeground, RoundedCornerShape(topStart = 2.dp, topEnd = 2.dp)))
     }
 }
 

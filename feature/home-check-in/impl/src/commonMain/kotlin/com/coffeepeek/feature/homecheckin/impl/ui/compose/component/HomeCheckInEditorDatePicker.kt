@@ -1,5 +1,7 @@
 package com.coffeepeek.feature.homecheckin.impl.ui.compose.component
 
+import com.coffeepeek.core.designsystem.component.coffeePeekDatePickerColors
+
 import androidx.compose.material3.*
 import com.coffeepeek.core.designsystem.component.CoffeePeekTextButton as TextButton
 import androidx.compose.runtime.*
@@ -24,7 +26,7 @@ internal fun HomeCheckInEditorDatePicker(date: String, today: String, onDismiss:
             picker.selectedDateMillis?.let { onSelected(isoDate(it.floorDiv(DAY_MILLIS))) }
         }) { Text(stringResource(Res.string.home_check_in_done)) } },
         dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(Res.string.home_check_in_cancel)) } },
-    ) { DatePicker(picker, showModeToggle = false) }
+    ) { DatePicker(picker, showModeToggle = false, colors = coffeePeekDatePickerColors()) }
 }
 
 private const val DAY_MILLIS = 86_400_000L

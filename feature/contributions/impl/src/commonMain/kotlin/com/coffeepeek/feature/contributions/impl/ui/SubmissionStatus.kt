@@ -1,5 +1,7 @@
 package com.coffeepeek.feature.contributions.impl.ui
 
+import androidx.compose.foundation.layout.heightIn
+
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.core.designsystem.component.CoffeePeekBackHandler
@@ -88,7 +90,7 @@ internal fun SubmissionStatusScreen(
 @Composable
 internal fun SubmissionErrorActions(retryText: String, backText: String, onRetry: () -> Unit, onEdit: () -> Unit) {
     CoffeePeekButton(retryText, onRetry)
-    OutlinedButton(onClick = onEdit, modifier = Modifier.fillMaxWidth().height(CoffeePeekDimens.buttonHeight)) { Text(backText) }
+    OutlinedButton(onClick = onEdit, modifier = Modifier.fillMaxWidth().heightIn(min = CoffeePeekDimens.buttonHeight)) { Text(backText) }
 }
 
 @Composable

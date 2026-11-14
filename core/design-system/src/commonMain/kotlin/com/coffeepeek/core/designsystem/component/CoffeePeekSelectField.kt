@@ -69,7 +69,7 @@ fun CoffeePeekSelectField(
                     stateDescription = value
                     errorDescription?.let { error(it) }
                 }
-                .heightIn(min = 48.dp).padding(horizontal = CoffeePeekDimens.spacing4, vertical = CoffeePeekDimens.buttonPaddingV),
+                .heightIn(min = CoffeePeekDimens.selectMinHeight).padding(horizontal = CoffeePeekDimens.spacing4, vertical = CoffeePeekDimens.buttonPaddingV),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2),
         ) {

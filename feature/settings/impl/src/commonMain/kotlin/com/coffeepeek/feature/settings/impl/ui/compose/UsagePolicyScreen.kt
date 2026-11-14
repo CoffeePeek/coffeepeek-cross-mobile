@@ -1,5 +1,7 @@
 package com.coffeepeek.feature.settings.impl.ui.compose
 
+import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
+
 import androidx.compose.foundation.clickable
 import com.coffeepeek.feature.settings.impl.resources.Res
 import com.coffeepeek.feature.settings.impl.resources.settings_policy_analytics_text
@@ -58,7 +60,7 @@ internal fun UsagePolicyContent(
     consent: UsageConsentState, onConsent: (Boolean) -> Unit, onOpenTerms: () -> Unit, onOpenPrivacy: () -> Unit,
     onBack: () -> Unit, modifier: Modifier = Modifier,
 ) {
-    val iconColors = CoffeePeekIconBadgeColors(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f), MaterialTheme.colorScheme.primary)
+    val iconColors = CoffeePeekIconBadgeColors(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f), MaterialTheme.colorScheme.coffeePeekAccentForeground)
     SettingsPage(stringResource(Res.string.settings_policy_title), onBack, modifier) {
         Spacer(Modifier.height(CoffeePeekDimens.spacing6))
         Column(Modifier.padding(horizontal = CoffeePeekDimens.settingsPagePadding)) {

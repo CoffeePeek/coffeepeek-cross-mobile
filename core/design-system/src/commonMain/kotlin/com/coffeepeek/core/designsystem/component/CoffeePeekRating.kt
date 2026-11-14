@@ -1,6 +1,10 @@
 package com.coffeepeek.core.designsystem.component
 
+import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
+
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.LocalContentColor
@@ -24,6 +28,7 @@ import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.resources.Res
 import com.coffeepeek.core.designsystem.resources.coffeepeek_rating_description
 import com.coffeepeek.core.designsystem.resources.coffeepeek_rating_choose
+import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import kotlin.math.roundToInt
 import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
@@ -48,10 +53,10 @@ fun CoffeePeekRating(
     contentDescription: String? = null,
     onRatingChange: ((Int) -> Unit)? = null,
     enabled: Boolean = true,
-    starSpacing: Dp = if (onRatingChange == null) 3.dp else 1.dp,
+    starSpacing: Dp = if (onRatingChange == null) 4.dp else 2.dp,
     valueSpacing: Dp = 8.dp,
-    activeColor: Color = MaterialTheme.colorScheme.primary,
-    inactiveColor: Color = MaterialTheme.colorScheme.outline,
+    activeColor: Color = MaterialTheme.colorScheme.coffeePeekAccentForeground,
+    inactiveColor: Color = MaterialTheme.colorScheme.onSurfaceVariant,
     valueColor: Color = LocalContentColor.current,
     valueStyle: TextStyle = MaterialTheme.typography.bodyMedium,
     starDescription: @Composable (Int) -> String = { stringResource(Res.string.coffeepeek_rating_choose, it) },
@@ -62,28 +67,40 @@ fun CoffeePeekRating(
     val behavior = if (onRatingChange == null) Modifier.semantics(mergeDescendants = true) {
         this.contentDescription = description
         progressBarRangeInfo = ProgressBarRangeInfo(value.toFloat(), 0f..5f)
-    } else Modifier.widthIn(max = 224.dp).fillMaxWidth()
+    } else Modifier.widthIn(max = coffeePeekRatingInputWidth(starSpacing)).fillMaxWidth()
     Row(modifier.then(behavior), verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(valueSpacing)) {
         if (display == CoffeePeekRatingDisplay.Compact) {
             CoffeePeekIcon(CoffeePeekIcons.StarFilled, null, Modifier.size(size.starSize), tint = activeColor)
-        } else Row(if (onRatingChange == null) Modifier else Modifier.weight(1f),
-            horizontalArrangement = Arrangement.spacedBy(starSpacing), verticalAlignment = Alignment.CenterVertically) {
-            repeat(5) { index ->
-                if (onRatingChange == null) {
-                    CoffeePeekRatingStar(coffeePeekRatingStarFill(value, index), size.starSize, activeColor, inactiveColor)
-                } else {
-                    val label = starDescription(index + 1)
-                    Box(Modifier.weight(1f).height(44.dp).clip(RoundedCornerShape(8.dp))
-                        .selectable(selected = value == (index + 1).toDouble(), enabled = enabled, role = Role.Button) {
-                            onRatingChange(index + 1)
-                        }.semantics { this.contentDescription = label }, contentAlignment = Alignment.Center) {
-                        CoffeePeekRatingStar(coffeePeekRatingStarFill(value, index), size.starSize, activeColor, inactiveColor)
-                    }
-                }
-            }
-        }
+        } else CoffeePeekRatingStars(value, size.starSize, enabled, starSpacing, activeColor, inactiveColor,
+            onRatingChange, starDescription, if (onRatingChange == null) Modifier else Modifier.weight(1f))
         if (valueText != null) Text(valueText, style = valueStyle, color = valueColor)
+    }
+}
+
+internal fun coffeePeekRatingInputWidth(spacing: Dp): Dp = CoffeePeekDimens.minimumTouchTarget * 5 + spacing * 4
+
+@Composable
+private fun CoffeePeekRatingStars(value: Double, starSize: Dp, enabled: Boolean, spacing: Dp,
+    active: Color, inactive: Color, onChange: ((Int) -> Unit)?, description: @Composable (Int) -> String,
+    modifier: Modifier) {
+    val scrolling = if (onChange == null) Modifier else Modifier.horizontalScroll(rememberScrollState())
+    Row(modifier.then(scrolling), horizontalArrangement = Arrangement.spacedBy(spacing),
+        verticalAlignment = Alignment.CenterVertically) {
+        repeat(5) { index ->
+            if (onChange == null) CoffeePeekRatingStar(coffeePeekRatingStarFill(value, index), starSize, active, inactive)
+            else CoffeePeekRatingChoice(index + 1, value, starSize, enabled, active, inactive, description(index + 1), onChange)
+        }
+    }
+}
+
+@Composable
+private fun CoffeePeekRatingChoice(score: Int, value: Double, starSize: Dp, enabled: Boolean,
+    active: Color, inactive: Color, description: String, onChange: (Int) -> Unit) {
+    Box(Modifier.size(CoffeePeekDimens.minimumTouchTarget).clip(RoundedCornerShape(8.dp))
+        .selectable(selected = value == score.toDouble(), enabled = enabled, role = Role.Button) { onChange(score) }
+        .semantics { contentDescription = description }, contentAlignment = Alignment.Center) {
+        CoffeePeekRatingStar(coffeePeekRatingStarFill(value, score - 1), starSize, active, inactive)
     }
 }
 
@@ -121,6 +138,7 @@ internal fun coffeePeekRatingText(rating: Double): String {
             CoffeePeekRating(4.3, display = CoffeePeekRatingDisplay.Compact)
             CoffeePeekRating(4.0, size = CoffeePeekRatingSize.Large, onRatingChange = {})
             CoffeePeekRating(0.0, size = CoffeePeekRatingSize.Large, onRatingChange = {}, enabled = false)
+            CoffeePeekRating(3.0, modifier = Modifier.width(160.dp), onRatingChange = {})
         }
     }
 }

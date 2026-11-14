@@ -1,5 +1,7 @@
 package com.coffeepeek.core.designsystem.component
 
+import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
+
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Column
@@ -87,7 +89,7 @@ fun CoffeePeekTextField(
                 focusedBorderColor      = MaterialTheme.colorScheme.outline,
                 unfocusedBorderColor    = MaterialTheme.colorScheme.outline,
                 errorBorderColor        = MaterialTheme.colorScheme.error,
-                cursorColor             = MaterialTheme.colorScheme.primary,
+                cursorColor             = MaterialTheme.colorScheme.coffeePeekAccentForeground,
                 errorCursorColor        = MaterialTheme.colorScheme.error,
             ),
             leadingIcon = if (leadingIcon != null) {

@@ -122,9 +122,9 @@ private fun ShelfVerdictChip(
     Row(modifier.heightIn(min = 52.dp).clip(CircleShape).background(fill).border(1.5.dp, color.copy(alpha = if (selected) 1f else 0.45f), CircleShape)
         .toggleable(selected, role = Role.Checkbox) { onClick() }.padding(horizontal = CoffeePeekDimens.spacing3),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2, Alignment.CenterHorizontally)) {
-        CoffeePeekIcon(icon, null, Modifier.size(20.dp), tint = if (selected) onColor else color)
-        Text(text, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, color = content, maxLines = 1,
-            overflow = TextOverflow.Ellipsis)
+        CoffeePeekIcon(icon, null, Modifier.size(20.dp), tint = content)
+        Text(text, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, color = content,
+            modifier = Modifier.weight(1f).padding(vertical = CoffeePeekDimens.spacing2))
     }
 }
 

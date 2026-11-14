@@ -27,10 +27,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
@@ -122,11 +124,9 @@ fun CoffeePeekSettingsRow(
 @Composable
 private fun CoffeePeekSettingsRowText(label: String, description: String?, modifier: Modifier) {
     Column(modifier, verticalArrangement = Arrangement.spacedBy(2.dp)) {
-        Text(label, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface,
-            maxLines = 1, overflow = TextOverflow.Ellipsis)
+        Text(label, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
         if (description != null) {
-            Text(description, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 3, overflow = TextOverflow.Ellipsis)
+            Text(description, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }
@@ -153,6 +153,22 @@ private fun CoffeePeekSettingsListPreviewContent(darkTheme: Boolean) = CoffeePee
 
 @Preview @Composable private fun CoffeePeekSettingsListLightPreview() = CoffeePeekSettingsListPreviewContent(false)
 @Preview @Composable private fun CoffeePeekSettingsListDarkPreview() = CoffeePeekSettingsListPreviewContent(true)
+
+@Composable
+private fun CoffeePeekSettingsLargeTextPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
+    val density = LocalDensity.current
+    CompositionLocalProvider(LocalDensity provides Density(density.density, 2f)) {
+        Surface(Modifier.width(320.dp)) {
+            CoffeePeekSettingsSection("Настройки") {
+                CoffeePeekSettingsRow(CoffeePeekIcons.Settings, "Оформление приложения",
+                    description = "Выберите светлую, тёмную или системную тему", onClick = {})
+            }
+        }
+    }
+}
+
+@Preview @Composable private fun CoffeePeekSettingsLargeLightPreview() = CoffeePeekSettingsLargeTextPreview(false)
+@Preview @Composable private fun CoffeePeekSettingsLargeDarkPreview() = CoffeePeekSettingsLargeTextPreview(true)
 
 @Composable
 private fun CoffeePeekSettingsSwitchRolePreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {

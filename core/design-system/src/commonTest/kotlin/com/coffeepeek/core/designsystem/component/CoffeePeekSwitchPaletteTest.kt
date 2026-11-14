@@ -27,7 +27,7 @@ class CoffeePeekSwitchPaletteTest {
 
     @Test fun explicitThumbColorsMatchTheProductionTokens() {
         assertEquals(Color(0xFFFFF7D6), coffeePeekSwitchPalette(true).uncheckedThumb)
-        assertEquals(Color(0xFF78716C), coffeePeekSwitchPalette(false).uncheckedThumb)
+        assertEquals(Color(0xFF6B655F), coffeePeekSwitchPalette(false).uncheckedThumb)
         assertEquals(Color(0xFF684900), coffeePeekSwitchPalette(false).checkedThumb)
     }
 }

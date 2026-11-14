@@ -26,7 +26,7 @@ import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 internal fun RoasterContactPill(icon: ImageVector, text: String, onClick: () -> Unit) {
     Surface(
         onClick = onClick,
-        shape = RoundedCornerShape(999.dp),
+        shape = RoundedCornerShape(percent = 50),
         color = Color.Transparent,
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
         tonalElevation = 0.dp,

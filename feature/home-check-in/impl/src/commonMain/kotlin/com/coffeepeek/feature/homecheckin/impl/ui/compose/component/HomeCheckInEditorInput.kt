@@ -48,7 +48,7 @@ internal fun HomeCheckInEditorInput(
             .semantics { contentDescription = label },
         shape = RoundedCornerShape(22.dp), textStyle = MaterialTheme.typography.bodyMedium,
         placeholder = { Text(placeholder, style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)) },
+            color = MaterialTheme.colorScheme.onSurfaceVariant) },
         contentPadding = PaddingValues(horizontal = 14.dp, vertical = if (multiline) 12.dp else 0.dp),
         keyboardOptions = KeyboardOptions(keyboardType = keyboardType, imeAction = if (multiline) ImeAction.Default else ImeAction.Done),
         keyboardActions = KeyboardActions(onDone = { focus.clearFocus(force = true); keyboard?.hide() }),

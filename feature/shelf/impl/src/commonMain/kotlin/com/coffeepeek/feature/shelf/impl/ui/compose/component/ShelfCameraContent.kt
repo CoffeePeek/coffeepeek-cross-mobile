@@ -1,5 +1,6 @@
 package com.coffeepeek.feature.shelf.impl.ui.compose.component
 
+import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -285,7 +286,7 @@ private fun ShelfCameraTips(modifier: Modifier, onClose: () -> Unit) {
             Text(stringResource(Res.string.shelf_camera_how), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
             listOf(Res.string.shelf_scan_tip_whole, Res.string.shelf_scan_tip_straight, Res.string.shelf_scan_tip_clean).forEach {
                 Row(horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2), verticalAlignment = Alignment.CenterVertically) {
-                    CoffeePeekIcon(CoffeePeekIcons.CheckCircle, null, Modifier.size(20.dp), tint = MaterialTheme.colorScheme.primary)
+                    CoffeePeekIcon(CoffeePeekIcons.CheckCircle, null, Modifier.size(20.dp), tint = MaterialTheme.colorScheme.coffeePeekAccentForeground)
                     Text(stringResource(it), style = MaterialTheme.typography.bodyMedium)
                 }
             }

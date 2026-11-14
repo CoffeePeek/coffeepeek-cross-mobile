@@ -24,6 +24,7 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.component.*
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
+import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.homecheckin.impl.resources.*
 import com.coffeepeek.feature.homecheckin.impl.ui.compose.model.*
@@ -40,7 +41,7 @@ internal fun HomeCheckInBeanPicker(
     val bags = state.shelfBags.matching(state.beanQuery)
     Column(modifier.fillMaxSize().padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            IconButton(onClick = { onAction(HomeCheckInEditorAction.CloseBeanPicker) }, Modifier.size(44.dp)) {
+            IconButton(onClick = { onAction(HomeCheckInEditorAction.CloseBeanPicker) }, Modifier.size(CoffeePeekDimens.minimumTouchTarget)) {
                 CoffeePeekIcon(CoffeePeekIcons.Back, stringResource(Res.string.home_check_in_back_to_editor))
             }
             Text(stringResource(Res.string.home_check_in_bean), style = MaterialTheme.typography.headlineSmall)

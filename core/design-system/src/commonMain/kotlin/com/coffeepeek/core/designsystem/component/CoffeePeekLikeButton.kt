@@ -74,11 +74,11 @@ fun CoffeePeekLikeButton(
     } else contentDescription
     if (style.isGlass && LocalCoffeePeekNativeGlassPresenter.current
             ?.IconButton(if (selected) CoffeePeekGlassIcon.FavoriteFilled else CoffeePeekGlassIcon.Favorite,
-                onClick, label, modifier.sizeIn(minWidth = 48.dp, minHeight = 48.dp),
+                onClick, label, modifier.sizeIn(minWidth = CoffeePeekDimens.minimumTouchTarget, minHeight = CoffeePeekDimens.minimumTouchTarget),
                 enabled && !isLoading, selected, isLoading) == true) return
     val interactions = remember { MutableInteractionSource() }
     val pressed by interactions.collectIsPressedAsState()
-    Box(modifier.sizeIn(minWidth = 48.dp, minHeight = 48.dp)
+    Box(modifier.sizeIn(minWidth = CoffeePeekDimens.minimumTouchTarget, minHeight = CoffeePeekDimens.minimumTouchTarget)
         .coffeePeekGlassPress(pressed, enabled && !isLoading)
         .toggleable(selected, interactionSource = interactions, indication = null,
             enabled = enabled && !isLoading, role = Role.Checkbox, onValueChange = { onClick() })

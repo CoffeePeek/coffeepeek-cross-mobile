@@ -1,5 +1,7 @@
 package com.coffeepeek.feature.homecheckin.impl.ui.compose.component
 
+import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
+
 import androidx.compose.foundation.layout.*
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import com.coffeepeek.feature.homecheckin.impl.resources.Res
@@ -31,14 +33,14 @@ internal fun HomeCheckInHeading(entry: HomePreparation, dateLabel: String) {
         FlowRow(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp),
             itemVerticalAlignment = Alignment.CenterVertically) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                CoffeePeekIcon(CoffeePeekIcons.Coffee, null, Modifier.size(20.dp), tint = MaterialTheme.colorScheme.primary)
+                CoffeePeekIcon(CoffeePeekIcons.Coffee, null, Modifier.size(20.dp), tint = MaterialTheme.colorScheme.coffeePeekAccentForeground)
                 Text(stringResource(Res.string.home_check_in_home), style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             entry.visibilityLabelResource()?.let { resource ->
                 Surface(shape = RoundedCornerShape(50), color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)) {
                     Row(Modifier.padding(horizontal = 10.dp, vertical = 6.dp), verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                         CoffeePeekIcon(if (entry.visibility == HomePreparationVisibility.Private) CoffeePeekIcons.Lock else CoffeePeekIcons.Globe,
                             null, Modifier.size(14.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
                         Text(stringResource(resource), style = MaterialTheme.typography.labelSmall,

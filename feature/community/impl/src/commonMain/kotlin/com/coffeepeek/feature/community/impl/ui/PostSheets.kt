@@ -1,5 +1,9 @@
 package com.coffeepeek.feature.community.impl.ui
 
+import androidx.compose.foundation.layout.heightIn
+
+import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
+
 import androidx.compose.foundation.Image
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import com.coffeepeek.feature.community.impl.resources.Res
@@ -161,7 +165,7 @@ private fun RatingCard(image: DrawableResource, label: String, value: Int, onCha
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing1)) {
             Text(label, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
             CoffeePeekRating(value.toDouble(), size = CoffeePeekRatingSize.Large, onRatingChange = onChange,
-                inactiveColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.65f),
+                inactiveColor = MaterialTheme.colorScheme.onSurfaceVariant,
                 starDescription = { stringResource(Res.string.community_choose_rating, label, it) })
         }
     }
@@ -260,14 +264,14 @@ private fun TextArea(value: String, onChange: (String) -> Unit, placeholder: Str
         keyboardActions = KeyboardActions(onDone = { focus.clearFocus(force = true) }),
         singleLine = singleLine,
         textStyle = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onSurface),
-        cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
-        modifier = modifier.fillMaxWidth().then(if (singleLine) Modifier.height(CoffeePeekDimens.buttonHeight) else Modifier)
+        cursorBrush = SolidColor(MaterialTheme.colorScheme.coffeePeekAccentForeground),
+        modifier = modifier.fillMaxWidth().then(if (singleLine) Modifier.heightIn(min = CoffeePeekDimens.buttonHeight) else Modifier)
             .clip(shape).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.04f))
             .border(1.dp, if (isError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.outline, shape)
             .padding(horizontal = 14.dp, vertical = if (singleLine) 0.dp else 12.dp),
         decorationBox = { inner ->
             Box(if (singleLine) Modifier.fillMaxSize() else Modifier, contentAlignment = Alignment.CenterStart) {
-                if (value.isEmpty()) Text(placeholder, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f))
+                if (value.isEmpty()) Text(placeholder, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 inner()
             }
         },

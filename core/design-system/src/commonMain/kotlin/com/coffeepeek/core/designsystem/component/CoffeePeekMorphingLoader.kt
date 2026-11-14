@@ -9,6 +9,7 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.size
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
@@ -32,7 +33,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.resources.Res
 import com.coffeepeek.core.designsystem.resources.coffeepeek_loading
-import com.coffeepeek.core.designsystem.theme.CoffeePeekColors
+import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import kotlin.math.PI
@@ -113,7 +114,7 @@ fun CoffeePeekMorphingLoader(
     contentDescription: String = stringResource(Res.string.coffeepeek_loading),
     modifier: Modifier = Modifier,
     size: Dp = CoffeePeekDimens.loaderDefault,
-    color: Color = CoffeePeekColors.Primary,
+    color: Color = MaterialTheme.colorScheme.coffeePeekAccentForeground,
     strokeWidth: Dp = (size / 16f).coerceAtLeast(2.dp),
     progress: Float? = null,
 ) {

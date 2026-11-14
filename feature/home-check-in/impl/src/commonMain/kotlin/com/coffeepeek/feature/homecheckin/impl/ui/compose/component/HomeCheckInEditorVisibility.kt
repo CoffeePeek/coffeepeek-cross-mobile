@@ -29,7 +29,7 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 @Composable
 internal fun HomeCheckInEditorVisibility(isPublic: Boolean, enabled: Boolean, onChange: (Boolean) -> Unit) {
     Row(
-        Modifier.fillMaxWidth().heightIn(min = CoffeePeekDimens.controlHeight).toggleable(
+        Modifier.fillMaxWidth().heightIn(min = CoffeePeekDimens.minimumTouchTarget).toggleable(
             value = isPublic, enabled = enabled, role = Role.Switch, onValueChange = onChange,
         ),
         verticalAlignment = Alignment.CenterVertically,

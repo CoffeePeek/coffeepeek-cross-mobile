@@ -2,6 +2,10 @@
 
 package com.coffeepeek.admin.ui.component
 
+import androidx.compose.foundation.layout.heightIn
+
+import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
+
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.WindowInsets
@@ -114,7 +118,7 @@ private fun IosGlassIconButton(
         update = { button ->
             button.overrideUserInterfaceStyle = colors.uiKitStyle
             button.backgroundColor = UIColor.clearColor
-            button.tintColor = colors.primary.toUIColor()
+            button.tintColor = colors.coffeePeekAccentForeground.toUIColor()
             button.configuration = glassIconConfiguration(icon, selected, isLoading, colors)
             button.accessibilityLabel = contentDescription
             button.accessibilityValue = loadingLabel
@@ -170,12 +174,12 @@ actual fun PlatformGlassBackButton(onClick: () -> Unit, modifier: Modifier) {
                 primaryAction = UIAction.actionWithHandler { currentOnClick.value() },
             )
         },
-        modifier = modifier.height(CoffeePeekDimens.buttonHeight).width(104.dp),
+        modifier = modifier.heightIn(min = CoffeePeekDimens.buttonHeight).width(104.dp),
         properties = UIKitInteropProperties(isNativeAccessibilityEnabled = true, placedAsOverlay = true),
         update = { button ->
             button.overrideUserInterfaceStyle = colors.uiKitStyle
             button.backgroundColor = UIColor.clearColor
-            button.tintColor = colors.primary.toUIColor()
+            button.tintColor = colors.coffeePeekAccentForeground.toUIColor()
             val configuration = coffeePeekGlassButtonConfiguration()
             configuration.cornerStyle = UIButtonConfigurationCornerStyleCapsule
             configuration.baseForegroundColor = colors.onSurface.toUIColor()
@@ -232,7 +236,7 @@ actual fun PlatformFloatingBottomNavBar(
         properties = UIKitInteropProperties(isNativeAccessibilityEnabled = true, placedAsOverlay = true),
         update = { bar ->
             bar.overrideUserInterfaceStyle = colors.uiKitStyle
-            bar.tintColor = colors.primary.toUIColor()
+            bar.tintColor = colors.coffeePeekAccentForeground.toUIColor()
             bar.unselectedItemTintColor = colors.onSurfaceVariant.toUIColor()
             if (bar.items?.size != items.size) {
                 bar.items = items.mapIndexed { index, item ->

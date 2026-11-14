@@ -96,7 +96,7 @@ private fun shopKindLabel(kind: ShopKind): String = stringResource(when (kind) {
 private fun ShopBrewMethods(methods: List<String>) {
     Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
         methods.take(2).forEach { method ->
-            CoffeePeekShopInfoChip(method, Modifier.widthIn(max = 112.dp), icon = { DiscoveryBrewMethodIcon(method, 13.dp) })
+            CoffeePeekShopInfoChip(method, Modifier.widthIn(max = 112.dp), icon = { DiscoveryBrewMethodIcon(method, 14.dp) })
         }
         if (methods.size > 2) CoffeePeekShopInfoChip("+${methods.size - 2}")
     }

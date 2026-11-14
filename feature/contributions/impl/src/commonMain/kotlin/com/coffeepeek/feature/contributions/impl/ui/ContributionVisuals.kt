@@ -1,5 +1,8 @@
 package com.coffeepeek.feature.contributions.impl.ui
 
+import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
+import androidx.compose.material3.MaterialTheme
+
 import androidx.compose.runtime.Composable
 import com.coffeepeek.feature.contributions.impl.resources.Res
 import com.coffeepeek.feature.contributions.impl.resources.contributions_availability_absent
@@ -77,10 +80,11 @@ internal fun ChangeSection.visual(): Visual = when (this) {
     ChangeSection.BrewMethods -> Visual(CoffeePeekIcons.Coffee, CoffeePeekIconBadgePalette.Aqua)
 }
 
+@Composable
 internal fun ModerationStatus.color(): Color = when (this) {
-    ModerationStatus.Approved -> CoffeePeekColors.Success
-    ModerationStatus.Pending -> CoffeePeekColors.GoldWarmHover
-    ModerationStatus.Rejected -> CoffeePeekColors.Error
+    ModerationStatus.Approved -> MaterialTheme.colorScheme.tertiary
+    ModerationStatus.Pending -> MaterialTheme.colorScheme.coffeePeekAccentForeground
+    ModerationStatus.Rejected -> MaterialTheme.colorScheme.error
 }
 
 @Composable internal fun ContributionKind.title() = stringResource(

@@ -49,8 +49,8 @@ internal fun CoffeePeekActionMenuRow(action: CoffeePeekMenuAction, onClick: () -
     val pressed by interaction.collectIsPressedAsState()
     val colors = MaterialTheme.colorScheme
     val tint = if (action.destructive) colors.error else colors.onSurface
-    Row(Modifier.fillMaxWidth().heightIn(min = CoffeePeekDimens.controlHeight)
-        .graphicsLayer { alpha = if (pressed) .55f else 1f }
+    Row(Modifier.fillMaxWidth().heightIn(min = CoffeePeekDimens.minimumTouchTarget)
+        .coffeePeekGlassPress(pressed, enabled = true)
         .clickable(interactionSource = interaction, indication = null, role = Role.Button, onClick = onClick)
         .padding(horizontal = CoffeePeekDimens.spacing4, vertical = CoffeePeekDimens.spacing3),
         verticalAlignment = Alignment.CenterVertically,

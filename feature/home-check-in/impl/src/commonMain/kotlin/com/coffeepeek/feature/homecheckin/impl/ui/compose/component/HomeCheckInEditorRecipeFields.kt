@@ -118,12 +118,10 @@ private fun HomeCheckInRecipeDisclosure(expanded: Boolean, rotation: Float, enab
     val description = stringResource(if (expanded) Res.string.home_check_in_recipe_expanded
         else Res.string.home_check_in_recipe_collapsed)
     val interactions = remember { MutableInteractionSource() }
-    val pressed by interactions.collectIsPressedAsState()
     TextButton(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth().heightIn(min = CoffeePeekDimens.controlHeight)
             .clip(CircleShape)
-            .graphicsLayer { alpha = if (!enabled) 0.4f else if (pressed) 0.6f else 1f }
             .semantics { stateDescription = description },
         enabled = enabled,
         shape = CircleShape,

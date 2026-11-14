@@ -1,5 +1,7 @@
 package com.coffeepeek.feature.discovery.impl.ui
 
+import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
+
 
 import com.coffeepeek.feature.discovery.impl.resources.Res
 import com.coffeepeek.feature.discovery.impl.resources.discovery_map_my_location
@@ -87,7 +89,7 @@ private fun androidx.compose.foundation.layout.BoxScope.MapPositionControls(stat
         MapHeatmapButton(state.showHeatmap) { onAction(MapAction.ToggleHeatmap) }
         val zones = stringResource(if (state.showZones) Res.string.discovery_map_zones_hide else Res.string.discovery_map_zones_show)
         CoffeePeekGlassIconButton({ onAction(MapAction.ToggleZones) }, zones) {
-            CoffeePeekIcon(CoffeePeekIcons.Polygon, null, Modifier.size(26.dp), tint = if (state.showZones) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface)
+            CoffeePeekIcon(CoffeePeekIcons.Polygon, null, Modifier.size(26.dp), tint = if (state.showZones) MaterialTheme.colorScheme.coffeePeekAccentForeground else MaterialTheme.colorScheme.onSurface)
         }
         CoffeePeekGlassIconButton({ onAction(MapAction.RequestMyLocation) }, stringResource(Res.string.discovery_map_my_location), Modifier.size(CoffeePeekDimens.buttonHeight + 4.dp)) {
             CoffeePeekIcon(CoffeePeekIcons.Navigation, null, Modifier.size(32.dp))

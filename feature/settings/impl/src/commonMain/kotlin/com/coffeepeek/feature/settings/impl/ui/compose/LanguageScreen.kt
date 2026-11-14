@@ -1,5 +1,7 @@
 package com.coffeepeek.feature.settings.impl.ui.compose
 
+import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
+
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -102,7 +104,7 @@ private fun LanguageOption(name: String, selected: Boolean, enabled: Boolean, on
     ) {
         Text(name, Modifier.weight(1f), style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
         if (selected) {
-            CoffeePeekIcon(CoffeePeekIcons.Check, contentDescription = null, tint = MaterialTheme.colorScheme.primary,
+            CoffeePeekIcon(CoffeePeekIcons.Check, contentDescription = null, tint = MaterialTheme.colorScheme.coffeePeekAccentForeground,
                 modifier = Modifier.size(CoffeePeekDimens.settingsIconSize))
         }
     }

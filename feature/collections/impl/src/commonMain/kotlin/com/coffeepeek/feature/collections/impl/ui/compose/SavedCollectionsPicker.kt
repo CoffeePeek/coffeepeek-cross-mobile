@@ -1,5 +1,7 @@
 package com.coffeepeek.feature.collections.impl.ui.compose
 
+import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
+
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -88,7 +90,7 @@ internal fun SavedMembershipRow(value: SavedCollectionSummary, checked: Boolean,
                 Text(stringResource(Res.string.collections_saved_count, value.itemCount), style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
-            Box(Modifier.size(24.dp)) { if (checked) CoffeePeekIcon(CoffeePeekIcons.Check, null, tint = MaterialTheme.colorScheme.primary) }
+            Box(Modifier.size(24.dp)) { if (checked) CoffeePeekIcon(CoffeePeekIcons.Check, null, tint = MaterialTheme.colorScheme.coffeePeekAccentForeground) }
         }
         CoffeePeekRowSeparator()
     }

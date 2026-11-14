@@ -324,7 +324,7 @@ private fun PostPhotoStrip(photos: PostPhotos, onPhoto: (Int) -> Unit, host: Com
                 CoffeePeekLoader(stringResource(Res.string.community_loading), size = 32.dp)
             }
             host.image(photos.thumbnails.getOrNull(index) ?: photos.originals[index], photos.inlineSource(index), Modifier.fillMaxSize(), ContentScale.Crop)
-            if (index == 2 && count > 3) Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.45f)), contentAlignment = Alignment.Center) {
+            if (index == 2 && count > 3) Box(Modifier.fillMaxSize().background(CoffeePeekColors.PhotoBadgeOverlay), contentAlignment = Alignment.Center) {
                 Text(stringResource(Res.string.community_more_photos, count - 3), style = MaterialTheme.typography.headlineSmall, color = Color.White)
             }
         }

@@ -14,9 +14,13 @@ import kotlin.test.assertSame
 import kotlin.test.assertTrue
 
 class DesignTokensTest {
-    @Test fun sharedDimensionsKeepPreviousValues() {
+    @Test fun visualTokensAndPlatformTargetsStayDistinct() {
         assertEquals(44.dp, CoffeePeekDimens.controlHeight)
-        assertEquals(22.dp, CoffeePeekDimens.buttonRadius)
+        assertTrue(CoffeePeekDimens.minimumTouchTarget >= 44.dp)
+        assertTrue(CoffeePeekDimens.buttonHeight >= CoffeePeekDimens.minimumTouchTarget)
+        assertTrue(CoffeePeekDimens.inputMinHeight >= CoffeePeekDimens.minimumTouchTarget)
+        assertTrue(CoffeePeekDimens.selectMinHeight >= CoffeePeekDimens.minimumTouchTarget)
+        assertEquals(CoffeePeekDimens.buttonHeight, CoffeePeekDimens.buttonRadius * 2)
         assertEquals(16.dp, CoffeePeekDimens.radiusLg)
         assertEquals(24.dp, CoffeePeekDimens.cardPadding)
     }
@@ -24,7 +28,7 @@ class DesignTokensTest {
     @Test fun typographyUsesSuppliedFontInsteadOfApplicationResources() {
         val typography = coffeePeekTypography(FontFamily.Monospace)
         assertEquals(FontFamily.Monospace, typography.bodyLarge.fontFamily)
-        assertEquals(16.sp, typography.bodyLarge.fontSize)
+        assertEquals(17.sp, typography.bodyLarge.fontSize)
         assertEquals(24.sp, typography.bodyLarge.lineHeight)
         assertEquals(FontFamily.Monospace, typography.labelLarge.fontFamily)
     }

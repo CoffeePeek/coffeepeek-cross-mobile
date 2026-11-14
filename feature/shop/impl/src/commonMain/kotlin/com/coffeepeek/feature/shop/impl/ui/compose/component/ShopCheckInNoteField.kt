@@ -44,7 +44,7 @@ internal fun ShopCheckInNoteField(value: String, enabled: Boolean, hasError: Boo
                 focusedBorderColor = MaterialTheme.colorScheme.outline),
             placeholder = { Text(stringResource(Res.string.shop_checkin_form_note_hint),
                 style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)) })
+                color = MaterialTheme.colorScheme.onSurfaceVariant) })
         if (hasError) Text(errorMessage, color = MaterialTheme.colorScheme.error,
             style = MaterialTheme.typography.bodySmall)
     }

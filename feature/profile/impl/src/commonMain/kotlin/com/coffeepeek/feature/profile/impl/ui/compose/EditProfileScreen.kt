@@ -235,7 +235,7 @@ private fun EditProfileAbout(state: EditProfileState, onAction: (EditProfileActi
 private fun SaveProfileButton(state: EditProfileState, onClick: () -> Unit) {
     Button(
         onClick = onClick,
-        modifier = Modifier.fillMaxWidth().height(CoffeePeekDimens.buttonHeight),
+        modifier = Modifier.fillMaxWidth().heightIn(min = CoffeePeekDimens.buttonHeight),
         enabled = state.canSave,
         shape = RoundedCornerShape(CoffeePeekDimens.buttonRadius),
         colors = ButtonDefaults.buttonColors(

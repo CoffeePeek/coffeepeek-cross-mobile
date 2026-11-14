@@ -1,5 +1,7 @@
 package com.coffeepeek.feature.discovery.impl.ui
 
+import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
+
 import androidx.compose.foundation.background
 import com.coffeepeek.feature.discovery.impl.resources.Res
 import com.coffeepeek.feature.discovery.impl.resources.discovery_loading
@@ -94,7 +96,7 @@ internal fun MapSuggestions(state: MapState, onSelect: (String) -> Unit) {
                         Modifier.fillMaxWidth().heightIn(min = 56.dp).clickable { onSelect(shop.id) }.padding(horizontal = CoffeePeekDimens.spacing4, vertical = CoffeePeekDimens.spacing2),
                         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3),
                     ) {
-                        CoffeePeekIcon(CoffeePeekIcons.Location, null, Modifier.size(22.dp), tint = MaterialTheme.colorScheme.primary)
+                        CoffeePeekIcon(CoffeePeekIcons.Location, null, Modifier.size(22.dp), tint = MaterialTheme.colorScheme.coffeePeekAccentForeground)
                         Column(Modifier.weight(1f)) {
                             Text(shop.title, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                             shop.address?.takeIf(String::isNotBlank)?.let {
@@ -127,7 +129,7 @@ internal fun MapZoomControl(onZoomIn: () -> Unit, onZoomOut: () -> Unit, modifie
 
 @Composable
 private fun ZoomButton(icon: androidx.compose.ui.graphics.vector.ImageVector, description: StringResource, onClick: () -> Unit) {
-    Box(Modifier.fillMaxWidth().height(CoffeePeekDimens.buttonHeight).clickable(onClick = onClick), contentAlignment = Alignment.Center) {
+    Box(Modifier.fillMaxWidth().heightIn(min = CoffeePeekDimens.buttonHeight).clickable(onClick = onClick), contentAlignment = Alignment.Center) {
         CoffeePeekIcon(icon, stringResource(description), Modifier.size(22.dp), tint = MaterialTheme.colorScheme.onSurface)
     }
 }
@@ -149,7 +151,7 @@ internal fun MapZoneCard(zone: MapZone, onShowShops: () -> Unit, onDismiss: () -
             if (zone.description.isNotBlank()) {
                 Text(zone.description, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 3, overflow = TextOverflow.Ellipsis)
             }
-            Button(onShowShops, Modifier.fillMaxWidth().height(CoffeePeekDimens.buttonHeight), shape = RoundedCornerShape(percent = 50)) {
+            Button(onShowShops, Modifier.fillMaxWidth().heightIn(min = CoffeePeekDimens.buttonHeight), shape = RoundedCornerShape(percent = 50)) {
                 Text(stringResource(Res.string.discovery_map_zone_show_shops))
             }
         }

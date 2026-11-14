@@ -2,6 +2,8 @@
 
 package com.coffeepeek.core.designsystem.component
 
+import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
+
 import androidx.compose.foundation.layout.Box
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -40,7 +42,7 @@ internal actual fun CoffeePeekNativeMenu(
             modifier = Modifier.matchParentSize(),
             update = { button ->
                 button.overrideUserInterfaceStyle = coffeePeekUserInterfaceStyle(colors.background)
-                button.tintColor = colors.primary.toUIColor()
+                button.tintColor = colors.coffeePeekAccentForeground.toUIColor()
                 button.accessibilityLabel = description
                 button.enabled = enabled
                 button.menu = coffeePeekActionMenu(actions, images) { if (active.value) latest.value else emptyList() }

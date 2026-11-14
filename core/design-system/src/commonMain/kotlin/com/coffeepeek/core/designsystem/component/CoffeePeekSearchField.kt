@@ -21,6 +21,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -64,7 +67,7 @@ fun CoffeePeekSearchField(
 ) {
     val touchHeight = maxOf(fieldHeight + 4.dp, CoffeePeekDimens.glassControlSize)
     if (CoffeePeekPlatformSearchField(value, onValueChange, placeholder, clearDescription, enabled,
-            readOnly, modifier.height(touchHeight), keyboardOptions, onSearch, onFocusChanged)) return
+            readOnly, modifier.heightIn(min = touchHeight), keyboardOptions, onSearch, onFocusChanged)) return
     val focusManager = LocalFocusManager.current
     val shape = RoundedCornerShape(percent = 50)
     val field = remember { SyncedTextFieldState(value) }
@@ -118,23 +121,29 @@ private fun SearchFieldContents(
 
 @Composable
 private fun SearchClearButton(description: String, size: Dp, enabled: Boolean, onClear: () -> Unit) {
-    Box(Modifier.size(size).clip(CircleShape)
+    Box(Modifier.size(maxOf(size, CoffeePeekDimens.minimumTouchTarget)).clip(CircleShape)
         .clickable(enabled = enabled, role = Role.Button, onClick = onClear), contentAlignment = Alignment.Center) {
         CoffeePeekIcon(CoffeePeekIcons.Close, description, Modifier.size(18.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 
 @Composable
-private fun CoffeePeekSearchFieldPreviewContent(darkTheme: Boolean) = CoffeePeekTheme(darkTheme = darkTheme) {
-    var query by remember { mutableStateOf("Coffee") }
-    Surface {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            CoffeePeekSearchField("", {}, "Search", "Clear search")
-            CoffeePeekSearchField(query, { query = it }, "Search", "Clear search")
-            CoffeePeekSearchField("Coffee", {}, "Search", "Clear search", enabled = false)
+private fun CoffeePeekSearchFieldPreviewContent(darkTheme: Boolean, fontScale: Float = 1f) = CoffeePeekTheme(darkTheme = darkTheme) {
+    CompositionLocalProvider(LocalDensity provides Density(LocalDensity.current.density, fontScale)) {
+        var query by remember { mutableStateOf("Coffee") }
+        Surface {
+            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                CoffeePeekSearchField("", {}, "Search", "Clear search")
+                CoffeePeekSearchField(query, { query = it }, "Search", "Clear search")
+                CoffeePeekSearchField("Coffee", {}, "Search", "Clear search", enabled = false)
+            }
         }
     }
+
 }
 
 @Preview @Composable private fun CoffeePeekSearchFieldLightPreview() = CoffeePeekSearchFieldPreviewContent(false)
 @Preview @Composable private fun CoffeePeekSearchFieldDarkPreview() = CoffeePeekSearchFieldPreviewContent(true)
+
+@Preview @Composable private fun CoffeePeekSearchFieldLargeTextLightPreview() = CoffeePeekSearchFieldPreviewContent(false, 2f)
+@Preview @Composable private fun CoffeePeekSearchFieldLargeTextDarkPreview() = CoffeePeekSearchFieldPreviewContent(true, 2f)

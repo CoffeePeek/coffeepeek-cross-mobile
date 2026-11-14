@@ -1,5 +1,7 @@
 package com.coffeepeek.feature.shop.impl.ui.compose.component
 
+import com.coffeepeek.core.designsystem.theme.CoffeePeekColors
+
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -55,8 +57,8 @@ internal fun MenuPhotoCard(
             )
         }
         Surface(
-            shape = RoundedCornerShape(999.dp),
-            color = Color.Black.copy(alpha = 0.48f),
+            shape = RoundedCornerShape(percent = 50),
+            color = CoffeePeekColors.PhotoBadgeOverlay,
             modifier = Modifier.align(Alignment.BottomEnd).padding(CoffeePeekDimens.spacing3),
         ) {
             Text(

@@ -45,7 +45,7 @@ import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.hazeSource
 import dev.chrisbanes.haze.rememberHazeState
 
-private val ShopFooterMaxWidth = 353.dp
+private val ShopFooterMaxWidth = 352.dp
 
 @Composable
 internal fun ShopDetailBottomBar(

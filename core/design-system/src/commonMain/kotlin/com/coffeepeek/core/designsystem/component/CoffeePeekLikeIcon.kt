@@ -2,6 +2,7 @@ package com.coffeepeek.core.designsystem.component
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -31,8 +32,12 @@ fun CoffeePeekLikeIcon(
 ) {
     val color = coffeePeekLikeColor(selected, overImage, MaterialTheme.colorScheme.onSurface)
     val alpha = if (enabled) 1f else 0.38f
-    CoffeePeekIcon(if (selected) CoffeePeekIcons.FavoriteFilled else CoffeePeekIcons.Favorite,
-        contentDescription, modifier.size(size), tint = color.copy(alpha = alpha))
+    Box(modifier.size(size)) {
+        CoffeePeekIcon(if (selected) CoffeePeekIcons.FavoriteFilled else CoffeePeekIcons.Favorite,
+            contentDescription, Modifier.matchParentSize(), tint = color.copy(alpha = alpha))
+        if (selected && !overImage) CoffeePeekIcon(CoffeePeekIcons.Favorite, null, Modifier.matchParentSize(),
+            tint = MaterialTheme.colorScheme.onSurface.copy(alpha = alpha))
+    }
 }
 
 internal fun coffeePeekLikeColor(selected: Boolean, overImage: Boolean, content: Color): Color = when {

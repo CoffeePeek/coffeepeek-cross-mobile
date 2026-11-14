@@ -60,6 +60,7 @@ import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
 import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.text.coffeePeekPluralForm
+import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.homecheckin.domain.model.*
 import com.coffeepeek.feature.homecheckin.impl.resources.*
@@ -194,7 +195,7 @@ private fun HomeCheckInEditorHeader(state: HomeCheckInEditorState, onClose: () -
         verticalAlignment = Alignment.CenterVertically) {
         Text(stringResource(if (state.entry == null) Res.string.home_check_in_home else Res.string.home_check_in_editor_title),
             Modifier.weight(1f), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-        IconButton(onClick = onClose, enabled = !state.isSaving, modifier = Modifier.size(44.dp)) {
+        IconButton(onClick = onClose, enabled = !state.isSaving, modifier = Modifier.size(CoffeePeekDimens.minimumTouchTarget)) {
             CoffeePeekIcon(CoffeePeekIcons.Close, stringResource(Res.string.home_check_in_editor_close), Modifier.size(20.dp))
         }
     }
