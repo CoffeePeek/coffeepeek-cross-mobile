@@ -1,6 +1,5 @@
 package com.coffeepeek.feature.shop.impl.ui.compose.component
 
-import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.foundation.relocation.bringIntoViewRequester
@@ -26,7 +25,6 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.ime
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.semantics.error
-import androidx.compose.ui.semantics.semantics
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.component.CoffeePeekCompactOutlinedTextField

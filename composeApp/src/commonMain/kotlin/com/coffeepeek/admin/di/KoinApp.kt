@@ -42,8 +42,6 @@ import com.coffeepeek.admin.ui.screen.shop.ShopCheckInListScreenRenderer
 import com.coffeepeek.admin.ui.screen.checkins.CheckInHistoryScreenRenderer
 import com.coffeepeek.admin.ui.screen.checkins.CheckInCreateFlowRenderer
 import com.coffeepeek.admin.ui.screen.review.ContentReportScreenRenderer
-import com.coffeepeek.admin.ui.screen.contributions.ContributionKind
-import com.coffeepeek.feature.favorites.domain.usecase.ObserveFavoriteIdsUseCase
 import org.koin.core.context.startKoin
 import org.koin.core.module.Module
 import org.koin.core.scope.Scope

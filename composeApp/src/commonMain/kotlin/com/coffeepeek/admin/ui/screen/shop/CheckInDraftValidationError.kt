@@ -2,15 +2,12 @@ package com.coffeepeek.admin.ui.screen.shop
 
 import com.coffeepeek.admin.ui.screen.review.message
 
-import com.coffeepeek.admin.ui.screen.review.consumedDrinkValidationLabels
 
 import com.coffeepeek.admin.ui.screen.review.ConsumedDrinkValidationLabels
 
 import com.coffeepeek.admin.ui.screen.review.ConsumedDrinkIssue
 
-import androidx.compose.runtime.Composable
 import coffeepeek.composeapp.generated.resources.*
-import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 
 sealed interface CheckInDraftValidationError {
     data object Date : CheckInDraftValidationError

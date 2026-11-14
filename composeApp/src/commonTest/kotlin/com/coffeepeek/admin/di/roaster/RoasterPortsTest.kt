@@ -30,7 +30,6 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNull
 import kotlin.test.assertSame
-import kotlin.test.assertTrue
 
 internal class MemorySettings : SettingRepository {
     val values = mutableMapOf<String, String>()

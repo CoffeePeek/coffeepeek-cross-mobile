@@ -1,6 +1,5 @@
 package com.coffeepeek.admin.di.ownership
 
-import androidx.compose.runtime.Composable
 import com.coffeepeek.admin.ui.component.NativeNavigationBar
 import com.coffeepeek.admin.ui.shopCheckInLink
 import com.coffeepeek.admin.utils.ShareHelper

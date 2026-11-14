@@ -1,23 +1,15 @@
 package com.coffeepeek.feature.community.impl.ui
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.expandVertically
-import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.Image
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import com.coffeepeek.feature.community.impl.resources.Res
 import com.coffeepeek.feature.community.impl.resources.community_mascot_error
 import com.coffeepeek.feature.community.impl.resources.community_edit_saved
 import com.coffeepeek.feature.community.impl.resources.community_edit_sent_for_review
-import com.coffeepeek.feature.community.impl.resources.community_empty
 import com.coffeepeek.feature.community.impl.resources.community_error_body
 import com.coffeepeek.feature.community.impl.resources.community_error_title
 import com.coffeepeek.feature.community.impl.resources.community_loading
-import com.coffeepeek.feature.community.impl.resources.community_refresh
 import com.coffeepeek.feature.community.impl.resources.community_report_sent
-import com.coffeepeek.feature.community.impl.resources.community_restart
-import com.coffeepeek.feature.community.impl.resources.community_retry
-import com.coffeepeek.feature.community.impl.resources.community_title
 import com.coffeepeek.feature.community.impl.resources.community_visibility_failed
 import com.coffeepeek.feature.community.impl.resources.community_vote_failed
 import androidx.compose.foundation.layout.Arrangement
@@ -56,7 +48,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
-import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.painterResource
 import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import androidx.compose.ui.text.style.TextAlign

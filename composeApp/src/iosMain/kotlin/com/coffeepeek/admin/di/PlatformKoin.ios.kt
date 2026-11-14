@@ -37,7 +37,6 @@ import com.coffeepeek.admin.di.profile.profileSnapshotModule
 import com.coffeepeek.admin.di.shelf.ShelfFeatureScreenRenderer
 import com.coffeepeek.admin.di.shelf.shelfBrewForm
 import com.coffeepeek.admin.di.shelf.iosShelfModule
-import com.coffeepeek.admin.locator.Locator
 import com.coffeepeek.admin.locator.Constants
 
 internal fun iosPlatformModules(apiBaseUrl: String = Constants.BASE_URL) = listOf(

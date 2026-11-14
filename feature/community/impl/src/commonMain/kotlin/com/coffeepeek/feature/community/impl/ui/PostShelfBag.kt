@@ -14,7 +14,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import org.jetbrains.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.component.CoffeePeekPostShelfBagRow
 import com.coffeepeek.core.designsystem.component.coffeePeekPostShelfBagCardImage
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme

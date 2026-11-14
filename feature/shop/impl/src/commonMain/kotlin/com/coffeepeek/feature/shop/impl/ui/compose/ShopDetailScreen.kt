@@ -16,9 +16,6 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import com.coffeepeek.core.designsystem.component.LocalCoffeePeekScreenInsets
-import com.coffeepeek.core.designsystem.component.coffeePeekViewportBottomPadding
-import com.coffeepeek.core.designsystem.component.coffeePeekScreenBottomPadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -27,7 +24,6 @@ import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.MaterialTheme
 import com.coffeepeek.core.designsystem.component.CoffeePeekScaffold as Scaffold
-import com.coffeepeek.core.designsystem.component.coffeePeekScrollContentPadding
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import com.coffeepeek.feature.shop.impl.ui.data.LocalShopAnalytics

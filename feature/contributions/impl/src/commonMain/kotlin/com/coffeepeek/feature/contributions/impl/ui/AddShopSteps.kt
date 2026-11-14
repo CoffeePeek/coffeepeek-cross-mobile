@@ -24,7 +24,6 @@ import com.coffeepeek.feature.contributions.impl.resources.contributions_shop_ph
 import com.coffeepeek.feature.contributions.impl.resources.contributions_shop_pick_on_map
 import com.coffeepeek.feature.contributions.impl.resources.contributions_shop_website_label
 import com.coffeepeek.feature.contributions.impl.resources.contributions_shop_website_placeholder
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -51,7 +50,6 @@ import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
 import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
-import com.coffeepeek.feature.contributions.api.AddShopHost
 import com.coffeepeek.feature.contributions.domain.rules.ContactIssue
 import com.coffeepeek.feature.contributions.domain.rules.ContributionLimits
 import com.coffeepeek.feature.contributions.domain.rules.ShopBasicsIssue

@@ -3,7 +3,6 @@
 package com.coffeepeek.feature.profile.data
 
 import com.coffeepeek.core.session.Session
-import com.coffeepeek.feature.profile.api.ProfileAvatarImage
 import com.coffeepeek.feature.profile.api.UsernameChangeFailure
 import io.ktor.client.engine.mock.respond
 import io.ktor.client.engine.mock.toByteArray

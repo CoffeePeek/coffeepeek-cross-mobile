@@ -1,7 +1,5 @@
 package com.coffeepeek.feature.discovery.impl.ui
 
-import androidx.compose.animation.Crossfade
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.TextButton
@@ -10,31 +8,17 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.component.CoffeePeekContentCard
-import androidx.compose.foundation.layout.Arrangement
 import com.coffeepeek.feature.discovery.impl.resources.Res
-import com.coffeepeek.feature.discovery.impl.resources.discovery_map_collapse
-import com.coffeepeek.feature.discovery.impl.resources.discovery_map_my_location
-import com.coffeepeek.feature.discovery.impl.resources.discovery_map_search_placeholder
 import com.coffeepeek.feature.discovery.impl.resources.discovery_map_load_failed
 import com.coffeepeek.feature.discovery.impl.resources.discovery_map_retry
-import com.coffeepeek.feature.discovery.impl.resources.discovery_map_truncated
-import com.coffeepeek.feature.discovery.impl.resources.discovery_map_zones_hide
-import com.coffeepeek.feature.discovery.impl.resources.discovery_map_zones_show
-import com.coffeepeek.feature.discovery.impl.resources.discovery_search_clear
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.shape.RoundedCornerShape
-import com.coffeepeek.core.designsystem.component.CoffeePeekFilledButton as Button
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -51,10 +35,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.zIndex
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.coffeepeek.core.designsystem.component.CoffeePeekSearchField
 import com.coffeepeek.core.designsystem.component.CoffeePeekMapPreviewOverlay
-import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
-import com.coffeepeek.core.designsystem.modifier.CoffeePeekGlassIconButton
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.feature.discovery.api.DiscoveryExposure
 import com.coffeepeek.feature.discovery.api.DiscoveryHost

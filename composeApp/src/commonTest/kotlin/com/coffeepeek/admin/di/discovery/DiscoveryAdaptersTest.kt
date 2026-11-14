@@ -10,8 +10,6 @@ import com.coffeepeek.feature.favorites.domain.model.FavoriteAddress
 import com.coffeepeek.feature.favorites.domain.model.FavoriteEntry
 import com.coffeepeek.feature.favorites.domain.model.FavoriteKind
 import com.coffeepeek.feature.favorites.domain.repository.AccountFavorites
-import com.coffeepeek.admin.di.favorites.CatalogItem
-import com.coffeepeek.admin.di.favorites.PublicAddress
 import com.coffeepeek.feature.shop.api.PublicShopDetails
 import com.coffeepeek.feature.shop.api.PublicShopSummary
 import com.coffeepeek.feature.discovery.domain.model.CatalogEntry
@@ -24,7 +22,6 @@ import com.coffeepeek.feature.favorites.domain.model.FavoriteShop
 import com.coffeepeek.feature.favorites.domain.repository.FavoritesRepository
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.async
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.toList
