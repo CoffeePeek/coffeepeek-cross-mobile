@@ -19,10 +19,10 @@ class CoffeePeekThemeContrastTest {
         }
     }
 
-    @Test fun textAndUnfilledActionsRemainReadableOnEverySurface() {
+    @Test fun themeTextAndErrorsRemainReadableOnEverySurface() {
         schemes.forEach { scheme ->
             surfaces(scheme).forEach { background ->
-                listOf(scheme.onSurface, scheme.onSurfaceVariant, scheme.coffeePeekAccentForeground, scheme.error)
+                listOf(scheme.onSurface, scheme.onSurfaceVariant, scheme.error)
                     .forEach { assertContrast(it, background, 4.5f) }
             }
         }
@@ -38,7 +38,7 @@ class CoffeePeekThemeContrastTest {
 
     @Test fun badgesRemainDistinctInBothThemesAndOnElevatedSurfaces() {
         val badges = with(CoffeePeekIconBadgePalette) {
-            listOf(Mint, Cyan, Sky, Aqua, Lavender, Gold, Emerald, Blue, Rose, Violet, BrightCyan)
+            listOf(Mint, Cyan, Sky, Aqua, Gold, Emerald, Rose, Violet)
         }
         schemes.forEach { scheme ->
             surfaces(scheme).forEach { surface ->
@@ -69,14 +69,14 @@ class CoffeePeekThemeContrastTest {
 
     @Test fun moderationPillsRemainReadableOnTintedBackgrounds() {
         schemes.forEach { scheme ->
-            listOf(scheme.tertiary, scheme.coffeePeekAccentForeground, scheme.error).forEach { color ->
+            listOf(scheme.tertiary, scheme.error).forEach { color ->
                 assertContrast(color, color.copy(alpha = 0.12f).compositeOver(scheme.surface), 4.5f)
             }
         }
     }
 
     @Test fun nativeSwitchSelectedTracksContrastWithTheSystemWhiteThumb() {
-        listOf(CoffeePeekColors.AccentTextLight, CoffeePeekColors.SwitchCheckedTrackDark).forEach { track ->
+        listOf(CoffeePeekColors.SwitchCheckedThumbLight, CoffeePeekColors.SwitchCheckedTrackDark).forEach { track ->
             assertContrast(Color.White, track, 3f)
         }
     }

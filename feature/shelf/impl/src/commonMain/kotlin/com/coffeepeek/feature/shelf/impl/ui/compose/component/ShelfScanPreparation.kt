@@ -1,6 +1,5 @@
 package com.coffeepeek.feature.shelf.impl.ui.compose.component
 
-import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -69,7 +68,7 @@ private fun ShelfPreparationProgress(scanner: ShelfScannerStatus.Downloading) {
     val label = progress?.let { stringResource(Res.string.shelf_scanner_downloading, "${(it * 100).toInt()}%") }
         ?: stringResource(Res.string.shelf_scanner_downloading_unknown)
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2)) {
-        CoffeePeekLoader(label, size = 20.dp, color = MaterialTheme.colorScheme.coffeePeekAccentForeground, strokeWidth = 2.dp, progress = progress)
+        CoffeePeekLoader(label, size = 20.dp, color = MaterialTheme.colorScheme.primary, strokeWidth = 2.dp, progress = progress)
         Text(label, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }

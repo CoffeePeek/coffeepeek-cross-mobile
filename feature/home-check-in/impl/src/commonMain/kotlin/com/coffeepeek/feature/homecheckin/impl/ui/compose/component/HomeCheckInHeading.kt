@@ -1,6 +1,5 @@
 package com.coffeepeek.feature.homecheckin.impl.ui.compose.component
 
-import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
 
 import androidx.compose.foundation.layout.*
 import org.jetbrains.compose.ui.tooling.preview.Preview
@@ -33,7 +32,7 @@ internal fun HomeCheckInHeading(entry: HomePreparation, dateLabel: String) {
         FlowRow(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp),
             itemVerticalAlignment = Alignment.CenterVertically) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                CoffeePeekIcon(CoffeePeekIcons.Coffee, null, Modifier.size(20.dp), tint = MaterialTheme.colorScheme.coffeePeekAccentForeground)
+                CoffeePeekIcon(CoffeePeekIcons.Coffee, null, Modifier.size(20.dp), tint = MaterialTheme.colorScheme.primary)
                 Text(stringResource(Res.string.home_check_in_home), style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant)
             }

@@ -2,7 +2,6 @@ package com.coffeepeek.feature.roaster.impl.ui.compose.component
 
 import androidx.compose.foundation.layout.heightIn
 
-import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
@@ -36,7 +35,7 @@ internal fun RoasterSearchHeader(query: String, onQueryChange: (String) -> Unit,
     }
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         CoffeePeekCircularBackButton(cancel, stringResource(Res.string.roaster_search_back),
-            tint = androidx.compose.material3.MaterialTheme.colorScheme.coffeePeekAccentForeground)
+            tint = androidx.compose.material3.MaterialTheme.colorScheme.primary)
         val modifier = analytics.exposure(Modifier.weight(1f), RoasterExposure.Search)
         val placeholder = stringResource(Res.string.roaster_search_placeholder)
         if (!CoffeePeekNativeSearchField(query, onQueryChange, placeholder, {}, cancel,

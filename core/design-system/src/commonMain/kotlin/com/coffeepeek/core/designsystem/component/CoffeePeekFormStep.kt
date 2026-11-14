@@ -1,6 +1,5 @@
 package com.coffeepeek.core.designsystem.component
 
-import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -30,7 +29,7 @@ fun CoffeePeekFormStep(
     modifier: Modifier = Modifier,
     content: @Composable () -> Unit,
 ) {
-    val color = if (isError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.coffeePeekAccentForeground
+    val color = if (isError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.primary
     Column(modifier.fillMaxWidth()
         .semantics { if (optional) optionalDescription?.let { stateDescription = it } }
         .drawBehind {

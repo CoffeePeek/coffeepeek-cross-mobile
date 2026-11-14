@@ -2,7 +2,6 @@ package com.coffeepeek.feature.contributions.impl.ui
 
 import androidx.compose.foundation.layout.heightIn
 
-import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
 
 import androidx.compose.foundation.background
 import org.jetbrains.compose.ui.tooling.preview.Preview
@@ -246,7 +245,7 @@ private fun ContactsContent(contacts: Contacts?) {
 private fun ValueRow(icon: ImageVector, label: StringResource, value: String?) {
     val text = value?.takeIf(String::isNotBlank)
     Row(verticalAlignment = Alignment.CenterVertically) {
-        CoffeePeekIcon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.coffeePeekAccentForeground, modifier = Modifier.size(20.dp))
+        CoffeePeekIcon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
         Spacer(Modifier.width(CoffeePeekDimens.spacing3))
         Column(Modifier.weight(1f)) {
             Text(stringResource(label), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)

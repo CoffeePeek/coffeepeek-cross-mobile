@@ -1,6 +1,5 @@
 package com.coffeepeek.core.designsystem.component
 
-import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.*
@@ -19,7 +18,7 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 @Composable
 fun CoffeePeekTimelineRail(accent: Boolean, firstInDay: Boolean, lastInDay: Boolean, content: @Composable () -> Unit) {
     val line = MaterialTheme.colorScheme.outlineVariant
-    val dot = if (accent) MaterialTheme.colorScheme.coffeePeekAccentForeground else MaterialTheme.colorScheme.onSurfaceVariant
+    val dot = if (accent) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
     val background = MaterialTheme.colorScheme.background
     val rtl = LocalLayoutDirection.current == LayoutDirection.Rtl
     Box(Modifier.fillMaxWidth()) {

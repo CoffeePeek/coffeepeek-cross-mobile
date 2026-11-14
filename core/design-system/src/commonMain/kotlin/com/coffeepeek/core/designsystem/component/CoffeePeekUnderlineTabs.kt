@@ -1,7 +1,6 @@
 package com.coffeepeek.core.designsystem.component
 
 import com.coffeepeek.core.designsystem.theme.reducedMotionDuration
-import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -63,7 +62,7 @@ private fun CoffeePeekUnderlineTab(text: String, selected: Boolean, onClick: () 
         val indicator by animateFloatAsState(if (selected) 1f else 0f, tween(reducedMotionDuration(180)), label = "tab-indicator")
         Box(Modifier.align(Alignment.BottomCenter).fillMaxWidth().height(2.dp)
             .graphicsLayer { alpha = indicator; scaleX = indicator }
-            .background(MaterialTheme.colorScheme.coffeePeekAccentForeground, RoundedCornerShape(topStart = 2.dp, topEnd = 2.dp)))
+            .background(MaterialTheme.colorScheme.primary, RoundedCornerShape(topStart = 2.dp, topEnd = 2.dp)))
     }
 }
 

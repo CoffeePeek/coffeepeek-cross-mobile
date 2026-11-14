@@ -1,6 +1,5 @@
 package com.coffeepeek.feature.settings.impl.ui.compose
 
-import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
 
 import androidx.compose.foundation.clickable
 import com.coffeepeek.feature.settings.impl.resources.Res
@@ -103,7 +102,7 @@ private fun CityOption(city: SettingsCity, selected: Boolean, onClick: () -> Uni
         Text(city.name, Modifier.weight(1f), style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
         if (selected) CoffeePeekIcon(
             CoffeePeekIcons.Check, contentDescription = stringResource(Res.string.settings_selected),
-            tint = MaterialTheme.colorScheme.coffeePeekAccentForeground, modifier = Modifier.size(CoffeePeekDimens.settingsIconSize),
+            tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(CoffeePeekDimens.settingsIconSize),
         )
     }
 }

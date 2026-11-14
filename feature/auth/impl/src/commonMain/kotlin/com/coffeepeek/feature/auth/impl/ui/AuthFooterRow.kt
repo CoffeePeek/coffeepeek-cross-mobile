@@ -19,7 +19,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
-import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
 import com.coffeepeek.feature.auth.impl.resources.Res
 import com.coffeepeek.feature.auth.impl.resources.auth_already_have_account
 import com.coffeepeek.feature.auth.impl.resources.auth_login
@@ -42,7 +41,7 @@ internal fun AuthFooterRow(
         FlowRow(horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing1, Alignment.CenterHorizontally)) {
             if (prompt != null) Text(prompt, color = colors.onSurfaceVariant, style = MaterialTheme.typography.bodyMedium,
                 textAlign = TextAlign.Center)
-            Text(text, color = colors.coffeePeekAccentForeground.copy(alpha = if (enabled) 1f else 0.38f),
+            Text(text, color = colors.primary.copy(alpha = if (enabled) 1f else 0.38f),
                 style = MaterialTheme.typography.labelMedium, textAlign = TextAlign.Center,
                 textDecoration = TextDecoration.Underline)
         }

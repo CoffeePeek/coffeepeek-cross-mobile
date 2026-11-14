@@ -48,10 +48,6 @@ object CoffeePeekIconBadgePalette {
         background = Color(0xFFDDFAF8),
         icon = Color(0xFF257D78),
     )
-    val Lavender = CoffeePeekIconBadgeColors(
-        background = Color(0xFFFFF1FF),
-        icon = Color(0xFF8F3CA3),
-    )
     val Gold = CoffeePeekIconBadgeColors(
         background = Color(0xFFFEF3C7),
         icon = Color(0xFF8A6300),
@@ -60,10 +56,6 @@ object CoffeePeekIconBadgePalette {
         background = Color(0xFFECFDF5),
         icon = Color(0xFF087F5B),
     )
-    val Blue = CoffeePeekIconBadgeColors(
-        background = Color(0xFFEFF6FF),
-        icon = Color(0xFF2563EB),
-    )
     val Rose = CoffeePeekIconBadgeColors(
         background = Color(0xFFFFF1F2),
         icon = Color(0xFFBE123C),
@@ -71,10 +63,6 @@ object CoffeePeekIconBadgePalette {
     val Violet = CoffeePeekIconBadgeColors(
         background = Color(0xFFF5F3FF),
         icon = Color(0xFF7C3AED),
-    )
-    val BrightCyan = CoffeePeekIconBadgeColors(
-        background = Color(0xFFECFEFF),
-        icon = Color(0xFF087E91),
     )
 }
 

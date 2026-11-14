@@ -1,6 +1,5 @@
 package com.coffeepeek.feature.contributions.impl.ui
 
-import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
 import com.coffeepeek.core.designsystem.component.CoffeePeekPhotoRemoveButton
 import com.coffeepeek.core.designsystem.component.CoffeePeekTextButton
 

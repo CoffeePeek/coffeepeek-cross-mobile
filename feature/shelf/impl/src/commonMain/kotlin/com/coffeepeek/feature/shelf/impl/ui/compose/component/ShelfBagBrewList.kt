@@ -1,6 +1,5 @@
 package com.coffeepeek.feature.shelf.impl.ui.compose.component
 
-import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
 
 import com.coffeepeek.feature.shelf.impl.ui.data.methodDisplayName
 
@@ -92,9 +91,9 @@ private fun ShelfBrewRow(brew: ShelfBrewItem, today: ShelfDay) {
         .semantics(mergeDescendants = true) {},
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3)) {
         CoffeePeekInfoItem(brew.title(), brew.day?.let { shelfBrewDayText(it, today) }.orEmpty(), Modifier.weight(1f)) {
-            Box(Modifier.size(36.dp).background(MaterialTheme.colorScheme.coffeePeekAccentForeground.copy(alpha = 0.14f), CircleShape),
+            Box(Modifier.size(36.dp).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.14f), CircleShape),
                 contentAlignment = Alignment.Center) {
-                CoffeePeekIcon(CoffeePeekIcons.Coffee, null, Modifier.size(18.dp), tint = MaterialTheme.colorScheme.coffeePeekAccentForeground)
+                CoffeePeekIcon(CoffeePeekIcons.Coffee, null, Modifier.size(18.dp), tint = MaterialTheme.colorScheme.primary)
             }
         }
         brew.score?.let { CoffeePeekRating(it.toDouble(), size = CoffeePeekRatingSize.Small, display = CoffeePeekRatingDisplay.Compact) }

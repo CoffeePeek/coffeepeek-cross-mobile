@@ -14,7 +14,7 @@ class ZoneColorTest {
 
     @Test
     fun fallsBackWhenColorIsMissingOrInvalid() {
-        assertEquals("#B07A45", zoneColorForMap(null, isDarkTheme = false))
-        assertEquals("#D2A26E", zoneColorForMap("not-a-color", isDarkTheme = true))
+        assertEquals("#FACC15", zoneColorForMap(null, isDarkTheme = false))
+        assertEquals("#D4A84B", zoneColorForMap("not-a-color", isDarkTheme = true))
     }
 }

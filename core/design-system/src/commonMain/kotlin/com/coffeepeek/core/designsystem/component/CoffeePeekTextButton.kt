@@ -17,7 +17,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
-import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 /** Platform action control; preserves the caller's foreground slot and behavior. */
@@ -27,7 +26,7 @@ fun CoffeePeekTextButton(
     modifier: Modifier = Modifier,
     enabled: Boolean = true,
     shape: Shape = RoundedCornerShape(28.dp),
-    colors: ButtonColors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.coffeePeekAccentForeground),
+    colors: ButtonColors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.primary),
     elevation: ButtonElevation? = null,
     border: BorderStroke? = null,
     contentPadding: PaddingValues = ButtonDefaults.TextButtonContentPadding,

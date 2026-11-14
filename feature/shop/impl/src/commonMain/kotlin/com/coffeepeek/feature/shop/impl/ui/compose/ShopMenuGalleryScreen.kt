@@ -1,6 +1,5 @@
 package com.coffeepeek.feature.shop.impl.ui.compose
 
-import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
@@ -81,7 +80,7 @@ internal fun ShopMenuGalleryScreenContent(
                 else -> 2
             }, animationSpec = tween(220), label = "gallery-status") { status ->
             when (status) {
-                0 -> CoffeePeekLoader(size = 40.dp, color = MaterialTheme.colorScheme.coffeePeekAccentForeground, strokeWidth = 4.dp)
+                0 -> CoffeePeekLoader(size = 40.dp, color = MaterialTheme.colorScheme.primary, strokeWidth = 4.dp)
                 1 -> GalleryMessage(state.hasError,
                     onRetry = { onAction(ShopMenuGalleryAction.Load) })
                 else -> LazyColumn(

@@ -43,7 +43,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
-import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
@@ -85,7 +84,7 @@ fun CoffeePeekSearchField(
         readOnly = readOnly,
         singleLine = true,
         textStyle = MaterialTheme.typography.bodyLarge.copy(color = MaterialTheme.colorScheme.onSurface),
-        cursorBrush = SolidColor(MaterialTheme.colorScheme.coffeePeekAccentForeground),
+        cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
         keyboardOptions = keyboardOptions,
         keyboardActions = KeyboardActions(onSearch = { focusManager.clearFocus(); onSearch() }),
         decorationBox = { innerTextField ->

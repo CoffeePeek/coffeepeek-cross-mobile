@@ -37,7 +37,7 @@ internal actual fun CoffeePeekNativeSwitch(
         update = { control ->
             control.overrideUserInterfaceStyle = coffeePeekUserInterfaceStyle(colors.background)
             control.onTintColor = (if (colors.background.luminance() < 0.5f)
-                CoffeePeekColors.SwitchCheckedTrackDark else CoffeePeekColors.AccentTextLight).toUIColor()
+                CoffeePeekColors.SwitchCheckedTrackDark else CoffeePeekColors.SwitchCheckedThumbLight).toUIColor()
             control.setOn(checked, animated = false)
             control.enabled = enabled
             control.userInteractionEnabled = enabled && onCheckedChange != null

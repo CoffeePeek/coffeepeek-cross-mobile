@@ -1,6 +1,5 @@
 package com.coffeepeek.core.designsystem.component
 
-import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -35,7 +34,7 @@ fun CoffeePeekDiscreteSlider(
 ) {
     require(maximum > 0)
     val colors = SliderDefaults.colors(
-        thumbColor = Color.White, activeTrackColor = MaterialTheme.colorScheme.coffeePeekAccentForeground,
+        thumbColor = Color.White, activeTrackColor = MaterialTheme.colorScheme.primary,
         inactiveTrackColor = MaterialTheme.colorScheme.onSurfaceVariant,
         activeTickColor = Color.Transparent, inactiveTickColor = Color.Transparent,
     )

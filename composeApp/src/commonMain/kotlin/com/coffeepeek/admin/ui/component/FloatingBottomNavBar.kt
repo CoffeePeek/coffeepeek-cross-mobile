@@ -80,7 +80,6 @@ import com.coffeepeek.core.designsystem.modifier.coffeePeekLiquidGlass
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.reducedMotionDuration
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
-import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
 import dev.chrisbanes.haze.HazeState
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
@@ -183,7 +182,7 @@ private fun FloatingNavBarItem(item: FloatingNavItem, selection: State<Float>, m
 @Composable
 private fun FloatingNavBarCaption(item: FloatingNavItem, selection: State<Float>) {
     val colors = MaterialTheme.colorScheme
-    val accent = colors.coffeePeekAccentForeground
+    val accent = colors.primary
     val icon = coffeePeekIconPainter(item.icon)
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val (inactive, active) = rememberNavCaptions(item.title, constraints.maxWidth)

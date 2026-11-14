@@ -1,6 +1,5 @@
 package com.coffeepeek.feature.shop.impl.ui.compose.component
 
-import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -56,7 +55,7 @@ internal fun ShopCheckInRatingsOverview(checkIns: List<ShopCheckIn>, overallRati
     Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3)) {
         Row(verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2)) {
-            CoffeePeekIcon(CoffeePeekIcons.StarFilled, null, Modifier.size(24.dp), tint = MaterialTheme.colorScheme.coffeePeekAccentForeground)
+            CoffeePeekIcon(CoffeePeekIcons.StarFilled, null, Modifier.size(24.dp), tint = MaterialTheme.colorScheme.primary)
             Text(stringResource(Res.string.shop_checkins_rating_summary,
                 formatShopRating(overallRating?.takeIf { it > 0 && it.isFinite() } ?: averages?.overall ?: 0.0),
                 maxOf(checkInCount, sampleSize)),
@@ -86,7 +85,7 @@ private fun RatingRow(label: String, value: Double, mascot: DrawableResource) {
         }
         Box(Modifier.weight(1f).height(6.dp).clip(CircleShape).background(MaterialTheme.colorScheme.surfaceVariant)) {
             Box(Modifier.fillMaxWidth((value / 5).toFloat().coerceIn(0f, 1f)).height(6.dp)
-                .background(MaterialTheme.colorScheme.coffeePeekAccentForeground))
+                .background(MaterialTheme.colorScheme.primary))
         }
         Text(formatted, style = MaterialTheme.typography.labelLarge)
     }

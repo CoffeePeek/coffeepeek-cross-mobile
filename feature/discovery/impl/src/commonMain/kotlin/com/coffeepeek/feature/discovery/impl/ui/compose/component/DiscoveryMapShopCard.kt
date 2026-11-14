@@ -1,6 +1,5 @@
 package com.coffeepeek.feature.discovery.impl.ui.compose.component
 
-import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -70,7 +69,7 @@ private fun MapShopRating(details: MapShopDetails?) {
     val rating = details?.rating
     Row(verticalAlignment = Alignment.CenterVertically) {
         if (rating != null && rating > 0) {
-            CoffeePeekIcon(CoffeePeekIcons.StarFilled, null, Modifier.size(14.dp), tint = MaterialTheme.colorScheme.coffeePeekAccentForeground)
+            CoffeePeekIcon(CoffeePeekIcons.StarFilled, null, Modifier.size(14.dp), tint = MaterialTheme.colorScheme.primary)
             Spacer(Modifier.width(4.dp))
             Text(oneDecimal(rating), style = MaterialTheme.typography.labelMedium)
             if (details.reviewCount > 0) Text(" (${details.reviewCount})", style = MaterialTheme.typography.labelSmall,

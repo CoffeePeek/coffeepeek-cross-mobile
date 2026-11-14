@@ -1,6 +1,5 @@
 package com.coffeepeek.feature.contributions.impl.ui
 
-import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
 import androidx.compose.material3.MaterialTheme
 
 import androidx.compose.runtime.Composable
@@ -72,7 +71,7 @@ internal fun ContributionKind.visual(section: ChangeSection?): Visual = when (th
 internal fun ChangeSection.visual(): Visual = when (this) {
     ChangeSection.Photos -> Visual(CoffeePeekIcons.Photo, CoffeePeekIconBadgePalette.Sky)
     ChangeSection.Contacts -> Visual(CoffeePeekIcons.Phone, CoffeePeekIconBadgePalette.Mint)
-    ChangeSection.Description -> Visual(CoffeePeekIcons.NoteEdit, CoffeePeekIconBadgePalette.Lavender)
+    ChangeSection.Description -> Visual(CoffeePeekIcons.NoteEdit, CoffeePeekIconBadgePalette.Violet)
     ChangeSection.Tags -> Visual(CoffeePeekIcons.Sparkle, CoffeePeekIconBadgePalette.Gold)
     ChangeSection.Roasters -> Visual(CoffeePeekIcons.CoffeeBean, CoffeePeekIconBadgePalette.Rose)
     ChangeSection.Equipment -> Visual(CoffeePeekIcons.Settings, CoffeePeekIconBadgePalette.Cyan)
@@ -83,7 +82,7 @@ internal fun ChangeSection.visual(): Visual = when (this) {
 @Composable
 internal fun ModerationStatus.color(): Color = when (this) {
     ModerationStatus.Approved -> MaterialTheme.colorScheme.tertiary
-    ModerationStatus.Pending -> MaterialTheme.colorScheme.coffeePeekAccentForeground
+    ModerationStatus.Pending -> MaterialTheme.colorScheme.primary
     ModerationStatus.Rejected -> MaterialTheme.colorScheme.error
 }
 

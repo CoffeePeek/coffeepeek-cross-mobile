@@ -69,7 +69,7 @@ private fun ShopOverviewPhotoMetadata(
     Column(horizontalAlignment = alignment, verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing1)) {
         ShopTypeBadge(type)
         if (photoCount > 0) {
-            Surface(shape = CircleShape, color = Color.Black.copy(alpha = 0.6f), contentColor = Color.White) {
+            Surface(shape = CircleShape, color = CoffeePeekColors.PhotoBadgeOverlay, contentColor = Color.White) {
                 Text(stringResource(Res.string.shop_overview_photo_counter, currentPage.coerceAtMost(photoCount - 1) + 1, photoCount),
                     modifier = Modifier.padding(horizontal = 10.dp, vertical = CoffeePeekDimens.spacing1),
                     style = MaterialTheme.typography.labelSmall)

@@ -1,6 +1,5 @@
 package com.coffeepeek.feature.shopreport.impl.ui.compose.component
 
-import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
 
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.layout.Arrangement
@@ -45,7 +44,7 @@ internal fun ShopReportCategoryOption(
         // A check is visual feedback for a single selection, not an independent checkbox.
         Box(Modifier.size(24.dp), contentAlignment = Alignment.Center) {
             if (selected) CoffeePeekIcon(CoffeePeekIcons.Check, null, Modifier.size(20.dp),
-                tint = MaterialTheme.colorScheme.coffeePeekAccentForeground)
+                tint = MaterialTheme.colorScheme.primary)
         }
     }
 }

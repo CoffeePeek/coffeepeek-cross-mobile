@@ -1,6 +1,5 @@
 package com.coffeepeek.feature.shop.impl.ui.compose.component
 
-import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
 import com.coffeepeek.feature.shop.impl.resources.shop_review_photo_hint
 
 import com.coffeepeek.feature.shop.impl.resources.shop_review_photos
@@ -107,7 +106,7 @@ internal fun ShopPhotoAttachments(
                     .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(CoffeePeekDimens.radiusMd))
                     .clickable(enabled = enabled && !isLoading, role = Role.Button) { sourceShown = true },
                     contentAlignment = Alignment.Center) {
-                    if (isLoading) CoffeePeekLoader(size = 40.dp, color = MaterialTheme.colorScheme.coffeePeekAccentForeground, strokeWidth = 4.dp)
+                    if (isLoading) CoffeePeekLoader(size = 40.dp, color = MaterialTheme.colorScheme.primary, strokeWidth = 4.dp)
                     else CoffeePeekIcon(CoffeePeekIcons.Camera,
                         contentDescription = stringResource(Res.string.shop_review_photo_add),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(28.dp))

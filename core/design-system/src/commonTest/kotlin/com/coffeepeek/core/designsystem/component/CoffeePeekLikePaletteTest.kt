@@ -3,6 +3,7 @@ package com.coffeepeek.core.designsystem.component
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.luminance
+import com.coffeepeek.core.designsystem.theme.CoffeePeekLightColorScheme
 import com.coffeepeek.core.designsystem.theme.CoffeePeekColors
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -13,7 +14,7 @@ class CoffeePeekLikePaletteTest {
         assertEquals(CoffeePeekColors.Primary, CoffeePeekColors.Like)
         assertEquals(CoffeePeekColors.Like, coffeePeekLikeColor(true, false, Color.White))
         assertEquals(CoffeePeekColors.Like, coffeePeekLikeColor(true, false, Color.Black))
-        assertTrue(CoffeePeekColors.Like != CoffeePeekColors.Error)
+        assertTrue(CoffeePeekColors.Like != CoffeePeekLightColorScheme.error)
     }
 
     @Test fun unselectedUsesThemeContentAndWhiteOnPhotos() {
@@ -41,7 +42,7 @@ class CoffeePeekLikePaletteTest {
 
     @Test fun photoPlatePreservesGoldContrastEvenOnWhiteImages() {
         for (photo in listOf(Color.Black, Color.White)) {
-            val plate = CoffeePeekColors.LikePhotoOverlay.compositeOver(photo)
+            val plate = CoffeePeekColors.PhotoBadgeOverlay.compositeOver(photo)
             val gold = coffeePeekLikeColor(true, true, Color.White)
             val high = maxOf(gold.luminance(), plate.luminance())
             val low = minOf(gold.luminance(), plate.luminance())

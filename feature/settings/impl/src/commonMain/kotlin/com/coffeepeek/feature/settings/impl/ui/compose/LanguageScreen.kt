@@ -1,6 +1,5 @@
 package com.coffeepeek.feature.settings.impl.ui.compose
 
-import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
@@ -118,7 +117,7 @@ private fun LanguageOption(name: String, selected: Boolean, enabled: Boolean, on
         Text(name, Modifier.weight(1f), style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
         AnimatedVisibility(selected, enter = fadeIn(tween(160)) + scaleIn(initialScale = 0.7f),
             exit = fadeOut(tween(120))) {
-            CoffeePeekIcon(CoffeePeekIcons.Check, contentDescription = null, tint = MaterialTheme.colorScheme.coffeePeekAccentForeground,
+            CoffeePeekIcon(CoffeePeekIcons.Check, contentDescription = null, tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(CoffeePeekDimens.settingsIconSize))
         }
     }

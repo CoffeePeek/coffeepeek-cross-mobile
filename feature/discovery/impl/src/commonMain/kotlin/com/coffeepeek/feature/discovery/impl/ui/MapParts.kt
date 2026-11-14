@@ -1,6 +1,5 @@
 package com.coffeepeek.feature.discovery.impl.ui
 
-import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
 
 import com.coffeepeek.feature.discovery.impl.resources.Res
 import com.coffeepeek.feature.discovery.impl.resources.discovery_loading
@@ -80,7 +79,7 @@ internal fun MapSuggestions(state: MapState, onSelect: (String) -> Unit) {
                         Modifier.fillMaxWidth().heightIn(min = 56.dp).clickable { onSelect(shop.id) }.padding(horizontal = CoffeePeekDimens.spacing4, vertical = CoffeePeekDimens.spacing2),
                         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3),
                     ) {
-                        CoffeePeekIcon(CoffeePeekIcons.Location, null, Modifier.size(22.dp), tint = MaterialTheme.colorScheme.coffeePeekAccentForeground)
+                        CoffeePeekIcon(CoffeePeekIcons.Location, null, Modifier.size(22.dp), tint = MaterialTheme.colorScheme.primary)
                         Column(Modifier.weight(1f)) {
                             Text(shop.title, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                             shop.address?.takeIf(String::isNotBlank)?.let {

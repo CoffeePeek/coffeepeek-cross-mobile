@@ -24,7 +24,6 @@ import androidx.compose.ui.viewinterop.UIKitInteropInteractionMode
 import androidx.compose.ui.viewinterop.UIKitInteropProperties
 import androidx.compose.ui.viewinterop.UIKitView
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
-import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
 import kotlinx.cinterop.useContents
 import platform.CoreGraphics.CGRectMake
 import platform.Foundation.NSMakeRange
@@ -129,7 +128,7 @@ private class CoffeePeekMultilineInput(target: CoffeePeekMultilineDelegate) :
     fun applyColors(colors: ColorScheme, radius: Double, isError: Boolean, enabled: Boolean) {
         backgroundColor = colors.onSurface.copy(alpha = 0.04f).toUIColor()
         textColor = colors.onSurface.copy(alpha = if (enabled) 1f else 0.38f).toUIColor()
-        tintColor = colors.coffeePeekAccentForeground.toUIColor()
+        tintColor = colors.primary.toUIColor()
         hint.textColor = colors.onSurfaceVariant.toUIColor()
         layer.cornerRadius = radius
         layer.borderWidth = 1.0

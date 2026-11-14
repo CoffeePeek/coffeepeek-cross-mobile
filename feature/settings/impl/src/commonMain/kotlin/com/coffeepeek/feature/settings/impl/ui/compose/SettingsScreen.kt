@@ -211,7 +211,7 @@ private fun SettingsOtherSection(navigation: SettingsNavigation, external: Setti
         CoffeePeekSettingsDivider()
         CoffeePeekSettingsRow(
             CoffeePeekIcons.Share, stringResource(Res.string.settings_share), null, external::shareApp,
-            iconColors = CoffeePeekIconBadgePalette.BrightCyan,
+            iconColors = CoffeePeekIconBadgePalette.Cyan,
         )
         StoreReviewRow(external)
     }

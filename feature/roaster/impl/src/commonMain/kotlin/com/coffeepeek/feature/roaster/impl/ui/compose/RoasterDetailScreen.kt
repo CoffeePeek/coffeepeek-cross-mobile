@@ -1,6 +1,5 @@
 package com.coffeepeek.feature.roaster.impl.ui.compose
 
-import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
 
 import com.coffeepeek.feature.roaster.impl.ui.compose.model.RoasterImage
 import com.coffeepeek.feature.roaster.impl.ui.compose.model.RoasterPhotoViewer
@@ -169,7 +168,7 @@ private fun RoasterDetailContent(
                 details.location?.let { location ->
                     RoasterSection(stringResource(Res.string.roaster_address_title)) {
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2)) {
-                            CoffeePeekIcon(CoffeePeekIcons.Location, null, tint = MaterialTheme.colorScheme.coffeePeekAccentForeground)
+                            CoffeePeekIcon(CoffeePeekIcons.Location, null, tint = MaterialTheme.colorScheme.primary)
                             Text(location.address, style = MaterialTheme.typography.bodyLarge)
                         }
                     }

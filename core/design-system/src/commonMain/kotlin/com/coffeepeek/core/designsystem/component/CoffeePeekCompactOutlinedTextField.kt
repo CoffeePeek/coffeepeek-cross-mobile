@@ -1,6 +1,5 @@
 package com.coffeepeek.core.designsystem.component
 
-import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
 
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
@@ -72,7 +71,7 @@ fun CoffeePeekCompactOutlinedTextField(
     shape: androidx.compose.ui.graphics.Shape = OutlinedTextFieldDefaults.shape,
     colors: TextFieldColors = OutlinedTextFieldDefaults.colors(
         focusedBorderColor = MaterialTheme.colorScheme.primary,
-        cursorColor = MaterialTheme.colorScheme.coffeePeekAccentForeground),
+        cursorColor = MaterialTheme.colorScheme.primary),
     contentPadding: PaddingValues = CoffeePeekDimens.singleLineFieldContentPadding,
     inputRole: CoffeePeekInputRole = CoffeePeekInputRole.Default,
 ) {

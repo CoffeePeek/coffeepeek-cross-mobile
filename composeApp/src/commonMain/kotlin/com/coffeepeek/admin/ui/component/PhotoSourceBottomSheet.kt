@@ -2,7 +2,6 @@ package com.coffeepeek.admin.ui.component
 
 import androidx.compose.foundation.layout.heightIn
 
-import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -119,7 +118,7 @@ private fun PhotoSourceRow(
         CoffeePeekIcon(
             imageVector = icon,
             contentDescription = null,
-            tint = MaterialTheme.colorScheme.coffeePeekAccentForeground,
+            tint = MaterialTheme.colorScheme.primary,
             modifier = Modifier.size(22.dp),
         )
         Text(

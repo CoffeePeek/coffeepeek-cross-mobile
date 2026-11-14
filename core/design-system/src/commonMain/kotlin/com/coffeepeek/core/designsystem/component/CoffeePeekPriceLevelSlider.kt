@@ -1,6 +1,5 @@
 package com.coffeepeek.core.designsystem.component
 
-import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -27,7 +26,7 @@ fun CoffeePeekPriceLevelSlider(selected: Int?, onSelect: (Int?) -> Unit, modifie
     Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing1)) {
         if (title != null) Text(title, style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
             color = MaterialTheme.colorScheme.onSurface)
-        if (hint != null) Text(hint, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.coffeePeekAccentForeground)
+        if (hint != null) Text(hint, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
         PriceLevelTrack(filled, onSelect)
         PriceLevelStops(filled)
     }
@@ -36,7 +35,7 @@ fun CoffeePeekPriceLevelSlider(selected: Int?, onSelect: (Int?) -> Unit, modifie
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun PriceLevelTrack(value: Int, onSelect: (Int?) -> Unit) {
-    val colors = SliderDefaults.colors(thumbColor = Color.White, activeTrackColor = MaterialTheme.colorScheme.coffeePeekAccentForeground,
+    val colors = SliderDefaults.colors(thumbColor = Color.White, activeTrackColor = MaterialTheme.colorScheme.primary,
         inactiveTrackColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.4f), activeTickColor = Color.Transparent,
         inactiveTickColor = Color.Transparent)
     Slider(value = value.toFloat(), onValueChange = { onSelect(it.roundToInt().coerceIn(0, 3).takeIf { level -> level > 0 }) },
@@ -59,7 +58,7 @@ private fun PriceLevelStops(filled: Int) {
             val tickCenter = trackInset + trackWidth * (tier.toFloat() / 3)
             val x = (tickCenter - groupWidth / 2).coerceIn(0.dp, (maxWidth - groupWidth).coerceAtLeast(0.dp))
             CoffeePeekBynPriceIndicators(tier, Modifier.offset(x = x), iconWidth = iconWidth, spacing = spacing,
-                tint = if (filled == tier) MaterialTheme.colorScheme.coffeePeekAccentForeground else MaterialTheme.colorScheme.outline)
+                tint = if (filled == tier) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline)
         }
     }
 }

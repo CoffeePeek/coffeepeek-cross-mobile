@@ -13,7 +13,6 @@ import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
-import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 /**
@@ -55,9 +54,9 @@ fun CoffeePeekDatePickerDialog(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun coffeePeekDatePickerColors() = DatePickerDefaults.colors(
-    todayContentColor = MaterialTheme.colorScheme.coffeePeekAccentForeground,
+    todayContentColor = MaterialTheme.colorScheme.primary,
     todayDateBorderColor = MaterialTheme.colorScheme.primary,
-    currentYearContentColor = MaterialTheme.colorScheme.coffeePeekAccentForeground,
+    currentYearContentColor = MaterialTheme.colorScheme.primary,
     navigationContentColor = MaterialTheme.colorScheme.onSurface,
 )
 

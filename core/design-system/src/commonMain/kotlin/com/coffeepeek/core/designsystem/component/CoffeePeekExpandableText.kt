@@ -8,9 +8,7 @@ import androidx.compose.material3.Text
 import com.coffeepeek.core.designsystem.component.CoffeePeekTextButton as TextButton
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.text.style.TextOverflow
-import com.coffeepeek.core.designsystem.theme.CoffeePeekColors
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
@@ -27,12 +25,6 @@ fun CoffeePeekExpandableText(
 ) {
     require(collapsedLines > 0)
     var overflows by remember(text, collapsedLines) { mutableStateOf(false) }
-    val actionColor = if (MaterialTheme.colorScheme.surface.luminance() < 0.5f) {
-        CoffeePeekColors.AccentTextDark
-    } else {
-        CoffeePeekColors.AccentTextLight
-    }
-
     Column(modifier) {
         Text(
             text = text,
@@ -45,7 +37,7 @@ fun CoffeePeekExpandableText(
         if (overflows || expanded) {
             TextButton(
                 onClick = onToggle,
-                colors = ButtonDefaults.textButtonColors(contentColor = actionColor),
+                colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.primary),
             ) {
                 Text(if (expanded) collapseLabel else expandLabel)
             }

@@ -28,7 +28,6 @@ import com.coffeepeek.core.designsystem.component.CoffeePeekBynPriceIndicators
 import com.coffeepeek.core.designsystem.component.CoffeePeekDiscreteSlider
 import com.coffeepeek.core.designsystem.component.CoffeePeekGroupSection
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
-import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
 import com.coffeepeek.feature.discovery.domain.model.PriceLevel
 import com.coffeepeek.feature.discovery.impl.search.priceFilterStops
 import com.coffeepeek.feature.discovery.impl.search.priceFilterStop
@@ -57,7 +56,7 @@ internal fun PriceFilter(selected: PriceLevel?, onSelect: (PriceLevel?) -> Unit)
 private fun PriceStops(selected: PriceLevel?) {
     Row(Modifier.fillMaxWidth().clearAndSetSemantics {}) {
         priceFilterStops.forEach { level ->
-            val tint = if (selected == level) MaterialTheme.colorScheme.coffeePeekAccentForeground else MaterialTheme.colorScheme.onSurfaceVariant
+            val tint = if (selected == level) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
             Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
                 if (level == null) Text(stringResource(Res.string.discovery_price_any), style = MaterialTheme.typography.labelSmall, color = tint)
                 else CoffeePeekBynPriceIndicators(level.level, iconWidth = 10.dp, tint = tint, spacing = 2.dp)

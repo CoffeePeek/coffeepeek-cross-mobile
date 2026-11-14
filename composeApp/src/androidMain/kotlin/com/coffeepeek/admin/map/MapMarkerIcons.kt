@@ -47,7 +47,7 @@ internal object MapMarkerIcons {
     private const val SELECTED_HALO_GAP_DP = 1.5f
     private const val CLUSTER_TEXT_SP = 12f
 
-    private const val MY_LOCATION = 0xFF2563EB.toInt()
+    private const val MY_LOCATION = 0xFF47B7C7.toInt()
     private const val WHITE = 0xFFFFFFFF.toInt()
     private const val SHADOW = 0xFF1A1412.toInt()
 
@@ -245,7 +245,7 @@ internal object MapMarkerIcons {
                 style = Paint.Style.FILL
                 // Muted chip: near-surface fill so the label reads as context, not as a pin.
                 color = if (isDarkTheme) 0xEB2A221D.toInt() else 0xEBFFFFFF.toInt()
-                setShadowLayer(3f * density, 0f, 1f * density, ColorUtils.setAlphaComponent(SHADOW, 0x1F))
+                setShadowLayer(3f * density, 0f, 1f * density, ColorUtils.setAlphaComponent(SHADOW, 0x59))
             },
         )
         canvas.drawRoundRect(

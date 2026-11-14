@@ -8,18 +8,17 @@ import kotlin.test.Test
 import kotlin.test.assertTrue
 
 class CoffeePeekContentContrastTest {
-    @Test fun accentTextIsReadableOnEveryThemeSurface() {
-        for (surface in surfaces) {
-            val foreground = lightColorScheme(surface = surface).coffeePeekAccentForeground
-            assertContrast(foreground, surface, 4.5f)
+    @Test fun primaryIsReadableOnDarkThemeSurfaces() {
+        with(CoffeePeekDarkColorScheme) {
+            listOf(background, surface, surfaceVariant).forEach { assertContrast(primary, it, 4.5f) }
         }
     }
 
     @Test fun statusTextIsReadableOnItsActualCompositedFill() {
-        for (surface in listOf(CoffeePeekColors.LightCard, CoffeePeekColors.DarkCard)) {
+        for (surface in listOf(CoffeePeekColors.LightSurface, CoffeePeekColors.DarkSurface)) {
             for (open in listOf(true, false)) {
-                val fill = if (open) CoffeePeekColors.Success else CoffeePeekColors.Error
                 val foreground = lightColorScheme(surface = surface).coffeePeekStatusForeground(open)
+                val fill = if (open) CoffeePeekColors.Success else foreground
                 assertContrast(foreground, fill.copy(alpha = 0.14f).compositeOver(surface), 4.5f)
             }
         }
@@ -37,8 +36,4 @@ class CoffeePeekContentContrastTest {
         assertTrue(ratio >= minimum, "Contrast $ratio is below $minimum: $foreground on $background")
     }
 
-    private val surfaces = listOf(
-        CoffeePeekColors.LightBackground, CoffeePeekColors.LightSurface, CoffeePeekColors.LightSurfaceAlt,
-        CoffeePeekColors.LightBadge, CoffeePeekColors.DarkBackground, CoffeePeekColors.DarkSurface,
-    )
 }

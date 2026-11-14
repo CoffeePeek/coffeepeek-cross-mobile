@@ -1,6 +1,5 @@
 package com.coffeepeek.feature.profile.impl.ui.compose.component
 
-import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
 
 import androidx.compose.foundation.BorderStroke
 import com.coffeepeek.feature.profile.impl.resources.Res
@@ -87,7 +86,7 @@ internal fun ProfileSectionHeading(title: String, onAll: () -> Unit) {
             modifier = Modifier.semantics { contentDescription = description },
             contentPadding = PaddingValues(start = 12.dp),
         ) {
-            Text(stringResource(Res.string.profile_section_all), color = MaterialTheme.colorScheme.coffeePeekAccentForeground)
+            Text(stringResource(Res.string.profile_section_all), color = MaterialTheme.colorScheme.primary)
             Spacer(Modifier.width(4.dp))
             CoffeePeekIcon(CoffeePeekIcons.ChevronRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(18.dp))
         }

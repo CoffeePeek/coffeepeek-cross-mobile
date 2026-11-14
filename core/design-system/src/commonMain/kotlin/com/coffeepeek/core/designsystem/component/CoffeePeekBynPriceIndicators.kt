@@ -1,6 +1,5 @@
 package com.coffeepeek.core.designsystem.component
 
-import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
@@ -30,7 +29,7 @@ fun CoffeePeekBynPriceIndicators(
     count: Int,
     modifier: Modifier = Modifier,
     iconWidth: Dp = 14.dp,
-    tint: Color = MaterialTheme.colorScheme.coffeePeekAccentForeground,
+    tint: Color = MaterialTheme.colorScheme.primary,
     maxCount: Int = count,
     inactiveTint: Color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.25f),
     spacing: Dp = 2.dp,

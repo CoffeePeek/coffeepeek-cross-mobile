@@ -1,6 +1,5 @@
 package com.coffeepeek.core.designsystem.component
 
-import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.heightIn
@@ -51,7 +50,7 @@ internal actual fun CoffeePeekSelectMenu(
                     leadingIcon = option.leadingIcon,
                     trailingIcon = {
                         Box(Modifier.size(20.dp)) {
-                            if (option.selected) Icon(CoffeePeekIcons.Check, null, tint = MaterialTheme.colorScheme.coffeePeekAccentForeground)
+                            if (option.selected) Icon(CoffeePeekIcons.Check, null, tint = MaterialTheme.colorScheme.primary)
                         }
                     },
                 )

@@ -1,6 +1,5 @@
 package com.coffeepeek.feature.ownership.impl.ui.compose
 
-import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
 
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -17,7 +16,7 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
 internal fun OwnershipFeedback(state: OwnershipState, action: (OwnershipAction) -> Unit) {
-    if (state.saved) Text(stringResource(Res.string.ownership_saved), color = MaterialTheme.colorScheme.coffeePeekAccentForeground,
+    if (state.saved) Text(stringResource(Res.string.ownership_saved), color = MaterialTheme.colorScheme.primary,
         modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite })
     state.problem?.let { issue ->
         CoffeePeekContentCard {

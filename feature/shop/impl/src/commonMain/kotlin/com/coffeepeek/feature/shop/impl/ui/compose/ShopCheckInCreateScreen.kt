@@ -1,6 +1,5 @@
 package com.coffeepeek.feature.shop.impl.ui.compose
 
-import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -174,7 +173,7 @@ internal fun ShopCheckInCreateScreenContent(
                 onFeed = { onAction(ShopCheckInFormAction.GoToFeed) },
             )
         } else if (state.isLoading) {
-            CoffeePeekLoader(size = 40.dp, color = MaterialTheme.colorScheme.coffeePeekAccentForeground, strokeWidth = 4.dp)
+            CoffeePeekLoader(size = 40.dp, color = MaterialTheme.colorScheme.primary, strokeWidth = 4.dp)
         } else {
             ShopCheckInFormFields(state, shopName, shopAddress, visitLabel,
                 selectedVisitMillis, nowMillis, editable, photosPreparing,

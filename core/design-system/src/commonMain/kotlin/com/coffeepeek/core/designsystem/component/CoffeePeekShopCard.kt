@@ -39,7 +39,6 @@ import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekColors
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
-import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
 import com.coffeepeek.core.designsystem.theme.coffeePeekStatusForeground
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
@@ -142,7 +141,7 @@ private fun ShopCardDetails(
         ShopCardTitle(title, statusLabel, isOpen)
         brewMethods?.invoke()
         if (!locationSummary.isNullOrBlank()) Row(verticalAlignment = Alignment.CenterVertically) {
-            CoffeePeekIcon(CoffeePeekIcons.Location, contentDescription = null, tint = MaterialTheme.colorScheme.coffeePeekAccentForeground, modifier = Modifier.size(14.dp))
+            CoffeePeekIcon(CoffeePeekIcons.Location, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(14.dp))
             Spacer(Modifier.width(2.dp))
             Text(locationSummary, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = if (LocalDensity.current.fontScale > 1.2f) 3 else 1, overflow = TextOverflow.Ellipsis)
@@ -210,7 +209,7 @@ fun CoffeePeekShopInfoChip(text: String, modifier: Modifier = Modifier, icon: (@
 @Composable
 private fun NewBadge(label: String, modifier: Modifier) {
     Row(
-        modifier.clip(RoundedCornerShape(CoffeePeekDimens.radiusLg)).background(CoffeePeekColors.DarkSurface.copy(alpha = 0.92f))
+        modifier.clip(RoundedCornerShape(CoffeePeekDimens.radiusLg)).background(CoffeePeekColors.DarkSurface)
             .padding(horizontal = CoffeePeekDimens.spacing3, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing1),
@@ -229,7 +228,7 @@ private fun RatingBadge(text: String, count: Int) {
     ) {
         CoffeePeekIcon(CoffeePeekIcons.StarFilled, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(16.dp))
         Text(text, style = MaterialTheme.typography.labelMedium, color = Color.White, fontWeight = FontWeight.SemiBold)
-        if (count > 0) Text("($count)", style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.82f))
+        if (count > 0) Text("($count)", style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.9f))
     }
 }
 

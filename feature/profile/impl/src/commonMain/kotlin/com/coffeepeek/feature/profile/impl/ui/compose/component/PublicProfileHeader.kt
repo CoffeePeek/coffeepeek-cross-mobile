@@ -54,7 +54,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.coffeepeek.core.designsystem.theme.CoffeePeekColors
-import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
 import com.coffeepeek.feature.profile.api.ProfileImage
 import com.coffeepeek.feature.profile.domain.PublicProfileStats
 import com.coffeepeek.feature.profile.impl.resources.*
@@ -123,7 +122,7 @@ private fun ProfileFollowButton(nickname: String, isFollowing: Boolean, enabled:
         onClick = onClick, enabled = enabled, modifier = Modifier.semantics { contentDescription = description },
         contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-        colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.coffeePeekAccentForeground),
+        colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.primary),
     ) { Text(stringResource(if (isFollowing) Res.string.profile_following else Res.string.profile_follow),
         style = MaterialTheme.typography.labelMedium) }
 }

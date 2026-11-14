@@ -1,6 +1,5 @@
 package com.coffeepeek.core.designsystem.component
 
-import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -31,7 +30,7 @@ fun CoffeePeekSelectionCard(
     val shape = RoundedCornerShape(CoffeePeekDimens.cardRadius)
     Row(
         modifier.fillMaxWidth().clip(shape)
-            .background(if (selected) MaterialTheme.colorScheme.coffeePeekAccentForeground.copy(alpha = 0.08f)
+            .background(if (selected) MaterialTheme.colorScheme.primary.copy(alpha = 0.08f)
                 else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.04f))
             .border(1.dp, if (selected) MaterialTheme.colorScheme.primary.copy(alpha = 0.65f)
                 else MaterialTheme.colorScheme.outline, shape)
@@ -46,7 +45,7 @@ fun CoffeePeekSelectionCard(
             Text(description, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         if (selected) CoffeePeekIcon(CoffeePeekIcons.CheckCircle, null,
-            tint = MaterialTheme.colorScheme.coffeePeekAccentForeground, modifier = Modifier.size(24.dp))
+            tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(24.dp))
     }
 }
 

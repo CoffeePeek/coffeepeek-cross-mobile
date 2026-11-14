@@ -1,5 +1,6 @@
 package com.coffeepeek.feature.shelf.impl.ui.compose.component
 
+import com.coffeepeek.core.designsystem.theme.CoffeePeekColors
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -65,11 +66,11 @@ private fun ShelfWoodPlane(texture: Painter, top: Boolean, modifier: Modifier) {
 
 private fun Modifier.shelfWoodLighting(top: Boolean): Modifier = drawWithCache {
     val light = Brush.verticalGradient(if (top) {
-        listOf(Color.White.copy(alpha = .12f), Color.Black.copy(alpha = .05f))
+        listOf(Color.White.copy(alpha = .12f), Color.Black.copy(alpha = .12f))
     } else {
-        listOf(Color(0xFF624323).copy(alpha = .2f), Color.Black.copy(alpha = .3f))
+        listOf(CoffeePeekColors.DarkBorderHover, Color.Black.copy(alpha = .2f))
     })
-    val edge = if (top) Color.White.copy(alpha = .16f) else Color(0xFF513A24).copy(alpha = .22f)
+    val edge = if (top) Color.White.copy(alpha = .12f) else CoffeePeekColors.DarkBorderHover
     onDrawWithContent {
         drawContent()
         drawRect(light)

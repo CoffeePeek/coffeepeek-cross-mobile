@@ -1,5 +1,6 @@
 package com.coffeepeek.feature.shop.impl.ui.compose.component
 
+import com.coffeepeek.core.designsystem.theme.CoffeePeekColors
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -83,7 +84,7 @@ internal fun ShopMenuPhotoStack(
                 contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize(),
                 onLoading = { MenuPhotoPlaceholder() }, onFailure = { MenuPhotoPlaceholder() })
             Box(Modifier.fillMaxSize().background(Brush.verticalGradient(
-                listOf(Color.Transparent, Color.Transparent, Color.Black.copy(alpha = 0.72f)))))
+                listOf(Color.Transparent, Color.Transparent, CoffeePeekColors.PhotoBadgeOverlay))))
             overlay()
         }
     }

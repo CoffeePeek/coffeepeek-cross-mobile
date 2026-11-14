@@ -2,7 +2,6 @@
 
 package com.coffeepeek.core.designsystem.component
 
-import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
 
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.material3.MaterialTheme
@@ -35,11 +34,11 @@ internal actual fun CoffeePeekNativeFilterChip(
         update = { button ->
             button.overrideUserInterfaceStyle = coffeePeekUserInterfaceStyle(colors.background)
             button.backgroundColor = UIColor.clearColor
-            button.tintColor = colors.coffeePeekAccentForeground.toUIColor()
+            button.tintColor = colors.primary.toUIColor()
             button.configuration = coffeePeekGlassButtonConfiguration(prominent = selected).apply {
                 title = label
                 this.image = image?.imageWithTintColor(
-                    (if (selected) colors.onPrimary else colors.coffeePeekAccentForeground).toUIColor(), UIImageRenderingModeAlwaysOriginal)
+                    (if (selected) colors.onPrimary else colors.primary).toUIColor(), UIImageRenderingModeAlwaysOriginal)
                 imagePadding = 6.0
                 if (trailingIcon != null) imagePlacement = NSDirectionalRectEdgeTrailing
                 cornerStyle = UIButtonConfigurationCornerStyleCapsule

@@ -44,7 +44,6 @@ import com.coffeepeek.core.designsystem.component.CoffeePeekRowSeparator
 import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
-import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
 import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import com.coffeepeek.core.designsystem.theme.reducedMotionDuration
 import com.coffeepeek.feature.notifications.api.*
@@ -77,7 +76,7 @@ internal fun NotificationsContent(
 private fun NotificationsReadAll(onReadAll: () -> Unit, enabled: Boolean) {
     TextButton(onClick = onReadAll, enabled = enabled,
         colors = ButtonDefaults.textButtonColors(
-            contentColor = MaterialTheme.colorScheme.coffeePeekAccentForeground,
+            contentColor = MaterialTheme.colorScheme.primary,
             disabledContentColor = MaterialTheme.colorScheme.onSurfaceVariant),
         contentPadding = PaddingValues(start = CoffeePeekDimens.spacing2)) {
         CoffeePeekIcon(CoffeePeekIcons.Check, contentDescription = null, modifier = Modifier.size(CoffeePeekDimens.spacing4))

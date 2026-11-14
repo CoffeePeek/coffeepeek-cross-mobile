@@ -1,6 +1,5 @@
 package com.coffeepeek.feature.homecheckin.impl.ui.compose.component
 
-import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
 
 import androidx.compose.foundation.background
 import org.jetbrains.compose.ui.tooling.preview.Preview
@@ -57,7 +56,7 @@ private fun SourceRow(icon: ImageVector, label: String, onClick: () -> Unit) {
     Row(Modifier.fillMaxWidth().clickable(role = Role.Button, onClick = onClick).heightIn(min = 56.dp)
         .padding(horizontal = 16.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        CoffeePeekIcon(icon, null, Modifier.size(22.dp), tint = MaterialTheme.colorScheme.coffeePeekAccentForeground)
+        CoffeePeekIcon(icon, null, Modifier.size(22.dp), tint = MaterialTheme.colorScheme.primary)
         Text(label, style = MaterialTheme.typography.bodyLarge)
     }
 }

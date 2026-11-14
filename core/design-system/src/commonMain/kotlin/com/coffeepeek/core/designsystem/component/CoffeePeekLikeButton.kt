@@ -109,7 +109,7 @@ internal fun Modifier.coffeePeekLikeBackground(style: CoffeePeekLikeButtonStyle,
     if (style == CoffeePeekLikeButtonStyle.PhotoBadge) {
         val surface = MaterialTheme.colorScheme.surface
         val plate = if (surface.luminance() >= 0.5f) surface.copy(alpha = 0.90f)
-            else com.coffeepeek.core.designsystem.theme.CoffeePeekColors.LikePhotoOverlay
+            else com.coffeepeek.core.designsystem.theme.CoffeePeekColors.PhotoBadgeOverlay
         return background(plate, shape)
     }
     if (coffeePeekUsesNativeGlass) return this

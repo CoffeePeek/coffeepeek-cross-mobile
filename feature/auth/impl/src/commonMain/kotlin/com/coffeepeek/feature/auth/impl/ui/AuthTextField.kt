@@ -39,7 +39,6 @@ import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
-import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
 import com.coffeepeek.feature.auth.impl.resources.Res
 import com.coffeepeek.feature.auth.impl.resources.auth_forgot_password
 import com.coffeepeek.feature.auth.impl.resources.auth_hide_password
@@ -151,9 +150,9 @@ private fun authAutofillType(isPassword: Boolean, text: Boolean, newPassword: Bo
 
 @Composable
 private fun authFieldColors() = OutlinedTextFieldDefaults.colors(
-    focusedBorderColor = MaterialTheme.colorScheme.coffeePeekAccentForeground,
+    focusedBorderColor = MaterialTheme.colorScheme.primary,
     unfocusedBorderColor = MaterialTheme.colorScheme.outline,
-    cursorColor = MaterialTheme.colorScheme.coffeePeekAccentForeground,
+    cursorColor = MaterialTheme.colorScheme.primary,
     focusedPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant,
     unfocusedPlaceholderColor = MaterialTheme.colorScheme.onSurfaceVariant,
 )

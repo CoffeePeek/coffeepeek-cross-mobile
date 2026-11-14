@@ -1,6 +1,5 @@
 package com.coffeepeek.feature.contributions.impl.ui
 
-import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
 
 import androidx.compose.foundation.BorderStroke
 import org.jetbrains.compose.ui.tooling.preview.Preview
@@ -117,8 +116,8 @@ private fun OpenFooter(target: ContributionTarget) {
         verticalAlignment = Alignment.CenterVertically,
     ) {
         val label = if (target is ContributionTarget.Request) Res.string.contributions_open_request else Res.string.contributions_open_catalog
-        Text(stringResource(label), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.coffeePeekAccentForeground, modifier = Modifier.weight(1f))
-        CoffeePeekIcon(CoffeePeekIcons.ChevronRight, contentDescription = null, tint = MaterialTheme.colorScheme.coffeePeekAccentForeground, modifier = Modifier.size(20.dp))
+        Text(stringResource(label), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary, modifier = Modifier.weight(1f))
+        CoffeePeekIcon(CoffeePeekIcons.ChevronRight, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
     }
 }
 

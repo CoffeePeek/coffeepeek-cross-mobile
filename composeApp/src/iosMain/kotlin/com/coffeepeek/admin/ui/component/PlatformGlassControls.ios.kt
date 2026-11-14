@@ -4,7 +4,6 @@ package com.coffeepeek.admin.ui.component
 
 import androidx.compose.foundation.layout.heightIn
 
-import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
 
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -118,7 +117,7 @@ private fun IosGlassIconButton(
         update = { button ->
             button.overrideUserInterfaceStyle = colors.uiKitStyle
             button.backgroundColor = UIColor.clearColor
-            button.tintColor = colors.coffeePeekAccentForeground.toUIColor()
+            button.tintColor = colors.primary.toUIColor()
             button.configuration = glassIconConfiguration(icon, selected, isLoading, colors)
             button.accessibilityLabel = contentDescription
             button.accessibilityValue = loadingLabel
@@ -179,7 +178,7 @@ actual fun PlatformGlassBackButton(onClick: () -> Unit, modifier: Modifier) {
         update = { button ->
             button.overrideUserInterfaceStyle = colors.uiKitStyle
             button.backgroundColor = UIColor.clearColor
-            button.tintColor = colors.coffeePeekAccentForeground.toUIColor()
+            button.tintColor = colors.primary.toUIColor()
             val configuration = coffeePeekGlassButtonConfiguration()
             configuration.cornerStyle = UIButtonConfigurationCornerStyleCapsule
             configuration.baseForegroundColor = colors.onSurface.toUIColor()
@@ -236,7 +235,7 @@ actual fun PlatformFloatingBottomNavBar(
         properties = UIKitInteropProperties(isNativeAccessibilityEnabled = true, placedAsOverlay = true),
         update = { bar ->
             bar.overrideUserInterfaceStyle = colors.uiKitStyle
-            bar.tintColor = colors.coffeePeekAccentForeground.toUIColor()
+            bar.tintColor = colors.primary.toUIColor()
             bar.unselectedItemTintColor = colors.onSurfaceVariant.toUIColor()
             if (bar.items?.size != items.size) {
                 bar.items = items.mapIndexed { index, item ->

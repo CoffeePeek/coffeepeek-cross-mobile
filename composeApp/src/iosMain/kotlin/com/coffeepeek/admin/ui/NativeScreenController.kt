@@ -2,7 +2,6 @@
 
 package com.coffeepeek.admin.ui
 
-import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -170,7 +169,7 @@ internal class NativeScreenController(
         SideEffect {
             overrideUserInterfaceStyle = themeMode.uiKitStyle
             view.backgroundColor = colors.background.toUIColor()
-            view.tintColor = colors.coffeePeekAccentForeground.toUIColor()
+            view.tintColor = colors.primary.toUIColor()
             setNeedsStatusBarAppearanceUpdate()
         }
         val floatingClearance = if (isTabRoot) bottomClearance else 0.dp

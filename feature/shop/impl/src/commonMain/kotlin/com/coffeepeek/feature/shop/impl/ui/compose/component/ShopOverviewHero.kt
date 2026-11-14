@@ -1,5 +1,6 @@
 package com.coffeepeek.feature.shop.impl.ui.compose.component
 
+import com.coffeepeek.core.designsystem.theme.CoffeePeekColors
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -62,8 +63,8 @@ internal fun ShopOverviewHero(
         Box(Modifier.matchParentSize().background(Brush.verticalGradient(
             0f to Color.Black.copy(alpha = 0.2f),
             0.38f to Color.Transparent,
-            0.74f to Color.Black.copy(alpha = 0.66f),
-            1f to Color.Black.copy(alpha = 0.84f),
+            0.74f to CoffeePeekColors.PhotoBadgeOverlay,
+            1f to Color.Black.copy(alpha = 0.8f),
         )))
         ShopOverviewHeader(overview, onOpenMap, Modifier.align(Alignment.BottomStart).padding(
             start = CoffeePeekDimens.spacing4, end = CoffeePeekDimens.spacing4,

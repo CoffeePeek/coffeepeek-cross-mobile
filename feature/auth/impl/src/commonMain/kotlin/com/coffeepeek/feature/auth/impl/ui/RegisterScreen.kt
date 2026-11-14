@@ -80,7 +80,6 @@ import com.coffeepeek.feature.auth.impl.register.RegisterEvent
 import com.coffeepeek.core.designsystem.theme.CoffeePeekColors
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
-import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
 import com.coffeepeek.feature.auth.domain.MIN_REGISTRATION_NAME_LENGTH
 import com.coffeepeek.feature.auth.domain.RegistrationIssue
 import com.coffeepeek.feature.auth.domain.canSubmitRegistration
@@ -362,7 +361,7 @@ private fun CheckRow(
     val showFocus = enabled && focused && LocalInputModeManager.current.inputMode == InputMode.Keyboard
     Row(
         modifier = modifier.fillMaxWidth()
-            .then(if (showFocus) Modifier.border(1.dp, MaterialTheme.colorScheme.coffeePeekAccentForeground,
+            .then(if (showFocus) Modifier.border(1.dp, MaterialTheme.colorScheme.primary,
                 RoundedCornerShape(CoffeePeekDimens.radiusMd)) else Modifier)
             .toggleable(
                 value = checked,
@@ -390,7 +389,7 @@ private fun CheckRow(
 @Composable
 private fun TermsText() {
     val linkStyles = TextLinkStyles(
-        style = SpanStyle(color = MaterialTheme.colorScheme.coffeePeekAccentForeground, fontWeight = FontWeight.SemiBold),
+        style = SpanStyle(color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.SemiBold),
     )
     val text = buildAnnotatedString {
         append(stringResource(Res.string.auth_terms_prefix))

@@ -2,7 +2,6 @@
 
 package com.coffeepeek.core.designsystem.component
 
-import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
 
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -38,7 +37,7 @@ internal actual fun CoffeePeekNativeActionDialog(
     }
     SideEffect {
         controller.overrideUserInterfaceStyle = coffeePeekUserInterfaceStyle(colors.background)
-        controller.view.tintColor = colors.coffeePeekAccentForeground.toUIColor()
+        controller.view.tintColor = colors.primary.toUIColor()
         actions.forEachIndexed { index, action -> (controller.actions[index] as UIAlertAction).enabled = action.enabled }
     }
     CoffeePeekPresentNativeController(controller, host)

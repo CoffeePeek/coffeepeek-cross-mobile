@@ -1,6 +1,5 @@
 package com.coffeepeek.feature.shop.impl.ui.compose.component
 
-import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -38,7 +37,7 @@ internal fun ShopCheckInSubmissionContent(
         verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing4),
         horizontalAlignment = if (submittedVisibility == null) Alignment.CenterHorizontally else Alignment.Start) {
         if (submittedVisibility == null) {
-            CoffeePeekLoader(size = 40.dp, color = MaterialTheme.colorScheme.coffeePeekAccentForeground, strokeWidth = 4.dp)
+            CoffeePeekLoader(size = 40.dp, color = MaterialTheme.colorScheme.primary, strokeWidth = 4.dp)
             Text(stringResource(Res.string.shop_checkin_form_sending),
                 style = MaterialTheme.typography.headlineSmall, textAlign = TextAlign.Center)
         } else {

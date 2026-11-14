@@ -2,7 +2,6 @@ package com.coffeepeek.feature.community.impl.ui
 
 import androidx.compose.foundation.layout.heightIn
 
-import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
 
 import androidx.compose.foundation.Image
 import org.jetbrains.compose.ui.tooling.preview.Preview
@@ -268,7 +267,7 @@ private fun TextArea(value: String, onChange: (String) -> Unit, placeholder: Str
         keyboardActions = KeyboardActions(onDone = { focus.clearFocus(force = true) }),
         singleLine = singleLine,
         textStyle = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onSurface),
-        cursorBrush = SolidColor(MaterialTheme.colorScheme.coffeePeekAccentForeground),
+        cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
         modifier = modifier.fillMaxWidth().then(if (singleLine) Modifier.heightIn(min = CoffeePeekDimens.buttonHeight) else Modifier)
             .clip(shape).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.04f))
             .border(1.dp, if (isError) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.outline, shape)

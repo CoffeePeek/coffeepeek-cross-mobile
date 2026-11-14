@@ -44,14 +44,14 @@ internal fun SavedCollectionCard(value: SavedCollectionSummary, onClick: () -> U
 private fun SavedCollectionCardCaption(value: SavedCollectionSummary, modifier: Modifier) {
     Box(modifier.fillMaxWidth().heightIn(min = 96.dp)) {
         CoffeePeekFrostedSurface(Modifier.matchParentSize().bottomBlurFade(),
-            shape = RoundedCornerShape(0.dp), tint = Color.Black.copy(alpha = .18f), blurRadius = 14.dp)
+            shape = RoundedCornerShape(0.dp), tint = Color.Black.copy(alpha = .2f), blurRadius = 14.dp)
         Box(Modifier.matchParentSize().background(Brush.verticalGradient(
-            0f to Color.Transparent, .4f to Color.Black.copy(alpha = .24f), 1f to Color.Black.copy(alpha = .82f))))
+            0f to Color.Transparent, .4f to Color.Black.copy(alpha = .2f), 1f to Color.Black.copy(alpha = .8f))))
         Column(Modifier.align(Alignment.BottomStart).fillMaxWidth().background(CoffeePeekColors.PhotoBadgeOverlay).padding(12.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(value.title, style = MaterialTheme.typography.titleMedium, color = Color.White,
                 maxLines = 2, overflow = TextOverflow.Ellipsis)
             Text(stringResource(Res.string.collections_saved_count, value.itemCount),
-                style = MaterialTheme.typography.bodySmall, color = Color.White.copy(alpha = .92f))
+                style = MaterialTheme.typography.bodySmall, color = Color.White.copy(alpha = .9f))
         }
     }
 }
@@ -59,7 +59,7 @@ private fun SavedCollectionCardCaption(value: SavedCollectionSummary, modifier: 
 private fun Modifier.bottomBlurFade(): Modifier = graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }
     .drawWithContent {
         drawContent()
-        drawRect(Brush.verticalGradient(0f to Color.Transparent, .3f to Color.White.copy(alpha = .25f),
+        drawRect(Brush.verticalGradient(0f to Color.Transparent, .3f to Color.White.copy(alpha = .12f),
             1f to Color.White), blendMode = BlendMode.DstIn)
     }
 

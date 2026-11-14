@@ -1,6 +1,5 @@
 package com.coffeepeek.feature.ownership.impl.ui.compose
 
-import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
 
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -22,7 +21,7 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 internal fun OwnershipClaimDetails(claim: OwnershipClaim, image: OwnershipImage = { _, _, m, _ -> CoffeePeekImagePlaceholder(m) }) {
     Text(claim.name, style = MaterialTheme.typography.headlineSmall)
     Text(claim.slug)
-    Text(claimStatus(claim.status), color = MaterialTheme.colorScheme.coffeePeekAccentForeground)
+    Text(claimStatus(claim.status), color = MaterialTheme.colorScheme.primary)
     Text(stringResource(if (claim.hasCurrentAccess) Res.string.ownership_access_yes else Res.string.ownership_access_no))
     CoffeePeekContentCard {
         Text(stringResource(Res.string.ownership_contact), fontWeight = FontWeight.SemiBold)
