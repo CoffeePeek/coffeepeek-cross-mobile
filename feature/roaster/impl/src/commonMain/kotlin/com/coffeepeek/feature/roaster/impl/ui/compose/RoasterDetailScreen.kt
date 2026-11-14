@@ -2,6 +2,9 @@ package com.coffeepeek.feature.roaster.impl.ui.compose
 
 import com.coffeepeek.feature.roaster.impl.ui.compose.model.RoasterImage
 import com.coffeepeek.feature.roaster.impl.ui.compose.model.RoasterPhotoViewer
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.tween
+import com.coffeepeek.core.designsystem.theme.reducedMotionDuration
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -110,16 +113,25 @@ internal fun RoasterDetailScreenContent(
     // Zero insets: the hero runs edge-to-edge like the previous screen and pads its own controls.
     Scaffold(modifier, snackbarHost = { SnackbarHost(snackbar, Modifier.navigationBarsPadding()) },
         containerColor = MaterialTheme.colorScheme.background, contentWindowInsets = WindowInsets(0)) {
-        when {
-            state.isLoading && details == null -> Box(Modifier.fillMaxSize().safeDrawingPadding(), contentAlignment = Alignment.Center) {
-                CoffeePeekLoader(stringResource(Res.string.roaster_loading))
-            }
-            state.loadFailed && details == null -> RoasterDetailError({ onAction(RoasterDetailAction.Retry) },
-                { onAction(RoasterDetailAction.Back) }, Modifier.safeDrawingPadding())
-            details != null -> androidx.compose.runtime.CompositionLocalProvider(
-                com.coffeepeek.feature.roaster.impl.ui.compose.component.LocalRoasterBusinessIdentity provides
-                    com.coffeepeek.feature.roaster.impl.ui.compose.component.RoasterBusinessIdentity(details.id, details.address.slug, details.address.canonicalPath)) {
-                RoasterDetailContent(details, state.isFavorite, onAction, image, screen, onFavoriteFeedback)
+        val currentDetails = details
+        Crossfade(targetState = when {
+            state.isLoading && currentDetails == null -> "loading"
+            state.loadFailed && currentDetails == null -> "error"
+            else -> "content"
+        }, animationSpec = tween(reducedMotionDuration(220)), label = "roaster-status") { status ->
+            when (status) {
+                ("loading") -> Box(Modifier.fillMaxSize().safeDrawingPadding(), contentAlignment = Alignment.Center) {
+                    CoffeePeekLoader(stringResource(Res.string.roaster_loading))
+                }
+                ("error") -> RoasterDetailError({ onAction(RoasterDetailAction.Retry) },
+                    { onAction(RoasterDetailAction.Back) }, Modifier.safeDrawingPadding())
+                else -> currentDetails?.let { current ->
+                    androidx.compose.runtime.CompositionLocalProvider(
+                        com.coffeepeek.feature.roaster.impl.ui.compose.component.LocalRoasterBusinessIdentity provides
+                            com.coffeepeek.feature.roaster.impl.ui.compose.component.RoasterBusinessIdentity(current.id, current.address.slug, current.address.canonicalPath)) {
+                        RoasterDetailContent(current, state.isFavorite, onAction, image, screen, onFavoriteFeedback)
+                    }
+                }
             }
         }
     }

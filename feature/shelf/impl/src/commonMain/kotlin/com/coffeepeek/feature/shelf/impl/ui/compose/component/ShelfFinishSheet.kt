@@ -1,5 +1,6 @@
 package com.coffeepeek.feature.shelf.impl.ui.compose.component
 
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -42,6 +43,7 @@ import com.coffeepeek.core.designsystem.component.CoffeePeekSwipeDismissModalBot
 import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
+import com.coffeepeek.core.designsystem.theme.reducedMotionDuration
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.shelf.impl.resources.*
 import com.coffeepeek.feature.shelf.api.ShelfImage
@@ -117,8 +119,10 @@ private fun ShelfVerdictChip(
     text: String, icon: ImageVector, color: Color, onColor: Color, selected: Boolean, onClick: () -> Unit, modifier: Modifier,
 ) {
     val surface = MaterialTheme.colorScheme.surface
-    val fill by animateColorAsState(if (selected) color else color.copy(alpha = 0.14f).compositeOver(surface), label = "verdict fill")
-    val content by animateColorAsState(if (selected) onColor else MaterialTheme.colorScheme.onSurface, label = "verdict text")
+    val fill by animateColorAsState(if (selected) color else color.copy(alpha = 0.14f).compositeOver(surface),
+        animationSpec = tween(reducedMotionDuration(220)), label = "verdict fill")
+    val content by animateColorAsState(if (selected) onColor else MaterialTheme.colorScheme.onSurface,
+        animationSpec = tween(reducedMotionDuration(220)), label = "verdict text")
     Row(modifier.heightIn(min = 52.dp).clip(CircleShape).background(fill).border(1.5.dp, color.copy(alpha = if (selected) 1f else 0.45f), CircleShape)
         .toggleable(selected, role = Role.Checkbox) { onClick() }.padding(horizontal = CoffeePeekDimens.spacing3),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2, Alignment.CenterHorizontally)) {

@@ -50,21 +50,23 @@ internal fun ShopCheckInRatingsOverview(checkIns: List<ShopCheckIn>, overallRati
     summary: ShopCheckInRatingSummary? = checkIns.ratingSummary(),
     sampleSize: Int = checkIns.size,
 ) {
-    val averages = summary ?: return
+    val averages = summary
     Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3)) {
         Row(verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2)) {
             CoffeePeekIcon(CoffeePeekIcons.StarFilled, null, Modifier.size(24.dp), tint = MaterialTheme.colorScheme.primary)
             Text(stringResource(Res.string.shop_checkins_rating_summary,
-                formatShopRating(overallRating?.takeIf { it > 0 && it.isFinite() } ?: averages.overall),
+                formatShopRating(overallRating?.takeIf { it > 0 && it.isFinite() } ?: averages?.overall ?: 0.0),
                 maxOf(checkInCount, sampleSize)),
                 style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
         }
         if (checkInCount > sampleSize) Text(stringResource(Res.string.shop_checkins_rating_sample),
             style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        RatingRow(stringResource(Res.string.shop_review_coffee), averages.coffee, Res.drawable.shop_checkin_rating_coffee)
-        RatingRow(stringResource(Res.string.shop_review_service), averages.service, Res.drawable.shop_checkin_rating_service)
-        RatingRow(stringResource(Res.string.shop_checkins_aura), averages.place, Res.drawable.shop_checkin_rating_atmosphere)
+        if (averages != null) {
+            RatingRow(stringResource(Res.string.shop_review_coffee), averages.coffee, Res.drawable.shop_checkin_rating_coffee)
+            RatingRow(stringResource(Res.string.shop_review_service), averages.service, Res.drawable.shop_checkin_rating_service)
+            RatingRow(stringResource(Res.string.shop_checkins_aura), averages.place, Res.drawable.shop_checkin_rating_atmosphere)
+        }
     }
 }
 

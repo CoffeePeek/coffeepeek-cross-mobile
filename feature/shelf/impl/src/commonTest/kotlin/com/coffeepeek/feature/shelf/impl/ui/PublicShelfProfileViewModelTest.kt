@@ -48,7 +48,7 @@ class PublicShelfProfileViewModelTest {
         assertEquals(listOf<PublicShelfProfileEvent>(PublicShelfProfileEvent.OpenCoffee("ethiopia")), events)
     }
 
-    @Test fun refreshImmediatelyDropsTheOldPublicProjectionAndRejectsStaleClicks() = runTest(dispatcher) {
+    @Test fun refreshKeepsTheProjectionUntilTheNewOneArrives() = runTest(dispatcher) {
         val gate = CompletableDeferred<Result<PublicShelf?>>()
         val repository = FakeShelfProfileRepository().apply { publicRead = { Result.success(profileShelf()) } }
         val model = model(repository)
@@ -58,24 +58,24 @@ class PublicShelfProfileViewModelTest {
         assertNotNull(model.state.value.shelf)
         repository.publicRead = { gate.await() }
         model.onAction(PublicShelfProfileAction.Refresh)
-        model.onAction(PublicShelfProfileAction.OpenCoffee("bag"))
         runCurrent()
-        assertNull(model.state.value.shelf)
-        assertTrue(model.state.value.loading)
-        assertTrue(events.isEmpty())
+        // Stale-while-revalidate: the loaded projection stays visible during the refresh.
+        assertNotNull(model.state.value.shelf)
+        assertTrue(model.state.value.refreshing)
         gate.complete(Result.success(null))
         runCurrent()
         assertNull(model.state.value.shelf)
     }
 
-    @Test fun aRefreshFailureDoesNotRetainFormerlyPublicBags() = runTest(dispatcher) {
+    @Test fun aRefreshFailureKeepsTheProjectionAndMarksTheError() = runTest(dispatcher) {
         val repository = FakeShelfProfileRepository().apply { publicRead = { Result.success(profileShelf()) } }
         val model = model(repository)
         runCurrent()
         repository.publicRead = { Result.failure(IllegalStateException()) }
         model.onAction(PublicShelfProfileAction.Refresh)
         runCurrent()
-        assertNull(model.state.value.shelf)
+        // Stale-while-revalidate: the failed refresh does not blank the loaded shelf.
+        assertNotNull(model.state.value.shelf)
         assertTrue(model.state.value.failed)
     }
 

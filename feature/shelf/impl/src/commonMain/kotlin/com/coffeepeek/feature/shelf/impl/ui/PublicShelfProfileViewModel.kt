@@ -28,7 +28,7 @@ internal class PublicShelfProfileViewModel(private val repository: ShelfProfileR
         val epoch = ++generation
         work?.cancel()
         updateState {
-            if (reset || !ownerView) initialShelfState(repository, slug, ownerView).copy(revision = epoch)
+            if (reset) initialShelfState(repository, slug, ownerView).copy(revision = epoch)
             else copy(loading = shelf == null && repository.cachedPublicShelf(slug) == null,
                 refreshing = true, failed = false)
         }

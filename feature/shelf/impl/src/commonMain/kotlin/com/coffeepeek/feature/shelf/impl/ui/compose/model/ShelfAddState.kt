@@ -56,6 +56,8 @@ internal data class ShelfAddState(
     val failure: BagScanIssue? = null,
     val form: ShelfBagForm = ShelfBagForm(),
     val options: List<ShelfCoffeeOption> = emptyList(),
+    val searching: Boolean = false,
+    val searchFailed: Boolean = false,
     val saving: Boolean = false,
     val confirmDuplicate: Boolean = false,
     /** The card has just flown off the scan and still has to drop into its place in the form. */

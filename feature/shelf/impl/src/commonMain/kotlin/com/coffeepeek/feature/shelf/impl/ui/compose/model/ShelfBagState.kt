@@ -13,6 +13,7 @@ internal data class ShelfBagState(
     val today: ShelfDay,
     val bag: ShelfBagItem? = null,
     val missing: Boolean = false,
+    val loadFailed: Boolean = false,
     val brews: ShelfBagBrews? = null,
     val finishing: Boolean = false,
     val deleting: Boolean = false,

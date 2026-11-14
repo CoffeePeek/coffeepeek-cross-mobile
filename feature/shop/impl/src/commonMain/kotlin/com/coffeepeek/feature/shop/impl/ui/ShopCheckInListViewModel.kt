@@ -97,7 +97,7 @@ internal class ShopCheckInListViewModel(
         val generation = sessionGeneration
         loadJob = job
         var wasCancelled = false
-        updateState { copy(isLoading = true, hasLoadError = false) }
+        updateState { copy(isLoading = !hasLoaded, hasLoadError = false) }
         try {
             val viewer = currentViewer().getOrThrow()
             currentCoroutineContext().ensureActive()

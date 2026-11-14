@@ -1,5 +1,7 @@
 package com.coffeepeek.core.designsystem.component
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.background
@@ -7,6 +9,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
@@ -29,7 +32,8 @@ fun CoffeePeekLikeIcon(
     enabled: Boolean = true,
     overImage: Boolean = false,
 ) {
-    val color = coffeePeekLikeColor(selected, overImage, MaterialTheme.colorScheme.onSurface)
+    val target = coffeePeekLikeColor(selected, overImage, MaterialTheme.colorScheme.onSurface)
+    val color by animateColorAsState(target, tween(180), label = "like-color")
     val alpha = if (enabled) 1f else 0.38f
     CoffeePeekIcon(if (selected) CoffeePeekIcons.FavoriteFilled else CoffeePeekIcons.Favorite,
         contentDescription, modifier.size(size), tint = color.copy(alpha = alpha))

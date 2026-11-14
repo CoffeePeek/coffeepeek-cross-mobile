@@ -59,7 +59,7 @@ internal fun CoffeeOfferCard(offer: CoffeeOffer, brewNames: Map<String, String>,
                 }
             }
             CoffeePrice(offer)
-            CoffeePeekButton(stringResource(Res.string.coffee_open_seller), onOpenSeller, enabled = offer.sourceUrl != null)
+            CoffeePeekButton(stringResource(Res.string.coffee_open_seller), onOpenSeller, enabled = !offer.sourceUrl.isNullOrBlank())
             val fields = listOf(
                 stringResource(Res.string.coffee_seller) to (offer.sellerName ?: stringResource(Res.string.coffee_unspecified)),
                 stringResource(Res.string.coffee_grind) to (coffeeProductFormLabel(offer.grind) ?: stringResource(Res.string.coffee_unspecified)),

@@ -83,6 +83,8 @@
     <string name="discovery_map_card_checkins">%1$d чекинов</string>
     <string name="discovery_map_card_no_checkins">Нет чекинов</string>
     <string name="discovery_map_card_closed">Закрыто</string>
+    <string name="discovery_map_load_failed">Не удалось загрузить кофейни на карте</string>
+    <string name="discovery_map_retry">Повторить</string>
     <string name="discovery_map_card_hours">%1$s · %2$s</string>
     <string name="discovery_map_carousel_position">Кофейня %1$d из %2$d</string>
     <string name="discovery_map_photo_missing">Фото %1$s отсутствует</string>

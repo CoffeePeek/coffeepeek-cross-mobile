@@ -296,12 +296,16 @@ private fun HelpfulButton(count: Int, helpful: Boolean, onClick: (() -> Unit)?) 
     }
     Row(
         Modifier.heightIn(min = 48.dp).widthIn(min = 48.dp).clip(RoundedCornerShape(CoffeePeekDimens.radiusMd))
-            .then(if (onClick != null) Modifier.clickable(role = Role.Button, onClick = onClick) else Modifier)
             .semantics(mergeDescendants = true) { contentDescription = description },
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2),
     ) {
-        CoffeePeekLikeIcon(helpful, contentDescription = null)
+        // The ripple belongs to the heart alone; the row only widens the touch target.
+        Box(Modifier.size(44.dp).clip(CircleShape)
+            .then(if (onClick != null) Modifier.clickable(role = Role.Button, onClick = onClick) else Modifier),
+            contentAlignment = Alignment.Center) {
+            CoffeePeekLikeIcon(helpful, contentDescription = null)
+        }
         Text(count.toString(), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface)
     }
 }
@@ -329,7 +333,7 @@ private fun PostPhotoStrip(photos: PostPhotos, onPhoto: (Int) -> Unit, host: Com
             Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surfaceVariant), contentAlignment = Alignment.Center) {
                 CoffeePeekLoader(stringResource(Res.string.community_loading), size = 32.dp)
             }
-            host.image(photos.thumbnails.getOrNull(index) ?: photos.originals[index], photos.inlineSource(index), Modifier.fillMaxSize(), ContentScale.Crop)
+            host.image(photos.thumbnails.getOrNull(index)?.takeIf(String::isNotBlank) ?: photos.originals.getOrNull(index).orEmpty(), photos.inlineSource(index), Modifier.fillMaxSize(), ContentScale.Crop)
             if (index == 2 && count > 3) Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.45f)), contentAlignment = Alignment.Center) {
                 Text(stringResource(Res.string.community_more_photos, count - 3), style = MaterialTheme.typography.headlineSmall, color = Color.White)
             }

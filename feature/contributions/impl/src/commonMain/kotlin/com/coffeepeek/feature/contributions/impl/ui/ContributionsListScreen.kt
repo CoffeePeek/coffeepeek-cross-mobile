@@ -1,8 +1,10 @@
 package com.coffeepeek.feature.contributions.impl.ui
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
 import org.jetbrains.compose.ui.tooling.preview.Preview
-import com.coffeepeek.feature.contributions.impl.resources.Res
+import com.coffeepeek.feature.contributions.impl.resources.*
 import com.coffeepeek.feature.contributions.impl.resources.contributions_back
 import com.coffeepeek.feature.contributions.impl.resources.contributions_load_failed
 import com.coffeepeek.feature.contributions.impl.resources.contributions_loading
@@ -36,7 +38,9 @@ import androidx.compose.ui.Modifier
 import org.jetbrains.compose.resources.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.coffeepeek.core.designsystem.component.CoffeePeekButton
+import com.coffeepeek.core.designsystem.component.CoffeePeekPullToRefresh
 import com.coffeepeek.core.designsystem.component.CoffeePeekCapsuleSegmentedControl
+import com.coffeepeek.core.designsystem.component.CoffeePeekTextButton
 import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
 import com.coffeepeek.core.designsystem.component.CoffeePeekTopBar
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
@@ -114,29 +118,42 @@ private fun Tabs(state: ContributionsListState, selected: ModerationStatus, kind
             scrollable = true,
         )
         key(selected) {
-            ContributionList(kind, selected, state.tabs[selected] ?: TabState(), callbacks, { onAction(ContributionsListAction.LoadMore(selected)) })
+            ContributionList(kind, selected, state.tabs[selected] ?: TabState(), callbacks,
+                { onAction(ContributionsListAction.LoadMore(selected)) },
+                { onAction(ContributionsListAction.Refresh) })
         }
     }
 }
 
 @Composable
-private fun ContributionList(kind: ContributionKind, status: ModerationStatus, tab: TabState, callbacks: ListCallbacks, onLoadMore: () -> Unit) {
+private fun ContributionList(kind: ContributionKind, status: ModerationStatus, tab: TabState, callbacks: ListCallbacks,
+    onLoadMore: () -> Unit, onRefresh: () -> Unit) {
     val listState = rememberLazyListState()
     val nearEnd by remember(tab) {
-        derivedStateOf { (listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0) >= tab.items.size - 3 && tab.hasMore && !tab.isLoadingMore }
+        derivedStateOf { (listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0) >= tab.items.size - 3 && tab.hasMore && !tab.isLoadingMore && !tab.loadMoreFailed }
     }
     LaunchedEffect(nearEnd) { if (nearEnd) onLoadMore() }
-    LazyColumn(
-        Modifier.fillMaxSize(), state = listState, contentPadding = coffeePeekScrollContentPadding(PaddingValues(CoffeePeekDimens.spacing4)),
-        verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3),
-    ) {
-        items(tab.items, key = { it.id }) { item ->
-            ContributionCard(item, kind, status, { target ->
-                when (target) {
-                    is ContributionTarget.Shop -> callbacks.onOpenShop(target.slug)
-                    is ContributionTarget.Request -> callbacks.onOpenRequest(target.id)
+    CoffeePeekPullToRefresh(listState, isRefreshing = false, onRefresh = onRefresh,
+        refreshDescription = stringResource(Res.string.contributions_refreshing),
+        loadingDescription = stringResource(Res.string.contributions_refreshing),
+        modifier = Modifier.fillMaxSize()) { listModifier ->
+        LazyColumn(
+            listModifier, state = listState, contentPadding = coffeePeekScrollContentPadding(PaddingValues(CoffeePeekDimens.spacing4)),
+            verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3),
+        ) {
+            items(tab.items, key = { it.id }) { item ->
+                ContributionCard(item, kind, status, { target ->
+                    when (target) {
+                        is ContributionTarget.Shop -> callbacks.onOpenShop(target.slug)
+                        is ContributionTarget.Request -> callbacks.onOpenRequest(target.id)
+                    }
+                })
+            }
+            if (tab.loadMoreFailed) item(key = "load-more-failed") {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
+                    CoffeePeekTextButton({ onLoadMore() }) { Text(stringResource(Res.string.contributions_load_more_failed)) }
                 }
-            })
+            }
         }
     }
 }

@@ -67,6 +67,8 @@ import com.coffeepeek.core.designsystem.component.CoffeePeekButton
 import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
+import com.coffeepeek.core.designsystem.theme.coffeePeekReduceMotion
+import com.coffeepeek.core.designsystem.theme.reducedMotionDuration
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.shelf.api.ShelfCameraFocus
 import com.coffeepeek.feature.shelf.api.ShelfCameraStatus
@@ -254,10 +256,13 @@ private fun ShelfBolt(color: Color, crossed: Boolean) = Canvas(Modifier.size(22.
 @Composable
 private fun ShelfShutterFlash(capturing: Boolean) {
     val flash = remember { Animatable(0f) }
+    val reduceMotion = coffeePeekReduceMotion()
     LaunchedEffect(capturing) {
         if (!capturing) return@LaunchedEffect
-        flash.snapTo(0.85f)
-        flash.animateTo(0f, tween(260))
+        if (reduceMotion) { flash.snapTo(0f) } else {
+            flash.snapTo(0.85f)
+            flash.animateTo(0f, tween(260))
+        }
     }
     if (flash.value > 0f) Box(Modifier.fillMaxSize().background(Color.White.copy(alpha = flash.value)))
 }
@@ -265,13 +270,13 @@ private fun ShelfShutterFlash(capturing: Boolean) {
 /** "Как снимать?" rises from the bottom over a dimmed viewfinder; a tap outside or "Понятно" lowers it. */
 @Composable
 private fun BoxScope.ShelfCameraTipsOverlay(visible: Boolean, onClose: () -> Unit) {
-    AnimatedVisibility(visible, Modifier.fillMaxSize(), enter = fadeIn(tween(220)), exit = fadeOut(tween(220))) {
+    AnimatedVisibility(visible, Modifier.fillMaxSize(), enter = fadeIn(tween(reducedMotionDuration(220))), exit = fadeOut(tween(reducedMotionDuration(220)))) {
         Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.45f))
             .clickable(interactionSource = null, indication = null, onClick = onClose))
     }
     AnimatedVisibility(visible, Modifier.align(Alignment.BottomCenter),
-        enter = slideInVertically(tween(280, easing = FastOutSlowInEasing)) { it / 2 } + fadeIn(tween(220)),
-        exit = slideOutVertically(tween(220)) { it / 2 } + fadeOut(tween(180))) {
+        enter = slideInVertically(tween(280, easing = FastOutSlowInEasing)) { it / 2 } + fadeIn(tween(reducedMotionDuration(220))),
+        exit = slideOutVertically(tween(reducedMotionDuration(220))) { it / 2 } + fadeOut(tween(reducedMotionDuration(180)))) {
         ShelfCameraTips(Modifier, onClose)
     }
 }

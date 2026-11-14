@@ -24,6 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.semantics.Role
@@ -78,8 +79,8 @@ fun CoffeePeekLikeButton(
                 enabled && !isLoading, selected, isLoading) == true) return
     val interactions = remember { MutableInteractionSource() }
     val pressed by interactions.collectIsPressedAsState()
+    // The touch target stays 48dp, but only the heart itself gives press feedback.
     Box(modifier.sizeIn(minWidth = 48.dp, minHeight = 48.dp)
-        .coffeePeekGlassPress(pressed, enabled && !isLoading)
         .toggleable(selected, interactionSource = interactions, indication = null,
             enabled = enabled && !isLoading, role = Role.Checkbox, onValueChange = { onClick() })
         .semantics {
@@ -88,7 +89,7 @@ fun CoffeePeekLikeButton(
         },
         contentAlignment = Alignment.Center) {
         if (style.isGlass && coffeePeekUsesNativeGlass) {
-            CoffeePeekNativeControlBackground(Modifier.matchParentSize(), enabled = enabled && !isLoading, pressed = pressed)
+            CoffeePeekNativeControlBackground(Modifier.matchParentSize(), enabled = enabled && !isLoading)
         }
         // A compact visual plate is independent of the accessible touch target.
         Box(Modifier.size(coffeePeekLikePlateSize(style, iconSize)).coffeePeekLikeBackground(style, shape)
@@ -97,7 +98,12 @@ fun CoffeePeekLikeButton(
             if (isLoading) CoffeePeekLoader(label, modifier = Modifier.clearAndSetSemantics {},
                 size = 18.dp, strokeWidth = 2.dp)
             else CoffeePeekLikeIcon(selected, null, size = iconSize, enabled = enabled,
-                overImage = coffeePeekLikeUsesPhotoColor(overImage, style, LocalCoffeePeekOpaqueGlass.current))
+                overImage = coffeePeekLikeUsesPhotoColor(overImage, style, LocalCoffeePeekOpaqueGlass.current),
+                modifier = Modifier.graphicsLayer {
+                    val scale = if (pressed) 0.88f else 1f
+                    scaleX = scale
+                    scaleY = scale
+                })
         }
     }
 }
