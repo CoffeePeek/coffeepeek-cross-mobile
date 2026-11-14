@@ -298,24 +298,25 @@ private fun HelpfulButton(count: Int, helpful: Boolean, onClick: (() -> Unit)?) 
         else -> stringResource(Res.string.community_like, count)
     }
     Row(
-        Modifier.heightIn(min = 48.dp).widthIn(min = 48.dp)
+        Modifier.heightIn(min = 48.dp)
             .semantics(mergeDescendants = true) { contentDescription = description },
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing1),
+        horizontalArrangement = Arrangement.spacedBy(2.dp),
     ) {
-        // The press effect lives inside the heart itself; the row only widens the touch target
-        // (no visual ripple of its own), so the heart and the count sit close together.
+        // The heart sits on the content grid (no centering indent before it); the 44dp touch
+        // target is an invisible overlay centered on the glyph, so it adds no layout gap.
+        // The press effect plays on the heart itself via the shared interaction source.
         val interactions = remember { MutableInteractionSource() }
-        val press = if (onClick != null) Modifier.clickable(
-            interactionSource = interactions, indication = null, role = Role.Button, onClick = onClick,
-        ) else Modifier
-        Box(Modifier.size(44.dp).then(press), contentAlignment = Alignment.Center) {
+        Box(Modifier.size(24.dp), contentAlignment = Alignment.Center) {
             val heartPress = if (onClick != null) Modifier.clip(CircleShape).clickable(
                 interactionSource = interactions, indication = ripple(bounded = true), onClick = onClick,
             ) else Modifier
             Box(Modifier.size(28.dp).then(heartPress), contentAlignment = Alignment.Center) {
                 CoffeePeekLikeIcon(helpful, contentDescription = null)
             }
+            if (onClick != null) Box(Modifier.size(44.dp).clickable(
+                interactionSource = interactions, indication = null, role = Role.Button, onClick = onClick,
+            ))
         }
         Text(count.toString(), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface)
     }
