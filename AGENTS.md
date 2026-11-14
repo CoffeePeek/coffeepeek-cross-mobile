@@ -245,7 +245,7 @@ implementation details.
   (`com.coffeepeek.sandbox`) for fake account/data writes, errors and visual
   checks. It uses a local in-memory
   fake backend, not a staging server. Use ordinary `directDebug` or `playDebug`
-  (`com.coffeepeek`) only for requested live-backend/device integration checks;
+  (`com.coffeepeek.debug`) only for requested live-backend/device integration checks;
   Debug uses the normal app/data/backend and disables Google sign-in, not all
   authentication. Delivery flavor (`direct`/`play`) is separate from execution
   environment (`sandbox`/`debug`/`release`). Never use Release for routine tests.
@@ -257,8 +257,8 @@ implementation details.
   shared `CoffeePeek Sandbox — Build` / `CoffeePeek Debug — Build` configurations
   assemble exact variants only: they do not install or launch anything. Do not
   install a live Debug APK merely because a Sandbox check was requested. Verify
-  installed version/signature first; normal Debug may share the real app's data
-  and cannot safely replace an incompatible-signed release. No uninstall or data
+  installed version/signature first; Debug has separate local data but uses the
+  live backend, and local/distributed Debug signatures may differ. No uninstall or data
   clearing to work around this. Fake tests never certify real backend, camera,
   OAuth, analytics or persistence acceptance.
 - Define a short verification plan before changing code: the behavior to preserve,

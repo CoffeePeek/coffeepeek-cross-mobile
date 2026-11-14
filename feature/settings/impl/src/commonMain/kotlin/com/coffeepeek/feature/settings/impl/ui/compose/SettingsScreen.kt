@@ -69,6 +69,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import com.coffeepeek.core.designsystem.component.CoffeePeekIconBadgePalette
@@ -104,6 +105,7 @@ internal fun SettingsScreen(
     appInfo: SettingsAppInfo, bottomClearance: Dp, modifier: Modifier = Modifier,
 ) {
     val state by vm.state.collectAsStateWithLifecycle()
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { vm.onScreenShown() }
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     val upToDate by rememberUpdatedState(stringResource(Res.string.settings_update_up_to_date))
     val failed by rememberUpdatedState(stringResource(Res.string.settings_update_failed))
@@ -218,6 +220,7 @@ private fun SettingsOtherSection(navigation: SettingsNavigation, external: Setti
 
 @Composable
 private fun SettingsUpdateSection(state: SettingsState, appInfo: SettingsAppInfo, onCheckForUpdates: () -> Unit) {
+    if (!appInfo.canCheckForUpdates) return
     CoffeePeekSettingsSection(title = stringResource(Res.string.settings_section_update)) {
         val update = state.update
         CoffeePeekSettingsRow(

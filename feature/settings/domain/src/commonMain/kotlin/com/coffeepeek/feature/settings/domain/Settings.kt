@@ -10,7 +10,7 @@ data class SettingsCity(val id: String, val name: String)
  * The analytics consent switch. [available] is true only for a signed-in user whose analytics identity is ready; the row is
  * not shown otherwise. [accepted] is false for both "declined" and "never asked".
  */
-data class UsageConsentState(val available: Boolean, val accepted: Boolean) {
+data class UsageConsentState(val available: Boolean, val accepted: Boolean, val syncFailed: Boolean = false) {
     companion object {
         val Unavailable = UsageConsentState(available = false, accepted = false)
     }

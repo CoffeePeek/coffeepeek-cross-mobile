@@ -12,6 +12,9 @@ import androidx.compose.runtime.*
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.unit.Density
@@ -103,9 +106,12 @@ private fun NotificationsIconButton(unreadCount: Int, onClick: () -> Unit) {
                 stringResource(Res.string.notifications_button_unread, unreadCount) else stringResource(Res.string.notifications_title))
         }
         // A sibling stays outside the circular IconButton's clip and inside the button's bounds.
-        if (unreadCount > 0) Badge(modifier = Modifier.align(Alignment.TopEnd).clearAndSetSemantics { },
-            containerColor = MaterialTheme.colorScheme.primary, contentColor = MaterialTheme.colorScheme.onPrimary) {
-            Text(if (unreadCount > 99) stringResource(Res.string.notifications_badge_max) else unreadCount.toString(), maxLines = 1)
+        AnimatedVisibility(visible = unreadCount > 0, enter = scaleIn(initialScale = 0.6f),
+            exit = scaleOut(targetScale = 0.6f), modifier = Modifier.align(Alignment.TopEnd)) {
+            Badge(modifier = Modifier.clearAndSetSemantics { },
+                containerColor = MaterialTheme.colorScheme.primary, contentColor = MaterialTheme.colorScheme.onPrimary) {
+                Text(if (unreadCount > 99) stringResource(Res.string.notifications_badge_max) else unreadCount.toString(), maxLines = 1)
+            }
         }
     }
 }

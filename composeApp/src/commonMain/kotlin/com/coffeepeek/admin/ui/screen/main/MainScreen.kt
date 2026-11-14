@@ -39,6 +39,7 @@ import androidx.navigation.NavDestination
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavBackStackEntry
+import androidx.navigation.NavHostController
 import androidx.lifecycle.Lifecycle
 import androidx.navigation.compose.LocalOwnersProvider
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -97,15 +98,7 @@ internal fun ComposeMainScreen(isLoggedIn: Boolean, onMapExpandedChange: (Boolea
     val items = mainBottomNavItems(availableTabs)
     val availableRoutes = items.flatMap { listOf(it.graph, it.startScreen) }
 
-    var previousBusinessMode by remember { mutableStateOf(businessMode) }
-    LaunchedEffect(businessMode) {
-        if (previousBusinessMode == businessMode) return@LaunchedEffect
-        previousBusinessMode = businessMode
-        bottomNavController.navigate(if (businessMode) Navigator.Screen.BusinessGraph else Navigator.Screen.FeedGraph) {
-            popUpTo(bottomNavController.graph.id) { inclusive = true }
-            launchSingleTop = true
-        }
-    }
+    BusinessModeNavigationEffect(businessMode, bottomNavController)
     LaunchedEffect(availableRoutes) {
         Navigator.navigationEvents.collect { event ->
             when (event) {
@@ -297,6 +290,23 @@ private fun createNavItem(onCreate: () -> Unit): FloatingNavItem {
     )
 }
 
+@Composable
+private fun BusinessModeNavigationEffect(businessMode: Boolean, controller: NavHostController) {
+    var previousBusinessMode by remember { mutableStateOf(businessMode) }
+    LaunchedEffect(businessMode) {
+        if (previousBusinessMode == businessMode) return@LaunchedEffect
+        previousBusinessMode = businessMode
+        controller.navigate(if (businessMode) Navigator.Screen.BusinessGraph else Navigator.Screen.FeedGraph) {
+            popUpTo(controller.graph.id) {
+                inclusive = true
+                saveState = true
+            }
+            launchSingleTop = true
+            restoreState = true
+        }
+    }
+}
+
 private fun AnimatedContentTransitionScope<NavBackStackEntry>.tabDirection() =
     if (targetState.destination.tabIndex() >= initialState.destination.tabIndex()) {
         AnimatedContentTransitionScope.SlideDirection.Left
@@ -305,6 +315,7 @@ private fun AnimatedContentTransitionScope<NavBackStackEntry>.tabDirection() =
     }
 
 private fun NavDestination.tabIndex(): Int = when {
+    hasRoute<Navigator.Screen.BusinessTab>() -> 0
     hasRoute<Navigator.Screen.FeedTab>() -> 0
     hasRoute<Navigator.Screen.CommunityTab>() -> 2
     hasRoute<Navigator.Screen.ProfileTab>() -> 3

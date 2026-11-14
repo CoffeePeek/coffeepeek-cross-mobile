@@ -2,6 +2,8 @@ package com.coffeepeek.feature.leaderboard.impl.ui.compose.component
 
 import com.coffeepeek.core.designsystem.component.CoffeePeekTextButton as TextButton
 
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -14,6 +16,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
+import com.coffeepeek.core.designsystem.theme.reducedMotionDuration
 import com.coffeepeek.feature.leaderboard.impl.resources.*
 import com.coffeepeek.feature.leaderboard.impl.ui.compose.model.LeaderboardAction
 import com.coffeepeek.feature.leaderboard.impl.ui.compose.model.LeaderboardState
@@ -24,16 +27,22 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 internal fun LeaderboardStatus(state: LeaderboardState, onAction: (LeaderboardAction) -> Unit) {
     Column(Modifier.fillMaxWidth().padding(vertical = 12.dp).semantics { liveRegion = LiveRegionMode.Polite },
         horizontalAlignment = Alignment.CenterHorizontally) {
-        when {
-            state.isLoading && state.data == null -> CoffeePeekLoader(contentDescription = stringResource(Res.string.leaderboard_loading))
-            state.loadFailed -> {
-                Text(stringResource(Res.string.leaderboard_error), color = MaterialTheme.colorScheme.onSurfaceVariant)
-                TextButton(onClick = { onAction(LeaderboardAction.Retry) }) {
-                    Text(stringResource(Res.string.leaderboard_retry))
+        Crossfade(targetState = when {
+            state.isLoading && state.data == null -> 0
+            state.loadFailed -> 1
+            else -> 2
+        }, animationSpec = tween(reducedMotionDuration(220)), label = "leaderboard-status") { status ->
+            when (status) {
+                0 -> CoffeePeekLoader(contentDescription = stringResource(Res.string.leaderboard_loading))
+                1 -> {
+                    Text(stringResource(Res.string.leaderboard_error), color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    TextButton(onClick = { onAction(LeaderboardAction.Retry) }) {
+                        Text(stringResource(Res.string.leaderboard_retry))
+                    }
                 }
+                else -> Text(stringResource(Res.string.leaderboard_empty),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
-            state.data?.items.isNullOrEmpty() -> Text(stringResource(Res.string.leaderboard_empty),
-                color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }

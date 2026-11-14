@@ -10,8 +10,8 @@ import com.coffeepeek.feature.settings.impl.ui.model.CityState
 import kotlinx.coroutines.launch
 
 /**
- * The default city. Unlike production (an empty card when the catalog is missing) a failed load shows an error with a retry. Only ids
- * from the loaded list can be selected; a repeated choice is ignored by the port.
+ * The default city. A failed catalog load shows an error with a retry.
+ * Only ids from the loaded list can be selected.
  */
 internal class CityViewModel(private val port: CityPort) : MviViewModel<CityState, CityAction, CityEvent>(CityState()) {
     init {

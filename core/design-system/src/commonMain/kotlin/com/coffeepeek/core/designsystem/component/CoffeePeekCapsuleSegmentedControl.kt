@@ -1,5 +1,6 @@
 package com.coffeepeek.core.designsystem.component
 
+import com.coffeepeek.core.designsystem.theme.reducedMotionDuration
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
@@ -21,6 +22,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -100,12 +103,14 @@ private fun <T> CoffeePeekScrollableSegments(options: List<T>, selected: T, labe
 internal fun CoffeePeekCapsuleSegment(text: String, isSelected: Boolean, enabled: Boolean, onClick: () -> Unit,
     modifier: Modifier, minHeight: Dp, labelPadding: Dp = 0.dp) {
     val shape = RoundedCornerShape(percent = 50)
+    val fill by animateColorAsState(if (isSelected) MaterialTheme.colorScheme.surface else Color.Transparent,
+        tween(reducedMotionDuration(160)), label = "segment-fill")
     Box(modifier.sizeIn(minWidth = CoffeePeekDimens.minimumTouchTarget,
         minHeight = maxOf(minHeight, CoffeePeekDimens.minimumTouchTarget))
         .selectable(selected = isSelected, role = Role.Tab, enabled = enabled, onClick = onClick),
         contentAlignment = Alignment.Center) {
         Box(Modifier.matchParentSize().padding(vertical = CoffeePeekDimens.spacing1)
-            .clip(shape).background(if (isSelected) MaterialTheme.colorScheme.surface else Color.Transparent)
+            .clip(shape).background(fill)
             .then(if (isSelected) Modifier.border(1.dp, MaterialTheme.colorScheme.outlineVariant, shape) else Modifier))
         Text(text, Modifier.padding(horizontal = labelPadding, vertical = CoffeePeekDimens.spacing2),
             style = MaterialTheme.typography.labelMedium,

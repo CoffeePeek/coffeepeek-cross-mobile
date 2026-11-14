@@ -10,10 +10,18 @@ import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.Crossfade
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -31,6 +39,7 @@ import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
+import com.coffeepeek.core.designsystem.theme.reducedMotionDuration
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.settings.domain.AppLanguage
 import com.coffeepeek.feature.settings.impl.resources.*
@@ -54,12 +63,17 @@ internal fun LanguageContent(
         Column(Modifier.fillMaxSize().padding(coffeePeekScrollContentPadding(padding)).verticalScroll(rememberScrollState())) {
             LanguageHeading(copy)
             LanguageOptions(state, copy, onSelect)
-            if (state.isSaving) {
-                Box(Modifier.fillMaxWidth().padding(CoffeePeekDimens.spacing6), contentAlignment = Alignment.Center) {
-                    CoffeePeekLoader(copy.saving)
+            Crossfade(targetState = when {
+                state.isSaving -> 0
+                state.hasSaveError -> 1
+                else -> 2
+            }, animationSpec = tween(reducedMotionDuration(220)), label = "language-status") { status ->
+                when (status) {
+                    0 -> Box(Modifier.fillMaxWidth().padding(CoffeePeekDimens.spacing6), contentAlignment = Alignment.Center) {
+                        CoffeePeekLoader(copy.saving)
+                    }
+                    1 -> CoffeePeekRefreshError(onRetry, Modifier.padding(CoffeePeekDimens.spacing4), message = copy.saveError, retryLabel = copy.retry)
                 }
-            } else if (state.hasSaveError) {
-                CoffeePeekRefreshError(onRetry, Modifier.padding(CoffeePeekDimens.spacing4), message = copy.saveError, retryLabel = copy.retry)
             }
         }
     }
@@ -103,7 +117,8 @@ private fun LanguageOption(name: String, selected: Boolean, enabled: Boolean, on
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(name, Modifier.weight(1f), style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
-        if (selected) {
+        AnimatedVisibility(selected, enter = fadeIn(tween(160)) + scaleIn(initialScale = 0.7f),
+            exit = fadeOut(tween(120))) {
             CoffeePeekIcon(CoffeePeekIcons.Check, contentDescription = null, tint = MaterialTheme.colorScheme.coffeePeekAccentForeground,
                 modifier = Modifier.size(CoffeePeekDimens.settingsIconSize))
         }

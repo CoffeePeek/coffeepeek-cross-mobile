@@ -9,7 +9,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.coffeepeek.admin.di.shop.AppShopCheckInDraftStore
-import com.coffeepeek.admin.settings.CityPreference
 import com.coffeepeek.admin.di.collections.FavoriteCollectionsPrompt
 import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.ui.component.LocalFloatingNavClearance
@@ -27,7 +26,6 @@ import com.coffeepeek.feature.discovery.domain.model.Coordinates
 import com.coffeepeek.feature.discovery.impl.createDiscoveryTabEntry
 import com.coffeepeek.feature.favorites.domain.repository.FavoritesRepository
 import io.ktor.client.HttpClient
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -89,9 +87,9 @@ internal fun featureDiscoveryScreenRenderer(
     catalog: PublicRoasterCatalog,
     sessions: SessionReader,
     favorites: FavoritesRepository,
-    cityPreference: CityPreference,
+    city: PreferenceDiscoveryCity,
     roasters: RoasterScreenRenderer,
-    scope: CoroutineScope,
+    location: AppDiscoveryLocation,
     favoriteCollections: FavoriteCollectionsPrompt?,
 ): DiscoveryScreenRenderer {
     val favoriteAdapter = AppDiscoveryFavorites(favorites, favoriteCollections)
@@ -100,8 +98,8 @@ internal fun featureDiscoveryScreenRenderer(
         createDiscoveryTabEntry(
             repository = repository,
             favorites = favoriteAdapter,
-            city = PreferenceDiscoveryCity(cityPreference),
-            location = AppDiscoveryLocation(scope),
+            city = city,
+            location = location,
             account = SessionDiscoveryAccount(sessions),
             shopDetails = ShopDiscoveryDetails(shops),
             analytics = AppDiscoveryAnalytics(),

@@ -10,6 +10,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.semantics.error
@@ -30,7 +31,7 @@ internal fun ShopCheckInNoteField(value: String, enabled: Boolean, hasError: Boo
     Column(verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing1)) {
         Text(stringResource(Res.string.shop_checkin_form_note), style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant)
-        CoffeePeekCompactOutlinedTextField(value, onChange, enabled = enabled, isError = hasError,
+        CoffeePeekCompactOutlinedTextField(value, { onChange(it.take(1000)) }, enabled = enabled, isError = hasError,
             errorDescription = errorMessage.takeIf { hasError }, singleLine = false,
             modifier = Modifier.fillMaxWidth().heightIn(min = 80.dp),
             shape = RoundedCornerShape(CoffeePeekDimens.buttonRadius),
@@ -45,6 +46,8 @@ internal fun ShopCheckInNoteField(value: String, enabled: Boolean, hasError: Boo
             placeholder = { Text(stringResource(Res.string.shop_checkin_form_note_hint),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant) })
+        Text("${value.length}/1000", Modifier.align(Alignment.End), style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant)
         if (hasError) Text(errorMessage, color = MaterialTheme.colorScheme.error,
             style = MaterialTheme.typography.bodySmall)
     }

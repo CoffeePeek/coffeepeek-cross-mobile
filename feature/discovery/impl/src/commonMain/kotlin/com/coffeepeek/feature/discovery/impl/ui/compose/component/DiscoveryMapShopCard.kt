@@ -88,7 +88,9 @@ private fun MapShopHours(details: MapShopDetails?, isLoading: Boolean) {
     val summary = details?.hours
     val hours = if (summary?.isClosed == true) stringResource(Res.string.discovery_map_card_closed) else summary?.intervalLabel()
     when {
-        hours != null -> Text(stringResource(Res.string.discovery_map_card_hours,
+        hours != null -> if (summary?.isClosed == true) Text(stringResource(Res.string.discovery_map_card_closed),
+            Modifier.padding(top = 4.dp), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        else Text(stringResource(Res.string.discovery_map_card_hours,
             stringResource(if (details?.isOpen == true) Res.string.discovery_map_card_open else Res.string.discovery_map_card_closed), hours),
             Modifier.padding(top = 4.dp), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         isLoading -> Text(stringResource(Res.string.discovery_map_card_loading), Modifier.padding(top = 4.dp),

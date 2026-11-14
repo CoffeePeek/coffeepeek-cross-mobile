@@ -74,7 +74,13 @@ internal class RoasterDetailViewModel(
 
     private suspend fun observeFavoriteKeys() {
         try {
-            favorites.observeKeys().collect { keys -> updateState { copy(favoriteKeys = keys) } }
+            favorites.observeKeys().collect { result ->
+                result.onSuccess { keys -> updateState { copy(favoriteKeys = keys) } }
+                    .onFailure {
+                        if (it is CancellationException) throw it
+                        updateState { copy(message = RoasterMessage.FavoritesUnavailable) }
+                    }
+            }
         } catch (cancelled: CancellationException) { throw cancelled }
         catch (_: Exception) { updateState { copy(message = RoasterMessage.FavoritesUnavailable) } }
     }

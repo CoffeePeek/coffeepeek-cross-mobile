@@ -30,6 +30,10 @@ internal class EditProfileViewModel(
             }
             is EditProfileAction.AvatarPicked -> if (!currentState.isSaving) pickAvatar(action.image)
             EditProfileAction.DismissError -> updateState { copy(error = null, usernameRetryAtUtc = null) }
+            EditProfileAction.Reload -> if (!currentState.isSaving) {
+                updateState { copy(isLoading = true, error = null) }
+                load()
+            }
             EditProfileAction.CancelUsernameChange -> updateState { copy(usernameToConfirm = null) }
             EditProfileAction.ConfirmUsernameChange -> confirmUsernameChange()
             EditProfileAction.Save -> requestSave()

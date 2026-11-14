@@ -36,7 +36,10 @@ internal class OwnershipAccess(private val repository: BusinessOwnershipReposito
             businesses = owned
             state.value = BusinessSessionState(state.value.businessMode && owned.isNotEmpty(), owned.isNotEmpty(), owned.keys.map { "${it.first.name}:${it.second}" }.toSet())
         } catch (cancelled: CancellationException) { throw cancelled }
-        catch (_: Exception) { reset() }
+        catch (_: Exception) {
+            // A transient failure must not silently kick the owner out of business mode;
+            // the last known session stays until the next successful refresh.
+        }
     }
     suspend fun switchMode() {
         if (switching) return

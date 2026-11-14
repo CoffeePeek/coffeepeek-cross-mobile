@@ -154,3 +154,27 @@ it without extending the baseline. A prior switch test expected the old grey
 literal; it was updated for the new palette. Integration compilation then found
 an incorrectly renamed `primaryContainer` reference; the reference was corrected.
 These failures are separate from the successful retries recorded below.
+
+## Develop integration — 2026-11-14
+
+The HIG checkpoint `800bb3ced` and its author-visible check-in publication parent
+`99de162dc` were integrated with develop `ae6572821` before publication.
+Resolutions preserve both platform sizing/contrast and develop's animation,
+Reduce Motion, guest-feed, photo fallback and note-limit behavior. Confirmed saved
+posts remain visible while the empty-feed loader transitions. Debug retains
+develop's isolated `com.coffeepeek.debug` package.
+
+The first integration run passed product unit tests but failed the function-body
+check after a navigation change grew the root function by one line. Its business
+mode navigation effect was extracted without changing route/save/restore behavior.
+Baseline regeneration only shrank/removed entries; no new debt was accepted.
+
+The final combined run passed: `testDebugUnitTest`,
+`:composeApp:testDirectDebugUnitTest`, design-system `compileKotlinIosArm64`,
+DirectDebug/DirectSandbox assembly, both packaged DEX checks, Sandbox isolation
+and `verifyFunctionBodyLimits`. Current reports contain **2,624 unit cases,
+0 failures/errors/skips**; unchanged tasks were reused on the final retry.
+Both staged and working-tree whitespace checks passed.
+
+The manual observations above identify the pre-integration APK. No additional
+manual device pass or full iOS application build is claimed for this merge.
