@@ -6,5 +6,5 @@ import platform.UIKit.UIApplicationOpenSettingsURLString
 
 internal actual fun openAppLocationSettings() {
     val url = NSURL.URLWithString(UIApplicationOpenSettingsURLString) ?: return
-    UIApplication.sharedApplication.openURL(url)
+    UIApplication.sharedApplication.openURL(url, options = emptyMap<Any?, Any>(), completionHandler = null)
 }

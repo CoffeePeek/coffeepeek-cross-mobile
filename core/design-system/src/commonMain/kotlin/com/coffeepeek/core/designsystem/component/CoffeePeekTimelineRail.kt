@@ -1,5 +1,6 @@
 package com.coffeepeek.core.designsystem.component
 
+
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.MaterialTheme
@@ -23,9 +24,9 @@ fun CoffeePeekTimelineRail(accent: Boolean, firstInDay: Boolean, lastInDay: Bool
     Box(Modifier.fillMaxWidth()) {
         Canvas(Modifier.matchParentSize()) {
             val x = if (rtl) size.width - 8.dp.toPx() else 8.dp.toPx()
-            val dotY = 27.dp.toPx()
+            val dotY = 28.dp.toPx()
             drawLine(line, Offset(x, if (firstInDay) dotY else 0f), Offset(x, if (lastInDay) dotY else size.height), 2.dp.toPx())
-            drawCircle(background, 7.dp.toPx(), Offset(x, dotY))
+            drawCircle(background, 8.dp.toPx(), Offset(x, dotY))
             drawCircle(dot, 4.dp.toPx(), Offset(x, dotY))
         }
         Box(Modifier.fillMaxWidth().padding(start = 28.dp, bottom = if (lastInDay) 0.dp else 12.dp)) { content() }

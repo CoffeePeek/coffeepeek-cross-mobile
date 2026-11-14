@@ -1,5 +1,8 @@
 package com.coffeepeek.feature.contributions.impl.ui
 
+import androidx.compose.foundation.layout.heightIn
+
+
 import androidx.compose.foundation.background
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import com.coffeepeek.feature.contributions.impl.resources.Res
@@ -72,6 +75,7 @@ import com.coffeepeek.core.designsystem.component.CoffeePeekContentCard
 import com.coffeepeek.core.designsystem.component.CoffeePeekIconBadge
 import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
 import com.coffeepeek.core.designsystem.component.CoffeePeekTopBar
+import com.coffeepeek.core.designsystem.component.CoffeePeekCoffeeIcon
 import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekColors
@@ -135,9 +139,9 @@ private fun RequestBody(request: ChangeRequest, onOpenShop: (String) -> Unit) {
         PayloadCard(request.section, request.payload)
         OutlinedButton(
             onClick = { onOpenShop(request.shopSlug) }, enabled = request.shopSlug.isNotBlank(),
-            modifier = Modifier.fillMaxWidth().height(CoffeePeekDimens.buttonHeight), shape = RoundedCornerShape(percent = 50),
+            modifier = Modifier.fillMaxWidth().heightIn(min = CoffeePeekDimens.buttonHeight), shape = RoundedCornerShape(percent = 50),
         ) {
-            CoffeePeekIcon(CoffeePeekIcons.Coffee, contentDescription = null, modifier = Modifier.size(18.dp))
+            CoffeePeekCoffeeIcon(contentDescription = null, modifier = Modifier.size(18.dp))
             Spacer(Modifier.width(CoffeePeekDimens.spacing2))
             Text(stringResource(Res.string.contributions_request_open_shop))
         }
@@ -283,7 +287,7 @@ private fun MenuRow(entry: MenuEntry) {
         Text(
             entry.availability.title(), style = MaterialTheme.typography.labelMedium,
             color = when (entry.availability) {
-                Availability.Present -> CoffeePeekColors.Success
+                Availability.Present -> MaterialTheme.colorScheme.tertiary
                 Availability.Absent -> MaterialTheme.colorScheme.error
                 Availability.Unknown -> MaterialTheme.colorScheme.onSurfaceVariant
             },

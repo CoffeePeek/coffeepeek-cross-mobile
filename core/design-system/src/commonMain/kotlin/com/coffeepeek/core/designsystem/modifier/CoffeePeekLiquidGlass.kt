@@ -23,7 +23,6 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
-import com.coffeepeek.core.designsystem.component.LocalCoffeePeekNativeControlsPresenter
 import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
@@ -82,7 +81,7 @@ fun Modifier.coffeePeekLiquidGlass(
         .border(if (opaque) 1.dp else 0.75.dp, rim, shape)
 }
 
-/** Platform navigation/floating action, with a 48dp Compose touch target. */
+/** Platform navigation/floating action, with the platform minimum touch target. */
 @Composable
 fun CoffeePeekGlassIconButton(
     onClick: () -> Unit,
@@ -94,7 +93,8 @@ fun CoffeePeekGlassIconButton(
     content: @Composable () -> Unit,
 ) {
     if (nativeIcon != null && LocalCoffeePeekNativeGlassPresenter.current
-            ?.IconButton(nativeIcon, onClick, contentDescription, modifier, enabled) == true) return
+            ?.IconButton(nativeIcon, onClick, contentDescription,
+                modifier.size(CoffeePeekDimens.glassControlSize), enabled) == true) return
     CoffeePeekIconButton(
         onClick = onClick,
         enabled = enabled,

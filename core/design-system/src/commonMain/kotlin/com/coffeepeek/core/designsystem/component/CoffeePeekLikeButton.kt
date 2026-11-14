@@ -8,23 +8,18 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.background
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.remember
-import androidx.compose.foundation.interaction.collectIsPressedAsState
-import androidx.compose.runtime.getValue
 import com.coffeepeek.core.designsystem.theme.coffeePeekUsesNativeGlass
-import com.coffeepeek.core.designsystem.modifier.CoffeePeekGlassIcon
-import com.coffeepeek.core.designsystem.modifier.LocalCoffeePeekNativeGlassPresenter
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.graphics.Shape
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.semantics.Role
@@ -73,16 +68,13 @@ fun CoffeePeekLikeButton(
     val label = if (isLoading) requireNotNull(loadingDescription).also {
         require(it.isNotBlank()) { "Loading requires a localized description" }
     } else contentDescription
-    if (style.isGlass && LocalCoffeePeekNativeGlassPresenter.current
-            ?.IconButton(if (selected) CoffeePeekGlassIcon.FavoriteFilled else CoffeePeekGlassIcon.Favorite,
-                onClick, label, modifier.sizeIn(minWidth = 48.dp, minHeight = 48.dp),
-                enabled && !isLoading, selected, isLoading) == true) return
-    val interactions = remember { MutableInteractionSource() }
-    val pressed by interactions.collectIsPressedAsState()
-    // The touch target stays 48dp, but only the heart itself gives press feedback.
-    Box(modifier.sizeIn(minWidth = 48.dp, minHeight = 48.dp)
-        .toggleable(selected, interactionSource = interactions, indication = null,
-            enabled = enabled && !isLoading, role = Role.Checkbox, onValueChange = { onClick() })
+    val effects = LocalCoffeePeekPlatformEffects.current.takeIf { style.isGlass && coffeePeekUsesNativeGlass }
+    Box(modifier.sizeIn(minWidth = CoffeePeekDimens.minimumTouchTarget, minHeight = CoffeePeekDimens.minimumTouchTarget)
+        .toggleable(selected, interactionSource = null, indication = null,
+            enabled = enabled && !isLoading, role = Role.Checkbox, onValueChange = {
+                effects?.haptic(CoffeePeekHaptic.Selection)
+                onClick()
+            })
         .semantics {
             this.contentDescription = label
             if (isLoading) progressBarRangeInfo = ProgressBarRangeInfo.Indeterminate
@@ -91,20 +83,14 @@ fun CoffeePeekLikeButton(
         if (style.isGlass && coffeePeekUsesNativeGlass) {
             CoffeePeekNativeControlBackground(Modifier.matchParentSize(), enabled = enabled && !isLoading)
         }
-        // A compact visual plate is independent of the accessible touch target.
+        // Keep the heart outside the clipped plate so it can expand without clipping.
         Box(Modifier.size(coffeePeekLikePlateSize(style, iconSize)).coffeePeekLikeBackground(style, shape)
-            .then(if (style == CoffeePeekLikeButtonStyle.Plain) Modifier.background(containerColor, shape) else Modifier)
-            .clip(shape), contentAlignment = Alignment.Center) {
-            if (isLoading) CoffeePeekLoader(label, modifier = Modifier.clearAndSetSemantics {},
-                size = 18.dp, strokeWidth = 2.dp)
-            else CoffeePeekLikeIcon(selected, null, size = iconSize, enabled = enabled,
-                overImage = coffeePeekLikeUsesPhotoColor(overImage, style, LocalCoffeePeekOpaqueGlass.current),
-                modifier = Modifier.graphicsLayer {
-                    val scale = if (pressed) 0.88f else 1f
-                    scaleX = scale
-                    scaleY = scale
-                })
-        }
+            .then(if (style == CoffeePeekLikeButtonStyle.Plain) Modifier.background(containerColor, shape) else Modifier))
+        CoffeePeekAnimatedLikeIcon(selected, null, Modifier.alpha(if (isLoading) 0f else 1f), size = iconSize,
+            enabled = enabled, overImage = coffeePeekLikeUsesPhotoColor(overImage, style, LocalCoffeePeekOpaqueGlass.current),
+            isLoading = isLoading)
+        if (isLoading) CoffeePeekLoader(label, modifier = Modifier.clearAndSetSemantics {},
+            size = 18.dp, strokeWidth = 2.dp)
     }
 }
 
@@ -120,8 +106,12 @@ internal fun coffeePeekLikePlateSize(style: CoffeePeekLikeButtonStyle, iconSize:
 
 @Composable
 internal fun Modifier.coffeePeekLikeBackground(style: CoffeePeekLikeButtonStyle, shape: Shape): Modifier {
-    if (style == CoffeePeekLikeButtonStyle.PhotoBadge) return background(
-        com.coffeepeek.core.designsystem.theme.CoffeePeekColors.PhotoBadgeOverlay, shape)
+    if (style == CoffeePeekLikeButtonStyle.PhotoBadge) {
+        val surface = MaterialTheme.colorScheme.surface
+        val plate = if (surface.luminance() >= 0.5f) surface.copy(alpha = 0.90f)
+            else com.coffeepeek.core.designsystem.theme.CoffeePeekColors.PhotoBadgeOverlay
+        return background(plate, shape)
+    }
     if (coffeePeekUsesNativeGlass) return this
     return when (style) {
         CoffeePeekLikeButtonStyle.Glass, CoffeePeekLikeButtonStyle.FloatingGlass -> coffeePeekLiquidGlass(shape)

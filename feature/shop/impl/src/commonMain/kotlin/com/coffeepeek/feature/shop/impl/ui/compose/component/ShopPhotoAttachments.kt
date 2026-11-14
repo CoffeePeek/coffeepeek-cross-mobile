@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.shape.RoundedCornerShape
-import com.coffeepeek.core.designsystem.component.CoffeePeekIconButton as IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -34,6 +33,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
+import com.coffeepeek.core.designsystem.component.CoffeePeekPhotoRemoveButton
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
@@ -96,15 +96,8 @@ internal fun ShopPhotoAttachments(
                             onFailure = { PhotoUnavailable() },
                         )
                     } else PhotoUnavailable()
-                    Box(Modifier.align(Alignment.TopEnd).offset(x = 6.dp, y = (-6).dp)
-                        .size(24.dp).clip(RoundedCornerShape(50)).background(Color.Black.copy(alpha = 0.75f))
-                        .border(1.5.dp, Color.White, RoundedCornerShape(50))
-                        .clickable(enabled = enabled, role = Role.Button) { onRemove(index) },
-                        contentAlignment = Alignment.Center) {
-                        CoffeePeekIcon(CoffeePeekIcons.Close,
-                            contentDescription = stringResource(Res.string.shop_review_photo_remove, index + 1),
-                            tint = Color.White, modifier = Modifier.size(14.dp))
-                    }
+                    CoffeePeekPhotoRemoveButton(stringResource(Res.string.shop_review_photo_remove, index + 1),
+                        { onRemove(index) }, Modifier.align(Alignment.TopEnd), enabled)
                 }
             }
             if (photos.size < maxPhotos) {

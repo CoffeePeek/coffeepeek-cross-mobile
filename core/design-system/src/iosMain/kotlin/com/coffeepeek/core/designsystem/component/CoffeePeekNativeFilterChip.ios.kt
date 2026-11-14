@@ -2,7 +2,8 @@
 
 package com.coffeepeek.core.designsystem.component
 
-import androidx.compose.foundation.layout.heightIn
+
+import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberUpdatedState
@@ -29,7 +30,7 @@ internal actual fun CoffeePeekNativeFilterChip(
     CoffeePeekNativeGlassView(
         factory = { UIButton.buttonWithConfiguration(coffeePeekGlassButtonConfiguration(),
             UIAction.actionWithHandler { callback.value() }) },
-        modifier = modifier.heightIn(min = CoffeePeekDimens.glassControlSize),
+        modifier = modifier.sizeIn(minWidth = CoffeePeekDimens.minimumTouchTarget, minHeight = CoffeePeekDimens.glassControlSize),
         update = { button ->
             button.overrideUserInterfaceStyle = coffeePeekUserInterfaceStyle(colors.background)
             button.backgroundColor = UIColor.clearColor

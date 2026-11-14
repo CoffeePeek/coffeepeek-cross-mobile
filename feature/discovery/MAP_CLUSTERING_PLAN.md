@@ -1,5 +1,40 @@
 # Map clustering parity
 
+## Viewport-based loading — 2026-11-14
+
+The map in Discovery and the check-in shop picker loads markers, clusters,
+zones, carousel cards and heatmap points using camera bounds, without a city
+filter. The map can load before the city catalog is available. List search and
+map text suggestions retain their city criteria. Nearby, text and other filters
+still apply to map reads. The heatmap joins shops in the viewport to public
+check-in counts from the search endpoint using the same city-independent filters.
+
+- Base `4959d2315` plus the viewport changes. Android `directDebug`
+  `1.2.0.3004-debug` / 3004 assembled and passed packaged runtime class and
+  function body checks. No installation or device run.
+- Discovery reports contain 226 passing tests across domain, data and impl.
+  Six Sandbox map contracts passed in the `directDebug` JVM test target with
+  the in-memory backend. The first Discovery run failed on a former city-filter
+  assertion, addressed in the retry. The Sandbox-specific task name was
+  unavailable, so the contract was run through the existing JVM test target.
+- An anonymous live read at zoom 22 returned nine shops for the Brest bounds
+  (52.0, 23.5)–(52.3, 23.9) with a null city and zero with `minsk`.
+  Native Android and iOS visual checks remain pending.
+
+### PR #347 Sandbox regression correction — 2026-11-14
+
+The first Android CI run on `2b1c232b0` failed in both application unit-test
+variants: `SandboxDiscoveryFixturesTest` still expected the list city to empty
+a different map viewport. The assertion now compares marker ID sets with and
+without that city criterion; list-city filtering remains covered separately.
+
+Windows verification on `2b1c232b0` plus this test correction executed all 673
+application tests across 151 suites for each of `directDebug` and `playDebug`:
+zero failures, errors or skips, with no local retries. Direct Debug assembly,
+packaged DEX runtime-class verification and function body limits passed in the
+same Gradle run (`--max-workers=6`, 1m 26s). Existing unrelated compiler warnings
+remain. No device was used or APK installed; native UI gates above remain open.
+
 ## Scope and verification plan
 
 Checkpoint: `codex/migration-map-clusters`, based on

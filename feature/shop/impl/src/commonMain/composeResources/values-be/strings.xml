@@ -93,7 +93,6 @@
     <string name="shop_checkins_like_updating">Абнаўленне лайка, лайкаў: %1$d</string>
     <string name="shop_checkins_photo_description">Фота наведвання %1$d з %2$d</string>
     <string name="shop_detail_back">Назад</string>
-    <string name="shop_detail_error">Не ўдалося загрузіць кавярню</string>
     <string name="shop_detail_retry">Паўтарыць</string>
     <string name="shop_detail_share">Падзяліцца</string>
     <string name="shop_detail_suggest_change">Прапанаваць праўку</string>
@@ -105,7 +104,6 @@
     <string name="shop_favorite_updating">Абнаўленне абранага</string>
     <string name="shop_detail_loading">Загрузка кавярні</string>
     <string name="shop_detail_refreshing">Абнаўленне звестак пра кавярню</string>
-    <string name="shop_detail_refresh_error">Не ўдалося абнавіць звесткі. Паказаныя раней загружаныя звесткі.</string>
     <string name="shop_review_coffee">Кава</string>
     <string name="shop_review_service">Сэрвіс</string>
     <string name="shop_review_place">Атмасфера</string>
@@ -137,18 +135,14 @@
     <string name="shop_checkin_form_photos_hint">Дадайце да %1$d фота вашага візіту.</string>
     <string name="shop_photo_attachment_description">Выбранае фота %1$d</string>
     <string name="shop_checkin_form_public">Зрабіць публічным</string>
-    <string name="shop_checkin_form_public_hint">У стужцы пасля мадэрацыі. Без публікацыі — толькі вам.</string>
+    <string name="shop_checkin_form_public_hint">Дадаць у стужку. Калі выключана, чэкін бачны толькі вам.</string>
     <string name="shop_checkin_form_submit">Апублікаваць</string>
     <string name="shop_checkin_form_change_shop">Змяніць</string>
     <string name="shop_checkin_today">Сёння</string>
     <string name="shop_checkin_form_sending">Адпраўляем чэкін…</string>
-    <string name="shop_checkin_form_success_pending">Захавана · публікацыя ўдакладняецца</string>
-    <string name="shop_checkin_form_success_waiting">Чакае публікацыі</string>
-    <string name="shop_checkin_form_success_waiting_body">Чэкін захаваны і чакае праверкі перад публікацыяй.</string>
-    <string name="shop_checkin_form_success_published">Апублікавана</string>
-    <string name="shop_checkin_form_success_published_body">Чэкін захаваны і бачны ўсім у стужцы.</string>
+    <string name="shop_checkin_form_success_published">Чэкін дададзены</string>
     <string name="shop_checkin_form_success_only_me">Захавана для вас</string>
-    <string name="shop_checkin_form_success_public">Чэкін даступны ў вашых запісах. Статус публікацыі можна праверыць пасля мадэрацыі.</string>
+    <string name="shop_checkin_form_success_public">Ён захаваны ў гісторыі і даступны ў вашай стужцы.</string>
     <string name="shop_checkin_form_success_private">Кававы момант захаваны ў вашых чэкінах і бачны толькі вам.</string>
     <string name="shop_checkin_form_feed">Да стужкі</string>
     <string name="shop_checkin_form_history">Мае чэкіны</string>

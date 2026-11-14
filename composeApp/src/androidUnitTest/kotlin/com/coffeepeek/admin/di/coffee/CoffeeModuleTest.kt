@@ -48,7 +48,7 @@ class CoffeeModuleTest {
     }
 
     private fun coffeeShelfApplication(client: ApiClients) = koinApplication {
-        modules(module {
+        modules(com.coffeepeek.admin.di.community.communityWritesTestModule(), module {
             single { client }
             single<SessionStore> { CheckInTestSessions() }
             single<SessionReader> { get<SessionStore>() }

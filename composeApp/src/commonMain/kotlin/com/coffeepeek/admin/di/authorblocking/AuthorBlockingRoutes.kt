@@ -3,7 +3,6 @@ package com.coffeepeek.admin.di.authorblocking
 import com.coffeepeek.admin.ui.NavMetrics
 
 import androidx.compose.runtime.Composable
-import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.feature.authorblocking.api.AuthorBlockingEntry
 import org.koin.compose.koinInject

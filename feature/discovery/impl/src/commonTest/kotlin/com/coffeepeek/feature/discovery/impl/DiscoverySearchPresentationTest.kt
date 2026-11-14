@@ -37,7 +37,7 @@ class DiscoverySearchPresentationTest {
 
     private fun TestScope.models() {
         search = SearchViewModel(repository, favorites, city, location, account, analytics)
-        map = MapViewModel(repository, city, location, FakeShopDetails(), analytics, account, favorites)
+        map = MapViewModel(repository, location, FakeShopDetails(), analytics, account, favorites)
         store.put("search", search)
         store.put("map", map)
         backgroundScope.launch { search.state.map { it.criteria }.distinctUntilChanged().collect { map.onAction(MapAction.SyncCriteria(it)) } }

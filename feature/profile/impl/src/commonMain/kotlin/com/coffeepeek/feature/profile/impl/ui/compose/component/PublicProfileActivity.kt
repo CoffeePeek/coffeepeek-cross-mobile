@@ -47,7 +47,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
-import com.coffeepeek.core.designsystem.text.coffeePeekPluralForm
 import com.coffeepeek.feature.profile.domain.PublicProfileActivity
 import com.coffeepeek.feature.profile.impl.resources.*
 import com.coffeepeek.feature.profile.impl.ui.data.profileMonth
@@ -131,7 +130,7 @@ private fun ProfileActivityMonthGrid(activity: PublicProfileActivity) {
             }
         }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-            Box(Modifier.size(7.dp).background(MaterialTheme.colorScheme.primary, CircleShape))
+            Box(Modifier.size(8.dp).background(MaterialTheme.colorScheme.primary, CircleShape))
             Text(stringResource(Res.string.profile_activity_legend), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         if (activity.timeZone == "Europe/Minsk") {

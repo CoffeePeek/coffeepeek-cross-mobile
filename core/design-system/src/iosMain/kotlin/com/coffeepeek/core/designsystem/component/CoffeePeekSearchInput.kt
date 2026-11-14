@@ -5,7 +5,10 @@ package com.coffeepeek.core.designsystem.component
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import kotlinx.cinterop.useContents
+import kotlinx.cinterop.CValue
 import platform.CoreGraphics.CGRectMake
+import platform.CoreGraphics.CGSize
+import platform.CoreGraphics.CGSizeMake
 import platform.UIKit.UIAction
 import platform.UIKit.UIButton
 import platform.UIKit.UIButtonConfiguration
@@ -20,6 +23,7 @@ import platform.UIKit.UITextAutocorrectionType
 import platform.UIKit.UITextBorderStyle
 import platform.UIKit.UITextField
 import platform.UIKit.UIView
+import platform.UIKit.UIViewNoIntrinsicMetric
 import platform.UIKit.accessibilityLabel
 
 /** Glass and input are siblings in one UIKit overlay; no underlay hole can expose another screen. */
@@ -42,6 +46,13 @@ internal class CoffeePeekSearchInput(private val target: CoffeePeekSearchTarget)
         clear.configuration = UIButtonConfiguration.plainButtonConfiguration().apply { image = UIImage.systemImageNamed("xmark.circle.fill") }
         target.attach(field)
     }
+
+    override fun intrinsicContentSize(): CValue<CGSize> = CGSizeMake(
+        UIViewNoIntrinsicMetric, maxOf(48.0, field.intrinsicContentSize().useContents { height } + 20.0),
+    )
+
+    override fun sizeThatFits(size: CValue<CGSize>): CValue<CGSize> =
+        size.useContents { CGSizeMake(width, intrinsicContentSize().useContents { height }) }
 
     override fun layoutSubviews() {
         super.layoutSubviews()
@@ -67,6 +78,7 @@ internal class CoffeePeekSearchInput(private val target: CoffeePeekSearchTarget)
         field.autocorrectionType = if (options.autoCorrectEnabled == false) UITextAutocorrectionType.UITextAutocorrectionTypeNo
             else UITextAutocorrectionType.UITextAutocorrectionTypeDefault
         field.autocapitalizationType = options.capitalization.nativeCapitalization()
+        field.font = UIFont.preferredFontForTextStyle(UIFontTextStyleBody)
         setNeedsLayout()
     }
 

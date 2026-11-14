@@ -1,5 +1,7 @@
 package com.coffeepeek.feature.shelf.impl.ui.compose.component
 
+import com.coffeepeek.core.designsystem.component.coffeePeekDatePickerColors
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
@@ -54,7 +56,7 @@ internal fun ShelfRoastDateField(day: ShelfDay?, today: ShelfDay, onChange: (She
         },
         dismissButton = {
             TextButton({ onChange(null); picking = false }) { Text(stringResource(Res.string.shelf_form_roasted_clear)) }
-        }) { DatePicker(state, showModeToggle = false) }
+        }) { DatePicker(state, showModeToggle = false, colors = coffeePeekDatePickerColors()) }
 }
 
 @Composable

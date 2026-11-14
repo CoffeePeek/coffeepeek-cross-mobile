@@ -1,5 +1,6 @@
 package com.coffeepeek.core.designsystem.component
 
+import com.coffeepeek.core.designsystem.theme.CoffeePeekColors
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -55,9 +56,10 @@ internal fun CoffeePeekPhotoAttachment(
             photo(Modifier.fillMaxSize())
             if (manage) Text("${index + 1}", color = Color.White, style = MaterialTheme.typography.labelSmall,
                 modifier = Modifier.align(Alignment.BottomStart).padding(4.dp)
-                    .background(Color.Black.copy(alpha = 0.75f), RoundedCornerShape(4.dp)).padding(horizontal = 4.dp))
+                    .background(CoffeePeekColors.PhotoBadgeOverlay, RoundedCornerShape(4.dp)).padding(horizontal = 4.dp))
         }
-        PhotoRemoveButton(index, enabled, onRemove, Modifier.align(Alignment.TopEnd), simple = !manage)
+        CoffeePeekPhotoRemoveButton(stringResource(Res.string.coffeepeek_photo_remove, index + 1),
+            onRemove, Modifier.align(Alignment.TopEnd), enabled)
     }
 }
 
@@ -103,19 +105,6 @@ private fun photoMoveActions(index: Int, count: Int, enabled: Boolean, onMove: (
             onMove(index, index + 1)
             true
         })
-    }
-}
-
-@Composable
-private fun PhotoRemoveButton(index: Int, enabled: Boolean, onRemove: () -> Unit, modifier: Modifier, simple: Boolean) {
-    val offset = if (simple) 18.dp else 16.dp
-    IconButton(onClick = onRemove, enabled = enabled, glass = false,
-        modifier = modifier.offset(x = offset, y = -offset).size(48.dp)) {
-        // With the glass backdrop off, the badge itself carries the disabled affordance.
-        CoffeePeekIcon(CoffeePeekIcons.Close, stringResource(Res.string.coffeepeek_photo_remove, index + 1),
-            Modifier.size(24.dp).alpha(if (enabled) 1f else 0.45f)
-                .background(Color.Black.copy(alpha = 0.75f), RoundedCornerShape(50))
-                .border(1.5.dp, Color.White, RoundedCornerShape(50)).padding(if (simple) 5.dp else 4.dp), tint = Color.White)
     }
 }
 

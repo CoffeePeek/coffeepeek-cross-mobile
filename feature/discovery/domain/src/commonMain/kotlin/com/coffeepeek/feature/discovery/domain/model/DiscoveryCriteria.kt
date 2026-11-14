@@ -11,4 +11,6 @@ data class DiscoveryCriteria(
         val nearbyOrigin = origin?.takeIf { filters.nearbyOnly && it.isValid }
         return ShopQuery(text, if (nearbyOrigin != null) filters.copy(cityId = null) else filters, nearbyOrigin, page, pageSize)
     }
+
+    fun forViewport(): DiscoveryCriteria = copy(filters = filters.copy(cityId = null))
 }

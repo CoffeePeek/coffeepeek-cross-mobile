@@ -22,6 +22,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
+import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.checkinhistory.domain.model.HistoryMonth
 import com.coffeepeek.feature.checkinhistory.impl.resources.*
@@ -109,7 +110,7 @@ private fun HistoryCalendarGrid(state: CombinedHistoryState, select: (CombinedHi
 
 @Composable private fun MonthArrow(next: Boolean, enabled: Boolean, onClick: () -> Unit) {
     val description = stringResource(if (next) Res.string.history_next_month else Res.string.history_previous_month)
-    IconButton(onClick, enabled = enabled, modifier = Modifier.size(44.dp), contentDescription = description,
+    IconButton(onClick, enabled = enabled, modifier = Modifier.size(CoffeePeekDimens.minimumTouchTarget), contentDescription = description,
         nativeIcon = if (next) CoffeePeekGlassIcon.Forward else CoffeePeekGlassIcon.Back) {
         Box(Modifier.size(34.dp).background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f), CircleShape),
             contentAlignment = Alignment.Center) {

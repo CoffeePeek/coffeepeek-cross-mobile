@@ -6,28 +6,12 @@ import com.coffeepeek.core.designsystem.component.CoffeePeekBackHandler
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import com.coffeepeek.feature.homecheckin.impl.resources.Res
 import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_validation_summary
-import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_bean
-import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_brew_method
-import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_choose_bean
-import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_choose_date
-import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_dose_description
-import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_dose_hint
-import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_dose_label
-import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_drink
-import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_drink_hint
 import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_editor_close
-import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_editor_note
 import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_editor_title
 import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_home
-import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_keep_photos
 import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_load_failed
 import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_loading
-import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_methods_loading
-import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_methods_retry
-import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_note_hint
-import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_optional
 import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_photo_upload_failed
-import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_prepared_date
 import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_retry
 import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_save
 import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_saving
@@ -48,18 +32,18 @@ import org.jetbrains.compose.resources.pluralStringResource
 import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import androidx.compose.ui.semantics.*
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import com.coffeepeek.core.designsystem.component.CoffeePeekButton
-import com.coffeepeek.core.designsystem.component.CoffeePeekFormStep
 import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
+import com.coffeepeek.core.designsystem.component.CoffeePeekCoffeeIcon
 import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.text.coffeePeekPluralForm
+import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.homecheckin.domain.model.*
 import com.coffeepeek.feature.homecheckin.impl.resources.*
@@ -194,7 +178,7 @@ private fun HomeCheckInEditorHeader(state: HomeCheckInEditorState, onClose: () -
         verticalAlignment = Alignment.CenterVertically) {
         Text(stringResource(if (state.entry == null) Res.string.home_check_in_home else Res.string.home_check_in_editor_title),
             Modifier.weight(1f), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-        IconButton(onClick = onClose, enabled = !state.isSaving, modifier = Modifier.size(44.dp)) {
+        IconButton(onClick = onClose, enabled = !state.isSaving, modifier = Modifier.size(CoffeePeekDimens.minimumTouchTarget)) {
             CoffeePeekIcon(CoffeePeekIcons.Close, stringResource(Res.string.home_check_in_editor_close), Modifier.size(20.dp))
         }
     }
@@ -242,8 +226,8 @@ private fun HomeCheckInEditorFooter(state: HomeCheckInEditorState, enabled: Bool
 
 /** Fixture ports only; real artwork/decoding will come from application composition. */
 internal fun previewHomeEditorMedia() = HomeCheckInEditorMedia(
-    { CoffeePeekIcon(CoffeePeekIcons.Coffee, null, it) }, { CoffeePeekIcon(CoffeePeekIcons.Search, null, it) },
-    { _, modifier -> CoffeePeekIcon(CoffeePeekIcons.Coffee, null, modifier, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
+    { CoffeePeekCoffeeIcon(null, it) }, { CoffeePeekIcon(CoffeePeekIcons.Search, null, it) },
+    { _, modifier -> CoffeePeekCoffeeIcon(null, modifier, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
     { _, modifier, _ -> Box(modifier) },
 )
 

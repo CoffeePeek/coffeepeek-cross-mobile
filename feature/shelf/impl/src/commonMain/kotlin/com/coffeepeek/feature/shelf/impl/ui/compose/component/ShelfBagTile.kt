@@ -5,7 +5,6 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
@@ -75,15 +74,15 @@ private const val GHOST_ALPHA = 0.3f
 /** A dashed line a little outside the card. */
 private fun Modifier.shelfGhostOutline(color: Color): Modifier = drawWithContent {
     drawContent()
-    val inset = 3.dp.toPx()
-    drawRoundRect(color, Offset(-inset, -inset), Size(size.width + inset * 2, size.height + inset * 2), CornerRadius(7.dp.toPx()),
+    val inset = 4.dp.toPx()
+    drawRoundRect(color, Offset(-inset, -inset), Size(size.width + inset * 2, size.height + inset * 2), CornerRadius(8.dp.toPx()),
         Stroke(1.5.dp.toPx(), pathEffect = PathEffect.dashPathEffect(floatArrayOf(5.dp.toPx(), 4.dp.toPx()))))
 }
 
 @Composable
 private fun ShelfNewMark(modifier: Modifier) {
     Text(stringResource(Res.string.shelf_new_badge), modifier.clip(RoundedCornerShape(6.dp)).background(MaterialTheme.colorScheme.primary)
-        .padding(horizontal = 5.dp, vertical = 1.dp), color = MaterialTheme.colorScheme.onPrimary, fontSize = 9.sp, fontWeight = FontWeight.ExtraBold)
+        .padding(horizontal = 6.dp, vertical = 2.dp), color = MaterialTheme.colorScheme.onPrimary, fontSize = 11.sp, fontWeight = FontWeight.ExtraBold)
 }
 
 @Composable

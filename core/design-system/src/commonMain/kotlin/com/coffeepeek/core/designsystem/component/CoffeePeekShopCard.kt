@@ -1,6 +1,5 @@
 package com.coffeepeek.core.designsystem.component
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -40,7 +39,6 @@ import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekColors
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
-import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
 import com.coffeepeek.core.designsystem.theme.coffeePeekStatusForeground
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
@@ -86,7 +84,7 @@ fun CoffeePeekShopCard(
         shape = RoundedCornerShape(CoffeePeekDimens.radiusXl),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+        border = coffeePeekCardBorder(),
     ) {
         Column {
             ShopCardCover(rating, ratingText, ratingCount, isNew, newLabel, cover, roasterLogoCount, roasterLogo, favorite)
@@ -143,7 +141,7 @@ private fun ShopCardDetails(
         ShopCardTitle(title, statusLabel, isOpen)
         brewMethods?.invoke()
         if (!locationSummary.isNullOrBlank()) Row(verticalAlignment = Alignment.CenterVertically) {
-            CoffeePeekIcon(CoffeePeekIcons.Location, contentDescription = null, tint = MaterialTheme.colorScheme.coffeePeekAccentForeground, modifier = Modifier.size(14.dp))
+            CoffeePeekIcon(CoffeePeekIcons.Location, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(14.dp))
             Spacer(Modifier.width(2.dp))
             Text(locationSummary, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = if (LocalDensity.current.fontScale > 1.2f) 3 else 1, overflow = TextOverflow.Ellipsis)
@@ -179,7 +177,7 @@ private fun ShopCardSummary(kindLabel: String, priceLevel: Int?, tag: String?) {
             if (priceLevel != null && priceLevel > 0) {
                 Separator()
                 // Prod proportions: the symbol drawn at 90% of 8 dp, one dp apart.
-                CoffeePeekBynPriceIndicators(priceLevel, iconWidth = 7.2.dp, tint = MaterialTheme.colorScheme.onSurfaceVariant, spacing = 1.dp)
+                CoffeePeekBynPriceIndicators(priceLevel, iconWidth = 8.dp, tint = MaterialTheme.colorScheme.onSurfaceVariant, spacing = 2.dp)
             }
             if (!tag.isNullOrBlank()) {
                 Separator()
@@ -199,7 +197,7 @@ fun CoffeePeekShopInfoChip(text: String, modifier: Modifier = Modifier, icon: (@
     val shape = RoundedCornerShape(CoffeePeekDimens.radiusLg)
     Row(
         modifier.clip(shape).background(MaterialTheme.colorScheme.surfaceVariant).border(1.dp, MaterialTheme.colorScheme.outlineVariant, shape)
-            .padding(horizontal = CoffeePeekDimens.spacing2, vertical = 5.dp),
+            .padding(horizontal = CoffeePeekDimens.spacing2, vertical = 6.dp),
         horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing1),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -211,8 +209,8 @@ fun CoffeePeekShopInfoChip(text: String, modifier: Modifier = Modifier, icon: (@
 @Composable
 private fun NewBadge(label: String, modifier: Modifier) {
     Row(
-        modifier.clip(RoundedCornerShape(CoffeePeekDimens.radiusLg)).background(CoffeePeekColors.DarkSurface.copy(alpha = 0.92f))
-            .padding(horizontal = CoffeePeekDimens.spacing3, vertical = 7.dp),
+        modifier.clip(RoundedCornerShape(CoffeePeekDimens.radiusLg)).background(CoffeePeekColors.DarkSurface)
+            .padding(horizontal = CoffeePeekDimens.spacing3, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing1),
     ) {
@@ -230,7 +228,7 @@ private fun RatingBadge(text: String, count: Int) {
     ) {
         CoffeePeekIcon(CoffeePeekIcons.StarFilled, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(16.dp))
         Text(text, style = MaterialTheme.typography.labelMedium, color = Color.White, fontWeight = FontWeight.SemiBold)
-        if (count > 0) Text("($count)", style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.82f))
+        if (count > 0) Text("($count)", style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.9f))
     }
 }
 

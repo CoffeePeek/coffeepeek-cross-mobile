@@ -1,5 +1,7 @@
 package com.coffeepeek.feature.contributions.impl.ui
 
+import androidx.compose.material3.MaterialTheme
+
 import androidx.compose.runtime.Composable
 import com.coffeepeek.feature.contributions.impl.resources.Res
 import com.coffeepeek.feature.contributions.impl.resources.contributions_availability_absent
@@ -46,11 +48,14 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import kotlin.time.ExperimentalTime
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.painter.Painter
 import org.jetbrains.compose.resources.stringResource
 import com.coffeepeek.core.designsystem.component.CoffeePeekIconBadgeColors
 import com.coffeepeek.core.designsystem.component.CoffeePeekIconBadgePalette
+import com.coffeepeek.core.designsystem.component.coffeePeekIconPainter
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
+import com.coffeepeek.core.designsystem.icons.CoffeePeekMapIcon
+import com.coffeepeek.core.designsystem.icons.coffeePeekMapIconPainter
 import com.coffeepeek.core.designsystem.theme.CoffeePeekColors
 import com.coffeepeek.feature.contributions.api.ContributionKind
 import com.coffeepeek.feature.contributions.domain.model.Availability
@@ -58,29 +63,32 @@ import com.coffeepeek.feature.contributions.domain.model.ChangeSection
 import com.coffeepeek.feature.contributions.domain.model.ModerationStatus
 import com.coffeepeek.feature.contributions.impl.ChangeSummary
 
-internal class Visual(val icon: ImageVector, val colors: CoffeePeekIconBadgeColors)
+internal class Visual(val icon: Painter, val colors: CoffeePeekIconBadgeColors)
 
+@Composable
 internal fun ContributionKind.visual(section: ChangeSection?): Visual = when (this) {
-    ContributionKind.Shops -> Visual(CoffeePeekIcons.Coffee, CoffeePeekIconBadgePalette.Gold)
-    ContributionKind.Roasters -> Visual(CoffeePeekIcons.CoffeeBean, CoffeePeekIconBadgePalette.Rose)
-    ContributionKind.Changes -> section?.visual() ?: Visual(CoffeePeekIcons.Edit, CoffeePeekIconBadgePalette.Violet)
+    ContributionKind.Shops -> Visual(coffeePeekMapIconPainter(CoffeePeekMapIcon.CoffeeShop), CoffeePeekIconBadgePalette.Gold)
+    ContributionKind.Roasters -> Visual(coffeePeekIconPainter(CoffeePeekIcons.CoffeeBean), CoffeePeekIconBadgePalette.Rose)
+    ContributionKind.Changes -> section?.visual() ?: Visual(coffeePeekIconPainter(CoffeePeekIcons.Edit), CoffeePeekIconBadgePalette.Violet)
 }
 
+@Composable
 internal fun ChangeSection.visual(): Visual = when (this) {
-    ChangeSection.Photos -> Visual(CoffeePeekIcons.Photo, CoffeePeekIconBadgePalette.Sky)
-    ChangeSection.Contacts -> Visual(CoffeePeekIcons.Phone, CoffeePeekIconBadgePalette.Mint)
-    ChangeSection.Description -> Visual(CoffeePeekIcons.NoteEdit, CoffeePeekIconBadgePalette.Lavender)
-    ChangeSection.Tags -> Visual(CoffeePeekIcons.Sparkle, CoffeePeekIconBadgePalette.Gold)
-    ChangeSection.Roasters -> Visual(CoffeePeekIcons.CoffeeBean, CoffeePeekIconBadgePalette.Rose)
-    ChangeSection.Equipment -> Visual(CoffeePeekIcons.Settings, CoffeePeekIconBadgePalette.Cyan)
-    ChangeSection.Menu -> Visual(CoffeePeekIcons.Menu, CoffeePeekIconBadgePalette.Emerald)
-    ChangeSection.BrewMethods -> Visual(CoffeePeekIcons.Coffee, CoffeePeekIconBadgePalette.Aqua)
+    ChangeSection.Photos -> Visual(coffeePeekIconPainter(CoffeePeekIcons.Photo), CoffeePeekIconBadgePalette.Sky)
+    ChangeSection.Contacts -> Visual(coffeePeekIconPainter(CoffeePeekIcons.Phone), CoffeePeekIconBadgePalette.Mint)
+    ChangeSection.Description -> Visual(coffeePeekIconPainter(CoffeePeekIcons.NoteEdit), CoffeePeekIconBadgePalette.Violet)
+    ChangeSection.Tags -> Visual(coffeePeekIconPainter(CoffeePeekIcons.Sparkle), CoffeePeekIconBadgePalette.Gold)
+    ChangeSection.Roasters -> Visual(coffeePeekIconPainter(CoffeePeekIcons.CoffeeBean), CoffeePeekIconBadgePalette.Rose)
+    ChangeSection.Equipment -> Visual(coffeePeekIconPainter(CoffeePeekIcons.Settings), CoffeePeekIconBadgePalette.Cyan)
+    ChangeSection.Menu -> Visual(coffeePeekIconPainter(CoffeePeekIcons.Menu), CoffeePeekIconBadgePalette.Emerald)
+    ChangeSection.BrewMethods -> Visual(coffeePeekMapIconPainter(CoffeePeekMapIcon.CoffeeShop), CoffeePeekIconBadgePalette.Aqua)
 }
 
+@Composable
 internal fun ModerationStatus.color(): Color = when (this) {
-    ModerationStatus.Approved -> CoffeePeekColors.Success
-    ModerationStatus.Pending -> CoffeePeekColors.GoldWarmHover
-    ModerationStatus.Rejected -> CoffeePeekColors.Error
+    ModerationStatus.Approved -> MaterialTheme.colorScheme.tertiary
+    ModerationStatus.Pending -> MaterialTheme.colorScheme.primary
+    ModerationStatus.Rejected -> MaterialTheme.colorScheme.error
 }
 
 @Composable internal fun ContributionKind.title() = stringResource(

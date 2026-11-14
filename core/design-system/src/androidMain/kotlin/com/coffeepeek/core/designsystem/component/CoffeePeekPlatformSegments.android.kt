@@ -20,11 +20,11 @@ internal actual fun CoffeePeekPlatformSegments(
 ) {
     Row(modifier.fillMaxWidth().heightIn(min = minSegmentHeight)
         .coffeePeekLiquidGlass(RoundedCornerShape(percent = 50), shadowElevation = 0.dp)
-        .padding(CoffeePeekDimens.spacing1).selectableGroup()) {
+        .padding(horizontal = CoffeePeekDimens.spacing1).selectableGroup()) {
         labels.forEachIndexed { index, label ->
             CoffeePeekCapsuleSegment(label, selectedIndex == index, enabled,
                 { onSelected(index) }, Modifier.weight(1f),
-                minHeight = (minSegmentHeight - CoffeePeekDimens.spacing1 * 2).coerceAtLeast(0.dp))
+                minHeight = minSegmentHeight)
         }
     }
 }

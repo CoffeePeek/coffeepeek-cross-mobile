@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.pager.PagerState
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.CircleShape
@@ -24,10 +25,12 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.util.lerp
 import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
+import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.homecheckin.impl.resources.Res
 import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_onboarding_step
 import kotlinx.coroutines.launch
 import kotlin.math.abs
+import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
 internal fun GuestCheckInOnboardingIndicator(pager: PagerState) {
@@ -38,7 +41,7 @@ internal fun GuestCheckInOnboardingIndicator(pager: PagerState) {
             val selected = index == pager.currentPage % slideCount
             val label = coffeePeekStringResource(Res.string.home_check_in_onboarding_step, index + 1, slideCount)
             Box(
-                Modifier.size(width = CoffeePeekDimens.spacing6, height = CoffeePeekDimens.spacing12)
+                Modifier.size(width = CoffeePeekDimens.spacing6, height = CoffeePeekDimens.minimumTouchTarget)
                     .clip(CircleShape)
                     .selectable(selected = selected, role = Role.Tab) {
                         scope.launch { pager.animateScrollToPage(nearestOnboardingPage(pager.currentPage, index, slideCount)) }
@@ -73,3 +76,11 @@ private fun nearestOnboardingPage(currentPage: Int, index: Int, slideCount: Int)
     val forward = (index - currentPage % slideCount + slideCount) % slideCount
     return currentPage + if (forward <= slideCount / 2) forward else forward - slideCount
 }
+
+@Composable
+private fun OnboardingIndicatorPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
+    GuestCheckInOnboardingIndicator(rememberPagerState(initialPage = 2) { GuestCheckInOnboardingPage.entries.size })
+}
+
+@Preview @Composable private fun OnboardingIndicatorLightPreview() = OnboardingIndicatorPreview(false)
+@Preview @Composable private fun OnboardingIndicatorDarkPreview() = OnboardingIndicatorPreview(true)

@@ -1,5 +1,10 @@
 package com.coffeepeek.feature.community.impl.post
 
+import com.coffeepeek.feature.community.api.CommunityAnalytics
+import com.coffeepeek.feature.community.api.ConsumedDrinks
+import com.coffeepeek.feature.community.api.EditField
+import com.coffeepeek.feature.community.impl.timeline.PostEditState
+import com.coffeepeek.feature.community.impl.timeline.EditError
 import androidx.lifecycle.viewModelScope
 import com.coffeepeek.core.presentation.MviViewModel
 import com.coffeepeek.feature.authorblocking.api.AuthorVisibility
@@ -29,12 +34,15 @@ internal class PostViewModel(
     private val repository: CommunityRepository,
     private val account: CommunityAccount,
     private val authors: AuthorVisibility = AuthorVisibility.None,
+    private val analytics: CommunityAnalytics,
+    private val drinks: ConsumedDrinks,
 ) : MviViewModel<PostState, PostAction, PostEvent>(PostState()) {
     private var accountKey: String? = null
     private var generation = 0L
     private var loadJob: Job? = null
     private var mutationJob: Job? = null
     private var profileJob: Job? = null
+    private var drinksJob: Job? = null
 
     init {
         viewModelScope.launch {
@@ -47,6 +55,7 @@ internal class PostViewModel(
     private fun switchAccount(key: String?) {
         generation++
         loadJob?.cancel(); mutationJob?.cancel(); profileJob?.cancel()
+        drinksJob?.cancel()
         accountKey = key
         updateState { PostState(isLoggedIn = key != null) }
         load()
@@ -71,6 +80,20 @@ internal class PostViewModel(
 
     override suspend fun handleActionInternal(action: PostAction) {
         when (action) {
+            PostAction.Edit -> openEdit()
+            is PostAction.EditText -> updateEdit { copy(text = action.text) }
+            is PostAction.EditRating -> updateEdit { copy(rating = action.rating) }
+            is PostAction.EditDrink -> updateEdit { copy(drinkSlug = action.slug, customDrinkName = action.customName) }
+            PostAction.LoadDrinks -> if (currentState.editing != null) loadDrinks()
+            PostAction.SaveEdit -> saveEdit()
+            PostAction.DismissEdit -> dismissEdit()
+            else -> handlePostAction(action)
+        }
+    }
+
+    private suspend fun handlePostAction(action: PostAction) {
+        when (action) {
+            PostAction.Reload -> if (!currentState.isMutating && currentState.editing == null) load()
             PostAction.Retry -> if (currentState.error == PostError.Failed) load()
             PostAction.ToggleHelpful -> toggleHelpful()
             PostAction.OpenReport -> openReport()
@@ -81,6 +104,7 @@ internal class PostViewModel(
             PostAction.DismissReport -> if (!currentState.isReporting) {
                 updateState { copy(isReportOpen = false, reportText = "", reportIssue = null, reportFailed = false, reportFailure = null) }
             }
+            else -> Unit
         }
     }
 
@@ -105,7 +129,7 @@ internal class PostViewModel(
     private suspend fun toggleHelpful() {
         val current = currentState
         val post = current.post ?: return
-        if (!current.isPublished || current.isOwn || current.isMutating) return
+        if (!current.isPublished || current.isOwn || current.isMutating || current.editing != null) return
         val key = accountKey ?: run { sendEvent(PostEvent.SignInRequested); return }
         if (!isCurrent(key)) return
         loadJob?.cancel()
@@ -148,7 +172,7 @@ internal class PostViewModel(
 
     private suspend fun openReport() {
         val current = currentState
-        if (!current.isPublished || current.isOwn || current.isMutating) return
+        if (!current.isPublished || current.isOwn || current.isMutating || current.editing != null) return
         if (accountKey == null) { sendEvent(PostEvent.SignInRequested); return }
         updateState { copy(isReportOpen = true, reportText = "", reportIssue = null, reportFailed = false, reportFailure = null) }
     }
@@ -173,4 +197,72 @@ internal class PostViewModel(
             }
         }
     }
+    private fun openEdit() {
+        val current = currentState
+        val post = current.post ?: return
+        if (!current.isOwn || current.isMutating || current.isReportOpen || post.isHome || !isCurrent(accountKey)) return
+        analytics.editOpened()
+        updateState { copy(editing = PostEditState(post)) }
+        loadDrinks()
+    }
+
+    private fun updateEdit(change: PostEditState.() -> PostEditState) {
+        val before = currentState.editing ?: return
+        if (currentState.isSaving) return
+        val after = before.change()
+        if (before.text != after.text) analytics.editFieldChanged(EditField.Note)
+        if (before.rating != after.rating) analytics.editFieldChanged(EditField.Rating)
+        if (before.drinkSlug != after.drinkSlug || before.customDrinkName != after.customDrinkName) analytics.editFieldChanged(EditField.Drink)
+        updateState { copy(editing = after.copy(error = null)) }
+    }
+
+    private fun dismissEdit() {
+        if (currentState.isSaving) return
+        analytics.editCancelled()
+        updateState { copy(editing = null) }
+    }
+
+    private fun loadDrinks() {
+        val key = accountKey ?: return
+        drinksJob?.cancel()
+        drinksJob = viewModelScope.launch {
+            val result = drinks.load()
+            currentCoroutineContext().ensureActive()
+            if (!isCurrent(key)) return@launch
+            result.onSuccess { options -> updateState { copy(drinks = options, drinksFailed = false) } }
+                .onFailure { updateState { copy(drinksFailed = true) } }
+        }
+    }
+
+    private fun saveEdit() {
+        val edit = currentState.editing ?: return
+        val key = accountKey ?: return
+        if (!isCurrent(key) || currentState.isMutating) return
+        analytics.editSubmitted()
+        edit.issue()?.let { issue ->
+            analytics.editRejected()
+            updateState { copy(editing = edit.copy(error = EditError.Invalid(issue))) }
+            return
+        }
+        submitEdit(edit, key)
+    }
+
+    private fun submitEdit(edit: PostEditState, key: String) {
+        loadJob?.cancel()
+        updateState { copy(isSaving = true, isLoading = false) }
+        mutationJob = viewModelScope.launch {
+            val result = repository.update(edit.source.id, edit.input())
+            currentCoroutineContext().ensureActive()
+            if (!isCurrent(key)) return@launch
+            result.onSuccess { updated ->
+                analytics.editSaved(updated.visibility, updated.photos.originals.isNotEmpty())
+                updateState { copy(post = updated, editing = null, isSaving = false) }
+                sendEvent(PostEvent.Message(ActionMessage(MessageKind.EditSaved)))
+            }.onFailure { error ->
+                analytics.editFailed(error)
+                updateState { copy(isSaving = false, editing = edit.copy(error = EditError.Server((error as? CommunityFailure)?.serverMessage))) }
+            }
+        }
+    }
+
 }

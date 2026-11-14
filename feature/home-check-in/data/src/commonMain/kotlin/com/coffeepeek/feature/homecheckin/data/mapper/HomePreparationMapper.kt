@@ -16,6 +16,7 @@ internal fun HomeDto.toDomain(apiBaseUrl: String): HomePreparation {
         drinkSlug = drink.string("slug"), customDrinkName = drink.string("customName", "customDrinkName"),
         photos = orderedPhotos.map { (photo, original) -> photo.toDomain(original, apiBaseUrl) },
         shelfBagPhoto = shelfBagPhoto?.let { photo -> photo.url.resolvePhotoUrl(apiBaseUrl)?.let { photo.toDomain(it, apiBaseUrl) } },
+        rejectionReason = rejectionReason,
         visibility = HomePreparationVisibility.entries.firstOrNull { it.name.equals(visibility, ignoreCase = true) },
         moderation = HomePreparationModeration.entries.firstOrNull { it.name.equals(moderationState, ignoreCase = true) }
             ?: HomePreparationModeration.Unknown,

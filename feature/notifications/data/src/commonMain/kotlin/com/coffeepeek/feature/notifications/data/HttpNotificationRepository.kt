@@ -10,7 +10,9 @@ import io.ktor.http.*
 import kotlinx.serialization.Serializable
 
 /** The transport of the notification history, push settings and device registration. */
-fun createNotificationRepository(client: HttpClient): NotificationRepository = HttpNotificationRepository(client)
+fun createNotificationRepository(client: HttpClient): NotificationRepository {
+    return HttpNotificationRepository(client)
+}
 
 internal class HttpNotificationRepository(private val client: HttpClient) : NotificationRepository {
     private val root = "/api/v1/me/notifications"
@@ -26,7 +28,10 @@ internal class HttpNotificationRepository(private val client: HttpClient) : Noti
     }
     override suspend fun destination(notificationId: String): NotificationTarget? {
         require(notificationId.isNotBlank() && notificationId.none { it in "/\\?#" || it.isISOControl() })
-        val response = client.get("$root/$notificationId/destination") { expectSuccess = true }
+        val response = client.get("$root/$notificationId/destination") {
+            expectSuccess = true
+            parameter("supportsCheckInPost", true)
+        }
         if (response.status == HttpStatusCode.NoContent) return null
         val target = response.body<DestinationDto>()
         return NotificationTarget(target.kind, target.value)

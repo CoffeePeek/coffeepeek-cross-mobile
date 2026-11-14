@@ -25,6 +25,7 @@ internal enum class SandboxFeed { Single, Paged, PageFailsOnce, InvalidCursor, E
 
 /** Local fixture contracts for the existing app, not an alternative implementation of its UI. */
 internal class SandboxApplicationBackend(private val today: LocalDate, private val visits: MutableList<JsonObject>,
+    private val homePosts: () -> List<JsonObject> = { emptyList() },
     uploadedCover: (String, Long) -> Boolean = { _, _ -> false }) {
     companion object {
         const val SELF_ID = "sandbox-author-self"
@@ -308,12 +309,30 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
 
     /** Like the real read of a shared post: the account's own visit always, another author's only when published and not blocked; otherwise 404. */
     private fun checkIn(id: String): Pair<HttpStatusCode, JsonObject> {
-        val own = visits.firstOrNull { it["id"]?.jsonPrimitive?.content == id }
+        val own = (visits + homePosts()).firstOrNull { it["id"]?.jsonPrimitive?.content == id }
         val public = (others + generatedFeed).firstOrNull { it["id"]?.jsonPrimitive?.content == id && visible(it) && isPublished(it) }
         return (own ?: public)?.let(::ok) ?: (HttpStatusCode.NotFound to failure("Check-in not found."))
     }
 
-    private fun feedItem(row: JsonObject) =buildJsonObject { put("publishedAtUtc", row["createdAtUtc"] ?: JsonPrimitive("${today}T07:00:00Z")); put("checkIn", row) }
+    private fun feedItem(row: JsonObject) = buildJsonObject {
+        val date = row["createdAtUtc"] ?: JsonPrimitive(today.toString() + "T07:00:00Z")
+        put("publishedAtUtc", if (isPublished(row)) date else JsonNull)
+        put("feedPositionAtUtc", date)
+        put("checkIn", row)
+    }
+
+    private fun feedRows(request: HttpRequestData): List<JsonObject> {
+        val owner = request.headers[SandboxSavedCollectionsBackend.OWNER]
+        val signedIn = owner?.let(::isSandboxOwner) == true || request.headers[HttpHeaders.Authorization] == "Bearer " + accessToken()
+        val ownPending = request.url.parameters["includeOwnPending"] == "true" && signedIn
+        val own = (visits + homePosts()).filter {
+            isPublished(it) || ownPending && it["visibility"]?.jsonPrimitive?.content == "Public" &&
+                it["moderationState"]?.jsonPrimitive?.content == "Pending"
+        }
+        return (own + others.filter { visible(it) && isPublished(it) })
+            .sortedByDescending { it["createdAtUtc"]?.jsonPrimitive?.content.orEmpty() }
+    }
+
     /** Page size and cursor are validated like the real endpoint; the cursor is the offset into the visible fixtures. */
     private fun feedPage(request: HttpRequestData): Pair<HttpStatusCode, JsonObject> {
         if (feed == SandboxFeed.Failure) return HttpStatusCode.InternalServerError to failure("Не удалось загрузить ленту")
@@ -321,7 +340,7 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
             put("items", JsonArray(rows.map(::feedItem))); put("nextCursor", next?.let(::JsonPrimitive) ?: JsonNull)
         })
         if (feed == SandboxFeed.Empty) return page(emptyList(), null)
-        val base = (visits + others.filter(::visible)).filter(::isPublished)
+        val base = feedRows(request)
         if (feed == SandboxFeed.Single) return page(base, null)
         val size = request.url.parameters["pageSize"]?.toIntOrNull()?.takeIf { it in 1..100 } ?: 20
         val cursor = request.url.parameters["cursor"]
@@ -394,6 +413,7 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
         put("authorAvatarUrl", "/media/sample"); put("shop", address("sandbox-cafe", "/coffee-shops/sandbox-cafe"))
         put("createdAtUtc", "${today}T06:00:00Z"); put("visitedAt", "${today}T06:00:00Z")
         put("text", "Публичный визит другого автора"); put("visibility", "Public"); put("moderationState", "Approved")
+        put("drinkNameRu", "Батч"); put("drinkNameEn", "Batch brew")
         put("helpfulCount", 2); put("isHelpfulByCurrentUser", false)
         putJsonObject("rating") { put("coffee", 5); put("service", 4); put("place", 5) }
         // Protected delivery shape: an owner-scoped original plus immutable feed/detail variants.
@@ -457,11 +477,27 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
         putJsonObject("location") { put("address", "Тестовая улица, 1"); put("latitude", 53.9); put("longitude", 27.56) }
         putJsonArray("photos") { add(photo()) }; put("coverPhoto", photo())
         put("roasters", JsonArray(listOf(catalog("sandbox-roaster", "Sandbox Roaster"))))
+        if (slug == "sandbox-cafe") putShopFeatures()
         // Counters above stay server aggregates; only the visible cards are filtered.
         put("checkIns", JsonArray(publicVisits.filter(::visible))); put("userCheckIns", JsonArray(shopVisits))
         putJsonObject("menu") { put("inputRevision", 0); put("currency", "BYN"); put("photos", JsonArray(listOf(photo()))); put("items", drinks()) }
         putJsonArray("schedules") { (1..7).forEach { day -> add(buildJsonObject { put("dayOfWeek", day); putJsonArray("intervals") { add(buildJsonObject { put("openTime", "08:00:00"); put("closeTime", "23:00:00") }) } }) } }
     }
+
+    private fun JsonObjectBuilder.putShopFeatures() {
+        putJsonArray("brewMethods") {
+            add(catalog("espresso", "Эспрессо"))
+            add(catalog("v60", "V60"))
+            add(catalog("aeropress", "Аэропресс"))
+        }
+        putJsonArray("shopTags") {
+            add(catalog("wifi", "Wi-Fi"))
+            add(catalog("pets", "Можно с животными"))
+            add(catalog("plant-milk", "Растительное молоко"))
+            add(catalog("bakery", "Выпечка"))
+        }
+    }
+
     // Three synthetic roasters: full data (tags, contacts, shops with and without photos), partial data, and bare.
     private fun roasters() = listOf(
         roasterRow("sandbox-roaster", "Sandbox Roaster", about = "Локальный обжарщик для тестирования", withPhotos = true,

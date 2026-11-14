@@ -23,7 +23,7 @@ internal fun ContentReportTextField(state: ContentReportState, onText: (String) 
         singleLine = false, shape = RoundedCornerShape(CoffeePeekDimens.buttonRadius), contentPadding = PaddingValues(14.dp, 12.dp),
         textStyle = MaterialTheme.typography.bodyMedium.copy(color = MaterialTheme.colorScheme.onSurface),
         placeholder = { Text(stringResource(Res.string.content_report_placeholder), style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)) },
+            color = MaterialTheme.colorScheme.onSurfaceVariant) },
         isError = invalid, errorDescription = if (invalid) reportError(state) else null,
         colors = OutlinedTextFieldDefaults.colors(focusedContainerColor = background, unfocusedContainerColor = background,
             disabledContainerColor = background, errorContainerColor = background,

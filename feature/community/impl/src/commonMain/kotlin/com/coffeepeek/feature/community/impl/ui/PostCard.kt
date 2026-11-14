@@ -13,10 +13,8 @@ import com.coffeepeek.feature.community.impl.resources.community_details_separat
 import com.coffeepeek.feature.community.impl.resources.community_dose
 import com.coffeepeek.feature.community.impl.resources.community_edit
 import com.coffeepeek.feature.community.impl.resources.community_hide
-import com.coffeepeek.feature.community.impl.resources.community_label_pending
 import com.coffeepeek.feature.community.impl.resources.community_label_private
 import com.coffeepeek.feature.community.impl.resources.community_label_public
-import com.coffeepeek.feature.community.impl.resources.community_label_published
 import com.coffeepeek.feature.community.impl.resources.community_label_rejected
 import com.coffeepeek.feature.community.impl.resources.community_label_unknown
 import com.coffeepeek.feature.community.impl.resources.community_like
@@ -36,6 +34,7 @@ import com.coffeepeek.feature.community.impl.resources.community_unlike
 import com.coffeepeek.feature.community.impl.resources.community_user
 import com.coffeepeek.feature.community.impl.resources.community_you
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -45,10 +44,8 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
@@ -56,6 +53,7 @@ import androidx.compose.material3.Text
 import com.coffeepeek.core.designsystem.component.CoffeePeekTextButton as TextButton
 import com.coffeepeek.core.designsystem.component.CoffeePeekPlainIconButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -71,7 +69,9 @@ import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.component.CoffeePeekActionMenu
-import com.coffeepeek.core.designsystem.component.CoffeePeekLikeIcon
+import com.coffeepeek.core.designsystem.component.CoffeePeekDrinkLabel
+import com.coffeepeek.core.designsystem.component.CoffeePeekDrinkLabelSize
+import com.coffeepeek.core.designsystem.component.CoffeePeekLikeCount
 import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
 import com.coffeepeek.core.designsystem.component.CoffeePeekMenuAction
 import com.coffeepeek.core.designsystem.component.CoffeePeekMenuIcon
@@ -146,10 +146,8 @@ internal fun PostCard(
         } else PostHeading(post.shopName.ifBlank { stringResource(Res.string.community_shop_default) }, post.rating, actions.onShop)
         if (post.note.isNotBlank()) Text(post.note, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
         PostPhotoStrip(post.photos, actions.onPhoto, host)
-        if (!publicTimeline) Text(publicationText(post.publicationLabel()), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        if (isOwn && post.moderation == PostModeration.Rejected) post.rejectionReason?.takeIf(String::isNotBlank)?.let {
-            Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
-        }
+        if (!publicTimeline && !(isOwn && post.moderation == PostModeration.Rejected)) Text(publicationText(post.publicationLabel()), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        if (isOwn && post.moderation == PostModeration.Rejected) PostRejection(post.rejectionReason, actions.onEdit, enabled)
         val drinkName = post.drink?.displayName(Locale.current.language)
         if (showHelpfulCount || drinkName != null || actions.onPublish != null) Row(
             Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2),
@@ -161,7 +159,7 @@ internal fun PostCard(
                     Text(stringResource(if (changingVisibility) Res.string.community_saving else Res.string.community_publish))
                 }
             }
-            drinkName?.let { DrinkLabel(it) }
+            drinkName?.let { CoffeePeekDrinkLabel(it, size = CoffeePeekDrinkLabelSize.Compact) }
         }
     }
 }
@@ -199,7 +197,7 @@ private fun Avatar(name: String, photoUrl: String?, host: CommunityHost) {
     }
 }
 
-/** The overflow menu: share, edit, hide, report, block (last, in red) — only what this viewer may do with this post. */
+/** The overflow menu: share, edit, hide, report, block (last, in red) вЂ” only what this viewer may do with this post. */
 @Composable
 private fun PostMenu(actions: PostCardActions, enabled: Boolean, hiding: Boolean) {
     if (actions.onShare == null && actions.onBlock == null && actions.onEdit == null && actions.onHide == null && actions.onReport == null) return
@@ -223,15 +221,13 @@ private fun PostMenu(actions: PostCardActions, enabled: Boolean, hiding: Boolean
 private fun publicationText(label: PublicationLabel): String = stringResource(
     when (label) {
         PublicationLabel.Private -> Res.string.community_label_private
-        PublicationLabel.Pending -> Res.string.community_label_pending
-        PublicationLabel.Published -> Res.string.community_label_published
         PublicationLabel.Rejected -> Res.string.community_label_rejected
         PublicationLabel.Public -> Res.string.community_label_public
         PublicationLabel.Unknown -> Res.string.community_label_unknown
     },
 )
 
-/** Sends a post's link to the system share sheet with the title the website gives its page: «{author} в «{shop}»» or «Кофе дома — {author}». */
+/** Sends a post's link to the system share sheet with the title the website gives its page: В«{author} РІ В«{shop}В»В» or В«РљРѕС„Рµ РґРѕРјР° вЂ” {author}В». */
 internal class PostSharer(
     private val shopFormat: String,
     private val homeFormat: String,
@@ -294,28 +290,7 @@ private fun HelpfulButton(count: Int, helpful: Boolean, onClick: (() -> Unit)?) 
         helpful -> stringResource(Res.string.community_unlike, count)
         else -> stringResource(Res.string.community_like, count)
     }
-    Row(
-        Modifier.heightIn(min = 48.dp).widthIn(min = 48.dp).clip(RoundedCornerShape(CoffeePeekDimens.radiusMd))
-            .semantics(mergeDescendants = true) { contentDescription = description },
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2),
-    ) {
-        // The ripple belongs to the heart alone; the row only widens the touch target.
-        Box(Modifier.size(44.dp).clip(CircleShape)
-            .then(if (onClick != null) Modifier.clickable(role = Role.Button, onClick = onClick) else Modifier),
-            contentAlignment = Alignment.Center) {
-            CoffeePeekLikeIcon(helpful, contentDescription = null)
-        }
-        Text(count.toString(), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface)
-    }
-}
-
-@Composable
-private fun DrinkLabel(name: String) {
-    Row(horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing1), verticalAlignment = Alignment.CenterVertically) {
-        CoffeePeekIcon(CoffeePeekIcons.Coffee, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(14.dp))
-        Text(name, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-    }
+    CoffeePeekLikeCount(count, helpful, description, onClick = onClick)
 }
 
 @Composable
@@ -334,7 +309,7 @@ private fun PostPhotoStrip(photos: PostPhotos, onPhoto: (Int) -> Unit, host: Com
                 CoffeePeekLoader(stringResource(Res.string.community_loading), size = 32.dp)
             }
             host.image(photos.thumbnails.getOrNull(index)?.takeIf(String::isNotBlank) ?: photos.originals.getOrNull(index).orEmpty(), photos.inlineSource(index), Modifier.fillMaxSize(), ContentScale.Crop)
-            if (index == 2 && count > 3) Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.45f)), contentAlignment = Alignment.Center) {
+            if (index == 2 && count > 3) Box(Modifier.fillMaxSize().background(CoffeePeekColors.PhotoBadgeOverlay), contentAlignment = Alignment.Center) {
                 Text(stringResource(Res.string.community_more_photos, count - 3), style = MaterialTheme.typography.headlineSmall, color = Color.White)
             }
         }
@@ -369,9 +344,9 @@ private fun com.coffeepeek.feature.community.domain.model.PostDrink.displayName(
     else nameRu?.takeIf(String::isNotBlank) ?: nameEn?.takeIf(String::isNotBlank)
 
 internal fun previewPost() = CommunityPost(
-    "preview", "cafe", "Sandbox Cafe", PostAuthor("a", "anna", "Анна", null), "Уютное место и отличный кофе.", "2026-10-07T10:00:00Z", "2026-10-07T09:00:00Z",
+    "preview", "cafe", "Sandbox Cafe", PostAuthor("a", "anna", "РђРЅРЅР°", null), "РЈСЋС‚РЅРѕРµ РјРµСЃС‚Рѕ Рё РѕС‚Р»РёС‡РЅС‹Р№ РєРѕС„Рµ.", "2026-10-07T10:00:00Z", "2026-10-07T09:00:00Z",
     PostPhotos(listOf("o1", "o2", "o3", "o4"), listOf("t1", "t2", "t3", "t4"), listOf("d1", "d2", "d3", "d4")), PostRating(4, 4, 5),
-    com.coffeepeek.feature.community.domain.model.PostDrink("cappuccino", null, "Капучино", "Cappuccino"), PostVisibility.Public, PostModeration.Approved,
+    com.coffeepeek.feature.community.domain.model.PostDrink("cappuccino", null, "РљР°РїСѓС‡РёРЅРѕ", "Cappuccino"), PostVisibility.Public, PostModeration.Approved,
     1, null, 3, true, false, null,
 )
 
@@ -382,7 +357,7 @@ internal fun previewPost() = CommunityPost(
 @Preview @Composable private fun PostCardDarkPreview() = PostCardPreview(true)
 
 @Composable private fun HomePostCardPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
-    PostCard(previewPost().copy(isHome = true, home = HomePreparation("2026-10-07", "hario-v60", "Эфиопия", 18.0, 150, 4), photos = PostPhotos.None, rating = null),
+    PostCard(previewPost().copy(isHome = true, home = HomePreparation("2026-10-07", "hario-v60", "Р­С„РёРѕРїРёСЏ", 18.0, 150, 4), photos = PostPhotos.None, rating = null),
         isOwn = true, publicTimeline = false, showHelpfulCount = false, enabled = true, PostCardActions(null, null, null, null, {}), CommunityHost())
 }
 

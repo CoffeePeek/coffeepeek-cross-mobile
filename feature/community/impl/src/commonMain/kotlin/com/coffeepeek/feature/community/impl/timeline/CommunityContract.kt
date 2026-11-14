@@ -17,7 +17,7 @@ internal enum class CommunityTimeline { Public, Mine }
 
 internal enum class TimelineError { LoadFailed, BlocksFailed }
 
-internal enum class MessageKind { VoteFailed, VisibilityFailed, ReportSent, EditSaved, EditSentForReview }
+internal enum class MessageKind { VoteFailed, VisibilityFailed, ReportSent, EditSaved }
 
 /** A short notice for the snackbar; [serverMessage] is shown instead of the default text when the server sent one. */
 internal data class ActionMessage(val kind: MessageKind, val serverMessage: String? = null)
@@ -46,6 +46,7 @@ internal data class CommunityState(
     /** Bumped when the account or the timeline scope changes; late answers for an older generation are dropped. */
     val sessionGeneration: Long = 0,
     val items: List<CommunityPost> = emptyList(),
+    val confirmedSaves: List<String> = emptyList(),
     val firstPageCount: Int? = null,
     val timeline: CommunityTimeline = CommunityTimeline.Public,
     val filters: FeedFilters = FeedFilters(),
@@ -75,6 +76,10 @@ internal data class CommunityState(
     val isReporting: Boolean = false,
 ) {
     val isMutating: Boolean get() = isSaving || changingVisibilityId != null || helpfulIds.isNotEmpty() || isReporting
+    val isUnfilteredFeed: Boolean get() = timeline == CommunityTimeline.Public &&
+        filters.citySlug == null && filters.coffeeShopSlug == null && filters.authorSlug == null
+    val visibleConfirmedSaves: List<String> get() = if (isLoggedIn == true && isUnfilteredFeed)
+        confirmedSaves.filter { id -> items.none { it.id == id } } else emptyList()
     val canLike: Boolean get() = timeline == CommunityTimeline.Public && !isSaving && changingVisibilityId == null &&
         !isReporting && editing == null && reportingId == null
     fun owns(post: CommunityPost): Boolean = ownsPost(post, isLoggedIn, timeline == CommunityTimeline.Mine, ownAuthorSlug)

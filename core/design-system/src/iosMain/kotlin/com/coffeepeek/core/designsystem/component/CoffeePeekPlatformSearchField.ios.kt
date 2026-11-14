@@ -17,7 +17,6 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
-import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
 import kotlinx.cinterop.ObjCAction
 import platform.Foundation.NSSelectorFromString
 import platform.UIKit.UIControlEventEditingChanged
@@ -62,7 +61,7 @@ internal actual fun CoffeePeekPlatformSearchField(
             view.configure(displayedText, placeholder, clearDescription, enabled, keyboardOptions)
             view.overrideUserInterfaceStyle = coffeePeekUserInterfaceStyle(colors.background)
             view.field.textColor = colors.onSurface.toUIColor()
-            view.field.tintColor = colors.coffeePeekAccentForeground.toUIColor()
+            view.field.tintColor = colors.primary.toUIColor()
             view.setIconTint(colors.onSurfaceVariant.toUIColor())
         },
         onRelease = { it.release() },

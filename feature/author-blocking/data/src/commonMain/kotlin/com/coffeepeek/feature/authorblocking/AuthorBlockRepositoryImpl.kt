@@ -35,7 +35,7 @@ internal class AuthorBlockRepositoryImpl(
                 val generation = epoch.updateAndGet { it + 1 }
                 account = current
                 _state.value = AuthorBlocksState(signedIn = current != null, ready = current == null, sessionVersion = generation)
-                publish(emptyList(), current == null, generation, force = true)
+                publish(emptyList(), current == null, generation)
                 if (current != null) refresh()
             }
         }
@@ -54,7 +54,7 @@ internal class AuthorBlockRepositoryImpl(
             try {
                 val items = readAll()
                 requireCurrent(generation)
-                replace(items, generation, force = true)
+                replace(items, generation)
             } catch (cancelled: CancellationException) {
                 _state.update { if (it.sessionVersion == generation) it.copy(loading = false) else it }
                 throw cancelled
@@ -158,17 +158,21 @@ internal class AuthorBlockRepositoryImpl(
         return items.values.toList()
     }
 
-    private fun replace(items: List<BlockedAuthor>, generation: Long, force: Boolean = false) {
+    private fun replace(items: List<BlockedAuthor>, generation: Long) {
         _state.update { if (it.sessionVersion == generation && account == accounts.current()) AuthorBlocksState(items, signedIn = true, ready = true, sessionVersion = generation) else it }
-        publish(items, ready = true, generation = generation, force = force)
+        publish(items, ready = true, generation = generation)
     }
 
-    private fun publish(items: List<BlockedAuthor>, ready: Boolean, generation: Long, force: Boolean = false) {
+    private fun publish(items: List<BlockedAuthor>, ready: Boolean, generation: Long) {
         val ids = items.mapTo(mutableSetOf()) { it.id }
         val slugs = items.mapNotNullTo(mutableSetOf()) { it.slug }
+        // An unchanged list must not bump the revision: a periodic refresh (for example the
+        // one on every ON_START) would otherwise invalidate every personalized page and wipe
+        // the feed the user is looking at, although nothing visible has changed. Consumers
+        // key invalidation on the content, not on the revision counter itself.
         _visibility.update { previous ->
             if (_state.value.sessionVersion != generation || account != accounts.current()) previous
-            else if (!force && previous.ready == ready && previous.blockedIds == ids && previous.blockedSlugs == slugs) previous
+            else if (previous.ready == ready && previous.blockedIds == ids && previous.blockedSlugs == slugs) previous
             else AuthorVisibilitySnapshot(previous.revision + 1, ready, ids, slugs)
         }
     }

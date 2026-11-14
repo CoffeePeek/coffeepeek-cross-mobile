@@ -35,16 +35,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
 import com.coffeepeek.core.designsystem.component.CoffeePeekFilledButton as Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
@@ -52,7 +48,6 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import com.coffeepeek.core.designsystem.component.CoffeePeekScaffold as Scaffold
 import com.coffeepeek.core.designsystem.component.CoffeePeekScrollableColumn
-import com.coffeepeek.core.designsystem.component.CoffeePeekNativeAlert
 import androidx.compose.material3.Text
 import com.coffeepeek.core.designsystem.component.CoffeePeekTextButton as TextButton
 import androidx.compose.runtime.Composable
@@ -247,7 +242,7 @@ private fun EditProfileAbout(state: EditProfileState, onAction: (EditProfileActi
 private fun SaveProfileButton(state: EditProfileState, onClick: () -> Unit) {
     Button(
         onClick = onClick,
-        modifier = Modifier.fillMaxWidth().height(CoffeePeekDimens.buttonHeight),
+        modifier = Modifier.fillMaxWidth().heightIn(min = CoffeePeekDimens.buttonHeight),
         enabled = state.canSave,
         shape = RoundedCornerShape(CoffeePeekDimens.buttonRadius),
         colors = ButtonDefaults.buttonColors(

@@ -19,6 +19,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.component.CoffeePeekCompactOutlinedTextField
+import com.coffeepeek.core.designsystem.component.CoffeePeekMultilineTextField
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 
 /** Text and numeric variants deliberately keep the current form's 44dp/pill and 80dp/note geometry. */
@@ -35,6 +36,11 @@ internal fun HomeCheckInEditorInput(
     keyboardType: KeyboardType = KeyboardType.Text,
     maximum: Int? = null,
 ) {
+    if (multiline) {
+        CoffeePeekMultilineTextField(value, onChange, label, placeholder, maxLength,
+            enabled = enabled, errorDescription = error)
+        return
+    }
     val focus = LocalFocusManager.current
     val keyboard = LocalSoftwareKeyboardController.current
     CoffeePeekCompactOutlinedTextField(value, { input ->
@@ -43,14 +49,14 @@ internal fun HomeCheckInEditorInput(
                 keyboardType == KeyboardType.Decimal && (it == '.' || it == ',')
         }
         if (maximum == null || filtered.isEmpty() || filtered.toIntOrNull() in 0..maximum) onChange(filtered)
-    }, enabled = enabled, singleLine = !multiline, isError = error != null, errorDescription = error,
-        modifier = Modifier.fillMaxWidth().heightIn(min = if (multiline) 80.dp else 44.dp)
+    }, enabled = enabled, isError = error != null, errorDescription = error,
+        modifier = Modifier.fillMaxWidth().heightIn(min = 44.dp)
             .semantics { contentDescription = label },
         shape = RoundedCornerShape(22.dp), textStyle = MaterialTheme.typography.bodyMedium,
         placeholder = { Text(placeholder, style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)) },
-        contentPadding = PaddingValues(horizontal = 14.dp, vertical = if (multiline) 12.dp else 0.dp),
-        keyboardOptions = KeyboardOptions(keyboardType = keyboardType, imeAction = if (multiline) ImeAction.Default else ImeAction.Done),
+            color = MaterialTheme.colorScheme.onSurfaceVariant) },
+        contentPadding = PaddingValues(horizontal = 14.dp, vertical = 0.dp),
+        keyboardOptions = KeyboardOptions(keyboardType = keyboardType, imeAction = ImeAction.Done),
         keyboardActions = KeyboardActions(onDone = { focus.clearFocus(force = true); keyboard?.hide() }),
         colors = OutlinedTextFieldDefaults.colors(
             focusedContainerColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.04f),

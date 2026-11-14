@@ -27,7 +27,7 @@ class MapHeatmapViewModelTest {
 
     private fun TestScope.model(): MapViewModel {
         repository.heatmap = { _, _ -> Result.success(heatmap) }
-        return MapViewModel(repository, FakeCity(), FakeLocation(), FakeShopDetails(), analytics, account, FakeFavorites())
+        return MapViewModel(repository, FakeLocation(), FakeShopDetails(), analytics, account, FakeFavorites())
             .also { store.put("map", it); it.onAction(MapAction.BoundsChanged(bounds, 12f)); runCurrent() }
     }
 
@@ -104,7 +104,8 @@ class MapHeatmapViewModelTest {
         gate.complete(Result.success(heatmap))
         runCurrent()
         assertTrue(vm.state.value.heatmap.points.isEmpty())
-        assertEquals("brest", repository.heatmapRequests.last().second.filters.cityId)
+        assertNull(repository.heatmapRequests.last().second.filters.cityId)
+        assertEquals("tea", repository.heatmapRequests.last().second.text)
         assertFalse(vm.state.value.isHeatmapLoading)
     }
 

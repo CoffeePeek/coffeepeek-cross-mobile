@@ -1,17 +1,9 @@
 package com.coffeepeek.feature.discovery.impl.ui
 
-import androidx.compose.foundation.background
+
 import com.coffeepeek.feature.discovery.impl.resources.Res
 import com.coffeepeek.feature.discovery.impl.resources.discovery_loading
-import com.coffeepeek.feature.discovery.impl.resources.discovery_map_card_checkins
-import com.coffeepeek.feature.discovery.impl.resources.discovery_map_card_closed
-import com.coffeepeek.feature.discovery.impl.resources.discovery_map_card_hours
-import com.coffeepeek.feature.discovery.impl.resources.discovery_map_card_loading
-import com.coffeepeek.feature.discovery.impl.resources.discovery_map_card_nearby
-import com.coffeepeek.feature.discovery.impl.resources.discovery_map_card_no_checkins
-import com.coffeepeek.feature.discovery.impl.resources.discovery_map_card_open
 import com.coffeepeek.feature.discovery.impl.resources.discovery_map_carousel_position
-import com.coffeepeek.feature.discovery.impl.resources.discovery_map_photo_missing
 import com.coffeepeek.feature.discovery.impl.resources.discovery_map_search_empty
 import com.coffeepeek.feature.discovery.impl.resources.discovery_map_search_failed
 import com.coffeepeek.feature.discovery.impl.resources.discovery_map_zone_close
@@ -19,23 +11,17 @@ import com.coffeepeek.feature.discovery.impl.resources.discovery_map_zone_shops_
 import com.coffeepeek.feature.discovery.impl.resources.discovery_map_zone_shops_many
 import com.coffeepeek.feature.discovery.impl.resources.discovery_map_zone_shops_one
 import com.coffeepeek.feature.discovery.impl.resources.discovery_map_zone_show_shops
-import com.coffeepeek.feature.discovery.impl.resources.discovery_map_zoom_in
-import com.coffeepeek.feature.discovery.impl.resources.discovery_map_zoom_out
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -55,7 +41,6 @@ import androidx.compose.runtime.key
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
@@ -116,23 +101,6 @@ private fun SuggestionText(text: StringResource) {
 }
 
 @Composable
-internal fun MapZoomControl(onZoomIn: () -> Unit, onZoomOut: () -> Unit, modifier: Modifier = Modifier) {
-    val shape = RoundedCornerShape(CoffeePeekDimens.radiusLg)
-    Column(modifier.width(CoffeePeekDimens.buttonHeight).clip(shape).background(MaterialTheme.colorScheme.surface.copy(alpha = 0.94f)).border(1.dp, MaterialTheme.colorScheme.outline, shape)) {
-        ZoomButton(CoffeePeekIcons.Add, Res.string.discovery_map_zoom_in, onZoomIn)
-        HorizontalDivider(thickness = 1.dp, color = MaterialTheme.colorScheme.outline)
-        ZoomButton(CoffeePeekIcons.Minus, Res.string.discovery_map_zoom_out, onZoomOut)
-    }
-}
-
-@Composable
-private fun ZoomButton(icon: androidx.compose.ui.graphics.vector.ImageVector, description: StringResource, onClick: () -> Unit) {
-    Box(Modifier.fillMaxWidth().height(CoffeePeekDimens.buttonHeight).clickable(onClick = onClick), contentAlignment = Alignment.Center) {
-        CoffeePeekIcon(icon, stringResource(description), Modifier.size(22.dp), tint = MaterialTheme.colorScheme.onSurface)
-    }
-}
-
-@Composable
 internal fun MapZoneCard(zone: MapZone, onShowShops: () -> Unit, onDismiss: () -> Unit, modifier: Modifier = Modifier) {
     Card(
         modifier.fillMaxWidth(), shape = RoundedCornerShape(CoffeePeekDimens.cardRadius),
@@ -149,7 +117,7 @@ internal fun MapZoneCard(zone: MapZone, onShowShops: () -> Unit, onDismiss: () -
             if (zone.description.isNotBlank()) {
                 Text(zone.description, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 3, overflow = TextOverflow.Ellipsis)
             }
-            Button(onShowShops, Modifier.fillMaxWidth().height(CoffeePeekDimens.buttonHeight), shape = RoundedCornerShape(percent = 50)) {
+            Button(onShowShops, Modifier.fillMaxWidth().heightIn(min = CoffeePeekDimens.buttonHeight), shape = RoundedCornerShape(percent = 50)) {
                 Text(stringResource(Res.string.discovery_map_zone_show_shops))
             }
         }

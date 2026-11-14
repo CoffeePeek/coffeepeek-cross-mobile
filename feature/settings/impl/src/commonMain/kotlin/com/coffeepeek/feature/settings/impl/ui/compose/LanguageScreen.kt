@@ -1,5 +1,6 @@
 package com.coffeepeek.feature.settings.impl.ui.compose
 
+
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -13,7 +14,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.animation.scaleOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.fadeIn
@@ -28,12 +28,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.coffeepeek.core.designsystem.component.CoffeePeekCard
+import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
 import com.coffeepeek.core.designsystem.component.CoffeePeekRefreshError
 import com.coffeepeek.core.designsystem.component.CoffeePeekScaffold
 import com.coffeepeek.core.designsystem.component.CoffeePeekTopBar
 import com.coffeepeek.core.designsystem.component.coffeePeekScrollContentPadding
-import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
@@ -117,7 +117,7 @@ private fun LanguageOption(name: String, selected: Boolean, enabled: Boolean, on
         Text(name, Modifier.weight(1f), style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
         AnimatedVisibility(selected, enter = fadeIn(tween(160)) + scaleIn(initialScale = 0.7f),
             exit = fadeOut(tween(120))) {
-            Icon(CoffeePeekIcons.Check, contentDescription = null, tint = MaterialTheme.colorScheme.primary,
+            CoffeePeekIcon(CoffeePeekIcons.Check, contentDescription = null, tint = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.size(CoffeePeekDimens.settingsIconSize))
         }
     }

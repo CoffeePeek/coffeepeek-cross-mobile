@@ -28,9 +28,7 @@
     <string name="history_create_home">Чекин дома</string>
     <string name="history_private">Только мне</string>
     <string name="history_visible">Виден всем</string>
-    <string name="history_pending">На модерации</string>
     <string name="history_rejected">Не опубликован</string>
-    <string name="history_waiting_publication">Ожидает публикации</string>
     <string name="history_public">Публичный</string>
     <string name="history_dose">%1$s г</string>
     <string name="history_seconds">%1$d с</string>
@@ -97,4 +95,6 @@
     </string-array>
     <string-array name="history_visit_forms"><item>чекин</item><item>чекина</item><item>чекинов</item></string-array>
     <string-array name="history_shop_forms"><item>кофейня</item><item>кофейни</item><item>кофеен</item></string-array>
+    <string name="history_open_check_in">Открыть чекин</string>
+    <string name="history_rejection_fallback">Чекин не опубликован. Откройте его, чтобы исправить.</string>
 </resources>

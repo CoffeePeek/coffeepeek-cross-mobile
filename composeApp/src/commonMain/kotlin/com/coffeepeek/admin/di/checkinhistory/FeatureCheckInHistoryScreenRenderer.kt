@@ -3,7 +3,6 @@ package com.coffeepeek.admin.di.checkinhistory
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.unit.dp
 import com.coffeepeek.admin.analytics.Analytics
 import com.coffeepeek.admin.analytics.AnalyticsOverlay
 import com.coffeepeek.admin.analytics.analyticsExposure
@@ -121,6 +120,7 @@ internal class FeatureCheckInHistoryScreenRenderer(
             onSignIn = { if (session.lease.isCurrent()) onSignIn() },
             onOpenShop = { if (session.lease.isCurrent() && session.lease.isLoggedIn) onOpenShop(it) },
             onOpenPhoto = session::openPhoto,
+            onOpenCheckIn = { if (session.lease.isCurrent() && session.lease.isLoggedIn) Navigator.navigate(Navigator.Screen.CheckInDetail(it)) },
             onOpenHome = { if (session.lease.isCurrent() && session.lease.isLoggedIn) onOpenHome(it) },
             onCreateShop = { if (session.lease.isCurrent() && session.lease.isLoggedIn) onCreateShop() },
             onCreateHome = { if (session.lease.isCurrent() && session.lease.isLoggedIn) onCreateHome() },

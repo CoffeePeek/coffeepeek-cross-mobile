@@ -73,7 +73,6 @@ import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import com.coffeepeek.core.designsystem.component.CoffeePeekIconBadgePalette
-import com.coffeepeek.core.designsystem.component.CoffeePeekActivityIndicator
 import com.coffeepeek.core.designsystem.component.CoffeePeekSettingsDivider
 import com.coffeepeek.core.designsystem.component.CoffeePeekSettingsRow
 import com.coffeepeek.core.designsystem.component.CoffeePeekSettingsSection
@@ -212,7 +211,7 @@ private fun SettingsOtherSection(navigation: SettingsNavigation, external: Setti
         CoffeePeekSettingsDivider()
         CoffeePeekSettingsRow(
             CoffeePeekIcons.Share, stringResource(Res.string.settings_share), null, external::shareApp,
-            iconColors = CoffeePeekIconBadgePalette.BrightCyan,
+            iconColors = CoffeePeekIconBadgePalette.Cyan,
         )
         StoreReviewRow(external)
     }

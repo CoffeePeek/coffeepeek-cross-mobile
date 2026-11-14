@@ -45,8 +45,8 @@ internal fun CoffeeOfferCard(offer: CoffeeOffer, brewNames: Map<String, String>,
         Column(verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing4)) {
             val (label, color) = when (offer.availability) {
                 CoffeeAvailability.InStock -> Res.string.coffee_in_stock to CoffeePeekColors.Success
-                CoffeeAvailability.OutOfStock -> Res.string.coffee_out_of_stock to CoffeePeekColors.Error
-                CoffeeAvailability.PreOrder -> Res.string.coffee_preorder to CoffeePeekColors.Warning
+                CoffeeAvailability.OutOfStock -> Res.string.coffee_out_of_stock to MaterialTheme.colorScheme.error
+                CoffeeAvailability.PreOrder -> Res.string.coffee_preorder to CoffeePeekColors.Primary
                 CoffeeAvailability.Unknown -> Res.string.coffee_availability_unknown to MaterialTheme.colorScheme.onSurfaceVariant
             }
             FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween,

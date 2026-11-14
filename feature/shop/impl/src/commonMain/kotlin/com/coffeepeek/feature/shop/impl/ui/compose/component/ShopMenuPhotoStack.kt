@@ -1,5 +1,6 @@
 package com.coffeepeek.feature.shop.impl.ui.compose.component
 
+import com.coffeepeek.core.designsystem.theme.CoffeePeekColors
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -14,7 +15,6 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
@@ -84,7 +84,7 @@ internal fun ShopMenuPhotoStack(
                 contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize(),
                 onLoading = { MenuPhotoPlaceholder() }, onFailure = { MenuPhotoPlaceholder() })
             Box(Modifier.fillMaxSize().background(Brush.verticalGradient(
-                listOf(Color.Transparent, Color.Transparent, Color.Black.copy(alpha = 0.72f)))))
+                listOf(Color.Transparent, Color.Transparent, CoffeePeekColors.PhotoBadgeOverlay))))
             overlay()
         }
     }

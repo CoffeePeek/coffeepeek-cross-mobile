@@ -1,5 +1,7 @@
 package com.coffeepeek.admin.ui.dialogs
 
+import androidx.compose.foundation.layout.heightIn
+
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIllustrations
 import coffeepeek.composeapp.generated.resources.*
 import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
@@ -29,7 +31,6 @@ import androidx.compose.ui.window.Dialog
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import coffeepeek.composeapp.generated.resources.Res
 import org.jetbrains.compose.resources.painterResource
-import org.jetbrains.compose.ui.tooling.preview.Preview
 
 object ErrorDialog {
 
@@ -88,7 +89,7 @@ object ErrorDialog {
 
                         Button(
                             onClick = onDismiss,
-                            modifier = Modifier.fillMaxWidth().height(CoffeePeekDimens.buttonHeight),
+                            modifier = Modifier.fillMaxWidth().heightIn(min = CoffeePeekDimens.buttonHeight),
                             colors = ButtonDefaults.buttonColors(
                                 containerColor = MaterialTheme.colorScheme.primary,
                                 contentColor   = MaterialTheme.colorScheme.onPrimary,

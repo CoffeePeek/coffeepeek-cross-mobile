@@ -1,5 +1,7 @@
 package com.coffeepeek.feature.shop.impl.ui.compose.component
 
+import com.coffeepeek.core.designsystem.theme.CoffeePeekColors
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -69,7 +71,7 @@ private fun PhotoTile(urls: List<String>, thumbnails: List<String>, details: Lis
         else KamelImage(resource = { asyncPainterResource(preview) }, contentDescription = null,
             contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize(),
             onLoading = { PhotoUnavailable() }, onFailure = { PhotoUnavailable() })
-        if (index == 2 && urls.size > 3) Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.45f)),
+        if (index == 2 && urls.size > 3) Box(Modifier.fillMaxSize().background(CoffeePeekColors.PhotoBadgeOverlay),
             contentAlignment = Alignment.Center) {
             Text(stringResource(Res.string.shop_checkins_more_photos, urls.size - 3),
                 style = MaterialTheme.typography.headlineSmall, color = Color.White)

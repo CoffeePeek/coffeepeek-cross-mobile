@@ -1,6 +1,5 @@
 package com.coffeepeek.admin.di
 
-import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.di.collections.androidCollectionFavoritesModule
 import com.coffeepeek.admin.di.collections.collectionsModule
 import com.coffeepeek.admin.di.favorites.serverFavoritesModule
@@ -95,8 +94,8 @@ internal fun initAndroidKoin(extraModules: List<org.koin.core.module.Module> = e
         appUpdateRendererFactory = { androidAppUpdateRenderer(get(), get()) },
         notificationsRendererFactory = { featureNotificationsRenderer(get(), get(), get()) },
         authRendererFactory = { androidAuthScreenRenderer(get(), get()) },
-        checkInDetailRendererFactory = { featureCheckInDetailScreenRenderer(get(), get(), get(), get()) },
-        communityRendererFactory = { featureCommunityScreenRenderer(get(), get(), get(), get(), get(), get()) },
+        checkInDetailRendererFactory = { featureCheckInDetailScreenRenderer(get(), get(), get(), get(), get(), get()) },
+        communityRendererFactory = { featureCommunityScreenRenderer(get(), get(), get(), get(), get(), get(), get()) },
         contributionsRendererFactory = { featureContributionsScreenRenderer(get(), get(), get()) },
         discoveryRendererFactory = { featureDiscoveryScreenRenderer(get<ApiClients>().client, get(), get(), get(), get(), get(), get(), get(), get()) },
     )

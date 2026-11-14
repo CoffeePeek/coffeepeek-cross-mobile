@@ -1,5 +1,6 @@
 package com.coffeepeek.feature.community.impl
 
+import com.coffeepeek.feature.community.domain.model.PostModeration
 import androidx.lifecycle.ViewModelStore
 import com.coffeepeek.feature.authorblocking.api.AuthorVisibilitySnapshot
 import com.coffeepeek.feature.community.api.FeedItemAction
@@ -54,6 +55,41 @@ class CommunityViewModelTest {
     private fun TestScope.events(vm: CommunityViewModel) = mutableListOf<CommunityEvent>().also { list -> backgroundScope.launch { vm.events.collect { list += it } } }
     private fun CommunityViewModel.send(action: CommunityAction, scope: TestScope) { onAction(action); scope.runCurrent() }
     private fun page(vararg ids: String, next: String? = null) = FeedPage(ids.map { entry(post(it)) }, next)
+
+    @Test fun confirmedSaveSurvivesReadFailureAndIsReconciledWithoutADuplicate() = runTest(dispatcher) {
+        val saved = createCommunitySavedPosts()
+        val repo = FakeRepository().apply { feed = { _, _, _ -> Result.failure(Exception("offline")) } }
+        val account = FakeAccount("one")
+        val vm = CommunityViewModel(repo, account, FakeAnalytics(), FakeDrinks(), FakeAuthors(), saved)
+        store.put("community", vm); runCurrent()
+        saved.saved("one", "created"); runCurrent()
+        assertEquals(listOf("created"), vm.state.value.visibleConfirmedSaves)
+        repo.feed = { _, _, _ -> Result.success(FeedPage(listOf(entry(post("created", slug = "me"))), null)) }
+        vm.send(CommunityAction.Refresh(), this)
+        assertEquals(listOf("created"), vm.state.value.items.map { it.id })
+        assertTrue(vm.state.value.confirmedSaves.isEmpty())
+        saved.saved("one", "late"); account.switchTo("two"); runCurrent()
+        assertTrue(vm.state.value.confirmedSaves.isEmpty())
+        assertTrue(saved.posts.value.isEmpty())
+    }
+
+    @Test fun refreshReplacesInFlightReadAndUsesPersonalizedFeedForBothKinds() = runTest(dispatcher) {
+        val gate = CompletableDeferred<Unit>()
+        var first = true
+        val pending = post("new", slug = "me", home = true).copy(moderation = PostModeration.Pending)
+        val repo = FakeRepository().apply { feed = { _, _, filters ->
+            assertTrue(filters.includeOwnPending)
+            if (first) { first = false; withContext(NonCancellable) { gate.await() }; Result.success(FeedPage(emptyList(), null)) }
+            else Result.success(FeedPage(listOf(entry(pending)), null))
+        } }
+        val vm = model(repo, FakeAccount("one"))
+        vm.send(CommunityAction.Refresh(), this)
+        assertEquals(listOf(pending), vm.state.value.items)
+        gate.complete(Unit); runCurrent()
+        assertEquals(listOf(pending), vm.state.value.items)
+        vm.send(CommunityAction.ToggleHelpful("new"), this)
+        assertTrue(vm.state.value.helpfulIds.isEmpty())
+    }
 
     @Test fun aGuestSeesThePublicFeedInServerOrderWithoutPersonalRequestsAndALikeAsksToSignIn() = runTest(dispatcher) {
         val repo = FakeRepository().apply { feed = { _, _, _ -> Result.success(page("first", "second")) }; mine = { _, _ -> error("Private history must not load") } }
@@ -125,7 +161,7 @@ class CommunityViewModelTest {
         assertTrue(vm.state.value.restartPagination)
         vm.send(CommunityAction.Retry, this)
         assertEquals(listOf(null, null, "stale", null), repo.feedRequests.map { it.second })
-        assertEquals(filters, repo.feedRequests.last().third)
+        assertEquals(filters.copy(includeOwnPending = true), repo.feedRequests.last().third)
         assertEquals(1, vm.state.value.page); assertFalse(vm.state.value.restartPagination)
     }
 

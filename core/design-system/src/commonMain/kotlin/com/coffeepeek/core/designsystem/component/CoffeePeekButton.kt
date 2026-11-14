@@ -3,7 +3,7 @@ package com.coffeepeek.core.designsystem.component
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.width
@@ -14,6 +14,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.Dp
@@ -33,12 +36,14 @@ fun CoffeePeekButton(
     minHeight: Dp = CoffeePeekDimens.buttonHeight,
     useGlass: Boolean = true,
 ) {
-    if (useGlass && leadingIcon == null && CoffeePeekNativePrimaryButton(text, onClick, modifier, enabled)) return
+    val buttonModifier = modifier
+        .then(if (fillWidth) Modifier.fillMaxWidth() else Modifier)
+        .sizeIn(minWidth = CoffeePeekDimens.minimumTouchTarget,
+            minHeight = maxOf(minHeight, CoffeePeekDimens.minimumTouchTarget))
+    if (useGlass && leadingIcon == null && CoffeePeekNativePrimaryButton(text, onClick, buttonModifier, enabled)) return
     Button(
         onClick = onClick,
-        modifier = modifier
-                .then(if (fillWidth) Modifier.fillMaxWidth() else Modifier)
-                .heightIn(min = minHeight),
+        modifier = buttonModifier,
         colors = ButtonDefaults.buttonColors(
             containerColor         = MaterialTheme.colorScheme.primary,
             contentColor           = MaterialTheme.colorScheme.onPrimary,
@@ -61,17 +66,25 @@ fun CoffeePeekButton(
 }
 
 @Composable
-private fun CoffeePeekButtonPreviewContent(darkTheme: Boolean) = CoffeePeekTheme(darkTheme = darkTheme) {
-    Surface {
-        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            CoffeePeekButton("Continue", {})
-            CoffeePeekButton("Unavailable", {}, enabled = false)
-            CoffeePeekButton("Continue", {}, useGlass = false)
-            CoffeePeekButton("Unavailable", {}, enabled = false, useGlass = false)
-            CoffeePeekButton("Continue", {}, leadingIcon = { CoffeePeekIcon(CoffeePeekIcons.Check, contentDescription = null) })
+private fun CoffeePeekButtonPreviewContent(darkTheme: Boolean, fontScale: Float = 1f) = CoffeePeekTheme(darkTheme = darkTheme) {
+    CompositionLocalProvider(LocalDensity provides Density(LocalDensity.current.density, fontScale)) {
+        Surface {
+            Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                CoffeePeekButton("Continue", {})
+                CoffeePeekButton("Save changes and return to the check-in", {}, modifier = Modifier.width(280.dp))
+                CoffeePeekButton("Compact", {}, fillWidth = false, minHeight = 64.dp)
+                CoffeePeekButton("Unavailable", {}, enabled = false)
+                CoffeePeekButton("Continue", {}, useGlass = false)
+                CoffeePeekButton("Unavailable", {}, enabled = false, useGlass = false)
+                CoffeePeekButton("Continue", {}, leadingIcon = { CoffeePeekIcon(CoffeePeekIcons.Check, contentDescription = null) })
+            }
         }
     }
+
 }
 
 @Preview @Composable private fun CoffeePeekButtonLightPreview() = CoffeePeekButtonPreviewContent(false)
 @Preview @Composable private fun CoffeePeekButtonDarkPreview() = CoffeePeekButtonPreviewContent(true)
+
+@Preview @Composable private fun CoffeePeekButtonLargeTextLightPreview() = CoffeePeekButtonPreviewContent(false, 2f)
+@Preview @Composable private fun CoffeePeekButtonLargeTextDarkPreview() = CoffeePeekButtonPreviewContent(true, 2f)

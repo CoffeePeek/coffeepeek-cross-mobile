@@ -1,5 +1,6 @@
 package com.coffeepeek.feature.collections.impl.ui.compose.component
 
+import com.coffeepeek.core.designsystem.theme.CoffeePeekColors
 import androidx.compose.ui.geometry.*
 import androidx.compose.ui.graphics.*
 import androidx.compose.ui.graphics.drawscope.*
@@ -21,14 +22,14 @@ internal class CollectionPosterPainter(
     private val photos: Map<String, ImageBitmap> = emptyMap(),
 ) : Painter() {
     override val intrinsicSize = Size(format.width.toFloat(), format.height.toFloat())
-    private val gold = Color(0xFFEAB308)
-    private val muted = Color(0xFFCDC2B7)
-    private val ink = Color(0xFFF8F5F1)
+    private val gold = CoffeePeekColors.Primary
+    private val muted = CoffeePeekColors.DarkTextSecondary
+    private val ink = CoffeePeekColors.DarkTextPrimary
     private val detailFontSize = 22
 
     override fun DrawScope.onDraw() {
         withTransform({ scale(size.width / format.width, size.height / format.height, Offset.Zero) }) {
-            drawRect(Brush.radialGradient(listOf(Color(0xFF352B25), Color(0xFF191614)),
+            drawRect(Brush.radialGradient(listOf(CoffeePeekColors.DarkBorder, CoffeePeekColors.DarkBackground),
                 Offset(240f, 360f), format.height * 0.8f), size = intrinsicSize)
             heading()
             resources.layout.pages.getOrElse(page) { emptyList() }.forEach { card ->
@@ -46,7 +47,7 @@ internal class CollectionPosterPainter(
     }
 
     private fun DrawScope.brandStrip(y: Float) {
-        drawRect(Color(0xFF171411), Offset(0f, y), Size(1080f, 44f))
+        drawRect(CoffeePeekColors.DarkBackground, Offset(0f, y), Size(1080f, 44f))
         val width = measure(resources.labels.brand, 300f, 22, FontWeight.SemiBold).size.width.toFloat()
         var x = -36f
         while (x < format.width) {
@@ -58,9 +59,9 @@ internal class CollectionPosterPainter(
     private fun DrawScope.panel(card: CollectionPosterCard) {
         val offset = Offset(card.left, card.top)
         val panelSize = Size(card.width, card.height)
-        drawRoundRect(Brush.linearGradient(listOf(Color(0xFF3D322A), Color(0xFF29221E))),
+        drawRoundRect(Brush.linearGradient(listOf(CoffeePeekColors.DarkBorder, CoffeePeekColors.DarkSurface)),
             offset, panelSize, CornerRadius(26f))
-        drawRoundRect(Color(0xFF685748).copy(alpha = 0.28f), offset, panelSize, CornerRadius(26f), style = Stroke(1f))
+        drawRoundRect(CoffeePeekColors.DarkBorderHover, offset, panelSize, CornerRadius(26f), style = Stroke(1f))
     }
 
     private fun DrawScope.shopCard(card: CollectionPosterCard) {
@@ -116,8 +117,8 @@ internal class CollectionPosterPainter(
     }
 
     private fun DrawScope.ratingBadge(value: Double, x: Float, y: Float) {
-        drawRoundRect(Color(0xFF514438), Offset(x, y), Size(146f, 56f), CornerRadius(28f))
-        drawRoundRect(Color(0xFF78634E).copy(alpha = 0.55f), Offset(x, y), Size(146f, 56f), CornerRadius(28f), style = Stroke(1f))
+        drawRoundRect(CoffeePeekColors.DarkBorderHover, Offset(x, y), Size(146f, 56f), CornerRadius(28f))
+        drawRoundRect(CoffeePeekColors.DarkTextSecondary, Offset(x, y), Size(146f, 56f), CornerRadius(28f), style = Stroke(1f))
         icon(resources.icons.star, x + 16f, y + 12f, 32f, gold)
         val tenths = (value * 10).roundToInt()
         text("${tenths / 10}.${tenths % 10}", x + 60f, y + 8f, 76f, 34, ink, FontWeight.Bold)
@@ -126,7 +127,7 @@ internal class CollectionPosterPainter(
     private fun DrawScope.photo(place: CollectionPlace, rect: Rect, fit: Boolean) {
         val clip = Path().apply { addRoundRect(RoundRect(rect, CornerRadius(20f))) }
         clipPath(clip) {
-            drawRect(if (fit) Color.White else Color(0xFF493A2D), rect.topLeft, rect.size)
+            drawRect(if (fit) Color.White else CoffeePeekColors.DarkBorderHover, rect.topLeft, rect.size)
             val image = photos[place.key]
             if (image != null) drawPhotoImage(image, rect, fit)
             else withTransform({ translate(rect.left, rect.top) }) {

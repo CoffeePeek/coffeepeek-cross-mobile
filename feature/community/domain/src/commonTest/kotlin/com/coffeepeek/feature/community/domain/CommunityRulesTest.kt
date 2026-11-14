@@ -21,6 +21,16 @@ class CommunityRulesTest {
     ) = CommunityPost(id, "shop", "Shop", PostAuthor("author-$id", slug, "Name", null), note, "2026-10-07T10:00:00Z", "", PostPhotos.None,
         PostRating(4, 4, 5), null, visibility, moderation, 0, null, 0, false, false, null)
 
+    @Test fun onlyOwnersSeePendingAndRejectedNeverAppearsInFeed() {
+        val pending = post(moderation = PostModeration.Pending)
+        assertTrue(pending.isVisibleInTimeline(isOwn = true))
+        assertFalse(pending.isVisibleInTimeline(isOwn = false))
+        assertNull(pending.shareLink())
+        assertFalse(post(moderation = PostModeration.Rejected).isVisibleInTimeline(isOwn = true))
+        assertFalse(post(visibility = PostVisibility.Private).isVisibleInTimeline(isOwn = true))
+        assertEquals(pending.publicationLabel(), post().publicationLabel())
+    }
+
     @Test fun editIsCheckedInThePreviousOrderNoteThenRatingThenDrink() {
         assertNull(validateEdit(PostEdit("ok")))
         assertEquals(EditIssue.NoteTooLong, validateEdit(PostEdit("x".repeat(1001), PostRating(0, 0, 0), "other", null)))
@@ -49,8 +59,8 @@ class CommunityRulesTest {
 
     @Test fun publicationLabelsFollowVisibilityThenModeration() {
         assertEquals(PublicationLabel.Private, post(visibility = PostVisibility.Private, moderation = PostModeration.Approved).publicationLabel())
-        assertEquals(PublicationLabel.Pending, post(moderation = PostModeration.Pending).publicationLabel())
-        assertEquals(PublicationLabel.Published, post(moderation = PostModeration.Approved).publicationLabel())
+        assertEquals(PublicationLabel.Public, post(moderation = PostModeration.Pending).publicationLabel())
+        assertEquals(PublicationLabel.Public, post(moderation = PostModeration.Approved).publicationLabel())
         assertEquals(PublicationLabel.Rejected, post(moderation = PostModeration.Rejected).publicationLabel())
         assertEquals(PublicationLabel.Public, post(moderation = PostModeration.NotSubmitted).publicationLabel())
         assertEquals(PublicationLabel.Unknown, post(moderation = PostModeration.Unknown).publicationLabel())

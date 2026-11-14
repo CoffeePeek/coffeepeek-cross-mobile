@@ -13,7 +13,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
+import com.coffeepeek.core.designsystem.icons.CoffeePeekMapIcon
+import com.coffeepeek.core.designsystem.icons.coffeePeekMapIconPainter
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import org.jetbrains.compose.ui.tooling.preview.Preview
@@ -35,7 +36,8 @@ fun CoffeePeekDrinkLabel(
     Row(modifier.widthIn(max = 200.dp), verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(if (compact) CoffeePeekDimens.spacing1 else CoffeePeekDimens.spacing2)) {
         Box(Modifier.size(iconSize), contentAlignment = Alignment.Center) {
-            if (imageContent == null) CoffeePeekIcon(CoffeePeekIcons.Coffee, null, Modifier.size(if (compact) iconSize else 24.dp),
+            if (imageContent == null) CoffeePeekIcon(coffeePeekMapIconPainter(CoffeePeekMapIcon.CoffeeShop),
+                null, Modifier.size(if (compact) iconSize else 24.dp),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant)
             else imageContent(Modifier.size(iconSize))
         }

@@ -21,6 +21,10 @@ import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
+/** The subtle outline shared by catalogue cards and adjacent map surfaces. */
+@Composable
+fun coffeePeekCardBorder(): BorderStroke = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+
 /**
  * Declarative card builder: full-bleed header, padded body and optional full-bleed
  * footer. Slots own their content/spacing; this shell knows no feature models.
@@ -73,6 +77,7 @@ fun CoffeePeekCard(
 @Composable
 private fun CoffeePeekCardPreviewContent(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     CoffeePeekCard(
+        border = coffeePeekCardBorder(),
         header = { CoffeePeekImagePlaceholder(Modifier.height(140.dp)) },
         footer = { CoffeePeekButton("Continue", {}, Modifier.padding(16.dp)) },
     ) {

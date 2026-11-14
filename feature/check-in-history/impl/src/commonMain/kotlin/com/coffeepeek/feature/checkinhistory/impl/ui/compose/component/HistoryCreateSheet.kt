@@ -2,15 +2,10 @@ package com.coffeepeek.feature.checkinhistory.impl.ui.compose.component
 
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.material3.*
-import com.coffeepeek.core.designsystem.component.CoffeePeekSelectionCard
 import androidx.compose.runtime.*
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.coffeepeek.core.designsystem.component.CoffeePeekButton
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.Column
@@ -26,6 +21,7 @@ import com.coffeepeek.core.designsystem.component.CoffeePeekActionList
 import com.coffeepeek.core.designsystem.component.CoffeePeekMenuAction
 import com.coffeepeek.core.designsystem.component.CoffeePeekSwipeDismissModalBottomSheet
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
+import com.coffeepeek.core.designsystem.icons.CoffeePeekMapIcon
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.checkinhistory.impl.resources.*
 import com.coffeepeek.feature.checkinhistory.impl.ui.compose.model.HistorySource
@@ -44,7 +40,7 @@ private fun HistoryCreateContent(onCreate: (HistorySource) -> Unit, modifier: Mo
         CoffeePeekMenuAction(stringResource(Res.string.history_create_shop), CoffeePeekIcons.Location) {
             onCreate(HistorySource.Shop)
         },
-        CoffeePeekMenuAction(stringResource(Res.string.history_create_home), CoffeePeekIcons.Coffee) {
+        CoffeePeekMenuAction(stringResource(Res.string.history_create_home), CoffeePeekMapIcon.CoffeeShop) {
             onCreate(HistorySource.Home)
         },
     )

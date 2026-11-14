@@ -39,7 +39,7 @@ internal fun ShopCoffeeCatalogGroup(title: String, items: List<String>, modifier
                 items.forEach { item ->
                     Surface(color = CoffeePeekColors.GoldWarmSoft, shape = RoundedCornerShape(CoffeePeekDimens.radiusSm)) {
                         Text(item, Modifier.padding(horizontal = CoffeePeekDimens.spacing2, vertical = 4.dp),
-                            style = MaterialTheme.typography.labelMedium, color = CoffeePeekColors.GoldWarmHover)
+                            style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
                     }
                 }
             }

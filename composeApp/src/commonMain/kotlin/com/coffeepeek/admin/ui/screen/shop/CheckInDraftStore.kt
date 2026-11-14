@@ -3,7 +3,6 @@ package com.coffeepeek.admin.ui.screen.shop
 import com.coffeepeek.admin.ui.screen.review.consumedDrinkIssue
 import com.coffeepeek.admin.utils.PickedImage
 import com.coffeepeek.admin.utils.currentEpochMillis
-import com.coffeepeek.admin.utils.datePickerMillisWithLocalTime
 
 data class CheckInDraft(
     val shopId: String,

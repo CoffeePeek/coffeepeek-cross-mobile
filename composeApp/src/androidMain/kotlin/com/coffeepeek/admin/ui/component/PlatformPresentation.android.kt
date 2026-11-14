@@ -1,5 +1,6 @@
 package com.coffeepeek.admin.ui.component
 
+
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.MotionDurationScale
@@ -7,12 +8,6 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.material3.*
 import com.coffeepeek.core.designsystem.component.CoffeePeekTextButton as TextButton
 import androidx.compose.ui.Modifier
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.size
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.luminance
-import androidx.compose.ui.unit.dp
-import com.coffeepeek.admin.theme.switchPalette
 
 @Composable
 internal actual fun PlatformAlert(title: String, message: String, confirmLabel: String, onConfirm: () -> Unit, onDismiss: () -> Unit, cancelLabel: String?, destructive: Boolean, enabled: Boolean) {

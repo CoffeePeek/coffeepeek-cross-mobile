@@ -21,7 +21,10 @@ import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.core.designsystem.component.CoffeePeekButton
 import com.coffeepeek.core.designsystem.component.CoffeePeekIconBadge
 import com.coffeepeek.core.designsystem.component.CoffeePeekIconBadgePalette
+import com.coffeepeek.core.designsystem.component.coffeePeekIconPainter
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
+import com.coffeepeek.core.designsystem.icons.CoffeePeekMapIcon
+import com.coffeepeek.core.designsystem.icons.coffeePeekMapIconPainter
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
@@ -30,7 +33,9 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 internal fun NotificationEmptyState(signedOut: Boolean = false, onSignIn: () -> Unit = {}) {
     Column(Modifier.fillMaxWidth().padding(vertical = CoffeePeekDimens.spacing6),
         horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3)) {
-        CoffeePeekIconBadge(if (signedOut) CoffeePeekIcons.Notifications else CoffeePeekIcons.Coffee, CoffeePeekIconBadgePalette.Gold)
+        val icon = if (signedOut) coffeePeekIconPainter(CoffeePeekIcons.Notifications)
+            else coffeePeekMapIconPainter(CoffeePeekMapIcon.CoffeeShop)
+        CoffeePeekIconBadge(icon, CoffeePeekIconBadgePalette.Gold)
         Text(stringResource(if (signedOut) Res.string.notifications_sign_in_title else Res.string.notifications_empty_title),
             style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold,
             modifier = Modifier.semantics { heading() })

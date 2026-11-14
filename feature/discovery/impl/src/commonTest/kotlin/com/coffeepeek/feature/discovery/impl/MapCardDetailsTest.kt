@@ -87,7 +87,7 @@ class MapCardDetailsTest {
     }
 
     private fun TestScope.model(): MapViewModel =
-        MapViewModel(FakeRepository(), FakeCity(), FakeLocation(), details, RecordingAnalytics(), FakeAccount(), FakeFavorites()).also {
+        MapViewModel(FakeRepository(), FakeLocation(), details, RecordingAnalytics(), FakeAccount(), FakeFavorites()).also {
             store.put("map", it)
             runCurrent()
         }

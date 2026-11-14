@@ -17,10 +17,8 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.customActions
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
-import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
 import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.component.CoffeePeekImagePlaceholder
@@ -46,7 +44,7 @@ internal fun CollectionPlaceRow(place: CollectionPlace, checked: Boolean?, enabl
             CollectionPlacePhoto(place, Modifier.size(48.dp).clip(RoundedCornerShape(10.dp)))
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) { CollectionPlaceLabels(place, checked == null) }
             if (checked != null) Box(Modifier.size(24.dp)) {
-                if (checked) CoffeePeekIcon(CoffeePeekIcons.Check, null, tint = MaterialTheme.colorScheme.coffeePeekAccentForeground)
+                if (checked) CoffeePeekIcon(CoffeePeekIcons.Check, null, tint = MaterialTheme.colorScheme.primary)
             }
             else CoffeePeekIcon(CoffeePeekIcons.ChevronRight, null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
             trailing()

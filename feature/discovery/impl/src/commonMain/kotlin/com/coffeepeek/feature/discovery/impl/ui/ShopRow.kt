@@ -23,7 +23,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.layout.ContentScale
 import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.component.CoffeePeekLikeButton
@@ -96,7 +95,7 @@ private fun shopKindLabel(kind: ShopKind): String = stringResource(when (kind) {
 private fun ShopBrewMethods(methods: List<String>) {
     Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
         methods.take(2).forEach { method ->
-            CoffeePeekShopInfoChip(method, Modifier.widthIn(max = 112.dp), icon = { DiscoveryBrewMethodIcon(method, 13.dp) })
+            CoffeePeekShopInfoChip(method, Modifier.widthIn(max = 112.dp), icon = { DiscoveryBrewMethodIcon(method, 14.dp) })
         }
         if (methods.size > 2) CoffeePeekShopInfoChip("+${methods.size - 2}")
     }

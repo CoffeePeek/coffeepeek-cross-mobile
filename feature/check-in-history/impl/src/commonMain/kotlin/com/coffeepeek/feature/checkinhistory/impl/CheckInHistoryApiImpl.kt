@@ -36,8 +36,10 @@ fun createCheckInHistoryEntry(
     highQualityImage: (@Composable (url: String, highQualityUrl: String, modifier: Modifier, scale: ContentScale) -> Unit)? = null,
     shopTimelineContent: (@Composable (PersonalCheckIn, onOpen: () -> Unit) -> Unit)? = null,
     homeTimelineContent: (@Composable (HomeHistoryEntry, onOpen: () -> Unit) -> Unit)? = null,
-): CheckInHistoryEntry = DefaultCheckInHistoryEntry(repository, homeReader, calendarSnapshot, imageContent,
-    createButtonModifier, createPickerModifier, modalContent, highQualityImage, shopTimelineContent, homeTimelineContent)
+): CheckInHistoryEntry {
+    return DefaultCheckInHistoryEntry(repository, homeReader, calendarSnapshot, imageContent,
+        createButtonModifier, createPickerModifier, modalContent, highQualityImage, shopTimelineContent, homeTimelineContent)
+}
 
 private class DefaultCheckInHistoryEntry(
     private val repository: CheckInHistoryRepository,
@@ -61,6 +63,7 @@ private class DefaultCheckInHistoryEntry(
         onOpenShop: (String) -> Unit,
         onOpenPhoto: (List<String>, List<String>, Int) -> Unit,
         formatCheckInTime: (String) -> String,
+        onOpenCheckIn: (String) -> Unit,
         onOpenHome: (String) -> Unit,
         onCreateShop: () -> Unit,
         onCreateHome: () -> Unit,
@@ -68,16 +71,7 @@ private class DefaultCheckInHistoryEntry(
         onCreatePickerOpened: () -> Unit,
         onCreatePickerCancelled: () -> Unit,
     ) {
-        val provider = HistoryCalendarProvider {
-            val snapshot = calendarSnapshot()
-            object : HistoryCalendarContext {
-                override val today = snapshot.today
-                override val zoneId = snapshot.zoneId
-                override fun period(month: HistoryMonth): HistoryPeriod = snapshot.monthPeriod(month.year, month.month)
-                    .let { HistoryPeriod(it.fromInclusive, it.toExclusive) }
-                override fun localDate(instant: String): String? = snapshot.localDate(instant)
-            }
-        }
+        val provider = historyCalendarProvider(calendarSnapshot)
         val viewModel = viewModel(key = "check-in-history") {
             CombinedHistoryViewModel(repository, homeReader, provider, isLoggedIn, sessionGeneration, contentGeneration)
         }
@@ -91,12 +85,27 @@ private class DefaultCheckInHistoryEntry(
                 CheckInHistoryEvent.SignIn -> onSignIn()
                 is CheckInHistoryEvent.OpenShop -> onOpenShop(event.slug)
                 is CheckInHistoryEvent.OpenPhoto -> onOpenPhoto(event.urls, event.originalUrls, event.index)
+                is CheckInHistoryEvent.OpenCheckIn -> onOpenCheckIn(event.id)
                 is CheckInHistoryEvent.OpenHome -> onOpenHome(event.id)
                 is CheckInHistoryEvent.Create -> if (event.source == HistorySource.Shop) onCreateShop() else onCreateHome()
                 CheckInHistoryEvent.CreatePickerOpened -> onCreatePickerOpened()
                 CheckInHistoryEvent.CreatePickerCancelled -> onCreatePickerCancelled()
             }
         }
+        }
+    }
+}
+
+
+private fun historyCalendarProvider(calendarSnapshot: () -> CheckInHistoryCalendarSnapshot): HistoryCalendarProvider {
+    return HistoryCalendarProvider {
+        val snapshot = calendarSnapshot()
+        object : HistoryCalendarContext {
+            override val today = snapshot.today
+            override val zoneId = snapshot.zoneId
+            override fun period(month: HistoryMonth): HistoryPeriod = snapshot.monthPeriod(month.year, month.month)
+                .let { HistoryPeriod(it.fromInclusive, it.toExclusive) }
+            override fun localDate(instant: String): String? = snapshot.localDate(instant)
         }
     }
 }

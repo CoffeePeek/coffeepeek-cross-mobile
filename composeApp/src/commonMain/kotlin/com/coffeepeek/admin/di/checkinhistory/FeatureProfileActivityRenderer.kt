@@ -1,7 +1,6 @@
 package com.coffeepeek.admin.di.checkinhistory
 
 import androidx.compose.runtime.*
-import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.coffeepeek.core.designsystem.component.CoffeePeekImage

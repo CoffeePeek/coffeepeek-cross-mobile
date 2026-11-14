@@ -38,6 +38,7 @@ internal class CommunityBackend(private val client: HttpClient) {
             // The timeline and personalised votes are always read afresh.
             header(HttpHeaders.CacheControl, "no-store")
             parameter("pageSize", pageSize)
+            if (filters.includeOwnPending) parameter("includeOwnPending", true)
             cursor?.let { parameter("cursor", it) }
             filters.citySlug?.let { parameter("citySlug", it) }
             filters.coffeeShopSlug?.let { parameter("coffeeShopSlug", it) }

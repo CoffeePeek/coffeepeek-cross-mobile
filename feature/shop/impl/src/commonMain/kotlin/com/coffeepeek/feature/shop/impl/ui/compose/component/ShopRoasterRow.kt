@@ -21,6 +21,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.coffeepeek.core.designsystem.component.CoffeePeekCoffeeIcon
 import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
@@ -59,7 +60,7 @@ internal fun ShopRoasterRow(roaster: ShopRoaster, onOpenRoaster: (String) -> Uni
 @Composable
 private fun RoasterPlaceholder() {
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        CoffeePeekIcon(CoffeePeekIcons.Coffee, stringResource(Res.string.shop_coffee_roaster_photo_missing), Modifier.size(24.dp),
+        CoffeePeekCoffeeIcon(stringResource(Res.string.shop_coffee_roaster_photo_missing), Modifier.size(24.dp),
             tint = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }

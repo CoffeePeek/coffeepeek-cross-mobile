@@ -20,7 +20,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
@@ -32,7 +31,6 @@ import coffeepeek.composeapp.generated.resources.shop_session_retry
 import coffeepeek.composeapp.generated.resources.shop_session_unavailable
 import coffeepeek.composeapp.generated.resources.snackbar_dismiss
 import coffeepeek.composeapp.generated.resources.snackbar_retrying
-import com.coffeepeek.core.designsystem.theme.CoffeePeekColors
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
@@ -84,10 +82,9 @@ private fun SnackbarMessageContent(
 @Composable
 private fun SnackbarMessageRow(message: String, onDismiss: () -> Unit) {
     val colors = MaterialTheme.colorScheme
-    val accent = if (colors.background.luminance() < .5f) CoffeePeekColors.AccentTextDark else CoffeePeekColors.AccentTextLight
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2)) {
-        CoffeePeekIcon(CoffeePeekIcons.Info, contentDescription = null, tint = accent, modifier = Modifier.size(20.dp))
+        CoffeePeekIcon(CoffeePeekIcons.Info, contentDescription = null, tint = colors.primary, modifier = Modifier.size(20.dp))
         Text(message, style = MaterialTheme.typography.bodyMedium,
             color = colors.onSurface, modifier = Modifier.weight(1f).padding(vertical = CoffeePeekDimens.spacing2))
         CoffeePeekPlainIconButton(onClick = onDismiss) {

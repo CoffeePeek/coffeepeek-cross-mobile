@@ -34,11 +34,11 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.unit.dp
 import androidx.navigation.NavDestination
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavBackStackEntry
+import androidx.navigation.NavHostController
 import androidx.lifecycle.Lifecycle
 import androidx.navigation.compose.LocalOwnersProvider
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -97,16 +97,7 @@ internal fun ComposeMainScreen(isLoggedIn: Boolean, onMapExpandedChange: (Boolea
     val items = mainBottomNavItems(availableTabs)
     val availableRoutes = items.flatMap { listOf(it.graph, it.startScreen) }
 
-    var previousBusinessMode by remember { mutableStateOf(businessMode) }
-    LaunchedEffect(businessMode) {
-        if (previousBusinessMode == businessMode) return@LaunchedEffect
-        previousBusinessMode = businessMode
-        bottomNavController.navigate(if (businessMode) Navigator.Screen.BusinessGraph else Navigator.Screen.FeedGraph) {
-            popUpTo(bottomNavController.graph.id) { inclusive = true; saveState = true }
-            launchSingleTop = true
-            restoreState = true
-        }
-    }
+    BusinessModeNavigationEffect(businessMode, bottomNavController)
     LaunchedEffect(availableRoutes) {
         Navigator.navigationEvents.collect { event ->
             when (event) {
@@ -296,6 +287,23 @@ private fun createNavItem(onCreate: () -> Unit): FloatingNavItem {
         selected = false, onClick = onCreate, isAction = true,
         modifier = Modifier.analyticsExposure("check_in", "global_create", page),
     )
+}
+
+@Composable
+private fun BusinessModeNavigationEffect(businessMode: Boolean, controller: NavHostController) {
+    var previousBusinessMode by remember { mutableStateOf(businessMode) }
+    LaunchedEffect(businessMode) {
+        if (previousBusinessMode == businessMode) return@LaunchedEffect
+        previousBusinessMode = businessMode
+        controller.navigate(if (businessMode) Navigator.Screen.BusinessGraph else Navigator.Screen.FeedGraph) {
+            popUpTo(controller.graph.id) {
+                inclusive = true
+                saveState = true
+            }
+            launchSingleTop = true
+            restoreState = true
+        }
+    }
 }
 
 private fun AnimatedContentTransitionScope<NavBackStackEntry>.tabDirection() =

@@ -1,7 +1,6 @@
 package com.coffeepeek.admin.di.checkinhistory
 
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.unit.dp
 import com.coffeepeek.admin.analytics.CheckInSource
 import com.coffeepeek.admin.di.shelf.ShelfHomeCheckInBags
 import com.coffeepeek.admin.analytics.CheckInTracker

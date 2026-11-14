@@ -43,7 +43,6 @@ import com.coffeepeek.feature.contributions.impl.resources.contributions_shop_re
 import com.coffeepeek.feature.contributions.impl.resources.contributions_shop_website_label
 import com.coffeepeek.feature.contributions.impl.resources.contributions_shop_website_placeholder
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer

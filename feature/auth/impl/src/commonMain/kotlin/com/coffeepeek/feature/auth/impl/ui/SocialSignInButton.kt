@@ -30,12 +30,12 @@ internal fun SocialSignInButton(provider: SocialProvider, onClick: () -> Unit, e
         onClick = onClick, enabled = enabled, shape = shape,
         modifier = modifier.fillMaxWidth().heightIn(min = CoffeePeekDimens.controlHeight)
             .shadow(if (enabled && !dark) 3.dp else 0.dp, shape,
-                ambientColor = Color.Black.copy(alpha = .06f), spotColor = Color.Black.copy(alpha = .06f)),
+                ambientColor = Color.Black.copy(alpha = .12f), spotColor = Color.Black.copy(alpha = .12f)),
         contentPadding = PaddingValues(horizontal = 6.dp, vertical = 8.dp),
-        border = BorderStroke(1.dp, if (dark) MaterialTheme.colorScheme.outline else Color(0xFFE9E9EC)),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
         colors = ButtonDefaults.outlinedButtonColors(
             containerColor = if (dark) MaterialTheme.colorScheme.surface else Color.White,
-            contentColor = if (dark) Color.White else Color(0xFF15171C),
+            contentColor = MaterialTheme.colorScheme.onSurface,
             disabledContainerColor = if (dark) MaterialTheme.colorScheme.surface else Color.White,
         ),
     ) { SocialSignInLabel(provider) }

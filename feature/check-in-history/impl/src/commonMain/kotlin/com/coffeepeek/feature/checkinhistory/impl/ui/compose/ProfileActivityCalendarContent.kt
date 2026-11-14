@@ -1,5 +1,7 @@
 package com.coffeepeek.feature.checkinhistory.impl.ui.compose
 
+import com.coffeepeek.core.designsystem.component.CoffeePeekTextButton as TextButton
+
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*

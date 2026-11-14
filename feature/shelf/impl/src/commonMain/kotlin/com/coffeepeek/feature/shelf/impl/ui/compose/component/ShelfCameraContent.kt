@@ -62,7 +62,6 @@ import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.coffeepeek.core.designsystem.component.CoffeePeekButton
 import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
@@ -129,7 +128,7 @@ private fun ShelfFocusRing(focus: ShelfCameraFocus) {
     val color = when (focus.sharp) {
         null -> Color.White
         true -> MaterialTheme.colorScheme.primary
-        false -> Color.White.copy(alpha = 0.5f)
+        false -> Color.White.copy(alpha = 0.7f)
     }
     Canvas(Modifier.fillMaxSize()) {
         val center = Offset(focus.x * size.width, focus.y * size.height)
@@ -169,7 +168,7 @@ private fun ShelfCameraGuide(modifier: Modifier) {
             lineTo(size.width * 0.26f, size.height * 0.82f)
             close()
         }
-        drawPath(bag, Color.White.copy(alpha = 0.28f), style = Stroke(1.5.dp.toPx()))
+        drawPath(bag, Color.White.copy(alpha = 0.7f), style = Stroke(1.5.dp.toPx()))
         listOf(Offset(0f, 0f) to Offset(1f, 1f), Offset(size.width, 0f) to Offset(-1f, 1f),
             Offset(size.width, size.height) to Offset(-1f, -1f), Offset(0f, size.height) to Offset(1f, -1f)).forEach { (corner, inward) ->
             val path = Path().apply {
@@ -189,7 +188,7 @@ private fun ShelfCameraBlocked(status: ShelfCameraStatus, onAllow: () -> Unit) {
         if (status == ShelfCameraStatus.Denied) {
             Text(stringResource(Res.string.shelf_camera_denied), color = Color.White, style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center)
-            Text(stringResource(Res.string.shelf_camera_denied_body), color = Color.White.copy(alpha = 0.8f), textAlign = TextAlign.Center)
+            Text(stringResource(Res.string.shelf_camera_denied_body), color = Color.White.copy(alpha = 0.9f), textAlign = TextAlign.Center)
             CoffeePeekButton(stringResource(Res.string.shelf_camera_allow), onAllow)
         } else Text(stringResource(Res.string.shelf_camera_unavailable), color = Color.White, textAlign = TextAlign.Center)
     }
@@ -271,7 +270,7 @@ private fun ShelfShutterFlash(capturing: Boolean) {
 @Composable
 private fun BoxScope.ShelfCameraTipsOverlay(visible: Boolean, onClose: () -> Unit) {
     AnimatedVisibility(visible, Modifier.fillMaxSize(), enter = fadeIn(tween(reducedMotionDuration(220))), exit = fadeOut(tween(reducedMotionDuration(220)))) {
-        Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.45f))
+        Box(Modifier.fillMaxSize().background(Scrim)
             .clickable(interactionSource = null, indication = null, onClick = onClose))
     }
     AnimatedVisibility(visible, Modifier.align(Alignment.BottomCenter),

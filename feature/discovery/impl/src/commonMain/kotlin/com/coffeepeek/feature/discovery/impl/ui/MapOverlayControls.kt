@@ -1,6 +1,7 @@
 package com.coffeepeek.feature.discovery.impl.ui
 
 
+
 import com.coffeepeek.feature.discovery.impl.resources.Res
 import com.coffeepeek.feature.discovery.impl.resources.discovery_map_my_location
 import com.coffeepeek.feature.discovery.impl.resources.discovery_map_zones_hide

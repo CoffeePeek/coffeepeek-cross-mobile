@@ -2,6 +2,9 @@
 
 package com.coffeepeek.admin.ui.component
 
+import androidx.compose.foundation.layout.heightIn
+
+
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.WindowInsets
@@ -170,7 +173,7 @@ actual fun PlatformGlassBackButton(onClick: () -> Unit, modifier: Modifier) {
                 primaryAction = UIAction.actionWithHandler { currentOnClick.value() },
             )
         },
-        modifier = modifier.height(CoffeePeekDimens.buttonHeight).width(104.dp),
+        modifier = modifier.heightIn(min = CoffeePeekDimens.buttonHeight).width(104.dp),
         properties = UIKitInteropProperties(isNativeAccessibilityEnabled = true, placedAsOverlay = true),
         update = { button ->
             button.overrideUserInterfaceStyle = colors.uiKitStyle

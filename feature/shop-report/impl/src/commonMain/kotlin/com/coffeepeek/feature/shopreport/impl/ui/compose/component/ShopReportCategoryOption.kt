@@ -1,5 +1,6 @@
 package com.coffeepeek.feature.shopreport.impl.ui.compose.component
 
+
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box

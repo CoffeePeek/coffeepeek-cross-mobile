@@ -61,7 +61,7 @@ class CheckInHistoryModuleTest {
     }
 
     private fun historyApplication(client: ApiClients, sessions: SessionStore) = koinApplication {
-        modules(module {
+        modules(com.coffeepeek.admin.di.community.communityWritesTestModule(), module {
             single { client }
             single<SessionStore> { sessions }
             single<SessionReader> { sessions }

@@ -2,12 +2,14 @@ package com.coffeepeek.core.designsystem.component
 
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.width
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.progressBarRangeInfo
@@ -30,7 +32,11 @@ actual fun CoffeePeekGlassButton(
                 stateDescription = loadingLabel
                 progressBarRangeInfo = ProgressBarRangeInfo.Indeterminate
             }
-        }, enabled = enabled && !isLoading) {
+        }, enabled = enabled && !isLoading, colors = ButtonDefaults.filledTonalButtonColors(
+            containerColor = Color.Transparent,
+            disabledContainerColor = Color.Transparent,
+            contentColor = MaterialTheme.colorScheme.onSurface,
+        )) {
             if (isLoading) CoffeePeekLoader(loadingLabel!!, Modifier.clearAndSetSemantics {}, size = 16.dp)
             else if (leadingIcon == CoffeePeekGlassButtonIcon.Check) Icon(CoffeePeekIcons.Check, null)
             if (isLoading || leadingIcon != null) Spacer(Modifier.width(4.dp))

@@ -1,5 +1,6 @@
 package com.coffeepeek.feature.contributions.impl.ui
 
+
 import androidx.compose.foundation.BorderStroke
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import com.coffeepeek.feature.contributions.impl.resources.Res
@@ -102,7 +103,7 @@ private fun CardText(item: ContributionItem, kind: ContributionKind, modifier: M
 private fun Meta(text: String, icon: androidx.compose.ui.graphics.vector.ImageVector) {
     Spacer(Modifier.height(CoffeePeekDimens.spacing2))
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing1)) {
-        CoffeePeekIcon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(15.dp))
+        CoffeePeekIcon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(16.dp))
         Text(text, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }

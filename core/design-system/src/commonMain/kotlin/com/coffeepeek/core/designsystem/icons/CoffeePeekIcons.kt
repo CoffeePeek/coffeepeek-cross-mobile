@@ -34,7 +34,6 @@ import com.adamglin.phosphoricons.regular.ChatCenteredText
 import com.adamglin.phosphoricons.regular.Check
 import com.adamglin.phosphoricons.regular.CheckCircle
 import com.adamglin.phosphoricons.regular.Clock
-import com.adamglin.phosphoricons.regular.Coffee
 import com.adamglin.phosphoricons.regular.CoffeeBean
 import com.adamglin.phosphoricons.regular.Coins
 import com.adamglin.phosphoricons.regular.Copy
@@ -114,7 +113,6 @@ object CoffeePeekIcons {
     val ChevronUp: ImageVector get() = PhosphorIcons.Regular.CaretUp
     val ChevronUpDown: ImageVector get() = PhosphorIcons.Regular.CaretUpDown
     val Close: ImageVector get() = PhosphorIcons.Regular.X
-    val Coffee: ImageVector get() = PhosphorIcons.Regular.Coffee
     val CoffeeBean: ImageVector get() = PhosphorIcons.Regular.CoffeeBean
     val Coins: ImageVector get() = PhosphorIcons.Regular.Coins
     val Copy: ImageVector get() = PhosphorIcons.Regular.Copy

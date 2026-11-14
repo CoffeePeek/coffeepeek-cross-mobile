@@ -1,5 +1,6 @@
 package com.coffeepeek.feature.shop.impl.ui.compose
 
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,10 +21,11 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.error
@@ -146,15 +148,20 @@ internal fun ShopCheckInCreateScreenContent(
         ShopCheckInSendingPane(modifier)
         return
     }
-    val scroll = rememberScrollState()
+    val editable = state.isEditable(photosPreparing)
     val focus = LocalFocusManager.current
     val keyboard = LocalSoftwareKeyboardController.current
-    LaunchedEffect(scroll.isScrollInProgress) {
-        if (scroll.isScrollInProgress) { keyboard?.hide(); focus.clearFocus() }
-    }
-    val editable = state.isEditable(photosPreparing)
     Column(
-        modifier.fillMaxWidth().testTag("shop-checkin-form").verticalScroll(scroll)
+        // The keyboard stays while the user scrolls (it belongs to the focused field), and a
+        // tap anywhere outside the fields clears the focus and puts it away.
+        modifier.fillMaxWidth().testTag("shop-checkin-form")
+            .pointerInput(Unit) {
+                detectTapGestures {
+                    keyboard?.hide()
+                    focus.clearFocus()
+                }
+            }
+            .verticalScroll(rememberScrollState())
             .padding(horizontal = CoffeePeekDimens.spacing4)
             .padding(top = CoffeePeekDimens.spacing3, bottom = CoffeePeekDimens.spacing6),
         verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing6),
@@ -164,7 +171,6 @@ internal fun ShopCheckInCreateScreenContent(
                 submittedVisibility = state.input.visibility.takeIf { state.submitted },
                 cleanupFailed = state.submitted && state.draftFailed,
                 onFeed = { onAction(ShopCheckInFormAction.GoToFeed) },
-                publication = state.publication,
             )
         } else if (state.isLoading) {
             CoffeePeekLoader(size = 40.dp, color = MaterialTheme.colorScheme.primary, strokeWidth = 4.dp)

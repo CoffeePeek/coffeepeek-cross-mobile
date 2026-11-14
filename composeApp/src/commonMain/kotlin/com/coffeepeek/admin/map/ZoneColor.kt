@@ -3,7 +3,7 @@ package com.coffeepeek.admin.map
 private val hexZoneColor = Regex("^#?([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$")
 
 internal fun zoneColorForMap(color: String?, isDarkTheme: Boolean): String {
-    val fallback = if (isDarkTheme) "#D2A26E" else "#B07A45"
+    val fallback = if (isDarkTheme) "#D4A84B" else "#FACC15"
     val value = color?.trim()?.takeIf(hexZoneColor::matches) ?: return fallback
     val digits = value.removePrefix("#")
     return if (digits.length == 3) {

@@ -80,7 +80,6 @@ import com.coffeepeek.core.designsystem.modifier.coffeePeekLiquidGlass
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.reducedMotionDuration
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
-import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
 import dev.chrisbanes.haze.HazeState
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
@@ -117,7 +116,7 @@ fun FloatingBottomNavBar(
             .consumeWindowInsets(systemBars),
     ) {
         val availableSideSpace = (maxWidth - CoffeePeekDimens.glassControlSize * items.size - 20.dp) / 2
-        val sideInset = availableSideSpace.coerceIn(0.dp, 21.dp)
+        val sideInset = availableSideSpace.coerceIn(0.dp, 20.dp)
         FloatingNavPill(items, Modifier.fillMaxWidth().padding(horizontal = sideInset), hazeState)
     }
 }
@@ -183,15 +182,15 @@ private fun FloatingNavBarItem(item: FloatingNavItem, selection: State<Float>, m
 @Composable
 private fun FloatingNavBarCaption(item: FloatingNavItem, selection: State<Float>) {
     val colors = MaterialTheme.colorScheme
-    val accent = colors.coffeePeekAccentForeground
+    val accent = colors.primary
     val icon = coffeePeekIconPainter(item.icon)
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val (inactive, active) = rememberNavCaptions(item.title, constraints.maxWidth)
         Canvas(Modifier.fillMaxSize()) {
             val progress = selection.value.coerceIn(0f, 1f)
-            val iconHeight = lerp(28.dp.toPx(), 21.dp.toPx(), progress)
+            val iconHeight = lerp(28.dp.toPx(), 22.dp.toPx(), progress)
             val iconSize = lerp(22.dp.toPx(), 18.dp.toPx(), progress)
-            val gap = lerp(0.5.dp.toPx(), 1.dp.toPx(), progress)
+            val gap = 2.dp.toPx()
             val captionHeight = lerp(inactive.size.height.toFloat(), active.size.height.toFloat(), progress)
             val contentTop = (size.height - iconHeight - gap - maxOf(12.dp.toPx(), captionHeight)) / 2f
             val tint = if (item.isAction) accent else lerp(colors.onSurfaceVariant, accent, progress)
@@ -224,13 +223,13 @@ private fun TextMeasurer.measureNavCaption(title: String, style: TextStyle, dens
     val text = AnnotatedString(title)
     val constraints = Constraints(maxWidth = width)
     var fontSize = style.fontSize.value
-    while (fontSize > 9f) {
+    while (fontSize > 11f) {
         val layout = measure(text, style.copy(fontSize = fontSize.sp), maxLines = 1,
             softWrap = false, constraints = constraints, density = density)
         if (!layout.hasVisualOverflow) return layout
         fontSize -= 0.5f
     }
-    return measure(text, style.copy(fontSize = 9.sp), maxLines = 1, softWrap = false,
+    return measure(text, style.copy(fontSize = 11.sp), maxLines = 1, softWrap = false,
         overflow = TextOverflow.Ellipsis, constraints = constraints, density = density)
 }
 

@@ -34,47 +34,35 @@ data class CoffeePeekIconBadgeColors(
 object CoffeePeekIconBadgePalette {
     val Mint = CoffeePeekIconBadgeColors(
         background = Color(0xFFECFAED),
-        icon = Color(0xFF5CB66A),
+        icon = Color(0xFF287D3B),
     )
     val Cyan = CoffeePeekIconBadgeColors(
         background = Color(0xFFD3EFFA),
-        icon = Color(0xFF42AFC2),
+        icon = Color(0xFF247A8B),
     )
     val Sky = CoffeePeekIconBadgeColors(
         background = Color(0xFFECF6FF),
-        icon = Color(0xFF4AA9EE),
+        icon = Color(0xFF246FA3),
     )
     val Aqua = CoffeePeekIconBadgeColors(
         background = Color(0xFFDDFAF8),
-        icon = Color(0xFF4DBDB8),
-    )
-    val Lavender = CoffeePeekIconBadgeColors(
-        background = Color(0xFFFFF1FF),
-        icon = Color(0xFFC96DDD),
+        icon = Color(0xFF257D78),
     )
     val Gold = CoffeePeekIconBadgeColors(
         background = Color(0xFFFEF3C7),
-        icon = Color(0xFFCA8A04),
+        icon = Color(0xFF8A6300),
     )
     val Emerald = CoffeePeekIconBadgeColors(
         background = Color(0xFFECFDF5),
-        icon = Color(0xFF10B981),
-    )
-    val Blue = CoffeePeekIconBadgeColors(
-        background = Color(0xFFEFF6FF),
-        icon = Color(0xFF3B82F6),
+        icon = Color(0xFF087F5B),
     )
     val Rose = CoffeePeekIconBadgeColors(
         background = Color(0xFFFFF1F2),
-        icon = Color(0xFFF43F5E),
+        icon = Color(0xFFBE123C),
     )
     val Violet = CoffeePeekIconBadgeColors(
         background = Color(0xFFF5F3FF),
-        icon = Color(0xFF8B5CF6),
-    )
-    val BrightCyan = CoffeePeekIconBadgeColors(
-        background = Color(0xFFECFEFF),
-        icon = Color(0xFF06B6D4),
+        icon = Color(0xFF7C3AED),
     )
 }
 
@@ -97,24 +85,27 @@ fun CoffeePeekIconBadge(
 ) {
     // Derive dark-theme colors from the icon hue instead of a second palette
     // table — the pale light backgrounds read as near-white blocks on a dark surface.
-    val isDark = MaterialTheme.colorScheme.surface.luminance() < 0.5f
-    val background = if (isDark) colors.icon.copy(alpha = 0.20f) else colors.background
-    val iconTint = if (isDark) lerp(colors.icon, Color.White, 0.30f) else colors.icon
+    val palette = coffeePeekIconBadgeColors(colors, MaterialTheme.colorScheme.surface)
     Box(
         modifier = modifier
             .size(CoffeePeekDimens.settingsIconContainer)
             .clip(RoundedCornerShape(CoffeePeekDimens.settingsIconRadius))
-            .background(background),
+            .background(palette.background),
         contentAlignment = Alignment.Center,
     ) {
         CoffeePeekIcon(
             painter = painter,
             contentDescription = contentDescription,
-            tint = iconTint,
+            tint = palette.icon,
             modifier = Modifier.size(CoffeePeekDimens.settingsIconSize),
         )
     }
 }
+
+internal fun coffeePeekIconBadgeColors(colors: CoffeePeekIconBadgeColors, surface: Color): CoffeePeekIconBadgeColors =
+    if (surface.luminance() < 0.5f) CoffeePeekIconBadgeColors(
+        colors.icon.copy(alpha = 0.20f), lerp(colors.icon, Color.White, 0.35f),
+    ) else colors
 
 @Composable
 private fun CoffeePeekIconBadgePreviewContent(darkTheme: Boolean) = CoffeePeekTheme(darkTheme = darkTheme) {

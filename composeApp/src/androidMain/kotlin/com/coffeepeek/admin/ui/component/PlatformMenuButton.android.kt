@@ -57,10 +57,9 @@ internal actual fun PlatformMenuButton(
                 items.forEachIndexed { index, item ->
                     if (index > 0) Box(Modifier.fillMaxWidth().height(1.dp).background(colors.outlineVariant))
                     val interaction = remember(item.id) { MutableInteractionSource() }
-                    val pressed by interaction.collectIsPressedAsState()
                     val tint = if (item.destructive) colors.error else colors.onSurface
-                    Row(Modifier.fillMaxWidth().heightIn(min = CoffeePeekDimens.controlHeight).graphicsLayer { alpha = if (!item.enabled) .4f else if (pressed) .55f else 1f }
-                        .clickable(interactionSource = interaction, indication = null, enabled = item.enabled, role = Role.Button) { expanded = false; item.onClick() }
+                    Row(Modifier.fillMaxWidth().heightIn(min = CoffeePeekDimens.minimumTouchTarget).graphicsLayer { alpha = if (item.enabled) 1f else .4f }
+                        .clickable(interactionSource = interaction, indication = androidx.compose.foundation.LocalIndication.current, enabled = item.enabled, role = Role.Button) { expanded = false; item.onClick() }
                         .semantics { item.selected?.let { selected = it } }
                         .padding(horizontal = CoffeePeekDimens.spacing4, vertical = CoffeePeekDimens.spacing3), verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3)) {

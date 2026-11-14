@@ -1,5 +1,8 @@
 package com.coffeepeek.core.designsystem.component
 
+import com.coffeepeek.core.designsystem.component.CoffeePeekTextButton as TextButton
+
+
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -76,7 +79,7 @@ private fun CoffeePeekActivityDayCell(day: CoffeePeekActivityDay, modifier: Modi
             if (day.photoCount > 0) {
                 image(Modifier.fillMaxSize().clearAndSetSemantics {})
                 if (day.photoCount > 1) Text("+${day.photoCount - 1}",
-                    Modifier.align(Alignment.BottomEnd).background(MaterialTheme.colorScheme.surface.copy(alpha = 0.9f)).padding(horizontal = 3.dp),
+                    Modifier.align(Alignment.BottomEnd).background(MaterialTheme.colorScheme.surface.copy(alpha = 0.9f)).padding(horizontal = 4.dp),
                     style = MaterialTheme.typography.labelSmall)
             } else Box(Modifier.size(8.dp).background(if (day.active) MaterialTheme.colorScheme.primary
                 else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f), CircleShape))

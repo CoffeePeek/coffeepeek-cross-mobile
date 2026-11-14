@@ -1,5 +1,8 @@
 package com.coffeepeek.feature.roaster.impl.ui.compose.component
 
+import androidx.compose.foundation.layout.heightIn
+
+
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.height
@@ -36,9 +39,9 @@ internal fun RoasterSearchHeader(query: String, onQueryChange: (String) -> Unit,
         val modifier = analytics.exposure(Modifier.weight(1f), RoasterExposure.Search)
         val placeholder = stringResource(Res.string.roaster_search_placeholder)
         if (!CoffeePeekNativeSearchField(query, onQueryChange, placeholder, {}, cancel,
-                modifier.height(CoffeePeekDimens.buttonHeight))) {
+                modifier.heightIn(min = CoffeePeekDimens.buttonHeight))) {
             CoffeePeekSearchField(query, onQueryChange, placeholder, stringResource(Res.string.roaster_search_clear),
-                modifier = modifier, clearButtonSize = 28.dp)
+                modifier = modifier)
         }
     }
 }

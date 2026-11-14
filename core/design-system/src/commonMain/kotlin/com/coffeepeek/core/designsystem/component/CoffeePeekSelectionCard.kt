@@ -1,5 +1,6 @@
 package com.coffeepeek.core.designsystem.component
 
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -51,7 +52,7 @@ fun CoffeePeekSelectionCard(
 @Composable
 private fun CoffeePeekSelectionCardPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        CoffeePeekSelectionCard("CoffeePeek", "Selected option", CoffeePeekIcons.Coffee, true, {})
+        CoffeePeekSelectionCard("CoffeePeek", "Selected option", CoffeePeekIcons.Check, true, {})
         CoffeePeekSelectionCard("CoffeePeek", "Another option", CoffeePeekIcons.Location, false, {})
     }
 }

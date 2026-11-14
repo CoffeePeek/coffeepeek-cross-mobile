@@ -26,7 +26,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.semantics
@@ -37,6 +37,8 @@ import androidx.compose.ui.unit.constrainHeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
+import com.coffeepeek.core.designsystem.icons.CoffeePeekMapIcon
+import com.coffeepeek.core.designsystem.icons.coffeePeekMapIconPainter
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import org.jetbrains.compose.ui.tooling.preview.Preview
@@ -118,7 +120,7 @@ private fun RoasterHeader(name: String, summary: String?, hasLogo: Boolean, logo
                     fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis,
                 )
                 if (summary != null) Text(
-                    summary, style = MaterialTheme.typography.bodySmall.copy(fontSize = 11.sp, lineHeight = 13.sp),
+                    summary, style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 3, overflow = TextOverflow.Ellipsis,
                 )
             }
@@ -130,14 +132,14 @@ private fun RoasterHeader(name: String, summary: String?, hasLogo: Boolean, logo
 @Composable
 private fun RoasterCounters(shopsCount: Int, shopsLabel: String, productsCount: Int, productsLabel: String) {
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-        RoasterCounter(CoffeePeekIcons.Coffee, shopsLabel, shopsCount, Modifier.weight(1f))
+        RoasterCounter(coffeePeekMapIconPainter(CoffeePeekMapIcon.CoffeeShop), shopsLabel, shopsCount, Modifier.weight(1f))
         VerticalDivider(Modifier.height(20.dp), color = MaterialTheme.colorScheme.outlineVariant)
-        RoasterCounter(CoffeePeekIcons.CoffeeBean, productsLabel, productsCount, Modifier.weight(1f))
+        RoasterCounter(coffeePeekIconPainter(CoffeePeekIcons.CoffeeBean), productsLabel, productsCount, Modifier.weight(1f))
     }
 }
 
 @Composable
-private fun RoasterCounter(icon: ImageVector, label: String, count: Int, modifier: Modifier) {
+private fun RoasterCounter(icon: Painter, label: String, count: Int, modifier: Modifier) {
     Row(
         modifier.semantics(mergeDescendants = true) {}, verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing1),
@@ -145,7 +147,7 @@ private fun RoasterCounter(icon: ImageVector, label: String, count: Int, modifie
         CoffeePeekIcon(icon, null, Modifier.size(20.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
         Text(coffeePeekCountLabel(count), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
         Text(
-            label, Modifier.weight(1f), style = MaterialTheme.typography.labelSmall.copy(fontSize = 11.sp),
+            label, Modifier.weight(1f), style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis,
         )
     }

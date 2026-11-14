@@ -25,8 +25,12 @@ internal data class PostState(
     val reportFailure: String? = null,
     val reportFailed: Boolean = false,
     val isReporting: Boolean = false,
+    val editing: com.coffeepeek.feature.community.impl.timeline.PostEditState? = null,
+    val drinks: List<com.coffeepeek.feature.community.domain.model.DrinkOption> = emptyList(),
+    val drinksFailed: Boolean = false,
+    val isSaving: Boolean = false,
 ) {
-    val isMutating: Boolean get() = isVoting || isReporting
+    val isMutating: Boolean get() = isVoting || isReporting || isSaving
     val isOwn: Boolean get() = post != null && ownsPost(post, isLoggedIn, personalTimeline = false, ownSlug = ownAuthorSlug)
 
     /** Likes, reports and blocking apply to a post everyone can see; an owner may also open a private or unapproved one. */
@@ -35,6 +39,14 @@ internal data class PostState(
 }
 
 internal sealed interface PostAction {
+    data object Edit : PostAction
+    data class EditText(val text: String) : PostAction
+    data class EditRating(val rating: com.coffeepeek.feature.community.domain.model.PostRating) : PostAction
+    data class EditDrink(val slug: String?, val customName: String?) : PostAction
+    data object LoadDrinks : PostAction
+    data object SaveEdit : PostAction
+    data object DismissEdit : PostAction
+    data object Reload : PostAction
     data object Retry : PostAction
     data object ToggleHelpful : PostAction
     data object OpenReport : PostAction

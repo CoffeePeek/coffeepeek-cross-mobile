@@ -1,5 +1,6 @@
 package com.coffeepeek.core.designsystem.component
 
+
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -32,7 +33,7 @@ fun CoffeePeekFormStep(
     Column(modifier.fillMaxWidth()
         .semantics { if (optional) optionalDescription?.let { stateDescription = it } }
         .drawBehind {
-            val x = 5.dp.toPx()
+            val x = 6.dp.toPx()
             val y = 10.dp.toPx()
             val stroke = 2.dp.toPx()
             drawLine(color, Offset(x, 0f), Offset(x, if (last) y else size.height), strokeWidth = stroke,

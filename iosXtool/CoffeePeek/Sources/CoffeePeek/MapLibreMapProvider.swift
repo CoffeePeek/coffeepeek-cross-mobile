@@ -3,6 +3,8 @@ import Foundation
 import MapLibre
 import UIKit
 
+private let mapSelectionGold = UIColor(hex: "#FACC15")
+
 /// Native rendering only: shared Kotlin owns map content, selection and navigation.
 /// This file is used by both the Xcode and xtool application targets.
 final class MapLibreMapProvider: NSObject, IosNativeMapProvider, MLNMapViewDelegate, UIGestureRecognizerDelegate {
@@ -14,8 +16,14 @@ final class MapLibreMapProvider: NSObject, IosNativeMapProvider, MLNMapViewDeleg
     private static let zoneLine = "cp-zones-line"
     private static let zoneLabels = "cp-zone-labels"
     private let images = NSCache<NSString, UIImage>()
+    private var coffeeShopIcon: UIImage?
 
-    func createMapView() -> UIView {
+    func createMapView(coffeeShopIconUri: String) -> UIView {
+        if coffeeShopIcon == nil {
+            let url = URL(string: coffeeShopIconUri)
+            let path = url?.isFileURL == true ? url?.path ?? coffeeShopIconUri : coffeeShopIconUri
+            coffeeShopIcon = UIImage(contentsOfFile: path)
+        }
         let map = CoffeeMapView(frame: .zero, styleURL: Self.lightStyle)
         map.autoresizingMask = [.flexibleWidth, .flexibleHeight]
         map.automaticallyAdjustsContentInset = false
@@ -376,34 +384,29 @@ final class MapLibreMapProvider: NSObject, IosNativeMapProvider, MLNMapViewDeleg
     }
 
     private func drawPinIcon(type: String, rect: CGRect, dark: Bool) {
-        let name = type == "specialty" ? "map_coffeepeek_bean" : (type == "cafe" ? "map_fork_knife" : "map_cup_fill")
+        let icon: UIImage?
+        let side = rect.width * 0.44
+        let configuration = UIImage.SymbolConfiguration(pointSize: side, weight: .semibold)
+        switch type {
+        case "specialty": icon = UIImage(systemName: "cup.and.saucer.fill", withConfiguration: configuration)
+        case "cafe": icon = UIImage(systemName: "fork.knife", withConfiguration: configuration)
+        default: icon = coffeeShopIcon
+        }
+        guard let icon else { return }
         let tint = UIColor(hex: dark ? "#FFFFFF" : "#2D241F")
-        bundleImage(named: name)?.withTintColor(tint, renderingMode: .alwaysOriginal)
-            .draw(in: rect.insetBy(dx: rect.width * 0.20, dy: rect.height * 0.20))
+        let scale = min(1, side / max(icon.size.width, icon.size.height))
+        let width = icon.size.width * scale
+        let height = icon.size.height * scale
+        icon.withTintColor(tint, renderingMode: .alwaysOriginal).draw(in:
+            CGRect(x: rect.midX - width / 2, y: rect.midY - height / 2, width: width, height: height))
     }
 
     private func drawPinRing(_ cg: CGContext, rect: CGRect, selected: Bool, dark: Bool) {
-        let border = dark ? "#3D2F28" : "#E7E5E4"
-        UIColor(hex: selected ? "#D4A84B" : border).setStroke()
+        let border = UIColor(hex: dark ? "#3D2F28" : "#E7E5E4")
+        (selected ? mapSelectionGold : border).setStroke()
         cg.setLineWidth(selected ? 2 : 1.1)
         let inset: CGFloat = selected ? -2.5 : 0.55
         cg.strokeEllipse(in: rect.insetBy(dx: inset, dy: inset))
-    }
-
-    private func bundleImage(named name: String) -> UIImage? {
-        let key = "asset-\(name)" as NSString
-        if let cached = images.object(forKey: key) { return cached }
-        let file = name + ".png"
-        let root = Bundle.main.resourcePath
-        let candidates = [
-            Bundle.main.path(forResource: name, ofType: "png"),
-            root.map { "\($0)/compose-resources/composeResources/coffeepeek.composeapp.generated.resources/drawable/\(file)" },
-            root.map { "\($0)/composeResources/coffeepeek.composeapp.generated.resources/drawable/\(file)" },
-            root.map { "\($0)/Frameworks/ComposeApp.framework/composeResources/coffeepeek.composeapp.generated.resources/drawable/\(file)" },
-        ].compactMap { $0 }
-        let image = candidates.lazy.compactMap(UIImage.init(contentsOfFile:)).first
-        if let image { images.setObject(image, forKey: key) }
-        return image
     }
 
     private func clusterImage(count: Int, dark: Bool) -> UIImage {
@@ -711,8 +714,8 @@ private final class CoffeePinView: MLNAnnotationView {
         let radius: CGFloat = reduced ? 26 : 20
         pulse.frame = bounds
         pulse.path = UIBezierPath(ovalIn: CGRect(x: bounds.midX - radius, y: bounds.midY - radius, width: radius * 2, height: radius * 2)).cgPath
-        pulse.fillColor = UIColor(hex: "#EAB308").withAlphaComponent(reduced ? 0.18 : 0.22).cgColor
-        pulse.strokeColor = UIColor(hex: "#CA8A04").withAlphaComponent(reduced ? 0.35 : 0.6).cgColor
+        pulse.fillColor = mapSelectionGold.withAlphaComponent(reduced ? 0.18 : 0.22).cgColor
+        pulse.strokeColor = mapSelectionGold.withAlphaComponent(reduced ? 0.35 : 0.6).cgColor
         pulse.lineWidth = 1.5
         guard !reduced else { return }
         let scale = CABasicAnimation(keyPath: "transform.scale")

@@ -1,5 +1,6 @@
 package com.coffeepeek.feature.settings.impl.ui.compose
 
+
 import androidx.compose.foundation.clickable
 import com.coffeepeek.feature.settings.impl.resources.Res
 import com.coffeepeek.feature.settings.impl.resources.settings_policy_privacy_description

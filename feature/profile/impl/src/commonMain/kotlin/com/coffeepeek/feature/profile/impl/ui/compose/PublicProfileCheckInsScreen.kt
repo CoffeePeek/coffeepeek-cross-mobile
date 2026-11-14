@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.Arrangement
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import com.coffeepeek.feature.profile.impl.resources.Res
 import com.coffeepeek.feature.profile.impl.resources.profile_back
-import com.coffeepeek.feature.profile.impl.resources.profile_blocked_title
 import com.coffeepeek.feature.profile.impl.resources.profile_check_ins_empty
 import com.coffeepeek.feature.profile.impl.resources.profile_check_ins_failed
 import com.coffeepeek.feature.profile.impl.resources.profile_load_failed
@@ -15,7 +14,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items

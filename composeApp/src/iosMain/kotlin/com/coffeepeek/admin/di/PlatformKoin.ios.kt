@@ -37,7 +37,6 @@ import com.coffeepeek.admin.di.profile.profileSnapshotModule
 import com.coffeepeek.admin.di.shelf.ShelfFeatureScreenRenderer
 import com.coffeepeek.admin.di.shelf.shelfBrewForm
 import com.coffeepeek.admin.di.shelf.iosShelfModule
-import com.coffeepeek.admin.locator.Locator
 import com.coffeepeek.admin.locator.Constants
 
 internal fun iosPlatformModules(apiBaseUrl: String = Constants.BASE_URL) = listOf(
@@ -68,8 +67,8 @@ actual fun initPlatformKoin() {
         appUpdateRendererFactory = { featureAppUpdateRenderer(get(), get()) },
         notificationsRendererFactory = { featureNotificationsRenderer(get(), get(), get()) },
         authRendererFactory = { iosAuthScreenRenderer(get(), get()) },
-        checkInDetailRendererFactory = { com.coffeepeek.admin.di.community.featureCheckInDetailScreenRenderer(get(), get(), get(), get()) },
-        communityRendererFactory = { featureCommunityScreenRenderer(get(), get(), get(), get(), get(), get()) },
+        checkInDetailRendererFactory = { com.coffeepeek.admin.di.community.featureCheckInDetailScreenRenderer(get(), get(), get(), get(), get(), get()) },
+        communityRendererFactory = { featureCommunityScreenRenderer(get(), get(), get(), get(), get(), get(), get()) },
         coffeeRendererFactory = {
             featureCoffeeScreenRenderer(get())
         },

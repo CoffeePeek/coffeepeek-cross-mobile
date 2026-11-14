@@ -1,5 +1,6 @@
 package com.coffeepeek.core.designsystem.component
 
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
@@ -7,7 +8,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
@@ -36,7 +36,7 @@ fun CoffeePeekPriceLevelSlider(selected: Int?, onSelect: (Int?) -> Unit, modifie
 @Composable
 private fun PriceLevelTrack(value: Int, onSelect: (Int?) -> Unit) {
     val colors = SliderDefaults.colors(thumbColor = Color.White, activeTrackColor = MaterialTheme.colorScheme.primary,
-        inactiveTrackColor = MaterialTheme.colorScheme.outline.copy(alpha = .4f), activeTickColor = Color.Transparent,
+        inactiveTrackColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.4f), activeTickColor = Color.Transparent,
         inactiveTickColor = Color.Transparent)
     Slider(value = value.toFloat(), onValueChange = { onSelect(it.roundToInt().coerceIn(0, 3).takeIf { level -> level > 0 }) },
         valueRange = 0f..3f, steps = 2, colors = colors, interactionSource = remember { MutableInteractionSource() },
@@ -47,16 +47,17 @@ private fun PriceLevelTrack(value: Int, onSelect: (Int?) -> Unit) {
 
 @Composable
 private fun PriceLevelStops(filled: Int) {
-    val iconWidth = 14.dp * .9f
-    BoxWithConstraints(Modifier.fillMaxWidth().height(14.dp * (446.4f / 360.67f))) {
+    val iconWidth = 12.dp
+    val spacing = 2.dp
+    BoxWithConstraints(Modifier.fillMaxWidth().height(coffeePeekBynIndicatorSize(iconWidth).height)) {
         val trackInset = 14.dp
         val trackWidth = (maxWidth - trackInset * 2).coerceAtLeast(0.dp)
         repeat(3) { index ->
             val tier = index + 1
-            val groupWidth = iconWidth * tier + 1.dp * (tier - 1)
+            val groupWidth = iconWidth * tier + spacing * (tier - 1)
             val tickCenter = trackInset + trackWidth * (tier.toFloat() / 3)
             val x = (tickCenter - groupWidth / 2).coerceIn(0.dp, (maxWidth - groupWidth).coerceAtLeast(0.dp))
-            CoffeePeekBynPriceIndicators(tier, Modifier.offset(x = x), iconWidth = iconWidth, spacing = 1.dp,
+            CoffeePeekBynPriceIndicators(tier, Modifier.offset(x = x), iconWidth = iconWidth, spacing = spacing,
                 tint = if (filled == tier) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline)
         }
     }
