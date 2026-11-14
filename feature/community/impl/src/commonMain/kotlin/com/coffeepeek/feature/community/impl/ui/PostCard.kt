@@ -56,7 +56,6 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ripple
 import androidx.compose.material3.Text
 import com.coffeepeek.core.designsystem.component.CoffeePeekTextButton as TextButton
 import com.coffeepeek.core.designsystem.component.CoffeePeekPlainIconButton
@@ -307,16 +306,14 @@ private fun HelpfulButton(count: Int, helpful: Boolean, onClick: (() -> Unit)?) 
     ) {
         // The glyph lines up with the card content: it is pulled left out of its centered
         // 44dp touch slot back to the content edge. The count follows at 4dp; the 44dp slot
-        // keeps the touch target, and the ripple still plays inside the heart itself.
+        // keeps the touch target. The heart's own pop animation (in CoffeePeekLikeIcon)
+        // is the press feedback, so no ripple is drawn anywhere.
         val interactions = remember { MutableInteractionSource() }
         val tap = if (onClick != null) Modifier.clickable(
             interactionSource = interactions, indication = null, role = Role.Button, onClick = onClick,
         ) else Modifier
         Box(Modifier.height(44.dp).width(28.dp), contentAlignment = Alignment.Center) {
-            val heartPress = if (onClick != null) Modifier.clip(CircleShape).clickable(
-                interactionSource = interactions, indication = ripple(bounded = true), onClick = onClick,
-            ) else Modifier
-            Box(Modifier.size(28.dp).then(heartPress), contentAlignment = Alignment.Center) {
+            Box(Modifier.size(28.dp), contentAlignment = Alignment.Center) {
                 CoffeePeekLikeIcon(helpful, contentDescription = null)
             }
             Box(Modifier.size(44.dp).then(tap))
