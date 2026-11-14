@@ -1,0 +1,46 @@
+name: Draft mobile release
+
+on:
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: Mobile platform
+        type: choice
+        options:
+          - android
+          - ios
+        required: true
+      build_run:
+        description: URL or run ID of Android Release or iOS TestFlight on main
+        type: string
+        required: true
+
+permissions: {}
+
+concurrency:
+  group: draft-mobile-release-${{ inputs.platform }}
+  cancel-in-progress: false
+
+jobs:
+  draft:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      actions: read
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Check release draft logic
+        run: python3 -m unittest discover -s tools/release -p test_draft_release.py -v
+
+      - name: Create GitHub release draft
+        env:
+          GH_TOKEN: ${{ secrets.MOBILE_RELEASE_TOKEN || github.token }}
+          PLATFORM: ${{ inputs.platform }}
+          BUILD_RUN: ${{ inputs.build_run }}
+        run: python3 tools/release/draft_release.py "$PLATFORM" "$BUILD_RUN"
