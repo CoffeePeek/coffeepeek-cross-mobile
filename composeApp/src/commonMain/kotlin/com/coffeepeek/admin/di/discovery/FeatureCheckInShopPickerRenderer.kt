@@ -9,7 +9,6 @@ import com.coffeepeek.admin.di.shop.ShopBrowsingHost
 import com.coffeepeek.admin.di.shop.ShopBrowsingHostSession
 import com.coffeepeek.admin.di.shop.CheckInFlowHandoff
 import com.coffeepeek.admin.di.checkinhistory.CheckInHistorySession
-import com.coffeepeek.admin.settings.CityPreference
 import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.ui.screen.checkins.CheckInShopPickerRenderer
 import com.coffeepeek.core.session.SessionReader
@@ -21,12 +20,12 @@ import com.coffeepeek.feature.favorites.domain.repository.FavoritesRepository
 import com.coffeepeek.feature.checkinhistory.domain.repository.CheckInHistoryRepository
 import com.coffeepeek.feature.shop.domain.repository.ShopDetailsRepository
 import io.ktor.client.HttpClient
-import kotlinx.coroutines.CoroutineScope
 
 internal class FeatureCheckInShopPickerRenderer(
     private val client: HttpClient, private val shops: PublicShopPreviews, private val catalog: PublicRoasterCatalog,
     private val sessions: SessionReader,
-    private val favorites: FavoritesRepository, private val city: CityPreference,
+    private val favorites: FavoritesRepository, private val city: PreferenceDiscoveryCity,
+    private val location: AppDiscoveryLocation,
     private val history: CheckInHistoryRepository, private val details: ShopDetailsRepository,
 ) : CheckInShopPickerRenderer {
     @Composable
@@ -36,10 +35,9 @@ internal class FeatureCheckInShopPickerRenderer(
 
     @Composable
     private fun Picker(session: ShopBrowsingHostSession) {
-        val scope = rememberCoroutineScope()
         val historySession = remember(session) { CheckInHistorySession(sessions) }
         DisposableEffect(historySession) { onDispose { historySession.revoke() } }
-        val entry = remember(session) { entry(session, scope, historySession) }
+        val entry = remember(session) { entry(session, historySession) }
         val focus = LocalFocusManager.current
         val keyboard = LocalSoftwareKeyboardController.current
         val navigation = remember(session) {
@@ -59,11 +57,11 @@ internal class FeatureCheckInShopPickerRenderer(
             { if (session.lease.isCurrent()) Navigator.navigate(Navigator.Screen.Auth) }, Modifier)
     }
 
-    private fun entry(session: ShopBrowsingHostSession, scope: CoroutineScope, historySession: CheckInHistorySession) =
+    private fun entry(session: ShopBrowsingHostSession, historySession: CheckInHistorySession) =
         AppDiscoveryFavorites(session.lease.favorites(favorites)).let { favoriteAdapter ->
             createCheckInShopPickerEntry(
                 createDiscoveryRepository(client, favoriteAdapter::favoriteIds, roasterEntries(catalog)),
-                favoriteAdapter, PreferenceDiscoveryCity(city), AppDiscoveryLocation(scope),
+                favoriteAdapter, city, location,
                 SessionDiscoveryAccount(sessions), ShopDiscoveryDetails(shops), AppDiscoveryAnalytics(), discoveryHost(),
                 recentShops = RecentCheckInShops(historySession.bind(history), session.lease.details(details)),
             )

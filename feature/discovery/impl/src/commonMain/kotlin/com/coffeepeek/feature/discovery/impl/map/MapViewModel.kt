@@ -6,6 +6,7 @@ import com.coffeepeek.feature.discovery.api.DiscoveryAnalytics
 import com.coffeepeek.feature.discovery.api.DiscoveryAccount
 import com.coffeepeek.feature.discovery.api.DiscoveryFavorites
 import com.coffeepeek.feature.discovery.api.DiscoveryCity
+import com.coffeepeek.feature.discovery.api.DiscoveryCitySelection
 import com.coffeepeek.feature.discovery.api.DiscoveryLocation
 import com.coffeepeek.feature.discovery.api.DiscoveryShopDetails
 import com.coffeepeek.feature.discovery.api.GeolocationOutcome
@@ -172,7 +173,8 @@ internal class MapViewModel(
         analytics.geolocation(PLACEMENT, userTriggered = currentState.locationPermissionRequest > 0, outcome = GeolocationOutcome.Unavailable)
     }
 
-    private fun onCity(cityId: String?) {
+    private fun onCity(selection: DiscoveryCitySelection?) {
+        val cityId = selection?.id
         if (criteriaSupplied || !cityReady || cityId == null || cityId == currentState.cityId) return
         syncCriteria(currentState.criteria.copy(filters = currentState.filters.copy(cityId = cityId)))
     }
@@ -181,7 +183,8 @@ internal class MapViewModel(
         viewModelScope.launch {
             repository.catalogs().onSuccess { catalogs ->
                 if (!criteriaSupplied) {
-                    val cityId = city.resolve(catalogs.cities)
+                    val resolvedCityId = city.resolve(catalogs.cities)
+                    val cityId = city.selected.value?.id ?: resolvedCityId
                     if (!criteriaSupplied) updateState { copy(cityId = cityId, filters = filters.copy(cityId = cityId)) }
                 }
             }
@@ -369,7 +372,9 @@ internal class MapViewModel(
     }
 
     private fun onMyLocationFound(point: Coordinates) {
+        if (!point.isValid) return
         analytics.geolocation(PLACEMENT, userTriggered = currentState.myLocationRequest > 0, outcome = GeolocationOutcome.Available)
+        location.updateFromMap(point)
         changeUserLocation(point)
         moveCamera(point, MY_LOCATION_ZOOM, PAUSE_AFTER_MOVE_MS)
     }

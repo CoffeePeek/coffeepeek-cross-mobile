@@ -96,7 +96,7 @@ class SettingsPortsTest {
         port.loadCities()
         port.select("grodno"); port.select("")
         assertEquals("grodno", port.observeSelectedCityId().first())
-        await { settings.valueOf("selected_city_id") == "grodno" }
+        assertEquals("grodno", settings.valueOf("manual_city_id"))
     }
 
     // --- account -----------------------------------------------------------------------------------------------------------

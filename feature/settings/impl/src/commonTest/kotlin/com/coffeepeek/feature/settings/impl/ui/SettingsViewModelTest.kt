@@ -76,7 +76,7 @@ class SettingsViewModelTest {
             result.onSuccess { list -> if (selected.value == null) selected.value = list.firstOrNull()?.id }
             return result
         }
-        override fun select(cityId: String) { selected.value = cityId }
+        override suspend fun select(cityId: String) { selected.value = cityId }
     }
 
     private class Updates : UpdateCheckPort {

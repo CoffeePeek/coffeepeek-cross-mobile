@@ -3,6 +3,7 @@ package com.coffeepeek.feature.discovery.impl
 import com.coffeepeek.feature.discovery.api.DiscoveryAccount
 import com.coffeepeek.feature.discovery.api.DiscoveryAnalytics
 import com.coffeepeek.feature.discovery.api.DiscoveryCity
+import com.coffeepeek.feature.discovery.api.DiscoveryCitySelection
 import com.coffeepeek.feature.discovery.api.DiscoveryFavorites
 import com.coffeepeek.feature.discovery.api.DiscoveryGate
 import com.coffeepeek.feature.discovery.api.DiscoveryLocation
@@ -70,9 +71,18 @@ internal class FakeFavorites : DiscoveryFavorites {
 }
 
 internal class FakeCity(saved: String? = null) : DiscoveryCity {
-    val flow = MutableStateFlow(saved)
-    override val selected = flow
-    override suspend fun resolve(cities: List<CityEntry>): String? = (flow.value?.takeIf { id -> cities.any { it.id == id } } ?: cities.firstOrNull()?.id).also { flow.value = it }
+    private val selection = MutableStateFlow(saved?.let { DiscoveryCitySelection(it, manual = true) })
+    override val selected = selection
+
+    fun select(id: String, manual: Boolean = true) {
+        selection.value = DiscoveryCitySelection(id, manual)
+    }
+
+    override suspend fun resolve(cities: List<CityEntry>): String? {
+        val existing = selection.value?.takeIf { current -> cities.any { it.id == current.id } }
+        selection.value = existing ?: cities.firstOrNull()?.let { DiscoveryCitySelection(it.id, manual = false) }
+        return selection.value?.id
+    }
 }
 
 internal class FakeLocation : DiscoveryLocation {
@@ -80,6 +90,7 @@ internal class FakeLocation : DiscoveryLocation {
     var refreshes = 0
     override val current = flow
     override fun refresh() { refreshes++ }
+    override fun updateFromMap(point: Coordinates) { flow.value = point }
 }
 
 internal class RecordingAnalytics : DiscoveryAnalytics {

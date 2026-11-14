@@ -42,8 +42,8 @@ interface CityPort {
      */
     suspend fun loadCities(): Result<List<SettingsCity>>
 
-    /** Ignores a blank or already selected id. The caller only offers ids from [loadCities]. */
-    fun select(cityId: String)
+    /** Records an explicit choice from [loadCities], even if it matches the automatic city. */
+    suspend fun select(cityId: String)
 }
 
 /** Whether a signed-in account is active. Guests keep the tab but lose the signed-in rows. */

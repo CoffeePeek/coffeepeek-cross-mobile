@@ -101,7 +101,7 @@ class NearbyRequestTest {
         vm.onAction(SearchAction.ToggleNearby)
         vm.onAction(SearchAction.LocationGranted)
         runCurrent()
-        city.flow.value = "brest"
+        city.select("brest")
         runCurrent()
         location.flow.value = here
         runCurrent()
@@ -120,11 +120,30 @@ class NearbyRequestTest {
         vm.onAction(SearchAction.ToggleNearby)
         vm.onAction(SearchAction.ToggleOpen)
         runCurrent()
-        city.flow.value = "brest"
+        city.select("brest")
         runCurrent()
         assertFalse(vm.state.value.filters.nearbyOnly)
         assertTrue(vm.state.value.filters.openOnly)
         assertEquals("brest", repository.queries.last().filters.cityId)
+    }
+
+    @Test fun automaticCityChangeKeepsNearbyActiveAndBecomesTheDefaultWhenNearbyEnds() = runTest(dispatcher) {
+        val vm = model()
+        vm.onAction(SearchAction.ToggleNearby)
+        runCurrent()
+        city.select("brest", manual = false)
+        runCurrent()
+        assertTrue(vm.state.value.nearbyRequested)
+        location.flow.value = here
+        runCurrent()
+        assertTrue(vm.state.value.filters.nearbyOnly)
+        val requests = repository.queries.size
+        city.select("minsk", manual = false)
+        runCurrent()
+        assertEquals(requests, repository.queries.size)
+        vm.onAction(SearchAction.ToggleNearby)
+        runCurrent()
+        assertEquals("minsk", repository.queries.last().filters.cityId)
     }
 
     @Test fun dismissingPendingRequestDoesNotEnableNearbyAfterLateGrant() = runTest(dispatcher) {
