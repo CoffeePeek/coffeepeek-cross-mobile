@@ -16,6 +16,8 @@ actual fun CoffeePeekFullScreenDialog(
         properties = DialogProperties(
             usePlatformDefaultWidth = false,
             usePlatformInsets = false,
+            // The full-screen form owns IME padding and reads its unconsumed visibility.
+            useSoftwareKeyboardInset = false,
             scrimColor = Color.Transparent,
         ),
         content = content,

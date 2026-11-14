@@ -8,7 +8,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.luminance
 import com.coffeepeek.core.designsystem.theme.CoffeePeekColors
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.UIKitInteropInteractionMode
@@ -36,8 +35,7 @@ internal actual fun CoffeePeekNativeSwitch(
         accessibilityEnabled = onCheckedChange != null,
         update = { control ->
             control.overrideUserInterfaceStyle = coffeePeekUserInterfaceStyle(colors.background)
-            control.onTintColor = (if (colors.background.luminance() < 0.5f)
-                CoffeePeekColors.SwitchCheckedTrackDark else CoffeePeekColors.SwitchCheckedThumbLight).toUIColor()
+            control.onTintColor = CoffeePeekColors.Primary.toUIColor()
             control.setOn(checked, animated = false)
             control.enabled = enabled
             control.userInteractionEnabled = enabled && onCheckedChange != null

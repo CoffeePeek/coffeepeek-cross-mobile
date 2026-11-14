@@ -16,6 +16,7 @@ import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_retry
 import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_save
 import com.coffeepeek.feature.homecheckin.impl.resources.home_check_in_saving
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.background
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
@@ -134,7 +135,7 @@ internal fun HomeCheckInEditorScreenContent(
         if (date != draft.preparedOn) onAction(HomeCheckInEditorAction.DateChosen(date, dateToInstant(date)))
         showDatePicker = false
     }
-    // Android IME space is consumed once, around header, scroll body and save footer together.
+    // The full-screen host leaves IME handling to this form on both platforms.
     Box(Modifier.imePadding().then(modifier)) {
         if (state.isBeanPickerOpen && enabled) {
             HomeCheckInEditorBeanPickerContent(state, media, onAction, ::dispatch)
@@ -214,7 +215,8 @@ private fun HomeCheckInEditorFooter(state: HomeCheckInEditorState, enabled: Bool
     onAction: (HomeCheckInEditorAction) -> Unit, onSave: () -> Unit) {
     // Leave the available height to the form while typing, including in iOS full-screen dialogs.
     if (WindowInsets.ime.getBottom(LocalDensity.current) > 0) return
-    Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    Column(Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.background).padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)) {
         HomeCheckInEditorVisibility(state.draft.visibility == HomePreparationVisibility.Public, enabled) {
             onAction(HomeCheckInEditorAction.VisibilityChanged(if (it) HomePreparationVisibility.Public else HomePreparationVisibility.Private))
         }

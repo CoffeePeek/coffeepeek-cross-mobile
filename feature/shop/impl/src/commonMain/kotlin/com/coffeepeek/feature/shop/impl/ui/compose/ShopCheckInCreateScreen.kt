@@ -7,6 +7,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -23,6 +25,7 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -105,11 +108,12 @@ internal fun ShopCheckInCreateScreen(
     CoffeePeekBackHandler(enabled = !state.isSubmitting && !state.isDiscarding) {
         viewModel.onAction(ShopCheckInFormAction.Dismiss)
     }
+    val keyboardVisible = WindowInsets.ime.getBottom(LocalDensity.current) > 0
     CoffeePeekScaffold(
         modifier = Modifier.fillMaxSize().imePadding(),
         contentWindowInsets = androidx.compose.foundation.layout.WindowInsets(0),
         topBar = { ShopCheckInEditorTopBar(state, viewModel::onAction) },
-        bottomBar = { if (!state.submitted && !state.isSubmitting) ShopCheckInSaveBar(
+        bottomBar = { if (!keyboardVisible && !state.submitted && !state.isSubmitting) ShopCheckInSaveBar(
             state, picker.isPreparing, viewModel::onAction) },
     ) { insets ->
         Box(Modifier.fillMaxSize().padding(insets)) {
