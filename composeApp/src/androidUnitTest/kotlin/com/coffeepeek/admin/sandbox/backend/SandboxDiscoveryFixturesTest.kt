@@ -210,11 +210,14 @@ class SandboxDiscoveryFixturesTest {
         sandboxAccountFavorites(client).setFavorite(sandboxShopFavorite("discovery-3"), true).getOrThrow()
         assertEquals(2, shops.search(nearby(favoritesOnly = true)).getOrThrow().items.size)
 
-        // The map: shops by bounds and filters, zones inside the bounds, no clusters, nothing truncated.
+        // The map follows its bounds regardless of the list city: no zones, clusters, or truncation here.
         val inMinsk = map(minsk)
         assertEquals(38, inMinsk.markers.size); assertTrue(inMinsk.zones.isEmpty()); assertTrue(inMinsk.clusters.isEmpty()); assertFalse(inMinsk.isTruncated)
         assertEquals(9, map(brest).markers.size); assertTrue(map(brest).zones.isEmpty())
-        assertTrue(map(minsk, city = "brest").markers.isEmpty())
+        assertEquals(
+            inMinsk.markers.map { it.id }.toSet(),
+            map(minsk, city = "brest").markers.map { it.id }.toSet(),
+        )
 
         backend.discovery = SandboxDiscovery.Truncated
         assertEquals(SandboxDiscoveryBackend.MAP_LIMIT, map(minsk).markers.size); assertTrue(map(minsk).isTruncated)

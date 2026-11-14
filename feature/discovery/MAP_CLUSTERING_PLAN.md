@@ -21,6 +21,20 @@ check-in counts from the search endpoint using the same city-independent filters
   (52.0, 23.5)–(52.3, 23.9) with a null city and zero with `minsk`.
   Native Android and iOS visual checks remain pending.
 
+### PR #347 Sandbox regression correction — 2026-11-14
+
+The first Android CI run on `2b1c232b0` failed in both application unit-test
+variants: `SandboxDiscoveryFixturesTest` still expected the list city to empty
+a different map viewport. The assertion now compares marker ID sets with and
+without that city criterion; list-city filtering remains covered separately.
+
+Windows verification on `2b1c232b0` plus this test correction executed all 673
+application tests across 151 suites for each of `directDebug` and `playDebug`:
+zero failures, errors or skips, with no local retries. Direct Debug assembly,
+packaged DEX runtime-class verification and function body limits passed in the
+same Gradle run (`--max-workers=6`, 1m 26s). Existing unrelated compiler warnings
+remain. No device was used or APK installed; native UI gates above remain open.
+
 ## Scope and verification plan
 
 Checkpoint: `codex/migration-map-clusters`, based on
