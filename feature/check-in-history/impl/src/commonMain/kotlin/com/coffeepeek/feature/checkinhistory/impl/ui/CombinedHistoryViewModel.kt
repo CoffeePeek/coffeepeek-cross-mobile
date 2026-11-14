@@ -14,7 +14,6 @@ import com.coffeepeek.feature.checkinhistory.impl.ui.compose.model.CombinedHisto
 import com.coffeepeek.feature.checkinhistory.impl.ui.compose.model.CombinedHistoryState
 import com.coffeepeek.feature.checkinhistory.impl.ui.compose.model.CheckInHistoryEvent
 import com.coffeepeek.feature.checkinhistory.impl.ui.compose.model.CheckInHistoryEventEnvelope
-import com.coffeepeek.feature.checkinhistory.impl.ui.compose.model.HistoryKindFilter
 import com.coffeepeek.feature.checkinhistory.impl.ui.compose.model.HistorySource
 import com.coffeepeek.feature.checkinhistory.impl.ui.compose.model.HistoryTimelineItem
 import com.coffeepeek.feature.checkinhistory.impl.ui.data.HistoryCalendarContext

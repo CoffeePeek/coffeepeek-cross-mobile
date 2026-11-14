@@ -19,9 +19,6 @@ import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopCheckInFormAction
 import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopCheckInFormEvent
 import com.coffeepeek.feature.shop.impl.ui.data.ShopCheckInDraftSnapshot
 import com.coffeepeek.feature.shop.impl.ui.data.ShopCheckInDraftStore
-import kotlinx.coroutines.NonCancellable
-import kotlinx.coroutines.withContext
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi

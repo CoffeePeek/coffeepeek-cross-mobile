@@ -7,7 +7,6 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.coffeepeek.feature.contributions.api.*
-import com.coffeepeek.feature.contributions.domain.model.ChangeSection
 import com.coffeepeek.feature.contributions.domain.repository.ContributionsRepository
 import com.coffeepeek.feature.contributions.impl.shop.AddShopViewModel
 import com.coffeepeek.feature.contributions.impl.ui.AddShopCallbacks

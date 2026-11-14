@@ -10,33 +10,23 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import com.coffeepeek.core.designsystem.component.CoffeePeekTextButton as TextButton
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.graphics.luminance
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.uikit.LocalUIViewController
 import androidx.compose.ui.viewinterop.UIKitView
 import androidx.compose.ui.viewinterop.UIKitInteropProperties
-import androidx.compose.ui.window.ComposeUIViewController
 import coffeepeek.composeapp.generated.resources.Res
 import coffeepeek.composeapp.generated.resources.presentation_cancel
 import coffeepeek.composeapp.generated.resources.native_date_cancel
 import coffeepeek.composeapp.generated.resources.native_done
-import com.coffeepeek.admin.AppContent
-import com.coffeepeek.admin.theme.switchPalette
 import com.coffeepeek.admin.theme.toUIColor
 import com.coffeepeek.admin.theme.uiKitStyle
 import com.coffeepeek.admin.theme.ThemeManager
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.core.designsystem.resources.LocalCoffeePeekLanguageTag
-import kotlinx.cinterop.ObjCAction
-import kotlinx.cinterop.useContents
 import platform.Foundation.*
 import platform.UIKit.*
-import platform.darwin.NSObject
 import kotlinx.coroutines.delay
 import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
-import kotlin.math.abs
 
 internal fun UIViewController.presentationHost(): UIViewController {
     var host = this

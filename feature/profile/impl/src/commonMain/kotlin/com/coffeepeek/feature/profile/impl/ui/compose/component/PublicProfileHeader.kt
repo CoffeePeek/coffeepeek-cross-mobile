@@ -4,7 +4,6 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 import androidx.compose.foundation.BorderStroke
 import com.coffeepeek.feature.profile.impl.resources.Res
 import com.coffeepeek.feature.profile.impl.resources.profile_avatar_of
-import com.coffeepeek.feature.profile.impl.resources.profile_edit
 import com.coffeepeek.feature.profile.impl.resources.profile_follow
 import com.coffeepeek.feature.profile.impl.resources.profile_follow_description
 import com.coffeepeek.feature.profile.impl.resources.profile_following

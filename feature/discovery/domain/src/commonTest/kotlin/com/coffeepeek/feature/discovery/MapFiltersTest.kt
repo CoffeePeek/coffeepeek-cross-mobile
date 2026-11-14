@@ -3,7 +3,6 @@ package com.coffeepeek.feature.discovery
 import com.coffeepeek.feature.discovery.domain.model.DiscoveryFilters
 import com.coffeepeek.feature.discovery.domain.model.DiscoveryCriteria
 import com.coffeepeek.feature.discovery.domain.model.Coordinates
-import com.coffeepeek.feature.discovery.domain.model.PriceLevel
 import com.coffeepeek.feature.discovery.domain.model.ShopKind
 import kotlin.test.Test
 import kotlin.test.assertEquals

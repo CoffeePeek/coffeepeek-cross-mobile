@@ -1,9 +1,7 @@
 package com.coffeepeek.admin.di.collections
 
 import com.coffeepeek.feature.favorites.domain.model.FavoriteEntry
-import com.coffeepeek.feature.favorites.domain.model.FavoriteKind
 import com.coffeepeek.feature.favorites.domain.repository.AccountFavorites
-import com.coffeepeek.admin.di.favorites.PublicAddress
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CancellationException

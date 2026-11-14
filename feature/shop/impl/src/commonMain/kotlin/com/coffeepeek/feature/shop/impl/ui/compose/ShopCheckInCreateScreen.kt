@@ -1,6 +1,7 @@
 package com.coffeepeek.feature.shop.impl.ui.compose
 
 import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,6 +22,9 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.platform.testTag
@@ -146,8 +150,19 @@ internal fun ShopCheckInCreateScreenContent(
         return
     }
     val editable = state.isEditable(photosPreparing)
+    val focus = LocalFocusManager.current
+    val keyboard = LocalSoftwareKeyboardController.current
     Column(
-        modifier.fillMaxWidth().testTag("shop-checkin-form").verticalScroll(rememberScrollState())
+        // The keyboard stays while the user scrolls (it belongs to the focused field), and a
+        // tap anywhere outside the fields clears the focus and puts it away.
+        modifier.fillMaxWidth().testTag("shop-checkin-form")
+            .pointerInput(Unit) {
+                detectTapGestures {
+                    keyboard?.hide()
+                    focus.clearFocus()
+                }
+            }
+            .verticalScroll(rememberScrollState())
             .padding(horizontal = CoffeePeekDimens.spacing4)
             .padding(top = CoffeePeekDimens.spacing3, bottom = CoffeePeekDimens.spacing6),
         verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing6),

@@ -31,7 +31,6 @@ import androidx.compose.ui.window.Dialog
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import coffeepeek.composeapp.generated.resources.Res
 import org.jetbrains.compose.resources.painterResource
-import org.jetbrains.compose.ui.tooling.preview.Preview
 
 object ErrorDialog {
 

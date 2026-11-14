@@ -3,7 +3,6 @@ package com.coffeepeek.admin.di.checkinhistory
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.unit.dp
 import com.coffeepeek.admin.analytics.Analytics
 import com.coffeepeek.admin.analytics.AnalyticsOverlay
 import com.coffeepeek.admin.analytics.analyticsExposure

@@ -1,6 +1,5 @@
 package com.coffeepeek.admin.di
 
-import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.di.collections.androidCollectionFavoritesModule
 import com.coffeepeek.admin.di.collections.collectionsModule
 import com.coffeepeek.admin.di.favorites.serverFavoritesModule

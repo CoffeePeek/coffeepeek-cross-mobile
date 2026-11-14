@@ -2,6 +2,7 @@ package com.coffeepeek.core.designsystem.component
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.material3.MaterialTheme
@@ -17,6 +18,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.semantics.selected
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
@@ -43,7 +45,9 @@ fun CoffeePeekLikeCount(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing1),
     ) {
-        CoffeePeekLikeIcon(selected, contentDescription = null)
+        // 3dp of headroom: the pop scales the glyph ~2.9dp past its bounds, and the post card
+        // clips its content — without it the heart would get shaved on the left mid-pop.
+        CoffeePeekLikeIcon(selected, contentDescription = null, Modifier.padding(start = 3.dp))
         Text(count.toString(), Modifier.clearAndSetSemantics {},
             style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface)
     }

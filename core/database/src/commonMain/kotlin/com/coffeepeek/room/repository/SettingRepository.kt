@@ -1,7 +1,6 @@
 package com.coffeepeek.room.repository
 
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
 import com.coffeepeek.room.model.Setting
 import com.coffeepeek.room.utils.JsonExt
 

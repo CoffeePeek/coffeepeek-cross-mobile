@@ -4,15 +4,7 @@ import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
 
 import com.coffeepeek.feature.discovery.impl.resources.Res
 import com.coffeepeek.feature.discovery.impl.resources.discovery_loading
-import com.coffeepeek.feature.discovery.impl.resources.discovery_map_card_checkins
-import com.coffeepeek.feature.discovery.impl.resources.discovery_map_card_closed
-import com.coffeepeek.feature.discovery.impl.resources.discovery_map_card_hours
-import com.coffeepeek.feature.discovery.impl.resources.discovery_map_card_loading
-import com.coffeepeek.feature.discovery.impl.resources.discovery_map_card_nearby
-import com.coffeepeek.feature.discovery.impl.resources.discovery_map_card_no_checkins
-import com.coffeepeek.feature.discovery.impl.resources.discovery_map_card_open
 import com.coffeepeek.feature.discovery.impl.resources.discovery_map_carousel_position
-import com.coffeepeek.feature.discovery.impl.resources.discovery_map_photo_missing
 import com.coffeepeek.feature.discovery.impl.resources.discovery_map_search_empty
 import com.coffeepeek.feature.discovery.impl.resources.discovery_map_search_failed
 import com.coffeepeek.feature.discovery.impl.resources.discovery_map_zone_close
@@ -26,8 +18,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn

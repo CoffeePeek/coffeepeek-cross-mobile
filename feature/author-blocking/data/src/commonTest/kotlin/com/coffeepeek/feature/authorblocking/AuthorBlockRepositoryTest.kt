@@ -47,6 +47,25 @@ class AuthorBlockRepositoryTest {
         } finally { repo.close(); client.close() }
     }
 
+    @Test fun identicalRefreshKeepsTheRevisionChangedContentBumpsIt(): Unit = runBlocking {
+        val client = HttpClientFactory(MockEngine { request ->
+            if (request.method == HttpMethod.Put) respond("""{"data":{"authorId":"b","isBlocked":true}}""", headers = headers)
+            else respond(page(author("a")), headers = headers)
+        }).api("https://api.example")
+        val repo = AuthorBlockRepositoryImpl(client, FakeAccount(), scope())
+        try {
+            withTimeout(5_000) { repo.visibility.first { it.ready } }
+            val before = repo.visibility.value
+            // A reconciliation refresh with the same list must not invalidate consumers.
+            repo.refresh().getOrThrow()
+            assertEquals(before, repo.visibility.value)
+            // A real content change does.
+            repo.setBlocked("b", null, "Author b", null, true).getOrThrow()
+            assertEquals(setOf("a", "b"), repo.visibility.value.blockedIds)
+            assertTrue(repo.visibility.value.revision > before.revision)
+        } finally { repo.close(); client.close() }
+    }
+
     @Test fun failedMutationAndFailedReconciliationNeverHideAnUnconfirmedAuthor(): Unit = runBlocking {
         var fail = false
         val client = HttpClientFactory(MockEngine {

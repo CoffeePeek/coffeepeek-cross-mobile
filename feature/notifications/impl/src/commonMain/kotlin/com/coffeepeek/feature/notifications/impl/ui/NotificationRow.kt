@@ -1,7 +1,6 @@
 package com.coffeepeek.feature.notifications.impl.ui
 
 import com.coffeepeek.feature.notifications.impl.resources.notifications_open
-import androidx.compose.foundation.BorderStroke
 import com.coffeepeek.feature.notifications.impl.resources.Res
 import com.coffeepeek.feature.notifications.impl.resources.notifications_mark_read
 import com.coffeepeek.feature.notifications.impl.resources.notifications_read

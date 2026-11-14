@@ -10,7 +10,6 @@ import com.coffeepeek.feature.notifications.impl.resources.notifications_push_sa
 import com.coffeepeek.feature.notifications.impl.resources.notifications_push_unavailable
 import com.coffeepeek.feature.notifications.impl.resources.notifications_retry_settings
 import com.coffeepeek.feature.notifications.impl.resources.notifications_saving
-import androidx.compose.foundation.shape.RoundedCornerShape
 import com.coffeepeek.feature.notifications.impl.resources.notifications_settings_sign_in_description
 import com.coffeepeek.feature.notifications.impl.resources.notifications_title
 import androidx.compose.material3.*

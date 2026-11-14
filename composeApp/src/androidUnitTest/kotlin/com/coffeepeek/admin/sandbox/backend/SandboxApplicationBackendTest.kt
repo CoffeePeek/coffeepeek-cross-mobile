@@ -31,8 +31,6 @@ import com.coffeepeek.feature.profile.domain.PublicProfileConnectionKind
 import com.coffeepeek.feature.shop.data.repository.createShopCheckInVoteRepository
 import com.coffeepeek.feature.shop.data.repository.createShopDetailsRepository
 import com.coffeepeek.feature.shop.domain.model.*
-import com.coffeepeek.core.session.Session
-import com.coffeepeek.core.session.SessionStore
 import com.coffeepeek.feature.authorblocking.api.AuthorReference
 import com.coffeepeek.admin.di.authorblocking.SessionAuthorBlockingAccount
 import com.coffeepeek.feature.authorblocking.impl.createAuthorBlockingFeature
@@ -44,8 +42,6 @@ import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
