@@ -9,6 +9,7 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -197,5 +198,24 @@ class RoasterListViewModelTest {
         val other = model(favorites = broken); runCurrent()
         assertEquals(RoasterMessage.FavoritesUnavailable, other.state.value.message)
         assertEquals(listOf("a", "b"), other.state.value.items.map { it.slug }) // the catalog still loads
+    }
+
+    @Test fun firstMembershipFailureUsesTheLocalizedMessageAndLaterFailuresKeepTheKeys() = runTest(dispatcher) {
+        val results = MutableStateFlow<Result<Set<String>>>(Result.failure(IllegalStateException("initial")))
+        val model = model(favorites = FakeFavorites().apply { keysFlow = results })
+        runCurrent()
+        assertEquals(RoasterMessage.FavoritesUnavailable, model.state.value.message)
+        assertEquals(emptySet(), model.state.value.favoriteKeys)
+        results.value = Result.success(setOf("b"))
+        runCurrent()
+        assertEquals(setOf("b"), model.state.value.favoriteKeys)
+        model.onAction(RoasterListAction.DismissMessage)
+        results.value = Result.failure(IllegalStateException("refresh"))
+        runCurrent()
+        assertEquals(RoasterMessage.FavoritesUnavailable, model.state.value.message)
+        assertEquals(setOf("b"), model.state.value.favoriteKeys)
+        results.value = Result.success(setOf("a"))
+        runCurrent()
+        assertEquals(setOf("a"), model.state.value.favoriteKeys)
     }
 }

@@ -19,8 +19,8 @@ data class RoasterFavoriteTarget(
  * account guards and analytics; the feature only asks and reacts.
  */
 interface RoasterFavoritesPort {
-    /** Favorite keys of the active account. */
-    fun observeKeys(): Flow<Set<String>>
+    /** Favorite keys of the active account. A failed read leaves the last successful keys in place. */
+    fun observeKeys(): Flow<Result<Set<String>>>
     /** Store-level error messages, null when cleared. */
     fun observeErrors(): Flow<String?>
     /** Fire and forget; [onFailed] runs only when a started change did not complete. */
@@ -28,7 +28,7 @@ interface RoasterFavoritesPort {
 
     companion object {
         val None: RoasterFavoritesPort = object : RoasterFavoritesPort {
-            override fun observeKeys(): Flow<Set<String>> = emptyFlow()
+            override fun observeKeys(): Flow<Result<Set<String>>> = emptyFlow()
             override fun observeErrors(): Flow<String?> = emptyFlow()
             override fun change(target: RoasterFavoriteTarget, favorite: Boolean, onFailed: () -> Unit) = Unit
         }

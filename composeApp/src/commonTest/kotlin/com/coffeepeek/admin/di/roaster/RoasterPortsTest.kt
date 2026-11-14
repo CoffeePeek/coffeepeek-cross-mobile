@@ -29,6 +29,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertNull
+import kotlin.test.assertSame
 import kotlin.test.assertTrue
 
 internal class MemorySettings : SettingRepository {
@@ -75,7 +76,7 @@ class RoasterPortsTest {
             CatalogItem("guid-1", "A", address = PublicAddress("a", "/roasters/a", 1, false)), // favorite id = slug
             CatalogItem("guid-2", "B"), // no address: falls back to the id
         )
-        assertEquals(setOf("a", "guid-2"), port.observeKeys().first())
+        assertEquals(setOf("a", "guid-2"), port.observeKeys().first().getOrThrow())
         val seen = async { port.observeErrors().first() }
         runCurrent() // the collector subscribes before the hot flow emits
         store.errors.tryEmit("Лимит")
@@ -116,23 +117,30 @@ class RoasterPortsTest {
     }
 
     @Test fun membershipFailuresSurfaceAnErrorAndTheNextSuccessKeysKeepFlowing() = runTest {
-        val serverFavorites = FakeAccountFavorites()
+        val firstFailure = IllegalStateException("Initial request failed")
+        val serverFavorites = FakeAccountFavorites().apply { memberships.value = Result.failure(firstFailure) }
         val port = RoasterFavoritesAdapter(FakeFavorites(), backgroundScope, PromptNoop(), serverFavorites)
-        val seen = async { port.observeErrors().first() }
-        val keysSeen = mutableListOf<Set<String>>()
-        val keysJob = launch { port.observeKeys().collect { keysSeen += it } }
-        runCurrent() // the collectors subscribe before the hot flows emit
+        val results = mutableListOf<Result<Set<String>>>()
+        backgroundScope.launch { port.observeKeys().collect { results += it } }
+        runCurrent()
+        assertSame(firstFailure, results.single().exceptionOrNull())
         serverFavorites.memberships.value = Result.success(setOf(FavoriteTarget(FavoriteKind.Roaster, "a")))
         runCurrent()
-        assertEquals(setOf("a"), keysSeen.last())
-        serverFavorites.memberships.value = Result.failure(IllegalStateException("net"))
+        assertEquals(setOf("a"), results.last().getOrThrow())
+        val refreshFailure = IllegalStateException("Refresh failed")
+        serverFavorites.memberships.value = Result.failure(refreshFailure)
         runCurrent()
-        assertEquals("Не удалось обновить избранное", seen.await())
-        assertEquals(setOf("a"), keysSeen.last()) // the failure keeps the last known keys
+        assertSame(refreshFailure, results.last().exceptionOrNull())
         serverFavorites.memberships.value = Result.success(setOf(FavoriteTarget(FavoriteKind.Roaster, "b")))
         runCurrent()
-        keysJob.cancel()
-        assertEquals(setOf("b"), keysSeen.last())
+        assertEquals(setOf("b"), results.last().getOrThrow())
+    }
+
+    @Test fun cancelledMembershipDoesNotBecomeAReadFailure() = runTest {
+        val cancelled = CancellationException("Account changed")
+        val serverFavorites = FakeAccountFavorites().apply { memberships.value = Result.failure(cancelled) }
+        val port = RoasterFavoritesAdapter(FakeFavorites(), backgroundScope, PromptNoop(), serverFavorites)
+        assertSame(cancelled, assertFailsWith<CancellationException> { port.observeKeys().first() })
     }
 
     @Test fun catalogStoreUsesTheExistingKeyAndIgnoresBlankOrNullValues() = runTest {
