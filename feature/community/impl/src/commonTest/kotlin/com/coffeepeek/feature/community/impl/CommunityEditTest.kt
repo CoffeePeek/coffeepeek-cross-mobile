@@ -118,9 +118,9 @@ class CommunityEditTest {
         assertEquals(1, sent.size); assertTrue(vm.state.value.editing != null)
         release.complete(Unit); runCurrent()
         assertEquals(PostEdit("Edited", PostRating(4, 4, 5), "cappuccino", null), sent.single())
-        assertEquals(listOf("other"), vm.state.value.items.map { it.id }); assertNull(vm.state.value.editing); assertFalse(vm.state.value.isSaving)
-        assertFalse("own" in vm.state.value.publishedAt)
-        assertEquals(MessageKind.EditSentForReview, assertIs<CommunityEvent.Message>(events.single()).message.kind)
+        assertEquals(listOf("own", "other"), vm.state.value.items.map { it.id }); assertNull(vm.state.value.editing); assertFalse(vm.state.value.isSaving)
+        assertTrue("own" in vm.state.value.publishedAt)
+        assertEquals(MessageKind.EditSaved, assertIs<CommunityEvent.Message>(events.single()).message.kind)
         assertEquals("edit:saved:Public:false", analytics.events.last())
     }
 

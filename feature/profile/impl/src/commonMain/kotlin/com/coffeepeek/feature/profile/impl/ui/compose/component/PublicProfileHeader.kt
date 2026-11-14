@@ -16,8 +16,8 @@ import com.coffeepeek.feature.profile.impl.resources.profile_stat_shops
 import com.coffeepeek.feature.profile.impl.resources.profile_unfollow_description
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -55,6 +55,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.coffeepeek.core.designsystem.theme.CoffeePeekColors
+import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
 import com.coffeepeek.feature.profile.api.ProfileImage
 import com.coffeepeek.feature.profile.domain.PublicProfileStats
 import com.coffeepeek.feature.profile.impl.resources.*
@@ -75,7 +76,6 @@ internal fun PublicProfileHeader(
     onAvatarClick: () -> Unit,
 ) {
     BoxWithConstraints(Modifier.fillMaxWidth()) {
-        val availableWidth = maxWidth
         val statsWidth = (if (stats?.roasters == 0) 168.dp else 220.dp) * LocalDensity.current.fontScale
         val inlineStats = maxWidth >= statsWidth + 68.dp
         val avatarSize = if (inlineStats) (maxWidth - statsWidth - 12.dp).coerceIn(56.dp, 88.dp) else 88.dp
@@ -90,9 +90,7 @@ internal fun PublicProfileHeader(
                     if (stats != null && inlineStats) ProfileStats(stats, onFollowersClick, onShopsClick, onRoastersClick)
                 }
             }
-            if (stats != null && !inlineStats) Box(Modifier.horizontalScroll(rememberScrollState())) {
-                ProfileStats(stats, onFollowersClick, onShopsClick, onRoastersClick, Modifier.width(maxOf(availableWidth, statsWidth)))
-            }
+            if (stats != null && !inlineStats) ProfileStats(stats, onFollowersClick, onShopsClick, onRoastersClick)
             if (!about.isNullOrBlank()) Text(about, style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant)
             if (onFollow != null) ProfileFollowButton(nickname, isFollowing, followEnabled, onFollow)
@@ -126,11 +124,12 @@ private fun ProfileFollowButton(nickname: String, isFollowing: Boolean, enabled:
         onClick = onClick, enabled = enabled, modifier = Modifier.semantics { contentDescription = description },
         contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
         border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-        colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.secondary),
+        colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.coffeePeekAccentForeground),
     ) { Text(stringResource(if (isFollowing) Res.string.profile_following else Res.string.profile_follow),
         style = MaterialTheme.typography.labelMedium) }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun ProfileStats(stats: PublicProfileStats, onFollowersClick: (() -> Unit)?,
     onShopsClick: (() -> Unit)?, onRoastersClick: (() -> Unit)?, modifier: Modifier = Modifier) {
@@ -138,18 +137,19 @@ private fun ProfileStats(stats: PublicProfileStats, onFollowersClick: (() -> Uni
     val shops = stringResource(Res.string.profile_stat_shops)
     val roasters = stringResource(Res.string.profile_stat_roasters)
     val followers = stringResource(Res.string.profile_stat_followers)
-    Row(modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-        ProfileStat(stats.checkIns, checkIns, Modifier.weight(checkIns.length.toFloat()))
-        ProfileStat(stats.coffeeShops, shops, Modifier.weight(shops.length.toFloat()),
+    FlowRow(modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        maxItemsInEachRow = if (LocalDensity.current.fontScale > 1.3f) 2 else 4) {
+        ProfileStat(stats.checkIns, checkIns, Modifier.weight(1f))
+        ProfileStat(stats.coffeeShops, shops, Modifier.weight(1f),
             onShopsClick, stringResource(Res.string.profile_menu_submitted_shops))
-        if (stats.roasters > 0) ProfileStat(stats.roasters, roasters, Modifier.weight(roasters.length.toFloat()),
+        if (stats.roasters > 0) ProfileStat(stats.roasters, roasters, Modifier.weight(1f),
             onRoastersClick, stringResource(Res.string.profile_menu_submitted_roasters))
-        ProfileStat(stats.followers, followers, Modifier.weight(followers.length.toFloat()),
+        ProfileStat(stats.followers, followers, Modifier.weight(1f),
             onFollowersClick, stringResource(Res.string.profile_open_followers))
     }
 }
 
-@Preview
 @Composable
 private fun ProfileStat(count: Int, label: String, modifier: Modifier, onClick: (() -> Unit)? = null,
     actionLabel: String = label) {
@@ -158,9 +158,9 @@ private fun ProfileStat(count: Int, label: String, modifier: Modifier, onClick: 
         horizontalAlignment = Alignment.Start) {
         Text(count.toString(), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold,
             maxLines = 1, softWrap = false, overflow = TextOverflow.Ellipsis)
-        Text(label, style = MaterialTheme.typography.labelSmall.copy(fontSize = 10.sp, lineHeight = 14.sp),
+        Text(label, style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Start,
-            maxLines = 1, softWrap = false, overflow = TextOverflow.Ellipsis)
+            maxLines = 2, overflow = TextOverflow.Ellipsis)
     }
 }
 
@@ -188,5 +188,5 @@ private fun ProfileHeaderPreview(dark: Boolean, own: Boolean = true, width: Dp =
 @Preview @Composable private fun ProfileHeaderNarrowDarkPreview() = ProfileHeaderPreview(true, width = 320.dp)
 @Preview @Composable private fun ProfileHeaderNoRoastersLightPreview() = ProfileHeaderPreview(false, roasters = 0)
 @Preview @Composable private fun ProfileHeaderNoRoastersDarkPreview() = ProfileHeaderPreview(true, roasters = 0)
-@Preview @Composable private fun ProfileHeaderLargeFontLightPreview() = ProfileHeaderPreview(false, width = 320.dp, fontScale = 1.5f)
-@Preview @Composable private fun ProfileHeaderLargeFontDarkPreview() = ProfileHeaderPreview(true, width = 320.dp, fontScale = 1.5f)
+@Preview @Composable private fun ProfileHeaderLargeFontLightPreview() = ProfileHeaderPreview(false, width = 320.dp, fontScale = 2f)
+@Preview @Composable private fun ProfileHeaderLargeFontDarkPreview() = ProfileHeaderPreview(true, width = 320.dp, fontScale = 2f)

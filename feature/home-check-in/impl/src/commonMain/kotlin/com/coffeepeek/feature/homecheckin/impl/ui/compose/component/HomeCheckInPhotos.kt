@@ -1,5 +1,7 @@
 package com.coffeepeek.feature.homecheckin.impl.ui.compose.component
 
+import com.coffeepeek.core.designsystem.theme.CoffeePeekColors
+
 import androidx.compose.foundation.background
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import com.coffeepeek.feature.homecheckin.impl.resources.Res
@@ -40,7 +42,7 @@ internal fun HomeCheckInPhotos(
             .clickable(enabled = enabled && originalUrls[index].isNotBlank(), role = Role.Button) { onOpen(index) }
             .semantics(mergeDescendants = true) { contentDescription = description }) {
             if (urls[index].isNotBlank()) imageContent(urls[index], description, Modifier.fillMaxSize(), false)
-            if (index == 2 && urls.size > 3) Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.45f)),
+            if (index == 2 && urls.size > 3) Box(Modifier.fillMaxSize().background(CoffeePeekColors.PhotoBadgeOverlay),
                 contentAlignment = Alignment.Center) {
                 Text(stringResource(Res.string.home_check_in_more_photos, urls.size - 3),
                     style = MaterialTheme.typography.headlineSmall, color = Color.White)

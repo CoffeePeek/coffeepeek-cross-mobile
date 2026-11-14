@@ -1,5 +1,7 @@
 package com.coffeepeek.feature.shop.impl.ui.compose.component
 
+import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
+
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
@@ -33,12 +35,12 @@ internal fun ShopTypeBadge(type: ShopType, modifier: Modifier = Modifier) {
         ShopType.Cafe -> Res.string.shop_type_cafe
     })
     Surface(modifier, shape = CircleShape,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.coffeePeekAccentForeground.copy(alpha = 0.5f)),
         color = MaterialTheme.colorScheme.surface) {
         Row(Modifier.padding(horizontal = CoffeePeekDimens.spacing2, vertical = CoffeePeekDimens.spacing1),
             horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing1),
             verticalAlignment = Alignment.CenterVertically) {
-            CoffeePeekIcon(CoffeePeekIcons.Coffee, null, Modifier.size(14.dp), tint = MaterialTheme.colorScheme.primary)
+            CoffeePeekIcon(CoffeePeekIcons.Coffee, null, Modifier.size(14.dp), tint = MaterialTheme.colorScheme.coffeePeekAccentForeground)
             Text(label, style = MaterialTheme.typography.labelSmall)
         }
     }

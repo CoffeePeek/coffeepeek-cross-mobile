@@ -1,5 +1,7 @@
 package com.coffeepeek.feature.roaster.impl.ui.compose.component
 
+import androidx.compose.foundation.layout.heightIn
+
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -28,10 +30,10 @@ internal fun RoasterDetailError(onRetry: () -> Unit, onBack: () -> Unit, modifie
     Box(modifier.fillMaxSize().padding(CoffeePeekDimens.spacing4), contentAlignment = Alignment.Center) {
         Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3)) {
             Text(stringResource(Res.string.roaster_detail_load_failed), color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Button(onRetry, Modifier.height(CoffeePeekDimens.buttonHeight), shape = RoundedCornerShape(percent = 50)) {
+            Button(onRetry, Modifier.heightIn(min = CoffeePeekDimens.buttonHeight), shape = RoundedCornerShape(percent = 50)) {
                 Text(stringResource(Res.string.roaster_detail_retry))
             }
-            OutlinedButton(onBack, Modifier.height(CoffeePeekDimens.buttonHeight), shape = RoundedCornerShape(percent = 50)) {
+            OutlinedButton(onBack, Modifier.heightIn(min = CoffeePeekDimens.buttonHeight), shape = RoundedCornerShape(percent = 50)) {
                 Text(stringResource(Res.string.roaster_detail_back))
             }
         }

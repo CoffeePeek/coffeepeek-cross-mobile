@@ -25,6 +25,7 @@ interface CheckInHistoryEntry {
         onOpenShop: (shopSlug: String) -> Unit,
         onOpenPhoto: (imageUrls: List<String>, originalUrls: List<String>, initialIndex: Int) -> Unit,
         formatCheckInTime: (timestamp: String) -> String,
+        onOpenCheckIn: (id: String) -> Unit,
         onOpenHome: (id: String) -> Unit,
         onCreateShop: () -> Unit,
         onCreateHome: () -> Unit,

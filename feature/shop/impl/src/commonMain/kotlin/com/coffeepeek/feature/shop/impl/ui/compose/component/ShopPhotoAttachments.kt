@@ -1,5 +1,6 @@
 package com.coffeepeek.feature.shop.impl.ui.compose.component
 
+import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
 import com.coffeepeek.feature.shop.impl.resources.shop_review_photo_hint
 
 import com.coffeepeek.feature.shop.impl.resources.shop_review_photos
@@ -34,6 +35,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
+import com.coffeepeek.core.designsystem.component.CoffeePeekPhotoRemoveButton
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
@@ -96,15 +98,8 @@ internal fun ShopPhotoAttachments(
                             onFailure = { PhotoUnavailable() },
                         )
                     } else PhotoUnavailable()
-                    Box(Modifier.align(Alignment.TopEnd).offset(x = 6.dp, y = (-6).dp)
-                        .size(24.dp).clip(RoundedCornerShape(50)).background(Color.Black.copy(alpha = 0.75f))
-                        .border(1.5.dp, Color.White, RoundedCornerShape(50))
-                        .clickable(enabled = enabled, role = Role.Button) { onRemove(index) },
-                        contentAlignment = Alignment.Center) {
-                        CoffeePeekIcon(CoffeePeekIcons.Close,
-                            contentDescription = stringResource(Res.string.shop_review_photo_remove, index + 1),
-                            tint = Color.White, modifier = Modifier.size(14.dp))
-                    }
+                    CoffeePeekPhotoRemoveButton(stringResource(Res.string.shop_review_photo_remove, index + 1),
+                        { onRemove(index) }, Modifier.align(Alignment.TopEnd), enabled)
                 }
             }
             if (photos.size < maxPhotos) {
@@ -113,7 +108,7 @@ internal fun ShopPhotoAttachments(
                     .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(CoffeePeekDimens.radiusMd))
                     .clickable(enabled = enabled && !isLoading, role = Role.Button) { sourceShown = true },
                     contentAlignment = Alignment.Center) {
-                    if (isLoading) CoffeePeekLoader(size = 40.dp, color = MaterialTheme.colorScheme.primary, strokeWidth = 4.dp)
+                    if (isLoading) CoffeePeekLoader(size = 40.dp, color = MaterialTheme.colorScheme.coffeePeekAccentForeground, strokeWidth = 4.dp)
                     else CoffeePeekIcon(CoffeePeekIcons.Camera,
                         contentDescription = stringResource(Res.string.shop_review_photo_add),
                         tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(28.dp))

@@ -1,5 +1,9 @@
 package com.coffeepeek.feature.contributions.impl.ui
 
+import androidx.compose.foundation.layout.heightIn
+
+import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
+
 import androidx.compose.foundation.background
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import com.coffeepeek.feature.contributions.impl.resources.Res
@@ -135,7 +139,7 @@ private fun RequestBody(request: ChangeRequest, onOpenShop: (String) -> Unit) {
         PayloadCard(request.section, request.payload)
         OutlinedButton(
             onClick = { onOpenShop(request.shopSlug) }, enabled = request.shopSlug.isNotBlank(),
-            modifier = Modifier.fillMaxWidth().height(CoffeePeekDimens.buttonHeight), shape = RoundedCornerShape(percent = 50),
+            modifier = Modifier.fillMaxWidth().heightIn(min = CoffeePeekDimens.buttonHeight), shape = RoundedCornerShape(percent = 50),
         ) {
             CoffeePeekIcon(CoffeePeekIcons.Coffee, contentDescription = null, modifier = Modifier.size(18.dp))
             Spacer(Modifier.width(CoffeePeekDimens.spacing2))
@@ -242,7 +246,7 @@ private fun ContactsContent(contacts: Contacts?) {
 private fun ValueRow(icon: ImageVector, label: StringResource, value: String?) {
     val text = value?.takeIf(String::isNotBlank)
     Row(verticalAlignment = Alignment.CenterVertically) {
-        CoffeePeekIcon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
+        CoffeePeekIcon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.coffeePeekAccentForeground, modifier = Modifier.size(20.dp))
         Spacer(Modifier.width(CoffeePeekDimens.spacing3))
         Column(Modifier.weight(1f)) {
             Text(stringResource(label), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -283,7 +287,7 @@ private fun MenuRow(entry: MenuEntry) {
         Text(
             entry.availability.title(), style = MaterialTheme.typography.labelMedium,
             color = when (entry.availability) {
-                Availability.Present -> CoffeePeekColors.Success
+                Availability.Present -> MaterialTheme.colorScheme.tertiary
                 Availability.Absent -> MaterialTheme.colorScheme.error
                 Availability.Unknown -> MaterialTheme.colorScheme.onSurfaceVariant
             },

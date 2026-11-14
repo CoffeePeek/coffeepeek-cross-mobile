@@ -21,7 +21,8 @@ internal fun shopCheckInModule(
     single<ShopCheckInPhotoPicker> { AppShopCheckInPhotoPicker() }
     single<ShopCheckInRepository> {
         val client = get<ApiClients>()
-        createShopCheckInRepository(apiClient = client.client, uploadClient = client.uploadClient)
+        com.coffeepeek.admin.di.community.ShopCommunityWrites(
+            createShopCheckInRepository(apiClient = client.client, uploadClient = client.uploadClient), get(), get())
     }
     single<ShopCheckInCreateEntry> {
         SessionShopCheckInEntry(sessions = get(), repository = get(), history = get(), drafts = get(), dates = get(),

@@ -27,6 +27,7 @@ fun createCommunityEntry(
     visibility: AuthorVisibility,
     blockActions: AuthorBlockActions,
     host: CommunityHost,
+    saved: com.coffeepeek.feature.community.api.CommunitySavedPosts,
 ): CommunityEntry = object : CommunityEntry {
     @Composable
     override fun Content(
@@ -42,7 +43,7 @@ fun createCommunityEntry(
         floatingAction: @Composable BoxScope.(CommunityFloating) -> Unit,
     ) {
         CommunityScreen(
-            viewModel(key = "community-feed") { CommunityViewModel(repository, account, analytics, drinks, visibility) },
+            viewModel(key = "community-feed") { CommunityViewModel(repository, account, analytics, drinks, visibility, saved) },
             host, blockActions, CommunityCallbacks(onSignIn, onOpenAuthor, onOpenShop, onEditHome, onOpenPost, onOpenCoffee), modifier, bottomClearance, headerAction, floatingAction,
         )
     }

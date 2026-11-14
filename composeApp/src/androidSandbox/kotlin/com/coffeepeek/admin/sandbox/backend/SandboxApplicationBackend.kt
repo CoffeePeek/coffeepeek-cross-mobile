@@ -25,6 +25,7 @@ internal enum class SandboxFeed { Single, Paged, PageFailsOnce, InvalidCursor, E
 
 /** Local fixture contracts for the existing app, not an alternative implementation of its UI. */
 internal class SandboxApplicationBackend(private val today: LocalDate, private val visits: MutableList<JsonObject>,
+    private val homePosts: () -> List<JsonObject> = { emptyList() },
     uploadedCover: (String, Long) -> Boolean = { _, _ -> false }) {
     companion object {
         const val SELF_ID = "sandbox-author-self"
@@ -308,12 +309,30 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
 
     /** Like the real read of a shared post: the account's own visit always, another author's only when published and not blocked; otherwise 404. */
     private fun checkIn(id: String): Pair<HttpStatusCode, JsonObject> {
-        val own = visits.firstOrNull { it["id"]?.jsonPrimitive?.content == id }
+        val own = (visits + homePosts()).firstOrNull { it["id"]?.jsonPrimitive?.content == id }
         val public = (others + generatedFeed).firstOrNull { it["id"]?.jsonPrimitive?.content == id && visible(it) && isPublished(it) }
         return (own ?: public)?.let(::ok) ?: (HttpStatusCode.NotFound to failure("Check-in not found."))
     }
 
-    private fun feedItem(row: JsonObject) =buildJsonObject { put("publishedAtUtc", row["createdAtUtc"] ?: JsonPrimitive("${today}T07:00:00Z")); put("checkIn", row) }
+    private fun feedItem(row: JsonObject) = buildJsonObject {
+        val date = row["createdAtUtc"] ?: JsonPrimitive(today.toString() + "T07:00:00Z")
+        put("publishedAtUtc", if (isPublished(row)) date else JsonNull)
+        put("feedPositionAtUtc", date)
+        put("checkIn", row)
+    }
+
+    private fun feedRows(request: HttpRequestData): List<JsonObject> {
+        val owner = request.headers[SandboxSavedCollectionsBackend.OWNER]
+        val signedIn = owner?.let(::isSandboxOwner) == true || request.headers[HttpHeaders.Authorization] == "Bearer " + accessToken()
+        val ownPending = request.url.parameters["includeOwnPending"] == "true" && signedIn
+        val own = (visits + homePosts()).filter {
+            isPublished(it) || ownPending && it["visibility"]?.jsonPrimitive?.content == "Public" &&
+                it["moderationState"]?.jsonPrimitive?.content == "Pending"
+        }
+        return (own + others.filter { visible(it) && isPublished(it) })
+            .sortedByDescending { it["createdAtUtc"]?.jsonPrimitive?.content.orEmpty() }
+    }
+
     /** Page size and cursor are validated like the real endpoint; the cursor is the offset into the visible fixtures. */
     private fun feedPage(request: HttpRequestData): Pair<HttpStatusCode, JsonObject> {
         if (feed == SandboxFeed.Failure) return HttpStatusCode.InternalServerError to failure("Не удалось загрузить ленту")
@@ -321,7 +340,7 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
             put("items", JsonArray(rows.map(::feedItem))); put("nextCursor", next?.let(::JsonPrimitive) ?: JsonNull)
         })
         if (feed == SandboxFeed.Empty) return page(emptyList(), null)
-        val base = (visits + others.filter(::visible)).filter(::isPublished)
+        val base = feedRows(request)
         if (feed == SandboxFeed.Single) return page(base, null)
         val size = request.url.parameters["pageSize"]?.toIntOrNull()?.takeIf { it in 1..100 } ?: 20
         val cursor = request.url.parameters["cursor"]

@@ -68,8 +68,8 @@ actual fun initPlatformKoin() {
         appUpdateRendererFactory = { featureAppUpdateRenderer(get(), get()) },
         notificationsRendererFactory = { featureNotificationsRenderer(get(), get(), get()) },
         authRendererFactory = { iosAuthScreenRenderer(get(), get()) },
-        checkInDetailRendererFactory = { com.coffeepeek.admin.di.community.featureCheckInDetailScreenRenderer(get(), get(), get(), get()) },
-        communityRendererFactory = { featureCommunityScreenRenderer(get(), get(), get(), get(), get(), get()) },
+        checkInDetailRendererFactory = { com.coffeepeek.admin.di.community.featureCheckInDetailScreenRenderer(get(), get(), get(), get(), get(), get()) },
+        communityRendererFactory = { featureCommunityScreenRenderer(get(), get(), get(), get(), get(), get(), get()) },
         coffeeRendererFactory = {
             featureCoffeeScreenRenderer(get())
         },

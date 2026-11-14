@@ -38,7 +38,7 @@ internal fun GuestCheckInOnboardingIndicator(pager: PagerState) {
             val selected = index == pager.currentPage % slideCount
             val label = coffeePeekStringResource(Res.string.home_check_in_onboarding_step, index + 1, slideCount)
             Box(
-                Modifier.size(width = CoffeePeekDimens.spacing6, height = CoffeePeekDimens.spacing12)
+                Modifier.size(CoffeePeekDimens.minimumTouchTarget)
                     .clip(CircleShape)
                     .selectable(selected = selected, role = Role.Tab) {
                         scope.launch { pager.animateScrollToPage(nearestOnboardingPage(pager.currentPage, index, slideCount)) }

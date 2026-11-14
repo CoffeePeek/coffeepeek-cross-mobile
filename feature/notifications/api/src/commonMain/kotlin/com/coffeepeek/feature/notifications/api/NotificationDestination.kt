@@ -6,5 +6,6 @@ sealed interface NotificationDestination {
     data class ShopChange(val requestId: String) : NotificationDestination
     data class ShopSubmission(val submissionId: String) : NotificationDestination
     data object RoasterSubmissions : NotificationDestination
+    data class CheckIn(val id: String) : NotificationDestination
     data object CheckIns : NotificationDestination
 }

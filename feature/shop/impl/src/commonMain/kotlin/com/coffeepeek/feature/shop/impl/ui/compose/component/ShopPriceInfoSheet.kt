@@ -1,5 +1,7 @@
 package com.coffeepeek.feature.shop.impl.ui.compose.component
 
+import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -66,7 +68,7 @@ private fun ShopPriceInfoContent(selectedLevel: ShopPriceLevel) {
                     ShopPriceLevel.High -> Res.string.shop_price_high_hint
                 }), Modifier.weight(1f), style = MaterialTheme.typography.bodyLarge)
                 if (selected) CoffeePeekIcon(CoffeePeekIcons.Check, null, Modifier.size(20.dp),
-                    tint = MaterialTheme.colorScheme.primary)
+                    tint = MaterialTheme.colorScheme.coffeePeekAccentForeground)
             }
         }
     }

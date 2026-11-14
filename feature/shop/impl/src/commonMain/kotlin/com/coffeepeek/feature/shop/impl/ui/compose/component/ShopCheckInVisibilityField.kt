@@ -32,7 +32,7 @@ internal fun ShopCheckInVisibilityField(
 ) {
     val isPublic = visibility == ShopCheckInVisibility.Public
     Row(
-        Modifier.fillMaxWidth().heightIn(min = CoffeePeekDimens.controlHeight).toggleable(
+        Modifier.fillMaxWidth().heightIn(min = CoffeePeekDimens.minimumTouchTarget).toggleable(
             value = isPublic, enabled = enabled, role = Role.Switch,
             onValueChange = { onChange(if (it) ShopCheckInVisibility.Public else ShopCheckInVisibility.Private) },
         ),

@@ -84,7 +84,7 @@ internal fun CommunityFeedContent(state: CommunityState, onAction: (CommunityAct
     if (state.reportingId != null) ReportSheet(state.reportForm(), reportCallbacks(onAction))
     val sharer = postSharer(host)
     Box(Modifier.fillMaxSize()) {
-        CommunityFeedList(state, posts, listState, onAction, host, snackbar, bottomClearance, onRefreshed, guest, callbacks.onSignIn) { index, post ->
+        CommunityFeedList(state, posts, listState, onAction, host, snackbar, bottomClearance, onRefreshed, guest, callbacks.onSignIn, callbacks.onOpenPost) { index, post ->
             if (guest && index > 0) {
                 CommunityGuestTeaser(post, host, callbacks.onSignIn)
             } else {
@@ -142,10 +142,11 @@ private fun CommunityPagination(state: CommunityState, listState: LazyListState,
 @Composable
 private fun CommunityFeedList(state: CommunityState, posts: List<CommunityPost>, listState: LazyListState,
     onAction: (CommunityAction) -> Unit, host: CommunityHost, snackbar: SnackbarHostState, bottomClearance: Dp,
-    onRefreshed: () -> Unit, guest: Boolean, onSignIn: () -> Unit, post: @Composable (Int, CommunityPost) -> Unit) {
+    onRefreshed: () -> Unit, guest: Boolean, onSignIn: () -> Unit, onOpenPost: (String) -> Unit, post: @Composable (Int, CommunityPost) -> Unit) {
     Scaffold(containerColor = MaterialTheme.colorScheme.background, contentWindowInsets = WindowInsets(0),
         snackbarHost = { host.snackbar(snackbar, bottomClearance) }) { padding ->
-        Crossfade(targetState = state.isLoggedIn == null || (state.isLoading && state.items.isEmpty()),
+        Crossfade(targetState = (state.isLoggedIn == null || (state.isLoading && state.items.isEmpty())) &&
+            state.visibleConfirmedSaves.isEmpty(),
             animationSpec = tween(reducedMotionDuration(220)), label = "feed-load-status") { loading ->
             if (loading) {
                 Box(Modifier.fillMaxSize().padding(top = padding.calculateTopPadding())) { CenteredLoader() }
@@ -161,6 +162,10 @@ private fun CommunityFeedList(state: CommunityState, posts: List<CommunityPost>,
                     contentPadding = PaddingValues(start = CoffeePeekDimens.spacing4, end = CoffeePeekDimens.spacing4,
                         top = CoffeePeekDimens.spacing2, bottom = bottomClearance + 88.dp),
                     verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3)) {
+                    state.visibleConfirmedSaves.forEach { id ->
+                        item(key = "saved:" + id) { ConfirmedPostCard({ onOpenPost(id) }, { onAction(CommunityAction.Refresh()) }) }
+                    }
+                    if (state.isLoading && state.items.isEmpty()) item(key = "loading") { CenteredLoader() }
                     itemsIndexed(posts, key = { _, item -> item.id },
                         contentType = { _, item -> if (item.isHome) "home-post" else "shop-post" }) { index, item -> post(index, item) }
                     communityFeedStatus(state, guest, onSignIn, onAction)
@@ -217,7 +222,7 @@ private fun postActions(
         onAuthor = author?.let { slug -> { callbacks.onOpenAuthor(slug, post.author.name, post.author.avatarUrl) } },
         onShop = { onAction(CommunityAction.ItemInteracted(FeedItemAction.Shop, post.id)); callbacks.onOpenShop(post.shopSlug) }
             .takeIf { post.shopSlug.isNotBlank() },
-        onHelpful = { onAction(CommunityAction.ToggleHelpful(post.id)) }.takeIf { state.canLike },
+        onHelpful = { onAction(CommunityAction.ToggleHelpful(post.id)) }.takeIf { state.canLike && post.moderation == com.coffeepeek.feature.community.domain.model.PostModeration.Approved },
         onBlock = {
             blockActions.requestBlock(AuthorReference(post.author.id, post.author.slug, authorName, post.author.avatarUrl))
         }.takeIf { public && !isOwn && state.canBlockAuthor(post) && (!post.author.id.isNullOrBlank() || !post.author.slug.isNullOrBlank()) },

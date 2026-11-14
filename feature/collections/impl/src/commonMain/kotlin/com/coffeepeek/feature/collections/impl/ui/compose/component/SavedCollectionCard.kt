@@ -1,5 +1,7 @@
 package com.coffeepeek.feature.collections.impl.ui.compose.component
 
+import com.coffeepeek.core.designsystem.theme.CoffeePeekColors
+
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -45,7 +47,7 @@ private fun SavedCollectionCardCaption(value: SavedCollectionSummary, modifier: 
             shape = RoundedCornerShape(0.dp), tint = Color.Black.copy(alpha = .18f), blurRadius = 14.dp)
         Box(Modifier.matchParentSize().background(Brush.verticalGradient(
             0f to Color.Transparent, .4f to Color.Black.copy(alpha = .24f), 1f to Color.Black.copy(alpha = .82f))))
-        Column(Modifier.align(Alignment.BottomStart).padding(12.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        Column(Modifier.align(Alignment.BottomStart).fillMaxWidth().background(CoffeePeekColors.PhotoBadgeOverlay).padding(12.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(value.title, style = MaterialTheme.typography.titleMedium, color = Color.White,
                 maxLines = 2, overflow = TextOverflow.Ellipsis)
             Text(stringResource(Res.string.collections_saved_count, value.itemCount),

@@ -28,21 +28,23 @@ object CoffeePeekDimens {
 
     // ── Button / input — one control height, pill ends ────────────────────────
     val controlHeight   = 44.dp
-    val buttonHeight    = controlHeight
-    val glassControlSize = 48.dp
+    val minimumTouchTarget = coffeePeekMinimumTouchTarget
+    val buttonHeight    = minimumTouchTarget
+    val glassControlSize = minimumTouchTarget
     val buttonPaddingH  = 16.dp
     val buttonPaddingV  = 10.dp
-    val buttonRadius    = controlHeight / 2
+    val buttonRadius    = buttonHeight / 2
+    val buttonContentPadding = PaddingValues(horizontal = buttonPaddingH, vertical = buttonPaddingV)
 
     // ── Input ─────────────────────────────────────────────────────────────────
-    val inputMinHeight  = controlHeight
+    val inputMinHeight  = minimumTouchTarget
     val inputPadding    = 16.dp
     val inputRadius     = buttonRadius
     /** Vertical padding is zero so a 44.dp field does not clip the text line. */
     val singleLineFieldContentPadding = PaddingValues(horizontal = inputPadding, vertical = 0.dp)
 
     // ── Select ────────────────────────────────────────────────────────────────
-    val selectMinHeight = 56.dp
+    val selectMinHeight = minimumTouchTarget
     val selectRadius    = 16.dp
 
     // ── Card ──────────────────────────────────────────────────────────────────

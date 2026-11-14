@@ -1,5 +1,7 @@
 package com.coffeepeek.feature.contributions.impl.ui
 
+import androidx.compose.foundation.layout.heightIn
+
 import androidx.compose.foundation.Image
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import com.coffeepeek.feature.contributions.impl.resources.Res
@@ -45,7 +47,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
+import com.coffeepeek.core.designsystem.component.CoffeePeekOutlinedButton as OutlinedButton
 import com.coffeepeek.core.designsystem.component.CoffeePeekScaffold as Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -190,7 +192,7 @@ private fun EditorSuccess(title: String, request: ChangeRequest, editing: Boolea
         bottomBar = {
             Column(Modifier.fillMaxWidth().coffeePeekViewportBottomPadding().coffeePeekScreenBottomPadding().padding(CoffeePeekDimens.spacing4), verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3)) {
                 CoffeePeekButton(stringResource(Res.string.contributions_open_request), { callbacks.onOpenRequest(request.id) })
-                OutlinedButton(onClick = callbacks.onBack, modifier = Modifier.fillMaxWidth().height(CoffeePeekDimens.buttonHeight)) { Text(stringResource(Res.string.contributions_roaster_done)) }
+                OutlinedButton(onClick = callbacks.onBack, modifier = Modifier.fillMaxWidth().heightIn(min = CoffeePeekDimens.buttonHeight)) { Text(stringResource(Res.string.contributions_roaster_done)) }
             }
         },
     ) { padding ->

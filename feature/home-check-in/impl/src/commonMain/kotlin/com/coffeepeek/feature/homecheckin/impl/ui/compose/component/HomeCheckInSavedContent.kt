@@ -1,5 +1,7 @@
 package com.coffeepeek.feature.homecheckin.impl.ui.compose.component
 
+import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
+
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -32,8 +34,9 @@ internal fun HomeCheckInSavedContent(entry: HomePreparation, visibilityUnconfirm
     Box(modifier.fillMaxSize().padding(24.dp), contentAlignment = Alignment.Center) {
         Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(20.dp)) {
-            CoffeePeekIcon(CoffeePeekIcons.CheckCircle, null, tint = MaterialTheme.colorScheme.primary)
-            Text(stringResource(entry.visibilityLabelResource() ?: Res.string.home_check_in_saved_unknown),
+            CoffeePeekIcon(CoffeePeekIcons.CheckCircle, null, tint = MaterialTheme.colorScheme.coffeePeekAccentForeground)
+            Text(stringResource(if (entry.visibility == com.coffeepeek.feature.homecheckin.domain.model.HomePreparationVisibility.Private)
+                Res.string.home_check_in_saved_private else Res.string.home_check_in_saved_unknown),
                 style = MaterialTheme.typography.headlineSmall,
                 modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite })
             if (visibilityUnconfirmed) Text(stringResource(Res.string.home_check_in_saved_visibility_changed),

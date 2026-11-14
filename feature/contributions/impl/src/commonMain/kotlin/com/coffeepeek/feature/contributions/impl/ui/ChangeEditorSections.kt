@@ -1,5 +1,9 @@
 package com.coffeepeek.feature.contributions.impl.ui
 
+import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
+import com.coffeepeek.core.designsystem.component.CoffeePeekPhotoRemoveButton
+import com.coffeepeek.core.designsystem.component.CoffeePeekTextButton
+
 import com.coffeepeek.feature.contributions.impl.ui.component.ContributionRoasterLogo
 import com.coffeepeek.feature.contributions.impl.ui.component.ContributionBrewMethodIcon
 import com.coffeepeek.feature.contributions.impl.ui.component.ContributionPhotos
@@ -217,10 +221,9 @@ private fun UploadedNote(count: Int, onRemove: () -> Unit) {
             stringResource(Res.string.contributions_editor_already_uploaded, count), style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.weight(1f),
         )
-        Text(
-            stringResource(Res.string.contributions_editor_remove_uploaded), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary,
-            modifier = Modifier.clickable(onClick = onRemove).padding(CoffeePeekDimens.spacing1),
-        )
+        CoffeePeekTextButton(onClick = onRemove) {
+            Text(stringResource(Res.string.contributions_editor_remove_uploaded))
+        }
     }
 }
 
@@ -240,11 +243,8 @@ private fun SavedPhotos(photos: List<ShopPhotoRef>, onRemove: (String) -> Unit) 
         photos.forEach { photo ->
             Box(Modifier.size(96.dp)) {
                 com.coffeepeek.core.designsystem.component.CoffeePeekImage(data = photo.url, modifier = Modifier.fillMaxSize().clip(shape).border(1.dp, MaterialTheme.colorScheme.outline, shape), contentScale = androidx.compose.ui.layout.ContentScale.Crop)
-                Box(
-                    Modifier.align(Alignment.TopEnd).offset(x = 6.dp, y = (-6).dp).size(24.dp).clip(CircleShape).background(Color.Black.copy(alpha = 0.75f))
-                        .clickable { onRemove(photo.id) },
-                    contentAlignment = Alignment.Center,
-                ) { CoffeePeekIcon(CoffeePeekIcons.Close, stringResource(Res.string.contributions_editor_remove), tint = Color.White, modifier = Modifier.size(14.dp)) }
+                CoffeePeekPhotoRemoveButton(stringResource(Res.string.contributions_editor_remove),
+                    { onRemove(photo.id) }, Modifier.align(Alignment.TopEnd))
             }
         }
     }

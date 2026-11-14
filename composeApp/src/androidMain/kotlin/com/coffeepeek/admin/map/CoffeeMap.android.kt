@@ -2,6 +2,10 @@
 
 package com.coffeepeek.admin.map
 
+import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
+
+import androidx.compose.foundation.layout.sizeIn
+
 import android.Manifest
 import android.animation.ValueAnimator
 import android.content.Context
@@ -156,7 +160,6 @@ actual fun CoffeeMap(
     val context = LocalContext.current
     val appContext = context.applicationContext
     val lifecycleOwner = LocalLifecycleOwner.current
-    val uriHandler = LocalUriHandler.current
     val onBoundsChangedState = rememberUpdatedState(onBoundsChanged)
     val onCameraCenterChangedState = rememberUpdatedState(onCameraCenterChanged)
     val onShopClickState = rememberUpdatedState(onShopClick)
@@ -405,20 +408,18 @@ actual fun CoffeeMap(
                 }
             },
         )
-        if (showAttribution) Text(
-            text = "OpenMapTiles · © OSM",
-            modifier = Modifier
-                .align(Alignment.BottomStart)
-                .padding(8.dp)
-                .background(
-                    color = MaterialTheme.colorScheme.surface.copy(alpha = 0.88f),
-                    shape = RoundedCornerShape(4.dp),
-                )
-                .clickable { uriHandler.openUri(OSM_COPYRIGHT_URL) }
-                .padding(horizontal = 6.dp, vertical = 3.dp),
-            color = MaterialTheme.colorScheme.onSurface,
-            fontSize = 10.sp,
-        )
+        if (showAttribution) MapAttribution(Modifier.align(Alignment.BottomStart).padding(8.dp))
+    }
+}
+
+@Composable
+private fun MapAttribution(modifier: Modifier) {
+    val uriHandler = LocalUriHandler.current
+    Box(modifier.background(MaterialTheme.colorScheme.surface, RoundedCornerShape(4.dp))
+        .sizeIn(minWidth = CoffeePeekDimens.minimumTouchTarget, minHeight = CoffeePeekDimens.minimumTouchTarget)
+        .clickable { uriHandler.openUri(OSM_COPYRIGHT_URL) }.padding(horizontal = 6.dp, vertical = 4.dp),
+        contentAlignment = Alignment.Center) {
+        Text("OpenMapTiles · © OSM", color = MaterialTheme.colorScheme.onSurface, fontSize = 11.sp)
     }
 }
 

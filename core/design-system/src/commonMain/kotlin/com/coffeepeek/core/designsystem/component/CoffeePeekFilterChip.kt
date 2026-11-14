@@ -1,5 +1,7 @@
 package com.coffeepeek.core.designsystem.component
 
+import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
+
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Column
@@ -68,7 +70,7 @@ private fun CoffeePeekGlassFilterChip(
             Row(Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
                 verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 if (leadingIcon != null) CoffeePeekIcon(leadingIcon, null, Modifier.size(18.dp),
-                    tint = if (selected) foreground else colors.primary)
+                    tint = if (selected) foreground else colors.coffeePeekAccentForeground)
                 Text(label, color = foreground, style = MaterialTheme.typography.labelMedium, maxLines = 1)
                 if (trailingIcon != null) CoffeePeekIcon(trailingIcon, null, Modifier.size(16.dp), tint = foreground)
             }

@@ -1,5 +1,7 @@
 package com.coffeepeek.feature.shop.impl.ui.compose.component
 
+import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
+
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -45,7 +47,7 @@ internal fun ShopOverviewInfoCard(
             horizontalArrangement = Arrangement.spacedBy(6.dp),
             verticalAlignment = Alignment.CenterVertically) {
             // Product decision: all three information-card icons keep the brand accent.
-            CoffeePeekIcon(icon, null, Modifier.size(18.dp), tint = MaterialTheme.colorScheme.primary)
+            CoffeePeekIcon(icon, null, Modifier.size(18.dp), tint = MaterialTheme.colorScheme.coffeePeekAccentForeground)
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(title, style = MaterialTheme.typography.labelMedium, maxLines = 2,
                     overflow = TextOverflow.Ellipsis)

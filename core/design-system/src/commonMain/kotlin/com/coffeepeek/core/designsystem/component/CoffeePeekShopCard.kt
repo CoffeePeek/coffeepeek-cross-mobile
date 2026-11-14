@@ -179,7 +179,7 @@ private fun ShopCardSummary(kindLabel: String, priceLevel: Int?, tag: String?) {
             if (priceLevel != null && priceLevel > 0) {
                 Separator()
                 // Prod proportions: the symbol drawn at 90% of 8 dp, one dp apart.
-                CoffeePeekBynPriceIndicators(priceLevel, iconWidth = 7.2.dp, tint = MaterialTheme.colorScheme.onSurfaceVariant, spacing = 1.dp)
+                CoffeePeekBynPriceIndicators(priceLevel, iconWidth = 8.dp, tint = MaterialTheme.colorScheme.onSurfaceVariant, spacing = 2.dp)
             }
             if (!tag.isNullOrBlank()) {
                 Separator()
@@ -199,7 +199,7 @@ fun CoffeePeekShopInfoChip(text: String, modifier: Modifier = Modifier, icon: (@
     val shape = RoundedCornerShape(CoffeePeekDimens.radiusLg)
     Row(
         modifier.clip(shape).background(MaterialTheme.colorScheme.surfaceVariant).border(1.dp, MaterialTheme.colorScheme.outlineVariant, shape)
-            .padding(horizontal = CoffeePeekDimens.spacing2, vertical = 5.dp),
+            .padding(horizontal = CoffeePeekDimens.spacing2, vertical = 6.dp),
         horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing1),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -212,7 +212,7 @@ fun CoffeePeekShopInfoChip(text: String, modifier: Modifier = Modifier, icon: (@
 private fun NewBadge(label: String, modifier: Modifier) {
     Row(
         modifier.clip(RoundedCornerShape(CoffeePeekDimens.radiusLg)).background(CoffeePeekColors.DarkSurface.copy(alpha = 0.92f))
-            .padding(horizontal = CoffeePeekDimens.spacing3, vertical = 7.dp),
+            .padding(horizontal = CoffeePeekDimens.spacing3, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing1),
     ) {

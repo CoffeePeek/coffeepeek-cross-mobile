@@ -1,5 +1,7 @@
 package com.coffeepeek.feature.contributions.impl.ui
 
+import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
+
 import androidx.compose.foundation.BorderStroke
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import com.coffeepeek.feature.contributions.impl.resources.Res
@@ -102,7 +104,7 @@ private fun CardText(item: ContributionItem, kind: ContributionKind, modifier: M
 private fun Meta(text: String, icon: androidx.compose.ui.graphics.vector.ImageVector) {
     Spacer(Modifier.height(CoffeePeekDimens.spacing2))
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing1)) {
-        CoffeePeekIcon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(15.dp))
+        CoffeePeekIcon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(16.dp))
         Text(text, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
@@ -115,8 +117,8 @@ private fun OpenFooter(target: ContributionTarget) {
         verticalAlignment = Alignment.CenterVertically,
     ) {
         val label = if (target is ContributionTarget.Request) Res.string.contributions_open_request else Res.string.contributions_open_catalog
-        Text(stringResource(label), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary, modifier = Modifier.weight(1f))
-        CoffeePeekIcon(CoffeePeekIcons.ChevronRight, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
+        Text(stringResource(label), style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.coffeePeekAccentForeground, modifier = Modifier.weight(1f))
+        CoffeePeekIcon(CoffeePeekIcons.ChevronRight, contentDescription = null, tint = MaterialTheme.colorScheme.coffeePeekAccentForeground, modifier = Modifier.size(20.dp))
     }
 }
 

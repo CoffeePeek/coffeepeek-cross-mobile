@@ -84,7 +84,7 @@ internal fun ShopOverviewHero(
         if (photos.isNotEmpty()) {
             Surface(
                 modifier = Modifier.align(Alignment.BottomEnd).padding(CoffeePeekDimens.spacing3),
-                shape = RoundedCornerShape(999.dp),
+                shape = RoundedCornerShape(percent = 50),
                 color = Color.Black.copy(alpha = 0.6f),
             ) {
                 Text(stringResource(Res.string.shop_overview_photo_counter,

@@ -73,7 +73,7 @@ class IosShelfModuleTest {
     }
 
     private fun shelfApplication(client: ApiClients, requested: MutableList<String>) = koinApplication {
-        modules(module {
+        modules(com.coffeepeek.admin.di.community.communityWritesTestModule(), module {
             single { client }
             single<SessionReader> { unreadSessions() }
             single<BrewMethodCatalog> { BrewMethodCatalog { error("Resolving the graph must not read brew methods") } }

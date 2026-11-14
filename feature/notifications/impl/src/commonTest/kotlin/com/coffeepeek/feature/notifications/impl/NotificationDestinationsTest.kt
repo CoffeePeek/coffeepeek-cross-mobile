@@ -6,6 +6,16 @@ import com.coffeepeek.feature.notifications.domain.NotificationTarget
 import kotlin.test.*
 
 class NotificationDestinationsTest {
+    @Test fun rejectedCheckInOpensItsCanonicalPostAndLegacyNoticesOpenHistory() {
+        assertEquals(NotificationDestination.CheckIn("post-id"), NotificationTarget("CheckIn", "post-id").toDestination())
+        assertEquals(NotificationDestination.CheckIns, NotificationTarget("CheckIns", "submission-id").toDestination())
+        val notice = Notification("notice", "CheckInModeration", "Title", "Body", "2026-11-14T10:00:00Z",
+            null, "Rejected", "CheckInPost", "post-id")
+        assertTrue(notice.canOpen())
+        assertTrue(notice.copy(entityType = "CheckIn").canOpen())
+        assertFalse(notice.copy(entityType = "Shop").canOpen())
+    }
+
     @Test fun currentPublishedSlugsAndSubmissionIdentitiesRemainDistinct() {
         assertEquals(NotificationDestination.Shop("current-cafe"), NotificationTarget("Shop", "current-cafe").toDestination())
         assertEquals(NotificationDestination.ShopChange("change-id"), NotificationTarget("ShopChange", "change-id").toDestination())

@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -41,7 +42,8 @@ internal fun ShopOverviewHeader(overview: ShopOverview, onOpenMap: () -> Unit,
         val address = overview.address?.takeIf(String::isNotBlank)
             ?: if (canOpenMap) stringResource(Res.string.shop_overview_show_on_map) else null
         address?.let { label ->
-            Row(Modifier.clickable(enabled = canOpenMap, role = Role.Button, onClick = onOpenMap),
+            Row(Modifier.heightIn(min = CoffeePeekDimens.minimumTouchTarget)
+                .clickable(enabled = canOpenMap, role = Role.Button, onClick = onOpenMap),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing1)) {
                 CoffeePeekIcon(CoffeePeekIcons.Location, null, Modifier.size(14.dp))

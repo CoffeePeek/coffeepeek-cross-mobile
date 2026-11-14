@@ -2,7 +2,6 @@
     <string name="home_check_in_home">Кава дома</string>
     <string name="home_check_in_title_fallback">Хатняе прыгатаванне</string>
     <string name="home_check_in_rejected">Не апублікаваны</string>
-    <string name="home_check_in_not_submitted">Чакае публікацыі</string>
     <string name="home_check_in_unknown_moderation">Публічны</string>
     <string name="home_check_in_method">Спосаб прыгатавання</string>
     <string name="home_check_in_unspecified">Не ўказаны</string>
@@ -47,14 +46,12 @@
     <string name="home_check_in_photo_upload_failed">Не ўдалося загрузіць фота. Паспрабуйце яшчэ раз.</string>
     <string name="home_check_in_optional">Неабавязкова</string>
     <string name="home_check_in_public_title">Зрабіць публічным</string>
-    <string name="home_check_in_public_hint">У стужцы пасля мадэрацыі. Без публікацыі — толькі вам.</string>
+    <string name="home_check_in_public_hint">Дадаць у стужку. Калі выключана, чэкін бачны толькі вам.</string>
     <string name="home_check_in_recipe_title">Дадаткова</string>
     <string name="home_check_in_recipe_collapsed">Згорнуты</string>
     <string name="home_check_in_recipe_expanded">Разгорнуты</string>
     <string name="home_check_in_saved_private">Захавана толькі для вас</string>
-    <string name="home_check_in_saved_pending">Захавана, чакае публікацыі</string>
-    <string name="home_check_in_saved_published">Апублікавана</string>
-    <string name="home_check_in_saved_unknown">Чэкін захаваны. Статус публікацыі ўдакладняецца</string>
+    <string name="home_check_in_saved_unknown">Чэкін дададзены</string>
     <string name="home_check_in_saved_visibility_changed">Налада аўдыторыі не пацвердзілася. Праверце запіс.</string>
     <string name="home_check_in_taste_question">Як атрымалася кава?</string>
     <string name="home_check_in_choose_rating">Як атрымалася кава?: выбраць %1$d з 5</string>
@@ -147,4 +144,5 @@
         <item quantity="many">Праверце запоўненыя палі (%1$d памылак).</item>
         <item quantity="other">Праверце запоўненыя палі (%1$d памылкі).</item>
     </plurals>
+    <string name="home_check_in_rejection_fallback">Чэкін захаваны ў гісторыі. Выпраўце яго, каб апублікаваць.</string>
 </resources>

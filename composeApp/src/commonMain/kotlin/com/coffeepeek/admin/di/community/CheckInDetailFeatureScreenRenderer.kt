@@ -6,6 +6,8 @@ import com.coffeepeek.admin.ui.screen.community.CheckInDetailScreenRenderer
 import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.feature.authorblocking.api.AuthorBlockActions
 import com.coffeepeek.feature.authorblocking.api.AuthorVisibility
+import com.coffeepeek.feature.community.api.CommunityAnalytics
+import com.coffeepeek.feature.community.api.ConsumedDrinks
 import com.coffeepeek.feature.community.api.CommunityAccount
 import com.coffeepeek.feature.community.api.CommunityPostEntry
 import com.coffeepeek.feature.community.domain.repository.CommunityRepository
@@ -21,6 +23,7 @@ internal class FeatureCheckInDetailScreenRenderer(private val entry: CommunityPo
             onSignIn = { Navigator.navigate(Navigator.Screen.Auth) },
             onOpenAuthor = { slug, name, avatar -> Navigator.navigate(Navigator.Screen.UserProfile(slug, name, avatar)) },
             onOpenShop = { Navigator.navigate(Navigator.Screen.ShopDetail(it)) },
+            onEditHome = { Navigator.navigate(Navigator.Screen.EditHomeCheckIn(it)) },
             onOpenCoffee = { Navigator.navigate(Navigator.Screen.CoffeeDetail(it)) },
             modifier = Modifier,
         )
@@ -28,7 +31,8 @@ internal class FeatureCheckInDetailScreenRenderer(private val entry: CommunityPo
 }
 
 internal fun featureCheckInDetailScreenRenderer(
+    analytics: CommunityAnalytics, drinks: ConsumedDrinks,
     repository: CommunityRepository, account: CommunityAccount, visibility: AuthorVisibility, blockActions: AuthorBlockActions,
 ): CheckInDetailScreenRenderer = FeatureCheckInDetailScreenRenderer(
-    createCommunityPostEntry(repository, account, visibility, blockActions, communityHost()),
+    createCommunityPostEntry(repository, account, visibility, blockActions, communityHost(), analytics, drinks),
 )

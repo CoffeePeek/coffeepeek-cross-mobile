@@ -10,7 +10,7 @@ internal object NavMetrics {
     val nativeOperationClearance = 64.dp
     val iosTabBarClearanceFloor = 83.dp
 
-    fun floatingNavBottomGap(systemBottomInset: Dp): Dp = maxOf(21.dp, systemBottomInset + 8.dp)
+    fun floatingNavBottomGap(systemBottomInset: Dp): Dp = maxOf(20.dp, systemBottomInset + 8.dp)
 
     fun floatingNavClearance(systemBottomInset: Dp): Dp =
         floatingNavBarHeight + floatingNavBottomGap(systemBottomInset)

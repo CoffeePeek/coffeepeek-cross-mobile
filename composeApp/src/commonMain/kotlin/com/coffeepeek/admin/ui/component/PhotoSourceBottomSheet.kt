@@ -1,5 +1,9 @@
 package com.coffeepeek.admin.ui.component
 
+import androidx.compose.foundation.layout.heightIn
+
+import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -106,7 +110,7 @@ private fun PhotoSourceRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .height(56.dp)
+            .heightIn(min = 56.dp)
             .clickable(onClickLabel = title, onClick = onClick)
             .padding(horizontal = CoffeePeekDimens.spacing4),
         verticalAlignment = Alignment.CenterVertically,
@@ -115,7 +119,7 @@ private fun PhotoSourceRow(
         CoffeePeekIcon(
             imageVector = icon,
             contentDescription = null,
-            tint = MaterialTheme.colorScheme.primary,
+            tint = MaterialTheme.colorScheme.coffeePeekAccentForeground,
             modifier = Modifier.size(22.dp),
         )
         Text(

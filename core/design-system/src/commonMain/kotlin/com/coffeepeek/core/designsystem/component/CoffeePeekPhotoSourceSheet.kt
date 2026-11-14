@@ -1,5 +1,9 @@
 package com.coffeepeek.core.designsystem.component
 
+import com.coffeepeek.core.designsystem.component.CoffeePeekTextButton as TextButton
+
+import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -49,10 +53,10 @@ private fun PhotoSourceContent(title: String, onGallery: () -> Unit, onCamera: (
 
 @Composable
 private fun PhotoSourceRow(icon: ImageVector, title: String, onClick: () -> Unit) {
-    Row(Modifier.fillMaxWidth().height(56.dp).clickable(role = Role.Button, onClickLabel = title, onClick = onClick)
+    Row(Modifier.fillMaxWidth().heightIn(min = 56.dp).clickable(role = Role.Button, onClickLabel = title, onClick = onClick)
         .padding(horizontal = CoffeePeekDimens.spacing4), verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3)) {
-        CoffeePeekIcon(icon, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(22.dp))
+        CoffeePeekIcon(icon, null, tint = MaterialTheme.colorScheme.coffeePeekAccentForeground, modifier = Modifier.size(22.dp))
         Text(title, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
     }
 }

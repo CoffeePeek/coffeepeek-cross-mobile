@@ -31,7 +31,7 @@ internal fun PublicProfileTopBar(profile: PublicProfile?, viewingOwn: Boolean, o
     authorActions: ProfileAuthorActions, callbacks: PublicProfileCallbacks) {
     Box(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp).height(48.dp), contentAlignment = Alignment.Center) {
         if (callbacks.onBack != null) CoffeePeekIconButton(callbacks.onBack, Modifier.align(Alignment.CenterStart)) {
-            CoffeePeekIcon(CoffeePeekIcons.ChevronLeft, stringResource(Res.string.profile_back), Modifier.size(23.dp))
+            CoffeePeekIcon(CoffeePeekIcons.ChevronLeft, stringResource(Res.string.profile_back), Modifier.size(24.dp))
         }
         Text(stringResource(Res.string.profile_title),
             Modifier.fillMaxWidth().padding(start = if (callbacks.onBack == null) 0.dp else 56.dp, end = 56.dp),
@@ -57,7 +57,7 @@ private fun PublicProfileTopBarActions(profile: PublicProfile?, viewingOwn: Bool
     if (!viewingOwn) PublicProfileActions(profile.isBlockedByViewer, share,
         { if (profile.isBlockedByViewer) authorActions.requestUnblock(author) else authorActions.requestBlock(author) })
     else if (share != null) CoffeePeekIconButton(share) {
-        CoffeePeekIcon(CoffeePeekIcons.Share, stringResource(Res.string.profile_share), Modifier.size(21.dp))
+        CoffeePeekIcon(CoffeePeekIcons.Share, stringResource(Res.string.profile_share), Modifier.size(22.dp))
     }
 }
 

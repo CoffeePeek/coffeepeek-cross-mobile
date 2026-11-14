@@ -2,7 +2,9 @@
 
 package com.coffeepeek.core.designsystem.component
 
-import androidx.compose.foundation.layout.heightIn
+import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
+
+import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberUpdatedState
@@ -29,15 +31,15 @@ internal actual fun CoffeePeekNativeFilterChip(
     CoffeePeekNativeGlassView(
         factory = { UIButton.buttonWithConfiguration(coffeePeekGlassButtonConfiguration(),
             UIAction.actionWithHandler { callback.value() }) },
-        modifier = modifier.heightIn(min = CoffeePeekDimens.glassControlSize),
+        modifier = modifier.sizeIn(minWidth = CoffeePeekDimens.minimumTouchTarget, minHeight = CoffeePeekDimens.glassControlSize),
         update = { button ->
             button.overrideUserInterfaceStyle = coffeePeekUserInterfaceStyle(colors.background)
             button.backgroundColor = UIColor.clearColor
-            button.tintColor = colors.primary.toUIColor()
+            button.tintColor = colors.coffeePeekAccentForeground.toUIColor()
             button.configuration = coffeePeekGlassButtonConfiguration(prominent = selected).apply {
                 title = label
                 this.image = image?.imageWithTintColor(
-                    (if (selected) colors.onPrimary else colors.primary).toUIColor(), UIImageRenderingModeAlwaysOriginal)
+                    (if (selected) colors.onPrimary else colors.coffeePeekAccentForeground).toUIColor(), UIImageRenderingModeAlwaysOriginal)
                 imagePadding = 6.0
                 if (trailingIcon != null) imagePlacement = NSDirectionalRectEdgeTrailing
                 cornerStyle = UIButtonConfigurationCornerStyleCapsule

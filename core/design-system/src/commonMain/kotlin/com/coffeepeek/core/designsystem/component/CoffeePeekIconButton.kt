@@ -50,7 +50,9 @@ fun CoffeePeekIconButton(
     content: @Composable () -> Unit,
 ) {
     if (nativeIcon != null && contentDescription != null && LocalCoffeePeekNativeGlassPresenter.current
-            ?.IconButton(nativeIcon, onClick, contentDescription, modifier, enabled) == true) return
+            ?.IconButton(nativeIcon, onClick, contentDescription,
+                modifier.sizeIn(minWidth = CoffeePeekDimens.minimumTouchTarget,
+                    minHeight = CoffeePeekDimens.minimumTouchTarget), enabled) == true) return
     val accessibleModifier = if (contentDescription != null) modifier.semantics {
         this.contentDescription = contentDescription
     } else modifier

@@ -75,7 +75,7 @@ internal fun communityHost() = CommunityHost(
 
 internal fun featureCommunityScreenRenderer(
     repository: CommunityRepository, account: CommunityAccount, analytics: CommunityAnalytics, drinks: ConsumedDrinks,
-    visibility: AuthorVisibility, blockActions: AuthorBlockActions,
+    visibility: AuthorVisibility, blockActions: AuthorBlockActions, saved: com.coffeepeek.feature.community.api.CommunitySavedPosts,
 ): CommunityScreenRenderer = FeatureCommunityScreenRenderer(
-    createCommunityEntry(repository, account, analytics, drinks, visibility, blockActions, communityHost()),
+    createCommunityEntry(repository, account, analytics, drinks, visibility, blockActions, communityHost(), saved),
 )

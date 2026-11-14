@@ -1,5 +1,7 @@
 package com.coffeepeek.core.designsystem.component
 
+import com.coffeepeek.core.designsystem.theme.CoffeePeekColors
+
 import androidx.compose.animation.core.animate
 import com.coffeepeek.core.designsystem.modifier.CoffeePeekGlassIcon
 import androidx.compose.animation.core.tween
@@ -147,7 +149,7 @@ private fun BoxScope.PhotoViewerControls(page: Int, count: Int, onDismiss: () ->
     if (count > 1) Text(stringResource(Res.string.coffeepeek_photo_position, page + 1, count),
         style = MaterialTheme.typography.labelLarge, color = Color.White,
         modifier = Modifier.align(Alignment.TopCenter).padding(top = CoffeePeekDimens.spacing4)
-            .background(Color.Black.copy(alpha = 0.45f), RoundedCornerShape(50))
+            .background(CoffeePeekColors.PhotoBadgeOverlay, RoundedCornerShape(50))
             .padding(horizontal = CoffeePeekDimens.spacing3, vertical = CoffeePeekDimens.spacing1))
     CoffeePeekGlassIconButton(onClick = onDismiss, nativeIcon = CoffeePeekGlassIcon.Close,
         contentDescription = stringResource(Res.string.coffeepeek_viewer_close),

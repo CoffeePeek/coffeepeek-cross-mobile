@@ -1,5 +1,7 @@
 package com.coffeepeek.feature.discovery.impl.ui.compose.component
 
+import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
+
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -24,7 +26,7 @@ internal fun MapHeatmapButton(enabled: Boolean, onClick: () -> Unit) {
         Modifier.semantics { selected = enabled },
     ) {
         CoffeePeekIcon(CoffeePeekIcons.Fire, null, Modifier.size(26.dp),
-            tint = if (enabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface)
+            tint = if (enabled) MaterialTheme.colorScheme.coffeePeekAccentForeground else MaterialTheme.colorScheme.onSurface)
     }
 }
 

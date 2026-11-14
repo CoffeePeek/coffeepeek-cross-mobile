@@ -4,6 +4,7 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -35,8 +36,12 @@ fun CoffeePeekLikeIcon(
     val target = coffeePeekLikeColor(selected, overImage, MaterialTheme.colorScheme.onSurface)
     val color by animateColorAsState(target, tween(180), label = "like-color")
     val alpha = if (enabled) 1f else 0.38f
-    CoffeePeekIcon(if (selected) CoffeePeekIcons.FavoriteFilled else CoffeePeekIcons.Favorite,
-        contentDescription, modifier.size(size), tint = color.copy(alpha = alpha))
+    Box(modifier.size(size)) {
+        CoffeePeekIcon(if (selected) CoffeePeekIcons.FavoriteFilled else CoffeePeekIcons.Favorite,
+            contentDescription, Modifier.matchParentSize(), tint = color.copy(alpha = alpha))
+        if (selected && !overImage) CoffeePeekIcon(CoffeePeekIcons.Favorite, null, Modifier.matchParentSize(),
+            tint = MaterialTheme.colorScheme.onSurface.copy(alpha = alpha))
+    }
 }
 
 internal fun coffeePeekLikeColor(selected: Boolean, overImage: Boolean, content: Color): Color = when {

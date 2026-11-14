@@ -50,6 +50,7 @@ internal class NotificationNavigation(
         is NotificationDestination.ShopSubmission -> publishedShop(destination.submissionId, canAccess)?.let(::shop)
             ?: Navigator.Screen.MyContributions(ContributionKind.Shops.name)
         NotificationDestination.RoasterSubmissions -> Navigator.Screen.MyContributions(ContributionKind.Roasters.name)
+        is NotificationDestination.CheckIn -> Navigator.Screen.CheckInDetail(destination.id)
         NotificationDestination.CheckIns -> Navigator.Screen.VisitedPlaces
         null -> Navigator.Screen.Main
     }

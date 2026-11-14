@@ -38,14 +38,11 @@
     <string name="community_share_home">Кава дома — %1$s: %2$s</string>
     <string name="community_publish">Апублікаваць</string>
     <string name="community_label_private">Прыватны</string>
-    <string name="community_label_pending">На праверцы</string>
-    <string name="community_label_published">Апублікаваны</string>
-    <string name="community_label_rejected">Адхілены</string>
+    <string name="community_label_rejected">Не апублікаваны</string>
     <string name="community_label_public">Публічны</string>
-    <string name="community_label_unknown">Статус праверкі невядомы</string>
+    <string name="community_label_unknown">Чэкін захаваны</string>
     <string name="community_edit_title">Рэдагаваць чэкін</string>
     <string name="community_edit_kept">Кавярня, дата візіту і фатаграфіі захаваюцца.</string>
-    <string name="community_edit_review">Пасля захавання публічны чэкін зноў адправіцца на праверку.</string>
     <string name="community_ratings_title">Вашы адзнакі</string>
     <string name="community_ratings_hint">Націсніце на зоркі, каб змяніць адзнаку</string>
     <string name="community_rating_coffee">Кава</string>
@@ -77,9 +74,13 @@
     <string name="community_visibility_failed">Не ўдалося змяніць бачнасць</string>
     <string name="community_report_sent">Скарга адпраўлена</string>
     <string name="community_edit_saved">Чэкін захаваны</string>
-    <string name="community_edit_sent_for_review">Чэкін захаваны і адпраўлены на праверку. Ён даступны ў профілі, у раздзеле «Чэкіны»</string>
     <string name="community_post_title">Публікацыя</string>
     <string name="community_back">Назад</string>
     <string name="community_post_unavailable_title">Публікацыя недаступная</string>
-    <string name="community_post_unavailable_body">Магчыма, аўтар схаваў або выдаліў яе, ці яна яшчэ на мадэрацыі.</string>
+    <string name="community_post_unavailable_body">Запіс недаступны. Магчыма, аўтар схаваў або выдаліў яго.</string>
+    <string name="community_rejection_fallback">Чэкін захаваны ў гісторыі. Выпраўце яго, каб апублікаваць.</string>
+    <string name="community_rejection_edit">Выправіць</string>
+    <string name="community_saved_title">Чэкін дададзены</string>
+    <string name="community_saved_body">Запіс захаваны. Абнавіце стужку, каб загрузіць яго картку.</string>
+    <string name="community_saved_open">Адкрыць чэкін</string>
 </resources>

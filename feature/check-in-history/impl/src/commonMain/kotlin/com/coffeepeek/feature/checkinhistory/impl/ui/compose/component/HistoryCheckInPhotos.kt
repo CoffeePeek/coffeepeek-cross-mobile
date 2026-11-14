@@ -1,5 +1,7 @@
 package com.coffeepeek.feature.checkinhistory.impl.ui.compose.component
 
+import com.coffeepeek.core.designsystem.theme.CoffeePeekColors
+
 import androidx.compose.foundation.background
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import androidx.compose.foundation.clickable
@@ -46,7 +48,7 @@ private fun HistoryPhotoTile(urls: List<String>, originals: List<String>, detail
         .semantics(mergeDescendants = true) { contentDescription = description }, contentAlignment = Alignment.Center) {
         HistoryPhoto(urls[index], Modifier.fillMaxSize(), imageContent = imageContent,
             highQualityUrl = details?.getOrNull(index)?.takeIf { it.isNotBlank() && it != urls[index] })
-        if (index == 2 && urls.size > 3) Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.45f)),
+        if (index == 2 && urls.size > 3) Box(Modifier.fillMaxSize().background(CoffeePeekColors.PhotoBadgeOverlay),
             contentAlignment = Alignment.Center) {
             Text(stringResource(Res.string.history_more_photos, urls.size - 3), color = Color.White,
                 style = MaterialTheme.typography.headlineSmall)

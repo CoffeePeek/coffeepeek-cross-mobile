@@ -1,5 +1,7 @@
 package com.coffeepeek.feature.homecheckin.impl.ui.compose.component
 
+import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
+
 import androidx.compose.foundation.background
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import com.coffeepeek.feature.homecheckin.impl.resources.Res
@@ -34,9 +36,9 @@ internal fun HomeCheckInRecipeCard(entry: HomePreparation, methodLabel: String?)
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 Box(Modifier.size(44.dp).background(MaterialTheme.colorScheme.surface, RoundedCornerShape(14.dp)),
                     contentAlignment = Alignment.Center) {
-                    CoffeePeekIcon(CoffeePeekIcons.Coffee, null, Modifier.size(24.dp), tint = MaterialTheme.colorScheme.primary)
+                    CoffeePeekIcon(CoffeePeekIcons.Coffee, null, Modifier.size(24.dp), tint = MaterialTheme.colorScheme.coffeePeekAccentForeground)
                 }
-                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(stringResource(Res.string.home_check_in_method), style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Text(homeRecipeMethodLabel(entry, methodLabel),

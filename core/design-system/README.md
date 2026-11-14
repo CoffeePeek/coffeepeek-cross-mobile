@@ -1,5 +1,11 @@
 # Design-system preparation
 
+Current control sizing and platform behavior are documented in
+[HIG controls](HIG_CONTROLS.md), including the iOS/Android target policy,
+large-text adaptation and the 2026-11-14 verification record. The subsequent
+[full HIG audit](HIG_AUDIT.md) covers buttons, typography, contrast, spacing,
+consumer overrides and the latest build/manual verification.
+
 As of 2026-10-20, the agent-authored instrumented UI suites and their hosts are
 removed at the user's request. Earlier test descriptions/results below are
 historical. Unit tests and colocated previews remain; use manual Sandbox checks
@@ -129,8 +135,8 @@ favorites badge), not a one-star scale. Other standalone decorative stars or
 information-card icons need not become rating controls.
 
 Supplying `onRatingChange` enables integer 1..5 input with five selected/disabled
-accessible buttons. Targets are 44dp high and share up to 224dp width, shrinking
-equally in narrow containers; glyph sizes do not silently shrink. Ripple stays
+accessible buttons. Each target keeps the platform minimum (44pt on iOS, 48dp on
+Android); narrow containers scroll horizontally instead of shrinking choices. Ripple stays
 inside each rounded target. The feature supplies its localized per-score labels;
 fallback rating/choice resources are English with Russian translations. Read-only
 ratings expose one description/range, not five misleading accessibility targets.
@@ -279,9 +285,9 @@ version lookup and localization stay in composition. Section titles are rendered
 as supplied (callers decide uppercase); row callbacks and enabled state are explicit.
 Directional row chevrons mirror in RTL. CoffeePeekCapsuleSegmentedControl exposes tab
 selection, accepts enabled state and requires nonempty unique options with a valid
-selection. Its default track height matches `CoffeePeekDimens.buttonHeight` (44 dp).
-Android fixed and shared scrollable tracks include their 4 dp top/bottom insets
-in that height; native iOS receives the same outer height.
+selection. Its minimum target follows `CoffeePeekDimens.minimumTouchTarget`.
+The 4dp selection-plate insets sit inside the touch region. UIKit owns the native
+iOS control geometry; large text or insufficient width uses scrollable options.
 `minSegmentHeight` sizes the whole track; Compose segments can grow with typography.
 Paired previews compare the capsule with the notification-sized icon button and
 include a 2x font-scale sample.

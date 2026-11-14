@@ -37,7 +37,7 @@ fun createCommunityRepository(client: HttpClient, apiBaseUrl: String): Community
 private class RemoteCommunityRepository(private val backend: CommunityBackend, private val apiBaseUrl: String) : CommunityRepository {
     override suspend fun feed(pageSize: Int, cursor: String?, filters: FeedFilters): Result<FeedPage> = requestResult {
         val page = backend.feed(pageSize, cursor, filters).getOrThrow()
-        FeedPage(page.items.map { FeedEntry(it.publishedAtUtc, it.checkIn.toDomain(apiBaseUrl)) }, page.nextCursor)
+        FeedPage(page.items.map { FeedEntry(it.publishedAtUtc, it.checkIn.toDomain(apiBaseUrl), it.feedPositionAtUtc ?: it.publishedAtUtc.orEmpty()) }, page.nextCursor)
     }
 
     override suspend fun postById(id: String): Result<CommunityPost> = requestResult {

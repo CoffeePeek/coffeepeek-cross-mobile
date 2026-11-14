@@ -2,7 +2,7 @@
 
 package com.coffeepeek.core.designsystem.component
 
-import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
@@ -11,8 +11,6 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
-import androidx.compose.ui.viewinterop.UIKitInteropProperties
-import androidx.compose.ui.viewinterop.UIKitView
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import dev.chrisbanes.haze.HazeState
 import platform.UIKit.UIAction
@@ -35,14 +33,13 @@ actual fun CoffeePeekGlassButton(
     val loadingLabel = if (isLoading) requireNotNull(loadingDescription) else null
     val colors = MaterialTheme.colorScheme
     val loaderParent = remember { mutableStateOf<UIView?>(null) }
-    UIKitView(
+    CoffeePeekNativeGlassView(
         factory = {
             UIButton.buttonWithConfiguration(coffeePeekGlassButtonConfiguration(), UIAction.actionWithHandler {
                 if (currentEnabled.value) currentOnClick.value()
             })
         },
-        modifier = modifier.height(CoffeePeekDimens.buttonHeight),
-        properties = UIKitInteropProperties(isNativeAccessibilityEnabled = true, placedAsOverlay = true),
+        modifier = modifier.sizeIn(minWidth = CoffeePeekDimens.minimumTouchTarget, minHeight = CoffeePeekDimens.buttonHeight),
         update = { button ->
             button.overrideUserInterfaceStyle = coffeePeekUserInterfaceStyle(colors.background)
             button.backgroundColor = UIColor.clearColor
@@ -57,6 +54,8 @@ actual fun CoffeePeekGlassButton(
                 cornerStyle = UIButtonConfigurationCornerStyleCapsule
                 baseForegroundColor = colors.onSurface.toUIColor()
             }
+            button.titleLabel?.adjustsFontForContentSizeCategory = true
+            button.titleLabel?.numberOfLines = 0
             button.accessibilityLabel = text
             button.accessibilityValue = loadingLabel
             button.enabled = currentEnabled.value

@@ -1,5 +1,6 @@
 package com.coffeepeek.feature.shopreport.impl.ui.compose
 
+import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -134,7 +135,7 @@ internal fun ShopReportScreenContent(
 
             Spacer(Modifier.height(CoffeePeekDimens.spacing2))
             if (state.isSubmitting) {
-                CoffeePeekLoader(size = 40.dp, color = MaterialTheme.colorScheme.primary, strokeWidth = 4.dp)
+                CoffeePeekLoader(size = 40.dp, color = MaterialTheme.colorScheme.coffeePeekAccentForeground, strokeWidth = 4.dp)
             } else {
                 CoffeePeekButton(stringResource(Res.string.shop_report_submit),
                     { onAction(ShopReportAction.Submit) }, enabled = state.selectedCategory != null)
