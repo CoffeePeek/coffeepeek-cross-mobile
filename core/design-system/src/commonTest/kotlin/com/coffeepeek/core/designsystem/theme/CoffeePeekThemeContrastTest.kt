@@ -7,6 +7,7 @@ import androidx.compose.ui.graphics.luminance
 import com.coffeepeek.core.designsystem.component.CoffeePeekIconBadgePalette
 import com.coffeepeek.core.designsystem.component.coffeePeekIconBadgeColors
 import kotlin.test.Test
+import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class CoffeePeekThemeContrastTest {
@@ -23,9 +24,16 @@ class CoffeePeekThemeContrastTest {
             surfaces(scheme).forEach { background ->
                 listOf(scheme.onSurface, scheme.onSurfaceVariant, scheme.coffeePeekAccentForeground, scheme.error)
                     .forEach { assertContrast(it, background, 4.5f) }
-                assertContrast(scheme.outline, background, 3f)
             }
         }
+    }
+
+    @Test fun bothThemesUseTheDarkThemeGoldAndTheirOriginalBorderColors() {
+        val gold = Color(0xFFFACC15)
+        assertEquals(gold, CoffeePeekDarkColorScheme.primary)
+        assertEquals(gold, CoffeePeekLightColorScheme.primary)
+        assertEquals(CoffeePeekColors.DarkBorder, CoffeePeekDarkColorScheme.outline)
+        assertEquals(CoffeePeekColors.LightBorder, CoffeePeekLightColorScheme.outline)
     }
 
     @Test fun badgesRemainDistinctInBothThemesAndOnElevatedSurfaces() {

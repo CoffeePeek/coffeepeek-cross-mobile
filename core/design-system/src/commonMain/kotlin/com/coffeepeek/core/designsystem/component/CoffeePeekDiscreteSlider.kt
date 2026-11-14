@@ -1,7 +1,5 @@
 package com.coffeepeek.core.designsystem.component
 
-import androidx.compose.foundation.border
-
 import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
 
 import androidx.compose.foundation.background
@@ -50,7 +48,7 @@ fun CoffeePeekDiscreteSlider(
             stateDescription = selectedDescription
         },
         colors = colors, interactionSource = remember { MutableInteractionSource() },
-        thumb = { Box(Modifier.size(28.dp).shadow(3.dp, CircleShape).background(Color.White, CircleShape).border(2.dp, MaterialTheme.colorScheme.coffeePeekAccentForeground, CircleShape)) },
+        thumb = { Box(Modifier.size(28.dp).shadow(3.dp, CircleShape).background(Color.White, CircleShape)) },
         track = { state ->
             SliderDefaults.Track(state, Modifier.height(4.dp), colors = colors,
                 drawStopIndicator = null, thumbTrackGapSize = 0.dp)

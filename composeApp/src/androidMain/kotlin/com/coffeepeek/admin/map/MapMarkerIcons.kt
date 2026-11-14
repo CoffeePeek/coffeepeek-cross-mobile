@@ -182,7 +182,7 @@ internal object MapMarkerIcons {
         val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
             style = Paint.Style.STROKE
             strokeWidth = stroke
-            color = (if (selected) CoffeePeekColors.GoldWarm else border).toArgb()
+            color = (if (selected) CoffeePeekColors.Primary else border).toArgb()
         }
         val ringRadius = if (selected) radius + SELECTED_HALO_GAP_DP * px + stroke / 2f else radius - stroke / 2f
         canvas.drawCircle(center, center, ringRadius, paint)

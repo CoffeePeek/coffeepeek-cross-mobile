@@ -89,7 +89,6 @@ internal data class CommunityState(
 internal sealed interface CommunityAction {
     data class Refresh(val trigger: FeedTrigger? = null) : CommunityAction
     data class LoadMore(val track: Boolean = true) : CommunityAction
-    data object Resume : CommunityAction
     data object Retry : CommunityAction
     data class SelectTimeline(val timeline: CommunityTimeline) : CommunityAction
     data class SetFilters(val filters: FeedFilters) : CommunityAction

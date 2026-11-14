@@ -476,11 +476,27 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
         putJsonObject("location") { put("address", "Тестовая улица, 1"); put("latitude", 53.9); put("longitude", 27.56) }
         putJsonArray("photos") { add(photo()) }; put("coverPhoto", photo())
         put("roasters", JsonArray(listOf(catalog("sandbox-roaster", "Sandbox Roaster"))))
+        if (slug == "sandbox-cafe") putShopFeatures()
         // Counters above stay server aggregates; only the visible cards are filtered.
         put("checkIns", JsonArray(publicVisits.filter(::visible))); put("userCheckIns", JsonArray(shopVisits))
         putJsonObject("menu") { put("inputRevision", 0); put("currency", "BYN"); put("photos", JsonArray(listOf(photo()))); put("items", drinks()) }
         putJsonArray("schedules") { (1..7).forEach { day -> add(buildJsonObject { put("dayOfWeek", day); putJsonArray("intervals") { add(buildJsonObject { put("openTime", "08:00:00"); put("closeTime", "23:00:00") }) } }) } }
     }
+
+    private fun JsonObjectBuilder.putShopFeatures() {
+        putJsonArray("brewMethods") {
+            add(catalog("espresso", "Эспрессо"))
+            add(catalog("v60", "V60"))
+            add(catalog("aeropress", "Аэропресс"))
+        }
+        putJsonArray("shopTags") {
+            add(catalog("wifi", "Wi-Fi"))
+            add(catalog("pets", "Можно с животными"))
+            add(catalog("plant-milk", "Растительное молоко"))
+            add(catalog("bakery", "Выпечка"))
+        }
+    }
+
     // Three synthetic roasters: full data (tags, contacts, shops with and without photos), partial data, and bare.
     private fun roasters() = listOf(
         roasterRow("sandbox-roaster", "Sandbox Roaster", about = "Локальный обжарщик для тестирования", withPhotos = true,

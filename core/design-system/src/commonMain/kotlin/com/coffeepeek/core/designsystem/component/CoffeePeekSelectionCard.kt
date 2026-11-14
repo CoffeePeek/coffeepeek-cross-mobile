@@ -33,7 +33,7 @@ fun CoffeePeekSelectionCard(
         modifier.fillMaxWidth().clip(shape)
             .background(if (selected) MaterialTheme.colorScheme.coffeePeekAccentForeground.copy(alpha = 0.08f)
                 else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.04f))
-            .border(1.dp, if (selected) MaterialTheme.colorScheme.coffeePeekAccentForeground.copy(alpha = 0.65f)
+            .border(1.dp, if (selected) MaterialTheme.colorScheme.primary.copy(alpha = 0.65f)
                 else MaterialTheme.colorScheme.outline, shape)
             .selectable(selected, role = Role.RadioButton, onClick = onClick)
             .heightIn(min = 72.dp).padding(CoffeePeekDimens.spacing3),

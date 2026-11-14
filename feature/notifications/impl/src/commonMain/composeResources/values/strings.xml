@@ -18,6 +18,7 @@
     <string name="notifications_read">Прочитано</string>
     <string name="notifications_unread">Не прочитано</string>
     <string name="notifications_mark_read">Отметить прочитанным</string>
+    <string name="notifications_read_all">Прочитать всё</string>
     <string name="notifications_empty_title">Пока тихо</string>
     <string name="notifications_empty_description">Новые уведомления появятся здесь. Загляните за чашкой кофе чуть позже.</string>
     <string name="notifications_sign_in_title">Войдите в CoffeePeek</string>

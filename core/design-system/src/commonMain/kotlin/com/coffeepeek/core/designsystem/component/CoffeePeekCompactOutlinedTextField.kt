@@ -71,7 +71,7 @@ fun CoffeePeekCompactOutlinedTextField(
     minLines: Int = 1,
     shape: androidx.compose.ui.graphics.Shape = OutlinedTextFieldDefaults.shape,
     colors: TextFieldColors = OutlinedTextFieldDefaults.colors(
-        focusedBorderColor = MaterialTheme.colorScheme.coffeePeekAccentForeground,
+        focusedBorderColor = MaterialTheme.colorScheme.primary,
         cursorColor = MaterialTheme.colorScheme.coffeePeekAccentForeground),
     contentPadding: PaddingValues = CoffeePeekDimens.singleLineFieldContentPadding,
     inputRole: CoffeePeekInputRole = CoffeePeekInputRole.Default,

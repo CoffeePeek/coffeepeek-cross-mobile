@@ -1,9 +1,6 @@
 package com.coffeepeek.core.designsystem.component
 
-import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
@@ -14,13 +11,12 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
@@ -32,7 +28,6 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 /** Shared heart renderer, also for read-only counters and existing glass containers.
  * Selection uses a filled brand-gold heart; an unselected outline is neutral.
  * A decorative icon inside a labelled control must use a null description.
- * Every selection change pops the heart (a story-like bounce); reduced motion skips it.
  */
 @Composable
 fun CoffeePeekLikeIcon(
@@ -42,26 +37,47 @@ fun CoffeePeekLikeIcon(
     size: Dp = 24.dp,
     enabled: Boolean = true,
     overImage: Boolean = false,
+) = CoffeePeekAnimatedLikeIcon(selected, contentDescription, modifier, size, enabled, overImage)
+
+@Composable
+internal fun CoffeePeekAnimatedLikeIcon(
+    selected: Boolean,
+    contentDescription: String?,
+    modifier: Modifier,
+    size: Dp,
+    enabled: Boolean,
+    overImage: Boolean,
+    isLoading: Boolean = false,
 ) {
-    val target = coffeePeekLikeColor(selected, overImage, MaterialTheme.colorScheme.onSurface)
-    val color by animateColorAsState(target, tween(180), label = "like-color")
-    val alpha = if (enabled) 1f else 0.38f
-    val motionless = coffeePeekReduceMotion()
+    val targetFill = if (selected) 1f else 0f
+    val fill = remember { Animatable(targetFill) }
     val scale = remember { Animatable(1f) }
-    val firstRender = remember { mutableStateOf(true) }
-    LaunchedEffect(selected) {
-        if (firstRender.value) { firstRender.value = false; return@LaunchedEffect }
-        if (motionless) return@LaunchedEffect
-        scale.snapTo(0.7f)
-        scale.animateTo(1f, spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium))
+    val reduceMotion = coffeePeekReduceMotion()
+    LaunchedEffect(selected, reduceMotion, isLoading) {
+        if (reduceMotion) {
+            scale.snapTo(1f)
+            fill.snapTo(targetFill)
+        } else if (!isLoading && (fill.value != targetFill || scale.value != 1f)) {
+            scale.animateTo(1.24f, tween(95))
+            fill.animateTo(targetFill, tween(80))
+            scale.animateTo(1f, tween(145))
+        }
     }
-    Box(modifier.graphicsLayer {
-        scaleX = scale.value; scaleY = scale.value
-    }.size(size)) {
-        CoffeePeekIcon(if (selected) CoffeePeekIcons.FavoriteFilled else CoffeePeekIcons.Favorite,
-            contentDescription, Modifier.matchParentSize(), tint = color.copy(alpha = alpha))
-        if (selected && !overImage) CoffeePeekIcon(CoffeePeekIcons.Favorite, null, Modifier.matchParentSize(),
-            tint = MaterialTheme.colorScheme.onSurface.copy(alpha = alpha))
+    val outline = coffeePeekLikeColor(false, overImage, MaterialTheme.colorScheme.onSurface)
+    Box(modifier.size(size).semantics {
+        if (contentDescription != null) this.contentDescription = contentDescription
+    }.graphicsLayer {
+        scaleX = scale.value
+        scaleY = scale.value
+        alpha = if (enabled) 1f else 0.38f
+    }) {
+        CoffeePeekIcon(CoffeePeekIcons.FavoriteFilled, null, Modifier.matchParentSize().graphicsLayer {
+            alpha = fill.value
+        }, tint = coffeePeekLikeColor(true, overImage, outline))
+        // The outline keeps the bright fill legible against plain light surfaces.
+        CoffeePeekIcon(CoffeePeekIcons.Favorite, null, Modifier.matchParentSize().graphicsLayer {
+            alpha = if (overImage) 1f - fill.value else 1f
+        }, tint = outline)
     }
 }
 

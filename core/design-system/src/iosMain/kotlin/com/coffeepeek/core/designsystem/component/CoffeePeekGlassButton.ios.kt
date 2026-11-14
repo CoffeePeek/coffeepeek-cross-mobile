@@ -10,7 +10,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.isSpecified
 import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.graphics.takeOrElse
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import dev.chrisbanes.haze.HazeState
 import platform.UIKit.UIAction
@@ -27,11 +29,13 @@ import platform.UIKit.accessibilityValue
 actual fun CoffeePeekGlassButton(
     text: String, onClick: () -> Unit, modifier: Modifier, enabled: Boolean,
     isLoading: Boolean, loadingDescription: String?, leadingIcon: CoffeePeekGlassButtonIcon?, hazeState: HazeState?,
+    containerColor: Color, contentColor: Color,
 ) {
     val currentOnClick = rememberUpdatedState(onClick)
     val currentEnabled = rememberUpdatedState(enabled && !isLoading)
     val loadingLabel = if (isLoading) requireNotNull(loadingDescription) else null
     val colors = MaterialTheme.colorScheme
+    val foreground = contentColor.takeOrElse { colors.onSurface }
     val loaderParent = remember { mutableStateOf<UIView?>(null) }
     CoffeePeekNativeGlassView(
         factory = {
@@ -43,7 +47,7 @@ actual fun CoffeePeekGlassButton(
         update = { button ->
             button.overrideUserInterfaceStyle = coffeePeekUserInterfaceStyle(colors.background)
             button.backgroundColor = UIColor.clearColor
-            button.configuration = coffeePeekGlassButtonConfiguration().apply {
+            button.configuration = coffeePeekGlassButtonConfiguration(prominent = containerColor.isSpecified).apply {
                 title = text
                 image = if (isLoading) coffeePeekLoaderPlaceholderImage() else when (leadingIcon) {
                     CoffeePeekGlassButtonIcon.Check -> UIImage.systemImageNamed("checkmark")
@@ -52,7 +56,8 @@ actual fun CoffeePeekGlassButton(
                 imagePadding = 4.0
                 showsActivityIndicator = false
                 cornerStyle = UIButtonConfigurationCornerStyleCapsule
-                baseForegroundColor = colors.onSurface.toUIColor()
+                if (containerColor.isSpecified) baseBackgroundColor = containerColor.toUIColor()
+                baseForegroundColor = foreground.toUIColor()
             }
             button.titleLabel?.adjustsFontForContentSizeCategory = true
             button.titleLabel?.numberOfLines = 0
@@ -62,7 +67,7 @@ actual fun CoffeePeekGlassButton(
             loaderParent.value = if (isLoading) button.imageView else null
         },
     )
-    CoffeePeekNativeLoader(loaderParent.value, colors.onSurface)
+    CoffeePeekNativeLoader(loaderParent.value, foreground)
 }
 
 internal fun coffeePeekUserInterfaceStyle(background: Color): UIUserInterfaceStyle =

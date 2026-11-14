@@ -2,6 +2,7 @@
 
 package com.coffeepeek.admin.map
 
+import com.coffeepeek.core.designsystem.theme.CoffeePeekColors
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 
 import androidx.compose.foundation.layout.sizeIn
@@ -36,6 +37,7 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.unit.dp
@@ -550,10 +552,10 @@ private fun addOverlayLayers(style: Style, isDarkTheme: Boolean) {
     )
     add(
         CircleLayer(PULSE_LAYER, PULSE_SOURCE).withProperties(
-            circleColor("#EAB308"),
+            circleColor(CoffeePeekColors.Primary.toArgb()),
             circleRadius(PULSE_MIN_RADIUS),
             circleOpacity(0f),
-            circleStrokeColor("#CA8A04"),
+            circleStrokeColor(CoffeePeekColors.Primary.toArgb()),
             circleStrokeWidth(1.5f),
             circleStrokeOpacity(0f),
             circlePitchAlignment(Property.CIRCLE_PITCH_ALIGNMENT_MAP),

@@ -1,8 +1,12 @@
 package com.coffeepeek.feature.discovery.impl.ui
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.*
@@ -10,6 +14,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.drawscope.ContentDrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.layout
@@ -18,10 +25,13 @@ import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import com.coffeepeek.core.designsystem.component.coffeePeekCardBorder
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
+import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.discovery.api.DiscoveryHost
 import com.coffeepeek.feature.discovery.impl.tab.*
 import kotlin.math.roundToInt
+import org.jetbrains.compose.ui.tooling.preview.Preview
 
 internal data class DiscoveryMapPresentation(val canvasSize: DpSize, val expanded: Boolean, val controlsExpanded: Boolean)
 
@@ -58,8 +68,7 @@ private fun Modifier.discoveryMapFrame(ui: DiscoveryTabState, motion: DiscoveryT
     val width = with(density) { canvasSize.width.toPx() }
     val height = with(density) { canvasSize.height.toPx() }
     val radius = with(density) { CoffeePeekDimens.radius2xl.toPx() }
-    val outline = MaterialTheme.colorScheme.outline
-    val stroke = with(density) { 1.dp.toPx() }
+    val border = coffeePeekCardBorder()
     return offset {
         val bounds = expandedFrame(ui.previewBounds, width, height, motion.expansion.value)
         val clipTop = mapClipTop(ui.viewportTop, motion.expansion.value, height.roundToInt())
@@ -73,6 +82,32 @@ private fun Modifier.discoveryMapFrame(ui: DiscoveryTabState, motion: DiscoveryT
         shape = RoundedCornerShape(mapCornerRadius(radius, motion.expansion.value))
     }.drawWithContent {
         drawContent()
-        drawRoundRect(outline, cornerRadius = CornerRadius(mapCornerRadius(radius, motion.expansion.value)), style = Stroke(stroke))
+        drawMapCardBorder(border, mapCornerRadius(radius, motion.expansion.value))
     }
 }
+
+private fun ContentDrawScope.drawMapCardBorder(border: BorderStroke, radius: Float) {
+    val stroke = border.width.toPx().coerceAtMost(size.minDimension)
+    val inset = stroke / 2f
+    drawRoundRect(
+        brush = border.brush,
+        topLeft = Offset(inset, inset),
+        size = Size(size.width - stroke, size.height - stroke),
+        cornerRadius = CornerRadius((radius - inset).coerceAtLeast(0f)),
+        style = Stroke(stroke),
+    )
+}
+
+@Composable
+private fun DiscoveryMapLayerPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
+    val state = rememberDiscoveryTabState()
+    val motion = remember { DiscoveryTabMotion(mutableFloatStateOf(1f), mutableFloatStateOf(1f), mutableFloatStateOf(1f)) }
+    BoxWithConstraints(Modifier.size(width = 320.dp, height = 180.dp)) {
+        DiscoveryMapLayer(state, motion, DiscoveryHost(), DpSize(maxWidth, maxHeight), {}) { _, _, modifier ->
+            Box(modifier.background(MaterialTheme.colorScheme.surface))
+        }
+    }
+}
+
+@Preview @Composable private fun DiscoveryMapLayerLightPreview() = DiscoveryMapLayerPreview(false)
+@Preview @Composable private fun DiscoveryMapLayerDarkPreview() = DiscoveryMapLayerPreview(true)

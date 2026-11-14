@@ -1,6 +1,5 @@
 package com.coffeepeek.feature.shop.impl.ui.compose
 
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -70,7 +69,6 @@ import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopBusinessIdentit
 import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopDetailLoading
 import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopDetailRefreshStatus
 import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopDetailBottomBar
-import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopOverviewHeader
 import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopPriceInfoSheet
 import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopReportIssueSection
 import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopMenuSection
@@ -375,24 +373,19 @@ private fun ShopDetailHeader(
     distanceLabel: String?,
 ) {
     val overview = state.details?.overview ?: return
-    androidx.compose.runtime.CompositionLocalProvider(
-        com.coffeepeek.feature.shop.impl.ui.compose.component.LocalShopBusinessIdentity provides
-            com.coffeepeek.feature.shop.impl.ui.compose.component.ShopBusinessIdentity(overview.id,
-                overview.canonicalPath?.substringAfterLast('/') ?: overview.id)) {
-    Column {
-        ShopOverviewHero(overview,
-            onOpenPhoto = { urls, originals, index -> onAction(ShopDetailAction.OpenPhoto(urls, index, originals)) })
-        Column(Modifier.padding(horizontal = CoffeePeekDimens.spacing4,
-            vertical = CoffeePeekDimens.spacing3),
-            verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2)) {
-            ShopOverviewHeader(overview, onOpenMap = { onAction(ShopDetailAction.OpenMap) })
+    val identity = ShopBusinessIdentity(overview.id, overview.canonicalPath?.substringAfterLast('/') ?: overview.id)
+    CompositionLocalProvider(LocalShopBusinessIdentity provides identity) {
+        Column {
+            ShopOverviewHero(overview,
+                onOpenPhoto = { urls, originals, index -> onAction(ShopDetailAction.OpenPhoto(urls, index, originals)) },
+                onOpenMap = { onAction(ShopDetailAction.OpenMap) })
             ShopOverviewStats(overview,
                 onOpenCheckIns = { onAction(ShopDetailAction.OpenCheckIns) },
                 onOpenPriceInfo = { onAction(ShopDetailAction.OpenPriceInfo) },
-                distanceLabel = distanceLabel)
+                distanceLabel = distanceLabel,
+                modifier = Modifier.padding(horizontal = CoffeePeekDimens.spacing4, vertical = CoffeePeekDimens.spacing3))
         }
     }
-}
 }
 
 @Preview @Composable private fun ShopDetailScreenLightPreview() = CoffeePeekTheme(darkTheme = false) {

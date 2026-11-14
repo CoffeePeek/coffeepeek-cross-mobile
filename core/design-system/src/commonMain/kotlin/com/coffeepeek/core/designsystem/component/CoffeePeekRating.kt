@@ -1,7 +1,5 @@
 package com.coffeepeek.core.designsystem.component
 
-import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
-
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
@@ -55,7 +53,7 @@ fun CoffeePeekRating(
     enabled: Boolean = true,
     starSpacing: Dp = if (onRatingChange == null) 4.dp else 2.dp,
     valueSpacing: Dp = 8.dp,
-    activeColor: Color = MaterialTheme.colorScheme.coffeePeekAccentForeground,
+    activeColor: Color = MaterialTheme.colorScheme.primary,
     inactiveColor: Color = MaterialTheme.colorScheme.onSurfaceVariant,
     valueColor: Color = LocalContentColor.current,
     valueStyle: TextStyle = MaterialTheme.typography.bodyMedium,
@@ -71,7 +69,7 @@ fun CoffeePeekRating(
     Row(modifier.then(behavior), verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(valueSpacing)) {
         if (display == CoffeePeekRatingDisplay.Compact) {
-            CoffeePeekIcon(CoffeePeekIcons.StarFilled, null, Modifier.size(size.starSize), tint = activeColor)
+            CoffeePeekRatingStar(1f, size.starSize, activeColor, inactiveColor)
         } else CoffeePeekRatingStars(value, size.starSize, enabled, starSpacing, activeColor, inactiveColor,
             onRatingChange, starDescription, if (onRatingChange == null) Modifier else Modifier.weight(1f))
         if (valueText != null) Text(valueText, style = valueStyle, color = valueColor)
@@ -108,13 +106,13 @@ private fun CoffeePeekRatingChoice(score: Int, value: Double, starSize: Dp, enab
 private fun CoffeePeekRatingStar(fill: Float, starSize: Dp, active: Color, inactive: Color) {
     val rtl = LocalLayoutDirection.current == LayoutDirection.Rtl
     Box(Modifier.size(starSize)) {
-        CoffeePeekIcon(CoffeePeekIcons.StarOutline, null, Modifier.fillMaxSize(), tint = inactive)
         if (fill > 0f) CoffeePeekIcon(CoffeePeekIcons.StarFilled, null,
             Modifier.fillMaxSize().drawWithContent {
                 val boundary = this.size.width * fill
                 clipRect(left = if (rtl) this.size.width - boundary else 0f,
                     right = if (rtl) this.size.width else boundary) { this@drawWithContent.drawContent() }
             }, tint = active)
+        CoffeePeekIcon(CoffeePeekIcons.StarOutline, null, Modifier.fillMaxSize(), tint = inactive)
     }
 }
 

@@ -1,7 +1,5 @@
 package com.coffeepeek.core.designsystem.component
 
-import androidx.compose.foundation.border
-
 import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
 
 import androidx.compose.foundation.background
@@ -39,11 +37,11 @@ fun CoffeePeekPriceLevelSlider(selected: Int?, onSelect: (Int?) -> Unit, modifie
 @Composable
 private fun PriceLevelTrack(value: Int, onSelect: (Int?) -> Unit) {
     val colors = SliderDefaults.colors(thumbColor = Color.White, activeTrackColor = MaterialTheme.colorScheme.coffeePeekAccentForeground,
-        inactiveTrackColor = MaterialTheme.colorScheme.outline, activeTickColor = Color.Transparent,
+        inactiveTrackColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.4f), activeTickColor = Color.Transparent,
         inactiveTickColor = Color.Transparent)
     Slider(value = value.toFloat(), onValueChange = { onSelect(it.roundToInt().coerceIn(0, 3).takeIf { level -> level > 0 }) },
         valueRange = 0f..3f, steps = 2, colors = colors, interactionSource = remember { MutableInteractionSource() },
-        thumb = { Box(Modifier.size(28.dp).shadow(3.dp, CircleShape).background(Color.White, CircleShape).border(2.dp, MaterialTheme.colorScheme.coffeePeekAccentForeground, CircleShape)) },
+        thumb = { Box(Modifier.size(28.dp).shadow(3.dp, CircleShape).background(Color.White, CircleShape)) },
         track = { SliderDefaults.Track(it, Modifier.height(4.dp), colors = colors,
             drawStopIndicator = null, thumbTrackGapSize = 0.dp) })
 }
