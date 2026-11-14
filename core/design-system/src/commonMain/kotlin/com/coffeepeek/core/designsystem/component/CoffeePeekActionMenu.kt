@@ -36,17 +36,22 @@ import androidx.compose.ui.window.PopupPositionProvider
 import androidx.compose.ui.window.PopupProperties
 import com.coffeepeek.core.designsystem.modifier.coffeePeekLiquidGlass
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
+import com.coffeepeek.core.designsystem.icons.CoffeePeekMapIcon
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 
 data class CoffeePeekMenuAction(
     val label: String,
-    val icon: ImageVector,
+    val icon: ImageVector?,
     val destructive: Boolean = false,
     /** The glyph a native menu draws for this row; none draws the row without one. */
     val nativeIcon: CoffeePeekMenuIcon? = null,
+    internal val mapIcon: CoffeePeekMapIcon? = null,
     val onClick: () -> Unit,
-)
+) {
+    constructor(label: String, icon: CoffeePeekMapIcon, onClick: () -> Unit) :
+        this(label, null, mapIcon = icon, onClick = onClick)
+}
 
 @Composable
 fun CoffeePeekActionMenu(

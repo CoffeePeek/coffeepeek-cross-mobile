@@ -16,8 +16,14 @@ final class MapLibreMapProvider: NSObject, IosNativeMapProvider, MLNMapViewDeleg
     private static let zoneLine = "cp-zones-line"
     private static let zoneLabels = "cp-zone-labels"
     private let images = NSCache<NSString, UIImage>()
+    private var coffeeShopIcon: UIImage?
 
-    func createMapView() -> UIView {
+    func createMapView(coffeeShopIconUri: String) -> UIView {
+        if coffeeShopIcon == nil {
+            let url = URL(string: coffeeShopIconUri)
+            let path = url?.isFileURL == true ? url?.path ?? coffeeShopIconUri : coffeeShopIconUri
+            coffeeShopIcon = UIImage(contentsOfFile: path)
+        }
         let map = CoffeeMapView(frame: .zero, styleURL: Self.lightStyle)
         map.autoresizingMask = [.flexibleWidth, .flexibleHeight]
         map.automaticallyAdjustsContentInset = false
@@ -378,17 +384,21 @@ final class MapLibreMapProvider: NSObject, IosNativeMapProvider, MLNMapViewDeleg
     }
 
     private func drawPinIcon(type: String, rect: CGRect, dark: Bool) {
-        let name: String
+        let icon: UIImage?
+        let side = rect.width * 0.44
+        let configuration = UIImage.SymbolConfiguration(pointSize: side, weight: .semibold)
         switch type {
-        case "specialty": name = "cup.and.saucer.fill"
-        case "cafe": name = "fork.knife"
-        default: name = "cup.and.saucer"
+        case "specialty": icon = UIImage(systemName: "cup.and.saucer.fill", withConfiguration: configuration)
+        case "cafe": icon = UIImage(systemName: "fork.knife", withConfiguration: configuration)
+        default: icon = coffeeShopIcon
         }
-        let configuration = UIImage.SymbolConfiguration(pointSize: rect.width * 0.44, weight: .semibold)
-        guard let icon = UIImage(systemName: name, withConfiguration: configuration) else { return }
+        guard let icon else { return }
         let tint = UIColor(hex: dark ? "#FFFFFF" : "#2D241F")
-        let origin = CGPoint(x: rect.midX - icon.size.width / 2, y: rect.midY - icon.size.height / 2)
-        icon.withTintColor(tint, renderingMode: .alwaysOriginal).draw(at: origin)
+        let scale = min(1, side / max(icon.size.width, icon.size.height))
+        let width = icon.size.width * scale
+        let height = icon.size.height * scale
+        icon.withTintColor(tint, renderingMode: .alwaysOriginal).draw(in:
+            CGRect(x: rect.midX - width / 2, y: rect.midY - height / 2, width: width, height: height))
     }
 
     private func drawPinRing(_ cg: CGContext, rect: CGRect, selected: Bool, dark: Bool) {

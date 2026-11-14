@@ -13,7 +13,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.component.*
-import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.profile.api.ProfileImage
@@ -70,7 +69,7 @@ private fun ProfileDrinkFavorite(item: PublicProfileFavorite, image: ProfileImag
             Box(Modifier.fillMaxWidth().aspectRatio(2f).background(MaterialTheme.colorScheme.surfaceVariant),
                 contentAlignment = Alignment.Center) {
                 if (!item.imageUrl.isNullOrBlank()) image(item.imageUrl!!, item.title, Modifier.fillMaxSize())
-                else CoffeePeekIcon(CoffeePeekIcons.Coffee, null, Modifier.size(48.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                else CoffeePeekCoffeeIcon(null, Modifier.size(48.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
                 CoffeePeekLikeBadge(true, stringResource(Res.string.profile_favorite_saved),
                     Modifier.align(Alignment.TopEnd).padding(CoffeePeekDimens.spacing3).size(40.dp))
             }

@@ -17,6 +17,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.coffeepeek.core.designsystem.component.CoffeePeekCoffeeIcon
 import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
@@ -32,7 +33,7 @@ internal fun HomeCheckInHeading(entry: HomePreparation, dateLabel: String) {
         FlowRow(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp),
             itemVerticalAlignment = Alignment.CenterVertically) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                CoffeePeekIcon(CoffeePeekIcons.Coffee, null, Modifier.size(20.dp), tint = MaterialTheme.colorScheme.primary)
+                CoffeePeekCoffeeIcon(null, Modifier.size(20.dp), tint = MaterialTheme.colorScheme.primary)
                 Text(stringResource(Res.string.home_check_in_home), style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant)
             }

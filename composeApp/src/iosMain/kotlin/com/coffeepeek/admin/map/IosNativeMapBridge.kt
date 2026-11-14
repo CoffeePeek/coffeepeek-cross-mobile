@@ -22,7 +22,7 @@ interface IosNativeMapCallbacks {
 }
 
 interface IosNativeMapProvider {
-    fun createMapView(): UIView
+    fun createMapView(coffeeShopIconUri: String): UIView
 
     fun updateMapView(
         mapView: UIView,

@@ -39,6 +39,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import com.coffeepeek.core.designsystem.component.CoffeePeekButton
 import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
+import com.coffeepeek.core.designsystem.component.CoffeePeekCoffeeIcon
 import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.text.coffeePeekPluralForm
@@ -225,8 +226,8 @@ private fun HomeCheckInEditorFooter(state: HomeCheckInEditorState, enabled: Bool
 
 /** Fixture ports only; real artwork/decoding will come from application composition. */
 internal fun previewHomeEditorMedia() = HomeCheckInEditorMedia(
-    { CoffeePeekIcon(CoffeePeekIcons.Coffee, null, it) }, { CoffeePeekIcon(CoffeePeekIcons.Search, null, it) },
-    { _, modifier -> CoffeePeekIcon(CoffeePeekIcons.Coffee, null, modifier, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
+    { CoffeePeekCoffeeIcon(null, it) }, { CoffeePeekIcon(CoffeePeekIcons.Search, null, it) },
+    { _, modifier -> CoffeePeekCoffeeIcon(null, modifier, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
     { _, modifier, _ -> Box(modifier) },
 )
 

@@ -22,7 +22,6 @@ private val coffeePeekSymbolNames by lazy {
             ChevronUp to "chevron.up",
             ChevronUpDown to "chevron.up.chevron.down",
             Close to "xmark",
-            Coffee to "cup.and.saucer",
             Community to "person.2",
             Copy to "doc.on.doc",
             Delete to "trash",

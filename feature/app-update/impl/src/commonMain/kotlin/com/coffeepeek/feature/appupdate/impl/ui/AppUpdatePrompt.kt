@@ -21,6 +21,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
+import com.coffeepeek.core.designsystem.component.coffeePeekIconPainter
+import com.coffeepeek.core.designsystem.icons.CoffeePeekMapIcon
+import com.coffeepeek.core.designsystem.icons.coffeePeekMapIconPainter
 import com.coffeepeek.core.designsystem.component.CoffeePeekFilledButton as Button
 import androidx.compose.material3.MaterialTheme
 import com.coffeepeek.core.designsystem.component.CoffeePeekOutlinedButton as OutlinedButton
@@ -171,27 +174,7 @@ private fun UpdateCard(
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Box(
-                    modifier = Modifier.size(52.dp).background(MaterialTheme.colorScheme.primary, CircleShape),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    if (transfer.busy) {
-                        val progress = transfer.progress
-                        if (progress != null && transfer.stage == InstallationStage.Downloading) {
-                            CoffeePeekLoader(modifier = Modifier.size(36.dp), size = 36.dp, color = MaterialTheme.colorScheme.onPrimary,
-                                strokeWidth = 4.dp, progress = progress)
-                        } else {
-                            CoffeePeekLoader(modifier = Modifier.size(36.dp), size = 36.dp, color = MaterialTheme.colorScheme.onPrimary, strokeWidth = 4.dp)
-                        }
-                    } else {
-                        CoffeePeekIcon(
-                            imageVector = if (transfer.stage == InstallationStage.Ready) CoffeePeekIcons.Check else CoffeePeekIcons.Coffee,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onPrimary,
-                            modifier = Modifier.size(28.dp),
-                        )
-                    }
-                }
+                UpdateStatusIcon(transfer)
                 Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(
                         text = when (transfer.stage) {
@@ -260,6 +243,32 @@ private fun UpdateCard(
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun UpdateStatusIcon(transfer: InstallationState) {
+    Box(
+        modifier = Modifier.size(52.dp).background(MaterialTheme.colorScheme.primary, CircleShape),
+        contentAlignment = Alignment.Center,
+    ) {
+        if (transfer.busy) {
+            val progress = transfer.progress
+            if (progress != null && transfer.stage == InstallationStage.Downloading) {
+                CoffeePeekLoader(modifier = Modifier.size(36.dp), size = 36.dp, color = MaterialTheme.colorScheme.onPrimary,
+                    strokeWidth = 4.dp, progress = progress)
+            } else {
+                CoffeePeekLoader(modifier = Modifier.size(36.dp), size = 36.dp, color = MaterialTheme.colorScheme.onPrimary, strokeWidth = 4.dp)
+            }
+        } else {
+            CoffeePeekIcon(
+                painter = if (transfer.stage == InstallationStage.Ready) coffeePeekIconPainter(CoffeePeekIcons.Check)
+                    else coffeePeekMapIconPainter(CoffeePeekMapIcon.CoffeeShop),
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onPrimary,
+                modifier = Modifier.size(28.dp),
+            )
         }
     }
 }

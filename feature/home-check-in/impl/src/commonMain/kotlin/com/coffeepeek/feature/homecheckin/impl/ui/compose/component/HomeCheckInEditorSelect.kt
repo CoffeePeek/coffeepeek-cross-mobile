@@ -23,7 +23,7 @@ import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 
 @Composable
 internal fun HomeCheckInEditorSelect(
-    value: String, icon: ImageVector, description: String, enabled: Boolean,
+    value: String, icon: ImageVector?, description: String, enabled: Boolean,
     error: String? = null, artwork: (@Composable (Modifier) -> Unit)? = null, onClick: () -> Unit,
 ) {
     val shape = RoundedCornerShape(12.dp)
@@ -36,7 +36,7 @@ internal fun HomeCheckInEditorSelect(
         .heightIn(min = 44.dp).padding(horizontal = 14.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         if (artwork != null) artwork(Modifier.size(24.dp))
-        else CoffeePeekIcon(icon, null, Modifier.size(18.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        else if (icon != null) CoffeePeekIcon(icon, null, Modifier.size(18.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
         Text(value, Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium)
         CoffeePeekIcon(CoffeePeekIcons.ChevronUpDown, null, Modifier.size(16.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
     }

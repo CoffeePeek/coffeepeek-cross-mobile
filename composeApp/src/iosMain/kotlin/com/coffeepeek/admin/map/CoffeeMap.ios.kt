@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.DpSize
 import androidx.compose.ui.viewinterop.UIKitView
 import androidx.compose.ui.viewinterop.UIKitInteropProperties
 import androidx.compose.ui.viewinterop.UIKitInteropInteractionMode
+import coffeepeek.composeapp.generated.resources.Res
 import com.coffeepeek.admin.location.LocationPermissionEffect
 import com.coffeepeek.admin.location.PlatformLocation
 import com.coffeepeek.admin.theme.toUIColor
@@ -179,7 +180,7 @@ private fun NativeMapContent(
             },
         )
         UIKitView(
-            factory = { provider.createMapView().also(session::attach) },
+            factory = { provider.createMapView(Res.getUri("drawable/map_cup_fill.png")).also(session::attach) },
             modifier = Modifier.matchParentSize(),
             // The map fills its rectangle; keep it below Compose markers, controls and sheets.
             properties = UIKitInteropProperties(interactionMode = UIKitInteropInteractionMode.NonCooperative, placedAsOverlay = false),

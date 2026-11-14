@@ -13,7 +13,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
-import com.coffeepeek.core.designsystem.component.CoffeePeekPlatformCoffeeIcon
+import com.coffeepeek.core.designsystem.component.CoffeePeekCoffeeIcon
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.contributions.impl.resources.*
 import org.jetbrains.compose.resources.stringResource
@@ -36,7 +36,7 @@ internal fun ContributionLocationPin(modifier: Modifier = Modifier) {
     Box(modifier.offset(y = (-28).dp).size(44.dp, 56.dp).shadow(6.dp, locationPinShape)
         .background(MaterialTheme.colorScheme.primary, locationPinShape)
         .semantics { contentDescription = label }.testTag("shop_location_pin"), contentAlignment = Alignment.TopCenter) {
-        CoffeePeekPlatformCoffeeIcon(null, tint = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.padding(top = 8.dp).size(24.dp))
+        CoffeePeekCoffeeIcon(null, tint = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.padding(top = 8.dp).size(24.dp))
     }
 }
 

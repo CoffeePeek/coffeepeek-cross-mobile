@@ -13,6 +13,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import androidx.compose.ui.unit.dp
+import com.coffeepeek.core.designsystem.component.CoffeePeekCoffeeIcon
 import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
@@ -30,9 +31,12 @@ internal fun HomeCheckInEditorMethod(
         if (it == "other") stringResource(Res.string.home_check_in_method_other) else formatMethod(it)
     }
     Box {
-        HomeCheckInEditorSelect(label ?: stringResource(Res.string.home_check_in_choose_method), CoffeePeekIcons.Coffee,
+        HomeCheckInEditorSelect(label ?: stringResource(Res.string.home_check_in_choose_method), null,
             stringResource(Res.string.home_check_in_method_action), enabled, error,
-            artwork = if (label == null) null else { modifier -> artwork(label, modifier) }) { expanded = true }
+            artwork = { modifier ->
+                if (label != null) artwork(label, modifier)
+                else CoffeePeekCoffeeIcon(null, Modifier.size(18.dp), MaterialTheme.colorScheme.onSurfaceVariant)
+            }) { expanded = true }
         DropdownMenu(expanded && enabled, { expanded = false }, modifier = Modifier.widthIn(min = 240.dp, max = 320.dp)
             .heightIn(max = 360.dp), shape = RoundedCornerShape(12.dp), containerColor = MaterialTheme.colorScheme.surface,
             tonalElevation = 0.dp) {
@@ -50,7 +54,7 @@ internal fun HomeCheckInEditorMethod(
 
 @Composable private fun HomeCheckInEditorMethodPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     Surface { HomeCheckInEditorMethod("hario-v60", listOf(HomeCheckInBrewMethod("hario-v60", "Hario V60")),
-        true, null, { it }, { _, modifier -> CoffeePeekIcon(CoffeePeekIcons.Coffee, null, modifier) }, {}) }
+        true, null, { it }, { _, modifier -> CoffeePeekCoffeeIcon(null, modifier) }, {}) }
 }
 @Preview @Composable private fun HomeCheckInEditorMethodLightPreview() = HomeCheckInEditorMethodPreview(false)
 @Preview @Composable private fun HomeCheckInEditorMethodDarkPreview() = HomeCheckInEditorMethodPreview(true)

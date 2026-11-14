@@ -16,8 +16,7 @@ import androidx.compose.ui.draw.clip
 import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
-import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
+import com.coffeepeek.core.designsystem.component.CoffeePeekCoffeeIcon
 import com.coffeepeek.core.designsystem.component.CoffeePeekRating
 import com.coffeepeek.core.designsystem.component.CoffeePeekRatingSize
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
@@ -43,7 +42,7 @@ internal fun HomeCheckInEditorRating(
 }
 
 @Composable private fun HomeCheckInEditorRatingPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
-    Surface { HomeCheckInEditorRating(5, true, { CoffeePeekIcon(CoffeePeekIcons.Coffee, null, it) }, {}) }
+    Surface { HomeCheckInEditorRating(5, true, { CoffeePeekCoffeeIcon(null, it) }, {}) }
 }
 @Preview @Composable private fun HomeCheckInEditorRatingLightPreview() = HomeCheckInEditorRatingPreview(false)
 @Preview @Composable private fun HomeCheckInEditorRatingDarkPreview() = HomeCheckInEditorRatingPreview(true)

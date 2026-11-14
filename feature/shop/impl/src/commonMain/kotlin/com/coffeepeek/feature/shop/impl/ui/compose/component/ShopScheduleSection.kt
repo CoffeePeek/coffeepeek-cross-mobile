@@ -9,7 +9,6 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -27,7 +26,6 @@ import com.coffeepeek.feature.shop.api.ShopExposure
 import com.coffeepeek.feature.shop.impl.ui.data.shopExposure
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
@@ -118,7 +116,13 @@ private fun ScheduleHeader(status: String, expanded: Boolean, onToggle: () -> Un
     val rotation by animateFloatAsState(if (expanded) 90f else 0f, tween(reducedMotionDuration(250)))
     Row(Modifier.fillMaxWidth().heightIn(min = CoffeePeekDimens.minimumTouchTarget)
         .semantics { stateDescription = expansionState }
-        .clickable(role = Role.Button, onClickLabel = toggleLabel, onClick = onToggle),
+        .clickable(
+            interactionSource = null,
+            indication = null,
+            role = Role.Button,
+            onClickLabel = toggleLabel,
+            onClick = onToggle,
+        ),
         horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing4),
         verticalAlignment = Alignment.CenterVertically) {
         CoffeePeekIcon(CoffeePeekIcons.Time, null, Modifier.size(24.dp))

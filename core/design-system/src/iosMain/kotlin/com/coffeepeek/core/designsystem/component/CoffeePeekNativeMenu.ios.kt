@@ -9,6 +9,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.clearAndSetSemantics
+import com.coffeepeek.core.designsystem.icons.coffeePeekMapIconPainter
 import com.coffeepeek.core.designsystem.resources.Res
 import com.coffeepeek.core.designsystem.resources.coffeepeek_actions
 import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
@@ -30,7 +31,10 @@ internal actual fun CoffeePeekNativeMenu(
     val active = rememberUpdatedState(enabled)
     val colors = MaterialTheme.colorScheme
     val description = stringResource(Res.string.coffeepeek_actions)
-    val images = actions.map { coffeePeekNativeImage(it.icon) }
+    val images = actions.map { action ->
+        action.mapIcon?.let { coffeePeekNativeImage(coffeePeekMapIconPainter(it)) }
+            ?: action.icon?.let { coffeePeekNativeImage(it) }
+    }
     Box(modifier) {
         Box(Modifier.clearAndSetSemantics { }) { content { } }
         CoffeePeekNativeGlassView(

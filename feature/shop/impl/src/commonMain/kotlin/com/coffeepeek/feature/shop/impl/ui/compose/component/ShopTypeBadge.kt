@@ -13,8 +13,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
-import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
-import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
+import com.coffeepeek.core.designsystem.component.CoffeePeekCoffeeIcon
 import com.coffeepeek.core.designsystem.theme.CoffeePeekColors
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
@@ -37,7 +36,7 @@ internal fun ShopTypeBadge(type: ShopType, modifier: Modifier = Modifier) {
         Row(Modifier.padding(horizontal = CoffeePeekDimens.spacing2, vertical = CoffeePeekDimens.spacing1),
             horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing1),
             verticalAlignment = Alignment.CenterVertically) {
-            CoffeePeekIcon(CoffeePeekIcons.Coffee, null, Modifier.size(14.dp), tint = CoffeePeekColors.Primary)
+            CoffeePeekCoffeeIcon(null, Modifier.size(14.dp), tint = CoffeePeekColors.Primary)
             Text(label, style = MaterialTheme.typography.labelSmall)
         }
     }

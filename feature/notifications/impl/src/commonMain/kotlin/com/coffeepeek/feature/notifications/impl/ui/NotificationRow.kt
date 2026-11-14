@@ -20,8 +20,11 @@ import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.core.designsystem.component.CoffeePeekIconBadge
 import com.coffeepeek.core.designsystem.component.CoffeePeekIconBadgePalette
+import com.coffeepeek.core.designsystem.component.coffeePeekIconPainter
 import com.coffeepeek.core.designsystem.component.CoffeePeekRowSeparator
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
+import com.coffeepeek.core.designsystem.icons.CoffeePeekMapIcon
+import com.coffeepeek.core.designsystem.icons.coffeePeekMapIconPainter
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.feature.notifications.api.NotificationItem
 import com.coffeepeek.feature.notifications.api.NotificationKind
@@ -53,16 +56,17 @@ internal fun NotificationRow(item: NotificationItem, enabled: Boolean, onClick: 
     }
 }
 
+@Composable
 private fun notificationAppearance(item: NotificationItem) = when {
     item.kind == NotificationKind.ShopRejected || item.kind == NotificationKind.RoasterRejected || item.status == "Rejected" ->
-        CoffeePeekIcons.Close to CoffeePeekIconBadgePalette.Rose
+        coffeePeekIconPainter(CoffeePeekIcons.Close) to CoffeePeekIconBadgePalette.Rose
     item.kind == NotificationKind.ShopApproved || item.kind == NotificationKind.RoasterApproved ->
-        CoffeePeekIcons.CheckCircle to CoffeePeekIconBadgePalette.Mint
-    item.kind == NotificationKind.NewShop -> CoffeePeekIcons.Location to CoffeePeekIconBadgePalette.Gold
-    item.kind == NotificationKind.CheckInModeration -> CoffeePeekIcons.Review to CoffeePeekIconBadgePalette.Sky
-    item.kind == NotificationKind.CorrectionModeration -> CoffeePeekIcons.Edit to CoffeePeekIconBadgePalette.Cyan
-    item.kind == NotificationKind.Inactivity -> CoffeePeekIcons.Coffee to CoffeePeekIconBadgePalette.Gold
-    else -> CoffeePeekIcons.Sparkle to CoffeePeekIconBadgePalette.Violet
+        coffeePeekIconPainter(CoffeePeekIcons.CheckCircle) to CoffeePeekIconBadgePalette.Mint
+    item.kind == NotificationKind.NewShop -> coffeePeekIconPainter(CoffeePeekIcons.Location) to CoffeePeekIconBadgePalette.Gold
+    item.kind == NotificationKind.CheckInModeration -> coffeePeekIconPainter(CoffeePeekIcons.Review) to CoffeePeekIconBadgePalette.Sky
+    item.kind == NotificationKind.CorrectionModeration -> coffeePeekIconPainter(CoffeePeekIcons.Edit) to CoffeePeekIconBadgePalette.Cyan
+    item.kind == NotificationKind.Inactivity -> coffeePeekMapIconPainter(CoffeePeekMapIcon.CoffeeShop) to CoffeePeekIconBadgePalette.Gold
+    else -> coffeePeekIconPainter(CoffeePeekIcons.Sparkle) to CoffeePeekIconBadgePalette.Violet
 }
 
 @Composable

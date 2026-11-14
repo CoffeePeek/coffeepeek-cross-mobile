@@ -75,6 +75,7 @@ import com.coffeepeek.core.designsystem.component.CoffeePeekContentCard
 import com.coffeepeek.core.designsystem.component.CoffeePeekIconBadge
 import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
 import com.coffeepeek.core.designsystem.component.CoffeePeekTopBar
+import com.coffeepeek.core.designsystem.component.CoffeePeekCoffeeIcon
 import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekColors
@@ -140,7 +141,7 @@ private fun RequestBody(request: ChangeRequest, onOpenShop: (String) -> Unit) {
             onClick = { onOpenShop(request.shopSlug) }, enabled = request.shopSlug.isNotBlank(),
             modifier = Modifier.fillMaxWidth().heightIn(min = CoffeePeekDimens.buttonHeight), shape = RoundedCornerShape(percent = 50),
         ) {
-            CoffeePeekIcon(CoffeePeekIcons.Coffee, contentDescription = null, modifier = Modifier.size(18.dp))
+            CoffeePeekCoffeeIcon(contentDescription = null, modifier = Modifier.size(18.dp))
             Spacer(Modifier.width(CoffeePeekDimens.spacing2))
             Text(stringResource(Res.string.contributions_request_open_shop))
         }
