@@ -5,7 +5,6 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 import com.coffeepeek.feature.community.impl.resources.Res
 import com.coffeepeek.feature.community.impl.resources.community_mascot_error
 import com.coffeepeek.feature.community.impl.resources.community_edit_saved
-import com.coffeepeek.feature.community.impl.resources.community_empty
 import com.coffeepeek.feature.community.impl.resources.community_error_body
 import com.coffeepeek.feature.community.impl.resources.community_error_title
 import com.coffeepeek.feature.community.impl.resources.community_loading

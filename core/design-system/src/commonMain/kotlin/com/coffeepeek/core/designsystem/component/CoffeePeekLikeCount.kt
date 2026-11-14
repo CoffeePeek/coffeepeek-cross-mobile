@@ -84,7 +84,7 @@ private fun CoffeePeekReactionHeart(selected: Boolean) {
         }, tint = MaterialTheme.colorScheme.onSurface)
         CoffeePeekIcon(CoffeePeekIcons.FavoriteFilled, null, Modifier.matchParentSize().graphicsLayer {
             alpha = fill.value
-        }, tint = CoffeePeekColors.ReactionHeart)
+        }, tint = CoffeePeekColors.Like)
     }
 }
 
