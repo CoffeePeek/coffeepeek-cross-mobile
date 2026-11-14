@@ -28,6 +28,7 @@ object CoffeePeekColors {
     val ErrorTextLight = Color(0xFFB91C1C)
     val ErrorTextDark = Color(0xFFFCA5A5)
     // Positive affinity has its own semantic role, using brand gold rather than error red.
+    val ReactionHeart  = Color(0xFFE84255)
     val Like           = Primary
     val LikeOutline    = AccentTextLight
     val PhotoBadgeOverlay = Color.Black.copy(alpha = 0.68f)

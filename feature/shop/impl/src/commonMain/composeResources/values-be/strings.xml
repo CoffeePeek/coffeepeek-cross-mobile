@@ -93,7 +93,6 @@
     <string name="shop_checkins_like_updating">Абнаўленне лайка, лайкаў: %1$d</string>
     <string name="shop_checkins_photo_description">Фота наведвання %1$d з %2$d</string>
     <string name="shop_detail_back">Назад</string>
-    <string name="shop_detail_error">Не ўдалося загрузіць кавярню</string>
     <string name="shop_detail_retry">Паўтарыць</string>
     <string name="shop_detail_share">Падзяліцца</string>
     <string name="shop_detail_suggest_change">Прапанаваць праўку</string>
@@ -105,7 +104,6 @@
     <string name="shop_favorite_updating">Абнаўленне абранага</string>
     <string name="shop_detail_loading">Загрузка кавярні</string>
     <string name="shop_detail_refreshing">Абнаўленне звестак пра кавярню</string>
-    <string name="shop_detail_refresh_error">Не ўдалося абнавіць звесткі. Паказаныя раней загружаныя звесткі.</string>
     <string name="shop_review_coffee">Кава</string>
     <string name="shop_review_service">Сэрвіс</string>
     <string name="shop_review_place">Атмасфера</string>

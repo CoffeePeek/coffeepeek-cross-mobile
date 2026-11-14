@@ -93,7 +93,6 @@
     <string name="shop_checkins_like_updating">Обновление лайка, лайков: %1$d</string>
     <string name="shop_checkins_photo_description">Фото посещения %1$d из %2$d</string>
     <string name="shop_detail_back">Назад</string>
-    <string name="shop_detail_error">Не удалось загрузить кофейню</string>
     <string name="shop_detail_retry">Повторить</string>
     <string name="shop_detail_share">Поделиться</string>
     <string name="shop_detail_suggest_change">Предложить правку</string>
@@ -105,7 +104,6 @@
     <string name="shop_favorite_updating">Обновление избранного</string>
     <string name="shop_detail_loading">Загрузка кофейни</string>
     <string name="shop_detail_refreshing">Обновление информации о кофейне</string>
-    <string name="shop_detail_refresh_error">Не удалось обновить данные. Показана ранее загруженная информация.</string>
     <string name="shop_review_coffee">Кофе</string>
     <string name="shop_review_service">Сервис</string>
     <string name="shop_review_place">Атмосфера</string>

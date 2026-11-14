@@ -71,7 +71,7 @@ import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopFeaturesSection
 import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopDetailTopActions
 import com.coffeepeek.feature.shop.impl.ui.compose.component.LocalShopBusinessIdentity
 import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopBusinessIdentity
-import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopDetailLoadState
+import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopDetailLoading
 import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopDetailRefreshStatus
 import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopDetailBottomBar
 import com.coffeepeek.feature.shop.impl.ui.compose.component.ShopOverviewHeader
@@ -217,15 +217,27 @@ private fun ShopDetailScaffold(
         containerColor = MaterialTheme.colorScheme.background) { insets ->
         Box(Modifier.fillMaxSize().padding(insets).consumeWindowInsets(insets), contentAlignment = Alignment.Center) {
             val currentDetails = state.details
-            Crossfade(targetState = currentDetails == null,
-                animationSpec = tween(reducedMotionDuration(220)), label = "shop-status") { empty ->
-                if (empty || currentDetails == null) ShopDetailLoadState(state.isLoading, onRetry = { onAction(ShopDetailAction.Retry) })
-                else ShopDetailList(currentDetails, state, onAction, distanceLabel, formatCheckInDate, formatMenuDate,
-                    listState, clearance)
+            val status = when {
+                currentDetails != null -> ShopDetailDisplay.Content
+                state.isLoading -> ShopDetailDisplay.Loading
+                else -> ShopDetailDisplay.Empty
+            }
+            Crossfade(targetState = status,
+                animationSpec = tween(reducedMotionDuration(220)), label = "shop-status") { display ->
+                when (display) {
+                    ShopDetailDisplay.Loading -> ShopDetailLoading()
+                    ShopDetailDisplay.Content -> if (currentDetails != null) {
+                        ShopDetailList(currentDetails, state, onAction, distanceLabel, formatCheckInDate,
+                            formatMenuDate, listState, clearance)
+                    }
+                    ShopDetailDisplay.Empty -> Unit
+                }
             }
         }
     }
 }
+
+private enum class ShopDetailDisplay { Loading, Content, Empty }
 
 @Composable
 private fun ShopDetailList(
@@ -238,7 +250,7 @@ private fun ShopDetailList(
         contentPadding = PaddingValues(bottom = clearance + CoffeePeekDimens.spacing4 +
             CoffeePeekDimens.spacing6 + bottomInset)) {
         item { ShopDetailHeader(state, onAction, distanceLabel) }
-        shopDetailIntroItems(details, state, onAction)
+        shopDetailIntroItems(details, state.isLoading)
         shopDetailCoffeeItems(details, state, onAction)
         shopDetailMenuItems(details, formatMenuDate, onAction)
         shopDetailContactItems(details, state, onAction)
@@ -248,10 +260,9 @@ private fun ShopDetailList(
     }
 }
 
-private fun LazyListScope.shopDetailIntroItems(details: ShopDetails, state: ShopDetailState,
-    onAction: (ShopDetailAction) -> Unit) {
-    if (state.isLoading || state.hasError) item {
-        ShopDetailRefreshStatus(state.isLoading, onRetry = { onAction(ShopDetailAction.Retry) },
+private fun LazyListScope.shopDetailIntroItems(details: ShopDetails, isLoading: Boolean) {
+    if (isLoading) item {
+        ShopDetailRefreshStatus(
             modifier = Modifier.padding(horizontal = CoffeePeekDimens.spacing4, vertical = CoffeePeekDimens.spacing3))
     }
     details.overview.description?.let { description -> item {
@@ -403,10 +414,10 @@ private fun ShopDetailHeader(
 @Preview @Composable private fun ShopDetailLoadingDarkPreview() = CoffeePeekTheme(darkTheme = true) {
     ShopDetailScreenContent(ShopDetailState(), {})
 }
-@Preview @Composable private fun ShopDetailErrorLightPreview() = CoffeePeekTheme(darkTheme = false) {
+@Preview @Composable private fun ShopDetailUnavailableLightPreview() = CoffeePeekTheme(darkTheme = false) {
     ShopDetailScreenContent(ShopDetailState(isLoading = false, hasError = true), {})
 }
-@Preview @Composable private fun ShopDetailErrorDarkPreview() = CoffeePeekTheme(darkTheme = true) {
+@Preview @Composable private fun ShopDetailUnavailableDarkPreview() = CoffeePeekTheme(darkTheme = true) {
     ShopDetailScreenContent(ShopDetailState(isLoading = false, hasError = true), {})
 }
 @Preview @Composable private fun ShopDetailRefreshErrorLightPreview() = CoffeePeekTheme(darkTheme = false) {

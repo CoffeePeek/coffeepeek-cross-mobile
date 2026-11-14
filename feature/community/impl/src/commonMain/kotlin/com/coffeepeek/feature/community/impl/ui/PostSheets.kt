@@ -47,6 +47,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -79,6 +80,7 @@ import com.coffeepeek.core.designsystem.component.CoffeePeekRating
 import com.coffeepeek.core.designsystem.component.CoffeePeekRatingSize
 import com.coffeepeek.core.designsystem.component.CoffeePeekSelectField
 import com.coffeepeek.core.designsystem.component.CoffeePeekSelectOption
+import com.coffeepeek.core.designsystem.component.CoffeePeekMultilineTextField
 import com.coffeepeek.core.designsystem.component.CoffeePeekSwipeDismissModalBottomSheet
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
@@ -113,13 +115,16 @@ internal fun PostEditorSheet(edit: PostEditState, drinks: List<DrinkOption>, fai
 
 @Composable
 internal fun EditSheetContent(edit: PostEditState, drinks: List<DrinkOption>, drinksFailed: Boolean, saving: Boolean, callbacks: PostEditorCallbacks) {
-    Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(CoffeePeekDimens.spacing4), verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3)) {
+    Column(Modifier.fillMaxWidth().imePadding().verticalScroll(rememberScrollState()).padding(CoffeePeekDimens.spacing4), verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3)) {
         Text(stringResource(Res.string.community_edit_title), style = MaterialTheme.typography.headlineSmall)
         Text(edit.source.shopName.ifBlank { stringResource(Res.string.community_shop_default) }, style = MaterialTheme.typography.titleMedium)
         Text(stringResource(Res.string.community_edit_kept), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         RatingCards(edit.rating, callbacks.onRating)
-        Text(stringResource(Res.string.community_note_label), style = MaterialTheme.typography.labelMedium)
-        TextArea(edit.text, callbacks.onText, stringResource(Res.string.community_note_placeholder), MAX_NOTE_LENGTH, isError = edit.error != null)
+        val noteLabel = stringResource(Res.string.community_note_label)
+        Text(noteLabel, style = MaterialTheme.typography.labelMedium)
+        CoffeePeekMultilineTextField(edit.text, callbacks.onText, noteLabel,
+            stringResource(Res.string.community_note_placeholder), MAX_NOTE_LENGTH, enabled = !saving,
+            errorDescription = edit.error?.let { editErrorText(it) })
         DrinkField(edit, drinks, drinksFailed, callbacks)
         edit.error?.let { Text(editErrorText(it), color = MaterialTheme.colorScheme.error) }
         CoffeePeekButton(stringResource(if (saving) Res.string.community_saving else Res.string.community_save), callbacks.onSave, Modifier.fillMaxWidth(), enabled = !saving)

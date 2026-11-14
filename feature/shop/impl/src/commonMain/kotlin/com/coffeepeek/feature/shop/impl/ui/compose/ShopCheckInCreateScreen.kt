@@ -23,8 +23,6 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.error
@@ -147,15 +145,9 @@ internal fun ShopCheckInCreateScreenContent(
         ShopCheckInSendingPane(modifier)
         return
     }
-    val scroll = rememberScrollState()
-    val focus = LocalFocusManager.current
-    val keyboard = LocalSoftwareKeyboardController.current
-    LaunchedEffect(scroll.isScrollInProgress) {
-        if (scroll.isScrollInProgress) { keyboard?.hide(); focus.clearFocus() }
-    }
     val editable = state.isEditable(photosPreparing)
     Column(
-        modifier.fillMaxWidth().testTag("shop-checkin-form").verticalScroll(scroll)
+        modifier.fillMaxWidth().testTag("shop-checkin-form").verticalScroll(rememberScrollState())
             .padding(horizontal = CoffeePeekDimens.spacing4)
             .padding(top = CoffeePeekDimens.spacing3, bottom = CoffeePeekDimens.spacing6),
         verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing6),

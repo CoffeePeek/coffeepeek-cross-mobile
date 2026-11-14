@@ -43,10 +43,8 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
@@ -69,7 +67,7 @@ import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.component.CoffeePeekActionMenu
-import com.coffeepeek.core.designsystem.component.CoffeePeekLikeIcon
+import com.coffeepeek.core.designsystem.component.CoffeePeekLikeCount
 import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
 import com.coffeepeek.core.designsystem.component.CoffeePeekMenuAction
 import com.coffeepeek.core.designsystem.component.CoffeePeekMenuIcon
@@ -288,20 +286,7 @@ private fun HelpfulButton(count: Int, helpful: Boolean, onClick: (() -> Unit)?) 
         helpful -> stringResource(Res.string.community_unlike, count)
         else -> stringResource(Res.string.community_like, count)
     }
-    Row(
-        Modifier.heightIn(min = 48.dp).widthIn(min = 48.dp).clip(RoundedCornerShape(CoffeePeekDimens.radiusMd))
-            .semantics(mergeDescendants = true) { contentDescription = description },
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2),
-    ) {
-        // The ripple belongs to the heart alone; the row only widens the touch target.
-        Box(Modifier.size(44.dp).clip(CircleShape)
-            .then(if (onClick != null) Modifier.clickable(role = Role.Button, onClick = onClick) else Modifier),
-            contentAlignment = Alignment.Center) {
-            CoffeePeekLikeIcon(helpful, contentDescription = null)
-        }
-        Text(count.toString(), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface)
-    }
+    CoffeePeekLikeCount(count, helpful, description, onClick = onClick)
 }
 
 @Composable
