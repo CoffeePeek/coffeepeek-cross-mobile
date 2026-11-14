@@ -36,6 +36,7 @@ import com.coffeepeek.feature.community.impl.resources.community_unlike
 import com.coffeepeek.feature.community.impl.resources.community_user
 import com.coffeepeek.feature.community.impl.resources.community_you
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -52,10 +53,12 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ripple
 import androidx.compose.material3.Text
 import com.coffeepeek.core.designsystem.component.CoffeePeekTextButton as TextButton
 import com.coffeepeek.core.designsystem.component.CoffeePeekPlainIconButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -295,16 +298,24 @@ private fun HelpfulButton(count: Int, helpful: Boolean, onClick: (() -> Unit)?) 
         else -> stringResource(Res.string.community_like, count)
     }
     Row(
-        Modifier.heightIn(min = 48.dp).widthIn(min = 48.dp).clip(RoundedCornerShape(CoffeePeekDimens.radiusMd))
+        Modifier.heightIn(min = 48.dp).widthIn(min = 48.dp)
             .semantics(mergeDescendants = true) { contentDescription = description },
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2),
+        horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing1),
     ) {
-        // The ripple belongs to the heart alone; the row only widens the touch target.
-        Box(Modifier.size(44.dp).clip(CircleShape)
-            .then(if (onClick != null) Modifier.clickable(role = Role.Button, onClick = onClick) else Modifier),
-            contentAlignment = Alignment.Center) {
-            CoffeePeekLikeIcon(helpful, contentDescription = null)
+        // The press effect lives inside the heart itself; the row only widens the touch target
+        // (no visual ripple of its own), so the heart and the count sit close together.
+        val interactions = remember { MutableInteractionSource() }
+        val press = if (onClick != null) Modifier.clickable(
+            interactionSource = interactions, indication = null, role = Role.Button, onClick = onClick,
+        ) else Modifier
+        Box(Modifier.size(44.dp).then(press), contentAlignment = Alignment.Center) {
+            val heartPress = if (onClick != null) Modifier.clip(CircleShape).clickable(
+                interactionSource = interactions, indication = ripple(bounded = true), onClick = onClick,
+            ) else Modifier
+            Box(Modifier.size(28.dp).then(heartPress), contentAlignment = Alignment.Center) {
+                CoffeePeekLikeIcon(helpful, contentDescription = null)
+            }
         }
         Text(count.toString(), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface)
     }
