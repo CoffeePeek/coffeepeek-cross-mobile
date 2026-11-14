@@ -25,7 +25,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
@@ -83,7 +82,6 @@ internal fun ShopDetailBottomBar(
 private fun ShopCheckInAction(onClick: () -> Unit, hazeState: HazeState?, modifier: Modifier) {
     CoffeePeekGlassButton(text = stringResource(Res.string.shop_detail_checkin), onClick = onClick,
         leadingIcon = CoffeePeekGlassButtonIcon.Check, hazeState = hazeState,
-        glassTint = CoffeePeekColors.DarkSurface.copy(alpha = 0.68f), contentColor = Color.White,
         modifier = modifier.heightIn(min = CoffeePeekDimens.glassControlSize).shopExposure(ShopExposure.CheckIn))
 }
 

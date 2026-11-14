@@ -18,6 +18,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.component.*
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
+import com.coffeepeek.core.designsystem.icons.CoffeePeekMapIcon
+import com.coffeepeek.core.designsystem.icons.coffeePeekMapIconPainter
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.checkinhistory.impl.ui.compose.model.HistoryTimelineItem
 import com.coffeepeek.feature.checkinhistory.impl.ui.data.displayName
@@ -66,7 +68,8 @@ private fun ActivityThumbnail(row: HistoryTimelineItem, image: HistoryImageConte
     if (photo != null) image(photo, modifier.clip(RoundedCornerShape(10.dp)), ContentScale.Crop)
     else Box(modifier.background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f), RoundedCornerShape(10.dp)),
         contentAlignment = Alignment.Center) {
-        CoffeePeekIcon(CoffeePeekIcons.Coffee, null, Modifier.fillMaxSize(0.5f), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+        CoffeePeekIcon(coffeePeekMapIconPainter(CoffeePeekMapIcon.CoffeeShop), null,
+            Modifier.fillMaxSize(0.5f), tint = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 

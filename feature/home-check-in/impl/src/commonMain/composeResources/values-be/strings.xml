@@ -117,9 +117,9 @@
     <string name="home_check_in_method_other">Іншае</string>
     <string name="home_check_in_create_title">Новы чэкін</string>
     <string name="home_check_in_create_prompt">Дзе вы пілі каву?</string>
-    <string name="home_check_in_create_shop">У кавярні</string>
+    <string name="home_check_in_create_shop">Чэкін у кавярні</string>
     <string name="home_check_in_create_shop_hint">Выбраць месца і напой</string>
-    <string name="home_check_in_create_home">Дома</string>
+    <string name="home_check_in_create_home">Чэкін дома</string>
     <string name="home_check_in_create_home_hint">Запісаць прыгатаванне</string>
     <string name="home_check_in_create_what">Што дадамо?</string>
     <string name="home_check_in_create_shelf_title">Пачак на паліцу</string>

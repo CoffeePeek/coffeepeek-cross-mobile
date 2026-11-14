@@ -32,8 +32,6 @@ expect fun CoffeePeekGlassButton(
     loadingDescription: String? = null,
     leadingIcon: CoffeePeekGlassButtonIcon? = null,
     hazeState: HazeState? = LocalCoffeePeekGlassHazeState.current,
-    glassTint: Color = Color.Unspecified,
-    contentColor: Color = Color.Unspecified,
 )
 
 @Composable
@@ -45,7 +43,6 @@ private fun CoffeePeekGlassButtonPreview(dark: Boolean) = CoffeePeekTheme(darkTh
             Box(Modifier.fillMaxWidth().weight(1f).background(Color(0xFF46664D)))
         }
         CoffeePeekGlassButton("Check in", {}, leadingIcon = CoffeePeekGlassButtonIcon.Check, hazeState = haze,
-            glassTint = Color(0xAD2D241F), contentColor = Color.White,
             modifier = Modifier.align(Alignment.Center).fillMaxWidth().padding(16.dp))
     }
 }

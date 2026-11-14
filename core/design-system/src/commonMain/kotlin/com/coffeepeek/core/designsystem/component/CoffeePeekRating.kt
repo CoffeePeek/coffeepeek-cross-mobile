@@ -111,11 +111,10 @@ private fun CoffeePeekRatingStar(fill: Float, starSize: Dp, active: Color, inact
     Box(Modifier.size(starSize)) {
         if (fill > 0f) Box(Modifier.matchParentSize().clipRatingFill(fill, rtl)) {
             CoffeePeekIcon(CoffeePeekIcons.StarFilled, null, Modifier.matchParentSize(), tint = active)
-            if (light) CoffeePeekIcon(CoffeePeekIcons.StarOutline, null, Modifier.matchParentSize(), tint = active)
+            CoffeePeekIcon(CoffeePeekIcons.StarOutline, null, Modifier.matchParentSize(), tint = active)
         }
-        if (!light || fill < 1f) {
-            val outline = if (light) Modifier.clipRatingFill(1f - fill, !rtl) else Modifier
-            CoffeePeekIcon(CoffeePeekIcons.StarOutline, null, Modifier.fillMaxSize().then(outline),
+        if (fill < 1f) {
+            CoffeePeekIcon(CoffeePeekIcons.StarOutline, null, Modifier.fillMaxSize().clipRatingFill(1f - fill, !rtl),
                 tint = if (light) colors.onSurface else inactive)
         }
     }

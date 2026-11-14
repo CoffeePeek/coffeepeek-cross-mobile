@@ -10,7 +10,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.takeOrElse
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.progressBarRangeInfo
@@ -25,23 +24,19 @@ import com.coffeepeek.core.designsystem.modifier.LocalCoffeePeekGlassHazeState
 actual fun CoffeePeekGlassButton(
     text: String, onClick: () -> Unit, modifier: Modifier, enabled: Boolean,
     isLoading: Boolean, loadingDescription: String?, leadingIcon: CoffeePeekGlassButtonIcon?, hazeState: HazeState?,
-    glassTint: Color, contentColor: Color,
 ) {
     val loadingLabel = if (isLoading) requireNotNull(loadingDescription) else null
-    val defaults = ButtonDefaults.filledTonalButtonColors()
-    val colors = ButtonDefaults.filledTonalButtonColors(
-        containerColor = glassTint.takeOrElse { Color.Transparent },
-        contentColor = contentColor.takeOrElse { defaults.contentColor },
-        disabledContainerColor = glassTint.takeOrElse { Color.Transparent },
-        disabledContentColor = contentColor.takeOrElse { defaults.disabledContentColor },
-    )
     CompositionLocalProvider(LocalCoffeePeekGlassHazeState provides hazeState) {
         CoffeePeekTonalButton(onClick, modifier.semantics {
             if (loadingLabel != null) {
                 stateDescription = loadingLabel
                 progressBarRangeInfo = ProgressBarRangeInfo.Indeterminate
             }
-        }, enabled = enabled && !isLoading, colors = colors) {
+        }, enabled = enabled && !isLoading, colors = ButtonDefaults.filledTonalButtonColors(
+            containerColor = Color.Transparent,
+            disabledContainerColor = Color.Transparent,
+            contentColor = MaterialTheme.colorScheme.onSurface,
+        )) {
             if (isLoading) CoffeePeekLoader(loadingLabel!!, Modifier.clearAndSetSemantics {}, size = 16.dp)
             else if (leadingIcon == CoffeePeekGlassButtonIcon.Check) Icon(CoffeePeekIcons.Check, null)
             if (isLoading || leadingIcon != null) Spacer(Modifier.width(4.dp))

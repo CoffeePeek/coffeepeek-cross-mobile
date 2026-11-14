@@ -79,9 +79,8 @@ internal fun CoffeePeekAnimatedLikeIcon(
         CoffeePeekIcon(CoffeePeekIcons.FavoriteFilled, null, Modifier.matchParentSize().graphicsLayer {
             alpha = fill.value
         }, tint = gold)
-        CoffeePeekIcon(CoffeePeekIcons.Favorite, null, Modifier.matchParentSize().graphicsLayer {
-            alpha = if (!light && overImage) 1f - fill.value else 1f
-        }, tint = if (light) lerp(outline, gold, fill.value) else outline)
+        CoffeePeekIcon(CoffeePeekIcons.Favorite, null, Modifier.matchParentSize(),
+            tint = lerp(outline, gold, fill.value))
     }
 }
 

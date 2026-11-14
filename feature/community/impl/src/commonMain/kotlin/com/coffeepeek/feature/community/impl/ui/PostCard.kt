@@ -69,6 +69,8 @@ import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.component.CoffeePeekActionMenu
+import com.coffeepeek.core.designsystem.component.CoffeePeekDrinkLabel
+import com.coffeepeek.core.designsystem.component.CoffeePeekDrinkLabelSize
 import com.coffeepeek.core.designsystem.component.CoffeePeekLikeCount
 import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
 import com.coffeepeek.core.designsystem.component.CoffeePeekMenuAction
@@ -157,7 +159,7 @@ internal fun PostCard(
                     Text(stringResource(if (changingVisibility) Res.string.community_saving else Res.string.community_publish))
                 }
             }
-            drinkName?.let { DrinkLabel(it) }
+            drinkName?.let { CoffeePeekDrinkLabel(it, size = CoffeePeekDrinkLabelSize.Compact) }
         }
     }
 }
@@ -289,14 +291,6 @@ private fun HelpfulButton(count: Int, helpful: Boolean, onClick: (() -> Unit)?) 
         else -> stringResource(Res.string.community_like, count)
     }
     CoffeePeekLikeCount(count, helpful, description, onClick = onClick)
-}
-
-@Composable
-private fun DrinkLabel(name: String) {
-    Row(horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing1), verticalAlignment = Alignment.CenterVertically) {
-        CoffeePeekIcon(CoffeePeekIcons.Coffee, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(14.dp))
-        Text(name, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-    }
 }
 
 @Composable

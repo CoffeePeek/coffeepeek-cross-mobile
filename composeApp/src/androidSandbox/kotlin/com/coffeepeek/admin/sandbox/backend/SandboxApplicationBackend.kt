@@ -413,6 +413,7 @@ internal class SandboxApplicationBackend(private val today: LocalDate, private v
         put("authorAvatarUrl", "/media/sample"); put("shop", address("sandbox-cafe", "/coffee-shops/sandbox-cafe"))
         put("createdAtUtc", "${today}T06:00:00Z"); put("visitedAt", "${today}T06:00:00Z")
         put("text", "Публичный визит другого автора"); put("visibility", "Public"); put("moderationState", "Approved")
+        put("drinkNameRu", "Батч"); put("drinkNameEn", "Batch brew")
         put("helpfulCount", 2); put("isHelpfulByCurrentUser", false)
         putJsonObject("rating") { put("coffee", 5); put("service", 4); put("place", 5) }
         // Protected delivery shape: an owner-scoped original plus immutable feed/detail variants.
