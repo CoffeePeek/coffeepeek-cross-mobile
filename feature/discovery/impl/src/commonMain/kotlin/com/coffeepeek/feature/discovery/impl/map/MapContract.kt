@@ -14,7 +14,6 @@ import com.coffeepeek.feature.discovery.domain.model.MapZone
 import com.coffeepeek.feature.discovery.domain.model.ShopSummary
 
 internal data class MapState(
-    val cityId: String? = null,
     val filters: DiscoveryFilters = DiscoveryFilters(),
     val userLocation: Coordinates? = null,
     /** Shops in the settled viewport, retaining the order of surviving cards. */

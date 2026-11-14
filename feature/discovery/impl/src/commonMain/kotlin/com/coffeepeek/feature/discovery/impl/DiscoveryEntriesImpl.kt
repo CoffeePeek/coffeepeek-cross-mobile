@@ -50,7 +50,7 @@ fun createDiscoveryTabEntry(
     ) {
         DiscoveryTab(
             viewModel(key = "discovery-search") { SearchViewModel(repository, favorites, city, location, account, analytics) },
-            viewModel(key = "discovery-map") { MapViewModel(repository, city, location, shopDetails, analytics, account, favorites) },
+            viewModel(key = "discovery-map") { MapViewModel(repository, location, shopDetails, analytics, account, favorites) },
             host, roasters, analytics,
             TabCallbacks(onOpenShop, onSignIn, onAddShop, onMapExpandedChange, onFocusConsumed, reselections,
                 onContinueCheckIn),

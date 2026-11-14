@@ -22,6 +22,10 @@ val MapBounds.center: Coordinates get() = Coordinates((minLat + maxLat) / 2.0, (
 fun MapBounds.contains(other: MapBounds): Boolean =
     other.minLat >= minLat && other.maxLat <= maxLat && other.minLon >= minLon && other.maxLon <= maxLon
 
+fun MapBounds.contains(point: Coordinates): Boolean =
+    point.isValid && point.latitude in minLat..maxLat &&
+        if (minLon <= maxLon) point.longitude in minLon..maxLon else point.longitude >= minLon || point.longitude <= maxLon
+
 /**
  * The visible bounds padded on every side by half a viewport, but at least [minMarginKm], so that moving the map a couple of kilometers stays inside the loaded area.
  * It ignores the antimeridian (city maps) and clamps to ±85 / ±180.
@@ -63,12 +67,8 @@ fun MapBounds.expandedForCarousel(): MapBounds {
 fun viewportMarkers(markers: List<MapMarker>, bounds: MapBounds, previous: List<MapMarker>): List<MapMarker> {
     val positions = previous.mapIndexed { index, marker -> marker.id to index }.toMap()
     val viewportCenter = bounds.center
-    return markers.distinctBy { it.id }.filter { marker ->
-        val point = marker.coordinates
-        point.isValid && point.latitude in bounds.minLat..bounds.maxLat &&
-            if (bounds.minLon <= bounds.maxLon) point.longitude in bounds.minLon..bounds.maxLon
-            else point.longitude >= bounds.minLon || point.longitude <= bounds.maxLon
-    }.sortedWith(compareBy<MapMarker> { positions[it.id] ?: Int.MAX_VALUE }
+    return markers.distinctBy { it.id }.filter { bounds.contains(it.coordinates) }
+        .sortedWith(compareBy<MapMarker> { positions[it.id] ?: Int.MAX_VALUE }
         .thenBy { distanceMeters(viewportCenter, it.coordinates) ?: Double.POSITIVE_INFINITY }
         .thenBy { it.id })
 }
