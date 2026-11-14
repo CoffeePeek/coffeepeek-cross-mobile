@@ -51,7 +51,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import com.coffeepeek.core.designsystem.component.CoffeePeekTextButton as TextButton
@@ -77,6 +76,7 @@ import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
 import com.coffeepeek.core.designsystem.component.CoffeePeekMenuAction
 import com.coffeepeek.core.designsystem.component.CoffeePeekMenuIcon
 import com.coffeepeek.core.designsystem.component.CoffeePeekRating
+import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekColors
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
@@ -215,7 +215,7 @@ private fun PostMenu(actions: PostCardActions, enabled: Boolean, hiding: Boolean
         actions.onBlock?.let { add(CoffeePeekMenuAction(stringResource(Res.string.community_block_author), CoffeePeekIcons.VisibilityOff, destructive = true, nativeIcon = CoffeePeekMenuIcon.Block, onClick = it)) }
     }
     CoffeePeekActionMenu(items, enabled = enabled) { open ->
-        CoffeePeekPlainIconButton(onClick = open, enabled = enabled) { Icon(CoffeePeekIcons.MoreHorizontal, label, tint = MaterialTheme.colorScheme.onSurfaceVariant) }
+        CoffeePeekPlainIconButton(onClick = open, enabled = enabled) { CoffeePeekIcon(CoffeePeekIcons.MoreHorizontal, label, tint = MaterialTheme.colorScheme.onSurfaceVariant) }
     }
 }
 
@@ -296,12 +296,16 @@ private fun HelpfulButton(count: Int, helpful: Boolean, onClick: (() -> Unit)?) 
     }
     Row(
         Modifier.heightIn(min = 48.dp).widthIn(min = 48.dp).clip(RoundedCornerShape(CoffeePeekDimens.radiusMd))
-            .then(if (onClick != null) Modifier.clickable(role = Role.Button, onClick = onClick) else Modifier)
             .semantics(mergeDescendants = true) { contentDescription = description },
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2),
     ) {
-        CoffeePeekLikeIcon(helpful, contentDescription = null)
+        // The ripple belongs to the heart alone; the row only widens the touch target.
+        Box(Modifier.size(44.dp).clip(CircleShape)
+            .then(if (onClick != null) Modifier.clickable(role = Role.Button, onClick = onClick) else Modifier),
+            contentAlignment = Alignment.Center) {
+            CoffeePeekLikeIcon(helpful, contentDescription = null)
+        }
         Text(count.toString(), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface)
     }
 }
@@ -309,7 +313,7 @@ private fun HelpfulButton(count: Int, helpful: Boolean, onClick: (() -> Unit)?) 
 @Composable
 private fun DrinkLabel(name: String) {
     Row(horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing1), verticalAlignment = Alignment.CenterVertically) {
-        Icon(CoffeePeekIcons.Coffee, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(14.dp))
+        CoffeePeekIcon(CoffeePeekIcons.Coffee, null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(14.dp))
         Text(name, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
@@ -329,7 +333,7 @@ private fun PostPhotoStrip(photos: PostPhotos, onPhoto: (Int) -> Unit, host: Com
             Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surfaceVariant), contentAlignment = Alignment.Center) {
                 CoffeePeekLoader(stringResource(Res.string.community_loading), size = 32.dp)
             }
-            host.image(photos.thumbnails.getOrNull(index) ?: photos.originals[index], photos.inlineSource(index), Modifier.fillMaxSize(), ContentScale.Crop)
+            host.image(photos.thumbnails.getOrNull(index)?.takeIf(String::isNotBlank) ?: photos.originals.getOrNull(index).orEmpty(), photos.inlineSource(index), Modifier.fillMaxSize(), ContentScale.Crop)
             if (index == 2 && count > 3) Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.45f)), contentAlignment = Alignment.Center) {
                 Text(stringResource(Res.string.community_more_photos, count - 3), style = MaterialTheme.typography.headlineSmall, color = Color.White)
             }

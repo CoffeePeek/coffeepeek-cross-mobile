@@ -32,7 +32,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.Icon
+import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import com.coffeepeek.core.designsystem.component.CoffeePeekScaffold as Scaffold
@@ -99,7 +99,7 @@ internal fun OutlinedField(
             minLines = minLines,
             maxLines = maxLines,
             contentPadding = if (singleLine) CoffeePeekDimens.singleLineFieldContentPadding else OutlinedTextFieldDefaults.contentPadding(),
-            leadingIcon = leadingIcon?.let { icon -> { Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant) } },
+            leadingIcon = leadingIcon?.let { icon -> { CoffeePeekIcon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant) } },
             keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
             colors = OutlinedTextFieldDefaults.colors(
                 focusedBorderColor = MaterialTheme.colorScheme.outline, unfocusedBorderColor = MaterialTheme.colorScheme.outline,

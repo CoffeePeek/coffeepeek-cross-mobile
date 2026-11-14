@@ -2,6 +2,7 @@ package com.coffeepeek.feature.shop.impl.ui.compose.component
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
+import androidx.compose.ui.text.intl.Locale
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -29,7 +30,9 @@ internal fun ShopMenuDrinkRow(item: ShopMenuItem, modifier: Modifier = Modifier)
     Row(modifier.fillMaxWidth().padding(vertical = CoffeePeekDimens.spacing1),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2)) {
-        Text(item.nameRu.ifBlank { item.nameEn.ifBlank { item.slug } }, Modifier.weight(1f),
+        val primary = if (Locale.current.language == "en") item.nameEn else item.nameRu
+        val fallback = if (Locale.current.language == "en") item.nameRu else item.nameEn
+        Text(primary.ifBlank { fallback.ifBlank { item.slug } }, Modifier.weight(1f),
             style = MaterialTheme.typography.bodyLarge)
         item.price?.takeIf(Double::isFinite)?.let { price ->
             val amount = formatShopMenuAmount(price)

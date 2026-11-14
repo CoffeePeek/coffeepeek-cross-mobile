@@ -13,11 +13,9 @@ import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class AppUpdateAdaptersTest {
-    @Test fun localIosDebugCannotCheckStoreUpdatesWhilePublishedBuildsAndAndroidKeepTheirChannels() {
-        assertFalse(appUpdateChecksEnabled("ios", debug = true))
-        assertTrue(appUpdateChecksEnabled("ios", debug = false))
-        assertTrue(appUpdateChecksEnabled("android", debug = true))
-        assertTrue(appUpdateChecksEnabled("android", debug = false))
+    @Test fun debugInstallationsCannotCheckProductionUpdatesWhilePublishedBuildsCan() {
+        assertFalse(appUpdateChecksEnabled(debug = true))
+        assertTrue(appUpdateChecksEnabled(debug = false))
     }
     private class Settings : SettingRepository {
         val rows = mutableMapOf<String, String>()

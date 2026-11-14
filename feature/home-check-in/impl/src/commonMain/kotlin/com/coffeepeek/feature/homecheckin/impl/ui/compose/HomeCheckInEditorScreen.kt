@@ -41,6 +41,7 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import org.jetbrains.compose.resources.pluralStringResource
@@ -56,6 +57,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import com.coffeepeek.core.designsystem.component.CoffeePeekButton
 import com.coffeepeek.core.designsystem.component.CoffeePeekFormStep
 import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
+import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.text.coffeePeekPluralForm
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
@@ -193,7 +195,7 @@ private fun HomeCheckInEditorHeader(state: HomeCheckInEditorState, onClose: () -
         Text(stringResource(if (state.entry == null) Res.string.home_check_in_home else Res.string.home_check_in_editor_title),
             Modifier.weight(1f), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
         IconButton(onClick = onClose, enabled = !state.isSaving, modifier = Modifier.size(44.dp)) {
-            Icon(CoffeePeekIcons.Close, stringResource(Res.string.home_check_in_editor_close), Modifier.size(20.dp))
+            CoffeePeekIcon(CoffeePeekIcons.Close, stringResource(Res.string.home_check_in_editor_close), Modifier.size(20.dp))
         }
     }
 }
@@ -226,6 +228,8 @@ private fun HomeCheckInEditorSaveError(state: HomeCheckInEditorState) {
 @Composable
 private fun HomeCheckInEditorFooter(state: HomeCheckInEditorState, enabled: Boolean,
     onAction: (HomeCheckInEditorAction) -> Unit, onSave: () -> Unit) {
+    // Leave the available height to the form while typing, including in iOS full-screen dialogs.
+    if (WindowInsets.ime.getBottom(LocalDensity.current) > 0) return
     Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         HomeCheckInEditorVisibility(state.draft.visibility == HomePreparationVisibility.Public, enabled) {
             onAction(HomeCheckInEditorAction.VisibilityChanged(if (it) HomePreparationVisibility.Public else HomePreparationVisibility.Private))
@@ -238,8 +242,8 @@ private fun HomeCheckInEditorFooter(state: HomeCheckInEditorState, enabled: Bool
 
 /** Fixture ports only; real artwork/decoding will come from application composition. */
 internal fun previewHomeEditorMedia() = HomeCheckInEditorMedia(
-    { Icon(CoffeePeekIcons.Coffee, null, it) }, { Icon(CoffeePeekIcons.Search, null, it) },
-    { _, modifier -> Icon(CoffeePeekIcons.Coffee, null, modifier, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
+    { CoffeePeekIcon(CoffeePeekIcons.Coffee, null, it) }, { CoffeePeekIcon(CoffeePeekIcons.Search, null, it) },
+    { _, modifier -> CoffeePeekIcon(CoffeePeekIcons.Coffee, null, modifier, tint = MaterialTheme.colorScheme.onSurfaceVariant) },
     { _, modifier, _ -> Box(modifier) },
 )
 

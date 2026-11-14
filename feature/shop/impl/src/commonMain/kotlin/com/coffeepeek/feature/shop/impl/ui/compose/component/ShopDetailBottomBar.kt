@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import com.coffeepeek.core.designsystem.component.CoffeePeekFilledIconButton as FilledIconButton
 import androidx.compose.material3.IconButtonDefaults
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import com.coffeepeek.feature.shop.api.ShopExposure
 import com.coffeepeek.feature.shop.impl.ui.data.shopExposure
@@ -32,6 +31,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.component.CoffeePeekGlassButton
 import com.coffeepeek.core.designsystem.component.CoffeePeekGlassButtonIcon
+import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekColors
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
@@ -71,7 +71,7 @@ internal fun ShopDetailBottomBar(
                     contentColor = CoffeePeekColors.LightTextOnPrimary),
                 modifier = Modifier.then(if (canOpenRoute) Modifier.shopExposure(ShopExposure.Directions) else Modifier)
                     .size(CoffeePeekDimens.glassControlSize)) {
-                Icon(CoffeePeekIcons.Navigation, stringResource(Res.string.shop_detail_route), Modifier.size(20.dp))
+                CoffeePeekIcon(CoffeePeekIcons.Navigation, stringResource(Res.string.shop_detail_route), Modifier.size(20.dp))
             }
             ShopCheckInAction(onCheckIn, hazeState, Modifier.weight(1f))
         }

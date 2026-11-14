@@ -21,7 +21,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import com.coffeepeek.feature.shop.api.ShopExposure
@@ -39,8 +38,10 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
+import com.coffeepeek.core.designsystem.theme.reducedMotionDuration
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.feature.shop.domain.model.ScheduleInterval
 import com.coffeepeek.feature.shop.domain.model.ShopSchedule
@@ -100,8 +101,8 @@ internal fun ShopScheduleSection(
             Column(Modifier.padding(CoffeePeekDimens.spacing4)) {
                 ScheduleHeader(status, expanded, onToggle)
                 AnimatedVisibility(expanded,
-                    enter = expandVertically(tween(250), expandFrom = Alignment.Top) + fadeIn(tween(180)),
-                    exit = shrinkVertically(tween(250), shrinkTowards = Alignment.Top) + fadeOut(tween(150))) {
+                    enter = expandVertically(tween(reducedMotionDuration(250)), expandFrom = Alignment.Top) + fadeIn(tween(reducedMotionDuration(180))),
+                    exit = shrinkVertically(tween(reducedMotionDuration(250)), shrinkTowards = Alignment.Top) + fadeOut(tween(reducedMotionDuration(150)))) {
                     ScheduleDays(schedules)
                 }
             }
@@ -114,17 +115,17 @@ private fun ScheduleHeader(status: String, expanded: Boolean, onToggle: () -> Un
     val toggleLabel = stringResource(if (expanded) Res.string.shop_schedule_collapse else Res.string.shop_schedule_expand)
     val expansionState = stringResource(if (expanded) Res.string.shop_schedule_expanded_state
         else Res.string.shop_schedule_collapsed_state)
-    val rotation by animateFloatAsState(if (expanded) 90f else 0f, tween(250))
+    val rotation by animateFloatAsState(if (expanded) 90f else 0f, tween(reducedMotionDuration(250)))
     Row(Modifier.fillMaxWidth().heightIn(min = 44.dp)
         .semantics { stateDescription = expansionState }
         .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null,
             role = Role.Button, onClickLabel = toggleLabel, onClick = onToggle),
         horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing4),
         verticalAlignment = Alignment.CenterVertically) {
-        Icon(CoffeePeekIcons.Time, null, Modifier.size(24.dp))
+        CoffeePeekIcon(CoffeePeekIcons.Time, null, Modifier.size(24.dp))
         Text(status, Modifier.weight(1f), style = MaterialTheme.typography.bodyLarge,
             fontWeight = FontWeight.Medium, maxLines = 2, overflow = TextOverflow.Ellipsis)
-        Icon(CoffeePeekIcons.ChevronRight, null, Modifier.size(18.dp).rotate(rotation),
+        CoffeePeekIcon(CoffeePeekIcons.ChevronRight, null, Modifier.size(18.dp).rotate(rotation),
             tint = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }

@@ -5,7 +5,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.Icon
 import androidx.compose.foundation.clickable
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.semantics
@@ -48,7 +47,7 @@ private fun CollectionLink(link: CollectionSummary, busy: Boolean, onOpen: () ->
                     color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
             CoffeePeekPlainIconButton(onRevoke, enabled = !busy) {
-                Icon(CoffeePeekIcons.Delete, stringResource(Res.string.collections_revoke_description, link.title))
+                CoffeePeekIcon(CoffeePeekIcons.Delete, stringResource(Res.string.collections_revoke_description, link.title))
             }
         }
     }

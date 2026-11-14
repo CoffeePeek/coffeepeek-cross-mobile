@@ -158,7 +158,8 @@ class RegisterViewModelTest {
 
     @Test fun declinedAnalyticsIsStoredAsDeclined() = runTest(dispatcher) {
         val analytics = FakeAnalytics(); val vm = model(analytics = analytics)
-        vm.fill(); vm.onAction(RegisterAction.Submit); runCurrent()
+        vm.fill(); vm.onAction(RegisterAction.AnalyticsChanged(false)); runCurrent()
+        vm.onAction(RegisterAction.Submit); runCurrent()
         assertEquals(listOf(false), analytics.consents)
     }
 

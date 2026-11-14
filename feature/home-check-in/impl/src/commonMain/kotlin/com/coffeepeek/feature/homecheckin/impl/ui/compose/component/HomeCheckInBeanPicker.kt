@@ -41,7 +41,7 @@ internal fun HomeCheckInBeanPicker(
     Column(modifier.fillMaxSize().padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             IconButton(onClick = { onAction(HomeCheckInEditorAction.CloseBeanPicker) }, Modifier.size(44.dp)) {
-                Icon(CoffeePeekIcons.Back, stringResource(Res.string.home_check_in_back_to_editor))
+                CoffeePeekIcon(CoffeePeekIcons.Back, stringResource(Res.string.home_check_in_back_to_editor))
             }
             Text(stringResource(Res.string.home_check_in_bean), style = MaterialTheme.typography.headlineSmall)
         }
@@ -118,7 +118,7 @@ private fun HomeCheckInShelfBagRow(
             bag.imageUrl?.let { image(it, Modifier.clip(BagCardShape)) }
                 ?: Box(Modifier.fillMaxSize().clip(BagCardShape).background(MaterialTheme.colorScheme.surfaceVariant),
                     contentAlignment = Alignment.Center) {
-                    Icon(CoffeePeekIcons.CoffeeBean, null, Modifier.size(20.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                    CoffeePeekIcon(CoffeePeekIcons.CoffeeBean, null, Modifier.size(20.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
         }
         Column(Modifier.weight(1f)) {
@@ -167,7 +167,7 @@ private fun List<HomeCheckInShelfBag>.matching(query: String): List<HomeCheckInS
 
 @Composable private fun HomeCheckInBeanPickerPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     Surface { HomeCheckInBeanPicker(HomeCheckInEditorState(isBeanPickerOpen = true), {},
-        { Icon(CoffeePeekIcons.Search, null, it) }) }
+        { CoffeePeekIcon(CoffeePeekIcons.Search, null, it) }) }
 }
 @Preview @Composable private fun HomeCheckInBeanPickerLightPreview() = HomeCheckInBeanPickerPreview(false)
 @Preview @Composable private fun HomeCheckInBeanPickerDarkPreview() = HomeCheckInBeanPickerPreview(true)
@@ -176,7 +176,7 @@ private fun List<HomeCheckInShelfBag>.matching(query: String): List<HomeCheckInS
     Surface { HomeCheckInBeanPicker(HomeCheckInEditorState(isBeanPickerOpen = true,
         shelfBags = listOf(HomeCheckInShelfBag("1", "Эфиопия Иргачеффе", "Sibaristica", "https://preview.invalid/card"), HomeCheckInShelfBag("2", null, null)),
         beans = listOf(HomeCheckInBeanOption("honey-bloom", "Honey Bloom", "Tasty Coffee"))), {},
-        { Icon(CoffeePeekIcons.Search, null, it) }, { _, modifier -> Box(modifier.size(40.dp, 48.dp).background(MaterialTheme.colorScheme.tertiary)) }) }
+        { CoffeePeekIcon(CoffeePeekIcons.Search, null, it) }, { _, modifier -> Box(modifier.size(40.dp, 48.dp).background(MaterialTheme.colorScheme.tertiary)) }) }
 }
 @Preview @Composable private fun HomeCheckInBeanPickerShelfLightPreview() = HomeCheckInBeanPickerShelfPreview(false)
 @Preview @Composable private fun HomeCheckInBeanPickerShelfDarkPreview() = HomeCheckInBeanPickerShelfPreview(true)

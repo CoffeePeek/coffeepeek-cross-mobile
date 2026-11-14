@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -21,6 +20,7 @@ import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.component.CoffeePeekBynPriceIndicators
 import com.coffeepeek.core.designsystem.component.CoffeePeekSwipeDismissModalBottomSheet
+import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
@@ -65,7 +65,7 @@ private fun ShopPriceInfoContent(selectedLevel: ShopPriceLevel) {
                     ShopPriceLevel.Average -> Res.string.shop_price_average_hint
                     ShopPriceLevel.High -> Res.string.shop_price_high_hint
                 }), Modifier.weight(1f), style = MaterialTheme.typography.bodyLarge)
-                if (selected) Icon(CoffeePeekIcons.Check, null, Modifier.size(20.dp),
+                if (selected) CoffeePeekIcon(CoffeePeekIcons.Check, null, Modifier.size(20.dp),
                     tint = MaterialTheme.colorScheme.primary)
             }
         }

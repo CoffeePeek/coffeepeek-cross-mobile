@@ -9,7 +9,9 @@ import androidx.compose.ui.composed
 import androidx.compose.ui.graphics.luminance
 import com.coffeepeek.admin.analytics.analyticsExposure
 import com.coffeepeek.admin.analytics.LocalAnalyticsVisible
+import com.coffeepeek.admin.config.AppConfig
 import com.coffeepeek.admin.location.LocationPermissionEffect
+import com.coffeepeek.admin.location.openAppLocationSettings
 import com.coffeepeek.admin.map.CoffeeMap
 import com.coffeepeek.admin.map.mapCanvasSize
 import com.coffeepeek.admin.ui.component.HapticEvent
@@ -27,17 +29,20 @@ import com.coffeepeek.feature.discovery.domain.model.MapBounds
 import com.coffeepeek.feature.discovery.domain.model.MapMarker
 import com.coffeepeek.feature.discovery.domain.model.MapZone
 import com.coffeepeek.feature.discovery.domain.model.ShopKind
+import com.coffeepeek.feature.settings.impl.AppReviewPrompt
 
 /** Root supplies platform services and exposure ownership, never business visual slots. */
 internal fun discoveryHost() = DiscoveryHost(
     exposure = ::discoveryExposure,
     haptic = { platformHaptic(HapticEvent.Selection) },
     retained = { visible, content -> RetainedContent(visible, content) },
-    locationPermission = { requestKey, onGranted, onDenied ->
-        LocationPermissionEffect(requestKey, onGranted, onDenied, requestOnce = true)
+    locationPermission = { requestKey, onGranted, onDenied, onPermanentlyDenied ->
+        LocationPermissionEffect(requestKey, onGranted, onDenied, onPermanentlyDenied, requestOnce = true)
     },
+    openLocationSettings = { openAppLocationSettings() },
     reduceMotion = { platformReduceMotion() },
     isVisible = { LocalAnalyticsVisible.current },
+    onIdle = { if (AppConfig.storeReviewsEnabled) AppReviewPrompt() },
     mapCanvas = { state, callbacks, modifier -> DiscoveryMapCanvas(state, callbacks, modifier) },
 )
 

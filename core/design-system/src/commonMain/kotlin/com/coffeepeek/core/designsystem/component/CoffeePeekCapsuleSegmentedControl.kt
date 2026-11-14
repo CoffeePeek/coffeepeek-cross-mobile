@@ -16,10 +16,11 @@ import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -96,11 +97,13 @@ internal fun CoffeePeekCapsuleSegment(text: String, isSelected: Boolean, enabled
         modifier = modifier
             .heightIn(min = minHeight)
             .clip(RoundedCornerShape(percent = 50))
-            .background(if (isSelected) MaterialTheme.colorScheme.surface else Color.Transparent)
+            .background(animateColorAsState(
+                if (isSelected) MaterialTheme.colorScheme.surface else Color.Transparent, tween(160), label = "segment-fill").value)
             .then(
                 if (isSelected) Modifier.border(
                     width = 1.dp,
-                    color = MaterialTheme.colorScheme.outlineVariant,
+                    color = animateColorAsState(
+                        MaterialTheme.colorScheme.outlineVariant, tween(160), label = "segment-border").value,
                     shape = RoundedCornerShape(percent = 50),
                 ) else Modifier,
             )
@@ -133,7 +136,7 @@ private fun CoffeePeekCapsuleSegmentedControlPreviewContent(darkTheme: Boolean, 
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     CoffeePeekCapsuleSegmentedControl(listOf("First", "Second"), selected, { it }, { selected = it }, Modifier.weight(1f))
                     CoffeePeekIconButton({}, Modifier.size(CoffeePeekDimens.buttonHeight)) {
-                        Icon(CoffeePeekIcons.Notifications, null)
+                        CoffeePeekIcon(CoffeePeekIcons.Notifications, null)
                     }
                 }
                 CoffeePeekCapsuleSegmentedControl(listOf("First", "Second"), "Second", { it }, {})

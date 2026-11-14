@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.VerticalDivider
@@ -124,7 +123,7 @@ fun CoffeePeekCheckmarkRow(
             modifier = Modifier.weight(1f),
         )
         if (checked) {
-            Icon(
+            CoffeePeekIcon(
                 imageVector = CoffeePeekIcons.Check,
                 contentDescription = null,
                 tint = MaterialTheme.colorScheme.coffeePeekAccentForeground,
@@ -151,7 +150,7 @@ fun CoffeePeekActionRow(
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         if (icon != null) {
-            Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.coffeePeekAccentForeground, modifier = Modifier.size(20.dp))
+            CoffeePeekIcon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.coffeePeekAccentForeground, modifier = Modifier.size(20.dp))
         }
         Text(text = label, fontSize = 17.sp, color = MaterialTheme.colorScheme.coffeePeekAccentForeground)
     }

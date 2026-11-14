@@ -3,6 +3,11 @@ package com.coffeepeek.feature.collections.impl.ui.compose
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import com.coffeepeek.core.designsystem.component.CoffeePeekDestructiveConfirmationSheet
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.ProgressBarRangeInfo
@@ -18,6 +23,7 @@ import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as st
 
 @Composable
 internal fun SavedCollectionsStatus(state: SavedCollectionsState, action: (SavedCollectionsAction) -> Unit) {
+    var confirmReload by remember { mutableStateOf(false) }
     Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         if (state.loading || state.mode == SavedCollectionsMode.Picker && state.refreshing) SavedCollectionsLoadingStatus()
         if (!state.signedIn && state.mode !in setOf(SavedCollectionsMode.Public, SavedCollectionsMode.Featured)) {
@@ -34,11 +40,23 @@ internal fun SavedCollectionsStatus(state: SavedCollectionsState, action: (Saved
                 SavedCollectionsFailure.Delete -> Res.string.collections_delete_failed
             }), color = MaterialTheme.colorScheme.error)
             if (failure in setOf(SavedCollectionsFailure.Load, SavedCollectionsFailure.Conflict)) {
-                CoffeePeekTextButton({ action(SavedCollectionsAction.Reload) }, enabled = !state.busy && !state.loading) {
+                CoffeePeekTextButton({
+                    // A reload after a conflict would discard unsaved edits: confirm first.
+                    if (failure == SavedCollectionsFailure.Conflict && state.mode == SavedCollectionsMode.Editor &&
+                        state.hasEdits()) confirmReload = true else action(SavedCollectionsAction.Reload)
+                }, enabled = !state.busy && !state.loading) {
                     Text(stringResource(Res.string.collections_retry))
                 }
             }
         }
+        if (confirmReload) CoffeePeekDestructiveConfirmationSheet(
+            stringResource(Res.string.collections_reload_title),
+            stringResource(Res.string.collections_reload_message),
+            stringResource(Res.string.collections_reload_confirm),
+            stringResource(Res.string.collections_cancel), {
+                confirmReload = false
+                action(SavedCollectionsAction.Reload)
+            }, { confirmReload = false })
     }
 }
 

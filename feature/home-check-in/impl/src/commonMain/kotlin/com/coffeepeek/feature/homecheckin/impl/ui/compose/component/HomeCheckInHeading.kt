@@ -18,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.homecheckin.domain.model.*
@@ -32,7 +33,7 @@ internal fun HomeCheckInHeading(entry: HomePreparation, dateLabel: String) {
         FlowRow(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp),
             itemVerticalAlignment = Alignment.CenterVertically) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                Icon(CoffeePeekIcons.Coffee, null, Modifier.size(20.dp), tint = MaterialTheme.colorScheme.primary)
+                CoffeePeekIcon(CoffeePeekIcons.Coffee, null, Modifier.size(20.dp), tint = MaterialTheme.colorScheme.primary)
                 Text(stringResource(Res.string.home_check_in_home), style = MaterialTheme.typography.labelLarge,
                     color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
@@ -40,7 +41,7 @@ internal fun HomeCheckInHeading(entry: HomePreparation, dateLabel: String) {
                 Surface(shape = RoundedCornerShape(50), color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f)) {
                     Row(Modifier.padding(horizontal = 10.dp, vertical = 6.dp), verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(5.dp)) {
-                        Icon(if (entry.visibility == HomePreparationVisibility.Private) CoffeePeekIcons.Lock else CoffeePeekIcons.Globe,
+                        CoffeePeekIcon(if (entry.visibility == HomePreparationVisibility.Private) CoffeePeekIcons.Lock else CoffeePeekIcons.Globe,
                             null, Modifier.size(14.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
                         Text(stringResource(resource), style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant)

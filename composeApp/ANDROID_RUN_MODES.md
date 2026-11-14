@@ -5,8 +5,8 @@
 | Purpose | Build Variant | Package / launcher | Data and backend |
 |---|---|---|---|
 | Default development, visual checks, safe create/edit/delete, simulated failures | `directSandbox` | `com.coffeepeek.sandbox` / CoffeePeek Sandbox, purple icon | Local fake HTTP backend, synthetic photos; no INTERNET permission |
-| Real-backend parity, actual platform integrations, read-only account checks | `directDebug` | `com.coffeepeek` / CoffeePeek | Real configured backend and normal app storage; Google sign-in disabled |
-| Same real-backend Debug through Play delivery behavior | `playDebug` | `com.coffeepeek` / CoffeePeek | Same live data; no direct APK updater; Google sign-in disabled |
+| Real-backend parity, actual platform integrations, read-only account checks | `directDebug` | `com.coffeepeek.debug` / CoffeePeek Debug, gold icon | Real configured backend; separate local storage/session; Google sign-in and production updates disabled |
+| Same real-backend Debug through Play delivery behavior | `playDebug` | `com.coffeepeek.debug` / CoffeePeek Debug, gold icon | Same Debug storage and live backend; Google sign-in and production updates disabled |
 | Distribution / production | `directRelease`, `playRelease` | `com.coffeepeek` | Release signing/configuration; not a routine test run |
 
 `direct`/`play` select delivery behavior; `debug`/`sandbox` select the execution
@@ -15,6 +15,12 @@ install both Sandbox delivery variants expecting two separate apps. Debug is
 production-like behavior compiled from the current branch, **not** an assertion
 that it exactly equals the currently released source. Release Google sign-in
 still needs valid OAuth configuration; Debug explicitly ignores that key.
+
+`main` distributes Release (`com.coffeepeek`); the development branch is named
+`develop` and distributes Debug (`com.coffeepeek.debug`) through Firebase. All
+three environments, including Sandbox, can coexist. Direct/Play variants of the
+same environment share one package. Debug's launcher uses `GoldWarm` (`#D4A84B`)
+in light and dark themes and displays `CoffeePeek Debug` in every locale.
 
 `directRelease` packages native libraries only for `arm64-v8a` and
 `armeabi-v7a`; its single APK is for ARM phones. Debug/Sandbox retain x86 ABIs
@@ -25,7 +31,7 @@ Do not use the direct APK to update an x86-only installation.
 
 For day-to-day use, choose `directDebug`; switch to `directSandbox` only when
 you want fake scenarios. The agent's safe-testing default does not automatically
-switch your chosen variant. Both apps can remain installed side by side; after
+switch your chosen variant. All three apps can remain installed side by side; after
 installation you can also open either directly from its launcher icon.
 
 1. Sync Gradle after changing modules or variants.
@@ -94,13 +100,22 @@ For an explicitly approved live Debug check, after the same compatibility checks
 
 ```shell
 adb -s DEVICE_SERIAL install -r composeApp/build/outputs/apk/direct/debug/composeApp-direct-debug.apk
-adb -s DEVICE_SERIAL shell am start -n com.coffeepeek/com.coffeepeek.admin.MainActivity
+adb -s DEVICE_SERIAL shell am start -n com.coffeepeek.debug/com.coffeepeek.admin.MainActivity
 ```
 
-Debug and Release use the same package. A debug-signed APK cannot update a
-differently signed installed release. Stop and report an incompatible signature
-or newer installed APK: never uninstall, clear data or force a downgrade. Sandbox
-installs alongside the normal app and does not need that workaround.
+Debug, Release and Sandbox have separate packages, storage and sessions. Existing
+data stays in its original package; installing Debug does not migrate or clear
+Prod data. Debug still connects to the configured live backend.
+
+Local Debug uses the normal debug signing key. Firebase Debug uses the configured
+distribution keystore for stable updates. Those two Debug APKs share a package
+but can have different signatures. Stop and report an incompatible signature or
+newer installed APK: never uninstall, clear data or force a downgrade.
+
+For push/Firebase integration, provide a registered `com.coffeepeek.debug` client
+in `composeApp/src/debug/google-services.json` (or alongside the production client
+in `composeApp/google-services.json`). Never rename the package in a production
+Firebase config. See [Firebase distribution configuration](../docs/FIREBASE_CD.md).
 
 ## What each check proves
 
@@ -116,3 +131,32 @@ The agent-authored feature/design-system UI suites and test-only hosts were
 removed on 2026-10-20 at the user's request; earlier recorded runs are historical.
 Other contributors' application UI tests and database instrumentation remain.
 See [removal scope](../feature/UI_TEST_REMOVAL.md).
+
+## Debug identity verification — 2026-11-13
+
+Source: `497814408` plus the working-tree Debug identity changes; Android version
+`1.2.0.2945-debug` / code `2945`. No device was installed or launched.
+
+- `assembleDirectDebug`, `assemblePlayDebug`, `assembleDirectSandbox`: passed,
+  including packaged DEX runtime-class checks and Sandbox isolation.
+- Merged manifests and APK metadata confirm separate package/provider authorities,
+  the Debug label/icon, and no Debug icon assets in Sandbox. Release retains
+  `com.coffeepeek` and its original launcher resources.
+- `AppUpdateAdaptersTest`: 3 executed, 0 failures; release tooling: 29 executed,
+  0 failures. Function body limits: 0 new violations. Workflow YAML and embedded
+  Python parsed; synthetic Firebase configs accepted one Debug client and rejected
+  production-only and duplicate Debug clients.
+- Initial build failed while packing a locked Kotlin cache; the no-build-cache
+  retry passed Direct Debug/Sandbox but hit an inaccessible unit-test cache.
+  Removing only that generated task cache allowed the final unit/Play checks to
+  pass. Existing preview deprecations and unrelated coroutine opt-in warnings remain.
+- Local adaptive-icon preview checked with a round launcher mask; packaged color
+  is `#FFD4A84B`, with one foreground/background for light/dark and one label for
+  every locale. Device launcher/theme review, Firebase registration/secret setup,
+  distribution signing, push and live-backend checks remain unverified.
+
+The Debug-only foreground is `src/debug/res/drawable-nodpi/ic_launcher_debug_foreground.png`.
+It was edited with built-in `image_gen`; Android draws the exact gold background
+separately. The final edit prompt was:
+
+> Precise background removal for an Android adaptive launcher icon foreground. Edit target is the existing CoffeePeek icon provided. REMOVE ONLY the white background, including inside the cup handle, making the entire backdrop genuinely transparent, including the outer padding. Keep the ivory coffee cup and olive-green bean mascot with both eyes and hands and coffee exactly unchanged in design, placement, scale, lighting and color. Preserve soft contact shadow with partial alpha only, no white matte. Do not enlarge, recenter or redesign the subject: it should occupy the central roughly 58% of the square width, like the original, for adaptive icon safe zone. Output a square RGBA transparent PNG with the original large margins. No gold backdrop; the app draws an exact #D4A84B background as a separate layer. No text, no other elements.

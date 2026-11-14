@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -98,7 +97,7 @@ fun CoffeePeekPostShelfBagRow(
         }
         if (showChevron) {
             Box(Modifier.size(CoffeePeekPostHeaderOverflowWidth), contentAlignment = Alignment.Center) {
-                Icon(
+                CoffeePeekIcon(
                     CoffeePeekIcons.ChevronRight,
                     contentDescription = null,
                     modifier = Modifier.size(18.dp),

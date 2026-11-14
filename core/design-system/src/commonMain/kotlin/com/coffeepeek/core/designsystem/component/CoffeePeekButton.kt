@@ -11,7 +11,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import com.coffeepeek.core.designsystem.component.CoffeePeekFilledButton as Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -32,8 +31,9 @@ fun CoffeePeekButton(
     leadingIcon: (@Composable () -> Unit)? = null,
     fillWidth: Boolean = true,
     minHeight: Dp = CoffeePeekDimens.buttonHeight,
+    useGlass: Boolean = true,
 ) {
-    if (leadingIcon == null && CoffeePeekNativePrimaryButton(text, onClick, modifier, enabled)) return
+    if (useGlass && leadingIcon == null && CoffeePeekNativePrimaryButton(text, onClick, modifier, enabled)) return
     Button(
         onClick = onClick,
         modifier = modifier
@@ -47,6 +47,7 @@ fun CoffeePeekButton(
         ),
         shape = RoundedCornerShape(CoffeePeekDimens.buttonRadius),
         enabled = enabled,
+        useGlass = useGlass,
     ) {
         if (leadingIcon != null) {
             leadingIcon()
@@ -65,7 +66,9 @@ private fun CoffeePeekButtonPreviewContent(darkTheme: Boolean) = CoffeePeekTheme
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             CoffeePeekButton("Continue", {})
             CoffeePeekButton("Unavailable", {}, enabled = false)
-            CoffeePeekButton("Continue", {}, leadingIcon = { Icon(CoffeePeekIcons.Check, contentDescription = null) })
+            CoffeePeekButton("Continue", {}, useGlass = false)
+            CoffeePeekButton("Unavailable", {}, enabled = false, useGlass = false)
+            CoffeePeekButton("Continue", {}, leadingIcon = { CoffeePeekIcon(CoffeePeekIcons.Check, contentDescription = null) })
         }
     }
 }

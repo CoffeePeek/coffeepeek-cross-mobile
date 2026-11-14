@@ -30,7 +30,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.selection.toggleable
-import androidx.compose.material3.Icon
 import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
 import com.coffeepeek.core.designsystem.component.CoffeePeekIconButton as IconButton
 import androidx.compose.material3.MaterialTheme
@@ -65,8 +64,11 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.coffeepeek.core.designsystem.component.CoffeePeekButton
+import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
+import com.coffeepeek.core.designsystem.theme.coffeePeekReduceMotion
+import com.coffeepeek.core.designsystem.theme.reducedMotionDuration
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.shelf.api.ShelfCameraFocus
 import com.coffeepeek.feature.shelf.api.ShelfCameraStatus
@@ -140,7 +142,7 @@ private fun ShelfFocusRing(focus: ShelfCameraFocus) {
 private fun ShelfCameraTopBar(onClose: () -> Unit, onTips: () -> Unit) {
     Row(Modifier.fillMaxWidth().padding(horizontal = CoffeePeekDimens.spacing2), verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween) {
-        IconButton(onClose) { Icon(CoffeePeekIcons.Close, stringResource(Res.string.shelf_camera_close), tint = Color.White) }
+        IconButton(onClose) { CoffeePeekIcon(CoffeePeekIcons.Close, stringResource(Res.string.shelf_camera_close), tint = Color.White) }
         TextButton(onTips) { Text(stringResource(Res.string.shelf_camera_how), color = Color.White, fontWeight = FontWeight.SemiBold) }
     }
 }
@@ -200,7 +202,7 @@ private fun ShelfCameraShutterBar(ready: Boolean, capturing: Boolean, torchAvail
         val gallery = stringResource(Res.string.shelf_camera_gallery)
         Box(Modifier.size(48.dp).clip(RoundedCornerShape(12.dp)).border(2.dp, Color.White.copy(alpha = 0.7f), RoundedCornerShape(12.dp))
             .background(Scrim).clickable(role = Role.Button, onClickLabel = gallery, onClick = actions.onGallery),
-            contentAlignment = Alignment.Center) { Icon(CoffeePeekIcons.Gallery, gallery, tint = Color.White) }
+            contentAlignment = Alignment.Center) { CoffeePeekIcon(CoffeePeekIcons.Gallery, gallery, tint = Color.White) }
         ShelfShutter(ready, capturing, actions.onShutter)
         ShelfTorchButton(torchAvailable, torch, actions.onTorch)
     }
@@ -254,10 +256,13 @@ private fun ShelfBolt(color: Color, crossed: Boolean) = Canvas(Modifier.size(22.
 @Composable
 private fun ShelfShutterFlash(capturing: Boolean) {
     val flash = remember { Animatable(0f) }
+    val reduceMotion = coffeePeekReduceMotion()
     LaunchedEffect(capturing) {
         if (!capturing) return@LaunchedEffect
-        flash.snapTo(0.85f)
-        flash.animateTo(0f, tween(260))
+        if (reduceMotion) { flash.snapTo(0f) } else {
+            flash.snapTo(0.85f)
+            flash.animateTo(0f, tween(260))
+        }
     }
     if (flash.value > 0f) Box(Modifier.fillMaxSize().background(Color.White.copy(alpha = flash.value)))
 }
@@ -265,13 +270,13 @@ private fun ShelfShutterFlash(capturing: Boolean) {
 /** "Как снимать?" rises from the bottom over a dimmed viewfinder; a tap outside or "Понятно" lowers it. */
 @Composable
 private fun BoxScope.ShelfCameraTipsOverlay(visible: Boolean, onClose: () -> Unit) {
-    AnimatedVisibility(visible, Modifier.fillMaxSize(), enter = fadeIn(tween(220)), exit = fadeOut(tween(220))) {
+    AnimatedVisibility(visible, Modifier.fillMaxSize(), enter = fadeIn(tween(reducedMotionDuration(220))), exit = fadeOut(tween(reducedMotionDuration(220)))) {
         Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.45f))
             .clickable(interactionSource = null, indication = null, onClick = onClose))
     }
     AnimatedVisibility(visible, Modifier.align(Alignment.BottomCenter),
-        enter = slideInVertically(tween(280, easing = FastOutSlowInEasing)) { it / 2 } + fadeIn(tween(220)),
-        exit = slideOutVertically(tween(220)) { it / 2 } + fadeOut(tween(180))) {
+        enter = slideInVertically(tween(280, easing = FastOutSlowInEasing)) { it / 2 } + fadeIn(tween(reducedMotionDuration(220))),
+        exit = slideOutVertically(tween(reducedMotionDuration(220))) { it / 2 } + fadeOut(tween(reducedMotionDuration(180)))) {
         ShelfCameraTips(Modifier, onClose)
     }
 }
@@ -285,7 +290,7 @@ private fun ShelfCameraTips(modifier: Modifier, onClose: () -> Unit) {
             Text(stringResource(Res.string.shelf_camera_how), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
             listOf(Res.string.shelf_scan_tip_whole, Res.string.shelf_scan_tip_straight, Res.string.shelf_scan_tip_clean).forEach {
                 Row(horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2), verticalAlignment = Alignment.CenterVertically) {
-                    Icon(CoffeePeekIcons.CheckCircle, null, Modifier.size(20.dp), tint = MaterialTheme.colorScheme.primary)
+                    CoffeePeekIcon(CoffeePeekIcons.CheckCircle, null, Modifier.size(20.dp), tint = MaterialTheme.colorScheme.primary)
                     Text(stringResource(it), style = MaterialTheme.typography.bodyMedium)
                 }
             }

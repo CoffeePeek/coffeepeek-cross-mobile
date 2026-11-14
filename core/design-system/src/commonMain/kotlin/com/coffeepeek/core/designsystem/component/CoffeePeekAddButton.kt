@@ -2,7 +2,6 @@ package com.coffeepeek.core.designsystem.component
 
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -39,7 +38,7 @@ fun CoffeePeekAddButton(
         containerColor = MaterialTheme.colorScheme.primary, contentColor = MaterialTheme.colorScheme.onPrimary) {
         if (isLoading) CoffeePeekLoader(description, modifier = Modifier.size(24.dp).clearAndSetSemantics {}, size = 24.dp,
             color = MaterialTheme.colorScheme.onPrimary, strokeWidth = 2.dp)
-        else Icon(CoffeePeekIcons.Add, null, Modifier.size(28.dp))
+        else CoffeePeekIcon(CoffeePeekIcons.Add, null, Modifier.size(28.dp))
     }
 }
 

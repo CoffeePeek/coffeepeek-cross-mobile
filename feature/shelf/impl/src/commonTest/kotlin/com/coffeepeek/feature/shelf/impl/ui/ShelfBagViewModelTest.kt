@@ -3,6 +3,7 @@ package com.coffeepeek.feature.shelf.impl.ui
 import androidx.lifecycle.ViewModelStore
 import com.coffeepeek.feature.shelf.api.ShelfBrewCoffee
 import com.coffeepeek.feature.shelf.domain.model.ShelfBag
+import com.coffeepeek.feature.shelf.domain.model.ShelfFailure
 import com.coffeepeek.feature.shelf.domain.model.ShelfIssue
 import com.coffeepeek.feature.shelf.impl.ui.compose.model.ShelfBagAction
 import com.coffeepeek.feature.shelf.impl.ui.compose.model.ShelfBagBrews
@@ -61,6 +62,17 @@ class ShelfBagViewModelTest {
         assertFalse(found.state.value.missing)
         assertNull(gone.state.value.bag)
         assertTrue(gone.state.value.missing)
+    }
+
+    @Test fun aLoadFailureOnAnUnknownBagShowsARetryInsteadOfMissing() = runTest(dispatcher) {
+        val repository = FakeShelfRepository(emptyList()).apply {
+            refreshResult = { Result.failure(ShelfFailure(ShelfIssue.Timeout)) }
+        }
+        val failed = model("ghost", repository)
+        runCurrent()
+        assertNull(failed.state.value.bag)
+        assertFalse(failed.state.value.missing)
+        assertTrue(failed.state.value.loadFailed)
     }
 
     @Test fun aBagWithoutACoffeeStillListsTheCheckInsThatNameIt() = runTest(dispatcher) {

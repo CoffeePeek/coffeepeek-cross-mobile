@@ -127,6 +127,7 @@ object Modules {
         object Settings {
             const val api = ":feature:settings:api"
             const val domain = ":feature:settings:domain"
+            const val data = ":feature:settings:data"
             const val impl = ":feature:settings:impl"
         }
 
@@ -220,6 +221,7 @@ object Modules {
         feature.profile.data,
         feature.profile.impl,
         feature.settings.domain,
+        feature.settings.data,
         feature.settings.api,
         feature.settings.impl,
         feature.coffee.domain,

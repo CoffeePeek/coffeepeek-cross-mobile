@@ -8,8 +8,8 @@ import kotlin.test.*
 
 internal class MemoryConsent(var consent: AnalyticsConsent = AnalyticsConsent.Unknown) : AnalyticsConsentStore {
     var failWrite = false
-    override suspend fun read() = consent
-    override suspend fun write(consent: AnalyticsConsent) {
+    override suspend fun read(userId: String?) = consent
+    override suspend fun write(userId: String?, consent: AnalyticsConsent) {
         if (failWrite) error("disk unavailable")
         this.consent = consent
     }
@@ -173,8 +173,8 @@ class AnalyticsServiceTest {
         val resumeWrite = kotlinx.coroutines.CompletableDeferred<Unit>()
         var stored = AnalyticsConsent.Unknown
         val store = object : AnalyticsConsentStore {
-            override suspend fun read() = stored
-            override suspend fun write(consent: AnalyticsConsent) {
+            override suspend fun read(userId: String?) = stored
+            override suspend fun write(userId: String?, consent: AnalyticsConsent) {
                 if (consent == AnalyticsConsent.Accepted) { writing.complete(Unit); resumeWrite.await() }
                 stored = consent
             }

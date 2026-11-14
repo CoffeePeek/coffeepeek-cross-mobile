@@ -52,7 +52,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -70,6 +69,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import com.coffeepeek.core.designsystem.component.CoffeePeekIconBadgePalette
@@ -78,6 +78,7 @@ import com.coffeepeek.core.designsystem.component.CoffeePeekSettingsDivider
 import com.coffeepeek.core.designsystem.component.CoffeePeekSettingsRow
 import com.coffeepeek.core.designsystem.component.CoffeePeekSettingsSection
 import com.coffeepeek.core.designsystem.component.CoffeePeekSwitch
+import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
@@ -104,6 +105,7 @@ internal fun SettingsScreen(
     appInfo: SettingsAppInfo, bottomClearance: Dp, modifier: Modifier = Modifier,
 ) {
     val state by vm.state.collectAsStateWithLifecycle()
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { vm.onScreenShown() }
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     val upToDate by rememberUpdatedState(stringResource(Res.string.settings_update_up_to_date))
     val failed by rememberUpdatedState(stringResource(Res.string.settings_update_failed))
@@ -218,6 +220,7 @@ private fun SettingsOtherSection(navigation: SettingsNavigation, external: Setti
 
 @Composable
 private fun SettingsUpdateSection(state: SettingsState, appInfo: SettingsAppInfo, onCheckForUpdates: () -> Unit) {
+    if (!appInfo.canCheckForUpdates) return
     CoffeePeekSettingsSection(title = stringResource(Res.string.settings_section_update)) {
         val update = state.update
         CoffeePeekSettingsRow(
@@ -250,7 +253,7 @@ private fun SettingsVersionFooter(appInfo: SettingsAppInfo, bottomClearance: Dp)
 private fun RowValue(text: String) {
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing1)) {
         Text(text, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
-        Icon(CoffeePeekIcons.ChevronRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(CoffeePeekDimens.settingsIconSize))
+        CoffeePeekIcon(CoffeePeekIcons.ChevronRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(CoffeePeekDimens.settingsIconSize))
     }
 }
 

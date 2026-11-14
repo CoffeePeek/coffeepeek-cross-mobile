@@ -25,7 +25,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Icon
 import com.coffeepeek.core.designsystem.component.CoffeePeekIconButton as IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -46,6 +45,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.text.coffeePeekPluralForm
 import com.coffeepeek.feature.profile.domain.PublicProfileActivity
@@ -79,10 +79,10 @@ internal fun PublicProfileActivityCalendar(
                 val previous = shiftProfileMonth(selectedMonth, -1)
                 val next = shiftProfileMonth(selectedMonth, 1)
                 IconButton(onClick = { previous?.let(onMonthChange) }, enabled = previous != null) {
-                    Icon(CoffeePeekIcons.ChevronLeft, contentDescription = stringResource(Res.string.profile_previous_month))
+                    CoffeePeekIcon(CoffeePeekIcons.ChevronLeft, contentDescription = stringResource(Res.string.profile_previous_month))
                 }
                 IconButton(onClick = { next?.let(onMonthChange) }, enabled = next != null) {
-                    Icon(CoffeePeekIcons.ChevronRight, contentDescription = stringResource(Res.string.profile_next_month))
+                    CoffeePeekIcon(CoffeePeekIcons.ChevronRight, contentDescription = stringResource(Res.string.profile_next_month))
                 }
             }
         }
