@@ -41,6 +41,7 @@ jobs:
       - name: Create GitHub release draft
         env:
           GH_TOKEN: ${{ secrets.MOBILE_RELEASE_TOKEN || github.token }}
+          RELEASE_USES_GITHUB_TOKEN: ${{ secrets.MOBILE_RELEASE_TOKEN == '' }}
           PLATFORM: ${{ inputs.platform }}
           BUILD_RUN: ${{ inputs.build_run }}
         run: python3 tools/release/draft_release.py "$PLATFORM" "$BUILD_RUN"

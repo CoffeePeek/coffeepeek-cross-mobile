@@ -20,9 +20,14 @@ def api(repository, endpoint, *, data=None, paginated=False):
         args.extend(["--paginate", "--slurp"])
     if data is not None:
         args.extend(["--method", "POST", "--input", "-"])
-    result = subprocess.run(
-        args, input=json.dumps(data), check=True, capture_output=True, encoding="utf-8"
-    )
+    try:
+        result = subprocess.run(
+            args, input=json.dumps(data), check=True, capture_output=True, encoding="utf-8"
+        )
+    except subprocess.CalledProcessError as error:
+        method = "POST" if data is not None else "GET"
+        error.stderr = f"GitHub API {method} /repos/{repository}/{endpoint} failed:\n{error.stderr or ''}"
+        raise
     return json.loads(result.stdout)
 
 
@@ -118,6 +123,18 @@ def previous_release(releases, platform, commit):
     return None
 
 
+def verify_release_token(commit):
+    if os.environ.get("RELEASE_USES_GITHUB_TOKEN") != "true":
+        return
+    if git("diff", "--name-only", commit, "HEAD", "--", ".github/workflows"):
+        raise ValueError(
+            "This build has different workflow files from main. GITHUB_TOKEN cannot create its release. "
+            "Set MOBILE_RELEASE_TOKEN with Actions: read, Contents: write and Workflows: write, "
+            "or create the draft using an authorized local gh login and rerun this workflow. "
+            "The selected build commit will not be changed."
+        )
+
+
 def draft_release(repository, server, platform, run_id):
     commit = build_commit(repository, platform, run_id)
     version, number = build_version(platform, commit)
@@ -132,6 +149,7 @@ def draft_release(repository, server, platform, run_id):
         if (pinned or existing["target_commitish"]) != commit:
             raise ValueError(f"Release {tag} already targets a different commit.")
         return existing, False
+    verify_release_token(commit)
     previous = previous_release(releases, platform, commit)
     body = release_body(repository, server, run_id, number, tag, commit, previous)
     return api(repository, "releases", data={
@@ -164,8 +182,9 @@ def main(platform, build_run):
         status = "Release already published"
     summary = f'{status} — [{release["tag_name"]}]({release["html_url"]})'
     print(summary)
-    with Path(os.environ["GITHUB_STEP_SUMMARY"]).open("a", encoding="utf-8") as output:
-        output.write(summary + "\n")
+    if summary_path := os.environ.get("GITHUB_STEP_SUMMARY"):
+        with Path(summary_path).open("a", encoding="utf-8") as output:
+            output.write(summary + "\n")
 
 
 if __name__ == "__main__":
