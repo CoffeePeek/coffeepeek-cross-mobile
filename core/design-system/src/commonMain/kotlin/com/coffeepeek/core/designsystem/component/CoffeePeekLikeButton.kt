@@ -17,6 +17,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -104,8 +106,12 @@ internal fun coffeePeekLikePlateSize(style: CoffeePeekLikeButtonStyle, iconSize:
 
 @Composable
 internal fun Modifier.coffeePeekLikeBackground(style: CoffeePeekLikeButtonStyle, shape: Shape): Modifier {
-    if (style == CoffeePeekLikeButtonStyle.PhotoBadge) return background(
-        com.coffeepeek.core.designsystem.theme.CoffeePeekColors.PhotoBadgeOverlay, shape)
+    if (style == CoffeePeekLikeButtonStyle.PhotoBadge) {
+        val surface = MaterialTheme.colorScheme.surface
+        val plate = if (surface.luminance() >= 0.5f) surface.copy(alpha = 0.90f)
+            else com.coffeepeek.core.designsystem.theme.CoffeePeekColors.LikePhotoOverlay
+        return background(plate, shape)
+    }
     if (coffeePeekUsesNativeGlass) return this
     return when (style) {
         CoffeePeekLikeButtonStyle.Glass, CoffeePeekLikeButtonStyle.FloatingGlass -> coffeePeekLiquidGlass(shape)

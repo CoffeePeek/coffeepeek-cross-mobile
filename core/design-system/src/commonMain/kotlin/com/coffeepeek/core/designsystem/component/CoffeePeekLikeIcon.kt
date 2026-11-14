@@ -5,9 +5,9 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -15,6 +15,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.Dp
@@ -63,7 +65,10 @@ internal fun CoffeePeekAnimatedLikeIcon(
             scale.animateTo(1f, tween(145))
         }
     }
-    val outline = coffeePeekLikeColor(false, overImage, MaterialTheme.colorScheme.onSurface)
+    val colors = MaterialTheme.colorScheme
+    val light = colors.surface.luminance() >= 0.5f
+    val outline = coffeePeekLikeColor(false, overImage && !light, colors.onSurface)
+    val gold = coffeePeekLikeColor(true, overImage, outline)
     Box(modifier.size(size).semantics {
         if (contentDescription != null) this.contentDescription = contentDescription
     }.graphicsLayer {
@@ -73,11 +78,10 @@ internal fun CoffeePeekAnimatedLikeIcon(
     }) {
         CoffeePeekIcon(CoffeePeekIcons.FavoriteFilled, null, Modifier.matchParentSize().graphicsLayer {
             alpha = fill.value
-        }, tint = coffeePeekLikeColor(true, overImage, outline))
-        // The outline keeps the bright fill legible against plain light surfaces.
+        }, tint = gold)
         CoffeePeekIcon(CoffeePeekIcons.Favorite, null, Modifier.matchParentSize().graphicsLayer {
-            alpha = if (overImage) 1f - fill.value else 1f
-        }, tint = outline)
+            alpha = if (!light && overImage) 1f - fill.value else 1f
+        }, tint = if (light) lerp(outline, gold, fill.value) else outline)
     }
 }
 
@@ -93,7 +97,7 @@ private fun LikeIconPreviewContent() {
         CoffeePeekLikeIcon(false, null)
         CoffeePeekLikeIcon(true, null)
         CoffeePeekLikeIcon(true, null, enabled = false)
-        Row(Modifier.background(CoffeePeekColors.LikePhotoOverlay).padding(4.dp)) {
+        Row(Modifier.coffeePeekLikeBackground(CoffeePeekLikeButtonStyle.PhotoBadge, CircleShape).padding(4.dp)) {
             CoffeePeekLikeIcon(true, null, overImage = true)
             CoffeePeekLikeIcon(false, null, overImage = true)
         }

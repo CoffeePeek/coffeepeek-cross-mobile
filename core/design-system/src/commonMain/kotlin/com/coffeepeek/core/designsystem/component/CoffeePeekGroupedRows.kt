@@ -156,9 +156,9 @@ fun CoffeePeekActionRow(
 }
 
 @Composable
-fun CoffeePeekRowSeparator() {
+fun CoffeePeekRowSeparator(modifier: Modifier = Modifier.padding(start = RowInset)) {
     HorizontalDivider(
-        modifier = Modifier.padding(start = RowInset),
+        modifier = modifier,
         thickness = 0.5.dp,
         color = MaterialTheme.colorScheme.outline.copy(alpha = 0.6f),
     )

@@ -7,8 +7,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -30,25 +32,47 @@ import com.coffeepeek.core.designsystem.theme.CoffeePeekColors
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.feature.shop.domain.model.ShopOverview
+import com.coffeepeek.feature.shop.domain.model.ShopPhoto
+import com.coffeepeek.feature.shop.domain.model.ShopType
 import com.coffeepeek.feature.shop.impl.resources.Res
+import com.coffeepeek.feature.shop.impl.resources.shop_overview_photo_counter
 import com.coffeepeek.feature.shop.impl.resources.shop_overview_show_on_map
 import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
 internal fun ShopOverviewHeader(overview: ShopOverview, onOpenMap: () -> Unit,
-    modifier: Modifier = Modifier) {
+    modifier: Modifier = Modifier, currentPage: Int = 0) {
     BoxWithConstraints(modifier.fillMaxWidth()) {
         if (maxWidth < 296.dp || LocalDensity.current.fontScale > 1.3f) {
             Column(verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing1)) {
                 ShopOverviewIdentity(overview, onOpenMap)
-                ShopTypeBadge(overview.type)
+                ShopOverviewPhotoMetadata(overview.type, currentPage, overview.photos.size, Alignment.Start)
             }
         } else {
             Row(verticalAlignment = Alignment.Bottom,
                 horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2)) {
                 ShopOverviewIdentity(overview, onOpenMap, Modifier.weight(1f))
-                ShopTypeBadge(overview.type)
+                ShopOverviewPhotoMetadata(overview.type, currentPage, overview.photos.size, Alignment.End)
+            }
+        }
+    }
+}
+
+@Composable
+private fun ShopOverviewPhotoMetadata(
+    type: ShopType,
+    currentPage: Int,
+    photoCount: Int,
+    alignment: Alignment.Horizontal,
+) {
+    Column(horizontalAlignment = alignment, verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing1)) {
+        ShopTypeBadge(type)
+        if (photoCount > 0) {
+            Surface(shape = CircleShape, color = Color.Black.copy(alpha = 0.6f), contentColor = Color.White) {
+                Text(stringResource(Res.string.shop_overview_photo_counter, currentPage.coerceAtMost(photoCount - 1) + 1, photoCount),
+                    modifier = Modifier.padding(horizontal = 10.dp, vertical = CoffeePeekDimens.spacing1),
+                    style = MaterialTheme.typography.labelSmall)
             }
         }
     }
@@ -81,7 +105,7 @@ private fun ShopOverviewHeaderPreview(dark: Boolean, largeText: Boolean = false)
     val density = LocalDensity.current
     CompositionLocalProvider(LocalDensity provides Density(density.density, if (largeText) 2f else density.fontScale)) {
         Surface(Modifier.width(if (largeText) 280.dp else 360.dp), color = CoffeePeekColors.DarkSurface) {
-            ShopOverviewHeader(previewOverview(), {})
+            ShopOverviewHeader(previewOverview().copy(photos = List(4) { ShopPhoto(it.toString(), "", "") }), {})
         }
     }
 }

@@ -83,7 +83,7 @@ internal fun ShopDetailBottomBar(
 private fun ShopCheckInAction(onClick: () -> Unit, hazeState: HazeState?, modifier: Modifier) {
     CoffeePeekGlassButton(text = stringResource(Res.string.shop_detail_checkin), onClick = onClick,
         leadingIcon = CoffeePeekGlassButtonIcon.Check, hazeState = hazeState,
-        containerColor = CoffeePeekColors.DarkSurface, contentColor = Color.White,
+        glassTint = CoffeePeekColors.DarkSurface.copy(alpha = 0.68f), contentColor = Color.White,
         modifier = modifier.heightIn(min = CoffeePeekDimens.glassControlSize).shopExposure(ShopExposure.CheckIn))
 }
 

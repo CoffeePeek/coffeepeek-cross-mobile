@@ -34,19 +34,22 @@ internal fun NotificationRow(item: NotificationItem, enabled: Boolean, onClick: 
     val (icon, palette) = notificationAppearance(item)
     val readDescription = stringResource(if (item.read) Res.string.notifications_read else Res.string.notifications_unread)
     val clickAction = stringResource(if (item.canOpen) Res.string.notifications_open else Res.string.notifications_mark_read)
-    Column(Modifier.fillMaxWidth().semantics { stateDescription = readDescription }
+    Row(Modifier.fillMaxWidth().semantics { stateDescription = readDescription }
         .clickable(enabled = enabled && (item.canOpen || !item.read), role = Role.Button, onClickLabel = clickAction, onClick = onClick)
-        .padding(CoffeePeekDimens.spacing4), verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3)) {
-        Row(horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3)) {
-            CoffeePeekIconBadge(icon, palette)
-            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing1)) {
-                Text(item.title, style = MaterialTheme.typography.titleSmall, color = colors.onSurface,
-                    fontWeight = if (item.read) FontWeight.Medium else FontWeight.SemiBold)
-                Text(localDateTime(item.createdAtUtc), style = MaterialTheme.typography.labelSmall, color = colors.onSurfaceVariant)
+        .padding(vertical = CoffeePeekDimens.spacing3),
+        horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3)) {
+        CoffeePeekIconBadge(icon, palette)
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing1)) {
+            Text(item.title, style = MaterialTheme.typography.titleSmall, color = colors.onSurface,
+                fontWeight = if (item.read) FontWeight.Medium else FontWeight.SemiBold)
+            Text(localDateTime(item.createdAtUtc), style = MaterialTheme.typography.labelSmall, color = colors.onSurfaceVariant)
+            if (item.body.isNotBlank()) {
+                Text(item.body, style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant)
             }
-            if (!item.read) Box(Modifier.padding(top = CoffeePeekDimens.spacing2).size(6.dp).background(colors.primary, CircleShape))
         }
-        Text(item.body, style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant)
+        Box(Modifier.padding(top = CoffeePeekDimens.spacing2).size(6.dp)) {
+            if (!item.read) Box(Modifier.matchParentSize().background(colors.primary, CircleShape))
+        }
     }
 }
 
@@ -65,12 +68,12 @@ private fun notificationAppearance(item: NotificationItem) = when {
 @Composable
 private fun NotificationRowPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     Surface {
-        Column {
+        Column(Modifier.padding(horizontal = CoffeePeekDimens.spacing5)) {
             listOf(false, true).forEachIndexed { index, read ->
                 NotificationRow(NotificationItem("preview", NotificationKind.NewShop, "Новая кофейня на карте",
                     "На карте появилась новая кофейня. Откройте приложение, чтобы узнать подробности и заглянуть за чашкой кофе!",
                     "2026-10-21T08:00:00Z", read, canOpen = true), true, {})
-                if (index == 0) CoffeePeekRowSeparator()
+                if (index == 0) CoffeePeekRowSeparator(Modifier)
             }
         }
     }

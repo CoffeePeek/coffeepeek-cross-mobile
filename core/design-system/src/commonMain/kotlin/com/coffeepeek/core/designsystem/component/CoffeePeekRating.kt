@@ -16,6 +16,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.clipRect
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.semantics.*
 import androidx.compose.ui.text.TextStyle
@@ -105,14 +106,25 @@ private fun CoffeePeekRatingChoice(score: Int, value: Double, starSize: Dp, enab
 @Composable
 private fun CoffeePeekRatingStar(fill: Float, starSize: Dp, active: Color, inactive: Color) {
     val rtl = LocalLayoutDirection.current == LayoutDirection.Rtl
+    val colors = MaterialTheme.colorScheme
+    val light = colors.surface.luminance() >= 0.5f
     Box(Modifier.size(starSize)) {
-        if (fill > 0f) CoffeePeekIcon(CoffeePeekIcons.StarFilled, null,
-            Modifier.fillMaxSize().drawWithContent {
-                val boundary = this.size.width * fill
-                clipRect(left = if (rtl) this.size.width - boundary else 0f,
-                    right = if (rtl) this.size.width else boundary) { this@drawWithContent.drawContent() }
-            }, tint = active)
-        CoffeePeekIcon(CoffeePeekIcons.StarOutline, null, Modifier.fillMaxSize(), tint = inactive)
+        if (fill > 0f) Box(Modifier.matchParentSize().clipRatingFill(fill, rtl)) {
+            CoffeePeekIcon(CoffeePeekIcons.StarFilled, null, Modifier.matchParentSize(), tint = active)
+            if (light) CoffeePeekIcon(CoffeePeekIcons.StarOutline, null, Modifier.matchParentSize(), tint = active)
+        }
+        if (!light || fill < 1f) {
+            val outline = if (light) Modifier.clipRatingFill(1f - fill, !rtl) else Modifier
+            CoffeePeekIcon(CoffeePeekIcons.StarOutline, null, Modifier.fillMaxSize().then(outline),
+                tint = if (light) colors.onSurface else inactive)
+        }
+    }
+}
+
+private fun Modifier.clipRatingFill(fill: Float, rtl: Boolean) = drawWithContent {
+    val boundary = size.width * fill
+    clipRect(left = if (rtl) size.width - boundary else 0f, right = if (rtl) size.width else boundary) {
+        this@drawWithContent.drawContent()
     }
 }
 

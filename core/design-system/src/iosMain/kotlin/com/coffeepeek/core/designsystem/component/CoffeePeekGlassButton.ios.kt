@@ -29,7 +29,7 @@ import platform.UIKit.accessibilityValue
 actual fun CoffeePeekGlassButton(
     text: String, onClick: () -> Unit, modifier: Modifier, enabled: Boolean,
     isLoading: Boolean, loadingDescription: String?, leadingIcon: CoffeePeekGlassButtonIcon?, hazeState: HazeState?,
-    containerColor: Color, contentColor: Color,
+    glassTint: Color, contentColor: Color,
 ) {
     val currentOnClick = rememberUpdatedState(onClick)
     val currentEnabled = rememberUpdatedState(enabled && !isLoading)
@@ -45,9 +45,11 @@ actual fun CoffeePeekGlassButton(
         },
         modifier = modifier.sizeIn(minWidth = CoffeePeekDimens.minimumTouchTarget, minHeight = CoffeePeekDimens.buttonHeight),
         update = { button ->
-            button.overrideUserInterfaceStyle = coffeePeekUserInterfaceStyle(colors.background)
+            button.overrideUserInterfaceStyle = coffeePeekUserInterfaceStyle(glassTint.takeOrElse { colors.background })
             button.backgroundColor = UIColor.clearColor
-            button.configuration = coffeePeekGlassButtonConfiguration(prominent = containerColor.isSpecified).apply {
+            button.configuration = coffeePeekGlassButtonConfiguration(
+                prominent = glassTint.isSpecified && coffeePeekLiquidGlassAvailable,
+            ).apply {
                 title = text
                 image = if (isLoading) coffeePeekLoaderPlaceholderImage() else when (leadingIcon) {
                     CoffeePeekGlassButtonIcon.Check -> UIImage.systemImageNamed("checkmark")
@@ -56,7 +58,7 @@ actual fun CoffeePeekGlassButton(
                 imagePadding = 4.0
                 showsActivityIndicator = false
                 cornerStyle = UIButtonConfigurationCornerStyleCapsule
-                if (containerColor.isSpecified) baseBackgroundColor = containerColor.toUIColor()
+                if (glassTint.isSpecified && coffeePeekLiquidGlassAvailable) baseBackgroundColor = glassTint.toUIColor()
                 baseForegroundColor = foreground.toUIColor()
             }
             button.titleLabel?.adjustsFontForContentSizeCategory = true

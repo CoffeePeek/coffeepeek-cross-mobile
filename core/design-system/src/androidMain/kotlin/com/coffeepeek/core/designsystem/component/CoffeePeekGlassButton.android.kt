@@ -25,14 +25,14 @@ import com.coffeepeek.core.designsystem.modifier.LocalCoffeePeekGlassHazeState
 actual fun CoffeePeekGlassButton(
     text: String, onClick: () -> Unit, modifier: Modifier, enabled: Boolean,
     isLoading: Boolean, loadingDescription: String?, leadingIcon: CoffeePeekGlassButtonIcon?, hazeState: HazeState?,
-    containerColor: Color, contentColor: Color,
+    glassTint: Color, contentColor: Color,
 ) {
     val loadingLabel = if (isLoading) requireNotNull(loadingDescription) else null
     val defaults = ButtonDefaults.filledTonalButtonColors()
     val colors = ButtonDefaults.filledTonalButtonColors(
-        containerColor = containerColor.takeOrElse { Color.Transparent },
+        containerColor = glassTint.takeOrElse { Color.Transparent },
         contentColor = contentColor.takeOrElse { defaults.contentColor },
-        disabledContainerColor = containerColor.takeOrElse { Color.Transparent },
+        disabledContainerColor = glassTint.takeOrElse { Color.Transparent },
         disabledContentColor = contentColor.takeOrElse { defaults.disabledContentColor },
     )
     CompositionLocalProvider(LocalCoffeePeekGlassHazeState provides hazeState) {

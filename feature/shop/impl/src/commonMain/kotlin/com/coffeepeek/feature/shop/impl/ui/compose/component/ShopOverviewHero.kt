@@ -3,7 +3,6 @@ package com.coffeepeek.feature.shop.impl.ui.compose.component
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.statusBars
@@ -16,8 +15,6 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import com.coffeepeek.feature.shop.api.ShopContentAction
 import com.coffeepeek.feature.shop.api.ShopContentMetric
 import com.coffeepeek.feature.shop.api.ShopExposure
@@ -37,7 +34,6 @@ import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.feature.shop.domain.model.ShopOverview
 import com.coffeepeek.feature.shop.impl.resources.Res
-import com.coffeepeek.feature.shop.impl.resources.shop_overview_photo_counter
 import com.coffeepeek.feature.shop.impl.resources.shop_overview_photo_description
 import com.coffeepeek.feature.shop.impl.resources.shop_overview_photo_missing
 import io.kamel.image.KamelImage
@@ -69,16 +65,11 @@ internal fun ShopOverviewHero(
             0.74f to Color.Black.copy(alpha = 0.66f),
             1f to Color.Black.copy(alpha = 0.84f),
         )))
-        Column(Modifier.align(Alignment.BottomStart).padding(
+        ShopOverviewHeader(overview, onOpenMap, Modifier.align(Alignment.BottomStart).padding(
             start = CoffeePeekDimens.spacing4, end = CoffeePeekDimens.spacing4,
             top = topInset + CoffeePeekDimens.glassControlSize + CoffeePeekDimens.spacing4,
             bottom = CoffeePeekDimens.spacing3,
-        )) {
-            if (photos.isNotEmpty()) {
-                ShopOverviewPhotoCounter(pagerState.currentPage + 1, photos.size, Modifier.align(Alignment.End))
-            }
-            ShopOverviewHeader(overview, onOpenMap)
-        }
+        ), currentPage = pagerState.currentPage)
     }
 }
 
@@ -106,15 +97,6 @@ private fun ShopOverviewPhotoPager(
             onLoading = { CoffeePeekImagePlaceholder(labelSize = 24.sp) },
             onFailure = { CoffeePeekImagePlaceholder(labelSize = 24.sp) },
         )
-    }
-}
-
-@Composable
-private fun ShopOverviewPhotoCounter(page: Int, count: Int, modifier: Modifier = Modifier) {
-    Surface(modifier, shape = RoundedCornerShape(percent = 50), color = Color.Black.copy(alpha = 0.6f)) {
-        Text(stringResource(Res.string.shop_overview_photo_counter, page, count),
-            modifier = Modifier.padding(horizontal = 10.dp, vertical = CoffeePeekDimens.spacing1),
-            color = Color.White, style = MaterialTheme.typography.labelSmall)
     }
 }
 

@@ -16,8 +16,6 @@ import com.coffeepeek.core.designsystem.component.CoffeePeekIconBadge
 import com.coffeepeek.core.designsystem.component.CoffeePeekIconBadgePalette
 import com.coffeepeek.core.designsystem.component.CoffeePeekScrollableColumn
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
-import com.coffeepeek.core.designsystem.icons.CoffeePeekMapIcon
-import com.coffeepeek.core.designsystem.icons.coffeePeekMapIconPainter
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.homecheckin.impl.resources.*
@@ -47,7 +45,7 @@ internal fun CheckInCreatePickerContent(
             CheckInCreateOption(stringResource(Res.string.home_check_in_create_shop),
                 stringResource(Res.string.home_check_in_create_shop_hint), coffeePeekIconPainter(CoffeePeekIcons.Location), onShop)
             CheckInCreateOption(stringResource(Res.string.home_check_in_create_home),
-                stringResource(Res.string.home_check_in_create_home_hint), coffeePeekMapIconPainter(CoffeePeekMapIcon.CoffeeShop), onHome)
+                stringResource(Res.string.home_check_in_create_home_hint), coffeePeekIconPainter(CoffeePeekIcons.Coffee), onHome)
             if (onShelfBag != null) CheckInCreateOption(stringResource(Res.string.home_check_in_create_shelf_title),
                 stringResource(Res.string.home_check_in_create_shelf_body), coffeePeekIconPainter(CoffeePeekIcons.Camera), onShelfBag)
         }

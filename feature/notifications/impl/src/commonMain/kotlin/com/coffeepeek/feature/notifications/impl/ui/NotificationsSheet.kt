@@ -23,14 +23,17 @@ import androidx.compose.material3.*
 import com.coffeepeek.core.designsystem.component.CoffeePeekIconButton as IconButton
 import com.coffeepeek.core.designsystem.component.CoffeePeekTextButton as TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -63,21 +66,16 @@ internal fun NotificationsContent(
 ) {
     Column(Modifier.fillMaxWidth().padding(horizontal = CoffeePeekDimens.spacing5)) {
         NotificationsHeader(onClose)
-        if (state.accountId != null && state.items.isNotEmpty()) {
-            NotificationsReadAll(state, onReadAll, openingId == null, Modifier.align(Alignment.End))
-        }
-        Spacer(Modifier.height(CoffeePeekDimens.spacing4))
-        NotificationsList(state, onClose, onRead, onSeen, onRefresh, onLoadMore, onSignIn,
+        Spacer(Modifier.height(CoffeePeekDimens.spacing2))
+        NotificationsList(state, onClose, onRead, onReadAll, onSeen, onRefresh, onLoadMore, onSignIn,
             openingId, Modifier.weight(1f, fill = false))
     }
 }
 
 @Composable
-private fun NotificationsReadAll(state: NotificationInboxState, onReadAll: () -> Unit,
-    canInteract: Boolean, modifier: Modifier = Modifier) {
-    TextButton(onClick = onReadAll, modifier = modifier,
-        colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onSurface),
-        enabled = canInteract && state.unreadCount > 0 && !state.markingRead && !state.loading && !state.loadingMore) {
+private fun NotificationsReadAll(onReadAll: () -> Unit, enabled: Boolean) {
+    TextButton(onClick = onReadAll, enabled = enabled,
+        contentPadding = PaddingValues(start = CoffeePeekDimens.spacing2)) {
         CoffeePeekIcon(CoffeePeekIcons.Check, contentDescription = null, modifier = Modifier.size(CoffeePeekDimens.spacing4))
         Spacer(Modifier.width(CoffeePeekDimens.spacing2))
         Text(stringResource(Res.string.notifications_read_all))
@@ -86,7 +84,7 @@ private fun NotificationsReadAll(state: NotificationInboxState, onReadAll: () ->
 
 @Composable
 private fun NotificationsList(state: NotificationInboxState, onClose: () -> Unit,
-    onRead: (String) -> Unit, onSeen: (String) -> Unit, onRefresh: () -> Unit,
+    onRead: (String) -> Unit, onReadAll: () -> Unit, onSeen: (String) -> Unit, onRefresh: () -> Unit,
     onLoadMore: () -> Unit, onSignIn: () -> Unit, openingId: String?, modifier: Modifier) {
     val listState = rememberLazyListState()
     // The sheet supplies a maximum; short lists must keep their content height.
@@ -100,7 +98,7 @@ private fun NotificationsList(state: NotificationInboxState, onClose: () -> Unit
                 })
             }
         } else {
-            notificationHistory(state, onRead, onSeen, openingId, listState)
+            notificationHistory(state, onRead, onReadAll, onSeen, openingId, listState)
             if (state.items.isEmpty() || state.error != null) {
                 item(key = "status") { NotificationsStatus(state, onRefresh) }
             }
@@ -127,19 +125,33 @@ private fun NotificationsHeader(onClose: () -> Unit) {
 }
 
 private fun LazyListScope.notificationHistory(state: NotificationInboxState, onRead: (String) -> Unit,
-    onSeen: (String) -> Unit, openingId: String?, listState: LazyListState) {
-    state.items.groupBy { isToday(it.createdAtUtc) }.forEach { (isToday, entries) ->
+    onReadAll: () -> Unit, onSeen: (String) -> Unit, openingId: String?, listState: LazyListState) {
+    val canInteract = openingId == null && !state.loading && !state.loadingMore
+    state.items.groupBy { isToday(it.createdAtUtc) }.entries.forEachIndexed { groupIndex, (isToday, entries) ->
         item(key = if (isToday) "today" else "earlier") {
-            Text(stringResource(if (isToday) Res.string.notifications_today else Res.string.notifications_earlier),
-                style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(top = CoffeePeekDimens.spacing1).semantics { heading() })
+            NotificationGroupHeader(isToday, onReadAll.takeIf { groupIndex == 0 && state.unreadCount > 0 },
+                canInteract && !state.markingRead)
         }
         itemsIndexed(entries, key = { _, item -> item.id }) { index, item ->
             Column {
                 NotificationSeenEffect(listState, item, state.generation, onSeen)
-                NotificationRow(item, enabled = openingId == null && !state.loading && !state.loadingMore,
-                    onClick = { onRead(item.id) })
-                if (index < entries.lastIndex) CoffeePeekRowSeparator()
+                NotificationRow(item, enabled = canInteract, onClick = { onRead(item.id) })
+                if (index < entries.lastIndex) CoffeePeekRowSeparator(Modifier)
+            }
+        }
+    }
+}
+
+@Composable
+private fun NotificationGroupHeader(isToday: Boolean, onReadAll: (() -> Unit)?, enabled: Boolean) {
+    Row(Modifier.fillMaxWidth().heightIn(min = CoffeePeekDimens.spacing8),
+        verticalAlignment = Alignment.CenterVertically) {
+        Text(stringResource(if (isToday) Res.string.notifications_today else Res.string.notifications_earlier),
+            style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.weight(1f).semantics { heading() })
+        if (onReadAll != null) {
+            Box(Modifier.weight(1.7f), contentAlignment = Alignment.CenterEnd) {
+                NotificationsReadAll(onReadAll, enabled)
             }
         }
     }
@@ -205,14 +217,16 @@ private fun NotificationsStatus(state: NotificationInboxState, onRefresh: () -> 
 }
 
 @Composable
-private fun NotificationsPreview(dark: Boolean, count: Int) = CoffeePeekTheme(darkTheme = dark) {
+private fun NotificationsPreview(dark: Boolean, count: Int, fontScale: Float = 1f) = CoffeePeekTheme(darkTheme = dark) {
     val state = NotificationInboxState(accountId = "preview", settingsLoaded = true, deviceAvailable = true,
         unreadCount = (count + 1) / 2, items = List(count) { index ->
             NotificationItem("preview-$index", NotificationKind.ShopApproved, "Кофейня добавлена",
                 "Спасибо! Новая кофейня уже появилась на карте.", "2026-10-21T08:00:00Z", read = index % 2 == 1, canOpen = true)
         })
-    Surface(Modifier.width(360.dp).heightIn(max = 640.dp)) {
-        NotificationsContent(state, {}, {}, {}, {}, {}, {}, {})
+    CompositionLocalProvider(LocalDensity provides Density(LocalDensity.current.density, fontScale)) {
+        Surface(Modifier.width(360.dp).heightIn(max = 640.dp)) {
+            NotificationsContent(state, {}, {}, {}, {}, {}, {}, {})
+        }
     }
 }
 
@@ -222,6 +236,8 @@ private fun NotificationsPreview(dark: Boolean, count: Int) = CoffeePeekTheme(da
 @Preview @Composable private fun NotificationsListDarkPreview() = NotificationsPreview(true, 1)
 @Preview @Composable private fun NotificationsLongListLightPreview() = NotificationsPreview(false, 15)
 @Preview @Composable private fun NotificationsLongListDarkPreview() = NotificationsPreview(true, 15)
+@Preview @Composable private fun NotificationsLargeTextLightPreview() = NotificationsPreview(false, 3, fontScale = 2f)
+@Preview @Composable private fun NotificationsLargeTextDarkPreview() = NotificationsPreview(true, 3, fontScale = 2f)
 
 @Composable
 private fun NotificationsErrorsPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
