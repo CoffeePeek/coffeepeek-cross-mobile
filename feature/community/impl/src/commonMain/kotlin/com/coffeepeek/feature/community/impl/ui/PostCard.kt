@@ -301,22 +301,21 @@ private fun HelpfulButton(count: Int, helpful: Boolean, onClick: (() -> Unit)?) 
         Modifier.heightIn(min = 48.dp)
             .semantics(mergeDescendants = true) { contentDescription = description },
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(2.dp),
+        horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2),
     ) {
-        // The heart sits on the content grid (no centering indent before it); the 44dp touch
-        // target is an invisible overlay centered on the glyph, so it adds no layout gap.
-        // The press effect plays on the heart itself via the shared interaction source.
+        // Production geometry: the glyph rides centered in its 44dp slot, so it sits ~10dp
+        // off the content edge with an 8dp step to the count. The press effect still plays
+        // inside the heart itself via the shared interaction source.
         val interactions = remember { MutableInteractionSource() }
-        Box(Modifier.size(24.dp), contentAlignment = Alignment.Center) {
+        Box(Modifier.size(44.dp).then(if (onClick != null) Modifier.clickable(
+            interactionSource = interactions, indication = null, role = Role.Button, onClick = onClick,
+        ) else Modifier), contentAlignment = Alignment.Center) {
             val heartPress = if (onClick != null) Modifier.clip(CircleShape).clickable(
                 interactionSource = interactions, indication = ripple(bounded = true), onClick = onClick,
             ) else Modifier
             Box(Modifier.size(28.dp).then(heartPress), contentAlignment = Alignment.Center) {
                 CoffeePeekLikeIcon(helpful, contentDescription = null)
             }
-            if (onClick != null) Box(Modifier.size(44.dp).clickable(
-                interactionSource = interactions, indication = null, role = Role.Button, onClick = onClick,
-            ))
         }
         Text(count.toString(), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface)
     }
