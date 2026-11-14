@@ -46,9 +46,12 @@ import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -301,23 +304,26 @@ private fun HelpfulButton(count: Int, helpful: Boolean, onClick: (() -> Unit)?) 
         Modifier.heightIn(min = 48.dp)
             .semantics(mergeDescendants = true) { contentDescription = description },
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2),
     ) {
-        // Production geometry: the glyph rides centered in its 44dp slot, so it sits ~10dp
-        // off the content edge with an 8dp step to the count. The press effect still plays
-        // inside the heart itself via the shared interaction source.
+        // The glyph lines up with the card content: it is pulled left out of its centered
+        // 44dp touch slot back to the content edge. The count follows at 4dp; the 44dp slot
+        // keeps the touch target, and the ripple still plays inside the heart itself.
         val interactions = remember { MutableInteractionSource() }
-        Box(Modifier.size(44.dp).then(if (onClick != null) Modifier.clickable(
+        val tap = if (onClick != null) Modifier.clickable(
             interactionSource = interactions, indication = null, role = Role.Button, onClick = onClick,
-        ) else Modifier), contentAlignment = Alignment.Center) {
+        ) else Modifier
+        Box(Modifier.height(44.dp).width(28.dp), contentAlignment = Alignment.Center) {
             val heartPress = if (onClick != null) Modifier.clip(CircleShape).clickable(
                 interactionSource = interactions, indication = ripple(bounded = true), onClick = onClick,
             ) else Modifier
             Box(Modifier.size(28.dp).then(heartPress), contentAlignment = Alignment.Center) {
                 CoffeePeekLikeIcon(helpful, contentDescription = null)
             }
+            Box(Modifier.size(44.dp).then(tap))
         }
-        Text(count.toString(), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface)
+        Text(count.toString(), Modifier.padding(start = 4.dp),
+            style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface)
+
     }
 }
 
