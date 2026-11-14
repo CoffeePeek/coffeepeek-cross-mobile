@@ -1,3 +1,4 @@
+import os
 import subprocess
 import unittest
 from unittest.mock import patch
@@ -10,6 +11,43 @@ SERVER = "https://github.com"
 RUN_ID = "12345"
 COMMIT = "a" * 40
 OLDER_COMMIT = "b" * 40
+
+
+class ApiFailureTest(unittest.TestCase):
+    def test_reports_failed_write_endpoint_without_request_body(self):
+        failure = subprocess.CalledProcessError(1, "gh", stderr="gh: Resource not accessible by integration (HTTP 403)")
+        with patch.object(drafts.subprocess, "run", side_effect=failure):
+            with self.assertRaises(subprocess.CalledProcessError) as raised:
+                drafts.api(REPOSITORY, "releases", data={"body": "private release notes"})
+        self.assertIn(f"POST /repos/{REPOSITORY}/releases", raised.exception.stderr)
+        self.assertIn("HTTP 403", raised.exception.stderr)
+        self.assertNotIn("private release notes", raised.exception.stderr)
+
+    def test_reports_failed_read_endpoint(self):
+        failure = subprocess.CalledProcessError(1, "gh", stderr="gh: Not Found (HTTP 404)")
+        with patch.object(drafts.subprocess, "run", side_effect=failure):
+            with self.assertRaises(subprocess.CalledProcessError) as raised:
+                drafts.api(REPOSITORY, f"actions/runs/{RUN_ID}")
+        self.assertIn(f"GET /repos/{REPOSITORY}/actions/runs/{RUN_ID}", raised.exception.stderr)
+
+
+class ReleaseTokenTest(unittest.TestCase):
+    def test_builtin_token_accepts_build_with_same_workflows(self):
+        with patch.dict(os.environ, {"RELEASE_USES_GITHUB_TOKEN": "true"}), \
+                patch.object(drafts, "git", return_value="") as git:
+            drafts.verify_release_token(COMMIT)
+        git.assert_called_once_with("diff", "--name-only", COMMIT, "HEAD", "--", ".github/workflows")
+
+    def test_builtin_token_explains_historical_workflow_permission(self):
+        with patch.dict(os.environ, {"RELEASE_USES_GITHUB_TOKEN": "true"}), \
+                patch.object(drafts, "git", return_value=".github/workflows/draft-release.yml"):
+            with self.assertRaisesRegex(ValueError, "MOBILE_RELEASE_TOKEN.*Workflows: write"):
+                drafts.verify_release_token(COMMIT)
+
+    def test_explicit_release_token_does_not_use_builtin_token_restriction(self):
+        with patch.dict(os.environ, {"RELEASE_USES_GITHUB_TOKEN": "false"}), patch.object(drafts, "git") as git:
+            drafts.verify_release_token(COMMIT)
+        git.assert_not_called()
 
 
 def release(tag, published_at="2026-11-06T10:00:00Z", **overrides):
@@ -115,6 +153,16 @@ class DraftReleaseTest(unittest.TestCase):
         existing = release("ios-v1.2.0", draft=True, target_commitish=COMMIT, body="Edited notes")
         self.api.return_value = [[existing]]
         self.assertEqual((existing, False), drafts.draft_release(REPOSITORY, SERVER, "ios", RUN_ID))
+        self.api.assert_called_once_with(REPOSITORY, "releases?per_page=100", paginated=True)
+
+    def test_builtin_token_reuses_historical_draft_when_tag_pins_the_build(self):
+        existing = release("android-v1.2.0", draft=True, target_commitish="main", body="Edited notes")
+        self.api.return_value = [[existing]]
+        self.tag.return_value = COMMIT
+        with patch.dict(os.environ, {"RELEASE_USES_GITHUB_TOKEN": "true"}), \
+                patch.object(drafts, "verify_release_token") as verify:
+            self.assertEqual((existing, False), drafts.draft_release(REPOSITORY, SERVER, "android", RUN_ID))
+        verify.assert_not_called()
         self.api.assert_called_once_with(REPOSITORY, "releases?per_page=100", paginated=True)
 
     def test_rejects_existing_tag_or_draft_for_different_commit(self):

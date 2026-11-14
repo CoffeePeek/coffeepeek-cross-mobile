@@ -97,21 +97,34 @@ jobs:
             echo "GOOGLE_WEB_CLIENT_ID=$GOOGLE_WEB_CLIENT_ID"
           } > local.properties
 
-      - name: Restore Firebase Android configuration
+      - name: Restore Firebase Android configurations
         shell: bash
         env:
           FIREBASE_GOOGLE_SERVICES_JSON: ${{ secrets.FIREBASE_GOOGLE_SERVICES_JSON }}
+          FIREBASE_GOOGLE_SERVICES_JSON_DEBUG: ${{ secrets.FIREBASE_GOOGLE_SERVICES_JSON_DEBUG }}
         run: |
           set -euo pipefail
-          test -n "$FIREBASE_GOOGLE_SERVICES_JSON"
           umask 077
-          printf '%s' "$FIREBASE_GOOGLE_SERVICES_JSON" > composeApp/google-services.json
           python3 - <<'PY'
           import json
+          import os
           from pathlib import Path
-          config = json.loads(Path('composeApp/google-services.json').read_text())
-          assert config['project_info']['project_id'] == 'coffeepeek', 'Incorrect Firebase project'
-          assert any(client['client_info']['android_client_info']['package_name'] == 'com.coffeepeek' for client in config['client']), 'Missing com.coffeepeek Firebase client'
+          configs = []
+          for variant, package, secret in (
+              ('release', 'com.coffeepeek', 'FIREBASE_GOOGLE_SERVICES_JSON'),
+              ('debug', 'com.coffeepeek.debug', 'FIREBASE_GOOGLE_SERVICES_JSON_DEBUG'),
+          ):
+              raw = os.environ.get(secret, '')
+              if not raw:
+                  raise SystemExit(f'Missing configuration: {secret}')
+              config = json.loads(raw)
+              assert config['project_info']['project_id'] == 'coffeepeek', f'Incorrect Firebase project for {variant}'
+              clients = [c for c in config['client'] if c['client_info']['android_client_info']['package_name'] == package]
+              assert len(clients) == 1, f'Missing or ambiguous {package} Firebase client'
+              configs.append((Path(f'composeApp/src/{variant}/google-services.json'), config))
+          for path, config in configs:
+              path.parent.mkdir(parents=True, exist_ok=True)
+              path.write_text(json.dumps(config), encoding='utf-8')
           PY
 
       - name: Restore release keystore
