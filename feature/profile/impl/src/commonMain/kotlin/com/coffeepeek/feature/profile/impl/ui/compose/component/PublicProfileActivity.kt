@@ -130,7 +130,7 @@ private fun ProfileActivityMonthGrid(activity: PublicProfileActivity) {
             }
         }
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-            Box(Modifier.size(7.dp).background(MaterialTheme.colorScheme.primary, CircleShape))
+            Box(Modifier.size(8.dp).background(MaterialTheme.colorScheme.primary, CircleShape))
             Text(stringResource(Res.string.profile_activity_legend), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         if (activity.timeZone == "Europe/Minsk") {

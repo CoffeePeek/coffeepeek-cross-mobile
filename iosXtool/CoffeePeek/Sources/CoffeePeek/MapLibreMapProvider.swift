@@ -376,10 +376,17 @@ final class MapLibreMapProvider: NSObject, IosNativeMapProvider, MLNMapViewDeleg
     }
 
     private func drawPinIcon(type: String, rect: CGRect, dark: Bool) {
-        let name = type == "specialty" ? "map_coffeepeek_bean" : (type == "cafe" ? "map_fork_knife" : "map_cup_fill")
+        let name: String
+        switch type {
+        case "specialty": name = "cup.and.saucer.fill"
+        case "cafe": name = "fork.knife"
+        default: name = "cup.and.saucer"
+        }
+        let configuration = UIImage.SymbolConfiguration(pointSize: rect.width * 0.44, weight: .semibold)
+        guard let icon = UIImage(systemName: name, withConfiguration: configuration) else { return }
         let tint = UIColor(hex: dark ? "#FFFFFF" : "#2D241F")
-        bundleImage(named: name)?.withTintColor(tint, renderingMode: .alwaysOriginal)
-            .draw(in: rect.insetBy(dx: rect.width * 0.20, dy: rect.height * 0.20))
+        let origin = CGPoint(x: rect.midX - icon.size.width / 2, y: rect.midY - icon.size.height / 2)
+        icon.withTintColor(tint, renderingMode: .alwaysOriginal).draw(at: origin)
     }
 
     private func drawPinRing(_ cg: CGContext, rect: CGRect, selected: Bool, dark: Bool) {
@@ -388,22 +395,6 @@ final class MapLibreMapProvider: NSObject, IosNativeMapProvider, MLNMapViewDeleg
         cg.setLineWidth(selected ? 2 : 1.1)
         let inset: CGFloat = selected ? -2.5 : 0.55
         cg.strokeEllipse(in: rect.insetBy(dx: inset, dy: inset))
-    }
-
-    private func bundleImage(named name: String) -> UIImage? {
-        let key = "asset-\(name)" as NSString
-        if let cached = images.object(forKey: key) { return cached }
-        let file = name + ".png"
-        let root = Bundle.main.resourcePath
-        let candidates = [
-            Bundle.main.path(forResource: name, ofType: "png"),
-            root.map { "\($0)/compose-resources/composeResources/coffeepeek.composeapp.generated.resources/drawable/\(file)" },
-            root.map { "\($0)/composeResources/coffeepeek.composeapp.generated.resources/drawable/\(file)" },
-            root.map { "\($0)/Frameworks/ComposeApp.framework/composeResources/coffeepeek.composeapp.generated.resources/drawable/\(file)" },
-        ].compactMap { $0 }
-        let image = candidates.lazy.compactMap(UIImage.init(contentsOfFile:)).first
-        if let image { images.setObject(image, forKey: key) }
-        return image
     }
 
     private func clusterImage(count: Int, dark: Bool) -> UIImage {

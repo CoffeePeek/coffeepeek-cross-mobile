@@ -26,6 +26,7 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.isSpecified
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
+import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 
 internal enum class CoffeePeekButtonStyle { Filled, Tonal, Outlined, Text }
 
@@ -49,7 +50,7 @@ internal fun CoffeePeekGlassButtonSurface(
     val background = if (enabled) colors.containerColor else colors.disabledContainerColor
     val tint = background.takeIf { it.isSpecified && it.alpha > 0f }
     Box(
-        modifier.defaultMinSize(minWidth = 64.dp, minHeight = 48.dp)
+        modifier.defaultMinSize(minWidth = 64.dp, minHeight = CoffeePeekDimens.minimumTouchTarget)
             .coffeePeekGlassPress(pressed, enabled)
             .then(if (border != null) Modifier.border(border, shape) else Modifier)
             .clickable(interactions, indication = null, enabled = enabled, role = Role.Button, onClick = onClick),

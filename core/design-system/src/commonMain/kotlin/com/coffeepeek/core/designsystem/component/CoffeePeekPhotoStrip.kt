@@ -1,5 +1,7 @@
 package com.coffeepeek.core.designsystem.component
 
+import com.coffeepeek.core.designsystem.theme.CoffeePeekColors
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -48,7 +50,7 @@ private fun CoffeePeekPhotoStripTile(index: Int, count: Int, description: String
         .clickable(enabled = enabled, role = Role.Button) { onPhoto(index) }
         .semantics(mergeDescendants = true) { contentDescription = description }) {
         image(index, Modifier.fillMaxSize())
-        if (index == 2 && count > 3) Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.45f)),
+        if (index == 2 && count > 3) Box(Modifier.fillMaxSize().background(CoffeePeekColors.PhotoBadgeOverlay),
             contentAlignment = Alignment.Center) {
             Text("+${count - 3}", style = MaterialTheme.typography.headlineSmall, color = Color.White)
         }

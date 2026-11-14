@@ -7,12 +7,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.unit.dp
-import com.coffeepeek.core.designsystem.component.CoffeePeekLikeIcon
+import com.coffeepeek.core.designsystem.component.CoffeePeekLikeCount
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.checkinhistory.domain.model.*
@@ -33,15 +31,15 @@ internal fun HistoryCheckInCard(checkIn: PersonalCheckIn, dateLabel: String,
                 style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
             checkIn.rating?.let { HistoryCheckInRating(it) }
             HistoryCheckInNote(checkIn.note)
+            if (checkIn.moderation == HistoryModeration.Rejected) Text(
+                checkIn.rejectionReason?.takeIf(String::isNotBlank) ?: stringResource(Res.string.history_rejection_fallback),
+                style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.error,
+            )
             HistoryCheckInPhotos(checkIn.photoThumbnailUrls ?: checkIn.photoUrls, onOpenPhoto, imageContent = imageContent,
                 originalUrls = checkIn.photoUrls, detailUrls = checkIn.photoDetailUrls)
             if (checkIn.visibility == HistoryVisibility.Public || checkIn.helpfulCount > 0) {
                 val likes = stringResource(Res.string.history_helpful_count, checkIn.helpfulCount)
-                Row(Modifier.semantics(mergeDescendants = true) { contentDescription = likes },
-                    horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing1)) {
-                    CoffeePeekLikeIcon(checkIn.isHelpfulByCurrentUser, null, size = 18.dp)
-                    Text(checkIn.helpfulCount.toString(), style = MaterialTheme.typography.labelMedium)
-                }
+                CoffeePeekLikeCount(checkIn.helpfulCount, checkIn.isHelpfulByCurrentUser, likes)
             }
             checkIn.drink.displayName(Locale.current.language)?.let { HistoryDrinkBadge(it) }
         }

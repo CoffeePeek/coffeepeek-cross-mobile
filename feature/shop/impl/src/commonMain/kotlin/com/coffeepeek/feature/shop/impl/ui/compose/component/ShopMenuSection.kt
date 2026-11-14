@@ -1,6 +1,8 @@
 package com.coffeepeek.feature.shop.impl.ui.compose.component
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -22,6 +24,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.component.CoffeePeekContentCard
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
+import com.coffeepeek.core.designsystem.theme.CoffeePeekColors
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.shop.domain.model.ShopMenu
 import com.coffeepeek.feature.shop.domain.model.ShopMenuItem
@@ -64,7 +67,9 @@ private fun MenuCard(menu: ShopMenu, groups: List<List<ShopMenuItem>>, captured:
                 val photoStack: @Composable () -> Unit = {
                     ShopMenuPhotoStack(menu.photos, onOpenPhoto) {
                         ShopMenuFreshness(captured, updated,
-                            Modifier.align(Alignment.BottomStart).padding(CoffeePeekDimens.spacing2),
+                            Modifier.align(Alignment.BottomStart).padding(CoffeePeekDimens.spacing2)
+                                .background(CoffeePeekColors.PhotoBadgeOverlay, RoundedCornerShape(8.dp))
+                                .padding(CoffeePeekDimens.spacing2),
                             contentColor = Color.White)
                     }
                 }

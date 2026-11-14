@@ -10,10 +10,10 @@ import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as st
 @Composable internal fun HomeHistoryEntry.visibilityLabel(): String? = when (visibility) {
     HistoryVisibility.Private -> stringResource(Res.string.history_private)
     HistoryVisibility.Public -> stringResource(when (moderation) {
-        HistoryModeration.Approved -> Res.string.history_visible
-        HistoryModeration.Pending -> Res.string.history_pending
+        HistoryModeration.Approved -> Res.string.history_public
+        HistoryModeration.Pending -> Res.string.history_public
         HistoryModeration.Rejected -> Res.string.history_rejected
-        HistoryModeration.NotSubmitted -> Res.string.history_waiting_publication
+        HistoryModeration.NotSubmitted -> Res.string.history_public
         HistoryModeration.Unknown -> Res.string.history_public
     })
     null -> null

@@ -5,7 +5,7 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 import com.coffeepeek.feature.community.impl.resources.Res
 import com.coffeepeek.feature.community.impl.resources.community_mascot_error
 import com.coffeepeek.feature.community.impl.resources.community_edit_saved
-import com.coffeepeek.feature.community.impl.resources.community_edit_sent_for_review
+import com.coffeepeek.feature.community.impl.resources.community_empty
 import com.coffeepeek.feature.community.impl.resources.community_error_body
 import com.coffeepeek.feature.community.impl.resources.community_error_title
 import com.coffeepeek.feature.community.impl.resources.community_loading
@@ -108,6 +108,10 @@ internal fun CommunityScreen(
             }
         }
     }
+    androidx.lifecycle.compose.LifecycleResumeEffect(vm) {
+        vm.onAction(CommunityAction.Resume)
+        onPauseOrDispose { }
+    }
     CommunityContent(state, vm::onAction, host, blockActions, callbacks, snackbar, modifier, bottomClearance,
         headerAction, floatingAction, leadersSelected) { leadersSelected = it }
 }
@@ -118,16 +122,14 @@ internal fun messageTexts() = MessageTexts(
     visibility = stringResource(Res.string.community_visibility_failed),
     reported = stringResource(Res.string.community_report_sent),
     saved = stringResource(Res.string.community_edit_saved),
-    review = stringResource(Res.string.community_edit_sent_for_review),
 )
 
-internal class MessageTexts(val vote: String, val visibility: String, val reported: String, val saved: String, val review: String) {
+internal class MessageTexts(val vote: String, val visibility: String, val reported: String, val saved: String) {
     fun text(message: ActionMessage): String = when (message.kind) {
         MessageKind.VoteFailed -> message.serverMessage ?: vote
         MessageKind.VisibilityFailed -> message.serverMessage ?: visibility
         MessageKind.ReportSent -> reported
         MessageKind.EditSaved -> saved
-        MessageKind.EditSentForReview -> review
     }
 }
 

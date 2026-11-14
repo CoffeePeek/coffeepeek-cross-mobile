@@ -1,5 +1,7 @@
 package com.coffeepeek.feature.profile.impl.ui.compose.component
 
+import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
+
 import androidx.compose.foundation.BorderStroke
 import com.coffeepeek.feature.profile.impl.resources.Res
 import com.coffeepeek.feature.profile.impl.resources.profile_loading
@@ -53,7 +55,7 @@ internal fun ProfileCard(modifier: Modifier = Modifier.fillMaxWidth(), content: 
 internal fun ProfileEmptyCard(text: String, icon: ImageVector) {
     ProfileCard {
         Row(Modifier.fillMaxWidth().padding(20.dp), horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
-            CoffeePeekIcon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(23.dp))
+            CoffeePeekIcon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(24.dp))
             Text(text, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
@@ -85,9 +87,9 @@ internal fun ProfileSectionHeading(title: String, onAll: () -> Unit) {
             modifier = Modifier.semantics { contentDescription = description },
             contentPadding = PaddingValues(start = 12.dp),
         ) {
-            Text(stringResource(Res.string.profile_section_all), color = MaterialTheme.colorScheme.secondary)
-            Spacer(Modifier.width(3.dp))
-            CoffeePeekIcon(CoffeePeekIcons.ChevronRight, contentDescription = null, tint = MaterialTheme.colorScheme.secondary, modifier = Modifier.size(17.dp))
+            Text(stringResource(Res.string.profile_section_all), color = MaterialTheme.colorScheme.coffeePeekAccentForeground)
+            Spacer(Modifier.width(4.dp))
+            CoffeePeekIcon(CoffeePeekIcons.ChevronRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(18.dp))
         }
     }
 }

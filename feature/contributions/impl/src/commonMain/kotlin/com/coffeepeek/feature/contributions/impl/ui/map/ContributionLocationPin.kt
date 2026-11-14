@@ -36,7 +36,7 @@ internal fun ContributionLocationPin(modifier: Modifier = Modifier) {
     Box(modifier.offset(y = (-28).dp).size(44.dp, 56.dp).shadow(6.dp, locationPinShape)
         .background(MaterialTheme.colorScheme.primary, locationPinShape)
         .semantics { contentDescription = label }.testTag("shop_location_pin"), contentAlignment = Alignment.TopCenter) {
-        CoffeePeekPlatformCoffeeIcon(null, tint = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.padding(top = 9.dp).size(24.dp))
+        CoffeePeekPlatformCoffeeIcon(null, tint = MaterialTheme.colorScheme.onPrimary, modifier = Modifier.padding(top = 8.dp).size(24.dp))
     }
 }
 

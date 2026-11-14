@@ -367,7 +367,7 @@ private fun CheckRow(
             .toggleable(
                 value = checked,
                 interactionSource = interactions,
-                indication = null,
+                indication = androidx.compose.foundation.LocalIndication.current,
                 enabled = enabled,
                 role = Role.Checkbox,
                 onValueChange = onCheckedChange,

@@ -25,7 +25,6 @@
     <string name="home_check_in_home">Кофе дома</string>
     <string name="home_check_in_title_fallback">Домашнее приготовление</string>
     <string name="home_check_in_rejected">Не опубликован</string>
-    <string name="home_check_in_not_submitted">Ожидает публикации</string>
     <string name="home_check_in_unknown_moderation">Публичный</string>
     <string name="home_check_in_method">Способ приготовления</string>
     <string name="home_check_in_unspecified">Не указан</string>
@@ -76,14 +75,12 @@
     <string name="home_check_in_photo_upload_failed">Не удалось загрузить фото. Попробуйте ещё раз.</string>
     <string name="home_check_in_optional">Необязательно</string>
     <string name="home_check_in_public_title">Сделать публичным</string>
-    <string name="home_check_in_public_hint">В ленте после модерации. Без публикации — только вам.</string>
+    <string name="home_check_in_public_hint">Добавить в ленту. Если выключено, чекин виден только вам.</string>
     <string name="home_check_in_recipe_title">Дополнительно</string>
     <string name="home_check_in_recipe_collapsed">Свёрнут</string>
     <string name="home_check_in_recipe_expanded">Развёрнут</string>
     <string name="home_check_in_saved_private">Сохранено только для вас</string>
-    <string name="home_check_in_saved_pending">Сохранено, ожидает публикации</string>
-    <string name="home_check_in_saved_published">Опубликовано</string>
-    <string name="home_check_in_saved_unknown">Чекин сохранён. Статус публикации уточняется</string>
+    <string name="home_check_in_saved_unknown">Чекин добавлен</string>
     <string name="home_check_in_saved_visibility_changed">Настройка аудитории не подтвердилась. Проверьте запись.</string>
     <string name="home_check_in_taste_question">Как получился кофе?</string>
     <string name="home_check_in_choose_rating">Как получился кофе?: выбрать %1$d из 5</string>
@@ -147,4 +144,5 @@
     <string name="home_check_in_error_visibility">Проверьте видимость чекина.</string>
     <string name="home_check_in_error_input">Проверьте введённые данные.</string>
     <string name="home_check_in_method_other">Другое</string>
+    <string name="home_check_in_rejection_fallback">Чекин сохранён в истории. Исправьте его, чтобы опубликовать.</string>
 </resources>

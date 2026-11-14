@@ -41,7 +41,7 @@ internal fun ActivityDiaryRow(row: HistoryTimelineItem, image: HistoryImageConte
         val ratingBelow = maxWidth < 310.dp || LocalDensity.current.fontScale > 1.2f
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             ActivityThumbnail(row, image, Modifier.size(56.dp))
-            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold,
                     maxLines = 2, overflow = TextOverflow.Ellipsis)
                 if (!drink.isNullOrBlank()) Text(drink, style = MaterialTheme.typography.bodySmall,

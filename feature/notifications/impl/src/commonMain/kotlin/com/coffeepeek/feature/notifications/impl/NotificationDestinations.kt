@@ -10,7 +10,7 @@ internal fun Notification.canOpen(): Boolean {
         "NewShop", "ShopApproved", "ShopRejected" -> entityType == "Shop"
         "RoasterApproved", "RoasterRejected" -> entityType == "Roaster"
         "CorrectionModeration" -> entityType == "ShopChange"
-        "CheckInModeration" -> entityType == "CheckIn"
+        "CheckInModeration" -> entityType in setOf("CheckIn", "CheckInPost")
         else -> false
     }
 }
@@ -22,6 +22,7 @@ internal fun NotificationTarget.toDestination(): NotificationDestination? {
         "ShopChange" -> NotificationDestination.ShopChange(value)
         "ShopSubmission" -> NotificationDestination.ShopSubmission(value)
         "RoasterSubmission" -> NotificationDestination.RoasterSubmissions
+        "CheckIn" -> NotificationDestination.CheckIn(value)
         "CheckIns" -> NotificationDestination.CheckIns
         else -> null
     }

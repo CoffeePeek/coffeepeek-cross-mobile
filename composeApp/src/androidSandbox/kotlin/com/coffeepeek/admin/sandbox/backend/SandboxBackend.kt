@@ -32,7 +32,7 @@ internal class SandboxBackend(private val samplePhoto: ByteArray,
     private val images = mutableMapOf<String, ByteArray>()
     private val reservations = mutableSetOf<String>()
     private val uploaded = mutableSetOf<String>()
-    private val application = SandboxApplicationBackend(today, shopRows) { key, size ->
+    private val application = SandboxApplicationBackend(today, shopRows, homePosts = { rows.values.map { read(it).asSandboxHomePost() } }) { key, size ->
         key in uploaded && images["/media/$key"]?.size?.toLong() == size
     }
     val contentReportCount get() = synchronized(lock) { application.submittedReports.size }

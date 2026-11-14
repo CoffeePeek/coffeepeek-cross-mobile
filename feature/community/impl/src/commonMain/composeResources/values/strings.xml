@@ -41,15 +41,12 @@
     <string name="community_share_home">Кофе дома — %1$s: %2$s</string>
     <string name="community_publish">Опубликовать</string>
     <string name="community_label_private">Приватный</string>
-    <string name="community_label_pending">На проверке</string>
-    <string name="community_label_published">Опубликован</string>
-    <string name="community_label_rejected">Отклонён</string>
+    <string name="community_label_rejected">Не опубликован</string>
     <string name="community_label_public">Публичный</string>
-    <string name="community_label_unknown">Статус проверки неизвестен</string>
+    <string name="community_label_unknown">Чекин сохранён</string>
 
     <string name="community_edit_title">Редактировать чек-ин</string>
     <string name="community_edit_kept">Кофейня, дата визита и фотографии сохранятся.</string>
-    <string name="community_edit_review">После сохранения публичный чек-ин снова отправится на проверку.</string>
     <string name="community_ratings_title">Ваши оценки</string>
     <string name="community_ratings_hint">Нажмите на звёзды, чтобы изменить оценку</string>
     <string name="community_rating_coffee">Кофе</string>
@@ -83,10 +80,14 @@
     <string name="community_visibility_failed">Не удалось изменить видимость</string>
     <string name="community_report_sent">Жалоба отправлена</string>
     <string name="community_edit_saved">Чек-ин сохранён</string>
-    <string name="community_edit_sent_for_review">Чек-ин сохранён и отправлен на проверку. Он доступен в профиле, в разделе «Чекины»</string>
 
     <string name="community_post_title">Публикация</string>
     <string name="community_back">Назад</string>
     <string name="community_post_unavailable_title">Публикация недоступна</string>
-    <string name="community_post_unavailable_body">Возможно, автор скрыл или удалил её, или она ещё на модерации.</string>
+    <string name="community_post_unavailable_body">Запись недоступна. Возможно, автор скрыл или удалил её.</string>
+    <string name="community_rejection_fallback">Чекин сохранён в истории. Исправьте его, чтобы опубликовать.</string>
+    <string name="community_rejection_edit">Исправить</string>
+    <string name="community_saved_title">Чекин добавлен</string>
+    <string name="community_saved_body">Запись сохранена. Обновите ленту, чтобы загрузить её карточку.</string>
+    <string name="community_saved_open">Открыть чекин</string>
 </resources>

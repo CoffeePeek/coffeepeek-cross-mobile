@@ -1,5 +1,7 @@
 package com.coffeepeek.core.designsystem.component
 
+import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
+
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.size
@@ -10,6 +12,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.DpSize
+import kotlin.math.ceil
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.resources.Res
 import com.coffeepeek.core.designsystem.resources.ic_byn_symbol
@@ -26,20 +30,24 @@ fun CoffeePeekBynPriceIndicators(
     count: Int,
     modifier: Modifier = Modifier,
     iconWidth: Dp = 14.dp,
-    tint: Color = MaterialTheme.colorScheme.primary,
+    tint: Color = MaterialTheme.colorScheme.coffeePeekAccentForeground,
     maxCount: Int = count,
     inactiveTint: Color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.25f),
-    spacing: Dp = 3.dp,
+    spacing: Dp = 2.dp,
 ) {
     Row(modifier, horizontalArrangement = Arrangement.spacedBy(spacing),
         verticalAlignment = Alignment.CenterVertically) {
         repeat(maxCount.coerceAtLeast(0)) { index ->
             Icon(painterResource(Res.drawable.ic_byn_symbol), contentDescription = null,
-                modifier = Modifier.size(width = iconWidth, height = iconWidth * BynSymbolHeightPerWidth),
+                modifier = Modifier.size(coffeePeekBynIndicatorSize(iconWidth)),
                 tint = if (index < count) tint else inactiveTint)
         }
     }
 }
+
+/** Round the layout box, retaining the official glyph proportions through Icon's fit scaling. */
+internal fun coffeePeekBynIndicatorSize(width: Dp): DpSize =
+    DpSize(width, (ceil(width.value * BynSymbolHeightPerWidth / 2f) * 2f).dp)
 
 @Preview @Composable private fun CoffeePeekBynPriceIndicatorsLightPreview() = CoffeePeekTheme(darkTheme = false) {
     CoffeePeekBynPriceIndicators(count = 2, maxCount = 3)

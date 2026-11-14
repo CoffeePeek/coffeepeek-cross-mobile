@@ -20,6 +20,7 @@ import com.coffeepeek.feature.community.domain.model.PostVisibility
 import com.coffeepeek.feature.community.domain.repository.CommunityRepository
 import com.coffeepeek.feature.community.domain.rules.appendTimeline
 import com.coffeepeek.feature.community.domain.rules.isWithdrawnFromPublic
+import com.coffeepeek.feature.community.domain.rules.isVisibleInTimeline
 import com.coffeepeek.feature.community.domain.rules.MAX_REPORT_LENGTH
 import com.coffeepeek.feature.community.domain.rules.validateReport
 import kotlinx.coroutines.CoroutineStart
@@ -45,7 +46,9 @@ internal class CommunityViewModel(
     private val analytics: CommunityAnalytics,
     private val drinks: ConsumedDrinks,
     private val authors: AuthorVisibility = AuthorVisibility.None,
+    private val saved: com.coffeepeek.feature.community.api.CommunitySavedPosts = com.coffeepeek.feature.community.api.CommunitySavedPosts.None,
 ) : MviViewModel<CommunityState, CommunityAction, CommunityEvent>(CommunityState()) {
+    private var firstResume = true
     private var accountKey: String? = null
     private var loadJob: Job? = null
     private var mutationJob: Job? = null
@@ -57,6 +60,13 @@ internal class CommunityViewModel(
 
     init {
         var appliedVisibility: AuthorVisibilitySnapshot? = null
+        viewModelScope.launch {
+            saved.posts.collect { posts ->
+                val own = posts.filter { it.accountKey == accountKey }.map { it.id }
+                updateState { copy(confirmedSaves = own) }
+                if (own.isNotEmpty()) refresh(null)
+            }
+        }
         viewModelScope.launch {
             authors.visibility.drop(1).collect { snapshot ->
                 if (snapshot == ownRefreshSnapshot) { ownRefreshSnapshot = null; return@collect }
@@ -78,6 +88,7 @@ internal class CommunityViewModel(
             account.accountKey.distinctUntilChanged().collect { key ->
                 loadJob?.cancel(); mutationJob?.cancel(); profileJob?.cancel(); drinksJob?.cancel(); cancelVotes()
                 accountKey = key
+                saved.retainAccount(key)
                 val initial = updateAndGet {
                     CommunityState(
                         isLoggedIn = key != null,
@@ -109,11 +120,19 @@ internal class CommunityViewModel(
         when (action) {
             is CommunityAction.Refresh -> refresh(action.trigger)
             is CommunityAction.LoadMore -> loadMore(action.track)
+            CommunityAction.Resume -> if (firstResume) firstResume = false else refresh(null)
             CommunityAction.Retry -> retry()
             is CommunityAction.SelectTimeline -> selectTimeline(action.timeline)
             is CommunityAction.SetFilters -> setFilters(action.filters)
             is CommunityAction.ToggleHelpful -> toggleHelpful(action.id)
             is CommunityAction.ItemInteracted -> itemInteracted(action.action, currentState.items.firstOrNull { it.id == action.id })
+            is CommunityAction.ToggleVisibility -> toggleVisibility(action.id)
+            else -> handleEditorAction(action)
+        }
+    }
+
+    private suspend fun handleEditorAction(action: CommunityAction) {
+        when (action) {
             is CommunityAction.Edit -> edit(action.id)
             is CommunityAction.EditText -> updateEdit { copy(text = action.text) }
             is CommunityAction.EditRating -> updateEdit { copy(rating = action.rating) }
@@ -121,7 +140,12 @@ internal class CommunityViewModel(
             CommunityAction.LoadDrinks -> loadDrinks()
             CommunityAction.SaveEdit -> saveEdit()
             CommunityAction.DismissEdit -> dismissEdit()
-            is CommunityAction.ToggleVisibility -> toggleVisibility(action.id)
+            else -> handleReportAction(action)
+        }
+    }
+
+    private suspend fun handleReportAction(action: CommunityAction) {
+        when (action) {
             is CommunityAction.OpenReport -> openReport(action.id)
             is CommunityAction.ReportText -> if (!currentState.isReporting) {
                 updateState { copy(reportText = action.text.take(MAX_REPORT_LENGTH), reportIssue = null, reportFailed = false, reportFailure = null) }
@@ -130,6 +154,7 @@ internal class CommunityViewModel(
             CommunityAction.DismissReport -> if (!currentState.isReporting) {
                 updateState { copy(reportingId = null, reportText = "", reportIssue = null, reportFailed = false, reportFailure = null) }
             }
+            else -> Unit
         }
     }
 
@@ -164,7 +189,10 @@ internal class CommunityViewModel(
     private fun refresh(trigger: FeedTrigger?) {
         if (trigger != null && currentState.timeline == CommunityTimeline.Public) analytics.feedAction(FeedAction.Refresh, trigger)
         val current = currentState
-        if (!current.isLoading && !current.isMutating) load(reset = true)
+        if (current.isMutating || current.editing != null || current.reportingId != null) return
+        loadJob?.cancel()
+        updateState { copy(sessionGeneration = sessionGeneration + 1) }
+        load(reset = true)
     }
 
     private fun loadMore(track: Boolean) {
@@ -180,6 +208,16 @@ internal class CommunityViewModel(
         if (!currentState.restartPagination && (currentState.failedPage ?: 1) > 1) loadMore(track = false) else refresh(null)
     }
 
+    private fun beginLoad(key: String?, generation: Long, reset: Boolean) {
+        updateState {
+            if (sessionGeneration != generation) this else copy(
+                confirmedSaves = saved.posts.value.filter { it.accountKey == key }.map { it.id },
+                isLoading = reset, isLoadingMore = !reset, error = null, failedPage = null, restartPagination = false,
+                nextCursor = if (reset) null else nextCursor, page = if (reset) 0 else this.page, hasMore = if (reset) false else hasMore,
+            )
+        }
+    }
+
     private fun load(reset: Boolean, expectedGeneration: Long? = null) {
         val key = accountKey
         val current = currentState
@@ -191,12 +229,8 @@ internal class CommunityViewModel(
         val page = if (reset) 1 else current.page + 1
         val cursor = if (reset) null else current.nextCursor
         val filters = current.filters
-        updateState {
-            if (sessionGeneration != generation) this else copy(
-                isLoading = reset, isLoadingMore = !reset, error = null, failedPage = null, restartPagination = false,
-                nextCursor = if (reset) null else nextCursor, page = if (reset) 0 else this.page, hasMore = if (reset) false else hasMore,
-            )
-        }
+        val confirmed = saved.posts.value.filter { it.accountKey == key }
+        beginLoad(key, generation, reset)
         val request = viewModelScope.launch(start = CoroutineStart.LAZY) {
             if (!isCurrent(key) || currentState.sessionGeneration != generation) return@launch
             if (timeline == CommunityTimeline.Public && !authors.visibility.value.ready) {
@@ -208,13 +242,15 @@ internal class CommunityViewModel(
                 }
             }
             val result = if (timeline == CommunityTimeline.Public) {
-                repository.feed(PAGE_SIZE, cursor, filters).map { feed ->
-                    TimelinePage(feed.entries.map { it.post }, feed.nextCursor != null, feed.nextCursor, feed.entries.associate { it.post.id to it.publishedAtUtc })
+                repository.feed(PAGE_SIZE, cursor, filters.copy(includeOwnPending = true)).map { feed ->
+                    TimelinePage(feed.entries.map { it.post }, feed.nextCursor != null, feed.nextCursor, feed.entries.associate { it.post.id to it.feedPositionAtUtc })
                 }
             } else repository.myPosts(page, PAGE_SIZE).map { TimelinePage(it.posts, it.hasMore) }
             currentCoroutineContext().ensureActive()
             if (!isCurrent(key)) return@launch
             result.onSuccess { loaded ->
+                if (currentState.sessionGeneration != generation) return@onSuccess
+                if (reset && currentState.isUnfilteredFeed) saved.acknowledge(confirmed)
                 val visible = if (timeline == CommunityTimeline.Public) loaded.copy(posts = loaded.posts.filterNot {
                     authors.visibility.value.hides(it.author.id, it.author.slug)
                 }) else loaded
@@ -245,7 +281,7 @@ internal class CommunityViewModel(
     private suspend fun toggleHelpful(id: String) {
         val current = currentState
         val item = current.items.firstOrNull { it.id == id } ?: return
-        if (!current.canLike || id in current.helpfulIds) return
+        if (!current.canLike || isWithdrawnFromPublic(item) || id in current.helpfulIds) return
         analytics.itemInteracted(if (item.isHelpfulByCurrentUser) FeedItemAction.Unlike else FeedItemAction.Like, item.isHome)
         val key = accountKey ?: run { analytics.likeGateShown(); requestSignIn(); return }
         if (!isCurrent(key)) return
@@ -347,6 +383,10 @@ internal class CommunityViewModel(
             updateState { copy(editing = edit.copy(error = EditError.Invalid(issue))) }
             return
         }
+        submitEdit(edit, key)
+    }
+
+    private fun submitEdit(edit: PostEditState, key: String) {
         loadJob?.cancel()
         updateState { copy(isSaving = true, isLoading = false, isLoadingMore = false) }
         mutationJob = viewModelScope.launch {
@@ -354,15 +394,23 @@ internal class CommunityViewModel(
             currentCoroutineContext().ensureActive()
             if (!isCurrent(key)) return@launch
             result.onSuccess { updated ->
+                discardConfirmation(updated.id)
                 analytics.editSaved(updated.visibility, updated.photos.originals.isNotEmpty())
-                val inPublic = currentState.timeline == CommunityTimeline.Public
                 updateState { withUpdated(updated).copy(editing = null, isSaving = false) }
-                sendEvent(CommunityEvent.Message(ActionMessage(if (inPublic) MessageKind.EditSentForReview else MessageKind.EditSaved)))
+                sendEvent(CommunityEvent.Message(ActionMessage(MessageKind.EditSaved)))
             }.onFailure { error ->
                 analytics.editFailed(error)
                 updateState { copy(isSaving = false, editing = edit.copy(error = EditError.Server((error as? CommunityFailure)?.serverMessage))) }
             }
         }
+    }
+
+    private fun discardConfirmation(id: String) =
+        saved.acknowledge(saved.posts.value.filter { it.accountKey == accountKey && it.id == id })
+
+    private fun finishVisibility(updated: CommunityPost) {
+        discardConfirmation(updated.id)
+        updateState { withUpdated(updated).copy(changingVisibilityId = null) }
     }
 
     private fun toggleVisibility(id: String) {
@@ -377,7 +425,7 @@ internal class CommunityViewModel(
             val result = repository.setVisibility(id, next)
             currentCoroutineContext().ensureActive()
             if (!isCurrent(key)) return@launch
-            result.onSuccess { updated -> updateState { withUpdated(updated).copy(changingVisibilityId = null) } }
+            result.onSuccess(::finishVisibility)
                 .onFailure { error ->
                     updateState { copy(changingVisibilityId = null) }
                     sendEvent(CommunityEvent.Message(ActionMessage(MessageKind.VisibilityFailed, (error as? CommunityFailure)?.serverMessage)))
@@ -414,9 +462,9 @@ internal class CommunityViewModel(
         }
     }
 
-    /** An edited or hidden post leaves the public timeline unless it is still public and approved; elsewhere it is replaced in place. */
+    /** An owner keeps their pending public post in place; rejected and private posts leave the feed. */
     private fun CommunityState.withUpdated(updated: CommunityPost): CommunityState {
-        val withdrawn = timeline == CommunityTimeline.Public && isWithdrawnFromPublic(updated)
+        val withdrawn = timeline == CommunityTimeline.Public && !updated.isVisibleInTimeline(owns(updated))
         return copy(
             items = if (withdrawn) items.filterNot { it.id == updated.id } else items.map { if (it.id == updated.id) updated else it },
             publishedAt = if (withdrawn) publishedAt - updated.id else publishedAt,

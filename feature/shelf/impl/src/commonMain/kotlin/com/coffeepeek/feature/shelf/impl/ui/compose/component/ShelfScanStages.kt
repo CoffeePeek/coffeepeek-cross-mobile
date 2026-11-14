@@ -1,5 +1,6 @@
 package com.coffeepeek.feature.shelf.impl.ui.compose.component
 
+import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -45,7 +46,7 @@ internal fun ShelfScanStagesRunning(stagesDone: Set<BagScanStage>, modifier: Mod
                 stage in stagesDone -> ShelfStageRow(stage.text(passed = false), muted) { ShelfStageRing(muted, filled = true) }
                 stage == current -> ShelfStageRow(stage.text(passed = false), MaterialTheme.colorScheme.onSurface) {
                     CoffeePeekLoader(stage.text(passed = false), modifier = Modifier.size(16.dp), size = 16.dp,
-                        color = MaterialTheme.colorScheme.primary, strokeWidth = 2.dp)
+                        color = MaterialTheme.colorScheme.coffeePeekAccentForeground, strokeWidth = 2.dp)
                 }
                 else -> ShelfStageRow(stage.text(passed = false), muted) { ShelfStageRing(MaterialTheme.colorScheme.outlineVariant, filled = false) }
             }

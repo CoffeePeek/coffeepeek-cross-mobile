@@ -2,6 +2,8 @@
 
 package com.coffeepeek.admin.ui.component
 
+import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
+
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import androidx.compose.runtime.*
 import androidx.compose.foundation.layout.*
@@ -105,7 +107,7 @@ private fun IosActionDialog(
     }
     SideEffect {
         alert.overrideUserInterfaceStyle = themeMode.uiKitStyle
-        alert.view.tintColor = colors.primary.toUIColor()
+        alert.view.tintColor = colors.coffeePeekAccentForeground.toUIColor()
         actions.forEachIndexed { index, action -> (alert.actions[index] as UIAlertAction).enabled = action.enabled }
     }
     PresentNativeController(alert, host)
@@ -187,7 +189,7 @@ internal actual fun NativeDatePicker(title: String, initialMillis: Long, maximum
                 update = {
                     it.overrideUserInterfaceStyle = colors.uiKitStyle
                     it.backgroundColor = UIColor.clearColor
-                    it.tintColor = colors.primary.toUIColor()
+                    it.tintColor = colors.coffeePeekAccentForeground.toUIColor()
                     it.locale = NSLocale(languageTag)
                 },
             )

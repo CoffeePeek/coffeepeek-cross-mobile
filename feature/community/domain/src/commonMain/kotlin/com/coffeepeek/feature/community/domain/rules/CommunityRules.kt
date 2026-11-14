@@ -32,11 +32,10 @@ fun validateReport(text: String): ReportIssue? = when {
     else -> null
 }
 
-enum class PublicationLabel { Private, Pending, Published, Rejected, Public, Unknown }
+enum class PublicationLabel { Private, Rejected, Public, Unknown }
 
 fun CommunityPost.publicationLabel(): PublicationLabel = if (visibility == PostVisibility.Private) PublicationLabel.Private else when (moderation) {
-    PostModeration.Pending -> PublicationLabel.Pending
-    PostModeration.Approved -> PublicationLabel.Published
+    PostModeration.Pending, PostModeration.Approved -> PublicationLabel.Public
     PostModeration.Rejected -> PublicationLabel.Rejected
     PostModeration.NotSubmitted -> PublicationLabel.Public
     PostModeration.Unknown -> PublicationLabel.Unknown
@@ -45,6 +44,10 @@ fun CommunityPost.publicationLabel(): PublicationLabel = if (visibility == PostV
 /** An edited or hidden post leaves the public timeline unless it is public and approved. */
 fun isWithdrawnFromPublic(updated: CommunityPost): Boolean =
     updated.visibility != PostVisibility.Public || updated.moderation != PostModeration.Approved
+
+/** Personalised membership never changes the public sharing/interaction policy. */
+fun CommunityPost.isVisibleInTimeline(isOwn: Boolean): Boolean =
+    !isWithdrawnFromPublic(this) || (isOwn && visibility == PostVisibility.Public && moderation == PostModeration.Pending)
 
 /** The website link of a post, null unless it is public and approved: anyone else opening the link of another post gets «unavailable». */
 fun CommunityPost.shareLink(): String? = "https://coffeepeek.by/check-ins/$id".takeIf { id.isNotBlank() && !isWithdrawnFromPublic(this) }

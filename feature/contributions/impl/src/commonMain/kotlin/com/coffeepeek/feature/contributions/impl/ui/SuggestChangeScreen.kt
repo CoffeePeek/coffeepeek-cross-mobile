@@ -92,7 +92,7 @@ internal fun SuggestChangeContent(state: SuggestChangeState, callbacks: SuggestC
 @Composable
 private fun SectionRow(section: ChangeSection, onPick: (ChangeSection) -> Unit) {
     Row(
-        Modifier.fillMaxWidth().clickable(role = Role.Button) { onPick(section) }.heightIn(min = 56.dp).padding(horizontal = CoffeePeekDimens.spacing4, vertical = 11.dp),
+        Modifier.fillMaxWidth().clickable(role = Role.Button) { onPick(section) }.heightIn(min = 56.dp).padding(horizontal = CoffeePeekDimens.spacing4, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3),
     ) {
         Column(Modifier.weight(1f)) {

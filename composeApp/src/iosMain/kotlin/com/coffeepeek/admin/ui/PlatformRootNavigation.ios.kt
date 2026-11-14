@@ -2,6 +2,8 @@
 
 package com.coffeepeek.admin.ui
 
+import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
+
 import org.koin.compose.koinInject
 import coffeepeek.composeapp.generated.resources.Res
 import coffeepeek.composeapp.generated.resources.business_tab_title
@@ -244,8 +246,8 @@ internal actual fun PlatformRootNavigation(
         tabDelegate.onTabChanged = { saveNavigation() }
         tabs.overrideUserInterfaceStyle = themeMode.uiKitStyle
         tabs.view.backgroundColor = colors.background.toUIColor()
-        tabs.view.tintColor = colors.primary.toUIColor()
-        tabs.tabBar.tintColor = colors.primary.toUIColor()
+        tabs.view.tintColor = colors.coffeePeekAccentForeground.toUIColor()
+        tabs.tabBar.tintColor = colors.coffeePeekAccentForeground.toUIColor()
         tabs.tabBar.unselectedItemTintColor = colors.onSurfaceVariant.toUIColor()
         navigations.forEach { it.view.backgroundColor = colors.background.toUIColor() }
     }

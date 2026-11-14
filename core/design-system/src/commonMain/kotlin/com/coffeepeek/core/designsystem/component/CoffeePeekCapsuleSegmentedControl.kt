@@ -1,8 +1,11 @@
 package com.coffeepeek.core.designsystem.component
 
+import com.coffeepeek.core.designsystem.theme.reducedMotionDuration
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
@@ -45,7 +48,7 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 /**
  * A pill of exclusive options. By default the options share the width equally (short labels). With [scrollable] every option takes the width of its label
  * (plus a horizontal padding) and the row scrolls sideways, so long labels or a large font never get squeezed; the pill then keeps a 4 dp inner padding.
- * Scrollable options retain the Compose layout.
+ * Scrollable options and large text retain the Compose layout with full-height action targets.
  * [minSegmentHeight] includes the track's inner padding and defaults to the button height.
  * Compose segments can grow beyond that minimum to accommodate larger text.
  */
@@ -63,13 +66,19 @@ fun <T> CoffeePeekCapsuleSegmentedControl(
     require(options.isNotEmpty()) { "Segmented control requires options" }
     require(options.distinct().size == options.size) { "Options must be unique" }
     require(selected in options) { "Selection must belong to options" }
-    if (!scrollable) {
-        CoffeePeekPlatformSegments(options.map(label), options.indexOf(selected),
-            { onSelected(options[it]) }, modifier, enabled, minSegmentHeight)
-        return
+    val fontScale = LocalDensity.current.fontScale
+    BoxWithConstraints(modifier) {
+        if (coffeePeekSegmentsNeedScroll(options.size, maxWidth, fontScale, scrollable)) {
+            CoffeePeekScrollableSegments(options, selected, label, onSelected, Modifier, enabled, minSegmentHeight)
+        } else {
+            CoffeePeekPlatformSegments(options.map(label), options.indexOf(selected),
+                { onSelected(options[it]) }, Modifier, enabled, minSegmentHeight)
+        }
     }
-    CoffeePeekScrollableSegments(options, selected, label, onSelected, modifier, enabled, minSegmentHeight)
 }
+
+internal fun coffeePeekSegmentsNeedScroll(count: Int, width: Dp, fontScale: Float, requested: Boolean): Boolean =
+    requested || fontScale > 1.3f || width < CoffeePeekDimens.minimumTouchTarget * count + CoffeePeekDimens.spacing1 * 2
 
 @Composable
 private fun <T> CoffeePeekScrollableSegments(options: List<T>, selected: T, label: (T) -> String,
@@ -80,12 +89,12 @@ private fun <T> CoffeePeekScrollableSegments(options: List<T>, selected: T, labe
         .background(MaterialTheme.colorScheme.surfaceVariant)
     LazyRow(
         modifier = container.selectableGroup(),
-        contentPadding = PaddingValues(CoffeePeekDimens.spacing1),
+        contentPadding = PaddingValues(horizontal = CoffeePeekDimens.spacing1),
     ) {
         items(options) { option ->
             CoffeePeekCapsuleSegment(label(option), option == selected, enabled, { onSelected(option) },
                 Modifier, labelPadding = 16.dp,
-                minHeight = (minSegmentHeight - CoffeePeekDimens.spacing1 * 2).coerceAtLeast(0.dp))
+                minHeight = minSegmentHeight)
         }
     }
 }
@@ -93,37 +102,21 @@ private fun <T> CoffeePeekScrollableSegments(options: List<T>, selected: T, labe
 @Composable
 internal fun CoffeePeekCapsuleSegment(text: String, isSelected: Boolean, enabled: Boolean, onClick: () -> Unit,
     modifier: Modifier, minHeight: Dp, labelPadding: Dp = 0.dp) {
-    Box(
-        modifier = modifier
-            .heightIn(min = minHeight)
-            .clip(RoundedCornerShape(percent = 50))
-            .background(animateColorAsState(
-                if (isSelected) MaterialTheme.colorScheme.surface else Color.Transparent, tween(160), label = "segment-fill").value)
-            .then(
-                if (isSelected) Modifier.border(
-                    width = 1.dp,
-                    color = animateColorAsState(
-                        MaterialTheme.colorScheme.outlineVariant, tween(160), label = "segment-border").value,
-                    shape = RoundedCornerShape(percent = 50),
-                ) else Modifier,
-            )
-            .selectable(
-                selected = isSelected,
-                role = Role.Tab,
-                enabled = enabled,
-                onClick = onClick,
-            )
-            .padding(horizontal = labelPadding),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(
-            text = text,
+    val shape = RoundedCornerShape(percent = 50)
+    val fill by animateColorAsState(if (isSelected) MaterialTheme.colorScheme.surface else Color.Transparent,
+        tween(reducedMotionDuration(160)), label = "segment-fill")
+    Box(modifier.sizeIn(minWidth = CoffeePeekDimens.minimumTouchTarget,
+        minHeight = maxOf(minHeight, CoffeePeekDimens.minimumTouchTarget))
+        .selectable(selected = isSelected, role = Role.Tab, enabled = enabled, onClick = onClick),
+        contentAlignment = Alignment.Center) {
+        Box(Modifier.matchParentSize().padding(vertical = CoffeePeekDimens.spacing1)
+            .clip(shape).background(fill)
+            .then(if (isSelected) Modifier.border(1.dp, MaterialTheme.colorScheme.outlineVariant, shape) else Modifier))
+        Text(text, Modifier.padding(horizontal = labelPadding, vertical = CoffeePeekDimens.spacing2),
             style = MaterialTheme.typography.labelMedium,
             color = if (isSelected) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
             fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-        )
+            maxLines = 1, overflow = TextOverflow.Ellipsis)
     }
 }
 

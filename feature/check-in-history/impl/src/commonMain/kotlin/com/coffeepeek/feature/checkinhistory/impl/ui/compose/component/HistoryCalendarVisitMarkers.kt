@@ -1,5 +1,7 @@
 package com.coffeepeek.feature.checkinhistory.impl.ui.compose.component
 
+import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
+
 import androidx.compose.foundation.background
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import androidx.compose.foundation.layout.Arrangement
@@ -24,12 +26,12 @@ import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as st
 @Composable
 internal fun HistoryCalendarVisitMarkers(total: Long, onSelectedBackground: Boolean, modifier: Modifier = Modifier) {
     if (total <= 0) return
-    val color = if (onSelectedBackground) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.primary
+    val color = if (onSelectedBackground) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.coffeePeekAccentForeground
     Row(modifier.clearAndSetSemantics {}, horizontalArrangement = Arrangement.spacedBy(2.dp),
         verticalAlignment = Alignment.CenterVertically) {
-        repeat(total.coerceAtMost(3).toInt()) { Box(Modifier.size(3.dp).background(color, CircleShape)) }
+        repeat(total.coerceAtMost(3).toInt()) { Box(Modifier.size(4.dp).background(color, CircleShape)) }
         if (total > 3) Text(stringResource(Res.string.history_calendar_more_visits, total - 3),
-            color = color, style = MaterialTheme.typography.labelSmall, fontSize = 8.sp, lineHeight = 10.sp, maxLines = 1)
+            color = color, style = MaterialTheme.typography.labelSmall, fontSize = 11.sp, lineHeight = 12.sp, maxLines = 1)
     }
 }
 

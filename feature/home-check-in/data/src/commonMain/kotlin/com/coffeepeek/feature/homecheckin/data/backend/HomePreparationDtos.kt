@@ -38,6 +38,7 @@ import kotlinx.serialization.json.JsonNames
     val shelfBagPhoto: HomePhotoDto? = null,
     val visibility: String? = null,
     val moderationState: String? = null,
+    val rejectionReason: String? = null,
 )
 @Serializable internal data class HomeEditDto(
     val preparedAt: String,

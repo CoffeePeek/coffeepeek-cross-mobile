@@ -75,12 +75,12 @@ fun CoffeePeekLikeButton(
     } else contentDescription
     if (style.isGlass && LocalCoffeePeekNativeGlassPresenter.current
             ?.IconButton(if (selected) CoffeePeekGlassIcon.FavoriteFilled else CoffeePeekGlassIcon.Favorite,
-                onClick, label, modifier.sizeIn(minWidth = 48.dp, minHeight = 48.dp),
+                onClick, label, modifier.sizeIn(minWidth = CoffeePeekDimens.minimumTouchTarget, minHeight = CoffeePeekDimens.minimumTouchTarget),
                 enabled && !isLoading, selected, isLoading) == true) return
     val interactions = remember { MutableInteractionSource() }
     val pressed by interactions.collectIsPressedAsState()
-    // The touch target stays 48dp, but only the heart itself gives press feedback.
-    Box(modifier.sizeIn(minWidth = 48.dp, minHeight = 48.dp)
+    // Keep the platform touch target; only the heart gives press feedback.
+    Box(modifier.sizeIn(minWidth = CoffeePeekDimens.minimumTouchTarget, minHeight = CoffeePeekDimens.minimumTouchTarget)
         .toggleable(selected, interactionSource = interactions, indication = null,
             enabled = enabled && !isLoading, role = Role.Checkbox, onValueChange = { onClick() })
         .semantics {

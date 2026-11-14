@@ -1,5 +1,7 @@
 package com.coffeepeek.feature.contributions.impl.ui
 
+import androidx.compose.foundation.layout.heightIn
+
 import androidx.compose.foundation.background
 import com.coffeepeek.feature.contributions.impl.resources.Res
 import com.coffeepeek.feature.contributions.impl.resources.contributions_back
@@ -64,7 +66,7 @@ internal fun FormField(label: String, required: Boolean = false, optional: Boole
         Text(if (required) "$label *" else label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         if (optional) Text(
             stringResource(Res.string.contributions_shop_field_optional), style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
     content()
@@ -89,7 +91,7 @@ internal fun OutlinedField(
         CoffeePeekCompactOutlinedTextField(
             value = value,
             onValueChange = onValueChange,
-            modifier = Modifier.fillMaxWidth().then(if (singleLine) Modifier.height(CoffeePeekDimens.buttonHeight) else Modifier),
+            modifier = Modifier.fillMaxWidth().then(if (singleLine) Modifier.heightIn(min = CoffeePeekDimens.buttonHeight) else Modifier),
             shape = if (singleLine) RoundedCornerShape(percent = 50) else RoundedCornerShape(CoffeePeekDimens.buttonRadius),
             placeholder = { Text(placeholder, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant) },
             textStyle = MaterialTheme.typography.bodyLarge,
@@ -125,7 +127,7 @@ internal fun ReadOnlyField(value: String) {
     val container = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.35f)
     CoffeePeekCompactOutlinedTextField(
         value = value, onValueChange = {}, readOnly = true, enabled = false,
-        modifier = Modifier.fillMaxWidth().height(CoffeePeekDimens.buttonHeight),
+        modifier = Modifier.fillMaxWidth().heightIn(min = CoffeePeekDimens.buttonHeight),
         textStyle = MaterialTheme.typography.bodyLarge, shape = RoundedCornerShape(percent = 50),
         colors = OutlinedTextFieldDefaults.colors(
             disabledBorderColor = MaterialTheme.colorScheme.outline, disabledTextColor = MaterialTheme.colorScheme.onSurface, disabledContainerColor = container,

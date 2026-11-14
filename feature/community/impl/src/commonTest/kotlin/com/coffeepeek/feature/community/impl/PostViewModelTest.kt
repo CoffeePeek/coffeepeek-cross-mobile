@@ -46,10 +46,45 @@ class PostViewModelTest {
     private fun repository(shown: CommunityPost = post("shared")) = FakeRepository().apply { byId = { Result.success(shown) } }
 
     private fun TestScope.model(repository: FakeRepository = repository(), account: FakeAccount = FakeAccount("one"), authors: FakeAuthors = FakeAuthors()) =
-        PostViewModel("shared", repository, account, authors).also { store.put("post", it); runCurrent() }
+        PostViewModel("shared", repository, account, authors, FakeAnalytics(), FakeDrinks()).also { store.put("post", it); runCurrent() }
 
     private fun TestScope.events(vm: PostViewModel) = mutableListOf<PostEvent>().also { list -> backgroundScope.launch { vm.events.collect { list += it } } }
     private fun PostViewModel.send(action: PostAction, scope: TestScope) { onAction(action); scope.runCurrent() }
+
+    @Test fun rejectedOwnPostCanBeCorrectedWithoutApprovalMessageOrDuplicateWrite() = runTest(dispatcher) {
+        val rejected = post("shared", slug = "me").copy(moderation = PostModeration.Rejected, rejectionReason = "Reason")
+        val gate = CompletableDeferred<Unit>()
+        var saves = 0
+        val repo = repository(rejected).apply { update = { _, edit ->
+            saves++; gate.await()
+            Result.success(rejected.copy(note = edit.text, moderation = PostModeration.Pending, rejectionReason = null))
+        } }
+        val vm = model(repo)
+        val notices = events(vm)
+        vm.send(PostAction.Edit, this); vm.send(PostAction.EditText("Fixed"), this)
+        vm.send(PostAction.SaveEdit, this); vm.send(PostAction.SaveEdit, this)
+        assertEquals(1, saves); assertTrue(vm.state.value.isSaving)
+        gate.complete(Unit); runCurrent()
+        assertEquals("Fixed", vm.state.value.post?.note); assertNull(vm.state.value.post?.rejectionReason)
+        assertNull(vm.state.value.editing); assertFalse(vm.state.value.isSaving)
+        assertEquals(MessageKind.EditSaved, assertIs<PostEvent.Message>(notices.single()).message.kind)
+    }
+
+    @Test fun lateEditResultCannotReplaceAnotherAccountsPost() = runTest(dispatcher) {
+        val own = post("shared", slug = "me")
+        val gate = CompletableDeferred<Unit>()
+        val repo = repository(own).apply { update = { _, _ ->
+            withContext(NonCancellable) { gate.await() }
+            Result.success(own.copy(note = "Old account edit"))
+        } }
+        val account = FakeAccount("one")
+        val vm = model(repo, account)
+        vm.send(PostAction.Edit, this); vm.send(PostAction.SaveEdit, this)
+        account.switchTo("two"); runCurrent()
+        gate.complete(Unit); runCurrent()
+        assertEquals(own.note, vm.state.value.post?.note)
+        assertNull(vm.state.value.editing); assertFalse(vm.state.value.isSaving)
+    }
 
     @Test fun aGuestReadsThePostButALikeOrAReportAsksToSignInWithoutARequest() = runTest(dispatcher) {
         val repo = repository().apply { helpful = { _, _ -> error("A guest must not vote") } }

@@ -9,7 +9,7 @@ object CoffeePeekColors {
     val PrimaryHover   = Color(0xFFFACC15)
     val PrimaryTint10  = Color(0x1AEAB308)
     // Foreground on light surfaces; Primary remains the brand fill/selection color.
-    val AccentTextLight = Color(0xFF8A6300)
+    val AccentTextLight = Color(0xFF7B5700)
     val AccentTextDark  = Color(0xFFFACC15)
     val SwitchCheckedThumbLight = Color(0xFF684900)
     val SwitchCheckedTrackDark = Color(0xFF9A7A28)
@@ -28,6 +28,7 @@ object CoffeePeekColors {
     val ErrorTextLight = Color(0xFFB91C1C)
     val ErrorTextDark = Color(0xFFFCA5A5)
     // Positive affinity has its own semantic role, using brand gold rather than error red.
+    val ReactionHeart  = Color(0xFFE84255)
     val Like           = Primary
     val LikeOutline    = AccentTextLight
     val PhotoBadgeOverlay = Color.Black.copy(alpha = 0.68f)
@@ -41,11 +42,12 @@ object CoffeePeekColors {
     val LightInput         = Color(0xFFFFFFFF)
     val LightBadge         = Color(0xFFF3F4F6)
     val LightTextPrimary   = Color(0xFF1C1917)
-    val LightTextSecondary = Color(0xFF78716C)
-    val LightTextMuted     = Color(0xFF75706B)
+    val LightTextSecondary = Color(0xFF6B655F)
+    val LightTextMuted     = LightTextSecondary
     val LightTextTertiary  = Color(0xFF6B7280)
     val LightTextOnPrimary = Color(0xFF1A1412)
     val LightBorder        = Color(0xFFE7E5E4)
+    val LightControlOutline = Color(0xFF847A70)
     val LightBorderSubtle  = Color(0xFFE5E1DA)
     val LightBorderHover   = Color(0xFFD1D5DB)
     val LightOverlay       = Color(0x80000000)
@@ -60,9 +62,10 @@ object CoffeePeekColors {
     val DarkTextPrimary   = Color(0xFFFFFFFF)
     val DarkTextSecondary = Color(0xFFA39E93)
     val DarkTextMuted     = Color(0xFFA8A8A8)
-    val DarkTextTertiary  = Color(0xFF5C544F)
+    val DarkTextTertiary  = DarkTextSecondary
     val DarkTextOnPrimary = Color(0xFF1A1412)
     val DarkBorder        = Color(0xFF3D2F28)
+    val DarkControlOutline = Color(0xFF95887C)
     val DarkBorderSubtle  = Color(0xFF3D2F28)
     val DarkBorderHover   = Color(0xFF4A3D35)
     val DarkOverlay       = Color(0x80000000)

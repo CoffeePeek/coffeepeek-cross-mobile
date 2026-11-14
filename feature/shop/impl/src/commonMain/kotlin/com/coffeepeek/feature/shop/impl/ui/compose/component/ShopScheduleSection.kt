@@ -116,10 +116,9 @@ private fun ScheduleHeader(status: String, expanded: Boolean, onToggle: () -> Un
     val expansionState = stringResource(if (expanded) Res.string.shop_schedule_expanded_state
         else Res.string.shop_schedule_collapsed_state)
     val rotation by animateFloatAsState(if (expanded) 90f else 0f, tween(reducedMotionDuration(250)))
-    Row(Modifier.fillMaxWidth().heightIn(min = 44.dp)
+    Row(Modifier.fillMaxWidth().heightIn(min = CoffeePeekDimens.minimumTouchTarget)
         .semantics { stateDescription = expansionState }
-        .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null,
-            role = Role.Button, onClickLabel = toggleLabel, onClick = onToggle),
+        .clickable(role = Role.Button, onClickLabel = toggleLabel, onClick = onToggle),
         horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing4),
         verticalAlignment = Alignment.CenterVertically) {
         CoffeePeekIcon(CoffeePeekIcons.Time, null, Modifier.size(24.dp))
@@ -134,7 +133,7 @@ private fun ScheduleHeader(status: String, expanded: Boolean, onToggle: () -> Un
 private fun ScheduleDays(schedules: List<ShopSchedule>) {
     Column {
         HorizontalDivider(Modifier.padding(vertical = CoffeePeekDimens.spacing2),
-            color = MaterialTheme.colorScheme.outline)
+            color = MaterialTheme.colorScheme.outlineVariant)
         Column(verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2)) {
             schedules.sortedBy { if (it.dayOfWeek == 0) 7 else it.dayOfWeek }.forEach { schedule ->
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3)) {

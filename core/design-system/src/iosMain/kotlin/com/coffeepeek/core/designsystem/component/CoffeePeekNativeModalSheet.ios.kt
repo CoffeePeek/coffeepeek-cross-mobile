@@ -2,6 +2,8 @@
 
 package com.coffeepeek.core.designsystem.component
 
+import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
+
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -53,7 +55,7 @@ actual fun CoffeePeekNativeModalSheet(
         controller.modalInPresentation = !dismissEnabled
         controller.overrideUserInterfaceStyle = coffeePeekUserInterfaceStyle(colors.background)
         controller.view.backgroundColor = colors.surface.toUIColor()
-        controller.view.tintColor = colors.primary.toUIColor()
+        controller.view.tintColor = colors.coffeePeekAccentForeground.toUIColor()
     }
     CoffeePeekNativeSheetDetents(controller, sizing, fraction, expanded, delegate)
     CoffeePeekNativeSheetResize(controller, sizing.contentHeight, sizing.maximumHeight, fraction.value, expanded.value)

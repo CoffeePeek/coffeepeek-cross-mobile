@@ -1,5 +1,7 @@
 package com.coffeepeek.core.designsystem.component
 
+import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
+
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.WindowInsets
@@ -7,6 +9,7 @@ import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.selection.LocalTextSelectionColors
@@ -17,10 +20,13 @@ import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.TextFieldColors
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.unit.Density
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.takeOrElse
 import androidx.compose.ui.platform.LocalFocusManager
@@ -64,7 +70,9 @@ fun CoffeePeekCompactOutlinedTextField(
     maxLines: Int = if (singleLine) 1 else Int.MAX_VALUE,
     minLines: Int = 1,
     shape: androidx.compose.ui.graphics.Shape = OutlinedTextFieldDefaults.shape,
-    colors: TextFieldColors = OutlinedTextFieldDefaults.colors(),
+    colors: TextFieldColors = OutlinedTextFieldDefaults.colors(
+        focusedBorderColor = MaterialTheme.colorScheme.coffeePeekAccentForeground,
+        cursorColor = MaterialTheme.colorScheme.coffeePeekAccentForeground),
     contentPadding: PaddingValues = CoffeePeekDimens.singleLineFieldContentPadding,
     inputRole: CoffeePeekInputRole = CoffeePeekInputRole.Default,
 ) {
@@ -73,29 +81,17 @@ fun CoffeePeekCompactOutlinedTextField(
     }
     val interactionSource = remember { MutableInteractionSource() }
     val focused = interactionSource.collectIsFocusedAsState().value
-    val textColor = textStyle.color.takeOrElse {
-        when {
-            !enabled -> colors.disabledTextColor
-            isError -> colors.errorTextColor
-            focused -> colors.focusedTextColor
-            else -> colors.unfocusedTextColor
-        }
-    }
+    val textColor = textStyle.color.takeOrElse { colors.contentColor(enabled, isError, focused) }
     val cursorColor = if (isError) colors.errorCursorColor else colors.cursorColor
     val keyboard = LocalCoffeePeekKeyboardPresenter.current
-    val focusManager = LocalFocusManager.current
-    val softwareKeyboard = LocalSoftwareKeyboardController.current
-    keyboard?.DoneAccessory(
-        focused && WindowInsets.ime.getBottom(LocalDensity.current) > 0 &&
-            keyboardOptions.keyboardType in NumericKeyboards,
-    ) { focusManager.clearFocus(force = true); softwareKeyboard?.hide() }
+    CoffeePeekNumericKeyboardAccessory(focused, keyboardOptions)
 
     CompositionLocalProvider(LocalTextSelectionColors provides colors.textSelectionColors) {
         BasicTextField(
             value = value,
             onValueChange = onValueChange,
             // Compose draws its autofill highlight over the decoration, including the outline.
-            modifier = modifier.clip(shape).semantics {
+            modifier = modifier.heightIn(min = CoffeePeekDimens.inputMinHeight).clip(shape).semantics {
                 errorDescription?.let { error(it) }
             },
             enabled = enabled,
@@ -110,41 +106,71 @@ fun CoffeePeekCompactOutlinedTextField(
             maxLines = maxLines,
             minLines = minLines,
             decorationBox = { innerTextField ->
-                OutlinedTextFieldDefaults.DecorationBox(
-                    value = value,
-                    visualTransformation = visualTransformation,
-                    innerTextField = innerTextField,
-                    placeholder = placeholder,
-                    leadingIcon = leadingIcon,
-                    trailingIcon = trailingIcon,
-                    singleLine = singleLine,
-                    enabled = enabled,
-                    isError = isError,
-                    interactionSource = interactionSource,
-                    colors = colors,
-                    contentPadding = contentPadding,
-                    container = {
-                        OutlinedTextFieldDefaults.Container(
-                            enabled = enabled,
-                            isError = isError,
-                            interactionSource = interactionSource,
-                            colors = colors,
-                            shape = shape,
-                        )
-                    },
-                )
+                CoffeePeekOutlinedDecoration(value, visualTransformation, innerTextField, placeholder,
+                    leadingIcon, trailingIcon, singleLine, enabled, isError, interactionSource, colors, contentPadding, shape)
             },
         )
     }
 }
 
+private fun TextFieldColors.contentColor(enabled: Boolean, error: Boolean, focused: Boolean): Color = when {
+    !enabled -> disabledTextColor
+    error -> errorTextColor
+    focused -> focusedTextColor
+    else -> unfocusedTextColor
+}
+
 @Composable
-private fun CoffeePeekCompactOutlinedTextFieldPreviewContent(darkTheme: Boolean) = CoffeePeekTheme(darkTheme = darkTheme) {
-    Surface {
-        CoffeePeekCompactOutlinedTextField("name@example.com", {}, modifier = Modifier.padding(16.dp),
-            shape = MaterialTheme.shapes.small)
+private fun CoffeePeekNumericKeyboardAccessory(focused: Boolean, options: KeyboardOptions) {
+    val keyboard = LocalCoffeePeekKeyboardPresenter.current
+    val focusManager = LocalFocusManager.current
+    val softwareKeyboard = LocalSoftwareKeyboardController.current
+    keyboard?.DoneAccessory(focused && WindowInsets.ime.getBottom(LocalDensity.current) > 0 &&
+        options.keyboardType in NumericKeyboards) {
+        focusManager.clearFocus(force = true)
+        softwareKeyboard?.hide()
     }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun CoffeePeekOutlinedDecoration(value: String, transformation: VisualTransformation,
+    inner: @Composable () -> Unit, placeholder: @Composable (() -> Unit)?,
+    leading: @Composable (() -> Unit)?, trailing: @Composable (() -> Unit)?,
+    singleLine: Boolean, enabled: Boolean, isError: Boolean, interactions: MutableInteractionSource,
+    colors: TextFieldColors, padding: PaddingValues, shape: Shape) {
+    OutlinedTextFieldDefaults.DecorationBox(
+        value = value,
+        visualTransformation = transformation,
+        innerTextField = inner,
+        placeholder = placeholder,
+        leadingIcon = leading,
+        trailingIcon = trailing,
+        singleLine = singleLine,
+        enabled = enabled,
+        isError = isError,
+        interactionSource = interactions,
+        colors = colors,
+        contentPadding = padding,
+        container = {
+            OutlinedTextFieldDefaults.Container(enabled, isError, interactions, colors = colors, shape = shape)
+        },
+    )
+}
+
+@Composable
+private fun CoffeePeekCompactOutlinedTextFieldPreviewContent(darkTheme: Boolean, fontScale: Float = 1f) = CoffeePeekTheme(darkTheme = darkTheme) {
+    CompositionLocalProvider(LocalDensity provides Density(LocalDensity.current.density, fontScale)) {
+        Surface {
+            CoffeePeekCompactOutlinedTextField("name@example.com", {}, modifier = Modifier.padding(16.dp),
+                shape = MaterialTheme.shapes.small)
+        }
+    }
+
 }
 
 @Preview @Composable private fun CoffeePeekCompactOutlinedTextFieldLightPreview() = CoffeePeekCompactOutlinedTextFieldPreviewContent(false)
 @Preview @Composable private fun CoffeePeekCompactOutlinedTextFieldDarkPreview() = CoffeePeekCompactOutlinedTextFieldPreviewContent(true)
+
+@Preview @Composable private fun CoffeePeekCompactOutlinedTextFieldLargeTextLightPreview() = CoffeePeekCompactOutlinedTextFieldPreviewContent(false, 2f)
+@Preview @Composable private fun CoffeePeekCompactOutlinedTextFieldLargeTextDarkPreview() = CoffeePeekCompactOutlinedTextFieldPreviewContent(true, 2f)

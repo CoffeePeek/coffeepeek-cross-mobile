@@ -48,7 +48,7 @@ internal fun ShopCheckInRatingCard(image: DrawableResource, label: String, ratin
             Text(label, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
             CoffeePeekRating(rating.toDouble(), size = CoffeePeekRatingSize.Large,
                 onRatingChange = onChange, enabled = enabled,
-                inactiveColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.65f),
+                inactiveColor = MaterialTheme.colorScheme.onSurfaceVariant,
                 starDescription = { stringResource(Res.string.shop_review_rating_value, label, it) })
         }
     }

@@ -1,5 +1,9 @@
 package com.coffeepeek.core.designsystem.component
 
+import androidx.compose.foundation.border
+
+import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
@@ -25,7 +29,7 @@ fun CoffeePeekPriceLevelSlider(selected: Int?, onSelect: (Int?) -> Unit, modifie
     Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing1)) {
         if (title != null) Text(title, style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
             color = MaterialTheme.colorScheme.onSurface)
-        if (hint != null) Text(hint, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary)
+        if (hint != null) Text(hint, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.coffeePeekAccentForeground)
         PriceLevelTrack(filled, onSelect)
         PriceLevelStops(filled)
     }
@@ -34,29 +38,30 @@ fun CoffeePeekPriceLevelSlider(selected: Int?, onSelect: (Int?) -> Unit, modifie
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun PriceLevelTrack(value: Int, onSelect: (Int?) -> Unit) {
-    val colors = SliderDefaults.colors(thumbColor = Color.White, activeTrackColor = MaterialTheme.colorScheme.primary,
-        inactiveTrackColor = MaterialTheme.colorScheme.outline.copy(alpha = .4f), activeTickColor = Color.Transparent,
+    val colors = SliderDefaults.colors(thumbColor = Color.White, activeTrackColor = MaterialTheme.colorScheme.coffeePeekAccentForeground,
+        inactiveTrackColor = MaterialTheme.colorScheme.outline, activeTickColor = Color.Transparent,
         inactiveTickColor = Color.Transparent)
     Slider(value = value.toFloat(), onValueChange = { onSelect(it.roundToInt().coerceIn(0, 3).takeIf { level -> level > 0 }) },
         valueRange = 0f..3f, steps = 2, colors = colors, interactionSource = remember { MutableInteractionSource() },
-        thumb = { Box(Modifier.size(28.dp).shadow(3.dp, CircleShape).background(Color.White, CircleShape)) },
+        thumb = { Box(Modifier.size(28.dp).shadow(3.dp, CircleShape).background(Color.White, CircleShape).border(2.dp, MaterialTheme.colorScheme.coffeePeekAccentForeground, CircleShape)) },
         track = { SliderDefaults.Track(it, Modifier.height(4.dp), colors = colors,
             drawStopIndicator = null, thumbTrackGapSize = 0.dp) })
 }
 
 @Composable
 private fun PriceLevelStops(filled: Int) {
-    val iconWidth = 14.dp * .9f
-    BoxWithConstraints(Modifier.fillMaxWidth().height(14.dp * (446.4f / 360.67f))) {
+    val iconWidth = 12.dp
+    val spacing = 2.dp
+    BoxWithConstraints(Modifier.fillMaxWidth().height(coffeePeekBynIndicatorSize(iconWidth).height)) {
         val trackInset = 14.dp
         val trackWidth = (maxWidth - trackInset * 2).coerceAtLeast(0.dp)
         repeat(3) { index ->
             val tier = index + 1
-            val groupWidth = iconWidth * tier + 1.dp * (tier - 1)
+            val groupWidth = iconWidth * tier + spacing * (tier - 1)
             val tickCenter = trackInset + trackWidth * (tier.toFloat() / 3)
             val x = (tickCenter - groupWidth / 2).coerceIn(0.dp, (maxWidth - groupWidth).coerceAtLeast(0.dp))
-            CoffeePeekBynPriceIndicators(tier, Modifier.offset(x = x), iconWidth = iconWidth, spacing = 1.dp,
-                tint = if (filled == tier) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline)
+            CoffeePeekBynPriceIndicators(tier, Modifier.offset(x = x), iconWidth = iconWidth, spacing = spacing,
+                tint = if (filled == tier) MaterialTheme.colorScheme.coffeePeekAccentForeground else MaterialTheme.colorScheme.outline)
         }
     }
 }

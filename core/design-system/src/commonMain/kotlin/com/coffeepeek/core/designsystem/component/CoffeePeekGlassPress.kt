@@ -7,11 +7,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import com.coffeepeek.core.designsystem.theme.reducedMotionDuration
-import com.coffeepeek.core.designsystem.theme.coffeePeekUsesNativeGlass
 
 @Composable
 internal fun Modifier.coffeePeekGlassPress(pressed: Boolean, enabled: Boolean): Modifier {
-    if (coffeePeekUsesNativeGlass) return this
     val duration = reducedMotionDuration(140)
     val scale by animateFloatAsState(if (pressed && enabled) 0.97f else 1f, tween(duration), label = "glass-press")
     return graphicsLayer {

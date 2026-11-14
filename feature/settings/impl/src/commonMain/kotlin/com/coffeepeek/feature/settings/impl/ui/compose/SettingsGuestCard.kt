@@ -1,5 +1,7 @@
 package com.coffeepeek.feature.settings.impl.ui.compose
 
+import androidx.compose.foundation.layout.heightIn
+
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -42,7 +44,7 @@ internal fun SettingsGuestCard(onLogin: () -> Unit, onRegister: () -> Unit, modi
         ) {
             Text(stringResource(Res.string.settings_guest_prompt), style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurface, textAlign = TextAlign.Center)
-            CoffeePeekFilledButton(onClick = onLogin, modifier = Modifier.fillMaxWidth().height(CoffeePeekDimens.buttonHeight)) {
+            CoffeePeekFilledButton(onClick = onLogin, modifier = Modifier.fillMaxWidth().heightIn(min = CoffeePeekDimens.buttonHeight)) {
                 Text(stringResource(Res.string.settings_guest_login), style = MaterialTheme.typography.labelLarge)
             }
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center) {

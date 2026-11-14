@@ -1,5 +1,6 @@
 package com.coffeepeek.feature.shop.impl.ui.compose
 
+import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -144,10 +145,9 @@ internal fun ShopCheckInCreateScreenContent(
         ShopCheckInSendingPane(modifier)
         return
     }
-    val scroll = rememberScrollState()
     val editable = state.isEditable(photosPreparing)
     Column(
-        modifier.fillMaxWidth().testTag("shop-checkin-form").closeKeyboardOnDrag().verticalScroll(scroll)
+        modifier.fillMaxWidth().testTag("shop-checkin-form").closeKeyboardOnDrag().verticalScroll(rememberScrollState())
             .padding(horizontal = CoffeePeekDimens.spacing4)
             .padding(top = CoffeePeekDimens.spacing3, bottom = CoffeePeekDimens.spacing6),
         verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing6),
@@ -157,10 +157,9 @@ internal fun ShopCheckInCreateScreenContent(
                 submittedVisibility = state.input.visibility.takeIf { state.submitted },
                 cleanupFailed = state.submitted && state.draftFailed,
                 onFeed = { onAction(ShopCheckInFormAction.GoToFeed) },
-                publication = state.publication,
             )
         } else if (state.isLoading) {
-            CoffeePeekLoader(size = 40.dp, color = MaterialTheme.colorScheme.primary, strokeWidth = 4.dp)
+            CoffeePeekLoader(size = 40.dp, color = MaterialTheme.colorScheme.coffeePeekAccentForeground, strokeWidth = 4.dp)
         } else {
             ShopCheckInFormFields(state, shopName, shopAddress, visitLabel,
                 selectedVisitMillis, nowMillis, editable, photosPreparing,

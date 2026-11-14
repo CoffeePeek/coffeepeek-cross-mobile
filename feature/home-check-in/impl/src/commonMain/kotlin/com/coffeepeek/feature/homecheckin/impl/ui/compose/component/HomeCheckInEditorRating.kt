@@ -36,7 +36,7 @@ internal fun HomeCheckInEditorRating(
             Text(stringResource(Res.string.home_check_in_taste_question), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
             CoffeePeekRating((rating ?: 0).toDouble(), size = CoffeePeekRatingSize.Large,
                 onRatingChange = onRate, enabled = enabled,
-                inactiveColor = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.65f),
+                inactiveColor = MaterialTheme.colorScheme.onSurfaceVariant,
                 starDescription = { stringResource(Res.string.home_check_in_choose_rating, it) })
         }
     }

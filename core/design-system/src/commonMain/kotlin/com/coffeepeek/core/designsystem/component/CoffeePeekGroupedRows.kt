@@ -110,7 +110,7 @@ fun CoffeePeekCheckmarkRow(
             .fillMaxWidth()
             .toggleable(value = checked, role = Role.Checkbox, onValueChange = { onToggle() })
             .heightIn(min = RowMinHeight)
-            .padding(horizontal = RowInset, vertical = 11.dp),
+            .padding(horizontal = RowInset, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
@@ -144,7 +144,7 @@ fun CoffeePeekActionRow(
             .fillMaxWidth()
             .clickable(role = Role.Button, onClick = onClick)
             .heightIn(min = RowMinHeight)
-            .padding(horizontal = RowInset, vertical = 11.dp),
+            .padding(horizontal = RowInset, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {

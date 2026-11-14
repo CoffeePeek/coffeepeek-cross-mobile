@@ -1,5 +1,7 @@
 package com.coffeepeek.feature.roaster.impl.ui.compose
 
+import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
+
 import com.coffeepeek.feature.roaster.impl.ui.compose.model.RoasterImage
 import com.coffeepeek.feature.roaster.impl.ui.compose.model.RoasterPhotoViewer
 import androidx.compose.animation.Crossfade
@@ -167,7 +169,7 @@ private fun RoasterDetailContent(
                 details.location?.let { location ->
                     RoasterSection(stringResource(Res.string.roaster_address_title)) {
                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2)) {
-                            CoffeePeekIcon(CoffeePeekIcons.Location, null, tint = MaterialTheme.colorScheme.primary)
+                            CoffeePeekIcon(CoffeePeekIcons.Location, null, tint = MaterialTheme.colorScheme.coffeePeekAccentForeground)
                             Text(location.address, style = MaterialTheme.typography.bodyLarge)
                         }
                     }
@@ -175,7 +177,7 @@ private fun RoasterDetailContent(
                 val instagram = details.contact?.instagramLink
                 val website = details.contact?.siteLink
                 if (!instagram.isNullOrBlank() || !website.isNullOrBlank()) RoasterSection(stringResource(Res.string.roaster_links_title)) {
-                    Column(screen.exposure(Modifier.fillMaxWidth(), RoasterExposure.Contacts), verticalArrangement = Arrangement.spacedBy(11.dp)) {
+                    Column(screen.exposure(Modifier.fillMaxWidth(), RoasterExposure.Contacts), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         if (!instagram.isNullOrBlank()) RoasterContactPill(CoffeePeekIcons.Instagram, instagramDisplayText(instagram)) {
                             onAction(RoasterDetailAction.OpenInstagram)
                         }

@@ -33,7 +33,7 @@ internal fun HistoryCalendarDay(day: Int, date: String, total: Long, homeCount: 
         if (homeCount > 0) ", " + stringResource(Res.string.history_home_count, homeCount) else ""
     val photo = photos.firstOrNull()
     val shape = RoundedCornerShape(12.dp)
-    Box(modifier.aspectRatio(1f).padding(1.dp).clip(shape)
+    Box(modifier.aspectRatio(1f).padding(2.dp).clip(shape)
         .background(when {
             isSelected && photo == null -> MaterialTheme.colorScheme.primary
             isSelected -> MaterialTheme.colorScheme.primary.copy(alpha = 0.10f)
@@ -56,8 +56,8 @@ internal fun HistoryCalendarDay(day: Int, date: String, total: Long, homeCount: 
                 }, modifier = Modifier.padding(bottom = if (total > 0) 6.dp else 0.dp)
                     .padding(4.dp).clearAndSetSemantics {})
         } else {
-            Box(Modifier.fillMaxSize().padding(start = 3.dp, top = 3.dp, end = 3.dp,
-                bottom = if (total > 3) 17.dp else if (total > 0) 11.dp else 3.dp)
+            Box(Modifier.fillMaxSize().padding(start = 4.dp, top = 4.dp, end = 4.dp,
+                bottom = if (total > 3) 20.dp else if (total > 0) 14.dp else 4.dp)
                 .clearAndSetSemantics {}, contentAlignment = Alignment.Center) {
                 val imageModifier = Modifier.aspectRatio(1f, matchHeightConstraintsFirst = true)
                 HistoryPhoto(photo.url,
@@ -66,7 +66,7 @@ internal fun HistoryCalendarDay(day: Int, date: String, total: Long, homeCount: 
             }
         }
         HistoryCalendarVisitMarkers(total, isSelected && photo == null,
-            Modifier.align(Alignment.BottomCenter).padding(bottom = 3.dp))
+            Modifier.align(Alignment.BottomCenter).padding(bottom = 4.dp))
     }
 }
 

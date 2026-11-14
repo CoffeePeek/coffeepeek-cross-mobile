@@ -1,5 +1,6 @@
 package com.coffeepeek.feature.shop.impl.ui.compose.component
 
+import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -18,17 +19,12 @@ import com.coffeepeek.core.designsystem.component.CoffeePeekButton
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.feature.shop.domain.model.ShopCheckInVisibility
-import com.coffeepeek.feature.shop.domain.model.ShopCheckInPublication
 import com.coffeepeek.feature.shop.impl.resources.Res
 import com.coffeepeek.feature.shop.impl.resources.shop_checkin_form_sending
-import com.coffeepeek.feature.shop.impl.resources.shop_checkin_form_success_pending
 import com.coffeepeek.feature.shop.impl.resources.shop_checkin_form_success_only_me
 import com.coffeepeek.feature.shop.impl.resources.shop_checkin_form_success_public
 import com.coffeepeek.feature.shop.impl.resources.shop_checkin_form_success_private
 import com.coffeepeek.feature.shop.impl.resources.shop_checkin_form_success_published
-import com.coffeepeek.feature.shop.impl.resources.shop_checkin_form_success_published_body
-import com.coffeepeek.feature.shop.impl.resources.shop_checkin_form_success_waiting
-import com.coffeepeek.feature.shop.impl.resources.shop_checkin_form_success_waiting_body
 import com.coffeepeek.feature.shop.impl.resources.shop_checkin_form_feed
 import com.coffeepeek.feature.shop.impl.resources.shop_checkin_form_cleanup_error
 import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
@@ -37,29 +33,20 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 @Composable
 internal fun ShopCheckInSubmissionContent(
     submittedVisibility: ShopCheckInVisibility?, cleanupFailed: Boolean, onFeed: () -> Unit,
-    publication: ShopCheckInPublication = ShopCheckInPublication.Unknown,
 ) {
     Column(Modifier.fillMaxWidth().semantics { liveRegion = LiveRegionMode.Polite },
         verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing4),
         horizontalAlignment = if (submittedVisibility == null) Alignment.CenterHorizontally else Alignment.Start) {
         if (submittedVisibility == null) {
-            CoffeePeekLoader(size = 40.dp, color = MaterialTheme.colorScheme.primary, strokeWidth = 4.dp)
+            CoffeePeekLoader(size = 40.dp, color = MaterialTheme.colorScheme.coffeePeekAccentForeground, strokeWidth = 4.dp)
             Text(stringResource(Res.string.shop_checkin_form_sending),
                 style = MaterialTheme.typography.headlineSmall, textAlign = TextAlign.Center)
         } else {
-            Text(stringResource(when {
-                submittedVisibility != ShopCheckInVisibility.Public -> Res.string.shop_checkin_form_success_only_me
-                publication == ShopCheckInPublication.Pending -> Res.string.shop_checkin_form_success_waiting
-                publication == ShopCheckInPublication.Published -> Res.string.shop_checkin_form_success_published
-                else -> Res.string.shop_checkin_form_success_pending
-            }),
+            Text(stringResource(if (submittedVisibility == ShopCheckInVisibility.Public)
+                Res.string.shop_checkin_form_success_published else Res.string.shop_checkin_form_success_only_me),
                 style = MaterialTheme.typography.headlineSmall)
-            Text(stringResource(when {
-                submittedVisibility != ShopCheckInVisibility.Public -> Res.string.shop_checkin_form_success_private
-                publication == ShopCheckInPublication.Pending -> Res.string.shop_checkin_form_success_waiting_body
-                publication == ShopCheckInPublication.Published -> Res.string.shop_checkin_form_success_published_body
-                else -> Res.string.shop_checkin_form_success_public
-            }))
+            Text(stringResource(if (submittedVisibility == ShopCheckInVisibility.Public)
+                Res.string.shop_checkin_form_success_public else Res.string.shop_checkin_form_success_private))
             if (cleanupFailed) Text(stringResource(Res.string.shop_checkin_form_cleanup_error),
                 color = MaterialTheme.colorScheme.error)
             CoffeePeekButton(stringResource(Res.string.shop_checkin_form_feed), onFeed)
@@ -68,10 +55,10 @@ internal fun ShopCheckInSubmissionContent(
 }
 
 @Preview @Composable private fun ShopCheckInSubmissionLightPreview() = CoffeePeekTheme(darkTheme = false) {
-    ShopCheckInSubmissionContent(ShopCheckInVisibility.Private, false, {})
+    ShopCheckInSubmissionContent(ShopCheckInVisibility.Public, false, {})
 }
 @Preview @Composable private fun ShopCheckInSubmissionDarkPreview() = CoffeePeekTheme(darkTheme = true) {
-    ShopCheckInSubmissionContent(ShopCheckInVisibility.Public, false, {}, ShopCheckInPublication.Pending)
+    ShopCheckInSubmissionContent(ShopCheckInVisibility.Public, false, {} )
 }
 @Preview @Composable private fun ShopCheckInSendingLightPreview() = CoffeePeekTheme(darkTheme = false) {
     ShopCheckInSubmissionContent(null, false, {})

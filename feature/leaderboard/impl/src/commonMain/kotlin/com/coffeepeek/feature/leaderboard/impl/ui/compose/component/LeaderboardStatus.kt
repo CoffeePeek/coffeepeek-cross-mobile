@@ -1,11 +1,12 @@
 package com.coffeepeek.feature.leaderboard.impl.ui.compose.component
 
+import com.coffeepeek.core.designsystem.component.CoffeePeekTextButton as TextButton
+
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier

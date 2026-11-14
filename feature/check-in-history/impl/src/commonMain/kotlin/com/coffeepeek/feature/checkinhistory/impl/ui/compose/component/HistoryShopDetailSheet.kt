@@ -17,18 +17,19 @@ import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as st
 
 @Composable
 internal fun HistoryShopDetailSheet(entry: PersonalCheckIn, dateLabel: String, onDismiss: () -> Unit,
-    onOpenShop: () -> Unit, onOpenPhoto: (Int) -> Unit, imageContent: HistoryImageContent?) {
+    onOpenShop: () -> Unit, onOpenCheckIn: () -> Unit, onOpenPhoto: (Int) -> Unit, imageContent: HistoryImageContent?) {
     CoffeePeekSwipeDismissModalBottomSheet(onDismiss, stringResource(Res.string.history_close),
         maxSheetHeightFraction = 0.9f) {
-        HistoryShopDetailContent(entry, dateLabel, onOpenShop, onOpenPhoto,
+        HistoryShopDetailContent(entry, dateLabel, onOpenShop, onOpenCheckIn, onOpenPhoto,
             Modifier.weight(1f), imageContent)
     }
 }
 
 @Composable private fun HistoryShopDetailContent(entry: PersonalCheckIn, dateLabel: String, onOpenShop: () -> Unit,
-    onOpenPhoto: (Int) -> Unit, modifier: Modifier = Modifier, imageContent: HistoryImageContent? = null) {
+    onOpenCheckIn: () -> Unit, onOpenPhoto: (Int) -> Unit, modifier: Modifier = Modifier, imageContent: HistoryImageContent? = null) {
     Column(modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp)) {
         HistoryCheckInCard(entry, dateLabel, onOpenPhoto, imageContent = imageContent)
+        TextButton(onOpenCheckIn, Modifier.fillMaxWidth()) { Text(stringResource(Res.string.history_open_check_in)) }
         if (entry.shop?.slug?.isNotBlank() == true) TextButton(onOpenShop,
             Modifier.fillMaxWidth().padding(vertical = 16.dp)) {
             Text(stringResource(Res.string.history_open_shop_action))
@@ -38,7 +39,7 @@ internal fun HistoryShopDetailSheet(entry: PersonalCheckIn, dateLabel: String, o
 
 // Dialog placement is verified on the isolated host; IDE previews render the modal content.
 @Composable private fun HistoryShopDetailPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
-    HistoryShopDetailContent(previewHistoryCheckIn(), "14 октября 2026", {}, {})
+    HistoryShopDetailContent(previewHistoryCheckIn(), "14 октября 2026", {}, {}, {})
 }
 @Preview @Composable private fun HistoryShopDetailLightPreview() = HistoryShopDetailPreview(false)
 @Preview @Composable private fun HistoryShopDetailDarkPreview() = HistoryShopDetailPreview(true)

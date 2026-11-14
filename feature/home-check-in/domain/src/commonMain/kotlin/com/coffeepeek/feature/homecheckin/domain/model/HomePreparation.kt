@@ -28,6 +28,7 @@ data class HomePreparation(
     val coffeeProductSlug: String? = null,
     /** This entry's own copy of its bag's card, present while the author shows the bag with it. */
     val shelfBagPhoto: HomePreparationPhoto? = null,
+    val rejectionReason: String? = null,
 )
 
 data class HomePreparationPhoto(val id: String, val url: String,

@@ -60,7 +60,7 @@ private fun PriceStops(selected: PriceLevel?) {
             val tint = if (selected == level) MaterialTheme.colorScheme.coffeePeekAccentForeground else MaterialTheme.colorScheme.onSurfaceVariant
             Box(Modifier.weight(1f), contentAlignment = Alignment.Center) {
                 if (level == null) Text(stringResource(Res.string.discovery_price_any), style = MaterialTheme.typography.labelSmall, color = tint)
-                else CoffeePeekBynPriceIndicators(level.level, iconWidth = 9.dp, tint = tint, spacing = 1.dp)
+                else CoffeePeekBynPriceIndicators(level.level, iconWidth = 10.dp, tint = tint, spacing = 2.dp)
             }
         }
     }

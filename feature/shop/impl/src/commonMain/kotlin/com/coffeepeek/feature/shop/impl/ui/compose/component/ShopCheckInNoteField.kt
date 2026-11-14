@@ -1,15 +1,13 @@
 package com.coffeepeek.feature.shop.impl.ui.compose.component
 
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.relocation.BringIntoViewRequester
-import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -21,13 +19,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.ime
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.semantics.error
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
-import com.coffeepeek.core.designsystem.component.CoffeePeekCompactOutlinedTextField
+import com.coffeepeek.core.designsystem.component.CoffeePeekMultilineTextField
 import com.coffeepeek.feature.shop.impl.resources.Res
 import com.coffeepeek.feature.shop.impl.resources.shop_checkin_form_note
 import com.coffeepeek.feature.shop.impl.resources.shop_checkin_form_note_hint
@@ -45,25 +40,15 @@ internal fun ShopCheckInNoteField(value: String, enabled: Boolean, hasError: Boo
     val imeUp = WindowInsets.ime.getBottom(LocalDensity.current) > 0
     LaunchedEffect(focused, imeUp) { if (focused && imeUp) bringIntoView.bringIntoView() }
     Column(verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing1)) {
-        Text(stringResource(Res.string.shop_checkin_form_note), style = MaterialTheme.typography.labelMedium,
+        val label = stringResource(Res.string.shop_checkin_form_note)
+        Text(label, style = MaterialTheme.typography.labelMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant)
-        CoffeePeekCompactOutlinedTextField(value, { onChange(it.take(1000)) }, enabled = enabled, isError = hasError,
-            errorDescription = errorMessage.takeIf { hasError }, singleLine = false,
-            modifier = Modifier.fillMaxWidth().heightIn(min = 80.dp)
+        CoffeePeekMultilineTextField(value, onChange, label,
+            stringResource(Res.string.shop_checkin_form_note_hint), 1000,
+            modifier = Modifier.fillMaxWidth()
                 .bringIntoViewRequester(bringIntoView)
                 .onFocusChanged { focused = it.hasFocus },
-            shape = RoundedCornerShape(CoffeePeekDimens.buttonRadius),
-            contentPadding = PaddingValues(horizontal = 14.dp, vertical = 12.dp),
-            textStyle = MaterialTheme.typography.bodyMedium,
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedContainerColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.04f),
-                unfocusedContainerColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.04f),
-                disabledContainerColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.04f),
-                errorContainerColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.04f),
-                focusedBorderColor = MaterialTheme.colorScheme.outline),
-            placeholder = { Text(stringResource(Res.string.shop_checkin_form_note_hint),
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)) })
+            enabled = enabled, errorDescription = errorMessage.takeIf { hasError })
         Text("${value.length}/1000", Modifier.align(Alignment.End), style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant)
         if (hasError) Text(errorMessage, color = MaterialTheme.colorScheme.error,

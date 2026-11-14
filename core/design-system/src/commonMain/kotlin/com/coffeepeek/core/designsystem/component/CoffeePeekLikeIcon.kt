@@ -7,6 +7,7 @@ import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -54,10 +55,14 @@ fun CoffeePeekLikeIcon(
         scale.snapTo(0.7f)
         scale.animateTo(1f, spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium))
     }
-    CoffeePeekIcon(if (selected) CoffeePeekIcons.FavoriteFilled else CoffeePeekIcons.Favorite,
-        contentDescription, modifier.graphicsLayer {
-            scaleX = scale.value; scaleY = scale.value
-        }.size(size), tint = color.copy(alpha = alpha))
+    Box(modifier.graphicsLayer {
+        scaleX = scale.value; scaleY = scale.value
+    }.size(size)) {
+        CoffeePeekIcon(if (selected) CoffeePeekIcons.FavoriteFilled else CoffeePeekIcons.Favorite,
+            contentDescription, Modifier.matchParentSize(), tint = color.copy(alpha = alpha))
+        if (selected && !overImage) CoffeePeekIcon(CoffeePeekIcons.Favorite, null, Modifier.matchParentSize(),
+            tint = MaterialTheme.colorScheme.onSurface.copy(alpha = alpha))
+    }
 }
 
 internal fun coffeePeekLikeColor(selected: Boolean, overImage: Boolean, content: Color): Color = when {

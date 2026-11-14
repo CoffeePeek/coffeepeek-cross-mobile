@@ -18,7 +18,8 @@ import org.koin.dsl.module
 internal fun homeCheckInModule(apiBaseUrl: String = Constants.BASE_URL) = module {
     single<HomePreparationRepository> {
         val client = get<ApiClients>()
-        createHomePreparationRepository(client.client, client.uploadClient, apiBaseUrl)
+        com.coffeepeek.admin.di.community.HomeCommunityWrites(
+            createHomePreparationRepository(client.client, client.uploadClient, apiBaseUrl), get(), get())
     }
     single<HomePreparationReader> { get<HomePreparationRepository>() }
     single<HomePreparationShelfBagReader> { createHomePreparationShelfBagReader(get<ApiClients>().client, apiBaseUrl) }

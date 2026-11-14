@@ -1,5 +1,6 @@
 package com.coffeepeek.feature.shop.impl.ui.compose.component
 
+import com.coffeepeek.core.designsystem.theme.coffeePeekAccentForeground
 import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
 import com.coffeepeek.core.designsystem.component.CoffeePeekSelectField
 import com.coffeepeek.core.designsystem.component.CoffeePeekSelectOption
@@ -64,7 +65,7 @@ internal fun ShopCheckInDrinkField(
         }
         CoffeePeekSelectField(label, options, stringResource(Res.string.shop_checkin_form_drink),
             modifier = Modifier.fillMaxWidth(), enabled = enabled && !loading)
-        if (loading) CoffeePeekLoader(size = 40.dp, color = MaterialTheme.colorScheme.primary, strokeWidth = 4.dp)
+        if (loading) CoffeePeekLoader(size = 40.dp, color = MaterialTheme.colorScheme.coffeePeekAccentForeground, strokeWidth = 4.dp)
         if (failed) {
             Text(stringResource(Res.string.shop_checkin_form_drinks_error), color = MaterialTheme.colorScheme.error)
             TextButton(onClick = onRetry, enabled = !loading) { Text(stringResource(Res.string.shop_checkin_form_retry)) }
