@@ -10,6 +10,7 @@ import com.coffeepeek.feature.notifications.impl.resources.notifications_inbox_l
 import com.coffeepeek.feature.notifications.impl.resources.notifications_load_more
 import com.coffeepeek.feature.notifications.impl.resources.notifications_loading
 import com.coffeepeek.feature.notifications.impl.resources.notifications_mark_read_failed
+import com.coffeepeek.feature.notifications.impl.resources.notifications_read_all
 import com.coffeepeek.feature.notifications.impl.resources.notifications_retry
 import com.coffeepeek.feature.notifications.impl.resources.notifications_title
 import com.coffeepeek.feature.notifications.impl.resources.notifications_today
@@ -40,9 +41,9 @@ import com.coffeepeek.core.designsystem.component.CoffeePeekRowSeparator
 import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import com.coffeepeek.core.designsystem.theme.reducedMotionDuration
 import com.coffeepeek.feature.notifications.api.*
-import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
@@ -53,6 +54,7 @@ internal fun NotificationsContent(
     state: NotificationInboxState,
     onClose: () -> Unit,
     onRead: (String) -> Unit,
+    onReadAll: () -> Unit,
     onSeen: (String) -> Unit,
     onRefresh: () -> Unit,
     onLoadMore: () -> Unit,
@@ -61,9 +63,24 @@ internal fun NotificationsContent(
 ) {
     Column(Modifier.fillMaxWidth().padding(horizontal = CoffeePeekDimens.spacing5)) {
         NotificationsHeader(onClose)
+        if (state.accountId != null && state.items.isNotEmpty()) {
+            NotificationsReadAll(state, onReadAll, openingId == null, Modifier.align(Alignment.End))
+        }
         Spacer(Modifier.height(CoffeePeekDimens.spacing4))
         NotificationsList(state, onClose, onRead, onSeen, onRefresh, onLoadMore, onSignIn,
             openingId, Modifier.weight(1f, fill = false))
+    }
+}
+
+@Composable
+private fun NotificationsReadAll(state: NotificationInboxState, onReadAll: () -> Unit,
+    canInteract: Boolean, modifier: Modifier = Modifier) {
+    TextButton(onClick = onReadAll, modifier = modifier,
+        colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onSurface),
+        enabled = canInteract && state.unreadCount > 0 && !state.markingRead && !state.loading && !state.loadingMore) {
+        CoffeePeekIcon(CoffeePeekIcons.Check, contentDescription = null, modifier = Modifier.size(CoffeePeekDimens.spacing4))
+        Spacer(Modifier.width(CoffeePeekDimens.spacing2))
+        Text(stringResource(Res.string.notifications_read_all))
     }
 }
 
@@ -195,7 +212,7 @@ private fun NotificationsPreview(dark: Boolean, count: Int) = CoffeePeekTheme(da
                 "Спасибо! Новая кофейня уже появилась на карте.", "2026-10-21T08:00:00Z", read = index % 2 == 1, canOpen = true)
         })
     Surface(Modifier.width(360.dp).heightIn(max = 640.dp)) {
-        NotificationsContent(state, {}, {}, {}, {}, {}, {})
+        NotificationsContent(state, {}, {}, {}, {}, {}, {}, {})
     }
 }
 

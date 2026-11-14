@@ -133,7 +133,7 @@ private fun ScheduleHeader(status: String, expanded: Boolean, onToggle: () -> Un
 private fun ScheduleDays(schedules: List<ShopSchedule>) {
     Column {
         HorizontalDivider(Modifier.padding(vertical = CoffeePeekDimens.spacing2),
-            color = MaterialTheme.colorScheme.outlineVariant)
+            color = MaterialTheme.colorScheme.outline)
         Column(verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2)) {
             schedules.sortedBy { if (it.dayOfWeek == 0) 7 else it.dayOfWeek }.forEach { schedule ->
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3)) {

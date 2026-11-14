@@ -3,6 +3,7 @@ package com.coffeepeek.admin.sandbox.compose
 import com.coffeepeek.admin.ui.screen.appupdate.AppUpdateRenderer
 import com.coffeepeek.feature.appupdate.impl.AppUpdateController
 import com.coffeepeek.admin.di.authorblocking.AuthorBlockingRootHost
+import com.coffeepeek.admin.di.collections.CollectionsPickerHost
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -20,6 +21,7 @@ import com.coffeepeek.R
 import com.coffeepeek.admin.AppContent
 import com.coffeepeek.admin.map.LocalMapStyleOverride
 import com.coffeepeek.admin.sandbox.SandboxApplication
+import com.coffeepeek.admin.sandbox.SandboxOwner
 import com.coffeepeek.admin.sandbox.SandboxViewModel
 import com.coffeepeek.admin.sandbox.sandboxImageBytes
 import com.coffeepeek.admin.sandbox.packscan.PackScanProbe
@@ -41,28 +43,9 @@ import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 @Composable internal fun SandboxScreen(model: SandboxViewModel, application: SandboxApplication) {
     val state by model.state.collectAsStateWithLifecycle()
     val updates = koinInject<AppUpdateController>()
-    val updateRenderer = koinInject<AppUpdateRenderer>()
-    var nextPhoto by remember { mutableIntStateOf(0) }
     var packProbe by remember { mutableStateOf(false) }
     AppContent {
-        CompositionLocalProvider(LocalMapStyleOverride provides """{"version":8,"sources":{},"layers":[{"id":"sandbox-background","type":"background","paint":{"background-color":"#716552"}}]}""",
-            LocalPhotoPickerOverride provides { limit, deliver ->
-            val photo = { if (limit > 0) {
-                val variant = nextPhoto++
-                deliver(listOf(PickedImage(sandboxImageBytes(variant), "sandbox-$variant.png", "image/png")))
-            } }
-            PhotoPickerController(photo, photo)
-        }) {
-            SandboxScreenContent({ model.controls(true) }) {
-                key(state.owner) {
-                    CompositionLocalProvider(LocalViewModelStoreOwner provides state.owner) { Navigator() }
-                }
-                // App.kt hosts this next to the Navigator; without it block/unblock confirmations never appear.
-                AuthorBlockingRootHost()
-                // Same for the update prompt: App.kt hosts it at the root and it checks on every resume.
-                updateRenderer.Prompt()
-            }
-        }
+        SandboxApplicationContent(state.owner) { model.controls(true) }
         if (state.controls) Dialog({ model.controls(false) }) {
             Surface(shape = MaterialTheme.shapes.large) {
                 Column(Modifier.padding(12.dp)) {
@@ -97,6 +80,33 @@ import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
         }
         if (packProbe) Dialog({ packProbe = false }, DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)) {
             PackScanProbe(onClose = { packProbe = false })
+        }
+    }
+}
+
+@Composable
+private fun SandboxApplicationContent(owner: SandboxOwner, onControls: () -> Unit) {
+    val updateRenderer = koinInject<AppUpdateRenderer>()
+    var nextPhoto by remember { mutableIntStateOf(0) }
+    CompositionLocalProvider(
+        LocalMapStyleOverride provides """{"version":8,"sources":{},"layers":[{"id":"sandbox-background","type":"background","paint":{"background-color":"#716552"}}]}""",
+        LocalPhotoPickerOverride provides { limit, deliver ->
+            val photo = {
+                if (limit > 0) {
+                    val variant = nextPhoto++
+                    deliver(listOf(PickedImage(sandboxImageBytes(variant), "sandbox-$variant.png", "image/png")))
+                }
+            }
+            PhotoPickerController(photo, photo)
+        },
+    ) {
+        SandboxScreenContent(onControls) {
+            key(owner) {
+                CompositionLocalProvider(LocalViewModelStoreOwner provides owner) { Navigator() }
+            }
+            CollectionsPickerHost()
+            AuthorBlockingRootHost()
+            updateRenderer.Prompt()
         }
     }
 }

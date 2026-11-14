@@ -40,6 +40,6 @@ class DesignTokensTest {
     }
 
     @Test fun paletteKeepsBrandColor() {
-        assertEquals(0xFFEAB308.toInt(), CoffeePeekColors.Primary.toArgb())
+        assertEquals(0xFFFACC15.toInt(), CoffeePeekColors.Primary.toArgb())
     }
 }

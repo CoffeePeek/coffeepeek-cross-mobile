@@ -34,7 +34,7 @@ internal fun ShopReportCategoryList(selected: ShopIssueCategory?, onSelect: (Sho
         Column(Modifier.selectableGroup()) {
             CATEGORY_ORDER.forEachIndexed { index, category ->
                 if (index > 0) HorizontalDivider(Modifier.padding(horizontal = CoffeePeekDimens.spacing4),
-                    color = MaterialTheme.colorScheme.outlineVariant)
+                    color = MaterialTheme.colorScheme.outline)
                 val label = stringResource(when (category) {
                     ShopIssueCategory.OutdatedMenu -> Res.string.shop_report_outdated_menu
                     ShopIssueCategory.ShopClosed -> Res.string.shop_report_shop_closed

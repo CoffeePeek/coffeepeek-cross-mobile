@@ -3,6 +3,8 @@ import Foundation
 import MapLibre
 import UIKit
 
+private let mapSelectionGold = UIColor(hex: "#FACC15")
+
 /// Native rendering only: shared Kotlin owns map content, selection and navigation.
 /// This file is used by both the Xcode and xtool application targets.
 final class MapLibreMapProvider: NSObject, IosNativeMapProvider, MLNMapViewDelegate, UIGestureRecognizerDelegate {
@@ -390,8 +392,8 @@ final class MapLibreMapProvider: NSObject, IosNativeMapProvider, MLNMapViewDeleg
     }
 
     private func drawPinRing(_ cg: CGContext, rect: CGRect, selected: Bool, dark: Bool) {
-        let border = dark ? "#3D2F28" : "#E7E5E4"
-        UIColor(hex: selected ? "#D4A84B" : border).setStroke()
+        let border = UIColor(hex: dark ? "#3D2F28" : "#E7E5E4")
+        (selected ? mapSelectionGold : border).setStroke()
         cg.setLineWidth(selected ? 2 : 1.1)
         let inset: CGFloat = selected ? -2.5 : 0.55
         cg.strokeEllipse(in: rect.insetBy(dx: inset, dy: inset))
@@ -702,8 +704,8 @@ private final class CoffeePinView: MLNAnnotationView {
         let radius: CGFloat = reduced ? 26 : 20
         pulse.frame = bounds
         pulse.path = UIBezierPath(ovalIn: CGRect(x: bounds.midX - radius, y: bounds.midY - radius, width: radius * 2, height: radius * 2)).cgPath
-        pulse.fillColor = UIColor(hex: "#EAB308").withAlphaComponent(reduced ? 0.18 : 0.22).cgColor
-        pulse.strokeColor = UIColor(hex: "#CA8A04").withAlphaComponent(reduced ? 0.35 : 0.6).cgColor
+        pulse.fillColor = mapSelectionGold.withAlphaComponent(reduced ? 0.18 : 0.22).cgColor
+        pulse.strokeColor = mapSelectionGold.withAlphaComponent(reduced ? 0.35 : 0.6).cgColor
         pulse.lineWidth = 1.5
         guard !reduced else { return }
         let scale = CABasicAnimation(keyPath: "transform.scale")

@@ -71,9 +71,21 @@ private fun NotificationSheet(feature: NotificationFeature, state: NotificationI
         dismissDescription = stringResource(Res.string.notifications_close),
         maxSheetHeightFraction = .88f,
     ) {
-        NotificationsContent(state, onClose, { id ->
-            if (openingId == null) openNotification(scope, feature, state, id, { openingId = it }, onClose, onOpen)
-        }, feature::markRead, feature::refresh, feature::loadMore, onSignIn, openingId)
+        NotificationsContent(
+            state = state,
+            onClose = onClose,
+            onRead = { id ->
+                if (openingId == null) openNotification(scope, feature, state, id, { openingId = it }, onClose, onOpen)
+            },
+            onReadAll = {
+                if (feature.state.value.generation == state.generation) feature.markAllRead()
+            },
+            onSeen = feature::markRead,
+            onRefresh = feature::refresh,
+            onLoadMore = feature::loadMore,
+            onSignIn = onSignIn,
+            openingId = openingId,
+        )
     }
 }
 

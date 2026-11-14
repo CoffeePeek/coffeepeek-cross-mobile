@@ -1,6 +1,5 @@
 package com.coffeepeek.core.designsystem.component
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -86,7 +85,7 @@ fun CoffeePeekShopCard(
         shape = RoundedCornerShape(CoffeePeekDimens.radiusXl),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+        border = coffeePeekCardBorder(),
     ) {
         Column {
             ShopCardCover(rating, ratingText, ratingCount, isNew, newLabel, cover, roasterLogoCount, roasterLogo, favorite)

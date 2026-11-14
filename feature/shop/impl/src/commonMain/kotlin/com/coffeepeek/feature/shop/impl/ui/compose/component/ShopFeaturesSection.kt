@@ -1,5 +1,11 @@
 package com.coffeepeek.feature.shop.impl.ui.compose.component
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -23,6 +29,7 @@ import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.text.coffeePeekPluralForm
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
+import com.coffeepeek.core.designsystem.theme.reducedMotionDuration
 import com.coffeepeek.feature.shop.domain.model.ShopFeature
 import com.coffeepeek.feature.shop.impl.resources.Res
 import com.coffeepeek.feature.shop.impl.resources.shop_features_collapse
@@ -49,28 +56,48 @@ internal fun ShopFeaturesSection(
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
             border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline)) {
             Column(Modifier.padding(CoffeePeekDimens.spacing4), verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing1)) {
-                val visible = if (expanded) features else features.take(PREVIEW_FEATURE_COUNT)
-                visible.forEach { feature ->
-                    Row(Modifier.fillMaxWidth().heightIn(min = 52.dp), verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3)) {
-                        ShopFeatureIcon(feature, Modifier.size(28.dp))
-                        Text(feature.name, Modifier.weight(1f), style = MaterialTheme.typography.bodyLarge)
-                    }
-                }
+                features.take(PREVIEW_FEATURE_COUNT).forEach { ShopFeatureRow(it) }
                 if (features.size > PREVIEW_FEATURE_COUNT) {
-                    val label = if (expanded) stringResource(Res.string.shop_features_collapse)
-                        else stringResource(coffeePeekPluralForm(features.size, Res.string.shop_features_show_all_count_one,
-                            Res.string.shop_features_show_all_count_few, Res.string.shop_features_show_all_count_many), features.size)
-                    Surface(Modifier.fillMaxWidth().heightIn(min = 52.dp)
-                        .clickable(role = Role.Button, onClickLabel = label, onClick = onToggle),
-                        shape = RoundedCornerShape(CoffeePeekDimens.radiusLg),
-                        color = MaterialTheme.colorScheme.surfaceVariant) {
-                        Text(label, Modifier.padding(CoffeePeekDimens.spacing3), style = MaterialTheme.typography.titleMedium,
-                            textAlign = androidx.compose.ui.text.style.TextAlign.Center)
-                    }
+                    ShopAdditionalFeatures(features.drop(PREVIEW_FEATURE_COUNT), expanded)
+                    ShopFeaturesToggle(features.size, expanded, onToggle)
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun ShopFeatureRow(feature: ShopFeature) {
+    Row(Modifier.fillMaxWidth().heightIn(min = 52.dp), verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3)) {
+        ShopFeatureIcon(feature, Modifier.size(28.dp))
+        Text(feature.name, Modifier.weight(1f), style = MaterialTheme.typography.bodyLarge)
+    }
+}
+
+@Composable
+private fun ShopAdditionalFeatures(features: List<ShopFeature>, expanded: Boolean) {
+    val duration = reducedMotionDuration(250)
+    AnimatedVisibility(expanded,
+        enter = expandVertically(tween(duration), expandFrom = Alignment.Top) + fadeIn(tween(duration)),
+        exit = shrinkVertically(tween(duration), shrinkTowards = Alignment.Top) + fadeOut(tween(duration))) {
+        Column(verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing1)) {
+            features.forEach { ShopFeatureRow(it) }
+        }
+    }
+}
+
+@Composable
+private fun ShopFeaturesToggle(count: Int, expanded: Boolean, onToggle: () -> Unit) {
+    val label = if (expanded) stringResource(Res.string.shop_features_collapse)
+        else stringResource(coffeePeekPluralForm(count, Res.string.shop_features_show_all_count_one,
+            Res.string.shop_features_show_all_count_few, Res.string.shop_features_show_all_count_many), count)
+    Surface(Modifier.fillMaxWidth().heightIn(min = 52.dp)
+        .clickable(role = Role.Button, onClickLabel = label, onClick = onToggle),
+        shape = RoundedCornerShape(CoffeePeekDimens.radiusLg),
+        color = MaterialTheme.colorScheme.surfaceVariant) {
+        Text(label, Modifier.padding(CoffeePeekDimens.spacing3), style = MaterialTheme.typography.titleMedium,
+            textAlign = androidx.compose.ui.text.style.TextAlign.Center)
     }
 }
 

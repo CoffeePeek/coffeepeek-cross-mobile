@@ -48,7 +48,6 @@ internal class CommunityViewModel(
     private val authors: AuthorVisibility = AuthorVisibility.None,
     private val saved: com.coffeepeek.feature.community.api.CommunitySavedPosts = com.coffeepeek.feature.community.api.CommunitySavedPosts.None,
 ) : MviViewModel<CommunityState, CommunityAction, CommunityEvent>(CommunityState()) {
-    private var firstResume = true
     private var accountKey: String? = null
     private var loadJob: Job? = null
     private var mutationJob: Job? = null
@@ -115,7 +114,6 @@ internal class CommunityViewModel(
         when (action) {
             is CommunityAction.Refresh -> refresh(action.trigger)
             is CommunityAction.LoadMore -> loadMore(action.track)
-            CommunityAction.Resume -> if (firstResume) firstResume = false else refresh(null)
             CommunityAction.Retry -> retry()
             is CommunityAction.SelectTimeline -> selectTimeline(action.timeline)
             is CommunityAction.SetFilters -> setFilters(action.filters)

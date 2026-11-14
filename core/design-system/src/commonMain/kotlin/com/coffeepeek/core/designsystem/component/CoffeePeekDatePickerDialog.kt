@@ -56,7 +56,7 @@ fun CoffeePeekDatePickerDialog(
 @Composable
 fun coffeePeekDatePickerColors() = DatePickerDefaults.colors(
     todayContentColor = MaterialTheme.colorScheme.coffeePeekAccentForeground,
-    todayDateBorderColor = MaterialTheme.colorScheme.coffeePeekAccentForeground,
+    todayDateBorderColor = MaterialTheme.colorScheme.primary,
     currentYearContentColor = MaterialTheme.colorScheme.coffeePeekAccentForeground,
     navigationContentColor = MaterialTheme.colorScheme.onSurface,
 )

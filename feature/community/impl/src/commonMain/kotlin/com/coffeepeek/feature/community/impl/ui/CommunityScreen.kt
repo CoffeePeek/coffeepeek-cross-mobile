@@ -117,10 +117,6 @@ internal fun CommunityScreen(
             }
         }
     }
-    androidx.lifecycle.compose.LifecycleResumeEffect(vm) {
-        vm.onAction(CommunityAction.Resume)
-        onPauseOrDispose { }
-    }
     CommunityContent(state, vm::onAction, host, blockActions, callbacks, snackbar, modifier, bottomClearance,
         headerAction, floatingAction, leadersSelected) { leadersSelected = it }
 }
