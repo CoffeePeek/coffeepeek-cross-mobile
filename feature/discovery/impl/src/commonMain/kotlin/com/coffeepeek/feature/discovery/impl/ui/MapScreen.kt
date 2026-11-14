@@ -152,7 +152,7 @@ internal fun MapContent(
         MapSearchControls(state, dismissInput, onAction, onToggleExpand, onOpenFilters,
             Modifier.align(Alignment.TopCenter).statusBarsPadding().fillMaxWidth()
                 .padding(vertical = CoffeePeekDimens.spacing3).zIndex(2f), onSearchAction, showSearchField)
-        if (state.viewportFailed && state.markers.isEmpty()) {
+        if (state.viewportFailed && state.markers.isEmpty() && !state.locationSettingsNeeded) {
             MapViewportError({ onAction(MapAction.RetryViewport) },
                 Modifier.align(Alignment.TopCenter).statusBarsPadding().padding(top = 76.dp).zIndex(2f))
         }
