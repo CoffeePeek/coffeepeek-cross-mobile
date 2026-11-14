@@ -5,8 +5,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.imeNestedScroll
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
@@ -126,7 +124,6 @@ internal fun ShopCheckInCreateScreen(
 }
 
 /** Previewable body: no DI, ViewModel, platform picker or network lookup. */
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 internal fun ShopCheckInCreateScreenContent(
     state: ShopCheckInFormState,
@@ -150,7 +147,7 @@ internal fun ShopCheckInCreateScreenContent(
     val scroll = rememberScrollState()
     val editable = state.isEditable(photosPreparing)
     Column(
-        modifier.fillMaxWidth().testTag("shop-checkin-form").imeNestedScroll().verticalScroll(scroll)
+        modifier.fillMaxWidth().testTag("shop-checkin-form").closeKeyboardOnDrag().verticalScroll(scroll)
             .padding(horizontal = CoffeePeekDimens.spacing4)
             .padding(top = CoffeePeekDimens.spacing3, bottom = CoffeePeekDimens.spacing6),
         verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing6),
