@@ -39,7 +39,6 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.mutableLongStateOf
@@ -159,13 +158,8 @@ internal fun CommunityContent(
             leaders.invoke(refreshKey, bottomClearance, Modifier.weight(1f).fillMaxSize())
         } else savedContent.SaveableStateProvider("feed") {
             val listState = rememberLazyListState()
-            val headerVisible by remember(listState) {
-                derivedStateOf { !listState.canScrollBackward || !listState.lastScrolledForward }
-            }
-            AnimatedVisibility(state.items.isEmpty() || headerVisible,
-                enter = expandVertically(expandFrom = Alignment.Top), exit = shrinkVertically(shrinkTowards = Alignment.Top)) {
-                CommunitySections(false, onSelectLeaders, leaders != null, headerAction)
-            }
+            // The feed header is pinned: it must stay put while the list scrolls.
+            CommunitySections(false, onSelectLeaders, leaders != null, headerAction)
             Box(Modifier.weight(1f)) {
                 CommunityFeedContent(state, onAction, host, blockActions, callbacks, snackbar,
                     bottomClearance, listState, { refreshKey++ }, floatingAction)

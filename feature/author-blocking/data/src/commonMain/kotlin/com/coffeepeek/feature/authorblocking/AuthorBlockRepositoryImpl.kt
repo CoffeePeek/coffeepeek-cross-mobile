@@ -166,9 +166,12 @@ internal class AuthorBlockRepositoryImpl(
     private fun publish(items: List<BlockedAuthor>, ready: Boolean, generation: Long, force: Boolean = false) {
         val ids = items.mapTo(mutableSetOf()) { it.id }
         val slugs = items.mapNotNullTo(mutableSetOf()) { it.slug }
+        // An unchanged list must not bump the revision: a periodic refresh (for example the
+        // one on every ON_START) would otherwise invalidate every personalized page and wipe
+        // the feed the user is looking at, although nothing visible has changed.
         _visibility.update { previous ->
             if (_state.value.sessionVersion != generation || account != accounts.current()) previous
-            else if (!force && previous.ready == ready && previous.blockedIds == ids && previous.blockedSlugs == slugs) previous
+            else if (previous.ready == ready && previous.blockedIds == ids && previous.blockedSlugs == slugs) previous
             else AuthorVisibilitySnapshot(previous.revision + 1, ready, ids, slugs)
         }
     }

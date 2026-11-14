@@ -56,9 +56,14 @@ internal class CommunityViewModel(
     private var ownRefreshSnapshot: AuthorVisibilitySnapshot? = null
 
     init {
+        var appliedVisibility: AuthorVisibilitySnapshot? = null
         viewModelScope.launch {
             authors.visibility.drop(1).collect { snapshot ->
                 if (snapshot == ownRefreshSnapshot) { ownRefreshSnapshot = null; return@collect }
+                // The visibility source re-emits its current value when the app returns to the
+                // foreground; an identical snapshot must not wipe and reload the feed again.
+                if (snapshot == appliedVisibility) return@collect
+                appliedVisibility = snapshot
                 if (currentState.timeline != CommunityTimeline.Public) return@collect
                 loadJob?.cancel(); mutationJob?.cancel(); cancelVotes()
                 updateState {
