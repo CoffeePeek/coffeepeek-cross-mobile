@@ -16,6 +16,7 @@ import platform.darwin.NSObject
 import coffeepeek.composeapp.generated.resources.Res
 import coffeepeek.composeapp.generated.resources.native_done
 import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
+import com.coffeepeek.core.designsystem.component.coffeePeekApplyKeyboardColors
 
 // Auth fields share the Compose design-system shape and surface on both platforms.
 @Composable
@@ -59,13 +60,15 @@ internal actual fun NativeKeyboardDoneAccessory(visible: Boolean, onDone: () -> 
     val controller = LocalUIViewController.current
     val action = rememberUpdatedState(onDone)
     val done = stringResource(Res.string.native_done)
-    DisposableEffect(controller, done) {
-        val host = controller.parentViewController?.view ?: controller.view
+    val colors = MaterialTheme.colorScheme
+    DisposableEffect(controller, done, colors) {
+        val host = controller.view
         val target = DoneTarget {
             host.endEditing(true)
             action.value()
         }
         val toolbar = UIToolbar().apply {
+            coffeePeekApplyKeyboardColors(colors)
             translatesAutoresizingMaskIntoConstraints = false
             items = listOf(
                 UIBarButtonItem(barButtonSystemItem = UIBarButtonSystemItem.UIBarButtonSystemItemFlexibleSpace, target = null, action = null),

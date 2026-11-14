@@ -17,6 +17,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
@@ -38,6 +39,7 @@ import platform.UIKit.UITextAutocapitalizationType
 import platform.UIKit.UITextView
 import platform.UIKit.UITextViewDelegateProtocol
 import platform.UIKit.UIToolbar
+import platform.UIKit.UIView
 import platform.UIKit.accessibilityHint
 import platform.UIKit.accessibilityLabel
 import platform.UIKit.isAccessibilityElement
@@ -70,19 +72,33 @@ internal actual fun CoffeePeekNativeMultilineTextField(
     val maxHeight = maxOf(144.dp, (lineHeight * 4 + 24).dp)
     val text = synced.value.text
     UIKitView(
-        factory = { CoffeePeekMultilineInput(delegate) },
+        factory = { CoffeePeekMultilineContainer(delegate) },
         modifier = modifier.heightIn(min = minHeight, max = maxHeight).bringIntoViewRequester(requester),
         properties = UIKitInteropProperties(
             interactionMode = UIKitInteropInteractionMode.NonCooperative,
             isNativeAccessibilityEnabled = true,
         ),
         update = { view ->
-            view.configure(text, label, placeholder, enabled, errorDescription)
-            view.applyColors(colors, radius, errorDescription != null, enabled)
+            view.backgroundColor = colors.background.toUIColor()
+            view.input.configure(text, label, placeholder, enabled, errorDescription)
+            view.input.applyColors(colors, radius, errorDescription != null, enabled)
         },
-        onRelease = { it.release() },
+        onRelease = { it.input.release() },
     )
     return true
+}
+
+/** The solid backing also covers the rounded input's corners inside the interop cutout. */
+private class CoffeePeekMultilineContainer(target: CoffeePeekMultilineDelegate) :
+    UIView(frame = CGRectMake(0.0, 0.0, 0.0, 0.0)) {
+    val input = CoffeePeekMultilineInput(target)
+
+    init { addSubview(input) }
+
+    override fun layoutSubviews() {
+        super.layoutSubviews()
+        input.setFrame(bounds)
+    }
 }
 
 private class CoffeePeekMultilineInput(target: CoffeePeekMultilineDelegate) :
@@ -126,7 +142,8 @@ private class CoffeePeekMultilineInput(target: CoffeePeekMultilineDelegate) :
     }
 
     fun applyColors(colors: ColorScheme, radius: Double, isError: Boolean, enabled: Boolean) {
-        backgroundColor = colors.onSurface.copy(alpha = 0.04f).toUIColor()
+        // Interop punches through the Compose dialog: alpha would reveal the native screen below.
+        backgroundColor = colors.onSurface.copy(alpha = 0.04f).compositeOver(colors.background).toUIColor()
         textColor = colors.onSurface.copy(alpha = if (enabled) 1f else 0.38f).toUIColor()
         tintColor = colors.primary.toUIColor()
         hint.textColor = colors.onSurfaceVariant.toUIColor()
@@ -134,6 +151,7 @@ private class CoffeePeekMultilineInput(target: CoffeePeekMultilineDelegate) :
         layer.borderWidth = 1.0
         layer.borderColor = if (isError) colors.error.toUIColor().CGColor else colors.outline.toUIColor().CGColor
         overrideUserInterfaceStyle = coffeePeekUserInterfaceStyle(colors.background)
+        (inputAccessoryView as? UIToolbar)?.coffeePeekApplyKeyboardColors(colors)
     }
 
     fun replaceText(value: String) {

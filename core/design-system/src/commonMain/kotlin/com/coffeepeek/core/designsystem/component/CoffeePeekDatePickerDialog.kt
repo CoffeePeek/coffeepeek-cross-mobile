@@ -37,7 +37,7 @@ fun CoffeePeekDatePickerDialog(
         initialSelectedDateMillis = initialMillis,
         selectableDates = remember(maximumMillis) {
             object : SelectableDates {
-                override fun isSelectableDate(utcTimeMillis: Long) = utcTimeMillis > 0 && (maximumMillis == null || utcTimeMillis <= maximumMillis)
+                override fun isSelectableDate(utcTimeMillis: Long) = maximumMillis == null || utcTimeMillis <= maximumMillis
             }
         },
     )

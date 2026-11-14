@@ -1046,3 +1046,11 @@ impl 109 tests, plus the other affected suites (1,374 total), and Direct Debug
 assembly/DEX verification passed. Initial failure and remaining manual/native
 gates are recorded in `../community/RESPONSIVE_LIKES_PLAN.md`. No device run or
 automated UI/instrumentation/screenshot test was performed.
+
+## Check-in keyboard and native controls — 2026-11-15
+
+The cafe editor now hides publication controls while the keyboard is open.
+Shared native note, toolbar and switch fixes also cover this form. See
+[the check-in UI audit](../home-check-in/CHECK_IN_UI_AUDIT.md) for source coverage,
+108 passing Shop impl tests, Android/iOS-library compilation and outstanding
+device acceptance. No persistence, analytics or domain contracts changed.

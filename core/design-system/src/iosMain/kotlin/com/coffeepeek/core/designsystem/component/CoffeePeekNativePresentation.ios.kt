@@ -8,6 +8,7 @@ import androidx.compose.runtime.LaunchedEffect
 import kotlinx.coroutines.delay
 import platform.UIKit.UIAccessibilityIsReduceMotionEnabled
 import platform.UIKit.UIViewController
+import platform.UIKit.endEditing
 import platform.UIKit.transitionCoordinator
 
 internal fun UIViewController.coffeePeekPresentationHost(): UIViewController {
@@ -32,6 +33,7 @@ internal fun CoffeePeekPresentNativeController(controller: UIViewController, hos
             delay(16)
             presenter = host.coffeePeekPresentationHost()
         }
+        presenter.view.endEditing(true)
         presenter.presentViewController(controller, !UIAccessibilityIsReduceMotionEnabled(), null)
     }
     DisposableEffect(controller) {

@@ -1451,3 +1451,11 @@ Pending manual gates: iPhone and Android Sandbox keyboard open/close and form
 scrolling, footer restoration with draft/privacy retained, light/dark themes,
 large fonts/windows, accessibility and back/cancel. iOS framework linking,
 Xcode/device execution, live-backend and release acceptance remain unverified.
+
+## iPhone check-in layering follow-up — 2026-11-15
+
+The latest-device screenshots exposed native note/accessory transparency,
+incorrect switch tint, a direct Material date-picker call and conflicting
+keyboard-inset ownership. See [the check-in UI audit](CHECK_IN_UI_AUDIT.md) for
+the corrections, source coverage across both forms, build/test evidence,
+the original compiler failure and the remaining iPhone acceptance gates.

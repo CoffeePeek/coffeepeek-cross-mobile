@@ -1,9 +1,6 @@
 package com.coffeepeek.feature.homecheckin.impl.ui.compose.component
 
-import com.coffeepeek.core.designsystem.component.coffeePeekDatePickerColors
-
-import androidx.compose.material3.*
-import com.coffeepeek.core.designsystem.component.CoffeePeekTextButton as TextButton
+import com.coffeepeek.core.designsystem.component.CoffeePeekDatePickerDialog
 import androidx.compose.runtime.*
 import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
@@ -12,21 +9,20 @@ import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 import com.coffeepeek.feature.homecheckin.impl.resources.*
 
-/** Material's millis represent a civil day at UTC midnight, not the eventual preparation instant. */
-@OptIn(ExperimentalMaterial3Api::class)
+/** Picker millis represent a civil day at UTC midnight, not the eventual preparation instant. */
 @Composable
 internal fun HomeCheckInEditorDatePicker(date: String, today: String, onDismiss: () -> Unit, onSelected: (String) -> Unit) {
     val maximum = remember(today) { (checkNotNull(isoEpochDay(today)) + 1) * DAY_MILLIS - 1 }
     val selected = remember(date) { isoEpochDay(date)?.let { it * DAY_MILLIS } }
-    val picker = rememberDatePickerState(initialSelectedDateMillis = selected, selectableDates = remember(maximum) {
-        object : SelectableDates { override fun isSelectableDate(utcTimeMillis: Long) = utcTimeMillis <= maximum }
-    })
-    DatePickerDialog(onDismissRequest = onDismiss,
-        confirmButton = { TextButton(enabled = picker.selectedDateMillis != null, onClick = {
-            picker.selectedDateMillis?.let { onSelected(isoDate(it.floorDiv(DAY_MILLIS))) }
-        }) { Text(stringResource(Res.string.home_check_in_done)) } },
-        dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(Res.string.home_check_in_cancel)) } },
-    ) { DatePicker(picker, showModeToggle = false, colors = coffeePeekDatePickerColors()) }
+    CoffeePeekDatePickerDialog(
+        title = stringResource(Res.string.home_check_in_choose_date),
+        initialMillis = selected,
+        maximumMillis = maximum,
+        confirmLabel = stringResource(Res.string.home_check_in_done),
+        cancelLabel = stringResource(Res.string.home_check_in_cancel),
+        onConfirm = { onSelected(isoDate(it.floorDiv(DAY_MILLIS))) },
+        onDismiss = onDismiss,
+    )
 }
 
 private const val DAY_MILLIS = 86_400_000L
