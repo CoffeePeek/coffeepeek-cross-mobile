@@ -32,7 +32,6 @@ class MapViewModelTest {
     @AfterTest fun tearDown() { store.clear(); Dispatchers.resetMain() }
 
     private val repository = FakeRepository()
-    private val city = FakeCity()
     private val location = FakeLocation()
     private val details = FakeShopDetails()
     private val analytics = RecordingAnalytics()
@@ -40,7 +39,7 @@ class MapViewModelTest {
     private val here = Coordinates(53.9, 27.56)
 
     private fun TestScope.model(requestLocationOnMapInteraction: Boolean = true): MapViewModel {
-        val model = MapViewModel(repository, city, location, details, analytics, FakeAccount(), FakeFavorites(),
+        val model = MapViewModel(repository, location, details, analytics, FakeAccount(), FakeFavorites(),
             requestLocationOnMapInteraction)
         store.put("map", model)
         model.onAction(MapAction.PresentationChanged(true))
@@ -52,37 +51,39 @@ class MapViewModelTest {
     private fun MapViewModel.send(vararg actions: MapAction, scope: TestScope) { actions.forEach { onAction(it); scope.runCurrent() } }
     private val MapViewModel.now get() = state.value
     private fun queryAction(text: String) = MapAction.SyncCriteria(DiscoveryCriteria(text, DiscoveryFilters(cityId = "minsk")))
-    private fun cityRequests() = repository.mapRequests.filter { it.second != 22f }
+    private fun viewportRequests() = repository.mapRequests.filter { it.second != 22f }
     private fun carouselRequests() = repository.mapRequests.filter { it.second == 22f }
 
     // ---- the viewport ----
 
-    @Test fun theFirstLoadWaitsForTheCatalogsAndUsesThePrefetchAreaAndTheCity() = runTest(dispatcher) {
-        val gate = CompletableDeferred<Result<DiscoveryCatalogs>>()
-        repository.catalogs = { gate.await() }
+    @Test fun theFirstLoadUsesTheCameraBoundsWithoutLoadingTheCatalog() = runTest(dispatcher) {
         val vm = model()
-        vm.send(MapAction.BoundsChanged(view, 14f), scope = this); settle()
-        assertTrue(repository.mapRequests.isEmpty())
-        gate.complete(Result.success(DiscoveryCatalogs(cities = listOf(minskCity)))); runCurrent(); settle()
-        val request = cityRequests().single()
-        assertEquals(view.expandedForPrefetch(), request.first); assertEquals(14f, request.second); assertEquals("minsk", request.third.cityId)
+        vm.send(queryAction(""), MapAction.BoundsChanged(view, 14f), scope = this)
+        advanceTimeBy(501)
+        runCurrent()
+        val request = viewportRequests().single()
+        assertEquals(view.expandedForPrefetch(), request.first)
+        assertEquals(14f, request.second)
+        assertEquals(view.expandedForCarousel(), carouselRequests().single().first)
+        assertTrue(repository.mapRequests.all { it.third.cityId == null })
+        assertEquals(0, repository.catalogCalls)
     }
 
     @Test fun theBoundsAreDebouncedAndAPanInsideTheLoadedAreaLoadsNothing() = runTest(dispatcher) {
         repository.map = { _, _, _ -> Result.success(MapContent(listOf(marker("a")))) }
         val vm = model()
         vm.send(MapAction.BoundsChanged(view, 14f), MapAction.BoundsChanged(MapBounds(53.881, 27.501, 53.921, 27.601), 14f), scope = this)
-        advanceTimeBy(249); runCurrent(); assertTrue(cityRequests().isEmpty())
+        advanceTimeBy(249); runCurrent(); assertTrue(viewportRequests().isEmpty())
         advanceTimeBy(2); runCurrent()
-        assertEquals(1, cityRequests().size); assertEquals(listOf("a"), vm.now.markers.map { it.id }); assertFalse(vm.now.isLoading)
+        assertEquals(1, viewportRequests().size); assertEquals(listOf("a"), vm.now.markers.map { it.id }); assertFalse(vm.now.isLoading)
         vm.send(MapAction.BoundsChanged(MapBounds(53.885, 27.505, 53.925, 27.605), 14f), scope = this); settle()
-        assertEquals(1, cityRequests().size)
+        assertEquals(1, viewportRequests().size)
         vm.send(MapAction.BoundsChanged(MapBounds(53.885, 27.505, 53.925, 27.605), 15f), scope = this); settle()
-        assertEquals(2, cityRequests().size)
+        assertEquals(2, viewportRequests().size)
     }
 
-    @Test fun zonesSeenInTheCityAreKeptAndForgottenWhenTheCityChanges() = runTest(dispatcher) {
-        fun zone(id: String) = MapZone(id, id, "", null, here, 300.0, 2)
+    @Test fun zonesAreKeptWithinTheLoadedAreaAndReplacedWhenPanningAway() = runTest(dispatcher) {
+        fun zone(id: String, center: Coordinates = here) = MapZone(id, id, "", null, center, 300.0, 2)
         var answer = listOf(zone("z1"))
         repository.map = { _, _, _ -> Result.success(MapContent(zones = answer)) }
         val vm = model()
@@ -90,8 +91,12 @@ class MapViewModelTest {
         answer = listOf(zone("z2"))
         vm.send(MapAction.BoundsChanged(view, 15f), scope = this); settle()
         assertEquals(setOf("z1", "z2"), vm.now.zones.map { it.id }.toSet())
-        city.select("brest"); runCurrent(); settle()
-        assertEquals(listOf("z2"), vm.now.zones.map { it.id })
+        val brest = MapBounds(52.0, 23.5, 52.2, 23.8)
+        answer = listOf(zone("z3", brest.center))
+        vm.send(MapAction.BoundsChanged(brest, 15f), scope = this)
+        settle()
+        assertEquals(brest.expandedForPrefetch(), viewportRequests().last().first)
+        assertEquals(listOf("z3"), vm.now.zones.map { it.id })
     }
 
     @Test fun aFilterChangeAutomaticallyReloadsAfterAFailedRequest() = runTest(dispatcher) {
@@ -101,7 +106,7 @@ class MapViewModelTest {
         assertFalse(vm.now.isLoading); assertEquals(MapInteraction.LoadFailed, analytics.interactions.last())
         repository.map = { _, _, _ -> Result.success(MapContent(listOf(marker("a")))) }
         vm.send(MapAction.SyncCriteria(DiscoveryCriteria("", DiscoveryFilters(cityId = "minsk", openOnly = true))), scope = this); settle()
-        assertTrue(cityRequests().last().third.openOnly)
+        assertTrue(viewportRequests().last().third.openOnly)
         assertEquals(listOf("a"), vm.now.markers.map { it.id })
     }
 
@@ -204,11 +209,11 @@ class MapViewModelTest {
         val vm = model()
         vm.send(MapAction.BoundsChanged(view, 14f), scope = this)
         advanceTimeBy(501); runCurrent()
-        val coarseCount = cityRequests().size
+        val coarseCount = viewportRequests().size
         val panned = MapBounds(53.90, 27.50, 53.94, 27.60)
         vm.send(MapAction.BoundsChanged(panned, 14f), scope = this)
         advanceTimeBy(501); runCurrent()
-        assertEquals(coarseCount, cityRequests().size)
+        assertEquals(coarseCount, viewportRequests().size)
         assertEquals(panned, carouselRequests().last().first)
         assertEquals(listOf("b"), vm.now.carouselShops.map { it.id })
     }
@@ -306,13 +311,13 @@ class MapViewModelTest {
     @Test fun viewportChangesDuringACameraMoveAreRecordedAndLoadedAfterThePause() = runTest(dispatcher) {
         val vm = model()
         vm.send(MapAction.BoundsChanged(view, 14f), scope = this); settle()
-        val before = cityRequests().size
+        val before = viewportRequests().size
         vm.send(MapAction.Focus(MapFocus("x", "Shop x", here)), scope = this)
         val moved = MapBounds(50.0, 20.0, 50.1, 20.1)
         vm.send(MapAction.BoundsChanged(moved, 16f), scope = this)
-        advanceTimeBy(600); runCurrent(); assertEquals(before, cityRequests().size)
+        advanceTimeBy(600); runCurrent(); assertEquals(before, viewportRequests().size)
         advanceTimeBy(200); runCurrent(); settle()
-        assertEquals(before + 1, cityRequests().size); assertEquals(moved.expandedForPrefetch(), cityRequests().last().first)
+        assertEquals(before + 1, viewportRequests().size); assertEquals(moved.expandedForPrefetch(), viewportRequests().last().first)
     }
 
     @Test fun myLocationIsAskedFoundAndReportedWithItsTrigger() = runTest(dispatcher) {

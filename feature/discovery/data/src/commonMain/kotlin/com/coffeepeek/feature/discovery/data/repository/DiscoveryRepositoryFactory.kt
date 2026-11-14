@@ -88,7 +88,7 @@ private class RemoteDiscoveryRepository(
     }
 
     override suspend fun mapContent(bounds: MapBounds, zoom: Float, criteria: DiscoveryCriteria): Result<MapContent> = requestResult {
-        val query = criteria.searchQuery()
+        val query = criteria.forViewport().searchQuery()
         val origin = query.origin?.let { OriginDto(it.latitude, it.longitude) }
         // One finer server level halves cluster cells and unfolds dense areas sooner.
         val request = ShopMapRequestDto(searchText(query.text.orEmpty()).orEmpty(), query.filters.toRequest(origin),
@@ -111,7 +111,7 @@ private class RemoteDiscoveryRepository(
     }
 
     override suspend fun checkInHeatmap(bounds: MapBounds, criteria: DiscoveryCriteria): Result<CheckInHeatmap> = requestResult {
-        val query = criteria.searchQuery()
+        val query = criteria.forViewport().searchQuery()
         val filters = query.filters.toRequest(query.origin?.let { OriginDto(it.latitude, it.longitude) })
         val text = searchText(query.text.orEmpty())
         heatmap.load(

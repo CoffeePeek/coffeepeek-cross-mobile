@@ -55,6 +55,7 @@ class DiscoveryHeatmapTest {
         val (map, search) = requests.map { it.second }
         assertEquals(22, map.getValue("zoom").jsonPrimitive.int)
         assertEquals(map["filters"], search["filters"])
+        assertEquals(JsonNull, map.getValue("filters").jsonObject["city"])
         assertEquals("coffee", search.getValue("q").jsonPrimitive.content)
         assertEquals(100, search.getValue("pageSize").jsonPrimitive.int)
         assertEquals(53.8, map.getValue("bounds").jsonObject.getValue("minLat").jsonPrimitive.double)

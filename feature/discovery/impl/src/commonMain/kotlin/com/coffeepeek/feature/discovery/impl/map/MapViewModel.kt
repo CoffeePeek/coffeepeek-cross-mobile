@@ -5,8 +5,6 @@ import com.coffeepeek.core.presentation.MviViewModel
 import com.coffeepeek.feature.discovery.api.DiscoveryAnalytics
 import com.coffeepeek.feature.discovery.api.DiscoveryAccount
 import com.coffeepeek.feature.discovery.api.DiscoveryFavorites
-import com.coffeepeek.feature.discovery.api.DiscoveryCity
-import com.coffeepeek.feature.discovery.api.DiscoveryCitySelection
 import com.coffeepeek.feature.discovery.api.DiscoveryLocation
 import com.coffeepeek.feature.discovery.api.DiscoveryShopDetails
 import com.coffeepeek.feature.discovery.api.GeolocationOutcome
@@ -47,12 +45,11 @@ private const val PAUSE_AFTER_ZOOM_MS = 500L
 
 /**
  * Prefetches the viewport after 250 ms and loads its carousel after 500 ms of camera idle.
- * Keeps known city zones, suggests three search results and pauses reads during requested camera moves.
+ * Keeps known zones within the loaded area, suggests three search results and pauses reads during requested camera moves.
  * Drops late replies for an obsolete viewport, selection or query.
  */
 internal class MapViewModel(
     private val repository: DiscoveryRepository,
-    private val city: DiscoveryCity,
     private val location: DiscoveryLocation,
     private val shopDetails: DiscoveryShopDetails,
     private val analytics: DiscoveryAnalytics,
@@ -60,8 +57,6 @@ internal class MapViewModel(
     favorites: DiscoveryFavorites,
     private val requestLocationOnMapInteraction: Boolean = true,
 ) : MviViewModel<MapState, MapAction, MapEvent>(MapState()) {
-    private var cityReady = false
-    private var zonesCityId: String? = null
     private var selectionFromSearch = false
     private var selectionVersion = 0
     private var suppressBounds = false
@@ -84,11 +79,9 @@ internal class MapViewModel(
     private var heatmapArea: MapBounds? = null
 
     init {
-        viewModelScope.launch { city.selected.collect(::onCity) }
         viewModelScope.launch { location.current.collect { point -> if (point != null) changeUserLocation(point) } }
         viewModelScope.launch { account.accountKey.distinctUntilChanged().collect(::onAccount) }
         viewModelScope.launch { favorites.ids.distinctUntilChanged().collect(::onFavorites) }
-        loadCatalogs()
     }
 
     override suspend fun handleActionInternal(action: MapAction) {
@@ -173,29 +166,6 @@ internal class MapViewModel(
         analytics.geolocation(PLACEMENT, userTriggered = currentState.locationPermissionRequest > 0, outcome = GeolocationOutcome.Unavailable)
     }
 
-    private fun onCity(selection: DiscoveryCitySelection?) {
-        val cityId = selection?.id
-        if (criteriaSupplied || !cityReady || cityId == null || cityId == currentState.cityId) return
-        syncCriteria(currentState.criteria.copy(filters = currentState.filters.copy(cityId = cityId)))
-    }
-
-    private fun loadCatalogs() {
-        viewModelScope.launch {
-            repository.catalogs().onSuccess { catalogs ->
-                if (!criteriaSupplied) {
-                    val resolvedCityId = city.resolve(catalogs.cities)
-                    val cityId = city.selected.value?.id ?: resolvedCityId
-                    if (!criteriaSupplied) updateState { copy(cityId = cityId, filters = filters.copy(cityId = cityId)) }
-                }
-            }
-            // A failed catalog still lets the map load: it shows every city then.
-            cityReady = true
-            val bounds = currentState.pendingBounds
-            val zoom = currentState.pendingZoom
-            if (bounds != null && zoom != null) onBoundsChanged(bounds, zoom)
-        }
-    }
-
     // ---- the viewport ----
 
     private fun acceptSharedCriteria(criteria: DiscoveryCriteria) {
@@ -204,14 +174,16 @@ internal class MapViewModel(
     }
 
     private fun syncCriteria(criteria: DiscoveryCriteria) {
-        if (criteria == currentState.criteria) return
-        val selectionChanged = criteria.text != currentState.query || criteria.filters != currentState.filters ||
-            criteria.filters.nearbyOnly && criteria.origin != currentState.userLocation
-        val textOnly = criteria.filters == currentState.filters && criteria.origin == currentState.userLocation &&
-            criteria.text != currentState.query
-        updateState { copy(query = criteria.text, filters = criteria.filters, cityId = criteria.filters.cityId, userLocation = criteria.origin) }
-        if (!selectionChanged) return
-        if (textOnly) refreshForTextQuery() else invalidateSelection()
+        val previous = currentState.criteria
+        if (criteria == previous) return
+        val viewport = criteria.forViewport().searchQuery()
+        val previousViewport = previous.forViewport().searchQuery()
+        updateState { copy(query = criteria.text, filters = criteria.filters, userLocation = criteria.origin) }
+        when {
+            viewport.copy(text = previousViewport.text) != previousViewport -> invalidateSelection()
+            viewport.text != previousViewport.text -> refreshForTextQuery()
+            criteria.searchQuery() != previous.searchQuery() -> loadSuggestions()
+        }
     }
 
     /** A text-only query change keeps the current markers: a blank flash per keystroke is worse
@@ -223,7 +195,6 @@ internal class MapViewModel(
         selectionVersion++
         loadedArea = null
         carouselArea = null
-        zonesCityId = null
         updateState { copy(zones = emptyList(), zoneGroups = emptyList(), carouselShops = emptyList(),
             selectedShop = null, selectedZone = null, details = null, isLoadingDetails = false, isTruncated = false) }
         loadSuggestions()
@@ -251,7 +222,6 @@ internal class MapViewModel(
         selectionVersion++
         loadedArea = null
         carouselArea = null
-        zonesCityId = null
         updateState {
             copy(markers = emptyList(), clusters = emptyList(),
                 zones = emptyList(), zoneGroups = emptyList(), carouselShops = emptyList(),
@@ -283,14 +253,14 @@ internal class MapViewModel(
     }
 
     private fun loadBounds(bounds: MapBounds, zoom: Float) {
-        if (!cityReady || !canRequest(currentState.criteria)) return
+        if (!canRequest(currentState.criteria)) return
         boundsJob?.cancel()
         // The filters may have changed: until this request succeeds the old area is not trusted.
         loadedArea = null
         boundsJob = viewModelScope.launch {
             delay(BOUNDS_DEBOUNCE_MS)
             updateState { copy(isLoading = true, viewportFailed = false, activeBounds = bounds, activeZoom = zoom) }
-            requestBounds(bounds.expandedForPrefetch(), zoom, currentState.criteria)
+            requestBounds(bounds.expandedForPrefetch(), zoom, currentState.criteria.forViewport())
         }
     }
 
@@ -300,27 +270,29 @@ internal class MapViewModel(
         val accountKey = account.currentAccountKey()
         val result = repository.mapContent(area, zoom, criteria)
         currentCoroutineContext().ensureActive()
-        if (account.currentAccountKey() != accountKey || criteria.searchQuery() != currentState.criteria.searchQuery()) return
+        if (account.currentAccountKey() != accountKey || !isCurrentViewportCriteria(criteria)) return
         result.onSuccess { content ->
             analytics.mapInteracted(MapInteraction.Loaded, resultCount = content.markers.size + content.clusters.sumOf { it.count } + content.zones.sumOf { it.shopCount }, durationMs = started.elapsedNow().inWholeMilliseconds)
             loadedArea = area
             loadedZoomLevel = zoom.toInt()
-            applyContent(content, criteria.filters.cityId)
+            applyContent(content, area)
         }.onFailure {
             analytics.mapInteracted(MapInteraction.LoadFailed, durationMs = started.elapsedNow().inWholeMilliseconds)
             updateState { copy(isLoading = false, viewportFailed = true) }
         }
     }
 
-    private fun applyContent(content: MapContent, cityId: String?) {
+    private fun isCurrentViewportCriteria(criteria: DiscoveryCriteria): Boolean =
+        criteria.searchQuery() == currentState.criteria.forViewport().searchQuery()
+
+    private fun applyContent(content: MapContent, area: MapBounds) {
         val viewport = currentState.pendingBounds ?: currentState.activeBounds
         if (viewport != carouselArea) carouselArea = null
         updateState {
             val merged = (content.markers + listOfNotNull(selectedShop)).distinctBy { it.id }
             val visibleCards = if (viewport != null)
                 viewportMarkers(content.markers + carouselShops, viewport.expandedForCarousel(), carouselShops) else carouselShops
-            val known = if (zonesCityId == cityId) zones else emptyList()
-            zonesCityId = cityId
+            val known = zones.filter { area.contains(it.center) }
             val allZones = (content.zones + known).distinctBy { it.id }
             copy(
                 markers = merged, clusters = content.clusters, zones = allZones, zoneGroups = content.zones,
@@ -340,17 +312,16 @@ internal class MapViewModel(
     }
 
     private fun loadCarousel(bounds: MapBounds) {
-        if (!cityReady) return
         carouselJob?.cancel()
         if (carouselArea == bounds) return
-        val criteria = currentState.criteria
+        val criteria = currentState.criteria.forViewport()
         if (!canRequest(criteria)) return
         val accountKey = account.currentAccountKey()
         carouselJob = viewModelScope.launch {
             delay(CAROUSEL_DEBOUNCE_MS)
             val result = repository.mapContent(bounds.expandedForCarousel(), CAROUSEL_ZOOM, criteria)
             currentCoroutineContext().ensureActive()
-            if (account.currentAccountKey() != accountKey || criteria.searchQuery() != currentState.criteria.searchQuery()) return@launch
+            if (account.currentAccountKey() != accountKey || !isCurrentViewportCriteria(criteria)) return@launch
             result.onSuccess { content ->
                 analytics.mapInteracted(MapInteraction.NearbyLoaded, resultCount = content.markers.size)
                 carouselArea = bounds
@@ -516,12 +487,12 @@ internal class MapViewModel(
     }
 
     private fun loadHeatmap(bounds: MapBounds? = currentState.pendingBounds ?: currentState.activeBounds) {
-        if (!currentState.showHeatmap || !cityReady || bounds == null || !canRequest(currentState.criteria)) return
+        if (!currentState.showHeatmap || bounds == null || !canRequest(currentState.criteria)) return
         if (heatmapArea?.contains(bounds) == true) return
         heatmapJob?.cancel()
         heatmapArea = null
         val area = bounds.expandedForPrefetch()
-        val criteria = currentState.criteria
+        val criteria = currentState.criteria.forViewport()
         heatmapJob = viewModelScope.launch {
             updateState { copy(isHeatmapLoading = true, heatmapFailed = false) }
             delay(BOUNDS_DEBOUNCE_MS)
@@ -534,7 +505,7 @@ internal class MapViewModel(
         val result = repository.checkInHeatmap(area, criteria)
         currentCoroutineContext().ensureActive()
         if (!currentState.showHeatmap || account.currentAccountKey() != accountKey ||
-            criteria.searchQuery() != currentState.criteria.searchQuery()) return
+            !isCurrentViewportCriteria(criteria)) return
         result.onSuccess { content ->
             heatmapArea = area
             analytics.mapInteracted(MapInteraction.HeatmapLoaded, resultCount = content.points.size)

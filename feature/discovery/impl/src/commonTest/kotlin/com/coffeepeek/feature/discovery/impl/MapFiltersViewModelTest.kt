@@ -38,7 +38,7 @@ class MapFiltersViewModelTest {
     @BeforeTest fun setUp() { Dispatchers.setMain(dispatcher) }
     @AfterTest fun tearDown() { store.clear(); Dispatchers.resetMain() }
 
-    private fun TestScope.model() = MapViewModel(repository, city, location, FakeShopDetails(), analytics, account, favorites).also {
+    private fun TestScope.model() = MapViewModel(repository, location, FakeShopDetails(), analytics, account, favorites).also {
         store.put("map", it)
         it.onAction(MapAction.PresentationChanged(true))
         runCurrent()
@@ -57,7 +57,7 @@ class MapFiltersViewModelTest {
         runCurrent()
         settle()
         assertEquals(setOf(14f, 22f), repository.mapRequests.map { it.second }.toSet())
-        assertTrue(repository.mapRequests.all { it.third == filters })
+        assertTrue(repository.mapRequests.all { it.third == filters.copy(cityId = null) })
         assertTrue(repository.mapCriteria.all { it.text == "coffee" })
         assertEquals(filters, repository.queries.single().filters)
         assertTrue(analytics.mapSearches.single().contains("tags"))
@@ -263,18 +263,18 @@ class MapFiltersViewModelTest {
         assertFalse(vm.state.value.isSearchLoading)
     }
 
-    @Test fun lateMapCatalogCannotOverwriteAlreadySharedCriteria() = runTest(dispatcher) {
-        val ready = CompletableDeferred<Unit>()
-        repository.catalogs = { ready.await(); Result.success(DiscoveryCatalogs(cities = listOf(minskCity))) }
+    @Test fun cityChangesReloadSuggestionsAndReuseTheLoadedViewport() = runTest(dispatcher) {
         val vm = model()
-        val chosen = DiscoveryCriteria("coffee", laptop.copy(cityId = "brest", openOnly = true))
+        val chosen = DiscoveryCriteria("coffee", laptop.copy(openOnly = true))
         vm.onAction(MapAction.SyncCriteria(chosen))
-        runCurrent()
-        ready.complete(Unit)
-        runCurrent()
         settle()
-        assertEquals(chosen, vm.state.value.criteria)
-        assertTrue(repository.mapCriteria.all { it == chosen })
+        val mapRequests = repository.mapRequests.size
+        val updated = chosen.copy(filters = chosen.filters.copy(cityId = "brest"))
+        vm.onAction(MapAction.SyncCriteria(updated))
+        settle()
+        assertEquals(updated, vm.state.value.criteria)
+        assertEquals(mapRequests, repository.mapRequests.size)
+        assertEquals(listOf("minsk", "brest"), repository.queries.map { it.filters.cityId })
     }
 
     @Test fun mapLocationCallbacksCannotReplaceTheSharedNearbyOrigin() = runTest(dispatcher) {

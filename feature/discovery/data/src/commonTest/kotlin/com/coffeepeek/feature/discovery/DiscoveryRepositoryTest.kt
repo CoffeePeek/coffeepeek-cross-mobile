@@ -191,7 +191,7 @@ class DiscoveryRepositoryTest {
 
     private val bounds = MapBounds(53.8, 27.5, 54.0, 27.7)
 
-    @Test fun theMapRequestsOneFinerZoomAndRetainsServerClustersAndFilters() = runBlocking {
+    @Test fun theMapUsesBoundsWithoutTheListCityAndRetainsServerClustersAndFilters() = runBlocking {
         reply = { mapAnswer("""{"address":{"slug":"s1"},"latitude":53.9,"longitude":27.56,"title":"Cafe","type":"Specialty","primaryZone":{"slug":"z"}}""",
             """{"address":{"slug":"zone"},"name":"Centre","latitude":53.9,"longitude":27.56,"radiusMeters":800,"shopCount":7}""", truncated = true) }
         val filters = DiscoveryFilters(cityId = "minsk", priceLevel = PriceLevel.Cheap, minRating = 4.0, roasterIds = setOf("r"), tagIds = setOf("t"))
@@ -202,7 +202,7 @@ class DiscoveryRepositoryTest {
         assertEquals(15, sent["zoom"]!!.jsonPrimitive.int)
         assertEquals("/api/v1/coffee-shops/map", request.url.encodedPath)
         assertEquals(53.8, sent["bounds"]!!.jsonObject["minLat"]!!.jsonPrimitive.double)
-        assertEquals("minsk", sent["filters"]!!.jsonObject["city"]!!.jsonPrimitive.content)
+        assertEquals(JsonNull, sent["filters"]!!.jsonObject["city"])
         assertEquals("cheap", sent["filters"]!!.jsonObject["priceRange"]!!.jsonPrimitive.content)
         assertEquals(listOf("r"), sent["filters"]!!.jsonObject["roasters"]!!.jsonArray.map { it.jsonPrimitive.content })
         assertMapContent(content)
@@ -248,7 +248,7 @@ class DiscoveryRepositoryTest {
         repository().mapContent(bounds, 22f, DiscoveryCriteria(filters = filters)).getOrThrow()
         val request = requests.single()
         val sent = body(request)["filters"]!!.jsonObject
-        assertEquals("minsk", sent["city"]!!.jsonPrimitive.content)
+        assertEquals(JsonNull, sent["city"])
         assertEquals("specialty", sent["type"]!!.jsonPrimitive.content)
         assertEquals("moderate", sent["priceRange"]!!.jsonPrimitive.content)
         assertEquals(4.5, sent["minRating"]!!.jsonPrimitive.double)

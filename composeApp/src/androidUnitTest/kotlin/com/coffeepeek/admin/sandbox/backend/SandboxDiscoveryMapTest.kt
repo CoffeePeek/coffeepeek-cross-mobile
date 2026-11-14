@@ -3,6 +3,7 @@ package com.coffeepeek.admin.sandbox.backend
 import com.coffeepeek.feature.discovery.data.repository.createDiscoveryRepository
 import com.coffeepeek.feature.discovery.domain.model.*
 import com.coffeepeek.feature.discovery.domain.repository.DiscoveryRepository
+import com.coffeepeek.feature.discovery.domain.rules.contains
 import io.ktor.client.request.delete
 import kotlinx.coroutines.test.runTest
 import kotlin.test.*
@@ -37,14 +38,14 @@ class SandboxDiscoveryMapTest {
     private fun repository(backend: SandboxBackend): DiscoveryRepository =
         createDiscoveryRepository(backend.gateway, { emptySet() }, { Result.success(emptyList()) })
 
-    @Test fun seededAndPagedMapUseTheSameSelectionAsSearch() = runTest {
+    @Test fun seededAndPagedMapUseTheSameNonCityFiltersAsSearch() = runTest {
         val backend = SandboxBackend(byteArrayOf(1))
         try {
             val repository = repository(backend)
             for (mode in listOf(SandboxDiscovery.Seeded, SandboxDiscovery.Paged)) {
                 backend.discovery = mode
                 for (criteria in selections()) {
-                    val list = repository.search(criteria.searchQuery(pageSize = 100)).getOrThrow()
+                    val list = repository.search(criteria.forViewport().searchQuery(pageSize = 100)).getOrThrow()
                     val map = repository.mapContent(bounds, 22f, criteria).getOrThrow()
                     assertEquals(list.items.map { it.id }.toSet(), map.markers.map { it.id }.toSet(), "$mode $criteria")
                 }
@@ -81,11 +82,26 @@ class SandboxDiscoveryMapTest {
             backend.discovery = SandboxDiscovery.Paged
             val repository = repository(backend)
             val criteria = DiscoveryCriteria(filters = DiscoveryFilters(openOnly = true, cityId = "minsk"))
-            val total = repository.search(criteria.searchQuery(pageSize = 100)).getOrThrow().totalCount
+            val total = repository.search(criteria.forViewport().searchQuery(pageSize = 100)).getOrThrow().totalCount
             val content = repository.mapContent(bounds, 12f, criteria).getOrThrow()
             assertEquals(total, content.markers.size + content.clusters.sumOf { it.count } + content.zones.sumOf { it.shopCount })
             backend.discovery = SandboxDiscovery.MapFailure
             assertTrue(repository.mapContent(bounds, 22f, criteria).isFailure)
+        } finally { backend.close() }
+    }
+
+    @Test fun aViewportOutsideTheListCityReturnsShopsFromItsOwnArea() = runTest {
+        val backend = SandboxBackend(byteArrayOf(1))
+        try {
+            backend.discovery = SandboxDiscovery.Paged
+            val repository = repository(backend)
+            val criteria = DiscoveryCriteria(filters = DiscoveryFilters(cityId = "minsk"))
+            val brest = MapBounds(52.0, 23.5, 52.3, 23.9)
+            val list = repository.search(criteria.searchQuery(pageSize = 100)).getOrThrow()
+            val map = repository.mapContent(brest, 22f, criteria).getOrThrow()
+            assertTrue(map.markers.isNotEmpty())
+            assertTrue(map.markers.none { marker -> list.items.any { it.id == marker.id } })
+            assertTrue(map.markers.all { brest.contains(it.coordinates) })
         } finally { backend.close() }
     }
 }
