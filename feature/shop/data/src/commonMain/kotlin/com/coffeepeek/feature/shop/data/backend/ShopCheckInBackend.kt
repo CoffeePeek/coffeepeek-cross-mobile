@@ -38,7 +38,7 @@ internal class ShopCheckInBackend(private val client: HttpClient) {
         text: String,
         rating: ShopRating,
         photos: List<UploadedShopPhoto>,
-    ): Result<Unit> = requestResult {
+    ): Result<String> = requestResult {
         val response = try {
             client.post("/api/v1/check-ins") {
                 expectSuccess = false
@@ -57,7 +57,7 @@ internal class ShopCheckInBackend(private val client: HttpClient) {
         }
         val envelope = response.readEnvelopeOrNull() ?: throw ShopCheckInCreationUnconfirmed()
         if (!envelope.isSuccess) throw ShopCheckInRejection(response.status.value, envelope.message?.takeIf(String::isNotBlank))
-        if (envelope.data?.id.isNullOrBlank()) throw ShopCheckInCreationUnconfirmed()
+        envelope.data?.id?.takeIf(String::isNotBlank) ?: throw ShopCheckInCreationUnconfirmed()
     }
 }
 

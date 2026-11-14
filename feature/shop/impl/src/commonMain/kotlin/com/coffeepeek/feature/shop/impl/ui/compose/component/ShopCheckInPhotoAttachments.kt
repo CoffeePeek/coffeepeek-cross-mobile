@@ -26,7 +26,7 @@ internal fun ShopCheckInPhotoAttachments(
     onGallery: (Int) -> Unit, onCamera: () -> Unit,
 ) {
     var sourceShown by remember { mutableStateOf(false) }
-    if (sourceShown && enabled && !isLoading && photos.size < MAX_SHOP_CHECK_IN_PHOTOS) ShopPhotoSourceSheet(
+    if (sourceShown && enabled && !isLoading) ShopPhotoSourceSheet(
         onDismiss = { sourceShown = false },
         onGallery = {
             sourceShown = false
@@ -63,5 +63,5 @@ private fun AttachmentImage(bytes: ByteArray, modifier: Modifier, scale: Content
     ShopCheckInPhotoAttachments(emptyList(), false, true, { _, _ -> }, {}, {}, {})
 }
 @Preview @Composable private fun ShopCheckInPhotoAttachmentsDarkPreview() = CoffeePeekTheme(darkTheme = true) {
-    ShopCheckInPhotoAttachments(List(4) { byteArrayOf() }, false, true, { _, _ -> }, {}, {}, {})
+    ShopCheckInPhotoAttachments(emptyList(), false, true, { _, _ -> }, {}, {}, {})
 }

@@ -4,6 +4,7 @@ import com.coffeepeek.feature.discovery.api.MapCamera
 import com.coffeepeek.feature.discovery.api.MapFocus
 import com.coffeepeek.feature.discovery.api.MapShopDetails
 import com.coffeepeek.feature.discovery.domain.model.DiscoveryCriteria
+import com.coffeepeek.feature.discovery.domain.model.CheckInHeatmap
 import com.coffeepeek.feature.discovery.domain.model.DiscoveryFilters
 import com.coffeepeek.feature.discovery.domain.model.Coordinates
 import com.coffeepeek.feature.discovery.domain.model.MapBounds
@@ -23,12 +24,19 @@ internal data class MapState(
     val zones: List<MapZone> = emptyList(),
     val zoneGroups: List<MapZone> = emptyList(),
     val showZones: Boolean = true,
+    val showHeatmap: Boolean = false,
+    val heatmap: CheckInHeatmap = CheckInHeatmap(),
+    val isHeatmapLoading: Boolean = false,
+    val heatmapFailed: Boolean = false,
     val selectedShop: MapMarker? = null,
     val selectedZone: MapZone? = null,
     val details: MapShopDetails? = null,
     val cardDetails: Map<String, MapShopDetails> = emptyMap(),
     val isLoadingDetails: Boolean = false,
     val isLoading: Boolean = false,
+    val viewportFailed: Boolean = false,
+    /** The system will not ask for the location permission again; the notice offers «Настройки». */
+    val locationSettingsNeeded: Boolean = false,
     val query: String = "",
     val suggestions: List<ShopSummary> = emptyList(),
     val isSearchLoading: Boolean = false,
@@ -55,14 +63,19 @@ internal sealed interface MapAction {
     data object ShowZoneShops : MapAction
     data object ClearZone : MapAction
     data object ToggleZones : MapAction
+    data object ToggleHeatmap : MapAction
     data class SyncCriteria(val criteria: DiscoveryCriteria) : MapAction
     data class PresentationChanged(val active: Boolean) : MapAction
     data class SelectSuggestion(val shopId: String) : MapAction
     data object RequestMyLocation : MapAction
     data object Interact : MapAction
+    data object RetryViewport : MapAction
     data object LocationGranted : MapAction
     data class MyLocationFound(val point: Coordinates) : MapAction
     data object LocationDenied : MapAction
+    /** The system will not prompt again; the notice's only way out is the app settings screen. */
+    data object LocationPermanentlyDenied : MapAction
+    data object DismissLocationSettings : MapAction
     data object ZoomIn : MapAction
     data object ZoomOut : MapAction
     data class Focus(val focus: MapFocus) : MapAction

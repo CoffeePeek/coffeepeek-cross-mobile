@@ -147,7 +147,7 @@ internal object AnalyticsSchema {
         "outcome" -> if (event == AnalyticsEvent.GEOLOCATION_RESULT) setOf("available", "unavailable") else setOf("success", "failure")
         "action" -> when (event) {
             AnalyticsEvent.FILTERS_APPLIED -> setOf("apply", "reset")
-            AnalyticsEvent.MAP_INTERACTION -> setOf("expanded", "collapsed", "loaded", "load_failed", "marker_selected", "search_selected", "zones_toggled", "zoomed", "nearby_loaded", "nearby_failed")
+            AnalyticsEvent.MAP_INTERACTION -> setOf("expanded", "collapsed", "loaded", "load_failed", "marker_selected", "search_selected", "zones_toggled", "zoomed", "nearby_loaded", "nearby_failed", "heatmap_toggled", "heatmap_loaded", "heatmap_failed")
             AnalyticsEvent.SHOP_CONTENT_INTERACTED -> setOf("open", "close", "select")
             AnalyticsEvent.SHOP_ACTION_CLICKED -> setOf("directions", "share", "phone_copy", "phone_call", "email", "website", "instagram", "check_in", "edit", "report_issue")
             AnalyticsEvent.ENTITY_CONTENT_INTERACTED -> setOf("open", "close", "select", "view_all", "website", "instagram", "share")

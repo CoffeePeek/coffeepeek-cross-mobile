@@ -19,7 +19,7 @@ internal class FakeAuthRepository : AuthRepository {
         return challenge
     }
 
-    override suspend fun signInWithApple(challengeId: String, idToken: String): Result<SignedInAccount> {
+    override suspend fun signInWithApple(challengeId: String, idToken: String, analyticsEnabled: Boolean?): Result<SignedInAccount> {
         appleTokens += challengeId to idToken
         gate?.await()
         return apple
@@ -30,6 +30,7 @@ internal class FakeAuthRepository : AuthRepository {
     val emailChecks = mutableListOf<String>()
     var register: Result<Unit> = Result.success(Unit)
     var emailTaken: Result<Boolean> = Result.success(false)
+    var emailCheckGate: CompletableDeferred<Unit>? = null
     var onRegister: () -> Unit = {}
     var signIn: Result<SignedInAccount> = Result.success(SignedInAccount("user-1"))
     var reset: Result<Unit> = Result.success(Unit)
@@ -50,12 +51,12 @@ internal class FakeAuthRepository : AuthRepository {
     val googleTokens = mutableListOf<String>()
     var google: Result<SignedInAccount> = Result.success(SignedInAccount("google-user"))
 
-    override suspend fun signInWithGoogle(idToken: String): Result<SignedInAccount> {
+    override suspend fun signInWithGoogle(idToken: String, analyticsEnabled: Boolean?): Result<SignedInAccount> {
         googleTokens += idToken
         gate?.await()
         return google
     }
-    override suspend fun register(userName: String, email: String, password: String): Result<Unit> {
+    override suspend fun register(userName: String, email: String, password: String, analyticsEnabled: Boolean): Result<Unit> {
         registrations += listOf(userName, email, password)
         onRegister()
         gate?.await()
@@ -64,7 +65,7 @@ internal class FakeAuthRepository : AuthRepository {
 
     override suspend fun isEmailTaken(email: String): Result<Boolean> {
         emailChecks += email
-        gate?.await()
+        emailCheckGate?.await()
         return emailTaken
     }
 

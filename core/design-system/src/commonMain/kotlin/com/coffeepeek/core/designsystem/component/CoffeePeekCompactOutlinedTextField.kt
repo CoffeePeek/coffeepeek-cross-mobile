@@ -12,14 +12,15 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.selection.LocalTextSelectionColors
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.LocalTextStyle
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.TextFieldColors
-import androidx.compose.material3.Text
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.takeOrElse
 import androidx.compose.ui.platform.LocalFocusManager
@@ -93,7 +94,8 @@ fun CoffeePeekCompactOutlinedTextField(
         BasicTextField(
             value = value,
             onValueChange = onValueChange,
-            modifier = modifier.semantics {
+            // Compose draws its autofill highlight over the decoration, including the outline.
+            modifier = modifier.clip(shape).semantics {
                 errorDescription?.let { error(it) }
             },
             enabled = enabled,
@@ -139,8 +141,8 @@ fun CoffeePeekCompactOutlinedTextField(
 @Composable
 private fun CoffeePeekCompactOutlinedTextFieldPreviewContent(darkTheme: Boolean) = CoffeePeekTheme(darkTheme = darkTheme) {
     Surface {
-        CoffeePeekCompactOutlinedTextField("", {}, modifier = Modifier.padding(16.dp),
-            placeholder = { Text("Compact input") })
+        CoffeePeekCompactOutlinedTextField("name@example.com", {}, modifier = Modifier.padding(16.dp),
+            shape = MaterialTheme.shapes.small)
     }
 }
 

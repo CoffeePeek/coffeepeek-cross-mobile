@@ -45,7 +45,12 @@ class ReleaseVersioningTest(unittest.TestCase):
         workflow = (ROOT / '.github/workflows/android-firebase-develop.yml').read_text(encoding='utf-8')
         self.assertIn('branches: [develop]', workflow)
         self.assertEqual(2, workflow.count("if: github.ref == 'refs/heads/develop'"))
-        self.assertIn(':composeApp:assembleDirectRelease', workflow)
+        self.assertIn(':composeApp:assembleDirectDebug', workflow)
+        self.assertIn("metadata['applicationId'] == 'com.coffeepeek.debug'", workflow)
+        self.assertIn('secrets.FIREBASE_GOOGLE_SERVICES_JSON_DEBUG', workflow)
+        self.assertIn('appId: ${{ needs.build_apk.outputs.firebase_app_id }}', workflow)
+        self.assertNotIn('secrets.FIREBASE_APP_ID_ANDROID', workflow)
+        self.assertNotIn('assembleDirectRelease', workflow)
         self.assertIn('Distribute APK to Firebase', workflow)
         for production_action in ('publish_play:', 'publish_apk:', 'upload-google-play', 'VPS_',
                                   '/android/version', '/ios/version', 'publish_android_release.py --publish'):

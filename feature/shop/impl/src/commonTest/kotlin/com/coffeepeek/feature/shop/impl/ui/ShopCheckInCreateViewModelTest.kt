@@ -6,12 +6,14 @@ import androidx.lifecycle.ViewModelStore
 import com.coffeepeek.feature.shop.domain.model.ShopCheckInCreateInput
 import com.coffeepeek.feature.shop.domain.model.ShopCheckInPhoto
 import com.coffeepeek.feature.shop.domain.model.ShopCheckInVisibility
+import com.coffeepeek.feature.shop.domain.model.ShopCheckInPublication
 import com.coffeepeek.feature.shop.domain.model.ShopConsumedDrinkOption
 import com.coffeepeek.feature.shop.domain.model.ShopRating
 import com.coffeepeek.feature.shop.domain.repository.ShopCheckInCreationUnconfirmed
 import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopCheckInSubmitFailure
 import com.coffeepeek.feature.shop.domain.repository.ShopCheckInRejection
 import com.coffeepeek.feature.shop.domain.repository.ShopCheckInRepository
+import com.coffeepeek.feature.shop.domain.repository.ShopCheckInPublicationReader
 import com.coffeepeek.feature.shop.domain.usecase.ShopCheckInValidationError
 import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopCheckInFormAction
 import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopCheckInFormEvent
@@ -50,13 +52,13 @@ class ShopCheckInCreateViewModelTest {
 
     private class Repository : ShopCheckInRepository {
         val writes = mutableListOf<ShopCheckInCreateInput>()
-        var writeResult: Result<Unit> = Result.success(Unit)
+        var writeResult: Result<String> = Result.success("created-check-in")
         var writeThrows: Throwable? = null
         var drinkResult: Result<List<ShopConsumedDrinkOption>> = Result.success(listOf(ShopConsumedDrinkOption("filter", "Фильтр", "Filter")))
         var gate: CompletableDeferred<Unit>? = null
         var drinkCalls = 0
         override suspend fun getDrinkOptions(): Result<List<ShopConsumedDrinkOption>> { drinkCalls++; return drinkResult }
-        override suspend fun create(input: ShopCheckInCreateInput): Result<Unit> { writes += input; gate?.await(); writeThrows?.let { throw it }; return writeResult }
+        override suspend fun create(input: ShopCheckInCreateInput): Result<String> { writes += input; gate?.await(); writeThrows?.let { throw it }; return writeResult }
     }
 
     private class Drafts : ShopCheckInDraftStore {
@@ -80,9 +82,63 @@ class ShopCheckInCreateViewModelTest {
     }
 
     private fun viewModel(repository: Repository = Repository(), drafts: Drafts = Drafts(),
-        analytics: ShopCheckInAnalytics = ShopCheckInAnalytics.None) =
-        ShopCheckInCreateViewModel(initial, repository, drafts, now = { now }, analytics = analytics)
+        analytics: ShopCheckInAnalytics = ShopCheckInAnalytics.None,
+        publication: ShopCheckInPublicationReader = ShopCheckInPublicationReader.None) =
+        ShopCheckInCreateViewModel(initial, repository, drafts, now = { now }, analytics = analytics,
+            publication = publication)
             .also { store.put("create", it) }
+
+    @Test fun publicSaveUsesConfirmedPublicationStatusFromCreatedId() = runTest(dispatcher) {
+        val ids = mutableListOf<String>()
+        val reader = object : ShopCheckInPublicationReader {
+            override suspend fun status(checkInId: String): Result<ShopCheckInPublication> {
+                ids += checkInId
+                return Result.success(ShopCheckInPublication.Published)
+            }
+        }
+        val model = viewModel(publication = reader)
+        runCurrent()
+        model.onAction(ShopCheckInFormAction.Submit)
+        runCurrent()
+        assertEquals(listOf("created-check-in"), ids)
+        assertEquals(ShopCheckInPublication.Published, model.state.value.publication)
+    }
+
+    @Test fun failedPublicationReadKeepsSavedUnknown() = runTest(dispatcher) {
+        val reader = object : ShopCheckInPublicationReader {
+            var calls = 0
+            override suspend fun status(checkInId: String): Result<ShopCheckInPublication> {
+                calls++
+                return Result.failure(IllegalStateException("offline"))
+            }
+        }
+        val model = viewModel(publication = reader)
+        runCurrent()
+        model.onAction(ShopCheckInFormAction.Submit)
+        runCurrent()
+        assertTrue(model.state.value.submitted)
+        assertEquals(ShopCheckInPublication.Unknown, model.state.value.publication)
+        assertEquals(1, reader.calls)
+    }
+
+    @Test fun privateSaveSkipsPublicationRead() = runTest(dispatcher) {
+        val reader = object : ShopCheckInPublicationReader {
+            var calls = 0
+            override suspend fun status(checkInId: String): Result<ShopCheckInPublication> {
+                calls++
+                return Result.success(ShopCheckInPublication.Published)
+            }
+        }
+        val model = viewModel(publication = reader)
+        runCurrent()
+        model.onAction(ShopCheckInFormAction.VisibilityChanged(ShopCheckInVisibility.Private))
+        runCurrent()
+        model.onAction(ShopCheckInFormAction.Submit)
+        runCurrent()
+        assertTrue(model.state.value.submitted)
+        assertEquals(0, reader.calls)
+        assertEquals(ShopCheckInPublication.Unknown, model.state.value.publication)
+    }
 
     private class Metrics : ShopCheckInAnalytics {
         val events = mutableListOf<String>()
@@ -313,7 +369,7 @@ class ShopCheckInCreateViewModelTest {
         assertFalse(viewModel.state.value.deliveryUnconfirmed)
         assertEquals("Coffee", drafts.snapshot!!.input.text)
         assertFalse(drafts.snapshot!!.deliveryUnconfirmed)
-        repository.writeResult = Result.success(Unit)
+        repository.writeResult = Result.success("created-check-in")
         viewModel.onAction(ShopCheckInFormAction.Submit)
         runCurrent()
         assertEquals(2, repository.writes.size)
@@ -342,7 +398,7 @@ class ShopCheckInCreateViewModelTest {
         assertEquals("Coffee", drafts.snapshot!!.input.text)
         assertEquals(ShopCheckInFormEvent.OpenHistory, viewModel.events.first())
         viewModel.onAction(ShopCheckInFormAction.HistoryChecked)
-        repository.writeResult = Result.success(Unit)
+        repository.writeResult = Result.success("created-check-in")
         viewModel.onAction(ShopCheckInFormAction.Submit)
         runCurrent()
         assertEquals(2, repository.writes.size)
@@ -364,7 +420,7 @@ class ShopCheckInCreateViewModelTest {
         assertEquals(1, repository.writes.size)
     }
 
-    @Test fun failedDeliveryGuardSavePreventsWriteAndCancellationKeepsGuardForReopen() = runTest(dispatcher) {
+    @Test fun aBrokenDraftStorageCannotBlockTheSubmissionButCancellationKeepsTheGuard() = runTest(dispatcher) {
         val repository = Repository()
         val drafts = Drafts()
         val viewModel = viewModel(repository, drafts)
@@ -374,15 +430,9 @@ class ShopCheckInCreateViewModelTest {
         drafts.saveFails = true
         viewModel.onAction(ShopCheckInFormAction.Submit)
         runCurrent()
-        assertTrue(repository.writes.isEmpty())
-        assertTrue(viewModel.state.value.draftFailed)
-        drafts.saveFails = false
-        repository.writeResult = Result.failure(CancellationException("cancel"))
-        viewModel.onAction(ShopCheckInFormAction.Submit)
-        runCurrent()
-        assertTrue(drafts.snapshot!!.deliveryUnconfirmed)
-        assertFalse(viewModel.state.value.isSubmitting)
-        assertFalse(viewModel.state.value.submitFailed)
+        // The broken storage does not block the write itself: the check-in goes through.
+        assertTrue(viewModel.state.value.submitted)
+        assertFalse(viewModel.state.value.deliveryUnconfirmed)
     }
 
     @Test fun successKeepsConfirmationUntilUserChoosesFeedOrHistory() = runTest(dispatcher) {

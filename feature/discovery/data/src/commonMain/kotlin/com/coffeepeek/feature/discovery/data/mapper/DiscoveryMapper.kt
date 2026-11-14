@@ -34,7 +34,7 @@ internal fun ShopSearchRowDto.toDomain(favorites: Set<String>, requestedKind: Sh
 /** What prod shows for a map shop without a title. */
 internal const val UNNAMED_SHOP = "Кофейня"
 
-internal fun CityDto.toDomain() = CityEntry(address.slug, name)
+internal fun CityDto.toDomain() = CityEntry(address.slug, name, catalogCityCenters[address.slug])
 
 internal fun NamedDto.toCatalogEntry() = CatalogEntry(key, name.orEmpty())
 

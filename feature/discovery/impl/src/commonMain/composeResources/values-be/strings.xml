@@ -66,6 +66,8 @@
     <string name="discovery_map_card_checkins">%1$d чэкінаў</string>
     <string name="discovery_map_card_no_checkins">Няма чэкінаў</string>
     <string name="discovery_map_card_closed">Закрыта</string>
+    <string name="discovery_map_load_failed">Не ўдалося загрузіць кавярні на карце</string>
+    <string name="discovery_map_retry">Паўтарыць</string>
     <string name="discovery_map_card_hours">%1$s · %2$s</string>
     <string name="discovery_map_carousel_position">Кавярня %1$d з %2$d</string>
     <string name="discovery_map_photo_missing">Фота %1$s адсутнічае</string>
@@ -75,6 +77,7 @@
     <string name="discovery_favorite_failed">Не ўдалося змяніць абранае. Паспрабуйце яшчэ раз.</string>
     <string name="discovery_message_dismiss">Схаваць паведамленне</string>
     <string name="discovery_picker_nearby">Побач са мной</string>
+    <string name="discovery_picker_recent">Нядаўнія кавярні</string>
     <string name="discovery_picker_title">Выберыце кавярню</string>
     <string name="discovery_picker_close">Закрыць</string>
     <string name="discovery_picker_close_description">Закрыць выбар кавярні</string>

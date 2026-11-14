@@ -4,7 +4,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Icon
 import com.coffeepeek.core.designsystem.component.CoffeePeekIconButton as IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHost
@@ -28,6 +27,7 @@ import com.coffeepeek.core.designsystem.component.CoffeePeekDialogAction
 import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
 import com.coffeepeek.core.designsystem.component.CoffeePeekScaffold
 import com.coffeepeek.core.designsystem.component.CoffeePeekTopBar
+import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
@@ -77,7 +77,7 @@ internal fun ShelfBagScreenContent(
     CoffeePeekScaffold(modifier, snackbarHost = { SnackbarHost(snackbar) }, topBar = {
         CoffeePeekTopBar("", stringResource(Res.string.shelf_bag_back), onBack = { onAction(ShelfBagAction.Back) }, actions = {
             if (state.bag != null) IconButton({ menu = true }) {
-                Icon(CoffeePeekIcons.MoreHorizontal, stringResource(Res.string.shelf_bag_more), tint = MaterialTheme.colorScheme.onSurface)
+                CoffeePeekIcon(CoffeePeekIcons.MoreHorizontal, stringResource(Res.string.shelf_bag_more), tint = MaterialTheme.colorScheme.onSurface)
             }
         })
     }, bottomBar = { if (state.bag != null) ShelfBagMainButton(state, canBrew, onAction) }) { padding ->
@@ -96,6 +96,8 @@ private fun ShelfBagBody(state: ShelfBagState, image: ShelfImage, onAction: (She
             onRetryBrews = { onAction(ShelfBagAction.RetryBrews) }, modifier = modifier)
         state.missing -> ShelfInvitation(stringResource(Res.string.shelf_bag_missing_title), stringResource(Res.string.shelf_bag_missing_body),
             stringResource(Res.string.shelf_bag_back), { onAction(ShelfBagAction.Back) }, modifier.padding(CoffeePeekDimens.spacing4))
+        state.loadFailed -> ShelfInvitation(stringResource(Res.string.shelf_bag_offline_title), stringResource(Res.string.shelf_bag_offline_body),
+            stringResource(Res.string.shelf_bag_retry), { onAction(ShelfBagAction.Retry) }, modifier.padding(CoffeePeekDimens.spacing4))
         else -> Box(modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CoffeePeekLoader(stringResource(Res.string.shelf_loading)) }
     }
 }

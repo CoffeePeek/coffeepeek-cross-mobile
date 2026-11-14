@@ -16,6 +16,22 @@ import kotlin.test.assertTrue
 
 class NativeMapStateTest {
     @Test
+    fun heatmapPayloadPreservesCoordinatesAndWeightAndClearsWhenDisabled() {
+        val payload = Json.parseToJsonElement(nativeMapStateJson(
+            emptyList(), emptyList(), emptyList(), null, false, true,
+            listOf(MapHeatPoint(53.9, 27.56, 2.5)),
+        )).jsonObject
+        val point = payload.getValue("heatmap").jsonArray.single().jsonObject
+        assertEquals(53.9, point.getValue("lat").jsonPrimitive.double)
+        assertEquals(27.56, point.getValue("lon").jsonPrimitive.double)
+        assertEquals(2.5, point.getValue("weight").jsonPrimitive.double)
+        val cleared = Json.parseToJsonElement(nativeMapStateJson(
+            emptyList(), emptyList(), emptyList(), null, true, true,
+        )).jsonObject
+        assertTrue(cleared.getValue("heatmap").jsonArray.isEmpty())
+    }
+
+    @Test
     fun payloadPreservesSelectionZoneCountAndClusterBounds() {
         val title = "Кофейня \"Угол\"\n\t\u0001"
         val payload = Json.parseToJsonElement(nativeMapStateJson(

@@ -90,13 +90,13 @@ internal class ContributionsListViewModel(
     private fun loadMore(status: ModerationStatus) {
         val tab = currentState.tabs[status] ?: return
         if (!tab.hasMore || tab.isLoadingMore) return
-        updateTab(status) { copy(isLoadingMore = true) }
+        updateTab(status) { copy(isLoadingMore = true, loadMoreFailed = false) }
         val mine = generation
         moreJobs[status] = viewModelScope.launch {
             val result = fetch(status, tab.page + 1)
             if (mine != generation) return@launch
             result.onSuccess { page -> updateTab(status) { copy(items = items + page.items).withPage(page) } }
-                .onFailure { updateTab(status) { copy(isLoadingMore = false) } }
+                .onFailure { updateTab(status) { copy(isLoadingMore = false, loadMoreFailed = true) } }
         }
     }
 

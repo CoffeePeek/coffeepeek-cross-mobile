@@ -58,8 +58,22 @@ class DiscoveryAnalyticsTest {
         port.searchStarted("private query", emptyList(), false, null, "criteria").results(1)
         port.filtersOpened()
         port.mapInteracted(MapInteraction.Expanded)
+        port.mapInteracted(MapInteraction.HeatmapToggled, enabled = true)
         runCurrent()
         assertTrue(sdk.events.isEmpty())
+    }
+
+    @Test fun heatmapUsesTheExistingMapEventWithAggregatePropertiesOnly() = runTest {
+        val sdk = installDiscoveryAnalytics()
+        val port = AppDiscoveryAnalytics()
+        port.mapInteracted(MapInteraction.HeatmapToggled, enabled = true)
+        port.mapInteracted(MapInteraction.HeatmapLoaded, resultCount = 12)
+        port.mapInteracted(MapInteraction.HeatmapFailed)
+        runCurrent()
+        val events = sdk.events.filter { it.first == "map_interaction" }.map { it.second }
+        assertEquals(listOf("heatmap_toggled", "heatmap_loaded", "heatmap_failed"), events.map { it["action"] })
+        assertEquals(true, events[0]["enabled"])
+        assertEquals(12, events[1]["result_count"])
     }
 }
 

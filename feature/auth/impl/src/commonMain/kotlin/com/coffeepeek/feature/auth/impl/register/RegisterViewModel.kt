@@ -17,8 +17,8 @@ import com.coffeepeek.feature.auth.domain.validatePassword
 import kotlinx.coroutines.CancellationException
 
 /**
- * Registration as the previous screens did it: e-mail check, then name/password/terms, then the "check your mail" screen.
- * The analytics choice is stored before the account is created and the password sign-up is remembered after it.
+ * Validates the form, checks e-mail availability and creates the account before showing email confirmation.
+ * The analytics choice is stored before account creation and the password sign-up is remembered after it.
  */
 internal class RegisterViewModel(
     private val repository: AuthRepository,
@@ -28,24 +28,29 @@ internal class RegisterViewModel(
 
     override suspend fun handleActionInternal(action: RegisterAction) {
         // While a request is running the form is frozen: edits, consent and "change e-mail" must not change what is being sent or move the step.
-        if (currentState.busy) return
+        if (currentState.busy || currentState.step == RegisterStep.Success) return
         when (action) {
             is RegisterAction.NameChanged -> updateState { copy(name = action.value, reported = null, failure = null, socialFailure = null) }
             is RegisterAction.EmailChanged -> changeEmail(action.value)
             is RegisterAction.PasswordChanged -> changePassword(action.value)
             is RegisterAction.TermsChanged -> updateState { copy(termsAccepted = action.checked, reported = null) }
             is RegisterAction.AnalyticsChanged -> updateState { copy(analyticsAccepted = action.checked) }
-            RegisterAction.ChangeEmail -> updateState { copy(step = RegisterStep.Email, passwordIssue = null, reported = null, failure = null) }
-            RegisterAction.ContinueWithEmail -> continueWithEmail()
             RegisterAction.Submit -> submit()
             RegisterAction.AppleSignIn -> appleSignIn()
-            is RegisterAction.GoogleToken -> socialSignIn(SignInMethod.Google, SocialProvider.Google) { repository.signInWithGoogle(action.idToken) }
+            is RegisterAction.GoogleToken -> socialSignIn(SignInMethod.Google, SocialProvider.Google) { repository.signInWithGoogle(action.idToken, currentState.analyticsAccepted) }
             is RegisterAction.GoogleFailed -> googleFailed(action.message)
         }
     }
 
     private fun changeEmail(value: String) = updateState {
-        copy(email = value, emailIssue = null, emailTaken = false, failure = null, socialFailure = null)
+        copy(
+            email = value,
+            emailIssue = emailIssue?.let { validateEmail(value) },
+            emailTaken = emailTaken && value.trim().equals(email.trim(), ignoreCase = true),
+            reported = null,
+            failure = null,
+            socialFailure = null,
+        )
     }
 
     private fun changePassword(value: String) = updateState {
@@ -61,58 +66,48 @@ internal class RegisterViewModel(
         copy(socialFailure = classifySocialFailure(SocialProvider.Google, message), failure = null)
     }
 
-    private suspend fun continueWithEmail() {
-        if (currentState.busy) return
-        val email = currentState.email.trim()
-        val issue = validateEmail(email)
-        if (issue != null) {
-            updateState { copy(emailIssue = issue, failure = null) }
-            return
+    private suspend fun emailIsAvailable(email: String): Boolean {
+        val taken = repository.isEmailTaken(email).getOrElse { error ->
+            val failure = failureOf(error).copy(checkingEmail = true)
+            updateState { copy(failure = failure) }
+            return false
         }
-        updateState { copy(busy = true, failure = null) }
-        try {
-            repository.isEmailTaken(email).fold(
-                onSuccess = { taken ->
-                    updateState {
-                        if (taken) copy(emailTaken = true, emailIssue = null) else copy(emailTaken = false, emailIssue = null, step = RegisterStep.Details)
-                    }
-                },
-                onFailure = { error -> updateState { copy(failure = failureOf(error)) } },
-            )
-        } finally {
-            updateState { copy(busy = false) }
-        }
+        if (taken) updateState { copy(emailTaken = true) }
+        return !taken
     }
 
     private suspend fun submit() {
-        if (currentState.busy) return
-        val name = currentState.name.trim()
-        val email = currentState.email.trim()
-        val password = currentState.password
-        val analyticsAccepted = currentState.analyticsAccepted
-        val check = checkRegistration(name, email, password, currentState.termsAccepted)
+        val form = currentState
+        val name = form.name.trim()
+        val email = form.email.trim()
+        val check = checkRegistration(name, email, form.password, form.termsAccepted)
         if (!check.valid) {
             updateState { copy(passwordIssue = check.password, emailIssue = check.email, reported = check.reported, failure = null) }
             return
         }
-        updateState { copy(busy = true, reported = null, failure = null) }
+        updateState { copy(busy = true, emailTaken = false, emailIssue = null, passwordIssue = null,
+            reported = null, failure = null, socialFailure = null) }
         try {
-            analytics.saveAnalyticsConsent(analyticsAccepted)
-            repository.register(name, email, password).fold(
-                onSuccess = {
-                    analytics.passwordSignUpCompleted(email)
-                    updateState { copy(step = RegisterStep.Success) }
-                },
-                onFailure = { error -> updateState { copy(failure = failureOf(error)) } },
-            )
+            if (emailIsAvailable(email)) register(name, email, form)
         } finally {
             updateState { copy(busy = false) }
         }
     }
 
+    private suspend fun register(name: String, email: String, form: RegisterState) {
+        analytics.saveAnalyticsConsent(form.analyticsAccepted)
+        repository.register(name, email, form.password, form.analyticsAccepted).fold(
+            onSuccess = {
+                analytics.passwordSignUpCompleted(email)
+                updateState { copy(step = RegisterStep.Success, email = email, password = "") }
+            },
+            onFailure = { error -> updateState { copy(failure = failureOf(error)) } },
+        )
+    }
+
     private suspend fun appleSignIn() {
         val authorizer = apple ?: return
-        socialSignIn(SignInMethod.Apple, SocialProvider.Apple) { signInWithApple(repository, authorizer) }
+        socialSignIn(SignInMethod.Apple, SocialProvider.Apple) { signInWithApple(repository, authorizer, currentState.analyticsAccepted) }
     }
 
     private suspend fun socialSignIn(method: SignInMethod, provider: SocialProvider, request: suspend () -> Result<SignedInAccount>) {

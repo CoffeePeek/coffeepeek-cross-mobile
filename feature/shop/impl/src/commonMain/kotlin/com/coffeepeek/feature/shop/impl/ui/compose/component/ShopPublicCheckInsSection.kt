@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.Icon
 import com.coffeepeek.core.designsystem.component.CoffeePeekIconButton as IconButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalDensity
@@ -32,6 +31,7 @@ import androidx.compose.animation.core.Animatable
 import androidx.compose.runtime.key
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.Alignment
+import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -74,7 +74,7 @@ internal fun ShopPublicCheckInsSection(
         Row(gutter.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             ShopSectionTitle(stringResource(Res.string.shop_checkins_public_title), Modifier.weight(1f))
             if (checkIns.isNotEmpty()) IconButton(onClick = onOpenAll) {
-                Icon(CoffeePeekIcons.ChevronRight, stringResource(Res.string.shop_checkins_show_all),
+                CoffeePeekIcon(CoffeePeekIcons.ChevronRight, stringResource(Res.string.shop_checkins_show_all),
                     tint = MaterialTheme.colorScheme.onSurface)
             }
         }

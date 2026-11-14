@@ -13,6 +13,7 @@ import com.coffeepeek.feature.auth.impl.register.RegisterAction
 import com.coffeepeek.feature.auth.impl.register.RegisterStep
 import com.coffeepeek.feature.auth.impl.register.RegisterViewModel
 import com.coffeepeek.feature.auth.impl.register.RequestFailure
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -39,65 +40,83 @@ class RegisterViewModelTest {
     private fun model(auth: FakeAuthRepository = FakeAuthRepository(), analytics: FakeAnalytics = FakeAnalytics()) =
         RegisterViewModel(auth, analytics).also { store.put("register", it) }
 
-    private fun RegisterViewModel.toDetails(email: String = "new@example.com") {
-        onAction(RegisterAction.EmailChanged(email)); onAction(RegisterAction.ContinueWithEmail)
+    private fun RegisterViewModel.fill(
+        name: String = "Анна", password: String = "password1", terms: Boolean = true, email: String = "new@example.com",
+    ) {
+        onAction(RegisterAction.EmailChanged(email))
+        onAction(RegisterAction.NameChanged(name))
+        onAction(RegisterAction.PasswordChanged(password))
+        onAction(RegisterAction.TermsChanged(terms))
     }
 
-    private fun RegisterViewModel.fill(name: String = "Анна", password: String = "password1", terms: Boolean = true) {
-        onAction(RegisterAction.NameChanged(name)); onAction(RegisterAction.PasswordChanged(password)); onAction(RegisterAction.TermsChanged(terms))
-    }
-
-    @Test fun anEmptyOrInvalidEmailStopsAtTheFirstStepWithoutAskingTheServer() = runTest(dispatcher) {
+    @Test fun anEmptyOrInvalidEmailDoesNotAskTheServer() = runTest(dispatcher) {
         val auth = FakeAuthRepository(); val vm = model(auth)
-        vm.onAction(RegisterAction.ContinueWithEmail); runCurrent()
+        vm.fill(email = "")
+        vm.onAction(RegisterAction.Submit); runCurrent()
         assertEquals(EmailIssue.Empty, vm.state.value.emailIssue)
-        vm.onAction(RegisterAction.EmailChanged("nope")); vm.onAction(RegisterAction.ContinueWithEmail); runCurrent()
+        vm.onAction(RegisterAction.EmailChanged("nope")); vm.onAction(RegisterAction.Submit); runCurrent()
         assertEquals(EmailIssue.Invalid, vm.state.value.emailIssue)
         assertTrue(auth.emailChecks.isEmpty())
-        assertEquals(RegisterStep.Email, vm.state.value.step)
+        assertEquals(RegisterStep.Form, vm.state.value.step)
     }
 
-    @Test fun aFreeEmailMovesToTheDetailsStepWithTheTrimmedAddressChecked() = runTest(dispatcher) {
-        val auth = FakeAuthRepository(); val vm = model(auth)
-        vm.toDetails("  new@example.com "); runCurrent()
-        assertEquals(listOf("new@example.com"), auth.emailChecks)
-        assertEquals(RegisterStep.Details, vm.state.value.step)
-        assertFalse(vm.state.value.busy)
-    }
-
-    @Test fun aTakenEmailStaysOnTheFirstStepAndEditingClearsTheMark() = runTest(dispatcher) {
-        val auth = FakeAuthRepository().apply { emailTaken = Result.success(true) }; val vm = model(auth)
-        vm.toDetails(); runCurrent()
-        assertEquals(RegisterStep.Email, vm.state.value.step)
+    @Test fun aTakenEmailPreservesTheFormAndDoesNotRegisterOrSaveConsent() = runTest(dispatcher) {
+        val auth = FakeAuthRepository().apply { emailTaken = Result.success(true) }
+        val analytics = FakeAnalytics()
+        val vm = model(auth, analytics)
+        vm.fill()
+        vm.onAction(RegisterAction.Submit); runCurrent()
+        assertEquals(RegisterStep.Form, vm.state.value.step)
+        assertTrue(vm.state.value.emailTaken)
+        assertEquals("Анна", vm.state.value.name)
+        assertEquals("password1", vm.state.value.password)
+        assertTrue(vm.state.value.termsAccepted)
+        assertTrue(auth.registrations.isEmpty())
+        assertTrue(analytics.consents.isEmpty())
+        vm.onAction(RegisterAction.EmailChanged(" NEW@example.com ")); runCurrent()
         assertTrue(vm.state.value.emailTaken)
         vm.onAction(RegisterAction.EmailChanged("other@example.com")); runCurrent()
         assertFalse(vm.state.value.emailTaken)
     }
 
-    @Test fun aFailedEmailCheckKeepsTheStepAndShowsTheServerMessage() = runTest(dispatcher) {
+    @Test fun aFailedEmailCheckKeepsTheFormAndAllowsRetry() = runTest(dispatcher) {
         val auth = FakeAuthRepository().apply { emailTaken = Result.failure(IllegalStateException("Service down")) }; val vm = model(auth)
-        vm.toDetails(); runCurrent()
-        assertEquals(RegisterStep.Email, vm.state.value.step)
-        assertEquals(RequestFailure("Service down"), vm.state.value.failure)
+        vm.fill()
+        vm.onAction(RegisterAction.Submit); runCurrent()
+        assertEquals(RegisterStep.Form, vm.state.value.step)
+        assertEquals(RequestFailure("Service down", checkingEmail = true), vm.state.value.failure)
         assertFalse(vm.state.value.busy)
+        assertTrue(auth.registrations.isEmpty())
+        auth.emailTaken = Result.success(false)
+        vm.onAction(RegisterAction.Submit); runCurrent()
+        assertEquals(listOf("new@example.com", "new@example.com"), auth.emailChecks)
+        assertEquals(1, auth.registrations.size)
+        assertEquals(RegisterStep.Success, vm.state.value.step)
     }
 
-    @Test fun changingTheEmailGoesBackAndDropsThePasswordError() = runTest(dispatcher) {
-        val vm = model(); vm.toDetails(); runCurrent()
-        vm.onAction(RegisterAction.PasswordChanged("short")); vm.onAction(RegisterAction.TermsChanged(true)); vm.onAction(RegisterAction.NameChanged("Анна"))
+    @Test fun changingTheEmailLeavesThePasswordErrorOnTheSameForm() = runTest(dispatcher) {
+        val vm = model()
+        vm.fill(password = "short")
         vm.onAction(RegisterAction.Submit); runCurrent()
         assertEquals(PasswordIssue.TooShort(8), vm.state.value.passwordIssue)
-        vm.onAction(RegisterAction.ChangeEmail); runCurrent()
-        assertEquals(RegisterStep.Email, vm.state.value.step)
-        assertNull(vm.state.value.passwordIssue)
+        vm.onAction(RegisterAction.EmailChanged("other@example.com")); runCurrent()
+        assertEquals(RegisterStep.Form, vm.state.value.step)
+        assertEquals(PasswordIssue.TooShort(8), vm.state.value.passwordIssue)
     }
 
-    @Test fun aValidSubmitStoresTheConsentFirstThenRegistersThenRemembersTheSignUp() = runTest(dispatcher) {
+    @Test fun aValidSubmitChecksTheEmailThenStoresConsentRegistersAndRemembersTheSignUp() = runTest(dispatcher) {
         val auth = FakeAuthRepository(); val analytics = FakeAnalytics()
+        auth.emailCheckGate = CompletableDeferred()
         auth.onRegister = { analytics.calls += "register" }
-        val vm = model(auth, analytics); vm.toDetails("  new@example.com "); runCurrent()
-        vm.fill(name = "  Анна ", password = " pass word1 "); vm.onAction(RegisterAction.AnalyticsChanged(true))
+        val vm = model(auth, analytics)
+        vm.fill(name = "  Анна ", password = " pass word1 ", email = "  new@example.com ")
+        vm.onAction(RegisterAction.AnalyticsChanged(true))
         vm.onAction(RegisterAction.Submit); runCurrent()
+        assertEquals(listOf("new@example.com"), auth.emailChecks)
+        assertTrue(analytics.calls.isEmpty())
+        assertTrue(auth.registrations.isEmpty())
+        assertTrue(vm.state.value.busy)
+        auth.emailCheckGate!!.complete(Unit); runCurrent()
         assertEquals(listOf(listOf("Анна", "new@example.com", " pass word1 ")), auth.registrations)
         assertEquals(listOf("consent", "register", "signup"), analytics.calls)
         assertEquals(listOf(true), analytics.consents)
@@ -107,17 +126,17 @@ class RegisterViewModelTest {
 
     @Test fun theFormIsFrozenWhileTheRegistrationIsBeingSent() = runTest(dispatcher) {
         val auth = FakeAuthRepository(); val analytics = FakeAnalytics()
-        val vm = model(auth, analytics); vm.toDetails("new@example.com"); runCurrent()
+        val vm = model(auth, analytics)
         vm.fill(name = "Анна", password = "password1"); vm.onAction(RegisterAction.AnalyticsChanged(true)); runCurrent()
         auth.gate = CompletableDeferred()
         vm.onAction(RegisterAction.Submit); runCurrent()
         assertTrue(vm.state.value.busy)
-        // None of these may change what is being sent or move the step while the request runs.
-        vm.onAction(RegisterAction.ChangeEmail); vm.onAction(RegisterAction.TermsChanged(false)); vm.onAction(RegisterAction.AnalyticsChanged(false))
+        // None of these may change what is being sent while the request runs.
+        vm.onAction(RegisterAction.TermsChanged(false)); vm.onAction(RegisterAction.AnalyticsChanged(false))
         vm.onAction(RegisterAction.NameChanged("Другое")); vm.onAction(RegisterAction.EmailChanged("other@example.com")); vm.onAction(RegisterAction.PasswordChanged("changed password"))
         runCurrent()
         with(vm.state.value) {
-            assertEquals(RegisterStep.Details, step); assertTrue(termsAccepted); assertTrue(analyticsAccepted)
+            assertEquals(RegisterStep.Form, step); assertTrue(termsAccepted); assertTrue(analyticsAccepted)
             assertEquals("Анна", name); assertEquals("new@example.com", email); assertEquals("password1", password)
         }
         auth.gate!!.complete(Unit); runCurrent()
@@ -129,7 +148,7 @@ class RegisterViewModelTest {
 
     @Test fun theFormIsEditableAgainOnceTheRequestHasFailed() = runTest(dispatcher) {
         val auth = FakeAuthRepository().apply { register = Result.failure(IllegalStateException("rejected")) }
-        val vm = model(auth); vm.toDetails(); runCurrent()
+        val vm = model(auth)
         vm.fill(); auth.gate = CompletableDeferred(); vm.onAction(RegisterAction.Submit); runCurrent()
         auth.gate!!.complete(Unit); runCurrent()
         assertFalse(vm.state.value.busy)
@@ -138,16 +157,17 @@ class RegisterViewModelTest {
     }
 
     @Test fun declinedAnalyticsIsStoredAsDeclined() = runTest(dispatcher) {
-        val analytics = FakeAnalytics(); val vm = model(analytics = analytics); vm.toDetails(); runCurrent()
-        vm.fill(); vm.onAction(RegisterAction.Submit); runCurrent()
+        val analytics = FakeAnalytics(); val vm = model(analytics = analytics)
+        vm.fill(); vm.onAction(RegisterAction.AnalyticsChanged(false)); runCurrent()
+        vm.onAction(RegisterAction.Submit); runCurrent()
         assertEquals(listOf(false), analytics.consents)
     }
 
     @Test fun aRejectedRegistrationShowsTheServerMessageAndSkipsTheSignUpMemory() = runTest(dispatcher) {
         val auth = FakeAuthRepository().apply { register = Result.failure(IllegalStateException("Registration rejected")) }
-        val analytics = FakeAnalytics(); val vm = model(auth, analytics); vm.toDetails(); runCurrent()
+        val analytics = FakeAnalytics(); val vm = model(auth, analytics)
         vm.fill(); vm.onAction(RegisterAction.Submit); runCurrent()
-        assertEquals(RegisterStep.Details, vm.state.value.step)
+        assertEquals(RegisterStep.Form, vm.state.value.step)
         assertEquals(RequestFailure("Registration rejected"), vm.state.value.failure)
         assertTrue(analytics.signUps.isEmpty())
         assertFalse(vm.state.value.busy)
@@ -157,7 +177,7 @@ class RegisterViewModelTest {
 
     @Test fun aFailureWithoutAMessageIsGeneric() = runTest(dispatcher) {
         val auth = FakeAuthRepository().apply { register = Result.failure(IllegalStateException()) }
-        val vm = model(auth); vm.toDetails(); runCurrent()
+        val vm = model(auth)
         vm.fill(); vm.onAction(RegisterAction.Submit); runCurrent()
         assertEquals(RequestFailure(null), vm.state.value.failure)
     }
@@ -173,22 +193,46 @@ class RegisterViewModelTest {
         vm.onAction(RegisterAction.PasswordChanged("password1")); vm.onAction(RegisterAction.Submit); runCurrent()
         assertEquals(RegistrationIssue.TermsRequired, vm.state.value.reported)
         assertTrue(auth.registrations.isEmpty())
+        assertTrue(auth.emailChecks.isEmpty())
         assertTrue(analytics.consents.isEmpty())
     }
 
-    @Test fun aSecondSubmitWhileBusyIsIgnored() = runTest(dispatcher) {
-        val auth = FakeAuthRepository(); val vm = model(auth); vm.toDetails(); runCurrent()
-        vm.fill(); auth.gate = CompletableDeferred()
+    @Test fun duplicateSubmitsAreIgnoredDuringBothRequestsAndAfterSuccess() = runTest(dispatcher) {
+        val auth = FakeAuthRepository()
+        val vm = model(auth)
+        vm.fill()
+        auth.emailCheckGate = CompletableDeferred()
+        auth.gate = CompletableDeferred()
         vm.onAction(RegisterAction.Submit); runCurrent()
         assertTrue(vm.state.value.busy)
         vm.onAction(RegisterAction.Submit); runCurrent()
+        assertEquals(1, auth.emailChecks.size)
+        auth.emailCheckGate!!.complete(Unit); runCurrent()
+        assertTrue(vm.state.value.busy)
+        vm.onAction(RegisterAction.Submit); runCurrent()
+        assertEquals(1, auth.emailChecks.size)
         auth.gate!!.complete(Unit); runCurrent()
+        vm.onAction(RegisterAction.Submit); runCurrent()
         assertEquals(1, auth.registrations.size)
+        assertEquals(1, auth.emailChecks.size)
         assertFalse(vm.state.value.busy)
     }
 
+    @Test fun cancelledEmailCheckDoesNotRegisterOrSurfaceAFailure() = runTest(dispatcher) {
+        val auth = FakeAuthRepository().apply { emailTaken = Result.failure(CancellationException("cancelled")) }
+        val analytics = FakeAnalytics()
+        val vm = model(auth, analytics)
+        vm.fill()
+        vm.onAction(RegisterAction.Submit); runCurrent()
+        assertEquals(RegisterStep.Form, vm.state.value.step)
+        assertFalse(vm.state.value.busy)
+        assertNull(vm.state.value.failure)
+        assertTrue(auth.registrations.isEmpty())
+        assertTrue(analytics.consents.isEmpty())
+    }
+
     @Test fun theShownPasswordErrorIsValidatedLiveWhileTyping() = runTest(dispatcher) {
-        val vm = model(); vm.toDetails(); runCurrent()
+        val vm = model()
         vm.fill(password = "short"); vm.onAction(RegisterAction.Submit); runCurrent()
         assertEquals(PasswordIssue.TooShort(8), vm.state.value.passwordIssue)
         vm.onAction(RegisterAction.PasswordChanged("longenough1")); runCurrent()
@@ -206,11 +250,11 @@ class RegisterViewModelTest {
         assertFalse(vm.state.value.busy)
     }
 
-    @Test fun aFailedGoogleSignUpIsClassifiedAndStaysOnTheFirstStep() = runTest(dispatcher) {
+    @Test fun aFailedGoogleSignUpIsClassifiedAndKeepsTheForm() = runTest(dispatcher) {
         val auth = FakeAuthRepository().apply { google = Result.failure(IllegalStateException("Network timeout")) }
         val vm = model(auth)
         vm.onAction(RegisterAction.GoogleToken("t")); runCurrent()
         assertEquals(SocialFailureKind.Network, vm.state.value.socialFailure?.kind)
-        assertEquals(RegisterStep.Email, vm.state.value.step)
+        assertEquals(RegisterStep.Form, vm.state.value.step)
     }
 }

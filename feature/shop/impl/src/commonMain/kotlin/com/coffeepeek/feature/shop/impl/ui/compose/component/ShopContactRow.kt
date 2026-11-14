@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.Icon
 import com.coffeepeek.core.designsystem.component.CoffeePeekPlainIconButton as IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -19,6 +18,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
@@ -38,14 +38,14 @@ internal fun ShopContactRow(link: ContactLink, icon: ImageVector, onOpenLink: (S
             top = CoffeePeekDimens.spacing1, bottom = CoffeePeekDimens.spacing1),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing4)) {
-        Icon(icon, null, Modifier.size(24.dp))
+        CoffeePeekIcon(icon, null, Modifier.size(24.dp))
         Text(link.label, Modifier.weight(1f), style = MaterialTheme.typography.bodyLarge,
             maxLines = 1, overflow = TextOverflow.Ellipsis)
         if (onCopy != null) IconButton(onClick = onCopy, modifier = Modifier.size(48.dp)) {
-            Icon(CoffeePeekIcons.Copy, stringResource(Res.string.shop_contact_copy_phone), Modifier.size(20.dp),
+            CoffeePeekIcon(CoffeePeekIcons.Copy, stringResource(Res.string.shop_contact_copy_phone), Modifier.size(20.dp),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant)
         } else Box(Modifier.size(48.dp), contentAlignment = Alignment.Center) {
-            Icon(CoffeePeekIcons.ChevronRight, null, Modifier.size(20.dp),
+            CoffeePeekIcon(CoffeePeekIcons.ChevronRight, null, Modifier.size(20.dp),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }

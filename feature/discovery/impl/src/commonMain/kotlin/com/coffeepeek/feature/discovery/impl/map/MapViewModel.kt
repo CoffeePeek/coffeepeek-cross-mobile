@@ -6,12 +6,14 @@ import com.coffeepeek.feature.discovery.api.DiscoveryAnalytics
 import com.coffeepeek.feature.discovery.api.DiscoveryAccount
 import com.coffeepeek.feature.discovery.api.DiscoveryFavorites
 import com.coffeepeek.feature.discovery.api.DiscoveryCity
+import com.coffeepeek.feature.discovery.api.DiscoveryCitySelection
 import com.coffeepeek.feature.discovery.api.DiscoveryLocation
 import com.coffeepeek.feature.discovery.api.DiscoveryShopDetails
 import com.coffeepeek.feature.discovery.api.GeolocationOutcome
 import com.coffeepeek.feature.discovery.api.MapCamera
 import com.coffeepeek.feature.discovery.api.MapInteraction
 import com.coffeepeek.feature.discovery.domain.model.Coordinates
+import com.coffeepeek.feature.discovery.domain.model.CheckInHeatmap
 import com.coffeepeek.feature.discovery.domain.model.DiscoveryCriteria
 import com.coffeepeek.feature.discovery.domain.model.MapContent
 import com.coffeepeek.feature.discovery.domain.model.MapBounds
@@ -56,6 +58,7 @@ internal class MapViewModel(
     private val analytics: DiscoveryAnalytics,
     private val account: DiscoveryAccount,
     favorites: DiscoveryFavorites,
+    private val requestLocationOnMapInteraction: Boolean = true,
 ) : MviViewModel<MapState, MapAction, MapEvent>(MapState()) {
     private var cityReady = false
     private var zonesCityId: String? = null
@@ -70,12 +73,15 @@ internal class MapViewModel(
     private var queryJob: Job? = null
     private var detailsJob: Job? = null
     private var pauseJob: Job? = null
+    private var pauseGeneration = 0
     private var permissionRequestPending = false
     private var locateAfterPermission = false
     private var accountSeen = false
     private var criteriaSupplied = false
     private var searchPresented = false
     private var favoriteIds: Set<String>? = null
+    private var heatmapJob: Job? = null
+    private var heatmapArea: MapBounds? = null
 
     init {
         viewModelScope.launch { city.selected.collect(::onCity) }
@@ -90,12 +96,18 @@ internal class MapViewModel(
             is MapAction.SyncCriteria -> acceptSharedCriteria(action.criteria)
             is MapAction.PresentationChanged -> setSearchPresentation(action.active)
             is MapAction.BoundsChanged -> onBoundsChanged(action.bounds, action.zoom)
+            MapAction.ToggleHeatmap -> toggleHeatmap()
             is MapAction.SelectSuggestion -> selectSuggestion(action.shopId)
             MapAction.Interact -> requestLocationPermission()
             MapAction.RequestMyLocation -> requestLocationPermission(locate = true)
+            MapAction.RetryViewport -> currentState.pendingBounds?.let { bounds ->
+                onBoundsChanged(bounds, currentState.pendingZoom ?: currentState.activeZoom ?: return)
+            }
             MapAction.LocationGranted -> onLocationGranted()
             is MapAction.MyLocationFound -> onMyLocationFound(action.point)
             MapAction.LocationDenied -> onLocationDenied()
+            MapAction.LocationPermanentlyDenied -> { onLocationDenied(); updateState { copy(locationSettingsNeeded = true) } }
+            MapAction.DismissLocationSettings -> updateState { copy(locationSettingsNeeded = false) }
             MapAction.ZoomIn -> changeZoom(1f)
             MapAction.ZoomOut -> changeZoom(-1f)
             is MapAction.Focus -> focusOnShop(action.focus.let { MapMarker(it.shopId, it.title, it.coordinates) })
@@ -113,6 +125,7 @@ internal class MapViewModel(
             MapAction.ClearZone -> updateState { copy(selectedZone = null) }
             MapAction.ToggleZones -> {
                 analytics.mapInteracted(MapInteraction.ZonesToggled, enabled = !currentState.showZones)
+                if (currentState.showHeatmap) toggleHeatmap()
                 updateState { copy(showZones = !showZones, selectedZone = null) }
             }
             is MapAction.OpenShop -> {
@@ -138,6 +151,7 @@ internal class MapViewModel(
     // ---- what comes from outside ----
 
     private fun requestLocationPermission(locate: Boolean = false) {
+        if (!locate && !requestLocationOnMapInteraction) return
         if (locate) locateAfterPermission = true
         if (permissionRequestPending || (!locate && currentState.locationPermissionRequest > 0)) return
         permissionRequestPending = true
@@ -146,6 +160,7 @@ internal class MapViewModel(
 
     private fun onLocationGranted() {
         permissionRequestPending = false
+        updateState { copy(locationSettingsNeeded = false) }
         location.refresh()
         if (locateAfterPermission) updateState { copy(myLocationRequest = myLocationRequest + 1) }
         else analytics.geolocation(PLACEMENT, userTriggered = true, outcome = GeolocationOutcome.Available)
@@ -158,7 +173,8 @@ internal class MapViewModel(
         analytics.geolocation(PLACEMENT, userTriggered = currentState.locationPermissionRequest > 0, outcome = GeolocationOutcome.Unavailable)
     }
 
-    private fun onCity(cityId: String?) {
+    private fun onCity(selection: DiscoveryCitySelection?) {
+        val cityId = selection?.id
         if (criteriaSupplied || !cityReady || cityId == null || cityId == currentState.cityId) return
         syncCriteria(currentState.criteria.copy(filters = currentState.filters.copy(cityId = cityId)))
     }
@@ -167,7 +183,8 @@ internal class MapViewModel(
         viewModelScope.launch {
             repository.catalogs().onSuccess { catalogs ->
                 if (!criteriaSupplied) {
-                    val cityId = city.resolve(catalogs.cities)
+                    val resolvedCityId = city.resolve(catalogs.cities)
+                    val cityId = city.selected.value?.id ?: resolvedCityId
                     if (!criteriaSupplied) updateState { copy(cityId = cityId, filters = filters.copy(cityId = cityId)) }
                 }
             }
@@ -190,8 +207,27 @@ internal class MapViewModel(
         if (criteria == currentState.criteria) return
         val selectionChanged = criteria.text != currentState.query || criteria.filters != currentState.filters ||
             criteria.filters.nearbyOnly && criteria.origin != currentState.userLocation
+        val textOnly = criteria.filters == currentState.filters && criteria.origin == currentState.userLocation &&
+            criteria.text != currentState.query
         updateState { copy(query = criteria.text, filters = criteria.filters, cityId = criteria.filters.cityId, userLocation = criteria.origin) }
-        if (selectionChanged) invalidateSelection()
+        if (!selectionChanged) return
+        if (textOnly) refreshForTextQuery() else invalidateSelection()
+    }
+
+    /** A text-only query change keeps the current markers: a blank flash per keystroke is worse
+     * than briefly stale pins; they are replaced when the response lands. */
+    private fun refreshForTextQuery() {
+        cancelViewportLoads()
+        queryJob?.cancel()
+        detailsJob?.cancel()
+        selectionVersion++
+        loadedArea = null
+        carouselArea = null
+        zonesCityId = null
+        updateState { copy(zones = emptyList(), zoneGroups = emptyList(), carouselShops = emptyList(),
+            selectedShop = null, selectedZone = null, details = null, isLoadingDetails = false, isTruncated = false) }
+        loadSuggestions()
+        if (!suppressBounds) searchCurrentArea()
     }
 
     private fun onAccount(key: String?) {
@@ -229,6 +265,7 @@ internal class MapViewModel(
         // The latest viewport is remembered even while the updates are paused, so it can be loaded afterwards.
         updateState { copy(pendingBounds = bounds, pendingZoom = zoom) }
         if (suppressBounds) return
+        loadHeatmap(bounds)
         loadCarousel(bounds)
         // A small pan inside the prefetched area at the same zoom level needs no new request.
         if (loadedArea?.contains(bounds) == true && loadedZoomLevel == zoom.toInt()) return
@@ -239,6 +276,7 @@ internal class MapViewModel(
     private fun searchCurrentArea() {
         val bounds = currentState.pendingBounds ?: currentState.activeBounds ?: return
         val zoom = currentState.pendingZoom ?: currentState.activeZoom ?: return
+        loadHeatmap(bounds)
         carouselArea = null
         loadCarousel(bounds)
         loadBounds(bounds, zoom)
@@ -251,7 +289,7 @@ internal class MapViewModel(
         loadedArea = null
         boundsJob = viewModelScope.launch {
             delay(BOUNDS_DEBOUNCE_MS)
-            updateState { copy(isLoading = true, activeBounds = bounds, activeZoom = zoom) }
+            updateState { copy(isLoading = true, viewportFailed = false, activeBounds = bounds, activeZoom = zoom) }
             requestBounds(bounds.expandedForPrefetch(), zoom, currentState.criteria)
         }
     }
@@ -270,7 +308,7 @@ internal class MapViewModel(
             applyContent(content, criteria.filters.cityId)
         }.onFailure {
             analytics.mapInteracted(MapInteraction.LoadFailed, durationMs = started.elapsedNow().inWholeMilliseconds)
-            updateState { copy(isLoading = false) }
+            updateState { copy(isLoading = false, viewportFailed = true) }
         }
     }
 
@@ -334,7 +372,9 @@ internal class MapViewModel(
     }
 
     private fun onMyLocationFound(point: Coordinates) {
+        if (!point.isValid) return
         analytics.geolocation(PLACEMENT, userTriggered = currentState.myLocationRequest > 0, outcome = GeolocationOutcome.Available)
+        location.updateFromMap(point)
         changeUserLocation(point)
         moveCamera(point, MY_LOCATION_ZOOM, PAUSE_AFTER_MOVE_MS)
     }
@@ -454,10 +494,56 @@ internal class MapViewModel(
 
     // ---- the camera ----
 
-    private fun cancelViewportLoads() {
+    private fun cancelViewportLoads(clearHeatmap: Boolean = true) {
         boundsJob?.cancel()
         carouselJob?.cancel()
-        updateState { copy(isLoading = false) }
+        heatmapJob?.cancel()
+        if (clearHeatmap) heatmapArea = null
+        updateState {
+            copy(isLoading = false, isHeatmapLoading = false, heatmapFailed = false,
+                heatmap = if (clearHeatmap) CheckInHeatmap() else heatmap)
+        }
+    }
+
+    private fun toggleHeatmap() {
+        val enabled = !currentState.showHeatmap
+        heatmapJob?.cancel()
+        heatmapArea = null
+        analytics.mapInteracted(MapInteraction.HeatmapToggled, enabled = enabled)
+        updateState { copy(showHeatmap = enabled, showZones = if (enabled) false else showZones,
+            selectedZone = null, heatmap = CheckInHeatmap(), isHeatmapLoading = false, heatmapFailed = false) }
+        if (enabled) loadHeatmap()
+    }
+
+    private fun loadHeatmap(bounds: MapBounds? = currentState.pendingBounds ?: currentState.activeBounds) {
+        if (!currentState.showHeatmap || !cityReady || bounds == null || !canRequest(currentState.criteria)) return
+        if (heatmapArea?.contains(bounds) == true) return
+        heatmapJob?.cancel()
+        heatmapArea = null
+        val area = bounds.expandedForPrefetch()
+        val criteria = currentState.criteria
+        heatmapJob = viewModelScope.launch {
+            updateState { copy(isHeatmapLoading = true, heatmapFailed = false) }
+            delay(BOUNDS_DEBOUNCE_MS)
+            requestHeatmap(area, criteria)
+        }
+    }
+
+    private suspend fun requestHeatmap(area: MapBounds, criteria: DiscoveryCriteria) {
+        val accountKey = account.currentAccountKey()
+        val result = repository.checkInHeatmap(area, criteria)
+        currentCoroutineContext().ensureActive()
+        if (!currentState.showHeatmap || account.currentAccountKey() != accountKey ||
+            criteria.searchQuery() != currentState.criteria.searchQuery()) return
+        result.onSuccess { content ->
+            heatmapArea = area
+            analytics.mapInteracted(MapInteraction.HeatmapLoaded, resultCount = content.points.size)
+            updateState { copy(heatmap = content, isHeatmapLoading = false, heatmapFailed = false) }
+        }.onFailure {
+            heatmapArea = null
+            analytics.mapInteracted(MapInteraction.HeatmapFailed)
+            updateState { copy(isHeatmapLoading = false, heatmapFailed = true) }
+        }
     }
 
     private fun changeZoom(delta: Float) {
@@ -477,14 +563,16 @@ internal class MapViewModel(
     }
 
     private fun pauseBounds(durationMs: Long) {
-        cancelViewportLoads()
+        cancelViewportLoads(clearHeatmap = false)
+        val generation = ++pauseGeneration
         pauseJob?.cancel()
         pauseJob = viewModelScope.launch {
             suppressBounds = true
             try {
                 delay(durationMs)
             } finally {
-                suppressBounds = false
+                // A newer pause owns the flag now; the cancelled run must not release it.
+                if (generation == pauseGeneration) suppressBounds = false
             }
             // Camera moves during the pause were only recorded: load where the camera ended up.
             val bounds = currentState.pendingBounds ?: return@launch

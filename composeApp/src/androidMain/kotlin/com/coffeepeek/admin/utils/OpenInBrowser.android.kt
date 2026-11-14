@@ -7,9 +7,13 @@ import com.coffeepeek.admin.locator.Locator
 actual object OpenInBrowser {
 
     actual fun openInBrowser(link: String) {
-        val intent = Intent(Intent.ACTION_VIEW, link.toUri()).apply {
-            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        try {
+            val intent = Intent(Intent.ACTION_VIEW, link.toUri()).apply {
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            }
+            Locator.appContext.startActivity(intent)
+        } catch (error: Exception) {
+            if (error is kotlinx.coroutines.CancellationException) throw error
         }
-        Locator.appContext.startActivity(intent)
     }
 }

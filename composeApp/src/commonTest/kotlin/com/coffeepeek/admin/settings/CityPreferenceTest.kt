@@ -1,12 +1,13 @@
 package com.coffeepeek.admin.settings
 
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
+import com.coffeepeek.feature.discovery.api.DiscoveryCitySelection
+import com.coffeepeek.room.model.Setting
+import com.coffeepeek.room.repository.SettingRepository
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.test.runTest
-import kotlinx.coroutines.withContext
-import kotlinx.coroutines.withTimeout
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertNull
 
 class CityPreferenceTest {
@@ -28,24 +29,24 @@ class CityPreferenceTest {
     }
 }
 
-/** Parity tests for the stateful half of the existing `CityPreference` (settings migration step 1). */
 class CityPreferenceStorageTest {
     private val cities = listOf("minsk", "grodno")
-    private suspend fun await(condition: () -> Boolean) =
-        withContext(Dispatchers.Default) { withTimeout(5_000) { while (!condition()) delay(10) } }
 
     @Test fun aSavedCityThatStillExistsIsKeptAndNotWrittenAgain() = runTest {
         val settings = FakeSettingRepository(mapOf("selected_city_id" to "grodno"))
         val preference = CityPreference(settings)
         assertEquals("grodno", preference.resolve(cities))
-        assertEquals("grodno", preference.selectedCityId.value)
+        assertEquals(DiscoveryCitySelection("grodno", manual = false), preference.selected.value)
         assertEquals(emptyList(), settings.saves)
     }
 
-    @Test fun aMissingOrRemovedCityFallsBackToTheFirstOneAndThatIsPersisted() = runTest {
+    @Test fun aMissingOrRemovedCityFallsBackInMemoryWithoutRewritingTheSavedChoice() = runTest {
+        // A transient catalog without the saved city must not rewrite the persisted choice.
         val settings = FakeSettingRepository(mapOf("selected_city_id" to "removed"))
-        assertEquals("minsk", CityPreference(settings).resolve(cities))
-        assertEquals("minsk", settings.valueOf("selected_city_id"))
+        val preference = CityPreference(settings)
+        assertEquals("minsk", preference.resolve(cities))
+        assertEquals(DiscoveryCitySelection("minsk", manual = false), preference.selected.value)
+        assertEquals("removed", settings.valueOf("selected_city_id"))
 
         val fresh = FakeSettingRepository()
         assertEquals("minsk", CityPreference(fresh).resolve(cities))
@@ -56,30 +57,83 @@ class CityPreferenceStorageTest {
         val settings = FakeSettingRepository(mapOf("selected_city_id" to "minsk"))
         val preference = CityPreference(settings)
         assertNull(preference.resolve(emptyList()))
-        assertNull(preference.selectedCityId.value)
+        assertNull(preference.selected.value)
         assertEquals(emptyList(), settings.saves)
     }
 
-    @Test fun theInMemoryChoiceWinsOverTheStoredOneOnTheNextResolve() = runTest {
+    @Test fun anExplicitSelectionOfTheCurrentCityWinsOverLocationAfterRestart() = runTest {
         val settings = FakeSettingRepository(mapOf("selected_city_id" to "minsk"))
         val preference = CityPreference(settings)
         preference.resolve(cities)
+        preference.select("minsk")
+        val restarted = CityPreference(settings)
+        assertEquals("minsk", restarted.resolve(cities, nearbyCityId = "grodno"))
+        assertEquals(DiscoveryCitySelection("minsk", manual = true), restarted.selected.value)
+    }
+
+    @Test fun locationCanReplaceAnExistingSelectionFromBeforeAutomaticDetection() = runTest {
+        val settings = FakeSettingRepository(mapOf("selected_city_id" to "minsk"))
+        val preference = CityPreference(settings)
+        assertEquals("grodno", preference.resolve(cities, nearbyCityId = "grodno"))
+        assertEquals("grodno", settings.valueOf("selected_city_id"))
+        assertEquals("grodno", CityPreference(settings).resolve(cities))
+    }
+
+    @Test fun missingManualCityReturnsWhenTheFullCatalogIsAvailableAgain() = runTest {
+        val settings = FakeSettingRepository(mapOf("manual_city_id" to "grodno", "selected_city_id" to "grodno"))
+        val preference = CityPreference(settings)
+        assertEquals("minsk", preference.resolve(listOf("minsk"), nearbyCityId = "minsk"))
+        assertEquals(emptyList(), settings.saves)
+        assertEquals("grodno", preference.resolve(cities, nearbyCityId = "minsk"))
+        assertEquals(DiscoveryCitySelection("grodno", manual = true), preference.selected.value)
+    }
+
+    @Test fun aFailedManualWriteKeepsTheChoiceInMemoryAndCanBeRetried() = runTest {
+        val settings = FakeSettingRepository()
+        var diskUnavailable = true
+        val storage = object : SettingRepository by settings {
+            override suspend fun save(model: Setting) {
+                check(!diskUnavailable)
+                settings.save(model)
+            }
+        }
+        val preference = CityPreference(storage)
         preference.select("grodno")
-        assertEquals("grodno", preference.selectedCityId.value)
-        await { settings.valueOf("selected_city_id") == "grodno" }
+        assertEquals("grodno", preference.resolve(cities, nearbyCityId = "minsk"))
+        assertNull(settings.valueOf("manual_city_id"))
+        diskUnavailable = false
+        preference.select("grodno")
+        assertEquals("grodno", CityPreference(settings).resolve(cities, nearbyCityId = "minsk"))
+    }
+
+    @Test fun aFailedReadDoesNotOverwriteStorageOrPreventDetection() = runTest {
+        val settings = FakeSettingRepository()
+        val storage = object : SettingRepository by settings {
+            override suspend fun read(key: String): Setting? = error("Unavailable")
+        }
+        val preference = CityPreference(storage)
+        assertEquals("grodno", preference.resolve(cities, nearbyCityId = "grodno"))
         assertEquals("grodno", preference.resolve(cities))
+        assertEquals(emptyList(), settings.saves)
+    }
+
+    @Test fun aCancelledReadIsPropagated() = runTest {
+        val settings = FakeSettingRepository()
+        val storage = object : SettingRepository by settings {
+            override suspend fun read(key: String): Setting? = throw CancellationException()
+        }
+        assertFailsWith<CancellationException> { CityPreference(storage).resolve(cities) }
     }
 
     @Test fun selectIgnoresBlankAndRepeatedIds() = runTest {
         val settings = FakeSettingRepository()
         val preference = CityPreference(settings)
-        preference.resolve(cities)
+        preference.select("minsk")
         val before = settings.saves.size
         preference.select("")
         preference.select("  ".trim())
         preference.select("minsk")
-        delay(150)
-        assertEquals("minsk", preference.selectedCityId.value)
+        assertEquals(DiscoveryCitySelection("minsk", manual = true), preference.selected.value)
         assertEquals(before, settings.saves.size)
     }
 }

@@ -3,6 +3,7 @@ package com.coffeepeek.feature.checkinhistory.impl.ui.data
 import com.coffeepeek.feature.checkinhistory.domain.model.HistoryCalendarPhoto
 import com.coffeepeek.feature.checkinhistory.impl.ui.compose.model.CombinedHistoryState
 import com.coffeepeek.feature.checkinhistory.impl.ui.compose.model.HistorySource
+import com.coffeepeek.core.datetime.parseServerInstant
 import kotlin.time.Instant
 
 /** Month snapshots, newest photographed visit first. */
@@ -18,8 +19,4 @@ internal fun historyCalendarPhotos(state: CombinedHistoryState, date: String, ma
         .map { it.first }.distinctBy { it.url }.take(maxPhotos)
 }
 
-private fun String.instantOrNull(): Instant? = try {
-    Instant.parse(this)
-} catch (_: IllegalArgumentException) {
-    null
-}
+private fun String.instantOrNull(): Instant? = parseServerInstant(this)

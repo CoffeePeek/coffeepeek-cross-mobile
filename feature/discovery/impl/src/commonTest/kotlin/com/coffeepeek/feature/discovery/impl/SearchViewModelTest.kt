@@ -202,7 +202,7 @@ class SearchViewModelTest {
 
     @Test fun aChangeOfTheSavedCityReloadsTheList() = runTest(dispatcher) {
         val vm = model()
-        city.flow.value = "brest"; runCurrent()
+        city.select("brest"); runCurrent()
         assertEquals("brest", repository.queries.last().filters.cityId); assertEquals(2, repository.queries.size); assertEquals("brest", vm.now.filters.cityId)
     }
 

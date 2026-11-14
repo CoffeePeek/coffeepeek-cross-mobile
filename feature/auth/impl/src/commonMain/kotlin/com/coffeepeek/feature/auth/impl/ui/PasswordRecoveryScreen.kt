@@ -23,7 +23,6 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.auth.impl.recovery.PasswordRecoveryAction
 import com.coffeepeek.feature.auth.impl.recovery.PasswordRecoveryState
@@ -44,7 +43,11 @@ internal fun PasswordRecoveryScreen(
     PasswordRecoveryContent(
         state = state,
         onEmail = { vm.onAction(PasswordRecoveryAction.EmailChanged(it)) },
-        onSubmit = { focus.clearFocus(force = true); keyboard?.hide(); vm.onAction(PasswordRecoveryAction.Submit) },
+        onSubmit = {
+            focus.clearFocus(force = true)
+            keyboard?.hide()
+            vm.onAction(PasswordRecoveryAction.Submit)
+        },
         onAnotherEmail = { vm.onAction(PasswordRecoveryAction.RequestAnotherEmail) },
         onClose = onClose,
         onBackToLogin = onBackToLogin,
@@ -62,29 +65,20 @@ internal fun PasswordRecoveryContent(
     onBackToLogin: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    AuthScaffold(onClose = onClose, modifier = modifier) {
-        AuthHeading(
-            title = stringResource(Res.string.auth_recovery_title),
-            subtitle = stringResource(if (state.step == RecoveryStep.Email) Res.string.auth_recovery_info else Res.string.auth_recovery_sent),
+    AuthScaffold(
+        title = stringResource(Res.string.auth_recovery_title),
+        onClose = onClose,
+        modifier = modifier,
+        closeIcon = true,
+    ) {
+        val emailStep = state.step == RecoveryStep.Email
+        Text(
+            text = stringResource(if (emailStep) Res.string.auth_recovery_info else Res.string.auth_recovery_sent),
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
-        if (state.step == RecoveryStep.Email) {
-            AuthTextField(
-                value = state.email,
-                onValueChange = onEmail,
-                placeholder = stringResource(Res.string.auth_email_placeholder),
-                label = stringResource(Res.string.auth_email_label),
-                leadingIcon = CoffeePeekIcons.Email,
-            )
-        }
-        state.error?.let { error ->
-            Text(recoveryErrorText(error), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
-        }
-        if (state.step == RecoveryStep.Email) {
-            AuthPrimaryButton(
-                text = stringResource(if (state.busy) Res.string.auth_recovery_busy else Res.string.auth_recovery_send),
-                enabled = !state.busy,
-                onClick = onSubmit,
-            )
+        if (emailStep) {
+            RecoveryEmailForm(state, onEmail, onSubmit)
         } else {
             AuthPrimaryButton(stringResource(Res.string.auth_recovery_back_to_login), onBackToLogin)
             AuthFooterRow(stringResource(Res.string.auth_recovery_another_email), onAnotherEmail)
@@ -93,16 +87,48 @@ internal fun PasswordRecoveryContent(
 }
 
 @Composable
-private fun recoveryErrorText(error: RecoveryError): String = stringResource(
-    when (error) {
+private fun RecoveryEmailForm(state: PasswordRecoveryState, onEmail: (String) -> Unit, onSubmit: () -> Unit) {
+    val emailError = when (state.error) {
         RecoveryError.EmailEmpty -> Res.string.auth_email_required
         RecoveryError.EmailInvalid -> Res.string.auth_email_invalid
-        RecoveryError.SendFailed -> Res.string.auth_recovery_failed
-    },
-)
-
-@Preview
-@Composable
-private fun PasswordRecoveryPreview() = CoffeePeekTheme {
-    PasswordRecoveryContent(PasswordRecoveryState(email = "name@example.com"), {}, {}, {}, {}, {})
+        else -> null
+    }
+    AuthTextField(
+        value = state.email,
+        onValueChange = onEmail,
+        placeholder = stringResource(Res.string.auth_email_placeholder),
+        label = stringResource(Res.string.auth_email_label),
+        errorText = emailError?.let { stringResource(it) },
+        enabled = !state.busy,
+        onDone = onSubmit.takeUnless { state.busy },
+    )
+    if (state.error == RecoveryError.SendFailed) {
+        Text(
+            text = stringResource(Res.string.auth_recovery_failed),
+            color = MaterialTheme.colorScheme.error,
+            style = MaterialTheme.typography.bodySmall,
+        )
+    }
+    AuthPrimaryButton(
+        text = stringResource(if (state.busy) Res.string.auth_recovery_busy else Res.string.auth_recovery_send),
+        enabled = !state.busy,
+        onClick = onSubmit,
+    )
 }
+
+@Composable
+private fun PasswordRecoveryPreview(dark: Boolean, state: PasswordRecoveryState) = CoffeePeekTheme(darkTheme = dark) {
+    PasswordRecoveryContent(state, {}, {}, {}, {}, {})
+}
+
+@Preview @Composable private fun PasswordRecoveryLightPreview() =
+    PasswordRecoveryPreview(false, PasswordRecoveryState(email = "name@example.com"))
+
+@Preview @Composable private fun PasswordRecoveryDarkPreview() =
+    PasswordRecoveryPreview(true, PasswordRecoveryState(email = "name@example.com"))
+
+@Preview @Composable private fun PasswordRecoverySentLightPreview() =
+    PasswordRecoveryPreview(false, PasswordRecoveryState(step = RecoveryStep.EmailSent))
+
+@Preview @Composable private fun PasswordRecoverySentDarkPreview() =
+    PasswordRecoveryPreview(true, PasswordRecoveryState(step = RecoveryStep.EmailSent))

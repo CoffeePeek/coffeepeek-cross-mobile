@@ -1,5 +1,6 @@
 package com.coffeepeek.admin.ui
 
+import com.coffeepeek.core.designsystem.theme.reducedMotionDuration
 import com.coffeepeek.admin.di.collections.CollectionsComposerDestination
 import com.coffeepeek.admin.di.collections.PublicCollectionDestination
 import com.coffeepeek.admin.di.collections.CollectionsLibraryDestination
@@ -95,7 +96,48 @@ internal val RootMainSlideSpec = tween<Float>(
     easing = FastOutSlowInEasing,
 )
 
+
 object Navigator {
+
+/** The root navigation host: slide transitions honor the reduce-motion setting in one place. */
+@Composable
+private fun RootNavHost(
+    nav: NavHostController,
+    modifier: Modifier,
+    builder: androidx.navigation.NavGraphBuilder.() -> Unit,
+) {
+    val rootNavDuration = reducedMotionDuration(ROOT_NAV_ANIMATION_DURATION_MS)
+    NavHost(
+        navController = nav,
+        startDestination = Screen.Main,
+        modifier = modifier,
+        enterTransition = {
+            slideIntoContainer(
+                towards = AnimatedContentTransitionScope.SlideDirection.Left,
+                animationSpec = tween(durationMillis = rootNavDuration, easing = FastOutSlowInEasing),
+            )
+        },
+        exitTransition = {
+            slideOutOfContainer(
+                towards = AnimatedContentTransitionScope.SlideDirection.Left,
+                animationSpec = tween(durationMillis = rootNavDuration, easing = FastOutSlowInEasing),
+            )
+        },
+        popEnterTransition = {
+            slideIntoContainer(
+                towards = AnimatedContentTransitionScope.SlideDirection.Right,
+                animationSpec = tween(durationMillis = rootNavDuration, easing = FastOutSlowInEasing),
+            )
+        },
+        popExitTransition = {
+            slideOutOfContainer(
+                towards = AnimatedContentTransitionScope.SlideDirection.Right,
+                animationSpec = tween(durationMillis = rootNavDuration, easing = FastOutSlowInEasing),
+            )
+        },
+        builder = builder,
+    )
+}
 
     private val navigatorScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
 
@@ -135,10 +177,11 @@ object Navigator {
 
         // Inner screens (add here + in the graph in MainScreen)
         @Serializable data class ShopDetail(
-            val shopId: String, val forCheckIn: Boolean = false, val openCheckIn: Boolean = false,
+            val shopId: String, val openCheckIn: Boolean = false,
         ) : Screen
         @Serializable data class ShopCheckInSignIn(val shopId: String) : Screen
         @Serializable data object CreateCheckIn : Screen
+        @Serializable data class ShopCheckInEditor(val shopId: String) : Screen
         @Serializable data class CoffeeDetail(val slug: String) : Screen
         @Serializable data class ShopMenuGallery(val shopId: String) : Screen
         @Serializable data class ReportShop(val shopId: String, val shopTitle: String) : Screen
@@ -261,8 +304,6 @@ object Navigator {
         is Screen.ResetPassword,
         is Screen.Main,
         is Screen.ShopDetail,
-        is Screen.ShopCheckInSignIn,
-        is Screen.CreateCheckIn,
         is Screen.CoffeeDetail,
         is Screen.ShopMenuGallery,
         is Screen.ReportShop,
@@ -298,8 +339,11 @@ object Navigator {
         is Screen.LanguageSettings,
         is Screen.BlockedAuthors,
         is Screen.UsagePolicy -> true
-        else -> false
+        else -> isCheckInRootRoute()
     }
+
+    private fun Screen.isCheckInRootRoute(): Boolean =
+        this is Screen.ShopCheckInSignIn || this is Screen.CreateCheckIn || this is Screen.ShopCheckInEditor
 
     fun navigate(screen: Screen) {
         navigatorScope.launch { _navigationEvents.emit(NavEvent.NavigateTo(screen)) }
@@ -483,49 +527,12 @@ object Navigator {
                     }
                 }
             }
-            NavHost(
-                navController = nav,
-                startDestination = Screen.Main,
-                modifier = Modifier.fillMaxSize().windowInsetsPadding(
+            RootNavHost(
+                nav,
+                Modifier.fillMaxSize().windowInsetsPadding(
                     if (shopPhotoUnderStatusBar || authUnderSystemBars) WindowInsets(0)
                     else systemInsets.only(WindowInsetsSides.Top),
                 ).clipToBounds(),
-                enterTransition = {
-                    slideIntoContainer(
-                        towards = AnimatedContentTransitionScope.SlideDirection.Left,
-                        animationSpec = tween(
-                            durationMillis = ROOT_NAV_ANIMATION_DURATION_MS,
-                            easing = FastOutSlowInEasing,
-                        ),
-                    )
-                },
-                exitTransition = {
-                    slideOutOfContainer(
-                        towards = AnimatedContentTransitionScope.SlideDirection.Left,
-                        animationSpec = tween(
-                            durationMillis = ROOT_NAV_ANIMATION_DURATION_MS,
-                            easing = FastOutSlowInEasing,
-                        ),
-                    )
-                },
-                popEnterTransition = {
-                    slideIntoContainer(
-                        towards = AnimatedContentTransitionScope.SlideDirection.Right,
-                        animationSpec = tween(
-                            durationMillis = ROOT_NAV_ANIMATION_DURATION_MS,
-                            easing = FastOutSlowInEasing,
-                        ),
-                    )
-                },
-                popExitTransition = {
-                    slideOutOfContainer(
-                        towards = AnimatedContentTransitionScope.SlideDirection.Right,
-                        animationSpec = tween(
-                            durationMillis = ROOT_NAV_ANIMATION_DURATION_MS,
-                            easing = FastOutSlowInEasing,
-                        ),
-                    )
-                },
             ) {
                     composable<Screen.Auth> { koinInject<AuthScreenRenderer>().Login() }
                     composable<Screen.Register> { koinInject<AuthScreenRenderer>().Register() }
@@ -553,11 +560,10 @@ object Navigator {
                     }
                     composable<Screen.ShopDetail> { backStack ->
                         val route = backStack.toRoute<Screen.ShopDetail>()
-                        koinInject<ShopDetailScreenRenderer>().Content(route.shopId, route.forCheckIn, route.openCheckIn)
+                        koinInject<ShopDetailScreenRenderer>().Content(route.shopId, route.openCheckIn)
                     }
-                    composable<Screen.CreateCheckIn> {
-                        org.koin.compose.koinInject<com.coffeepeek.admin.ui.screen.checkins.CheckInShopPickerRenderer>().Content()
-                    }
+                    composable<Screen.CreateCheckIn> { CheckInRootScreen(Screen.CreateCheckIn) }
+                    composable<Screen.ShopCheckInEditor> { ShopCheckInEditorRoute(it.toRoute<Screen.ShopCheckInEditor>().shopId) }
                     composable<Screen.CoffeeDetail> { backStack ->
                         val route = backStack.toRoute<Screen.CoffeeDetail>()
                         koinInject<CoffeeScreenRenderer>().Detail(route.slug)
@@ -651,9 +657,9 @@ koinInject<ContributionsScreenRenderer>().Editor(route.shopId, route.section, ro
             Screen.Register -> koinInject<AuthScreenRenderer>().Register()
             is Screen.ForgotPassword -> koinInject<AuthScreenRenderer>().Recovery(initialEmail = screen.email, onClose = ::popBack, onBackToLogin = resetToLogin)
             is Screen.ResetPassword -> LaunchedEffect(Unit) { resetToLogin() }
-            is Screen.ShopDetail -> koinInject<ShopDetailScreenRenderer>().Content(screen.shopId, screen.forCheckIn, screen.openCheckIn)
+            is Screen.ShopDetail -> koinInject<ShopDetailScreenRenderer>().Content(screen.shopId, screen.openCheckIn)
             is Screen.ShopCheckInSignIn -> ShopCheckInSignInRoute(screen.shopId)
-            Screen.CreateCheckIn -> org.koin.compose.koinInject<com.coffeepeek.admin.ui.screen.checkins.CheckInShopPickerRenderer>().Content()
+            Screen.CreateCheckIn, is Screen.ShopCheckInEditor -> CheckInRootScreen(screen)
             is Screen.CoffeeDetail -> koinInject<CoffeeScreenRenderer>().Detail(screen.slug)
             is Screen.ShopReviews -> koinInject<ShopCheckInListScreenRenderer>().Content(screen.shopId)
             is Screen.ReportReview -> org.koin.compose.koinInject<com.coffeepeek.admin.ui.screen.review.ContentReportScreenRenderer>().Content(screen.reviewId, false, screen.isPreview)
@@ -691,6 +697,20 @@ koinInject<ContributionsScreenRenderer>().Editor(route.shopId, route.section, ro
             Screen.UsagePolicy -> koinInject<SettingsScreenRenderer>().UsagePolicy()
             else -> error("Tab route must be handled by MainScreen: $screen")
         }
+    }
+
+    @Composable
+    private fun CheckInRootScreen(screen: Screen) {
+        when (screen) {
+            Screen.CreateCheckIn -> koinInject<com.coffeepeek.admin.ui.screen.checkins.CheckInShopPickerRenderer>().Content()
+            is Screen.ShopCheckInEditor -> ShopCheckInEditorRoute(screen.shopId)
+            else -> error("Expected a check-in route: $screen")
+        }
+    }
+
+    @Composable
+    private fun ShopCheckInEditorRoute(shopId: String) {
+        koinInject<com.coffeepeek.admin.ui.screen.shop.ShopCheckInEditorRenderer>().Content(shopId)
     }
 
     @Composable

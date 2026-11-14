@@ -9,6 +9,7 @@ import com.coffeepeek.feature.discovery.domain.model.PriceLevel
 import com.coffeepeek.feature.discovery.domain.model.ShopKind
 import com.coffeepeek.feature.discovery.domain.model.ShopSummary
 import com.coffeepeek.feature.discovery.domain.rules.showsDiscovery
+import com.coffeepeek.feature.discovery.domain.rules.searchText
 import com.coffeepeek.feature.discovery.domain.rules.visibleShops
 
 /** A failed search. UI uses localized copy rather than the unreviewed [serverMessage]. */
@@ -47,8 +48,13 @@ internal data class SearchState(
     val locationPermissionRequest: Int = 0,
     val nearbyRequested: Boolean = false,
     val locationUnavailable: Boolean = false,
+    /** The permission cannot be granted without leaving the app; the notice offers «Настройки». */
+    val locationSettingsNeeded: Boolean = false,
     /** Where the user is, for the distance on a card when the server sends none. */
     val userLocation: Coordinates? = null,
+    /** The picker keeps one accepted result snapshot while a new query is loading. */
+    val pickerResultCriteria: DiscoveryCriteria? = null,
+    val pickerRecentShops: List<ShopSummary> = emptyList(),
 ) {
     fun showsShopsFirst(hasRoasterResults: Boolean?): Boolean =
         query.isNotBlank() && hasRoasterResults == false && visibleShops.isNotEmpty()
@@ -64,6 +70,9 @@ internal data class SearchState(
         roasters.isEmpty() && beans.isEmpty() && equipment.isEmpty() && brewMethods.isEmpty() && tags.isEmpty()
     }
 }
+
+internal fun DiscoveryCriteria.matchesPickerQuery(other: DiscoveryCriteria): Boolean =
+    searchQuery().copy(text = searchText(text)) == other.searchQuery().copy(text = searchText(other.text))
 
 internal sealed interface SearchAction {
     data class Query(val text: String) : SearchAction
@@ -84,6 +93,8 @@ internal sealed interface SearchAction {
     /** The location permission was granted or refused by the screen's effect. */
     data object LocationGranted : SearchAction
     data object LocationDenied : SearchAction
+    /** The system will not ask again; only the app settings can re-enable the permission. */
+    data object LocationPermanentlyDenied : SearchAction
     data object DismissLocationFailure : SearchAction
     data class SetPrice(val level: PriceLevel?) : SearchAction
     data class SetMinRating(val rating: Double?) : SearchAction

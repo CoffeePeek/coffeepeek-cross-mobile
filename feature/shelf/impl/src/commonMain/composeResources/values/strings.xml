@@ -61,6 +61,9 @@
     <string name="shelf_cancel">Отмена</string>
     <string name="shelf_bag_left">осталось %1$s</string>
     <string name="shelf_bag_back">Назад</string>
+    <string name="shelf_bag_offline_title">Не удалось загрузить пачку</string>
+    <string name="shelf_bag_offline_body">Проверьте подключение к сети и попробуйте ещё раз</string>
+    <string name="shelf_bag_retry">Повторить</string>
     <string name="shelf_bag_missing_title">Этой пачки уже нет</string>
     <string name="shelf_bag_missing_body">Она закончилась или удалена. Найдите её в архиве или на полке</string>
     <string name="shelf_brew_action">Заварить чашку</string>
@@ -129,19 +132,24 @@
     <string name="shelf_scan_bag">Сканировать пачку</string>
     <string name="shelf_add_title">Новая пачка</string>
     <string name="shelf_add_close">Закрыть</string>
-    <string name="shelf_scan_intro_title">Сфотографируйте пачку</string>
-    <string name="shelf_scan_intro_body">Сканер вырежет лицевую сторону и выровняет её. Фото остаётся на телефоне, на сервер уходит только карточка.</string>
+    <string name="shelf_scan_intro_title">Добавьте фото пачки</string>
+    <string name="shelf_scan_intro_body">Исходное фото остаётся на телефоне. После сохранения на сервер отправятся обработанное изображение пачки и данные карточки.</string>
+    <string name="shelf_scan_example_before">Обычное фото</string>
+    <string name="shelf_scan_example_after">Пачка на полке</string>
+    <string name="shelf_scan_example_accessibility">Схема: фото пачки обрабатывается, а карточка встаёт на полку</string>
+    <string name="shelf_prepare_title">Фото выбрано</string>
+    <string name="shelf_prepare_body">Подготовьте сканер для автоматической обработки. После загрузки продолжим с этим фото.</string>
     <string name="shelf_scan_tip_whole">Пачка целиком, лицевой стороной</string>
     <string name="shelf_scan_tip_straight">Ровно, без сильного наклона</string>
     <string name="shelf_scan_tip_clean">Без рук, зёрен и бликов на пачке</string>
     <string name="shelf_scan_camera">Сфотографировать</string>
     <string name="shelf_scan_gallery">Выбрать из галереи</string>
     <string name="shelf_scanner_checking">Проверяем сканер</string>
-    <string name="shelf_scanner_download_body">Для первого скана нужно один раз скачать модель · %1$d МБ</string>
-    <string name="shelf_scanner_download">Скачать</string>
+    <string name="shelf_scanner_download">Подготовить сканер</string>
+    <string name="shelf_scanner_prepare">Подготовить сканер · %1$d МБ</string>
     <string name="shelf_scanner_downloading">Готовим сканер · %1$s</string>
     <string name="shelf_scanner_downloading_unknown">Готовим сканер…</string>
-    <string name="shelf_scanner_download_failed">Не удалось скачать модель. Проверьте сеть и попробуйте ещё раз</string>
+    <string name="shelf_scanner_download_failed">Не удалось подготовить сканер. Проверьте сеть и попробуйте ещё раз.</string>
 
     <string name="shelf_scan_title">Сканируем</string>
     <string name="shelf_scan_stage_found">Нашли пачку</string>
@@ -194,6 +202,7 @@
     <string name="shelf_form_ready">Готово, пачка вырезана</string>
     <string name="shelf_form_hint">Карточка получилась, но её можно сделать чище</string>
     <string name="shelf_form_coffee">Кофе</string>
+    <string name="shelf_form_coffee_failed">Не удалось найти кофе. Повторите запрос</string>
     <string name="shelf_form_coffee_hint">Название или поиск по каталогу</string>
     <string name="shelf_form_catalog_match">Из каталога CoffeePeek</string>
     <string name="shelf_form_roaster">Обжарщик</string>

@@ -89,4 +89,7 @@ private val MapInteraction.wire: String
         MapInteraction.NearbyFailed -> "nearby_failed"
         MapInteraction.Expanded -> "expanded"
         MapInteraction.Collapsed -> "collapsed"
+        MapInteraction.HeatmapToggled -> "heatmap_toggled"
+        MapInteraction.HeatmapLoaded -> "heatmap_loaded"
+        MapInteraction.HeatmapFailed -> "heatmap_failed"
     }

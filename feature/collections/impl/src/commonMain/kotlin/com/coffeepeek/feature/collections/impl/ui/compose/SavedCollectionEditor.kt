@@ -94,7 +94,7 @@ private fun SavedEditorMenu(state: SavedCollectionsState, action: (SavedCollecti
     }
     CoffeePeekActionMenu(actions, enabled = !state.busy) { open ->
         CoffeePeekPlainIconButton(open, enabled = !state.busy) {
-            Icon(CoffeePeekIcons.MoreHorizontal, stringResource(Res.string.collections_more_actions))
+            CoffeePeekIcon(CoffeePeekIcons.MoreHorizontal, stringResource(Res.string.collections_more_actions))
         }
     }
 }

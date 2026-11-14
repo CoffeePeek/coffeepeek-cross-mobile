@@ -26,4 +26,5 @@ expect fun CoffeeMap(
     requestLocationPermissionOnLoad: Boolean = true,
     showAttribution: Boolean = true,
     onCameraCenterChanged: (Double, Double) -> Unit = { _, _ -> },
+    heatmap: List<MapHeatPoint> = emptyList(),
 )

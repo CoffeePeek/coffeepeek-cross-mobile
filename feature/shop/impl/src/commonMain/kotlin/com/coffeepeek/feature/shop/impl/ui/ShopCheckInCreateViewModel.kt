@@ -2,6 +2,7 @@ package com.coffeepeek.feature.shop.impl.ui
 
 import com.coffeepeek.feature.shop.api.ShopCheckInAnalytics
 import com.coffeepeek.feature.shop.domain.model.ShopCheckInVisibility
+import com.coffeepeek.feature.shop.domain.model.ShopCheckInPublication
 import com.coffeepeek.feature.shop.impl.ui.data.changed
 import com.coffeepeek.core.presentation.MviViewModel
 import com.coffeepeek.feature.shop.domain.model.MAX_SHOP_CHECK_IN_PHOTOS
@@ -11,6 +12,7 @@ import com.coffeepeek.feature.shop.domain.repository.ShopCheckInCreationUnconfir
 import com.coffeepeek.feature.shop.domain.repository.ShopCheckInRejection
 import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopCheckInSubmitFailure
 import com.coffeepeek.feature.shop.domain.repository.ShopCheckInRepository
+import com.coffeepeek.feature.shop.domain.repository.ShopCheckInPublicationReader
 import com.coffeepeek.feature.shop.domain.usecase.validateShopCheckIn
 import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopCheckInFormAction
 import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopCheckInFormEvent
@@ -27,6 +29,7 @@ internal class ShopCheckInCreateViewModel(
     private val drafts: ShopCheckInDraftStore,
     private val now: () -> Instant = { Clock.System.now() },
     private val analytics: ShopCheckInAnalytics = ShopCheckInAnalytics.None,
+    private val publication: ShopCheckInPublicationReader = ShopCheckInPublicationReader.None,
 ) : MviViewModel<ShopCheckInFormState, ShopCheckInFormAction, ShopCheckInFormEvent>(
     ShopCheckInFormState(initial),
 ) {
@@ -77,9 +80,8 @@ internal class ShopCheckInCreateViewModel(
             ShopCheckInFormAction.HistoryChecked -> {
                 if (!currentState.deliveryUnconfirmed || currentState.isSubmitting || currentState.submitted ||
                     currentState.isDiscarding || currentState.confirmDiscard) return
-                if (saveDraft(currentState.input, unconfirmed = false)) {
-                    updateState { copy(deliveryUnconfirmed = false, submitFailure = null) }
-                }
+                val saved = saveDraft(currentState.input, unconfirmed = false)
+                updateState { copy(deliveryUnconfirmed = false, submitFailure = null, draftFailed = !saved) }
             }
         }
     }
@@ -154,10 +156,12 @@ internal class ShopCheckInCreateViewModel(
     private suspend fun submit() {
         val input = prepareSubmission() ?: return
         updateState { copy(isSubmitting = true) }
+        var createdId: String? = null
         try {
-            // Persist the delivery guard before any request; never silently repeat an uncertain write.
-            if (!saveDraft(input, unconfirmed = true)) return
-            repository.create(input).getOrThrow()
+            // Persist the delivery guard before any request. A broken storage must not block
+            // the submission itself; the uncertain outcome stays visible only in this session.
+            saveDraft(input, unconfirmed = true)
+            createdId = repository.create(input).getOrThrow()
             completeSubmission(input)
         } catch (cancelled: CancellationException) {
             updateState { copy(deliveryUnconfirmed = true) }
@@ -165,6 +169,17 @@ internal class ShopCheckInCreateViewModel(
         } catch (error: Exception) {
             failSubmission(input, error)
         } finally { updateState { copy(isSubmitting = false) } }
+        if (input.visibility == ShopCheckInVisibility.Public && currentState.submitted) {
+            createdId?.let { refreshPublication(it) }
+        }
+    }
+
+    private suspend fun refreshPublication(checkInId: String) {
+        val status = try { publication.status(checkInId) }
+            catch (cancelled: CancellationException) { throw cancelled }
+            catch (error: Exception) { Result.failure(error) }
+        status.exceptionOrNull()?.let { if (it is CancellationException) throw it }
+        updateState { copy(publication = status.getOrNull() ?: ShopCheckInPublication.Unknown) }
     }
 
     private fun prepareSubmission(): ShopCheckInCreateInput? {
@@ -193,7 +208,7 @@ internal class ShopCheckInCreateViewModel(
         val uncertain = error is ShopCheckInCreationUnconfirmed
         val saved = if (uncertain) true else saveDraft(input, unconfirmed = false)
         val rejection = error as? ShopCheckInRejection
-        updateState { copy(deliveryUnconfirmed = uncertain || !saved,
+        updateState { copy(deliveryUnconfirmed = uncertain, draftFailed = !saved,
             submitFailure = if (uncertain) null else ShopCheckInSubmitFailure(rejection?.status, rejection?.serverMessage)) }
     }
 }

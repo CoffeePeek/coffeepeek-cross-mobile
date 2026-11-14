@@ -7,7 +7,6 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -25,7 +24,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
@@ -39,6 +37,7 @@ import com.coffeepeek.core.designsystem.component.CoffeePeekDialogAction
 import com.coffeepeek.core.designsystem.component.CoffeePeekScaffold
 import com.coffeepeek.core.designsystem.component.CoffeePeekTopBar
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
+import com.coffeepeek.core.designsystem.theme.reducedMotionDuration
 import com.coffeepeek.feature.shelf.api.ShelfPhoto
 import com.coffeepeek.feature.shelf.api.ShelfCamera
 import com.coffeepeek.feature.shelf.api.ShelfGalleryPicker
@@ -62,13 +61,10 @@ internal fun ShelfAddScreen(
         lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) { viewModel.events.collect { currentEvent(it) } }
     }
     val openGallery = gallery({ viewModel.onAction(ShelfAddAction.PhotoPicked(it)) }, { viewModel.onAction(ShelfAddAction.PhotoFailed) })
-    // Screens cross-fade; steps that are one screen (scanning, then the card peeling off) do not. While the scanner is
-    // still being checked (null) the screen stays black like a camera that is starting, so nothing else flashes first.
-    val shown = state.step.takeUnless { it == ShelfAddStep.Intro && state.scanner == ShelfScannerStatus.Checking }
-    AnimatedContent(shown, modifier, transitionSpec = { fadeIn(tween(320)) togetherWith fadeOut(tween(320)) },
-        contentKey = { it?.screen }, label = "shelf-add") { step ->
+    val stepDuration = reducedMotionDuration(320)
+    AnimatedContent(state.step, modifier, transitionSpec = { fadeIn(tween(stepDuration)) togetherWith fadeOut(tween(stepDuration)) },
+        contentKey = { it.screen }, label = "shelf-add") { step ->
         when (step) {
-            null -> Box(Modifier.fillMaxSize().background(Color.Black))
             ShelfAddStep.Camera -> ShelfCameraStep(camera, openGallery, viewModel::onAction, Modifier)
             else -> ShelfAddScreenContent(state, viewModel::onAction, openGallery, step = step)
         }
@@ -146,8 +142,9 @@ private fun ShelfAddStepBody(
     val openCamera = { onAction(ShelfAddAction.OpenCamera) }
     val photo = state.photo
     when {
-        step == ShelfAddStep.Intro || photo == null ->
-            ShelfScanIntro(state.scanner, openCamera, onGallery, { onAction(ShelfAddAction.DownloadScanner) }, modifier)
+        step == ShelfAddStep.Intro || photo == null -> ShelfScanIntro(openCamera, onGallery, modifier)
+        step == ShelfAddStep.Preparing -> ShelfScanPreparation(photo.bytes, state.scanner,
+            { onAction(ShelfAddAction.DownloadScanner) }, openCamera, onGallery, modifier)
         step == ShelfAddStep.Scanning || step == ShelfAddStep.Revealing -> ShelfScanProgress(photo.bytes, state.stagesDone,
             state.liveFrame ?: state.result?.frame, revealing = step == ShelfAddStep.Revealing, onPhotoBounds, modifier)
         step == ShelfAddStep.Retake -> ShelfScanRetake(photo.bytes, state.result?.frame, state.stageOutcomes(), state.failure,

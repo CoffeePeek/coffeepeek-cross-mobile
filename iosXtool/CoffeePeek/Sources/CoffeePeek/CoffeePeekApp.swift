@@ -9,6 +9,7 @@ struct CoffeePeekApp: App {
     @UIApplicationDelegateAdaptor(PushAppDelegate.self) private var pushDelegate
     #endif
     init() {
+        configureCoffeePeekNativeGlass()
         IosNativeMapRegistry.shared.provider = MapLibreMapProvider()
         SocialSignInProvider.shared.configure()
     }

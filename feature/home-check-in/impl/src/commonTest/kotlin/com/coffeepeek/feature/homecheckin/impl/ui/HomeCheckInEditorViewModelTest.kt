@@ -112,6 +112,9 @@ class HomeCheckInEditorViewModelTest {
         rebound.onAction(HomeCheckInEditorAction.Save); runCurrent()
         assertEquals(1, repo.creates.size)
         repo.saveGate!!.complete(Unit); runCurrent()
+        assertNotNull(rebound.state.value.savedEntry)
+        assertFalse(rebound.state.value.isClosed)
+        rebound.onAction(HomeCheckInEditorAction.FinishSaved); runCurrent()
         assertEquals(HomeCheckInEditorEvent.Saved("home", false), rebound.events.first().event)
         assertTrue(rebound.state.value.isClosed)
     }
@@ -219,6 +222,8 @@ class HomeCheckInEditorViewModelTest {
         assertNull(sent.brewMethodCode)
         assertNull(sent.coffeeProductSlug)
         assertTrue(sent.photos.isEmpty())
+        assertNotNull(vm.state.value.savedEntry)
+        vm.onAction(HomeCheckInEditorAction.FinishSaved); runCurrent()
         assertTrue(vm.state.value.isClosed)
         assertEquals(HomeCheckInEditorEvent.Saved("home", false), vm.events.first().event)
     }
@@ -311,6 +316,10 @@ class HomeCheckInEditorViewModelTest {
             HomeCheckInEditorAction.MethodChanged("INVALID"), HomeCheckInEditorAction.Save); runCurrent()
         assertEquals(setOf(HomePreparationField.Dose, HomePreparationField.Duration, HomePreparationField.Method), vm.state.value.fieldErrors.keys)
         assertTrue(repo.creates.isEmpty())
+        val firstAttempt = vm.state.value.saveAttempt
+        vm.onAction(HomeCheckInEditorAction.Save); runCurrent()
+        assertEquals(firstAttempt + 1, vm.state.value.saveAttempt)
+        assertFalse(vm.state.value.isSaving)
         vm.onAction(HomeCheckInEditorAction.DoseChanged("18.001")); runCurrent()
         assertEquals(HomePreparationIssue.DosePrecision, vm.state.value.fieldErrors[HomePreparationField.Dose])
         vm.act(HomeCheckInEditorAction.DoseChanged("18"), HomeCheckInEditorAction.NoteChanged("Note")); runCurrent()
@@ -408,6 +417,7 @@ class HomeCheckInEditorViewModelTest {
         assertEquals(1, catalog.methodsCalls)
         vm.onAction(HomeCheckInEditorAction.Save); runCurrent()
         gate.complete(Unit); runCurrent()
+        vm.onAction(HomeCheckInEditorAction.FinishSaved); runCurrent()
         assertTrue(vm.state.value.isClosed)
         assertTrue(vm.state.value.methods.isEmpty())
     }
@@ -423,6 +433,8 @@ class HomeCheckInEditorViewModelTest {
         assertEquals(1, repo.creates.size)
         assertFalse(vm.state.value.isBeanPickerOpen)
         repo.saveGate!!.complete(Unit); runCurrent()
+        assertNotNull(vm.state.value.savedEntry)
+        vm.onAction(HomeCheckInEditorAction.FinishSaved); runCurrent()
         assertEquals(HomeCheckInEditorEvent.Saved("home", false), vm.events.first().event)
     }
 
@@ -458,6 +470,8 @@ class HomeCheckInEditorViewModelTest {
             val repo = Repository().apply { saveResult = Result.success(entry().copy(visibility = visibility, moderation = HomePreparationModeration.Pending)) }
             val vm = model(repo); runCurrent()
             vm.act(HomeCheckInEditorAction.VisibilityChanged(HomePreparationVisibility.Public), HomeCheckInEditorAction.Save); runCurrent()
+            assertEquals(visibility, vm.state.value.savedEntry?.visibility)
+            vm.onAction(HomeCheckInEditorAction.FinishSaved); runCurrent()
             val event = vm.events.first()
             assertEquals(HomeCheckInEditorEvent.Saved("home", visibility != HomePreparationVisibility.Public), event.event)
             assertTrue(vm.canDeliver(event))
@@ -522,6 +536,7 @@ class HomeCheckInEditorViewModelTest {
         val photos = repo.creates.single().photos
         assertEquals(listOf("third", "first"), photos.map { it.fileName })
         photos.forEach { assertContentEquals(it.fileName.encodeToByteArray(), it.bytes) }
+        vm.onAction(HomeCheckInEditorAction.FinishSaved); runCurrent()
         assertTrue(vm.state.value.isClosed)
     }
 
@@ -552,6 +567,7 @@ class HomeCheckInEditorViewModelTest {
         assertEquals(listOf("second"), repo.creates.single().photos.map { it.fileName })
         assertContentEquals("second".encodeToByteArray(), repo.creates.single().photos.single().bytes)
         assertEquals("Keep note", repo.creates.single().text)
+        vm.onAction(HomeCheckInEditorAction.FinishSaved); runCurrent()
         assertTrue(vm.state.value.isClosed)
     }
 
@@ -609,6 +625,7 @@ class HomeCheckInEditorViewModelTest {
             assertEquals(issue, vm.state.value.saveIssue)
             repo.saveResult = Result.success(entry().copy(visibility = HomePreparationVisibility.Public))
             vm.onAction(HomeCheckInEditorAction.Save); runCurrent()
+            vm.onAction(HomeCheckInEditorAction.FinishSaved); runCurrent()
             assertEquals(HomeCheckInEditorEvent.Saved("home", false), vm.events.first().event)
         }
     }
@@ -617,6 +634,7 @@ class HomeCheckInEditorViewModelTest {
         var allowed = true
         val vm = model(access = { allowed }); runCurrent()
         vm.onAction(HomeCheckInEditorAction.Save); runCurrent()
+        vm.onAction(HomeCheckInEditorAction.FinishSaved); runCurrent()
         val saved = vm.events.first()
         assertTrue(vm.canDeliver(saved)); assertFalse(vm.canDeliver(saved.copy(sessionGeneration = 8)))
         assertFalse(vm.canDeliver(saved.copy(revision = saved.revision - 1)))
@@ -739,6 +757,8 @@ class HomeCheckInEditorViewModelTest {
         val vm = model(repo, analytics = HomeCheckInEditorAnalytics { error("Unavailable metrics SDK") }); runCurrent()
         assertTrue(vm.state.value.isReady)
         vm.act(HomeCheckInEditorAction.NoteChanged("Private"), HomeCheckInEditorAction.Save); runCurrent()
+        assertNotNull(vm.state.value.savedEntry)
+        vm.onAction(HomeCheckInEditorAction.FinishSaved); runCurrent()
         assertTrue(vm.state.value.isClosed)
         assertNull(vm.state.value.saveIssue)
         assertEquals(HomeCheckInEditorEvent.Saved("home", false), vm.events.first().event)

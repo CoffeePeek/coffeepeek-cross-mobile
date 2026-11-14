@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import com.coffeepeek.core.designsystem.component.CoffeePeekTextButton as TextButton
@@ -18,6 +17,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.component.CoffeePeekButton
+import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
@@ -49,7 +49,7 @@ internal fun ShelfScanRetake(
         val tips = outcomes.filter { it.status == ShelfStageStatus.Failed }.flatMap { it.reasons }.take(2).mapNotNull { it.tip() }
         tips.forEach { Text(it, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) }
         CoffeePeekButton(stringResource(Res.string.shelf_retake_camera), onCamera, Modifier.padding(top = CoffeePeekDimens.spacing2),
-            leadingIcon = { Icon(CoffeePeekIcons.Camera, null) })
+            leadingIcon = { CoffeePeekIcon(CoffeePeekIcons.Camera, null) })
         ShelfSecondaryButton(stringResource(Res.string.shelf_retake_gallery), onGallery)
     }
 }

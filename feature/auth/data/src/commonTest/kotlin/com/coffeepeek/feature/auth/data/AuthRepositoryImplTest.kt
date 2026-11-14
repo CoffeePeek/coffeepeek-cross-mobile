@@ -4,6 +4,8 @@ import com.coffeepeek.core.session.Session
 import com.coffeepeek.core.network.HttpStatusFailure
 import com.coffeepeek.core.session.SessionStore
 import com.coffeepeek.feature.auth.api.LocalUserData
+import com.coffeepeek.feature.auth.domain.LoginFailure
+import com.coffeepeek.feature.auth.domain.classifyLoginFailure
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
@@ -118,12 +120,32 @@ class AuthRepositoryImplTest {
     }
 
     @Test fun registrationNormalizesTheEmailAndReportsARejection() = runBlocking {
-        val f = Fixture(null) { _, _ -> ok("""{"isSuccess":true,"data":null}""") }
-        assertTrue(f.repository.register("Coffee User", " USER@Example.com ", "password1").isSuccess)
-        assertEquals("""{"email":"user@example.com","password":"password1","userName":"Coffee User"}""", f.requests.single().body)
+        for (enabled in listOf(true, false)) {
+            val f = Fixture(null) { _, _ -> ok("""{"isSuccess":true,"data":null}""") }
+            assertTrue(f.repository.register("Coffee User", " USER@Example.com ", "password1", enabled).isSuccess)
+            assertEquals("""{"email":"user@example.com","password":"password1","userName":"Coffee User","analyticsEnabled":$enabled}""", f.requests.single().body)
+            f.close()
+        }
         val rejected = Fixture(null) { _, _ -> ok("""{"isSuccess":false,"message":"Email already registered"}""") }
         assertEquals("Email already registered", rejected.repository.register("Coffee User", "user@example.com", "password1").exceptionOrNull()?.message)
-        f.close(); rejected.close()
+        rejected.close()
+    }
+
+    @Test fun passwordLoginDistinguishesTheTwoUnauthorizedResponses() = runBlocking {
+        val cases = mapOf(
+            "Email is not confirmed" to LoginFailure.EmailNotConfirmed,
+            "Invalid credentials" to LoginFailure.WrongCredentials,
+        )
+        for ((message, expected) in cases) {
+            val f = Fixture(null) { _, _ ->
+                val error = """{"isSuccess":false,"message":"$message","errorCode":"UNAUTHORIZED"}"""
+                Triple(HttpStatusCode.Unauthorized, error, emptyMap())
+            }
+            val error = assertNotNull(f.repository.signIn("a@example.com", "secret1").exceptionOrNull())
+            assertEquals(expected, classifyLoginFailure(error.message))
+            assertNull(f.store.peekSession())
+            f.close()
+        }
     }
 
     @Test fun theEmailCheckTreats404AsFreeAndOtherwiseReadsTheEnvelope() = runBlocking {

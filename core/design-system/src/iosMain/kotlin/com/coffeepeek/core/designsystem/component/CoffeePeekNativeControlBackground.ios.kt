@@ -24,7 +24,7 @@ internal actual fun CoffeePeekNativeControlBackground(
     val colors = MaterialTheme.colorScheme
     UIKitView(
         factory = {
-            UIButton.buttonWithConfiguration(glassButtonConfiguration(prominent), null).apply {
+            UIButton.buttonWithConfiguration(coffeePeekGlassButtonConfiguration(prominent), null).apply {
                 userInteractionEnabled = false
                 isAccessibilityElement = false
             }
@@ -38,7 +38,7 @@ internal actual fun CoffeePeekNativeControlBackground(
             button.overrideUserInterfaceStyle = coffeePeekUserInterfaceStyle(colors.background)
             button.backgroundColor = UIColor.clearColor
             button.tintColor = (tint ?: colors.primary).toUIColor()
-            button.configuration = glassButtonConfiguration(prominent).apply {
+            button.configuration = coffeePeekGlassButtonConfiguration(prominent).apply {
                 cornerStyle = UIButtonConfigurationCornerStyleCapsule
                 if (tint != null) baseBackgroundColor = tint.toUIColor()
             }

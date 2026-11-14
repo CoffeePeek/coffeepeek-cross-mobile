@@ -8,7 +8,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.FloatingActionButtonElevation
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.contentColorFor
@@ -41,7 +40,7 @@ fun CoffeePeekFloatingActionButton(
 @Composable
 private fun CoffeePeekFloatingActionButtonPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     Column {
-        CoffeePeekFloatingActionButton({}) { Icon(CoffeePeekIcons.Add, "Add") }
+        CoffeePeekFloatingActionButton({}) { CoffeePeekIcon(CoffeePeekIcons.Add, "Add") }
     }
 }
 

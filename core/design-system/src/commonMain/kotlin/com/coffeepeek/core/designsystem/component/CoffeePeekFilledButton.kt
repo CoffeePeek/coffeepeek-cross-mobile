@@ -29,8 +29,14 @@ fun CoffeePeekFilledButton(
     border: BorderStroke? = null,
     contentPadding: PaddingValues = ButtonDefaults.ContentPadding,
     interactionSource: MutableInteractionSource? = null,
+    useGlass: Boolean = true,
     content: @Composable RowScope.() -> Unit,
 ) {
+    if (!useGlass) {
+        androidx.compose.material3.Button(onClick, modifier, enabled, shape, colors, elevation,
+            border, contentPadding, interactionSource, content)
+        return
+    }
     CoffeePeekGlassButtonSurface(onClick, modifier, enabled, colors, contentPadding,
         interactionSource, CoffeePeekButtonStyle.Filled, shape, border, content)
 }
@@ -40,6 +46,8 @@ private fun CoffeePeekFilledButtonPreview(dark: Boolean) = CoffeePeekTheme(darkT
     Column {
         CoffeePeekFilledButton({}) { Text("Continue") }
         CoffeePeekFilledButton({}, enabled = false) { Text("Continue") }
+        CoffeePeekFilledButton({}, useGlass = false) { Text("Continue") }
+        CoffeePeekFilledButton({}, enabled = false, useGlass = false) { Text("Continue") }
     }
 }
 

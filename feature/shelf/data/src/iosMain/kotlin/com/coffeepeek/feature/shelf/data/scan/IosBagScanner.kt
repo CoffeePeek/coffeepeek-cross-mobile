@@ -55,6 +55,8 @@ private suspend fun <T> scanResult(block: suspend () -> T): Result<T> = try {
     throw cancelled
 } catch (failure: BagScanFailure) {
     Result.failure(failure)
+} catch (_: OutOfMemoryError) {
+    Result.failure(BagScanFailure(BagScanIssue.OutOfMemory))
 } catch (_: Exception) {
     Result.failure(BagScanFailure(BagScanIssue.Failed))
 }

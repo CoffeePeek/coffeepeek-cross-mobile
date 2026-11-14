@@ -70,7 +70,7 @@ private fun operationConstraints(view: UIView, container: UIView, spinner: UIVie
     container.centerXAnchor.constraintEqualToAnchor(view.centerXAnchor),
     container.leadingAnchor.constraintGreaterThanOrEqualToAnchor(view.safeAreaLayoutGuide.leadingAnchor, 16.0),
     container.trailingAnchor.constraintLessThanOrEqualToAnchor(view.safeAreaLayoutGuide.trailingAnchor, -16.0),
-    container.bottomAnchor.constraintEqualToAnchor(view.safeAreaLayoutGuide.bottomAnchor, -(NavMetrics.floatingNavContentClearance + CoffeePeekDimens.spacing4).value.toDouble()),
+    container.bottomAnchor.constraintEqualToAnchor(view.safeAreaLayoutGuide.bottomAnchor, -(NavMetrics.nativeOperationClearance + CoffeePeekDimens.spacing4).value.toDouble()),
     container.widthAnchor.constraintLessThanOrEqualToConstant(440.0),
     container.heightAnchor.constraintGreaterThanOrEqualToConstant(52.0),
     spinner.leadingAnchor.constraintEqualToAnchor(container.leadingAnchor, 20.0),

@@ -43,7 +43,6 @@ import com.coffeepeek.core.designsystem.component.CoffeePeekFilledButton as Butt
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
 import com.coffeepeek.core.designsystem.component.CoffeePeekIconButton as IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -68,6 +67,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
+import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.feature.discovery.impl.ui.compose.component.DiscoveryMapShopCard
@@ -94,14 +94,14 @@ internal fun MapSuggestions(state: MapState, onSelect: (String) -> Unit) {
                         Modifier.fillMaxWidth().heightIn(min = 56.dp).clickable { onSelect(shop.id) }.padding(horizontal = CoffeePeekDimens.spacing4, vertical = CoffeePeekDimens.spacing2),
                         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3),
                     ) {
-                        Icon(CoffeePeekIcons.Location, null, Modifier.size(22.dp), tint = MaterialTheme.colorScheme.primary)
+                        CoffeePeekIcon(CoffeePeekIcons.Location, null, Modifier.size(22.dp), tint = MaterialTheme.colorScheme.primary)
                         Column(Modifier.weight(1f)) {
                             Text(shop.title, style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                             shop.address?.takeIf(String::isNotBlank)?.let {
                                 Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
                             }
                         }
-                        Icon(CoffeePeekIcons.ChevronRight, null, Modifier.size(18.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                        CoffeePeekIcon(CoffeePeekIcons.ChevronRight, null, Modifier.size(18.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                     if (index != state.suggestions.lastIndex) HorizontalDivider(Modifier.padding(start = 56.dp), color = MaterialTheme.colorScheme.outlineVariant)
                 }
@@ -128,7 +128,7 @@ internal fun MapZoomControl(onZoomIn: () -> Unit, onZoomOut: () -> Unit, modifie
 @Composable
 private fun ZoomButton(icon: androidx.compose.ui.graphics.vector.ImageVector, description: StringResource, onClick: () -> Unit) {
     Box(Modifier.fillMaxWidth().height(CoffeePeekDimens.buttonHeight).clickable(onClick = onClick), contentAlignment = Alignment.Center) {
-        Icon(icon, stringResource(description), Modifier.size(22.dp), tint = MaterialTheme.colorScheme.onSurface)
+        CoffeePeekIcon(icon, stringResource(description), Modifier.size(22.dp), tint = MaterialTheme.colorScheme.onSurface)
     }
 }
 
@@ -144,7 +144,7 @@ internal fun MapZoneCard(zone: MapZone, onShowShops: () -> Unit, onDismiss: () -
                     Text(zone.name, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
                     Text(zoneShopCount(zone.shopCount), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
-                IconButton(onDismiss) { Icon(CoffeePeekIcons.Close, stringResource(Res.string.discovery_map_zone_close)) }
+                IconButton(onDismiss) { CoffeePeekIcon(CoffeePeekIcons.Close, stringResource(Res.string.discovery_map_zone_close)) }
             }
             if (zone.description.isNotBlank()) {
                 Text(zone.description, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 3, overflow = TextOverflow.Ellipsis)

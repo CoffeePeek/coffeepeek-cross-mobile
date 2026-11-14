@@ -11,7 +11,6 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Icon
 import com.coffeepeek.core.designsystem.component.CoffeePeekIconButton as IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -84,7 +83,9 @@ private fun PhotoGallery(
     LocalCoffeePeekPhotoViewerPlatform.current.overlay()
     val pager = rememberPagerState(initialPage = initialIndex.coerceIn(0, images.previews.lastIndex), pageCount = { images.previews.size })
     if (prefetch) PrefetchPhotos(images.adjacentPreviewUrls(pager.currentPage), inPhotoViewer = true)
-    CoffeePeekFullScreenDialog(onDismiss) { PhotoViewerContent(images, pager, onDismiss, photo) }
+    CoffeePeekFullScreenDialog(onDismiss, darkSystemBarIcons = false) {
+        PhotoViewerContent(images, pager, onDismiss, photo)
+    }
 }
 
 private class ViewerDismissState {
@@ -151,7 +152,7 @@ private fun BoxScope.PhotoViewerControls(page: Int, count: Int, onDismiss: () ->
     CoffeePeekGlassIconButton(onClick = onDismiss, nativeIcon = CoffeePeekGlassIcon.Close,
         contentDescription = stringResource(Res.string.coffeepeek_viewer_close),
         modifier = Modifier.align(Alignment.TopEnd).padding(CoffeePeekDimens.spacing3)) {
-        Icon(CoffeePeekIcons.Close, null, tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(20.dp))
+        CoffeePeekIcon(CoffeePeekIcons.Close, null, tint = MaterialTheme.colorScheme.onSurface, modifier = Modifier.size(20.dp))
     }
 }
 

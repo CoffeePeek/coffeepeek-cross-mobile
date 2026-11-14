@@ -50,7 +50,7 @@ class ShopCheckInSessionTest {
     @Test fun sameAccountTokenRenewalDoesNotCancelOrRetryTheWrite() = runTest {
         val sessions = CheckInTestSessions()
         val complete = CompletableDeferred<Unit>()
-        val repository = Repository().apply { write = { complete.await(); Result.success(Unit) } }
+        val repository = Repository().apply { write = { complete.await(); Result.success("created-check-in") } }
         val lease = ShopCheckInSession(sessions, repository)
         val result = async { lease.create(input) }
         runCurrent()
@@ -88,7 +88,7 @@ class ShopCheckInSessionTest {
         var notifications = 0
         val sessions = CheckInTestSessions()
         val repository = Repository().apply {
-            write = { sessions.applySession(Session("changed", userId = "other")); Result.success(Unit) }
+            write = { sessions.applySession(Session("changed", userId = "other")); Result.success("created-check-in") }
         }
         val lease = ShopCheckInSession(sessions, repository) { notifications++ }
         assertFailsWith<CancellationException> { lease.create(input) }
@@ -126,12 +126,12 @@ class ShopCheckInSessionTest {
     private class Repository : ShopCheckInRepository {
         var reads = 0
         var writes = 0
-        var write: suspend () -> Result<Unit> = { Result.success(Unit) }
+        var write: suspend () -> Result<String> = { Result.success("created-check-in") }
         override suspend fun getDrinkOptions(): Result<List<ShopConsumedDrinkOption>> {
             reads++
             return Result.success(emptyList())
         }
-        override suspend fun create(input: ShopCheckInCreateInput): Result<Unit> {
+        override suspend fun create(input: ShopCheckInCreateInput): Result<String> {
             writes++
             return write()
         }

@@ -78,7 +78,8 @@ class SettingsPortsTest {
         assertNull(port.observeSelectedCityId().first())
         assertEquals(listOf(SettingsCity("minsk", "Минск"), SettingsCity("grodno", "Гродно")), port.loadCities().getOrThrow())
         assertEquals("minsk", port.observeSelectedCityId().first())
-        assertEquals("minsk", settings.valueOf("selected_city_id"))
+        // The transient fallback stays in memory; the persisted choice is untouched.
+        assertEquals("removed", settings.valueOf("selected_city_id"))
     }
 
     @Test fun aCatalogFailureChangesNothing() = runTest {
@@ -95,7 +96,7 @@ class SettingsPortsTest {
         port.loadCities()
         port.select("grodno"); port.select("")
         assertEquals("grodno", port.observeSelectedCityId().first())
-        await { settings.valueOf("selected_city_id") == "grodno" }
+        assertEquals("grodno", settings.valueOf("manual_city_id"))
     }
 
     // --- account -----------------------------------------------------------------------------------------------------------

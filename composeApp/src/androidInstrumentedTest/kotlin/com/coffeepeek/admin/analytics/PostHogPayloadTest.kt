@@ -26,8 +26,8 @@ class PostHogPayloadTest {
         val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
         var storedConsent = AnalyticsConsent.Unknown
         val store = object : AnalyticsConsentStore {
-            override suspend fun read() = storedConsent
-            override suspend fun write(consent: AnalyticsConsent) { storedConsent = consent }
+            override suspend fun read(userId: String?) = storedConsent
+            override suspend fun write(userId: String?, consent: AnalyticsConsent) { storedConsent = consent }
         }
         val service = AnalyticsService(AnalyticsContext("coffee-peek-android", "sdk-smoke+0", "development"), store, transport, scope, true)
         try {

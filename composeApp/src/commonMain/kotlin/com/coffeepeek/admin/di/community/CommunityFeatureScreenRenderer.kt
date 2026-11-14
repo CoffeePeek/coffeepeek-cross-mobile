@@ -1,6 +1,7 @@
 package com.coffeepeek.admin.di.community
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.foundation.layout.padding
 import com.coffeepeek.admin.analytics.TrackFeedViewed
@@ -13,7 +14,6 @@ import com.coffeepeek.core.designsystem.component.CoffeePeekPhotoViewer
 import com.coffeepeek.admin.ui.component.LocalFloatingNavClearance
 import com.coffeepeek.core.designsystem.component.CoffeePeekPhotoViewerImages
 import com.coffeepeek.admin.ui.component.rememberReviewDisplayDate
-import com.coffeepeek.admin.ui.screen.checkins.CheckInCreateHost
 import com.coffeepeek.core.designsystem.component.CoffeePeekImage
 import com.coffeepeek.core.media.PrefetchListPhotos
 import com.coffeepeek.admin.utils.ShareHelper
@@ -28,10 +28,11 @@ import com.coffeepeek.feature.community.api.CommunityAnalytics
 import com.coffeepeek.feature.community.api.ConsumedDrinks
 import com.coffeepeek.feature.community.domain.repository.CommunityRepository
 
-/** Both platforms use one migrated feed; navigation, protected media, analytics and the global creation flow remain app-owned. */
+/** Both platforms use one migrated feed; navigation, protected media and analytics remain app-owned. */
 internal class FeatureCommunityScreenRenderer(private val entry: CommunityEntry) : CommunityScreenRenderer {
     @Composable
-    override fun Content(onCreateCheckIn: () -> Unit, notificationsAction: @Composable () -> Unit) {
+    override fun Content(notificationsAction: @Composable () -> Unit,
+        onRefreshChange: ((() -> Unit)?) -> Unit) {
         entry.Content(
             onSignIn = { Navigator.navigate(Navigator.Screen.Auth) },
             onOpenAuthor = { slug, name, avatar -> Navigator.navigate(Navigator.Screen.UserProfile(slug, name, avatar)) },
@@ -43,10 +44,10 @@ internal class FeatureCommunityScreenRenderer(private val entry: CommunityEntry)
             headerAction = notificationsAction,
             bottomClearance = LocalFloatingNavClearance.current,
             floatingAction = { floating ->
-                CheckInCreateHost(
-                    canCreate = { floating.isLoggedIn == true }, resetKey = floating.sessionGeneration,
-                    onShop = onCreateCheckIn, onHomeSaved = floating.refresh,
-                )
+                DisposableEffect(floating.refresh) {
+                    onRefreshChange(floating.refresh)
+                    onDispose { onRefreshChange(null) }
+                }
             },
         )
     }

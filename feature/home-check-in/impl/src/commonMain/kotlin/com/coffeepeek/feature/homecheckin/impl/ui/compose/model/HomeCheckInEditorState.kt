@@ -12,6 +12,8 @@ internal data class HomeCheckInEditorState(
     val isLoading: Boolean = false,
     val loadIssue: HomePreparationIssue? = null,
     val isSaving: Boolean = false,
+    /** Advances even when the same validation error repeats, so the modal can release its save gate. */
+    val saveAttempt: Long = 0L,
     val saveIssue: HomePreparationIssue? = null,
     val failedOperation: HomePreparationOperation? = null,
     val fieldErrors: Map<HomePreparationField, HomePreparationIssue> = emptyMap(),
@@ -27,6 +29,9 @@ internal data class HomeCheckInEditorState(
     val shelfBags: List<HomeCheckInShelfBag> = emptyList(),
     /** The chosen bag's card for the "show the bag" switch; null hides the switch (no bag, or a bag without a card). */
     val shelfBagCardUrl: String? = null,
+    /** Accepted server response shown before leaving the editor; carries confirmed publication state. */
+    val savedEntry: HomePreparation? = null,
+    val savedVisibilityUnconfirmed: Boolean = false,
     val isClosed: Boolean = false,
     val isAccessRevoked: Boolean = false,
 )

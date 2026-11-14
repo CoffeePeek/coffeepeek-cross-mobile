@@ -46,7 +46,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import com.coffeepeek.core.designsystem.component.CoffeePeekScaffold as Scaffold
 import com.coffeepeek.core.designsystem.component.CoffeePeekOutlinedButton as OutlinedButton
@@ -73,6 +72,7 @@ import com.coffeepeek.core.designsystem.component.CoffeePeekContentCard
 import com.coffeepeek.core.designsystem.component.CoffeePeekIconBadge
 import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
 import com.coffeepeek.core.designsystem.component.CoffeePeekTopBar
+import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekColors
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
@@ -137,7 +137,7 @@ private fun RequestBody(request: ChangeRequest, onOpenShop: (String) -> Unit) {
             onClick = { onOpenShop(request.shopSlug) }, enabled = request.shopSlug.isNotBlank(),
             modifier = Modifier.fillMaxWidth().height(CoffeePeekDimens.buttonHeight), shape = RoundedCornerShape(percent = 50),
         ) {
-            Icon(CoffeePeekIcons.Coffee, contentDescription = null, modifier = Modifier.size(18.dp))
+            CoffeePeekIcon(CoffeePeekIcons.Coffee, contentDescription = null, modifier = Modifier.size(18.dp))
             Spacer(Modifier.width(CoffeePeekDimens.spacing2))
             Text(stringResource(Res.string.contributions_request_open_shop))
         }
@@ -162,7 +162,7 @@ private fun Hero(request: ChangeRequest) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             StatusPill(request.status, Modifier.padding(vertical = CoffeePeekDimens.spacing1))
             Spacer(Modifier.weight(1f))
-            Icon(CoffeePeekIcons.Calendar, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(16.dp))
+            CoffeePeekIcon(CoffeePeekIcons.Calendar, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(16.dp))
             Spacer(Modifier.width(CoffeePeekDimens.spacing1))
             Text(localDateTime(request.createdAtUtc), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
@@ -175,7 +175,7 @@ private fun Rejection(reason: String) {
         Modifier.fillMaxWidth().clip(RoundedCornerShape(CoffeePeekDimens.radiusLg)).background(MaterialTheme.colorScheme.error.copy(alpha = 0.09f)).padding(CoffeePeekDimens.spacing4),
         horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3), verticalAlignment = Alignment.Top,
     ) {
-        Icon(CoffeePeekIcons.Error, contentDescription = null, tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(22.dp))
+        CoffeePeekIcon(CoffeePeekIcons.Error, contentDescription = null, tint = MaterialTheme.colorScheme.error, modifier = Modifier.size(22.dp))
         Column {
             Text(stringResource(Res.string.contributions_request_rejection), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.error)
             Spacer(Modifier.height(CoffeePeekDimens.spacing1))
@@ -242,7 +242,7 @@ private fun ContactsContent(contacts: Contacts?) {
 private fun ValueRow(icon: ImageVector, label: StringResource, value: String?) {
     val text = value?.takeIf(String::isNotBlank)
     Row(verticalAlignment = Alignment.CenterVertically) {
-        Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
+        CoffeePeekIcon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
         Spacer(Modifier.width(CoffeePeekDimens.spacing3))
         Column(Modifier.weight(1f)) {
             Text(stringResource(label), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)

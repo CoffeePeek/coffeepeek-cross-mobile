@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
@@ -27,6 +26,7 @@ import androidx.compose.ui.Modifier
 import org.jetbrains.compose.resources.stringResource
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.modifier.CoffeePeekGlassIconButton
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
@@ -39,6 +39,7 @@ import com.coffeepeek.feature.discovery.api.MapOpeningHours
 import com.coffeepeek.feature.discovery.api.MapShopDetails
 import com.coffeepeek.feature.discovery.domain.model.Coordinates
 import com.coffeepeek.feature.discovery.domain.model.MapMarker
+import com.coffeepeek.feature.discovery.impl.ui.compose.component.MapHeatmapButton
 
 @Composable
 internal fun androidx.compose.foundation.layout.BoxScope.MapOverlayControls(
@@ -52,7 +53,14 @@ internal fun androidx.compose.foundation.layout.BoxScope.MapOverlayControls(
 
 @Preview
 @Composable
-private fun MapOverlayControlsPreview() = CoffeePeekTheme {
+private fun MapOverlayControlsPreview() = MapOverlayControlsPreviewContent(false)
+
+@Preview
+@Composable
+private fun MapOverlayControlsDarkPreview() = MapOverlayControlsPreviewContent(true)
+
+@Composable
+private fun MapOverlayControlsPreviewContent(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     val shop = MapMarker("preview", "CoffeePeek Specialty Coffee", Coordinates(53.9, 27.56))
     val details = MapShopDetails(null, 4.5, 12, true, MapOpeningHours(false, "09:00", "21:00"))
     val state = MapState(carouselShops = listOf(shop), cardDetails = mapOf(shop.id to details))
@@ -66,7 +74,6 @@ private fun MapOverlayControlsPreview() = CoffeePeekTheme {
 
 @Composable
 private fun androidx.compose.foundation.layout.BoxScope.MapPositionControls(state: MapState, bottomClearance: Dp, carouselHeight: Dp, onAction: (MapAction) -> Unit) {
-    MapZoomControl({ onAction(MapAction.ZoomIn) }, { onAction(MapAction.ZoomOut) }, Modifier.align(Alignment.CenterEnd).padding(end = CoffeePeekDimens.spacing4))
     val controlsBottom = bottomClearance + when {
         state.selectedZone != null -> 180.dp
         state.hasCarousel -> carouselHeight + CoffeePeekDimens.spacing4 * 2
@@ -76,12 +83,14 @@ private fun androidx.compose.foundation.layout.BoxScope.MapPositionControls(stat
         Modifier.align(Alignment.BottomEnd).padding(end = CoffeePeekDimens.spacing4, bottom = controlsBottom),
         verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2), horizontalAlignment = Alignment.End,
     ) {
+        MapZoomControl({ onAction(MapAction.ZoomIn) }, { onAction(MapAction.ZoomOut) })
+        MapHeatmapButton(state.showHeatmap) { onAction(MapAction.ToggleHeatmap) }
         val zones = stringResource(if (state.showZones) Res.string.discovery_map_zones_hide else Res.string.discovery_map_zones_show)
         CoffeePeekGlassIconButton({ onAction(MapAction.ToggleZones) }, zones) {
-            Icon(CoffeePeekIcons.Polygon, null, Modifier.size(26.dp), tint = if (state.showZones) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface)
+            CoffeePeekIcon(CoffeePeekIcons.Polygon, null, Modifier.size(26.dp), tint = if (state.showZones) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface)
         }
         CoffeePeekGlassIconButton({ onAction(MapAction.RequestMyLocation) }, stringResource(Res.string.discovery_map_my_location), Modifier.size(CoffeePeekDimens.buttonHeight + 4.dp)) {
-            Icon(CoffeePeekIcons.Navigation, null, Modifier.size(32.dp))
+            CoffeePeekIcon(CoffeePeekIcons.Navigation, null, Modifier.size(32.dp))
         }
     }
 }

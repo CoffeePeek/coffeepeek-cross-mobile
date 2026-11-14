@@ -126,3 +126,36 @@ invocation could not connect to a Gradle daemon. The in-process retry passed.
 No device was used. Manual light and dark checks of profile tabs, scan
 return, dragging, archive undo and visibility remain open, as does the
 native iOS build.
+
+## Profile calendar and feed scrolling — 2026-11-13
+
+The profile header moves between the ordinary scroll container and the
+editable shelf with its existing composition. Switching tabs preserves the
+week calendar and its lifecycle observer. The Community feed uses the list's
+scroll direction to collapse and reveal the header with its notification button.
+
+Verified on Windows from `a8e9ffa60` plus the local changes. Both Android
+variants assembled and passed packaged DEX verification. Sandbox isolation and
+the function body limits check passed.
+
+| JVM unit suite | Suites | Tests | Failures / errors / skips |
+|---|---:|---:|---:|
+| Profile impl | 7 | 72 | 0 / 0 / 0 |
+| Check-in history impl | 8 | 82 | 0 / 0 / 0 |
+| Community impl | 4 | 51 | 0 / 0 / 0 |
+
+Manual checks used `directSandbox` (`com.coffeepeek.sandbox`,
+`1.1.10.2936-sandbox`) on the API 37 Pixel 8 AVD (`emulator-5554`).
+The calendar retained seven accessible days after repeated tab changes, including
+on the narrow shelf. Opening history and pressing Back returned to the selected
+shelf. The feed title and notification button left the accessibility tree when
+collapsed and returned on reverse scrolling before reaching the top. The checks
+covered light and dark themes, plus a 320 dp window with 1.3× text. The first
+dark reverse gesture was inconclusive. A longer reverse gesture confirmed the
+header had returned while the second post was still at the top of the viewport.
+
+The first Gradle invocation could not write the wrapper lock in the sandbox.
+The next invocation reached and passed the Android build and test tasks. Common
+metadata compilation stopped in the existing iOS design-system source with
+`Unresolved reference 'animateWithDuration'` in `CoffeePeekPlatformSegments.ios.kt`.
+Native iOS behavior and live-backend checks remain open.

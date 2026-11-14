@@ -4,6 +4,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.asPaddingValues
@@ -47,6 +49,7 @@ import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
+import com.coffeepeek.core.designsystem.theme.reducedMotionDuration
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.feature.shop.domain.model.ShopCheckIn
 import com.coffeepeek.feature.shop.domain.model.ShopCoffeeDetails
@@ -105,7 +108,6 @@ internal fun ShopDetailScreen(
     onEvent: (ShopDetailEvent) -> Unit,
     sessionGeneration: Int,
     formatDistance: (Double, Double) -> String? = { _, _ -> null },
-    forCheckIn: Boolean = false,
     formatCheckInDate: (String) -> String = { it.take(10) },
     formatMenuDate: (String) -> String = ::formatShopMenuDate,
     refreshGeneration: Long = 0,
@@ -140,7 +142,7 @@ internal fun ShopDetailScreen(
         ShopDetailScreenContent(visibleState, { action ->
             trackShopAction(action, visibleState, analytics)
             viewModel.onAction(action)
-        }, distance, forCheckIn,
+        }, distance,
             formatCheckInDate, formatMenuDate, snackbarHostState)
     }
 }
@@ -185,7 +187,6 @@ internal fun ShopDetailScreenContent(
     state: ShopDetailState,
     onAction: (ShopDetailAction) -> Unit,
     distanceLabel: String? = null,
-    forCheckIn: Boolean = false,
     formatCheckInDate: (String) -> String = { it.take(10) },
     formatMenuDate: (String) -> String = ::formatShopMenuDate,
     snackbarHostState: SnackbarHostState = remember { SnackbarHostState() },
@@ -201,7 +202,7 @@ internal fun ShopDetailScreenContent(
         ShopDetailScaffold(state, onAction, distanceLabel, formatCheckInDate, formatMenuDate,
             snackbarHostState, listState, hazeState, floatingActionsClearance)
         ShopDetailScrollingActions(state, listState, onAction, hazeState)
-        ShopDetailBottomAction(state, forCheckIn, onAction, hazeState, Modifier.align(Alignment.BottomCenter))
+        ShopDetailBottomAction(state, onAction, hazeState, Modifier.align(Alignment.BottomCenter))
     }
 }
 
@@ -215,10 +216,13 @@ private fun ShopDetailScaffold(
         snackbarHost = { SnackbarHost(snackbarHostState, Modifier.navigationBarsPadding().padding(bottom = clearance)) },
         containerColor = MaterialTheme.colorScheme.background) { insets ->
         Box(Modifier.fillMaxSize().padding(insets).consumeWindowInsets(insets), contentAlignment = Alignment.Center) {
-            val details = state.details
-            if (details == null) ShopDetailLoadState(state.isLoading, onRetry = { onAction(ShopDetailAction.Retry) })
-            else ShopDetailList(details, state, onAction, distanceLabel, formatCheckInDate, formatMenuDate,
-                listState, clearance)
+            val currentDetails = state.details
+            Crossfade(targetState = currentDetails == null,
+                animationSpec = tween(reducedMotionDuration(220)), label = "shop-status") { empty ->
+                if (empty || currentDetails == null) ShopDetailLoadState(state.isLoading, onRetry = { onAction(ShopDetailAction.Retry) })
+                else ShopDetailList(currentDetails, state, onAction, distanceLabel, formatCheckInDate, formatMenuDate,
+                    listState, clearance)
+            }
         }
     }
 }
@@ -318,14 +322,12 @@ private fun ShopDetailCheckIns(details: ShopDetails, state: ShopDetailState,
 }
 
 @Composable
-private fun ShopDetailBottomAction(state: ShopDetailState, forCheckIn: Boolean,
+private fun ShopDetailBottomAction(state: ShopDetailState,
     onAction: (ShopDetailAction) -> Unit, hazeState: HazeState, modifier: Modifier) {
     val overview = state.details?.overview ?: return
     ShopDetailBottomBar(canOpenRoute = overview.latitude != null && overview.longitude != null,
-        forCheckIn = forCheckIn,
         onRoute = { onAction(ShopDetailAction.OpenRoute) },
         onCheckIn = { onAction(ShopDetailAction.OpenCheckIn) },
-        onChooseAnotherShop = { onAction(ShopDetailAction.ChooseAnotherShop) },
         modifier = modifier, hazeState = hazeState)
 }
 
@@ -393,14 +395,6 @@ private fun ShopDetailHeader(
 @Preview @Composable private fun ShopDetailScreenDarkPreview() = CoffeePeekTheme(darkTheme = true) {
     ShopDetailScreenContent(previewState().copy(scheduleExpanded = true, featuresExpanded = true),
         onAction = {}, distanceLabel = "350 м")
-}
-
-@Preview @Composable private fun ShopDetailPickerLightPreview() = CoffeePeekTheme(darkTheme = false) {
-    ShopDetailScreenContent(previewState(), onAction = {}, forCheckIn = true)
-}
-
-@Preview @Composable private fun ShopDetailPickerDarkPreview() = CoffeePeekTheme(darkTheme = true) {
-    ShopDetailScreenContent(previewState(), onAction = {}, forCheckIn = true)
 }
 
 @Preview @Composable private fun ShopDetailLoadingLightPreview() = CoffeePeekTheme(darkTheme = false) {

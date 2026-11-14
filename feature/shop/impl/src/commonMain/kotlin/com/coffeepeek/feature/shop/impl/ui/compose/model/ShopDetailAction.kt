@@ -18,7 +18,6 @@ internal sealed interface ShopDetailAction {
     data object OpenRoute : ShopDetailAction
     data object OpenCheckIn : ShopDetailAction
     data object OpenCheckIns : ShopDetailAction
-    data object ChooseAnotherShop : ShopDetailAction
     data object ReportShop : ShopDetailAction
     data object OpenPriceInfo : ShopDetailAction
     data object DismissPriceInfo : ShopDetailAction

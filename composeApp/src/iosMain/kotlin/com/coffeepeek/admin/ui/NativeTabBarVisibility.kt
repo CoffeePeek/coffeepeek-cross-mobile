@@ -1,5 +1,8 @@
+@file:OptIn(kotlinx.cinterop.ExperimentalForeignApi::class)
+
 package com.coffeepeek.admin.ui
 
+import platform.Foundation.NSSelectorFromString
 import platform.UIKit.UINavigationController
 import platform.UIKit.UITabBarController
 import platform.UIKit.hidesBottomBarWhenPushed
@@ -8,9 +11,11 @@ import platform.UIKit.hidesBottomBarWhenPushed
 internal class NativeTabBarVisibility(
     tabs: UITabBarController,
     discoveryNavigation: UINavigationController,
+    visibilityChanged: (Boolean) -> Unit = {},
 ) {
     private var tabs: UITabBarController? = tabs
     private var discoveryNavigation: UINavigationController? = discoveryNavigation
+    private var onVisibilityChanged: ((Boolean) -> Unit)? = visibilityChanged
     private var mapExpanded = false
 
     fun onMapExpandedChange(expanded: Boolean) {
@@ -27,7 +32,12 @@ internal class NativeTabBarVisibility(
         val expandedMapVisible = mapExpanded && navigation == discoveryNavigation &&
             top == navigation.viewControllers.firstOrNull()
         val hidden = expandedMapVisible || top?.hidesBottomBarWhenPushed == true
-        tabs.setTabBarHidden(hidden, animated = false)
+        onVisibilityChanged?.invoke(!hidden)
+        if (tabs.respondsToSelector(NSSelectorFromString("setTabBarHidden:animated:"))) {
+            tabs.setTabBarHidden(hidden, animated = false)
+        } else {
+            tabs.tabBar.hidden = hidden
+        }
         navigation.viewControllers.forEach { (it as? NativeScreenController)?.syncBottomClearance(hidden) }
     }
 
@@ -35,5 +45,6 @@ internal class NativeTabBarVisibility(
         // Root content captures this callback; break its reference back to the UIKit tree.
         tabs = null
         discoveryNavigation = null
+        onVisibilityChanged = null
     }
 }

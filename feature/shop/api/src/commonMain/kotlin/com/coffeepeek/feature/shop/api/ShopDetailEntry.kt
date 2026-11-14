@@ -8,7 +8,6 @@ interface ShopDetailEntry {
     fun Content(
         shopId: String,
         sessionGeneration: Int,
-        forCheckIn: Boolean,
         formatCheckInDate: (String) -> String,
         formatMenuDate: (String) -> String,
         formatDistance: (latitude: Double, longitude: Double) -> String?,

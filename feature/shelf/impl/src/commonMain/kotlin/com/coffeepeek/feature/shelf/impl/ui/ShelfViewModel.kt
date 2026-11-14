@@ -13,6 +13,8 @@ import com.coffeepeek.feature.shelf.impl.ui.data.ShelfCalendar
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 private const val ARRIVAL_HIGHLIGHT_MILLIS = 5_000L
 
@@ -27,7 +29,8 @@ internal class ShelfViewModel(
     private val arrivals: ShelfArrivals,
     private val handoff: ShelfBagHandoff,
 ) : MviViewModel<ShelfState, ShelfAction, ShelfEvent>(ShelfState(today = calendar.today())) {
-    private val busyBags = mutableSetOf<String>()
+    private val bagLocks = mutableMapOf<String, kotlinx.coroutines.sync.Mutex>()
+    private val bagLocksMutex = Mutex()
     private var arrivalHighlight: Job? = null
 
     init {
@@ -75,7 +78,8 @@ internal class ShelfViewModel(
 
     private suspend fun refresh() {
         if (currentState.loading) return
-        updateState { copy(loading = true, loadFailed = false) }
+        // An already loaded shelf refreshes silently; the spinner is only for the first load.
+        updateState { copy(loading = !loaded, loadFailed = false) }
         val failure = repository.refresh().exceptionOrNull()
         val issue = failure?.let(::issueOf)
         updateState {
@@ -124,10 +128,10 @@ internal class ShelfViewModel(
         write(id) { repository.restore(id, position).onFailure(::fail) }
     }
 
-    /** Ignores a second write to the same bag while the first is still running. */
+    /** Serializes writes per bag: a second request waits instead of being dropped silently. */
     private suspend fun write(id: String, block: suspend () -> Unit) {
-        if (!busyBags.add(id)) return
-        try { block() } finally { busyBags.remove(id) }
+        val lock = bagLocksMutex.withLock { bagLocks.getOrPut(id) { Mutex() } }
+        lock.withLock { block() }
     }
 
     private fun fail(error: Throwable) = updateState { copy(message = ShelfMessage.Failed(issueOf(error))) }

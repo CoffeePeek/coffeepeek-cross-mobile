@@ -1,12 +1,12 @@
 package com.coffeepeek.feature.shop.impl.ui.compose.component
 
-import androidx.compose.material3.Icon
 import com.coffeepeek.core.designsystem.component.CoffeePeekPlainIconButton as IconButton
 import androidx.compose.material3.MaterialTheme
 import com.coffeepeek.core.designsystem.component.CoffeePeekActionMenu
 import com.coffeepeek.core.designsystem.component.CoffeePeekMenuAction
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.shop.impl.resources.Res
@@ -27,7 +27,7 @@ internal fun ShopCheckInActions(onReport: (() -> Unit)?, modifier: Modifier = Mo
     }
     CoffeePeekActionMenu(actions, modifier) { open ->
         IconButton(onClick = open) {
-            Icon(CoffeePeekIcons.MoreHorizontal, stringResource(Res.string.shop_checkins_actions),
+            CoffeePeekIcon(CoffeePeekIcons.MoreHorizontal, stringResource(Res.string.shop_checkins_actions),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }

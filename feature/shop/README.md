@@ -229,7 +229,7 @@ state cannot overwrite or clear a replacement draft. The date formatter retains
 the existing local-calendar-day to UTC conversion. The Android photo port reuses
 the existing URI/JPEG/camera-permission pipeline, caps delivered photos at the
 remaining five-photo allowance, and disables submission during processing.
-The Android form is active from both normal detail and `forCheckIn` mode.
+The check-in form opens from shop detail and from the direct editor route after place selection.
 Guests retain the existing Auth route. Opening the new form does not load the
 legacy drink catalog or open a second legacy draft. Accepted submission refreshes
 detail without hiding confirmation; feed/history callbacks use the existing
@@ -273,7 +273,7 @@ The Android detail source switch represents the current interactions:
 check-in cards and full list, helpful/report ownership rules,
 guest visibility, check-in draft/submission/results, report/suggest/share/map
 bridges, distance/type/price information, and live favorite observation.
-Keep the existing picker route and its `forCheckIn` mode working. Do not connect
+The picker opens the editor directly; the old `forCheckIn` detail mode is retired. Do not connect
 legacy review forms merely because they were prepared before the backend/UI
 change. Viewer/session and device-time providers stay application-owned. Verify
 the active flows on device before releasing this renderer switch. iOS
