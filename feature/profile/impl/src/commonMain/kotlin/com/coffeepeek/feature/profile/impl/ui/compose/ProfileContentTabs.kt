@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.padding
@@ -51,7 +52,14 @@ internal fun ProfileContentTabs(
             ownerShelf?.onOpened?.invoke()
         }
     }
-    val scroll = rememberScrollState()
+    // Each text tab keeps its own scroll position; leaving for the shelf (which owns its
+    // scroll container) must not send the others back to the top.
+    val scrolls = remember(stateKey) {
+        val map = mutableMapOf<ProfileContentTab, ScrollState>()
+        ProfileContentTab.entries.forEach { tab -> map[tab] = ScrollState(0) }
+        map
+    }
+    val scroll = scrolls.getValue(selected)
     val select: (ProfileContentTab) -> Unit = { selectedName = it.name }
     // The editable shelf owns its scroll container. Move the header with its calendar state and effects.
     val tabHeader = remember(stateKey) {
