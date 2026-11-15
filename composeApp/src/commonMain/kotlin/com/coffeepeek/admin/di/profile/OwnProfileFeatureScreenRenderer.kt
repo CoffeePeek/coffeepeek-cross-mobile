@@ -1,5 +1,18 @@
 package com.coffeepeek.admin.di.profile
 
+import coffeepeek.composeapp.generated.resources.profile_collections_cancel
+import coffeepeek.composeapp.generated.resources.profile_collections_settings
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
+import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
+import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
+import com.coffeepeek.core.designsystem.component.CoffeePeekSwipeDismissModalBottomSheet
+import com.coffeepeek.core.designsystem.component.CoffeePeekIconButton
+import androidx.compose.ui.Alignment
+import androidx.compose.foundation.layout.Row
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.foundation.layout.Box
@@ -107,10 +120,22 @@ internal fun featureOwnProfileScreenRenderer(
 private fun ownProfileSlots(activity: FeatureProfileActivityRenderer) = OwnProfileSlots(
     shared = profileSlots(),
     favoritesPreview = { _, _, header ->
+        // Like the shelf: the settings button sits next to the section title and opens the
+        // collection preferences in a bottom sheet.
+        var preferencesOpen by rememberSaveable { mutableStateOf(false) }
         Column {
-            Box(Modifier.padding(horizontal = 16.dp)) { header() }
+            Row(Modifier.padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) {
+                Box(Modifier.weight(1f)) { header() }
+                CoffeePeekIconButton({ preferencesOpen = true }) {
+                    CoffeePeekIcon(CoffeePeekIcons.Settings, stringResource(Res.string.profile_collections_settings))
+                }
+            }
             ProfileOwnerCollection()
         }
+        if (preferencesOpen) CoffeePeekSwipeDismissModalBottomSheet(
+            onDismissRequest = { preferencesOpen = false },
+            dismissDescription = stringResource(Res.string.profile_collections_cancel),
+        ) { ProfileDisplayPreferences() }
     },
     activityCalendar = { openShop, openCheckIns -> activity.Calendar(openShop, openCheckIns) },
     activityPreview = { onClick -> activity.Week(onClick) },

@@ -1,4 +1,6 @@
 <resources>
+    <string name="profile_collections_cancel">Адмена</string>
+    <string name="profile_collections_settings">Налады падборак</string>
     <string name="check_in_create_close">Закрыць</string>
     <string name="history_home_visibility_unconfirmed">Чэкін захаваны, але сервер не пацвердзіў выбраную бачнасць. Яе можна паўторна змяніць праз рэдагаванне гэтага запісу.</string>
     <string name="history_session_unavailable">Не ўдалося праверыць сесію. Гісторыя акаўнта схаваная; паспрабуйце яшчэ раз.</string>

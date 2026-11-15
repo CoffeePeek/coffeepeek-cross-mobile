@@ -8,14 +8,10 @@ import org.koin.compose.koinInject
 
 @Composable
 internal fun ProfileOwnerCollection() {
-    val collections = koinInject<CollectionsEntry>()
-    val signIn = { Navigator.navigate(Navigator.Screen.Auth) }
-    collections.OwnerProfile(
+    koinInject<CollectionsEntry>().OwnerProfile(
         onOpenCollection = { Navigator.navigate(Navigator.Screen.CollectionEditor(it)) },
-        onSignIn = signIn,
-        modifier = Modifier,
-        preferenceSettings = { collections.ProfilePreference(signIn, Modifier) },
-    )
+        onSignIn = { Navigator.navigate(Navigator.Screen.Auth) },
+        modifier = Modifier)
 }
 
 internal fun openProfileCollections() {
