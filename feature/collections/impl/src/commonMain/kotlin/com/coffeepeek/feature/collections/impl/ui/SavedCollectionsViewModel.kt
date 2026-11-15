@@ -34,7 +34,9 @@ internal class SavedCollectionsViewModel(private val saved: SavedCollectionsRepo
 
     override suspend fun handleActionInternal(action: SavedCollectionsAction) {
         when (action) {
-            SavedCollectionsAction.Reload -> if (!currentState.busy && !currentState.loading) reload(force = true)
+            // An ON_RESUME tap re-reads the local source; the network fetch happens on the
+            // first load, after a failure, or on pull-to-refresh — not on every tab entry.
+            SavedCollectionsAction.Reload -> if (!currentState.busy && !currentState.loading) reload(force = !currentState.listsLoaded)
             SavedCollectionsAction.Back -> back()
             SavedCollectionsAction.SignIn -> sendEvent(SavedCollectionsEvent.SignIn)
             SavedCollectionsAction.Save -> save()

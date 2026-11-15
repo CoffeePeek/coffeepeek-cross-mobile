@@ -72,7 +72,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
 import com.coffeepeek.core.designsystem.component.CoffeePeekTopBar
-import com.coffeepeek.core.designsystem.component.CoffeePeekGroupSection
 import com.coffeepeek.core.designsystem.component.rememberCoffeePeekSyncedText
 import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
@@ -164,10 +163,6 @@ internal fun EditProfileScreenContent(
                 Spacer(Modifier.height(CoffeePeekDimens.spacing4))
                 EditProfileAbout(state, onAction)
                 Spacer(Modifier.height(CoffeePeekDimens.spacing4))
-                CoffeePeekGroupSection(title = stringResource(Res.string.profile_edit_display_preferences)) {
-                    slots.displayPreferences()
-                }
-                Spacer(Modifier.height(CoffeePeekDimens.spacing6))
                 SaveProfileButton(state) { onAction(EditProfileAction.Save) }
                 Spacer(Modifier.height(CoffeePeekDimens.spacing4))
                 DeleteAccountButton(!state.isSaving, onDeleteAccount)
@@ -283,18 +278,9 @@ private fun EditProfileScreenPreview(dark: Boolean) {
     CoffeePeekTheme(darkTheme = dark) {
         EditProfileScreenContent(
             state = EditProfileState(username = "coffee_lover", originalUsername = "coffee_lover", isLoading = false),
-            slots = EditProfileSlots(image = { _, _, _ -> }, pickedAvatar = { _, _ -> }, photoPicker = { _, _, _, _, _ -> },
-                displayPreferences = { EditProfileDisplayPreferencesPreview() }),
+            slots = EditProfileSlots(image = { _, _, _ -> }, pickedAvatar = { _, _ -> }, photoPicker = { _, _, _, _, _ -> }),
             photoLoading = false, onAction = {}, onBack = {}, onPickAvatar = {}, onDeleteAccount = {},
         )
-    }
-}
-
-@Composable
-private fun EditProfileDisplayPreferencesPreview() {
-    Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text(stringResource(Res.string.profile_section_favorites), style = MaterialTheme.typography.bodyLarge)
-        Text(stringResource(Res.string.profile_edit_display_shelf), style = MaterialTheme.typography.bodyLarge)
     }
 }
 

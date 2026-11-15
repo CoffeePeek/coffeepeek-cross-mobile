@@ -20,7 +20,7 @@ import kotlinx.coroutines.flow.collectLatest
 internal fun SavedCollectionsScreen(model: SavedCollectionsViewModel, saved: SavedCollectionsRepository,
     snapshots: CollectionsRepository, decode: CollectionPhotoDecoder, picker: CollectionCoverPicker,
     callbacks: CollectionsCallbacks, openEditor: (String?) -> Unit, openCollection: (String) -> Unit, modifier: Modifier,
-    profilePreview: Boolean = false) {
+    profilePreview: Boolean = false, preferenceSettings: (@Composable () -> Unit)? = null) {
     val state by model.state.collectAsStateWithLifecycle()
     val actions = model::onAction
     val currentCallbacks by rememberUpdatedState(callbacks)
@@ -42,7 +42,9 @@ internal fun SavedCollectionsScreen(model: SavedCollectionsViewModel, saved: Sav
     if (state.preview) SavedCollectionPoster(state, actions, snapshots, decode, modifier)
     else if (profilePreview) SavedCollectionOwnerProfile(state, actions, openCollection, modifier) { value, m -> image(value, m) }
     else when (state.mode) {
-        SavedCollectionsMode.Library -> SavedCollectionsLibrary(state, actions, modifier) { value, m -> image(value, m) }
+        SavedCollectionsMode.Library -> SavedCollectionsLibrary(state, actions, modifier,
+            image = { value, m -> image(value, m) },
+            preferenceSettings = preferenceSettings.takeIf { state.signedIn })
         SavedCollectionsMode.Editor -> SavedEditorRuntime(state, actions, saved, decode, picker, modifier)
         SavedCollectionsMode.Picker -> SavedCollectionsPicker(state, actions, modifier) { value, m -> image(value, m) }
         SavedCollectionsMode.Preference -> SavedCollectionProfilePreference(state, actions, modifier)

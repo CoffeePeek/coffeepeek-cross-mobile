@@ -30,7 +30,9 @@ interface CollectionsEntry {
 
     /** Owner's private and public collections, independent of the optional featured selection. */
     @Composable
-    fun OwnerProfile(onOpenCollection: (String) -> Unit, onSignIn: () -> Unit, modifier: Modifier)
+    /** [preferenceSettings] opens the collection preferences from the library itself (like the shelf's own settings). */
+    fun OwnerProfile(onOpenCollection: (String) -> Unit, onSignIn: () -> Unit, modifier: Modifier,
+        preferenceSettings: (@Composable () -> Unit)? = null)
 
     /** Shows only the explicitly featured public collection, or no content. */
     @Composable

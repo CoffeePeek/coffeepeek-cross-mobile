@@ -4,6 +4,10 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -20,10 +24,16 @@ import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as st
 
 @Composable
 internal fun SavedCollectionsLibrary(state: SavedCollectionsState, action: (SavedCollectionsAction) -> Unit,
-    modifier: Modifier = Modifier, image: @Composable (SavedCollectionSummary, Modifier) -> Unit = { _, m -> CoffeePeekImagePlaceholder(m) }) {
+    modifier: Modifier = Modifier, image: @Composable (SavedCollectionSummary, Modifier) -> Unit = { _, m -> CoffeePeekImagePlaceholder(m) },
+    preferenceSettings: (@Composable () -> Unit)? = null) {
+    var preferencesOpen by remember { mutableStateOf(false) }
     CoffeePeekScaffold(modifier, topBar = {
         CoffeePeekTopBar(stringResource(Res.string.collections_library), stringResource(Res.string.collections_back),
             onBack = { action(SavedCollectionsAction.Back) }, actions = {
+                if (preferenceSettings != null) CoffeePeekPlainIconButton({ preferencesOpen = true },
+                    enabled = state.signedIn && !state.busy) {
+                    CoffeePeekIcon(CoffeePeekIcons.Settings, stringResource(Res.string.collections_settings))
+                }
                 CoffeePeekPlainIconButton({ action(SavedCollectionsAction.OpenEditor(null)) }, enabled = state.signedIn && !state.busy) {
                     CoffeePeekIcon(CoffeePeekIcons.Add, stringResource(Res.string.collections_new_list))
                 }
@@ -53,6 +63,17 @@ internal fun SavedCollectionsLibrary(state: SavedCollectionsState, action: (Save
             }
         }
     }
+    SavedCollectionsSettingsSheet(preferencesOpen, { preferencesOpen = false }) {
+        preferenceSettings?.invoke()
+    }
+}
+
+@Composable
+private fun SavedCollectionsSettingsSheet(open: Boolean, onClose: () -> Unit,
+    preferenceSettings: @Composable () -> Unit) {
+    if (!open) return
+    CoffeePeekSwipeDismissModalBottomSheet(onDismissRequest = onClose,
+        dismissDescription = stringResource(Res.string.collections_cancel)) { preferenceSettings() }
 }
 
 @Composable
