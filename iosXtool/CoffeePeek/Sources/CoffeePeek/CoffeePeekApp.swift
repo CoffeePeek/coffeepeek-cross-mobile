@@ -46,7 +46,10 @@ private struct ComposeRootView: UIViewControllerRepresentable {
             onReady: { DispatchQueue.main.async { onReady() } },
             makeShopMenuGalleryController: makeShopMenuGalleryController,
             makeThemeSettingsController: makeThemeSettingsController,
-            makeShopReportController: makeShopReportController
+            makeShopReportController: makeShopReportController,
+            makeCollectionsLibraryController: makeCollectionsLibraryController,
+            makeSettingsController: makeSettingsController,
+            makeBlockedAuthorsController: makeBlockedAuthorsController
         )
     }
 
