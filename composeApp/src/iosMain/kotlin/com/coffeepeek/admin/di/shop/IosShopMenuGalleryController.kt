@@ -5,6 +5,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.staticCompositionLocalOf
+import com.coffeepeek.admin.di.media.IosCatalogueMedia
 import com.coffeepeek.admin.locator.Constants
 import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.core.designsystem.resources.LocalCoffeePeekLanguageTag
@@ -26,10 +27,11 @@ internal fun iosShopMenuGalleryContent(): (String) -> UIViewController {
     val languageTag by rememberUpdatedState(LocalCoffeePeekLanguageTag.current)
     val client = koinInject<ApiClients>().client
     val imageFetcher = koinInject<ImageUrlFetcher>()
+    val media = remember(imageFetcher) { IosCatalogueMedia(imageFetcher, Constants.BASE_URL) }
     val repository = remember(client) { createShopMenuGalleryRepository(client) }
     return { shopId ->
         val session = createIosShopMenuGallerySession(shopId, repository)
-        val gallery = IosShopMenuGallery(session, imageFetcher, Constants.BASE_URL, Navigator::popBack)
+        val gallery = IosShopMenuGallery(session, media, Navigator::popBack)
         factory(gallery, languageTag)
     }
 }

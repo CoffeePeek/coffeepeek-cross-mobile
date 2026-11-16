@@ -39,6 +39,9 @@
 		53E77165000000000000000D /* SettingsNative.strings in Resources */ = {isa = PBXBuildFile; fileRef = 53E771650000000000000010 /* SettingsNative.strings */; };
 		B10000000000000000000001 /* BlockedAuthorsScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000003 /* BlockedAuthorsScreen.swift */; };
 		B10000000000000000000002 /* BlockedAuthors.strings in Resources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000006 /* BlockedAuthors.strings */; };
+		C0FFEE500000000000000001 /* CoffeeDetailScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0FFEE500000000000000004 /* CoffeeDetailScreen.swift */; };
+		C0FFEE500000000000000002 /* CoffeeDetailComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0FFEE500000000000000005 /* CoffeeDetailComponents.swift */; };
+		C0FFEE500000000000000003 /* CoffeeDetail.strings in Resources */ = {isa = PBXBuildFile; fileRef = C0FFEE500000000000000008 /* CoffeeDetail.strings */; };
 		A0871E7A0000000000000001 /* AuthNativeController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0871E7A0000000000000002 /* AuthNativeController.swift */; };
 		A0871E7A0000000000000003 /* AuthNativeComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0871E7A0000000000000004 /* AuthNativeComponents.swift */; };
 		A0871E7A0000000000000005 /* LoginScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0871E7A0000000000000006 /* LoginScreen.swift */; };
@@ -89,6 +92,10 @@
 		B10000000000000000000003 /* BlockedAuthorsScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = BlockedAuthorsScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/BlockedAuthorsScreen.swift; sourceTree = "<group>"; };
 		B10000000000000000000004 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/BlockedAuthors.strings; sourceTree = "<group>"; };
 		B10000000000000000000005 /* be */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = be; path = be.lproj/BlockedAuthors.strings; sourceTree = "<group>"; };
+		C0FFEE500000000000000004 /* CoffeeDetailScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CoffeeDetailScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CoffeeDetailScreen.swift; sourceTree = "<group>"; };
+		C0FFEE500000000000000005 /* CoffeeDetailComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CoffeeDetailComponents.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CoffeeDetailComponents.swift; sourceTree = "<group>"; };
+		C0FFEE500000000000000006 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/CoffeeDetail.strings; sourceTree = "<group>"; };
+		C0FFEE500000000000000007 /* be */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = be; path = be.lproj/CoffeeDetail.strings; sourceTree = "<group>"; };
 		A0871E7A0000000000000002 /* AuthNativeController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AuthNativeController.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/AuthNativeController.swift; sourceTree = "<group>"; };
 		A0871E7A0000000000000004 /* AuthNativeComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AuthNativeComponents.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/AuthNativeComponents.swift; sourceTree = "<group>"; };
 		A0871E7A0000000000000006 /* LoginScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = LoginScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/LoginScreen.swift; sourceTree = "<group>"; };
@@ -134,6 +141,9 @@
 				B30000000000000000000003 /* ShopReportScreen.swift */,
 				71C04E5D0000000000000003 /* ContentReportScreen.swift */,
 				B30000000000000000000006 /* ShopReport.strings */,
+				C0FFEE500000000000000004 /* CoffeeDetailScreen.swift */,
+				C0FFEE500000000000000005 /* CoffeeDetailComponents.swift */,
+				C0FFEE500000000000000008 /* CoffeeDetail.strings */,
 				71C04E5D0000000000000006 /* ContentReport.strings */,
 				B20000000000000000000003 /* CollectionsLibraryScreen.swift */,
 				B20000000000000000000006 /* CollectionsLibrary.strings */,
@@ -273,6 +283,7 @@
 				A10000000000000000000016 /* ThemeSettings.strings in Resources */,
 				A0871E7A0000000000000009 /* NativeAuth.strings in Resources */,
 				B30000000000000000000002 /* ShopReport.strings in Resources */,
+				C0FFEE500000000000000003 /* CoffeeDetail.strings in Resources */,
 				71C04E5D0000000000000002 /* ContentReport.strings in Resources */,
 				B20000000000000000000002 /* CollectionsLibrary.strings in Resources */,
 				53E77165000000000000000D /* SettingsNative.strings in Resources */,
@@ -348,6 +359,8 @@
 				A6C011E60000000000000001 /* ShopMenuGalleryScreen.swift in Sources */,
 				A10000000000000000000015 /* ThemeSettingsScreen.swift in Sources */,
 				B30000000000000000000001 /* ShopReportScreen.swift in Sources */,
+				C0FFEE500000000000000001 /* CoffeeDetailScreen.swift in Sources */,
+				C0FFEE500000000000000002 /* CoffeeDetailComponents.swift in Sources */,
 				71C04E5D0000000000000001 /* ContentReportScreen.swift in Sources */,
 				B20000000000000000000001 /* CollectionsLibraryScreen.swift in Sources */,
 				53E771650000000000000001 /* SettingsNativeController.swift in Sources */,
@@ -437,6 +450,15 @@
 				B10000000000000000000005 /* be */,
 			);
 			name = BlockedAuthors.strings;
+			sourceTree = "<group>";
+		};
+		C0FFEE500000000000000008 /* CoffeeDetail.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				C0FFEE500000000000000006 /* ru */,
+				C0FFEE500000000000000007 /* be */,
+			);
+			name = CoffeeDetail.strings;
 			sourceTree = "<group>";
 		};
 		A0871E7A000000000000000C /* NativeAuth.strings */ = {

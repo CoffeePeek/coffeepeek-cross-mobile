@@ -2,6 +2,8 @@ package com.coffeepeek.admin
 
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.window.ComposeUIViewController
+import com.coffeepeek.admin.di.coffee.IosCoffeeDetail
+import com.coffeepeek.admin.di.coffee.LocalIosCoffeeDetailController
 import com.coffeepeek.admin.di.initPlatformKoin
 import com.coffeepeek.admin.di.auth.IosAuthScreen
 import com.coffeepeek.admin.di.auth.LocalIosAuthController
@@ -40,6 +42,7 @@ fun handleAppLink(link: String): Boolean {
 fun MainViewController(
     onReady: () -> Unit,
     makeShopMenuGalleryController: (IosShopMenuGallery, String) -> UIViewController,
+    makeCoffeeDetailController: (IosCoffeeDetail, String) -> UIViewController,
     makeThemeSettingsController: (IosThemeSettings, String, () -> Unit) -> UIViewController,
     makeShopReportController: (IosShopReport, String, String, () -> Unit) -> UIViewController,
     makeContentReportController: (IosContentReport, String) -> UIViewController,
@@ -55,6 +58,7 @@ fun MainViewController(
     return ComposeUIViewController {
         CompositionLocalProvider(
             LocalIosShopMenuGalleryController provides makeShopMenuGalleryController,
+            LocalIosCoffeeDetailController provides makeCoffeeDetailController,
             LocalIosThemeSettingsController provides makeThemeSettingsController,
             LocalIosShopReportController provides makeShopReportController,
             LocalIosContentReportController provides makeContentReportController,
