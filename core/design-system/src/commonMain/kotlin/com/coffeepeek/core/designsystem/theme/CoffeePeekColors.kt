@@ -31,6 +31,7 @@ object CoffeePeekColors {
     val LightTextPrimary   = Color(0xFF1C1917)
     val LightTextSecondary = Color(0xFF6B655F)
     val LightTextOnPrimary = Color(0xFF1A1412)
+    val LightSecondary     = Color(0xFF8C5A00)
     val LightBorder        = Color(0xFFE7E5E4)
     val LightBorderSubtle  = Color(0xFFE5E1DA)
 

@@ -19,11 +19,11 @@ class CoffeePeekThemeContrastTest {
         }
     }
 
-    @Test fun themeTextAndErrorsRemainReadableOnEverySurface() {
+    @Test fun themeForegroundsRemainReadableOnEverySurface() {
         schemes.forEach { scheme ->
+            val foregrounds = listOf(scheme.onSurface, scheme.onSurfaceVariant, scheme.error, scheme.coffeePeekSecondaryAccent)
             surfaces(scheme).forEach { background ->
-                listOf(scheme.onSurface, scheme.onSurfaceVariant, scheme.error)
-                    .forEach { assertContrast(it, background, 4.5f) }
+                foregrounds.forEach { assertContrast(it, background, 4.5f) }
             }
         }
     }

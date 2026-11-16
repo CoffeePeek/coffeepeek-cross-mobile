@@ -27,6 +27,7 @@ import com.coffeepeek.core.designsystem.icons.CoffeePeekMapIcon
 import com.coffeepeek.core.designsystem.icons.coffeePeekMapIconPainter
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
+import com.coffeepeek.core.designsystem.theme.coffeePeekSecondaryAccent
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 /**
@@ -69,7 +70,7 @@ private fun CoffeePeekGlassFilterChip(
             Row(Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
                 verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 if (leadingIcon != null) CoffeePeekIcon(leadingIcon, null, Modifier.size(18.dp),
-                    tint = if (selected) foreground else colors.primary)
+                    tint = if (selected) foreground else colors.coffeePeekSecondaryAccent)
                 Text(label, color = foreground, style = MaterialTheme.typography.labelMedium, maxLines = 1)
                 if (trailingIcon != null) CoffeePeekIcon(trailingIcon, null, Modifier.size(16.dp), tint = foreground)
             }
@@ -84,7 +85,7 @@ private fun FilterChipPreviewContent(darkTheme: Boolean) = CoffeePeekTheme(darkT
             Row(Modifier.padding(16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 CoffeePeekFilterChip("Открыто", selected = false, onClick = {}, leadingIcon = CoffeePeekIcons.Time)
                 CoffeePeekFilterChip("Новые", selected = true, onClick = {}, leadingIcon = CoffeePeekIcons.Sparkle)
-                CoffeePeekFilterChip("Декаф", selected = false, onClick = {})
+                CoffeePeekFilterChip("Рядом", selected = false, onClick = {}, leadingIcon = CoffeePeekIcons.Distance)
             }
             Row(Modifier.padding(16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 CoffeePeekFilterChip("Specialty", false, {}, leadingPainter = coffeePeekMapIconPainter(CoffeePeekMapIcon.Specialty))

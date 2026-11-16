@@ -5,6 +5,7 @@ import com.coffeepeek.feature.discovery.impl.resources.discovery_section_roaster
 import com.coffeepeek.feature.discovery.impl.resources.discovery_section_shops
 import com.coffeepeek.feature.discovery.impl.resources.discovery_show_all
 import androidx.compose.foundation.layout.*
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import com.coffeepeek.core.designsystem.component.CoffeePeekTextButton as TextButton
@@ -20,6 +21,7 @@ import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
+import com.coffeepeek.core.designsystem.theme.coffeePeekSecondaryAccent
 
 @Composable
 internal fun DiscoverySectionTitle(title: String, onShowAll: () -> Unit, modifier: Modifier = Modifier) {
@@ -38,7 +40,8 @@ internal fun DiscoverySectionTitle(title: String, onShowAll: () -> Unit, modifie
 
 @Composable
 private fun ShowAllAction(onClick: () -> Unit, modifier: Modifier = Modifier) {
-    TextButton(onClick, modifier) {
+    val colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.coffeePeekSecondaryAccent)
+    TextButton(onClick, modifier, colors = colors) {
         Text(stringResource(Res.string.discovery_show_all))
         CoffeePeekIcon(CoffeePeekIcons.ChevronRight, null, Modifier.padding(start = CoffeePeekDimens.spacing1).size(16.dp))
     }
@@ -46,7 +49,10 @@ private fun ShowAllAction(onClick: () -> Unit, modifier: Modifier = Modifier) {
 
 @Composable
 private fun DiscoverySectionTitlePreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
-    DiscoverySectionTitle(stringResource(Res.string.discovery_section_shops), {})
+    Column {
+        DiscoverySectionTitle(stringResource(Res.string.discovery_section_shops), {})
+        DiscoverySectionTitle(stringResource(Res.string.discovery_section_roasters), {})
+    }
 }
 
 @Preview @Composable private fun DiscoverySectionTitlePreviewLight() = DiscoverySectionTitlePreview(false)
