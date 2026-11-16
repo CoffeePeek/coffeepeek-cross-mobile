@@ -180,7 +180,7 @@ Workflow [`.github/workflows/ios-testflight.yml`](../.github/workflows/ios-testf
 архивирует основное приложение `iosApp` на GitHub-hosted Mac с Xcode 27 и
 загружает архив в App Store Connect. Он запускается после изменений iOS/KMP-кода
 в `main` или вручную через **Actions → iOS TestFlight → Run workflow**
-с выбором `main`. Публикация из других веток запрещена условием job.
+с выбором `main` или `codex/ios-native`.
 Используется текущий `API_BASE_URL_MAIN`. Изменения только документации
 не запускают автоматическую сборку: сохраняется фильтр путей iOS/KMP-кода.
 Для pull request ключи подписи не выдаются. Номер сборки `CFBundleVersion` — целое

@@ -20,12 +20,21 @@ class ReleaseVersioningTest(unittest.TestCase):
         self.assertNotIn('"--all"', gradle)
         self.assertIn('commandLine("git", "rev-list", "--count", "HEAD")', gradle)
 
-    def test_release_workflows_only_publish_main_and_never_raise_server_policy(self):
+    def test_release_workflows_limit_publication_and_never_raise_server_policy(self):
         android = (ROOT / '.github/workflows/android-apk.yml').read_text(encoding='utf-8')
         ios = (ROOT / '.github/workflows/ios-testflight.yml').read_text(encoding='utf-8')
         self.assertNotIn('develop', android)
+        self.assertIn("if: github.ref == 'refs/heads/main'", android)
+        self.assertIn('push:\n    branches: [main]\n', ios)
+        self.assertIn(
+            "  upload:\n    if: >-\n"
+            "      github.ref == 'refs/heads/main' ||\n"
+            "      (github.event_name == 'workflow_dispatch' && "
+            "github.ref == 'refs/heads/codex/ios-native')\n"
+            "    runs-on:",
+            ios,
+        )
         for workflow in (android, ios):
-            self.assertIn("if: github.ref == 'refs/heads/main'", workflow)
             self.assertNotIn('/android/version', workflow)
             self.assertNotIn('/ios/version', workflow)
             self.assertNotIn('publish_android_release.py --publish', workflow)
