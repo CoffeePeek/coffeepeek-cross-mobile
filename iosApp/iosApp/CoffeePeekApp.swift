@@ -43,9 +43,18 @@ private struct ComposeRootView: UIViewControllerRepresentable {
     let onReady: () -> Void
 
     func makeUIViewController(context: Context) -> UIViewController {
-        MainViewControllerKt.MainViewController(onReady: {
-            DispatchQueue.main.async { onReady() }
-        })
+        MainViewControllerKt.MainViewController(
+            onReady: { DispatchQueue.main.async { onReady() } },
+            makeShopMenuGalleryController: makeShopMenuGalleryController,
+            makeCoffeeDetailController: makeCoffeeDetailController,
+            makeThemeSettingsController: makeThemeSettingsController,
+            makeShopReportController: makeShopReportController,
+            makeContentReportController: makeContentReportController,
+            makeCollectionsLibraryController: makeCollectionsLibraryController,
+            makeSettingsController: makeSettingsController,
+            makeBlockedAuthorsController: makeBlockedAuthorsController,
+            makeAuthController: makeAuthController
+        )
     }
 
     func updateUIViewController(_ uiViewController: UIViewController, context: Context) {}

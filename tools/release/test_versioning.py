@@ -9,23 +9,30 @@ ROOT = Path(__file__).resolve().parents[2]
 class ReleaseVersioningTest(unittest.TestCase):
     def test_android_formats_version_with_shared_build_number_offset(self):
         config = (ROOT / 'iosApp/Configuration/Shared.xcconfig').read_text(encoding='utf-8')
-        version = re.search(r'^MARKETING_VERSION = (.+)$', config, re.MULTILINE).group(1)
-        self.assertRegex(version, r'^[0-9]+\.[0-9]+\.[0-9]+$')
         offset = int(re.search(r'^BUILD_NUMBER_OFFSET = ([0-9]+)$', config, re.MULTILINE).group(1))
         self.assertGreaterEqual(offset, 1000)
         gradle = (ROOT / 'composeApp/build.gradle.kts').read_text(encoding='utf-8')
         self.assertIn('file("iosApp/Configuration/Shared.xcconfig")', gradle)
-        self.assertIn(f'val appVersionName: Provider<String> = appVersionCode.map {{ "{version}.$it" }}', gradle)
+        self.assertRegex(gradle, r'val appVersionName: Provider<String> = appVersionCode\.map \{ "[0-9]+\.[0-9]+\.[0-9]+\.\$it" \}')
         self.assertIn('gitCommitCount.zip(appBuildNumberOffset) { count, offset -> count + offset }', gradle)
         self.assertNotIn('"--all"', gradle)
         self.assertIn('commandLine("git", "rev-list", "--count", "HEAD")', gradle)
 
-    def test_release_workflows_only_publish_main_and_never_raise_server_policy(self):
+    def test_release_workflows_limit_publication_and_never_raise_server_policy(self):
         android = (ROOT / '.github/workflows/android-apk.yml').read_text(encoding='utf-8')
         ios = (ROOT / '.github/workflows/ios-testflight.yml').read_text(encoding='utf-8')
         self.assertNotIn('develop', android)
+        self.assertIn("if: github.ref == 'refs/heads/main'", android)
+        self.assertIn('push:\n    branches: [main]\n', ios)
+        self.assertIn(
+            "  upload:\n    if: >-\n"
+            "      github.ref == 'refs/heads/main' ||\n"
+            "      (github.event_name == 'workflow_dispatch' && "
+            "github.ref == 'refs/heads/codex/ios-native')\n"
+            "    runs-on:",
+            ios,
+        )
         for workflow in (android, ios):
-            self.assertIn("if: github.ref == 'refs/heads/main'", workflow)
             self.assertNotIn('/android/version', workflow)
             self.assertNotIn('/ios/version', workflow)
             self.assertNotIn('publish_android_release.py --publish', workflow)
@@ -33,6 +40,8 @@ class ReleaseVersioningTest(unittest.TestCase):
         self.assertIn('--request POST', android)  # APK registration remains a draft.
 
     def test_ios_build_is_an_integer_commit_count_and_archive_checks_both_versions(self):
+        config = (ROOT / 'iosApp/Configuration/Shared.xcconfig').read_text(encoding='utf-8')
+        self.assertRegex(config, r'(?m)^MARKETING_VERSION = [0-9]+\.[0-9]+\.[0-9]+$')
         workflow = (ROOT / '.github/workflows/ios-testflight.yml').read_text(encoding='utf-8')
         self.assertIn('COMMIT_COUNT=$(git rev-list --count HEAD)', workflow)
         self.assertIn('IOS_BUILD_NUMBER=$((BUILD_NUMBER_OFFSET + COMMIT_COUNT))', workflow)

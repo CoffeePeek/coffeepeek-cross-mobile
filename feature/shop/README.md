@@ -8,6 +8,23 @@ are retained. Legacy screens remain a fallback until acceptance; the older notes
 below describe the original Android-first checkpoints. Current verification and
 remaining device/server gates: [iOS migration plan](../IOS_MIGRATION_PLAN.md).
 
+## SwiftUI menu gallery on iOS
+
+The native `ShopMenuGallery` destination opens from the shop detail page through
+the existing UIKit stack. The gallery takes an iOS session from Shop impl, which
+owns the existing gallery ViewModel and clears it when the destination is released.
+The Kotlin adapter supplies the configured image fetcher for previews and passes
+the ViewModel's ordered full-size URLs and index to the existing fullscreen viewer.
+The route keeps its `shop_detail` impression in root navigation.
+
+The iOS workflow runs the gallery ViewModel and session tests. The session tests
+check preview/full-size URL order and cancellation when the session closes.
+Manual simulator acceptance covers loading, empty and retry states, opening a
+second photo, paging and zooming, closing the viewer, returning through the back
+button and completing or cancelling a back swipe. Check Russian and Belarusian,
+light and dark appearances, Dynamic Type and VoiceOver. Record the build
+revision and device before reporting manual acceptance.
+
 ## Selection controls correction — 2026-10-15
 
 - Photo source uses existing CoffeePeek settings rows with yellow icon badges,

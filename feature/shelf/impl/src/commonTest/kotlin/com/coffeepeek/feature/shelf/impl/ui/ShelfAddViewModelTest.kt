@@ -51,6 +51,21 @@ class ShelfAddViewModelTest {
         runCurrent()
     }
 
+    @Test fun disabledScannerDoesNotPrepareCaptureOrScan() = runTest(dispatcher) {
+        val scanner = FakeBagScanner(BagScannerReadiness.Disabled)
+        scanner.prepareGate = { error("Disabled scanner must not download models") }
+        val model = model(scanner = scanner)
+        runCurrent()
+        model.onAction(ShelfAddAction.DownloadScanner)
+        model.onAction(ShelfAddAction.OpenCamera)
+        model.onAction(ShelfAddAction.PhotoPicked(ShelfPhoto(byteArrayOf(1), fromCamera = true)))
+        runCurrent()
+        assertEquals(ShelfScannerStatus.Disabled, model.state.value.scanner)
+        assertEquals(ShelfAddStep.Intro, model.state.value.step)
+        assertNull(model.state.value.photo)
+        assertEquals(0, scanner.scans)
+    }
+
     @Test fun selectedPhotoWaitsForScannerThenTheSamePhotoIsScanned() = runTest(dispatcher) {
         val scanner = FakeBagScanner(BagScannerReadiness.NeedsDownload(28_000_000))
         val model = model(scanner = scanner)

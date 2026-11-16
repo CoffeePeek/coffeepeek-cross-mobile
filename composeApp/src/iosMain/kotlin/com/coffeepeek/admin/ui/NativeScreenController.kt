@@ -47,20 +47,21 @@ import platform.UIKit.UIViewController
 import platform.UIKit.addChildViewController
 import platform.UIKit.didMoveToParentViewController
 
-/** UIKit owns navigation and bounds; Compose owns headers and edge-to-edge insets. */
+/** UIKit owns the route and bounds. The child owns the screen content and header. */
 internal class NativeScreenController(
     title: String? = null,
     val route: Navigator.Screen? = null,
     private val analyticsPage: String? = null,
     private val isTabRoot: Boolean = false,
+    private val nativeContent: (() -> UIViewController)? = null,
     private val content: @Composable () -> Unit,
 ) : UIViewController(nibName = null, bundle = null) {
-    private val analyticsVisit = com.coffeepeek.admin.analytics.correlationId("screen")
+    internal val analyticsVisit = com.coffeepeek.admin.analytics.correlationId("screen")
     private var analyticsVisible by mutableStateOf(false)
     private var bottomClearance by mutableStateOf(if (isTabRoot) NavMetrics.iosTabBarClearanceFloor else 0.dp)
     private var tabBarHidden = false
     private var expandedMap by mutableStateOf(false)
-    private var composeController: UIViewController? = null
+    private var contentController: UIViewController? = null
     private var contentTopConstraint: NSLayoutConstraint? = null
     private val photoUnderStatusBar = route is Navigator.Screen.ShopDetail || route is Navigator.Screen.RoasterDetail
     private val isAuthFlow = route == Navigator.Screen.Auth || route == Navigator.Screen.Register ||
@@ -96,7 +97,8 @@ internal class NativeScreenController(
     override fun viewDidLoad() {
         super.viewDidLoad()
         view.clipsToBounds = true
-        attachContent(ComposeUIViewController { AppContent { ScreenContent() } })
+        val child = nativeContent?.invoke() ?: ComposeUIViewController { AppContent { ScreenContent() } }
+        attachContent(child)
     }
 
     override fun viewDidLayoutSubviews() {
@@ -142,7 +144,7 @@ internal class NativeScreenController(
 
     private fun attachContent(child: UIViewController) {
         addChildViewController(child)
-        composeController = child
+        contentController = child
         child.view.translatesAutoresizingMaskIntoConstraints = false
         child.view.clipsToBounds = true
         view.addSubview(child.view)
@@ -156,7 +158,7 @@ internal class NativeScreenController(
     }
 
     private fun updateContentTopConstraint() {
-        val child = composeController ?: return
+        val child = contentController ?: return
         contentTopConstraint?.active = false
         val top = if (extendsUnderStatusBar) view.topAnchor else view.safeAreaLayoutGuide.topAnchor
         contentTopConstraint = child.view.topAnchor.constraintEqualToAnchor(top).apply { active = true }

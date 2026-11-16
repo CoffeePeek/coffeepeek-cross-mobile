@@ -1,7 +1,26 @@
 package com.coffeepeek.admin
 
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.window.ComposeUIViewController
+import com.coffeepeek.admin.di.coffee.IosCoffeeDetail
+import com.coffeepeek.admin.di.coffee.LocalIosCoffeeDetailController
 import com.coffeepeek.admin.di.initPlatformKoin
+import com.coffeepeek.admin.di.auth.IosAuthScreen
+import com.coffeepeek.admin.di.auth.LocalIosAuthController
+import com.coffeepeek.admin.di.contentreport.IosContentReport
+import com.coffeepeek.admin.di.contentreport.LocalIosContentReportController
+import com.coffeepeek.admin.di.shopreport.IosShopReport
+import com.coffeepeek.admin.di.shopreport.LocalIosShopReportController
+import com.coffeepeek.admin.di.collections.IosCollectionsLibrary
+import com.coffeepeek.admin.di.collections.LocalIosCollectionsLibraryController
+import com.coffeepeek.admin.di.settings.IosSettingsScreen
+import com.coffeepeek.admin.di.authorblocking.IosBlockedAuthors
+import com.coffeepeek.admin.di.authorblocking.LocalIosBlockedAuthorsController
+import com.coffeepeek.admin.di.settings.IosThemeSettings
+import com.coffeepeek.admin.di.settings.LocalIosSettingsController
+import com.coffeepeek.admin.di.settings.LocalIosThemeSettingsController
+import com.coffeepeek.admin.di.shop.IosShopMenuGallery
+import com.coffeepeek.admin.di.shop.LocalIosShopMenuGalleryController
 import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.ui.appLinkScreen
 import com.coffeepeek.core.designsystem.component.configureCoffeePeekNativeGlass
@@ -20,10 +39,35 @@ fun handleAppLink(link: String): Boolean {
     return true
 }
 
-fun MainViewController(onReady: () -> Unit): UIViewController {
+fun MainViewController(
+    onReady: () -> Unit,
+    makeShopMenuGalleryController: (IosShopMenuGallery, String) -> UIViewController,
+    makeCoffeeDetailController: (IosCoffeeDetail, String) -> UIViewController,
+    makeThemeSettingsController: (IosThemeSettings, String, () -> Unit) -> UIViewController,
+    makeShopReportController: (IosShopReport, String, String, () -> Unit) -> UIViewController,
+    makeContentReportController: (IosContentReport, String) -> UIViewController,
+    makeCollectionsLibraryController: (IosCollectionsLibrary, String) -> UIViewController,
+    makeSettingsController: (IosSettingsScreen) -> UIViewController,
+    makeBlockedAuthorsController: (IosBlockedAuthors, String, () -> Unit, () -> Unit, () -> Unit) -> UIViewController,
+    makeAuthController: (IosAuthScreen) -> UIViewController,
+): UIViewController {
     if (!koinInitialized) {
         initPlatformKoin()
         koinInitialized = true
     }
-    return ComposeUIViewController { App(onReady = onReady) }
+    return ComposeUIViewController {
+        CompositionLocalProvider(
+            LocalIosShopMenuGalleryController provides makeShopMenuGalleryController,
+            LocalIosCoffeeDetailController provides makeCoffeeDetailController,
+            LocalIosThemeSettingsController provides makeThemeSettingsController,
+            LocalIosShopReportController provides makeShopReportController,
+            LocalIosContentReportController provides makeContentReportController,
+            LocalIosCollectionsLibraryController provides makeCollectionsLibraryController,
+            LocalIosSettingsController provides makeSettingsController,
+            LocalIosBlockedAuthorsController provides makeBlockedAuthorsController,
+            LocalIosAuthController provides makeAuthController,
+        ) {
+            App(onReady = onReady)
+        }
+    }
 }

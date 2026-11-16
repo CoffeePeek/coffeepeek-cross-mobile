@@ -476,3 +476,53 @@ reproduced server/client defects, no-op and cache corrections, confirmed card
 projection, privacy rules, backend-first publication dependency and verification
 evidence. It supersedes any assumption above that client fake tests alone
 established the deployed server's membership/favorite consistency.
+
+### SwiftUI library slice — 2026-11-16
+
+Package 7 starts from `codex/ios-native` at `742e4e84` with the full-screen
+`Navigator.Screen.CollectionsLibrary` entry. The existing profile entry opens
+this route, and its back action returns through the retained UIKit stack.
+Create and item selection keep the existing `CollectionEditor(id)` callback.
+Guests retain the `Auth` callback. Editor, public collection, poster, cover
+selection and inline profile rendering remain subsequent package 7 slices.
+
+The new iOS-only feature session owns the existing `SavedCollectionsViewModel`
+and a `ViewModelStore`. `IosCollectionsLibrary` exposes presentation snapshots
+to SwiftUI and adapts feature events into the existing navigation callbacks.
+Observation runs on the main dispatcher and pauses while covered. The retained
+screen resumes the existing reload action after returning from an editor.
+Disposing the Swift host clears the feature store and its pending work.
+Account changes clear search, items and private cover requests. Custom covers
+continue through `SavedCollectionsRepository.cover`; fallback shop photos use
+the existing feature resolver and screen-owned URL cache. Repeated row appearance
+reuses collection metadata. Account replacement and disposal clear and replace
+the cache so a late old-account response cannot populate its successor.
+Temporary cover bytes are erased after the
+native image-data copy.
+
+The native screen covers guest, loading, refreshing, failure/retry, empty and
+search-empty states, public/private groups and create/edit navigation. Strings
+live in the Russian and Belarusian `CollectionsLibrary` tables. Colocated SwiftUI
+previews include light and dark appearance and accessibility text size.
+`NativeScreenController` retains screen analytics ownership.
+
+Verification plan includes Kotlin/Native compilation, the eight non-UI
+`CollectionsLibrarySessionTest` contracts and the Xcode Simulator build. The
+contracts cover observer cancellation, snapshot/query mapping, account reset,
+navigation, disposal during load, authenticated media, stale cover delivery,
+repeated photo reads and account-specific cache invalidation.
+On 2026-11-16, function-body verification passed after changing the session
+factory to an explicit return block for the checker. Xcode object identifiers,
+source/resource registration and all 15 RU/BE key pairs passed local checks.
+The Windows Gradle run skipped application iOS compilation and native execution.
+The first macOS run for `f6dae11b9` failed compiling two assertions in
+`CollectionsLibrarySessionTest` because Kotlin/Native could not infer the
+comparison type. The assertions now explicitly compare lists of the event
+interface and nullable strings. A new macOS run validates this correction
+together with the native tab routing integration from `8648736bd`.
+The Xcode Simulator build and binary compatibility check for `f6dae11b9`
+passed in the same run, GitHub Actions `43867041801`.
+At authoring time these tests are written and await the integration run. Manual
+macOS checks for both languages, themes, large text, VoiceOver, completed and
+cancelled back gestures and editor return remain open. Live account operations
+and private media acceptance require the separately selected test account.
