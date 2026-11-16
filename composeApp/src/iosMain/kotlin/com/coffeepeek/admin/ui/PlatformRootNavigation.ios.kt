@@ -8,6 +8,7 @@ import coffeepeek.composeapp.generated.resources.Res
 import coffeepeek.composeapp.generated.resources.business_tab_title
 import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import com.coffeepeek.admin.di.settings.iosThemeSettingsContent
+import com.coffeepeek.admin.di.shop.iosShopMenuGalleryContent
 import coffeepeek.composeapp.generated.resources.navigation_search
 import coffeepeek.composeapp.generated.resources.navigation_feed
 import coffeepeek.composeapp.generated.resources.navigation_profile
@@ -174,10 +175,10 @@ internal actual fun PlatformRootNavigation(
             saveNavigation()
         }
     }
-    val themeSettingsContent = iosThemeSettingsContent()
+    val nativeContent = nativePushedContent()
     fun controller(screen: Navigator.Screen): UIViewController = NativeScreenController(
         route = screen,
-        nativeContent = themeSettingsContent.takeIf { screen == Navigator.Screen.ThemeSettings },
+        nativeContent = nativeContent(screen),
     ) {
         body.value(screen) {
             scope.launch { navigate {
@@ -306,6 +307,19 @@ internal actual fun PlatformRootNavigation(
         }
     }
     return true
+}
+
+@Composable
+private fun nativePushedContent(): (Navigator.Screen) -> (() -> UIViewController)? {
+    val themeSettingsContent = iosThemeSettingsContent()
+    val shopMenuGalleryContent = iosShopMenuGalleryContent()
+    return { screen ->
+        when (screen) {
+            Navigator.Screen.ThemeSettings -> themeSettingsContent
+            is Navigator.Screen.ShopMenuGallery -> { { shopMenuGalleryContent(screen.shopId) } }
+            else -> null
+        }
+    }
 }
 
 private fun nativeRootTabIndices(isLoggedIn: Boolean, businessMode: Boolean): List<Int> =
