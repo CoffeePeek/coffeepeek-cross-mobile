@@ -80,14 +80,8 @@ Gradle modules.
   and cancelled edge swipes. Check the surrounding Compose screen after each
   theme change and verify the existing screen impression with a test sink.
 
-## Remaining migration sequence
-
-1. Move a read-only destination with loading, error and retry states to confirm
-   that the Kotlin bridge handles asynchronous screen work.
-2. Migrate profile and forms with SwiftUI Form/List/TextEditor. Preserve
-   validation, credential content types and the native photo pickers.
-3. Migrate search, feed, shop and check-in content, including modals and photo
-   viewing. Preserve CoffeePeek branding and the existing MapLibre engine.
+The [SwiftUI execution plan](IOS_SWIFTUI_EXECUTION_PLAN.md) lists the remaining
+iOS surfaces, dependencies, and work packages for parallel implementation.
 
 ## Risks and verification
 
