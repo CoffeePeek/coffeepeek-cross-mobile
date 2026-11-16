@@ -142,8 +142,8 @@ struct NativeAuthField<Content: View>: View {
                 Text(labelActionTitle).underline().font(CoffeePeekNativeStyle.font(15))
             }
             .buttonStyle(.plain).foregroundStyle(CoffeePeekNativeStyle.accent)
-            .padding(.vertical, 10).contentShape(Rectangle())
-            .padding(.vertical, -10)
+            .frame(minHeight: 44).contentShape(Rectangle())
+            .padding(.vertical, -12)
         }
     }
 }

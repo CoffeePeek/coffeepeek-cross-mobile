@@ -10,8 +10,9 @@ struct RegisterConsent: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 24) {
-            HStack(alignment: .top, spacing: 8) {
+            HStack(alignment: .top, spacing: 12) {
                 consentToggle(termsLabel, selected: $termsAccepted)
+                    .frame(width: 24)
                 Text(legalText)
                     .font(CoffeePeekNativeStyle.font(13))
                     .foregroundStyle(CoffeePeekNativeStyle.secondary)
@@ -20,8 +21,10 @@ struct RegisterConsent: View {
                     .environment(\.openURL, OpenURLAction(handler: openLegalURL))
             }
             if let termsError { NativeAuthError(text: termsError) }
-            HStack(alignment: .top, spacing: 8) {
+            HStack(alignment: .top, spacing: 12) {
                 consentToggle(strings.text("auth_analytics_title"), selected: $analyticsAccepted)
+                    .frame(width: 24)
+                    .accessibilityHint(strings.text("auth_analytics_description"))
                 VStack(alignment: .leading, spacing: 6) {
                     Text(strings.text("auth_analytics_title"))
                         .font(CoffeePeekNativeStyle.font(15))
