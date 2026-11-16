@@ -23,7 +23,7 @@ internal object IosGoogleSignInLauncher : GoogleSignInLauncher {
 }
 
 /** The scope belongs to this screen; leaving it drops late native results and never starts a backend request. */
-private class IosGoogleRequest(private val scope: CoroutineScope) {
+internal class IosGoogleRequest(private val scope: CoroutineScope) {
     private var job: Job? = null
 
     fun launch(onToken: (String) -> Unit, onFailure: (String) -> Unit) {

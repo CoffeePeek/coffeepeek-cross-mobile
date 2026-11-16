@@ -51,7 +51,8 @@ private struct ComposeRootView: UIViewControllerRepresentable {
             makeContentReportController: makeContentReportController,
             makeCollectionsLibraryController: makeCollectionsLibraryController,
             makeSettingsController: makeSettingsController,
-            makeBlockedAuthorsController: makeBlockedAuthorsController
+            makeBlockedAuthorsController: makeBlockedAuthorsController,
+            makeAuthController: makeAuthController
         )
     }
 

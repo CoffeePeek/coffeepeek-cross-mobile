@@ -8,6 +8,7 @@ import coffeepeek.composeapp.generated.resources.Res
 import coffeepeek.composeapp.generated.resources.business_tab_title
 import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import com.coffeepeek.admin.di.settings.iosSettingsContent
+import com.coffeepeek.admin.di.auth.iosAuthContent
 import com.coffeepeek.admin.di.settings.iosThemeSettingsContent
 import com.coffeepeek.admin.di.shopreport.iosShopReportContent
 import com.coffeepeek.admin.di.contentreport.iosContentReportContent
@@ -181,17 +182,15 @@ internal actual fun PlatformRootNavigation(
         }
     }
     val nativeContent = nativeRouteContent()
-    fun controller(screen: Navigator.Screen): UIViewController = NativeScreenController(
-        route = screen,
-        nativeContent = nativeContent(screen),
+    val authContent = iosAuthContent()
+    fun controller(screen: Navigator.Screen): UIViewController = nativeDestinationController(
+        screen, nativeContent(screen), authContent, { route, reset -> body.value(route, reset) },
     ) {
-        body.value(screen) {
-            scope.launch { navigate {
-                val navigation = currentNavigation()
-                navigation.setViewControllers(listOf(navigation.viewControllers.first(), controller(Navigator.Screen.Auth).apply { hidesBottomBarWhenPushed = true }), !UIAccessibilityIsReduceMotionEnabled())
-                saveNavigation()
-            } }
-        }
+        scope.launch { navigate {
+            val navigation = currentNavigation()
+            navigation.setViewControllers(listOf(navigation.viewControllers.first(), controller(Navigator.Screen.Auth).apply { hidesBottomBarWhenPushed = true }), !UIAccessibilityIsReduceMotionEnabled())
+            saveNavigation()
+        } }
     }
 
     val createTitle = stringResource(Res.string.check_in_create_actions)
@@ -312,6 +311,17 @@ internal actual fun PlatformRootNavigation(
     }
     return true
 }
+
+private fun nativeDestinationController(
+    screen: Navigator.Screen,
+    nativeContent: (() -> UIViewController)?,
+    authContent: (Navigator.Screen, () -> Unit) -> (() -> UIViewController)?,
+    content: @Composable (Navigator.Screen, () -> Unit) -> Unit,
+    resetToLogin: () -> Unit,
+): UIViewController = NativeScreenController(
+    route = screen,
+    nativeContent = nativeContent ?: authContent(screen, resetToLogin),
+) { content(screen, resetToLogin) }
 
 @Composable
 private fun nativeRouteContent(): (Navigator.Screen) -> (() -> UIViewController)? {

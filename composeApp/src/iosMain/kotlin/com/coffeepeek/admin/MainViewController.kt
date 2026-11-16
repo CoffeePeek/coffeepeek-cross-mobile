@@ -3,6 +3,8 @@ package com.coffeepeek.admin
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.window.ComposeUIViewController
 import com.coffeepeek.admin.di.initPlatformKoin
+import com.coffeepeek.admin.di.auth.IosAuthScreen
+import com.coffeepeek.admin.di.auth.LocalIosAuthController
 import com.coffeepeek.admin.di.contentreport.IosContentReport
 import com.coffeepeek.admin.di.contentreport.LocalIosContentReportController
 import com.coffeepeek.admin.di.shopreport.IosShopReport
@@ -44,6 +46,7 @@ fun MainViewController(
     makeCollectionsLibraryController: (IosCollectionsLibrary, String) -> UIViewController,
     makeSettingsController: (IosSettingsScreen) -> UIViewController,
     makeBlockedAuthorsController: (IosBlockedAuthors, String, () -> Unit, () -> Unit, () -> Unit) -> UIViewController,
+    makeAuthController: (IosAuthScreen) -> UIViewController,
 ): UIViewController {
     if (!koinInitialized) {
         initPlatformKoin()
@@ -58,6 +61,7 @@ fun MainViewController(
             LocalIosCollectionsLibraryController provides makeCollectionsLibraryController,
             LocalIosSettingsController provides makeSettingsController,
             LocalIosBlockedAuthorsController provides makeBlockedAuthorsController,
+            LocalIosAuthController provides makeAuthController,
         ) {
             App(onReady = onReady)
         }

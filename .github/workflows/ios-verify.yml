@@ -202,6 +202,15 @@ jobs:
               tail -n 150 "$RUNNER_TEMP/ios-native-tests.log"
               exit 1
             }
+      - name: Run authentication Kotlin Native tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./gradlew --max-workers=6 :feature:auth:impl:iosSimulatorArm64Test \
+            > "$RUNNER_TEMP/ios-auth-tests.log" 2>&1 || {
+              tail -n 150 "$RUNNER_TEMP/ios-auth-tests.log"
+              exit 1
+            }
       - name: Run shop menu gallery Kotlin Native tests
         shell: bash
         run: |
@@ -236,4 +245,6 @@ jobs:
             composeApp/build/test-results/iosSimulatorArm64Test/
             ${{ runner.temp }}/ios-shop-menu-gallery-tests.log
             feature/shop/impl/build/test-results/iosSimulatorArm64Test/
+            ${{ runner.temp }}/ios-auth-tests.log
+            feature/auth/impl/build/test-results/iosSimulatorArm64Test/
           retention-days: 7
