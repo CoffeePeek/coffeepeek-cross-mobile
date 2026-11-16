@@ -12,6 +12,34 @@ import platform.UIKit.UIViewController
 /** Native delegate wiring only: no window, Compose content, account, or services. */
 class TabDelegateTest {
     @Test
+    fun settingsRootBuildsItsNativeContentOnlyWhenItLoads() {
+        val hosted = UIViewController()
+        var factoryCalls = 0
+        val factory: () -> UIViewController = {
+            factoryCalls++
+            hosted
+        }
+        val root = IosRootTab.Settings.controller("Settings", nativeContent = { screen ->
+            assertEquals(Navigator.Screen.SettingsTab, screen)
+            factory
+        }) { error("A registered native route must not compose the fallback") }
+
+        assertEquals(Navigator.Screen.SettingsTab, root.route)
+        assertEquals(0, factoryCalls)
+        root.loadViewIfNeeded()
+        root.loadViewIfNeeded()
+        assertEquals(1, factoryCalls)
+        assertEquals(root, hosted.parentViewController)
+    }
+
+    @Test
+    fun rootControllerOrderMatchesSharedTabIndexes() {
+        IosRootTab.entries.forEach { tab ->
+            assertEquals(tab.ordinal, nativeTabIndex(tab.screen))
+        }
+    }
+
+    @Test
     fun activeRootTabIsReselectedOnEveryTap() {
         val navigation = UINavigationController(rootViewController = UIViewController())
         val tabs = UITabBarController().apply { setViewControllers(listOf(navigation), false) }

@@ -122,7 +122,7 @@ private object NavigationMemory {
 private data class SavedNavigation(
     val isLoggedIn: Boolean? = null,
     val selectedTab: Int = 0,
-    val stacks: List<List<Navigator.Screen>> = List(5) { emptyList() },
+    val stacks: List<List<Navigator.Screen>> = List(IosRootTab.entries.size) { emptyList() },
 )
 
 internal actual fun clearPlatformNavigationState() = NavigationMemory.clear()
@@ -139,11 +139,11 @@ internal actual fun PlatformRootNavigation(
     val tabs = remember { UITabBarController() }
     val tabDelegate = remember { TabDelegate() }
     val tabReselections = remember { MainTabReselections() }
-    val navigationDelegates = remember { List(5) { NavigationDelegate() } }
-    val navigations = remember { List(5) { UINavigationController() } }
+    val navigationDelegates = remember { List(IosRootTab.entries.size) { NavigationDelegate() } }
+    val navigations = remember { List(IosRootTab.entries.size) { UINavigationController() } }
     val createNavigation = remember { UINavigationController(rootViewController = UIViewController()) }
     var createVisible by remember { mutableStateOf(false) }
-    val tabBarVisibility = remember(tabs) { NativeTabBarVisibility(tabs, navigations[0]) { createVisible = it } }
+    val tabBarVisibility = remember(tabs) { NativeTabBarVisibility(tabs, navigations[IosRootTab.Discovery.ordinal]) { createVisible = it } }
     val businessMode = koinInject<com.coffeepeek.feature.ownership.api.BusinessOwnershipEntry>().Session().businessMode
     val visibleTabIndices = remember(isLoggedIn, businessMode) { nativeRootTabIndices(isLoggedIn, businessMode) }
     val restoredNavigation = remember { NavigationMemory.restore(isLoggedIn) }
@@ -175,7 +175,7 @@ internal actual fun PlatformRootNavigation(
             saveNavigation()
         }
     }
-    val nativeContent = nativePushedContent()
+    val nativeContent = nativeRouteContent()
     fun controller(screen: Navigator.Screen): UIViewController = NativeScreenController(
         route = screen,
         nativeContent = nativeContent(screen),
@@ -192,11 +192,10 @@ internal actual fun PlatformRootNavigation(
     val createTitle = stringResource(Res.string.check_in_create_actions)
     val labels = nativeRootTabLabels()
     UIKitViewController(factory = {
-        val symbols = listOf("magnifyingglass", "person.2", "person.crop.circle", "gearshape", "building.2")
-        navigations.indices.forEach { index ->
+        IosRootTab.entries.forEachIndexed { index, tab ->
             val navigation = navigations[index]
-            val root = NativeScreenController(labels[index], analyticsPage = listOf("discovery", "feed", "profile", "settings", "business_ownership")[index], isTabRoot = true) {
-                NativeRootTabContent(index, isLoggedIn, tabBarVisibility, tabReselections) { refreshCommunity = it }
+            val root = tab.controller(labels[index], nativeContent) {
+                NativeRootTabContent(tab, isLoggedIn, tabBarVisibility, tabReselections) { refreshCommunity = it }
             }
             navigation.setNavigationBarHidden(true, false)
             navigation.setViewControllers(
@@ -205,7 +204,7 @@ internal actual fun PlatformRootNavigation(
                 },
                 false,
             )
-            navigation.tabBarItem = UITabBarItem(title = labels[index], image = UIImage.systemImageNamed(symbols[index]), tag = index.toLong())
+            navigation.tabBarItem = UITabBarItem(title = labels[index], image = UIImage.systemImageNamed(tab.symbol), tag = index.toLong())
             navigationDelegates[index].navigation = navigation
             navigationDelegates[index].onStackChanged = { saveNavigation() }
             navigation.delegate = navigationDelegates[index]
@@ -216,7 +215,7 @@ internal actual fun PlatformRootNavigation(
         tabDelegate.createNavigation = createNavigation
         tabDelegate.onTabChanged = { saveNavigation() }
         tabDelegate.onTabReselected = { navigation ->
-            tabReselections.onTabPressed(Navigator.Screen.FeedTab, isSelected = navigation == navigations[0])
+            tabReselections.onTabPressed(Navigator.Screen.FeedTab, isSelected = navigation == navigations[IosRootTab.Discovery.ordinal])
         }
         tabs
     }, modifier = Modifier.fillMaxSize(), update = {
@@ -310,13 +309,13 @@ internal actual fun PlatformRootNavigation(
 }
 
 @Composable
-private fun nativePushedContent(): (Navigator.Screen) -> (() -> UIViewController)? {
-    val themeSettingsContent = iosThemeSettingsContent()
-    val shopMenuGalleryContent = iosShopMenuGalleryContent()
+private fun nativeRouteContent(): (Navigator.Screen) -> (() -> UIViewController)? {
+    val themeSettings = iosThemeSettingsContent()
+    val shopMenuGallery = iosShopMenuGalleryContent()
     return { screen ->
         when (screen) {
-            Navigator.Screen.ThemeSettings -> themeSettingsContent
-            is Navigator.Screen.ShopMenuGallery -> { { shopMenuGalleryContent(screen.shopId) } }
+            Navigator.Screen.ThemeSettings -> themeSettings
+            is Navigator.Screen.ShopMenuGallery -> { { shopMenuGallery(screen.shopId) } }
             else -> null
         }
     }
@@ -347,17 +346,17 @@ private fun NativeCreateAction(tabDelegate: TabDelegate, refreshCommunity: (() -
 }
 
 @Composable
-private fun NativeRootTabContent(index: Int, isLoggedIn: Boolean, visibility: NativeTabBarVisibility,
+private fun NativeRootTabContent(tab: IosRootTab, isLoggedIn: Boolean, visibility: NativeTabBarVisibility,
     reselections: MainTabReselections, onRefreshChange: ((() -> Unit)?) -> Unit) {
-    when (index) {
-        0 -> koinInject<DiscoveryScreenRenderer>().Tab(
+    when (tab) {
+        IosRootTab.Discovery -> koinInject<DiscoveryScreenRenderer>().Tab(
             onMapExpandedChange = visibility::onMapExpandedChange, reselections = reselections.search)
-        1 -> koinInject<CommunityScreenRenderer>().Content(
+        IosRootTab.Community -> koinInject<CommunityScreenRenderer>().Content(
             notificationsAction = { koinInject<com.coffeepeek.admin.ui.screen.notifications.NotificationsRenderer>().Bell() },
             onRefreshChange = onRefreshChange)
-        2 -> koinInject<OwnProfileScreenRenderer>().Content(isLoggedIn)
-        3 -> koinInject<SettingsScreenRenderer>().Tab()
-        4 -> koinInject<com.coffeepeek.feature.ownership.api.BusinessOwnershipEntry>().Tab()
+        IosRootTab.Profile -> koinInject<OwnProfileScreenRenderer>().Content(isLoggedIn)
+        IosRootTab.Settings -> koinInject<SettingsScreenRenderer>().Tab()
+        IosRootTab.Business -> koinInject<com.coffeepeek.feature.ownership.api.BusinessOwnershipEntry>().Tab()
     }
 }
 
