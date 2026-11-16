@@ -1,5 +1,13 @@
 # Incremental native iOS UI migration
 
+## Integration branch
+
+Start native SwiftUI migration branches from `codex/ios-native` and open their
+pull requests against it. For a stacked pull request, target its open parent
+first and retarget to `codex/ios-native` after that parent lands. GitHub Actions
+runs iOS build verification for migration pull requests into this branch.
+Android CI continues to run for pull requests into `main` and `develop`.
+
 ## Responsibility and current boundary
 
 The application composition module owns route dispatch, UIKit controller lifetime,
