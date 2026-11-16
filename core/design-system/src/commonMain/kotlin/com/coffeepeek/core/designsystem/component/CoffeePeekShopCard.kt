@@ -39,6 +39,7 @@ import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekColors
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
+import com.coffeepeek.core.designsystem.theme.coffeePeekSecondaryAccent
 import com.coffeepeek.core.designsystem.theme.coffeePeekStatusForeground
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
@@ -141,7 +142,8 @@ private fun ShopCardDetails(
         ShopCardTitle(title, statusLabel, isOpen)
         brewMethods?.invoke()
         if (!locationSummary.isNullOrBlank()) Row(verticalAlignment = Alignment.CenterVertically) {
-            CoffeePeekIcon(CoffeePeekIcons.Location, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(14.dp))
+            CoffeePeekIcon(CoffeePeekIcons.Location, contentDescription = null,
+                tint = MaterialTheme.colorScheme.coffeePeekSecondaryAccent, modifier = Modifier.size(14.dp))
             Spacer(Modifier.width(2.dp))
             Text(locationSummary, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = if (LocalDensity.current.fontScale > 1.2f) 3 else 1, overflow = TextOverflow.Ellipsis)
@@ -256,7 +258,7 @@ private fun ShopCardPreviewContent(darkTheme: Boolean) = CoffeePeekTheme(darkThe
             CoffeePeekShopCard(
                 title = "Sandbox Cafe", kindLabel = "Specialty", rating = 4.5, ratingText = "4.5", ratingCount = 12, isNew = true, newLabel = "Новое",
                 statusLabel = "ОТКРЫТО", isOpen = true, locationSummary = "Тестовая улица, 1 • 250 м от вас", priceLevel = 2, tag = "Wi-Fi", onClick = {},
-                cover = { Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.primary.copy(alpha = 0.4f))) }, roasterLogoCount = 2,
+                cover = { Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surfaceVariant)) }, roasterLogoCount = 2,
                 roasterLogo = { Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.outline)) },
                 brewMethods = { Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) { CoffeePeekShopInfoChip("V60"); CoffeePeekShopInfoChip("+1") } },
                 favorite = { CoffeePeekLikeButton(selected = true, contentDescription = "В избранном", onClick = {}, overImage = true) },

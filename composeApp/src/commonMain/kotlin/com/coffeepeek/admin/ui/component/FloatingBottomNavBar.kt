@@ -31,6 +31,7 @@ import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.State
@@ -78,6 +79,7 @@ import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.modifier.LocalCoffeePeekGlassHazeState
 import com.coffeepeek.core.designsystem.modifier.coffeePeekLiquidGlass
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
+import com.coffeepeek.core.designsystem.theme.coffeePeekSecondaryAccent
 import com.coffeepeek.core.designsystem.theme.reducedMotionDuration
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import dev.chrisbanes.haze.HazeState
@@ -182,7 +184,7 @@ private fun FloatingNavBarItem(item: FloatingNavItem, selection: State<Float>, m
 @Composable
 private fun FloatingNavBarCaption(item: FloatingNavItem, selection: State<Float>) {
     val colors = MaterialTheme.colorScheme
-    val accent = colors.primary
+    val accent = colors.coffeePeekSecondaryAccent
     val icon = coffeePeekIconPainter(item.icon)
     BoxWithConstraints(Modifier.fillMaxSize()) {
         val (inactive, active) = rememberNavCaptions(item.title, constraints.maxWidth)
@@ -254,13 +256,15 @@ private fun FloatingBottomNavBarPreview(dark: Boolean, scale: Float = 1f, width:
     CoffeePeekTheme(darkTheme = dark) {
         var selected by remember { mutableIntStateOf(0) }
         CompositionLocalProvider(LocalDensity provides Density(LocalDensity.current.density, scale)) {
-            FloatingBottomNavBar(listOf(
-                FloatingNavItem("Поиск", CoffeePeekIcons.Search, selected == 0, { selected = 0 }),
-                FloatingNavItem("Лента", CoffeePeekIcons.Community, selected == 1, { selected = 1 }),
-                FloatingNavItem("Добавить", CoffeePeekIcons.Add, false, {}, isAction = true),
-                FloatingNavItem("Профиль", CoffeePeekIcons.Profile, selected == 3, { selected = 3 }),
-                FloatingNavItem("Настройки", CoffeePeekIcons.Settings, selected == 4, { selected = 4 }),
-            ), Modifier.width(width))
+            Surface {
+                FloatingBottomNavBar(listOf(
+                    FloatingNavItem("Поиск", CoffeePeekIcons.Search, selected == 0, { selected = 0 }),
+                    FloatingNavItem("Лента", CoffeePeekIcons.Community, selected == 1, { selected = 1 }),
+                    FloatingNavItem("Добавить", CoffeePeekIcons.Add, false, {}, isAction = true),
+                    FloatingNavItem("Профиль", CoffeePeekIcons.Profile, selected == 3, { selected = 3 }),
+                    FloatingNavItem("Настройки", CoffeePeekIcons.Settings, selected == 4, { selected = 4 }),
+                ), Modifier.width(width))
+            }
         }
     }
 

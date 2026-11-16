@@ -10,6 +10,7 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.painter.Painter
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
+import com.coffeepeek.core.designsystem.theme.coffeePeekSecondaryAccent
 import platform.UIKit.UIAction
 import platform.UIKit.UIButton
 import platform.UIKit.UIButtonConfigurationCornerStyleCapsule
@@ -27,6 +28,11 @@ internal actual fun CoffeePeekNativeFilterChip(
     val callback = rememberUpdatedState(onClick)
     val colors = MaterialTheme.colorScheme
     val image = (leadingIcon ?: trailingIcon)?.let { coffeePeekNativeImage(it) }
+    val iconTint = when {
+        selected -> colors.onPrimary
+        leadingIcon != null -> colors.coffeePeekSecondaryAccent
+        else -> colors.primary
+    }
     CoffeePeekNativeGlassView(
         factory = { UIButton.buttonWithConfiguration(coffeePeekGlassButtonConfiguration(),
             UIAction.actionWithHandler { callback.value() }) },
@@ -37,8 +43,7 @@ internal actual fun CoffeePeekNativeFilterChip(
             button.tintColor = colors.primary.toUIColor()
             button.configuration = coffeePeekGlassButtonConfiguration(prominent = selected).apply {
                 title = label
-                this.image = image?.imageWithTintColor(
-                    (if (selected) colors.onPrimary else colors.primary).toUIColor(), UIImageRenderingModeAlwaysOriginal)
+                this.image = image?.imageWithTintColor(iconTint.toUIColor(), UIImageRenderingModeAlwaysOriginal)
                 imagePadding = 6.0
                 if (trailingIcon != null) imagePlacement = NSDirectionalRectEdgeTrailing
                 cornerStyle = UIButtonConfigurationCornerStyleCapsule
