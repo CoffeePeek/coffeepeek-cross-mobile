@@ -1,4 +1,122 @@
 import SwiftUI
+import CoreText
+import UIKit
+
+// Native rendering of CoffeePeekColors, CoffeePeekDimens and CoffeePeekIconBadgePalette.
+// Keep these values aligned with core/design-system; no UIKit grouped-list defaults.
+enum SettingsNativeStyle {
+    static let background = adaptive(0xFAFAF9, 0x1A1412)
+    static let surface = adaptive(0xFFFFFF, 0x2D241F)
+    static let foreground = adaptive(0x1C1917, 0xFFFFFF)
+    static let secondary = adaptive(0x6B655F, 0xA39E93)
+    static let border = adaptive(0xE5E1DA, 0x3D2F28)
+    static let accent = color(0xFACC15)
+
+    // The bundled static weights share one PostScript name. Loading the actual
+    // font data avoids global registration collisions and preserves each weight.
+    private static let graphicsFonts: [String: CGFont] = {
+        Dictionary(uniqueKeysWithValues: ["regular", "medium", "semibold", "bold"].compactMap { weight in
+            loadGraphicsFont(weight).map { (weight, $0) }
+        })
+    }()
+
+    static func font(_ size: CGFloat, weight: String = "Regular", relativeTo: Font.TextStyle = .body) -> Font {
+        let scaledSize = UIFontMetrics(forTextStyle: textStyle(relativeTo)).scaledValue(for: size)
+        guard let graphicsFont = graphicsFonts[weight.lowercased()] else {
+            return .system(size: scaledSize, weight: fallbackWeight(weight))
+        }
+        return Font(CTFontCreateWithGraphicsFont(graphicsFont, scaledSize, nil, nil))
+    }
+
+    private static func loadGraphicsFont(_ weight: String) -> CGFont? {
+        let resource = "com.coffeepeek.core.designsystem.resources/font"
+        for directory in ["compose-resources/composeResources/\(resource)", "compose-resources/\(resource)"] {
+            if let url = Bundle.main.url(forResource: "manrope_\(weight)", withExtension: "ttf", subdirectory: directory),
+               let provider = CGDataProvider(url: url as CFURL), let font = CGFont(provider) {
+                return font
+            }
+        }
+        return nil
+    }
+
+    private static func textStyle(_ style: Font.TextStyle) -> UIFont.TextStyle {
+        switch style {
+        case .largeTitle: .largeTitle
+        case .title: .title1
+        case .title2: .title2
+        case .title3: .title3
+        case .headline: .headline
+        case .subheadline: .subheadline
+        case .callout: .callout
+        case .footnote: .footnote
+        case .caption: .caption1
+        case .caption2: .caption2
+        default: .body
+        }
+    }
+
+    private static func fallbackWeight(_ weight: String) -> Font.Weight {
+        switch weight.lowercased() {
+        case "bold": .bold
+        case "semibold": .semibold
+        case "medium": .medium
+        default: .regular
+        }
+    }
+
+    static func color(_ hex: UInt32) -> Color {
+        Color(red: Double((hex >> 16) & 255) / 255, green: Double((hex >> 8) & 255) / 255, blue: Double(hex & 255) / 255)
+    }
+
+    private static func adaptive(_ light: UInt32, _ dark: UInt32) -> Color {
+        Color(uiColor: UIColor { traits in
+            let hex = traits.userInterfaceStyle == .dark ? dark : light
+            return UIColor(red: CGFloat((hex >> 16) & 255) / 255, green: CGFloat((hex >> 8) & 255) / 255,
+                           blue: CGFloat(hex & 255) / 255, alpha: 1)
+        })
+    }
+
+    static func heading(_ title: String, description: String) -> some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text(title).font(font(22, weight: "Bold", relativeTo: .title2)).accessibilityAddTraits(.isHeader)
+            Text(description).font(font(17)).foregroundStyle(secondary).fixedSize(horizontal: false, vertical: true)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.bottom, 8)
+    }
+
+    static func section<Content: View>(_ title: String? = nil, description: String? = nil,
+                                      @ViewBuilder content: () -> Content) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            if let title {
+                Text(title.uppercased()).font(font(13, relativeTo: .footnote))
+                    .foregroundStyle(secondary).accessibilityAddTraits(.isHeader)
+            }
+            if let description { Text(description).font(font(14)).foregroundStyle(secondary) }
+            VStack(spacing: 0, content: content).settingsCard()
+        }
+    }
+
+    static var divider: some View {
+        Rectangle().fill(border).frame(height: 0.5).accessibilityHidden(true)
+    }
+}
+
+extension View {
+    func settingsCard() -> some View {
+        frame(maxWidth: .infinity, alignment: .leading)
+            .background(SettingsNativeStyle.surface)
+            .clipShape(RoundedRectangle(cornerRadius: 16))
+            .overlay(RoundedRectangle(cornerRadius: 16).strokeBorder(SettingsNativeStyle.border, lineWidth: 1))
+    }
+
+    func settingsAppearance() -> some View {
+        font(SettingsNativeStyle.font(17))
+            .foregroundStyle(SettingsNativeStyle.foreground)
+            .tint(SettingsNativeStyle.accent)
+            .background(SettingsNativeStyle.background.ignoresSafeArea())
+    }
+}
 
 struct SettingsNativeStrings {
     private let bundle: Bundle
@@ -21,29 +139,49 @@ struct SettingsNativeStrings {
 
 struct SettingsNativePage<Content: View>: View {
     let title: String
-    let strings: SettingsNativeStrings
+    let backLabel: String
     let back: () -> Void
     @ViewBuilder let content: () -> Content
 
+    init(title: String, strings: SettingsNativeStrings, back: @escaping () -> Void,
+         @ViewBuilder content: @escaping () -> Content) {
+        self.init(title: title, backLabel: strings.text("settings_back"), back: back, content: content)
+    }
+
+    init(title: String, backLabel: String, back: @escaping () -> Void,
+         @ViewBuilder content: @escaping () -> Content) {
+        self.title = title
+        self.backLabel = backLabel
+        self.back = back
+        self.content = content
+    }
+
     var body: some View {
-        List(content: content)
-            .listStyle(.insetGrouped)
-            .safeAreaInset(edge: .top, spacing: 0) {
-                HStack(spacing: 8) {
-                    Button(action: back) {
-                        Label(strings.text("settings_back"), systemImage: "chevron.backward")
-                            .labelStyle(.iconOnly)
-                            .frame(minWidth: 44, minHeight: 44)
-                            .contentShape(Rectangle())
-                    }
-                    Text(title)
-                        .font(.headline)
-                        .accessibilityAddTraits(.isHeader)
-                    Spacer(minLength: 0)
-                }
-                .padding(.horizontal, 12)
-                .background(.bar)
+        ScrollView {
+            VStack(alignment: .leading, spacing: 16, content: content)
+                .padding(16)
+                .padding(.bottom, 24)
+        }
+        .safeAreaInset(edge: .top, spacing: 0) { header }
+        .settingsAppearance()
+    }
+
+    private var header: some View {
+        HStack(spacing: 8) {
+            Button(action: back) {
+                Image(systemName: "chevron.left").font(.system(size: 20, weight: .regular))
+                    .frame(width: 48, height: 48)
+                    .background(SettingsNativeStyle.surface, in: Circle())
+                    .shadow(color: .black.opacity(0.04), radius: 3, y: 2)
             }
+            .buttonStyle(.plain).accessibilityLabel(backLabel)
+            Text(title).font(SettingsNativeStyle.font(22, weight: "Bold", relativeTo: .title2))
+                .frame(maxWidth: .infinity).multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true).accessibilityAddTraits(.isHeader)
+            Color.clear.frame(width: title.count > 20 ? 0 : 48, height: 1).accessibilityHidden(true)
+        }
+        .padding(.horizontal, 16).padding(.vertical, 8)
+        .background(SettingsNativeStyle.background)
     }
 }
 
@@ -55,32 +193,40 @@ struct SettingsNativeRow: View {
     var navigates: Bool = false
     var busy: Bool = false
     let action: () -> Void
+    @Environment(\.dynamicTypeSize) private var textSize
 
     var body: some View {
         Button(action: action) {
-            HStack(spacing: 10) {
+            HStack(spacing: 12) {
                 if let systemImage {
-                    Image(systemName: systemImage)
-                        .foregroundStyle(Color.accentColor)
-                        .accessibilityHidden(true)
+                    SettingsNativeLabel.icon(systemImage)
                 }
-                SettingsNativeLabel(title: title, description: description)
-                Spacer(minLength: 0)
-                if let value {
+                VStack(alignment: .leading, spacing: 4) {
+                    SettingsNativeLabel(title: title, description: description)
+                    if textSize.isAccessibilitySize, let value {
+                        Text(value).font(SettingsNativeStyle.font(15)).foregroundStyle(SettingsNativeStyle.secondary)
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                if let value, !textSize.isAccessibilitySize {
                     Text(value)
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
+                        .font(SettingsNativeStyle.font(15))
+                        .foregroundStyle(SettingsNativeStyle.secondary)
+                        .multilineTextAlignment(.trailing)
+                        .frame(maxWidth: 110, alignment: .trailing)
+                        .fixedSize(horizontal: true, vertical: false)
                 }
                 if busy {
                     ProgressView().accessibilityHidden(true)
                 } else if navigates {
                     Image(systemName: "chevron.forward")
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(.tertiary)
+                        .font(.system(size: 17, weight: .regular))
+                        .foregroundStyle(SettingsNativeStyle.secondary)
                         .accessibilityHidden(true)
                 }
             }
-            .frame(minHeight: 44)
+            .padding(.horizontal, 16).padding(.vertical, 12)
+            .frame(minHeight: 64)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -91,12 +237,73 @@ struct SettingsNativeRow: View {
 struct SettingsNativeLabel: View {
     let title: String
     var description: String? = nil
+    var descriptionSize: CGFloat = 14
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(title).foregroundStyle(.primary)
+        VStack(alignment: .leading, spacing: descriptionSize > 14 ? 8 : 4) {
+            Text(title).font(SettingsNativeStyle.font(17)).foregroundStyle(SettingsNativeStyle.foreground)
             if let description {
-                Text(description).font(.footnote).foregroundStyle(.secondary)
+                Text(description).font(SettingsNativeStyle.font(descriptionSize)).foregroundStyle(SettingsNativeStyle.secondary)
+            }
+        }
+        .fixedSize(horizontal: false, vertical: true)
+    }
+
+    static func icon(_ name: String) -> some View { Badge(name: name) }
+
+    static func toggle(_ title: String, description: String, icon: String,
+                       isOn: Binding<Bool>, longDescription: Bool = false) -> some View {
+        Toggle(isOn: isOn) {
+            HStack(alignment: longDescription ? .top : .center, spacing: 12) {
+                Self.icon(icon)
+                SettingsNativeLabel(title: title, description: description, descriptionSize: longDescription ? 15 : 14)
+            }
+        }
+        .toggleStyle(.switch)
+        .tint(SettingsNativeStyle.accent)
+        .padding(.horizontal, 16).padding(.vertical, longDescription ? 16 : 12)
+    }
+
+    private struct Badge: View {
+        let name: String
+        @Environment(\.colorScheme) private var scheme
+        @ScaledMetric(relativeTo: .body) private var size = 40.0
+        private var colors: (UInt32, UInt32) {
+            switch name {
+            case "location", "mappin": (0xDDFAF8, 0x257D78)
+            case "globe", "bean": (0xECFAED, 0x287D3B)
+            case "business", "desktopcomputer", "square.and.arrow.up": (0xD3EFFA, 0x247A8B)
+            case "theme", "moon": (0xF5F3FF, 0x7C3AED)
+            case "shield", "doc.text": (0xFDF9E3, 0xE8C52A)
+            case "lock.shield": (0xECFDF5, 0x087F5B)
+            default: (0xFEF3C7, 0x8A6300)
+            }
+        }
+        var body: some View {
+            symbol.font(.system(size: 22, weight: .regular))
+                .foregroundStyle(SettingsNativeStyle.color(scheme == .dark ? lightenedIcon : colors.1))
+                .frame(width: size, height: size)
+                .background(SettingsNativeStyle.color(scheme == .dark ? colors.1 : colors.0)
+                    .opacity(scheme == .dark ? 0.2 : 1), in: RoundedRectangle(cornerRadius: 12))
+                .accessibilityHidden(true)
+        }
+        private var lightenedIcon: UInt32 {
+            let channels = [16, 8, 0].map { UInt32(Double((colors.1 >> $0) & 255) * 0.65 + 255 * 0.35) }
+            return (channels[0] << 16) | (channels[1] << 8) | channels[2]
+        }
+        @ViewBuilder private var symbol: some View {
+            switch name {
+            case "bean", "business":
+                ZStack {
+                    Ellipse().stroke(lineWidth: 1.5).frame(width: 14, height: 21).rotationEffect(.degrees(35))
+                    Path { path in
+                        path.move(to: CGPoint(x: 7, y: 0))
+                        path.addCurve(to: CGPoint(x: 7, y: 21), control1: CGPoint(x: 18, y: 7), control2: CGPoint(x: -4, y: 14))
+                    }.stroke(lineWidth: 1.3).frame(width: 14, height: 21).rotationEffect(.degrees(35))
+                }.frame(width: 22, height: 22)
+            case "location": Image(systemName: "mappin.and.ellipse")
+            case "theme": Image(systemName: "sun.max")
+            default: Image(systemName: name)
             }
         }
     }
@@ -110,19 +317,20 @@ struct SettingsSelectionRow: View {
 
     var body: some View {
         Button(action: select) {
-            HStack {
+            HStack(spacing: 12) {
                 if let systemImage {
-                    Image(systemName: systemImage).accessibilityHidden(true)
+                    SettingsNativeLabel.icon(systemImage)
                 }
-                Text(title).foregroundStyle(.primary)
+                Text(title).font(SettingsNativeStyle.font(17)).foregroundStyle(SettingsNativeStyle.foreground)
                 Spacer(minLength: 0)
                 if selected {
                     Image(systemName: "checkmark")
-                        .foregroundStyle(Color.accentColor)
+                        .foregroundStyle(SettingsNativeStyle.accent)
                         .accessibilityHidden(true)
                 }
             }
-            .frame(minHeight: 44)
+            .padding(.horizontal, 16).padding(.vertical, 12)
+            .frame(minHeight: 64)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -138,8 +346,13 @@ struct SettingsRetryRow: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(message).foregroundStyle(.secondary)
-            Button(retry, action: action)
+            Button(action: action) {
+                Text(retry)
+                    .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
+                    .contentShape(Rectangle())
+            }
         }
+        .padding(16)
     }
 }
 
@@ -147,27 +360,39 @@ struct SettingsRetryRow: View {
 private func settingsComponentsPreview(languageTag: String) -> some View {
     let strings = SettingsNativeStrings(languageTag: languageTag)
     return SettingsNativePage(title: strings.text("settings_tab_title"), strings: strings, back: {}) {
-        Section(strings.text("settings_section_settings")) {
-            SettingsNativeRow(
-                title: strings.text("settings_city_row"),
-                description: strings.text("settings_city_row_description"),
-                systemImage: "location", value: languageTag == "be" ? "Мінск" : "Минск", navigates: true
-            ) {}
-            SettingsNativeRow(
-                title: strings.text("settings_update_checking"), systemImage: "arrow.down.circle", busy: true
-            ) {}
-        }
-        Section(strings.text("settings_language_title")) {
-            SettingsSelectionRow(
-                title: strings.text("settings_language_russian"), selected: languageTag == "ru"
-            ) {}
-            SettingsSelectionRow(
-                title: strings.text("settings_language_belarusian"), selected: languageTag == "be"
-            ) {}
-            SettingsRetryRow(
-                message: strings.text("settings_language_save_error"), retry: strings.text("settings_retry"), action: {}
-            )
-        }
+        settingsNavigationPreview(strings: strings, languageTag: languageTag)
+        settingsLanguagePreview(strings: strings, languageTag: languageTag)
+    }
+}
+
+@MainActor
+private func settingsNavigationPreview(strings: SettingsNativeStrings, languageTag: String) -> some View {
+    SettingsNativeStyle.section(strings.text("settings_section_settings")) {
+        SettingsNativeRow(
+            title: strings.text("settings_city_row"),
+            description: strings.text("settings_city_row_description"),
+            systemImage: "location", value: languageTag == "be" ? "Мінск" : "Минск", navigates: true
+        ) {}
+        SettingsNativeStyle.divider
+        SettingsNativeRow(
+            title: strings.text("settings_update_checking"), systemImage: "arrow.down.circle", busy: true
+        ) {}
+    }
+}
+
+@MainActor
+private func settingsLanguagePreview(strings: SettingsNativeStrings, languageTag: String) -> some View {
+    SettingsNativeStyle.section(strings.text("settings_language_title")) {
+        SettingsSelectionRow(
+            title: strings.text("settings_language_russian"), selected: languageTag == "ru"
+        ) {}
+        SettingsNativeStyle.divider
+        SettingsSelectionRow(
+            title: strings.text("settings_language_belarusian"), selected: languageTag == "be"
+        ) {}
+        SettingsRetryRow(
+            message: strings.text("settings_language_save_error"), retry: strings.text("settings_retry"), action: {}
+        )
     }
 }
 

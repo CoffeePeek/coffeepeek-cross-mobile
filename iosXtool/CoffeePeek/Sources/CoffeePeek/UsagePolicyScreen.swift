@@ -12,28 +12,26 @@ struct UsagePolicyScreen: View {
     var body: some View {
         SettingsNativePage(title: strings.text("settings_policy_title"), strings: strings, back: back) {
             if state.available {
-                Section(strings.text("settings_policy_section")) {
-                    Toggle(isOn: Binding(get: { state.accepted }, set: setConsent)) {
-                        SettingsNativeLabel(
-                            title: strings.text("settings_policy_analytics_title"),
-                            description: strings.text(state.syncFailed ? "settings_analytics_sync_failed" : "settings_policy_analytics_text")
-                        )
-                    }
+                SettingsNativeStyle.section(strings.text("settings_policy_section")) {
+                    SettingsNativeLabel.toggle(
+                        strings.text("settings_policy_analytics_title"),
+                        description: strings.text(state.syncFailed ? "settings_analytics_sync_failed" : "settings_policy_analytics_text"),
+                        icon: "shield", isOn: Binding(get: { state.accepted }, set: setConsent), longDescription: true
+                    )
                 }
             }
-            Section {
+            SettingsNativeStyle.section(state.available ? nil : strings.text("settings_policy_section")) {
                 SettingsNativeRow(
                     title: strings.text("settings_policy_terms_title"),
                     description: strings.text("settings_policy_terms_description"),
                     systemImage: "doc.text", navigates: true, action: openTerms
                 )
+                SettingsNativeStyle.divider
                 SettingsNativeRow(
                     title: strings.text("settings_policy_privacy_title"),
                     description: strings.text("settings_policy_privacy_description"),
                     systemImage: "shield", navigates: true, action: openPrivacy
                 )
-            } header: {
-                if !state.available { Text(strings.text("settings_policy_section")) }
             }
         }
     }
@@ -41,7 +39,7 @@ struct UsagePolicyScreen: View {
 
 #Preview("Usage policy light") {
     UsagePolicyScreen(
-        state: IosUsagePolicyState(available: false, accepted: false, syncFailed: false),
+        state: IosUsagePolicyState(available: true, accepted: true, syncFailed: false),
         strings: SettingsNativeStrings(languageTag: "ru"), setConsent: { _ in }, openTerms: {}, openPrivacy: {}, back: {}
     )
     .preferredColorScheme(.light)

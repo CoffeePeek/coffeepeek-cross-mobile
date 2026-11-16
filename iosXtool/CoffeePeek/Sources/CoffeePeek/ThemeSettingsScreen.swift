@@ -54,56 +54,20 @@ private struct ThemeSettingsScreen: View {
     let onBack: () -> Void
 
     var body: some View {
-        List {
-            Section {
-                option(.system, title: strings.text("theme.system"), icon: "circle.lefthalf.filled")
+        SettingsNativePage(title: strings.text("theme.title"), backLabel: strings.text("theme.back"), back: onBack) {
+            SettingsNativeStyle.heading(strings.text("theme.heading"), description: strings.text("theme.description"))
+            SettingsNativeStyle.section {
+                option(.system, title: strings.text("theme.system"), icon: "desktopcomputer")
+                SettingsNativeStyle.divider
                 option(.light, title: strings.text("theme.light"), icon: "sun.max")
+                SettingsNativeStyle.divider
                 option(.dark, title: strings.text("theme.dark"), icon: "moon")
-            } header: {
-                Text(strings.text("theme.heading"))
-            } footer: {
-                Text(strings.text("theme.description"))
             }
         }
-        .listStyle(.insetGrouped)
-        .safeAreaInset(edge: .top, spacing: 0) {
-            header
-        }
-    }
-
-    private var header: some View {
-        HStack(alignment: .firstTextBaseline, spacing: 8) {
-            Button(action: onBack) {
-                Label(strings.text("theme.back"), systemImage: "chevron.backward")
-                    .labelStyle(.iconOnly)
-                    .frame(minWidth: 44, minHeight: 44)
-                    .contentShape(Rectangle())
-            }
-            Text(strings.text("theme.title"))
-                .font(.headline)
-                .accessibilityAddTraits(.isHeader)
-            Spacer(minLength: 0)
-        }
-        .padding(.horizontal, 12)
-        .background(.bar)
     }
 
     private func option(_ mode: ThemeMode, title: String, icon: String) -> some View {
-        let isSelected = mode == selected
-        return Button { onSelect(mode) } label: {
-            HStack {
-                Label(title, systemImage: icon)
-                    .foregroundStyle(.primary)
-                Spacer(minLength: 12)
-                if isSelected {
-                    Image(systemName: "checkmark")
-                        .foregroundStyle(Color.accentColor)
-                        .accessibilityHidden(true)
-                }
-            }
-            .contentShape(Rectangle())
-        }
-        .accessibilityAddTraits(isSelected ? .isSelected : [])
+        SettingsSelectionRow(title: title, selected: mode == selected, systemImage: icon) { onSelect(mode) }
     }
 }
 

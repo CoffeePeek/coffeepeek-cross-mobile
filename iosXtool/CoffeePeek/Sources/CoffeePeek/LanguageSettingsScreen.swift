@@ -10,18 +10,17 @@ struct LanguageSettingsScreen: View {
 
     var body: some View {
         SettingsNativePage(title: strings.text("settings_language_title"), strings: strings, back: back) {
-            Section {
+            SettingsNativeStyle.heading(strings.text("settings_language_heading"),
+                                        description: strings.text("settings_language_description"))
+            SettingsNativeStyle.section {
                 languageOption("ru", label: "settings_language_russian")
+                SettingsNativeStyle.divider
                 languageOption("be", label: "settings_language_belarusian")
-            } header: {
-                Text(strings.text("settings_language_heading"))
-            } footer: {
-                Text(strings.text("settings_language_description"))
             }
             if state.saving {
-                Section { ProgressView(strings.text("settings_language_saving")) }
+                ProgressView(strings.text("settings_language_saving"))
             } else if state.saveFailed {
-                Section {
+                SettingsNativeStyle.section {
                     SettingsRetryRow(
                         message: strings.text("settings_language_save_error"),
                         retry: strings.text("settings_retry"),

@@ -10,9 +10,12 @@ struct CitySettingsScreen: View {
 
     var body: some View {
         SettingsNativePage(title: strings.text("settings_city_title"), strings: strings, back: back) {
-            Section {
+            SettingsNativeStyle.heading(strings.text("settings_city_heading"),
+                                        description: strings.text("settings_city_description"))
+            SettingsNativeStyle.section {
                 if state.loading {
                     ProgressView(strings.text("settings_loading"))
+                        .padding(16)
                 } else if state.failed || state.cities.isEmpty {
                     SettingsRetryRow(
                         message: strings.text(state.failed ? "settings_city_error" : "settings_city_empty"),
@@ -24,12 +27,9 @@ struct CitySettingsScreen: View {
                         SettingsSelectionRow(
                             title: city.name, selected: city.id == state.selectedId, systemImage: "location"
                         ) { select(city.id) }
+                        if city.id != state.cities.last?.id { SettingsNativeStyle.divider }
                     }
                 }
-            } header: {
-                Text(strings.text("settings_city_heading"))
-            } footer: {
-                Text(strings.text("settings_city_description"))
             }
         }
     }

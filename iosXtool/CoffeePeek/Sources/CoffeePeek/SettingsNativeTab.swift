@@ -11,12 +11,20 @@ struct SettingsNativeTab: View {
     let switchAccount: () -> Void
 
     var body: some View {
-        List {
+        ScrollView {
+            content
+                .padding(16)
+                .padding(.bottom, 100)
+        }
+        .settingsAppearance()
+    }
+
+    private var content: some View {
+        VStack(alignment: .leading, spacing: 16) {
             Text(strings.text("settings_tab_title"))
-                .font(.largeTitle.bold())
+                .font(SettingsNativeStyle.font(28, weight: "Bold", relativeTo: .title))
                 .accessibilityAddTraits(.isHeader)
-                .listRowBackground(Color.clear)
-                .listRowSeparator(.hidden)
+                .padding(.bottom, 4)
             if state.showGuestCard { guestSection }
             if state.hasBusinesses { businessSection }
             if state.showAddRows { addSection }
@@ -24,58 +32,61 @@ struct SettingsNativeTab: View {
             otherSection
             if state.updateChecksEnabled { updateSection }
             Text(strings.version(state.version))
-                .font(.footnote)
-                .foregroundStyle(.secondary)
-                .listRowBackground(Color.clear)
+                .font(SettingsNativeStyle.font(13, relativeTo: .footnote))
+                .foregroundStyle(SettingsNativeStyle.secondary)
         }
-        .listStyle(.insetGrouped)
     }
 
     private var guestSection: some View {
-        Section {
+        SettingsNativeStyle.section {
             Text(strings.text("settings_guest_prompt"))
-                .foregroundStyle(.secondary)
-            Button(strings.text("settings_guest_login")) { open(.login) }
-            Button(strings.text("settings_guest_register")) { open(.registration) }
+                .foregroundStyle(SettingsNativeStyle.secondary).padding(16)
+            SettingsNativeRow(title: strings.text("settings_guest_login"), navigates: true) { open(.login) }
+            SettingsNativeStyle.divider
+            SettingsNativeRow(title: strings.text("settings_guest_register"), navigates: true) { open(.registration) }
         }
     }
 
     private var businessSection: some View {
-        Section(strings.text("ownership_account")) {
+        SettingsNativeStyle.section(strings.text("ownership_account")) {
             SettingsNativeRow(
                 title: strings.text(state.businessMode ? "ownership_switch_personal" : "ownership_switch_business"),
-                systemImage: "person.crop.circle", action: switchAccount
+                systemImage: "business", navigates: true, action: switchAccount
             )
         }
     }
 
     private var addSection: some View {
-        Section(strings.text("settings_section_add")) {
+        SettingsNativeStyle.section(strings.text("settings_section_add")) {
             SettingsNativeRow(
                 title: strings.text("settings_add_shop"), description: strings.text("settings_add_shop_description"),
-                systemImage: "plus.circle", navigates: true
+                systemImage: "plus", navigates: true
             ) { open(.shop) }
+            SettingsNativeStyle.divider
             SettingsNativeRow(
                 title: strings.text("settings_add_roaster"), description: strings.text("settings_add_roaster_description"),
-                systemImage: "cup.and.saucer", navigates: true
+                systemImage: "bean", navigates: true
             ) { open(.roaster) }
         }
     }
 
     private var preferencesSection: some View {
-        Section(strings.text("settings_section_settings")) {
+        SettingsNativeStyle.section(strings.text("settings_section_settings")) {
             SettingsNativeRow(
                 title: strings.text("settings_city_row"), description: strings.text("settings_city_row_description"),
                 systemImage: "location", value: state.city ?? strings.text("settings_city_not_selected"), navigates: true
             ) { open(.city) }
+            SettingsNativeStyle.divider
             SettingsNativeRow(
                 title: strings.text("settings_theme_row"), description: strings.text("settings_theme_row_description"),
-                systemImage: themeImage, value: strings.text(themeValue), navigates: true
+                systemImage: "theme", value: strings.text(themeValue), navigates: true
             ) { open(.theme) }
+            SettingsNativeStyle.divider
             SettingsNativeRow(
                 title: strings.text("settings_language_title"), description: strings.text("settings_language_row_description"),
                 systemImage: "globe", value: strings.text(languageValue), navigates: true
             ) { open(.language) }
+            SettingsNativeStyle.divider
             notificationRows
         }
     }
@@ -88,9 +99,8 @@ struct SettingsNativeTab: View {
         if preference.guest {
             SettingsNativeRow(title: title, description: description, systemImage: "bell", navigates: true) { open(.login) }
         } else {
-            Toggle(isOn: Binding(get: { preference.checked }, set: setPushEnabled)) {
-                SettingsNativeLabel(title: title, description: description)
-            }
+            SettingsNativeLabel.toggle(title, description: description, icon: "bell",
+                                       isOn: Binding(get: { preference.checked }, set: setPushEnabled))
             .disabled(!preference.enabled)
             if let failure = preference.failureKey {
                 if preference.canRetry {
@@ -105,27 +115,27 @@ struct SettingsNativeTab: View {
     }
 
     private var otherSection: some View {
-        Section {
+        SettingsNativeStyle.section(strings.text("settings_section_other"),
+                                    description: strings.text("settings_section_other_description")) {
             SettingsNativeRow(
                 title: strings.text("settings_support"), description: strings.text("settings_support_description"),
-                systemImage: "lifepreserver", navigates: true
+                systemImage: "text.bubble", navigates: true
             ) { open(.support) }
+            SettingsNativeStyle.divider
             SettingsNativeRow(
                 title: strings.text("settings_policy_row"), systemImage: "lock.shield", navigates: true
             ) { open(.usage) }
+            SettingsNativeStyle.divider
             SettingsNativeRow(title: strings.text("settings_share"), systemImage: "square.and.arrow.up") { open(.share) }
             if state.canRateApp {
+                SettingsNativeStyle.divider
                 SettingsNativeRow(title: strings.text("settings_rate_app"), systemImage: "star") { open(.rate) }
             }
-        } header: {
-            Text(strings.text("settings_section_other"))
-        } footer: {
-            Text(strings.text("settings_section_other_description"))
         }
     }
 
     private var updateSection: some View {
-        Section(strings.text("settings_section_update")) {
+        SettingsNativeStyle.section(strings.text("settings_section_update")) {
             SettingsNativeRow(
                 title: strings.text(state.checkingUpdates ? "settings_update_checking" : "settings_update_check"),
                 description: state.updateAvailable ? strings.text("settings_update_available") : strings.version(state.version),
@@ -146,13 +156,6 @@ struct SettingsNativeTab: View {
         }
     }
 
-    private var themeImage: String {
-        switch state.theme {
-        case .dark: "moon"
-        case .light: "sun.max"
-        default: "circle.lefthalf.filled"
-        }
-    }
 }
 
 private func settingsPreview(guest: Bool, languageTag: String) -> some View {
@@ -172,7 +175,7 @@ private func settingsPreview(guest: Bool, languageTag: String) -> some View {
 }
 
 #Preview("Settings light") {
-    settingsPreview(guest: true, languageTag: "ru").preferredColorScheme(.light)
+    settingsPreview(guest: false, languageTag: "ru").preferredColorScheme(.light)
 }
 
 #Preview("Settings dark") {
