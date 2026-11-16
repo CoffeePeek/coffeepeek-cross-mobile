@@ -25,7 +25,9 @@
 		A10000000000000000000015 /* ThemeSettingsScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000016 /* ThemeSettingsScreen.swift */; };
 		A10000000000000000000016 /* ThemeSettings.strings in Resources */ = {isa = PBXBuildFile; fileRef = DAD91A913BF64AB1A801759B /* ThemeSettings.strings */; };
 		B30000000000000000000001 /* ShopReportScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = B30000000000000000000003 /* ShopReportScreen.swift */; };
+		71C04E5D0000000000000001 /* ContentReportScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71C04E5D0000000000000003 /* ContentReportScreen.swift */; };
 		B30000000000000000000002 /* ShopReport.strings in Resources */ = {isa = PBXBuildFile; fileRef = B30000000000000000000006 /* ShopReport.strings */; };
+		71C04E5D0000000000000002 /* ContentReport.strings in Resources */ = {isa = PBXBuildFile; fileRef = 71C04E5D0000000000000006 /* ContentReport.strings */; };
 		B20000000000000000000001 /* CollectionsLibraryScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000000000000000000003 /* CollectionsLibraryScreen.swift */; };
 		B20000000000000000000002 /* CollectionsLibrary.strings in Resources */ = {isa = PBXBuildFile; fileRef = B20000000000000000000006 /* CollectionsLibrary.strings */; };
 		53E771650000000000000001 /* SettingsNativeController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53E771650000000000000002 /* SettingsNativeController.swift */; };
@@ -68,8 +70,11 @@
 		A20000000000000000000017 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/ThemeSettings.strings; sourceTree = "<group>"; };
 		A20000000000000000000018 /* be */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = be; path = be.lproj/ThemeSettings.strings; sourceTree = "<group>"; };
 		B30000000000000000000003 /* ShopReportScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ShopReportScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/ShopReportScreen.swift; sourceTree = "<group>"; };
+		71C04E5D0000000000000003 /* ContentReportScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ContentReportScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/ContentReportScreen.swift; sourceTree = "<group>"; };
 		B30000000000000000000004 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/ShopReport.strings; sourceTree = "<group>"; };
+		71C04E5D0000000000000004 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/ContentReport.strings; sourceTree = "<group>"; };
 		B30000000000000000000005 /* be */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = be; path = be.lproj/ShopReport.strings; sourceTree = "<group>"; };
+		71C04E5D0000000000000005 /* be */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = be; path = be.lproj/ContentReport.strings; sourceTree = "<group>"; };
 		B20000000000000000000003 /* CollectionsLibraryScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CollectionsLibraryScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CollectionsLibraryScreen.swift; sourceTree = "<group>"; };
 		B20000000000000000000004 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/CollectionsLibrary.strings; sourceTree = "<group>"; };
 		B20000000000000000000005 /* be */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = be; path = be.lproj/CollectionsLibrary.strings; sourceTree = "<group>"; };
@@ -127,7 +132,9 @@
 				A0871E7A0000000000000008 /* PasswordRecoveryScreen.swift */,
 				A20000000000000000000016 /* ThemeSettingsScreen.swift */,
 				B30000000000000000000003 /* ShopReportScreen.swift */,
+				71C04E5D0000000000000003 /* ContentReportScreen.swift */,
 				B30000000000000000000006 /* ShopReport.strings */,
+				71C04E5D0000000000000006 /* ContentReport.strings */,
 				B20000000000000000000003 /* CollectionsLibraryScreen.swift */,
 				B20000000000000000000006 /* CollectionsLibrary.strings */,
 				53E771650000000000000002 /* SettingsNativeController.swift */,
@@ -266,6 +273,7 @@
 				A10000000000000000000016 /* ThemeSettings.strings in Resources */,
 				A0871E7A0000000000000009 /* NativeAuth.strings in Resources */,
 				B30000000000000000000002 /* ShopReport.strings in Resources */,
+				71C04E5D0000000000000002 /* ContentReport.strings in Resources */,
 				B20000000000000000000002 /* CollectionsLibrary.strings in Resources */,
 				53E77165000000000000000D /* SettingsNative.strings in Resources */,
 				B10000000000000000000002 /* BlockedAuthors.strings in Resources */,
@@ -340,6 +348,7 @@
 				A6C011E60000000000000001 /* ShopMenuGalleryScreen.swift in Sources */,
 				A10000000000000000000015 /* ThemeSettingsScreen.swift in Sources */,
 				B30000000000000000000001 /* ShopReportScreen.swift in Sources */,
+				71C04E5D0000000000000001 /* ContentReportScreen.swift in Sources */,
 				B20000000000000000000001 /* CollectionsLibraryScreen.swift in Sources */,
 				53E771650000000000000001 /* SettingsNativeController.swift in Sources */,
 				53E771650000000000000003 /* SettingsNativeComponents.swift in Sources */,
@@ -392,6 +401,15 @@
 				B30000000000000000000005 /* be */,
 			);
 			name = ShopReport.strings;
+			sourceTree = "<group>";
+		};
+		71C04E5D0000000000000006 /* ContentReport.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				71C04E5D0000000000000004 /* ru */,
+				71C04E5D0000000000000005 /* be */,
+			);
+			name = ContentReport.strings;
 			sourceTree = "<group>";
 		};
 		B20000000000000000000006 /* CollectionsLibrary.strings */ = {
