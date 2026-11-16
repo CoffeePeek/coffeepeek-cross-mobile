@@ -77,6 +77,7 @@ class IosShopMenuGallery internal constructor(
             onImage(url?.takeIf(String::isNotBlank)?.let { loadImage(it) })
         })
 
+    @OptIn(androidx.compose.ui.ExperimentalComposeUiApi::class)
     fun makeViewer(photo: IosShopMenuGalleryPhoto, onDismiss: () -> Unit): UIViewController =
         ComposeUIViewController(configure = { opaque = false }) {
             AppContent {
