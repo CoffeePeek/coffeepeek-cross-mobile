@@ -19,10 +19,7 @@ import com.coffeepeek.feature.community.impl.resources.community_label_rejected
 import com.coffeepeek.feature.community.impl.resources.community_label_unknown
 import com.coffeepeek.feature.community.impl.resources.community_like
 import com.coffeepeek.feature.community.impl.resources.community_likes
-import com.coffeepeek.feature.community.impl.resources.community_loading
-import com.coffeepeek.feature.community.impl.resources.community_more_photos
 import com.coffeepeek.feature.community.impl.resources.community_open_profile
-import com.coffeepeek.feature.community.impl.resources.community_photo
 import com.coffeepeek.feature.community.impl.resources.community_publish
 import com.coffeepeek.feature.community.impl.resources.community_rating_description
 import com.coffeepeek.feature.community.impl.resources.community_report
@@ -40,9 +37,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -57,13 +51,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.style.TextOverflow
@@ -72,7 +63,6 @@ import com.coffeepeek.core.designsystem.component.CoffeePeekActionMenu
 import com.coffeepeek.core.designsystem.component.CoffeePeekDrinkLabel
 import com.coffeepeek.core.designsystem.component.CoffeePeekDrinkLabelSize
 import com.coffeepeek.core.designsystem.component.CoffeePeekLikeCount
-import com.coffeepeek.core.designsystem.component.CoffeePeekLoader
 import com.coffeepeek.core.designsystem.component.CoffeePeekMenuAction
 import com.coffeepeek.core.designsystem.component.CoffeePeekMenuIcon
 import com.coffeepeek.core.designsystem.component.CoffeePeekRating
@@ -193,7 +183,7 @@ private fun Avatar(name: String, photoUrl: String?, host: CommunityHost) {
     Box(avatar.background(CoffeePeekColors.GoldWarmSoft), contentAlignment = Alignment.Center) {
         Text(name.trim().firstOrNull()?.uppercase() ?: "?", style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.SemiBold, color = CoffeePeekColors.LightTextPrimary)
-        if (photoUrl != null) host.image(photoUrl, null, avatar, ContentScale.Crop)
+        if (photoUrl != null) host.image(photoUrl, null, avatar, ContentScale.Crop, null)
     }
 }
 
@@ -291,38 +281,6 @@ private fun HelpfulButton(count: Int, helpful: Boolean, onClick: (() -> Unit)?) 
         else -> stringResource(Res.string.community_like, count)
     }
     CoffeePeekLikeCount(count, helpful, description, onClick = onClick)
-}
-
-@Composable
-private fun PostPhotoStrip(photos: PostPhotos, onPhoto: (Int) -> Unit, host: CommunityHost) {
-    val count = photos.originals.size
-    if (count == 0) return
-    @Composable
-    fun Photo(index: Int, modifier: Modifier) {
-        val description = stringResource(Res.string.community_photo, index + 1, count)
-        Box(
-            modifier.clip(RoundedCornerShape(CoffeePeekDimens.radiusMd)).clickable(role = Role.Button) { onPhoto(index) }
-                .semantics(mergeDescendants = true) { contentDescription = description },
-        ) {
-            // The loader stays under the photo: a photo that is not loaded yet (a fresh list after leaving the tab) never shows an empty hole.
-            Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surfaceVariant), contentAlignment = Alignment.Center) {
-                CoffeePeekLoader(stringResource(Res.string.community_loading), size = 32.dp)
-            }
-            host.image(photos.thumbnails.getOrNull(index)?.takeIf(String::isNotBlank) ?: photos.originals.getOrNull(index).orEmpty(), photos.inlineSource(index), Modifier.fillMaxSize(), ContentScale.Crop)
-            if (index == 2 && count > 3) Box(Modifier.fillMaxSize().background(CoffeePeekColors.PhotoBadgeOverlay), contentAlignment = Alignment.Center) {
-                Text(stringResource(Res.string.community_more_photos, count - 3), style = MaterialTheme.typography.headlineSmall, color = Color.White)
-            }
-        }
-    }
-    if (count == 1) Photo(0, Modifier.fillMaxWidth().aspectRatio(2f))
-    else Row(Modifier.fillMaxWidth().aspectRatio(4f / 3f), horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing1)) {
-        Photo(0, Modifier.weight(1f).fillMaxHeight())
-        if (count == 2) Photo(1, Modifier.weight(1f).fillMaxHeight())
-        else Column(Modifier.weight(1f).fillMaxHeight(), verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing1)) {
-            Photo(1, Modifier.weight(1f).fillMaxWidth())
-            Photo(2, Modifier.weight(1f).fillMaxWidth())
-        }
-    }
 }
 
 @Composable
