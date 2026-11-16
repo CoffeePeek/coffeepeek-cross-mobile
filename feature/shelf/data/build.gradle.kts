@@ -10,7 +10,10 @@ plugins {
 }
 
 android.namespace = "com.coffeepeek.feature.shelf.data"
-val xcrossBuild = providers.gradleProperty("coffeepeekXcross").map(String::toBoolean).orElse(false).get()
+// Dart uppercases Windows environment keys, including ORG_GRADLE_PROJECT suffixes.
+val xcrossBuild = providers.gradleProperty("coffeepeekXcross").map(String::toBoolean)
+    .orElse(providers.environmentVariable("COFFEEPEEK_XCROSS").map { it == "1" })
+    .orElse(false).get()
 
 dependencies {
     api(project(module.feature.shelf.domain))

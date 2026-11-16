@@ -255,7 +255,7 @@ index 07eaa55..86c82c2 100644
      };
    }
 diff --git a/packages/xcross/lib/src/shared/compose/build/gradle_klib_builder.dart b/packages/xcross/lib/src/shared/compose/build/gradle_klib_builder.dart
-index da31573..8df8104 100644
+index da31573..4f0f013 100644
 --- a/packages/xcross/lib/src/shared/compose/build/gradle_klib_builder.dart
 +++ b/packages/xcross/lib/src/shared/compose/build/gradle_klib_builder.dart
 @@ -90,6 +90,7 @@ final class GradleKlibBuilder<T extends PlatformHostInterface> {
@@ -266,6 +266,22 @@ index da31573..8df8104 100644
          ],
          workingDirectory: project.root,
          environment: env,
+@@ -188,6 +189,15 @@ allprojects {
+             .mapNotNull { project.tasks.findByName(it) }
+             .forEach { dependsOn(it) }
+         doLast {
++            // A disabled cross-compilation task can leave an older KLIB behind.
++            // Existence alone must never turn that into a successful build.
++            val compile = project.tasks.getByName("compileKotlin${target[0].toUpperCase()}${target.substring(1)}")
++            val state = compile.state
++            check(compile.enabled && state.executed && !state.noSource &&
++                (!state.skipped || state.upToDate || state.skipMessage == "FROM-CACHE")) {
++                "xcross: Kotlin compilation did not run: " + compile.path +
++                    " (" + state.skipMessage + "). Refusing a possibly stale KLIB."
++            }
+             val outPath = (project.findProperty("xcross.depsOut") as String?)
+                 ?: System.getenv("XCROSS_DEPS_OUT")
+                 ?: error("XCROSS_DEPS_OUT not set")
 diff --git a/packages/xcross/lib/src/shared/compose/compose_setup_options.dart b/packages/xcross/lib/src/shared/compose/compose_setup_options.dart
 index ebc0340..ea40702 100644
 --- a/packages/xcross/lib/src/shared/compose/compose_setup_options.dart

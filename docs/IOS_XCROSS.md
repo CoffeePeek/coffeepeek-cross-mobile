@@ -5,7 +5,7 @@ Build and device acceptance are recorded separately below.
 
 **Windows build, signing, USB installation and startup passed.**
 CoffeePeek Xcross 1.2.0 (2949), ARM64, iOS 17+, bundle ID `com.coffeepeek.xcross`.
-Built using xcross 2.1.1-coffeepeek.5 and installed on the selected iPhone15,4
+Built using xcross 2.1.1-coffeepeek.6 and installed on the selected iPhone15,4
 running iOS 27.0.1. The onboarding screen rendered and the app process remained
 running after debugger detachment. The existing `com.coffeepeek` 1.2.1 (3050)
 was preserved alongside it.
@@ -116,6 +116,7 @@ Upstream is AGPL-3.0. No SDKs or credentials are included.
 - Forwards SwiftPM header search paths and compiler macros to the Swift host.
 - Uses the configured iOS minimum, preserves launch metadata, expands entitlements,
   and copies native localization, privacy and optional Firebase resources.
+- Rejects skipped/no-source Kotlin compilation even when an older KLIB exists.
 - Never automatically revokes team certificates on quota/stale-cache failures,
   and preserves provisioning profiles created by other tools.
 
@@ -129,10 +130,10 @@ git apply /absolute/path/to/xcross-2.1.1-coffeepeek.patch
 dart pub get
 cd packages/xcross
 dart test test/compose/coffeepeek_entry_test.dart test/compose/swift_app_host_test.dart test/swiftpm/swiftpm_binary_target_test.dart test/compose/compose_host_test.dart test/compose/swiftpm/host_swift_packages_test.dart
-dart run -DXCROSS_VERSION=2.1.1-coffeepeek.5 tool/build_xcross.dart
+dart run -DXCROSS_VERSION=2.1.1-coffeepeek.6 tool/build_xcross.dart
 ```
 
-In PowerShell quote the complete '-DXCROSS_VERSION=2.1.1-coffeepeek.5' argument.
+In PowerShell quote the complete '-DXCROSS_VERSION=2.1.1-coffeepeek.6' argument.
 Source builds omit OpenAppleMacrosServer by default. Copy the official 2.1.1
 bundle's OpenAppleMacrosServer.exe, swiftCore.dll, msvcp140.dll, vcruntime140.dll
 and vcruntime140_1.dll into the new bundle's lib directory, retaining the fresh
@@ -211,3 +212,41 @@ acceptance; removing the disabled UI alone is insufficient.
 References: [xcross Compose](https://xcross.sh/docs/compose/),
 [upstream v2.1.1](https://github.com/arxdeus/xcross/tree/v2.1.1),
 [Apple device registration roles](https://developer.apple.com/help/account/devices/register-a-single-device/).
+
+
+## Native branch integration (2026-11-16)
+
+The checkpoint was rebased onto native iOS tip `175f7b31e` and pushed to
+`codex/ios-native` as `1342b8c86`. Existing SwiftUI screens and scanner source
+changes from that branch were retained. This section supersedes the older
+baseline above for native-branch acceptance.
+
+The first native-branch build failed in Swift compilation: the framework exported
+an older MainViewController signature. Dart uppercases environment variable names
+on Windows, so Gradle did not recognize the mixed-case
+`ORG_GRADLE_PROJECT_coffeepeekXcross` suffix. ONNX cinterop disabled app Kotlin
+compilation, but xcross consumed the previous KLIB. The shelf build now also reads
+the existing uppercase `COFFEEPEEK_XCROSS=1` flag; the explicit Gradle property
+still takes precedence. The xcross Gradle bridge rejects an unexecuted, disabled
+or no-source compile task. Valid up-to-date/build-cache results remain accepted.
+
+Verification of this correction:
+- Confirmed Windows Dart exposes the mixed-case project variable in uppercase.
+- Negative integration check: excluded `:composeApp:compileKotlinIosArm64` while
+  retaining its old output; `dumpIosDeps` rejected the stale KLIB.
+- Positive integration check: `dumpIosDeps` succeeded with only
+  `COFFEEPEEK_XCROSS=1`, without an explicit scanner Gradle property; current app
+  compilation was up-to-date and current Compose resources were included.
+- Changed Dart file: static analysis passed. Existing xcross suites: 63 passed.
+- Python build/deployment wrapper suites: 7 passed.
+- Native-branch shelf JVM suite: 89 tests, zero failures/errors/skips.
+- Native-branch Android DirectDebug assembly and packaged runtime-class check
+  passed. No Android app was installed.
+- `verifyFunctionBodyLimits` failed on pre-existing
+  `createBusinessOwnershipEntry()` (56 body lines vs 20). The source blob is
+  identical to native parent `175f7b31e`; this checkpoint does not alter that
+  function or extend its baseline. This check is not green on the native tip.
+
+Native-branch device deployment remains pending until the corrected full build
+and manual startup verification finish. The earlier installed build 2949 is not
+evidence for this integration.
