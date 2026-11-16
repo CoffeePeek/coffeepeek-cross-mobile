@@ -24,6 +24,8 @@
 		A10000000000000000000014 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000015 /* PrivacyInfo.xcprivacy */; };
 		A10000000000000000000015 /* ThemeSettingsScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000016 /* ThemeSettingsScreen.swift */; };
 		A10000000000000000000016 /* ThemeSettings.strings in Resources */ = {isa = PBXBuildFile; fileRef = DAD91A913BF64AB1A801759B /* ThemeSettings.strings */; };
+		B20000000000000000000001 /* CollectionsLibraryScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000000000000000000003 /* CollectionsLibraryScreen.swift */; };
+		B20000000000000000000002 /* CollectionsLibrary.strings in Resources */ = {isa = PBXBuildFile; fileRef = B20000000000000000000006 /* CollectionsLibrary.strings */; };
 		53E771650000000000000001 /* SettingsNativeController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53E771650000000000000002 /* SettingsNativeController.swift */; };
 		53E771650000000000000003 /* SettingsNativeComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53E771650000000000000004 /* SettingsNativeComponents.swift */; };
 		53E771650000000000000005 /* SettingsNativeTab.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53E771650000000000000006 /* SettingsNativeTab.swift */; };
@@ -58,6 +60,9 @@
 		A20000000000000000000016 /* ThemeSettingsScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ThemeSettingsScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/ThemeSettingsScreen.swift; sourceTree = "<group>"; };
 		A20000000000000000000017 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/ThemeSettings.strings; sourceTree = "<group>"; };
 		A20000000000000000000018 /* be */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = be; path = be.lproj/ThemeSettings.strings; sourceTree = "<group>"; };
+		B20000000000000000000003 /* CollectionsLibraryScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CollectionsLibraryScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CollectionsLibraryScreen.swift; sourceTree = "<group>"; };
+		B20000000000000000000004 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/CollectionsLibrary.strings; sourceTree = "<group>"; };
+		B20000000000000000000005 /* be */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = be; path = be.lproj/CollectionsLibrary.strings; sourceTree = "<group>"; };
 		53E771650000000000000002 /* SettingsNativeController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = SettingsNativeController.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/SettingsNativeController.swift; sourceTree = "<group>"; };
 		53E771650000000000000004 /* SettingsNativeComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = SettingsNativeComponents.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/SettingsNativeComponents.swift; sourceTree = "<group>"; };
 		53E771650000000000000006 /* SettingsNativeTab.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = SettingsNativeTab.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/SettingsNativeTab.swift; sourceTree = "<group>"; };
@@ -101,6 +106,8 @@
 			children = (
 				A20000000000000000000001 /* CoffeePeekApp.swift */,
 				A20000000000000000000016 /* ThemeSettingsScreen.swift */,
+				B20000000000000000000003 /* CollectionsLibraryScreen.swift */,
+				B20000000000000000000006 /* CollectionsLibrary.strings */,
 				53E771650000000000000002 /* SettingsNativeController.swift */,
 				53E771650000000000000004 /* SettingsNativeComponents.swift */,
 				53E771650000000000000006 /* SettingsNativeTab.swift */,
@@ -234,6 +241,7 @@
 				A6C011E60000000000000002 /* ShopMenuGallery.strings in Resources */,
 				6B2031D9196667F65FD358E5 /* InfoPlist.strings in Resources */,
 				A10000000000000000000016 /* ThemeSettings.strings in Resources */,
+				B20000000000000000000002 /* CollectionsLibrary.strings in Resources */,
 				53E77165000000000000000D /* SettingsNative.strings in Resources */,
 				B10000000000000000000002 /* BlockedAuthors.strings in Resources */,
 				A10000000000000000000014 /* PrivacyInfo.xcprivacy in Resources */,
@@ -302,6 +310,7 @@
 				A10000000000000000000001 /* CoffeePeekApp.swift in Sources */,
 				A6C011E60000000000000001 /* ShopMenuGalleryScreen.swift in Sources */,
 				A10000000000000000000015 /* ThemeSettingsScreen.swift in Sources */,
+				B20000000000000000000001 /* CollectionsLibraryScreen.swift in Sources */,
 				53E771650000000000000001 /* SettingsNativeController.swift in Sources */,
 				53E771650000000000000003 /* SettingsNativeComponents.swift in Sources */,
 				53E771650000000000000005 /* SettingsNativeTab.swift in Sources */,
@@ -344,6 +353,15 @@
 				A20000000000000000000018 /* be */,
 			);
 			name = ThemeSettings.strings;
+			sourceTree = "<group>";
+		};
+		B20000000000000000000006 /* CollectionsLibrary.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				B20000000000000000000004 /* ru */,
+				B20000000000000000000005 /* be */,
+			);
+			name = CollectionsLibrary.strings;
 			sourceTree = "<group>";
 		};
 		53E771650000000000000010 /* SettingsNative.strings */ = {

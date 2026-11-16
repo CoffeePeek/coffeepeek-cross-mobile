@@ -3,6 +3,8 @@ package com.coffeepeek.admin
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.window.ComposeUIViewController
 import com.coffeepeek.admin.di.initPlatformKoin
+import com.coffeepeek.admin.di.collections.IosCollectionsLibrary
+import com.coffeepeek.admin.di.collections.LocalIosCollectionsLibraryController
 import com.coffeepeek.admin.di.settings.IosSettingsScreen
 import com.coffeepeek.admin.di.authorblocking.IosBlockedAuthors
 import com.coffeepeek.admin.di.authorblocking.LocalIosBlockedAuthorsController
@@ -33,6 +35,7 @@ fun MainViewController(
     onReady: () -> Unit,
     makeShopMenuGalleryController: (IosShopMenuGallery, String) -> UIViewController,
     makeThemeSettingsController: (IosThemeSettings, String, () -> Unit) -> UIViewController,
+    makeCollectionsLibraryController: (IosCollectionsLibrary, String) -> UIViewController,
     makeSettingsController: (IosSettingsScreen) -> UIViewController,
     makeBlockedAuthorsController: (IosBlockedAuthors, String, () -> Unit, () -> Unit, () -> Unit) -> UIViewController,
 ): UIViewController {
@@ -44,6 +47,7 @@ fun MainViewController(
         CompositionLocalProvider(
             LocalIosShopMenuGalleryController provides makeShopMenuGalleryController,
             LocalIosThemeSettingsController provides makeThemeSettingsController,
+            LocalIosCollectionsLibraryController provides makeCollectionsLibraryController,
             LocalIosSettingsController provides makeSettingsController,
             LocalIosBlockedAuthorsController provides makeBlockedAuthorsController,
         ) {
