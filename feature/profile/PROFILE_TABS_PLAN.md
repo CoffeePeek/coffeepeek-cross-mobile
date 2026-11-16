@@ -276,3 +276,14 @@ On `cc02e1f6a` with this patch, the function-body check and both Android
 assemblies passed, including packaged runtime classes and Sandbox isolation.
 Profile and Check-In History compiled for Kotlin iOS Arm64. The animation was
 reviewed in source. Device and full iOS app behavior remain unverified.
+
+### Date filtering and scroll position — 2026-11-16
+
+Picking a day updates the date filter without explicitly scrolling the
+Check-ins list to the calendar. Selecting a date from another tab still opens
+Check-ins. The active date can still be cleared by tapping it again.
+
+On `c054e4081` with this patch, the function-body check and both Android
+assemblies passed, including packaged runtime classes and Sandbox isolation.
+Profile compiled for Kotlin iOS Arm64. The scroll behavior was reviewed in
+source and remains unverified on a device.
