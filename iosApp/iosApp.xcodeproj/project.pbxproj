@@ -22,6 +22,8 @@
 		A10000000000000000000014 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000015 /* PrivacyInfo.xcprivacy */; };
 		A10000000000000000000015 /* ThemeSettingsScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000016 /* ThemeSettingsScreen.swift */; };
 		A10000000000000000000016 /* ThemeSettings.strings in Resources */ = {isa = PBXBuildFile; fileRef = DAD91A913BF64AB1A801759B /* ThemeSettings.strings */; };
+		B30000000000000000000001 /* ShopReportScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = B30000000000000000000003 /* ShopReportScreen.swift */; };
+		B30000000000000000000002 /* ShopReport.strings in Resources */ = {isa = PBXBuildFile; fileRef = B30000000000000000000006 /* ShopReport.strings */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -44,6 +46,9 @@
 		A20000000000000000000016 /* ThemeSettingsScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ThemeSettingsScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/ThemeSettingsScreen.swift; sourceTree = "<group>"; };
 		A20000000000000000000017 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/ThemeSettings.strings; sourceTree = "<group>"; };
 		A20000000000000000000018 /* be */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = be; path = be.lproj/ThemeSettings.strings; sourceTree = "<group>"; };
+		B30000000000000000000003 /* ShopReportScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ShopReportScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/ShopReportScreen.swift; sourceTree = "<group>"; };
+		B30000000000000000000004 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/ShopReport.strings; sourceTree = "<group>"; };
+		B30000000000000000000005 /* be */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = be; path = be.lproj/ShopReport.strings; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -76,6 +81,8 @@
 			children = (
 				A20000000000000000000001 /* CoffeePeekApp.swift */,
 				A20000000000000000000016 /* ThemeSettingsScreen.swift */,
+				B30000000000000000000003 /* ShopReportScreen.swift */,
+				B30000000000000000000006 /* ShopReport.strings */,
 				A20000000000000000000014 /* CoffeePeekNativeGlass.swift */,
 				A20000000000000000000013 /* ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CoffeePeekLaunchView.swift */,
 				A20000000000000000000011 /* ../../iosXtool/CoffeePeek/Sources/CoffeePeek/SocialSignInProvider.swift */,
@@ -197,6 +204,7 @@
 				A10000000000000000000009 /* GoogleService-Info.plist in Resources */,
 				6B2031D9196667F65FD358E5 /* InfoPlist.strings in Resources */,
 				A10000000000000000000016 /* ThemeSettings.strings in Resources */,
+				B30000000000000000000002 /* ShopReport.strings in Resources */,
 				A10000000000000000000014 /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -262,6 +270,7 @@
 			files = (
 				A10000000000000000000001 /* CoffeePeekApp.swift in Sources */,
 				A10000000000000000000015 /* ThemeSettingsScreen.swift in Sources */,
+				B30000000000000000000001 /* ShopReportScreen.swift in Sources */,
 				A10000000000000000000013 /* CoffeePeekNativeGlass.swift in Sources */,
 				A10000000000000000000012 /* ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CoffeePeekLaunchView.swift in Sources */,
 				A10000000000000000000007 /* ../../iosXtool/CoffeePeek/Sources/CoffeePeek/SocialSignInProvider.swift in Sources */,
@@ -288,6 +297,15 @@
 				A20000000000000000000018 /* be */,
 			);
 			name = ThemeSettings.strings;
+			sourceTree = "<group>";
+		};
+		B30000000000000000000006 /* ShopReport.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				B30000000000000000000004 /* ru */,
+				B30000000000000000000005 /* be */,
+			);
+			name = ShopReport.strings;
 			sourceTree = "<group>";
 		};
 /* End PBXVariantGroup section */

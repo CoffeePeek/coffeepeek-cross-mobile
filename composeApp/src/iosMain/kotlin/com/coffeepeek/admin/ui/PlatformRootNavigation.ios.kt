@@ -8,6 +8,7 @@ import coffeepeek.composeapp.generated.resources.Res
 import coffeepeek.composeapp.generated.resources.business_tab_title
 import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import com.coffeepeek.admin.di.settings.iosThemeSettingsContent
+import com.coffeepeek.admin.di.shopreport.iosShopReportContent
 import coffeepeek.composeapp.generated.resources.navigation_search
 import coffeepeek.composeapp.generated.resources.navigation_feed
 import coffeepeek.composeapp.generated.resources.navigation_profile
@@ -39,6 +40,19 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.cinterop.ObjCSignatureOverride
 import platform.UIKit.*
 import platform.darwin.NSObject
+
+@Composable
+private fun nativeScreenContent(): (Navigator.Screen) -> (() -> UIViewController)? {
+    val themeSettings = iosThemeSettingsContent()
+    val shopReport = iosShopReportContent()
+    return { screen ->
+        when (screen) {
+            Navigator.Screen.ThemeSettings -> themeSettings
+            is Navigator.Screen.ReportShop -> shopReport(screen.shopId, screen.shopTitle)
+            else -> null
+        }
+    }
+}
 
 internal class NavigationDelegate : NSObject(), UINavigationControllerDelegateProtocol, UIGestureRecognizerDelegateProtocol {
     private var previousTop: UIViewController? = null
@@ -174,10 +188,10 @@ internal actual fun PlatformRootNavigation(
             saveNavigation()
         }
     }
-    val themeSettingsContent = iosThemeSettingsContent()
+    val nativeContent = nativeScreenContent()
     fun controller(screen: Navigator.Screen): UIViewController = NativeScreenController(
         route = screen,
-        nativeContent = themeSettingsContent.takeIf { screen == Navigator.Screen.ThemeSettings },
+        nativeContent = nativeContent(screen),
     ) {
         body.value(screen) {
             scope.launch { navigate {
