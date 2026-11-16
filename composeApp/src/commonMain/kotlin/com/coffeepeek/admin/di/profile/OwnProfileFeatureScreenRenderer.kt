@@ -138,7 +138,7 @@ private fun ownProfileSlots(activity: FeatureProfileActivityRenderer) = OwnProfi
         ) { ProfileDisplayPreferences() }
     },
     activity = OwnProfileActivity(
-        month = { date, select, expanded, title -> activity.Calendar(date, select, expanded, title) },
+        month = { date, select, expanded, header -> activity.Calendar(date, select, expanded, header) },
         onOpenHistory = { Navigator.navigate(Navigator.Screen.VisitedPlaces) },
     ),
     loadError = { onRetry -> CoffeePeekLoadErrorContent(onRetry = onRetry) },

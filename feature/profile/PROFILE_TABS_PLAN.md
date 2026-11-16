@@ -250,3 +250,16 @@ passed packaged runtime-class checks, and Sandbox passed isolation. The JVM
 suites ran 75 Profile and 83 Check-In History tests, with zero failures,
 errors or skips. Both affected Kotlin iOS Arm64 compile tasks passed. Device
 interaction, the full iOS app and live backend behavior remain unverified.
+
+### Calendar header controls — 2026-11-16
+
+The expanded profile calendar puts the previous and next arrows around the
+month title. The separate expand/collapse arrow stays at the end of the
+header. The title still toggles the calendar on touch. The standalone history
+calendar keeps its existing controls.
+
+On `26d6e5498` with this patch, the function-body check and Android
+`directSandbox` and `directDebug` builds passed, including packaged runtime
+classes and Sandbox isolation. Profile and Check-In History compiled for
+Kotlin iOS Arm64. Added light/dark previews for both header states at a narrow
+width. The previews were not rendered, and no device or full iOS app was run.

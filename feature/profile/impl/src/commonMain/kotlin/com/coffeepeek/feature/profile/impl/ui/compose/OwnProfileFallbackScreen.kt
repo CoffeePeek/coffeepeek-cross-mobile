@@ -141,9 +141,9 @@ private fun OwnProfileFallbackPreview(dark: Boolean) = CoffeePeekTheme(darkTheme
     val shared = ProfileSlots(image = { _, _, _ -> }, photoViewer = { _, _, _, _ -> }, photoPrefetch = { _, _ -> })
     val slots = OwnProfileSlots(shared, favoritesPreview = { _, _, header -> header() },
         activity = OwnProfileActivity(
-            month = { _, _, _, title ->
+            month = { _, _, _, header ->
                 val november = stringArrayResource(Res.array.profile_months)[10]
-                title(stringResource(Res.string.profile_month_title, november, 2026))
+                header(stringResource(Res.string.profile_month_title, november, 2026), null, null)
             },
             onOpenHistory = {},
         ),

@@ -33,13 +33,11 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
-import com.coffeepeek.core.designsystem.component.CoffeePeekIconButton
 import com.coffeepeek.core.designsystem.component.CoffeePeekTextButton
-import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.resources.coffeePeekStringArrayResource as stringArrayResource
 import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
+import com.coffeepeek.feature.profile.api.ProfileCalendarHeaderContent
 import com.coffeepeek.feature.profile.api.ProfileImage
 import com.coffeepeek.feature.profile.domain.PublicProfileActivity
 import com.coffeepeek.feature.profile.domain.PublicProfileCheckIn
@@ -57,7 +55,7 @@ internal fun PublicProfileActivityCalendar(
     activity: PublicProfileActivity?, selectedMonth: String, isLoading: Boolean, error: PublicProfileError?,
     checkIns: List<PublicProfileCheckIn>, image: ProfileImage,
     onMonthChange: (String) -> Unit, onRetry: () -> Unit, selectedDate: String?, onDateSelect: (String) -> Unit,
-    expanded: Boolean, title: @Composable (String) -> Unit, profileKey: String? = null, today: String = currentPublicProfileDate(),
+    expanded: Boolean, header: ProfileCalendarHeaderContent, profileKey: String? = null, today: String = currentPublicProfileDate(),
 ) {
     val weekDates = remember(today) { publicProfileWeekDates(today) }
     val weekActivity = rememberWeekActivity(profileKey, weekDates, activity)
@@ -71,7 +69,7 @@ internal fun PublicProfileActivityCalendar(
         publicProfileWeek(dates, source, checkIns)
     }
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        ProfileMonthHeader(shownMonth, expanded, onMonthChange, title)
+        DisplayProfileMonth(shownMonth, expanded, onMonthChange, header)
         ProfileMonthGrid(days, if (expanded) month.firstWeekday else 0, selectedDate, onDateSelect, image,
             lastSelectableDate = if (expanded) null else today)
         if (expanded && error != null && !isLoading) {
@@ -93,29 +91,13 @@ private fun rememberWeekActivity(profileKey: String?, dates: List<String>, activ
 }
 
 @Composable
-private fun ProfileMonthHeader(monthValue: String, expanded: Boolean, onMonthChange: (String) -> Unit, title: @Composable (String) -> Unit) {
+private fun DisplayProfileMonth(monthValue: String, expanded: Boolean, onMonthChange: (String) -> Unit,
+    header: ProfileCalendarHeaderContent) {
     val month = profileMonth(monthValue)
     val months = stringArrayResource(Res.array.profile_months)
-    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-        Box(Modifier.weight(1f)) {
-            title(stringResource(Res.string.profile_month_title, months[month.number - 1], month.year))
-        }
-        if (expanded) ProfileMonthArrows(monthValue, onMonthChange)
-    }
-}
-
-@Composable
-private fun ProfileMonthArrows(monthValue: String, onMonthChange: (String) -> Unit) {
-    val previous = shiftProfileMonth(monthValue, -1)
-    val next = shiftProfileMonth(monthValue, 1)
-    CoffeePeekIconButton(onClick = { previous?.let(onMonthChange) }, enabled = previous != null,
-        glass = false, contentDescription = stringResource(Res.string.profile_previous_month)) {
-        CoffeePeekIcon(CoffeePeekIcons.ChevronLeft, null)
-    }
-    CoffeePeekIconButton(onClick = { next?.let(onMonthChange) }, enabled = next != null,
-        glass = false, contentDescription = stringResource(Res.string.profile_next_month)) {
-        CoffeePeekIcon(CoffeePeekIcons.ChevronRight, null)
-    }
+    val previous = if (expanded) shiftProfileMonth(monthValue, -1)?.let { date -> { onMonthChange(date) } } else null
+    val next = if (expanded) shiftProfileMonth(monthValue, 1)?.let { date -> { onMonthChange(date) } } else null
+    header(stringResource(Res.string.profile_month_title, months[month.number - 1], month.year), previous, next)
 }
 
 @Composable
@@ -177,7 +159,7 @@ private fun PublicProfileMonthPreview(darkTheme: Boolean) = CoffeePeekTheme(dark
     val checkIn = PublicProfileCheckIn("preview", null, "", "", null, null, "", "2026-11-16", listOf("preview"))
     PublicProfileActivityCalendar(PublicProfileActivity("2026-11", setOf(16, 18)), "2026-11", false, null,
         listOf(checkIn), { _, _, modifier -> Box(modifier.background(MaterialTheme.colorScheme.tertiaryContainer)) },
-        {}, {}, "2026-11-16", {}, true, { Text(it) }, today = "2026-11-16")
+        {}, {}, "2026-11-16", {}, true, { month, _, _ -> Text(month) }, today = "2026-11-16")
 }
 
 @Preview @Composable private fun PublicProfileMonthLightPreview() = PublicProfileMonthPreview(false)
