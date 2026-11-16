@@ -35,8 +35,8 @@ class IosSettingsTab internal constructor(
     fun observeNotificationRefresh(): IosSettingsObservation =
         observe(notifications.state.map { it.generation }.distinctUntilChanged()) { notifications.refresh() }
 
-    fun observeUpdateMessage(onMessage: (IosSettingsUpdateMessage) -> Unit) =
-        observe(presentation.updateMessages.map { it.toIos() }, onMessage)
+    fun observeUpdateMessage(onMessageKey: (String) -> Unit) =
+        observe(presentation.updateMessages.map { it.messageKey() }, onMessageKey)
 
     fun screenShown() = presentation.screenShown()
     fun checkForUpdates() = presentation.checkForUpdates()
@@ -47,17 +47,17 @@ class IosSettingsTab internal constructor(
 
     fun open(action: IosSettingsAction) {
         when (action) {
-            IosSettingsAction.City -> navigate(Navigator.Screen.CitySettings)
-            IosSettingsAction.Language -> navigate(Navigator.Screen.LanguageSettings)
-            IosSettingsAction.Theme -> navigate(Navigator.Screen.ThemeSettings)
-            IosSettingsAction.Usage -> navigate(Navigator.Screen.UsagePolicy)
-            IosSettingsAction.AddShop -> navigate(Navigator.Screen.AddShop)
-            IosSettingsAction.AddRoaster -> navigate(Navigator.Screen.AddRoaster)
-            IosSettingsAction.SignIn -> navigate(Navigator.Screen.Auth)
-            IosSettingsAction.Register -> navigate(Navigator.Screen.Register)
-            IosSettingsAction.Support -> external.openSupport()
-            IosSettingsAction.Share -> external.shareApp()
-            IosSettingsAction.Rate -> external.rateApp()
+            IosSettingsAction.CITY -> navigate(Navigator.Screen.CitySettings)
+            IosSettingsAction.LANGUAGE -> navigate(Navigator.Screen.LanguageSettings)
+            IosSettingsAction.THEME -> navigate(Navigator.Screen.ThemeSettings)
+            IosSettingsAction.USAGE -> navigate(Navigator.Screen.UsagePolicy)
+            IosSettingsAction.SHOP -> navigate(Navigator.Screen.AddShop)
+            IosSettingsAction.ROASTER -> navigate(Navigator.Screen.AddRoaster)
+            IosSettingsAction.LOGIN -> navigate(Navigator.Screen.Auth)
+            IosSettingsAction.REGISTER -> navigate(Navigator.Screen.Register)
+            IosSettingsAction.SUPPORT -> external.openSupport()
+            IosSettingsAction.SHARE -> external.shareApp()
+            IosSettingsAction.RATE -> external.rateApp()
         }
     }
 
@@ -79,8 +79,7 @@ class IosSettingsTab internal constructor(
         )
 }
 
-enum class IosSettingsAction { City, Language, Theme, Usage, AddShop, AddRoaster, SignIn, Register, Support, Share, Rate }
-enum class IosSettingsUpdateMessage { UpToDate, Failed }
+enum class IosSettingsAction { CITY, LANGUAGE, THEME, USAGE, SHOP, ROASTER, LOGIN, REGISTER, SUPPORT, SHARE, RATE }
 
 data class IosSettingsTabState(
     val showGuestCard: Boolean,
@@ -127,7 +126,7 @@ private fun NotificationInboxState.toIos() = IosNotificationSettingsState(
     canRetry = !settingsLoaded && settingsError != null,
 )
 
-private fun NativeSettingsUpdateMessage.toIos() = when (this) {
-    NativeSettingsUpdateMessage.UpToDate -> IosSettingsUpdateMessage.UpToDate
-    NativeSettingsUpdateMessage.Failed -> IosSettingsUpdateMessage.Failed
+private fun NativeSettingsUpdateMessage.messageKey() = when (this) {
+    NativeSettingsUpdateMessage.UpToDate -> "settings_update_up_to_date"
+    NativeSettingsUpdateMessage.Failed -> "settings_update_failed"
 }

@@ -35,7 +35,7 @@ struct SettingsNativeTab: View {
         Section {
             Text(strings.text("settings_guest_prompt"))
                 .foregroundStyle(.secondary)
-            Button(strings.text("settings_guest_login")) { open(.signIn) }
+            Button(strings.text("settings_guest_login")) { open(.login) }
             Button(strings.text("settings_guest_register")) { open(.register) }
         }
     }
@@ -54,11 +54,11 @@ struct SettingsNativeTab: View {
             SettingsNativeRow(
                 title: strings.text("settings_add_shop"), description: strings.text("settings_add_shop_description"),
                 systemImage: "plus.circle", navigates: true
-            ) { open(.addShop) }
+            ) { open(.shop) }
             SettingsNativeRow(
                 title: strings.text("settings_add_roaster"), description: strings.text("settings_add_roaster_description"),
                 systemImage: "cup.and.saucer", navigates: true
-            ) { open(.addRoaster) }
+            ) { open(.roaster) }
         }
     }
 
@@ -86,7 +86,7 @@ struct SettingsNativeTab: View {
         let title = strings.text("settings_notifications_title")
         let description = strings.text(preference.descriptionKey)
         if preference.guest {
-            SettingsNativeRow(title: title, description: description, systemImage: "bell", navigates: true) { open(.signIn) }
+            SettingsNativeRow(title: title, description: description, systemImage: "bell", navigates: true) { open(.login) }
         } else {
             Toggle(isOn: Binding(get: { preference.checked }, set: setPushEnabled)) {
                 SettingsNativeLabel(title: title, description: description)

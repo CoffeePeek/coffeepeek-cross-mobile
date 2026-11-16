@@ -41,8 +41,7 @@ private func hostSettingsTab(_ model: IosSettingsTab) -> UIViewController {
         observe: model.observeState,
         start: {
             model.screenShown()
-            return [model.observeNotificationRefresh(), model.observeUpdateMessage { event in
-                let key = event == .upToDate ? "settings_update_up_to_date" : "settings_update_failed"
+            return [model.observeNotificationRefresh(), model.observeUpdateMessage { key in
                 model.showUpdateMessage(message: SettingsNativeStrings(languageTag: model.languageTag()).text(key))
             }]
         }
