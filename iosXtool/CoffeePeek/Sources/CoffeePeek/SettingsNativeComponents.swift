@@ -142,3 +142,39 @@ struct SettingsRetryRow: View {
         }
     }
 }
+
+@MainActor
+private func settingsComponentsPreview(languageTag: String) -> some View {
+    let strings = SettingsNativeStrings(languageTag: languageTag)
+    return SettingsNativePage(title: strings.text("settings_tab_title"), strings: strings, back: {}) {
+        Section(strings.text("settings_section_settings")) {
+            SettingsNativeRow(
+                title: strings.text("settings_city_row"),
+                description: strings.text("settings_city_row_description"),
+                systemImage: "location", value: languageTag == "be" ? "Мінск" : "Минск", navigates: true
+            ) {}
+            SettingsNativeRow(
+                title: strings.text("settings_update_checking"), systemImage: "arrow.down.circle", busy: true
+            ) {}
+        }
+        Section(strings.text("settings_language_title")) {
+            SettingsSelectionRow(
+                title: strings.text("settings_language_russian"), selected: languageTag == "ru"
+            ) {}
+            SettingsSelectionRow(
+                title: strings.text("settings_language_belarusian"), selected: languageTag == "be"
+            ) {}
+            SettingsRetryRow(
+                message: strings.text("settings_language_save_error"), retry: strings.text("settings_retry"), action: {}
+            )
+        }
+    }
+}
+
+#Preview("Settings components light") {
+    settingsComponentsPreview(languageTag: "ru").preferredColorScheme(.light)
+}
+
+#Preview("Settings components dark") {
+    settingsComponentsPreview(languageTag: "be").preferredColorScheme(.dark)
+}
