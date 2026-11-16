@@ -13,5 +13,6 @@ dependencies {
     api(compose.runtime)
     api(compose.ui)
     api(compose.foundation)
+    api(libs.kotlinx.coroutines.core)
     testImplementation(libs.kotlin.test)
 }

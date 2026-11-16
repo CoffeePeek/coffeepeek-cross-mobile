@@ -7,6 +7,7 @@ import org.koin.compose.koinInject
 import coffeepeek.composeapp.generated.resources.Res
 import coffeepeek.composeapp.generated.resources.business_tab_title
 import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
+import com.coffeepeek.admin.di.settings.iosSettingsContent
 import com.coffeepeek.admin.di.settings.iosThemeSettingsContent
 import com.coffeepeek.admin.di.authorblocking.iosBlockedAuthorsContent
 import com.coffeepeek.admin.di.shop.iosShopMenuGalleryContent
@@ -311,6 +312,7 @@ internal actual fun PlatformRootNavigation(
 
 @Composable
 private fun nativeRouteContent(): (Navigator.Screen) -> (() -> UIViewController)? {
+    val settings = iosSettingsContent()
     val themeSettings = iosThemeSettingsContent()
     val shopMenuGallery = iosShopMenuGalleryContent()
     val blockedAuthorsContent = iosBlockedAuthorsContent()
@@ -319,7 +321,7 @@ private fun nativeRouteContent(): (Navigator.Screen) -> (() -> UIViewController)
             Navigator.Screen.ThemeSettings -> themeSettings
             is Navigator.Screen.ShopMenuGallery -> { { shopMenuGallery(screen.shopId) } }
             Navigator.Screen.BlockedAuthors -> blockedAuthorsContent
-            else -> null
+            else -> settings(screen)
         }
     }
 }

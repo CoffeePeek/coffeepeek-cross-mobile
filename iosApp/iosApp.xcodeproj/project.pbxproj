@@ -24,6 +24,13 @@
 		A10000000000000000000014 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000015 /* PrivacyInfo.xcprivacy */; };
 		A10000000000000000000015 /* ThemeSettingsScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000016 /* ThemeSettingsScreen.swift */; };
 		A10000000000000000000016 /* ThemeSettings.strings in Resources */ = {isa = PBXBuildFile; fileRef = DAD91A913BF64AB1A801759B /* ThemeSettings.strings */; };
+		53E771650000000000000001 /* SettingsNativeController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53E771650000000000000002 /* SettingsNativeController.swift */; };
+		53E771650000000000000003 /* SettingsNativeComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53E771650000000000000004 /* SettingsNativeComponents.swift */; };
+		53E771650000000000000005 /* SettingsNativeTab.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53E771650000000000000006 /* SettingsNativeTab.swift */; };
+		53E771650000000000000007 /* CitySettingsScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53E771650000000000000008 /* CitySettingsScreen.swift */; };
+		53E771650000000000000009 /* LanguageSettingsScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53E77165000000000000000A /* LanguageSettingsScreen.swift */; };
+		53E77165000000000000000B /* UsagePolicyScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53E77165000000000000000C /* UsagePolicyScreen.swift */; };
+		53E77165000000000000000D /* SettingsNative.strings in Resources */ = {isa = PBXBuildFile; fileRef = 53E771650000000000000010 /* SettingsNative.strings */; };
 		B10000000000000000000001 /* BlockedAuthorsScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000003 /* BlockedAuthorsScreen.swift */; };
 		B10000000000000000000002 /* BlockedAuthors.strings in Resources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000006 /* BlockedAuthors.strings */; };
 /* End PBXBuildFile section */
@@ -51,6 +58,14 @@
 		A20000000000000000000016 /* ThemeSettingsScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ThemeSettingsScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/ThemeSettingsScreen.swift; sourceTree = "<group>"; };
 		A20000000000000000000017 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/ThemeSettings.strings; sourceTree = "<group>"; };
 		A20000000000000000000018 /* be */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = be; path = be.lproj/ThemeSettings.strings; sourceTree = "<group>"; };
+		53E771650000000000000002 /* SettingsNativeController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = SettingsNativeController.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/SettingsNativeController.swift; sourceTree = "<group>"; };
+		53E771650000000000000004 /* SettingsNativeComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = SettingsNativeComponents.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/SettingsNativeComponents.swift; sourceTree = "<group>"; };
+		53E771650000000000000006 /* SettingsNativeTab.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = SettingsNativeTab.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/SettingsNativeTab.swift; sourceTree = "<group>"; };
+		53E771650000000000000008 /* CitySettingsScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CitySettingsScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CitySettingsScreen.swift; sourceTree = "<group>"; };
+		53E77165000000000000000A /* LanguageSettingsScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = LanguageSettingsScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/LanguageSettingsScreen.swift; sourceTree = "<group>"; };
+		53E77165000000000000000C /* UsagePolicyScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = UsagePolicyScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/UsagePolicyScreen.swift; sourceTree = "<group>"; };
+		53E77165000000000000000E /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/SettingsNative.strings; sourceTree = "<group>"; };
+		53E77165000000000000000F /* be */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = be; path = be.lproj/SettingsNative.strings; sourceTree = "<group>"; };
 		B10000000000000000000003 /* BlockedAuthorsScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = BlockedAuthorsScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/BlockedAuthorsScreen.swift; sourceTree = "<group>"; };
 		B10000000000000000000004 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/BlockedAuthors.strings; sourceTree = "<group>"; };
 		B10000000000000000000005 /* be */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = be; path = be.lproj/BlockedAuthors.strings; sourceTree = "<group>"; };
@@ -86,6 +101,12 @@
 			children = (
 				A20000000000000000000001 /* CoffeePeekApp.swift */,
 				A20000000000000000000016 /* ThemeSettingsScreen.swift */,
+				53E771650000000000000002 /* SettingsNativeController.swift */,
+				53E771650000000000000004 /* SettingsNativeComponents.swift */,
+				53E771650000000000000006 /* SettingsNativeTab.swift */,
+				53E771650000000000000008 /* CitySettingsScreen.swift */,
+				53E77165000000000000000A /* LanguageSettingsScreen.swift */,
+				53E77165000000000000000C /* UsagePolicyScreen.swift */,
 				B10000000000000000000003 /* BlockedAuthorsScreen.swift */,
 				B10000000000000000000006 /* BlockedAuthors.strings */,
 				A20000000000000000000014 /* CoffeePeekNativeGlass.swift */,
@@ -100,6 +121,7 @@
 				A6C011E60000000000000006 /* ShopMenuGallery.strings */,
 				37A6BA4C5AAF06904D9C889E /* InfoPlist.strings */,
 				DAD91A913BF64AB1A801759B /* ThemeSettings.strings */,
+				53E771650000000000000010 /* SettingsNative.strings */,
 			);
 			path = iosApp;
 			sourceTree = "<group>";
@@ -212,6 +234,7 @@
 				A6C011E60000000000000002 /* ShopMenuGallery.strings in Resources */,
 				6B2031D9196667F65FD358E5 /* InfoPlist.strings in Resources */,
 				A10000000000000000000016 /* ThemeSettings.strings in Resources */,
+				53E77165000000000000000D /* SettingsNative.strings in Resources */,
 				B10000000000000000000002 /* BlockedAuthors.strings in Resources */,
 				A10000000000000000000014 /* PrivacyInfo.xcprivacy in Resources */,
 			);
@@ -279,6 +302,12 @@
 				A10000000000000000000001 /* CoffeePeekApp.swift in Sources */,
 				A6C011E60000000000000001 /* ShopMenuGalleryScreen.swift in Sources */,
 				A10000000000000000000015 /* ThemeSettingsScreen.swift in Sources */,
+				53E771650000000000000001 /* SettingsNativeController.swift in Sources */,
+				53E771650000000000000003 /* SettingsNativeComponents.swift in Sources */,
+				53E771650000000000000005 /* SettingsNativeTab.swift in Sources */,
+				53E771650000000000000007 /* CitySettingsScreen.swift in Sources */,
+				53E771650000000000000009 /* LanguageSettingsScreen.swift in Sources */,
+				53E77165000000000000000B /* UsagePolicyScreen.swift in Sources */,
 				B10000000000000000000001 /* BlockedAuthorsScreen.swift in Sources */,
 				A10000000000000000000013 /* CoffeePeekNativeGlass.swift in Sources */,
 				A10000000000000000000012 /* ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CoffeePeekLaunchView.swift in Sources */,
@@ -315,6 +344,15 @@
 				A20000000000000000000018 /* be */,
 			);
 			name = ThemeSettings.strings;
+			sourceTree = "<group>";
+		};
+		53E771650000000000000010 /* SettingsNative.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				53E77165000000000000000E /* ru */,
+				53E77165000000000000000F /* be */,
+			);
+			name = SettingsNative.strings;
 			sourceTree = "<group>";
 		};
 		B10000000000000000000006 /* BlockedAuthors.strings */ = {
