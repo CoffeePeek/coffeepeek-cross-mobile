@@ -7,6 +7,7 @@ import org.koin.compose.koinInject
 import coffeepeek.composeapp.generated.resources.Res
 import coffeepeek.composeapp.generated.resources.business_tab_title
 import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
+import com.coffeepeek.admin.di.settings.iosThemeSettingsContent
 import coffeepeek.composeapp.generated.resources.navigation_search
 import coffeepeek.composeapp.generated.resources.navigation_feed
 import coffeepeek.composeapp.generated.resources.navigation_profile
@@ -173,8 +174,10 @@ internal actual fun PlatformRootNavigation(
             saveNavigation()
         }
     }
+    val themeSettingsContent = iosThemeSettingsContent()
     fun controller(screen: Navigator.Screen): UIViewController = NativeScreenController(
         route = screen,
+        nativeContent = themeSettingsContent.takeIf { screen == Navigator.Screen.ThemeSettings },
     ) {
         body.value(screen) {
             scope.launch { navigate {
@@ -185,11 +188,8 @@ internal actual fun PlatformRootNavigation(
         }
     }
 
-    val businessTitle = stringResource(Res.string.business_tab_title)
     val createTitle = stringResource(Res.string.check_in_create_actions)
-    val labels = listOf(stringResource(Res.string.navigation_search),
-        stringResource(Res.string.navigation_feed), stringResource(Res.string.navigation_profile),
-        stringResource(Res.string.navigation_settings), businessTitle)
+    val labels = nativeRootTabLabels()
     UIKitViewController(factory = {
         val symbols = listOf("magnifyingglass", "person.2", "person.crop.circle", "gearshape", "building.2")
         navigations.indices.forEach { index ->
@@ -346,6 +346,15 @@ private fun NativeRootTabContent(index: Int, isLoggedIn: Boolean, visibility: Na
         4 -> koinInject<com.coffeepeek.feature.ownership.api.BusinessOwnershipEntry>().Tab()
     }
 }
+
+@Composable
+private fun nativeRootTabLabels(): List<String> = listOf(
+    stringResource(Res.string.navigation_search),
+    stringResource(Res.string.navigation_feed),
+    stringResource(Res.string.navigation_profile),
+    stringResource(Res.string.navigation_settings),
+    stringResource(Res.string.business_tab_title),
+)
 
 private fun updateNativeTabLabels(navigations: List<UINavigationController>, labels: List<String>) {
     navigations.forEachIndexed { index, navigation ->

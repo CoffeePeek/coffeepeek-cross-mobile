@@ -42,9 +42,10 @@ private struct ComposeRootView: UIViewControllerRepresentable {
     let onReady: () -> Void
 
     func makeUIViewController(context: Context) -> UIViewController {
-        MainViewControllerKt.MainViewController(onReady: {
-            DispatchQueue.main.async { onReady() }
-        })
+        MainViewControllerKt.MainViewController(
+            onReady: { DispatchQueue.main.async { onReady() } },
+            makeThemeSettingsController: makeThemeSettingsController
+        )
     }
 
     func updateUIViewController(_ uiViewController: UIViewController, context: Context) {}
