@@ -30,6 +30,7 @@ private class CollectionsLibrarySessionImpl(
     private val store = ViewModelStore().apply { put("library", model) }
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private val covers = mutableSetOf<Job>()
+    private var photoUrls = mutableMapOf<String, String>()
     private var closed = false
 
     init {
@@ -38,6 +39,7 @@ private class CollectionsLibrarySessionImpl(
             model.state.collect {
                 if (version != it.accountVersion) {
                     version = it.accountVersion
+                    clearPhotoUrls()
                     covers.toList().forEach { job -> job.cancel() }
                     covers.clear()
                 }
@@ -88,7 +90,7 @@ private class CollectionsLibrarySessionImpl(
         var bytes: ByteArray? = null
         try {
             val cover = summary.cover
-            val url = if (cover == null) defaultShopPhotoUrl(summary, saved) else null
+            val url = if (cover == null) defaultShopPhotoUrl(summary, saved, photoUrls) else null
             if (cover != null) bytes = saved.cover(summary.id, cover).getOrThrow()
             currentCoroutineContext().ensureActive()
             if (owner == account.currentId() && version == current().accountVersion) onCover(bytes, url)
@@ -104,8 +106,15 @@ private class CollectionsLibrarySessionImpl(
     override fun close() {
         if (closed) return
         closed = true
+        clearPhotoUrls()
         scope.cancel()
         store.clear()
+    }
+
+    private fun clearPhotoUrls() {
+        photoUrls.clear()
+        // Late work can only populate the retired account's detached map.
+        photoUrls = mutableMapOf()
     }
 }
 

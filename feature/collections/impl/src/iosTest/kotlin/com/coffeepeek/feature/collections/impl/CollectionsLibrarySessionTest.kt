@@ -3,6 +3,7 @@ package com.coffeepeek.feature.collections.impl
 import com.coffeepeek.feature.collections.api.CollectionsLibraryEvent
 import com.coffeepeek.feature.collections.api.CollectionsLibrarySession
 import com.coffeepeek.feature.collections.domain.model.SavedCollectionCover
+import com.coffeepeek.feature.collections.domain.model.SavedCollection
 import com.coffeepeek.feature.collections.domain.repository.SavedCollectionsRepository
 import com.coffeepeek.feature.collections.impl.ui.SavedTestAccount
 import com.coffeepeek.feature.collections.impl.ui.SavedTestRepository
@@ -139,6 +140,59 @@ class CollectionsLibrarySessionTest {
         assertContentEquals(byteArrayOf(0, 0, 0), bytes)
     }
 
+    @Test fun repeatedPhotoRequestsReuseDetailsUntilAccountChanges() = runTest(dispatcher) {
+        saved.value = collectionWithPhoto("first")
+        val session = session()
+        val urls = mutableListOf<String?>()
+        runCurrent()
+        session.loadCover("private", session.current().accountVersion) { _, url -> urls.add(url) }
+        runCurrent()
+        session.loadCover("private", session.current().accountVersion) { _, url -> urls.add(url) }
+        runCurrent()
+        assertEquals(1, saved.ownedReads)
+        saved.value = collectionWithPhoto("second")
+        account.owner.value = "second"
+        runCurrent()
+        session.loadCover("private", session.current().accountVersion) { _, url -> urls.add(url) }
+        runCurrent()
+        assertEquals(2, saved.ownedReads)
+        assertEquals(listOf("first", "first", "second"), urls)
+    }
+
+    @Test fun stalePhotoResultCannotPopulateReplacementAccountsCache() = runTest(dispatcher) {
+        val gate = CompletableDeferred<Unit>()
+        val repository = DelayedPhotoRepository(saved, gate)
+        val session = session(repository)
+        runCurrent()
+        session.loadCover("private", session.current().accountVersion) { _, _ -> fail("Stale photo delivered") }
+        runCurrent()
+        account.owner.value = "second"
+        runCurrent()
+        gate.complete(Unit)
+        runCurrent()
+        var delivered: String? = null
+        session.loadCover("private", session.current().accountVersion) { _, url -> delivered = url }
+        runCurrent()
+        assertEquals("second", delivered)
+        assertEquals(2, repository.reads)
+    }
+
+    private class DelayedPhotoRepository(
+        delegate: SavedCollectionsRepository,
+        private val gate: CompletableDeferred<Unit>,
+    ) : SavedCollectionsRepository by delegate {
+        var reads = 0
+
+        override suspend fun owned(id: String): Result<SavedCollection> {
+            reads++
+            if (reads > 1) return Result.success(collectionWithPhoto("second"))
+            return withContext(NonCancellable) {
+                gate.await()
+                Result.success(collectionWithPhoto("first"))
+            }
+        }
+    }
+
     private fun delayedCoverRepository(gate: CompletableDeferred<Unit>, bytes: ByteArray) =
         object : SavedCollectionsRepository by saved {
             override suspend fun cover(collectionId: String, cover: SavedCollectionCover): Result<ByteArray> =
@@ -151,3 +205,6 @@ class CollectionsLibrarySessionTest {
     private fun session(repository: SavedCollectionsRepository = saved): CollectionsLibrarySession =
         createCollectionsLibrarySession(repository, SavedTestSnapshots(), account).also(sessions::add)
 }
+
+private fun collectionWithPhoto(url: String): SavedCollection =
+    privateList.copy(places = privateList.places.map { it.copy(photoUrl = url) })

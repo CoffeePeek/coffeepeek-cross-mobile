@@ -494,7 +494,10 @@ screen resumes the existing reload action after returning from an editor.
 Disposing the Swift host clears the feature store and its pending work.
 Account changes clear search, items and private cover requests. Custom covers
 continue through `SavedCollectionsRepository.cover`; fallback shop photos use
-the existing feature resolver. Temporary cover bytes are erased after the
+the existing feature resolver and screen-owned URL cache. Repeated row appearance
+reuses collection metadata. Account replacement and disposal clear and replace
+the cache so a late old-account response cannot populate its successor.
+Temporary cover bytes are erased after the
 native image-data copy.
 
 The native screen covers guest, loading, refreshing, failure/retry, empty and
@@ -503,10 +506,15 @@ live in the Russian and Belarusian `CollectionsLibrary` tables. Colocated SwiftU
 previews include light and dark appearance and accessibility text size.
 `NativeScreenController` retains screen analytics ownership.
 
-Verification plan includes Kotlin/Native compilation, the six non-UI
+Verification plan includes Kotlin/Native compilation, the eight non-UI
 `CollectionsLibrarySessionTest` contracts and the Xcode Simulator build. The
 contracts cover observer cancellation, snapshot/query mapping, account reset,
-navigation, disposal during load, authenticated media and stale cover delivery.
+navigation, disposal during load, authenticated media, stale cover delivery,
+repeated photo reads and account-specific cache invalidation.
+On 2026-11-16, function-body verification passed after changing the session
+factory to an explicit return block for the checker. Xcode object identifiers,
+source/resource registration and all 15 RU/BE key pairs passed local checks.
+The Windows Gradle run skipped application iOS compilation and native execution.
 At authoring time these tests are written and await the integration run. Manual
 macOS checks for both languages, themes, large text, VoiceOver, completed and
 cancelled back gestures and editor return remain open. Live account operations
