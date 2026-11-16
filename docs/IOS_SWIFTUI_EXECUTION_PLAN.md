@@ -4,6 +4,14 @@
 
 Цель — перевести активные экраны и модальные сценарии iOS на SwiftUI. Kotlin сохраняет бизнес-правила, данные, сессию и состояние сценариев, UIKit — существующие стеки вкладок и системные интеграции. Compose-реализации продолжают обслуживать Android и оставшиеся iOS-маршруты до их переноса. Остаток legacy exit ведётся в [feature/LEGACY_EXIT_PLAN.md](../feature/LEGACY_EXIT_PLAN.md).
 
+## Статус первой партии
+
+- **Интеграция iOS влита.** Корни вкладок и вложенные маршруты используют общий выбор нативного контроллера. Повторный прогон после подключения галереи подтвердил сборку Xcode и 93 теста Kotlin/Native. [PR #368](https://github.com/CoffeePeek/coffeepeek-cross-mobile/pull/368) · [ios-verify](https://github.com/CoffeePeek/coffeepeek-cross-mobile/actions/runs/43865870802)
+- **Галерея меню влита.** Экран SwiftUI использует существующую Kotlin-загрузку и открывает полноэкранный просмотрщик на выбранном фото. Сборка Xcode и 91 тест Kotlin/Native прошли. [PR #369](https://github.com/CoffeePeek/coffeepeek-cross-mobile/pull/369) · [ios-verify](https://github.com/CoffeePeek/coffeepeek-cross-mobile/actions/runs/43860308720)
+- **Настройки проходят проверку.** К `SettingsTab`, `CitySettings`, `LanguageSettings` и `UsagePolicy` подключены SwiftUI, русские и белорусские строки и парные превью. Исправлены имена экспортированных Kotlin-действий, из-за которых падала сборка Swift. PR приведён к базе с интеграцией и галереей. Агент следит за iOS-сборкой и тестами на `3d95e7c5`. [PR #370](https://github.com/CoffeePeek/coffeepeek-cross-mobile/pull/370) · [ios-verify](https://github.com/CoffeePeek/coffeepeek-cross-mobile/actions/runs/43870701296)
+
+Ручные проверки темы, галереи и настроек в iOS Simulator остаются открытыми. Следующий пакет по плану — вход и восстановление пароля.
+
 ## Пакеты работ
 
 Каждая строка задаёт владельца сценария. Один пакет может потребовать нескольких PR, если пользовательские сценарии можно принять по отдельности. Зависимости в колонке относятся к подключению и сквозной проверке. Подготовку SwiftUI на тестовых данных и аудит текущих маршрутов можно вести раньше.

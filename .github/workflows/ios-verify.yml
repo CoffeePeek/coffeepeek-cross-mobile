@@ -188,6 +188,8 @@ jobs:
             --tests 'com.coffeepeek.admin.ui.AppLinksTest' \
             --tests 'com.coffeepeek.admin.di.profile.IosProfileCompositionTest' \
             --tests 'com.coffeepeek.admin.di.settings.IosThemeSettingsTest' \
+            --tests 'com.coffeepeek.admin.di.settings.IosSettingsScreensTest' \
+            --tests 'com.coffeepeek.admin.di.authorblocking.IosBlockedAuthorsTest' \
             --tests 'com.coffeepeek.admin.ui.NavigationDelegateTest' \
             --tests 'com.coffeepeek.admin.ui.MainTabReselectionsTest' \
             --tests 'com.coffeepeek.admin.ui.TabDelegateTest' \
