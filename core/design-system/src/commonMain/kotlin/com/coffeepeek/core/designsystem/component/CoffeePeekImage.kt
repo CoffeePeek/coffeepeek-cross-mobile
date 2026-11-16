@@ -7,6 +7,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.geometry.isSpecified
 import androidx.compose.ui.graphics.painter.ColorPainter
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
@@ -30,12 +32,15 @@ import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
-/** Preview-first image; higher quality waits for visibility and yields to an open gallery. */
+/** Preview-first image; higher quality waits for visibility and yields to an open gallery.
+ * [onDecodedSize] reports the displayed source's usable dimensions in pixels.
+ */
 @Composable
 fun CoffeePeekImage(
     data: Any, placeholder: DrawableResource? = null, error: DrawableResource? = null,
     contentScale: ContentScale = ContentScale.Crop, modifier: Modifier = Modifier, contentDescription: String? = null,
     alignment: Alignment = Alignment.Center, highQualityData: Any? = null, upgradeDelayMillis: Long = 1_500L, showLoader: Boolean = false,
+    onDecodedSize: ((Size) -> Unit)? = null,
     placeholderContent: (@Composable (Modifier) -> Unit)? = null,
 ) {
     val base = LocalImageEnvironment.current.apiBaseUrl
@@ -43,8 +48,17 @@ fun CoffeePeekImage(
     val detail = highQualityData?.let { resolveImageData(it, base) }?.takeUnless { it == preview || it is ImageUrl && it.url.isBlank() }
     var visible by remember(preview, detail) { mutableStateOf(false) }
     val result = rememberProgressiveImageResult(preview, detail, upgradeDelayMillis, visible)
+    if (onDecodedSize != null) ReportDecodedSize(result, preview, detail, onDecodedSize)
     val observed = modifier.imageVisibility(detail != null && upgradeDelayMillis > 0) { visible = it }
     CoffeePeekImageContent(result, placeholder, error, showLoader, contentScale, observed, contentDescription, alignment, placeholderContent)
+}
+
+@Composable
+private fun ReportDecodedSize(result: Resource<Painter>, preview: Any, detail: Any?, onDecodedSize: (Size) -> Unit) {
+    val size = (result as? Resource.Success)?.value?.intrinsicSize ?: return
+    if (!size.isSpecified || !size.width.isFinite() || !size.height.isFinite() || size.width <= 0f || size.height <= 0f) return
+    val callback by rememberUpdatedState(onDecodedSize)
+    LaunchedEffect(preview, detail, size) { callback(size) }
 }
 
 @Composable
@@ -100,8 +114,10 @@ private fun Modifier.imageVisibility(enabled: Boolean, onVisible: (Boolean) -> U
     }
 
 @Preview @Composable private fun CoffeePeekImageLightPreview() = CoffeePeekTheme(darkTheme = false) {
-    CoffeePeekImage(data = "", modifier = Modifier.size(120.dp), showLoader = true)
+    CoffeePeekImage(data = "", modifier = Modifier.size(120.dp), contentScale = ContentScale.Fit,
+        showLoader = true, onDecodedSize = {})
 }
 @Preview @Composable private fun CoffeePeekImageDarkPreview() = CoffeePeekTheme(darkTheme = true) {
-    CoffeePeekImage(data = "", modifier = Modifier.size(120.dp), showLoader = true)
+    CoffeePeekImage(data = "", modifier = Modifier.size(120.dp), contentScale = ContentScale.Fit,
+        showLoader = true, onDecodedSize = {})
 }

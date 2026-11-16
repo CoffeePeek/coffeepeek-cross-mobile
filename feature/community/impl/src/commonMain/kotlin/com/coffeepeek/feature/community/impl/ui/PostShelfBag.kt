@@ -36,7 +36,7 @@ internal fun PostShelfBag(
         onClickLabel = openLabel.takeIf { onCoffee != null },
         showChevron = onCoffee != null,
         card = {
-            host.image(cardUrl, null, Modifier.coffeePeekPostShelfBagCardImage(), ContentScale.Fit)
+            host.image(cardUrl, null, Modifier.coffeePeekPostShelfBagCardImage(), ContentScale.Fit, null)
         },
     )
 }
@@ -54,7 +54,7 @@ private fun PostShelfBagTitle(name: String, roaster: String?) {
         color = MaterialTheme.colorScheme.onSurface, maxLines = 2, overflow = TextOverflow.Ellipsis)
 }
 
-private val previewHost = CommunityHost(image = { _, _, modifier, _ ->
+private val previewHost = CommunityHost(image = { _, _, modifier, _, _ ->
     Box(modifier.background(MaterialTheme.colorScheme.tertiary))
 })
 

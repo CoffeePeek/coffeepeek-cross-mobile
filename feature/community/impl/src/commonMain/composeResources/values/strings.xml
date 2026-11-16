@@ -22,7 +22,6 @@
     <string name="community_actions">Действия с чекином</string>
     <string name="community_block_author">Заблокировать автора</string>
     <string name="community_photo">Фотография %1$d из %2$d</string>
-    <string name="community_more_photos">+%1$d</string>
     <string name="community_likes">Лайки: %1$d</string>
     <string name="community_unlike">Убрать лайк, лайков: %1$d</string>
     <string name="community_like">Поставить лайк, лайков: %1$d</string>
