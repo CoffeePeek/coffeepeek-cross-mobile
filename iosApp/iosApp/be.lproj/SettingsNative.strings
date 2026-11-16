@@ -24,6 +24,7 @@
 "settings_city_row_description" = "Вызначае, якія кавярні паказваць у першую чаргу";
 "settings_city_title" = "Горад";
 "settings_guest_login" = "Увайсці";
+"settings_guest_no_account" = "Няма ўліковага запісу?";
 "settings_guest_prompt" = "Далучайцеся да супольнасці, каб захоўваць любімыя месцы і дзяліцца ўражаннямі.";
 "settings_guest_register" = "Зарэгістравацца";
 "settings_language_belarusian" = "Беларуская";

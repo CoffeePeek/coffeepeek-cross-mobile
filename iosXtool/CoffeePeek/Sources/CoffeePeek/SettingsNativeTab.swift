@@ -38,13 +38,47 @@ struct SettingsNativeTab: View {
     }
 
     private var guestSection: some View {
-        SettingsNativeStyle.section {
+        VStack(spacing: 12) {
             Text(strings.text("settings_guest_prompt"))
-                .foregroundStyle(SettingsNativeStyle.secondary).padding(16)
-            SettingsNativeRow(title: strings.text("settings_guest_login"), navigates: true) { open(.login) }
-            SettingsNativeStyle.divider
-            SettingsNativeRow(title: strings.text("settings_guest_register"), navigates: true) { open(.registration) }
+                .font(SettingsNativeStyle.font(15))
+                .foregroundStyle(SettingsNativeStyle.foreground)
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+            guestLoginButton
+            guestRegistrationButton
         }
+        .padding(16)
+        .settingsCard()
+    }
+
+    private var guestLoginButton: some View {
+        Button { open(.login) } label: {
+            Text(strings.text("settings_guest_login"))
+                .font(SettingsNativeStyle.font(17, weight: "SemiBold"))
+                .foregroundStyle(SettingsNativeStyle.color(0x1A1412))
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+                .padding(.horizontal, 16).padding(.vertical, 12)
+                .frame(maxWidth: .infinity, minHeight: 48)
+                .background(SettingsNativeStyle.accent, in: RoundedRectangle(cornerRadius: 24))
+                .contentShape(RoundedRectangle(cornerRadius: 24))
+        }
+        .buttonStyle(.plain)
+    }
+
+    private var guestRegistrationButton: some View {
+        Button { open(.registration) } label: {
+            (Text(strings.text("settings_guest_no_account"))
+                .font(SettingsNativeStyle.font(15)).foregroundColor(SettingsNativeStyle.secondary)
+             + Text(" ")
+             + Text(strings.text("settings_guest_register"))
+                .font(SettingsNativeStyle.font(17, weight: "SemiBold")).foregroundColor(SettingsNativeStyle.foreground))
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: .infinity, minHeight: 44)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
     }
 
     private var businessSection: some View {
@@ -180,4 +214,12 @@ private func settingsPreview(guest: Bool, languageTag: String) -> some View {
 
 #Preview("Settings dark") {
     settingsPreview(guest: false, languageTag: "be").preferredColorScheme(.dark)
+}
+
+#Preview("Settings guest light") {
+    settingsPreview(guest: true, languageTag: "ru").preferredColorScheme(.light)
+}
+
+#Preview("Settings guest dark") {
+    settingsPreview(guest: true, languageTag: "be").preferredColorScheme(.dark)
 }
