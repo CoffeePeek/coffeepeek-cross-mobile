@@ -247,6 +247,30 @@ Verification of this correction:
   identical to native parent `175f7b31e`; this checkpoint does not alter that
   function or extend its baseline. This check is not green on the native tip.
 
-Native-branch device deployment remains pending until the corrected full build
-and manual startup verification finish. The earlier installed build 2949 is not
-evidence for this integration.
+Device verification completed on 2026-11-16 at 23:10 Europe/Minsk:
+- Built clean commit `590c2d08b376a6360e785e2d84c09658137ab755`, already pushed to
+  `codex/ios-native`, using xcross `2.1.1-coffeepeek.6` on Windows. Later changes
+  to this report are documentation only; the installed source revision is exact.
+- Debug test app `com.coffeepeek.xcross`, version `1.2.1 (3055)`, installed on
+  the owner-selected iPhone15,4 running iOS 27.0.1 over USB. Production
+  `com.coffeepeek` remained `1.2.1 (3050)`. No uninstall, downgrade or data clear.
+- Swift packages 59.0s; Kotlin sources 35.6s; framework 12m53s; Swift host 31.6s;
+  app assembly 1.5s; signing 4.0s; USB installation 1m42s. These are full-build
+  measurements, not an incremental Kotlin-edit estimate.
+- New framework exports all ten MainViewController parameters and native screen
+  interfaces. All selected Xcode Swift app sources compiled and linked.
+- Development profile contains the selected device, uses the CoffeePeek team,
+  permits debugging and expires 2027-11-16. Signed bundle checks passed: ARM64,
+  required resources/frameworks present, ONNX Runtime absent. Scanner disabled.
+- CoreDevice confirmed the test process remains running after debugger detach.
+  Explicitly opened `com.coffeepeek.xcross` without killing its process; manual
+  screenshot showed the native Settings screen rendered in light mode. This is
+  a startup/visible-screen check, not full navigation, OAuth or scanner acceptance.
+  No agent-driven account, favorite, consent or preference writes were performed.
+- Signed IPA retained locally as
+  `build/xcross-ios/CoffeePeek-Xcross-1.2.1-3055-signed.ipa` (50,229,830 bytes).
+  SHA-256: `0833bed76262bc8b27441d27671f1a9f6e5057073a9deb8e15a0040435f94fec`.
+  Exact source identity and executable digest are in ignored `build-identity.json`.
+- The initial device attempt failed because USB was disconnected. After the owner
+  reconnected the phone, the complete build/install/run succeeded. The earlier
+  stale-KLIB Swift failure remains recorded above rather than counted as a pass.
