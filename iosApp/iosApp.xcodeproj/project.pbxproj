@@ -31,6 +31,8 @@
 		53E771650000000000000009 /* LanguageSettingsScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53E77165000000000000000A /* LanguageSettingsScreen.swift */; };
 		53E77165000000000000000B /* UsagePolicyScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53E77165000000000000000C /* UsagePolicyScreen.swift */; };
 		53E77165000000000000000D /* SettingsNative.strings in Resources */ = {isa = PBXBuildFile; fileRef = 53E771650000000000000010 /* SettingsNative.strings */; };
+		B10000000000000000000001 /* BlockedAuthorsScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000003 /* BlockedAuthorsScreen.swift */; };
+		B10000000000000000000002 /* BlockedAuthors.strings in Resources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000006 /* BlockedAuthors.strings */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -64,6 +66,9 @@
 		53E77165000000000000000C /* UsagePolicyScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = UsagePolicyScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/UsagePolicyScreen.swift; sourceTree = "<group>"; };
 		53E77165000000000000000E /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/SettingsNative.strings; sourceTree = "<group>"; };
 		53E77165000000000000000F /* be */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = be; path = be.lproj/SettingsNative.strings; sourceTree = "<group>"; };
+		B10000000000000000000003 /* BlockedAuthorsScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = BlockedAuthorsScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/BlockedAuthorsScreen.swift; sourceTree = "<group>"; };
+		B10000000000000000000004 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/BlockedAuthors.strings; sourceTree = "<group>"; };
+		B10000000000000000000005 /* be */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = be; path = be.lproj/BlockedAuthors.strings; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -102,6 +107,8 @@
 				53E771650000000000000008 /* CitySettingsScreen.swift */,
 				53E77165000000000000000A /* LanguageSettingsScreen.swift */,
 				53E77165000000000000000C /* UsagePolicyScreen.swift */,
+				B10000000000000000000003 /* BlockedAuthorsScreen.swift */,
+				B10000000000000000000006 /* BlockedAuthors.strings */,
 				A20000000000000000000014 /* CoffeePeekNativeGlass.swift */,
 				A20000000000000000000013 /* ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CoffeePeekLaunchView.swift */,
 				A20000000000000000000011 /* ../../iosXtool/CoffeePeek/Sources/CoffeePeek/SocialSignInProvider.swift */,
@@ -228,6 +235,7 @@
 				6B2031D9196667F65FD358E5 /* InfoPlist.strings in Resources */,
 				A10000000000000000000016 /* ThemeSettings.strings in Resources */,
 				53E77165000000000000000D /* SettingsNative.strings in Resources */,
+				B10000000000000000000002 /* BlockedAuthors.strings in Resources */,
 				A10000000000000000000014 /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -300,6 +308,7 @@
 				53E771650000000000000007 /* CitySettingsScreen.swift in Sources */,
 				53E771650000000000000009 /* LanguageSettingsScreen.swift in Sources */,
 				53E77165000000000000000B /* UsagePolicyScreen.swift in Sources */,
+				B10000000000000000000001 /* BlockedAuthorsScreen.swift in Sources */,
 				A10000000000000000000013 /* CoffeePeekNativeGlass.swift in Sources */,
 				A10000000000000000000012 /* ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CoffeePeekLaunchView.swift in Sources */,
 				A10000000000000000000007 /* ../../iosXtool/CoffeePeek/Sources/CoffeePeek/SocialSignInProvider.swift in Sources */,
@@ -344,6 +353,15 @@
 				53E77165000000000000000F /* be */,
 			);
 			name = SettingsNative.strings;
+			sourceTree = "<group>";
+		};
+		B10000000000000000000006 /* BlockedAuthors.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				B10000000000000000000004 /* ru */,
+				B10000000000000000000005 /* be */,
+			);
+			name = BlockedAuthors.strings;
 			sourceTree = "<group>";
 		};
 /* End PBXVariantGroup section */

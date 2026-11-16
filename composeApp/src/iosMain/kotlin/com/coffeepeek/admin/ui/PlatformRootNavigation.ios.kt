@@ -9,6 +9,7 @@ import coffeepeek.composeapp.generated.resources.business_tab_title
 import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import com.coffeepeek.admin.di.settings.iosSettingsContent
 import com.coffeepeek.admin.di.settings.iosThemeSettingsContent
+import com.coffeepeek.admin.di.authorblocking.iosBlockedAuthorsContent
 import com.coffeepeek.admin.di.shop.iosShopMenuGalleryContent
 import coffeepeek.composeapp.generated.resources.navigation_search
 import coffeepeek.composeapp.generated.resources.navigation_feed
@@ -314,10 +315,12 @@ private fun nativeRouteContent(): (Navigator.Screen) -> (() -> UIViewController)
     val settings = iosSettingsContent()
     val themeSettings = iosThemeSettingsContent()
     val shopMenuGallery = iosShopMenuGalleryContent()
+    val blockedAuthorsContent = iosBlockedAuthorsContent()
     return { screen ->
         when (screen) {
             Navigator.Screen.ThemeSettings -> themeSettings
             is Navigator.Screen.ShopMenuGallery -> { { shopMenuGallery(screen.shopId) } }
+            Navigator.Screen.BlockedAuthors -> blockedAuthorsContent
             else -> settings(screen)
         }
     }
