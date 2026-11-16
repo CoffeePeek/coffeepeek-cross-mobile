@@ -36,7 +36,7 @@ struct SettingsNativeTab: View {
             Text(strings.text("settings_guest_prompt"))
                 .foregroundStyle(.secondary)
             Button(strings.text("settings_guest_login")) { open(.login) }
-            Button(strings.text("settings_guest_register")) { open(.register) }
+            Button(strings.text("settings_guest_register")) { open(.registration) }
         }
     }
 

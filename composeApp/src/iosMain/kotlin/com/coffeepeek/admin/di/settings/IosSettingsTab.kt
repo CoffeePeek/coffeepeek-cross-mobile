@@ -54,7 +54,7 @@ class IosSettingsTab internal constructor(
             IosSettingsAction.SHOP -> navigate(Navigator.Screen.AddShop)
             IosSettingsAction.ROASTER -> navigate(Navigator.Screen.AddRoaster)
             IosSettingsAction.LOGIN -> navigate(Navigator.Screen.Auth)
-            IosSettingsAction.REGISTER -> navigate(Navigator.Screen.Register)
+            IosSettingsAction.REGISTRATION -> navigate(Navigator.Screen.Register)
             IosSettingsAction.SUPPORT -> external.openSupport()
             IosSettingsAction.SHARE -> external.shareApp()
             IosSettingsAction.RATE -> external.rateApp()
@@ -79,7 +79,7 @@ class IosSettingsTab internal constructor(
         )
 }
 
-enum class IosSettingsAction { CITY, LANGUAGE, THEME, USAGE, SHOP, ROASTER, LOGIN, REGISTER, SUPPORT, SHARE, RATE }
+enum class IosSettingsAction { CITY, LANGUAGE, THEME, USAGE, SHOP, ROASTER, LOGIN, REGISTRATION, SUPPORT, SHARE, RATE }
 
 data class IosSettingsTabState(
     val showGuestCard: Boolean,
