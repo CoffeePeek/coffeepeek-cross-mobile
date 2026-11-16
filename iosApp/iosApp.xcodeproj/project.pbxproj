@@ -37,6 +37,11 @@
 		53E77165000000000000000D /* SettingsNative.strings in Resources */ = {isa = PBXBuildFile; fileRef = 53E771650000000000000010 /* SettingsNative.strings */; };
 		B10000000000000000000001 /* BlockedAuthorsScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000003 /* BlockedAuthorsScreen.swift */; };
 		B10000000000000000000002 /* BlockedAuthors.strings in Resources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000006 /* BlockedAuthors.strings */; };
+		A0871E7A0000000000000001 /* AuthNativeController.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0871E7A0000000000000002 /* AuthNativeController.swift */; };
+		A0871E7A0000000000000003 /* AuthNativeComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0871E7A0000000000000004 /* AuthNativeComponents.swift */; };
+		A0871E7A0000000000000005 /* LoginScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0871E7A0000000000000006 /* LoginScreen.swift */; };
+		A0871E7A0000000000000007 /* PasswordRecoveryScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0871E7A0000000000000008 /* PasswordRecoveryScreen.swift */; };
+		A0871E7A0000000000000009 /* NativeAuth.strings in Resources */ = {isa = PBXBuildFile; fileRef = A0871E7A000000000000000C /* NativeAuth.strings */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -79,6 +84,12 @@
 		B10000000000000000000003 /* BlockedAuthorsScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = BlockedAuthorsScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/BlockedAuthorsScreen.swift; sourceTree = "<group>"; };
 		B10000000000000000000004 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/BlockedAuthors.strings; sourceTree = "<group>"; };
 		B10000000000000000000005 /* be */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = be; path = be.lproj/BlockedAuthors.strings; sourceTree = "<group>"; };
+		A0871E7A0000000000000002 /* AuthNativeController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AuthNativeController.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/AuthNativeController.swift; sourceTree = "<group>"; };
+		A0871E7A0000000000000004 /* AuthNativeComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AuthNativeComponents.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/AuthNativeComponents.swift; sourceTree = "<group>"; };
+		A0871E7A0000000000000006 /* LoginScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = LoginScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/LoginScreen.swift; sourceTree = "<group>"; };
+		A0871E7A0000000000000008 /* PasswordRecoveryScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = PasswordRecoveryScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/PasswordRecoveryScreen.swift; sourceTree = "<group>"; };
+		A0871E7A000000000000000A /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/NativeAuth.strings; sourceTree = "<group>"; };
+		A0871E7A000000000000000B /* be */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = be; path = be.lproj/NativeAuth.strings; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -110,6 +121,10 @@
 			isa = PBXGroup;
 			children = (
 				A20000000000000000000001 /* CoffeePeekApp.swift */,
+				A0871E7A0000000000000002 /* AuthNativeController.swift */,
+				A0871E7A0000000000000004 /* AuthNativeComponents.swift */,
+				A0871E7A0000000000000006 /* LoginScreen.swift */,
+				A0871E7A0000000000000008 /* PasswordRecoveryScreen.swift */,
 				A20000000000000000000016 /* ThemeSettingsScreen.swift */,
 				B30000000000000000000003 /* ShopReportScreen.swift */,
 				B30000000000000000000006 /* ShopReport.strings */,
@@ -135,6 +150,7 @@
 				A6C011E60000000000000006 /* ShopMenuGallery.strings */,
 				37A6BA4C5AAF06904D9C889E /* InfoPlist.strings */,
 				DAD91A913BF64AB1A801759B /* ThemeSettings.strings */,
+				A0871E7A000000000000000C /* NativeAuth.strings */,
 				53E771650000000000000010 /* SettingsNative.strings */,
 			);
 			path = iosApp;
@@ -248,6 +264,7 @@
 				A6C011E60000000000000002 /* ShopMenuGallery.strings in Resources */,
 				6B2031D9196667F65FD358E5 /* InfoPlist.strings in Resources */,
 				A10000000000000000000016 /* ThemeSettings.strings in Resources */,
+				A0871E7A0000000000000009 /* NativeAuth.strings in Resources */,
 				B30000000000000000000002 /* ShopReport.strings in Resources */,
 				B20000000000000000000002 /* CollectionsLibrary.strings in Resources */,
 				53E77165000000000000000D /* SettingsNative.strings in Resources */,
@@ -316,6 +333,10 @@
 			buildActionMask = 2147483647;
 			files = (
 				A10000000000000000000001 /* CoffeePeekApp.swift in Sources */,
+				A0871E7A0000000000000001 /* AuthNativeController.swift in Sources */,
+				A0871E7A0000000000000003 /* AuthNativeComponents.swift in Sources */,
+				A0871E7A0000000000000005 /* LoginScreen.swift in Sources */,
+				A0871E7A0000000000000007 /* PasswordRecoveryScreen.swift in Sources */,
 				A6C011E60000000000000001 /* ShopMenuGalleryScreen.swift in Sources */,
 				A10000000000000000000015 /* ThemeSettingsScreen.swift in Sources */,
 				B30000000000000000000001 /* ShopReportScreen.swift in Sources */,
@@ -398,6 +419,15 @@
 				B10000000000000000000005 /* be */,
 			);
 			name = BlockedAuthors.strings;
+			sourceTree = "<group>";
+		};
+		A0871E7A000000000000000C /* NativeAuth.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				A0871E7A000000000000000A /* ru */,
+				A0871E7A000000000000000B /* be */,
+			);
+			name = NativeAuth.strings;
 			sourceTree = "<group>";
 		};
 /* End PBXVariantGroup section */
