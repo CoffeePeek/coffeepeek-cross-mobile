@@ -63,9 +63,11 @@ struct RegisterConsent: View {
         var terms = AttributedString(strings.text("auth_terms_link"))
         terms.link = URL(string: "https://coffeepeek.by/terms")
         terms.foregroundColor = CoffeePeekNativeStyle.accent
+        terms.font = CoffeePeekNativeStyle.font(13, weight: "SemiBold")
         var privacy = AttributedString(strings.text("auth_privacy_link"))
         privacy.link = URL(string: "https://coffeepeek.by/privacy")
         privacy.foregroundColor = CoffeePeekNativeStyle.accent
+        privacy.font = CoffeePeekNativeStyle.font(13, weight: "SemiBold")
         return AttributedString(strings.text("auth_terms_prefix") + " ") + terms
             + AttributedString(" " + strings.text("auth_terms_and") + " ") + privacy
     }

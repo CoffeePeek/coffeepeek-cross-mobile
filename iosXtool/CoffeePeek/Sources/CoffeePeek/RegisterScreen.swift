@@ -104,9 +104,13 @@ struct RegisterScreen: View {
     private var passwordInput: some View {
         Group {
             if showingPassword {
-                TextField(strings.text("auth_password_label"), text: passwordBinding)
+                TextField(strings.text("auth_password_label"), text: passwordBinding,
+                          prompt: Text(strings.text("auth_password_label"))
+                            .foregroundStyle(CoffeePeekNativeStyle.secondary))
             } else {
-                SecureField(strings.text("auth_password_label"), text: passwordBinding)
+                SecureField(strings.text("auth_password_label"), text: passwordBinding,
+                            prompt: Text(strings.text("auth_password_label"))
+                                .foregroundStyle(CoffeePeekNativeStyle.secondary))
             }
         }
         .textContentType(.newPassword)

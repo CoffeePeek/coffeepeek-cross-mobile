@@ -177,13 +177,13 @@ struct NativeAuthSubmit: View {
                 Text(title)
                     .font(CoffeePeekNativeStyle.font(17, weight: "SemiBold"))
             }
-            .foregroundStyle(.black)
-            .frame(maxWidth: .infinity, minHeight: 24)
+            .foregroundStyle(Color.black.opacity(enabled && !busy ? 1 : 0.65))
+            .frame(maxWidth: .infinity, minHeight: 48)
+            .padding(.horizontal, 16)
+            .background(CoffeePeekNativeStyle.accent.opacity(enabled && !busy ? 1 : 0.48), in: Capsule())
+            .contentShape(Capsule())
         }
-        .buttonStyle(.borderedProminent)
-        .buttonBorderShape(.capsule)
-        .controlSize(.large)
-        .tint(CoffeePeekNativeStyle.accent)
+        .buttonStyle(.plain)
         .disabled(busy || !enabled)
     }
 }

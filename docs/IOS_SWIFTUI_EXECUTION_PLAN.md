@@ -155,3 +155,22 @@ Compose и остаётся активным потребителем, поэт�
   без SignedIn, отмена до записи аккаунта. На Windows они не исполнены.
 - Владение screenShown остаётся у root NativeScreenController; бизнес-аналитика
   и сохранение согласия остаются в существующем RegisterViewModel, без второго сервиса.
+
+
+#### Проверка нативной авторизации — 2026-11-17
+
+- JVM: 39 тестов impl исполнены (4 suites), 11 domain восстановлены из Gradle
+  cache (2 suites); 0 failures/errors/skips. Android Debug/DEX прошли.
+- Windows xcross: Swift packages23.8s, Kotlin compile1m04s, framework12m40s,
+  Swift35.7s, package1.4s, sign3.8s, USB install10.1s. Debug 1.2.1(3060)
+  установлен на прежний iPhone15,4/iOS27.0.1; production1.2.1(3050) сохранён.
+- Ручные USB-снимки обеих пустых форм на3060 подтверждают нативный вход и
+  регистрацию, Manrope, капсулы и квадратные Toggle/SF Symbols; defaults
+  условий=false/аналитики=true видны. Аккаунтные действия не выполнялись.
+- Первый снимок выявил системную серую disabled-кнопку и светлый placeholder
+  пароля регистрации. Цвета уточнены в нативных Button/TextField/SecureField;
+  юридическим ссылкам возвращён SemiBold. Требуется финальная Swift-пересборка.
+- Нативные iosTest не исполнялись; dark/BE/крупный шрифт/VoiceOver, клавиатура,
+  legal back/cancel и реальный OAuth/создание аккаунта остаются отдельными gates.
+- Общий verifyFunctionBodyLimits имеет ранее установленное несвязанное нарушение
+  createBusinessOwnershipEntry (56>20); baseline не расширялся.
