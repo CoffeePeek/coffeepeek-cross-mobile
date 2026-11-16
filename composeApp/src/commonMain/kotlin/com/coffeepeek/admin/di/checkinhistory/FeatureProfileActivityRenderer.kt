@@ -22,9 +22,10 @@ internal class FeatureProfileActivityRenderer(
         }
     }
 
-    @Composable fun Week(onOpen: () -> Unit) {
+    @Composable fun Week(onOpenShop: (String) -> Unit, onOpen: () -> Unit) {
         Host("profile-activity-week") { session, entry ->
-            entry.Week(true, { if (session.lease.isCurrent()) onOpen() })
+            entry.Week(true, { if (session.lease.isCurrent()) onOpenShop(it) },
+                { if (session.lease.isCurrent()) onOpen() })
         }
     }
 

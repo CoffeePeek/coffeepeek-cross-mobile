@@ -2,6 +2,7 @@ package com.coffeepeek.feature.checkinhistory.impl.ui
 
 import androidx.lifecycle.ViewModelStore
 import com.coffeepeek.feature.checkinhistory.domain.model.*
+import com.coffeepeek.feature.checkinhistory.impl.routeProfileActivityEvent
 import com.coffeepeek.feature.checkinhistory.impl.ui.compose.model.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.first
@@ -110,6 +111,20 @@ class ProfileActivityViewModelTest {
         runCurrent()
         assertFalse(model.state.value.failed)
         assertEquals(3L, model.state.value.calendar.calendarCounts["2026-10-25"])
+    }
+
+    @Test fun selectedShopKeepsItsDestinationThroughProfileCallbacks() = runTest(dispatcher) {
+        shops.load = { Result.success(listOf(activityShop("visit"))) }
+        val model = model()
+        val owner = Any()
+        model.onAction(ProfileActivityAction.SelectDate("2026-10-25"))
+        runCurrent()
+        model.onAction(ProfileActivityAction.OpenRow("shop:visit", owner))
+        runCurrent()
+        val destinations = mutableListOf<String>()
+        val event = requireNotNull(model.events.first().forOwner(owner))
+        routeProfileActivityEvent(event, { destinations += "shop:$it" }, { destinations += "history" })
+        assertEquals(listOf("shop:coffee"), destinations)
     }
 
     @Test fun initialResumeDoesNotDuplicateReadsAndReturnRefreshesUsingNewToday() = runTest(dispatcher) {

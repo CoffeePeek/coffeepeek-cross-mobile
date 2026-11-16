@@ -238,3 +238,12 @@ state; автоматизированные UI/screenshot тесты не соз
   commonMain previews возвращены на поддержанный org.jetbrains multiplatform
   импорт без изменения зависимостей. Предупреждение Android о deprecation
   принимается до отдельного обновления preview tooling; не скрывает native failure.
+
+- Повтор3065 прошёл Kotlin compile; остановлен агентом на framework link до
+  установки после read-only review. Обнаружена неверная маршрутизация OpenShop
+  из раскрытого profile calendar: теперь отдельный callback сохраняет shop slug
+  и session guard; collapsed VoiceOver сообщает открытие истории. Добавлена
+  non-UI регрессия от события ViewModel до callback; приложение не удалялось.
+- После исправления callback повторно прошли history86 tests и Android
+  assembleDirectDebug с packaged DEX verification (1m12s). Function-body check
+  снова сообщает только прежнее ownership56>20; нового нарушения нет.

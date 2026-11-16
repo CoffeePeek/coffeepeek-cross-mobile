@@ -104,7 +104,8 @@ private fun ProfileCalendarDay(state: CombinedHistoryState, date: String, expand
     HistoryCalendarDay(date.takeLast(2).toInt(), date, state.calendarCounts[date] ?: 0L,
         state.homeCalendar.content[date] ?: 0, state.selectedDate == date, state.today == date, date > state.today,
         { onAction(if (expanded) ProfileActivityAction.SelectDate(date) else ProfileActivityAction.OpenWeek()) },
-        modifier, historyCalendarPhotos(state, date), image)
+        modifier, historyCalendarPhotos(state, date), image,
+        actionLabel = stringResource(if (expanded) Res.string.history_select_day else Res.string.history_activity_open))
 }
 
 @Composable

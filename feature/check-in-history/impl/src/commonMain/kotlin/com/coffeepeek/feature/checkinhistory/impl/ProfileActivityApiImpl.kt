@@ -28,18 +28,16 @@ private class DefaultProfileActivityEntry(
 ) : ProfileActivityEntry {
     @Composable override fun Calendar(isLoggedIn: Boolean, onOpenShop: (String) -> Unit, onOpenHistory: () -> Unit) {
         Surface(false, isLoggedIn, Modifier) { event ->
-            when (event) {
-                is ProfileActivityEvent.OpenShop -> onOpenShop(event.slug)
-                ProfileActivityEvent.OpenHistory -> onOpenHistory()
-                ProfileActivityEvent.OpenWeek -> Unit
-            }
+            routeProfileActivityEvent(event, onOpenShop, onOpenHistory)
         }
     }
 
-    @Composable override fun Week(isLoggedIn: Boolean, onOpen: () -> Unit) {
+    @Composable override fun Week(isLoggedIn: Boolean, onOpenShop: (String) -> Unit, onOpen: () -> Unit) {
         var expanded by rememberSaveable { mutableStateOf(false) }
         key(expanded) {
-            Surface(!expanded, isLoggedIn, Modifier, summary = true, onToggle = { expanded = !expanded }) { onOpen() }
+            Surface(!expanded, isLoggedIn, Modifier, summary = true, onToggle = { expanded = !expanded }) { event ->
+                routeProfileActivityEvent(event, onOpenShop, onOpen)
+            }
         }
     }
 

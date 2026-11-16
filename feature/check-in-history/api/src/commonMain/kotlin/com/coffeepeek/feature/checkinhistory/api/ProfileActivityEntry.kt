@@ -8,5 +8,5 @@ interface ProfileActivityEntry {
     fun Calendar(isLoggedIn: Boolean, onOpenShop: (String) -> Unit, onOpenHistory: () -> Unit)
 
     @Composable
-    fun Week(isLoggedIn: Boolean, onOpen: () -> Unit)
+    fun Week(isLoggedIn: Boolean, onOpenShop: (String) -> Unit, onOpen: () -> Unit)
 }

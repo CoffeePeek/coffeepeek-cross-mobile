@@ -138,7 +138,7 @@ private fun ownProfileSlots(activity: FeatureProfileActivityRenderer) = OwnProfi
         ) { ProfileDisplayPreferences() }
     },
     activityCalendar = { openShop, openCheckIns -> activity.Calendar(openShop, openCheckIns) },
-    activityPreview = { onClick -> activity.Week(onClick) },
+    activityPreview = { onClick -> activity.Week({ Navigator.navigate(Navigator.Screen.ShopDetail(it)) }, onClick) },
     loadError = { onRetry -> CoffeePeekLoadErrorContent(onRetry = onRetry) },
     shelf = OwnProfileShelf(
         content = { modifier, header -> ProfileOwnShelf(modifier, header) },
