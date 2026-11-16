@@ -129,7 +129,7 @@ struct CoffeeDetailOfferCard: View {
                 Spacer()
                 Text(strings.text("coffee_availability_" + offer.availability))
                     .font(.subheadline)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(availabilityColor)
             }
             Text(coffeePrice(offer, strings)).font(.title3.bold())
             Button(strings.text("coffee_open_seller"), action: open)
@@ -148,6 +148,15 @@ struct CoffeeDetailOfferCard: View {
             field("coffee_brew", value: offer.brew ?? strings.text("coffee_unconfirmed"))
             field("coffee_source", value: sourceLabel)
             if let date = offer.checkedAt { field("coffee_checked", value: date) }
+        }
+    }
+
+    private var availabilityColor: Color {
+        switch offer.availability {
+        case "InStock": .green
+        case "OutOfStock": .red
+        case "PreOrder": .accentColor
+        default: .secondary
         }
     }
 
@@ -199,6 +208,7 @@ struct CoffeeSimilarCard: View {
             CoffeeDetailImage(url: coffee.photo, images: images)
                 .aspectRatio(1.4, contentMode: .fit)
                 .clipShape(RoundedRectangle(cornerRadius: 12))
+                .overlay(alignment: .bottomTrailing) { roasterBadge.padding(8) }
             Text(coffee.name).font(.headline).lineLimit(1)
             if !coffee.countries.isEmpty { Text(coffee.countries).font(.footnote).foregroundStyle(.secondary) }
             if !coffee.tastes.isEmpty {
@@ -207,6 +217,21 @@ struct CoffeeSimilarCard: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .contentShape(Rectangle())
+    }
+
+    private var roasterBadge: some View {
+        Group {
+            if let logo = coffee.roasterPhoto, !logo.isEmpty {
+                CoffeeDetailImage(url: logo, images: images)
+            } else {
+                Text(String(coffee.roasterName.prefix(2)).uppercased()).font(.caption.bold())
+            }
+        }
+        .frame(width: 40, height: 40)
+        .background(Color(uiColor: .systemBackground), in: Circle())
+        .clipShape(Circle())
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(coffee.roasterName)
     }
 
     @ViewBuilder

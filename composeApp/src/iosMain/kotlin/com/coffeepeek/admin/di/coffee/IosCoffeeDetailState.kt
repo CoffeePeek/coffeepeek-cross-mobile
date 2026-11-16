@@ -53,6 +53,8 @@ data class IosSimilarCoffee(
     val name: String,
     val photo: String?,
     val countries: String,
+    val roasterName: String,
+    val roasterPhoto: String?,
     val tastes: List<String>,
     val offers: List<IosCoffeeOffer>,
     val initialWeight: String?,
@@ -105,6 +107,8 @@ private fun CoffeeDetailSnapshot.similar(coffee: Coffee) = IosSimilarCoffee(
     name = coffee.name,
     photo = coffee.photoUrl,
     countries = coffee.countries.joinToString(", "),
+    roasterName = coffee.roasterName,
+    roasterPhoto = coffee.roasterPhotoUrl,
     tastes = tastes(coffee),
     offers = coffee.offers.distinctBy { it.weightGrams }
         .sortedBy { it.weightGrams ?: Int.MAX_VALUE }
