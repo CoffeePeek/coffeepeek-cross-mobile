@@ -7,6 +7,7 @@ import org.koin.compose.koinInject
 import coffeepeek.composeapp.generated.resources.Res
 import coffeepeek.composeapp.generated.resources.business_tab_title
 import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
+import com.coffeepeek.admin.di.settings.iosSettingsContent
 import com.coffeepeek.admin.di.settings.iosThemeSettingsContent
 import coffeepeek.composeapp.generated.resources.navigation_search
 import coffeepeek.composeapp.generated.resources.navigation_feed
@@ -174,10 +175,10 @@ internal actual fun PlatformRootNavigation(
             saveNavigation()
         }
     }
-    val themeSettingsContent = iosThemeSettingsContent()
+    val nativeContent = nativeSettingsContent()
     fun controller(screen: Navigator.Screen): UIViewController = NativeScreenController(
         route = screen,
-        nativeContent = themeSettingsContent.takeIf { screen == Navigator.Screen.ThemeSettings },
+        nativeContent = nativeContent(screen),
     ) {
         body.value(screen) {
             scope.launch { navigate {
@@ -194,7 +195,7 @@ internal actual fun PlatformRootNavigation(
         val symbols = listOf("magnifyingglass", "person.2", "person.crop.circle", "gearshape", "building.2")
         navigations.indices.forEach { index ->
             val navigation = navigations[index]
-            val root = NativeScreenController(labels[index], analyticsPage = listOf("discovery", "feed", "profile", "settings", "business_ownership")[index], isTabRoot = true) {
+            val root = nativeRootController(index, labels[index], nativeContent) {
                 NativeRootTabContent(index, isLoggedIn, tabBarVisibility, tabReselections) { refreshCommunity = it }
             }
             navigation.setNavigationBarHidden(true, false)
@@ -307,6 +308,26 @@ internal actual fun PlatformRootNavigation(
     }
     return true
 }
+
+@Composable
+private fun nativeSettingsContent(): (Navigator.Screen) -> (() -> UIViewController)? {
+    val theme = iosThemeSettingsContent()
+    val settings = iosSettingsContent()
+    return { screen -> if (screen == Navigator.Screen.ThemeSettings) theme else settings(screen) }
+}
+
+private fun nativeRootController(
+    index: Int,
+    title: String,
+    nativeContent: (Navigator.Screen) -> (() -> UIViewController)?,
+    content: @Composable () -> Unit,
+) = NativeScreenController(
+    title,
+    analyticsPage = listOf("discovery", "feed", "profile", "settings", "business_ownership")[index],
+    isTabRoot = true,
+    nativeContent = if (index == nativeTabIndex(Navigator.Screen.SettingsTab)) nativeContent(Navigator.Screen.SettingsTab) else null,
+    content = content,
+)
 
 private fun nativeRootTabIndices(isLoggedIn: Boolean, businessMode: Boolean): List<Int> =
     mainTabScreens(isLoggedIn, businessMode).map { requireNotNull(nativeTabIndex(it)) }

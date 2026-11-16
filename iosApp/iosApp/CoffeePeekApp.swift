@@ -45,7 +45,8 @@ private struct ComposeRootView: UIViewControllerRepresentable {
     func makeUIViewController(context: Context) -> UIViewController {
         MainViewControllerKt.MainViewController(
             onReady: { DispatchQueue.main.async { onReady() } },
-            makeThemeSettingsController: makeThemeSettingsController
+            makeThemeSettingsController: makeThemeSettingsController,
+            makeSettingsController: makeSettingsController
         )
     }
 

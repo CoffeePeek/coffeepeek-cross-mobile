@@ -9,6 +9,7 @@ import com.coffeepeek.feature.ownership.impl.ui.OwnershipViewModel
 import com.coffeepeek.feature.ownership.impl.ui.OwnershipAccess
 import com.coffeepeek.feature.ownership.impl.ui.compose.*
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import com.coffeepeek.feature.ownership.impl.ui.compose.BusinessOwnershipScreen
 import com.coffeepeek.feature.ownership.impl.ui.compose.model.OwnershipEvent
@@ -46,10 +47,14 @@ private class OwnershipEntry(
         }
         return access.state.collectAsState().value
     }
+    override val accountSwitchState = access.state.asStateFlow()
+
+    override suspend fun switchAccountMode() = access.switchMode()
+
     @Composable override fun AccountSwitch() {
-        val state by access.state.collectAsState()
+        val state by accountSwitchState.collectAsState()
         val scope = rememberCoroutineScope()
-        OwnershipAccountSwitch(state) { scope.launch { access.switchMode() } }
+        OwnershipAccountSwitch(state) { scope.launch { switchAccountMode() } }
     }
     @Composable override fun Tab() {
         val model = viewModel(key = "business-tab") { OwnershipViewModel(repository, account, businessTab = true) }
