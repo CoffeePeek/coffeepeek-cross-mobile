@@ -9,6 +9,7 @@ import coffeepeek.composeapp.generated.resources.business_tab_title
 import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import com.coffeepeek.admin.di.settings.iosThemeSettingsContent
 import com.coffeepeek.admin.di.authorblocking.iosBlockedAuthorsContent
+import com.coffeepeek.admin.di.shop.iosShopMenuGalleryContent
 import coffeepeek.composeapp.generated.resources.navigation_search
 import coffeepeek.composeapp.generated.resources.navigation_feed
 import coffeepeek.composeapp.generated.resources.navigation_profile
@@ -40,19 +41,6 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.cinterop.ObjCSignatureOverride
 import platform.UIKit.*
 import platform.darwin.NSObject
-
-@Composable
-private fun nativeScreenContent(): (Navigator.Screen) -> (() -> UIViewController)? {
-    val themeSettings = iosThemeSettingsContent()
-    val blockedAuthors = iosBlockedAuthorsContent()
-    return { screen ->
-        when (screen) {
-            Navigator.Screen.ThemeSettings -> themeSettings
-            Navigator.Screen.BlockedAuthors -> blockedAuthors
-            else -> null
-        }
-    }
-}
 
 internal class NavigationDelegate : NSObject(), UINavigationControllerDelegateProtocol, UIGestureRecognizerDelegateProtocol {
     private var previousTop: UIViewController? = null
@@ -188,7 +176,7 @@ internal actual fun PlatformRootNavigation(
             saveNavigation()
         }
     }
-    val nativeContent = nativeScreenContent()
+    val nativeContent = nativePushedContent()
     fun controller(screen: Navigator.Screen): UIViewController = NativeScreenController(
         route = screen,
         nativeContent = nativeContent(screen),
@@ -320,6 +308,21 @@ internal actual fun PlatformRootNavigation(
         }
     }
     return true
+}
+
+@Composable
+private fun nativePushedContent(): (Navigator.Screen) -> (() -> UIViewController)? {
+    val themeSettingsContent = iosThemeSettingsContent()
+    val shopMenuGalleryContent = iosShopMenuGalleryContent()
+    val blockedAuthorsContent = iosBlockedAuthorsContent()
+    return { screen ->
+        when (screen) {
+            Navigator.Screen.ThemeSettings -> themeSettingsContent
+            is Navigator.Screen.ShopMenuGallery -> { { shopMenuGalleryContent(screen.shopId) } }
+            Navigator.Screen.BlockedAuthors -> blockedAuthorsContent
+            else -> null
+        }
+    }
 }
 
 private fun nativeRootTabIndices(isLoggedIn: Boolean, businessMode: Boolean): List<Int> =
