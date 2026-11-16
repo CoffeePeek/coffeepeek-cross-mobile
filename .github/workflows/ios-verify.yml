@@ -188,6 +188,7 @@ jobs:
             --tests 'com.coffeepeek.admin.ui.AppLinksTest' \
             --tests 'com.coffeepeek.admin.di.profile.IosProfileCompositionTest' \
             --tests 'com.coffeepeek.admin.di.settings.IosThemeSettingsTest' \
+            --tests 'com.coffeepeek.admin.di.coffee.IosCoffeeDetailAnalyticsTest' \
             --tests 'com.coffeepeek.admin.di.shopreport.IosShopReportTest' \
             --tests 'com.coffeepeek.admin.di.settings.IosSettingsScreensTest' \
             --tests 'com.coffeepeek.admin.di.authorblocking.IosBlockedAuthorsTest' \
@@ -209,6 +210,17 @@ jobs:
             --tests 'com.coffeepeek.feature.shop.impl.ui.ShopMenuGallery*Test' \
             > "$RUNNER_TEMP/ios-shop-menu-gallery-tests.log" 2>&1 || {
               tail -n 150 "$RUNNER_TEMP/ios-shop-menu-gallery-tests.log"
+              exit 1
+            }
+      - name: Run coffee details Kotlin Native tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./gradlew --max-workers=6 :feature:coffee:impl:iosSimulatorArm64Test \
+            --tests 'com.coffeepeek.feature.coffee.impl.ui.CoffeeDetailViewModelTest' \
+            --tests 'com.coffeepeek.feature.coffee.impl.CoffeeDetailIosSessionTest' \
+            > "$RUNNER_TEMP/ios-coffee-detail-tests.log" 2>&1 || {
+              tail -n 150 "$RUNNER_TEMP/ios-coffee-detail-tests.log"
               exit 1
             }
       - name: Run shared business ownership unit and contract tests
@@ -235,4 +247,6 @@ jobs:
             composeApp/build/test-results/iosSimulatorArm64Test/
             ${{ runner.temp }}/ios-shop-menu-gallery-tests.log
             feature/shop/impl/build/test-results/iosSimulatorArm64Test/
+            ${{ runner.temp }}/ios-coffee-detail-tests.log
+            feature/coffee/impl/build/test-results/iosSimulatorArm64Test/
           retention-days: 7

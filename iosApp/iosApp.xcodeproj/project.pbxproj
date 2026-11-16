@@ -37,6 +37,9 @@
 		53E77165000000000000000D /* SettingsNative.strings in Resources */ = {isa = PBXBuildFile; fileRef = 53E771650000000000000010 /* SettingsNative.strings */; };
 		B10000000000000000000001 /* BlockedAuthorsScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000003 /* BlockedAuthorsScreen.swift */; };
 		B10000000000000000000002 /* BlockedAuthors.strings in Resources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000006 /* BlockedAuthors.strings */; };
+		C0FFEE500000000000000001 /* CoffeeDetailScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0FFEE500000000000000004 /* CoffeeDetailScreen.swift */; };
+		C0FFEE500000000000000002 /* CoffeeDetailComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0FFEE500000000000000005 /* CoffeeDetailComponents.swift */; };
+		C0FFEE500000000000000003 /* CoffeeDetail.strings in Resources */ = {isa = PBXBuildFile; fileRef = C0FFEE500000000000000008 /* CoffeeDetail.strings */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -79,6 +82,10 @@
 		B10000000000000000000003 /* BlockedAuthorsScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = BlockedAuthorsScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/BlockedAuthorsScreen.swift; sourceTree = "<group>"; };
 		B10000000000000000000004 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/BlockedAuthors.strings; sourceTree = "<group>"; };
 		B10000000000000000000005 /* be */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = be; path = be.lproj/BlockedAuthors.strings; sourceTree = "<group>"; };
+		C0FFEE500000000000000004 /* CoffeeDetailScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CoffeeDetailScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CoffeeDetailScreen.swift; sourceTree = "<group>"; };
+		C0FFEE500000000000000005 /* CoffeeDetailComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CoffeeDetailComponents.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CoffeeDetailComponents.swift; sourceTree = "<group>"; };
+		C0FFEE500000000000000006 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/CoffeeDetail.strings; sourceTree = "<group>"; };
+		C0FFEE500000000000000007 /* be */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = be; path = be.lproj/CoffeeDetail.strings; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -113,6 +120,9 @@
 				A20000000000000000000016 /* ThemeSettingsScreen.swift */,
 				B30000000000000000000003 /* ShopReportScreen.swift */,
 				B30000000000000000000006 /* ShopReport.strings */,
+				C0FFEE500000000000000004 /* CoffeeDetailScreen.swift */,
+				C0FFEE500000000000000005 /* CoffeeDetailComponents.swift */,
+				C0FFEE500000000000000008 /* CoffeeDetail.strings */,
 				B20000000000000000000003 /* CollectionsLibraryScreen.swift */,
 				B20000000000000000000006 /* CollectionsLibrary.strings */,
 				53E771650000000000000002 /* SettingsNativeController.swift */,
@@ -249,6 +259,7 @@
 				6B2031D9196667F65FD358E5 /* InfoPlist.strings in Resources */,
 				A10000000000000000000016 /* ThemeSettings.strings in Resources */,
 				B30000000000000000000002 /* ShopReport.strings in Resources */,
+				C0FFEE500000000000000003 /* CoffeeDetail.strings in Resources */,
 				B20000000000000000000002 /* CollectionsLibrary.strings in Resources */,
 				53E77165000000000000000D /* SettingsNative.strings in Resources */,
 				B10000000000000000000002 /* BlockedAuthors.strings in Resources */,
@@ -319,6 +330,8 @@
 				A6C011E60000000000000001 /* ShopMenuGalleryScreen.swift in Sources */,
 				A10000000000000000000015 /* ThemeSettingsScreen.swift in Sources */,
 				B30000000000000000000001 /* ShopReportScreen.swift in Sources */,
+				C0FFEE500000000000000001 /* CoffeeDetailScreen.swift in Sources */,
+				C0FFEE500000000000000002 /* CoffeeDetailComponents.swift in Sources */,
 				B20000000000000000000001 /* CollectionsLibraryScreen.swift in Sources */,
 				53E771650000000000000001 /* SettingsNativeController.swift in Sources */,
 				53E771650000000000000003 /* SettingsNativeComponents.swift in Sources */,
@@ -398,6 +411,15 @@
 				B10000000000000000000005 /* be */,
 			);
 			name = BlockedAuthors.strings;
+			sourceTree = "<group>";
+		};
+		C0FFEE500000000000000008 /* CoffeeDetail.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				C0FFEE500000000000000006 /* ru */,
+				C0FFEE500000000000000007 /* be */,
+			);
+			name = CoffeeDetail.strings;
 			sourceTree = "<group>";
 		};
 /* End PBXVariantGroup section */

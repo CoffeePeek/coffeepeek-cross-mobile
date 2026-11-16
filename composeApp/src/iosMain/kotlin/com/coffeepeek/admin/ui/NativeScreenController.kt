@@ -56,7 +56,7 @@ internal class NativeScreenController(
     private val nativeContent: (() -> UIViewController)? = null,
     private val content: @Composable () -> Unit,
 ) : UIViewController(nibName = null, bundle = null) {
-    private val analyticsVisit = com.coffeepeek.admin.analytics.correlationId("screen")
+    internal val analyticsVisit = com.coffeepeek.admin.analytics.correlationId("screen")
     private var analyticsVisible by mutableStateOf(false)
     private var bottomClearance by mutableStateOf(if (isTabRoot) NavMetrics.iosTabBarClearanceFloor else 0.dp)
     private var tabBarHidden = false
