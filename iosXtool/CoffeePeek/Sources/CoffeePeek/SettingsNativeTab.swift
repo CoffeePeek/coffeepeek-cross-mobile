@@ -38,47 +38,11 @@ struct SettingsNativeTab: View {
     }
 
     private var guestSection: some View {
-        VStack(spacing: 12) {
-            Text(strings.text("settings_guest_prompt"))
-                .font(CoffeePeekNativeStyle.font(15))
-                .foregroundStyle(CoffeePeekNativeStyle.foreground)
-                .multilineTextAlignment(.center)
-                .fixedSize(horizontal: false, vertical: true)
-            guestLoginButton
-            guestRegistrationButton
-        }
-        .padding(16)
-        .settingsCard()
-    }
-
-    private var guestLoginButton: some View {
-        Button { open(.login) } label: {
-            Text(strings.text("settings_guest_login"))
-                .font(CoffeePeekNativeStyle.font(17, weight: "SemiBold"))
-                .foregroundStyle(CoffeePeekNativeStyle.color(0x1A1412))
-                .multilineTextAlignment(.center)
-                .fixedSize(horizontal: false, vertical: true)
-                .padding(.horizontal, 16).padding(.vertical, 12)
-                .frame(maxWidth: .infinity, minHeight: 48)
-                .background(CoffeePeekNativeStyle.accent, in: RoundedRectangle(cornerRadius: 24))
-                .contentShape(RoundedRectangle(cornerRadius: 24))
-        }
-        .buttonStyle(.plain)
-    }
-
-    private var guestRegistrationButton: some View {
-        Button { open(.registration) } label: {
-            (Text(strings.text("settings_guest_no_account"))
-                .font(CoffeePeekNativeStyle.font(15)).foregroundColor(CoffeePeekNativeStyle.secondary)
-             + Text(" ")
-             + Text(strings.text("settings_guest_register"))
-                .font(CoffeePeekNativeStyle.font(17, weight: "SemiBold")).foregroundColor(CoffeePeekNativeStyle.foreground))
-                .multilineTextAlignment(.center)
-                .fixedSize(horizontal: false, vertical: true)
-                .frame(maxWidth: .infinity, minHeight: 44)
-                .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
+        CoffeePeekGuestAccountCard(
+            prompt: strings.text("settings_guest_prompt"), loginTitle: strings.text("settings_guest_login"),
+            noAccountPrompt: strings.text("settings_guest_no_account"), registerTitle: strings.text("settings_guest_register"),
+            login: { open(.login) }, register: { open(.registration) }
+        )
     }
 
     private var businessSection: some View {

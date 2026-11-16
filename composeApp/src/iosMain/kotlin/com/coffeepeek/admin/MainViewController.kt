@@ -1,5 +1,6 @@
 package com.coffeepeek.admin
 
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.window.ComposeUIViewController
 import com.coffeepeek.admin.di.coffee.IosCoffeeDetail
@@ -7,6 +8,8 @@ import com.coffeepeek.admin.di.coffee.LocalIosCoffeeDetailController
 import com.coffeepeek.admin.di.initPlatformKoin
 import com.coffeepeek.admin.di.auth.IosAuthScreen
 import com.coffeepeek.admin.di.auth.LocalIosAuthController
+import com.coffeepeek.admin.di.profile.IosGuestProfile
+import com.coffeepeek.admin.di.profile.LocalIosGuestProfileController
 import com.coffeepeek.admin.di.contentreport.IosContentReport
 import com.coffeepeek.admin.di.contentreport.LocalIosContentReportController
 import com.coffeepeek.admin.di.shopreport.IosShopReport
@@ -50,12 +53,41 @@ fun MainViewController(
     makeSettingsController: (IosSettingsScreen) -> UIViewController,
     makeBlockedAuthorsController: (IosBlockedAuthors, String, () -> Unit, () -> Unit, () -> Unit) -> UIViewController,
     makeAuthController: (IosAuthScreen) -> UIViewController,
+    makeGuestProfileController: (IosGuestProfile) -> UIViewController,
 ): UIViewController {
     if (!koinInitialized) {
         initPlatformKoin()
         koinInitialized = true
     }
-    return ComposeUIViewController {
+    val controllers = IosControllerFactories(
+        makeShopMenuGalleryController,
+        makeCoffeeDetailController,
+        makeThemeSettingsController,
+        makeShopReportController,
+        makeContentReportController,
+        makeCollectionsLibraryController,
+        makeSettingsController,
+        makeBlockedAuthorsController,
+        makeAuthController,
+        makeGuestProfileController,
+    )
+    return ComposeUIViewController { controllers.Content(onReady) }
+}
+
+private class IosControllerFactories(
+    private val makeShopMenuGalleryController: (IosShopMenuGallery, String) -> UIViewController,
+    private val makeCoffeeDetailController: (IosCoffeeDetail, String) -> UIViewController,
+    private val makeThemeSettingsController: (IosThemeSettings, String, () -> Unit) -> UIViewController,
+    private val makeShopReportController: (IosShopReport, String, String, () -> Unit) -> UIViewController,
+    private val makeContentReportController: (IosContentReport, String) -> UIViewController,
+    private val makeCollectionsLibraryController: (IosCollectionsLibrary, String) -> UIViewController,
+    private val makeSettingsController: (IosSettingsScreen) -> UIViewController,
+    private val makeBlockedAuthorsController: (IosBlockedAuthors, String, () -> Unit, () -> Unit, () -> Unit) -> UIViewController,
+    private val makeAuthController: (IosAuthScreen) -> UIViewController,
+    private val makeGuestProfileController: (IosGuestProfile) -> UIViewController,
+) {
+    @Composable
+    fun Content(onReady: () -> Unit) {
         CompositionLocalProvider(
             LocalIosShopMenuGalleryController provides makeShopMenuGalleryController,
             LocalIosCoffeeDetailController provides makeCoffeeDetailController,
@@ -66,6 +98,7 @@ fun MainViewController(
             LocalIosSettingsController provides makeSettingsController,
             LocalIosBlockedAuthorsController provides makeBlockedAuthorsController,
             LocalIosAuthController provides makeAuthController,
+            LocalIosGuestProfileController provides makeGuestProfileController,
         ) {
             App(onReady = onReady)
         }

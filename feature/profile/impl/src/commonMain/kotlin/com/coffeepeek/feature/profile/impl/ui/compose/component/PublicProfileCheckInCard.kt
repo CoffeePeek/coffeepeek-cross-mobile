@@ -36,7 +36,7 @@ internal fun PublicProfileCheckInCard(
             CoffeePeekTimelineHeader(name, slots.displayDate(row.createdAt), avatar = { modifier ->
                 (row.authorAvatarUrl ?: author.avatarUrl)?.let { slots.image(it, null, modifier) }
             }, actions = { ProfileCheckInActions(onBlock, onReport) })
-        }, heading = { ProfileCheckInHeading(row, onShop) },
+        }, heading = { ProfileCheckInHeading(row, slots, onShop) },
         photos = { ProfileCheckInPhotos(row, slots, onPhoto) },
         footer = {
             CoffeePeekTimelineFooter(row.helpfulCount, row.isHelpfulByCurrentUser,
@@ -45,9 +45,9 @@ internal fun PublicProfileCheckInCard(
 }
 
 @Composable
-private fun ProfileCheckInHeading(row: PublicProfileCheckIn, onShop: (() -> Unit)?) {
+private fun ProfileCheckInHeading(row: PublicProfileCheckIn, slots: ProfileSlots, onShop: (() -> Unit)?) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        if (row.isHome) ProfileCheckInPreparation(row.preparation)
+        if (row.isHome) ProfileCheckInPreparation(row.preparation, slots)
         else {
             Text(row.venue.ifBlank { stringResource(Res.string.profile_favorite_shop) },
                 Modifier.then(onShop?.let { Modifier.clickable(role = Role.Button, onClick = it) } ?: Modifier),

@@ -113,12 +113,7 @@ struct LoginScreen: View {
             }
             .fixedSize(horizontal: false, vertical: true)
             if let apple = actions.apple {
-                Button(action: apple) {
-                    Label(strings.text("auth_sign_in_apple"), systemImage: "apple.logo")
-                        .frame(maxWidth: .infinity, minHeight: 44)
-                }
-                .buttonStyle(.bordered)
-                .buttonBorderShape(.capsule)
+                CoffeePeekAppleSignInButton(action: apple)
             }
             if let google = actions.google {
                 Button(action: google) {

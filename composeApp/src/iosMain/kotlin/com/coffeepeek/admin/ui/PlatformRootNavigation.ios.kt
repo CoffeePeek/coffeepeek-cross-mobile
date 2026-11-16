@@ -9,6 +9,7 @@ import coffeepeek.composeapp.generated.resources.business_tab_title
 import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import com.coffeepeek.admin.di.settings.iosSettingsContent
 import com.coffeepeek.admin.di.auth.iosAuthContent
+import com.coffeepeek.admin.di.profile.iosGuestProfileContent
 import com.coffeepeek.admin.di.settings.iosThemeSettingsContent
 import com.coffeepeek.admin.di.shopreport.iosShopReportContent
 import com.coffeepeek.admin.di.contentreport.iosContentReportContent
@@ -182,7 +183,7 @@ internal actual fun PlatformRootNavigation(
             saveNavigation()
         }
     }
-    val nativeContent = nativeRouteContent()
+    val nativeContent = nativeRouteContent(isLoggedIn)
     val authContent = iosAuthContent()
     fun controller(screen: Navigator.Screen): UIViewController = nativeDestinationController(
         screen, nativeContent(screen), authContent, { route, reset -> body.value(route, reset) },
@@ -325,8 +326,9 @@ private fun nativeDestinationController(
 ) { content(screen, resetToLogin) }
 
 @Composable
-private fun nativeRouteContent(): (Navigator.Screen) -> (() -> UIViewController)? {
+private fun nativeRouteContent(isLoggedIn: Boolean): (Navigator.Screen) -> (() -> UIViewController)? {
     val settings = iosSettingsContent()
+    val guestProfile = if (isLoggedIn) null else iosGuestProfileContent()
     val themeSettings = iosThemeSettingsContent()
     val shopMenuGallery = iosShopMenuGalleryContent()
     val coffeeDetail = iosCoffeeDetailContent()
@@ -336,6 +338,7 @@ private fun nativeRouteContent(): (Navigator.Screen) -> (() -> UIViewController)
     val blockedAuthorsContent = iosBlockedAuthorsContent()
     return { screen ->
         when (screen) {
+            Navigator.Screen.ProfileTab -> guestProfile
             Navigator.Screen.ThemeSettings -> themeSettings
             is Navigator.Screen.ShopMenuGallery -> { { shopMenuGallery(screen.shopId) } }
             is Navigator.Screen.ReportShop -> shopReportContent(screen.shopId, screen.shopTitle)

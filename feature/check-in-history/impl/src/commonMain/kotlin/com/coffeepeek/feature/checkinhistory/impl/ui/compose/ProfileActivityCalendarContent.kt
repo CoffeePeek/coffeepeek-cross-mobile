@@ -41,7 +41,7 @@ internal fun ProfileActivityCalendarContent(state: ProfileActivityState, onActio
 }
 
 @Composable
-private fun ActivitySelectedDay(state: ProfileActivityState, onAction: (ProfileActivityAction) -> Unit,
+internal fun ActivitySelectedDay(state: ProfileActivityState, onAction: (ProfileActivityAction) -> Unit,
     image: HistoryImageContent, timeLabel: (String) -> String) {
     val date = requireNotNull(state.calendar.selectedDate)
     val rows = state.selectedRows

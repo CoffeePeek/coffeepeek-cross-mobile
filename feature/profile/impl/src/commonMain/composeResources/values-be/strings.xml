@@ -1,5 +1,7 @@
 <resources>
     <string name="profile_title">Профіль</string>
+    <string name="profile_open_coffee">Адкрыць каву ў каталогу</string>
+    <string name="profile_shelf_bag">Пачка з паліцы</string>
     <string name="profile_loading">Загрузка</string>
     <string name="profile_back">Назад</string>
     <string name="profile_close">Закрыць</string>

@@ -10,4 +10,7 @@ data class PublicCheckInDrink(val customName: String?, val nameRu: String?, val 
 data class PublicCheckInPreparation(
     val beanName: String?, val brewMethodCode: String?, val doseGrams: Double?,
     val brewDurationSeconds: Int?, val tasteScore: Int?,
+    val roasterName: String? = null,
+    val coffeeProductSlug: String? = null,
+    val shelfBagCardUrl: String? = null,
 )

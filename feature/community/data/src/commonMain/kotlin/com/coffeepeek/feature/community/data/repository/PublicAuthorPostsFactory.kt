@@ -29,7 +29,8 @@ private fun CommunityPost.publicRead() = PublicAuthorPost(
     isHome = isHome, scores = rating?.let { PublicPostScores(it.place, it.service, it.coffee) },
     drink = drink?.let { PublicPostDrink(it.customName, it.nameRu, it.nameEn) },
     home = home?.let {
-        PublicPostPreparation(it.preparedOn, it.brewMethodCode, it.beanName, it.doseGrams, it.brewDurationSeconds, it.tasteScore)
+        PublicPostPreparation(it.preparedOn, it.brewMethodCode, it.beanName, it.doseGrams, it.brewDurationSeconds, it.tasteScore,
+            roasterName = it.roasterName, coffeeProductSlug = it.coffeeProductSlug, shelfBagCardUrl = it.shelfBagCardUrl)
     }, originals = photos.originals, thumbnails = photos.thumbnails, details = photos.details,
     helpfulCount = helpfulCount, isHelpfulByCurrentUser = isHelpfulByCurrentUser,
 )

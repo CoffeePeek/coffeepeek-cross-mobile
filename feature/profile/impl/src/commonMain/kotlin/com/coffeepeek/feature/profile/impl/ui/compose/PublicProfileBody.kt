@@ -19,6 +19,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.component.CoffeePeekFilledButton
+import com.coffeepeek.core.designsystem.component.CoffeePeekTextButton
 import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
@@ -161,7 +162,6 @@ private fun PublicProfileCheckInPreview(state: PublicProfileState, profile: Publ
     authorActions: ProfileAuthorActions, slots: ProfileSlots, callbacks: PublicProfileCallbacks) {
     val author = ProfileAuthor(profile.authorId, profile.slug, profile.nickname, profile.avatarUrl)
     Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        ProfileSectionHeading(stringResource(Res.string.profile_section_check_ins), onAll = callbacks.onOpenCheckIns)
         if (state.checkInsError != null && state.checkIns.isNotEmpty()) {
             InlineProfileError(stringResource(Res.string.profile_check_ins_failed)) { callbacks.onAction(PublicProfileAction.RetryCheckIns) }
         }
@@ -179,6 +179,9 @@ private fun PublicProfileCheckInPreview(state: PublicProfileState, profile: Publ
                     onBlock = if (allowActions) ({ authorActions.requestBlock(author) }) else null,
                     onReport = if (allowActions) ({ slots.reportCheckIn(checkIn.id) }) else null)
             }
+        }
+        CoffeePeekTextButton(onClick = callbacks.onOpenCheckIns, modifier = Modifier.align(Alignment.CenterHorizontally)) {
+            Text(stringResource(Res.string.profile_section_all_description, stringResource(Res.string.profile_section_check_ins)))
         }
     }
 }

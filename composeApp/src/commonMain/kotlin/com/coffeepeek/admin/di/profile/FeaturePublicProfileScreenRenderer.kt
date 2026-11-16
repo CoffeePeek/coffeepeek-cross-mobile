@@ -76,6 +76,7 @@ internal fun profileSlots(): ProfileSlots {
         ownerCollection = { ProfileOwnerCollection() },
         onOpenOwnCollections = ::openProfileCollections,
         onOwnContributions = ::openProfileContributions,
+        onOpenCoffee = { Navigator.navigate(Navigator.Screen.CoffeeDetail(it)) },
         image = { url, description, modifier -> CoffeePeekImage(data = url, modifier = modifier, contentScale = ContentScale.Crop, contentDescription = description) },
         photoViewer = { previews, originals, index, onDismiss -> CoffeePeekPhotoViewer(CoffeePeekPhotoViewerImages(previews, originals), index, onDismiss) },
         logoImage = { url, description, modifier -> CoffeePeekImage(data = url, modifier = modifier, contentScale = ContentScale.Fit, contentDescription = description) },

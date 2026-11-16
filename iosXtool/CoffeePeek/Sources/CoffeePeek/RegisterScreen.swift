@@ -149,11 +149,7 @@ struct RegisterScreen: View {
             Text(strings.text("auth_or"))
                 .font(CoffeePeekNativeStyle.font(13)).foregroundStyle(CoffeePeekNativeStyle.secondary)
             if let apple = actions.apple {
-                Button(action: apple) {
-                    Label(strings.text("auth_sign_in_apple"), systemImage: "apple.logo")
-                        .frame(maxWidth: .infinity, minHeight: 44)
-                }
-                .buttonStyle(.bordered)
+                CoffeePeekAppleSignInButton(action: apple)
             }
             if let google = actions.google {
                 Button(action: google) {

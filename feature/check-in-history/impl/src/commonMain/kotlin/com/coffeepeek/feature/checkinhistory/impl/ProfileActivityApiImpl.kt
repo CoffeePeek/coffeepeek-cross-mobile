@@ -1,6 +1,7 @@
 package com.coffeepeek.feature.checkinhistory.impl
 
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
@@ -16,7 +17,9 @@ import com.coffeepeek.feature.checkinhistory.impl.ui.compose.model.*
 fun createProfileActivityEntry(
     shops: CheckInHistoryRepository, homes: HomeHistoryReader, snapshot: () -> CheckInHistoryCalendarSnapshot,
     image: HistoryImageContent, timeLabel: (String) -> String,
-): ProfileActivityEntry = DefaultProfileActivityEntry(shops, homes, snapshot, image, timeLabel)
+): ProfileActivityEntry {
+    return DefaultProfileActivityEntry(shops, homes, snapshot, image, timeLabel)
+}
 
 private class DefaultProfileActivityEntry(
     private val shops: CheckInHistoryRepository, private val homes: HomeHistoryReader,
@@ -34,10 +37,14 @@ private class DefaultProfileActivityEntry(
     }
 
     @Composable override fun Week(isLoggedIn: Boolean, onOpen: () -> Unit) {
-        Surface(true, isLoggedIn, Modifier) { if (it == ProfileActivityEvent.OpenWeek) onOpen() }
+        var expanded by rememberSaveable { mutableStateOf(false) }
+        key(expanded) {
+            Surface(!expanded, isLoggedIn, Modifier, summary = true, onToggle = { expanded = !expanded }) { onOpen() }
+        }
     }
 
-    @Composable private fun Surface(weekly: Boolean, loggedIn: Boolean, modifier: Modifier, onEvent: (ProfileActivityEvent) -> Unit) {
+    @Composable private fun Surface(weekly: Boolean, loggedIn: Boolean, modifier: Modifier,
+        summary: Boolean = false, onToggle: () -> Unit = {}, onEvent: (ProfileActivityEvent) -> Unit) {
         val model = viewModel(key = if (weekly) "profile-activity-week" else "profile-activity-calendar") {
             ProfileActivityViewModel(shops, homes, snapshot, weekly, loggedIn)
         }
@@ -53,7 +60,7 @@ private class DefaultProfileActivityEntry(
         }
         LaunchedEffect(model) { model.events.collect { it.forOwner(owner)?.let(event) } }
         LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { model.onAction(ProfileActivityAction.Resume) }
-        if (weekly) ProfileActivityWeekContent(state, dispatch, image, modifier)
+        if (summary) ProfileActivitySummaryContent(state, dispatch, image, timeLabel, !weekly, onToggle, modifier)
         else ProfileActivityCalendarContent(state, dispatch, image, timeLabel, modifier)
     }
 }

@@ -50,6 +50,10 @@
 		A0871E7A000000000000000F /* RegisterScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0871E7A0000000000000010 /* RegisterScreen.swift */; };
 		A0871E7A0000000000000011 /* RegisterConsent.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0871E7A0000000000000012 /* RegisterConsent.swift */; };
 		A0871E7A0000000000000009 /* NativeAuth.strings in Resources */ = {isa = PBXBuildFile; fileRef = A0871E7A000000000000000C /* NativeAuth.strings */; };
+		A0871E7B0000000000000001 /* CoffeePeekAppleSignInButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0871E7B0000000000000002 /* CoffeePeekAppleSignInButton.swift */; };
+		A0871E7B0000000000000003 /* CoffeePeekGuestAccountCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0871E7B0000000000000004 /* CoffeePeekGuestAccountCard.swift */; };
+		A0871E7B0000000000000005 /* GuestProfileScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0871E7B0000000000000006 /* GuestProfileScreen.swift */; };
+		A0871E7B0000000000000007 /* NativeProfile.strings in Resources */ = {isa = PBXBuildFile; fileRef = A0871E7B0000000000000008 /* NativeProfile.strings */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -108,6 +112,11 @@
 		A0871E7A0000000000000012 /* RegisterConsent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = RegisterConsent.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/RegisterConsent.swift; sourceTree = "<group>"; };
 		A0871E7A000000000000000A /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/NativeAuth.strings; sourceTree = "<group>"; };
 		A0871E7A000000000000000B /* be */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = be; path = be.lproj/NativeAuth.strings; sourceTree = "<group>"; };
+		A0871E7B0000000000000002 /* CoffeePeekAppleSignInButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CoffeePeekAppleSignInButton.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CoffeePeekAppleSignInButton.swift; sourceTree = "<group>"; };
+		A0871E7B0000000000000004 /* CoffeePeekGuestAccountCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CoffeePeekGuestAccountCard.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CoffeePeekGuestAccountCard.swift; sourceTree = "<group>"; };
+		A0871E7B0000000000000006 /* GuestProfileScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = GuestProfileScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/GuestProfileScreen.swift; sourceTree = "<group>"; };
+		A0871E7B0000000000000009 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/NativeProfile.strings; sourceTree = "<group>"; };
+		A0871E7B000000000000000A /* be */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = be; path = be.lproj/NativeProfile.strings; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -146,6 +155,9 @@
 				A0871E7A000000000000000E /* CoffeePeekNativeStyle.swift */,
 				A0871E7A0000000000000010 /* RegisterScreen.swift */,
 				A0871E7A0000000000000012 /* RegisterConsent.swift */,
+				A0871E7B0000000000000006 /* GuestProfileScreen.swift */,
+				A0871E7B0000000000000004 /* CoffeePeekGuestAccountCard.swift */,
+				A0871E7B0000000000000002 /* CoffeePeekAppleSignInButton.swift */,
 				A20000000000000000000016 /* ThemeSettingsScreen.swift */,
 				B30000000000000000000003 /* ShopReportScreen.swift */,
 				71C04E5D0000000000000003 /* ContentReportScreen.swift */,
@@ -177,6 +189,7 @@
 				37A6BA4C5AAF06904D9C889E /* InfoPlist.strings */,
 				DAD91A913BF64AB1A801759B /* ThemeSettings.strings */,
 				A0871E7A000000000000000C /* NativeAuth.strings */,
+				A0871E7B0000000000000008 /* NativeProfile.strings */,
 				53E771650000000000000010 /* SettingsNative.strings */,
 			);
 			path = iosApp;
@@ -291,6 +304,7 @@
 				6B2031D9196667F65FD358E5 /* InfoPlist.strings in Resources */,
 				A10000000000000000000016 /* ThemeSettings.strings in Resources */,
 				A0871E7A0000000000000009 /* NativeAuth.strings in Resources */,
+				A0871E7B0000000000000007 /* NativeProfile.strings in Resources */,
 				B30000000000000000000002 /* ShopReport.strings in Resources */,
 				C0FFEE500000000000000003 /* CoffeeDetail.strings in Resources */,
 				71C04E5D0000000000000002 /* ContentReport.strings in Resources */,
@@ -368,6 +382,9 @@
 				A0871E7A000000000000000D /* CoffeePeekNativeStyle.swift in Sources */,
 				A0871E7A000000000000000F /* RegisterScreen.swift in Sources */,
 				A0871E7A0000000000000011 /* RegisterConsent.swift in Sources */,
+				A0871E7B0000000000000005 /* GuestProfileScreen.swift in Sources */,
+				A0871E7B0000000000000003 /* CoffeePeekGuestAccountCard.swift in Sources */,
+				A0871E7B0000000000000001 /* CoffeePeekAppleSignInButton.swift in Sources */,
 				A6C011E60000000000000001 /* ShopMenuGalleryScreen.swift in Sources */,
 				A10000000000000000000015 /* ThemeSettingsScreen.swift in Sources */,
 				B30000000000000000000001 /* ShopReportScreen.swift in Sources */,
@@ -482,6 +499,15 @@
 			name = NativeAuth.strings;
 			sourceTree = "<group>";
 		};
+		A0871E7B0000000000000008 /* NativeProfile.strings */ = {
+            isa = PBXVariantGroup;
+            children = (
+                A0871E7B0000000000000009 /* ru */,
+                A0871E7B000000000000000A /* be */,
+            );
+            name = NativeProfile.strings;
+            sourceTree = "<group>";
+        };
 /* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */

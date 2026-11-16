@@ -41,4 +41,7 @@ data class PublicPostPreparation(
     val doseGrams: Double?,
     val brewDurationSeconds: Int?,
     val tasteScore: Int?,
+    val roasterName: String? = null,
+    val coffeeProductSlug: String? = null,
+    val shelfBagCardUrl: String? = null,
 )
