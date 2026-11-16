@@ -41,7 +41,8 @@ internal fun ProfileContentTabs(
     stateKey: String, checkIns: @Composable () -> Unit, collections: @Composable () -> Unit,
     shelf: @Composable () -> Unit, modifier: Modifier = Modifier,
     ownerShelf: OwnProfileShelf? = null, bottomPadding: Dp = 0.dp,
-    header: @Composable () -> Unit = {},
+    checkInsList: (@Composable (Modifier, @Composable () -> Unit) -> Unit)? = null,
+    header: @Composable (onSelectCheckIns: () -> Unit) -> Unit = {},
 ) {
     var selectedName by rememberSaveable(stateKey) { mutableStateOf(ProfileContentTab.CheckIns.name) }
     val selected = ProfileContentTab.entries.firstOrNull { it.name == selectedName } ?: ProfileContentTab.CheckIns
@@ -63,12 +64,15 @@ internal fun ProfileContentTabs(
     val select: (ProfileContentTab) -> Unit = { selectedName = it.name }
     // The editable shelf owns its scroll container. Move the header with its calendar state and effects.
     val tabHeader = remember(stateKey) {
-        movableContentOf { tab: ProfileContentTab, onSelect: (ProfileContentTab) -> Unit, content: @Composable () -> Unit ->
+        movableContentOf { tab: ProfileContentTab, onSelect: (ProfileContentTab) -> Unit,
+            content: @Composable (() -> Unit) -> Unit ->
             ProfileTabHeader(tab, onSelect, content)
         }
     }
     if (selected == ProfileContentTab.Shelf && ownerShelf != null) {
         ownerShelf.content(modifier) { tabHeader(selected, select, header) }
+    } else if (selected == ProfileContentTab.CheckIns && checkInsList != null) {
+        checkInsList(modifier) { tabHeader(selected, select, header) }
     } else Column(modifier.fillMaxWidth().verticalScroll(scroll), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         tabHeader(selected, select, header)
         when (selected) {
@@ -82,12 +86,12 @@ internal fun ProfileContentTabs(
 
 @Composable
 private fun ProfileTabHeader(
-    selected: ProfileContentTab, onSelect: (ProfileContentTab) -> Unit, header: @Composable () -> Unit,
+    selected: ProfileContentTab, onSelect: (ProfileContentTab) -> Unit, header: @Composable (() -> Unit) -> Unit,
 ) {
     val labels = listOf(stringResource(Res.string.profile_section_check_ins),
         stringResource(Res.string.profile_section_favorites), stringResource(Res.string.profile_section_shelf))
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        header()
+        header { if (selected != ProfileContentTab.CheckIns) onSelect(ProfileContentTab.CheckIns) }
         CoffeePeekUnderlineTabs(ProfileContentTab.entries, selected, { labels[it.ordinal] }, onSelect,
             Modifier.padding(horizontal = 16.dp))
     }

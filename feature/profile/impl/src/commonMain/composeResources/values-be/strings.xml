@@ -29,6 +29,11 @@
     <string name="profile_section_all_description">Усе: %1$s</string>
     <string name="profile_check_ins_failed">Не ўдалося загрузіць чэкіны</string>
     <string name="profile_check_ins_empty">Пакуль няма чэкінаў</string>
+    <string name="profile_check_ins_open_history">Асабістая гісторыя чэкінаў</string>
+    <string name="profile_calendar_expanded">Каляндар разгорнуты</string>
+    <string name="profile_calendar_collapsed">Каляндар згорнуты</string>
+    <string name="profile_check_in_shelf_bag">Пачак кавы</string>
+    <string name="profile_check_in_open_coffee">Адкрыць каву</string>
     <string name="profile_activity_failed">Не ўдалося загрузіць актыўнасць</string>
     <string name="profile_blocked_title">Аўтар заблакіраваны</string>
     <string name="profile_blocked_message">Публікацыі аўтара «%1$s» схаваныя. Вы можаце зняць блакіроўку ў любы момант.</string>
@@ -157,7 +162,7 @@
     <string name="profile_brew_turkish">Cezve (Turkish Coffee)</string>
     <string name="profile_week_loading">Загрузка актыўнасці…</string>
     <string name="profile_week_error">Не ўдалося загрузіць актыўнасць</string>
-    <string name="profile_week_open">Адкрыць чэкіны</string>
+    <string name="profile_week_open">Разгарнуць каляндар</string>
     <string name="profile_week_day">%1$s: %2$s</string>
     <plurals name="profile_week_count">
         <item quantity="one">%1$d чэкін</item>

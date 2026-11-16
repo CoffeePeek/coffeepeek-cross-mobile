@@ -31,12 +31,12 @@ internal fun PublicProfileCheckInCard(
     onBlock: (() -> Unit)?, onReport: (() -> Unit)?,
 ) {
     val name = row.authorName.ifBlank { author.name }
-    CoffeePeekTimelineContent(row.note,
+    CoffeePeekTimelineContent(row.note, modifier = Modifier.padding(horizontal = 16.dp),
         header = {
             CoffeePeekTimelineHeader(name, slots.displayDate(row.createdAt), avatar = { modifier ->
                 (row.authorAvatarUrl ?: author.avatarUrl)?.let { slots.image(it, null, modifier) }
             }, actions = { ProfileCheckInActions(onBlock, onReport) })
-        }, heading = { ProfileCheckInHeading(row, onShop) },
+        }, heading = { ProfileCheckInHeading(row, slots, onShop) },
         photos = { ProfileCheckInPhotos(row, slots, onPhoto) },
         footer = {
             CoffeePeekTimelineFooter(row.helpfulCount, row.isHelpfulByCurrentUser,
@@ -45,9 +45,9 @@ internal fun PublicProfileCheckInCard(
 }
 
 @Composable
-private fun ProfileCheckInHeading(row: PublicProfileCheckIn, onShop: (() -> Unit)?) {
+private fun ProfileCheckInHeading(row: PublicProfileCheckIn, slots: ProfileSlots, onShop: (() -> Unit)?) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        if (row.isHome) ProfileCheckInPreparation(row.preparation)
+        if (row.isHome) ProfileCheckInPreparation(row.preparation, slots.logoImage, slots.onOpenCoffee)
         else {
             Text(row.venue.ifBlank { stringResource(Res.string.profile_favorite_shop) },
                 Modifier.then(onShop?.let { Modifier.clickable(role = Role.Button, onClick = it) } ?: Modifier),
@@ -67,9 +67,10 @@ private fun ProfileCheckInHeading(row: PublicProfileCheckIn, onShop: (() -> Unit
 private fun ProfileCheckInPhotos(row: PublicProfileCheckIn, slots: ProfileSlots, onPhoto: (List<String>, List<String>, Int) -> Unit) {
     val photos = row.profileCheckInPhotos()
     val descriptions = photos.originals.indices.map { stringResource(Res.string.profile_check_in_photo, it + 1, photos.originals.size) }
-    CoffeePeekPhotoStrip(photos.originals.size, { descriptions[it] }, { onPhoto(photos.previews, photos.originals, it) },
-        photoEnabled = photos::canOpen) { index, modifier ->
-        slots.progressiveImage(photos.display(index), photos.upgrade(index), modifier)
+    CoffeePeekTimelinePhotoStrip(photos.originals, { descriptions[it] }, { onPhoto(photos.previews, photos.originals, it) },
+        photoEnabled = photos::canOpen) { index, modifier, scale, onSize ->
+        val preview = photos.display(index)
+        if (preview.isNotBlank()) slots.progressiveImage(preview, photos.upgrade(index), modifier, scale, onSize)
     }
 }
 

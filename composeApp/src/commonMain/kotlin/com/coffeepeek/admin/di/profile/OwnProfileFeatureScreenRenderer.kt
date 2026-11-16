@@ -39,6 +39,7 @@ import com.coffeepeek.feature.profile.api.ProfileAccountPort
 import com.coffeepeek.feature.authorblocking.api.AuthorBlockActions
 import com.coffeepeek.feature.authorblocking.api.AuthorVisibility
 import com.coffeepeek.feature.profile.api.OwnProfileEntry
+import com.coffeepeek.feature.profile.api.OwnProfileActivity
 import com.coffeepeek.feature.profile.api.OwnProfileSlots
 import com.coffeepeek.feature.profile.api.OwnProfileShelf
 import com.coffeepeek.feature.profile.api.ProfileSignOutPort
@@ -66,7 +67,6 @@ internal class FeatureOwnProfileScreenRenderer(private val entry: OwnProfileEntr
             onLogin = { Navigator.navigate(Navigator.Screen.Auth) },
             onOpenUser = { slug, nickname, avatar -> Navigator.navigate(Navigator.Screen.UserProfile(slug, nickname, avatar)) },
             onOpenFavorites = ::openProfileCollections,
-            onOpenCheckIns = { Navigator.navigate(Navigator.Screen.VisitedPlaces) },
             onOpenContributions = ::openProfileContributions,
             onOpenBlockedAuthors = { Navigator.navigate(Navigator.Screen.BlockedAuthors) },
             modifier = Modifier,
@@ -137,8 +137,10 @@ private fun ownProfileSlots(activity: FeatureProfileActivityRenderer) = OwnProfi
             dismissDescription = stringResource(Res.string.profile_collections_cancel),
         ) { ProfileDisplayPreferences() }
     },
-    activityCalendar = { openShop, openCheckIns -> activity.Calendar(openShop, openCheckIns) },
-    activityPreview = { onClick -> activity.Week(onClick) },
+    activity = OwnProfileActivity(
+        month = { date, select, expanded, title -> activity.Calendar(date, select, expanded, title) },
+        onOpenHistory = { Navigator.navigate(Navigator.Screen.VisitedPlaces) },
+    ),
     loadError = { onRetry -> CoffeePeekLoadErrorContent(onRetry = onRetry) },
     shelf = OwnProfileShelf(
         content = { modifier, header -> ProfileOwnShelf(modifier, header) },

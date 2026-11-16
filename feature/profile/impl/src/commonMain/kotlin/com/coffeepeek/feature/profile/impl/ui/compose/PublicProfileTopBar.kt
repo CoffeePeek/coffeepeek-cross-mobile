@@ -64,7 +64,7 @@ private fun PublicProfileTopBarActions(profile: PublicProfile?, viewingOwn: Bool
 @Composable
 private fun PublicProfileTopBarPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     PublicProfileTopBar(null, false, null, ProfileAuthorActions.None,
-        PublicProfileCallbacks({}, {}, { _, _, _ -> }, {}, {}, {}, { _, _, _ -> }))
+        PublicProfileCallbacks({}, {}, { _, _, _ -> }, {}, {}, { _, _, _ -> }))
 }
 
 @Preview @Composable private fun PublicProfileTopBarLightPreview() = PublicProfileTopBarPreview(false)

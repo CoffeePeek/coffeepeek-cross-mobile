@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import com.coffeepeek.feature.profile.api.OwnProfileActivity
 import com.coffeepeek.feature.profile.api.OwnProfileShelf
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -22,6 +23,7 @@ import com.coffeepeek.feature.profile.api.ProfileAuthorActions
 import com.coffeepeek.feature.profile.api.ProfileContribution
 import com.coffeepeek.feature.profile.api.ProfileSlots
 import com.coffeepeek.feature.profile.domain.PublicProfile
+import com.coffeepeek.feature.profile.domain.PublicProfileActivity
 import com.coffeepeek.feature.profile.domain.PublicProfileStats
 import com.coffeepeek.feature.profile.impl.ui.PublicProfileViewModel
 import com.coffeepeek.feature.profile.impl.ui.compose.component.PublicProfileConnectionsSheet
@@ -33,12 +35,10 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 /** Owner-specific content and destinations supplied by the application composition boundary. */
 internal class OwnProfileExtras(
     val onOpenFavorites: () -> Unit,
-    val onOpenCheckIns: () -> Unit,
+    val activity: OwnProfileActivity,
     val onOpenContributions: (ProfileContribution) -> Unit,
     val topBarActions: @Composable () -> Unit,
     val favoritesPreview: @Composable (header: @Composable () -> Unit) -> Unit,
-    val checkInCount: Int,
-    val activityPreview: @Composable (onClick: () -> Unit) -> Unit,
     val bottomContentPadding: Dp,
     val shelf: OwnProfileShelf?,
 )
@@ -48,21 +48,20 @@ internal class PublicProfileCallbacks(
     val onOpenShop: (String) -> Unit,
     val onOpenUser: (slug: String, nickname: String, avatarUrl: String?) -> Unit,
     val onShare: (String) -> Unit,
-    val onOpenCheckIns: () -> Unit,
     val onAction: (PublicProfileAction) -> Unit,
     val onPhotoClick: (previews: List<String>, originals: List<String>, index: Int) -> Unit,
 )
 
 private data class ProfilePhotos(val previews: List<String>, val originals: List<String>, val index: Int)
 
-/** Lifecycle adapter; both the week and the check-in section use the caller's full-history destination. */
+/** Lifecycle adapter for the profile and its media viewer. */
 @Composable
 internal fun PublicProfileScreen(
     slug: String, nickname: String?, avatarUrl: String?, vm: PublicProfileViewModel,
     authorActions: ProfileAuthorActions, slots: ProfileSlots, onBack: (() -> Unit)?,
     onOpenShop: (String) -> Unit, onOpenRoaster: (String) -> Unit, onLogin: () -> Unit,
     onOpenUser: (slug: String, nickname: String, avatarUrl: String?) -> Unit,
-    onShare: (url: String) -> Unit, onOpenCheckIns: () -> Unit,
+    onShare: (url: String) -> Unit,
     checkInsOnly: Boolean = false, own: OwnProfileExtras? = null,
 ) {
     val state by vm.state.collectAsStateWithLifecycle()
@@ -71,7 +70,7 @@ internal fun PublicProfileScreen(
     val pending = !visibility.ready || state.profile?.let { !it.isBlockedByViewer && visibility.hides(it.authorId, it.slug) } == true
     val visible = if (pending) state.copy(profile = null, checkIns = emptyList(), connectionKind = null) else state
     val callbacks = PublicProfileCallbacks(onBack, onOpenShop, onOpenUser, onShare,
-        own?.onOpenCheckIns ?: onOpenCheckIns, vm::onAction,
+        vm::onAction,
         { previews, originals, index -> photos = ProfilePhotos(previews, originals, index) })
     LaunchedEffect(visibility.revision, visible.profile?.slug) { photos = null }
     LaunchedEffect(vm) { vm.events.collect { if (it == PublicProfileEvent.RequireLogin) onLogin() } }
@@ -118,11 +117,12 @@ private fun PublicProfileConnections(state: PublicProfileState, slots: ProfileSl
 
 @Composable
 private fun PublicProfileScreenPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
+    val activity = PublicProfileActivity("2026-11", setOf(10, 11, 15, 16))
     val profile = PublicProfile("coffeepeek", "coffeepeek", "Кофейные заметки", null,
-        PublicProfileStats(0, 2, 1, 4), emptyList(), null)
+        PublicProfileStats(4, 2, 1, 4), emptyList(), activity)
     val slots = ProfileSlots(image = { _, _, _ -> }, photoViewer = { _, _, _, _ -> }, photoPrefetch = { _, _ -> })
-    PublicProfileScreenContent(PublicProfileState(isLoading = false, profile = profile), false,
-        ProfileAuthorActions.None, slots, PublicProfileCallbacks(null, {}, { _, _, _ -> }, {}, {}, {}, { _, _, _ -> }))
+    PublicProfileScreenContent(PublicProfileState(isLoading = false, profile = profile, activityMonth = activity.month), false,
+        ProfileAuthorActions.None, slots, PublicProfileCallbacks(null, {}, { _, _, _ -> }, {}, {}, { _, _, _ -> }))
 }
 
 @Preview @Composable private fun PublicProfileLightPreview() = PublicProfileScreenPreview(false)

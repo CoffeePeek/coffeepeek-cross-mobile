@@ -3,6 +3,8 @@ package com.coffeepeek.feature.profile.api
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.layout.ContentScale
 
 /** Application image port: owns loading, caching and the failure state. */
 typealias ProfileImage = @Composable (url: String, description: String?, modifier: Modifier) -> Unit
@@ -20,7 +22,8 @@ class ProfileSlots(
     /** Fit-scaled logo loading; the regular image port crops covers and avatars. */
     val logoImage: ProfileImage = image,
     val displayDate: @Composable (String) -> String = { it },
-    val progressiveImage: @Composable (preview: String, detail: String?, modifier: Modifier) -> Unit = { preview, _, modifier -> image(preview, null, modifier) },
+    val progressiveImage: @Composable (String, String?, Modifier, ContentScale, (Size) -> Unit) -> Unit =
+        { preview, _, modifier, _, _ -> image(preview, null, modifier) },
     val reportCheckIn: (id: String) -> Unit = {},
     /** Only the profile's explicitly featured public collection; empty when hidden. */
     val featuredCollection: @Composable (profileSlug: String) -> Unit = {},
@@ -31,4 +34,5 @@ class ProfileSlots(
     val onOpenOwnCollections: () -> Unit = {},
     /** Called only while viewing the signed-in owner's counters. */
     val onOwnContributions: (ProfileContribution) -> Unit = {},
+    val onOpenCoffee: ((slug: String) -> Unit)? = null,
 )

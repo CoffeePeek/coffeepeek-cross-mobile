@@ -35,7 +35,6 @@ internal class FeaturePublicProfileScreenRenderer(private val entry: PublicProfi
             onLogin = { Navigator.navigate(Navigator.Screen.Auth) },
             onOpenUser = { userSlug, userNickname, avatar -> Navigator.navigate(Navigator.Screen.UserProfile(userSlug, userNickname, avatar)) },
             onShare = { url -> ShareHelper.shareText(url) },
-            onOpenCheckIns = { Navigator.navigate(Navigator.Screen.UserCheckIns(slug, nickname, avatarUrl)) },
             checkInsOnly = checkInsOnly, modifier = Modifier)
     }
 }
@@ -80,9 +79,10 @@ internal fun profileSlots(): ProfileSlots {
         photoViewer = { previews, originals, index, onDismiss -> CoffeePeekPhotoViewer(CoffeePeekPhotoViewerImages(previews, originals), index, onDismiss) },
         logoImage = { url, description, modifier -> CoffeePeekImage(data = url, modifier = modifier, contentScale = ContentScale.Fit, contentDescription = description) },
         displayDate = { rememberReviewDisplayDate(it) },
-        progressiveImage = { preview, detail, modifier -> CoffeePeekImage(data = preview, highQualityData = detail,
-            modifier = modifier, contentScale = ContentScale.Crop) },
+        progressiveImage = { preview, detail, modifier, scale, onSize -> CoffeePeekImage(data = preview, highQualityData = detail,
+            modifier = modifier, contentScale = scale, showLoader = true, onDecodedSize = onSize) },
         reportCheckIn = { Navigator.navigate(Navigator.Screen.ReportCheckIn(it)) },
+        onOpenCoffee = { Navigator.navigate(Navigator.Screen.CoffeeDetail(it)) },
         photoPrefetch = { listState, items -> PrefetchListPhotos(listState, items) },
     )
 }
