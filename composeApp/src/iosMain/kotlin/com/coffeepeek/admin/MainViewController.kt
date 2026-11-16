@@ -3,6 +3,8 @@ package com.coffeepeek.admin
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.window.ComposeUIViewController
 import com.coffeepeek.admin.di.initPlatformKoin
+import com.coffeepeek.admin.di.collections.IosCollectionsLibrary
+import com.coffeepeek.admin.di.collections.LocalIosCollectionsLibraryController
 import com.coffeepeek.admin.di.settings.IosThemeSettings
 import com.coffeepeek.admin.di.settings.LocalIosThemeSettingsController
 import com.coffeepeek.admin.ui.Navigator
@@ -26,13 +28,17 @@ fun handleAppLink(link: String): Boolean {
 fun MainViewController(
     onReady: () -> Unit,
     makeThemeSettingsController: (IosThemeSettings, String, () -> Unit) -> UIViewController,
+    makeCollectionsLibraryController: (IosCollectionsLibrary, String) -> UIViewController,
 ): UIViewController {
     if (!koinInitialized) {
         initPlatformKoin()
         koinInitialized = true
     }
     return ComposeUIViewController {
-        CompositionLocalProvider(LocalIosThemeSettingsController provides makeThemeSettingsController) {
+        CompositionLocalProvider(
+            LocalIosThemeSettingsController provides makeThemeSettingsController,
+            LocalIosCollectionsLibraryController provides makeCollectionsLibraryController,
+        ) {
             App(onReady = onReady)
         }
     }
