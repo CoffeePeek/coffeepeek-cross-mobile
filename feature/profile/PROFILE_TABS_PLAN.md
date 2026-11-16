@@ -263,3 +263,16 @@ On `26d6e5498` with this patch, the function-body check and Android
 classes and Sandbox isolation. Profile and Check-In History compiled for
 Kotlin iOS Arm64. Added light/dark previews for both header states at a narrow
 width. The previews were not rendered, and no device or full iOS app was run.
+
+### Calendar header motion — 2026-11-16
+
+The month title fades and interpolates its size when the displayed month
+changes. The side arrows fade and expand into position, and the disclosure
+chevron rotates in place. The calendar card and header share a 220 ms timing
+that follows the existing iOS reduced-motion setting. The owner calendar
+keeps the header mounted when switching week and month data sources.
+
+On `cc02e1f6a` with this patch, the function-body check and both Android
+assemblies passed, including packaged runtime classes and Sandbox isolation.
+Profile and Check-In History compiled for Kotlin iOS Arm64. The animation was
+reviewed in source. Device and full iOS app behavior remain unverified.

@@ -1,6 +1,18 @@
 package com.coffeepeek.feature.profile.impl.ui.compose.component
 
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.Transition
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.updateTransition
+import androidx.compose.animation.expandHorizontally
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -17,6 +29,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.semantics.clearAndSetSemantics
@@ -35,6 +48,7 @@ import com.coffeepeek.core.designsystem.component.coffeePeekCardBorder
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
+import com.coffeepeek.core.designsystem.theme.reducedMotionDuration
 import com.coffeepeek.feature.profile.api.OwnProfileActivity
 import com.coffeepeek.feature.profile.api.ProfileCalendarHeaderContent
 import com.coffeepeek.feature.profile.api.ProfileImage
@@ -43,6 +57,8 @@ import com.coffeepeek.feature.profile.domain.PublicProfileActivity
 import com.coffeepeek.feature.profile.impl.resources.*
 import com.coffeepeek.feature.profile.impl.ui.model.PublicProfileAction
 import com.coffeepeek.feature.profile.impl.ui.model.PublicProfileState
+
+private const val CalendarMotionMillis = 220
 
 @Composable
 internal fun ProfileCheckInCalendar(
@@ -87,7 +103,7 @@ private fun ProfileCalendarFrame(
 ) {
     var expanded by rememberSaveable(stateKey) { mutableStateOf(initiallyExpanded) }
     Box(modifier.fillMaxWidth(), contentAlignment = Alignment.TopCenter) {
-        CoffeePeekCard(Modifier.widthIn(max = 420.dp).animateContentSize(),
+        CoffeePeekCard(Modifier.widthIn(max = 420.dp).animateContentSize(tween(reducedMotionDuration(CalendarMotionMillis))),
             border = coffeePeekCardBorder(), elevation = 0.dp, contentPadding = PaddingValues(10.dp)) {
             content(expanded) { month, previous, next ->
                 ProfileCalendarHeader(month, expanded, previous, next) { expanded = !expanded }
@@ -101,22 +117,55 @@ private fun ProfileCalendarHeader(
     month: String, expanded: Boolean, previous: (() -> Unit)?, next: (() -> Unit)?, onToggle: () -> Unit,
 ) {
     val description = stringResource(if (expanded) Res.string.profile_calendar_expanded else Res.string.profile_calendar_collapsed)
-    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+    val duration = reducedMotionDuration(CalendarMotionMillis)
+    val disclosure = updateTransition(expanded, label = "profile calendar disclosure")
+    val rotation by disclosure.animateFloat(transitionSpec = { tween(duration) }, label = "calendar chevron") {
+        if (it) 180f else 0f
+    }
+    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
         Row(Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
-            if (expanded) ProfileMonthArrow(previous = true, onClick = previous)
+            AnimatedProfileMonthArrow(disclosure, previous = true, onClick = previous, duration = duration)
             // The title stays a touch shortcut. The chevron is the sole accessible disclosure button.
             CoffeePeekTextButton(onToggle, Modifier.weight(1f, fill = false)
                 .focusProperties { canFocus = false }.clearAndSetSemantics {},
                 contentPadding = PaddingValues(horizontal = 6.dp, vertical = 4.dp)) {
-                Text(month, color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
+                AnimatedProfileMonthText(month, duration)
             }
-            if (expanded) ProfileMonthArrow(previous = false, onClick = next)
+            AnimatedProfileMonthArrow(disclosure, previous = false, onClick = next, duration = duration)
         }
         CoffeePeekIconButton(onToggle, Modifier.semantics { stateDescription = description },
             glass = false, contentDescription = month) {
-            CoffeePeekIcon(if (expanded) CoffeePeekIcons.ChevronUp else CoffeePeekIcons.ChevronDown, null, Modifier.size(18.dp))
+            CoffeePeekIcon(CoffeePeekIcons.ChevronDown, null, Modifier.size(18.dp).rotate(rotation))
         }
+    }
+}
+
+@Composable
+private fun AnimatedProfileMonthText(month: String, duration: Int) {
+    AnimatedContent(
+        targetState = month,
+        transitionSpec = {
+            (fadeIn(tween(duration)) togetherWith fadeOut(tween(duration)))
+                .using(SizeTransform { _, _ -> tween(duration) })
+        },
+        label = "calendar month title",
+    ) { shownMonth ->
+        Text(shownMonth, color = MaterialTheme.colorScheme.onSurface, style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.SemiBold, maxLines = 2, overflow = TextOverflow.Ellipsis)
+    }
+}
+
+@Composable
+private fun AnimatedProfileMonthArrow(
+    disclosure: Transition<Boolean>, previous: Boolean, onClick: (() -> Unit)?, duration: Int,
+) {
+    val anchor = if (previous) Alignment.End else Alignment.Start
+    disclosure.AnimatedVisibility(
+        visible = { it },
+        enter = expandHorizontally(tween(duration), expandFrom = anchor) + fadeIn(tween(duration)),
+        exit = shrinkHorizontally(tween(duration), shrinkTowards = anchor) + fadeOut(tween(duration)),
+    ) {
+        ProfileMonthArrow(previous, onClick)
     }
 }
 
