@@ -232,3 +232,9 @@ state; автоматизированные UI/screenshot тесты не соз
   устранено явным блоком; остаётся только старое createBusinessOwnershipEntry
   (56>20). Baseline не расширялся. Старые предупреждения previews/Gradle вне
   изменённых новых компонентов не исправлялись в этом срезе.
+
+- Первый iOS прогон3064 остановился до link: androidx.compose.ui.tooling.preview
+  отсутствует в текущем native source set, хотя Android его разрешает. Новые
+  commonMain previews возвращены на поддержанный org.jetbrains multiplatform
+  импорт без изменения зависимостей. Предупреждение Android о deprecation
+  принимается до отдельного обновления preview tooling; не скрывает native failure.

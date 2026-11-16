@@ -14,7 +14,7 @@ import com.coffeepeek.feature.checkinhistory.impl.resources.*
 import com.coffeepeek.feature.checkinhistory.impl.ui.compose.component.HistoryImageContent
 import com.coffeepeek.feature.checkinhistory.impl.ui.compose.component.ProfileActivityCalendarCard
 import com.coffeepeek.feature.checkinhistory.impl.ui.compose.model.*
-import androidx.compose.ui.tooling.preview.Preview
+import org.jetbrains.compose.ui.tooling.preview.Preview
 
 /** Profile-only calendar presentation; the full history calendar keeps its filtering controls. */
 @Composable

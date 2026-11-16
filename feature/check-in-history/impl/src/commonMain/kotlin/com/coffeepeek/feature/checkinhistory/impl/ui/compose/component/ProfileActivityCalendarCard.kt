@@ -26,7 +26,7 @@ import com.coffeepeek.feature.checkinhistory.impl.ui.compose.model.*
 import com.coffeepeek.feature.checkinhistory.impl.ui.data.historyCalendarPhotos
 import com.coffeepeek.feature.checkinhistory.impl.ui.data.historyMonthTitle
 import com.coffeepeek.feature.checkinhistory.impl.ui.data.profileActivityDates
-import androidx.compose.ui.tooling.preview.Preview
+import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
 internal fun ProfileActivityCalendarCard(state: ProfileActivityState, expanded: Boolean,
