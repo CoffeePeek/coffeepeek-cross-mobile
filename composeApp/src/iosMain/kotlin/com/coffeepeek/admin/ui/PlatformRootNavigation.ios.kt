@@ -8,6 +8,7 @@ import coffeepeek.composeapp.generated.resources.Res
 import coffeepeek.composeapp.generated.resources.business_tab_title
 import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import com.coffeepeek.admin.di.settings.iosThemeSettingsContent
+import com.coffeepeek.admin.di.shop.iosShopMenuGalleryContent
 import coffeepeek.composeapp.generated.resources.navigation_search
 import coffeepeek.composeapp.generated.resources.navigation_feed
 import coffeepeek.composeapp.generated.resources.navigation_profile
@@ -310,9 +311,11 @@ internal actual fun PlatformRootNavigation(
 @Composable
 private fun nativeRouteContent(): (Navigator.Screen) -> (() -> UIViewController)? {
     val themeSettings = iosThemeSettingsContent()
+    val shopMenuGallery = iosShopMenuGalleryContent()
     return { screen ->
         when (screen) {
             Navigator.Screen.ThemeSettings -> themeSettings
+            is Navigator.Screen.ShopMenuGallery -> { { shopMenuGallery(screen.shopId) } }
             else -> null
         }
     }
