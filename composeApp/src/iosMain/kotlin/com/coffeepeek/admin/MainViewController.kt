@@ -5,6 +5,10 @@ import androidx.compose.ui.window.ComposeUIViewController
 import com.coffeepeek.admin.di.coffee.IosCoffeeDetail
 import com.coffeepeek.admin.di.coffee.LocalIosCoffeeDetailController
 import com.coffeepeek.admin.di.initPlatformKoin
+import com.coffeepeek.admin.di.auth.IosAuthScreen
+import com.coffeepeek.admin.di.auth.LocalIosAuthController
+import com.coffeepeek.admin.di.contentreport.IosContentReport
+import com.coffeepeek.admin.di.contentreport.LocalIosContentReportController
 import com.coffeepeek.admin.di.shopreport.IosShopReport
 import com.coffeepeek.admin.di.shopreport.LocalIosShopReportController
 import com.coffeepeek.admin.di.collections.IosCollectionsLibrary
@@ -41,9 +45,11 @@ fun MainViewController(
     makeCoffeeDetailController: (IosCoffeeDetail, String) -> UIViewController,
     makeThemeSettingsController: (IosThemeSettings, String, () -> Unit) -> UIViewController,
     makeShopReportController: (IosShopReport, String, String, () -> Unit) -> UIViewController,
+    makeContentReportController: (IosContentReport, String) -> UIViewController,
     makeCollectionsLibraryController: (IosCollectionsLibrary, String) -> UIViewController,
     makeSettingsController: (IosSettingsScreen) -> UIViewController,
     makeBlockedAuthorsController: (IosBlockedAuthors, String, () -> Unit, () -> Unit, () -> Unit) -> UIViewController,
+    makeAuthController: (IosAuthScreen) -> UIViewController,
 ): UIViewController {
     if (!koinInitialized) {
         initPlatformKoin()
@@ -55,9 +61,11 @@ fun MainViewController(
             LocalIosCoffeeDetailController provides makeCoffeeDetailController,
             LocalIosThemeSettingsController provides makeThemeSettingsController,
             LocalIosShopReportController provides makeShopReportController,
+            LocalIosContentReportController provides makeContentReportController,
             LocalIosCollectionsLibraryController provides makeCollectionsLibraryController,
             LocalIosSettingsController provides makeSettingsController,
             LocalIosBlockedAuthorsController provides makeBlockedAuthorsController,
+            LocalIosAuthController provides makeAuthController,
         ) {
             App(onReady = onReady)
         }

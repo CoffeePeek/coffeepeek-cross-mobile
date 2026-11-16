@@ -186,9 +186,9 @@ Workflow [`.github/workflows/ios-testflight.yml`](../.github/workflows/ios-testf
 Для pull request ключи подписи не выдаются. Номер сборки `CFBundleVersion` — целое
 число `1000 + git rev-list --count HEAD`, как `versionCode` Android. Сдвиг `1000`
 задан в `BUILD_NUMBER_OFFSET`, чтобы не уменьшить ранее опубликованный код. Повторный
-запуск CI для того же коммита не повышает номер. Публичная версия задаётся вручную
-в `iosApp/Configuration/Shared.xcconfig` (`MARKETING_VERSION = 1.1.1`). Android
-использует `1.1.1.N`, где `N` равен `versionCode`; iOS хранит номер сборки отдельно. Серверные коды
+запуск CI для того же коммита не повышает номер. Публичная версия iOS задаётся
+в `iosApp/Configuration/Shared.xcconfig` (`MARKETING_VERSION`). Android задаёт
+свою версию в `composeApp/build.gradle.kts` и добавляет к ней `versionCode`. Серверные коды
 обновления и обязательный минимум задаются вручную через админку.
 
 Перед первым запуском:
@@ -203,7 +203,7 @@ Workflow [`.github/workflows/ios-testflight.yml`](../.github/workflows/ios-testf
    ID. Ключ понадобится для неинтерактивной загрузки через `xcodebuild`.
 4. В настройках репозитория GitHub создайте Environment `testflight`. Секреты
    из таблицы могут быть заданы на уровне репозитория или этого Environment.
-   Если для Environment включены ограничения веток, разрешите только `main`.
+   Если для Environment включены ограничения веток, добавьте `main` и `codex/ios-native`.
    Также можно включить требование
    одобрения перед публикацией.
 

@@ -190,6 +190,7 @@ jobs:
             --tests 'com.coffeepeek.admin.di.settings.IosThemeSettingsTest' \
             --tests 'com.coffeepeek.admin.di.coffee.IosCoffeeDetailAnalyticsTest' \
             --tests 'com.coffeepeek.admin.di.shopreport.IosShopReportTest' \
+            --tests 'com.coffeepeek.admin.di.contentreport.IosContentReportTest' \
             --tests 'com.coffeepeek.admin.di.settings.IosSettingsScreensTest' \
             --tests 'com.coffeepeek.admin.di.authorblocking.IosBlockedAuthorsTest' \
             --tests 'com.coffeepeek.admin.ui.NavigationDelegateTest' \
@@ -200,6 +201,15 @@ jobs:
             --tests 'com.coffeepeek.admin.ui.component.GlassIconConfigurationTest' \
             > "$RUNNER_TEMP/ios-native-tests.log" 2>&1 || {
               tail -n 150 "$RUNNER_TEMP/ios-native-tests.log"
+              exit 1
+            }
+      - name: Run authentication Kotlin Native tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./gradlew --max-workers=6 :feature:auth:impl:iosSimulatorArm64Test \
+            > "$RUNNER_TEMP/ios-auth-tests.log" 2>&1 || {
+              tail -n 150 "$RUNNER_TEMP/ios-auth-tests.log"
               exit 1
             }
       - name: Run shop menu gallery Kotlin Native tests
@@ -249,4 +259,6 @@ jobs:
             feature/shop/impl/build/test-results/iosSimulatorArm64Test/
             ${{ runner.temp }}/ios-coffee-detail-tests.log
             feature/coffee/impl/build/test-results/iosSimulatorArm64Test/
+            ${{ runner.temp }}/ios-auth-tests.log
+            feature/auth/impl/build/test-results/iosSimulatorArm64Test/
           retention-days: 7
