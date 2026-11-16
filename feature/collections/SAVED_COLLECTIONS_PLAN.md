@@ -520,6 +520,8 @@ The first macOS run for `f6dae11b9` failed compiling two assertions in
 comparison type. The assertions now explicitly compare lists of the event
 interface and nullable strings. A new macOS run validates this correction
 together with the native tab routing integration from `8648736bd`.
+The Xcode Simulator build and binary compatibility check for `f6dae11b9`
+passed in the same run, GitHub Actions `43867041801`.
 At authoring time these tests are written and await the integration run. Manual
 macOS checks for both languages, themes, large text, VoiceOver, completed and
 cancelled back gestures and editor return remain open. Live account operations
