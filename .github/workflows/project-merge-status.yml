@@ -1,9 +1,24 @@
-name: Project status on merge
+name: Project issue workflow
 
 on:
-  pull_request_target:
+  pull_request:
     branches: [develop, main]
     types: [closed]
+  issues:
+    types: [opened, labeled, reopened]
+  schedule:
+    - cron: '17 2 * * *'
+  workflow_dispatch:
+    inputs:
+      issue:
+        description: Issue reference such as '#350' or 'CoffeePeek/coffeepeek-tracker#456'
+        required: true
+        type: string
+      target:
+        description: Branch status to preview
+        required: true
+        type: choice
+        options: [develop, main]
 
 permissions:
   contents: read
@@ -14,14 +29,21 @@ concurrency:
 
 jobs:
   sync:
-    if: github.repository == 'CoffeePeek/coffeepeek-cross-mobile' && github.event.pull_request.merged == true && vars.PROJECT_STATUS_ENABLED == 'true'
+    if: >-
+      github.repository == 'CoffeePeek/coffeepeek-cross-mobile' &&
+      vars.PROJECT_STATUS_ENABLED == 'true' &&
+      ((github.event_name == 'pull_request' && github.event.pull_request.merged == true &&
+        github.event.pull_request.head.repo.full_name == github.repository) ||
+       (github.event_name == 'issues' && (github.event.action != 'labeled' || github.event.label.name == 'project:coffeepeek')) ||
+       (github.event_name == 'schedule' && vars.PROJECT_STATUS_ARCHIVE_ENABLED == 'true') ||
+       (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main'))
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - name: Check out the trusted base revision
+      - name: Check out the trusted revision
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ github.sha }}
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.merge_commit_sha || github.sha }}
           persist-credentials: false
 
       - name: Create the project automation token
@@ -36,8 +58,9 @@ jobs:
           permission-pull-requests: read
           permission-organization-projects: write
 
-      - name: Update existing issue cards
+      - name: Apply opted-in project rules
         env:
           PROJECT_STATUS_TOKEN: ${{ steps.project_token.outputs.token }}
           PROJECT_STATUS_DRY_RUN: ${{ vars.PROJECT_STATUS_DRY_RUN }}
-        run: node tools/project-status/sync.mjs
+          PROJECT_STATUS_ARCHIVE_ENABLED: ${{ vars.PROJECT_STATUS_ARCHIVE_ENABLED }}
+        run: node tools/project-status/run.mjs

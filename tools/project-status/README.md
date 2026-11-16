@@ -1,29 +1,39 @@
-# CoffeePeek Project status
+# CoffeePeek Project issue workflow
 
-The mobile repository can update existing issue cards in [CoffeePeek Project #6](https://github.com/orgs/CoffeePeek/projects/6) when a pull request merges. A merge into `develop` sets `Preview`. A merge into `main` sets `Done`. A card already in `Done` stays there if a preview run is delayed or retried. `Done` records the merge, so release or deployment success would be a separate signal.
+The workflow acts on [CoffeePeek Project #6](https://github.com/orgs/CoffeePeek/projects/6). It keeps issue cards separate from pull request cards.
+
+| Event | Change |
+| --- | --- |
+| Same-repository PR merged into `develop` | Linked issue cards move to `Preview`. |
+| Same-repository PR merged into `main` | Linked issue cards move to `Done`. |
+| Mobile issue opened with `project:coffeepeek` or labeled while open | Add a card if absent and initialize its empty status to `Backlog`. |
+| Mobile issue reopened with an existing `Done` card | Restore it if archived, then move to `Todo`. |
+| Daily archive job, after separate opt-in | Archive existing `Done` cards for issues closed as completed. The issue close, card update and Status update must all be at least 30 days old. |
+
+A delayed merge does not downgrade `Done` or advance a card reopened after that merge. The archive job checks the current card before applying the update. It can archive older eligible cards from the mobile, tracker and backend repositories on its first writing run.
 
 ## Link issues in the pull request
 
-For a task PR, link the issue through GitHub Development when it is available, or put one marker per line in the PR description:
+For a task PR, link the issue through GitHub Development or add one marker per line in the description:
 
 ```text
-Project-Issue: #123
+Project-Issue: #350
 Project-Issue: CoffeePeek/coffeepeek-tracker#456
 ```
 
-`#123` means the mobile repository. Use a qualified reference for a tracker or backend issue. Review the marker lines before merging. The workflow changes only unarchived issue cards that already belong to Project #6 and are in `coffeepeek-cross-mobile`, `coffeepeek-tracker`, or `coffeepeek-backend`.
+`#350` means the mobile repository. Use qualified references for tracker or backend issues. For a `develop` → `main` release PR, add a `Project-Issue:` line for each issue included in the release. An empty release list leaves existing statuses as they are. [GitHub issue linking](https://docs.github.com/en/issues/tracking-your-work-with-issues/using-issues/linking-a-pull-request-to-an-issue)
 
-For a `develop` → `main` release PR, list the issues included in that release using `Project-Issue:` lines. Release PRs in this repository commonly have no linked closing issues. An empty release list leaves the project unchanged. Closing keywords targeting the default branch can still close an issue natively, so use an explicit marker for a Preview move when necessary. [GitHub issue linking](https://docs.github.com/en/issues/tracking-your-work-with-issues/using-issues/linking-a-pull-request-to-an-issue)
+## Enable and verify
 
-## Enable the workflow
+1. Publish the workflow and `tools/project-status` to `main` for issue events, scheduled archival, manual checks and `main` merges. Sync these same files to `develop` for preview merges. The standard `pull_request` closed trigger works for same-repository merges. GitHub withholds repository App secrets from fork PR workflows.
+2. Ask a CoffeePeek organization admin to create or approve a GitHub App installed on `coffeepeek-cross-mobile`, `coffeepeek-tracker` and `coffeepeek-backend`. Grant organization **Projects: Read and write**, repository **Issues: Read** and **Pull requests: Read**. Maintain the mobile `project:coffeepeek` label through repository settings. [Projects GitHub App permissions](https://docs.github.com/en/issues/planning-and-tracking-with-projects/automating-your-project/automating-projects-using-actions)
+3. Set mobile repository Actions variable `PROJECT_STATUS_APP_CLIENT_ID` to the App client ID and secret `PROJECT_STATUS_APP_PRIVATE_KEY` to its private key. Set `PROJECT_STATUS_ENABLED=true` and leave `PROJECT_STATUS_DRY_RUN` unset or `true`.
+4. From `main`, manually run **Project issue workflow** for an existing card, such as `#350`. Select `develop`, then repeat with `main`. Both runs always report planned changes without writing. [Run a workflow manually](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/manually-run-a-workflow)
+5. Review the project’s **Item added to project**, **Item closed**, and **Pull request linked to issue** rules. Their current Status changes should agree with Backlog intake and the meaning of Preview and Done. Set `PROJECT_STATUS_DRY_RUN=false` when ready to write. Removing `PROJECT_STATUS_ENABLED` pauses the workflow. If intake adds a card but the initial Status write fails, finish setting its empty status to Backlog manually.
+6. To verify archiving, set `PROJECT_STATUS_ARCHIVE_ENABLED=true` after setting the dry-run variable back to true. Review the next scheduled counts before enabling writes again. The daily job only writes after both opt-ins and `PROJECT_STATUS_DRY_RUN=false`. Leave the archive flag unset to keep scheduled archiving off.
 
-1. Have a CoffeePeek organization admin create or approve a GitHub App installed on the three repositories above. Grant organization **Projects: Read and write**, repository **Issues: Read** and **Pull requests: Read**. [Projects GitHub App permissions](https://docs.github.com/en/issues/planning-and-tracking-with-projects/automating-your-project/automating-projects-using-actions)
-2. In the mobile repository Actions configuration, set variable `PROJECT_STATUS_APP_CLIENT_ID` to the App client ID and add its private key as secret `PROJECT_STATUS_APP_PRIVATE_KEY`. Keep `PROJECT_STATUS_ENABLED` unset until the workflow is on `main`.
-3. Publish this workflow and its script to the default branch `main` before testing either merge target. It uses a closed and merged `pull_request_target` event and checks out the trusted default-branch revision. [GitHub Actions events](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#pull_request_target)
-4. Set `PROJECT_STATUS_ENABLED` to `true`. Begin with `PROJECT_STATUS_DRY_RUN` unset or `true`. Check the counts of matched and planned issue updates in the workflow run. Set the variable to `false` to enable status writes. Disabling `PROJECT_STATUS_ENABLED` pauses the automation.
-
-Only the mobile repository runs this workflow. A dedicated queue serializes its runs. Rerunning a failed job is safe after restoring access. Keep any built-in workflow that manages PR cards alone if you want it. Review the board rules Item closed and Pull request linked to issue before enabling writes. They also act on issue cards and may set status after a close or link event. [GitHub Actions concurrency](https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/control-workflow-concurrency)
+The mobile repository is the trigger source. Its issue label and reopen events apply to mobile issues only. The scheduled archive can act on existing Project #6 cards in the three allowlisted repositories. The queue serializes this workflow’s runs within the mobile repository. [GitHub Actions concurrency](https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/control-workflow-concurrency)
 
 ## Local verification
 
-Run `node --test tools/project-status/sync.test.mjs` with Node 20 or later. The tests use a fake GraphQL client and no credentials.
+Run `node --test tools/project-status/sync.test.mjs tools/project-status/lifecycle.test.mjs` with Node 20 or later. The tests use a fake GraphQL client without credentials.

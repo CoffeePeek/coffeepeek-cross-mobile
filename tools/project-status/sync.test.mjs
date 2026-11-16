@@ -13,6 +13,7 @@ function mergedEvent(branch, body = '', head = 'fix/example') {
     pull_request: {
       number: 92,
       merged: true,
+      merged_at: '2026-11-16T09:00:00Z',
       body,
       base: { ref: branch, repo: { full_name: mobile } },
       head: { ref: head, repo: { full_name: mobile } },
@@ -162,4 +163,25 @@ test('a misconfigured Status field stops before any write', async () => {
   });
   await assert.rejects(syncProjectStatus(mergedEvent('main'), mock), /Status field with Preview and Done/);
   assert.equal(mock.mutations.length, 0);
+});
+
+
+test('a merge predating the latest reopen cannot advance that card', async () => {
+  const issue = card(tracker, 7, 'todo');
+  issue.content.timelineItems = { nodes: [{ createdAt: '2026-11-16T10:00:00Z' }] };
+  const mock = mockProject({ items: [[issue]], links: [[linkedIssue(tracker, 7)]] });
+  const prior = mergedEvent('main');
+  assert.equal((await syncProjectStatus(prior, mock)).updated, 0);
+  const next = mergedEvent('main');
+  next.pull_request.merged_at = '2026-11-16T11:00:00Z';
+  assert.equal((await syncProjectStatus(next, mock)).updated, 1);
+  assert.equal(issue.fieldValueByName.optionId, 'done');
+});
+
+test('a fork merge is skipped when App credentials cannot be supplied', async () => {
+  const event = mergedEvent('develop', 'Project-Issue: #350');
+  event.pull_request.head.repo.full_name = 'contributor/coffeepeek-cross-mobile';
+  const mock = mockProject();
+  assert.deepEqual(await syncProjectStatus(event, mock), { skipped: 'unhandled event' });
+  assert.equal(mock.calls.length, 0);
 });

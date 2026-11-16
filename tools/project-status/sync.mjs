@@ -1,16 +1,12 @@
-import { readFile } from 'node:fs/promises';
-import { resolve } from 'node:path';
-import { pathToFileURL } from 'node:url';
-
 const projectOwner = 'CoffeePeek';
 const projectNumber = 6;
-const sourceRepository = 'coffeepeek/coffeepeek-cross-mobile';
+export const sourceRepository = 'coffeepeek/coffeepeek-cross-mobile';
 const allowedRepositories = new Set([
   sourceRepository,
   'coffeepeek/coffeepeek-tracker',
   'coffeepeek/coffeepeek-backend',
 ]);
-const targetStatuses = new Map([['develop', 'Preview'], ['main', 'Done']]);
+export const targetStatuses = new Map([['develop', 'Preview'], ['main', 'Done']]);
 const explicitMarker = /^ {0,3}(?:[-*] +)?Project-Issue:/i;
 const explicitReference = /^(?:([a-z0-9_.-]+\/[a-z0-9_.-]+))?#([1-9][0-9]*)$/i;
 
@@ -40,22 +36,38 @@ const projectQuery = `
   }
 `;
 
+const itemFields = `
+  id
+  isArchived
+  updatedAt
+  content {
+    __typename
+    ... on Issue {
+      number state stateReason closedAt repository { nameWithOwner }
+      timelineItems(last: 1, itemTypes: [REOPENED_EVENT]) {
+        nodes { ... on ReopenedEvent { createdAt } }
+      }
+    }
+  }
+  fieldValueByName(name: "Status") {
+    ... on ProjectV2ItemFieldSingleSelectValue { optionId updatedAt }
+  }
+`;
+
+const itemQuery = `
+  query ProjectIssueItem($id: ID!) {
+    node(id: $id) {
+      ... on ProjectV2Item { ${itemFields} project { id } }
+    }
+  }
+`;
+
 const itemsQuery = `
   query ProjectIssues($projectId: ID!, $cursor: String) {
     node(id: $projectId) {
       ... on ProjectV2 {
-        items(first: 100, after: $cursor) {
-          nodes {
-            id
-            isArchived
-            content {
-              __typename
-              ... on Issue { number repository { nameWithOwner } }
-            }
-            fieldValueByName(name: "Status") {
-              ... on ProjectV2ItemFieldSingleSelectValue { optionId }
-            }
-          }
+        items(first: 100, after: $cursor, archivedStates: [ARCHIVED, NOT_ARCHIVED]) {
+          nodes { ${itemFields} }
           pageInfo { hasNextPage endCursor }
         }
       }
@@ -72,7 +84,7 @@ const updateMutation = `
   }
 `;
 
-function repositoryName(name) {
+export function repositoryName(name) {
   return typeof name === 'string' ? name.toLowerCase() : '';
 }
 
@@ -82,13 +94,16 @@ function mergedPullRequest(event) {
   const status = targetStatuses.get(pull?.base?.ref);
   if (event?.action !== 'closed' || pull?.merged !== true || !status ||
       repository !== sourceRepository || repositoryName(pull.base.repo?.full_name) !== repository ||
+      repositoryName(pull.head?.repo?.full_name) !== repository ||
       !Number.isSafeInteger(pull.number) || pull.number < 1) return null;
   const release = status === 'Done' && pull.head?.ref === 'develop' &&
     repositoryName(pull.head.repo?.full_name) === repository;
-  return { repository, status, release, number: pull.number, body: pull.body ?? '' };
+  const mergedAt = Date.parse(pull.merged_at);
+  if (!Number.isFinite(mergedAt)) return null;
+  return { repository, status, release, mergedAt, number: pull.number, body: pull.body ?? '' };
 }
 
-function issueKey(repository, number) {
+export function issueKey(repository, number) {
   const name = repositoryName(repository);
   if (!allowedRepositories.has(name) || !Number.isSafeInteger(number) || number < 1) return null;
   return name + '#' + number;
@@ -110,13 +125,17 @@ function* markerValues(body) {
   }
 }
 
+export function parseIssueReference(value, repository = sourceRepository) {
+  const match = typeof value === 'string' && value.trim().match(explicitReference);
+  const key = match && issueKey(match[1] ?? repository, Number(match[2]));
+  if (!key) throw new Error('Invalid Project-Issue line. Use #123 or an issue in an approved CoffeePeek repository.');
+  return key;
+}
+
 function explicitIssues(body, repository) {
   const keys = new Set();
   for (const value of markerValues(body)) {
-    const match = value.match(explicitReference);
-    const key = match && issueKey(match[1] ?? repository, Number(match[2]));
-    if (!key) throw new Error('Invalid Project-Issue line. Use #123 or an issue in an approved CoffeePeek repository.');
-    keys.add(key);
+    keys.add(parseIssueReference(value, repository));
   }
   return keys;
 }
@@ -153,25 +172,42 @@ async function collectIssues(pull, graphql) {
   return keys;
 }
 
-async function readProject(graphql) {
+export async function readProject(graphql, required = ['Preview', 'Done']) {
   const data = await graphql(projectQuery, { owner: projectOwner, number: projectNumber });
   const project = data.organization?.projectV2;
   const field = project?.field;
   const options = new Map(field?.options?.map(option => [option.name, option.id]) ?? []);
-  if (!project?.id || !field?.id || !options.get('Preview') || !options.get('Done')) {
-    throw new Error('CoffeePeek Project #6 must be accessible and have a Status field with Preview and Done options.');
+  if (!project?.id || !field?.id || !required.every(name => options.get(name))) {
+    throw new Error('CoffeePeek Project #6 must be accessible and have a Status field with ' + required.join(' and ') + ' options.');
   }
   return { projectId: project.id, fieldId: field.id, options };
 }
 
-function planStatusChanges(items, issues, targetId, doneId) {
+export async function projectItems(graphql, projectId) {
+  return collectPages(async cursor => {
+    const data = await graphql(itemsQuery, { projectId, cursor });
+    return data.node?.items;
+  });
+}
+
+export async function projectItem(graphql, projectId, id) {
+  const { node } = await graphql(itemQuery, { id });
+  return node?.project?.id === projectId ? node : null;
+}
+
+export function itemIssueKey(item) {
+  const issue = item?.content;
+  return issue?.__typename === 'Issue' ? issueKey(issue.repository?.nameWithOwner, issue.number) : null;
+}
+
+function planStatusChanges(items, issues, targetId, doneId, mergedAt) {
   const changes = new Set();
   let matched = 0;
   for (const item of items) {
-    if (item?.isArchived || item?.content?.__typename !== 'Issue') continue;
-    const key = issueKey(item.content.repository?.nameWithOwner, item.content.number);
-    if (!issues.has(key)) continue;
+    if (item?.isArchived || !issues.has(itemIssueKey(item))) continue;
     matched++;
+    const reopenedAt = Date.parse(item.content.timelineItems?.nodes?.[0]?.createdAt);
+    if (Number.isFinite(reopenedAt) && reopenedAt > mergedAt) continue;
     const current = item.fieldValueByName?.optionId;
     if (current !== targetId && current !== doneId) changes.add(item.id);
   }
@@ -183,25 +219,28 @@ export async function syncProjectStatus(event, { graphql, dryRun = false }) {
   if (!pull) return { skipped: 'unhandled event' };
   const issues = await collectIssues(pull, graphql);
   if (!issues.size) return { skipped: pull.release ? 'release has no Project-Issue lines' : 'no linked issues' };
-  const { projectId, fieldId, options } = await readProject(graphql);
-  const items = await collectPages(async cursor => {
-    const data = await graphql(itemsQuery, { projectId, cursor });
-    return data.node?.items;
-  });
-  const optionId = options.get(pull.status);
-  const { matched, ids } = planStatusChanges(items, issues, optionId, options.get('Done'));
-  if (!dryRun) {
-    for (const itemId of ids) {
-      const result = await graphql(updateMutation, { projectId, fieldId, itemId, optionId });
-      if (result.updateProjectV2ItemFieldValue?.projectV2Item?.id !== itemId) {
-        throw new Error('GitHub did not confirm the status update.');
-      }
-    }
-  }
-  return { target: pull.status, matched, planned: ids.length, updated: dryRun ? 0 : ids.length, dryRun };
+  return syncIssueCards(issues, pull.status, { graphql, dryRun, mergedAt: pull.mergedAt });
 }
 
-function githubGraphql(token) {
+export async function writeStatus(graphql, { projectId, fieldId }, itemId, optionId) {
+  const result = await graphql(updateMutation, { projectId, fieldId, itemId, optionId });
+  if (result.updateProjectV2ItemFieldValue?.projectV2Item?.id !== itemId) {
+    throw new Error('GitHub did not confirm the status update.');
+  }
+}
+
+export async function syncIssueCards(issues, status, { graphql, dryRun = true, mergedAt = Infinity }) {
+  const project = await readProject(graphql);
+  const items = await projectItems(graphql, project.projectId);
+  const optionId = project.options.get(status);
+  const { matched, ids } = planStatusChanges(items, issues, optionId, project.options.get('Done'), mergedAt);
+  if (!dryRun) {
+    for (const id of ids) await writeStatus(graphql, project, id, optionId);
+  }
+  return { target: status, matched, planned: ids.length, updated: dryRun ? 0 : ids.length, dryRun };
+}
+
+export function githubGraphql(token) {
   return async (query, variables) => {
     const name = query.match(/\b(?:query|mutation)\s+(\w+)/)?.[1] ?? 'unknown';
     const response = await fetch('https://api.github.com/graphql', {
@@ -217,23 +256,4 @@ function githubGraphql(token) {
     }
     return result.data;
   };
-}
-
-async function run() {
-  const token = process.env.PROJECT_STATUS_TOKEN;
-  if (!token || !process.env.GITHUB_EVENT_PATH) throw new Error('Missing GitHub App token or Actions event.');
-  const flag = process.env.PROJECT_STATUS_DRY_RUN;
-  if (flag !== '' && flag !== undefined && flag !== 'true' && flag !== 'false') {
-    throw new Error('Set PROJECT_STATUS_DRY_RUN to true or false.');
-  }
-  const event = JSON.parse(await readFile(process.env.GITHUB_EVENT_PATH, 'utf8'));
-  const result = await syncProjectStatus(event, { graphql: githubGraphql(token), dryRun: flag !== 'false' });
-  console.log(JSON.stringify(result));
-}
-
-if (process.argv[1] && import.meta.url === pathToFileURL(resolve(process.argv[1])).href) {
-  run().catch(error => {
-    console.error(error.message);
-    process.exitCode = 1;
-  });
 }
