@@ -272,6 +272,24 @@ CoffeePeek → TestFlight. Чтобы новые сборки автоматич
 потребовать информацию о тестировании, проверку сборки и ответы по экспортному
 контролю. Загрузка в TestFlight сама по себе не публикует приложение в App Store.
 
+## Пилот Xcode Cloud
+
+На Mac откройте `iosApp/iosApp.xcodeproj` из ветки
+`codex/ios-xcode-cloud-pilot`. В Xcode откройте Report Navigator → Cloud →
+Get Started, выберите существующий CoffeePeek и команду Apple Developer.
+Для проекта с bundle ID в `.xcconfig` Apple просит явно задать
+`com.coffeepeek` в Signing & Capabilities при первой настройке. В мастере
+подключите `CoffeePeek/coffeepeek-cross-mobile`.
+[Первая настройка Xcode Cloud](https://developer.apple.com/documentation/xcode/configuring-your-first-xcode-cloud-workflow)
+
+Для одного замера выберите действие Build, схему `iosApp`, назначение
+iOS Simulator и ветку `codex/ios-xcode-cloud-pilot`. Скрипт
+`iosApp/ci_scripts/ci_post_clone.sh` добавляет JDK 17 при необходимости
+и использует синтетический Firebase plist для Build action. Сравните
+время в очереди и длительность сборки с задачей `build` в `ios-verify`
+на том же коммите. Kotlin/Native тесты идут через существующий
+`ios-verify`. [Действие Build](https://developer.apple.com/documentation/xcode/configuring-your-xcode-cloud-workflow-s-actions)
+
 ## Universal Links: открытие ссылок CoffeePeek
 
 Приложение объявляет Associated Domains для `applinks:coffeepeek.by` и обрабатывает
