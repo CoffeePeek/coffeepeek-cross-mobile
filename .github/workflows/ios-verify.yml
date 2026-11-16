@@ -199,6 +199,16 @@ jobs:
               tail -n 150 "$RUNNER_TEMP/ios-native-tests.log"
               exit 1
             }
+      - name: Run shop menu gallery Kotlin Native tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./gradlew --max-workers=6 :feature:shop:impl:iosSimulatorArm64Test \
+            --tests 'com.coffeepeek.feature.shop.impl.ui.ShopMenuGallery*Test' \
+            > "$RUNNER_TEMP/ios-shop-menu-gallery-tests.log" 2>&1 || {
+              tail -n 150 "$RUNNER_TEMP/ios-shop-menu-gallery-tests.log"
+              exit 1
+            }
       - name: Run shared business ownership unit and contract tests
         shell: bash
         run: |
@@ -220,4 +230,6 @@ jobs:
             ${{ runner.temp }}/ios-ownership-tests.log
             feature/business-ownership/**/build/test-results/iosSimulatorArm64Test/
             composeApp/build/test-results/iosSimulatorArm64Test/
+            ${{ runner.temp }}/ios-shop-menu-gallery-tests.log
+            feature/shop/impl/build/test-results/iosSimulatorArm64Test/
           retention-days: 7
