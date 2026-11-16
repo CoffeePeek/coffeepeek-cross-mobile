@@ -1,5 +1,55 @@
 # Shop report feature
 
+## SwiftUI report destination — 2026-11-16
+
+Package 5 of `docs/IOS_SWIFTUI_EXECUTION_PLAN.md` starts with the full-screen
+`Navigator.Screen.ReportShop(shopId, shopTitle)` destination. The entry remains
+the report action in a coffee shop detail. The existing shop feature handles
+guest access before emitting `ShopDetailEffect.ReportShop`. Both the inspected
+`origin/main` navigator and the `742e4e84` migration base use this route.
+
+`NativeShopReport` gives iOS a snapshot and actions over the existing
+`ShopReportViewModel`. SwiftUI renders a native form with six categories, the
+Other description, validation, submitting, success and uncertain-delivery states.
+The existing owner enforces the Unicode-safe 500-character limit, one pending
+submission and blocked retry after an uncertain result. Known failures allow
+retry with the same form. Russian and Belarusian strings live in the feature's
+`ShopReport` iOS resource table.
+
+Application composition supplies the authenticated repository and the session
+reader. The adapter rejects actions and queued repository calls after the account
+generation changes, clears the draft and cancels in-flight work. Token refresh
+for the same account preserves the draft. Leaving the visible screen cancels its
+Swift subscription. Removing the hosting controller closes the form owner on the
+main queue. UIKit continues to own Back and interactive-pop transitions, with
+`Navigator.popBack` as the explicit callback. The root navigation tracker remains
+the screen analytics owner and the shop report action retains its existing shop
+analytics event.
+
+Verification covers five feature bridge contracts and five iOS adapter contracts
+using in-memory repositories. The feature tests cover validation and Unicode,
+known-failure retry, uncertain-delivery deduplication, pending-work cancellation
+and unknown categories. The iOS tests cover subscription resumption, account
+replacement, actions queued across replacement and same-account token refresh.
+The integration adds these suites to `ios-verify`. Execution results are recorded
+with the PR and CI run for the final revision.
+
+On 2026-11-16, revision `dd417e1d8` passed Xcode Simulator compilation,
+binary compatibility and all selected Kotlin/Native suites in GitHub Actions
+`43866392032` for PR #374. Local JVM tests passed 11 cases in two suites,
+with no failures, errors or skips. Function-body limits and the 22 RU/BE keys
+and Xcode resource registration checks passed. Windows skipped application
+iOS compilation and execution, so the macOS run supplies that evidence.
+The subsequent integration with native tab routing `8648736bd` receives
+its own final PR verification.
+
+Manual macOS/iOS checks remain open for both languages, light/dark appearance,
+large Dynamic Type, VoiceOver, keyboard dismissal, the Back button, completed and
+cancelled interactive pop, and form behavior on fake success/failure responses.
+No live report was submitted. This slice completes the ReportShop implementation
+within package 5. Search, catalogues and the other package-5 destinations remain
+in the execution plan.
+
 ## iOS activation — 2026-10-25
 
 Android and iOS now select the shared feature entries through app composition.

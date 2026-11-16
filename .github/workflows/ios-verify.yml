@@ -188,6 +188,7 @@ jobs:
             --tests 'com.coffeepeek.admin.ui.AppLinksTest' \
             --tests 'com.coffeepeek.admin.di.profile.IosProfileCompositionTest' \
             --tests 'com.coffeepeek.admin.di.settings.IosThemeSettingsTest' \
+            --tests 'com.coffeepeek.admin.di.shopreport.IosShopReportTest' \
             --tests 'com.coffeepeek.admin.di.settings.IosSettingsScreensTest' \
             --tests 'com.coffeepeek.admin.di.authorblocking.IosBlockedAuthorsTest' \
             --tests 'com.coffeepeek.admin.ui.NavigationDelegateTest' \
@@ -217,6 +218,7 @@ jobs:
           ./gradlew --max-workers=6 :feature:business-ownership:domain:iosSimulatorArm64Test \
             :feature:business-ownership:data:iosSimulatorArm64Test \
             :feature:business-ownership:impl:iosSimulatorArm64Test \
+            :feature:shop-report:impl:iosSimulatorArm64Test \
             :feature:collections:impl:iosSimulatorArm64Test \
             > "$RUNNER_TEMP/ios-ownership-tests.log" 2>&1 || {
               tail -n 150 "$RUNNER_TEMP/ios-ownership-tests.log"
