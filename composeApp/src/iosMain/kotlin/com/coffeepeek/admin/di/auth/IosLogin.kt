@@ -74,7 +74,7 @@ private fun LoginFailure.textKey() = when (this) {
     LoginFailure.Unknown -> "auth_login_unknown"
 }
 
-private fun SocialFailure.toIos() = IosAuthMessage(
+internal fun SocialFailure.toIos() = IosAuthMessage(
     key = when (kind) {
         SocialFailureKind.AccountExists -> "auth_social_account_exists"
         SocialFailureKind.EmailNotVerified -> if (provider == SocialProvider.Apple) "auth_social_apple_email_not_verified" else "auth_social_email_not_verified"

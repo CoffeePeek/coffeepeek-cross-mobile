@@ -22,7 +22,7 @@ struct SettingsNativeTab: View {
     private var content: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text(strings.text("settings_tab_title"))
-                .font(SettingsNativeStyle.font(28, weight: "Bold", relativeTo: .title))
+                .font(CoffeePeekNativeStyle.font(28, weight: "Bold", relativeTo: .title))
                 .accessibilityAddTraits(.isHeader)
                 .padding(.bottom, 4)
             if state.showGuestCard { guestSection }
@@ -32,16 +32,16 @@ struct SettingsNativeTab: View {
             otherSection
             if state.updateChecksEnabled { updateSection }
             Text(strings.version(state.version))
-                .font(SettingsNativeStyle.font(13, relativeTo: .footnote))
-                .foregroundStyle(SettingsNativeStyle.secondary)
+                .font(CoffeePeekNativeStyle.font(13, relativeTo: .footnote))
+                .foregroundStyle(CoffeePeekNativeStyle.secondary)
         }
     }
 
     private var guestSection: some View {
         VStack(spacing: 12) {
             Text(strings.text("settings_guest_prompt"))
-                .font(SettingsNativeStyle.font(15))
-                .foregroundStyle(SettingsNativeStyle.foreground)
+                .font(CoffeePeekNativeStyle.font(15))
+                .foregroundStyle(CoffeePeekNativeStyle.foreground)
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
             guestLoginButton
@@ -54,13 +54,13 @@ struct SettingsNativeTab: View {
     private var guestLoginButton: some View {
         Button { open(.login) } label: {
             Text(strings.text("settings_guest_login"))
-                .font(SettingsNativeStyle.font(17, weight: "SemiBold"))
-                .foregroundStyle(SettingsNativeStyle.color(0x1A1412))
+                .font(CoffeePeekNativeStyle.font(17, weight: "SemiBold"))
+                .foregroundStyle(CoffeePeekNativeStyle.color(0x1A1412))
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
                 .padding(.horizontal, 16).padding(.vertical, 12)
                 .frame(maxWidth: .infinity, minHeight: 48)
-                .background(SettingsNativeStyle.accent, in: RoundedRectangle(cornerRadius: 24))
+                .background(CoffeePeekNativeStyle.accent, in: RoundedRectangle(cornerRadius: 24))
                 .contentShape(RoundedRectangle(cornerRadius: 24))
         }
         .buttonStyle(.plain)
@@ -69,10 +69,10 @@ struct SettingsNativeTab: View {
     private var guestRegistrationButton: some View {
         Button { open(.registration) } label: {
             (Text(strings.text("settings_guest_no_account"))
-                .font(SettingsNativeStyle.font(15)).foregroundColor(SettingsNativeStyle.secondary)
+                .font(CoffeePeekNativeStyle.font(15)).foregroundColor(CoffeePeekNativeStyle.secondary)
              + Text(" ")
              + Text(strings.text("settings_guest_register"))
-                .font(SettingsNativeStyle.font(17, weight: "SemiBold")).foregroundColor(SettingsNativeStyle.foreground))
+                .font(CoffeePeekNativeStyle.font(17, weight: "SemiBold")).foregroundColor(CoffeePeekNativeStyle.foreground))
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
                 .frame(maxWidth: .infinity, minHeight: 44)

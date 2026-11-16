@@ -5,32 +5,56 @@ import UIKit
 @MainActor
 func makeAuthController(screen: IosAuthScreen) -> UIViewController {
     switch screen {
-    case let login as IosLogin:
-        return AuthHostingController(screen: login, rootView: AuthStateHost(
-            screen: login,
-            currentState: login.currentState,
-            observeState: login.observeState,
-            observeEvent: login.observeSignedIn
-        ) { state, strings in
-            LoginScreen(state: state, strings: strings, actions: LoginScreenActions(
-                emailChanged: login.emailChanged, passwordChanged: login.passwordChanged,
-                submit: login.submit, forgotPassword: login.forgotPassword, register: login.register,
-                back: login.back, apple: login.appleAvailable ? login.signInWithApple : nil,
-                google: login.googleAvailable ? login.signInWithGoogle : nil
-            ))
-        })
-    case let recovery as IosPasswordRecovery:
-        return AuthHostingController(screen: recovery, rootView: AuthStateHost(
-            screen: recovery, currentState: recovery.currentState, observeState: recovery.observeState
-        ) { state, strings in
-            PasswordRecoveryScreen(state: state, strings: strings, actions: PasswordRecoveryActions(
-                emailChanged: recovery.emailChanged, submit: recovery.submit, back: recovery.back,
-                login: recovery.login, anotherEmail: recovery.requestAnotherEmail
-            ))
-        })
-    default:
-        preconditionFailure("Unsupported iOS authentication route")
+    case let login as IosLogin: return makeLoginController(login)
+    case let registration as IosRegister: return makeRegisterController(registration)
+    case let recovery as IosPasswordRecovery: return makeRecoveryController(recovery)
+    default: preconditionFailure("Unsupported iOS authentication route")
     }
+}
+
+@MainActor
+private func makeLoginController(_ login: IosLogin) -> UIViewController {
+    AuthHostingController(screen: login, rootView: AuthStateHost(
+        screen: login, currentState: login.currentState, observeState: login.observeState,
+        observeEvent: login.observeSignedIn
+    ) { state, strings in
+        LoginScreen(state: state, strings: strings, actions: LoginScreenActions(
+            emailChanged: login.emailChanged, passwordChanged: login.passwordChanged,
+            submit: login.submit, forgotPassword: login.forgotPassword, register: login.register,
+            back: login.back, apple: login.appleAvailable ? login.signInWithApple : nil,
+            google: login.googleAvailable ? login.signInWithGoogle : nil
+        ))
+    })
+}
+
+@MainActor
+private func makeRegisterController(_ registration: IosRegister) -> UIViewController {
+    AuthHostingController(screen: registration, rootView: AuthStateHost(
+        screen: registration, currentState: registration.currentState,
+        observeState: registration.observeState, observeEvent: registration.observeSignedIn
+    ) { state, strings in
+        RegisterScreen(state: state, strings: strings, actions: RegisterScreenActions(
+            nameChanged: registration.nameChanged, emailChanged: registration.emailChanged,
+            passwordChanged: registration.passwordChanged, termsChanged: registration.termsChanged,
+            analyticsChanged: registration.analyticsChanged, submit: registration.submit,
+            login: registration.login, back: registration.back,
+            openTerms: registration.openTerms, openPrivacy: registration.openPrivacy,
+            apple: registration.appleAvailable ? registration.signInWithApple : nil,
+            google: registration.googleAvailable ? registration.signInWithGoogle : nil
+        ))
+    })
+}
+
+@MainActor
+private func makeRecoveryController(_ recovery: IosPasswordRecovery) -> UIViewController {
+    AuthHostingController(screen: recovery, rootView: AuthStateHost(
+        screen: recovery, currentState: recovery.currentState, observeState: recovery.observeState
+    ) { state, strings in
+        PasswordRecoveryScreen(state: state, strings: strings, actions: PasswordRecoveryActions(
+            emailChanged: recovery.emailChanged, submit: recovery.submit, back: recovery.back,
+            login: recovery.login, anotherEmail: recovery.requestAnotherEmail
+        ))
+    })
 }
 
 private final class AuthHostingController<Content: View>: UIHostingController<Content> {

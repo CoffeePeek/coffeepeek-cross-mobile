@@ -1,85 +1,10 @@
 import SwiftUI
-import CoreText
-import UIKit
 
-// Native rendering of CoffeePeekColors, CoffeePeekDimens and CoffeePeekIconBadgePalette.
-// Keep these values aligned with core/design-system; no UIKit grouped-list defaults.
 enum SettingsNativeStyle {
-    static let background = adaptive(0xFAFAF9, 0x1A1412)
-    static let surface = adaptive(0xFFFFFF, 0x2D241F)
-    static let foreground = adaptive(0x1C1917, 0xFFFFFF)
-    static let secondary = adaptive(0x6B655F, 0xA39E93)
-    static let border = adaptive(0xE5E1DA, 0x3D2F28)
-    static let accent = color(0xFACC15)
-
-    // The bundled static weights share one PostScript name. Loading the actual
-    // font data avoids global registration collisions and preserves each weight.
-    private static let graphicsFonts: [String: CGFont] = {
-        Dictionary(uniqueKeysWithValues: ["regular", "medium", "semibold", "bold"].compactMap { weight in
-            loadGraphicsFont(weight).map { (weight, $0) }
-        })
-    }()
-
-    static func font(_ size: CGFloat, weight: String = "Regular", relativeTo: Font.TextStyle = .body) -> Font {
-        let scaledSize = UIFontMetrics(forTextStyle: textStyle(relativeTo)).scaledValue(for: size)
-        guard let graphicsFont = graphicsFonts[weight.lowercased()] else {
-            return .system(size: scaledSize, weight: fallbackWeight(weight))
-        }
-        return Font(CTFontCreateWithGraphicsFont(graphicsFont, scaledSize, nil, nil))
-    }
-
-    private static func loadGraphicsFont(_ weight: String) -> CGFont? {
-        let resource = "com.coffeepeek.core.designsystem.resources/font"
-        for directory in ["compose-resources/composeResources/\(resource)", "compose-resources/\(resource)"] {
-            if let url = Bundle.main.url(forResource: "manrope_\(weight)", withExtension: "ttf", subdirectory: directory),
-               let provider = CGDataProvider(url: url as CFURL), let font = CGFont(provider) {
-                return font
-            }
-        }
-        return nil
-    }
-
-    private static func textStyle(_ style: Font.TextStyle) -> UIFont.TextStyle {
-        switch style {
-        case .largeTitle: .largeTitle
-        case .title: .title1
-        case .title2: .title2
-        case .title3: .title3
-        case .headline: .headline
-        case .subheadline: .subheadline
-        case .callout: .callout
-        case .footnote: .footnote
-        case .caption: .caption1
-        case .caption2: .caption2
-        default: .body
-        }
-    }
-
-    private static func fallbackWeight(_ weight: String) -> Font.Weight {
-        switch weight.lowercased() {
-        case "bold": .bold
-        case "semibold": .semibold
-        case "medium": .medium
-        default: .regular
-        }
-    }
-
-    static func color(_ hex: UInt32) -> Color {
-        Color(red: Double((hex >> 16) & 255) / 255, green: Double((hex >> 8) & 255) / 255, blue: Double(hex & 255) / 255)
-    }
-
-    private static func adaptive(_ light: UInt32, _ dark: UInt32) -> Color {
-        Color(uiColor: UIColor { traits in
-            let hex = traits.userInterfaceStyle == .dark ? dark : light
-            return UIColor(red: CGFloat((hex >> 16) & 255) / 255, green: CGFloat((hex >> 8) & 255) / 255,
-                           blue: CGFloat(hex & 255) / 255, alpha: 1)
-        })
-    }
-
     static func heading(_ title: String, description: String) -> some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text(title).font(font(22, weight: "Bold", relativeTo: .title2)).accessibilityAddTraits(.isHeader)
-            Text(description).font(font(17)).foregroundStyle(secondary).fixedSize(horizontal: false, vertical: true)
+            Text(title).font(CoffeePeekNativeStyle.font(22, weight: "Bold", relativeTo: .title2)).accessibilityAddTraits(.isHeader)
+            Text(description).font(CoffeePeekNativeStyle.font(17)).foregroundStyle(CoffeePeekNativeStyle.secondary).fixedSize(horizontal: false, vertical: true)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.bottom, 8)
@@ -89,32 +14,32 @@ enum SettingsNativeStyle {
                                       @ViewBuilder content: () -> Content) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             if let title {
-                Text(title.uppercased()).font(font(13, relativeTo: .footnote))
-                    .foregroundStyle(secondary).accessibilityAddTraits(.isHeader)
+                Text(title.uppercased()).font(CoffeePeekNativeStyle.font(13, relativeTo: .footnote))
+                    .foregroundStyle(CoffeePeekNativeStyle.secondary).accessibilityAddTraits(.isHeader)
             }
-            if let description { Text(description).font(font(14)).foregroundStyle(secondary) }
+            if let description { Text(description).font(CoffeePeekNativeStyle.font(14)).foregroundStyle(CoffeePeekNativeStyle.secondary) }
             VStack(spacing: 0, content: content).settingsCard()
         }
     }
 
     static var divider: some View {
-        Rectangle().fill(border).frame(height: 0.5).accessibilityHidden(true)
+        Rectangle().fill(CoffeePeekNativeStyle.border).frame(height: 0.5).accessibilityHidden(true)
     }
 }
 
 extension View {
     func settingsCard() -> some View {
         frame(maxWidth: .infinity, alignment: .leading)
-            .background(SettingsNativeStyle.surface)
+            .background(CoffeePeekNativeStyle.surface)
             .clipShape(RoundedRectangle(cornerRadius: 16))
-            .overlay(RoundedRectangle(cornerRadius: 16).strokeBorder(SettingsNativeStyle.border, lineWidth: 1))
+            .overlay(RoundedRectangle(cornerRadius: 16).strokeBorder(CoffeePeekNativeStyle.border, lineWidth: 1))
     }
 
     func settingsAppearance() -> some View {
-        font(SettingsNativeStyle.font(17))
-            .foregroundStyle(SettingsNativeStyle.foreground)
-            .tint(SettingsNativeStyle.accent)
-            .background(SettingsNativeStyle.background.ignoresSafeArea())
+        font(CoffeePeekNativeStyle.font(17))
+            .foregroundStyle(CoffeePeekNativeStyle.foreground)
+            .tint(CoffeePeekNativeStyle.accent)
+            .background(CoffeePeekNativeStyle.background.ignoresSafeArea())
     }
 }
 
@@ -171,17 +96,17 @@ struct SettingsNativePage<Content: View>: View {
             Button(action: back) {
                 Image(systemName: "chevron.left").font(.system(size: 20, weight: .regular))
                     .frame(width: 48, height: 48)
-                    .background(SettingsNativeStyle.surface, in: Circle())
+                    .background(CoffeePeekNativeStyle.surface, in: Circle())
                     .shadow(color: .black.opacity(0.04), radius: 3, y: 2)
             }
             .buttonStyle(.plain).accessibilityLabel(backLabel)
-            Text(title).font(SettingsNativeStyle.font(22, weight: "Bold", relativeTo: .title2))
+            Text(title).font(CoffeePeekNativeStyle.font(22, weight: "Bold", relativeTo: .title2))
                 .frame(maxWidth: .infinity).multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true).accessibilityAddTraits(.isHeader)
             Color.clear.frame(width: title.count > 20 ? 0 : 48, height: 1).accessibilityHidden(true)
         }
         .padding(.horizontal, 16).padding(.vertical, 8)
-        .background(SettingsNativeStyle.background)
+        .background(CoffeePeekNativeStyle.background)
     }
 }
 
@@ -204,14 +129,14 @@ struct SettingsNativeRow: View {
                 VStack(alignment: .leading, spacing: 4) {
                     SettingsNativeLabel(title: title, description: description)
                     if textSize.isAccessibilitySize, let value {
-                        Text(value).font(SettingsNativeStyle.font(15)).foregroundStyle(SettingsNativeStyle.secondary)
+                        Text(value).font(CoffeePeekNativeStyle.font(15)).foregroundStyle(CoffeePeekNativeStyle.secondary)
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 if let value, !textSize.isAccessibilitySize {
                     Text(value)
-                        .font(SettingsNativeStyle.font(15))
-                        .foregroundStyle(SettingsNativeStyle.secondary)
+                        .font(CoffeePeekNativeStyle.font(15))
+                        .foregroundStyle(CoffeePeekNativeStyle.secondary)
                         .multilineTextAlignment(.trailing)
                         .frame(maxWidth: 110, alignment: .trailing)
                         .fixedSize(horizontal: true, vertical: false)
@@ -221,7 +146,7 @@ struct SettingsNativeRow: View {
                 } else if navigates {
                     Image(systemName: "chevron.forward")
                         .font(.system(size: 17, weight: .regular))
-                        .foregroundStyle(SettingsNativeStyle.secondary)
+                        .foregroundStyle(CoffeePeekNativeStyle.secondary)
                         .accessibilityHidden(true)
                 }
             }
@@ -241,9 +166,9 @@ struct SettingsNativeLabel: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: descriptionSize > 14 ? 8 : 4) {
-            Text(title).font(SettingsNativeStyle.font(17)).foregroundStyle(SettingsNativeStyle.foreground)
+            Text(title).font(CoffeePeekNativeStyle.font(17)).foregroundStyle(CoffeePeekNativeStyle.foreground)
             if let description {
-                Text(description).font(SettingsNativeStyle.font(descriptionSize)).foregroundStyle(SettingsNativeStyle.secondary)
+                Text(description).font(CoffeePeekNativeStyle.font(descriptionSize)).foregroundStyle(CoffeePeekNativeStyle.secondary)
             }
         }
         .fixedSize(horizontal: false, vertical: true)
@@ -260,7 +185,7 @@ struct SettingsNativeLabel: View {
             }
         }
         .toggleStyle(.switch)
-        .tint(SettingsNativeStyle.accent)
+        .tint(CoffeePeekNativeStyle.accent)
         .padding(.horizontal, 16).padding(.vertical, longDescription ? 16 : 12)
     }
 
@@ -281,9 +206,9 @@ struct SettingsNativeLabel: View {
         }
         var body: some View {
             symbol.font(.system(size: 22, weight: .regular))
-                .foregroundStyle(SettingsNativeStyle.color(scheme == .dark ? lightenedIcon : colors.1))
+                .foregroundStyle(CoffeePeekNativeStyle.color(scheme == .dark ? lightenedIcon : colors.1))
                 .frame(width: size, height: size)
-                .background(SettingsNativeStyle.color(scheme == .dark ? colors.1 : colors.0)
+                .background(CoffeePeekNativeStyle.color(scheme == .dark ? colors.1 : colors.0)
                     .opacity(scheme == .dark ? 0.2 : 1), in: RoundedRectangle(cornerRadius: 12))
                 .accessibilityHidden(true)
         }
@@ -321,11 +246,11 @@ struct SettingsSelectionRow: View {
                 if let systemImage {
                     SettingsNativeLabel.icon(systemImage)
                 }
-                Text(title).font(SettingsNativeStyle.font(17)).foregroundStyle(SettingsNativeStyle.foreground)
+                Text(title).font(CoffeePeekNativeStyle.font(17)).foregroundStyle(CoffeePeekNativeStyle.foreground)
                 Spacer(minLength: 0)
                 if selected {
                     Image(systemName: "checkmark")
-                        .foregroundStyle(SettingsNativeStyle.accent)
+                        .foregroundStyle(CoffeePeekNativeStyle.accent)
                         .accessibilityHidden(true)
                 }
             }

@@ -40,13 +40,10 @@ struct LoginScreen: View {
                 NativeAuthError(text: strings.message(error))
             }
             NativeAuthSubmit(title: strings.text("auth_login"), busy: state.busy, action: submit)
-            VStack(spacing: 2) {
-                Text(strings.text("auth_login_no_account")).foregroundStyle(.secondary)
-                Button(strings.text("auth_login_register"), action: actions.register)
-                    .frame(minHeight: 44)
-                    .disabled(state.busy)
-            }
-            .frame(maxWidth: .infinity)
+            NativeAuthFooter(
+                prompt: strings.text("auth_login_no_account"), actionTitle: strings.text("auth_login_register"),
+                enabled: !state.busy, action: actions.register
+            )
             if actions.apple != nil || actions.google != nil {
                 socialOptions
             }
@@ -54,42 +51,47 @@ struct LoginScreen: View {
     }
 
     private var credentialFields: some View {
-        VStack(alignment: .leading, spacing: 14) {
+        VStack(alignment: .leading, spacing: 24) {
             NativeAuthField(title: strings.text("auth_email_label"), error: state.emailError.map(strings.message)) {
                 NativeAuthEmailInput(strings: strings, email: emailBinding, contentType: .username)
                     .focused($focus, equals: .email)
                     .submitLabel(.next)
                     .onSubmit { focus = .password }
             }
-            NativeAuthField(title: strings.text("auth_password_label"), error: state.passwordError.map(strings.message)) {
-                HStack {
-                    passwordInput
-                    Button {
-                        showingPassword.toggle()
-                    } label: {
-                        Label(
-                            strings.text(showingPassword ? "auth_hide_password" : "auth_show_password"),
-                            systemImage: showingPassword ? "eye.slash" : "eye"
-                        )
-                        .labelStyle(.iconOnly)
-                        .frame(minWidth: 44, minHeight: 44)
-                        .contentShape(Rectangle())
-                    }
-                    .buttonStyle(.plain)
-                }
-            }
-            Button(strings.text("auth_forgot_password")) { actions.forgotPassword(email) }
-                .frame(minHeight: 44, alignment: .leading)
+            passwordField
         }
         .disabled(state.busy)
+    }
+
+    private var passwordField: some View {
+        NativeAuthField(
+            title: strings.text("auth_password_label"), error: state.passwordError.map(strings.message),
+            labelActionTitle: strings.text("auth_forgot_password"), labelAction: { actions.forgotPassword(email) }
+        ) {
+            HStack(spacing: 0) {
+                passwordInput
+                Button { showingPassword.toggle() } label: {
+                    Label(
+                        strings.text(showingPassword ? "auth_hide_password" : "auth_show_password"),
+                        systemImage: showingPassword ? "eye.slash" : "eye"
+                    )
+                    .labelStyle(.iconOnly)
+                    .font(.system(size: 22, weight: .regular))
+                    .frame(minWidth: 44, minHeight: 44).contentShape(Rectangle())
+                }
+                .buttonStyle(.plain).foregroundStyle(CoffeePeekNativeStyle.foreground)
+            }
+        }
     }
 
     private var passwordInput: some View {
         Group {
             if showingPassword {
-                TextField(strings.text("auth_password_label"), text: passwordBinding)
+                TextField(strings.text("auth_password_label"), text: passwordBinding,
+                          prompt: Text(strings.text("auth_password_label")).foregroundStyle(CoffeePeekNativeStyle.secondary))
             } else {
-                SecureField(strings.text("auth_password_label"), text: passwordBinding)
+                SecureField(strings.text("auth_password_label"), text: passwordBinding,
+                            prompt: Text(strings.text("auth_password_label")).foregroundStyle(CoffeePeekNativeStyle.secondary))
             }
         }
         .textContentType(.password)
@@ -102,15 +104,21 @@ struct LoginScreen: View {
 
     private var socialOptions: some View {
         VStack(spacing: 10) {
-            Text(strings.text("auth_or"))
-                .font(.footnote)
-                .foregroundStyle(.secondary)
+            HStack(spacing: 12) {
+                Rectangle().fill(CoffeePeekNativeStyle.border).frame(height: 0.5)
+                Text(strings.text("auth_or"))
+                    .font(CoffeePeekNativeStyle.font(13, relativeTo: .footnote))
+                    .foregroundStyle(CoffeePeekNativeStyle.secondary)
+                Rectangle().fill(CoffeePeekNativeStyle.border).frame(height: 0.5)
+            }
+            .fixedSize(horizontal: false, vertical: true)
             if let apple = actions.apple {
                 Button(action: apple) {
                     Label(strings.text("auth_sign_in_apple"), systemImage: "apple.logo")
                         .frame(maxWidth: .infinity, minHeight: 44)
                 }
                 .buttonStyle(.bordered)
+                .buttonBorderShape(.capsule)
             }
             if let google = actions.google {
                 Button(action: google) {
@@ -118,8 +126,10 @@ struct LoginScreen: View {
                         .frame(maxWidth: .infinity, minHeight: 44)
                 }
                 .buttonStyle(.bordered)
+                .buttonBorderShape(.capsule)
             }
         }
+        .foregroundStyle(CoffeePeekNativeStyle.foreground)
         .disabled(state.busy)
     }
 
@@ -147,7 +157,7 @@ struct LoginScreen: View {
 #Preview("Light") {
     LoginScreen(
         state: IosLoginState(email: "", emailError: nil, passwordError: nil, failure: nil, busy: false),
-        strings: NativeAuthStrings(languageTag: "ru"), actions: LoginScreenActions(apple: {}, google: {})
+        strings: NativeAuthStrings(languageTag: "ru"), actions: LoginScreenActions()
     )
     .preferredColorScheme(.light)
 }

@@ -27,6 +27,10 @@ struct NativeAuthStrings {
         return format("auth_social_diag", primary, code, domain, oauth)
     }
 
+    func registrationSuccess(email: String) -> String {
+        format("auth_register_success_subtitle", email)
+    }
+
     private func format(_ key: String, _ values: CVarArg...) -> String {
         String(format: text(key), locale: locale, arguments: values)
     }
@@ -43,67 +47,103 @@ struct NativeAuthPage<Content: View>: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
-                Image("LaunchLogo")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(width: 58, height: 58)
-                    .accessibilityHidden(true)
-                VStack(alignment: .leading, spacing: 8) {
-                    Text(title).font(.largeTitle.bold()).accessibilityAddTraits(.isHeader)
-                    if let subtitle {
-                        Text(subtitle).foregroundStyle(.secondary)
-                    }
+                if let subtitle {
+                    Text(subtitle).foregroundStyle(CoffeePeekNativeStyle.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
                 content()
             }
             .frame(maxWidth: 480)
             .padding(.horizontal, 24)
-            .padding(.top, 8)
+            .padding(.top, 24)
             .padding(.bottom, 28)
             .frame(maxWidth: .infinity)
         }
         .scrollDismissesKeyboard(.interactively)
-        .background(Color(uiColor: .systemGroupedBackground))
-        .safeAreaInset(edge: .top, spacing: 0) {
-            HStack {
-                Button(action: back) {
-                    Label(
-                        strings.text(closeIcon ? "auth_close" : "auth_back"),
-                        systemImage: closeIcon ? "xmark" : "chevron.backward"
-                    )
-                        .labelStyle(.iconOnly)
-                        .frame(minWidth: 44, minHeight: 44)
-                        .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-                Spacer()
+        .font(CoffeePeekNativeStyle.font(17))
+        .foregroundStyle(CoffeePeekNativeStyle.foreground)
+        .tint(CoffeePeekNativeStyle.accent)
+        .background(CoffeePeekNativeStyle.background.ignoresSafeArea())
+        .safeAreaInset(edge: .top, spacing: 0) { header }
+    }
+
+    private var header: some View {
+        HStack(spacing: 8) {
+            Button(action: back) {
+                Label(
+                    strings.text(closeIcon ? "auth_close" : "auth_back"),
+                    systemImage: closeIcon ? "xmark" : "chevron.backward"
+                )
+                .labelStyle(.iconOnly)
+                .font(.system(size: 22, weight: .regular))
+                .frame(minWidth: 44, minHeight: 44)
+                .contentShape(Rectangle())
             }
-            .padding(.horizontal, 12)
-            .background(Color(uiColor: .systemGroupedBackground))
+            .buttonStyle(.plain)
+            Text(title).font(CoffeePeekNativeStyle.font(22, weight: "Bold", relativeTo: .title2))
+                .frame(maxWidth: .infinity).multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true).accessibilityAddTraits(.isHeader)
+            Color.clear.frame(width: 44, height: 1).accessibilityHidden(true)
         }
+        .foregroundStyle(CoffeePeekNativeStyle.foreground)
+        .padding(.horizontal, 12).padding(.vertical, 8)
+        .background(CoffeePeekNativeStyle.background)
     }
 }
 
 struct NativeAuthField<Content: View>: View {
     let title: String
     let error: String?
+    var hint: String? = nil
+    var labelActionTitle: String? = nil
+    var labelAction: (() -> Void)? = nil
     @ViewBuilder let content: () -> Content
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text(title).font(.subheadline.weight(.semibold))
+            label
             content()
-                .padding(.horizontal, 14)
-                .frame(minHeight: 50)
-                .background(.background, in: RoundedRectangle(cornerRadius: 12))
+                .font(CoffeePeekNativeStyle.font(17))
+                .padding(.horizontal, 16)
+                .frame(minHeight: 48)
+                .background(CoffeePeekNativeStyle.background, in: Capsule())
                 .overlay {
-                    RoundedRectangle(cornerRadius: 12)
-                        .strokeBorder(error == nil ? Color.secondary.opacity(0.24) : .red, lineWidth: 1)
+                    Capsule()
+                        .strokeBorder(error == nil ? CoffeePeekNativeStyle.border : .red, lineWidth: 1)
                         .allowsHitTesting(false)
                 }
             if let error {
                 NativeAuthError(text: error)
+            } else if let hint {
+                Text(hint).font(CoffeePeekNativeStyle.font(13, relativeTo: .footnote))
+                    .foregroundStyle(CoffeePeekNativeStyle.secondary)
             }
+        }
+    }
+
+    private var label: some View {
+        ViewThatFits(in: .horizontal) {
+            HStack(alignment: .firstTextBaseline, spacing: 8) {
+                Text(title).font(CoffeePeekNativeStyle.font(15))
+                Spacer(minLength: 0)
+                labelButton
+            }
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title).font(CoffeePeekNativeStyle.font(15))
+                labelButton
+            }
+        }
+        .foregroundStyle(CoffeePeekNativeStyle.foreground)
+    }
+
+    @ViewBuilder private var labelButton: some View {
+        if let labelActionTitle, let labelAction {
+            Button(action: labelAction) {
+                Text(labelActionTitle).underline().font(CoffeePeekNativeStyle.font(15))
+            }
+            .buttonStyle(.plain).foregroundStyle(CoffeePeekNativeStyle.accent)
+            .padding(.vertical, 10).contentShape(Rectangle())
+            .padding(.vertical, -10)
         }
     }
 }
@@ -113,7 +153,7 @@ struct NativeAuthError: View {
 
     var body: some View {
         Text(text)
-            .font(.footnote)
+            .font(CoffeePeekNativeStyle.font(13, relativeTo: .footnote))
             .foregroundStyle(.red)
             .onAppear { announce() }
             .onChange(of: text) { _, _ in announce() }
@@ -127,19 +167,65 @@ struct NativeAuthError: View {
 struct NativeAuthSubmit: View {
     let title: String
     var busy = false
+    var enabled = true
     let action: () -> Void
 
     var body: some View {
         Button(action: action) {
             HStack(spacing: 8) {
-                if busy { ProgressView().tint(.white).accessibilityHidden(true) }
+                if busy { ProgressView().tint(.black).accessibilityHidden(true) }
                 Text(title)
-                    .font(.body.weight(.semibold))
+                    .font(CoffeePeekNativeStyle.font(17, weight: "SemiBold"))
             }
-            .frame(maxWidth: .infinity, minHeight: 44)
+            .foregroundStyle(.black)
+            .frame(maxWidth: .infinity, minHeight: 24)
         }
         .buttonStyle(.borderedProminent)
-        .disabled(busy)
+        .buttonBorderShape(.capsule)
+        .controlSize(.large)
+        .tint(CoffeePeekNativeStyle.accent)
+        .disabled(busy || !enabled)
+    }
+}
+
+struct NativeAuthFooter: View {
+    let prompt: String
+    let actionTitle: String
+    var accented = false
+    var enabled = true
+    let action: () -> Void
+
+    var body: some View {
+        ViewThatFits(in: .horizontal) {
+            HStack(spacing: 8) {
+                promptText
+                actionButton
+            }
+            .fixedSize(horizontal: true, vertical: false)
+            VStack(spacing: 0) {
+                promptText
+                actionButton
+            }
+        }
+        .frame(maxWidth: .infinity).padding(.top, 8)
+    }
+
+    private var promptText: some View {
+        Text(prompt).font(CoffeePeekNativeStyle.font(15))
+            .foregroundStyle(CoffeePeekNativeStyle.secondary)
+            .fixedSize(horizontal: false, vertical: true)
+    }
+
+    private var actionButton: some View {
+        Button(action: action) {
+            Text(actionTitle).underline(accented)
+                .font(CoffeePeekNativeStyle.font(17, weight: "SemiBold"))
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(minHeight: 44)
+        }
+        .buttonStyle(.plain)
+        .foregroundStyle(accented ? CoffeePeekNativeStyle.accent : CoffeePeekNativeStyle.foreground)
+        .disabled(!enabled)
     }
 }
 
@@ -151,7 +237,7 @@ struct NativeAuthEmailInput: View {
     var body: some View {
         TextField(
             strings.text("auth_email_label"), text: $email,
-            prompt: Text(strings.text("auth_email_placeholder"))
+            prompt: Text(strings.text("auth_email_placeholder")).foregroundStyle(CoffeePeekNativeStyle.secondary)
         )
         .textContentType(contentType)
         .keyboardType(.emailAddress)
@@ -169,6 +255,8 @@ private struct AuthComponentsPreview: View {
                 NativeAuthEmailInput(strings: strings, email: .constant("example"))
             }
             NativeAuthSubmit(title: strings.text("auth_login"), action: {})
+            NativeAuthFooter(prompt: strings.text("auth_login_no_account"),
+                             actionTitle: strings.text("auth_login_register"), action: {})
         }
     }
 }

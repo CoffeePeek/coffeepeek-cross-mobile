@@ -46,6 +46,9 @@
 		A0871E7A0000000000000003 /* AuthNativeComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0871E7A0000000000000004 /* AuthNativeComponents.swift */; };
 		A0871E7A0000000000000005 /* LoginScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0871E7A0000000000000006 /* LoginScreen.swift */; };
 		A0871E7A0000000000000007 /* PasswordRecoveryScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0871E7A0000000000000008 /* PasswordRecoveryScreen.swift */; };
+		A0871E7A000000000000000D /* CoffeePeekNativeStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0871E7A000000000000000E /* CoffeePeekNativeStyle.swift */; };
+		A0871E7A000000000000000F /* RegisterScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0871E7A0000000000000010 /* RegisterScreen.swift */; };
+		A0871E7A0000000000000011 /* RegisterConsent.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0871E7A0000000000000012 /* RegisterConsent.swift */; };
 		A0871E7A0000000000000009 /* NativeAuth.strings in Resources */ = {isa = PBXBuildFile; fileRef = A0871E7A000000000000000C /* NativeAuth.strings */; };
 /* End PBXBuildFile section */
 
@@ -100,6 +103,9 @@
 		A0871E7A0000000000000004 /* AuthNativeComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AuthNativeComponents.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/AuthNativeComponents.swift; sourceTree = "<group>"; };
 		A0871E7A0000000000000006 /* LoginScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = LoginScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/LoginScreen.swift; sourceTree = "<group>"; };
 		A0871E7A0000000000000008 /* PasswordRecoveryScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = PasswordRecoveryScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/PasswordRecoveryScreen.swift; sourceTree = "<group>"; };
+		A0871E7A000000000000000E /* CoffeePeekNativeStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CoffeePeekNativeStyle.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CoffeePeekNativeStyle.swift; sourceTree = "<group>"; };
+		A0871E7A0000000000000010 /* RegisterScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = RegisterScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/RegisterScreen.swift; sourceTree = "<group>"; };
+		A0871E7A0000000000000012 /* RegisterConsent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = RegisterConsent.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/RegisterConsent.swift; sourceTree = "<group>"; };
 		A0871E7A000000000000000A /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/NativeAuth.strings; sourceTree = "<group>"; };
 		A0871E7A000000000000000B /* be */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = be; path = be.lproj/NativeAuth.strings; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -137,6 +143,9 @@
 				A0871E7A0000000000000004 /* AuthNativeComponents.swift */,
 				A0871E7A0000000000000006 /* LoginScreen.swift */,
 				A0871E7A0000000000000008 /* PasswordRecoveryScreen.swift */,
+				A0871E7A000000000000000E /* CoffeePeekNativeStyle.swift */,
+				A0871E7A0000000000000010 /* RegisterScreen.swift */,
+				A0871E7A0000000000000012 /* RegisterConsent.swift */,
 				A20000000000000000000016 /* ThemeSettingsScreen.swift */,
 				B30000000000000000000003 /* ShopReportScreen.swift */,
 				71C04E5D0000000000000003 /* ContentReportScreen.swift */,
@@ -356,6 +365,9 @@
 				A0871E7A0000000000000003 /* AuthNativeComponents.swift in Sources */,
 				A0871E7A0000000000000005 /* LoginScreen.swift in Sources */,
 				A0871E7A0000000000000007 /* PasswordRecoveryScreen.swift in Sources */,
+				A0871E7A000000000000000D /* CoffeePeekNativeStyle.swift in Sources */,
+				A0871E7A000000000000000F /* RegisterScreen.swift in Sources */,
+				A0871E7A0000000000000011 /* RegisterConsent.swift in Sources */,
 				A6C011E60000000000000001 /* ShopMenuGalleryScreen.swift in Sources */,
 				A10000000000000000000015 /* ThemeSettingsScreen.swift in Sources */,
 				B30000000000000000000001 /* ShopReportScreen.swift in Sources */,
