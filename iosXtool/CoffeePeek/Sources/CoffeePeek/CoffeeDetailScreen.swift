@@ -219,7 +219,7 @@ private struct CoffeeDetailScreen: View {
             let type = [strings.optional("coffee_kind_", product.productKind),
                         strings.optional("coffee_form_", product.productForm)].compactMap { $0 }.joined(separator: " · ")
             if !type.isEmpty { Text(type).font(.subheadline).foregroundStyle(.secondary) }
-            description(product.description)
+            description(product.descriptionText)
             if let roast = product.roast { CoffeeDetailField(title: strings.text("coffee_roast"), value: roast) }
             if !product.profile.isEmpty { CoffeeDetailField(title: strings.text("coffee_profile"), value: product.profile) }
             if let acidity = product.acidity { CoffeeDetailField(title: strings.text("coffee_acidity"), value: acidity) }
@@ -335,7 +335,7 @@ private struct CoffeeDetailViewer: UIViewControllerRepresentable {
 private func coffeeDetailPreview(languageTag: String, failed: Bool) -> some View {
     let product = IosCoffeeProduct(
         name: "Эфиопия", photo: nil, countries: "Эфиопия", productKind: "roasted_beans",
-        productForm: "whole_beans", description: "Сладкий кофе с ягодным послевкусием.",
+        productForm: "whole_beans", descriptionText: "Сладкий кофе с ягодным послевкусием.",
         roast: nil, acidity: nil, profile: "", tasteDescriptors: ["Ягоды"],
         roasterName: "CoffeePeek", roasterPhoto: nil, canOpenRoaster: false, checkedAt: nil, offers: []
     )
