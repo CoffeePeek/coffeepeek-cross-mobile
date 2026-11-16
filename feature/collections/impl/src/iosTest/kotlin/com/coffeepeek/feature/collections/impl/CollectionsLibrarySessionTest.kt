@@ -78,7 +78,9 @@ class CollectionsLibrarySessionTest {
         session.openEditor("missing")
         session.openEditor(null)
         runCurrent()
-        assertEquals(listOf(CollectionsLibraryEvent.Editor("private"), CollectionsLibraryEvent.Editor(null)), events)
+        assertEquals<List<CollectionsLibraryEvent>>(
+            listOf(CollectionsLibraryEvent.Editor("private"), CollectionsLibraryEvent.Editor(null)), events,
+        )
         account.owner.value = null
         runCurrent()
         session.openEditor(null)
@@ -156,7 +158,7 @@ class CollectionsLibrarySessionTest {
         session.loadCover("private", session.current().accountVersion) { _, url -> urls.add(url) }
         runCurrent()
         assertEquals(2, saved.ownedReads)
-        assertEquals(listOf("first", "first", "second"), urls)
+        assertEquals<List<String?>>(listOf("first", "first", "second"), urls)
     }
 
     @Test fun stalePhotoResultCannotPopulateReplacementAccountsCache() = runTest(dispatcher) {

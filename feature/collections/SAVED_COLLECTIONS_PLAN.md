@@ -515,6 +515,11 @@ On 2026-11-16, function-body verification passed after changing the session
 factory to an explicit return block for the checker. Xcode object identifiers,
 source/resource registration and all 15 RU/BE key pairs passed local checks.
 The Windows Gradle run skipped application iOS compilation and native execution.
+The first macOS run for `f6dae11b9` failed compiling two assertions in
+`CollectionsLibrarySessionTest` because Kotlin/Native could not infer the
+comparison type. The assertions now explicitly compare lists of the event
+interface and nullable strings. A new macOS run validates this correction
+together with the native tab routing integration from `8648736bd`.
 At authoring time these tests are written and await the integration run. Manual
 macOS checks for both languages, themes, large text, VoiceOver, completed and
 cancelled back gestures and editor return remain open. Live account operations
