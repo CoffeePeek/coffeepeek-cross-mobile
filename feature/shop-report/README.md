@@ -34,6 +34,15 @@ replacement, actions queued across replacement and same-account token refresh.
 The integration adds these suites to `ios-verify`. Execution results are recorded
 with the PR and CI run for the final revision.
 
+On 2026-11-16, revision `dd417e1d8` passed Xcode Simulator compilation,
+binary compatibility and all selected Kotlin/Native suites in GitHub Actions
+`43866392032` for PR #374. Local JVM tests passed 11 cases in two suites,
+with no failures, errors or skips. Function-body limits and the 22 RU/BE keys
+and Xcode resource registration checks passed. Windows skipped application
+iOS compilation and execution, so the macOS run supplies that evidence.
+The subsequent integration with native tab routing `8648736bd` receives
+its own final PR verification.
+
 Manual macOS/iOS checks remain open for both languages, light/dark appearance,
 large Dynamic Type, VoiceOver, keyboard dismissal, the Back button, completed and
 cancelled interactive pop, and form behavior on fake success/failure responses.
