@@ -44,6 +44,7 @@ private struct ComposeRootView: UIViewControllerRepresentable {
     func makeUIViewController(context: Context) -> UIViewController {
         MainViewControllerKt.MainViewController(
             onReady: { DispatchQueue.main.async { onReady() } },
+            makeShopMenuGalleryController: makeShopMenuGalleryController,
             makeThemeSettingsController: makeThemeSettingsController,
             makeCollectionsLibraryController: makeCollectionsLibraryController
         )

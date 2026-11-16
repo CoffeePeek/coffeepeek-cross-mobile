@@ -7,6 +7,8 @@ import com.coffeepeek.admin.di.collections.IosCollectionsLibrary
 import com.coffeepeek.admin.di.collections.LocalIosCollectionsLibraryController
 import com.coffeepeek.admin.di.settings.IosThemeSettings
 import com.coffeepeek.admin.di.settings.LocalIosThemeSettingsController
+import com.coffeepeek.admin.di.shop.IosShopMenuGallery
+import com.coffeepeek.admin.di.shop.LocalIosShopMenuGalleryController
 import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.ui.appLinkScreen
 import com.coffeepeek.core.designsystem.component.configureCoffeePeekNativeGlass
@@ -27,6 +29,7 @@ fun handleAppLink(link: String): Boolean {
 
 fun MainViewController(
     onReady: () -> Unit,
+    makeShopMenuGalleryController: (IosShopMenuGallery, String) -> UIViewController,
     makeThemeSettingsController: (IosThemeSettings, String, () -> Unit) -> UIViewController,
     makeCollectionsLibraryController: (IosCollectionsLibrary, String) -> UIViewController,
 ): UIViewController {
@@ -36,6 +39,7 @@ fun MainViewController(
     }
     return ComposeUIViewController {
         CompositionLocalProvider(
+            LocalIosShopMenuGalleryController provides makeShopMenuGalleryController,
             LocalIosThemeSettingsController provides makeThemeSettingsController,
             LocalIosCollectionsLibraryController provides makeCollectionsLibraryController,
         ) {
