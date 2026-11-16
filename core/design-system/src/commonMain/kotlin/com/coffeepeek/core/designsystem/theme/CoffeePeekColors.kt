@@ -6,8 +6,7 @@ object CoffeePeekColors {
 
     // ── Brand ─────────────────────────────────────────────────────────────────
     val Primary        = Color(0xFFFACC15)
-    private val CoffeeBrown = Color(0xFF684900)
-    val SwitchCheckedThumbLight = CoffeeBrown
+    val SwitchCheckedThumbLight = Color(0xFF684900)
     val SwitchCheckedTrackDark = Color(0xFF9A7A28)
     val SwitchCheckedThumbDark = Color(0xFFFFF7D6)
 
@@ -32,7 +31,7 @@ object CoffeePeekColors {
     val LightTextPrimary   = Color(0xFF1C1917)
     val LightTextSecondary = Color(0xFF6B655F)
     val LightTextOnPrimary = Color(0xFF1A1412)
-    val LightSecondary     = CoffeeBrown
+    val LightSecondary     = Color(0xFF8C5A00)
     val LightBorder        = Color(0xFFE7E5E4)
     val LightBorderSubtle  = Color(0xFFE5E1DA)
 
