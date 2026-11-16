@@ -15,6 +15,7 @@ internal sealed interface PublicProfileAction {
     data object LoadMoreConnections : PublicProfileAction
     data object LoadMoreCheckIns : PublicProfileAction
     data object RetryCheckIns : PublicProfileAction
+    data class SelectCheckInDate(val date: String?) : PublicProfileAction
 }
 
 internal sealed interface PublicProfileEvent {

@@ -58,7 +58,7 @@ private class OwnProfileEntryImpl(
     @Composable
     override fun Content(
         onEditProfile: () -> Unit, onOpenShop: (String) -> Unit, onOpenRoaster: (String) -> Unit, onLogin: () -> Unit,
-        onOpenUser: (String, String, String?) -> Unit, onOpenFavorites: () -> Unit, onOpenCheckIns: () -> Unit,
+        onOpenUser: (String, String, String?) -> Unit, onOpenFavorites: () -> Unit,
         onOpenContributions: (ProfileContribution) -> Unit, onOpenBlockedAuthors: () -> Unit, modifier: Modifier, bottomClearance: Dp,
     ) {
         val model = viewModel(key = "own-profile:$instanceKey") { OwnProfileViewModel(accounts, signOut) }
@@ -67,7 +67,7 @@ private class OwnProfileEntryImpl(
             publicModel = { slug -> viewModel(key = "own-public:$instanceKey:$slug") { PublicProfileViewModel(slug, data, checkIns, accounts, visibility, snapshots) } },
             authorActions = authorActions, slots = slots, bottomClearance = bottomClearance,
             onEditProfile = onEditProfile, onOpenShop = onOpenShop, onOpenRoaster = onOpenRoaster, onLogin = onLogin,
-            onOpenUser = onOpenUser, onOpenFavorites = onOpenFavorites, onOpenCheckIns = onOpenCheckIns,
+            onOpenUser = onOpenUser, onOpenFavorites = onOpenFavorites,
             onOpenContributions = onOpenContributions,
             onOpenBlockedAuthors = onOpenBlockedAuthors,
 

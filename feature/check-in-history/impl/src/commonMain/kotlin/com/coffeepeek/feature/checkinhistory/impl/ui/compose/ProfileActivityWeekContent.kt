@@ -14,7 +14,7 @@ import org.jetbrains.compose.resources.*
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
 @Composable
-internal fun ProfileActivityWeekContent(state: ProfileActivityState, onAction: (ProfileActivityAction) -> Unit,
+internal fun ProfileActivityWeekContent(state: ProfileActivityState, openLabel: String, onOpen: () -> Unit, onRetry: () -> Unit,
     image: HistoryImageContent, modifier: Modifier = Modifier) {
     val weekdays = stringArrayResource(Res.array.history_weekdays)
     val photos = state.weekDates.map { historyCalendarPhotos(state.calendar, it, maxPhotos = Int.MAX_VALUE) }
@@ -23,16 +23,17 @@ internal fun ProfileActivityWeekContent(state: ProfileActivityState, onAction: (
         CoffeePeekActivityDay(weekdays[index], stringResource(Res.string.history_activity_day, date, historyVisitCountLabel(count)),
             date == state.calendar.today, count > 0, photos[index].size)
     }
-    CoffeePeekActivityWeek(days, CoffeePeekActivityWeekLabels(stringResource(Res.string.history_activity_open),
+    CoffeePeekActivityWeek(days, CoffeePeekActivityWeekLabels(openLabel,
         stringResource(Res.string.history_activity_loading), stringResource(Res.string.history_activity_failed),
         stringResource(Res.string.history_retry)), state.loading, state.failed,
-        { onAction(ProfileActivityAction.OpenWeek()) }, { onAction(ProfileActivityAction.Retry) }, modifier) { index, imageModifier ->
+        onOpen, onRetry, modifier) { index, imageModifier ->
         photos[index].firstOrNull()?.let { image(it.url, imageModifier, ContentScale.Crop) }
     }
 }
 
 @Composable private fun ActivityWeekPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
-    ProfileActivityWeekContent(ProfileActivityState(CombinedHistoryState("2026-10-25", HistoryMonth(2026, 10), true, 0)), {}, { _, _, _ -> })
+    ProfileActivityWeekContent(ProfileActivityState(CombinedHistoryState("2026-10-25", HistoryMonth(2026, 10), true, 0)),
+        stringResource(Res.string.history_activity_open), {}, {}, { _, _, _ -> })
 }
 @Preview @Composable private fun ActivityWeekLightPreview() = ActivityWeekPreview(false)
 @Preview @Composable private fun ActivityWeekDarkPreview() = ActivityWeekPreview(true)

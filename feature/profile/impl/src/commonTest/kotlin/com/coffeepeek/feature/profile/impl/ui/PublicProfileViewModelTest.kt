@@ -25,17 +25,20 @@ import com.coffeepeek.feature.profile.domain.PublicProfileStats
 import com.coffeepeek.feature.profile.domain.PublicProfileUnavailable
 import com.coffeepeek.feature.profile.impl.ui.model.PublicProfileAction
 import com.coffeepeek.feature.profile.impl.ui.model.PublicProfileEvent
+import com.coffeepeek.feature.profile.impl.ui.data.filteredCheckIns
 import com.coffeepeek.feature.profile.impl.createProfileSnapshotStore
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
+import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
@@ -436,6 +439,48 @@ class PublicProfileViewModelTest {
         assertEquals(listOf("one"), vm.state.value.connections.map { it.slug })
         vm.onAction(PublicProfileAction.CloseConnections); runCurrent()
         assertNull(vm.state.value.connectionKind)
+    }
+
+    @Test
+    fun slowCheckInRequestStopsLoadingAndCanBeRetried() = runTest(dispatcher) {
+        val data = FakeData().apply { checkIns = { _, _ -> awaitCancellation() } }
+        val vm = model(data = data)
+        runCurrent()
+        assertTrue(vm.state.value.isLoadingCheckIns)
+        advanceTimeBy(15_000)
+        runCurrent()
+        assertFalse(vm.state.value.isLoadingCheckIns)
+        assertEquals(PublicProfileError.CheckIns, vm.state.value.checkInsError)
+        data.checkIns = { _, _ -> Result.success(PublicProfileCheckInPage(listOf(checkIn("after-retry")), null)) }
+        vm.onAction(PublicProfileAction.RetryCheckIns)
+        runCurrent()
+        assertEquals(listOf("after-retry"), vm.state.value.checkIns.map { it.id })
+        assertNull(vm.state.value.checkInsError)
+    }
+
+    @Test
+    fun dayFilterIncludesBothKindsAcrossPagesAndCanBeCleared() = runTest(dispatcher) {
+        val data = FakeData().apply {
+            checkIns = { _, cursor ->
+                val rows = if (cursor == null) listOf(
+                    checkIn("shop").copy(occurredAt = "2026-10-14T22:30:00Z"),
+                    checkIn("previous").copy(occurredAt = "2026-10-14", isHome = true),
+                ) else listOf(checkIn("home").copy(isHome = true))
+                Result.success(PublicProfileCheckInPage(rows, "next"))
+            }
+        }
+        val vm = model(data = data)
+        runCurrent()
+        vm.onAction(PublicProfileAction.SelectCheckInDate("2026-10-15"))
+        runCurrent()
+        assertEquals(listOf("shop"), vm.state.value.filteredCheckIns().map { it.id })
+        vm.onAction(PublicProfileAction.LoadMoreCheckIns)
+        runCurrent()
+        assertEquals(listOf("shop", "home"), vm.state.value.filteredCheckIns().map { it.id })
+        assertFalse(vm.state.value.hasMoreCheckIns)
+        vm.onAction(PublicProfileAction.SelectCheckInDate("2026-10-15"))
+        runCurrent()
+        assertEquals(listOf("shop", "previous", "home"), vm.state.value.filteredCheckIns().map { it.id })
     }
 
     @Test

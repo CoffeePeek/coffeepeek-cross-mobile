@@ -32,7 +32,6 @@ internal class OwnProfileCallbacks(
     val login: () -> Unit,
     val openUser: (String, String, String?) -> Unit,
     val openFavorites: () -> Unit,
-    val openCheckIns: () -> Unit,
     val openContributions: (ProfileContribution) -> Unit,
     val openBlockedAuthors: () -> Unit,
 )
@@ -51,7 +50,6 @@ internal fun OwnProfileScreen(
     onLogin: () -> Unit,
     onOpenUser: (slug: String, nickname: String, avatarUrl: String?) -> Unit,
     onOpenFavorites: () -> Unit,
-    onOpenCheckIns: () -> Unit,
     onOpenContributions: (ProfileContribution) -> Unit,
     onOpenBlockedAuthors: () -> Unit,
 
@@ -59,7 +57,7 @@ internal fun OwnProfileScreen(
     val state by vm.state.collectAsStateWithLifecycle()
     var showLogout by remember { mutableStateOf(false) }
     val callbacks = OwnProfileCallbacks(onEditProfile, onOpenShop, onOpenRoaster, onLogin, onOpenUser,
-        onOpenFavorites, onOpenCheckIns, onOpenContributions, onOpenBlockedAuthors)
+        onOpenFavorites, onOpenContributions, onOpenBlockedAuthors)
     val actions: @Composable () -> Unit = {
         OwnProfileActions(callbacks.editProfile, callbacks.openContributions, callbacks.openBlockedAuthors) { showLogout = true }
     }
@@ -89,12 +87,11 @@ private fun OwnPublicProfileContent(
         slug = slug, nickname = profile.userName, avatarUrl = profile.avatarUrl,
         vm = publicVm, authorActions = authorActions, slots = slots.shared, onBack = null,
         onOpenShop = callbacks.openShop, onOpenRoaster = callbacks.openRoaster, onLogin = callbacks.login,
-        onOpenUser = callbacks.openUser, onShare = {}, onOpenCheckIns = callbacks.openCheckIns,
+        onOpenUser = callbacks.openUser, onShare = {},
         own = OwnProfileExtras(
-            onOpenFavorites = callbacks.openFavorites, onOpenCheckIns = callbacks.openCheckIns,
+            onOpenFavorites = callbacks.openFavorites, activity = slots.activity,
             onOpenContributions = callbacks.openContributions, topBarActions = actions,
             favoritesPreview = { header -> slots.favoritesPreview(callbacks.openShop, callbacks.openRoaster, header) },
-            checkInCount = profile.checkInCount, activityPreview = slots.activityPreview,
             bottomContentPadding = bottomPadding, shelf = slots.shelf,
         ),
     )

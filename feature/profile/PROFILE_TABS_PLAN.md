@@ -159,3 +159,94 @@ The next invocation reached and passed the Android build and test tasks. Common
 metadata compilation stopped in the existing iOS design-system source with
 `Unresolved reference 'animateWithDuration'` in `CoffeePeekPlatformSegments.ios.kt`.
 Native iOS behavior and live-backend checks remain open.
+
+## Profile check-in filters and card parity — 2026-11-16
+
+Issue #362 adds the type and calendar-day filters to the profile tab. The
+profile uses the feed's gallery and shelf bag row, including the public bag
+photo and product link. The initial implementation kept a personal history
+link. The check-in request exposes retry after a 15-second timeout, and the
+loader stops offering more pages when a cursor repeats.
+
+Android verification used `8b559dd86` plus the task changes on
+`codex/profile-checkins-362`. The `directSandbox` package
+`com.coffeepeek.sandbox` (`1.2.0.3035-sandbox`) passed assembly,
+isolation, packaged DEX and function body checks. Early builds found stale
+imports, an oversized action handler and a missing layout import. These were
+corrected before the successful builds.
+The final APK passed signature verification and launched the profile tab.
+APK SHA-256 `50b4781f5130b605b4e2e485bb21de0a80d6c401b68a6304c2d8e4d94aa9917c`.
+
+| JVM unit tests | Suites | Tests | Failures / errors / skips |
+|---|---:|---:|---:|
+| Profile impl | 7 | 74 | 0 / 0 / 0 |
+| Profile data | 7 | 43 | 0 / 0 / 0 |
+| Community impl | 4 | 55 | 0 / 0 / 0 |
+| Community data | 3 | 24 | 0 / 0 / 0 |
+
+Manual Sandbox checks used an isolated Pixel 10a AVD running Android API 37
+(`CoffeePeekProfile362`, `emulator-5564`). The `Paged` fixture confirmed month
+expansion in light and dark modes, selection of an active day, the home filter,
+and a paged home check-in with its photo and a working coffee detail link. The
+`PageFailsOnce` fixture kept existing cards visible, exposed a retry, and loaded
+the second page after retry. The verified Android behavior used fake data.
+Native iOS, live backend and physical-device checks remain open.
+
+### Calendar and filter follow-up — 2026-11-16
+
+The profile animates between the original week and a compact month. The
+owner's calendar uses the existing session-scoped date counts and thumbnails.
+Other profiles use photos from their loaded public check-ins. Selecting a date
+filters the tab in the same time zone as its calendar. The type filter is a
+dropdown and the profile's navigation to personal history was removed.
+
+The Sandbox protected-photo fixture now sends matching revalidation headers
+for both image data and a conditional response. The first manual run showed
+the photo placeholder in the public calendar and its corresponding card. The
+revised fixture rendered the actual image in the public month grid.
+
+Verified on `8b559dd86` plus local changes with the same isolated Pixel 10a
+API 37 AVD. Manual checks covered expanding and collapsing the calendar,
+owner and public date thumbnails in light and dark themes, retaining the date
+while selecting a type from the dropdown, and the absence of the personal
+history link. The initial build identified a stale preview callback; the
+corrected `directSandbox` build passed isolation, packaged DEX and function
+body checks. JVM suites passed 74 Profile and 82 Check-In History tests
+across 15 suites with zero failures, errors or skips. Final signed test APK
+`1.2.0.3035-sandbox` SHA-256
+`7de4932bb528fa945b4fc0ba0d46143fa92fa4dc6a4a31a2541df2490d294e02`.
+Native iOS and the live backend remain unverified.
+
+### Calendar in the shared profile header — 2026-11-16
+
+The calendar now appears below the bio and above the profile tabs. It opens
+expanded by default, and tapping the month title toggles the grid. The
+selected month and day are retained when switching tabs or collapsing the
+grid. Selecting a day opens the Check-ins tab with the date applied. The type
+filter was removed. The owner profile without a public handle retains a link
+to its private history, which opens the full history.
+
+On `8b559dd86` with the local profile changes, the function-body check and
+both Android assemblies passed (`directSandbox` and `directDebug`, version
+`1.2.0.3035`). The Sandbox isolation and packaged runtime-class checks passed.
+The JVM suites ran 74 Profile and 82 Check-In History tests across 15 suites
+with no failures or skips. The first Kotlin/Native compile found Android-only
+preview imports. After switching the affected files to the multiplatform
+annotation, the Profile and Check-In History `compileKotlinIosArm64` tasks
+passed. This revision still needs manual UI review on a device. No full iOS
+app, device, or live backend run was performed.
+
+### Current week in the collapsed calendar — 2026-11-16
+
+The calendar below the bio starts with the current Monday–Sunday week. The
+month title toggles the full grid without a chevron, and the open grid keeps
+plain previous and next actions. It retains its selected month and date when
+collapsed. Tapping the selected date again clears the filter. The profile no
+longer shows a separate reset label or a spinner under the month grid.
+
+On `8b559dd86` with these local changes, the function-body check and Android
+`directSandbox` and `directDebug` assemblies passed. Both `1.2.0.3035` APKs
+passed packaged runtime-class checks, and Sandbox passed isolation. The JVM
+suites ran 75 Profile and 83 Check-In History tests, with zero failures,
+errors or skips. Both affected Kotlin iOS Arm64 compile tasks passed. Device
+interaction, the full iOS app and live backend behavior remain unverified.

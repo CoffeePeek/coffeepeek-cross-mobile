@@ -1,5 +1,6 @@
 package com.coffeepeek.core.designsystem.component
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -21,10 +22,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.withStyle
+import org.jetbrains.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
+import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 
 /** Matches post / check-in header: avatar column and overflow menu touch target. */
 val CoffeePeekPostHeaderLeadingWidth = 44.dp
@@ -34,6 +41,28 @@ val CoffeePeekPostHeaderOverflowWidth = 48.dp
 val CoffeePeekPostShelfBagCardMaxHeight = 54.dp
 
 val CoffeePeekPostShelfBagCardShape = RoundedCornerShape(4.dp)
+
+@Composable
+fun CoffeePeekPostShelfBagTitle(name: String, roaster: String?, separator: String) {
+    val quiet = SpanStyle(fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    val title = buildAnnotatedString {
+        append(name)
+        roaster?.takeIf(String::isNotBlank)?.let {
+            withStyle(quiet) {
+                append(separator)
+                append(it)
+            }
+        }
+    }
+    Text(
+        title,
+        style = MaterialTheme.typography.titleMedium,
+        fontWeight = FontWeight.SemiBold,
+        color = MaterialTheme.colorScheme.onSurface,
+        maxLines = 2,
+        overflow = TextOverflow.Ellipsis,
+    )
+}
 
 /** Clip and size bounds for a bag card photo in [CoffeePeekPostShelfBagCardSlot]. */
 fun Modifier.coffeePeekPostShelfBagCardImage(): Modifier = height(CoffeePeekPostShelfBagCardMaxHeight)
@@ -107,3 +136,24 @@ fun CoffeePeekPostShelfBagRow(
         }
     }
 }
+
+@Composable
+private fun PostShelfBagRowPreview(darkTheme: Boolean) = CoffeePeekTheme(darkTheme = darkTheme) {
+    CoffeePeekPostShelfBagRow(
+        title = { CoffeePeekPostShelfBagTitle("Ethiopia", "Sample Roaster", " · ") },
+        modifier = Modifier.widthIn(max = 320.dp).background(MaterialTheme.colorScheme.surface),
+        details = "V60 · 15 g · 150 s",
+        showChevron = true,
+    ) {
+        Box(Modifier.size(32.dp, 48.dp).clip(CoffeePeekPostShelfBagCardShape)
+            .background(MaterialTheme.colorScheme.tertiaryContainer))
+    }
+}
+
+@Preview
+@Composable
+private fun PostShelfBagRowLightPreview() = PostShelfBagRowPreview(darkTheme = false)
+
+@Preview
+@Composable
+private fun PostShelfBagRowDarkPreview() = PostShelfBagRowPreview(darkTheme = true)

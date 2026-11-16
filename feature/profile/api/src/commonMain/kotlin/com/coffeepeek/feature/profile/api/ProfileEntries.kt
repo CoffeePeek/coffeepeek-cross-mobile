@@ -20,7 +20,6 @@ interface PublicProfileEntry {
         onOpenUser: (slug: String, nickname: String, avatarUrl: String?) -> Unit,
         /** Receives the full public profile URL. */
         onShare: (url: String) -> Unit,
-        onOpenCheckIns: () -> Unit,
         checkInsOnly: Boolean,
         modifier: Modifier,
     )

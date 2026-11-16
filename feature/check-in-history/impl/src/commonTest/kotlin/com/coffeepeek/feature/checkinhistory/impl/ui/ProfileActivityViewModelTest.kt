@@ -48,6 +48,18 @@ class ProfileActivityViewModelTest {
         assertEquals(HistoryMonth(2027, 1), week.state.value.calendar.month)
     }
 
+    @Test fun reopeningTheWeekRefreshesForTodayButDoesNotDuplicateReadsOnTheSameDay() = runTest(dispatcher) {
+        val week = model(weekly = true)
+        week.onAction(ProfileActivityAction.SyncVisibleWeek)
+        runCurrent()
+        assertEquals(1, shops.periods.size)
+        clock.today = "2026-10-26"
+        week.onAction(ProfileActivityAction.SyncVisibleWeek)
+        runCurrent()
+        assertEquals(2, shops.periods.size)
+        assertEquals("2026-10-26", week.state.value.weekDates.first())
+    }
+
     @Test fun guestDoesNotReadPrivateDataOrEmitAnOpenEvent() = runTest(dispatcher) {
         val model = model(loggedIn = false)
         assertTrue(shops.periods.isEmpty())

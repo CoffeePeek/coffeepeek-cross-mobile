@@ -11,6 +11,7 @@ import com.coffeepeek.feature.profile.api.PublicCheckInsPort
 import com.coffeepeek.feature.profile.domain.PublicProfile
 import com.coffeepeek.feature.profile.domain.PublicProfileAuthenticationRequired
 import com.coffeepeek.feature.profile.domain.PublicProfileCheckIn
+import com.coffeepeek.feature.profile.domain.PublicProfileCheckInPage
 import com.coffeepeek.feature.profile.domain.PublicProfileConnection
 import com.coffeepeek.feature.profile.domain.PublicProfileConnectionKind
 import com.coffeepeek.feature.profile.domain.PublicProfileData
@@ -27,6 +28,7 @@ import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 
 /**
  * Public profile of one author. Every response is tied to a (generation, account) pair: a refresh, a visibility change or an
@@ -49,6 +51,7 @@ internal class PublicProfileViewModel(
     private var connectionsJob: Job? = null
     private var ownProfileJob: Job? = null
     private var nextCursor: String? = cachedSnapshot(slug, accounts, visibility, snapshots)?.nextCheckInCursor
+    private val loadedCheckInCursors = mutableSetOf<String>()
     private var connectionsPage = 0
     private var generation = 0
     private var generationScope = accounts.cacheScope()
@@ -109,14 +112,10 @@ internal class PublicProfileViewModel(
                 val current = currentState
                 if (current.hasMoreConnections && current.connectionsError == null) loadConnections(reset = false)
             }
-            PublicProfileAction.LoadMoreCheckIns -> {
-                val current = currentState
-                if (current.hasMoreCheckIns && current.checkInsError == null && !current.isLoadingCheckIns &&
-                    !current.isLoadingMoreCheckIns && !current.isLoading) loadCheckIns(reset = false)
-            }
-            PublicProfileAction.RetryCheckIns -> {
-                val current = currentState
-                if (current.profile != null && !current.isLoading && !current.isLoadingCheckIns && !current.isLoadingMoreCheckIns) loadCheckIns(reset = true)
+            PublicProfileAction.LoadMoreCheckIns -> requestCheckIns(reset = false)
+            PublicProfileAction.RetryCheckIns -> requestCheckIns(reset = true)
+            is PublicProfileAction.SelectCheckInDate -> updateState {
+                copy(checkInDate = action.date.takeUnless { it == checkInDate })
             }
         }
     }
@@ -411,6 +410,13 @@ internal class PublicProfileViewModel(
         }
     }
 
+    private fun requestCheckIns(reset: Boolean) {
+        val state = currentState
+        if (state.isLoading || state.isLoadingCheckIns || state.isLoadingMoreCheckIns) return
+        if (!reset && (!state.hasMoreCheckIns || state.checkInsError != null)) return
+        loadCheckIns(reset)
+    }
+
     private fun loadCheckIns(reset: Boolean) {
         val profile = currentState.profile?.takeUnless { it.isBlockedByViewer } ?: return
         val cursor = if (reset) null else nextCursor
@@ -418,17 +424,25 @@ internal class PublicProfileViewModel(
         val requestAccount = account
         updateState { copy(isLoadingCheckIns = reset, isLoadingMoreCheckIns = !reset, checkInsError = null) }
         checkInsJob = viewModelScope.launch {
-            val result = checkIns.page(profile.slug, cursor)
-            val failureMessage = if (result.isFailure) PublicProfileError.CheckIns else null
+            val result = withTimeoutOrNull(15_000) { checkIns.page(profile.slug, cursor) }
             currentCoroutineContext().ensureActive()
             if (!isCurrent(requestGeneration, requestAccount)) return@launch
-            result.onSuccess { page ->
-                nextCursor = page.nextCursor
-                updateState { copy(checkIns = (if (reset) page.items else this.checkIns + page.items).distinctBy(PublicProfileCheckIn::id),
-                    hasMoreCheckIns = page.nextCursor != null, isLoadingCheckIns = false, isLoadingMoreCheckIns = false, checkInsError = null) }
-                rememberSnapshot()
-            }.onFailure { updateState { copy(isLoadingCheckIns = false, isLoadingMoreCheckIns = false, checkInsError = failureMessage) } }
+            val page = result?.getOrNull()
+            if (page == null) updateState { copy(isLoadingCheckIns = false, isLoadingMoreCheckIns = false, checkInsError = PublicProfileError.CheckIns) }
+            else applyCheckInPage(page, reset, cursor)
         }
+    }
+
+    private fun applyCheckInPage(page: PublicProfileCheckInPage, reset: Boolean, cursor: String?) {
+        if (reset) loadedCheckInCursors.clear()
+        if (cursor != null) loadedCheckInCursors.add(cursor)
+        nextCursor = page.nextCursor?.takeIf { it.isNotBlank() && it !in loadedCheckInCursors }
+        updateState {
+            copy(checkIns = (if (reset) page.items else checkIns + page.items).distinctBy(PublicProfileCheckIn::id),
+                hasMoreCheckIns = nextCursor != null, isLoadingCheckIns = false,
+                isLoadingMoreCheckIns = false, checkInsError = null)
+        }
+        rememberSnapshot()
     }
 }
 

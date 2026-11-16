@@ -16,6 +16,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -23,15 +24,18 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.component.CoffeePeekTextButton
+import com.coffeepeek.core.designsystem.resources.coffeePeekStringArrayResource as stringArrayResource
 import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.profile.api.OwnProfile
+import com.coffeepeek.feature.profile.api.OwnProfileActivity
 import com.coffeepeek.feature.profile.api.OwnProfileSlots
 import com.coffeepeek.feature.profile.api.ProfileContribution
 import com.coffeepeek.feature.profile.api.ProfileSlots
 import com.coffeepeek.feature.profile.domain.PublicProfileStats
 import com.coffeepeek.feature.profile.impl.resources.*
 import com.coffeepeek.feature.profile.impl.ui.compose.component.ProfileLoadingSkeleton
+import com.coffeepeek.feature.profile.impl.ui.compose.component.OwnerCheckInCalendar
 import com.coffeepeek.feature.profile.impl.ui.compose.component.ProfileSectionHeading
 import com.coffeepeek.feature.profile.impl.ui.compose.component.PublicProfileHeader
 import com.coffeepeek.feature.profile.impl.ui.model.OwnProfileState
@@ -73,9 +77,12 @@ private fun OwnProfileFallbackContent(
     bottomPadding: Dp, onRetry: () -> Unit, onPhoto: (String) -> Unit,
 ) {
     val profile = state.profile ?: return
+    var date by rememberSaveable(profile.email) { mutableStateOf<String?>(null) }
     ProfileContentTabs(
         stateKey = "own:${profile.email}",
-        checkIns = { OwnProfileFallbackCheckIns(profile.checkInCount, callbacks.openCheckIns) },
+        checkIns = {
+            OwnProfileFallbackCheckIns(profile.checkInCount, slots.activity.onOpenHistory.takeIf { state.isLoggedIn })
+        },
         collections = {
             slots.favoritesPreview(callbacks.openShop, callbacks.openRoaster) {
                 ProfileSectionHeading(stringResource(Res.string.profile_section_favorites), callbacks.openFavorites)
@@ -83,10 +90,13 @@ private fun OwnProfileFallbackContent(
         },
         shelf = { OwnProfileFallbackShelf(callbacks.editProfile) },
         modifier = Modifier.fillMaxSize(), ownerShelf = slots.shelf, bottomPadding = bottomPadding,
-    ) {
+    ) { selectCheckIns ->
         Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             OwnProfileFallbackHeader(profile, slots, callbacks, onPhoto)
-            slots.activityPreview(callbacks.openCheckIns)
+            if (state.isLoggedIn) OwnerCheckInCalendar(slots.activity, date, { selected ->
+                date = selected
+                if (selected != null) selectCheckIns()
+            })
             if (state.error != null || state.refreshError != null) slots.loadError(onRetry)
         }
     }
@@ -106,10 +116,15 @@ private fun OwnProfileFallbackHeader(
 }
 
 @Composable
-private fun OwnProfileFallbackCheckIns(count: Int, onOpen: () -> Unit) {
+private fun OwnProfileFallbackCheckIns(count: Int, onOpenHistory: (() -> Unit)?) {
     Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        ProfileSectionHeading(stringResource(Res.string.profile_section_check_ins), onOpen)
-        if (count == 0) Text(stringResource(Res.string.profile_check_ins_empty), color = MaterialTheme.colorScheme.onSurfaceVariant)
+        if (count == 0) {
+            Text(stringResource(Res.string.profile_check_ins_empty), color = MaterialTheme.colorScheme.onSurfaceVariant)
+        } else if (onOpenHistory != null) {
+            CoffeePeekTextButton(onClick = onOpenHistory) {
+                Text(stringResource(Res.string.profile_check_ins_open_history))
+            }
+        }
     }
 }
 
@@ -125,9 +140,16 @@ private fun OwnProfileFallbackShelf(onEditProfile: () -> Unit) {
 private fun OwnProfileFallbackPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     val shared = ProfileSlots(image = { _, _, _ -> }, photoViewer = { _, _, _, _ -> }, photoPrefetch = { _, _ -> })
     val slots = OwnProfileSlots(shared, favoritesPreview = { _, _, header -> header() },
-        activityCalendar = { _, _ -> }, activityPreview = { Text(stringResource(Res.string.profile_section_activity)) }, loadError = {})
-    val callbacks = OwnProfileCallbacks({}, {}, {}, {}, { _, _, _ -> }, {}, {}, {}, {})
-    val profile = OwnProfile("CoffeePeek", "preview@example.com", null, null, 0, 0, 0, 0, null)
+        activity = OwnProfileActivity(
+            month = { _, _, _, title ->
+                val november = stringArrayResource(Res.array.profile_months)[10]
+                title(stringResource(Res.string.profile_month_title, november, 2026))
+            },
+            onOpenHistory = {},
+        ),
+        loadError = {})
+    val callbacks = OwnProfileCallbacks({}, {}, {}, {}, { _, _, _ -> }, {}, {}, {})
+    val profile = OwnProfile("CoffeePeek", "preview@example.com", null, null, 2, 0, 0, 0, null)
     OwnProfileFallbackScreen(OwnProfileState(isLoggedIn = true, profile = profile, isLoading = false), slots, callbacks,
         actions = { OwnProfileActions({}, {}, {}, {}) }, bottomPadding = 20.dp, onRetry = {})
 }
