@@ -1,0 +1,43 @@
+name: Project status on merge
+
+on:
+  pull_request_target:
+    branches: [develop, main]
+    types: [closed]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: coffeepeek-project-6-status
+  queue: max
+
+jobs:
+  sync:
+    if: github.repository == 'CoffeePeek/coffeepeek-cross-mobile' && github.event.pull_request.merged == true && vars.PROJECT_STATUS_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out the trusted base revision
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
+      - name: Create the project automation token
+        id: project_token
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+        with:
+          client-id: ${{ vars.PROJECT_STATUS_APP_CLIENT_ID }}
+          private-key: ${{ secrets.PROJECT_STATUS_APP_PRIVATE_KEY }}
+          owner: CoffeePeek
+          repositories: coffeepeek-cross-mobile,coffeepeek-tracker,coffeepeek-backend
+          permission-issues: read
+          permission-pull-requests: read
+          permission-organization-projects: write
+
+      - name: Update existing issue cards
+        env:
+          PROJECT_STATUS_TOKEN: ${{ steps.project_token.outputs.token }}
+          PROJECT_STATUS_DRY_RUN: ${{ vars.PROJECT_STATUS_DRY_RUN }}
+        run: node tools/project-status/sync.mjs
