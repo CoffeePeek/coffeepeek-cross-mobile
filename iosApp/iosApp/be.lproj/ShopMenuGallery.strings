@@ -1,0 +1,9 @@
+"gallery.title" = "Фатаграфіі меню";
+"gallery.back" = "Назад";
+"gallery.loading" = "Загрузка фатаграфій меню";
+"gallery.empty" = "Фатаграфій меню пакуль няма";
+"gallery.error" = "Не ўдалося загрузіць фатаграфіі меню";
+"gallery.retry" = "Паўтарыць";
+"gallery.photo" = "Фатаграфія меню %1$d з %2$d";
+"gallery.counter" = "%1$d / %2$d";
+"gallery.photoUnavailable" = "Фота недаступнае";

@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		A6C011E60000000000000001 /* ShopMenuGalleryScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6C011E60000000000000003 /* ShopMenuGalleryScreen.swift */; };
+		A6C011E60000000000000002 /* ShopMenuGallery.strings in Resources */ = {isa = PBXBuildFile; fileRef = A6C011E60000000000000006 /* ShopMenuGallery.strings */; };
 		6B2031D9196667F65FD358E5 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 37A6BA4C5AAF06904D9C889E /* InfoPlist.strings */; };
 		A10000000000000000000001 /* CoffeePeekApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000001 /* CoffeePeekApp.swift */; };
 		A10000000000000000000002 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000002 /* Assets.xcassets */; };
@@ -32,6 +34,9 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		A6C011E60000000000000003 /* ShopMenuGalleryScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ShopMenuGalleryScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/ShopMenuGalleryScreen.swift; sourceTree = "<group>"; };
+		A6C011E60000000000000004 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/ShopMenuGallery.strings; sourceTree = "<group>"; };
+		A6C011E60000000000000005 /* be */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = be; path = be.lproj/ShopMenuGallery.strings; sourceTree = "<group>"; };
 		63F9FA5248F9B32DFB6EE1B8 /* be */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = be; path = be.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		699B07C40BD723F87323A277 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		A20000000000000000000001 /* CoffeePeekApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoffeePeekApp.swift; sourceTree = "<group>"; };
@@ -100,11 +105,13 @@
 				A20000000000000000000014 /* CoffeePeekNativeGlass.swift */,
 				A20000000000000000000013 /* ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CoffeePeekLaunchView.swift */,
 				A20000000000000000000011 /* ../../iosXtool/CoffeePeek/Sources/CoffeePeek/SocialSignInProvider.swift */,
+				A6C011E60000000000000003 /* ShopMenuGalleryScreen.swift */,
 				A20000000000000000000009 /* ../../iosXtool/CoffeePeek/Sources/CoffeePeek/MapLibreMapProvider.swift */,
 				A20000000000000000000002 /* Assets.xcassets */,
 				A20000000000000000000003 /* Info.plist */,
 				A20000000000000000000015 /* PrivacyInfo.xcprivacy */,
 				A20000000000000000000012 /* GoogleService-Info.plist */,
+				A6C011E60000000000000006 /* ShopMenuGallery.strings */,
 				37A6BA4C5AAF06904D9C889E /* InfoPlist.strings */,
 				DAD91A913BF64AB1A801759B /* ThemeSettings.strings */,
 				53E771650000000000000010 /* SettingsNative.strings */,
@@ -217,6 +224,7 @@
 			files = (
 				A10000000000000000000002 /* Assets.xcassets in Resources */,
 				A10000000000000000000009 /* GoogleService-Info.plist in Resources */,
+				A6C011E60000000000000002 /* ShopMenuGallery.strings in Resources */,
 				6B2031D9196667F65FD358E5 /* InfoPlist.strings in Resources */,
 				A10000000000000000000016 /* ThemeSettings.strings in Resources */,
 				53E77165000000000000000D /* SettingsNative.strings in Resources */,
@@ -284,6 +292,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				A10000000000000000000001 /* CoffeePeekApp.swift in Sources */,
+				A6C011E60000000000000001 /* ShopMenuGalleryScreen.swift in Sources */,
 				A10000000000000000000015 /* ThemeSettingsScreen.swift in Sources */,
 				53E771650000000000000001 /* SettingsNativeController.swift in Sources */,
 				53E771650000000000000003 /* SettingsNativeComponents.swift in Sources */,
@@ -301,6 +310,15 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXVariantGroup section */
+		A6C011E60000000000000006 /* ShopMenuGallery.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				A6C011E60000000000000004 /* ru */,
+				A6C011E60000000000000005 /* be */,
+			);
+			name = ShopMenuGallery.strings;
+			sourceTree = "<group>";
+		};
 		37A6BA4C5AAF06904D9C889E /* InfoPlist.strings */ = {
 			isa = PBXVariantGroup;
 			children = (

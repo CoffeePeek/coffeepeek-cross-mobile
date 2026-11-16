@@ -9,6 +9,7 @@ import coffeepeek.composeapp.generated.resources.business_tab_title
 import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import com.coffeepeek.admin.di.settings.iosSettingsContent
 import com.coffeepeek.admin.di.settings.iosThemeSettingsContent
+import com.coffeepeek.admin.di.shop.iosShopMenuGalleryContent
 import coffeepeek.composeapp.generated.resources.navigation_search
 import coffeepeek.composeapp.generated.resources.navigation_feed
 import coffeepeek.composeapp.generated.resources.navigation_profile
@@ -175,7 +176,7 @@ internal actual fun PlatformRootNavigation(
             saveNavigation()
         }
     }
-    val nativeContent = nativeSettingsContent()
+    val nativeContent = nativeScreenContent()
     fun controller(screen: Navigator.Screen): UIViewController = NativeScreenController(
         route = screen,
         nativeContent = nativeContent(screen),
@@ -310,10 +311,17 @@ internal actual fun PlatformRootNavigation(
 }
 
 @Composable
-private fun nativeSettingsContent(): (Navigator.Screen) -> (() -> UIViewController)? {
+private fun nativeScreenContent(): (Navigator.Screen) -> (() -> UIViewController)? {
     val theme = iosThemeSettingsContent()
     val settings = iosSettingsContent()
-    return { screen -> if (screen == Navigator.Screen.ThemeSettings) theme else settings(screen) }
+    val shopMenuGallery = iosShopMenuGalleryContent()
+    return { screen ->
+        when (screen) {
+            Navigator.Screen.ThemeSettings -> theme
+            is Navigator.Screen.ShopMenuGallery -> { { shopMenuGallery(screen.shopId) } }
+            else -> settings(screen)
+        }
+    }
 }
 
 private fun nativeRootController(
