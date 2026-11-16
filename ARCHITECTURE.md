@@ -3,8 +3,8 @@
 ## Purpose
 
 CoffeePeek evolves toward a feature-based Clean Architecture for Kotlin
-Multiplatform. Today Android uses Compose and iOS hosts the shared Compose UI in
-SwiftUI; native iOS screens remain a future per-feature choice. The goal is
+Multiplatform. Android uses Compose. iOS hosts shared Compose screens in UIKit
+and renders Theme Settings in SwiftUI. The goal is
 predictable ownership, isolated changes, testable logic, and controlled Gradle
 dependencies — not the maximum number of modules or classes.
 
@@ -269,17 +269,16 @@ iosApp      native Swift/SwiftUI application, lifecycle, navigation, integration
 ```
 
 `commonMain` does not mean “non-UI”: Compose Multiplatform UI may live there.
-The current iOS SwiftUI shell hosts the shared Compose framework; it does not
-yet provide native SwiftUI versions of migrated screens. A native screen may
-later use shared domain/data through a deliberate public bridge without copying
-business rules.
+The iOS SwiftUI shell hosts the shared Compose framework. The SwiftUI Theme
+Settings screen reads and updates existing Kotlin state through a narrow public
+bridge supplied by application composition.
 Roasters uses one commonMain Compose implementation and shared application
 adapters on Android and iOS; its native app navigation and platform callbacks
 stay application-owned. Other features retain their existing migration scope.
 Only Android-specific Compose/API code belongs in `androidMain`. Native SwiftUI
-always belongs in `iosApp`, not `iosMain` or shared feature modules. Prefer
-shared code where library support permits; use `expect`/`actual` only for a real
-platform difference.
+belongs to the iOS app boundary. Xcode and xtool share Swift sources under
+`iosXtool/CoffeePeek/Sources/CoffeePeek`. Use `expect`/`actual` for real platform
+differences.
 
 ## Incremental migration
 

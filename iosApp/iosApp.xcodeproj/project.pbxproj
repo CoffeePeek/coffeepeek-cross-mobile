@@ -20,6 +20,8 @@
 		A10000000000000000000012 /* ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CoffeePeekLaunchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000013 /* ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CoffeePeekLaunchView.swift */; };
 		A10000000000000000000013 /* CoffeePeekNativeGlass.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000014 /* CoffeePeekNativeGlass.swift */; };
 		A10000000000000000000014 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000015 /* PrivacyInfo.xcprivacy */; };
+		A10000000000000000000015 /* ThemeSettingsScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = A20000000000000000000016 /* ThemeSettingsScreen.swift */; };
+		A10000000000000000000016 /* ThemeSettings.strings in Resources */ = {isa = PBXBuildFile; fileRef = DAD91A913BF64AB1A801759B /* ThemeSettings.strings */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -39,6 +41,9 @@
 		A20000000000000000000013 /* ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CoffeePeekLaunchView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CoffeePeekLaunchView.swift; sourceTree = "<group>"; };
 		A20000000000000000000014 /* CoffeePeekNativeGlass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CoffeePeekNativeGlass.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CoffeePeekNativeGlass.swift; sourceTree = "<group>"; };
 		A20000000000000000000015 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		A20000000000000000000016 /* ThemeSettingsScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ThemeSettingsScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/ThemeSettingsScreen.swift; sourceTree = "<group>"; };
+		A20000000000000000000017 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/ThemeSettings.strings; sourceTree = "<group>"; };
+		A20000000000000000000018 /* be */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = be; path = be.lproj/ThemeSettings.strings; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -70,6 +75,7 @@
 			isa = PBXGroup;
 			children = (
 				A20000000000000000000001 /* CoffeePeekApp.swift */,
+				A20000000000000000000016 /* ThemeSettingsScreen.swift */,
 				A20000000000000000000014 /* CoffeePeekNativeGlass.swift */,
 				A20000000000000000000013 /* ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CoffeePeekLaunchView.swift */,
 				A20000000000000000000011 /* ../../iosXtool/CoffeePeek/Sources/CoffeePeek/SocialSignInProvider.swift */,
@@ -79,6 +85,7 @@
 				A20000000000000000000015 /* PrivacyInfo.xcprivacy */,
 				A20000000000000000000012 /* GoogleService-Info.plist */,
 				37A6BA4C5AAF06904D9C889E /* InfoPlist.strings */,
+				DAD91A913BF64AB1A801759B /* ThemeSettings.strings */,
 			);
 			path = iosApp;
 			sourceTree = "<group>";
@@ -189,6 +196,7 @@
 				A10000000000000000000002 /* Assets.xcassets in Resources */,
 				A10000000000000000000009 /* GoogleService-Info.plist in Resources */,
 				6B2031D9196667F65FD358E5 /* InfoPlist.strings in Resources */,
+				A10000000000000000000016 /* ThemeSettings.strings in Resources */,
 				A10000000000000000000014 /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -253,6 +261,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				A10000000000000000000001 /* CoffeePeekApp.swift in Sources */,
+				A10000000000000000000015 /* ThemeSettingsScreen.swift in Sources */,
 				A10000000000000000000013 /* CoffeePeekNativeGlass.swift in Sources */,
 				A10000000000000000000012 /* ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CoffeePeekLaunchView.swift in Sources */,
 				A10000000000000000000007 /* ../../iosXtool/CoffeePeek/Sources/CoffeePeek/SocialSignInProvider.swift in Sources */,
@@ -270,6 +279,15 @@
 				63F9FA5248F9B32DFB6EE1B8 /* be */,
 			);
 			name = InfoPlist.strings;
+			sourceTree = "<group>";
+		};
+		DAD91A913BF64AB1A801759B /* ThemeSettings.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				A20000000000000000000017 /* ru */,
+				A20000000000000000000018 /* be */,
+			);
+			name = ThemeSettings.strings;
 			sourceTree = "<group>";
 		};
 /* End PBXVariantGroup section */
