@@ -58,6 +58,7 @@ import androidx.compose.ui.semantics.role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.component.CoffeePeekActionMenu
 import com.coffeepeek.core.designsystem.component.CoffeePeekDrinkLabel
@@ -116,31 +117,31 @@ internal fun PostCard(
     host: CommunityHost,
     modifier: Modifier = Modifier,
     changingVisibility: Boolean = false,
+    horizontalInset: Dp = 0.dp,
 ) {
     val openLabel = stringResource(Res.string.community_open_post)
+    // The gallery scrolls through the side inset; the other content stays inside it.
+    val photoScrollInset = if (post.photos.originals.size > 1) horizontalInset else 0.dp
+    val textInset = Modifier.padding(horizontal = photoScrollInset)
     Column(
-        modifier.fillMaxWidth().clip(RoundedCornerShape(CoffeePeekDimens.radiusMd))
+        modifier.padding(horizontal = horizontalInset - photoScrollInset).fillMaxWidth().clip(RoundedCornerShape(CoffeePeekDimens.radiusMd))
             .then(actions.onOpen?.let { Modifier.clickable(role = Role.Button, onClickLabel = openLabel, onClick = it) } ?: Modifier),
         verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2),
     ) {
-        PostHeader(post, isOwn, actions, enabled, changingVisibility, host)
-        if (post.isHome) {
-            post.home?.let { recipe ->
-                val details = recipe.details(host.brewMethodLabel)
-                // A shown bag is the title and carries the recipe line itself.
-                recipe.shelfBagCardUrl?.let { PostShelfBag(it, recipe.beanName, recipe.roasterName, details, actions.onCoffee, host) } ?: run {
-                    recipe.beanName?.takeIf(String::isNotBlank)?.let { Text(it, style = MaterialTheme.typography.titleMedium) }
-                    if (details.isNotBlank()) Text(details, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-            }
-        } else PostHeading(post.shopName.ifBlank { stringResource(Res.string.community_shop_default) }, post.rating, actions.onShop)
-        if (post.note.isNotBlank()) Text(post.note, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
-        PostPhotoStrip(post.photos, actions.onPhoto, host)
-        if (!publicTimeline && !(isOwn && post.moderation == PostModeration.Rejected)) Text(publicationText(post.publicationLabel()), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        if (isOwn && post.moderation == PostModeration.Rejected) PostRejection(post.rejectionReason, actions.onEdit, enabled)
+        PostHeader(post, isOwn, actions, enabled, changingVisibility, host, textInset)
+        PostIntroduction(post, actions, host, textInset)
+        if (post.note.isNotBlank()) Text(post.note, modifier = textInset, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
+        PostPhotoStrip(post.photos, actions.onPhoto, host, horizontalInset = photoScrollInset)
+        if (!publicTimeline && !(isOwn && post.moderation == PostModeration.Rejected)) {
+            Text(publicationText(post.publicationLabel()), modifier = textInset,
+                style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        if (isOwn && post.moderation == PostModeration.Rejected) Box(textInset) {
+            PostRejection(post.rejectionReason, actions.onEdit, enabled)
+        }
         val drinkName = post.drink?.displayName(Locale.current.language)
         if (showHelpfulCount || drinkName != null || actions.onPublish != null) Row(
-            Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2),
+            textInset.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2),
         ) {
             if (showHelpfulCount) HelpfulButton(post.helpfulCount, post.isHelpfulByCurrentUser, actions.onHelpful)
             Spacer(Modifier.weight(1f))
@@ -155,9 +156,28 @@ internal fun PostCard(
 }
 
 @Composable
-private fun PostHeader(post: CommunityPost, isOwn: Boolean, actions: PostCardActions, enabled: Boolean, hiding: Boolean, host: CommunityHost) {
+private fun PostIntroduction(post: CommunityPost, actions: PostCardActions, host: CommunityHost, modifier: Modifier) {
+    if (!post.isHome) {
+        PostHeading(post.shopName.ifBlank { stringResource(Res.string.community_shop_default) }, post.rating, actions.onShop, modifier)
+        return
+    }
+    val recipe = post.home ?: return
+    val details = recipe.details(host.brewMethodLabel)
+    val bag = recipe.shelfBagCardUrl
+    // A shown bag is the title and carries the recipe line itself.
+    if (bag != null) Box(modifier) {
+        PostShelfBag(bag, recipe.beanName, recipe.roasterName, details, actions.onCoffee, host)
+    } else {
+        recipe.beanName?.takeIf(String::isNotBlank)?.let { Text(it, modifier = modifier, style = MaterialTheme.typography.titleMedium) }
+        if (details.isNotBlank()) Text(details, modifier = modifier, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    }
+}
+
+@Composable
+private fun PostHeader(post: CommunityPost, isOwn: Boolean, actions: PostCardActions, enabled: Boolean, hiding: Boolean,
+    host: CommunityHost, modifier: Modifier) {
     val name = post.author.name.ifBlank { stringResource(if (isOwn) Res.string.community_you else Res.string.community_user) }
-    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+    Row(modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         val openLabel = stringResource(Res.string.community_open_profile, name)
         Row(
             Modifier.weight(1f).clip(RoundedCornerShape(CoffeePeekDimens.radiusMd)).then(
@@ -249,8 +269,8 @@ internal fun postSharer(host: CommunityHost) = PostSharer(
 )
 
 @Composable
-private fun PostHeading(shopName: String, rating: PostRating?, onShop: (() -> Unit)?) {
-    Column(verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2)) {
+private fun PostHeading(shopName: String, rating: PostRating?, onShop: (() -> Unit)?, modifier: Modifier) {
+    Column(modifier, verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2)) {
         Text(shopName, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface,
             maxLines = 2, overflow = TextOverflow.Ellipsis,
             modifier = Modifier.then(onShop?.let { Modifier.clickable(role = Role.Button, onClick = it) } ?: Modifier))
@@ -309,7 +329,8 @@ internal fun previewPost() = CommunityPost(
 )
 
 @Composable private fun PostCardPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
-    PostCard(previewPost(), isOwn = false, publicTimeline = true, showHelpfulCount = true, enabled = true, PostCardActions({}, {}, {}, {}, {}), CommunityHost())
+    PostCard(previewPost(), isOwn = false, publicTimeline = true, showHelpfulCount = true, enabled = true,
+        PostCardActions({}, {}, {}, {}, {}), CommunityHost(), horizontalInset = CoffeePeekDimens.spacing4)
 }
 @Preview @Composable private fun PostCardLightPreview() = PostCardPreview(false)
 @Preview @Composable private fun PostCardDarkPreview() = PostCardPreview(true)

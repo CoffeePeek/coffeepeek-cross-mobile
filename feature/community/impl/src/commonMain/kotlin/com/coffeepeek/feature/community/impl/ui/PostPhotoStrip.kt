@@ -6,11 +6,13 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -48,24 +50,26 @@ private val PostPhotoMaxHeight = 260.dp
 private const val MinimumPostPhotoPreviewRatio = 3f / 4f
 
 @Composable
-internal fun PostPhotoStrip(photos: PostPhotos, onPhoto: (Int) -> Unit, host: CommunityHost) {
+internal fun PostPhotoStrip(photos: PostPhotos, onPhoto: (Int) -> Unit, host: CommunityHost, horizontalInset: Dp = 0.dp) {
     val count = photos.originals.size
     if (count == 0) return
     val ratios = remember(photos) { List(count) { mutableStateOf<Float?>(null) } }
     BoxWithConstraints(Modifier.fillMaxWidth(), contentAlignment = Alignment.TopStart) {
-        val previewHeight = (maxWidth * 0.72f).coerceAtMost(PostPhotoMaxHeight)
+        val contentWidth = (maxWidth - horizontalInset * 2).coerceAtLeast(0.dp)
+        val previewHeight = (contentWidth * 0.72f).coerceAtMost(PostPhotoMaxHeight)
         if (count == 1) {
-            PostPhotoTile(photos, 0, onPhoto, host, ratios.first(), Modifier.heightIn(max = previewHeight),
+            PostPhotoTile(photos, 0, onPhoto, host, ratios.first(), Modifier.padding(horizontal = horizontalInset).heightIn(max = previewHeight),
                 placeholderRatio = 2f)
-        } else PostPhotoRow(photos, onPhoto, host, ratios, previewHeight, maxWidth * 0.88f)
+        } else PostPhotoRow(photos, onPhoto, host, ratios, previewHeight, contentWidth * 0.88f, horizontalInset)
     }
 }
 
 @Composable
 private fun PostPhotoRow(photos: PostPhotos, onPhoto: (Int) -> Unit, host: CommunityHost,
-    ratios: List<MutableState<Float?>>, rowHeight: Dp, tileWidth: Dp) {
+    ratios: List<MutableState<Float?>>, rowHeight: Dp, tileWidth: Dp, horizontalInset: Dp) {
     LazyRow(
         modifier = Modifier.fillMaxWidth().height(rowHeight),
+        contentPadding = PaddingValues(horizontal = horizontalInset),
         horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2),
         verticalAlignment = Alignment.Top,
     ) {
@@ -126,7 +130,8 @@ private fun PostPhotoStripPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = d
     Column(Modifier.widthIn(max = 300.dp), verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2)) {
         PostPhotoStrip(PostPhotos(listOf("screenshot"), emptyList(), emptyList()), {}, photoPreviewHost)
         PostPhotoStrip(PostPhotos(listOf("portrait"), emptyList(), emptyList()), {}, photoPreviewHost)
-        PostPhotoStrip(PostPhotos(listOf("portrait", "screenshot", "landscape"), emptyList(), emptyList()), {}, photoPreviewHost)
+        PostPhotoStrip(PostPhotos(listOf("portrait", "screenshot", "landscape"), emptyList(), emptyList()), {}, photoPreviewHost,
+            horizontalInset = CoffeePeekDimens.spacing4)
     }
 }
 
