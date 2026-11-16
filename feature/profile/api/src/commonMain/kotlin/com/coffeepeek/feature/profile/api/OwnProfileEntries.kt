@@ -13,10 +13,13 @@ class OwnProfileShelf(
     val onOpened: () -> Unit,
 )
 
+/** The localized month and independent navigation actions for the profile header. */
+typealias ProfileCalendarHeaderContent = @Composable (month: String, previous: (() -> Unit)?, next: (() -> Unit)?) -> Unit
+
 /** Calendar backed by the owner's session, including their personal photo previews. */
 class OwnProfileActivity(
     val month: @Composable (
-        selectedDate: String?, onSelectDate: (String?) -> Unit, expanded: Boolean, title: @Composable (String) -> Unit,
+        selectedDate: String?, onSelectDate: (String?) -> Unit, expanded: Boolean, header: ProfileCalendarHeaderContent,
     ) -> Unit,
     val onOpenHistory: () -> Unit,
 )

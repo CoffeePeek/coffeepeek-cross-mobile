@@ -6,6 +6,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.coffeepeek.core.designsystem.component.CoffeePeekImage
 import com.coffeepeek.core.session.SessionReader
 import com.coffeepeek.feature.checkinhistory.api.ProfileActivityEntry
+import com.coffeepeek.feature.checkinhistory.api.ProfileActivityHeader
 import com.coffeepeek.feature.checkinhistory.domain.repository.*
 import com.coffeepeek.feature.checkinhistory.impl.createProfileActivityEntry
 
@@ -15,9 +16,9 @@ internal class FeatureProfileActivityRenderer(
     private val homes: HomeHistoryReader, private val calendar: AppCheckInHistoryCalendar,
 ) {
     @Composable fun Calendar(selectedDate: String?, onSelectDate: (String?) -> Unit,
-        expanded: Boolean, title: @Composable (String) -> Unit) {
+        expanded: Boolean, header: ProfileActivityHeader) {
         Host("profile-activity-month") { session, entry ->
-            entry.Calendar(true, selectedDate, { if (session.lease.isCurrent()) onSelectDate(it) }, expanded, title)
+            entry.Calendar(true, selectedDate, { if (session.lease.isCurrent()) onSelectDate(it) }, expanded, header)
         }
     }
 

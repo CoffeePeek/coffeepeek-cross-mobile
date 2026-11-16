@@ -22,13 +22,11 @@ private class DefaultProfileActivityEntry(
     private val snapshot: () -> CheckInHistoryCalendarSnapshot, private val image: HistoryImageContent,
 ) : ProfileActivityEntry {
     @Composable override fun Calendar(isLoggedIn: Boolean, selectedDate: String?, onSelectDate: (String?) -> Unit,
-        expanded: Boolean, title: @Composable (String) -> Unit) {
+        expanded: Boolean, header: ProfileActivityHeader) {
         val model = activityModel(weekly = !expanded, loggedIn = isLoggedIn)
         if (!expanded) LaunchedEffect(model) { model.onAction(ProfileActivityAction.SyncVisibleWeek) }
-        key(model) {
-            val state by model.state.collectAsStateWithLifecycle()
-            ProfileActivityCalendarContent(state, model::onAction, image, selectedDate, onSelectDate, expanded, title)
-        }
+        val state = key(model) { model.state.collectAsStateWithLifecycle().value }
+        ProfileActivityCalendarContent(state, model::onAction, image, selectedDate, onSelectDate, expanded, header)
     }
 
     @Composable private fun activityModel(weekly: Boolean, loggedIn: Boolean): ProfileActivityViewModel {

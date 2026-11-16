@@ -104,10 +104,7 @@ private fun PublicProfileLoadedContent(state: PublicProfileState, profile: Publi
             PublicProfileIdentity(state, profile, viewingOwn, slots, callbacks, own)
             ProfileCheckInCalendar(state, profile, slots.image, own?.activity, callbacks.onAction) { date ->
                 callbacks.onAction(PublicProfileAction.SelectCheckInDate(date))
-                if (date != null) {
-                    checkInList.requestScrollToItem(0)
-                    selectCheckIns()
-                }
+                if (date != null) selectCheckIns()
             }
             PublicProfileRefreshErrors(state, viewingOwn, callbacks.onAction)
         }

@@ -250,3 +250,40 @@ passed packaged runtime-class checks, and Sandbox passed isolation. The JVM
 suites ran 75 Profile and 83 Check-In History tests, with zero failures,
 errors or skips. Both affected Kotlin iOS Arm64 compile tasks passed. Device
 interaction, the full iOS app and live backend behavior remain unverified.
+
+### Calendar header controls — 2026-11-16
+
+The expanded profile calendar puts the previous and next arrows around the
+month title. The separate expand/collapse arrow stays at the end of the
+header. The title still toggles the calendar on touch. The standalone history
+calendar keeps its existing controls.
+
+On `26d6e5498` with this patch, the function-body check and Android
+`directSandbox` and `directDebug` builds passed, including packaged runtime
+classes and Sandbox isolation. Profile and Check-In History compiled for
+Kotlin iOS Arm64. Added light/dark previews for both header states at a narrow
+width. The previews were not rendered, and no device or full iOS app was run.
+
+### Calendar header motion — 2026-11-16
+
+The month title fades and interpolates its size when the displayed month
+changes. The side arrows fade and expand into position, and the disclosure
+chevron rotates in place. The calendar card and header share a 220 ms timing
+that follows the existing iOS reduced-motion setting. The owner calendar
+keeps the header mounted when switching week and month data sources.
+
+On `cc02e1f6a` with this patch, the function-body check and both Android
+assemblies passed, including packaged runtime classes and Sandbox isolation.
+Profile and Check-In History compiled for Kotlin iOS Arm64. The animation was
+reviewed in source. Device and full iOS app behavior remain unverified.
+
+### Date filtering and scroll position — 2026-11-16
+
+Picking a day updates the date filter without explicitly scrolling the
+Check-ins list to the calendar. Selecting a date from another tab still opens
+Check-ins. The active date can still be cleared by tapping it again.
+
+On `c054e4081` with this patch, the function-body check and both Android
+assemblies passed, including packaged runtime classes and Sandbox isolation.
+Profile compiled for Kotlin iOS Arm64. The scroll behavior was reviewed in
+source and remains unverified on a device.

@@ -24,6 +24,7 @@ import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
+import com.coffeepeek.feature.checkinhistory.api.ProfileActivityHeader
 import com.coffeepeek.feature.checkinhistory.domain.model.HistoryMonth
 import com.coffeepeek.feature.checkinhistory.impl.resources.*
 import com.coffeepeek.feature.checkinhistory.impl.ui.compose.model.*
@@ -34,7 +35,7 @@ import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as st
 @Composable
 internal fun HistoryCalendarCard(state: CombinedHistoryState, onAction: (CombinedHistoryAction) -> Unit,
     modifier: Modifier = Modifier, imageContent: HistoryImageContent? = null, framed: Boolean = true,
-    profileTitle: (@Composable (String) -> Unit)? = null, profileWeek: List<String>? = null) {
+    profileHeader: ProfileActivityHeader? = null, profileWeek: List<String>? = null) {
     val haptics = LocalHapticFeedback.current
     val select: (CombinedHistoryAction) -> Unit = { action ->
         haptics.performHapticFeedback(HapticFeedbackType.SegmentTick)
@@ -45,7 +46,7 @@ internal fun HistoryCalendarCard(state: CombinedHistoryState, onAction: (Combine
             else androidx.compose.ui.graphics.Color.Transparent),
         border = if (framed) BorderStroke(0.5.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f)) else null) {
         Column(Modifier.padding(if (framed) 12.dp else 0.dp)) {
-            HistoryCalendarHeader(state, select, profileTitle, showArrows = profileWeek == null)
+            HistoryCalendarHeader(state, select, profileHeader, showArrows = profileWeek == null)
             HistoryCalendarDays(state, select, imageContent, profileWeek)
         }
     }
@@ -53,18 +54,22 @@ internal fun HistoryCalendarCard(state: CombinedHistoryState, onAction: (Combine
 
 @Composable
 private fun HistoryCalendarHeader(state: CombinedHistoryState, select: (CombinedHistoryAction) -> Unit,
-    profileTitle: (@Composable (String) -> Unit)?, showArrows: Boolean) {
+    profileHeader: ProfileActivityHeader?, showArrows: Boolean) {
     val title = historyMonthTitle(state.month)
-    Row(Modifier.fillMaxWidth().padding(start = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-        if (profileTitle == null) Text(title, Modifier.weight(1f),
-            style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
-        else Box(Modifier.weight(1f)) { profileTitle(title) }
-        if (showArrows) {
-            MonthArrow(false, state.month != HistoryMonth(1, 1), profileTitle != null) { select(CombinedHistoryAction.ChangeMonth(-1)) }
-            MonthArrow(true, state.canGoNextMonth, profileTitle != null) { select(CombinedHistoryAction.ChangeMonth(1)) }
-        }
+    val canGoBack = state.month != HistoryMonth(1, 1)
+    if (profileHeader != null) {
+        val previous: (() -> Unit)? = if (showArrows && canGoBack) ({ select(CombinedHistoryAction.ChangeMonth(-1)) }) else null
+        val next: (() -> Unit)? = if (showArrows && state.canGoNextMonth) ({ select(CombinedHistoryAction.ChangeMonth(1)) }) else null
+        profileHeader(title, previous, next)
+        return
     }
-    if (profileTitle == null) HistoryCalendarSummary(state, select)
+    Row(Modifier.fillMaxWidth().padding(start = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+        Text(title, Modifier.weight(1f),
+            style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
+        MonthArrow(false, canGoBack) { select(CombinedHistoryAction.ChangeMonth(-1)) }
+        MonthArrow(true, state.canGoNextMonth) { select(CombinedHistoryAction.ChangeMonth(1)) }
+    }
+    HistoryCalendarSummary(state, select)
 }
 
 @Composable
@@ -130,13 +135,12 @@ private fun HistoryCalendarGrid(
     }
 }
 
-@Composable private fun MonthArrow(next: Boolean, enabled: Boolean, plain: Boolean, onClick: () -> Unit) {
+@Composable private fun MonthArrow(next: Boolean, enabled: Boolean, onClick: () -> Unit) {
     val description = stringResource(if (next) Res.string.history_next_month else Res.string.history_previous_month)
     val icon = if (next) CoffeePeekIcons.ChevronRight else CoffeePeekIcons.ChevronLeft
     IconButton(onClick, enabled = enabled, modifier = Modifier.size(CoffeePeekDimens.minimumTouchTarget), contentDescription = description,
-        nativeIcon = if (plain) null else if (next) CoffeePeekGlassIcon.Forward else CoffeePeekGlassIcon.Back, glass = !plain) {
-        if (plain) CoffeePeekIcon(icon, null, Modifier.size(18.dp))
-        else Box(Modifier.size(34.dp).background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f), CircleShape),
+        nativeIcon = if (next) CoffeePeekGlassIcon.Forward else CoffeePeekGlassIcon.Back) {
+        Box(Modifier.size(34.dp).background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.45f), CircleShape),
             contentAlignment = Alignment.Center) {
             CoffeePeekIcon(icon, null, Modifier.size(18.dp))
         }
