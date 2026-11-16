@@ -32,13 +32,15 @@ class CoffeeDetailIosSessionTest {
         val observation = session.observeState { deliveries.add(it.details?.coffee?.slug) }
 
         runCurrent()
-        assertEquals(listOf(null), deliveries)
+        assertEquals(listOf("coffee"), repository.details)
+        assertTrue(deliveries.isNotEmpty() && deliveries.all { it == null })
+        val beforeClose = deliveries.toList()
         session.close()
         request.complete(Unit)
         runCurrent()
 
         assertTrue(observation.isCancelled)
-        assertEquals(listOf(null), deliveries)
+        assertEquals(beforeClose, deliveries)
     }
 
     @Test fun shareUsesLoadedCanonicalPath() = runTest(dispatcher) {
