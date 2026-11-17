@@ -23,6 +23,8 @@ class IosLogin internal constructor(
     private val google = IosGoogleRequest(scope)
     val appleAvailable get() = presentation.appleAvailable
 
+    override fun onHidden() = google.cancel()
+
     fun currentState() = presentation.current().toIos()
     fun observeState(onState: (IosLoginState) -> Unit) = observe(presentation.state.map(NativeLoginState::toIos), onState)
     fun observeSignedIn() = observe(presentation.signedIn) { onSignedIn() }

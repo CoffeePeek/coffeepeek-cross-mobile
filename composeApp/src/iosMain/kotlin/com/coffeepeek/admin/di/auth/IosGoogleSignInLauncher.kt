@@ -26,6 +26,11 @@ internal object IosGoogleSignInLauncher : GoogleSignInLauncher {
 internal class IosGoogleRequest(private val scope: CoroutineScope) {
     private var job: Job? = null
 
+    fun cancel() {
+        job?.cancel()
+        job = null
+    }
+
     fun launch(onToken: (String) -> Unit, onFailure: (String) -> Unit) {
         if (job?.isActive == true) return
         job = scope.launch {

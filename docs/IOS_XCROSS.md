@@ -32,17 +32,18 @@ From the repository root:
 python tools/ios/xcross_build.py --xcross /path/to/patched/xcross.exe --config .gradle/xcross-config.yaml
 ```
 
-The wrapper selects Debug, sets `coffeepeekXcross=true` for Gradle and
-`COFFEEPEEK_XCROSS=1` for SwiftPM, and flattens Debug.xcconfig with Shared and
-optional Local includes. Build numbering follows git commit count plus
+The wrapper selects Debug, sets `coffeepeekXcross=true` and `COFFEEPEEK_XCROSS=1`
+for Gradle, and flattens Debug.xcconfig with Shared and optional Local includes.
+During the xcross command it omits the scanner dependency from the generated
+SwiftPM manifest and restores the original manifest when the command exits. Build numbering follows git commit count plus
 BUILD_NUMBER_OFFSET. Local developer settings remain ignored. The wrapper restores
 launch metadata, expands development entitlements, copies an existing Firebase
 plist, and validates the executable and bundle resources.
 
 Expected outputs: `build/xcross-ios/CoffeePeek.app`, a versioned `-unsigned.ipa`,
 and `build-identity.json` beside them. They are unsigned. A compile does not certify iPhone installation or
-startup. Do not run `xcross compose run` without the same environment settings:
-it would select the ordinary scanner configuration again.
+startup. Build with the wrapper, then use `xcross_run.py` to install and launch
+the resulting scannerless app.
 
 Signing and installation need the CoffeePeek Apple Developer team and an explicitly
 selected, trusted iPhone. The deployment wrapper installs a separate

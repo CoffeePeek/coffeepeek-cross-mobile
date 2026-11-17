@@ -4,7 +4,7 @@ import struct
 import tempfile
 import unittest
 
-from xcross_build import expand_settings, finalize_bundle, flatten_config, validate_bundle
+from xcross_build import expand_settings, finalize_bundle, flatten_config, scannerless_linkage_package, validate_bundle
 
 
 class XcrossBuildTest(unittest.TestCase):
@@ -35,6 +35,20 @@ class XcrossBuildTest(unittest.TestCase):
         self.write("Missing.xcconfig", '#include "Debug.xcconfig"\n')
         with self.assertRaisesRegex(ValueError, "Recursive"):
             flatten_config(debug)
+
+    def test_restores_kotlin_manifest_when_xcross_fails(self):
+        path = self.root / "iosApp/KotlinMultiplatformLinkedPackage/Package.swift"
+        path.parent.mkdir(parents=True)
+        repository_manifest = Path(__file__).resolve().parents[2] / path.relative_to(self.root)
+        original = repository_manifest.read_bytes()
+        path.write_bytes(original)
+        with self.assertRaisesRegex(RuntimeError, "build failed"):
+            with scannerless_linkage_package(self.root):
+                filtered = path.read_bytes()
+                self.assertNotIn(b"_feature_shelf_data", filtered)
+                self.assertIn(b"com_posthog_posthog_kmp_0_5_1", filtered)
+                raise RuntimeError("build failed")
+        self.assertEqual(path.read_bytes(), original)
 
     def make_bundle(self):
         app = self.root / "CoffeePeek.app"
