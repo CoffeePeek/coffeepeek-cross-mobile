@@ -51,7 +51,7 @@ class SessionDeviceMetadataTest {
             )) assertEquals(captured, result.exceptionOrNull())
 
             assertEquals(listOf("/api/Tokens", "/api/Tokens/google/login",
-                "/api/Tokens/apple/login", "/api/Tokens"), requests.map { it.first })
+                "/api/Tokens/apple/login", "/api/Tokens/native"), requests.map { it.first })
             for ((_, agents) in requests) {
                 assertEquals(1, agents?.size)
                 val agent = agents!!.single()

@@ -23,15 +23,15 @@ class CurlInterceptorTest {
     }
 
     @Test
-    fun redactsRecoveryTokenAndPasswordsIncludingEscapedQuotes() {
+    fun redactsTokensAndPasswordsIncludingEscapedQuotes() {
         val request = HttpRequestBuilder().apply {
             setBody(TextContent(
-                """{"token":"reset-secret","newPassword":"prefix\"secret-tail","currentPassword":"old-secret","email":"user@example.com"}""",
+                """{"token":"reset-secret","refreshToken":"refresh-secret","newPassword":"prefix\"secret-tail","currentPassword":"old-secret","email":"user@example.com"}""",
                 ContentType.Application.Json,
             ))
         }
         val curl = request.asCurlString()
-        listOf("reset-secret", "prefix", "secret-tail", "old-secret").forEach { assertFalse(curl.contains(it)) }
+        listOf("reset-secret", "refresh-secret", "prefix", "secret-tail", "old-secret").forEach { assertFalse(curl.contains(it)) }
         assertTrue(curl.contains("user@example.com"))
     }
 }

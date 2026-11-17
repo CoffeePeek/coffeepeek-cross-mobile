@@ -21,6 +21,9 @@ internal data class TokensDto(
 )
 
 @Serializable
+internal class NativeRefreshRequest(val refreshToken: String)
+
+@Serializable
 internal data class LoginRequest(@SerialName("email") val email: String, @SerialName("password") val password: String)
 
 @Serializable
