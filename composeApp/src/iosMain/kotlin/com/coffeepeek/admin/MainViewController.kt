@@ -28,6 +28,8 @@ import com.coffeepeek.admin.di.collections.LocalIosSavedPublicCollectionControll
 import com.coffeepeek.admin.di.settings.IosSettingsScreen
 import com.coffeepeek.admin.di.authorblocking.IosBlockedAuthors
 import com.coffeepeek.admin.di.authorblocking.LocalIosBlockedAuthorsController
+import com.coffeepeek.admin.di.shelf.IosShelfArchive
+import com.coffeepeek.admin.di.shelf.LocalIosShelfArchiveController
 import com.coffeepeek.admin.di.settings.IosThemeSettings
 import com.coffeepeek.admin.di.settings.LocalIosSettingsController
 import com.coffeepeek.admin.di.settings.LocalIosThemeSettingsController
@@ -58,6 +60,7 @@ fun MainViewController(
     makeShopMenuGalleryController: (IosShopMenuGallery, String) -> UIViewController,
     makeShopCheckInListController: (IosShopCheckInList, String) -> UIViewController,
     makeCoffeeDetailController: (IosCoffeeDetail, String) -> UIViewController,
+    makeShelfArchiveController: (IosShelfArchive, String) -> UIViewController,
     makeThemeSettingsController: (IosThemeSettings, String, () -> Unit) -> UIViewController,
     makeShopReportController: (IosShopReport, String, String, () -> Unit) -> UIViewController,
     makeContentReportController: (IosContentReport, String) -> UIViewController,
@@ -70,35 +73,38 @@ fun MainViewController(
     makeGuestProfileController: (IosGuestProfile) -> UIViewController,
     makeOwnProfileController: (IosOwnProfile) -> UIViewController,
     makeNotificationInboxController: (IosNotificationInbox, String) -> UIViewController,
-): UIViewController {
+): UIViewController = IosControllerFactories(
+    makeShopMenuGalleryController,
+    makeShopCheckInListController,
+    makeCoffeeDetailController,
+    makeShelfArchiveController,
+    makeThemeSettingsController,
+    makeShopReportController,
+    makeContentReportController,
+    makeCollectionsLibraryController,
+    makeSavedPublicCollectionController,
+    makeSettingsController,
+    makeBlockedAuthorsController,
+    makeAuthController,
+    makeCheckInCreatePickerController,
+    makeGuestProfileController,
+    makeOwnProfileController,
+    makeNotificationInboxController,
+).createController(onReady)
+
+private fun IosControllerFactories.createController(onReady: () -> Unit): UIViewController {
     if (!koinInitialized) {
         initPlatformKoin()
         koinInitialized = true
     }
-    val controllers = IosControllerFactories(
-        makeShopMenuGalleryController,
-        makeShopCheckInListController,
-        makeCoffeeDetailController,
-        makeThemeSettingsController,
-        makeShopReportController,
-        makeContentReportController,
-        makeCollectionsLibraryController,
-        makeSavedPublicCollectionController,
-        makeSettingsController,
-        makeBlockedAuthorsController,
-        makeAuthController,
-        makeCheckInCreatePickerController,
-        makeGuestProfileController,
-        makeOwnProfileController,
-        makeNotificationInboxController,
-    )
-    return ComposeUIViewController { controllers.Content(onReady) }
+    return ComposeUIViewController { Content(onReady) }
 }
 
 private class IosControllerFactories(
     private val makeShopMenuGalleryController: (IosShopMenuGallery, String) -> UIViewController,
     private val makeShopCheckInListController: (IosShopCheckInList, String) -> UIViewController,
     private val makeCoffeeDetailController: (IosCoffeeDetail, String) -> UIViewController,
+    private val makeShelfArchiveController: (IosShelfArchive, String) -> UIViewController,
     private val makeThemeSettingsController: (IosThemeSettings, String, () -> Unit) -> UIViewController,
     private val makeShopReportController: (IosShopReport, String, String, () -> Unit) -> UIViewController,
     private val makeContentReportController: (IosContentReport, String) -> UIViewController,
@@ -118,6 +124,7 @@ private class IosControllerFactories(
             LocalIosShopMenuGalleryController provides makeShopMenuGalleryController,
             LocalIosShopCheckInListController provides makeShopCheckInListController,
             LocalIosCoffeeDetailController provides makeCoffeeDetailController,
+            LocalIosShelfArchiveController provides makeShelfArchiveController,
             LocalIosThemeSettingsController provides makeThemeSettingsController,
             LocalIosShopReportController provides makeShopReportController,
             LocalIosContentReportController provides makeContentReportController,

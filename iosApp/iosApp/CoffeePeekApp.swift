@@ -48,6 +48,7 @@ private struct ComposeRootView: UIViewControllerRepresentable {
             makeShopMenuGalleryController: makeShopMenuGalleryController,
             makeShopCheckInListController: makeShopCheckInListController(list:languageTag:),
             makeCoffeeDetailController: makeCoffeeDetailController,
+            makeShelfArchiveController: makeShelfArchiveController,
             makeThemeSettingsController: makeThemeSettingsController,
             makeShopReportController: makeShopReportController,
             makeContentReportController: makeContentReportController,

@@ -15,6 +15,7 @@ import com.coffeepeek.admin.di.settings.iosThemeSettingsContent
 import com.coffeepeek.admin.di.shopreport.iosShopReportContent
 import com.coffeepeek.admin.di.contentreport.iosContentReportContent
 import com.coffeepeek.admin.di.collections.iosCollectionsLibraryContent
+import com.coffeepeek.admin.di.shelf.iosShelfArchiveContent
 import com.coffeepeek.admin.di.collections.iosSavedPublicCollectionContent
 import com.coffeepeek.admin.di.authorblocking.iosBlockedAuthorsContent
 import com.coffeepeek.admin.di.shop.iosShopMenuGalleryContent
@@ -332,6 +333,7 @@ private fun nativeDestinationController(
 private fun nativeRouteContent(isLoggedIn: Boolean): (Navigator.Screen) -> (() -> UIViewController)? {
     val settings = iosSettingsContent()
     val profile = if (isLoggedIn) iosOwnProfileContent() else iosGuestProfileContent()
+    val shelfArchive = iosShelfArchiveContent()
     val themeSettings = iosThemeSettingsContent()
     val shopMenuGallery = iosShopMenuGalleryContent()
     val shopCheckIns = iosShopCheckInListContent()
@@ -344,6 +346,7 @@ private fun nativeRouteContent(isLoggedIn: Boolean): (Navigator.Screen) -> (() -
     return { screen ->
         when (screen) {
             Navigator.Screen.ProfileTab -> profile
+            Navigator.Screen.ShelfArchive -> shelfArchive
             Navigator.Screen.ThemeSettings -> themeSettings
             is Navigator.Screen.ShopMenuGallery -> { { shopMenuGallery(screen.shopId) } }
             is Navigator.Screen.ShopReviews -> { { shopCheckIns(screen.shopId) } }
