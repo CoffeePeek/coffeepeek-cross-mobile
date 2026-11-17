@@ -58,9 +58,7 @@ import com.coffeepeek.core.designsystem.component.CoffeePeekGroupSection
 import com.coffeepeek.core.designsystem.component.CoffeePeekRowSeparator
 import com.coffeepeek.core.designsystem.component.CoffeePeekSwipeDismissModalBottomSheet
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
-import com.coffeepeek.feature.discovery.api.DiscoveryHost
 import com.coffeepeek.feature.discovery.domain.model.CatalogEntry
-import com.coffeepeek.feature.discovery.domain.model.DiscoveryFilters
 import com.coffeepeek.feature.discovery.domain.model.DiscoveryCatalogs
 import com.coffeepeek.feature.discovery.domain.rules.amenityTags
 import com.coffeepeek.feature.discovery.impl.search.SearchAction
@@ -72,8 +70,9 @@ import com.coffeepeek.feature.discovery.impl.search.SearchState
  * and the amenity tags.
  */
 @Composable
-internal fun FilterSheet(state: SearchState, host: DiscoveryHost, onAction: (SearchAction) -> Unit) {
-    var draft by remember { mutableStateOf(state.filters) }
+internal fun FilterSheet(state: SearchState, onAction: (SearchAction) -> Unit) {
+    if (PlatformDiscoveryFilterSheet(state, onAction)) return
+    val draft = remember { DiscoveryFilterDraft(state.filters) }
     val density = LocalDensity.current
     val width = with(density) { LocalWindowInfo.current.containerSize.width.toDp() }
     CoffeePeekSwipeDismissModalBottomSheet(
@@ -85,8 +84,8 @@ internal fun FilterSheet(state: SearchState, host: DiscoveryHost, onAction: (Sea
     ) {
         // The modal window must use the caller's text scale.
         CompositionLocalProvider(LocalDensity provides density) {
-            FilterSheetContent(state, host, draft, { draft = it }, {
-                onAction(SearchAction.ApplyFilters(draft.copy(cityId = state.filters.cityId)))
+            FilterSheetContent(state, draft, {
+                onAction(SearchAction.ApplyFilters(draft.applyTo(state.filters)))
                 onAction(SearchAction.CloseFilters)
             }, { onAction(SearchAction.RetryCatalogs) })
         }
@@ -95,17 +94,17 @@ internal fun FilterSheet(state: SearchState, host: DiscoveryHost, onAction: (Sea
 
 @Composable
 private fun ColumnScope.FilterSheetContent(
-    state: SearchState, host: DiscoveryHost, draft: DiscoveryFilters, onDraft: (DiscoveryFilters) -> Unit,
+    state: SearchState, draft: DiscoveryFilterDraft,
     onDone: () -> Unit, onRetry: () -> Unit,
 ) {
-    FilterSheetHeader(draft.activeCount > 0, { onDraft(draft.clearSelections()) }, onDone)
+    FilterSheetHeader(draft.filters.activeCount > 0, draft::reset, onDone)
     Column(
         Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState())
             .padding(horizontal = CoffeePeekDimens.spacing4).padding(bottom = CoffeePeekDimens.spacing6),
         verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing6),
     ) {
         FilterCatalogStatus(state, onRetry)
-        FilterSelections(state, host, draft, onDraft)
+        FilterSelections(state, draft)
     }
 }
 
@@ -143,19 +142,21 @@ private fun FilterSheetHeader(resetEnabled: Boolean, onReset: () -> Unit, onDone
 }
 
 @Composable
-private fun FilterSelections(state: SearchState, host: DiscoveryHost, draft: DiscoveryFilters, onDraft: (DiscoveryFilters) -> Unit) {
-    PriceFilter(draft.priceLevel) { onDraft(draft.copy(priceLevel = it)) }
-    Selection(Res.string.discovery_section_roasters, state.catalogs.roasters, draft.roasterIds, { onDraft(draft.copy(roasterIds = draft.roasterIds.toggle(it))) }) { entry ->
-        DiscoveryRoasterAvatar(entry.name, entry.photoUrl)
-    }
-    Selection(Res.string.discovery_section_beans, state.catalogs.beans, draft.beanIds, { onDraft(draft.copy(beanIds = draft.beanIds.toggle(it))) })
-    Selection(Res.string.discovery_section_equipment, state.catalogs.equipment, draft.equipmentIds, { onDraft(draft.copy(equipmentIds = draft.equipmentIds.toggle(it))) })
-    Selection(Res.string.discovery_section_brew_methods, state.catalogs.brewMethods, draft.brewMethodIds,
-        { onDraft(draft.copy(brewMethodIds = draft.brewMethodIds.toggle(it))) }, label = { filterBrewMethodLabel(it) }) { entry ->
+private fun FilterSelections(state: SearchState, draft: DiscoveryFilterDraft) {
+    val filters = draft.filters
+    PriceFilter(filters.priceLevel, draft::selectPrice)
+    Selection(Res.string.discovery_section_roasters, state.catalogs.roasters, filters.roasterIds,
+        { draft.toggle(DiscoveryFilterGroup.Roasters, it) }) { entry -> DiscoveryRoasterAvatar(entry.name, entry.photoUrl) }
+    Selection(Res.string.discovery_section_beans, state.catalogs.beans, filters.beanIds,
+        { draft.toggle(DiscoveryFilterGroup.Beans, it) })
+    Selection(Res.string.discovery_section_equipment, state.catalogs.equipment, filters.equipmentIds,
+        { draft.toggle(DiscoveryFilterGroup.Equipment, it) })
+    Selection(Res.string.discovery_section_brew_methods, state.catalogs.brewMethods, filters.brewMethodIds,
+        { draft.toggle(DiscoveryFilterGroup.BrewMethods, it) }, label = { filterBrewMethodLabel(it) }) { entry ->
         DiscoveryBrewMethodIcon(entry.name, 22.dp)
     }
-    Selection(Res.string.discovery_section_tags, amenityTags(state.catalogs.tags), draft.tagIds,
-        { onDraft(draft.copy(tagIds = draft.tagIds.toggle(it))) }, label = { filterTagLabel(it) }) { entry ->
+    Selection(Res.string.discovery_section_tags, amenityTags(state.catalogs.tags), filters.tagIds,
+        { draft.toggle(DiscoveryFilterGroup.Tags, it) }, label = { filterTagLabel(it) }) { entry ->
         DiscoveryTagIcon(entry.id)
     }
 }
@@ -191,12 +192,10 @@ private fun Selection(
 
 private const val COLLAPSED_ROWS = 5
 
-private fun Set<String>.toggle(id: String): Set<String> = if (id in this) this - id else this + id
-
 @Preview
 @Composable
 private fun FilterSheetPreview() = CoffeePeekTheme {
-    FilterSheet(SearchState(), DiscoveryHost()) {}
+    FilterSheet(SearchState()) {}
 }
 
 @Preview
@@ -215,7 +214,7 @@ private fun FilterSheetCompactLargePreview() = CoffeePeekTheme {
         catalogLoadState = com.coffeepeek.feature.discovery.impl.search.CatalogLoadState.Ready)
     CompositionLocalProvider(LocalDensity provides androidx.compose.ui.unit.Density(LocalDensity.current.density, 2f)) {
         Surface(Modifier.width(320.dp).height(300.dp)) {
-            Column { FilterSheetContent(state, DiscoveryHost(), DiscoveryFilters(), {}, {}, {}) }
+            Column { FilterSheetContent(state, remember { DiscoveryFilterDraft(state.filters) }, {}, {}) }
         }
     }
 }
@@ -232,6 +231,6 @@ private fun FilterSheetBelarusianPreview() = CoffeePeekTheme {
     val state = SearchState(catalogs = catalogs,
         catalogLoadState = com.coffeepeek.feature.discovery.impl.search.CatalogLoadState.Ready)
     Surface(Modifier.width(360.dp).height(720.dp)) {
-        Column { FilterSheetContent(state, DiscoveryHost(), DiscoveryFilters(), {}, {}, {}) }
+        Column { FilterSheetContent(state, remember { DiscoveryFilterDraft(state.filters) }, {}, {}) }
     }
 }

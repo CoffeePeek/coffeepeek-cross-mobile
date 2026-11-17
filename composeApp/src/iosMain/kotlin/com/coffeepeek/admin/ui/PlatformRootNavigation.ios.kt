@@ -2,6 +2,11 @@
 
 package com.coffeepeek.admin.ui
 
+import com.coffeepeek.admin.di.discovery.IosDiscoveryFilterController
+import com.coffeepeek.admin.di.discovery.IosDiscoveryFilters
+import com.coffeepeek.admin.di.discovery.LocalIosDiscoveryFilterController
+import com.coffeepeek.feature.discovery.impl.ui.ProvideIosDiscoveryFilterSheet
+
 
 import org.koin.compose.koinInject
 import coffeepeek.composeapp.generated.resources.Res
@@ -195,14 +200,13 @@ internal actual fun PlatformRootNavigation(
         } }
     }
 
-    val createTitle = stringResource(Res.string.check_in_create_actions)
-    val labels = nativeRootTabLabels()
+    val presentation = nativeRootTabPresentation()
     UIKitViewController(factory = {
         IosRootTab.entries.forEachIndexed { index, tab ->
             val navigation = navigations[index]
-            val root = tab.controller(labels[index], nativeContent) {
+            val root = tab.controller(presentation.labels[index], nativeContent, presentation.content(tab) {
                 NativeRootTabContent(tab, isLoggedIn, tabBarVisibility, tabReselections) { refreshCommunity = it }
-            }
+            })
             navigation.setNavigationBarHidden(true, false)
             navigation.setViewControllers(
                 listOf(root) + restoredNavigation.stacks[index].map { screen ->
@@ -210,13 +214,13 @@ internal actual fun PlatformRootNavigation(
                 },
                 false,
             )
-            navigation.tabBarItem = UITabBarItem(title = labels[index], image = UIImage.systemImageNamed(tab.symbol), tag = index.toLong())
+            navigation.tabBarItem = UITabBarItem(title = presentation.labels[index], image = UIImage.systemImageNamed(tab.symbol), tag = index.toLong())
             navigationDelegates[index].navigation = navigation
             navigationDelegates[index].onStackChanged = { saveNavigation() }
             navigation.delegate = navigationDelegates[index]
             navigation.interactivePopGestureRecognizer?.delegate = navigationDelegates[index]
         }
-        installRootTabsWithCreate(tabs, navigations, createNavigation, visibleTabIndices, restoredNavigation.selectedTab, createTitle)
+        installRootTabsWithCreate(tabs, navigations, createNavigation, visibleTabIndices, restoredNavigation.selectedTab, presentation.createTitle)
         tabs.delegate = tabDelegate
         tabDelegate.createNavigation = createNavigation
         tabDelegate.onTabChanged = { saveNavigation() }
@@ -225,8 +229,8 @@ internal actual fun PlatformRootNavigation(
         }
         tabs
     }, modifier = Modifier.fillMaxSize(), update = {
-        updateNativeTabLabels(navigations, labels)
-        createNavigation.tabBarItem.title = createTitle
+        updateNativeTabLabels(navigations, presentation.labels)
+        createNavigation.tabBarItem.title = presentation.createTitle
     }, properties = UIKitInteropProperties(
         interactionMode = UIKitInteropInteractionMode.NonCooperative,
         isNativeAccessibilityEnabled = true,
@@ -390,6 +394,26 @@ private fun NativeRootTabContent(tab: IosRootTab, isLoggedIn: Boolean, visibilit
         IosRootTab.Business -> koinInject<com.coffeepeek.feature.ownership.api.BusinessOwnershipEntry>().Tab()
     }
 }
+
+private class IosRootTabPresentation(
+    val createTitle: String,
+    val labels: List<String>,
+    private val discoveryFilterFactory: (IosDiscoveryFilters) -> UIViewController,
+) {
+    fun content(tab: IosRootTab, body: @Composable () -> Unit): @Composable () -> Unit {
+        if (tab != IosRootTab.Discovery) return body
+        return @Composable {
+            ProvideIosDiscoveryFilterSheet({ IosDiscoveryFilterController(it, discoveryFilterFactory) }, body)
+        }
+    }
+}
+
+@Composable
+private fun nativeRootTabPresentation() = IosRootTabPresentation(
+    createTitle = stringResource(Res.string.check_in_create_actions),
+    labels = nativeRootTabLabels(),
+    discoveryFilterFactory = LocalIosDiscoveryFilterController.current,
+)
 
 @Composable
 private fun nativeRootTabLabels(): List<String> = listOf(

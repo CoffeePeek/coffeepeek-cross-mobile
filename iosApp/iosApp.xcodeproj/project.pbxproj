@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		E10F17E50000000000000001 /* DiscoveryFilterSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10F17E50000000000000002 /* DiscoveryFilterSheet.swift */; };
 		A6C011E60000000000000001 /* ShopMenuGalleryScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6C011E60000000000000003 /* ShopMenuGalleryScreen.swift */; };
 		A6C011E60000000000000002 /* ShopMenuGallery.strings in Resources */ = {isa = PBXBuildFile; fileRef = A6C011E60000000000000006 /* ShopMenuGallery.strings */; };
 		6B2031D9196667F65FD358E5 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 37A6BA4C5AAF06904D9C889E /* InfoPlist.strings */; };
@@ -62,6 +63,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		E10F17E50000000000000002 /* DiscoveryFilterSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = DiscoveryFilterSheet.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/DiscoveryFilterSheet.swift; sourceTree = "<group>"; };
 		A6C011E60000000000000003 /* ShopMenuGalleryScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ShopMenuGalleryScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/ShopMenuGalleryScreen.swift; sourceTree = "<group>"; };
 		A6C011E60000000000000004 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/ShopMenuGallery.strings; sourceTree = "<group>"; };
 		A6C011E60000000000000005 /* be */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = be; path = be.lproj/ShopMenuGallery.strings; sourceTree = "<group>"; };
@@ -167,6 +169,7 @@
 				A0871E7A0000000000000010 /* RegisterScreen.swift */,
 				A0871E7A0000000000000012 /* RegisterConsent.swift */,
 				A0871E7B0000000000000006 /* GuestProfileScreen.swift */,
+				E10F17E50000000000000002 /* DiscoveryFilterSheet.swift */,
 				A0871E7C0000000000000005 /* OwnProfileScreen.swift */,
 				A0871E7C0000000000000006 /* OwnProfileComponents.swift */,
 				A0871E7C0000000000000007 /* OwnProfileActivityView.swift */,
@@ -400,6 +403,7 @@
 				A0871E7A000000000000000F /* RegisterScreen.swift in Sources */,
 				A0871E7A0000000000000011 /* RegisterConsent.swift in Sources */,
 				A0871E7B0000000000000005 /* GuestProfileScreen.swift in Sources */,
+				E10F17E50000000000000001 /* DiscoveryFilterSheet.swift in Sources */,
 				A0871E7C0000000000000001 /* OwnProfileScreen.swift in Sources */,
 				A0871E7C0000000000000002 /* OwnProfileComponents.swift in Sources */,
 				A0871E7C0000000000000003 /* OwnProfileActivityView.swift in Sources */,

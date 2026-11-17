@@ -4,6 +4,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.window.ComposeUIViewController
 import com.coffeepeek.admin.di.coffee.IosCoffeeDetail
+import com.coffeepeek.admin.di.discovery.IosDiscoveryFilters
+import com.coffeepeek.admin.di.discovery.LocalIosDiscoveryFilterController
 import com.coffeepeek.admin.di.coffee.LocalIosCoffeeDetailController
 import com.coffeepeek.admin.di.initPlatformKoin
 import com.coffeepeek.admin.di.auth.IosAuthScreen
@@ -46,6 +48,7 @@ fun handleAppLink(link: String): Boolean {
 
 fun MainViewController(
     onReady: () -> Unit,
+    makeDiscoveryFilterController: (IosDiscoveryFilters) -> UIViewController,
     makeShopMenuGalleryController: (IosShopMenuGallery, String) -> UIViewController,
     makeCoffeeDetailController: (IosCoffeeDetail, String) -> UIViewController,
     makeThemeSettingsController: (IosThemeSettings, String, () -> Unit) -> UIViewController,
@@ -63,6 +66,7 @@ fun MainViewController(
         koinInitialized = true
     }
     val controllers = IosControllerFactories(
+        makeDiscoveryFilterController,
         makeShopMenuGalleryController,
         makeCoffeeDetailController,
         makeThemeSettingsController,
@@ -79,6 +83,7 @@ fun MainViewController(
 }
 
 private class IosControllerFactories(
+    private val makeDiscoveryFilterController: (IosDiscoveryFilters) -> UIViewController,
     private val makeShopMenuGalleryController: (IosShopMenuGallery, String) -> UIViewController,
     private val makeCoffeeDetailController: (IosCoffeeDetail, String) -> UIViewController,
     private val makeThemeSettingsController: (IosThemeSettings, String, () -> Unit) -> UIViewController,
@@ -94,6 +99,7 @@ private class IosControllerFactories(
     @Composable
     fun Content(onReady: () -> Unit) {
         CompositionLocalProvider(
+            LocalIosDiscoveryFilterController provides makeDiscoveryFilterController,
             LocalIosShopMenuGalleryController provides makeShopMenuGalleryController,
             LocalIosCoffeeDetailController provides makeCoffeeDetailController,
             LocalIosThemeSettingsController provides makeThemeSettingsController,
