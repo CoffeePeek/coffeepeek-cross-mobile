@@ -5,27 +5,59 @@ struct OwnProfileCheckIns: View {
     @ObservedObject var model: OwnProfileModel
 
     var body: some View {
-        let state = model.state
-        let rows = model.visibleCheckIns
-        VStack(alignment: .leading, spacing: 10) {
-            if state.checkInsFailed {
-                OwnProfileRetry(message: model.strings["profile_check_ins_failed"], strings: model.strings,
-                                retry: model.profile.retryCheckIns)
-            } else if state.checkInsLoading && rows.isEmpty {
-                ProgressView().frame(maxWidth: .infinity, minHeight: 64)
-                    .accessibilityLabel(model.strings["profile_loading"])
-            } else if rows.isEmpty {
-                Text(model.strings["profile_check_ins_empty"]).foregroundStyle(CoffeePeekNativeStyle.secondary)
+        OwnProfileCheckInsContent(state: model.state, strings: model.strings, profile: model.profile,
+            retry: model.profile.retryCheckIns, more: model.profile.moreCheckIns,
+            clearDate: model.clearSelectedDay,
+            openPhoto: { model.openPhoto(id: $0, index: $1) }, openEntry: model.profile.openCheckIn)
+    }
+}
+
+private struct OwnProfileCheckInsContent: View {
+    let state: IosOwnProfileState
+    let strings: OwnProfileStrings
+    var profile: IosOwnProfile? = nil
+    var retry: () -> Void = {}
+    var more: () -> Void = {}
+    var clearDate: () -> Void = {}
+    var openPhoto: (String, Int) -> Void = { _, _ in }
+    var openEntry: (String) -> Void = { _ in }
+
+    var body: some View {
+        LazyVStack(alignment: .leading, spacing: 16) {
+            if let date = state.selectedDate {
+                HStack {
+                    Text(date).font(CoffeePeekNativeStyle.font(15, weight: "Semibold"))
+                    Spacer()
+                    Button(strings["profile_check_ins_clear_date"], action: clearDate).frame(minHeight: 44)
+                }
             }
-            ForEach(rows, id: \.id) { checkIn in
-                OwnProfileCheckInCard(checkIn: checkIn, strings: model.strings, profile: model.profile,
-                    openShop: { model.profile.openShop(slug: $0) },
-                    openCoffee: { model.profile.openCoffee(slug: $0) },
-                    openPhoto: { model.openPhoto(id: checkIn.id, index: $0) }, timeline: true)
+            feedback
+            ForEach(state.checkIns, id: \.id) { checkIn in
+                OwnProfileCheckInCard(checkIn: checkIn, strings: strings, profile: profile,
+                    openShop: { profile?.openShop(slug: $0) }, openCoffee: { profile?.openCoffee(slug: $0) },
+                    openPhoto: { openPhoto(checkIn.id, $0) }, openEntry: { openEntry(checkIn.id) }, timeline: true)
             }
-            Button(model.strings["profile_section_all_check_ins"], action: model.profile.openHistory)
-                .frame(maxWidth: .infinity, minHeight: 44)
-                .tint(CoffeePeekNativeStyle.foreground)
+            pagination
+        }
+    }
+
+    @ViewBuilder private var feedback: some View {
+        if state.checkInsFailed {
+            OwnProfileRetry(message: strings["profile_check_ins_failed"], strings: strings, retry: retry)
+        } else if state.checkInsLoading && state.checkIns.isEmpty {
+            ProgressView().frame(maxWidth: .infinity, minHeight: 64).accessibilityLabel(strings["profile_loading"])
+        } else if state.checkIns.isEmpty {
+            Text(strings["profile_check_ins_empty"]).foregroundStyle(CoffeePeekNativeStyle.secondary)
+        }
+    }
+
+    @ViewBuilder private var pagination: some View {
+        if state.loadingMoreCheckIns {
+            ProgressView().frame(maxWidth: .infinity, minHeight: 44).accessibilityLabel(strings["profile_loading"])
+        } else if state.moreCheckInsFailed {
+            OwnProfileRetry(message: strings["profile_check_ins_failed"], strings: strings, retry: retry)
+        } else if state.moreCheckIns && !state.checkInsLoading && !state.checkInsFailed {
+            Color.clear.frame(height: 1).onAppear(perform: more).accessibilityHidden(true)
         }
     }
 }
@@ -37,6 +69,7 @@ struct OwnProfileCheckInCard: View {
     let openShop: (String) -> Void
     let openCoffee: (String) -> Void
     let openPhoto: (Int) -> Void
+    var openEntry: (() -> Void)?
     var imageLoader: ProfileImageLoader?
     var openMenu: (() -> Void)?
     var report: (() -> Void)?
@@ -92,6 +125,10 @@ struct OwnProfileCheckInCard: View {
                 }
             }
             Spacer(minLength: 0)
+            if let openEntry {
+                Button(action: openEntry) { Image(systemName: "chevron.right").frame(width: 44, height: 44) }
+                    .buttonStyle(.plain).accessibilityLabel(strings["profile_check_in_open"])
+            }
             if let openMenu, let report {
                 Menu {
                     Button(strings["profile_check_in_report"], systemImage: "flag", action: report)
@@ -448,4 +485,27 @@ private func ownProfileCheckInPreview(language: String) -> some View {
 
 #Preview("Own check-in dark") {
     ownProfileCheckInPreview(language: "be").preferredColorScheme(.dark)
+}
+
+private func ownProfileHistoryPreview(selectedDate: String?) -> some View {
+    let rows = [false, true].map { home in
+        IosOwnProfileCheckIn(id: home ? "home:fixture" : "shop:fixture", name: "CoffeePeek", avatar: nil,
+            shop: home ? "" : "CoffeePeek", shopSlug: nil, home: home, note: "", date: "17.11.2026 12:00",
+            drink: nil, helpfulCount: 0, liked: false, score: nil, photos: [], brew: nil)
+    }
+    let state = IosOwnProfileState(active: true, identity: nil, loading: false, refreshing: false,
+        failed: false, refreshFailed: false, checkInsLoading: false, checkInsFailed: false, checkIns: rows,
+        followers: IosOwnProfileFollowers(open: false, loading: false, failed: false, more: false, people: []),
+        moreCheckIns: false, loadingMoreCheckIns: false, moreCheckInsFailed: false, selectedDate: selectedDate)
+    return ScrollView {
+        OwnProfileCheckInsContent(state: state, strings: OwnProfileStrings(languageTag: "ru")).padding(16)
+    }.foregroundStyle(CoffeePeekNativeStyle.foreground).background(CoffeePeekNativeStyle.background)
+}
+
+#Preview("Merged history light") {
+    ownProfileHistoryPreview(selectedDate: nil).preferredColorScheme(.light)
+}
+
+#Preview("Merged history selected dark") {
+    ownProfileHistoryPreview(selectedDate: "2026-11-17").preferredColorScheme(.dark)
 }

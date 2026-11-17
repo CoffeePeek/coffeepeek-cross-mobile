@@ -12,6 +12,13 @@ import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
+/** Notification history requests reveal all check-ins, rather than restoring the previously selected profile section. */
+internal fun openNotificationDestination(screen: Navigator.Screen,
+    openProfileCheckIns: () -> Unit = { Navigator.openProfileCheckIns() },
+    openAppLink: (Navigator.Screen) -> Unit = Navigator::openAppLink) {
+    if (screen == Navigator.Screen.ProfileTab) openProfileCheckIns() else openAppLink(screen)
+}
+
 /** Application-owned adapters between independent feature contracts and root navigation. */
 internal class NotificationNavigation(
     private val notifications: NotificationFeature,
@@ -51,7 +58,7 @@ internal class NotificationNavigation(
             ?: Navigator.Screen.MyContributions(ContributionKind.Shops.name)
         NotificationDestination.RoasterSubmissions -> Navigator.Screen.MyContributions(ContributionKind.Roasters.name)
         is NotificationDestination.CheckIn -> Navigator.Screen.CheckInDetail(destination.id)
-        NotificationDestination.CheckIns -> Navigator.Screen.VisitedPlaces
+        NotificationDestination.CheckIns -> Navigator.Screen.ProfileTab
         null -> Navigator.Screen.Main
     }
 

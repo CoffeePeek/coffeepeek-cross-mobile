@@ -126,7 +126,7 @@ internal class FeatureShopDetailScreenRenderer(
                 },
                 onOpenHistory = {
                     state.form = null
-                    Navigator.popThenNavigate(Navigator.Screen.VisitedPlaces)
+                    Navigator.openProfileCheckIns(popCurrent = true)
                 })
         }
     }

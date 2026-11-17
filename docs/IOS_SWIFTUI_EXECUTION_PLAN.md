@@ -368,3 +368,46 @@ that cannot execute on Windows and manual device gates are reported separately.
   Android Debug/packaged DEX checks passed in19s. Body-limit check still reports
   only the two inherited violations. Five media and two lifecycle iOS non-UI
   regressions are authored but unexecuted on Windows. Device recheck is required.
+
+
+### 2026-11-17 — Unified owner profile history (Android and native iOS)
+
+Owner scope: replace the separate own check-in history page on both platforms with one
+paginated mixed shop/home list in Profile. The calendar filters that same list; no second
+daily list, source tabs or “all check-ins” link. Keep standalone check-in detail/edit routes.
+Public profiles of other authors retain their separate public-only access contract.
+
+Ownership: check-in-history owns private account-bound reads, merged pagination,
+calendar/date filtering and shared presentation state. Profile owns header and tabs,
+receiving a calendar/list scope through its public slots. Application composition binds
+existing repositories, account leases, navigation and photo rendering. Native SwiftUI
+uses an account-owned history session over the same CombinedHistoryViewModel.
+No new backend, writer or Gradle module.
+
+Retirement inventory: own-profile preview/history links, VisitedPlaces/HomeCheckIns root
+routes, notification CheckIns destinations and shop uncertain-delivery history actions.
+Redirect these to Profile; retain Home detail/edit access independently. Analytics creation
+continues through the existing picker/editor tracker; Profile remains the owning screen.
+
+Verification plan: unit regressions for date selection across month boundaries, mixed
+pagination and stale account/date responses; affected JVM suites; Android directDebug
+assembly with packaged DEX checks; native framework/Swift build. Manual device gates:
+expand/collapse and month transition, uniform photo/plain day cells, same-list date filter
+and reset, pagination, content-sized plus sheet, collections light/dark surfaces. No live
+writes or consent changes. Prior 3088 crash evidence remains above; the owner reports
+3089 photos and profile persistence now appear fixed, without a full cold-start matrix.
+
+Verification before the native build: Android directDebug assembly and packaged DEX
+runtime-class checks pass. JVM suites: history 90, profile 73, composition 685;
+848 tests, zero failures/errors/skips. The first run stopped at a missing import in a
+new regression; the second stopped because the packaged-class allowlist still named
+retired page classes. Both were corrected; the final run passes. Existing preview/API
+deprecation warnings remain. Function-body verification reports only the two inherited
+violations (ownership factory and IosPublicProfileSession); no new violations, baseline
+not expanded. Native build and manual device acceptance are still pending.
+
+Explicit history intents from notifications/uncertain-submit actions select the profile
+check-ins tab and clear its date filter. Ordinary tab switching preserves the section
+and filter. Calendar collapse retains the selected date and anchors its week to that
+date (otherwise today in the displayed month, or the first of a browsed month).
+Calendar reads cover adjacent-month days in that week with stale-response guards.

@@ -16,6 +16,10 @@ data class IosOwnProfileState(
     val checkInsFailed: Boolean,
     val checkIns: List<IosOwnProfileCheckIn>,
     val followers: IosOwnProfileFollowers,
+    val moreCheckIns: Boolean = false,
+    val loadingMoreCheckIns: Boolean = false,
+    val moreCheckInsFailed: Boolean = false,
+    val selectedDate: String? = null,
 )
 
 data class IosOwnProfileIdentity(
@@ -52,7 +56,7 @@ data class IosOwnProfileFollower(val slug: String, val name: String, val avatar:
 data class IosOwnProfileActivity(
     val expanded: Boolean, val year: Int, val month: Int, val loading: Boolean, val failed: Boolean,
     val selected: String?, val canGoNext: Boolean, val canGoPrevious: Boolean,
-    val days: List<IosOwnProfileDay>, val rows: List<IosOwnProfileActivityRow>,
+    val days: List<IosOwnProfileDay>,
 )
 
 data class IosOwnProfileDay(
@@ -60,15 +64,10 @@ data class IosOwnProfileDay(
     val selected: Boolean, val today: Boolean, val enabled: Boolean,
 )
 
-data class IosOwnProfileActivityRow(
-    val key: String, val title: String?, val drink: String?, val time: String, val photo: String?, val home: Boolean,
-)
-
-internal fun OwnProfileSnapshot.iosState(language: String): IosOwnProfileState {
+internal fun OwnProfileSnapshot.iosState(): IosOwnProfileState {
     return IosOwnProfileState(active, iosIdentity(), loading || publicLoading && !hasContent, refreshing,
         failed || publicFailed && !hasContent, refreshFailed || publicFailed && hasContent,
-        checkInsLoading || publicLoading, checkInsFailed || publicFailed, checkIns.map { it.iosCheckIn(language, publicProfile?.nickname ?: identity?.userName.orEmpty(),
-            publicProfile?.avatarUrl ?: identity?.avatarUrl) },
+        false, false, emptyList(),
         IosOwnProfileFollowers(followersOpen, followersLoading, followersFailed, moreFollowers,
             followers.map { IosOwnProfileFollower(it.slug, it.userName, it.avatarUrl) }))
 }
@@ -102,6 +101,4 @@ private fun OwnProfileCheckInSnapshot.brew(): IosOwnProfileBrew? = checkIn.prepa
 
 internal fun ProfileActivitySnapshot.iosActivity(expanded: Boolean) = IosOwnProfileActivity(expanded, year, month, loading,
     failed, selected, canGoNext, canGoPrevious,
-    days.map { IosOwnProfileDay(it.date, it.photo, it.shopCount, it.homeCount, it.selected, it.today, it.enabled) },
-    rows.map { IosOwnProfileActivityRow(it.key, it.title, it.drink,
-        utcIsoToLocalDateTime(it.timestamp).substringAfterLast(' ', ""), it.photo, it.home) })
+    days.map { IosOwnProfileDay(it.date, it.photo, it.shopCount, it.homeCount, it.selected, it.today, it.enabled) })

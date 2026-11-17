@@ -45,16 +45,19 @@ private struct OwnProfileScreen: View {
 
     var body: some View {
         GeometryReader { geometry in
-            ScrollView {
-                VStack(alignment: .leading, spacing: 12) {
-                    menu
-                    profileContent(viewport: geometry.size.height)
+            ScrollViewReader { proxy in
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 12) {
+                        menu.id("own-profile-top")
+                        profileContent(viewport: geometry.size.height)
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.top, 8)
+                    .padding(.bottom, 100)
                 }
-                .padding(.horizontal, 16)
-                .padding(.top, 8)
-                .padding(.bottom, 100)
+                .accessibilityIdentifier("own-profile")
+                .onChange(of: model.scrollRevision) { _, _ in proxy.scrollTo("own-profile-top", anchor: .top) }
             }
-            .accessibilityIdentifier("own-profile")
         }
         .font(CoffeePeekNativeStyle.font(15))
         .foregroundStyle(CoffeePeekNativeStyle.foreground)
@@ -80,6 +83,9 @@ private struct OwnProfileScreen: View {
                 .padding()
                 OwnProfileEmbedded(controller: slot.controller)
             }
+            .background(CoffeePeekNativeStyle.background)
+            .foregroundStyle(CoffeePeekNativeStyle.foreground)
+            .tint(CoffeePeekNativeStyle.foreground)
             .presentationDetents([.medium, .large])
         }
     }
@@ -184,11 +190,11 @@ final class OwnProfileModel: ObservableObject {
     @Published private(set) var state: IosOwnProfileState
     @Published private(set) var activity: IosOwnProfileActivity?
     @Published private(set) var selected: OwnProfileTab = .checkIns
-    @Published var checkInKind: OwnProfileCheckInKind = .all
     @Published private(set) var strings: OwnProfileStrings
     @Published private(set) var photoViewer: IosPhotoViewer?
     @Published var preferences: OwnProfileSlot?
     @Published var logoutPresented = false
+    @Published private(set) var scrollRevision = 0
     let profile: IosOwnProfile
     private(set) var shelf: UIViewController?
     private(set) var collections: UIViewController?
@@ -207,10 +213,6 @@ final class OwnProfileModel: ObservableObject {
         calendarObservation?.cancel()
     }
 
-    var visibleCheckIns: [IosOwnProfileCheckIn] {
-        Array(state.checkIns.lazy.filter { self.checkInKind.includes($0) }.prefix(2))
-    }
-
     var followersPresented: Binding<Bool> {
         Binding(get: { self.state.followers.open }, set: { if !$0 { self.profile.closeFollowers() } })
     }
@@ -218,10 +220,13 @@ final class OwnProfileModel: ObservableObject {
     func observe() {
         guard observation == nil else { return }
         update(profile.current())
+        profile.resume()
         if profile.shelfRequested() { openRequestedShelf() }
+        if profile.checkInsRequested() { openRequestedCheckIns() }
         observation = profile.observe(onState: { [weak self] in self?.update($0) },
                                       onLanguage: { [weak self] in self?.strings = OwnProfileStrings(languageTag: $0) },
-                                      onShelf: { [weak self] in self?.openRequestedShelf() })
+                                      onShelf: { [weak self] in self?.openRequestedShelf() },
+                                      onCheckIns: { [weak self] in self?.openRequestedCheckIns() })
     }
 
     func stopObserving() {
@@ -240,7 +245,7 @@ final class OwnProfileModel: ObservableObject {
 
     func selectStat(_ stat: OwnProfileStat) {
         switch stat {
-        case .checkIns: profile.openHistory()
+        case .checkIns: select(.checkIns)
         case .shops: profile.openContribution(kind: OwnProfileContribution.shops.rawValue)
         case .roasters: profile.openContribution(kind: OwnProfileContribution.roasters.rawValue)
         case .followers: profile.openFollowers()
@@ -253,6 +258,13 @@ final class OwnProfileModel: ObservableObject {
     }
 
     func dismissPhotoViewer() { photoViewer = nil }
+
+    func selectDay(_ date: String) {
+        selected = .checkIns
+        profile.selectDay(date: date)
+    }
+
+    func clearSelectedDay() { profile.clearSelectedDay() }
 
     func toggleActivity() {
         expanded.toggle()
@@ -277,7 +289,6 @@ final class OwnProfileModel: ObservableObject {
             shelf = nil
             collections = nil
             selected = .checkIns
-            checkInKind = .all
         } else if next.identity != nil && calendarObservation == nil {
             observeCalendar()
         }
@@ -286,6 +297,13 @@ final class OwnProfileModel: ObservableObject {
     private func observeCalendar() {
         activity = profile.activity(expanded: expanded)
         calendarObservation = profile.observeActivity(expanded: expanded) { [weak self] in self?.activity = $0 }
+    }
+
+    private func openRequestedCheckIns() {
+        selected = .checkIns
+        profile.clearSelectedDay()
+        profile.consumeCheckInsRequest()
+        scrollRevision += 1
     }
 
     private func openRequestedShelf() {
@@ -324,22 +342,6 @@ enum OwnProfileTab: String, CaseIterable, Identifiable {
     var id: Self { self }
 }
 
-enum OwnProfileCheckInKind: String, CaseIterable, Identifiable {
-    case all = "history_all"
-    case shop = "history_at_shop"
-    case home = "history_at_home"
-
-    var id: Self { self }
-
-    func includes(_ row: IosOwnProfileCheckIn) -> Bool {
-        switch self {
-        case .all: true
-        case .shop: !row.home
-        case .home: row.home
-        }
-    }
-}
-
 private enum OwnProfileContribution: String, CaseIterable, Identifiable {
     case changes, shops, roasters
     var id: Self { self }
@@ -362,10 +364,4 @@ private enum OwnProfileContribution: String, CaseIterable, Identifiable {
 struct OwnProfileSlot: Identifiable {
     let controller: UIViewController
     var id: ObjectIdentifier { ObjectIdentifier(controller) }
-}
-
-struct OwnProfileEmbedded: UIViewControllerRepresentable {
-    let controller: UIViewController
-    func makeUIViewController(context: Context) -> UIViewController { controller }
-    func updateUIViewController(_ uiViewController: UIViewController, context: Context) {}
 }

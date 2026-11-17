@@ -66,7 +66,6 @@ internal class FeatureOwnProfileScreenRenderer(private val entry: OwnProfileEntr
             onLogin = { Navigator.navigate(Navigator.Screen.Auth) },
             onOpenUser = { slug, nickname, avatar -> Navigator.navigate(Navigator.Screen.UserProfile(slug, nickname, avatar)) },
             onOpenFavorites = ::openProfileCollections,
-            onOpenCheckIns = { Navigator.navigate(Navigator.Screen.VisitedPlaces) },
             onOpenContributions = ::openProfileContributions,
             onOpenBlockedAuthors = { Navigator.navigate(Navigator.Screen.BlockedAuthors) },
             modifier = Modifier,
@@ -137,8 +136,7 @@ private fun ownProfileSlots(activity: FeatureProfileActivityRenderer) = OwnProfi
             dismissDescription = stringResource(Res.string.profile_collections_cancel),
         ) { ProfileDisplayPreferences() }
     },
-    activityCalendar = { openShop, openCheckIns -> activity.Calendar(openShop, openCheckIns) },
-    activityPreview = { onClick -> activity.Week({ Navigator.navigate(Navigator.Screen.ShopDetail(it)) }, onClick) },
+    history = { content -> activity.History(content) },
     loadError = { onRetry -> CoffeePeekLoadErrorContent(onRetry = onRetry) },
     shelf = OwnProfileShelf(
         content = { modifier, header -> ProfileOwnShelf(modifier, header) },

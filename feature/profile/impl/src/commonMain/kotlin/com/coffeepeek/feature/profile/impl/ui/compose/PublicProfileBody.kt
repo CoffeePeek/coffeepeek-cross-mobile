@@ -95,7 +95,7 @@ private fun PublicProfileLoadedContent(state: PublicProfileState, profile: Publi
         collections = { PublicProfileCollections(profile, viewingOwn, slots, own) },
         shelf = { slots.shelfPreview(profile.slug, viewingOwn) },
         modifier = Modifier.fillMaxSize().then(if (own == null) Modifier.navigationBarsPadding() else Modifier),
-        ownerShelf = own?.shelf, bottomPadding = own?.bottomContentPadding ?: 20.dp,
+        ownerShelf = own?.shelf, ownerHistory = own?.history, bottomPadding = own?.bottomContentPadding ?: 20.dp,
     ) {
         Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Spacer(Modifier.height(2.dp))
@@ -123,7 +123,7 @@ private fun PublicProfileIdentity(state: PublicProfileState, profile: PublicProf
 @Composable
 private fun PublicProfileWeek(state: PublicProfileState, profile: PublicProfile, slots: ProfileSlots,
     callbacks: PublicProfileCallbacks, own: OwnProfileExtras?) {
-    if (own != null) own.activityPreview(callbacks.onOpenCheckIns)
+    if (own != null) own.history.calendar()
     else PublicProfileActivityPreview(profile.slug, profile.activity, state.checkIns,
         (state.isLoadingActivity && profile.activity == null) || (state.isLoadingCheckIns && state.checkIns.isEmpty()),
         state.activityError != null || state.checkInsError != null, slots.image,

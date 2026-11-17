@@ -22,6 +22,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.coffeepeek.feature.profile.api.OwnProfileHistory
 import com.coffeepeek.feature.profile.api.OwnProfileShelf
 import com.coffeepeek.core.designsystem.component.CoffeePeekUnderlineTabs
 import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
@@ -40,11 +41,14 @@ private enum class ProfileContentTab { CheckIns, Collections, Shelf }
 internal fun ProfileContentTabs(
     stateKey: String, checkIns: @Composable () -> Unit, collections: @Composable () -> Unit,
     shelf: @Composable () -> Unit, modifier: Modifier = Modifier,
-    ownerShelf: OwnProfileShelf? = null, bottomPadding: Dp = 0.dp,
+    ownerShelf: OwnProfileShelf? = null, ownerHistory: OwnProfileHistory? = null, bottomPadding: Dp = 0.dp,
     header: @Composable () -> Unit = {},
 ) {
     var selectedName by rememberSaveable(stateKey) { mutableStateOf(ProfileContentTab.CheckIns.name) }
     val selected = ProfileContentTab.entries.firstOrNull { it.name == selectedName } ?: ProfileContentTab.CheckIns
+    LaunchedEffect(ownerHistory?.selectionRevision) {
+        if ((ownerHistory?.selectionRevision ?: 0) > 0) selectedName = ProfileContentTab.CheckIns.name
+    }
     val requested = ownerShelf?.openRequested?.invoke() == true
     LaunchedEffect(requested) {
         if (requested) {
@@ -52,13 +56,7 @@ internal fun ProfileContentTabs(
             ownerShelf?.onOpened?.invoke()
         }
     }
-    // Each text tab keeps its own scroll position; leaving for the shelf (which owns its
-    // scroll container) must not send the others back to the top.
-    val scrolls = remember(stateKey) {
-        val map = mutableMapOf<ProfileContentTab, ScrollState>()
-        ProfileContentTab.entries.forEach { tab -> map[tab] = ScrollState(0) }
-        map
-    }
+    val scrolls = remember(stateKey) { ProfileContentTab.entries.associateWith { ScrollState(0) } }
     val scroll = scrolls.getValue(selected)
     val select: (ProfileContentTab) -> Unit = { selectedName = it.name }
     // The editable shelf owns its scroll container. Move the header with its calendar state and effects.
@@ -67,7 +65,9 @@ internal fun ProfileContentTabs(
             ProfileTabHeader(tab, onSelect, content)
         }
     }
-    if (selected == ProfileContentTab.Shelf && ownerShelf != null) {
+    if (selected == ProfileContentTab.CheckIns && ownerHistory != null) {
+        ownerHistory.list { tabHeader(selected, select, header) }
+    } else if (selected == ProfileContentTab.Shelf && ownerShelf != null) {
         ownerShelf.content(modifier) { tabHeader(selected, select, header) }
     } else Column(modifier.fillMaxWidth().verticalScroll(scroll), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         tabHeader(selected, select, header)

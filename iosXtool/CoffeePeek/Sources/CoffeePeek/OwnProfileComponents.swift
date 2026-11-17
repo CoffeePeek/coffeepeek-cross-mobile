@@ -4,6 +4,21 @@ import UIKit
 
 enum OwnProfileStat: Equatable { case checkIns, shops, roasters, followers, avatar }
 
+struct OwnProfileEmbedded: View {
+    let controller: UIViewController
+
+    var body: some View {
+        OwnProfileControllerRepresentable(controller: controller)
+            .background(CoffeePeekNativeStyle.background)
+    }
+}
+
+private struct OwnProfileControllerRepresentable: UIViewControllerRepresentable {
+    let controller: UIViewController
+    func makeUIViewController(context: Context) -> UIViewController { controller }
+    func updateUIViewController(_ uiViewController: UIViewController, context: Context) {}
+}
+
 struct OwnProfileHeader: View {
     let identity: IosOwnProfileIdentity
     let strings: OwnProfileStrings

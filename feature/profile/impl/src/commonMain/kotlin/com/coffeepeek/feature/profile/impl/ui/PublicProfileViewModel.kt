@@ -39,6 +39,7 @@ internal class PublicProfileViewModel(
     private val accounts: ProfileAccountPort,
     private val visibility: ProfileAuthorVisibility = ProfileAuthorVisibility.None,
     private val snapshots: ProfileSnapshotStore = ProfileSnapshotStore.None,
+    private val includeCheckIns: Boolean = true,
 ) : MviViewModel<PublicProfileState, PublicProfileAction, PublicProfileEvent>(cachedState(slug, accounts, visibility, snapshots)) {
     private var initialized = false
     private var profileJob: Job? = null
@@ -257,7 +258,7 @@ internal class PublicProfileViewModel(
             return
         }
         rememberSnapshot()
-        loadCheckIns(reset = true)
+        if (includeCheckIns) loadCheckIns(reset = true)
         retryFavorites()
         retryActivity()
         currentState.connectionKind?.let(::openConnections)

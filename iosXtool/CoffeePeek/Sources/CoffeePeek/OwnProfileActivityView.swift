@@ -10,24 +10,21 @@ struct OwnProfileActivityView: View {
         OwnProfileActivityCard(
             state: state, strings: strings, profile: model.profile, toggle: model.toggleActivity,
             changeMonth: { model.profile.changeMonth(offset: Int32($0)) },
-            openDay: { date in
-                if state.expanded { model.profile.selectDay(date: date) }
-                else { model.profile.openWeek() }
-            },
-            openRow: { model.profile.openHistoryRow(key: $0) },
+            openDay: model.selectDay,
             retry: { model.profile.retryActivity(expanded: state.expanded) }
         )
     }
 }
 
 private struct OwnProfileActivityCard: View {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var pagingDirection = 1
     let state: IosOwnProfileActivity
     let strings: OwnProfileStrings
     let profile: IosOwnProfile?
     let toggle: () -> Void
     let changeMonth: (Int) -> Void
     let openDay: (String) -> Void
-    let openRow: (String) -> Void
     let retry: () -> Void
     private let columns = Array(repeating: GridItem(.flexible(minimum: 1), spacing: 0), count: 7)
 
@@ -45,7 +42,11 @@ private struct OwnProfileActivityCard: View {
             Rectangle().fill(CoffeePeekNativeStyle.border.opacity(0.4))
                 .frame(height: 1).padding(.top, 10).padding(.bottom, 6)
                 .accessibilityHidden(true)
-            dates
+            ZStack(alignment: .top) {
+                dates.id(monthKey).transition(pageTransition)
+            }
+            .clipped()
+            .simultaneousGesture(monthSwipe)
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 10)
@@ -54,6 +55,16 @@ private struct OwnProfileActivityCard: View {
             RoundedRectangle(cornerRadius: 28).strokeBorder(CoffeePeekNativeStyle.border)
                 .allowsHitTesting(false)
         }
+        .overlay(alignment: .bottomTrailing) {
+            if state.loading {
+                ProgressView().padding(8)
+                    .background(CoffeePeekNativeStyle.surface, in: Circle())
+                    .padding(8).allowsHitTesting(false)
+                    .accessibilityLabel(strings["history_activity_loading"])
+            }
+        }
+        .animation(calendarAnimation, value: state.expanded)
+        .animation(calendarAnimation, value: monthKey)
     }
 
     private var monthHeader: some View {
@@ -88,24 +99,27 @@ private struct OwnProfileActivityCard: View {
     }
 
     private var previousMonth: some View {
-        calendarButton("chevron.left", key: "history_previous_month", enabled: state.canGoPrevious) { changeMonth(-1) }
+        calendarButton("chevron.left", key: "history_previous_month", enabled: state.canGoPrevious) { page(-1) }
     }
 
     private var nextMonth: some View {
-        calendarButton("chevron.right", key: "history_next_month", enabled: state.canGoNext) { changeMonth(1) }
+        calendarButton("chevron.right", key: "history_next_month", enabled: state.canGoNext) { page(1) }
     }
 
     private var collapseButton: some View {
-        calendarButton(state.expanded ? "chevron.up" : "chevron.down",
-                       key: state.expanded ? "history_activity_collapse" : "history_activity_expand", action: toggle)
+        calendarButton("chevron.down",
+                       key: state.expanded ? "history_activity_collapse" : "history_activity_expand",
+                       rotation: state.expanded ? -180 : 0, action: toggle)
     }
 
     private func calendarButton(
-        _ symbol: String, key: String, enabled: Bool = true, action: @escaping () -> Void
+        _ symbol: String, key: String, enabled: Bool = true, rotation: Double = 0,
+        action: @escaping () -> Void
     ) -> some View {
         Button(action: action) {
             Image(systemName: symbol).font(.system(size: 20, weight: .regular))
                 .foregroundStyle(CoffeePeekNativeStyle.foreground)
+                .rotationEffect(.degrees(rotation))
                 .frame(width: 48, height: 48).contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -128,16 +142,48 @@ private struct OwnProfileActivityCard: View {
 
     private var dates: some View {
         LazyVGrid(columns: columns, spacing: 0) {
-            ForEach(state.days.indices, id: \.self) { index in
-                let day = state.days[index]
-                if let date = day.date {
-                    OwnProfileActivityCell(day: day, date: date, strings: strings, profile: profile,
-                                           isExpanded: state.expanded) { openDay(date) }
+            ForEach(0..<slotCount, id: \.self) { index in
+                if index < state.days.count, let date = state.days[index].date {
+                    OwnProfileActivityCell(day: state.days[index], date: date, strings: strings,
+                                           profile: profile) { openDay(date) }
                 } else {
-                    Color.clear.aspectRatio(1, contentMode: .fit).accessibilityHidden(true)
+                    OwnProfileDaySlot { Color.clear }.accessibilityHidden(true)
                 }
             }
         }
+    }
+
+    private var slotCount: Int {
+        let fullWeeks = ((state.days.count + 6) / 7) * 7
+        return max(state.expanded ? 42 : 7, fullWeeks)
+    }
+
+    private var monthKey: String { "\(state.year)-\(state.month)" }
+
+    private var calendarAnimation: Animation? {
+        reduceMotion ? nil : .easeInOut(duration: 0.28)
+    }
+
+    private var pageTransition: AnyTransition {
+        guard !reduceMotion && state.expanded else { return .identity }
+        return .asymmetric(
+            insertion: .move(edge: pagingDirection > 0 ? .trailing : .leading).combined(with: .opacity),
+            removal: .move(edge: pagingDirection > 0 ? .leading : .trailing).combined(with: .opacity)
+        )
+    }
+
+    private var monthSwipe: some Gesture {
+        DragGesture(minimumDistance: 30).onEnded { value in
+            let translation = value.translation
+            guard abs(translation.width) > abs(translation.height) * 1.5 else { return }
+            page(translation.width < 0 ? 1 : -1)
+        }
+    }
+
+    private func page(_ offset: Int) {
+        guard state.expanded, offset < 0 ? state.canGoPrevious : state.canGoNext else { return }
+        pagingDirection = offset
+        changeMonth(offset)
     }
 
     private var monthLabel: String {
@@ -154,45 +200,20 @@ private struct OwnProfileActivityCard: View {
 
     @ViewBuilder
     private var feedback: some View {
-        if state.loading {
-            ProgressView().accessibilityLabel(strings["history_activity_loading"])
-        } else if state.failed {
+        if state.failed && !state.loading {
             OwnProfileRetry(message: strings["history_activity_failed"], strings: strings, retry: retry)
-        } else if state.expanded, let selected = state.selected {
-            selectedRows(date: selected)
         }
     }
+}
 
-    private func selectedRows(date: String) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(ownProfileDayLabel(date, language: strings.languageTag))
-                .font(CoffeePeekNativeStyle.font(17, weight: "Bold", relativeTo: .headline))
-                .accessibilityAddTraits(.isHeader)
-            if state.rows.isEmpty {
-                Text(strings["history_activity_empty_day"]).foregroundStyle(CoffeePeekNativeStyle.secondary)
-            }
-            ForEach(state.rows, id: \.key, content: activityRow)
-        }
-    }
+private struct OwnProfileDaySlot<Content: View>: View {
+    @ScaledMetric(relativeTo: .body) private var minimumHeight: CGFloat = 44
+    @ViewBuilder let content: () -> Content
 
-    private func activityRow(_ row: IosOwnProfileActivityRow) -> some View {
-        Button { openRow(row.key) } label: {
-            HStack(spacing: 8) {
-                OwnProfileImage(url: row.photo, profile: profile, symbol: row.home ? "house" : "cup.and.saucer")
-                    .frame(width: 44, height: 44).clipShape(RoundedRectangle(cornerRadius: 8))
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(row.home ? strings["history_activity_at_home"] : row.title ?? strings["history_shop"])
-                    if let drink = row.drink { Text(drink).foregroundStyle(CoffeePeekNativeStyle.secondary) }
-                    if !row.time.isEmpty { Text(row.time).foregroundStyle(CoffeePeekNativeStyle.secondary) }
-                }
-                Spacer()
-                Image(systemName: "chevron.right").accessibilityHidden(true)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .accessibilityElement(children: .combine)
+    var body: some View {
+        Color.clear.aspectRatio(1, contentMode: .fit)
+            .frame(minHeight: minimumHeight)
+            .overlay { content() }
     }
 }
 
@@ -201,7 +222,6 @@ private struct OwnProfileActivityCell: View {
     let date: String
     let strings: OwnProfileStrings
     let profile: IosOwnProfile?
-    let isExpanded: Bool
     let open: () -> Void
 
     var body: some View {
@@ -214,30 +234,31 @@ private struct OwnProfileActivityCell: View {
         .opacity(day.enabled ? 1 : 0.35)
         .accessibilityLabel(ownProfileDayLabel(date, language: strings.languageTag))
         .accessibilityValue(strings.count("history_profile_day_count", Int(day.shopCount) + Int(day.homeCount)))
-        .accessibilityHint(strings[isExpanded ? "history_select_day" : "history_activity_open"])
+        .accessibilityHint(strings[day.selected ? "profile_check_ins_clear_date" : "history_select_day"])
         .accessibilityAddTraits(day.selected ? .isSelected : [])
     }
 
     private var hasActivity: Bool { day.shopCount > 0 || day.homeCount > 0 }
 
     private var monthDate: some View {
-        ZStack {
-            monthMarker.padding(hasActivity ? 8 : 4)
-            if day.shopCount > 0 {
-                visitMarkers.frame(maxHeight: .infinity, alignment: .bottom).padding(.bottom, 4)
+        OwnProfileDaySlot {
+            ZStack {
+                monthMarker.padding(hasActivity ? 8 : 4)
+                if day.shopCount > 0 {
+                    visitMarkers.frame(maxHeight: .infinity, alignment: .bottom).padding(.bottom, 4)
+                }
             }
-        }
-        .frame(maxWidth: .infinity)
-        .aspectRatio(1, contentMode: .fit)
-        .background(day.selected && day.photo == nil ? CoffeePeekNativeStyle.accent : .clear,
-                    in: RoundedRectangle(cornerRadius: 12))
-        .overlay {
-            if (day.today && !day.selected) || (day.selected && day.photo != nil) {
-                RoundedRectangle(cornerRadius: 12).strokeBorder(CoffeePeekNativeStyle.accent, lineWidth: 1)
-                    .allowsHitTesting(false)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .background(day.selected && day.photo == nil ? CoffeePeekNativeStyle.accent : .clear,
+                        in: RoundedRectangle(cornerRadius: 12))
+            .overlay {
+                if (day.today && !day.selected) || (day.selected && day.photo != nil) {
+                    RoundedRectangle(cornerRadius: 12).strokeBorder(CoffeePeekNativeStyle.accent, lineWidth: 1)
+                        .allowsHitTesting(false)
+                }
             }
+            .padding(2)
         }
-        .padding(2)
     }
 
     @ViewBuilder
@@ -275,40 +296,93 @@ private func ownProfileDayLabel(_ value: String, language: String) -> String {
     return date.formatted(.dateTime.weekday(.wide).day().month(.wide).locale(Locale(identifier: language)))
 }
 
-private func ownProfileActivityPreviewDays(expanded: Bool) -> [IosOwnProfileDay] {
-    let dates = (expanded ? 1...30 : 16...22).map { day in
-        IosOwnProfileDay(date: String(format: "2026-11-%02d", day), photo: nil,
-                         shopCount: day == 10 ? 1 : 0, homeCount: day == 16 ? 1 : 0,
-                         selected: expanded && day == 16, today: day == 16, enabled: day <= 16)
+private func ownProfileActivityPreviewDays(expanded: Bool, month: Int, selected: String?) -> [IosOwnProfileDay] {
+    let calendar = Calendar(identifier: .gregorian)
+    let first = calendar.date(from: DateComponents(year: 2026, month: month, day: 1))!
+    let dates = ownProfileActivityPreviewDateValues(expanded: expanded, month: month, selected: selected).map { value in
+        let day = calendar.component(.day, from: value)
+        let valueMonth = calendar.component(.month, from: value)
+        let date = String(format: "%04d-%02d-%02d", calendar.component(.year, from: value), valueMonth, day)
+        return IosOwnProfileDay(date: date, photo: day == 16 ? "preview://coffee" : nil,
+                         shopCount: day == 10 || day == 16 ? 2 : 0, homeCount: day == 16 ? 1 : 0,
+                         selected: selected == date, today: date == "2026-11-16", enabled: date <= "2026-11-16")
     }
     guard expanded else { return dates }
     let blank = IosOwnProfileDay(date: nil, photo: nil, shopCount: 0, homeCount: 0,
                                  selected: false, today: false, enabled: false)
-    return Array(repeating: blank, count: 6) + dates
+    return Array(repeating: blank, count: (calendar.component(.weekday, from: first) + 5) % 7) + dates
 }
 
-private func ownProfileActivityPreview(expanded: Bool, language: String) -> some View {
-    let state = IosOwnProfileActivity(expanded: expanded, year: 2026, month: 11, loading: false, failed: false,
-                                      selected: nil, canGoNext: false, canGoPrevious: true,
-                                      days: ownProfileActivityPreviewDays(expanded: expanded), rows: [])
-    return OwnProfileActivityCard(state: state, strings: OwnProfileStrings(languageTag: language), profile: nil,
-                                  toggle: {}, changeMonth: { _ in }, openDay: { _ in }, openRow: { _ in }, retry: {})
-        .padding()
+private func ownProfileActivityPreviewDateValues(expanded: Bool, month: Int, selected: String?) -> [Date] {
+    var calendar = Calendar(identifier: .gregorian)
+    calendar.firstWeekday = 2
+    let first = calendar.date(from: DateComponents(year: 2026, month: month, day: 1))!
+    if expanded {
+        return calendar.range(of: .day, in: .month, for: first)!.map {
+            calendar.date(byAdding: .day, value: $0 - 1, to: first)!
+        }
+    }
+    let anchorDay = selected.flatMap { Int($0.suffix(2)) } ?? (month == 11 ? 16 : 1)
+    let anchor = calendar.date(byAdding: .day, value: anchorDay - 1, to: first)!
+    let start = calendar.dateInterval(of: .weekOfYear, for: anchor)!.start
+    return (0..<7).map { calendar.date(byAdding: .day, value: $0, to: start)! }
+}
+
+private struct OwnProfileActivityPreview: View {
+    @State var expanded: Bool
+    let language: String
+    @State private var month = 11
+    @State private var selected: String?
+
+    private var state: IosOwnProfileActivity {
+        IosOwnProfileActivity(expanded: expanded, year: 2026, month: Int32(month), loading: false, failed: false,
+                              selected: selected, canGoNext: month < 11, canGoPrevious: month > 1,
+                              days: ownProfileActivityPreviewDays(expanded: expanded, month: month,
+                                                                  selected: selected))
+    }
+
+    var body: some View {
+        ScrollView {
+            OwnProfileActivityCard(state: state, strings: OwnProfileStrings(languageTag: language), profile: nil,
+                                   toggle: toggle, changeMonth: changeMonth,
+                                   openDay: { selected = selected == $0 ? nil : $0 }, retry: {})
+                .padding()
+        }
         .background(CoffeePeekNativeStyle.background)
+    }
+
+    private func toggle() {
+        expanded.toggle()
+    }
+
+    private func changeMonth(_ offset: Int) {
+        month += offset
+        selected = nil
+    }
 }
 
 #Preview("Current week light") {
-    ownProfileActivityPreview(expanded: false, language: "ru").preferredColorScheme(.light)
+    OwnProfileActivityPreview(expanded: false, language: "ru").preferredColorScheme(.light)
 }
 
 #Preview("Current week dark") {
-    ownProfileActivityPreview(expanded: false, language: "be").preferredColorScheme(.dark)
+    OwnProfileActivityPreview(expanded: false, language: "be").preferredColorScheme(.dark)
 }
 
 #Preview("Month light") {
-    ownProfileActivityPreview(expanded: true, language: "ru").preferredColorScheme(.light)
+    OwnProfileActivityPreview(expanded: true, language: "ru").preferredColorScheme(.light)
 }
 
 #Preview("Month dark") {
-    ownProfileActivityPreview(expanded: true, language: "be").preferredColorScheme(.dark)
+    OwnProfileActivityPreview(expanded: true, language: "be").preferredColorScheme(.dark)
+}
+
+#Preview("Month narrow, large text") {
+    OwnProfileActivityPreview(expanded: true, language: "ru")
+        .frame(width: 320).dynamicTypeSize(.accessibility2).preferredColorScheme(.light)
+}
+
+#Preview("Month reduced motion") {
+    OwnProfileActivityPreview(expanded: true, language: "be")
+        .environment(\.accessibilityReduceMotion, true).preferredColorScheme(.dark)
 }

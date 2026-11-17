@@ -2,7 +2,7 @@ package com.coffeepeek.admin.di.shelf
 
 import com.coffeepeek.admin.di.coffee.coffeeModule
 import com.coffeepeek.admin.di.coffee.featureCoffeeScreenRenderer
-import com.coffeepeek.admin.di.checkinhistory.FeatureCheckInHistoryScreenRenderer
+import com.coffeepeek.admin.di.checkinhistory.FeatureHomeCheckInDetailRenderer
 import com.coffeepeek.admin.di.checkinhistory.HistoryHomeEditorFactory
 import com.coffeepeek.admin.di.checkinhistory.checkInHistoryModule
 import com.coffeepeek.admin.di.catalog.BrewMethodCatalog
@@ -95,7 +95,7 @@ class IosShelfModuleTest {
         koin.get<HomePreparationShelfBagReader>()
         assertSame(koin.get<FeatureCheckInCreateFlowRenderer>(), koin.get<FeatureCheckInCreateFlowRenderer>())
         assertSame(koin.get<HistoryHomeEditorFactory>(), koin.get<HistoryHomeEditorFactory>())
-        assertSame(koin.get<FeatureCheckInHistoryScreenRenderer>(), koin.get<FeatureCheckInHistoryScreenRenderer>())
+        assertSame(koin.get<FeatureHomeCheckInDetailRenderer>(), koin.get<FeatureHomeCheckInDetailRenderer>())
         assertNotNull(featureCoffeeScreenRenderer(koin.get()))
     }
 

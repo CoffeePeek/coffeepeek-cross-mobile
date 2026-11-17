@@ -30,7 +30,7 @@ fun createIosOwnProfileSession(
     checkIns: PublicCheckInsPort, visibility: ProfileAuthorVisibility, snapshots: ProfileSnapshotStore,
     lifecycle: (String) -> Unit = {},
 ): IosOwnProfileSession = IosOwnProfileSession(accounts, OwnProfileViewModel(accounts, signOut), lifecycle) { slug ->
-    PublicProfileViewModel(slug, data, checkIns, accounts, visibility, snapshots)
+    PublicProfileViewModel(slug, data, checkIns, accounts, visibility, snapshots, includeCheckIns = false)
 }
 
 class OwnProfileSnapshot internal constructor(own: OwnProfileState, public: PublicProfileState?, val active: Boolean) {
@@ -44,9 +44,6 @@ class OwnProfileSnapshot internal constructor(own: OwnProfileState, public: Publ
     val refreshing = active && own.isRefreshing
     val failed = active && own.error != null
     val refreshFailed = active && own.refreshError != null
-    val checkIns = public?.checkIns.orEmpty().takeIf { publicProfile != null }.orEmpty().map(::OwnProfileCheckInSnapshot)
-    val checkInsLoading = publicProfile != null && public?.isLoadingCheckIns == true
-    val checkInsFailed = publicProfile != null && public?.checkInsError != null
     val followersOpen = publicProfile != null && public?.connectionKind == PublicProfileConnectionKind.Followers
     val followers = public?.connections.orEmpty().takeIf { followersOpen }.orEmpty()
     val followersLoading = followersOpen && (public?.isLoadingConnections == true || public?.isLoadingMoreConnections == true)
@@ -108,7 +105,6 @@ class IosOwnProfileSession internal constructor(
         if (isCurrent()) own.onAction(OwnProfileAction.Logout)
     }
 
-    fun retryCheckIns() = publicAction(PublicProfileAction.RetryCheckIns)
     fun openFollowers() = publicAction(PublicProfileAction.OpenConnections(PublicProfileConnectionKind.Followers))
     fun closeFollowers() = publicAction(PublicProfileAction.CloseConnections)
     fun retryFollowers() = publicAction(PublicProfileAction.RetryConnections)

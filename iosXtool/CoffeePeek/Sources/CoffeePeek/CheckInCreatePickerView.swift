@@ -10,6 +10,7 @@ func makeCheckInCreatePickerController(picker: IosCheckInCreatePicker) -> UIView
 private final class CheckInCreatePickerController: UIHostingController<CheckInCreatePickerView>,
     UIAdaptivePresentationControllerDelegate {
     private let picker: IosCheckInCreatePicker
+    private var contentHeight: CGFloat?
 
     init(picker: IosCheckInCreatePicker) {
         self.picker = picker
@@ -21,12 +22,30 @@ private final class CheckInCreatePickerController: UIHostingController<CheckInCr
             shelfBag: { picker.chooseShelfBag() }
         ))
         modalPresentationStyle = .pageSheet
-        sheetPresentationController?.detents = [.medium(), .large()]
+        rootView.heightChanged = { [weak self] height in self?.updateHeight(height) }
+        sheetPresentationController?.detents = [.custom(identifier: .init("check-in-create-content")) { [weak self] context in
+            guard let self else { return nil }
+            return min(self.contentHeight ?? self.initialContentHeight(), context.maximumDetentValue)
+        }]
         sheetPresentationController?.prefersGrabberVisible = true
+        sheetPresentationController?.prefersScrollingExpandsWhenScrolledToEdge = false
         sheetPresentationController?.prefersEdgeAttachedInCompactHeight = true
     }
 
     @MainActor required dynamic init?(coder aDecoder: NSCoder) { return nil }
+
+    private func initialContentHeight() -> CGFloat {
+        let width = view.bounds.width > 0 ? view.bounds.width : presentingViewController?.view.bounds.width ?? 320
+        let measuring = UIHostingController(rootView: rootView.content)
+        return ceil(measuring.sizeThatFits(in: CGSize(width: width, height: .greatestFiniteMagnitude)).height)
+    }
+
+    private func updateHeight(_ height: CGFloat) {
+        let height = ceil(height)
+        guard height > 0, contentHeight != height else { return }
+        contentHeight = height
+        sheetPresentationController?.invalidateDetents()
+    }
 
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
@@ -50,22 +69,28 @@ private struct CheckInCreatePickerView: View {
     let shop: () -> Void
     let home: () -> Void
     let shelfBag: () -> Void
+    var heightChanged: (CGFloat) -> Void = { _ in }
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 12) {
-                heading
-                choice("shop", icon: "location.fill", action: shop)
-                choice("home", icon: "cup.and.saucer.fill", action: home)
-                choice("shelf", icon: "camera.fill", action: shelfBag)
-            }
-            .padding(.horizontal, 16)
-            .padding(.top, 24)
-            .padding(.bottom, 24)
-            .frame(maxWidth: 560)
-            .frame(maxWidth: .infinity)
+            content.onGeometryChange(for: CGFloat.self) { $0.size.height } action: { heightChanged($0) }
         }
+        .scrollBounceBehavior(.basedOnSize)
         .background(CoffeePeekNativeStyle.background.ignoresSafeArea())
+    }
+
+    var content: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            heading
+            choice("shop", icon: "location.fill", action: shop)
+            choice("home", icon: "cup.and.saucer.fill", action: home)
+            choice("shelf", icon: "camera.fill", action: shelfBag)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 24)
+        .frame(maxWidth: 560)
+        .frame(maxWidth: .infinity)
+        .fixedSize(horizontal: false, vertical: true)
     }
 
     private var heading: some View {
@@ -139,4 +164,12 @@ private struct CheckInCreatePickerStrings {
     CheckInCreatePickerView(strings: CheckInCreatePickerStrings(languageTag: "be"),
         dismiss: {}, shop: {}, home: {}, shelfBag: {})
         .preferredColorScheme(.dark)
+}
+
+#Preview("Small viewport and large text") {
+    CheckInCreatePickerView(strings: CheckInCreatePickerStrings(languageTag: "ru"),
+        dismiss: {}, shop: {}, home: {}, shelfBag: {})
+        .dynamicTypeSize(.accessibility3)
+        .frame(width: 320, height: 480)
+        .preferredColorScheme(.light)
 }

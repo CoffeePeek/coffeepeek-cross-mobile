@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import com.coffeepeek.feature.profile.api.OwnProfileHistory
 import com.coffeepeek.feature.profile.api.OwnProfileShelf
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -33,12 +34,11 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 /** Owner-specific content and destinations supplied by the application composition boundary. */
 internal class OwnProfileExtras(
     val onOpenFavorites: () -> Unit,
-    val onOpenCheckIns: () -> Unit,
     val onOpenContributions: (ProfileContribution) -> Unit,
     val topBarActions: @Composable () -> Unit,
     val favoritesPreview: @Composable (header: @Composable () -> Unit) -> Unit,
     val checkInCount: Int,
-    val activityPreview: @Composable (onClick: () -> Unit) -> Unit,
+    val history: OwnProfileHistory,
     val bottomContentPadding: Dp,
     val shelf: OwnProfileShelf?,
 )
@@ -71,7 +71,7 @@ internal fun PublicProfileScreen(
     val pending = !visibility.ready || state.profile?.let { !it.isBlockedByViewer && visibility.hides(it.authorId, it.slug) } == true
     val visible = if (pending) state.copy(profile = null, checkIns = emptyList(), connectionKind = null) else state
     val callbacks = PublicProfileCallbacks(onBack, onOpenShop, onOpenUser, onShare,
-        own?.onOpenCheckIns ?: onOpenCheckIns, vm::onAction,
+        onOpenCheckIns, vm::onAction,
         { previews, originals, index -> photos = ProfilePhotos(previews, originals, index) })
     LaunchedEffect(visibility.revision, visible.profile?.slug) { photos = null }
     LaunchedEffect(vm) { vm.events.collect { if (it == PublicProfileEvent.RequireLogin) onLogin() } }

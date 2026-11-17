@@ -67,6 +67,21 @@ class PublicProfileViewModelTest {
         snapshots: ProfileSnapshotStore = ProfileSnapshotStore.None,
     ) = PublicProfileViewModel(slug, data, data, accounts, visibility, snapshots).also { store.put("profile-${nextKey++}", it) }
 
+    @Test fun ownHistoryHeaderDoesNotFetchThePublicFeed() = runTest(dispatcher) {
+        var requests = 0
+        val data = FakeData().apply { checkIns = { _, _ ->
+            requests++
+            Result.success(PublicProfileCheckInPage(emptyList(), null))
+        } }
+        val model = PublicProfileViewModel("canonical", data, data, FakeAccounts(), includeCheckIns = false)
+        store.put("own-header", model)
+        runCurrent()
+        assertNotNull(model.state.value.profile)
+        model.onAction(PublicProfileAction.Refresh)
+        runCurrent()
+        assertEquals(0, requests)
+    }
+
     @Test
     fun recreatedRouteShowsCompleteSnapshotBeforeRefreshAndKeepsItOnNetworkFailure() = runTest(dispatcher) {
         val snapshots = createProfileSnapshotStore()

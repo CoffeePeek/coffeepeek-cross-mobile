@@ -15,7 +15,7 @@ import com.coffeepeek.feature.auth.domain.AuthRepository
 import com.coffeepeek.feature.authorblocking.api.AuthorVisibility
 import com.coffeepeek.feature.checkinhistory.domain.repository.CheckInHistoryRepository
 import com.coffeepeek.feature.checkinhistory.domain.repository.HomeHistoryReader
-import com.coffeepeek.feature.checkinhistory.impl.createIosProfileActivitySession
+import com.coffeepeek.feature.checkinhistory.impl.createIosOwnProfileHistorySession
 import com.coffeepeek.feature.notifications.api.NotificationFeature
 import com.coffeepeek.feature.profile.api.ProfileAccountPort
 import com.coffeepeek.feature.profile.api.ProfileSnapshotStore
@@ -52,9 +52,8 @@ internal fun iosOwnProfileContent(): () -> UIViewController {
         val lease = CheckInHistorySession(sessions)
         val profile = createIosOwnProfileSession(accounts, AppProfileSignOut(notifications, auth, drafts),
             repository, checkIns, AppProfileAuthorVisibility(visibility), snapshots, ::profileLifecycleDiagnostic)
-        factory(IosOwnProfile(profile, lease, { expanded ->
-            createIosProfileActivitySession(lease.bind(shops), lease.bind(homes), calendar::snapshot, expanded)
-        }, language, media))
+        factory(IosOwnProfile(profile, lease,
+            createIosOwnProfileHistorySession(lease.bind(shops), lease.bind(homes), calendar::snapshot), language, media))
     }
 }
 

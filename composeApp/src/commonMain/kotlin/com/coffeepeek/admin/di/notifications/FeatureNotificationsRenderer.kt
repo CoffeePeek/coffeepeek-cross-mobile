@@ -55,7 +55,7 @@ internal fun featureNotificationsRenderer(
     feature: NotificationFeature, contributions: ContributionsRepository, sessions: SessionReader,
 ): NotificationsRenderer {
     val currentUser = { sessions.peekSession()?.takeIf(sessions::isActiveSession)?.userId }
-    val navigation = NotificationNavigation(feature, contributions, currentUser, Navigator::openAppLink) {
+    val navigation = NotificationNavigation(feature, contributions, currentUser, { openNotificationDestination(it) }) {
         ErrorHandler.showError(getString(Res.string.notifications_open_error))
     }
     val entry = createNotificationsEntry(feature, { Navigator.navigate(Navigator.Screen.Auth) }, navigation::open)
