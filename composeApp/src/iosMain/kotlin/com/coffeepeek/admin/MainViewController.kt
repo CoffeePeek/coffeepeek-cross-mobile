@@ -6,6 +6,8 @@ import androidx.compose.ui.window.ComposeUIViewController
 import com.coffeepeek.admin.di.coffee.IosCoffeeDetail
 import com.coffeepeek.admin.di.coffee.LocalIosCoffeeDetailController
 import com.coffeepeek.admin.di.initPlatformKoin
+import com.coffeepeek.admin.di.notifications.IosNotificationInbox
+import com.coffeepeek.admin.di.notifications.LocalIosNotificationInboxController
 import com.coffeepeek.admin.di.auth.IosAuthScreen
 import com.coffeepeek.admin.di.auth.LocalIosAuthController
 import com.coffeepeek.admin.di.profile.IosGuestProfile
@@ -57,6 +59,7 @@ fun MainViewController(
     makeAuthController: (IosAuthScreen) -> UIViewController,
     makeGuestProfileController: (IosGuestProfile) -> UIViewController,
     makeOwnProfileController: (IosOwnProfile) -> UIViewController,
+    makeNotificationInboxController: (IosNotificationInbox, String) -> UIViewController,
 ): UIViewController {
     if (!koinInitialized) {
         initPlatformKoin()
@@ -74,6 +77,7 @@ fun MainViewController(
         makeAuthController,
         makeGuestProfileController,
         makeOwnProfileController,
+        makeNotificationInboxController,
     )
     return ComposeUIViewController { controllers.Content(onReady) }
 }
@@ -90,6 +94,7 @@ private class IosControllerFactories(
     private val makeAuthController: (IosAuthScreen) -> UIViewController,
     private val makeGuestProfileController: (IosGuestProfile) -> UIViewController,
     private val makeOwnProfileController: (IosOwnProfile) -> UIViewController,
+    private val makeNotificationInboxController: (IosNotificationInbox, String) -> UIViewController,
 ) {
     @Composable
     fun Content(onReady: () -> Unit) {
@@ -105,6 +110,7 @@ private class IosControllerFactories(
             LocalIosAuthController provides makeAuthController,
             LocalIosGuestProfileController provides makeGuestProfileController,
             LocalIosOwnProfileController provides makeOwnProfileController,
+            LocalIosNotificationInboxController provides makeNotificationInboxController,
         ) {
             App(onReady = onReady)
         }

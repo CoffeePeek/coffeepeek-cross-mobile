@@ -235,6 +235,15 @@ jobs:
               tail -n 150 "$RUNNER_TEMP/ios-coffee-detail-tests.log"
               exit 1
             }
+      - name: Run notification inbox Kotlin Native tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./gradlew --max-workers=6 :feature:notifications:impl:iosSimulatorArm64Test \
+            > "$RUNNER_TEMP/ios-notification-inbox-tests.log" 2>&1 || {
+              tail -n 150 "$RUNNER_TEMP/ios-notification-inbox-tests.log"
+              exit 1
+            }
       - name: Run own profile and calendar Kotlin Native tests
         shell: bash
         run: |
@@ -276,6 +285,8 @@ jobs:
             feature/shop/impl/build/test-results/iosSimulatorArm64Test/
             ${{ runner.temp }}/ios-coffee-detail-tests.log
             feature/coffee/impl/build/test-results/iosSimulatorArm64Test/
+            ${{ runner.temp }}/ios-notification-inbox-tests.log
+            feature/notifications/impl/build/test-results/iosSimulatorArm64Test/
             ${{ runner.temp }}/ios-own-profile-tests.log
             feature/profile/impl/build/test-results/iosSimulatorArm64Test/
             feature/check-in-history/impl/build/test-results/iosSimulatorArm64Test/

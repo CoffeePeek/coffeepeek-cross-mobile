@@ -55,7 +55,8 @@ private struct ComposeRootView: UIViewControllerRepresentable {
             makeBlockedAuthorsController: makeBlockedAuthorsController,
             makeAuthController: makeAuthController,
             makeGuestProfileController: makeGuestProfileController(profile:),
-            makeOwnProfileController: makeOwnProfileController(profile:)
+            makeOwnProfileController: makeOwnProfileController(profile:),
+            makeNotificationInboxController: makeNotificationInboxController(inbox:languageTag:)
         )
     }
 
