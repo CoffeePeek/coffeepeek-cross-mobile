@@ -411,3 +411,20 @@ check-ins tab and clear its date filter. Ordinary tab switching preserves the se
 and filter. Calendar collapse retains the selected date and anchors its week to that
 date (otherwise today in the displayed month, or the first of a browsed month).
 Calendar reads cover adjacent-month days in that week with stale-response guards.
+
+
+Native result: installed CoffeePeek Xcross 1.2.1 (3092), source c9395d16e,
+Debug/scanner disabled, on iPhone15,4 / iOS 27.0.1. InstallationProxy independently
+confirms 3092; CoreDevice confirms one running test-app process. The existing
+com.coffeepeek 1.2.1 (3108) remains installed. In-place update, no data reset.
+Full framework build: 10m00s; Swift Runner 57.8s. Installation preparation reused
+the framework in 2.0s, signing took 3.4s and installation 13.7s.
+
+Original native failures retained: first Kotlin compile required ExperimentalComposeUiApi
+opt-in for transparent hosts; first Swift preflight rejected writing the read-only
+accessibilityReduceMotion environment in a preview. Both corrected. All 56 Swift
+files then passed typecheck, and the actual Runner compiled successfully. Real
+Reduce Motion remains respected. Native non-UI tests were not executed on Windows.
+Manual acceptance of animations/filtering/picker height/collections themes and
+Android manual UI review remain pending; successful install is not UI acceptance.
+Local signed IPA and sanitized build identity remain under ignored build/xcross-ios.
