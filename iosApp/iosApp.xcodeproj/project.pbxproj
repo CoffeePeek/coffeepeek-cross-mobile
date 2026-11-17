@@ -39,6 +39,8 @@
 		53E77165000000000000000D /* SettingsNative.strings in Resources */ = {isa = PBXBuildFile; fileRef = 53E771650000000000000010 /* SettingsNative.strings */; };
 		B10000000000000000000001 /* BlockedAuthorsScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000003 /* BlockedAuthorsScreen.swift */; };
 		B10000000000000000000002 /* BlockedAuthors.strings in Resources */ = {isa = PBXBuildFile; fileRef = B10000000000000000000006 /* BlockedAuthors.strings */; };
+		C1E6A50B0000000000000001 /* CheckInCreatePickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C1E6A50B0000000000000003 /* CheckInCreatePickerView.swift */; };
+		C1E6A50B0000000000000002 /* NativeCheckInCreate.strings in Resources */ = {isa = PBXBuildFile; fileRef = C1E6A50B0000000000000006 /* NativeCheckInCreate.strings */; };
 		C0FFEE500000000000000001 /* CoffeeDetailScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0FFEE500000000000000004 /* CoffeeDetailScreen.swift */; };
 		C0FFEE500000000000000002 /* CoffeeDetailComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0FFEE500000000000000005 /* CoffeeDetailComponents.swift */; };
 		C0FFEE500000000000000003 /* CoffeeDetail.strings in Resources */ = {isa = PBXBuildFile; fileRef = C0FFEE500000000000000008 /* CoffeeDetail.strings */; };
@@ -104,6 +106,9 @@
 		B10000000000000000000003 /* BlockedAuthorsScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = BlockedAuthorsScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/BlockedAuthorsScreen.swift; sourceTree = "<group>"; };
 		B10000000000000000000004 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/BlockedAuthors.strings; sourceTree = "<group>"; };
 		B10000000000000000000005 /* be */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = be; path = be.lproj/BlockedAuthors.strings; sourceTree = "<group>"; };
+		C1E6A50B0000000000000003 /* CheckInCreatePickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CheckInCreatePickerView.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CheckInCreatePickerView.swift; sourceTree = "<group>"; };
+		C1E6A50B0000000000000004 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/NativeCheckInCreate.strings; sourceTree = "<group>"; };
+		C1E6A50B0000000000000005 /* be */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = be; path = be.lproj/NativeCheckInCreate.strings; sourceTree = "<group>"; };
 		C0FFEE500000000000000004 /* CoffeeDetailScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CoffeeDetailScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CoffeeDetailScreen.swift; sourceTree = "<group>"; };
 		C0FFEE500000000000000005 /* CoffeeDetailComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CoffeeDetailComponents.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CoffeeDetailComponents.swift; sourceTree = "<group>"; };
 		C0FFEE500000000000000006 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/CoffeeDetail.strings; sourceTree = "<group>"; };
@@ -190,7 +195,9 @@
 				53E77165000000000000000A /* LanguageSettingsScreen.swift */,
 				53E77165000000000000000C /* UsagePolicyScreen.swift */,
 				B10000000000000000000003 /* BlockedAuthorsScreen.swift */,
+				C1E6A50B0000000000000003 /* CheckInCreatePickerView.swift */,
 				B10000000000000000000006 /* BlockedAuthors.strings */,
+				C1E6A50B0000000000000006 /* NativeCheckInCreate.strings */,
 				A20000000000000000000014 /* CoffeePeekNativeGlass.swift */,
 				A20000000000000000000013 /* ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CoffeePeekLaunchView.swift */,
 				A20000000000000000000011 /* ../../iosXtool/CoffeePeek/Sources/CoffeePeek/SocialSignInProvider.swift */,
@@ -328,6 +335,7 @@
 				B20000000000000000000002 /* CollectionsLibrary.strings in Resources */,
 				53E77165000000000000000D /* SettingsNative.strings in Resources */,
 				B10000000000000000000002 /* BlockedAuthors.strings in Resources */,
+				C1E6A50B0000000000000002 /* NativeCheckInCreate.strings in Resources */,
 				A10000000000000000000014 /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -420,6 +428,7 @@
 				53E771650000000000000009 /* LanguageSettingsScreen.swift in Sources */,
 				53E77165000000000000000B /* UsagePolicyScreen.swift in Sources */,
 				B10000000000000000000001 /* BlockedAuthorsScreen.swift in Sources */,
+				C1E6A50B0000000000000001 /* CheckInCreatePickerView.swift in Sources */,
 				A10000000000000000000013 /* CoffeePeekNativeGlass.swift in Sources */,
 				A10000000000000000000012 /* ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CoffeePeekLaunchView.swift in Sources */,
 				A10000000000000000000007 /* ../../iosXtool/CoffeePeek/Sources/CoffeePeek/SocialSignInProvider.swift in Sources */,
@@ -500,6 +509,15 @@
 				B10000000000000000000005 /* be */,
 			);
 			name = BlockedAuthors.strings;
+			sourceTree = "<group>";
+		};
+		C1E6A50B0000000000000006 /* NativeCheckInCreate.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				C1E6A50B0000000000000004 /* ru */,
+				C1E6A50B0000000000000005 /* be */,
+			);
+			name = NativeCheckInCreate.strings;
 			sourceTree = "<group>";
 		};
 		C0FFEE500000000000000008 /* CoffeeDetail.strings */ = {

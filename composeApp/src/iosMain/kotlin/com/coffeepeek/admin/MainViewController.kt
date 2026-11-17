@@ -8,6 +8,9 @@ import com.coffeepeek.admin.di.coffee.LocalIosCoffeeDetailController
 import com.coffeepeek.admin.di.initPlatformKoin
 import com.coffeepeek.admin.di.auth.IosAuthScreen
 import com.coffeepeek.admin.di.auth.LocalIosAuthController
+import com.coffeepeek.admin.di.homecheckin.IosCheckInCreatePicker
+import com.coffeepeek.admin.di.homecheckin.LocalCheckInCreatePicker
+import com.coffeepeek.admin.di.homecheckin.iosCheckInCreatePickerContent
 import com.coffeepeek.admin.di.profile.IosGuestProfile
 import com.coffeepeek.admin.di.profile.LocalIosGuestProfileController
 import com.coffeepeek.admin.di.profile.IosOwnProfile
@@ -55,6 +58,7 @@ fun MainViewController(
     makeSettingsController: (IosSettingsScreen) -> UIViewController,
     makeBlockedAuthorsController: (IosBlockedAuthors, String, () -> Unit, () -> Unit, () -> Unit) -> UIViewController,
     makeAuthController: (IosAuthScreen) -> UIViewController,
+    makeCheckInCreatePickerController: (IosCheckInCreatePicker) -> UIViewController,
     makeGuestProfileController: (IosGuestProfile) -> UIViewController,
     makeOwnProfileController: (IosOwnProfile) -> UIViewController,
 ): UIViewController {
@@ -72,6 +76,7 @@ fun MainViewController(
         makeSettingsController,
         makeBlockedAuthorsController,
         makeAuthController,
+        makeCheckInCreatePickerController,
         makeGuestProfileController,
         makeOwnProfileController,
     )
@@ -88,6 +93,7 @@ private class IosControllerFactories(
     private val makeSettingsController: (IosSettingsScreen) -> UIViewController,
     private val makeBlockedAuthorsController: (IosBlockedAuthors, String, () -> Unit, () -> Unit, () -> Unit) -> UIViewController,
     private val makeAuthController: (IosAuthScreen) -> UIViewController,
+    private val makeCheckInCreatePickerController: (IosCheckInCreatePicker) -> UIViewController,
     private val makeGuestProfileController: (IosGuestProfile) -> UIViewController,
     private val makeOwnProfileController: (IosOwnProfile) -> UIViewController,
 ) {
@@ -103,6 +109,7 @@ private class IosControllerFactories(
             LocalIosSettingsController provides makeSettingsController,
             LocalIosBlockedAuthorsController provides makeBlockedAuthorsController,
             LocalIosAuthController provides makeAuthController,
+            LocalCheckInCreatePicker provides iosCheckInCreatePickerContent(makeCheckInCreatePickerController),
             LocalIosGuestProfileController provides makeGuestProfileController,
             LocalIosOwnProfileController provides makeOwnProfileController,
         ) {
