@@ -14,9 +14,7 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.uikit.LocalUIViewController
-import androidx.compose.ui.viewinterop.UIKitInteropInteractionMode
-import androidx.compose.ui.viewinterop.UIKitInteropProperties
-import androidx.compose.ui.viewinterop.UIKitViewController
+import com.coffeepeek.admin.ui.component.NativeEditorControllerHost
 import com.coffeepeek.admin.ui.component.NativeNavigationBar
 import com.coffeepeek.feature.settings.api.LanguagePort
 import com.coffeepeek.feature.shop.impl.ui.data.ShopCheckInPhotoPickerController
@@ -39,8 +37,6 @@ internal actual fun PlatformShopCheckInForm(form: ShopCheckInNativeForm): Boolea
     }
     DisposableEffect(editor) { onDispose { picker.value = null; editor.close() } }
     NativeNavigationBar(form.shopName, editor::dismiss, customBack = true, action = null)
-    UIKitViewController(factory = { controller }, modifier = Modifier.fillMaxSize(),
-        properties = UIKitInteropProperties(interactionMode = UIKitInteropInteractionMode.NonCooperative,
-            isNativeAccessibilityEnabled = true))
+    NativeEditorControllerHost(controller, Modifier.fillMaxSize())
     return true
 }

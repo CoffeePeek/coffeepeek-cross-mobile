@@ -4,15 +4,29 @@ import UIKit
 
 @MainActor
 func makeOwnProfileController(profile: IosOwnProfile) -> UIViewController {
-    UIHostingController(rootView: OwnProfileHost(profile: profile))
+    OwnProfileHostingController(profile: profile)
+}
+
+private final class OwnProfileHostingController: UIHostingController<OwnProfileHost> {
+    private let profile: IosOwnProfile
+    private let model: OwnProfileModel
+
+    init(profile: IosOwnProfile) {
+        self.profile = profile
+        let model = OwnProfileModel(profile: profile)
+        self.model = model
+        super.init(rootView: OwnProfileHost(model: model))
+    }
+
+    @MainActor required dynamic init?(coder: NSCoder) { return nil }
+
+    // SwiftUI may rebuild its state graph while UIKit retains the root tab.
+    // The account lease ends only when that root controller is released.
+    deinit { profile.close() }
 }
 
 private struct OwnProfileHost: View {
-    @StateObject private var model: OwnProfileModel
-
-    init(profile: IosOwnProfile) {
-        _model = StateObject(wrappedValue: OwnProfileModel(profile: profile))
-    }
+    @ObservedObject var model: OwnProfileModel
 
     var body: some View {
         OwnProfileScreen(model: model)
@@ -191,7 +205,6 @@ final class OwnProfileModel: ObservableObject {
     deinit {
         observation?.cancel()
         calendarObservation?.cancel()
-        profile.close()
     }
 
     var visibleCheckIns: [IosOwnProfileCheckIn] {

@@ -67,9 +67,19 @@ class IosHomeCheckInEditor internal constructor(
 
     fun loadImage(url: String, onImage: (UIImage?) -> Unit): IosHomeCheckInObservation {
         return IosHomeCheckInObservation(scope.launch {
-            if (!session.isCurrent()) return@launch
-            val image = imageLease.withCurrentAccount { Result.success(media.loadImage(url)) }.getOrNull()
-            if (session.isCurrent()) onImage(image)
+            try {
+                if (!session.isCurrent()) {
+                    onImage(null)
+                    return@launch
+                }
+                imageLease.withCurrentAccount {
+                    media.observeImage(url, session::isCurrent).collect { onImage(it.takeIf { session.isCurrent() }) }
+                    Result.success(Unit)
+                }
+            } catch (cancelled: CancellationException) {
+                onImage(null)
+                throw cancelled
+            }
         })
     }
 

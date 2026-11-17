@@ -28,7 +28,8 @@ import kotlinx.coroutines.launch
 fun createIosOwnProfileSession(
     accounts: ProfileAccountPort, signOut: ProfileSignOutPort, data: PublicProfileData,
     checkIns: PublicCheckInsPort, visibility: ProfileAuthorVisibility, snapshots: ProfileSnapshotStore,
-): IosOwnProfileSession = IosOwnProfileSession(accounts, OwnProfileViewModel(accounts, signOut)) { slug ->
+    lifecycle: (String) -> Unit = {},
+): IosOwnProfileSession = IosOwnProfileSession(accounts, OwnProfileViewModel(accounts, signOut), lifecycle) { slug ->
     PublicProfileViewModel(slug, data, checkIns, accounts, visibility, snapshots)
 }
 
@@ -69,6 +70,7 @@ class OwnProfileCheckInSnapshot internal constructor(val checkIn: PublicProfileC
 class IosOwnProfileSession internal constructor(
     private val accounts: ProfileAccountPort,
     private val own: OwnProfileViewModel,
+    private val lifecycle: (String) -> Unit = {},
     private val publicFactory: (String) -> PublicProfileViewModel,
 ) {
     private val account = accounts.activeAccount()
@@ -84,6 +86,7 @@ class IosOwnProfileSession internal constructor(
     private var invalidated = false
 
     init {
+        lifecycle("created owner_present=${account != null} scope_present=${accountScope != null}")
         scope.launch { own.state.collect { synchronize(it) } }
         scope.launch { accounts.observeCacheScope().collect { if (!isCurrent()) invalidate() } }
         scope.launch { accounts.observeActiveAccount().collect { if (!isCurrent()) invalidate() } }
@@ -112,7 +115,7 @@ class IosOwnProfileSession internal constructor(
     fun moreFollowers() = publicAction(PublicProfileAction.LoadMoreConnections)
 
     fun close() {
-        invalidate()
+        invalidate("closed")
         scope.cancel()
         ownStore.clear()
     }
@@ -143,11 +146,19 @@ class IosOwnProfileSession internal constructor(
         }
     }
 
-    private fun invalidate() {
+    private fun invalidate(reason: String = inactiveReason()) {
         if (invalidated) return
         invalidated = true
+        lifecycle("invalidated reason=$reason")
         replacePublic(null)
         notify()
+    }
+
+    private fun inactiveReason(): String = when {
+        account == null -> "owner_uninitialized"
+        accounts.activeAccount() != account -> "session_owner"
+        accounts.cacheScope() != accountScope -> "account_scope"
+        else -> "closed"
     }
 
     private fun notify() { updates.value += 1 }

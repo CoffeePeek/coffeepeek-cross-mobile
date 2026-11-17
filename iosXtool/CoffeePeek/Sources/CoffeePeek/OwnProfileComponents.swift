@@ -239,6 +239,7 @@ func profileImageLoader(_ profile: IosOwnProfile?) -> ProfileImageLoader {
 }
 
 struct OwnProfileImage: View {
+    @Environment(\.scenePhase) private var scenePhase
     let url: String?
     let symbol: String
     let fits: Bool
@@ -247,7 +248,9 @@ struct OwnProfileImage: View {
     @State private var image: UIImage?
     @State private var observation: IosOwnProfileObservation?
     @State private var fallbackObservation: IosOwnProfileObservation?
+    @State private var fallbackRequest: UUID?
     @State private var requested: UUID?
+    @State private var visible = false
 
     private struct Sources: Equatable {
         let preview: String?
@@ -284,39 +287,53 @@ struct OwnProfileImage: View {
             .clipped()
         }
         .accessibilityHidden(true)
-        .onAppear(perform: load)
+        .onAppear {
+            visible = true
+            load()
+        }
         .onChange(of: sources) { _, _ in load() }
-        .onDisappear { cancel() }
+        .onChange(of: scenePhase) { _, _ in load() }
+        .onDisappear {
+            visible = false
+            cancel()
+        }
     }
 
     private func load() {
         cancel()
-        image = nil
-        guard let url, !url.isEmpty else { return }
+        guard visible, scenePhase == .active, let url, !url.isEmpty else { return }
         let request = UUID()
         requested = request
         observation = loadImage(url) { next in
             guard requested == request else { return }
-            if let next {
-                image = next
-            } else if let fallbackUrl, !fallbackUrl.isEmpty, fallbackUrl != url {
+            cancelFallback()
+            image = next
+            if next == nil, let fallbackUrl, !fallbackUrl.isEmpty, fallbackUrl != url {
                 loadFallback(fallbackUrl, request: request)
             }
         }
     }
 
     private func loadFallback(_ url: String, request: UUID) {
+        let fallback = UUID()
+        fallbackRequest = fallback
         fallbackObservation = loadImage(url) { next in
-            if requested == request { image = next }
+            if requested == request && fallbackRequest == fallback { image = next }
         }
+    }
+
+    private func cancelFallback() {
+        fallbackRequest = nil
+        fallbackObservation?.cancel()
+        fallbackObservation = nil
     }
 
     private func cancel() {
         requested = nil
+        image = nil
         observation?.cancel()
-        fallbackObservation?.cancel()
+        cancelFallback()
         observation = nil
-        fallbackObservation = nil
     }
 }
 

@@ -342,3 +342,29 @@ that cannot execute on Windows and manual device gates are reported separately.
   device connection. This build has not yet been claimed installed or device-verified.
   iOS-only tests remain authored but unexecuted on Windows; real-account writes
   and full check-in flow migration beyond these editor entries remain separate gates.
+
+#### Device3088 failures and corrective checkpoint
+
+- Installed Debug1.2.1(3088), source `3d131fd13` (documentation-only successor
+  of the successful3087 source), on the agreed iPhone15,4/iOS27.0.1. Independent
+  InstallationProxy and process checks passed; main CoffeePeek1.2.1(3108) remained
+  unchanged. Framework cache2.0s, signing3.3s, USB install13.6s.
+- Manual light/RU review confirmed four statistics in one row and expanded native
+  calendar placement. User initially confirmed tab return retained the profile.
+  Protected check-in, calendar and bag thumbnails displayed placeholders.
+- Opening Home create crashed with UIViewControllerHierarchyInconsistency:
+  the dialog layer contained the view while the outer camera host owned its child
+  controller. User then relaunched and observed inactive/blank profile again.
+  The earlier tab-return result does not certify cold-launch recovery. The run
+  wrapper returned0 despite the captured crash; it is not startup acceptance.
+- Home and Shop editors now use scoped UIKit containment resolved from the mounted
+  responder chain; the existing global dialog camera-host workaround remains.
+  Profile/Home images use the existing permission-aware native viewer stream and
+  clear on invalidation, background or cancelled request. No new photo writer.
+- Own-profile session lifetime now belongs to its hosting controller, with Debug
+  reason-only diagnostics for invalidation. Cold-start root cause is still under
+  investigation; account and privacy guards remain unchanged.
+- Corrective checks: all56 Swift files typechecked; media71 JVM tests passed;
+  Android Debug/packaged DEX checks passed in19s. Body-limit check still reports
+  only the two inherited violations. Five media and two lifecycle iOS non-UI
+  regressions are authored but unexecuted on Windows. Device recheck is required.

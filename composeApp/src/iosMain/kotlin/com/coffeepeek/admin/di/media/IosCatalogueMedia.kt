@@ -16,6 +16,9 @@ internal class IosCatalogueMedia(
 ) {
     suspend fun loadImage(url: String): UIImage? = imageFetcher.loadIosImage(imageUrl(url))
 
+    fun observeImage(url: String, canLoad: () -> Boolean) =
+        imageFetcher.observeIosViewerImage(imageUrl(url), canLoad)
+
     fun viewer(
         images: CoffeePeekPhotoViewerImages,
         index: Int,

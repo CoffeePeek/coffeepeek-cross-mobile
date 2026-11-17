@@ -20,6 +20,7 @@ import com.coffeepeek.feature.profile.api.ProfileContribution
 import com.coffeepeek.feature.profile.impl.IosOwnProfileSession
 import com.coffeepeek.feature.settings.api.LanguagePort
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
@@ -100,9 +101,19 @@ class IosOwnProfile internal constructor(
 
     fun loadImage(url: String, onImage: (UIImage?) -> Unit): IosOwnProfileObservation {
         return IosOwnProfileObservation(scope.launch {
-            if (!isCurrent()) return@launch
-            val image = lease.withCurrentAccount { Result.success(media.loadImage(url)) }.getOrNull()
-            if (isCurrent()) onImage(image)
+            try {
+                if (!isCurrent()) {
+                    onImage(null)
+                    return@launch
+                }
+                lease.withCurrentAccount {
+                    media.observeImage(url, ::isCurrent).collect { onImage(it.takeIf { isCurrent() }) }
+                    Result.success(Unit)
+                }
+            } catch (cancelled: CancellationException) {
+                onImage(null)
+                throw cancelled
+            }
         })
     }
 

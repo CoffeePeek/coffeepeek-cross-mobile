@@ -5,9 +5,6 @@ package com.coffeepeek.admin.di.homecheckin
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.viewinterop.UIKitInteropInteractionMode
-import androidx.compose.ui.viewinterop.UIKitInteropProperties
-import androidx.compose.ui.viewinterop.UIKitViewController
 import androidx.compose.ui.uikit.LocalUIViewController
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -17,6 +14,7 @@ import com.coffeepeek.admin.di.checkinhistory.CheckInHistorySession
 import com.coffeepeek.admin.locator.Constants
 import com.coffeepeek.admin.theme.ThemeManager
 import com.coffeepeek.admin.theme.uiKitStyle
+import com.coffeepeek.admin.ui.component.NativeEditorControllerHost
 import com.coffeepeek.core.media.ImageUrlFetcher
 import com.coffeepeek.core.session.SessionReader
 import com.coffeepeek.feature.homecheckin.impl.NativeHomeCheckInSession
@@ -63,9 +61,7 @@ private fun HomeCheckInNativeHost(session: NativeHomeCheckInSession, allowed: Bo
     }
     DisposableEffect(editor) { onDispose { photos.value = null; editor.close() } }
     HomeCheckInNativeEffects(session, allowed, onClose, onSaved, onDismissAllowed)
-    UIKitViewController(factory = { controller }, modifier = modifier.fillMaxSize(),
-        properties = UIKitInteropProperties(interactionMode = UIKitInteropInteractionMode.NonCooperative,
-            isNativeAccessibilityEnabled = true))
+    NativeEditorControllerHost(controller, modifier.fillMaxSize())
 }
 
 @Composable

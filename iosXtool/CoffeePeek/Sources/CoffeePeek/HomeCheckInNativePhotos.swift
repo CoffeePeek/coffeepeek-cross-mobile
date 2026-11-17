@@ -97,12 +97,14 @@ private struct HomeCheckInNativePhotoSelection: Identifiable {
 }
 
 struct HomeCheckInNativeRemoteImage: View {
+    @Environment(\.scenePhase) private var scenePhase
     let url: String?
     var fits = true
     let load: (String, @escaping (UIImage?) -> Void) -> IosHomeCheckInObservation?
     @State private var image: UIImage?
     @State private var observation: IosHomeCheckInObservation?
     @State private var request: UUID?
+    @State private var visible = false
     var body: some View {
         GeometryReader { geometry in
             Group {
@@ -112,18 +114,27 @@ struct HomeCheckInNativeRemoteImage: View {
                 } else { CoffeePeekNativeStyle.surface.overlay { Image(systemName: "leaf").foregroundStyle(CoffeePeekNativeStyle.secondary) } }
             }.clipped()
         }.accessibilityHidden(true)
-            .onAppear(perform: start).onChange(of: url) { _, _ in start() }.onDisappear(perform: cancel)
+            .onAppear {
+                visible = true
+                start()
+            }
+            .onChange(of: url) { _, _ in start() }
+            .onChange(of: scenePhase) { _, _ in start() }
+            .onDisappear {
+                visible = false
+                cancel()
+            }
     }
     private func start() {
         cancel()
-        image = nil
-        guard let url, !url.isEmpty else { return }
+        guard visible, scenePhase == .active, let url, !url.isEmpty else { return }
         let token = UUID()
         request = token
         observation = load(url) { next in if request == token { image = next } }
     }
     private func cancel() {
         request = nil
+        image = nil
         observation?.cancel()
         observation = nil
     }
