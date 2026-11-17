@@ -17,15 +17,22 @@ sealed class IosAuthScreen(
     private val closePresentation: () -> Unit,
 ) {
     internal val scope = CoroutineScope(Dispatchers.Main + SupervisorJob())
+    private var closed = false
 
     fun languageTag() = language.current().languageTag
     fun observeLanguage(onLanguage: (String) -> Unit) = observe(language.observe().map { it.languageTag }, onLanguage)
     fun back() = onBack()
 
     fun close() {
+        if (closed) return
+        closed = true
         scope.cancel()
+        closeChildren()
         closePresentation()
     }
+
+    internal open fun onHidden() = Unit
+    protected open fun closeChildren() = Unit
 
     internal fun <T> observe(flow: Flow<T>, callback: (T) -> Unit): IosAuthObservation =
         IosAuthObservation(scope.launch { flow.collect { callback(it) } })

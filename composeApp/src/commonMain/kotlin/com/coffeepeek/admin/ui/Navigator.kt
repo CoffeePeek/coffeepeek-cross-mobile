@@ -271,6 +271,9 @@ private fun RootNavHost(
     private val hasOpenedAppLink = MutableStateFlow(false)
     private val checkInSignInHandoff = ShopCheckInSignInHandoff()
 
+    internal fun shopCheckInSignInAttempt(shopId: String, sessions: SessionReader): ShopCheckInSignInHandoff.Attempt =
+        checkInSignInHandoff.attempt(shopId) { sessions.isActiveSession(sessions.peekSession()) }
+
     internal fun openAppLink(screen: Screen) {
         hasOpenedAppLink.value = true
         pendingAppLink.value = screen
@@ -716,15 +719,13 @@ koinInject<ContributionsScreenRenderer>().Editor(route.shopId, route.section, ro
     @Composable
     private fun ShopCheckInSignInRoute(shopId: String) {
         val sessions = koinInject<SessionReader>()
-        val request = remember(shopId) { ShopCheckInSignInHandoff.Request(shopId) }
-        DisposableEffect(request, sessions) {
-            checkInSignInHandoff.begin(request)
-            onDispose {
-                if (!sessions.isActiveSession(sessions.peekSession())) checkInSignInHandoff.cancel(request)
-            }
+        val attempt = remember(shopId, sessions) { shopCheckInSignInAttempt(shopId, sessions) }
+        DisposableEffect(attempt) {
+            attempt.begin()
+            onDispose(attempt::dispose)
         }
         koinInject<AuthScreenRenderer>().CheckInLogin(onClose = {
-            checkInSignInHandoff.cancel(request)
+            attempt.cancel()
             popBack()
         })
     }

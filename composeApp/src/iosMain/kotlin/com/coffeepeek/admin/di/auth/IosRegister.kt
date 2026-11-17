@@ -22,6 +22,8 @@ class IosRegister internal constructor(
     private val google = IosGoogleRequest(scope)
     val appleAvailable get() = presentation.appleAvailable
 
+    override fun onHidden() = google.cancel()
+
     fun currentState() = presentation.current().toIos()
     fun observeState(onState: (IosRegisterState) -> Unit) = observe(presentation.state.map(NativeRegisterState::toIos), onState)
     fun observeSignedIn() = observe(presentation.signedIn) { onSignedIn() }
