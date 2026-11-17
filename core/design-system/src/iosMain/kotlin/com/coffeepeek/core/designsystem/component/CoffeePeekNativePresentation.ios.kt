@@ -20,7 +20,7 @@ internal fun UIViewController.coffeePeekPresentationHost(): UIViewController {
 }
 
 @Composable
-internal fun CoffeePeekPresentNativeController(controller: UIViewController, host: UIViewController) {
+fun CoffeePeekPresentNativeController(controller: UIViewController, host: UIViewController) {
     LaunchedEffect(controller, host) {
         // A visible page sheet may keep a transition coordinator while its custom detent
         // resizes. Its child sheet can be presented without waiting for that resize.

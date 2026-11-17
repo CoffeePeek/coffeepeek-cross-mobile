@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		E10F17E50000000000000001 /* DiscoveryFilterSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10F17E50000000000000002 /* DiscoveryFilterSheet.swift */; };
 		5C13B3110000000000000001 /* ShopCheckInListScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C13B3110000000000000004 /* ShopCheckInListScreen.swift */; };
 		5C13B3110000000000000002 /* ShopCheckInListComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C13B3110000000000000005 /* ShopCheckInListComponents.swift */; };
 		5C13B3110000000000000003 /* NativeShopCheckIns.strings in Resources */ = {isa = PBXBuildFile; fileRef = 5C13B3110000000000000008 /* NativeShopCheckIns.strings */; };
@@ -83,6 +84,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		E10F17E50000000000000002 /* DiscoveryFilterSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = DiscoveryFilterSheet.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/DiscoveryFilterSheet.swift; sourceTree = "<group>"; };
 		5C13B3110000000000000004 /* ShopCheckInListScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ShopCheckInListScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/ShopCheckInListScreen.swift; sourceTree = "<group>"; };
 		5C13B3110000000000000005 /* ShopCheckInListComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ShopCheckInListComponents.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/ShopCheckInListComponents.swift; sourceTree = "<group>"; };
 		5C13B3110000000000000006 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/NativeShopCheckIns.strings; sourceTree = "<group>"; };
@@ -217,6 +219,7 @@
 				A0871E7A0000000000000010 /* RegisterScreen.swift */,
 				A0871E7A0000000000000012 /* RegisterConsent.swift */,
 				A0871E7B0000000000000006 /* GuestProfileScreen.swift */,
+				E10F17E50000000000000002 /* DiscoveryFilterSheet.swift */,
 				A0871E7C0000000000000005 /* OwnProfileScreen.swift */,
 				817EAB940000000000000005 /* PublicProfileScreen.swift */,
 				A0871E7C0000000000000006 /* OwnProfileComponents.swift */,
@@ -479,6 +482,7 @@
 				A0871E7A000000000000000F /* RegisterScreen.swift in Sources */,
 				A0871E7A0000000000000011 /* RegisterConsent.swift in Sources */,
 				A0871E7B0000000000000005 /* GuestProfileScreen.swift in Sources */,
+				E10F17E50000000000000001 /* DiscoveryFilterSheet.swift in Sources */,
 				A0871E7C0000000000000001 /* OwnProfileScreen.swift in Sources */,
 				817EAB940000000000000001 /* PublicProfileScreen.swift in Sources */,
 				A0871E7C0000000000000002 /* OwnProfileComponents.swift in Sources */,

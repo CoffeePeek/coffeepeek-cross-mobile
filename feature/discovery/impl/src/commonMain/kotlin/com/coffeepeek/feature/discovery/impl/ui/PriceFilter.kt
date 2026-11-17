@@ -66,7 +66,7 @@ private fun PriceStops(selected: PriceLevel?) {
 }
 
 @Composable
-private fun priceLabel(level: PriceLevel?): String = stringResource(when (level) {
+internal fun priceLabel(level: PriceLevel?): String = stringResource(when (level) {
     null -> Res.string.discovery_price_any
     PriceLevel.Cheap -> Res.string.discovery_price_cheap
     PriceLevel.Moderate -> Res.string.discovery_price_moderate

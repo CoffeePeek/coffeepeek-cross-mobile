@@ -38,7 +38,11 @@ import com.coffeepeek.admin.theme.ThemeManager
 import androidx.compose.ui.viewinterop.UIKitInteropInteractionMode
 import androidx.compose.ui.viewinterop.UIKitInteropProperties
 import androidx.compose.ui.viewinterop.UIKitViewController
+import com.coffeepeek.admin.di.discovery.IosDiscoveryFilterController
+import com.coffeepeek.admin.di.discovery.IosDiscoveryFilters
+import com.coffeepeek.admin.di.discovery.LocalIosDiscoveryFilterController
 import com.coffeepeek.admin.di.notifications.iosNotificationInboxAction
+import com.coffeepeek.feature.discovery.impl.ui.ProvideIosDiscoveryFilterSheet
 import com.coffeepeek.admin.ui.screen.community.CommunityScreenRenderer
 import com.coffeepeek.admin.ui.Navigator.isHandledByRootNav
 import com.coffeepeek.admin.ui.screen.main.DiscoveryScreenRenderer
@@ -202,13 +206,13 @@ internal actual fun PlatformRootNavigation(
     }
 
     val createTitle = stringResource(Res.string.check_in_create_actions)
-    val (labels, notificationsAction) = nativeRootTabPresentation()
+    val presentation = nativeRootTabPresentation()
     UIKitViewController(factory = {
         IosRootTab.entries.forEachIndexed { index, tab ->
             val navigation = navigations[index]
-            val root = tab.controller(labels[index], nativeContent) {
-                NativeRootTabContent(tab, tabBarVisibility, tabReselections, notificationsAction) { refreshCommunity = it }
-            }
+            val root = tab.controller(presentation.labels[index], nativeContent, presentation.content(tab) {
+                NativeRootTabContent(tab, tabBarVisibility, tabReselections, presentation.notificationsAction) { refreshCommunity = it }
+            })
             navigation.setNavigationBarHidden(true, false)
             navigation.setViewControllers(
                 listOf(root) + restoredNavigation.stacks[index].map { screen ->
@@ -216,7 +220,7 @@ internal actual fun PlatformRootNavigation(
                 },
                 false,
             )
-            navigation.tabBarItem = UITabBarItem(title = labels[index], image = UIImage.systemImageNamed(tab.symbol), tag = index.toLong())
+            navigation.tabBarItem = UITabBarItem(title = presentation.labels[index], image = UIImage.systemImageNamed(tab.symbol), tag = index.toLong())
             navigationDelegates[index].navigation = navigation
             navigationDelegates[index].onStackChanged = { saveNavigation() }
             navigation.delegate = navigationDelegates[index]
@@ -231,7 +235,7 @@ internal actual fun PlatformRootNavigation(
         }
         tabs
     }, modifier = Modifier.fillMaxSize(), update = {
-        updateNativeTabLabels(navigations, labels)
+        updateNativeTabLabels(navigations, presentation.labels)
         createNavigation.tabBarItem.title = createTitle
     }, properties = UIKitInteropProperties(
         interactionMode = UIKitInteropInteractionMode.NonCooperative,
@@ -412,10 +416,21 @@ private fun NativeRootTabContent(tab: IosRootTab, visibility: NativeTabBarVisibi
 private data class NativeRootTabPresentation(
     val labels: List<String>,
     val notificationsAction: @Composable () -> Unit,
-)
+    private val discoveryFilterFactory: (IosDiscoveryFilters) -> UIViewController,
+) {
+    fun content(tab: IosRootTab, body: @Composable () -> Unit): @Composable () -> Unit {
+        if (tab != IosRootTab.Discovery) return body
+        val discoveryContent: @Composable () -> Unit = {
+            ProvideIosDiscoveryFilterSheet({ IosDiscoveryFilterController(it, discoveryFilterFactory) }, body)
+        }
+        return discoveryContent
+    }
+}
 
 @Composable
-private fun nativeRootTabPresentation() = NativeRootTabPresentation(nativeRootTabLabels(), iosNotificationInboxAction())
+private fun nativeRootTabPresentation() = NativeRootTabPresentation(
+    nativeRootTabLabels(), iosNotificationInboxAction(), LocalIosDiscoveryFilterController.current,
+)
 
 @Composable
 private fun nativeRootTabLabels(): List<String> = listOf(

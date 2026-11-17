@@ -5,6 +5,8 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.window.ComposeUIViewController
 import com.coffeepeek.admin.di.coffee.IosCoffeeDetail
 import com.coffeepeek.admin.di.coffee.LocalIosCoffeeDetailController
+import com.coffeepeek.admin.di.discovery.IosDiscoveryFilters
+import com.coffeepeek.admin.di.discovery.LocalIosDiscoveryFilterController
 import com.coffeepeek.admin.di.initPlatformKoin
 import com.coffeepeek.admin.di.notifications.IosNotificationInbox
 import com.coffeepeek.admin.di.notifications.LocalIosNotificationInboxController
@@ -61,6 +63,7 @@ fun handleAppLink(link: String): Boolean {
 
 fun MainViewController(
     onReady: () -> Unit,
+    makeDiscoveryFilterController: (IosDiscoveryFilters) -> UIViewController,
     makeShopMenuGalleryController: (IosShopMenuGallery, String) -> UIViewController,
     makeShopCheckInListController: (IosShopCheckInList, String) -> UIViewController,
     makeCoffeeDetailController: (IosCoffeeDetail, String) -> UIViewController,
@@ -80,6 +83,7 @@ fun MainViewController(
     makePublicProfileController: (IosPublicProfile) -> UIViewController,
     makeNotificationInboxController: (IosNotificationInbox, String) -> UIViewController,
 ): UIViewController = IosControllerFactories(
+    makeDiscoveryFilterController,
     makeShopMenuGalleryController,
     makeShopCheckInListController,
     makeCoffeeDetailController,
@@ -109,6 +113,7 @@ private fun IosControllerFactories.createController(onReady: () -> Unit): UIView
 }
 
 private class IosControllerFactories(
+    private val makeDiscoveryFilterController: (IosDiscoveryFilters) -> UIViewController,
     private val makeShopMenuGalleryController: (IosShopMenuGallery, String) -> UIViewController,
     private val makeShopCheckInListController: (IosShopCheckInList, String) -> UIViewController,
     private val makeCoffeeDetailController: (IosCoffeeDetail, String) -> UIViewController,
@@ -131,6 +136,7 @@ private class IosControllerFactories(
     @Composable
     fun Content(onReady: () -> Unit) {
         CompositionLocalProvider(
+            LocalIosDiscoveryFilterController provides makeDiscoveryFilterController,
             LocalIosShopMenuGalleryController provides makeShopMenuGalleryController,
             LocalIosShopCheckInListController provides makeShopCheckInListController,
             LocalIosCoffeeDetailController provides makeCoffeeDetailController,
