@@ -187,10 +187,12 @@ jobs:
             --tests 'com.coffeepeek.admin.AppLinkHandlingTest' \
             --tests 'com.coffeepeek.admin.ui.AppLinksTest' \
             --tests 'com.coffeepeek.admin.ui.ShopCheckInSignInHandoffTest' \
+            --tests 'com.coffeepeek.admin.di.homecheckin.IosCheckInCreatePickerTest' \
             --tests 'com.coffeepeek.admin.di.auth.IosCheckInAuthFlowTest' \
             --tests 'com.coffeepeek.admin.di.profile.IosProfileCompositionTest' \
             --tests 'com.coffeepeek.admin.di.settings.IosThemeSettingsTest' \
             --tests 'com.coffeepeek.admin.di.coffee.IosCoffeeDetailAnalyticsTest' \
+            --tests 'com.coffeepeek.admin.di.media.IosPhotoViewerTest' \
             --tests 'com.coffeepeek.admin.di.shopreport.IosShopReportTest' \
             --tests 'com.coffeepeek.admin.di.contentreport.IosContentReportTest' \
             --tests 'com.coffeepeek.admin.di.settings.IosSettingsScreensTest' \
@@ -235,6 +237,15 @@ jobs:
               tail -n 150 "$RUNNER_TEMP/ios-coffee-detail-tests.log"
               exit 1
             }
+      - name: Run notification inbox Kotlin Native tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./gradlew --max-workers=6 :feature:notifications:impl:iosSimulatorArm64Test \
+            > "$RUNNER_TEMP/ios-notification-inbox-tests.log" 2>&1 || {
+              tail -n 150 "$RUNNER_TEMP/ios-notification-inbox-tests.log"
+              exit 1
+            }
       - name: Run own profile and calendar Kotlin Native tests
         shell: bash
         run: |
@@ -248,6 +259,17 @@ jobs:
             --tests 'com.coffeepeek.feature.checkinhistory.impl.ui.data.ProfileActivityDatesTest' \
             > "$RUNNER_TEMP/ios-own-profile-tests.log" 2>&1 || {
               tail -n 150 "$RUNNER_TEMP/ios-own-profile-tests.log"
+              exit 1
+            }
+      - name: Run shelf archive Kotlin Native tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./gradlew --max-workers=6 :feature:shelf:impl:iosSimulatorArm64Test \
+            --tests 'com.coffeepeek.feature.shelf.impl.ui.ShelfArchiveViewModelTest' \
+            --tests 'com.coffeepeek.feature.shelf.impl.IosShelfArchiveSessionTest' \
+            > "$RUNNER_TEMP/ios-shelf-archive-tests.log" 2>&1 || {
+              tail -n 150 "$RUNNER_TEMP/ios-shelf-archive-tests.log"
               exit 1
             }
       - name: Run shared business ownership unit and contract tests
@@ -273,11 +295,15 @@ jobs:
             ${{ runner.temp }}/ios-ownership-tests.log
             feature/business-ownership/**/build/test-results/iosSimulatorArm64Test/
             feature/contributions/impl/build/test-results/iosSimulatorArm64Test/
+            ${{ runner.temp }}/ios-shelf-archive-tests.log
+            feature/shelf/impl/build/test-results/iosSimulatorArm64Test/
             composeApp/build/test-results/iosSimulatorArm64Test/
             ${{ runner.temp }}/ios-shop-menu-gallery-tests.log
             feature/shop/impl/build/test-results/iosSimulatorArm64Test/
             ${{ runner.temp }}/ios-coffee-detail-tests.log
             feature/coffee/impl/build/test-results/iosSimulatorArm64Test/
+            ${{ runner.temp }}/ios-notification-inbox-tests.log
+            feature/notifications/impl/build/test-results/iosSimulatorArm64Test/
             ${{ runner.temp }}/ios-own-profile-tests.log
             feature/profile/impl/build/test-results/iosSimulatorArm64Test/
             feature/check-in-history/impl/build/test-results/iosSimulatorArm64Test/

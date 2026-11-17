@@ -47,16 +47,20 @@ private struct ComposeRootView: UIViewControllerRepresentable {
             onReady: { DispatchQueue.main.async { onReady() } },
             makeShopMenuGalleryController: makeShopMenuGalleryController,
             makeCoffeeDetailController: makeCoffeeDetailController,
+            makeShelfArchiveController: makeShelfArchiveController,
             makeThemeSettingsController: makeThemeSettingsController,
             makeShopReportController: makeShopReportController,
             makeContributionsController: makeContributionsController,
             makeContentReportController: makeContentReportController,
             makeCollectionsLibraryController: makeCollectionsLibraryController,
+            makeSavedPublicCollectionController: makeSavedPublicCollectionController,
             makeSettingsController: makeSettingsController,
             makeBlockedAuthorsController: makeBlockedAuthorsController,
             makeAuthController: makeAuthController,
+            makeCheckInCreatePickerController: makeCheckInCreatePickerController,
             makeGuestProfileController: makeGuestProfileController(profile:),
-            makeOwnProfileController: makeOwnProfileController(profile:)
+            makeOwnProfileController: makeOwnProfileController(profile:),
+            makeNotificationInboxController: makeNotificationInboxController(inbox:languageTag:)
         )
     }
 

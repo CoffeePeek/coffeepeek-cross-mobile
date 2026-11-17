@@ -34,13 +34,7 @@ private struct ShopMenuGalleryHost: View {
         )
         .accessibilityHidden(model.viewer != nil)
         .allowsHitTesting(model.viewer == nil)
-        .overlay {
-            if let viewer = model.viewer {
-                ShopMenuGalleryViewer(controller: viewer)
-                    .id(ObjectIdentifier(viewer))
-                    .ignoresSafeArea()
-            }
-        }
+        .coffeePeekPhotoViewer(model.viewer, languageTag: strings.languageTag, onDismiss: model.dismissViewer)
         .onAppear { model.observe() }
         .onDisappear { model.stopObserving() }
     }
@@ -48,7 +42,7 @@ private struct ShopMenuGalleryHost: View {
 
 private final class ShopMenuGalleryModel: ObservableObject {
     @Published private(set) var state: IosShopMenuGalleryState
-    @Published private(set) var viewer: UIViewController?
+    @Published private(set) var viewer: IosPhotoViewer?
     private let gallery: IosShopMenuGallery
     private var observation: IosShopMenuGalleryObservation?
 
@@ -72,16 +66,17 @@ private final class ShopMenuGalleryModel: ObservableObject {
     }
 
     func stopObserving() {
+        guard viewer == nil else { return }
         observation?.cancel()
         observation = nil
     }
 
     private func openViewer(_ photo: IosShopMenuGalleryPhoto) {
         guard viewer == nil else { return }
-        viewer = gallery.makeViewer(photo: photo, onDismiss: { [weak self] in
-            self?.viewer = nil
-        })
+        viewer = gallery.photoViewer(photo: photo)
     }
+
+    func dismissViewer() { viewer = nil }
 }
 
 private struct ShopMenuGalleryScreen<Photo: View>: View {
@@ -209,18 +204,13 @@ private struct ShopMenuGalleryPreviewPhoto: View {
     }
 }
 
-private struct ShopMenuGalleryViewer: UIViewControllerRepresentable {
-    let controller: UIViewController
-
-    func makeUIViewController(context: Context) -> UIViewController { controller }
-    func updateUIViewController(_ uiViewController: UIViewController, context: Context) {}
-}
-
 private struct ShopMenuGalleryStrings {
+    let languageTag: String
     private let bundle: Bundle
     private let locale: Locale
 
     init(languageTag: String) {
+        self.languageTag = languageTag
         let localization = Bundle.main.url(forResource: languageTag, withExtension: "lproj")
         bundle = localization.flatMap { Bundle(url: $0) } ?? .main
         locale = Locale(identifier: languageTag)

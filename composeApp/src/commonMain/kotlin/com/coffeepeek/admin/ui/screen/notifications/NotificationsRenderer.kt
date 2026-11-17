@@ -4,6 +4,8 @@ import androidx.compose.runtime.Composable
 
 /** Application route adapter; both platforms bind migrated feature entries explicitly. */
 interface NotificationsRenderer {
+    suspend fun open(id: String, accountId: String, generation: Long): Boolean
+
     @Composable
     fun Bell()
 

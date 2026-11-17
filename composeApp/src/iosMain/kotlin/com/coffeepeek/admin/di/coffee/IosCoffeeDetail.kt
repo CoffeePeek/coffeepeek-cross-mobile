@@ -7,6 +7,7 @@ import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.ui.nativeScreenHost
 import com.coffeepeek.admin.utils.OpenInBrowser
 import com.coffeepeek.admin.utils.ShareHelper
+import com.coffeepeek.core.designsystem.component.CoffeePeekPhotoViewerImages
 import com.coffeepeek.feature.coffee.impl.IosCoffeeDetailSession
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -58,8 +59,10 @@ class IosCoffeeDetail internal constructor(
     fun loadImage(url: String, onImage: (UIImage?) -> Unit): IosCoffeeDetailObservation =
         IosCoffeeDetailObservation(scope.launch { onImage(media.loadImage(url)) })
 
-    fun makeViewer(): UIViewController? = session.currentState().details?.photos?.takeIf { it.isNotEmpty() }
-        ?.let { urls -> media.makeViewer(urls, 0, session::closePhotos) }
+    fun photoViewer() = session.currentState().details?.photos?.takeIf { it.isNotEmpty() }
+        ?.let { urls -> media.viewer(CoffeePeekPhotoViewerImages(urls), 0) }
+
+    fun closePhotos() = session.closePhotos()
 
     fun visible(host: UIViewController) = analytics.updateOwner(host.nativeScreenHost()?.analyticsVisit)
     fun hidden() = analytics.updateOwner(null)
