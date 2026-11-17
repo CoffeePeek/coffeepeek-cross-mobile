@@ -6,6 +6,7 @@ struct HomeCheckInNativeBeanPicker: View {
     let strings: CheckInNativeStrings
     let actions: HomeCheckInNativeActions
     @State private var customName = ""
+    @State private var footerHeight: CGFloat = 180
     @FocusState private var searching: Bool
     private var bags: [IosHomeCheckInOption] {
         let query = state.catalog.beanQuery.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -15,17 +16,34 @@ struct HomeCheckInNativeBeanPicker: View {
         }
     }
     var body: some View {
-        VStack(spacing: 16) {
-            header
-            search
-            ScrollView {
-                LazyVStack(alignment: .leading, spacing: 8) {
-                    results
-                    customBean
+        GeometryReader { geometry in
+            VStack(spacing: 16) {
+                header
+                search
+                ScrollView {
+                    LazyVStack(alignment: .leading, spacing: 8) { results }
                 }
-            }.scrollDismissesKeyboard(.interactively)
-        }.padding(.horizontal, 16).disabled(!state.status.canEdit)
+                .scrollDismissesKeyboard(.interactively)
+                .frame(maxHeight: .infinity)
+                customBeanFooter(availableHeight: geometry.size.height)
+            }
+        }
+        .padding(.horizontal, 16).disabled(!state.status.canEdit)
             .onAppear { customName = state.draft.customBeanName ?? "" }
+    }
+
+    private func customBeanFooter(availableHeight: CGFloat) -> some View {
+        // Keep the action reachable above the keyboard, even with large text on a small phone.
+        ScrollView {
+            customBean.background {
+                GeometryReader { geometry in
+                    Color.clear.preference(key: HomeCheckInBeanFooterHeight.self, value: geometry.size.height)
+                }
+            }
+        }
+        .frame(height: min(footerHeight, max(44, availableHeight - 176)))
+        .scrollDismissesKeyboard(.interactively)
+        .onPreferenceChange(HomeCheckInBeanFooterHeight.self) { footerHeight = $0 }
     }
     private var header: some View {
         HStack {
@@ -109,6 +127,11 @@ struct HomeCheckInNativeBeanPicker: View {
             }
         }.padding(.vertical, 16)
     }
+}
+
+private struct HomeCheckInBeanFooterHeight: PreferenceKey {
+    static let defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) { value = max(value, nextValue()) }
 }
 
 #Preview("Home bean picker light") {

@@ -5,7 +5,7 @@ import os
 from pathlib import Path
 import subprocess
 
-from xcross_build import ROOT, build_environment, prepare_config
+from xcross_build import ROOT, build_environment, prepare_config, scannerless_linkage_package
 
 BUNDLE_ID = "com.coffeepeek.xcross"
 
@@ -48,7 +48,8 @@ def main():
     environment = build_environment(args.config)
     environment["XCROSS_BUNDLE_ID"] = "original"
     command = [args.xcross, "compose", "run", "--udid", args.udid, "--usb", "--bundle-id", BUNDLE_ID]
-    subprocess.run(command, cwd=ROOT, env=environment, check=True)
+    with scannerless_linkage_package(ROOT):
+        subprocess.run(command, cwd=ROOT, env=environment, check=True)
 
 
 if __name__ == "__main__":

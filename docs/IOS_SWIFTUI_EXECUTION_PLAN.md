@@ -301,3 +301,9 @@ that cannot execute on Windows and manual device gates are reported separately.
 - Function-body verification reports two inherited violations: ownership factory56
   and public-profile native factory31, already present at pulled11535611b.
   No new/grown violation from this checkpoint; baseline unchanged.
+- First native attempt was stopped during Swift dependency compilation, before
+  Kotlin linking: direct xcross invocation bypassed the pulled scannerless linkage
+  context and began compiling ONNX. The existing context is now also used by the
+  device-run wrapper; the next build uses that same context and bundle validation.
+  No affected package was installed. Home custom-bean input now stays in a fixed
+  scrollable footer as on Android, including keyboard/short viewport handling.
