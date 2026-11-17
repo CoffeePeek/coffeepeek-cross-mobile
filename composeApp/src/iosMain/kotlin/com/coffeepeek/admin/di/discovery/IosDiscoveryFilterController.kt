@@ -19,6 +19,7 @@ import org.koin.compose.koinInject
 import platform.UIKit.UIAdaptivePresentationControllerDelegateProtocol
 import platform.UIKit.UIPresentationController
 import platform.UIKit.UIViewController
+import platform.UIKit.presentationController
 import platform.darwin.NSObject
 
 internal val LocalIosDiscoveryFilterController =
@@ -40,9 +41,9 @@ internal fun IosDiscoveryFilterController(
     SideEffect {
         model.update(presentation)
         controller.overrideUserInterfaceStyle = style
-        controller.presentationController?.delegate = delegate
     }
     DisposableEffect(model, controller) {
+        controller.presentationController?.delegate = delegate
         onDispose {
             controller.presentationController?.delegate = null
             model.dispose()

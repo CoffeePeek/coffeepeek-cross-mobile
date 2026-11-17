@@ -24,6 +24,9 @@ internal class FeatureNotificationsRenderer(
     private val navigation: NotificationNavigation,
     private val currentUserId: () -> String?,
 ) : NotificationsRenderer {
+    override suspend fun open(id: String, accountId: String, generation: Long): Boolean =
+        navigation.open(id, accountId, generation)
+
     @Composable
     override fun Bell() = entry.Bell()
 

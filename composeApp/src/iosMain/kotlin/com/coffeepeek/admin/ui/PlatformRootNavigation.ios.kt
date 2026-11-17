@@ -2,11 +2,6 @@
 
 package com.coffeepeek.admin.ui
 
-import com.coffeepeek.admin.di.discovery.IosDiscoveryFilterController
-import com.coffeepeek.admin.di.discovery.IosDiscoveryFilters
-import com.coffeepeek.admin.di.discovery.LocalIosDiscoveryFilterController
-import com.coffeepeek.feature.discovery.impl.ui.ProvideIosDiscoveryFilterSheet
-
 
 import org.koin.compose.koinInject
 import coffeepeek.composeapp.generated.resources.Res
@@ -20,6 +15,7 @@ import com.coffeepeek.admin.di.settings.iosThemeSettingsContent
 import com.coffeepeek.admin.di.shopreport.iosShopReportContent
 import com.coffeepeek.admin.di.contentreport.iosContentReportContent
 import com.coffeepeek.admin.di.collections.iosCollectionsLibraryContent
+import com.coffeepeek.admin.di.collections.iosSavedPublicCollectionContent
 import com.coffeepeek.admin.di.authorblocking.iosBlockedAuthorsContent
 import com.coffeepeek.admin.di.shop.iosShopMenuGalleryContent
 import com.coffeepeek.admin.di.coffee.iosCoffeeDetailContent
@@ -38,6 +34,11 @@ import com.coffeepeek.admin.theme.ThemeManager
 import androidx.compose.ui.viewinterop.UIKitInteropInteractionMode
 import androidx.compose.ui.viewinterop.UIKitInteropProperties
 import androidx.compose.ui.viewinterop.UIKitViewController
+import com.coffeepeek.admin.di.discovery.IosDiscoveryFilterController
+import com.coffeepeek.admin.di.discovery.IosDiscoveryFilters
+import com.coffeepeek.admin.di.discovery.LocalIosDiscoveryFilterController
+import com.coffeepeek.admin.di.notifications.iosNotificationInboxAction
+import com.coffeepeek.feature.discovery.impl.ui.ProvideIosDiscoveryFilterSheet
 import com.coffeepeek.admin.ui.screen.community.CommunityScreenRenderer
 import com.coffeepeek.admin.ui.Navigator.isHandledByRootNav
 import com.coffeepeek.admin.ui.screen.main.DiscoveryScreenRenderer
@@ -200,12 +201,14 @@ internal actual fun PlatformRootNavigation(
         } }
     }
 
+    val createTitle = stringResource(Res.string.check_in_create_actions)
     val presentation = nativeRootTabPresentation()
+    val (labels, notificationsAction) = presentation
     UIKitViewController(factory = {
         IosRootTab.entries.forEachIndexed { index, tab ->
             val navigation = navigations[index]
-            val root = tab.controller(presentation.labels[index], nativeContent, presentation.content(tab) {
-                NativeRootTabContent(tab, isLoggedIn, tabBarVisibility, tabReselections) { refreshCommunity = it }
+            val root = tab.controller(labels[index], nativeContent, presentation.content(tab) {
+                NativeRootTabContent(tab, tabBarVisibility, tabReselections, notificationsAction) { refreshCommunity = it }
             })
             navigation.setNavigationBarHidden(true, false)
             navigation.setViewControllers(
@@ -214,13 +217,13 @@ internal actual fun PlatformRootNavigation(
                 },
                 false,
             )
-            navigation.tabBarItem = UITabBarItem(title = presentation.labels[index], image = UIImage.systemImageNamed(tab.symbol), tag = index.toLong())
+            navigation.tabBarItem = UITabBarItem(title = labels[index], image = UIImage.systemImageNamed(tab.symbol), tag = index.toLong())
             navigationDelegates[index].navigation = navigation
             navigationDelegates[index].onStackChanged = { saveNavigation() }
             navigation.delegate = navigationDelegates[index]
             navigation.interactivePopGestureRecognizer?.delegate = navigationDelegates[index]
         }
-        installRootTabsWithCreate(tabs, navigations, createNavigation, visibleTabIndices, restoredNavigation.selectedTab, presentation.createTitle)
+        installRootTabsWithCreate(tabs, navigations, createNavigation, visibleTabIndices, restoredNavigation.selectedTab, createTitle)
         tabs.delegate = tabDelegate
         tabDelegate.createNavigation = createNavigation
         tabDelegate.onTabChanged = { saveNavigation() }
@@ -229,8 +232,8 @@ internal actual fun PlatformRootNavigation(
         }
         tabs
     }, modifier = Modifier.fillMaxSize(), update = {
-        updateNativeTabLabels(navigations, presentation.labels)
-        createNavigation.tabBarItem.title = presentation.createTitle
+        updateNativeTabLabels(navigations, labels)
+        createNavigation.tabBarItem.title = createTitle
     }, properties = UIKitInteropProperties(
         interactionMode = UIKitInteropInteractionMode.NonCooperative,
         isNativeAccessibilityEnabled = true,
@@ -339,6 +342,7 @@ private fun nativeRouteContent(isLoggedIn: Boolean): (Navigator.Screen) -> (() -
     val shopReportContent = iosShopReportContent()
     val contentReport = iosContentReportContent()
     val collectionsLibraryContent = iosCollectionsLibraryContent()
+    val savedPublicCollectionContent = iosSavedPublicCollectionContent()
     val blockedAuthorsContent = iosBlockedAuthorsContent()
     return { screen ->
         when (screen) {
@@ -350,6 +354,7 @@ private fun nativeRouteContent(isLoggedIn: Boolean): (Navigator.Screen) -> (() -
             is Navigator.Screen.ReportCheckIn -> contentReport(screen.checkInId, true, false)
             is Navigator.Screen.ReportReview -> contentReport(screen.reviewId, false, screen.isPreview)
             Navigator.Screen.CollectionsLibrary -> collectionsLibraryContent
+            is Navigator.Screen.SavedPublicCollection -> { { savedPublicCollectionContent(screen.id) } }
             Navigator.Screen.BlockedAuthors -> blockedAuthorsContent
             else -> settings(screen)
         }
@@ -381,13 +386,14 @@ private fun NativeCreateAction(tabDelegate: TabDelegate, refreshCommunity: (() -
 }
 
 @Composable
-private fun NativeRootTabContent(tab: IosRootTab, isLoggedIn: Boolean, visibility: NativeTabBarVisibility,
-    reselections: MainTabReselections, onRefreshChange: ((() -> Unit)?) -> Unit) {
+private fun NativeRootTabContent(tab: IosRootTab, visibility: NativeTabBarVisibility,
+    reselections: MainTabReselections, notificationsAction: @Composable () -> Unit,
+    onRefreshChange: ((() -> Unit)?) -> Unit) {
     when (tab) {
         IosRootTab.Discovery -> koinInject<DiscoveryScreenRenderer>().Tab(
             onMapExpandedChange = visibility::onMapExpandedChange, reselections = reselections.search)
         IosRootTab.Community -> koinInject<CommunityScreenRenderer>().Content(
-            notificationsAction = { koinInject<com.coffeepeek.admin.ui.screen.notifications.NotificationsRenderer>().Bell() },
+            notificationsAction = notificationsAction,
             onRefreshChange = onRefreshChange)
         IosRootTab.Profile -> error("The iOS profile tab requires a native controller")
         IosRootTab.Settings -> koinInject<SettingsScreenRenderer>().Tab()
@@ -395,24 +401,23 @@ private fun NativeRootTabContent(tab: IosRootTab, isLoggedIn: Boolean, visibilit
     }
 }
 
-private class IosRootTabPresentation(
-    val createTitle: String,
+private data class NativeRootTabPresentation(
     val labels: List<String>,
+    val notificationsAction: @Composable () -> Unit,
     private val discoveryFilterFactory: (IosDiscoveryFilters) -> UIViewController,
 ) {
     fun content(tab: IosRootTab, body: @Composable () -> Unit): @Composable () -> Unit {
         if (tab != IosRootTab.Discovery) return body
-        return @Composable {
+        val discoveryContent: @Composable () -> Unit = {
             ProvideIosDiscoveryFilterSheet({ IosDiscoveryFilterController(it, discoveryFilterFactory) }, body)
         }
+        return discoveryContent
     }
 }
 
 @Composable
-private fun nativeRootTabPresentation() = IosRootTabPresentation(
-    createTitle = stringResource(Res.string.check_in_create_actions),
-    labels = nativeRootTabLabels(),
-    discoveryFilterFactory = LocalIosDiscoveryFilterController.current,
+private fun nativeRootTabPresentation() = NativeRootTabPresentation(
+    nativeRootTabLabels(), iosNotificationInboxAction(), LocalIosDiscoveryFilterController.current,
 )
 
 @Composable

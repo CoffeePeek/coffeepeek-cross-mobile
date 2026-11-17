@@ -3,6 +3,7 @@
 package com.coffeepeek.admin.di.shop
 
 import com.coffeepeek.admin.di.media.IosCatalogueMedia
+import com.coffeepeek.core.designsystem.component.CoffeePeekPhotoViewerImages
 import com.coffeepeek.feature.shop.impl.IosShopMenuGallerySession
 import com.coffeepeek.feature.shop.impl.ShopMenuGallerySnapshot
 import kotlinx.coroutines.CoroutineScope
@@ -11,7 +12,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import platform.UIKit.UIImage
-import platform.UIKit.UIViewController
 
 data class IosShopMenuGalleryState(
     val shopTitle: String,
@@ -59,8 +59,8 @@ class IosShopMenuGallery internal constructor(
             onImage(url?.takeIf(String::isNotBlank)?.let { media.loadImage(it) })
         })
 
-    fun makeViewer(photo: IosShopMenuGalleryPhoto, onDismiss: () -> Unit): UIViewController =
-        media.makeViewer(photo.imageUrls, photo.index, onDismiss)
+    fun photoViewer(photo: IosShopMenuGalleryPhoto) =
+        media.viewer(CoffeePeekPhotoViewerImages(photo.imageUrls), photo.index)
 
     fun close() {
         previewScope.cancel()
