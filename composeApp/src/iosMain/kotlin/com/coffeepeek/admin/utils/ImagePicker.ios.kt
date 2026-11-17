@@ -26,6 +26,7 @@ import platform.UIKit.UIImagePickerController
 import platform.UIKit.UIImagePickerControllerDelegateProtocol
 import platform.UIKit.UIImagePickerControllerOriginalImage
 import platform.UIKit.UIImagePickerControllerSourceType
+import platform.UIKit.UIModalPresentationOverFullScreen
 import platform.UIKit.UINavigationControllerDelegateProtocol
 import platform.UIKit.UIViewController
 import platform.darwin.NSObject
@@ -51,14 +52,7 @@ actual fun rememberPhotoPicker(
     }
 
     fun presentCamera() {
-        val camera = UIImagePickerControllerSourceType.UIImagePickerControllerSourceTypeCamera
-        if (!UIImagePickerController.isSourceTypeAvailable(camera)) return
-        val picker = UIImagePickerController().apply {
-            overrideUserInterfaceStyle = ThemeManager.themeMode.value.uiKitStyle
-            sourceType = camera
-            allowsEditing = false
-            this.delegate = delegate
-        }
+        val picker = cameraPicker(delegate) ?: return
         scope.launch {
             awaitPhotoPickerHost(host)?.presentViewController(picker, animated = true, completion = null)
         }
@@ -78,11 +72,23 @@ actual fun rememberPhotoPicker(
         }
     }
 
-    return remember(delegate, maxSelection) {
+    return remember(host, delegate, maxSelection) {
         PhotoPickerController(
             pickFromGallery = ::presentGallery,
             takePhoto = ::presentCamera,
         )
+    }
+}
+
+private fun cameraPicker(delegate: IosImagePickerDelegate): UIImagePickerController? {
+    val camera = UIImagePickerControllerSourceType.UIImagePickerControllerSourceTypeCamera
+    if (!UIImagePickerController.isSourceTypeAvailable(camera)) return null
+    return UIImagePickerController().apply {
+        overrideUserInterfaceStyle = ThemeManager.themeMode.value.uiKitStyle
+        sourceType = camera
+        modalPresentationStyle = UIModalPresentationOverFullScreen
+        allowsEditing = false
+        this.delegate = delegate
     }
 }
 
@@ -133,12 +139,16 @@ private class IosImagePickerDelegate(
         picker: UIImagePickerController,
         didFinishPickingMediaWithInfo: Map<Any?, *>,
     ) {
-        picker.dismissViewControllerAnimated(true, completion = null)
         val image = didFinishPickingMediaWithInfo[UIImagePickerControllerOriginalImage] as? UIImage
-            ?: return
+        picker.dismissViewControllerAnimated(true) {
+            if (image != null) deliverCameraImage(image)
+        }
+    }
+
+    private fun deliverCameraImage(image: UIImage) {
         isLoading(true)
-        val bytes = UIImageJPEGRepresentation(image, JPEG_QUALITY)?.toByteArray()
-        if (bytes != null) {
+        try {
+            val bytes = UIImageJPEGRepresentation(image, JPEG_QUALITY)?.toByteArray() ?: return
             onPicked(
                 listOf(
                     PickedImage(
@@ -148,8 +158,9 @@ private class IosImagePickerDelegate(
                     ),
                 ),
             )
+        } finally {
+            isLoading(false)
         }
-        isLoading(false)
     }
 
     override fun imagePickerControllerDidCancel(picker: UIImagePickerController) {
