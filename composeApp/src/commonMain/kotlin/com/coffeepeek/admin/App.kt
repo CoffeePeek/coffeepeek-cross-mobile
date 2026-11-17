@@ -73,7 +73,11 @@ internal fun AppContent(content: @Composable () -> Unit) {
                 com.coffeepeek.feature.ownership.api.LocalBusinessOwnership provides koinInject<com.coffeepeek.feature.ownership.api.BusinessOwnershipEntry>(),
                 LocalContentColor provides MaterialTheme.colorScheme.onBackground,
             ) {
-                ProvideDesignSystemPlatformHooks { com.coffeepeek.admin.di.media.ProvideImageEnvironment(content) }
+                ProvideDesignSystemPlatformHooks {
+                    com.coffeepeek.admin.di.homecheckin.ProvidePlatformCheckInEditors {
+                        com.coffeepeek.admin.di.media.ProvideImageEnvironment(content)
+                    }
+                }
             }
         }
     }

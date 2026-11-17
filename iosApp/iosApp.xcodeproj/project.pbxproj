@@ -81,6 +81,17 @@
 		817EAB940000000000000009 /* NativePublicProfile.strings in Resources */ = {isa = PBXBuildFile; fileRef = 817EAB94000000000000000C /* NativePublicProfile.strings */; };
 		F07A11400000000000000001 /* CoffeePeekNativePhotoViewer.swift in Sources */ = {isa = PBXBuildFile; fileRef = F07A11400000000000000003 /* CoffeePeekNativePhotoViewer.swift */; };
 		F07A11400000000000000002 /* NativePhotoViewer.strings in Resources */ = {isa = PBXBuildFile; fileRef = F07A11400000000000000006 /* NativePhotoViewer.strings */; };
+		C39A482AD721BD4CE3E954E6 /* CheckInNativeComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = F35E4494F2133912E05680DB /* CheckInNativeComponents.swift */; };
+		0C20174F28F6D29AA76E2BEE /* CheckInNativeDateField.swift in Sources */ = {isa = PBXBuildFile; fileRef = C89F0137C4ACC294E23840D7 /* CheckInNativeDateField.swift */; };
+		19EE56A02A19F8C0EF365A81 /* ShopCheckInNativeScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC2535FE304764F633F83757 /* ShopCheckInNativeScreen.swift */; };
+		A975A16A0F08668B1352B857 /* ShopCheckInNativeFields.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3BB9149083BDDBB25028DCA9 /* ShopCheckInNativeFields.swift */; };
+		CFB71285E32784D6A7C89461 /* HomeCheckInNativeScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3DC75EE9EC7A52285BE12E6B /* HomeCheckInNativeScreen.swift */; };
+		AB3988F5DCA8C7B40BD3D01D /* HomeCheckInNativeRecipe.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25F4DF9CE7FF41E11B230215 /* HomeCheckInNativeRecipe.swift */; };
+		30A90043BD692A633392CBEE /* HomeCheckInNativeBeanPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE717B8364C9C15EFD76AB5F /* HomeCheckInNativeBeanPicker.swift */; };
+		BE080A3022FB00856830F021 /* HomeCheckInNativePhotos.swift in Sources */ = {isa = PBXBuildFile; fileRef = D49685C4AC658E8E723DCCE1 /* HomeCheckInNativePhotos.swift */; };
+		5B7D6EE565C6D0EB469E72A7 /* HomeCheckInNativeSaved.swift in Sources */ = {isa = PBXBuildFile; fileRef = D5FF61E5E7113C624BCBB1BC /* HomeCheckInNativeSaved.swift */; };
+		A212BDBD9C4E88828A595102 /* NativeHomeCheckIn.strings in Resources */ = {isa = PBXBuildFile; fileRef = 0C1A750256D49685CBF6D16F /* NativeHomeCheckIn.strings */; };
+		0543AA17535E355866739201 /* NativeShopCheckIn.strings in Resources */ = {isa = PBXBuildFile; fileRef = EC640EEA5E659199A22C4935 /* NativeShopCheckIn.strings */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -180,6 +191,19 @@
 		F07A11400000000000000003 /* CoffeePeekNativePhotoViewer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CoffeePeekNativePhotoViewer.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CoffeePeekNativePhotoViewer.swift; sourceTree = "<group>"; };
 		F07A11400000000000000004 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/NativePhotoViewer.strings; sourceTree = "<group>"; };
 		F07A11400000000000000005 /* be */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = be; path = be.lproj/NativePhotoViewer.strings; sourceTree = "<group>"; };
+		F35E4494F2133912E05680DB /* CheckInNativeComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CheckInNativeComponents.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CheckInNativeComponents.swift; sourceTree = "<group>"; };
+		C89F0137C4ACC294E23840D7 /* CheckInNativeDateField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CheckInNativeDateField.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CheckInNativeDateField.swift; sourceTree = "<group>"; };
+		CC2535FE304764F633F83757 /* ShopCheckInNativeScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ShopCheckInNativeScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/ShopCheckInNativeScreen.swift; sourceTree = "<group>"; };
+		3BB9149083BDDBB25028DCA9 /* ShopCheckInNativeFields.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ShopCheckInNativeFields.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/ShopCheckInNativeFields.swift; sourceTree = "<group>"; };
+		3DC75EE9EC7A52285BE12E6B /* HomeCheckInNativeScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = HomeCheckInNativeScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/HomeCheckInNativeScreen.swift; sourceTree = "<group>"; };
+		25F4DF9CE7FF41E11B230215 /* HomeCheckInNativeRecipe.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = HomeCheckInNativeRecipe.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/HomeCheckInNativeRecipe.swift; sourceTree = "<group>"; };
+		DE717B8364C9C15EFD76AB5F /* HomeCheckInNativeBeanPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = HomeCheckInNativeBeanPicker.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/HomeCheckInNativeBeanPicker.swift; sourceTree = "<group>"; };
+		D49685C4AC658E8E723DCCE1 /* HomeCheckInNativePhotos.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = HomeCheckInNativePhotos.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/HomeCheckInNativePhotos.swift; sourceTree = "<group>"; };
+		D5FF61E5E7113C624BCBB1BC /* HomeCheckInNativeSaved.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = HomeCheckInNativeSaved.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/HomeCheckInNativeSaved.swift; sourceTree = "<group>"; };
+		3D2DD99281245D969A9C04BC /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/NativeHomeCheckIn.strings; sourceTree = "<group>"; };
+		2A139ABC193D775C51577878 /* be */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = be; path = be.lproj/NativeHomeCheckIn.strings; sourceTree = "<group>"; };
+		38A0271F3F63C5C4D0439D14 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/NativeShopCheckIn.strings; sourceTree = "<group>"; };
+		C8F6F7C0AED4F7CAC866D33C /* be */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = be; path = be.lproj/NativeShopCheckIn.strings; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -220,6 +244,15 @@
 				A0871E7A0000000000000012 /* RegisterConsent.swift */,
 				A0871E7B0000000000000006 /* GuestProfileScreen.swift */,
 				E10F17E50000000000000002 /* DiscoveryFilterSheet.swift */,
+				F35E4494F2133912E05680DB /* CheckInNativeComponents.swift */,
+				C89F0137C4ACC294E23840D7 /* CheckInNativeDateField.swift */,
+				CC2535FE304764F633F83757 /* ShopCheckInNativeScreen.swift */,
+				3BB9149083BDDBB25028DCA9 /* ShopCheckInNativeFields.swift */,
+				3DC75EE9EC7A52285BE12E6B /* HomeCheckInNativeScreen.swift */,
+				25F4DF9CE7FF41E11B230215 /* HomeCheckInNativeRecipe.swift */,
+				DE717B8364C9C15EFD76AB5F /* HomeCheckInNativeBeanPicker.swift */,
+				D49685C4AC658E8E723DCCE1 /* HomeCheckInNativePhotos.swift */,
+				D5FF61E5E7113C624BCBB1BC /* HomeCheckInNativeSaved.swift */,
 				A0871E7C0000000000000005 /* OwnProfileScreen.swift */,
 				817EAB940000000000000005 /* PublicProfileScreen.swift */,
 				A0871E7C0000000000000006 /* OwnProfileComponents.swift */,
@@ -278,6 +311,8 @@
 				DAD91A913BF64AB1A801759B /* ThemeSettings.strings */,
 				A0871E7A000000000000000C /* NativeAuth.strings */,
 				A0871E7B0000000000000008 /* NativeProfile.strings */,
+				0C1A750256D49685CBF6D16F /* NativeHomeCheckIn.strings */,
+				EC640EEA5E659199A22C4935 /* NativeShopCheckIn.strings */,
 				A0871E7C000000000000000C /* NativeOwnProfile.strings */,
 				817EAB94000000000000000C /* NativePublicProfile.strings */,
 				53E771650000000000000010 /* SettingsNative.strings */,
@@ -397,6 +432,8 @@
 				A10000000000000000000016 /* ThemeSettings.strings in Resources */,
 				A0871E7A0000000000000009 /* NativeAuth.strings in Resources */,
 				A0871E7B0000000000000007 /* NativeProfile.strings in Resources */,
+				A212BDBD9C4E88828A595102 /* NativeHomeCheckIn.strings in Resources */,
+				0543AA17535E355866739201 /* NativeShopCheckIn.strings in Resources */,
 				A0871E7C0000000000000009 /* NativeOwnProfile.strings in Resources */,
 				817EAB940000000000000009 /* NativePublicProfile.strings in Resources */,
 				B30000000000000000000002 /* ShopReport.strings in Resources */,
@@ -483,6 +520,15 @@
 				A0871E7A0000000000000011 /* RegisterConsent.swift in Sources */,
 				A0871E7B0000000000000005 /* GuestProfileScreen.swift in Sources */,
 				E10F17E50000000000000001 /* DiscoveryFilterSheet.swift in Sources */,
+				C39A482AD721BD4CE3E954E6 /* CheckInNativeComponents.swift in Sources */,
+				0C20174F28F6D29AA76E2BEE /* CheckInNativeDateField.swift in Sources */,
+				19EE56A02A19F8C0EF365A81 /* ShopCheckInNativeScreen.swift in Sources */,
+				A975A16A0F08668B1352B857 /* ShopCheckInNativeFields.swift in Sources */,
+				CFB71285E32784D6A7C89461 /* HomeCheckInNativeScreen.swift in Sources */,
+				AB3988F5DCA8C7B40BD3D01D /* HomeCheckInNativeRecipe.swift in Sources */,
+				30A90043BD692A633392CBEE /* HomeCheckInNativeBeanPicker.swift in Sources */,
+				BE080A3022FB00856830F021 /* HomeCheckInNativePhotos.swift in Sources */,
+				5B7D6EE565C6D0EB469E72A7 /* HomeCheckInNativeSaved.swift in Sources */,
 				A0871E7C0000000000000001 /* OwnProfileScreen.swift in Sources */,
 				817EAB940000000000000001 /* PublicProfileScreen.swift in Sources */,
 				A0871E7C0000000000000002 /* OwnProfileComponents.swift in Sources */,
@@ -704,6 +750,24 @@
 				F07A11400000000000000005 /* be */,
 			);
 			name = NativePhotoViewer.strings;
+			sourceTree = "<group>";
+		};
+		0C1A750256D49685CBF6D16F /* NativeHomeCheckIn.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				3D2DD99281245D969A9C04BC /* ru */,
+				2A139ABC193D775C51577878 /* be */,
+			);
+			name = NativeHomeCheckIn.strings;
+			sourceTree = "<group>";
+		};
+		EC640EEA5E659199A22C4935 /* NativeShopCheckIn.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				38A0271F3F63C5C4D0439D14 /* ru */,
+				C8F6F7C0AED4F7CAC866D33C /* be */,
+			);
+			name = NativeShopCheckIn.strings;
 			sourceTree = "<group>";
 		};
 /* End PBXVariantGroup section */

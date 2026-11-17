@@ -13,31 +13,40 @@ struct OwnProfileHeader: View {
     var imageLoader: ProfileImageLoader?
     var signedInLayout = false
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    @ScaledMetric(relativeTo: .caption) private var fourStatsWidth: CGFloat = 220
+    @ScaledMetric(relativeTo: .caption) private var threeStatsWidth: CGFloat = 168
 
     var body: some View {
         if signedInLayout { signedInHeader } else { publicHeader }
     }
 
     private var signedInHeader: some View {
-        VStack(alignment: .leading, spacing: 18) {
-            if dynamicTypeSize.isAccessibilitySize {
-                HStack(spacing: 12) {
-                    avatar(size: 72)
-                    name
-                }
-                counts
-            } else {
-                HStack(alignment: .center, spacing: 12) {
-                    avatar(size: 84)
-                    VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 12) {
+            ViewThatFits(in: .horizontal) {
+                inlineIdentity(avatarSize: 88)
+                inlineIdentity(avatarSize: 56)
+                VStack(alignment: .leading, spacing: 12) {
+                    HStack(spacing: 12) {
+                        avatar(size: 88)
                         name
-                        counts
                     }
+                    counts
                 }
             }
             bio
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private func inlineIdentity(avatarSize: CGFloat) -> some View {
+        HStack(alignment: .center, spacing: 12) {
+            avatar(size: avatarSize)
+            VStack(alignment: .leading, spacing: 8) {
+                name
+                counts
+            }
+            .frame(minWidth: identity.roasters > 0 ? fourStatsWidth : threeStatsWidth)
+        }
     }
 
     private var publicHeader: some View {
@@ -53,44 +62,72 @@ struct OwnProfileHeader: View {
         }
     }
 
+    @ViewBuilder
     private var counts: some View {
-        ViewThatFits(in: .horizontal) {
-            HStack(alignment: .top, spacing: signedInLayout ? 4 : 6) {
+        if dynamicTypeSize.isAccessibilitySize {
+            countsGrid
+        } else {
+            HStack(alignment: .top, spacing: signedInLayout ? 8 : 6) {
                 stat(.checkIns)
                 stat(.shops)
-                stat(.roasters)
+                if !signedInLayout || identity.roasters > 0 { stat(.roasters) }
                 stat(.followers)
             }
-            VStack(spacing: 4) {
-                HStack { stat(.checkIns); stat(.shops) }
-                HStack { stat(.roasters); stat(.followers) }
+        }
+    }
+
+    private var countsGrid: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                stat(.checkIns)
+                stat(.shops)
+            }
+            HStack {
+                if !signedInLayout || identity.roasters > 0 { stat(.roasters) }
+                stat(.followers)
             }
         }
     }
 
     private var name: some View {
-        Text(identity.name).font(CoffeePeekNativeStyle.font(21, weight: "Bold", relativeTo: .title2))
+        Text(identity.name).font(CoffeePeekNativeStyle.font(22, weight: "Bold", relativeTo: .title2))
+            .lineLimit(2)
             .accessibilityAddTraits(.isHeader)
     }
 
     @ViewBuilder
     private var bio: some View {
         if let about = identity.about, !about.isEmpty {
-            Text(about).foregroundStyle(CoffeePeekNativeStyle.secondary)
+            Text(about).font(CoffeePeekNativeStyle.font(15, relativeTo: .subheadline))
+                .foregroundStyle(CoffeePeekNativeStyle.secondary)
         }
     }
 
     @ViewBuilder
     private func avatar(size: CGFloat) -> some View {
-        let image = OwnProfileImage(url: identity.avatar, symbol: "person.crop.circle",
-                                    loadImage: imageLoader ?? profileImageLoader(profile))
-            .frame(width: size, height: size).clipShape(Circle())
+        let image = avatarImage.frame(width: size, height: size).clipShape(Circle())
         if let avatar = identity.avatar, !avatar.isEmpty {
             Button { select(.avatar) } label: { image }
                 .buttonStyle(.plain)
                 .accessibilityLabel(strings["profile_open_avatar"])
         } else {
             image.accessibilityHidden(true)
+        }
+    }
+
+    @ViewBuilder
+    private var avatarImage: some View {
+        if let url = identity.avatar, !url.isEmpty {
+            OwnProfileImage(url: url, symbol: "person.crop.circle",
+                            loadImage: imageLoader ?? profileImageLoader(profile))
+        } else {
+            LinearGradient(colors: [CoffeePeekNativeStyle.color(0xD4A84B), CoffeePeekNativeStyle.accent],
+                           startPoint: .topLeading, endPoint: .bottomTrailing)
+                .overlay {
+                    Text(String(identity.name.drop(while: { $0 == "@" }).prefix(1)).uppercased())
+                        .font(CoffeePeekNativeStyle.font(34, weight: "Semibold", relativeTo: .largeTitle))
+                        .foregroundStyle(CoffeePeekNativeStyle.color(0x1A1412))
+                }
         }
     }
 
@@ -108,20 +145,20 @@ struct OwnProfileHeader: View {
     }
 
     private func statLabel(_ data: (count: Int32, key: String)) -> some View {
-        let compact = signedInLayout && !dynamicTypeSize.isAccessibilitySize
-        return VStack(alignment: compact ? .leading : .center, spacing: 3) {
+        let compact = signedInLayout
+        return VStack(alignment: compact ? .leading : .center, spacing: 0) {
             Text(data.count.formatted())
-                .font(CoffeePeekNativeStyle.font(compact ? 21 : 18, weight: "Bold", relativeTo: .headline))
+                .font(CoffeePeekNativeStyle.font(compact ? 22 : 18, weight: "Semibold", relativeTo: .title2))
                 .lineLimit(compact ? 1 : nil)
-                .minimumScaleFactor(compact ? 0.72 : 1)
             Text(strings[data.key])
-                .font(CoffeePeekNativeStyle.font(compact ? 12 : 11, relativeTo: .caption))
+                .font(CoffeePeekNativeStyle.font(compact ? 12 : 11, weight: "Medium", relativeTo: .caption))
                 .foregroundStyle(CoffeePeekNativeStyle.secondary)
-                .lineLimit(compact ? 1 : nil)
-                .minimumScaleFactor(compact ? 0.74 : 1)
+                .lineLimit(compact && !dynamicTypeSize.isAccessibilitySize ? 2 : nil)
+                .fixedSize(horizontal: false, vertical: true)
         }
         .fixedSize(horizontal: !compact, vertical: false)
-        .frame(maxWidth: .infinity, minHeight: 44, alignment: compact ? .leading : .center)
+        .padding(.vertical, compact ? 4 : 0)
+        .frame(maxWidth: .infinity, minHeight: 48, alignment: compact ? .leading : .center)
     }
 
     private func statValue(_ kind: OwnProfileStat) -> (count: Int32, key: String) {
@@ -162,16 +199,16 @@ struct OwnProfileTabs: View {
             VStack(spacing: 8) {
                 if equalWidth {
                     Text(strings[tab.rawValue])
-                        .font(CoffeePeekNativeStyle.font(16, weight: selection == tab ? "Semibold" : "Regular"))
+                        .font(CoffeePeekNativeStyle.font(15, weight: selection == tab ? "Semibold" : "Regular"))
                         .foregroundStyle(selection == tab ? CoffeePeekNativeStyle.foreground : CoffeePeekNativeStyle.secondary)
                         .fixedSize(horizontal: !fillsWidth, vertical: false)
                         .frame(maxWidth: fillsWidth ? .infinity : nil)
                 } else {
                     Text(strings[tab.rawValue]).fixedSize(horizontal: true, vertical: false)
                 }
-                Capsule().fill(selection == tab ? CoffeePeekNativeStyle.accent : .clear).frame(height: 3)
+                Capsule().fill(selection == tab ? CoffeePeekNativeStyle.accent : .clear).frame(height: 2)
             }
-            .frame(minHeight: 44, alignment: equalWidth ? .bottom : .center)
+            .frame(minHeight: 48, alignment: .center)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -288,6 +325,8 @@ struct OwnProfileImage: View {
         checkIns: 13, shops: 4, roasters: 2, followers: 18, canOpenFollowers: true),
         strings: OwnProfileStrings(languageTag: "ru"), profile: nil, select: { _ in }, signedInLayout: true)
     .padding()
+    .foregroundStyle(CoffeePeekNativeStyle.foreground)
+    .background(CoffeePeekNativeStyle.background)
     .preferredColorScheme(.light)
 }
 
@@ -296,5 +335,35 @@ struct OwnProfileImage: View {
         checkIns: 13, shops: 4, roasters: 2, followers: 18, canOpenFollowers: true),
         strings: OwnProfileStrings(languageTag: "be"), profile: nil, select: { _ in }, signedInLayout: true)
     .padding()
+    .foregroundStyle(CoffeePeekNativeStyle.foreground)
+    .background(CoffeePeekNativeStyle.background)
     .preferredColorScheme(.dark)
+}
+
+#Preview("Profile statistics narrow light") {
+    OwnProfileHeader(identity: IosOwnProfileIdentity(name: "@CoffeePeek", about: nil, avatar: nil,
+        checkIns: 13, shops: 4, roasters: 0, followers: 18, canOpenFollowers: true),
+        strings: OwnProfileStrings(languageTag: "ru"), profile: nil, select: { _ in }, signedInLayout: true)
+        .padding(16).frame(width: 320)
+        .foregroundStyle(CoffeePeekNativeStyle.foreground).background(CoffeePeekNativeStyle.background)
+        .preferredColorScheme(.light)
+}
+
+#Preview("Profile statistics large dark") {
+    OwnProfileHeader(identity: IosOwnProfileIdentity(name: "@CoffeePeek", about: nil, avatar: nil,
+        checkIns: 13, shops: 4, roasters: 0, followers: 18, canOpenFollowers: true),
+        strings: OwnProfileStrings(languageTag: "be"), profile: nil, select: { _ in }, signedInLayout: true)
+        .padding(16).frame(width: 320).dynamicTypeSize(.accessibility2)
+        .foregroundStyle(CoffeePeekNativeStyle.foreground).background(CoffeePeekNativeStyle.background)
+        .preferredColorScheme(.dark)
+}
+
+#Preview("Profile tabs light") {
+    OwnProfileTabs(selection: .checkIns, strings: OwnProfileStrings(languageTag: "ru"), select: { _ in }, equalWidth: true)
+        .padding().background(CoffeePeekNativeStyle.background).preferredColorScheme(.light)
+}
+
+#Preview("Profile tabs dark") {
+    OwnProfileTabs(selection: .collections, strings: OwnProfileStrings(languageTag: "be"), select: { _ in }, equalWidth: true)
+        .padding().background(CoffeePeekNativeStyle.background).preferredColorScheme(.dark)
 }

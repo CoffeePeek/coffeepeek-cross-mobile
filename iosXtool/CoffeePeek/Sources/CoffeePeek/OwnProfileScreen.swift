@@ -32,17 +32,17 @@ private struct OwnProfileScreen: View {
     var body: some View {
         GeometryReader { geometry in
             ScrollView {
-                VStack(alignment: .leading, spacing: 16) {
+                VStack(alignment: .leading, spacing: 12) {
                     menu
                     profileContent(viewport: geometry.size.height)
                 }
                 .padding(.horizontal, 16)
                 .padding(.top, 8)
-                .padding(.bottom, 24)
+                .padding(.bottom, 100)
             }
             .accessibilityIdentifier("own-profile")
         }
-        .font(CoffeePeekNativeStyle.font(16))
+        .font(CoffeePeekNativeStyle.font(15))
         .foregroundStyle(CoffeePeekNativeStyle.foreground)
         .tint(CoffeePeekNativeStyle.accent)
         .background(CoffeePeekNativeStyle.background.ignoresSafeArea())
@@ -73,7 +73,7 @@ private struct OwnProfileScreen: View {
     private var menu: some View {
         HStack {
             Text(model.strings["profile_title"])
-                .font(CoffeePeekNativeStyle.font(24, weight: "Medium", relativeTo: .title))
+                .font(CoffeePeekNativeStyle.font(22, weight: "Semibold", relativeTo: .title2))
                 .accessibilityAddTraits(.isHeader)
             Spacer(minLength: 0)
             if model.state.active {
@@ -89,7 +89,7 @@ private struct OwnProfileScreen: View {
                     Button(model.strings["profile_menu_logout"], systemImage: "rectangle.portrait.and.arrow.right",
                            role: .destructive) { model.logoutPresented = true }
                 } label: {
-                    Image(systemName: "ellipsis").frame(width: 46, height: 46)
+                    Image(systemName: "ellipsis").frame(width: 48, height: 48)
                         .background(CoffeePeekNativeStyle.surface, in: Circle())
                         .overlay {
                             Circle().strokeBorder(CoffeePeekNativeStyle.border.opacity(0.45))
@@ -107,6 +107,9 @@ private struct OwnProfileScreen: View {
         if let identity = model.state.identity {
             OwnProfileHeader(identity: identity, strings: model.strings, profile: model.profile,
                              select: model.selectStat, signedInLayout: true)
+            if let activity = model.activity {
+                OwnProfileActivityView(state: activity, model: model, strings: model.strings)
+            }
             if model.state.refreshFailed {
                 OwnProfileRetry(message: model.strings["profile_update_failed"], strings: model.strings,
                                 retry: model.profile.refresh)
@@ -126,39 +129,7 @@ private struct OwnProfileScreen: View {
     }
 
     private var checkInsTab: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            if let activity = model.activity {
-                OwnProfileActivityView(state: activity, model: model, strings: model.strings)
-            }
-            checkInFilter
-            OwnProfileCheckIns(model: model)
-        }
-    }
-
-    private var checkInFilter: some View {
-        Menu {
-            Picker(model.strings["profile_check_in_source"], selection: $model.checkInKind) {
-                ForEach(OwnProfileCheckInKind.allCases) { kind in Text(model.strings[kind.rawValue]).tag(kind) }
-            }
-        } label: {
-            HStack {
-                Text(model.strings[model.checkInKind.rawValue])
-                Spacer(minLength: 8)
-                Image(systemName: "chevron.up.chevron.down").font(.footnote)
-                    .foregroundStyle(CoffeePeekNativeStyle.secondary)
-                    .accessibilityHidden(true)
-            }
-            .padding(.horizontal, 16)
-            .frame(minHeight: 46)
-            .background(CoffeePeekNativeStyle.foreground.opacity(0.04), in: RoundedRectangle(cornerRadius: 16))
-            .overlay {
-                RoundedRectangle(cornerRadius: 16).strokeBorder(CoffeePeekNativeStyle.border)
-                    .allowsHitTesting(false)
-            }
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel(model.strings["profile_check_in_source"])
-        .accessibilityValue(model.strings[model.checkInKind.rawValue])
+        OwnProfileCheckIns(model: model)
     }
 
     @ViewBuilder

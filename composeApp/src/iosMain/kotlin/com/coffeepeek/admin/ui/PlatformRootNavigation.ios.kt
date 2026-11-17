@@ -121,14 +121,14 @@ private object NavigationMemory {
     var generation = 0
     private var saved = SavedNavigation()
 
-    fun restore(isLoggedIn: Boolean) = saved.takeIf { it.isLoggedIn == isLoggedIn } ?: SavedNavigation()
+    fun restore(session: RootNavigationSession) = saved.takeIf { it.session == session } ?: SavedNavigation()
 
-    fun save(tabs: UITabBarController, navigations: List<UINavigationController>, visibleTabIndices: List<Int>, isLoggedIn: Boolean) {
+    fun save(tabs: UITabBarController, navigations: List<UINavigationController>, visibleTabIndices: List<Int>, session: RootNavigationSession) {
         val selectedTab = visibleTabIndices[tabs.selectedIndex.toInt().coerceIn(visibleTabIndices.indices)]
         val stacks = navigations.map { navigation ->
             navigation.viewControllers.drop(1).mapNotNull { (it as? NativeScreenController)?.route }
         }
-        saved = SavedNavigation(isLoggedIn, selectedTab, stacks)
+        saved = SavedNavigation(session, selectedTab, stacks)
     }
 
     fun clear() {
@@ -138,12 +138,23 @@ private object NavigationMemory {
 }
 
 private data class SavedNavigation(
-    val isLoggedIn: Boolean? = null,
+    val session: RootNavigationSession? = null,
     val selectedTab: Int = 0,
     val stacks: List<List<Navigator.Screen>> = List(IosRootTab.entries.size) { emptyList() },
 )
 
 internal actual fun clearPlatformNavigationState() = NavigationMemory.clear()
+
+private data class RestoredNavigation(val state: SavedNavigation, val generation: Int, val session: RootNavigationSession)
+
+@Composable
+private fun rememberNavigationMemory(): RestoredNavigation {
+    val sessions = koinInject<SessionReader>()
+    return remember {
+        val session = sessions.currentRootNavigationSession()
+        RestoredNavigation(NavigationMemory.restore(session), NavigationMemory.generation, session)
+    }
+}
 
 @Composable
 internal actual fun PlatformRootNavigation(
@@ -164,15 +175,14 @@ internal actual fun PlatformRootNavigation(
     val tabBarVisibility = remember(tabs) { NativeTabBarVisibility(tabs, navigations[IosRootTab.Discovery.ordinal]) { createVisible = it } }
     val businessMode = koinInject<com.coffeepeek.feature.ownership.api.BusinessOwnershipEntry>().Session().businessMode
     val visibleTabIndices = remember(isLoggedIn, businessMode) { nativeRootTabIndices(isLoggedIn, businessMode) }
-    val restoredNavigation = remember { NavigationMemory.restore(isLoggedIn) }
-    val memoryGeneration = remember { NavigationMemory.generation }
+    val navigationMemory = rememberNavigationMemory()
     val pendingTab by Navigator.pendingTabSelection.collectAsState()
     var refreshCommunity by remember { mutableStateOf<(() -> Unit)?>(null) }
     NativeCreateAction(tabDelegate, refreshCommunity, createVisible)
 
     fun saveNavigation() {
         tabBarVisibility.sync()
-        if (NavigationMemory.generation == memoryGeneration) NavigationMemory.save(tabs, navigations, visibleTabIndices, isLoggedIn)
+        if (NavigationMemory.generation == navigationMemory.generation) NavigationMemory.save(tabs, navigations, visibleTabIndices, navigationMemory.session)
     }
 
     suspend fun navigate(block: () -> Unit) = transitions.withLock {
@@ -215,7 +225,7 @@ internal actual fun PlatformRootNavigation(
             })
             navigation.setNavigationBarHidden(true, false)
             navigation.setViewControllers(
-                listOf(root) + restoredNavigation.stacks[index].map { screen ->
+                listOf(root) + navigationMemory.state.stacks[index].map { screen ->
                     controller(screen).apply { hidesBottomBarWhenPushed = true }
                 },
                 false,
@@ -226,7 +236,7 @@ internal actual fun PlatformRootNavigation(
             navigation.delegate = navigationDelegates[index]
             navigation.interactivePopGestureRecognizer?.delegate = navigationDelegates[index]
         }
-        installRootTabsWithCreate(tabs, navigations, createNavigation, visibleTabIndices, restoredNavigation.selectedTab, createTitle)
+        installRootTabsWithCreate(tabs, navigations, createNavigation, visibleTabIndices, navigationMemory.state.selectedTab, createTitle)
         tabs.delegate = tabDelegate
         tabDelegate.createNavigation = createNavigation
         tabDelegate.onTabChanged = { saveNavigation() }

@@ -29,124 +29,101 @@ private struct OwnProfileActivityCard: View {
     let openDay: (String) -> Void
     let openRow: (String) -> Void
     let retry: () -> Void
-    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
-    private let columns = Array(repeating: GridItem(.flexible(minimum: 1), spacing: 2), count: 7)
+    private let columns = Array(repeating: GridItem(.flexible(minimum: 1), spacing: 0), count: 7)
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            if state.expanded { monthCalendar }
-            else { weekCalendar }
+            calendar
             feedback
         }
     }
 
-    private var weekCalendar: some View {
+    private var calendar: some View {
         VStack(spacing: 0) {
-            weekHeader
+            monthHeader.padding(.bottom, 8)
+            weekdays
+            Rectangle().fill(CoffeePeekNativeStyle.border.opacity(0.4))
+                .frame(height: 1).padding(.top, 10).padding(.bottom, 6)
+                .accessibilityHidden(true)
             dates
         }
         .padding(.horizontal, 8)
-        .padding(.vertical, 2)
-        .background(CoffeePeekNativeStyle.surface, in: RoundedRectangle(cornerRadius: 18))
+        .padding(.vertical, 10)
+        .background(CoffeePeekNativeStyle.surface, in: RoundedRectangle(cornerRadius: 28))
         .overlay {
-            RoundedRectangle(cornerRadius: 18)
-                .strokeBorder(CoffeePeekNativeStyle.border)
+            RoundedRectangle(cornerRadius: 28).strokeBorder(CoffeePeekNativeStyle.border)
                 .allowsHitTesting(false)
         }
     }
 
-    private var weekHeader: some View {
-        Button(action: toggle) {
-            weekdays(highlightToday: true)
-                .frame(minHeight: 44)
-                .overlay(alignment: .topTrailing) {
-                    Image(systemName: "chevron.down")
-                        .font(.system(size: 9, weight: .semibold))
-                        .foregroundStyle(CoffeePeekNativeStyle.secondary)
-                        .padding(.top, 4)
-                }
-                .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel(strings["history_activity_expand"])
-    }
-
-    private var monthCalendar: some View {
-        VStack(spacing: 8) {
-            monthHeader
-            weekdays(highlightToday: false)
-                .padding(.vertical, 3)
-            Rectangle()
-                .fill(CoffeePeekNativeStyle.border.opacity(0.5))
-                .frame(height: 1)
-                .accessibilityHidden(true)
-            dates
-        }
-        .padding(.horizontal, dynamicTypeSize.isAccessibilitySize ? 0 : 28)
-    }
-
     private var monthHeader: some View {
         ViewThatFits(in: .horizontal) {
-            HStack(spacing: 8) {
+            HStack(spacing: 0) {
+                if state.expanded { previousMonth }
                 monthTitle.fixedSize(horizontal: true, vertical: false)
+                if state.expanded { nextMonth }
                 Spacer(minLength: 0)
-                monthControls
+                collapseButton
             }
-            VStack(alignment: .leading, spacing: 6) {
+            VStack(alignment: .leading, spacing: 4) {
                 monthTitle
-                monthControls.frame(maxWidth: .infinity, alignment: .trailing)
+                HStack {
+                    if state.expanded {
+                        previousMonth
+                        nextMonth
+                    }
+                    Spacer()
+                    collapseButton
+                }
             }
         }
     }
 
     private var monthTitle: some View {
         Text(monthLabel)
-            .font(CoffeePeekNativeStyle.font(17, weight: "Medium", relativeTo: .headline))
+            .font(CoffeePeekNativeStyle.font(17, weight: "Semibold", relativeTo: .headline))
             .foregroundStyle(CoffeePeekNativeStyle.foreground)
+            .padding(.leading, state.expanded ? 0 : 8)
             .accessibilityAddTraits(.isHeader)
     }
 
-    private var monthControls: some View {
-        HStack(spacing: 3) {
-            calendarButton("chevron.left", key: "history_previous_month", enabled: state.canGoPrevious) {
-                changeMonth(-1)
-            }
-            calendarButton("chevron.right", key: "history_next_month", enabled: state.canGoNext) {
-                changeMonth(1)
-            }
-            calendarButton("chevron.up", key: "history_activity_collapse", action: toggle)
-        }
+    private var previousMonth: some View {
+        calendarButton("chevron.left", key: "history_previous_month", enabled: state.canGoPrevious) { changeMonth(-1) }
+    }
+
+    private var nextMonth: some View {
+        calendarButton("chevron.right", key: "history_next_month", enabled: state.canGoNext) { changeMonth(1) }
+    }
+
+    private var collapseButton: some View {
+        calendarButton(state.expanded ? "chevron.up" : "chevron.down",
+                       key: state.expanded ? "history_activity_collapse" : "history_activity_expand", action: toggle)
     }
 
     private func calendarButton(
         _ symbol: String, key: String, enabled: Bool = true, action: @escaping () -> Void
     ) -> some View {
         Button(action: action) {
-            Image(systemName: symbol)
-                .font(.system(size: 15, weight: .medium))
+            Image(systemName: symbol).font(.system(size: 20, weight: .regular))
                 .foregroundStyle(CoffeePeekNativeStyle.foreground)
-                .frame(width: 44, height: 44)
-                .background(CoffeePeekNativeStyle.surface, in: Circle())
-                .shadow(color: .black.opacity(0.06), radius: 2, x: 0, y: 1)
+                .frame(width: 48, height: 48).contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .disabled(!enabled)
-        .opacity(enabled ? 1 : 0.4)
+        .opacity(enabled ? 1 : 0.35)
         .accessibilityLabel(strings[key])
     }
 
-    private func weekdays(highlightToday: Bool) -> some View {
-        LazyVGrid(columns: columns) {
+    private var weekdays: some View {
+        LazyVGrid(columns: columns, spacing: 0) {
             ForEach(0..<7) { index in
-                let today = highlightToday && state.days.indices.contains(index) && state.days[index].today
                 Text(strings["history_weekday_\(index)"])
-                    .font(CoffeePeekNativeStyle.font(12, weight: today ? "Semibold" : "Regular", relativeTo: .caption))
-                    .foregroundStyle(today ? CoffeePeekNativeStyle.accent : CoffeePeekNativeStyle.secondary)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.7)
+                    .font(CoffeePeekNativeStyle.font(12, weight: "Medium", relativeTo: .caption))
+                    .foregroundStyle(CoffeePeekNativeStyle.secondary)
+                    .lineLimit(1).minimumScaleFactor(0.7)
             }
         }
-        .accessibilityHidden(!highlightToday)
+        .accessibilityHidden(true)
     }
 
     private var dates: some View {
@@ -157,7 +134,7 @@ private struct OwnProfileActivityCard: View {
                     OwnProfileActivityCell(day: day, date: date, strings: strings, profile: profile,
                                            isExpanded: state.expanded) { openDay(date) }
                 } else {
-                    Color.clear.frame(minHeight: 44).accessibilityHidden(true)
+                    Color.clear.aspectRatio(1, contentMode: .fit).accessibilityHidden(true)
                 }
             }
         }
@@ -226,19 +203,15 @@ private struct OwnProfileActivityCell: View {
     let profile: IosOwnProfile?
     let isExpanded: Bool
     let open: () -> Void
-    @ScaledMetric(relativeTo: .body) private var dateHeight: CGFloat = 44
 
     var body: some View {
         Button(action: open) {
-            Group {
-                if isExpanded { monthDate }
-                else { weekMarker }
-            }
+            monthDate
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .disabled(!day.enabled)
-        .opacity(day.enabled || !isExpanded ? 1 : 0.45)
+        .opacity(day.enabled ? 1 : 0.35)
         .accessibilityLabel(ownProfileDayLabel(date, language: strings.languageTag))
         .accessibilityValue(strings.count("history_profile_day_count", Int(day.shopCount) + Int(day.homeCount)))
         .accessibilityHint(strings[isExpanded ? "history_select_day" : "history_activity_open"])
@@ -247,53 +220,50 @@ private struct OwnProfileActivityCell: View {
 
     private var hasActivity: Bool { day.shopCount > 0 || day.homeCount > 0 }
 
-    private var weekMarker: some View {
-        Group {
-            if let photo = day.photo {
-                thumbnail(photo)
-            } else {
-                Circle()
-                    .fill(hasActivity ? CoffeePeekNativeStyle.accent : CoffeePeekNativeStyle.secondary.opacity(0.32))
-                    .frame(width: 8, height: 8)
-            }
-        }
-        .frame(maxWidth: .infinity, minHeight: 44)
-    }
-
     private var monthDate: some View {
-        VStack(spacing: 4) {
-            monthMarker
-            if hasActivity {
-                Circle().fill(CoffeePeekNativeStyle.accent).frame(width: 4, height: 4)
+        ZStack {
+            monthMarker.padding(hasActivity ? 8 : 4)
+            if day.shopCount > 0 {
+                visitMarkers.frame(maxHeight: .infinity, alignment: .bottom).padding(.bottom, 4)
             }
         }
-        .frame(maxWidth: .infinity, minHeight: dateHeight)
-        .background(day.selected ? CoffeePeekNativeStyle.accent.opacity(0.14) : .clear, in: RoundedRectangle(cornerRadius: 10))
+        .frame(maxWidth: .infinity)
+        .aspectRatio(1, contentMode: .fit)
+        .background(day.selected && day.photo == nil ? CoffeePeekNativeStyle.accent : .clear,
+                    in: RoundedRectangle(cornerRadius: 12))
         .overlay {
-            if day.today || day.selected {
-                RoundedRectangle(cornerRadius: 10).strokeBorder(CoffeePeekNativeStyle.accent, lineWidth: 1)
+            if (day.today && !day.selected) || (day.selected && day.photo != nil) {
+                RoundedRectangle(cornerRadius: 12).strokeBorder(CoffeePeekNativeStyle.accent, lineWidth: 1)
                     .allowsHitTesting(false)
             }
         }
+        .padding(2)
     }
 
     @ViewBuilder
     private var monthMarker: some View {
         if let photo = day.photo {
-            thumbnail(photo)
+            OwnProfileImage(url: photo, profile: profile, symbol: day.homeCount > 0 ? "house" : "cup.and.saucer")
+                .aspectRatio(1, contentMode: .fit)
+                .clipShape(RoundedRectangle(cornerRadius: 6))
+                .padding(.bottom, day.shopCount > 0 ? 6 : 0)
         } else {
             Text(date.suffix(2).drop(while: { $0 == "0" }))
-                .font(CoffeePeekNativeStyle.font(14, weight: day.today ? "Semibold" : "Regular", relativeTo: .body))
-                .foregroundStyle(CoffeePeekNativeStyle.foreground)
-                .lineLimit(1)
-                .minimumScaleFactor(0.7)
+                .font(CoffeePeekNativeStyle.font(15, weight: day.today || day.selected ? "Semibold" : "Regular"))
+                .foregroundStyle(day.selected ? CoffeePeekNativeStyle.color(0x1A1412) : CoffeePeekNativeStyle.foreground)
+                .padding(.bottom, day.shopCount > 0 ? 6 : 0)
+                .lineLimit(1).minimumScaleFactor(0.7)
         }
     }
 
-    private func thumbnail(_ url: String) -> some View {
-        OwnProfileImage(url: url, profile: profile, symbol: day.homeCount > 0 ? "house" : "cup.and.saucer")
-            .frame(width: 22, height: 22)
-            .clipShape(RoundedRectangle(cornerRadius: 5))
+    private var visitMarkers: some View {
+        HStack(spacing: 2) {
+            ForEach(0..<min(Int(day.shopCount), 3), id: \.self) { _ in
+                Circle().fill(day.selected && day.photo == nil ? CoffeePeekNativeStyle.color(0x1A1412) : CoffeePeekNativeStyle.accent)
+                    .frame(width: 4, height: 4)
+            }
+        }
+        .accessibilityHidden(true)
     }
 }
 
@@ -324,6 +294,7 @@ private func ownProfileActivityPreview(expanded: Bool, language: String) -> some
     return OwnProfileActivityCard(state: state, strings: OwnProfileStrings(languageTag: language), profile: nil,
                                   toggle: {}, changeMonth: { _ in }, openDay: { _ in }, openRow: { _ in }, retry: {})
         .padding()
+        .background(CoffeePeekNativeStyle.background)
 }
 
 #Preview("Current week light") {

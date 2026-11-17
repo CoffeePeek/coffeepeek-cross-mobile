@@ -7,7 +7,7 @@ struct OwnProfileCheckIns: View {
     var body: some View {
         let state = model.state
         let rows = model.visibleCheckIns
-        VStack(alignment: .leading, spacing: 20) {
+        VStack(alignment: .leading, spacing: 10) {
             if state.checkInsFailed {
                 OwnProfileRetry(message: model.strings["profile_check_ins_failed"], strings: model.strings,
                                 retry: model.profile.retryCheckIns)
@@ -57,12 +57,12 @@ struct OwnProfileCheckInCard: View {
     }
 
     private var content: some View {
-        VStack(alignment: .leading, spacing: timeline ? 12 : 10) {
+        VStack(alignment: .leading, spacing: timeline ? 8 : 10) {
             author
             heading
             if !checkIn.note.isEmpty {
                 if timeline {
-                    Text(checkIn.note).font(CoffeePeekNativeStyle.font(16))
+                    Text(checkIn.note).font(CoffeePeekNativeStyle.font(17))
                         .fixedSize(horizontal: false, vertical: true)
                 } else {
                     Text(checkIn.note)
@@ -76,15 +76,15 @@ struct OwnProfileCheckInCard: View {
 
     private var author: some View {
         HStack(spacing: timeline ? 12 : 8) {
-            OwnProfileImage(url: checkIn.avatar, symbol: "person.crop.circle", loadImage: loadImage)
+            authorAvatar
                 .frame(width: timeline ? 44 : 32, height: timeline ? 44 : 32).clipShape(Circle())
             VStack(alignment: .leading, spacing: 2) {
-                Text(checkIn.name).font(CoffeePeekNativeStyle.font(timeline ? 16 : 14, weight: "Semibold"))
+                Text(checkIn.name).font(CoffeePeekNativeStyle.font(timeline ? 15 : 14, weight: "Semibold"))
                 if !checkIn.date.isEmpty {
                     Group {
                         if timeline {
                             Text(profileTimelineDate(checkIn.date, language: strings.languageTag))
-                                .font(CoffeePeekNativeStyle.font(12, relativeTo: .caption))
+                                .font(CoffeePeekNativeStyle.font(12, weight: "Medium", relativeTo: .caption))
                         } else {
                             Text(checkIn.date)
                         }
@@ -105,27 +105,64 @@ struct OwnProfileCheckInCard: View {
     }
 
     @ViewBuilder
+    private var authorAvatar: some View {
+        if let url = checkIn.avatar, !url.isEmpty {
+            OwnProfileImage(url: url, symbol: "person.crop.circle", loadImage: loadImage)
+        } else {
+            CoffeePeekNativeStyle.color(0xF8F1DD).overlay {
+                Text(String(checkIn.name.trimmingCharacters(in: .whitespacesAndNewlines).prefix(1)).uppercased())
+                    .font(CoffeePeekNativeStyle.font(17, weight: "Semibold"))
+                    .foregroundStyle(CoffeePeekNativeStyle.color(0x1C1917))
+            }
+            .accessibilityHidden(true)
+        }
+    }
+
+    @ViewBuilder
     private var heading: some View {
         if checkIn.home {
             if let brew = checkIn.brew {
                 OwnProfileBrewPreview(brew: brew, strings: strings, loadImage: loadImage,
                                       openCoffee: openCoffee, timeline: timeline)
             } else {
-                Text(strings["history_activity_at_home"]).font(.headline)
+                Text(strings["history_activity_at_home"]).font(CoffeePeekNativeStyle.font(17, weight: "Semibold"))
             }
         } else if let slug = checkIn.shopSlug, !slug.isEmpty {
             Button { openShop(slug) } label: {
-                Label(shopName, systemImage: "arrow.up.right").frame(minHeight: 44)
+                Text(shopName).frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
             }
             .buttonStyle(.plain)
-            .font(.headline)
+            .font(CoffeePeekNativeStyle.font(22, weight: "Semibold", relativeTo: .title2))
         } else {
-            Text(shopName).font(.headline)
+            Text(shopName).font(CoffeePeekNativeStyle.font(22, weight: "Semibold", relativeTo: .title2))
         }
         if let score = checkIn.score {
-            Label(score, systemImage: "star.fill")
-                .accessibilityLabel(ratingDescription ?? String(format: strings["profile_native_rating"], score))
+            rating(score)
         }
+    }
+
+    private func rating(_ score: String) -> some View {
+        HStack(spacing: 8) {
+            HStack(spacing: 4) {
+                ForEach(0..<5) { index in
+                    ratingStar(fill: min(1, max(0, (Double(score.replacingOccurrences(of: ",", with: ".")) ?? 0) - Double(index))))
+                }
+            }
+            Text(score).font(CoffeePeekNativeStyle.font(15))
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(ratingDescription ?? String(format: strings["profile_native_rating"], score))
+    }
+
+    private func ratingStar(fill: Double) -> some View {
+        Image(systemName: "star").font(.system(size: 20))
+            .foregroundStyle(CoffeePeekNativeStyle.secondary)
+            .overlay(alignment: .leading) {
+                Image(systemName: "star.fill").font(.system(size: 20))
+                    .foregroundStyle(CoffeePeekNativeStyle.accent)
+                    .mask(alignment: .leading) { Rectangle().frame(width: 22 * fill) }
+            }
+            .frame(width: 22, height: 22)
     }
 
     private var shopName: String {
@@ -165,14 +202,14 @@ struct OwnProfileCheckInCard: View {
         if indices.count == 1 {
             photoTile(indices[0], width: size.width, height: size.height)
         } else {
-            let width = max(0, (size.width - 8) / 2)
-            HStack(spacing: 8) {
+            let width = max(0, (size.width - 4) / 2)
+            HStack(spacing: 4) {
                 photoTile(indices[0], width: width, height: size.height)
                 if indices.count == 2 {
                     photoTile(indices[1], width: width, height: size.height)
                 } else {
-                    let height = max(0, (size.height - 8) / 2)
-                    VStack(spacing: 8) {
+                    let height = max(0, (size.height - 4) / 2)
+                    VStack(spacing: 4) {
                         photoTile(indices[1], width: width, height: height)
                         photoTile(indices[2], width: width, height: height, more: indices.count - 3)
                     }
@@ -209,7 +246,7 @@ struct OwnProfileCheckInCard: View {
     @ViewBuilder
     private var footer: some View {
         if timeline {
-            footerContent.font(CoffeePeekNativeStyle.font(13, relativeTo: .footnote))
+            footerContent.font(CoffeePeekNativeStyle.font(15, relativeTo: .subheadline))
         } else {
             footerContent
         }
@@ -218,6 +255,8 @@ struct OwnProfileCheckInCard: View {
     private var footerContent: some View {
         HStack {
             Label(checkIn.helpfulCount.formatted(), systemImage: checkIn.liked ? "heart.fill" : "heart")
+                .frame(minWidth: 48, minHeight: 48, alignment: .leading)
+                .foregroundStyle(CoffeePeekNativeStyle.foreground)
                 .accessibilityLabel(strings.count("profile_check_in_likes", Int(checkIn.helpfulCount)))
             Spacer()
             if let drink = checkIn.drink { Text(drink) }
@@ -265,7 +304,7 @@ private struct OwnProfileBrewPreview: View {
     private func row(link: Bool) -> some View {
         HStack(spacing: timeline ? 12 : 10) {
             thumbnail
-            VStack(alignment: .leading, spacing: 3) {
+            VStack(alignment: .leading, spacing: timeline ? (cover == nil ? 8 : 2) : 3) {
                 if timeline { timelineHeading } else { standardHeading }
                 if !details.isEmpty {
                     recipeDetails
@@ -275,6 +314,8 @@ private struct OwnProfileBrewPreview: View {
             if link {
                 if timeline {
                     Image(systemName: "chevron.right")
+                        .font(.system(size: 18))
+                        .frame(width: 48, height: 48)
                         .foregroundStyle(CoffeePeekNativeStyle.secondary)
                         .accessibilityHidden(true)
                 } else {
@@ -283,6 +324,7 @@ private struct OwnProfileBrewPreview: View {
             }
         }
         .frame(minHeight: 44)
+        .padding(.vertical, timeline && cover != nil ? 4 : 0)
         .contentShape(Rectangle())
     }
 
@@ -292,11 +334,6 @@ private struct OwnProfileBrewPreview: View {
             OwnProfileImage(url: cover, symbol: "cup.and.saucer", fits: true, loadImage: loadImage)
                 .frame(width: timeline ? 44 : 52, height: timeline ? 54 : 52)
                 .clipShape(RoundedRectangle(cornerRadius: timeline ? 4 : 8))
-        } else if timeline {
-            Image(systemName: "cup.and.saucer")
-                .foregroundStyle(CoffeePeekNativeStyle.secondary)
-                .frame(width: 44, height: 44)
-                .accessibilityHidden(true)
         }
     }
 
@@ -311,7 +348,7 @@ private struct OwnProfileBrewPreview: View {
     private var recipeDetails: some View {
         Group {
             if timeline {
-                Text(details).font(CoffeePeekNativeStyle.font(14, relativeTo: .subheadline))
+                Text(details).font(CoffeePeekNativeStyle.font(15, relativeTo: .subheadline))
             } else {
                 Text(details)
             }
@@ -320,9 +357,9 @@ private struct OwnProfileBrewPreview: View {
 
     private var timelineHeading: Text {
         let name = Text(title).font(CoffeePeekNativeStyle.font(17, weight: "Semibold", relativeTo: .headline))
-        guard let roaster = brew.roaster, !roaster.isEmpty else { return name }
+        guard cover != nil, let roaster = brew.roaster, !roaster.isEmpty else { return name }
         let origin = Text(strings["profile_check_in_separator"] + roaster)
-            .font(CoffeePeekNativeStyle.font(17, relativeTo: .headline))
+            .font(CoffeePeekNativeStyle.font(17, weight: "Medium", relativeTo: .headline))
             .foregroundColor(CoffeePeekNativeStyle.secondary)
         return Text("\(name)\(origin)")
     }
@@ -402,6 +439,7 @@ private func ownProfileCheckInPreview(language: String) -> some View {
                                   score: nil, photos: [], brew: brew)
     return OwnProfileCheckInCard(checkIn: row, strings: OwnProfileStrings(languageTag: language), profile: nil,
                                  openShop: { _ in }, openCoffee: { _ in }, openPhoto: { _ in }, timeline: true).padding()
+        .foregroundStyle(CoffeePeekNativeStyle.foreground).background(CoffeePeekNativeStyle.background)
 }
 
 #Preview("Own check-in light") {

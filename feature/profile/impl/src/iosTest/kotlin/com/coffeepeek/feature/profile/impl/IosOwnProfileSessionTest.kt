@@ -67,6 +67,38 @@ class IosOwnProfileSessionTest {
             error("Fixture has no public profile")
         }
 
+    @Test fun returningToTheTabReobservesTheSameActiveProfile() = runTest(dispatcher) {
+        val accounts = Accounts()
+        val session = nativeSession(accounts)
+        val first = session.observe {}
+        runCurrent()
+        first.cancel()
+        runCurrent()
+        assertTrue(session.isCurrent())
+        assertFalse(accounts.readCancelled)
+        val names = mutableListOf<String?>()
+        val resumed = session.observe { names += it.identity?.userName }
+        runCurrent()
+        assertEquals(listOf("First"), names)
+        resumed.cancel()
+        session.close()
+    }
+
+    @Test fun rebuildingTheRootAfterReplacementCreatesAnActiveProfile() = runTest(dispatcher) {
+        val accounts = Accounts()
+        val old = nativeSession(accounts)
+        runCurrent()
+        accounts.replace()
+        runCurrent()
+        assertFalse(old.current().active)
+        old.close()
+        val replacement = nativeSession(accounts)
+        runCurrent()
+        assertTrue(replacement.current().active)
+        assertEquals("Replacement", replacement.current().identity?.userName)
+        replacement.close()
+    }
+
     private class Accounts : ProfileAccountPort {
         private val generation = MutableStateFlow<String?>("first")
         private val profile = MutableStateFlow<OwnProfile?>(owner("First"))

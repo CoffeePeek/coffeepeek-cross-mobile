@@ -267,3 +267,37 @@ state; автоматизированные UI/screenshot тесты не соз
   и guest card на устройстве в этом прогоне не проверены. OAuth агент не запускал.
 - По последнему запросу владельца публикуется текущая установленная сборка;
   дополнительная пересборка ради найденного переноса не запускается.
+
+### Native profile lifecycle and check-in editors — 2026-11-17
+
+Base: `11535611b` from `origin/codex/ios-native`, pulled fast-forward before work.
+The current checkpoint fixes disappearing native profile state and matches the
+Android profile's typography, spacing, calendar placement/modes and post rows.
+Check-in migration continues beyond the already native creation picker: home
+create/edit and shop create reuse their existing feature ViewModels, guarded
+repositories, draft/photo ports and analytics. Shop editing is not an existing
+capability and is not invented by this migration.
+
+Ownership: feature impl owns platform-independent native presentation sessions;
+composition owns account leases, factory assembly and navigation; SwiftUI owns
+native fields, sheets, calendar/rating controls and layout. No new writer,
+backend, Gradle module, permission policy or scanner enablement is introduced.
+
+Verification plan: account-generation and same-account token-refresh regression;
+existing profile/home/shop unit suites plus native session contract tests;
+Android Debug assembly/DEX; Windows xcross compile/link. On the agreed iPhone,
+read-only review of profile return/navigation and empty check-in forms in both
+themes, keyboard/photo cancellation and back flows. Real submission, consent,
+account changes and camera capture are not performed by the agent. Native tests
+that cannot execute on Windows and manual device gates are reported separately.
+
+- Before native build: 881 executed JVM unit/contract tests (Home88, Shop112,
+  composition681), zero failures/errors/skips; Profile72 UP-TO-DATE. Android
+  assembleDirectDebug and packaged DEX verification passed in2m48s.
+- Swift syntax parsing passed (not type checking). Local packaging suite5/5 passed;
+  initial unittest module invocation failed on Python import path before tests,
+  direct script invocation succeeded. Initial Swift process lacked runtime PATH;
+  rerun with installed runtime PATH passed.
+- Function-body verification reports two inherited violations: ownership factory56
+  and public-profile native factory31, already present at pulled11535611b.
+  No new/grown violation from this checkpoint; baseline unchanged.

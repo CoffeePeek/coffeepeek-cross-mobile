@@ -7,7 +7,6 @@ import com.coffeepeek.admin.base.BaseViewModel
 import com.coffeepeek.core.session.SessionReader
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 
 class NavigatorViewModel(
@@ -16,8 +15,7 @@ class NavigatorViewModel(
 
     internal var guestOnboardingDismissed by mutableStateOf(false)
 
-    val isLoggedIn: StateFlow<Boolean?> = sessionRepository.observeSession()
-        .map { session -> sessionRepository.isActiveSession(session) }
+    internal val navigationSession: StateFlow<RootNavigationSession?> = sessionRepository.observeRootNavigationSession()
         .stateIn(
             scope = workScope,
             started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5_000),

@@ -389,8 +389,9 @@ private fun RootNavHost(
     ) {
         val errorMessage = ErrorHandler.errorMessage.collectAsState().value
         val loading = LoadingHandler.isLoading.collectAsState().value
-        val isLoggedIn by vm.isLoggedIn.collectAsState()
-        var previousLoginState by remember { mutableStateOf<Boolean?>(null) }
+        val session by vm.navigationSession.collectAsState()
+        val isLoggedIn = session?.isLoggedIn
+        var previousSession by remember { mutableStateOf<RootNavigationSession?>(null) }
         var navigationGeneration by remember { mutableIntStateOf(0) }
 
         ErrorDialog(
@@ -398,14 +399,15 @@ private fun RootNavHost(
             message = errorMessage ?: "",
             onDismiss = { ErrorHandler.clearError() }
         )
-        LaunchedEffect(isLoggedIn) {
-            val loggedIn = isLoggedIn ?: return@LaunchedEffect
-            if (previousLoginState != null && previousLoginState != loggedIn) {
+        LaunchedEffect(session) {
+            val currentSession = session ?: return@LaunchedEffect
+            val loggedIn = currentSession.isLoggedIn
+            if (previousSession != null && previousSession != currentSession) {
                 clearPlatformNavigationState()
                 navigationGeneration++
-                if (!loggedIn) clearSessionNavigationRequests()
+                if (!loggedIn || previousSession?.isLoggedIn == true) clearSessionNavigationRequests()
             }
-            previousLoginState = loggedIn
+            previousSession = currentSession
             if (loggedIn) {
                 vm.guestOnboardingDismissed = false
                 checkInSignInHandoff.take()?.let { pendingAppLink.compareAndSet(null, it) }
@@ -420,7 +422,7 @@ private fun RootNavHost(
             }
         }
 
-        NavigationContent(vm, isLoggedIn, previousLoginState, navigationGeneration, loading)
+        NavigationContent(vm, isLoggedIn, previousSession?.isLoggedIn, navigationGeneration, loading)
     }
 
     @Composable
