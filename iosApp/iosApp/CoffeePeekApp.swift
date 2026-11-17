@@ -60,6 +60,7 @@ private struct ComposeRootView: UIViewControllerRepresentable {
             makeCheckInCreatePickerController: makeCheckInCreatePickerController,
             makeGuestProfileController: makeGuestProfileController(profile:),
             makeOwnProfileController: makeOwnProfileController(profile:),
+            makePublicProfileController: makePublicProfileController(profile:),
             makeNotificationInboxController: makeNotificationInboxController(inbox:languageTag:)
         )
     }

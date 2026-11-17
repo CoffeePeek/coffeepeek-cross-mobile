@@ -11,6 +11,7 @@ import com.coffeepeek.admin.di.settings.iosSettingsContent
 import com.coffeepeek.admin.di.auth.iosAuthContent
 import com.coffeepeek.admin.di.profile.iosGuestProfileContent
 import com.coffeepeek.admin.di.profile.iosOwnProfileContent
+import com.coffeepeek.admin.di.profile.iosPublicProfileContent
 import com.coffeepeek.admin.di.settings.iosThemeSettingsContent
 import com.coffeepeek.admin.di.shopreport.iosShopReportContent
 import com.coffeepeek.admin.di.contentreport.iosContentReportContent
@@ -333,6 +334,7 @@ private fun nativeDestinationController(
 private fun nativeRouteContent(isLoggedIn: Boolean): (Navigator.Screen) -> (() -> UIViewController)? {
     val settings = iosSettingsContent()
     val profile = if (isLoggedIn) iosOwnProfileContent() else iosGuestProfileContent()
+    val publicProfile = iosPublicProfileContent()
     val shelfArchive = iosShelfArchiveContent()
     val themeSettings = iosThemeSettingsContent()
     val shopMenuGallery = iosShopMenuGalleryContent()
@@ -346,6 +348,8 @@ private fun nativeRouteContent(isLoggedIn: Boolean): (Navigator.Screen) -> (() -
     return { screen ->
         when (screen) {
             Navigator.Screen.ProfileTab -> profile
+            is Navigator.Screen.UserProfile -> { { publicProfile(screen.slug, screen.nickname, screen.avatarUrl, false) } }
+            is Navigator.Screen.UserCheckIns -> { { publicProfile(screen.slug, screen.nickname, screen.avatarUrl, true) } }
             Navigator.Screen.ShelfArchive -> shelfArchive
             Navigator.Screen.ThemeSettings -> themeSettings
             is Navigator.Screen.ShopMenuGallery -> { { shopMenuGallery(screen.shopId) } }
