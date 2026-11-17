@@ -31,7 +31,9 @@
 		71C04E5D0000000000000001 /* ContentReportScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71C04E5D0000000000000003 /* ContentReportScreen.swift */; };
 		B30000000000000000000002 /* ShopReport.strings in Resources */ = {isa = PBXBuildFile; fileRef = B30000000000000000000006 /* ShopReport.strings */; };
 		71C04E5D0000000000000002 /* ContentReport.strings in Resources */ = {isa = PBXBuildFile; fileRef = 71C04E5D0000000000000006 /* ContentReport.strings */; };
+		5E1FA2200000000000000001 /* ShelfArchiveScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E1FA2200000000000000003 /* ShelfArchiveScreen.swift */; };
 		B20000000000000000000001 /* CollectionsLibraryScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000000000000000000003 /* CollectionsLibraryScreen.swift */; };
+		5E1FA2200000000000000002 /* NativeShelfArchive.strings in Resources */ = {isa = PBXBuildFile; fileRef = 5E1FA2200000000000000006 /* NativeShelfArchive.strings */; };
 		86C051CE0000000000000001 /* SavedPublicCollectionScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86C051CE0000000000000003 /* SavedPublicCollectionScreen.swift */; };
 		B20000000000000000000002 /* CollectionsLibrary.strings in Resources */ = {isa = PBXBuildFile; fileRef = B20000000000000000000006 /* CollectionsLibrary.strings */; };
 		86C051CE0000000000000002 /* SavedPublicCollection.strings in Resources */ = {isa = PBXBuildFile; fileRef = 86C051CE0000000000000006 /* SavedPublicCollection.strings */; };
@@ -103,9 +105,12 @@
 		71C04E5D0000000000000004 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/ContentReport.strings; sourceTree = "<group>"; };
 		B30000000000000000000005 /* be */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = be; path = be.lproj/ShopReport.strings; sourceTree = "<group>"; };
 		71C04E5D0000000000000005 /* be */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = be; path = be.lproj/ContentReport.strings; sourceTree = "<group>"; };
+		5E1FA2200000000000000003 /* ShelfArchiveScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ShelfArchiveScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/ShelfArchiveScreen.swift; sourceTree = "<group>"; };
 		B20000000000000000000003 /* CollectionsLibraryScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CollectionsLibraryScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CollectionsLibraryScreen.swift; sourceTree = "<group>"; };
-		86C051CE0000000000000003 /* SavedPublicCollectionScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = SavedPublicCollectionScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/SavedPublicCollectionScreen.swift; sourceTree = "<group>"; };
+		5E1FA2200000000000000004 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/NativeShelfArchive.strings; sourceTree = "<group>"; };
 		B20000000000000000000004 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/CollectionsLibrary.strings; sourceTree = "<group>"; };
+		5E1FA2200000000000000005 /* be */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = be; path = be.lproj/NativeShelfArchive.strings; sourceTree = "<group>"; };
+		86C051CE0000000000000003 /* SavedPublicCollectionScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = SavedPublicCollectionScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/SavedPublicCollectionScreen.swift; sourceTree = "<group>"; };
 		86C051CE0000000000000004 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/SavedPublicCollection.strings; sourceTree = "<group>"; };
 		B20000000000000000000005 /* be */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = be; path = be.lproj/CollectionsLibrary.strings; sourceTree = "<group>"; };
 		86C051CE0000000000000005 /* be */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = be; path = be.lproj/SavedPublicCollection.strings; sourceTree = "<group>"; };
@@ -206,7 +211,9 @@
 				C0FFEE500000000000000008 /* CoffeeDetail.strings */,
 				CD184B270000000000000008 /* NativeNotificationInbox.strings */,
 				71C04E5D0000000000000006 /* ContentReport.strings */,
+				5E1FA2200000000000000003 /* ShelfArchiveScreen.swift */,
 				B20000000000000000000003 /* CollectionsLibraryScreen.swift */,
+				5E1FA2200000000000000006 /* NativeShelfArchive.strings */,
 				86C051CE0000000000000003 /* SavedPublicCollectionScreen.swift */,
 				B20000000000000000000006 /* CollectionsLibrary.strings */,
 				86C051CE0000000000000006 /* SavedPublicCollection.strings */,
@@ -358,6 +365,7 @@
 				C0FFEE500000000000000003 /* CoffeeDetail.strings in Resources */,
 				CD184B270000000000000003 /* NativeNotificationInbox.strings in Resources */,
 				71C04E5D0000000000000002 /* ContentReport.strings in Resources */,
+				5E1FA2200000000000000002 /* NativeShelfArchive.strings in Resources */,
 				B20000000000000000000002 /* CollectionsLibrary.strings in Resources */,
 				86C051CE0000000000000002 /* SavedPublicCollection.strings in Resources */,
 				53E77165000000000000000D /* SettingsNative.strings in Resources */,
@@ -450,6 +458,7 @@
 				CD184B270000000000000001 /* NotificationInboxScreen.swift in Sources */,
 				CD184B270000000000000002 /* NotificationInboxHost.swift in Sources */,
 				71C04E5D0000000000000001 /* ContentReportScreen.swift in Sources */,
+				5E1FA2200000000000000001 /* ShelfArchiveScreen.swift in Sources */,
 				B20000000000000000000001 /* CollectionsLibraryScreen.swift in Sources */,
 				86C051CE0000000000000001 /* SavedPublicCollectionScreen.swift in Sources */,
 				53E771650000000000000001 /* SettingsNativeController.swift in Sources */,
@@ -522,6 +531,15 @@
 				71C04E5D0000000000000005 /* be */,
 			);
 			name = ContentReport.strings;
+			sourceTree = "<group>";
+		};
+		5E1FA2200000000000000006 /* NativeShelfArchive.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				5E1FA2200000000000000004 /* ru */,
+				5E1FA2200000000000000005 /* be */,
+			);
+			name = NativeShelfArchive.strings;
 			sourceTree = "<group>";
 		};
 		B20000000000000000000006 /* CollectionsLibrary.strings */ = {

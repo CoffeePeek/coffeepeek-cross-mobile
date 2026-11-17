@@ -88,7 +88,7 @@ class IosShelfModuleTest {
     private fun assertShelfGraph(koin: Koin) {
         assertSame(koin.get<ShelfRepository>(), koin.get<ShelfRepository>())
         assertSame(koin.get<BagScanner>(), koin.get<BagScanner>())
-        assertSame(koin.get<ShelfEntry>(), koin.get<ShelfEntry>())
+        assertSame(koin.get<ShelfEntry>(), koin.get<com.coffeepeek.feature.shelf.impl.IosShelfFeature>().entry)
         assertSame(koin.get<com.coffeepeek.feature.shelf.api.ShelfProfileEntry>(),
             koin.get<com.coffeepeek.feature.shelf.api.ShelfProfileEntry>())
         koin.get<CoffeePicker>()
