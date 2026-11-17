@@ -14,7 +14,6 @@ import com.coffeepeek.feature.shop.impl.NativeShopCheckInSnapshot
 import com.coffeepeek.feature.shop.impl.ui.data.ShopCheckInPhotoPickerController
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -137,10 +136,6 @@ class IosShopCheckInEditor internal constructor(
             IosShopCheckInPhoto(index, imageCache.getOrPut(photo) { photo.nativeImage() }, photo.fileName)
         }
     }
-}
-
-class IosShopCheckInObservation internal constructor(private val job: Job) {
-    fun cancel() = job.cancel()
 }
 
 private fun civilDate(millis: Long?): String = millis?.let {

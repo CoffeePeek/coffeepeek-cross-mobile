@@ -307,3 +307,6 @@ that cannot execute on Windows and manual device gates are reported separately.
   device-run wrapper; the next build uses that same context and bundle validation.
   No affected package was installed. Home custom-bean input now stays in a fixed
   scrollable footer as on Android, including keyboard/short viewport handling.
+- Native compile retry stopped before framework link because editor/list both
+  declared IosShopCheckInObservation. Editor now reuses the existing identical
+  shop observation contract; no behavior/API changes to cancellation.
