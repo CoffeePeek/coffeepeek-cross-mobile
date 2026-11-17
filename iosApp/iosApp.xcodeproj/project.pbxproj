@@ -54,6 +54,11 @@
 		A0871E7B0000000000000003 /* CoffeePeekGuestAccountCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0871E7B0000000000000004 /* CoffeePeekGuestAccountCard.swift */; };
 		A0871E7B0000000000000005 /* GuestProfileScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0871E7B0000000000000006 /* GuestProfileScreen.swift */; };
 		A0871E7B0000000000000007 /* NativeProfile.strings in Resources */ = {isa = PBXBuildFile; fileRef = A0871E7B0000000000000008 /* NativeProfile.strings */; };
+		A0871E7C0000000000000001 /* OwnProfileScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0871E7C0000000000000005 /* OwnProfileScreen.swift */; };
+		A0871E7C0000000000000002 /* OwnProfileComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0871E7C0000000000000006 /* OwnProfileComponents.swift */; };
+		A0871E7C0000000000000003 /* OwnProfileActivityView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0871E7C0000000000000007 /* OwnProfileActivityView.swift */; };
+		A0871E7C0000000000000004 /* OwnProfileCheckIns.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0871E7C0000000000000008 /* OwnProfileCheckIns.swift */; };
+		A0871E7C0000000000000009 /* NativeOwnProfile.strings in Resources */ = {isa = PBXBuildFile; fileRef = A0871E7C000000000000000C /* NativeOwnProfile.strings */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -117,6 +122,12 @@
 		A0871E7B0000000000000006 /* GuestProfileScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = GuestProfileScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/GuestProfileScreen.swift; sourceTree = "<group>"; };
 		A0871E7B0000000000000009 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/NativeProfile.strings; sourceTree = "<group>"; };
 		A0871E7B000000000000000A /* be */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = be; path = be.lproj/NativeProfile.strings; sourceTree = "<group>"; };
+		A0871E7C0000000000000005 /* OwnProfileScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = OwnProfileScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/OwnProfileScreen.swift; sourceTree = "<group>"; };
+		A0871E7C0000000000000006 /* OwnProfileComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = OwnProfileComponents.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/OwnProfileComponents.swift; sourceTree = "<group>"; };
+		A0871E7C0000000000000007 /* OwnProfileActivityView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = OwnProfileActivityView.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/OwnProfileActivityView.swift; sourceTree = "<group>"; };
+		A0871E7C0000000000000008 /* OwnProfileCheckIns.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = OwnProfileCheckIns.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/OwnProfileCheckIns.swift; sourceTree = "<group>"; };
+		A0871E7C000000000000000A /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/NativeOwnProfile.strings; sourceTree = "<group>"; };
+		A0871E7C000000000000000B /* be */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = be; path = be.lproj/NativeOwnProfile.strings; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -156,6 +167,10 @@
 				A0871E7A0000000000000010 /* RegisterScreen.swift */,
 				A0871E7A0000000000000012 /* RegisterConsent.swift */,
 				A0871E7B0000000000000006 /* GuestProfileScreen.swift */,
+				A0871E7C0000000000000005 /* OwnProfileScreen.swift */,
+				A0871E7C0000000000000006 /* OwnProfileComponents.swift */,
+				A0871E7C0000000000000007 /* OwnProfileActivityView.swift */,
+				A0871E7C0000000000000008 /* OwnProfileCheckIns.swift */,
 				A0871E7B0000000000000004 /* CoffeePeekGuestAccountCard.swift */,
 				A0871E7B0000000000000002 /* CoffeePeekAppleSignInButton.swift */,
 				A20000000000000000000016 /* ThemeSettingsScreen.swift */,
@@ -190,6 +205,7 @@
 				DAD91A913BF64AB1A801759B /* ThemeSettings.strings */,
 				A0871E7A000000000000000C /* NativeAuth.strings */,
 				A0871E7B0000000000000008 /* NativeProfile.strings */,
+				A0871E7C000000000000000C /* NativeOwnProfile.strings */,
 				53E771650000000000000010 /* SettingsNative.strings */,
 			);
 			path = iosApp;
@@ -305,6 +321,7 @@
 				A10000000000000000000016 /* ThemeSettings.strings in Resources */,
 				A0871E7A0000000000000009 /* NativeAuth.strings in Resources */,
 				A0871E7B0000000000000007 /* NativeProfile.strings in Resources */,
+				A0871E7C0000000000000009 /* NativeOwnProfile.strings in Resources */,
 				B30000000000000000000002 /* ShopReport.strings in Resources */,
 				C0FFEE500000000000000003 /* CoffeeDetail.strings in Resources */,
 				71C04E5D0000000000000002 /* ContentReport.strings in Resources */,
@@ -383,6 +400,10 @@
 				A0871E7A000000000000000F /* RegisterScreen.swift in Sources */,
 				A0871E7A0000000000000011 /* RegisterConsent.swift in Sources */,
 				A0871E7B0000000000000005 /* GuestProfileScreen.swift in Sources */,
+				A0871E7C0000000000000001 /* OwnProfileScreen.swift in Sources */,
+				A0871E7C0000000000000002 /* OwnProfileComponents.swift in Sources */,
+				A0871E7C0000000000000003 /* OwnProfileActivityView.swift in Sources */,
+				A0871E7C0000000000000004 /* OwnProfileCheckIns.swift in Sources */,
 				A0871E7B0000000000000003 /* CoffeePeekGuestAccountCard.swift in Sources */,
 				A0871E7B0000000000000001 /* CoffeePeekAppleSignInButton.swift in Sources */,
 				A6C011E60000000000000001 /* ShopMenuGalleryScreen.swift in Sources */,
@@ -508,6 +529,15 @@
             name = NativeProfile.strings;
             sourceTree = "<group>";
         };
+		A0871E7C000000000000000C /* NativeOwnProfile.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				A0871E7C000000000000000A /* ru */,
+				A0871E7C000000000000000B /* be */,
+			);
+			name = NativeOwnProfile.strings;
+			sourceTree = "<group>";
+		};
 /* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */

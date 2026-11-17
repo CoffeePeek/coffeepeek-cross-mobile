@@ -53,7 +53,8 @@ private struct ComposeRootView: UIViewControllerRepresentable {
             makeSettingsController: makeSettingsController,
             makeBlockedAuthorsController: makeBlockedAuthorsController,
             makeAuthController: makeAuthController,
-            makeGuestProfileController: makeGuestProfileController(profile:)
+            makeGuestProfileController: makeGuestProfileController(profile:),
+            makeOwnProfileController: makeOwnProfileController(profile:)
         )
     }
 

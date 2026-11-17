@@ -10,6 +10,7 @@ import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as st
 import com.coffeepeek.admin.di.settings.iosSettingsContent
 import com.coffeepeek.admin.di.auth.iosAuthContent
 import com.coffeepeek.admin.di.profile.iosGuestProfileContent
+import com.coffeepeek.admin.di.profile.iosOwnProfileContent
 import com.coffeepeek.admin.di.settings.iosThemeSettingsContent
 import com.coffeepeek.admin.di.shopreport.iosShopReportContent
 import com.coffeepeek.admin.di.contentreport.iosContentReportContent
@@ -35,7 +36,6 @@ import androidx.compose.ui.viewinterop.UIKitViewController
 import com.coffeepeek.admin.ui.screen.community.CommunityScreenRenderer
 import com.coffeepeek.admin.ui.Navigator.isHandledByRootNav
 import com.coffeepeek.admin.ui.screen.main.DiscoveryScreenRenderer
-import com.coffeepeek.admin.ui.screen.profile.OwnProfileScreenRenderer
 import com.coffeepeek.admin.ui.screen.profile.SettingsScreenRenderer
 import com.coffeepeek.admin.ui.screen.checkins.CheckInCreateHost
 import com.coffeepeek.admin.analytics.TrackNativeCreateActionExposure
@@ -328,7 +328,7 @@ private fun nativeDestinationController(
 @Composable
 private fun nativeRouteContent(isLoggedIn: Boolean): (Navigator.Screen) -> (() -> UIViewController)? {
     val settings = iosSettingsContent()
-    val guestProfile = if (isLoggedIn) null else iosGuestProfileContent()
+    val profile = if (isLoggedIn) iosOwnProfileContent() else iosGuestProfileContent()
     val themeSettings = iosThemeSettingsContent()
     val shopMenuGallery = iosShopMenuGalleryContent()
     val coffeeDetail = iosCoffeeDetailContent()
@@ -338,7 +338,7 @@ private fun nativeRouteContent(isLoggedIn: Boolean): (Navigator.Screen) -> (() -
     val blockedAuthorsContent = iosBlockedAuthorsContent()
     return { screen ->
         when (screen) {
-            Navigator.Screen.ProfileTab -> guestProfile
+            Navigator.Screen.ProfileTab -> profile
             Navigator.Screen.ThemeSettings -> themeSettings
             is Navigator.Screen.ShopMenuGallery -> { { shopMenuGallery(screen.shopId) } }
             is Navigator.Screen.ReportShop -> shopReportContent(screen.shopId, screen.shopTitle)
@@ -385,7 +385,7 @@ private fun NativeRootTabContent(tab: IosRootTab, isLoggedIn: Boolean, visibilit
         IosRootTab.Community -> koinInject<CommunityScreenRenderer>().Content(
             notificationsAction = { koinInject<com.coffeepeek.admin.ui.screen.notifications.NotificationsRenderer>().Bell() },
             onRefreshChange = onRefreshChange)
-        IosRootTab.Profile -> koinInject<OwnProfileScreenRenderer>().Content(isLoggedIn)
+        IosRootTab.Profile -> error("The iOS profile tab requires a native controller")
         IosRootTab.Settings -> koinInject<SettingsScreenRenderer>().Tab()
         IosRootTab.Business -> koinInject<com.coffeepeek.feature.ownership.api.BusinessOwnershipEntry>().Tab()
     }
