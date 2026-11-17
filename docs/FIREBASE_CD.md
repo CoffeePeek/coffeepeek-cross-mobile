@@ -14,6 +14,7 @@ Google Play и изменение серверной политики обнов
 Обязательные GitHub secrets:
 
 - `FIREBASE_APP_ID_ANDROID` — Android App ID production-приложения для `main`.
+- `FIREBASE_GOOGLE_SERVICES_JSON` — production-конфигурация `com.coffeepeek`.
 - `FIREBASE_GOOGLE_SERVICES_JSON_DEBUG` — конфигурация зарегистрированного
   Android-приложения `com.coffeepeek.debug` в проекте `coffeepeek`. Workflow `develop`
   проверяет пакет и извлекает Firebase App ID из этого же клиента; production App ID
@@ -22,6 +23,12 @@ Google Play и изменение серверной политики обнов
 - `FIREBASE_TESTER_GROUPS` или `FIREBASE_TESTERS` — группы или email тестировщиков через запятую.
 
 При отсутствующей конфигурации job завершается ошибкой. Доставка на сайт и в Play продолжает выполняться независимо.
+
+`Android Release` восстанавливает оба JSON перед Debug-тестами и lint:
+production в `composeApp/src/release/google-services.json`, Debug в
+`composeApp/src/debug/google-services.json`. Каждый файл проверяется на проект
+`coffeepeek` и единственный клиент соответствующего пакета. Оба JSON проверяются
+до записи, общий `composeApp/google-services.json` в CI не создаётся.
 
 Debug подписывается существующим distribution keystore из `ANDROID_KEYSTORE_*` /
 `ANDROID_KEY_*`. Локальная сборка без этих переменных использует debug keystore;
@@ -36,3 +43,11 @@ Sandbox хранят данные раздельно; production-обновле�
 новый package ID в Firebase и заполнить `FIREBASE_GOOGLE_SERVICES_JSON_DEBUG`.
 
 Сборка и подпись описаны в [GOOGLE_PLAY_CD.md](GOOGLE_PLAY_CD.md). Отдельный workflow `Android CI` проверяет PR в `main` и `develop` без публикации и release secrets.
+
+Проверка исправления workflow, 2026-11-14: Windows, `74f9a71a0` плюс изменения
+конфигурации; 51 тест релизных скриптов прошёл без ошибок и пропусков. Сборки
+Direct/Play Debug, обе проверки packaged DEX и лимитов функций прошли за 1м45с
+с `--max-workers=6`. Firebase-регрессии используют синтетические JSON; реальные
+CI-секреты проверяются в следующем `Android Release`. Устройства не использованы,
+APK не установлен. Android Release до исправления падал на отсутствии клиента
+`com.coffeepeek.debug` в общем production JSON.
