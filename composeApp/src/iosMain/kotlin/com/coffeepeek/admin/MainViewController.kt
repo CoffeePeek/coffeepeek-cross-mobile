@@ -10,6 +10,8 @@ import com.coffeepeek.admin.di.auth.IosAuthScreen
 import com.coffeepeek.admin.di.auth.LocalIosAuthController
 import com.coffeepeek.admin.di.profile.IosGuestProfile
 import com.coffeepeek.admin.di.profile.LocalIosGuestProfileController
+import com.coffeepeek.admin.di.profile.IosOwnProfile
+import com.coffeepeek.admin.di.profile.LocalIosOwnProfileController
 import com.coffeepeek.admin.di.contentreport.IosContentReport
 import com.coffeepeek.admin.di.contentreport.LocalIosContentReportController
 import com.coffeepeek.admin.di.shopreport.IosShopReport
@@ -54,6 +56,7 @@ fun MainViewController(
     makeBlockedAuthorsController: (IosBlockedAuthors, String, () -> Unit, () -> Unit, () -> Unit) -> UIViewController,
     makeAuthController: (IosAuthScreen) -> UIViewController,
     makeGuestProfileController: (IosGuestProfile) -> UIViewController,
+    makeOwnProfileController: (IosOwnProfile) -> UIViewController,
 ): UIViewController {
     if (!koinInitialized) {
         initPlatformKoin()
@@ -70,6 +73,7 @@ fun MainViewController(
         makeBlockedAuthorsController,
         makeAuthController,
         makeGuestProfileController,
+        makeOwnProfileController,
     )
     return ComposeUIViewController { controllers.Content(onReady) }
 }
@@ -85,6 +89,7 @@ private class IosControllerFactories(
     private val makeBlockedAuthorsController: (IosBlockedAuthors, String, () -> Unit, () -> Unit, () -> Unit) -> UIViewController,
     private val makeAuthController: (IosAuthScreen) -> UIViewController,
     private val makeGuestProfileController: (IosGuestProfile) -> UIViewController,
+    private val makeOwnProfileController: (IosOwnProfile) -> UIViewController,
 ) {
     @Composable
     fun Content(onReady: () -> Unit) {
@@ -99,6 +104,7 @@ private class IosControllerFactories(
             LocalIosBlockedAuthorsController provides makeBlockedAuthorsController,
             LocalIosAuthController provides makeAuthController,
             LocalIosGuestProfileController provides makeGuestProfileController,
+            LocalIosOwnProfileController provides makeOwnProfileController,
         ) {
             App(onReady = onReady)
         }

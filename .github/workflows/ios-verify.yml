@@ -233,6 +233,21 @@ jobs:
               tail -n 150 "$RUNNER_TEMP/ios-coffee-detail-tests.log"
               exit 1
             }
+      - name: Run own profile and calendar Kotlin Native tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./gradlew --max-workers=6 :feature:profile:impl:iosSimulatorArm64Test \
+            --tests 'com.coffeepeek.feature.profile.impl.IosOwnProfileSessionTest' \
+            --tests 'com.coffeepeek.feature.profile.impl.ui.OwnProfileViewModelTest' \
+            --tests 'com.coffeepeek.feature.profile.impl.ui.PublicProfileViewModelTest' \
+            :feature:check-in-history:impl:iosSimulatorArm64Test \
+            --tests 'com.coffeepeek.feature.checkinhistory.impl.ui.ProfileActivityViewModelTest' \
+            --tests 'com.coffeepeek.feature.checkinhistory.impl.ui.data.ProfileActivityDatesTest' \
+            > "$RUNNER_TEMP/ios-own-profile-tests.log" 2>&1 || {
+              tail -n 150 "$RUNNER_TEMP/ios-own-profile-tests.log"
+              exit 1
+            }
       - name: Run shared business ownership unit and contract tests
         shell: bash
         run: |
@@ -259,6 +274,9 @@ jobs:
             feature/shop/impl/build/test-results/iosSimulatorArm64Test/
             ${{ runner.temp }}/ios-coffee-detail-tests.log
             feature/coffee/impl/build/test-results/iosSimulatorArm64Test/
+            ${{ runner.temp }}/ios-own-profile-tests.log
+            feature/profile/impl/build/test-results/iosSimulatorArm64Test/
+            feature/check-in-history/impl/build/test-results/iosSimulatorArm64Test/
             ${{ runner.temp }}/ios-auth-tests.log
             feature/auth/impl/build/test-results/iosSimulatorArm64Test/
           retention-days: 7
