@@ -101,6 +101,9 @@
 		00B9031DF9CEEA84481B4495 /* CoffeePeekCheckInPhotoStrip.swift in Sources */ = {isa = PBXBuildFile; fileRef = C81D3982143661CAB5562DAD /* CoffeePeekCheckInPhotoStrip.swift */; };
 		BD8B1EB2E303103F86366987 /* CoffeePeekCheckInProfileAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7C8E5F0D83FEB1E3D9D1C4E7 /* CoffeePeekCheckInProfileAdapter.swift */; };
 		78A7DD89998FCB72E4D2A814 /* CoffeePeekCommunityCardHost.swift in Sources */ = {isa = PBXBuildFile; fileRef = A44D991116E6787B1080A9A0 /* CoffeePeekCommunityCardHost.swift */; };
+		0A8D371634C33941B0A3B65E /* CoffeePeekCheckInCardMapping.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FEE323F041175CE7CB48A5D /* CoffeePeekCheckInCardMapping.swift */; };
+		553A0D82DFD57F0624F032F7 /* CheckInDetailNativeScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B56539BE4310FF08426B0FB /* CheckInDetailNativeScreen.swift */; };
+		4A4149ED7EA558535A593018 /* CheckInDetailNativeModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7202F5348B4C69AB9987EA8D /* CheckInDetailNativeModel.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -223,6 +226,9 @@
 		C81D3982143661CAB5562DAD /* CoffeePeekCheckInPhotoStrip.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CoffeePeekCheckInPhotoStrip.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CoffeePeekCheckInPhotoStrip.swift; sourceTree = "<group>"; };
 		7C8E5F0D83FEB1E3D9D1C4E7 /* CoffeePeekCheckInProfileAdapter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CoffeePeekCheckInProfileAdapter.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CoffeePeekCheckInProfileAdapter.swift; sourceTree = "<group>"; };
 		A44D991116E6787B1080A9A0 /* CoffeePeekCommunityCardHost.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CoffeePeekCommunityCardHost.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CoffeePeekCommunityCardHost.swift; sourceTree = "<group>"; };
+		0FEE323F041175CE7CB48A5D /* CoffeePeekCheckInCardMapping.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CoffeePeekCheckInCardMapping.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CoffeePeekCheckInCardMapping.swift; sourceTree = "<group>"; };
+		9B56539BE4310FF08426B0FB /* CheckInDetailNativeScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CheckInDetailNativeScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CheckInDetailNativeScreen.swift; sourceTree = "<group>"; };
+		7202F5348B4C69AB9987EA8D /* CheckInDetailNativeModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CheckInDetailNativeModel.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CheckInDetailNativeModel.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -275,6 +281,9 @@
 				A07DF1284A0A4A1BA912127D /* EditProfileNativeModel.swift */,
 				9F183ADBA4744FA39CFA5DC7 /* EditProfileNativeFields.swift */,
 				031FEDA29E0E401EA5C6ED3F /* EditProfileNativeScreen.swift */,
+				7202F5348B4C69AB9987EA8D /* CheckInDetailNativeModel.swift */,
+				9B56539BE4310FF08426B0FB /* CheckInDetailNativeScreen.swift */,
+				0FEE323F041175CE7CB48A5D /* CoffeePeekCheckInCardMapping.swift */,
 				A44D991116E6787B1080A9A0 /* CoffeePeekCommunityCardHost.swift */,
 				7C8E5F0D83FEB1E3D9D1C4E7 /* CoffeePeekCheckInProfileAdapter.swift */,
 				C81D3982143661CAB5562DAD /* CoffeePeekCheckInPhotoStrip.swift */,
@@ -561,6 +570,9 @@
 				C22721FA8DE144AF9E0A2BF8 /* EditProfileNativeModel.swift in Sources */,
 				84DBB4A53A194255851C3CF4 /* EditProfileNativeFields.swift in Sources */,
 				C17C79C980964743A1A224AD /* EditProfileNativeScreen.swift in Sources */,
+				4A4149ED7EA558535A593018 /* CheckInDetailNativeModel.swift in Sources */,
+				553A0D82DFD57F0624F032F7 /* CheckInDetailNativeScreen.swift in Sources */,
+				0A8D371634C33941B0A3B65E /* CoffeePeekCheckInCardMapping.swift in Sources */,
 				78A7DD89998FCB72E4D2A814 /* CoffeePeekCommunityCardHost.swift in Sources */,
 				BD8B1EB2E303103F86366987 /* CoffeePeekCheckInProfileAdapter.swift in Sources */,
 				00B9031DF9CEEA84481B4495 /* CoffeePeekCheckInPhotoStrip.swift in Sources */,

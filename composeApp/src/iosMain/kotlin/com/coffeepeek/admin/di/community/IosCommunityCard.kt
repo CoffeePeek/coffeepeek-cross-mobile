@@ -35,7 +35,7 @@ class IosCommunityCard internal constructor(
     fun current() = state.value
     fun observe(onState: (IosCommunityCardState) -> Unit) = IosCommunityCardObservation(scope.launch { state.collect(onState) })
 
-    internal fun update(next: CommunityCardPresentation, callbacks: CommunityCardActions) {
+    internal fun update(next: CommunityCardPresentation?, callbacks: CommunityCardActions) {
         if (!isCurrent()) return
         data = next
         actions = callbacks
@@ -71,7 +71,7 @@ class IosCommunityCard internal constructor(
         scope.cancel()
     }
 
-    private fun revoke() {
+    internal fun revoke() {
         closed = true
         data = null
         actions = null

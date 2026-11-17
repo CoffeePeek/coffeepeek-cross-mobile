@@ -70,7 +70,7 @@ private struct GuestProfileScreen: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
                 Text(strings.text("profile_title"))
-                    .font(CoffeePeekNativeStyle.font(28, weight: "Bold", relativeTo: .title))
+                    .font(CoffeePeekNativeStyle.rootHeadingFont)
                     .accessibilityAddTraits(.isHeader)
                     .padding(.bottom, 4)
                 CoffeePeekGuestAccountCard(

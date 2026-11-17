@@ -485,3 +485,34 @@ The update preserved data and the scanner remains disabled. Code is published to
 codex/ios-native. Signed IPA/build identity are local under ignored build/xcross-ios.
 Manual device review of the new calendar/card/editor and Android visual review are
 still pending; successful compilation and startup alone do not certify those gates.
+
+### 2026-11-17 — native check-in details and Settings top inset
+
+Owner feedback: Home/shop detail backgrounds and custom navigation diverge; Settings
+retains a fixed top safe-area strip, and Profile title is smaller than Settings.
+Scope: optional feature presentation seams reuse existing ViewModels/actions and
+compose one native detail body using the existing feed/profile card. UIKit owns
+detail navigation. Settings scroll extends under the status bar with initial title
+clearance inside scroll content; Profile and Settings share the 28-point bold token.
+
+Verification plan: Home detail presentation/action regressions, community and app
+composition JVM tests, directDebug assembly with packaged DEX checks, Kotlin body
+limits, full native framework and Swift compilation, then an in-place USB update.
+Preserve account revocation, protected photo variants, deletion/back guards, editing,
+analytics ownership and real-account data. Manual read-only light/dark detail and
+scrolled Settings checks remain device gates; no live write or consent test is planned.
+
+Android verification: 835 JVM tests pass (Home detail/editor 92, community 58,
+composition 685), zero failures/errors/skips; directDebug APK assembly and packaged
+DEX checks pass. First run failed to compile two new test assertions due to inferred
+sealed-action subtype lists; explicit expected list types fixed them. The complete
+retry passed in 34s. Function-body verification reports only the two inherited
+violations (business ownership factory and public-profile session); no new/grown
+violations and no baseline changes. Native compilation and device checks are pending.
+
+Native preflight: Kotlin sources compile and all 68 Swift files typecheck against
+the newly exported framework header. The initial Kotlin attempt required explicit
+UIKit category-property imports; the corrected compile passes. Native detail back
+uses the feature callback (including revoked-account close); ordinary community
+details retain the native swipe gesture. Full framework/link and device review remain
+pending. Both startup entry points and the Xcode source list register the detail host.

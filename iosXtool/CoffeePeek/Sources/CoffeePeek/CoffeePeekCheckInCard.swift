@@ -83,8 +83,8 @@ struct CoffeePeekCheckInCard: View {
                 Text(data.title).font(CoffeePeekNativeStyle.font(22, weight: "Semibold", relativeTo: .title2))
                     .lineLimit(2).frame(maxWidth: .infinity, alignment: .leading)
             }
-            if let rating = data.rating { stars(rating) }
         }
+        if let rating = data.rating { stars(rating) }
     }
 
     private var brew: some View {
@@ -141,7 +141,8 @@ struct CoffeePeekCheckInCard: View {
                     Button(edit) { perform("edit") }.disabled(!data.actions.contains("edit")).frame(minHeight: 44)
                 }
             }.foregroundStyle(CoffeePeekNativeStyle.secondary)
-        } else if let publication = data.publication {
+        }
+        if let publication = data.publication {
             Text(publication).font(CoffeePeekNativeStyle.font(12, relativeTo: .caption))
                 .foregroundStyle(CoffeePeekNativeStyle.secondary)
         }
@@ -222,5 +223,23 @@ private func coffeePeekCardPreview() -> CoffeePeekCheckInCardData {
 
 #Preview("Shared check-in dark") {
     CoffeePeekCheckInCard(data: coffeePeekCardPreview(), loadImage: { _, _ in nil }, perform: { _ in }, openPhoto: { _ in })
+        .preferredColorScheme(.dark)
+}
+
+private func coffeePeekRejectedCardPreview() -> CoffeePeekCheckInCardData {
+    var data = coffeePeekCardPreview()
+    data.home = true
+    data.publication = "Виден только вам"
+    data.rejectedTitle = "Публикация отклонена"
+    data.rejectedReason = "Проверьте описание перед повторной отправкой."
+    return data
+}
+
+#Preview("Rejected check-in light") {
+    CoffeePeekCheckInCard(data: coffeePeekRejectedCardPreview(), loadImage: { _, _ in nil }, perform: { _ in }, openPhoto: { _ in })
+        .preferredColorScheme(.light)
+}
+#Preview("Rejected check-in dark") {
+    CoffeePeekCheckInCard(data: coffeePeekRejectedCardPreview(), loadImage: { _, _ in nil }, perform: { _ in }, openPhoto: { _ in })
         .preferredColorScheme(.dark)
 }

@@ -65,7 +65,7 @@ internal class NavigationDelegate : NSObject(), UINavigationControllerDelegatePr
     var onStackChanged: (() -> Unit)? = null
     @ObjCSignatureOverride
     override fun navigationController(navigationController: UINavigationController, willShowViewController: UIViewController, animated: Boolean) {
-        navigationController.setNavigationBarHidden(true, animated)
+        navigationController.setNavigationBarHidden((willShowViewController as? NativeScreenController)?.nativeDetailBarVisible != true, animated)
     }
 
     override fun gestureRecognizerShouldBegin(gestureRecognizer: UIGestureRecognizer): Boolean {

@@ -74,6 +74,7 @@ internal fun communityHost() = CommunityHost(
     leaders = null,
     share = ShareHelper::shareText,
     nativeCard = nativeCommunityCardRenderer(),
+    nativeDetail = nativeCommunityDetailRenderer(),
 )
 
 internal fun featureCommunityScreenRenderer(

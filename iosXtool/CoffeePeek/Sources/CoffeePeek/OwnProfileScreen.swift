@@ -98,7 +98,7 @@ private struct OwnProfileScreen: View {
     private var menu: some View {
         HStack {
             Text(model.strings["profile_title"])
-                .font(CoffeePeekNativeStyle.font(22, weight: "Semibold", relativeTo: .title2))
+                .font(CoffeePeekNativeStyle.rootHeadingFont)
                 .accessibilityAddTraits(.isHeader)
             Spacer(minLength: 0)
             if model.state.active {

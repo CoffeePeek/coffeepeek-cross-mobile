@@ -12,6 +12,9 @@ enum CoffeePeekNativeStyle {
     static let border = adaptive(0xE5E1DA, 0x3D2F28)
     static let accent = color(0xFACC15)
 
+    // Root-tab titles match design-system headlineMedium; pushed navigation stays compact.
+    static var rootHeadingFont: Font { font(28, weight: "Bold", relativeTo: .title) }
+
     // The bundled static weights share one PostScript name. Loading the actual
     // font data avoids global registration collisions and preserves each weight.
     private static let graphicsFonts: [String: CGFont] = {
@@ -76,4 +79,27 @@ enum CoffeePeekNativeStyle {
         })
     }
 
+}
+
+private func nativeRootHeadingPreview() -> some View {
+    VStack(alignment: .leading, spacing: 16) {
+        Text("Настройки")
+        HStack {
+            Text("Профиль")
+            Spacer()
+            Image(systemName: "ellipsis").font(.system(size: 20)).frame(width: 48, height: 48)
+        }
+    }
+    .font(CoffeePeekNativeStyle.rootHeadingFont)
+    .foregroundStyle(CoffeePeekNativeStyle.foreground)
+    .padding(16)
+    .background(CoffeePeekNativeStyle.background)
+}
+
+#Preview("Root headings light") {
+    nativeRootHeadingPreview().preferredColorScheme(.light)
+}
+
+#Preview("Root headings dark") {
+    nativeRootHeadingPreview().preferredColorScheme(.dark)
 }

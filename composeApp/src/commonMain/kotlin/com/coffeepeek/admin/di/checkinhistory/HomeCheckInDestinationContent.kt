@@ -13,6 +13,7 @@ import coffeepeek.composeapp.generated.resources.history_home_close
 import coffeepeek.composeapp.generated.resources.history_home_visibility_unconfirmed
 import com.coffeepeek.admin.analytics.AnalyticsOverlay
 import com.coffeepeek.admin.di.homecheckin.appHomeCheckInDates
+import com.coffeepeek.admin.di.community.nativeCheckInDetailAvailable
 import com.coffeepeek.admin.di.homecheckin.HomeCheckInFullScreenDialog
 import com.coffeepeek.admin.ui.component.NativeNavigationBar
 import com.coffeepeek.admin.utils.utcIsoToLocalDateTime
@@ -25,7 +26,9 @@ internal fun HomeCheckInDestinationContent(bridge: HistoryHomeBridge, session: H
     onPhoto: (List<String>, List<String>, Int) -> Unit) {
     val destination by bridge.destination.collectAsStateWithLifecycle()
     destination?.let { current -> key(current) {
-        NativeNavigationBar("", { bridge.dismiss(current) }, customBack = true, action = null)
+        if (current.editing || !nativeCheckInDetailAvailable()) {
+            NativeNavigationBar("", { bridge.dismiss(current) }, customBack = true, action = null)
+        }
         if (current.editing) HomeCheckInEditContent(current, bridge, session)
         else HomeCheckInDetailContent(current, bridge, session, onPhoto)
     } }
@@ -53,7 +56,7 @@ private fun HomeCheckInDetailContent(current: HistoryHomeDestination, bridge: Hi
     val dates = remember { appHomeCheckInDates() }
     CompositionLocalProvider(LocalViewModelStoreOwner provides current) {
         Column(Modifier.fillMaxSize()) {
-            CoffeePeekCircularBackButton(onClick = { bridge.dismiss(current) },
+            if (!nativeCheckInDetailAvailable()) CoffeePeekCircularBackButton(onClick = { bridge.dismiss(current) },
                 contentDescription = stringResource(Res.string.history_home_close),
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
             current.entries.detail.Content(requireNotNull(current.id), session.generation,
