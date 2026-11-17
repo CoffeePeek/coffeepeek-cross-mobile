@@ -67,7 +67,8 @@ data class IosOwnProfileActivityRow(
 internal fun OwnProfileSnapshot.iosState(language: String): IosOwnProfileState {
     return IosOwnProfileState(active, iosIdentity(), loading || publicLoading && !hasContent, refreshing,
         failed || publicFailed && !hasContent, refreshFailed || publicFailed && hasContent,
-        checkInsLoading || publicLoading, checkInsFailed || publicFailed, checkIns.map { it.iosCheckIn(language, this) },
+        checkInsLoading || publicLoading, checkInsFailed || publicFailed, checkIns.map { it.iosCheckIn(language, publicProfile?.nickname ?: identity?.userName.orEmpty(),
+            publicProfile?.avatarUrl ?: identity?.avatarUrl) },
         IosOwnProfileFollowers(followersOpen, followersLoading, followersFailed, moreFollowers,
             followers.map { IosOwnProfileFollower(it.slug, it.userName, it.avatarUrl) }))
 }
@@ -81,10 +82,12 @@ private fun OwnProfileSnapshot.iosIdentity(): IosOwnProfileIdentity? {
         public?.stats?.followers ?: own.followersCount, public != null)
 }
 
-private fun OwnProfileCheckInSnapshot.iosCheckIn(language: String, snapshot: OwnProfileSnapshot): IosOwnProfileCheckIn {
+internal fun OwnProfileCheckInSnapshot.iosCheckIn(
+    language: String, fallbackName: String, fallbackAvatar: String?,
+): IosOwnProfileCheckIn {
     val row = checkIn
-    val name = row.authorName.ifBlank { snapshot.publicProfile?.nickname ?: snapshot.identity?.userName.orEmpty() }
-    val avatar = row.authorAvatarUrl ?: snapshot.publicProfile?.avatarUrl ?: snapshot.identity?.avatarUrl
+    val name = row.authorName.ifBlank { fallbackName }
+    val avatar = row.authorAvatarUrl ?: fallbackAvatar
     return IosOwnProfileCheckIn(row.id, name, avatar, row.venue, row.coffeeShopSlug, row.isHome, row.note,
         utcIsoToLocalDateTime(row.createdAt), drinkName(language), row.helpfulCount, row.isHelpfulByCurrentUser,
         row.scores?.let { (kotlin.math.round(it.average * 10) / 10).toString() },

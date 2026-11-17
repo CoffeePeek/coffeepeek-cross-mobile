@@ -29,13 +29,19 @@ struct OwnProfileCheckIns: View {
     }
 }
 
-private struct OwnProfileCheckInCard: View {
+struct OwnProfileCheckInCard: View {
     let checkIn: IosOwnProfileCheckIn
     let strings: OwnProfileStrings
     let profile: IosOwnProfile?
     let openShop: (String) -> Void
     let openCoffee: (String) -> Void
     let openPhoto: (Int) -> Void
+    var imageLoader: ProfileImageLoader?
+    var openMenu: (() -> Void)?
+    var report: (() -> Void)?
+    var ratingDescription: String?
+
+    private var loadImage: ProfileImageLoader { imageLoader ?? profileImageLoader(profile) }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -53,13 +59,23 @@ private struct OwnProfileCheckInCard: View {
 
     private var author: some View {
         HStack(spacing: 8) {
-            OwnProfileImage(url: checkIn.avatar, profile: profile, symbol: "person.crop.circle")
+            OwnProfileImage(url: checkIn.avatar, symbol: "person.crop.circle", loadImage: loadImage)
                 .frame(width: 32, height: 32).clipShape(Circle())
             VStack(alignment: .leading, spacing: 2) {
                 Text(checkIn.name).font(CoffeePeekNativeStyle.font(14, weight: "Semibold"))
                 if !checkIn.date.isEmpty {
                     Text(checkIn.date).foregroundStyle(CoffeePeekNativeStyle.secondary)
                 }
+            }
+            Spacer(minLength: 0)
+            if let openMenu, let report {
+                Menu {
+                    Button(strings["profile_check_in_report"], systemImage: "flag", action: report)
+                    Button(strings["profile_block_author"], systemImage: "nosign", role: .destructive, action: openMenu)
+                } label: {
+                    Image(systemName: "ellipsis").frame(width: 44, height: 44)
+                }
+                .accessibilityLabel(strings["profile_check_in_actions"])
             }
         }
     }
@@ -68,7 +84,7 @@ private struct OwnProfileCheckInCard: View {
     private var heading: some View {
         if checkIn.home {
             if let brew = checkIn.brew {
-                OwnProfileBrewPreview(brew: brew, strings: strings, profile: profile, openCoffee: openCoffee)
+                OwnProfileBrewPreview(brew: brew, strings: strings, loadImage: loadImage, openCoffee: openCoffee)
             } else {
                 Text(strings["history_activity_at_home"]).font(.headline)
             }
@@ -82,7 +98,8 @@ private struct OwnProfileCheckInCard: View {
             Text(shopName).font(.headline)
         }
         if let score = checkIn.score {
-            Label(score, systemImage: "star.fill").accessibilityLabel(String(format: strings["profile_native_rating"], score))
+            Label(score, systemImage: "star.fill")
+                .accessibilityLabel(ratingDescription ?? String(format: strings["profile_native_rating"], score))
         }
     }
 
@@ -98,7 +115,7 @@ private struct OwnProfileCheckInCard: View {
                     ForEach(checkIn.photos.indices, id: \.self) { index in
                         let photo = checkIn.photos[index]
                         Button { openPhoto(index) } label: {
-                            OwnProfileImage(url: photo.url, profile: profile, symbol: "photo")
+                            OwnProfileImage(url: photo.url, symbol: "photo", loadImage: loadImage)
                                 .frame(width: 92, height: 92).clipShape(RoundedRectangle(cornerRadius: 8))
                         }
                         .buttonStyle(.plain)
@@ -124,7 +141,7 @@ private struct OwnProfileCheckInCard: View {
 private struct OwnProfileBrewPreview: View {
     let brew: IosOwnProfileBrew
     let strings: OwnProfileStrings
-    let profile: IosOwnProfile?
+    let loadImage: ProfileImageLoader
     let openCoffee: (String) -> Void
 
     var body: some View {
@@ -143,7 +160,7 @@ private struct OwnProfileBrewPreview: View {
     private func row(link: Bool) -> some View {
         HStack(spacing: 10) {
             if brew.cover != nil {
-                OwnProfileImage(url: brew.cover, profile: profile, symbol: "cup.and.saucer", fits: true)
+                OwnProfileImage(url: brew.cover, symbol: "cup.and.saucer", fits: true, loadImage: loadImage)
                     .frame(width: 52, height: 52).clipShape(RoundedRectangle(cornerRadius: 8))
             }
             VStack(alignment: .leading, spacing: 3) {

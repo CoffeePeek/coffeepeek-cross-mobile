@@ -17,6 +17,8 @@ import com.coffeepeek.admin.di.profile.IosGuestProfile
 import com.coffeepeek.admin.di.profile.LocalIosGuestProfileController
 import com.coffeepeek.admin.di.profile.IosOwnProfile
 import com.coffeepeek.admin.di.profile.LocalIosOwnProfileController
+import com.coffeepeek.admin.di.profile.IosPublicProfile
+import com.coffeepeek.admin.di.profile.LocalIosPublicProfileController
 import com.coffeepeek.admin.di.contentreport.IosContentReport
 import com.coffeepeek.admin.di.contentreport.LocalIosContentReportController
 import com.coffeepeek.admin.di.shopreport.IosShopReport
@@ -69,6 +71,7 @@ fun MainViewController(
     makeCheckInCreatePickerController: (IosCheckInCreatePicker) -> UIViewController,
     makeGuestProfileController: (IosGuestProfile) -> UIViewController,
     makeOwnProfileController: (IosOwnProfile) -> UIViewController,
+    makePublicProfileController: (IosPublicProfile) -> UIViewController,
     makeNotificationInboxController: (IosNotificationInbox, String) -> UIViewController,
 ): UIViewController = IosControllerFactories(
     makeShopMenuGalleryController,
@@ -85,6 +88,7 @@ fun MainViewController(
     makeCheckInCreatePickerController,
     makeGuestProfileController,
     makeOwnProfileController,
+    makePublicProfileController,
     makeNotificationInboxController,
 ).createController(onReady)
 
@@ -111,6 +115,7 @@ private class IosControllerFactories(
     private val makeCheckInCreatePickerController: (IosCheckInCreatePicker) -> UIViewController,
     private val makeGuestProfileController: (IosGuestProfile) -> UIViewController,
     private val makeOwnProfileController: (IosOwnProfile) -> UIViewController,
+    private val makePublicProfileController: (IosPublicProfile) -> UIViewController,
     private val makeNotificationInboxController: (IosNotificationInbox, String) -> UIViewController,
 ) {
     @Composable
@@ -130,6 +135,7 @@ private class IosControllerFactories(
             LocalCheckInCreatePicker provides iosCheckInCreatePickerContent(makeCheckInCreatePickerController),
             LocalIosGuestProfileController provides makeGuestProfileController,
             LocalIosOwnProfileController provides makeOwnProfileController,
+            LocalIosPublicProfileController provides makePublicProfileController,
             LocalIosNotificationInboxController provides makeNotificationInboxController,
         ) {
             App(onReady = onReady)
