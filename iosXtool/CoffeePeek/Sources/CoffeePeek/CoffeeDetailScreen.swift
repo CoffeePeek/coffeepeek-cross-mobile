@@ -52,13 +52,7 @@ private struct CoffeeDetailHost: View {
         )
         .allowsHitTesting(model.viewer == nil)
         .accessibilityHidden(model.viewer != nil)
-        .overlay {
-            if let viewer = model.viewer {
-                CoffeeDetailViewer(controller: viewer)
-                    .id(ObjectIdentifier(viewer))
-                    .ignoresSafeArea()
-            }
-        }
+        .coffeePeekPhotoViewer(model.viewer, languageTag: strings.languageTag, onDismiss: detail.closePhotos)
         .onAppear { model.observe() }
         .onDisappear { model.stopObserving() }
     }
@@ -66,7 +60,7 @@ private struct CoffeeDetailHost: View {
 
 private final class CoffeeDetailModel: ObservableObject {
     @Published private(set) var state: IosCoffeeDetailState
-    @Published private(set) var viewer: UIViewController?
+    @Published private(set) var viewer: IosPhotoViewer?
     private let detail: IosCoffeeDetail
     private var observation: IosCoffeeDetailObservation?
 
@@ -87,6 +81,7 @@ private final class CoffeeDetailModel: ObservableObject {
     }
 
     func stopObserving() {
+        guard viewer == nil else { return }
         observation?.cancel()
         observation = nil
     }
@@ -110,7 +105,7 @@ private final class CoffeeDetailModel: ObservableObject {
         if !next.arePhotosOpen {
             viewer = nil
         } else if viewer == nil {
-            viewer = detail.makeViewer()
+            viewer = detail.photoViewer()
         }
     }
 }
@@ -324,12 +319,6 @@ private struct CoffeeDetailScreen: View {
             .font(.title2.bold())
             .accessibilityAddTraits(.isHeader)
     }
-}
-
-private struct CoffeeDetailViewer: UIViewControllerRepresentable {
-    let controller: UIViewController
-    func makeUIViewController(context: Context) -> UIViewController { controller }
-    func updateUIViewController(_ uiViewController: UIViewController, context: Context) {}
 }
 
 private func coffeeDetailPreview(languageTag: String, failed: Bool) -> some View {

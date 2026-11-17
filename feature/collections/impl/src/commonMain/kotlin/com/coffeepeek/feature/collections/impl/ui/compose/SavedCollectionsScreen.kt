@@ -66,7 +66,7 @@ private suspend fun handleSavedEvent(event: SavedCollectionsEvent, model: SavedC
     }
 }
 
-private suspend fun shareSavedImages(event: SavedCollectionsEvent.Export, model: SavedCollectionsViewModel,
+internal suspend fun shareSavedImages(event: SavedCollectionsEvent.Export, model: SavedCollectionsViewModel,
     snapshots: CollectionsRepository, decode: CollectionPhotoDecoder, callbacks: CollectionsCallbacks, resources: CollectionPosterResources) {
     var failed = false
     try {
@@ -79,7 +79,7 @@ private suspend fun shareSavedImages(event: SavedCollectionsEvent.Export, model:
 }
 
 @Composable
-private fun SavedCollectionPoster(state: SavedCollectionsState, action: (SavedCollectionsAction) -> Unit,
+internal fun SavedCollectionPoster(state: SavedCollectionsState, action: (SavedCollectionsAction) -> Unit,
     snapshots: CollectionsRepository, decode: CollectionPhotoDecoder, modifier: Modifier) {
     val collection = state.collection?.toSharedPoster() ?: return
     CollectionsScreenContent(CollectionsState(publicView = true, loading = false, busy = state.busy,

@@ -3,9 +3,11 @@ import SwiftUI
 import UIKit
 
 struct CoffeeDetailStrings {
+    let languageTag: String
     private let bundle: Bundle
 
     init(languageTag: String) {
+        self.languageTag = languageTag
         bundle = Bundle.main.url(forResource: languageTag, withExtension: "lproj")
             .flatMap { Bundle(url: $0) } ?? .main
     }
