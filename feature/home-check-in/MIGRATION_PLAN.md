@@ -1334,6 +1334,21 @@ compilation passed; Android Direct Debug APK and packaged DEX guard passed.
 `PlatformActionSelectionTest` ran 4/4 and Home impl tests ran 81/81, with zero
 failures, errors or skips. No iPhone build or picker runtime was tested here.
 
+## iOS camera return to the editor — 2026-11-17
+
+The full-screen Compose dialog now passes the owning UIKit controller to its
+content for native presentation. Compose 1.12.1 can lose a dialog layer after
+a controller presented from that layer closes ([CMP-10589](https://github.com/JetBrains/compose-multiplatform-core/pull/3610)).
+The check-in can then appear closed while its flow is still active, so another
+tap on the create action has no effect. The camera keeps the presenter in the
+window and hands the image to the editor after dismissal completes.
+
+Verification uses `ios-verify` for the simulator build and Kotlin/Native tests.
+On an iPhone, check that Camera → Use Photo retains the typed draft and adds a
+preview, Camera → Cancel keeps the same draft, Gallery still returns to the
+form, and the create action reopens after closing the editor. Check both the
+home and coffee shop editors without publishing a live check-in.
+
 ## Guest check-in onboarding — 2026-11-09
 
 The root offers the shared guide on each ordinary launch as a guest and when
