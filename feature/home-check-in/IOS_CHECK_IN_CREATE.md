@@ -42,8 +42,12 @@ Added non-UI Home session contracts for local-day projection and field rules,
 unchanged edit timestamp and unknown visibility, owned/bounded/single-use photo
 delivery, picker cancellation and stale callbacks, submit blocking while photos
 are pending, owner revocation, one saved outcome after confirmation, and detail
-request cancellation on owner disposal. Tests are authored, not claimed executed
-here; the coordinating task owns serial Gradle checks and the iOS build.
+request cancellation on owner disposal. The coordinating run executed Home88,
+Shop112 and composition681 JVM unit/contract tests with zero failures/errors/skips;
+Profile72 was UP-TO-DATE. Android Debug/packaged DEX checks and Windows iOS
+Debug1.2.1(3087) assembly passed at source `c651f529d`. iOS-only tests remain
+authored but unexecuted on Windows. See `docs/IOS_SWIFTUI_EXECUTION_PLAN.md` for
+the retained failed attempts, inherited body-limit violations and device gates.
 
 Manual gates remain: create/edit and shelf entry placement in both themes,
 native date and bean selection, keyboard/large text/VoiceOver, cancelled photo

@@ -330,3 +330,15 @@ that cannot execute on Windows and manual device gates are reported separately.
   it after restoring the verified macro/runtime files passed. Stale cache as the
   original cause is not proven. Xcross coffeepeek.8 serializes the Windows driver
   and restores selected binary framework copy nodes; framework/response tests7/7 passed.
+- Final Windows build passed using xcross2.1.1-coffeepeek.8: source
+  `c651f529d07c4ded50ad158b84b752e583761e46`, clean tree at build time,
+  Debug1.2.1(3087), `com.coffeepeek.xcross`. Swift dependencies3m37s,
+  Kotlin sources10.8s, framework9m41s, Swift host58.9s, assembly1.3s.
+  ARM64 bundle/resource validation passed, including MapLibre embedding and
+  absence of ONNX. Unsigned IPA and executable hash are retained locally.
+- The changes are published to `origin/codex/ios-native`. USB preflight after
+  assembly did not find the agreed iPhone. Signing, installation, profile
+  navigation/foreground checks and empty native editor visual review are pending
+  device connection. This build has not yet been claimed installed or device-verified.
+  iOS-only tests remain authored but unexecuted on Windows; real-account writes
+  and full check-in flow migration beyond these editor entries remain separate gates.
