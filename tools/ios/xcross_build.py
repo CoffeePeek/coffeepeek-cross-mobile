@@ -1,5 +1,6 @@
 """Build an unsigned CoffeePeek Debug app with the local xcross compatibility build."""
 import argparse
+from contextlib import contextmanager
 import hashlib
 import json
 import os
@@ -116,6 +117,31 @@ def build_environment(config):
     return environment
 
 
+@contextmanager
+def scannerless_linkage_package(root):
+    # Xcode's Kotlin plugin expects the checked-in generated manifest verbatim.
+    manifest = root / "iosApp/KotlinMultiplatformLinkedPackage/Package.swift"
+    original = manifest.read_bytes()
+    lines = original.splitlines(keepends=True)
+    scanner_entries = (
+        b'.package(path: "subpackages/_feature_shelf_data"),',
+        b'.product(name: "_feature_shelf_data", package: "_feature_shelf_data"),',
+    )
+    contents = [line.strip() for line in lines]
+    if any(contents.count(entry) != 1 for entry in scanner_entries):
+        raise ValueError("Expected one shelf package and product in the Kotlin linkage manifest")
+    scannerless = b"".join(line for line in lines if line.strip() not in scanner_entries)
+    manifest.write_bytes(scannerless)
+    try:
+        yield
+    finally:
+        current = manifest.read_bytes()
+        if current == scannerless:
+            manifest.write_bytes(original)
+        elif current != original:
+            raise RuntimeError("The Kotlin linkage manifest changed during xcross; review it before building again")
+
+
 def record_build(root, app, settings):
     revision = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=root, text=True).strip()
     status = subprocess.check_output(["git", "status", "--porcelain"], cwd=root, text=True)
@@ -151,7 +177,8 @@ def main():
     settings = prepare_config(ROOT)
     environment = build_environment(args.config)
     command = [args.xcross, "compose", "build", "--configuration", "debug"]
-    subprocess.run(command, cwd=ROOT, env=environment, check=True)
+    with scannerless_linkage_package(ROOT):
+        subprocess.run(command, cwd=ROOT, env=environment, check=True)
     app = ROOT / "build/xcross-ios" / (settings["PRODUCT_NAME"] + ".app")
     finalize_bundle(ROOT, app, settings)
     record_build(ROOT, app, settings)
