@@ -1,9 +1,9 @@
 PRODUCT_NAME = CoffeePeek
 PRODUCT_BUNDLE_IDENTIFIER = com.coffeepeek
 CODE_SIGN_ENTITLEMENTS = iosApp/CoffeePeek.entitlements
-MARKETING_VERSION = 1.2.0
-// Preserve published build codes when counting only the current branch history.
-BUILD_NUMBER_OFFSET = 1000
+MARKETING_VERSION = 1.2.1
+// Keep release build codes above TestFlight builds made from the longer native iOS branch.
+BUILD_NUMBER_OFFSET = 1100
 CURRENT_PROJECT_VERSION = 1
 IPHONEOS_DEPLOYMENT_TARGET = 17.0
 EXCLUDED_ARCHS[sdk=iphonesimulator*] = x86_64
