@@ -26,6 +26,7 @@ internal sealed interface ProfileActivityAction {
     data object Today : ProfileActivityAction
     data object Retry : ProfileActivityAction
     data object Resume : ProfileActivityAction
+    data object SyncVisibleWeek : ProfileActivityAction
     data class OpenWeek(val owner: Any = Unit) : ProfileActivityAction
 }
 

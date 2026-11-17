@@ -33,10 +33,19 @@ internal class ProfileActivityViewModel(
             ProfileActivityAction.Resume -> {
                 if (firstResume) firstResume = false else refresh()
             }
+            ProfileActivityAction.SyncVisibleWeek -> syncVisibleWeek()
             is ProfileActivityAction.OpenWeek -> if (currentState.calendar.isLoggedIn) {
                 sendEvent(ProfileActivityEventEnvelope(ProfileActivityEvent.OpenWeek, action.owner))
             }
         }
+    }
+
+    private fun syncVisibleWeek() {
+        if (!weekly) return
+        val today = try { snapshot().today }
+        catch (error: CancellationException) { throw error }
+        catch (_: Exception) { return }
+        if (today != currentState.calendar.today) refresh()
     }
 
     private fun updateCalendar(transform: CombinedHistoryState.() -> CombinedHistoryState) {

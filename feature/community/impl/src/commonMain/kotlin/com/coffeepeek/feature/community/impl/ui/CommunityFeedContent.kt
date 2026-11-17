@@ -85,7 +85,9 @@ internal fun CommunityFeedContent(state: CommunityState, onAction: (CommunityAct
     Box(Modifier.fillMaxSize()) {
         CommunityFeedList(state, posts, listState, onAction, host, snackbar, bottomClearance, onRefreshed, guest, callbacks.onSignIn, callbacks.onOpenPost) { index, post ->
             if (guest && index > 0) {
-                CommunityGuestTeaser(post, host, callbacks.onSignIn)
+                Box(Modifier.padding(horizontal = CoffeePeekDimens.spacing4)) {
+                    CommunityGuestTeaser(post, host, callbacks.onSignIn)
+                }
             } else {
                 CommunityFeedPost(index, post, state, host, postActions(post, state, onAction, callbacks, blockActions,
                     sharer, { homeEditorOpened = true }) { thumbnails, originals, photoIndex ->
@@ -158,11 +160,14 @@ private fun CommunityFeedList(state: CommunityState, posts: List<CommunityPost>,
                 loadingDescription = stringResource(Res.string.community_loading),
                 modifier = Modifier.fillMaxSize().padding(top = padding.calculateTopPadding())) { scrollModifier ->
                 LazyColumn(state = listState, modifier = host.exposure(scrollModifier.fillMaxSize(), ExposureKind.Feed),
-                    contentPadding = PaddingValues(start = CoffeePeekDimens.spacing4, end = CoffeePeekDimens.spacing4,
-                        top = CoffeePeekDimens.spacing2, bottom = bottomClearance + 88.dp),
+                    contentPadding = PaddingValues(top = CoffeePeekDimens.spacing2, bottom = bottomClearance + 88.dp),
                     verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3)) {
                     state.visibleConfirmedSaves.forEach { id ->
-                        item(key = "saved:" + id) { ConfirmedPostCard({ onOpenPost(id) }, { onAction(CommunityAction.Refresh()) }) }
+                        item(key = "saved:" + id) {
+                            Box(Modifier.padding(horizontal = CoffeePeekDimens.spacing4)) {
+                                ConfirmedPostCard({ onOpenPost(id) }, { onAction(CommunityAction.Refresh()) })
+                            }
+                        }
                     }
                     if (state.isLoading && state.items.isEmpty()) item(key = "loading") { CenteredLoader() }
                     itemsIndexed(posts, key = { _, item -> item.id },
@@ -176,14 +181,15 @@ private fun CommunityFeedList(state: CommunityState, posts: List<CommunityPost>,
 
 private fun androidx.compose.foundation.lazy.LazyListScope.communityFeedStatus(state: CommunityState,
     guest: Boolean, onSignIn: () -> Unit, onAction: (CommunityAction) -> Unit) {
+    val inset = Modifier.padding(horizontal = CoffeePeekDimens.spacing4)
     when {
         state.error != null -> item(key = "error") {
             ErrorBlock({ onAction(CommunityAction.Retry) }, stringResource(
-                if (state.restartPagination) Res.string.community_restart else Res.string.community_retry))
+                if (state.restartPagination) Res.string.community_restart else Res.string.community_retry), inset)
         }
         state.items.isEmpty() && !state.isLoading -> item(key = "empty") {
-            Text(stringResource(Res.string.community_empty), color = MaterialTheme.colorScheme.onSurfaceVariant)
-            if (guest) CoffeePeekButton(stringResource(Res.string.community_sign_in_to_read), onSignIn)
+            Text(stringResource(Res.string.community_empty), modifier = inset, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            if (guest) CoffeePeekButton(stringResource(Res.string.community_sign_in_to_read), onSignIn, modifier = inset)
         }
     }
     if (state.isLoadingMore) item(key = "loading-more") { CenteredLoader() }
@@ -194,11 +200,11 @@ private fun CommunityFeedPost(index: Int, post: CommunityPost, state: CommunityS
     host: CommunityHost, actions: PostCardActions) {
     Column(host.exposure(Modifier, if (post.isHome) ExposureKind.HomePost else ExposureKind.ShopPost),
         verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing3)) {
-        if (index > 0) HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+        if (index > 0) HorizontalDivider(Modifier.padding(horizontal = CoffeePeekDimens.spacing4), color = MaterialTheme.colorScheme.outlineVariant)
         PostCard(post = post, isOwn = state.owns(post), publicTimeline = state.timeline == CommunityTimeline.Public,
             changingVisibility = state.changingVisibilityId == post.id,
             showHelpfulCount = state.timeline == CommunityTimeline.Public || post.helpfulCount > 0,
-            enabled = !state.isMutating, actions = actions, host = host)
+            enabled = !state.isMutating, actions = actions, host = host, horizontalInset = CoffeePeekDimens.spacing4)
     }
 }
 

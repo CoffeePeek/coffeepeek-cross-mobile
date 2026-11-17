@@ -8,7 +8,7 @@ import com.coffeepeek.core.session.SessionStore
 
 /**
  * The transport's view of the account's stored session. Only an active session yields credentials; a rotated pair is stored
- * with the user id read from its access token, and a refresh response without a refresh token keeps the stored one.
+ * with the user id read from its access token.
  */
 internal class SessionStoreCredentials(private val sessions: SessionStore) : SessionCredentials {
     override suspend fun load(): SessionTokens? {
@@ -32,6 +32,6 @@ private fun Session.toTokens() = SessionTokens(accessToken, refreshToken)
 
 private fun SessionTokens.toSession(current: Session?) = Session(
     accessToken = accessToken,
-    refreshToken = refreshToken?.takeIf { it.isNotBlank() } ?: current?.refreshToken,
+    refreshToken = refreshToken?.takeIf { it.isNotBlank() },
     userId = JwtUtils.extractUserId(accessToken) ?: current?.userId,
 )

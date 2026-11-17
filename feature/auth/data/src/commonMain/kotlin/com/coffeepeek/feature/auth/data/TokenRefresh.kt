@@ -6,8 +6,10 @@ import com.coffeepeek.core.network.requestResult
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.expectSuccess
-import io.ktor.client.request.cookie
 import io.ktor.client.request.put
+import io.ktor.client.request.setBody
+import io.ktor.http.ContentType
+import io.ktor.http.contentType
 import io.ktor.http.isSuccess
 
 /** The exchange of a refresh token for a new credential pair; it carries no session of its own. */
@@ -16,25 +18,27 @@ fun interface TokenRefresh {
 }
 
 /**
- * [plain] carries no credentials. A definitive rejection (400, 401, 403) fails with [RefreshRejectedException] so the session
- * is signed out; any other failure is temporary and leaves the session alone. The new refresh token is the one in the body,
- * else the `refreshToken` cookie, else the one that was sent.
+ * [plain] sends the refresh token as JSON without bearer authentication. A definitive rejection
+ * (400, 401, 403) fails with [RefreshRejectedException]. A successful exchange requires a complete
+ * token pair with a rotated refresh token.
  */
 fun createTokenRefresh(plain: HttpClient): TokenRefresh = TokenRefresh { refreshToken ->
     requestResult {
         val token = refreshToken.takeIf { it.isNotBlank() } ?: throw AuthApiException("Refresh token отсутствует")
-        val response = plain.put("/api/Tokens") {
+        val response = plain.put("/api/Tokens/native") {
             expectSuccess = false
-            cookie("refreshToken", token)
+            contentType(ContentType.Application.Json)
+            setBody(NativeRefreshRequest(token))
         }
         if (!response.status.isSuccess()) {
             if (response.status.value in setOf(400, 401, 403)) throw RefreshRejectedException()
             throw AuthApiException("Refresh temporarily failed (${response.status.value})", response.status.value)
         }
         val envelope = response.body<Envelope<TokensDto>>()
-        val data = envelope.data
-        if (!envelope.isSuccess || data == null) throw AuthApiException(envelope.message)
-        val resolved = data.refreshToken.takeIf { it.isNotBlank() } ?: response.refreshTokenCookie()?.takeIf { it.isNotBlank() } ?: token
-        SessionTokens(data.accessToken, resolved)
+        val data = envelope.data?.takeIf { envelope.isSuccess } ?: throw AuthApiException(envelope.message)
+        if (data.accessToken.isBlank() || data.refreshToken.isBlank() || data.refreshToken == token) {
+            throw AuthApiException(null)
+        }
+        SessionTokens(data.accessToken, data.refreshToken)
     }
 }

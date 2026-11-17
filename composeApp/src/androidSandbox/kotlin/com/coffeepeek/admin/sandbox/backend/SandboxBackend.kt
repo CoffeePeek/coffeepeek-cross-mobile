@@ -7,6 +7,7 @@ import io.ktor.client.request.HttpRequestData
 import io.ktor.client.request.HttpResponseData
 import io.ktor.http.*
 import io.ktor.http.content.OutgoingContent
+import io.ktor.util.date.GMTDate
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.serialization.json.*
@@ -147,16 +148,21 @@ internal class SandboxBackend(private val samplePhoto: ByteArray,
         val bytes = synchronized(lock) { shelfProfile.cardKey(request.url.encodedPath)?.let { images["/media/$it"]?.copyOf() } }
         return (if (bytes == null) HttpStatusCode.NotFound else HttpStatusCode.OK) to (bytes ?: byteArrayOf())
     }
-    // Owner-scoped media: uncached, ETag-revalidated, and a blocked author's photo disappears (404, no existence leak).
+    // Protected media requires revalidation, and a blocked author's photo disappears.
     private fun protectedPhoto(request: HttpRequestData, mode: SandboxScenario, checkInId: String): Triple<HttpStatusCode, Headers, ByteArray> {
         val etag = "\"sandbox-photo\""
+        val headers = headersOf(
+            HttpHeaders.ContentType to listOf("image/png"),
+            HttpHeaders.ETag to listOf(etag),
+            HttpHeaders.Date to listOf(GMTDate().toHttpDate()),
+            HttpHeaders.CacheControl to listOf("private, no-cache, max-age=20"),
+        )
         return when {
             mode == SandboxScenario.ServerError -> Triple(HttpStatusCode.InternalServerError, Headers.Empty, byteArrayOf())
             !application.protectedPhotoAvailable(checkInId) -> Triple(HttpStatusCode.NotFound, Headers.Empty, byteArrayOf())
             request.headers[HttpHeaders.IfNoneMatch] == etag ->
-                Triple(HttpStatusCode.NotModified, headersOf(HttpHeaders.ETag, etag), byteArrayOf())
-            else -> Triple(HttpStatusCode.OK, headersOf(HttpHeaders.ContentType to listOf("image/png"), HttpHeaders.ETag to listOf(etag),
-                HttpHeaders.CacheControl to listOf("private, no-cache")), images["/media/sample"] ?: byteArrayOf())
+                Triple(HttpStatusCode.NotModified, headers, byteArrayOf())
+            else -> Triple(HttpStatusCode.OK, headers, images["/media/sample"] ?: byteArrayOf())
         }
     }
     private val shelfCardPath = Regex("${SandboxShelfBackend.ROOT}/bags/([^/]+)/photos/([^/]+)")

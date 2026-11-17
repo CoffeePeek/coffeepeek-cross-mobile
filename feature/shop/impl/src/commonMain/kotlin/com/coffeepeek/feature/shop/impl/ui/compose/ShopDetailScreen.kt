@@ -22,6 +22,7 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.MaterialTheme
+import com.coffeepeek.core.designsystem.component.CoffeePeekLoadErrorContent
 import com.coffeepeek.core.designsystem.component.CoffeePeekScaffold as Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -214,6 +215,7 @@ private fun ShopDetailScaffold(
             val status = when {
                 currentDetails != null -> ShopDetailDisplay.Content
                 state.isLoading -> ShopDetailDisplay.Loading
+                state.hasError -> ShopDetailDisplay.Error
                 else -> ShopDetailDisplay.Empty
             }
             Crossfade(targetState = status,
@@ -224,6 +226,7 @@ private fun ShopDetailScaffold(
                         ShopDetailList(currentDetails, state, onAction, distanceLabel, formatCheckInDate,
                             formatMenuDate, listState, clearance)
                     }
+                    ShopDetailDisplay.Error -> CoffeePeekLoadErrorContent(onRetry = { onAction(ShopDetailAction.Retry) })
                     ShopDetailDisplay.Empty -> Unit
                 }
             }
@@ -231,7 +234,7 @@ private fun ShopDetailScaffold(
     }
 }
 
-private enum class ShopDetailDisplay { Loading, Content, Empty }
+private enum class ShopDetailDisplay { Loading, Content, Error, Empty }
 
 @Composable
 private fun ShopDetailList(

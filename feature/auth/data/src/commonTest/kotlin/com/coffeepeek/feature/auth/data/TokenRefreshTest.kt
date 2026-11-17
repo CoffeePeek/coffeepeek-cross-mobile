@@ -7,12 +7,13 @@ import io.ktor.client.HttpClient
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.MockRequestHandleScope
 import io.ktor.client.engine.mock.respond
+import io.ktor.client.engine.mock.toByteArray
 import io.ktor.client.request.HttpRequestData
+import io.ktor.client.request.HttpResponseData
+import io.ktor.http.ContentType
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpMethod
 import io.ktor.http.HttpStatusCode
-import io.ktor.http.content.OutgoingContent
-import io.ktor.client.request.HttpResponseData
 import io.ktor.http.headersOf
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.runBlocking
@@ -21,6 +22,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFailsWith
 import kotlin.test.assertIs
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class TokenRefreshTest {
@@ -30,34 +32,57 @@ class TokenRefreshTest {
     private fun client(handler: MockRequestHandleScope.(HttpRequestData) -> HttpResponseData): HttpClient =
         HttpClientFactory(MockEngine { request -> requests += request; handler(request) }).api("https://api.example")
 
-    private fun MockRequestHandleScope.tokens(refresh: String, cookie: String? = null) = respond(
-        """{"isSuccess":true,"data":{"accessToken":"new-access","refreshToken":"$refresh"}}""",
+    private fun MockRequestHandleScope.tokens(refresh: String) = respond(
+        """{"isSuccess":true,"data":{"accessToken":"new-access","refreshToken":"$refresh","refreshTokenExpiresAt":"2026-12-31T00:00:00Z"}}""",
         HttpStatusCode.OK,
-        if (cookie == null) json else headersOf(HttpHeaders.ContentType to listOf("application/json"), HttpHeaders.SetCookie to listOf("refreshToken=$cookie; Path=/; HttpOnly")),
+        json,
     )
 
-    @Test fun sendsOnlyTheRefreshCookieToTheTokensEndpointAndReadsTheNewPair() = runBlocking {
-        val client = client { tokens("new-refresh") }
+    @Test fun sendsRefreshTokensAsJsonAndUsesEachRotatedTokenForTheNextExchange() = runBlocking {
+        val client = client { tokens("refresh-${requests.size}") }
         try {
-            val result = createTokenRefresh(client).refresh("old-refresh").getOrThrow()
-            assertEquals(SessionTokens("new-access", "new-refresh"), result)
-            val request = requests.single()
-            assertEquals(HttpMethod.Put, request.method)
-            assertEquals("/api/Tokens", request.url.encodedPath)
-            assertTrue(request.headers[HttpHeaders.Cookie].orEmpty().contains("refreshToken=old-refresh"))
-            assertTrue(request.body is OutgoingContent.NoContent)
-        } finally { client.close() }
+            val refresh = createTokenRefresh(client)
+            val first = refresh.refresh("old-refresh").getOrThrow()
+            val second = refresh.refresh(assertNotNull(first.refreshToken)).getOrThrow()
+            assertEquals(SessionTokens("new-access", "refresh-1"), first)
+            assertEquals(SessionTokens("new-access", "refresh-2"), second)
+            assertEquals(
+                listOf("""{"refreshToken":"old-refresh"}""", """{"refreshToken":"refresh-1"}"""),
+                requests.map { it.body.toByteArray().decodeToString() },
+            )
+            for (request in requests) {
+                assertEquals(HttpMethod.Put, request.method)
+                assertEquals("/api/Tokens/native", request.url.encodedPath)
+                assertEquals(ContentType.Application.Json, request.body.contentType?.withoutParameters())
+                assertNull(request.headers[HttpHeaders.Cookie])
+                assertNull(request.headers[HttpHeaders.Authorization])
+            }
+        } finally {
+            client.close()
+        }
     }
 
-    @Test fun theBodyTokenWinsThenThePercentDecodedCookieThenTheOneThatWasSent() = runBlocking {
-        val withBody = client { tokens("body-refresh", cookie = "cookie-refresh") }
-        val withCookie = client { tokens("", cookie = "cookie%2Frefresh") }
-        val withNeither = client { tokens("") }
-        try {
-            assertEquals("body-refresh", createTokenRefresh(withBody).refresh("sent").getOrThrow().refreshToken)
-            assertEquals("cookie/refresh", createTokenRefresh(withCookie).refresh("sent").getOrThrow().refreshToken)
-            assertEquals("sent", createTokenRefresh(withNeither).refresh("sent").getOrThrow().refreshToken)
-        } finally { withBody.close(); withCookie.close(); withNeither.close() }
+    @Test fun aSuccessfulResponseWithoutANewRefreshTokenIsAnInvalidResponse() = runBlocking {
+        val jsonWithCookie = headersOf(
+            HttpHeaders.ContentType to listOf("application/json"),
+            HttpHeaders.SetCookie to listOf("refreshToken=cookie-token; Path=/; HttpOnly"),
+        )
+        val missing = """{"accessToken":"new-access"}"""
+        val cases = listOf(
+            missing to json,
+            missing to jsonWithCookie,
+            """{"accessToken":"new-access","refreshToken":" "}""" to json,
+            """{"accessToken":"new-access","refreshToken":"old-refresh"}""" to json,
+        )
+        for ((data, headers) in cases) {
+            val client = client { respond("""{"isSuccess":true,"data":$data}""", HttpStatusCode.OK, headers) }
+            try {
+                val result = createTokenRefresh(client).refresh("old-refresh")
+                assertIs<AuthApiException>(result.exceptionOrNull())
+            } finally {
+                client.close()
+            }
+        }
     }
 
     @Test fun aDefinitiveRejectionIsRefreshRejectedAndATemporaryFailureIsNot() = runBlocking {

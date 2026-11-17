@@ -67,6 +67,9 @@ internal class CommunityViewModel(
             }
         }
         viewModelScope.launch {
+            saved.updates.collect { key -> if (isCurrent(key)) refresh(null) }
+        }
+        viewModelScope.launch {
             authors.visibility.drop(1).collect { snapshot ->
                 if (snapshot == ownRefreshSnapshot) { ownRefreshSnapshot = null; return@collect }
                 // The visibility source re-emits its current value when the app returns to the

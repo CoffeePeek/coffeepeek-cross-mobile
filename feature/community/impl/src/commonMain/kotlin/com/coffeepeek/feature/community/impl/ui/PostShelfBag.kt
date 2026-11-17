@@ -3,18 +3,13 @@ package com.coffeepeek.feature.community.impl.ui
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.text.withStyle
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import com.coffeepeek.core.designsystem.component.CoffeePeekPostShelfBagRow
+import com.coffeepeek.core.designsystem.component.CoffeePeekPostShelfBagTitle
 import com.coffeepeek.core.designsystem.component.coffeePeekPostShelfBagCardImage
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.community.api.CommunityHost
@@ -29,32 +24,21 @@ internal fun PostShelfBag(
     cardUrl: String, name: String?, roaster: String?, details: String, onCoffee: (() -> Unit)?, host: CommunityHost,
 ) {
     val openLabel = stringResource(Res.string.community_open_coffee)
+    val title = name?.takeIf(String::isNotBlank) ?: stringResource(Res.string.community_shelf_bag)
+    val separator = stringResource(Res.string.community_details_separator)
     CoffeePeekPostShelfBagRow(
-        title = { PostShelfBagTitle(name?.takeIf(String::isNotBlank) ?: stringResource(Res.string.community_shelf_bag), roaster) },
+        title = { CoffeePeekPostShelfBagTitle(title, roaster, separator) },
         details = details.takeIf(String::isNotBlank),
         onClick = onCoffee,
         onClickLabel = openLabel.takeIf { onCoffee != null },
         showChevron = onCoffee != null,
         card = {
-            host.image(cardUrl, null, Modifier.coffeePeekPostShelfBagCardImage(), ContentScale.Fit)
+            host.image(cardUrl, null, Modifier.coffeePeekPostShelfBagCardImage(), ContentScale.Fit, null)
         },
     )
 }
 
-/** «Name · roaster» on one line: the roaster reads as a quieter part of the same title. */
-@Composable
-private fun PostShelfBagTitle(name: String, roaster: String?) {
-    val separator = stringResource(Res.string.community_details_separator)
-    val quiet = SpanStyle(fontWeight = FontWeight.Medium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-    val title = buildAnnotatedString {
-        append(name)
-        roaster?.takeIf(String::isNotBlank)?.let { withStyle(quiet) { append(separator); append(it) } }
-    }
-    Text(title, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold,
-        color = MaterialTheme.colorScheme.onSurface, maxLines = 2, overflow = TextOverflow.Ellipsis)
-}
-
-private val previewHost = CommunityHost(image = { _, _, modifier, _ ->
+private val previewHost = CommunityHost(image = { _, _, modifier, _, _ ->
     Box(modifier.background(MaterialTheme.colorScheme.tertiary))
 })
 

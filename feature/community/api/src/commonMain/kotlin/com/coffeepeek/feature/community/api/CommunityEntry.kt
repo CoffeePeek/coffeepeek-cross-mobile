@@ -6,6 +6,7 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.Dp
 
@@ -16,9 +17,10 @@ enum class ExposureKind { Feed, ShopPost, HomePost }
  * What the screen borrows from the application: image loading with authentication, the relative date, the brew method names, photo prefetch,
  * the full-screen photo viewer, the system share sheet, the snackbar look (it must clear the floating navigation) and the exposure/viewed analytics. Defaults keep previews and tests free of app services.
  * [leaders] supplies independent ranking content through the application composition boundary.
+ * [image] can report the decoded size of the displayed image when a caller needs its proportions.
  */
 class CommunityHost(
-    val image: @Composable (url: String, highQualityUrl: String?, modifier: Modifier, contentScale: ContentScale) -> Unit = { _, _, _, _ -> },
+    val image: @Composable (url: String, highQualityUrl: String?, modifier: Modifier, contentScale: ContentScale, onDecodedSize: ((Size) -> Unit)?) -> Unit = { _, _, _, _, _ -> },
     val displayDate: @Composable (iso: String) -> String = { it.substringBefore('T') },
     val brewMethodLabel: (code: String) -> String? = { it },
     val prefetchPhotos: @Composable (state: LazyListState, posts: List<Pair<String, List<String>>>) -> Unit = { _, _ -> },

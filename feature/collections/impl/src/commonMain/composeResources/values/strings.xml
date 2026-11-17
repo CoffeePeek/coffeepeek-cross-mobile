@@ -50,6 +50,7 @@
     <string name="collections_move_up">Переместить выше</string>
     <string name="collections_move_down">Переместить ниже</string>
     <string name="collections_library">Подборки</string>
+    <string name="collections_settings">Настройки подборок</string>
     <string name="collections_new_list">Новая подборка</string>
     <string name="collections_edit_list">Редактировать</string>
     <string name="collections_more_actions">Действия с подборкой</string>

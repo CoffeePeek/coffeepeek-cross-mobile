@@ -1,7 +1,11 @@
+@file:OptIn(androidx.compose.ui.ExperimentalComposeUiApi::class)
+
 package com.coffeepeek.core.designsystem.component
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.uikit.LocalUIViewController
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 
@@ -11,6 +15,7 @@ actual fun CoffeePeekFullScreenDialog(
     darkSystemBarIcons: Boolean?,
     content: @Composable () -> Unit,
 ) {
+    val host = LocalUIViewController.current
     Dialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(
@@ -20,6 +25,8 @@ actual fun CoffeePeekFullScreenDialog(
             useSoftwareKeyboardInset = false,
             scrimColor = Color.Transparent,
         ),
-        content = content,
-    )
+    ) {
+        // UIKit can detach the Compose dialog layer when it presents another controller (CMP-10589).
+        CompositionLocalProvider(LocalUIViewController provides host, content = content)
+    }
 }

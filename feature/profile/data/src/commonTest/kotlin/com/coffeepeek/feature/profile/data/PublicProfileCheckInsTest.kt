@@ -56,7 +56,8 @@ class PublicProfileCheckInsTest {
 
     @Test fun homeKindIsExplicitAndPreparedDateAndRecipeSurvive() = runTest {
         val row = load(post().copy(isHome = true,
-            home = PublicPostPreparation("prepared", "hario-v60", "Эфиопия", 18.0, 180, 5)))
+            home = PublicPostPreparation("prepared", "hario-v60", "Эфиопия", 18.0, 180, 5,
+                shelfBagCardUrl = "bag-thumb", roasterName = "Roaster", coffeeProductSlug = "coffee")))
         assertTrue(row.isHome)
         assertNull(row.coffeeShopSlug)
         assertEquals("Дома", row.venue)
@@ -67,6 +68,9 @@ class PublicProfileCheckInsTest {
         assertEquals(5.0, row.rating)
         assertEquals(18.0, row.preparation?.doseGrams)
         assertEquals(180, row.preparation?.brewDurationSeconds)
+        assertEquals("bag-thumb", row.preparation?.shelfBagCardUrl)
+        assertEquals("Roaster", row.preparation?.roasterName)
+        assertEquals("coffee", row.preparation?.coffeeProductSlug)
     }
 
     @Test fun missingRecipeScoresAndDrinkNeverInventRatingsOrHomeKind() = runTest {
