@@ -475,3 +475,13 @@ first Swift check required an explicit local capture of the profile editor. Both
 corrected. The shared-card renderer also passed an isolated Swift check. Both application
 entry points register the native editor/card factories. Full framework/link/install
 and device acceptance remain pending.
+
+Native build/install result: full framework completed in 9m54s and Runner in 1m03s.
+Installed CoffeePeek Xcross 1.2.1 (3094), source f5a6791a9, on the agreed iPhone15,4 /
+iOS27.0.1. Installation preparation reused the framework in 2.1s; signing took 3.5s,
+USB installation 14.5s. InstallationProxy independently confirms 3094 and unchanged
+main app com.coffeepeek 1.2.1 (3108); CoreDevice confirms one running test-app process.
+The update preserved data and the scanner remains disabled. Code is published to
+codex/ios-native. Signed IPA/build identity are local under ignored build/xcross-ios.
+Manual device review of the new calendar/card/editor and Android visual review are
+still pending; successful compilation and startup alone do not certify those gates.
