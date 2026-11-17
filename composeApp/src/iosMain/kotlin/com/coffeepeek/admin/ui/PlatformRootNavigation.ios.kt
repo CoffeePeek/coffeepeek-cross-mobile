@@ -21,6 +21,7 @@ import com.coffeepeek.admin.di.shelf.iosShelfArchiveContent
 import com.coffeepeek.admin.di.collections.iosSavedPublicCollectionContent
 import com.coffeepeek.admin.di.authorblocking.iosBlockedAuthorsContent
 import com.coffeepeek.admin.di.shop.iosShopMenuGalleryContent
+import com.coffeepeek.admin.di.shop.iosShopCheckInListContent
 import com.coffeepeek.admin.di.coffee.iosCoffeeDetailContent
 import coffeepeek.composeapp.generated.resources.navigation_search
 import coffeepeek.composeapp.generated.resources.navigation_feed
@@ -338,6 +339,7 @@ private fun nativeRouteContent(isLoggedIn: Boolean): (Navigator.Screen) -> (() -
     val shelfArchive = iosShelfArchiveContent()
     val themeSettings = iosThemeSettingsContent()
     val shopMenuGallery = iosShopMenuGalleryContent()
+    val shopCheckIns = iosShopCheckInListContent()
     val coffeeDetail = iosCoffeeDetailContent()
     val shopReportContent = iosShopReportContent()
     val contributions = iosContributionsContent()
@@ -353,6 +355,7 @@ private fun nativeRouteContent(isLoggedIn: Boolean): (Navigator.Screen) -> (() -
             Navigator.Screen.ShelfArchive -> shelfArchive
             Navigator.Screen.ThemeSettings -> themeSettings
             is Navigator.Screen.ShopMenuGallery -> { { shopMenuGallery(screen.shopId) } }
+            is Navigator.Screen.ShopReviews -> { { shopCheckIns(screen.shopId) } }
             is Navigator.Screen.ReportShop -> shopReportContent(screen.shopId, screen.shopTitle)
             is Navigator.Screen.CoffeeDetail -> { { coffeeDetail(screen.slug) } }
             is Navigator.Screen.MyContributions, is Navigator.Screen.ShopChangeRequestDetail -> contributions(screen)

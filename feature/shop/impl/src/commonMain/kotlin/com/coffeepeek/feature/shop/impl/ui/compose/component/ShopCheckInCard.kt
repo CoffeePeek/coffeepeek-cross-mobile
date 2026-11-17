@@ -26,6 +26,7 @@ import com.coffeepeek.feature.shop.domain.model.ShopRating
 import com.coffeepeek.feature.shop.impl.resources.Res
 import com.coffeepeek.feature.shop.impl.resources.shop_checkins_author_unknown
 import com.coffeepeek.feature.shop.impl.resources.shop_checkins_author_self
+import com.coffeepeek.feature.shop.impl.ui.data.displayDrinkName
 import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
@@ -62,10 +63,7 @@ internal fun ShopCheckInCard(
                 Text(it, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold, maxLines = 2)
             }
             checkIn.rating?.let { ShopCheckInRating(it) }
-            val primaryDrinkName = if (Locale.current.language == "en") checkIn.drinkNameEn else checkIn.drinkNameRu
-            val fallbackDrinkName = if (Locale.current.language == "en") checkIn.drinkNameRu else checkIn.drinkNameEn
-            val drink = checkIn.customDrinkName?.takeIf(String::isNotBlank)
-                ?: primaryDrinkName?.takeIf(String::isNotBlank) ?: fallbackDrinkName?.takeIf(String::isNotBlank)
+            val drink = checkIn.displayDrinkName(Locale.current.language)
             if (checkIn.note.isNotBlank()) ShopCheckInNote(checkIn.id, checkIn.note, fullVersion = fullVersion)
             ShopCheckInPhotos(checkIn.photoUrls, checkIn.photoThumbnailUrls, onOpenPhoto, detailUrls = checkIn.photoDetailUrls)
             val showHelpfulCount = showHelpful &&

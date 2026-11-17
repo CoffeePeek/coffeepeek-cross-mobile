@@ -7,6 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		5C13B3110000000000000001 /* ShopCheckInListScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C13B3110000000000000004 /* ShopCheckInListScreen.swift */; };
+		5C13B3110000000000000002 /* ShopCheckInListComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C13B3110000000000000005 /* ShopCheckInListComponents.swift */; };
+		5C13B3110000000000000003 /* NativeShopCheckIns.strings in Resources */ = {isa = PBXBuildFile; fileRef = 5C13B3110000000000000008 /* NativeShopCheckIns.strings */; };
 		A6C011E60000000000000001 /* ShopMenuGalleryScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6C011E60000000000000003 /* ShopMenuGalleryScreen.swift */; };
 		A6C011E60000000000000002 /* ShopMenuGallery.strings in Resources */ = {isa = PBXBuildFile; fileRef = A6C011E60000000000000006 /* ShopMenuGallery.strings */; };
 		6B2031D9196667F65FD358E5 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 37A6BA4C5AAF06904D9C889E /* InfoPlist.strings */; };
@@ -80,6 +83,10 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		5C13B3110000000000000004 /* ShopCheckInListScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ShopCheckInListScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/ShopCheckInListScreen.swift; sourceTree = "<group>"; };
+		5C13B3110000000000000005 /* ShopCheckInListComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ShopCheckInListComponents.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/ShopCheckInListComponents.swift; sourceTree = "<group>"; };
+		5C13B3110000000000000006 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/NativeShopCheckIns.strings; sourceTree = "<group>"; };
+		5C13B3110000000000000007 /* be */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = be; path = be.lproj/NativeShopCheckIns.strings; sourceTree = "<group>"; };
 		A6C011E60000000000000003 /* ShopMenuGalleryScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ShopMenuGalleryScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/ShopMenuGalleryScreen.swift; sourceTree = "<group>"; };
 		A6C011E60000000000000004 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/ShopMenuGallery.strings; sourceTree = "<group>"; };
 		A6C011E60000000000000005 /* be */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = be; path = be.lproj/ShopMenuGallery.strings; sourceTree = "<group>"; };
@@ -255,12 +262,15 @@
 				A6C011E60000000000000003 /* ShopMenuGalleryScreen.swift */,
 				F07A11400000000000000003 /* CoffeePeekNativePhotoViewer.swift */,
 				F07A11400000000000000006 /* NativePhotoViewer.strings */,
+				5C13B3110000000000000004 /* ShopCheckInListScreen.swift */,
+				5C13B3110000000000000005 /* ShopCheckInListComponents.swift */,
 				A20000000000000000000009 /* ../../iosXtool/CoffeePeek/Sources/CoffeePeek/MapLibreMapProvider.swift */,
 				A20000000000000000000002 /* Assets.xcassets */,
 				A20000000000000000000003 /* Info.plist */,
 				A20000000000000000000015 /* PrivacyInfo.xcprivacy */,
 				A20000000000000000000012 /* GoogleService-Info.plist */,
 				A6C011E60000000000000006 /* ShopMenuGallery.strings */,
+				5C13B3110000000000000008 /* NativeShopCheckIns.strings */,
 				37A6BA4C5AAF06904D9C889E /* InfoPlist.strings */,
 				DAD91A913BF64AB1A801759B /* ThemeSettings.strings */,
 				A0871E7A000000000000000C /* NativeAuth.strings */,
@@ -379,6 +389,7 @@
 				A10000000000000000000009 /* GoogleService-Info.plist in Resources */,
 				A6C011E60000000000000002 /* ShopMenuGallery.strings in Resources */,
 				F07A11400000000000000002 /* NativePhotoViewer.strings in Resources */,
+				5C13B3110000000000000003 /* NativeShopCheckIns.strings in Resources */,
 				6B2031D9196667F65FD358E5 /* InfoPlist.strings in Resources */,
 				A10000000000000000000016 /* ThemeSettings.strings in Resources */,
 				A0871E7A0000000000000009 /* NativeAuth.strings in Resources */,
@@ -478,6 +489,8 @@
 				A0871E7B0000000000000001 /* CoffeePeekAppleSignInButton.swift in Sources */,
 				A6C011E60000000000000001 /* ShopMenuGalleryScreen.swift in Sources */,
 				F07A11400000000000000001 /* CoffeePeekNativePhotoViewer.swift in Sources */,
+				5C13B3110000000000000001 /* ShopCheckInListScreen.swift in Sources */,
+				5C13B3110000000000000002 /* ShopCheckInListComponents.swift in Sources */,
 				A10000000000000000000015 /* ThemeSettingsScreen.swift in Sources */,
 				B30000000000000000000001 /* ShopReportScreen.swift in Sources */,
 				C0FFEE500000000000000001 /* CoffeeDetailScreen.swift in Sources */,
@@ -509,6 +522,15 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXVariantGroup section */
+		5C13B3110000000000000008 /* NativeShopCheckIns.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				5C13B3110000000000000006 /* ru */,
+				5C13B3110000000000000007 /* be */,
+			);
+			name = NativeShopCheckIns.strings;
+			sourceTree = "<group>";
+		};
 		A6C011E60000000000000006 /* ShopMenuGallery.strings */ = {
 			isa = PBXVariantGroup;
 			children = (

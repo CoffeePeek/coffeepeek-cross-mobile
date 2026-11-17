@@ -37,6 +37,8 @@ import com.coffeepeek.admin.di.shelf.LocalIosShelfArchiveController
 import com.coffeepeek.admin.di.settings.IosThemeSettings
 import com.coffeepeek.admin.di.settings.LocalIosSettingsController
 import com.coffeepeek.admin.di.settings.LocalIosThemeSettingsController
+import com.coffeepeek.admin.di.shop.IosShopCheckInList
+import com.coffeepeek.admin.di.shop.LocalIosShopCheckInListController
 import com.coffeepeek.admin.di.shop.IosShopMenuGallery
 import com.coffeepeek.admin.di.shop.LocalIosShopMenuGalleryController
 import com.coffeepeek.admin.ui.Navigator
@@ -60,6 +62,7 @@ fun handleAppLink(link: String): Boolean {
 fun MainViewController(
     onReady: () -> Unit,
     makeShopMenuGalleryController: (IosShopMenuGallery, String) -> UIViewController,
+    makeShopCheckInListController: (IosShopCheckInList, String) -> UIViewController,
     makeCoffeeDetailController: (IosCoffeeDetail, String) -> UIViewController,
     makeShelfArchiveController: (IosShelfArchive, String) -> UIViewController,
     makeThemeSettingsController: (IosThemeSettings, String, () -> Unit) -> UIViewController,
@@ -78,6 +81,7 @@ fun MainViewController(
     makeNotificationInboxController: (IosNotificationInbox, String) -> UIViewController,
 ): UIViewController = IosControllerFactories(
     makeShopMenuGalleryController,
+    makeShopCheckInListController,
     makeCoffeeDetailController,
     makeShelfArchiveController,
     makeThemeSettingsController,
@@ -106,6 +110,7 @@ private fun IosControllerFactories.createController(onReady: () -> Unit): UIView
 
 private class IosControllerFactories(
     private val makeShopMenuGalleryController: (IosShopMenuGallery, String) -> UIViewController,
+    private val makeShopCheckInListController: (IosShopCheckInList, String) -> UIViewController,
     private val makeCoffeeDetailController: (IosCoffeeDetail, String) -> UIViewController,
     private val makeShelfArchiveController: (IosShelfArchive, String) -> UIViewController,
     private val makeThemeSettingsController: (IosThemeSettings, String, () -> Unit) -> UIViewController,
@@ -127,6 +132,7 @@ private class IosControllerFactories(
     fun Content(onReady: () -> Unit) {
         CompositionLocalProvider(
             LocalIosShopMenuGalleryController provides makeShopMenuGalleryController,
+            LocalIosShopCheckInListController provides makeShopCheckInListController,
             LocalIosCoffeeDetailController provides makeCoffeeDetailController,
             LocalIosShelfArchiveController provides makeShelfArchiveController,
             LocalIosThemeSettingsController provides makeThemeSettingsController,
