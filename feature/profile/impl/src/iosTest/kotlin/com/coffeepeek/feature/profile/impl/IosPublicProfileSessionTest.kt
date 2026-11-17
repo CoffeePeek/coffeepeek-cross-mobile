@@ -6,6 +6,7 @@ import com.coffeepeek.feature.profile.domain.PublicProfileCheckIn
 import com.coffeepeek.feature.profile.domain.PublicProfileConnection
 import com.coffeepeek.feature.profile.domain.PublicProfileConnectionKind
 import com.coffeepeek.feature.profile.domain.PublicProfileStats
+import com.coffeepeek.feature.profile.impl.ui.model.PublicProfileError
 import com.coffeepeek.feature.profile.impl.ui.model.PublicProfileState
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -35,6 +36,25 @@ class IosPublicProfileSessionTest {
         }
         assertTrue(loadingBlocks.loading)
         assertFalse(replacingAccount.active)
+    }
+
+    @Test
+    fun failedVisibilityLoadDisplaysRetryWithoutExposingContent() {
+        val visibility = ProfileAuthorVisibilityState(ready = false)
+        val failure = snapshot(open.copy(error = PublicProfileError.BlocksLoad), visibility)
+        assertFalse(failure.loading)
+        assertEquals(PublicProfileError.BlocksLoad.name, failure.loadError)
+        assertEquals("profile_blocks_load_failed", failure.errorKey)
+        assertNull(failure.profile)
+        assertTrue(failure.checkIns.isEmpty())
+        assertTrue(failure.week.isEmpty())
+        assertTrue(failure.connections.isEmpty())
+
+        val retry = snapshot(open.copy(isLoading = true), visibility)
+        assertTrue(retry.loading)
+        assertNull(retry.loadError)
+        assertNull(retry.profile)
+        assertTrue(retry.checkIns.isEmpty())
     }
 
     @Test

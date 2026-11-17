@@ -44,8 +44,9 @@ class PublicProfileSnapshot internal constructor(
         state.profile?.let { !it.isBlockedByViewer && visibility.hides(it.authorId, it.slug) } == true
     val profile = state.profile.takeIf { active && !visibilityPending }
     private val showsContent = profile?.isBlockedByViewer == false
-    val loading = active && (state.isLoading || visibilityPending)
-    val loadError = state.error?.name.takeIf { active && !visibilityPending }
+    private val visibilityLoadFailed = !state.isLoading && state.error == PublicProfileError.BlocksLoad
+    val loading = active && !visibilityLoadFailed && (state.isLoading || visibilityPending)
+    val loadError = state.error?.name.takeIf { active && (!visibilityPending || visibilityLoadFailed) }
     val own = state.isOwnProfile && showsContent
     val signedIn = state.isSignedIn && showsContent
     val following = state.isFollowing && showsContent
