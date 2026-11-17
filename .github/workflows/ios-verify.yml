@@ -224,6 +224,7 @@ jobs:
           ./gradlew --max-workers=6 :feature:shop:impl:iosSimulatorArm64Test \
             --tests 'com.coffeepeek.feature.shop.impl.ui.ShopMenuGallery*Test' \
             --tests 'com.coffeepeek.feature.shop.impl.ui.ShopCheckInListViewModelTest' \
+            --tests 'com.coffeepeek.feature.shop.impl.IosShopCheckInListPresentationTest' \
             > "$RUNNER_TEMP/ios-shop-menu-gallery-tests.log" 2>&1 || {
               tail -n 150 "$RUNNER_TEMP/ios-shop-menu-gallery-tests.log"
               exit 1

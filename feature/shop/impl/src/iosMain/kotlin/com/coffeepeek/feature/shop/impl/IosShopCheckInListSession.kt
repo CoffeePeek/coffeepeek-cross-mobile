@@ -13,6 +13,7 @@ import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopCheckInListAction
 import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopCheckInListEvent
 import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopCheckInListState
 import com.coffeepeek.feature.shop.impl.ui.data.blockableAuthor
+import com.coffeepeek.feature.shop.impl.ui.data.displayDrinkName
 import com.coffeepeek.feature.shop.impl.ui.data.formatShopRating
 import kotlinx.coroutines.launch
 
@@ -23,13 +24,14 @@ fun createIosShopCheckInListSession(
     currentViewer: suspend () -> Result<ShopViewer>,
     generation: Int,
     store: ViewModelStore,
+    languageTag: String,
 ): IosShopCheckInListSession {
     val model = ShopCheckInListViewModel(shopId, details, votes, currentViewer, generation)
     store.put("ios-shop-check-in-list", model)
-    return IosShopCheckInListSession(model)
+    return IosShopCheckInListSession(model, languageTag)
 }
 
-class ShopCheckInListSnapshot internal constructor(state: ShopCheckInListState) {
+class ShopCheckInListSnapshot internal constructor(state: ShopCheckInListState, languageTag: String) {
     val isLoading = state.isLoading
     val hasLoaded = state.hasLoaded
     val hasLoadError = state.hasLoadError
@@ -42,7 +44,7 @@ class ShopCheckInListSnapshot internal constructor(state: ShopCheckInListState) 
     val breakdown = state.ratingSummary?.let {
         listOf(ShopCheckInRatingValue(it.coffee), ShopCheckInRatingValue(it.service), ShopCheckInRatingValue(it.place))
     }.orEmpty()
-    val rows = state.checkIns.map { ShopCheckInListRow(it, state) }
+    val rows = state.checkIns.map { ShopCheckInListRow(it, state, languageTag) }
     val hiddenCount = state.hiddenCheckInCount
     val showGuestPrompt = !state.isLoggedIn && rows.isNotEmpty()
 }
@@ -51,7 +53,20 @@ class ShopCheckInRatingValue internal constructor(val value: Double) {
     val label = formatShopRating(value)
 }
 
-class ShopCheckInListRow internal constructor(val checkIn: ShopCheckIn, state: ShopCheckInListState) {
+class ShopCheckInListRow internal constructor(
+    private val checkIn: ShopCheckIn,
+    state: ShopCheckInListState,
+    languageTag: String,
+) {
+    val id = checkIn.id
+    val authorName = checkIn.username
+    val avatarUrl = checkIn.authorAvatarUrl?.takeIf(String::isNotBlank)
+    val hasAvatar = avatarUrl != null
+    val date = checkIn.createdAt
+    val note = checkIn.note
+    val drink = checkIn.displayDrinkName(languageTag)
+    val helpfulCount = checkIn.helpfulCount
+    val markedHelpful = checkIn.isHelpfulByCurrentUser
     val isOwn = state.owns(checkIn)
     val canVote = state.pendingVoteId == null && !state.isLoading
     val isVoting = state.pendingVoteId == checkIn.id
@@ -60,6 +75,13 @@ class ShopCheckInListRow internal constructor(val checkIn: ShopCheckIn, state: S
     val canOpenAuthor = !checkIn.authorSlug.isNullOrBlank()
     val showHelpful = checkIn.visibility == ShopCheckInVisibility.Public || checkIn.helpfulCount > 0
     val ratingLabel = checkIn.rating?.let { formatShopRating(it.average) }
+    val coffeeRating = checkIn.rating?.coffee ?: 0
+    val serviceRating = checkIn.rating?.service ?: 0
+    val placeRating = checkIn.rating?.place ?: 0
+    val photoCount = checkIn.photoUrls.size
+
+    fun canOpenPhoto(index: Int) = !checkIn.photoUrls.getOrNull(index).isNullOrBlank()
+
     fun thumbnail(index: Int): String? =
         (checkIn.photoThumbnailUrls.getOrNull(index) ?: checkIn.photoUrls.getOrNull(index))?.takeIf(String::isNotBlank)
 }
@@ -74,11 +96,14 @@ interface ShopCheckInListCallbacks {
     fun photo(urls: List<String>, originals: List<String>, index: Int)
 }
 
-class IosShopCheckInListSession internal constructor(private val model: ShopCheckInListViewModel) {
-    fun current() = ShopCheckInListSnapshot(model.state.value)
+class IosShopCheckInListSession internal constructor(
+    private val model: ShopCheckInListViewModel,
+    private val languageTag: String,
+) {
+    fun current() = ShopCheckInListSnapshot(model.state.value, languageTag)
 
     fun observeState(receive: (ShopCheckInListSnapshot) -> Unit) = model.viewModelScope.launch {
-        model.state.collect { receive(ShopCheckInListSnapshot(it)) }
+        model.state.collect { receive(ShopCheckInListSnapshot(it, languageTag)) }
     }
 
     fun observeEvents(callbacks: ShopCheckInListCallbacks) = model.viewModelScope.launch {

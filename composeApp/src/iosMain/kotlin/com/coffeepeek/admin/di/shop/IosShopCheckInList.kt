@@ -38,6 +38,7 @@ class IosShopCheckInList internal constructor(
     private val votes: ShopCheckInVoteRepository,
     private val blockActions: AuthorBlockActions,
     private val media: IosCatalogueMedia,
+    private val languageTag: String,
     private val formatDate: (String) -> String,
 ) {
     private val host = ShopBrowsingHostViewModel(sessions, visibility)
@@ -78,14 +79,14 @@ class IosShopCheckInList internal constructor(
     fun photo(id: String, index: Int) { currentModel()?.photo(id, index) }
     fun close() = store.clear()
 
-    fun loadAvatar(id: String, receive: (UIImage?) -> Unit) = load(id, receive) { it.checkIn.authorAvatarUrl }
+    fun loadAvatar(id: String, receive: (UIImage?) -> Unit) = load(id, receive) { it.avatarUrl }
     fun loadPhoto(id: String, index: Int, receive: (UIImage?) -> Unit) = load(id, receive) { it.thumbnail(index) }
 
     private fun load(id: String, receive: (UIImage?) -> Unit, url: (ShopCheckInListRow) -> String?) =
         IosShopCheckInObservation(host.viewModelScope.launch {
             val bound = bind(host.session.value) ?: return@launch
-            val row = bound.model.current().rows.firstOrNull { it.checkIn.id == id } ?: return@launch
-            val image = url(row)?.takeIf(String::isNotBlank)?.let { media.loadImage(it) }
+            val row = bound.model.current().rows.firstOrNull { it.id == id } ?: return@launch
+            val image = url(row)?.let { media.loadImage(it) }
             if (bound.source.lease.isCurrent()) receive(image)
         })
 
@@ -111,7 +112,7 @@ class IosShopCheckInList internal constructor(
         if (source.observationFailed || !source.lease.isCurrent()) return null
         binding?.takeIf { it.source === source }?.let { return it }
         val model = createIosShopCheckInListSession(shopId, source.lease.details(details), source.lease.votes(votes),
-            { source.lease.viewer(accounts) }, source.generation, source.viewModelStore)
+            { source.lease.viewer(accounts) }, source.generation, source.viewModelStore, languageTag)
         return BoundShopCheckIns(source, model).also { binding = it }
     }
 }

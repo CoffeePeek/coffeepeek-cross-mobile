@@ -38,7 +38,8 @@ internal fun iosShopCheckInListContent(): (String) -> UIViewController {
     val formatDate by rememberUpdatedState(rememberCheckInDateLabel())
     val languageTag by rememberUpdatedState(LocalCoffeePeekLanguageTag.current)
     return { shopId ->
+        val language = languageTag
         factory(IosShopCheckInList(shopId, sessions, visibility, accounts, details, votes, blockActions,
-            media, { raw -> formatDate(raw) }), languageTag)
+            media, language, { raw -> formatDate(raw) }), language)
     }
 }

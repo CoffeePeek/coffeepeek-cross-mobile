@@ -24,21 +24,19 @@ class IosShopCheckInListState internal constructor(
 
 class IosShopCheckInRating internal constructor(val value: Double, val label: String)
 
-class IosShopCheckInListRow internal constructor(row: ShopCheckInListRow) {
-    private val source = row.checkIn
-    val id = source.id
-    val authorName = source.username
-    val hasAvatar = !source.authorAvatarUrl.isNullOrBlank()
-    val date = source.createdAt
-    val note = source.note
-    val drink = listOf(source.customDrinkName, source.drinkNameRu, source.drinkNameEn)
-        .firstOrNull { !it.isNullOrBlank() }
+class IosShopCheckInListRow internal constructor(private val row: ShopCheckInListRow) {
+    val id = row.id
+    val authorName = row.authorName
+    val hasAvatar = row.hasAvatar
+    val date = row.date
+    val note = row.note
+    val drink = row.drink
     val ratingLabel = row.ratingLabel
-    val coffeeRating = source.rating?.coffee ?: 0
-    val serviceRating = source.rating?.service ?: 0
-    val placeRating = source.rating?.place ?: 0
-    val helpfulCount = source.helpfulCount
-    val markedHelpful = source.isHelpfulByCurrentUser
+    val coffeeRating = row.coffeeRating
+    val serviceRating = row.serviceRating
+    val placeRating = row.placeRating
+    val helpfulCount = row.helpfulCount
+    val markedHelpful = row.markedHelpful
     val isOwn = row.isOwn
     val isVoting = row.isVoting
     val canVote = row.canVote
@@ -46,6 +44,6 @@ class IosShopCheckInListRow internal constructor(row: ShopCheckInListRow) {
     val canBlock = row.canBlock
     val canOpenAuthor = row.canOpenAuthor
     val showHelpful = row.showHelpful
-    val photoCount = source.photoUrls.size
-    fun canOpenPhoto(index: Int) = !source.photoUrls.getOrNull(index).isNullOrBlank()
+    val photoCount = row.photoCount
+    fun canOpenPhoto(index: Int) = row.canOpenPhoto(index)
 }
