@@ -316,3 +316,17 @@ that cannot execute on Windows and manual device gates are reported separately.
 - Both editor localization tables passed read-only key/placeholder checks
   (Home143 and Shop71 keys in each RU/BE locale). Device version guard tests3/3
   passed; newer installed marketing/build versions fail closed without erasing data.
+- All56 Swift application sources passed actual type checking against the current
+  generated ComposeApp headers, with an isolated module cache and explicit MapLibre
+  framework search path. This is not executable linking or device verification.
+  Existing Sendable warnings remain in report/contribution screens outside this slice.
+- Windows response-file regression tests3/3 passed with the real Swift driver,
+  Unicode/space paths and arguments exceeding32767 characters. A later framework
+  build was interrupted without a completion result; its retry failed inside
+  SwiftPM/PostHog with compiler exception29. Neither attempt installed an app.
+- PostHog isolated replay with a fresh module cache and Swift driver j1 compiled
+  all148 objects and emitted its module successfully. The first emission attempt
+  overlapped toolchain bundle replacement and lacked the macro server; repeating
+  it after restoring the verified macro/runtime files passed. Stale cache as the
+  original cause is not proven. Xcross coffeepeek.8 serializes the Windows driver
+  and restores selected binary framework copy nodes; framework/response tests7/7 passed.

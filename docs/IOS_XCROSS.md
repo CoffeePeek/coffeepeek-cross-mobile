@@ -116,6 +116,24 @@ Unicode/spaced paths, embedded quotes, trailing backslashes and a long argv.
 On 2026-11-17 all three checks passed with Swift 6.4.2. The initial sandbox run
 could not launch Swift (access denied); the normal local compiler run passed.
 
+Then apply [xcross-2.1.1-windows-framework-staging.patch](../tools/ios/xcross/xcross-2.1.1-windows-framework-staging.patch)
+and build version `2.1.1-coffeepeek.8`. Windows synchronizes the framework copy
+nodes from the selected SwiftPM build plan into its target products directory
+before compiling. This restores both runner imports and normal embedding of
+dynamic frameworks, including their modules, headers and resources; it does not
+hard-code MapLibre's checkout path or choose another XCFramework slice. Only
+framework outputs directly inside that target products directory are accepted.
+The Windows Swift driver also receives `-j1`: SwiftPM's existing `--jobs 1`
+limits targets, whereas each driver previously still spawned parallel frontends.
+This avoids concurrent jobs with disabled implicit module locks; the observed
+PostHog compiler assertion is not, by itself, proof of a cache race.
+
+`dart test test/swiftpm/framework_copies_test.dart test/compose/swift_runner_response_test.dart`
+passed all seven checks on 2026-11-17 with `SWIFT_TEST=1`. The new fixtures verify
+the selected platform copy, rejection of conflicting/out-of-directory outputs,
+complete framework contents and a missing-binary failure. Application linking,
+embedding and launch remain separate full-build/device checks.
+
 - Adds published Kotlin 2.4.21 archive hashes.
 - Prefers the existing SwiftUI @main over the Kotlin UIViewController factory.
 - Handles Windows extended paths and excludes .build from source discovery.
