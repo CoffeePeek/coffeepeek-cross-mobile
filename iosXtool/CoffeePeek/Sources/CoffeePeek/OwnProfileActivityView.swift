@@ -382,8 +382,3 @@ private struct OwnProfileActivityPreview: View {
     OwnProfileActivityPreview(expanded: true, language: "ru")
         .frame(width: 320).dynamicTypeSize(.accessibility2).preferredColorScheme(.light)
 }
-
-#Preview("Month reduced motion") {
-    OwnProfileActivityPreview(expanded: true, language: "be")
-        .environment(\.accessibilityReduceMotion, true).preferredColorScheme(.dark)
-}
