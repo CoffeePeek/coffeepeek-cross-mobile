@@ -17,7 +17,9 @@ import com.coffeepeek.admin.di.contentreport.LocalIosContentReportController
 import com.coffeepeek.admin.di.shopreport.IosShopReport
 import com.coffeepeek.admin.di.shopreport.LocalIosShopReportController
 import com.coffeepeek.admin.di.collections.IosCollectionsLibrary
+import com.coffeepeek.admin.di.collections.IosSavedPublicCollection
 import com.coffeepeek.admin.di.collections.LocalIosCollectionsLibraryController
+import com.coffeepeek.admin.di.collections.LocalIosSavedPublicCollectionController
 import com.coffeepeek.admin.di.settings.IosSettingsScreen
 import com.coffeepeek.admin.di.authorblocking.IosBlockedAuthors
 import com.coffeepeek.admin.di.authorblocking.LocalIosBlockedAuthorsController
@@ -52,6 +54,7 @@ fun MainViewController(
     makeShopReportController: (IosShopReport, String, String, () -> Unit) -> UIViewController,
     makeContentReportController: (IosContentReport, String) -> UIViewController,
     makeCollectionsLibraryController: (IosCollectionsLibrary, String) -> UIViewController,
+    makeSavedPublicCollectionController: (IosSavedPublicCollection, String) -> UIViewController,
     makeSettingsController: (IosSettingsScreen) -> UIViewController,
     makeBlockedAuthorsController: (IosBlockedAuthors, String, () -> Unit, () -> Unit, () -> Unit) -> UIViewController,
     makeAuthController: (IosAuthScreen) -> UIViewController,
@@ -69,6 +72,7 @@ fun MainViewController(
         makeShopReportController,
         makeContentReportController,
         makeCollectionsLibraryController,
+        makeSavedPublicCollectionController,
         makeSettingsController,
         makeBlockedAuthorsController,
         makeAuthController,
@@ -85,6 +89,7 @@ private class IosControllerFactories(
     private val makeShopReportController: (IosShopReport, String, String, () -> Unit) -> UIViewController,
     private val makeContentReportController: (IosContentReport, String) -> UIViewController,
     private val makeCollectionsLibraryController: (IosCollectionsLibrary, String) -> UIViewController,
+    private val makeSavedPublicCollectionController: (IosSavedPublicCollection, String) -> UIViewController,
     private val makeSettingsController: (IosSettingsScreen) -> UIViewController,
     private val makeBlockedAuthorsController: (IosBlockedAuthors, String, () -> Unit, () -> Unit, () -> Unit) -> UIViewController,
     private val makeAuthController: (IosAuthScreen) -> UIViewController,
@@ -100,6 +105,7 @@ private class IosControllerFactories(
             LocalIosShopReportController provides makeShopReportController,
             LocalIosContentReportController provides makeContentReportController,
             LocalIosCollectionsLibraryController provides makeCollectionsLibraryController,
+            LocalIosSavedPublicCollectionController provides makeSavedPublicCollectionController,
             LocalIosSettingsController provides makeSettingsController,
             LocalIosBlockedAuthorsController provides makeBlockedAuthorsController,
             LocalIosAuthController provides makeAuthController,

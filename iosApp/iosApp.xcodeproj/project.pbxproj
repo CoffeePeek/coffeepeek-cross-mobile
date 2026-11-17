@@ -29,7 +29,9 @@
 		B30000000000000000000002 /* ShopReport.strings in Resources */ = {isa = PBXBuildFile; fileRef = B30000000000000000000006 /* ShopReport.strings */; };
 		71C04E5D0000000000000002 /* ContentReport.strings in Resources */ = {isa = PBXBuildFile; fileRef = 71C04E5D0000000000000006 /* ContentReport.strings */; };
 		B20000000000000000000001 /* CollectionsLibraryScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000000000000000000003 /* CollectionsLibraryScreen.swift */; };
+		86C051CE0000000000000001 /* SavedPublicCollectionScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86C051CE0000000000000003 /* SavedPublicCollectionScreen.swift */; };
 		B20000000000000000000002 /* CollectionsLibrary.strings in Resources */ = {isa = PBXBuildFile; fileRef = B20000000000000000000006 /* CollectionsLibrary.strings */; };
+		86C051CE0000000000000002 /* SavedPublicCollection.strings in Resources */ = {isa = PBXBuildFile; fileRef = 86C051CE0000000000000006 /* SavedPublicCollection.strings */; };
 		53E771650000000000000001 /* SettingsNativeController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53E771650000000000000002 /* SettingsNativeController.swift */; };
 		53E771650000000000000003 /* SettingsNativeComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53E771650000000000000004 /* SettingsNativeComponents.swift */; };
 		53E771650000000000000005 /* SettingsNativeTab.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53E771650000000000000006 /* SettingsNativeTab.swift */; };
@@ -91,8 +93,11 @@
 		B30000000000000000000005 /* be */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = be; path = be.lproj/ShopReport.strings; sourceTree = "<group>"; };
 		71C04E5D0000000000000005 /* be */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = be; path = be.lproj/ContentReport.strings; sourceTree = "<group>"; };
 		B20000000000000000000003 /* CollectionsLibraryScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CollectionsLibraryScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CollectionsLibraryScreen.swift; sourceTree = "<group>"; };
+		86C051CE0000000000000003 /* SavedPublicCollectionScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = SavedPublicCollectionScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/SavedPublicCollectionScreen.swift; sourceTree = "<group>"; };
 		B20000000000000000000004 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/CollectionsLibrary.strings; sourceTree = "<group>"; };
+		86C051CE0000000000000004 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/SavedPublicCollection.strings; sourceTree = "<group>"; };
 		B20000000000000000000005 /* be */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = be; path = be.lproj/CollectionsLibrary.strings; sourceTree = "<group>"; };
+		86C051CE0000000000000005 /* be */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = be; path = be.lproj/SavedPublicCollection.strings; sourceTree = "<group>"; };
 		53E771650000000000000002 /* SettingsNativeController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = SettingsNativeController.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/SettingsNativeController.swift; sourceTree = "<group>"; };
 		53E771650000000000000004 /* SettingsNativeComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = SettingsNativeComponents.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/SettingsNativeComponents.swift; sourceTree = "<group>"; };
 		53E771650000000000000006 /* SettingsNativeTab.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = SettingsNativeTab.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/SettingsNativeTab.swift; sourceTree = "<group>"; };
@@ -182,7 +187,9 @@
 				C0FFEE500000000000000008 /* CoffeeDetail.strings */,
 				71C04E5D0000000000000006 /* ContentReport.strings */,
 				B20000000000000000000003 /* CollectionsLibraryScreen.swift */,
+				86C051CE0000000000000003 /* SavedPublicCollectionScreen.swift */,
 				B20000000000000000000006 /* CollectionsLibrary.strings */,
+				86C051CE0000000000000006 /* SavedPublicCollection.strings */,
 				53E771650000000000000002 /* SettingsNativeController.swift */,
 				53E771650000000000000004 /* SettingsNativeComponents.swift */,
 				53E771650000000000000006 /* SettingsNativeTab.swift */,
@@ -326,6 +333,7 @@
 				C0FFEE500000000000000003 /* CoffeeDetail.strings in Resources */,
 				71C04E5D0000000000000002 /* ContentReport.strings in Resources */,
 				B20000000000000000000002 /* CollectionsLibrary.strings in Resources */,
+				86C051CE0000000000000002 /* SavedPublicCollection.strings in Resources */,
 				53E77165000000000000000D /* SettingsNative.strings in Resources */,
 				B10000000000000000000002 /* BlockedAuthors.strings in Resources */,
 				A10000000000000000000014 /* PrivacyInfo.xcprivacy in Resources */,
@@ -413,6 +421,7 @@
 				C0FFEE500000000000000002 /* CoffeeDetailComponents.swift in Sources */,
 				71C04E5D0000000000000001 /* ContentReportScreen.swift in Sources */,
 				B20000000000000000000001 /* CollectionsLibraryScreen.swift in Sources */,
+				86C051CE0000000000000001 /* SavedPublicCollectionScreen.swift in Sources */,
 				53E771650000000000000001 /* SettingsNativeController.swift in Sources */,
 				53E771650000000000000003 /* SettingsNativeComponents.swift in Sources */,
 				53E771650000000000000005 /* SettingsNativeTab.swift in Sources */,
@@ -482,6 +491,15 @@
 				B20000000000000000000005 /* be */,
 			);
 			name = CollectionsLibrary.strings;
+			sourceTree = "<group>";
+		};
+		86C051CE0000000000000006 /* SavedPublicCollection.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				86C051CE0000000000000004 /* ru */,
+				86C051CE0000000000000005 /* be */,
+			);
+			name = SavedPublicCollection.strings;
 			sourceTree = "<group>";
 		};
 		53E771650000000000000010 /* SettingsNative.strings */ = {

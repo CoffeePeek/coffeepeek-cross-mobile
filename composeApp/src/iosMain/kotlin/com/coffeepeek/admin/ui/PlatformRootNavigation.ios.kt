@@ -15,6 +15,7 @@ import com.coffeepeek.admin.di.settings.iosThemeSettingsContent
 import com.coffeepeek.admin.di.shopreport.iosShopReportContent
 import com.coffeepeek.admin.di.contentreport.iosContentReportContent
 import com.coffeepeek.admin.di.collections.iosCollectionsLibraryContent
+import com.coffeepeek.admin.di.collections.iosSavedPublicCollectionContent
 import com.coffeepeek.admin.di.authorblocking.iosBlockedAuthorsContent
 import com.coffeepeek.admin.di.shop.iosShopMenuGalleryContent
 import com.coffeepeek.admin.di.coffee.iosCoffeeDetailContent
@@ -335,6 +336,7 @@ private fun nativeRouteContent(isLoggedIn: Boolean): (Navigator.Screen) -> (() -
     val shopReportContent = iosShopReportContent()
     val contentReport = iosContentReportContent()
     val collectionsLibraryContent = iosCollectionsLibraryContent()
+    val savedPublicCollectionContent = iosSavedPublicCollectionContent()
     val blockedAuthorsContent = iosBlockedAuthorsContent()
     return { screen ->
         when (screen) {
@@ -346,6 +348,7 @@ private fun nativeRouteContent(isLoggedIn: Boolean): (Navigator.Screen) -> (() -
             is Navigator.Screen.ReportCheckIn -> contentReport(screen.checkInId, true, false)
             is Navigator.Screen.ReportReview -> contentReport(screen.reviewId, false, screen.isPreview)
             Navigator.Screen.CollectionsLibrary -> collectionsLibraryContent
+            is Navigator.Screen.SavedPublicCollection -> { { savedPublicCollectionContent(screen.id) } }
             Navigator.Screen.BlockedAuthors -> blockedAuthorsContent
             else -> settings(screen)
         }
