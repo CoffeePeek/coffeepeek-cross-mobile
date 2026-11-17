@@ -10,6 +10,7 @@ import com.coffeepeek.feature.community.api.CommunityAnalytics
 import com.coffeepeek.feature.community.api.ConsumedDrinks
 import com.coffeepeek.feature.community.api.CommunityAccount
 import com.coffeepeek.feature.community.api.CommunityPostEntry
+import com.coffeepeek.feature.community.api.CommunitySavedPosts
 import com.coffeepeek.feature.community.domain.repository.CommunityRepository
 import com.coffeepeek.feature.community.impl.createCommunityPostEntry
 
@@ -33,6 +34,7 @@ internal class FeatureCheckInDetailScreenRenderer(private val entry: CommunityPo
 internal fun featureCheckInDetailScreenRenderer(
     analytics: CommunityAnalytics, drinks: ConsumedDrinks,
     repository: CommunityRepository, account: CommunityAccount, visibility: AuthorVisibility, blockActions: AuthorBlockActions,
+    saved: CommunitySavedPosts,
 ): CheckInDetailScreenRenderer = FeatureCheckInDetailScreenRenderer(
-    createCommunityPostEntry(repository, account, visibility, blockActions, communityHost(), analytics, drinks),
+    createCommunityPostEntry(repository, account, visibility, blockActions, communityHost(), analytics, drinks, saved),
 )

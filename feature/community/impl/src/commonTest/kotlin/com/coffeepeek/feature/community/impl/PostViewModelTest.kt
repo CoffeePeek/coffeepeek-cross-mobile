@@ -2,9 +2,11 @@ package com.coffeepeek.feature.community.impl
 
 import androidx.lifecycle.ViewModelStore
 import com.coffeepeek.feature.authorblocking.api.AuthorVisibilitySnapshot
+import com.coffeepeek.feature.community.api.CommunitySavedPosts
 import com.coffeepeek.feature.community.domain.model.CommunityFailure
 import com.coffeepeek.feature.community.domain.model.CommunityPost
 import com.coffeepeek.feature.community.domain.model.FailureKind
+import com.coffeepeek.feature.community.domain.model.FeedPage
 import com.coffeepeek.feature.community.domain.model.HelpfulVote
 import com.coffeepeek.feature.community.domain.model.PostModeration
 import com.coffeepeek.feature.community.domain.model.PostVisibility
@@ -13,6 +15,7 @@ import com.coffeepeek.feature.community.impl.post.PostAction
 import com.coffeepeek.feature.community.impl.post.PostError
 import com.coffeepeek.feature.community.impl.post.PostEvent
 import com.coffeepeek.feature.community.impl.post.PostViewModel
+import com.coffeepeek.feature.community.impl.timeline.CommunityViewModel
 import com.coffeepeek.feature.community.impl.timeline.MessageKind
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CancellationException
@@ -45,8 +48,11 @@ class PostViewModelTest {
 
     private fun repository(shown: CommunityPost = post("shared")) = FakeRepository().apply { byId = { Result.success(shown) } }
 
-    private fun TestScope.model(repository: FakeRepository = repository(), account: FakeAccount = FakeAccount("one"), authors: FakeAuthors = FakeAuthors()) =
-        PostViewModel("shared", repository, account, authors, FakeAnalytics(), FakeDrinks()).also { store.put("post", it); runCurrent() }
+    private fun TestScope.model(
+        repository: FakeRepository = repository(), account: FakeAccount = FakeAccount("one"),
+        authors: FakeAuthors = FakeAuthors(), saved: CommunitySavedPosts = CommunitySavedPosts.None,
+    ) = PostViewModel("shared", repository, account, authors, FakeAnalytics(), FakeDrinks(), saved)
+        .also { store.put("post", it); runCurrent() }
 
     private fun TestScope.events(vm: PostViewModel) = mutableListOf<PostEvent>().also { list -> backgroundScope.launch { vm.events.collect { list += it } } }
     private fun PostViewModel.send(action: PostAction, scope: TestScope) { onAction(action); scope.runCurrent() }
@@ -68,6 +74,28 @@ class PostViewModelTest {
         assertEquals("Fixed", vm.state.value.post?.note); assertNull(vm.state.value.post?.rejectionReason)
         assertNull(vm.state.value.editing); assertFalse(vm.state.value.isSaving)
         assertEquals(MessageKind.EditSaved, assertIs<PostEvent.Message>(notices.single()).message.kind)
+    }
+
+    @Test fun detailEditRefreshesTheCachedFeedWithoutASavedPostCard() = runTest(dispatcher) {
+        var current = post("shared", slug = "me", note = "Before")
+        val repo = repository(current).apply {
+            feed = { _, _, _ -> Result.success(FeedPage(listOf(entry(current)), null)) }
+            update = { _, edit ->
+                current = current.copy(note = edit.text)
+                Result.success(current)
+            }
+        }
+        val account = FakeAccount("one")
+        val saved = createCommunitySavedPosts()
+        val feed = CommunityViewModel(repo, account, FakeAnalytics(), FakeDrinks(), FakeAuthors(), saved)
+        store.put("feed", feed)
+        val detail = model(repo, account, saved = saved)
+        assertEquals("Before", feed.state.value.items.single().note)
+        detail.send(PostAction.Edit, this)
+        detail.send(PostAction.EditText("After"), this)
+        detail.send(PostAction.SaveEdit, this)
+        assertEquals("After", feed.state.value.items.single().note)
+        assertTrue(feed.state.value.visibleConfirmedSaves.isEmpty())
     }
 
     @Test fun lateEditResultCannotReplaceAnotherAccountsPost() = runTest(dispatcher) {
