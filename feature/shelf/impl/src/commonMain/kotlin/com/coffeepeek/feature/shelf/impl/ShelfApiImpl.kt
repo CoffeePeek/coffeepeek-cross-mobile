@@ -50,11 +50,13 @@ class ShelfPorts(
  * Construct once in composition. The shelf's ViewModel lives in the caller's ViewModel-store owner (the Coffee tab);
  * the archive, a bag's screen and the scan live in their own destinations.
  */
+fun createShelfEntry(repository: ShelfRepository, ports: ShelfPorts): ShelfEntry = createShelfFeature(repository, ports)
+
 @OptIn(ExperimentalTime::class)
-fun createShelfEntry(repository: ShelfRepository, ports: ShelfPorts): ShelfEntry =
+internal fun createShelfFeature(repository: ShelfRepository, ports: ShelfPorts): ShelfApiImpl =
     ShelfApiImpl(repository, ports, ShelfCalendar(ports.timeZone) { Clock.System.now() })
 
-private class ShelfApiImpl(
+internal class ShelfApiImpl(
     private val repository: ShelfRepository,
     private val ports: ShelfPorts,
     private val calendar: ShelfCalendar,
@@ -62,6 +64,8 @@ private class ShelfApiImpl(
     private val instanceKey = Uuid.random().toString()
     private val arrivals = ShelfArrivals()
     private val bags = ShelfBagHandoff()
+
+    internal fun archiveModel() = ShelfArchiveViewModel(repository, calendar, bags)
 
     @Composable
     override fun Shelf(
@@ -85,7 +89,7 @@ private class ShelfApiImpl(
     @Composable
     override fun Archive(onBack: () -> Unit, onOpenBag: (String) -> Unit, modifier: Modifier) {
         key(this) {
-            val model = viewModel(key = "shelf-archive:$instanceKey") { ShelfArchiveViewModel(repository, calendar, bags) }
+            val model = viewModel(key = "shelf-archive:$instanceKey") { archiveModel() }
             ShelfArchiveScreen(model, ports.image, modifier) { event ->
                 when (event) {
                     ShelfArchiveEvent.Back -> onBack()
