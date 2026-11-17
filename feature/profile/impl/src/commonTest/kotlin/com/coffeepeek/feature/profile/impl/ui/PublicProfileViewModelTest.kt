@@ -206,6 +206,30 @@ class PublicProfileViewModelTest {
     }
 
     @Test
+    fun emptyCheckInPagesAdvanceUntilTheCursorStopsChanging() = runTest(dispatcher) {
+        val requests = mutableListOf<String?>()
+        val data = FakeData().apply {
+            checkIns = { _, cursor ->
+                requests += cursor
+                Result.success(PublicProfileCheckInPage(emptyList(), if (cursor == null) "first" else "second"))
+            }
+        }
+        val vm = model(data = data)
+        runCurrent()
+        assertEquals(1, vm.state.value.checkInsPageRevision)
+        vm.onAction(PublicProfileAction.LoadMoreCheckIns)
+        runCurrent()
+        assertTrue(vm.state.value.hasMoreCheckIns)
+        assertEquals(2, vm.state.value.checkInsPageRevision)
+        repeat(2) {
+            vm.onAction(PublicProfileAction.LoadMoreCheckIns)
+            runCurrent()
+        }
+        assertEquals(listOf(null, "first", "second"), requests)
+        assertFalse(vm.state.value.hasMoreCheckIns)
+    }
+
+    @Test
     fun favoriteAndActivityFailuresDoNotHideProfileAndCanBeRetriedIndependently() = runTest(dispatcher) {
         val data = FakeData().apply {
             favorites = { Result.failure(IllegalStateException("Favorites unavailable")) }

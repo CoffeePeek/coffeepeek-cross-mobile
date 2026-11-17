@@ -423,9 +423,10 @@ internal class PublicProfileViewModel(
             currentCoroutineContext().ensureActive()
             if (!isCurrent(requestGeneration, requestAccount)) return@launch
             result.onSuccess { page ->
-                nextCursor = page.nextCursor
+                nextCursor = page.nextCursor?.takeUnless { it == cursor }
                 updateState { copy(checkIns = (if (reset) page.items else this.checkIns + page.items).distinctBy(PublicProfileCheckIn::id),
-                    hasMoreCheckIns = page.nextCursor != null, isLoadingCheckIns = false, isLoadingMoreCheckIns = false, checkInsError = null) }
+                    hasMoreCheckIns = nextCursor != null, checkInsPageRevision = checkInsPageRevision + 1,
+                    isLoadingCheckIns = false, isLoadingMoreCheckIns = false, checkInsError = null) }
                 rememberSnapshot()
             }.onFailure { updateState { copy(isLoadingCheckIns = false, isLoadingMoreCheckIns = false, checkInsError = failureMessage) } }
         }

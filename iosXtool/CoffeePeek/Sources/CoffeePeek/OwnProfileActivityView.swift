@@ -59,12 +59,6 @@ private struct OwnProfileActivityCard: View {
         Button(action: toggle) {
             weekdays(highlightToday: true)
                 .frame(minHeight: 44)
-                .overlay(alignment: .topTrailing) {
-                    Image(systemName: "chevron.down")
-                        .font(.system(size: 9, weight: .semibold))
-                        .foregroundStyle(CoffeePeekNativeStyle.secondary)
-                        .padding(.top, 4)
-                }
                 .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -201,7 +195,7 @@ private struct OwnProfileActivityCard: View {
     private func activityRow(_ row: IosOwnProfileActivityRow) -> some View {
         Button { openRow(row.key) } label: {
             HStack(spacing: 8) {
-                OwnProfileImage(url: row.photo, profile: profile, symbol: row.home ? "house" : "cup.and.saucer")
+                OwnProfileImage(url: row.photo, profile: profile)
                     .frame(width: 44, height: 44).clipShape(RoundedRectangle(cornerRadius: 8))
                 VStack(alignment: .leading, spacing: 3) {
                     Text(row.home ? strings["history_activity_at_home"] : row.title ?? strings["history_shop"])
@@ -291,7 +285,7 @@ private struct OwnProfileActivityCell: View {
     }
 
     private func thumbnail(_ url: String) -> some View {
-        OwnProfileImage(url: url, profile: profile, symbol: day.homeCount > 0 ? "house" : "cup.and.saucer")
+        OwnProfileImage(url: url, profile: profile)
             .frame(width: 22, height: 22)
             .clipShape(RoundedRectangle(cornerRadius: 5))
     }

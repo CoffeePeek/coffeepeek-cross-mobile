@@ -4,7 +4,20 @@ import UIKit
 
 @MainActor
 func makeOwnProfileController(profile: IosOwnProfile) -> UIViewController {
-    UIHostingController(rootView: OwnProfileHost(profile: profile))
+    OwnProfileHostingController(profile: profile)
+}
+
+private final class OwnProfileHostingController: UIHostingController<OwnProfileHost> {
+    private let profile: IosOwnProfile
+
+    init(profile: IosOwnProfile) {
+        self.profile = profile
+        super.init(rootView: OwnProfileHost(profile: profile))
+    }
+
+    @MainActor required dynamic init?(coder: NSCoder) { return nil }
+
+    deinit { profile.close() }
 }
 
 private struct OwnProfileHost: View {
@@ -130,35 +143,8 @@ private struct OwnProfileScreen: View {
             if let activity = model.activity {
                 OwnProfileActivityView(state: activity, model: model, strings: model.strings)
             }
-            checkInFilter
             OwnProfileCheckIns(model: model)
         }
-    }
-
-    private var checkInFilter: some View {
-        Menu {
-            Picker(model.strings["profile_check_in_source"], selection: $model.checkInKind) {
-                ForEach(OwnProfileCheckInKind.allCases) { kind in Text(model.strings[kind.rawValue]).tag(kind) }
-            }
-        } label: {
-            HStack {
-                Text(model.strings[model.checkInKind.rawValue])
-                Spacer(minLength: 8)
-                Image(systemName: "chevron.up.chevron.down").font(.footnote)
-                    .foregroundStyle(CoffeePeekNativeStyle.secondary)
-                    .accessibilityHidden(true)
-            }
-            .padding(.horizontal, 16)
-            .frame(minHeight: 46)
-            .background(CoffeePeekNativeStyle.foreground.opacity(0.04), in: RoundedRectangle(cornerRadius: 16))
-            .overlay {
-                RoundedRectangle(cornerRadius: 16).strokeBorder(CoffeePeekNativeStyle.border)
-                    .allowsHitTesting(false)
-            }
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel(model.strings["profile_check_in_source"])
-        .accessibilityValue(model.strings[model.checkInKind.rawValue])
     }
 
     @ViewBuilder
@@ -199,7 +185,6 @@ final class OwnProfileModel: ObservableObject {
     @Published private(set) var state: IosOwnProfileState
     @Published private(set) var activity: IosOwnProfileActivity?
     @Published private(set) var selected: OwnProfileTab = .checkIns
-    @Published var checkInKind: OwnProfileCheckInKind = .all
     @Published private(set) var strings: OwnProfileStrings
     @Published private(set) var photoViewer: IosPhotoViewer?
     @Published var preferences: OwnProfileSlot?
@@ -220,11 +205,6 @@ final class OwnProfileModel: ObservableObject {
     deinit {
         observation?.cancel()
         calendarObservation?.cancel()
-        profile.close()
-    }
-
-    var visibleCheckIns: [IosOwnProfileCheckIn] {
-        Array(state.checkIns.lazy.filter { self.checkInKind.includes($0) }.prefix(2))
     }
 
     var followersPresented: Binding<Bool> {
@@ -268,6 +248,12 @@ final class OwnProfileModel: ObservableObject {
         photoViewer = profile.checkInViewer(id: id, index: Int32(index))
     }
 
+    func loadMoreCheckIns() {
+        guard state.active, selected == .checkIns, state.checkInsHasMore,
+              !state.checkInsLoading, !state.checkInsLoadingMore, !state.checkInsFailed else { return }
+        profile.loadMoreCheckIns()
+    }
+
     func dismissPhotoViewer() { photoViewer = nil }
 
     func toggleActivity() {
@@ -293,7 +279,6 @@ final class OwnProfileModel: ObservableObject {
             shelf = nil
             collections = nil
             selected = .checkIns
-            checkInKind = .all
         } else if next.identity != nil && calendarObservation == nil {
             observeCalendar()
         }
@@ -338,22 +323,6 @@ enum OwnProfileTab: String, CaseIterable, Identifiable {
     case collections = "profile_section_favorites"
     case shelf = "profile_section_shelf"
     var id: Self { self }
-}
-
-enum OwnProfileCheckInKind: String, CaseIterable, Identifiable {
-    case all = "history_all"
-    case shop = "history_at_shop"
-    case home = "history_at_home"
-
-    var id: Self { self }
-
-    func includes(_ row: IosOwnProfileCheckIn) -> Bool {
-        switch self {
-        case .all: true
-        case .shop: !row.home
-        case .home: row.home
-        }
-    }
 }
 
 private enum OwnProfileContribution: String, CaseIterable, Identifiable {

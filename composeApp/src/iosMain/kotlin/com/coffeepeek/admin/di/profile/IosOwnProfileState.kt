@@ -13,7 +13,10 @@ data class IosOwnProfileState(
     val failed: Boolean,
     val refreshFailed: Boolean,
     val checkInsLoading: Boolean,
+    val checkInsLoadingMore: Boolean,
     val checkInsFailed: Boolean,
+    val checkInsHasMore: Boolean,
+    val checkInsPageRevision: Int,
     val checkIns: List<IosOwnProfileCheckIn>,
     val followers: IosOwnProfileFollowers,
 )
@@ -67,7 +70,8 @@ data class IosOwnProfileActivityRow(
 internal fun OwnProfileSnapshot.iosState(language: String): IosOwnProfileState {
     return IosOwnProfileState(active, iosIdentity(), loading || publicLoading && !hasContent, refreshing,
         failed || publicFailed && !hasContent, refreshFailed || publicFailed && hasContent,
-        checkInsLoading || publicLoading, checkInsFailed || publicFailed, checkIns.map { it.iosCheckIn(language, publicProfile?.nickname ?: identity?.userName.orEmpty(),
+        checkInsLoading || publicLoading, checkInsLoadingMore, checkInsFailed || publicFailed, checkInsHasMore,
+        checkInsPageRevision, checkIns.map { it.iosCheckIn(language, publicProfile?.nickname ?: identity?.userName.orEmpty(),
             publicProfile?.avatarUrl ?: identity?.avatarUrl) },
         IosOwnProfileFollowers(followersOpen, followersLoading, followersFailed, moreFollowers,
             followers.map { IosOwnProfileFollower(it.slug, it.userName, it.avatarUrl) }))

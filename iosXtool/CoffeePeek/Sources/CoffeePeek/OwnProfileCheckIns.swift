@@ -6,26 +6,27 @@ struct OwnProfileCheckIns: View {
 
     var body: some View {
         let state = model.state
-        let rows = model.visibleCheckIns
-        VStack(alignment: .leading, spacing: 20) {
-            if state.checkInsFailed {
-                OwnProfileRetry(message: model.strings["profile_check_ins_failed"], strings: model.strings,
-                                retry: model.profile.retryCheckIns)
-            } else if state.checkInsLoading && rows.isEmpty {
-                ProgressView().frame(maxWidth: .infinity, minHeight: 64)
-                    .accessibilityLabel(model.strings["profile_loading"])
-            } else if rows.isEmpty {
+        LazyVStack(alignment: .leading, spacing: 20) {
+            if state.checkIns.isEmpty && !state.checkInsLoading && !state.checkInsHasMore && !state.checkInsFailed {
                 Text(model.strings["profile_check_ins_empty"]).foregroundStyle(CoffeePeekNativeStyle.secondary)
             }
-            ForEach(rows, id: \.id) { checkIn in
+            ForEach(state.checkIns, id: \.id) { checkIn in
                 OwnProfileCheckInCard(checkIn: checkIn, strings: model.strings, profile: model.profile,
                     openShop: { model.profile.openShop(slug: $0) },
                     openCoffee: { model.profile.openCoffee(slug: $0) },
                     openPhoto: { model.openPhoto(id: checkIn.id, index: $0) }, timeline: true)
             }
-            Button(model.strings["profile_section_all_check_ins"], action: model.profile.openHistory)
-                .frame(maxWidth: .infinity, minHeight: 44)
-                .tint(CoffeePeekNativeStyle.foreground)
+            if state.checkInsLoading || state.checkInsLoadingMore {
+                ProgressView().frame(maxWidth: .infinity, minHeight: 44)
+                    .accessibilityLabel(model.strings["profile_loading"])
+            } else if state.checkInsFailed {
+                OwnProfileRetry(message: model.strings["profile_check_ins_failed"], strings: model.strings,
+                                retry: model.profile.retryCheckIns)
+            } else if state.checkInsHasMore {
+                Color.clear.frame(height: 1)
+                    .accessibilityHidden(true)
+                    .task(id: state.checkInsPageRevision) { model.loadMoreCheckIns() }
+            }
         }
     }
 }
@@ -123,8 +124,12 @@ struct OwnProfileCheckInCard: View {
             Text(shopName).font(.headline)
         }
         if let score = checkIn.score {
-            Label(score, systemImage: "star.fill")
-                .accessibilityLabel(ratingDescription ?? String(format: strings["profile_native_rating"], score))
+            Label {
+                Text(score).foregroundStyle(CoffeePeekNativeStyle.foreground)
+            } icon: {
+                Image(systemName: "star.fill").foregroundStyle(CoffeePeekNativeStyle.accent)
+            }
+            .accessibilityLabel(ratingDescription ?? String(format: strings["profile_native_rating"], score))
         }
     }
 
@@ -185,7 +190,7 @@ struct OwnProfileCheckInCard: View {
         let photo = checkIn.photos[index]
         let url = timeline ? timelinePhotoURL(photo) : photo.url
         return Button { openPhoto(index) } label: {
-            OwnProfileImage(url: url, symbol: "photo", fallbackUrl: timeline ? photo.fallbackUrl : nil, loadImage: loadImage)
+            OwnProfileImage(url: url, fallbackUrl: photo.fallbackUrl, loadImage: loadImage)
                 .frame(width: width, height: height)
                 .overlay {
                     if more > 0 {
@@ -217,8 +222,13 @@ struct OwnProfileCheckInCard: View {
 
     private var footerContent: some View {
         HStack {
-            Label(checkIn.helpfulCount.formatted(), systemImage: checkIn.liked ? "heart.fill" : "heart")
-                .accessibilityLabel(strings.count("profile_check_in_likes", Int(checkIn.helpfulCount)))
+            Label {
+                Text(checkIn.helpfulCount.formatted()).foregroundStyle(CoffeePeekNativeStyle.foreground)
+            } icon: {
+                Image(systemName: checkIn.liked ? "heart.fill" : "heart")
+                    .foregroundStyle(checkIn.liked ? CoffeePeekNativeStyle.accent : CoffeePeekNativeStyle.foreground)
+            }
+            .accessibilityLabel(strings.count("profile_check_in_likes", Int(checkIn.helpfulCount)))
             Spacer()
             if let drink = checkIn.drink { Text(drink) }
         }
@@ -288,15 +298,10 @@ private struct OwnProfileBrewPreview: View {
 
     @ViewBuilder
     private var thumbnail: some View {
-        if let cover {
-            OwnProfileImage(url: cover, symbol: "cup.and.saucer", fits: true, loadImage: loadImage)
+        if cover != nil || timeline {
+            OwnProfileImage(url: cover, fits: true, loadImage: loadImage)
                 .frame(width: timeline ? 44 : 52, height: timeline ? 54 : 52)
                 .clipShape(RoundedRectangle(cornerRadius: timeline ? 4 : 8))
-        } else if timeline {
-            Image(systemName: "cup.and.saucer")
-                .foregroundStyle(CoffeePeekNativeStyle.secondary)
-                .frame(width: 44, height: 44)
-                .accessibilityHidden(true)
         }
     }
 

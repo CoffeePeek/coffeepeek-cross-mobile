@@ -16,11 +16,14 @@ internal class IosCatalogueMedia(
 ) {
     suspend fun loadImage(url: String): UIImage? = imageFetcher.loadIosImage(imageUrl(url))
 
+    fun observeImage(url: String, canLoad: () -> Boolean) =
+        imageFetcher.observeIosViewerImage(imageUrl(url), canLoad)
+
     fun viewer(
         images: CoffeePeekPhotoViewerImages,
         index: Int,
         canLoad: () -> Boolean = { true },
-    ) = IosPhotoViewer(images, index) { url -> imageFetcher.observeIosViewerImage(imageUrl(url), canLoad) }
+    ) = IosPhotoViewer(images, index) { url -> observeImage(url, canLoad) }
 
     private fun imageUrl(url: String) = resolveImageData(url, apiBaseUrl) as ImageUrl
 }

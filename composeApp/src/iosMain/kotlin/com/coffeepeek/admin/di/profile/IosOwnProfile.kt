@@ -67,6 +67,7 @@ class IosOwnProfile internal constructor(
 
     fun refresh() = profile.refresh()
     fun retryCheckIns() = profile.retryCheckIns()
+    fun loadMoreCheckIns() = profile.loadMoreCheckIns()
     fun openFollowers() = profile.openFollowers()
     fun closeFollowers() = profile.closeFollowers()
     fun retryFollowers() = profile.retryFollowers()
@@ -101,8 +102,10 @@ class IosOwnProfile internal constructor(
     fun loadImage(url: String, onImage: (UIImage?) -> Unit): IosOwnProfileObservation {
         return IosOwnProfileObservation(scope.launch {
             if (!isCurrent()) return@launch
-            val image = lease.withCurrentAccount { Result.success(media.loadImage(url)) }.getOrNull()
-            if (isCurrent()) onImage(image)
+            lease.withCurrentAccount {
+                media.observeImage(url, ::isCurrent).collect { image -> onImage(image.takeIf { isCurrent() }) }
+                Result.success(Unit)
+            }
         })
     }
 

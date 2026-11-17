@@ -50,8 +50,10 @@ import com.coffeepeek.admin.ui.screen.profile.SettingsScreenRenderer
 import com.coffeepeek.admin.ui.screen.checkins.CheckInCreateHost
 import com.coffeepeek.admin.analytics.TrackNativeCreateActionExposure
 import com.coffeepeek.core.session.SessionReader
+import com.coffeepeek.feature.profile.api.ProfileAccountPort
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -206,7 +208,7 @@ internal actual fun PlatformRootNavigation(
     }
 
     val createTitle = stringResource(Res.string.check_in_create_actions)
-    val presentation = nativeRootTabPresentation()
+    val presentation = nativeRootTabPresentation(isLoggedIn, navigations[IosRootTab.Profile.ordinal], nativeContent, ::saveNavigation)
     UIKitViewController(factory = {
         IosRootTab.entries.forEachIndexed { index, tab ->
             val navigation = navigations[index]
@@ -428,9 +430,37 @@ private data class NativeRootTabPresentation(
 }
 
 @Composable
-private fun nativeRootTabPresentation() = NativeRootTabPresentation(
-    nativeRootTabLabels(), iosNotificationInboxAction(), LocalIosDiscoveryFilterController.current,
-)
+private fun nativeRootTabPresentation(
+    isLoggedIn: Boolean,
+    profileNavigation: UINavigationController,
+    nativeContent: (Navigator.Screen) -> (() -> UIViewController)?,
+    onProfileRebound: () -> Unit,
+): NativeRootTabPresentation {
+    val labels = nativeRootTabLabels()
+    if (isLoggedIn) RebindNativeProfileTab(profileNavigation, labels[IosRootTab.Profile.ordinal], nativeContent, onProfileRebound)
+    return NativeRootTabPresentation(labels, iosNotificationInboxAction(), LocalIosDiscoveryFilterController.current)
+}
+
+@Composable
+private fun RebindNativeProfileTab(
+    navigation: UINavigationController,
+    title: String,
+    nativeContent: (Navigator.Screen) -> (() -> UIViewController)?,
+    onRebound: () -> Unit,
+) {
+    val accounts = koinInject<ProfileAccountPort>()
+    val binding = remember(navigation, accounts) { NativeProfileTabAccount(accounts.cacheScope()) }
+    val createRoot by rememberUpdatedState {
+        IosRootTab.Profile.controller(title, nativeContent) { error("The iOS profile tab requires a native controller") }
+    }
+    val onReboundLatest by rememberUpdatedState(onRebound)
+    LaunchedEffect(navigation, accounts) {
+        accounts.observeCacheScope().collectLatest { scope ->
+            if (scope != null) while (navigation.transitionCoordinator != null) delay(16)
+            if (binding.rebind(scope, navigation, createRoot)) onReboundLatest()
+        }
+    }
+}
 
 @Composable
 private fun nativeRootTabLabels(): List<String> = listOf(

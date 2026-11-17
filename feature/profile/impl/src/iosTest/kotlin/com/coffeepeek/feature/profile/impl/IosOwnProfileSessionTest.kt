@@ -3,7 +3,11 @@ package com.coffeepeek.feature.profile.impl
 import com.coffeepeek.feature.profile.api.OwnProfile
 import com.coffeepeek.feature.profile.api.ProfileAccountPort
 import com.coffeepeek.feature.profile.api.ProfileSignOutPort
+import com.coffeepeek.feature.profile.domain.PublicProfile
+import com.coffeepeek.feature.profile.domain.PublicProfileStats
 import com.coffeepeek.feature.profile.impl.ui.OwnProfileViewModel
+import com.coffeepeek.feature.profile.impl.ui.model.OwnProfileState
+import com.coffeepeek.feature.profile.impl.ui.model.PublicProfileState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.awaitCancellation
@@ -60,6 +64,20 @@ class IosOwnProfileSessionTest {
         assertTrue(accounts.readCancelled)
         assertTrue(observation.isCancelled)
         assertNull(session.current().identity)
+    }
+
+    @Test fun paginationSnapshotHidesInactiveAccountState() {
+        val profile = PublicProfile("owner", "Owner", null, null, PublicProfileStats(1, 0, 0, 0), emptyList(), null)
+        val page = PublicProfileState(profile = profile, isLoadingMoreCheckIns = true,
+            hasMoreCheckIns = true, checkInsPageRevision = 2)
+        val active = OwnProfileSnapshot(OwnProfileState(), page, active = true)
+        assertTrue(active.checkInsLoadingMore)
+        assertTrue(active.checkInsHasMore)
+        assertEquals(2, active.checkInsPageRevision)
+        val inactive = OwnProfileSnapshot(OwnProfileState(), page, active = false)
+        assertFalse(inactive.checkInsLoadingMore)
+        assertFalse(inactive.checkInsHasMore)
+        assertEquals(0, inactive.checkInsPageRevision)
     }
 
     private fun nativeSession(accounts: Accounts): IosOwnProfileSession =
