@@ -267,15 +267,19 @@ final class OwnProfileModel: ObservableObject {
 struct OwnProfileStrings {
     let languageTag: String
     private let bundle: Bundle
+    private let table: String
 
-    init(languageTag: String) {
+    init(languageTag: String, table: String = "NativeOwnProfile") {
         self.languageTag = languageTag
+        self.table = table
         let url = Bundle.main.url(forResource: languageTag, withExtension: "lproj")
         bundle = url.flatMap { Bundle(url: $0) } ?? .main
     }
 
     subscript(_ key: String) -> String {
-        bundle.localizedString(forKey: key, value: nil, table: "NativeOwnProfile")
+        let label = bundle.localizedString(forKey: key, value: nil, table: table)
+        if label != key || table == "NativeOwnProfile" { return label }
+        return bundle.localizedString(forKey: key, value: nil, table: "NativeOwnProfile")
     }
 
     func count(_ key: String, _ value: Int) -> String {
@@ -314,7 +318,7 @@ struct OwnProfileSlot: Identifiable {
     var id: ObjectIdentifier { ObjectIdentifier(controller) }
 }
 
-private struct OwnProfileEmbedded: UIViewControllerRepresentable {
+struct OwnProfileEmbedded: UIViewControllerRepresentable {
     let controller: UIViewController
     func makeUIViewController(context: Context) -> UIViewController { controller }
     func updateUIViewController(_ uiViewController: UIViewController, context: Context) {}
