@@ -12,6 +12,8 @@ import com.coffeepeek.admin.di.profile.IosGuestProfile
 import com.coffeepeek.admin.di.profile.LocalIosGuestProfileController
 import com.coffeepeek.admin.di.profile.IosOwnProfile
 import com.coffeepeek.admin.di.profile.LocalIosOwnProfileController
+import com.coffeepeek.admin.di.contributions.IosContributionsRoute
+import com.coffeepeek.admin.di.contributions.LocalIosContributionsController
 import com.coffeepeek.admin.di.contentreport.IosContentReport
 import com.coffeepeek.admin.di.contentreport.LocalIosContentReportController
 import com.coffeepeek.admin.di.shopreport.IosShopReport
@@ -50,6 +52,7 @@ fun MainViewController(
     makeCoffeeDetailController: (IosCoffeeDetail, String) -> UIViewController,
     makeThemeSettingsController: (IosThemeSettings, String, () -> Unit) -> UIViewController,
     makeShopReportController: (IosShopReport, String, String, () -> Unit) -> UIViewController,
+    makeContributionsController: (IosContributionsRoute, String) -> UIViewController,
     makeContentReportController: (IosContentReport, String) -> UIViewController,
     makeCollectionsLibraryController: (IosCollectionsLibrary, String) -> UIViewController,
     makeSettingsController: (IosSettingsScreen) -> UIViewController,
@@ -67,6 +70,7 @@ fun MainViewController(
         makeCoffeeDetailController,
         makeThemeSettingsController,
         makeShopReportController,
+        makeContributionsController,
         makeContentReportController,
         makeCollectionsLibraryController,
         makeSettingsController,
@@ -83,6 +87,7 @@ private class IosControllerFactories(
     private val makeCoffeeDetailController: (IosCoffeeDetail, String) -> UIViewController,
     private val makeThemeSettingsController: (IosThemeSettings, String, () -> Unit) -> UIViewController,
     private val makeShopReportController: (IosShopReport, String, String, () -> Unit) -> UIViewController,
+    private val makeContributionsController: (IosContributionsRoute, String) -> UIViewController,
     private val makeContentReportController: (IosContentReport, String) -> UIViewController,
     private val makeCollectionsLibraryController: (IosCollectionsLibrary, String) -> UIViewController,
     private val makeSettingsController: (IosSettingsScreen) -> UIViewController,
@@ -98,6 +103,7 @@ private class IosControllerFactories(
             LocalIosCoffeeDetailController provides makeCoffeeDetailController,
             LocalIosThemeSettingsController provides makeThemeSettingsController,
             LocalIosShopReportController provides makeShopReportController,
+            LocalIosContributionsController provides makeContributionsController,
             LocalIosContentReportController provides makeContentReportController,
             LocalIosCollectionsLibraryController provides makeCollectionsLibraryController,
             LocalIosSettingsController provides makeSettingsController,
