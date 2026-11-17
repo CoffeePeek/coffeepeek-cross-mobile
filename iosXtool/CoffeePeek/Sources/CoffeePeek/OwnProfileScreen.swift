@@ -18,13 +18,8 @@ private struct OwnProfileHost: View {
         OwnProfileScreen(model: model)
             .allowsHitTesting(model.photoViewer == nil)
             .accessibilityHidden(model.photoViewer != nil)
-            .overlay {
-                if let viewer = model.photoViewer {
-                    OwnProfileEmbedded(controller: viewer)
-                        .id(ObjectIdentifier(viewer))
-                        .ignoresSafeArea()
-                }
-            }
+            .coffeePeekPhotoViewer(model.photoViewer, languageTag: model.strings.languageTag,
+                                   onDismiss: model.dismissPhotoViewer)
             .onAppear(perform: model.observe)
             .onDisappear(perform: model.stopObserving)
     }
@@ -163,7 +158,7 @@ final class OwnProfileModel: ObservableObject {
     @Published private(set) var activity: IosOwnProfileActivity?
     @Published private(set) var selected: OwnProfileTab = .checkIns
     @Published private(set) var strings: OwnProfileStrings
-    @Published private(set) var photoViewer: UIViewController?
+    @Published private(set) var photoViewer: IosPhotoViewer?
     @Published var preferences: OwnProfileSlot?
     @Published var logoutPresented = false
     let profile: IosOwnProfile
@@ -199,6 +194,7 @@ final class OwnProfileModel: ObservableObject {
     }
 
     func stopObserving() {
+        guard photoViewer == nil else { return }
         observation?.cancel()
         calendarObservation?.cancel()
         observation = nil
@@ -217,13 +213,15 @@ final class OwnProfileModel: ObservableObject {
         case .shops: profile.openContribution(kind: OwnProfileContribution.shops.rawValue)
         case .roasters: profile.openContribution(kind: OwnProfileContribution.roasters.rawValue)
         case .followers: profile.openFollowers()
-        case .avatar: photoViewer = profile.makeAvatarViewer { [weak self] in self?.photoViewer = nil }
+        case .avatar: photoViewer = profile.avatarViewer()
         }
     }
 
     func openPhoto(id: String, index: Int) {
-        photoViewer = profile.makeCheckInViewer(id: id, index: Int32(index)) { [weak self] in self?.photoViewer = nil }
+        photoViewer = profile.checkInViewer(id: id, index: Int32(index))
     }
+
+    func dismissPhotoViewer() { photoViewer = nil }
 
     func toggleActivity() {
         expanded.toggle()

@@ -50,12 +50,15 @@ private struct ComposeRootView: UIViewControllerRepresentable {
             makeShopReportController: makeShopReportController,
             makeContentReportController: makeContentReportController,
             makeCollectionsLibraryController: makeCollectionsLibraryController,
+            makeSavedPublicCollectionController: makeSavedPublicCollectionController,
             makeSettingsController: makeSettingsController,
             makeBlockedAuthorsController: makeBlockedAuthorsController,
             makeAuthController: makeAuthController,
+            makeCheckInCreatePickerController: makeCheckInCreatePickerController,
             makeGuestProfileController: makeGuestProfileController(profile:),
             makeOwnProfileController: makeOwnProfileController(profile:),
-            makePublicProfileController: makePublicProfileController(profile:)
+            makePublicProfileController: makePublicProfileController(profile:),
+            makeNotificationInboxController: makeNotificationInboxController(inbox:languageTag:)
         )
     }
 
