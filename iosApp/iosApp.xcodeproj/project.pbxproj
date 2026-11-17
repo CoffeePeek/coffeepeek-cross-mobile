@@ -59,6 +59,8 @@
 		A0871E7C0000000000000003 /* OwnProfileActivityView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0871E7C0000000000000007 /* OwnProfileActivityView.swift */; };
 		A0871E7C0000000000000004 /* OwnProfileCheckIns.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0871E7C0000000000000008 /* OwnProfileCheckIns.swift */; };
 		A0871E7C0000000000000009 /* NativeOwnProfile.strings in Resources */ = {isa = PBXBuildFile; fileRef = A0871E7C000000000000000C /* NativeOwnProfile.strings */; };
+		F07A11400000000000000001 /* CoffeePeekNativePhotoViewer.swift in Sources */ = {isa = PBXBuildFile; fileRef = F07A11400000000000000003 /* CoffeePeekNativePhotoViewer.swift */; };
+		F07A11400000000000000002 /* NativePhotoViewer.strings in Resources */ = {isa = PBXBuildFile; fileRef = F07A11400000000000000006 /* NativePhotoViewer.strings */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -128,6 +130,9 @@
 		A0871E7C0000000000000008 /* OwnProfileCheckIns.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = OwnProfileCheckIns.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/OwnProfileCheckIns.swift; sourceTree = "<group>"; };
 		A0871E7C000000000000000A /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/NativeOwnProfile.strings; sourceTree = "<group>"; };
 		A0871E7C000000000000000B /* be */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = be; path = be.lproj/NativeOwnProfile.strings; sourceTree = "<group>"; };
+		F07A11400000000000000003 /* CoffeePeekNativePhotoViewer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CoffeePeekNativePhotoViewer.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CoffeePeekNativePhotoViewer.swift; sourceTree = "<group>"; };
+		F07A11400000000000000004 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/NativePhotoViewer.strings; sourceTree = "<group>"; };
+		F07A11400000000000000005 /* be */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = be; path = be.lproj/NativePhotoViewer.strings; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -195,6 +200,8 @@
 				A20000000000000000000013 /* ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CoffeePeekLaunchView.swift */,
 				A20000000000000000000011 /* ../../iosXtool/CoffeePeek/Sources/CoffeePeek/SocialSignInProvider.swift */,
 				A6C011E60000000000000003 /* ShopMenuGalleryScreen.swift */,
+				F07A11400000000000000003 /* CoffeePeekNativePhotoViewer.swift */,
+				F07A11400000000000000006 /* NativePhotoViewer.strings */,
 				A20000000000000000000009 /* ../../iosXtool/CoffeePeek/Sources/CoffeePeek/MapLibreMapProvider.swift */,
 				A20000000000000000000002 /* Assets.xcassets */,
 				A20000000000000000000003 /* Info.plist */,
@@ -317,6 +324,7 @@
 				A10000000000000000000002 /* Assets.xcassets in Resources */,
 				A10000000000000000000009 /* GoogleService-Info.plist in Resources */,
 				A6C011E60000000000000002 /* ShopMenuGallery.strings in Resources */,
+				F07A11400000000000000002 /* NativePhotoViewer.strings in Resources */,
 				6B2031D9196667F65FD358E5 /* InfoPlist.strings in Resources */,
 				A10000000000000000000016 /* ThemeSettings.strings in Resources */,
 				A0871E7A0000000000000009 /* NativeAuth.strings in Resources */,
@@ -407,6 +415,7 @@
 				A0871E7B0000000000000003 /* CoffeePeekGuestAccountCard.swift in Sources */,
 				A0871E7B0000000000000001 /* CoffeePeekAppleSignInButton.swift in Sources */,
 				A6C011E60000000000000001 /* ShopMenuGalleryScreen.swift in Sources */,
+				F07A11400000000000000001 /* CoffeePeekNativePhotoViewer.swift in Sources */,
 				A10000000000000000000015 /* ThemeSettingsScreen.swift in Sources */,
 				B30000000000000000000001 /* ShopReportScreen.swift in Sources */,
 				C0FFEE500000000000000001 /* CoffeeDetailScreen.swift in Sources */,
@@ -536,6 +545,15 @@
 				A0871E7C000000000000000B /* be */,
 			);
 			name = NativeOwnProfile.strings;
+			sourceTree = "<group>";
+		};
+		F07A11400000000000000006 /* NativePhotoViewer.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				F07A11400000000000000004 /* ru */,
+				F07A11400000000000000005 /* be */,
+			);
+			name = NativePhotoViewer.strings;
 			sourceTree = "<group>";
 		};
 /* End PBXVariantGroup section */
