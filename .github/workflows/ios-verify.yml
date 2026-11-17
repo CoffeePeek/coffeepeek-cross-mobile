@@ -187,6 +187,7 @@ jobs:
             --tests 'com.coffeepeek.admin.AppLinkHandlingTest' \
             --tests 'com.coffeepeek.admin.ui.AppLinksTest' \
             --tests 'com.coffeepeek.admin.ui.ShopCheckInSignInHandoffTest' \
+            --tests 'com.coffeepeek.admin.di.homecheckin.IosCheckInCreatePickerTest' \
             --tests 'com.coffeepeek.admin.di.shop.ShopBrowsingHostViewModelTest' \
             --tests 'com.coffeepeek.admin.di.shop.ShopBrowsingSessionTest' \
             --tests 'com.coffeepeek.admin.di.shop.ShopAuthorBlockBridgeTest' \
@@ -194,6 +195,7 @@ jobs:
             --tests 'com.coffeepeek.admin.di.profile.IosProfileCompositionTest' \
             --tests 'com.coffeepeek.admin.di.settings.IosThemeSettingsTest' \
             --tests 'com.coffeepeek.admin.di.coffee.IosCoffeeDetailAnalyticsTest' \
+            --tests 'com.coffeepeek.admin.di.media.IosPhotoViewerTest' \
             --tests 'com.coffeepeek.admin.di.shopreport.IosShopReportTest' \
             --tests 'com.coffeepeek.admin.di.contentreport.IosContentReportTest' \
             --tests 'com.coffeepeek.admin.di.settings.IosSettingsScreensTest' \
@@ -240,6 +242,15 @@ jobs:
               tail -n 150 "$RUNNER_TEMP/ios-coffee-detail-tests.log"
               exit 1
             }
+      - name: Run notification inbox Kotlin Native tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./gradlew --max-workers=6 :feature:notifications:impl:iosSimulatorArm64Test \
+            > "$RUNNER_TEMP/ios-notification-inbox-tests.log" 2>&1 || {
+              tail -n 150 "$RUNNER_TEMP/ios-notification-inbox-tests.log"
+              exit 1
+            }
       - name: Run own profile and calendar Kotlin Native tests
         shell: bash
         run: |
@@ -281,6 +292,8 @@ jobs:
             feature/shop/impl/build/test-results/iosSimulatorArm64Test/
             ${{ runner.temp }}/ios-coffee-detail-tests.log
             feature/coffee/impl/build/test-results/iosSimulatorArm64Test/
+            ${{ runner.temp }}/ios-notification-inbox-tests.log
+            feature/notifications/impl/build/test-results/iosSimulatorArm64Test/
             ${{ runner.temp }}/ios-own-profile-tests.log
             feature/profile/impl/build/test-results/iosSimulatorArm64Test/
             feature/check-in-history/impl/build/test-results/iosSimulatorArm64Test/

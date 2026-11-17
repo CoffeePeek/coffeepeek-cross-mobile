@@ -27,7 +27,7 @@ class IosShopCheckInListPresentationTest {
         assertEquals(listOf(0, 0, 0), listOf(missing.coffeeRating, missing.serviceRating, missing.placeRating))
         assertFalse(missing.canOpenPhoto(0))
 
-        val present = row(checkIn().copy(authorAvatarUrl = "avatar", rating = ShopRating(5, 4, 3)))
+        val present = row(checkIn().copy(authorAvatarUrl = "avatar", rating = ShopRating(place = 3, service = 4, coffee = 5)))
         assertTrue(present.hasAvatar)
         assertEquals("4.0", present.ratingLabel)
         assertEquals(listOf(5, 4, 3), listOf(present.coffeeRating, present.serviceRating, present.placeRating))

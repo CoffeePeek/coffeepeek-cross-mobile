@@ -85,6 +85,7 @@ internal class FeatureCheckInCreateFlowRenderer(
         if (destination is GlobalCheckInDestination.Closed || !model.canAccess()) return
         val home = destination as? GlobalCheckInDestination.Home
         val dismissAllowed = home?.dismissAllowed?.collectAsState()?.value ?: true
+        val nativePicker = LocalCheckInCreatePicker.current
         AnalyticsOverlay {
             if (home != null) HomeCheckInFullScreenDialog({ if (dismissAllowed) model.cancel(home) }) {
                 CompositionLocalProvider(LocalViewModelStoreOwner provides owner) {
@@ -92,6 +93,8 @@ internal class FeatureCheckInCreateFlowRenderer(
                         { id, _ -> model.saved(home, id) }, { model.setDismissAllowed(home, it) },
                         Modifier.fillMaxSize(), bean = model.homeBean)
                 }
+            } else if (nativePicker != null) {
+                nativePicker(model.pickerActions())
             } else CoffeePeekSwipeDismissModalBottomSheet({ model.cancel(destination) },
                 stringResource(Res.string.check_in_create_close)) {
                 // UIKit sheets have their own Compose root; bind the flow store inside their body.

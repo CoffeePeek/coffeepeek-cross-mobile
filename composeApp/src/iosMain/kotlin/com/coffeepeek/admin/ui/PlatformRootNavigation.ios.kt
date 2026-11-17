@@ -15,6 +15,7 @@ import com.coffeepeek.admin.di.settings.iosThemeSettingsContent
 import com.coffeepeek.admin.di.shopreport.iosShopReportContent
 import com.coffeepeek.admin.di.contentreport.iosContentReportContent
 import com.coffeepeek.admin.di.collections.iosCollectionsLibraryContent
+import com.coffeepeek.admin.di.collections.iosSavedPublicCollectionContent
 import com.coffeepeek.admin.di.authorblocking.iosBlockedAuthorsContent
 import com.coffeepeek.admin.di.shop.iosShopMenuGalleryContent
 import com.coffeepeek.admin.di.shop.iosShopCheckInListContent
@@ -34,6 +35,7 @@ import com.coffeepeek.admin.theme.ThemeManager
 import androidx.compose.ui.viewinterop.UIKitInteropInteractionMode
 import androidx.compose.ui.viewinterop.UIKitInteropProperties
 import androidx.compose.ui.viewinterop.UIKitViewController
+import com.coffeepeek.admin.di.notifications.iosNotificationInboxAction
 import com.coffeepeek.admin.ui.screen.community.CommunityScreenRenderer
 import com.coffeepeek.admin.ui.Navigator.isHandledByRootNav
 import com.coffeepeek.admin.ui.screen.main.DiscoveryScreenRenderer
@@ -197,12 +199,12 @@ internal actual fun PlatformRootNavigation(
     }
 
     val createTitle = stringResource(Res.string.check_in_create_actions)
-    val labels = nativeRootTabLabels()
+    val (labels, notificationsAction) = nativeRootTabPresentation()
     UIKitViewController(factory = {
         IosRootTab.entries.forEachIndexed { index, tab ->
             val navigation = navigations[index]
             val root = tab.controller(labels[index], nativeContent) {
-                NativeRootTabContent(tab, isLoggedIn, tabBarVisibility, tabReselections) { refreshCommunity = it }
+                NativeRootTabContent(tab, tabBarVisibility, tabReselections, notificationsAction) { refreshCommunity = it }
             }
             navigation.setNavigationBarHidden(true, false)
             navigation.setViewControllers(
@@ -337,6 +339,7 @@ private fun nativeRouteContent(isLoggedIn: Boolean): (Navigator.Screen) -> (() -
     val shopReportContent = iosShopReportContent()
     val contentReport = iosContentReportContent()
     val collectionsLibraryContent = iosCollectionsLibraryContent()
+    val savedPublicCollectionContent = iosSavedPublicCollectionContent()
     val blockedAuthorsContent = iosBlockedAuthorsContent()
     return { screen ->
         when (screen) {
@@ -349,6 +352,7 @@ private fun nativeRouteContent(isLoggedIn: Boolean): (Navigator.Screen) -> (() -
             is Navigator.Screen.ReportCheckIn -> contentReport(screen.checkInId, true, false)
             is Navigator.Screen.ReportReview -> contentReport(screen.reviewId, false, screen.isPreview)
             Navigator.Screen.CollectionsLibrary -> collectionsLibraryContent
+            is Navigator.Screen.SavedPublicCollection -> { { savedPublicCollectionContent(screen.id) } }
             Navigator.Screen.BlockedAuthors -> blockedAuthorsContent
             else -> settings(screen)
         }
@@ -380,19 +384,28 @@ private fun NativeCreateAction(tabDelegate: TabDelegate, refreshCommunity: (() -
 }
 
 @Composable
-private fun NativeRootTabContent(tab: IosRootTab, isLoggedIn: Boolean, visibility: NativeTabBarVisibility,
-    reselections: MainTabReselections, onRefreshChange: ((() -> Unit)?) -> Unit) {
+private fun NativeRootTabContent(tab: IosRootTab, visibility: NativeTabBarVisibility,
+    reselections: MainTabReselections, notificationsAction: @Composable () -> Unit,
+    onRefreshChange: ((() -> Unit)?) -> Unit) {
     when (tab) {
         IosRootTab.Discovery -> koinInject<DiscoveryScreenRenderer>().Tab(
             onMapExpandedChange = visibility::onMapExpandedChange, reselections = reselections.search)
         IosRootTab.Community -> koinInject<CommunityScreenRenderer>().Content(
-            notificationsAction = { koinInject<com.coffeepeek.admin.ui.screen.notifications.NotificationsRenderer>().Bell() },
+            notificationsAction = notificationsAction,
             onRefreshChange = onRefreshChange)
         IosRootTab.Profile -> error("The iOS profile tab requires a native controller")
         IosRootTab.Settings -> koinInject<SettingsScreenRenderer>().Tab()
         IosRootTab.Business -> koinInject<com.coffeepeek.feature.ownership.api.BusinessOwnershipEntry>().Tab()
     }
 }
+
+private data class NativeRootTabPresentation(
+    val labels: List<String>,
+    val notificationsAction: @Composable () -> Unit,
+)
+
+@Composable
+private fun nativeRootTabPresentation() = NativeRootTabPresentation(nativeRootTabLabels(), iosNotificationInboxAction())
 
 @Composable
 private fun nativeRootTabLabels(): List<String> = listOf(
