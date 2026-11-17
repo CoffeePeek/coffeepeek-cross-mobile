@@ -2,8 +2,10 @@
 
 package com.coffeepeek.admin.di.media
 
+import com.coffeepeek.admin.session.ReadOnlySessions
 import com.coffeepeek.core.designsystem.component.CoffeePeekPhotoViewerImages
 import com.coffeepeek.core.media.ImageUrlFetcher
+import com.coffeepeek.core.media.installImageAccess
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
@@ -28,10 +30,11 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import kotlin.time.Duration.Companion.seconds
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class IosPhotoViewerTest {
-    @Test fun protectedCataloguePhotosClearWhenAccessEnds() = runTest {
+    @Test fun protectedCataloguePhotosClearWhenAccessEnds() = runTest(timeout = 10.seconds) {
         val requests = mutableListOf<String>()
         val publicClient = HttpClient(MockEngine { error("Protected photos require their own client") })
         val protectedClient = HttpClient(MockEngine { request ->
@@ -39,7 +42,11 @@ class IosPhotoViewerTest {
             respond(Base64.decode(PIXEL_PNG), headers = headersOf(HttpHeaders.ContentType, "image/png"))
         })
         val media = IosCatalogueMedia(ImageUrlFetcher(publicClient, protectedClient), "https://fixture.invalid")
+        val sessions = object : ReadOnlySessions() {
+            override fun observeSession() = flowOf(null)
+        }
         try {
+            installImageAccess(sessions, publicClient)
             PHOTO_PATHS.forEach { path -> media.assertAuthorizedFrameAndClear(path) }
             assertEquals(PHOTO_PATHS, requests)
         } finally {
