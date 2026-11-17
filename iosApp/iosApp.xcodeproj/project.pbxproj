@@ -70,6 +70,10 @@
 		A0871E7C0000000000000003 /* OwnProfileActivityView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0871E7C0000000000000007 /* OwnProfileActivityView.swift */; };
 		A0871E7C0000000000000004 /* OwnProfileCheckIns.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0871E7C0000000000000008 /* OwnProfileCheckIns.swift */; };
 		A0871E7C0000000000000009 /* NativeOwnProfile.strings in Resources */ = {isa = PBXBuildFile; fileRef = A0871E7C000000000000000C /* NativeOwnProfile.strings */; };
+		B251C0510000000000000001 /* ContributionsNativeHost.swift in Sources */ = {isa = PBXBuildFile; fileRef = B251C0510000000000000004 /* ContributionsNativeHost.swift */; };
+		B251C0510000000000000002 /* ContributionsListNativeScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = B251C0510000000000000005 /* ContributionsListNativeScreen.swift */; };
+		B251C0510000000000000003 /* ChangeRequestNativeScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = B251C0510000000000000006 /* ChangeRequestNativeScreen.swift */; };
+		B251C051000000000000000A /* NativeContributions.strings in Resources */ = {isa = PBXBuildFile; fileRef = B251C0510000000000000009 /* NativeContributions.strings */; };
 		817EAB940000000000000009 /* NativePublicProfile.strings in Resources */ = {isa = PBXBuildFile; fileRef = 817EAB94000000000000000C /* NativePublicProfile.strings */; };
 		F07A11400000000000000001 /* CoffeePeekNativePhotoViewer.swift in Sources */ = {isa = PBXBuildFile; fileRef = F07A11400000000000000003 /* CoffeePeekNativePhotoViewer.swift */; };
 		F07A11400000000000000002 /* NativePhotoViewer.strings in Resources */ = {isa = PBXBuildFile; fileRef = F07A11400000000000000006 /* NativePhotoViewer.strings */; };
@@ -158,6 +162,11 @@
 		A0871E7C000000000000000A /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/NativeOwnProfile.strings; sourceTree = "<group>"; };
 		817EAB94000000000000000A /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/NativePublicProfile.strings; sourceTree = "<group>"; };
 		A0871E7C000000000000000B /* be */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = be; path = be.lproj/NativeOwnProfile.strings; sourceTree = "<group>"; };
+		B251C0510000000000000004 /* ContributionsNativeHost.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ContributionsNativeHost.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/ContributionsNativeHost.swift; sourceTree = "<group>"; };
+		B251C0510000000000000005 /* ContributionsListNativeScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ContributionsListNativeScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/ContributionsListNativeScreen.swift; sourceTree = "<group>"; };
+		B251C0510000000000000006 /* ChangeRequestNativeScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ChangeRequestNativeScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/ChangeRequestNativeScreen.swift; sourceTree = "<group>"; };
+		B251C0510000000000000007 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/NativeContributions.strings; sourceTree = "<group>"; };
+		B251C0510000000000000008 /* be */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = be; path = be.lproj/NativeContributions.strings; sourceTree = "<group>"; };
 		817EAB94000000000000000B /* be */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = be; path = be.lproj/NativePublicProfile.strings; sourceTree = "<group>"; };
 		F07A11400000000000000003 /* CoffeePeekNativePhotoViewer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CoffeePeekNativePhotoViewer.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CoffeePeekNativePhotoViewer.swift; sourceTree = "<group>"; };
 		F07A11400000000000000004 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/NativePhotoViewer.strings; sourceTree = "<group>"; };
@@ -211,6 +220,10 @@
 				A0871E7B0000000000000002 /* CoffeePeekAppleSignInButton.swift */,
 				A20000000000000000000016 /* ThemeSettingsScreen.swift */,
 				B30000000000000000000003 /* ShopReportScreen.swift */,
+				B251C0510000000000000004 /* ContributionsNativeHost.swift */,
+				B251C0510000000000000005 /* ContributionsListNativeScreen.swift */,
+				B251C0510000000000000006 /* ChangeRequestNativeScreen.swift */,
+				B251C0510000000000000009 /* NativeContributions.strings */,
 				CD184B270000000000000004 /* NotificationInboxScreen.swift */,
 				CD184B270000000000000005 /* NotificationInboxHost.swift */,
 				71C04E5D0000000000000003 /* ContentReportScreen.swift */,
@@ -374,6 +387,7 @@
 				817EAB940000000000000009 /* NativePublicProfile.strings in Resources */,
 				B30000000000000000000002 /* ShopReport.strings in Resources */,
 				C0FFEE500000000000000003 /* CoffeeDetail.strings in Resources */,
+				B251C051000000000000000A /* NativeContributions.strings in Resources */,
 				CD184B270000000000000003 /* NativeNotificationInbox.strings in Resources */,
 				71C04E5D0000000000000002 /* ContentReport.strings in Resources */,
 				5E1FA2200000000000000002 /* NativeShelfArchive.strings in Resources */,
@@ -468,6 +482,9 @@
 				B30000000000000000000001 /* ShopReportScreen.swift in Sources */,
 				C0FFEE500000000000000001 /* CoffeeDetailScreen.swift in Sources */,
 				C0FFEE500000000000000002 /* CoffeeDetailComponents.swift in Sources */,
+				B251C0510000000000000001 /* ContributionsNativeHost.swift in Sources */,
+				B251C0510000000000000002 /* ContributionsListNativeScreen.swift in Sources */,
+				B251C0510000000000000003 /* ChangeRequestNativeScreen.swift in Sources */,
 				CD184B270000000000000001 /* NotificationInboxScreen.swift in Sources */,
 				CD184B270000000000000002 /* NotificationInboxHost.swift in Sources */,
 				71C04E5D0000000000000001 /* ContentReportScreen.swift in Sources */,
@@ -634,6 +651,15 @@
 				A0871E7C000000000000000B /* be */,
 			);
 			name = NativeOwnProfile.strings;
+			sourceTree = "<group>";
+		};
+		B251C0510000000000000009 /* NativeContributions.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				B251C0510000000000000007 /* ru */,
+				B251C0510000000000000008 /* be */,
+			);
+			name = NativeContributions.strings;
 			sourceTree = "<group>";
 		};
 		817EAB94000000000000000C /* NativePublicProfile.strings */ = {

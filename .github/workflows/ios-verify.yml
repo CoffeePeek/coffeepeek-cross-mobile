@@ -281,6 +281,7 @@ jobs:
           ./gradlew --max-workers=6 :feature:business-ownership:domain:iosSimulatorArm64Test \
             :feature:business-ownership:data:iosSimulatorArm64Test \
             :feature:business-ownership:impl:iosSimulatorArm64Test \
+            :feature:contributions:impl:iosSimulatorArm64Test \
             :feature:shop-report:impl:iosSimulatorArm64Test \
             :feature:collections:impl:iosSimulatorArm64Test \
             > "$RUNNER_TEMP/ios-ownership-tests.log" 2>&1 || {
@@ -295,6 +296,7 @@ jobs:
             ${{ runner.temp }}/ios-native-tests.log
             ${{ runner.temp }}/ios-ownership-tests.log
             feature/business-ownership/**/build/test-results/iosSimulatorArm64Test/
+            feature/contributions/impl/build/test-results/iosSimulatorArm64Test/
             ${{ runner.temp }}/ios-shelf-archive-tests.log
             feature/shelf/impl/build/test-results/iosSimulatorArm64Test/
             composeApp/build/test-results/iosSimulatorArm64Test/

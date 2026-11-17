@@ -15,6 +15,7 @@ import com.coffeepeek.admin.di.profile.iosPublicProfileContent
 import com.coffeepeek.admin.di.settings.iosThemeSettingsContent
 import com.coffeepeek.admin.di.shopreport.iosShopReportContent
 import com.coffeepeek.admin.di.contentreport.iosContentReportContent
+import com.coffeepeek.admin.di.contributions.iosContributionsContent
 import com.coffeepeek.admin.di.collections.iosCollectionsLibraryContent
 import com.coffeepeek.admin.di.shelf.iosShelfArchiveContent
 import com.coffeepeek.admin.di.collections.iosSavedPublicCollectionContent
@@ -339,6 +340,7 @@ private fun nativeRouteContent(isLoggedIn: Boolean): (Navigator.Screen) -> (() -
     val shopMenuGallery = iosShopMenuGalleryContent()
     val coffeeDetail = iosCoffeeDetailContent()
     val shopReportContent = iosShopReportContent()
+    val contributions = iosContributionsContent()
     val contentReport = iosContentReportContent()
     val collectionsLibraryContent = iosCollectionsLibraryContent()
     val savedPublicCollectionContent = iosSavedPublicCollectionContent()
@@ -353,6 +355,7 @@ private fun nativeRouteContent(isLoggedIn: Boolean): (Navigator.Screen) -> (() -
             is Navigator.Screen.ShopMenuGallery -> { { shopMenuGallery(screen.shopId) } }
             is Navigator.Screen.ReportShop -> shopReportContent(screen.shopId, screen.shopTitle)
             is Navigator.Screen.CoffeeDetail -> { { coffeeDetail(screen.slug) } }
+            is Navigator.Screen.MyContributions, is Navigator.Screen.ShopChangeRequestDetail -> contributions(screen)
             is Navigator.Screen.ReportCheckIn -> contentReport(screen.checkInId, true, false)
             is Navigator.Screen.ReportReview -> contentReport(screen.reviewId, false, screen.isPreview)
             Navigator.Screen.CollectionsLibrary -> collectionsLibraryContent

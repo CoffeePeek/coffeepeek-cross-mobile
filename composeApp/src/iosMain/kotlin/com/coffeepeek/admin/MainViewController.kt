@@ -17,6 +17,8 @@ import com.coffeepeek.admin.di.profile.IosGuestProfile
 import com.coffeepeek.admin.di.profile.LocalIosGuestProfileController
 import com.coffeepeek.admin.di.profile.IosOwnProfile
 import com.coffeepeek.admin.di.profile.LocalIosOwnProfileController
+import com.coffeepeek.admin.di.contributions.IosContributionsRoute
+import com.coffeepeek.admin.di.contributions.LocalIosContributionsController
 import com.coffeepeek.admin.di.profile.IosPublicProfile
 import com.coffeepeek.admin.di.profile.LocalIosPublicProfileController
 import com.coffeepeek.admin.di.contentreport.IosContentReport
@@ -62,6 +64,7 @@ fun MainViewController(
     makeShelfArchiveController: (IosShelfArchive, String) -> UIViewController,
     makeThemeSettingsController: (IosThemeSettings, String, () -> Unit) -> UIViewController,
     makeShopReportController: (IosShopReport, String, String, () -> Unit) -> UIViewController,
+    makeContributionsController: (IosContributionsRoute, String) -> UIViewController,
     makeContentReportController: (IosContentReport, String) -> UIViewController,
     makeCollectionsLibraryController: (IosCollectionsLibrary, String) -> UIViewController,
     makeSavedPublicCollectionController: (IosSavedPublicCollection, String) -> UIViewController,
@@ -79,6 +82,7 @@ fun MainViewController(
     makeShelfArchiveController,
     makeThemeSettingsController,
     makeShopReportController,
+    makeContributionsController,
     makeContentReportController,
     makeCollectionsLibraryController,
     makeSavedPublicCollectionController,
@@ -106,6 +110,7 @@ private class IosControllerFactories(
     private val makeShelfArchiveController: (IosShelfArchive, String) -> UIViewController,
     private val makeThemeSettingsController: (IosThemeSettings, String, () -> Unit) -> UIViewController,
     private val makeShopReportController: (IosShopReport, String, String, () -> Unit) -> UIViewController,
+    private val makeContributionsController: (IosContributionsRoute, String) -> UIViewController,
     private val makeContentReportController: (IosContentReport, String) -> UIViewController,
     private val makeCollectionsLibraryController: (IosCollectionsLibrary, String) -> UIViewController,
     private val makeSavedPublicCollectionController: (IosSavedPublicCollection, String) -> UIViewController,
@@ -126,6 +131,7 @@ private class IosControllerFactories(
             LocalIosShelfArchiveController provides makeShelfArchiveController,
             LocalIosThemeSettingsController provides makeThemeSettingsController,
             LocalIosShopReportController provides makeShopReportController,
+            LocalIosContributionsController provides makeContributionsController,
             LocalIosContentReportController provides makeContentReportController,
             LocalIosCollectionsLibraryController provides makeCollectionsLibraryController,
             LocalIosSavedPublicCollectionController provides makeSavedPublicCollectionController,
