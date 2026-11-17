@@ -238,13 +238,14 @@ private struct OwnProfileActivityCell: View {
         .accessibilityAddTraits(day.selected ? .isSelected : [])
     }
 
-    private var hasActivity: Bool { day.shopCount > 0 || day.homeCount > 0 }
+    private var visitCount: Int { Int(day.shopCount) + Int(day.homeCount) }
+    private var hasActivity: Bool { visitCount > 0 }
 
     private var monthDate: some View {
         OwnProfileDaySlot {
             ZStack {
                 monthMarker.padding(hasActivity ? 8 : 4)
-                if day.shopCount > 0 {
+                if visitCount > 0 {
                     visitMarkers.frame(maxHeight: .infinity, alignment: .bottom).padding(.bottom, 4)
                 }
             }
@@ -267,19 +268,19 @@ private struct OwnProfileActivityCell: View {
             OwnProfileImage(url: photo, profile: profile, symbol: day.homeCount > 0 ? "house" : "cup.and.saucer")
                 .aspectRatio(1, contentMode: .fit)
                 .clipShape(RoundedRectangle(cornerRadius: 6))
-                .padding(.bottom, day.shopCount > 0 ? 6 : 0)
+                .padding(.bottom, visitCount > 0 ? 6 : 0)
         } else {
             Text(date.suffix(2).drop(while: { $0 == "0" }))
                 .font(CoffeePeekNativeStyle.font(15, weight: day.today || day.selected ? "Semibold" : "Regular"))
                 .foregroundStyle(day.selected ? CoffeePeekNativeStyle.color(0x1A1412) : CoffeePeekNativeStyle.foreground)
-                .padding(.bottom, day.shopCount > 0 ? 6 : 0)
+                .padding(.bottom, visitCount > 0 ? 6 : 0)
                 .lineLimit(1).minimumScaleFactor(0.7)
         }
     }
 
     private var visitMarkers: some View {
         HStack(spacing: 2) {
-            ForEach(0..<min(Int(day.shopCount), 3), id: \.self) { _ in
+            ForEach(0..<min(visitCount, 3), id: \.self) { _ in
                 Circle().fill(day.selected && day.photo == nil ? CoffeePeekNativeStyle.color(0x1A1412) : CoffeePeekNativeStyle.accent)
                     .frame(width: 4, height: 4)
             }

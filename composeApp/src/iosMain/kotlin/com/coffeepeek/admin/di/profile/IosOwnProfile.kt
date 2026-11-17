@@ -137,14 +137,17 @@ class IosOwnProfile internal constructor(
         return media.viewer(CoffeePeekPhotoViewerImages(row.previews, row.originals), index, ::isCurrent)
     }
 
+    @OptIn(androidx.compose.ui.ExperimentalComposeUiApi::class)
     fun makeCollections(): UIViewController = ComposeUIViewController(configure = { opaque = false }) {
         AppContent { ProfileOwnerCollection() }
     }
 
+    @OptIn(androidx.compose.ui.ExperimentalComposeUiApi::class)
     fun makeCollectionPreferences(): UIViewController = ComposeUIViewController(configure = { opaque = false }) {
         AppContent { Column(Modifier.verticalScroll(rememberScrollState())) { ProfileDisplayPreferences() } }
     }
 
+    @OptIn(androidx.compose.ui.ExperimentalComposeUiApi::class)
     fun makeShelf(): UIViewController = ComposeUIViewController(configure = { opaque = false }) {
         AppContent { ProvideFloatingNavClearance(72.dp) { ProfileOwnShelf(Modifier) {} } }
     }
