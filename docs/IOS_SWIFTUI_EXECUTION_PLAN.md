@@ -516,3 +516,18 @@ UIKit category-property imports; the corrected compile passes. Native detail bac
 uses the feature callback (including revoked-account close); ordinary community
 details retain the native swipe gesture. Full framework/link and device review remain
 pending. Both startup entry points and the Xcode source list register the detail host.
+
+2026-11-18 native delivery: full framework passed in 13m35s, Runner in 1m28s.
+Installed CoffeePeek Xcross 1.2.1 (3096), source f2e04e860, on the agreed iPhone15,4 /
+iOS27.0.1. The install preparation reused the framework in 2.4s; signing took 6.0s,
+USB installation 15.4s. InstallationProxy confirms 3096 and unchanged main app 3108;
+CoreDevice confirms one running Xcross process. No data clearing or downgrade.
+Signed IPA and source/build identity are retained locally under ignored build/xcross-ios.
+Code is published to codex/ios-native. Scrolled Settings and Home/shop detail visual
+acceptance on the device remain pending, as does Android manual UI review.
+
+Read-only device check: user opened Settings and scrolled to Other settings.
+USB capture in dark theme shows content continuing beneath the status bar and no
+fixed root title/top safe-area band. No settings, consents or account data changed.
+Capture stays local in ignored build/. Root headings at scroll origin and both detail
+variants still need visual review; this one capture does not certify those states.
