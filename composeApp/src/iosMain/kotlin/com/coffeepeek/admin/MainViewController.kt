@@ -51,10 +51,17 @@ import platform.UIKit.UIVisualEffectView
 
 private var koinInitialized = false
 
+fun configureNativeCommunityCards(factory: (com.coffeepeek.admin.di.community.IosCommunityCard) -> UIViewController) =
+    com.coffeepeek.admin.di.community.configureNativeCommunityCards(factory)
+
 fun configureNativeCheckInEditors(
     home: (com.coffeepeek.admin.di.homecheckin.IosHomeCheckInEditor) -> UIViewController,
     shop: (com.coffeepeek.admin.di.shop.IosShopCheckInEditor) -> UIViewController,
 ) = com.coffeepeek.admin.di.homecheckin.configureNativeCheckInEditors(home, shop)
+
+fun configureNativeEditProfile(factory: (com.coffeepeek.admin.di.profile.IosEditProfile) -> UIViewController) {
+    com.coffeepeek.admin.di.profile.configureNativeEditProfile(factory)
+}
 
 fun configureNativeGlass(makeView: () -> UIVisualEffectView) {
     configureCoffeePeekNativeGlass(makeView)

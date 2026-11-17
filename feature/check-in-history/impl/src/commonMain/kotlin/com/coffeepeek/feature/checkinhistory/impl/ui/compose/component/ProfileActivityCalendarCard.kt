@@ -33,7 +33,6 @@ import com.coffeepeek.feature.checkinhistory.domain.model.HistoryMonth
 import com.coffeepeek.feature.checkinhistory.impl.resources.*
 import com.coffeepeek.feature.checkinhistory.impl.ui.compose.model.*
 import com.coffeepeek.feature.checkinhistory.impl.ui.data.historyCalendarPhotos
-import com.coffeepeek.feature.checkinhistory.impl.ui.data.historyMonthTitle
 import com.coffeepeek.feature.checkinhistory.impl.ui.data.profileHistoryDates
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
@@ -69,7 +68,8 @@ private fun ProfileCalendarHeader(state: CombinedHistoryState, expanded: Boolean
     Row(Modifier.fillMaxWidth().padding(bottom = 8.dp), verticalAlignment = Alignment.CenterVertically) {
         Row(Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
             if (expanded) ProfileMonthArrow(false, state.month != HistoryMonth(1, 1)) { onAction(CombinedHistoryAction.ChangeMonth(-1)) }
-            Text(historyMonthTitle(state.month), Modifier.weight(1f, fill = false).padding(start = if (expanded) 0.dp else 8.dp),
+            Text(stringArrayResource(Res.array.history_months)[state.month.month - 1],
+                Modifier.weight(1f, fill = false).padding(start = if (expanded) 0.dp else 8.dp),
                 style = MaterialTheme.typography.titleMedium)
             if (expanded) ProfileMonthArrow(true, state.canGoNextMonth) { onAction(CombinedHistoryAction.ChangeMonth(1)) }
         }
@@ -135,8 +135,7 @@ private fun profileCalendarTransition(from: ProfileCalendarPage, to: ProfileCale
 private fun ProfileCalendarWeekRows(state: CombinedHistoryState, page: ProfileCalendarPage,
     height: androidx.compose.ui.unit.Dp, onAction: (CombinedHistoryAction) -> Unit, image: HistoryImageContent) {
     val dates = profileHistoryDates(page.today, page.month, page.selected, page.expanded)
-    val slots = if (page.expanded) dates + List((42 - dates.size).coerceAtLeast(0)) { null } else dates
-    slots.chunked(7).forEach { week ->
+    dates.chunked(7).forEach { week ->
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
             week.forEach { date ->
                 val slot = Modifier.weight(1f).height(height)
@@ -158,12 +157,29 @@ private fun ProfileCalendarDay(state: CombinedHistoryState, date: String,
 }
 
 @Composable
-private fun ProfileCalendarCardPreview(dark: Boolean, expanded: Boolean) = CoffeePeekTheme(darkTheme = dark) {
-    ProfileHistoryCalendarCard(CombinedHistoryState("2026-11-17", HistoryMonth(2026, 11), true, 0),
-        expanded, {}, {}, { _, _, _ -> })
+private fun ProfileCalendarCardPreview(dark: Boolean, expanded: Boolean,
+    initialMonth: HistoryMonth = HistoryMonth(2026, 11)) = CoffeePeekTheme(darkTheme = dark) {
+    var month by remember { mutableStateOf(initialMonth) }
+    var open by remember { mutableStateOf(expanded) }
+    var selected by remember { mutableStateOf<String?>(null) }
+    ProfileHistoryCalendarCard(CombinedHistoryState("2026-11-17", month, true, 0, selectedDate = selected),
+        open, { open = !open }, { action ->
+            when (action) {
+                is CombinedHistoryAction.ChangeMonth -> {
+                    month = month.plusMonths(action.offset)
+                    selected = null
+                }
+                is CombinedHistoryAction.SelectDate -> selected = action.date
+                else -> Unit
+            }
+        }, { _, _, _ -> })
 }
 
 @Preview @Composable private fun ProfileCalendarWeekLightPreview() = ProfileCalendarCardPreview(false, false)
 @Preview @Composable private fun ProfileCalendarWeekDarkPreview() = ProfileCalendarCardPreview(true, false)
 @Preview @Composable private fun ProfileCalendarMonthLightPreview() = ProfileCalendarCardPreview(false, true)
 @Preview @Composable private fun ProfileCalendarMonthDarkPreview() = ProfileCalendarCardPreview(true, true)
+@Preview @Composable private fun ProfileCalendarFourWeeksLightPreview() = ProfileCalendarCardPreview(false, true, HistoryMonth(2021, 2))
+@Preview @Composable private fun ProfileCalendarFourWeeksDarkPreview() = ProfileCalendarCardPreview(true, true, HistoryMonth(2021, 2))
+@Preview @Composable private fun ProfileCalendarFiveWeeksLightPreview() = ProfileCalendarCardPreview(false, true, HistoryMonth(2026, 10))
+@Preview @Composable private fun ProfileCalendarFiveWeeksDarkPreview() = ProfileCalendarCardPreview(true, true, HistoryMonth(2026, 10))

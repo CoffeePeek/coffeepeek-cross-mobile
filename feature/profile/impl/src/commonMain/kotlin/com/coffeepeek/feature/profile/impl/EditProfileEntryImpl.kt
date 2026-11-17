@@ -1,6 +1,7 @@
 package com.coffeepeek.feature.profile.impl
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.coffeepeek.feature.profile.api.AccountDeletionEntry
@@ -18,12 +19,18 @@ import com.coffeepeek.feature.profile.impl.ui.compose.EditProfileScreen
  * The edit form. The ViewModel (form draft, picked avatar, save progress) lives in the host's ViewModel store, so it survives rotation and
  * theme changes; the caller owns navigation. The app supplies the own-account port, the writes and the picker/image slots.
  */
-fun createEditProfileEntry(accounts: ProfileAccountPort, edit: ProfileEditPort, slots: EditProfileSlots): EditProfileEntry =
+fun createEditProfileEntry(
+    accounts: ProfileAccountPort, edit: ProfileEditPort, slots: EditProfileSlots,
+    nativeContent: (@Composable (NativeEditProfileSession, () -> Unit, () -> Unit, Modifier) -> Boolean)? = null,
+): EditProfileEntry =
     object : EditProfileEntry {
         @Composable
         override fun Content(onBack: () -> Unit, onOpenAccountDeletion: () -> Unit, modifier: Modifier) {
             val model = viewModel(key = "edit-profile") { EditProfileViewModel(accounts, edit) }
-            EditProfileScreen(model, slots, onBack, onOpenAccountDeletion, modifier)
+            val session = remember(model) { NativeEditProfileSession(model, accounts) }
+            if (nativeContent?.invoke(session, onBack, onOpenAccountDeletion, modifier) != true) {
+                EditProfileScreen(model, slots, onBack, onOpenAccountDeletion, modifier)
+            }
         }
     }
 

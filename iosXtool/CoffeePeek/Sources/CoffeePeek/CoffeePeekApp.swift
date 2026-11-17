@@ -42,6 +42,8 @@ private struct ComposeRootView: UIViewControllerRepresentable {
     let onReady: () -> Void
 
     func makeUIViewController(context: Context) -> UIViewController {
+        MainViewControllerKt.configureNativeEditProfile(factory: makeEditProfileController)
+        MainViewControllerKt.configureNativeCommunityCards(factory: makeCommunityCardController)
         MainViewControllerKt.configureNativeCheckInEditors(home: makeHomeCheckInEditorController, shop: makeShopCheckInEditorController)
         return MainViewControllerKt.MainViewController(
             onReady: { DispatchQueue.main.async { onReady() } },

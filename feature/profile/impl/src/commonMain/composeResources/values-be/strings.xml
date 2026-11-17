@@ -183,4 +183,6 @@
     </plurals>
     <string name="profile_edit_display_preferences">Паказваць у профілі</string>
     <string name="profile_edit_display_shelf">Кававая паліца</string>
+    <string name="profile_edit_camera">Зрабіць фота</string>
+    <string name="profile_edit_gallery">Выбраць з галерэі</string>
 </resources>

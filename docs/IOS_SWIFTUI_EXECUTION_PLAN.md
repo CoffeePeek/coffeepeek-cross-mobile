@@ -428,3 +428,50 @@ Reduce Motion remains respected. Native non-UI tests were not executed on Window
 Manual acceptance of animations/filtering/picker height/collections themes and
 Android manual UI review remain pending; successful install is not UI acceptance.
 Local signed IPA and sanitized build identity remain under ignored build/xcross-ios.
+
+### 2026-11-17 — Profile visual corrections after 3092
+
+Owner feedback: use actual month row count and a month-only title; synchronize calendar
+height with profile tabs; retain photos in the collapsed week. Remove global profile
+insets, reuse the feed check-in renderer (including yellow likes), and replace the edit
+profile form with native inputs and a save button without a separate background plate.
+Android shares the calendar and timeline corrections; native editor integration is iOS.
+
+Verification plan: retain selected-date filtering, pagination, account-scoped image
+authorization, feed actions/exposure ownership and existing profile-save validation.
+Run history/profile/community/composition JVM suites, Android directDebug assembly
+and packaged DEX checks, then the scanner-disabled native Debug build. Device review
+is read-only: calendar/photo transitions, feed/profile card parity, native empty/edit
+form layout and cancellation; do not save account changes or send reactions.
+
+Before changes, USB captures of 3092 showed the selected 17 November photo both in the
+expanded month and collapsed week. The reported missing photo did not reproduce in
+that exact scenario; this is not proof for every date or lifecycle transition.
+Captures stay local under ignored build/. Native cells now receive explicit geometry
+as part of the uniform-size correction; protected media policy remains unchanged.
+
+Implementation: community cards now compose the same design-system timeline primitives
+as Android history/profile. The optional iOS presentation seam preserves localized labels,
+allowed callbacks and feed exposure tracking, and mounts the same SwiftUI check-in card
+used by native own/public profiles. Text has local insets; the multi-photo strip scrolls
+through the full viewport. Card height follows its measured content, and mounted UIKit
+containment reuses the editor host with cooperative scrolling. Account replacement clears
+the card's presentation and invalidates its actions and image observations.
+
+Edit Profile uses native fields over the existing feature ViewModel, confirmation and
+partial-save handling. A revoked native snapshot clears the draft; account generation is
+checked before writes. Existing avatar picker/compression and resource translations remain.
+
+Android verification: directDebug assembly and packaged DEX class checks pass; 911 JVM
+tests passed (history 91, profile 77, community 58, composition 685), zero failures/errors/
+skips. Initial compile failed on passing a composable function reference to let; replaced
+it with an inline lambda, then the full run passed in 1m01s. Body-limit verification still
+reports only the same two inherited violations; the baseline was not expanded. Native
+build and manual visual acceptance are pending.
+
+Native preflight: all 65 Swift files typecheck with the newly exported Kotlin header.
+The first native compile required matching nullable expect/actual return types; the
+first Swift check required an explicit local capture of the profile editor. Both were
+corrected. The shared-card renderer also passed an isolated Swift check. Both application
+entry points register the native editor/card factories. Full framework/link/install
+and device acceptance remain pending.

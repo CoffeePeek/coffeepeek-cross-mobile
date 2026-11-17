@@ -39,7 +39,7 @@ struct PublicProfileRows: View {
             imageLoader: model.loadImage,
             openMenu: canModerate ? { model.profile?.blockOrUnblock() } : nil,
             report: canModerate ? { model.profile?.reportCheckIn(id: row.id) } : nil,
-            ratingDescription: ratingDescription(row))
+            ratingDescription: ratingDescription(row)).padding(.horizontal, -16)
     }
 
     private func ratingDescription(_ row: IosOwnProfileCheckIn) -> String? {

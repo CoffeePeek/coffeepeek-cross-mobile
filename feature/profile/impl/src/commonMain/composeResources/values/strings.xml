@@ -180,4 +180,6 @@
     </plurals>
     <string name="profile_edit_display_preferences">Отображать в профиле</string>
     <string name="profile_edit_display_shelf">Кофейная полка</string>
+    <string name="profile_edit_camera">Сделать фото</string>
+    <string name="profile_edit_gallery">Выбрать из галереи</string>
 </resources>

@@ -20,6 +20,11 @@ private final class OwnProfileHostingController: UIHostingController<OwnProfileH
 
     @MainActor required dynamic init?(coder: NSCoder) { return nil }
 
+    override func viewSafeAreaInsetsDidChange() {
+        super.viewSafeAreaInsetsDidChange()
+        model.headerTopInset = view.safeAreaInsets.top
+    }
+
     // SwiftUI may rebuild its state graph while UIKit retains the root tab.
     // The account lease ends only when that root controller is released.
     deinit { profile.close() }
@@ -48,17 +53,17 @@ private struct OwnProfileScreen: View {
             ScrollViewReader { proxy in
                 ScrollView {
                     VStack(alignment: .leading, spacing: 12) {
-                        menu.id("own-profile-top")
-                        profileContent(viewport: geometry.size.height)
+                        menu.padding(.horizontal, 16).padding(.top, model.headerTopInset).id("own-profile-top")
+                        profileContent(viewport: geometry.size.height, width: geometry.size.width)
                     }
-                    .padding(.horizontal, 16)
-                    .padding(.top, 8)
                     .padding(.bottom, 100)
+                    .ownProfileCalendarAnimation(model.activity)
                 }
                 .accessibilityIdentifier("own-profile")
                 .onChange(of: model.scrollRevision) { _, _ in proxy.scrollTo("own-profile-top", anchor: .top) }
             }
         }
+        .ignoresSafeArea(.container, edges: [.top, .leading, .trailing])
         .font(CoffeePeekNativeStyle.font(15))
         .foregroundStyle(CoffeePeekNativeStyle.foreground)
         .tint(CoffeePeekNativeStyle.accent)
@@ -123,21 +128,25 @@ private struct OwnProfileScreen: View {
     }
 
     @ViewBuilder
-    private func profileContent(viewport: CGFloat) -> some View {
+    private func profileContent(viewport: CGFloat, width: CGFloat) -> some View {
         if let identity = model.state.identity {
             OwnProfileHeader(identity: identity, strings: model.strings, profile: model.profile,
                              select: model.selectStat, signedInLayout: true)
+                .padding(.horizontal, 16)
             if let activity = model.activity {
-                OwnProfileActivityView(state: activity, model: model, strings: model.strings)
+                OwnProfileActivityView(state: activity, model: model, strings: model.strings, availableWidth: width - 32)
+                    .padding(.horizontal, 16)
             }
             if model.state.refreshFailed {
                 OwnProfileRetry(message: model.strings["profile_update_failed"], strings: model.strings,
                                 retry: model.profile.refresh)
+                    .padding(.horizontal, 16)
             }
             OwnProfileTabs(selection: model.selected, strings: model.strings, select: model.select, equalWidth: true)
                 .background(alignment: .bottom) {
                     Rectangle().fill(CoffeePeekNativeStyle.border.opacity(0.45)).frame(height: 1)
                 }
+                .padding(.horizontal, 16)
             profileTab(viewport: viewport)
         } else if model.state.loading || model.state.refreshing {
             ProgressView().frame(maxWidth: .infinity, minHeight: 130)
@@ -145,6 +154,7 @@ private struct OwnProfileScreen: View {
         } else if model.state.active {
             OwnProfileRetry(message: model.strings["profile_load_failed"], strings: model.strings,
                             retry: model.profile.refresh)
+                .padding(.horizontal, 16)
         }
     }
 
@@ -169,10 +179,10 @@ private struct OwnProfileScreen: View {
                     }
                     .accessibilityLabel(model.strings["profile_collections_settings"])
                 }
+                .padding(.horizontal, 16)
                 if let collections = model.collections {
                     OwnProfileEmbedded(controller: collections)
                         .frame(height: collectionsHeight)
-                        .padding(.horizontal, -16)
                 }
             }
             .tint(CoffeePeekNativeStyle.foreground)
@@ -180,7 +190,6 @@ private struct OwnProfileScreen: View {
             if let shelf = model.shelf {
                 OwnProfileEmbedded(controller: shelf)
                     .frame(height: max(400, viewport))
-                    .padding(.horizontal, -16)
             }
         }
     }
@@ -195,6 +204,7 @@ final class OwnProfileModel: ObservableObject {
     @Published var preferences: OwnProfileSlot?
     @Published var logoutPresented = false
     @Published private(set) var scrollRevision = 0
+    @Published var headerTopInset: CGFloat = 0
     let profile: IosOwnProfile
     private(set) var shelf: UIViewController?
     private(set) var collections: UIViewController?

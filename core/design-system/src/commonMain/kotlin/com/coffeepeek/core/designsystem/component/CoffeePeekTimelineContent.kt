@@ -21,11 +21,12 @@ fun CoffeePeekTimelineContent(
     photos: @Composable () -> Unit,
     supporting: (@Composable () -> Unit)? = null,
     footer: (@Composable () -> Unit)? = null,
+    noteModifier: Modifier = Modifier,
 ) {
     Column(modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2)) {
         header()
         heading()
-        if (note.isNotBlank()) Text(note, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
+        if (note.isNotBlank()) Text(note, modifier = noteModifier, style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurface)
         photos()
         supporting?.invoke()
         footer?.invoke()

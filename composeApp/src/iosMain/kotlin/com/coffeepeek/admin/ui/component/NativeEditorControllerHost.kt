@@ -19,13 +19,14 @@ import platform.UIKit.willMoveToParentViewController
 
 /** Dialogs may override LocalUIViewController for camera presentation; containment follows the mounted view. */
 @Composable
-internal fun NativeEditorControllerHost(controller: UIViewController, modifier: Modifier) {
+internal fun NativeEditorControllerHost(controller: UIViewController, modifier: Modifier,
+    interactionMode: UIKitInteropInteractionMode = UIKitInteropInteractionMode.NonCooperative) {
     key(controller) {
         UIKitView(
             factory = { NativeEditorContainer(controller) },
             modifier = modifier,
             properties = UIKitInteropProperties(
-                interactionMode = UIKitInteropInteractionMode.NonCooperative,
+                interactionMode = interactionMode,
                 isNativeAccessibilityEnabled = true,
             ),
             onRelease = { it.release() },

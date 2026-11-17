@@ -5,10 +5,12 @@ struct OwnProfileActivityView: View {
     let state: IosOwnProfileActivity
     let model: OwnProfileModel
     let strings: OwnProfileStrings
+    let availableWidth: CGFloat
 
     var body: some View {
         OwnProfileActivityCard(
-            state: state, strings: strings, profile: model.profile, toggle: model.toggleActivity,
+            state: state, strings: strings, profile: model.profile, availableWidth: availableWidth,
+            toggle: model.toggleActivity,
             changeMonth: { model.profile.changeMonth(offset: Int32($0)) },
             openDay: model.selectDay,
             retry: { model.profile.retryActivity(expanded: state.expanded) }
@@ -18,10 +20,12 @@ struct OwnProfileActivityView: View {
 
 private struct OwnProfileActivityCard: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @ScaledMetric(relativeTo: .body) private var minimumCellHeight: CGFloat = 44
     @State private var pagingDirection = 1
     let state: IosOwnProfileActivity
     let strings: OwnProfileStrings
     let profile: IosOwnProfile?
+    let availableWidth: CGFloat
     let toggle: () -> Void
     let changeMonth: (Int) -> Void
     let openDay: (String) -> Void
@@ -45,6 +49,7 @@ private struct OwnProfileActivityCard: View {
             ZStack(alignment: .top) {
                 dates.id(monthKey).transition(pageTransition)
             }
+            .frame(height: gridHeight, alignment: .top)
             .clipped()
             .simultaneousGesture(monthSwipe)
         }
@@ -63,8 +68,6 @@ private struct OwnProfileActivityCard: View {
                     .accessibilityLabel(strings["history_activity_loading"])
             }
         }
-        .animation(calendarAnimation, value: state.expanded)
-        .animation(calendarAnimation, value: monthKey)
     }
 
     private var monthHeader: some View {
@@ -145,9 +148,9 @@ private struct OwnProfileActivityCard: View {
             ForEach(0..<slotCount, id: \.self) { index in
                 if index < state.days.count, let date = state.days[index].date {
                     OwnProfileActivityCell(day: state.days[index], date: date, strings: strings,
-                                           profile: profile) { openDay(date) }
+                                           profile: profile, cellWidth: cellWidth, cellHeight: cellHeight) { openDay(date) }
                 } else {
-                    OwnProfileDaySlot { Color.clear }.accessibilityHidden(true)
+                    OwnProfileDaySlot(height: cellHeight) { Color.clear }.accessibilityHidden(true)
                 }
             }
         }
@@ -155,14 +158,14 @@ private struct OwnProfileActivityCard: View {
 
     private var slotCount: Int {
         let fullWeeks = ((state.days.count + 6) / 7) * 7
-        return max(state.expanded ? 42 : 7, fullWeeks)
+        return max(7, fullWeeks)
     }
 
     private var monthKey: String { "\(state.year)-\(state.month)" }
 
-    private var calendarAnimation: Animation? {
-        reduceMotion ? nil : .easeInOut(duration: 0.28)
-    }
+    private var cellWidth: CGFloat { max(0, (availableWidth - 16) / 7) }
+    private var cellHeight: CGFloat { max(cellWidth, minimumCellHeight) }
+    private var gridHeight: CGFloat { cellHeight * CGFloat(slotCount / 7) }
 
     private var pageTransition: AnyTransition {
         guard !reduceMotion && state.expanded else { return .identity }
@@ -194,7 +197,7 @@ private struct OwnProfileActivityCard: View {
         let formatter = DateFormatter()
         formatter.locale = locale
         formatter.calendar = calendar
-        formatter.dateFormat = "LLLL yyyy"
+        formatter.dateFormat = "LLLL"
         return formatter.string(from: month).capitalized(with: locale)
     }
 
@@ -206,13 +209,32 @@ private struct OwnProfileActivityCard: View {
     }
 }
 
+extension View {
+    func ownProfileCalendarAnimation(_ activity: IosOwnProfileActivity?) -> some View {
+        modifier(OwnProfileCalendarAnimation(activity: activity))
+    }
+}
+
+private struct OwnProfileCalendarAnimation: ViewModifier {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    let activity: IosOwnProfileActivity?
+
+    private var layoutKey: String {
+        guard let activity else { return "" }
+        return "\(activity.expanded)-\(activity.year)-\(activity.month)-\(activity.days.count)"
+    }
+
+    func body(content: Content) -> some View {
+        content.animation(reduceMotion ? nil : .easeInOut(duration: 0.28), value: layoutKey)
+    }
+}
+
 private struct OwnProfileDaySlot<Content: View>: View {
-    @ScaledMetric(relativeTo: .body) private var minimumHeight: CGFloat = 44
+    let height: CGFloat
     @ViewBuilder let content: () -> Content
 
     var body: some View {
-        Color.clear.aspectRatio(1, contentMode: .fit)
-            .frame(minHeight: minimumHeight)
+        Color.clear.frame(maxWidth: .infinity).frame(height: height)
             .overlay { content() }
     }
 }
@@ -222,6 +244,8 @@ private struct OwnProfileActivityCell: View {
     let date: String
     let strings: OwnProfileStrings
     let profile: IosOwnProfile?
+    let cellWidth: CGFloat
+    let cellHeight: CGFloat
     let open: () -> Void
 
     var body: some View {
@@ -242,9 +266,9 @@ private struct OwnProfileActivityCell: View {
     private var hasActivity: Bool { visitCount > 0 }
 
     private var monthDate: some View {
-        OwnProfileDaySlot {
+        OwnProfileDaySlot(height: cellHeight) {
             ZStack {
-                monthMarker.padding(hasActivity ? 8 : 4)
+                monthMarker.padding(day.photo != nil ? 4 : hasActivity ? 8 : 4)
                 if visitCount > 0 {
                     visitMarkers.frame(maxHeight: .infinity, alignment: .bottom).padding(.bottom, 4)
                 }
@@ -266,7 +290,7 @@ private struct OwnProfileActivityCell: View {
     private var monthMarker: some View {
         if let photo = day.photo {
             OwnProfileImage(url: photo, profile: profile, symbol: day.homeCount > 0 ? "house" : "cup.and.saucer")
-                .aspectRatio(1, contentMode: .fit)
+                .frame(width: photoSide, height: photoSide)
                 .clipShape(RoundedRectangle(cornerRadius: 6))
                 .padding(.bottom, visitCount > 0 ? 6 : 0)
         } else {
@@ -276,6 +300,10 @@ private struct OwnProfileActivityCell: View {
                 .padding(.bottom, visitCount > 0 ? 6 : 0)
                 .lineLimit(1).minimumScaleFactor(0.7)
         }
+    }
+
+    private var photoSide: CGFloat {
+        max(1, min(cellWidth - 12, cellHeight - 12 - (visitCount > 0 ? 6 : 0)))
     }
 
     private var visitMarkers: some View {
@@ -297,16 +325,17 @@ private func ownProfileDayLabel(_ value: String, language: String) -> String {
     return date.formatted(.dateTime.weekday(.wide).day().month(.wide).locale(Locale(identifier: language)))
 }
 
-private func ownProfileActivityPreviewDays(expanded: Bool, month: Int, selected: String?) -> [IosOwnProfileDay] {
+private func ownProfileActivityPreviewDays(expanded: Bool, year: Int, month: Int, selected: String?) -> [IosOwnProfileDay] {
     let calendar = Calendar(identifier: .gregorian)
-    let first = calendar.date(from: DateComponents(year: 2026, month: month, day: 1))!
-    let dates = ownProfileActivityPreviewDateValues(expanded: expanded, month: month, selected: selected).map { value in
+    let first = calendar.date(from: DateComponents(year: year, month: month, day: 1))!
+    let today = String(format: "%04d-11-16", year)
+    let dates = ownProfileActivityPreviewDateValues(expanded: expanded, year: year, month: month, selected: selected).map { value in
         let day = calendar.component(.day, from: value)
         let valueMonth = calendar.component(.month, from: value)
         let date = String(format: "%04d-%02d-%02d", calendar.component(.year, from: value), valueMonth, day)
         return IosOwnProfileDay(date: date, photo: day == 16 ? "preview://coffee" : nil,
                          shopCount: day == 10 || day == 16 ? 2 : 0, homeCount: day == 16 ? 1 : 0,
-                         selected: selected == date, today: date == "2026-11-16", enabled: date <= "2026-11-16")
+                         selected: selected == date, today: date == today, enabled: date <= today)
     }
     guard expanded else { return dates }
     let blank = IosOwnProfileDay(date: nil, photo: nil, shopCount: 0, homeCount: 0,
@@ -314,10 +343,10 @@ private func ownProfileActivityPreviewDays(expanded: Bool, month: Int, selected:
     return Array(repeating: blank, count: (calendar.component(.weekday, from: first) + 5) % 7) + dates
 }
 
-private func ownProfileActivityPreviewDateValues(expanded: Bool, month: Int, selected: String?) -> [Date] {
+private func ownProfileActivityPreviewDateValues(expanded: Bool, year: Int, month: Int, selected: String?) -> [Date] {
     var calendar = Calendar(identifier: .gregorian)
     calendar.firstWeekday = 2
-    let first = calendar.date(from: DateComponents(year: 2026, month: month, day: 1))!
+    let first = calendar.date(from: DateComponents(year: year, month: month, day: 1))!
     if expanded {
         return calendar.range(of: .day, in: .month, for: first)!.map {
             calendar.date(byAdding: .day, value: $0 - 1, to: first)!
@@ -332,22 +361,36 @@ private func ownProfileActivityPreviewDateValues(expanded: Bool, month: Int, sel
 private struct OwnProfileActivityPreview: View {
     @State var expanded: Bool
     let language: String
+    let year: Int
     @State private var month = 11
     @State private var selected: String?
 
+    init(expanded: Bool, language: String, year: Int = 2026, month: Int = 11) {
+        _expanded = State(initialValue: expanded)
+        self.language = language
+        self.year = year
+        _month = State(initialValue: month)
+    }
+
     private var state: IosOwnProfileActivity {
-        IosOwnProfileActivity(expanded: expanded, year: 2026, month: Int32(month), loading: false, failed: false,
+        IosOwnProfileActivity(expanded: expanded, year: Int32(year), month: Int32(month), loading: false, failed: false,
                               selected: selected, canGoNext: month < 11, canGoPrevious: month > 1,
-                              days: ownProfileActivityPreviewDays(expanded: expanded, month: month,
+                              days: ownProfileActivityPreviewDays(expanded: expanded, year: year, month: month,
                                                                   selected: selected))
     }
 
     var body: some View {
-        ScrollView {
-            OwnProfileActivityCard(state: state, strings: OwnProfileStrings(languageTag: language), profile: nil,
-                                   toggle: toggle, changeMonth: changeMonth,
-                                   openDay: { selected = selected == $0 ? nil : $0 }, retry: {})
-                .padding()
+        GeometryReader { geometry in
+            ScrollView {
+                VStack(spacing: 12) {
+                    OwnProfileActivityCard(state: state, strings: OwnProfileStrings(languageTag: language), profile: nil,
+                                           availableWidth: geometry.size.width - 32, toggle: toggle, changeMonth: changeMonth,
+                                           openDay: { selected = selected == $0 ? nil : $0 }, retry: {})
+                    OwnProfileTabs(selection: .checkIns, strings: OwnProfileStrings(languageTag: language),
+                                   select: { _ in }, equalWidth: true)
+                }
+                .padding().ownProfileCalendarAnimation(state)
+            }
         }
         .background(CoffeePeekNativeStyle.background)
     }
@@ -381,4 +424,20 @@ private struct OwnProfileActivityPreview: View {
 #Preview("Month narrow, large text") {
     OwnProfileActivityPreview(expanded: true, language: "ru")
         .frame(width: 320).dynamicTypeSize(.accessibility2).preferredColorScheme(.light)
+}
+
+#Preview("Four weeks light") {
+    OwnProfileActivityPreview(expanded: true, language: "ru", year: 2021, month: 2).preferredColorScheme(.light)
+}
+
+#Preview("Four weeks dark") {
+    OwnProfileActivityPreview(expanded: true, language: "be", year: 2021, month: 2).preferredColorScheme(.dark)
+}
+
+#Preview("Five weeks light") {
+    OwnProfileActivityPreview(expanded: true, language: "ru", month: 10).preferredColorScheme(.light)
+}
+
+#Preview("Five weeks dark") {
+    OwnProfileActivityPreview(expanded: true, language: "be", month: 10).preferredColorScheme(.dark)
 }

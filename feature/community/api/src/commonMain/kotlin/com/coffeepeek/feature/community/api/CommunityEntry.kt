@@ -30,6 +30,7 @@ class CommunityHost(
     val snackbar: @Composable (state: SnackbarHostState, bottomClearance: Dp) -> Unit = { state, _ -> SnackbarHost(state) },
     val leaders: (@Composable (refreshKey: Long, bottomClearance: Dp, modifier: Modifier) -> Unit)? = null,
     val share: (text: String) -> Unit = {},
+    val nativeCard: (@Composable (CommunityCardPresentation, CommunityCardActions, Modifier) -> Unit)? = null,
 )
 
 /** What the floating action slot needs: whether a user is signed in, when the account or scope changes (close open sheets), and how to reload. */
