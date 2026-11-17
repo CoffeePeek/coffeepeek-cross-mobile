@@ -566,3 +566,12 @@ its checkpoint; the feed continues in child branch codex/migration-ios-native-fe
 Native preflight passes: Kotlin iOS sources compile, all 73 Swift sources typecheck
 against the updated header. Both entry points and the Xcode source list register the
 feed host. Full framework/link and device checks are still pending.
+
+Native delivery: framework passed in 13m45s and Runner in 1m36s. Installed CoffeePeek
+Xcross 1.2.1 (3099), source 2f96432fa, on the agreed iPhone15,4 / iOS27.0.1. Installer
+reused the framework in 2.5s; signing 4.8s, installation 15.1s. InstallationProxy
+independently confirms 3099, CoreDevice confirms one running Xcross process, and main
+app com.coffeepeek remains 1.2.1 (3108). Data preserved, scanner still disabled.
+Code is pushed to codex/ios-native; signed IPA and build identity are local in ignored
+build/xcross-ios. Manual feed/menu/cover verification remains pending; startup alone
+does not prove pagination, refresh, theme parity or mutation acceptance.
