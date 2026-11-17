@@ -310,3 +310,9 @@ that cannot execute on Windows and manual device gates are reported separately.
 - Native compile retry stopped before framework link because editor/list both
   declared IosShopCheckInObservation. Editor now reuses the existing identical
   shop observation contract; no behavior/API changes to cancellation.
+- The following attempt built ComposeApp.framework in9m54s, then Windows refused
+  to start Swift because its command exceeded the process argument limit. This
+  is retained as a separate failed build; no device installation occurred.
+- Both editor localization tables passed read-only key/placeholder checks
+  (Home143 and Shop71 keys in each RU/BE locale). Device version guard tests3/3
+  passed; newer installed marketing/build versions fail closed without erasing data.

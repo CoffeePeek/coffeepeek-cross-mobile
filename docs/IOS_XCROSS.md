@@ -105,6 +105,17 @@ Gradle's idempotent include preserves the module graph.
 targets upstream commit `251be22c033fa31fd03a7bf107308d07d28abf81` (v2.1.1).
 Upstream is AGPL-3.0. No SDKs or credentials are included.
 
+Apply [xcross-2.1.1-swift-runner-response.patch](../tools/ios/xcross/xcross-2.1.1-swift-runner-response.patch)
+after the compatibility patch. It passes the Windows Swift runner arguments in
+an UTF-8 response file using the existing Swift driver quoting, avoiding the
+32,767-character CreateProcess limit as the native source list grows. POSIX
+invocations remain unchanged. Rebuild with `-DXCROSS_VERSION=2.1.1-coffeepeek.7`.
+Run `dart test test/compose/swift_runner_response_test.dart`; setting
+`SWIFT_TEST=1` additionally checks the installed Windows Swift compiler with
+Unicode/spaced paths, embedded quotes, trailing backslashes and a long argv.
+On 2026-11-17 all three checks passed with Swift 6.4.2. The initial sandbox run
+could not launch Swift (access denied); the normal local compiler run passed.
+
 - Adds published Kotlin 2.4.21 archive hashes.
 - Prefers the existing SwiftUI @main over the Kotlin UIViewController factory.
 - Handles Windows extended paths and excludes .build from source discovery.
