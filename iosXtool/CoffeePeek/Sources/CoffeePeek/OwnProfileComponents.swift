@@ -9,6 +9,8 @@ struct OwnProfileHeader: View {
     let strings: OwnProfileStrings
     let profile: IosOwnProfile?
     let select: (OwnProfileStat) -> Void
+    var enabled: (OwnProfileStat) -> Bool = { _ in true }
+    var imageLoader: ProfileImageLoader?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -39,27 +41,35 @@ struct OwnProfileHeader: View {
     }
 
     private var avatarImage: some View {
-        OwnProfileImage(url: identity.avatar, profile: profile, symbol: "person.crop.circle")
+        OwnProfileImage(url: identity.avatar, symbol: "person.crop.circle",
+                        loadImage: imageLoader ?? profileImageLoader(profile))
             .frame(width: 56, height: 56)
             .clipShape(Circle())
     }
 
+    @ViewBuilder
     private func stat(_ kind: OwnProfileStat) -> some View {
         let data = statValue(kind)
-        return Button { select(kind) } label: {
-            VStack(spacing: 3) {
-                Text(data.count.formatted())
-                    .font(CoffeePeekNativeStyle.font(18, weight: "Bold", relativeTo: .headline))
-                Text(strings[data.key])
-                    .font(CoffeePeekNativeStyle.font(11, relativeTo: .caption))
-                    .foregroundStyle(CoffeePeekNativeStyle.secondary)
-            }
-            .fixedSize(horizontal: true, vertical: false)
-            .frame(maxWidth: .infinity, minHeight: 44)
+        if enabled(kind) {
+            Button { select(kind) } label: { statLabel(data) }
+                .buttonStyle(.plain)
+                .disabled(kind == .followers && !identity.canOpenFollowers)
+                .accessibilityElement(children: .combine)
+        } else {
+            statLabel(data).accessibilityElement(children: .combine)
         }
-        .buttonStyle(.plain)
-        .disabled(kind == .followers && !identity.canOpenFollowers)
-        .accessibilityElement(children: .combine)
+    }
+
+    private func statLabel(_ data: (count: Int32, key: String)) -> some View {
+        VStack(spacing: 3) {
+            Text(data.count.formatted())
+                .font(CoffeePeekNativeStyle.font(18, weight: "Bold", relativeTo: .headline))
+            Text(strings[data.key])
+                .font(CoffeePeekNativeStyle.font(11, relativeTo: .caption))
+                .foregroundStyle(CoffeePeekNativeStyle.secondary)
+        }
+        .fixedSize(horizontal: true, vertical: false)
+        .frame(maxWidth: .infinity, minHeight: 44)
     }
 
     private func statValue(_ kind: OwnProfileStat) -> (count: Int32, key: String) {
@@ -114,14 +124,31 @@ struct OwnProfileRetry: View {
     }
 }
 
+typealias ProfileImageLoader = (String, @escaping (UIImage?) -> Void) -> IosOwnProfileObservation?
+
+func profileImageLoader(_ profile: IosOwnProfile?) -> ProfileImageLoader {
+    { url, receive in profile?.loadImage(url: url, onImage: receive) }
+}
+
 struct OwnProfileImage: View {
     let url: String?
-    let profile: IosOwnProfile?
     let symbol: String
-    var fits: Bool = false
+    let fits: Bool
+    let loadImage: ProfileImageLoader
     @State private var image: UIImage?
     @State private var observation: IosOwnProfileObservation?
     @State private var requested: String?
+
+    init(url: String?, profile: IosOwnProfile?, symbol: String, fits: Bool = false) {
+        self.init(url: url, symbol: symbol, fits: fits, loadImage: profileImageLoader(profile))
+    }
+
+    init(url: String?, symbol: String, fits: Bool = false, loadImage: @escaping ProfileImageLoader) {
+        self.url = url
+        self.symbol = symbol
+        self.fits = fits
+        self.loadImage = loadImage
+    }
 
     var body: some View {
         GeometryReader { geometry in
@@ -148,9 +175,9 @@ struct OwnProfileImage: View {
         image = nil
         guard let url, !url.isEmpty else { return }
         requested = url
-        observation = profile?.loadImage(url: url, onImage: { next in
+        observation = loadImage(url) { next in
             if requested == url { image = next }
-        })
+        }
     }
 
     private func cancel() {

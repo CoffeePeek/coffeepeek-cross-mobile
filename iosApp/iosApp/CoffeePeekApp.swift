@@ -48,8 +48,10 @@ private struct ComposeRootView: UIViewControllerRepresentable {
             makeDiscoveryFilterController: makeDiscoveryFilterController,
             makeShopMenuGalleryController: makeShopMenuGalleryController,
             makeCoffeeDetailController: makeCoffeeDetailController,
+            makeShelfArchiveController: makeShelfArchiveController,
             makeThemeSettingsController: makeThemeSettingsController,
             makeShopReportController: makeShopReportController,
+            makeContributionsController: makeContributionsController,
             makeContentReportController: makeContentReportController,
             makeCollectionsLibraryController: makeCollectionsLibraryController,
             makeSavedPublicCollectionController: makeSavedPublicCollectionController,
@@ -59,6 +61,7 @@ private struct ComposeRootView: UIViewControllerRepresentable {
             makeCheckInCreatePickerController: makeCheckInCreatePickerController,
             makeGuestProfileController: makeGuestProfileController(profile:),
             makeOwnProfileController: makeOwnProfileController(profile:),
+            makePublicProfileController: makePublicProfileController(profile:),
             makeNotificationInboxController: makeNotificationInboxController(inbox:languageTag:)
         )
     }

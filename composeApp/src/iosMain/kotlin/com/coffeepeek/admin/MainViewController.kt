@@ -4,9 +4,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.window.ComposeUIViewController
 import com.coffeepeek.admin.di.coffee.IosCoffeeDetail
+import com.coffeepeek.admin.di.coffee.LocalIosCoffeeDetailController
 import com.coffeepeek.admin.di.discovery.IosDiscoveryFilters
 import com.coffeepeek.admin.di.discovery.LocalIosDiscoveryFilterController
-import com.coffeepeek.admin.di.coffee.LocalIosCoffeeDetailController
 import com.coffeepeek.admin.di.initPlatformKoin
 import com.coffeepeek.admin.di.notifications.IosNotificationInbox
 import com.coffeepeek.admin.di.notifications.LocalIosNotificationInboxController
@@ -19,6 +19,10 @@ import com.coffeepeek.admin.di.profile.IosGuestProfile
 import com.coffeepeek.admin.di.profile.LocalIosGuestProfileController
 import com.coffeepeek.admin.di.profile.IosOwnProfile
 import com.coffeepeek.admin.di.profile.LocalIosOwnProfileController
+import com.coffeepeek.admin.di.contributions.IosContributionsRoute
+import com.coffeepeek.admin.di.contributions.LocalIosContributionsController
+import com.coffeepeek.admin.di.profile.IosPublicProfile
+import com.coffeepeek.admin.di.profile.LocalIosPublicProfileController
 import com.coffeepeek.admin.di.contentreport.IosContentReport
 import com.coffeepeek.admin.di.contentreport.LocalIosContentReportController
 import com.coffeepeek.admin.di.shopreport.IosShopReport
@@ -30,6 +34,8 @@ import com.coffeepeek.admin.di.collections.LocalIosSavedPublicCollectionControll
 import com.coffeepeek.admin.di.settings.IosSettingsScreen
 import com.coffeepeek.admin.di.authorblocking.IosBlockedAuthors
 import com.coffeepeek.admin.di.authorblocking.LocalIosBlockedAuthorsController
+import com.coffeepeek.admin.di.shelf.IosShelfArchive
+import com.coffeepeek.admin.di.shelf.LocalIosShelfArchiveController
 import com.coffeepeek.admin.di.settings.IosThemeSettings
 import com.coffeepeek.admin.di.settings.LocalIosSettingsController
 import com.coffeepeek.admin.di.settings.LocalIosThemeSettingsController
@@ -58,8 +64,10 @@ fun MainViewController(
     makeDiscoveryFilterController: (IosDiscoveryFilters) -> UIViewController,
     makeShopMenuGalleryController: (IosShopMenuGallery, String) -> UIViewController,
     makeCoffeeDetailController: (IosCoffeeDetail, String) -> UIViewController,
+    makeShelfArchiveController: (IosShelfArchive, String) -> UIViewController,
     makeThemeSettingsController: (IosThemeSettings, String, () -> Unit) -> UIViewController,
     makeShopReportController: (IosShopReport, String, String, () -> Unit) -> UIViewController,
+    makeContributionsController: (IosContributionsRoute, String) -> UIViewController,
     makeContentReportController: (IosContentReport, String) -> UIViewController,
     makeCollectionsLibraryController: (IosCollectionsLibrary, String) -> UIViewController,
     makeSavedPublicCollectionController: (IosSavedPublicCollection, String) -> UIViewController,
@@ -69,38 +77,45 @@ fun MainViewController(
     makeCheckInCreatePickerController: (IosCheckInCreatePicker) -> UIViewController,
     makeGuestProfileController: (IosGuestProfile) -> UIViewController,
     makeOwnProfileController: (IosOwnProfile) -> UIViewController,
+    makePublicProfileController: (IosPublicProfile) -> UIViewController,
     makeNotificationInboxController: (IosNotificationInbox, String) -> UIViewController,
-): UIViewController {
+): UIViewController = IosControllerFactories(
+    makeDiscoveryFilterController,
+    makeShopMenuGalleryController,
+    makeCoffeeDetailController,
+    makeShelfArchiveController,
+    makeThemeSettingsController,
+    makeShopReportController,
+    makeContributionsController,
+    makeContentReportController,
+    makeCollectionsLibraryController,
+    makeSavedPublicCollectionController,
+    makeSettingsController,
+    makeBlockedAuthorsController,
+    makeAuthController,
+    makeCheckInCreatePickerController,
+    makeGuestProfileController,
+    makeOwnProfileController,
+    makePublicProfileController,
+    makeNotificationInboxController,
+).createController(onReady)
+
+private fun IosControllerFactories.createController(onReady: () -> Unit): UIViewController {
     if (!koinInitialized) {
         initPlatformKoin()
         koinInitialized = true
     }
-    val controllers = IosControllerFactories(
-        makeDiscoveryFilterController,
-        makeShopMenuGalleryController,
-        makeCoffeeDetailController,
-        makeThemeSettingsController,
-        makeShopReportController,
-        makeContentReportController,
-        makeCollectionsLibraryController,
-        makeSavedPublicCollectionController,
-        makeSettingsController,
-        makeBlockedAuthorsController,
-        makeAuthController,
-        makeCheckInCreatePickerController,
-        makeGuestProfileController,
-        makeOwnProfileController,
-        makeNotificationInboxController,
-    )
-    return ComposeUIViewController { controllers.Content(onReady) }
+    return ComposeUIViewController { Content(onReady) }
 }
 
 private class IosControllerFactories(
     private val makeDiscoveryFilterController: (IosDiscoveryFilters) -> UIViewController,
     private val makeShopMenuGalleryController: (IosShopMenuGallery, String) -> UIViewController,
     private val makeCoffeeDetailController: (IosCoffeeDetail, String) -> UIViewController,
+    private val makeShelfArchiveController: (IosShelfArchive, String) -> UIViewController,
     private val makeThemeSettingsController: (IosThemeSettings, String, () -> Unit) -> UIViewController,
     private val makeShopReportController: (IosShopReport, String, String, () -> Unit) -> UIViewController,
+    private val makeContributionsController: (IosContributionsRoute, String) -> UIViewController,
     private val makeContentReportController: (IosContentReport, String) -> UIViewController,
     private val makeCollectionsLibraryController: (IosCollectionsLibrary, String) -> UIViewController,
     private val makeSavedPublicCollectionController: (IosSavedPublicCollection, String) -> UIViewController,
@@ -110,6 +125,7 @@ private class IosControllerFactories(
     private val makeCheckInCreatePickerController: (IosCheckInCreatePicker) -> UIViewController,
     private val makeGuestProfileController: (IosGuestProfile) -> UIViewController,
     private val makeOwnProfileController: (IosOwnProfile) -> UIViewController,
+    private val makePublicProfileController: (IosPublicProfile) -> UIViewController,
     private val makeNotificationInboxController: (IosNotificationInbox, String) -> UIViewController,
 ) {
     @Composable
@@ -118,8 +134,10 @@ private class IosControllerFactories(
             LocalIosDiscoveryFilterController provides makeDiscoveryFilterController,
             LocalIosShopMenuGalleryController provides makeShopMenuGalleryController,
             LocalIosCoffeeDetailController provides makeCoffeeDetailController,
+            LocalIosShelfArchiveController provides makeShelfArchiveController,
             LocalIosThemeSettingsController provides makeThemeSettingsController,
             LocalIosShopReportController provides makeShopReportController,
+            LocalIosContributionsController provides makeContributionsController,
             LocalIosContentReportController provides makeContentReportController,
             LocalIosCollectionsLibraryController provides makeCollectionsLibraryController,
             LocalIosSavedPublicCollectionController provides makeSavedPublicCollectionController,
@@ -129,6 +147,7 @@ private class IosControllerFactories(
             LocalCheckInCreatePicker provides iosCheckInCreatePickerContent(makeCheckInCreatePickerController),
             LocalIosGuestProfileController provides makeGuestProfileController,
             LocalIosOwnProfileController provides makeOwnProfileController,
+            LocalIosPublicProfileController provides makePublicProfileController,
             LocalIosNotificationInboxController provides makeNotificationInboxController,
         ) {
             App(onReady = onReady)

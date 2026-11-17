@@ -263,6 +263,8 @@ jobs:
           set -euo pipefail
           ./gradlew --max-workers=6 :feature:profile:impl:iosSimulatorArm64Test \
             --tests 'com.coffeepeek.feature.profile.impl.IosOwnProfileSessionTest' \
+            --tests 'com.coffeepeek.feature.profile.impl.IosPublicProfileSessionTest' \
+            --tests 'com.coffeepeek.feature.profile.impl.ui.data.PublicProfileWeekTest' \
             --tests 'com.coffeepeek.feature.profile.impl.ui.OwnProfileViewModelTest' \
             --tests 'com.coffeepeek.feature.profile.impl.ui.PublicProfileViewModelTest' \
             :feature:check-in-history:impl:iosSimulatorArm64Test \
@@ -272,6 +274,17 @@ jobs:
               tail -n 150 "$RUNNER_TEMP/ios-own-profile-tests.log"
               exit 1
             }
+      - name: Run shelf archive Kotlin Native tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./gradlew --max-workers=6 :feature:shelf:impl:iosSimulatorArm64Test \
+            --tests 'com.coffeepeek.feature.shelf.impl.ui.ShelfArchiveViewModelTest' \
+            --tests 'com.coffeepeek.feature.shelf.impl.IosShelfArchiveSessionTest' \
+            > "$RUNNER_TEMP/ios-shelf-archive-tests.log" 2>&1 || {
+              tail -n 150 "$RUNNER_TEMP/ios-shelf-archive-tests.log"
+              exit 1
+            }
       - name: Run shared business ownership unit and contract tests
         shell: bash
         run: |
@@ -279,6 +292,7 @@ jobs:
           ./gradlew --max-workers=6 :feature:business-ownership:domain:iosSimulatorArm64Test \
             :feature:business-ownership:data:iosSimulatorArm64Test \
             :feature:business-ownership:impl:iosSimulatorArm64Test \
+            :feature:contributions:impl:iosSimulatorArm64Test \
             :feature:shop-report:impl:iosSimulatorArm64Test \
             :feature:collections:impl:iosSimulatorArm64Test \
             > "$RUNNER_TEMP/ios-ownership-tests.log" 2>&1 || {
@@ -293,6 +307,9 @@ jobs:
             ${{ runner.temp }}/ios-native-tests.log
             ${{ runner.temp }}/ios-ownership-tests.log
             feature/business-ownership/**/build/test-results/iosSimulatorArm64Test/
+            feature/contributions/impl/build/test-results/iosSimulatorArm64Test/
+            ${{ runner.temp }}/ios-shelf-archive-tests.log
+            feature/shelf/impl/build/test-results/iosSimulatorArm64Test/
             composeApp/build/test-results/iosSimulatorArm64Test/
             ${{ runner.temp }}/ios-shop-menu-gallery-tests.log
             feature/shop/impl/build/test-results/iosSimulatorArm64Test/

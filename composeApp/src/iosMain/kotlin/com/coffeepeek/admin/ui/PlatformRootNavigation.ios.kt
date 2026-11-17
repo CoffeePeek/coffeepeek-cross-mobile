@@ -11,10 +11,13 @@ import com.coffeepeek.admin.di.settings.iosSettingsContent
 import com.coffeepeek.admin.di.auth.iosAuthContent
 import com.coffeepeek.admin.di.profile.iosGuestProfileContent
 import com.coffeepeek.admin.di.profile.iosOwnProfileContent
+import com.coffeepeek.admin.di.profile.iosPublicProfileContent
 import com.coffeepeek.admin.di.settings.iosThemeSettingsContent
 import com.coffeepeek.admin.di.shopreport.iosShopReportContent
 import com.coffeepeek.admin.di.contentreport.iosContentReportContent
+import com.coffeepeek.admin.di.contributions.iosContributionsContent
 import com.coffeepeek.admin.di.collections.iosCollectionsLibraryContent
+import com.coffeepeek.admin.di.shelf.iosShelfArchiveContent
 import com.coffeepeek.admin.di.collections.iosSavedPublicCollectionContent
 import com.coffeepeek.admin.di.authorblocking.iosBlockedAuthorsContent
 import com.coffeepeek.admin.di.shop.iosShopMenuGalleryContent
@@ -203,12 +206,11 @@ internal actual fun PlatformRootNavigation(
 
     val createTitle = stringResource(Res.string.check_in_create_actions)
     val presentation = nativeRootTabPresentation()
-    val (labels, notificationsAction) = presentation
     UIKitViewController(factory = {
         IosRootTab.entries.forEachIndexed { index, tab ->
             val navigation = navigations[index]
-            val root = tab.controller(labels[index], nativeContent, presentation.content(tab) {
-                NativeRootTabContent(tab, tabBarVisibility, tabReselections, notificationsAction) { refreshCommunity = it }
+            val root = tab.controller(presentation.labels[index], nativeContent, presentation.content(tab) {
+                NativeRootTabContent(tab, tabBarVisibility, tabReselections, presentation.notificationsAction) { refreshCommunity = it }
             })
             navigation.setNavigationBarHidden(true, false)
             navigation.setViewControllers(
@@ -217,7 +219,7 @@ internal actual fun PlatformRootNavigation(
                 },
                 false,
             )
-            navigation.tabBarItem = UITabBarItem(title = labels[index], image = UIImage.systemImageNamed(tab.symbol), tag = index.toLong())
+            navigation.tabBarItem = UITabBarItem(title = presentation.labels[index], image = UIImage.systemImageNamed(tab.symbol), tag = index.toLong())
             navigationDelegates[index].navigation = navigation
             navigationDelegates[index].onStackChanged = { saveNavigation() }
             navigation.delegate = navigationDelegates[index]
@@ -232,7 +234,7 @@ internal actual fun PlatformRootNavigation(
         }
         tabs
     }, modifier = Modifier.fillMaxSize(), update = {
-        updateNativeTabLabels(navigations, labels)
+        updateNativeTabLabels(navigations, presentation.labels)
         createNavigation.tabBarItem.title = createTitle
     }, properties = UIKitInteropProperties(
         interactionMode = UIKitInteropInteractionMode.NonCooperative,
@@ -336,10 +338,13 @@ private fun nativeDestinationController(
 private fun nativeRouteContent(isLoggedIn: Boolean): (Navigator.Screen) -> (() -> UIViewController)? {
     val settings = iosSettingsContent()
     val profile = if (isLoggedIn) iosOwnProfileContent() else iosGuestProfileContent()
+    val publicProfile = iosPublicProfileContent()
+    val shelfArchive = iosShelfArchiveContent()
     val themeSettings = iosThemeSettingsContent()
     val shopMenuGallery = iosShopMenuGalleryContent()
     val coffeeDetail = iosCoffeeDetailContent()
     val shopReportContent = iosShopReportContent()
+    val contributions = iosContributionsContent()
     val contentReport = iosContentReportContent()
     val collectionsLibraryContent = iosCollectionsLibraryContent()
     val savedPublicCollectionContent = iosSavedPublicCollectionContent()
@@ -347,10 +352,14 @@ private fun nativeRouteContent(isLoggedIn: Boolean): (Navigator.Screen) -> (() -
     return { screen ->
         when (screen) {
             Navigator.Screen.ProfileTab -> profile
+            is Navigator.Screen.UserProfile -> { { publicProfile(screen.slug, screen.nickname, screen.avatarUrl, false) } }
+            is Navigator.Screen.UserCheckIns -> { { publicProfile(screen.slug, screen.nickname, screen.avatarUrl, true) } }
+            Navigator.Screen.ShelfArchive -> shelfArchive
             Navigator.Screen.ThemeSettings -> themeSettings
             is Navigator.Screen.ShopMenuGallery -> { { shopMenuGallery(screen.shopId) } }
             is Navigator.Screen.ReportShop -> shopReportContent(screen.shopId, screen.shopTitle)
             is Navigator.Screen.CoffeeDetail -> { { coffeeDetail(screen.slug) } }
+            is Navigator.Screen.MyContributions, is Navigator.Screen.ShopChangeRequestDetail -> contributions(screen)
             is Navigator.Screen.ReportCheckIn -> contentReport(screen.checkInId, true, false)
             is Navigator.Screen.ReportReview -> contentReport(screen.reviewId, false, screen.isPreview)
             Navigator.Screen.CollectionsLibrary -> collectionsLibraryContent
