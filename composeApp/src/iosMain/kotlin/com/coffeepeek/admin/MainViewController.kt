@@ -24,6 +24,8 @@ import com.coffeepeek.admin.di.authorblocking.LocalIosBlockedAuthorsController
 import com.coffeepeek.admin.di.settings.IosThemeSettings
 import com.coffeepeek.admin.di.settings.LocalIosSettingsController
 import com.coffeepeek.admin.di.settings.LocalIosThemeSettingsController
+import com.coffeepeek.admin.di.shop.IosShopCheckInList
+import com.coffeepeek.admin.di.shop.LocalIosShopCheckInListController
 import com.coffeepeek.admin.di.shop.IosShopMenuGallery
 import com.coffeepeek.admin.di.shop.LocalIosShopMenuGalleryController
 import com.coffeepeek.admin.ui.Navigator
@@ -47,6 +49,7 @@ fun handleAppLink(link: String): Boolean {
 fun MainViewController(
     onReady: () -> Unit,
     makeShopMenuGalleryController: (IosShopMenuGallery, String) -> UIViewController,
+    makeShopCheckInListController: (IosShopCheckInList, String) -> UIViewController,
     makeCoffeeDetailController: (IosCoffeeDetail, String) -> UIViewController,
     makeThemeSettingsController: (IosThemeSettings, String, () -> Unit) -> UIViewController,
     makeShopReportController: (IosShopReport, String, String, () -> Unit) -> UIViewController,
@@ -64,6 +67,7 @@ fun MainViewController(
     }
     val controllers = IosControllerFactories(
         makeShopMenuGalleryController,
+        makeShopCheckInListController,
         makeCoffeeDetailController,
         makeThemeSettingsController,
         makeShopReportController,
@@ -80,6 +84,7 @@ fun MainViewController(
 
 private class IosControllerFactories(
     private val makeShopMenuGalleryController: (IosShopMenuGallery, String) -> UIViewController,
+    private val makeShopCheckInListController: (IosShopCheckInList, String) -> UIViewController,
     private val makeCoffeeDetailController: (IosCoffeeDetail, String) -> UIViewController,
     private val makeThemeSettingsController: (IosThemeSettings, String, () -> Unit) -> UIViewController,
     private val makeShopReportController: (IosShopReport, String, String, () -> Unit) -> UIViewController,
@@ -95,6 +100,7 @@ private class IosControllerFactories(
     fun Content(onReady: () -> Unit) {
         CompositionLocalProvider(
             LocalIosShopMenuGalleryController provides makeShopMenuGalleryController,
+            LocalIosShopCheckInListController provides makeShopCheckInListController,
             LocalIosCoffeeDetailController provides makeCoffeeDetailController,
             LocalIosThemeSettingsController provides makeThemeSettingsController,
             LocalIosShopReportController provides makeShopReportController,

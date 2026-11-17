@@ -17,6 +17,7 @@ import com.coffeepeek.admin.di.contentreport.iosContentReportContent
 import com.coffeepeek.admin.di.collections.iosCollectionsLibraryContent
 import com.coffeepeek.admin.di.authorblocking.iosBlockedAuthorsContent
 import com.coffeepeek.admin.di.shop.iosShopMenuGalleryContent
+import com.coffeepeek.admin.di.shop.iosShopCheckInListContent
 import com.coffeepeek.admin.di.coffee.iosCoffeeDetailContent
 import coffeepeek.composeapp.generated.resources.navigation_search
 import coffeepeek.composeapp.generated.resources.navigation_feed
@@ -331,6 +332,7 @@ private fun nativeRouteContent(isLoggedIn: Boolean): (Navigator.Screen) -> (() -
     val profile = if (isLoggedIn) iosOwnProfileContent() else iosGuestProfileContent()
     val themeSettings = iosThemeSettingsContent()
     val shopMenuGallery = iosShopMenuGalleryContent()
+    val shopCheckIns = iosShopCheckInListContent()
     val coffeeDetail = iosCoffeeDetailContent()
     val shopReportContent = iosShopReportContent()
     val contentReport = iosContentReportContent()
@@ -341,6 +343,7 @@ private fun nativeRouteContent(isLoggedIn: Boolean): (Navigator.Screen) -> (() -
             Navigator.Screen.ProfileTab -> profile
             Navigator.Screen.ThemeSettings -> themeSettings
             is Navigator.Screen.ShopMenuGallery -> { { shopMenuGallery(screen.shopId) } }
+            is Navigator.Screen.ShopReviews -> { { shopCheckIns(screen.shopId) } }
             is Navigator.Screen.ReportShop -> shopReportContent(screen.shopId, screen.shopTitle)
             is Navigator.Screen.CoffeeDetail -> { { coffeeDetail(screen.slug) } }
             is Navigator.Screen.ReportCheckIn -> contentReport(screen.checkInId, true, false)

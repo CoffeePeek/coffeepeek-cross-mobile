@@ -187,6 +187,9 @@ jobs:
             --tests 'com.coffeepeek.admin.AppLinkHandlingTest' \
             --tests 'com.coffeepeek.admin.ui.AppLinksTest' \
             --tests 'com.coffeepeek.admin.ui.ShopCheckInSignInHandoffTest' \
+            --tests 'com.coffeepeek.admin.di.shop.ShopBrowsingHostViewModelTest' \
+            --tests 'com.coffeepeek.admin.di.shop.ShopBrowsingSessionTest' \
+            --tests 'com.coffeepeek.admin.di.shop.ShopAuthorBlockBridgeTest' \
             --tests 'com.coffeepeek.admin.di.auth.IosCheckInAuthFlowTest' \
             --tests 'com.coffeepeek.admin.di.profile.IosProfileCompositionTest' \
             --tests 'com.coffeepeek.admin.di.settings.IosThemeSettingsTest' \
@@ -214,12 +217,13 @@ jobs:
               tail -n 150 "$RUNNER_TEMP/ios-auth-tests.log"
               exit 1
             }
-      - name: Run shop menu gallery Kotlin Native tests
+      - name: Run shop Kotlin Native tests
         shell: bash
         run: |
           set -euo pipefail
           ./gradlew --max-workers=6 :feature:shop:impl:iosSimulatorArm64Test \
             --tests 'com.coffeepeek.feature.shop.impl.ui.ShopMenuGallery*Test' \
+            --tests 'com.coffeepeek.feature.shop.impl.ui.ShopCheckInListViewModelTest' \
             > "$RUNNER_TEMP/ios-shop-menu-gallery-tests.log" 2>&1 || {
               tail -n 150 "$RUNNER_TEMP/ios-shop-menu-gallery-tests.log"
               exit 1
