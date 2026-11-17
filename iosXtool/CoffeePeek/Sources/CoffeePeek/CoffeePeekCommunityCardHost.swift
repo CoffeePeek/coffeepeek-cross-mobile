@@ -7,6 +7,17 @@ func makeCommunityCardController(card: IosCommunityCard) -> UIViewController {
     CoffeePeekCommunityHostingController(card: card)
 }
 
+/// The same live card model is usable inside a native lazy feed without embedding a UIKit row.
+struct CoffeePeekCommunityCardView: View {
+    @StateObject private var model: CoffeePeekCommunityCardModel
+
+    init(card: IosCommunityCard) {
+        _model = StateObject(wrappedValue: CoffeePeekCommunityCardModel(card: card))
+    }
+
+    var body: some View { CoffeePeekCommunityCardHost(model: model) }
+}
+
 private final class CoffeePeekCommunityHostingController: UIHostingController<CoffeePeekCommunityCardHost> {
     private let model: CoffeePeekCommunityCardModel
 

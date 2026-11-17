@@ -531,3 +531,38 @@ USB capture in dark theme shows content continuing beneath the status bar and no
 fixed root title/top safe-area band. No settings, consents or account data changed.
 Capture stays local in ignored build/. Root headings at scroll origin and both detail
 variants still need visual review; this one capture does not certify those states.
+
+### 2026-11-18 — detail menus, collection covers and native community feed
+
+Owner accepted Settings safe area and the profile check-in list. Follow-up scope:
+Home edit/delete move into the same top ellipsis menu as other check-ins, community
+detail title becomes Check-in, collection covers fade from clear at the top to dark
+at the bottom, and the iOS feed becomes a native list. Shelf is explicitly excluded.
+
+Verification plan: preserve existing shared feed ViewModel and mutation/analytics
+callbacks, guest first-card/teaser access, saved confirmations, refresh/pagination,
+editor/report/photo overlays, account revocation and protected media permissions.
+Run Home/community/collections/media/composition JVM checks, Android directDebug
+assembly with DEX verification, body limits, Swift typecheck and native build. Finish
+with an in-place iPhone update and read-only feed/detail/collection visual checks.
+Do not create records, like, change visibility or delete user data during validation.
+
+Implementation ownership: feature/community supplies a minimal native presentation
+and original callbacks; composition adapts media/session and measured exposure.
+SwiftUI owns native list/refresh/geometry and reuses the existing shared check-in card.
+The native feed keeps the real pinned title and notifications slot; ranking stays
+disabled as in the running app. Android retains the active Compose renderer.
+
+Verification: 993 JVM tests pass (Home 93, community 65, collections 79, media 71,
+composition 685), no failures/errors/skips. Android directDebug assembly and packaged
+DEX checks pass. Latest refresh-mutation regression executed separately with body
+verification; only the same two inherited body-limit violations remain. Account epoch
+is separate from refresh/scope generation so native pull-to-refresh retains its host;
+account replacement recreates it. Overlay callbacks are sanitized without dropping
+card keys, and exposure dwell is keyed per visible card using the existing ledger.
+Native compilation and device review are pending. Profile follow-up is committed on
+its checkpoint; the feed continues in child branch codex/migration-ios-native-feed.
+
+Native preflight passes: Kotlin iOS sources compile, all 73 Swift sources typecheck
+against the updated header. Both entry points and the Xcode source list register the
+feed host. Full framework/link and device checks are still pending.

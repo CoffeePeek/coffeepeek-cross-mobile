@@ -95,6 +95,7 @@ internal class CommunityViewModel(
                         timeline = timeline.takeIf { key != null } ?: CommunityTimeline.Public,
                         filters = filters,
                         sessionGeneration = sessionGeneration + 1,
+                        accountEpoch = accountEpoch + 1,
                     )
                 }
                 load(reset = true, expectedGeneration = initial.sessionGeneration)

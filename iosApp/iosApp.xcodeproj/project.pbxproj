@@ -104,6 +104,11 @@
 		0A8D371634C33941B0A3B65E /* CoffeePeekCheckInCardMapping.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FEE323F041175CE7CB48A5D /* CoffeePeekCheckInCardMapping.swift */; };
 		553A0D82DFD57F0624F032F7 /* CheckInDetailNativeScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B56539BE4310FF08426B0FB /* CheckInDetailNativeScreen.swift */; };
 		4A4149ED7EA558535A593018 /* CheckInDetailNativeModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7202F5348B4C69AB9987EA8D /* CheckInDetailNativeModel.swift */; };
+		24B6C1CE91371B3F19C414C4 /* CommunityFeedNativeModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56BCB17E90B80BABAB18568D /* CommunityFeedNativeModel.swift */; };
+		D8ED759D953BFD65B94F0ADE /* CommunityFeedNativePresentation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C64B0C6CBAC0C087713348C /* CommunityFeedNativePresentation.swift */; };
+		DAD5EF785C5BAC5D9F65C43E /* CommunityFeedNativeScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 803179B19B045FF27D2D5353 /* CommunityFeedNativeScreen.swift */; };
+		15E615F307B4D33226886FF1 /* CommunityFeedNativeRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30DB789D6C7E79AAEB5B487B /* CommunityFeedNativeRow.swift */; };
+		91B28778B1017172858BC88D /* CommunityFeedNativeStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = C59BA6BB01B30CC9D1704EA3 /* CommunityFeedNativeStatus.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -229,6 +234,11 @@
 		0FEE323F041175CE7CB48A5D /* CoffeePeekCheckInCardMapping.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CoffeePeekCheckInCardMapping.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CoffeePeekCheckInCardMapping.swift; sourceTree = "<group>"; };
 		9B56539BE4310FF08426B0FB /* CheckInDetailNativeScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CheckInDetailNativeScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CheckInDetailNativeScreen.swift; sourceTree = "<group>"; };
 		7202F5348B4C69AB9987EA8D /* CheckInDetailNativeModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CheckInDetailNativeModel.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CheckInDetailNativeModel.swift; sourceTree = "<group>"; };
+		56BCB17E90B80BABAB18568D /* CommunityFeedNativeModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CommunityFeedNativeModel.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CommunityFeedNativeModel.swift; sourceTree = "<group>"; };
+		6C64B0C6CBAC0C087713348C /* CommunityFeedNativePresentation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CommunityFeedNativePresentation.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CommunityFeedNativePresentation.swift; sourceTree = "<group>"; };
+		803179B19B045FF27D2D5353 /* CommunityFeedNativeScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CommunityFeedNativeScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CommunityFeedNativeScreen.swift; sourceTree = "<group>"; };
+		30DB789D6C7E79AAEB5B487B /* CommunityFeedNativeRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CommunityFeedNativeRow.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CommunityFeedNativeRow.swift; sourceTree = "<group>"; };
+		C59BA6BB01B30CC9D1704EA3 /* CommunityFeedNativeStatus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CommunityFeedNativeStatus.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CommunityFeedNativeStatus.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -281,6 +291,11 @@
 				A07DF1284A0A4A1BA912127D /* EditProfileNativeModel.swift */,
 				9F183ADBA4744FA39CFA5DC7 /* EditProfileNativeFields.swift */,
 				031FEDA29E0E401EA5C6ED3F /* EditProfileNativeScreen.swift */,
+				C59BA6BB01B30CC9D1704EA3 /* CommunityFeedNativeStatus.swift */,
+				30DB789D6C7E79AAEB5B487B /* CommunityFeedNativeRow.swift */,
+				803179B19B045FF27D2D5353 /* CommunityFeedNativeScreen.swift */,
+				6C64B0C6CBAC0C087713348C /* CommunityFeedNativePresentation.swift */,
+				56BCB17E90B80BABAB18568D /* CommunityFeedNativeModel.swift */,
 				7202F5348B4C69AB9987EA8D /* CheckInDetailNativeModel.swift */,
 				9B56539BE4310FF08426B0FB /* CheckInDetailNativeScreen.swift */,
 				0FEE323F041175CE7CB48A5D /* CoffeePeekCheckInCardMapping.swift */,
@@ -570,6 +585,11 @@
 				C22721FA8DE144AF9E0A2BF8 /* EditProfileNativeModel.swift in Sources */,
 				84DBB4A53A194255851C3CF4 /* EditProfileNativeFields.swift in Sources */,
 				C17C79C980964743A1A224AD /* EditProfileNativeScreen.swift in Sources */,
+				91B28778B1017172858BC88D /* CommunityFeedNativeStatus.swift in Sources */,
+				15E615F307B4D33226886FF1 /* CommunityFeedNativeRow.swift in Sources */,
+				DAD5EF785C5BAC5D9F65C43E /* CommunityFeedNativeScreen.swift in Sources */,
+				D8ED759D953BFD65B94F0ADE /* CommunityFeedNativePresentation.swift in Sources */,
+				24B6C1CE91371B3F19C414C4 /* CommunityFeedNativeModel.swift in Sources */,
 				4A4149ED7EA558535A593018 /* CheckInDetailNativeModel.swift in Sources */,
 				553A0D82DFD57F0624F032F7 /* CheckInDetailNativeScreen.swift in Sources */,
 				0A8D371634C33941B0A3B65E /* CoffeePeekCheckInCardMapping.swift in Sources */,

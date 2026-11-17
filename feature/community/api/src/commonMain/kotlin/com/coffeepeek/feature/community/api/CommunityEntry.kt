@@ -32,6 +32,8 @@ class CommunityHost(
     val share: (text: String) -> Unit = {},
     val nativeCard: (@Composable (CommunityCardPresentation, CommunityCardActions, Modifier) -> Unit)? = null,
     val nativeDetail: (@Composable (CommunityPostPresentation, CommunityCardActions, Modifier, @Composable () -> Unit) -> Boolean)? = null,
+    val nativeFeed: (@Composable (CommunityFeedPresentation, CommunityFeedActions, Modifier,
+        @Composable () -> Unit, @Composable () -> Unit) -> Unit)? = null,
 )
 
 /** What the floating action slot needs: whether a user is signed in, when the account or scope changes (close open sheets), and how to reload. */

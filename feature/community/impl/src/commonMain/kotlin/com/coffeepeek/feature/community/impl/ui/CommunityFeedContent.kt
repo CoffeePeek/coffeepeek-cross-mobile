@@ -57,13 +57,19 @@ import com.coffeepeek.feature.community.impl.timeline.CommunityTimeline
 
 private class PhotoPreview(val generation: Long, val thumbnails: List<String>, val originals: List<String>, val index: Int)
 
+internal class CommunityFeedCardCallbacks(
+    val onHomeEditorOpened: () -> Unit,
+    val onPhoto: (List<String>, List<String>, Int) -> Unit,
+)
+
 @Composable
 internal fun CommunityFeedContent(state: CommunityState, onAction: (CommunityAction) -> Unit,
     host: CommunityHost, blockActions: AuthorBlockActions, callbacks: CommunityCallbacks,
     snackbar: SnackbarHostState, bottomClearance: Dp, listState: LazyListState, onRefreshed: () -> Unit,
-    floatingAction: @Composable BoxScope.(CommunityFloating) -> Unit) {
+    floatingAction: @Composable BoxScope.(CommunityFloating) -> Unit, headerAction: @Composable () -> Unit = {}) {
     val guest = state.isLoggedIn == false
     val posts = if (guest) state.items.take(2) else state.items
+    val native = host.nativeFeed != null && host.leaders == null
     var preview by remember { mutableStateOf<PhotoPreview?>(null) }
     var homeEditorOpened by rememberSaveable { mutableStateOf(false) }
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
@@ -72,34 +78,55 @@ internal fun CommunityFeedContent(state: CommunityState, onAction: (CommunityAct
             onAction(CommunityAction.Refresh())
         }
     }
-    ResetFeedOnSessionChange(state.sessionGeneration, listState) { preview = null }
+    if (native) LaunchedEffect(state.sessionGeneration) { preview = null }
+    else ResetFeedOnSessionChange(state.sessionGeneration, listState) { preview = null }
     host.feedViewed(state.firstPageCount, state.timeline == CommunityTimeline.Public)
-    host.prefetchPhotos(listState, posts.map { it.id to it.photos.thumbnails.take(3) })
-    if (!guest) CommunityPagination(state, listState, onAction)
+    if (!native) {
+        host.prefetchPhotos(listState, posts.map { it.id to it.photos.thumbnails.take(3) })
+        if (!guest) CommunityPagination(state, listState, onAction)
+    }
     preview?.takeIf { it.generation == state.sessionGeneration }?.let {
         host.photoViewer(it.thumbnails, it.originals, it.index) { preview = null }
     }
     if (state.editing != null) key(state.sessionGeneration, state.editing.source.id) { EditSheet(state, onAction) }
     if (state.reportingId != null) ReportSheet(state.reportForm(), reportCallbacks(onAction))
-    val sharer = postSharer(host)
+    val cardCallbacks = CommunityFeedCardCallbacks({ homeEditorOpened = true }) { thumbnails, originals, index ->
+        preview = PhotoPreview(state.sessionGeneration, thumbnails, originals, index)
+    }
+    val interactive = state.editing == null && state.reportingId == null && preview == null && !homeEditorOpened
+    CommunityFeedSurface(state, posts, listState, onAction, host, blockActions, callbacks, cardCallbacks,
+        snackbar, bottomClearance, onRefreshed, floatingAction, headerAction, guest, native, interactive)
+}
+
+@Composable
+private fun CommunityFeedSurface(state: CommunityState, posts: List<CommunityPost>, listState: LazyListState,
+    onAction: (CommunityAction) -> Unit, host: CommunityHost, blockActions: AuthorBlockActions,
+    callbacks: CommunityCallbacks, cardCallbacks: CommunityFeedCardCallbacks, snackbar: SnackbarHostState,
+    bottomClearance: Dp, onRefreshed: () -> Unit, floatingAction: @Composable BoxScope.(CommunityFloating) -> Unit,
+    headerAction: @Composable () -> Unit, guest: Boolean, native: Boolean, interactive: Boolean) {
     Box(Modifier.fillMaxSize()) {
-        CommunityFeedList(state, posts, listState, onAction, host, snackbar, bottomClearance, onRefreshed, guest, callbacks.onSignIn, callbacks.onOpenPost) { index, post ->
-            if (guest && index > 0) {
-                Box(Modifier.padding(horizontal = CoffeePeekDimens.spacing4)) {
-                    CommunityGuestTeaser(post, host, callbacks.onSignIn)
-                }
-            } else {
-                CommunityFeedPost(index, post, state, host, postActions(post, state, onAction, callbacks, blockActions,
-                    sharer, { homeEditorOpened = true }) { thumbnails, originals, photoIndex ->
-                    preview = PhotoPreview(state.sessionGeneration, thumbnails, originals, photoIndex)
-                })
-            }
-        }
+        if (native) NativeCommunityFeed(state, posts, onAction, host, blockActions, callbacks, cardCallbacks,
+            snackbar, bottomClearance, onRefreshed, headerAction, interactive)
+        else ComposeCommunityFeed(state, posts, listState, onAction, host, blockActions, callbacks,
+            cardCallbacks, snackbar, bottomClearance, onRefreshed, guest)
         if (guest && posts.isNotEmpty()) {
-            GuestFeedSignInButton(bottomClearance, callbacks.onSignIn)
-        } else {
-            floatingAction(CommunityFloating(state.isLoggedIn, state.sessionGeneration) { onAction(CommunityAction.Refresh()) })
-        }
+            if (!native) GuestFeedSignInButton(bottomClearance, callbacks.onSignIn)
+        } else floatingAction(CommunityFloating(state.isLoggedIn, state.sessionGeneration) { onAction(CommunityAction.Refresh()) })
+    }
+}
+
+@Composable
+private fun ComposeCommunityFeed(state: CommunityState, posts: List<CommunityPost>, listState: LazyListState,
+    onAction: (CommunityAction) -> Unit, host: CommunityHost, blockActions: AuthorBlockActions,
+    callbacks: CommunityCallbacks, cardCallbacks: CommunityFeedCardCallbacks, snackbar: SnackbarHostState,
+    bottomClearance: Dp, onRefreshed: () -> Unit, guest: Boolean) {
+    val sharer = postSharer(host)
+    CommunityFeedList(state, posts, listState, onAction, host, snackbar, bottomClearance, onRefreshed,
+        guest, callbacks.onSignIn, callbacks.onOpenPost) { index, post ->
+        if (guest && index > 0) Box(Modifier.padding(horizontal = CoffeePeekDimens.spacing4)) {
+            CommunityGuestTeaser(post, host, callbacks.onSignIn)
+        } else CommunityFeedPost(index, post, state, host, postActions(post, state, onAction, callbacks, blockActions,
+            sharer, cardCallbacks.onHomeEditorOpened, cardCallbacks.onPhoto))
     }
 }
 
@@ -209,7 +236,7 @@ private fun CommunityFeedPost(index: Int, post: CommunityPost, state: CommunityS
 }
 
 @Composable
-private fun postActions(
+internal fun postActions(
     post: CommunityPost,
     state: CommunityState,
     onAction: (CommunityAction) -> Unit,
