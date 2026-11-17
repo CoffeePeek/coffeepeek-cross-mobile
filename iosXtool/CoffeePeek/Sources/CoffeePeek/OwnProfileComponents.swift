@@ -11,40 +11,87 @@ struct OwnProfileHeader: View {
     let select: (OwnProfileStat) -> Void
     var enabled: (OwnProfileStat) -> Bool = { _ in true }
     var imageLoader: ProfileImageLoader?
+    var signedInLayout = false
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(spacing: 12) {
-                if let avatar = identity.avatar, !avatar.isEmpty {
-                    Button { select(.avatar) } label: { avatarImage }
-                        .buttonStyle(.plain)
-                        .accessibilityLabel(strings["profile_open_avatar"])
-                } else {
-                    avatarImage.accessibilityHidden(true)
+        if signedInLayout { signedInHeader } else { publicHeader }
+    }
+
+    private var signedInHeader: some View {
+        VStack(alignment: .leading, spacing: 18) {
+            if dynamicTypeSize.isAccessibilitySize {
+                HStack(spacing: 12) {
+                    avatar(size: 72)
+                    name
                 }
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(identity.name).font(CoffeePeekNativeStyle.font(21, weight: "Bold", relativeTo: .title2))
-                        .accessibilityAddTraits(.isHeader)
-                    if let about = identity.about, !about.isEmpty {
-                        Text(about).foregroundStyle(CoffeePeekNativeStyle.secondary)
+                counts
+            } else {
+                HStack(alignment: .center, spacing: 12) {
+                    avatar(size: 84)
+                    VStack(alignment: .leading, spacing: 12) {
+                        name
+                        counts
                     }
                 }
             }
-            ViewThatFits(in: .horizontal) {
-                HStack(alignment: .top, spacing: 6) { stat(.checkIns); stat(.shops); stat(.roasters); stat(.followers) }
-                VStack(spacing: 4) {
-                    HStack { stat(.checkIns); stat(.shops) }
-                    HStack { stat(.roasters); stat(.followers) }
+            bio
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private var publicHeader: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 12) {
+                avatar(size: 56)
+                VStack(alignment: .leading, spacing: 4) {
+                    name
+                    bio
                 }
+            }
+            counts
+        }
+    }
+
+    private var counts: some View {
+        ViewThatFits(in: .horizontal) {
+            HStack(alignment: .top, spacing: signedInLayout ? 4 : 6) {
+                stat(.checkIns)
+                stat(.shops)
+                stat(.roasters)
+                stat(.followers)
+            }
+            VStack(spacing: 4) {
+                HStack { stat(.checkIns); stat(.shops) }
+                HStack { stat(.roasters); stat(.followers) }
             }
         }
     }
 
-    private var avatarImage: some View {
-        OwnProfileImage(url: identity.avatar, symbol: "person.crop.circle",
-                        loadImage: imageLoader ?? profileImageLoader(profile))
-            .frame(width: 56, height: 56)
-            .clipShape(Circle())
+    private var name: some View {
+        Text(identity.name).font(CoffeePeekNativeStyle.font(21, weight: "Bold", relativeTo: .title2))
+            .accessibilityAddTraits(.isHeader)
+    }
+
+    @ViewBuilder
+    private var bio: some View {
+        if let about = identity.about, !about.isEmpty {
+            Text(about).foregroundStyle(CoffeePeekNativeStyle.secondary)
+        }
+    }
+
+    @ViewBuilder
+    private func avatar(size: CGFloat) -> some View {
+        let image = OwnProfileImage(url: identity.avatar, symbol: "person.crop.circle",
+                                    loadImage: imageLoader ?? profileImageLoader(profile))
+            .frame(width: size, height: size).clipShape(Circle())
+        if let avatar = identity.avatar, !avatar.isEmpty {
+            Button { select(.avatar) } label: { image }
+                .buttonStyle(.plain)
+                .accessibilityLabel(strings["profile_open_avatar"])
+        } else {
+            image.accessibilityHidden(true)
+        }
     }
 
     @ViewBuilder
@@ -61,15 +108,20 @@ struct OwnProfileHeader: View {
     }
 
     private func statLabel(_ data: (count: Int32, key: String)) -> some View {
-        VStack(spacing: 3) {
+        let compact = signedInLayout && !dynamicTypeSize.isAccessibilitySize
+        return VStack(alignment: compact ? .leading : .center, spacing: 3) {
             Text(data.count.formatted())
-                .font(CoffeePeekNativeStyle.font(18, weight: "Bold", relativeTo: .headline))
+                .font(CoffeePeekNativeStyle.font(compact ? 21 : 18, weight: "Bold", relativeTo: .headline))
+                .lineLimit(compact ? 1 : nil)
+                .minimumScaleFactor(compact ? 0.72 : 1)
             Text(strings[data.key])
-                .font(CoffeePeekNativeStyle.font(11, relativeTo: .caption))
+                .font(CoffeePeekNativeStyle.font(compact ? 12 : 11, relativeTo: .caption))
                 .foregroundStyle(CoffeePeekNativeStyle.secondary)
+                .lineLimit(compact ? 1 : nil)
+                .minimumScaleFactor(compact ? 0.74 : 1)
         }
-        .fixedSize(horizontal: true, vertical: false)
-        .frame(maxWidth: .infinity, minHeight: 44)
+        .fixedSize(horizontal: !compact, vertical: false)
+        .frame(maxWidth: .infinity, minHeight: 44, alignment: compact ? .leading : .center)
     }
 
     private func statValue(_ kind: OwnProfileStat) -> (count: Int32, key: String) {
@@ -87,24 +139,43 @@ struct OwnProfileTabs: View {
     let selection: OwnProfileTab
     let strings: OwnProfileStrings
     let select: (OwnProfileTab) -> Void
+    var equalWidth = false
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     var body: some View {
-        ScrollView(.horizontal) {
-            HStack(spacing: 16) {
-                ForEach(OwnProfileTab.allCases) { tab in
-                    Button { select(tab) } label: {
-                        VStack(spacing: 8) {
-                            Text(strings[tab.rawValue]).fixedSize(horizontal: true, vertical: false)
-                            Capsule().fill(selection == tab ? CoffeePeekNativeStyle.accent : .clear).frame(height: 3)
-                        }
-                        .frame(minHeight: 44)
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityAddTraits(selection == tab ? .isSelected : [])
+        if equalWidth && !dynamicTypeSize.isAccessibilitySize {
+            HStack(spacing: 0) {
+                ForEach(OwnProfileTab.allCases) { tab in tabButton(tab, fillsWidth: true) }
+            }
+        } else {
+            ScrollView(.horizontal) {
+                HStack(spacing: 16) {
+                    ForEach(OwnProfileTab.allCases) { tab in tabButton(tab, fillsWidth: false) }
                 }
             }
+            .scrollIndicators(.hidden)
         }
-        .scrollIndicators(.hidden)
+    }
+
+    private func tabButton(_ tab: OwnProfileTab, fillsWidth: Bool) -> some View {
+        Button { select(tab) } label: {
+            VStack(spacing: 8) {
+                if equalWidth {
+                    Text(strings[tab.rawValue])
+                        .font(CoffeePeekNativeStyle.font(16, weight: selection == tab ? "Semibold" : "Regular"))
+                        .foregroundStyle(selection == tab ? CoffeePeekNativeStyle.foreground : CoffeePeekNativeStyle.secondary)
+                        .fixedSize(horizontal: !fillsWidth, vertical: false)
+                        .frame(maxWidth: fillsWidth ? .infinity : nil)
+                } else {
+                    Text(strings[tab.rawValue]).fixedSize(horizontal: true, vertical: false)
+                }
+                Capsule().fill(selection == tab ? CoffeePeekNativeStyle.accent : .clear).frame(height: 3)
+            }
+            .frame(minHeight: 44, alignment: equalWidth ? .bottom : .center)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityAddTraits(selection == tab ? .isSelected : [])
     }
 }
 
@@ -134,19 +205,30 @@ struct OwnProfileImage: View {
     let url: String?
     let symbol: String
     let fits: Bool
+    let fallbackUrl: String?
     let loadImage: ProfileImageLoader
     @State private var image: UIImage?
     @State private var observation: IosOwnProfileObservation?
-    @State private var requested: String?
+    @State private var fallbackObservation: IosOwnProfileObservation?
+    @State private var requested: UUID?
+
+    private struct Sources: Equatable {
+        let preview: String?
+        let fallback: String?
+    }
+
+    private var sources: Sources { Sources(preview: url, fallback: fallbackUrl) }
 
     init(url: String?, profile: IosOwnProfile?, symbol: String, fits: Bool = false) {
         self.init(url: url, symbol: symbol, fits: fits, loadImage: profileImageLoader(profile))
     }
 
-    init(url: String?, symbol: String, fits: Bool = false, loadImage: @escaping ProfileImageLoader) {
+    init(url: String?, symbol: String, fits: Bool = false, fallbackUrl: String? = nil,
+         loadImage: @escaping ProfileImageLoader) {
         self.url = url
         self.symbol = symbol
         self.fits = fits
+        self.fallbackUrl = fallbackUrl
         self.loadImage = loadImage
     }
 
@@ -166,7 +248,7 @@ struct OwnProfileImage: View {
         }
         .accessibilityHidden(true)
         .onAppear(perform: load)
-        .onChange(of: url) { _, _ in load() }
+        .onChange(of: sources) { _, _ in load() }
         .onDisappear { cancel() }
     }
 
@@ -174,31 +256,45 @@ struct OwnProfileImage: View {
         cancel()
         image = nil
         guard let url, !url.isEmpty else { return }
-        requested = url
+        let request = UUID()
+        requested = request
         observation = loadImage(url) { next in
-            if requested == url { image = next }
+            guard requested == request else { return }
+            if let next {
+                image = next
+            } else if let fallbackUrl, !fallbackUrl.isEmpty, fallbackUrl != url {
+                loadFallback(fallbackUrl, request: request)
+            }
+        }
+    }
+
+    private func loadFallback(_ url: String, request: UUID) {
+        fallbackObservation = loadImage(url) { next in
+            if requested == request { image = next }
         }
     }
 
     private func cancel() {
-        observation?.cancel()
-        observation = nil
         requested = nil
+        observation?.cancel()
+        fallbackObservation?.cancel()
+        observation = nil
+        fallbackObservation = nil
     }
 }
 
 #Preview("Own profile header light") {
-    OwnProfileHeader(identity: IosOwnProfileIdentity(name: "CoffeePeek", about: "Кофе и прогулки", avatar: nil,
+    OwnProfileHeader(identity: IosOwnProfileIdentity(name: "@CoffeePeek", about: "Кофе и прогулки", avatar: nil,
         checkIns: 13, shops: 4, roasters: 2, followers: 18, canOpenFollowers: true),
-        strings: OwnProfileStrings(languageTag: "ru"), profile: nil, select: { _ in })
+        strings: OwnProfileStrings(languageTag: "ru"), profile: nil, select: { _ in }, signedInLayout: true)
     .padding()
     .preferredColorScheme(.light)
 }
 
 #Preview("Own profile header dark") {
-    OwnProfileHeader(identity: IosOwnProfileIdentity(name: "CoffeePeek", about: "Кава і прагулкі", avatar: nil,
+    OwnProfileHeader(identity: IosOwnProfileIdentity(name: "@CoffeePeek", about: "Кава і прагулкі", avatar: nil,
         checkIns: 13, shops: 4, roasters: 2, followers: 18, canOpenFollowers: true),
-        strings: OwnProfileStrings(languageTag: "be"), profile: nil, select: { _ in })
+        strings: OwnProfileStrings(languageTag: "be"), profile: nil, select: { _ in }, signedInLayout: true)
     .padding()
     .preferredColorScheme(.dark)
 }

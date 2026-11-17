@@ -35,7 +35,7 @@ data class IosOwnProfileCheckIn(
     val liked: Boolean, val score: String?, val photos: List<IosOwnProfilePhoto>, val brew: IosOwnProfileBrew?,
 )
 
-data class IosOwnProfilePhoto(val url: String?, val canOpen: Boolean)
+data class IosOwnProfilePhoto(val url: String?, val canOpen: Boolean, val fallbackUrl: String?)
 
 data class IosOwnProfileBrew(
     val bean: String?, val roaster: String?, val method: String?, val dose: String?,
@@ -76,7 +76,8 @@ internal fun OwnProfileSnapshot.iosState(language: String): IosOwnProfileState {
 private fun OwnProfileSnapshot.iosIdentity(): IosOwnProfileIdentity? {
     val own = identity ?: return null
     val public = publicProfile
-    return IosOwnProfileIdentity(public?.nickname ?: own.userName, public?.about ?: own.about,
+    val name = own.address?.slug?.takeIf(String::isNotBlank)?.let { "@$it" } ?: public?.nickname ?: own.userName
+    return IosOwnProfileIdentity(name, public?.about ?: own.about,
         public?.avatarUrl ?: own.avatarUrl, public?.stats?.checkIns ?: own.checkInCount,
         public?.stats?.coffeeShops ?: own.addedShopsCount, public?.stats?.roasters ?: own.addedRoastersCount,
         public?.stats?.followers ?: own.followersCount, public != null)
@@ -91,7 +92,7 @@ internal fun OwnProfileCheckInSnapshot.iosCheckIn(
     return IosOwnProfileCheckIn(row.id, name, avatar, row.venue, row.coffeeShopSlug, row.isHome, row.note,
         utcIsoToLocalDateTime(row.createdAt), drinkName(language), row.helpfulCount, row.isHelpfulByCurrentUser,
         row.scores?.let { (kotlin.math.round(it.average * 10) / 10).toString() },
-        originalPhotos.indices.map { IosOwnProfilePhoto(displayPhoto(it), canOpenPhoto(it)) }, brew())
+        originalPhotos.indices.map { IosOwnProfilePhoto(displayPhoto(it), canOpenPhoto(it), fallbackPhoto(it)) }, brew())
 }
 
 private fun OwnProfileCheckInSnapshot.brew(): IosOwnProfileBrew? = checkIn.preparation?.let { value ->

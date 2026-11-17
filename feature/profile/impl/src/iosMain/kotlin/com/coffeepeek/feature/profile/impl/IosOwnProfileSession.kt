@@ -43,7 +43,7 @@ class OwnProfileSnapshot internal constructor(own: OwnProfileState, public: Publ
     val refreshing = active && own.isRefreshing
     val failed = active && own.error != null
     val refreshFailed = active && own.refreshError != null
-    val checkIns = public?.checkIns.orEmpty().take(2).takeIf { publicProfile != null }.orEmpty().map(::OwnProfileCheckInSnapshot)
+    val checkIns = public?.checkIns.orEmpty().takeIf { publicProfile != null }.orEmpty().map(::OwnProfileCheckInSnapshot)
     val checkInsLoading = publicProfile != null && public?.isLoadingCheckIns == true
     val checkInsFailed = publicProfile != null && public?.checkInsError != null
     val followersOpen = publicProfile != null && public?.connectionKind == PublicProfileConnectionKind.Followers
@@ -61,6 +61,7 @@ class OwnProfileCheckInSnapshot internal constructor(val checkIn: PublicProfileC
 
     fun displayPhoto(index: Int) = sources.display(index)
     fun canOpenPhoto(index: Int) = sources.canOpen(index)
+    fun fallbackPhoto(index: Int) = sources.upgrade(index)
     fun drinkName(language: String) = checkIn.drink.profileCheckInDrink(language)
 }
 

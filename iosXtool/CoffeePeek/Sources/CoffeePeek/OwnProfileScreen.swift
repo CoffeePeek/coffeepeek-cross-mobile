@@ -73,7 +73,7 @@ private struct OwnProfileScreen: View {
     private var menu: some View {
         HStack {
             Text(model.strings["profile_title"])
-                .font(CoffeePeekNativeStyle.font(28, weight: "Bold", relativeTo: .title))
+                .font(CoffeePeekNativeStyle.font(24, weight: "Medium", relativeTo: .title))
                 .accessibilityAddTraits(.isHeader)
             Spacer(minLength: 0)
             if model.state.active {
@@ -89,7 +89,12 @@ private struct OwnProfileScreen: View {
                     Button(model.strings["profile_menu_logout"], systemImage: "rectangle.portrait.and.arrow.right",
                            role: .destructive) { model.logoutPresented = true }
                 } label: {
-                    Image(systemName: "ellipsis").frame(width: 44, height: 44)
+                    Image(systemName: "ellipsis").frame(width: 46, height: 46)
+                        .background(CoffeePeekNativeStyle.surface, in: Circle())
+                        .overlay {
+                            Circle().strokeBorder(CoffeePeekNativeStyle.border.opacity(0.45))
+                                .allowsHitTesting(false)
+                        }
                 }
                 .accessibilityLabel(model.strings["profile_actions"])
             }
@@ -100,15 +105,16 @@ private struct OwnProfileScreen: View {
     @ViewBuilder
     private func profileContent(viewport: CGFloat) -> some View {
         if let identity = model.state.identity {
-            OwnProfileHeader(identity: identity, strings: model.strings, profile: model.profile, select: model.selectStat)
-            if let activity = model.activity {
-                OwnProfileActivityView(state: activity, model: model, strings: model.strings)
-            }
+            OwnProfileHeader(identity: identity, strings: model.strings, profile: model.profile,
+                             select: model.selectStat, signedInLayout: true)
             if model.state.refreshFailed {
                 OwnProfileRetry(message: model.strings["profile_update_failed"], strings: model.strings,
                                 retry: model.profile.refresh)
             }
-            OwnProfileTabs(selection: model.selected, strings: model.strings, select: model.select)
+            OwnProfileTabs(selection: model.selected, strings: model.strings, select: model.select, equalWidth: true)
+                .background(alignment: .bottom) {
+                    Rectangle().fill(CoffeePeekNativeStyle.border.opacity(0.45)).frame(height: 1)
+                }
             profileTab(viewport: viewport)
         } else if model.state.loading || model.state.refreshing {
             ProgressView().frame(maxWidth: .infinity, minHeight: 130)
@@ -119,11 +125,47 @@ private struct OwnProfileScreen: View {
         }
     }
 
+    private var checkInsTab: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            if let activity = model.activity {
+                OwnProfileActivityView(state: activity, model: model, strings: model.strings)
+            }
+            checkInFilter
+            OwnProfileCheckIns(model: model)
+        }
+    }
+
+    private var checkInFilter: some View {
+        Menu {
+            Picker(model.strings["profile_check_in_source"], selection: $model.checkInKind) {
+                ForEach(OwnProfileCheckInKind.allCases) { kind in Text(model.strings[kind.rawValue]).tag(kind) }
+            }
+        } label: {
+            HStack {
+                Text(model.strings[model.checkInKind.rawValue])
+                Spacer(minLength: 8)
+                Image(systemName: "chevron.up.chevron.down").font(.footnote)
+                    .foregroundStyle(CoffeePeekNativeStyle.secondary)
+                    .accessibilityHidden(true)
+            }
+            .padding(.horizontal, 16)
+            .frame(minHeight: 46)
+            .background(CoffeePeekNativeStyle.foreground.opacity(0.04), in: RoundedRectangle(cornerRadius: 16))
+            .overlay {
+                RoundedRectangle(cornerRadius: 16).strokeBorder(CoffeePeekNativeStyle.border)
+                    .allowsHitTesting(false)
+            }
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(model.strings["profile_check_in_source"])
+        .accessibilityValue(model.strings[model.checkInKind.rawValue])
+    }
+
     @ViewBuilder
     private func profileTab(viewport: CGFloat) -> some View {
         switch model.selected {
         case .checkIns:
-            OwnProfileCheckIns(model: model)
+            checkInsTab
         case .collections:
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
@@ -157,6 +199,7 @@ final class OwnProfileModel: ObservableObject {
     @Published private(set) var state: IosOwnProfileState
     @Published private(set) var activity: IosOwnProfileActivity?
     @Published private(set) var selected: OwnProfileTab = .checkIns
+    @Published var checkInKind: OwnProfileCheckInKind = .all
     @Published private(set) var strings: OwnProfileStrings
     @Published private(set) var photoViewer: IosPhotoViewer?
     @Published var preferences: OwnProfileSlot?
@@ -178,6 +221,10 @@ final class OwnProfileModel: ObservableObject {
         observation?.cancel()
         calendarObservation?.cancel()
         profile.close()
+    }
+
+    var visibleCheckIns: [IosOwnProfileCheckIn] {
+        Array(state.checkIns.lazy.filter { self.checkInKind.includes($0) }.prefix(2))
     }
 
     var followersPresented: Binding<Bool> {
@@ -246,6 +293,7 @@ final class OwnProfileModel: ObservableObject {
             shelf = nil
             collections = nil
             selected = .checkIns
+            checkInKind = .all
         } else if next.identity != nil && calendarObservation == nil {
             observeCalendar()
         }
@@ -290,6 +338,22 @@ enum OwnProfileTab: String, CaseIterable, Identifiable {
     case collections = "profile_section_favorites"
     case shelf = "profile_section_shelf"
     var id: Self { self }
+}
+
+enum OwnProfileCheckInKind: String, CaseIterable, Identifiable {
+    case all = "history_all"
+    case shop = "history_at_shop"
+    case home = "history_at_home"
+
+    var id: Self { self }
+
+    func includes(_ row: IosOwnProfileCheckIn) -> Bool {
+        switch self {
+        case .all: true
+        case .shop: !row.home
+        case .home: row.home
+        }
+    }
 }
 
 private enum OwnProfileContribution: String, CaseIterable, Identifiable {

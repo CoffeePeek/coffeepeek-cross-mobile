@@ -72,3 +72,7 @@
 "profile_stat_shops" = "Кавярні";
 "profile_title" = "Профіль";
 "profile_update_failed" = "Не ўдалося абнавіць профіль";
+"profile_check_in_source" = "Тып чэкіна";
+"history_all" = "Усе";
+"history_at_shop" = "У кавярні";
+"history_at_home" = "Дома";
