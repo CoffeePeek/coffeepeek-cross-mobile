@@ -22,6 +22,7 @@ internal fun nativeHomeDetailPresentation(state: HomeCheckInDetailState, formatD
         retryLabel = if (canRetryHomeDetail(state)) stringResource(Res.string.home_check_in_retry) else null,
         notice = notice.takeIf { active }, editLabel = stringResource(Res.string.home_check_in_edit),
         deleteLabel = stringResource(Res.string.home_check_in_delete), confirmation = homeDetailConfirmation(state),
+        menuLabel = stringResource(Res.string.home_check_in_actions),
     )
 }
 

@@ -8,15 +8,7 @@ struct CheckInDetailNativePresentation {
     var notice: String?
     var dismissAllowed = true
     var card: CoffeePeekCheckInCardData?
-    var actions: [CheckInDetailNativeAction] = []
     var confirmation: CheckInDetailNativeConfirmation?
-}
-
-struct CheckInDetailNativeAction: Identifiable {
-    let id: String
-    let label: String
-    var enabled = true
-    var destructive = false
 }
 
 struct CheckInDetailNativeConfirmation {
@@ -43,7 +35,6 @@ struct CheckInDetailNativeContent: View {
                         if let card = state.card {
                             CoffeePeekCheckInCard(data: card, loadImage: loadImage, perform: perform, openPhoto: openPhoto)
                         }
-                        if !state.actions.isEmpty { footerActions.padding(.horizontal, 16) }
                     }
                     .padding(.top, 16).padding(.bottom, 32)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -85,22 +76,6 @@ struct CheckInDetailNativeContent: View {
             .padding(.horizontal, 16)
     }
 
-    private var footerActions: some View {
-        VStack(spacing: 8) {
-            ForEach(state.actions) { action in
-                if action.destructive {
-                    Button(action.label, role: .destructive) { perform(action.id) }
-                        .buttonStyle(.plain).foregroundStyle(.red).frame(maxWidth: .infinity, minHeight: 48)
-                        .disabled(!action.enabled)
-                } else {
-                    Button { perform(action.id) } label: { Text(action.label).frame(maxWidth: .infinity, minHeight: 32) }
-                        .buttonStyle(.borderedProminent).buttonBorderShape(.capsule).controlSize(.large)
-                        .foregroundStyle(.black).disabled(!action.enabled)
-                }
-            }
-        }
-    }
-
     private var confirmationPresented: Binding<Bool> {
         Binding(get: { state.active && state.confirmation != nil }, set: { _ in })
     }
@@ -116,9 +91,9 @@ private func checkInDetailPreview(home: Bool) -> CheckInDetailNativePresentation
     card.rating = 4
     card.ratingLabel = "4 из 5"
     card.drink = "Фильтр"
-    var state = CheckInDetailNativePresentation(card: card)
-    state.actions = [.init(id: "edit", label: "Редактировать"), .init(id: "delete", label: "Удалить", destructive: true)]
-    return state
+    card.menu = [.init(id: "edit", label: "Редактировать"), .init(id: "delete", label: "Удалить", destructive: true)]
+    card.actions = ["edit", "delete"]
+    return CheckInDetailNativePresentation(card: card)
 }
 
 #Preview("Home detail light") {

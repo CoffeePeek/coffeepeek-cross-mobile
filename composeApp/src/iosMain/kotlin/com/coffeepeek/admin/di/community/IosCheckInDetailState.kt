@@ -6,7 +6,7 @@ internal data class NativeCheckInDetailPresentation(
     val card: CommunityCardPresentation?, val title: String, val backLabel: String,
     val active: Boolean = true, val dismissAllowed: Boolean = true,
     val loadingLabel: String? = null, val errorText: String? = null, val retryLabel: String? = null,
-    val notice: String? = null, val actions: List<IosCheckInDetailAction> = emptyList(),
+    val notice: String? = null,
     val confirmation: IosCheckInDetailConfirmation? = null,
 )
 
@@ -20,9 +20,7 @@ class IosCheckInDetailState internal constructor(data: NativeCheckInDetailPresen
     val retryLabel = data?.retryLabel.takeIf { active }
     val notice = data?.notice.takeIf { active }
     val card = card.takeIf { active && data?.card != null }
-    val actions = data?.actions.orEmpty().takeIf { active }.orEmpty()
     val confirmation = data?.confirmation.takeIf { active }
 }
 
-class IosCheckInDetailAction internal constructor(val id: String, val label: String, val enabled: Boolean, val destructive: Boolean)
 class IosCheckInDetailConfirmation internal constructor(val title: String, val body: String, val confirmLabel: String, val cancelLabel: String)

@@ -52,9 +52,6 @@ private final class CheckInDetailNativeModel: ObservableObject {
         var result = CheckInDetailNativePresentation(loadingLabel: state.loadingLabel, errorText: state.errorText,
             retryLabel: state.retryLabel, notice: state.notice, dismissAllowed: state.dismissAllowed)
         if let card = state.card, card.active { result.card = CoffeePeekCheckInCardData(state: card) }
-        result.actions = state.actions.map {
-            CheckInDetailNativeAction(id: $0.id, label: $0.label, enabled: $0.enabled, destructive: $0.destructive)
-        }
         if let confirmation = state.confirmation {
             result.confirmation = CheckInDetailNativeConfirmation(title: confirmation.title, body: confirmation.body,
                 confirmLabel: confirmation.confirmLabel, cancelLabel: confirmation.cancelLabel)

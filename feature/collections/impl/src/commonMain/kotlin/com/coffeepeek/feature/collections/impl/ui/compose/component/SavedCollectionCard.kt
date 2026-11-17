@@ -1,7 +1,5 @@
 package com.coffeepeek.feature.collections.impl.ui.compose.component
 
-import com.coffeepeek.core.designsystem.theme.CoffeePeekColors
-
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -12,17 +10,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawWithContent
-import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.CompositingStrategy
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.coffeepeek.core.designsystem.component.CoffeePeekFrostedSurface
 import com.coffeepeek.core.designsystem.component.CoffeePeekImagePlaceholder
 import com.coffeepeek.core.designsystem.component.CoffeePeekPhotoBackdrop
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
@@ -37,17 +30,16 @@ internal fun SavedCollectionCard(value: SavedCollectionSummary, onClick: () -> U
     CoffeePeekPhotoBackdrop(modifier.aspectRatio(1f).clip(RoundedCornerShape(16.dp))
         .clickable(role = Role.Button, onClick = onClick).semantics(mergeDescendants = true) {},
         photo = { image(Modifier.matchParentSize()) },
-        overlay = { SavedCollectionCardCaption(value, Modifier.align(Alignment.BottomCenter)) })
+        overlay = { SavedCollectionCardCaption(value, Modifier.matchParentSize()) })
 }
 
 @Composable
 private fun SavedCollectionCardCaption(value: SavedCollectionSummary, modifier: Modifier) {
-    Box(modifier.fillMaxWidth().heightIn(min = 96.dp)) {
-        CoffeePeekFrostedSurface(Modifier.matchParentSize().bottomBlurFade(),
-            shape = RoundedCornerShape(0.dp), tint = Color.Black.copy(alpha = .2f), blurRadius = 14.dp)
-        Box(Modifier.matchParentSize().background(Brush.verticalGradient(
-            0f to Color.Transparent, .4f to Color.Black.copy(alpha = .2f), 1f to Color.Black.copy(alpha = .8f))))
-        Column(Modifier.align(Alignment.BottomStart).fillMaxWidth().background(CoffeePeekColors.PhotoBadgeOverlay).padding(12.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+    Box(modifier.background(Brush.verticalGradient(
+        0f to Color.Transparent, .35f to Color.Black.copy(alpha = .08f),
+        .65f to Color.Black.copy(alpha = .45f), 1f to Color.Black.copy(alpha = .85f),
+    ))) {
+        Column(Modifier.align(Alignment.BottomStart).fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(value.title, style = MaterialTheme.typography.titleMedium, color = Color.White,
                 maxLines = 2, overflow = TextOverflow.Ellipsis)
             Text(stringResource(Res.string.collections_saved_count, value.itemCount),
@@ -56,15 +48,10 @@ private fun SavedCollectionCardCaption(value: SavedCollectionSummary, modifier: 
     }
 }
 
-private fun Modifier.bottomBlurFade(): Modifier = graphicsLayer { compositingStrategy = CompositingStrategy.Offscreen }
-    .drawWithContent {
-        drawContent()
-        drawRect(Brush.verticalGradient(0f to Color.Transparent, .3f to Color.White.copy(alpha = .12f),
-            1f to Color.White), blendMode = BlendMode.DstIn)
-    }
-
 @Composable private fun SavedCollectionCardSample(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
-    SavedCollectionCard(SavedCollectionSummary("sample", "Кофейни выходного дня", itemCount = 7), {}, Modifier.width(180.dp))
+    SavedCollectionCard(SavedCollectionSummary("sample", "Кофейни выходного дня", itemCount = 7), {}, Modifier.width(180.dp)) {
+        Box(it.background(Brush.horizontalGradient(listOf(Color(0xFFF1D5A9), Color(0xFF669A91), Color(0xFFEDDCC5)))))
+    }
 }
 @Preview @Composable private fun SavedCollectionCardLightPreview() = SavedCollectionCardSample(false)
 @Preview @Composable private fun SavedCollectionCardDarkPreview() = SavedCollectionCardSample(true)

@@ -185,6 +185,7 @@ struct CoffeePeekCheckInCard: View {
         switch action {
         case "share": "square.and.arrow.up"
         case "edit": "square.and.pencil"
+        case "delete": "trash"
         case "hide": "eye.slash"
         case "report": "flag"
         case "block": "nosign"

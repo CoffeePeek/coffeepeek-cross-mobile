@@ -7,6 +7,16 @@ import com.coffeepeek.feature.homecheckin.impl.ui.compose.model.*
 import kotlin.test.*
 
 class NativeHomeDetailPresentationTest {
+    @Test fun menuDeleteOnlyRequestsConfirmationAndEditKeepsItsExistingIntent() {
+        val sent = mutableListOf<HomeCheckInDetailAction>()
+        val state = HomeCheckInDetailState(entry = previewHomePreparation())
+        val actions = nativeHomeDetailActions(state, sent::add).actions
+        actions.getValue("edit")()
+        actions.getValue("delete")()
+        assertEquals(listOf<HomeCheckInDetailAction>(HomeCheckInDetailAction.Edit, HomeCheckInDetailAction.RequestDelete), sent)
+        assertFalse("confirmDelete" in actions)
+    }
+
     @Test fun unavailableInlinePhotoDoesNotExposeOriginalOrDetailFallback() {
         val photo = nativeHomeDetailPhoto(HomePreparationPhoto("photo", "original", thumbnailUrl = "", detailUrl = "detail"), "photo")
         assertEquals("", photo.previewUrl)

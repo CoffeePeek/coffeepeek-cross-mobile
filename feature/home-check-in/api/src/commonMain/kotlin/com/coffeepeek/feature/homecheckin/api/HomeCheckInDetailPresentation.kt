@@ -11,6 +11,7 @@ data class HomeCheckInDetailPresentation(
     val errorText: String?, val retryLabel: String?, val notice: String?,
     val editLabel: String, val deleteLabel: String,
     val confirmation: HomeCheckInDetailConfirmation?,
+    val menuLabel: String,
 )
 
 data class HomeCheckInDetailCard(

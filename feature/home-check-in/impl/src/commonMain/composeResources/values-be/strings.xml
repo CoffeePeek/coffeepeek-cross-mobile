@@ -1,4 +1,5 @@
 <resources>
+    <string name="home_check_in_actions">Дзеянні з чэкінам</string>
     <string name="home_check_in_home">Кава дома</string>
     <string name="home_check_in_title_fallback">Хатняе прыгатаванне</string>
     <string name="home_check_in_rejected">Не апублікаваны</string>
