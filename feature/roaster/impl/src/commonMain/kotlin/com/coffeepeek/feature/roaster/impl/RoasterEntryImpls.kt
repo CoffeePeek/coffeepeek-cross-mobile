@@ -8,6 +8,7 @@ import com.coffeepeek.feature.roaster.impl.ui.compose.component.RoasterSearchHea
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.key
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -41,7 +42,8 @@ fun createRoasterDiscoveryEntry(
     analytics: RoasterAnalytics = RoasterAnalytics.None,
     screenAnalytics: RoasterScreenAnalytics = RoasterScreenAnalytics.None,
     onFavoriteFeedback: () -> Unit = {},
-): RoasterDiscoveryEntry = RoasterDiscoveryApiImpl(repository, favorites, analytics, screenAnalytics, roasterImage(), onFavoriteFeedback)
+    nativeContent: NativeRoasterDiscoveryContent? = null,
+): RoasterDiscoveryEntry = RoasterDiscoveryApiImpl(repository, favorites, analytics, screenAnalytics, roasterImage(), onFavoriteFeedback, nativeContent)
 
 /** Caller owns navigation/browser and destination lifetime; shared visuals are assembled inside the feature. */
 fun createRoasterDetailEntry(
@@ -51,7 +53,11 @@ fun createRoasterDetailEntry(
     analytics: RoasterAnalytics = RoasterAnalytics.None,
     screenAnalytics: RoasterScreenAnalytics = RoasterScreenAnalytics.None,
     onFavoriteFeedback: () -> Unit = {},
-): RoasterDetailEntry = RoasterDetailApiImpl(repository, favorites, shopPhotos, analytics, screenAnalytics, roasterImage(), { url, dismiss -> CoffeePeekPhotoViewer(url, dismiss) }, onFavoriteFeedback)
+    nativeContent: NativeRoasterDetailContent? = null,
+): RoasterDetailEntry {
+    return RoasterDetailApiImpl(repository, favorites, shopPhotos, analytics, screenAnalytics, roasterImage(),
+        { url, dismiss -> CoffeePeekPhotoViewer(url, dismiss) }, onFavoriteFeedback, nativeContent)
+}
 
 private class RoasterDiscoveryApiImpl(
     private val repository: RoasterRepository,
@@ -60,6 +66,7 @@ private class RoasterDiscoveryApiImpl(
     private val screenAnalytics: RoasterScreenAnalytics,
     private val image: RoasterImage,
     private val onFavoriteFeedback: () -> Unit,
+    private val nativeContent: NativeRoasterDiscoveryContent?,
 ) : RoasterDiscoveryEntry {
     private val instanceKey = Uuid.random().toString()
 
@@ -77,8 +84,14 @@ private class RoasterDiscoveryApiImpl(
     override fun Section(query: String, selectedRoasters: Set<String>, favoritesOnly: Boolean,
         onOpenRoaster: (String) -> Unit, onAddRoaster: () -> Unit, modifier: Modifier) {
         key(this) {
-            RoasterDiscoverySection(model(), query, selectedRoasters, favoritesOnly, image, { CoffeePeekLoadErrorContent(it) }, { RoasterCatalogSuggestion(onAddRoaster, it) }, screenAnalytics,
-                onFavoriteFeedback, modifier) { event -> when (event) { is RoasterListEvent.OpenRoaster -> onOpenRoaster(event.slug) } }
+            val model = model()
+            val session = remember(model) { NativeRoasterListSession(model) }
+            val host = NativeRoasterDiscoveryHost(query, selectedRoasters, favoritesOnly, false,
+                onOpenRoaster, onAddRoaster, {}, {}, onFavoriteFeedback, modifier, 0f)
+            if (nativeContent?.invoke(session, host) != true) {
+                RoasterDiscoverySection(model, query, selectedRoasters, favoritesOnly, image, { CoffeePeekLoadErrorContent(it) }, { RoasterCatalogSuggestion(onAddRoaster, it) }, screenAnalytics,
+                    onFavoriteFeedback, modifier) { event -> when (event) { is RoasterListEvent.OpenRoaster -> onOpenRoaster(event.slug) } }
+            }
         }
     }
 
@@ -87,10 +100,16 @@ private class RoasterDiscoveryApiImpl(
         onOpenRoaster: (String) -> Unit, onAddRoaster: () -> Unit, onQueryChange: (String) -> Unit,
         onCancel: () -> Unit, modifier: Modifier, bottomClearance: Dp) {
         key(this) {
-            RoasterListScreen(model(), query, selectedRoasters, favoritesOnly, image, { CoffeePeekLoadErrorContent(it) }, { RoasterCatalogSuggestion(onAddRoaster, it) }, screenAnalytics,
-                onFavoriteFeedback, bottomClearance, modifier,
-                header = { RoasterSearchHeader(query, onQueryChange, onCancel, screenAnalytics) }) { event ->
-                when (event) { is RoasterListEvent.OpenRoaster -> onOpenRoaster(event.slug) }
+            val model = model()
+            val session = remember(model) { NativeRoasterListSession(model) }
+            val host = NativeRoasterDiscoveryHost(query, selectedRoasters, favoritesOnly, true,
+                onOpenRoaster, onAddRoaster, onQueryChange, onCancel, onFavoriteFeedback, modifier, bottomClearance.value)
+            if (nativeContent?.invoke(session, host) != true) {
+                RoasterListScreen(model, query, selectedRoasters, favoritesOnly, image, { CoffeePeekLoadErrorContent(it) }, { RoasterCatalogSuggestion(onAddRoaster, it) }, screenAnalytics,
+                    onFavoriteFeedback, bottomClearance, modifier,
+                    header = { RoasterSearchHeader(query, onQueryChange, onCancel, screenAnalytics) }) { event ->
+                    when (event) { is RoasterListEvent.OpenRoaster -> onOpenRoaster(event.slug) }
+                }
             }
         }
     }
@@ -110,6 +129,7 @@ private class RoasterDetailApiImpl(
     private val image: RoasterImage,
     private val photoViewer: RoasterPhotoViewer,
     private val onFavoriteFeedback: () -> Unit,
+    private val nativeContent: NativeRoasterDetailContent?,
 ) : RoasterDetailEntry {
     private val instanceKey = Uuid.random().toString()
 
@@ -119,14 +139,21 @@ private class RoasterDetailApiImpl(
             val model = viewModel(key = "roaster-detail:$instanceKey:$slug") {
                 RoasterDetailViewModel(slug, repository, favorites, shopPhotos, analytics.detail())
             }
-            androidx.compose.runtime.CompositionLocalProvider(com.coffeepeek.feature.roaster.impl.ui.compose.component.LocalRoasterShare provides onShare) {
-            RoasterDetailScreen(model, image, photoViewer, screenAnalytics, onFavoriteFeedback, modifier) { event ->
-                when (event) {
-                    RoasterDetailEvent.Back -> onBack()
-                    is RoasterDetailEvent.OpenShop -> onOpenShop(event.slug)
-                    is RoasterDetailEvent.OpenLink -> onOpenLink(event.url)
-                }
+            val session = remember(model) { NativeRoasterDetailSession(model) }
+            val host = NativeRoasterDetailHost(onBack, onOpenShop, onOpenLink, onShare, onFavoriteFeedback, modifier)
+            if (nativeContent?.invoke(session, host) != true) legacyContent(model, host)
             }
+        }
+
+    @Composable
+    private fun legacyContent(model: RoasterDetailViewModel, host: NativeRoasterDetailHost) {
+        androidx.compose.runtime.CompositionLocalProvider(com.coffeepeek.feature.roaster.impl.ui.compose.component.LocalRoasterShare provides host.onShare) {
+            RoasterDetailScreen(model, image, photoViewer, screenAnalytics, onFavoriteFeedback, host.modifier) { event ->
+                when (event) {
+                    RoasterDetailEvent.Back -> host.onBack()
+                    is RoasterDetailEvent.OpenShop -> host.onOpenShop(event.slug)
+                    is RoasterDetailEvent.OpenLink -> host.onOpenLink(event.url)
+                }
             }
         }
     }
