@@ -21,6 +21,13 @@ class NativeCommunitySheetsTest {
         assertEquals("Saved", missing.last().label)
     }
 
+    @Test fun emptySavedDrinkNamesFallBackToTheCurrentCatalogName() {
+        val edit = PostEditState(post().copy(drink = PostDrink("filter", null, " ", "")))
+        val drinks = listOf(DrinkOption("filter", "Каталог", "Catalog"))
+        assertEquals("Каталог", nativeEditorDrinks(edit, drinks, "ru", "Нет", "Другое").last().label)
+        assertEquals("Catalog", nativeEditorDrinks(edit, drinks, "en", "None", "Other").last().label)
+    }
+
     @Test fun nativeRatingKeysChangeOnlyTheirOwnAxisAndIgnoreInvalidRatings() {
         val actions = mutableListOf<CommunityAction>()
         val edit = PostEditState(post(), rating = PostRating(place = 3, service = 4, coffee = 2))

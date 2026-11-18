@@ -64,8 +64,9 @@ internal fun nativeEditorDrinks(edit: PostEditState, drinks: List<DrinkOption>, 
 private fun nativeSavedDrinkTitle(edit: PostEditState, language: String): String? {
     if (edit.drinkSlug == OTHER_DRINK) return edit.customDrinkName?.takeIf(String::isNotBlank)
     val saved = edit.source.drink?.takeIf { it.slug == edit.drinkSlug } ?: return null
-    return if (language == "en") saved.nameEn?.takeIf(String::isNotBlank) ?: saved.nameRu
+    val name = if (language == "en") saved.nameEn?.takeIf(String::isNotBlank) ?: saved.nameRu
         else saved.nameRu?.takeIf(String::isNotBlank) ?: saved.nameEn
+    return name?.takeIf(String::isNotBlank)
 }
 
 private fun DrinkOption.nativeTitle(language: String) =
