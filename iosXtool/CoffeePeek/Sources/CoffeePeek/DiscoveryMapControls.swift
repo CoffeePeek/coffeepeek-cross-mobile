@@ -61,16 +61,16 @@ struct DiscoveryMapControls: View {
     }
 
     @ViewBuilder private var selection: some View {
-        if let zone = state.zone {
+        if let selectedZone = state.selectedZone {
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
-                    Text(zone.title).font(CoffeePeekNativeStyle.font(18, weight: "SemiBold"))
+                    Text(selectedZone.title).font(CoffeePeekNativeStyle.font(18, weight: "SemiBold"))
                     Spacer()
                     control("xmark", label: text("zone-close"), action: "zone-close")
                 }
-                if let description = zone.summary, !description.isEmpty { Text(description) }
+                if let description = selectedZone.summary, !description.isEmpty { Text(description) }
                 Button { actions.call("zone-shops") } label: {
-                    Text(text("zone-shops") + " (\(zone.count))")
+                    Text(text("zone-shops") + " (\(selectedZone.count))")
                 }
             }.padding(16).background(.regularMaterial, in: RoundedRectangle(cornerRadius: 24)).padding(.horizontal, 16)
         } else if !state.mapShops.isEmpty {
