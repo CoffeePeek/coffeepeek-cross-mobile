@@ -14,6 +14,7 @@ private final class OwnershipActionsHostingController: UIHostingController<Owner
         self.model = model
         super.init(rootView: OwnershipActionsHost(model: model))
         view.backgroundColor = .clear
+        if actions.kind != "Roaster" { safeAreaRegions = [] }
     }
     @MainActor required dynamic init?(coder: NSCoder) { return nil }
     deinit { model.close() }
@@ -71,16 +72,29 @@ private struct OwnershipNativeActionsContent: View {
     var body: some View {
         Group {
             if owner {
-                Button(action: edit) { Label(strings["ownership_edit"], systemImage: "square.and.pencil").labelStyle(.iconOnly) }
+                Button(action: edit) { controlLabel(strings["ownership_edit"], symbol: "square.and.pencil") }
             } else {
                 Menu {
                     if !roaster { Button(strings["ownership_edit"], action: suggest) }
                     Button(strings[roaster ? "ownership_representative_roaster" : "ownership_representative"], action: claim)
-                } label: { Label(strings["ownership_actions"], systemImage: "ellipsis").labelStyle(.iconOnly) }
+                } label: { controlLabel(strings["ownership_actions"], symbol: "ellipsis") }
             }
         }
-        .frame(width: 44, height: 44).background(.ultraThinMaterial, in: Circle())
+        .modifier(OwnershipActionsSurface(roaster: roaster))
         .foregroundStyle(CoffeePeekNativeStyle.foreground).tint(CoffeePeekNativeStyle.foreground)
+    }
+
+    private func controlLabel(_ title: String, symbol: String) -> some View {
+        Label(title, systemImage: symbol).labelStyle(.iconOnly).font(roaster ? nil : .system(size: 20))
+            .frame(width: roaster ? 44 : 48, height: roaster ? 44 : 48).contentShape(Circle())
+    }
+}
+
+private struct OwnershipActionsSurface: ViewModifier {
+    let roaster: Bool
+    @ViewBuilder func body(content: Content) -> some View {
+        if roaster { content.background(.ultraThinMaterial, in: Circle()) }
+        else { content.buttonStyle(.plain).shopDetailGlassCircle() }
     }
 }
 
@@ -91,4 +105,13 @@ private struct OwnershipNativeActionsContent: View {
 #Preview("Owner menu dark") {
     OwnershipNativeActionsContent(owner: true, roaster: true, strings: OwnershipNativeStrings("ru"), edit: {}, suggest: {}, claim: {})
         .preferredColorScheme(.dark)
+}
+
+#Preview("Shop owner action dark") {
+    OwnershipNativeActionsContent(owner: true, roaster: false, strings: OwnershipNativeStrings("ru"), edit: {}, suggest: {}, claim: {})
+        .preferredColorScheme(.dark)
+}
+#Preview("Shop owner action light") {
+    OwnershipNativeActionsContent(owner: true, roaster: false, strings: OwnershipNativeStrings("ru"), edit: {}, suggest: {}, claim: {})
+        .preferredColorScheme(.light)
 }

@@ -156,12 +156,15 @@ struct ContributionFormContent<Photo: View, OptionImage: View>: View {
                 else if state.kind == "AddShop" { shopStep }
                 else if state.kind == "AddRoaster" { roasterFields }
                 else { editorFields }
-            }.padding(16)
+            }.padding(.horizontal, 16).padding(.vertical, 20)
         }
-        .safeAreaInset(edge: .bottom) {
+        .scrollDismissesKeyboard(.interactively)
+        .safeAreaInset(edge: .bottom, spacing: 0) {
             if state.kind != "Suggest" {
                 CoffeePeekNativeActionButton(title: submitLabel, enabled: state.canSubmit && !preparingPhotos,
-                    action: { onAction(state.kind == "AddShop" ? "next" : "submit") }).padding(16).background(.bar)
+                    action: { onAction(state.kind == "AddShop" ? "next" : "submit") })
+                    .padding(.horizontal, 16).padding(.vertical, 10)
+                    .background(CoffeePeekNativeStyle.background)
             }
         }
     }
@@ -186,13 +189,7 @@ struct ContributionFormContent<Photo: View, OptionImage: View>: View {
             field("name")
             field("description", multiline: true)
             city
-            HStack(alignment: .top) {
-                field("address")
-                Button { onAction("openMap") } label: {
-                    Image(systemName: "map").frame(width: 48, height: 48)
-                        .background(CoffeePeekNativeStyle.accent, in: Circle()).foregroundStyle(.black)
-                }.accessibilityLabel(strings.text("shop_pick_on_map")).disabled(state.resolvingAddress)
-            }
+            field("address", showsMap: true)
             if let hint = state.locationHint { Text(strings.locationHint(hint)).font(.caption).foregroundStyle(CoffeePeekNativeStyle.secondary) }
             price
         case 1:
@@ -249,39 +246,73 @@ struct ContributionFormContent<Photo: View, OptionImage: View>: View {
         Group { field("phone"); field("instagram"); field("website"); field("email") }
     }
 
-    private func field(_ key: String, multiline: Bool = false) -> some View {
+    private func field(_ key: String, multiline: Bool = false, showsMap: Bool = false) -> some View {
         let value = state.field(key)
+        let title = strings.fieldTitle(key, roaster: state.kind == "AddRoaster")
+        let required = key == "name" || state.kind == "AddShop" && key == "address"
+        let issue = (!value.value.isEmpty || state.kind == "AddRoaster" && value.issues.contains("AddressMissing"))
+            ? value.issues.first : nil
         return VStack(alignment: .leading, spacing: 6) {
-            Text(strings.fieldTitle(key, roaster: state.kind == "AddRoaster") +
-                ((key == "name" || state.kind == "AddShop" && key == "address") ? " *" : ""))
-                .font(.caption).foregroundStyle(CoffeePeekNativeStyle.secondary)
-            TextField(strings.fieldTitle(key, roaster: state.kind == "AddRoaster"),
-                text: Binding(get: { value.value }, set: { onEdit(key, $0) }), axis: multiline ? .vertical : .horizontal)
-                .lineLimit(multiline ? 3...6 : 1...1).textFieldStyle(.roundedBorder)
-                .keyboardType(key == "phone" ? .phonePad : key == "email" ? .emailAddress : ["website", "instagram"].contains(key) ? .URL : .default)
-                .textInputAutocapitalization(["phone", "email", "website", "instagram"].contains(key) ? .never : .sentences)
-                .autocorrectionDisabled(["phone", "email", "website", "instagram"].contains(key))
-            if key == "name" { Text("\(value.value.utf16.count)/\(state.kind == "AddRoaster" ? 100 : 55)").font(.caption2).foregroundStyle(CoffeePeekNativeStyle.secondary) }
-            if !value.value.isEmpty || state.kind == "AddRoaster" && value.issues.contains("AddressMissing"), let issue = value.issues.first { Text(strings.issue(issue, roaster: state.kind == "AddRoaster")).font(.caption).foregroundStyle(.red) }
+            Text(title + (required ? " *" : "")).font(.subheadline)
+            HStack(spacing: 8) {
+                input(key, title: title, value: value.value, multiline: multiline)
+                    .contributionInputSurface(multiline: multiline, invalid: issue != nil)
+                if showsMap { mapButton }
+            }
+            if key == "name" {
+                Text("\(value.value.utf16.count)/\(state.kind == "AddRoaster" ? 100 : 55)")
+                    .font(.caption2).foregroundStyle(CoffeePeekNativeStyle.secondary)
+            }
+            if let issue {
+                Text(strings.issue(issue, roaster: state.kind == "AddRoaster")).font(.caption).foregroundStyle(.red)
+            }
         }
     }
 
+    private func input(_ key: String, title: String, value: String, multiline: Bool) -> some View {
+        let contact = ["phone", "email", "website", "instagram"].contains(key)
+        return TextField(title, text: Binding(get: { value }, set: { onEdit(key, $0) }),
+                         prompt: Text(title).foregroundStyle(CoffeePeekNativeStyle.secondary),
+                         axis: multiline ? .vertical : .horizontal)
+            .lineLimit(multiline ? 3...6 : 1...1)
+            .keyboardType(key == "phone" ? .phonePad : key == "email" ? .emailAddress : contact ? .URL : .default)
+            .textInputAutocapitalization(contact ? .never : .sentences)
+            .autocorrectionDisabled(contact)
+    }
+
+    private var mapButton: some View {
+        Button { onAction("openMap") } label: {
+            Image(systemName: "map").frame(width: 48, height: 48)
+                .background(CoffeePeekNativeStyle.surface, in: Circle())
+                .overlay { Circle().strokeBorder(CoffeePeekNativeStyle.border) }
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(strings.text("shop_pick_on_map"))
+        .disabled(state.resolvingAddress)
+    }
+
     private var city: some View {
-        Picker(strings.text("shop_city_label") + (state.kind == "AddShop" ? " *" : ""), selection: Binding(
-            get: { state.group("city").first(where: \.selected)?.id ?? "" },
-            set: { if $0.isEmpty { onEdit("city", "") } else { onToggle("city", $0) } })) {
-                Text(strings.text("shop_city_label")).tag("")
-                ForEach(state.group("city")) { Text($0.name).tag($0.id) }
-            }.disabled(state.group("city").count == 1 && state.kind == "AddShop")
+        optionPicker("city", title: strings.text("shop_city_label") + (state.kind == "AddShop" ? " *" : "")) {
+            if $0.isEmpty { onEdit("city", "") } else { onToggle("city", $0) }
+        }
+        .disabled(state.group("city").count == 1 && state.kind == "AddShop")
     }
 
     private var price: some View {
-        Picker(strings.text("price_title"), selection: Binding(
-            get: { state.group("price").first(where: \.selected)?.id ?? "" },
-            set: { onEdit("price", $0) })) {
-                Text(strings.text("price_title")).tag("")
-                ForEach(state.group("price")) { Text($0.name).tag($0.id) }
-            }
+        optionPicker("price", title: strings.text("price_title")) { onEdit("price", $0) }
+    }
+
+    private func optionPicker(_ key: String, title: String, select: @escaping (String) -> Void) -> some View {
+        let options = state.group(key)
+        return LabeledContent {
+            Picker(title, selection: Binding(get: { options.first(where: \.selected)?.id ?? "" }, set: select)) {
+                Text(title).tag("")
+                ForEach(options) { Text($0.name).tag($0.id) }
+            }.pickerStyle(.menu).labelsHidden()
+        } label: {
+            Text(title)
+        }
+        .contributionInputSurface()
     }
 
     private func choices(_ key: String) -> some View {
@@ -375,7 +406,7 @@ struct ContributionFormContent<Photo: View, OptionImage: View>: View {
                 ForEach(["Unknown", "Present", "Absent"], id: \.self) { Text(strings.text("availability_\($0.lowercased())")).tag($0) }
             }.pickerStyle(.segmented)
             TextField(strings.text("editor_price_placeholder"), text: Binding(get: { row.price }, set: { onMenu(row.slug, nil, $0) }))
-                .keyboardType(.decimalPad).textFieldStyle(.roundedBorder)
+                .keyboardType(.decimalPad).contributionInputSurface()
         }.padding(.vertical, 8)
     }
 
@@ -417,6 +448,17 @@ struct ContributionFormContent<Photo: View, OptionImage: View>: View {
                 Button(strings.text("roaster_done"), action: onBack).buttonStyle(.borderedProminent)
             }
         }.multilineTextAlignment(.center).padding(24).frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+}
+
+private extension View {
+    func contributionInputSurface(multiline: Bool = false, invalid: Bool = false) -> some View {
+        let shape = RoundedRectangle(cornerRadius: multiline ? 16 : 24)
+        return textFieldStyle(.plain)
+            .padding(.horizontal, 14).padding(.vertical, multiline ? 12 : 0)
+            .frame(minHeight: 48)
+            .background(CoffeePeekNativeStyle.surface, in: shape)
+            .overlay { shape.strokeBorder(invalid ? .red : CoffeePeekNativeStyle.border).allowsHitTesting(false) }
     }
 }
 

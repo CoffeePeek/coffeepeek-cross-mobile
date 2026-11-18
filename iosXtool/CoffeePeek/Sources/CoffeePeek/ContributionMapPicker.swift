@@ -25,31 +25,45 @@ struct ContributionMapContent<Map: View>: View {
 
     var body: some View {
         ZStack {
-            map().ignoresSafeArea()
-            Image(systemName: "mappin.circle.fill").font(.system(size: 40))
-                .foregroundStyle(CoffeePeekNativeStyle.accent).shadow(radius: 3)
-                .accessibilityLabel(strings.text("map_pin"))
+            map().overlay {
+                Image(systemName: "mappin").font(.system(size: 34, weight: .semibold))
+                    .foregroundStyle(CoffeePeekNativeStyle.accent)
+                    .shadow(color: .black.opacity(0.5), radius: 3, y: 1)
+                    .offset(y: -14)
+                    .allowsHitTesting(false)
+                    .accessibilityLabel(strings.text("map_pin"))
+            }.ignoresSafeArea()
             VStack {
                 HStack {
-                    Button(strings.text("map_cancel"), action: onCancel)
-                        .frame(minHeight: 44).padding(.horizontal, 12).background(.regularMaterial, in: Capsule())
+                    mapControl("xmark", label: strings.text("map_cancel"), action: onCancel)
                     Spacer()
-                    Button(action: onLocate) {
-                        Image(systemName: "location.fill").frame(width: 48, height: 48).background(.regularMaterial, in: Circle())
-                    }.accessibilityLabel(strings.text("map_my_location"))
+                    mapControl("location.fill", label: strings.text("map_my_location"), action: onLocate)
                 }
                 Spacer()
                 VStack(alignment: .leading, spacing: 12) {
-                    Text(strings.text("map_hint")).font(.headline)
+                    Text(strings.text("map_hint")).font(CoffeePeekNativeStyle.font(16, weight: "SemiBold", relativeTo: .headline))
                     if let state {
                         if state.resolving { ProgressView(strings.text("map_resolving")) }
                         else if state.failed { Text(strings.text("map_failed")).foregroundStyle(.red) }
-                        else { Text(state.address ?? strings.text("map_move")) }
+                        else { Text(state.address ?? strings.text("map_move")).foregroundStyle(CoffeePeekNativeStyle.secondary) }
                         CoffeePeekNativeActionButton(title: strings.text("map_choose"), enabled: state.canConfirm, action: onConfirm)
                     }
-                }.padding(16).background(.regularMaterial, in: RoundedRectangle(cornerRadius: 20))
+                }.padding(16).background(CoffeePeekNativeStyle.surface, in: RoundedRectangle(cornerRadius: 24))
+                    .overlay { RoundedRectangle(cornerRadius: 24).strokeBorder(CoffeePeekNativeStyle.border).allowsHitTesting(false) }
+                    .padding(.bottom, 12)
             }.padding(16)
-        }.tint(CoffeePeekNativeStyle.foreground).foregroundStyle(CoffeePeekNativeStyle.foreground)
+        }.font(CoffeePeekNativeStyle.font(15))
+            .tint(CoffeePeekNativeStyle.foreground).foregroundStyle(CoffeePeekNativeStyle.foreground)
+    }
+
+    private func mapControl(_ symbol: String, label: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: symbol).font(.system(size: 18, weight: .semibold))
+                .frame(width: 48, height: 48)
+                .background(.regularMaterial, in: Circle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(label)
     }
 }
 

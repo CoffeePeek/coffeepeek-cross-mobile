@@ -153,20 +153,35 @@ private struct DiscoveryFilterSheet: View {
 
     private var priceSection: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text(state.priceTitle).font(.headline).accessibilityAddTraits(.isHeader)
-            Picker(state.priceTitle, selection: Binding(get: { state.priceIndex }, set: actions.price)) {
-                ForEach(Array(state.prices.enumerated()), id: \.offset) { index, label in
-                    Text(label).tag(Int32(index))
+            ViewThatFits(in: .horizontal) {
+                HStack {
+                    Text(state.priceTitle).font(.headline).accessibilityAddTraits(.isHeader)
+                    Spacer()
+                    Text(selectedPrice).foregroundStyle(CoffeePeekNativeStyle.secondary)
+                }
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(state.priceTitle).font(.headline).accessibilityAddTraits(.isHeader)
+                    Text(selectedPrice).foregroundStyle(CoffeePeekNativeStyle.secondary)
                 }
             }
-            .pickerStyle(.menu)
-            .tint(CoffeePeekNativeStyle.foreground)
-            .frame(minHeight: 44)
+            if state.prices.count > 1 {
+                Slider(value: Binding(get: { Double(state.priceIndex) }, set: { actions.price(Int32($0.rounded())) }),
+                       in: 0...Double(state.prices.count - 1), step: 1) {
+                    Text(state.priceTitle)
+                }
+                .accessibilityValue(selectedPrice)
+                .frame(minHeight: 44)
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
         .background(CoffeePeekNativeStyle.background, in: RoundedRectangle(cornerRadius: 16))
+    }
+
+    private var selectedPrice: String {
+        let index = Int(state.priceIndex)
+        return state.prices.indices.contains(index) ? state.prices[index] : ""
     }
 }
 
@@ -214,6 +229,12 @@ private struct DiscoveryFilterSectionView: View {
                     DiscoveryFilterLogo(url: choice.photoUrl, load: actions.image)
                         .id(choice.photoUrl)
                         .accessibilityHidden(true)
+                } else if section.id == "BrewMethods" {
+                    Image(systemName: brewSymbol(choice))
+                        .font(.system(size: 16))
+                        .frame(width: 28, height: 28)
+                        .foregroundStyle(CoffeePeekNativeStyle.secondary)
+                        .accessibilityHidden(true)
                 }
                 Text(choice.title).frame(maxWidth: .infinity, alignment: .leading)
                 if choice.selected {
@@ -229,6 +250,17 @@ private struct DiscoveryFilterSectionView: View {
         }
         .buttonStyle(.plain)
         .accessibilityAddTraits(choice.selected ? .isSelected : [])
+    }
+
+    private func brewSymbol(_ choice: IosDiscoveryFilterChoice) -> String {
+        let method = (choice.id + " " + choice.title).lowercased()
+        let matches: ([String]) -> Bool = { $0.contains { method.contains($0) } }
+        if matches(["cold", "колд", "айс"]) { return "snowflake" }
+        if matches(["chemex", "кемекс"]) { return "hourglass" }
+        if matches(["v60", "pour", "ворон", "filter", "batch", "фільтр", "фильтр"]) { return "line.3.horizontal.decrease" }
+        if matches(["press", "пресс", "прэс"]) { return "arrow.down.to.line" }
+        if matches(["cezve", "turkish", "турк", "джезв", "мока", "moka"]) { return "mug" }
+        return "cup.and.saucer"
     }
 }
 

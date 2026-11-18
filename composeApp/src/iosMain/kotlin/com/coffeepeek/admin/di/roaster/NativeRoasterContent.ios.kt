@@ -3,12 +3,7 @@
 package com.coffeepeek.admin.di.roaster
 
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.*
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.unit.dp
 import com.coffeepeek.admin.analytics.Entity
 import com.coffeepeek.admin.analytics.TrackEntityDetail
 import com.coffeepeek.admin.analytics.TrackNativeFeatureExposure
@@ -28,6 +23,7 @@ import org.koin.compose.koinInject
 import platform.UIKit.UIViewController
 
 private lateinit var roasterController: (IosRoasterScreen) -> UIViewController
+internal val LocalIosRoasterDiscoverySink = staticCompositionLocalOf<((IosRoasterDiscovery?) -> Unit)?> { null }
 object IosRoasterControllers {
     fun configure(factory: (IosRoasterScreen) -> UIViewController) { roasterController = factory }
 }
@@ -49,17 +45,17 @@ private fun RoasterDiscoveryNativeContent(session: NativeRoasterListSession, hos
     val fetcher = koinInject<ImageUrlFetcher>()
     val generation = accounts.accountGeneration()
     val source = remember(session, generation) { IosRoasterDiscovery(session, host, language, accounts, IosCatalogueMedia(fetcher, Constants.BASE_URL)) }
-    val controller = remember(source) { roasterController(source) }
-    val theme by ThemeManager.themeMode.collectAsState()
-    SideEffect { source.update(host); controller.overrideUserInterfaceStyle = theme.uiKitStyle }
+    SideEffect { source.update(host) }
     LaunchedEffect(session, host.query, host.selectedRoasters, host.favoritesOnly) {
         session.criteria(host.query, host.selectedRoasters, host.favoritesOnly)
     }
     DisposableEffect(source) { onDispose { source.close() } }
     RoasterNativeExposures(source, if (host.search) "catalog" else "discovery")
-    val modifier = if (host.search) host.modifier.fillMaxSize() else host.modifier.fillMaxWidth()
-        .height(if (LocalDensity.current.fontScale >= 1.5f) 520.dp else 360.dp)
-    NativeEditorControllerHost(controller, modifier)
+    val sink = checkNotNull(LocalIosRoasterDiscoverySink.current) { "Discovery owns the native roaster presentation" }
+    DisposableEffect(source, sink) {
+        sink(source)
+        onDispose { sink(null) }
+    }
 }
 
 @Composable

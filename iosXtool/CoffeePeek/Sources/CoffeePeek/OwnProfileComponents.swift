@@ -371,8 +371,8 @@ struct CoffeePeekPhotoPlaceholder: View {
     var body: some View {
         GeometryReader { geometry in
             let dark = colorScheme == .dark
-            Text(verbatim: "CFPK")
-                .font(.system(size: min(28, max(7, geometry.size.width * 0.24)), weight: .black))
+            Text(verbatim: "CoffeePeek")
+                .font(.system(size: min(28, max(7, geometry.size.width * 0.15)), weight: .black))
                 .lineLimit(1)
                 .minimumScaleFactor(0.5)
                 .foregroundStyle(dark ? Color.black : Color.white)

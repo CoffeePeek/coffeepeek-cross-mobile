@@ -5,6 +5,7 @@ struct DiscoveryMapLayoutTests {
     static func main() {
         rejectsInvalidPreviewFrames()
         respectsPreviewMarginsAndFullScreenBounds()
+        clipsPreviewToMeasuredResultsAndLeavesExpandedMapFullSize()
     }
 
     private static func rejectsInvalidPreviewFrames() {
@@ -30,5 +31,15 @@ struct DiscoveryMapLayoutTests {
         let expanded = discoveryMapLayoutFrame(viewport: viewport, preview: .null, expanded: true)
         assert(expanded == CGRect(origin: .zero, size: viewport))
         assert(discoveryMapLayoutFrame(viewport: .zero, preview: preview, expanded: true) == nil)
+    }
+
+    private static func clipsPreviewToMeasuredResultsAndLeavesExpandedMapFullSize() {
+        let viewport = CGSize(width: 393, height: 852)
+        let results = CGRect(x: 0, y: 110, width: 393, height: 800)
+        let clip = discoveryMapClipFrame(viewport: viewport, results: results, expanded: false)
+        assert(clip == CGRect(x: 0, y: 110, width: 393, height: 742))
+        assert(discoveryMapClipFrame(viewport: viewport, results: .zero, expanded: false) == .zero)
+        assert(discoveryMapClipFrame(viewport: viewport, results: .infinite, expanded: false) == .zero)
+        assert(discoveryMapClipFrame(viewport: viewport, results: results, expanded: true) == CGRect(origin: .zero, size: viewport))
     }
 }

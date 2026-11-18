@@ -6,7 +6,10 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.foundation.layout.fillMaxSize
 import com.coffeepeek.admin.analytics.TrackNativeFeatureExposure
+import com.coffeepeek.admin.analytics.LocalAnalyticsVisible
 import com.coffeepeek.admin.di.media.IosCatalogueMedia
+import com.coffeepeek.admin.di.roaster.LocalIosRoasterDiscoverySink
+import com.coffeepeek.admin.di.roaster.IosRoasterDiscovery
 import com.coffeepeek.admin.locator.Constants
 import com.coffeepeek.admin.theme.ThemeManager
 import com.coffeepeek.admin.theme.uiKitStyle
@@ -35,14 +38,26 @@ private fun NativeDiscovery(data: DiscoveryIosPresentation, modifier: Modifier, 
 private fun NativeDiscoverySession(data: DiscoveryIosPresentation, modifier: Modifier,
     factory: (IosDiscovery) -> UIViewController, accounts: SessionReader) {
     val fetcher = koinInject<ImageUrlFetcher>()
-    val locals = currentCompositionLocalContext
-    val discovery = remember { IosDiscovery(data, IosCatalogueMedia(fetcher, Constants.BASE_URL), accounts, locals) }
+    val discovery = remember { IosDiscovery(data, IosCatalogueMedia(fetcher, Constants.BASE_URL), accounts) }
     val controller = remember(discovery) { factory(discovery) }
     val theme by ThemeManager.themeMode.collectAsState()
-    SideEffect { discovery.update(data, locals); controller.overrideUserInterfaceStyle = theme.uiKitStyle }
+    SideEffect { discovery.update(data); controller.overrideUserInterfaceStyle = theme.uiKitStyle }
     DisposableEffect(discovery) { onDispose { discovery.close() } }
     NativeDiscoveryExposures(discovery, data)
+    NativeDiscoveryRoasters(discovery, data)
     NativeEditorControllerHost(controller, modifier.fillMaxSize())
+}
+
+@Composable
+private fun NativeDiscoveryRoasters(discovery: IosDiscovery, data: DiscoveryIosPresentation) {
+    val state = data.state
+    val shown = state.roastersExpanded || (!state.mapExpanded && (state.landing || state.showRoasterResults))
+    if (!shown) return
+    val sink = remember(discovery) { { source: IosRoasterDiscovery? -> discovery.roastersChanged(source) } }
+    CompositionLocalProvider(LocalIosRoasterDiscoverySink provides sink,
+        LocalAnalyticsVisible provides (LocalAnalyticsVisible.current && state.active)) {
+        key(state.roastersExpanded) { data.roasters(state.roastersExpanded) }
+    }
 }
 
 @Composable

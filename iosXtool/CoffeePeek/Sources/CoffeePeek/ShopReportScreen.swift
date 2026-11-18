@@ -116,16 +116,21 @@ private struct ShopReportScreen: View {
 
     var body: some View {
         Form {
-            if state.sessionEnded {
-                message("shop_report_session_ended", button: "shop_report_back")
-            } else if state.unconfirmed {
-                message("shop_report_unconfirmed", button: "shop_report_back")
-            } else if state.submitted {
-                success
-            } else {
-                formFields
-            }
+            Group {
+                if state.sessionEnded {
+                    message("shop_report_session_ended", button: "shop_report_back")
+                } else if state.unconfirmed {
+                    message("shop_report_unconfirmed", button: "shop_report_back")
+                } else if state.submitted {
+                    success
+                } else {
+                    formFields
+                }
+            }.listRowBackground(CoffeePeekNativeStyle.surface)
         }
+        .scrollContentBackground(.hidden)
+        .background(CoffeePeekNativeStyle.background.ignoresSafeArea())
+        .foregroundStyle(CoffeePeekNativeStyle.foreground).tint(CoffeePeekNativeStyle.accent)
         .safeAreaInset(edge: .top, spacing: 0) { header }
         .toolbar {
             ToolbarItemGroup(placement: .keyboard) {
@@ -149,7 +154,7 @@ private struct ShopReportScreen: View {
             Spacer(minLength: 0)
         }
         .padding(.horizontal, 12)
-        .background(.bar)
+        .background(CoffeePeekNativeStyle.background)
     }
 
     private var formFields: some View {

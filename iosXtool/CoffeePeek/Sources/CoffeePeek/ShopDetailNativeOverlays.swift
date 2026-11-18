@@ -76,3 +76,31 @@ private struct ShopDetailSessionErrorView: View {
 #Preview("Shop message dark") {
     ShopDetailToastView(message: "Номер скопирован", dismissLabel: "Закрыть", dismiss: {}).preferredColorScheme(.dark)
 }
+
+/** Native Liquid Glass for shop photo controls; earlier iOS versions use system material. */
+extension View {
+    @ViewBuilder func shopDetailGlassCircle() -> some View {
+        if #available(iOS 26.0, *) {
+            self.glassEffect(.regular.interactive(), in: Circle())
+        } else {
+            self.background(.ultraThinMaterial, in: Circle())
+        }
+    }
+
+    @ViewBuilder func shopDetailGlassPrimary() -> some View {
+        if #available(iOS 26.0, *) {
+            self.glassEffect(.regular.tint(CoffeePeekNativeStyle.accent).interactive(), in: Capsule())
+        } else {
+            self.background(CoffeePeekNativeStyle.accent, in: Capsule())
+        }
+    }
+}
+
+#Preview("Shop glass control light") {
+    Button {} label: { Image(systemName: "chevron.left").frame(width: 48, height: 48) }
+        .buttonStyle(.plain).shopDetailGlassCircle().padding().preferredColorScheme(.light)
+}
+#Preview("Shop glass control dark") {
+    Button {} label: { Image(systemName: "chevron.left").frame(width: 48, height: 48) }
+        .buttonStyle(.plain).shopDetailGlassCircle().padding().preferredColorScheme(.dark)
+}

@@ -13,3 +13,12 @@ func discoveryMapLayoutFrame(viewport: CGSize, preview: CGRect, expanded: Bool) 
     guard frame.maxX.isFinite, frame.maxY.isFinite else { return nil }
     return frame
 }
+
+func discoveryMapClipFrame(viewport: CGSize, results: CGRect, expanded: Bool) -> CGRect {
+    guard let bounds = discoveryMapLayoutFrame(viewport: viewport, preview: .zero, expanded: true) else { return .zero }
+    if expanded { return bounds }
+    guard !results.isNull, !results.isInfinite, !results.isEmpty,
+          results.minX.isFinite, results.minY.isFinite, results.maxX.isFinite, results.maxY.isFinite else { return .zero }
+    let visible = bounds.intersection(results)
+    return visible.isEmpty ? .zero : visible
+}

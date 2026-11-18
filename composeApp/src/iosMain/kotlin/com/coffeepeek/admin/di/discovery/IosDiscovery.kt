@@ -2,29 +2,26 @@
 
 package com.coffeepeek.admin.di.discovery
 
-import androidx.compose.runtime.*
-import androidx.compose.ui.window.ComposeUIViewController
-import com.coffeepeek.admin.analytics.LocalAnalyticsVisible
 import com.coffeepeek.admin.di.media.IosCatalogueMedia
+import com.coffeepeek.admin.di.roaster.IosRoasterDiscovery
 import com.coffeepeek.core.session.SessionReader
 import com.coffeepeek.feature.discovery.impl.ui.DiscoveryIosPresentation
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import platform.UIKit.UIImage
 import platform.UIKit.UIView
-import platform.UIKit.UIViewController
 
 /** One native surface; account generations revoke actions, protected media and child owner slots together. */
 class IosDiscovery internal constructor(
     initial: DiscoveryIosPresentation, private val media: IosCatalogueMedia,
-    private val accounts: SessionReader, locals: CompositionLocalContext,
+    private val accounts: SessionReader,
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private val account = accounts.discoveryAccount()
     private var closed = false
     private val presentation = MutableStateFlow<DiscoveryIosPresentation?>(initial)
     private val state = MutableStateFlow(initial.state)
-    private var compositionLocals by mutableStateOf(locals)
+    private val roasters = MutableStateFlow<IosRoasterDiscovery?>(null)
     internal val visibleElements = MutableStateFlow<Set<String>>(emptySet())
     private val map = IosDiscoveryMap(scope, { presentation.value }, ::isCurrent)
 
@@ -34,9 +31,8 @@ class IosDiscovery internal constructor(
     fun observe(onState: (IosDiscoveryState) -> Unit) =
         IosDiscoveryObservation(scope.launch { state.collect { onState(it.toNative()) } })
 
-    internal fun update(data: DiscoveryIosPresentation, locals: CompositionLocalContext) {
+    internal fun update(data: DiscoveryIosPresentation) {
         if (!isCurrent()) return
-        compositionLocals = locals
         presentation.value = data
         state.value = data.state
         map.update()
@@ -68,17 +64,12 @@ class IosDiscovery internal constructor(
     fun createMapView(): UIView = map.createView()
     fun updateMapView(view: UIView, dark: Boolean) = map.attach(view, dark)
 
-    /** Temporary owner slot: Roaster's current preview/search entry remains authoritative. */
-    fun roastersController(expanded: Boolean): UIViewController = ComposeUIViewController {
-        val active by presentation.collectAsState()
-        CompositionLocalProvider(compositionLocals) {
-            val data = active
-            val shown = data?.state?.let { it.active && if (expanded) it.roastersExpanded
-                else !it.roastersExpanded && !it.mapExpanded && (it.landing || it.showRoasterResults) } == true
-            CompositionLocalProvider(LocalAnalyticsVisible provides (LocalAnalyticsVisible.current && shown)) {
-                data?.roasters?.invoke(expanded)
-            }
-        }
+    fun currentRoasters(): IosRoasterDiscovery? = roasters.value.takeIf { isCurrent() }
+    fun observeRoasters(onSource: (IosRoasterDiscovery?) -> Unit) =
+        IosDiscoveryObservation(scope.launch { roasters.collect { onSource(it.takeIf { isCurrent() }) } })
+
+    internal fun roastersChanged(source: IosRoasterDiscovery?) {
+        roasters.value = source.takeIf { isCurrent() }
     }
 
     internal fun close() {
@@ -89,6 +80,7 @@ class IosDiscovery internal constructor(
     private fun revoke() {
         closed = true
         presentation.value = null
+        roasters.value = null
         state.value = state.value.copy(active = false, shops = emptyList(), recent = emptyList(), mapShops = emptyList())
         visibleElements.value = emptySet()
         map.close()

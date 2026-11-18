@@ -70,17 +70,28 @@ struct RoasterDiscoveryNativeScreen: View {
     }
 
     private var header: some View {
-        HStack {
+        HStack(spacing: 8) {
             Button { source?.cancel() } label: { Image(systemName: "chevron.left").frame(width: 44, height: 44) }
+                .background(CoffeePeekNativeStyle.surface, in: Circle())
                 .accessibilityLabel(strings["roaster_search_back"])
+            searchField
+        }.padding(.horizontal, 16).roasterExposure("search", source: source)
+    }
+
+    private var searchField: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "magnifyingglass").foregroundStyle(CoffeePeekNativeStyle.secondary).accessibilityHidden(true)
             TextField(strings["roaster_search_placeholder"], text: $query)
-                .textInputAutocapitalization(.never).autocorrectionDisabled()
+                .textInputAutocapitalization(.never).autocorrectionDisabled().submitLabel(.search)
                 .onChange(of: query) { _, value in source?.query(value: value) }
             if !query.isEmpty {
                 Button { query = "" } label: { Image(systemName: "xmark.circle.fill").frame(width: 44, height: 44) }
+                    .foregroundStyle(CoffeePeekNativeStyle.secondary)
                     .accessibilityLabel(strings["roaster_search_clear"])
             }
-        }.padding(.horizontal, 8).roasterExposure("search", source: source)
+        }.padding(.horizontal, 12).frame(minHeight: 48)
+            .background(CoffeePeekNativeStyle.surface, in: RoundedRectangle(cornerRadius: 16))
+            .overlay { RoundedRectangle(cornerRadius: 16).strokeBorder(CoffeePeekNativeStyle.border, lineWidth: 1) }
     }
 
     private var tags: some View {
@@ -95,7 +106,7 @@ struct RoasterDiscoveryNativeScreen: View {
                         .accessibilityAddTraits(tag.selected ? .isSelected : [])
                 }
             }.padding(.horizontal, 16)
-        }.scrollIndicators(.hidden)
+        }.scrollIndicators(.hidden).fixedSize(horizontal: false, vertical: true)
     }
 
     private var list: some View {
@@ -112,19 +123,20 @@ struct RoasterDiscoveryNativeScreen: View {
     }
 
     private var carousel: some View {
-        GeometryReader { geometry in
-            ScrollView(.horizontal) {
-                LazyHStack(alignment: .top, spacing: 12) {
-                    status
-                    ForEach(Array(state.cards.enumerated()), id: \.offset) { index, card in
-                        RoasterNativeCard(card: card, strings: strings, source: source, loader: loader)
-                            .id(card.slug ?? "unaddressed:\(index)")
-                            .frame(width: min(360, max(280, (geometry.size.width - 32) * 0.88)))
-                    }
-                    if state.cards.isEmpty && !state.loading { suggestion.frame(width: max(240, geometry.size.width - 32)) }
-                }.padding(.horizontal, 16)
-            }.scrollIndicators(.hidden)
-        }.roasterExposure("catalog", source: source)
+        ScrollView(.horizontal) {
+            HStack(alignment: .top, spacing: 12) {
+                status
+                ForEach(Array(state.cards.enumerated()), id: \.offset) { index, card in
+                    RoasterNativeCard(card: card, strings: strings, source: source, loader: loader)
+                        .id(card.slug ?? "unaddressed:\(index)")
+                        .containerRelativeFrame(.horizontal) { width, _ in min(360, max(240, (width - 32) * 0.88)) }
+                }
+                if state.cards.isEmpty && !state.loading {
+                    suggestion.containerRelativeFrame(.horizontal) { width, _ in max(240, width - 32) }
+                }
+            }.padding(.horizontal, 16)
+        }.scrollIndicators(.hidden).fixedSize(horizontal: false, vertical: true)
+            .roasterExposure("catalog", source: source)
     }
 
     @ViewBuilder private var status: some View {
@@ -148,7 +160,7 @@ private func roasterDiscoveryPreview(_ search: Bool, language: String) -> some V
         strings: OwnProfileStrings(languageTag: language, table: "NativeRoaster"), source: nil,
         loader: { _, receive in receive(nil); return nil })
 }
-#Preview("Roaster carousel light") { roasterDiscoveryPreview(false, language: "ru").frame(height: 360).preferredColorScheme(.light) }
-#Preview("Roaster carousel dark") { roasterDiscoveryPreview(false, language: "be").frame(height: 360).preferredColorScheme(.dark) }
+#Preview("Roaster carousel light") { roasterDiscoveryPreview(false, language: "ru").preferredColorScheme(.light) }
+#Preview("Roaster carousel dark") { roasterDiscoveryPreview(false, language: "be").preferredColorScheme(.dark) }
 #Preview("Roaster search light") { roasterDiscoveryPreview(true, language: "ru").preferredColorScheme(.light) }
 #Preview("Roaster search dark") { roasterDiscoveryPreview(true, language: "be").preferredColorScheme(.dark) }

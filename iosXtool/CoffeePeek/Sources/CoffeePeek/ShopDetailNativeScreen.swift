@@ -65,8 +65,11 @@ struct ShopDetailNativeScreen: View {
                         Text(text("report")).font(CoffeePeekNativeStyle.font(16, weight: "SemiBold"))
                         Text(text("report-body")).foregroundStyle(CoffeePeekNativeStyle.secondary)
                     }.frame(maxWidth: .infinity, alignment: .leading).padding(16)
-                }.buttonStyle(.plain).padding(.horizontal, 16)
-            }.padding(.bottom, bottomInset + 110)
+                }.buttonStyle(.plain)
+                    .background(CoffeePeekNativeStyle.surface, in: RoundedRectangle(cornerRadius: 24))
+                    .overlay { RoundedRectangle(cornerRadius: 24).strokeBorder(CoffeePeekNativeStyle.border).allowsHitTesting(false) }
+                    .padding(.horizontal, 16)
+            }.padding(.bottom, 16)
         }
         .scrollIndicators(.hidden)
         .safeAreaInset(edge: .bottom, spacing: 0) { footer(details) }
@@ -124,17 +127,17 @@ struct ShopDetailNativeScreen: View {
         HStack(spacing: 8) {
             back
             Spacer(minLength: 0)
-            owner().frame(width: 136, height: 48)
             Button { actions.call("favorite") } label: {
                 Group {
                     if state.favoriteBusy { ProgressView() }
                     else { Image(systemName: state.favoriteSelection ? "bookmark" : state.favorite ? "heart.fill" : "heart") }
-                }.font(.system(size: 21)).foregroundStyle(state.favorite ? CoffeePeekNativeStyle.accent : .white)
-                    .frame(width: 48, height: 48).background(.black.opacity(0.5), in: Circle())
-            }.buttonStyle(.plain).disabled(!state.favoriteEnabled || state.favoriteBusy)
+                }.font(.system(size: 21)).foregroundStyle(state.favorite ? CoffeePeekNativeStyle.accent : CoffeePeekNativeStyle.foreground)
+                    .frame(width: 48, height: 48).contentShape(Circle())
+            }.buttonStyle(.plain).shopDetailGlassCircle().disabled(!state.favoriteEnabled || state.favoriteBusy)
                 .accessibilityLabel(state.favoriteLabel).shopDetailExposure("Favorite", id: "favorite")
             actionButton("square.and.arrow.up", label: text("share"), name: "share")
                 .shopDetailExposure("Share", id: "share")
+            owner().frame(width: 48, height: 48)
         }.padding(.horizontal, 12).padding(.top, topInset + 8)
     }
 
@@ -142,38 +145,52 @@ struct ShopDetailNativeScreen: View {
 
     private func actionButton(_ symbol: String, label: String, name: String) -> some View {
         Button { actions.call(name) } label: {
-            Image(systemName: symbol).font(.system(size: 20)).foregroundStyle(.white)
-                .frame(width: 48, height: 48).background(.black.opacity(0.5), in: Circle())
-        }.buttonStyle(.plain).accessibilityLabel(label)
+            Image(systemName: symbol).font(.system(size: 20)).foregroundStyle(CoffeePeekNativeStyle.foreground)
+                .frame(width: 48, height: 48).contentShape(Circle())
+        }.buttonStyle(.plain).shopDetailGlassCircle().accessibilityLabel(label)
     }
 
     private func stats(_ details: IosShopDetails) -> some View {
         ViewThatFits(in: .horizontal) {
-            HStack(spacing: 8) { statistics(details) }
-            VStack(spacing: 8) { statistics(details) }
+            HStack(alignment: .top, spacing: 8) { statistics(details, compact: true) }
+            VStack(spacing: 8) { statistics(details, compact: false) }
         }
     }
 
-    @ViewBuilder private func statistics(_ details: IosShopDetails) -> some View {
-        stat(details.rating, subtitle: details.reviews, symbol: "star.fill", action: "check-ins")
-        if let distance = details.distance { stat(distance, subtitle: text("distance"), symbol: "location", action: nil) }
-        if let price = details.priceValue { stat(price, subtitle: text("price"), symbol: "banknote", action: "price") }
+    @ViewBuilder private func statistics(_ details: IosShopDetails, compact: Bool) -> some View {
+        stat(details.rating, subtitle: details.reviews, symbol: "star.fill", action: "check-ins", compact: compact)
+        if let distance = details.distance { stat(distance, subtitle: text("distance"), symbol: "location", action: nil, compact: compact) }
+        if let price = details.priceValue { stat(price, subtitle: text("price"), symbol: "banknote", action: "price", compact: compact) }
     }
 
-    private func stat(_ value: String, subtitle: String, symbol: String, action: String?) -> some View {
-        Button { if let action { actions.call(action) } } label: {
-            VStack(alignment: .leading, spacing: 6) {
-                Label {
-                    Text(value).foregroundStyle(CoffeePeekNativeStyle.foreground)
-                } icon: {
-                    Image(systemName: symbol).foregroundStyle(symbol == "star.fill"
-                        ? CoffeePeekNativeStyle.accent : CoffeePeekNativeStyle.foreground)
-                }.font(CoffeePeekNativeStyle.font(18, weight: "SemiBold"))
-                Text(subtitle).font(CoffeePeekNativeStyle.font(11)).foregroundStyle(CoffeePeekNativeStyle.secondary)
-            }.frame(maxWidth: .infinity, alignment: .leading).padding(12)
-                .background(CoffeePeekNativeStyle.surface, in: RoundedRectangle(cornerRadius: 16))
-                .overlay { RoundedRectangle(cornerRadius: 16).stroke(CoffeePeekNativeStyle.border, lineWidth: 1) }
-        }.buttonStyle(.plain).disabled(action == nil)
+    @ViewBuilder private func stat(_ value: String, subtitle: String, symbol: String, action: String?, compact: Bool) -> some View {
+        let content = statContent(value, subtitle: subtitle, symbol: symbol, compact: compact)
+        if let action {
+            Button { actions.call(action) } label: { content }.buttonStyle(.plain)
+        } else {
+            content
+        }
+    }
+
+    private func statContent(_ value: String, subtitle: String, symbol: String, compact: Bool) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack(spacing: 5) {
+                Image(systemName: symbol).font(.system(size: 13))
+                    .foregroundStyle(symbol == "star.fill" ? CoffeePeekNativeStyle.accent : CoffeePeekNativeStyle.secondary)
+                    .accessibilityHidden(true)
+                Text(value).font(CoffeePeekNativeStyle.font(14, weight: "SemiBold"))
+                    .fixedSize(horizontal: compact, vertical: false)
+            }.foregroundStyle(CoffeePeekNativeStyle.foreground)
+            Text(subtitle).font(CoffeePeekNativeStyle.font(11, relativeTo: .caption2))
+                .foregroundStyle(CoffeePeekNativeStyle.secondary)
+                .fixedSize(horizontal: compact, vertical: false)
+        }
+        .frame(maxWidth: .infinity, minHeight: 46, alignment: .leading)
+        .padding(8)
+        .background(CoffeePeekNativeStyle.surface, in: RoundedRectangle(cornerRadius: 14))
+        .overlay { RoundedRectangle(cornerRadius: 14).strokeBorder(CoffeePeekNativeStyle.border).allowsHitTesting(false) }
+        .contentShape(Rectangle())
+        .accessibilityElement(children: .combine)
     }
 
     private var status: some View {
@@ -236,16 +253,23 @@ struct ShopDetailNativeScreen: View {
     private func footer(_ details: IosShopDetails) -> some View {
         HStack(spacing: 12) {
             if details.canRoute {
-                CoffeePeekNativeActionButton(title: text("route"), primary: false,
-                    symbol: "arrow.triangle.turn.up.right.diamond") { actions.call("route") }
-                    .shopDetailExposure("Directions", id: "directions")
+                actionButton("arrow.triangle.turn.up.right.diamond", label: text("route"), name: "route")
+                    .fixedSize().shopDetailExposure("Directions", id: "directions")
             }
-            CoffeePeekNativeActionButton(title: text("check-in"), symbol: "plus") { actions.call("check-in") }
-                .shopDetailExposure("CheckIn", id: "check-in")
+            Button { actions.call("check-in") } label: {
+                Label(text("check-in"), systemImage: "plus")
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 12)
+                    .frame(maxWidth: .infinity, minHeight: 48)
+                    .contentShape(Capsule())
+            }
+            .buttonStyle(.plain)
+            .foregroundStyle(.black)
+            .shopDetailGlassPrimary()
+            .shopDetailExposure("CheckIn", id: "check-in")
         }
         .font(CoffeePeekNativeStyle.font(16, weight: "SemiBold"))
-        .frame(maxWidth: 352).padding(12).frame(maxWidth: .infinity).padding(.bottom, bottomInset)
-        .background(.regularMaterial)
+        .frame(maxWidth: .infinity).padding(.horizontal, 16).padding(.vertical, 12).padding(.bottom, bottomInset)
     }
 
     private var priceInformation: some View {

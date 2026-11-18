@@ -7,8 +7,6 @@ func makeRoasterController(screen: IosRoasterScreen) -> UIViewController {
     switch screen {
     case let source as IosRoasterDetail:
         return UIHostingController(rootView: RoasterDetailNativeHost(source: source))
-    case let source as IosRoasterDiscovery:
-        return UIHostingController(rootView: RoasterDiscoveryNativeHost(source: source))
     default:
         preconditionFailure("Unsupported native roaster screen")
     }

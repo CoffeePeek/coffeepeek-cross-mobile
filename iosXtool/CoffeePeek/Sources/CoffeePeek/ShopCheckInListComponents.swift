@@ -8,6 +8,7 @@ struct ShopCheckInRatingPresentation {
 }
 
 struct ShopCheckInListRatings: View {
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     let overall: String
     let count: Int
     let isSample: Bool
@@ -19,18 +20,29 @@ struct ShopCheckInListRatings: View {
             ShopCheckInRatingLabel(title: strings.format("shop_checkins_rating_summary", overall, count))
                 .font(.headline)
             if isSample { Text(strings.text("shop_checkins_rating_sample")).font(.footnote).foregroundStyle(.secondary) }
-            ForEach(Array(breakdown.enumerated()), id: \.offset) { index, rating in
-                let name = strings.text(["shop_review_coffee", "shop_review_service", "shop_checkins_aura"][index])
-                HStack(spacing: 12) {
-                    Text(name)
-                    ProgressView(value: min(5, max(0, rating.value)), total: 5).tint(CoffeePeekNativeStyle.accent)
-                    Text(rating.label).monospacedDigit()
+            Grid(alignment: .leading, horizontalSpacing: 12, verticalSpacing: 8) {
+                ForEach(Array(breakdown.prefix(3).enumerated()), id: \.offset) { index, rating in
+                    ratingRows(index: index, rating: rating)
                 }
-                .font(.subheadline)
-                .accessibilityElement(children: .ignore)
-                .accessibilityLabel(strings.format("shop_checkins_rating_category", name, rating.label))
+            }.font(.subheadline)
+        }
+    }
+
+    @ViewBuilder private func ratingRows(index: Int, rating: ShopCheckInRatingPresentation) -> some View {
+        let name = strings.text(["shop_review_coffee", "shop_review_service", "shop_checkins_aura"][index])
+        if dynamicTypeSize.isAccessibilitySize {
+            GridRow {
+                Text(name).gridCellColumns(2).accessibilityHidden(true)
             }
         }
+        GridRow {
+            if !dynamicTypeSize.isAccessibilitySize { Text(name) }
+            ProgressView(value: min(5, max(0, rating.value)), total: 5)
+                .tint(CoffeePeekNativeStyle.accent).frame(maxWidth: .infinity)
+            Text(rating.label).monospacedDigit().gridColumnAlignment(.trailing)
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(strings.format("shop_checkins_rating_category", name, rating.label))
     }
 }
 
@@ -318,4 +330,11 @@ private func shopCheckInCardComponentsPreview() -> some View {
 }
 #Preview("Shop check-in components dark") {
     shopCheckInCardComponentsPreview().preferredColorScheme(.dark)
+}
+
+#Preview("Shop ratings accessibility light") {
+    shopCheckInCardComponentsPreview().dynamicTypeSize(.accessibility2).preferredColorScheme(.light)
+}
+#Preview("Shop ratings accessibility dark") {
+    shopCheckInCardComponentsPreview().dynamicTypeSize(.accessibility2).preferredColorScheme(.dark)
 }

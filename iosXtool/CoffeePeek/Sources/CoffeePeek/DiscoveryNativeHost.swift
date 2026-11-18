@@ -17,7 +17,7 @@ private struct DiscoveryNativeHost: View {
     var body: some View {
         DiscoveryNativeScreen(state: model.state, actions: model.actions,
             map: AnyView(DiscoveryMapCanvas(discovery: model.discovery)),
-            roasters: { expanded in AnyView(OwnProfileEmbedded(controller: model.roasters(expanded))) })
+            roasters: { expanded in model.roasters(expanded) })
             .onAppear(perform: model.observe)
     }
 }
@@ -26,34 +26,28 @@ private struct DiscoveryNativeHost: View {
 private final class DiscoveryNativeModel: ObservableObject {
     let discovery: IosDiscovery
     @Published private(set) var state: IosDiscoveryState
+    @Published private var roasterSource: IosRoasterDiscovery?
     private var observation: IosDiscoveryObservation?
-    private var preview: UIViewController?
-    private var search: UIViewController?
+    private var roasterObservation: IosDiscoveryObservation?
 
     init(_ discovery: IosDiscovery) {
         self.discovery = discovery
         state = discovery.currentState()
+        roasterSource = discovery.currentRoasters()
     }
 
-    deinit { observation?.cancel() }
+    deinit { observation?.cancel(); roasterObservation?.cancel() }
 
     func observe() {
         guard observation == nil else { return }
         state = discovery.currentState()
         observation = discovery.observe { [weak self] in self?.state = $0 }
+        roasterObservation = discovery.observeRoasters { [weak self] in self?.roasterSource = $0 }
     }
 
-    func roasters(_ expanded: Bool) -> UIViewController {
-        if expanded {
-            if let search { return search }
-            let child = discovery.roastersController(expanded: true)
-            search = child
-            return child
-        }
-        if let preview { return preview }
-        let child = discovery.roastersController(expanded: false)
-        preview = child
-        return child
+    func roasters(_ expanded: Bool) -> AnyView {
+        guard let source = roasterSource, source.search == expanded else { return AnyView(Color.clear.frame(height: 0)) }
+        return AnyView(RoasterDiscoveryNativeHost(source: source).id(ObjectIdentifier(source)))
     }
 
     var actions: DiscoveryNativeActions {

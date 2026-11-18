@@ -820,3 +820,45 @@ Local JVM verification: 15 executed profile tests passed (4 native session tests
 11 existing AccountDeletionViewModel tests), no failures/errors. First invocation
 could not locate the Android SDK; rerun with the installed SDK path passed. Native
 compilation, Kotlin/Native execution and manual iPhone acceptance remain pending.
+### 2026-11-18 — Discovery, shop metrics and contribution forms
+
+The local changes build on `094b86303`, the native startup and map checkpoint.
+Discovery clips the preview map to the measured scrolling viewport
+and puts expanded map content above the retained list. Carousel spacing uses the
+content height for shops and a more compact roaster slot. Filter price keeps the
+existing four values via SwiftUI Slider; brew rows use method-specific symbols.
+Shop metrics resize to fit a compact row and stack at large type sizes.
+Contribution forms retain draft, validation and submission callbacks with native
+inputs, consistent surfaces and a map pin aligned to the map canvas.
+
+All 401 JVM tests passed (Discovery 178, shop 112, contributions 82, roaster 29).
+Android directDebug assembly and packaged DEX validation passed.
+The map geometry checks ran on Windows with Foundation providing CGRect/CGSize.
+All 119 Swift files typechecked against the current exported ComposeApp header.
+All 32 iOS tool tests passed after the temporary build manifest was restored.
+An initial tool test run overlapped the build manifest and hit Git Bash sandbox
+restrictions. The independent rerun passed. xcross uses JDK 21 for Kotlin/Native.
+Gradle needed the path to the installed JDK 17 in its Java installations settings.
+Read-only on-device checks of list/map transitions, price selection, compact shop
+metrics and light/dark forms remain pending.
+
+Windows xcross produced the local unsigned CoffeePeek Xcross Debug build 3211.
+The framework took 11m11s and Runner 2m17s. The installer target was unavailable
+over USB, so install and visual verification did not run.
+
+Later on 2026-11-18, xcross signed 3211 in 3.7s and installed it in place over
+USB in 14.0s on iPhone15,4 / iOS 27.0.1. InstallationProxy confirmed the Xcross
+version and CoreDevice confirmed its running process. The separate TestFlight
+app was also at 3211.
+
+The light-theme device check reproduced the Discovery landing defect. The
+roaster carousel covers the search header and leaves a large gap before shops.
+The filter sheet shows the new slider, the selected price and the Cold Brew and
+Chemex icons. Both contribution forms open and show outlined fields and disabled
+actions while required information is missing. The shop point picker renders its
+map, marker, address and confirmation panel. No contribution or map point was
+submitted. Device captures are local under ignored build/.
+
+Expanded Discovery map fills the content area and keeps the search header and
+map controls visible without the roaster overlay. Narrow blank safe-area strips
+and clipped marker circles along the left edge are still visible on the device.
