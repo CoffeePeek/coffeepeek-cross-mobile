@@ -48,6 +48,7 @@ private struct ComposeRootView: UIViewControllerRepresentable {
         MainViewControllerKt.configureNativeCommunityCards(factory: makeCommunityCardController)
         MainViewControllerKt.configureNativeCheckInDetails(factory: makeCheckInDetailController)
         MainViewControllerKt.configureNativeCommunityFeed(factory: makeCommunityFeedController)
+        IosCommunityMessageControllers.shared.configure(factory: makeCommunityMessageController)
         MainViewControllerKt.configureNativeCheckInEditors(home: makeHomeCheckInEditorController, shop: makeShopCheckInEditorController)
         return MainViewControllerKt.MainViewController(
             onReady: { DispatchQueue.main.async { onReady() } },

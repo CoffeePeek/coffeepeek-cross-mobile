@@ -46,6 +46,23 @@ Kotlin сохраняет ViewModels, бизнес-правила, сеть, с�
 
 Ручные проверки темы, галереи и настроек в iOS Simulator остаются открытыми. Следующий пакет по плану — вход и восстановление пароля.
 
+### 2026-11-18 — native transient messages
+
+The final nested-UI audit found the Compose snackbar still mounted over the
+native community feed and post detail. Both now use SwiftUI message cards via a
+platform adapter. The same Kotlin SnackbarHostState and Material host retain
+queue ordering, accessible timeouts, action results and transition disposal;
+Material does not render a message card on iOS. Android keeps its current host.
+
+Verification plan: preserve FIFO/action/dismiss semantics and prevent delayed
+callbacks from affecting a replaced or disposed message; two non-UI native
+contracts cover callback identity, closure and late geometry. Native content
+measures its height, uses the existing 12 pt toast radius, supports scrolling
+for large text and announces the message. Both launcher registrations and the
+Xcode source references are included. Existing local iOS tooling tests pass
+(29 tests). Xcode and native contracts are pending ios-verify; manual checks for
+VoiceOver timing, large fonts and touch-through outside the card remain open.
+
 ## Пакеты работ
 
 Каждая строка задаёт владельца сценария. Один пакет может потребовать нескольких PR, если пользовательские сценарии можно принять по отдельности. Зависимости в колонке относятся к подключению и сквозной проверке. Подготовку SwiftUI на тестовых данных и аудит текущих маршрутов можно вести раньше.

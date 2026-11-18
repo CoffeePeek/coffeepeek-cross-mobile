@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		A9AA00000000000000000001 /* CoffeePeekNativeMessage.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9AA00000000000000000002 /* CoffeePeekNativeMessage.swift */; };
 		E10F17E50000000000000001 /* DiscoveryFilterSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10F17E50000000000000002 /* DiscoveryFilterSheet.swift */; };
 		5C13B3110000000000000001 /* ShopCheckInListScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C13B3110000000000000004 /* ShopCheckInListScreen.swift */; };
 		5C13B3110000000000000002 /* ShopCheckInListComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C13B3110000000000000005 /* ShopCheckInListComponents.swift */; };
@@ -122,6 +123,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		A9AA00000000000000000002 /* CoffeePeekNativeMessage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CoffeePeekNativeMessage.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CoffeePeekNativeMessage.swift; sourceTree = "<group>"; };
 		E10F17E50000000000000002 /* DiscoveryFilterSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = DiscoveryFilterSheet.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/DiscoveryFilterSheet.swift; sourceTree = "<group>"; };
 		5C13B3110000000000000004 /* ShopCheckInListScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ShopCheckInListScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/ShopCheckInListScreen.swift; sourceTree = "<group>"; };
 		5C13B3110000000000000005 /* ShopCheckInListComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ShopCheckInListComponents.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/ShopCheckInListComponents.swift; sourceTree = "<group>"; };
@@ -335,6 +337,7 @@
 				A0871E7C0000000000000008 /* OwnProfileCheckIns.swift */,
 				A0871E7B0000000000000004 /* CoffeePeekGuestAccountCard.swift */,
 				A0871E7B0000000000000002 /* CoffeePeekAppleSignInButton.swift */,
+				A9AA00000000000000000002 /* CoffeePeekNativeMessage.swift */,
 				A20000000000000000000016 /* ThemeSettingsScreen.swift */,
 				B30000000000000000000003 /* ShopReportScreen.swift */,
 				B251C0510000000000000004 /* ContributionsNativeHost.swift */,
@@ -653,6 +656,7 @@
 				F07A11400000000000000001 /* CoffeePeekNativePhotoViewer.swift in Sources */,
 				5C13B3110000000000000001 /* ShopCheckInListScreen.swift in Sources */,
 				5C13B3110000000000000002 /* ShopCheckInListComponents.swift in Sources */,
+				A9AA00000000000000000001 /* CoffeePeekNativeMessage.swift in Sources */,
 				A10000000000000000000015 /* ThemeSettingsScreen.swift in Sources */,
 				B30000000000000000000001 /* ShopReportScreen.swift in Sources */,
 				C0FFEE500000000000000001 /* CoffeeDetailScreen.swift in Sources */,
