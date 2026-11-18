@@ -5,32 +5,53 @@ import UIKit
 @MainActor
 func makeSettingsController(screen: IosSettingsScreen) -> UIViewController {
     switch screen {
-    case let model as IosSettingsTab:
-        return hostSettingsTab(model)
-    case let model as IosCitySettings:
-        return SettingsHostingController(screen: model, rootView: SettingsStateHost(
-            screen: model, current: model.currentState, observe: model.observeState
-        ) { state, strings in
-            CitySettingsScreen(state: state, strings: strings, select: model.select, retry: model.retry, back: model.back)
-        })
-    case let model as IosLanguageSettings:
-        return SettingsHostingController(screen: model, rootView: SettingsStateHost(
-            screen: model, current: model.currentState, observe: model.observeState
-        ) { state, strings in
-            LanguageSettingsScreen(state: state, strings: strings, select: model.select, retry: model.retry, back: model.back)
-        })
-    case let model as IosUsagePolicy:
-        return SettingsHostingController(screen: model, rootView: SettingsStateHost(
-            screen: model, current: model.currentState, observe: model.observeState
-        ) { state, strings in
-            UsagePolicyScreen(
-                state: state, strings: strings, setConsent: model.setConsent,
-                openTerms: model.openTerms, openPrivacy: model.openPrivacy, back: model.back
-            )
-        })
-    default:
-        preconditionFailure("Unsupported iOS settings destination")
+    case let model as IosSettingsTab: return hostSettingsTab(model)
+    case let model as IosCitySettings: return hostCitySettings(model)
+    case let model as IosLanguageSettings: return hostLanguageSettings(model)
+    case let model as IosUsagePolicy: return hostUsagePolicy(model)
+    case let model as IosAccountDeletion: return hostAccountDeletion(model)
+    default: preconditionFailure("Unsupported iOS settings destination")
     }
+}
+
+@MainActor
+private func hostCitySettings(_ model: IosCitySettings) -> UIViewController {
+    SettingsHostingController(screen: model, rootView: SettingsStateHost(
+        screen: model, current: model.currentState, observe: model.observeState
+    ) { state, strings in
+        CitySettingsScreen(state: state, strings: strings, select: model.select, retry: model.retry, back: model.back)
+    })
+}
+
+@MainActor
+private func hostLanguageSettings(_ model: IosLanguageSettings) -> UIViewController {
+    SettingsHostingController(screen: model, rootView: SettingsStateHost(
+        screen: model, current: model.currentState, observe: model.observeState
+    ) { state, strings in
+        LanguageSettingsScreen(state: state, strings: strings, select: model.select, retry: model.retry, back: model.back)
+    })
+}
+
+@MainActor
+private func hostUsagePolicy(_ model: IosUsagePolicy) -> UIViewController {
+    SettingsHostingController(screen: model, rootView: SettingsStateHost(
+        screen: model, current: model.currentState, observe: model.observeState
+    ) { state, strings in
+        UsagePolicyScreen(state: state, strings: strings, setConsent: model.setConsent,
+            openTerms: model.openTerms, openPrivacy: model.openPrivacy, back: model.back)
+    })
+}
+
+@MainActor
+private func hostAccountDeletion(_ model: IosAccountDeletion) -> UIViewController {
+    SettingsHostingController(screen: model, rootView: SettingsStateHost(
+        screen: model, current: model.currentState, observe: model.observeState,
+        start: { [model.observeSessionEnd()] }
+    ) { state, _ in
+        AccountDeletionNativeScreen(state: state,
+            strings: OwnProfileStrings(languageTag: model.languageTag(), table: "NativeAccountDeletion"),
+            send: model.send, dismissError: model.dismissError, back: model.back)
+    })
 }
 
 @MainActor

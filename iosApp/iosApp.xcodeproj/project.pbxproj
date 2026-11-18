@@ -113,6 +113,14 @@
 		DAD5EF785C5BAC5D9F65C43E /* CommunityFeedNativeScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 803179B19B045FF27D2D5353 /* CommunityFeedNativeScreen.swift */; };
 		15E615F307B4D33226886FF1 /* CommunityFeedNativeRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30DB789D6C7E79AAEB5B487B /* CommunityFeedNativeRow.swift */; };
 		91B28778B1017172858BC88D /* CommunityFeedNativeStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = C59BA6BB01B30CC9D1704EA3 /* CommunityFeedNativeStatus.swift */; };
+		13E1EB359E1732420F69CBB7 /* CoffeePeekNativeActionButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = CAE1B6D000F4B0D99EB77976 /* CoffeePeekNativeActionButton.swift */; };
+		5EB38D9D1A59581550BCF75A /* AccountDeletionNativeScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = E562C8937159452DC6C0A077 /* AccountDeletionNativeScreen.swift */; };
+		45F8E39BC34FFD6CDC34298B /* RootModalNativeController.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC42BBFED62CCD1752E8C839 /* RootModalNativeController.swift */; };
+		1AFFB44C0CA1DABC7CE94803 /* GuestOnboardingNativeScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC1F415B437B8A86F54CBC84 /* GuestOnboardingNativeScreen.swift */; };
+		0AA13B21D6BCD94E8B05BD6E /* AppUpdateNativeScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 409A8042B64371AC0EF51FED /* AppUpdateNativeScreen.swift */; };
+		9F65437D1B4E3D385CB36601 /* NativeAccountDeletion.strings in Resources */ = {isa = PBXBuildFile; fileRef = 29AA5120F89FEC550C685CBE /* NativeAccountDeletion.strings */; };
+		5C55A1F6A4F5DFB3DE7EDF5B /* NativeGuestOnboarding.strings in Resources */ = {isa = PBXBuildFile; fileRef = C94B40E17EA121EFC3D9632D /* NativeGuestOnboarding.strings */; };
+		C13FD4859C40AAE420E7E0FC /* NativeAppUpdate.strings in Resources */ = {isa = PBXBuildFile; fileRef = EA778DBEF66FD480C275D198 /* NativeAppUpdate.strings */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -247,6 +255,17 @@
 		803179B19B045FF27D2D5353 /* CommunityFeedNativeScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CommunityFeedNativeScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CommunityFeedNativeScreen.swift; sourceTree = "<group>"; };
 		30DB789D6C7E79AAEB5B487B /* CommunityFeedNativeRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CommunityFeedNativeRow.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CommunityFeedNativeRow.swift; sourceTree = "<group>"; };
 		C59BA6BB01B30CC9D1704EA3 /* CommunityFeedNativeStatus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CommunityFeedNativeStatus.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CommunityFeedNativeStatus.swift; sourceTree = "<group>"; };
+		CAE1B6D000F4B0D99EB77976 /* CoffeePeekNativeActionButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CoffeePeekNativeActionButton.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CoffeePeekNativeActionButton.swift; sourceTree = "<group>"; };
+		E562C8937159452DC6C0A077 /* AccountDeletionNativeScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AccountDeletionNativeScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/AccountDeletionNativeScreen.swift; sourceTree = "<group>"; };
+		CC42BBFED62CCD1752E8C839 /* RootModalNativeController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = RootModalNativeController.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/RootModalNativeController.swift; sourceTree = "<group>"; };
+		CC1F415B437B8A86F54CBC84 /* GuestOnboardingNativeScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = GuestOnboardingNativeScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/GuestOnboardingNativeScreen.swift; sourceTree = "<group>"; };
+		409A8042B64371AC0EF51FED /* AppUpdateNativeScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppUpdateNativeScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/AppUpdateNativeScreen.swift; sourceTree = "<group>"; };
+		D47404F9E2F7C880C6AFDCA0 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/NativeAccountDeletion.strings; sourceTree = "<group>"; };
+		07C3A68E7563BFECB15E5D10 /* be */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = be; path = be.lproj/NativeAccountDeletion.strings; sourceTree = "<group>"; };
+		0769FE21141D267C9A925D7F /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/NativeGuestOnboarding.strings; sourceTree = "<group>"; };
+		D4CE6039F8E15828368F22A6 /* be */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = be; path = be.lproj/NativeGuestOnboarding.strings; sourceTree = "<group>"; };
+		168991BEEC11C0CB322F684C /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/NativeAppUpdate.strings; sourceTree = "<group>"; };
+		C4E9615DA2EF35A243B7C779 /* be */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = be; path = be.lproj/NativeAppUpdate.strings; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -379,6 +398,14 @@
 				A0871E7C000000000000000C /* NativeOwnProfile.strings */,
 				817EAB94000000000000000C /* NativePublicProfile.strings */,
 				53E771650000000000000010 /* SettingsNative.strings */,
+				CAE1B6D000F4B0D99EB77976 /* CoffeePeekNativeActionButton.swift */,
+				E562C8937159452DC6C0A077 /* AccountDeletionNativeScreen.swift */,
+				CC42BBFED62CCD1752E8C839 /* RootModalNativeController.swift */,
+				CC1F415B437B8A86F54CBC84 /* GuestOnboardingNativeScreen.swift */,
+				409A8042B64371AC0EF51FED /* AppUpdateNativeScreen.swift */,
+				29AA5120F89FEC550C685CBE /* NativeAccountDeletion.strings */,
+				C94B40E17EA121EFC3D9632D /* NativeGuestOnboarding.strings */,
+				EA778DBEF66FD480C275D198 /* NativeAppUpdate.strings */,
 			);
 			path = iosApp;
 			sourceTree = "<group>";
@@ -486,6 +513,9 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				C13FD4859C40AAE420E7E0FC /* NativeAppUpdate.strings in Resources */,
+				5C55A1F6A4F5DFB3DE7EDF5B /* NativeGuestOnboarding.strings in Resources */,
+				9F65437D1B4E3D385CB36601 /* NativeAccountDeletion.strings in Resources */,
 				A10000000000000000000002 /* Assets.xcassets in Resources */,
 				A10000000000000000000009 /* GoogleService-Info.plist in Resources */,
 				A6C011E60000000000000002 /* ShopMenuGallery.strings in Resources */,
@@ -574,6 +604,11 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				0AA13B21D6BCD94E8B05BD6E /* AppUpdateNativeScreen.swift in Sources */,
+				1AFFB44C0CA1DABC7CE94803 /* GuestOnboardingNativeScreen.swift in Sources */,
+				45F8E39BC34FFD6CDC34298B /* RootModalNativeController.swift in Sources */,
+				5EB38D9D1A59581550BCF75A /* AccountDeletionNativeScreen.swift in Sources */,
+				13E1EB359E1732420F69CBB7 /* CoffeePeekNativeActionButton.swift in Sources */,
 				A10000000000000000000001 /* CoffeePeekApp.swift in Sources */,
 				A0871E7A0000000000000001 /* AuthNativeController.swift in Sources */,
 				A0871E7A0000000000000003 /* AuthNativeComponents.swift in Sources */,
@@ -862,6 +897,33 @@
             name = NativeEditProfile.strings;
             sourceTree = "<group>";
         };
+		29AA5120F89FEC550C685CBE /* NativeAccountDeletion.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				D47404F9E2F7C880C6AFDCA0 /* ru */,
+				07C3A68E7563BFECB15E5D10 /* be */,
+			);
+			name = NativeAccountDeletion.strings;
+			sourceTree = "<group>";
+		};
+		C94B40E17EA121EFC3D9632D /* NativeGuestOnboarding.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				0769FE21141D267C9A925D7F /* ru */,
+				D4CE6039F8E15828368F22A6 /* be */,
+			);
+			name = NativeGuestOnboarding.strings;
+			sourceTree = "<group>";
+		};
+		EA778DBEF66FD480C275D198 /* NativeAppUpdate.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				168991BEEC11C0CB322F684C /* ru */,
+				C4E9615DA2EF35A243B7C779 /* be */,
+			);
+			name = NativeAppUpdate.strings;
+			sourceTree = "<group>";
+		};
 /* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */

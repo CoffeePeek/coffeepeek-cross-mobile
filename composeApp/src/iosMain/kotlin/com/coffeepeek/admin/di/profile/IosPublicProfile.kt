@@ -2,13 +2,12 @@
 
 package com.coffeepeek.admin.di.profile
 
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.window.ComposeUIViewController
 import com.coffeepeek.admin.AppContent
 import com.coffeepeek.admin.di.media.IosCatalogueMedia
+import com.coffeepeek.admin.di.media.IosPhotoViewer
 import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.utils.ShareHelper
-import com.coffeepeek.core.designsystem.component.CoffeePeekPhotoViewer
 import com.coffeepeek.core.designsystem.component.CoffeePeekPhotoViewerImages
 import com.coffeepeek.feature.profile.api.ProfileAuthor
 import com.coffeepeek.feature.profile.api.ProfileAuthorActions
@@ -102,15 +101,15 @@ class IosPublicProfile internal constructor(
         media.observeImage(url, ::canLoad).collect { image -> onImage(image.takeIf { canLoad() }) }
     })
 
-    fun makeAvatarViewer(onDismiss: () -> Unit): UIViewController? {
+    fun makeAvatarViewer(): IosPhotoViewer? {
         val avatar = visible()?.profile?.avatarUrl?.takeIf(String::isNotBlank) ?: return null
-        return viewer(CoffeePeekPhotoViewerImages(listOf(avatar), listOf(avatar)), 0, onDismiss)
+        return viewer(CoffeePeekPhotoViewerImages(listOf(avatar), listOf(avatar)), 0)
     }
 
-    fun makeCheckInViewer(id: String, index: Int, onDismiss: () -> Unit): UIViewController? {
+    fun makeCheckInViewer(id: String, index: Int): IosPhotoViewer? {
         val row = visible()?.checkIns?.firstOrNull { it.checkIn.id == id } ?: return null
         if (!row.canOpenPhoto(index)) return null
-        return viewer(CoffeePeekPhotoViewerImages(row.previewPhotos, row.originalPhotos), index, onDismiss)
+        return viewer(CoffeePeekPhotoViewerImages(row.previewPhotos, row.originalPhotos), index)
     }
 
     fun makeFeaturedCollection(): UIViewController? {
@@ -136,7 +135,8 @@ class IosPublicProfile internal constructor(
         if (profile.isCurrent()) Navigator.navigate(destination)
     }
 
-    @OptIn(ExperimentalComposeUiApi::class)
-    private fun viewer(images: CoffeePeekPhotoViewerImages, index: Int, onDismiss: () -> Unit) =
-        ComposeUIViewController(configure = { opaque = false }) { AppContent { CoffeePeekPhotoViewer(images, index, onDismiss) } }
+    private fun viewer(images: CoffeePeekPhotoViewerImages, index: Int): IosPhotoViewer {
+        val revision = visible()?.visibilityRevision
+        return media.viewer(images, index) { profile.isCurrent() && visible()?.visibilityRevision == revision }
+    }
 }

@@ -6,6 +6,37 @@
 
 ## Статус первой партии
 
+### Продолжение полной сегрегации — 2026-11-18
+
+Повторный аудит `5f381a4f7` проверил фактические native factories и вложенные
+потребители. Осталось 15 активных поверхностей маршрутизации, включая две вкладки,
+а также вложенные подборки/полка, постер, фотопросмотр и два корневых диалога.
+Наличие SwiftUI-оболочки не считается переносом встроенного Compose-содержимого.
+Kotlin сохраняет ViewModels, бизнес-правила, сеть, сессию и аналитику.
+
+| Волна | Владелец и ветка | Переносимые входы |
+| --- | --- | --- |
+| 1 | Агент поиска, `codex/ios-native-discovery-ui` | Discovery, выбор кофейни для чекина, обвязка существующей нативной карты |
+| 1 | Агент полки, `codex/ios-native-shelf-ui` | Своя полка, публичный preview, добавление/сканирование, карточка пачки и действия |
+| 1 | Агент подборок, `codex/ios-native-collections-ui` | Редактор, публичная подборка из ссылки, профиль, настройки показа, постер и picker |
+| 1 | Интеграция, `codex/ios-native-system-ui` | Фотопросмотр публичного профиля и списка чекинов кофейни |
+| 2 | Освободившийся агент | Карточки кофейни и обжарщика, preview/search обжарщиков внутри Discovery |
+| 2 | Освободившийся агент | Добавление кофейни/обжарщика, предложение изменения и редактор изменения |
+| 2 | Освободившийся агент | BusinessTab и MyBusiness со вложенными сценариями владения |
+| 2 | Интеграция | Ожидание удаления аккаунта, гостевой onboarding, предложение обновления |
+| 3 | Интеграция | Повторный аудит активных входов и удаление последнего Compose fallback/корневого UI на iOS |
+
+Каждый checkpoint получает отдельный PR в `codex/ios-native`. Перед слиянием
+проверяются актуальная база, итоговый diff, успешные Xcode build и Kotlin/Native
+контракты на последнем SHA. Android CI в этих PR не запускается. Ручные проверки
+на iPhone фиксируются отдельно; зелёный CI не подтверждает камеру, OAuth,
+реальный backend, VoiceOver и визуальное соответствие в обеих темах.
+
+Начальная проверка фотопросмотра: сохранить выбранный индекс, ленивую загрузку
+оригинала, отмену подписок, запрет устаревших кадров при смене аккаунта/блокировке,
+аналитику overlay и возврат к исходному экрану. Используется существующий
+`CoffeePeekNativePhotoViewer`; Compose-viewer удаляется из заменённых входов.
+
 - **Интеграция iOS влита.** Корни вкладок и вложенные маршруты используют общий выбор нативного контроллера. Повторный прогон после подключения галереи подтвердил сборку Xcode и 93 теста Kotlin/Native. [PR #368](https://github.com/CoffeePeek/coffeepeek-cross-mobile/pull/368) · [ios-verify](https://github.com/CoffeePeek/coffeepeek-cross-mobile/actions/runs/43865870802)
 - **Галерея меню влита.** Экран SwiftUI использует существующую Kotlin-загрузку и открывает полноэкранный просмотрщик на выбранном фото. Сборка Xcode и 91 тест Kotlin/Native прошли. [PR #369](https://github.com/CoffeePeek/coffeepeek-cross-mobile/pull/369) · [ios-verify](https://github.com/CoffeePeek/coffeepeek-cross-mobile/actions/runs/43860308720)
 - **Настройки влиты.** Перенесены вкладка, город, язык и политика использования. Сборка Xcode и 96 тестов Kotlin/Native прошли на `3d95e7c5` до разрешения конфликта с экраном заблокированных авторов. [PR #370](https://github.com/CoffeePeek/coffeepeek-cross-mobile/pull/370) · [ios-verify](https://github.com/CoffeePeek/coffeepeek-cross-mobile/actions/runs/43870701296)
@@ -575,3 +606,27 @@ app com.coffeepeek remains 1.2.1 (3108). Data preserved, scanner still disabled.
 Code is pushed to codex/ios-native; signed IPA and build identity are local in ignored
 build/xcross-ios. Manual feed/menu/cover verification remains pending; startup alone
 does not prove pagination, refresh, theme parity or mutation acceptance.
+
+
+### 2026-11-18 — native root modals and account-deletion status
+
+Scope: replace the real DeleteAccountPending route via the existing native Settings
+factory, guest-launch onboarding and the root App Store update card. The profile
+ViewModel keeps status/email confirmation/resend timing/session events. The shared
+AppUpdateController and StoreUpdateInstaller retain update policy, persisted dismissal
+and URL opening. Onboarding retains its five original feature-owned illustrations,
+ru/be text, guest/login/register destinations and two-second rotation with press/hold;
+VoiceOver pauses automatic rotation and reduced motion disables its transition.
+
+Verification plan: Xcode simulator build, native modal contracts (single completion,
+closed callback revocation, required/optional updates and existing installer), account
+session replacement and queued-send regressions, tooling/resource packaging checks.
+Do not send deletion emails or modify a real account. Native light/dark previews are
+colocated with each screen. The AppUpdate feature has Russian resources only, so its
+Belarusian table preserves the existing Russian fallback rather than claiming a new
+translation. Remove obsolete iOS-only Compose update entry after its last consumer.
+
+Local JVM verification: 15 executed profile tests passed (4 native session tests and
+11 existing AccountDeletionViewModel tests), no failures/errors. First invocation
+could not locate the Android SDK; rerun with the installed SDK path passed. Native
+compilation, Kotlin/Native execution and manual iPhone acceptance remain pending.

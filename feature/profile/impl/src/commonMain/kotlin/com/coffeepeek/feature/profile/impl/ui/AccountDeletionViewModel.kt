@@ -30,6 +30,8 @@ internal class AccountDeletionViewModel(
     private val tickMillis: Long = 1_000,
 ) : MviViewModel<AccountDeletionState, AccountDeletionAction, AccountDeletionEvent>(AccountDeletionState()) {
     private var ticker: Job? = null
+    private val owner = accounts.activeAccount()
+    private val generation = accounts.cacheScope()
 
     init {
         observeSessionEnd()
@@ -44,7 +46,7 @@ internal class AccountDeletionViewModel(
     }
 
     private suspend fun send() {
-        if (!currentState.canSend) return
+        if (!currentState.canSend || owner == null || accounts.activeAccount() != owner || accounts.cacheScope() != generation) return
         updateState { copy(isSending = true, error = null) }
         deletion.request()
             .onSuccess { applyRequest(it); updateState { copy(isSending = false) } }
