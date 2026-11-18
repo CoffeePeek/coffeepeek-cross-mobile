@@ -200,6 +200,7 @@ jobs:
             --tests 'com.coffeepeek.admin.di.media.IosPhotoViewerTest' \
             --tests 'com.coffeepeek.admin.di.media.IosCatalogueMediaTest' \
             --tests 'com.coffeepeek.admin.ui.RootNavigationSessionTest' \
+            --tests 'com.coffeepeek.admin.di.roaster.IosRoasterLifetimeTest' \
             --tests 'com.coffeepeek.admin.di.shopreport.IosShopReportTest' \
             --tests 'com.coffeepeek.admin.di.contentreport.IosContentReportTest' \
             --tests 'com.coffeepeek.admin.di.settings.IosSettingsScreensTest' \
@@ -295,6 +296,15 @@ jobs:
               tail -n 150 "$RUNNER_TEMP/ios-own-profile-tests.log"
               exit 1
             }
+      - name: Run roaster Kotlin Native tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./gradlew --max-workers=6 :feature:roaster:impl:iosSimulatorArm64Test \
+            > "$RUNNER_TEMP/ios-roaster-tests.log" 2>&1 || {
+              tail -n 150 "$RUNNER_TEMP/ios-roaster-tests.log"
+              exit 1
+            }
       - name: Run shelf archive Kotlin Native tests
         shell: bash
         run: |
@@ -335,6 +345,8 @@ jobs:
             composeApp/build/test-results/iosSimulatorArm64Test/
             ${{ runner.temp }}/ios-shop-menu-gallery-tests.log
             feature/shop/impl/build/test-results/iosSimulatorArm64Test/
+            ${{ runner.temp }}/ios-roaster-tests.log
+            feature/roaster/impl/build/test-results/iosSimulatorArm64Test/
             ${{ runner.temp }}/ios-coffee-detail-tests.log
             feature/coffee/impl/build/test-results/iosSimulatorArm64Test/
             ${{ runner.temp }}/ios-notification-inbox-tests.log
