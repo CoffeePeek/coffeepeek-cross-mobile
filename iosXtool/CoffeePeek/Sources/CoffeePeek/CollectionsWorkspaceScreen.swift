@@ -34,7 +34,7 @@ final class CollectionsWorkspaceModel: ObservableObject {
             let next = workspace.current()
             if next.accountVersion != state.accountVersion || !next.busy { exportTask?.cancel() }
             state = next
-        }, onExport: { [weak self] poster, epoch in self?.export(poster, epoch: epoch) })
+        }, onExport: { [weak self] poster, epoch in self?.export(poster, epoch: epoch.int32Value) })
         if ["Owner", "Preference", "Featured"].contains(state.mode) { workspace.reload() }
     }
 
@@ -50,7 +50,7 @@ final class CollectionsWorkspaceModel: ObservableObject {
             guard let self else { return }
             let images = await renderCollectionPosters(poster, workspace: workspace, strings: strings)
             guard !Task.isCancelled else { return }
-            workspace.finishExport(epoch: epoch, id: poster.id, images: images.map { $0 as NSData })
+            workspace.finishExport(epoch: epoch, id: poster.id, images: images)
         }
     }
 
@@ -99,7 +99,7 @@ private struct CollectionsWorkspaceHost: View {
             let version = coverVersion
             Task {
                 if let data = try? await item.loadTransferable(type: Data.self) {
-                    model.workspace.coverPicked(data: data as NSData, version: version)
+                    model.workspace.coverPicked(data: data, version: version)
                 }
                 coverItem = nil
             }
