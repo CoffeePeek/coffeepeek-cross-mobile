@@ -14,10 +14,13 @@ Kotlin сохраняет существующие ViewModels, данные, в�
 
 Срез собран в заключительном [PR #407](https://github.com/CoffeePeek/coffeepeek-cross-mobile/pull/407)
 из самостоятельных checkpoint #399/#401/#404/#405/#406/#408/#409. До их слияния
-это зависимости draft-кандидата; каждый parent сливается только после успешных
-Xcode и Kotlin/Native проверок своего последнего SHA. Используется merge commit,
-чтобы сохранить ancestry и итоговый scoped diff зависимых #405/#407. Точные SHA,
-прогоны и выводы проверок фиксируются в описаниях соответствующих PR.
+это зависимости draft-кандидата; каждый parent допускается в integration только
+после успешных Xcode и Kotlin/Native проверок своего последнего SHA. Зелёные
+mergeable PR сливаются отдельно. Остаточные чисто структурные конфликты разрешены
+в #407: после green всех parent и общего кандидата их проверенные commits могут
+войти одним обычным merge #407 с сохранением ancestry. Base-only pushes ради
+повторения уже решённых конфликтов не нужны. Точные SHA, прогоны и выводы
+проверок фиксируются в описаниях соответствующих PR.
 
 Таблица покрывает все 53 сериализуемых ID из `Navigator.Screen`, включая
 технические контейнеры и совместимость. Это не число разных экранов: некоторые
@@ -82,6 +85,12 @@ CFPK (чёрный/белый в светлой теме, белый/чёрны�
   #400 — 99 Collections tests, #402 — полный Native job и Xcode; #398/#403 также
   имеют успешные Xcode/Native прогоны. Остальные результаты привязаны к final SHA
   в PR; слияние при красном/незавершённом CI не разрешено.
+- В первом Native прогоне #408 компиляция теста не вывела generic type для
+  `List<ChangeDraft.Description>` против `MutableList<ChangeDraft>`; assertion
+  явно типизирован `List<ChangeDraft>`, аналогичный Community assertion исправлен.
+  Старый Xcode build и app contracts прошли, feature suite до отказа не исполнился.
+  Новый final SHA проходит повторный Native CI. Media guard отдельно проверяет
+  live owner/epoch до и после fetch, включая смену аккаунта до flow collector.
 - Требуют ручного iPhone review: камера/сканер и возврат после фото, повторный `+`,
   фото с реальными разрешениями, OAuth/backend/persistence, смена аккаунта,
   keyboard/VoiceOver/крупный шрифт, обе темы, native sheet/back/cancel и запуск
