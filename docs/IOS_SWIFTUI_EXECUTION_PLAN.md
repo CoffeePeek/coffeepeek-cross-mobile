@@ -46,6 +46,23 @@ Kotlin сохраняет ViewModels, бизнес-правила, сеть, с�
 
 Ручные проверки темы, галереи и настроек в iOS Simulator остаются открытыми. Следующий пакет по плану — вход и восстановление пароля.
 
+### 2026-11-18 — native transient messages
+
+The final nested-UI audit found the Compose snackbar still mounted over the
+native community feed and post detail. Both now use SwiftUI message cards via a
+platform adapter. The same Kotlin SnackbarHostState and Material host retain
+queue ordering, accessible timeouts, action results and transition disposal;
+Material does not render a message card on iOS. Android keeps its current host.
+
+Verification plan: preserve FIFO/action/dismiss semantics and prevent delayed
+callbacks from affecting a replaced or disposed message; two non-UI native
+contracts cover callback identity, closure and late geometry. Native content
+measures its height, uses the existing 12 pt toast radius, supports scrolling
+for large text and announces the message. Both launcher registrations and the
+Xcode source references are included. Existing local iOS tooling tests pass
+(29 tests). Xcode and native contracts are pending ios-verify; manual checks for
+VoiceOver timing, large fonts and touch-through outside the card remain open.
+
 ### 2026-11-18 — native roaster detail, carousel and search
 
 Ownership: feature/roaster retains both existing ViewModels, filters, favorites,
@@ -63,8 +80,10 @@ Verification: all 29 roaster JVM tests pass (4 suites, 0 failures/errors), inclu
 The function-body gate reports only the two inherited ownership/public-profile
 violations after making the roaster factory body explicit; its first run also found
 that factory expression and it was corrected. Native account-lifetime contracts and
-the full roaster suite are included in ios-verify. macOS native build/test execution
-and manual device review remain pending. Previews use fake state in both themes;
+the full roaster suite passed on c980a6137 in ios-verify run 44273211112,
+alongside the Xcode build/binary compatibility check; PR #402 is merged.
+The earlier Xcode resource-group parser failure was fixed before that run.
+Manual device review remains pending. Previews use fake state in both themes;
 only existing supported translations are copied, missing be entries keep Russian.
 
 ## Пакеты работ

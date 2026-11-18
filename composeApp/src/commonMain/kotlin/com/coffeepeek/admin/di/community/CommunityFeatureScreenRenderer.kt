@@ -3,13 +3,11 @@ package com.coffeepeek.admin.di.community
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.Modifier
-import androidx.compose.foundation.layout.padding
 import com.coffeepeek.admin.analytics.TrackFeedViewed
 import com.coffeepeek.admin.analytics.analyticsExposure
 import com.coffeepeek.admin.di.catalog.methodLabel
 import com.coffeepeek.admin.ui.screen.community.CommunityScreenRenderer
 import com.coffeepeek.admin.ui.Navigator
-import com.coffeepeek.admin.ui.component.CpSnackbarHost
 import com.coffeepeek.core.designsystem.component.CoffeePeekPhotoViewer
 import com.coffeepeek.admin.ui.component.LocalFloatingNavClearance
 import com.coffeepeek.core.designsystem.component.CoffeePeekPhotoViewerImages
@@ -69,7 +67,7 @@ internal fun communityHost() = CommunityHost(
         }
     },
     feedViewed = { count, isPublic -> TrackFeedViewed(count, isPublic) },
-    snackbar = { state, clearance -> CpSnackbarHost(state, Modifier.padding(bottom = clearance)) },
+    snackbar = { state, clearance -> CommunitySnackbar(state, clearance) },
     // Temporarily show only Feed; ranking implementation remains available for re-enabling.
     leaders = null,
     share = ShareHelper::shareText,
