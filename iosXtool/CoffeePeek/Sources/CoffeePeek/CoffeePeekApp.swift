@@ -44,6 +44,7 @@ private struct ComposeRootView: UIViewControllerRepresentable {
     func makeUIViewController(context: Context) -> UIViewController {
         MainViewControllerKt.configureNativeEditProfile(factory: makeEditProfileController)
         MainViewControllerKt.configureNativeRoasters(factory: makeRoasterController)
+        MainViewControllerKt.configureNativeRootModals(factory: makeRootModalController)
         MainViewControllerKt.configureNativeCommunityCards(factory: makeCommunityCardController)
         MainViewControllerKt.configureNativeCheckInDetails(factory: makeCheckInDetailController)
         MainViewControllerKt.configureNativeCommunityFeed(factory: makeCommunityFeedController)

@@ -73,6 +73,10 @@ fun configureNativeRoasters(factory: (com.coffeepeek.admin.di.roaster.IosRoaster
     com.coffeepeek.admin.di.roaster.configureNativeRoasters(factory)
 }
 
+fun configureNativeRootModals(factory: (com.coffeepeek.admin.di.system.IosRootModal) -> UIViewController) {
+    com.coffeepeek.admin.di.system.configureNativeRootModals(factory)
+}
+
 fun configureNativeGlass(makeView: () -> UIVisualEffectView) {
     configureCoffeePeekNativeGlass(makeView)
 }
