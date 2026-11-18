@@ -256,7 +256,7 @@ func profileImageLoader(_ profile: IosOwnProfile?) -> ProfileImageLoader {
 struct OwnProfileImage: View {
     @Environment(\.scenePhase) private var scenePhase
     let url: String?
-    let symbol: String
+    let symbol: String?
     let fits: Bool
     let fallbackUrl: String?
     let loadImage: ProfileImageLoader
@@ -265,6 +265,8 @@ struct OwnProfileImage: View {
     @State private var fallbackObservation: IosOwnProfileObservation?
     @State private var fallbackRequest: UUID?
     @State private var requested: UUID?
+    @State private var hasShownPrimary = false
+    @State private var usesFallback = false
     @State private var visible = false
 
     private struct Sources: Equatable {
@@ -274,11 +276,11 @@ struct OwnProfileImage: View {
 
     private var sources: Sources { Sources(preview: url, fallback: fallbackUrl) }
 
-    init(url: String?, profile: IosOwnProfile?, symbol: String, fits: Bool = false) {
+    init(url: String?, profile: IosOwnProfile?, symbol: String? = nil, fits: Bool = false) {
         self.init(url: url, symbol: symbol, fits: fits, loadImage: profileImageLoader(profile))
     }
 
-    init(url: String?, symbol: String, fits: Bool = false, fallbackUrl: String? = nil,
+    init(url: String?, symbol: String? = nil, fits: Bool = false, fallbackUrl: String? = nil,
          loadImage: @escaping ProfileImageLoader) {
         self.url = url
         self.symbol = symbol
@@ -293,10 +295,12 @@ struct OwnProfileImage: View {
                 if let image {
                     Image(uiImage: image).resizable().aspectRatio(contentMode: fits ? .fit : .fill)
                         .frame(width: geometry.size.width, height: geometry.size.height)
-                } else {
+                } else if let symbol {
                     CoffeePeekNativeStyle.surface.overlay {
                         Image(systemName: symbol).foregroundStyle(CoffeePeekNativeStyle.secondary)
                     }
+                } else {
+                    CoffeePeekPhotoPlaceholder()
                 }
             }
             .clipped()
@@ -316,17 +320,24 @@ struct OwnProfileImage: View {
 
     private func load() {
         cancel()
-        guard visible, scenePhase == .active, let url, !url.isEmpty else { return }
+        guard visible, scenePhase == .active else { return }
+        let primary = url.flatMap { $0.isEmpty ? nil : $0 } ?? fallbackUrl
+        guard let primary, !primary.isEmpty else { return }
         let request = UUID()
         requested = request
-        observation = loadImage(url) { next in
-            guard requested == request else { return }
-            cancelFallback()
+        let handle = loadImage(primary) { next in
+            guard requested == request, !usesFallback else { return }
             image = next
-            if next == nil, let fallbackUrl, !fallbackUrl.isEmpty, fallbackUrl != url {
+            if next != nil {
+                hasShownPrimary = true
+            } else if !hasShownPrimary, let fallbackUrl, !fallbackUrl.isEmpty, fallbackUrl != primary {
+                usesFallback = true
+                observation?.cancel()
+                observation = nil
                 loadFallback(fallbackUrl, request: request)
             }
         }
+        if usesFallback { handle?.cancel() } else { observation = handle }
     }
 
     private func loadFallback(_ url: String, request: UUID) {
@@ -349,7 +360,35 @@ struct OwnProfileImage: View {
         observation?.cancel()
         cancelFallback()
         observation = nil
+        hasShownPrimary = false
+        usesFallback = false
     }
+}
+
+struct CoffeePeekPhotoPlaceholder: View {
+    @Environment(\.colorScheme) private var colorScheme
+
+    var body: some View {
+        GeometryReader { geometry in
+            let dark = colorScheme == .dark
+            Text(verbatim: "CFPK")
+                .font(.system(size: min(28, max(7, geometry.size.width * 0.24)), weight: .black))
+                .lineLimit(1)
+                .minimumScaleFactor(0.5)
+                .foregroundStyle(dark ? Color.black : Color.white)
+                .padding(.horizontal, 2)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(dark ? Color.white : Color.black)
+        }
+    }
+}
+
+#Preview("Photo placeholder light") {
+    CoffeePeekPhotoPlaceholder().frame(width: 150, height: 150).preferredColorScheme(.light)
+}
+
+#Preview("Photo placeholder dark") {
+    CoffeePeekPhotoPlaceholder().frame(width: 150, height: 150).preferredColorScheme(.dark)
 }
 
 #Preview("Own profile header light") {

@@ -84,7 +84,7 @@ struct PublicProfileWeek: View {
             Text(model.strings["history_weekday_\(index)"])
                 .font(CoffeePeekNativeStyle.font(11, relativeTo: .caption))
                 .foregroundStyle(CoffeePeekNativeStyle.secondary)
-            OwnProfileImage(url: day.photo, symbol: day.count > 0 ? "cup.and.saucer" : "minus",
+            OwnProfileImage(url: day.photo, symbol: day.photo == nil ? "minus" : nil,
                 loadImage: model.loadImage)
                 .frame(height: 32).clipShape(RoundedRectangle(cornerRadius: 6))
                 .overlay {

@@ -97,11 +97,9 @@ class IosPublicProfile internal constructor(
     }
 
     fun loadImage(url: String, onImage: (UIImage?) -> Unit): IosOwnProfileObservation = IosOwnProfileObservation(scope.launch {
-        val state = visible() ?: return@launch
-        val image = media.loadImage(url)
-        val current = visible()
-        if (current != null && current.visibilityRevision == state.visibilityRevision && current.profile?.slug == state.profile?.slug)
-            onImage(image)
+        val visibleSlug = visible()?.profile?.slug ?: return@launch
+        fun canLoad() = visible()?.profile?.slug == visibleSlug
+        media.observeImage(url, ::canLoad).collect { image -> onImage(image.takeIf { canLoad() }) }
     })
 
     fun makeAvatarViewer(onDismiss: () -> Unit): UIViewController? {
