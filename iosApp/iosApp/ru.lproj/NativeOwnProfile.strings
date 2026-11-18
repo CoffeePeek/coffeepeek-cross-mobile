@@ -72,10 +72,6 @@
 "profile_stat_shops" = "Кофейни";
 "profile_title" = "Профиль";
 "profile_update_failed" = "Не удалось обновить профиль";
-"profile_check_in_source" = "Тип чекина";
-"history_all" = "Все";
-"history_at_shop" = "В кофейне";
-"history_at_home" = "Дома";
 
 "profile_check_ins_clear_date" = "Сбросить дату";
 "profile_check_in_open" = "Открыть чекин";

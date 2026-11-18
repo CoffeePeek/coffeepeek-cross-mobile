@@ -78,7 +78,7 @@ class IosOwnProfileSessionTest {
         val names = mutableListOf<String?>()
         val resumed = session.observe { names += it.identity?.userName }
         runCurrent()
-        assertEquals(listOf("First"), names)
+        assertEquals(listOf<String?>("First"), names)
         resumed.cancel()
         session.close()
     }

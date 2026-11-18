@@ -289,7 +289,7 @@ private struct OwnProfileActivityCell: View {
     @ViewBuilder
     private var monthMarker: some View {
         if let photo = day.photo {
-            OwnProfileImage(url: photo, profile: profile, symbol: day.homeCount > 0 ? "house" : "cup.and.saucer")
+            OwnProfileImage(url: photo, profile: profile)
                 .frame(width: photoSide, height: photoSide)
                 .clipShape(RoundedRectangle(cornerRadius: 6))
                 .padding(.bottom, visitCount > 0 ? 6 : 0)

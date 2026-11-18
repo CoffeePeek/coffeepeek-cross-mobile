@@ -90,7 +90,7 @@ struct CoffeePeekCheckInCard: View {
     private var brew: some View {
         HStack(spacing: 12) {
             if let bag = data.bag, !bag.isEmpty {
-                CoffeePeekCardImage(url: bag, symbol: "cup.and.saucer", fits: true, loadImage: loadImage)
+                CoffeePeekCardImage(url: bag, symbol: nil, fits: true, loadImage: loadImage)
                     .frame(width: 44, height: 54).clipShape(RoundedRectangle(cornerRadius: 4))
             }
             VStack(alignment: .leading, spacing: data.bag == nil ? 8 : 2) {
