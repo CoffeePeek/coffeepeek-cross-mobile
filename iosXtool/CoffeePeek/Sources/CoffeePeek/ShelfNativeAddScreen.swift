@@ -32,7 +32,7 @@ struct ShelfNativeAddScreen: View {
 
     @ViewBuilder private func content(_ add: IosShelfAddState) -> some View {
         switch add.step {
-        case "Form": ShelfNativeBagForm(model: model, add: add)
+        case "Form": ShelfNativeBagForm(add: add, strings: strings, card: model.screen.photo(card: true), send: model.send)
         case "Preparing": preparation(add)
         case "Scanning", "Revealing": progress(add)
         case "Retake": retake(add)

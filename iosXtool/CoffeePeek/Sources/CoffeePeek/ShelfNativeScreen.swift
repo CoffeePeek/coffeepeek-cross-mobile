@@ -24,8 +24,27 @@ final class ShelfNativeModel: ObservableObject {
         observation = screen.observe { [weak self] in self?.state = $0 }
         if screen.kind == "shelf" || screen.kind == "public" { action("refresh") }
     }
-    func disappear() { observation?.cancel(); observation = nil; screen.stopCamera() }
+    func disappear() {
+        screen.stopCamera()
+        // A full-screen native Home form completes through the bag model; keep that close/saved state observed.
+        guard !state.brewing else { return }
+        observation?.cancel()
+        observation = nil
+    }
     func action(_ value: String, _ id: String? = nil) { screen.action(value: value, id: id) }
+    func send(_ intent: ShelfNativeAddIntent) {
+        switch intent {
+        case .command(let value): action(value)
+        case .query(let value): screen.query(value: value)
+        case .coffee(let slug): screen.coffee(slug: slug)
+        case .roaster(let value): screen.roaster(value: value)
+        case .weight(let grams): screen.weight(grams: grams.map { KotlinInt(int: Int32($0)) })
+        case .grind(let value): screen.grind(value: value)
+        case .purpose(let value): screen.purpose(value: value)
+        case .date(let value): screen.date(value: value)
+        case .save(let later): screen.save(later: later)
+        }
+    }
     deinit { observation?.cancel(); screen.close() }
 }
 
@@ -64,8 +83,23 @@ struct ShelfNativeStrings {
         let form = (11...14).contains(tail) ? "many" : value % 10 == 1 ? "one" : (2...4).contains(value % 10) ? "few" : "many"
         return String(format: self["shelf_\(stem)_\(form)"], value)
     }
+    func age(_ days: Int) -> String { days < 14 ? count("days", days) : count("weeks", days / 7) }
+    func weight(_ grams: Int) -> String {
+        guard grams >= 1000 else { return String(format: self["shelf_weight_g"], grams) }
+        let tenths = (grams + 50) / 100
+        let value = tenths % 10 == 0 ? "\(tenths / 10)" : "\(tenths / 10),\(tenths % 10)"
+        return String(format: self["shelf_weight_kg"], value)
+    }
+    func date(_ value: String) -> String {
+        let parts = value.split(separator: "-").compactMap { Int($0) }
+        guard parts.count == 3 else { return value }
+        let month = self["shelf_month_of_\(parts[1])"]
+        if parts[0] == Calendar.current.component(.year, from: Date()) { return String(format: self["shelf_date"], parts[2], month) }
+        return String(format: self["shelf_date_year"], parts[2], month, parts[0])
+    }
     func issue(_ issue: String?) -> String {
-        let key = ["Offline": "offline", "SignedOut": "signed_out", "Unauthorized": "signed_out", "Stale": "stale", "NotFound": "not_found", "PhotoUpload": "photo_upload",
+        let key = ["Offline": "offline", "Timeout": "offline", "Unavailable": "offline", "SignedOut": "signed_out",
+                   "AccountChanged": "signed_out", "Unauthorized": "signed_out", "Stale": "stale", "NotFound": "not_found", "PhotoUpload": "photo_upload",
                    "ShelfFull": "shelf_full", "BeanUnavailable": "bean_unavailable"][issue ?? ""] ?? "generic"
         return self["shelf_error_\(key)"]
     }
@@ -114,4 +148,23 @@ struct ShelfNativeStatus: View {
             Button(retry, action: onRetry).buttonStyle(.bordered)
         }.frame(maxWidth: .infinity).padding(24)
     }
+}
+
+enum ShelfNativeAddIntent {
+    case command(String), query(String), coffee(String), roaster(String), weight(Int?), grind(String?), purpose(String?), date(String?), save(Bool)
+}
+
+func shelfNativePreviewItem() -> IosShelfItem {
+    IosShelfItem(id: "preview", title: "Santa Rosa", roaster: "Coffee Roaster", grams: KotlinInt(int: 250),
+        grind: "Beans", purpose: "Filter", roastedOn: nil, addedOn: nil, finishedOn: nil, days: nil, roastDays: nil,
+        rating: nil, buyAgain: nil, hasPhoto: false, hasCoffee: false)
+}
+
+func shelfNativePreviewState() -> IosShelfState {
+    let item = shelfNativePreviewItem()
+    return IosShelfState(active: true, items: [item], loading: false, failed: false, visible: true,
+        finishingId: nil, arrivingId: nil, grams: KotlinInt(int: 250), roasters: 1, undo: false, failure: nil,
+        item: item, missing: false, archived: false, deleting: false, busy: false, brewing: false,
+        brewsLoading: false, brewsFailed: false, leftGrams: nil, brews: [], visibility: false,
+        visibilityEnabled: true, visibilityLoading: false, visibilityFailed: false, revision: 0, add: nil)
 }

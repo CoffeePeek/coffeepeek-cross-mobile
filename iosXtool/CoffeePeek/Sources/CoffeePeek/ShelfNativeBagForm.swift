@@ -2,21 +2,22 @@ import ComposeApp
 import SwiftUI
 
 struct ShelfNativeBagForm: View {
-    @ObservedObject var model: ShelfNativeModel
     let add: IosShelfAddState
-    private var strings: ShelfNativeStrings { model.strings }
+    let strings: ShelfNativeStrings
+    let card: UIImage?
+    let send: (ShelfNativeAddIntent) -> Void
     @State private var dateShown = false
     @State private var roasted = Date()
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             HStack(spacing: 16) {
-                if let image = model.screen.photo(card: true) {
+                if let image = card {
                     Image(uiImage: image).resizable().scaledToFit().frame(width: 110, height: 150).accessibilityHidden(true)
                 }
                 VStack(alignment: .leading, spacing: 12) {
                     Text(strings["shelf_form_ready"]).font(.headline)
-                    Button(strings["shelf_retake_camera"]) { model.action("camera") }
+                    Button(strings["shelf_retake_camera"]) { send(.command("camera")) }
                 }
             }
             if !add.hints.isEmpty {
@@ -26,29 +27,29 @@ struct ShelfNativeBagForm: View {
                 }.padding(12).background(CoffeePeekNativeStyle.accent.opacity(0.12), in: RoundedRectangle(cornerRadius: 12))
             }
             coffeeField
-            TextField(strings["shelf_form_roaster"], text: Binding(get: { add.roaster }, set: { model.screen.roaster(value: $0) }))
+            TextField(strings["shelf_form_roaster"], text: Binding(get: { add.roaster }, set: { send(.roaster($0)) }))
                 .textFieldStyle(.roundedBorder).accessibilityLabel(strings["shelf_form_roaster"])
             weights
             traits
             roastDate
             if add.saving { ProgressView() }
-            Button(strings["shelf_form_save"]) { model.screen.save(later: false) }
+            Button(strings["shelf_form_save"]) { send(.save(false)) }
                 .buttonStyle(.borderedProminent).foregroundStyle(.black).frame(maxWidth: .infinity)
-            Button(strings["shelf_form_later"]) { model.screen.save(later: true) }.frame(maxWidth: .infinity)
+            Button(strings["shelf_form_later"]) { send(.save(true)) }.frame(maxWidth: .infinity)
         }
         .disabled(add.saving)
-        .task(id: add.landing) { if add.landing { model.action("landed") } }
+        .task(id: add.landing) { if add.landing { send(.command("landed")) } }
     }
 
     private var coffeeField: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(strings["shelf_form_coffee"]).font(.headline)
-            TextField(strings["shelf_form_coffee_hint"], text: Binding(get: { add.query }, set: { model.screen.query(value: $0) }))
+            TextField(strings["shelf_form_coffee_hint"], text: Binding(get: { add.query }, set: { send(.query($0)) }))
                 .textFieldStyle(.roundedBorder).autocorrectionDisabled()
             if add.searching { ProgressView() }
             if add.searchFailed { Text(strings["shelf_form_coffee_failed"]).font(.footnote).foregroundStyle(CoffeePeekNativeStyle.secondary) }
             ForEach(add.options, id: \.slug) { option in
-                Button { model.screen.coffee(slug: option.slug) } label: {
+                Button { send(.coffee(option.slug)) } label: {
                     VStack(alignment: .leading, spacing: 4) {
                         Text(option.title).font(.headline)
                         Text(option.roaster).font(.subheadline).foregroundStyle(CoffeePeekNativeStyle.secondary)
@@ -63,7 +64,7 @@ struct ShelfNativeBagForm: View {
             ForEach([200, 250, 500, 1000], id: \.self) { grams in
                 let selected = add.grams?.intValue == Int32(grams)
                 Button(String(format: strings["shelf_weight"], grams)) {
-                    model.screen.weight(grams: selected ? nil : KotlinInt(int: Int32(grams)))
+                    send(.weight(selected ? nil : grams))
                 }
                 .buttonStyle(.bordered).tint(selected ? CoffeePeekNativeStyle.accent : CoffeePeekNativeStyle.secondary)
                 .accessibilityAddTraits(selected ? .isSelected : [])
@@ -73,12 +74,12 @@ struct ShelfNativeBagForm: View {
     private var traits: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
-                trait("Beans", key: "shelf_grind_beans", selected: add.grind) { model.screen.grind(value: $0) }
-                trait("Ground", key: "shelf_grind_ground", selected: add.grind) { model.screen.grind(value: $0) }
+                trait("Beans", key: "shelf_grind_beans", selected: add.grind) { send(.grind($0)) }
+                trait("Ground", key: "shelf_grind_ground", selected: add.grind) { send(.grind($0)) }
             }
             HStack {
-                trait("Espresso", key: "shelf_roast_espresso", selected: add.purpose) { model.screen.purpose(value: $0) }
-                trait("Filter", key: "shelf_roast_filter", selected: add.purpose) { model.screen.purpose(value: $0) }
+                trait("Espresso", key: "shelf_roast_espresso", selected: add.purpose) { send(.purpose($0)) }
+                trait("Filter", key: "shelf_roast_filter", selected: add.purpose) { send(.purpose($0)) }
             }
         }
     }
@@ -96,7 +97,7 @@ struct ShelfNativeBagForm: View {
                     roasted = Self.formatter.date(from: add.roastedOn ?? add.today) ?? Date()
                     dateShown = true
                 }
-                if add.roastedOn != nil { Button(strings["shelf_form_roasted_clear"]) { model.screen.date(value: nil) } }
+                if add.roastedOn != nil { Button(strings["shelf_form_roasted_clear"]) { send(.date(nil)) } }
             }
         }
         .sheet(isPresented: $dateShown) {
@@ -104,7 +105,7 @@ struct ShelfNativeBagForm: View {
                 DatePicker(strings["shelf_form_roasted"], selection: $roasted,
                     in: ...(Self.formatter.date(from: add.today) ?? Date()), displayedComponents: .date)
                     .datePickerStyle(.graphical)
-                Button(strings["shelf_date_done"]) { model.screen.date(value: Self.formatter.string(from: roasted)); dateShown = false }
+                Button(strings["shelf_date_done"]) { send(.date(Self.formatter.string(from: roasted))); dateShown = false }
             }.padding().presentationDetents([.medium, .large])
         }
     }
@@ -116,3 +117,14 @@ struct ShelfNativeBagForm: View {
         return formatter
     }
 }
+
+private func shelfFormPreview() -> some View {
+    let state = IosShelfAddState(step: "Form", scanner: "Ready", downloadBytes: 0, downloadDone: 0,
+        downloadTotal: 0, frame: [], stages: [], failure: nil, query: "Santa Rosa", roaster: "Coffee Roaster",
+        grams: KotlinInt(int: 250), grind: "Beans", purpose: "Filter", roastedOn: nil, today: "2026-11-18",
+        searching: false, searchFailed: false, options: [], saving: false, duplicate: false, landing: false, hints: [], message: nil)
+    return ScrollView { ShelfNativeBagForm(add: state, strings: ShelfNativeStrings("ru"), card: nil, send: { _ in }).padding() }
+        .foregroundStyle(CoffeePeekNativeStyle.foreground).background(CoffeePeekNativeStyle.background)
+}
+#Preview("Add bag form light") { shelfFormPreview().preferredColorScheme(.light) }
+#Preview("Add bag form dark") { shelfFormPreview().preferredColorScheme(.dark) }

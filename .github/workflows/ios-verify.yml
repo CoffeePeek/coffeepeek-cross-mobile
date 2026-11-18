@@ -78,10 +78,10 @@ jobs:
         run: |
           set -euo pipefail
           CHECKOUTS=build/kotlin/swiftPMCheckouts
-          if [ ! -d "$CHECKOUTS" ]; then echo "no restored checkouts â€” cold run"; exit 0; fi
+          if [ ! -d "$CHECKOUTS" ]; then echo "no restored checkouts — cold run"; exit 0; fi
           BIN=$(find "$CHECKOUTS" -type f -path '*onnxruntime.xcframework/ios-arm64_x86_64-simulator/onnxruntime.framework/onnxruntime' | head -1)
           if [ -n "$BIN" ]; then echo "cached onnxruntime simulator binary OK"; exit 0; fi
-          echo "::warning::Cached SPM checkouts are incomplete â€” dropping them and the cache entry"
+          echo "::warning::Cached SPM checkouts are incomplete — dropping them and the cache entry"
           rm -rf "$CHECKOUTS"
           KEY=$(gh cache list --key "$SPM_CACHE_KEY_PREFIX" --json key --jq '.[0].key' || true)
           if [ -n "${KEY:-}" ]; then gh cache delete "$KEY" || true; fi
@@ -171,10 +171,10 @@ jobs:
         run: |
           set -euo pipefail
           CHECKOUTS=build/kotlin/swiftPMCheckouts
-          if [ ! -d "$CHECKOUTS" ]; then echo "no restored checkouts â€” cold run"; exit 0; fi
+          if [ ! -d "$CHECKOUTS" ]; then echo "no restored checkouts — cold run"; exit 0; fi
           BIN=$(find "$CHECKOUTS" -type f -path '*onnxruntime.xcframework/ios-arm64_x86_64-simulator/onnxruntime.framework/onnxruntime' | head -1)
           if [ -n "$BIN" ]; then echo "cached onnxruntime simulator binary OK"; exit 0; fi
-          echo "::warning::Cached SPM checkouts are incomplete â€” dropping them and the cache entry"
+          echo "::warning::Cached SPM checkouts are incomplete — dropping them and the cache entry"
           rm -rf "$CHECKOUTS"
           KEY=$(gh cache list --key "$SPM_CACHE_KEY_PREFIX" --json key --jq '.[0].key' || true)
           if [ -n "${KEY:-}" ]; then gh cache delete "$KEY" || true; fi

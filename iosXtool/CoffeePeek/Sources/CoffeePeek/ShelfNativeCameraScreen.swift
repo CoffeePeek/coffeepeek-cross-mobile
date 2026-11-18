@@ -49,7 +49,9 @@ struct ShelfNativeCameraScreen: View {
                         RoundedRectangle(cornerRadius: 4).stroke(state.sharp?.boolValue == false ? .white : .yellow, lineWidth: 2)
                             .frame(width: 56, height: 56).position(x: CGFloat(x.floatValue) * geometry.size.width, y: CGFloat(y.floatValue) * geometry.size.height)
                     }
-                    if cameraModel.state?.status != "Ready" { status }
+                    if cameraModel.state?.status != "Ready" {
+                        ShelfNativeCameraStatus(status: cameraModel.state?.status, strings: strings, allow: { cameraModel.camera?.allow() })
+                    }
                     if cameraModel.state?.capturing == true { ProgressView().tint(.white) }
                 }
                 .contentShape(Rectangle())
@@ -61,6 +63,7 @@ struct ShelfNativeCameraScreen: View {
             Text(strings["shelf_scan_tip_whole"]).font(.footnote).multilineTextAlignment(.center).padding()
             HStack(spacing: 40) {
                 Button { model.screen.gallery() } label: { Label(strings["shelf_scan_gallery"], systemImage: "photo.on.rectangle").labelStyle(.iconOnly).frame(width: 48, height: 48) }
+                    .disabled(cameraModel.state?.capturing == true)
                 Button { cameraModel.camera?.capture() } label: {
                     Circle().fill(.white).padding(5).overlay(Circle().stroke(.white, lineWidth: 3)).frame(width: 68, height: 68)
                 }.accessibilityLabel(strings["shelf_camera_shutter"]).disabled(cameraModel.state?.status != "Ready" || cameraModel.state?.capturing == true)
@@ -71,14 +74,20 @@ struct ShelfNativeCameraScreen: View {
         .onAppear(perform: cameraModel.start).onDisappear(perform: cameraModel.stop)
         .onChange(of: phase) { _, value in if value == .active { cameraModel.start() } else { cameraModel.stop() } }
     }
-    @ViewBuilder private var status: some View {
-        if cameraModel.state?.status == "Denied" {
+}
+
+private struct ShelfNativeCameraStatus: View {
+    let status: String?
+    let strings: ShelfNativeStrings
+    let allow: () -> Void
+    @ViewBuilder var body: some View {
+        if status == "Denied" {
             VStack(spacing: 12) {
                 Text(strings["shelf_camera_denied"]).font(.headline)
                 Text(strings["shelf_camera_denied_body"])
-                Button(strings["shelf_camera_allow"]) { cameraModel.camera?.allow() }.buttonStyle(.bordered)
+                Button(strings["shelf_camera_allow"], action: allow).buttonStyle(.bordered)
             }.padding().multilineTextAlignment(.center).background(.black.opacity(0.8))
-        } else if cameraModel.state?.status == "Unavailable" { Text(strings["shelf_camera_unavailable"]).padding() }
+        } else if status == "Unavailable" { Text(strings["shelf_camera_unavailable"]).padding() }
         else { ProgressView().tint(.white) }
     }
 }
@@ -87,4 +96,13 @@ private struct ShelfNativeViewfinder: UIViewRepresentable {
     let camera: IosShelfNativeCamera
     func makeUIView(context: Context) -> UIView { camera.view() }
     func updateUIView(_ uiView: UIView, context: Context) {}
+}
+
+#Preview("Camera permission light") {
+    ShelfNativeCameraStatus(status: "Denied", strings: ShelfNativeStrings("ru"), allow: {})
+        .foregroundStyle(.white).background(.black).preferredColorScheme(.light)
+}
+#Preview("Camera permission dark") {
+    ShelfNativeCameraStatus(status: "Denied", strings: ShelfNativeStrings("ru"), allow: {})
+        .foregroundStyle(.white).background(.black).preferredColorScheme(.dark)
 }

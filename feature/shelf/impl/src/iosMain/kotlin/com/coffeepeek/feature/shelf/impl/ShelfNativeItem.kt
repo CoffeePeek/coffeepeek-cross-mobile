@@ -5,7 +5,7 @@ import com.coffeepeek.feature.shelf.impl.ui.data.ShelfDay
 
 class ShelfNativeItem internal constructor(item: ShelfBagItem, today: ShelfDay) {
     val id = item.id
-    val title = item.bag.name
+    val title = item.bag.name?.takeIf(String::isNotBlank)
     val roaster = item.bag.roasterName
     val grams = item.bag.weightGrams
     val grind = item.bag.grind?.name

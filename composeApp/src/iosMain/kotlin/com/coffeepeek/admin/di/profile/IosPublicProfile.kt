@@ -126,7 +126,7 @@ class IosPublicProfile internal constructor(
         val target = state.profile?.slug ?: return null
         return shelfController(target, state.own) {
             val current = visible()
-            profile.isCurrent() && current?.visibilityRevision == state.visibilityRevision && current.profile?.slug == target
+            profile.isCurrent() && current != null && current.visibilityRevision == state.visibilityRevision && current.profile?.slug == target
         }
     }
 

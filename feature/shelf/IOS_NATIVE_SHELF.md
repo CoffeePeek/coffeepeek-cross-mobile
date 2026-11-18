@@ -21,8 +21,10 @@ The existing form edits optional bag metadata before creation; there is no exist
 ## Verification
 
 - Plan: verify native handoff/finish/undo, scanner download/photo continuity, duplicate writes while saving, public read-only/hidden projection, cancellation and existing ViewModel contracts.
-- 2026-11-18, Windows host: `python -m unittest discover -s tools/ios -p 'test_*.py'` — 29 passed. `git diff --check` — passed.
+- 2026-11-18, Windows host: `python -m unittest discover -s tools/ios -p 'test_*.py'` — 29 passed. `git diff --check` — passed. Isolated `:feature:shelf:impl:compileIosMainKotlinMetadata` — passed (common + iOS feature bridge metadata).
+- Full application metadata on Windows stopped at the pre-existing generated Room expect/actual collision in core/database, before application compile. Body-limit validation reports only the two existing ownership/public-profile violations; this checkpoint adds none and does not change the baseline.
 - macOS `ios-verify` builds both Kotlin/Native and the Xcode app and executes the entire shelf unit/contract suite (including new native-session regressions). Record the final run/source after completion.
 - No automated UI, screenshot or instrumentation tests were added or run.
 - Pending physical-device/manual gates: camera permissions and focus/torch, real scanner model download, retake and gallery cancellation, persisted create/finish/restore/delete, light/dark and large fonts, VoiceOver reordering, public visibility and account switch, nested Home check-in camera, image authorization and back/cancel. Windows verification does not certify these gates.
+- Paired light/dark SwiftUI previews beside shelf grid, bag details, form, finish sheet and camera permission content use fake snapshots and no DI/network. Hardware camera and scan animation rendering remain manual gates.
 - Native shelf reuses the source-owned Russian strings; shared shelf has no Belarusian translation, so native retains the Russian fallback.

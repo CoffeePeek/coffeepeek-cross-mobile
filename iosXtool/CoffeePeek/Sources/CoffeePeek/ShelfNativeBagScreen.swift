@@ -9,7 +9,7 @@ struct ShelfNativeBagScreen: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
-                if let item = state.item { details(item) }
+                if let item = state.item { ShelfNativeBagDetails(state: state, item: item, strings: strings, cover: AnyView(ShelfNativeCover(screen: model.screen, item: item)), action: { model.action($0) }) }
                 else if state.missing { Text(strings["shelf_bag_missing_title"]).font(.title2); Text(strings["shelf_bag_missing_body"]) }
                 else if state.failed {
                     ShelfNativeStatus(message: strings["shelf_bag_offline_body"], retry: strings["shelf_retry"]) { model.action("retry") }
@@ -21,7 +21,7 @@ struct ShelfNativeBagScreen: View {
         .safeAreaInset(edge: .bottom) { if state.item != nil { mainAction } }
         .sheet(isPresented: Binding(get: { state.finishingId != nil }, set: { if !$0 { model.action("cancelFinish") } })) {
             if let item = state.item {
-                ShelfNativeFinishSheet(screen: model.screen, item: item, strings: strings,
+                ShelfNativeFinishSheet(cover: AnyView(ShelfNativeCover(screen: model.screen, item: item)), item: item, strings: strings,
                     finish: { rating, again in model.screen.finish(id: item.id, rating: rating, buyAgain: again) },
                     cancel: { model.action("cancelFinish") })
             }
@@ -49,53 +49,6 @@ struct ShelfNativeBagScreen: View {
         }.background(CoffeePeekNativeStyle.background)
     }
 
-    private func details(_ item: IosShelfItem) -> some View {
-        VStack(alignment: .leading, spacing: 16) {
-            ShelfNativeCover(screen: model.screen, item: item).frame(height: 270).frame(maxWidth: .infinity)
-            Text(item.title ?? strings["shelf_bag_untitled"]).font(.title2.weight(.semibold))
-            if let roaster = item.roaster { Text(roaster).foregroundStyle(CoffeePeekNativeStyle.secondary) }
-            if item.hasCoffee { Button(strings["shelf_open_catalog"]) { model.action("coffee") } }
-            Text(metadata(item)).foregroundStyle(CoffeePeekNativeStyle.secondary)
-            if let days = item.days { Text(String(format: strings["shelf_on_shelf_for"], strings.count("days", Int(days.intValue)))) }
-            if let date = item.roastedOn { Text("\(strings["shelf_form_roasted"]) · \(date)") }
-            if let date = item.finishedOn { Text(String(format: strings["shelf_finished_on"], date)) }
-            if let rating = item.rating {
-                Label("\(rating.intValue)/5", systemImage: "star.fill").foregroundStyle(CoffeePeekNativeStyle.accent)
-            }
-            if let again = item.buyAgain { Text(strings[again.boolValue ? "shelf_buy_again" : "shelf_not_again"]) }
-            brews
-        }
-    }
-
-    private var brews: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text(strings["shelf_brews_title"]).font(.headline)
-            if let left = state.leftGrams { Text(String(format: strings["shelf_bag_left"], String(format: strings["shelf_weight"], left.intValue))) }
-            if state.brewsLoading { ProgressView(strings["shelf_brews_loading"]) }
-            else if state.brewsFailed {
-                ShelfNativeStatus(message: strings["shelf_brews_failed"], retry: strings["shelf_retry"]) { model.action("retryBrews") }
-            } else if state.brews.isEmpty { Text(strings["shelf_brews_empty"]).foregroundStyle(CoffeePeekNativeStyle.secondary) }
-            ForEach(state.brews, id: \.id) { brew in
-                HStack {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(brew.method ?? strings["shelf_brew_untitled"])
-                        if let date = brew.date { Text(date).font(.caption).foregroundStyle(CoffeePeekNativeStyle.secondary) }
-                    }
-                    Spacer()
-                    if let dose = brew.dose { Text(String(format: strings["shelf_brew_dose"], dose.stringValue)) }
-                    if let score = brew.score { Label("\(score.intValue)", systemImage: "star.fill").foregroundStyle(CoffeePeekNativeStyle.accent) }
-                }.padding(.vertical, 4)
-            }
-        }
-    }
-
-    private func metadata(_ item: IosShelfItem) -> String {
-        [item.grams.map { String(format: strings["shelf_weight"], $0.intValue) },
-         item.grind.map { strings[$0 == "Beans" ? "shelf_grind_beans" : "shelf_grind_ground"] },
-         item.purpose.map { strings[$0 == "Espresso" ? "shelf_roast_espresso" : "shelf_roast_filter"] }]
-            .compactMap { $0 }.joined(separator: " · ")
-    }
-
     private var mainAction: some View {
         Button(strings[state.archived ? "shelf_bag_restore" : "shelf_brew_action"]) { model.action(state.archived ? "restore" : "brew") }
             .buttonStyle(.borderedProminent).foregroundStyle(.black)
@@ -114,3 +67,75 @@ private struct ShelfNativeBrewHost: View {
         }.onAppear { if controller == nil { controller = model.screen.makeBrew() } }
     }
 }
+
+private struct ShelfNativeBagDetails: View {
+    let state: IosShelfState
+    let item: IosShelfItem
+    let strings: ShelfNativeStrings
+    let cover: AnyView
+    let action: (String) -> Void
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            cover.frame(height: 270).frame(maxWidth: .infinity)
+            Text(item.title ?? strings["shelf_bag_untitled"]).font(.title2.weight(.semibold))
+            if let roaster = item.roaster { Text(roaster).foregroundStyle(CoffeePeekNativeStyle.secondary) }
+            if item.hasCoffee { Button(strings["shelf_open_catalog"]) { action("coffee") } }
+            Text(metadata(item)).foregroundStyle(CoffeePeekNativeStyle.secondary)
+            if let days = item.days { Text(age(Int(days.intValue))) }
+            if let roastDays = item.roastDays {
+                Text(roastDays.intValue == 0 ? strings["shelf_roasted_today"] : String(format: strings["shelf_roasted_ago"], strings.age(Int(roastDays.intValue))))
+            }
+            if let date = item.finishedOn { Text(String(format: strings["shelf_finished_on"], strings.date(date))) }
+            if let rating = item.rating {
+                Label("\(rating.intValue)/5", systemImage: "star.fill").foregroundStyle(CoffeePeekNativeStyle.accent)
+            }
+            if let again = item.buyAgain { Text(strings[again.boolValue ? "shelf_buy_again" : "shelf_not_again"]) }
+            brews
+        }
+    }
+
+    private var brews: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text(strings["shelf_brews_title"]).font(.headline)
+            if let left = state.leftGrams { Text(String(format: strings["shelf_bag_left"], String(format: strings["shelf_weight"], left.intValue))) }
+            if state.brewsLoading { ProgressView(strings["shelf_brews_loading"]) }
+            else if state.brewsFailed {
+                ShelfNativeStatus(message: strings["shelf_brews_failed"], retry: strings["shelf_retry"]) { action("retryBrews") }
+            } else if state.brews.isEmpty { Text(strings["shelf_brews_empty"]).foregroundStyle(CoffeePeekNativeStyle.secondary) }
+            ForEach(state.brews, id: \.id) { brew in
+                HStack {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(brew.method ?? strings["shelf_brew_untitled"])
+                        if let date = brew.date { Text(strings.date(date)).font(.caption).foregroundStyle(CoffeePeekNativeStyle.secondary) }
+                    }
+                    Spacer()
+                    if let dose = brew.dose { Text(String(format: strings["shelf_brew_dose"], dose.stringValue)) }
+                    if let score = brew.score { Label("\(score.intValue)", systemImage: "star.fill").foregroundStyle(CoffeePeekNativeStyle.accent) }
+                }.padding(.vertical, 4)
+            }
+        }
+    }
+
+    private func age(_ days: Int) -> String {
+        guard days > 0 else { return strings["shelf_added_today"] }
+        let duration = strings.age(days)
+        return String(format: strings["shelf_on_shelf_for"], duration)
+    }
+
+    private func metadata(_ item: IosShelfItem) -> String {
+        [item.grams.map { String(format: strings["shelf_weight"], $0.intValue) },
+         item.grind.map { strings[$0 == "Beans" ? "shelf_grind_beans" : "shelf_grind_ground"] },
+         item.purpose.map { strings[$0 == "Espresso" ? "shelf_roast_espresso" : "shelf_roast_filter"] }]
+            .compactMap { $0 }.joined(separator: " · ")
+    }
+
+ }
+
+private func shelfBagPreview() -> some View {
+    ScrollView {
+        ShelfNativeBagDetails(state: shelfNativePreviewState(), item: shelfNativePreviewItem(), strings: ShelfNativeStrings("ru"),
+            cover: AnyView(CoffeePeekPhotoPlaceholder()), action: { _ in }).padding()
+    }.foregroundStyle(CoffeePeekNativeStyle.foreground).background(CoffeePeekNativeStyle.background)
+}
+#Preview("Bag detail light") { shelfBagPreview().preferredColorScheme(.light) }
+#Preview("Bag detail dark") { shelfBagPreview().preferredColorScheme(.dark) }

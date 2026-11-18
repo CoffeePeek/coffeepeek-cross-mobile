@@ -2,9 +2,13 @@ package com.coffeepeek.feature.shelf.impl
 
 import com.coffeepeek.feature.shelf.api.ShelfCoffeeSearch
 import com.coffeepeek.feature.shelf.domain.model.BagScannerReadiness
+import com.coffeepeek.feature.shelf.domain.model.PublicShelf
+import com.coffeepeek.feature.shelf.domain.model.PublicShelfItem
+import com.coffeepeek.feature.shelf.domain.repository.ShelfProfileRepository
 import com.coffeepeek.feature.shelf.impl.ui.*
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.*
 import kotlin.test.*
@@ -47,35 +51,47 @@ class IosShelfNativeSessionsTest {
         val observer = session.events { outcomes += it }
         try {
             runCurrent()
-            session.action("camera")
-            runCurrent()
-            session.action("closeCamera")
-            runCurrent()
-            assertEquals("Intro", session.current().step)
-            session.photo(byteArrayOf(9, 8), false)
-            runCurrent()
-            assertEquals("Preparing", session.current().step)
-            assertEquals(0, scanner.scans)
-            session.action("download")
-            runCurrent()
-            assertEquals(1, scanner.scans)
-            assertContentEquals(byteArrayOf(9, 8), scanner.scannedPhotos.single())
-            session.action("revealed")
-            runCurrent()
+            cameraBackReturnsToIntro(session)
+            prepareSelectedPhoto(session, scanner)
             assertEquals("Form", session.current().step)
             session.query("Custom coffee")
             runCurrent()
-            val saveGate = CompletableDeferred<Unit>()
-            repository.gate = { saveGate.await() }
-            session.save(false)
-            session.save(false)
-            runCurrent()
-            saveGate.complete(Unit)
-            runCurrent()
+            saveWhileBusy(session, repository)
             assertEquals(1, repository.added.size)
             assertEquals(listOf(true), outcomes)
         } finally { session.close() }
         assertTrue(observer.isCancelled)
+    }
+
+    private fun TestScope.cameraBackReturnsToIntro(session: IosShelfAddSession) {
+        session.action("camera")
+        runCurrent()
+        session.action("closeCamera")
+        runCurrent()
+        assertEquals("Intro", session.current().step)
+    }
+
+    private fun TestScope.prepareSelectedPhoto(session: IosShelfAddSession, scanner: FakeBagScanner) {
+        session.photo(byteArrayOf(9, 8), false)
+        runCurrent()
+        assertEquals("Preparing", session.current().step)
+        assertEquals(0, scanner.scans)
+        session.action("download")
+        runCurrent()
+        assertEquals(1, scanner.scans)
+        assertContentEquals(byteArrayOf(9, 8), scanner.scannedPhotos.single())
+        session.action("revealed")
+        runCurrent()
+    }
+
+    private fun TestScope.saveWhileBusy(session: IosShelfAddSession, repository: FakeShelfRepository) {
+        val gate = CompletableDeferred<Unit>()
+        repository.gate = { gate.await() }
+        session.save(false)
+        session.save(false)
+        runCurrent()
+        gate.complete(Unit)
+        runCurrent()
     }
 
     @Test fun nativePublicShelfNeverOpensAnUnlinkedBagOrAfterProjectionIsHidden() = runTest(dispatcher) {
@@ -98,5 +114,29 @@ class IosShelfNativeSessionsTest {
             assertTrue(coffees.isEmpty())
         } finally { session.close() }
         assertTrue(observer.isCancelled)
+    }
+
+    @Test fun publicPhotoFinishingAfterAccountReplacementIsCleared() = runTest(dispatcher) {
+        val source = FakeShelfProfileRepository().apply {
+            publicRead = { Result.success(PublicShelf(listOf(PublicShelfItem("bag", "Coffee", null, null, "public-card")), 1)) }
+        }
+        val gate = CompletableDeferred<Unit>()
+        val bytes = byteArrayOf(-119, 80, 78, 71, 13, 10, 26, 10, 0, 0, 0, 13, 73, 72, 68, 82, 0, 0, 0, 1, 0, 0, 0, 1, 8)
+        val repository = object : ShelfProfileRepository by source {
+            override suspend fun photo(url: String): Result<ByteArray> { gate.await(); return Result.success(bytes) }
+        }
+        val session = createIosShelfProfileSession(repository, "public-person", false)
+        try {
+            runCurrent()
+            val request = async { session.photo("bag") }
+            runCurrent()
+            source.publicRead = { Result.success(null) }
+            source.owners.value = "replacement"
+            runCurrent()
+            gate.complete(Unit)
+            runCurrent()
+            assertNull(request.await())
+            assertTrue(bytes.all { it == 0.toByte() })
+        } finally { session.close() }
     }
 }
