@@ -67,4 +67,8 @@
     <string name="ownership_checkin_qr_description">QR-код для чекина в кофейне %1$s</string>
     <string name="ownership_checkin_qr_share">Поделиться PNG</string>
     <string name="ownership_checkin_qr_error">Не удалось подготовить QR-код. Попробуйте ещё раз.</string>
+    <string name="ownership_photo_previous">Переместить фото левее</string>
+    <string name="ownership_photo_next">Переместить фото правее</string>
+    <string name="ownership_photo_remove">Удалить фото</string>
+    <string name="ownership_photo_add">Добавить фото</string>
 </resources>

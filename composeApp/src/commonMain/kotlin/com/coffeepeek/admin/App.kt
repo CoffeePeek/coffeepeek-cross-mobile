@@ -75,7 +75,9 @@ internal fun AppContent(content: @Composable () -> Unit) {
             ) {
                 ProvideDesignSystemPlatformHooks {
                     com.coffeepeek.admin.di.homecheckin.ProvidePlatformCheckInEditors {
-                        com.coffeepeek.admin.di.media.ProvideImageEnvironment(content)
+                        com.coffeepeek.admin.di.ownership.ProvidePlatformOwnership {
+                            com.coffeepeek.admin.di.media.ProvideImageEnvironment(content)
+                        }
                     }
                 }
             }
