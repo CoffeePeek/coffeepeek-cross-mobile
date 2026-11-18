@@ -66,7 +66,7 @@ not create another OwnershipViewModel or copy access/claim decisions into Shop.
 
 ## Verification, 2026-11-18
 
-Base was refreshed to integration `e67fe3d5d` before publishing. On Windows,
+Base was refreshed to integration `0fb8b2d1d` before the corrected macOS build. On Windows,
 the changed Shop commonMain and iOSMain metadata compiled. The first
 metadata attempt found forbidden access to internal design-system resource
 symbols; corrected by feature-owned ru/be resources and the application's
@@ -100,3 +100,12 @@ and pure forwarding mappings, matching the existing native app boundaries. The
 shared feature state, business logic and module exports are unchanged; Swift
 now depends only on app-owned types. App values use `summary` for optional
 business descriptions to avoid NSObject member-name collisions.
+
+The first macOS run (`44270540581`, head `d93cf335e`) compiled Kotlin and
+executed the application native contracts, authentication and Shop native test
+steps successfully. Its Xcode step failed because feature DTOs were not exported
+and a nested photo callback expected `KotlinUnit`. The app-owned display values
+and callback signature fix these concrete diagnostics. The earlier run is not
+a passing Xcode check; the corrected head still requires both CI jobs to pass.
+The Xcode project was checked with the full OpenStep parser after merging the
+latest integration; it has no new missing or duplicate object references.
