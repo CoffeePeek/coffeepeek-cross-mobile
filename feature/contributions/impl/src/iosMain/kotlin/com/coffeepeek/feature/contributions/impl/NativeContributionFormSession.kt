@@ -92,8 +92,13 @@ class NativeContributionFormSession(
     }
 
     fun consumeBack(): Boolean {
+        if (!isCurrent()) return false
+        if (current().submit == "failed") {
+            dismissFailure()
+            return true
+        }
         val state = shop?.state?.value ?: return false
-        if (!isCurrent() || state.step == AddShopStep.Basic || state.submit != SubmitState.Idle) return false
+        if (state.step == AddShopStep.Basic || state.submit != SubmitState.Idle) return false
         shop.onAction(AddShopAction.Previous)
         return true
     }
