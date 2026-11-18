@@ -20,7 +20,7 @@ class IosRoasterDetail internal constructor(
         val state = session.current()
         val details = state.details.takeIf { isCurrent() }
         return IosRoasterDetailState(isCurrent(), state.loading, state.failed, details?.id, details?.name,
-            details?.about, details?.location?.address, details?.contact?.instagramLink, details?.contact?.siteLink,
+            details?.about, details?.location?.address, state.instagram.takeIf { isCurrent() }, state.website.takeIf { isCurrent() },
             details?.photos?.map { it.url }.orEmpty(), details?.shops?.map { IosRoasterShop(it.slug, it.name, it.photoUrl) }.orEmpty(),
             state.favorite, state.photo.takeIf { isCurrent() }, state.messageKey.takeIf { isCurrent() }, state.message.takeIf { isCurrent() })
     }

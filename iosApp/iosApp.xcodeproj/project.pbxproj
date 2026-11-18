@@ -109,6 +109,11 @@
 		DAD5EF785C5BAC5D9F65C43E /* CommunityFeedNativeScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 803179B19B045FF27D2D5353 /* CommunityFeedNativeScreen.swift */; };
 		15E615F307B4D33226886FF1 /* CommunityFeedNativeRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30DB789D6C7E79AAEB5B487B /* CommunityFeedNativeRow.swift */; };
 		91B28778B1017172858BC88D /* CommunityFeedNativeStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = C59BA6BB01B30CC9D1704EA3 /* CommunityFeedNativeStatus.swift */; };
+		CDC4E218272AEBD62CCBD0CF /* RoasterNativeController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 181460E0F1C39DE0D1DA1098 /* RoasterNativeController.swift */; };
+		8E9C5C56A4E3BE2852ED1CB6 /* RoasterNativeCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2645A333FA079F94D28AE329 /* RoasterNativeCard.swift */; };
+		FF51FDC39D4F328BFC814202 /* RoasterDiscoveryNativeScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC82D22A61C951409CB48B98 /* RoasterDiscoveryNativeScreen.swift */; };
+		8AF230A9B8B8789A2F1F28A1 /* RoasterDetailNativeScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C7A4C6E1544B2E0FA845DA9 /* RoasterDetailNativeScreen.swift */; };
+		6878214BAD9DFB393A3514C0 /* NativeRoaster.strings in Resources */ = {isa = PBXBuildFile; fileRef = 9EFAA51590745D5526C255B5 /* NativeRoaster.strings */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -239,6 +244,12 @@
 		803179B19B045FF27D2D5353 /* CommunityFeedNativeScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CommunityFeedNativeScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CommunityFeedNativeScreen.swift; sourceTree = "<group>"; };
 		30DB789D6C7E79AAEB5B487B /* CommunityFeedNativeRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CommunityFeedNativeRow.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CommunityFeedNativeRow.swift; sourceTree = "<group>"; };
 		C59BA6BB01B30CC9D1704EA3 /* CommunityFeedNativeStatus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CommunityFeedNativeStatus.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CommunityFeedNativeStatus.swift; sourceTree = "<group>"; };
+		181460E0F1C39DE0D1DA1098 /* RoasterNativeController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = RoasterNativeController.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/RoasterNativeController.swift; sourceTree = "<group>"; };
+		2645A333FA079F94D28AE329 /* RoasterNativeCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = RoasterNativeCard.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/RoasterNativeCard.swift; sourceTree = "<group>"; };
+		AC82D22A61C951409CB48B98 /* RoasterDiscoveryNativeScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = RoasterDiscoveryNativeScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/RoasterDiscoveryNativeScreen.swift; sourceTree = "<group>"; };
+		2C7A4C6E1544B2E0FA845DA9 /* RoasterDetailNativeScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = RoasterDetailNativeScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/RoasterDetailNativeScreen.swift; sourceTree = "<group>"; };
+		7358E39742738F1AF7508555 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/NativeRoaster.strings; sourceTree = "<group>"; };
+		93392B65F66B89565E0DF9D8 /* be */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = be; path = be.lproj/NativeRoaster.strings; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -368,6 +379,11 @@
 				A0871E7C000000000000000C /* NativeOwnProfile.strings */,
 				817EAB94000000000000000C /* NativePublicProfile.strings */,
 				53E771650000000000000010 /* SettingsNative.strings */,
+				181460E0F1C39DE0D1DA1098 /* RoasterNativeController.swift */,
+				2645A333FA079F94D28AE329 /* RoasterNativeCard.swift */,
+				AC82D22A61C951409CB48B98 /* RoasterDiscoveryNativeScreen.swift */,
+				2C7A4C6E1544B2E0FA845DA9 /* RoasterDetailNativeScreen.swift */,
+				9EFAA51590745D5526C255B5 /* NativeRoaster.strings */,
 			);
 			path = iosApp;
 			sourceTree = "<group>";
@@ -475,6 +491,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				6878214BAD9DFB393A3514C0 /* NativeRoaster.strings in Resources */,
 				A10000000000000000000002 /* Assets.xcassets in Resources */,
 				A10000000000000000000009 /* GoogleService-Info.plist in Resources */,
 				A6C011E60000000000000002 /* ShopMenuGallery.strings in Resources */,
@@ -563,6 +580,10 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				8AF230A9B8B8789A2F1F28A1 /* RoasterDetailNativeScreen.swift in Sources */,
+				FF51FDC39D4F328BFC814202 /* RoasterDiscoveryNativeScreen.swift in Sources */,
+				8E9C5C56A4E3BE2852ED1CB6 /* RoasterNativeCard.swift in Sources */,
+				CDC4E218272AEBD62CCBD0CF /* RoasterNativeController.swift in Sources */,
 				A10000000000000000000001 /* CoffeePeekApp.swift in Sources */,
 				A0871E7A0000000000000001 /* AuthNativeController.swift in Sources */,
 				A0871E7A0000000000000003 /* AuthNativeComponents.swift in Sources */,
@@ -848,6 +869,15 @@
             name = NativeEditProfile.strings;
             sourceTree = "<group>";
         };
+		9EFAA51590745D5526C255B5 /* NativeRoaster.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				7358E39742738F1AF7508555 /* ru */,
+				93392B65F66B89565E0DF9D8 /* be */,
+			);
+			name = NativeRoaster.strings;
+			sourceTree = "<group>";
+		};
 /* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */

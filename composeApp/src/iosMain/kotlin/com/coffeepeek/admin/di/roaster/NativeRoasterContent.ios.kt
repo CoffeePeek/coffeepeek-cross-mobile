@@ -3,8 +3,12 @@
 package com.coffeepeek.admin.di.roaster
 
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.ComposeUIViewController
 import com.coffeepeek.admin.AppContent
 import com.coffeepeek.admin.analytics.Entity
@@ -52,7 +56,9 @@ private fun RoasterDiscoveryNativeContent(session: NativeRoasterListSession, hos
     }
     DisposableEffect(source) { onDispose { source.close() } }
     RoasterNativeExposures(source, if (host.search) "catalog" else "discovery")
-    NativeEditorControllerHost(controller, host.modifier.fillMaxSize())
+    val modifier = if (host.search) host.modifier.fillMaxSize() else host.modifier.fillMaxWidth()
+        .height(if (LocalDensity.current.fontScale >= 1.5f) 520.dp else 360.dp)
+    NativeEditorControllerHost(controller, modifier)
 }
 
 @Composable
@@ -80,7 +86,7 @@ private fun RoasterDetailNativeContent(session: NativeRoasterDetailSession, host
     NativeEditorControllerHost(controller, host.modifier.fillMaxSize())
 }
 
-private fun roasterOwnershipController(session: NativeRoasterDetailSession, ownership: BusinessOwnershipEntry) = ComposeUIViewController {
+private fun roasterOwnershipController(session: NativeRoasterDetailSession, ownership: BusinessOwnershipEntry) = ComposeUIViewController(configure = { opaque = false }) {
     AppContent {
         val state by session.state.collectAsState(session.current())
         state.details?.let { details ->
@@ -101,6 +107,6 @@ private fun RoasterNativeExposures(source: IosRoasterScreen, placement: String) 
         TrackNativeFeatureExposure(source.isCurrent() && "catalog" in sections, "roaster_catalog", placement)
         if (placement == "catalog") TrackNativeFeatureExposure(source.isCurrent() && "search" in sections, "search", "roasters")
     }
-    TrackNativeFeatureExposure(source.isCurrent() && "favorite" in sections, "favorites",
+    TrackNativeFeatureExposure(source.isCurrent() && sections.any { it.startsWith("favorite:") }, "favorites",
         if (placement == "roaster_detail") "roaster_card" else "catalog_card")
 }

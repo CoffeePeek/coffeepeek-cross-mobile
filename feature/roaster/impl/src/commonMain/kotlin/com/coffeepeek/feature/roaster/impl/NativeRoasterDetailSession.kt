@@ -8,6 +8,8 @@ import com.coffeepeek.feature.roaster.impl.ui.model.RoasterDetailAction
 import com.coffeepeek.feature.roaster.impl.ui.model.RoasterDetailEvent
 import com.coffeepeek.feature.roaster.impl.ui.model.RoasterDetailState
 import com.coffeepeek.feature.roaster.impl.ui.model.RoasterMessage
+import com.coffeepeek.feature.roaster.impl.ui.data.instagramDisplayText
+import com.coffeepeek.feature.roaster.impl.ui.data.prettyExternalLink
 import kotlinx.coroutines.flow.map
 
 typealias NativeRoasterDetailContent = @Composable (NativeRoasterDetailSession, NativeRoasterDetailHost) -> Boolean
@@ -40,10 +42,13 @@ data class NativeRoasterEvent(val kind: String, val value: String)
 data class NativeRoasterDetailState(
     val loading: Boolean, val failed: Boolean, val details: RoasterDetails?,
     val favorite: Boolean, val photo: String?, val messageKey: String?, val message: String?,
+    val instagram: String?, val website: String?,
 )
 
 private fun RoasterDetailState.native() = NativeRoasterDetailState(
     isLoading, loadFailed, details, isFavorite, previewPhotoUrl, message.messageKey(), (message as? RoasterMessage.FromStore)?.text,
+    details?.contact?.instagramLink?.takeIf(String::isNotBlank)?.let(::instagramDisplayText),
+    details?.contact?.siteLink?.takeIf(String::isNotBlank)?.let(::prettyExternalLink),
 )
 
 internal fun RoasterMessage?.messageKey() = when (this) {

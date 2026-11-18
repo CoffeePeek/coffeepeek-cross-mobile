@@ -6,7 +6,7 @@ import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import platform.UIKit.UIImage
 
-sealed class IosRoasterScreen(
+abstract class IosRoasterScreen internal constructor(
     private val language: LanguagePort,
     protected val accounts: SessionReader,
     private val images: (String, () -> Boolean) -> Flow<UIImage?>,

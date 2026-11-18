@@ -54,7 +54,10 @@ fun createRoasterDetailEntry(
     screenAnalytics: RoasterScreenAnalytics = RoasterScreenAnalytics.None,
     onFavoriteFeedback: () -> Unit = {},
     nativeContent: NativeRoasterDetailContent? = null,
-): RoasterDetailEntry = RoasterDetailApiImpl(repository, favorites, shopPhotos, analytics, screenAnalytics, roasterImage(), { url, dismiss -> CoffeePeekPhotoViewer(url, dismiss) }, onFavoriteFeedback, nativeContent)
+): RoasterDetailEntry {
+    return RoasterDetailApiImpl(repository, favorites, shopPhotos, analytics, screenAnalytics, roasterImage(),
+        { url, dismiss -> CoffeePeekPhotoViewer(url, dismiss) }, onFavoriteFeedback, nativeContent)
+}
 
 private class RoasterDiscoveryApiImpl(
     private val repository: RoasterRepository,
