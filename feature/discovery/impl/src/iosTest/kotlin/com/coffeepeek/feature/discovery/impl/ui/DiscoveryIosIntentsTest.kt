@@ -52,6 +52,15 @@ class DiscoveryIosIntentsTest {
         assertEquals(SearchAction.ToggleFavorites, discoveryIosSearchIntent("favorites", "", selected))
     }
 
+    @Test fun roasterSuggestionIsLimitedToConfirmedEmptyTextResults() {
+        val empty = SearchState(query = "coffee", isLoading = false)
+        assertTrue(empty.iosCanSuggestRoaster(false))
+        assertFalse(empty.iosCanSuggestRoaster(null))
+        assertFalse(empty.iosCanSuggestRoaster(true))
+        assertFalse(empty.copy(shops = listOf(ShopSummary("shop", "Coffee"))).iosCanSuggestRoaster(false))
+        assertFalse(empty.copy(query = "").iosCanSuggestRoaster(false))
+    }
+
     @Test fun recreatedNativeMapCanRestoreSharedViewportWithoutIssuingAnotherFocusAction() {
         val state = MapState(activeBounds = MapBounds(52.0, 27.0, 54.0, 29.0), activeZoom = 12f)
         assertEquals(Coordinates(53.0, 28.0), state.iosViewportCamera()?.target)

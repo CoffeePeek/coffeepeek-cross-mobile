@@ -2,7 +2,7 @@ import ComposeApp
 import SwiftUI
 
 struct DiscoveryMapControls: View {
-    let state: DiscoveryIosState
+    let state: IosDiscoveryState
     let actions: DiscoveryNativeActions
     let header: AnyView
 
@@ -68,7 +68,7 @@ struct DiscoveryMapControls: View {
                     Spacer()
                     control("xmark", label: text("zone-close"), action: "zone-close")
                 }
-                if let description = zone.description, !description.isEmpty { Text(description) }
+                if let description = zone.summary, !description.isEmpty { Text(description) }
                 Button { actions.call("zone-shops") } label: {
                     Text(text("zone-shops") + " (\(zone.count))")
                 }
@@ -94,7 +94,7 @@ struct DiscoveryMapControls: View {
 }
 
 private struct DiscoveryMapCarousel: View {
-    let shops: [DiscoveryIosShop]
+    let shops: [IosDiscoveryShop]
     let selectedId: String?
     let labels: [String: String]
     let actions: DiscoveryNativeActions

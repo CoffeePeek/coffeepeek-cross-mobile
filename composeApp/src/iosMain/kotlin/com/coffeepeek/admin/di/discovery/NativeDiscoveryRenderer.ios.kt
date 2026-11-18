@@ -48,7 +48,7 @@ private fun NativeDiscoverySession(data: DiscoveryIosPresentation, modifier: Mod
 @Composable
 private fun NativeDiscoveryExposures(discovery: IosDiscovery, data: DiscoveryIosPresentation) {
     val visible by discovery.visibleElements.collectAsState()
-    val active = data.state.active
+    val active = data.state.active && !data.state.roastersExpanded
     TrackNativeFeatureExposure(active && "search" in visible, "search", "shops")
     TrackNativeFeatureExposure(active && "filters" in visible, "filters", "shops")
     TrackNativeFeatureExposure(active && "shops" in visible, "shop_catalog", "discovery")

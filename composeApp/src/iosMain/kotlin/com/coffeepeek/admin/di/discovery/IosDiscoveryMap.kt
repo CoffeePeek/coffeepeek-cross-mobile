@@ -25,7 +25,7 @@ internal class IosDiscoveryMap(
     private var view: UIView? = null
     private var dark = false
     private var camera: MapCamera? = null
-    private var locationRequest: Int? = null
+    private val locationRequests = IosDiscoveryLocationRequests()
     private var locationJob: Job? = null
     private val sessionOwner = lazy { NativeMapSession(provider,
         { bounds, zoom -> data()?.canvasCallbacks?.onBoundsChanged?.invoke(
@@ -42,8 +42,11 @@ internal class IosDiscoveryMap(
 
     fun createView(): UIView {
         val data = data()
-        if (data?.canvas?.camera == null) data?.viewportCamera?.let {
-            session.moveCamera(it.target.latitude, it.target.longitude, it.zoom, animated = false)
+        if (data != null && (data.canvas.camera != null || data.viewportCamera != null)) {
+            locationRequests.restore(data.canvas.myLocationRequest)
+            if (data.canvas.camera == null) data.viewportCamera?.let {
+                session.moveCamera(it.target.latitude, it.target.longitude, it.zoom, animated = false)
+            }
         }
         return provider.createMapView(Res.getUri("drawable/map_cup_fill.png")).also { attach(it, dark) }
     }
@@ -79,8 +82,7 @@ internal class IosDiscoveryMap(
     }
 
     private fun locate(request: Int) {
-        if (!PlatformLocation.hasPermission() || locationRequest == request) return
-        locationRequest = request
+        if (!locationRequests.take(request, PlatformLocation.hasPermission())) return
         if (request == 0 && (data()?.canvas?.camera != null || session.cameraRevision > 0)) return
         val revision = session.cameraRevision
         locationJob?.cancel()

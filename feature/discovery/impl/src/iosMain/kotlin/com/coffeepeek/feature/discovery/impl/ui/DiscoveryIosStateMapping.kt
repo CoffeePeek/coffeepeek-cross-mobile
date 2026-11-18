@@ -23,7 +23,7 @@ internal fun discoveryIosState(search: SearchState, map: MapState, ui: Discovery
     return DiscoveryIosState(
         picker, active, search.query, search.showsDiscovery, ui.mapExpanded, ui.showRoasters,
         !picker && search.query.isNotBlank() && hasRoasters != false,
-        !picker && search.query.isNotBlank() && hasRoasters == false && search.canSuggestShop, revision, clearance,
+        !picker && search.iosCanSuggestRoaster(hasRoasters), revision, clearance,
         search.isLoading, search.isRefreshing, search.isLoadingMore,
         search.canLoadMore && (!picker || search.pickerResultCriteria?.matchesPickerQuery(search.criteria) == true),
         search.error != null, search.loadMoreError != null, !picker && search.canSuggestShop,
@@ -124,3 +124,6 @@ internal fun MapState.iosViewportCamera(): MapCamera? {
     val zoom = activeZoom ?: return null
     return MapCamera(Coordinates((bounds.minLat + bounds.maxLat) / 2, (bounds.minLon + bounds.maxLon) / 2), zoom)
 }
+
+internal fun SearchState.iosCanSuggestRoaster(hasRoasters: Boolean?): Boolean =
+    query.isNotBlank() && hasRoasters == false && emptyReason != null

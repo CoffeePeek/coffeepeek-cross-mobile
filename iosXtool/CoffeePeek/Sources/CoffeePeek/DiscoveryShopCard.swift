@@ -3,7 +3,7 @@ import SwiftUI
 
 /// The Discovery owner supplies all display text and favorite state; images use shared authorized loading.
 struct DiscoveryShopCard: View {
-    let shop: DiscoveryIosShop
+    let shop: IosDiscoveryShop
     let picker: Bool
     let compact: Bool
     let labels: [String: String]

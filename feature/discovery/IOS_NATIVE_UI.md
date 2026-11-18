@@ -64,9 +64,10 @@ body check reported only the two pre-existing ownership/public-profile
 violations, with no new Discovery violations. Existing duplicate metadata and
 preview deprecation warnings remain outside this checkpoint.
 
-Added nine non-UI native contracts cover accepted picker rows, pending recents,
+Added fourteen non-UI native contracts cover accepted picker rows, pending recents,
 stale-query pagination, current-result opening, filter/cancel actions, distinct
-map select/open actions, restored viewport camera, and login-generation/account/authentication keys.
+map select/open actions, restored viewport camera, zero-key versus explicit
+location requests, empty-roaster suggestion boundaries and login-generation/account/authentication keys.
 The iOS verification workflow includes these suites together with existing
 search/filter/session/media contracts. Native tests and the Xcode app build
 must pass on macOS before merge; metadata compilation does not execute them.
@@ -87,3 +88,23 @@ sources: `IosDiscoveryMap` lacked UIKit's category-extension import for
 `endEditing`. Added `platform.UIKit.endEditing`, matching existing native
 keyboard-dismiss code. No native contract tests had executed in that failed
 run; the follow-up workflow must supply actual execution evidence.
+
+Static parity review also preserves cached native exposure visibility on return
+from child routes and explicitly suppresses Discovery exposures while the
+full Roaster owner slot is open. Permission granted after the map is mounted
+updates its location puck without recentering the viewed map; initial already-
+authorized positioning and each explicit location request still run once.
+The add-roaster suggestion remains limited to confirmed empty text results.
+
+The second macOS run `44267989848` passed application Kotlin compilation and
+its first app contract step, then Swift compilation found that feature-owned
+native payload types were not exported from the app framework. Added app-owned
+`IosDiscoveryState`/row wrappers, following the existing filter boundary, rather
+than exporting feature implementation modules. The final workflow must compile
+Swift against these app-owned types and execute the full updated suites.
+
+Run `44267989848` completed its Kotlin Native job successfully: the new account
+suite executed 2 tests and native feature-intent suite executed 7 tests, with
+zero failures, errors or skips in their XML reports. The updated wrappers and
+five additional parity regressions require the next workflow run; the failed
+Swift build is retained as earlier evidence rather than counted as a pass.

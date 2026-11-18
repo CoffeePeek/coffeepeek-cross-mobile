@@ -30,9 +30,9 @@ class IosDiscovery internal constructor(
 
     init { scope.launch { accounts.observeSession().collect { if (!isCurrent()) revoke() } } }
 
-    fun currentState() = state.value
-    fun observe(onState: (com.coffeepeek.feature.discovery.impl.ui.DiscoveryIosState) -> Unit) =
-        IosDiscoveryObservation(scope.launch { state.collect(onState) })
+    fun currentState() = state.value.toNative()
+    fun observe(onState: (IosDiscoveryState) -> Unit) =
+        IosDiscoveryObservation(scope.launch { state.collect { onState(it.toNative()) } })
 
     internal fun update(data: DiscoveryIosPresentation, locals: CompositionLocalContext) {
         if (!isCurrent()) return

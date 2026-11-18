@@ -25,7 +25,7 @@ private struct DiscoveryNativeHost: View {
 @MainActor
 private final class DiscoveryNativeModel: ObservableObject {
     let discovery: IosDiscovery
-    @Published private(set) var state: DiscoveryIosState
+    @Published private(set) var state: IosDiscoveryState
     private var observation: IosDiscoveryObservation?
     private var preview: UIViewController?
     private var search: UIViewController?

@@ -2,7 +2,7 @@ import ComposeApp
 import SwiftUI
 
 struct DiscoveryNativeScreen: View {
-    let state: DiscoveryIosState
+    let state: IosDiscoveryState
     let actions: DiscoveryNativeActions
     let map: AnyView
     let roasters: (Bool) -> AnyView
@@ -55,10 +55,8 @@ struct DiscoveryNativeScreen: View {
         .onChange(of: state.mapExpanded) { _, _ in queryFocused = false }
         .onChange(of: state.roastersExpanded) { _, _ in queryFocused = false }
         .accessibilityAction(.escape) { dismiss() }
-        .onDisappear {
-            for feature in exposed { actions.visible(feature, false) }
-            exposed = []
-        }
+        .onAppear { for feature in exposed { actions.visible(feature, true) } }
+        .onDisappear { for feature in exposed { actions.visible(feature, false) } }
     }
 
     private var mainContent: some View {
@@ -204,7 +202,7 @@ struct DiscoveryNativeScreen: View {
         }.frame(height: state.shops.isEmpty ? 0 : dynamicTypeSize.isAccessibilitySize ? 520 : 330)
     }
 
-    private func shopRow(_ shop: DiscoveryIosShop) -> some View {
+    private func shopRow(_ shop: IosDiscoveryShop) -> some View {
         DiscoveryShopCard(shop: shop, picker: state.picker, compact: state.picker, labels: state.labels, actions: actions)
             .padding(.horizontal, 16)
     }
@@ -353,12 +351,12 @@ extension View {
 }
 
 
-func discoveryPreviewState(picker: Bool = false, expanded: Bool = false) -> DiscoveryIosState {
-    let shop = DiscoveryIosShop(id: "preview", title: "CoffeePeek Specialty", photoUrl: nil,
+func discoveryPreviewState(picker: Bool = false, expanded: Bool = false) -> IosDiscoveryState {
+    let shop = IosDiscoveryShop(id: "preview", title: "CoffeePeek Specialty", photoUrl: nil,
         address: "Тихая улица, 12", rating: "4.8", detail: nil, distance: "350 м", kind: "Specialty",
         tags: ["V60", "Эспрессо"], favorite: true, favoriteBusy: false,
         favoriteLabel: "Убрать из избранного", open: true, isNew: true, hours: "Открыто · 09:00 – 22:00", decoration: nil)
-    return DiscoveryIosState(picker: picker, active: true, query: "", landing: !picker,
+    return IosDiscoveryState(picker: picker, active: true, query: "", landing: !picker,
         mapExpanded: expanded, roastersExpanded: false, showRoasterResults: false, canSuggestRoaster: false,
         scrollRevision: 0, bottomClearance: picker ? 0 : 84, loading: false, refreshing: false, loadingMore: false,
         canLoadMore: false, failed: false, loadMoreFailed: false, canSuggestShop: false, emptyReason: nil,
@@ -366,7 +364,7 @@ func discoveryPreviewState(picker: Bool = false, expanded: Bool = false) -> Disc
         shops: [shop], recent: [], mapShops: [shop], selectedShopId: "preview", suggestions: [],
         showSuggestions: false, searchFailed: false, searchLoading: false, zone: nil, zonesVisible: true,
         heatmapVisible: false, heatmapLoading: false, heatmapFailed: false, viewportFailed: false, truncated: false,
-        chips: [DiscoveryIosChip(id: "nearby", title: "Рядом", selected: false)], activeFilterCount: 0,
+        chips: [IosDiscoveryChip(id: "nearby", title: "Рядом", selected: false)], activeFilterCount: 0,
         labels: ["title": "Выберите кофейню", "search": "Поиск кофеен и обжарщиков…", "shops": "Кофейни",
             "roasters": "Обжарщики", "show-all": "Показать все", "open": "ОТКРЫТО", "new": "Новая",
             "nearby": "Рядом со мной", "map": "На карте", "list": "Списком", "filters": "Фильтры"])
