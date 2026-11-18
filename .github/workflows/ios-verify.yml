@@ -305,13 +305,12 @@ jobs:
               tail -n 150 "$RUNNER_TEMP/ios-roaster-tests.log"
               exit 1
             }
-      - name: Run shelf archive Kotlin Native tests
+      - name: Run shelf Kotlin Native tests
         shell: bash
         run: |
           set -euo pipefail
           ./gradlew --max-workers=6 :feature:shelf:impl:iosSimulatorArm64Test \
-            --tests 'com.coffeepeek.feature.shelf.impl.ui.ShelfArchiveViewModelTest' \
-            --tests 'com.coffeepeek.feature.shelf.impl.IosShelfArchiveSessionTest' \
+            --tests 'com.coffeepeek.feature.shelf.impl.*' \
             > "$RUNNER_TEMP/ios-shelf-archive-tests.log" 2>&1 || {
               tail -n 150 "$RUNNER_TEMP/ios-shelf-archive-tests.log"
               exit 1

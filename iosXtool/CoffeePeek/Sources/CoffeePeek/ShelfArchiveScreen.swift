@@ -220,30 +220,11 @@ private struct ShelfArchiveScreen<Cover: View>: View {
 private struct ShelfArchiveCover: View {
     let archive: IosShelfArchive
     let item: IosShelfArchiveRow
-    @State private var image: UIImage?
-    @State private var load: IosShelfArchiveObservation?
-
     var body: some View {
-        Group {
-            if let image {
-                Image(uiImage: image).resizable().scaledToFit()
-            } else {
-                RoundedRectangle(cornerRadius: 8)
-                    .fill(CoffeePeekNativeStyle.surface)
-                    .overlay(Image(systemName: "bag").foregroundStyle(CoffeePeekNativeStyle.secondary))
-            }
-        }
-        .clipShape(RoundedRectangle(cornerRadius: 8))
-        .onAppear {
-            if item.hasPhoto && load == nil {
-                load = archive.loadCover(id: item.id) { image = $0 }
-            }
-        }
-        .onDisappear {
-            load?.cancel()
-            load = nil
-            image = nil
-        }
+        CoffeePeekCardImage(url: item.hasPhoto ? item.id : nil, symbol: nil, fits: true, loadImage: { id, receive in
+            let request = archive.loadCover(id: id, receive: receive)
+            return CoffeePeekCardImageRequest { request.cancel() }
+        }).clipShape(RoundedRectangle(cornerRadius: 8))
     }
 }
 

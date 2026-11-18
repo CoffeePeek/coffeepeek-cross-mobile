@@ -44,6 +44,14 @@
 		71C04E5D0000000000000001 /* ContentReportScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 71C04E5D0000000000000003 /* ContentReportScreen.swift */; };
 		B30000000000000000000002 /* ShopReport.strings in Resources */ = {isa = PBXBuildFile; fileRef = B30000000000000000000006 /* ShopReport.strings */; };
 		71C04E5D0000000000000002 /* ContentReport.strings in Resources */ = {isa = PBXBuildFile; fileRef = 71C04E5D0000000000000006 /* ContentReport.strings */; };
+		5E1FA2300000000000000001 /* ShelfNativeScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E1FA2400000000000000001 /* ShelfNativeScreen.swift */; };
+		5E1FA2300000000000000002 /* ShelfNativeGridScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E1FA2400000000000000002 /* ShelfNativeGridScreen.swift */; };
+		5E1FA2300000000000000003 /* ShelfNativeFinishSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E1FA2400000000000000003 /* ShelfNativeFinishSheet.swift */; };
+		5E1FA2300000000000000004 /* ShelfNativeBagScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E1FA2400000000000000004 /* ShelfNativeBagScreen.swift */; };
+		5E1FA2300000000000000005 /* ShelfNativeAddScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E1FA2400000000000000005 /* ShelfNativeAddScreen.swift */; };
+		5E1FA2300000000000000006 /* ShelfNativeBagForm.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E1FA2400000000000000006 /* ShelfNativeBagForm.swift */; };
+		5E1FA2300000000000000007 /* ShelfNativeCameraScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E1FA2400000000000000007 /* ShelfNativeCameraScreen.swift */; };
+		5E1FA2500000000000000001 /* NativeShelf.strings in Resources */ = {isa = PBXBuildFile; fileRef = 5E1FA2500000000000000003 /* NativeShelf.strings */; };
 		5E1FA2200000000000000001 /* ShelfArchiveScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E1FA2200000000000000003 /* ShelfArchiveScreen.swift */; };
 		B20000000000000000000001 /* CollectionsLibraryScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000000000000000000003 /* CollectionsLibraryScreen.swift */; };
 		5E1FA2200000000000000002 /* NativeShelfArchive.strings in Resources */ = {isa = PBXBuildFile; fileRef = 5E1FA2200000000000000006 /* NativeShelfArchive.strings */; };
@@ -178,6 +186,14 @@
 		71C04E5D0000000000000004 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/ContentReport.strings; sourceTree = "<group>"; };
 		B30000000000000000000005 /* be */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = be; path = be.lproj/ShopReport.strings; sourceTree = "<group>"; };
 		71C04E5D0000000000000005 /* be */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = be; path = be.lproj/ContentReport.strings; sourceTree = "<group>"; };
+		5E1FA2400000000000000001 /* ShelfNativeScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ShelfNativeScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/ShelfNativeScreen.swift; sourceTree = "<group>"; };
+		5E1FA2400000000000000002 /* ShelfNativeGridScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ShelfNativeGridScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/ShelfNativeGridScreen.swift; sourceTree = "<group>"; };
+		5E1FA2400000000000000003 /* ShelfNativeFinishSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ShelfNativeFinishSheet.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/ShelfNativeFinishSheet.swift; sourceTree = "<group>"; };
+		5E1FA2400000000000000004 /* ShelfNativeBagScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ShelfNativeBagScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/ShelfNativeBagScreen.swift; sourceTree = "<group>"; };
+		5E1FA2400000000000000005 /* ShelfNativeAddScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ShelfNativeAddScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/ShelfNativeAddScreen.swift; sourceTree = "<group>"; };
+		5E1FA2400000000000000006 /* ShelfNativeBagForm.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ShelfNativeBagForm.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/ShelfNativeBagForm.swift; sourceTree = "<group>"; };
+		5E1FA2400000000000000007 /* ShelfNativeCameraScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ShelfNativeCameraScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/ShelfNativeCameraScreen.swift; sourceTree = "<group>"; };
+		5E1FA2500000000000000002 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/NativeShelf.strings; sourceTree = "<group>"; };
 		5E1FA2200000000000000003 /* ShelfArchiveScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ShelfArchiveScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/ShelfArchiveScreen.swift; sourceTree = "<group>"; };
 		B20000000000000000000003 /* CollectionsLibraryScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CollectionsLibraryScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CollectionsLibraryScreen.swift; sourceTree = "<group>"; };
 		5E1FA2200000000000000004 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/NativeShelfArchive.strings; sourceTree = "<group>"; };
@@ -369,6 +385,14 @@
 				C0FFEE500000000000000008 /* CoffeeDetail.strings */,
 				CD184B270000000000000008 /* NativeNotificationInbox.strings */,
 				71C04E5D0000000000000006 /* ContentReport.strings */,
+				5E1FA2400000000000000007 /* ShelfNativeCameraScreen.swift */,
+				5E1FA2400000000000000006 /* ShelfNativeBagForm.swift */,
+				5E1FA2400000000000000005 /* ShelfNativeAddScreen.swift */,
+				5E1FA2400000000000000004 /* ShelfNativeBagScreen.swift */,
+				5E1FA2400000000000000003 /* ShelfNativeFinishSheet.swift */,
+				5E1FA2400000000000000002 /* ShelfNativeGridScreen.swift */,
+				5E1FA2400000000000000001 /* ShelfNativeScreen.swift */,
+				5E1FA2500000000000000003 /* NativeShelf.strings */,
 				5E1FA2200000000000000003 /* ShelfArchiveScreen.swift */,
 				B20000000000000000000003 /* CollectionsLibraryScreen.swift */,
 				5E1FA2200000000000000006 /* NativeShelfArchive.strings */,
@@ -558,6 +582,7 @@
 				B251C051000000000000000A /* NativeContributions.strings in Resources */,
 				CD184B270000000000000003 /* NativeNotificationInbox.strings in Resources */,
 				71C04E5D0000000000000002 /* ContentReport.strings in Resources */,
+				5E1FA2500000000000000001 /* NativeShelf.strings in Resources */,
 				5E1FA2200000000000000002 /* NativeShelfArchive.strings in Resources */,
 				B20000000000000000000002 /* CollectionsLibrary.strings in Resources */,
 				86C051CE0000000000000002 /* CollectionsWorkspace.strings in Resources */,
@@ -695,6 +720,13 @@
 				CD184B270000000000000001 /* NotificationInboxScreen.swift in Sources */,
 				CD184B270000000000000002 /* NotificationInboxHost.swift in Sources */,
 				71C04E5D0000000000000001 /* ContentReportScreen.swift in Sources */,
+				5E1FA2300000000000000007 /* ShelfNativeCameraScreen.swift in Sources */,
+				5E1FA2300000000000000006 /* ShelfNativeBagForm.swift in Sources */,
+				5E1FA2300000000000000005 /* ShelfNativeAddScreen.swift in Sources */,
+				5E1FA2300000000000000004 /* ShelfNativeBagScreen.swift in Sources */,
+				5E1FA2300000000000000003 /* ShelfNativeFinishSheet.swift in Sources */,
+				5E1FA2300000000000000002 /* ShelfNativeGridScreen.swift in Sources */,
+				5E1FA2300000000000000001 /* ShelfNativeScreen.swift in Sources */,
 				5E1FA2200000000000000001 /* ShelfArchiveScreen.swift in Sources */,
 				B20000000000000000000001 /* CollectionsLibraryScreen.swift in Sources */,
 				86C051CE0000000000000001 /* CollectionsWorkspaceScreen.swift in Sources */,
@@ -801,6 +833,7 @@
 			name = ContentReport.strings;
 			sourceTree = "<group>";
 		};
+		5E1FA2500000000000000003 /* NativeShelf.strings */ = {isa = PBXVariantGroup; children = (5E1FA2500000000000000002 /* ru */,); name = NativeShelf.strings; sourceTree = "<group>"; };
 		5E1FA2200000000000000006 /* NativeShelfArchive.strings */ = {
 			isa = PBXVariantGroup;
 			children = (

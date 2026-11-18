@@ -60,7 +60,7 @@ internal object IosShelfCamera : ShelfCamera {
     }
 }
 
-private class IosShelfCameraSession(private val scope: CoroutineScope) : ShelfCameraSession {
+internal class IosShelfCameraSession(private val scope: CoroutineScope) : ShelfCameraSession {
     override var status by mutableStateOf(ShelfCameraStatus.Starting)
         private set
     override var torchAvailable by mutableStateOf(false)
@@ -194,6 +194,8 @@ private class IosShelfCameraSession(private val scope: CoroutineScope) : ShelfCa
         // Taps belong to the Compose overlay, which reports them through focusAt.
         properties = UIKitInteropProperties(interactionMode = null),
     )
+
+    fun nativeView(): UIView = PreviewView(preview)
 
     /** The preview layer cannot be read back; the screen keeps the live picture while the shot is taken. */
     override fun snapshot(): ImageBitmap? = null

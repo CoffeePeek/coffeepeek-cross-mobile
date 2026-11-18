@@ -77,6 +77,9 @@ fun configureNativeRootModals(factory: (com.coffeepeek.admin.di.system.IosRootMo
     com.coffeepeek.admin.di.system.configureNativeRootModals(factory)
 }
 
+fun configureNativeShelf(factory: (com.coffeepeek.admin.di.shelf.IosShelfScreen) -> UIViewController) =
+    com.coffeepeek.admin.di.shelf.configureNativeShelf(factory)
+
 fun configureNativeGlass(makeView: () -> UIVisualEffectView) {
     configureCoffeePeekNativeGlass(makeView)
 }
