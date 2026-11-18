@@ -49,7 +49,7 @@ class NativeCommunitySheetsTest {
         native.drink("drink:saved")
         native.drink("drink:other")
         native.drink("none")
-        assertEquals(listOf(CommunityAction.EditDrink("other", ""), CommunityAction.EditDrink(null, null)), actions)
+        assertEquals(listOf<CommunityAction>(CommunityAction.EditDrink("other", ""), CommunityAction.EditDrink(null, null)), actions)
     }
 
     @Test fun customNameIsLimitedAndOnlyOtherAcceptsIt() {
