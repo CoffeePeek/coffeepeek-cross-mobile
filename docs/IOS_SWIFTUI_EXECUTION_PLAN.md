@@ -971,3 +971,24 @@ Keep profile avatar and follower navigation, responsive counts and existing
 profile data. Check the zero-roaster and long-label cases. Pair fake previews
 for light and dark appearance. Verify the Windows xcross build, Android
 directDebug/DEX, and manual device appearance when USB is available.
+
+Build 3217 from `9fb5448dc` was compiled on Windows with xcross as
+scanner-disabled Debug and signed with the cached CoffeePeek development
+profile for iPhone15,4. The signed IPA was checked for its build identity,
+SHA-256 hashes, archive integrity, and both RU/BE attachment resources.
+Both native registration tests passed. Android directDebug assembly passed
+the packaged DEX and function-body checks (130 grandfathered, 0 new).
+Profile ran 81 unit tests with no failures or skips. Shop's 112 passing
+results were up to date. The Android Sandbox reference review is recorded
+above. USB enumeration returned no iPhone after signing, so installation,
+manual iOS rendering, gestures, Dynamic Type and VoiceOver remain pending.
+
+### 2026-11-18 — Discovery quick filters on iOS
+
+Match Android's quick filter row using its Sandbox reference and design-system
+tokens. Verify spacing, sizing, icon tint and selected state on the home list
+and across the map transition. Check all eight chips and their VoiceOver
+selection traits, light/dark appearance and large text. Keep the existing
+localized labels, filter intents and category glyphs shared with map pins.
+Verify the Windows xcross package and Android directDebug/DEX. The shop picker
+uses the same pill style with its existing two controls.

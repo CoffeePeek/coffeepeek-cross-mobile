@@ -822,8 +822,9 @@ enum CoffeePeekMapArtwork {
         case "Cafe": return shop(type: "cafe", side: side)
         case "nearby": symbol = "figure.walk"
         case "open-only": symbol = "clock"
-        case "new": symbol = "sparkle"
+        case "new": symbol = "sparkles"
         case "visited": symbol = "checkmark.circle"
+        case "favorites": symbol = "heart"
         case "map": symbol = "map"
         case "list": symbol = "list.bullet"
         default: return nil

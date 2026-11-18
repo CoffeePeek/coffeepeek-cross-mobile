@@ -41,6 +41,7 @@ struct DiscoveryNativeScreen: View {
     }
     private var showsLanding: Bool { state.landing && !state.picker }
     private var showsMapPreview: Bool { showsLanding && !state.roastersExpanded }
+    private var showsQuickFilterDivider: Bool { !state.mapExpanded && !state.picker && !state.roastersExpanded }
     private let mapPreviewHeight: CGFloat = 200
 
     private func screen(in size: CGSize) -> some View {
@@ -81,16 +82,22 @@ struct DiscoveryNativeScreen: View {
     }
 
     private var header: some View {
-        VStack(spacing: state.mapExpanded ? 8 : 12) {
+        VStack(spacing: state.picker && !state.mapExpanded ? 12 : 8) {
             if state.picker { pickerHeader }
             searchHeader(expanded: state.mapExpanded)
             if !state.roastersExpanded {
-                chips(expanded: state.mapExpanded).transition(catalogueTransition)
+                chips.transition(catalogueTransition)
             }
         }
         .padding(.top, state.mapExpanded ? 4 : 12)
-        .padding(.bottom, state.mapExpanded ? 4 : 16)
+        .padding(.bottom, state.mapExpanded ? 4 : (showsQuickFilterDivider ? 8 : 16))
         .background { CoffeePeekNativeStyle.background.opacity(state.mapExpanded ? 0 : 1) }
+        .overlay(alignment: .bottom) {
+            if showsQuickFilterDivider {
+                Rectangle().fill(CoffeePeekNativeStyle.border.opacity(0.7))
+                    .frame(height: 1).allowsHitTesting(false).accessibilityHidden(true)
+            }
+        }
     }
 
     private func updateExposure(_ frames: [String: DiscoveryExposureFrame], size: CGSize) {
@@ -199,20 +206,22 @@ struct DiscoveryNativeScreen: View {
         }
     }
 
-    private func chips(expanded: Bool) -> some View {
+    private var chips: some View {
         ScrollView(.horizontal) {
             HStack(spacing: 8) {
                 if state.picker {
-                    chip(text("nearby"), id: "nearby", selected: state.chips.first?.selected == true, glass: expanded) { actions.call("nearby") }
-                    chip(text(state.mapExpanded ? "list" : "map"), id: expanded ? "list" : "map", selected: expanded, glass: expanded) {
+                    DiscoveryQuickFilterChip(title: text("nearby"), id: "nearby",
+                        selected: state.chips.first?.selected == true) { actions.call("nearby") }
+                    DiscoveryQuickFilterChip(title: text(state.mapExpanded ? "list" : "map"),
+                        id: state.mapExpanded ? "list" : "map", selected: state.mapExpanded) {
                         queryFocused = false; actions.call("map")
                     }
                 } else {
                     ForEach(state.chips, id: \.id) { item in
-                        chip(item.title, id: item.id, selected: item.selected, glass: expanded) { actions.call(item.id) }
+                        DiscoveryQuickFilterChip(title: item.title, id: item.id, selected: item.selected) { actions.call(item.id) }
                     }
                 }
-            }.padding(.horizontal, 16)
+            }.padding(.horizontal, 16).padding(.vertical, showsQuickFilterDivider ? 4 : 0)
         }.scrollIndicators(.hidden)
     }
 
@@ -446,24 +455,6 @@ struct DiscoveryNativeScreen: View {
         }.buttonStyle(.plain).accessibilityLabel(label)
     }
 
-    private func chip(_ title: String, id: String, selected: Bool, glass: Bool, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            let caption = HStack(spacing: 6) {
-                if id == "favorites" { CoffeePeekLikeIcon(selected: selected) }
-                else { DiscoveryChipArtwork(id: id) }
-                Text(title)
-            }.font(CoffeePeekNativeStyle.font(13, weight: "Medium"))
-                .foregroundStyle(CoffeePeekNativeStyle.foreground)
-                .padding(.horizontal, 14).frame(minHeight: 36)
-            if glass {
-                caption.discoveryGlass(in: Capsule(), selected: selected)
-            } else {
-                caption.background(selected ? CoffeePeekNativeStyle.accent.opacity(0.22) : CoffeePeekNativeStyle.surface, in: Capsule())
-                    .overlay { Capsule().stroke(selected ? CoffeePeekNativeStyle.accent : CoffeePeekNativeStyle.border, lineWidth: 1) }
-            }
-        }.buttonStyle(.plain).accessibilityAddTraits(selected ? .isSelected : [])
-    }
-
     private var expandedMap: some View {
         DiscoveryMapControls(state: state, actions: actions, headerHeight: headerHeight)
             .discoveryExposure("map", id: "map-full")
@@ -485,6 +476,44 @@ struct DiscoveryNativeScreen: View {
                     feedback(text("favorite-failed"), action: "dismiss-favorite", label: text("dismiss"))
                 }
             }.padding(.bottom, CGFloat(state.bottomClearance) + (state.mapExpanded ? 16 : 76))
+        }
+    }
+}
+
+private struct DiscoveryQuickFilterChip: View {
+    let title: String
+    let id: String
+    let selected: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            styledCaption.frame(minWidth: 48, minHeight: 48).contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityAddTraits(selected ? .isSelected : [])
+    }
+
+    private var caption: some View {
+        HStack(spacing: 6) {
+            DiscoveryChipArtwork(id: id)
+                .foregroundStyle(selected ? CoffeePeekNativeStyle.onAccent : CoffeePeekNativeStyle.secondaryAccent)
+            Text(title)
+                .font(CoffeePeekNativeStyle.font(15, weight: "Medium", relativeTo: .callout))
+                .foregroundStyle(selected ? CoffeePeekNativeStyle.onAccent : CoffeePeekNativeStyle.foreground)
+        }
+        .fixedSize(horizontal: true, vertical: false)
+        .padding(.horizontal, 12).padding(.vertical, 10)
+        .frame(minHeight: 44)
+    }
+
+    @ViewBuilder private var styledCaption: some View {
+        if !selected {
+            caption.discoveryGlass(in: Capsule())
+        } else if #available(iOS 26.0, *) {
+            caption.glassEffect(.regular.tint(CoffeePeekNativeStyle.accent).interactive(), in: Capsule())
+        } else {
+            caption.background(CoffeePeekNativeStyle.accent, in: Capsule())
         }
     }
 }
@@ -544,12 +573,37 @@ func discoveryPreviewState(picker: Bool = false, expanded: Bool = false, canCont
         shops: [shop], recent: [], mapShops: [shop], selectedShopId: "preview", suggestions: [],
         showSuggestions: false, searchFailed: false, searchLoading: false, selectedZone: nil, zonesVisible: true,
         heatmapVisible: false, heatmapLoading: false, heatmapFailed: false, viewportFailed: false, truncated: false,
-        chips: [IosDiscoveryChip(id: "nearby", title: "Рядом", selected: false)], activeFilterCount: 0,
+        chips: discoveryPreviewChips(selected: picker ? "nearby" : "open-only"), activeFilterCount: 1,
         labels: ["title": "Выберите кофейню", "search": "Поиск кофеен и обжарщиков…", "shops": "Кофейни",
             "roasters": "Обжарщики", "show-all": "Показать все", "open": "ОТКРЫТО", "new": "Новая",
             "nearby": "Рядом со мной", "map": "На карте", "list": "Списком", "filters": "Фильтры",
             "continue": "Продолжить чекин"])
 }
+
+private func discoveryPreviewChips(selected: String) -> [IosDiscoveryChip] {
+    [
+        ("nearby", "Рядом"), ("open-only", "Открыто"), ("new", "Новые"), ("visited", "Уже был"),
+        ("favorites", "Избранное"), ("Specialty", "Specialty"), ("CoffeeBar", "Кофейня"), ("Cafe", "Кафе"),
+    ].map { IosDiscoveryChip(id: $0.0, title: $0.1, selected: $0.0 == selected) }
+}
+
+private func discoveryQuickFilterChipPreview() -> some View {
+    let chips = discoveryPreviewChips(selected: "CoffeeBar")
+    return VStack(alignment: .leading, spacing: 4) {
+        ForEach([chips.prefix(3), chips.dropFirst(3).prefix(3), chips.suffix(2)], id: \.startIndex) { row in
+            HStack(spacing: 8) {
+                ForEach(Array(row), id: \.id) { item in
+                    DiscoveryQuickFilterChip(title: item.title, id: item.id, selected: item.selected, action: {})
+                }
+            }
+        }
+    }
+    .padding(16)
+    .background(CoffeePeekNativeStyle.background)
+}
+
+#Preview("Discovery quick filters light") { discoveryQuickFilterChipPreview().preferredColorScheme(.light) }
+#Preview("Discovery quick filters dark") { discoveryQuickFilterChipPreview().preferredColorScheme(.dark) }
 
 private func discoveryScreenPreview(picker: Bool = false, expanded: Bool = false) -> some View {
     DiscoveryNativeScreen(state: discoveryPreviewState(picker: picker, expanded: expanded, canContinue: !picker),

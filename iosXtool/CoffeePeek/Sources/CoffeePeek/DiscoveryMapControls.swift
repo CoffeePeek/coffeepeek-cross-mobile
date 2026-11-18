@@ -202,7 +202,7 @@ struct DiscoveryChipArtwork: View {
 
 private func discoveryChipArtworkPreview() -> some View {
     HStack(spacing: 16) {
-        ForEach(["nearby", "open-only", "new", "visited", "Specialty", "CoffeeBar", "Cafe"], id: \.self) {
+        ForEach(["nearby", "open-only", "new", "visited", "favorites", "Specialty", "CoffeeBar", "Cafe"], id: \.self) {
             DiscoveryChipArtwork(id: $0)
         }
     }.padding().foregroundStyle(CoffeePeekNativeStyle.foreground).background(CoffeePeekNativeStyle.surface)

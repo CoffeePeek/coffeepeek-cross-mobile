@@ -11,6 +11,8 @@ enum CoffeePeekNativeStyle {
     static let secondary = adaptive(0x6B655F, 0xA39E93)
     static let border = adaptive(0xE5E1DA, 0x3D2F28)
     static let accent = color(0xFACC15)
+    static let secondaryAccent = adaptive(0x8C5A00, 0xFACC15)
+    static let onAccent = color(0x1A1412)
     static let error = adaptive(0xB91C1C, 0xFCA5A5)
 
     // Root-tab titles match design-system headlineMedium; pushed navigation stays compact.
