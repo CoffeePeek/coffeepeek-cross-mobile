@@ -1,3 +1,5 @@
+@file:OptIn(kotlinx.cinterop.ExperimentalForeignApi::class)
+
 package com.coffeepeek.admin.di.contributions
 
 import coffeepeek.composeapp.generated.resources.Res
