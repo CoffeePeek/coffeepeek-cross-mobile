@@ -16,16 +16,17 @@ struct HistoryFailureNativeContent: View {
     let back: () -> Void
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 12) {
-                Text(message).font(CoffeePeekNativeStyle.font(16)).foregroundStyle(CoffeePeekNativeStyle.error)
-                    .fixedSize(horizontal: false, vertical: true).multilineTextAlignment(.center)
-                CoffeePeekNativeActionButton(title: retryLabel, action: retry)
-                CoffeePeekNativeActionButton(title: backLabel, action: back)
-            }.frame(maxWidth: 480).padding(24).frame(maxWidth: .infinity)
+        GeometryReader { geometry in
+            ScrollView {
+                VStack(spacing: 12) {
+                    Text(message).font(CoffeePeekNativeStyle.font(16)).foregroundStyle(CoffeePeekNativeStyle.error)
+                        .fixedSize(horizontal: false, vertical: true).multilineTextAlignment(.center)
+                    CoffeePeekNativeActionButton(title: retryLabel, action: retry)
+                    CoffeePeekNativeActionButton(title: backLabel, action: back)
+                }.frame(maxWidth: 480).padding(24)
+                    .frame(maxWidth: .infinity, minHeight: geometry.size.height)
+            }.scrollBounceBehavior(.basedOnSize)
         }
-        .defaultScrollAnchor(.center)
-        .scrollBounceBehavior(.basedOnSize)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(CoffeePeekNativeStyle.background.ignoresSafeArea())
     }

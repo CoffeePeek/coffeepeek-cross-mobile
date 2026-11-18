@@ -54,7 +54,10 @@ adapter now presents the existing SwiftUI viewer through the existing UIKit
 presenter, retaining original/preview selection, image authorization, revocation,
 overlay analytics, reduced motion and return to the same Kotlin-owned route.
 The history session-observation failure screen also has a SwiftUI renderer with
-the same retry/back actions and localized feature-owned text. Android retains
+the same retry/back actions and localized feature-owned text. Large text scrolls
+from the beginning while shorter content remains centered. Coffee and check-in
+photo fallbacks reuse the existing theme-aware CFPK placeholder instead of SF
+photo/leaf symbols, following the requested light/dark colors. Android retains
 its existing viewers and failure content.
 
 Three non-UI native contracts cover revoked/disposed photo callbacks and failure

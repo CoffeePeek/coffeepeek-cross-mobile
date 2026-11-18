@@ -40,7 +40,7 @@ struct CoffeeDetailImage: View {
                 if let image {
                     Image(uiImage: image).resizable().scaledToFit()
                 } else {
-                    Image(systemName: "photo").font(.title3).foregroundStyle(.secondary)
+                    CoffeePeekPhotoPlaceholder()
                 }
             }
             .accessibilityHidden(true)
@@ -309,3 +309,11 @@ private func offerPreview(_ languageTag: String) -> some View {
 
 #Preview("Offer light") { offerPreview("ru").preferredColorScheme(.light) }
 #Preview("Offer dark") { offerPreview("be").preferredColorScheme(.dark) }
+
+#Preview("Coffee image placeholder light") {
+    CoffeeDetailImage(url: nil, images: nil).frame(width: 160, height: 200).preferredColorScheme(.light)
+}
+
+#Preview("Coffee image placeholder dark") {
+    CoffeeDetailImage(url: nil, images: nil).frame(width: 160, height: 200).preferredColorScheme(.dark)
+}

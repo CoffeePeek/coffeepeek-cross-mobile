@@ -74,7 +74,7 @@ struct HomeCheckInNativePhotos: View {
             HomeCheckInNativeRemoteImage(url: state.draft.existingPhotoUrls[index], fits: false, load: actions.loadImage)
         } else if state.draft.photos.indices.contains(index), let image = UIImage(data: state.draft.photos[index].bytes as Data) {
             Image(uiImage: image).resizable().scaledToFill()
-        } else { CoffeePeekNativeStyle.surface.overlay { Image(systemName: "photo") } }
+        } else { CoffeePeekPhotoPlaceholder() }
     }
     private func previewContent(_ index: Int) -> some View {
         NavigationStack {
@@ -111,7 +111,7 @@ struct HomeCheckInNativeRemoteImage: View {
                 if let image {
                     Image(uiImage: image).resizable().aspectRatio(contentMode: fits ? .fit : .fill)
                         .frame(width: geometry.size.width, height: geometry.size.height)
-                } else { CoffeePeekNativeStyle.surface.overlay { Image(systemName: "leaf").foregroundStyle(CoffeePeekNativeStyle.secondary) } }
+                } else { CoffeePeekPhotoPlaceholder() }
             }.clipped()
         }.accessibilityHidden(true)
             .onAppear {
@@ -147,4 +147,14 @@ struct HomeCheckInNativeRemoteImage: View {
 #Preview("Home photos dark") {
     HomeCheckInNativePhotos(state: homeCheckInNativePreviewState(), strings: homeCheckInNativePreviewStrings("be"), actions: .init())
         .padding().background(CoffeePeekNativeStyle.background).preferredColorScheme(.dark)
+}
+
+#Preview("Check-in photo placeholder light") {
+    HomeCheckInNativeRemoteImage(url: nil, load: { _, _ in nil }).frame(width: 160, height: 200)
+        .preferredColorScheme(.light)
+}
+
+#Preview("Check-in photo placeholder dark") {
+    HomeCheckInNativeRemoteImage(url: nil, load: { _, _ in nil }).frame(width: 160, height: 200)
+        .preferredColorScheme(.dark)
 }
