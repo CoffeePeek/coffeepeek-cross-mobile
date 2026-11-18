@@ -152,8 +152,12 @@ struct ShopDetailNativeScreen: View {
     private func stat(_ value: String, subtitle: String, symbol: String, action: String?) -> some View {
         Button { if let action { actions.call(action) } } label: {
             VStack(alignment: .leading, spacing: 6) {
-                Label(value, systemImage: symbol).font(CoffeePeekNativeStyle.font(18, weight: "SemiBold"))
-                    .foregroundStyle(CoffeePeekNativeStyle.foreground)
+                Label {
+                    Text(value).foregroundStyle(CoffeePeekNativeStyle.foreground)
+                } icon: {
+                    Image(systemName: symbol).foregroundStyle(symbol == "star.fill"
+                        ? CoffeePeekNativeStyle.accent : CoffeePeekNativeStyle.foreground)
+                }.font(CoffeePeekNativeStyle.font(18, weight: "SemiBold"))
                 Text(subtitle).font(CoffeePeekNativeStyle.font(11)).foregroundStyle(CoffeePeekNativeStyle.secondary)
             }.frame(maxWidth: .infinity, alignment: .leading).padding(12)
                 .background(CoffeePeekNativeStyle.surface, in: RoundedRectangle(cornerRadius: 16))
