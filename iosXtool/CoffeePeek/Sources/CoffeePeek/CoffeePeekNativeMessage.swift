@@ -27,12 +27,10 @@ struct CoffeePeekNativeMessage: View {
             content.onGeometryChange(for: CGFloat.self) { $0.size.height } action: { contentHeight = $0 }
         }
         .scrollBounceBehavior(.basedOnSize)
+        .frame(maxWidth: .infinity)
         .frame(height: min(contentHeight, max(64, UIScreen.main.bounds.height * 0.5)))
         .background(CoffeePeekNativeStyle.surface, in: RoundedRectangle(cornerRadius: 12))
         .overlay { RoundedRectangle(cornerRadius: 12).stroke(CoffeePeekNativeStyle.border, lineWidth: 1) }
-        .frame(maxWidth: 560)
-        .frame(maxWidth: .infinity)
-        .padding(.horizontal, 16).padding(.vertical, 8)
         .foregroundStyle(CoffeePeekNativeStyle.foreground)
     }
 
