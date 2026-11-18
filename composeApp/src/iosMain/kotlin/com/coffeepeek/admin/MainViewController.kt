@@ -89,6 +89,9 @@ fun configureNativeOwnership(factory: (com.coffeepeek.admin.di.ownership.IosOwne
     com.coffeepeek.admin.di.ownership.configureNativeOwnershipActions(actions)
 }
 
+fun configureNativeShelf(factory: (com.coffeepeek.admin.di.shelf.IosShelfScreen) -> UIViewController) =
+    com.coffeepeek.admin.di.shelf.configureNativeShelf(factory)
+
 fun configureNativeGlass(makeView: () -> UIVisualEffectView) {
     configureCoffeePeekNativeGlass(makeView)
 }

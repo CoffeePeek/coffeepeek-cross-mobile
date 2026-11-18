@@ -5,6 +5,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
 import com.coffeepeek.admin.di.media.IosCatalogueMedia
+import com.coffeepeek.admin.di.shelf.iosShelfFactory
+import com.coffeepeek.admin.di.shelf.nativeShelfController
 import com.coffeepeek.admin.locator.Constants
 import com.coffeepeek.core.media.ImageUrlFetcher
 import com.coffeepeek.feature.authorblocking.api.AuthorBlockActions
@@ -25,6 +27,7 @@ internal val LocalIosPublicProfileController = staticCompositionLocalOf<(IosPubl
 @Composable
 internal fun iosPublicProfileContent(): (String, String?, String?, Boolean) -> UIViewController {
     val factory = LocalIosPublicProfileController.current
+    val shelf = iosShelfFactory()
     val accounts = koinInject<ProfileAccountPort>()
     val data = koinInject<PublicProfileData>()
     val checkIns = koinInject<PublicCheckInsPort>()
@@ -38,6 +41,7 @@ internal fun iosPublicProfileContent(): (String, String?, String?, Boolean) -> U
     return { slug, nickname, avatarUrl, checkInsOnly ->
         val profile = createIosPublicProfileSession(slug, data, checkIns, accounts, AppProfileAuthorVisibility(visibility), snapshots)
         factory(IosPublicProfile(profile, AppProfileAuthorActions(blocks), language, media,
-            slug, nickname, avatarUrl, checkInsOnly, collections))
+            slug, nickname, avatarUrl, checkInsOnly,
+            shelfController = { target, own, allowed -> nativeShelfController(shelf("public", target, own, allowed)) }, collections = collections))
     }
 }

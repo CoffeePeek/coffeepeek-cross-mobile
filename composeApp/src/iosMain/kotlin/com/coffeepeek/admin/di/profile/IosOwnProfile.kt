@@ -6,14 +6,12 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.ComposeUIViewController
 import com.coffeepeek.admin.AppContent
 import com.coffeepeek.admin.di.checkinhistory.CheckInHistorySession
 import com.coffeepeek.admin.di.media.IosCatalogueMedia
 import com.coffeepeek.admin.di.media.IosPhotoViewer
 import com.coffeepeek.admin.ui.Navigator
-import com.coffeepeek.admin.ui.component.ProvideFloatingNavClearance
 import com.coffeepeek.core.designsystem.component.CoffeePeekPhotoViewerImages
 import com.coffeepeek.feature.checkinhistory.impl.IosOwnProfileHistorySession
 import com.coffeepeek.feature.profile.api.ProfileContribution
@@ -36,6 +34,7 @@ class IosOwnProfile internal constructor(
     private val history: IosOwnProfileHistorySession,
     private val language: LanguagePort,
     private val media: IosCatalogueMedia,
+    private val shelfController: (() -> Boolean) -> UIViewController,
     private val collections: (String, String?, String?) -> UIViewController,
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
@@ -142,10 +141,7 @@ class IosOwnProfile internal constructor(
 
     fun makeCollectionPreferences(): UIViewController = collections("Preference", null, null)
 
-    @OptIn(androidx.compose.ui.ExperimentalComposeUiApi::class)
-    fun makeShelf(): UIViewController = ComposeUIViewController(configure = { opaque = false }) {
-        AppContent { ProvideFloatingNavClearance(72.dp) { ProfileOwnShelf(Modifier) {} } }
-    }
+    fun makeShelf(): UIViewController = shelfController(::isCurrent)
 
     fun close() {
         lease.revoke()

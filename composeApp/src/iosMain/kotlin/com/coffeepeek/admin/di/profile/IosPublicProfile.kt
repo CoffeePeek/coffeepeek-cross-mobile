@@ -32,6 +32,7 @@ class IosPublicProfile internal constructor(
     private val nickname: String?,
     private val avatarUrl: String?,
     val checkInsOnly: Boolean,
+    private val shelfController: (String, Boolean, () -> Boolean) -> UIViewController,
     private val collections: (String, String?, String?) -> UIViewController,
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
@@ -121,7 +122,10 @@ class IosPublicProfile internal constructor(
     fun makeShelfPreview(): UIViewController? {
         val state = visible() ?: return null
         val target = state.profile?.slug ?: return null
-        return ComposeUIViewController { AppContent { ProfileShelfPreview(target, state.own) } }
+        return shelfController(target, state.own) {
+            val current = visible()
+            profile.isCurrent() && current != null && current.visibilityRevision == state.visibilityRevision && current.profile?.slug == target
+        }
     }
 
     fun close() {
