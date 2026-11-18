@@ -3,6 +3,7 @@ import SwiftUI
 struct CoffeePeekNativeActionButton: View {
     let title: String
     var primary = true
+    var symbol: String? = nil
     var busy = false
     var enabled = true
     var fontSize: CGFloat = 17
@@ -12,6 +13,7 @@ struct CoffeePeekNativeActionButton: View {
     var body: some View {
         Button(action: action) {
             HStack(spacing: 8) {
+                if let symbol { Image(systemName: symbol) }
                 if busy { ProgressView().tint(primary ? .black : CoffeePeekNativeStyle.foreground) }
                 Text(title).font(CoffeePeekNativeStyle.font(fontSize, weight: "Semibold"))
             }
@@ -36,7 +38,7 @@ struct CoffeePeekNativeActionButton: View {
 
 #Preview("Native actions light") {
     VStack {
-        CoffeePeekNativeActionButton(title: "CoffeePeek", action: {})
+        CoffeePeekNativeActionButton(title: "CoffeePeek", symbol: "plus", action: {})
         CoffeePeekNativeActionButton(title: "CoffeePeek", primary: false, action: {})
         CoffeePeekNativeActionButton(title: "CoffeePeek", fontSize: 14, cornerRadius: 12, action: {})
     }.padding().preferredColorScheme(.light)
@@ -44,7 +46,7 @@ struct CoffeePeekNativeActionButton: View {
 
 #Preview("Native actions dark") {
     VStack {
-        CoffeePeekNativeActionButton(title: "CoffeePeek", action: {})
+        CoffeePeekNativeActionButton(title: "CoffeePeek", symbol: "plus", action: {})
         CoffeePeekNativeActionButton(title: "CoffeePeek", primary: false, action: {})
         CoffeePeekNativeActionButton(title: "CoffeePeek", fontSize: 14, cornerRadius: 12, action: {})
     }.padding().preferredColorScheme(.dark)

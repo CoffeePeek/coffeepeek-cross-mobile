@@ -14,7 +14,7 @@ class IosRoasterDetail internal constructor(
     private val session: NativeRoasterDetailSession,
     private var host: NativeRoasterDetailHost,
     language: LanguagePort, accounts: SessionReader, private val media: IosCatalogueMedia,
-    private val ownership: () -> UIViewController?,
+    private val ownership: (() -> Boolean) -> UIViewController?,
 ) : IosRoasterScreen(language, accounts, media::observeImage) {
     fun current(): IosRoasterDetailState {
         val state = session.current()
@@ -44,7 +44,7 @@ class IosRoasterDetail internal constructor(
     fun website() = guarded(session::website)
     fun dismissMessage() = guarded(session::dismissMessage)
     fun share() = guarded { session.current().details?.address?.canonicalPath?.let(host.onShare) }
-    fun makeOwnershipActions() = if (isCurrent()) ownership() else null
+    fun makeOwnershipActions() = if (isCurrent()) ownership(::isCurrent) else null
     fun makePhotoViewer(): IosPhotoViewer? {
         val url = current().photo ?: return null
         return media.viewer(CoffeePeekPhotoViewerImages(listOf(url)), 0) { isCurrent() && session.current().photo == url }

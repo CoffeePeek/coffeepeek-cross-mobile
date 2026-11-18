@@ -51,8 +51,17 @@ import platform.UIKit.UIVisualEffectView
 
 private var koinInitialized = false
 
+fun configureNativeShopDetails(detail: (com.coffeepeek.admin.di.shop.IosShopDetail) -> UIViewController,
+    photo: (com.coffeepeek.admin.di.media.IosPhotoViewer, String, () -> Unit) -> UIViewController,
+    message: (com.coffeepeek.admin.di.shop.IosShopDetailNotice) -> UIViewController,
+    error: (com.coffeepeek.admin.di.shop.IosShopDetailSessionError) -> UIViewController) =
+    com.coffeepeek.admin.di.shop.configureNativeShopDetails(detail, photo, message, error)
+
 fun configureNativeCheckInDetails(factory: (com.coffeepeek.admin.di.community.IosCheckInDetail) -> UIViewController) =
     com.coffeepeek.admin.di.community.configureNativeCheckInDetails(factory)
+
+fun configureNativeDiscovery(factory: (com.coffeepeek.admin.di.discovery.IosDiscovery) -> UIViewController) =
+    com.coffeepeek.admin.di.discovery.configureNativeDiscovery(factory)
 
 fun configureNativeCommunityFeed(factory: (com.coffeepeek.admin.di.community.IosCommunityFeed) -> UIViewController) =
     com.coffeepeek.admin.di.community.configureNativeCommunityFeed(factory)
@@ -78,6 +87,12 @@ fun configureNativeGlobalDialogs(factory: (com.coffeepeek.admin.di.system.IosGlo
 
 fun configureNativeRootModals(factory: (com.coffeepeek.admin.di.system.IosRootModal) -> UIViewController) {
     com.coffeepeek.admin.di.system.configureNativeRootModals(factory)
+}
+
+fun configureNativeOwnership(factory: (com.coffeepeek.admin.di.ownership.IosOwnershipScreen) -> UIViewController,
+    actions: (com.coffeepeek.admin.di.ownership.IosOwnershipActions) -> UIViewController) {
+    com.coffeepeek.admin.di.ownership.configureNativeOwnership(factory)
+    com.coffeepeek.admin.di.ownership.configureNativeOwnershipActions(actions)
 }
 
 fun configureNativeShelf(factory: (com.coffeepeek.admin.di.shelf.IosShelfScreen) -> UIViewController) =

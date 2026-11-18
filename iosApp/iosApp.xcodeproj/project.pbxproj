@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		A9AB00000000000000000001 /* HistoryFailureNativeScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9AB00000000000000000002 /* HistoryFailureNativeScreen.swift */; };
 		C0F180000000000000000101 /* ContributionFormModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0F180000000000000000103 /* ContributionFormModel.swift */; };
 		C0F180000000000000000201 /* ContributionFormScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0F180000000000000000203 /* ContributionFormScreen.swift */; };
 		C0F180000000000000000301 /* ContributionScheduleContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0F180000000000000000303 /* ContributionScheduleContent.swift */; };
@@ -23,9 +24,17 @@
 		B23122000000000000000001 /* CollectionPosterScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = B23122000000000000000003 /* CollectionPosterScreen.swift */; };
 
 		E10F17E50000000000000001 /* DiscoveryFilterSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10F17E50000000000000002 /* DiscoveryFilterSheet.swift */; };
+		D15C0A000000000000000004 /* DiscoveryMapControls.swift in Sources */ = {isa = PBXBuildFile; fileRef = D15C0B000000000000000004 /* DiscoveryMapControls.swift */; };
+		D15C0A000000000000000003 /* DiscoveryShopCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = D15C0B000000000000000003 /* DiscoveryShopCard.swift */; };
+		D15C0A000000000000000002 /* DiscoveryNativeScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = D15C0B000000000000000002 /* DiscoveryNativeScreen.swift */; };
+		D15C0A000000000000000001 /* DiscoveryNativeHost.swift in Sources */ = {isa = PBXBuildFile; fileRef = D15C0B000000000000000001 /* DiscoveryNativeHost.swift */; };
 		5C13B3110000000000000001 /* ShopCheckInListScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C13B3110000000000000004 /* ShopCheckInListScreen.swift */; };
 		5C13B3110000000000000002 /* ShopCheckInListComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C13B3110000000000000005 /* ShopCheckInListComponents.swift */; };
 		5C13B3110000000000000003 /* NativeShopCheckIns.strings in Resources */ = {isa = PBXBuildFile; fileRef = 5C13B3110000000000000008 /* NativeShopCheckIns.strings */; };
+		5A0D0A000000000000000004 /* ShopDetailNativeOverlays.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A0D0B000000000000000004 /* ShopDetailNativeOverlays.swift */; };
+		5A0D0A000000000000000003 /* ShopDetailNativeInformation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A0D0B000000000000000003 /* ShopDetailNativeInformation.swift */; };
+		5A0D0A000000000000000002 /* ShopDetailNativeScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A0D0B000000000000000002 /* ShopDetailNativeScreen.swift */; };
+		5A0D0A000000000000000001 /* ShopDetailNativeHost.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A0D0B000000000000000001 /* ShopDetailNativeHost.swift */; };
 		A6C011E60000000000000001 /* ShopMenuGalleryScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6C011E60000000000000003 /* ShopMenuGalleryScreen.swift */; };
 		A6C011E60000000000000002 /* ShopMenuGallery.strings in Resources */ = {isa = PBXBuildFile; fileRef = A6C011E60000000000000006 /* ShopMenuGallery.strings */; };
 		6B2031D9196667F65FD358E5 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 37A6BA4C5AAF06904D9C889E /* InfoPlist.strings */; };
@@ -146,9 +155,16 @@
 		9F65437D1B4E3D385CB36601 /* NativeAccountDeletion.strings in Resources */ = {isa = PBXBuildFile; fileRef = 29AA5120F89FEC550C685CBE /* NativeAccountDeletion.strings */; };
 		5C55A1F6A4F5DFB3DE7EDF5B /* NativeGuestOnboarding.strings in Resources */ = {isa = PBXBuildFile; fileRef = C94B40E17EA121EFC3D9632D /* NativeGuestOnboarding.strings */; };
 		C13FD4859C40AAE420E7E0FC /* NativeAppUpdate.strings in Resources */ = {isa = PBXBuildFile; fileRef = EA778DBEF66FD480C275D198 /* NativeAppUpdate.strings */; };
+		B0510A100000000000000001 /* OwnershipNativeScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0510A200000000000000001 /* OwnershipNativeScreen.swift */; };
+		B0510A100000000000000002 /* OwnershipNativeOverview.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0510A200000000000000002 /* OwnershipNativeOverview.swift */; };
+		B0510A100000000000000003 /* OwnershipNativeForms.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0510A200000000000000003 /* OwnershipNativeForms.swift */; };
+		B0510A100000000000000004 /* OwnershipNativeQrSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0510A200000000000000004 /* OwnershipNativeQrSheet.swift */; };
+		B0510A100000000000000005 /* OwnershipNativeActions.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0510A200000000000000005 /* OwnershipNativeActions.swift */; };
+		B0510A300000000000000001 /* NativeOwnership.strings in Resources */ = {isa = PBXBuildFile; fileRef = B0510A300000000000000004 /* NativeOwnership.strings */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		A9AB00000000000000000002 /* HistoryFailureNativeScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = HistoryFailureNativeScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/HistoryFailureNativeScreen.swift; sourceTree = "<group>"; };
 		C0F180000000000000000103 /* ContributionFormModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ContributionFormModel.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/ContributionFormModel.swift; sourceTree = "<group>"; };
 		C0F180000000000000000203 /* ContributionFormScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ContributionFormScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/ContributionFormScreen.swift; sourceTree = "<group>"; };
 		C0F180000000000000000303 /* ContributionScheduleContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ContributionScheduleContent.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/ContributionScheduleContent.swift; sourceTree = "<group>"; };
@@ -166,10 +182,18 @@
 		B23122000000000000000003 /* CollectionPosterScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CollectionPosterScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CollectionPosterScreen.swift; sourceTree = "<group>"; };
 
 		E10F17E50000000000000002 /* DiscoveryFilterSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = DiscoveryFilterSheet.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/DiscoveryFilterSheet.swift; sourceTree = "<group>"; };
+		D15C0B000000000000000004 /* DiscoveryMapControls.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = DiscoveryMapControls.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/DiscoveryMapControls.swift; sourceTree = "<group>"; };
+		D15C0B000000000000000003 /* DiscoveryShopCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = DiscoveryShopCard.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/DiscoveryShopCard.swift; sourceTree = "<group>"; };
+		D15C0B000000000000000002 /* DiscoveryNativeScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = DiscoveryNativeScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/DiscoveryNativeScreen.swift; sourceTree = "<group>"; };
+		D15C0B000000000000000001 /* DiscoveryNativeHost.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = DiscoveryNativeHost.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/DiscoveryNativeHost.swift; sourceTree = "<group>"; };
 		5C13B3110000000000000004 /* ShopCheckInListScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ShopCheckInListScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/ShopCheckInListScreen.swift; sourceTree = "<group>"; };
 		5C13B3110000000000000005 /* ShopCheckInListComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ShopCheckInListComponents.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/ShopCheckInListComponents.swift; sourceTree = "<group>"; };
 		5C13B3110000000000000006 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/NativeShopCheckIns.strings; sourceTree = "<group>"; };
 		5C13B3110000000000000007 /* be */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = be; path = be.lproj/NativeShopCheckIns.strings; sourceTree = "<group>"; };
+		5A0D0B000000000000000004 /* ShopDetailNativeOverlays.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ShopDetailNativeOverlays.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/ShopDetailNativeOverlays.swift; sourceTree = "<group>"; };
+		5A0D0B000000000000000003 /* ShopDetailNativeInformation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ShopDetailNativeInformation.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/ShopDetailNativeInformation.swift; sourceTree = "<group>"; };
+		5A0D0B000000000000000002 /* ShopDetailNativeScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ShopDetailNativeScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/ShopDetailNativeScreen.swift; sourceTree = "<group>"; };
+		5A0D0B000000000000000001 /* ShopDetailNativeHost.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ShopDetailNativeHost.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/ShopDetailNativeHost.swift; sourceTree = "<group>"; };
 		A6C011E60000000000000003 /* ShopMenuGalleryScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ShopMenuGalleryScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/ShopMenuGalleryScreen.swift; sourceTree = "<group>"; };
 		A6C011E60000000000000004 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/ShopMenuGallery.strings; sourceTree = "<group>"; };
 		A6C011E60000000000000005 /* be */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = be; path = be.lproj/ShopMenuGallery.strings; sourceTree = "<group>"; };
@@ -317,6 +341,13 @@
 		D4CE6039F8E15828368F22A6 /* be */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = be; path = be.lproj/NativeGuestOnboarding.strings; sourceTree = "<group>"; };
 		168991BEEC11C0CB322F684C /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/NativeAppUpdate.strings; sourceTree = "<group>"; };
 		C4E9615DA2EF35A243B7C779 /* be */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = be; path = be.lproj/NativeAppUpdate.strings; sourceTree = "<group>"; };
+		B0510A200000000000000001 /* OwnershipNativeScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = OwnershipNativeScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/OwnershipNativeScreen.swift; sourceTree = "<group>"; };
+		B0510A200000000000000002 /* OwnershipNativeOverview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = OwnershipNativeOverview.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/OwnershipNativeOverview.swift; sourceTree = "<group>"; };
+		B0510A200000000000000003 /* OwnershipNativeForms.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = OwnershipNativeForms.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/OwnershipNativeForms.swift; sourceTree = "<group>"; };
+		B0510A200000000000000004 /* OwnershipNativeQrSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = OwnershipNativeQrSheet.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/OwnershipNativeQrSheet.swift; sourceTree = "<group>"; };
+		B0510A200000000000000005 /* OwnershipNativeActions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = OwnershipNativeActions.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/OwnershipNativeActions.swift; sourceTree = "<group>"; };
+		B0510A300000000000000002 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/NativeOwnership.strings; sourceTree = "<group>"; };
+		B0510A300000000000000003 /* be */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = be; path = be.lproj/NativeOwnership.strings; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -358,6 +389,10 @@
 				A0871E7A0000000000000012 /* RegisterConsent.swift */,
 				A0871E7B0000000000000006 /* GuestProfileScreen.swift */,
 				E10F17E50000000000000002 /* DiscoveryFilterSheet.swift */,
+				D15C0B000000000000000004 /* DiscoveryMapControls.swift */,
+				D15C0B000000000000000003 /* DiscoveryShopCard.swift */,
+				D15C0B000000000000000002 /* DiscoveryNativeScreen.swift */,
+				D15C0B000000000000000001 /* DiscoveryNativeHost.swift */,
 				F35E4494F2133912E05680DB /* CheckInNativeComponents.swift */,
 				C89F0137C4ACC294E23840D7 /* CheckInNativeDateField.swift */,
 				CC2535FE304764F633F83757 /* ShopCheckInNativeScreen.swift */,
@@ -424,8 +459,14 @@
 				5E1FA2400000000000000001 /* ShelfNativeScreen.swift */,
 				5E1FA2500000000000000003 /* NativeShelf.strings */,
 				5E1FA2200000000000000003 /* ShelfArchiveScreen.swift */,
+				B0510A200000000000000005 /* OwnershipNativeActions.swift */,
+				B0510A200000000000000004 /* OwnershipNativeQrSheet.swift */,
+				B0510A200000000000000003 /* OwnershipNativeForms.swift */,
+				B0510A200000000000000002 /* OwnershipNativeOverview.swift */,
+				B0510A200000000000000001 /* OwnershipNativeScreen.swift */,
 				B20000000000000000000003 /* CollectionsLibraryScreen.swift */,
 				5E1FA2200000000000000006 /* NativeShelfArchive.strings */,
+				B0510A300000000000000004 /* NativeOwnership.strings */,
 				86C051CE0000000000000003 /* CollectionsWorkspaceScreen.swift */,
 				B23122000000000000000003 /* CollectionPosterScreen.swift */,
 				B23122000000000000000023 /* CoffeePeekLocalBackProtection.swift */,
@@ -445,6 +486,7 @@
 				A20000000000000000000014 /* CoffeePeekNativeGlass.swift */,
 				A20000000000000000000013 /* ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CoffeePeekLaunchView.swift */,
 				A20000000000000000000011 /* ../../iosXtool/CoffeePeek/Sources/CoffeePeek/SocialSignInProvider.swift */,
+				A9AB00000000000000000002 /* HistoryFailureNativeScreen.swift */,
 				181460E0F1C39DE0D1DA1098 /* RoasterNativeController.swift */,
 				2645A333FA079F94D28AE329 /* RoasterNativeCard.swift */,
 				AC82D22A61C951409CB48B98 /* RoasterDiscoveryNativeScreen.swift */,
@@ -454,6 +496,10 @@
 				F07A11400000000000000003 /* CoffeePeekNativePhotoViewer.swift */,
 				F07A11400000000000000006 /* NativePhotoViewer.strings */,
 				5C13B3110000000000000004 /* ShopCheckInListScreen.swift */,
+				5A0D0B000000000000000004 /* ShopDetailNativeOverlays.swift */,
+				5A0D0B000000000000000003 /* ShopDetailNativeInformation.swift */,
+				5A0D0B000000000000000002 /* ShopDetailNativeScreen.swift */,
+				5A0D0B000000000000000001 /* ShopDetailNativeHost.swift */,
 				5C13B3110000000000000005 /* ShopCheckInListComponents.swift */,
 				A20000000000000000000009 /* ../../iosXtool/CoffeePeek/Sources/CoffeePeek/MapLibreMapProvider.swift */,
 				A20000000000000000000002 /* Assets.xcassets */,
@@ -614,6 +660,7 @@
 				71C04E5D0000000000000002 /* ContentReport.strings in Resources */,
 				5E1FA2500000000000000001 /* NativeShelf.strings in Resources */,
 				5E1FA2200000000000000002 /* NativeShelfArchive.strings in Resources */,
+				B0510A300000000000000001 /* NativeOwnership.strings in Resources */,
 				B20000000000000000000002 /* CollectionsLibrary.strings in Resources */,
 				86C051CE0000000000000002 /* CollectionsWorkspace.strings in Resources */,
 				53E77165000000000000000D /* SettingsNative.strings in Resources */,
@@ -700,6 +747,10 @@
 				A0871E7A0000000000000011 /* RegisterConsent.swift in Sources */,
 				A0871E7B0000000000000005 /* GuestProfileScreen.swift in Sources */,
 				E10F17E50000000000000001 /* DiscoveryFilterSheet.swift in Sources */,
+				D15C0A000000000000000004 /* DiscoveryMapControls.swift in Sources */,
+				D15C0A000000000000000003 /* DiscoveryShopCard.swift in Sources */,
+				D15C0A000000000000000002 /* DiscoveryNativeScreen.swift in Sources */,
+				D15C0A000000000000000001 /* DiscoveryNativeHost.swift in Sources */,
 				C39A482AD721BD4CE3E954E6 /* CheckInNativeComponents.swift in Sources */,
 				0C20174F28F6D29AA76E2BEE /* CheckInNativeDateField.swift in Sources */,
 				19EE56A02A19F8C0EF365A81 /* ShopCheckInNativeScreen.swift in Sources */,
@@ -739,7 +790,12 @@
 				A6C011E60000000000000001 /* ShopMenuGalleryScreen.swift in Sources */,
 				F07A11400000000000000001 /* CoffeePeekNativePhotoViewer.swift in Sources */,
 				5C13B3110000000000000001 /* ShopCheckInListScreen.swift in Sources */,
+				5A0D0A000000000000000004 /* ShopDetailNativeOverlays.swift in Sources */,
+				5A0D0A000000000000000003 /* ShopDetailNativeInformation.swift in Sources */,
+				5A0D0A000000000000000002 /* ShopDetailNativeScreen.swift in Sources */,
+				5A0D0A000000000000000001 /* ShopDetailNativeHost.swift in Sources */,
 				5C13B3110000000000000002 /* ShopCheckInListComponents.swift in Sources */,
+				A9AB00000000000000000001 /* HistoryFailureNativeScreen.swift in Sources */,
 				8AF230A9B8B8789A2F1F28A1 /* RoasterDetailNativeScreen.swift in Sources */,
 				FF51FDC39D4F328BFC814202 /* RoasterDiscoveryNativeScreen.swift in Sources */,
 				8E9C5C56A4E3BE2852ED1CB6 /* RoasterNativeCard.swift in Sources */,
@@ -768,6 +824,11 @@
 				5E1FA2300000000000000002 /* ShelfNativeGridScreen.swift in Sources */,
 				5E1FA2300000000000000001 /* ShelfNativeScreen.swift in Sources */,
 				5E1FA2200000000000000001 /* ShelfArchiveScreen.swift in Sources */,
+				B0510A100000000000000005 /* OwnershipNativeActions.swift in Sources */,
+				B0510A100000000000000004 /* OwnershipNativeQrSheet.swift in Sources */,
+				B0510A100000000000000003 /* OwnershipNativeForms.swift in Sources */,
+				B0510A100000000000000002 /* OwnershipNativeOverview.swift in Sources */,
+				B0510A100000000000000001 /* OwnershipNativeScreen.swift in Sources */,
 				B20000000000000000000001 /* CollectionsLibraryScreen.swift in Sources */,
 				86C051CE0000000000000001 /* CollectionsWorkspaceScreen.swift in Sources */,
 				B23122000000000000000001 /* CollectionPosterScreen.swift in Sources */,
@@ -1036,6 +1097,7 @@
 			name = NativeAppUpdate.strings;
 			sourceTree = "<group>";
 		};
+		B0510A300000000000000004 /* NativeOwnership.strings */ = {isa = PBXVariantGroup; children = (B0510A300000000000000002 /* ru */, B0510A300000000000000003 /* be */,); name = NativeOwnership.strings; sourceTree = "<group>"; };
 /* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */

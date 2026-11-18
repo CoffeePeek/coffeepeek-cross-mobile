@@ -27,7 +27,6 @@ import com.coffeepeek.admin.location.distanceToShopMeters
 import com.coffeepeek.admin.location.formatDistance
 import com.coffeepeek.admin.location.rememberPermittedUserLocation
 import com.coffeepeek.admin.ui.Navigator
-import com.coffeepeek.core.designsystem.component.CoffeePeekPhotoViewer
 import com.coffeepeek.admin.ui.component.rememberCheckInDateLabel
 import com.coffeepeek.admin.ui.screen.shop.ShopCheckInFormRenderer
 import com.coffeepeek.admin.ui.screen.shop.ShopDetailScreenRenderer
@@ -102,7 +101,7 @@ internal class FeatureShopDetailScreenRenderer(
                 formatDistance = { lat, lon -> formatDistance(distanceToShopMeters(location, lat, lon)) },
                 refreshGeneration = state.refreshGeneration, openCheckIn = openCheckIn,
                 onEffect = { if (session.lease.isCurrent()) handleEffect(it, state, session, shopId, scope, snackbar, copied) })
-            SnackbarHost(snackbar, Modifier.align(Alignment.BottomCenter)
+            ShopDetailHostFeedback(snackbar, Modifier.align(Alignment.BottomCenter)
                 .coffeePeekViewportBottomPadding().coffeePeekScreenBottomPadding().padding(bottom = 72.dp))
         }
     }
@@ -110,8 +109,7 @@ internal class FeatureShopDetailScreenRenderer(
     @Composable
     private fun Overlays(state: ShopDetailHostState, session: ShopBrowsingHostSession) {
         state.preview?.let { photo ->
-            CoffeePeekPhotoViewer(images = com.coffeepeek.core.designsystem.component.CoffeePeekPhotoViewerImages(photo.imageUrls, photo.originalUrls),
-                initialIndex = photo.initialIndex, onDismiss = { state.preview = null })
+            ShopDetailPhotoViewer(photo, session.lease, onDismiss = { state.preview = null })
         }
         state.route?.let { ShopRoutePicker(it.latitude, it.longitude, onDismiss = { state.route = null }) }
         state.form?.let { shop ->

@@ -4,6 +4,112 @@
 
 Цель — перевести активные экраны и модальные сценарии iOS на SwiftUI. Kotlin сохраняет бизнес-правила, данные, сессию и состояние сценариев, UIKit — существующие стеки вкладок и системные интеграции. Compose-реализации продолжают обслуживать Android и оставшиеся iOS-маршруты до их переноса. Остаток legacy exit ведётся в [feature/LEGACY_EXIT_PLAN.md](../feature/LEGACY_EXIT_PLAN.md).
 
+## Итоговый аудит активных входов — 2026-11-18
+
+Все перечисленные ниже активные iOS-экраны и вложенные тела модалок имеют
+SwiftUI-рендерер. MapLibre, камера, PHPicker, системные alerts/action sheets,
+share sheet и UIKit-навигация сохраняют нативные системные реализации.
+Kotlin сохраняет существующие ViewModels, данные, валидацию, запись, сессию,
+пагинацию, права на фото и аналитику. Android использует прежние рендереры.
+
+Срез собран в заключительном [PR #407](https://github.com/CoffeePeek/coffeepeek-cross-mobile/pull/407)
+из самостоятельных checkpoint #399/#401/#404/#405/#406/#408/#409. До их слияния
+это зависимости draft-кандидата; каждый parent допускается в integration только
+после успешных Xcode и Kotlin/Native проверок своего последнего SHA. Зелёные
+mergeable PR сливаются отдельно. Остаточные чисто структурные конфликты разрешены
+в #407: после green всех parent и общего кандидата их проверенные commits могут
+войти одним обычным merge #407 с сохранением ancestry. Base-only pushes ради
+повторения уже решённых конфликтов не нужны. Точные SHA, прогоны и выводы
+проверок фиксируются в описаниях соответствующих PR.
+
+Таблица покрывает все 53 сериализуемых ID из `Navigator.Screen`, включая
+технические контейнеры и совместимость. Это не число разных экранов: некоторые
+ID выбирают вариант того же нативного контроллера.
+
+| Входы | Нативный владелец и checkpoint |
+| --- | --- |
+| `Main`, `FeedGraph`, `CommunityGraph`, `ProfileGraph`, `BusinessGraph`, `SettingsGraph` | UIKit root/tab/back stacks; startup loading — SwiftUI (#403). Технические контейнеры без самостоятельного feature UI. |
+| `Auth`, `Register`, `ForgotPassword`, `ShopCheckInSignIn`, `ResetPassword` | `makeAuthController`; общий Kotlin auth/handoff. ResetPassword — совместимый ID с существующим переходом к web-only recovery/login, отдельного старого UI не открывает. |
+| `FeedTab`, `CommunityTab`, `ProfileTab`, `SettingsTab`, `BusinessTab` | Discovery (#401), native community feed, собственный/гостевой профиль, native settings, native ownership (#404). |
+| `ShopDetail`, `RoasterDetail`, `CoffeeDetail`, `ShopMenuGallery`, `ShopReviews`, `ReportShop` | Native Shop (#405), Roaster (#402), Coffee, menu/gallery/check-ins и report controllers. Owner actions общие с #404; временный roaster Compose toolbar удалён в #407. |
+| `SuggestShopChange`, `ShopChangeEditor`, `MyContributions`, `ShopChangeRequestDetail`, `AddShop`, `AddRoaster` | `IosContributionsRoute`/`IosContributionForm` → SwiftUI; четыре формы (#408), существующие native list/detail. Расписание, меню, фото/камера и карта входят в этот же путь. |
+| `MyBusiness` | Native overview/detail/editor/claim/photos/QR/publish/discard, тот же OwnershipViewModel (#404). |
+| `UserProfile`, `UserCheckIns`, `EditProfile`, `DeleteAccountPending` | Native public profile/list/edit, native deletion pending (#398). Публичные фото заменены в #397. |
+| `CollectionsComposer`, `PublicCollection`, `CollectionsLibrary`, `CollectionEditor`, `SavedPublicCollection` | Native workspace/library/public snapshot/poster/export и profile preferences (#400). CollectionsComposer не имеет production caller/app link; ID сохранён для совместимости и на iOS ведёт в native library. |
+| `CreateCheckIn`, `ShopCheckInEditor`, `CheckInDetail`, `HomeCheckInDetail`, `EditHomeCheckIn` | Native shop picker (#401), существующие SwiftUI check-in editors/details. Вложенные viewer и ошибка наблюдения сессии — #407; редактор старого shop-поста и report sheet — #409. |
+| `ShelfArchive`, `ShelfAddBag`, `ShelfBag` | Native shelf/archive/add/scanner/bag, включая собственный/публичный preview, visibility/finish/undo и brew handoff (#399). |
+| `CitySettings`, `ThemeSettings`, `LanguageSettings`, `BlockedAuthors`, `UsagePolicy` | Существующие native Settings/Theme/BlockedAuthors controllers. |
+| `ReportReview`, `ReportCheckIn` | Существующий native content-report controller; отдельные draft owners в Feed/Post report sheet сохраняются (#409). |
+
+Дополнительно проверены поверхности без отдельного route ID: notification inbox,
+check-in create picker и гостевой onboarding, обязательное/необязательное
+обновление, глобальные loading/error (#398/#403), profile shelf/collections и
+preferences, poster preview/picker, owner/claim, price, photo viewer, меню действий,
+finish/visibility/undo, Feed/Post editor/report и snackbar (#406/#409).
+`CollectionsPickerHost` на iOS остаётся `Unit`, leaderboard выключен в действующей
+композиции; отсутствующий продуктовый вход не восстанавливается ради миграции.
+
+В Root #407 добавлен non-UI контракт парности и полноты factory registration
+в обоих Swift launcher. Он ловит обнаруженные пропуски `configureNativeDiscovery`
+и `configureNativeShopDetails` в xtool, которые одна Xcode-сборка не выявляла.
+Устранены остаточные SF photo/leaf/bag placeholders: используется существующий
+CFPK (чёрный/белый в светлой теме, белый/чёрный в тёмной). Shared Shop card
+применяет brand gold для звезды/выбранного лайка в обоих своих consumers.
+
+Ревью заключительного кандидата отдельно проверило переходы и ввод. Исправлены
+перехват жестов в прозрачных полях snackbar (нативные bounds ограничены самой
+карточкой), прежние условия показа review prompt в Discovery (вне picker,
+refresh/location/filter/search и прокрутки), подписка формы на весь lifetime
+контроллера через map/camera/gallery covers и запрет явного Back при Sending.
+Новые non-UI контракты проверяют idle/scroll guards, map/photo/account updates
+одного observer и запрет Back в трёх сценариях отправки. UIKit/SwiftUI
+переходы между окнами остаются частью ручного device gate ниже.
+Повторный combined body gate: 131 recorded, 0 new. Проверены 155 новых или
+содержательно изменённых Swift func в 35 файлах: превышений 20 строк нет.
+Оба bootstrap contracts повторно исполнены после выделения launcher helpers: 2/2.
+
+### Что остаётся от Compose на iOS
+
+`MainViewController`, часть `NativeScreenController`, feature entry adapters,
+`NativeEditorControllerHost` и sheet containers пока используют Compose runtime
+для существующих VM/ViewModelStore, lifecycle/effects, ресурсов, root DI,
+аналитики и UIKit interop. Они всё ещё имеют действующих инфраструктурных
+потребителей и не являются неиспользуемыми fallback. Их удаление потребует
+отдельного изменения API/source sets/Gradle-графа после этого UI checkpoint.
+Перенос экранов не означает, что Compose уже удалён из iOS framework.
+Общие Compose-экраны Android также сохраняются.
+
+### Проверки и открытые ручные ворота
+
+- Общий кандидат: 32 исполненных Python iOS tooling/resource/bootstrap tests,
+  без ошибок; полный OpenStep синтаксис, уникальность 392 Xcode objects и ссылки
+  проверены. Единственная старая Firebase build-phase reference сохранена.
+- Combined `verifyFunctionBodyLimits` прошёл до обновления baseline. Штатный
+  generator только удалил/уменьшил старый долг, повторный gate прошёл;
+  новых либо увеличенных baseline entries нет. Первый совместный вызов generator
+  и verify был отклонён Gradle из-за producer/consumer task dependency; затем
+  обе задачи успешно выполнены отдельными последовательными invocation.
+- Локальная попытка app metadata ранее остановилась в старом generated Room
+  expect/actual конфликте core/database до компиляции новых app adapters;
+  database не менялась. Feature metadata проверена отдельно; app build и
+  исполнение native-контрактов проверяются macOS CI, а не подменяются metadata.
+- Подтверждённые checkpoint: #399 — 98 Shelf tests (8 новых native contracts),
+  #400 — 99 Collections tests, #402 — полный Native job и Xcode; #398/#403 также
+  имеют успешные Xcode/Native прогоны. Остальные результаты привязаны к final SHA
+  в PR; слияние при красном/незавершённом CI не разрешено.
+- В первом Native прогоне #408 компиляция теста не вывела generic type для
+  `List<ChangeDraft.Description>` против `MutableList<ChangeDraft>`; assertion
+  явно типизирован `List<ChangeDraft>`, аналогичный Community assertion исправлен.
+  Старый Xcode build и app contracts прошли, feature suite до отказа не исполнился.
+  Новый final SHA проходит повторный Native CI. Media guard отдельно проверяет
+  live owner/epoch до и после fetch, включая смену аккаунта до flow collector.
+- Требуют ручного iPhone review: камера/сканер и возврат после фото, повторный `+`,
+  фото с реальными разрешениями, OAuth/backend/persistence, смена аккаунта,
+  keyboard/VoiceOver/крупный шрифт, обе темы, native sheet/back/cancel и запуск
+  из cold start/deep link/push. Unit/contract tests и сборка этого не сертифицируют.
+  В этой волне нет автоматизированных UI/screenshot tests, Android app runs,
+  реальных account writes или ручного TestFlight dispatch.
+
 ## Статус первой партии
 
 ### Продолжение полной сегрегации — 2026-11-18
@@ -45,6 +151,30 @@ Kotlin сохраняет ViewModels, бизнес-правила, сеть, с�
 Версии #370, #372 и #374 до разрешения конфликтов прошли `ios-verify`. Перед слиянием объединённого кода сверены маршруты, аргументы обоих Swift launcher, ресурсы Xcode и фильтры Kotlin/Native. Повторный CI оставлен выполняться после слияния.
 
 Ручные проверки темы, галереи и настроек в iOS Simulator остаются открытыми. Следующий пакет по плану — вход и восстановление пароля.
+
+### 2026-11-18 — native check-in nested overlays
+
+Final entry tracing found the shared Compose photo viewer still reachable from
+native feed cards, community post detail and home check-in detail. A platform
+adapter now presents the existing SwiftUI viewer through the existing UIKit
+presenter, retaining original/preview selection, image authorization, revocation,
+overlay analytics, reduced motion and return to the same Kotlin-owned route.
+The history session-observation failure screen also has a SwiftUI renderer with
+the same retry/back actions and localized feature-owned text. Large text scrolls
+from the beginning while shorter content remains centered. Coffee and check-in
+photo fallbacks reuse the existing theme-aware CFPK placeholder instead of SF
+photo/leaf symbols, following the requested light/dark colors. Android retains
+its existing viewers and failure content.
+
+Three non-UI native contracts cover revoked/disposed photo callbacks and failure
+screen lifetime. Both launcher registrations, Xcode source references and paired
+previews are included. Local OpenStep parsing and 29 existing iOS tooling tests pass. The app metadata
+attempt stopped in the inherited core/database Room generated expect/actual
+conflict before compiling these adapters; database sources were not changed.
+The separate function-body gate has only the inherited ownership factory finding
+fixed by the Business checkpoint, with no new findings here. Xcode and the three
+native contracts remain pending ios-verify. Manual device acceptance remains for
+photos, session recovery, VoiceOver, large fonts, themes and camera/modal return.
 
 ### 2026-11-18 — native transient messages
 

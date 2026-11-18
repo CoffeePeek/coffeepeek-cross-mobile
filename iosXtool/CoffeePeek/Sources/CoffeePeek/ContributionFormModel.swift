@@ -127,7 +127,7 @@ final class ContributionFormModel: ObservableObject {
     private func update() {
         let next = ContributionFormSnapshot.decode(form.current())
         if state.accountVersion != next.accountVersion {
-            sourceMenu = nil; mediaRequest = nil; mediaRevision = nil; preparingPhotos = false; photoFailed = false
+            clearMediaRequest()
         }
         state = next
         if next.kind == "AddShop", next.signedIn == 1, initialLocationVersion != next.accountVersion {
@@ -139,6 +139,14 @@ final class ContributionFormModel: ObservableObject {
             form.feedback(success: next.submit == "done")
         }
         lastOutcome = outcome
+    }
+
+    private func clearMediaRequest() {
+        sourceMenu = nil
+        mediaRequest = nil
+        mediaRevision = nil
+        preparingPhotos = false
+        photoFailed = false
     }
 
     func requestPhoto(menu: Bool) { sourceMenu = menu }

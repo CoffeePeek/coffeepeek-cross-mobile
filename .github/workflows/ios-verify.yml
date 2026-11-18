@@ -93,6 +93,8 @@ jobs:
           python3 -m unittest discover -s tools/release -p test_ios_signing_profile.py
           cp tools/ios/GoogleService-Info.verification.plist iosApp/iosApp/GoogleService-Info.plist
 
+      - name: Verify both native controller bootstraps
+        run: python3 -m unittest discover -s tools/ios -p 'test_native_controller_registration.py'
       - name: Compile iPhone launch catalog for xtool
         shell: bash
         run: bash iosXtool/CoffeePeek/prepare-launch-resources.sh
@@ -201,7 +203,11 @@ jobs:
             --tests 'com.coffeepeek.admin.di.media.IosPhotoViewerTest' \
             --tests 'com.coffeepeek.admin.di.community.IosCommunitySheetTest' \
             --tests 'com.coffeepeek.admin.di.media.IosCatalogueMediaTest' \
+            --tests 'com.coffeepeek.admin.di.media.IosCheckInPhotoPresentationTest' \
+            --tests 'com.coffeepeek.admin.di.checkinhistory.IosHistoryFailureTest' \
             --tests 'com.coffeepeek.admin.di.community.IosCommunityMessageTest' \
+            --tests 'com.coffeepeek.admin.di.discovery.IosDiscoveryAccountTest' \
+            --tests 'com.coffeepeek.admin.di.discovery.IosDiscoveryLocationRequestsTest' \
             --tests 'com.coffeepeek.admin.ui.RootNavigationSessionTest' \
             --tests 'com.coffeepeek.admin.di.roaster.IosRoasterLifetimeTest' \
             --tests 'com.coffeepeek.admin.di.shopreport.IosShopReportTest' \
@@ -235,6 +241,8 @@ jobs:
             --tests 'com.coffeepeek.feature.shop.impl.ui.ShopMenuGallery*Test' \
             --tests 'com.coffeepeek.feature.shop.impl.ui.ShopCheckInListViewModelTest' \
             --tests 'com.coffeepeek.feature.shop.impl.IosShopCheckInListPresentationTest' \
+            --tests 'com.coffeepeek.feature.shop.impl.ui.ShopDetailIosBridgeTest' \
+            --tests 'com.coffeepeek.feature.shop.impl.ui.ShopDetailViewModelTest' \
             > "$RUNNER_TEMP/ios-shop-menu-gallery-tests.log" 2>&1 || {
               tail -n 150 "$RUNNER_TEMP/ios-shop-menu-gallery-tests.log"
               exit 1
@@ -265,6 +273,8 @@ jobs:
           set -euo pipefail
           ./gradlew --max-workers=6 :feature:discovery:impl:iosSimulatorArm64Test \
             --tests 'com.coffeepeek.feature.discovery.impl.ui.IosDiscoveryFilterDraftTest' \
+            --tests 'com.coffeepeek.feature.discovery.impl.ui.DiscoveryIosIntentsTest' \
+            --tests 'com.coffeepeek.feature.discovery.impl.ui.DiscoveryIdleTest' \
             --tests 'com.coffeepeek.feature.discovery.impl.SearchViewModelTest' \
             > "$RUNNER_TEMP/ios-discovery-tests.log" 2>&1 || {
               tail -n 150 "$RUNNER_TEMP/ios-discovery-tests.log"

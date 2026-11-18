@@ -9,12 +9,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.ComposeUIViewController
-import com.coffeepeek.admin.AppContent
 import com.coffeepeek.admin.analytics.Entity
 import com.coffeepeek.admin.analytics.TrackEntityDetail
 import com.coffeepeek.admin.analytics.TrackNativeFeatureExposure
 import com.coffeepeek.admin.di.media.IosCatalogueMedia
+import com.coffeepeek.admin.di.ownership.iosOwnershipActionsController
 import com.coffeepeek.admin.locator.Constants
 import com.coffeepeek.admin.theme.ThemeManager
 import com.coffeepeek.admin.theme.uiKitStyle
@@ -71,8 +70,8 @@ private fun RoasterDetailNativeContent(session: NativeRoasterDetailSession, host
     val ownership = koinInject<BusinessOwnershipEntry>()
     val generation = accounts.accountGeneration()
     val source = remember(session, generation) {
-        IosRoasterDetail(session, host, language, accounts, IosCatalogueMedia(fetcher, Constants.BASE_URL)) {
-            roasterOwnershipController(session, ownership)
+        IosRoasterDetail(session, host, language, accounts, IosCatalogueMedia(fetcher, Constants.BASE_URL)) { allowed ->
+            roasterOwnershipController(session, ownership, language, allowed)
         }
     }
     val controller = remember(source) { roasterController(source) }
@@ -88,13 +87,11 @@ private fun RoasterDetailNativeContent(session: NativeRoasterDetailSession, host
     NativeEditorControllerHost(controller, host.modifier.fillMaxSize())
 }
 
-private fun roasterOwnershipController(session: NativeRoasterDetailSession, ownership: BusinessOwnershipEntry) = ComposeUIViewController(configure = { opaque = false }) {
-    AppContent {
-        val state by session.state.collectAsState(session.current())
-        state.details?.let { details ->
-            ownership.ProfileActions("Roaster", details.id, details.address.slug, {}, {}, {}, {})
-        }
-    }
+private fun roasterOwnershipController(session: NativeRoasterDetailSession, ownership: BusinessOwnershipEntry,
+    language: LanguagePort, allowed: () -> Boolean): UIViewController? {
+    val details = session.current().details ?: return null
+    return iosOwnershipActionsController(ownership, language, "Roaster", details.id, details.address.slug,
+        allowed = { allowed() && session.current().details?.id == details.id })
 }
 
 @Composable
