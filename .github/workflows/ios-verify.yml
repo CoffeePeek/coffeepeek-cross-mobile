@@ -330,6 +330,7 @@ jobs:
             ${{ runner.temp }}/ios-ownership-tests.log
             feature/business-ownership/**/build/test-results/iosSimulatorArm64Test/
             feature/contributions/impl/build/test-results/iosSimulatorArm64Test/
+            feature/collections/impl/build/test-results/iosSimulatorArm64Test/
             ${{ runner.temp }}/ios-shelf-archive-tests.log
             feature/shelf/impl/build/test-results/iosSimulatorArm64Test/
             composeApp/build/test-results/iosSimulatorArm64Test/
