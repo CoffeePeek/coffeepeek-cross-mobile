@@ -69,6 +69,10 @@ fun configureNativeEditProfile(factory: (com.coffeepeek.admin.di.profile.IosEdit
     com.coffeepeek.admin.di.profile.configureNativeEditProfile(factory)
 }
 
+fun configureNativeGlobalDialogs(factory: (com.coffeepeek.admin.di.system.IosGlobalDialog) -> UIViewController) {
+    com.coffeepeek.admin.ui.dialogs.configureNativeGlobalDialogs(factory)
+}
+
 fun configureNativeGlass(makeView: () -> UIVisualEffectView) {
     configureCoffeePeekNativeGlass(makeView)
 }

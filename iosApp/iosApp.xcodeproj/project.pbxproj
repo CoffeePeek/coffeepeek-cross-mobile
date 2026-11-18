@@ -109,6 +109,8 @@
 		DAD5EF785C5BAC5D9F65C43E /* CommunityFeedNativeScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 803179B19B045FF27D2D5353 /* CommunityFeedNativeScreen.swift */; };
 		15E615F307B4D33226886FF1 /* CommunityFeedNativeRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30DB789D6C7E79AAEB5B487B /* CommunityFeedNativeRow.swift */; };
 		91B28778B1017172858BC88D /* CommunityFeedNativeStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = C59BA6BB01B30CC9D1704EA3 /* CommunityFeedNativeStatus.swift */; };
+		4330C63C97160834EB1EC6FA /* CoffeePeekNativeLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 220DCD8C6CC925FC5019893E /* CoffeePeekNativeLoader.swift */; };
+		26E4BC2F1E8076E36E7674AA /* GlobalDialogNativeScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5BCBB913B662C398717072D0 /* GlobalDialogNativeScreen.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -239,6 +241,8 @@
 		803179B19B045FF27D2D5353 /* CommunityFeedNativeScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CommunityFeedNativeScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CommunityFeedNativeScreen.swift; sourceTree = "<group>"; };
 		30DB789D6C7E79AAEB5B487B /* CommunityFeedNativeRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CommunityFeedNativeRow.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CommunityFeedNativeRow.swift; sourceTree = "<group>"; };
 		C59BA6BB01B30CC9D1704EA3 /* CommunityFeedNativeStatus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CommunityFeedNativeStatus.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CommunityFeedNativeStatus.swift; sourceTree = "<group>"; };
+		220DCD8C6CC925FC5019893E /* CoffeePeekNativeLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CoffeePeekNativeLoader.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CoffeePeekNativeLoader.swift; sourceTree = "<group>"; };
+		5BCBB913B662C398717072D0 /* GlobalDialogNativeScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = GlobalDialogNativeScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/GlobalDialogNativeScreen.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -368,6 +372,8 @@
 				A0871E7C000000000000000C /* NativeOwnProfile.strings */,
 				817EAB94000000000000000C /* NativePublicProfile.strings */,
 				53E771650000000000000010 /* SettingsNative.strings */,
+				220DCD8C6CC925FC5019893E /* CoffeePeekNativeLoader.swift */,
+				5BCBB913B662C398717072D0 /* GlobalDialogNativeScreen.swift */,
 			);
 			path = iosApp;
 			sourceTree = "<group>";
@@ -563,6 +569,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				26E4BC2F1E8076E36E7674AA /* GlobalDialogNativeScreen.swift in Sources */,
+				4330C63C97160834EB1EC6FA /* CoffeePeekNativeLoader.swift in Sources */,
 				A10000000000000000000001 /* CoffeePeekApp.swift in Sources */,
 				A0871E7A0000000000000001 /* AuthNativeController.swift in Sources */,
 				A0871E7A0000000000000003 /* AuthNativeComponents.swift in Sources */,

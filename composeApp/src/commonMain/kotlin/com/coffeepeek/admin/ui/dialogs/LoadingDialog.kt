@@ -24,6 +24,7 @@ object LoadingDialog {
         text: String? = null
     ) {
         if (!show) return
+        if (PlatformGlobalLoading(text)) return
 
         Box(
             modifier = Modifier

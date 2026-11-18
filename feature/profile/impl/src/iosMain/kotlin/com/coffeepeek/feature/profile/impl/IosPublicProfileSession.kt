@@ -31,9 +31,9 @@ import kotlin.time.Clock
 fun createIosPublicProfileSession(
     slug: String, data: PublicProfileData, checkIns: PublicCheckInsPort, accounts: ProfileAccountPort,
     visibility: ProfileAuthorVisibility, snapshots: ProfileSnapshotStore,
-): IosPublicProfileSession = IosPublicProfileSession(
-    accounts, PublicProfileViewModel(slug, data, checkIns, accounts, visibility, snapshots),
-)
+): IosPublicProfileSession {
+    return IosPublicProfileSession(accounts, PublicProfileViewModel(slug, data, checkIns, accounts, visibility, snapshots))
+}
 
 class PublicProfileSnapshot internal constructor(
     state: PublicProfileState, visibility: ProfileAuthorVisibilityState, val active: Boolean,
