@@ -40,8 +40,8 @@ class PublicCollectionSession(
             loading = state.loading || redirected != null, refreshing = false, busy = state.busy, failure = state.failure?.name,
             id = collection?.id, title = collection?.title.orEmpty(), description = "", isPublic = true,
             hasEdits = false, canSave = false, canShare = collection != null, canPreview = false,
-            preparingCover = false, coverKey = null, preview = true, story = state.format == CollectionPosterFormat.Story,
-            query = "", quickTitle = null, membershipsLoaded = false, featuredId = null, lists = emptyList(),
+            preparingCover = false, hasCover = false, coverKey = null, preview = true, story = state.format == CollectionPosterFormat.Story,
+            featuredId = null, lists = emptyList(),
             places = collection?.places.orEmpty().map { it.nativePlace() })
     }
 

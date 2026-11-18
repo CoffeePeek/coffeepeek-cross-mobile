@@ -36,7 +36,7 @@ class CollectionsWorkspaceSession(
         scope.launch { observeAccountVersion() }
     }
 
-    fun current(): CollectionsWorkspaceState = model.state.value.nativeState(mode)
+    fun current(): CollectionsWorkspaceState = visibleState().nativeState(mode)
 
     fun observe(onState: () -> Unit, onExport: (CollectionsPoster, Int) -> Unit): CollectionsLibraryObservation {
         export = onExport
@@ -53,26 +53,21 @@ class CollectionsWorkspaceSession(
     fun save() = dispatch(SavedCollectionsAction.Save)
     fun delete() = dispatch(SavedCollectionsAction.Delete)
     fun removeCover() = dispatch(SavedCollectionsAction.RemoveCover)
-    fun query(value: String) = dispatch(SavedCollectionsAction.Query(value))
-    fun quickTitle(value: String?) = dispatch(SavedCollectionsAction.QuickTitle(value))
-    fun createQuick() = dispatch(SavedCollectionsAction.CreateQuick)
-    fun toggleMembership(id: String) = dispatch(SavedCollectionsAction.ToggleMembership(id))
-    fun commitMemberships() = dispatch(SavedCollectionsAction.CommitMemberships)
     fun feature(id: String?) = dispatch(SavedCollectionsAction.Feature(id))
     fun togglePlace(key: String) = dispatch(SavedCollectionsAction.TogglePlace(key))
     fun movePlace(key: String, target: String, after: Boolean) = dispatch(SavedCollectionsAction.MovePlace(key, target, after))
     fun preview() { if (current().canPreview) dispatch(SavedCollectionsAction.Preview) }
     fun shareLink() { if (current().canShare) dispatch(SavedCollectionsAction.ShareLink) }
-    fun shareImages() = dispatch(SavedCollectionsAction.ShareImages)
+    fun shareImages() { if (poster() != null) dispatch(SavedCollectionsAction.ShareImages) }
     fun format(story: Boolean) = dispatch(SavedCollectionsAction.Format(if (story) CollectionPosterFormat.Story else CollectionPosterFormat.Chat))
 
     fun openCollection(id: String) {
-        if (mode == CollectionsWorkspaceMode.Featured && model.state.value.collection?.summary?.id == id) onCollection(id)
+        if (mode == CollectionsWorkspaceMode.Featured && current().id == id) onCollection(id)
         else if (current().signedIn && current().lists.any { it.id == id }) onEditor(id)
     }
 
     fun openPlace(key: String) {
-        model.state.value.collection?.places?.firstOrNull { it.key == key }?.let {
+        visibleState().collection?.places?.firstOrNull { it.key == key }?.let {
             dispatch(SavedCollectionsAction.OpenPlace(it))
         }
     }
@@ -81,14 +76,14 @@ class CollectionsWorkspaceSession(
     fun coverPicked(bytes: ByteArray, version: Int) = dispatch(SavedCollectionsAction.CoverPicked(
         CollectionCoverInput(bytes.copyOf(), "image/jpeg", "cover.jpg"), version))
 
-    fun poster(): CollectionsPoster? = model.state.value.let { it.collection?.toSharedPoster()?.nativePoster(it.format) }
+    fun poster(): CollectionsPoster? = visibleState().let { it.collection?.toSharedPoster()?.nativePoster(it.format) }
 
     fun isCurrentExport(epoch: Int, id: String): Boolean = !closed && model.isCurrentExport(epoch, id)
     fun finishExport(epoch: Int, failed: Boolean) = dispatch(SavedCollectionsAction.ExportFinished(epoch, failed))
 
     fun loadCover(id: String, version: Int, receive: (ByteArray?, String?) -> Unit): CollectionsLibraryObservation {
         val owner = account.currentId()
-        val summary = model.state.value.let { state -> state.collection?.summary?.takeIf { it.id == id } ?: state.lists.firstOrNull { it.id == id } }
+        val summary = visibleState().let { state -> state.collection?.summary?.takeIf { it.id == id } ?: state.lists.firstOrNull { it.id == id } }
         val job = scope.launch {
             val draft = model.state.value.coverInput?.bytes?.copyOf()?.takeIf { id == "draft" }
             if (draft != null) {
@@ -119,6 +114,12 @@ class CollectionsWorkspaceSession(
         photoUrls.clear()
         scope.cancel()
         store.clear()
+    }
+
+    private fun visibleState(): SavedCollectionsState {
+        val state = model.state.value
+        return if (mode in publicModes && state.collection?.summary?.visibility != SavedCollectionVisibility.Public)
+            state.copy(collection = null) else state
     }
 
     private fun dispatch(action: SavedCollectionsAction) { if (!closed) model.onAction(action) }
@@ -183,7 +184,6 @@ private fun CollectionsWorkspaceMode.savedMode(): SavedCollectionsMode = when (t
     CollectionsWorkspaceMode.Preference -> SavedCollectionsMode.Preference
     CollectionsWorkspaceMode.Featured -> SavedCollectionsMode.Featured
     CollectionsWorkspaceMode.Public -> SavedCollectionsMode.Public
-    CollectionsWorkspaceMode.Picker -> SavedCollectionsMode.Picker
     CollectionsWorkspaceMode.Snapshot -> error("Snapshot uses its public read session")
 }
 
@@ -197,8 +197,8 @@ private fun SavedCollectionsState.nativeState(mode: CollectionsWorkspaceMode): C
         signedIn && !loading && !busy && !preparingCover && SavedCollectionRules.validMetadata(SavedCollectionMetadata(title, description)),
         !edits && summary?.visibility == SavedCollectionVisibility.Public && summary.url != null || mode == CollectionsWorkspaceMode.Public && summary?.url != null,
         !busy && collection?.places?.isNotEmpty() == true && (mode == CollectionsWorkspaceMode.Public || !edits),
-        preparingCover, if (summary == null) coverInput?.let { "draft:${it.hashCode()}" } else summary.let { "$accountVersion:${it.id}:${it.revision}:${it.cover}:$removeCover:${coverInput?.hashCode()}" },
-        preview, format == CollectionPosterFormat.Story, query, quickTitle, membershipsLoaded, featuredId,
+        preparingCover, coverInput != null || summary?.cover != null && !removeCover, if (summary == null) coverInput?.let { "draft:${it.hashCode()}" } else summary.let { "$accountVersion:${it.id}:${it.revision}:${it.cover}:$removeCover:${coverInput?.hashCode()}" },
+        preview, format == CollectionPosterFormat.Story, featuredId,
         lists.map { CollectionsWorkspaceList(it.id, it.title, it.visibility == SavedCollectionVisibility.Public,
             it.itemCount, "$accountVersion:${it.id}:${it.revision}:${it.cover}", it.id in memberships) },
         (if (mode == CollectionsWorkspaceMode.Editor) places else collection?.places.orEmpty()).map { it.nativePlace(it.key in selectedPlaces) })

@@ -14,12 +14,14 @@ func makeCollectionsWorkspaceController(workspace: IosCollectionsWorkspace, lang
 @MainActor
 final class CollectionsWorkspaceModel: ObservableObject {
     let workspace: IosCollectionsWorkspace
+    let strings: CollectionsWorkspaceStrings
     @Published var state: IosCollectionsWorkspaceState
     private var observation: IosCollectionsWorkspaceObservation?
     private var exportTask: Task<Void, Never>?
 
-    init(workspace: IosCollectionsWorkspace) {
+    init(workspace: IosCollectionsWorkspace, strings: CollectionsWorkspaceStrings) {
         self.workspace = workspace
+        self.strings = strings
         state = workspace.current()
     }
 
@@ -45,7 +47,7 @@ final class CollectionsWorkspaceModel: ObservableObject {
         exportTask?.cancel()
         exportTask = Task { [weak self] in
             guard let self else { return }
-            let images = await renderCollectionPosters(poster, workspace: workspace)
+            let images = await renderCollectionPosters(poster, workspace: workspace, strings: strings)
             guard !Task.isCancelled else { return }
             workspace.finishExport(epoch: epoch, id: poster.id, images: images.map { $0 as NSData })
         }
@@ -70,7 +72,7 @@ private struct CollectionsWorkspaceHost: View {
     @Environment(\.dismiss) private var dismiss
 
     init(workspace: IosCollectionsWorkspace, strings: CollectionsWorkspaceStrings) {
-        _model = StateObject(wrappedValue: CollectionsWorkspaceModel(workspace: workspace))
+        _model = StateObject(wrappedValue: CollectionsWorkspaceModel(workspace: workspace, strings: strings))
         self.strings = strings
     }
 
@@ -119,7 +121,6 @@ private struct CollectionsWorkspaceHost: View {
                 case "Preference": preferences
                 case "Owner": owner
                 case "Featured": featured
-                case "Picker": membershipPicker
                 default: publicCollection
                 }
             }.padding(16)
@@ -130,14 +131,14 @@ private struct CollectionsWorkspaceHost: View {
     }
 
     @ViewBuilder private var header: some View {
-        if ["Editor", "Public", "Picker"].contains(state.mode) {
+        if ["Editor", "Public"].contains(state.mode) {
             HStack(spacing: 8) {
                 Button(action: model.workspace.back) {
                     Label(strings["collections_back"], systemImage: "chevron.backward")
                         .labelStyle(.iconOnly).frame(minWidth: 44, minHeight: 44)
                 }
                 Text(strings[state.mode == "Editor" ? (state.id == nil ? "collections_new_list" : "collections_edit_list") :
-                    state.mode == "Picker" ? "collections_save_to_list" : "collections_library"])
+                    "collections_library"])
                     .font(CoffeePeekNativeStyle.font(18, weight: "SemiBold")).accessibilityAddTraits(.isHeader)
                 Spacer()
                 if state.mode == "Editor" && state.id != nil {
@@ -156,7 +157,7 @@ private struct CollectionsWorkspaceHost: View {
         if state.loading || state.refreshing || state.preparingCover {
             ProgressView(strings["collections_loading"]).frame(maxWidth: .infinity)
         }
-        if !state.signedIn && ["Editor", "Owner", "Preference", "Picker"].contains(state.mode) {
+        if !state.signedIn && ["Editor", "Owner", "Preference"].contains(state.mode) {
             Text(strings["collections_sign_in_hint"])
             Button(strings["collections_sign_in"], action: model.workspace.signIn).buttonStyle(.borderedProminent)
         }
@@ -172,38 +173,32 @@ private struct CollectionsWorkspaceHost: View {
 
     private var editor: some View {
         VStack(alignment: .leading, spacing: 20) {
-            HStack(alignment: .top, spacing: 16) {
-                VStack {
-                    WorkspaceCover(workspace: model.workspace, id: state.id ?? "draft", version: state.accountVersion)
-                        .id(state.coverKey).frame(width: 108, height: 108).clipped()
-                        .clipShape(RoundedRectangle(cornerRadius: 16))
-                        .overlay(alignment: .bottomTrailing) {
-                            Button { coverVersion = state.accountVersion; selectingCover = true } label: {
-                                Image(systemName: "pencil").frame(width: 44, height: 44)
-                                    .background(CoffeePeekNativeStyle.surface, in: Circle())
-                            }.accessibilityLabel(strings["collections_change_cover"])
-                                .disabled(state.busy || state.preparingCover)
-                        }
-                    if state.coverKey != nil {
-                        Button(strings["collections_remove_cover"], action: model.workspace.removeCover)
-                            .font(.caption).disabled(state.busy)
-                    }
-                }
-                TextField(strings["collections_name"], text: Binding(get: { state.title }, set: model.workspace.title))
-                    .textFieldStyle(.roundedBorder).disabled(state.busy)
-            }
-            Text(strings["collections_description"]).font(.caption).foregroundStyle(CoffeePeekNativeStyle.secondary)
-            TextField(strings["collections_description_placeholder"],
-                text: Binding(get: { state.description }, set: model.workspace.editDescription), axis: .vertical)
-                .lineLimit(3...6).textFieldStyle(.roundedBorder).disabled(state.busy)
-            Toggle(strings["collections_public_switch"], isOn: Binding(get: { state.isPublic }, set: model.workspace.visibility))
-                .tint(CoffeePeekNativeStyle.accent).disabled(state.busy)
-            Text(strings[state.isPublic ? "collections_public_hint" : "collections_private_hint"])
-                .font(.caption).foregroundStyle(CoffeePeekNativeStyle.secondary)
+            CollectionEditorContent(title: state.title, description: state.description, isPublic: state.isPublic,
+                enabled: !state.busy, strings: strings, onTitle: model.workspace.title,
+                onDescription: model.workspace.editDescription, onVisibility: model.workspace.visibility) { coverEditor }
             if state.id != nil {
                 Text(strings["collections_manage_places"]).font(.headline)
                 if state.places.isEmpty { Text(strings["collections_saved_empty"]) }
                 ForEach(state.places, id: \.key) { place in editorPlace(place) }
+            }
+        }
+    }
+
+    private var coverEditor: some View {
+        VStack {
+            WorkspaceCover(workspace: model.workspace, id: state.id ?? "draft", version: state.accountVersion)
+                .id(state.coverKey).frame(width: 108, height: 108).clipped()
+                .clipShape(RoundedRectangle(cornerRadius: 16))
+                .overlay(alignment: .bottomTrailing) {
+                    Button { coverVersion = state.accountVersion; selectingCover = true } label: {
+                        Image(systemName: "pencil").frame(width: 44, height: 44)
+                            .background(CoffeePeekNativeStyle.surface, in: Circle())
+                    }.accessibilityLabel(strings["collections_change_cover"])
+                        .disabled(state.busy || state.preparingCover)
+                }
+            if state.hasCover {
+                Button(strings["collections_remove_cover"], action: model.workspace.removeCover)
+                    .font(.caption).disabled(state.busy)
             }
         }
     }
@@ -248,9 +243,6 @@ private struct CollectionsWorkspaceHost: View {
                 if state.canShare { Button(strings["collections_share_link"], action: model.workspace.shareLink) }
                 if state.canPreview { Button(strings["collections_share_photo"], action: model.workspace.preview) }
             }.frame(maxWidth: .infinity, minHeight: 44).padding(8).background(.bar)
-        } else if state.mode == "Picker" {
-            Button(strings["collections_done"], action: model.workspace.commitMemberships)
-                .disabled(!state.membershipsLoaded || state.busy).padding(16)
         }
     }
 
@@ -274,11 +266,8 @@ private struct CollectionsWorkspaceHost: View {
     }
 
     private func collectionCard(_ item: IosCollectionsWorkspaceList) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            WorkspaceCover(workspace: model.workspace, id: item.id, version: state.accountVersion)
-                .id(item.imageKey).aspectRatio(1.5, contentMode: .fit).clipped().clipShape(RoundedRectangle(cornerRadius: 16))
-            Text(item.title).font(.headline)
-            Text(strings.count(item.count)).font(.caption).foregroundStyle(CoffeePeekNativeStyle.secondary)
+        CollectionSummaryCard(title: item.title, count: item.count, strings: strings) {
+            WorkspaceCover(workspace: model.workspace, id: item.id, version: state.accountVersion).id(item.imageKey)
         }
     }
 
@@ -296,23 +285,13 @@ private struct CollectionsWorkspaceHost: View {
     }
 
     private var preferences: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text(strings["collections_settings"]).font(.title2).accessibilityAddTraits(.isHeader)
-            Toggle(strings["collections_profile_show"], isOn: Binding(get: { state.featuredId != nil }, set: { showing in
+        CollectionProfilePreferenceContent(visible: state.featuredId != nil,
+            selectedTitle: state.lists.first { $0.id == state.featuredId }?.title,
+            enabled: !state.loading && !state.busy && state.failure != "Load", strings: strings,
+            onVisibility: { showing in
                 if !state.signedIn { model.workspace.signIn() }
                 else if showing { choosingFeatured = true } else { model.workspace.feature(id: nil) }
-            })).tint(CoffeePeekNativeStyle.accent).disabled(state.loading || state.busy || state.failure == "Load")
-            Text(strings["collections_profile_choice_hint"]).font(.caption).foregroundStyle(CoffeePeekNativeStyle.secondary)
-            if state.featuredId != nil {
-                Button { choosingFeatured = true } label: {
-                    HStack {
-                        Text(state.lists.first { $0.id == state.featuredId }?.title ?? strings["collections_profile_choose"])
-                        Spacer(); Image(systemName: "chevron.forward")
-                    }
-                }.disabled(state.busy || state.loading || state.failure == "Load")
-            }
-            Button(strings["collections_done"]) { dismiss() }.frame(maxWidth: .infinity, minHeight: 44)
-        }
+            }, onChoose: { choosingFeatured = true }, onDone: { dismiss() })
     }
 
     private var featuredChoices: some View {
@@ -332,24 +311,6 @@ private struct CollectionsWorkspaceHost: View {
             model.workspace.feature(id: id); choosingFeatured = false
         } label: {
             HStack { Text(title); Spacer(); if state.featuredId == id { Image(systemName: "checkmark") } }
-        }
-    }
-
-    private var membershipPicker: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            TextField(strings["collections_search_lists"], text: Binding(get: { state.query }, set: model.workspace.query))
-                .textFieldStyle(.roundedBorder)
-            if state.quickTitle != nil {
-                TextField(strings["collections_name"], text: Binding(get: { state.quickTitle ?? "" }, set: { model.workspace.quickTitle(value: $0) }))
-                Button(strings["collections_create"], action: model.workspace.createQuick).disabled(state.busy)
-            } else {
-                Button(strings["collections_new_list"]) { model.workspace.quickTitle(value: "") }.disabled(!state.membershipsLoaded)
-            }
-            ForEach(state.lists.filter { state.query.isEmpty || $0.title.localizedCaseInsensitiveContains(state.query) }, id: \.id) { item in
-                Button { model.workspace.toggleMembership(id: item.id) } label: {
-                    HStack { Text(item.title); Spacer(); if item.selected { Image(systemName: "checkmark") } }.frame(minHeight: 44)
-                }.disabled(!state.membershipsLoaded || state.busy)
-            }
         }
     }
 

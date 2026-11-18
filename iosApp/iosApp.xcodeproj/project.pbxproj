@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		B23122000000000000000011 /* CollectionEditorContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = B23122000000000000000013 /* CollectionEditorContent.swift */; };
 		B23122000000000000000001 /* CollectionPosterScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = B23122000000000000000003 /* CollectionPosterScreen.swift */; };
 
 		E10F17E50000000000000001 /* DiscoveryFilterSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10F17E50000000000000002 /* DiscoveryFilterSheet.swift */; };
@@ -114,6 +115,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		B23122000000000000000013 /* CollectionEditorContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CollectionEditorContent.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CollectionEditorContent.swift; sourceTree = "<group>"; };
 		B23122000000000000000003 /* CollectionPosterScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CollectionPosterScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CollectionPosterScreen.swift; sourceTree = "<group>"; };
 
 		E10F17E50000000000000002 /* DiscoveryFilterSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = DiscoveryFilterSheet.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/DiscoveryFilterSheet.swift; sourceTree = "<group>"; };
@@ -336,6 +338,7 @@
 				5E1FA2200000000000000006 /* NativeShelfArchive.strings */,
 				86C051CE0000000000000003 /* CollectionsWorkspaceScreen.swift */,
 				B23122000000000000000003 /* CollectionPosterScreen.swift */,
+				B23122000000000000000013 /* CollectionEditorContent.swift */,
 				B20000000000000000000006 /* CollectionsLibrary.strings */,
 				86C051CE0000000000000006 /* CollectionsWorkspace.strings */,
 				53E771650000000000000002 /* SettingsNativeController.swift */,
@@ -629,6 +632,7 @@
 				B20000000000000000000001 /* CollectionsLibraryScreen.swift in Sources */,
 				86C051CE0000000000000001 /* CollectionsWorkspaceScreen.swift in Sources */,
 				B23122000000000000000001 /* CollectionPosterScreen.swift in Sources */,
+				B23122000000000000000011 /* CollectionEditorContent.swift in Sources */,
 				53E771650000000000000001 /* SettingsNativeController.swift in Sources */,
 				53E771650000000000000003 /* SettingsNativeComponents.swift in Sources */,
 				53E771650000000000000005 /* SettingsNativeTab.swift in Sources */,

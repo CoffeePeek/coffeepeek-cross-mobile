@@ -78,7 +78,7 @@ struct CollectionPosterPreview: View {
     }
 
     private func posterImage(_ poster: IosCollectionsPoster) -> some View {
-        CollectionPosterCanvas(poster: poster, page: min(page, max(0, poster.pages.count - 1)), photos: photos)
+        CollectionPosterCanvas(poster: poster, page: min(page, max(0, poster.pages.count - 1)), photos: photos, strings: strings)
             .frame(width: CGFloat(poster.width), height: CGFloat(poster.height))
             .modifier(CollectionPosterScale(width: CGFloat(poster.width), height: CGFloat(poster.height)))
     }
@@ -115,6 +115,7 @@ struct CollectionPosterCanvas: View {
     let poster: IosCollectionsPoster
     let page: Int
     let photos: [String: UIImage]
+    let strings: CollectionsWorkspaceStrings
 
     var body: some View {
         ZStack(alignment: .topLeading) {
@@ -122,7 +123,7 @@ struct CollectionPosterCanvas: View {
                 startPoint: .topLeading, endPoint: .bottomTrailing)
             VStack(alignment: .leading, spacing: 12) {
                 Text(poster.title).font(.system(size: 44, weight: .bold)).lineLimit(2)
-                Text("\(poster.pages.flatMap(\.cards).count)").font(.system(size: 24)).foregroundStyle(.gray)
+                Text(strings.count(Int32(poster.pages.flatMap(\.cards).count))).font(.system(size: 24)).foregroundStyle(.gray)
             }.frame(width: 1016, alignment: .leading).offset(x: 32, y: 66)
             if poster.pages.indices.contains(page) {
                 ForEach(poster.pages[page].cards, id: \.place.key) { card in
@@ -141,7 +142,7 @@ struct CollectionPosterCanvas: View {
 
     private var brand: some View {
         HStack(spacing: 24) {
-            ForEach(0..<7) { _ in Text("COFFEEPEEK").font(.system(size: 22, weight: .semibold)) }
+            ForEach(0..<7) { _ in Text(strings["collections_brand"]).font(.system(size: 22, weight: .semibold)) }
         }.foregroundStyle(CoffeePeekNativeStyle.accent)
             .frame(width: CGFloat(poster.width), height: 44).clipped().background(Color.black.opacity(0.25))
     }
@@ -176,13 +177,13 @@ struct CollectionPosterCanvas: View {
 }
 
 @MainActor
-func renderCollectionPosters(_ poster: IosCollectionsPoster, workspace: IosCollectionsWorkspace) async -> [Data] {
+func renderCollectionPosters(_ poster: IosCollectionsPoster, workspace: IosCollectionsWorkspace, strings: CollectionsWorkspaceStrings) async -> [Data] {
     let photos = await loadCollectionPosterPhotos(poster, workspace: workspace)
     guard !Task.isCancelled else { return [] }
     var result: [Data] = []
     for page in poster.pages.indices {
         guard !Task.isCancelled else { return [] }
-        let view = CollectionPosterCanvas(poster: poster, page: page, photos: photos)
+        let view = CollectionPosterCanvas(poster: poster, page: page, photos: photos, strings: strings)
             .frame(width: CGFloat(poster.width), height: CGFloat(poster.height))
         let renderer = ImageRenderer(content: view)
         renderer.scale = 1
@@ -258,11 +259,11 @@ private var collectionPosterSample: IosCollectionsPoster {
 }
 
 #Preview("Collection poster light") {
-    CollectionPosterCanvas(poster: collectionPosterSample, page: 0, photos: [:])
+    CollectionPosterCanvas(poster: collectionPosterSample, page: 0, photos: [:], strings: CollectionsWorkspaceStrings(languageTag: "ru"))
         .frame(width: 1080, height: 1350).scaleEffect(0.3, anchor: .topLeading).preferredColorScheme(.light)
 }
 #Preview("Collection poster dark") {
-    CollectionPosterCanvas(poster: collectionPosterSample, page: 0, photos: [:])
+    CollectionPosterCanvas(poster: collectionPosterSample, page: 0, photos: [:], strings: CollectionsWorkspaceStrings(languageTag: "ru"))
         .frame(width: 1080, height: 1350).scaleEffect(0.3, anchor: .topLeading).preferredColorScheme(.dark)
 }
 

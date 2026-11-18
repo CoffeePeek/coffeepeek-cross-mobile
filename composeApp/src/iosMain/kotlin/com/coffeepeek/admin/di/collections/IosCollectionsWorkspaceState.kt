@@ -7,8 +7,8 @@ data class IosCollectionsWorkspaceState(
     val loading: Boolean, val refreshing: Boolean, val busy: Boolean, val failure: String?,
     val id: String?, val title: String, val description: String, val isPublic: Boolean,
     val hasEdits: Boolean, val canSave: Boolean, val canShare: Boolean, val canPreview: Boolean,
-    val preparingCover: Boolean, val coverKey: String?, val preview: Boolean, val story: Boolean,
-    val query: String, val quickTitle: String?, val membershipsLoaded: Boolean, val featuredId: String?,
+    val preparingCover: Boolean, val hasCover: Boolean, val coverKey: String?, val preview: Boolean, val story: Boolean,
+    val featuredId: String?,
     val lists: List<IosCollectionsWorkspaceList>, val places: List<IosCollectionsWorkspacePlace>,
 )
 data class IosCollectionsWorkspaceList(val id: String, val title: String, val isPublic: Boolean,
@@ -23,8 +23,7 @@ data class IosCollectionsPosterCard(val place: IosCollectionsWorkspacePlace,
 
 internal fun CollectionsWorkspaceState.iosState() = IosCollectionsWorkspaceState(
     mode, accountVersion, signedIn, loading, refreshing, busy, failure, id, title, description, isPublic,
-    hasEdits, canSave, canShare, canPreview, preparingCover, coverKey, preview, story, query,
-    quickTitle, membershipsLoaded, featuredId,
+    hasEdits, canSave, canShare, canPreview, preparingCover, hasCover, coverKey, preview, story, featuredId,
     lists.map { IosCollectionsWorkspaceList(it.id, it.title, it.isPublic, it.count, it.imageKey, it.selected) },
     places.map { it.iosPlace() },
 )

@@ -3,15 +3,15 @@ package com.coffeepeek.feature.collections.impl
 import com.coffeepeek.feature.collections.domain.model.*
 import com.coffeepeek.feature.collections.impl.ui.model.*
 
-enum class CollectionsWorkspaceMode { Editor, Owner, Preference, Featured, Public, Snapshot, Picker }
+enum class CollectionsWorkspaceMode { Editor, Owner, Preference, Featured, Public, Snapshot }
 
 data class CollectionsWorkspaceState(
     val mode: String, val accountVersion: Int, val signedIn: Boolean,
     val loading: Boolean, val refreshing: Boolean, val busy: Boolean, val failure: String?,
     val id: String?, val title: String, val description: String, val isPublic: Boolean,
     val hasEdits: Boolean, val canSave: Boolean, val canShare: Boolean, val canPreview: Boolean,
-    val preparingCover: Boolean, val coverKey: String?, val preview: Boolean, val story: Boolean,
-    val query: String, val quickTitle: String?, val membershipsLoaded: Boolean, val featuredId: String?,
+    val preparingCover: Boolean, val hasCover: Boolean, val coverKey: String?, val preview: Boolean, val story: Boolean,
+    val featuredId: String?,
     val lists: List<CollectionsWorkspaceList>, val places: List<CollectionsWorkspacePlace>,
 )
 
@@ -33,7 +33,7 @@ internal fun CollectionPlace.nativePlace(selected: Boolean = true) = Collections
 )
 
 internal fun SharedCollection.nativePoster(format: CollectionPosterFormat): CollectionsPoster {
-    val layout = collectionPosterLayout(places, format)
+    val layout = collectionPosterLayout(places, format, contentTop = 228f)
     return CollectionsPoster(id, title, url, format.width, format.height, layout.pages.map { page ->
         CollectionsPosterPage(page.map { CollectionsPosterCard(it.place.nativePlace(), it.left, it.top, it.width, it.height) })
     })

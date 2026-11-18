@@ -19,17 +19,17 @@ import kotlinx.coroutines.test.setMain
 import kotlin.test.*
 
 @OptIn(ExperimentalCoroutinesApi::class)
-class SavedPublicCollectionSessionTest {
+class CollectionsPublicWorkspaceSessionTest {
     private val dispatcher = StandardTestDispatcher()
     private val saved = SavedTestRepository()
     private val account = SavedTestAccount().apply { owner.value = null }
     private val events = mutableListOf<String>()
-    private val sessions = mutableListOf<SavedPublicCollectionSession>()
+    private val sessions = mutableListOf<CollectionsWorkspaceSession>()
 
     @BeforeTest fun before() = Dispatchers.setMain(dispatcher)
 
     @AfterTest fun after() {
-        sessions.forEach(SavedPublicCollectionSession::close)
+        sessions.forEach(CollectionsWorkspaceSession::close)
         Dispatchers.resetMain()
     }
 
@@ -76,7 +76,7 @@ class SavedPublicCollectionSessionTest {
         val session = session(repository)
         runCurrent()
         var url: String? = null
-        session.loadCover(requireNotNull(session.current().coverKey)) { bytes, value ->
+        session.loadCover("public", session.current().accountVersion) { bytes, value ->
             assertNull(bytes)
             url = value
         }
@@ -86,6 +86,7 @@ class SavedPublicCollectionSessionTest {
     }
 
     @Test fun publicCoverNeverReadsAuthenticatedBytes() = runTest(dispatcher) {
+        account.owner.value = "signed-in-viewer"
         val repository = object : SavedCollectionsRepository by saved {
             override suspend fun public(id: String) = Result.success(publicList.copy(
                 summary = publicList.summary.copy(cover = SavedCollectionCover("owned", authenticated = true)),
@@ -96,7 +97,7 @@ class SavedPublicCollectionSessionTest {
         val public = session(repository)
         runCurrent()
         var coverDelivered = false
-        public.loadCover(requireNotNull(public.current().coverKey)) { bytes, url ->
+        public.loadCover("public", public.current().accountVersion) { bytes, url ->
             assertNull(bytes)
             assertNull(url)
             coverDelivered = true
@@ -114,13 +115,13 @@ class SavedPublicCollectionSessionTest {
         privateSession.openPlace(savedShop.key)
         privateSession.preview()
         runCurrent()
-        assertNull(privateSession.current().title)
+        assertEquals("", privateSession.current().title)
         assertFalse(privateSession.current().preview)
         assertTrue(events.isEmpty())
     }
 
-    private fun session(repository: SavedCollectionsRepository): SavedPublicCollectionSession =
-        SavedPublicCollectionSession("public", repository, SavedTestSnapshots(), account,
-            { events.add("back") }, { events.add("shop:$it") }, { events.add("roaster:$it") },
-            events::add, { _, _ -> }).also(sessions::add)
+    private fun session(repository: SavedCollectionsRepository): CollectionsWorkspaceSession =
+        CollectionsWorkspaceSession(repository, SavedTestSnapshots(), account, CollectionsWorkspaceMode.Public,
+            "public", null, null, { events.add("back") }, {}, {}, {},
+            { events.add("shop:$it") }, { events.add("roaster:$it") }, events::add).also(sessions::add)
 }
