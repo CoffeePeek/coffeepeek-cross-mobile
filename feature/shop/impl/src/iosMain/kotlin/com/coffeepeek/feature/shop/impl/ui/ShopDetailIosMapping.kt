@@ -89,6 +89,6 @@ private fun priceTiers(selected: ShopPriceLevel?): List<ShopDetailIosPriceTier> 
 
 /** Application disposal must clear every renderable protected row together with the detail snapshot. */
 fun ShopDetailIosState.withoutContent(languageTag: String): ShopDetailIosState = copy(
-    details = null, message = null, checkInDates = emptyMap(),
+    details = null, message = null, priceInfoVisible = false, checkInDates = emptyMap(),
     checkIns = ShopCheckInListSnapshot(ShopCheckInListState(sessionGeneration = generation), languageTag),
 )

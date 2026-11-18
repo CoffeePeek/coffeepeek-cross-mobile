@@ -105,7 +105,7 @@ struct ShopDetailNativeScreen: View {
         }
         .frame(height: dynamicTypeSize.isAccessibilitySize ? 470 + topInset : 300 + topInset)
         .clipShape(UnevenRoundedRectangle(bottomLeadingRadius: 16, bottomTrailingRadius: 16))
-        .shopDetailExposure("Photos", id: "hero")
+        .shopDetailExposure("Photos", id: "hero", enabled: !details.photos.isEmpty)
         .onChange(of: details.photos.map(\.id)) { _, _ in selectedPhoto = min(selectedPhoto, max(0, details.photos.count - 1)) }
     }
 
@@ -263,11 +263,15 @@ struct ShopDetailExposureFrames: PreferenceKey {
     }
 }
 extension View {
-    func shopDetailExposure(_ feature: String, id: String) -> some View {
-        background { GeometryReader { geometry in
-            Color.clear.preference(key: ShopDetailExposureFrames.self,
-                value: [id: ShopDetailExposureFrame(feature: feature, rect: geometry.frame(in: .named("shop-detail")))])
-        } }
+    func shopDetailExposure(_ feature: String, id: String, enabled: Bool = true) -> some View {
+        background {
+            if enabled {
+                GeometryReader { geometry in
+                    Color.clear.preference(key: ShopDetailExposureFrames.self,
+                        value: [id: ShopDetailExposureFrame(feature: feature, rect: geometry.frame(in: .named("shop-detail")))])
+                }
+            }
+        }
     }
 }
 

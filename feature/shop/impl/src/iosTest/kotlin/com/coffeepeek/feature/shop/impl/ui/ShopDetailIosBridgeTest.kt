@@ -58,6 +58,7 @@ class ShopDetailIosBridgeTest {
         assertTrue(cleared.checkIns.rows.isEmpty())
         assertTrue(cleared.checkInDates.isEmpty())
         assertNull(cleared.message)
+        assertFalse(cleared.priceInfoVisible)
         assertEquals(source.generation, cleared.generation)
     }
 
@@ -73,7 +74,7 @@ class ShopDetailIosBridgeTest {
         favoriteLabel = "favorite",
         scheduleExpanded = false,
         featuresExpanded = false,
-        priceInfoVisible = false,
+        priceInfoVisible = true,
         message = "message",
         details = null,
         checkIns = detailCheckInSnapshot(state().copy(isLoggedIn = true), "ru"),
