@@ -1,0 +1,17 @@
+"profile_deletion_status_failed" = "Памылка загрузкі стану";
+"profile_deletion_send_failed" = "Не ўдалося адправіць ліст";
+"profile_loading" = "Загрузка";
+"profile_back" = "Назад";
+"profile_close" = "Закрыць";
+"profile_error_title" = "Памылка";
+"profile_ok" = "OK";
+"profile_deletion_title" = "Выдаленне ўліковага запісу";
+"profile_deletion_confirm_title" = "Пацвердзіце выдаленне";
+"profile_deletion_confirm_subtitle" = "Мы адправім спасылку для пацвярджэння на %@. Уліковы запіс застанецца актыўным, пакуль вы не пацвердзіце выдаленне ў лісце.";
+"profile_deletion_confirm_no_email" = "вашу пошту";
+"profile_deletion_send" = "Адправіць ліст";
+"profile_deletion_sent_title" = "Ліст адпраўлены";
+"profile_deletion_sent_subtitle" = "Мы адправілі спасылку на %@. Адкрыйце ліст у браўзеры і пацвердзіце выдаленне ўліковага запісу.";
+"profile_deletion_wait_hint" = "Пасля пацвярджэння вы аўтаматычна выйдзеце з праграмы.";
+"profile_deletion_resend" = "Адправіць ліст яшчэ раз";
+"profile_deletion_resend_wait" = "Паўторная адпраўка пакуль недаступная";
