@@ -265,6 +265,7 @@ jobs:
           ./gradlew --max-workers=6 :feature:discovery:impl:iosSimulatorArm64Test \
             --tests 'com.coffeepeek.feature.discovery.impl.ui.IosDiscoveryFilterDraftTest' \
             --tests 'com.coffeepeek.feature.discovery.impl.ui.DiscoveryIosIntentsTest' \
+            --tests 'com.coffeepeek.feature.discovery.impl.ui.DiscoveryIdleTest' \
             --tests 'com.coffeepeek.feature.discovery.impl.SearchViewModelTest' \
             > "$RUNNER_TEMP/ios-discovery-tests.log" 2>&1 || {
               tail -n 150 "$RUNNER_TEMP/ios-discovery-tests.log"
