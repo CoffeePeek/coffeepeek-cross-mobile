@@ -904,3 +904,35 @@ the existing collections picker on iOS. Verify picker opening, draft choice
 and cancellation without a live write. Validate commit behavior with the
 existing test suite. Explicitly cover both target types, account change,
 unavailable collections, Reduce Motion, and manual light/dark appearance.
+
+Build 3215 from `43147a90d` passed typechecking for all 120 Swift sources and
+the two native factory registration checks. Android directDebug assembly, the
+packaged DEX check and function body limits passed. JVM reports contain 1,084
+tests with no failures or skips (app 685, Discovery 179, shop 112, collections
+79, roaster 29). The iOS ARM64 test sources compiled after resolving the
+uncached Ktor mock test dependency. The iOS tests were not executed on Windows.
+A read-only Reduce Motion environment override was removed from the heart
+preview after the first Swift check. Light and dark previews remain.
+
+Windows xcross built the unsigned Debug 3215 app in place. The Kotlin compiler
+took 30.7s, framework link 11m03s and Swift runner 2m22s. The unsigned IPA and
+local build identity were verified. After reconnecting USB, xcross's cached
+development profile and certificate signed an exact copy of 3215. InstallationProxy
+confirmed the update and CoreDevice launched CoffeePeek Xcross on iOS 27.0.1.
+The connection dropped again before the 3215 visual check.
+
+### 2026-11-18 — Native Discovery movement and filter icons
+
+The Discovery search field stays mounted while the map or a catalogue changes
+the content around it. One native map canvas uses the measured preview slot and
+scroll viewport when collapsed, and the screen bounds when expanded. The map
+grows as the search moves up and the preview lists move down. The full roaster
+catalogue reuses Discovery's query and retains its own search exposure. Glass
+cancel and filter controls share the existing accessibility labels and routing.
+The type chips use the exact glyphs rendered by the map provider.
+
+Check collapsed rendering on first load, scrolling, expand/collapse and back
+from each catalogue. Check that the cancel button shifts the focused field
+without losing keyboard focus, and that a roaster query updates roaster results.
+Verify markers, both safe areas, all chip icons, light/dark, and Reduce Motion.
+Kotlin Discovery intents and Android presentation are unchanged.

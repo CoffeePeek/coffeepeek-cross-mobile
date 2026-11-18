@@ -17,7 +17,7 @@ private struct DiscoveryNativeHost: View {
     var body: some View {
         DiscoveryNativeScreen(state: model.state, actions: model.actions,
             map: AnyView(DiscoveryMapCanvas(discovery: model.discovery)),
-            roasters: { expanded in model.roasters(expanded) })
+            roasters: { expanded in model.roasters(expanded) }, roasterSource: model.roasterSource)
             .onAppear(perform: model.observe)
     }
 }
@@ -26,7 +26,7 @@ private struct DiscoveryNativeHost: View {
 private final class DiscoveryNativeModel: ObservableObject {
     let discovery: IosDiscovery
     @Published private(set) var state: IosDiscoveryState
-    @Published private var roasterSource: IosRoasterDiscovery?
+    @Published private(set) var roasterSource: IosRoasterDiscovery?
     private var observation: IosDiscoveryObservation?
     private var roasterObservation: IosDiscoveryObservation?
 

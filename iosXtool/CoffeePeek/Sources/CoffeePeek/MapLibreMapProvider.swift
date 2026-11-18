@@ -384,15 +384,8 @@ final class MapLibreMapProvider: NSObject, IosNativeMapProvider, MLNMapViewDeleg
     }
 
     private func drawPinIcon(type: String, rect: CGRect, dark: Bool) {
-        let icon: UIImage?
         let side = rect.width * 0.44
-        let configuration = UIImage.SymbolConfiguration(pointSize: side, weight: .semibold)
-        switch type {
-        case "specialty": icon = UIImage(systemName: "cup.and.saucer.fill", withConfiguration: configuration)
-        case "cafe": icon = UIImage(systemName: "fork.knife", withConfiguration: configuration)
-        default: icon = coffeeShopIcon
-        }
-        guard let icon else { return }
+        guard let icon = CoffeePeekMapArtwork.shop(type: type, side: side, coffeeShopIcon: coffeeShopIcon) else { return }
         let tint = UIColor(hex: dark ? "#FFFFFF" : "#2D241F")
         let scale = min(1, side / max(icon.size.width, icon.size.height))
         let width = icon.size.width * scale
@@ -808,4 +801,44 @@ private struct ZoneState: Decodable, Equatable {
     let lon: Double
     let count: Int
     let polygon: [[Double]]
+}
+
+/// Shared glyphs for native map pins and discovery filters; pin geometry and tint remain with the provider.
+enum CoffeePeekMapArtwork {
+    static func shop(type: String, side: CGFloat, coffeeShopIcon: UIImage? = nil) -> UIImage? {
+        let configuration = UIImage.SymbolConfiguration(pointSize: side, weight: .semibold)
+        switch type {
+        case "specialty": return UIImage(systemName: "cup.and.saucer.fill", withConfiguration: configuration)
+        case "cafe": return UIImage(systemName: "fork.knife", withConfiguration: configuration)
+        default: return coffeeShopIcon ?? bundledCoffeeCup
+        }
+    }
+
+    static func discoveryChip(id: String, side: CGFloat) -> UIImage? {
+        let symbol: String
+        switch id {
+        case "Specialty": return shop(type: "specialty", side: side)
+        case "CoffeeBar": return shop(type: "coffee_bar", side: side)
+        case "Cafe": return shop(type: "cafe", side: side)
+        case "nearby": symbol = "figure.walk"
+        case "open-only": symbol = "clock"
+        case "new": symbol = "sparkle"
+        case "visited": symbol = "checkmark.circle"
+        case "map": symbol = "map"
+        case "list": symbol = "list.bullet"
+        default: return nil
+        }
+        return UIImage(systemName: symbol, withConfiguration: UIImage.SymbolConfiguration(pointSize: side, weight: .semibold))
+    }
+
+    private static let bundledCoffeeCup: UIImage? = {
+        for resource in ["com.coffeepeek.core.designsystem.resources", "coffeepeek.composeapp.generated.resources"] {
+            for prefix in ["compose-resources/composeResources", "compose-resources"] {
+                if let url = Bundle.main.url(forResource: "map_cup_fill", withExtension: "png",
+                    subdirectory: "\(prefix)/\(resource)/drawable"),
+                   let image = UIImage(contentsOfFile: url.path) { return image }
+            }
+        }
+        return nil
+    }()
 }

@@ -4,7 +4,7 @@ import SwiftUI
 struct DiscoveryMapControls: View {
     let state: IosDiscoveryState
     let actions: DiscoveryNativeActions
-    let header: AnyView
+    let headerHeight: CGFloat
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     private func text(_ key: String) -> String { state.labels[key] ?? "" }
@@ -22,7 +22,6 @@ struct DiscoveryMapControls: View {
 
     private func controls(centeredZoom: Bool) -> some View {
         VStack(spacing: 12) {
-            header
             if state.truncated { notice(text("truncated")) }
             if state.viewportFailed && state.mapShops.isEmpty {
                 VStack(spacing: 6) {
@@ -35,6 +34,7 @@ struct DiscoveryMapControls: View {
             mapActions(centeredZoom: centeredZoom)
             selection
         }
+        .padding(.top, headerHeight)
         .padding(.bottom, 4)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
@@ -180,10 +180,32 @@ extension View {
 
 #Preview("Discovery map light") {
     DiscoveryMapControls(state: discoveryPreviewState(expanded: true), actions: DiscoveryNativeActions(),
-        header: AnyView(Color.clear.frame(height: 100))).background(CoffeePeekNativeStyle.border).preferredColorScheme(.light)
+        headerHeight: 100).background(CoffeePeekNativeStyle.border).preferredColorScheme(.light)
 }
 
 #Preview("Discovery map dark") {
     DiscoveryMapControls(state: discoveryPreviewState(expanded: true), actions: DiscoveryNativeActions(),
-        header: AnyView(Color.clear.frame(height: 100))).background(CoffeePeekNativeStyle.border).preferredColorScheme(.dark)
+        headerHeight: 100).background(CoffeePeekNativeStyle.border).preferredColorScheme(.dark)
 }
+
+struct DiscoveryChipArtwork: View {
+    let id: String
+    var size: CGFloat = 18
+
+    var body: some View {
+        if let image = CoffeePeekMapArtwork.discoveryChip(id: id, side: size) {
+            Image(uiImage: image).renderingMode(.template).resizable().scaledToFit()
+                .frame(width: size, height: size).accessibilityHidden(true)
+        }
+    }
+}
+
+private func discoveryChipArtworkPreview() -> some View {
+    HStack(spacing: 16) {
+        ForEach(["nearby", "open-only", "new", "visited", "Specialty", "CoffeeBar", "Cafe"], id: \.self) {
+            DiscoveryChipArtwork(id: $0)
+        }
+    }.padding().foregroundStyle(CoffeePeekNativeStyle.foreground).background(CoffeePeekNativeStyle.surface)
+}
+#Preview("Discovery chip artwork light") { discoveryChipArtworkPreview().preferredColorScheme(.light) }
+#Preview("Discovery chip artwork dark") { discoveryChipArtworkPreview().preferredColorScheme(.dark) }

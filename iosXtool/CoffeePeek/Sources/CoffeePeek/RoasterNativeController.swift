@@ -32,6 +32,10 @@ private struct RoasterNativeExposure: ViewModifier {
             fraction = next
             source?.visible(section: key, fraction: next)
         }
+        .onChange(of: source) { previous, next in
+            previous?.visible(section: key, fraction: 0)
+            next?.visible(section: key, fraction: fraction)
+        }
         .onAppear { source?.visible(section: key, fraction: fraction) }
         .onDisappear { source?.visible(section: key, fraction: 0) }
     }

@@ -50,12 +50,10 @@ struct RoasterDiscoveryNativeScreen: View {
     let strings: OwnProfileStrings
     let source: IosRoasterDiscovery?
     let loader: CoffeePeekCardImageLoader
-    @State private var query = ""
 
     var body: some View {
         VStack(spacing: 12) {
             if state.active {
-                if search { header }
                 if !state.tags.isEmpty { tags }
                 if search { list } else { carousel }
                 if let message = state.message ?? state.messageKey.map({ strings[$0] }) {
@@ -65,33 +63,6 @@ struct RoasterDiscoveryNativeScreen: View {
         }
         .font(CoffeePeekNativeStyle.font(16)).foregroundStyle(CoffeePeekNativeStyle.foreground)
         .background(CoffeePeekNativeStyle.background).tint(CoffeePeekNativeStyle.accent)
-        .onAppear { query = state.query }
-        .onChange(of: state.query) { _, next in if query != next { query = next } }
-    }
-
-    private var header: some View {
-        HStack(spacing: 8) {
-            Button { source?.cancel() } label: { Image(systemName: "chevron.left").frame(width: 44, height: 44) }
-                .background(CoffeePeekNativeStyle.surface, in: Circle())
-                .accessibilityLabel(strings["roaster_search_back"])
-            searchField
-        }.padding(.horizontal, 16).roasterExposure("search", source: source)
-    }
-
-    private var searchField: some View {
-        HStack(spacing: 8) {
-            Image(systemName: "magnifyingglass").foregroundStyle(CoffeePeekNativeStyle.secondary).accessibilityHidden(true)
-            TextField(strings["roaster_search_placeholder"], text: $query)
-                .textInputAutocapitalization(.never).autocorrectionDisabled().submitLabel(.search)
-                .onChange(of: query) { _, value in source?.query(value: value) }
-            if !query.isEmpty {
-                Button { query = "" } label: { Image(systemName: "xmark.circle.fill").frame(width: 44, height: 44) }
-                    .foregroundStyle(CoffeePeekNativeStyle.secondary)
-                    .accessibilityLabel(strings["roaster_search_clear"])
-            }
-        }.padding(.horizontal, 12).frame(minHeight: 48)
-            .background(CoffeePeekNativeStyle.surface, in: Capsule())
-            .overlay { Capsule().strokeBorder(CoffeePeekNativeStyle.border, lineWidth: 1) }
     }
 
     private var tags: some View {
