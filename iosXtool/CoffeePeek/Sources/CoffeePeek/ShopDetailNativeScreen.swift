@@ -10,6 +10,7 @@ struct ShopDetailNativeScreen: View {
     let card: (ShopCheckInListRow) -> AnyView
     @State private var selectedPhoto = 0
     @State private var viewportWidth: CGFloat = 320
+    @State private var visibleNames: Set<String> = []
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     private func text(_ key: String) -> String { state.labels[key] ?? "" }
@@ -34,6 +35,7 @@ struct ShopDetailNativeScreen: View {
                     let visible = item.rect.intersection(viewport)
                     return area > 0 && !visible.isNull && visible.width * visible.height / area >= 0.1
                 }.map(\.feature))
+                visibleNames = names
                 actions.visible(names)
             }
         }
@@ -43,6 +45,7 @@ struct ShopDetailNativeScreen: View {
         .sheet(isPresented: Binding(get: { state.priceVisible }, set: { if !$0 { actions.call("dismiss-price") } })) {
             priceInformation.presentationDetents([.medium, .large]).presentationDragIndicator(.visible)
         }
+        .onAppear { actions.visible(visibleNames) }
         .onDisappear { actions.visible([]) }
     }
 
