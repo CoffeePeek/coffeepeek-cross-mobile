@@ -56,7 +56,7 @@ struct RoasterDiscoveryNativeScreen: View {
         VStack(spacing: 12) {
             if state.active {
                 if search { header }
-                tags
+                if !state.tags.isEmpty { tags }
                 if search { list } else { carousel }
                 if let message = state.message ?? state.messageKey.map({ strings[$0] }) {
                     Button(message) { source?.dismissMessage() }.frame(minHeight: 44)
@@ -90,8 +90,8 @@ struct RoasterDiscoveryNativeScreen: View {
                     .accessibilityLabel(strings["roaster_search_clear"])
             }
         }.padding(.horizontal, 12).frame(minHeight: 48)
-            .background(CoffeePeekNativeStyle.surface, in: RoundedRectangle(cornerRadius: 16))
-            .overlay { RoundedRectangle(cornerRadius: 16).strokeBorder(CoffeePeekNativeStyle.border, lineWidth: 1) }
+            .background(CoffeePeekNativeStyle.surface, in: Capsule())
+            .overlay { Capsule().strokeBorder(CoffeePeekNativeStyle.border, lineWidth: 1) }
     }
 
     private var tags: some View {
@@ -114,7 +114,7 @@ struct RoasterDiscoveryNativeScreen: View {
             LazyVStack(spacing: 12) {
                 status
                 ForEach(Array(state.cards.enumerated()), id: \.offset) { index, card in
-                    RoasterNativeCard(card: card, strings: strings, source: source, loader: loader)
+                    RoasterNativeCard(card: card, strings: strings, source: source, loader: loader, compact: true)
                         .id(card.slug ?? "unaddressed:\(index)")
                 }
                 suggestion

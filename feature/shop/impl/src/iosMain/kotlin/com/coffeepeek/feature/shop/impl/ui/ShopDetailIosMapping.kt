@@ -51,9 +51,16 @@ private fun iosShopDetails(details: ShopDetails, state: ShopDetailState, distanc
         details.schedules.sortedBy { if (it.dayOfWeek == 0) 7 else it.dayOfWeek }.map {
             ShopDetailIosSchedule(stringResource(dayName(it.dayOfWeek)), scheduleHours(it), it.dayOfWeek == state.todayDayOfWeek)
         }, details.menu?.takeIf { it.photos.isNotEmpty() || groupedPresentMenuItems(it.items).isNotEmpty() }?.let { iosMenu(it, formatMenu) },
-        iosContacts(details.contact), details.features.map { it.name }, featureToggle(details.features.size, state.featuresExpanded),
+        iosContacts(details.contact), details.features.map { iosFeature(it) }, featureToggle(details.features.size, state.featuresExpanded),
         price?.let { stringResource(priceValue(it)) }, priceTiers(price))
 }
+
+@Composable
+private fun iosFeature(feature: com.coffeepeek.feature.shop.domain.model.ShopFeature) = ShopDetailIosFeature(
+    feature.name,
+    com.coffeepeek.core.designsystem.component.coffeePeekNativeImage(
+        com.coffeepeek.feature.shop.impl.ui.compose.component.shopFeaturePainter(feature), size = 28f),
+)
 
 internal fun detailCheckInSnapshot(state: ShopDetailState, language: String): ShopCheckInListSnapshot {
     val details = state.details

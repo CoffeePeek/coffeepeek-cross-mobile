@@ -63,7 +63,7 @@ private fun iosShop(shop: ShopSummary, state: SearchState): DiscoveryIosShop {
         }), shop.tags, shop.isFavorite, shop.id in state.favoriteUpdates,
         stringResource(if (shop.isFavorite) Res.string.discovery_favorite_remove else Res.string.discovery_favorite_add),
         shop.isOpen, shop.isNew, null, DiscoveryIosShopDecoration(shop.priceLevel?.level ?: 0,
-            shop.checkInCount, shop.brewMethods, shop.roasterLogos))
+            shop.checkInCount, shop.brewMethods.map { DiscoveryIosBrewMethod(it, discoveryNativeBrewIcon(it)) }, shop.roasterLogos))
 }
 
 @Composable

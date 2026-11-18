@@ -46,8 +46,13 @@ class IosRoasterDetail internal constructor(
     fun share() = guarded { session.current().details?.address?.canonicalPath?.let(host.onShare) }
     fun makeOwnershipActions() = if (isCurrent()) ownership(::isCurrent) else null
     fun makePhotoViewer(): IosPhotoViewer? {
-        val url = current().photo ?: return null
-        return media.viewer(CoffeePeekPhotoViewerImages(listOf(url)), 0) { isCurrent() && session.current().photo == url }
+        val state = current()
+        val selected = state.photo ?: return null
+        val index = state.photos.indexOf(selected).takeIf { it >= 0 } ?: return null
+        return media.viewer(CoffeePeekPhotoViewerImages(state.photos), index) {
+            isCurrent() && session.current().photo == selected &&
+                session.current().details?.photos?.map { it.url } == state.photos
+        }
     }
     internal fun update(next: NativeRoasterDetailHost) { host = next }
 }

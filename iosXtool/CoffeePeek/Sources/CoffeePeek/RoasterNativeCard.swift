@@ -6,6 +6,7 @@ struct RoasterNativeCard: View {
     let strings: OwnProfileStrings
     let source: IosRoasterDiscovery?
     let loader: CoffeePeekCardImageLoader
+    var compact = false
 
     var body: some View {
         ZStack(alignment: .topTrailing) {
@@ -19,24 +20,24 @@ struct RoasterNativeCard: View {
     }
 
     private var content: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(alignment: .leading, spacing: compact ? 8 : 16) {
             HStack(alignment: .top, spacing: 12) {
                 CoffeePeekCardImage(url: card.photo, symbol: nil, fits: true, loadImage: loader)
-                    .frame(width: 64, height: 64).background(Color.white).clipShape(RoundedRectangle(cornerRadius: 12))
+                    .frame(width: compact ? 56 : 64, height: compact ? 56 : 64).background(Color.white).clipShape(RoundedRectangle(cornerRadius: 12))
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(card.name).font(CoffeePeekNativeStyle.font(17, weight: "Bold")).lineLimit(1).padding(.trailing, 36)
+                    Text(card.name).font(CoffeePeekNativeStyle.font(compact ? 16 : 17, weight: "Bold")).lineLimit(1).padding(.trailing, 36)
                     if let about = card.about, !about.isEmpty {
-                        Text(about).font(CoffeePeekNativeStyle.font(14)).foregroundStyle(CoffeePeekNativeStyle.secondary).lineLimit(3)
+                        Text(about).font(CoffeePeekNativeStyle.font(compact ? 13 : 14)).foregroundStyle(CoffeePeekNativeStyle.secondary).lineLimit(compact ? 2 : 3)
                     }
                 }.frame(maxWidth: .infinity, alignment: .leading)
             }
-            HStack(spacing: 12) {
+            HStack(spacing: compact ? 8 : 12) {
                 counter(card.shops, label: strings["roaster_stat_shops"], symbol: "cup.and.saucer")
                 Divider().frame(height: 20)
                 counter(card.products, label: strings["roaster_stat_catalog"], symbol: "leaf")
             }
         }
-        .padding(16)
+        .padding(compact ? 12 : 16)
 
     }
 
@@ -68,4 +69,15 @@ struct RoasterNativeCard: View {
     RoasterNativeCard(card: IosRoasterCard(slug: "fixture", name: "CoffeePeek", photo: nil, about: nil,
         shops: 0, products: 0, favorite: true), strings: OwnProfileStrings(languageTag: "be", table: "NativeRoaster"),
         source: nil, loader: { _, receive in receive(nil); return nil }).padding().preferredColorScheme(.dark)
+}
+
+#Preview("Compact roaster card light") {
+    RoasterNativeCard(card: IosRoasterCard(slug: "fixture", name: "CoffeePeek", photo: nil, about: "Кофе каждый день",
+        shops: 7, products: 21, favorite: false), strings: OwnProfileStrings(languageTag: "ru", table: "NativeRoaster"),
+        source: nil, loader: { _, receive in receive(nil); return nil }, compact: true).padding().preferredColorScheme(.light)
+}
+#Preview("Compact roaster card dark") {
+    RoasterNativeCard(card: IosRoasterCard(slug: "fixture", name: "CoffeePeek", photo: nil, about: "Кава кожны дзень",
+        shops: 7, products: 21, favorite: true), strings: OwnProfileStrings(languageTag: "be", table: "NativeRoaster"),
+        source: nil, loader: { _, receive in receive(nil); return nil }, compact: true).padding().preferredColorScheme(.dark)
 }

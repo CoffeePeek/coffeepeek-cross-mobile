@@ -14,7 +14,7 @@ private final class OwnershipActionsHostingController: UIHostingController<Owner
         self.model = model
         super.init(rootView: OwnershipActionsHost(model: model))
         view.backgroundColor = .clear
-        if actions.kind != "Roaster" { safeAreaRegions = [] }
+        safeAreaRegions = []
     }
     @MainActor required dynamic init?(coder: NSCoder) { return nil }
     deinit { model.close() }
@@ -80,21 +80,13 @@ private struct OwnershipNativeActionsContent: View {
                 } label: { controlLabel(strings["ownership_actions"], symbol: "ellipsis") }
             }
         }
-        .modifier(OwnershipActionsSurface(roaster: roaster))
+        .buttonStyle(.plain).shopDetailGlassCircle()
         .foregroundStyle(CoffeePeekNativeStyle.foreground).tint(CoffeePeekNativeStyle.foreground)
     }
 
     private func controlLabel(_ title: String, symbol: String) -> some View {
-        Label(title, systemImage: symbol).labelStyle(.iconOnly).font(roaster ? nil : .system(size: 20))
-            .frame(width: roaster ? 44 : 48, height: roaster ? 44 : 48).contentShape(Circle())
-    }
-}
-
-private struct OwnershipActionsSurface: ViewModifier {
-    let roaster: Bool
-    @ViewBuilder func body(content: Content) -> some View {
-        if roaster { content.background(.ultraThinMaterial, in: Circle()) }
-        else { content.buttonStyle(.plain).shopDetailGlassCircle() }
+        Label(title, systemImage: symbol).labelStyle(.iconOnly).font(.system(size: 20))
+            .frame(width: 48, height: 48).contentShape(Circle())
     }
 }
 
@@ -114,4 +106,13 @@ private struct OwnershipActionsSurface: ViewModifier {
 #Preview("Shop owner action light") {
     OwnershipNativeActionsContent(owner: true, roaster: false, strings: OwnershipNativeStrings("ru"), edit: {}, suggest: {}, claim: {})
         .preferredColorScheme(.light)
+}
+
+#Preview("Roaster menu light") {
+    OwnershipNativeActionsContent(owner: false, roaster: true, strings: OwnershipNativeStrings("ru"), edit: {}, suggest: {}, claim: {})
+        .preferredColorScheme(.light)
+}
+#Preview("Roaster menu dark") {
+    OwnershipNativeActionsContent(owner: false, roaster: true, strings: OwnershipNativeStrings("be"), edit: {}, suggest: {}, claim: {})
+        .preferredColorScheme(.dark)
 }

@@ -11,6 +11,7 @@ struct DiscoveryShopCard: View {
     var action = "open"
     var catalogDetails = true
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     var body: some View {
         Group {
@@ -43,7 +44,7 @@ struct DiscoveryShopCard: View {
         VStack(alignment: .leading, spacing: 0) {
             cover
             Button { actions.call(action, shop.id) } label: {
-                VStack(alignment: .leading, spacing: 8) {
+                VStack(alignment: .leading, spacing: 6) {
                     ViewThatFits(in: .horizontal) {
                         HStack(spacing: 8) { title; Spacer(minLength: 0); status }
                         VStack(alignment: .leading, spacing: 8) { title; status }
@@ -60,7 +61,7 @@ struct DiscoveryShopCard: View {
                         Spacer()
                         Image(systemName: "chevron.right")
                     }.font(CoffeePeekNativeStyle.font(12)).foregroundStyle(CoffeePeekNativeStyle.secondary)
-                }.padding(16).frame(maxWidth: .infinity, alignment: .leading)
+                }.padding(.horizontal, 16).padding(.vertical, 12).frame(maxWidth: .infinity, alignment: .leading)
             }.buttonStyle(.plain)
         }
         .background(CoffeePeekNativeStyle.surface)
@@ -69,7 +70,7 @@ struct DiscoveryShopCard: View {
     }
 
     private var cover: some View {
-        Button { actions.call(action, shop.id) } label: { photo.aspectRatio(1.6, contentMode: .fit).clipped() }
+        Button { actions.call(action, shop.id) } label: { photo.aspectRatio(2, contentMode: .fit).clipped() }
             .buttonStyle(.plain)
             .overlay(alignment: .topLeading) {
                 if shop.rating != nil {
@@ -95,7 +96,7 @@ struct DiscoveryShopCard: View {
     }
 
     private var title: some View {
-        Text(shop.title).font(CoffeePeekNativeStyle.font(20, weight: "Bold", relativeTo: .title3)).lineLimit(3)
+        Text(shop.title).font(CoffeePeekNativeStyle.font(18, weight: "Bold", relativeTo: .headline)).lineLimit(2)
     }
 
     private var status: some View {
@@ -109,8 +110,14 @@ struct DiscoveryShopCard: View {
     private var brewMethods: some View {
         HStack(spacing: 4) {
             ForEach(Array((shop.decoration?.brewMethods ?? []).prefix(2).enumerated()), id: \.offset) { _, method in
-                Text(method).lineLimit(1).padding(6)
-                    .background(CoffeePeekNativeStyle.background, in: RoundedRectangle(cornerRadius: 12))
+                HStack(spacing: 4) {
+                    if let icon = method.icon {
+                        Image(uiImage: icon).renderingMode(.template).resizable().scaledToFit()
+                            .frame(width: 14, height: 14).accessibilityHidden(true)
+                    }
+                    Text(method.name).lineLimit(1)
+                }.padding(.horizontal, 8).padding(.vertical, 6)
+                    .background(CoffeePeekNativeStyle.background, in: Capsule())
             }
             if let methods = shop.decoration?.brewMethods, methods.count > 2 { Text("+\(methods.count - 2)") }
         }.font(CoffeePeekNativeStyle.font(11)).foregroundStyle(CoffeePeekNativeStyle.secondary)
@@ -140,11 +147,9 @@ struct DiscoveryShopCard: View {
     }
 
     @ViewBuilder private var details: some View {
-        if let address = shop.address, !address.isEmpty {
-            Text(address).font(CoffeePeekNativeStyle.font(13)).foregroundStyle(CoffeePeekNativeStyle.secondary).lineLimit(2)
-        }
-        if let distance = shop.distance {
-            Text(distance).font(CoffeePeekNativeStyle.font(12)).foregroundStyle(CoffeePeekNativeStyle.secondary)
+        if !locationSummary.isEmpty {
+            Text(locationSummary).font(CoffeePeekNativeStyle.font(13)).foregroundStyle(CoffeePeekNativeStyle.secondary)
+                .lineLimit(dynamicTypeSize.isAccessibilitySize ? 3 : 1)
         }
         if let hours = shop.hours {
             Text(hours).font(CoffeePeekNativeStyle.font(12)).foregroundStyle(CoffeePeekNativeStyle.secondary).lineLimit(1)
@@ -153,6 +158,10 @@ struct DiscoveryShopCard: View {
             Text(shop.tags.prefix(3).joined(separator: " · "))
                 .font(CoffeePeekNativeStyle.font(12)).foregroundStyle(CoffeePeekNativeStyle.secondary).lineLimit(2)
         }
+    }
+
+    private var locationSummary: String {
+        [shop.address, shop.distance].compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: " · ")
     }
 
     private var favorite: some View {

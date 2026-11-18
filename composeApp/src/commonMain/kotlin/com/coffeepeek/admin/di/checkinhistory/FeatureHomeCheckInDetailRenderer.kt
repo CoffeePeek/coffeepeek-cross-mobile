@@ -10,7 +10,7 @@ import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.ui.screen.checkins.HomeCheckInDetailRenderer
-import com.coffeepeek.admin.di.media.CheckInPhotoViewer
+import com.coffeepeek.admin.di.media.PlatformPhotoViewer
 import com.coffeepeek.core.designsystem.component.CoffeePeekPhotoViewerImages
 import com.coffeepeek.core.session.SessionReader
 
@@ -45,7 +45,7 @@ internal class FeatureHomeCheckInDetailRenderer(
         HomeCheckInDestinationContent(bridge, session, session::openPhoto)
         val photo by session.photoPreview.collectAsState()
         photo?.let {
-            CheckInPhotoViewer(CoffeePeekPhotoViewerImages(it.urls, it.originalUrls),
+            PlatformPhotoViewer(CoffeePeekPhotoViewerImages(it.urls, it.originalUrls),
                 it.initialIndex, session::dismissPhoto)
         }
     }

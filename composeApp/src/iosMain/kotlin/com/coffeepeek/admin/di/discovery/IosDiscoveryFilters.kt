@@ -1,5 +1,6 @@
 package com.coffeepeek.admin.di.discovery
 
+
 import com.coffeepeek.admin.di.media.IosCatalogueMedia
 import com.coffeepeek.feature.discovery.impl.ui.DiscoveryIosFilterPresentation
 import com.coffeepeek.feature.discovery.impl.ui.DiscoveryIosFilterViewState
@@ -82,12 +83,12 @@ data class IosDiscoveryFilterSection(
     val choices: List<IosDiscoveryFilterChoice>,
 )
 
-data class IosDiscoveryFilterChoice(val id: String, val title: String, val selected: Boolean, val photoUrl: String?)
+data class IosDiscoveryFilterChoice(val id: String, val title: String, val selected: Boolean, val photoUrl: String?, val icon: platform.UIKit.UIImage? = null)
 
 private fun DiscoveryIosFilterViewState.toIos() = IosDiscoveryFilterState(
     title, reset, done, close, priceTitle, prices, priceIndex, canReset, catalogStatus, isLoading, retry,
     sections.map { section ->
         IosDiscoveryFilterSection(section.id, section.title, section.selectedLabel, section.showAll, section.collapse,
-            section.choices.map { IosDiscoveryFilterChoice(it.id, it.title, it.selected, it.photoUrl) })
+            section.choices.map { IosDiscoveryFilterChoice(it.id, it.title, it.selected, it.photoUrl, it.icon) })
     },
 )

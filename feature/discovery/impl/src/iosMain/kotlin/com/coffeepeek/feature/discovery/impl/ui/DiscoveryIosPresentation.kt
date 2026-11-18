@@ -71,5 +71,7 @@ data class DiscoveryIosChip(val id: String, val title: String, val selected: Boo
 data class DiscoveryIosZone(val title: String, val description: String?, val count: Int)
 
 data class DiscoveryIosShopDecoration(
-    val priceLevel: Int, val ratingCount: Int, val brewMethods: List<String>, val roasterLogos: List<String>,
+    val priceLevel: Int, val ratingCount: Int, val brewMethods: List<DiscoveryIosBrewMethod>, val roasterLogos: List<String>,
 )
+
+data class DiscoveryIosBrewMethod(val name: String, val icon: platform.UIKit.UIImage?)

@@ -112,8 +112,8 @@ struct DiscoveryNativeScreen: View {
             if !state.query.isEmpty { clearSearch }
         }
         .padding(.horizontal, 12).frame(minHeight: 48)
-        .background(CoffeePeekNativeStyle.surface, in: RoundedRectangle(cornerRadius: 16))
-        .overlay { RoundedRectangle(cornerRadius: 16).stroke(CoffeePeekNativeStyle.border, lineWidth: 1) }
+        .background(CoffeePeekNativeStyle.surface, in: Capsule())
+        .overlay { Capsule().strokeBorder(CoffeePeekNativeStyle.border, lineWidth: 1) }
         .discoveryExposure("search", id: expanded ? "search-map" : "search-list")
     }
 
@@ -256,8 +256,9 @@ struct DiscoveryNativeScreen: View {
         }
         .buttonStyle(.plain)
         .padding(.horizontal, 16)
-        .padding(.bottom, CGFloat(state.bottomClearance) + 12)
+        .padding(.bottom, CGFloat(state.bottomClearance) + 8)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
+        .ignoresSafeArea(.container, edges: .bottom)
     }
 
     private var shopCarousel: some View {

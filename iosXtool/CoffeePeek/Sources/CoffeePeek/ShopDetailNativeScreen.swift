@@ -325,7 +325,9 @@ func shopDetailPreviewData() -> ShopDetailNativeData {
         schedule: [IosShopDetailSchedule(day: "Понедельник", hours: "09:00 – 22:00", today: true)],
         menu: IosShopDetailMenu(groups: [[IosShopDetailMenuItem(id: "flat-white", title: "Флэт уайт", amount: "5,50", currency: "BYN", priceLabel: "5,50 белорусских рублей")]], photos: [], freshness: ["Актуально на 18.11.2026"]),
         contacts: [IosShopDetailContact(kind: "website", title: "coffeepeek.app", target: "https://coffeepeek.app", copyable: false, label: "Открыть сайт")],
-        features: ["Wi-Fi", "Велопарковка"], featureToggle: "Показать все", priceValue: "8 BYN",
+        features: [IosShopDetailFeature(name: "Wi-Fi", icon: nil),
+            IosShopDetailFeature(name: "Велопарковка", icon: nil)],
+        featureToggle: "Показать все", priceValue: "8 BYN",
         priceTiers: [IosShopDetailPriceTier(count: 2, label: "Около 8 BYN", selected: true)])
     state.labels = ["back": "Назад", "share": "Поделиться", "description": "Описание", "roasters": "Обжарщики",
         "beans": "Кофе", "equipment": "Оборудование", "hours": "Часы работы", "menu": "Меню", "contacts": "Контакты",

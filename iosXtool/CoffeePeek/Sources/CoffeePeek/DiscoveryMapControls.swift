@@ -5,10 +5,22 @@ struct DiscoveryMapControls: View {
     let state: IosDiscoveryState
     let actions: DiscoveryNativeActions
     let header: AnyView
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     private func text(_ key: String) -> String { state.labels[key] ?? "" }
 
     var body: some View {
+        GeometryReader { geometry in
+            let centeredZoom = geometry.size.height >= 740
+                && !dynamicTypeSize.isAccessibilitySize && !state.showSuggestions
+            controls(centeredZoom: centeredZoom)
+                .overlay(alignment: .trailing) {
+                    if centeredZoom { zoomControls.padding(.trailing, 16) }
+                }
+        }
+    }
+
+    private func controls(centeredZoom: Bool) -> some View {
         VStack(spacing: 12) {
             header
             if state.truncated { notice(text("truncated")) }
@@ -20,22 +32,32 @@ struct DiscoveryMapControls: View {
             }
             if state.showSuggestions { suggestions }
             Spacer(minLength: 8)
-            HStack {
-                Spacer()
-                VStack(spacing: 8) {
-                    control("plus", label: text("zoom-in"), action: "zoom-in")
-                    control("minus", label: text("zoom-out"), action: "zoom-out")
-                    control("flame", label: text(state.heatmapVisible ? "heatmap-hide" : "heatmap"), action: "heatmap", selected: state.heatmapVisible)
-                        .overlay { if state.heatmapLoading { ProgressView().controlSize(.mini) } }
-                    control("square.3.layers.3d", label: text(state.zonesVisible ? "zones-hide" : "zones-show"),
-                        action: "zones", selected: state.zonesVisible)
-                    control("location", label: text("location"), action: "location")
-                }
-            }.padding(.horizontal, 16)
+            mapActions(centeredZoom: centeredZoom)
             selection
         }
-        .padding(.bottom, CGFloat(state.bottomClearance) + 16)
+        .padding(.bottom, 10)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    private var zoomControls: some View {
+        VStack(spacing: 8) {
+            control("plus", label: text("zoom-in"), action: "zoom-in")
+            control("minus", label: text("zoom-out"), action: "zoom-out")
+        }
+    }
+
+    private func mapActions(centeredZoom: Bool) -> some View {
+        VStack(spacing: 8) {
+            if !centeredZoom { zoomControls }
+            control("flame", label: text(state.heatmapVisible ? "heatmap-hide" : "heatmap"),
+                action: "heatmap", selected: state.heatmapVisible)
+                .overlay { if state.heatmapLoading { ProgressView().controlSize(.mini) } }
+            control("square.3.layers.3d", label: text(state.zonesVisible ? "zones-hide" : "zones-show"),
+                action: "zones", selected: state.zonesVisible)
+            control("location", label: text("location"), action: "location")
+        }
+        .frame(maxWidth: .infinity, alignment: .trailing)
+        .padding(.horizontal, 16)
     }
 
     private var suggestions: some View {

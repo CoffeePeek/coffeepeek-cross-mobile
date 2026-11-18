@@ -25,8 +25,10 @@ data class ShopDetailIosDetails(
     val photos: List<ShopDetailIosPhoto>, val roasters: List<ShopDetailIosRoaster>,
     val beans: List<String>, val equipment: List<String>, val scheduleStatus: String,
     val schedule: List<ShopDetailIosSchedule>, val menu: ShopDetailIosMenu?, val contacts: List<ShopDetailIosContact>,
-    val features: List<String>, val featureToggle: String, val priceValue: String?, val priceTiers: List<ShopDetailIosPriceTier>,
+    val features: List<ShopDetailIosFeature>, val featureToggle: String, val priceValue: String?, val priceTiers: List<ShopDetailIosPriceTier>,
 )
+
+data class ShopDetailIosFeature(val name: String, val icon: platform.UIKit.UIImage?)
 
 data class ShopDetailIosPhoto(val id: String, val url: String, val label: String)
 data class ShopDetailIosRoaster(val id: String, val name: String, val photo: String?, val label: String)

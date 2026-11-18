@@ -37,19 +37,19 @@ internal fun coffeePeekNativeImage(vector: ImageVector): UIImage? {
 }
 
 @Composable
-internal fun coffeePeekNativeImage(painter: Painter): UIImage? {
+fun coffeePeekNativeImage(painter: Painter, size: Float = 20f): UIImage? {
     val density = LocalDensity.current
     val direction = LocalLayoutDirection.current
-    var image by remember(painter, density, direction) { mutableStateOf<UIImage?>(null) }
+    var image by remember(painter, density, direction, size) { mutableStateOf<UIImage?>(null) }
     // Render after the vector painter's composition has been applied.
-    LaunchedEffect(painter, density, direction) {
-        image = coffeePeekRenderNativeImage(painter, density, direction)
+    LaunchedEffect(painter, density, direction, size) {
+        image = coffeePeekRenderNativeImage(painter, density, direction, size)
     }
     return image
 }
 
-private fun coffeePeekRenderNativeImage(painter: Painter, density: Density, direction: LayoutDirection): UIImage {
-    val side = (20 * density.density).toInt().coerceAtLeast(1)
+private fun coffeePeekRenderNativeImage(painter: Painter, density: Density, direction: LayoutDirection, sizePoints: Float): UIImage {
+    val side = (sizePoints * density.density).toInt().coerceAtLeast(1)
     val bitmap = ImageBitmap(side, side)
     CanvasDrawScope().draw(density, direction, Canvas(bitmap), Size(side.toFloat(), side.toFloat())) {
         with(painter) { draw(size) }

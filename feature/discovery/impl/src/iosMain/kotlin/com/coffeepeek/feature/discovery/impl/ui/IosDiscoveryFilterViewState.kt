@@ -35,7 +35,7 @@ data class DiscoveryIosFilterSection(
     val choices: List<DiscoveryIosFilterChoice>,
 )
 
-data class DiscoveryIosFilterChoice(val id: String, val title: String, val selected: Boolean, val photoUrl: String?)
+data class DiscoveryIosFilterChoice(val id: String, val title: String, val selected: Boolean, val photoUrl: String?, val icon: platform.UIKit.UIImage? = null)
 
 @Composable
 internal fun discoveryIosFilterViewState(state: SearchState, draft: DiscoveryFilters): DiscoveryIosFilterViewState {
@@ -92,6 +92,6 @@ private fun filterSection(
         selectedLabel = if (count > 0) stringResource(Res.string.discovery_filters_selected, count) else null,
         showAll = stringResource(Res.string.discovery_filters_show_all, entries.size),
         collapse = stringResource(Res.string.discovery_filters_collapse),
-        choices = entries.map { DiscoveryIosFilterChoice(it.id, label(it), it.id in selected, it.photoUrl) },
+        choices = entries.map { DiscoveryIosFilterChoice(it.id, label(it), it.id in selected, it.photoUrl, discoveryNativeFilterIcon(group, it)) },
     )
 }

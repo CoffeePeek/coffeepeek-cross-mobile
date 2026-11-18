@@ -862,3 +862,25 @@ submitted. Device captures are local under ignored build/.
 Expanded Discovery map fills the content area and keeps the search header and
 map controls visible without the roaster overlay. Narrow blank safe-area strips
 and clipped marker circles along the left edge are still visible on the device.
+
+### 2026-11-18 — Discovery layout and native detail controls
+
+Windows xcross built and signed Debug 3212 from `c4096d344`. All 119 Swift
+sources typechecked, the four relevant JVM suites ran 401 tests with no
+failures, Android directDebug passed packaged DEX validation, and the function
+body check reported zero new violations. xcross installed 3212 in place on
+iPhone15,4 / iOS 27.0.1 after 4m20s. InstallationProxy and CoreDevice confirmed
+the version and running process.
+
+Manual light-theme USB checks found the map preview still blank. The expanded
+map showed tiles behind both safe areas and displayed the CoffeePeek placeholder.
+The continue-check-in button stayed above scrolling results. Shop detail actions
+appeared in the requested order and scrolled with the hero. The bottom actions
+had no shared plate. The rating tracks had aligned endpoints, and the error
+report entry had a bordered surface.
+
+Build 3213 from `5cdb1ccdc` renders the preview directly in the results scroll
+view. Signing took 3.3s and in-place USB installation 11.5s. InstallationProxy
+confirmed 3213. The light-theme run showed rendered preview tiles, expansion
+to both screen edges, return to preview, and the full roaster listing. Device
+captures are local under ignored build/. These checks did not exercise writes.

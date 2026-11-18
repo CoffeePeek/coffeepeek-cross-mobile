@@ -142,13 +142,23 @@ struct ShopDetailNativeInformation: View {
         section(text("features")) {
             VStack(alignment: .leading, spacing: 8) {
                 ForEach(Array(details.features.prefix(featuresExpanded ? details.features.count : 5).enumerated()), id: \.offset) { _, feature in
-                    Label(feature, systemImage: "checkmark.circle").frame(minHeight: 44)
+                    featureRow(feature)
                 }
                 if details.features.count > 5 {
                     Button(details.featureToggle) { actions.call("features") }.frame(maxWidth: .infinity, minHeight: 44)
                 }
             }.padding(16).shopDetailPanel()
         }
+    }
+
+    private func featureRow(_ feature: IosShopDetailFeature) -> some View {
+        HStack(spacing: 12) {
+            if let icon = feature.icon {
+                Image(uiImage: icon).renderingMode(.template).resizable().scaledToFit()
+                    .frame(width: 28, height: 28).accessibilityHidden(true)
+            } else { Color.clear.frame(width: 28, height: 28).accessibilityHidden(true) }
+            Text(feature.name).frame(maxWidth: .infinity, alignment: .leading)
+        }.frame(minHeight: 44).accessibilityElement(children: .combine)
     }
 
     private func section<Content: View>(_ title: String, @ViewBuilder content: () -> Content) -> some View {

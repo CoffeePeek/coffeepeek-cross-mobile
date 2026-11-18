@@ -204,11 +204,11 @@ private struct DiscoveryFilterSectionView: View {
                 Text(selectedLabel).font(.subheadline).foregroundStyle(CoffeePeekNativeStyle.secondary)
             }
             ForEach(choices, id: \.id) { choice in
-                Divider().overlay(CoffeePeekNativeStyle.border)
+                if section.id != "Tags" { Divider().overlay(CoffeePeekNativeStyle.border) }
                 choiceRow(choice)
             }
             if section.choices.count > 5 {
-                Divider().overlay(CoffeePeekNativeStyle.border)
+                if section.id != "Tags" { Divider().overlay(CoffeePeekNativeStyle.border) }
                 Button(expanded ? section.collapse : section.showAll) { expanded.toggle() }
                     .tint(CoffeePeekNativeStyle.foreground)
                     .frame(minHeight: 44)
@@ -221,47 +221,46 @@ private struct DiscoveryFilterSectionView: View {
     }
 
     private func choiceRow(_ choice: IosDiscoveryFilterChoice) -> some View {
-        Button {
-            actions.toggle(section.id, choice.id)
-        } label: {
-            HStack(spacing: 12) {
-                if section.id == "Roasters" {
-                    DiscoveryFilterLogo(url: choice.photoUrl, load: actions.image)
-                        .id(choice.photoUrl)
-                        .accessibilityHidden(true)
-                } else if section.id == "BrewMethods" {
-                    Image(systemName: brewSymbol(choice))
-                        .font(.system(size: 16))
-                        .frame(width: 28, height: 28)
-                        .foregroundStyle(CoffeePeekNativeStyle.secondary)
-                        .accessibilityHidden(true)
+        Button { actions.toggle(section.id, choice.id) } label: {
+            choiceContent(choice).foregroundStyle(CoffeePeekNativeStyle.foreground)
+                .padding(.vertical, 6).padding(.horizontal, section.id == "Tags" ? 12 : 0)
+                .frame(minHeight: 44).contentShape(Rectangle())
+                .background {
+                    if section.id == "Tags" { Capsule().fill(choice.selected ? CoffeePeekNativeStyle.accent.opacity(0.18) : CoffeePeekNativeStyle.surface) }
                 }
-                Text(choice.title).frame(maxWidth: .infinity, alignment: .leading)
-                if choice.selected {
-                    Image(systemName: "checkmark.circle.fill")
-                        .foregroundStyle(CoffeePeekNativeStyle.accent)
-                        .accessibilityHidden(true)
+                .overlay {
+                    if section.id == "Tags" { Capsule().strokeBorder(choice.selected ? CoffeePeekNativeStyle.accent : CoffeePeekNativeStyle.border, lineWidth: 1) }
                 }
-            }
-            .foregroundStyle(CoffeePeekNativeStyle.foreground)
-            .padding(.vertical, 6)
-            .frame(minHeight: 44)
-            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .padding(.vertical, section.id == "Tags" ? 4 : 0)
         .accessibilityAddTraits(choice.selected ? .isSelected : [])
     }
 
-    private func brewSymbol(_ choice: IosDiscoveryFilterChoice) -> String {
-        let method = (choice.id + " " + choice.title).lowercased()
-        let matches: ([String]) -> Bool = { $0.contains { method.contains($0) } }
-        if matches(["cold", "колд", "айс"]) { return "snowflake" }
-        if matches(["chemex", "кемекс"]) { return "hourglass" }
-        if matches(["v60", "pour", "ворон", "filter", "batch", "фільтр", "фильтр"]) { return "line.3.horizontal.decrease" }
-        if matches(["press", "пресс", "прэс"]) { return "arrow.down.to.line" }
-        if matches(["cezve", "turkish", "турк", "джезв", "мока", "moka"]) { return "mug" }
-        return "cup.and.saucer"
+    private func choiceContent(_ choice: IosDiscoveryFilterChoice) -> some View {
+        HStack(spacing: 12) {
+            choiceIcon(choice)
+            Text(choice.title).frame(maxWidth: .infinity, alignment: .leading)
+            if choice.selected {
+                Image(systemName: "checkmark.circle.fill")
+                    .foregroundStyle(CoffeePeekNativeStyle.accent).accessibilityHidden(true)
+            }
+        }
     }
+
+    @ViewBuilder private func choiceIcon(_ choice: IosDiscoveryFilterChoice) -> some View {
+        if section.id == "Roasters" {
+            DiscoveryFilterLogo(url: choice.photoUrl, load: actions.image)
+                .id(choice.photoUrl).accessibilityHidden(true)
+        } else if section.id == "BrewMethods" || section.id == "Tags" {
+            Group {
+                if let icon = choice.icon { Image(uiImage: icon).renderingMode(.template).resizable().scaledToFit() }
+                else { Color.clear }
+            }.frame(width: 22, height: 22).frame(width: 28, height: 28)
+                .foregroundStyle(CoffeePeekNativeStyle.secondary).accessibilityHidden(true)
+        }
+    }
+
 }
 
 private struct DiscoveryFilterLogo: View {
@@ -302,8 +301,15 @@ private var discoveryFilterPreview: IosDiscoveryFilterState {
                 id: "BrewMethods", title: "Brew methods", selectedLabel: "Selected: 1",
                 showAll: "Show all", collapse: "Collapse",
                 choices: [
-                    IosDiscoveryFilterChoice(id: "espresso", title: "Espresso", selected: true, photoUrl: nil),
-                    IosDiscoveryFilterChoice(id: "batch", title: "Filter coffee", selected: false, photoUrl: nil)
+                    IosDiscoveryFilterChoice(id: "espresso", title: "Espresso", selected: true, photoUrl: nil, icon: nil),
+                    IosDiscoveryFilterChoice(id: "batch", title: "Filter coffee", selected: false, photoUrl: nil, icon: nil)
+                ]
+            ),
+            IosDiscoveryFilterSection(
+                id: "Tags", title: "Features", selectedLabel: "Selected: 1", showAll: "Show all", collapse: "Collapse",
+                choices: [
+                    IosDiscoveryFilterChoice(id: "pet_friendly", title: "Pet friendly", selected: true, photoUrl: nil, icon: nil),
+                    IosDiscoveryFilterChoice(id: "outside-seating", title: "Outside seating", selected: false, photoUrl: nil, icon: nil)
                 ]
             )
         ]

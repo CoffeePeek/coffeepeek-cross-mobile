@@ -1,5 +1,6 @@
 package com.coffeepeek.admin.di.shop
 
+
 import com.coffeepeek.feature.shop.impl.ui.ShopDetailIosState
 import com.coffeepeek.feature.shop.impl.ui.ShopDetailIosDetails
 import com.coffeepeek.feature.shop.impl.ui.ShopDetailIosPhoto
@@ -26,7 +27,7 @@ internal fun ShopDetailIosDetails.toNative() = IosShopDetails(
     isOpen, canRoute, photos.map { it.toNative() },
     roasters.map { it.toNative() }, beans, equipment,
     scheduleStatus, schedule.map { it.toNative() }, menu?.toNative(),
-    contacts.map { it.toNative() }, features, featureToggle,
+    contacts.map { it.toNative() }, features.map { IosShopDetailFeature(it.name, it.icon) }, featureToggle,
     priceValue, priceTiers.map { it.toNative() },
 )
 

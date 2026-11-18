@@ -76,7 +76,7 @@ struct RoasterDetailNativeScreen: View {
             }.padding(.bottom, 24)
         }
         .refreshable { source?.retry() }
-        .overlay(alignment: .top) { toolbar }
+        .overlay(alignment: .top) { if state.name == nil { toolbar } }
         .font(CoffeePeekNativeStyle.font(16)).foregroundStyle(CoffeePeekNativeStyle.foreground)
         .background(CoffeePeekNativeStyle.background.ignoresSafeArea()).tint(CoffeePeekNativeStyle.accent)
         .onChange(of: state.photos) { _, next in selectedPhoto = min(selectedPhoto, max(0, next.count - 1)) }
@@ -86,25 +86,25 @@ struct RoasterDetailNativeScreen: View {
     }
 
     private var toolbar: some View {
-        HStack(spacing: 4) {
+        HStack(spacing: 8) {
             Button { source?.back() } label: { Image(systemName: "chevron.left").frame(width: 48, height: 48) }
-                .background(.regularMaterial, in: Circle())
+                .shopDetailGlassCircle()
                 .accessibilityLabel(strings["roaster_detail_back"])
             Spacer()
             if state.id != nil && state.active {
-                if let ownership { OwnProfileEmbedded(controller: ownership).frame(width: 48, height: 48) }
                 Button { source?.favorite() } label: {
                     Image(systemName: state.favorite ? "heart.fill" : "heart").frame(width: 48, height: 48)
                         .foregroundStyle(state.favorite ? CoffeePeekNativeStyle.accent : CoffeePeekNativeStyle.foreground)
                 }
-                .background(.regularMaterial, in: Circle())
+                .shopDetailGlassCircle()
                 .accessibilityLabel(strings[state.favorite ? "roaster_favorite_remove" : "roaster_favorite_add"])
                 .roasterExposure("favorite:detail", source: source)
                 Button { source?.share() } label: { Image(systemName: "square.and.arrow.up").frame(width: 48, height: 48) }
-                    .background(.regularMaterial, in: Circle())
+                    .shopDetailGlassCircle()
                     .accessibilityLabel(strings["roaster_share"])
+                if let ownership { OwnProfileEmbedded(controller: ownership).frame(width: 48, height: 48) }
             }
-        }.buttonStyle(.plain).padding(.horizontal, 8).padding(.top, 8)
+        }.font(.system(size: 20)).buttonStyle(.plain).padding(.horizontal, 12).padding(.top, 8)
     }
 
     @ViewBuilder private func content(_ name: String) -> some View {
@@ -145,7 +145,7 @@ struct RoasterDetailNativeScreen: View {
                         }
                     }
             }
-        }.roasterExposure("photos", source: source)
+        }.overlay(alignment: .top) { toolbar }.roasterExposure("photos", source: source)
     }
 
     private var contacts: some View {
@@ -202,3 +202,10 @@ private func roasterDetailPreview(_ language: String) -> some View {
 }
 #Preview("Roaster detail light") { roasterDetailPreview("ru").preferredColorScheme(.light) }
 #Preview("Roaster detail dark") { roasterDetailPreview("be").preferredColorScheme(.dark) }
+
+#Preview("Roaster detail accessibility light") {
+    roasterDetailPreview("ru").dynamicTypeSize(.accessibility2).preferredColorScheme(.light)
+}
+#Preview("Roaster detail accessibility dark") {
+    roasterDetailPreview("be").dynamicTypeSize(.accessibility2).preferredColorScheme(.dark)
+}

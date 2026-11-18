@@ -21,7 +21,7 @@ object IosCheckInPhotoControllers {
 }
 
 @Composable
-internal actual fun CheckInPhotoViewer(images: CoffeePeekPhotoViewerImages, initialIndex: Int, onDismiss: () -> Unit) {
+internal actual fun PlatformPhotoViewer(images: CoffeePeekPhotoViewerImages, initialIndex: Int, onDismiss: () -> Unit) {
     val accounts = koinInject<SessionReader>()
     val fetcher = koinInject<ImageUrlFetcher>()
     val language = koinInject<LanguagePort>()

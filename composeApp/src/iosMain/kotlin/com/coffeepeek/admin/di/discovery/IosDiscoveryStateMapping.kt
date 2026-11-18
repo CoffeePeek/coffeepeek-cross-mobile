@@ -1,5 +1,6 @@
 package com.coffeepeek.admin.di.discovery
 
+
 import com.coffeepeek.feature.discovery.impl.ui.DiscoveryIosState
 import com.coffeepeek.feature.discovery.impl.ui.DiscoveryIosShop
 import com.coffeepeek.feature.discovery.impl.ui.DiscoveryIosChip
@@ -41,6 +42,6 @@ internal fun DiscoveryIosZone.toNative() = IosDiscoveryZone(
 )
 
 internal fun DiscoveryIosShopDecoration.toNative() = IosDiscoveryShopDecoration(
-    priceLevel, ratingCount, brewMethods,
+    priceLevel, ratingCount, brewMethods.map { IosDiscoveryBrewMethod(it.name, it.icon) },
     roasterLogos,
 )

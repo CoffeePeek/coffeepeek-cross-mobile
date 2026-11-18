@@ -7,7 +7,7 @@ import com.coffeepeek.admin.analytics.AnalyticsOverlay
 import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.ui.component.rememberCheckInDateLabel
 import com.coffeepeek.core.designsystem.component.CoffeePeekImage
-import com.coffeepeek.admin.di.media.CheckInPhotoViewer
+import com.coffeepeek.admin.di.media.PlatformPhotoViewer
 import com.coffeepeek.core.designsystem.component.CoffeePeekPhotoViewerImages
 import com.coffeepeek.core.session.SessionReader
 import com.coffeepeek.feature.checkinhistory.api.ProfileHistoryEntry
@@ -30,7 +30,7 @@ internal class FeatureProfileActivityRenderer(
                 val entry = remember(session) { createEntry(session) { dateLabel(it) } }
                 HistoryContent(session, entry, content)
                 val photo by session.photoPreview.collectAsState()
-                photo?.let { CheckInPhotoViewer(CoffeePeekPhotoViewerImages(it.urls, it.originalUrls),
+                photo?.let { PlatformPhotoViewer(CoffeePeekPhotoViewerImages(it.urls, it.originalUrls),
                     initialIndex = it.initialIndex, onDismiss = session::dismissPhoto) }
             }
         }
