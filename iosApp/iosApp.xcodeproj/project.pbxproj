@@ -7,9 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		B23123000000000000000005 /* CommunityReportContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = B23123000000000000000006 /* CommunityReportContent.swift */; };
-		B23123000000000000000003 /* CommunityEditorContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = B23123000000000000000004 /* CommunityEditorContent.swift */; };
-		B23123000000000000000001 /* CommunitySheetHost.swift in Sources */ = {isa = PBXBuildFile; fileRef = B23123000000000000000002 /* CommunitySheetHost.swift */; };
 		B23122000000000000000021 /* CoffeePeekLocalBackProtection.swift in Sources */ = {isa = PBXBuildFile; fileRef = B23122000000000000000023 /* CoffeePeekLocalBackProtection.swift */; };
 		B23122000000000000000011 /* CollectionEditorContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = B23122000000000000000013 /* CollectionEditorContent.swift */; };
 		B23122000000000000000001 /* CollectionPosterScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = B23122000000000000000003 /* CollectionPosterScreen.swift */; };
@@ -111,6 +108,9 @@
 		0A8D371634C33941B0A3B65E /* CoffeePeekCheckInCardMapping.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FEE323F041175CE7CB48A5D /* CoffeePeekCheckInCardMapping.swift */; };
 		553A0D82DFD57F0624F032F7 /* CheckInDetailNativeScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9B56539BE4310FF08426B0FB /* CheckInDetailNativeScreen.swift */; };
 		4A4149ED7EA558535A593018 /* CheckInDetailNativeModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7202F5348B4C69AB9987EA8D /* CheckInDetailNativeModel.swift */; };
+		B23123000000000000000005 /* CommunityReportContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = B23123000000000000000006 /* CommunityReportContent.swift */; };
+		B23123000000000000000003 /* CommunityEditorContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = B23123000000000000000004 /* CommunityEditorContent.swift */; };
+		B23123000000000000000001 /* CommunitySheetHost.swift in Sources */ = {isa = PBXBuildFile; fileRef = B23123000000000000000002 /* CommunitySheetHost.swift */; };
 		24B6C1CE91371B3F19C414C4 /* CommunityFeedNativeModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56BCB17E90B80BABAB18568D /* CommunityFeedNativeModel.swift */; };
 		D8ED759D953BFD65B94F0ADE /* CommunityFeedNativePresentation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6C64B0C6CBAC0C087713348C /* CommunityFeedNativePresentation.swift */; };
 		DAD5EF785C5BAC5D9F65C43E /* CommunityFeedNativeScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 803179B19B045FF27D2D5353 /* CommunityFeedNativeScreen.swift */; };
@@ -129,9 +129,6 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		B23123000000000000000006 /* CommunityReportContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CommunityReportContent.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CommunityReportContent.swift; sourceTree = "<group>"; };
-		B23123000000000000000004 /* CommunityEditorContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CommunityEditorContent.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CommunityEditorContent.swift; sourceTree = "<group>"; };
-		B23123000000000000000002 /* CommunitySheetHost.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CommunitySheetHost.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CommunitySheetHost.swift; sourceTree = "<group>"; };
 		B23122000000000000000023 /* CoffeePeekLocalBackProtection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CoffeePeekLocalBackProtection.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CoffeePeekLocalBackProtection.swift; sourceTree = "<group>"; };
 		B23122000000000000000013 /* CollectionEditorContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CollectionEditorContent.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CollectionEditorContent.swift; sourceTree = "<group>"; };
 		B23122000000000000000003 /* CollectionPosterScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CollectionPosterScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CollectionPosterScreen.swift; sourceTree = "<group>"; };
@@ -258,6 +255,9 @@
 		0FEE323F041175CE7CB48A5D /* CoffeePeekCheckInCardMapping.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CoffeePeekCheckInCardMapping.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CoffeePeekCheckInCardMapping.swift; sourceTree = "<group>"; };
 		9B56539BE4310FF08426B0FB /* CheckInDetailNativeScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CheckInDetailNativeScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CheckInDetailNativeScreen.swift; sourceTree = "<group>"; };
 		7202F5348B4C69AB9987EA8D /* CheckInDetailNativeModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CheckInDetailNativeModel.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CheckInDetailNativeModel.swift; sourceTree = "<group>"; };
+		B23123000000000000000006 /* CommunityReportContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CommunityReportContent.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CommunityReportContent.swift; sourceTree = "<group>"; };
+		B23123000000000000000004 /* CommunityEditorContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CommunityEditorContent.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CommunityEditorContent.swift; sourceTree = "<group>"; };
+		B23123000000000000000002 /* CommunitySheetHost.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CommunitySheetHost.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CommunitySheetHost.swift; sourceTree = "<group>"; };
 		56BCB17E90B80BABAB18568D /* CommunityFeedNativeModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CommunityFeedNativeModel.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CommunityFeedNativeModel.swift; sourceTree = "<group>"; };
 		6C64B0C6CBAC0C087713348C /* CommunityFeedNativePresentation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CommunityFeedNativePresentation.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CommunityFeedNativePresentation.swift; sourceTree = "<group>"; };
 		803179B19B045FF27D2D5353 /* CommunityFeedNativeScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CommunityFeedNativeScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CommunityFeedNativeScreen.swift; sourceTree = "<group>"; };
@@ -332,6 +332,9 @@
 				30DB789D6C7E79AAEB5B487B /* CommunityFeedNativeRow.swift */,
 				803179B19B045FF27D2D5353 /* CommunityFeedNativeScreen.swift */,
 				6C64B0C6CBAC0C087713348C /* CommunityFeedNativePresentation.swift */,
+				B23123000000000000000002 /* CommunitySheetHost.swift */,
+				B23123000000000000000004 /* CommunityEditorContent.swift */,
+				B23123000000000000000006 /* CommunityReportContent.swift */,
 				56BCB17E90B80BABAB18568D /* CommunityFeedNativeModel.swift */,
 				7202F5348B4C69AB9987EA8D /* CheckInDetailNativeModel.swift */,
 				9B56539BE4310FF08426B0FB /* CheckInDetailNativeScreen.swift */,
@@ -369,9 +372,6 @@
 				5E1FA2200000000000000006 /* NativeShelfArchive.strings */,
 				86C051CE0000000000000003 /* CollectionsWorkspaceScreen.swift */,
 				B23122000000000000000003 /* CollectionPosterScreen.swift */,
-				B23123000000000000000002 /* CommunitySheetHost.swift */,
-				B23123000000000000000004 /* CommunityEditorContent.swift */,
-				B23123000000000000000006 /* CommunityReportContent.swift */,
 				B23122000000000000000023 /* CoffeePeekLocalBackProtection.swift */,
 				B23122000000000000000013 /* CollectionEditorContent.swift */,
 				B20000000000000000000006 /* CollectionsLibrary.strings */,
@@ -652,6 +652,9 @@
 				15E615F307B4D33226886FF1 /* CommunityFeedNativeRow.swift in Sources */,
 				DAD5EF785C5BAC5D9F65C43E /* CommunityFeedNativeScreen.swift in Sources */,
 				D8ED759D953BFD65B94F0ADE /* CommunityFeedNativePresentation.swift in Sources */,
+				B23123000000000000000001 /* CommunitySheetHost.swift in Sources */,
+				B23123000000000000000003 /* CommunityEditorContent.swift in Sources */,
+				B23123000000000000000005 /* CommunityReportContent.swift in Sources */,
 				24B6C1CE91371B3F19C414C4 /* CommunityFeedNativeModel.swift in Sources */,
 				4A4149ED7EA558535A593018 /* CheckInDetailNativeModel.swift in Sources */,
 				553A0D82DFD57F0624F032F7 /* CheckInDetailNativeScreen.swift in Sources */,
@@ -687,9 +690,6 @@
 				B20000000000000000000001 /* CollectionsLibraryScreen.swift in Sources */,
 				86C051CE0000000000000001 /* CollectionsWorkspaceScreen.swift in Sources */,
 				B23122000000000000000001 /* CollectionPosterScreen.swift in Sources */,
-				B23123000000000000000001 /* CommunitySheetHost.swift in Sources */,
-				B23123000000000000000003 /* CommunityEditorContent.swift in Sources */,
-				B23123000000000000000005 /* CommunityReportContent.swift in Sources */,
 				B23122000000000000000021 /* CoffeePeekLocalBackProtection.swift in Sources */,
 				B23122000000000000000011 /* CollectionEditorContent.swift in Sources */,
 				53E771650000000000000001 /* SettingsNativeController.swift in Sources */,
