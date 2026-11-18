@@ -3,9 +3,9 @@ import SwiftUI
 import UIKit
 
 @MainActor
-func makeShopPhotoOverlayController(album: IosPhotoViewer, languageTag: String, dismiss: @escaping () -> Void) -> UIViewController {
+func makeShopPhotoOverlayController(album: IosPhotoViewer, languageTag: String, dismiss: @escaping () -> KotlinUnit) -> UIViewController {
     let controller = UIHostingController(rootView: Color.clear
-        .coffeePeekPhotoViewer(album, languageTag: languageTag, onDismiss: dismiss))
+        .coffeePeekPhotoViewer(album, languageTag: languageTag, onDismiss: { _ = dismiss() }))
     controller.view.backgroundColor = .clear
     return controller
 }
