@@ -1,3 +1,5 @@
+@file:OptIn(kotlinx.cinterop.ExperimentalForeignApi::class, androidx.compose.ui.ExperimentalComposeUiApi::class)
+
 package com.coffeepeek.admin.di.community
 
 import androidx.compose.foundation.layout.fillMaxWidth
