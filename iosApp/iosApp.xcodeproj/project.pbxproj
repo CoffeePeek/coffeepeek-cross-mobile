@@ -7,6 +7,10 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		B23122000000000000000021 /* CoffeePeekLocalBackProtection.swift in Sources */ = {isa = PBXBuildFile; fileRef = B23122000000000000000023 /* CoffeePeekLocalBackProtection.swift */; };
+		B23122000000000000000011 /* CollectionEditorContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = B23122000000000000000013 /* CollectionEditorContent.swift */; };
+		B23122000000000000000001 /* CollectionPosterScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = B23122000000000000000003 /* CollectionPosterScreen.swift */; };
+
 		E10F17E50000000000000001 /* DiscoveryFilterSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10F17E50000000000000002 /* DiscoveryFilterSheet.swift */; };
 		5C13B3110000000000000001 /* ShopCheckInListScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C13B3110000000000000004 /* ShopCheckInListScreen.swift */; };
 		5C13B3110000000000000002 /* ShopCheckInListComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C13B3110000000000000005 /* ShopCheckInListComponents.swift */; };
@@ -38,9 +42,9 @@
 		5E1FA2200000000000000001 /* ShelfArchiveScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5E1FA2200000000000000003 /* ShelfArchiveScreen.swift */; };
 		B20000000000000000000001 /* CollectionsLibraryScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = B20000000000000000000003 /* CollectionsLibraryScreen.swift */; };
 		5E1FA2200000000000000002 /* NativeShelfArchive.strings in Resources */ = {isa = PBXBuildFile; fileRef = 5E1FA2200000000000000006 /* NativeShelfArchive.strings */; };
-		86C051CE0000000000000001 /* SavedPublicCollectionScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86C051CE0000000000000003 /* SavedPublicCollectionScreen.swift */; };
+		86C051CE0000000000000001 /* CollectionsWorkspaceScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86C051CE0000000000000003 /* CollectionsWorkspaceScreen.swift */; };
 		B20000000000000000000002 /* CollectionsLibrary.strings in Resources */ = {isa = PBXBuildFile; fileRef = B20000000000000000000006 /* CollectionsLibrary.strings */; };
-		86C051CE0000000000000002 /* SavedPublicCollection.strings in Resources */ = {isa = PBXBuildFile; fileRef = 86C051CE0000000000000006 /* SavedPublicCollection.strings */; };
+		86C051CE0000000000000002 /* CollectionsWorkspace.strings in Resources */ = {isa = PBXBuildFile; fileRef = 86C051CE0000000000000006 /* CollectionsWorkspace.strings */; };
 		53E771650000000000000001 /* SettingsNativeController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53E771650000000000000002 /* SettingsNativeController.swift */; };
 		53E771650000000000000003 /* SettingsNativeComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53E771650000000000000004 /* SettingsNativeComponents.swift */; };
 		53E771650000000000000005 /* SettingsNativeTab.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53E771650000000000000006 /* SettingsNativeTab.swift */; };
@@ -122,6 +126,10 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		B23122000000000000000023 /* CoffeePeekLocalBackProtection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CoffeePeekLocalBackProtection.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CoffeePeekLocalBackProtection.swift; sourceTree = "<group>"; };
+		B23122000000000000000013 /* CollectionEditorContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CollectionEditorContent.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CollectionEditorContent.swift; sourceTree = "<group>"; };
+		B23122000000000000000003 /* CollectionPosterScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CollectionPosterScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CollectionPosterScreen.swift; sourceTree = "<group>"; };
+
 		E10F17E50000000000000002 /* DiscoveryFilterSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = DiscoveryFilterSheet.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/DiscoveryFilterSheet.swift; sourceTree = "<group>"; };
 		5C13B3110000000000000004 /* ShopCheckInListScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ShopCheckInListScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/ShopCheckInListScreen.swift; sourceTree = "<group>"; };
 		5C13B3110000000000000005 /* ShopCheckInListComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ShopCheckInListComponents.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/ShopCheckInListComponents.swift; sourceTree = "<group>"; };
@@ -164,10 +172,10 @@
 		5E1FA2200000000000000004 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/NativeShelfArchive.strings; sourceTree = "<group>"; };
 		B20000000000000000000004 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/CollectionsLibrary.strings; sourceTree = "<group>"; };
 		5E1FA2200000000000000005 /* be */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = be; path = be.lproj/NativeShelfArchive.strings; sourceTree = "<group>"; };
-		86C051CE0000000000000003 /* SavedPublicCollectionScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = SavedPublicCollectionScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/SavedPublicCollectionScreen.swift; sourceTree = "<group>"; };
-		86C051CE0000000000000004 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/SavedPublicCollection.strings; sourceTree = "<group>"; };
+		86C051CE0000000000000003 /* CollectionsWorkspaceScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CollectionsWorkspaceScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CollectionsWorkspaceScreen.swift; sourceTree = "<group>"; };
+		86C051CE0000000000000004 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/CollectionsWorkspace.strings; sourceTree = "<group>"; };
 		B20000000000000000000005 /* be */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = be; path = be.lproj/CollectionsLibrary.strings; sourceTree = "<group>"; };
-		86C051CE0000000000000005 /* be */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = be; path = be.lproj/SavedPublicCollection.strings; sourceTree = "<group>"; };
+		86C051CE0000000000000005 /* be */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = be; path = be.lproj/CollectionsWorkspace.strings; sourceTree = "<group>"; };
 		53E771650000000000000002 /* SettingsNativeController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = SettingsNativeController.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/SettingsNativeController.swift; sourceTree = "<group>"; };
 		53E771650000000000000004 /* SettingsNativeComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = SettingsNativeComponents.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/SettingsNativeComponents.swift; sourceTree = "<group>"; };
 		53E771650000000000000006 /* SettingsNativeTab.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = SettingsNativeTab.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/SettingsNativeTab.swift; sourceTree = "<group>"; };
@@ -353,9 +361,12 @@
 				5E1FA2200000000000000003 /* ShelfArchiveScreen.swift */,
 				B20000000000000000000003 /* CollectionsLibraryScreen.swift */,
 				5E1FA2200000000000000006 /* NativeShelfArchive.strings */,
-				86C051CE0000000000000003 /* SavedPublicCollectionScreen.swift */,
+				86C051CE0000000000000003 /* CollectionsWorkspaceScreen.swift */,
+				B23122000000000000000003 /* CollectionPosterScreen.swift */,
+				B23122000000000000000023 /* CoffeePeekLocalBackProtection.swift */,
+				B23122000000000000000013 /* CollectionEditorContent.swift */,
 				B20000000000000000000006 /* CollectionsLibrary.strings */,
-				86C051CE0000000000000006 /* SavedPublicCollection.strings */,
+				86C051CE0000000000000006 /* CollectionsWorkspace.strings */,
 				53E771650000000000000002 /* SettingsNativeController.swift */,
 				53E771650000000000000004 /* SettingsNativeComponents.swift */,
 				53E771650000000000000006 /* SettingsNativeTab.swift */,
@@ -532,7 +543,7 @@
 				71C04E5D0000000000000002 /* ContentReport.strings in Resources */,
 				5E1FA2200000000000000002 /* NativeShelfArchive.strings in Resources */,
 				B20000000000000000000002 /* CollectionsLibrary.strings in Resources */,
-				86C051CE0000000000000002 /* SavedPublicCollection.strings in Resources */,
+				86C051CE0000000000000002 /* CollectionsWorkspace.strings in Resources */,
 				53E77165000000000000000D /* SettingsNative.strings in Resources */,
 				B10000000000000000000002 /* BlockedAuthors.strings in Resources */,
 				C1E6A50B0000000000000002 /* NativeCheckInCreate.strings in Resources */,
@@ -665,7 +676,10 @@
 				71C04E5D0000000000000001 /* ContentReportScreen.swift in Sources */,
 				5E1FA2200000000000000001 /* ShelfArchiveScreen.swift in Sources */,
 				B20000000000000000000001 /* CollectionsLibraryScreen.swift in Sources */,
-				86C051CE0000000000000001 /* SavedPublicCollectionScreen.swift in Sources */,
+				86C051CE0000000000000001 /* CollectionsWorkspaceScreen.swift in Sources */,
+				B23122000000000000000001 /* CollectionPosterScreen.swift in Sources */,
+				B23122000000000000000021 /* CoffeePeekLocalBackProtection.swift in Sources */,
+				B23122000000000000000011 /* CollectionEditorContent.swift in Sources */,
 				53E771650000000000000001 /* SettingsNativeController.swift in Sources */,
 				53E771650000000000000003 /* SettingsNativeComponents.swift in Sources */,
 				53E771650000000000000005 /* SettingsNativeTab.swift in Sources */,
@@ -765,13 +779,13 @@
 			name = CollectionsLibrary.strings;
 			sourceTree = "<group>";
 		};
-		86C051CE0000000000000006 /* SavedPublicCollection.strings */ = {
+		86C051CE0000000000000006 /* CollectionsWorkspace.strings */ = {
 			isa = PBXVariantGroup;
 			children = (
 				86C051CE0000000000000004 /* ru */,
 				86C051CE0000000000000005 /* be */,
 			);
-			name = SavedPublicCollection.strings;
+			name = CollectionsWorkspace.strings;
 			sourceTree = "<group>";
 		};
 		53E771650000000000000010 /* SettingsNative.strings */ = {
