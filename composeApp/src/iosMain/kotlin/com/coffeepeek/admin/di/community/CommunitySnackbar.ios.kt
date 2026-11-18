@@ -2,13 +2,16 @@
 
 package com.coffeepeek.admin.di.community
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.SnackbarData
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -49,5 +52,8 @@ private fun CommunityMessage(state: SnackbarHostState, data: SnackbarData) {
     SideEffect { controller.overrideUserInterfaceStyle = theme.uiKitStyle }
     DisposableEffect(source) { onDispose { source.close() } }
     LaunchedEffect(source) { UIAccessibilityPostNotification(UIAccessibilityAnnouncementNotification, source.text) }
-    NativeEditorControllerHost(controller, Modifier.fillMaxWidth().height(height.toFloat().dp))
+    // Only the visible card is a native touch target; Compose margins leave the feed interactive.
+    Box(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp), contentAlignment = Alignment.Center) {
+        NativeEditorControllerHost(controller, Modifier.widthIn(max = 560.dp).fillMaxWidth().height(height.toFloat().dp))
+    }
 }
