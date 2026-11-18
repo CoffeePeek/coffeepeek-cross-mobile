@@ -93,6 +93,8 @@ jobs:
           python3 -m unittest discover -s tools/release -p test_ios_signing_profile.py
           cp tools/ios/GoogleService-Info.verification.plist iosApp/iosApp/GoogleService-Info.plist
 
+      - name: Verify both native controller bootstraps
+        run: python3 -m unittest discover -s tools/ios -p 'test_native_controller_registration.py'
       - name: Compile iPhone launch catalog for xtool
         shell: bash
         run: bash iosXtool/CoffeePeek/prepare-launch-resources.sh
