@@ -81,3 +81,9 @@ sizes; preview-map clipping/expansion with retained list position; search and
 filter cancellation; viewport/cluster/zone/heatmap/camera interactions; protected
 images; guest favorite gates; account replacement; picker recents/pagination,
 selection, back and close; root draft continuation; and embedded Roaster slots.
+
+First macOS run `44264283844` stopped both jobs while compiling application iOS
+sources: `IosDiscoveryMap` lacked UIKit's category-extension import for
+`endEditing`. Added `platform.UIKit.endEditing`, matching existing native
+keyboard-dismiss code. No native contract tests had executed in that failed
+run; the follow-up workflow must supply actual execution evidence.

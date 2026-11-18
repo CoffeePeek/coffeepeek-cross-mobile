@@ -14,6 +14,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import platform.UIKit.UIView
+import platform.UIKit.endEditing
 
 /** Reuses the existing MapLibre session and serialized canvas protocol; only the parent layout becomes SwiftUI. */
 internal class IosDiscoveryMap(
