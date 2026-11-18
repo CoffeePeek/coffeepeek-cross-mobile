@@ -197,6 +197,7 @@ jobs:
             --tests 'com.coffeepeek.admin.di.coffee.IosCoffeeDetailAnalyticsTest' \
             --tests 'com.coffeepeek.admin.di.media.IosPhotoViewerTest' \
             --tests 'com.coffeepeek.admin.di.media.IosCatalogueMediaTest' \
+            --tests 'com.coffeepeek.admin.di.discovery.IosDiscoveryAccountTest' \
             --tests 'com.coffeepeek.admin.ui.RootNavigationSessionTest' \
             --tests 'com.coffeepeek.admin.di.shopreport.IosShopReportTest' \
             --tests 'com.coffeepeek.admin.di.contentreport.IosContentReportTest' \
@@ -259,6 +260,7 @@ jobs:
           set -euo pipefail
           ./gradlew --max-workers=6 :feature:discovery:impl:iosSimulatorArm64Test \
             --tests 'com.coffeepeek.feature.discovery.impl.ui.IosDiscoveryFilterDraftTest' \
+            --tests 'com.coffeepeek.feature.discovery.impl.ui.DiscoveryIosIntentsTest' \
             --tests 'com.coffeepeek.feature.discovery.impl.SearchViewModelTest' \
             > "$RUNNER_TEMP/ios-discovery-tests.log" 2>&1 || {
               tail -n 150 "$RUNNER_TEMP/ios-discovery-tests.log"

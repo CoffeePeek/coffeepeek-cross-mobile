@@ -43,6 +43,9 @@ internal fun CheckInShopPickerScreen(
     onBack: () -> Unit,
     onClose: () -> Unit, onSelect: (String) -> Unit, onSignIn: () -> Unit, modifier: Modifier,
 ) {
+    if (PlatformDiscoveryContent(search, map, host, null, com.coffeepeek.feature.discovery.api.NoDiscoveryAnalytics,
+        TabCallbacks(onSelect, onSignIn, {}, {}, {}, onClose = onClose, onBack = onBack),
+        0.dp, null, modifier, picker = true)) return
     val state by search.state.collectAsStateWithLifecycle()
     val select by rememberUpdatedState(onSelect)
     val signIn by rememberUpdatedState(onSignIn)

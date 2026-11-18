@@ -54,6 +54,9 @@ private var koinInitialized = false
 fun configureNativeCheckInDetails(factory: (com.coffeepeek.admin.di.community.IosCheckInDetail) -> UIViewController) =
     com.coffeepeek.admin.di.community.configureNativeCheckInDetails(factory)
 
+fun configureNativeDiscovery(factory: (com.coffeepeek.admin.di.discovery.IosDiscovery) -> UIViewController) =
+    com.coffeepeek.admin.di.discovery.configureNativeDiscovery(factory)
+
 fun configureNativeCommunityFeed(factory: (com.coffeepeek.admin.di.community.IosCommunityFeed) -> UIViewController) =
     com.coffeepeek.admin.di.community.configureNativeCommunityFeed(factory)
 
