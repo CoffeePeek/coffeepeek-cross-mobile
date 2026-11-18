@@ -195,6 +195,7 @@ jobs:
             --tests 'com.coffeepeek.admin.di.profile.IosProfileCompositionTest' \
             --tests 'com.coffeepeek.admin.di.settings.IosThemeSettingsTest' \
             --tests 'com.coffeepeek.admin.di.system.IosGlobalDialogTest' \
+            --tests 'com.coffeepeek.admin.di.system.IosRootModalsTest' \
             --tests 'com.coffeepeek.admin.di.coffee.IosCoffeeDetailAnalyticsTest' \
             --tests 'com.coffeepeek.admin.di.media.IosPhotoViewerTest' \
             --tests 'com.coffeepeek.admin.di.media.IosCatalogueMediaTest' \
@@ -281,6 +282,8 @@ jobs:
           ./gradlew --max-workers=6 :feature:profile:impl:iosSimulatorArm64Test \
             --tests 'com.coffeepeek.feature.profile.impl.IosOwnProfileSessionTest' \
             --tests 'com.coffeepeek.feature.profile.impl.IosPublicProfileSessionTest' \
+            --tests 'com.coffeepeek.feature.profile.impl.NativeAccountDeletionSessionTest' \
+            --tests 'com.coffeepeek.feature.profile.impl.ui.AccountDeletionViewModelTest' \
             --tests 'com.coffeepeek.feature.profile.impl.ui.data.PublicProfileWeekTest' \
             --tests 'com.coffeepeek.feature.profile.impl.ui.OwnProfileViewModelTest' \
             --tests 'com.coffeepeek.feature.profile.impl.ui.PublicProfileViewModelTest' \

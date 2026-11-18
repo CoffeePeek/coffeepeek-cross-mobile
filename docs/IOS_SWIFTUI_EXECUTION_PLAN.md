@@ -627,3 +627,26 @@ unit suite passes; body limits leave only the existing ownership factory violati
 which the Business checkpoint is replacing. Device review remains for blocking all
 underlying touches, error dismissal, font sizes, both themes, reduced motion and
 returning from a camera/modal without a retained loading surface.
+
+### 2026-11-18 — native root modals and account-deletion status
+
+Scope: replace the real DeleteAccountPending route via the existing native Settings
+factory, guest-launch onboarding and the root App Store update card. The profile
+ViewModel keeps status/email confirmation/resend timing/session events. The shared
+AppUpdateController and StoreUpdateInstaller retain update policy, persisted dismissal
+and URL opening. Onboarding retains its five original feature-owned illustrations,
+ru/be text, guest/login/register destinations and two-second rotation with press/hold;
+VoiceOver pauses automatic rotation and reduced motion disables its transition.
+
+Verification plan: Xcode simulator build, native modal contracts (single completion,
+closed callback revocation, required/optional updates and existing installer), account
+session replacement and queued-send regressions, tooling/resource packaging checks.
+Do not send deletion emails or modify a real account. Native light/dark previews are
+colocated with each screen. The AppUpdate feature has Russian resources only, so its
+Belarusian table preserves the existing Russian fallback rather than claiming a new
+translation. Remove obsolete iOS-only Compose update entry after its last consumer.
+
+Local JVM verification: 15 executed profile tests passed (4 native session tests and
+11 existing AccountDeletionViewModel tests), no failures/errors. First invocation
+could not locate the Android SDK; rerun with the installed SDK path passed. Native
+compilation, Kotlin/Native execution and manual iPhone acceptance remain pending.

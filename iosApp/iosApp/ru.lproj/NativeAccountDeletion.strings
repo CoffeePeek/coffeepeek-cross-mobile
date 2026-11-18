@@ -1,0 +1,17 @@
+"profile_deletion_status_failed" = "Ошибка загрузки статуса";
+"profile_deletion_send_failed" = "Не удалось отправить письмо";
+"profile_loading" = "Загрузка";
+"profile_back" = "Назад";
+"profile_close" = "Закрыть";
+"profile_error_title" = "Ошибка";
+"profile_ok" = "OK";
+"profile_deletion_title" = "Удаление аккаунта";
+"profile_deletion_confirm_title" = "Подтвердите удаление";
+"profile_deletion_confirm_subtitle" = "Мы отправим ссылку для подтверждения на %@. Аккаунт останется активным, пока вы не подтвердите удаление в письме.";
+"profile_deletion_confirm_no_email" = "вашу почту";
+"profile_deletion_send" = "Отправить письмо";
+"profile_deletion_sent_title" = "Письмо отправлено";
+"profile_deletion_sent_subtitle" = "Мы отправили ссылку на %@. Откройте письмо в браузере и подтвердите удаление аккаунта.";
+"profile_deletion_wait_hint" = "После подтверждения вы автоматически выйдете из приложения.";
+"profile_deletion_resend" = "Отправить письмо ещё раз";
+"profile_deletion_resend_wait" = "Повторная отправка пока недоступна";
