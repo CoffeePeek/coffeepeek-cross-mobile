@@ -88,14 +88,21 @@ internal fun CommunityFeedContent(state: CommunityState, onAction: (CommunityAct
     preview?.takeIf { it.generation == state.sessionGeneration }?.let {
         host.photoViewer(it.thumbnails, it.originals, it.index) { preview = null }
     }
-    if (state.editing != null) key(state.sessionGeneration, state.editing.source.id) { EditSheet(state, onAction) }
-    if (state.reportingId != null) ReportSheet(state.reportForm(), reportCallbacks(onAction))
+    CommunityFeedSheets(state, onAction, host)
     val cardCallbacks = CommunityFeedCardCallbacks({ homeEditorOpened = true }) { thumbnails, originals, index ->
         preview = PhotoPreview(state.sessionGeneration, thumbnails, originals, index)
     }
     val interactive = state.editing == null && state.reportingId == null && preview == null && !homeEditorOpened
     CommunityFeedSurface(state, posts, listState, onAction, host, blockActions, callbacks, cardCallbacks,
         snackbar, bottomClearance, onRefreshed, floatingAction, headerAction, guest, native, interactive)
+}
+
+@Composable
+private fun CommunityFeedSheets(state: CommunityState, onAction: (CommunityAction) -> Unit, host: CommunityHost) {
+    if (state.editing != null) key(state.sessionGeneration, state.editing.source.id) { EditSheet(state, onAction, host) }
+    if (state.reportingId != null) key(state.sessionGeneration, state.reportingId) {
+        ReportSheet(state.reportForm(), reportCallbacks(onAction), host)
+    }
 }
 
 @Composable

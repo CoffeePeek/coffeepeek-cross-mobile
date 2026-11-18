@@ -199,6 +199,7 @@ jobs:
             --tests 'com.coffeepeek.admin.di.contributions.IosContributionFormsTest' \
             --tests 'com.coffeepeek.admin.di.coffee.IosCoffeeDetailAnalyticsTest' \
             --tests 'com.coffeepeek.admin.di.media.IosPhotoViewerTest' \
+            --tests 'com.coffeepeek.admin.di.community.IosCommunitySheetTest' \
             --tests 'com.coffeepeek.admin.di.media.IosCatalogueMediaTest' \
             --tests 'com.coffeepeek.admin.di.community.IosCommunityMessageTest' \
             --tests 'com.coffeepeek.admin.ui.RootNavigationSessionTest' \
@@ -269,6 +270,17 @@ jobs:
               tail -n 150 "$RUNNER_TEMP/ios-discovery-tests.log"
               exit 1
             }
+      - name: Run community Kotlin Native unit and contract tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x ./gradlew
+          ./gradlew --no-daemon --max-workers=6 \
+            :feature:community:impl:iosSimulatorArm64Test \
+            > "$RUNNER_TEMP/ios-community-tests.log" 2>&1 || {
+              tail -n 150 "$RUNNER_TEMP/ios-community-tests.log"
+              exit 1
+            }
       - name: Run design-system Kotlin Native contracts
         shell: bash
         run: |
@@ -337,6 +349,8 @@ jobs:
           name: ios-tests-log
           path: |
             ${{ runner.temp }}/ios-native-tests.log
+            ${{ runner.temp }}/ios-community-tests.log
+            feature/community/impl/build/test-results/iosSimulatorArm64Test/
             ${{ runner.temp }}/ios-ownership-tests.log
             feature/business-ownership/**/build/test-results/iosSimulatorArm64Test/
             feature/contributions/impl/build/test-results/iosSimulatorArm64Test/
