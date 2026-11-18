@@ -33,13 +33,7 @@ private struct ShopCheckInListHost: View {
         }
         .accessibilityHidden(model.viewer != nil)
         .allowsHitTesting(model.viewer == nil)
-        .overlay {
-            if let viewer = model.viewer {
-                ShopCheckInListViewer(controller: viewer)
-                    .id(ObjectIdentifier(viewer))
-                    .ignoresSafeArea()
-            }
-        }
+        .coffeePeekPhotoViewer(model.viewer, languageTag: strings.languageTag, onDismiss: { model.viewer = nil })
         .onAppear { model.start(unknownAuthor: strings.text("shop_checkins_author_unknown")) }
         .onDisappear { model.stop() }
         .onChange(of: scenePhase) { _, next in
@@ -58,15 +52,9 @@ private struct ShopCheckInListHost: View {
     }
 }
 
-private struct ShopCheckInListViewer: UIViewControllerRepresentable {
-    let controller: UIViewController
-    func makeUIViewController(context: Context) -> UIViewController { controller }
-    func updateUIViewController(_ controller: UIViewController, context: Context) {}
-}
-
 private final class ShopCheckInListModel: ObservableObject {
     @Published private(set) var state: ShopCheckInListPresentation
-    @Published private(set) var viewer: UIViewController?
+    @Published var viewer: IosPhotoViewer?
     private let list: IosShopCheckInList
     private var observation: IosShopCheckInObservation?
     var isObserved: Bool { observation != nil }
@@ -90,6 +78,7 @@ private final class ShopCheckInListModel: ObservableObject {
     }
 
     func stop() {
+        guard viewer == nil else { return }
         observation?.cancel()
         observation = nil
         viewer = nil
@@ -100,9 +89,9 @@ private final class ShopCheckInListModel: ObservableObject {
         state = ShopCheckInListPresentation(incoming)
     }
 
-    private func openPhoto(_ album: IosShopCheckInAlbum) {
+    private func openPhoto(_ album: IosPhotoViewer) {
         guard viewer == nil else { return }
-        viewer = album.makeViewer(onDismiss: { [weak self] in self?.viewer = nil })
+        viewer = album
     }
 }
 

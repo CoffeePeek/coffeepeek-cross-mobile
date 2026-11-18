@@ -18,11 +18,8 @@ private struct PublicProfileHost: View {
         PublicProfileScreen(model: model)
             .allowsHitTesting(model.viewer == nil)
             .accessibilityHidden(model.viewer != nil)
-            .overlay {
-                if let viewer = model.viewer {
-                    OwnProfileEmbedded(controller: viewer).id(ObjectIdentifier(viewer)).ignoresSafeArea()
-                }
-            }
+            .coffeePeekPhotoViewer(model.viewer, languageTag: model.strings.languageTag,
+                                   onDismiss: { model.viewer = nil })
             .onAppear(perform: model.observe)
             .onDisappear(perform: model.stop)
     }
@@ -201,7 +198,7 @@ final class PublicProfileModel: ObservableObject {
     @Published private(set) var strings: OwnProfileStrings
     @Published private(set) var selected: OwnProfileTab = .checkIns
     @Published private(set) var slot: UIViewController?
-    @Published var viewer: UIViewController?
+    @Published var viewer: IosPhotoViewer?
     private var observation: IosOwnProfileObservation?
 
     init(profile: IosPublicProfile) {
@@ -239,6 +236,7 @@ final class PublicProfileModel: ObservableObject {
     }
 
     func stop() {
+        guard viewer == nil else { return }
         observation?.cancel()
         observation = nil
     }
@@ -252,12 +250,14 @@ final class PublicProfileModel: ObservableObject {
         if stat == .followers {
             profile?.openConnections(followers: true)
         } else if stat == .avatar {
-            viewer = profile?.makeAvatarViewer(onDismiss: { [weak self] in self?.viewer = nil })
+            guard viewer == nil else { return }
+            viewer = profile?.makeAvatarViewer()
         }
     }
 
     func openPhoto(id: String, index: Int) {
-        viewer = profile?.makeCheckInViewer(id: id, index: Int32(index), onDismiss: { [weak self] in self?.viewer = nil })
+        guard viewer == nil else { return }
+        viewer = profile?.makeCheckInViewer(id: id, index: Int32(index))
     }
 
     private static func strings(language: String) -> OwnProfileStrings {
