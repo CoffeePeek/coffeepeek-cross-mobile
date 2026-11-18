@@ -133,7 +133,7 @@ internal fun ShopDetailScreen(
     val distance = if (latitude != null && longitude != null)
         formatDistance(latitude, longitude) else null
     key(sessionGeneration) {
-        ShopDetailScreenContent(visibleState, { action ->
+        ShopDetailPresentationContent(visibleState, { action ->
             trackShopAction(action, visibleState, analytics)
             viewModel.onAction(action)
         }, distance,
@@ -445,4 +445,12 @@ private fun previewState(): ShopDetailState {
         todayDayOfWeek = 1,
         todayMinuteOfDay = 12 * 60,
     )
+}
+
+@Composable
+private fun ShopDetailPresentationContent(state: ShopDetailState, onAction: (ShopDetailAction) -> Unit,
+    distanceLabel: String?, formatCheckInDate: (String) -> String, formatMenuDate: (String) -> String,
+    snackbarHostState: SnackbarHostState) {
+    if (PlatformShopDetailContent(state, onAction, distanceLabel, formatCheckInDate, formatMenuDate, snackbarHostState)) return
+    ShopDetailScreenContent(state, onAction, distanceLabel, formatCheckInDate, formatMenuDate, snackbarHostState)
 }

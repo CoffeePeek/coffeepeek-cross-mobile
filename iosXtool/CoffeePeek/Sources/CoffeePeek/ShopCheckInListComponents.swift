@@ -16,7 +16,7 @@ struct ShopCheckInListRatings: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Label(strings.format("shop_checkins_rating_summary", overall, count), systemImage: "star.fill")
+            ShopCheckInRatingLabel(title: strings.format("shop_checkins_rating_summary", overall, count))
                 .font(.headline)
             if isSample { Text(strings.text("shop_checkins_rating_sample")).font(.footnote).foregroundStyle(.secondary) }
             ForEach(Array(breakdown.enumerated()), id: \.offset) { index, rating in
@@ -75,7 +75,7 @@ struct ShopCheckInListCard: View {
     let date: String
     let strings: ShopCheckInListStrings
     let actions: ShopCheckInCardActions
-    let loadArtwork: (Int?, @escaping (UIImage?) -> Void) -> IosShopCheckInObservation
+    let loadArtwork: (Int?, @escaping (UIImage?) -> Void) -> IosShopCheckInObservation?
     @State private var noteExpanded = false
     @State private var noteClipped = false
 
@@ -83,7 +83,7 @@ struct ShopCheckInListCard: View {
         VStack(alignment: .leading, spacing: 12) {
             header
             if let rating = row.ratingLabel {
-                Label(rating, systemImage: "star.fill")
+                ShopCheckInRatingLabel(title: rating)
                     .accessibilityLabel(strings.format("shop_checkins_rating_description", row.coffeeRating,
                                                        row.serviceRating, row.placeRating, rating))
             }
@@ -196,7 +196,7 @@ struct ShopCheckInListCard: View {
 
     private func photo(_ index: Int) -> some View {
         Button { actions.photo(index) } label: {
-            ShopCheckInArtwork(load: { loadArtwork(index, $0) }, placeholder: "photo")
+            ShopCheckInArtwork(load: { loadArtwork(index, $0) }, placeholder: nil)
                 .overlay {
                     if index == 2 && row.photoCount > 3 {
                         Color.black.opacity(0.45).overlay {
@@ -216,10 +216,7 @@ struct ShopCheckInListCard: View {
         HStack {
             if row.showHelpful {
                 Button(action: actions.vote) {
-                    HStack(spacing: 6) {
-                        Image(systemName: row.markedHelpful ? "heart.fill" : "heart")
-                        Text(row.helpfulCount.formatted())
-                    }
+                    ShopCheckInHelpfulLabel(selected: row.markedHelpful, count: row.helpfulCount)
                     .frame(minWidth: 44, minHeight: 44)
                     .contentShape(Rectangle())
                 }
@@ -249,8 +246,8 @@ private struct ShopCheckInNoteClipped: PreferenceKey {
 }
 
 private struct ShopCheckInArtwork: View {
-    let load: (@escaping (UIImage?) -> Void) -> IosShopCheckInObservation
-    let placeholder: String
+    let load: (@escaping (UIImage?) -> Void) -> IosShopCheckInObservation?
+    let placeholder: String?
     @State private var observation: IosShopCheckInObservation?
     @State private var image: UIImage?
 
@@ -260,7 +257,9 @@ private struct ShopCheckInArtwork: View {
                 if let image {
                     Image(uiImage: image).resizable().scaledToFill()
                         .frame(width: bounds.size.width, height: bounds.size.height)
-                } else { Image(systemName: placeholder).foregroundStyle(.secondary) }
+                } else if let placeholder {
+                    Image(systemName: placeholder).foregroundStyle(CoffeePeekNativeStyle.secondary)
+                } else { CoffeePeekPhotoPlaceholder() }
             }
             .clipped()
         }
@@ -268,4 +267,55 @@ private struct ShopCheckInArtwork: View {
         .onAppear { if image == nil { observation = load { image = $0 } } }
         .onDisappear { observation?.cancel(); observation = nil }
     }
+}
+
+private struct ShopCheckInRatingLabel: View {
+    let title: String
+
+    var body: some View {
+        Label {
+            Text(title).foregroundStyle(CoffeePeekNativeStyle.foreground)
+        } icon: {
+            Image(systemName: "star.fill").foregroundStyle(CoffeePeekNativeStyle.accent)
+        }
+    }
+}
+
+private struct ShopCheckInHelpfulLabel: View {
+    let selected: Bool
+    let count: Int
+
+    var body: some View {
+        HStack(spacing: 6) {
+            Image(systemName: selected ? "heart.fill" : "heart")
+                .foregroundStyle(selected ? CoffeePeekNativeStyle.accent : CoffeePeekNativeStyle.foreground)
+            Text(count.formatted()).foregroundStyle(CoffeePeekNativeStyle.foreground)
+        }
+    }
+}
+
+private func shopCheckInCardComponentsPreview() -> some View {
+    VStack(alignment: .leading, spacing: 16) {
+        ShopCheckInListRatings(overall: "4.8", count: 24, isSample: false,
+            breakdown: [ShopCheckInRatingPresentation(value: 4.8, label: "4.8"),
+                        ShopCheckInRatingPresentation(value: 4.5, label: "4.5"),
+                        ShopCheckInRatingPresentation(value: 5, label: "5.0")],
+            strings: ShopCheckInListStrings(languageTag: "ru"))
+        VStack(alignment: .leading, spacing: 12) {
+            ShopCheckInRatingLabel(title: "5.0")
+            ShopCheckInArtwork(load: { _ in nil }, placeholder: nil)
+                .aspectRatio(4.0 / 3.0, contentMode: .fit).clipShape(RoundedRectangle(cornerRadius: 10))
+            HStack(spacing: 24) {
+                ShopCheckInHelpfulLabel(selected: true, count: 6)
+                ShopCheckInHelpfulLabel(selected: false, count: 2)
+            }
+        }.padding(16).background(CoffeePeekNativeStyle.surface, in: RoundedRectangle(cornerRadius: 16))
+    }.padding(16).background(CoffeePeekNativeStyle.background).foregroundStyle(CoffeePeekNativeStyle.foreground)
+}
+
+#Preview("Shop check-in components light") {
+    shopCheckInCardComponentsPreview().preferredColorScheme(.light)
+}
+#Preview("Shop check-in components dark") {
+    shopCheckInCardComponentsPreview().preferredColorScheme(.dark)
 }

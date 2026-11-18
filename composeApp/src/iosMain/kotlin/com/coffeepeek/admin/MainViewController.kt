@@ -51,6 +51,12 @@ import platform.UIKit.UIVisualEffectView
 
 private var koinInitialized = false
 
+fun configureNativeShopDetails(detail: (com.coffeepeek.admin.di.shop.IosShopDetail) -> UIViewController,
+    photo: (com.coffeepeek.admin.di.media.IosPhotoViewer, String, () -> Unit) -> UIViewController,
+    message: (com.coffeepeek.admin.di.shop.IosShopDetailNotice) -> UIViewController,
+    error: (com.coffeepeek.admin.di.shop.IosShopDetailSessionError) -> UIViewController) =
+    com.coffeepeek.admin.di.shop.configureNativeShopDetails(detail, photo, message, error)
+
 fun configureNativeCheckInDetails(factory: (com.coffeepeek.admin.di.community.IosCheckInDetail) -> UIViewController) =
     com.coffeepeek.admin.di.community.configureNativeCheckInDetails(factory)
 

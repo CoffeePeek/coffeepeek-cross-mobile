@@ -21,6 +21,10 @@
 		5C13B3110000000000000001 /* ShopCheckInListScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C13B3110000000000000004 /* ShopCheckInListScreen.swift */; };
 		5C13B3110000000000000002 /* ShopCheckInListComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C13B3110000000000000005 /* ShopCheckInListComponents.swift */; };
 		5C13B3110000000000000003 /* NativeShopCheckIns.strings in Resources */ = {isa = PBXBuildFile; fileRef = 5C13B3110000000000000008 /* NativeShopCheckIns.strings */; };
+		5A0D0A000000000000000004 /* ShopDetailNativeOverlays.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A0D0B000000000000000004 /* ShopDetailNativeOverlays.swift */; };
+		5A0D0A000000000000000003 /* ShopDetailNativeInformation.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A0D0B000000000000000003 /* ShopDetailNativeInformation.swift */; };
+		5A0D0A000000000000000002 /* ShopDetailNativeScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A0D0B000000000000000002 /* ShopDetailNativeScreen.swift */; };
+		5A0D0A000000000000000001 /* ShopDetailNativeHost.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5A0D0B000000000000000001 /* ShopDetailNativeHost.swift */; };
 		A6C011E60000000000000001 /* ShopMenuGalleryScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = A6C011E60000000000000003 /* ShopMenuGalleryScreen.swift */; };
 		A6C011E60000000000000002 /* ShopMenuGallery.strings in Resources */ = {isa = PBXBuildFile; fileRef = A6C011E60000000000000006 /* ShopMenuGallery.strings */; };
 		6B2031D9196667F65FD358E5 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 37A6BA4C5AAF06904D9C889E /* InfoPlist.strings */; };
@@ -154,6 +158,10 @@
 		5C13B3110000000000000005 /* ShopCheckInListComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ShopCheckInListComponents.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/ShopCheckInListComponents.swift; sourceTree = "<group>"; };
 		5C13B3110000000000000006 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/NativeShopCheckIns.strings; sourceTree = "<group>"; };
 		5C13B3110000000000000007 /* be */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = be; path = be.lproj/NativeShopCheckIns.strings; sourceTree = "<group>"; };
+		5A0D0B000000000000000004 /* ShopDetailNativeOverlays.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ShopDetailNativeOverlays.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/ShopDetailNativeOverlays.swift; sourceTree = "<group>"; };
+		5A0D0B000000000000000003 /* ShopDetailNativeInformation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ShopDetailNativeInformation.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/ShopDetailNativeInformation.swift; sourceTree = "<group>"; };
+		5A0D0B000000000000000002 /* ShopDetailNativeScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ShopDetailNativeScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/ShopDetailNativeScreen.swift; sourceTree = "<group>"; };
+		5A0D0B000000000000000001 /* ShopDetailNativeHost.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ShopDetailNativeHost.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/ShopDetailNativeHost.swift; sourceTree = "<group>"; };
 		A6C011E60000000000000003 /* ShopMenuGalleryScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ShopMenuGalleryScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/ShopMenuGalleryScreen.swift; sourceTree = "<group>"; };
 		A6C011E60000000000000004 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/ShopMenuGallery.strings; sourceTree = "<group>"; };
 		A6C011E60000000000000005 /* be */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = be; path = be.lproj/ShopMenuGallery.strings; sourceTree = "<group>"; };
@@ -422,6 +430,10 @@
 				F07A11400000000000000003 /* CoffeePeekNativePhotoViewer.swift */,
 				F07A11400000000000000006 /* NativePhotoViewer.strings */,
 				5C13B3110000000000000004 /* ShopCheckInListScreen.swift */,
+				5A0D0B000000000000000004 /* ShopDetailNativeOverlays.swift */,
+				5A0D0B000000000000000003 /* ShopDetailNativeInformation.swift */,
+				5A0D0B000000000000000002 /* ShopDetailNativeScreen.swift */,
+				5A0D0B000000000000000001 /* ShopDetailNativeHost.swift */,
 				5C13B3110000000000000005 /* ShopCheckInListComponents.swift */,
 				A20000000000000000000009 /* ../../iosXtool/CoffeePeek/Sources/CoffeePeek/MapLibreMapProvider.swift */,
 				A20000000000000000000002 /* Assets.xcassets */,
@@ -703,6 +715,10 @@
 				A6C011E60000000000000001 /* ShopMenuGalleryScreen.swift in Sources */,
 				F07A11400000000000000001 /* CoffeePeekNativePhotoViewer.swift in Sources */,
 				5C13B3110000000000000001 /* ShopCheckInListScreen.swift in Sources */,
+				5A0D0A000000000000000004 /* ShopDetailNativeOverlays.swift in Sources */,
+				5A0D0A000000000000000003 /* ShopDetailNativeInformation.swift in Sources */,
+				5A0D0A000000000000000002 /* ShopDetailNativeScreen.swift in Sources */,
+				5A0D0A000000000000000001 /* ShopDetailNativeHost.swift in Sources */,
 				5C13B3110000000000000002 /* ShopCheckInListComponents.swift in Sources */,
 				A9AB00000000000000000001 /* HistoryFailureNativeScreen.swift in Sources */,
 				8AF230A9B8B8789A2F1F28A1 /* RoasterDetailNativeScreen.swift in Sources */,

@@ -65,7 +65,7 @@ private fun ShopActionMetric.placement(): String = when (this) {
     else -> "shop_detail"
 }
 
-private fun ShopExposure.wire(): String = when (this) {
+internal fun ShopExposure.wire(): String = when (this) {
     ShopExposure.Favorite -> "favorites"
     ShopExposure.Share -> "share"
     ShopExposure.CheckIn -> "check_in"
