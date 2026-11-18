@@ -33,6 +33,7 @@ class IosPublicProfile internal constructor(
     private val avatarUrl: String?,
     val checkInsOnly: Boolean,
     private val shelfController: (String, Boolean, () -> Boolean) -> UIViewController,
+    private val collections: (String, String?, String?) -> UIViewController,
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
@@ -115,9 +116,7 @@ class IosPublicProfile internal constructor(
     fun makeFeaturedCollection(): UIViewController? {
         val state = visible() ?: return null
         val target = state.profile?.slug ?: return null
-        return ComposeUIViewController {
-            AppContent { if (state.own) ProfileOwnerCollection() else ProfileFeaturedCollection(target) }
-        }
+        return collections(if (state.own) "Owner" else "Featured", null, target)
     }
 
     fun makeShelfPreview(): UIViewController? {

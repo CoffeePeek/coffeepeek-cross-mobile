@@ -28,9 +28,9 @@ import com.coffeepeek.admin.di.contentreport.LocalIosContentReportController
 import com.coffeepeek.admin.di.shopreport.IosShopReport
 import com.coffeepeek.admin.di.shopreport.LocalIosShopReportController
 import com.coffeepeek.admin.di.collections.IosCollectionsLibrary
-import com.coffeepeek.admin.di.collections.IosSavedPublicCollection
+import com.coffeepeek.admin.di.collections.IosCollectionsWorkspace
 import com.coffeepeek.admin.di.collections.LocalIosCollectionsLibraryController
-import com.coffeepeek.admin.di.collections.LocalIosSavedPublicCollectionController
+import com.coffeepeek.admin.di.collections.LocalIosCollectionsWorkspaceController
 import com.coffeepeek.admin.di.settings.IosSettingsScreen
 import com.coffeepeek.admin.di.authorblocking.IosBlockedAuthors
 import com.coffeepeek.admin.di.authorblocking.LocalIosBlockedAuthorsController
@@ -69,11 +69,16 @@ fun configureNativeEditProfile(factory: (com.coffeepeek.admin.di.profile.IosEdit
     com.coffeepeek.admin.di.profile.configureNativeEditProfile(factory)
 }
 
-fun configureNativeShelf(factory: (com.coffeepeek.admin.di.shelf.IosShelfScreen) -> UIViewController) =
-    com.coffeepeek.admin.di.shelf.configureNativeShelf(factory)
+fun configureNativeGlobalDialogs(factory: (com.coffeepeek.admin.di.system.IosGlobalDialog) -> UIViewController) {
+    com.coffeepeek.admin.ui.dialogs.configureNativeGlobalDialogs(factory)
+}
+
 fun configureNativeRootModals(factory: (com.coffeepeek.admin.di.system.IosRootModal) -> UIViewController) {
     com.coffeepeek.admin.di.system.configureNativeRootModals(factory)
 }
+
+fun configureNativeShelf(factory: (com.coffeepeek.admin.di.shelf.IosShelfScreen) -> UIViewController) =
+    com.coffeepeek.admin.di.shelf.configureNativeShelf(factory)
 
 fun configureNativeGlass(makeView: () -> UIVisualEffectView) {
     configureCoffeePeekNativeGlass(makeView)
@@ -97,7 +102,7 @@ fun MainViewController(
     makeContributionsController: (IosContributionsRoute, String) -> UIViewController,
     makeContentReportController: (IosContentReport, String) -> UIViewController,
     makeCollectionsLibraryController: (IosCollectionsLibrary, String) -> UIViewController,
-    makeSavedPublicCollectionController: (IosSavedPublicCollection, String) -> UIViewController,
+    makeCollectionsWorkspaceController: (IosCollectionsWorkspace, String) -> UIViewController,
     makeSettingsController: (IosSettingsScreen) -> UIViewController,
     makeBlockedAuthorsController: (IosBlockedAuthors, String, () -> Unit, () -> Unit, () -> Unit) -> UIViewController,
     makeAuthController: (IosAuthScreen) -> UIViewController,
@@ -117,7 +122,7 @@ fun MainViewController(
     makeContributionsController,
     makeContentReportController,
     makeCollectionsLibraryController,
-    makeSavedPublicCollectionController,
+    makeCollectionsWorkspaceController,
     makeSettingsController,
     makeBlockedAuthorsController,
     makeAuthController,
@@ -147,7 +152,7 @@ private class IosControllerFactories(
     private val makeContributionsController: (IosContributionsRoute, String) -> UIViewController,
     private val makeContentReportController: (IosContentReport, String) -> UIViewController,
     private val makeCollectionsLibraryController: (IosCollectionsLibrary, String) -> UIViewController,
-    private val makeSavedPublicCollectionController: (IosSavedPublicCollection, String) -> UIViewController,
+    private val makeCollectionsWorkspaceController: (IosCollectionsWorkspace, String) -> UIViewController,
     private val makeSettingsController: (IosSettingsScreen) -> UIViewController,
     private val makeBlockedAuthorsController: (IosBlockedAuthors, String, () -> Unit, () -> Unit, () -> Unit) -> UIViewController,
     private val makeAuthController: (IosAuthScreen) -> UIViewController,
@@ -170,7 +175,7 @@ private class IosControllerFactories(
             LocalIosContributionsController provides makeContributionsController,
             LocalIosContentReportController provides makeContentReportController,
             LocalIosCollectionsLibraryController provides makeCollectionsLibraryController,
-            LocalIosSavedPublicCollectionController provides makeSavedPublicCollectionController,
+            LocalIosCollectionsWorkspaceController provides makeCollectionsWorkspaceController,
             LocalIosSettingsController provides makeSettingsController,
             LocalIosBlockedAuthorsController provides makeBlockedAuthorsController,
             LocalIosAuthController provides makeAuthController,

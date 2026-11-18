@@ -35,6 +35,7 @@ class IosOwnProfile internal constructor(
     private val language: LanguagePort,
     private val media: IosCatalogueMedia,
     private val shelfController: (() -> Boolean) -> UIViewController,
+    private val collections: (String, String?, String?) -> UIViewController,
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
     fun current() = profile.current().iosHistoryState(history.current(), languageTag())
@@ -136,15 +137,9 @@ class IosOwnProfile internal constructor(
         return media.viewer(CoffeePeekPhotoViewerImages(row.previews, row.originals), index, ::isCurrent)
     }
 
-    @OptIn(androidx.compose.ui.ExperimentalComposeUiApi::class)
-    fun makeCollections(): UIViewController = ComposeUIViewController(configure = { opaque = false }) {
-        AppContent { ProfileOwnerCollection() }
-    }
+    fun makeCollections(): UIViewController = collections("Owner", null, null)
 
-    @OptIn(androidx.compose.ui.ExperimentalComposeUiApi::class)
-    fun makeCollectionPreferences(): UIViewController = ComposeUIViewController(configure = { opaque = false }) {
-        AppContent { Column(Modifier.verticalScroll(rememberScrollState())) { ProfileDisplayPreferences() } }
-    }
+    fun makeCollectionPreferences(): UIViewController = collections("Preference", null, null)
 
     fun makeShelf(): UIViewController = shelfController(::isCurrent)
 

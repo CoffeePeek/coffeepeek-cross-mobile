@@ -608,6 +608,26 @@ build/xcross-ios. Manual feed/menu/cover verification remains pending; startup a
 does not prove pagination, refresh, theme parity or mutation acceptance.
 
 
+### 2026-11-18 — native global loading and error UI
+
+The final root audit found Compose-rendered LoadingDialog, ErrorDialog and the
+startup language-loading state above native screens. Replace them with SwiftUI
+hosts, retaining the existing LoadingHandler/ErrorHandler state owners, translated
+messages/dismiss actions and original 96pt mascot. The loader uses the exact 320
+reference radius samples from core/design-system; both renderers share immutable
+normalized contours. SwiftUI retains the same Catmull-Rom contour, 1600ms rotation,
+2800ms fill up to0.72, 5000ms morph and cubic easing; reduced motion freezes it.
+Android's existing error visuals are preserved through cohesive component extraction.
+The public profile factory now has an explicit block body, removing its inherited
+body-scanner false positive without changing construction or account behavior.
+
+Verification plan: core design-system unit suite, unchanged-contour comparison,
+new native dialog callback contracts, Xcode build and Kotlin/Native. The local
+unit suite passes; body limits leave only the existing ownership factory violation,
+which the Business checkpoint is replacing. Device review remains for blocking all
+underlying touches, error dismissal, font sizes, both themes, reduced motion and
+returning from a camera/modal without a retained loading surface.
+
 ### 2026-11-18 — native root modals and account-deletion status
 
 Scope: replace the real DeleteAccountPending route via the existing native Settings

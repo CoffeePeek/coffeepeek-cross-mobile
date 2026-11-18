@@ -1,5 +1,6 @@
 package com.coffeepeek.admin.di.profile
 
+import com.coffeepeek.admin.di.collections.iosCollectionsWorkspaceContent
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
@@ -50,6 +51,7 @@ internal fun iosOwnProfileContent(): () -> UIViewController {
     val calendar = koinInject<AppCheckInHistoryCalendar>()
     val language = koinInject<LanguagePort>()
     val imageFetcher = koinInject<ImageUrlFetcher>()
+    val collections = iosCollectionsWorkspaceContent()
     val media = remember(imageFetcher) { IosCatalogueMedia(imageFetcher, Constants.BASE_URL) }
     return {
         val lease = CheckInHistorySession(sessions)
@@ -57,7 +59,7 @@ internal fun iosOwnProfileContent(): () -> UIViewController {
             repository, checkIns, AppProfileAuthorVisibility(visibility), snapshots, ::profileLifecycleDiagnostic)
         factory(IosOwnProfile(profile, lease,
             createIosOwnProfileHistorySession(lease.bind(shops), lease.bind(homes), calendar::snapshot), language, media,
-            { allowed -> nativeShelfController(shelf("shelf", null, true, allowed)) }))
+            shelfController = { allowed -> nativeShelfController(shelf("shelf", null, true, allowed)) }, collections = collections))
     }
 }
 
