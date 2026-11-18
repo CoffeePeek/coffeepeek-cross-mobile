@@ -112,7 +112,8 @@ struct ContributionFormContent<Photo: View, OptionImage: View>: View {
     @State private var menuExpanded = false
 
     var body: some View {
-        ContributionsScaffold(title: title, backLabel: strings.text("back"), onBack: onBack) {
+        ContributionsScaffold(title: title, backLabel: strings.text("back"),
+            onBack: state.submit == "sending" ? nil : onBack) {
             if state.signedIn == -1 || state.loading && state.kind != "AddRoaster" {
                 if state.loadError != nil { loadFailure } else { ProgressView(strings.text("loading")) }
             } else if state.signedIn == 0 {

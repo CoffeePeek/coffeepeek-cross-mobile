@@ -39,3 +39,13 @@ photo delivery and account replacement therefore reach the same active model.
 A non-UI contract verifies one subscription receives map confirmation, photo and
 account transitions until session close. SwiftUI cover presentation/dismissal and
 real permission transitions still require the documented manual iPhone gate.
+
+
+### Back during submission
+
+The native scaffold omits its explicit Back action while sending, matching the
+existing shared SubmissionStatusScreen. Native session consumeBack also consumes
+that state for shop, roaster and change submissions, preventing stale button
+callbacks from popping and disposing an in-flight destination. The UIKit local
+back guard remains active. A non-UI contract holds all three fake submissions
+pending and verifies back is consumed without changing their state or drafts.
