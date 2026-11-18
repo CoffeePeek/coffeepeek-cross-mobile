@@ -4,7 +4,18 @@ import UIKit
 
 @MainActor
 func makeShelfController(screen: IosShelfScreen) -> UIViewController {
-    UIHostingController(rootView: ShelfNativeHost(screen: screen))
+    ShelfNativeHostingController(screen: screen)
+}
+
+private final class ShelfNativeHostingController: UIHostingController<ShelfNativeHost> {
+    private let model: ShelfNativeModel
+    init(screen: IosShelfScreen) {
+        let model = ShelfNativeModel(screen)
+        self.model = model
+        super.init(rootView: ShelfNativeHost(model: model))
+    }
+    @MainActor required dynamic init?(coder: NSCoder) { return nil }
+    deinit { model.screen.close() }
 }
 
 final class ShelfNativeModel: ObservableObject {
@@ -45,12 +56,11 @@ final class ShelfNativeModel: ObservableObject {
         case .save(let later): screen.save(later: later)
         }
     }
-    deinit { observation?.cancel(); screen.close() }
+    deinit { observation?.cancel() }
 }
 
 private struct ShelfNativeHost: View {
-    @StateObject private var model: ShelfNativeModel
-    init(screen: IosShelfScreen) { _model = StateObject(wrappedValue: ShelfNativeModel(screen)) }
+    @ObservedObject var model: ShelfNativeModel
 
     var body: some View {
         Group {

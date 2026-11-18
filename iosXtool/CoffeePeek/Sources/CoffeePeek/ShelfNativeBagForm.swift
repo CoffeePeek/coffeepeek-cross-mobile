@@ -61,7 +61,7 @@ struct ShelfNativeBagForm: View {
 
     private var weights: some View {
         LazyVGrid(columns: [GridItem(.adaptive(minimum: 65))], spacing: 8) {
-            ForEach([200, 250, 500, 1000], id: \.self) { grams in
+            ForEach([200, 250, 500, 1000] as [Int], id: \.self) { grams in
                 let selected = add.grams?.intValue == Int32(grams)
                 Button(String(format: strings["shelf_weight"], grams)) {
                     send(.weight(selected ? nil : grams))
