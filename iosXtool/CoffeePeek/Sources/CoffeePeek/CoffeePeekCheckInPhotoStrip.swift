@@ -47,7 +47,7 @@ struct CoffeePeekCheckInPhotoStrip: View {
     private func tile(_ photo: CoffeePeekCheckInPhoto, index: Int, single: Bool) -> some View {
         let size = dimensions(photo, single: single)
         return Button { openPhoto(index) } label: {
-            CoffeePeekCardImage(url: photo.preview, detail: photo.detail, symbol: "photo",
+            CoffeePeekCardImage(url: photo.preview, detail: photo.detail, symbol: nil,
                 fits: (ratios[photo.id] ?? 1) >= 0.75, loadImage: loadImage) { decoded in
                     guard ratios[photo.id] == nil, decoded.width > 0, decoded.height > 0 else { return }
                     ratios[photo.id] = min(16, decoded.width / decoded.height)
@@ -63,7 +63,7 @@ struct CoffeePeekCardImage: View {
     @Environment(\.scenePhase) private var scenePhase
     let url: String?
     var detail: String?
-    let symbol: String
+    let symbol: String?
     var fits = false
     let loadImage: CoffeePeekCardImageLoader
     var decoded: (CGSize) -> Void = { _ in }
@@ -72,6 +72,10 @@ struct CoffeePeekCardImage: View {
     @State private var previewRequest: CoffeePeekCardImageRequest?
     @State private var detailRequest: CoffeePeekCardImageRequest?
     @State private var requestID: UUID?
+    @State private var detailRequestID: UUID?
+    @State private var hasShownPreview = false
+    @State private var hasShownDetail = false
+    @State private var usesDetailFallback = false
     @State private var visible = false
 
     var body: some View {
@@ -80,10 +84,12 @@ struct CoffeePeekCardImage: View {
                 if let image {
                     Image(uiImage: image).resizable().aspectRatio(contentMode: fits ? .fit : .fill)
                         .frame(width: geometry.size.width, height: geometry.size.height)
-                } else {
+                } else if let symbol {
                     CoffeePeekNativeStyle.surface.overlay {
                         Image(systemName: symbol).foregroundStyle(CoffeePeekNativeStyle.secondary)
                     }
+                } else {
+                    CoffeePeekPhotoPlaceholder()
                 }
             }.clipped()
         }
@@ -108,32 +114,63 @@ struct CoffeePeekCardImage: View {
         guard let target, !target.isEmpty else { return }
         let id = UUID()
         requestID = id
-        previewRequest = loadImage(target) { next in
-            guard requestID == id else { return }
-            previewImage = next
-            image = next
-            if let next { decoded(next.size) }
-            if let detail, !detail.isEmpty, detail != target { upgrade(detail, id: id) }
+        let handle = loadImage(target) { next in
+            receivePreview(next, id: id, target: target)
         }
+        if usesDetailFallback { handle?.cancel() } else { previewRequest = handle }
+    }
+
+    private func receivePreview(_ next: UIImage?, id: UUID, target: String) {
+        guard requestID == id, !usesDetailFallback else { return }
+        previewImage = next
+        image = next
+        cancelDetail()
+        if let next {
+            hasShownPreview = true
+            decoded(next.size)
+        } else if hasShownPreview {
+            return
+        }
+        guard let detail, !detail.isEmpty, detail != target else { return }
+        if next == nil {
+            usesDetailFallback = true
+            previewRequest?.cancel()
+            previewRequest = nil
+        }
+        upgrade(detail, id: id)
     }
 
     private func upgrade(_ url: String, id: UUID) {
-        detailRequest?.cancel()
+        let detailID = UUID()
+        detailRequestID = detailID
         detailRequest = loadImage(url) { next in
-            guard requestID == id else { return }
-            image = next ?? previewImage
-            if let next { decoded(next.size) }
+            guard requestID == id, detailRequestID == detailID else { return }
+            if let next {
+                hasShownDetail = true
+                image = next
+                decoded(next.size)
+            } else {
+                image = hasShownDetail ? nil : previewImage
+            }
         }
+    }
+
+    private func cancelDetail() {
+        detailRequestID = nil
+        detailRequest?.cancel()
+        detailRequest = nil
+        hasShownDetail = false
     }
 
     private func cancel() {
         requestID = nil
         previewRequest?.cancel()
-        detailRequest?.cancel()
+        cancelDetail()
         previewRequest = nil
-        detailRequest = nil
         image = nil
         previewImage = nil
+        hasShownPreview = false
+        usesDetailFallback = false
     }
 }
 

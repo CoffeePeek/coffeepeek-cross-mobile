@@ -196,6 +196,8 @@ jobs:
             --tests 'com.coffeepeek.admin.di.settings.IosThemeSettingsTest' \
             --tests 'com.coffeepeek.admin.di.coffee.IosCoffeeDetailAnalyticsTest' \
             --tests 'com.coffeepeek.admin.di.media.IosPhotoViewerTest' \
+            --tests 'com.coffeepeek.admin.di.media.IosCatalogueMediaTest' \
+            --tests 'com.coffeepeek.admin.ui.RootNavigationSessionTest' \
             --tests 'com.coffeepeek.admin.di.shopreport.IosShopReportTest' \
             --tests 'com.coffeepeek.admin.di.contentreport.IosContentReportTest' \
             --tests 'com.coffeepeek.admin.di.settings.IosSettingsScreensTest' \
@@ -273,6 +275,7 @@ jobs:
             --tests 'com.coffeepeek.feature.profile.impl.ui.OwnProfileViewModelTest' \
             --tests 'com.coffeepeek.feature.profile.impl.ui.PublicProfileViewModelTest' \
             :feature:check-in-history:impl:iosSimulatorArm64Test \
+            --tests 'com.coffeepeek.feature.checkinhistory.impl.ui.CombinedHistoryViewModelTest' \
             --tests 'com.coffeepeek.feature.checkinhistory.impl.ui.ProfileActivityViewModelTest' \
             --tests 'com.coffeepeek.feature.checkinhistory.impl.ui.data.ProfileActivityDatesTest' \
             > "$RUNNER_TEMP/ios-own-profile-tests.log" 2>&1 || {
