@@ -131,7 +131,7 @@ private struct OwnProfileScreen: View {
     private func profileContent(viewport: CGFloat, width: CGFloat) -> some View {
         if let identity = model.state.identity {
             OwnProfileHeader(identity: identity, strings: model.strings, profile: model.profile,
-                             select: model.selectStat, signedInLayout: true)
+                             select: model.selectStat)
                 .padding(.horizontal, 16)
             if let activity = model.activity {
                 OwnProfileActivityView(state: activity, model: model, strings: model.strings, availableWidth: width - 32)

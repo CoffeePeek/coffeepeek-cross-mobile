@@ -26,16 +26,11 @@ struct OwnProfileHeader: View {
     let select: (OwnProfileStat) -> Void
     var enabled: (OwnProfileStat) -> Bool = { _ in true }
     var imageLoader: ProfileImageLoader?
-    var signedInLayout = false
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @ScaledMetric(relativeTo: .caption) private var fourStatsWidth: CGFloat = 220
     @ScaledMetric(relativeTo: .caption) private var threeStatsWidth: CGFloat = 168
 
     var body: some View {
-        if signedInLayout { signedInHeader } else { publicHeader }
-    }
-
-    private var signedInHeader: some View {
         VStack(alignment: .leading, spacing: 12) {
             ViewThatFits(in: .horizontal) {
                 inlineIdentity(avatarSize: 88)
@@ -64,28 +59,15 @@ struct OwnProfileHeader: View {
         }
     }
 
-    private var publicHeader: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(spacing: 12) {
-                avatar(size: 56)
-                VStack(alignment: .leading, spacing: 4) {
-                    name
-                    bio
-                }
-            }
-            counts
-        }
-    }
-
     @ViewBuilder
     private var counts: some View {
         if dynamicTypeSize.isAccessibilitySize {
             countsGrid
         } else {
-            HStack(alignment: .top, spacing: signedInLayout ? 8 : 6) {
+            HStack(alignment: .top, spacing: 8) {
                 stat(.checkIns)
                 stat(.shops)
-                if !signedInLayout || identity.roasters > 0 { stat(.roasters) }
+                if identity.roasters > 0 { stat(.roasters) }
                 stat(.followers)
             }
         }
@@ -98,7 +80,7 @@ struct OwnProfileHeader: View {
                 stat(.shops)
             }
             HStack {
-                if !signedInLayout || identity.roasters > 0 { stat(.roasters) }
+                if identity.roasters > 0 { stat(.roasters) }
                 stat(.followers)
             }
         }
@@ -160,20 +142,18 @@ struct OwnProfileHeader: View {
     }
 
     private func statLabel(_ data: (count: Int32, key: String)) -> some View {
-        let compact = signedInLayout
-        return VStack(alignment: compact ? .leading : .center, spacing: 0) {
+        VStack(alignment: .leading, spacing: 0) {
             Text(data.count.formatted())
-                .font(CoffeePeekNativeStyle.font(compact ? 22 : 18, weight: "Semibold", relativeTo: .title2))
-                .lineLimit(compact ? 1 : nil)
+                .font(CoffeePeekNativeStyle.font(22, weight: "Semibold", relativeTo: .title2))
+                .lineLimit(1)
             Text(strings[data.key])
-                .font(CoffeePeekNativeStyle.font(compact ? 12 : 11, weight: "Medium", relativeTo: .caption))
+                .font(CoffeePeekNativeStyle.font(12, weight: "Medium", relativeTo: .caption))
                 .foregroundStyle(CoffeePeekNativeStyle.secondary)
-                .lineLimit(compact && !dynamicTypeSize.isAccessibilitySize ? 2 : nil)
+                .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 2)
                 .fixedSize(horizontal: false, vertical: true)
         }
-        .fixedSize(horizontal: !compact, vertical: false)
-        .padding(.vertical, compact ? 4 : 0)
-        .frame(maxWidth: .infinity, minHeight: 48, alignment: compact ? .leading : .center)
+        .padding(.vertical, 4)
+        .frame(maxWidth: .infinity, minHeight: 48, alignment: .leading)
     }
 
     private func statValue(_ kind: OwnProfileStat) -> (count: Int32, key: String) {
@@ -394,7 +374,7 @@ struct CoffeePeekPhotoPlaceholder: View {
 #Preview("Own profile header light") {
     OwnProfileHeader(identity: IosOwnProfileIdentity(name: "@CoffeePeek", about: "Кофе и прогулки", avatar: nil,
         checkIns: 13, shops: 4, roasters: 2, followers: 18, canOpenFollowers: true),
-        strings: OwnProfileStrings(languageTag: "ru"), profile: nil, select: { _ in }, signedInLayout: true)
+        strings: OwnProfileStrings(languageTag: "ru"), profile: nil, select: { _ in })
     .padding()
     .foregroundStyle(CoffeePeekNativeStyle.foreground)
     .background(CoffeePeekNativeStyle.background)
@@ -404,7 +384,7 @@ struct CoffeePeekPhotoPlaceholder: View {
 #Preview("Own profile header dark") {
     OwnProfileHeader(identity: IosOwnProfileIdentity(name: "@CoffeePeek", about: "Кава і прагулкі", avatar: nil,
         checkIns: 13, shops: 4, roasters: 2, followers: 18, canOpenFollowers: true),
-        strings: OwnProfileStrings(languageTag: "be"), profile: nil, select: { _ in }, signedInLayout: true)
+        strings: OwnProfileStrings(languageTag: "be"), profile: nil, select: { _ in })
     .padding()
     .foregroundStyle(CoffeePeekNativeStyle.foreground)
     .background(CoffeePeekNativeStyle.background)
@@ -414,7 +394,7 @@ struct CoffeePeekPhotoPlaceholder: View {
 #Preview("Profile statistics narrow light") {
     OwnProfileHeader(identity: IosOwnProfileIdentity(name: "@CoffeePeek", about: nil, avatar: nil,
         checkIns: 13, shops: 4, roasters: 0, followers: 18, canOpenFollowers: true),
-        strings: OwnProfileStrings(languageTag: "ru"), profile: nil, select: { _ in }, signedInLayout: true)
+        strings: OwnProfileStrings(languageTag: "ru"), profile: nil, select: { _ in })
         .padding(16).frame(width: 320)
         .foregroundStyle(CoffeePeekNativeStyle.foreground).background(CoffeePeekNativeStyle.background)
         .preferredColorScheme(.light)
@@ -423,10 +403,37 @@ struct CoffeePeekPhotoPlaceholder: View {
 #Preview("Profile statistics large dark") {
     OwnProfileHeader(identity: IosOwnProfileIdentity(name: "@CoffeePeek", about: nil, avatar: nil,
         checkIns: 13, shops: 4, roasters: 0, followers: 18, canOpenFollowers: true),
-        strings: OwnProfileStrings(languageTag: "be"), profile: nil, select: { _ in }, signedInLayout: true)
+        strings: OwnProfileStrings(languageTag: "be"), profile: nil, select: { _ in })
         .padding(16).frame(width: 320).dynamicTypeSize(.accessibility2)
         .foregroundStyle(CoffeePeekNativeStyle.foreground).background(CoffeePeekNativeStyle.background)
         .preferredColorScheme(.dark)
+}
+
+private func publicProfileHeaderPreview(languageTag: String, roasters: Int32) -> some View {
+    OwnProfileHeader(identity: IosOwnProfileIdentity(name: "@CoffeePeek", about: "Coffee · Кофе · Кава", avatar: nil,
+        checkIns: 1234, shops: 42, roasters: roasters, followers: 180, canOpenFollowers: true),
+        strings: OwnProfileStrings(languageTag: languageTag), profile: nil, select: { _ in },
+        enabled: { $0 == .followers })
+        .padding(16).frame(width: 320)
+        .foregroundStyle(CoffeePeekNativeStyle.foreground).background(CoffeePeekNativeStyle.background)
+}
+
+#Preview("Public profile header light") {
+    publicProfileHeaderPreview(languageTag: "ru", roasters: 2).preferredColorScheme(.light)
+}
+
+#Preview("Public profile header dark") {
+    publicProfileHeaderPreview(languageTag: "be", roasters: 0).preferredColorScheme(.dark)
+}
+
+#Preview("Public profile header large light") {
+    publicProfileHeaderPreview(languageTag: "ru", roasters: 0)
+        .dynamicTypeSize(.accessibility2).preferredColorScheme(.light)
+}
+
+#Preview("Public profile header large dark") {
+    publicProfileHeaderPreview(languageTag: "be", roasters: 2)
+        .dynamicTypeSize(.accessibility2).preferredColorScheme(.dark)
 }
 
 #Preview("Profile tabs light") {

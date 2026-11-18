@@ -70,3 +70,5 @@
 "shop_checkin_error_too_many_requests" = "Слишком много запросов. Попробуйте позже";
 "shop_checkin_photo_move_before" = "Переместить фото раньше";
 "shop_checkin_photo_move_after" = "Переместить фото позже";
+"coffeepeek_photos_manage_hint" = "Нажмите, чтобы посмотреть. Удерживайте и перетаскивайте, чтобы менять порядок.";
+"coffeepeek_photo_description" = "Фото %1$d из %2$d";

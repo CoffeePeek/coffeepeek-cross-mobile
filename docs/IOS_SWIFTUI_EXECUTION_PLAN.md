@@ -936,3 +936,38 @@ from each catalogue. Check that the cancel button shifts the focused field
 without losing keyboard focus, and that a roaster query updates roaster results.
 Verify markers, both safe areas, all chip icons, light/dark, and Reduce Motion.
 Kotlin Discovery intents and Android presentation are unchanged.
+
+Build 3216 from `af8475a06` passed the 120-file Swift typecheck,
+Discovery map-frame assertions, both native factory registration tests,
+and Android directDebug assembly with DEX and function-body validation.
+The first Swift check caught an implicit return in the search header; the
+explicit return compiled on retry. The Windows Swift runner took 3m25s.
+The app was signed with the cached development profile for iPhone15,4 and
+the signed archive was verified. The phone was unavailable over USB at the
+end of the review, so 3216 device rendering and animation remain pending.
+
+For the design comparison, Android API 37 `directSandbox` built and passed
+its packaged DEX check. The installed Sandbox version code was 37 and its
+certificate matched the local package before an in-place update. Manual
+dark-theme review on the CoffeePeek API 37 emulator covered Discovery,
+the add sheet, shop detail and menu, roaster detail and its photo viewer,
+and the shop check-in form and empty attachments. The fake record's menu
+has one photo and no price rows. The photo viewer opened one image from
+a two-photo roaster. The captures are local under ignored build/. The iOS
+comparison beyond Discovery used the active SwiftUI source; the fresh iOS
+build was unavailable for a side-by-side device review.
+
+### 2026-11-18 — Shop check-in photos, menu and public profile parity
+
+Use the active Android directSandbox rendering and Compose code for layout.
+Keep iOS photo selection and mutations in the existing shop editor and reuse
+the app's fullscreen SwiftUI viewer for its local attachments. Check the count,
+add/remove, preview from the tapped photo, complete or cancel reordering, and
+empty, preparing and full attachments. The home editor has a separate flow.
+
+Check menu prices and photo stack together, narrow and large-type layout,
+photo-only and price-only menus, date placement, paging and gallery entry.
+Keep profile avatar and follower navigation, responsive counts and existing
+profile data. Check the zero-roaster and long-label cases. Pair fake previews
+for light and dark appearance. Verify the Windows xcross build, Android
+directDebug/DEX, and manual device appearance when USB is available.

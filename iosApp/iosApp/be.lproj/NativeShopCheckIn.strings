@@ -70,3 +70,5 @@
 "shop_checkin_error_too_many_requests" = "Занадта шмат запытаў. Паспрабуйце пазней";
 "shop_checkin_photo_move_before" = "Перамясціць фота раней";
 "shop_checkin_photo_move_after" = "Перамясціць фота пазней";
+"coffeepeek_photos_manage_hint" = "Націсніце, каб паглядзець. Утрымлівайце і перацягвайце, каб змяняць парадак.";
+"coffeepeek_photo_description" = "Фота %1$d з %2$d";
