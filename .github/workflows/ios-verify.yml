@@ -194,12 +194,12 @@ jobs:
             --tests 'com.coffeepeek.admin.di.auth.IosCheckInAuthFlowTest' \
             --tests 'com.coffeepeek.admin.di.profile.IosProfileCompositionTest' \
             --tests 'com.coffeepeek.admin.di.settings.IosThemeSettingsTest' \
-            --tests 'com.coffeepeek.admin.di.roaster.IosRoasterLifetimeTest' \
             --tests 'com.coffeepeek.admin.di.system.IosRootModalsTest' \
             --tests 'com.coffeepeek.admin.di.coffee.IosCoffeeDetailAnalyticsTest' \
             --tests 'com.coffeepeek.admin.di.media.IosPhotoViewerTest' \
             --tests 'com.coffeepeek.admin.di.media.IosCatalogueMediaTest' \
             --tests 'com.coffeepeek.admin.ui.RootNavigationSessionTest' \
+            --tests 'com.coffeepeek.admin.di.roaster.IosRoasterLifetimeTest' \
             --tests 'com.coffeepeek.admin.di.shopreport.IosShopReportTest' \
             --tests 'com.coffeepeek.admin.di.contentreport.IosContentReportTest' \
             --tests 'com.coffeepeek.admin.di.settings.IosSettingsScreensTest' \
@@ -334,6 +334,8 @@ jobs:
             composeApp/build/test-results/iosSimulatorArm64Test/
             ${{ runner.temp }}/ios-shop-menu-gallery-tests.log
             feature/shop/impl/build/test-results/iosSimulatorArm64Test/
+            ${{ runner.temp }}/ios-roaster-tests.log
+            feature/roaster/impl/build/test-results/iosSimulatorArm64Test/
             ${{ runner.temp }}/ios-coffee-detail-tests.log
             feature/coffee/impl/build/test-results/iosSimulatorArm64Test/
             ${{ runner.temp }}/ios-notification-inbox-tests.log
@@ -342,8 +344,6 @@ jobs:
             feature/discovery/impl/build/test-results/iosSimulatorArm64Test/
             ${{ runner.temp }}/ios-own-profile-tests.log
             feature/profile/impl/build/test-results/iosSimulatorArm64Test/
-              ${{ runner.temp }}/ios-roaster-tests.log
-              feature/roaster/impl/build/test-results/iosSimulatorArm64Test/
             feature/check-in-history/impl/build/test-results/iosSimulatorArm64Test/
             ${{ runner.temp }}/ios-auth-tests.log
             feature/auth/impl/build/test-results/iosSimulatorArm64Test/

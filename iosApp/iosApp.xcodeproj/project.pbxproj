@@ -7,6 +7,11 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		CDC4E218272AEBD62CCBD0CF /* RoasterNativeController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 181460E0F1C39DE0D1DA1098 /* RoasterNativeController.swift */; };
+		8E9C5C56A4E3BE2852ED1CB6 /* RoasterNativeCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2645A333FA079F94D28AE329 /* RoasterNativeCard.swift */; };
+		FF51FDC39D4F328BFC814202 /* RoasterDiscoveryNativeScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC82D22A61C951409CB48B98 /* RoasterDiscoveryNativeScreen.swift */; };
+		8AF230A9B8B8789A2F1F28A1 /* RoasterDetailNativeScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C7A4C6E1544B2E0FA845DA9 /* RoasterDetailNativeScreen.swift */; };
+		6878214BAD9DFB393A3514C0 /* NativeRoaster.strings in Resources */ = {isa = PBXBuildFile; fileRef = 9EFAA51590745D5526C255B5 /* NativeRoaster.strings */; };
 		E10F17E50000000000000001 /* DiscoveryFilterSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10F17E50000000000000002 /* DiscoveryFilterSheet.swift */; };
 		5C13B3110000000000000001 /* ShopCheckInListScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C13B3110000000000000004 /* ShopCheckInListScreen.swift */; };
 		5C13B3110000000000000002 /* ShopCheckInListComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C13B3110000000000000005 /* ShopCheckInListComponents.swift */; };
@@ -109,11 +114,6 @@
 		DAD5EF785C5BAC5D9F65C43E /* CommunityFeedNativeScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 803179B19B045FF27D2D5353 /* CommunityFeedNativeScreen.swift */; };
 		15E615F307B4D33226886FF1 /* CommunityFeedNativeRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30DB789D6C7E79AAEB5B487B /* CommunityFeedNativeRow.swift */; };
 		91B28778B1017172858BC88D /* CommunityFeedNativeStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = C59BA6BB01B30CC9D1704EA3 /* CommunityFeedNativeStatus.swift */; };
-		CDC4E218272AEBD62CCBD0CF /* RoasterNativeController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 181460E0F1C39DE0D1DA1098 /* RoasterNativeController.swift */; };
-		8E9C5C56A4E3BE2852ED1CB6 /* RoasterNativeCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2645A333FA079F94D28AE329 /* RoasterNativeCard.swift */; };
-		FF51FDC39D4F328BFC814202 /* RoasterDiscoveryNativeScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC82D22A61C951409CB48B98 /* RoasterDiscoveryNativeScreen.swift */; };
-		8AF230A9B8B8789A2F1F28A1 /* RoasterDetailNativeScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C7A4C6E1544B2E0FA845DA9 /* RoasterDetailNativeScreen.swift */; };
-		6878214BAD9DFB393A3514C0 /* NativeRoaster.strings in Resources */ = {isa = PBXBuildFile; fileRef = 9EFAA51590745D5526C255B5 /* NativeRoaster.strings */; };
 		13E1EB359E1732420F69CBB7 /* CoffeePeekNativeActionButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = CAE1B6D000F4B0D99EB77976 /* CoffeePeekNativeActionButton.swift */; };
 		5EB38D9D1A59581550BCF75A /* AccountDeletionNativeScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = E562C8937159452DC6C0A077 /* AccountDeletionNativeScreen.swift */; };
 		45F8E39BC34FFD6CDC34298B /* RootModalNativeController.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC42BBFED62CCD1752E8C839 /* RootModalNativeController.swift */; };
@@ -125,6 +125,12 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		181460E0F1C39DE0D1DA1098 /* RoasterNativeController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = RoasterNativeController.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/RoasterNativeController.swift; sourceTree = "<group>"; };
+		2645A333FA079F94D28AE329 /* RoasterNativeCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = RoasterNativeCard.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/RoasterNativeCard.swift; sourceTree = "<group>"; };
+		AC82D22A61C951409CB48B98 /* RoasterDiscoveryNativeScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = RoasterDiscoveryNativeScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/RoasterDiscoveryNativeScreen.swift; sourceTree = "<group>"; };
+		2C7A4C6E1544B2E0FA845DA9 /* RoasterDetailNativeScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = RoasterDetailNativeScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/RoasterDetailNativeScreen.swift; sourceTree = "<group>"; };
+		7358E39742738F1AF7508555 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/NativeRoaster.strings; sourceTree = "<group>"; };
+		93392B65F66B89565E0DF9D8 /* be */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = be; path = be.lproj/NativeRoaster.strings; sourceTree = "<group>"; };
 		E10F17E50000000000000002 /* DiscoveryFilterSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = DiscoveryFilterSheet.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/DiscoveryFilterSheet.swift; sourceTree = "<group>"; };
 		5C13B3110000000000000004 /* ShopCheckInListScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ShopCheckInListScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/ShopCheckInListScreen.swift; sourceTree = "<group>"; };
 		5C13B3110000000000000005 /* ShopCheckInListComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ShopCheckInListComponents.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/ShopCheckInListComponents.swift; sourceTree = "<group>"; };
@@ -252,12 +258,6 @@
 		803179B19B045FF27D2D5353 /* CommunityFeedNativeScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CommunityFeedNativeScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CommunityFeedNativeScreen.swift; sourceTree = "<group>"; };
 		30DB789D6C7E79AAEB5B487B /* CommunityFeedNativeRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CommunityFeedNativeRow.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CommunityFeedNativeRow.swift; sourceTree = "<group>"; };
 		C59BA6BB01B30CC9D1704EA3 /* CommunityFeedNativeStatus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CommunityFeedNativeStatus.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CommunityFeedNativeStatus.swift; sourceTree = "<group>"; };
-		181460E0F1C39DE0D1DA1098 /* RoasterNativeController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = RoasterNativeController.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/RoasterNativeController.swift; sourceTree = "<group>"; };
-		2645A333FA079F94D28AE329 /* RoasterNativeCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = RoasterNativeCard.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/RoasterNativeCard.swift; sourceTree = "<group>"; };
-		AC82D22A61C951409CB48B98 /* RoasterDiscoveryNativeScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = RoasterDiscoveryNativeScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/RoasterDiscoveryNativeScreen.swift; sourceTree = "<group>"; };
-		2C7A4C6E1544B2E0FA845DA9 /* RoasterDetailNativeScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = RoasterDetailNativeScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/RoasterDetailNativeScreen.swift; sourceTree = "<group>"; };
-		7358E39742738F1AF7508555 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/NativeRoaster.strings; sourceTree = "<group>"; };
-		93392B65F66B89565E0DF9D8 /* be */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = be; path = be.lproj/NativeRoaster.strings; sourceTree = "<group>"; };
 		CAE1B6D000F4B0D99EB77976 /* CoffeePeekNativeActionButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CoffeePeekNativeActionButton.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CoffeePeekNativeActionButton.swift; sourceTree = "<group>"; };
 		E562C8937159452DC6C0A077 /* AccountDeletionNativeScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AccountDeletionNativeScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/AccountDeletionNativeScreen.swift; sourceTree = "<group>"; };
 		CC42BBFED62CCD1752E8C839 /* RootModalNativeController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = RootModalNativeController.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/RootModalNativeController.swift; sourceTree = "<group>"; };
@@ -376,6 +376,11 @@
 				A20000000000000000000014 /* CoffeePeekNativeGlass.swift */,
 				A20000000000000000000013 /* ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CoffeePeekLaunchView.swift */,
 				A20000000000000000000011 /* ../../iosXtool/CoffeePeek/Sources/CoffeePeek/SocialSignInProvider.swift */,
+				181460E0F1C39DE0D1DA1098 /* RoasterNativeController.swift */,
+				2645A333FA079F94D28AE329 /* RoasterNativeCard.swift */,
+				AC82D22A61C951409CB48B98 /* RoasterDiscoveryNativeScreen.swift */,
+				2C7A4C6E1544B2E0FA845DA9 /* RoasterDetailNativeScreen.swift */,
+				9EFAA51590745D5526C255B5 /* NativeRoaster.strings */,
 				A6C011E60000000000000003 /* ShopMenuGalleryScreen.swift */,
 				F07A11400000000000000003 /* CoffeePeekNativePhotoViewer.swift */,
 				F07A11400000000000000006 /* NativePhotoViewer.strings */,
@@ -398,11 +403,6 @@
 				A0871E7C000000000000000C /* NativeOwnProfile.strings */,
 				817EAB94000000000000000C /* NativePublicProfile.strings */,
 				53E771650000000000000010 /* SettingsNative.strings */,
-				181460E0F1C39DE0D1DA1098 /* RoasterNativeController.swift */,
-				2645A333FA079F94D28AE329 /* RoasterNativeCard.swift */,
-				AC82D22A61C951409CB48B98 /* RoasterDiscoveryNativeScreen.swift */,
-				2C7A4C6E1544B2E0FA845DA9 /* RoasterDetailNativeScreen.swift */,
-				9EFAA51590745D5526C255B5 /* NativeRoaster.strings */,
 				CAE1B6D000F4B0D99EB77976 /* CoffeePeekNativeActionButton.swift */,
 				E562C8937159452DC6C0A077 /* AccountDeletionNativeScreen.swift */,
 				CC42BBFED62CCD1752E8C839 /* RootModalNativeController.swift */,
@@ -518,7 +518,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				6878214BAD9DFB393A3514C0 /* NativeRoaster.strings in Resources */,
 				C13FD4859C40AAE420E7E0FC /* NativeAppUpdate.strings in Resources */,
 				5C55A1F6A4F5DFB3DE7EDF5B /* NativeGuestOnboarding.strings in Resources */,
 				9F65437D1B4E3D385CB36601 /* NativeAccountDeletion.strings in Resources */,
@@ -534,6 +533,7 @@
 				A212BDBD9C4E88828A595102 /* NativeHomeCheckIn.strings in Resources */,
 				0543AA17535E355866739201 /* NativeShopCheckIn.strings in Resources */,
 				4E059EBD0B5D4EC1818F5821 /* NativeEditProfile.strings in Resources */,
+				6878214BAD9DFB393A3514C0 /* NativeRoaster.strings in Resources */,
 				A0871E7C0000000000000009 /* NativeOwnProfile.strings in Resources */,
 				817EAB940000000000000009 /* NativePublicProfile.strings in Resources */,
 				B30000000000000000000002 /* ShopReport.strings in Resources */,
@@ -610,10 +610,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				8AF230A9B8B8789A2F1F28A1 /* RoasterDetailNativeScreen.swift in Sources */,
-				FF51FDC39D4F328BFC814202 /* RoasterDiscoveryNativeScreen.swift in Sources */,
-				8E9C5C56A4E3BE2852ED1CB6 /* RoasterNativeCard.swift in Sources */,
-				CDC4E218272AEBD62CCBD0CF /* RoasterNativeController.swift in Sources */,
 				0AA13B21D6BCD94E8B05BD6E /* AppUpdateNativeScreen.swift in Sources */,
 				1AFFB44C0CA1DABC7CE94803 /* GuestOnboardingNativeScreen.swift in Sources */,
 				45F8E39BC34FFD6CDC34298B /* RootModalNativeController.swift in Sources */,
@@ -666,6 +662,10 @@
 				F07A11400000000000000001 /* CoffeePeekNativePhotoViewer.swift in Sources */,
 				5C13B3110000000000000001 /* ShopCheckInListScreen.swift in Sources */,
 				5C13B3110000000000000002 /* ShopCheckInListComponents.swift in Sources */,
+				8AF230A9B8B8789A2F1F28A1 /* RoasterDetailNativeScreen.swift in Sources */,
+				FF51FDC39D4F328BFC814202 /* RoasterDiscoveryNativeScreen.swift in Sources */,
+				8E9C5C56A4E3BE2852ED1CB6 /* RoasterNativeCard.swift in Sources */,
+				CDC4E218272AEBD62CCBD0CF /* RoasterNativeController.swift in Sources */,
 				A10000000000000000000015 /* ThemeSettingsScreen.swift in Sources */,
 				B30000000000000000000001 /* ShopReportScreen.swift in Sources */,
 				C0FFEE500000000000000001 /* CoffeeDetailScreen.swift in Sources */,
@@ -697,6 +697,23 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXVariantGroup section */
+		9EFAA51590745D5526C255B5 /* NativeRoaster.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				7358E39742738F1AF7508555 /* ru */,
+				93392B65F66B89565E0DF9D8 /* be */,
+			);
+			name = NativeRoaster.strings;
+		29AA5120F89FEC550C685CBE /* NativeAccountDeletion.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				D47404F9E2F7C880C6AFDCA0 /* ru */,
+				07C3A68E7563BFECB15E5D10 /* be */,
+			);
+			name = NativeAccountDeletion.strings;
+			sourceTree = "<group>";
+		};
+
 		5C13B3110000000000000008 /* NativeShopCheckIns.strings */ = {
 			isa = PBXVariantGroup;
 			children = (
@@ -904,22 +921,6 @@
             name = NativeEditProfile.strings;
             sourceTree = "<group>";
         };
-		9EFAA51590745D5526C255B5 /* NativeRoaster.strings */ = {
-			isa = PBXVariantGroup;
-			children = (
-				7358E39742738F1AF7508555 /* ru */,
-				93392B65F66B89565E0DF9D8 /* be */,
-			);
-			name = NativeRoaster.strings;
-		29AA5120F89FEC550C685CBE /* NativeAccountDeletion.strings */ = {
-			isa = PBXVariantGroup;
-			children = (
-				D47404F9E2F7C880C6AFDCA0 /* ru */,
-				07C3A68E7563BFECB15E5D10 /* be */,
-			);
-			name = NativeAccountDeletion.strings;
-			sourceTree = "<group>";
-		};
 		C94B40E17EA121EFC3D9632D /* NativeGuestOnboarding.strings */ = {
 			isa = PBXVariantGroup;
 			children = (

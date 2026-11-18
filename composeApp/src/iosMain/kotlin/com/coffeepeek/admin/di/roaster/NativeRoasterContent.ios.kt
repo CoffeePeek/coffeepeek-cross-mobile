@@ -29,7 +29,9 @@ import org.koin.compose.koinInject
 import platform.UIKit.UIViewController
 
 private lateinit var roasterController: (IosRoasterScreen) -> UIViewController
-internal fun configureNativeRoasters(factory: (IosRoasterScreen) -> UIViewController) { roasterController = factory }
+object IosRoasterControllers {
+    fun configure(factory: (IosRoasterScreen) -> UIViewController) { roasterController = factory }
+}
 
 internal actual fun nativeRoasterDiscoveryContent(): NativeRoasterDiscoveryContent? = { session, host ->
     RoasterDiscoveryNativeContent(session, host)
