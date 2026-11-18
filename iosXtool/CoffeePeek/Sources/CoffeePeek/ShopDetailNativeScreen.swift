@@ -54,7 +54,7 @@ struct ShopDetailNativeScreen: View {
             LazyVStack(alignment: .leading, spacing: 16) {
                 hero(details)
                 stats(details).padding(.horizontal, 16)
-                if state.loading { ProgressView(text("refreshing")).frame(maxWidth: .infinity) }
+                if state.loading { CoffeePeekNativeLoader(label: text("refreshing")).frame(maxWidth: .infinity) }
                 if state.failed { recovery }
                 ShopDetailNativeInformation(details: details, scheduleExpanded: state.scheduleExpanded,
                     featuresExpanded: state.featuresExpanded, labels: state.labels, actions: actions)
@@ -106,6 +106,17 @@ struct ShopDetailNativeScreen: View {
     }
 
     private func heroIdentity(_ details: IosShopDetails) -> some View {
+        let layout = dynamicTypeSize.isAccessibilitySize
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 12))
+            : AnyLayout(HStackLayout(alignment: .bottom, spacing: 12))
+        return layout {
+            heroNameAddress(details)
+            ShopHeroPhotoMetadata(kind: details.kind, position: details.photos.count > 1
+                ? "\(min(selectedPhoto, details.photos.count - 1) + 1) / \(details.photos.count)" : nil)
+        }.foregroundStyle(.white).padding(16).padding(.top, topInset + 60)
+    }
+
+    private func heroNameAddress(_ details: IosShopDetails) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(details.title).font(CoffeePeekNativeStyle.font(28, weight: "Bold", relativeTo: .title)).lineLimit(3)
                 .accessibilityAddTraits(.isHeader)
@@ -115,12 +126,7 @@ struct ShopDetailNativeScreen: View {
             } else if details.canRoute {
                 Button(text("map")) { actions.call("map") }
             }
-            HStack {
-                Text(details.kind).font(CoffeePeekNativeStyle.font(11, weight: "Bold"))
-                Spacer()
-                if details.photos.count > 1 { Text("\(min(selectedPhoto, details.photos.count - 1) + 1) / \(details.photos.count)") }
-            }.font(CoffeePeekNativeStyle.font(12))
-        }.foregroundStyle(.white).padding(16).padding(.top, topInset + 60)
+        }.frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private var toolbar: some View {
@@ -128,10 +134,13 @@ struct ShopDetailNativeScreen: View {
             back
             Spacer(minLength: 0)
             Button { actions.call("favorite") } label: {
-                Group {
-                    if state.favoriteBusy { ProgressView() }
-                    else { Image(systemName: state.favoriteSelection ? "bookmark" : state.favorite ? "heart.fill" : "heart") }
-                }.font(.system(size: 21)).foregroundStyle(state.favorite ? CoffeePeekNativeStyle.accent : CoffeePeekNativeStyle.foreground)
+                ZStack {
+                    CoffeePeekLikeIcon(selected: state.favorite, isLoading: state.favoriteBusy)
+                        .opacity(state.favoriteBusy ? 0 : 1)
+                    if state.favoriteBusy {
+                        CoffeePeekNativeLoader(label: text("loading")).scaleEffect(0.55).accessibilityHidden(true)
+                    }
+                }
                     .frame(width: 48, height: 48).contentShape(Circle())
             }.buttonStyle(.plain).shopDetailGlassCircle().disabled(!state.favoriteEnabled || state.favoriteBusy)
                 .accessibilityLabel(state.favoriteLabel).shopDetailExposure("Favorite", id: "favorite")
@@ -195,7 +204,7 @@ struct ShopDetailNativeScreen: View {
 
     private var status: some View {
         VStack(spacing: 16) {
-            if state.loading { ProgressView(text("loading")) }
+            if state.loading { CoffeePeekNativeLoader(label: text("loading")) }
             else { Text(text("error")).font(CoffeePeekNativeStyle.font(20, weight: "SemiBold")); recovery }
         }.padding(24).frame(maxWidth: .infinity, maxHeight: .infinity)
     }
@@ -292,6 +301,32 @@ struct ShopDetailNativeScreen: View {
             Spacer(minLength: 0)
         }.padding(20).background(CoffeePeekNativeStyle.surface).foregroundStyle(CoffeePeekNativeStyle.foreground)
     }
+}
+
+private struct ShopHeroPhotoMetadata: View {
+    let kind: String
+    let position: String?
+
+    var body: some View {
+        VStack(alignment: .trailing, spacing: 8) {
+            Text(kind).font(CoffeePeekNativeStyle.font(11, weight: "Bold", relativeTo: .caption2))
+                .foregroundStyle(CoffeePeekNativeStyle.accent)
+                .multilineTextAlignment(.trailing)
+                .padding(.horizontal, 10).padding(.vertical, 6)
+                .background(.black.opacity(0.3), in: Capsule())
+                .overlay { Capsule().strokeBorder(CoffeePeekNativeStyle.accent, lineWidth: 1) }
+            if let position {
+                Text(position).font(CoffeePeekNativeStyle.font(12, relativeTo: .caption)).foregroundStyle(.white)
+            }
+        }
+    }
+}
+
+#Preview("Shop hero badge light") {
+    ShopHeroPhotoMetadata(kind: "SPECIALTY", position: "1 / 4").padding().background(.gray).preferredColorScheme(.light)
+}
+#Preview("Shop hero badge dark") {
+    ShopHeroPhotoMetadata(kind: "SPECIALTY", position: "1 / 4").padding().background(.black).preferredColorScheme(.dark)
 }
 
 struct ShopDetailExposureFrame: Equatable { let feature: String; let rect: CGRect }

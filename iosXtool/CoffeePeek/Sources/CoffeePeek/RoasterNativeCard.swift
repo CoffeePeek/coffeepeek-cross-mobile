@@ -43,8 +43,7 @@ struct RoasterNativeCard: View {
 
     private var favorite: some View {
         Button { if let slug = card.slug { source?.favorite(slug: slug) } } label: {
-            Image(systemName: card.favorite ? "heart.fill" : "heart").frame(width: 44, height: 44)
-                .foregroundStyle(card.favorite ? CoffeePeekNativeStyle.accent : CoffeePeekNativeStyle.foreground)
+            CoffeePeekLikeIcon(selected: card.favorite).frame(width: 44, height: 44)
         }
         .buttonStyle(.plain).disabled(card.slug == nil)
         .accessibilityLabel(strings[card.favorite ? "roaster_favorite_remove" : "roaster_favorite_add"])

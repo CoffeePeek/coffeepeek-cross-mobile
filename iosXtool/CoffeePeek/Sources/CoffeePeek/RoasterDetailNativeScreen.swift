@@ -71,7 +71,7 @@ struct RoasterDetailNativeScreen: View {
             VStack(alignment: .leading, spacing: 20) {
                 if !state.active { Color.clear }
                 else if let name = state.name { content(name) }
-                else if state.loading { ProgressView(strings["roaster_loading"]).frame(maxWidth: .infinity, minHeight: 180) }
+                else if state.loading { CoffeePeekNativeLoader(label: strings["roaster_loading"]).frame(maxWidth: .infinity, minHeight: 180) }
                 else { failure }
             }.padding(.bottom, 24)
         }
@@ -93,8 +93,7 @@ struct RoasterDetailNativeScreen: View {
             Spacer()
             if state.id != nil && state.active {
                 Button { source?.favorite() } label: {
-                    Image(systemName: state.favorite ? "heart.fill" : "heart").frame(width: 48, height: 48)
-                        .foregroundStyle(state.favorite ? CoffeePeekNativeStyle.accent : CoffeePeekNativeStyle.foreground)
+                    CoffeePeekLikeIcon(selected: state.favorite).frame(width: 48, height: 48)
                 }
                 .shopDetailGlassCircle()
                 .accessibilityLabel(strings[state.favorite ? "roaster_favorite_remove" : "roaster_favorite_add"])

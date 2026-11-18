@@ -299,8 +299,7 @@ private struct ShopCheckInHelpfulLabel: View {
 
     var body: some View {
         HStack(spacing: 6) {
-            Image(systemName: selected ? "heart.fill" : "heart")
-                .foregroundStyle(selected ? CoffeePeekNativeStyle.accent : CoffeePeekNativeStyle.foreground)
+            CoffeePeekLikeIcon(selected: selected)
             Text(count.formatted()).foregroundStyle(CoffeePeekNativeStyle.foreground)
         }
     }

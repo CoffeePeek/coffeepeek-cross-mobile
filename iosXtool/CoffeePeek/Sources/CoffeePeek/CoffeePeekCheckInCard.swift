@@ -157,8 +157,7 @@ struct CoffeePeekCheckInCard: View {
             if let count = data.likes {
                 actionable("like", label: data.likesLabel) {
                     HStack(spacing: 4) {
-                        Image(systemName: data.liked ? "heart.fill" : "heart").font(.system(size: 24))
-                            .foregroundStyle(data.liked ? CoffeePeekNativeStyle.accent : CoffeePeekNativeStyle.foreground)
+                        CoffeePeekLikeIcon(selected: data.liked)
                         Text(count.formatted()).font(CoffeePeekNativeStyle.font(15)).foregroundStyle(CoffeePeekNativeStyle.foreground)
                     }.frame(minWidth: 48, minHeight: 48, alignment: .leading)
                 }.accessibilityLabel(data.likesLabel).accessibilityAddTraits(data.liked ? .isSelected : [])

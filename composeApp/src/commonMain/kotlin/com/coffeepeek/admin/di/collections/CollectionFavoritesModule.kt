@@ -7,10 +7,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import org.koin.dsl.module
 
-/** Android shows the collection sheet after a roaster heart; iOS keeps the plain writer bound in the root graph. */
-internal fun androidCollectionFavoritesModule() = module {
+/** Both platforms route shop and roaster hearts through the same membership picker. */
+internal fun collectionFavoritesModule() = module {
     single { CollectionPickerRequests(get(), CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)) }
     single<CollectionPickerPrompts> { get<CollectionPickerRequests>() }
-    single<FavoriteCollectionsPrompt> { AndroidFavoriteCollectionsPrompt(get()) }
+    single<FavoriteCollectionsPrompt> { CollectionFavoritesPrompt(get()) }
     single<RoasterFavorites> { CollectionPromptRoasterFavorites(ServerRoasterFavorites(get(), get(), get()), get(), get()) }
 }

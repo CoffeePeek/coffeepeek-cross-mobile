@@ -35,7 +35,7 @@ struct DiscoveryMapControls: View {
             mapActions(centeredZoom: centeredZoom)
             selection
         }
-        .padding(.bottom, 10)
+        .padding(.bottom, 4)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
@@ -51,7 +51,11 @@ struct DiscoveryMapControls: View {
             if !centeredZoom { zoomControls }
             control("flame", label: text(state.heatmapVisible ? "heatmap-hide" : "heatmap"),
                 action: "heatmap", selected: state.heatmapVisible)
-                .overlay { if state.heatmapLoading { ProgressView().controlSize(.mini) } }
+                .overlay {
+                    if state.heatmapLoading {
+                        CoffeePeekNativeLoader(label: text("loading")).scaleEffect(0.55).allowsHitTesting(false)
+                    }
+                }
             control("square.3.layers.3d", label: text(state.zonesVisible ? "zones-hide" : "zones-show"),
                 action: "zones", selected: state.zonesVisible)
             control("location", label: text("location"), action: "location")
@@ -63,7 +67,7 @@ struct DiscoveryMapControls: View {
     private var suggestions: some View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: 0) {
-                if state.searchLoading { ProgressView(text("loading")).padding(12) }
+                if state.searchLoading { CoffeePeekNativeLoader(label: text("loading")).padding(12) }
                 if state.searchFailed { Text(text("map-search-failed")).padding(12) }
                 if !state.searchLoading && !state.searchFailed && state.suggestions.isEmpty {
                     Text(text("map-search-empty")).padding(12)
@@ -110,7 +114,7 @@ struct DiscoveryMapControls: View {
         Button { actions.call(action) } label: {
             Image(systemName: symbol).font(.system(size: 20))
                 .foregroundStyle(selected ? CoffeePeekNativeStyle.accent : CoffeePeekNativeStyle.foreground)
-                .frame(width: 48, height: 48).background(.regularMaterial, in: Circle())
+                .frame(width: 48, height: 48).discoveryGlass(in: Circle(), selected: selected)
         }.buttonStyle(.plain).accessibilityLabel(label).accessibilityAddTraits(selected ? .isSelected : [])
     }
 }
@@ -131,10 +135,12 @@ private struct DiscoveryMapCarousel: View {
                 let shop = shops[index % shops.count]
                 DiscoveryShopCard(shop: shop, picker: false, compact: true, labels: labels, actions: actions,
                     action: shop.id == selectedId ? "map-open" : "map-select")
-                    .padding(.horizontal, 20).tag(index)
+                    .padding(.horizontal, 20)
+                    .frame(maxHeight: .infinity, alignment: .bottom)
+                    .tag(index)
             }
         }
-        .tabViewStyle(.page(indexDisplayMode: .never)).frame(height: dynamicTypeSize.isAccessibilitySize ? 240 : 126)
+        .tabViewStyle(.page(indexDisplayMode: .never)).frame(height: dynamicTypeSize.isAccessibilitySize ? 240 : 104)
         .onAppear {
             page = (shops.count > 1 ? shops.count : 0) + (shops.firstIndex { $0.id == selectedId } ?? 0)
             DispatchQueue.main.async { initialized = true }
@@ -154,6 +160,19 @@ private struct DiscoveryMapCarousel: View {
         .onChange(of: selectedId) { _, id in
             guard let index = shops.firstIndex(where: { $0.id == id }), page % shops.count != index else { return }
             withAnimation { page = (shops.count > 1 ? shops.count : 0) + index }
+        }
+    }
+}
+
+extension View {
+    @ViewBuilder
+    func discoveryGlass<S: Shape>(in shape: S, selected: Bool = false) -> some View {
+        if #available(iOS 26.0, *) {
+            let glass: Glass = selected ? .regular.tint(CoffeePeekNativeStyle.accent.opacity(0.45)) : .regular
+            self.glassEffect(glass.interactive(), in: shape)
+        } else {
+            self.background(.regularMaterial, in: shape)
+                .overlay { if selected { shape.stroke(CoffeePeekNativeStyle.accent, lineWidth: 1).allowsHitTesting(false) } }
         }
     }
 }

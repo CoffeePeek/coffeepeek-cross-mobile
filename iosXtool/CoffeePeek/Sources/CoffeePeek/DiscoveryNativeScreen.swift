@@ -7,6 +7,7 @@ struct DiscoveryNativeScreen: View {
     let map: AnyView
     let roasters: (Bool) -> AnyView
     @FocusState private var queryFocused: Bool
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var resultsFrame: CGRect = .zero
     @State private var tailVisible = false
     @GestureState private var listDragging = false
@@ -20,18 +21,26 @@ struct DiscoveryNativeScreen: View {
                 if state.mapExpanded {
                     map.frame(maxWidth: .infinity, maxHeight: .infinity)
                         .ignoresSafeArea(.container, edges: .vertical)
+                        .transition(.asymmetric(insertion: modeTransition, removal: .identity))
                         .zIndex(1)
                 }
                 mainContent.simultaneousGesture(listDrag)
                     .opacity(state.mapExpanded || state.roastersExpanded ? 0 : 1)
                     .allowsHitTesting(!state.mapExpanded && !state.roastersExpanded)
                     .accessibilityHidden(state.mapExpanded || state.roastersExpanded)
-                if state.mapExpanded { expandedMap.zIndex(2) }
-                if state.roastersExpanded { roasters(true).zIndex(2) }
+                if state.mapExpanded { expandedMap.transition(modeTransition).zIndex(2) }
+                if state.roastersExpanded {
+                    roasters(true).frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                        .background(CoffeePeekNativeStyle.background)
+                        .transition(reduceMotion ? .identity : .move(edge: .trailing).combined(with: .opacity))
+                        .zIndex(2)
+                }
                 if showsContinueCheckIn { continueCheckIn.zIndex(2) }
                 notices.zIndex(3)
             }
             .frame(width: geometry.size.width, height: geometry.size.height, alignment: .topLeading)
+            .animation(modeAnimation, value: state.mapExpanded)
+            .animation(modeAnimation, value: state.roastersExpanded)
             .coordinateSpace(name: "discovery")
             .onPreferenceChange(DiscoveryResultsFrame.self) { resultsFrame = $0 }
             .onPreferenceChange(DiscoveryExposureFrames.self) { frames in
@@ -68,12 +77,15 @@ struct DiscoveryNativeScreen: View {
         .onDisappear { for feature in exposed { actions.visible(feature, false) } }
     }
 
+    private var modeAnimation: Animation? { reduceMotion ? nil : .easeInOut(duration: 0.26) }
+    private var modeTransition: AnyTransition { reduceMotion ? .identity : .opacity }
+
     private var mainContent: some View {
         VStack(spacing: 12) {
             VStack(spacing: 12) {
                 if state.picker { pickerHeader }
                 searchHeader(expanded: false)
-                chips
+                chips(expanded: false)
             }.padding(.top, 12).padding(.bottom, 4).background(CoffeePeekNativeStyle.background)
             results
         }
@@ -95,7 +107,7 @@ struct DiscoveryNativeScreen: View {
     private func searchHeader(expanded: Bool) -> some View {
         HStack(spacing: 8) {
             if expanded || (!state.landing && !state.picker) {
-                icon(expanded ? "xmark" : "chevron.left", label: text(expanded ? "collapse-map" : "cancel")) {
+                icon(expanded ? "xmark" : "chevron.left", label: text(expanded ? "collapse-map" : "cancel"), glass: expanded) {
                     queryFocused = false
                     actions.call(expanded ? "map" : "cancel")
                 }
@@ -105,16 +117,20 @@ struct DiscoveryNativeScreen: View {
         }.padding(.horizontal, 16)
     }
 
-    private func searchField(expanded: Bool) -> some View {
-        HStack(spacing: 8) {
+    @ViewBuilder private func searchField(expanded: Bool) -> some View {
+        let field = HStack(spacing: 8) {
             Image(systemName: "magnifyingglass").foregroundStyle(CoffeePeekNativeStyle.secondary)
             searchInput
             if !state.query.isEmpty { clearSearch }
         }
         .padding(.horizontal, 12).frame(minHeight: 48)
-        .background(CoffeePeekNativeStyle.surface, in: Capsule())
-        .overlay { Capsule().strokeBorder(CoffeePeekNativeStyle.border, lineWidth: 1) }
         .discoveryExposure("search", id: expanded ? "search-map" : "search-list")
+        if expanded {
+            field.discoveryGlass(in: Capsule())
+        } else {
+            field.background(CoffeePeekNativeStyle.surface, in: Capsule())
+                .overlay { Capsule().strokeBorder(CoffeePeekNativeStyle.border, lineWidth: 1).allowsHitTesting(false) }
+        }
     }
 
     private var searchInput: some View {
@@ -130,7 +146,7 @@ struct DiscoveryNativeScreen: View {
     }
 
     private func filterButton(expanded: Bool) -> some View {
-        icon("slider.horizontal.3", label: text("filters")) {
+        icon("slider.horizontal.3", label: text("filters"), glass: expanded) {
             queryFocused = false
             actions.call("filters")
         }
@@ -145,17 +161,17 @@ struct DiscoveryNativeScreen: View {
         }
     }
 
-    private var chips: some View {
+    private func chips(expanded: Bool) -> some View {
         ScrollView(.horizontal) {
             HStack(spacing: 8) {
                 if state.picker {
-                    chip(text("nearby"), selected: state.chips.first?.selected == true) { actions.call("nearby") }
-                    chip(text(state.mapExpanded ? "list" : "map"), selected: state.mapExpanded) {
+                    chip(text("nearby"), selected: state.chips.first?.selected == true, glass: expanded) { actions.call("nearby") }
+                    chip(text(state.mapExpanded ? "list" : "map"), selected: state.mapExpanded, glass: expanded) {
                         queryFocused = false; actions.call("map")
                     }
                 } else {
                     ForEach(state.chips, id: \.id) { item in
-                        chip(item.title, selected: item.selected) { actions.call(item.id) }
+                        chip(item.title, selected: item.selected, glass: expanded) { actions.call(item.id) }
                     }
                 }
             }.padding(.horizontal, 16)
@@ -167,10 +183,11 @@ struct DiscoveryNativeScreen: View {
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: 16) {
                     Color.clear.frame(height: 0).id("discovery-top")
-                    if state.refreshing { ProgressView(text("loading")).frame(maxWidth: .infinity) }
-                    if state.landing && !state.picker { landingContent }
-                    else { listContent }
+                    if state.refreshing { CoffeePeekNativeLoader(label: text("loading")).frame(maxWidth: .infinity) }
+                    if state.landing && !state.picker { landingContent.transition(.identity) }
+                    else { listContent.transition(.asymmetric(insertion: modeTransition, removal: .identity)) }
                 }.padding(.bottom, CGFloat(state.bottomClearance) + (showsContinueCheckIn ? 72 : 20))
+                    .animation(modeAnimation, value: state.landing)
             }
             .scrollDismissesKeyboard(.interactively)
             .clipped()
@@ -202,11 +219,14 @@ struct DiscoveryNativeScreen: View {
             queryFocused = false
             actions.call("map")
         } label: {
-            ZStack {
+            ZStack(alignment: .topTrailing) {
                 CoffeePeekNativeStyle.surface
                 if !state.mapExpanded && !state.roastersExpanded {
-                    map.allowsHitTesting(false).accessibilityHidden(true)
+                    map.allowsHitTesting(false).accessibilityHidden(true).transition(.identity)
                 }
+                Image(systemName: "arrow.up.left.and.arrow.down.right").font(.system(size: 17, weight: .semibold))
+                    .frame(width: 44, height: 44).discoveryGlass(in: Circle()).padding(8)
+                    .accessibilityHidden(true)
             }
             .frame(height: 200)
             .clipShape(RoundedRectangle(cornerRadius: 24))
@@ -279,7 +299,7 @@ struct DiscoveryNativeScreen: View {
 
     @ViewBuilder private var searchStatus: some View {
         if state.loading && state.shops.isEmpty && state.recent.isEmpty {
-            ProgressView(text("loading")).frame(maxWidth: .infinity).padding(20)
+            CoffeePeekNativeLoader(label: text("loading")).frame(maxWidth: .infinity).padding(20)
         } else if state.failed {
             feedback(text(state.shops.isEmpty ? "failed" : "refresh-failed"), action: "refresh", label: text("retry"))
         } else if let reason = state.emptyReason, state.shops.isEmpty && state.recent.isEmpty {
@@ -292,7 +312,7 @@ struct DiscoveryNativeScreen: View {
 
     private var pagination: some View {
         VStack(spacing: 8) {
-            if state.loadingMore { ProgressView(text("loading")) }
+            if state.loadingMore { CoffeePeekNativeLoader(label: text("loading")) }
             if state.loadMoreFailed { feedback(text("more-failed"), action: "retry-more", label: text("retry")) }
             Color.clear.frame(height: 1).onAppear { tailVisible = true; loadMore() }
                 .onDisappear { tailVisible = false }
@@ -321,8 +341,19 @@ struct DiscoveryNativeScreen: View {
             Text(title).font(CoffeePeekNativeStyle.font(22, weight: "SemiBold", relativeTo: .title2))
                 .accessibilityAddTraits(.isHeader)
             Spacer()
-            if let action { Button(text("show-all")) { actions.call(action) }.foregroundStyle(CoffeePeekNativeStyle.secondary) }
+            if let action { showAllButton(action) }
         }.padding(.horizontal, 16)
+    }
+
+    private func showAllButton(_ action: String) -> some View {
+        Button { actions.call(action) } label: {
+            Text(text("show-all")).font(CoffeePeekNativeStyle.font(13, weight: "SemiBold"))
+                .foregroundStyle(CoffeePeekNativeStyle.foreground)
+                .padding(.horizontal, 12).padding(.vertical, 7)
+                .background(CoffeePeekNativeStyle.surface, in: Capsule())
+                .overlay { Capsule().strokeBorder(CoffeePeekNativeStyle.border, lineWidth: 1) }
+                .frame(minHeight: 44).contentShape(Rectangle())
+        }.buttonStyle(.plain)
     }
 
     func feedback(_ message: String, action: String, label: String) -> some View {
@@ -333,20 +364,25 @@ struct DiscoveryNativeScreen: View {
             .background(CoffeePeekNativeStyle.surface, in: RoundedRectangle(cornerRadius: 16)).padding(.horizontal, 16)
     }
 
-    func icon(_ symbol: String, label: String, action: @escaping () -> Void) -> some View {
+    func icon(_ symbol: String, label: String, glass: Bool = false, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            Image(systemName: symbol).font(.system(size: 20)).frame(width: 48, height: 48)
-                .background(.regularMaterial, in: Circle())
+            let glyph = Image(systemName: symbol).font(.system(size: 20)).frame(width: 48, height: 48)
+            if glass { glyph.discoveryGlass(in: Circle()) }
+            else { glyph.background(.regularMaterial, in: Circle()) }
         }.buttonStyle(.plain).accessibilityLabel(label)
     }
 
-    private func chip(_ title: String, selected: Bool, action: @escaping () -> Void) -> some View {
+    private func chip(_ title: String, selected: Bool, glass: Bool, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            Text(title).font(CoffeePeekNativeStyle.font(13, weight: "Medium"))
+            let caption = Text(title).font(CoffeePeekNativeStyle.font(13, weight: "Medium"))
                 .foregroundStyle(CoffeePeekNativeStyle.foreground)
                 .padding(.horizontal, 14).frame(minHeight: 36)
-                .background(selected ? CoffeePeekNativeStyle.accent.opacity(0.22) : CoffeePeekNativeStyle.surface, in: Capsule())
-                .overlay { Capsule().stroke(selected ? CoffeePeekNativeStyle.accent : CoffeePeekNativeStyle.border, lineWidth: 1) }
+            if glass {
+                caption.discoveryGlass(in: Capsule(), selected: selected)
+            } else {
+                caption.background(selected ? CoffeePeekNativeStyle.accent.opacity(0.22) : CoffeePeekNativeStyle.surface, in: Capsule())
+                    .overlay { Capsule().stroke(selected ? CoffeePeekNativeStyle.accent : CoffeePeekNativeStyle.border, lineWidth: 1) }
+            }
         }.buttonStyle(.plain).accessibilityAddTraits(selected ? .isSelected : [])
     }
 
@@ -355,7 +391,7 @@ struct DiscoveryNativeScreen: View {
             header: AnyView(VStack(spacing: 8) {
                 if state.picker { pickerHeader }
                 searchHeader(expanded: true)
-                chips
+                chips(expanded: true)
             }.padding(.top, 12)))
             .discoveryExposure("map", id: "map-full")
     }

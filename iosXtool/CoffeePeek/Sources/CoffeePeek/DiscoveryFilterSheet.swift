@@ -140,7 +140,9 @@ private struct DiscoveryFilterSheet: View {
     @ViewBuilder private var catalogStatus: some View {
         if let status = state.catalogStatus {
             HStack(alignment: .center, spacing: 10) {
-                if state.isLoading { ProgressView().accessibilityHidden(true) }
+                if state.isLoading {
+                    CoffeePeekNativeLoader(label: status).scaleEffect(0.55).accessibilityHidden(true)
+                }
                 Text(status).foregroundStyle(CoffeePeekNativeStyle.secondary)
                 if let retry = state.retry {
                     Button(retry, action: actions.retry)

@@ -140,7 +140,7 @@ struct RoasterDiscoveryNativeScreen: View {
     }
 
     @ViewBuilder private var status: some View {
-        if state.loading && state.cards.isEmpty { ProgressView(strings["roaster_loading"]).padding(32) }
+        if state.loading && state.cards.isEmpty { CoffeePeekNativeLoader(label: strings["roaster_loading"]).padding(32) }
         else if state.failed { Button(strings["roaster_detail_retry"]) { source?.retry() }.frame(minHeight: 44) }
         else if state.cards.isEmpty { Text(strings["roaster_empty"]).foregroundStyle(CoffeePeekNativeStyle.secondary).padding() }
     }

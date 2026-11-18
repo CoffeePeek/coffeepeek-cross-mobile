@@ -6,9 +6,10 @@ import com.coffeepeek.admin.di.shop.FeatureShopDetailScreenRenderer
 import com.coffeepeek.admin.di.shop.FeatureShopCheckInListScreenRenderer
 import com.coffeepeek.admin.di.shop.shopBrowsingModule
 import com.coffeepeek.admin.di.shop.shopCheckInModule
-import com.coffeepeek.admin.di.shop.shopFavoriteIntent
+import com.coffeepeek.admin.di.shop.shopFavoritePickerIntent
 import org.koin.core.scope.Scope
 import com.coffeepeek.admin.di.collections.collectionsModule
+import com.coffeepeek.admin.di.collections.collectionFavoritesModule
 import com.coffeepeek.admin.di.checkinhistory.checkInHistoryModule
 import com.coffeepeek.admin.di.contentreport.contentReportModule
 import com.coffeepeek.admin.di.contentreport.FeatureContentReportRenderer
@@ -42,7 +43,8 @@ internal fun iosPlatformModules(apiBaseUrl: String = Constants.BASE_URL) = listO
     contributionsModule(),
     serverFavoritesModule(),
     coffeeModule(),
-    collectionsModule(apiBaseUrl),
+    collectionsModule(apiBaseUrl, trackPickerFavorites = true),
+    collectionFavoritesModule(),
     shopBrowsingModule(),
     shopCheckInModule(AppShopCheckInDateFormatter()),
     homeCheckInModule(apiBaseUrl),
@@ -90,7 +92,7 @@ private fun iosShopGalleryRenderer(client: ApiClients) =
 
 private fun Scope.iosShopDetailRenderer() =
     FeatureShopDetailScreenRenderer(sessions = get(), accounts = get(), details = get(), votes = get(),
-        favorites = get(), favoriteIntent = shopFavoriteIntent(get(), get(), get()), checkInForm = get(),
+        favorites = get(), favoriteIntent = shopFavoritePickerIntent(get(), get()), favoriteCollections = get(), checkInForm = get(),
         visibility = get(), blockActions = get())
 
 private fun Scope.iosShopCheckInListRenderer() =

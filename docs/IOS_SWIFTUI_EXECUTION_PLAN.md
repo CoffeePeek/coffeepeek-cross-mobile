@@ -884,3 +884,23 @@ view. Signing took 3.3s and in-place USB installation 11.5s. InstallationProxy
 confirmed 3213. The light-theme run showed rendered preview tiles, expansion
 to both screen edges, return to preview, and the full roaster listing. Device
 captures are local under ignored build/. These checks did not exercise writes.
+
+Build 3214 from `f93c40cef` adds a shared photo viewer route, compact catalogue
+cards and icons rendered from the same assets as Android. All 119 Swift files
+typechecked. The four JVM suites reported 402 tests with no failures, and
+Android directDebug passed packaged DEX and function body validation.
+The first native compile failed on a shadowed size parameter. Its retry built
+the final source with the prior version number because packing started before
+the commit. Rebuilding from the committed revision produced 3214. Signing took
+3.9s and installation 11.3s. InstallationProxy confirmed 3214 and CoreDevice
+confirmed startup on iPhone15,4 / iOS 27.0.1. Manual light-theme checks showed
+the working inline map, the lower continue button, full-screen map controls,
+brew-method icons, and rounded amenity choices. The USB link interrupted
+further device capture.
+
+The next slice animates Discovery mode changes, uses glass over the map and
+reuses the native loader and check-in heart. Shop and roaster favorites open
+the existing collections picker on iOS. Verify picker opening, draft choice
+and cancellation without a live write. Validate commit behavior with the
+existing test suite. Explicitly cover both target types, account change,
+unavailable collections, Reduce Motion, and manual light/dark appearance.

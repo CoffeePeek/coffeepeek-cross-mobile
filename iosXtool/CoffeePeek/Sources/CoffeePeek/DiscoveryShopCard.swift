@@ -166,8 +166,7 @@ struct DiscoveryShopCard: View {
 
     private var favorite: some View {
         Button { actions.call("favorite", shop.id) } label: {
-            Image(systemName: shop.favorite ? "heart.fill" : "heart")
-                .font(.system(size: 20)).foregroundStyle(shop.favorite ? CoffeePeekNativeStyle.accent : Color.white)
+            CoffeePeekLikeIcon(selected: shop.favorite, unselectedColor: .white, isLoading: shop.favoriteBusy)
                 .frame(width: 44, height: 44).background(.black.opacity(0.68), in: Circle())
         }
         .buttonStyle(.plain).disabled(shop.favoriteBusy).accessibilityLabel(shop.favoriteLabel)

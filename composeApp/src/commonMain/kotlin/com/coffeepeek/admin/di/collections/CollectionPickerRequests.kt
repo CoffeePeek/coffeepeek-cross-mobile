@@ -17,7 +17,7 @@ import kotlin.time.TimeSource
 /** App-owned delivery of a successful heart action to the root sheet, never a favorite writer. */
 internal class CollectionPickerRequests(private val sessions: SessionReader, private val scope: CoroutineScope) : CollectionPickerPrompts {
     internal data class Request(val lease: CollectionPickerLease, val target: CollectionTarget)
-    private val lock = Any()
+    private val lock = CollectionPickerLock()
     private var owner = activeOwner()
     private var accountGeneration = sessions.accountGeneration()
     private var generation = 0L
@@ -40,33 +40,33 @@ internal class CollectionPickerRequests(private val sessions: SessionReader, pri
         if (target.slug.isBlank()) return true
         val active = activeOwner()
         if (active != null) {
-            synchronized(lock) { afterAuth = null }
+            lock.withLock { afterAuth = null }
             added(lease(active), target)
             return true
         }
-        synchronized(lock) { afterAuth = target to TimeSource.Monotonic.markNow() }
+        lock.withLock { afterAuth = target to TimeSource.Monotonic.markNow() }
         if (activeOwner() != null) { resumeAfterAuth(); return true }
         return false
     }
 
     private fun resumeAfterAuth() {
         val active = activeOwner() ?: return
-        val target = synchronized(lock) { afterAuth.also { afterAuth = null } }
+        val target = lock.withLock { afterAuth.also { afterAuth = null } }
             ?.takeIf { it.second.elapsedNow() < 10.minutes }?.first ?: return
         added(lease(active), target)
     }
 
-    override fun lease(account: String): CollectionPickerLease? = synchronized(lock) {
+    override fun lease(account: String): CollectionPickerLease? = lock.withLock {
         updateAccount()
         if (owner == account) CollectionPickerLease(account, generation) else null
     }
 
     override fun added(lease: CollectionPickerLease?, slug: String) = added(lease, CollectionTarget(CollectionTargetKind.CoffeeShop, slug))
 
-    fun added(lease: CollectionPickerLease?, target: CollectionTarget): Unit = synchronized(lock) {
+    fun added(lease: CollectionPickerLease?, target: CollectionTarget): Unit = lock.withLock {
         updateAccount()
-        if (lease == null || owner != lease.owner || generation != lease.generation || target.slug.isBlank()) return@synchronized
-        if (pending.value?.let { it.lease == lease && it.target == target } == true) return@synchronized
+        if (lease == null || owner != lease.owner || generation != lease.generation || target.slug.isBlank()) return@withLock
+        if (pending.value?.let { it.lease == lease && it.target == target } == true) return@withLock
         val request = Request(lease, target)
         pending.value = request
         expiry?.cancel()
@@ -76,18 +76,18 @@ internal class CollectionPickerRequests(private val sessions: SessionReader, pri
         }
     }
 
-    fun presented(request: Request) = synchronized(lock) {
+    fun presented(request: Request) = lock.withLock {
         if (pending.value === request) expiry?.cancel()
     }
 
-    fun dismiss(request: Request) = synchronized(lock) {
+    fun dismiss(request: Request) = lock.withLock {
         if (pending.value === request) {
             pending.value = null
             expiry?.cancel()
         }
     }
 
-    private fun updateAccount(current: String? = activeOwner()) = synchronized(lock) {
+    private fun updateAccount(current: String? = activeOwner()) = lock.withLock {
         val currentGeneration = sessions.accountGeneration()
         if (current != owner || currentGeneration != accountGeneration) {
             owner = current

@@ -7,7 +7,7 @@ import com.coffeepeek.feature.collections.api.CollectionTarget
 import com.coffeepeek.feature.collections.api.CollectionTargetKind
 import kotlinx.coroutines.CancellationException
 
-/** Android presentation delivery around the existing writer; iOS keeps its original binding. */
+/** Presentation delivery around the existing server writer. */
 internal class CollectionPromptRoasterFavorites(private val delegate: RoasterFavorites,
     private val sessions: SessionReader, private val requests: CollectionPickerRequests) : RoasterFavorites by delegate {
     override suspend fun setFavorite(roaster: CatalogItem, isFavorite: Boolean): Result<Unit> {
