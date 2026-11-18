@@ -77,6 +77,12 @@ fun configureNativeRootModals(factory: (com.coffeepeek.admin.di.system.IosRootMo
     com.coffeepeek.admin.di.system.configureNativeRootModals(factory)
 }
 
+fun configureNativeOwnership(factory: (com.coffeepeek.admin.di.ownership.IosOwnershipScreen) -> UIViewController,
+    actions: (com.coffeepeek.admin.di.ownership.IosOwnershipActions) -> UIViewController) {
+    com.coffeepeek.admin.di.ownership.configureNativeOwnership(factory)
+    com.coffeepeek.admin.di.ownership.configureNativeOwnershipActions(actions)
+}
+
 fun configureNativeGlass(makeView: () -> UIVisualEffectView) {
     configureCoffeePeekNativeGlass(makeView)
 }

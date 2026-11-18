@@ -52,6 +52,7 @@ private struct ComposeRootView: UIViewControllerRepresentable {
         IosCheckInPhotoControllers.shared.configure(factory: makeCheckInPhotoController)
         IosHistoryFailureControllers.shared.configure(factory: makeHistoryFailureController)
         IosRoasterControllers.shared.configure(factory: makeRoasterController)
+        MainViewControllerKt.configureNativeOwnership(factory: makeOwnershipController, actions: makeOwnershipActionsController)
         MainViewControllerKt.configureNativeCheckInEditors(home: makeHomeCheckInEditorController, shop: makeShopCheckInEditorController)
         return MainViewControllerKt.MainViewController(
             onReady: { DispatchQueue.main.async { onReady() } },

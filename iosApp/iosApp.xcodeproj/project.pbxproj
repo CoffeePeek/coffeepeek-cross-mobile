@@ -129,6 +129,12 @@
 		9F65437D1B4E3D385CB36601 /* NativeAccountDeletion.strings in Resources */ = {isa = PBXBuildFile; fileRef = 29AA5120F89FEC550C685CBE /* NativeAccountDeletion.strings */; };
 		5C55A1F6A4F5DFB3DE7EDF5B /* NativeGuestOnboarding.strings in Resources */ = {isa = PBXBuildFile; fileRef = C94B40E17EA121EFC3D9632D /* NativeGuestOnboarding.strings */; };
 		C13FD4859C40AAE420E7E0FC /* NativeAppUpdate.strings in Resources */ = {isa = PBXBuildFile; fileRef = EA778DBEF66FD480C275D198 /* NativeAppUpdate.strings */; };
+		B0510A100000000000000001 /* OwnershipNativeScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0510A200000000000000001 /* OwnershipNativeScreen.swift */; };
+		B0510A100000000000000002 /* OwnershipNativeOverview.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0510A200000000000000002 /* OwnershipNativeOverview.swift */; };
+		B0510A100000000000000003 /* OwnershipNativeForms.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0510A200000000000000003 /* OwnershipNativeForms.swift */; };
+		B0510A100000000000000004 /* OwnershipNativeQrSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0510A200000000000000004 /* OwnershipNativeQrSheet.swift */; };
+		B0510A100000000000000005 /* OwnershipNativeActions.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0510A200000000000000005 /* OwnershipNativeActions.swift */; };
+		B0510A300000000000000001 /* NativeOwnership.strings in Resources */ = {isa = PBXBuildFile; fileRef = B0510A300000000000000004 /* NativeOwnership.strings */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -283,6 +289,13 @@
 		D4CE6039F8E15828368F22A6 /* be */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = be; path = be.lproj/NativeGuestOnboarding.strings; sourceTree = "<group>"; };
 		168991BEEC11C0CB322F684C /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/NativeAppUpdate.strings; sourceTree = "<group>"; };
 		C4E9615DA2EF35A243B7C779 /* be */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = be; path = be.lproj/NativeAppUpdate.strings; sourceTree = "<group>"; };
+		B0510A200000000000000001 /* OwnershipNativeScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = OwnershipNativeScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/OwnershipNativeScreen.swift; sourceTree = "<group>"; };
+		B0510A200000000000000002 /* OwnershipNativeOverview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = OwnershipNativeOverview.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/OwnershipNativeOverview.swift; sourceTree = "<group>"; };
+		B0510A200000000000000003 /* OwnershipNativeForms.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = OwnershipNativeForms.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/OwnershipNativeForms.swift; sourceTree = "<group>"; };
+		B0510A200000000000000004 /* OwnershipNativeQrSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = OwnershipNativeQrSheet.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/OwnershipNativeQrSheet.swift; sourceTree = "<group>"; };
+		B0510A200000000000000005 /* OwnershipNativeActions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = OwnershipNativeActions.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/OwnershipNativeActions.swift; sourceTree = "<group>"; };
+		B0510A300000000000000002 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/NativeOwnership.strings; sourceTree = "<group>"; };
+		B0510A300000000000000003 /* be */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = be; path = be.lproj/NativeOwnership.strings; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -372,8 +385,14 @@
 				CD184B270000000000000008 /* NativeNotificationInbox.strings */,
 				71C04E5D0000000000000006 /* ContentReport.strings */,
 				5E1FA2200000000000000003 /* ShelfArchiveScreen.swift */,
+				B0510A200000000000000005 /* OwnershipNativeActions.swift */,
+				B0510A200000000000000004 /* OwnershipNativeQrSheet.swift */,
+				B0510A200000000000000003 /* OwnershipNativeForms.swift */,
+				B0510A200000000000000002 /* OwnershipNativeOverview.swift */,
+				B0510A200000000000000001 /* OwnershipNativeScreen.swift */,
 				B20000000000000000000003 /* CollectionsLibraryScreen.swift */,
 				5E1FA2200000000000000006 /* NativeShelfArchive.strings */,
+				B0510A300000000000000004 /* NativeOwnership.strings */,
 				86C051CE0000000000000003 /* CollectionsWorkspaceScreen.swift */,
 				B23122000000000000000003 /* CollectionPosterScreen.swift */,
 				B23122000000000000000023 /* CoffeePeekLocalBackProtection.swift */,
@@ -562,6 +581,7 @@
 				CD184B270000000000000003 /* NativeNotificationInbox.strings in Resources */,
 				71C04E5D0000000000000002 /* ContentReport.strings in Resources */,
 				5E1FA2200000000000000002 /* NativeShelfArchive.strings in Resources */,
+				B0510A300000000000000001 /* NativeOwnership.strings in Resources */,
 				B20000000000000000000002 /* CollectionsLibrary.strings in Resources */,
 				86C051CE0000000000000002 /* CollectionsWorkspace.strings in Resources */,
 				53E77165000000000000000D /* SettingsNative.strings in Resources */,
@@ -700,6 +720,11 @@
 				CD184B270000000000000002 /* NotificationInboxHost.swift in Sources */,
 				71C04E5D0000000000000001 /* ContentReportScreen.swift in Sources */,
 				5E1FA2200000000000000001 /* ShelfArchiveScreen.swift in Sources */,
+				B0510A100000000000000005 /* OwnershipNativeActions.swift in Sources */,
+				B0510A100000000000000004 /* OwnershipNativeQrSheet.swift in Sources */,
+				B0510A100000000000000003 /* OwnershipNativeForms.swift in Sources */,
+				B0510A100000000000000002 /* OwnershipNativeOverview.swift in Sources */,
+				B0510A100000000000000001 /* OwnershipNativeScreen.swift in Sources */,
 				B20000000000000000000001 /* CollectionsLibraryScreen.swift in Sources */,
 				86C051CE0000000000000001 /* CollectionsWorkspaceScreen.swift in Sources */,
 				B23122000000000000000001 /* CollectionPosterScreen.swift in Sources */,
@@ -967,6 +992,7 @@
 			name = NativeAppUpdate.strings;
 			sourceTree = "<group>";
 		};
+		B0510A300000000000000004 /* NativeOwnership.strings */ = {isa = PBXVariantGroup; children = (B0510A300000000000000002 /* ru */, B0510A300000000000000003 /* be */,); name = NativeOwnership.strings; sourceTree = "<group>"; };
 /* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */
