@@ -17,6 +17,7 @@ class IosShopDetail internal constructor(
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private var presentation: ShopDetailIosPresentation? = initial
+    private var latestState = initial.state
     private var closed = false
     private val state = MutableStateFlow(IosShopDetailState(initial.state, true))
     internal val exposures = MutableStateFlow<Set<String>>(emptySet())
@@ -29,6 +30,7 @@ class IosShopDetail internal constructor(
     internal fun update(next: ShopDetailIosPresentation) {
         if (!allowed()) return
         presentation = next
+        latestState = next.state
         state.value = IosShopDetailState(next.state, true)
     }
 
@@ -62,16 +64,18 @@ class IosShopDetail internal constructor(
     }
 
     internal fun close() {
+        latestState = latestState.withoutContent(languageTag)
         closed = true
         presentation = null
         exposures.value = emptySet()
-        state.value = IosShopDetailState(state.value.data.withoutContent(languageTag), false)
+        state.value = IosShopDetailState(latestState, false)
         scope.cancel()
     }
 
     private fun allowed() = !closed && lease.isCurrent()
 }
 
-class IosShopDetailState internal constructor(val data: ShopDetailIosState, val active: Boolean) {
-    val checkIns = IosShopCheckInListState(data.generation, data.checkIns)
+class IosShopDetailState internal constructor(content: ShopDetailIosState, val active: Boolean) {
+    val data = content.toNative()
+    val checkIns = IosShopCheckInListState(content.generation, content.checkIns)
 }

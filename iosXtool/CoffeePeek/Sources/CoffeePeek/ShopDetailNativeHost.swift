@@ -120,7 +120,7 @@ struct ShopDetailNativeData {
     var featuresExpanded = false
     var priceVisible = false
     var message: String?
-    var details: ShopDetailIosDetails?
+    var details: IosShopDetails?
     var labels: [String: String] = [:]
     var checkInDates: [String: String] = [:]
     var rows: [ShopCheckInListRow] = []

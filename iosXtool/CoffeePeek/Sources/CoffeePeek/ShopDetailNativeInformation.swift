@@ -2,7 +2,7 @@ import ComposeApp
 import SwiftUI
 
 struct ShopDetailNativeInformation: View {
-    let details: ShopDetailIosDetails
+    let details: IosShopDetails
     let scheduleExpanded: Bool
     let featuresExpanded: Bool
     let labels: [String: String]
@@ -12,7 +12,7 @@ struct ShopDetailNativeInformation: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
-            if let description = details.description, !description.isEmpty {
+            if let description = details.summary, !description.isEmpty {
                 section(text("description")) { Text(description).fixedSize(horizontal: false, vertical: true) }
                     .padding(16).shopDetailPanel()
             }
@@ -77,7 +77,7 @@ struct ShopDetailNativeInformation: View {
         }.shopDetailExposure("Hours", id: "hours")
     }
 
-    private func menuSection(_ menu: ShopDetailIosMenu) -> some View {
+    private func menuSection(_ menu: IosShopDetailMenu) -> some View {
         section(text("menu")) {
             VStack(alignment: .leading, spacing: 16) {
                 ForEach(Array(menu.groups.enumerated()), id: \.offset) { groupIndex, items in

@@ -49,7 +49,7 @@ struct ShopDetailNativeScreen: View {
         .onDisappear { actions.visible([]) }
     }
 
-    private func content(_ details: ShopDetailIosDetails) -> some View {
+    private func content(_ details: IosShopDetails) -> some View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: 16) {
                 hero(details)
@@ -72,7 +72,7 @@ struct ShopDetailNativeScreen: View {
         .safeAreaInset(edge: .bottom, spacing: 0) { footer(details) }
     }
 
-    private func hero(_ details: ShopDetailIosDetails) -> some View {
+    private func hero(_ details: IosShopDetails) -> some View {
         ZStack(alignment: .bottomLeading) {
             if details.photos.isEmpty { CoffeePeekPhotoPlaceholder() }
             else {
@@ -136,14 +136,14 @@ struct ShopDetailNativeScreen: View {
         }.buttonStyle(.plain).accessibilityLabel(label)
     }
 
-    private func stats(_ details: ShopDetailIosDetails) -> some View {
+    private func stats(_ details: IosShopDetails) -> some View {
         ViewThatFits(in: .horizontal) {
             HStack(spacing: 8) { statistics(details) }
             VStack(spacing: 8) { statistics(details) }
         }
     }
 
-    @ViewBuilder private func statistics(_ details: ShopDetailIosDetails) -> some View {
+    @ViewBuilder private func statistics(_ details: IosShopDetails) -> some View {
         stat(details.rating, subtitle: details.reviews, symbol: "star.fill", action: "check-ins")
         if let distance = details.distance { stat(distance, subtitle: text("distance"), symbol: "location", action: nil) }
         if let price = details.priceValue { stat(price, subtitle: text("price"), symbol: "banknote", action: "price") }
@@ -218,7 +218,7 @@ struct ShopDetailNativeScreen: View {
         }.scrollIndicators(.hidden)
     }
 
-    private func footer(_ details: ShopDetailIosDetails) -> some View {
+    private func footer(_ details: IosShopDetails) -> some View {
         HStack(spacing: 12) {
             if details.canRoute {
                 CoffeePeekNativeActionButton(title: text("route"), primary: false,
@@ -274,16 +274,16 @@ extension View {
 
 func shopDetailPreviewData() -> ShopDetailNativeData {
     var state = ShopDetailNativeData()
-    state.details = ShopDetailIosDetails(id: "preview", slug: "preview", title: "CoffeePeek Specialty",
-        description: "Кофе, свежая выпечка и спокойная атмосфера.", address: "Тихая улица, 12", distance: "350 м",
+    state.details = IosShopDetails(id: "preview", slug: "preview", title: "CoffeePeek Specialty",
+        summary: "Кофе, свежая выпечка и спокойная атмосфера.", address: "Тихая улица, 12", distance: "350 м",
         kind: "SPECIALTY", rating: "4.8", reviews: "24 чекина", isOpen: true, canRoute: true, photos: [],
-        roasters: [ShopDetailIosRoaster(id: "preview-roaster", name: "Местная обжарка", photo: nil, label: "Открыть обжарщика")],
+        roasters: [IosShopDetailRoaster(id: "preview-roaster", name: "Местная обжарка", photo: nil, label: "Открыть обжарщика")],
         beans: ["Эфиопия", "Бразилия"], equipment: ["V60", "Аэропресс"], scheduleStatus: "Открыто до 22:00",
-        schedule: [ShopDetailIosSchedule(day: "Понедельник", hours: "09:00 – 22:00", today: true)],
-        menu: ShopDetailIosMenu(groups: [[ShopDetailIosMenuItem(id: "flat-white", title: "Флэт уайт", amount: "5,50", currency: "BYN", priceLabel: "5,50 белорусских рублей")]], photos: [], freshness: ["Актуально на 18.11.2026"]),
-        contacts: [ShopDetailIosContact(kind: "website", title: "coffeepeek.app", target: "https://coffeepeek.app", copyable: false, label: "Открыть сайт")],
+        schedule: [IosShopDetailSchedule(day: "Понедельник", hours: "09:00 – 22:00", today: true)],
+        menu: IosShopDetailMenu(groups: [[IosShopDetailMenuItem(id: "flat-white", title: "Флэт уайт", amount: "5,50", currency: "BYN", priceLabel: "5,50 белорусских рублей")]], photos: [], freshness: ["Актуально на 18.11.2026"]),
+        contacts: [IosShopDetailContact(kind: "website", title: "coffeepeek.app", target: "https://coffeepeek.app", copyable: false, label: "Открыть сайт")],
         features: ["Wi-Fi", "Велопарковка"], featureToggle: "Показать все", priceValue: "8 BYN",
-        priceTiers: [ShopDetailIosPriceTier(count: 2, label: "Около 8 BYN", selected: true)])
+        priceTiers: [IosShopDetailPriceTier(count: 2, label: "Около 8 BYN", selected: true)])
     state.labels = ["back": "Назад", "share": "Поделиться", "description": "Описание", "roasters": "Обжарщики",
         "beans": "Кофе", "equipment": "Оборудование", "hours": "Часы работы", "menu": "Меню", "contacts": "Контакты",
         "features": "Особенности", "route": "Маршрут", "check-in": "Чекин", "check-ins": "Чекины", "price": "Средний чек",

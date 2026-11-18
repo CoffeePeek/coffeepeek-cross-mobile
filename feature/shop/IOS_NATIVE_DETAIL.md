@@ -92,3 +92,11 @@ light/dark contrast, photo/price modal back and swipe cancellation, share,
 copy/contacts, route choice and map focus, guest favorite/check-in gates, own
 and blocked authors, account replacement during media work, menu/check-in
 photographs, form cancellation/submission refresh and ownership claims/edit.
+
+Discovery's macOS build exposed a framework boundary issue before this Shop
+checkpoint's first build: feature implementation payload types are intentionally
+not exported directly to Swift. Added app-owned `IosShopDetailData`/detail values
+and pure forwarding mappings, matching the existing native app boundaries. The
+shared feature state, business logic and module exports are unchanged; Swift
+now depends only on app-owned types. App values use `summary` for optional
+business descriptions to avoid NSObject member-name collisions.
