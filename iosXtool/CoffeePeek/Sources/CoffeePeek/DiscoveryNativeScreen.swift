@@ -7,7 +7,6 @@ struct DiscoveryNativeScreen: View {
     let map: AnyView
     let roasters: (Bool) -> AnyView
     @FocusState private var queryFocused: Bool
-    @State private var mapFrame: CGRect = .zero
     @State private var resultsFrame: CGRect = .zero
     @State private var tailVisible = false
     @GestureState private var listDragging = false
@@ -18,11 +17,11 @@ struct DiscoveryNativeScreen: View {
     var body: some View {
         GeometryReader { geometry in
             ZStack(alignment: .topLeading) {
-                GeometryReader { mapGeometry in
-                    mapLayer(size: mapGeometry.size)
+                if state.mapExpanded {
+                    map.frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .ignoresSafeArea(.container, edges: .vertical)
+                        .zIndex(1)
                 }
-                .ignoresSafeArea(.container, edges: state.mapExpanded ? .vertical : [])
-                .zIndex(state.mapExpanded ? 1 : 0)
                 mainContent.simultaneousGesture(listDrag)
                     .opacity(state.mapExpanded || state.roastersExpanded ? 0 : 1)
                     .allowsHitTesting(!state.mapExpanded && !state.roastersExpanded)
@@ -34,7 +33,6 @@ struct DiscoveryNativeScreen: View {
             }
             .frame(width: geometry.size.width, height: geometry.size.height, alignment: .topLeading)
             .coordinateSpace(name: "discovery")
-            .onPreferenceChange(DiscoveryMapFrame.self) { mapFrame = $0 }
             .onPreferenceChange(DiscoveryResultsFrame.self) { resultsFrame = $0 }
             .onPreferenceChange(DiscoveryExposureFrames.self) { frames in
                 if !state.mapExpanded && !state.roastersExpanded { actions.call("scroll") }
@@ -46,7 +44,9 @@ struct DiscoveryNativeScreen: View {
                 }
                 let visible = Set(eligible.values.filter { frame in
                     let area = frame.rect.width * frame.rect.height
-                    let clip = frame.feature == "map" && !state.mapExpanded ? resultsFrame : viewport
+                    let clip = frame.feature == "map" && !state.mapExpanded
+                        ? discoveryMapClipFrame(viewport: geometry.size, results: resultsFrame, expanded: false)
+                        : viewport
                     let intersection = frame.rect.intersection(clip)
                     return area > 0 && !intersection.isNull && intersection.width * intersection.height / area >= 0.1
                 }.map(\.feature))
@@ -187,14 +187,7 @@ struct DiscoveryNativeScreen: View {
 
     private var landingContent: some View {
         Group {
-            Color.clear.frame(height: 200).padding(.horizontal, 16)
-                .background { GeometryReader { geometry in
-                    Color.clear.preference(key: DiscoveryMapFrame.self, value: geometry.frame(in: .named("discovery")))
-                } }
-                .contentShape(RoundedRectangle(cornerRadius: 24))
-                .onTapGesture { queryFocused = false; actions.call("map") }
-                .accessibilityElement().accessibilityLabel(text("map")).accessibilityAddTraits(.isButton)
-                .discoveryExposure("map", id: "map-preview")
+            mapPreview
             section(text("shops"), action: "activate")
                 .discoveryExposure("shops", id: "shops-heading")
             searchStatus
@@ -202,6 +195,27 @@ struct DiscoveryNativeScreen: View {
             if state.shops.isEmpty && state.canSuggestShop { contribution }
             roasterPreview
         }
+    }
+
+    private var mapPreview: some View {
+        Button {
+            queryFocused = false
+            actions.call("map")
+        } label: {
+            ZStack {
+                CoffeePeekNativeStyle.surface
+                if !state.mapExpanded && !state.roastersExpanded {
+                    map.allowsHitTesting(false).accessibilityHidden(true)
+                }
+            }
+            .frame(height: 200)
+            .clipShape(RoundedRectangle(cornerRadius: 24))
+            .contentShape(RoundedRectangle(cornerRadius: 24))
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(text("map"))
+        .padding(.horizontal, 16)
+        .discoveryExposure("map", id: "map-preview")
     }
 
     @ViewBuilder private var listContent: some View {
@@ -335,22 +349,6 @@ struct DiscoveryNativeScreen: View {
         }.buttonStyle(.plain).accessibilityAddTraits(selected ? .isSelected : [])
     }
 
-    private func mapLayer(size: CGSize) -> some View {
-        let expanded = state.mapExpanded
-        let frame = discoveryMapLayoutFrame(viewport: size, preview: mapFrame, expanded: expanded)
-        let rect = frame ?? CGRect(x: 0, y: 0, width: 1, height: 1)
-        let clip = discoveryMapClipFrame(viewport: size, results: resultsFrame, expanded: expanded)
-        let visible = frame != nil && (expanded || state.landing && rect.intersects(clip)) && !state.roastersExpanded
-        return map.frame(width: rect.width, height: rect.height)
-            .clipShape(RoundedRectangle(cornerRadius: expanded ? 0 : 24))
-            .offset(x: rect.minX, y: rect.minY)
-            .frame(width: size.width, height: size.height, alignment: .topLeading)
-            .clipShape(Path { $0.addRect(clip) })
-            .opacity(visible ? 1 : 0)
-            .allowsHitTesting(visible && expanded)
-            .accessibilityHidden(!visible || !expanded)
-    }
-
     private var expandedMap: some View {
         DiscoveryMapControls(state: state, actions: actions,
             header: AnyView(VStack(spacing: 8) {
@@ -379,11 +377,6 @@ struct DiscoveryNativeScreen: View {
             }.padding(.bottom, CGFloat(state.bottomClearance) + (state.mapExpanded ? 16 : 76))
         }
     }
-}
-
-private struct DiscoveryMapFrame: PreferenceKey {
-    static var defaultValue: CGRect { .zero }
-    static func reduce(value: inout CGRect, nextValue: () -> CGRect) { value = nextValue() }
 }
 
 private struct DiscoveryResultsFrame: PreferenceKey {
