@@ -14,7 +14,8 @@ private final class CommunitySheetHostingController: UIHostingController<Communi
         let model = CommunitySheetModel(sheet: sheet)
         self.model = model
         super.init(rootView: CommunitySheetHost(model: model))
-        safeAreaRegions = []
+        // The outer sheet owns container insets; SwiftUI still avoids the keyboard.
+        safeAreaRegions = .keyboard
         view.backgroundColor = .clear
     }
 

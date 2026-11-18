@@ -39,6 +39,10 @@ the shared owner: a save may already have started before the next native render.
 every action and asynchronously for visible state; account replacement clears the
 native draft. Feed sheet keys include its session generation and post identity.
 
+The SwiftUI child excludes container insets already supplied by the outer sheet,
+but keeps the keyboard safe-area region so its scroll viewport avoids input
+occlusion. Manual keyboard/rotation acceptance is still required.
+
 The existing feature analytics callbacks still run once through their original
 ViewModel actions. No second overlay or analytics service is installed.
 
