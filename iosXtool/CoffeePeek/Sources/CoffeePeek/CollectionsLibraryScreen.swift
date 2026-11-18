@@ -203,8 +203,7 @@ private struct CollectionsLibraryCover: View {
 
     var body: some View {
         ZStack {
-            Color(uiColor: .tertiarySystemFill)
-            Image(systemName: "photo").foregroundStyle(.secondary)
+            CoffeePeekPhotoPlaceholder()
             if let image {
                 Image(uiImage: image).resizable().scaledToFill()
             } else if let photoURL {

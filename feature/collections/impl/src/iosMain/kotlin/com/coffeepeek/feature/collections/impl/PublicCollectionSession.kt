@@ -53,10 +53,12 @@ class PublicCollectionSession(
 
     fun reload() = dispatch(CollectionsAction.Retry)
     fun back() = dispatch(CollectionsAction.Back)
-    fun shareLink() = dispatch(CollectionsAction.ShareLink)
-    fun shareImages() = dispatch(CollectionsAction.ShareImages)
+    fun shareLink() { if (current().canShare) dispatch(CollectionsAction.ShareLink) }
+    fun shareImages() { if (poster() != null) dispatch(CollectionsAction.ShareImages) }
     fun format(story: Boolean) = dispatch(CollectionsAction.Format(if (story) CollectionPosterFormat.Story else CollectionPosterFormat.Chat))
-    fun poster(): CollectionsPoster? = model.state.value.let { it.collection?.nativePoster(it.format) }
+    fun poster(): CollectionsPoster? = model.state.value.let {
+        it.collection?.takeIf { value -> value.mode == SharedCollectionMode.Snapshot }?.nativePoster(it.format)
+    }
     fun isCurrentExport(epoch: Int, id: String): Boolean = !closed && model.isCurrentExport(epoch, id)
     fun finishExport(epoch: Int, id: String, failed: Boolean) = dispatch(CollectionsAction.ExportFinished(epoch, id, failed))
 
