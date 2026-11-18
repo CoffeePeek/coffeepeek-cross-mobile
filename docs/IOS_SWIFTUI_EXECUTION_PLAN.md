@@ -56,6 +56,18 @@ finish/visibility/undo, Feed/Post editor/report и snackbar (#406/#409).
 CFPK (чёрный/белый в светлой теме, белый/чёрный в тёмной). Shared Shop card
 применяет brand gold для звезды/выбранного лайка в обоих своих consumers.
 
+Ревью заключительного кандидата отдельно проверило переходы и ввод. Исправлены
+перехват жестов в прозрачных полях snackbar (нативные bounds ограничены самой
+карточкой), прежние условия показа review prompt в Discovery (вне picker,
+refresh/location/filter/search и прокрутки), подписка формы на весь lifetime
+контроллера через map/camera/gallery covers и запрет явного Back при Sending.
+Новые non-UI контракты проверяют idle/scroll guards, map/photo/account updates
+одного observer и запрет Back в трёх сценариях отправки. UIKit/SwiftUI
+переходы между окнами остаются частью ручного device gate ниже.
+Повторный combined body gate: 131 recorded, 0 new. Проверены 155 новых или
+содержательно изменённых Swift func в 35 файлах: превышений 20 строк нет.
+Оба bootstrap contracts повторно исполнены после выделения launcher helpers: 2/2.
+
 ### Что остаётся от Compose на iOS
 
 `MainViewController`, часть `NativeScreenController`, feature entry adapters,

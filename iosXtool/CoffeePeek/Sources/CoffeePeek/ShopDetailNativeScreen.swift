@@ -74,39 +74,50 @@ struct ShopDetailNativeScreen: View {
 
     private func hero(_ details: IosShopDetails) -> some View {
         ZStack(alignment: .bottomLeading) {
-            if details.photos.isEmpty { CoffeePeekPhotoPlaceholder() }
-            else {
-                TabView(selection: $selectedPhoto) {
-                    ForEach(Array(details.photos.enumerated()), id: \.element.id) { index, photo in
-                        Button { actions.call("hero-photo", "", index) } label: {
-                            CoffeePeekCardImage(url: photo.url, symbol: nil, loadImage: actions.image)
-                        }.buttonStyle(.plain).accessibilityLabel(photo.label).tag(index)
-                    }
-                }.tabViewStyle(.page(indexDisplayMode: .never))
-            }
+            heroPhotos(details)
             LinearGradient(colors: [.black.opacity(0.2), .clear, .black.opacity(0.8)], startPoint: .top, endPoint: .bottom)
                 .allowsHitTesting(false)
-            VStack(alignment: .leading, spacing: 8) {
-                Text(details.title).font(CoffeePeekNativeStyle.font(28, weight: "Bold", relativeTo: .title)).lineLimit(3)
-                    .accessibilityAddTraits(.isHeader)
-                if let address = details.address, !address.isEmpty {
-                    Button { actions.call("map") } label: { Label(address, systemImage: "mappin.and.ellipse") }
-                        .buttonStyle(.plain).disabled(!details.canRoute).accessibilityLabel(text("map"))
-                } else if details.canRoute {
-                    Button(text("map")) { actions.call("map") }
-                }
-                HStack {
-                    Text(details.kind).font(CoffeePeekNativeStyle.font(11, weight: "Bold"))
-                    Spacer()
-                    if details.photos.count > 1 { Text("\(min(selectedPhoto, details.photos.count - 1) + 1) / \(details.photos.count)") }
-                }.font(CoffeePeekNativeStyle.font(12))
-            }.foregroundStyle(.white).padding(16).padding(.top, topInset + 60)
-            VStack { toolbar; Spacer() }
+            heroIdentity(details)
+            VStack {
+                toolbar
+                Spacer()
+            }
         }
         .frame(height: dynamicTypeSize.isAccessibilitySize ? 470 + topInset : 300 + topInset)
         .clipShape(UnevenRoundedRectangle(bottomLeadingRadius: 16, bottomTrailingRadius: 16))
         .shopDetailExposure("Photos", id: "hero", enabled: !details.photos.isEmpty)
         .onChange(of: details.photos.map(\.id)) { _, _ in selectedPhoto = min(selectedPhoto, max(0, details.photos.count - 1)) }
+    }
+
+    @ViewBuilder private func heroPhotos(_ details: IosShopDetails) -> some View {
+        if details.photos.isEmpty { CoffeePeekPhotoPlaceholder() }
+        else {
+            TabView(selection: $selectedPhoto) {
+                ForEach(Array(details.photos.enumerated()), id: \.element.id) { index, photo in
+                    Button { actions.call("hero-photo", "", index) } label: {
+                        CoffeePeekCardImage(url: photo.url, symbol: nil, loadImage: actions.image)
+                    }.buttonStyle(.plain).accessibilityLabel(photo.label).tag(index)
+                }
+            }.tabViewStyle(.page(indexDisplayMode: .never))
+        }
+    }
+
+    private func heroIdentity(_ details: IosShopDetails) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(details.title).font(CoffeePeekNativeStyle.font(28, weight: "Bold", relativeTo: .title)).lineLimit(3)
+                .accessibilityAddTraits(.isHeader)
+            if let address = details.address, !address.isEmpty {
+                Button { actions.call("map") } label: { Label(address, systemImage: "mappin.and.ellipse") }
+                    .buttonStyle(.plain).disabled(!details.canRoute).accessibilityLabel(text("map"))
+            } else if details.canRoute {
+                Button(text("map")) { actions.call("map") }
+            }
+            HStack {
+                Text(details.kind).font(CoffeePeekNativeStyle.font(11, weight: "Bold"))
+                Spacer()
+                if details.photos.count > 1 { Text("\(min(selectedPhoto, details.photos.count - 1) + 1) / \(details.photos.count)") }
+            }.font(CoffeePeekNativeStyle.font(12))
+        }.foregroundStyle(.white).padding(16).padding(.top, topInset + 60)
     }
 
     private var toolbar: some View {

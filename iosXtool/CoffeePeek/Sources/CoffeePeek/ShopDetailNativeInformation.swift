@@ -80,35 +80,41 @@ struct ShopDetailNativeInformation: View {
     private func menuSection(_ menu: IosShopDetailMenu) -> some View {
         section(text("menu")) {
             VStack(alignment: .leading, spacing: 16) {
-                ForEach(Array(menu.groups.enumerated()), id: \.offset) { groupIndex, items in
-                    if groupIndex > 0 { Divider() }
-                    ForEach(Array(items.enumerated()), id: \.offset) { _, item in
-                        HStack(alignment: .firstTextBaseline, spacing: 12) {
-                            Text(item.title).frame(maxWidth: .infinity, alignment: .leading)
-                            if let amount = item.amount {
-                                Text(amount + " " + item.currency).font(CoffeePeekNativeStyle.font(15, weight: "SemiBold"))
-                                    .accessibilityLabel(item.priceLabel ?? amount)
-                            }
-                        }.padding(.vertical, 4)
-                    }
-                }
-                if !menu.photos.isEmpty {
-                    ScrollView(.horizontal) {
-                        HStack(spacing: 8) {
-                            ForEach(Array(menu.photos.enumerated()), id: \.element.id) { index, photo in
-                                Button { actions.call("menu-photo", "", index) } label: {
-                                    CoffeePeekCardImage(url: photo.url, symbol: nil, loadImage: actions.image)
-                                        .frame(width: 120, height: 154).clipShape(RoundedRectangle(cornerRadius: 12))
-                                }.buttonStyle(.plain).accessibilityLabel(photo.label)
-                            }
-                        }
-                    }.scrollIndicators(.hidden)
-                }
+                menuItems(menu.groups)
+                if !menu.photos.isEmpty { menuPhotos(menu.photos) }
                 ForEach(Array(menu.freshness.enumerated()), id: \.offset) { _, line in
                     Text(line).font(CoffeePeekNativeStyle.font(11)).foregroundStyle(CoffeePeekNativeStyle.secondary)
                 }
             }.padding(16).shopDetailPanel()
         }.shopDetailExposure("Menu", id: "menu")
+    }
+
+    private func menuItems(_ groups: [[IosShopDetailMenuItem]]) -> some View {
+        ForEach(Array(groups.enumerated()), id: \.offset) { groupIndex, items in
+            if groupIndex > 0 { Divider() }
+            ForEach(Array(items.enumerated()), id: \.offset) { _, item in
+                HStack(alignment: .firstTextBaseline, spacing: 12) {
+                    Text(item.title).frame(maxWidth: .infinity, alignment: .leading)
+                    if let amount = item.amount {
+                        Text(amount + " " + item.currency).font(CoffeePeekNativeStyle.font(15, weight: "SemiBold"))
+                            .accessibilityLabel(item.priceLabel ?? amount)
+                    }
+                }.padding(.vertical, 4)
+            }
+        }
+    }
+
+    private func menuPhotos(_ photos: [IosShopDetailPhoto]) -> some View {
+        ScrollView(.horizontal) {
+            HStack(spacing: 8) {
+                ForEach(Array(photos.enumerated()), id: \.element.id) { index, photo in
+                    Button { actions.call("menu-photo", "", index) } label: {
+                        CoffeePeekCardImage(url: photo.url, symbol: nil, loadImage: actions.image)
+                            .frame(width: 120, height: 154).clipShape(RoundedRectangle(cornerRadius: 12))
+                    }.buttonStyle(.plain).accessibilityLabel(photo.label)
+                }
+            }
+        }.scrollIndicators(.hidden)
     }
 
     private var contacts: some View {

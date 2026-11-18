@@ -43,6 +43,11 @@ private struct ComposeRootView: UIViewControllerRepresentable {
     let onReady: () -> Void
 
     func makeUIViewController(context: Context) -> UIViewController {
+        configureNativeScreens()
+        return makeNativeRootController()
+    }
+
+    @MainActor private func configureNativeScreens() {
         MainViewControllerKt.configureNativeEditProfile(factory: makeEditProfileController)
         IosCommunityMessageControllers.shared.configure(factory: makeCommunityMessageController)
         MainViewControllerKt.configureNativeGlobalDialogs(factory: makeGlobalDialogController)
@@ -60,7 +65,10 @@ private struct ComposeRootView: UIViewControllerRepresentable {
         MainViewControllerKt.configureNativeOwnership(factory: makeOwnershipController, actions: makeOwnershipActionsController)
         MainViewControllerKt.configureNativeShelf(factory: makeShelfController)
         MainViewControllerKt.configureNativeCheckInEditors(home: makeHomeCheckInEditorController, shop: makeShopCheckInEditorController)
-        return MainViewControllerKt.MainViewController(
+    }
+
+    @MainActor private func makeNativeRootController() -> UIViewController {
+        MainViewControllerKt.MainViewController(
             onReady: { DispatchQueue.main.async { onReady() } },
             makeDiscoveryFilterController: makeDiscoveryFilterController,
             makeShopMenuGalleryController: makeShopMenuGalleryController,
@@ -71,14 +79,12 @@ private struct ComposeRootView: UIViewControllerRepresentable {
             makeShopReportController: makeShopReportController,
             makeContributionsController: makeContributionsController,
             makeContentReportController: makeContentReportController,
-            makeCollectionsLibraryController: makeCollectionsLibraryController,
-            makeCollectionsWorkspaceController: makeCollectionsWorkspaceController,
+            makeCollectionsLibraryController: makeCollectionsLibraryController, makeCollectionsWorkspaceController: makeCollectionsWorkspaceController,
             makeSettingsController: makeSettingsController,
             makeBlockedAuthorsController: makeBlockedAuthorsController,
             makeAuthController: makeAuthController,
             makeCheckInCreatePickerController: makeCheckInCreatePickerController,
-            makeGuestProfileController: makeGuestProfileController(profile:),
-            makeOwnProfileController: makeOwnProfileController(profile:),
+            makeGuestProfileController: makeGuestProfileController(profile:), makeOwnProfileController: makeOwnProfileController(profile:),
             makePublicProfileController: makePublicProfileController(profile:),
             makeNotificationInboxController: makeNotificationInboxController(inbox:languageTag:)
         )

@@ -328,34 +328,44 @@ struct ContributionFormContent<Photo: View, OptionImage: View>: View {
         return VStack(alignment: .leading, spacing: 12) {
             Text(strings.text(menu ? "shop_menu_photos_title" : state.kind == "AddRoaster" ? "roaster_photos_title" : "shop_photos_title")).font(.headline)
             Text(strings.format("photo_count", all.count, limit)).font(.caption).foregroundStyle(CoffeePeekNativeStyle.secondary)
-            if !uploaded.isEmpty {
-                HStack {
-                    Text(strings.format("editor_already_uploaded", uploaded.count)).font(.caption)
-                    Spacer()
-                    Button(strings.text("editor_remove_uploaded")) { onRemovePhoto(uploaded[0].key) }
-                }
-            }
-            ScrollView(.horizontal) {
-                LazyHStack(spacing: 12) {
-                    ForEach(regular) { value in
-                        photo(value).frame(width: 112, height: 112).clipped().clipShape(RoundedRectangle(cornerRadius: 14))
-                            .overlay(alignment: .topTrailing) {
-                                Button { onRemovePhoto(value.key) } label: {
-                                    Image(systemName: "xmark.circle.fill").font(.title2).symbolRenderingMode(.palette)
-                                        .foregroundStyle(.white, .black.opacity(0.75)).frame(width: 44, height: 44)
-                                }.accessibilityLabel(strings.text("editor_remove"))
-                            }
-                    }
-                    if all.count < limit {
-                        Button { onAddPhoto(menu) } label: {
-                            if preparingPhotos { ProgressView() }
-                            else { Image(systemName: "plus").font(.title) }
-                        }.frame(width: 112, height: 112).background(CoffeePeekNativeStyle.surface, in: RoundedRectangle(cornerRadius: 14))
-                            .accessibilityLabel(strings.media("title")).disabled(preparingPhotos)
-                    }
-                }
+            if !uploaded.isEmpty { uploadedPhotoCount(uploaded) }
+            photoCarousel(regular, total: all.count, limit: limit, menu: menu)
+        }
+    }
+
+    private func uploadedPhotoCount(_ uploaded: [ContributionFormPhoto]) -> some View {
+        HStack {
+            Text(strings.format("editor_already_uploaded", uploaded.count)).font(.caption)
+            Spacer()
+            Button(strings.text("editor_remove_uploaded")) { onRemovePhoto(uploaded[0].key) }
+        }
+    }
+
+    private func photoCarousel(_ photos: [ContributionFormPhoto], total: Int, limit: Int, menu: Bool) -> some View {
+        ScrollView(.horizontal) {
+            LazyHStack(spacing: 12) {
+                ForEach(photos) { value in removablePhoto(value) }
+                if total < limit { addPhotoButton(menu: menu) }
             }
         }
+    }
+
+    private func removablePhoto(_ value: ContributionFormPhoto) -> some View {
+        photo(value).frame(width: 112, height: 112).clipped().clipShape(RoundedRectangle(cornerRadius: 14))
+            .overlay(alignment: .topTrailing) {
+                Button { onRemovePhoto(value.key) } label: {
+                    Image(systemName: "xmark.circle.fill").font(.title2).symbolRenderingMode(.palette)
+                        .foregroundStyle(.white, .black.opacity(0.75)).frame(width: 44, height: 44)
+                }.accessibilityLabel(strings.text("editor_remove"))
+            }
+    }
+
+    private func addPhotoButton(menu: Bool) -> some View {
+        Button { onAddPhoto(menu) } label: {
+            if preparingPhotos { ProgressView() }
+            else { Image(systemName: "plus").font(.title) }
+        }.frame(width: 112, height: 112).background(CoffeePeekNativeStyle.surface, in: RoundedRectangle(cornerRadius: 14))
+            .accessibilityLabel(strings.media("title")).disabled(preparingPhotos)
     }
 
     private func menuRow(_ row: ContributionMenuInput) -> some View {
