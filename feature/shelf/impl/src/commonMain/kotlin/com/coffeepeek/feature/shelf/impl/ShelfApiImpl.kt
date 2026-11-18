@@ -65,6 +65,9 @@ internal class ShelfApiImpl(
     private val arrivals = ShelfArrivals()
     private val bags = ShelfBagHandoff()
 
+    internal fun shelfModel() = ShelfViewModel(repository, calendar, arrivals, bags)
+    internal fun bagModel(id: String) = ShelfBagViewModel(id, repository, calendar, bags, ports.brews)
+    internal fun addModel() = ShelfAddViewModel(repository, ports.scanner, ports.coffees, arrivals, calendar)
     internal fun archiveModel() = ShelfArchiveViewModel(repository, calendar, bags)
 
     @Composable

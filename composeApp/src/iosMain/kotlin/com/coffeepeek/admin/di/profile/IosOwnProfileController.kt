@@ -7,6 +7,8 @@ import com.coffeepeek.admin.di.checkinhistory.AppCheckInHistoryCalendar
 import com.coffeepeek.admin.di.checkinhistory.CheckInHistorySession
 import com.coffeepeek.admin.di.media.IosCatalogueMedia
 import com.coffeepeek.admin.config.AppConfig
+import com.coffeepeek.admin.di.shelf.iosShelfFactory
+import com.coffeepeek.admin.di.shelf.nativeShelfController
 import com.coffeepeek.admin.locator.Constants
 import com.coffeepeek.admin.session.OldReviewDrafts
 import com.coffeepeek.core.media.ImageUrlFetcher
@@ -33,6 +35,7 @@ internal val LocalIosOwnProfileController = staticCompositionLocalOf<(IosOwnProf
 @Composable
 internal fun iosOwnProfileContent(): () -> UIViewController {
     val factory = LocalIosOwnProfileController.current
+    val shelf = iosShelfFactory()
     val accounts = koinInject<ProfileAccountPort>()
     val notifications = koinInject<NotificationFeature>()
     val auth = koinInject<AuthRepository>()
@@ -53,7 +56,8 @@ internal fun iosOwnProfileContent(): () -> UIViewController {
         val profile = createIosOwnProfileSession(accounts, AppProfileSignOut(notifications, auth, drafts),
             repository, checkIns, AppProfileAuthorVisibility(visibility), snapshots, ::profileLifecycleDiagnostic)
         factory(IosOwnProfile(profile, lease,
-            createIosOwnProfileHistorySession(lease.bind(shops), lease.bind(homes), calendar::snapshot), language, media))
+            createIosOwnProfileHistorySession(lease.bind(shops), lease.bind(homes), calendar::snapshot), language, media,
+            { allowed -> nativeShelfController(shelf("shelf", null, true, allowed)) }))
     }
 }
 

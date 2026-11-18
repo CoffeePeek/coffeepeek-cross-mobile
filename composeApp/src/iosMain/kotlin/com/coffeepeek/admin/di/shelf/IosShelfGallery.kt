@@ -31,10 +31,10 @@ internal val IosShelfGallery: ShelfGalleryPicker = { onPicked, onFailed ->
     val failed by rememberUpdatedState(onFailed)
     // The picker holds its delegate weakly: composition keeps it alive while the picker can call back.
     val delegate = remember { ShelfPickerDelegate(onPicked = { picked(it) }, onFailed = { failed() }) }
-    remember(delegate) { { present(delegate) } }
+    remember(delegate) { { presentShelfPicker(delegate) } }
 }
 
-private fun present(delegate: ShelfPickerDelegate) {
+internal fun presentShelfPicker(delegate: ShelfPickerDelegate) {
     val presenter = topViewController() ?: return
     val configuration = PHPickerConfiguration().apply {
         selectionLimit = 1
@@ -47,7 +47,7 @@ private fun present(delegate: ShelfPickerDelegate) {
     presenter.presentViewController(picker, animated = true, completion = null)
 }
 
-private class ShelfPickerDelegate(
+internal class ShelfPickerDelegate(
     private val onPicked: (ShelfPhoto) -> Unit,
     private val onFailed: () -> Unit,
 ) : NSObject(), PHPickerViewControllerDelegateProtocol {

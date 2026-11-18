@@ -34,8 +34,7 @@ import com.coffeepeek.admin.di.notifications.featureNotificationsRenderer
 import com.coffeepeek.admin.di.settings.featureSettingsScreenRenderer
 import com.coffeepeek.admin.utils.ErrorHandler
 import com.coffeepeek.admin.di.profile.profileSnapshotModule
-import com.coffeepeek.admin.di.shelf.ShelfFeatureScreenRenderer
-import com.coffeepeek.admin.di.shelf.shelfBrewForm
+import com.coffeepeek.admin.di.shelf.iosShelfScreenRenderer
 import com.coffeepeek.admin.di.shelf.iosShelfModule
 import com.coffeepeek.admin.locator.Constants
 
@@ -73,7 +72,7 @@ actual fun initPlatformKoin() {
             featureCoffeeScreenRenderer(get())
         },
         shelfRendererFactory = {
-            ShelfFeatureScreenRenderer(get(), shelfBrewForm(get()))
+            iosShelfScreenRenderer()
         },
         publicProfileRendererFactory = { featurePublicProfileScreenRenderer(get(), get(), get(), get(), get()) },
         ownProfileRendererFactory = { featureOwnProfileScreenRenderer(get(), get(), get(), get(), get(), get(), get(), get(), get()) },

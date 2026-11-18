@@ -18,6 +18,10 @@ fun createIosShelfFeature(repository: ShelfRepository, ports: ShelfPorts): IosSh
 class IosShelfFeature internal constructor(private val feature: ShelfApiImpl) {
     val entry: ShelfEntry get() = feature
 
+    fun shelf() = IosShelfSession(feature.shelfModel())
+    fun bag(id: String) = IosShelfBagSession(feature.bagModel(id))
+    fun add() = IosShelfAddSession(feature.addModel())
+
     fun archive() = IosShelfArchiveSession(feature.archiveModel())
 }
 

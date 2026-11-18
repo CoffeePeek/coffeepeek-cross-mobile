@@ -69,6 +69,9 @@ fun configureNativeEditProfile(factory: (com.coffeepeek.admin.di.profile.IosEdit
     com.coffeepeek.admin.di.profile.configureNativeEditProfile(factory)
 }
 
+fun configureNativeShelf(factory: (com.coffeepeek.admin.di.shelf.IosShelfScreen) -> UIViewController) =
+    com.coffeepeek.admin.di.shelf.configureNativeShelf(factory)
+
 fun configureNativeGlass(makeView: () -> UIVisualEffectView) {
     configureCoffeePeekNativeGlass(makeView)
 }
