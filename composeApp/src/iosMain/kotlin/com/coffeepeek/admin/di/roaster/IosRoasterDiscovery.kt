@@ -15,10 +15,12 @@ class IosRoasterDiscovery internal constructor(
     val search = host.search
     fun current(): IosRoasterDiscoveryState {
         val state = session.current()
-        val cards = state.cards.takeIf { isCurrent() }.orEmpty().let { if (search) it else it.take(8) }
-        return IosRoasterDiscoveryState(isCurrent(), state.loading, state.failed, state.query, host.bottomClearance,
+        val active = isCurrent()
+        val cards = state.cards.takeIf { active }.orEmpty().let { if (search) it else it.take(8) }
+        return IosRoasterDiscoveryState(active, state.loading && active, state.failed && active, state.query.takeIf { active }.orEmpty(), host.bottomClearance,
             cards.map { IosRoasterCard(it.slug, it.name, it.photo, it.about, it.shops, it.products, it.favorite) },
-            state.tags.map { IosRoasterTag(it.id, it.name, it.selected) }, state.messageKey, state.message)
+            state.tags.takeIf { active }.orEmpty().map { IosRoasterTag(it.id, it.name, it.selected) },
+            state.messageKey.takeIf { active }, state.message.takeIf { active })
     }
     fun observeState(receive: (IosRoasterDiscoveryState) -> Unit) = observe(session.state) { receive(current()) }
     fun observeEvents() = IosRoasterObservation(scope.launch {

@@ -18,11 +18,12 @@ class IosRoasterDetail internal constructor(
 ) : IosRoasterScreen(language, accounts, media::observeImage) {
     fun current(): IosRoasterDetailState {
         val state = session.current()
-        val details = state.details.takeIf { isCurrent() }
-        return IosRoasterDetailState(isCurrent(), state.loading, state.failed, details?.id, details?.name,
-            details?.about, details?.location?.address, state.instagram.takeIf { isCurrent() }, state.website.takeIf { isCurrent() },
+        val active = isCurrent()
+        val details = state.details.takeIf { active }
+        return IosRoasterDetailState(active, state.loading && active, state.failed && active, details?.id, details?.name,
+            details?.about, details?.location?.address, state.instagram.takeIf { active }, state.website.takeIf { active },
             details?.photos?.map { it.url }.orEmpty(), details?.shops?.map { IosRoasterShop(it.slug, it.name, it.photoUrl) }.orEmpty(),
-            state.favorite, state.photo.takeIf { isCurrent() }, state.messageKey.takeIf { isCurrent() }, state.message.takeIf { isCurrent() })
+            state.favorite && active, state.photo.takeIf { active }, state.messageKey.takeIf { active }, state.message.takeIf { active })
     }
     fun observeState(receive: (IosRoasterDetailState) -> Unit) = observe(session.state) { receive(current()) }
     fun observeEvents() = IosRoasterObservation(scope.launch {
