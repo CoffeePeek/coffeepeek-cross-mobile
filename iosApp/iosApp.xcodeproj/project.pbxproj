@@ -115,6 +115,8 @@
 		B0510A100000000000000004 /* OwnershipNativeQrSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0510A200000000000000004 /* OwnershipNativeQrSheet.swift */; };
 		B0510A100000000000000005 /* OwnershipNativeActions.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0510A200000000000000005 /* OwnershipNativeActions.swift */; };
 		B0510A300000000000000001 /* NativeOwnership.strings in Resources */ = {isa = PBXBuildFile; fileRef = B0510A300000000000000004 /* NativeOwnership.strings */; };
+		4330C63C97160834EB1EC6FA /* CoffeePeekNativeLoader.swift in Sources */ = {isa = PBXBuildFile; fileRef = 220DCD8C6CC925FC5019893E /* CoffeePeekNativeLoader.swift */; };
+		26E4BC2F1E8076E36E7674AA /* GlobalDialogNativeScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5BCBB913B662C398717072D0 /* GlobalDialogNativeScreen.swift */; };
 		13E1EB359E1732420F69CBB7 /* CoffeePeekNativeActionButton.swift in Sources */ = {isa = PBXBuildFile; fileRef = CAE1B6D000F4B0D99EB77976 /* CoffeePeekNativeActionButton.swift */; };
 		5EB38D9D1A59581550BCF75A /* AccountDeletionNativeScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = E562C8937159452DC6C0A077 /* AccountDeletionNativeScreen.swift */; };
 		45F8E39BC34FFD6CDC34298B /* RootModalNativeController.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC42BBFED62CCD1752E8C839 /* RootModalNativeController.swift */; };
@@ -260,6 +262,8 @@
 		B0510A200000000000000005 /* OwnershipNativeActions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = OwnershipNativeActions.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/OwnershipNativeActions.swift; sourceTree = "<group>"; };
 		B0510A300000000000000002 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/NativeOwnership.strings; sourceTree = "<group>"; };
 		B0510A300000000000000003 /* be */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = be; path = be.lproj/NativeOwnership.strings; sourceTree = "<group>"; };
+		220DCD8C6CC925FC5019893E /* CoffeePeekNativeLoader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CoffeePeekNativeLoader.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CoffeePeekNativeLoader.swift; sourceTree = "<group>"; };
+		5BCBB913B662C398717072D0 /* GlobalDialogNativeScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = GlobalDialogNativeScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/GlobalDialogNativeScreen.swift; sourceTree = "<group>"; };
 		CAE1B6D000F4B0D99EB77976 /* CoffeePeekNativeActionButton.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CoffeePeekNativeActionButton.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CoffeePeekNativeActionButton.swift; sourceTree = "<group>"; };
 		E562C8937159452DC6C0A077 /* AccountDeletionNativeScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AccountDeletionNativeScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/AccountDeletionNativeScreen.swift; sourceTree = "<group>"; };
 		CC42BBFED62CCD1752E8C839 /* RootModalNativeController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = RootModalNativeController.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/RootModalNativeController.swift; sourceTree = "<group>"; };
@@ -406,6 +410,8 @@
 				A0871E7C000000000000000C /* NativeOwnProfile.strings */,
 				817EAB94000000000000000C /* NativePublicProfile.strings */,
 				53E771650000000000000010 /* SettingsNative.strings */,
+				220DCD8C6CC925FC5019893E /* CoffeePeekNativeLoader.swift */,
+				5BCBB913B662C398717072D0 /* GlobalDialogNativeScreen.swift */,
 				CAE1B6D000F4B0D99EB77976 /* CoffeePeekNativeActionButton.swift */,
 				E562C8937159452DC6C0A077 /* AccountDeletionNativeScreen.swift */,
 				CC42BBFED62CCD1752E8C839 /* RootModalNativeController.swift */,
@@ -613,6 +619,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				26E4BC2F1E8076E36E7674AA /* GlobalDialogNativeScreen.swift in Sources */,
+				4330C63C97160834EB1EC6FA /* CoffeePeekNativeLoader.swift in Sources */,
 				0AA13B21D6BCD94E8B05BD6E /* AppUpdateNativeScreen.swift in Sources */,
 				1AFFB44C0CA1DABC7CE94803 /* GuestOnboardingNativeScreen.swift in Sources */,
 				45F8E39BC34FFD6CDC34298B /* RootModalNativeController.swift in Sources */,

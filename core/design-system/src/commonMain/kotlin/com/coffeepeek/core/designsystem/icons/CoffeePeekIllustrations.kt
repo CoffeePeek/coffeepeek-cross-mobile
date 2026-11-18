@@ -9,4 +9,7 @@ import org.jetbrains.compose.resources.DrawableResource
 object CoffeePeekIllustrations {
     val LoadError: DrawableResource get() = Res.drawable.maskot_astonishment
     val CatalogSearch: DrawableResource get() = Res.drawable.maskot_with_magnifying_glass
+
+    @OptIn(org.jetbrains.compose.resources.ExperimentalResourceApi::class)
+    suspend fun loadErrorBytes(): ByteArray = Res.readBytes("drawable/maskot_astonishment.png")
 }

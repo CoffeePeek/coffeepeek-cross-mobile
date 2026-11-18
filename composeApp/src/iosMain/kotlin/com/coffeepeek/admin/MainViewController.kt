@@ -69,14 +69,18 @@ fun configureNativeEditProfile(factory: (com.coffeepeek.admin.di.profile.IosEdit
     com.coffeepeek.admin.di.profile.configureNativeEditProfile(factory)
 }
 
-fun configureNativeOwnership(factory: (com.coffeepeek.admin.di.ownership.IosOwnershipScreen) -> UIViewController,
-    actions: (com.coffeepeek.admin.di.ownership.IosOwnershipActions) -> UIViewController) {
-    com.coffeepeek.admin.di.ownership.configureNativeOwnership(factory)
-    com.coffeepeek.admin.di.ownership.configureNativeOwnershipActions(actions)
+fun configureNativeGlobalDialogs(factory: (com.coffeepeek.admin.di.system.IosGlobalDialog) -> UIViewController) {
+    com.coffeepeek.admin.ui.dialogs.configureNativeGlobalDialogs(factory)
 }
 
 fun configureNativeRootModals(factory: (com.coffeepeek.admin.di.system.IosRootModal) -> UIViewController) {
     com.coffeepeek.admin.di.system.configureNativeRootModals(factory)
+}
+
+fun configureNativeOwnership(factory: (com.coffeepeek.admin.di.ownership.IosOwnershipScreen) -> UIViewController,
+    actions: (com.coffeepeek.admin.di.ownership.IosOwnershipActions) -> UIViewController) {
+    com.coffeepeek.admin.di.ownership.configureNativeOwnership(factory)
+    com.coffeepeek.admin.di.ownership.configureNativeOwnershipActions(actions)
 }
 
 fun configureNativeGlass(makeView: () -> UIVisualEffectView) {

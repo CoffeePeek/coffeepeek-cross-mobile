@@ -5,13 +5,14 @@ struct CoffeePeekNativeActionButton: View {
     var primary = true
     var busy = false
     var enabled = true
+    var fontSize: CGFloat = 17
     let action: () -> Void
 
     var body: some View {
         Button(action: action) {
             HStack(spacing: 8) {
                 if busy { ProgressView().tint(primary ? .black : CoffeePeekNativeStyle.foreground) }
-                Text(title).font(CoffeePeekNativeStyle.font(17, weight: "Semibold"))
+                Text(title).font(CoffeePeekNativeStyle.font(fontSize, weight: "Semibold"))
             }
             .multilineTextAlignment(.center)
             .padding(.horizontal, 16)
