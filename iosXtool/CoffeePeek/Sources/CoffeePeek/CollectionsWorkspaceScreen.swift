@@ -86,6 +86,9 @@ private struct CollectionsWorkspaceHost: View {
         .foregroundStyle(CoffeePeekNativeStyle.foreground)
         .tint(CoffeePeekNativeStyle.foreground)
         .background(CoffeePeekNativeStyle.background)
+        .background(CoffeePeekLocalBackProtection(protected:
+            model.state.preview && model.state.mode != "Snapshot" ||
+            model.state.mode == "Editor" && model.state.hasEdits || model.state.busy))
         .onAppear(perform: model.appear).onDisappear(perform: model.disappear)
         .onChange(of: model.state.accountVersion) { _ in
             coverItem = nil; selectingCover = false; choosingFeatured = false; deleting = false
