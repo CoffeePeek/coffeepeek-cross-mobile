@@ -70,6 +70,27 @@ fixed by the Business checkpoint, with no new findings here. Xcode and the three
 native contracts remain pending ios-verify. Manual device acceptance remains for
 photos, session recovery, VoiceOver, large fonts, themes and camera/modal return.
 
+### 2026-11-18 — native roaster detail, carousel and search
+
+Ownership: feature/roaster retains both existing ViewModels, filters, favorites,
+link normalization, photo validation, lazy detail reads and interaction analytics.
+Composition supplies the native iOS renderer and account-scoped image source.
+SwiftUI replaces RoasterDetail, the owner carousel and full search within Discovery.
+The public RoasterScreenRenderer contract stays unchanged, including shared list
+state between the carousel/search and Discovery-owned criteria. Android keeps its
+current Compose renderer. Shared native media keeps CFPK placeholders and access
+revocation. The ownership toolbar/claim slot remains under the Business checkpoint;
+its existing API is reused, so this checkpoint does not certify that separate UI.
+
+Verification: all 29 roaster JVM tests pass (4 suites, 0 failures/errors), including
+4 new native-session contracts for filters/favorite writes/navigation/photo selection.
+The function-body gate reports only the two inherited ownership/public-profile
+violations after making the roaster factory body explicit; its first run also found
+that factory expression and it was corrected. Native account-lifetime contracts and
+the full roaster suite are included in ios-verify. macOS native build/test execution
+and manual device review remain pending. Previews use fake state in both themes;
+only existing supported translations are copied, missing be entries keep Russian.
+
 ## Пакеты работ
 
 Каждая строка задаёт владельца сценария. Один пакет может потребовать нескольких PR, если пользовательские сценарии можно принять по отдельности. Зависимости в колонке относятся к подключению и сквозной проверке. Подготовку SwiftUI на тестовых данных и аудит текущих маршрутов можно вести раньше.
