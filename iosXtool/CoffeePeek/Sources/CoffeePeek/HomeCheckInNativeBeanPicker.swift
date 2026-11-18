@@ -116,9 +116,9 @@ struct HomeCheckInNativeBeanPicker: View {
     }
     private var customBean: some View {
         VStack(spacing: 12) {
-            CheckInNativeField(title: strings["home_check_in_custom_bean"]) {
+            CheckInNativeField(title: strings["home_check_in_custom_bean"], style: .home) {
                 CheckInNativeInput(title: strings["home_check_in_custom_bean_name"], placeholder: strings["home_check_in_custom_bean_hint"],
-                    value: Binding(get: { customName }, set: { customName = String($0.prefix(250)) }))
+                    value: Binding(get: { customName }, set: { customName = String($0.prefix(250)) }), style: .home)
             }
             CheckInNativePrimaryButton(title: strings["home_check_in_use_custom_bean"],
                 enabled: !customName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty) {

@@ -17,18 +17,42 @@ struct CheckInNativeStrings {
     }
 }
 
+enum CheckInNativeFormStyle {
+    case standard, home
+
+    static let homeOutline = Color(uiColor: UIColor { traits in
+        traits.userInterfaceStyle == .dark ? UIColor(red: 61 / 255, green: 47 / 255, blue: 40 / 255, alpha: 1) :
+            UIColor(red: 231 / 255, green: 229 / 255, blue: 228 / 255, alpha: 1)
+    })
+}
+
 struct CheckInNativeField<Content: View>: View {
     let title: String
     var error: String? = nil
+    var style: CheckInNativeFormStyle = .standard
     @ViewBuilder let content: Content
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            if !title.isEmpty { Text(title).font(CoffeePeekNativeStyle.font(15, weight: "Medium")) }
+        VStack(alignment: .leading, spacing: style == .home ? 4 : 8) {
+            if !title.isEmpty {
+                if style == .home { label.foregroundStyle(CoffeePeekNativeStyle.secondary) }
+                else { label }
+            }
             content
-            if let error { Text(error).font(CoffeePeekNativeStyle.font(12)).foregroundStyle(.red) }
+            if let error { errorLabel(error) }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private var label: some View { Text(title).font(CoffeePeekNativeStyle.font(15, weight: "Medium")) }
+
+    @ViewBuilder private func errorLabel(_ message: String) -> some View {
+        if style == .home {
+            HStack(alignment: .top, spacing: 6) {
+                Image(systemName: "exclamationmark.circle").font(.system(size: 18)).accessibilityHidden(true)
+                Text(message).font(CoffeePeekNativeStyle.font(13))
+            }.foregroundStyle(CoffeePeekNativeStyle.error)
+        } else { Text(message).font(CoffeePeekNativeStyle.font(12)).foregroundStyle(.red) }
     }
 }
 
@@ -38,18 +62,62 @@ struct CheckInNativeInput: View {
     @Binding var value: String
     var multiline = false
     var keyboard: UIKeyboardType = .default
+    var style: CheckInNativeFormStyle = .standard
+    var error: String? = nil
+    @FocusState private var focused: Bool
 
     var body: some View {
-        TextField(placeholder, text: $value, axis: multiline ? .vertical : .horizontal)
-            .lineLimit(multiline ? 4...8 : 1...1)
+        if style == .home && !multiline { input.submitLabel(.done).onSubmit { focused = false } }
+        else { input }
+    }
+
+    private var input: some View {
+        TextField(placeholder, text: $value,
+            prompt: style == .home ? Text(placeholder).foregroundStyle(CoffeePeekNativeStyle.secondary) : nil,
+            axis: multiline ? .vertical : .horizontal)
+            .lineLimit(multiline ? (style == .home ? 1...8 : 4...8) : 1...1)
             .keyboardType(keyboard)
-            .font(CoffeePeekNativeStyle.font(16))
-            .padding(.horizontal, 16).padding(.vertical, 12)
-            .frame(minHeight: 48, alignment: .topLeading)
-            .background(CoffeePeekNativeStyle.surface, in: RoundedRectangle(cornerRadius: multiline ? 20 : 24))
-            .overlay(RoundedRectangle(cornerRadius: multiline ? 20 : 24).stroke(CoffeePeekNativeStyle.border))
+            .font(CoffeePeekNativeStyle.font(style == .home ? 15 : 16))
+            .focused($focused)
+            .padding(.horizontal, style == .home ? 14 : 16).padding(.vertical, verticalPadding)
+            .frame(minHeight: minimumHeight, alignment: style == .home && !multiline ? .leading : .topLeading)
+            .background(background, in: RoundedRectangle(cornerRadius: radius))
+            .overlay(RoundedRectangle(cornerRadius: radius).stroke(outline))
             .accessibilityLabel(title)
     }
+
+    private var verticalPadding: CGFloat { style == .home && !multiline ? 0 : 12 }
+    private var minimumHeight: CGFloat { style == .home ? (multiline ? 80 : 44) : 48 }
+    private var radius: CGFloat { style == .home ? (multiline ? 24 : 22) : (multiline ? 20 : 24) }
+    private var background: Color {
+        guard style == .home else { return CoffeePeekNativeStyle.surface }
+        return error != nil && !multiline ? CoffeePeekNativeStyle.error.opacity(0.05) : CoffeePeekNativeStyle.foreground.opacity(0.04)
+    }
+    private var outline: Color {
+        guard style == .home else { return CoffeePeekNativeStyle.border }
+        return error == nil ? CheckInNativeFormStyle.homeOutline : CoffeePeekNativeStyle.error
+    }
+}
+
+#Preview("Home inputs light") { homeInputsPreview().preferredColorScheme(.light) }
+#Preview("Home inputs dark") { homeInputsPreview().preferredColorScheme(.dark) }
+
+private func homeInputsPreview() -> some View {
+    let strings = CheckInNativeStrings(languageTag: "ru", table: "NativeHomeCheckIn")
+    return VStack(spacing: 20) {
+        CheckInNativeField(title: strings["home_check_in_drink"], style: .home) {
+            CheckInNativeInput(title: strings["home_check_in_drink"], placeholder: strings["home_check_in_drink_hint"],
+                value: .constant(""), style: .home)
+        }
+        CheckInNativeField(title: strings["home_check_in_editor_note"], style: .home) {
+            CheckInNativeInput(title: strings["home_check_in_editor_note"], placeholder: strings["home_check_in_note_hint"],
+                value: .constant(""), multiline: true, style: .home)
+        }
+        CheckInNativeField(title: strings["home_check_in_dose_label"], error: strings["home_check_in_error_dose"], style: .home) {
+            CheckInNativeInput(title: strings["home_check_in_dose_label"], placeholder: strings["home_check_in_dose_hint"],
+                value: .constant("0"), keyboard: .decimalPad, style: .home, error: strings["home_check_in_error_dose"])
+        }
+    }.padding(16).background(CoffeePeekNativeStyle.background)
 }
 
 struct CheckInNativeRating: View {

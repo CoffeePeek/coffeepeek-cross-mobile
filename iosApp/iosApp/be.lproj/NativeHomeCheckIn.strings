@@ -142,3 +142,4 @@
 "coffeepeek_photo_remove" = "Выдаліць фота %1$d";
 "coffeepeek_photo_move_earlier" = "Перамясціць раней";
 "coffeepeek_photo_move_later" = "Перамясціць пазней";
+"coffeepeek_photos_manage_hint" = "Націсніце, каб паглядзець. Утрымлівайце і перацягвайце, каб змяняць парадак.";

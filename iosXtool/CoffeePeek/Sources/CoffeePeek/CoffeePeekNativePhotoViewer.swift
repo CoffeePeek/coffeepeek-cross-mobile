@@ -4,6 +4,17 @@ import UIKit
 
 /// Uses the Kotlin image source while presenting an independent SwiftUI cover.
 extension View {
+    func coffeePeekPhotoViewer(count: Int, selection: Binding<Int?>, languageTag: String,
+                              load: @escaping (Int, @escaping (UIImage?) -> Void) -> (() -> Void)) -> some View {
+        fullScreenCover(item: Binding(
+            get: { selection.wrappedValue.map(CoffeePeekLocalPhotoPresentation.init) },
+            set: { if $0 == nil { selection.wrappedValue = nil } }
+        )) { selected in
+            CoffeePeekNativePhotoViewer(source: CoffeePeekPhotoSource(count: count, selected: selected.id, load: load),
+                                        languageTag: languageTag, onDismiss: { selection.wrappedValue = nil })
+        }
+    }
+
     func coffeePeekPhotoViewer(images: [UIImage?], selection: Binding<Int?>, languageTag: String) -> some View {
         fullScreenCover(item: Binding(
             get: { selection.wrappedValue.map(CoffeePeekLocalPhotoPresentation.init) },
@@ -47,6 +58,14 @@ private struct CoffeePeekPhotoSource {
     let loadPreview: Load
     let loadOriginal: Load
     let setVisible: (Bool) -> Void
+
+    init(count: Int, selected: Int, load: @escaping (Int, @escaping Frame) -> (() -> Void)) {
+        self.count = count
+        initialIndex = min(max(0, selected), max(0, count - 1))
+        loadPreview = { index, _, receive in load(index, receive) }
+        loadOriginal = loadPreview
+        setVisible = { _ in }
+    }
 
     init(images: [UIImage?], selected: Int) {
         count = images.count

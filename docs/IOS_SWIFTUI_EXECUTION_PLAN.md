@@ -992,3 +992,47 @@ selection traits, light/dark appearance and large text. Keep the existing
 localized labels, filter intents and category glyphs shared with map pins.
 Verify the Windows xcross package and Android directDebug/DEX. The shop picker
 uses the same pill style with its existing two controls.
+
+Build 3218 from `bdda13ac8` compiled on Windows as scanner-disabled Debug.
+The first Swift preflight was interrupted by a source edit. The retry on
+the committed source typechecked 120 Swift files. Both registration tests
+and the eight-chip order/artwork assertions passed. Android directDebug
+assembly, its packaged DEX check, and function body limits passed. Discovery's
+179 passing unit test results were up to date. The signed IPA passed build
+identity, archive integrity and hash checks. USB enumeration returned no
+iPhone. Installation, visual comparison, and manual accessibility checks
+remain pending.
+
+### 2026-11-18 — Check-in creation visual audit
+
+Manually reviewed Russian Android directSandbox 3216 on CoffeePeek API 37
+(emulator-5554, installed APK matched local SHA-256). Android application
+sources are identical between `af8475a06` and `bdda13ac8`. In light and dark
+appearance reviewed the Add sheet, shop picker, both check-in editors, date
+and drink controls, rating cards, attached synthetic photos and preview,
+recipe disclosure, brew method, bean picker, visibility and submit buttons.
+Resumed the shop draft from Discovery. The 320dp/130% Sandbox override clips
+the fifth star in the shop editor. The separate home editor modal did not
+inherit that fixture. Screenshots are local under ignored build/.
+
+Compared SwiftUI 3218 and Compose source for dimensions, roles and theme
+tokens. Main differences are rating card layout and inactive star color,
+field background and typography, home photo grid, drink/recipe selectors,
+and shop draft controls and submission presentation. Shop attachments,
+screen background and primary CTA color are already close. iPhone was
+unavailable. No check-ins were submitted during this audit. Success and
+sending states were inspected in source. Real media, keyboard, Dynamic Type
+and actual iOS rendering remain device checks.
+
+### 2026-11-18 — Native iOS home check-in rating, fields and attachments
+
+Use the Android Sandbox light/dark captures for the appearance of the home
+editor. Keep native text inputs, date and method pickers and media entry
+points. Check the rating at 320 pt with a large accessibility text size:
+stack artwork/title above the row before a star can clip. Verify all five
+buttons, their selected state and labels. Check normal/error field surfaces,
+note height, recipe controls, empty/filled/full attachments, retained photos,
+preview, reordering and removal, and session revocation while a photo is
+open. Preserve existing sheet dismissal and creation/editing data contracts.
+Run the Windows xcross build and Android directDebug/DEX and verify the
+signed IPA. Confirm real device rendering and interactions if available.

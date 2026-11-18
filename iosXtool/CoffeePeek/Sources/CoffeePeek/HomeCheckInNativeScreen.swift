@@ -15,7 +15,7 @@ private struct HomeCheckInNativeHost: View {
     var body: some View {
         HomeCheckInNativeContent(state: model.state, strings: model.strings, today: model.editor.today(), actions: model.actions)
             .environment(\.locale, Locale(identifier: model.strings.languageTag))
-            .onAppear(perform: model.observe).onDisappear(perform: model.stopObserving)
+            .onAppear(perform: model.observe)
     }
 }
 
@@ -36,10 +36,6 @@ final class HomeCheckInNativeModel: ObservableObject {
         observation = editor.observe(onState: { [weak self] in self?.state = $0 }, onLanguage: { [weak self] in
             self?.strings = CheckInNativeStrings(languageTag: $0, table: "NativeHomeCheckIn")
         })
-    }
-    func stopObserving() {
-        observation?.cancel()
-        observation = nil
     }
     var actions: HomeCheckInNativeActions {
         let editor = self.editor
@@ -144,15 +140,14 @@ struct HomeCheckInNativeContent: View {
 
     private var primaryFields: some View {
         VStack(alignment: .leading, spacing: 20) {
-            CheckInNativeField(title: strings["home_check_in_prepared_date"], error: error("Date")) {
+            CheckInNativeField(title: strings["home_check_in_prepared_date"], error: error("Date"), style: .home) {
                 CheckInNativeDateField(title: strings["home_check_in_choose_date"], value: state.draft.preparedOn,
                     today: today, label: state.draft.dateLabel, done: strings["home_check_in_done"],
-                    cancel: strings["home_check_in_cancel"], changed: actions.date)
+                    cancel: strings["home_check_in_cancel"], changed: actions.date, style: .home, error: error("Date"))
             }
             input("home_check_in_drink", hint: "home_check_in_drink_hint", value: state.draft.drinkName, field: "Drink", changed: actions.drink)
-            CheckInNativeField(title: "", error: error("Rating")) {
-                CheckInNativeRating(title: strings["home_check_in_taste_question"], value: state.draft.tasteScore?.intValue,
-                    label: { strings.format("home_check_in_choose_rating", $0) }, select: actions.taste)
+            CheckInNativeField(title: "", error: error("Rating"), style: .home) {
+                HomeCheckInNativeRating(strings: strings, value: state.draft.tasteScore?.intValue, select: actions.taste)
             }
             input("home_check_in_editor_note", hint: "home_check_in_note_hint", value: state.draft.note,
                   field: "Note", multiline: true, changed: actions.note)
@@ -162,15 +157,16 @@ struct HomeCheckInNativeContent: View {
 
     private func input(_ title: String, hint: String, value: String, field: String, multiline: Bool = false,
                        changed: @escaping (String) -> Void) -> some View {
-        CheckInNativeField(title: strings[title], error: error(field)) {
+        CheckInNativeField(title: strings[title], error: error(field), style: .home) {
             CheckInNativeInput(title: strings[title], placeholder: strings[hint],
-                value: Binding(get: { value }, set: { changed(String($0.prefix(multiline ? 1000 : 100))) }), multiline: multiline)
+                value: Binding(get: { value }, set: { changed(String($0.prefix(multiline ? 1000 : 100))) }),
+                multiline: multiline, style: .home, error: error(field))
         }
     }
 
     private var footer: some View {
         VStack(spacing: 8) {
-            CheckInNativeField(title: "", error: error("Visibility")) {
+            CheckInNativeField(title: "", error: error("Visibility"), style: .home) {
                 Toggle(isOn: Binding(get: { state.draft.isPublic?.boolValue == true }, set: actions.visibility)) {
                     VStack(alignment: .leading, spacing: 4) {
                         Text(strings["home_check_in_public_title"]).font(CoffeePeekNativeStyle.font(17, weight: "Semibold"))
@@ -191,14 +187,14 @@ struct HomeCheckInNativeContent: View {
         VStack(spacing: 16) {
             if state.status.loading { ProgressView(strings["home_check_in_loading"]) }
             if let key = state.issues.loadKey {
-                Text(strings[key]).foregroundStyle(.red)
+                Text(strings[key]).foregroundStyle(CoffeePeekNativeStyle.error)
                 Button(strings["home_check_in_retry"], action: actions.retry).disabled(state.status.loading)
             }
         }.frame(maxWidth: .infinity, maxHeight: .infinity).padding(16)
     }
 
     @ViewBuilder private var errorSummary: some View {
-        if let summary { Text(summary).foregroundStyle(.red) }
+        if let summary { Text(summary).foregroundStyle(CoffeePeekNativeStyle.error) }
     }
     private var summary: String? {
         if !state.issues.fields.isEmpty { return strings["home_check_in_error_input"] }
@@ -207,6 +203,106 @@ struct HomeCheckInNativeContent: View {
     private func error(_ field: String) -> String? {
         state.issues.fields.first { $0.field == field }.map { strings[$0.messageKey] }
     }
+}
+
+private struct HomeCheckInNativeRating: View {
+    let strings: CheckInNativeStrings
+    let value: Int?
+    let select: (Int) -> Void
+    @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
+    var body: some View {
+        Group {
+            if dynamicTypeSize.isAccessibilitySize {
+                stacked
+            } else {
+                ViewThatFits(in: .horizontal) {
+                    HStack(spacing: 12) {
+                        artwork
+                        VStack(alignment: .leading, spacing: 4) {
+                            title
+                            stars()
+                        }
+                    }
+                    stacked
+                }
+            }
+        }
+        .padding(.horizontal, 8).padding(.vertical, 12)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(CoffeePeekNativeStyle.foreground.opacity(0.04), in: RoundedRectangle(cornerRadius: 12))
+        .overlay { RoundedRectangle(cornerRadius: 12).strokeBorder(CheckInNativeFormStyle.homeOutline).allowsHitTesting(false) }
+    }
+
+    private var stacked: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack(spacing: 12) {
+                artwork
+                title.fixedSize(horizontal: false, vertical: true)
+            }
+            ViewThatFits(in: .horizontal) {
+                stars()
+                VStack(alignment: .leading, spacing: 2) {
+                    stars(1...3)
+                    stars(4...5)
+                }
+            }
+        }
+    }
+
+    private var title: some View {
+        Text(strings["home_check_in_taste_question"])
+            .font(CoffeePeekNativeStyle.font(17, weight: "Semibold", relativeTo: .headline))
+            .accessibilityAddTraits(.isHeader)
+    }
+
+    private var artwork: some View {
+        Group {
+            if let image = Self.coffeeArtwork {
+                Image(uiImage: image).resizable().scaledToFill()
+            } else {
+                Image(systemName: "cup.and.saucer").font(.system(size: 28))
+                    .foregroundStyle(CoffeePeekNativeStyle.secondaryAccent)
+            }
+        }
+        .frame(width: 56, height: 56).clipShape(RoundedRectangle(cornerRadius: 8))
+        .accessibilityHidden(true)
+    }
+
+    private var inactiveColor: Color {
+        colorScheme == .dark ? CoffeePeekNativeStyle.secondary : CoffeePeekNativeStyle.foreground
+    }
+
+    private func stars(_ scores: ClosedRange<Int> = 1...5) -> some View {
+        HStack(spacing: 2) {
+            ForEach(scores, id: \.self) { score in
+                let filled = score <= (value ?? 0)
+                Button { select(score) } label: {
+                    Image(systemName: filled ? "star.fill" : "star")
+                        .font(.system(size: 24))
+                        .foregroundStyle(filled ? CoffeePeekNativeStyle.accent : inactiveColor)
+                        .frame(width: 44, height: 44)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(strings.format("home_check_in_choose_rating", score))
+                .accessibilityAddTraits(value == score ? .isSelected : [])
+            }
+        }
+    }
+
+    private static let coffeeArtwork: UIImage? = {
+        let resource = "coffeepeek.composeapp.generated.resources/drawable"
+        for prefix in ["compose-resources/composeResources", "compose-resources"] {
+            if let url = Bundle.main.url(forResource: "checkin_rating_coffee", withExtension: "png",
+                                         subdirectory: "\(prefix)/\(resource)"),
+               let image = UIImage(contentsOfFile: url.path) {
+                return image
+            }
+        }
+        return nil
+    }()
 }
 
 func homeCheckInNativePreviewStrings(_ language: String) -> CheckInNativeStrings {
@@ -234,4 +330,18 @@ func homeCheckInNativePreviewState(editing: Bool = false) -> IosHomeCheckInState
 #Preview("Home editor dark") {
     HomeCheckInNativeContent(state: homeCheckInNativePreviewState(editing: true), strings: homeCheckInNativePreviewStrings("be"),
                             today: "2026-11-17", actions: .init()).preferredColorScheme(.dark)
+}
+
+#Preview("Home taste rating at 320 pt") {
+    HomeCheckInNativeRating(strings: homeCheckInNativePreviewStrings("ru"), value: 3, select: { _ in })
+        .padding(16).frame(width: 320)
+        .foregroundStyle(CoffeePeekNativeStyle.foreground).background(CoffeePeekNativeStyle.background)
+        .preferredColorScheme(.light)
+}
+
+#Preview("Home taste rating with large text at 320 pt") {
+    HomeCheckInNativeRating(strings: homeCheckInNativePreviewStrings("be"), value: 5, select: { _ in })
+        .padding(16).frame(width: 320).dynamicTypeSize(.accessibility2)
+        .foregroundStyle(CoffeePeekNativeStyle.foreground).background(CoffeePeekNativeStyle.background)
+        .preferredColorScheme(.dark)
 }

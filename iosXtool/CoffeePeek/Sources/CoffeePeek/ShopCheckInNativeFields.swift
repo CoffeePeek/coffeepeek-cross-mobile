@@ -115,9 +115,7 @@ private struct ShopCheckInNativePhotos: View {
     let remove: (Int32) -> Void
     let add: () -> Void
     @State private var preview: Int?
-    @State private var dragSession = UUID()
-    @State private var dropTarget: Int32?
-    private var identities: [ObjectIdentifier?] { photos.map { $0.image.map(ObjectIdentifier.init) } }
+    private var identities: [AnyHashable] { photos.map { AnyHashable($0.image.map(ObjectIdentifier.init)) } }
 
     var body: some View {
         CheckInNativeField(title: strings["shop_checkin_form_photos"]) {
@@ -128,58 +126,97 @@ private struct ShopCheckInNativePhotos: View {
                 Text(strings["coffeepeek_photos_manage_hint"])
                     .font(CoffeePeekNativeStyle.font(12)).foregroundStyle(CoffeePeekNativeStyle.secondary)
             }
-            LazyVGrid(columns: [GridItem(.adaptive(minimum: 96, maximum: 96), spacing: 8)], alignment: .leading, spacing: 8) {
-                ForEach(photos, id: \.index) { photo in tile(photo) }
-                if photos.count < 5 { addTile }
-            }
+            CoffeePeekPhotoAttachmentGrid(count: photos.count, editable: editable, viewable: editable, managesPhotos: true,
+                showAdd: photos.count < 5, preparing: preparing, revision: identities,
+                labels: .init(add: strings["shop_review_photo_add"],
+                    description: { strings.format("coffeepeek_photo_description", $0 + 1, photos.count) },
+                    remove: { strings.format("shop_review_photo_remove", $0 + 1) },
+                    earlier: strings["shop_checkin_photo_move_before"], later: strings["shop_checkin_photo_move_after"]),
+                open: { preview = $0 }, move: { move(Int32($0), Int32($1)) },
+                remove: { remove(Int32($0)) }, add: add) { index in
+                    if let image = photos[index].image { Image(uiImage: image).resizable().scaledToFill() }
+                    else { CoffeePeekPhotoPlaceholder() }
+                }
         }
         .coffeePeekPhotoViewer(images: photos.map(\.image), selection: $preview, languageTag: strings.languageTag)
-        .onChange(of: identities) { _, _ in resetInteraction() }
+        .onChange(of: identities) { _, _ in preview = nil }
+        .onChange(of: editable) { _, _ in preview = nil }
+    }
+}
+
+struct CoffeePeekPhotoAttachmentLabels {
+    let add: String
+    let description: (Int) -> String
+    let remove: (Int) -> String
+    let earlier: String
+    let later: String
+}
+
+/// Presentation only: each editor keeps ownership of images, permissions and photo mutations.
+struct CoffeePeekPhotoAttachmentGrid<Thumbnail: View>: View {
+    let count: Int
+    let editable: Bool
+    let viewable: Bool
+    let managesPhotos: Bool
+    let showAdd: Bool
+    let preparing: Bool
+    let revision: [AnyHashable]
+    let labels: CoffeePeekPhotoAttachmentLabels
+    let open: (Int) -> Void
+    let move: (Int, Int) -> Void
+    let remove: (Int) -> Void
+    let add: () -> Void
+    @ViewBuilder let thumbnail: (Int) -> Thumbnail
+    @State private var dragSession = UUID()
+    @State private var dropTarget: Int?
+
+    var body: some View {
+        LazyVGrid(columns: [GridItem(.adaptive(minimum: 96, maximum: 96), spacing: 8)], alignment: .leading, spacing: 8) {
+            ForEach(0..<count, id: \.self) { index in tile(index) }
+            if showAdd { addTile }
+        }
+        .onChange(of: revision) { _, _ in resetInteraction() }
         .onChange(of: editable) { _, _ in resetInteraction() }
     }
 
-    private func tile(_ photo: IosShopCheckInPhoto) -> some View {
-        Button { preview = Int(photo.index) } label: { thumbnail(photo) }
-            .buttonStyle(.plain).disabled(!editable)
-            .accessibilityLabel(strings.format("coffeepeek_photo_description", Int(photo.index) + 1, photos.count))
-            .accessibilityActions {
-                if photo.index > 0 {
-                    Button(strings["shop_checkin_photo_move_before"]) { move(photo.index, photo.index - 1) }
+    @ViewBuilder private func tile(_ index: Int) -> some View {
+        if editable {
+            photoButton(index)
+                .draggable(dragSession.uuidString + ":" + String(index))
+                .dropDestination(for: String.self, action: { values, _ in acceptDrop(values, target: index) },
+                    isTargeted: { dropTarget = $0 ? index : nil })
+                .overlay(alignment: .topTrailing) { removeButton(index) }
+                .accessibilityActions {
+                    if index > 0 { Button(labels.earlier) { move(index, index - 1) } }
+                    if index < count - 1 { Button(labels.later) { move(index, index + 1) } }
                 }
-                if Int(photo.index) < photos.count - 1 {
-                    Button(strings["shop_checkin_photo_move_after"]) { move(photo.index, photo.index + 1) }
-                }
+        } else {
+            photoButton(index).overlay(alignment: .topTrailing) {
+                if managesPhotos { removeButton(index) }
             }
-            .draggable(dragSession.uuidString + ":" + String(photo.index))
-            .dropDestination(for: String.self, action: { values, _ in acceptDrop(values, target: photo.index) },
-                isTargeted: { dropTarget = $0 ? photo.index : nil })
-            .overlay(alignment: .topTrailing) { removeButton(photo.index) }
-    }
-
-    private func thumbnail(_ photo: IosShopCheckInPhoto) -> some View {
-        Group {
-            if let image = photo.image { Image(uiImage: image).resizable().scaledToFill() }
-            else { CoffeePeekPhotoPlaceholder() }
-        }
-        .frame(width: 96, height: 96).clipShape(RoundedRectangle(cornerRadius: 12))
-        .overlay(RoundedRectangle(cornerRadius: 12).stroke(dropTarget == photo.index ?
-            CoffeePeekNativeStyle.accent : CoffeePeekNativeStyle.border, lineWidth: dropTarget == photo.index ? 3 : 1))
-        .overlay(alignment: .bottomLeading) {
-            Text(String(photo.index + 1)).font(CoffeePeekNativeStyle.font(11, weight: "Medium"))
-                .foregroundStyle(.white).padding(.horizontal, 4)
-                .background(.black.opacity(0.55), in: RoundedRectangle(cornerRadius: 4)).padding(4)
         }
     }
 
-    private func removeButton(_ index: Int32) -> some View {
+    private func photoButton(_ index: Int) -> some View {
+        Button { open(index) } label: {
+            thumbnail(index).frame(width: 96, height: 96).clipped().clipShape(RoundedRectangle(cornerRadius: 12))
+                .overlay(RoundedRectangle(cornerRadius: 12).stroke(dropTarget == index ?
+                    CoffeePeekNativeStyle.accent : CoffeePeekNativeStyle.border, lineWidth: dropTarget == index ? 3 : 1))
+                .overlay(alignment: .bottomLeading) {
+                    Text(String(index + 1)).font(CoffeePeekNativeStyle.font(11, weight: "Medium"))
+                        .foregroundStyle(.white).padding(.horizontal, 4)
+                        .background(.black.opacity(0.55), in: RoundedRectangle(cornerRadius: 4)).padding(4)
+                }
+        }.buttonStyle(.plain).disabled(!viewable).accessibilityLabel(labels.description(index))
+    }
+
+    private func removeButton(_ index: Int) -> some View {
         Button(role: .destructive) { remove(index) } label: {
             Image(systemName: "xmark").font(.system(size: 12, weight: .semibold))
                 .foregroundStyle(.white).frame(width: 24, height: 24)
                 .background(.black.opacity(0.55), in: Circle()).overlay(Circle().stroke(.white, lineWidth: 1.5))
                 .frame(width: 44, height: 44)
-        }
-        .buttonStyle(.plain).disabled(!editable)
-        .accessibilityLabel(strings.format("shop_review_photo_remove", Int(index) + 1))
+        }.buttonStyle(.plain).disabled(!editable).accessibilityLabel(labels.remove(index))
     }
 
     private var addTile: some View {
@@ -191,24 +228,21 @@ private struct ShopCheckInNativePhotos: View {
             .foregroundStyle(CoffeePeekNativeStyle.secondary).frame(width: 96, height: 96)
             .background(CoffeePeekNativeStyle.surface, in: RoundedRectangle(cornerRadius: 12))
             .overlay(RoundedRectangle(cornerRadius: 12).stroke(CoffeePeekNativeStyle.border))
-        }.buttonStyle(.plain).disabled(!editable)
-            .accessibilityLabel(strings["shop_review_photo_add"])
+        }.buttonStyle(.plain).disabled(!editable).accessibilityLabel(labels.add)
     }
 
-    private func acceptDrop(_ values: [String], target: Int32) -> Bool {
+    private func acceptDrop(_ values: [String], target: Int) -> Bool {
         guard editable, let value = values.first else { return false }
         let parts = value.split(separator: ":")
         guard parts.count == 2, String(parts[0]) == dragSession.uuidString,
-              let source = Int32(parts[1]), source != target,
-              photos.contains(where: { $0.index == source }), photos.contains(where: { $0.index == target }) else { return false }
-        dragSession = UUID()
-        dropTarget = nil
+              let source = Int(parts[1]), source != target,
+              (0..<count).contains(source), (0..<count).contains(target) else { return false }
+        resetInteraction()
         move(source, target)
         return true
     }
 
     private func resetInteraction() {
-        preview = nil
         dragSession = UUID()
         dropTarget = nil
     }

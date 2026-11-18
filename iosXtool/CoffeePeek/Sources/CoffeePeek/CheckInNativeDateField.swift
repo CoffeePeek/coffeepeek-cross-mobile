@@ -8,6 +8,8 @@ struct CheckInNativeDateField: View {
     let done: String
     let cancel: String
     let changed: (String) -> Void
+    var style: CheckInNativeFormStyle = .standard
+    var error: String? = nil
     @State private var presented = false
     @State private var selection = Date()
 
@@ -16,14 +18,18 @@ struct CheckInNativeDateField: View {
             selection = date(value) ?? Date()
             presented = true
         } label: {
-            HStack {
-                Text(label)
-                Spacer()
-                Image(systemName: "calendar")
+            if style == .home {
+                HomeCheckInNativeSelection(label: label, symbol: "calendar", error: error)
+            } else {
+                HStack {
+                    Text(label)
+                    Spacer()
+                    Image(systemName: "calendar").accessibilityHidden(true)
+                }
+                .padding(16).frame(minHeight: 48)
+                .background(CoffeePeekNativeStyle.surface, in: Capsule())
+                .overlay(Capsule().stroke(CoffeePeekNativeStyle.border))
             }
-            .padding(16).frame(minHeight: 48)
-            .background(CoffeePeekNativeStyle.surface, in: Capsule())
-            .overlay(Capsule().stroke(CoffeePeekNativeStyle.border))
         }
         .buttonStyle(.plain).accessibilityLabel(title).accessibilityValue(label)
         .sheet(isPresented: $presented) {
@@ -66,4 +72,16 @@ struct CheckInNativeDateField: View {
 #Preview("Check-in date dark") {
     CheckInNativeDateField(title: "Дата", value: "2026-11-17", today: "2026-11-17", label: "17 ноября", done: "Готово", cancel: "Отмена", changed: { _ in })
         .padding().preferredColorScheme(.dark)
+}
+
+#Preview("Home date light") { homeDatePreview().preferredColorScheme(.light) }
+#Preview("Home date dark") { homeDatePreview().preferredColorScheme(.dark) }
+
+private func homeDatePreview() -> some View {
+    let strings = CheckInNativeStrings(languageTag: "ru", table: "NativeHomeCheckIn")
+    return CheckInNativeField(title: strings["home_check_in_prepared_date"], style: .home) {
+        CheckInNativeDateField(title: strings["home_check_in_choose_date"], value: "2026-11-17", today: "2026-11-17",
+            label: "17 ноября 2026", done: strings["home_check_in_done"], cancel: strings["home_check_in_cancel"],
+            changed: { _ in }, style: .home)
+    }.padding(16).background(CoffeePeekNativeStyle.background)
 }
