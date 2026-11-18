@@ -704,6 +704,8 @@
 				93392B65F66B89565E0DF9D8 /* be */,
 			);
 			name = NativeRoaster.strings;
+			sourceTree = "<group>";
+		};
 		29AA5120F89FEC550C685CBE /* NativeAccountDeletion.strings */ = {
 			isa = PBXVariantGroup;
 			children = (
