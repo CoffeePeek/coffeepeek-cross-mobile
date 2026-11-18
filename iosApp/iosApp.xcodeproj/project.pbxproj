@@ -27,6 +27,7 @@
 		D15C0A000000000000000004 /* DiscoveryMapControls.swift in Sources */ = {isa = PBXBuildFile; fileRef = D15C0B000000000000000004 /* DiscoveryMapControls.swift */; };
 		D15C0A000000000000000003 /* DiscoveryShopCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = D15C0B000000000000000003 /* DiscoveryShopCard.swift */; };
 		D15C0A000000000000000002 /* DiscoveryNativeScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = D15C0B000000000000000002 /* DiscoveryNativeScreen.swift */; };
+		D15C0A000000000000000005 /* DiscoveryMapLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = D15C0B000000000000000005 /* DiscoveryMapLayout.swift */; };
 		D15C0A000000000000000001 /* DiscoveryNativeHost.swift in Sources */ = {isa = PBXBuildFile; fileRef = D15C0B000000000000000001 /* DiscoveryNativeHost.swift */; };
 		5C13B3110000000000000001 /* ShopCheckInListScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C13B3110000000000000004 /* ShopCheckInListScreen.swift */; };
 		5C13B3110000000000000002 /* ShopCheckInListComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C13B3110000000000000005 /* ShopCheckInListComponents.swift */; };
@@ -185,6 +186,7 @@
 		D15C0B000000000000000004 /* DiscoveryMapControls.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = DiscoveryMapControls.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/DiscoveryMapControls.swift; sourceTree = "<group>"; };
 		D15C0B000000000000000003 /* DiscoveryShopCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = DiscoveryShopCard.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/DiscoveryShopCard.swift; sourceTree = "<group>"; };
 		D15C0B000000000000000002 /* DiscoveryNativeScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = DiscoveryNativeScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/DiscoveryNativeScreen.swift; sourceTree = "<group>"; };
+		D15C0B000000000000000005 /* DiscoveryMapLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = DiscoveryMapLayout.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/DiscoveryMapLayout.swift; sourceTree = "<group>"; };
 		D15C0B000000000000000001 /* DiscoveryNativeHost.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = DiscoveryNativeHost.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/DiscoveryNativeHost.swift; sourceTree = "<group>"; };
 		5C13B3110000000000000004 /* ShopCheckInListScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ShopCheckInListScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/ShopCheckInListScreen.swift; sourceTree = "<group>"; };
 		5C13B3110000000000000005 /* ShopCheckInListComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ShopCheckInListComponents.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/ShopCheckInListComponents.swift; sourceTree = "<group>"; };
@@ -392,6 +394,7 @@
 				D15C0B000000000000000004 /* DiscoveryMapControls.swift */,
 				D15C0B000000000000000003 /* DiscoveryShopCard.swift */,
 				D15C0B000000000000000002 /* DiscoveryNativeScreen.swift */,
+				D15C0B000000000000000005 /* DiscoveryMapLayout.swift */,
 				D15C0B000000000000000001 /* DiscoveryNativeHost.swift */,
 				F35E4494F2133912E05680DB /* CheckInNativeComponents.swift */,
 				C89F0137C4ACC294E23840D7 /* CheckInNativeDateField.swift */,
@@ -750,6 +753,7 @@
 				D15C0A000000000000000004 /* DiscoveryMapControls.swift in Sources */,
 				D15C0A000000000000000003 /* DiscoveryShopCard.swift in Sources */,
 				D15C0A000000000000000002 /* DiscoveryNativeScreen.swift in Sources */,
+				D15C0A000000000000000005 /* DiscoveryMapLayout.swift in Sources */,
 				D15C0A000000000000000001 /* DiscoveryNativeHost.swift in Sources */,
 				C39A482AD721BD4CE3E954E6 /* CheckInNativeComponents.swift in Sources */,
 				0C20174F28F6D29AA76E2BEE /* CheckInNativeDateField.swift in Sources */,
