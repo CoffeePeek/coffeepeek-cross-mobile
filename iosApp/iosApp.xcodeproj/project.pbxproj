@@ -109,6 +109,12 @@
 		DAD5EF785C5BAC5D9F65C43E /* CommunityFeedNativeScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 803179B19B045FF27D2D5353 /* CommunityFeedNativeScreen.swift */; };
 		15E615F307B4D33226886FF1 /* CommunityFeedNativeRow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30DB789D6C7E79AAEB5B487B /* CommunityFeedNativeRow.swift */; };
 		91B28778B1017172858BC88D /* CommunityFeedNativeStatus.swift in Sources */ = {isa = PBXBuildFile; fileRef = C59BA6BB01B30CC9D1704EA3 /* CommunityFeedNativeStatus.swift */; };
+		B0510A100000000000000001 /* OwnershipNativeScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0510A200000000000000001 /* OwnershipNativeScreen.swift */; };
+		B0510A100000000000000002 /* OwnershipNativeOverview.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0510A200000000000000002 /* OwnershipNativeOverview.swift */; };
+		B0510A100000000000000003 /* OwnershipNativeForms.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0510A200000000000000003 /* OwnershipNativeForms.swift */; };
+		B0510A100000000000000004 /* OwnershipNativeQrSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0510A200000000000000004 /* OwnershipNativeQrSheet.swift */; };
+		B0510A100000000000000005 /* OwnershipNativeActions.swift in Sources */ = {isa = PBXBuildFile; fileRef = B0510A200000000000000005 /* OwnershipNativeActions.swift */; };
+		B0510A300000000000000001 /* NativeOwnership.strings in Resources */ = {isa = PBXBuildFile; fileRef = B0510A300000000000000004 /* NativeOwnership.strings */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -239,6 +245,13 @@
 		803179B19B045FF27D2D5353 /* CommunityFeedNativeScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CommunityFeedNativeScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CommunityFeedNativeScreen.swift; sourceTree = "<group>"; };
 		30DB789D6C7E79AAEB5B487B /* CommunityFeedNativeRow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CommunityFeedNativeRow.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CommunityFeedNativeRow.swift; sourceTree = "<group>"; };
 		C59BA6BB01B30CC9D1704EA3 /* CommunityFeedNativeStatus.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CommunityFeedNativeStatus.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CommunityFeedNativeStatus.swift; sourceTree = "<group>"; };
+		B0510A200000000000000001 /* OwnershipNativeScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = OwnershipNativeScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/OwnershipNativeScreen.swift; sourceTree = "<group>"; };
+		B0510A200000000000000002 /* OwnershipNativeOverview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = OwnershipNativeOverview.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/OwnershipNativeOverview.swift; sourceTree = "<group>"; };
+		B0510A200000000000000003 /* OwnershipNativeForms.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = OwnershipNativeForms.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/OwnershipNativeForms.swift; sourceTree = "<group>"; };
+		B0510A200000000000000004 /* OwnershipNativeQrSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = OwnershipNativeQrSheet.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/OwnershipNativeQrSheet.swift; sourceTree = "<group>"; };
+		B0510A200000000000000005 /* OwnershipNativeActions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = OwnershipNativeActions.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/OwnershipNativeActions.swift; sourceTree = "<group>"; };
+		B0510A300000000000000002 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/NativeOwnership.strings; sourceTree = "<group>"; };
+		B0510A300000000000000003 /* be */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = be; path = be.lproj/NativeOwnership.strings; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -328,8 +341,14 @@
 				CD184B270000000000000008 /* NativeNotificationInbox.strings */,
 				71C04E5D0000000000000006 /* ContentReport.strings */,
 				5E1FA2200000000000000003 /* ShelfArchiveScreen.swift */,
+				B0510A200000000000000005 /* OwnershipNativeActions.swift */,
+				B0510A200000000000000004 /* OwnershipNativeQrSheet.swift */,
+				B0510A200000000000000003 /* OwnershipNativeForms.swift */,
+				B0510A200000000000000002 /* OwnershipNativeOverview.swift */,
+				B0510A200000000000000001 /* OwnershipNativeScreen.swift */,
 				B20000000000000000000003 /* CollectionsLibraryScreen.swift */,
 				5E1FA2200000000000000006 /* NativeShelfArchive.strings */,
+				B0510A300000000000000004 /* NativeOwnership.strings */,
 				86C051CE0000000000000003 /* SavedPublicCollectionScreen.swift */,
 				B20000000000000000000006 /* CollectionsLibrary.strings */,
 				86C051CE0000000000000006 /* SavedPublicCollection.strings */,
@@ -495,6 +514,7 @@
 				CD184B270000000000000003 /* NativeNotificationInbox.strings in Resources */,
 				71C04E5D0000000000000002 /* ContentReport.strings in Resources */,
 				5E1FA2200000000000000002 /* NativeShelfArchive.strings in Resources */,
+				B0510A300000000000000001 /* NativeOwnership.strings in Resources */,
 				B20000000000000000000002 /* CollectionsLibrary.strings in Resources */,
 				86C051CE0000000000000002 /* SavedPublicCollection.strings in Resources */,
 				53E77165000000000000000D /* SettingsNative.strings in Resources */,
@@ -621,6 +641,11 @@
 				CD184B270000000000000002 /* NotificationInboxHost.swift in Sources */,
 				71C04E5D0000000000000001 /* ContentReportScreen.swift in Sources */,
 				5E1FA2200000000000000001 /* ShelfArchiveScreen.swift in Sources */,
+				B0510A100000000000000005 /* OwnershipNativeActions.swift in Sources */,
+				B0510A100000000000000004 /* OwnershipNativeQrSheet.swift in Sources */,
+				B0510A100000000000000003 /* OwnershipNativeForms.swift in Sources */,
+				B0510A100000000000000002 /* OwnershipNativeOverview.swift in Sources */,
+				B0510A100000000000000001 /* OwnershipNativeScreen.swift in Sources */,
 				B20000000000000000000001 /* CollectionsLibraryScreen.swift in Sources */,
 				86C051CE0000000000000001 /* SavedPublicCollectionScreen.swift in Sources */,
 				53E771650000000000000001 /* SettingsNativeController.swift in Sources */,
@@ -848,6 +873,7 @@
             name = NativeEditProfile.strings;
             sourceTree = "<group>";
         };
+		B0510A300000000000000004 /* NativeOwnership.strings */ = {isa = PBXVariantGroup; children = (B0510A300000000000000002 /* ru */, B0510A300000000000000003 /* be */,); name = NativeOwnership.strings; sourceTree = "<group>"; };
 /* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */
