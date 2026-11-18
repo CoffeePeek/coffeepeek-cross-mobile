@@ -18,10 +18,10 @@ class NavigationDelegateTest {
         val host = NativeScreenController(route = Navigator.Screen.SavedPublicCollection("fixture"), nativeContent = { UIViewController() }) {}
         val child = UIViewController()
         host.addChildViewController(child)
-        NativeLocalBackProtection.update(child, protected = true)
+        NativeLocalBackProtection.update(child, enabled = true)
         assertTrue(host.handlesBackLocally)
         assertFalse(host.nativeDetailBarVisible)
-        NativeLocalBackProtection.update(child, protected = false)
+        NativeLocalBackProtection.update(child, enabled = false)
         assertFalse(host.handlesBackLocally)
     }
 

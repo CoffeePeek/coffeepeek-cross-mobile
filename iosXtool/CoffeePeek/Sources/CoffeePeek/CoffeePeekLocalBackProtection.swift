@@ -32,7 +32,7 @@ final class LocalBackProtectionController: UIViewController {
         if parent == nil { reset() }
         super.willMove(toParent: parent)
     }
-    func reset() { NativeLocalBackProtection.shared.update(controller: self, protected: false) }
-    private func apply() { NativeLocalBackProtection.shared.update(controller: self, protected: protected) }
+    func reset() { NativeLocalBackProtection.shared.update(controller: self, enabled: false) }
+    private func apply() { NativeLocalBackProtection.shared.update(controller: self, enabled: protected) }
 }
 
