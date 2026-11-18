@@ -73,6 +73,8 @@ fun configureNativeOwnership(factory: (com.coffeepeek.admin.di.ownership.IosOwne
     actions: (com.coffeepeek.admin.di.ownership.IosOwnershipActions) -> UIViewController) {
     com.coffeepeek.admin.di.ownership.configureNativeOwnership(factory)
     com.coffeepeek.admin.di.ownership.configureNativeOwnershipActions(actions)
+}
+
 fun configureNativeRootModals(factory: (com.coffeepeek.admin.di.system.IosRootModal) -> UIViewController) {
     com.coffeepeek.admin.di.system.configureNativeRootModals(factory)
 }
