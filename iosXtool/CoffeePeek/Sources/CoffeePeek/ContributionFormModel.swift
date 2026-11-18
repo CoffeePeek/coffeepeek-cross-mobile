@@ -116,15 +116,12 @@ final class ContributionFormModel: ObservableObject {
         state = ContributionFormSnapshot.decode(form.current())
     }
 
+    // The UIKit destination retains this model through map/photo covers.
+    // Observation ends with the model, not a temporary disappearance of its form view.
     func appear() {
         guard observation == nil else { return }
         update()
         observation = form.observe { [weak self] in self?.update() }
-    }
-
-    func disappear() {
-        observation?.cancel()
-        observation = nil
     }
 
     private func update() {

@@ -136,6 +136,36 @@ class NativeContributionFormSessionTest {
         assertEquals("Pending", session.current().resultStatus)
     }
 
+    @Test fun oneDestinationObserverReceivesMapPhotoAndAccountChangesUntilClose() = runTest(dispatcher) {
+        location.address = "Street 1"
+        val source = session(NativeContributionFormKind.AddShop)
+        val frames = mutableListOf<NativeContributionFormState>()
+        val observation = source.observe { frames += source.current() }
+        runCurrent()
+        resolveObservedMap(source)
+        assertTrue(frames.last().map?.canConfirm == true)
+        source.control("confirmMap")
+        runCurrent()
+        assertNull(frames.last().map)
+        source.pickedPhotos(source.beginPhotoPick(false), listOf(photo(1)))
+        runCurrent()
+        assertEquals(1, frames.last().photos.size)
+        account.key.value = null
+        runCurrent()
+        assertEquals(0, frames.last().signedIn)
+        assertTrue(frames.last().photos.isEmpty())
+        source.close()
+        assertTrue(observation.isCancelled)
+    }
+
+    private fun TestScope.resolveObservedMap(source: NativeContributionFormSession) {
+        source.control("openMap")
+        runCurrent()
+        source.moveMap(53.9, 27.5)
+        advanceTimeBy(350)
+        runCurrent()
+    }
+
     @Test fun staleAndDismissedMapResolutionsCannotReturnToTheForm() = runTest(dispatcher) {
         val gate = CompletableDeferred<Unit>()
         location.addressGate = gate

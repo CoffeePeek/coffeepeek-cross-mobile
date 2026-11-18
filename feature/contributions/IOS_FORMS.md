@@ -27,3 +27,15 @@ Verification evidence:
 - Xcode and executed Kotlin/Native results are pending the iOS-only PR verification.
 - Remaining manual iPhone gates: Photos permissions/cancel/iCloud load; camera capture/cancel and repeated plus; initial/denied/manual location and map panning; keyboard/Dynamic Type/light/dark; back and restored SwiftUI graph; safe-account create/edit submission and server outcomes. No production account writes or real camera/device tests were performed here.
 
+
+
+### Retained destination observation
+
+The UIKit hosting controller retains the Swift model while map, camera or gallery
+covers temporarily hide the form. Its one state observation continues throughout
+those covers and is cancelled only in model deinit; the controller closes the
+Kotlin session on route disposal. Map address/canConfirm/camera updates, dismissal,
+photo delivery and account replacement therefore reach the same active model.
+A non-UI contract verifies one subscription receives map confirmation, photo and
+account transitions until session close. SwiftUI cover presentation/dismissal and
+real permission transitions still require the documented manual iPhone gate.

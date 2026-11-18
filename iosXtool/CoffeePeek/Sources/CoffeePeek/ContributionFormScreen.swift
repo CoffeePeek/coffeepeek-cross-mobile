@@ -71,7 +71,7 @@ private struct ContributionFormHost: View {
         .background(CoffeePeekLocalBackProtection(protected: model.state.submit == "sending" ||
             model.state.submit == "idle" && (model.state.hasEdits ||
                 model.state.kind == "AddShop" && model.state.step > 0) || model.state.map != nil))
-        .onAppear(perform: model.appear).onDisappear(perform: model.disappear)
+        .onAppear(perform: model.appear)
         .confirmationDialog(model.strings.media("title"), isPresented: Binding(
             get: { model.sourceMenu != nil }, set: { if !$0 { model.sourceMenu = nil } })) {
             Button(model.strings.media("gallery")) { model.selectPhotoSource(camera: false) }
