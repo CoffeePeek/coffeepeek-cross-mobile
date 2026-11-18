@@ -6,10 +6,25 @@ import UIKit
 
 @MainActor
 func makeCollectionsWorkspaceController(workspace: IosCollectionsWorkspace, languageTag: String) -> UIViewController {
-    let controller = UIHostingController(rootView: CollectionsWorkspaceHost(workspace: workspace,
-        strings: CollectionsWorkspaceStrings(languageTag: languageTag)))
-    controller.view.backgroundColor = .clear
-    return controller
+    CollectionsWorkspaceHostingController(workspace: workspace, strings: CollectionsWorkspaceStrings(languageTag: languageTag))
+}
+
+@MainActor
+private final class CollectionsWorkspaceHostingController: UIHostingController<CollectionsWorkspaceHost> {
+    private let model: CollectionsWorkspaceModel
+    private let workspace: IosCollectionsWorkspace
+    init(workspace: IosCollectionsWorkspace, strings: CollectionsWorkspaceStrings) {
+        self.workspace = workspace
+        model = CollectionsWorkspaceModel(workspace: workspace, strings: strings)
+        super.init(rootView: CollectionsWorkspaceHost(model: model, strings: strings))
+        view.backgroundColor = .clear
+    }
+    @available(*, unavailable)
+    required init?(coder: NSCoder) { fatalError("Use init(workspace:strings:)") }
+    deinit {
+        let workspace = workspace
+        DispatchQueue.main.async { workspace.close() }
+    }
 }
 
 @MainActor
@@ -57,12 +72,11 @@ final class CollectionsWorkspaceModel: ObservableObject {
     deinit {
         observation?.cancel()
         exportTask?.cancel()
-        workspace.close()
     }
 }
 
 private struct CollectionsWorkspaceHost: View {
-    @StateObject private var model: CollectionsWorkspaceModel
+    @ObservedObject var model: CollectionsWorkspaceModel
     let strings: CollectionsWorkspaceStrings
     @State private var selectingCover = false
     @State private var coverItem: PhotosPickerItem?
@@ -71,11 +85,6 @@ private struct CollectionsWorkspaceHost: View {
     @State private var choosingFeatured = false
     @State private var reloading = false
     @Environment(\.dismiss) private var dismiss
-
-    init(workspace: IosCollectionsWorkspace, strings: CollectionsWorkspaceStrings) {
-        _model = StateObject(wrappedValue: CollectionsWorkspaceModel(workspace: workspace, strings: strings))
-        self.strings = strings
-    }
 
     var body: some View {
         Group {

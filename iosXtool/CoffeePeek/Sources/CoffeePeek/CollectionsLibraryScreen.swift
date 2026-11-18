@@ -3,14 +3,25 @@ import SwiftUI
 import UIKit
 
 @MainActor
-func makeCollectionsLibraryController(
-    library: IosCollectionsLibrary,
-    languageTag: String
-) -> UIViewController {
-    UIHostingController(rootView: CollectionsLibraryHost(
-        library: library,
-        strings: CollectionsLibraryStrings(languageTag: languageTag)
-    ))
+func makeCollectionsLibraryController(library: IosCollectionsLibrary, languageTag: String) -> UIViewController {
+    CollectionsLibraryHostingController(library: library, strings: CollectionsLibraryStrings(languageTag: languageTag))
+}
+
+@MainActor
+private final class CollectionsLibraryHostingController: UIHostingController<CollectionsLibraryHost> {
+    private let model: CollectionsLibraryModel
+    private let library: IosCollectionsLibrary
+    init(library: IosCollectionsLibrary, strings: CollectionsLibraryStrings) {
+        self.library = library
+        model = CollectionsLibraryModel(library: library)
+        super.init(rootView: CollectionsLibraryHost(model: model, strings: strings))
+    }
+    @available(*, unavailable)
+    required init?(coder: NSCoder) { fatalError("Use init(library:strings:)") }
+    deinit {
+        let library = library
+        DispatchQueue.main.async { library.close() }
+    }
 }
 
 private final class CollectionsLibraryModel: ObservableObject {
@@ -37,18 +48,12 @@ private final class CollectionsLibraryModel: ObservableObject {
 
     deinit {
         observation?.cancel()
-        library.close()
     }
 }
 
 private struct CollectionsLibraryHost: View {
-    @StateObject private var model: CollectionsLibraryModel
+    @ObservedObject var model: CollectionsLibraryModel
     let strings: CollectionsLibraryStrings
-
-    init(library: IosCollectionsLibrary, strings: CollectionsLibraryStrings) {
-        _model = StateObject(wrappedValue: CollectionsLibraryModel(library: library))
-        self.strings = strings
-    }
 
     var body: some View {
         CollectionsLibraryScreen(
