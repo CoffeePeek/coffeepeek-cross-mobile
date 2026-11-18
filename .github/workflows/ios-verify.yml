@@ -194,6 +194,7 @@ jobs:
             --tests 'com.coffeepeek.admin.di.auth.IosCheckInAuthFlowTest' \
             --tests 'com.coffeepeek.admin.di.profile.IosProfileCompositionTest' \
             --tests 'com.coffeepeek.admin.di.settings.IosThemeSettingsTest' \
+            --tests 'com.coffeepeek.admin.di.system.IosGlobalDialogTest' \
             --tests 'com.coffeepeek.admin.di.system.IosRootModalsTest' \
             --tests 'com.coffeepeek.admin.di.coffee.IosCoffeeDetailAnalyticsTest' \
             --tests 'com.coffeepeek.admin.di.media.IosPhotoViewerTest' \
@@ -267,6 +268,15 @@ jobs:
               tail -n 150 "$RUNNER_TEMP/ios-discovery-tests.log"
               exit 1
             }
+      - name: Run design-system Kotlin Native contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./gradlew --max-workers=6 :core:design-system:iosSimulatorArm64Test \
+            > "$RUNNER_TEMP/ios-design-system-tests.log" 2>&1 || {
+              tail -n 150 "$RUNNER_TEMP/ios-design-system-tests.log"
+              exit 1
+            }
       - name: Run own profile and calendar Kotlin Native tests
         shell: bash
         run: |
@@ -321,6 +331,7 @@ jobs:
             ${{ runner.temp }}/ios-ownership-tests.log
             feature/business-ownership/**/build/test-results/iosSimulatorArm64Test/
             feature/contributions/impl/build/test-results/iosSimulatorArm64Test/
+            feature/collections/impl/build/test-results/iosSimulatorArm64Test/
             ${{ runner.temp }}/ios-shelf-archive-tests.log
             feature/shelf/impl/build/test-results/iosSimulatorArm64Test/
             composeApp/build/test-results/iosSimulatorArm64Test/
@@ -334,6 +345,8 @@ jobs:
             feature/discovery/impl/build/test-results/iosSimulatorArm64Test/
             ${{ runner.temp }}/ios-own-profile-tests.log
             feature/profile/impl/build/test-results/iosSimulatorArm64Test/
+              ${{ runner.temp }}/ios-design-system-tests.log
+              core/design-system/build/test-results/iosSimulatorArm64Test/
             feature/check-in-history/impl/build/test-results/iosSimulatorArm64Test/
             ${{ runner.temp }}/ios-auth-tests.log
             feature/auth/impl/build/test-results/iosSimulatorArm64Test/

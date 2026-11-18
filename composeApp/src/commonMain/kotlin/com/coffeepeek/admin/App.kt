@@ -100,6 +100,7 @@ private fun AppForegroundNotifications() {
 
 @Composable
 private fun AppLanguageLoadingContent() {
+    if (com.coffeepeek.admin.ui.dialogs.PlatformGlobalLoading(null)) return
     Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background), contentAlignment = Alignment.Center) {
         CoffeePeekLoader()
     }

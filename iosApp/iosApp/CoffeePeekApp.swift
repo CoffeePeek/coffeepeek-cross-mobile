@@ -44,6 +44,7 @@ private struct ComposeRootView: UIViewControllerRepresentable {
 
     func makeUIViewController(context: Context) -> UIViewController {
         MainViewControllerKt.configureNativeEditProfile(factory: makeEditProfileController)
+        MainViewControllerKt.configureNativeGlobalDialogs(factory: makeGlobalDialogController)
         MainViewControllerKt.configureNativeRootModals(factory: makeRootModalController)
         MainViewControllerKt.configureNativeCommunityCards(factory: makeCommunityCardController)
         MainViewControllerKt.configureNativeShopDetails(detail: makeShopDetailController,
@@ -63,7 +64,7 @@ private struct ComposeRootView: UIViewControllerRepresentable {
             makeContributionsController: makeContributionsController,
             makeContentReportController: makeContentReportController,
             makeCollectionsLibraryController: makeCollectionsLibraryController,
-            makeSavedPublicCollectionController: makeSavedPublicCollectionController,
+            makeCollectionsWorkspaceController: makeCollectionsWorkspaceController,
             makeSettingsController: makeSettingsController,
             makeBlockedAuthorsController: makeBlockedAuthorsController,
             makeAuthController: makeAuthController,

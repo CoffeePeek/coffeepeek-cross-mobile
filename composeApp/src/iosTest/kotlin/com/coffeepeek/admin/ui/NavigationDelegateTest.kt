@@ -9,9 +9,22 @@ import kotlin.test.assertSame
 import kotlin.test.assertTrue
 import platform.UIKit.UINavigationController
 import platform.UIKit.UIViewController
+import platform.UIKit.addChildViewController
 
 /** Navigation wiring only: no window, Compose content, account, or services. */
 class NavigationDelegateTest {
+    @Test
+    fun nativeLocalStepsProtectEdgePopWithoutShowingTheUIKitBar() {
+        val host = NativeScreenController(route = Navigator.Screen.SavedPublicCollection("fixture"), nativeContent = { UIViewController() }) {}
+        val child = UIViewController()
+        host.addChildViewController(child)
+        NativeLocalBackProtection.update(child, enabled = true)
+        assertTrue(host.handlesBackLocally)
+        assertFalse(host.nativeDetailBarVisible)
+        NativeLocalBackProtection.update(child, enabled = false)
+        assertFalse(host.handlesBackLocally)
+    }
+
     @Test
     fun showingDetailRestoresDisabledSystemGestureAndItsDelegate() {
         val root = UIViewController()
