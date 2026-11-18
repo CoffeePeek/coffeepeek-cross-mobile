@@ -372,7 +372,9 @@ private fun nativeRouteContent(isLoggedIn: Boolean): (Navigator.Screen) -> (() -
             is Navigator.Screen.ShopReviews -> { { shopCheckIns(screen.shopId) } }
             is Navigator.Screen.ReportShop -> shopReportContent(screen.shopId, screen.shopTitle)
             is Navigator.Screen.CoffeeDetail -> { { coffeeDetail(screen.slug) } }
-            is Navigator.Screen.MyContributions, is Navigator.Screen.ShopChangeRequestDetail -> contributions(screen)
+            is Navigator.Screen.MyContributions, is Navigator.Screen.ShopChangeRequestDetail,
+            Navigator.Screen.AddShop, Navigator.Screen.AddRoaster, is Navigator.Screen.SuggestShopChange,
+            is Navigator.Screen.ShopChangeEditor -> contributions(screen)
             is Navigator.Screen.ReportCheckIn -> contentReport(screen.checkInId, true, false)
             is Navigator.Screen.ReportReview -> contentReport(screen.reviewId, false, screen.isPreview)
             Navigator.Screen.CollectionsLibrary -> collectionsLibraryContent

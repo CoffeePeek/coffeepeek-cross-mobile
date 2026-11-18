@@ -7,6 +7,12 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		C0F180000000000000000101 /* ContributionFormModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0F180000000000000000103 /* ContributionFormModel.swift */; };
+		C0F180000000000000000201 /* ContributionFormScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0F180000000000000000203 /* ContributionFormScreen.swift */; };
+		C0F180000000000000000301 /* ContributionScheduleContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0F180000000000000000303 /* ContributionScheduleContent.swift */; };
+		C0F180000000000000000401 /* ContributionMapPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0F180000000000000000403 /* ContributionMapPicker.swift */; };
+		C0F180000000000000000501 /* ContributionPhotoPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0F180000000000000000503 /* ContributionPhotoPicker.swift */; };
+		C0F180000000000000000601 /* CoffeePeekNativeThumbnail.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0F180000000000000000603 /* CoffeePeekNativeThumbnail.swift */; };
 		E10F17E50000000000000001 /* DiscoveryFilterSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = E10F17E50000000000000002 /* DiscoveryFilterSheet.swift */; };
 		5C13B3110000000000000001 /* ShopCheckInListScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C13B3110000000000000004 /* ShopCheckInListScreen.swift */; };
 		5C13B3110000000000000002 /* ShopCheckInListComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5C13B3110000000000000005 /* ShopCheckInListComponents.swift */; };
@@ -112,6 +118,12 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		C0F180000000000000000103 /* ContributionFormModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ContributionFormModel.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/ContributionFormModel.swift; sourceTree = "<group>"; };
+		C0F180000000000000000203 /* ContributionFormScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ContributionFormScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/ContributionFormScreen.swift; sourceTree = "<group>"; };
+		C0F180000000000000000303 /* ContributionScheduleContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ContributionScheduleContent.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/ContributionScheduleContent.swift; sourceTree = "<group>"; };
+		C0F180000000000000000403 /* ContributionMapPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ContributionMapPicker.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/ContributionMapPicker.swift; sourceTree = "<group>"; };
+		C0F180000000000000000503 /* ContributionPhotoPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ContributionPhotoPicker.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/ContributionPhotoPicker.swift; sourceTree = "<group>"; };
+		C0F180000000000000000603 /* CoffeePeekNativeThumbnail.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CoffeePeekNativeThumbnail.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CoffeePeekNativeThumbnail.swift; sourceTree = "<group>"; };
 		E10F17E50000000000000002 /* DiscoveryFilterSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = DiscoveryFilterSheet.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/DiscoveryFilterSheet.swift; sourceTree = "<group>"; };
 		5C13B3110000000000000004 /* ShopCheckInListScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ShopCheckInListScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/ShopCheckInListScreen.swift; sourceTree = "<group>"; };
 		5C13B3110000000000000005 /* ShopCheckInListComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = ShopCheckInListComponents.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/ShopCheckInListComponents.swift; sourceTree = "<group>"; };
@@ -315,6 +327,12 @@
 				A20000000000000000000016 /* ThemeSettingsScreen.swift */,
 				B30000000000000000000003 /* ShopReportScreen.swift */,
 				B251C0510000000000000004 /* ContributionsNativeHost.swift */,
+				C0F180000000000000000103 /* ContributionFormModel.swift */,
+				C0F180000000000000000203 /* ContributionFormScreen.swift */,
+				C0F180000000000000000303 /* ContributionScheduleContent.swift */,
+				C0F180000000000000000403 /* ContributionMapPicker.swift */,
+				C0F180000000000000000503 /* ContributionPhotoPicker.swift */,
+				C0F180000000000000000603 /* CoffeePeekNativeThumbnail.swift */,
 				B251C0510000000000000005 /* ContributionsListNativeScreen.swift */,
 				B251C0510000000000000006 /* ChangeRequestNativeScreen.swift */,
 				B251C0510000000000000009 /* NativeContributions.strings */,
@@ -615,6 +633,12 @@
 				C0FFEE500000000000000001 /* CoffeeDetailScreen.swift in Sources */,
 				C0FFEE500000000000000002 /* CoffeeDetailComponents.swift in Sources */,
 				B251C0510000000000000001 /* ContributionsNativeHost.swift in Sources */,
+				C0F180000000000000000101 /* ContributionFormModel.swift in Sources */,
+				C0F180000000000000000201 /* ContributionFormScreen.swift in Sources */,
+				C0F180000000000000000301 /* ContributionScheduleContent.swift in Sources */,
+				C0F180000000000000000401 /* ContributionMapPicker.swift in Sources */,
+				C0F180000000000000000501 /* ContributionPhotoPicker.swift in Sources */,
+				C0F180000000000000000601 /* CoffeePeekNativeThumbnail.swift in Sources */,
 				B251C0510000000000000002 /* ContributionsListNativeScreen.swift in Sources */,
 				B251C0510000000000000003 /* ChangeRequestNativeScreen.swift in Sources */,
 				CD184B270000000000000001 /* NotificationInboxScreen.swift in Sources */,

@@ -11,6 +11,9 @@ func makeContributionsController(route: IosContributionsRoute, languageTag: Stri
     if let detail = route as? IosChangeRequest {
         return ContributionsHostingController(route: route, content: ChangeRequestHost(route: detail, strings: strings))
     }
+    if let form = route as? IosContributionForm {
+        return makeContributionFormController(form: form, strings: strings)
+    }
     preconditionFailure("Unknown iOS contributions route")
 }
 
