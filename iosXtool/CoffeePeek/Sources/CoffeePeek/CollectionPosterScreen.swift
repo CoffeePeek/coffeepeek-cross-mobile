@@ -229,7 +229,7 @@ private final class CollectionPosterPhotoRequest {
             await withCheckedContinuation { continuation in
                 self.continuation = continuation
                 let observation = workspace.loadPhoto(url: url) { [weak self] data in
-                    self?.finish(data.flatMap { UIImage(data: $0 as Data) })
+                    self?.finish(data.flatMap { collectionWorkspaceImage($0 as Data) })
                 }
                 if self.continuation == nil { observation.cancel() } else { self.observation = observation }
                 timeout = Task { [weak self] in
