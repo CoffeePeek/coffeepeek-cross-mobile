@@ -629,7 +629,6 @@ build/xcross-ios. Manual feed/menu/cover verification remains pending; startup a
 does not prove pagination, refresh, theme parity or mutation acceptance.
 
 
-
 ### 2026-11-18 — native root modals and account-deletion status
 
 Scope: replace the real DeleteAccountPending route via the existing native Settings
