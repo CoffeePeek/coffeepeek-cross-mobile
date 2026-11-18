@@ -77,9 +77,13 @@ class IosContributionForm internal constructor(
 
     fun loadImage(url: String, version: Int, receive: (UIImage?) -> Unit): IosContributionObservation =
         IosContributionObservation(scope.launch {
+            if (!session.allowsMedia(version)) {
+                receive(null)
+                return@launch
+            }
             val image = media.loadImage(url)
             currentCoroutineContext().ensureActive()
-            if (session.current().accountVersion == version) receive(image)
+            receive(image.takeIf { session.allowsMedia(version) })
         })
 
     fun locationGranted(map: Boolean) = session.locationGranted(map)

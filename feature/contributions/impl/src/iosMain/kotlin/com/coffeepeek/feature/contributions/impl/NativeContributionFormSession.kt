@@ -148,8 +148,10 @@ class NativeContributionFormSession(
         deliver(photos)
     }
 
+    fun allowsMedia(expectedVersion: Int): Boolean = isCurrent() && expectedVersion == version
+
     fun localPhoto(key: String, expectedVersion: Int): ByteArray? {
-        if (!isCurrent() || expectedVersion != version) return null
+        if (!allowsMedia(expectedVersion)) return null
         return listOf(false, true).firstNotNullOfOrNull { menu ->
             pendingPhotos(menu).mapIndexedNotNull { index, photo -> photo.takeIf { it.nativePhotoKey(index, menu) == key } }.firstOrNull()?.bytes?.copyOf()
         }

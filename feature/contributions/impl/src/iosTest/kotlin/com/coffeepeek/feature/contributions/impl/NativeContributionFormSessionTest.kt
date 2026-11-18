@@ -105,6 +105,23 @@ class NativeContributionFormSessionTest {
         assertTrue(session.current().photos.isEmpty())
     }
 
+    @Test fun mediaPermissionIsRevokedBeforeTheAccountCollectorResetsItsEpoch() = runTest(dispatcher) {
+        val source = session(NativeContributionFormKind.AddRoaster)
+        runCurrent()
+        val before = source.current().accountVersion
+        assertTrue(source.allowsMedia(before))
+        account.key.value = "second"
+        assertEquals(before, source.current().accountVersion)
+        assertEquals(-1, source.current().signedIn)
+        assertFalse(source.allowsMedia(before))
+        runCurrent()
+        assertFalse(source.allowsMedia(before))
+        val after = source.current().accountVersion
+        assertTrue(source.allowsMedia(after))
+        source.close()
+        assertFalse(source.allowsMedia(after))
+    }
+
     @Test fun nativeEditorSubmitsOnlyItsSectionAndExposesTheReturnedRequest() = runTest(dispatcher) {
         catalogs.shop = { Result.success(ShopSnapshot("cafe", "Cafe", description = "Old")) }
         val session = session(NativeContributionFormKind.Editor, ChangeSection.Description)
@@ -113,7 +130,7 @@ class NativeContributionFormSessionTest {
         session.edit("phone", "123456789")
         session.control("submit")
         runCurrent()
-        assertEquals(listOf(ChangeDraft.Description("cafe", "New")), repository.drafts)
+        assertEquals(listOf<ChangeDraft>(ChangeDraft.Description("cafe", "New")), repository.drafts)
         assertEquals("done", session.current().submit)
         assertEquals("new", session.current().requestId)
         assertEquals("Pending", session.current().resultStatus)
