@@ -19,7 +19,7 @@ private final class CommunitySheetHostingController: UIHostingController<Communi
         view.backgroundColor = .clear
     }
 
-    @MainActor required dynamic init?(coder: NSCoder) { nil }
+    @MainActor required dynamic init?(coder: NSCoder) { return nil }
 }
 
 private struct CommunitySheetHost: View {
