@@ -18,7 +18,7 @@ import com.coffeepeek.admin.di.contentreport.iosContentReportContent
 import com.coffeepeek.admin.di.contributions.iosContributionsContent
 import com.coffeepeek.admin.di.collections.iosCollectionsLibraryContent
 import com.coffeepeek.admin.di.shelf.iosShelfArchiveContent
-import com.coffeepeek.admin.di.collections.iosSavedPublicCollectionContent
+import com.coffeepeek.admin.di.collections.iosCollectionsWorkspaceContent
 import com.coffeepeek.admin.di.authorblocking.iosBlockedAuthorsContent
 import com.coffeepeek.admin.di.shop.iosShopMenuGalleryContent
 import com.coffeepeek.admin.di.shop.iosShopCheckInListContent
@@ -359,7 +359,7 @@ private fun nativeRouteContent(isLoggedIn: Boolean): (Navigator.Screen) -> (() -
     val contributions = iosContributionsContent()
     val contentReport = iosContentReportContent()
     val collectionsLibraryContent = iosCollectionsLibraryContent()
-    val savedPublicCollectionContent = iosSavedPublicCollectionContent()
+    val collectionWorkspace = iosCollectionsWorkspaceContent()
     val blockedAuthorsContent = iosBlockedAuthorsContent()
     return { screen ->
         when (screen) {
@@ -377,8 +377,10 @@ private fun nativeRouteContent(isLoggedIn: Boolean): (Navigator.Screen) -> (() -
             is Navigator.Screen.ShopChangeEditor -> contributions(screen)
             is Navigator.Screen.ReportCheckIn -> contentReport(screen.checkInId, true, false)
             is Navigator.Screen.ReportReview -> contentReport(screen.reviewId, false, screen.isPreview)
-            Navigator.Screen.CollectionsLibrary -> collectionsLibraryContent
-            is Navigator.Screen.SavedPublicCollection -> { { savedPublicCollectionContent(screen.id) } }
+            Navigator.Screen.CollectionsLibrary, Navigator.Screen.CollectionsComposer -> collectionsLibraryContent
+            is Navigator.Screen.SavedPublicCollection -> { { collectionWorkspace("Public", screen.id, null) } }
+            is Navigator.Screen.PublicCollection -> { { collectionWorkspace("Snapshot", screen.id, null) } }
+            is Navigator.Screen.CollectionEditor -> { { collectionWorkspace("Editor", screen.id, null) } }
             Navigator.Screen.BlockedAuthors -> blockedAuthorsContent
             else -> settings(screen)
         }
