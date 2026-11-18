@@ -229,6 +229,8 @@ jobs:
             --tests 'com.coffeepeek.feature.shop.impl.ui.ShopMenuGallery*Test' \
             --tests 'com.coffeepeek.feature.shop.impl.ui.ShopCheckInListViewModelTest' \
             --tests 'com.coffeepeek.feature.shop.impl.IosShopCheckInListPresentationTest' \
+            --tests 'com.coffeepeek.feature.shop.impl.ui.ShopDetailIosBridgeTest' \
+            --tests 'com.coffeepeek.feature.shop.impl.ui.ShopDetailViewModelTest' \
             > "$RUNNER_TEMP/ios-shop-menu-gallery-tests.log" 2>&1 || {
               tail -n 150 "$RUNNER_TEMP/ios-shop-menu-gallery-tests.log"
               exit 1
