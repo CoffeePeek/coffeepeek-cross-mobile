@@ -17,7 +17,7 @@ import com.coffeepeek.feature.shopreport.data.repository.createShopIssueReportRe
 import com.coffeepeek.feature.shopreport.impl.createShopReportEntry
 import com.coffeepeek.feature.shop.data.repository.createShopMenuGalleryRepository
 import com.coffeepeek.feature.shop.impl.createShopMenuGalleryEntry
-import com.coffeepeek.admin.di.appupdate.featureAppUpdateRenderer
+import com.coffeepeek.admin.di.appupdate.IosAppUpdateRenderer
 import com.coffeepeek.admin.di.contributions.contributionsModule
 import com.coffeepeek.admin.di.contributions.featureContributionsScreenRenderer
 import com.coffeepeek.admin.di.auth.iosAuthScreenRenderer
@@ -63,7 +63,7 @@ actual fun initPlatformKoin() {
         shopDetailRendererFactory = { iosShopDetailRenderer() },
         shopCheckInListRendererFactory = { iosShopCheckInListRenderer() },
         settingsRendererFactory = { iosSettingsRenderer() },
-        appUpdateRendererFactory = { featureAppUpdateRenderer(get(), get()) },
+        appUpdateRendererFactory = { IosAppUpdateRenderer(get(), get(), get()) },
         notificationsRendererFactory = { featureNotificationsRenderer(get(), get(), get()) },
         authRendererFactory = { iosAuthScreenRenderer(get(), get()) },
         checkInDetailRendererFactory = { com.coffeepeek.admin.di.community.featureCheckInDetailScreenRenderer(get(), get(), get(), get(), get(), get()) },

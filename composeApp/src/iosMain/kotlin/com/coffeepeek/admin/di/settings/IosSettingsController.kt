@@ -10,6 +10,14 @@ import com.coffeepeek.feature.appupdate.impl.AppUpdateController
 import com.coffeepeek.feature.discovery.api.PublicDiscoveryCatalogs
 import com.coffeepeek.feature.notifications.api.NotificationFeature
 import com.coffeepeek.feature.ownership.api.BusinessOwnershipEntry
+import com.coffeepeek.feature.profile.api.ProfileAccountPort
+import com.coffeepeek.feature.profile.api.AccountDeletionPort
+import com.coffeepeek.feature.profile.impl.createNativeAccountDeletionSession
+import com.coffeepeek.admin.auth.GoogleAuth
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import com.coffeepeek.feature.settings.api.LanguagePort
 import com.coffeepeek.feature.settings.api.SettingsAppInfo
 import com.coffeepeek.feature.settings.impl.NativeCitySettings
@@ -27,7 +35,7 @@ internal val LocalIosSettingsController = staticCompositionLocalOf<(IosSettingsS
 internal fun iosSettingsContent(): (Navigator.Screen) -> (() -> UIViewController)? {
     val factory = LocalIosSettingsController.current
     val dependencies = IosSettingsDependencies(
-        koinInject(), koinInject(), koinInject(), koinInject(), koinInject(), koinInject(), koinInject(),
+        koinInject(), koinInject(), koinInject(), koinInject(), koinInject(), koinInject(), koinInject(), koinInject(), koinInject(),
     )
     return { route -> dependencies.controller(route, factory) }
 }
@@ -40,15 +48,19 @@ private class IosSettingsDependencies(
     private val language: LanguagePort,
     private val notifications: NotificationFeature,
     private val ownership: BusinessOwnershipEntry,
+    private val accounts: ProfileAccountPort,
+    private val deletion: AccountDeletionPort,
 ) {
     private val cities = AppCityPort(catalogs, cityPreference)
     private val external = AppSettingsExternalActions()
+    private val redirectScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
 
     fun controller(route: Navigator.Screen, factory: (IosSettingsScreen) -> UIViewController): (() -> UIViewController)? = when (route) {
         Navigator.Screen.SettingsTab -> { { factory(tab()) } }
         Navigator.Screen.CitySettings -> { { factory(IosCitySettings(NativeCitySettings(cities), language, Navigator::popBack)) } }
         Navigator.Screen.LanguageSettings -> { { factory(IosLanguageSettings(NativeLanguageSettings(language), language, Navigator::popBack)) } }
         Navigator.Screen.UsagePolicy -> { { factory(policy()) } }
+        Navigator.Screen.DeleteAccountPending -> { { factory(accountDeletion()) } }
         else -> null
     }
 
@@ -58,4 +70,8 @@ private class IosSettingsDependencies(
     )
 
     private fun policy() = IosUsagePolicy(NativeUsagePolicy(AppUsageConsentPort()), language, Navigator::popBack, external)
+
+    private fun accountDeletion() = IosAccountDeletion(
+        createNativeAccountDeletionSession(accounts, deletion), language, Navigator::popBack,
+    ) { redirectScope.launch { GoogleAuth.signOut(); Navigator.openLoginAfterSessionEnd() } }
 }
