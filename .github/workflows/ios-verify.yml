@@ -199,6 +199,8 @@ jobs:
             --tests 'com.coffeepeek.admin.di.coffee.IosCoffeeDetailAnalyticsTest' \
             --tests 'com.coffeepeek.admin.di.media.IosPhotoViewerTest' \
             --tests 'com.coffeepeek.admin.di.media.IosCatalogueMediaTest' \
+            --tests 'com.coffeepeek.admin.di.media.IosCheckInPhotoPresentationTest' \
+            --tests 'com.coffeepeek.admin.di.checkinhistory.IosHistoryFailureTest' \
             --tests 'com.coffeepeek.admin.ui.RootNavigationSessionTest' \
             --tests 'com.coffeepeek.admin.di.shopreport.IosShopReportTest' \
             --tests 'com.coffeepeek.admin.di.contentreport.IosContentReportTest' \

@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		A9AB00000000000000000001 /* HistoryFailureNativeScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9AB00000000000000000002 /* HistoryFailureNativeScreen.swift */; };
 		B23122000000000000000021 /* CoffeePeekLocalBackProtection.swift in Sources */ = {isa = PBXBuildFile; fileRef = B23122000000000000000023 /* CoffeePeekLocalBackProtection.swift */; };
 		B23122000000000000000011 /* CollectionEditorContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = B23122000000000000000013 /* CollectionEditorContent.swift */; };
 		B23122000000000000000001 /* CollectionPosterScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = B23122000000000000000003 /* CollectionPosterScreen.swift */; };
@@ -126,6 +127,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		A9AB00000000000000000002 /* HistoryFailureNativeScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = HistoryFailureNativeScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/HistoryFailureNativeScreen.swift; sourceTree = "<group>"; };
 		B23122000000000000000023 /* CoffeePeekLocalBackProtection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CoffeePeekLocalBackProtection.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CoffeePeekLocalBackProtection.swift; sourceTree = "<group>"; };
 		B23122000000000000000013 /* CollectionEditorContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CollectionEditorContent.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CollectionEditorContent.swift; sourceTree = "<group>"; };
 		B23122000000000000000003 /* CollectionPosterScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CollectionPosterScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CollectionPosterScreen.swift; sourceTree = "<group>"; };
@@ -380,6 +382,7 @@
 				A20000000000000000000014 /* CoffeePeekNativeGlass.swift */,
 				A20000000000000000000013 /* ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CoffeePeekLaunchView.swift */,
 				A20000000000000000000011 /* ../../iosXtool/CoffeePeek/Sources/CoffeePeek/SocialSignInProvider.swift */,
+				A9AB00000000000000000002 /* HistoryFailureNativeScreen.swift */,
 				A6C011E60000000000000003 /* ShopMenuGalleryScreen.swift */,
 				F07A11400000000000000003 /* CoffeePeekNativePhotoViewer.swift */,
 				F07A11400000000000000006 /* NativePhotoViewer.strings */,
@@ -664,6 +667,7 @@
 				F07A11400000000000000001 /* CoffeePeekNativePhotoViewer.swift in Sources */,
 				5C13B3110000000000000001 /* ShopCheckInListScreen.swift in Sources */,
 				5C13B3110000000000000002 /* ShopCheckInListComponents.swift in Sources */,
+				A9AB00000000000000000001 /* HistoryFailureNativeScreen.swift in Sources */,
 				A10000000000000000000015 /* ThemeSettingsScreen.swift in Sources */,
 				B30000000000000000000001 /* ShopReportScreen.swift in Sources */,
 				C0FFEE500000000000000001 /* CoffeeDetailScreen.swift in Sources */,

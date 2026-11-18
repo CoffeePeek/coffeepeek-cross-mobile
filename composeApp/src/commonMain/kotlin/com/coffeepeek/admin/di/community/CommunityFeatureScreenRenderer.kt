@@ -10,7 +10,7 @@ import com.coffeepeek.admin.di.catalog.methodLabel
 import com.coffeepeek.admin.ui.screen.community.CommunityScreenRenderer
 import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.ui.component.CpSnackbarHost
-import com.coffeepeek.core.designsystem.component.CoffeePeekPhotoViewer
+import com.coffeepeek.admin.di.media.CheckInPhotoViewer
 import com.coffeepeek.admin.ui.component.LocalFloatingNavClearance
 import com.coffeepeek.core.designsystem.component.CoffeePeekPhotoViewerImages
 import com.coffeepeek.admin.ui.component.rememberReviewDisplayDate
@@ -60,7 +60,7 @@ internal fun communityHost() = CommunityHost(
     displayDate = { rememberReviewDisplayDate(it) },
     brewMethodLabel = { it.methodLabel(it) },
     prefetchPhotos = { state, posts -> PrefetchListPhotos(state, posts) },
-    photoViewer = { thumbnails, originals, index, onDismiss -> CoffeePeekPhotoViewer(CoffeePeekPhotoViewerImages(thumbnails, originals), index, onDismiss) },
+    photoViewer = { thumbnails, originals, index, onDismiss -> CheckInPhotoViewer(CoffeePeekPhotoViewerImages(thumbnails, originals), index, onDismiss) },
     exposure = { modifier, kind ->
         when (kind) {
             ExposureKind.Feed -> modifier.analyticsExposure("feed", "feed", "feed")

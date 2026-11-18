@@ -369,3 +369,13 @@ private struct CoffeePeekPhotoViewerStrings {
     CoffeePeekNativePhotoViewer(source: CoffeePeekPhotoSource(preview: nil), languageTag: "be", onDismiss: {})
         .preferredColorScheme(.dark)
 }
+
+@MainActor
+func makeCheckInPhotoController(presentation: IosCheckInPhotoPresentation) -> UIViewController {
+    let controller = UIHostingController(rootView: CoffeePeekNativePhotoViewer(
+        source: CoffeePeekPhotoSource(presentation.viewer), languageTag: presentation.languageTag,
+        onDismiss: presentation.dismiss))
+    controller.modalPresentationStyle = .fullScreen
+    controller.isModalInPresentation = true
+    return controller
+}

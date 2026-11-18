@@ -46,6 +46,27 @@ Kotlin сохраняет ViewModels, бизнес-правила, сеть, с�
 
 Ручные проверки темы, галереи и настроек в iOS Simulator остаются открытыми. Следующий пакет по плану — вход и восстановление пароля.
 
+### 2026-11-18 — native check-in nested overlays
+
+Final entry tracing found the shared Compose photo viewer still reachable from
+native feed cards, community post detail and home check-in detail. A platform
+adapter now presents the existing SwiftUI viewer through the existing UIKit
+presenter, retaining original/preview selection, image authorization, revocation,
+overlay analytics, reduced motion and return to the same Kotlin-owned route.
+The history session-observation failure screen also has a SwiftUI renderer with
+the same retry/back actions and localized feature-owned text. Android retains
+its existing viewers and failure content.
+
+Three non-UI native contracts cover revoked/disposed photo callbacks and failure
+screen lifetime. Both launcher registrations, Xcode source references and paired
+previews are included. Local OpenStep parsing and 29 existing iOS tooling tests pass. The app metadata
+attempt stopped in the inherited core/database Room generated expect/actual
+conflict before compiling these adapters; database sources were not changed.
+The separate function-body gate has only the inherited ownership factory finding
+fixed by the Business checkpoint, with no new findings here. Xcode and the three
+native contracts remain pending ios-verify. Manual device acceptance remains for
+photos, session recovery, VoiceOver, large fonts, themes and camera/modal return.
+
 ## Пакеты работ
 
 Каждая строка задаёт владельца сценария. Один пакет может потребовать нескольких PR, если пользовательские сценарии можно принять по отдельности. Зависимости в колонке относятся к подключению и сквозной проверке. Подготовку SwiftUI на тестовых данных и аудит текущих маршрутов можно вести раньше.
