@@ -78,10 +78,19 @@ class IosShelfScreen internal constructor(val kind: String, val languageTag: Str
         }
     }
 
-    fun finish(id: String, rating: Int?, buyAgain: Boolean?) {
+    fun finish(id: String, skip: Boolean) {
         if (!isCurrent()) return
-        if (kind == "bag") bag?.finish(rating, buyAgain) else shelf?.finish(id, rating, buyAgain)
+        if (kind == "bag") bag?.confirmFinish(skip) else shelf?.confirmFinish(id, skip)
     }
+    fun rate(value: Int) {
+        if (!isCurrent()) return
+        if (kind == "bag") bag?.rate(value) else shelf?.rate(value)
+    }
+    fun chooseAgain(value: Boolean) {
+        if (!isCurrent()) return
+        if (kind == "bag") bag?.chooseAgain(value) else shelf?.chooseAgain(value)
+    }
+    fun messageExpired(key: String) { if (isCurrent()) shelf?.dismissMessage(key) }
     fun move(id: String, position: Int) { if (isCurrent()) shelf?.move(id, position) }
     fun setVisible(value: Boolean) { if (isCurrent()) visibility?.set(value) }
     fun query(value: String) { if (isCurrent()) add?.query(value) }

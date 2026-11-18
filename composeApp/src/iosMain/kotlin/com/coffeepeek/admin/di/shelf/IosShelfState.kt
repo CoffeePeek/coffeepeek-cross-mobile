@@ -19,7 +19,8 @@ data class IosShelfState(
     val busy: Boolean = false, val brewing: Boolean = false, val brewsLoading: Boolean = false, val brewsFailed: Boolean = false,
     val leftGrams: Int? = null, val brews: List<IosShelfBrew> = emptyList(), val visibility: Boolean = false,
     val visibilityEnabled: Boolean = false, val visibilityLoading: Boolean = false, val visibilityFailed: Boolean = false,
-    val revision: Int = 0, val add: IosShelfAddState? = null,
+    val revision: Int = 0, val add: IosShelfAddState? = null, val messageKey: String? = null,
+    val finishRating: Int = 5, val finishBuyAgain: Boolean? = null, val visibilityError: String? = null,
 )
 
 data class IosShelfAddState(
@@ -27,7 +28,7 @@ data class IosShelfAddState(
     val frame: List<IosShelfPoint>, val stages: List<IosShelfStage>, val failure: String?, val query: String, val roaster: String, val grams: Int?,
     val grind: String?, val purpose: String?, val roastedOn: String?, val today: String, val searching: Boolean,
     val searchFailed: Boolean, val options: List<IosShelfCoffee>, val saving: Boolean, val duplicate: Boolean,
-    val landing: Boolean, val hints: List<String>, val message: String?,
+    val landing: Boolean, val hints: List<String>, val message: String?, val catalogMatch: Boolean,
 )
 
 internal fun ShelfNativeItem.iosItem() = IosShelfItem(id, title, roaster, grams, grind, purpose, roastedOn, addedOn,
@@ -38,12 +39,13 @@ internal fun ShelfNativeSnapshot.iosState(visibility: ShelfNativeVisibilitySnaps
     finishingId = finishingId, arrivingId = arrivingId, grams = grams, roasters = roasters, undo = undo, failure = failure,
     visibility = visibility?.visible == true, visibilityEnabled = visibility?.enabled == true,
     visibilityLoading = visibility?.loading == true, visibilityFailed = visibility?.failed == true,
+    visibilityError = visibility?.error, messageKey = messageKey, finishRating = finishRating, finishBuyAgain = finishBuyAgain,
 )
 
 internal fun ShelfNativeBagSnapshot.iosState() = IosShelfState(
     active = true, item = item?.iosItem(), loading = item == null && !missing && !failed, missing = missing, failed = failed,
     archived = archived, finishingId = item?.id.takeIf { finishing }, deleting = deleting, busy = busy, brewing = brewing,
-    failure = failure, brewsLoading = brewsLoading, brewsFailed = brewsFailed, leftGrams = leftGrams,
+    finishRating = finishRating, finishBuyAgain = finishBuyAgain, failure = failure, brewsLoading = brewsLoading, brewsFailed = brewsFailed, leftGrams = leftGrams,
     brews = brews.map { IosShelfBrew(it.id, it.date, it.method, it.dose, it.score) },
 )
 
@@ -55,5 +57,5 @@ internal fun ShelfNativePublicSnapshot.iosState() = IosShelfState(active = true,
 internal fun ShelfNativeAddSnapshot.iosState() = IosShelfState(active = true, add = IosShelfAddState(
     step, scanner, downloadBytes, downloadDone, downloadTotal, frame.map { IosShelfPoint(it.x, it.y) }, stages.map { IosShelfStage(it.name, it.status, it.reasons) },
     failure, query, roaster, grams, grind, purpose, roastedOn, today, searching, searchFailed,
-    options.map { IosShelfCoffee(it.slug, it.title, it.roaster) }, saving, duplicate, landing, hints, message,
+    options.map { IosShelfCoffee(it.slug, it.title, it.roaster) }, saving, duplicate, landing, hints, message, catalogMatch,
 ))

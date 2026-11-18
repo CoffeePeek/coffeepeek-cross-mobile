@@ -9,11 +9,13 @@ struct ShelfNativeGridScreen: View {
         ShelfNativeGridContent(state: model.state, strings: model.strings, own: model.screen.kind == "shelf",
             cover: { AnyView(ShelfNativeCover(screen: model.screen, item: $0)) },
             action: model.action, move: { model.screen.move(id: $0, position: Int32($1)) },
-            setVisible: { model.screen.setVisible(value: $0) })
+            setVisible: { model.screen.setVisible(value: $0) }, messageExpired: { model.screen.messageExpired(key: $0) })
         .sheet(isPresented: Binding(get: { model.state.finishingId != nil }, set: { if !$0 { model.action("cancelFinish") } })) {
             if let item = model.state.items.first(where: { $0.id == model.state.finishingId }) {
                 ShelfNativeFinishSheet(cover: AnyView(ShelfNativeCover(screen: model.screen, item: item)), item: item, strings: model.strings,
-                    finish: { rating, again in model.screen.finish(id: item.id, rating: rating, buyAgain: again) },
+                    rating: Int(model.state.finishRating), again: model.state.finishBuyAgain?.boolValue,
+                    rate: { model.screen.rate(value: Int32($0)) }, chooseAgain: { model.screen.chooseAgain(value: $0) },
+                    finish: { model.screen.finish(id: item.id, skip: $0) },
                     cancel: { model.action("cancelFinish") })
             }
         }
@@ -29,7 +31,9 @@ private struct ShelfNativeGridContent: View {
     let action: (String, String?) -> Void
     let move: (String, Int) -> Void
     let setVisible: (Bool) -> Void
+    let messageExpired: (String) -> Void
     @State private var dragged: String?
+    @State private var settingsShown = false
 
     var body: some View {
         ScrollView {
@@ -38,12 +42,21 @@ private struct ShelfNativeGridContent: View {
                 if state.loading { ProgressView(strings["shelf_loading"]).frame(maxWidth: .infinity) }
                 else if state.failed { ShelfNativeStatus(message: strings["shelf_load_failed"], retry: strings["shelf_retry"]) { action("refresh", nil) } }
                 else if state.visible { grid }
-                if own { visibility }
             }.padding(16).padding(.bottom, own ? 88 : 16)
         }
         .refreshable { action("refresh", nil) }
         .safeAreaInset(edge: .bottom) { if own && (state.undo || state.failure != nil) { message } }
         .onDisappear { dragged = nil }
+         .sheet(isPresented: $settingsShown) {
+            ShelfNativeVisibilitySettings(state: state, strings: strings, setVisible: setVisible,
+                retry: { action("retryVisibility", nil) }, close: { settingsShown = false })
+        }
+        .task(id: state.messageKey) {
+            guard own, let key = state.messageKey else { return }
+            let duration: UInt64 = UIAccessibility.isVoiceOverRunning ? 20 : (state.undo ? 5 : 4)
+            try? await Task.sleep(nanoseconds: duration * 1_000_000_000)
+            if !Task.isCancelled { messageExpired(key) }
+        }
     }
 
     private var header: some View {
@@ -51,7 +64,12 @@ private struct ShelfNativeGridContent: View {
             HStack {
                 Text(strings["shelf_profile_title"]).font(.title3.weight(.semibold))
                 Spacer()
-                Button(strings["shelf_archive"]) { action("archive", nil) }
+                Button { action("archive", nil) } label: {
+                    Label(strings["shelf_archive"], systemImage: "archivebox").labelStyle(.iconOnly).frame(width: 44, height: 44)
+                }
+                Button { settingsShown = true } label: {
+                    Label(strings["shelf_settings"], systemImage: "gearshape").labelStyle(.iconOnly).frame(width: 44, height: 44)
+                }
             }
             Text([strings.count("bags", state.items.count), state.roasters > 0 ? strings.count("roasters", Int(state.roasters)) : nil,
                   state.grams.map { strings.weight(Int($0.intValue)) }].compactMap { $0 }.joined(separator: " · "))
@@ -82,10 +100,9 @@ private struct ShelfNativeGridContent: View {
     @ViewBuilder private func tile(_ item: IosShelfItem, index: Int) -> some View {
         if own {
             bagTile(item)
-                .onDrag { dragged = item.id; return NSItemProvider(object: item.id as NSString) }
+                .onDrag { dragged = item.id; return NSItemProvider(object: ("coffeepeek-shelf:" + item.id) as NSString) }
                 .onDrop(of: [UTType.text], isTargeted: nil) { providers in
-                    guard !providers.isEmpty, let id = dragged else { return false }
-                    move(id, index); dragged = nil; return true
+                    acceptDrop(providers) { move($0, index) }
                 }
                 .accessibilityActions {
                     Button(strings["shelf_move_up"]) { move(item.id, max(0, index - 1)) }
@@ -116,26 +133,23 @@ private struct ShelfNativeGridContent: View {
             .frame(maxWidth: .infinity, minHeight: 64)
             .background(CoffeePeekNativeStyle.surface, in: RoundedRectangle(cornerRadius: 16))
             .onDrop(of: [UTType.text], isTargeted: nil) { providers in
-                guard !providers.isEmpty, let id = dragged else { return false }
-                action("finish", id); dragged = nil; return true
+                acceptDrop(providers) { action("finish", $0) }
             }
     }
 
-    private var visibility: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Toggle(strings["shelf_profile_show"], isOn: Binding(get: { state.visibility }, set: { setVisible($0) }))
-                .disabled(!state.visibilityEnabled)
-            Text(strings["shelf_profile_show_hint"]).font(.footnote).foregroundStyle(CoffeePeekNativeStyle.secondary)
-            if state.visibilityLoading { ProgressView() }
-            if state.visibilityFailed {
-                ShelfNativeStatus(message: strings["shelf_profile_visibility_load_failed"], retry: strings["shelf_retry"]) { action("retryVisibility", nil) }
-            }
+    private func acceptDrop(_ providers: [NSItemProvider], perform: @escaping (String) -> Void) -> Bool {
+        guard let expected = dragged, let provider = providers.first(where: { $0.canLoadObject(ofClass: NSString.self) }) else { return false }
+        dragged = nil
+        provider.loadObject(ofClass: NSString.self) { object, _ in
+            guard object as? String == "coffeepeek-shelf:" + expected else { return }
+            DispatchQueue.main.async { perform(expected) }
         }
+        return true
     }
 
     private var message: some View {
         HStack {
-            Text(strings[state.undo ? "shelf_finished_message" : "shelf_error_generic"])
+            Text(state.undo ? strings["shelf_finished_message"] : strings.issue(state.failure))
             Spacer()
             if state.undo { Button(strings["shelf_undo"]) { action("undo", nil) } }
             Button { action("dismiss", nil) } label: { Label(strings["shelf_sheet_close"], systemImage: "xmark").labelStyle(.iconOnly) }
@@ -143,10 +157,38 @@ private struct ShelfNativeGridContent: View {
     }
 }
 
+private struct ShelfNativeVisibilitySettings: View {
+    let state: IosShelfState
+    let strings: ShelfNativeStrings
+    let setVisible: (Bool) -> Void
+    let retry: () -> Void
+    let close: () -> Void
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Text(strings["shelf_settings"]).font(.headline)
+                Spacer()
+                Button(strings["shelf_sheet_close"]) { close() }
+            }
+            Toggle(strings["shelf_profile_show"], isOn: Binding(get: { state.visibility }, set: { setVisible($0) }))
+                .disabled(!state.visibilityEnabled)
+            Text(strings["shelf_profile_show_hint"]).font(.footnote).foregroundStyle(CoffeePeekNativeStyle.secondary)
+            if state.visibilityLoading { ProgressView() }
+            if let error = state.visibilityError {
+                Text(strings[error == "Load" ? "shelf_profile_visibility_load_failed" : "shelf_profile_visibility_save_failed"])
+                    .font(.footnote).foregroundStyle(.red)
+                if error == "Load" { Button(strings["shelf_retry"], action: retry) }
+            }
+        }.padding(20).presentationDetents([.medium])
+            .foregroundStyle(CoffeePeekNativeStyle.foreground).background(CoffeePeekNativeStyle.background)
+    }
+
+}
+
 private func shelfGridPreview() -> some View {
     let state = shelfNativePreviewState()
     return ShelfNativeGridContent(state: state, strings: ShelfNativeStrings("ru"), own: true,
-        cover: { _ in AnyView(CoffeePeekPhotoPlaceholder()) }, action: { _, _ in }, move: { _, _ in }, setVisible: { _ in })
+        cover: { _ in AnyView(CoffeePeekPhotoPlaceholder()) }, action: { _, _ in }, move: { _, _ in }, setVisible: { _ in }, messageExpired: { _ in })
         .foregroundStyle(CoffeePeekNativeStyle.foreground).background(CoffeePeekNativeStyle.background)
 }
 
@@ -155,11 +197,20 @@ private func shelfGridPreview() -> some View {
 
 #Preview("Public shelf light") {
     ShelfNativeGridContent(state: shelfNativePreviewState(), strings: ShelfNativeStrings("ru"), own: false,
-        cover: { _ in AnyView(CoffeePeekPhotoPlaceholder()) }, action: { _, _ in }, move: { _, _ in }, setVisible: { _ in })
+        cover: { _ in AnyView(CoffeePeekPhotoPlaceholder()) }, action: { _, _ in }, move: { _, _ in }, setVisible: { _ in }, messageExpired: { _ in })
         .preferredColorScheme(.light)
 }
 #Preview("Public shelf dark") {
     ShelfNativeGridContent(state: shelfNativePreviewState(), strings: ShelfNativeStrings("ru"), own: false,
-        cover: { _ in AnyView(CoffeePeekPhotoPlaceholder()) }, action: { _, _ in }, move: { _, _ in }, setVisible: { _ in })
+        cover: { _ in AnyView(CoffeePeekPhotoPlaceholder()) }, action: { _, _ in }, move: { _, _ in }, setVisible: { _ in }, messageExpired: { _ in })
         .preferredColorScheme(.dark)
+}
+
+#Preview("Shelf visibility light") {
+    ShelfNativeVisibilitySettings(state: shelfNativePreviewState(), strings: ShelfNativeStrings("ru"),
+        setVisible: { _ in }, retry: {}, close: {}).preferredColorScheme(.light)
+}
+#Preview("Shelf visibility dark") {
+    ShelfNativeVisibilitySettings(state: shelfNativePreviewState(), strings: ShelfNativeStrings("ru"),
+        setVisible: { _ in }, retry: {}, close: {}).preferredColorScheme(.dark)
 }

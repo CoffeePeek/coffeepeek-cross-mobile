@@ -42,6 +42,119 @@ class IosShelfNativeSessionsTest {
         assertTrue(observer.isCancelled)
     }
 
+    @Test fun nativeFinishDefaultsToFiveAndResetsBeforeSkip() = runTest(dispatcher) {
+        val repository = FakeShelfRepository(listOf(bag("first")))
+        val session = IosShelfSession(ShelfViewModel(repository, testCalendar(), ShelfArrivals(), ShelfBagHandoff()))
+        try {
+            runCurrent()
+            session.startFinish("first")
+            runCurrent()
+            assertEquals(5, session.current().finishRating)
+            assertNull(session.current().finishBuyAgain)
+            finishWithSelectedChoices(session, repository)
+            session.undo()
+            runCurrent()
+            assertResetAndSkip(session, repository)
+        } finally { session.close() }
+    }
+
+    private fun TestScope.finishWithSelectedChoices(session: IosShelfSession, repository: FakeShelfRepository) {
+        session.rate(5)
+        assertEquals(0, session.current().finishRating)
+        session.rate(3)
+        session.chooseAgain(true)
+        session.chooseAgain(true)
+        assertNull(session.current().finishBuyAgain)
+        session.chooseAgain(false)
+        session.confirmFinish("first", false)
+        runCurrent()
+        assertEquals("finish:first:3:false", repository.calls.last())
+    }
+
+    private fun TestScope.assertResetAndSkip(session: IosShelfSession, repository: FakeShelfRepository) {
+        session.startFinish("first")
+        runCurrent()
+        assertEquals(5, session.current().finishRating)
+        assertNull(session.current().finishBuyAgain)
+        session.confirmFinish("first", true)
+        runCurrent()
+        assertEquals("finish:first:null:null", repository.calls.last())
+    }
+
+    @Test fun nativeBagFinishUsesSameDefaultAndCancelResetsIt() = runTest(dispatcher) {
+        val repository = FakeShelfRepository(listOf(bag("first")))
+        val model = ShelfBagViewModel("first", repository, testCalendar(), ShelfBagHandoff(), FakeShelfBrewLog())
+        val session = IosShelfBagSession(model)
+        try {
+            runCurrent()
+            session.action("finish")
+            runCurrent()
+            assertEquals(5, session.current().finishRating)
+            cancelBagFinishThenReopen(session)
+            session.confirmFinish(false)
+            runCurrent()
+            assertEquals("finish:first:5:null", repository.calls.last())
+        } finally { session.close() }
+    }
+
+    private fun TestScope.cancelBagFinishThenReopen(session: IosShelfBagSession) {
+        session.rate(2)
+        session.chooseAgain(true)
+        session.action("cancelFinish")
+        runCurrent()
+        session.action("finish")
+        runCurrent()
+        assertEquals(5, session.current().finishRating)
+        assertNull(session.current().finishBuyAgain)
+    }
+
+    @Test fun oldFeedbackExpiryCannotDismissANewerUndoForTheSameBag() = runTest(dispatcher) {
+        val repository = FakeShelfRepository(listOf(bag("first")))
+        val session = IosShelfSession(ShelfViewModel(repository, testCalendar(), ShelfArrivals(), ShelfBagHandoff()))
+        try {
+            runCurrent()
+            session.finish("first", 5, null)
+            runCurrent()
+            val expired = assertNotNull(session.current().messageKey)
+            session.undo()
+            runCurrent()
+            session.finish("first", 5, null)
+            runCurrent()
+            assertFeedbackCorrelation(session, expired)
+        } finally { session.close() }
+    }
+
+    private fun TestScope.assertFeedbackCorrelation(session: IosShelfSession, expired: String) {
+        val current = assertNotNull(session.current().messageKey)
+        assertNotEquals(expired, current)
+        session.dismissMessage(expired)
+        runCurrent()
+        assertTrue(session.current().undo)
+        session.dismissMessage(current)
+        runCurrent()
+        assertFalse(session.current().undo)
+    }
+
+    @Test fun visibilitySnapshotKeepsLoadAndSaveFailuresDistinct() = runTest(dispatcher) {
+        val repository = FakeShelfProfileRepository().apply {
+            visibilityRead = { Result.failure(IllegalStateException("offline")) }
+        }
+        val session = createIosShelfVisibilitySession(repository)
+        try {
+            runCurrent()
+            assertEquals("Load", session.current().error)
+            repository.visibilityRead = { Result.success(false) }
+            session.refresh()
+            runCurrent()
+            assertNull(session.current().error)
+            repository.visibilityWrite = { Result.failure(IllegalStateException("offline")) }
+            session.set(true)
+            runCurrent()
+            assertEquals("Save", session.current().error)
+            assertFalse(session.current().visible)
+        } finally { session.close() }
+    }
+
     @Test fun nativePhotoWaitsForModelsThenSavesOnlyTheProcessedCard() = runTest(dispatcher) {
         val repository = FakeShelfRepository(emptyList())
         val scanner = FakeBagScanner(BagScannerReadiness.NeedsDownload(100))

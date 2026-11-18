@@ -176,5 +176,6 @@ func shelfNativePreviewState() -> IosShelfState {
         finishingId: nil, arrivingId: nil, grams: KotlinInt(int: 250), roasters: 1, undo: false, failure: nil,
         item: item, missing: false, archived: false, deleting: false, busy: false, brewing: false,
         brewsLoading: false, brewsFailed: false, leftGrams: nil, brews: [], visibility: false,
-        visibilityEnabled: true, visibilityLoading: false, visibilityFailed: false, revision: 0, add: nil)
+        visibilityEnabled: true, visibilityLoading: false, visibilityFailed: false, revision: 0, add: nil,
+        messageKey: nil, finishRating: 5, finishBuyAgain: nil, visibilityError: nil)
 }

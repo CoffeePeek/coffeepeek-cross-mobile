@@ -46,6 +46,10 @@ struct ShelfNativeBagForm: View {
             Text(strings["shelf_form_coffee"]).font(.headline)
             TextField(strings["shelf_form_coffee_hint"], text: Binding(get: { add.query }, set: { send(.query($0)) }))
                 .textFieldStyle(.roundedBorder).autocorrectionDisabled()
+            if add.catalogMatch {
+                Label(strings["shelf_form_catalog_match"], systemImage: "checkmark.circle.fill")
+                    .font(.caption).foregroundStyle(CoffeePeekNativeStyle.accent)
+            }
             if add.searching { ProgressView() }
             if add.searchFailed { Text(strings["shelf_form_coffee_failed"]).font(.footnote).foregroundStyle(CoffeePeekNativeStyle.secondary) }
             ForEach(add.options, id: \.slug) { option in
@@ -62,7 +66,7 @@ struct ShelfNativeBagForm: View {
     private var weights: some View {
         LazyVGrid(columns: [GridItem(.adaptive(minimum: 65))], spacing: 8) {
             ForEach([200, 250, 500, 1000] as [Int], id: \.self) { grams in
-                let selected = add.grams?.intValue == Int32(grams)
+                let selected = add.grams?.intValue == grams
                 Button(String(format: strings["shelf_weight"], grams)) {
                     send(.weight(selected ? nil : grams))
                 }
@@ -122,7 +126,7 @@ private func shelfFormPreview() -> some View {
     let state = IosShelfAddState(step: "Form", scanner: "Ready", downloadBytes: 0, downloadDone: 0,
         downloadTotal: 0, frame: [], stages: [], failure: nil, query: "Santa Rosa", roaster: "Coffee Roaster",
         grams: KotlinInt(int: 250), grind: "Beans", purpose: "Filter", roastedOn: nil, today: "2026-11-18",
-        searching: false, searchFailed: false, options: [], saving: false, duplicate: false, landing: false, hints: [], message: nil)
+        searching: false, searchFailed: false, options: [], saving: false, duplicate: false, landing: false, hints: [], message: nil, catalogMatch: true)
     return ScrollView { ShelfNativeBagForm(add: state, strings: ShelfNativeStrings("ru"), card: nil, send: { _ in }).padding() }
         .foregroundStyle(CoffeePeekNativeStyle.foreground).background(CoffeePeekNativeStyle.background)
 }

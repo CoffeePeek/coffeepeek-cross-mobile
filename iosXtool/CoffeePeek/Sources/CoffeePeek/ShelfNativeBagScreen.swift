@@ -22,7 +22,9 @@ struct ShelfNativeBagScreen: View {
         .sheet(isPresented: Binding(get: { state.finishingId != nil }, set: { if !$0 { model.action("cancelFinish") } })) {
             if let item = state.item {
                 ShelfNativeFinishSheet(cover: AnyView(ShelfNativeCover(screen: model.screen, item: item)), item: item, strings: strings,
-                    finish: { rating, again in model.screen.finish(id: item.id, rating: rating, buyAgain: again) },
+                    rating: Int(state.finishRating), again: state.finishBuyAgain?.boolValue,
+                    rate: { model.screen.rate(value: Int32($0)) }, chooseAgain: { model.screen.chooseAgain(value: $0) },
+                    finish: { model.screen.finish(id: item.id, skip: $0) },
                     cancel: { model.action("cancelFinish") })
             }
         }
@@ -97,7 +99,7 @@ private struct ShelfNativeBagDetails: View {
     private var brews: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text(strings["shelf_brews_title"]).font(.headline)
-            if let left = state.leftGrams { Text(String(format: strings["shelf_bag_left"], String(format: strings["shelf_weight"], left.intValue))) }
+            if !state.archived, let left = state.leftGrams { Text(String(format: strings["shelf_bag_left"], String(format: strings["shelf_weight"], left.intValue))) }
             if state.brewsLoading { ProgressView(strings["shelf_brews_loading"]) }
             else if state.brewsFailed {
                 ShelfNativeStatus(message: strings["shelf_brews_failed"], retry: strings["shelf_retry"]) { action("retryBrews") }

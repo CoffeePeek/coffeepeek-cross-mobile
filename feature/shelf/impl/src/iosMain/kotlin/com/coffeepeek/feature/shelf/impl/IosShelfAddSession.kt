@@ -63,6 +63,7 @@ class ShelfNativeAddSnapshot internal constructor(state: ShelfAddState) {
     val frame = (state.liveFrame ?: state.result?.frame)?.points.orEmpty().map { ShelfNativePoint(it.first, it.second) }
     val failure = state.failure?.name
     val query = state.form.query
+    val catalogMatch = state.form.coffee != null
     val roaster = state.form.roaster
     val grams = state.form.weightGrams
     val grind = state.form.grind?.name

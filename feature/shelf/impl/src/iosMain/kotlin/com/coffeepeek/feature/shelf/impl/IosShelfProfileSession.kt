@@ -60,4 +60,5 @@ class ShelfNativeVisibilitySnapshot internal constructor(state: ShelfProfileVisi
     val enabled = state.signedIn && state.loaded && !state.loading && !state.busy
     val loading = state.loading || state.busy
     val failed = state.error != null
+    val error = state.error?.name
 }

@@ -4,19 +4,33 @@ import androidx.lifecycle.ViewModelStore
 import androidx.lifecycle.viewModelScope
 import com.coffeepeek.feature.shelf.impl.ui.ShelfBagViewModel
 import com.coffeepeek.feature.shelf.impl.ui.compose.model.*
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 
 class IosShelfBagSession internal constructor(private val model: ShelfBagViewModel) {
     private val store = ViewModelStore().apply { put("shelf-bag", model) }
-    fun current() = ShelfNativeBagSnapshot(model.state.value)
-    fun observe(receive: () -> Unit) = model.viewModelScope.launch { model.state.collect { receive() } }
+    private val finishDraft = ShelfNativeFinishDraft()
+    fun current() = ShelfNativeBagSnapshot(model.state.value, finishDraft)
+    fun observe(receive: () -> Unit) = model.viewModelScope.launch {
+        combine(model.state, finishDraft.state) { _, _ -> Unit }.collect { receive() }
+    }
     fun events(receive: (String, String?) -> Unit) = model.viewModelScope.launch {
         model.events.collect { event -> when (event) {
             ShelfBagEvent.Back -> receive("back", null)
             is ShelfBagEvent.OpenCoffee -> receive("coffee", event.slug)
         } }
     }
-    fun action(value: String) = model.onAction(when (value) {
+    fun rate(value: Int) { if (model.state.value.finishing) finishDraft.rate(value) }
+    fun chooseAgain(value: Boolean) { if (model.state.value.finishing) finishDraft.chooseAgain(value) }
+    fun confirmFinish(skip: Boolean) {
+        if (!model.state.value.finishing) return
+        finish(finishDraft.rating.takeIf { !skip && it > 0 }, finishDraft.buyAgain.takeUnless { skip })
+    }
+    fun action(value: String) {
+        if (value == "finish") finishDraft.reset()
+        model.onAction(bagAction(value))
+    }
+    private fun bagAction(value: String) = when (value) {
         "retry" -> ShelfBagAction.Retry
         "retryBrews" -> ShelfBagAction.RetryBrews
         "coffee" -> ShelfBagAction.OpenCoffee
@@ -29,7 +43,7 @@ class IosShelfBagSession internal constructor(private val model: ShelfBagViewMod
         "dismiss" -> ShelfBagAction.DismissFailure
         "brew" -> ShelfBagAction.Brew
         else -> ShelfBagAction.Back
-    })
+    }
     fun finish(rating: Int?, buyAgain: Boolean?) = model.onAction(ShelfBagAction.Finish(rating, buyAgain))
     fun brew() = model.state.value.brewing
     fun brewed(saved: Boolean) = model.onAction(ShelfBagAction.BrewClosed(saved))
@@ -37,7 +51,9 @@ class IosShelfBagSession internal constructor(private val model: ShelfBagViewMod
     fun close() = store.clear()
 }
 
-class ShelfNativeBagSnapshot internal constructor(state: ShelfBagState) {
+class ShelfNativeBagSnapshot internal constructor(state: ShelfBagState, draft: ShelfNativeFinishDraft) {
+    val finishRating = draft.rating
+    val finishBuyAgain = draft.buyAgain
     val item = state.bag?.let { ShelfNativeItem(it, state.today) }
     val missing = state.missing
     val failed = state.loadFailed
