@@ -7,6 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		B23123000000000000000005 /* CommunityReportContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = B23123000000000000000006 /* CommunityReportContent.swift */; };
+		B23123000000000000000003 /* CommunityEditorContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = B23123000000000000000004 /* CommunityEditorContent.swift */; };
+		B23123000000000000000001 /* CommunitySheetHost.swift in Sources */ = {isa = PBXBuildFile; fileRef = B23123000000000000000002 /* CommunitySheetHost.swift */; };
 		B23122000000000000000021 /* CoffeePeekLocalBackProtection.swift in Sources */ = {isa = PBXBuildFile; fileRef = B23122000000000000000023 /* CoffeePeekLocalBackProtection.swift */; };
 		B23122000000000000000011 /* CollectionEditorContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = B23122000000000000000013 /* CollectionEditorContent.swift */; };
 		B23122000000000000000001 /* CollectionPosterScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = B23122000000000000000003 /* CollectionPosterScreen.swift */; };
@@ -126,6 +129,9 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		B23123000000000000000006 /* CommunityReportContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CommunityReportContent.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CommunityReportContent.swift; sourceTree = "<group>"; };
+		B23123000000000000000004 /* CommunityEditorContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CommunityEditorContent.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CommunityEditorContent.swift; sourceTree = "<group>"; };
+		B23123000000000000000002 /* CommunitySheetHost.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CommunitySheetHost.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CommunitySheetHost.swift; sourceTree = "<group>"; };
 		B23122000000000000000023 /* CoffeePeekLocalBackProtection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CoffeePeekLocalBackProtection.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CoffeePeekLocalBackProtection.swift; sourceTree = "<group>"; };
 		B23122000000000000000013 /* CollectionEditorContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CollectionEditorContent.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CollectionEditorContent.swift; sourceTree = "<group>"; };
 		B23122000000000000000003 /* CollectionPosterScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CollectionPosterScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CollectionPosterScreen.swift; sourceTree = "<group>"; };
@@ -363,6 +369,9 @@
 				5E1FA2200000000000000006 /* NativeShelfArchive.strings */,
 				86C051CE0000000000000003 /* CollectionsWorkspaceScreen.swift */,
 				B23122000000000000000003 /* CollectionPosterScreen.swift */,
+				B23123000000000000000002 /* CommunitySheetHost.swift */,
+				B23123000000000000000004 /* CommunityEditorContent.swift */,
+				B23123000000000000000006 /* CommunityReportContent.swift */,
 				B23122000000000000000023 /* CoffeePeekLocalBackProtection.swift */,
 				B23122000000000000000013 /* CollectionEditorContent.swift */,
 				B20000000000000000000006 /* CollectionsLibrary.strings */,
@@ -678,6 +687,9 @@
 				B20000000000000000000001 /* CollectionsLibraryScreen.swift in Sources */,
 				86C051CE0000000000000001 /* CollectionsWorkspaceScreen.swift in Sources */,
 				B23122000000000000000001 /* CollectionPosterScreen.swift in Sources */,
+				B23123000000000000000001 /* CommunitySheetHost.swift in Sources */,
+				B23123000000000000000003 /* CommunityEditorContent.swift in Sources */,
+				B23123000000000000000005 /* CommunityReportContent.swift in Sources */,
 				B23122000000000000000021 /* CoffeePeekLocalBackProtection.swift in Sources */,
 				B23122000000000000000011 /* CollectionEditorContent.swift in Sources */,
 				53E771650000000000000001 /* SettingsNativeController.swift in Sources */,

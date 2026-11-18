@@ -106,8 +106,8 @@ internal fun PostScreenContent(
     var preview by remember { mutableStateOf<PostPhotoPreview?>(null) }
     preview?.takeIf { state.post != null && state.error == null }
         ?.let { host.photoViewer(it.thumbnails, it.originals, it.index) { preview = null } }
-    state.editing?.let { PostEditorSheet(it, state.drinks, state.drinksFailed, state.isSaving, postEditorCallbacks(onAction)) }
-    if (state.isReportOpen) ReportSheet(state.reportForm(), postReportCallbacks(onAction))
+    state.editing?.let { PostEditorSheet(it, state.drinks, state.drinksFailed, state.isSaving, postEditorCallbacks(onAction), host) }
+    if (state.isReportOpen) ReportSheet(state.reportForm(), postReportCallbacks(onAction), host)
     val authorFallback = stringResource(Res.string.community_user)
     val sharer = postSharer(host)
     if (host.nativeDetail != null) {

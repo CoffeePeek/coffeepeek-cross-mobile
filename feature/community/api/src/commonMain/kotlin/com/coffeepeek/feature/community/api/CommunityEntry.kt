@@ -32,6 +32,8 @@ class CommunityHost(
     val share: (text: String) -> Unit = {},
     val nativeCard: (@Composable (CommunityCardPresentation, CommunityCardActions, Modifier) -> Unit)? = null,
     val nativeDetail: (@Composable (CommunityPostPresentation, CommunityCardActions, Modifier, @Composable () -> Unit) -> Boolean)? = null,
+    val nativeEditor: (@Composable (CommunityEditorPresentation, CommunityEditorActions) -> Unit)? = null,
+    val nativeReport: (@Composable (CommunityReportPresentation, CommunityReportActions) -> Unit)? = null,
     val nativeFeed: (@Composable (CommunityFeedPresentation, CommunityFeedActions, Modifier,
         @Composable () -> Unit, @Composable () -> Unit) -> Unit)? = null,
 )

@@ -57,6 +57,9 @@ fun configureNativeCheckInDetails(factory: (com.coffeepeek.admin.di.community.Io
 fun configureNativeCommunityFeed(factory: (com.coffeepeek.admin.di.community.IosCommunityFeed) -> UIViewController) =
     com.coffeepeek.admin.di.community.configureNativeCommunityFeed(factory)
 
+fun configureNativeCommunitySheets(factory: (com.coffeepeek.admin.di.community.IosCommunitySheet) -> UIViewController) =
+    com.coffeepeek.admin.di.community.configureNativeCommunitySheets(factory)
+
 fun configureNativeCommunityCards(factory: (com.coffeepeek.admin.di.community.IosCommunityCard) -> UIViewController) =
     com.coffeepeek.admin.di.community.configureNativeCommunityCards(factory)
 
