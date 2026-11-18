@@ -3,6 +3,7 @@ import SwiftUI
 struct CoffeePeekNativeActionButton: View {
     let title: String
     var primary = true
+    var symbol: String? = nil
     var busy = false
     var enabled = true
     let action: () -> Void
@@ -10,6 +11,7 @@ struct CoffeePeekNativeActionButton: View {
     var body: some View {
         Button(action: action) {
             HStack(spacing: 8) {
+                if let symbol { Image(systemName: symbol) }
                 if busy { ProgressView().tint(primary ? .black : CoffeePeekNativeStyle.foreground) }
                 Text(title).font(CoffeePeekNativeStyle.font(17, weight: "Semibold"))
             }
@@ -28,14 +30,14 @@ struct CoffeePeekNativeActionButton: View {
 
 #Preview("Native actions light") {
     VStack {
-        CoffeePeekNativeActionButton(title: "CoffeePeek", action: {})
+        CoffeePeekNativeActionButton(title: "CoffeePeek", symbol: "plus", action: {})
         CoffeePeekNativeActionButton(title: "CoffeePeek", primary: false, action: {})
     }.padding().preferredColorScheme(.light)
 }
 
 #Preview("Native actions dark") {
     VStack {
-        CoffeePeekNativeActionButton(title: "CoffeePeek", action: {})
+        CoffeePeekNativeActionButton(title: "CoffeePeek", symbol: "plus", action: {})
         CoffeePeekNativeActionButton(title: "CoffeePeek", primary: false, action: {})
     }.padding().preferredColorScheme(.dark)
 }

@@ -168,7 +168,7 @@ struct ShopDetailNativeScreen: View {
     private var recovery: some View {
         VStack(alignment: .leading, spacing: 12) {
             Text(text("error-body")).foregroundStyle(CoffeePeekNativeStyle.secondary)
-            Button(text("retry")) { actions.call("retry") }.buttonStyle(.borderedProminent)
+            CoffeePeekNativeActionButton(title: text("retry")) { actions.call("retry") }
         }.padding(.horizontal, 16)
     }
 
@@ -218,14 +218,15 @@ struct ShopDetailNativeScreen: View {
     private func footer(_ details: ShopDetailIosDetails) -> some View {
         HStack(spacing: 12) {
             if details.canRoute {
-                Button { actions.call("route") } label: { Label(text("route"), systemImage: "arrow.triangle.turn.up.right.diamond") }
-                    .buttonStyle(.bordered).shopDetailExposure("Directions", id: "directions")
+                CoffeePeekNativeActionButton(title: text("route"), primary: false,
+                    symbol: "arrow.triangle.turn.up.right.diamond") { actions.call("route") }
+                    .shopDetailExposure("Directions", id: "directions")
             }
-            Button { actions.call("check-in") } label: { Label(text("check-in"), systemImage: "plus") }
-                .buttonStyle(.borderedProminent).foregroundStyle(.black).shopDetailExposure("CheckIn", id: "check-in")
+            CoffeePeekNativeActionButton(title: text("check-in"), symbol: "plus") { actions.call("check-in") }
+                .shopDetailExposure("CheckIn", id: "check-in")
         }
         .font(CoffeePeekNativeStyle.font(16, weight: "SemiBold"))
-        .padding(12).frame(maxWidth: .infinity).padding(.bottom, bottomInset)
+        .frame(maxWidth: 352).padding(12).frame(maxWidth: .infinity).padding(.bottom, bottomInset)
         .background(.regularMaterial)
     }
 

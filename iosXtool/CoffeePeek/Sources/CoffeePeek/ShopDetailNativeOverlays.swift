@@ -54,7 +54,7 @@ private struct ShopDetailSessionErrorView: View {
     var body: some View {
         VStack(spacing: 20) {
             Text(title).font(CoffeePeekNativeStyle.font(20, weight: "SemiBold", relativeTo: .title3))
-            Button(retry, action: onRetry).buttonStyle(.borderedProminent).tint(CoffeePeekNativeStyle.accent)
+            CoffeePeekNativeActionButton(title: retry, action: onRetry)
             Button(back, action: onBack)
         }.padding(24).frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(CoffeePeekNativeStyle.background).foregroundStyle(CoffeePeekNativeStyle.foreground)

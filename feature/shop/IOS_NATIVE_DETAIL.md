@@ -43,6 +43,10 @@ unchanged. Menu amount/category grouping, validated contacts, schedule text,
 price tiers, date formatting and author permissions reuse Kotlin presentation.
 No camera, account write or background sign-in flow was added.
 
+Native footer and retry actions reuse `CoffeePeekNativeActionButton`; its new
+optional symbol preserves the existing route/check-in icons and defaults to nil
+for all other consumers.
+
 The existing consent/session/lifecycle-aware shop analytics adapter remains the
 only analytics service. Shared action/content metrics are preserved; native
 geometry reports actual visible sections to the existing exposure ledger.
@@ -62,7 +66,8 @@ not create another OwnershipViewModel or copy access/claim decisions into Shop.
 
 ## Verification, 2026-11-18
 
-On Windows, the changed Shop commonMain and iOSMain metadata compiled. The first
+Base was refreshed to integration `e67fe3d5d` before publishing. On Windows,
+the changed Shop commonMain and iOSMain metadata compiled. The first
 metadata attempt found forbidden access to internal design-system resource
 symbols; corrected by feature-owned ru/be resources and the application's
 existing snackbar/back resources. The subsequent metadata run passed. The
