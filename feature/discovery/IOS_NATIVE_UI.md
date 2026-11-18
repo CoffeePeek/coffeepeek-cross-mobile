@@ -55,17 +55,18 @@ No claim that all embedded Roaster content is already native is made here.
 
 ## Verification (2026-11-18)
 
-Base includes integration `9861b209d` and the ONNX build recovery from PR #396.
-Before publishing, Windows Gradle compiled
+Base includes integration `8d18a6395`, the native photo-viewer checkpoint #397,
+and the ONNX build recovery from PR #396.
+Final pre-push Windows Gradle compiled
 `:feature:discovery:impl:compileCommonMainKotlinMetadata` and
 `:feature:discovery:impl:compileIosMainKotlinMetadata`. The repository function
 body check reported only the two pre-existing ownership/public-profile
 violations, with no new Discovery violations. Existing duplicate metadata and
 preview deprecation warnings remain outside this checkpoint.
 
-Added non-UI native contracts cover accepted picker rows, pending recents,
+Added nine non-UI native contracts cover accepted picker rows, pending recents,
 stale-query pagination, current-result opening, filter/cancel actions, distinct
-map select/open actions, and login-generation/account/authentication keys.
+map select/open actions, restored viewport camera, and login-generation/account/authentication keys.
 The iOS verification workflow includes these suites together with existing
 search/filter/session/media contracts. Native tests and the Xcode app build
 must pass on macOS before merge; metadata compilation does not execute them.
