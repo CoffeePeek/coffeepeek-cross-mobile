@@ -34,9 +34,7 @@ class IosCommunitySheet internal constructor(
 
     fun perform(action: String, value: String) {
         if (!isCurrent() || sending) return
-        val callback = actions
-        if (action == "dismiss") revoke()
-        callback?.invoke(action, value)
+        actions?.invoke(action, value)
     }
 
     fun heightChanged(value: Double) {

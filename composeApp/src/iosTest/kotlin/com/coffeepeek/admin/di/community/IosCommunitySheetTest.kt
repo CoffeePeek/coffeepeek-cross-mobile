@@ -36,10 +36,11 @@ class IosCommunitySheetTest {
         assertEquals(listOf("retry"), calls)
     }
 
-    @Test fun dismissalRevokesImmediatelyAndOldBodyCannotMutateAReopenedSheet() = runTest(dispatcher) {
+    @Test fun disposedBodyCannotMutateAReopenedSheet() = runTest(dispatcher) {
         val calls = mutableListOf<String>()
         val old = sheet(calls = calls)
         old.perform("dismiss", "")
+        old.close() // Shared owner accepted dismissal and composition disposed its body.
         val reopened = sheet(calls = calls)
         old.perform("text", "late")
         old.update("{}", false) { _, _ -> error("revoked") }

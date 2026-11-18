@@ -33,8 +33,9 @@ text limits, validation/server errors and shared submission actions are preserve
 Every mounted body has a distinct `IosCommunitySheet`. Composition closes it on
 disposal; the UIKit hosting controller retains its Swift model and the root view
 observes that model. Swift model deinitialization cancels only its observation.
-Dismiss revokes the transport immediately, so a callback from an old body cannot
-edit a later reopening. Account identity/generation are checked synchronously for
+Accepted dismissal disposes and revokes the transport, so an old body cannot
+edit a later reopening. A requested dismissal never closes the source ahead of
+the shared owner: a save may already have started before the next native render. Account identity/generation are checked synchronously for
 every action and asynchronously for visible state; account replacement clears the
 native draft. Feed sheet keys include its session generation and post identity.
 
@@ -60,7 +61,7 @@ injected feature API. This checkpoint adds no hidden Compose dialog/body on iOS.
   validated; `git diff --check` passed.
 - New non-UI tests cover rating-axis mapping, saved/custom/catalog drinks,
   independent feed/post actions, report limits, account replacement, busy-state
-  protection, immediate dismissal revocation, reopening and JSON escaping.
+  protection, accepted-dismissal revocation, reopening and JSON escaping.
 - iOS CI now runs the complete community Kotlin/Native suite, the app sheet tests,
   Xcode compilation, and retains their logs/XML. Results remain pending publication.
 - Colocated light/dark SwiftUI previews are supplied for editor and report, plus
