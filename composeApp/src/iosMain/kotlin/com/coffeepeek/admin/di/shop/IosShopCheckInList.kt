@@ -2,14 +2,11 @@
 
 package com.coffeepeek.admin.di.shop
 
-import androidx.compose.ui.ExperimentalComposeUiApi
-import androidx.compose.ui.window.ComposeUIViewController
 import androidx.lifecycle.ViewModelStore
 import androidx.lifecycle.viewModelScope
-import com.coffeepeek.admin.AppContent
 import com.coffeepeek.admin.di.media.IosCatalogueMedia
+import com.coffeepeek.admin.di.media.IosPhotoViewer
 import com.coffeepeek.admin.ui.Navigator
-import com.coffeepeek.core.designsystem.component.CoffeePeekPhotoViewer
 import com.coffeepeek.core.designsystem.component.CoffeePeekPhotoViewerImages
 import com.coffeepeek.core.session.SessionReader
 import com.coffeepeek.feature.authorblocking.api.AuthorBlockActions
@@ -27,7 +24,6 @@ import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import platform.UIKit.UIImage
-import platform.UIKit.UIViewController
 
 class IosShopCheckInList internal constructor(
     private val shopId: String,
@@ -52,7 +48,7 @@ class IosShopCheckInList internal constructor(
 
     fun observe(
         onState: (IosShopCheckInListState) -> Unit,
-        onPhoto: (IosShopCheckInAlbum) -> Unit,
+        onPhoto: (IosPhotoViewer) -> Unit,
         unknownAuthor: String,
     ) = IosShopCheckInObservation(host.viewModelScope.launch {
         host.session.collectLatest { source ->
@@ -93,13 +89,13 @@ class IosShopCheckInList internal constructor(
     private suspend fun observeBinding(
         bound: BoundShopCheckIns,
         onState: (IosShopCheckInListState) -> Unit,
-        onPhoto: (IosShopCheckInAlbum) -> Unit,
+        onPhoto: (IosPhotoViewer) -> Unit,
         unknownAuthor: String,
     ) {
         val state = bound.model.observeState {
             if (bound.source.lease.isCurrent()) onState(IosShopCheckInListState(bound.source.generation, it))
         }
-        val events = bound.model.observeEvents(ShopCheckInNavigation(bound.source.lease, blockActions, unknownAuthor, onPhoto))
+        val events = bound.model.observeEvents(ShopCheckInNavigation(bound.source.lease, blockActions, unknownAuthor, media, onPhoto))
         try { awaitCancellation() } finally {
             state.cancel()
             events.cancel()
@@ -123,7 +119,8 @@ private class ShopCheckInNavigation(
     private val lease: ShopBrowsingSession,
     private val blockActions: AuthorBlockActions,
     private val unknownAuthor: String,
-    private val onPhoto: (IosShopCheckInAlbum) -> Unit,
+    private val media: IosCatalogueMedia,
+    private val onPhoto: (IosPhotoViewer) -> Unit,
 ) : ShopCheckInListCallbacks {
     override fun back() { if (lease.isCurrent()) Navigator.popBack() }
     override fun signIn() = navigate(Navigator.Screen.Auth)
@@ -135,7 +132,7 @@ private class ShopCheckInNavigation(
         lease.requestAuthorBlock(author.copy(nickname = author.nickname.ifBlank { unknownAuthor }), blockActions)
 
     override fun photo(urls: List<String>, originals: List<String>, index: Int) {
-        if (lease.isCurrent()) onPhoto(IosShopCheckInAlbum(urls, originals, index))
+        if (lease.isCurrent()) onPhoto(media.viewer(CoffeePeekPhotoViewerImages(urls, originals), index, lease::isCurrent))
     }
 
     private fun navigate(screen: Navigator.Screen) {
@@ -145,15 +142,4 @@ private class ShopCheckInNavigation(
 
 class IosShopCheckInObservation internal constructor(private val job: Job) {
     fun cancel() = job.cancel()
-}
-
-class IosShopCheckInAlbum internal constructor(
-    private val urls: List<String>,
-    private val originals: List<String>,
-    private val index: Int,
-) {
-    @OptIn(ExperimentalComposeUiApi::class)
-    fun makeViewer(onDismiss: () -> Unit): UIViewController = ComposeUIViewController(configure = { opaque = false }) {
-        AppContent { CoffeePeekPhotoViewer(CoffeePeekPhotoViewerImages(urls, originals), index, onDismiss) }
-    }
 }
