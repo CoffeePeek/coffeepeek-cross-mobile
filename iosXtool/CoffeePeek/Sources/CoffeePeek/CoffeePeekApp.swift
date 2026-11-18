@@ -45,6 +45,7 @@ private struct ComposeRootView: UIViewControllerRepresentable {
         MainViewControllerKt.configureNativeEditProfile(factory: makeEditProfileController)
         IosCommunityMessageControllers.shared.configure(factory: makeCommunityMessageController)
         MainViewControllerKt.configureNativeGlobalDialogs(factory: makeGlobalDialogController)
+        MainViewControllerKt.configureNativeDiscovery(factory: makeDiscoveryController)
         MainViewControllerKt.configureNativeRootModals(factory: makeRootModalController)
         MainViewControllerKt.configureNativeCommunityCards(factory: makeCommunityCardController)
         MainViewControllerKt.configureNativeCommunitySheets(factory: makeCommunitySheetController)
