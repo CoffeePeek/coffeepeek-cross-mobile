@@ -1,5 +1,4 @@
 import ComposeApp
-import ImageIO
 import PhotosUI
 import SwiftUI
 import UIKit
@@ -412,20 +411,8 @@ struct WorkspacePhoto: View {
             .task(id: url) {
                 observation?.cancel(); image = nil
                 guard let url, !url.isEmpty else { return }
-                observation = workspace.loadPhoto(url: url) { data in image = data.flatMap { collectionWorkspaceImage($0 as Data) } }
+                observation = workspace.loadPhoto(url: url) { data in image = data.flatMap { coffeePeekNativeThumbnail($0 as Data) } }
             }.onDisappear { observation?.cancel(); observation = nil; image = nil }
     }
-}
-
-func collectionWorkspaceImage(_ data: Data) -> UIImage? {
-    guard let source = CGImageSourceCreateWithData(data as CFData, nil) else { return nil }
-    let options: [CFString: Any] = [
-        kCGImageSourceCreateThumbnailFromImageAlways: true,
-        kCGImageSourceCreateThumbnailWithTransform: true,
-        kCGImageSourceThumbnailMaxPixelSize: 640,
-        kCGImageSourceShouldCacheImmediately: true
-    ]
-    guard let image = CGImageSourceCreateThumbnailAtIndex(source, 0, options as CFDictionary) else { return nil }
-    return UIImage(cgImage: image)
 }
 

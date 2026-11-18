@@ -11,6 +11,9 @@ func makeContributionsController(route: IosContributionsRoute, languageTag: Stri
     if let detail = route as? IosChangeRequest {
         return ContributionsHostingController(route: route, content: ChangeRequestHost(route: detail, strings: strings))
     }
+    if let form = route as? IosContributionForm {
+        return makeContributionFormController(form: form, strings: strings)
+    }
     preconditionFailure("Unknown iOS contributions route")
 }
 
@@ -52,19 +55,21 @@ struct ContributionsStrings {
 struct ContributionsScaffold<Content: View>: View {
     let title: String
     let backLabel: String
-    let onBack: () -> Void
+    let onBack: (() -> Void)?
     @ViewBuilder let content: Content
 
     var body: some View {
         VStack(spacing: 0) {
             HStack(spacing: 12) {
-                Button(action: onBack) {
-                    Image(systemName: "chevron.backward")
-                        .frame(width: 44, height: 44)
-                        .contentShape(Rectangle())
+                if let onBack {
+                    Button(action: onBack) {
+                        Image(systemName: "chevron.backward")
+                            .frame(width: 44, height: 44)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel(backLabel)
                 }
-                .buttonStyle(.plain)
-                .accessibilityLabel(backLabel)
                 Text(title)
                     .font(CoffeePeekNativeStyle.font(21, weight: "Bold", relativeTo: .title2))
                     .accessibilityAddTraits(.isHeader)
@@ -131,3 +136,12 @@ extension View {
             }
     }
 }
+
+
+private func contributionsSendingPreview() -> some View {
+    ContributionsScaffold(title: "Отправка", backLabel: "Назад", onBack: nil) {
+        ProgressView("Сохраняем заявку…")
+    }
+}
+#Preview("Contributions sending light") { contributionsSendingPreview().preferredColorScheme(.light) }
+#Preview("Contributions sending dark") { contributionsSendingPreview().preferredColorScheme(.dark) }

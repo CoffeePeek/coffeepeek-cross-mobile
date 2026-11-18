@@ -23,13 +23,14 @@ internal val LocalIosContributionsController = staticCompositionLocalOf<(IosCont
 internal fun iosContributionsContent(): (Navigator.Screen) -> (() -> UIViewController)? {
     val factory = LocalIosContributionsController.current
     val languageTag by rememberUpdatedState(LocalCoffeePeekLanguageTag.current)
+    val forms = iosContributionFormsContent(factory) { languageTag }
     val repository = koinInject<ContributionsRepository>()
     val sessions = koinInject<SessionReader>()
     return { screen ->
         when (screen) {
             is Navigator.Screen.MyContributions -> { { factory(listRoute(screen.kind, repository, sessions), languageTag) } }
             is Navigator.Screen.ShopChangeRequestDetail -> { { factory(detailRoute(screen.requestId, repository, sessions), languageTag) } }
-            else -> null
+            else -> forms(screen)
         }
     }
 }
