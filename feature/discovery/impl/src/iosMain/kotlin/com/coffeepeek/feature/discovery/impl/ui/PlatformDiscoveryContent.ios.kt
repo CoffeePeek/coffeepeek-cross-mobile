@@ -4,12 +4,14 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.coffeepeek.core.designsystem.component.CoffeePeekBackHandler
 import com.coffeepeek.feature.discovery.api.*
 import com.coffeepeek.feature.discovery.impl.map.*
 import com.coffeepeek.feature.discovery.impl.search.*
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
 
@@ -32,18 +34,10 @@ internal actual fun PlatformDiscoveryContent(
     var revision by remember { mutableIntStateOf(0) }
     val lifecycle by LocalLifecycleOwner.current.lifecycle.currentStateFlow.collectAsStateWithLifecycle()
     val active = host.isVisible() && lifecycle.isAtLeast(Lifecycle.State.RESUMED)
-    NativeDiscoveryEffects(search, map, host, ui, callbacks, focus, picker, active)
+    NativeDiscoveryEffects(search, map, host, ui, callbacks, focus, active)
     if (!picker) DiscoveryTabEffects(ui, state.showsDiscovery, analytics, callbacks, focus, search::onAction)
     else CoffeePeekBackHandler(onBack = callbacks.onBack)
-    LaunchedEffect(callbacks.reselections) {
-        callbacks.reselections.collect {
-            ui.mapExpanded = false
-            ui.showRoasters = false
-            search.onAction(SearchAction.CloseFilters)
-            search.onAction(SearchAction.DismissLocationFailure)
-            revision++
-        }
-    }
+    NativeDiscoveryReselection(ui, callbacks.reselections, search) { revision++ }
     if (state.showFilters) PlatformDiscoveryFilterSheet(state, search::onAction)
     if (active && state.showsDiscovery && !state.isLoading && state.error == null &&
         !state.showFilters && !ui.mapExpanded && !ui.showRoasters) host.onIdle()
@@ -63,7 +57,7 @@ internal actual fun PlatformDiscoveryContent(
 
 @Composable
 private fun NativeDiscoveryEffects(search: SearchViewModel, map: MapViewModel, host: DiscoveryHost,
-    ui: DiscoveryTabState, callbacks: TabCallbacks, focus: MapFocus?, picker: Boolean, active: Boolean) {
+    ui: DiscoveryTabState, callbacks: TabCallbacks, focus: MapFocus?, active: Boolean) {
     val state by search.state.collectAsStateWithLifecycle()
     val mapState by map.state.collectAsStateWithLifecycle()
     val currentCallbacks by rememberUpdatedState(callbacks)
@@ -133,4 +127,22 @@ private fun NativeRoasterSlot(roasters: DiscoveryRoasterSlots?, state: SearchSta
 private fun dismissNativeLocation(search: SearchViewModel, map: MapViewModel) {
     search.onAction(SearchAction.DismissLocationFailure)
     map.onAction(MapAction.DismissLocationSettings)
+}
+
+@Composable
+private fun NativeDiscoveryReselection(ui: DiscoveryTabState, requests: Flow<Unit>, search: SearchViewModel,
+    onReselected: () -> Unit) {
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
+    val callback by rememberUpdatedState(onReselected)
+    LaunchedEffect(ui, requests, lifecycle) {
+        lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+            requests.collect {
+                ui.mapExpanded = false
+                ui.showRoasters = false
+                search.onAction(SearchAction.CloseFilters)
+                search.onAction(SearchAction.DismissLocationFailure)
+                callback()
+            }
+        }
+    }
 }
