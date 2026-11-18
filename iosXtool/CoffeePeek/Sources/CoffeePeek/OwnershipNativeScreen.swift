@@ -102,7 +102,7 @@ struct OwnershipNativeContent: View {
             LazyVStack(alignment: .leading, spacing: 16) {
                 if !state.signedIn {
                     Text(strings["ownership_login_hint"])
-                    Button(strings["ownership_login"]) { send(.action("login")) }.buttonStyle(.borderedProminent)
+                    CoffeePeekNativeActionButton(title: strings["ownership_login"]) { send(.action("login")) }
                 } else {
                     feedback
                     if state.loading { ProgressView(strings["ownership_loading"]).frame(maxWidth: .infinity) }
@@ -143,7 +143,7 @@ struct OwnershipNativeContent: View {
         if let problem = state.problem {
             VStack(alignment: .leading, spacing: 12) {
                 Text(strings.problem(problem))
-                Button(strings["ownership_retry"]) { send(.action("retry")) }.disabled(state.busy || state.loading)
+                CoffeePeekNativeActionButton(title: strings["ownership_retry"], primary: false, enabled: !state.busy && !state.loading) { send(.action("retry")) }
             }.padding(12).background(CoffeePeekNativeStyle.surface, in: RoundedRectangle(cornerRadius: 12))
         }
         if state.busy { ProgressView(strings["ownership_loading"]) }

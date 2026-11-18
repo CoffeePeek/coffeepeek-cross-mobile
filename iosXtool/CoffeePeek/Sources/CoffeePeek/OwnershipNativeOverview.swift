@@ -62,7 +62,7 @@ struct OwnershipNativeOverview: View {
                     Button(strings["ownership_checkin_qr_action"]) { qr = business }.buttonStyle(.bordered).frame(maxWidth: .infinity)
                 }
             } else {
-                Button(business.title) { send(.business(kind, business.id)) }.buttonStyle(.bordered).frame(maxWidth: .infinity)
+                CoffeePeekNativeActionButton(title: business.title) { send(.business(kind, business.id)) }
             }
         }
     }

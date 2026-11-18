@@ -16,7 +16,7 @@ struct OwnershipNativeQrSheet: View {
                 if let image {
                     Image(uiImage: image).interpolation(.none).resizable().scaledToFit().frame(maxWidth: 280)
                         .accessibilityLabel(String(format: strings["ownership_checkin_qr_description"], name))
-                    Button(strings["ownership_checkin_qr_share"]) { share(image) }.buttonStyle(.borderedProminent).foregroundStyle(.black)
+                    CoffeePeekNativeActionButton(title: strings["ownership_checkin_qr_share"]) { share(image) }
                 } else { Text(strings["ownership_checkin_qr_error"]) }
             }.padding(20)
         }

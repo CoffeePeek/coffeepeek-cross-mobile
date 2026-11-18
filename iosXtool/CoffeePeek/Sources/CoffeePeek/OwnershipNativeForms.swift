@@ -14,8 +14,7 @@ struct OwnershipNativeClaimForm: View {
             OwnershipNativePhotos(keys: state.evidencePhotos, title: strings["ownership_evidence_photos"],
                 maximum: 3, evidence: true, enabled: !state.busy, strings: strings, send: send, imageLoader: imageLoader)
             Text(strings["ownership_limits"]).font(.footnote).foregroundStyle(CoffeePeekNativeStyle.secondary)
-            Button(strings["ownership_submit"]) { send(.action("submit")) }
-                .buttonStyle(.borderedProminent).foregroundStyle(.black).disabled(state.busy)
+            CoffeePeekNativeActionButton(title: strings["ownership_submit"], enabled: !state.busy) { send(.action("submit")) }
         }
     }
     private func input(_ field: String, value: String) -> some View {
@@ -48,8 +47,7 @@ struct OwnershipNativeEditor: View {
             }
             OwnershipNativePhotos(keys: state.editorPhotos, title: strings["ownership_photos"], maximum: 10,
                 evidence: false, enabled: !state.busy && !state.reloadRequired, strings: strings, send: send, imageLoader: imageLoader)
-            Button(strings["ownership_save"]) { send(.action("askSave")) }
-                .buttonStyle(.borderedProminent).foregroundStyle(.black).disabled(!state.dirty || state.busy || state.reloadRequired)
+            CoffeePeekNativeActionButton(title: strings["ownership_save"], enabled: state.dirty && !state.busy && !state.reloadRequired) { send(.action("askSave")) }
         }
     }
 }
