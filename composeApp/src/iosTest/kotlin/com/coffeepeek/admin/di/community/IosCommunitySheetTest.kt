@@ -36,6 +36,16 @@ class IosCommunitySheetTest {
         assertEquals(listOf("retry"), calls)
     }
 
+    @Test fun requestedDismissalDoesNotClearBodyBeforeTheSharedOwnerAcceptsIt() = runTest(dispatcher) {
+        val calls = mutableListOf<String>()
+        val source = sheet(calls = calls)
+        source.perform("dismiss", "") // The shared owner may reject this if saving just began.
+        assertEquals("{\"active\":true}", source.current())
+        source.update("{\"active\":true}", true) { _, _ -> error("busy") }
+        source.perform("dismiss", "")
+        assertEquals(listOf("dismiss:"), calls)
+    }
+
     @Test fun disposedBodyCannotMutateAReopenedSheet() = runTest(dispatcher) {
         val calls = mutableListOf<String>()
         val old = sheet(calls = calls)
