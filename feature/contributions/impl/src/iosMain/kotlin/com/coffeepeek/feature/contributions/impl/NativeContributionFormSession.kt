@@ -93,6 +93,7 @@ class NativeContributionFormSession(
 
     fun consumeBack(): Boolean {
         if (!isCurrent()) return false
+        if (current().submit == "sending") return true
         if (current().submit == "failed") {
             dismissFailure()
             return true

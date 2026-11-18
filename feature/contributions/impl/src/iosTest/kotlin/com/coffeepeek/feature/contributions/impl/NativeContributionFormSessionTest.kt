@@ -62,7 +62,7 @@ class NativeContributionFormSessionTest {
         repository.roasterSubmit = { Result.failure(IllegalStateException("rejected")) }
         repository.changeSubmit = { Result.failure(IllegalStateException("rejected")) }
         for (kind in listOf(NativeContributionFormKind.AddShop, NativeContributionFormKind.AddRoaster, NativeContributionFormKind.Editor)) {
-            val source = failedForm(kind)
+            val source = submittedForm(kind)
             assertEquals("failed", source.current().submit)
             val fields = source.current().fields.map { it.key to it.value }
             assertTrue(source.consumeBack())
@@ -72,7 +72,22 @@ class NativeContributionFormSessionTest {
         }
     }
 
-    private fun TestScope.failedForm(kind: NativeContributionFormKind): NativeContributionFormSession {
+    @Test fun backCannotDisposeAnyOfTheThreePendingSubmissions() = runTest(dispatcher) {
+        repository.shopSubmit = { awaitCancellation() }
+        repository.roasterSubmit = { awaitCancellation() }
+        repository.changeSubmit = { awaitCancellation() }
+        for (kind in listOf(NativeContributionFormKind.AddShop, NativeContributionFormKind.AddRoaster, NativeContributionFormKind.Editor)) {
+            val source = submittedForm(kind)
+            assertEquals("sending", source.current().submit)
+            val fields = source.current().fields.map { it.key to it.value }
+            assertTrue(source.consumeBack())
+            runCurrent()
+            assertEquals("sending", source.current().submit)
+            assertEquals(fields, source.current().fields.map { it.key to it.value })
+        }
+    }
+
+    private fun TestScope.submittedForm(kind: NativeContributionFormKind): NativeContributionFormSession {
         val source = session(kind)
         runCurrent()
         source.edit("name", "Coffee")
