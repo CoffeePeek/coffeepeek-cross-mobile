@@ -361,6 +361,11 @@ struct CollectionsWorkspaceStrings {
     }
     subscript(_ key: String) -> String { bundle.localizedString(forKey: key, value: nil, table: "CollectionsWorkspace") }
     func count(_ value: Int32) -> String { String(format: self["collections_saved_count"], value) }
+    func checkIns(_ value: Int32) -> String {
+        let suffix = (11...14).contains(value % 100) ? "many" :
+            value % 10 == 1 ? "one" : (2...4).contains(value % 10) ? "few" : "many"
+        return String(format: self["collections_checkins_\(suffix)"], value)
+    }
 }
 
 struct WorkspaceCover: View {

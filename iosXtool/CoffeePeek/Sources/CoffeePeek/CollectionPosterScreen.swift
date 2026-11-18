@@ -157,9 +157,16 @@ struct CollectionPosterCanvas: View {
                     Text(card.place.address).font(.system(size: 22)).foregroundStyle(.gray).lineLimit(2)
                 }
             }.frame(maxWidth: .infinity, alignment: .leading)
-            if !card.place.roaster, let value = card.place.rating?.doubleValue, value > 0 && value <= 5 {
-                Label(String(format: "%.1f", value), systemImage: "star.fill").font(.system(size: 28, weight: .bold))
-                    .labelStyle(.titleAndIcon).foregroundStyle(CoffeePeekNativeStyle.accent)
+            if !card.place.roaster {
+                VStack(alignment: .trailing, spacing: 6) {
+                    if let value = card.place.rating?.doubleValue, value > 0 && value <= 5 {
+                        Label(String(format: "%.1f", value), systemImage: "star.fill").font(.system(size: 28, weight: .bold))
+                            .foregroundStyle(CoffeePeekNativeStyle.accent)
+                    }
+                    if let count = card.place.checkIns?.int32Value {
+                        Text(strings.checkIns(count)).font(.system(size: 22)).foregroundStyle(.gray)
+                    }
+                }
             }
             Image(systemName: "chevron.forward").font(.system(size: 24)).foregroundStyle(.gray)
         }.padding(12)

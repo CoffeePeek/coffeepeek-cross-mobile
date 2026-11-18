@@ -98,8 +98,13 @@ class CollectionsWorkspaceSession(
     fun loadPhoto(url: String, receive: (ByteArray?) -> Unit): CollectionsLibraryObservation {
         val version = current().accountVersion
         val job = scope.launch {
-            val bytes = snapshots.photo(url)
-            try { if (!closed && version == current().accountVersion) receive(bytes) }
+            var bytes: ByteArray? = null
+            try {
+                bytes = snapshots.photo(url)
+                currentCoroutineContext().ensureActive()
+                if (!closed && version == current().accountVersion) receive(bytes)
+            } catch (cancelled: CancellationException) { throw cancelled }
+            catch (_: Exception) { if (!closed && version == current().accountVersion) receive(null) }
             finally { bytes?.fill(0) }
         }
         jobs.add(job)

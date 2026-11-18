@@ -68,8 +68,14 @@ class PublicCollectionSession(
 
     fun loadPhoto(url: String, receive: (ByteArray?) -> Unit): CollectionsLibraryObservation {
         val job = scope.launch {
-            val bytes = repository.photo(url)
-            try { if (!closed) receive(bytes) } finally { bytes?.fill(0) }
+            var bytes: ByteArray? = null
+            try {
+                bytes = repository.photo(url)
+                currentCoroutineContext().ensureActive()
+                if (!closed) receive(bytes)
+            } catch (cancelled: CancellationException) { throw cancelled }
+            catch (_: Exception) { if (!closed) receive(null) }
+            finally { bytes?.fill(0) }
         }
         return CollectionsLibraryObservation { job.cancel() }
     }
