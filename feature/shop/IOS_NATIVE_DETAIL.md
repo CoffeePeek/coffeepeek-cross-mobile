@@ -109,3 +109,11 @@ and callback signature fix these concrete diagnostics. The earlier run is not
 a passing Xcode check; the corrected head still requires both CI jobs to pass.
 The Xcode project was checked with the full OpenStep parser after merging the
 latest integration; it has no new missing or duplicate object references.
+
+The shared `ShopCheckInListCard`/ratings are used by both the full Shop check-in
+list and this new Shop detail preview. Their artwork now reuses the existing
+`CoffeePeekPhotoPlaceholder` for photographs, retaining avatar symbols.
+Selected likes and rating stars use the existing gold accent; counts retain
+the normal foreground. Paired light/dark previews beside the shared card
+compose its actual rating, helpful and artwork primitives with fake data and
+no image requests. Device and preview rendering remain unverified on Windows.
