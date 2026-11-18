@@ -6,12 +6,14 @@ import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.LocalViewModelStoreOwner
 import com.coffeepeek.admin.analytics.TrackNativeFeatureExposure
 import com.coffeepeek.admin.di.media.IosCatalogueMedia
+import com.coffeepeek.admin.di.ownership.iosOwnershipActionsController
 import com.coffeepeek.admin.locator.Constants
 import com.coffeepeek.admin.theme.ThemeManager
 import com.coffeepeek.admin.theme.uiKitStyle
 import com.coffeepeek.admin.ui.component.NativeEditorControllerHost
 import com.coffeepeek.core.media.ImageUrlFetcher
 import com.coffeepeek.feature.ownership.api.LocalBusinessOwnership
+import com.coffeepeek.feature.settings.api.LanguagePort
 import com.coffeepeek.feature.shop.api.ShopExposure
 import com.coffeepeek.feature.shop.impl.ui.ShopDetailIosPresentation
 import com.coffeepeek.feature.shop.impl.ui.compose.configureIosShopDetail
@@ -31,8 +33,13 @@ private fun NativeShopDetail(data: ShopDetailIosPresentation, factory: (IosShopD
     val source = checkNotNull(LocalViewModelStoreOwner.current as? ShopBrowsingHostSession)
     val media = koinInject<ImageUrlFetcher>()
     val ownership = LocalBusinessOwnership.current
-    val detail = remember(source) { IosShopDetail(data, IosCatalogueMedia(media, Constants.BASE_URL), source.lease,
-        { id, slug, allowed, onSuggest, onEdit -> shopOwnershipController(ownership, id, slug, allowed, onSuggest, onEdit) }) }
+    val language = koinInject<LanguagePort>()
+    val detail = remember(source, ownership, language) {
+        IosShopDetail(data, IosCatalogueMedia(media, Constants.BASE_URL), source.lease,
+            { id, slug, allowed, onSuggest, onEdit -> ownership?.let {
+                iosOwnershipActionsController(it, language, "CoffeeShop", id, slug, allowed, onSuggest, onEdit)
+            } })
+    }
     val controller = remember(detail) { factory(detail) }
     val theme by ThemeManager.themeMode.collectAsState()
     SideEffect { detail.update(data); controller.overrideUserInterfaceStyle = theme.uiKitStyle }

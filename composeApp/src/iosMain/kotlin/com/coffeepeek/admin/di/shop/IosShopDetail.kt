@@ -13,7 +13,7 @@ import platform.UIKit.UIViewController
 class IosShopDetail internal constructor(
     initial: ShopDetailIosPresentation, private val media: IosCatalogueMedia,
     private val lease: ShopBrowsingSession,
-    private val ownerFactory: (String, String, () -> Boolean, () -> Unit, () -> Unit) -> UIViewController,
+    private val ownerFactory: (String, String, () -> Boolean, () -> Unit, () -> Unit) -> UIViewController?,
 ) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private var presentation: ShopDetailIosPresentation? = initial

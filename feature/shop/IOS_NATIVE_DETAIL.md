@@ -52,21 +52,25 @@ only analytics service. Shared action/content metrics are preserved; native
 geometry reports actual visible sections to the existing exposure ledger.
 Price/photo overlays retain their overlay ownership.
 
-## Ownership integration dependency
+## Shared native ownership
 
-The Business checkpoint #404 publishes the shared
+The toolbar uses the shared Business factory
 `iosOwnershipActionsController(ownership, language, kind, id, slug, allowed,
-onSuggest, onOwnerEdit)` factory for both Shop and Roaster. This branch keeps
-`shopOwnershipController` as a narrow temporary host of the existing
-`BusinessOwnershipEntry.ProfileActions`, with empty favorite/share slots and
-lease-guarded edit/representative actions. Native SwiftUI owns favorite/share.
-After #404 reaches integration, replace this temporary helper with the shared
-native factory before declaring the ownership toolbar fully migrated. It must
-not create another OwnershipViewModel or copy access/claim decisions into Shop.
+onSuggest, onOwnerEdit)` with the same `BusinessOwnershipEntry` and
+`OwnershipAccess`. Its SwiftUI menu and native claim sheet reuse the existing
+Kotlin claim lifecycle and mutation rules. Native SwiftUI continues to own
+favorite/share. All owner actions retain the current Shop browsing lease guard.
+A missing ownership provider produces no owner controller. The controller is
+replaced only when its Shop/ownership identity changes; observation and claim
+cleanup remain with its existing owner. The obsolete Shop-specific Compose
+owner host was removed in the same checkpoint.
+
+Business #404 is a declared integration dependency; its source was merged for
+combined validation before both PRs land in `codex/ios-native`.
 
 ## Verification, 2026-11-18
 
-Base was refreshed to integration `0fb8b2d1d` before the corrected macOS build. On Windows,
+Base was refreshed to integration `1d75fd56b` and Business #404 for the final combined macOS build. On Windows,
 the changed Shop commonMain and iOSMain metadata compiled. The first
 metadata attempt found forbidden access to internal design-system resource
 symbols; corrected by feature-owned ru/be resources and the application's
@@ -117,3 +121,12 @@ Selected likes and rating stars use the existing gold accent; counts retain
 the normal foreground. Paired light/dark previews beside the shared card
 compose its actual rating, helpful and artwork primitives with fake data and
 no image requests. Device and preview rendering remain unverified on Windows.
+
+The corrected Shop Xcode build (`44276663555`, head `4c43d6d6f`) passed,
+confirming the exported display types and nested photo callback fix. The first
+run's XML recorded all six native Shop bridge contracts and 37 existing
+ShopDetailViewModel tests passing, with zero failures, errors or skips. The
+price-disposal assertion, native ownership adoption and shared card visuals
+require verification on the final head. The latest Windows metadata check
+passed commonMain/iOSMain; body limits only reported the pre-#404 ownership
+factory from that earlier base, with no new Shop violations.
