@@ -24,7 +24,7 @@ private lateinit var nativeRootModal: (IosRootModal) -> UIViewController
 
 internal fun configureNativeRootModals(factory: (IosRootModal) -> UIViewController) { nativeRootModal = factory }
 
-sealed class IosRootModal(private val language: LanguagePort) {
+abstract class IosRootModal internal constructor(private val language: LanguagePort) {
     protected val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private var closed = false
     protected val isActive get() = !closed
