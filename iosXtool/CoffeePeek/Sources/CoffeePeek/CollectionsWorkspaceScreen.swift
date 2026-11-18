@@ -249,14 +249,12 @@ private struct CollectionsWorkspaceHost: View {
 
     private var owner: some View {
         VStack(alignment: .leading, spacing: 16) {
-            ForEach([true, false], id: \.self) { isPublic in
-                let lists = state.lists.filter { $0.isPublic == isPublic }
-                if !lists.isEmpty {
-                    Text(strings[isPublic ? "collections_public_lists" : "collections_private_lists"]).font(.headline)
-                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 145))], spacing: 16) {
-                        ForEach(lists, id: \.id) { item in
-                            Button { model.workspace.openCollection(id: item.id) } label: { collectionCard(item) }.buttonStyle(.plain)
-                        }
+            ScrollView(.horizontal) {
+                LazyHStack(alignment: .top, spacing: 16) {
+                    ForEach(state.lists, id: \.id) { item in
+                        Button { model.workspace.openCollection(id: item.id) } label: {
+                            collectionCard(item).frame(width: 176, height: 176)
+                        }.buttonStyle(.plain)
                     }
                 }
             }
@@ -274,13 +272,11 @@ private struct CollectionsWorkspaceHost: View {
 
     @ViewBuilder private var featured: some View {
         if let id = state.id {
+            Text(state.title).font(.title2)
             Button { model.workspace.openCollection(id: id) } label: {
-                VStack(alignment: .leading, spacing: 8) {
-                    WorkspaceCover(workspace: model.workspace, id: id, version: state.accountVersion)
-                        .id(state.coverKey).aspectRatio(1.7, contentMode: .fit).clipped().clipShape(RoundedRectangle(cornerRadius: 20))
-                    Text(state.title).font(.headline)
-                    Text(strings.count(Int32(state.places.count))).font(.caption)
-                }
+                CollectionSummaryCard(title: state.title, count: Int32(state.places.count), strings: strings) {
+                    WorkspaceCover(workspace: model.workspace, id: id, version: state.accountVersion).id(state.coverKey)
+                }.frame(maxWidth: 220)
             }.buttonStyle(.plain)
         }
     }

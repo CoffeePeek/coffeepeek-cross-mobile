@@ -66,11 +66,16 @@ struct CollectionSummaryCard<Cover: View>: View {
     @ViewBuilder let cover: () -> Cover
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            cover().aspectRatio(1.5, contentMode: .fit).clipped().clipShape(RoundedRectangle(cornerRadius: 16))
-            Text(title).font(.headline)
-            Text(strings.count(count)).font(.caption).foregroundStyle(CoffeePeekNativeStyle.secondary)
-        }
+        ZStack(alignment: .bottomLeading) {
+            cover()
+            LinearGradient(stops: [.init(color: .clear, location: 0.3),
+                .init(color: .black.opacity(0.85), location: 1)], startPoint: .top, endPoint: .bottom)
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title).font(.headline).lineLimit(2)
+                Text(strings.count(count)).font(.caption)
+            }.foregroundStyle(.white).padding(12)
+        }.aspectRatio(1, contentMode: .fit).clipped().clipShape(RoundedRectangle(cornerRadius: 16))
+            .accessibilityElement(children: .combine)
     }
 }
 
