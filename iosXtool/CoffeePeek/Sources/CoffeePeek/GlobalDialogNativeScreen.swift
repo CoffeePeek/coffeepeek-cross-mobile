@@ -35,47 +35,52 @@ struct GlobalDialogNativeContent: View {
     let closeLabel: String
     let illustration: UIImage?
     let dismiss: () -> Void
+    @State private var cardHeight: CGFloat = 0
 
     var body: some View {
-        ZStack {
-            Color.black.opacity(error ? 0.32 : 0.001).ignoresSafeArea()
-                .onTapGesture { if error { dismiss() } }
-            if error { errorCard }
-            else {
-                VStack(spacing: 16) {
-                    CoffeePeekNativeLoader(label: title)
-                    if let message { Text(message).font(CoffeePeekNativeStyle.font(16, weight: "Medium")) }
+        GeometryReader { geometry in
+            ZStack {
+                Color.black.opacity(error ? 0.32 : 0.001).ignoresSafeArea()
+                    .onTapGesture { if error { dismiss() } }
+                if error { errorCard(maxHeight: max(48, geometry.size.height - 64)) }
+                else {
+                    VStack(spacing: 16) {
+                        CoffeePeekNativeLoader(label: title)
+                        if let message { Text(message).font(CoffeePeekNativeStyle.font(16, weight: "Medium")) }
+                    }
                 }
-            }
+            }.frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         .foregroundStyle(CoffeePeekNativeStyle.foreground)
         .accessibilityAddTraits(.isModal)
         .accessibilityAction(.escape) { if error { dismiss() } }
     }
 
-    private var errorCard: some View {
+    private func errorCard(maxHeight: CGFloat) -> some View {
         ScrollView {
-            VStack(spacing: 0) {
-                if let illustration {
-                    Image(uiImage: illustration).resizable().scaledToFit().frame(width: 96, height: 96).accessibilityHidden(true)
-                } else { Color.clear.frame(height: 96).accessibilityHidden(true) }
-                Text(title).font(CoffeePeekNativeStyle.font(20, weight: "Bold", relativeTo: .headline))
-                    .accessibilityAddTraits(.isHeader).padding(.top, 16)
-                Text(message ?? "").font(CoffeePeekNativeStyle.font(16))
-                    .foregroundStyle(CoffeePeekNativeStyle.secondary).padding(.top, 8)
-                Button(action: dismiss) {
-                    Text(closeLabel).font(CoffeePeekNativeStyle.font(16, weight: "Semibold"))
-                        .padding(.horizontal, 16).padding(.vertical, 12).frame(maxWidth: .infinity, minHeight: 48)
-                }
-                .buttonStyle(.plain).foregroundStyle(.black)
-                .background(CoffeePeekNativeStyle.accent, in: Capsule()).padding(.top, 24)
-            }.padding(24).multilineTextAlignment(.center)
+            errorMessage.padding(24).multilineTextAlignment(.center)
                 .background(CoffeePeekNativeStyle.surface, in: RoundedRectangle(cornerRadius: 28))
+                .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { cardHeight = $0 }
         }
         .scrollBounceBehavior(.basedOnSize)
-        .fixedSize(horizontal: false, vertical: true)
-        .frame(maxWidth: 480).padding(32)
+        .frame(maxWidth: 480)
+        .frame(height: min(cardHeight > 0 ? cardHeight : maxHeight, maxHeight))
+        .padding(.horizontal, 32)
     }
+
+    private var errorMessage: some View {
+        VStack(spacing: 0) {
+            if let illustration {
+                Image(uiImage: illustration).resizable().scaledToFit().frame(width: 96, height: 96).accessibilityHidden(true)
+            } else { Color.clear.frame(height: 96).accessibilityHidden(true) }
+            Text(title).font(CoffeePeekNativeStyle.font(20, weight: "Bold", relativeTo: .headline))
+                .accessibilityAddTraits(.isHeader).padding(.top, 16)
+            Text(message ?? "").font(CoffeePeekNativeStyle.font(16))
+                .foregroundStyle(CoffeePeekNativeStyle.secondary).padding(.top, 8)
+            CoffeePeekNativeActionButton(title: closeLabel, fontSize: 16, action: dismiss).padding(.top, 24)
+        }
+    }
+
 }
 
 #Preview("Global error light") {

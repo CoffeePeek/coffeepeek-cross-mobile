@@ -7,6 +7,7 @@ struct CoffeePeekNativeLoader: View {
     @Environment(\.accessibilityReduceMotion) private var reducedMotion
     @Environment(\.scenePhase) private var scenePhase
     @State private var started = Date()
+    private let geometry = IosLoaderGeometry.shared
     private let contours = IosLoaderGeometry.shared.contours.map { shape in
         shape.map { CGPoint(x: CGFloat($0.x), y: CGFloat($0.y)) }
     }
@@ -15,19 +16,19 @@ struct CoffeePeekNativeLoader: View {
         TimelineView(.animation(minimumInterval: 1.0 / 30, paused: !animated || reducedMotion || scenePhase != .active)) { context in
             let elapsed = max(0, context.date.timeIntervalSince(started))
             let moving = animated && !reducedMotion
-            let position = moving ? elapsed.truncatingRemainder(dividingBy: 5) : 0
+            let position = moving ? elapsed.truncatingRemainder(dividingBy: geometry.morphSeconds) / geometry.morphSeconds * Double(contours.count) : 0
             let morph = floor(position) + eased(position - floor(position))
-            let fill = moving ? elapsed.truncatingRemainder(dividingBy: 2.8) / 2.8 * 0.72 : 0.5
-            let shape = CoffeePeekLoaderContour(contours: contours, morph: morph)
+            let fill = moving ? elapsed.truncatingRemainder(dividingBy: geometry.fillSeconds) / geometry.fillSeconds * Double(geometry.maxFill) : 0.5
+            let shape = CoffeePeekLoaderContour(contours: contours, morph: morph, stroke: CGFloat(geometry.stroke))
             ZStack {
-                shape.stroke(CoffeePeekNativeStyle.accent.opacity(0.18), style: StrokeStyle(lineWidth: 3, lineCap: .round, lineJoin: .round))
+                shape.stroke(CoffeePeekNativeStyle.accent.opacity(0.18), style: StrokeStyle(lineWidth: CGFloat(geometry.stroke), lineCap: .round, lineJoin: .round))
                 if fill > 0.01 {
-                    shape.trim(from: 0, to: fill).stroke(CoffeePeekNativeStyle.accent,
-                        style: StrokeStyle(lineWidth: 3, lineCap: .butt, lineJoin: .round))
+                    shape.trim(from: 0, to: CGFloat(fill)).stroke(CoffeePeekNativeStyle.accent,
+                        style: StrokeStyle(lineWidth: CGFloat(geometry.stroke), lineCap: .butt, lineJoin: .round))
                 }
-            }.rotationEffect(.degrees(moving ? elapsed / 1.6 * 360 : 0))
+            }.rotationEffect(.degrees(moving ? elapsed / geometry.rotationSeconds * 360 : 0))
         }
-        .frame(width: 48, height: 48)
+        .frame(width: CGFloat(geometry.size), height: CGFloat(geometry.size))
         .accessibilityElement(children: .ignore).accessibilityLabel(label)
         .accessibilityAddTraits(.updatesFrequently)
     }
@@ -48,6 +49,7 @@ struct CoffeePeekNativeLoader: View {
 private struct CoffeePeekLoaderContour: Shape {
     let contours: [[CGPoint]]
     let morph: Double
+    let stroke: CGFloat
 
     func path(in rect: CGRect) -> Path {
         let points = points(in: rect)
@@ -75,7 +77,7 @@ private struct CoffeePeekLoaderContour: Shape {
         let to = contours[(index + 1) % contours.count]
         guard from.count == to.count else { return [] }
         let amount = CGFloat(position - Double(index))
-        let radius = max(0, (min(rect.width, rect.height) - 3) / 2)
+        let radius = max(0, (min(rect.width, rect.height) - stroke) / 2)
         return from.indices.map { index in
             CGPoint(x: rect.midX + (from[index].x + (to[index].x - from[index].x) * amount) * radius,
                     y: rect.midY + (from[index].y + (to[index].y - from[index].y) * amount) * radius)

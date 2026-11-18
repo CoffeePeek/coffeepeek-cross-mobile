@@ -8,6 +8,10 @@ import kotlin.math.sin
 data class CoffeePeekLoaderPoint(val x: Float, val y: Float)
 
 object CoffeePeekLoaderGeometry {
+    const val rotationDurationMillis = 1600
+    const val fillDurationMillis = 2800
+    const val morphDurationMillis = 5000
+    const val maxFillFraction = 0.72f
     val contours: List<List<CoffeePeekLoaderPoint>> = contourRadii.map { radii ->
         List(radii.size) { index ->
             val angle = (index * 2 * PI / radii.size - PI / 2).toFloat()

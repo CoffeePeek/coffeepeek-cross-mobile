@@ -4,6 +4,7 @@ package com.coffeepeek.admin.di.system
 
 import com.coffeepeek.core.designsystem.component.CoffeePeekLoaderGeometry
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIllustrations
+import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import kotlinx.cinterop.addressOf
 import kotlinx.cinterop.usePinned
 import kotlinx.coroutines.*
@@ -32,6 +33,12 @@ class IosGlobalDialog internal constructor(
 
 object IosLoaderGeometry {
     val contours = CoffeePeekLoaderGeometry.contours.map { shape -> shape.map { IosLoaderPoint(it.x, it.y) } }
+    val size = CoffeePeekDimens.loaderDefault.value
+    val stroke = (size / 16f).coerceAtLeast(2f)
+    val rotationSeconds = CoffeePeekLoaderGeometry.rotationDurationMillis / 1000.0
+    val fillSeconds = CoffeePeekLoaderGeometry.fillDurationMillis / 1000.0
+    val morphSeconds = CoffeePeekLoaderGeometry.morphDurationMillis / 1000.0
+    val maxFill = CoffeePeekLoaderGeometry.maxFillFraction
 }
 data class IosLoaderPoint(val x: Float, val y: Float)
 

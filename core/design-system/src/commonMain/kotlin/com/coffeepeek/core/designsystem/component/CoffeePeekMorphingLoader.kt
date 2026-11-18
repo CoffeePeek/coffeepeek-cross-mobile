@@ -38,10 +38,6 @@ import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
 import org.jetbrains.compose.ui.tooling.preview.Preview
 
-private const val ROTATION_DURATION_MS = 1600
-private const val FILL_DURATION_MS = 2800
-private const val MORPH_DURATION_MS = 5000
-private const val MAX_FILL_FRACTION = 0.72f
 
 // Five reference contours, sampled clockwise from the top at equal angles.
 private val loaderContours = CoffeePeekLoaderGeometry.contours.map { contour ->
@@ -67,7 +63,7 @@ fun CoffeePeekMorphingLoader(
             ?: ProgressBarRangeInfo.Indeterminate
     }) {
         paths.prepare(center, ((this.size.minDimension - strokeWidth.toPx()) / 2f).coerceAtLeast(0f),
-            motion.morph.value, fraction ?: (motion.fill.value * MAX_FILL_FRACTION))
+            motion.morph.value, fraction ?: (motion.fill.value * CoffeePeekLoaderGeometry.maxFillFraction))
         rotate(motion.rotation.value) { drawLoader(paths, color, strokeWidth.toPx()) }
     }
 }
@@ -78,14 +74,14 @@ private class CoffeePeekLoaderMotion(val rotation: State<Float>, val fill: State
 private fun rememberLoaderMotion(): CoffeePeekLoaderMotion {
     val transition = rememberInfiniteTransition(label = "coffeepeek-loader")
     val rotation = transition.animateFloat(0f, 360f,
-        infiniteRepeatable(tween(ROTATION_DURATION_MS, easing = LinearEasing)), label = "coffeepeek-loader-spin")
+        infiniteRepeatable(tween(CoffeePeekLoaderGeometry.rotationDurationMillis, easing = LinearEasing)), label = "coffeepeek-loader-spin")
     val fill = transition.animateFloat(0f, 1f,
-        infiniteRepeatable(tween(FILL_DURATION_MS, easing = LinearEasing)), label = "coffeepeek-loader-fill")
+        infiniteRepeatable(tween(CoffeePeekLoaderGeometry.fillDurationMillis, easing = LinearEasing)), label = "coffeepeek-loader-fill")
     val morph = transition.animateFloat(0f, loaderContours.size.toFloat(),
         infiniteRepeatable(keyframes {
-            durationMillis = MORPH_DURATION_MS
+            durationMillis = CoffeePeekLoaderGeometry.morphDurationMillis
             for (shape in 0..loaderContours.size) {
-                shape.toFloat() at (shape * MORPH_DURATION_MS / loaderContours.size) using FastOutSlowInEasing
+                shape.toFloat() at (shape * CoffeePeekLoaderGeometry.morphDurationMillis / loaderContours.size) using FastOutSlowInEasing
             }
         }), label = "coffeepeek-loader-morph")
     return remember(rotation, fill, morph) { CoffeePeekLoaderMotion(rotation, fill, morph) }
