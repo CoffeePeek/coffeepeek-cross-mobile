@@ -78,12 +78,17 @@ class NativeContributionFormSessionTest {
         repository.changeSubmit = { awaitCancellation() }
         for (kind in listOf(NativeContributionFormKind.AddShop, NativeContributionFormKind.AddRoaster, NativeContributionFormKind.Editor)) {
             val source = submittedForm(kind)
-            assertEquals("sending", source.current().submit)
-            val fields = source.current().fields.map { it.key to it.value }
-            assertTrue(source.consumeBack())
-            runCurrent()
-            assertEquals("sending", source.current().submit)
-            assertEquals(fields, source.current().fields.map { it.key to it.value })
+            try {
+                assertEquals("sending", source.current().submit)
+                val fields = source.current().fields.map { it.key to it.value }
+                assertTrue(source.consumeBack())
+                runCurrent()
+                assertEquals("sending", source.current().submit)
+                assertEquals(fields, source.current().fields.map { it.key to it.value })
+            } finally {
+                source.close()
+                runCurrent()
+            }
         }
     }
 
