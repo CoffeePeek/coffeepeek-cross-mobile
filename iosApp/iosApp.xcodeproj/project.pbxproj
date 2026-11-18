@@ -7,7 +7,11 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		A9AA00000000000000000001 /* CoffeePeekNativeMessage.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9AA00000000000000000002 /* CoffeePeekNativeMessage.swift */; };
+		CDC4E218272AEBD62CCBD0CF /* RoasterNativeController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 181460E0F1C39DE0D1DA1098 /* RoasterNativeController.swift */; };
+		8E9C5C56A4E3BE2852ED1CB6 /* RoasterNativeCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2645A333FA079F94D28AE329 /* RoasterNativeCard.swift */; };
+		FF51FDC39D4F328BFC814202 /* RoasterDiscoveryNativeScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = AC82D22A61C951409CB48B98 /* RoasterDiscoveryNativeScreen.swift */; };
+		8AF230A9B8B8789A2F1F28A1 /* RoasterDetailNativeScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2C7A4C6E1544B2E0FA845DA9 /* RoasterDetailNativeScreen.swift */; };
+		6878214BAD9DFB393A3514C0 /* NativeRoaster.strings in Resources */ = {isa = PBXBuildFile; fileRef = 9EFAA51590745D5526C255B5 /* NativeRoaster.strings */; };
 		B23122000000000000000021 /* CoffeePeekLocalBackProtection.swift in Sources */ = {isa = PBXBuildFile; fileRef = B23122000000000000000023 /* CoffeePeekLocalBackProtection.swift */; };
 		B23122000000000000000011 /* CollectionEditorContent.swift in Sources */ = {isa = PBXBuildFile; fileRef = B23122000000000000000013 /* CollectionEditorContent.swift */; };
 		B23122000000000000000001 /* CollectionPosterScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = B23122000000000000000003 /* CollectionPosterScreen.swift */; };
@@ -65,6 +69,7 @@
 		A0871E7A0000000000000005 /* LoginScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0871E7A0000000000000006 /* LoginScreen.swift */; };
 		A0871E7A0000000000000007 /* PasswordRecoveryScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0871E7A0000000000000008 /* PasswordRecoveryScreen.swift */; };
 		A0871E7A000000000000000D /* CoffeePeekNativeStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0871E7A000000000000000E /* CoffeePeekNativeStyle.swift */; };
+		A9AA00000000000000000001 /* CoffeePeekNativeMessage.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9AA00000000000000000002 /* CoffeePeekNativeMessage.swift */; };
 		A0871E7A000000000000000F /* RegisterScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0871E7A0000000000000010 /* RegisterScreen.swift */; };
 		A0871E7A0000000000000011 /* RegisterConsent.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0871E7A0000000000000012 /* RegisterConsent.swift */; };
 		A0871E7A0000000000000009 /* NativeAuth.strings in Resources */ = {isa = PBXBuildFile; fileRef = A0871E7A000000000000000C /* NativeAuth.strings */; };
@@ -127,7 +132,12 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		A9AA00000000000000000002 /* CoffeePeekNativeMessage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CoffeePeekNativeMessage.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CoffeePeekNativeMessage.swift; sourceTree = "<group>"; };
+		181460E0F1C39DE0D1DA1098 /* RoasterNativeController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = RoasterNativeController.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/RoasterNativeController.swift; sourceTree = "<group>"; };
+		2645A333FA079F94D28AE329 /* RoasterNativeCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = RoasterNativeCard.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/RoasterNativeCard.swift; sourceTree = "<group>"; };
+		AC82D22A61C951409CB48B98 /* RoasterDiscoveryNativeScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = RoasterDiscoveryNativeScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/RoasterDiscoveryNativeScreen.swift; sourceTree = "<group>"; };
+		2C7A4C6E1544B2E0FA845DA9 /* RoasterDetailNativeScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = RoasterDetailNativeScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/RoasterDetailNativeScreen.swift; sourceTree = "<group>"; };
+		7358E39742738F1AF7508555 /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/NativeRoaster.strings; sourceTree = "<group>"; };
+		93392B65F66B89565E0DF9D8 /* be */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = be; path = be.lproj/NativeRoaster.strings; sourceTree = "<group>"; };
 		B23122000000000000000023 /* CoffeePeekLocalBackProtection.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CoffeePeekLocalBackProtection.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CoffeePeekLocalBackProtection.swift; sourceTree = "<group>"; };
 		B23122000000000000000013 /* CollectionEditorContent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CollectionEditorContent.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CollectionEditorContent.swift; sourceTree = "<group>"; };
 		B23122000000000000000003 /* CollectionPosterScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CollectionPosterScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CollectionPosterScreen.swift; sourceTree = "<group>"; };
@@ -201,6 +211,7 @@
 		A0871E7A0000000000000006 /* LoginScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = LoginScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/LoginScreen.swift; sourceTree = "<group>"; };
 		A0871E7A0000000000000008 /* PasswordRecoveryScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = PasswordRecoveryScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/PasswordRecoveryScreen.swift; sourceTree = "<group>"; };
 		A0871E7A000000000000000E /* CoffeePeekNativeStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CoffeePeekNativeStyle.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CoffeePeekNativeStyle.swift; sourceTree = "<group>"; };
+		A9AA00000000000000000002 /* CoffeePeekNativeMessage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CoffeePeekNativeMessage.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CoffeePeekNativeMessage.swift; sourceTree = "<group>"; };
 		A0871E7A0000000000000010 /* RegisterScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = RegisterScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/RegisterScreen.swift; sourceTree = "<group>"; };
 		A0871E7A0000000000000012 /* RegisterConsent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = RegisterConsent.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/RegisterConsent.swift; sourceTree = "<group>"; };
 		A0871E7A000000000000000A /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/NativeAuth.strings; sourceTree = "<group>"; };
@@ -308,6 +319,7 @@
 				A0871E7A0000000000000006 /* LoginScreen.swift */,
 				A0871E7A0000000000000008 /* PasswordRecoveryScreen.swift */,
 				A0871E7A000000000000000E /* CoffeePeekNativeStyle.swift */,
+				A9AA00000000000000000002 /* CoffeePeekNativeMessage.swift */,
 				A0871E7A0000000000000010 /* RegisterScreen.swift */,
 				A0871E7A0000000000000012 /* RegisterConsent.swift */,
 				A0871E7B0000000000000006 /* GuestProfileScreen.swift */,
@@ -345,7 +357,6 @@
 				A0871E7C0000000000000008 /* OwnProfileCheckIns.swift */,
 				A0871E7B0000000000000004 /* CoffeePeekGuestAccountCard.swift */,
 				A0871E7B0000000000000002 /* CoffeePeekAppleSignInButton.swift */,
-				A9AA00000000000000000002 /* CoffeePeekNativeMessage.swift */,
 				A20000000000000000000016 /* ThemeSettingsScreen.swift */,
 				B30000000000000000000003 /* ShopReportScreen.swift */,
 				B251C0510000000000000004 /* ContributionsNativeHost.swift */,
@@ -383,6 +394,11 @@
 				A20000000000000000000014 /* CoffeePeekNativeGlass.swift */,
 				A20000000000000000000013 /* ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CoffeePeekLaunchView.swift */,
 				A20000000000000000000011 /* ../../iosXtool/CoffeePeek/Sources/CoffeePeek/SocialSignInProvider.swift */,
+				181460E0F1C39DE0D1DA1098 /* RoasterNativeController.swift */,
+				2645A333FA079F94D28AE329 /* RoasterNativeCard.swift */,
+				AC82D22A61C951409CB48B98 /* RoasterDiscoveryNativeScreen.swift */,
+				2C7A4C6E1544B2E0FA845DA9 /* RoasterDetailNativeScreen.swift */,
+				9EFAA51590745D5526C255B5 /* NativeRoaster.strings */,
 				A6C011E60000000000000003 /* ShopMenuGalleryScreen.swift */,
 				F07A11400000000000000003 /* CoffeePeekNativePhotoViewer.swift */,
 				F07A11400000000000000006 /* NativePhotoViewer.strings */,
@@ -537,6 +553,7 @@
 				A212BDBD9C4E88828A595102 /* NativeHomeCheckIn.strings in Resources */,
 				0543AA17535E355866739201 /* NativeShopCheckIn.strings in Resources */,
 				4E059EBD0B5D4EC1818F5821 /* NativeEditProfile.strings in Resources */,
+				6878214BAD9DFB393A3514C0 /* NativeRoaster.strings in Resources */,
 				A0871E7C0000000000000009 /* NativeOwnProfile.strings in Resources */,
 				817EAB940000000000000009 /* NativePublicProfile.strings in Resources */,
 				B30000000000000000000002 /* ShopReport.strings in Resources */,
@@ -626,6 +643,7 @@
 				A0871E7A0000000000000005 /* LoginScreen.swift in Sources */,
 				A0871E7A0000000000000007 /* PasswordRecoveryScreen.swift in Sources */,
 				A0871E7A000000000000000D /* CoffeePeekNativeStyle.swift in Sources */,
+				A9AA00000000000000000001 /* CoffeePeekNativeMessage.swift in Sources */,
 				A0871E7A000000000000000F /* RegisterScreen.swift in Sources */,
 				A0871E7A0000000000000011 /* RegisterConsent.swift in Sources */,
 				A0871E7B0000000000000005 /* GuestProfileScreen.swift in Sources */,
@@ -667,7 +685,10 @@
 				F07A11400000000000000001 /* CoffeePeekNativePhotoViewer.swift in Sources */,
 				5C13B3110000000000000001 /* ShopCheckInListScreen.swift in Sources */,
 				5C13B3110000000000000002 /* ShopCheckInListComponents.swift in Sources */,
-				A9AA00000000000000000001 /* CoffeePeekNativeMessage.swift in Sources */,
+				8AF230A9B8B8789A2F1F28A1 /* RoasterDetailNativeScreen.swift in Sources */,
+				FF51FDC39D4F328BFC814202 /* RoasterDiscoveryNativeScreen.swift in Sources */,
+				8E9C5C56A4E3BE2852ED1CB6 /* RoasterNativeCard.swift in Sources */,
+				CDC4E218272AEBD62CCBD0CF /* RoasterNativeController.swift in Sources */,
 				A10000000000000000000015 /* ThemeSettingsScreen.swift in Sources */,
 				B30000000000000000000001 /* ShopReportScreen.swift in Sources */,
 				C0FFEE500000000000000001 /* CoffeeDetailScreen.swift in Sources */,
@@ -702,6 +723,25 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXVariantGroup section */
+		9EFAA51590745D5526C255B5 /* NativeRoaster.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				7358E39742738F1AF7508555 /* ru */,
+				93392B65F66B89565E0DF9D8 /* be */,
+			);
+			name = NativeRoaster.strings;
+			sourceTree = "<group>";
+		};
+		29AA5120F89FEC550C685CBE /* NativeAccountDeletion.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				D47404F9E2F7C880C6AFDCA0 /* ru */,
+				07C3A68E7563BFECB15E5D10 /* be */,
+			);
+			name = NativeAccountDeletion.strings;
+			sourceTree = "<group>";
+		};
+
 		5C13B3110000000000000008 /* NativeShopCheckIns.strings */ = {
 			isa = PBXVariantGroup;
 			children = (
@@ -909,15 +949,6 @@
             name = NativeEditProfile.strings;
             sourceTree = "<group>";
         };
-		29AA5120F89FEC550C685CBE /* NativeAccountDeletion.strings */ = {
-			isa = PBXVariantGroup;
-			children = (
-				D47404F9E2F7C880C6AFDCA0 /* ru */,
-				07C3A68E7563BFECB15E5D10 /* be */,
-			);
-			name = NativeAccountDeletion.strings;
-			sourceTree = "<group>";
-		};
 		C94B40E17EA121EFC3D9632D /* NativeGuestOnboarding.strings */ = {
 			isa = PBXVariantGroup;
 			children = (

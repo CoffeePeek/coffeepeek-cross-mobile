@@ -43,12 +43,13 @@ private struct ComposeRootView: UIViewControllerRepresentable {
 
     func makeUIViewController(context: Context) -> UIViewController {
         MainViewControllerKt.configureNativeEditProfile(factory: makeEditProfileController)
+        IosCommunityMessageControllers.shared.configure(factory: makeCommunityMessageController)
         MainViewControllerKt.configureNativeGlobalDialogs(factory: makeGlobalDialogController)
         MainViewControllerKt.configureNativeRootModals(factory: makeRootModalController)
         MainViewControllerKt.configureNativeCommunityCards(factory: makeCommunityCardController)
         MainViewControllerKt.configureNativeCheckInDetails(factory: makeCheckInDetailController)
         MainViewControllerKt.configureNativeCommunityFeed(factory: makeCommunityFeedController)
-        IosCommunityMessageControllers.shared.configure(factory: makeCommunityMessageController)
+        IosRoasterControllers.shared.configure(factory: makeRoasterController)
         MainViewControllerKt.configureNativeCheckInEditors(home: makeHomeCheckInEditorController, shop: makeShopCheckInEditorController)
         return MainViewControllerKt.MainViewController(
             onReady: { DispatchQueue.main.async { onReady() } },
