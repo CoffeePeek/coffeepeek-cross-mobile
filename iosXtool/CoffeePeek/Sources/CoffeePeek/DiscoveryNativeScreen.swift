@@ -307,13 +307,15 @@ struct DiscoveryNativeScreen: View {
 
     private func mapLayer(size: CGSize) -> some View {
         let expanded = state.mapExpanded
-        let rect = expanded ? CGRect(origin: .zero, size: size) : mapFrame.insetBy(dx: 16, dy: 0)
-        return map.frame(width: max(1, rect.width), height: max(1, rect.height))
+        let frame = discoveryMapLayoutFrame(viewport: size, preview: mapFrame, expanded: expanded)
+        let rect = frame ?? CGRect(x: 0, y: 0, width: 1, height: 1)
+        let visible = frame != nil && (expanded || state.landing) && !state.roastersExpanded
+        return map.frame(width: rect.width, height: rect.height)
             .clipShape(RoundedRectangle(cornerRadius: expanded ? 0 : 24))
             .offset(x: rect.minX, y: rect.minY)
-            .opacity((expanded || state.landing) && !state.roastersExpanded ? 1 : 0)
-            .allowsHitTesting(expanded && !state.roastersExpanded)
-            .accessibilityHidden(!expanded)
+            .opacity(visible ? 1 : 0)
+            .allowsHitTesting(visible && expanded)
+            .accessibilityHidden(!visible || !expanded)
     }
 
     private var expandedMap: some View {
