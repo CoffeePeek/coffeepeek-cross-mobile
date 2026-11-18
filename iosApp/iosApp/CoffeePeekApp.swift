@@ -51,6 +51,7 @@ private struct ComposeRootView: UIViewControllerRepresentable {
         MainViewControllerKt.configureNativeCommunityCards(factory: makeCommunityCardController)
         MainViewControllerKt.configureNativeShopDetails(detail: makeShopDetailController,
             photo: makeShopPhotoOverlayController, message: makeShopDetailNoticeController, error: makeShopDetailErrorController)
+        MainViewControllerKt.configureNativeCommunitySheets(factory: makeCommunitySheetController)
         MainViewControllerKt.configureNativeCheckInDetails(factory: makeCheckInDetailController)
         MainViewControllerKt.configureNativeCommunityFeed(factory: makeCommunityFeedController)
         IosCheckInPhotoControllers.shared.configure(factory: makeCheckInPhotoController)
