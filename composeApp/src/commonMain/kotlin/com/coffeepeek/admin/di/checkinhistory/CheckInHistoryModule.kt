@@ -16,6 +16,6 @@ internal fun checkInHistoryModule(apiBaseUrl: String = Constants.BASE_URL) = mod
     single<HistoryHomeEditorFactory> {
         historyHomeEditorFactory(get(), get(), get(), ShelfHomeCheckInBags(get()))
     }
-    single { FeatureCheckInHistoryScreenRenderer(get(), get(), get(), get(), get()) }
+    single { FeatureHomeCheckInDetailRenderer(get(), get()) }
     single { FeatureProfileActivityRenderer(get(), get(), get(), get()) }
 }

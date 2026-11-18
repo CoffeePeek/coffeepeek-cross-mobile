@@ -22,7 +22,6 @@ internal data class PublicProfileState(
     val isLoadingMoreCheckIns: Boolean = false,
     val checkInsError: PublicProfileError? = null,
     val hasMoreCheckIns: Boolean = false,
-    val checkInsPageRevision: Int = 0,
     val isOwnProfile: Boolean = false,
     val isFollowing: Boolean = false,
     val isFollowLoading: Boolean = false,

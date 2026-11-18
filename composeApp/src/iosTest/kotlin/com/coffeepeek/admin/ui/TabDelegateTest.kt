@@ -4,7 +4,6 @@ package com.coffeepeek.admin.ui
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 import platform.UIKit.UINavigationController
 import platform.UIKit.UITabBarController
@@ -38,32 +37,6 @@ class TabDelegateTest {
         IosRootTab.entries.forEach { tab ->
             assertEquals(tab.ordinal, nativeTabIndex(tab.screen))
         }
-    }
-
-    @Test
-    fun profileRootReusesItsStackForTokenRefreshAndRebindsForANewLogin() {
-        val existingRoot = UIViewController()
-        val pushedScreen = UIViewController()
-        val navigation = UINavigationController(rootViewController = existingRoot)
-        navigation.setViewControllers(listOf(existingRoot, pushedScreen), false)
-        val account = NativeProfileTabAccount("1:owner")
-        val replacement = UIViewController()
-
-        assertFalse(account.rebind("1:owner", navigation) { error("Same-login token refresh must reuse the root") })
-        assertEquals(listOf(existingRoot, pushedScreen), navigation.viewControllers)
-        assertTrue(account.rebind("2:owner", navigation) { replacement })
-        assertEquals(listOf(replacement), navigation.viewControllers)
-    }
-
-    @Test
-    fun profileRootCanRebindAfterBecomingInactive() {
-        val navigation = UINavigationController(rootViewController = UIViewController())
-        val account = NativeProfileTabAccount("1:owner")
-        val replacement = UIViewController()
-
-        assertFalse(account.rebind(null, navigation) { error("An inactive account must not create an own profile") })
-        assertTrue(account.rebind("1:owner", navigation) { replacement })
-        assertEquals(listOf(replacement), navigation.viewControllers)
     }
 
     @Test

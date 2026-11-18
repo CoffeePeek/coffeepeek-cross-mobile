@@ -39,6 +39,7 @@ internal class PublicProfileViewModel(
     private val accounts: ProfileAccountPort,
     private val visibility: ProfileAuthorVisibility = ProfileAuthorVisibility.None,
     private val snapshots: ProfileSnapshotStore = ProfileSnapshotStore.None,
+    private val includeCheckIns: Boolean = true,
 ) : MviViewModel<PublicProfileState, PublicProfileAction, PublicProfileEvent>(cachedState(slug, accounts, visibility, snapshots)) {
     private var initialized = false
     private var profileJob: Job? = null
@@ -257,7 +258,7 @@ internal class PublicProfileViewModel(
             return
         }
         rememberSnapshot()
-        loadCheckIns(reset = true)
+        if (includeCheckIns) loadCheckIns(reset = true)
         retryFavorites()
         retryActivity()
         currentState.connectionKind?.let(::openConnections)
@@ -423,10 +424,9 @@ internal class PublicProfileViewModel(
             currentCoroutineContext().ensureActive()
             if (!isCurrent(requestGeneration, requestAccount)) return@launch
             result.onSuccess { page ->
-                nextCursor = page.nextCursor?.takeUnless { it == cursor }
+                nextCursor = page.nextCursor
                 updateState { copy(checkIns = (if (reset) page.items else this.checkIns + page.items).distinctBy(PublicProfileCheckIn::id),
-                    hasMoreCheckIns = nextCursor != null, checkInsPageRevision = checkInsPageRevision + 1,
-                    isLoadingCheckIns = false, isLoadingMoreCheckIns = false, checkInsError = null) }
+                    hasMoreCheckIns = page.nextCursor != null, isLoadingCheckIns = false, isLoadingMoreCheckIns = false, checkInsError = null) }
                 rememberSnapshot()
             }.onFailure { updateState { copy(isLoadingCheckIns = false, isLoadingMoreCheckIns = false, checkInsError = failureMessage) } }
         }

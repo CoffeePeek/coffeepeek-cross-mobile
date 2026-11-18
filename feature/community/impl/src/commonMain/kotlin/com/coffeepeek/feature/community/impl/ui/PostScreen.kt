@@ -67,7 +67,7 @@ internal class PostCallbacks(
     val onEditHome: (String) -> Unit = {},
 )
 
-private class PostPhotoPreview(val thumbnails: List<String>, val originals: List<String>, val index: Int)
+internal class PostPhotoPreview(val thumbnails: List<String>, val originals: List<String>, val index: Int)
 
 @Composable
 internal fun PostScreen(vm: PostViewModel, host: CommunityHost, blockActions: AuthorBlockActions, callbacks: PostCallbacks, modifier: Modifier = Modifier) {
@@ -110,6 +110,9 @@ internal fun PostScreenContent(
     if (state.isReportOpen) ReportSheet(state.reportForm(), postReportCallbacks(onAction))
     val authorFallback = stringResource(Res.string.community_user)
     val sharer = postSharer(host)
+    if (host.nativeDetail != null) {
+        if (NativePostDetail(state, onAction, host, blockActions, callbacks, snackbar, modifier) { preview = it }) return
+    }
     CoffeePeekScaffold(
         modifier = modifier,
         topBar = { CoffeePeekTopBar(stringResource(Res.string.community_post_title), stringResource(Res.string.community_back), onBack = callbacks.onBack) },
@@ -154,7 +157,7 @@ private fun PostBody(post: CommunityPost, state: PostState, host: CommunityHost,
 }
 
 /** The feed's card actions for one post; likes, reports and blocking need a published post of someone else, sharing a published one. */
-private fun postActions(
+internal fun postActions(
     post: CommunityPost,
     state: PostState,
     onAction: (PostAction) -> Unit,

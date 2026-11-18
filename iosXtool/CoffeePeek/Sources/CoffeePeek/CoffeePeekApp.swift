@@ -42,7 +42,12 @@ private struct ComposeRootView: UIViewControllerRepresentable {
     let onReady: () -> Void
 
     func makeUIViewController(context: Context) -> UIViewController {
-        MainViewControllerKt.MainViewController(
+        MainViewControllerKt.configureNativeEditProfile(factory: makeEditProfileController)
+        MainViewControllerKt.configureNativeCommunityCards(factory: makeCommunityCardController)
+        MainViewControllerKt.configureNativeCheckInDetails(factory: makeCheckInDetailController)
+        MainViewControllerKt.configureNativeCommunityFeed(factory: makeCommunityFeedController)
+        MainViewControllerKt.configureNativeCheckInEditors(home: makeHomeCheckInEditorController, shop: makeShopCheckInEditorController)
+        return MainViewControllerKt.MainViewController(
             onReady: { DispatchQueue.main.async { onReady() } },
             makeDiscoveryFilterController: makeDiscoveryFilterController,
             makeShopMenuGalleryController: makeShopMenuGalleryController,

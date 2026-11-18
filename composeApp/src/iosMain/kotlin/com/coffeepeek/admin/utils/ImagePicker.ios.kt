@@ -52,9 +52,11 @@ actual fun rememberPhotoPicker(
     }
 
     fun presentCamera() {
-        val picker = cameraPicker(delegate) ?: return
+        val picker = cameraPicker(delegate) ?: return delegate.cancel()
         scope.launch {
-            awaitPhotoPickerHost(host)?.presentViewController(picker, animated = true, completion = null)
+            val presenter = awaitPhotoPickerHost(host)
+            if (presenter == null) delegate.cancel()
+            else presenter.presentViewController(picker, animated = true, completion = null)
         }
     }
 
@@ -68,7 +70,9 @@ actual fun rememberPhotoPicker(
             this.delegate = delegate
         }
         scope.launch {
-            awaitPhotoPickerHost(host)?.presentViewController(picker, animated = true, completion = null)
+            val presenter = awaitPhotoPickerHost(host)
+            if (presenter == null) delegate.cancel()
+            else presenter.presentViewController(picker, animated = true, completion = null)
         }
     }
 
@@ -106,7 +110,7 @@ private class IosImagePickerDelegate(
     ) {
         picker.dismissViewControllerAnimated(true, completion = null)
         val results = didFinishPicking.filterIsInstance<PHPickerResult>()
-        if (results.isEmpty()) return
+        if (results.isEmpty()) return cancel()
 
         isLoading(true)
         val selected = arrayOfNulls<PickedImage>(results.size)
@@ -127,7 +131,7 @@ private class IosImagePickerDelegate(
                     pending -= 1
                     if (pending == 0) {
                         val images = selected.filterNotNull()
-                        if (images.isNotEmpty()) onPicked(images)
+                        onPicked(images)
                         isLoading(false)
                     }
                 }
@@ -141,14 +145,14 @@ private class IosImagePickerDelegate(
     ) {
         val image = didFinishPickingMediaWithInfo[UIImagePickerControllerOriginalImage] as? UIImage
         picker.dismissViewControllerAnimated(true) {
-            if (image != null) deliverCameraImage(image)
+            if (image != null) deliverCameraImage(image) else cancel()
         }
     }
 
     private fun deliverCameraImage(image: UIImage) {
         isLoading(true)
         try {
-            val bytes = UIImageJPEGRepresentation(image, JPEG_QUALITY)?.toByteArray() ?: return
+            val bytes = UIImageJPEGRepresentation(image, JPEG_QUALITY)?.toByteArray() ?: return cancel()
             onPicked(
                 listOf(
                     PickedImage(
@@ -164,7 +168,12 @@ private class IosImagePickerDelegate(
     }
 
     override fun imagePickerControllerDidCancel(picker: UIImagePickerController) {
-        picker.dismissViewControllerAnimated(true, completion = null)
+        picker.dismissViewControllerAnimated(true) { cancel() }
+    }
+
+    fun cancel() {
+        isLoading(false)
+        onPicked(emptyList())
     }
 }
 

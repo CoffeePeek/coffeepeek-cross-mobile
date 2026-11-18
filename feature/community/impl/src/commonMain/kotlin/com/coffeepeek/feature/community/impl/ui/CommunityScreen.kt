@@ -139,6 +139,13 @@ internal fun CommunityContent(
     val savedContent = rememberSaveableStateHolder()
     var refreshKey by rememberSaveable { mutableLongStateOf(0L) }
     val leaders = host.leaders
+    if (host.nativeFeed != null && leaders == null) {
+        Box(modifier.fillMaxSize()) {
+            CommunityFeedContent(state, onAction, host, blockActions, callbacks, snackbar, bottomClearance,
+                rememberLazyListState(), { refreshKey++ }, floatingAction, headerAction)
+        }
+        return
+    }
     Column(modifier.fillMaxSize().background(MaterialTheme.colorScheme.background).statusBarsPadding()
         .windowInsetsPadding(WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal))) {
         if (leadersSelected && leaders != null) savedContent.SaveableStateProvider("leaders") {

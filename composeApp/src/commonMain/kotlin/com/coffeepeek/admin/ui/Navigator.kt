@@ -10,7 +10,7 @@ import com.coffeepeek.admin.di.homecheckin.GuestCheckInOnboardingHost
 
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
-import com.coffeepeek.admin.ui.screen.checkins.CheckInHistoryDestination
+import com.coffeepeek.admin.ui.screen.checkins.HomeCheckInDetailDestination
 import com.coffeepeek.admin.ui.screen.shelf.ShelfScreenRenderer
 import com.coffeepeek.admin.ui.screen.contributions.ContributionKind
 import com.coffeepeek.admin.ui.screen.contributions.ContributionsScreenRenderer
@@ -217,8 +217,7 @@ private fun RootNavHost(
         @Serializable data object CollectionsLibrary : Screen
         @Serializable data class CollectionEditor(val id: String? = null) : Screen
         @Serializable data class SavedPublicCollection(val id: String) : Screen
-        @Serializable data object VisitedPlaces : Screen
-        @Serializable data object HomeCheckIns : Screen
+        @Serializable data class HomeCheckInDetail(val id: String) : Screen
         @Serializable data object ShelfArchive : Screen
         @Serializable data object ShelfAddBag : Screen
         @Serializable data class ShelfBag(val bagId: String) : Screen
@@ -251,16 +250,32 @@ private fun RootNavHost(
     private val _pendingProfileShelf = MutableStateFlow(false)
     val pendingProfileShelf = _pendingProfileShelf.asStateFlow()
 
+    private val _pendingProfileCheckIns = MutableStateFlow(false)
+    val pendingProfileCheckIns = _pendingProfileCheckIns.asStateFlow()
+
     fun consumeProfileShelf() {
         _pendingProfileShelf.value = false
+    }
+
+    fun consumeProfileCheckIns() {
+        _pendingProfileCheckIns.value = false
+    }
+
+    /** Explicit history intent; ordinary profile tab selection retains its current section and date. */
+    fun openProfileCheckIns(popCurrent: Boolean = false) {
+        consumeProfileShelf()
+        _pendingProfileCheckIns.value = true
+        if (popCurrent) popThenSelectTab(Screen.ProfileTab) else selectTab(Screen.ProfileTab)
     }
 
     private fun clearSessionNavigationRequests() {
         hasOpenedAppLink.value = false
         consumeProfileShelf()
+        consumeProfileCheckIns()
     }
 
     fun returnToProfileShelf() {
+        consumeProfileCheckIns()
         _pendingProfileShelf.value = true
         popThenSelectTab(Screen.ProfileTab)
     }
@@ -331,8 +346,7 @@ private fun RootNavHost(
         is Screen.CollectionsLibrary,
         is Screen.CollectionEditor,
         is Screen.SavedPublicCollection,
-        is Screen.VisitedPlaces,
-        is Screen.HomeCheckIns,
+        is Screen.HomeCheckInDetail,
         is Screen.ShelfArchive,
         is Screen.ShelfAddBag,
         is Screen.ShelfBag,
@@ -389,8 +403,9 @@ private fun RootNavHost(
     ) {
         val errorMessage = ErrorHandler.errorMessage.collectAsState().value
         val loading = LoadingHandler.isLoading.collectAsState().value
-        val isLoggedIn by vm.isLoggedIn.collectAsState()
-        var previousLoginState by remember { mutableStateOf<Boolean?>(null) }
+        val session by vm.navigationSession.collectAsState()
+        val isLoggedIn = session?.isLoggedIn
+        var previousSession by remember { mutableStateOf<RootNavigationSession?>(null) }
         var navigationGeneration by remember { mutableIntStateOf(0) }
 
         ErrorDialog(
@@ -398,14 +413,15 @@ private fun RootNavHost(
             message = errorMessage ?: "",
             onDismiss = { ErrorHandler.clearError() }
         )
-        LaunchedEffect(isLoggedIn) {
-            val loggedIn = isLoggedIn ?: return@LaunchedEffect
-            if (previousLoginState != null && previousLoginState != loggedIn) {
+        LaunchedEffect(session) {
+            val currentSession = session ?: return@LaunchedEffect
+            val loggedIn = currentSession.isLoggedIn
+            if (previousSession != null && previousSession != currentSession) {
                 clearPlatformNavigationState()
                 navigationGeneration++
-                if (!loggedIn) clearSessionNavigationRequests()
+                if (!loggedIn || previousSession?.isLoggedIn == true) clearSessionNavigationRequests()
             }
-            previousLoginState = loggedIn
+            previousSession = currentSession
             if (loggedIn) {
                 vm.guestOnboardingDismissed = false
                 checkInSignInHandoff.take()?.let { pendingAppLink.compareAndSet(null, it) }
@@ -420,7 +436,7 @@ private fun RootNavHost(
             }
         }
 
-        NavigationContent(vm, isLoggedIn, previousLoginState, navigationGeneration, loading)
+        NavigationContent(vm, isLoggedIn, previousSession?.isLoggedIn, navigationGeneration, loading)
     }
 
     @Composable
@@ -485,7 +501,10 @@ private fun RootNavHost(
 
         LaunchedEffect(appLink) {
             val screen = appLink ?: return@LaunchedEffect
-            nav.navigate(screen.appLinkDestination(isLoggedIn)) {
+            if (screen == Screen.ProfileTab) {
+                nav.popBackStack<Screen.Main>(inclusive = false)
+                selectTab(Screen.ProfileTab)
+            } else nav.navigate(screen.appLinkDestination(isLoggedIn)) {
                 launchSingleTop = true
                 popUpTo<Screen.Main>()
             }
@@ -632,16 +651,12 @@ koinInject<ContributionsScreenRenderer>().Editor(route.shopId, route.section, ro
                     composable<Screen.CollectionsLibrary> { CollectionsLibraryDestination() }
                     composable<Screen.CollectionEditor> { backStack -> CollectionEditorDestination(backStack.toRoute<Screen.CollectionEditor>().id) }
                     composable<Screen.SavedPublicCollection> { backStack -> SavedPublicCollectionDestination(backStack.toRoute<Screen.SavedPublicCollection>().id) }
-                    composable<Screen.VisitedPlaces> { CheckInHistoryDestination() }
-                    composable<Screen.HomeCheckIns> { CheckInHistoryDestination() }
+                    homeCheckInRoutes()
                     composable<Screen.ShelfArchive> { koinInject<ShelfScreenRenderer>().Archive() }
                     composable<Screen.ShelfAddBag> { koinInject<ShelfScreenRenderer>().AddBag() }
                     composable<Screen.ShelfBag> { backStack ->
                         val route = backStack.toRoute<Screen.ShelfBag>()
                         koinInject<ShelfScreenRenderer>().Bag(route.bagId)
-                    }
-                    composable<Screen.EditHomeCheckIn> { entry ->
-                        CheckInHistoryDestination(initialHomeId = entry.toRoute<Screen.EditHomeCheckIn>().id)
                     }
                     composable<Screen.CitySettings> { koinInject<SettingsScreenRenderer>().City() }
                     composable<Screen.ThemeSettings> { koinInject<SettingsScreenRenderer>().Theme() }
@@ -649,6 +664,15 @@ koinInject<ContributionsScreenRenderer>().Editor(route.shopId, route.section, ro
                     composable<Screen.BlockedAuthors> { com.coffeepeek.admin.di.authorblocking.AuthorBlockingScreenRoute() }
                     composable<Screen.UsagePolicy> { koinInject<SettingsScreenRenderer>().UsagePolicy() }
             }
+        }
+    }
+
+    private fun androidx.navigation.NavGraphBuilder.homeCheckInRoutes() {
+        composable<Screen.HomeCheckInDetail> { entry ->
+            HomeCheckInDetailDestination(entry.toRoute<Screen.HomeCheckInDetail>().id)
+        }
+        composable<Screen.EditHomeCheckIn> { entry ->
+            HomeCheckInDetailDestination(entry.toRoute<Screen.EditHomeCheckIn>().id, editOnLoad = true)
         }
     }
 
@@ -687,12 +711,11 @@ koinInject<ContributionsScreenRenderer>().Editor(route.shopId, route.section, ro
             Screen.CollectionsLibrary -> CollectionsLibraryDestination()
             is Screen.CollectionEditor -> CollectionEditorDestination(screen.id)
             is Screen.SavedPublicCollection -> SavedPublicCollectionDestination(screen.id)
-            Screen.VisitedPlaces -> CheckInHistoryDestination()
-            Screen.HomeCheckIns -> CheckInHistoryDestination()
+            is Screen.HomeCheckInDetail -> HomeCheckInDetailDestination(screen.id)
             Screen.ShelfArchive -> koinInject<ShelfScreenRenderer>().Archive()
             Screen.ShelfAddBag -> koinInject<ShelfScreenRenderer>().AddBag()
             is Screen.ShelfBag -> koinInject<ShelfScreenRenderer>().Bag(screen.bagId)
-            is Screen.EditHomeCheckIn -> CheckInHistoryDestination(initialHomeId = screen.id)
+            is Screen.EditHomeCheckIn -> HomeCheckInDetailDestination(screen.id, editOnLoad = true)
             Screen.CitySettings -> koinInject<SettingsScreenRenderer>().City()
             Screen.ThemeSettings -> koinInject<SettingsScreenRenderer>().Theme()
             Screen.LanguageSettings -> koinInject<SettingsScreenRenderer>().Language()

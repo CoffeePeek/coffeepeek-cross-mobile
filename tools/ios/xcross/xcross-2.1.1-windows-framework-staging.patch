@@ -1,0 +1,289 @@
+diff --git a/packages/xcross/lib/src/shared/swiftpm/build_driver.dart b/packages/xcross/lib/src/shared/swiftpm/build_driver.dart
+--- a/packages/xcross/lib/src/shared/swiftpm/build_driver.dart
++++ b/packages/xcross/lib/src/shared/swiftpm/build_driver.dart
+@@ -15,6 +15,7 @@
+ import 'package:xcross/src/shared/swiftpm/checkout.dart';
+ import 'package:xcross/src/shared/swiftpm/dependency_preparation.dart';
+ import 'package:xcross/src/shared/swiftpm/errors.dart';
++import 'package:xcross/src/shared/swiftpm/framework_copies.dart';
+ import 'package:xcross/src/shared/swiftpm/host_build_services.dart';
+ import 'package:xcross/src/shared/swiftpm/host_policy.dart';
+ import 'package:xcross/src/shared/swiftpm/interop_build_recovery.dart';
+@@ -185,6 +186,24 @@
+       scratchPath: scratchPath,
+       deploymentTarget: deploymentTarget,
+     );
++    if (runner.host is WindowsHostInterface) {
++      final manifest = runner.host.fileSystem.file(
++        p.join(scratchPath, 'debug.yaml'),
++      );
++      if (manifest.existsSync()) {
++        await stageSwiftPmFrameworkCopies(
++          manifest: await manifest.readAsString(),
++          targetDebugDirectory: targetBuildDir,
++          files: runner.host.fileSystem,
++          paths: runner.host.paths.context,
++          copy: (source, destination) => hostBuildServices.stageBinaryFramework(
++            source,
++            destination,
++            copy: true,
++          ),
++        );
++      }
++    }
+     final command = SwiftPmBuildCommand(
+       executable: swiftBuild,
+       arguments: [
+diff --git a/packages/xcross/lib/src/host/windows/swiftpm/swiftpm_host_policy.dart b/packages/xcross/lib/src/host/windows/swiftpm/swiftpm_host_policy.dart
+--- a/packages/xcross/lib/src/host/windows/swiftpm/swiftpm_host_policy.dart
++++ b/packages/xcross/lib/src/host/windows/swiftpm/swiftpm_host_policy.dart
+@@ -44,6 +44,10 @@
+   List<String> get buildArguments => [
+     ...manifestArguments,
+     '--disable-automatic-resolution',
++    // SwiftPM --jobs limits targets, not the Swift driver's frontend jobs.
++    // Module locks are disabled below, so also serialize each target driver.
++    '-Xswiftc',
++    '-j1',
+     '-Xswiftc',
+     '-no-verify-emitted-module-interface',
+     ...SwiftPmBuildPlan.noImplicitModuleLockArguments,
+diff --git a/packages/xcross/lib/src/shared/swiftpm/framework_copies.dart b/packages/xcross/lib/src/shared/swiftpm/framework_copies.dart
+new file mode 100644
+--- /dev/null
++++ b/packages/xcross/lib/src/shared/swiftpm/framework_copies.dart
+@@ -0,0 +1,91 @@
++import 'dart:convert';
++
++import 'package:cli_kit/shared/platform/platform_host.dart';
++import 'package:meta/meta.dart';
++import 'package:path/path.dart' as p;
++import 'package:xcross/src/shared/swiftpm/errors.dart';
++
++/// Materializes only the binary frameworks the selected SwiftPM build graph
++/// copies directly into its products directory. Windows llbuild may keep a
++/// cached copy node although its destination disappeared; a search-path-only
++/// workaround would leave the dynamic framework out of the assembled app.
++@internal
++Future<void> stageSwiftPmFrameworkCopies({
++  required String manifest,
++  required String targetDebugDirectory,
++  required HostFileSystemInterface files,
++  required p.Context paths,
++  required Future<void> Function(String source, String destination) copy,
++}) async {
++  for (final entry in swiftPmFrameworkCopies(
++    manifest,
++    targetDebugDirectory,
++    paths,
++  ).entries) {
++    final source = entry.value;
++    final destination = entry.key;
++    final binaryName = paths.basenameWithoutExtension(source);
++    if (!files.file(paths.join(source, binaryName)).existsSync()) {
++      throw SwiftPmError(
++        'SwiftPM framework copy source is incomplete: $source',
++      );
++    }
++    await copy(source, destination);
++    if (!files.file(paths.join(destination, binaryName)).existsSync()) {
++      throw SwiftPmError('SwiftPM framework copy did not produce $destination');
++    }
++  }
++}
++
++/// Output -> source, using the platform slice already selected by SwiftPM.
++@internal
++Map<String, String> swiftPmFrameworkCopies(
++  String manifest,
++  String debugDirectory,
++  p.Context paths,
++) {
++  final copies = <String, String>{};
++  final debug = paths.normalize(paths.absolute(debugDirectory));
++  String? tool;
++  List<String> inputs = [];
++  List<String> outputs = [];
++  void flush() {
++    if (tool == 'copy-tool' && inputs.length == 1 && outputs.length == 1) {
++      final source = paths.normalize(inputs.single);
++      final destination = paths.normalize(outputs.single);
++      if (paths.isAbsolute(source) &&
++          paths.isAbsolute(destination) &&
++          paths.equals(paths.dirname(destination), debug) &&
++          paths.extension(source) == '.framework' &&
++          paths.basename(source) == paths.basename(destination) &&
++          !paths.equals(source, destination)) {
++        final previous = copies[destination];
++        if (previous != null && !paths.equals(previous, source)) {
++          throw SwiftPmError(
++            'Conflicting SwiftPM framework copies: $destination',
++          );
++        }
++        copies[destination] = source;
++      }
++    }
++    tool = null;
++    inputs = [];
++    outputs = [];
++  }
++
++  for (final line in const LineSplitter().convert(manifest)) {
++    final value = line.trimLeft();
++    if (value.isEmpty) continue;
++    if (line.length - value.length <= 2) {
++      flush();
++    } else if (value.startsWith('tool:')) {
++      tool = value.substring(5).trim();
++    } else if (value.startsWith('inputs:')) {
++      inputs = (jsonDecode(value.substring(7)) as List).cast<String>();
++    } else if (value.startsWith('outputs:')) {
++      outputs = (jsonDecode(value.substring(8)) as List).cast<String>();
++    }
++  }
++  flush();
++  return copies;
++}
+diff --git a/packages/xcross/test/swiftpm/framework_copies_test.dart b/packages/xcross/test/swiftpm/framework_copies_test.dart
+new file mode 100644
+--- /dev/null
++++ b/packages/xcross/test/swiftpm/framework_copies_test.dart
+@@ -0,0 +1,138 @@
++import 'dart:convert';
++import 'dart:io';
++
++import 'package:path/path.dart' as p;
++import 'package:test/test.dart';
++import 'package:xcross/src/shared/compose/swiftpm/host_package_link.dart';
++import 'package:xcross/src/shared/swiftpm/errors.dart';
++import 'package:xcross/src/shared/swiftpm/framework_copies.dart';
++import 'package:xcross/src/shared/swiftpm/recursive_directory_copy.dart';
++
++import '../apple/support/native_test_file_system.dart';
++
++String node(String source, String destination, {String tool = 'copy-tool'}) =>
++    '  ${jsonEncode(destination)}:\n'
++    '    tool: $tool\n'
++    '    inputs: ${jsonEncode([source])}\n'
++    '    outputs: ${jsonEncode([destination])}\n';
++
++void main() {
++  test('Windows uses only the exact selected framework copy destination', () {
++    const debug = r'C:\scratch\arm64-apple-ios\debug';
++    const source =
++        r'C:\checkout\.xa\hash\MapLibre.xcframework\ios-arm64\MapLibre.framework';
++    const destination = '$debug\\MapLibre.framework';
++    final manifest =
++        node('$source/', '$destination/') +
++        node(r'C:\other\Unused.framework', r'C:\outside\Unused.framework') +
++        node(r'C:\other\Header.h', '$debug\\Header.h') +
++        node(source, '$debug\\nested\\MapLibre.framework') +
++        node(source, destination, tool: 'shell');
++    expect(swiftPmFrameworkCopies(manifest, debug, p.windows), {
++      destination: source,
++    });
++  });
++
++  test('Copy nodes cannot choose conflicting platform slices', () {
++    const debug = '/scratch/debug';
++    final manifest =
++        node('/sdk/ios-arm64/MapLibre.framework', '$debug/MapLibre.framework') +
++        node('/sdk/simulator/MapLibre.framework', '$debug/MapLibre.framework');
++    expect(
++      () => swiftPmFrameworkCopies(manifest, debug, p.posix),
++      throwsA(isA<SwiftPmError>()),
++    );
++  });
++
++  test(
++    'Staging restores binary modules headers and resources for runner and embedding',
++    () async {
++      final root = Directory.systemTemp.createTempSync('framework-copy-');
++      addTearDown(() => root.deleteSync(recursive: true));
++      final source = p.join(root.path, 'selected slice', 'MapLibre.framework');
++      final debug = p.join(root.path, 'debug');
++      final destination = p.join(debug, 'MapLibre.framework');
++      const files = NativeTestFileSystem();
++      final contents = <String, List<int>>{
++        'MapLibre': [
++          0xcf,
++          0xfa,
++          0xed,
++          0xfe,
++          0x0c,
++          0,
++          0,
++          1,
++          0,
++          0,
++          0,
++          0,
++          6,
++          0,
++          0,
++          0,
++        ],
++        'Modules/module.modulemap': 'framework module MapLibre {}'.codeUnits,
++        'Headers/MapLibre.h': '// header'.codeUnits,
++        'PrivacyInfo.xcprivacy': '<plist/>'.codeUnits,
++        'Resources/data.bin': [1, 2, 3],
++      };
++      for (final entry in contents.entries) {
++        final file = File(p.join(source, entry.key));
++        await file.parent.create(recursive: true);
++        await file.writeAsBytes(entry.value);
++      }
++      final copier = RecursiveDirectoryCopier(
++        fileSystem: files,
++        paths: p.context,
++      );
++      await stageSwiftPmFrameworkCopies(
++        manifest: node('$source/', '$destination/'),
++        targetDebugDirectory: debug,
++        files: files,
++        paths: p.context,
++        copy: copier.copy,
++      );
++      for (final entry in contents.entries) {
++        expect(
++          await File(p.join(destination, entry.key)).readAsBytes(),
++          entry.value,
++        );
++      }
++      expect(
++        swiftPmBuiltModules(
++          files: files,
++          debugDirectory: debug,
++          moduleMapFiles: [],
++        ),
++        contains('MapLibre'),
++      );
++    },
++  );
++
++  test(
++    'Missing selected binary fails instead of silently omitting embedding',
++    () async {
++      final root = Directory.systemTemp.createTempSync('missing-framework-');
++      addTearDown(() => root.deleteSync(recursive: true));
++      final debug = p.join(root.path, 'debug');
++      var copied = false;
++      await expectLater(
++        stageSwiftPmFrameworkCopies(
++          manifest: node(
++            p.join(root.path, 'missing', 'MapLibre.framework'),
++            p.join(debug, 'MapLibre.framework'),
++          ),
++          targetDebugDirectory: debug,
++          files: const NativeTestFileSystem(),
++          paths: p.context,
++          copy: (_, _) async {
++            copied = true;
++          },
++        ),
++        throwsA(isA<SwiftPmError>()),
++      );
++      expect(copied, isFalse);
++    },
++  );
++}

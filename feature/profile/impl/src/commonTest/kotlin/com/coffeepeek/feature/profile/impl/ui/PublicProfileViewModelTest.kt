@@ -67,6 +67,21 @@ class PublicProfileViewModelTest {
         snapshots: ProfileSnapshotStore = ProfileSnapshotStore.None,
     ) = PublicProfileViewModel(slug, data, data, accounts, visibility, snapshots).also { store.put("profile-${nextKey++}", it) }
 
+    @Test fun ownHistoryHeaderDoesNotFetchThePublicFeed() = runTest(dispatcher) {
+        var requests = 0
+        val data = FakeData().apply { checkIns = { _, _ ->
+            requests++
+            Result.success(PublicProfileCheckInPage(emptyList(), null))
+        } }
+        val model = PublicProfileViewModel("canonical", data, data, FakeAccounts(), includeCheckIns = false)
+        store.put("own-header", model)
+        runCurrent()
+        assertNotNull(model.state.value.profile)
+        model.onAction(PublicProfileAction.Refresh)
+        runCurrent()
+        assertEquals(0, requests)
+    }
+
     @Test
     fun recreatedRouteShowsCompleteSnapshotBeforeRefreshAndKeepsItOnNetworkFailure() = runTest(dispatcher) {
         val snapshots = createProfileSnapshotStore()
@@ -202,30 +217,6 @@ class PublicProfileViewModelTest {
         assertEquals<Pair<String, String?>>("canonical" to null, requests.last())
         vm.onAction(PublicProfileAction.LoadMoreCheckIns); runCurrent()
         assertEquals(listOf("one", "two"), vm.state.value.checkIns.map { it.id })
-        assertFalse(vm.state.value.hasMoreCheckIns)
-    }
-
-    @Test
-    fun emptyCheckInPagesAdvanceUntilTheCursorStopsChanging() = runTest(dispatcher) {
-        val requests = mutableListOf<String?>()
-        val data = FakeData().apply {
-            checkIns = { _, cursor ->
-                requests += cursor
-                Result.success(PublicProfileCheckInPage(emptyList(), if (cursor == null) "first" else "second"))
-            }
-        }
-        val vm = model(data = data)
-        runCurrent()
-        assertEquals(1, vm.state.value.checkInsPageRevision)
-        vm.onAction(PublicProfileAction.LoadMoreCheckIns)
-        runCurrent()
-        assertTrue(vm.state.value.hasMoreCheckIns)
-        assertEquals(2, vm.state.value.checkInsPageRevision)
-        repeat(2) {
-            vm.onAction(PublicProfileAction.LoadMoreCheckIns)
-            runCurrent()
-        }
-        assertEquals(listOf(null, "first", "second"), requests)
         assertFalse(vm.state.value.hasMoreCheckIns)
     }
 

@@ -9,21 +9,24 @@ struct SettingsNativeTab: View {
     let setPushEnabled: (Bool) -> Void
     let refreshNotifications: () -> Void
     let switchAccount: () -> Void
+    var headerTopInset: CGFloat = 0
 
     var body: some View {
         ScrollView {
             content
-                .padding(16)
+                .padding(.horizontal, 16)
                 .padding(.bottom, 100)
         }
+        .ignoresSafeArea(.container, edges: .top)
         .settingsAppearance()
     }
 
     private var content: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text(strings.text("settings_tab_title"))
-                .font(CoffeePeekNativeStyle.font(28, weight: "Bold", relativeTo: .title))
+                .font(CoffeePeekNativeStyle.rootHeadingFont)
                 .accessibilityAddTraits(.isHeader)
+                .padding(.top, headerTopInset)
                 .padding(.bottom, 4)
             if state.showGuestCard { guestSection }
             if state.hasBusinesses { businessSection }

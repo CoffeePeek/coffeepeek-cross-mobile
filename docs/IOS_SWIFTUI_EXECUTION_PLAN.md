@@ -267,3 +267,311 @@ state; автоматизированные UI/screenshot тесты не соз
   и guest card на устройстве в этом прогоне не проверены. OAuth агент не запускал.
 - По последнему запросу владельца публикуется текущая установленная сборка;
   дополнительная пересборка ради найденного переноса не запускается.
+
+### Native profile lifecycle and check-in editors — 2026-11-17
+
+Base: `11535611b` from `origin/codex/ios-native`, pulled fast-forward before work.
+The current checkpoint fixes disappearing native profile state and matches the
+Android profile's typography, spacing, calendar placement/modes and post rows.
+Check-in migration continues beyond the already native creation picker: home
+create/edit and shop create reuse their existing feature ViewModels, guarded
+repositories, draft/photo ports and analytics. Shop editing is not an existing
+capability and is not invented by this migration.
+
+Ownership: feature impl owns platform-independent native presentation sessions;
+composition owns account leases, factory assembly and navigation; SwiftUI owns
+native fields, sheets, calendar/rating controls and layout. No new writer,
+backend, Gradle module, permission policy or scanner enablement is introduced.
+
+Verification plan: account-generation and same-account token-refresh regression;
+existing profile/home/shop unit suites plus native session contract tests;
+Android Debug assembly/DEX; Windows xcross compile/link. On the agreed iPhone,
+read-only review of profile return/navigation and empty check-in forms in both
+themes, keyboard/photo cancellation and back flows. Real submission, consent,
+account changes and camera capture are not performed by the agent. Native tests
+that cannot execute on Windows and manual device gates are reported separately.
+
+- Before native build: 881 executed JVM unit/contract tests (Home88, Shop112,
+  composition681), zero failures/errors/skips; Profile72 UP-TO-DATE. Android
+  assembleDirectDebug and packaged DEX verification passed in2m48s.
+- Swift syntax parsing passed (not type checking). Local packaging suite5/5 passed;
+  initial unittest module invocation failed on Python import path before tests,
+  direct script invocation succeeded. Initial Swift process lacked runtime PATH;
+  rerun with installed runtime PATH passed.
+- Function-body verification reports two inherited violations: ownership factory56
+  and public-profile native factory31, already present at pulled11535611b.
+  No new/grown violation from this checkpoint; baseline unchanged.
+- First native attempt was stopped during Swift dependency compilation, before
+  Kotlin linking: direct xcross invocation bypassed the pulled scannerless linkage
+  context and began compiling ONNX. The existing context is now also used by the
+  device-run wrapper; the next build uses that same context and bundle validation.
+  No affected package was installed. Home custom-bean input now stays in a fixed
+  scrollable footer as on Android, including keyboard/short viewport handling.
+- Native compile retry stopped before framework link because editor/list both
+  declared IosShopCheckInObservation. Editor now reuses the existing identical
+  shop observation contract; no behavior/API changes to cancellation.
+- The following attempt built ComposeApp.framework in9m54s, then Windows refused
+  to start Swift because its command exceeded the process argument limit. This
+  is retained as a separate failed build; no device installation occurred.
+- Both editor localization tables passed read-only key/placeholder checks
+  (Home143 and Shop71 keys in each RU/BE locale). Device version guard tests3/3
+  passed; newer installed marketing/build versions fail closed without erasing data.
+- All56 Swift application sources passed actual type checking against the current
+  generated ComposeApp headers, with an isolated module cache and explicit MapLibre
+  framework search path. This is not executable linking or device verification.
+  Existing Sendable warnings remain in report/contribution screens outside this slice.
+- Windows response-file regression tests3/3 passed with the real Swift driver,
+  Unicode/space paths and arguments exceeding32767 characters. A later framework
+  build was interrupted without a completion result; its retry failed inside
+  SwiftPM/PostHog with compiler exception29. Neither attempt installed an app.
+- PostHog isolated replay with a fresh module cache and Swift driver j1 compiled
+  all148 objects and emitted its module successfully. The first emission attempt
+  overlapped toolchain bundle replacement and lacked the macro server; repeating
+  it after restoring the verified macro/runtime files passed. Stale cache as the
+  original cause is not proven. Xcross coffeepeek.8 serializes the Windows driver
+  and restores selected binary framework copy nodes; framework/response tests7/7 passed.
+- Final Windows build passed using xcross2.1.1-coffeepeek.8: source
+  `c651f529d07c4ded50ad158b84b752e583761e46`, clean tree at build time,
+  Debug1.2.1(3087), `com.coffeepeek.xcross`. Swift dependencies3m37s,
+  Kotlin sources10.8s, framework9m41s, Swift host58.9s, assembly1.3s.
+  ARM64 bundle/resource validation passed, including MapLibre embedding and
+  absence of ONNX. Unsigned IPA and executable hash are retained locally.
+- The changes are published to `origin/codex/ios-native`. USB preflight after
+  assembly did not find the agreed iPhone. Signing, installation, profile
+  navigation/foreground checks and empty native editor visual review are pending
+  device connection. This build has not yet been claimed installed or device-verified.
+  iOS-only tests remain authored but unexecuted on Windows; real-account writes
+  and full check-in flow migration beyond these editor entries remain separate gates.
+
+#### Device3088 failures and corrective checkpoint
+
+- Installed Debug1.2.1(3088), source `3d131fd13` (documentation-only successor
+  of the successful3087 source), on the agreed iPhone15,4/iOS27.0.1. Independent
+  InstallationProxy and process checks passed; main CoffeePeek1.2.1(3108) remained
+  unchanged. Framework cache2.0s, signing3.3s, USB install13.6s.
+- Manual light/RU review confirmed four statistics in one row and expanded native
+  calendar placement. User initially confirmed tab return retained the profile.
+  Protected check-in, calendar and bag thumbnails displayed placeholders.
+- Opening Home create crashed with UIViewControllerHierarchyInconsistency:
+  the dialog layer contained the view while the outer camera host owned its child
+  controller. User then relaunched and observed inactive/blank profile again.
+  The earlier tab-return result does not certify cold-launch recovery. The run
+  wrapper returned0 despite the captured crash; it is not startup acceptance.
+- Home and Shop editors now use scoped UIKit containment resolved from the mounted
+  responder chain; the existing global dialog camera-host workaround remains.
+  Profile/Home images use the existing permission-aware native viewer stream and
+  clear on invalidation, background or cancelled request. No new photo writer.
+- Own-profile session lifetime now belongs to its hosting controller, with Debug
+  reason-only diagnostics for invalidation. Cold-start root cause is still under
+  investigation; account and privacy guards remain unchanged.
+- Corrective checks: all56 Swift files typechecked; media71 JVM tests passed;
+  Android Debug/packaged DEX checks passed in19s. Body-limit check still reports
+  only the two inherited violations. Five media and two lifecycle iOS non-UI
+  regressions are authored but unexecuted on Windows. Device recheck is required.
+
+
+### 2026-11-17 — Unified owner profile history (Android and native iOS)
+
+Owner scope: replace the separate own check-in history page on both platforms with one
+paginated mixed shop/home list in Profile. The calendar filters that same list; no second
+daily list, source tabs or “all check-ins” link. Keep standalone check-in detail/edit routes.
+Public profiles of other authors retain their separate public-only access contract.
+
+Ownership: check-in-history owns private account-bound reads, merged pagination,
+calendar/date filtering and shared presentation state. Profile owns header and tabs,
+receiving a calendar/list scope through its public slots. Application composition binds
+existing repositories, account leases, navigation and photo rendering. Native SwiftUI
+uses an account-owned history session over the same CombinedHistoryViewModel.
+No new backend, writer or Gradle module.
+
+Retirement inventory: own-profile preview/history links, VisitedPlaces/HomeCheckIns root
+routes, notification CheckIns destinations and shop uncertain-delivery history actions.
+Redirect these to Profile; retain Home detail/edit access independently. Analytics creation
+continues through the existing picker/editor tracker; Profile remains the owning screen.
+
+Verification plan: unit regressions for date selection across month boundaries, mixed
+pagination and stale account/date responses; affected JVM suites; Android directDebug
+assembly with packaged DEX checks; native framework/Swift build. Manual device gates:
+expand/collapse and month transition, uniform photo/plain day cells, same-list date filter
+and reset, pagination, content-sized plus sheet, collections light/dark surfaces. No live
+writes or consent changes. Prior 3088 crash evidence remains above; the owner reports
+3089 photos and profile persistence now appear fixed, without a full cold-start matrix.
+
+Verification before the native build: Android directDebug assembly and packaged DEX
+runtime-class checks pass. JVM suites: history 90, profile 73, composition 685;
+848 tests, zero failures/errors/skips. The first run stopped at a missing import in a
+new regression; the second stopped because the packaged-class allowlist still named
+retired page classes. Both were corrected; the final run passes. Existing preview/API
+deprecation warnings remain. Function-body verification reports only the two inherited
+violations (ownership factory and IosPublicProfileSession); no new violations, baseline
+not expanded. Native build and manual device acceptance are still pending.
+
+Explicit history intents from notifications/uncertain-submit actions select the profile
+check-ins tab and clear its date filter. Ordinary tab switching preserves the section
+and filter. Calendar collapse retains the selected date and anchors its week to that
+date (otherwise today in the displayed month, or the first of a browsed month).
+Calendar reads cover adjacent-month days in that week with stale-response guards.
+
+
+Native result: installed CoffeePeek Xcross 1.2.1 (3092), source c9395d16e,
+Debug/scanner disabled, on iPhone15,4 / iOS 27.0.1. InstallationProxy independently
+confirms 3092; CoreDevice confirms one running test-app process. The existing
+com.coffeepeek 1.2.1 (3108) remains installed. In-place update, no data reset.
+Full framework build: 10m00s; Swift Runner 57.8s. Installation preparation reused
+the framework in 2.0s, signing took 3.4s and installation 13.7s.
+
+Original native failures retained: first Kotlin compile required ExperimentalComposeUiApi
+opt-in for transparent hosts; first Swift preflight rejected writing the read-only
+accessibilityReduceMotion environment in a preview. Both corrected. All 56 Swift
+files then passed typecheck, and the actual Runner compiled successfully. Real
+Reduce Motion remains respected. Native non-UI tests were not executed on Windows.
+Manual acceptance of animations/filtering/picker height/collections themes and
+Android manual UI review remain pending; successful install is not UI acceptance.
+Local signed IPA and sanitized build identity remain under ignored build/xcross-ios.
+
+### 2026-11-17 — Profile visual corrections after 3092
+
+Owner feedback: use actual month row count and a month-only title; synchronize calendar
+height with profile tabs; retain photos in the collapsed week. Remove global profile
+insets, reuse the feed check-in renderer (including yellow likes), and replace the edit
+profile form with native inputs and a save button without a separate background plate.
+Android shares the calendar and timeline corrections; native editor integration is iOS.
+
+Verification plan: retain selected-date filtering, pagination, account-scoped image
+authorization, feed actions/exposure ownership and existing profile-save validation.
+Run history/profile/community/composition JVM suites, Android directDebug assembly
+and packaged DEX checks, then the scanner-disabled native Debug build. Device review
+is read-only: calendar/photo transitions, feed/profile card parity, native empty/edit
+form layout and cancellation; do not save account changes or send reactions.
+
+Before changes, USB captures of 3092 showed the selected 17 November photo both in the
+expanded month and collapsed week. The reported missing photo did not reproduce in
+that exact scenario; this is not proof for every date or lifecycle transition.
+Captures stay local under ignored build/. Native cells now receive explicit geometry
+as part of the uniform-size correction; protected media policy remains unchanged.
+
+Implementation: community cards now compose the same design-system timeline primitives
+as Android history/profile. The optional iOS presentation seam preserves localized labels,
+allowed callbacks and feed exposure tracking, and mounts the same SwiftUI check-in card
+used by native own/public profiles. Text has local insets; the multi-photo strip scrolls
+through the full viewport. Card height follows its measured content, and mounted UIKit
+containment reuses the editor host with cooperative scrolling. Account replacement clears
+the card's presentation and invalidates its actions and image observations.
+
+Edit Profile uses native fields over the existing feature ViewModel, confirmation and
+partial-save handling. A revoked native snapshot clears the draft; account generation is
+checked before writes. Existing avatar picker/compression and resource translations remain.
+
+Android verification: directDebug assembly and packaged DEX class checks pass; 911 JVM
+tests passed (history 91, profile 77, community 58, composition 685), zero failures/errors/
+skips. Initial compile failed on passing a composable function reference to let; replaced
+it with an inline lambda, then the full run passed in 1m01s. Body-limit verification still
+reports only the same two inherited violations; the baseline was not expanded. Native
+build and manual visual acceptance are pending.
+
+Native preflight: all 65 Swift files typecheck with the newly exported Kotlin header.
+The first native compile required matching nullable expect/actual return types; the
+first Swift check required an explicit local capture of the profile editor. Both were
+corrected. The shared-card renderer also passed an isolated Swift check. Both application
+entry points register the native editor/card factories. Full framework/link/install
+and device acceptance remain pending.
+
+Native build/install result: full framework completed in 9m54s and Runner in 1m03s.
+Installed CoffeePeek Xcross 1.2.1 (3094), source f5a6791a9, on the agreed iPhone15,4 /
+iOS27.0.1. Installation preparation reused the framework in 2.1s; signing took 3.5s,
+USB installation 14.5s. InstallationProxy independently confirms 3094 and unchanged
+main app com.coffeepeek 1.2.1 (3108); CoreDevice confirms one running test-app process.
+The update preserved data and the scanner remains disabled. Code is published to
+codex/ios-native. Signed IPA/build identity are local under ignored build/xcross-ios.
+Manual device review of the new calendar/card/editor and Android visual review are
+still pending; successful compilation and startup alone do not certify those gates.
+
+### 2026-11-17 — native check-in details and Settings top inset
+
+Owner feedback: Home/shop detail backgrounds and custom navigation diverge; Settings
+retains a fixed top safe-area strip, and Profile title is smaller than Settings.
+Scope: optional feature presentation seams reuse existing ViewModels/actions and
+compose one native detail body using the existing feed/profile card. UIKit owns
+detail navigation. Settings scroll extends under the status bar with initial title
+clearance inside scroll content; Profile and Settings share the 28-point bold token.
+
+Verification plan: Home detail presentation/action regressions, community and app
+composition JVM tests, directDebug assembly with packaged DEX checks, Kotlin body
+limits, full native framework and Swift compilation, then an in-place USB update.
+Preserve account revocation, protected photo variants, deletion/back guards, editing,
+analytics ownership and real-account data. Manual read-only light/dark detail and
+scrolled Settings checks remain device gates; no live write or consent test is planned.
+
+Android verification: 835 JVM tests pass (Home detail/editor 92, community 58,
+composition 685), zero failures/errors/skips; directDebug APK assembly and packaged
+DEX checks pass. First run failed to compile two new test assertions due to inferred
+sealed-action subtype lists; explicit expected list types fixed them. The complete
+retry passed in 34s. Function-body verification reports only the two inherited
+violations (business ownership factory and public-profile session); no new/grown
+violations and no baseline changes. Native compilation and device checks are pending.
+
+Native preflight: Kotlin sources compile and all 68 Swift files typecheck against
+the newly exported framework header. The initial Kotlin attempt required explicit
+UIKit category-property imports; the corrected compile passes. Native detail back
+uses the feature callback (including revoked-account close); ordinary community
+details retain the native swipe gesture. Full framework/link and device review remain
+pending. Both startup entry points and the Xcode source list register the detail host.
+
+2026-11-18 native delivery: full framework passed in 13m35s, Runner in 1m28s.
+Installed CoffeePeek Xcross 1.2.1 (3096), source f2e04e860, on the agreed iPhone15,4 /
+iOS27.0.1. The install preparation reused the framework in 2.4s; signing took 6.0s,
+USB installation 15.4s. InstallationProxy confirms 3096 and unchanged main app 3108;
+CoreDevice confirms one running Xcross process. No data clearing or downgrade.
+Signed IPA and source/build identity are retained locally under ignored build/xcross-ios.
+Code is published to codex/ios-native. Scrolled Settings and Home/shop detail visual
+acceptance on the device remain pending, as does Android manual UI review.
+
+Read-only device check: user opened Settings and scrolled to Other settings.
+USB capture in dark theme shows content continuing beneath the status bar and no
+fixed root title/top safe-area band. No settings, consents or account data changed.
+Capture stays local in ignored build/. Root headings at scroll origin and both detail
+variants still need visual review; this one capture does not certify those states.
+
+### 2026-11-18 — detail menus, collection covers and native community feed
+
+Owner accepted Settings safe area and the profile check-in list. Follow-up scope:
+Home edit/delete move into the same top ellipsis menu as other check-ins, community
+detail title becomes Check-in, collection covers fade from clear at the top to dark
+at the bottom, and the iOS feed becomes a native list. Shelf is explicitly excluded.
+
+Verification plan: preserve existing shared feed ViewModel and mutation/analytics
+callbacks, guest first-card/teaser access, saved confirmations, refresh/pagination,
+editor/report/photo overlays, account revocation and protected media permissions.
+Run Home/community/collections/media/composition JVM checks, Android directDebug
+assembly with DEX verification, body limits, Swift typecheck and native build. Finish
+with an in-place iPhone update and read-only feed/detail/collection visual checks.
+Do not create records, like, change visibility or delete user data during validation.
+
+Implementation ownership: feature/community supplies a minimal native presentation
+and original callbacks; composition adapts media/session and measured exposure.
+SwiftUI owns native list/refresh/geometry and reuses the existing shared check-in card.
+The native feed keeps the real pinned title and notifications slot; ranking stays
+disabled as in the running app. Android retains the active Compose renderer.
+
+Verification: 993 JVM tests pass (Home 93, community 65, collections 79, media 71,
+composition 685), no failures/errors/skips. Android directDebug assembly and packaged
+DEX checks pass. Latest refresh-mutation regression executed separately with body
+verification; only the same two inherited body-limit violations remain. Account epoch
+is separate from refresh/scope generation so native pull-to-refresh retains its host;
+account replacement recreates it. Overlay callbacks are sanitized without dropping
+card keys, and exposure dwell is keyed per visible card using the existing ledger.
+Native compilation and device review are pending. Profile follow-up is committed on
+its checkpoint; the feed continues in child branch codex/migration-ios-native-feed.
+
+Native preflight passes: Kotlin iOS sources compile, all 73 Swift sources typecheck
+against the updated header. Both entry points and the Xcode source list register the
+feed host. Full framework/link and device checks are still pending.
+
+Native delivery: framework passed in 13m45s and Runner in 1m36s. Installed CoffeePeek
+Xcross 1.2.1 (3099), source 2f96432fa, on the agreed iPhone15,4 / iOS27.0.1. Installer
+reused the framework in 2.5s; signing 4.8s, installation 15.1s. InstallationProxy
+independently confirms 3099, CoreDevice confirms one running Xcross process, and main
+app com.coffeepeek remains 1.2.1 (3108). Data preserved, scanner still disabled.
+Code is pushed to codex/ios-native; signed IPA and build identity are local in ignored
+build/xcross-ios. Manual feed/menu/cover verification remains pending; startup alone
+does not prove pagination, refresh, theme parity or mutation acceptance.

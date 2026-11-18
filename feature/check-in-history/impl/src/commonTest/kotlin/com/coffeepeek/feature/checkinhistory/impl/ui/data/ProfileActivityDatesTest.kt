@@ -7,6 +7,18 @@ import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class ProfileActivityDatesTest {
+    @Test fun expandedMonthHasOnlyItsActualWeeks() {
+        val february = profileActivityDates("2026-11-17", HistoryMonth(2021, 2), true)
+        val october = profileActivityDates("2026-11-17", HistoryMonth(2026, 10), true)
+        assertEquals(28, february.size)
+        assertEquals("2021-02-01", february.first())
+        assertEquals("2021-02-28", february.last())
+        assertEquals(35, october.size)
+        assertEquals(31, october.filterNotNull().size)
+        assertEquals("2026-10-31", october[33])
+        assertNull(october.last())
+    }
+
     @Test fun collapsedWeekCrossesYearWithoutUsingBrowsedMonth() {
         val dates = profileActivityDates("2027-01-01", HistoryMonth(2026, 10), false)
         assertEquals(listOf("2026-12-28", "2026-12-29", "2026-12-30", "2026-12-31",

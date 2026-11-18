@@ -20,14 +20,17 @@ fun CoffeePeekTimelineHeader(
     name: String, dateLabel: String, modifier: Modifier = Modifier,
     avatar: @Composable (Modifier) -> Unit,
     actions: @Composable () -> Unit = {},
+    identityModifier: Modifier = Modifier,
 ) {
     Row(modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-        CoffeePeekAvatar(name, Modifier.clearAndSetSemantics {}, avatar)
-        Column(Modifier.weight(1f).padding(start = CoffeePeekDimens.spacing3), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-            Text(name, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurface, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            if (dateLabel.isNotBlank()) Text(dateLabel, style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
+        Row(Modifier.weight(1f).then(identityModifier), verticalAlignment = Alignment.CenterVertically) {
+            CoffeePeekAvatar(name, Modifier.clearAndSetSemantics {}, avatar)
+            Column(Modifier.weight(1f).padding(start = CoffeePeekDimens.spacing3), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Text(name, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                if (dateLabel.isNotBlank()) Text(dateLabel, style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            }
         }
         actions()
     }

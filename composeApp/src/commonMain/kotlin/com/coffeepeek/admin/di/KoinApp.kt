@@ -39,7 +39,7 @@ import com.coffeepeek.admin.di.roaster.roasterScreenRenderer
 import com.coffeepeek.admin.ui.screen.roaster.RoasterScreenRenderer
 import com.coffeepeek.admin.ui.screen.shop.ShopDetailScreenRenderer
 import com.coffeepeek.admin.ui.screen.shop.ShopCheckInListScreenRenderer
-import com.coffeepeek.admin.ui.screen.checkins.CheckInHistoryScreenRenderer
+import com.coffeepeek.admin.ui.screen.checkins.HomeCheckInDetailRenderer
 import com.coffeepeek.admin.ui.screen.checkins.CheckInCreateFlowRenderer
 import com.coffeepeek.admin.ui.screen.review.ContentReportScreenRenderer
 import org.koin.core.context.startKoin
@@ -152,7 +152,7 @@ private fun appModule(
     }
     single<com.coffeepeek.admin.ui.screen.checkins.CheckInShopPickerRenderer> { checkInRenderers.shopPicker(this) }
     single<CheckInCreateFlowRenderer> { checkInRenderers.create(this) }
-    single<CheckInHistoryScreenRenderer> { checkInRenderers.history(this) }
+    single<HomeCheckInDetailRenderer> { checkInRenderers.homeDetail(this) }
     single<ShopDetailScreenRenderer> { shopDetailRendererFactory() }
     single<ShopCheckInListScreenRenderer> { shopCheckInListRendererFactory() }
     single<ShopCheckInFormRenderer> { shopCheckInRendererFactory() }

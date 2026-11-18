@@ -37,6 +37,18 @@ import com.coffeepeek.core.designsystem.modifier.CoffeePeekGlassIcon
 import com.coffeepeek.core.designsystem.modifier.CoffeePeekNativeGlassPresenter
 import com.coffeepeek.core.designsystem.modifier.LocalCoffeePeekNativeGlassPresenter
 import kotlinx.cinterop.useContents
+import kotlinx.cinterop.ObjCAction
+import platform.Foundation.NSSelectorFromString
+import platform.UIKit.UIBarButtonItem
+import platform.UIKit.UIBarButtonItemStyle
+import platform.UIKit.UIImage
+import platform.UIKit.UIColor
+import platform.UIKit.UINavigationBarAppearance
+import platform.UIKit.UINavigationItemLargeTitleDisplayMode
+import platform.UIKit.NSForegroundColorAttributeName
+import platform.UIKit.navigationItem
+import platform.UIKit.navigationController
+import platform.UIKit.accessibilityLabel
 import platform.UIKit.UINavigationController
 import platform.UIKit.NSLayoutConstraint
 import platform.UIKit.UIRectEdgeAll
@@ -47,7 +59,7 @@ import platform.UIKit.UIViewController
 import platform.UIKit.addChildViewController
 import platform.UIKit.didMoveToParentViewController
 
-/** UIKit owns the route and bounds. The child owns the screen content and header. */
+/** UIKit owns routes and detail navigation; tab children own their scrolling headings. */
 internal class NativeScreenController(
     title: String? = null,
     val route: Navigator.Screen? = null,
@@ -64,11 +76,63 @@ internal class NativeScreenController(
     private var contentController: UIViewController? = null
     private var contentTopConstraint: NSLayoutConstraint? = null
     private val photoUnderStatusBar = route is Navigator.Screen.ShopDetail || route is Navigator.Screen.RoasterDetail
+    private val isProfileTab = isTabRoot && route == Navigator.Screen.ProfileTab
+    private val isSettingsTab = isTabRoot && route == Navigator.Screen.SettingsTab
     private val isAuthFlow = route == Navigator.Screen.Auth || route == Navigator.Screen.Register ||
         route is Navigator.Screen.ShopCheckInSignIn ||
         route == Navigator.Screen.ForgotPassword || route is Navigator.Screen.ResetPassword
-    private val extendsUnderStatusBar get() = photoUnderStatusBar || isAuthFlow || expandedMap
+    private val extendsUnderStatusBar get() = photoUnderStatusBar || isProfileTab || isSettingsTab || isAuthFlow || expandedMap
+    internal val supportsNativeDetailBar = route is Navigator.Screen.HomeCheckInDetail ||
+        route is Navigator.Screen.CheckInDetail || route is Navigator.Screen.EditHomeCheckIn
+    internal var nativeDetailBarVisible = supportsNativeDetailBar && route !is Navigator.Screen.EditHomeCheckIn
+        private set
+    private var detailBack: (() -> Unit)? = null
+    private var detailBackEnabled = true
     var handlesBackLocally = false
+
+    internal fun configureDetailNavigation(title: String, backEnabled: Boolean, onBack: (() -> Unit)?, backLabel: String) {
+        if (!supportsNativeDetailBar) return
+        this.title = title
+        detailBack = onBack
+        detailBackEnabled = backEnabled
+        handlesBackLocally = !backEnabled || (onBack != null && route !is Navigator.Screen.CheckInDetail)
+        nativeDetailBarVisible = true
+        navigationItem.largeTitleDisplayMode = UINavigationItemLargeTitleDisplayMode.UINavigationItemLargeTitleDisplayModeNever
+        navigationItem.hidesBackButton = !backEnabled
+        navigationItem.leftBarButtonItem = onBack?.let { detailBackItem(backLabel, backEnabled) }
+        if (navigationController?.topViewController == this) navigationController?.setNavigationBarHidden(false, false)
+    }
+
+    private fun detailBackItem(label: String, enabled: Boolean) = UIBarButtonItem(
+        image = UIImage.systemImageNamed("chevron.backward"), style = UIBarButtonItemStyle.UIBarButtonItemStylePlain,
+        target = this, action = NSSelectorFromString("onDetailBack:"),
+    ).apply { accessibilityLabel = label; this.enabled = enabled }
+
+    @ObjCAction fun onDetailBack(sender: UIBarButtonItem) {
+        if (detailBackEnabled) detailBack?.invoke()
+    }
+
+    internal fun resetDetailNavigation() {
+        if (!supportsNativeDetailBar) return
+        detailBack = null
+        handlesBackLocally = false
+        nativeDetailBarVisible = false
+        navigationItem.leftBarButtonItem = null
+        if (navigationController?.topViewController == this) navigationController?.setNavigationBarHidden(true, false)
+    }
+
+    private fun updateDetailAppearance(background: UIColor, foreground: UIColor) {
+        if (!supportsNativeDetailBar) return
+        val appearance = UINavigationBarAppearance().apply {
+            configureWithOpaqueBackground()
+            backgroundColor = background
+            titleTextAttributes = mapOf(NSForegroundColorAttributeName to foreground)
+            shadowColor = UIColor.clearColor
+        }
+        navigationItem.standardAppearance = appearance
+        navigationItem.scrollEdgeAppearance = appearance
+        navigationItem.compactAppearance = appearance
+    }
 
     init {
         this.title = title
@@ -172,6 +236,7 @@ internal class NativeScreenController(
             overrideUserInterfaceStyle = themeMode.uiKitStyle
             view.backgroundColor = colors.background.toUIColor()
             view.tintColor = colors.primary.toUIColor()
+            updateDetailAppearance(colors.background.toUIColor(), colors.onBackground.toUIColor())
             setNeedsStatusBarAppearanceUpdate()
         }
         val floatingClearance = if (isTabRoot) bottomClearance else 0.dp

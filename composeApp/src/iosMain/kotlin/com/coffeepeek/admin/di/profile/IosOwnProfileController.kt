@@ -6,6 +6,7 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import com.coffeepeek.admin.di.checkinhistory.AppCheckInHistoryCalendar
 import com.coffeepeek.admin.di.checkinhistory.CheckInHistorySession
 import com.coffeepeek.admin.di.media.IosCatalogueMedia
+import com.coffeepeek.admin.config.AppConfig
 import com.coffeepeek.admin.locator.Constants
 import com.coffeepeek.admin.session.OldReviewDrafts
 import com.coffeepeek.core.media.ImageUrlFetcher
@@ -14,7 +15,7 @@ import com.coffeepeek.feature.auth.domain.AuthRepository
 import com.coffeepeek.feature.authorblocking.api.AuthorVisibility
 import com.coffeepeek.feature.checkinhistory.domain.repository.CheckInHistoryRepository
 import com.coffeepeek.feature.checkinhistory.domain.repository.HomeHistoryReader
-import com.coffeepeek.feature.checkinhistory.impl.createIosProfileActivitySession
+import com.coffeepeek.feature.checkinhistory.impl.createIosOwnProfileHistorySession
 import com.coffeepeek.feature.notifications.api.NotificationFeature
 import com.coffeepeek.feature.profile.api.ProfileAccountPort
 import com.coffeepeek.feature.profile.api.ProfileSnapshotStore
@@ -50,9 +51,12 @@ internal fun iosOwnProfileContent(): () -> UIViewController {
     return {
         val lease = CheckInHistorySession(sessions)
         val profile = createIosOwnProfileSession(accounts, AppProfileSignOut(notifications, auth, drafts),
-            repository, checkIns, AppProfileAuthorVisibility(visibility), snapshots)
-        factory(IosOwnProfile(profile, lease, { expanded ->
-            createIosProfileActivitySession(lease.bind(shops), lease.bind(homes), calendar::snapshot, expanded)
-        }, language, media))
+            repository, checkIns, AppProfileAuthorVisibility(visibility), snapshots, ::profileLifecycleDiagnostic)
+        factory(IosOwnProfile(profile, lease,
+            createIosOwnProfileHistorySession(lease.bind(shops), lease.bind(homes), calendar::snapshot), language, media))
     }
+}
+
+private fun profileLifecycleDiagnostic(message: String) {
+    if (AppConfig.isDebug) println("OwnProfileLifecycle $message")
 }

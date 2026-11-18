@@ -7,13 +7,13 @@ rows navigate. The root navigation still owns the screen visit and all
 destination pushes. The tab identity, active-account checks and profile
 snapshot cache are retained.
 
-The signed-in check-in list advances the shared profile cursor when the user
+The signed-in check-in list loads more shared history rows when the user
 reaches the end of the loaded rows. The iOS image observer uses the same
 protected photo access as the viewer for check-in photos and coffee bags.
 
 The selected profile section and calendar mode belong to the current native
 controller. A new login lifetime revokes the previous profile and history
-sessions and replaces the Profile tab's UIKit stack. Token renewal within the
+sessions and recreates native navigation. Token renewal within the
 same login keeps that stack. The guest and public profiles keep their existing
 entry points.
 

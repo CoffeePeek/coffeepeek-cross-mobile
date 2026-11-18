@@ -72,3 +72,6 @@
 "profile_stat_shops" = "Кавярні";
 "profile_title" = "Профіль";
 "profile_update_failed" = "Не ўдалося абнавіць профіль";
+
+"profile_check_ins_clear_date" = "Скінуць дату";
+"profile_check_in_open" = "Адкрыць чэкін";

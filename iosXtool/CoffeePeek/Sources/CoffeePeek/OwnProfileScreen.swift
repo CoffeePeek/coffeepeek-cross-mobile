@@ -9,23 +9,29 @@ func makeOwnProfileController(profile: IosOwnProfile) -> UIViewController {
 
 private final class OwnProfileHostingController: UIHostingController<OwnProfileHost> {
     private let profile: IosOwnProfile
+    private let model: OwnProfileModel
 
     init(profile: IosOwnProfile) {
         self.profile = profile
-        super.init(rootView: OwnProfileHost(profile: profile))
+        let model = OwnProfileModel(profile: profile)
+        self.model = model
+        super.init(rootView: OwnProfileHost(model: model))
     }
 
     @MainActor required dynamic init?(coder: NSCoder) { return nil }
 
+    override func viewSafeAreaInsetsDidChange() {
+        super.viewSafeAreaInsetsDidChange()
+        model.headerTopInset = view.safeAreaInsets.top
+    }
+
+    // SwiftUI may rebuild its state graph while UIKit retains the root tab.
+    // The account lease ends only when that root controller is released.
     deinit { profile.close() }
 }
 
 private struct OwnProfileHost: View {
-    @StateObject private var model: OwnProfileModel
-
-    init(profile: IosOwnProfile) {
-        _model = StateObject(wrappedValue: OwnProfileModel(profile: profile))
-    }
+    @ObservedObject var model: OwnProfileModel
 
     var body: some View {
         OwnProfileScreen(model: model)
@@ -44,18 +50,21 @@ private struct OwnProfileScreen: View {
 
     var body: some View {
         GeometryReader { geometry in
-            ScrollView {
-                VStack(alignment: .leading, spacing: 16) {
-                    menu
-                    profileContent(viewport: geometry.size.height)
+            ScrollViewReader { proxy in
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 12) {
+                        menu.padding(.horizontal, 16).padding(.top, model.headerTopInset).id("own-profile-top")
+                        profileContent(viewport: geometry.size.height, width: geometry.size.width)
+                    }
+                    .padding(.bottom, 100)
+                    .ownProfileCalendarAnimation(model.activity)
                 }
-                .padding(.horizontal, 16)
-                .padding(.top, 8)
-                .padding(.bottom, 24)
+                .accessibilityIdentifier("own-profile")
+                .onChange(of: model.scrollRevision) { _, _ in proxy.scrollTo("own-profile-top", anchor: .top) }
             }
-            .accessibilityIdentifier("own-profile")
         }
-        .font(CoffeePeekNativeStyle.font(16))
+        .ignoresSafeArea(.container, edges: [.top, .leading, .trailing])
+        .font(CoffeePeekNativeStyle.font(15))
         .foregroundStyle(CoffeePeekNativeStyle.foreground)
         .tint(CoffeePeekNativeStyle.accent)
         .background(CoffeePeekNativeStyle.background.ignoresSafeArea())
@@ -79,6 +88,9 @@ private struct OwnProfileScreen: View {
                 .padding()
                 OwnProfileEmbedded(controller: slot.controller)
             }
+            .background(CoffeePeekNativeStyle.background)
+            .foregroundStyle(CoffeePeekNativeStyle.foreground)
+            .tint(CoffeePeekNativeStyle.foreground)
             .presentationDetents([.medium, .large])
         }
     }
@@ -86,7 +98,7 @@ private struct OwnProfileScreen: View {
     private var menu: some View {
         HStack {
             Text(model.strings["profile_title"])
-                .font(CoffeePeekNativeStyle.font(24, weight: "Medium", relativeTo: .title))
+                .font(CoffeePeekNativeStyle.rootHeadingFont)
                 .accessibilityAddTraits(.isHeader)
             Spacer(minLength: 0)
             if model.state.active {
@@ -102,7 +114,7 @@ private struct OwnProfileScreen: View {
                     Button(model.strings["profile_menu_logout"], systemImage: "rectangle.portrait.and.arrow.right",
                            role: .destructive) { model.logoutPresented = true }
                 } label: {
-                    Image(systemName: "ellipsis").frame(width: 46, height: 46)
+                    Image(systemName: "ellipsis").frame(width: 48, height: 48)
                         .background(CoffeePeekNativeStyle.surface, in: Circle())
                         .overlay {
                             Circle().strokeBorder(CoffeePeekNativeStyle.border.opacity(0.45))
@@ -116,18 +128,25 @@ private struct OwnProfileScreen: View {
     }
 
     @ViewBuilder
-    private func profileContent(viewport: CGFloat) -> some View {
+    private func profileContent(viewport: CGFloat, width: CGFloat) -> some View {
         if let identity = model.state.identity {
             OwnProfileHeader(identity: identity, strings: model.strings, profile: model.profile,
                              select: model.selectStat, signedInLayout: true)
+                .padding(.horizontal, 16)
+            if let activity = model.activity {
+                OwnProfileActivityView(state: activity, model: model, strings: model.strings, availableWidth: width - 32)
+                    .padding(.horizontal, 16)
+            }
             if model.state.refreshFailed {
                 OwnProfileRetry(message: model.strings["profile_update_failed"], strings: model.strings,
                                 retry: model.profile.refresh)
+                    .padding(.horizontal, 16)
             }
             OwnProfileTabs(selection: model.selected, strings: model.strings, select: model.select, equalWidth: true)
                 .background(alignment: .bottom) {
                     Rectangle().fill(CoffeePeekNativeStyle.border.opacity(0.45)).frame(height: 1)
                 }
+                .padding(.horizontal, 16)
             profileTab(viewport: viewport)
         } else if model.state.loading || model.state.refreshing {
             ProgressView().frame(maxWidth: .infinity, minHeight: 130)
@@ -135,16 +154,12 @@ private struct OwnProfileScreen: View {
         } else if model.state.active {
             OwnProfileRetry(message: model.strings["profile_load_failed"], strings: model.strings,
                             retry: model.profile.refresh)
+                .padding(.horizontal, 16)
         }
     }
 
     private var checkInsTab: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            if let activity = model.activity {
-                OwnProfileActivityView(state: activity, model: model, strings: model.strings)
-            }
-            OwnProfileCheckIns(model: model)
-        }
+        OwnProfileCheckIns(model: model)
     }
 
     @ViewBuilder
@@ -164,10 +179,10 @@ private struct OwnProfileScreen: View {
                     }
                     .accessibilityLabel(model.strings["profile_collections_settings"])
                 }
+                .padding(.horizontal, 16)
                 if let collections = model.collections {
                     OwnProfileEmbedded(controller: collections)
                         .frame(height: collectionsHeight)
-                        .padding(.horizontal, -16)
                 }
             }
             .tint(CoffeePeekNativeStyle.foreground)
@@ -175,7 +190,6 @@ private struct OwnProfileScreen: View {
             if let shelf = model.shelf {
                 OwnProfileEmbedded(controller: shelf)
                     .frame(height: max(400, viewport))
-                    .padding(.horizontal, -16)
             }
         }
     }
@@ -189,6 +203,8 @@ final class OwnProfileModel: ObservableObject {
     @Published private(set) var photoViewer: IosPhotoViewer?
     @Published var preferences: OwnProfileSlot?
     @Published var logoutPresented = false
+    @Published private(set) var scrollRevision = 0
+    @Published var headerTopInset: CGFloat = 0
     let profile: IosOwnProfile
     private(set) var shelf: UIViewController?
     private(set) var collections: UIViewController?
@@ -214,10 +230,13 @@ final class OwnProfileModel: ObservableObject {
     func observe() {
         guard observation == nil else { return }
         update(profile.current())
+        profile.resume()
         if profile.shelfRequested() { openRequestedShelf() }
+        if profile.checkInsRequested() { openRequestedCheckIns() }
         observation = profile.observe(onState: { [weak self] in self?.update($0) },
                                       onLanguage: { [weak self] in self?.strings = OwnProfileStrings(languageTag: $0) },
-                                      onShelf: { [weak self] in self?.openRequestedShelf() })
+                                      onShelf: { [weak self] in self?.openRequestedShelf() },
+                                      onCheckIns: { [weak self] in self?.openRequestedCheckIns() })
     }
 
     func stopObserving() {
@@ -236,7 +255,7 @@ final class OwnProfileModel: ObservableObject {
 
     func selectStat(_ stat: OwnProfileStat) {
         switch stat {
-        case .checkIns: profile.openHistory()
+        case .checkIns: select(.checkIns)
         case .shops: profile.openContribution(kind: OwnProfileContribution.shops.rawValue)
         case .roasters: profile.openContribution(kind: OwnProfileContribution.roasters.rawValue)
         case .followers: profile.openFollowers()
@@ -248,13 +267,14 @@ final class OwnProfileModel: ObservableObject {
         photoViewer = profile.checkInViewer(id: id, index: Int32(index))
     }
 
-    func loadMoreCheckIns() {
-        guard state.active, selected == .checkIns, state.checkInsHasMore,
-              !state.checkInsLoading, !state.checkInsLoadingMore, !state.checkInsFailed else { return }
-        profile.loadMoreCheckIns()
+    func dismissPhotoViewer() { photoViewer = nil }
+
+    func selectDay(_ date: String) {
+        selected = .checkIns
+        profile.selectDay(date: date)
     }
 
-    func dismissPhotoViewer() { photoViewer = nil }
+    func clearSelectedDay() { profile.clearSelectedDay() }
 
     func toggleActivity() {
         expanded.toggle()
@@ -287,6 +307,13 @@ final class OwnProfileModel: ObservableObject {
     private func observeCalendar() {
         activity = profile.activity(expanded: expanded)
         calendarObservation = profile.observeActivity(expanded: expanded) { [weak self] in self?.activity = $0 }
+    }
+
+    private func openRequestedCheckIns() {
+        selected = .checkIns
+        profile.clearSelectedDay()
+        profile.consumeCheckInsRequest()
+        scrollRevision += 1
     }
 
     private func openRequestedShelf() {
@@ -347,10 +374,4 @@ private enum OwnProfileContribution: String, CaseIterable, Identifiable {
 struct OwnProfileSlot: Identifiable {
     let controller: UIViewController
     var id: ObjectIdentifier { ObjectIdentifier(controller) }
-}
-
-struct OwnProfileEmbedded: UIViewControllerRepresentable {
-    let controller: UIViewController
-    func makeUIViewController(context: Context) -> UIViewController { controller }
-    func updateUIViewController(_ uiViewController: UIViewController, context: Context) {}
 }

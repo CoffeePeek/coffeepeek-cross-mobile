@@ -3,7 +3,6 @@
 package com.coffeepeek.admin.ui
 
 import androidx.compose.runtime.Composable
-import platform.UIKit.UINavigationController
 import platform.UIKit.UIViewController
 
 /** Ordered to match the stable UIKit indexes in [nativeTabIndex]. */
@@ -30,19 +29,4 @@ internal enum class IosRootTab(
         nativeContent = nativeContent(screen),
         content = content,
     )
-}
-
-/** The signed-in profile's UIKit stack belongs to one account login lifetime. */
-internal class NativeProfileTabAccount(private var scope: String?) {
-    fun rebind(
-        nextScope: String?,
-        navigation: UINavigationController,
-        createRoot: () -> UIViewController,
-    ): Boolean {
-        if (scope == nextScope) return false
-        scope = nextScope
-        if (nextScope == null) return false
-        navigation.setViewControllers(listOf(createRoot()), false)
-        return true
-    }
 }

@@ -35,35 +35,59 @@ func makeSettingsController(screen: IosSettingsScreen) -> UIViewController {
 
 @MainActor
 private func hostSettingsTab(_ model: IosSettingsTab) -> UIViewController {
-    SettingsHostingController(screen: model, rootView: SettingsStateHost(
-        screen: model,
-        current: model.currentState,
-        observe: model.observeState,
-        start: {
-            model.screenShown()
-            return [model.observeNotificationRefresh(), model.observeUpdateMessage { key in
-                model.showUpdateMessage(message: SettingsNativeStrings(languageTag: model.languageTag()).text(key))
-            }]
+    let layout = SettingsTabLayout()
+    return SettingsHostingController(
+        screen: model, rootView: SettingsTabHost(model: model, layout: layout),
+        safeAreaChanged: { layout.headerTopInset = $0 }
+    )
+}
+
+private final class SettingsTabLayout: ObservableObject {
+    @Published var headerTopInset: CGFloat = 0
+}
+
+private struct SettingsTabHost: View {
+    let model: IosSettingsTab
+    @ObservedObject var layout: SettingsTabLayout
+
+    var body: some View {
+        SettingsStateHost(
+            screen: model,
+            current: model.currentState,
+            observe: model.observeState,
+            start: {
+                model.screenShown()
+                return [model.observeNotificationRefresh(), model.observeUpdateMessage { key in
+                    model.showUpdateMessage(message: SettingsNativeStrings(languageTag: model.languageTag()).text(key))
+                }]
+            }
+        ) { state, strings in
+            SettingsNativeTab(
+                state: state, strings: strings, open: model.open, checkForUpdates: model.checkForUpdates,
+                setPushEnabled: model.setPushEnabled, refreshNotifications: model.refreshNotifications,
+                switchAccount: model.switchAccount, headerTopInset: layout.headerTopInset
+            )
         }
-    ) { state, strings in
-        SettingsNativeTab(
-            state: state, strings: strings, open: model.open, checkForUpdates: model.checkForUpdates,
-            setPushEnabled: model.setPushEnabled, refreshNotifications: model.refreshNotifications,
-            switchAccount: model.switchAccount
-        )
-    })
+    }
 }
 
 private final class SettingsHostingController<Content: View>: UIHostingController<Content> {
     private let screen: IosSettingsScreen
+    private let safeAreaChanged: ((CGFloat) -> Void)?
 
-    init(screen: IosSettingsScreen, rootView: Content) {
+    init(screen: IosSettingsScreen, rootView: Content, safeAreaChanged: ((CGFloat) -> Void)? = nil) {
         self.screen = screen
+        self.safeAreaChanged = safeAreaChanged
         super.init(rootView: rootView)
     }
 
     @MainActor required dynamic init?(coder: NSCoder) {
         return nil
+    }
+
+    override func viewSafeAreaInsetsDidChange() {
+        super.viewSafeAreaInsetsDidChange()
+        safeAreaChanged?(view.safeAreaInsets.top)
     }
 
     deinit {

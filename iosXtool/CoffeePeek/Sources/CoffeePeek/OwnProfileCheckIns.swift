@@ -5,349 +5,61 @@ struct OwnProfileCheckIns: View {
     @ObservedObject var model: OwnProfileModel
 
     var body: some View {
-        let state = model.state
-        LazyVStack(alignment: .leading, spacing: 20) {
-            if state.checkIns.isEmpty && !state.checkInsLoading && !state.checkInsHasMore && !state.checkInsFailed {
-                Text(model.strings["profile_check_ins_empty"]).foregroundStyle(CoffeePeekNativeStyle.secondary)
+        OwnProfileCheckInsContent(state: model.state, strings: model.strings, profile: model.profile,
+            retry: model.profile.retryCheckIns, more: model.profile.moreCheckIns,
+            clearDate: model.clearSelectedDay,
+            openPhoto: { model.openPhoto(id: $0, index: $1) }, openEntry: model.profile.openCheckIn)
+    }
+}
+
+private struct OwnProfileCheckInsContent: View {
+    let state: IosOwnProfileState
+    let strings: OwnProfileStrings
+    var profile: IosOwnProfile? = nil
+    var retry: () -> Void = {}
+    var more: () -> Void = {}
+    var clearDate: () -> Void = {}
+    var openPhoto: (String, Int) -> Void = { _, _ in }
+    var openEntry: (String) -> Void = { _ in }
+
+    var body: some View {
+        LazyVStack(alignment: .leading, spacing: 16) {
+            if let date = state.selectedDate {
+                HStack {
+                    Text(date).font(CoffeePeekNativeStyle.font(15, weight: "Semibold"))
+                    Spacer()
+                    Button(strings["profile_check_ins_clear_date"], action: clearDate).frame(minHeight: 44)
+                }
+                .padding(.horizontal, 16)
             }
+            feedback.padding(.horizontal, 16)
             ForEach(state.checkIns, id: \.id) { checkIn in
-                OwnProfileCheckInCard(checkIn: checkIn, strings: model.strings, profile: model.profile,
-                    openShop: { model.profile.openShop(slug: $0) },
-                    openCoffee: { model.profile.openCoffee(slug: $0) },
-                    openPhoto: { model.openPhoto(id: checkIn.id, index: $0) }, timeline: true)
+                OwnProfileCheckInCard(checkIn: checkIn, strings: strings, profile: profile,
+                    openShop: { profile?.openShop(slug: $0) }, openCoffee: { profile?.openCoffee(slug: $0) },
+                    openPhoto: { openPhoto(checkIn.id, $0) }, openEntry: { openEntry(checkIn.id) })
             }
-            if state.checkInsLoading || state.checkInsLoadingMore {
-                ProgressView().frame(maxWidth: .infinity, minHeight: 44)
-                    .accessibilityLabel(model.strings["profile_loading"])
-            } else if state.checkInsFailed {
-                OwnProfileRetry(message: model.strings["profile_check_ins_failed"], strings: model.strings,
-                                retry: model.profile.retryCheckIns)
-            } else if state.checkInsHasMore {
-                Color.clear.frame(height: 1)
-                    .accessibilityHidden(true)
-                    .task(id: state.checkInsPageRevision) { model.loadMoreCheckIns() }
-            }
-        }
-    }
-}
-
-struct OwnProfileCheckInCard: View {
-    let checkIn: IosOwnProfileCheckIn
-    let strings: OwnProfileStrings
-    let profile: IosOwnProfile?
-    let openShop: (String) -> Void
-    let openCoffee: (String) -> Void
-    let openPhoto: (Int) -> Void
-    var imageLoader: ProfileImageLoader?
-    var openMenu: (() -> Void)?
-    var report: (() -> Void)?
-    var ratingDescription: String?
-    var timeline = false
-
-    private var loadImage: ProfileImageLoader { imageLoader ?? profileImageLoader(profile) }
-
-    var body: some View {
-        if timeline {
-            content
-        } else {
-            content
-                .padding(12)
-                .background(CoffeePeekNativeStyle.surface, in: RoundedRectangle(cornerRadius: 16))
-                .overlay { RoundedRectangle(cornerRadius: 16).strokeBorder(CoffeePeekNativeStyle.border).allowsHitTesting(false) }
+            pagination.padding(.horizontal, 16)
         }
     }
 
-    private var content: some View {
-        VStack(alignment: .leading, spacing: timeline ? 12 : 10) {
-            author
-            heading
-            if !checkIn.note.isEmpty {
-                if timeline {
-                    Text(checkIn.note).font(CoffeePeekNativeStyle.font(16))
-                        .fixedSize(horizontal: false, vertical: true)
-                } else {
-                    Text(checkIn.note)
-                }
-            }
-            photos
-            footer
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-    }
-
-    private var author: some View {
-        HStack(spacing: timeline ? 12 : 8) {
-            OwnProfileImage(url: checkIn.avatar, symbol: "person.crop.circle", loadImage: loadImage)
-                .frame(width: timeline ? 44 : 32, height: timeline ? 44 : 32).clipShape(Circle())
-            VStack(alignment: .leading, spacing: 2) {
-                Text(checkIn.name).font(CoffeePeekNativeStyle.font(timeline ? 16 : 14, weight: "Semibold"))
-                if !checkIn.date.isEmpty {
-                    Group {
-                        if timeline {
-                            Text(profileTimelineDate(checkIn.date, language: strings.languageTag))
-                                .font(CoffeePeekNativeStyle.font(12, relativeTo: .caption))
-                        } else {
-                            Text(checkIn.date)
-                        }
-                    }.foregroundStyle(CoffeePeekNativeStyle.secondary)
-                }
-            }
-            Spacer(minLength: 0)
-            if let openMenu, let report {
-                Menu {
-                    Button(strings["profile_check_in_report"], systemImage: "flag", action: report)
-                    Button(strings["profile_block_author"], systemImage: "nosign", role: .destructive, action: openMenu)
-                } label: {
-                    Image(systemName: "ellipsis").frame(width: 44, height: 44)
-                }
-                .accessibilityLabel(strings["profile_check_in_actions"])
-            }
+    @ViewBuilder private var feedback: some View {
+        if state.checkInsFailed {
+            OwnProfileRetry(message: strings["profile_check_ins_failed"], strings: strings, retry: retry)
+        } else if state.checkInsLoading && state.checkIns.isEmpty {
+            ProgressView().frame(maxWidth: .infinity, minHeight: 64).accessibilityLabel(strings["profile_loading"])
+        } else if state.checkIns.isEmpty {
+            Text(strings["profile_check_ins_empty"]).foregroundStyle(CoffeePeekNativeStyle.secondary)
         }
     }
 
-    @ViewBuilder
-    private var heading: some View {
-        if checkIn.home {
-            if let brew = checkIn.brew {
-                OwnProfileBrewPreview(brew: brew, strings: strings, loadImage: loadImage,
-                                      openCoffee: openCoffee, timeline: timeline)
-            } else {
-                Text(strings["history_activity_at_home"]).font(.headline)
-            }
-        } else if let slug = checkIn.shopSlug, !slug.isEmpty {
-            Button { openShop(slug) } label: {
-                Label(shopName, systemImage: "arrow.up.right").frame(minHeight: 44)
-            }
-            .buttonStyle(.plain)
-            .font(.headline)
-        } else {
-            Text(shopName).font(.headline)
+    @ViewBuilder private var pagination: some View {
+        if state.loadingMoreCheckIns {
+            ProgressView().frame(maxWidth: .infinity, minHeight: 44).accessibilityLabel(strings["profile_loading"])
+        } else if state.moreCheckInsFailed {
+            OwnProfileRetry(message: strings["profile_check_ins_failed"], strings: strings, retry: retry)
+        } else if state.moreCheckIns && !state.checkInsLoading && !state.checkInsFailed {
+            Color.clear.frame(height: 1).onAppear(perform: more).accessibilityHidden(true)
         }
-        if let score = checkIn.score {
-            Label {
-                Text(score).foregroundStyle(CoffeePeekNativeStyle.foreground)
-            } icon: {
-                Image(systemName: "star.fill").foregroundStyle(CoffeePeekNativeStyle.accent)
-            }
-            .accessibilityLabel(ratingDescription ?? String(format: strings["profile_native_rating"], score))
-        }
-    }
-
-    private var shopName: String {
-        checkIn.shop.isEmpty ? strings["profile_favorite_shop"] : checkIn.shop
-    }
-
-    @ViewBuilder
-    private var photos: some View {
-        if timeline {
-            timelinePhotos
-        } else if !checkIn.photos.isEmpty {
-            ScrollView(.horizontal) {
-                HStack(spacing: 8) {
-                    ForEach(checkIn.photos.indices, id: \.self) { index in
-                        photoTile(index, width: 92, height: 92)
-                    }
-                }
-            }
-        }
-    }
-
-    @ViewBuilder
-    private var timelinePhotos: some View {
-        let indices = checkIn.photos.indices.filter { timelinePhotoURL(checkIn.photos[$0]) != nil }
-        if !indices.isEmpty {
-            GeometryReader { geometry in
-                photoGrid(indices, size: geometry.size)
-            }
-            .aspectRatio(indices.count == 1 ? 2 : 4.0 / 3, contentMode: .fit)
-        } else if let index = checkIn.photos.firstIndex(where: { $0.canOpen }) {
-            photoTile(index, width: 44, height: 44)
-        }
-    }
-
-    @ViewBuilder
-    private func photoGrid(_ indices: [Int], size: CGSize) -> some View {
-        if indices.count == 1 {
-            photoTile(indices[0], width: size.width, height: size.height)
-        } else {
-            let width = max(0, (size.width - 8) / 2)
-            HStack(spacing: 8) {
-                photoTile(indices[0], width: width, height: size.height)
-                if indices.count == 2 {
-                    photoTile(indices[1], width: width, height: size.height)
-                } else {
-                    let height = max(0, (size.height - 8) / 2)
-                    VStack(spacing: 8) {
-                        photoTile(indices[1], width: width, height: height)
-                        photoTile(indices[2], width: width, height: height, more: indices.count - 3)
-                    }
-                }
-            }
-        }
-    }
-
-    private func photoTile(_ index: Int, width: CGFloat, height: CGFloat, more: Int = 0) -> some View {
-        let photo = checkIn.photos[index]
-        let url = timeline ? timelinePhotoURL(photo) : photo.url
-        return Button { openPhoto(index) } label: {
-            OwnProfileImage(url: url, fallbackUrl: photo.fallbackUrl, loadImage: loadImage)
-                .frame(width: width, height: height)
-                .overlay {
-                    if more > 0 {
-                        Color.black.opacity(0.35).overlay { Text("+\(more)").font(.headline).foregroundStyle(.white) }
-                    }
-                }
-                .clipShape(RoundedRectangle(cornerRadius: timeline ? 12 : 8))
-                .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .disabled(!photo.canOpen)
-        .accessibilityLabel(String(format: strings["profile_native_photo"], index + 1, checkIn.photos.count))
-    }
-
-    private func timelinePhotoURL(_ photo: IosOwnProfilePhoto) -> String? {
-        if let url = photo.url, !url.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { return url }
-        if let url = photo.fallbackUrl, !url.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { return url }
-        return nil
-    }
-
-    @ViewBuilder
-    private var footer: some View {
-        if timeline {
-            footerContent.font(CoffeePeekNativeStyle.font(13, relativeTo: .footnote))
-        } else {
-            footerContent
-        }
-    }
-
-    private var footerContent: some View {
-        HStack {
-            Label {
-                Text(checkIn.helpfulCount.formatted()).foregroundStyle(CoffeePeekNativeStyle.foreground)
-            } icon: {
-                Image(systemName: checkIn.liked ? "heart.fill" : "heart")
-                    .foregroundStyle(checkIn.liked ? CoffeePeekNativeStyle.accent : CoffeePeekNativeStyle.foreground)
-            }
-            .accessibilityLabel(strings.count("profile_check_in_likes", Int(checkIn.helpfulCount)))
-            Spacer()
-            if let drink = checkIn.drink { Text(drink) }
-        }
-        .foregroundStyle(CoffeePeekNativeStyle.secondary)
-    }
-}
-
-private func profileTimelineDate(_ value: String, language: String) -> String {
-    guard let day = value.split(separator: " ", maxSplits: 1).first else { return value }
-    let formatter = DateFormatter()
-    formatter.locale = Locale(identifier: "en_US_POSIX")
-    formatter.dateFormat = "dd.MM.yyyy"
-    guard let date = formatter.date(from: String(day)) else { return value }
-    formatter.locale = Locale(identifier: language)
-    formatter.dateFormat = "d MMM yyyy"
-    return formatter.string(from: date)
-}
-
-private struct OwnProfileBrewPreview: View {
-    let brew: IosOwnProfileBrew
-    let strings: OwnProfileStrings
-    let loadImage: ProfileImageLoader
-    let openCoffee: (String) -> Void
-    var timeline = false
-
-    private var cover: String? {
-        guard timeline, let url = brew.cover else { return brew.cover }
-        return url.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? nil : url
-    }
-
-    var body: some View {
-        Group {
-            if let coffee = brew.coffee, !coffee.isEmpty, cover != nil {
-                Button { openCoffee(coffee) } label: { row(link: true) }
-                    .buttonStyle(.plain)
-                    .accessibilityHint(strings["profile_open_coffee"])
-            } else {
-                row(link: false)
-            }
-        }
-        .accessibilityElement(children: .combine)
-    }
-
-    private func row(link: Bool) -> some View {
-        HStack(spacing: timeline ? 12 : 10) {
-            thumbnail
-            VStack(alignment: .leading, spacing: 3) {
-                if timeline { timelineHeading } else { standardHeading }
-                if !details.isEmpty {
-                    recipeDetails
-                }
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            if link {
-                if timeline {
-                    Image(systemName: "chevron.right")
-                        .foregroundStyle(CoffeePeekNativeStyle.secondary)
-                        .accessibilityHidden(true)
-                } else {
-                    Image(systemName: "chevron.right")
-                }
-            }
-        }
-        .frame(minHeight: 44)
-        .contentShape(Rectangle())
-    }
-
-    @ViewBuilder
-    private var thumbnail: some View {
-        if cover != nil || timeline {
-            OwnProfileImage(url: cover, fits: true, loadImage: loadImage)
-                .frame(width: timeline ? 44 : 52, height: timeline ? 54 : 52)
-                .clipShape(RoundedRectangle(cornerRadius: timeline ? 4 : 8))
-        }
-    }
-
-    @ViewBuilder
-    private var standardHeading: some View {
-        Text(title).font(.headline)
-        if let roaster = brew.roaster, !roaster.isEmpty {
-            Text(roaster).foregroundStyle(CoffeePeekNativeStyle.secondary)
-        }
-    }
-
-    private var recipeDetails: some View {
-        Group {
-            if timeline {
-                Text(details).font(CoffeePeekNativeStyle.font(14, relativeTo: .subheadline))
-            } else {
-                Text(details)
-            }
-        }.foregroundStyle(CoffeePeekNativeStyle.secondary)
-    }
-
-    private var timelineHeading: Text {
-        let name = Text(title).font(CoffeePeekNativeStyle.font(17, weight: "Semibold", relativeTo: .headline))
-        guard let roaster = brew.roaster, !roaster.isEmpty else { return name }
-        let origin = Text(strings["profile_check_in_separator"] + roaster)
-            .font(CoffeePeekNativeStyle.font(17, relativeTo: .headline))
-            .foregroundColor(CoffeePeekNativeStyle.secondary)
-        return Text("\(name)\(origin)")
-    }
-
-    private var title: String {
-        if let bean = brew.bean, !bean.isEmpty { return bean }
-        return strings[cover != nil ? "profile_shelf_bag" : "history_activity_at_home"]
-    }
-
-    private var details: String {
-        var values: [String] = []
-        if let method = brew.method, !method.isEmpty {
-            let key = "brew_\(method)"
-            let label = strings[key]
-            values.append(label == key ? method : label)
-        }
-        if let dose = brew.dose { values.append(String(format: strings["profile_check_in_dose"], dose)) }
-        if brew.seconds >= 0 { values.append(strings.count("profile_check_in_seconds", Int(brew.seconds))) }
-        if brew.taste >= 0 { values.append(strings.count("profile_check_in_taste", Int(brew.taste))) }
-        return values.joined(separator: strings["profile_check_in_separator"])
     }
 }
 
@@ -406,7 +118,8 @@ private func ownProfileCheckInPreview(language: String) -> some View {
                                   note: "", date: "17.11.2026 13:45", drink: "V60", helpfulCount: 2, liked: false,
                                   score: nil, photos: [], brew: brew)
     return OwnProfileCheckInCard(checkIn: row, strings: OwnProfileStrings(languageTag: language), profile: nil,
-                                 openShop: { _ in }, openCoffee: { _ in }, openPhoto: { _ in }, timeline: true).padding()
+                                 openShop: { _ in }, openCoffee: { _ in }, openPhoto: { _ in })
+        .foregroundStyle(CoffeePeekNativeStyle.foreground).background(CoffeePeekNativeStyle.background)
 }
 
 #Preview("Own check-in light") {
@@ -415,4 +128,27 @@ private func ownProfileCheckInPreview(language: String) -> some View {
 
 #Preview("Own check-in dark") {
     ownProfileCheckInPreview(language: "be").preferredColorScheme(.dark)
+}
+
+private func ownProfileHistoryPreview(selectedDate: String?) -> some View {
+    let rows = [false, true].map { home in
+        IosOwnProfileCheckIn(id: home ? "home:fixture" : "shop:fixture", name: "CoffeePeek", avatar: nil,
+            shop: home ? "" : "CoffeePeek", shopSlug: nil, home: home, note: "", date: "17.11.2026 12:00",
+            drink: nil, helpfulCount: 0, liked: false, score: nil, photos: [], brew: nil)
+    }
+    let state = IosOwnProfileState(active: true, identity: nil, loading: false, refreshing: false,
+        failed: false, refreshFailed: false, checkInsLoading: false, checkInsFailed: false, checkIns: rows,
+        followers: IosOwnProfileFollowers(open: false, loading: false, failed: false, more: false, people: []),
+        moreCheckIns: false, loadingMoreCheckIns: false, moreCheckInsFailed: false, selectedDate: selectedDate)
+    return ScrollView {
+        OwnProfileCheckInsContent(state: state, strings: OwnProfileStrings(languageTag: "ru")).padding(16)
+    }.foregroundStyle(CoffeePeekNativeStyle.foreground).background(CoffeePeekNativeStyle.background)
+}
+
+#Preview("Merged history light") {
+    ownProfileHistoryPreview(selectedDate: nil).preferredColorScheme(.light)
+}
+
+#Preview("Merged history selected dark") {
+    ownProfileHistoryPreview(selectedDate: "2026-11-17").preferredColorScheme(.dark)
 }

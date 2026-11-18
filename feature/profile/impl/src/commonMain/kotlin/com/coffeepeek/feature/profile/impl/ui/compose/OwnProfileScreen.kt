@@ -14,6 +14,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.coffeepeek.core.designsystem.component.CoffeePeekDestructiveConfirmationSheet
+import com.coffeepeek.feature.profile.api.OwnProfileHistory
 import com.coffeepeek.feature.profile.api.OwnProfileSlots
 import com.coffeepeek.feature.profile.api.ProfileAuthorActions
 import com.coffeepeek.feature.profile.api.ProfileContribution
@@ -32,7 +33,6 @@ internal class OwnProfileCallbacks(
     val login: () -> Unit,
     val openUser: (String, String, String?) -> Unit,
     val openFavorites: () -> Unit,
-    val openCheckIns: () -> Unit,
     val openContributions: (ProfileContribution) -> Unit,
     val openBlockedAuthors: () -> Unit,
 )
@@ -51,7 +51,6 @@ internal fun OwnProfileScreen(
     onLogin: () -> Unit,
     onOpenUser: (slug: String, nickname: String, avatarUrl: String?) -> Unit,
     onOpenFavorites: () -> Unit,
-    onOpenCheckIns: () -> Unit,
     onOpenContributions: (ProfileContribution) -> Unit,
     onOpenBlockedAuthors: () -> Unit,
 
@@ -59,7 +58,7 @@ internal fun OwnProfileScreen(
     val state by vm.state.collectAsStateWithLifecycle()
     var showLogout by remember { mutableStateOf(false) }
     val callbacks = OwnProfileCallbacks(onEditProfile, onOpenShop, onOpenRoaster, onLogin, onOpenUser,
-        onOpenFavorites, onOpenCheckIns, onOpenContributions, onOpenBlockedAuthors)
+        onOpenFavorites, onOpenContributions, onOpenBlockedAuthors)
     val actions: @Composable () -> Unit = {
         OwnProfileActions(callbacks.editProfile, callbacks.openContributions, callbacks.openBlockedAuthors) { showLogout = true }
     }
@@ -70,7 +69,9 @@ internal fun OwnProfileScreen(
     val profile = state.profile
     if (state.isLoggedIn && slug != null && profile != null) {
         key(slug) {
-            OwnPublicProfileContent(state, publicModel(slug), authorActions, slots, callbacks, actions, bottomPadding)
+            slots.history { history ->
+                OwnPublicProfileContent(state, publicModel(slug), authorActions, slots, callbacks, actions, bottomPadding, history)
+            }
         }
     } else {
         OwnProfileFallbackScreen(state, slots, callbacks, actions, bottomPadding) { vm.onAction(OwnProfileAction.Refresh) }
@@ -81,6 +82,7 @@ internal fun OwnProfileScreen(
 private fun OwnPublicProfileContent(
     state: OwnProfileState, publicVm: PublicProfileViewModel, authorActions: ProfileAuthorActions,
     slots: OwnProfileSlots, callbacks: OwnProfileCallbacks, actions: @Composable () -> Unit, bottomPadding: Dp,
+    history: OwnProfileHistory,
 ) {
     val profile = state.profile ?: return
     val slug = state.publicSlug ?: return
@@ -89,12 +91,12 @@ private fun OwnPublicProfileContent(
         slug = slug, nickname = profile.userName, avatarUrl = profile.avatarUrl,
         vm = publicVm, authorActions = authorActions, slots = slots.shared, onBack = null,
         onOpenShop = callbacks.openShop, onOpenRoaster = callbacks.openRoaster, onLogin = callbacks.login,
-        onOpenUser = callbacks.openUser, onShare = {}, onOpenCheckIns = callbacks.openCheckIns,
+        onOpenUser = callbacks.openUser, onShare = {}, onOpenCheckIns = {},
         own = OwnProfileExtras(
-            onOpenFavorites = callbacks.openFavorites, onOpenCheckIns = callbacks.openCheckIns,
+            onOpenFavorites = callbacks.openFavorites,
             onOpenContributions = callbacks.openContributions, topBarActions = actions,
             favoritesPreview = { header -> slots.favoritesPreview(callbacks.openShop, callbacks.openRoaster, header) },
-            checkInCount = profile.checkInCount, activityPreview = slots.activityPreview,
+            checkInCount = profile.checkInCount, history = history,
             bottomContentPadding = bottomPadding, shelf = slots.shelf,
         ),
     )
