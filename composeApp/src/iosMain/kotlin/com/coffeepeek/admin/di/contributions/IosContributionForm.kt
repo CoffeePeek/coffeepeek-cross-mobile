@@ -6,7 +6,6 @@ import com.coffeepeek.admin.di.media.IosCatalogueMedia
 import com.coffeepeek.admin.ui.Navigator
 import com.coffeepeek.admin.ui.component.HapticEvent
 import com.coffeepeek.admin.ui.component.platformHaptic
-import com.coffeepeek.feature.contributions.domain.model.ChangeSection
 import com.coffeepeek.feature.contributions.domain.model.PendingPhoto
 import com.coffeepeek.feature.contributions.impl.NativeContributionFormSession
 import kotlinx.cinterop.*
@@ -79,6 +78,7 @@ class IosContributionForm internal constructor(
     fun loadImage(url: String, version: Int, receive: (UIImage?) -> Unit): IosContributionObservation =
         IosContributionObservation(scope.launch {
             val image = media.loadImage(url)
+            currentCoroutineContext().ensureActive()
             if (session.current().accountVersion == version) receive(image)
         })
 

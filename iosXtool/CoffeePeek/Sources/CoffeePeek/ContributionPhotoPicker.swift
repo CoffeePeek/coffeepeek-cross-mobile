@@ -1,4 +1,5 @@
 import ComposeApp
+import Photos
 import PhotosUI
 import SwiftUI
 import UniformTypeIdentifiers
@@ -46,16 +47,18 @@ struct ContributionPhotoPicker: UIViewControllerRepresentable {
             guard !results.isEmpty else { onFinish([]); return }
             onStart()
             let group = DispatchGroup()
-            let lock = NSLock()
-            var values = [Data?](repeating: nil, count: results.count)
+            let batch = ContributionPhotoDataBatch(count: results.count)
             for (index, result) in results.enumerated() {
                 group.enter()
-                result.itemProvider.loadDataRepresentation(forTypeIdentifier: UTType.image.identifier) { data, _ in
-                    lock.lock(); values[index] = data; lock.unlock()
+                let type = result.itemProvider.registeredTypeIdentifiers.first {
+                    UTType($0)?.conforms(to: .image) == true
+                } ?? UTType.image.identifier
+                result.itemProvider.loadDataRepresentation(forTypeIdentifier: type) { data, _ in
+                    batch.store(data, at: index)
                     group.leave()
                 }
             }
-            group.notify(queue: .main) { self.onFinish(values.compactMap { $0 }) }
+            group.notify(queue: .main) { self.onFinish(batch.results()) }
         }
         func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]) {
             guard !finished else { return }
@@ -114,3 +117,21 @@ struct ContributionRemoteImage: View {
     }
 }
 
+
+
+// Item-provider callbacks arrive on independent queues; keep the user's selection order.
+private final class ContributionPhotoDataBatch: @unchecked Sendable {
+    private let lock = NSLock()
+    private var values: [Data?]
+    init(count: Int) { values = Array(repeating: nil, count: count) }
+    func store(_ data: Data?, at index: Int) {
+        lock.lock()
+        defer { lock.unlock() }
+        values[index] = data
+    }
+    func results() -> [Data] {
+        lock.lock()
+        defer { lock.unlock() }
+        return values.compactMap { $0 }
+    }
+}

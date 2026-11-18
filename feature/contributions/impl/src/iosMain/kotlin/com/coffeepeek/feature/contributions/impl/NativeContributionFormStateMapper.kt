@@ -113,7 +113,7 @@ internal fun List<PendingPhoto>.nativePhotos(menu: Boolean) = mapIndexed { index
     NativeContributionPhoto(value.nativePhotoKey(index, menu), null, value.fileName, menu)
 }
 private fun List<ShopPhotoRef>.nativeRetained(menu: Boolean) = map { NativeContributionPhoto("retained:$menu:${it.id}", it.url, "", menu) }
-private fun List<UploadedPhoto>.nativeUploaded(menu: Boolean) = map {
-    NativeContributionPhoto("uploaded:$menu:${it.storageKey}", null, it.fileName, menu, groupedRemoval = true)
+private fun List<UploadedPhoto>.nativeUploaded(menu: Boolean) = mapIndexed { index, photo ->
+    NativeContributionPhoto("uploaded:$menu:$index", null, photo.fileName, menu, groupedRemoval = true)
 }
 
