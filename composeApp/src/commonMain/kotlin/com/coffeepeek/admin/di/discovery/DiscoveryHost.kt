@@ -84,12 +84,12 @@ private fun DiscoveryMapCanvas(state: MapCanvasState, callbacks: MapCanvasCallba
     )
 }
 
-private fun MapMarker.toMapShop() = MapShop(
+internal fun MapMarker.toMapShop() = MapShop(
     id = id, title = title, latitude = coordinates.latitude, longitude = coordinates.longitude, primaryZoneId = zoneId,
     type = when (kind) { ShopKind.Specialty -> MapShopType.SPECIALTY; ShopKind.CoffeeBar -> MapShopType.COFFEE_BAR; ShopKind.Cafe -> MapShopType.CAFE },
 )
 
-private fun MapZone.toMapZone() = MapCoffeeZone(
+internal fun MapZone.toMapZone() = MapCoffeeZone(
     id = id, name = name, description = description, color = color, latitude = center.latitude, longitude = center.longitude,
     radiusMeters = radiusMeters, shopCount = shopCount, polygon = polygon.map { it.latitude to it.longitude },
 )

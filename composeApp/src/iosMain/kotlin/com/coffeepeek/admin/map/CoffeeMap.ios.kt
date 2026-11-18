@@ -196,7 +196,7 @@ private fun NativeMapContent(
     }
 }
 
-private class NativeMapSession(
+internal class NativeMapSession(
     private val provider: IosNativeMapProvider,
     private val onBoundsChanged: (MapBounds, Float) -> Unit,
     private val onShopClick: (String) -> Unit,

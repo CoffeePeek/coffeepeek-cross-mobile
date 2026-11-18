@@ -23,6 +23,8 @@ internal class TabCallbacks(
     val onFocusConsumed: () -> Unit,
     val reselections: kotlinx.coroutines.flow.Flow<Unit> = kotlinx.coroutines.flow.emptyFlow(),
     val onContinueCheckIn: (() -> Unit)? = null,
+    val onClose: () -> Unit = {},
+    val onBack: () -> Unit = {},
 )
 
 /** Lifecycle adapter; layout and transient overlays belong to the stateless content. */
@@ -38,6 +40,8 @@ internal fun DiscoveryTab(
     focus: MapFocus?,
     modifier: Modifier = Modifier,
 ) {
+    if (PlatformDiscoveryContent(searchViewModel, mapViewModel, host, roasters, analytics, callbacks,
+        bottomClearance, focus, modifier, picker = false)) return
     val state by searchViewModel.state.collectAsStateWithLifecycle()
     LaunchedEffect(searchViewModel, mapViewModel) {
         searchViewModel.state.map { it.criteria }.distinctUntilChanged().collect { mapViewModel.onAction(MapAction.SyncCriteria(it)) }
