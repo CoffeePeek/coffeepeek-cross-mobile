@@ -1,8 +1,7 @@
 package com.coffeepeek.feature.contributions.impl.ui.map
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import com.coffeepeek.feature.contributions.api.ContributionLocation
 import com.coffeepeek.feature.contributions.api.GeoPoint
 import kotlinx.coroutines.CancellationException
@@ -25,8 +24,11 @@ internal data class ContributionMapUiState(
 
 /** Ephemeral modal presentation state; disposed with this form/account, never a global location cache. */
 internal class ContributionMapPickerState(initial: GeoPoint?) {
-    var state by mutableStateOf(ContributionMapUiState(point = initial))
-        private set
+    private val mutableState = MutableStateFlow(ContributionMapUiState(point = initial))
+    val states = mutableState.asStateFlow()
+    var state: ContributionMapUiState
+        get() = mutableState.value
+        private set(value) { mutableState.value = value }
 
     fun move(point: GeoPoint) {
         if (!point.latitude.isFinite() || !point.longitude.isFinite() || point.latitude !in -90.0..90.0 || point.longitude !in -180.0..180.0) return
@@ -37,6 +39,10 @@ internal class ContributionMapPickerState(initial: GeoPoint?) {
     }
 
     fun cameraApplied() { state = state.copy(cameraTarget = null) }
+    fun showLocation(point: GeoPoint) {
+        move(point)
+        state = state.copy(cameraTarget = state.point)
+    }
     fun requestLocation() { state = state.copy(locationRequest = state.locationRequest + 1) }
 
     suspend fun resolve(location: ContributionLocation) {

@@ -196,6 +196,7 @@ jobs:
             --tests 'com.coffeepeek.admin.di.settings.IosThemeSettingsTest' \
             --tests 'com.coffeepeek.admin.di.system.IosGlobalDialogTest' \
             --tests 'com.coffeepeek.admin.di.system.IosRootModalsTest' \
+            --tests 'com.coffeepeek.admin.di.contributions.IosContributionFormsTest' \
             --tests 'com.coffeepeek.admin.di.coffee.IosCoffeeDetailAnalyticsTest' \
             --tests 'com.coffeepeek.admin.di.media.IosPhotoViewerTest' \
             --tests 'com.coffeepeek.admin.di.media.IosCatalogueMediaTest' \
