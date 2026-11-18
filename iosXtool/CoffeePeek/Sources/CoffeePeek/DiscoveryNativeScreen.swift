@@ -362,7 +362,7 @@ func discoveryPreviewState(picker: Bool = false, expanded: Bool = false) -> IosD
         canLoadMore: false, failed: false, loadMoreFailed: false, canSuggestShop: false, emptyReason: nil,
         locationNotice: nil, settingsNeeded: false, favoriteFailure: false, continueCheckIn: false,
         shops: [shop], recent: [], mapShops: [shop], selectedShopId: "preview", suggestions: [],
-        showSuggestions: false, searchFailed: false, searchLoading: false, zone: nil, zonesVisible: true,
+        showSuggestions: false, searchFailed: false, searchLoading: false, selectedZone: nil, zonesVisible: true,
         heatmapVisible: false, heatmapLoading: false, heatmapFailed: false, viewportFailed: false, truncated: false,
         chips: [IosDiscoveryChip(id: "nearby", title: "Рядом", selected: false)], activeFilterCount: 0,
         labels: ["title": "Выберите кофейню", "search": "Поиск кофеен и обжарщиков…", "shops": "Кофейни",

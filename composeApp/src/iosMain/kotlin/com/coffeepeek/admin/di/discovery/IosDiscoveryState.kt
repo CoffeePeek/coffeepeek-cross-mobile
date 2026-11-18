@@ -32,7 +32,7 @@ data class IosDiscoveryState(
     val showSuggestions: Boolean,
     val searchFailed: Boolean,
     val searchLoading: Boolean,
-    val zone: IosDiscoveryZone?,
+    val selectedZone: IosDiscoveryZone?,
     val zonesVisible: Boolean,
     val heatmapVisible: Boolean,
     val heatmapLoading: Boolean,
