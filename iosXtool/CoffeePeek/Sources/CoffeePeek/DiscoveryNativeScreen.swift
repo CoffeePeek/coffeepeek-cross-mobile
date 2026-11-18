@@ -10,6 +10,7 @@ struct DiscoveryNativeScreen: View {
     @FocusState private var queryFocused: Bool
     @State private var mapFrame: CGRect = .zero
     @State private var tailVisible = false
+    @GestureState private var listDragging = false
     @State private var exposed: Set<String> = []
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
@@ -19,7 +20,8 @@ struct DiscoveryNativeScreen: View {
         GeometryReader { geometry in
             ZStack(alignment: .topLeading) {
                 mapLayer(size: geometry.size)
-                mainContent.opacity(state.mapExpanded || state.roastersExpanded ? 0 : 1)
+                mainContent.simultaneousGesture(listDrag)
+                    .opacity(state.mapExpanded || state.roastersExpanded ? 0 : 1)
                     .allowsHitTesting(!state.mapExpanded && !state.roastersExpanded)
                     .accessibilityHidden(state.mapExpanded || state.roastersExpanded)
                 if state.mapExpanded { expandedMap }
@@ -29,6 +31,7 @@ struct DiscoveryNativeScreen: View {
             .coordinateSpace(name: "discovery")
             .onPreferenceChange(DiscoveryMapFrame.self) { mapFrame = $0 }
             .onPreferenceChange(DiscoveryExposureFrames.self) { frames in
+                if !state.mapExpanded && !state.roastersExpanded { actions.call("scroll") }
                 let viewport = CGRect(origin: .zero, size: geometry.size)
                 let eligible = frames.filter { id, _ in
                     if state.roastersExpanded { return false }
@@ -52,6 +55,7 @@ struct DiscoveryNativeScreen: View {
         .foregroundStyle(CoffeePeekNativeStyle.foreground)
         .tint(CoffeePeekNativeStyle.accent)
         .disabled(!state.active)
+        .onChange(of: listDragging) { _, dragging in actions.call(dragging ? "scroll-start" : "scroll-end") }
         .onChange(of: state.mapExpanded) { _, _ in queryFocused = false }
         .onChange(of: state.roastersExpanded) { _, _ in queryFocused = false }
         .accessibilityAction(.escape) { dismiss() }
@@ -79,6 +83,10 @@ struct DiscoveryNativeScreen: View {
         }.padding(.horizontal, 16)
     }
 
+    private var listDrag: some Gesture {
+        DragGesture(minimumDistance: 1).updating($listDragging) { _, dragging, _ in dragging = true }
+    }
+
     private func searchHeader(expanded: Bool) -> some View {
         HStack(spacing: 8) {
             if expanded || (!state.landing && !state.picker) {
@@ -87,32 +95,49 @@ struct DiscoveryNativeScreen: View {
                     actions.call(expanded ? "map" : "cancel")
                 }
             }
-            HStack(spacing: 8) {
-                Image(systemName: "magnifyingglass").foregroundStyle(CoffeePeekNativeStyle.secondary)
-                TextField(text("search"), text: Binding(get: { state.query }, set: actions.query))
-                    .textInputAutocapitalization(.never).autocorrectionDisabled().submitLabel(.search)
-                    .focused($queryFocused).onSubmit { queryFocused = false }
-                    .onChange(of: queryFocused) { _, focused in if focused { actions.call("activate") } }
-                if !state.query.isEmpty {
-                    Button { actions.query("") } label: { Image(systemName: "xmark.circle.fill") }
-                        .foregroundStyle(CoffeePeekNativeStyle.secondary).accessibilityLabel(text("clear"))
-                }
-            }
-            .padding(.horizontal, 12).frame(minHeight: 48)
-            .background(CoffeePeekNativeStyle.surface, in: RoundedRectangle(cornerRadius: 16))
-            .overlay { RoundedRectangle(cornerRadius: 16).stroke(CoffeePeekNativeStyle.border, lineWidth: 1) }
-            .discoveryExposure("search", id: expanded ? "search-map" : "search-list")
-            if !state.picker {
-                icon("slider.horizontal.3", label: text("filters")) { queryFocused = false; actions.call("filters") }
-                    .overlay(alignment: .topTrailing) {
-                        if state.activeFilterCount > 0 {
-                            Text(String(state.activeFilterCount)).font(CoffeePeekNativeStyle.font(10, weight: "Bold"))
-                                .foregroundStyle(.black).padding(4).background(CoffeePeekNativeStyle.accent, in: Circle())
-                        }
-                    }
-                    .discoveryExposure("filters", id: expanded ? "filters-map" : "filters-list")
-            }
+            searchField(expanded: expanded)
+            if !state.picker { filterButton(expanded: expanded) }
         }.padding(.horizontal, 16)
+    }
+
+    private func searchField(expanded: Bool) -> some View {
+        HStack(spacing: 8) {
+            Image(systemName: "magnifyingglass").foregroundStyle(CoffeePeekNativeStyle.secondary)
+            searchInput
+            if !state.query.isEmpty { clearSearch }
+        }
+        .padding(.horizontal, 12).frame(minHeight: 48)
+        .background(CoffeePeekNativeStyle.surface, in: RoundedRectangle(cornerRadius: 16))
+        .overlay { RoundedRectangle(cornerRadius: 16).stroke(CoffeePeekNativeStyle.border, lineWidth: 1) }
+        .discoveryExposure("search", id: expanded ? "search-map" : "search-list")
+    }
+
+    private var searchInput: some View {
+        TextField(text("search"), text: Binding(get: { state.query }, set: actions.query))
+            .textInputAutocapitalization(.never).autocorrectionDisabled().submitLabel(.search)
+            .focused($queryFocused).onSubmit { queryFocused = false }
+            .onChange(of: queryFocused) { _, focused in if focused { actions.call("activate") } }
+    }
+
+    private var clearSearch: some View {
+        Button { actions.query("") } label: { Image(systemName: "xmark.circle.fill") }
+            .foregroundStyle(CoffeePeekNativeStyle.secondary).accessibilityLabel(text("clear"))
+    }
+
+    private func filterButton(expanded: Bool) -> some View {
+        icon("slider.horizontal.3", label: text("filters")) {
+            queryFocused = false
+            actions.call("filters")
+        }
+            .overlay(alignment: .topTrailing) { filterBadge }
+            .discoveryExposure("filters", id: expanded ? "filters-map" : "filters-list")
+    }
+
+    @ViewBuilder private var filterBadge: some View {
+        if state.activeFilterCount > 0 {
+            Text(String(state.activeFilterCount)).font(CoffeePeekNativeStyle.font(10, weight: "Bold"))
+                .foregroundStyle(.black).padding(4).background(CoffeePeekNativeStyle.accent, in: Circle())
+        }
     }
 
     private var chips: some View {

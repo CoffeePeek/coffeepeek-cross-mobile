@@ -34,21 +34,27 @@ internal actual fun PlatformDiscoveryContent(
     var revision by remember { mutableIntStateOf(0) }
     val lifecycle by LocalLifecycleOwner.current.lifecycle.currentStateFlow.collectAsStateWithLifecycle()
     val active = host.isVisible() && lifecycle.isAtLeast(Lifecycle.State.RESUMED)
+    val scope = rememberCoroutineScope()
+    val scrolling = remember(scope) { DiscoveryNativeScrolling(scope) }
+    LaunchedEffect(active, state.showFilters, ui.mapExpanded, ui.showRoasters) {
+        if (!active || state.showFilters || ui.mapExpanded || ui.showRoasters) scrolling.reset()
+    }
     NativeDiscoveryEffects(search, map, host, ui, callbacks, focus, active)
     if (!picker) DiscoveryTabEffects(ui, state.showsDiscovery, analytics, callbacks, focus, search::onAction)
     else CoffeePeekBackHandler(onBack = callbacks.onBack)
     NativeDiscoveryReselection(ui, callbacks.reselections, search) { revision++ }
     if (state.showFilters) PlatformDiscoveryFilterSheet(state, search::onAction)
-    if (active && state.showsDiscovery && !state.isLoading && state.error == null &&
-        !state.showFilters && !ui.mapExpanded && !ui.showRoasters) host.onIdle()
+    if (nativeDiscoveryCanPromptReview(state, picker, active, ui.mapExpanded, ui.showRoasters, scrolling.active)) host.onIdle()
     val viewState = discoveryIosState(state, mapState, ui, picker, active && !state.showFilters,
         revision, bottomClearance.value, callbacks.onContinueCheckIn != null, roasters?.hasResults?.invoke(
             DiscoveryRoasterContext(state.query, state.filters.roasterIds, state.filters.favoritesOnly)))
     val toggle = discoveryMapToggle(ui, analytics)
     val presentation = DiscoveryIosPresentation(viewState, discoveryIosCanvas(mapState, !ui.mapExpanded),
         nativeCanvasCallbacks(map), mapState.iosViewportCamera(),
-        { name, id -> if (name == "add-roaster") roasters?.onAdd?.invoke()
-            else nativeDiscoveryIntent(name, id, search, map, ui, callbacks, toggle, host, picker) },
+        { name, id -> if (!scrolling.record(name)) {
+            if (name == "add-roaster") roasters?.onAdd?.invoke()
+            else nativeDiscoveryIntent(name, id, search, map, ui, callbacks, toggle, host, picker)
+        } },
         { search.onAction(SearchAction.Query(it)) }, host.openLocationSettings,
         { expanded -> NativeRoasterSlot(roasters, state, expanded, ui, search) })
     checkNotNull(nativeDiscoveryPresenter) { "Native Discovery must be configured before opening iOS screens" }(presentation, modifier)
