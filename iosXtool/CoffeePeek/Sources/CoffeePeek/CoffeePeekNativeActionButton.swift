@@ -7,6 +7,7 @@ struct CoffeePeekNativeActionButton: View {
     var busy = false
     var enabled = true
     var fontSize: CGFloat = 17
+    var cornerRadius: CGFloat? = nil
     let action: () -> Void
 
     var body: some View {
@@ -23,7 +24,13 @@ struct CoffeePeekNativeActionButton: View {
         }
         .buttonStyle(.plain)
         .foregroundStyle(primary ? .black : CoffeePeekNativeStyle.foreground)
-        .background(primary ? CoffeePeekNativeStyle.accent : CoffeePeekNativeStyle.surface, in: Capsule())
+        .background {
+            if let cornerRadius {
+                RoundedRectangle(cornerRadius: cornerRadius).fill(primary ? CoffeePeekNativeStyle.accent : CoffeePeekNativeStyle.surface)
+            } else {
+                Capsule().fill(primary ? CoffeePeekNativeStyle.accent : CoffeePeekNativeStyle.surface)
+            }
+        }
         .opacity(enabled ? 1 : 0.5)
         .disabled(!enabled || busy)
     }
@@ -33,6 +40,7 @@ struct CoffeePeekNativeActionButton: View {
     VStack {
         CoffeePeekNativeActionButton(title: "CoffeePeek", symbol: "plus", action: {})
         CoffeePeekNativeActionButton(title: "CoffeePeek", primary: false, action: {})
+        CoffeePeekNativeActionButton(title: "CoffeePeek", fontSize: 14, cornerRadius: 12, action: {})
     }.padding().preferredColorScheme(.light)
 }
 
@@ -40,5 +48,6 @@ struct CoffeePeekNativeActionButton: View {
     VStack {
         CoffeePeekNativeActionButton(title: "CoffeePeek", symbol: "plus", action: {})
         CoffeePeekNativeActionButton(title: "CoffeePeek", primary: false, action: {})
+        CoffeePeekNativeActionButton(title: "CoffeePeek", fontSize: 14, cornerRadius: 12, action: {})
     }.padding().preferredColorScheme(.dark)
 }

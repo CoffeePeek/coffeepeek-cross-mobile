@@ -74,6 +74,7 @@
 		A0871E7A0000000000000005 /* LoginScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0871E7A0000000000000006 /* LoginScreen.swift */; };
 		A0871E7A0000000000000007 /* PasswordRecoveryScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0871E7A0000000000000008 /* PasswordRecoveryScreen.swift */; };
 		A0871E7A000000000000000D /* CoffeePeekNativeStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0871E7A000000000000000E /* CoffeePeekNativeStyle.swift */; };
+		A9AA00000000000000000001 /* CoffeePeekNativeMessage.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9AA00000000000000000002 /* CoffeePeekNativeMessage.swift */; };
 		A0871E7A000000000000000F /* RegisterScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0871E7A0000000000000010 /* RegisterScreen.swift */; };
 		A0871E7A0000000000000011 /* RegisterConsent.swift in Sources */ = {isa = PBXBuildFile; fileRef = A0871E7A0000000000000012 /* RegisterConsent.swift */; };
 		A0871E7A0000000000000009 /* NativeAuth.strings in Resources */ = {isa = PBXBuildFile; fileRef = A0871E7A000000000000000C /* NativeAuth.strings */; };
@@ -226,6 +227,7 @@
 		A0871E7A0000000000000006 /* LoginScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = LoginScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/LoginScreen.swift; sourceTree = "<group>"; };
 		A0871E7A0000000000000008 /* PasswordRecoveryScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = PasswordRecoveryScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/PasswordRecoveryScreen.swift; sourceTree = "<group>"; };
 		A0871E7A000000000000000E /* CoffeePeekNativeStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CoffeePeekNativeStyle.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CoffeePeekNativeStyle.swift; sourceTree = "<group>"; };
+		A9AA00000000000000000002 /* CoffeePeekNativeMessage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = CoffeePeekNativeMessage.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/CoffeePeekNativeMessage.swift; sourceTree = "<group>"; };
 		A0871E7A0000000000000010 /* RegisterScreen.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = RegisterScreen.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/RegisterScreen.swift; sourceTree = "<group>"; };
 		A0871E7A0000000000000012 /* RegisterConsent.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = RegisterConsent.swift; path = ../../iosXtool/CoffeePeek/Sources/CoffeePeek/RegisterConsent.swift; sourceTree = "<group>"; };
 		A0871E7A000000000000000A /* ru */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ru; path = ru.lproj/NativeAuth.strings; sourceTree = "<group>"; };
@@ -340,6 +342,7 @@
 				A0871E7A0000000000000006 /* LoginScreen.swift */,
 				A0871E7A0000000000000008 /* PasswordRecoveryScreen.swift */,
 				A0871E7A000000000000000E /* CoffeePeekNativeStyle.swift */,
+				A9AA00000000000000000002 /* CoffeePeekNativeMessage.swift */,
 				A0871E7A0000000000000010 /* RegisterScreen.swift */,
 				A0871E7A0000000000000012 /* RegisterConsent.swift */,
 				A0871E7B0000000000000006 /* GuestProfileScreen.swift */,
@@ -675,6 +678,7 @@
 				A0871E7A0000000000000005 /* LoginScreen.swift in Sources */,
 				A0871E7A0000000000000007 /* PasswordRecoveryScreen.swift in Sources */,
 				A0871E7A000000000000000D /* CoffeePeekNativeStyle.swift in Sources */,
+				A9AA00000000000000000001 /* CoffeePeekNativeMessage.swift in Sources */,
 				A0871E7A000000000000000F /* RegisterScreen.swift in Sources */,
 				A0871E7A0000000000000011 /* RegisterConsent.swift in Sources */,
 				A0871E7B0000000000000005 /* GuestProfileScreen.swift in Sources */,
