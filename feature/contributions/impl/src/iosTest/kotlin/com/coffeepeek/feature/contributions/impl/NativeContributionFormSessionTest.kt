@@ -57,6 +57,35 @@ class NativeContributionFormSessionTest {
         assertEquals("Coffee", session.current().fields.first { it.key == "name" }.value)
     }
 
+    @Test fun backFromFailedSubmissionReturnsToAllThreeSharedDrafts() = runTest(dispatcher) {
+        repository.shopSubmit = { Result.failure(IllegalStateException("rejected")) }
+        repository.roasterSubmit = { Result.failure(IllegalStateException("rejected")) }
+        repository.changeSubmit = { Result.failure(IllegalStateException("rejected")) }
+        for (kind in listOf(NativeContributionFormKind.AddShop, NativeContributionFormKind.AddRoaster, NativeContributionFormKind.Editor)) {
+            val source = failedForm(kind)
+            assertEquals("failed", source.current().submit)
+            val fields = source.current().fields.map { it.key to it.value }
+            assertTrue(source.consumeBack())
+            runCurrent()
+            assertEquals("idle", source.current().submit)
+            assertEquals(fields, source.current().fields.map { it.key to it.value })
+        }
+    }
+
+    private fun TestScope.failedForm(kind: NativeContributionFormKind): NativeContributionFormSession {
+        val source = session(kind)
+        runCurrent()
+        source.edit("name", "Coffee")
+        source.edit("address", "Street 1")
+        source.edit("description", "New")
+        runCurrent()
+        repeat(if (kind == NativeContributionFormKind.AddShop) 5 else 1) {
+            source.control("submit")
+            runCurrent()
+        }
+        return source
+    }
+
     @Test fun nativePhotoRequestCopiesBytesAcceptsOneCallbackAndRejectsOldAccount() = runTest(dispatcher) {
         val session = session(NativeContributionFormKind.AddRoaster)
         runCurrent()
