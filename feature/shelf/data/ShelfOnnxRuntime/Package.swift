@@ -8,8 +8,11 @@ let package = Package(
     platforms: [.iOS(.v15)],
     products: [.library(name: "ShelfOnnxRuntime", targets: ["ShelfOnnxRuntime"])],
     dependencies: [
-        // Pinned: the Swift package lags the Android AAR.
-        .package(url: "https://github.com/microsoft/onnxruntime-swift-package-manager.git", exact: "1.24.2"),
+        // The Microsoft repository returns 404. Pin the mirror to the original 1.24.2 commit from Package.resolved.
+        .package(
+            url: "https://github.com/GuLP-AAC/onnxruntime-swift-package-manager.git",
+            revision: "b7fb7f7dea8a2469e6335d95a61b8f36d0dc83b2"
+        ),
     ],
     targets: [
         .target(
