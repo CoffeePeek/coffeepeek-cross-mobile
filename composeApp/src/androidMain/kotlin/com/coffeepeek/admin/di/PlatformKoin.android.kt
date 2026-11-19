@@ -85,8 +85,8 @@ internal fun initAndroidKoin(extraModules: List<org.koin.core.module.Module> = e
             featureCoffeeScreenRenderer(get())
         },
         shelfRendererFactory = { ShelfFeatureScreenRenderer(get(), shelfBrewForm(get())) },
-        publicProfileRendererFactory = { featurePublicProfileScreenRenderer(get(), get(), get(), get(), get(), get()) },
-        ownProfileRendererFactory = { featureOwnProfileScreenRenderer(get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) },
+        publicProfileRendererFactory = { featurePublicProfileScreenRenderer(get(), get(), get(), get(), get(), get(), get()) },
+        ownProfileRendererFactory = { featureOwnProfileScreenRenderer(get(), get(), get(), get(), get(), get(), get(), get(), get(), get(), get()) },
         accountRendererFactory = { featureAccountScreenRenderer(get(), get(), get()) },
         settingsRendererFactory = {
             featureSettingsScreenRenderer(get(), get(), get(), get(), get(), notify = { Toast.makeText(Locator.appContext, it, Toast.LENGTH_SHORT).show() })

@@ -7,6 +7,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.coffeepeek.feature.profile.api.OwnProfileEntry
 import com.coffeepeek.feature.profile.api.OwnProfileSlots
 import com.coffeepeek.feature.profile.api.ProfileAccountPort
+import com.coffeepeek.feature.profile.api.ProfileCheckInLikes
 import com.coffeepeek.feature.profile.api.ProfileAuthorActions
 import com.coffeepeek.feature.profile.api.ProfileAuthorVisibility
 import com.coffeepeek.feature.profile.api.ProfileContribution
@@ -29,19 +30,21 @@ fun createOwnProfileEntry(
     data: PublicProfileData,
     checkIns: PublicCheckInsPort,
     accounts: ProfileAccountPort,
+    likes: ProfileCheckInLikes,
     signOut: ProfileSignOutPort,
     visibility: ProfileAuthorVisibility = ProfileAuthorVisibility.None,
     authorActions: ProfileAuthorActions = ProfileAuthorActions.None,
     slots: OwnProfileSlots,
     snapshots: ProfileSnapshotStore = ProfileSnapshotStore.None,
 ): OwnProfileEntry {
-    return OwnProfileEntryImpl(data, checkIns, accounts, signOut, visibility, authorActions, slots, snapshots)
+    return OwnProfileEntryImpl(data, checkIns, accounts, likes, signOut, visibility, authorActions, slots, snapshots)
 }
 
 private class OwnProfileEntryImpl(
     private val data: PublicProfileData,
     private val checkIns: PublicCheckInsPort,
     private val accounts: ProfileAccountPort,
+    private val likes: ProfileCheckInLikes,
     private val signOut: ProfileSignOutPort,
     private val visibility: ProfileAuthorVisibility,
     private val authorActions: ProfileAuthorActions,
@@ -64,7 +67,7 @@ private class OwnProfileEntryImpl(
         val model = viewModel(key = "own-profile:$instanceKey") { OwnProfileViewModel(accounts, signOut) }
         OwnProfileScreen(
             vm = model,
-            publicModel = { slug -> viewModel(key = "own-public:$instanceKey:$slug") { PublicProfileViewModel(slug, data, checkIns, accounts, visibility, snapshots) } },
+            publicModel = { slug -> viewModel(key = "own-public:$instanceKey:$slug") { PublicProfileViewModel(slug, data, checkIns, accounts, likes, visibility, snapshots) } },
             authorActions = authorActions, slots = slots, bottomClearance = bottomClearance,
             onEditProfile = onEditProfile, onOpenShop = onOpenShop, onOpenRoaster = onOpenRoaster, onLogin = onLogin,
             onOpenUser = onOpenUser, onOpenFavorites = onOpenFavorites,

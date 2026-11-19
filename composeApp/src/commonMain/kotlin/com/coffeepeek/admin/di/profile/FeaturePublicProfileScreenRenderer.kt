@@ -13,6 +13,7 @@ import com.coffeepeek.core.designsystem.component.CoffeePeekImage
 import com.coffeepeek.core.media.PrefetchListPhotos
 import com.coffeepeek.admin.utils.ShareHelper
 import com.coffeepeek.feature.profile.api.ProfileAccountPort
+import com.coffeepeek.feature.profile.api.ProfileCheckInLikes
 import com.coffeepeek.feature.authorblocking.api.AuthorBlockActions
 import com.coffeepeek.feature.authorblocking.api.AuthorReference
 import com.coffeepeek.feature.authorblocking.api.AuthorVisibility
@@ -50,6 +51,7 @@ internal fun featurePublicProfileScreenRenderer(
     repository: PublicProfileData,
     checkIns: PublicCheckInsPort,
     accounts: ProfileAccountPort,
+    likes: ProfileCheckInLikes,
     visibility: AuthorVisibility,
     blocks: AuthorBlockActions,
     snapshots: ProfileSnapshotStore = ProfileSnapshotStore.None,
@@ -59,6 +61,7 @@ internal fun featurePublicProfileScreenRenderer(
         data = repository,
         checkIns = checkIns,
         accounts = accounts,
+        likes = likes,
         visibility = AppProfileAuthorVisibility(visibility),
         authorActions = AppProfileAuthorActions(blocks),
         slots = slots,

@@ -1,5 +1,46 @@
 # Profile tabs and controls — 2026-11-05
 
+## Profile check-in likes — 2026-11-19
+
+The shared profile check-in card displayed a reaction count through a read-only
+footer. It supplied no click action. The profile now sends like and unlike
+actions through a narrow injected port backed by the existing Community writer.
+The server's confirmed count and selection update the row and its profile
+snapshot. Returning to the profile refreshes the check-in page. A pending vote
+blocks another vote on that row, and a page reload waits for pending votes.
+Account replacement cancels pending work and prevents late responses from
+updating another session.
+
+Public read-only checks found nonzero counts in both the general and author
+feed on 2026-11-19. No live reaction was submitted. The new regression checks
+cover reading nonzero counts, like/unlike, failed and duplicate votes, cached
+route recreation, refresh during a vote, return to the profile and session
+replacement. Android app assembly, the shared iOS module compilation, RU/BE
+resource parity and the function body check are part of verification.
+Manual Sandbox interaction and full iOS application/device checks remain open.
+
+The profile uses the existing request analytics and signals the Community feed
+to refresh after a confirmed vote. It adds no analytics service or feed-event
+emission from a profile card. Preview states use fake data with three likes.
+
+Verified on Windows from `b13879713` with this patch. Executed JVM tests
+passed with no failures, errors or skips. Profile impl passed 83, Profile data
+43, Community data 24, Community impl 56, design system 81 and Direct Debug app
+676, for 963 total. These include 11 new reaction regressions with fake ports
+and HTTP responses. The final timeout/retry regression also passed.
+
+Both Direct Debug and Sandbox assembled with their packaged runtime-class
+checks, and Sandbox isolation passed. The builds are `1.2.1.3158-debug` and
+`1.2.1.3158-sandbox`, each with 36 DEX files. Profile impl and its tests compiled
+for iOS ARM64. RU/BE resource keys match. The function body baseline was
+regenerated with only reductions and passed verification. A combined baseline
+generation/verification invocation first failed Gradle's implicit output
+dependency validation. Running them sequentially passed. Existing Preview
+deprecation warnings remain.
+
+No app was installed or launched. Previews compiled but were not rendered in
+an IDE. Full Xcode linking and manual checks on Android/iOS remain open.
+
 Source: `codex/migration-shelf-light-timber`, based on `origin/develop`
 `43c9969ce`, continuing the uncommitted shelf reference changes. The user
 requested parallel subagents for this follow-up and confirmed the profile

@@ -137,7 +137,6 @@
     <string name="profile_deletion_wait_hint">Пасля пацвярджэння вы аўтаматычна выйдзеце з праграмы.</string>
     <string name="profile_deletion_resend">Адправіць ліст яшчэ раз</string>
     <string name="profile_deletion_resend_wait">Паўторная адпраўка пакуль недаступная</string>
-    <string name="profile_check_in_likes">Лайкі: %1$d</string>
     <string name="profile_check_in_rating">Кава: %1$d, сэрвіс: %2$d, атмасфера: %3$d. Сярэдняя адзнака: %4$s з 5</string>
     <string name="profile_check_in_photo">Фатаграфія %1$d з %2$d</string>
     <string name="profile_check_in_actions">Дзеянні з чэкінам</string>
@@ -186,4 +185,7 @@
     </plurals>
     <string name="profile_edit_display_preferences">Паказваць у профілі</string>
     <string name="profile_edit_display_shelf">Кававая паліца</string>
+    <string name="profile_check_in_like">Паставіць упадабанне. Упадабанняў: %1$d</string>
+    <string name="profile_check_in_unlike">Прыбраць упадабанне. Упадабанняў: %1$d</string>
+    <string name="profile_check_in_like_failed">Не атрымалася абнавіць упадабанне</string>
 </resources>

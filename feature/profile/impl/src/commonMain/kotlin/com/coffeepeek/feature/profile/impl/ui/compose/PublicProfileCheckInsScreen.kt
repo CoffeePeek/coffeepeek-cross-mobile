@@ -48,7 +48,7 @@ import kotlinx.datetime.TimeZone
 @Composable
 internal fun PublicProfileCheckInsScreenContent(
     state: PublicProfileState, slots: ProfileSlots, onBack: () -> Unit, onOpenShop: (String) -> Unit,
-    onRetry: () -> Unit, onLoadMore: () -> Unit,
+    onRetry: () -> Unit, onLoadMore: () -> Unit, onLike: (String) -> Unit,
     onPhotoClick: (List<String>, List<String>, Int) -> Unit,
     authorActions: ProfileAuthorActions = ProfileAuthorActions.None,
 ) {
@@ -62,7 +62,7 @@ internal fun PublicProfileCheckInsScreenContent(
                     checkNotNull(state.profile), authorActions)
                 state.profile == null && state.isLoading -> ProfileSectionLoader(160.dp)
                 state.profile == null -> InlineProfileError(stringResource(Res.string.profile_load_failed), onRetry)
-                else -> PublicProfileCheckInsList(state, slots, onOpenShop, onRetry, onLoadMore, onPhotoClick, authorActions = authorActions)
+                else -> PublicProfileCheckInsList(state, slots, onOpenShop, onRetry, onLoadMore, onLike, onPhotoClick, authorActions = authorActions)
             }
         }
     }
@@ -71,7 +71,7 @@ internal fun PublicProfileCheckInsScreenContent(
 @Composable
 internal fun PublicProfileCheckInsList(
     state: PublicProfileState, slots: ProfileSlots, onOpenShop: (String) -> Unit,
-    onRetry: () -> Unit, onLoadMore: () -> Unit, onPhotoClick: (List<String>, List<String>, Int) -> Unit,
+    onRetry: () -> Unit, onLoadMore: () -> Unit, onLike: (String) -> Unit, onPhotoClick: (List<String>, List<String>, Int) -> Unit,
     modifier: Modifier = Modifier.fillMaxSize(),
     isOwnProfile: Boolean = state.isOwnProfile,
     authorActions: ProfileAuthorActions = ProfileAuthorActions.None,
@@ -93,7 +93,9 @@ internal fun PublicProfileCheckInsList(
             PublicProfileCheckInCard(checkIn, author, slots,
                 checkIn.coffeeShopSlug?.takeIf(String::isNotBlank)?.let { slug -> { onOpenShop(slug) } }, onPhotoClick,
                 onBlock = if (allowActions) ({ authorActions.requestBlock(author) }) else null,
-                onReport = if (allowActions) ({ slots.reportCheckIn(checkIn.id) }) else null)
+                onReport = if (allowActions) ({ slots.reportCheckIn(checkIn.id) }) else null,
+                onLike = { onLike(checkIn.id) }, likeEnabled = checkIn.id !in state.pendingLikeIds,
+                likeError = checkIn.id in state.likeErrorIds)
         }
         if (state.isLoadingCheckIns || state.isLoadingMoreCheckIns) item { ProfileSectionLoader(88.dp) }
         else if (state.checkInsError != null) item { Box(Modifier.padding(horizontal = 16.dp)) {
@@ -112,7 +114,7 @@ internal fun PublicProfileCheckInsList(
 private fun PublicProfileCheckInsPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     val slots = ProfileSlots(image = { _, _, _ -> }, photoViewer = { _, _, _, _ -> },
         photoPrefetch = { _, _ -> })
-    PublicProfileCheckInsScreenContent(PublicProfileState(isLoading = false), slots, {}, {}, {}, {}, { _, _, _ -> })
+    PublicProfileCheckInsScreenContent(PublicProfileState(isLoading = false), slots, {}, {}, {}, {}, {}, { _, _, _ -> })
 }
 
 @Preview @Composable private fun PublicProfileCheckInsLightPreview() = PublicProfileCheckInsPreview(false)
