@@ -22,7 +22,7 @@ internal fun PublicProfileCheckInsTab(
     val onAction = callbacks.onAction
     PublicProfileCheckInsList(
         state, slots, callbacks.onOpenShop, { onAction(PublicProfileAction.RetryCheckIns) },
-        { onAction(PublicProfileAction.LoadMoreCheckIns) }, callbacks.onPhotoClick,
+        { onAction(PublicProfileAction.LoadMoreCheckIns) }, { onAction(PublicProfileAction.ToggleCheckInLike(it)) }, callbacks.onPhotoClick,
         modifier = modifier, isOwnProfile = viewingOwn, authorActions = authorActions,
         listState = listState, header = header, bottomPadding = bottomPadding,
         dateZone = if (ownerActivity == null) PublicProfileTimeZone else TimeZone.currentSystemDefault(),

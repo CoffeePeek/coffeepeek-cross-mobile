@@ -22,6 +22,8 @@ internal data class PublicProfileState(
     val isLoadingCheckIns: Boolean = false,
     val isLoadingMoreCheckIns: Boolean = false,
     val checkInsError: PublicProfileError? = null,
+    val pendingLikeIds: Set<String> = emptySet(),
+    val likeErrorIds: Set<String> = emptySet(),
     val hasMoreCheckIns: Boolean = false,
     val checkInDate: String? = null,
     val isOwnProfile: Boolean = false,

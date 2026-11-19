@@ -29,6 +29,7 @@ internal fun PublicProfileCheckInCard(
     row: PublicProfileCheckIn, author: ProfileAuthor, slots: ProfileSlots,
     onShop: (() -> Unit)?, onPhoto: (List<String>, List<String>, Int) -> Unit,
     onBlock: (() -> Unit)?, onReport: (() -> Unit)?,
+    onLike: () -> Unit, likeEnabled: Boolean = true, likeError: Boolean = false,
 ) {
     val name = row.authorName.ifBlank { author.name }
     CoffeePeekTimelineContent(row.note, modifier = Modifier.padding(horizontal = 16.dp),
@@ -38,10 +39,20 @@ internal fun PublicProfileCheckInCard(
             }, actions = { ProfileCheckInActions(onBlock, onReport) })
         }, heading = { ProfileCheckInHeading(row, slots, onShop) },
         photos = { ProfileCheckInPhotos(row, slots, onPhoto) },
-        footer = {
-            CoffeePeekTimelineFooter(row.helpfulCount, row.isHelpfulByCurrentUser,
-                stringResource(Res.string.profile_check_in_likes, row.helpfulCount), row.drink.profileCheckInDrink(Locale.current.language))
-        })
+        footer = { ProfileCheckInFooter(row, onLike, likeEnabled, likeError) })
+}
+
+@Composable
+private fun ProfileCheckInFooter(row: PublicProfileCheckIn, onLike: () -> Unit, enabled: Boolean, failed: Boolean) {
+    val description = stringResource(
+        if (row.isHelpfulByCurrentUser) Res.string.profile_check_in_unlike else Res.string.profile_check_in_like,
+        row.helpfulCount,
+    )
+    Column {
+        CoffeePeekTimelineFooter(row.helpfulCount, row.isHelpfulByCurrentUser, description,
+            row.drink.profileCheckInDrink(Locale.current.language), onLike = onLike, likeEnabled = enabled)
+        if (failed) InlineProfileError(stringResource(Res.string.profile_check_in_like_failed), onLike)
+    }
 }
 
 @Composable
@@ -92,8 +103,9 @@ private fun ProfileCheckInActions(onBlock: (() -> Unit)?, onReport: (() -> Unit)
 @Composable private fun ProfileCheckInPreview(dark: Boolean) = CoffeePeekTheme(darkTheme = dark) {
     val slots = ProfileSlots({ _, _, _ -> }, { _, _, _, _ -> }, { _, _ -> })
     PublicProfileCheckInCard(PublicProfileCheckIn("demo", "coffee", "CoffeePeek", "Кофе", null, 4.5,
-        "Сбалансированный кофе с ягодными нотами.", "14 октября 2026", emptyList()),
-        ProfileAuthor("author", "anna", "Анна"), slots, {}, { _, _, _ -> }, {}, {})
+        "Сбалансированный кофе с ягодными нотами.", "14 октября 2026", emptyList(),
+        helpfulCount = 3, isHelpfulByCurrentUser = true),
+        ProfileAuthor("author", "anna", "Анна"), slots, {}, { _, _, _ -> }, {}, {}, {})
 }
 @Preview @Composable private fun ProfileCheckInLightPreview() = ProfileCheckInPreview(false)
 @Preview @Composable private fun ProfileCheckInDarkPreview() = ProfileCheckInPreview(true)

@@ -190,12 +190,7 @@ private fun appModule(
     single<com.coffeepeek.feature.roaster.api.PublicRoasterDetails> {
         com.coffeepeek.feature.roaster.data.repository.createPublicRoasterDetails(get())
     }
-    single<com.coffeepeek.feature.community.api.PublicAuthorPosts> {
-        com.coffeepeek.feature.community.data.repository.createPublicAuthorPosts(get())
-    }
-    single<com.coffeepeek.feature.profile.api.PublicCheckInsPort> {
-        com.coffeepeek.feature.profile.data.repository.createPublicProfileCheckIns(get())
-    }
+    includes(com.coffeepeek.admin.di.profile.profileCheckInsModule())
     single<RoasterFavorites> { ServerRoasterFavorites(get(), get(), get()) }
     single<com.coffeepeek.feature.appupdate.domain.AppUpdateRepository> {
         com.coffeepeek.feature.appupdate.data.AppUpdateRepositoryImpl(

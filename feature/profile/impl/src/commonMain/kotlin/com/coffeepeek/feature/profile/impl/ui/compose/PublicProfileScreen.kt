@@ -18,6 +18,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.Dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.profile.api.ProfileAuthorActions
 import com.coffeepeek.feature.profile.api.ProfileContribution
@@ -74,10 +76,12 @@ internal fun PublicProfileScreen(
         { previews, originals, index -> photos = ProfilePhotos(previews, originals, index) })
     LaunchedEffect(visibility.revision, visible.profile?.slug) { photos = null }
     LaunchedEffect(vm) { vm.events.collect { if (it == PublicProfileEvent.RequireLogin) onLogin() } }
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { vm.onAction(PublicProfileAction.Resume) }
     if (checkInsOnly) {
         PublicProfileCheckInsScreenContent(visible, slots, onBack ?: {}, onOpenShop,
             { vm.onAction(if (visible.profile == null) PublicProfileAction.Refresh else PublicProfileAction.RetryCheckIns) },
-            { vm.onAction(PublicProfileAction.LoadMoreCheckIns) }, callbacks.onPhotoClick)
+            { vm.onAction(PublicProfileAction.LoadMoreCheckIns) },
+            { vm.onAction(PublicProfileAction.ToggleCheckInLike(it)) }, callbacks.onPhotoClick)
     } else PublicProfileScreenContent(visible, pending, authorActions, slots, callbacks, own)
     if (!checkInsOnly) PublicProfileConnections(visible, slots, callbacks)
     photos?.takeIf { visible.profile?.isBlockedByViewer == false }?.let {

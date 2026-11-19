@@ -38,7 +38,6 @@
     <string name="profile_calendar_collapsed">Календарь свёрнут</string>
     <string name="profile_check_in_shelf_bag">Пачка кофе</string>
     <string name="profile_check_in_open_coffee">Открыть кофе</string>
-    <string name="profile_check_in_likes">Лайки: %1$d</string>
     <string name="profile_check_in_rating">Кофе: %1$d, сервис: %2$d, атмосфера: %3$d. Средняя оценка: %4$s из 5</string>
     <string name="profile_check_in_photo">Фотография %1$d из %2$d</string>
     <string name="profile_check_in_actions">Действия с чекином</string>
@@ -183,4 +182,7 @@
     </plurals>
     <string name="profile_edit_display_preferences">Отображать в профиле</string>
     <string name="profile_edit_display_shelf">Кофейная полка</string>
+    <string name="profile_check_in_like">Поставить лайк. Лайков: %1$d</string>
+    <string name="profile_check_in_unlike">Убрать лайк. Лайков: %1$d</string>
+    <string name="profile_check_in_like_failed">Не удалось обновить лайк</string>
 </resources>

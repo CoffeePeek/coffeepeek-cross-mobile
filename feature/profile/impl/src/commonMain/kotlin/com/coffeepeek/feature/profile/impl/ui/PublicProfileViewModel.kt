@@ -3,6 +3,8 @@ package com.coffeepeek.feature.profile.impl.ui
 import androidx.lifecycle.viewModelScope
 import com.coffeepeek.core.presentation.MviViewModel
 import com.coffeepeek.feature.profile.api.ProfileAccountPort
+import com.coffeepeek.feature.profile.api.ProfileCheckInLike
+import com.coffeepeek.feature.profile.api.ProfileCheckInLikes
 import com.coffeepeek.feature.profile.api.ProfileAuthorVisibility
 import com.coffeepeek.feature.profile.api.ProfileAuthorVisibilityState
 import com.coffeepeek.feature.profile.api.ProfileSnapshot
@@ -23,8 +25,10 @@ import com.coffeepeek.feature.profile.impl.ui.model.PublicProfileAction
 import com.coffeepeek.feature.profile.impl.ui.model.PublicProfileEvent
 import com.coffeepeek.feature.profile.impl.ui.model.PublicProfileState
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.joinAll
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
@@ -39,10 +43,13 @@ internal class PublicProfileViewModel(
     private val data: PublicProfileData,
     private val checkIns: PublicCheckInsPort,
     private val accounts: ProfileAccountPort,
+    private val likes: ProfileCheckInLikes,
     private val visibility: ProfileAuthorVisibility = ProfileAuthorVisibility.None,
     private val snapshots: ProfileSnapshotStore = ProfileSnapshotStore.None,
 ) : MviViewModel<PublicProfileState, PublicProfileAction, PublicProfileEvent>(cachedState(slug, accounts, visibility, snapshots)) {
     private var initialized = false
+    private var hasResumed = false
+    private val likeJobs = mutableMapOf<String, Job>()
     private var profileJob: Job? = null
     private var checkInsJob: Job? = null
     private var followJob: Job? = null
@@ -112,11 +119,23 @@ internal class PublicProfileViewModel(
                 val current = currentState
                 if (current.hasMoreConnections && current.connectionsError == null) loadConnections(reset = false)
             }
+            else -> handleCheckInAction(action)
+        }
+    }
+
+    private suspend fun handleCheckInAction(action: PublicProfileAction) {
+        when (action) {
+            PublicProfileAction.Resume -> {
+                if (hasResumed) requestCheckIns(reset = true)
+                hasResumed = true
+            }
+            is PublicProfileAction.ToggleCheckInLike -> toggleCheckInLike(action.id)
             PublicProfileAction.LoadMoreCheckIns -> requestCheckIns(reset = false)
             PublicProfileAction.RetryCheckIns -> requestCheckIns(reset = true)
             is PublicProfileAction.SelectCheckInDate -> updateState {
                 copy(checkInDate = action.date.takeUnless { it == checkInDate })
             }
+            else -> Unit
         }
     }
 
@@ -145,6 +164,8 @@ internal class PublicProfileViewModel(
     }
 
     private fun resetViewer(current: String?) {
+        likeJobs.values.toList().forEach(Job::cancel)
+        likeJobs.clear()
         account = current
         ownProfileAccount = null
         ownIdentityLoaded = false
@@ -417,6 +438,57 @@ internal class PublicProfileViewModel(
         loadCheckIns(reset)
     }
 
+    private suspend fun toggleCheckInLike(id: String) {
+        val row = currentState.checkIns.firstOrNull { it.id == id } ?: return
+        if (currentState.profile?.isBlockedByViewer != false || currentState.isLoading || id in likeJobs) return
+        val owner = account
+        if (owner == null) {
+            sendEvent(PublicProfileEvent.RequireLogin)
+            return
+        }
+        val requestGeneration = generation
+        if (!isCurrent(requestGeneration, owner)) return
+        submitCheckInLike(row, requestGeneration, owner)
+    }
+
+    private suspend fun submitCheckInLike(row: PublicProfileCheckIn, requestGeneration: Int, owner: String) {
+        val id = row.id
+        val job = currentCoroutineContext()[Job] ?: return
+        beginLike(id, job)
+        try {
+            val result = withTimeoutOrNull(15_000) { likes.setHelpful(id, !row.isHelpfulByCurrentUser) }
+                ?: Result.failure(IllegalStateException("Check-in reaction request timed out"))
+            result.exceptionOrNull()?.let { if (it is CancellationException) throw it }
+            currentCoroutineContext().ensureActive()
+            if (isCurrent(requestGeneration, owner)) applyLikeResult(id, result)
+        } finally {
+            if (likeJobs[id] === job) {
+                likeJobs.remove(id)
+                updateState { copy(pendingLikeIds = pendingLikeIds - id) }
+            }
+        }
+    }
+
+    private fun beginLike(id: String, job: Job) {
+        likeJobs[id] = job
+        checkInsJob?.cancel()
+        updateState { copy(pendingLikeIds = pendingLikeIds + id, likeErrorIds = likeErrorIds - id,
+            isLoadingCheckIns = false, isLoadingMoreCheckIns = false) }
+    }
+
+    private suspend fun applyLikeResult(id: String, result: Result<ProfileCheckInLike>) {
+        result.onSuccess { vote ->
+            updateState { copy(checkIns = checkIns.map { row ->
+                if (row.id == id) row.copy(helpfulCount = vote.helpfulCount,
+                    isHelpfulByCurrentUser = vote.isHelpful) else row
+            }) }
+            rememberSnapshot()
+        }.onFailure { error ->
+            updateState { copy(likeErrorIds = likeErrorIds + id) }
+            if (error is PublicProfileAuthenticationRequired) sendEvent(PublicProfileEvent.RequireLogin)
+        }
+    }
+
     private fun loadCheckIns(reset: Boolean) {
         val profile = currentState.profile?.takeUnless { it.isBlockedByViewer } ?: return
         val cursor = if (reset) null else nextCursor
@@ -424,6 +496,7 @@ internal class PublicProfileViewModel(
         val requestAccount = account
         updateState { copy(isLoadingCheckIns = reset, isLoadingMoreCheckIns = !reset, checkInsError = null) }
         checkInsJob = viewModelScope.launch {
+            likeJobs.values.toList().joinAll()
             val result = withTimeoutOrNull(15_000) { checkIns.page(profile.slug, cursor) }
             currentCoroutineContext().ensureActive()
             if (!isCurrent(requestGeneration, requestAccount)) return@launch
@@ -440,7 +513,8 @@ internal class PublicProfileViewModel(
         updateState {
             copy(checkIns = (if (reset) page.items else checkIns + page.items).distinctBy(PublicProfileCheckIn::id),
                 hasMoreCheckIns = nextCursor != null, isLoadingCheckIns = false,
-                isLoadingMoreCheckIns = false, checkInsError = null)
+                isLoadingMoreCheckIns = false, checkInsError = null,
+                likeErrorIds = if (reset) emptySet() else likeErrorIds)
         }
         rememberSnapshot()
     }
