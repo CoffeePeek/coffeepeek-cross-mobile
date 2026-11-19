@@ -160,3 +160,23 @@ It was edited with built-in `image_gen`; Android draws the exact gold background
 separately. The final edit prompt was:
 
 > Precise background removal for an Android adaptive launcher icon foreground. Edit target is the existing CoffeePeek icon provided. REMOVE ONLY the white background, including inside the cup handle, making the entire backdrop genuinely transparent, including the outer padding. Keep the ivory coffee cup and olive-green bean mascot with both eyes and hands and coffee exactly unchanged in design, placement, scale, lighting and color. Preserve soft contact shadow with partial alpha only, no white matte. Do not enlarge, recenter or redesign the subject: it should occupy the central roughly 58% of the square width, like the original, for adaptive icon safe zone. Output a square RGBA transparent PNG with the original large margins. No gold backdrop; the app draws an exact #D4A84B background as a separate layer. No text, no other elements.
+
+## Launcher artwork — 2026-11-19
+
+The supplied square artwork replaces the production launcher icons on Android and
+iOS in both appearances. Android includes all five bitmap densities, round icons,
+adaptive layers and the Play Store image. The adaptive artwork occupies the
+central 72 dp of each 108 dp layer, with edge pixels extended into the outer
+padding. Debug displays the same artwork inside a gold ring.
+
+The iOS AppIcon catalog contains opaque 1024×1024 RGB PNGs for its default and
+dark entries. Both launchers use that catalog. Local mask previews cover round
+Android icons and rounded iOS icons against light and dark surfaces.
+
+Verified on Windows from `3e17370b8` with this patch, using
+`--max-workers=6`. `verifyFunctionBodyLimits` and `assembleDirectDebug`
+passed, including packaged runtime-class verification. The APK is
+`com.coffeepeek.debug`, version `1.2.1.3157-debug`, with 36 DEX files.
+All 31 packaged launcher bitmaps match their source pixels. The iOS catalog
+references and image dimensions/opacity passed local validation. Device launcher
+rendering and Xcode asset compilation remain unverified.
