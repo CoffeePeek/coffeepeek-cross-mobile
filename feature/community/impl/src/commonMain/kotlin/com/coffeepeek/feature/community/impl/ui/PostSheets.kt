@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.heightIn
 
 
 import androidx.compose.foundation.Image
+import androidx.compose.material3.ButtonDefaults
 import org.jetbrains.compose.ui.tooling.preview.Preview
 import com.coffeepeek.feature.community.impl.resources.Res
 import com.coffeepeek.feature.community.impl.resources.community_cancel
@@ -249,10 +250,14 @@ internal fun ReportSheetContent(form: ReportForm, callbacks: ReportCallbacks) {
             else -> null
         }
         message?.let { Text(it, color = MaterialTheme.colorScheme.error) }
-        TextButton(callbacks.onSubmit, enabled = !form.isSending) {
-            Text(stringResource(if (form.isSending) Res.string.community_report_sending else Res.string.community_report_send))
+        // The owner's pick from the #416 variants gallery (variant C): the app's
+        // primary button for send, a quiet text action for cancel below.
+        CoffeePeekButton(stringResource(if (form.isSending) Res.string.community_report_sending else Res.string.community_report_send),
+            callbacks.onSubmit, Modifier.fillMaxWidth(), enabled = !form.isSending)
+        TextButton(callbacks.onDismiss, Modifier.fillMaxWidth(), enabled = !form.isSending,
+            colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.onSurfaceVariant)) {
+            Text(stringResource(Res.string.community_cancel))
         }
-        TextButton(callbacks.onDismiss, enabled = !form.isSending) { Text(stringResource(Res.string.community_cancel)) }
     }
 }
 

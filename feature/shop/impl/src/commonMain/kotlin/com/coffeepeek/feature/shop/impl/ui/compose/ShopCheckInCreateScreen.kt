@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.ime
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -201,11 +202,14 @@ private fun ShopCheckInFeedback(state: ShopCheckInFormState, onAction: (ShopChec
     if (state.deliveryUnconfirmed) {
         Text(stringResource(Res.string.shop_checkin_form_uncertain),
             modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite })
-        TextButton(onClick = { onAction(ShopCheckInFormAction.OpenHistory) }) {
-            Text(stringResource(Res.string.shop_checkin_form_history))
-        }
-        TextButton(onClick = { onAction(ShopCheckInFormAction.HistoryChecked) }) {
-            Text(stringResource(Res.string.shop_checkin_form_history_checked))
+        Row(horizontalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing2),
+            verticalAlignment = Alignment.CenterVertically) {
+            TextButton(onClick = { onAction(ShopCheckInFormAction.OpenHistory) }) {
+                Text(stringResource(Res.string.shop_checkin_form_history))
+            }
+            TextButton(onClick = { onAction(ShopCheckInFormAction.HistoryChecked) }) {
+                Text(stringResource(Res.string.shop_checkin_form_history_checked))
+            }
         }
     }
 }

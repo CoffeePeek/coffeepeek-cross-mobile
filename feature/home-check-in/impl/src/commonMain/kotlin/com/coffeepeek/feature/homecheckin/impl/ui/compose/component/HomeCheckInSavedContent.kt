@@ -21,6 +21,7 @@ import com.coffeepeek.core.designsystem.component.CoffeePeekButton
 import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as stringResource
+import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.homecheckin.domain.model.HomePreparation
 import com.coffeepeek.feature.homecheckin.impl.resources.*
@@ -30,9 +31,9 @@ import org.jetbrains.compose.ui.tooling.preview.Preview
 @Composable
 internal fun HomeCheckInSavedContent(entry: HomePreparation, visibilityUnconfirmed: Boolean,
     onDone: () -> Unit, modifier: Modifier = Modifier) {
-    Box(modifier.fillMaxSize().padding(24.dp), contentAlignment = Alignment.Center) {
+    Box(modifier.fillMaxSize().padding(CoffeePeekDimens.spacing6), contentAlignment = Alignment.Center) {
         Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(20.dp)) {
+            verticalArrangement = Arrangement.spacedBy(CoffeePeekDimens.spacing5)) {
             CoffeePeekIcon(CoffeePeekIcons.CheckCircle, null, tint = MaterialTheme.colorScheme.primary)
             Text(stringResource(if (entry.visibility == com.coffeepeek.feature.homecheckin.domain.model.HomePreparationVisibility.Private)
                 Res.string.home_check_in_saved_private else Res.string.home_check_in_saved_unknown),
