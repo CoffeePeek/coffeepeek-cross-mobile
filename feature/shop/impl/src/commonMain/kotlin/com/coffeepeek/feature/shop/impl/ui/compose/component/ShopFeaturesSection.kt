@@ -24,6 +24,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import com.coffeepeek.core.designsystem.text.coffeePeekPluralForm
@@ -92,9 +93,11 @@ private fun ShopFeaturesToggle(count: Int, expanded: Boolean, onToggle: () -> Un
     val label = if (expanded) stringResource(Res.string.shop_features_collapse)
         else stringResource(coffeePeekPluralForm(count, Res.string.shop_features_show_all_count_one,
             Res.string.shop_features_show_all_count_few, Res.string.shop_features_show_all_count_many), count)
+    val shape = RoundedCornerShape(CoffeePeekDimens.radiusLg)
     Surface(Modifier.fillMaxWidth().heightIn(min = 52.dp)
+        .clip(shape)
         .clickable(role = Role.Button, onClickLabel = label, onClick = onToggle),
-        shape = RoundedCornerShape(CoffeePeekDimens.radiusLg),
+        shape = shape,
         color = MaterialTheme.colorScheme.surfaceVariant) {
         Text(label, Modifier.padding(CoffeePeekDimens.spacing3), style = MaterialTheme.typography.titleMedium,
             textAlign = androidx.compose.ui.text.style.TextAlign.Center)
