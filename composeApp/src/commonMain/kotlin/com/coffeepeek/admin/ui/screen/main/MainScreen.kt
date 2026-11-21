@@ -181,7 +181,12 @@ internal fun ComposeMainScreen(isLoggedIn: Boolean, onMapExpandedChange: (Boolea
                 }
                 NavHost(
                     navController = bottomNavController,
-                    startDestination = if (businessMode) Navigator.Screen.BusinessGraph else Navigator.Screen.FeedGraph,
+                    // Swapping startDestination on a mode change rebuilds the graph mid-composition,
+                    // which pops the whole back stack and breaks state restoration; capture the
+                    // initial destination once and let BusinessModeNavigationEffect handle switches.
+                    startDestination = remember {
+                        if (businessMode) Navigator.Screen.BusinessGraph else Navigator.Screen.FeedGraph
+                    },
                     modifier = Modifier.fillMaxSize(),
                     enterTransition = {
                         slideIntoContainer(tabDirection(), tween(if (reduceMotion) 0 else 300, easing = FastOutSlowInEasing))

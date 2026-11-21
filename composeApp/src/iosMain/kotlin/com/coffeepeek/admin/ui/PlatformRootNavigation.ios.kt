@@ -104,7 +104,9 @@ private object NavigationMemory {
     fun restore(isLoggedIn: Boolean) = saved.takeIf { it.isLoggedIn == isLoggedIn } ?: SavedNavigation()
 
     fun save(tabs: UITabBarController, navigations: List<UINavigationController>, visibleTabIndices: List<Int>, isLoggedIn: Boolean) {
-        val selectedTab = visibleTabIndices[tabs.selectedIndex.toInt().coerceIn(visibleTabIndices.indices)]
+        // A tab rebuild mid-switch can resolve the slot to the create tab (5) or run out of range;
+        // fall back to the first tab instead of trusting the transient selection.
+        val selectedTab = visibleTabIndices.getOrNull(tabs.selectedIndex.toInt())?.takeIf { it != 5 } ?: 0
         val stacks = navigations.map { navigation ->
             navigation.viewControllers.drop(1).mapNotNull { (it as? NativeScreenController)?.route }
         }
@@ -162,7 +164,13 @@ internal actual fun PlatformRootNavigation(
         delay(16)
     }
 
-    fun currentNavigation() = navigations[visibleTabIndices[tabs.selectedIndex.toInt().coerceIn(visibleTabIndices.indices)]]
+    // The visible slots include the create tab (5), which owns no navigation, and a tab rebuild
+    // leaves the stale selectedIndex pointing at the wrong slot until the effect reselects tab 0.
+    // Resolve leniently and skip navigation work in that window instead of indexing out of bounds.
+    fun currentNavigation(): UINavigationController? {
+        val tab = visibleTabIndices.getOrNull(tabs.selectedIndex.toInt()) ?: return null
+        return navigations.getOrNull(tab)
+    }
     fun selectTabRoot(destination: Navigator.Screen) {
         nativeTabIndex(destination)?.let { index ->
             val visibleIndex = visibleTabIndices.indexOf(index).takeIf { it >= 0 } ?: return
@@ -179,8 +187,10 @@ internal actual fun PlatformRootNavigation(
         body.value(screen) {
             scope.launch { navigate {
                 val navigation = currentNavigation()
-                navigation.setViewControllers(listOf(navigation.viewControllers.first(), controller(Navigator.Screen.Auth).apply { hidesBottomBarWhenPushed = true }), !UIAccessibilityIsReduceMotionEnabled())
-                saveNavigation()
+                if (navigation != null) {
+                    navigation.setViewControllers(listOf(navigation.viewControllers.first(), controller(Navigator.Screen.Auth).apply { hidesBottomBarWhenPushed = true }), !UIAccessibilityIsReduceMotionEnabled())
+                    saveNavigation()
+                }
             } }
         }
     }
@@ -253,25 +263,27 @@ internal actual fun PlatformRootNavigation(
     LaunchedEffect(tabs, visibleTabIndices) {
         events.collect { event -> navigate {
             val navigation = currentNavigation()
-            val animated = !UIAccessibilityIsReduceMotionEnabled()
-            when (event) {
-                Navigator.NavEvent.PopBack, Navigator.NavEvent.NavigateUp -> if (navigation.viewControllers.size > 1) navigation.popViewControllerAnimated(animated)
-                is Navigator.NavEvent.SelectTab -> selectTabRoot(event.tab)
-                is Navigator.NavEvent.NavigateTo -> {
-                    val tabIndex = nativeTabIndex(event.screen)
-                    when {
-                        event.screen == Navigator.Screen.Main -> navigation.popToRootViewControllerAnimated(animated)
-                        tabIndex != null -> visibleTabIndices.indexOf(tabIndex).takeIf { it >= 0 }?.let { tabs.selectedIndex = it.toULong() }
-                        event.screen.isHandledByRootNav() -> {
-                            val stack = navigation.viewControllers.map { (it as? NativeScreenController)?.route }
-                            val existing = navigation.viewControllers.getOrNull(existingProfileIndex(stack, event.screen)) as? UIViewController
-                            if (existing != null) navigation.popToViewController(existing, animated)
-                            else navigation.pushViewController(controller(event.screen).apply { hidesBottomBarWhenPushed = true }, animated)
+            if (navigation != null) {
+                val animated = !UIAccessibilityIsReduceMotionEnabled()
+                when (event) {
+                    Navigator.NavEvent.PopBack, Navigator.NavEvent.NavigateUp -> if (navigation.viewControllers.size > 1) navigation.popViewControllerAnimated(animated)
+                    is Navigator.NavEvent.SelectTab -> selectTabRoot(event.tab)
+                    is Navigator.NavEvent.NavigateTo -> {
+                        val tabIndex = nativeTabIndex(event.screen)
+                        when {
+                            event.screen == Navigator.Screen.Main -> navigation.popToRootViewControllerAnimated(animated)
+                            tabIndex != null -> visibleTabIndices.indexOf(tabIndex).takeIf { it >= 0 }?.let { tabs.selectedIndex = it.toULong() }
+                            event.screen.isHandledByRootNav() -> {
+                                val stack = navigation.viewControllers.map { (it as? NativeScreenController)?.route }
+                                val existing = navigation.viewControllers.getOrNull(existingProfileIndex(stack, event.screen)) as? UIViewController
+                                if (existing != null) navigation.popToViewController(existing, animated)
+                                else navigation.pushViewController(controller(event.screen).apply { hidesBottomBarWhenPushed = true }, animated)
+                            }
                         }
                     }
                 }
+                saveNavigation()
             }
-            saveNavigation()
         } }
     }
     LaunchedEffect(pendingTab, visibleTabIndices) {
@@ -284,9 +296,11 @@ internal actual fun PlatformRootNavigation(
         appLink?.let { destination ->
             navigate {
                 if (nativeTabIndex(destination) != null) selectTabRoot(destination)
-                else {
-                    val navigation = currentNavigation()
-                    navigation.setViewControllers(listOf(navigation.viewControllers.first(), controller(destination).apply { hidesBottomBarWhenPushed = true }), !UIAccessibilityIsReduceMotionEnabled())
+                else currentNavigation()?.let { navigation ->
+                    navigation.setViewControllers(
+                        listOf(navigation.viewControllers.first(), controller(destination).apply { hidesBottomBarWhenPushed = true }),
+                        !UIAccessibilityIsReduceMotionEnabled(),
+                    )
                 }
                 saveNavigation()
             }

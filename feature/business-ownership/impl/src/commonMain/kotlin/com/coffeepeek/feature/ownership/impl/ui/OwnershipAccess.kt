@@ -26,13 +26,33 @@ internal class OwnershipAccess(private val repository: BusinessOwnershipReposito
     fun editorId(kind: BusinessKind, id: String, slug: String): String? =
         if (identity == null || identity != account.current()) null else businesses[kind to slug] ?: businesses[kind to id]
 
-    suspend fun refresh() = mutex.withLock {
+    suspend fun refresh() = mutex.withLock { refreshLocked() }
+    suspend fun switchMode() {
+        if (switching) return
+        switching = true
+        try {
+            // The flag write must not interleave with a concurrent refresh: refresh() republishes
+            // the whole state from the value it read before the flip and would silently undo it.
+            mutex.withLock {
+                if (state.value.businessMode) state.value = state.value.copy(businessMode = false)
+                else {
+                    refreshLocked()
+                    if (state.value.hasBusinesses) state.value = state.value.copy(businessMode = true)
+                }
+            }
+        } finally { switching = false }
+    }
+    /** Caller holds the mutex; refresh() and switchMode() serialize around the network reads. */
+    private suspend fun refreshLocked() {
         val owner = account.current()
         if (owner != identity) reset()
-        if (owner == null) return@withLock
+        if (owner == null) return
         try {
             val owned = BusinessKind.entries.flatMap { loadAll(it) }.toMap()
-            if (owner != account.current()) return@withLock reset()
+            if (owner != account.current()) {
+                reset()
+                return
+            }
             businesses = owned
             state.value = BusinessSessionState(state.value.businessMode && owned.isNotEmpty(), owned.isNotEmpty(), owned.keys.map { "${it.first.name}:${it.second}" }.toSet())
         } catch (cancelled: CancellationException) { throw cancelled }
@@ -40,17 +60,6 @@ internal class OwnershipAccess(private val repository: BusinessOwnershipReposito
             // A transient failure must not silently kick the owner out of business mode;
             // the last known session stays until the next successful refresh.
         }
-    }
-    suspend fun switchMode() {
-        if (switching) return
-        switching = true
-        try {
-            if (state.value.businessMode) state.value = state.value.copy(businessMode = false)
-            else {
-                refresh()
-                if (state.value.hasBusinesses) state.value = state.value.copy(businessMode = true)
-            }
-        } finally { switching = false }
     }
     private suspend fun loadAll(kind: BusinessKind): List<Pair<Pair<BusinessKind, String>, String>> {
         val result = mutableListOf<Pair<Pair<BusinessKind, String>, String>>()
