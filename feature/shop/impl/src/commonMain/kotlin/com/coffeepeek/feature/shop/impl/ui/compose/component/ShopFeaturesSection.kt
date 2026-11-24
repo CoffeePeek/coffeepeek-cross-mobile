@@ -94,12 +94,18 @@ private fun ShopFeaturesToggle(count: Int, expanded: Boolean, onToggle: () -> Un
         else stringResource(coffeePeekPluralForm(count, Res.string.shop_features_show_all_count_one,
             Res.string.shop_features_show_all_count_few, Res.string.shop_features_show_all_count_many), count)
     val shape = RoundedCornerShape(CoffeePeekDimens.radiusLg)
+    // The forms' warm inset fill (onSurface 4%), not the cool LightBadge tint:
+    // the cold pill on the warm card read as green (that was the #350 follow-up).
     Surface(Modifier.fillMaxWidth().heightIn(min = 52.dp)
         .clip(shape)
         .clickable(role = Role.Button, onClickLabel = label, onClick = onToggle),
         shape = shape,
-        color = MaterialTheme.colorScheme.surfaceVariant) {
+        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.04f)) {
+        // onSurface at 60% blends into the pill as a neutral grey (R≈G≈B); the
+        // standard onSurfaceVariant is a warm stone grey whose olive cast read
+        // as green on the pill (the #350 follow-up).
         Text(label, Modifier.padding(CoffeePeekDimens.spacing3), style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
             textAlign = androidx.compose.ui.text.style.TextAlign.Center)
     }
 }
