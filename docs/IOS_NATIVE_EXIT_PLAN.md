@@ -480,3 +480,32 @@ codex/ios-native. Preserve its guard and reconcile that branch before publishing
   collection workspace lists retain their previous LazyVStack behavior. These
   final Swift-only follow-ups are compiling for build 3234. The layout controller
   sizing, isolation and cancellation review found no other actionable issue.
+
+### Discovery motion and shared header sizing (2026-11-25)
+
+- Final pre-motion build 3234 passed full Swift 6 complete-strict ARM64 link:
+  `3fc8ef12b5f12d8e1ea985472f7be84a89f118e0739281e688ef39d6a5551e0d`.
+  Signing/package checks passed. USB enumeration was still empty at the install
+  retry, so the last verified installed build remains 3232.
+- The owner requested upward map dismissal for both full catalogs, continuous
+  map expansion/collapse with vertically moving content, and matching search /
+  filter control heights on the map and Search page.
+- The same map view remains mounted. Catalog mode targets move its unchanged
+  preview rectangle above the result viewport's clip boundary; opacity no longer
+  removes the map when the preview is hidden. Expanding the map moves catalog
+  content below the viewport and brings it back on collapse. One no-bounce smooth
+  animation drives these changes; Reduce Motion retains its existing opt-out.
+- Search and filter/back controls share a scaled 48-point height. Top/bottom
+  header padding and chip spacing no longer change between map and Search modes.
+  Interactive colocated light/dark previews cover catalog/map/picker changes.
+- Four pure geometry contract groups passed on Windows using Foundation geometry,
+  including hidden-preview position/size, already-scrolled previews and invalid
+  bounds. Native CoreGraphics execution and full simulator compilation remain
+  macOS gates. Manual motion/layout review still needs the agreed USB iPhone.
+  Shared Kotlin state, repository behavior, analytics actions and native navigation
+  acknowledgement are unchanged. No UI automation was added.
+- Read-only review caught a transient clipping risk if the ScrollView itself moved
+  offscreen. Only its catalog content now moves; result viewport and map-preview
+  anchors remain stationary. Catalog entry travel is bounded to 48 points rather
+  than depending on a potentially very tall LazyVStack. A second review found no
+  concrete blocker. Full Swift 6 strict ARM64 code generation is running for 3235.

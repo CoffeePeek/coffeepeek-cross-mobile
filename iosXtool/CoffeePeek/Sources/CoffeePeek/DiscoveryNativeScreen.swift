@@ -15,6 +15,7 @@ struct DiscoveryNativeScreen: View {
     @State private var tailVisible = false
     @GestureState private var listDragging = false
     @State private var exposed: Set<String> = []
+    @ScaledMetric(relativeTo: .body) private var searchControlHeight: CGFloat = 48
 
     private func text(_ key: String) -> String { state.labels[key] ?? "" }
 
@@ -35,10 +36,13 @@ struct DiscoveryNativeScreen: View {
         .onDisappear { for feature in exposed { actions.visible(feature, false) } }
     }
 
-    private var modeAnimation: Animation? { reduceMotion ? nil : .easeInOut(duration: 0.36) }
-    private var mapAnimation: Animation? { reduceMotion ? nil : .easeInOut(duration: 0.42) }
+    private var modeAnimation: Animation? { reduceMotion ? nil : .smooth(duration: 0.5, extraBounce: 0) }
+    private var mapAnimation: Animation? { modeAnimation }
     private var catalogueTransition: AnyTransition {
-        reduceMotion ? .identity : .offset(y: 64).combined(with: .opacity)
+        reduceMotion ? .identity : .offset(y: 48)
+    }
+    private var bottomTransition: AnyTransition {
+        reduceMotion ? .identity : .move(edge: .bottom)
     }
     private var showsLanding: Bool { state.landing && !state.picker }
     private var hasQueryText: Bool { !state.query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
@@ -55,11 +59,11 @@ struct DiscoveryNativeScreen: View {
         ZStack(alignment: .top) {
             catalogueLayer(in: size)
                 .overlayPreferenceValue(DiscoveryMapAnchors.self) { anchors in mapLayer(anchors) }
-            if state.mapExpanded { expandedMap.transition(.opacity) }
+            if state.mapExpanded { expandedMap.transition(bottomTransition) }
             header.onGeometryChange(for: CGFloat.self) { $0.size.height } action: { next in
                 withAnimation(headerHeight == 0 ? nil : modeAnimation) { headerHeight = next }
             }
-            if showsContinueCheckIn { continueCheckIn }
+            if showsContinueCheckIn { continueCheckIn.transition(bottomTransition) }
             notices
         }
         .frame(width: size.width, height: size.height, alignment: .top)
@@ -74,9 +78,8 @@ struct DiscoveryNativeScreen: View {
         VStack(spacing: 0) {
             Color.clear.frame(height: headerHeight).accessibilityHidden(true)
             ZStack(alignment: .top) {
-                results.simultaneousGesture(listDrag)
-                    .offset(y: state.mapExpanded || state.roastersExpanded ? size.height * 0.3 : 0)
-                    .opacity(state.mapExpanded || state.roastersExpanded ? 0 : 1)
+                results(catalogueOffset: state.mapExpanded ? size.height : 0).simultaneousGesture(listDrag)
+                    .opacity(state.roastersExpanded ? 0 : 1)
                     .allowsHitTesting(!state.mapExpanded && !state.roastersExpanded)
                     .accessibilityHidden(state.mapExpanded || state.roastersExpanded)
                 if state.roastersExpanded {
@@ -89,15 +92,15 @@ struct DiscoveryNativeScreen: View {
     }
 
     private var header: some View {
-        VStack(spacing: state.picker && !state.mapExpanded ? 12 : 8) {
+        VStack(spacing: state.picker ? 12 : 8) {
             if state.picker { pickerHeader }
             searchHeader(expanded: state.mapExpanded)
             if !state.roastersExpanded {
                 chips.transition(catalogueTransition)
             }
         }
-        .padding(.top, state.mapExpanded ? 4 : 12)
-        .padding(.bottom, state.mapExpanded ? 4 : (showsQuickFilterDivider ? 8 : 16))
+        .padding(.top, 12)
+        .padding(.bottom, 8)
         .background { CoffeePeekNativeStyle.background.opacity(state.mapExpanded ? 0 : 1) }
         .overlay(alignment: .bottom) {
             if showsQuickFilterDivider {
@@ -165,7 +168,7 @@ struct DiscoveryNativeScreen: View {
             searchInput
             if !state.query.isEmpty { clearSearch }
         }
-        .padding(.horizontal, 12).frame(minHeight: 48)
+        .padding(.horizontal, 12).frame(height: searchControlHeight)
         .background {
             if expanded {
                 Color.clear.discoveryGlass(in: Capsule())
@@ -231,14 +234,14 @@ struct DiscoveryNativeScreen: View {
                         DiscoveryQuickFilterChip(title: item.title, id: item.id, selected: item.selected) { actions.call(item.id) }
                     }
                 }
-            }.padding(.horizontal, 16).padding(.vertical, showsQuickFilterDivider ? 4 : 0)
+            }.padding(.horizontal, 16).padding(.vertical, state.picker ? 0 : 4)
         }.scrollIndicators(.hidden)
     }
 
-    private var results: some View {
+    private func results(catalogueOffset: CGFloat) -> some View {
         ScrollViewReader { proxy in
             ScrollView {
-                resultRows
+                resultRows(catalogueOffset: catalogueOffset)
             }
             .scrollDismissesKeyboard(.interactively)
             .clipped()
@@ -264,7 +267,7 @@ struct DiscoveryNativeScreen: View {
         }
     }
 
-    private var resultRows: some View {
+    private func resultRows(catalogueOffset: CGFloat) -> some View {
         VStack(alignment: .leading, spacing: 0) {
             Color.clear.frame(height: 0).id("discovery-top")
             if state.refreshing && !state.picker {
@@ -276,6 +279,7 @@ struct DiscoveryNativeScreen: View {
                 if showsLanding { landingContent.transition(catalogueTransition) }
                 else { listContent.transition(catalogueTransition) }
             }
+            .offset(y: catalogueOffset)
             .animation(pickerListAnimation, value: pickerShopIds)
             .animation(pickerListAnimation, value: state.recent.isEmpty)
         }
@@ -299,7 +303,7 @@ struct DiscoveryNativeScreen: View {
             queryFocused = false
             actions.call("map")
         } label: {
-            Color.clear.frame(height: showsLanding ? mapPreviewHeight : 0)
+            Color.clear.frame(height: showsMapPreview ? mapPreviewHeight : 0)
                 .contentShape(RoundedRectangle(cornerRadius: 24))
         }
         .buttonStyle(.plain)
@@ -316,7 +320,8 @@ struct DiscoveryNativeScreen: View {
             let preview = anchors.preview.map { geometry[$0] } ?? .zero
             let results = anchors.results.map { geometry[$0] } ?? .zero
             let slot = CGRect(x: preview.minX, y: preview.minY, width: preview.width, height: mapPreviewHeight)
-            let frame = discoveryMapLayoutFrame(viewport: geometry.size, preview: slot, expanded: state.mapExpanded)
+            let frame = discoveryMapLayoutFrame(viewport: geometry.size, preview: slot, expanded: state.mapExpanded,
+                previewVisible: showsMapPreview, resultsTop: results.minY)
             let clip = discoveryMapClipFrame(viewport: geometry.size, results: results, expanded: state.mapExpanded)
             let target = frame ?? CGRect(x: 0, y: 0, width: 1, height: 1)
             map.background(CoffeePeekNativeStyle.surface)
@@ -324,11 +329,10 @@ struct DiscoveryNativeScreen: View {
                 .frame(width: target.width, height: target.height)
                 .clipShape(RoundedRectangle(cornerRadius: state.mapExpanded ? 0 : 24))
                 .position(x: target.midX, y: target.midY)
-                .offset(y: state.mapExpanded || showsMapPreview ? 0 : -24)
                 .mask(alignment: .topLeading) {
                     Rectangle().frame(width: clip.width, height: clip.height).offset(x: clip.minX, y: clip.minY)
                 }
-                .opacity(frame != nil && (state.mapExpanded || showsMapPreview) ? 1 : 0)
+                .opacity(frame != nil ? 1 : 0)
         }
         .ignoresSafeArea(.container, edges: .vertical)
         .allowsHitTesting(state.mapExpanded)
@@ -517,7 +521,8 @@ struct DiscoveryNativeScreen: View {
 
     func icon(_ symbol: String, label: String, glass: Bool = false, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            let glyph = Image(systemName: symbol).font(.system(size: 20)).frame(width: 48, height: 48)
+            let glyph = Image(systemName: symbol).font(.system(size: 20))
+                .frame(width: searchControlHeight, height: searchControlHeight)
             if glass { glyph.discoveryGlass(in: Circle()) }
             else { glyph.background(.regularMaterial, in: Circle()) }
         }.buttonStyle(.plain).accessibilityLabel(label)
@@ -684,11 +689,11 @@ extension View {
 
 func discoveryPreviewState(picker: Bool = false, expanded: Bool = false, canContinue: Bool = false,
                            pickerNearby: Bool = true, emptyReason: String? = nil,
-                           allResultsEmpty: Bool = false) -> IosDiscoveryState {
+                           allResultsEmpty: Bool = false, allShops: Bool = false, allRoasters: Bool = false) -> IosDiscoveryState {
     let shop = discoveryPreviewShop()
     return IosDiscoveryState(picker: picker, active: true, query: emptyReason == "Query" || emptyReason == "Filters" ? "coffee" : "",
-        landing: !picker && emptyReason == nil,
-        mapExpanded: expanded, roastersExpanded: false, showRoasterResults: false, canSuggestRoaster: allResultsEmpty,
+        landing: !picker && emptyReason == nil && !allShops,
+        mapExpanded: expanded, roastersExpanded: allRoasters, showRoasterResults: false, canSuggestRoaster: allResultsEmpty,
         scrollRevision: 0, bottomClearance: picker ? 0 : 84, loading: false, refreshing: false, loadingMore: false,
         canLoadMore: false, failed: false, loadMoreFailed: false, canSuggestShop: emptyReason != nil, emptyReason: emptyReason,
         locationNotice: nil, settingsNeeded: false, favoriteFailure: false, continueCheckIn: canContinue,
@@ -732,18 +737,31 @@ private func discoveryPickerPreviewShops(nearby: Bool) -> [IosDiscoveryShop] {
     return nearby ? [first, second, third] : [third, first]
 }
 
-private struct DiscoveryPickerInteractionPreview: View {
+private struct DiscoveryInteractionPreview: View {
+    var picker = true
+    private enum Mode { case landing, shops, roasters, map }
     @State private var nearby = true
-    @State private var expanded = false
+    @State private var mode = Mode.landing
 
     var body: some View {
-        DiscoveryNativeScreen(state: discoveryPreviewState(picker: true, expanded: expanded, pickerNearby: nearby),
-            actions: DiscoveryNativeActions(perform: { name, _ in
-                if name == "nearby" {
-                    if !expanded || !nearby { nearby.toggle() }
-                    expanded = false
-                } else if name == "map" { expanded.toggle() }
-            }), map: AnyView(CoffeePeekNativeStyle.border), roasters: { _ in AnyView(EmptyView()) })
+        DiscoveryNativeScreen(state: discoveryPreviewState(picker: picker, expanded: mode == .map, pickerNearby: nearby,
+            allShops: mode == .shops, allRoasters: mode == .roasters),
+            actions: DiscoveryNativeActions(perform: { name, _ in perform(name) }),
+            map: AnyView(CoffeePeekNativeStyle.border),
+            roasters: { _ in AnyView(CoffeePeekPhotoPlaceholder().frame(height: 160)) })
+    }
+
+    private func perform(_ name: String) {
+        switch name {
+        case "nearby":
+            if mode != .map || !nearby { nearby.toggle() }
+            mode = .landing
+        case "map": mode = mode == .map ? .landing : .map
+        case "activate": mode = .shops
+        case "roasters": mode = .roasters
+        case "cancel", "cancel-roasters": mode = .landing
+        default: break
+        }
     }
 }
 
@@ -786,10 +804,12 @@ private func discoveryScreenPreview(picker: Bool = false, expanded: Bool = false
 #Preview("Discovery map dark") { discoveryScreenPreview(expanded: true).preferredColorScheme(.dark) }
 #Preview("Check-in shop picker light") { discoveryScreenPreview(picker: true).preferredColorScheme(.light) }
 #Preview("Check-in shop picker dark") { discoveryScreenPreview(picker: true).preferredColorScheme(.dark) }
-#Preview("Picker transitions light") { DiscoveryPickerInteractionPreview().preferredColorScheme(.light) }
-#Preview("Picker transitions dark") { DiscoveryPickerInteractionPreview().preferredColorScheme(.dark) }
+#Preview("Discovery transitions light") { DiscoveryInteractionPreview(picker: false).preferredColorScheme(.light) }
+#Preview("Discovery transitions dark") { DiscoveryInteractionPreview(picker: false).preferredColorScheme(.dark) }
+#Preview("Picker transitions light") { DiscoveryInteractionPreview().preferredColorScheme(.light) }
+#Preview("Picker transitions dark") { DiscoveryInteractionPreview().preferredColorScheme(.dark) }
 #Preview("Picker large text") {
-    DiscoveryPickerInteractionPreview().preferredColorScheme(.dark).environment(\.dynamicTypeSize, .accessibility2)
+    DiscoveryInteractionPreview().preferredColorScheme(.dark).environment(\.dynamicTypeSize, .accessibility2)
 }
 
 @MainActor
