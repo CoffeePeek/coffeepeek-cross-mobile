@@ -9,7 +9,8 @@ import org.jetbrains.compose.resources.*
 /** Resolves the same feature resources without creating a composition or platform renderer. */
 internal class NativeCommunityResources(val language: String) {
     private val environment = getSystemResourceEnvironment()
-    suspend fun text(resource: StringResource, vararg args: Any): String = getString(environment, resource, *args)
+    suspend fun text(resource: StringResource, vararg args: Any): String =
+        if (args.isEmpty()) getString(environment, resource) else getString(environment, resource, *args)
 
     suspend fun postTexts() = NativePostTexts(
         text(Res.string.community_you), text(Res.string.community_user),

@@ -51,6 +51,7 @@ private final class CoffeePeekRootController: UIViewController, UITabBarControll
         super.init(nibName: nil, bundle: nil)
     }
     required init?(coder: NSCoder) { nil }
+    override var childForStatusBarStyle: UIViewController? { tabs }
     isolated deinit {
         observation?.cancel()
         source.close()
@@ -58,7 +59,8 @@ private final class CoffeePeekRootController: UIViewController, UITabBarControll
     }
     override func viewDidLoad() {
         super.viewDidLoad()
-        view.backgroundColor = UIColor(CoffeePeekNativeStyle.background)
+        view.backgroundColor = CoffeePeekNativeStyle.nativeBackground
+        tabs.view.backgroundColor = CoffeePeekNativeStyle.nativeBackground
         attach(tabs)
         tabs.delegate = self
         observeLifecycle()
@@ -68,11 +70,12 @@ private final class CoffeePeekRootController: UIViewController, UITabBarControll
     }
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
+        applyAppearance()
         modals.flush()
     }
     private func receive(_ next: IosRootState) {
         state = next
-        overrideUserInterfaceStyle = next.theme == "DARK" ? .dark : next.theme == "LIGHT" ? .light : .unspecified
+        applyAppearance()
         view.tintColor = UIColor(CoffeePeekNativeStyle.accent)
         if !next.ready { showUnavailable(next); return }
         removeFailure()
@@ -80,6 +83,12 @@ private final class CoffeePeekRootController: UIViewController, UITabBarControll
         updateLabels()
         syncTabBar()
         modals.flush()
+    }
+    private func applyAppearance() {
+        let style: UIUserInterfaceStyle = state.theme == "DARK" ? .dark : state.theme == "LIGHT" ? .light : .unspecified
+        overrideUserInterfaceStyle = style
+        viewIfLoaded?.window?.overrideUserInterfaceStyle = style
+        setNeedsStatusBarAppearanceUpdate()
     }
     private func showUnavailable(_ next: IosRootState) {
         view.endEditing(true)
@@ -118,7 +127,7 @@ private final class CoffeePeekRootController: UIViewController, UITabBarControll
             navigation.view.tag = index
             navigation.delegate = self
             navigation.setNavigationBarHidden(true, animated: false)
-            navigation.view.backgroundColor = UIColor(CoffeePeekNativeStyle.background)
+            navigation.view.backgroundColor = CoffeePeekNativeStyle.nativeBackground
             return navigation
         }
         installedGeneration = state.generation
@@ -188,7 +197,8 @@ private final class CoffeePeekRootController: UIViewController, UITabBarControll
     private func syncTabBar() {
         guard let navigation = tabs.selectedViewController as? UINavigationController else { return }
         let hidden = navigation.viewControllers.count > 1 || (navigation === navigations.first && state.expandedMap)
-        tabs.tabBar.isHidden = hidden
+        if #available(iOS 18.0, *) { tabs.setTabBarHidden(hidden, animated: false) }
+        else { tabs.tabBar.isHidden = hidden }
     }
     func tabBarController(_ tabBarController: UITabBarController, shouldSelect viewController: UIViewController) -> Bool {
         guard transition == nil, !navigations.contains(where: { $0.transitionCoordinator != nil }) else { return false }
@@ -269,7 +279,7 @@ private final class CoffeePeekRouteController: UIViewController {
     override var preferredStatusBarStyle: UIStatusBarStyle { route.lightStatusBar ? .lightContent : .default }
     override func viewDidLoad() {
         super.viewDidLoad()
-        view.backgroundColor = UIColor(CoffeePeekNativeStyle.background)
+        view.backgroundColor = CoffeePeekNativeStyle.nativeBackground
         guard let child = source.controller(route: route) else { return }
         addChild(child)
         child.view.translatesAutoresizingMaskIntoConstraints = false

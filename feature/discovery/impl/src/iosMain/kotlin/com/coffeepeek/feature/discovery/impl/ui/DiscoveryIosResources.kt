@@ -2,7 +2,7 @@
 
 package com.coffeepeek.feature.discovery.impl.ui
 
-import androidx.compose.ui.unit.Density
+import com.coffeepeek.core.designsystem.component.coffeePeekNativeDrawableImage
 import com.coffeepeek.core.designsystem.component.coffeePeekNativeVectorImage
 import com.coffeepeek.feature.discovery.domain.model.CatalogEntry
 import com.coffeepeek.feature.discovery.domain.model.PriceLevel
@@ -20,7 +20,8 @@ internal class DiscoveryIosResources {
     private val scale = UIScreen.mainScreen.scale.toFloat()
     private val brewImages = mutableMapOf<DrawableResource, UIImage>()
     private val tagImages = mutableMapOf<String, UIImage>()
-    suspend fun text(resource: StringResource, vararg args: Any): String = getString(environment, resource, *args)
+    suspend fun text(resource: StringResource, vararg args: Any): String =
+        if (args.isEmpty()) getString(environment, resource) else getString(environment, resource, *args)
     suspend fun price(level: PriceLevel?) = text(priceLabelResource(level))
     suspend fun distance(meters: Double): String = distanceLabelValue(meters).let { text(it.first, it.second) }
     suspend fun label(group: DiscoveryFilterGroup, entry: CatalogEntry): String {
@@ -41,7 +42,7 @@ internal class DiscoveryIosResources {
         brewImages[resource]?.let { return it }
         val bytes = getDrawableResourceBytes(environment, resource)
         val image = withContext(Dispatchers.Default) {
-            coffeePeekNativeVectorImage(bytes.decodeToImageVector(Density(scale)), 28f, scale)
+            coffeePeekNativeDrawableImage(bytes, 28f, scale)
         }
         brewImages[resource] = image
         return image

@@ -304,10 +304,72 @@ codex/ios-native. Preserve its guard and reconcile that branch before publishing
   extraction boundary was renamed with NativeRootView; the combined baseline
   generation/verification invocation failed Gradle validation. Separate final
   application tests, tooling and body gate passed after those corrections.
-- The integrated Kotlin framework is linking; full Swift 6 code generation/link,
-  macOS archive/signing and real Apple processing remain required before delivery.
+- The integrated Kotlin framework compiled and linked (2m04s compilation,
+  13m33s framework link). Full Swift 6 complete-strict ARM64 executable code
+  generation/link also passed. macOS archive/signing and real Apple processing
+  remain required before TestFlight delivery.
 - Whole-app Swift 6 complete-strict type checking passed against the integrated
   Kotlin header. Both native root controller and modal presenter passed real
   primary-file ARM64 object emission. The boxed Boolean/void callback adaptations
   are explicit; no Sendable/isolation bypass was added. Remaining warning is the
-  existing Firebase token API deprecation. Full executable linking remains open.
+  existing Firebase token API deprecation; it does not affect the strict-concurrency
+  result.
+
+### Local iPhone build checkpoint (2026-11-25)
+
+- Debug 1.2.2 (3229), bundle `com.coffeepeek.xcross`, was packaged from
+  `bca0fa47dc1064e309abbc05b7658f5f304b0d44` plus the recorded scanner dependency
+  URL change. The local source manifest retains that exact dirty-source identity.
+  No Kotlin/Swift runtime source changed after the verified integration.
+- Recompiled the complete app with Swift language version 6 and complete strict
+  concurrency, then replaced the compatibility-mode CLI executable before signing.
+  Unsigned ARM64 executable SHA-256:
+  `8868973145cbea3b35f4bd40f7058303ba3f20f8d65fee740c41208dbc4a3783`.
+- Existing development profile signing, concrete Keychain groups, bundle signature
+  verification and ZIP integrity passed. Signed IPA SHA-256:
+  `ac731ae61d5552d87a9fbc0402b26adec67cda2e42694a297973e33969f80e50`.
+- Initial installation API enumeration reported no USB device. After the user
+  connected/unlocked the agreed iPhone, the API confirmed iPhone15,4 / iOS 27.2.1,
+  pairing and unlocked state. In-place installation verified build 3229 and the
+  previous development signer; the main `com.coffeepeek` version stayed unchanged.
+- CoreDevice launch succeeded and the same process remained running after twelve
+  seconds (2026-11-25 18:34:54 UTC). This verifies startup only; screen interactions,
+  gestures, accessibility and live OAuth/push/camera/backend behavior are untested.
+  The existing Windows xcross build has no scanner; macOS/TestFlight builds keep it.
+- macOS verification first failed before compilation on the upstream ONNX archive's
+  TLS hostname validation. The original 1.24.2 bytes and license were retained in a
+  project dependency release with the identical upstream SHA-256. TLS/checksum
+  validation stays enabled. The new verification run is pending completion.
+
+### Device regressions reported after build 3229 (2026-11-25)
+
+- Collected seven app-only crash reports from the agreed iPhone, retained locally.
+  Four feed crashes enter `NativeCommunityResources.text` while the share template
+  is passed to the formatting overload with no arguments. Two shop crashes and
+  one filter crash enter the XML parser for the raster fallback brew icon.
+- Empty-argument native text lookups now use the raw resource overload. Explicit
+  arguments still use the formatting overload. The same behavior is aligned in
+  Discovery, Shop and Home resource adapters.
+- Native drawable decoding now accepts raster data before parsing vector XML;
+  both consumers reuse the design-system decoder. Added non-UI native contracts
+  for PNG fallback, vector size/tint and empty input. App and design-system native
+  test compilation passed; execution on macOS is pending. No new screenshot or
+  automated UI suite was introduced.
+- The native root applies app appearance to its window after attachment as well
+  as its own controller, releasing the override for SYSTEM. UIKit backgrounds use
+  the same dynamic palette as SwiftUI. Tab visibility uses UIKit's iOS 18+ layout
+  API. Intermediate Discovery/Shop route wrappers pass full container bounds to
+  their native child; leaf safe-area policies and the Home detail header remain.
+- The actual Discovery screenshot confirms black safe-area backgrounds, rather
+  than an extra top inset. No blanket padding or leaf safe-area reset was added.
+  Light/dark/system selection and the affected screens still require device review.
+- Mac native test compilation exposed three contracts for retired Kotlin UIKit
+  delegate/container implementations. Those files retain non-UI coverage at the
+  current Kotlin callback/tab/confirmed-stack boundary. Swift UIKit gesture,
+  lazy-loading and map/bar layout behavior remain manual acceptance gates.
+  The ten new root navigation model/acknowledgement contracts are now explicitly
+  selected by the native CI suite. The original failed run is retained.
+- TestFlight remains gated on these corrections, verification and a new build.
+- The corrected app passed whole-app Swift 6 complete-strict type checking.
+  Native test compilation passed in 3m41s, and body limits passed at 125 recorded
+  / zero new. Compiled native tests have not yet been executed.

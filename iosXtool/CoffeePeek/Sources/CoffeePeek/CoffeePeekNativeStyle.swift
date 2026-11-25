@@ -6,7 +6,8 @@ import UIKit
 // Keep these values aligned with core/design-system; no UIKit grouped-list defaults.
 @MainActor
 enum CoffeePeekNativeStyle {
-    static let background = adaptive(0xFAFAF9, 0x1A1412)
+    static let nativeBackground = adaptiveUIColor(0xFAFAF9, 0x1A1412)
+    static let background = Color(uiColor: nativeBackground)
     static let surface = adaptive(0xFFFFFF, 0x2D241F)
     static let surfaceVariant = adaptive(0xF3F4F6, 0x3D2F28)
     static let foreground = adaptive(0x1C1917, 0xFFFFFF)
@@ -77,11 +78,15 @@ enum CoffeePeekNativeStyle {
     }
 
     private static func adaptive(_ light: UInt32, _ dark: UInt32) -> Color {
-        Color(uiColor: UIColor { traits in
+        Color(uiColor: adaptiveUIColor(light, dark))
+    }
+
+    private static func adaptiveUIColor(_ light: UInt32, _ dark: UInt32) -> UIColor {
+        UIColor { traits in
             let hex = traits.userInterfaceStyle == .dark ? dark : light
             return UIColor(red: CGFloat((hex >> 16) & 255) / 255, green: CGFloat((hex >> 8) & 255) / 255,
                            blue: CGFloat(hex & 255) / 255, alpha: 1)
-        })
+        }
     }
 
 }

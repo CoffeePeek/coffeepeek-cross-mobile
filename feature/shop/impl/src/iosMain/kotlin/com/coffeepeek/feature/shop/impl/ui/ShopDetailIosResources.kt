@@ -2,7 +2,7 @@
 
 package com.coffeepeek.feature.shop.impl.ui
 
-import androidx.compose.ui.unit.Density
+import com.coffeepeek.core.designsystem.component.coffeePeekNativeDrawableImage
 import com.coffeepeek.core.designsystem.component.coffeePeekNativeVectorImage
 import com.coffeepeek.feature.shop.domain.model.ShopFeature
 import com.coffeepeek.feature.shop.domain.model.ShopSchedule
@@ -22,13 +22,16 @@ internal class ShopDetailIosResources(val language: String) {
     private val environment = getSystemResourceEnvironment()
     private val scale = UIScreen.mainScreen.scale.toFloat()
     private val images = mutableMapOf<ShopFeature, UIImage>()
-    suspend fun text(resource: StringResource, vararg args: Any) = getString(environment, resource, *args)
+    suspend fun text(resource: StringResource, vararg args: Any) =
+        if (args.isEmpty()) getString(environment, resource) else getString(environment, resource, *args)
 
     suspend fun feature(feature: ShopFeature): ShopDetailIosFeature {
         val image = images[feature] ?: run {
-            val vector = if (feature.isBrewMethod) getDrawableResourceBytes(environment, shopBrewArtwork(feature.name))
-                .decodeToImageVector(Density(scale)) else shopTagArtwork(feature.slug)
-            withContext(Dispatchers.Default) { coffeePeekNativeVectorImage(vector, 28f, scale) }.also { images[feature] = it }
+            withContext(Dispatchers.Default) {
+                if (feature.isBrewMethod) coffeePeekNativeDrawableImage(
+                    getDrawableResourceBytes(environment, shopBrewArtwork(feature.name)), 28f, scale)
+                else coffeePeekNativeVectorImage(shopTagArtwork(feature.slug), 28f, scale)
+            }.also { images[feature] = it }
         }
         return ShopDetailIosFeature(feature.name, image)
     }

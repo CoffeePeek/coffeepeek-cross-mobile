@@ -4,7 +4,9 @@ import UIKit
 
 @MainActor
 func makeDiscoveryRouteController(route: IosDiscoveryRoute) -> UIViewController {
-    UIHostingController(rootView: DiscoveryRouteHost(model: DiscoveryRouteModel(route)))
+    let controller = UIHostingController(rootView: DiscoveryRouteHost(model: DiscoveryRouteModel(route)))
+    controller.view.backgroundColor = CoffeePeekNativeStyle.nativeBackground
+    return controller
 }
 
 @MainActor
@@ -12,7 +14,9 @@ private struct DiscoveryRouteHost: View {
     @StateObject var model: DiscoveryRouteModel
     var body: some View {
         Group {
-            if let source = model.state.discovery { CheckInShopPickerContent(source: source).id(ObjectIdentifier(source)) }
+            if let source = model.state.discovery {
+                CheckInShopPickerContent(source: source).id(ObjectIdentifier(source)).ignoresSafeArea(.container)
+            }
             else {
                 VStack(spacing: 20) {
                     if model.state.failed {
@@ -23,7 +27,7 @@ private struct DiscoveryRouteHost: View {
                     .font(CoffeePeekNativeStyle.font(16)).foregroundStyle(CoffeePeekNativeStyle.foreground)
                     .background(CoffeePeekNativeStyle.background)
             }
-        }.onAppear(perform: model.observe)
+        }.background(CoffeePeekNativeStyle.background.ignoresSafeArea()).onAppear(perform: model.observe)
     }
 }
 
@@ -54,7 +58,7 @@ private final class DiscoveryNativeHostingController: UIHostingController<Discov
         let visibility = CoffeePeekNativeControllerVisibility { discovery.setVisible(visible: $0) }
         self.visibility = visibility
         super.init(rootView: DiscoveryNativeHost(model: DiscoveryNativeModel(discovery), visibility: visibility))
-        view.backgroundColor = .clear
+        view.backgroundColor = CoffeePeekNativeStyle.nativeBackground
         discovery.bindPresenter { [weak self] in self }
     }
     @MainActor required dynamic init?(coder: NSCoder) { return nil }
@@ -116,13 +120,14 @@ private struct CheckInShopPickerHost: View {
     var body: some View {
         Group {
             if let source = model.state.discovery {
-                CheckInShopPickerContent(source: source).id(ObjectIdentifier(source))
+                CheckInShopPickerContent(source: source).id(ObjectIdentifier(source)).ignoresSafeArea(.container)
             } else {
                 CheckInShopPickerStatus(title: model.state.title, failure: model.state.failure,
                     retry: model.state.retry, close: model.state.close, failed: model.state.failed,
                     onRetry: { model.picker.retry() }, onClose: { model.picker.dismiss() })
             }
         }
+        .background(CoffeePeekNativeStyle.background.ignoresSafeArea())
         .onAppear(perform: model.observe)
         .accessibilityAction(.escape) { model.picker.back() }
     }

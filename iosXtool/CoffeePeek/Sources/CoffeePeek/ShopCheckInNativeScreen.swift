@@ -13,12 +13,13 @@ private struct ShopCheckInRouteHost: View {
     var body: some View {
         Group {
             if let editor = model.state.editor {
-                ShopCheckInRouteContent(editor: editor).id(ObjectIdentifier(editor))
+                ShopCheckInRouteContent(editor: editor).id(ObjectIdentifier(editor)).ignoresSafeArea(.container)
             } else {
                 CoffeePeekNativeRouteStatus(failed: model.state.failed, title: model.state.title, retry: model.state.retry,
                     back: model.state.back, onRetry: { model.route.retry() }, onBack: { model.route.back() })
             }
         }
+        .background(CoffeePeekNativeStyle.background.ignoresSafeArea())
         .onAppear(perform: model.observe)
         .background(CoffeePeekLocalBackProtection(protected: model.state.editor != nil))
     }

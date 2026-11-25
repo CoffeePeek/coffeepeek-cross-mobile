@@ -24,6 +24,7 @@ private struct HomeCheckInRouteHost: View {
                     back: model.state.back, onRetry: { model.route.retry() }, onBack: { model.route.back() })
             }
         }
+        .background(CoffeePeekNativeStyle.background.ignoresSafeArea())
         .onAppear(perform: model.observe)
         .fullScreenCover(item: model.editorBinding) { item in
             HomeCheckInRouteEditor(editor: item.editor).interactiveDismissDisabled(!model.state.dismissAllowed)

@@ -1,4 +1,5 @@
-@file:OptIn(kotlinx.cinterop.ExperimentalForeignApi::class, kotlinx.cinterop.BetaInteropApi::class)
+@file:OptIn(kotlinx.cinterop.ExperimentalForeignApi::class, kotlinx.cinterop.BetaInteropApi::class,
+    org.jetbrains.compose.resources.ExperimentalResourceApi::class)
 
 package com.coffeepeek.core.designsystem.component
 
@@ -23,11 +24,23 @@ import androidx.compose.ui.unit.LayoutDirection
 import kotlinx.cinterop.addressOf
 import kotlinx.cinterop.usePinned
 import org.jetbrains.skia.Image
+import org.jetbrains.compose.resources.decodeToImageVector
 import platform.Foundation.NSData
 import platform.Foundation.create
 import platform.UIKit.UIImage
 import platform.UIKit.UIImageRenderingMode.UIImageRenderingModeAlwaysTemplate
 import platform.UIKit.UIScreen
+
+/** Drawable resources can contain either raster data or Android vector XML. */
+fun coffeePeekNativeDrawableImage(bytes: ByteArray, size: Float = 20f,
+    scale: Float = UIScreen.mainScreen.scale.toFloat()): UIImage {
+    require(bytes.isNotEmpty() && size.isFinite() && size > 0 && scale.isFinite() && scale > 0)
+    val raster = bytes.usePinned {
+        UIImage.imageWithData(NSData.create(bytes = it.addressOf(0), length = bytes.size.toULong()), scale.toDouble())
+    }
+    return raster?.imageWithRenderingMode(UIImageRenderingModeAlwaysTemplate)
+        ?: coffeePeekNativeVectorImage(bytes.decodeToImageVector(Density(scale)), size, scale)
+}
 
 /** Resolves an existing vector asset without starting a renderer/composition lifetime. */
 fun coffeePeekNativeVectorImage(vector: ImageVector, size: Float = 20f, scale: Float = UIScreen.mainScreen.scale.toFloat(),

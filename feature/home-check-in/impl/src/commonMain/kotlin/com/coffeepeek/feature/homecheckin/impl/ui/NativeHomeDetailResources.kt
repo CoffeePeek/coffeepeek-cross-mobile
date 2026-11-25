@@ -6,5 +6,6 @@ import org.jetbrains.compose.resources.*
 
 internal class NativeHomeDetailResources {
     private val environment = getSystemResourceEnvironment()
-    suspend fun text(resource: StringResource, vararg args: Any) = getString(environment, resource, *args)
+    suspend fun text(resource: StringResource, vararg args: Any) =
+        if (args.isEmpty()) getString(environment, resource) else getString(environment, resource, *args)
 }
