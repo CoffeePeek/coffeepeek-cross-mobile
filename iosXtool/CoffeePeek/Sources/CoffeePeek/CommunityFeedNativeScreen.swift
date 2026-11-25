@@ -45,8 +45,9 @@ struct CommunityFeedNativeContent: View {
         GeometryReader { geometry in
             ZStack(alignment: .bottom) {
                 ScrollViewReader { proxy in
-                    ScrollView { feedList }
-                        .refreshable { await actions.refresh() }
+                    ScrollView {
+                        feedList.coffeePeekRefreshable(isRefreshing: state.refreshing, label: state.labels.loading) { await actions.refresh() }
+                    }
                         .accessibilityAction(named: Text(state.labels.refresh)) { actions.perform("refresh") }
                         .onChange(of: state.sessionGeneration) { _, _ in
                             frames = [:]

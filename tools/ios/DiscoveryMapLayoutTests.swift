@@ -49,8 +49,9 @@ struct DiscoveryMapLayoutTests {
         let preview = CGRect(x: 0, y: 126, width: 393, height: 200)
         let hidden = discoveryMapLayoutFrame(viewport: viewport, preview: preview, expanded: false,
             previewVisible: false, resultsTop: 110)
-        assert(hidden == CGRect(x: 16, y: -90, width: 361, height: 200))
-        assert(hidden?.maxY == 110)
+        assert(hidden == CGRect(x: 16, y: -106, width: 361, height: 200))
+        assert(hidden?.maxY == 94)
+        assert(preview.minY - (hidden?.minY ?? 0) == 232)
         let offscreen = CGRect(x: 0, y: -400, width: 393, height: 200)
         assert(discoveryMapLayoutFrame(viewport: viewport, preview: offscreen, expanded: false,
             previewVisible: false, resultsTop: 110)?.minY == -400)

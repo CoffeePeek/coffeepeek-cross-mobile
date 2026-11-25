@@ -75,8 +75,8 @@ private struct ContributionsListNativeScreen: View {
                     .foregroundStyle(CoffeePeekNativeStyle.secondary)
                     .frame(maxWidth: .infinity)
                     .padding(24)
+                    .coffeePeekRefreshable(isRefreshing: state.loading, label: strings.text("loading")) { refresh() }
             }
-            .refreshable { refresh() }
         }
     }
 
@@ -113,9 +113,9 @@ private struct ContributionsListNativeScreen: View {
                 pageControl(state, selected: selected)
             }
             .padding(16)
+            .coffeePeekRefreshable(isRefreshing: state.loading, label: strings.text("loading")) { refresh() }
         }
         .id(selected)
-        .refreshable { refresh() }
     }
 
     @ViewBuilder

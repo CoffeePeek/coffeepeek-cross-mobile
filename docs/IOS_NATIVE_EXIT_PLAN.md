@@ -540,3 +540,29 @@ codex/ios-native. Preserve its guard and reconcile that branch before publishing
   macOS verification and same-device UI review. Preserve lazy lists, account
   invalidation, cancellation and existing refresh actions. No UI test suite or
   live account mutations are authorized for verification. TestFlight is pending.
+
+- Follow-up implementation keeps the shop catalog's LazyVStack identity stable:
+  collapsing its 232-point preview slot is its only vertical motion. Adding an
+  independent list transition doubled that displacement, so it was removed.
+  Roasters enter outside that layout flow with the same 232-point displacement
+  and shared 0.5-second smooth animation. Picker-only list animation remains scoped
+  to the picker. The four updated map geometry contract groups passed on Windows
+  Foundation geometry; Apple CoreGraphics execution remains a macOS gate.
+- All eleven SwiftUI refreshable call sites now use one branded native refresh
+  adapter. It attaches from each scroll content to its nearest owning UIScrollView,
+  never searches sibling lists or replaces another control, and synchronizes
+  UIRefreshControl with Kotlin busy state. SwiftUI owns refresh tasks through
+  task(id:), including async feed refresh and cancellation. No unstructured task,
+  unchecked Sendable or nonisolated escape was introduced. Light/dark previews
+  remain beside the shared component.
+- The square card also constrains its image to the measured square overlay,
+  keeping titles and gradients inside that same rectangle. A non-UI native
+  composition contract covers the moved preferences factory's signed-in guard
+  and rejects guest access again after account revocation.
+- The previous pushed revision e0b86a1 passed both macOS iOS verification jobs
+  (run 45723711010), including native contracts, real CoreGraphics geometry and
+  simulator compilation. This is prior-revision evidence; current changes still
+  require their own compile and test results.
+- Current whole-app Swift 6 complete-strict typecheck passed. The existing Firebase
+  Messaging token() deprecation is unchanged; no new isolation error was reported.
+  Full ARM64 executable linking awaits the fresh Kotlin framework.

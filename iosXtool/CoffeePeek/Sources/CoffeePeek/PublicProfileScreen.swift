@@ -38,9 +38,9 @@ private struct PublicProfileScreen: View {
                     }
                     .padding(.horizontal, 16)
                     .padding(.vertical, 16)
+                    .coffeePeekRefreshable(isRefreshing: model.state.loading, label: model.strings["profile_loading"]) { model.profile?.refresh() }
                 }
                 .accessibilityIdentifier(model.checkInsOnly ? "public-profile-check-ins" : "public-profile")
-                .refreshable { model.profile?.refresh() }
             }
         }
         .font(CoffeePeekNativeStyle.font(16))

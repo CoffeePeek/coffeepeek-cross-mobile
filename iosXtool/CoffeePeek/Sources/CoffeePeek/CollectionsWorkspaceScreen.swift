@@ -397,10 +397,10 @@ private struct CollectionsWorkspaceHost: View {
     private var scrollingContent: some View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: 16) { rowContents }.padding(16)
+                .coffeePeekRefreshable(isRefreshing: state.loading || state.refreshing, label: strings["collections_loading"]) { model.workspace.reload() }
         }
         .safeAreaInset(edge: .top, spacing: 0) { header }
         .safeAreaInset(edge: .bottom, spacing: 0) { bottomAction }
-        .refreshable { model.workspace.reload() }
     }
 
     @ViewBuilder private var header: some View {

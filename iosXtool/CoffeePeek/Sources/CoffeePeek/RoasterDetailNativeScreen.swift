@@ -80,7 +80,8 @@ struct RoasterDetailNativeScreen: View {
                     ScrollView {
                         VStack(alignment: .leading, spacing: 16) { content(name) }
                             .padding(.bottom, bottomInset + 24)
-                    }.refreshable { source?.retry() }.transition(.opacity)
+                            .coffeePeekRefreshable(isRefreshing: state.loading, label: strings["roaster_loading"]) { source?.retry() }
+                    }.transition(.opacity)
                 } else if state.loading {
                     CoffeePeekNativeLoader(label: strings["roaster_loading"]).transition(.opacity)
                 } else { failure.transition(.opacity) }

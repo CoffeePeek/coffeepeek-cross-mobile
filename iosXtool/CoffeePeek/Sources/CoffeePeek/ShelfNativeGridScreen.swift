@@ -44,8 +44,8 @@ private struct ShelfNativeGridContent: View {
                 else if state.failed { ShelfNativeStatus(message: strings["shelf_load_failed"], retry: strings["shelf_retry"]) { action("refresh", nil) } }
                 else if state.visible { grid }
             }.padding(16).padding(.bottom, own ? 88 : 16)
+                .coffeePeekRefreshable(isRefreshing: state.loading, label: strings["shelf_loading"]) { action("refresh", nil) }
         }
-        .refreshable { action("refresh", nil) }
         .safeAreaInset(edge: .bottom) { if own && (state.undo || state.failure != nil) { message } }
         .onDisappear { dragged = nil; dropRequest = nil }
         .task(id: dropRequest?.id) {

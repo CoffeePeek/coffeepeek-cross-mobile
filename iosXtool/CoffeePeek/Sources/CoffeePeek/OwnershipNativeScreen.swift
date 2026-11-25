@@ -111,8 +111,8 @@ struct OwnershipNativeContent: View {
                     else { destination }
                 }
             }.padding(16).padding(.bottom, tab ? 100 : 16)
+                .coffeePeekRefreshable(isRefreshing: state.loading, label: strings["ownership_loading"]) { send(.action("refresh")) }
         }
-        .refreshable { send(.action("refresh")) }
         .safeAreaInset(edge: .top) { header }
         .font(CoffeePeekNativeStyle.font(15))
         .foregroundStyle(CoffeePeekNativeStyle.foreground).tint(CoffeePeekNativeStyle.accent)

@@ -67,14 +67,16 @@ struct CollectionSummaryCard<Cover: View>: View {
     var body: some View {
         Color.clear.aspectRatio(1, contentMode: .fit)
             .overlay {
-                ZStack(alignment: .bottomLeading) {
-                    cover()
-                    LinearGradient(stops: [.init(color: .clear, location: 0.3),
-                        .init(color: .black.opacity(0.85), location: 1)], startPoint: .top, endPoint: .bottom)
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(title).font(.headline).lineLimit(2)
-                        Text(countText).font(.caption)
-                    }.foregroundStyle(.white).padding(12)
+                GeometryReader { geometry in
+                    ZStack(alignment: .bottomLeading) {
+                        cover().frame(width: geometry.size.width, height: geometry.size.height).clipped()
+                        LinearGradient(stops: [.init(color: .clear, location: 0.3),
+                            .init(color: .black.opacity(0.85), location: 1)], startPoint: .top, endPoint: .bottom)
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(title).font(.headline).lineLimit(2)
+                            Text(countText).font(.caption)
+                        }.foregroundStyle(.white).padding(12)
+                    }
                 }
             }
             .clipped().clipShape(RoundedRectangle(cornerRadius: 16))

@@ -91,7 +91,8 @@ struct RoasterDiscoveryNativeScreen: View {
                 }
                 suggestion
             }.padding(16).padding(.bottom, CGFloat(state.bottomClearance))
-        }.refreshable { source?.retry() }.roasterExposure("catalog", source: source)
+                .coffeePeekRefreshable(isRefreshing: state.loading, label: strings["roaster_loading"]) { source?.retry() }
+        }.roasterExposure("catalog", source: source)
     }
 
     private var carousel: some View {

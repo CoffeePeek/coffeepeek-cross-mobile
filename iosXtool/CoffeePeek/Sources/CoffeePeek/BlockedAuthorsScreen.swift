@@ -131,6 +131,7 @@ private struct BlockedAuthorsScreen: View {
             Section {
                 Text(strings.text("author_blocking_description"))
                     .foregroundStyle(.secondary)
+                    .coffeePeekRefreshable(isRefreshing: state.loading, label: strings.text("author_blocking_loading")) { onRefresh() }
             } header: {
                 Text(strings.text("author_blocking_heading"))
                     .accessibilityAddTraits(.isHeader)
@@ -138,7 +139,6 @@ private struct BlockedAuthorsScreen: View {
             if state.signedIn { authorList } else { guest }
         }
         .listStyle(.insetGrouped)
-        .refreshable { onRefresh() }
         .safeAreaInset(edge: .top, spacing: 0) { header }
         .overlay { workingOverlay }
     }

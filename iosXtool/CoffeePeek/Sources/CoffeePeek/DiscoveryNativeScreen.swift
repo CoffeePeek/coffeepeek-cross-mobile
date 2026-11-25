@@ -39,7 +39,10 @@ struct DiscoveryNativeScreen: View {
     private var modeAnimation: Animation? { reduceMotion ? nil : .smooth(duration: 0.5, extraBounce: 0) }
     private var mapAnimation: Animation? { modeAnimation }
     private var catalogueTransition: AnyTransition {
-        reduceMotion ? .identity : .offset(y: 48)
+        reduceMotion ? .identity : .offset(y: DiscoveryMapLayout.previewTravel)
+    }
+    private var headerTransition: AnyTransition {
+        reduceMotion ? .identity : .move(edge: .top).combined(with: .opacity)
     }
     private var bottomTransition: AnyTransition {
         reduceMotion ? .identity : .move(edge: .bottom)
@@ -53,7 +56,7 @@ struct DiscoveryNativeScreen: View {
     private var acceptedPickerCriteria: DiscoveryPickerResultCriteria {
         DiscoveryPickerResultCriteria(query: state.pickerResultQuery, nearby: state.pickerResultNearby)
     }
-    private let mapPreviewHeight: CGFloat = 200
+    private let mapPreviewHeight = DiscoveryMapLayout.previewHeight
 
     private func screen(in size: CGSize) -> some View {
         ZStack(alignment: .top) {
@@ -96,7 +99,7 @@ struct DiscoveryNativeScreen: View {
             if state.picker { pickerHeader }
             searchHeader(expanded: state.mapExpanded)
             if !state.roastersExpanded {
-                chips.transition(catalogueTransition)
+                chips.transition(headerTransition)
             }
         }
         .padding(.top, 12)
@@ -242,6 +245,7 @@ struct DiscoveryNativeScreen: View {
         ScrollViewReader { proxy in
             ScrollView {
                 resultRows(catalogueOffset: catalogueOffset)
+                    .coffeePeekRefreshable(isRefreshing: state.refreshing, label: text("loading")) { actions.call("refresh") }
             }
             .scrollDismissesKeyboard(.interactively)
             .clipped()
@@ -253,7 +257,6 @@ struct DiscoveryNativeScreen: View {
                     Color.clear.preference(key: DiscoveryResultsFrame.self, value: geometry.frame(in: .named("discovery")))
                 }
             }
-            .refreshable { actions.call("refresh") }
             .onChange(of: state.scrollRevision) { _, _ in queryFocused = false; proxy.scrollTo("discovery-top", anchor: .top) }
             .onChange(of: state.query) { _, _ in
                 if !state.picker { proxy.scrollTo("discovery-top", anchor: .top) }
@@ -273,18 +276,26 @@ struct DiscoveryNativeScreen: View {
             if state.refreshing && !state.picker {
                 CoffeePeekNativeLoader(label: text("loading")).frame(maxWidth: .infinity).padding(.bottom, 16)
             }
-            mapPreview.padding(.top, showsMapPreview ? 16 : 0)
-                .padding(.bottom, showsLanding ? 16 : 0)
-            LazyVStack(alignment: .leading, spacing: 16) {
-                if showsLanding { landingContent.transition(catalogueTransition) }
-                else { listContent.transition(catalogueTransition) }
-            }
-            .offset(y: catalogueOffset)
-            .animation(pickerListAnimation, value: pickerShopIds)
-            .animation(pickerListAnimation, value: state.recent.isEmpty)
+            mapPreview.padding(.vertical, showsMapPreview ? DiscoveryMapLayout.previewSpacing : 0)
+            catalogueRows(offset: catalogueOffset)
         }
         .padding(.bottom, CGFloat(state.bottomClearance) + (showsContinueCheckIn ? 72 : 20))
-        .animation(modeAnimation, value: showsLanding)
+        .animation(modeAnimation, value: showsMapPreview)
+    }
+
+    @ViewBuilder private func catalogueRows(offset: CGFloat) -> some View {
+        if state.picker {
+            catalogueContent.offset(y: offset)
+                .animation(pickerListAnimation, value: pickerShopIds)
+                .animation(pickerListAnimation, value: state.recent.isEmpty)
+        } else { catalogueContent.offset(y: offset) }
+    }
+
+    private var catalogueContent: some View {
+        LazyVStack(alignment: .leading, spacing: 16) {
+            if showsLanding { landingContent.transition(.identity) }
+            else { listContent.transition(.identity) }
+        }
     }
 
     private var landingContent: some View {
