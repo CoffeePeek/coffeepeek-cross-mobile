@@ -377,3 +377,32 @@ codex/ios-native. Preserve its guard and reconcile that branch before publishing
 - The corrected app passed whole-app Swift 6 complete-strict type checking.
   Native test compilation passed in 3m41s, and body limits passed at 125 recorded
   / zero new. Compiled native tests have not yet been executed.
+
+### Build 3230 verification and navigation follow-up (2026-11-25)
+
+- Corrected framework link passed (1m52s Kotlin compilation, 13m46s framework
+  link). The complete Swift 6 strict ARM64 executable linked successfully:
+  `1a5e97e0cbfcd46d082b3197df7f91c530cb64bf72f4042368aad1c0b0a4fa01`.
+- Three additional native resource contracts compiled. Executed shared regressions:
+  community 87 / 10 suites, Home 99 / 8 suites, zero failures/errors/skips. Android
+  directDebug assembly and packaged DEX checks passed. Body limits remain 125 / 0.
+- macOS verification for `b4601366a1d76d1d8c86e8bd8382266395b2ff6f` completed
+  successfully: simulator Kotlin/Swift build and all selected native test stages,
+  including actual packaged share strings and raster/vector decoding contracts.
+  Run: https://github.com/CoffeePeek/coffeepeek-cross-mobile/actions/runs/45709194041.
+- Signed 3230 was installed in place on the agreed iPhone15,4 / iOS 27.2.1; the
+  main app version was unchanged. Subsequent USB access was intermittent. One
+  successful collection found zero crash reports for 3230; its screenshot showed
+  the Home Screen, so it does not certify any application interaction.
+- The user reported a disappearing navigation panel. Static review found competing
+  `hidesBottomBarWhenPushed` and global tab-bar writes, including writes while an
+  interactive transition was pending. Root now solely owns bar visibility. It
+  sets transition targets explicitly, ignores ordinary intermediate updates,
+  restores cancelled gestures and settles from the actual UIKit top controller.
+- A weak navigation-controller reference tracks the active animation, preventing
+  an offscreen callback from clearing it. `didShow` acknowledges a pending command
+  when coordinator metadata is unavailable. Tuple/generation guards remain.
+- Debug-only native logs contain tab/stack/transition/visibility/layout scalars,
+  without account or route identifiers. Swift 6 type checking passed before the
+  final additional scalar fields; complete code generation and device review of
+  build 3231 remain pending. No new automated UI suite was added.

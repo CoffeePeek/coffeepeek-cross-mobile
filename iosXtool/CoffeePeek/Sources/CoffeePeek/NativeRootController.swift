@@ -1,4 +1,5 @@
 import ComposeApp
+import OSLog
 import SwiftUI
 import UIKit
 
@@ -40,9 +41,11 @@ private final class CoffeePeekRootController: UIViewController, UITabBarControll
     private var installedGeneration: Int64?
     private var appliedCommand: Int64?
     private var applying = false
-    private var nativeTransitionInFlight = false
+    private weak var nativeTransitionNavigation: UINavigationController?
+    private var nativeTransitionInFlight: Bool { nativeTransitionNavigation != nil }
     private var transition: (command: Int64, generation: Int64)?
     private var failure: UIViewController?
+    private let navigationLog = Logger(subsystem: "com.coffeepeek", category: "NativeNavigation")
     private lazy var modals = CoffeePeekRootModalPresenter(source: source, host: self)
 
     init(source: IosNativeRoot) {
@@ -71,6 +74,8 @@ private final class CoffeePeekRootController: UIViewController, UITabBarControll
     override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         applyAppearance()
+        syncTabBar()
+        traceNavigation("root_appeared")
         modals.flush()
     }
     private func receive(_ next: IosRootState) {
@@ -99,7 +104,7 @@ private final class CoffeePeekRootController: UIViewController, UITabBarControll
             installedGeneration = nil
             appliedCommand = nil
             transition = nil
-            nativeTransitionInFlight = false
+            nativeTransitionNavigation = nil
         }
         removeFailure()
         let child = UIHostingController(rootView: CoffeePeekRootStatus(failed: next.failed,
@@ -144,22 +149,26 @@ private final class CoffeePeekRootController: UIViewController, UITabBarControll
         let selected = Int(state.selected)
         transition = (command, generation)
         applying = true
+        var animatedSelection = false
         for stack in state.stacks {
             let navigation = navigations[Int(stack.index)]
             let controllers = stack.routes.map(controller)
             if navigation.viewControllers != controllers {
-                navigation.setViewControllers(controllers, animated: stack.index == state.selected && navigation.view.window != nil && !UIAccessibility.isReduceMotionEnabled)
+                let animated = stack.index == state.selected && navigation.view.window != nil && !UIAccessibility.isReduceMotionEnabled
+                if stack.index == state.selected { animatedSelection = animated }
+                navigation.setViewControllers(controllers, animated: animated)
             }
         }
         tabs.selectedViewController = navigations[selected]
         applying = false
+        updateTabBarForTransition(navigations[selected], showing: navigations[selected].topViewController, animated: animatedSelection)
         appliedCommand = command
         finishWhenShown(navigations[selected], command: command, generation: generation)
     }
     private func finishWhenShown(_ navigation: UINavigationController, command: Int64, generation: Int64) {
         navigation.view.isUserInteractionEnabled = false
         guard let coordinator = navigation.transitionCoordinator else {
-            finish(command: command, generation: generation)
+            if !nativeTransitionInFlight { finish(command: command, generation: generation) }
             return
         }
         coordinator.animate(alongsideTransition: nil) { [weak self] _ in self?.finish(command: command, generation: generation) }
@@ -180,8 +189,9 @@ private final class CoffeePeekRootController: UIViewController, UITabBarControll
     }
     private func controller(_ route: IosRootRoute) -> UIViewController {
         if let existing = cache[route.key] { return existing }
-        let controller = CoffeePeekRouteController(route: route, source: source) { [weak self] in self?.modals.flush() }
-        controller.hidesBottomBarWhenPushed = !state.stacks.contains { $0.routes.first === route }
+        let controller = CoffeePeekRouteController(route: route, source: source) { [weak self] in self?.routeAppeared() }
+        // The root owns depth/map visibility; UIKit must not independently toggle it on push.
+        controller.hidesBottomBarWhenPushed = false
         cache[route.key] = controller
         return controller
     }
@@ -195,13 +205,61 @@ private final class CoffeePeekRootController: UIViewController, UITabBarControll
         tabs.tabBar.unselectedItemTintColor = UIColor(CoffeePeekNativeStyle.secondary)
     }
     private func syncTabBar() {
+        guard state.ready, transition == nil, !nativeTransitionInFlight else { traceNavigation("bar_deferred"); return }
         guard let navigation = tabs.selectedViewController as? UINavigationController else { return }
-        let hidden = navigation.viewControllers.count > 1 || (navigation === navigations.first && state.expandedMap)
-        if #available(iOS 18.0, *) { tabs.setTabBarHidden(hidden, animated: false) }
+        setTabBarHidden(tabBarHidden(navigation, showing: navigation.topViewController), animated: false)
+        traceNavigation("bar_settled")
+    }
+    private func tabBarHidden(_ navigation: UINavigationController, showing controller: UIViewController?) -> Bool {
+        navigation.viewControllers.first !== controller || (navigation === navigations.first && state.expandedMap)
+    }
+    private var tabBarIsHidden: Bool {
+        if #available(iOS 18.0, *) { tabs.isTabBarHidden }
+        else { tabs.tabBar.isHidden }
+    }
+    private func setTabBarHidden(_ hidden: Bool, animated: Bool) {
+        guard tabBarIsHidden != hidden else { return }
+        if #available(iOS 18.0, *) { tabs.setTabBarHidden(hidden, animated: animated) }
         else { tabs.tabBar.isHidden = hidden }
     }
+    private func updateTabBarForTransition(_ navigation: UINavigationController, showing controller: UIViewController?, animated: Bool) {
+        guard state.ready, tabs.selectedViewController === navigation else { return }
+        let previous = tabBarIsHidden
+        let generation = state.generation
+        let hidden = tabBarHidden(navigation, showing: controller)
+        setTabBarHidden(hidden, animated: animated && !UIAccessibility.isReduceMotionEnabled)
+        traceNavigation("bar_transition")
+        guard previous != hidden, let coordinator = navigation.transitionCoordinator, coordinator.isInteractive else { return }
+        coordinator.notifyWhenInteractionChanges { [weak self] context in
+            guard context.isCancelled, let self, self.state.ready, self.state.generation == generation else { return }
+            self.setTabBarHidden(previous, animated: !UIAccessibility.isReduceMotionEnabled)
+            self.traceNavigation("bar_cancelled")
+        }
+    }
+    private func routeAppeared() {
+        syncTabBar()
+        traceNavigation("route_appeared")
+        modals.flush()
+    }
+    private func traceNavigation(_ event: String) {
+        guard Bundle.main.object(forInfoDictionaryKey: "CoffeePeekDebug") as? String == "YES" else { return }
+        let selected = state.selected
+        let navigation = tabs.selectedViewController as? UINavigationController
+        let actualTab = navigation?.view.tag ?? -1
+        let depth = navigation?.viewControllers.count ?? 0
+        let generation = state.generation
+        let command = state.command
+        let expanded = state.expandedMap
+        let hidden = tabBarIsHidden
+        let viewHidden = tabs.tabBar.isHidden
+        let pending = transition != nil
+        let native = nativeTransitionInFlight
+        let barHeight = Double(tabs.tabBar.frame.height)
+        let bottom = Double(navigation?.view.safeAreaInsets.bottom ?? 0)
+        navigationLog.info("event=\(event, privacy: .public) generation=\(generation) command=\(command) tab=\(selected) uiTab=\(actualTab) depth=\(depth) map=\(expanded) hidden=\(hidden) viewHidden=\(viewHidden) pending=\(pending) native=\(native) barHeight=\(barHeight) bottom=\(bottom)")
+    }
     func tabBarController(_ tabBarController: UITabBarController, shouldSelect viewController: UIViewController) -> Bool {
-        guard transition == nil, !navigations.contains(where: { $0.transitionCoordinator != nil }) else { return false }
+        guard transition == nil, !nativeTransitionInFlight, !navigations.contains(where: { $0.transitionCoordinator != nil }) else { return false }
         view.endEditing(true)
         if viewController === create { source.createCheckIn(); return false }
         if viewController === tabs.selectedViewController, let index = navigations.firstIndex(where: { $0 === viewController }),
@@ -215,17 +273,20 @@ private final class CoffeePeekRootController: UIViewController, UITabBarControll
     }
     func navigationController(_ navigationController: UINavigationController, willShow viewController: UIViewController, animated: Bool) {
         guard navigations.contains(where: { $0 === navigationController }) else { return }
-        if animated { nativeTransitionInFlight = true }
+        if animated { nativeTransitionNavigation = navigationController }
         navigationController.setNavigationBarHidden((viewController as? CoffeePeekRouteController)?.route.nativeNavigationBar != true, animated: animated)
+        if !applying { updateTabBarForTransition(navigationController, showing: viewController, animated: animated) }
         if navigationController.transitionCoordinator?.isInteractive == true { source.setInteracting(generation: state.generation, active: true) }
     }
     func navigationController(_ navigationController: UINavigationController, didShow viewController: UIViewController, animated: Bool) {
         guard navigations.contains(where: { $0 === navigationController }) else { return }
-        nativeTransitionInFlight = false
+        if nativeTransitionNavigation === navigationController { nativeTransitionNavigation = nil }
         navigationController.interactivePopGestureRecognizer?.delegate = self
         navigationController.interactivePopGestureRecognizer?.isEnabled = navigationController.viewControllers.count > 1
         guard !applying else { return }
-        if transition == nil, let route = (viewController as? CoffeePeekRouteController)?.route {
+        if let transition, tabs.selectedViewController === navigationController {
+            finish(command: transition.command, generation: transition.generation)
+        } else if transition == nil, let route = (viewController as? CoffeePeekRouteController)?.route {
             source.didPop(generation: route.generation, tab: Int32(navigationController.view.tag), topKey: route.key)
             pruneControllers()
         }
@@ -236,7 +297,7 @@ private final class CoffeePeekRootController: UIViewController, UITabBarControll
     }
     func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
         guard let navigation = navigations.first(where: { $0.interactivePopGestureRecognizer === gestureRecognizer }) else { return false }
-        return transition == nil && navigation.viewControllers.count > 1 && navigation.transitionCoordinator == nil &&
+        return transition == nil && !nativeTransitionInFlight && navigation.viewControllers.count > 1 && navigation.transitionCoordinator == nil &&
             navigation.presentedViewController == nil && (navigation.topViewController as? CoffeePeekRouteController)?.protectsBack != true
     }
     private func attach(_ child: UIViewController) {
@@ -255,7 +316,7 @@ private final class CoffeePeekRootController: UIViewController, UITabBarControll
         source.setStarted(active: UIApplication.shared.applicationState != .background)
         source.setForeground(active: UIApplication.shared.applicationState == .active)
     }
-    @objc private func becameActive() { source.setForeground(active: true); modals.flush() }
+    @objc private func becameActive() { source.setForeground(active: true); syncTabBar(); modals.flush() }
     @objc private func resignedActive() { source.setForeground(active: false) }
     @objc private func enteredBackground() { source.setStarted(active: false) }
     @objc private func enteredForeground() { source.setStarted(active: true) }
