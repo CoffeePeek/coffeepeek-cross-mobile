@@ -148,7 +148,7 @@ private fun appModule(
     single<com.coffeepeek.feature.auth.api.AuthAnalytics> { com.coffeepeek.admin.di.auth.AppAuthAnalytics() }
     single<com.coffeepeek.feature.auth.domain.AuthRepository> {
         val gateway = get<ApiClients>()
-        com.coffeepeek.feature.auth.data.createAuthRepository(gateway.plainClient, gateway.client, get(), get())
+        com.coffeepeek.feature.auth.data.createAuthRepository(gateway.plainClient, get(), get())
     }
     single<com.coffeepeek.admin.ui.screen.checkins.CheckInShopPickerRenderer> { checkInRenderers.shopPicker(this) }
     single<CheckInCreateFlowRenderer> { checkInRenderers.create(this) }

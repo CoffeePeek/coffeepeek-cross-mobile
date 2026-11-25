@@ -29,7 +29,7 @@ internal fun HttpClient.observeRequests(baseUrl: String, observer: () -> Request
         val path = url.encodedPath.lowercase()
         val isApi = url.protocol == origin.protocol && url.host == origin.host && url.port == origin.port
         // Refresh is part of its parent's logical operation, and storage uploads are not API requests.
-        if (!isApi || method !in setOf("GET", "POST", "PUT", "PATCH", "DELETE") || method == "PUT" && path.trimEnd('/') == "/api/tokens") {
+        if (!isApi || method !in setOf("GET", "POST", "PUT", "PATCH", "DELETE") || method == "PUT" && path.trimEnd('/') == "/api/tokens/native") {
             proceed()
             return@intercept
         }

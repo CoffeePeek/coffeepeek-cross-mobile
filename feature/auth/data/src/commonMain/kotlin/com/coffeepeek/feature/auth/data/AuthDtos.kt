@@ -5,6 +5,7 @@ package com.coffeepeek.feature.auth.data
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonNames
+import kotlin.time.Instant
 
 /** The server's envelope; `data` is read as the type each call expects. */
 @Serializable
@@ -18,13 +19,21 @@ internal data class Envelope<T>(
 internal data class TokensDto(
     @SerialName("accessToken") val accessToken: String,
     @SerialName("refreshToken") val refreshToken: String = "",
-)
+    val accessTokenExpiresAt: Instant? = null,
+    val refreshTokenExpiresAt: Instant? = null,
+) {
+    override fun toString(): String = "TokensDto([redacted])"
+}
 
 @Serializable
-internal data class LoginRequest(@SerialName("email") val email: String, @SerialName("password") val password: String)
+internal data class LoginRequest(@SerialName("email") val email: String, @SerialName("password") val password: String) {
+    override fun toString(): String = "LoginRequest([redacted])"
+}
 
 @Serializable
-internal data class GoogleLoginRequest(@SerialName("idToken") val idToken: String, val analyticsEnabled: Boolean? = null)
+internal data class GoogleLoginRequest(@SerialName("idToken") val idToken: String, val analyticsEnabled: Boolean? = null) {
+    override fun toString(): String = "GoogleLoginRequest([redacted])"
+}
 
 @Serializable
 internal data class RegistrationRequest(
@@ -32,7 +41,9 @@ internal data class RegistrationRequest(
     @SerialName("password") val password: String,
     @SerialName("userName") val userName: String,
     @SerialName("analyticsEnabled") val analyticsEnabled: Boolean,
-)
+) {
+    override fun toString(): String = "RegistrationRequest([redacted])"
+}
 
 @Serializable
 internal data class ForgotPasswordRequest(@SerialName("email") val email: String)

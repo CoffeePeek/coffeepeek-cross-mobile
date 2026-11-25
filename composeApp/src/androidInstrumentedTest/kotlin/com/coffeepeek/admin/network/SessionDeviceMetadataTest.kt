@@ -40,7 +40,7 @@ class SessionDeviceMetadataTest {
             throw captured
         }
         try {
-            val auth = createAuthRepository(client.plainClient, client.client, EmptySessions(), object : LocalUserData {
+            val auth = createAuthRepository(client.plainClient, EmptySessions(), object : LocalUserData {
                 override suspend fun clear() = Unit
             })
             for (result in listOf<Result<*>>(
@@ -50,8 +50,8 @@ class SessionDeviceMetadataTest {
                 createTokenRefresh(client.plainClient).refresh("fixture-refresh-token"),
             )) assertEquals(captured, result.exceptionOrNull())
 
-            assertEquals(listOf("/api/Tokens", "/api/Tokens/google/login",
-                "/api/Tokens/apple/login", "/api/Tokens"), requests.map { it.first })
+            assertEquals(listOf("/api/tokens/native", "/api/tokens/google/login",
+                "/api/tokens/apple/login", "/api/tokens/native"), requests.map { it.first })
             for ((_, agents) in requests) {
                 assertEquals(1, agents?.size)
                 val agent = agents!!.single()

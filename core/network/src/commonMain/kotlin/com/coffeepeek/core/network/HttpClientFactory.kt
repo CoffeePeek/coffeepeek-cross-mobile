@@ -17,7 +17,7 @@ class HttpClientFactory(private val engine: HttpClientEngine) {
     ): HttpClient = api(baseUrl) {
         configureBearerAuthentication(baseUrl, session, coordinator, requireHttps, onAuthRetry)
         diagnostics?.let { configureNetworkDiagnostics(it) }
-    }.also { if (coordinator != null) it.readCurrentSessionForRequests() }
+    }
 
     fun api(
         baseUrl: String,
