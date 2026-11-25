@@ -7,10 +7,12 @@ import com.coffeepeek.core.session.Session
 import com.coffeepeek.core.session.SessionStore
 
 /**
- * The transport's view of the account's stored session. Only an active session yields credentials; a rotated pair is stored
- * with the user id read from its access token, and a refresh response without a refresh token keeps the stored one.
+ * The transport's view of the account's stored session. Rotation replaces the whole snapshot atomically.
  */
-internal class SessionStoreCredentials(private val sessions: SessionStore) : SessionCredentials {
+internal class SessionStoreCredentials(
+    private val sessions: SessionStore,
+    private val onSessionRejected: () -> Unit = {},
+) : SessionCredentials {
     override suspend fun load(): SessionTokens? {
         sessions.warmCache()
         return sessions.peekSession()?.takeIf(sessions::isActiveSession)?.toTokens()
@@ -22,16 +24,22 @@ internal class SessionStoreCredentials(private val sessions: SessionStore) : Ses
     }
 
     override suspend fun replace(expected: SessionTokens, tokens: SessionTokens?): Boolean {
-        val old = sessions.peekSession()
-        if (old?.accessToken != expected.accessToken || old.refreshToken.orEmpty() != expected.refreshToken.orEmpty()) return false
-        return sessions.replaceSession(old, tokens?.toSession(old))
+        val old = sessions.peekSession() ?: return false
+        if (old.toTokens() != expected) return false
+        val next = tokens?.toSession(old)
+        if (next != null && next.userId != old.userId) return false
+        val replaced = sessions.replaceSession(old, next)
+        if (replaced && next == null && sessions.peekSession() == null) onSessionRejected()
+        return replaced
     }
 }
 
-private fun Session.toTokens() = SessionTokens(accessToken, refreshToken)
+private fun Session.toTokens() = SessionTokens(accessToken, refreshToken, accessTokenExpiresAt, refreshTokenExpiresAt)
 
 private fun SessionTokens.toSession(current: Session?) = Session(
     accessToken = accessToken,
-    refreshToken = refreshToken?.takeIf { it.isNotBlank() } ?: current?.refreshToken,
+    refreshToken = refreshToken,
     userId = JwtUtils.extractUserId(accessToken) ?: current?.userId,
+    accessTokenExpiresAt = accessTokenExpiresAt,
+    refreshTokenExpiresAt = refreshTokenExpiresAt,
 )

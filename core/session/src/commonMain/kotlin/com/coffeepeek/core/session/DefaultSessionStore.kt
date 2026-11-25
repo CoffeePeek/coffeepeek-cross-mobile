@@ -85,6 +85,8 @@ class DefaultSessionStore(
         }.map { it.session })
     }
     override suspend fun isLoggedIn() = isActiveSession(getSession())
-    private fun SessionCredentials.toSession() = Session(accessToken, refreshToken, JwtUtils.extractUserId(accessToken))
-    private fun Session.toCredentials() = SessionCredentials(accessToken, refreshToken.orEmpty())
+    private fun SessionCredentials.toSession() = Session(accessToken, refreshToken, JwtUtils.extractUserId(accessToken),
+        accessTokenExpiresAt, refreshTokenExpiresAt)
+    private fun Session.toCredentials() = SessionCredentials(accessToken, refreshToken.orEmpty(),
+        accessTokenExpiresAt, refreshTokenExpiresAt)
 }

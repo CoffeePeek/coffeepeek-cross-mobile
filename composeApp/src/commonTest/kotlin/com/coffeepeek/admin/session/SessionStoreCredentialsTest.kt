@@ -11,6 +11,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNull
 import kotlin.test.assertTrue
+import kotlin.time.Instant
 
 class SessionStoreCredentialsTest {
     private class Store(stored: Session?, private val loaded: Session? = stored) : SessionStore {
@@ -50,10 +51,14 @@ class SessionStoreCredentialsTest {
         assertNull(credentials.load())
     }
 
-    @Test fun savingWithoutARefreshTokenKeepsTheStoredOneAndTheUser() = runTest {
+    @Test fun savingCredentialsStoresTheNewPairAndServerExpiries() = runTest {
         val store = Store(Session("old", "stored-refresh", "owner"))
-        SessionCredentialsOf(store).save(SessionTokens("new", ""))
-        assertEquals(Session("new", "stored-refresh", "owner"), store.current)
+        val accessExpiry = Instant.parse("2026-11-26T00:00:00Z")
+        val refreshExpiry = Instant.parse("2026-12-26T00:00:00Z")
+        val tokens = SessionTokens("new", "rotated-refresh", accessExpiry, refreshExpiry)
+        SessionCredentialsOf(store).save(tokens)
+        assertEquals(Session("new", "rotated-refresh", "owner", accessExpiry, refreshExpiry), store.current)
+        assertEquals(tokens, SessionCredentialsOf(store).load())
     }
 
     @Test fun savingNothingSignsTheSessionOut() = runTest {
@@ -75,6 +80,22 @@ class SessionStoreCredentialsTest {
         val store = Store(Session("current", null, "owner"))
         assertTrue(SessionCredentialsOf(store).replace(SessionTokens("current", null), null))
         assertNull(store.current)
+    }
+
+    @Test fun reauthenticationIsRequestedOnlyAfterTheRejectedSessionIsCleared() = runTest {
+        val store = Store(Session("first", "r1", "owner"))
+        var prompts = 0
+        val credentials = SessionStoreCredentials(store) {
+            assertNull(store.current)
+            prompts++
+        }
+        val current = SessionTokens("next", "r2")
+        assertFalse(credentials.replace(SessionTokens("stale", "r0"), null))
+        assertTrue(credentials.replace(SessionTokens("first", "r1"), current))
+        assertEquals(0, prompts)
+        assertTrue(credentials.replace(current, null))
+        assertFalse(credentials.replace(current, null))
+        assertEquals(1, prompts)
     }
 
     private fun SessionCredentialsOf(store: SessionStore) = SessionStoreCredentials(store)
