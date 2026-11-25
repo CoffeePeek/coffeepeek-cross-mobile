@@ -590,3 +590,19 @@ codex/ios-native. Preserve its guard and reconcile that branch before publishing
   new owner feedback superseded that UI before full motion/refresh acceptance.
   The app-scoped diagnostic session was closed. New build/device and macOS gates
   are required for these follow-ups; no TestFlight upload is claimed.
+- Shelf Swift presentation reuses the archive host/rows/covers in one scroll
+  content beneath visibility controls, with no copied search/paging model. Its
+  sheet root observes the shelf model independently, retains account observation
+  until dismissal and immediately replaces private contents on inactive state.
+  A source review confirmed the archived-bag handoff survives child disposal.
+- Glass rails span each three-bag row; images align to their bottom edge while
+  other image consumers retain centered alignment. Titles, VoiceOver reorder /
+  finish actions, drag targets and Kotlin actions remain available. Colocated
+  light/dark previews cover seven bags, rails and both image alignments.
+- Two whole-driver Swift 6 strict typechecks passed before the final image
+  alignment change. A focused frontend-only attempt failed because that helper
+  disables the PhotosUI cross-import overlay; it was not a production source
+  import failure. Full ARM64 code generation will verify the frozen final source.
+  Read-only 3236 diagnostics contained 6,720 app-scoped records, no checked fatal /
+  UIKit containment / constraint / state-publishing marker and two settled root
+  samples with visible tabs. These samples do not certify animation acceptance.

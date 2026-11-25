@@ -4,7 +4,7 @@ import UIKit
 
 @MainActor
 func makeShelfArchiveController(archive: IosShelfArchive, languageTag: String) -> UIViewController {
-    UIHostingController(rootView: ShelfArchiveHost(archive: archive, strings: ShelfArchiveStrings(languageTag)))
+    UIHostingController(rootView: ShelfArchiveHost(archive: archive, languageTag: languageTag))
 }
 
 @MainActor
@@ -35,20 +35,23 @@ private final class ShelfArchiveModel: ObservableObject {
     }
 }
 
-private struct ShelfArchiveHost: View {
+struct ShelfArchiveHost: View {
     @StateObject private var model: ShelfArchiveModel
-    let strings: ShelfArchiveStrings
+    private let strings: ShelfArchiveStrings
+    let settings: AnyView?
 
-    init(archive: IosShelfArchive, strings: ShelfArchiveStrings) {
+    init(archive: IosShelfArchive, languageTag: String, settings: AnyView? = nil) {
         _model = StateObject(wrappedValue: ShelfArchiveModel(archive: archive))
-        self.strings = strings
+        strings = ShelfArchiveStrings(languageTag)
+        self.settings = settings
     }
 
     var body: some View {
         ShelfArchiveScreen(
             state: model.state, strings: strings,
             onQuery: { model.archive.query(value: $0) }, onBack: model.archive.back,
-            onRetry: model.archive.retry, onMore: model.archive.more, onBag: { model.archive.openBag(id: $0) }
+            onRetry: model.archive.retry, onMore: model.archive.more, onBag: { model.archive.openBag(id: $0) },
+            settings: settings
         ) { item in
             ShelfArchiveCover(archive: model.archive, item: item)
         }
@@ -65,11 +68,18 @@ private struct ShelfArchiveScreen<Cover: View>: View {
     let onRetry: () -> Void
     let onMore: () -> Void
     let onBag: (String) -> Void
+    var settings: AnyView? = nil
     @ViewBuilder let cover: (IosShelfArchiveRow) -> Cover
 
     var body: some View {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: 8) {
+                if let settings {
+                    settings
+                    Divider().padding(.vertical, 12)
+                    Text(strings.text("archive.title")).font(.title3.weight(.semibold)).accessibilityAddTraits(.isHeader)
+                    if state.signedIn { search }
+                }
                 if state.signedIn {
                     archiveContent
                 }
@@ -77,7 +87,8 @@ private struct ShelfArchiveScreen<Cover: View>: View {
             .padding(.horizontal, 16)
             .padding(.bottom, 16)
         }
-        .safeAreaInset(edge: .top, spacing: 0) { header }
+        .safeAreaInset(edge: .top, spacing: 0) { if settings == nil { header } }
+        .scrollDismissesKeyboard(.interactively)
         .background(CoffeePeekNativeStyle.background)
         .foregroundStyle(CoffeePeekNativeStyle.foreground)
     }

@@ -5,11 +5,18 @@ import UniformTypeIdentifiers
 
 struct ShelfNativeGridScreen: View {
     @ObservedObject var model: ShelfNativeModel
+    @State private var settingsShown = false
+    @State private var archive: IosShelfArchive?
+    @State private var archivedBag: String?
     var body: some View {
         ShelfNativeGridContent(state: model.state, strings: model.strings, own: model.screen.kind == "shelf",
-            cover: { AnyView(ShelfNativeCover(screen: model.screen, item: $0)) },
+            cover: { AnyView(ShelfNativeCover(screen: model.screen, item: $0, sitsOnShelf: true)) },
             action: model.action, move: { model.screen.move(id: $0, position: Int32($1)) },
-            setVisible: { model.screen.setVisible(value: $0) }, messageExpired: { model.screen.messageExpired(key: $0) })
+            onSettings: openSettings, messageExpired: { model.screen.messageExpired(key: $0) })
+        .sheet(isPresented: $settingsShown, onDismiss: finishSettings) {
+            ShelfNativeSettingsHost(model: model, archive: archive, close: { settingsShown = false })
+        }
+        .onChange(of: model.state.active) { _, active in if !active { archivedBag = nil; settingsShown = false } }
         .sheet(isPresented: Binding(get: { model.state.finishingId != nil }, set: { if !$0 { model.action("cancelFinish") } })) {
             if let item = model.state.items.first(where: { $0.id == model.state.finishingId }) {
                 ShelfNativeFinishSheet(cover: AnyView(ShelfNativeCover(screen: model.screen, item: item)), item: item, strings: model.strings,
@@ -21,6 +28,67 @@ struct ShelfNativeGridScreen: View {
         }
         .id(model.state.revision)
     }
+
+    private func openSettings() {
+        model.settingsVisibility(true)
+        archive = model.screen.makeArchive { id in
+            archivedBag = id
+            settingsShown = false
+        }
+        settingsShown = true
+    }
+    private func finishSettings() {
+        if let id = archivedBag { model.action("archivedBag", id) }
+        archivedBag = nil
+        model.screen.closeArchive()
+        archive = nil
+        model.settingsVisibility(false)
+    }
+}
+
+private struct ShelfNativeSettingsHost: View {
+    @ObservedObject var model: ShelfNativeModel
+    let archive: IosShelfArchive?
+    let close: () -> Void
+
+    var body: some View {
+        let controls = ShelfNativeVisibilitySettings(state: model.state, strings: model.strings,
+            setVisible: { model.screen.setVisible(value: $0) }, retry: { model.action("retryVisibility") },
+            close: close)
+        return Group {
+            if model.state.active {
+                if let archive { ShelfArchiveHost(archive: archive, languageTag: model.screen.languageTag, settings: AnyView(controls)) }
+                else { controls }
+            } else { Color.clear }
+        }
+        .animation(nil, value: model.state.active)
+        .padding(.top, 16).presentationDetents([.large]).presentationDragIndicator(.visible)
+        .background(CoffeePeekNativeStyle.background)
+    }
+}
+
+private struct ShelfNativeGlassRail: View {
+    var body: some View {
+        Color.clear.discoveryGlass(in: RoundedRectangle(cornerRadius: 9))
+            .overlay { RoundedRectangle(cornerRadius: 9).stroke(.white.opacity(0.6), lineWidth: 0.75) }
+            .overlay {
+                HStack {
+                    fastener
+                    Spacer()
+                    fastener
+                }.padding(.horizontal, 12)
+            }
+            .shadow(color: .black.opacity(0.16), radius: 10, x: 0, y: 8)
+            .accessibilityHidden(true)
+    }
+
+    private var fastener: some View {
+        Circle().fill(LinearGradient(colors: [.white.opacity(0.9), .gray.opacity(0.6)],
+                                    startPoint: .topLeading, endPoint: .bottomTrailing))
+            .overlay { Capsule().fill(.black.opacity(0.5)).frame(width: 5, height: 1).rotationEffect(.degrees(-45)) }
+            .overlay { Circle().stroke(.white.opacity(0.5), lineWidth: 0.5) }
+            .frame(width: 8, height: 8).shadow(color: .black.opacity(0.25), radius: 1, y: 1)
+    }
 }
 
 private struct ShelfNativeGridContent: View {
@@ -30,10 +98,10 @@ private struct ShelfNativeGridContent: View {
     let cover: (IosShelfItem) -> AnyView
     let action: (String, String?) -> Void
     let move: (String, Int) -> Void
-    let setVisible: (Bool) -> Void
+    let onSettings: () -> Void
     let messageExpired: (String) -> Void
     @State private var dragged: String?
-    @State private var settingsShown = false
+    @ScaledMetric(relativeTo: .body) private var bagHeight: CGFloat = 160
     @State private var dropRequest: ShelfNativeDrop?
 
     var body: some View {
@@ -53,10 +121,6 @@ private struct ShelfNativeGridContent: View {
             await request.load()
             if dropRequest?.id == request.id { dropRequest = nil }
         }
-         .sheet(isPresented: $settingsShown) {
-            ShelfNativeVisibilitySettings(state: state, strings: strings, setVisible: setVisible,
-                retry: { action("retryVisibility", nil) }, close: { settingsShown = false })
-        }
         .task(id: state.messageKey) {
             guard own, let key = state.messageKey else { return }
             let duration: UInt64 = UIAccessibility.isVoiceOverRunning ? 20 : (state.undo ? 5 : 4)
@@ -70,18 +134,13 @@ private struct ShelfNativeGridContent: View {
             HStack {
                 Text(strings["shelf_profile_title"]).font(.title3.weight(.semibold))
                 Spacer()
-                Button { action("archive", nil) } label: {
-                    Label(strings["shelf_archive"], systemImage: "archivebox").labelStyle(.iconOnly).frame(width: 44, height: 44)
-                }
-                Button { settingsShown = true } label: {
+                Button(action: onSettings) {
                     Label(strings["shelf_settings"], systemImage: "gearshape").labelStyle(.iconOnly).frame(width: 44, height: 44)
-                }
+                }.buttonStyle(.plain).shopDetailGlassCircle()
             }
-            Text([strings.count("bags", state.items.count), state.roasters > 0 ? strings.count("roasters", Int(state.roasters)) : nil,
-                  state.grams.map { strings.weight(Int($0.intValue)) }].compactMap { $0 }.joined(separator: " · "))
+            Text([strings.count("bags", state.items.count),
+                  state.roasters > 0 ? strings.count("roasters", Int(state.roasters)) : nil].compactMap { $0 }.joined(separator: " · "))
                 .font(.footnote).foregroundStyle(CoffeePeekNativeStyle.secondary)
-            Button { action("add", nil) } label: { Label(strings["shelf_scan_bag"], systemImage: "plus") }
-                .buttonStyle(.borderedProminent).foregroundStyle(.black)
         }
     }
 
@@ -94,12 +153,24 @@ private struct ShelfNativeGridContent: View {
                     if own { Text(strings["shelf_empty_body"]).foregroundStyle(CoffeePeekNativeStyle.secondary) }
                 }.padding(.vertical, 24)
             }
-            LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: 3), alignment: .leading, spacing: 24) {
-                ForEach(Array(state.items.enumerated()), id: \.element.id) { index, item in
-                    tile(item, index: index)
-                }
+            LazyVStack(spacing: 40) {
+                ForEach(Array(stride(from: 0, to: state.items.count, by: 3)), id: \.self) { start in shelfRow(start) }
             }
             if own && dragged != nil { finishZone }
+        }
+    }
+
+    private func shelfRow(_ start: Int) -> some View {
+        HStack(alignment: .top, spacing: 16) {
+            ForEach(start..<min(start + 3, state.items.count), id: \.self) { index in
+                tile(state.items[index], index: index).frame(maxWidth: .infinity).id(state.items[index].id)
+            }
+            ForEach(0..<max(0, start + 3 - state.items.count), id: \.self) { _ in
+                Color.clear.frame(maxWidth: .infinity).frame(height: bagHeight).accessibilityHidden(true)
+            }
+        }
+        .overlay(alignment: .top) {
+            ShelfNativeGlassRail().frame(height: 28).offset(y: bagHeight - 12).allowsHitTesting(false)
         }
     }
 
@@ -121,13 +192,12 @@ private struct ShelfNativeGridContent: View {
 
     private func bagTile(_ item: IosShelfItem) -> some View {
         Button { action("open", item.id) } label: {
-            VStack(spacing: 8) {
-                cover(item).frame(height: 136)
+            VStack(spacing: 28) {
+                cover(item).frame(height: bagHeight)
                     .shadow(color: .black.opacity(0.16), radius: 4, x: 0, y: 4)
-                RoundedRectangle(cornerRadius: 2).fill(CoffeePeekNativeStyle.secondary.opacity(0.18)).frame(height: 5)
                 Text(item.title ?? strings["shelf_bag_untitled"]).font(.caption).lineLimit(2)
             }
-            .padding(4)
+            .padding(.horizontal, 4)
             .background(item.id == state.arrivingId ? CoffeePeekNativeStyle.accent.opacity(0.15) : .clear, in: RoundedRectangle(cornerRadius: 8))
         }
         .buttonStyle(.plain)
@@ -193,7 +263,9 @@ private struct ShelfNativeVisibilitySettings: View {
             HStack {
                 Text(strings["shelf_settings"]).font(.headline)
                 Spacer()
-                Button(strings["shelf_sheet_close"]) { close() }
+                Button(action: close) {
+                    Label(strings["shelf_sheet_close"], systemImage: "xmark").labelStyle(.iconOnly).frame(width: 44, height: 44)
+                }.buttonStyle(.plain).shopDetailGlassCircle()
             }
             Toggle(strings["shelf_profile_show"], isOn: Binding(get: { state.visibility }, set: { setVisible($0) }))
                 .disabled(!state.visibilityEnabled)
@@ -204,7 +276,7 @@ private struct ShelfNativeVisibilitySettings: View {
                     .font(.footnote).foregroundStyle(.red)
                 if error == "Load" { Button(strings["shelf_retry"], action: retry) }
             }
-        }.padding(20).presentationDetents([.medium])
+        }.padding(.vertical, 8)
             .foregroundStyle(CoffeePeekNativeStyle.foreground).background(CoffeePeekNativeStyle.background)
     }
 
@@ -212,23 +284,32 @@ private struct ShelfNativeVisibilitySettings: View {
 
 @MainActor
 private func shelfGridPreview() -> some View {
-    let state = shelfNativePreviewState()
+    let state = shelfNativePreviewState(items: (0..<7).map { shelfNativePreviewItem(id: "bag-\($0)") })
     return ShelfNativeGridContent(state: state, strings: ShelfNativeStrings("ru"), own: true,
-        cover: { _ in AnyView(CoffeePeekPhotoPlaceholder()) }, action: { _, _ in }, move: { _, _ in }, setVisible: { _ in }, messageExpired: { _ in })
+        cover: { _ in AnyView(CoffeePeekPhotoPlaceholder()) }, action: { _, _ in }, move: { _, _ in }, onSettings: {}, messageExpired: { _ in })
         .foregroundStyle(CoffeePeekNativeStyle.foreground).background(CoffeePeekNativeStyle.background)
 }
 
 #Preview("Shelf light") { shelfGridPreview().preferredColorScheme(.light) }
 #Preview("Shelf dark") { shelfGridPreview().preferredColorScheme(.dark) }
 
+#Preview("Glass rail light") {
+    ShelfNativeGlassRail().frame(height: 28).padding(24)
+        .background(CoffeePeekNativeStyle.background).preferredColorScheme(.light)
+}
+#Preview("Glass rail dark") {
+    ShelfNativeGlassRail().frame(height: 28).padding(24)
+        .background(CoffeePeekNativeStyle.background).preferredColorScheme(.dark)
+}
+
 #Preview("Public shelf light") {
     ShelfNativeGridContent(state: shelfNativePreviewState(), strings: ShelfNativeStrings("ru"), own: false,
-        cover: { _ in AnyView(CoffeePeekPhotoPlaceholder()) }, action: { _, _ in }, move: { _, _ in }, setVisible: { _ in }, messageExpired: { _ in })
+        cover: { _ in AnyView(CoffeePeekPhotoPlaceholder()) }, action: { _, _ in }, move: { _, _ in }, onSettings: {}, messageExpired: { _ in })
         .preferredColorScheme(.light)
 }
 #Preview("Public shelf dark") {
     ShelfNativeGridContent(state: shelfNativePreviewState(), strings: ShelfNativeStrings("ru"), own: false,
-        cover: { _ in AnyView(CoffeePeekPhotoPlaceholder()) }, action: { _, _ in }, move: { _, _ in }, setVisible: { _ in }, messageExpired: { _ in })
+        cover: { _ in AnyView(CoffeePeekPhotoPlaceholder()) }, action: { _, _ in }, move: { _, _ in }, onSettings: {}, messageExpired: { _ in })
         .preferredColorScheme(.dark)
 }
 
