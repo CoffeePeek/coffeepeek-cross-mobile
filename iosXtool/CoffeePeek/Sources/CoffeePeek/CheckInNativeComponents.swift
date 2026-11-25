@@ -155,7 +155,7 @@ struct CheckInNativePrimaryButton: View {
     var body: some View {
         Button(action: action) {
             HStack(spacing: 8) {
-                if busy { ProgressView().tint(CoffeePeekNativeStyle.foreground) }
+                if busy { CoffeePeekNativeLoader(color: .black, size: 24) }
                 Text(title).font(CoffeePeekNativeStyle.font(17, weight: "SemiBold"))
             }
             .frame(maxWidth: .infinity, minHeight: 48)

@@ -46,7 +46,6 @@ private struct OwnProfileHost: View {
 
 private struct OwnProfileScreen: View {
     @ObservedObject var model: OwnProfileModel
-    @ScaledMetric(relativeTo: .body) private var collectionsHeight: CGFloat = 220
 
     var body: some View {
         GeometryReader { geometry in
@@ -145,7 +144,7 @@ private struct OwnProfileScreen: View {
                 .padding(.horizontal, 16)
             profileTab(viewport: viewport)
         } else if model.state.loading || model.state.refreshing {
-            ProgressView().frame(maxWidth: .infinity, minHeight: 130)
+            CoffeePeekNativeLoader(size: 24).frame(maxWidth: .infinity, minHeight: 130)
                 .accessibilityLabel(model.strings["profile_loading"])
         } else if model.state.active {
             OwnProfileRetry(message: model.strings["profile_load_failed"], strings: model.strings,
@@ -181,8 +180,7 @@ private struct OwnProfileScreen: View {
                 }
                 .padding(.horizontal, 16)
                 if let collections = model.collections {
-                    OwnProfileEmbedded(controller: collections)
-                        .frame(height: collectionsHeight)
+                    OwnProfileEmbedded(controller: collections, fitsContent: true)
                 }
             }
             .tint(CoffeePeekNativeStyle.foreground)

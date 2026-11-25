@@ -53,7 +53,7 @@ struct DiscoveryMapControls: View {
                 action: "heatmap", selected: state.heatmapVisible)
                 .overlay {
                     if state.heatmapLoading {
-                        CoffeePeekNativeLoader(label: text("loading")).scaleEffect(0.55).allowsHitTesting(false)
+                        CoffeePeekNativeLoader(label: text("loading"), size: 22).allowsHitTesting(false)
                     }
                 }
             control("square.3.layers.3d", label: text(state.zonesVisible ? "zones-hide" : "zones-show"),

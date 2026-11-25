@@ -153,7 +153,7 @@ struct ShopCheckInNativeScreen: View {
                 VStack(alignment: .leading, spacing: 24) {
                     if !state.active { Text(strings["shop_checkin_error_unauthorized"]) }
                     else if state.loading || state.submitting {
-                        ProgressView(strings["shop_checkin_form_sending"])
+                        CoffeePeekNativeLoader(label: strings["shop_checkin_form_sending"], size: 32, showsLabel: true)
                             .frame(maxWidth: .infinity).padding(.vertical, 32)
                     } else if state.submitted {
                         ShopCheckInNativeOutcome(state: state, strings: strings, feed: actions.goToFeed)

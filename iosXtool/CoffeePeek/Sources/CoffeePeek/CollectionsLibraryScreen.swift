@@ -118,7 +118,7 @@ private struct CollectionsLibraryScreen<Cover: View>: View {
 
     @ViewBuilder private var status: some View {
         if state.loading || state.refreshing {
-            ProgressView(strings.text("library.loading")).frame(maxWidth: .infinity)
+            CoffeePeekNativeLoader(label: strings.text("library.loading"), size: 32, showsLabel: true).frame(maxWidth: .infinity)
         }
         if !state.signedIn {
             Text(strings.text("library.signInHint"))
@@ -161,7 +161,7 @@ private struct CollectionsLibraryScreen<Cover: View>: View {
     }
 
     private var columns: [GridItem] {
-        [GridItem(.adaptive(minimum: dynamicTypeSize.isAccessibilitySize ? 280 : 150), spacing: 16)]
+        Array(repeating: GridItem(.flexible(minimum: 0), spacing: 16, alignment: .top), count: 2)
     }
 
     private var filteredItems: [IosCollectionsLibraryItem] {
@@ -247,6 +247,8 @@ private struct CollectionsLibraryStrings {
 private var libraryPreviewState: IosCollectionsLibraryState {
     let items = [
         IosCollectionsLibraryItem(id: "one", title: "Кофейни выходного дня", isPublic: true, count: 7, imageKey: "one"),
+        IosCollectionsLibraryItem(id: "three", title: "Эспрессо и завтраки", isPublic: true, count: 4, imageKey: "three"),
+        IosCollectionsLibraryItem(id: "four", title: "Новые кофейни у парка", isPublic: true, count: 2, imageKey: "four"),
         IosCollectionsLibraryItem(id: "two", title: "Избранное", isPublic: false, count: 3, imageKey: "two")
     ]
     return IosCollectionsLibraryState(

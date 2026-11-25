@@ -220,7 +220,7 @@ private struct ShopReportScreen: View {
                     .foregroundStyle(CoffeePeekNativeStyle.error)
             }
             if state.submitting {
-                ProgressView(strings.text("shop_report_submitting"))
+                CoffeePeekNativeLoader(label: strings.text("shop_report_submitting"), size: 32, showsLabel: true)
                     .frame(maxWidth: .infinity, minHeight: 48)
             } else {
                 CoffeePeekNativeActionButton(title: strings.text("shop_report_submit"), enabled: state.category != nil) {

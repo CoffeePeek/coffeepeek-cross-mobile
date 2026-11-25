@@ -46,7 +46,7 @@ private struct OwnProfileCheckInsContent: View {
         if state.checkInsFailed {
             OwnProfileRetry(message: strings["profile_check_ins_failed"], strings: strings, retry: retry)
         } else if state.checkInsLoading && state.checkIns.isEmpty {
-            ProgressView().frame(maxWidth: .infinity, minHeight: 64).accessibilityLabel(strings["profile_loading"])
+            CoffeePeekNativeLoader(size: 24).frame(maxWidth: .infinity, minHeight: 64).accessibilityLabel(strings["profile_loading"])
         } else if state.checkIns.isEmpty {
             Text(strings["profile_check_ins_empty"]).foregroundStyle(CoffeePeekNativeStyle.secondary)
         }
@@ -54,7 +54,7 @@ private struct OwnProfileCheckInsContent: View {
 
     @ViewBuilder private var pagination: some View {
         if state.loadingMoreCheckIns {
-            ProgressView().frame(maxWidth: .infinity, minHeight: 44).accessibilityLabel(strings["profile_loading"])
+            CoffeePeekNativeLoader(size: 24).frame(maxWidth: .infinity, minHeight: 44).accessibilityLabel(strings["profile_loading"])
         } else if state.moreCheckInsFailed {
             OwnProfileRetry(message: strings["profile_check_ins_failed"], strings: strings, retry: retry)
         } else if state.moreCheckIns && !state.checkInsLoading && !state.checkInsFailed {
@@ -106,7 +106,7 @@ struct CoffeePeekProfileConnectionsSheet: View {
                         openUser(person.slug)
                     }
                 }
-                if state.loading { ProgressView().frame(maxWidth: .infinity, minHeight: 44) }
+                if state.loading { CoffeePeekNativeLoader(size: 24).frame(maxWidth: .infinity, minHeight: 44) }
                 else if state.failed {
                     OwnProfileRetry(message: strings[state.followers ? "profile_followers_failed" : "profile_following_failed"],
                         strings: strings, retry: retry)

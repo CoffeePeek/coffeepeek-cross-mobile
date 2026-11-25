@@ -12,7 +12,7 @@ struct EditProfileNativeContent: View {
         VStack(spacing: 0) {
             header
             if state.revoked { Color.clear }
-            else if state.loading { ProgressView(strings["profile_loading"]).frame(maxHeight: .infinity) }
+            else if state.loading { CoffeePeekNativeLoader(label: strings["profile_loading"], size: 32, showsLabel: true).frame(maxHeight: .infinity) }
             else if state.loadFailed { loadFailure }
             else { form }
         }
@@ -49,7 +49,7 @@ struct EditProfileNativeContent: View {
                 EditProfileNativeFields(state: state, strings: strings, actions: actions)
                 Button(action: actions.save) {
                     Group {
-                        if state.saving { ProgressView(strings["profile_edit_saving"]) }
+                        if state.saving { CoffeePeekNativeLoader(label: strings["profile_edit_saving"], color: .black, size: 24, showsLabel: true) }
                         else { Text(strings["profile_edit_save"]) }
                     }.frame(maxWidth: .infinity).frame(minHeight: 48)
                 }.buttonStyle(.plain).font(CoffeePeekNativeStyle.font(16, weight: "SemiBold"))

@@ -2,9 +2,11 @@ import ComposeApp
 import SwiftUI
 
 struct CoffeePeekNativeLoader: View {
-    let label: String
+    var label: String = ""
     var animated = true
     var color: Color = CoffeePeekNativeStyle.accent
+    var size: CGFloat = CGFloat(IosLoaderGeometry.shared.size)
+    var showsLabel = false
     @Environment(\.accessibilityReduceMotion) private var reducedMotion
     @Environment(\.scenePhase) private var scenePhase
     @State private var started = Date()
@@ -14,6 +16,15 @@ struct CoffeePeekNativeLoader: View {
     }
 
     var body: some View {
+        VStack(spacing: 8) {
+            contour
+            if showsLabel && !label.isEmpty { Text(label).multilineTextAlignment(.center) }
+        }
+        .accessibilityElement(children: .ignore).accessibilityLabel(label)
+        .accessibilityAddTraits(.updatesFrequently)
+    }
+
+    private var contour: some View {
         TimelineView(.animation(minimumInterval: 1.0 / 30, paused: !animated || reducedMotion || scenePhase != .active)) { context in
             let elapsed = max(0, context.date.timeIntervalSince(started))
             let moving = animated && !reducedMotion
@@ -30,8 +41,9 @@ struct CoffeePeekNativeLoader: View {
             }.rotationEffect(.degrees(moving ? elapsed / geometry.rotationSeconds * 360 : 0))
         }
         .frame(width: CGFloat(geometry.size), height: CGFloat(geometry.size))
-        .accessibilityElement(children: .ignore).accessibilityLabel(label)
-        .accessibilityAddTraits(.updatesFrequently)
+        .scaleEffect(size / CGFloat(geometry.size))
+        .frame(width: size, height: size)
+        .clipped()
     }
 
     private func eased(_ value: Double) -> Double {
@@ -88,3 +100,5 @@ private struct CoffeePeekLoaderContour: Shape {
 
 #Preview("Native loader light") { CoffeePeekNativeLoader(label: "Загрузка", animated: false).padding().preferredColorScheme(.light) }
 #Preview("Native loader dark") { CoffeePeekNativeLoader(label: "Загрузка", animated: false).padding().preferredColorScheme(.dark) }
+#Preview("Inline loader light") { CoffeePeekNativeLoader(label: "Загрузка", animated: false, color: .black, size: 20, showsLabel: true).padding().preferredColorScheme(.light) }
+#Preview("Inline loader dark") { CoffeePeekNativeLoader(label: "Загрузка", animated: false, size: 20, showsLabel: true).padding().preferredColorScheme(.dark) }

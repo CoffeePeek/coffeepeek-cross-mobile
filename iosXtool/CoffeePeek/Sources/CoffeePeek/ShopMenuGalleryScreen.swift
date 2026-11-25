@@ -91,7 +91,7 @@ private struct ShopMenuGalleryScreen<Photo: View>: View {
     var body: some View {
         Group {
             if state.isLoading {
-                ProgressView().accessibilityLabel(strings.text("gallery.loading"))
+                CoffeePeekNativeLoader(size: 24).accessibilityLabel(strings.text("gallery.loading"))
             } else if state.hasError || state.previewUrls.isEmpty {
                 statusMessage
             } else {

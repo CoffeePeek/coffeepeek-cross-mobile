@@ -150,7 +150,7 @@ private struct BlockedAuthorsScreen: View {
 
     @ViewBuilder private var authorList: some View {
         if state.loading {
-            Section { ProgressView(strings.text("author_blocking_loading")) }
+            Section { CoffeePeekNativeLoader(label: strings.text("author_blocking_loading"), size: 32, showsLabel: true) }
         }
         if let error = state.error {
             Section {
@@ -187,7 +187,7 @@ private struct BlockedAuthorsScreen: View {
         if let prompt = state.prompt, prompt.working {
             ZStack {
                 Color.black.opacity(0.15).ignoresSafeArea()
-                ProgressView(strings.text(prompt.blocking ? "author_blocking_blocking" : "author_blocking_unblocking"))
+                CoffeePeekNativeLoader(label: strings.text(prompt.blocking ? "author_blocking_blocking" : "author_blocking_unblocking"), size: 32, showsLabel: true)
                     .padding(24)
                     .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16))
                     .accessibilityAddTraits(.updatesFrequently)

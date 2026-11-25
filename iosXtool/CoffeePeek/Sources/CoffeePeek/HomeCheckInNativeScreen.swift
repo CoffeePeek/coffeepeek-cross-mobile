@@ -276,7 +276,7 @@ struct HomeCheckInNativeContent: View {
 
     private var loadStatus: some View {
         VStack(spacing: 16) {
-            if state.status.loading { ProgressView(strings["home_check_in_loading"]) }
+            if state.status.loading { CoffeePeekNativeLoader(label: strings["home_check_in_loading"], size: 32, showsLabel: true) }
             if let key = state.issues.loadKey {
                 Text(strings[key]).foregroundStyle(CoffeePeekNativeStyle.error)
                 Button(strings["home_check_in_retry"], action: actions.retry).disabled(state.status.loading)

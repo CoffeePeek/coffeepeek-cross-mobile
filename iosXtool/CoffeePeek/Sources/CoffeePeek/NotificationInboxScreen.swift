@@ -106,7 +106,7 @@ struct NotificationInboxScreen: View {
     @ViewBuilder
     private var status: some View {
         if state.loading && state.items.isEmpty {
-            ProgressView().frame(maxWidth: .infinity).accessibilityLabel(Text(strings.text("notifications_loading")))
+            CoffeePeekNativeLoader(size: 24).frame(maxWidth: .infinity).accessibilityLabel(Text(strings.text("notifications_loading")))
         } else if let error = state.errorKey {
             VStack(alignment: .leading, spacing: 6) {
                 Text(strings.text(error)).foregroundStyle(.red)

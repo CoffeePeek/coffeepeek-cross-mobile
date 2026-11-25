@@ -144,7 +144,7 @@ struct ContributionFormContent<Photo: View, OptionImage: View>: View {
 
     @ViewBuilder private var formState: some View {
         if state.signedIn == -1 || state.loading && state.kind != "AddRoaster" {
-            if state.loadError != nil { loadFailure } else { ProgressView(strings.text("loading")) }
+            if state.loadError != nil { loadFailure } else { CoffeePeekNativeLoader(label: strings.text("loading"), size: 32, showsLabel: true) }
         } else if state.signedIn == 0 {
             ContributionsMessage(text: strings.text(signInKey), actionTitle: strings.text("sign_in"), onAction: onSignIn)
         } else if state.submit != "idle" { submission }
@@ -243,7 +243,7 @@ struct ContributionFormContent<Photo: View, OptionImage: View>: View {
         Group {
             field("name")
             field("description", multiline: true)
-            if state.loading { ProgressView(strings.text("loading")) }
+            if state.loading { CoffeePeekNativeLoader(label: strings.text("loading"), size: 32, showsLabel: true) }
             city
             field("address")
             Text(strings.text("roaster_location_hint")).font(.caption).foregroundStyle(CoffeePeekNativeStyle.secondary)
@@ -417,7 +417,7 @@ struct ContributionFormContent<Photo: View, OptionImage: View>: View {
 
     private func addPhotoButton(menu: Bool) -> some View {
         Button { onAddPhoto(menu) } label: {
-            if preparingPhotos { ProgressView() }
+            if preparingPhotos { CoffeePeekNativeLoader(size: 24) }
             else { Image(systemName: "plus").font(.title) }
         }.frame(width: 112, height: 112).background(CoffeePeekNativeStyle.surface, in: RoundedRectangle(cornerRadius: 14))
             .accessibilityLabel(strings.media("title")).disabled(preparingPhotos)

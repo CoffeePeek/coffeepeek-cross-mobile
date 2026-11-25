@@ -145,7 +145,7 @@ private struct ContentReportScreen: View {
                 Text(error).foregroundStyle(.red)
             }
             if state.submitting {
-                ProgressView(strings.text("content_report_loading"))
+                CoffeePeekNativeLoader(label: strings.text("content_report_loading"), size: 32, showsLabel: true)
             } else {
                 Button(strings.text(state.preview ? "content_report_preview_submit" : "content_report_submit")) {
                     editorFocused = false

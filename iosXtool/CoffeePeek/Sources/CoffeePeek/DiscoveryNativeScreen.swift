@@ -270,7 +270,8 @@ struct DiscoveryNativeScreen: View {
             if state.refreshing && !state.picker {
                 CoffeePeekNativeLoader(label: text("loading")).frame(maxWidth: .infinity).padding(.bottom, 16)
             }
-            mapPreview.padding(.bottom, showsLanding ? 16 : 0)
+            mapPreview.padding(.top, showsMapPreview ? 16 : 0)
+                .padding(.bottom, showsLanding ? 16 : 0)
             LazyVStack(alignment: .leading, spacing: 16) {
                 if showsLanding { landingContent.transition(catalogueTransition) }
                 else { listContent.transition(catalogueTransition) }

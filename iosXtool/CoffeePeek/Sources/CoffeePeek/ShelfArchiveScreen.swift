@@ -120,7 +120,7 @@ private struct ShelfArchiveScreen<Cover: View>: View {
             empty
         }
         if state.loading && !state.sections.isEmpty {
-            ProgressView().frame(maxWidth: .infinity).accessibilityLabel(strings.text("archive.loading"))
+            CoffeePeekNativeLoader(size: 24).frame(maxWidth: .infinity).accessibilityLabel(strings.text("archive.loading"))
         }
         ForEach(state.sections, id: \.id) { section in
             Text(strings.month(section))
@@ -141,7 +141,7 @@ private struct ShelfArchiveScreen<Cover: View>: View {
     }
 
     private var loader: some View {
-        ProgressView(strings.text("archive.loading"))
+        CoffeePeekNativeLoader(label: strings.text("archive.loading"), size: 32, showsLabel: true)
             .frame(maxWidth: .infinity)
             .padding(.vertical, 16)
     }

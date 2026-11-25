@@ -40,7 +40,7 @@ struct ShopCheckInNativeFields: View {
 
     private var drink: some View {
         CheckInNativeField(title: strings["shop_checkin_form_drink"]) {
-            if state.drinksLoading { ProgressView() }
+            if state.drinksLoading { CoffeePeekNativeLoader(size: 24) }
             if state.drinksFailed {
                 Button(strings["shop_checkin_form_drinks_error"], action: actions.retryDrinks)
             }
@@ -224,7 +224,7 @@ struct CoffeePeekPhotoAttachmentGrid<Thumbnail: View>: View {
     private var addTile: some View {
         Button { sourcePresented = true } label: {
             Group {
-                if preparing { ProgressView() }
+                if preparing { CoffeePeekNativeLoader(size: 24) }
                 else { Image(systemName: "camera").font(.system(size: 28)) }
             }
             .foregroundStyle(CoffeePeekNativeStyle.secondary).frame(width: 96, height: 96)

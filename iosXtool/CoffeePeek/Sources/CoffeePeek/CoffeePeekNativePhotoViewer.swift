@@ -335,7 +335,7 @@ private struct CoffeePeekPhotoPage: View {
                     .offset(pan)
                     .accessibilityLabel(strings.description(index, source.count))
             } else if images.isLoading {
-                ProgressView().tint(.white).accessibilityLabel(strings.text("loading"))
+                CoffeePeekNativeLoader(color: .white, size: 24).accessibilityLabel(strings.text("loading"))
             } else if index == selected {
                 Button { reload(retry: true) } label: {
                     Label(strings.text("retry"), systemImage: "arrow.clockwise")

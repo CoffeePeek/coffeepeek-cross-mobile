@@ -127,7 +127,7 @@ private struct CoffeeDetailScreen: View {
     var body: some View {
         Group {
             if state.isLoading {
-                ProgressView(strings.text("coffee_loading"))
+                CoffeePeekNativeLoader(label: strings.text("coffee_loading"), size: 32, showsLabel: true)
             } else if state.loadFailed {
                 loadError
             } else if let product = state.product {
@@ -297,7 +297,7 @@ private struct CoffeeDetailScreen: View {
             VStack(alignment: .leading, spacing: 12) {
                 sectionTitle("coffee_similar").coffeeDetailSection(.similarCoffees)
                 if state.similarLoading {
-                    ProgressView(strings.text("coffee_loading"))
+                    CoffeePeekNativeLoader(label: strings.text("coffee_loading"), size: 32, showsLabel: true)
                 } else if state.similarFailed {
                     Button(strings.text("coffee_retry_similar")) { onAction(.retrySimilar) }
                 } else {

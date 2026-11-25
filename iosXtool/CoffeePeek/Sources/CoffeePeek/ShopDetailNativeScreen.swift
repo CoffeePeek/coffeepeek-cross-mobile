@@ -141,7 +141,7 @@ struct ShopDetailNativeScreen: View {
                     CoffeePeekLikeIcon(selected: state.favorite, isLoading: state.favoriteBusy)
                         .opacity(state.favoriteBusy ? 0 : 1)
                     if state.favoriteBusy {
-                        CoffeePeekNativeLoader(label: text("loading")).scaleEffect(0.55).accessibilityHidden(true)
+                        CoffeePeekNativeLoader(label: text("loading"), size: 22).accessibilityHidden(true)
                     }
                 }
                     .frame(width: 48, height: 48).contentShape(Circle())

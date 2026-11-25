@@ -67,7 +67,7 @@ struct HomeCheckInNativeBeanPicker: View {
             section("home_check_in_from_catalog")
             ForEach(state.catalog.beans, id: \.id) { bean in row(bean, shelf: false) }
         }
-        if state.catalog.beansLoading { ProgressView(strings["home_check_in_beans_loading"]).padding() }
+        if state.catalog.beansLoading { CoffeePeekNativeLoader(label: strings["home_check_in_beans_loading"], size: 32, showsLabel: true).padding() }
         else if let key = state.catalog.beansIssueKey {
             Text(strings[key]).foregroundStyle(.red)
             Button(strings["home_check_in_retry"], action: actions.search).frame(minHeight: 44)

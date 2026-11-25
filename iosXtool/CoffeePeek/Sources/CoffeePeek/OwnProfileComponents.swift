@@ -50,17 +50,29 @@ private func profileConnectionsPreview() -> some View {
 
 struct OwnProfileEmbedded: View {
     let controller: UIViewController
+    var drawsBackground = true
+    var fitsContent = false
 
     var body: some View {
-        OwnProfileControllerRepresentable(controller: controller)
-            .background(CoffeePeekNativeStyle.background)
+        OwnProfileControllerRepresentable(controller: controller, fitsContent: fitsContent)
+            .background(drawsBackground ? CoffeePeekNativeStyle.background : .clear)
     }
 }
 
 private struct OwnProfileControllerRepresentable: UIViewControllerRepresentable {
     let controller: UIViewController
+    let fitsContent: Bool
     func makeUIViewController(context: Context) -> UIViewController { controller }
     func updateUIViewController(_ uiViewController: UIViewController, context: Context) {}
+    func sizeThatFits(_ proposal: ProposedViewSize, uiViewController: UIViewController, context: Context) -> CGSize? {
+        guard fitsContent, let width = proposal.width, let content = controller as? CoffeePeekNativeContentSizing else { return nil }
+        return content.contentSize(width: width)
+    }
+}
+
+@MainActor
+protocol CoffeePeekNativeContentSizing: AnyObject {
+    func contentSize(width: CGFloat) -> CGSize
 }
 
 struct OwnProfileHeader: View {

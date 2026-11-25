@@ -14,7 +14,7 @@ struct CoffeePeekNativeActionButton: View {
         Button(action: action) {
             HStack(spacing: 8) {
                 if let symbol { Image(systemName: symbol) }
-                if busy { ProgressView().tint(primary ? .black : CoffeePeekNativeStyle.foreground) }
+                if busy { CoffeePeekNativeLoader(color: primary ? .black : CoffeePeekNativeStyle.foreground, size: 24) }
                 Text(title).font(CoffeePeekNativeStyle.font(fontSize, weight: "Semibold"))
             }
             .multilineTextAlignment(.center)

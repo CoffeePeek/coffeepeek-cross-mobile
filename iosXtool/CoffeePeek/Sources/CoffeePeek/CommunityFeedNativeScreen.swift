@@ -72,7 +72,7 @@ struct CommunityFeedNativeContent: View {
                 CommunityFeedConfirmedCard(id: id, labels: state.labels, perform: actions.perform).padding(.horizontal, 16)
             }
             if state.loading && state.rows.isEmpty {
-                ProgressView(state.labels.loading).tint(CoffeePeekNativeStyle.foreground)
+                CoffeePeekNativeLoader(label: state.labels.loading, color: CoffeePeekNativeStyle.foreground, size: 32, showsLabel: true)
                     .frame(maxWidth: .infinity).padding(.top, 8)
             } else {
                 ForEach(Array(state.rows.enumerated()), id: \.element.id) { index, row in

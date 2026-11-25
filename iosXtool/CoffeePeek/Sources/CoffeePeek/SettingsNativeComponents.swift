@@ -130,7 +130,7 @@ struct SettingsNativeRow: View {
                         .fixedSize(horizontal: true, vertical: false)
                 }
                 if busy {
-                    ProgressView().accessibilityHidden(true)
+                    CoffeePeekNativeLoader(size: 24).accessibilityHidden(true)
                 } else if navigates {
                     Image(systemName: "chevron.forward")
                         .font(.system(size: 17, weight: .regular))

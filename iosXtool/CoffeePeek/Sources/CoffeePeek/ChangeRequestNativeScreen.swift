@@ -56,7 +56,7 @@ private struct ChangeRequestNativeScreen: View {
                     )
                 }
             } else {
-                ProgressView(strings.text("loading"))
+                CoffeePeekNativeLoader(label: strings.text("loading"), size: 32, showsLabel: true)
             }
         }
     }

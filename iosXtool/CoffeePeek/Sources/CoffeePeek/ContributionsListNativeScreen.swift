@@ -50,7 +50,7 @@ private struct ContributionsListNativeScreen: View {
             if let state, !state.loading {
                 content(state)
             } else {
-                ProgressView(strings.text("loading"))
+                CoffeePeekNativeLoader(label: strings.text("loading"), size: 32, showsLabel: true)
             }
         }
     }
@@ -124,7 +124,7 @@ private struct ContributionsListNativeScreen: View {
             Button(strings.text("load_more_failed")) { loadMore(selected) }
                 .frame(minHeight: 44)
         } else if state.loadingMore || state.hasMore {
-            ProgressView(strings.text("loading"))
+            CoffeePeekNativeLoader(label: strings.text("loading"), size: 32, showsLabel: true)
                 .task(id: state.items.count) {
                     if state.hasMore && !state.loadingMore { loadMore(selected) }
                 }

@@ -184,7 +184,7 @@ struct NativeAuthSubmit: View {
     var body: some View {
         Button(action: action) {
             HStack(spacing: 8) {
-                if busy { ProgressView().tint(.black).accessibilityHidden(true) }
+                if busy { CoffeePeekNativeLoader(color: .black, size: 24).accessibilityHidden(true) }
                 Text(title)
                     .font(CoffeePeekNativeStyle.font(17, weight: "SemiBold"))
             }

@@ -130,7 +130,7 @@ private struct DiscoveryFilterSheet: View {
         if let status = state.catalogStatus {
             HStack(alignment: .center, spacing: 10) {
                 if state.isLoading {
-                    CoffeePeekNativeLoader(label: status).scaleEffect(0.55).accessibilityHidden(true)
+                    CoffeePeekNativeLoader(label: status, size: 22).accessibilityHidden(true)
                 }
                 Text(status).foregroundStyle(CoffeePeekNativeStyle.secondary)
                 if let retry = state.retry {

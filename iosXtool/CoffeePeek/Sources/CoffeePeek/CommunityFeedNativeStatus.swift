@@ -13,7 +13,7 @@ struct CommunityFeedNativeStatus: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                 if state.guest { signIn }
             }
-            if state.loadingMore { ProgressView(state.labels.loading).tint(CoffeePeekNativeStyle.foreground) }
+            if state.loadingMore { CoffeePeekNativeLoader(label: state.labels.loading, color: CoffeePeekNativeStyle.foreground, size: 32, showsLabel: true) }
         }.padding(.horizontal, 16)
     }
 

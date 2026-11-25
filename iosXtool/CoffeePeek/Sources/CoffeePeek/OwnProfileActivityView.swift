@@ -64,7 +64,7 @@ struct CoffeePeekProfileActivityCard: View {
         }
         .overlay(alignment: .bottomTrailing) {
             if state.loading {
-                ProgressView().padding(8)
+                CoffeePeekNativeLoader(size: 24).padding(8)
                     .background(CoffeePeekNativeStyle.surface, in: Circle())
                     .padding(8).allowsHitTesting(false)
                     .accessibilityLabel(strings["history_activity_loading"])

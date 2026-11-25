@@ -56,7 +56,7 @@ struct HomeCheckInNativeRecipe: View {
             } label: {
                 HomeCheckInNativeSelection(label: methodLabel, symbol: "cup.and.saucer", error: error("Method"))
             }.disabled(state.catalog.methodsLoading).accessibilityLabel(strings["home_check_in_method_action"])
-            if state.catalog.methodsLoading { ProgressView(strings["home_check_in_methods_loading"]) }
+            if state.catalog.methodsLoading { CoffeePeekNativeLoader(label: strings["home_check_in_methods_loading"], size: 32, showsLabel: true) }
             if state.catalog.methodsIssueKey != nil {
                 Button(strings["home_check_in_methods_retry"], action: actions.retryMethods)
             }

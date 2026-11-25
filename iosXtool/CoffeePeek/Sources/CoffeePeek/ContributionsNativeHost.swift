@@ -125,7 +125,7 @@ extension View {
 @MainActor
 private func contributionsSendingPreview() -> some View {
     ContributionsScaffold(title: "Отправка", backLabel: "Назад", onBack: nil) {
-        ProgressView("Сохраняем заявку…")
+        CoffeePeekNativeLoader(label: "Сохраняем заявку…", size: 32, showsLabel: true)
     }
 }
 #Preview("Contributions sending light") { contributionsSendingPreview().preferredColorScheme(.light) }

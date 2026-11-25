@@ -435,3 +435,35 @@ codex/ios-native. Preserve its guard and reconcile that branch before publishing
   expanded-map collapse/return, tab switching and appearance checks on the same
   iPhone. Shared Kotlin behavior is unchanged; the preceding executed shared and
   native contracts remain relevant. Device/release acceptance is still pending.
+
+### Follow-up visual corrections (2026-11-25)
+
+- Build 3232 passed full Swift 6 complete-strict ARM64 link; executable SHA-256
+  `42b96b717c5011e92fb7e62f7f3d2431c9058146c3c098ba4373298e56cadb1e`.
+  Signed in-place installation on the same iPhone15,4 / iOS 27.2.1 succeeded,
+  preserving the user's signed-in session and the separate main app version.
+- Manual filter-sheet open/scroll/close exercised brew and amenity icons without
+  a crash. Shop detail and shop check-in list also opened. The native diagnostic
+  stream recorded detail-to-root returns with the tab view visible and the bottom
+  inset restored to 83. Concurrent user interaction prevents treating the attempted
+  cancelled swipe as a controlled acceptance check; it remains unverified.
+- The owner then requested branded loaders throughout, a two-column collection
+  grid, spacing above the collapsed map and correction of the roaster ellipsis
+  background. These are part of the same unreleased native checkpoint.
+- All 65 explicit indeterminate SwiftUI progress indicators now reuse the shared
+  contour loader, with compact sizing and preserved labels/contrast. Scanner
+  download progress also uses that loader and retains its numeric percentage.
+  The remaining determinate ProgressView renders a rating, not a loading state.
+  System-provided pull-to-refresh/picker controls are not custom loading views.
+- Own/featured profile collections use two flexible columns and content sizing
+  instead of the fixed-height horizontal carousel. Library columns follow the
+  same two-column policy. Existing card rendering, Kotlin collection visibility,
+  order, image loading and navigation remain. Colocated light/dark previews include
+  multiple rows, long titles and large type.
+- The collapsed map gains 16 points above its preview anchor; expanded-map bounds
+  retain their existing policy. The embedded roaster ownership control requests a
+  transparent wrapper, removing the opaque rectangle behind its glass circle.
+- Verification plan: full Swift 6 strict compilation/link and macOS verification;
+  same-device review of grid sizing after asynchronous data, map expansion,
+  roaster menu background and bottom-tab back/cancel. No new UI automation or
+  business/data changes are introduced. TestFlight remains pending these checks.

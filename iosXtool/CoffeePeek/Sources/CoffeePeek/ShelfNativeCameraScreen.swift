@@ -53,7 +53,7 @@ struct ShelfNativeCameraScreen: View {
                     if cameraModel.state?.status != "Ready" {
                         ShelfNativeCameraStatus(status: cameraModel.state?.status, strings: strings, allow: { cameraModel.camera?.allow() })
                     }
-                    if cameraModel.state?.capturing == true { ProgressView().tint(.white) }
+                    if cameraModel.state?.capturing == true { CoffeePeekNativeLoader(color: .white, size: 24) }
                 }
                 .contentShape(Rectangle())
                 .onTapGesture(coordinateSpace: .local) { point in
@@ -89,7 +89,7 @@ private struct ShelfNativeCameraStatus: View {
                 Button(strings["shelf_camera_allow"], action: allow).buttonStyle(.bordered)
             }.padding().multilineTextAlignment(.center).background(.black.opacity(0.8))
         } else if status == "Unavailable" { Text(strings["shelf_camera_unavailable"]).padding() }
-        else { ProgressView().tint(.white) }
+        else { CoffeePeekNativeLoader(color: .white, size: 24) }
     }
 }
 

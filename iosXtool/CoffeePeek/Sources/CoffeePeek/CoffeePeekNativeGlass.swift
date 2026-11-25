@@ -6,9 +6,8 @@ import SwiftUI
 func configureCoffeePeekNativeGlass() {
     MainViewControllerKt.configureNativeLoader { color, size in
         let side = CGFloat(truncating: size)
-        let controller = UIHostingController(rootView: CoffeePeekNativeLoader(label: "", color: Color(uiColor: color))
-            .scaleEffect(side / CGFloat(IosLoaderGeometry.shared.size))
-            .frame(width: side, height: side).accessibilityHidden(true))
+        let controller = UIHostingController(rootView: CoffeePeekNativeLoader(color: Color(uiColor: color), size: side)
+            .accessibilityHidden(true))
         controller.view.backgroundColor = .clear
         return controller
     }

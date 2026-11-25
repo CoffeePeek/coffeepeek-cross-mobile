@@ -46,7 +46,7 @@ struct ContributionMapContent<Map: View>: View {
                 VStack(alignment: .leading, spacing: 12) {
                     Text(strings.text("map_hint")).font(CoffeePeekNativeStyle.font(16, weight: "SemiBold", relativeTo: .headline))
                     if let state {
-                        if state.resolving { ProgressView(strings.text("map_resolving")) }
+                        if state.resolving { CoffeePeekNativeLoader(label: strings.text("map_resolving"), size: 32, showsLabel: true) }
                         else if state.failed { Text(strings.text("map_failed")).foregroundStyle(.red) }
                         else { Text(state.address ?? strings.text("map_move")).foregroundStyle(CoffeePeekNativeStyle.secondary) }
                         CoffeePeekNativeActionButton(title: strings.text("map_choose"), enabled: state.canConfirm, action: onConfirm)

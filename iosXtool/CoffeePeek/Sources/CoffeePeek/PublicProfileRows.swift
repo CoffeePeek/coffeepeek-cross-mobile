@@ -22,7 +22,7 @@ struct PublicProfileRows: View {
             }
             ForEach(rows, id: \.id, content: card)
             if state.loading {
-                ProgressView().frame(maxWidth: .infinity, minHeight: 44)
+                CoffeePeekNativeLoader(size: 24).frame(maxWidth: .infinity, minHeight: 44)
                     .accessibilityLabel(model.strings["profile_loading"])
             } else if state.failed {
                 OwnProfileRetry(message: model.strings["profile_check_ins_failed"], strings: model.strings) {

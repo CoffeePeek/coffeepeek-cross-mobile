@@ -40,7 +40,7 @@ private struct ShelfNativeGridContent: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
                 if own { header }
-                if state.loading { ProgressView(strings["shelf_loading"]).frame(maxWidth: .infinity) }
+                if state.loading { CoffeePeekNativeLoader(label: strings["shelf_loading"], size: 32, showsLabel: true).frame(maxWidth: .infinity) }
                 else if state.failed { ShelfNativeStatus(message: strings["shelf_load_failed"], retry: strings["shelf_retry"]) { action("refresh", nil) } }
                 else if state.visible { grid }
             }.padding(16).padding(.bottom, own ? 88 : 16)
@@ -198,7 +198,7 @@ private struct ShelfNativeVisibilitySettings: View {
             Toggle(strings["shelf_profile_show"], isOn: Binding(get: { state.visibility }, set: { setVisible($0) }))
                 .disabled(!state.visibilityEnabled)
             Text(strings["shelf_profile_show_hint"]).font(.footnote).foregroundStyle(CoffeePeekNativeStyle.secondary)
-            if state.visibilityLoading { ProgressView() }
+            if state.visibilityLoading { CoffeePeekNativeLoader(size: 24) }
             if let error = state.visibilityError {
                 Text(strings[error == "Load" ? "shelf_profile_visibility_load_failed" : "shelf_profile_visibility_save_failed"])
                     .font(.footnote).foregroundStyle(.red)

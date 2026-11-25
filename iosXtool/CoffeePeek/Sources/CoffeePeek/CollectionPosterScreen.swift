@@ -12,7 +12,7 @@ struct CollectionPosterPreview: View {
     var body: some View {
         ScrollView {
             VStack(spacing: 16) {
-                if model.state.loading { ProgressView(strings["collections_loading"]) }
+                if model.state.loading { CoffeePeekNativeLoader(label: strings["collections_loading"], size: 32, showsLabel: true) }
                 if model.state.failure != nil {
                     Text(strings["collections_load_failed"]).foregroundStyle(.red)
                     Button(strings["collections_retry"], action: model.workspace.reload)
@@ -50,7 +50,7 @@ struct CollectionPosterPreview: View {
             HStack {
                 if model.state.canShare { Button(strings["collections_share_link"], action: model.workspace.shareLink) }
                 Button(action: model.workspace.shareImages) {
-                    if model.state.busy { ProgressView(strings["collections_preparing"]) }
+                    if model.state.busy { CoffeePeekNativeLoader(label: strings["collections_preparing"], size: 32, showsLabel: true) }
                     else { Text(strings["collections_share_photo"]) }
                 }.disabled(model.state.busy || model.state.places.isEmpty)
             }.frame(maxWidth: .infinity, minHeight: 44).padding(8).background(.bar)

@@ -109,7 +109,7 @@ private struct PublicProfileScreen: View {
                 overview(identity: identity, viewport: viewport)
             }
         } else if model.state.loading {
-            ProgressView().frame(maxWidth: .infinity, minHeight: 140)
+            CoffeePeekNativeLoader(size: 24).frame(maxWidth: .infinity, minHeight: 140)
                 .accessibilityLabel(model.strings["profile_loading"])
         } else {
             OwnProfileRetry(message: model.strings[model.state.errorKey ?? "profile_load_failed"],
@@ -165,7 +165,7 @@ private struct PublicProfileScreen: View {
             PublicProfileRows(model: model, full: false)
         case .collections:
             if let slot = model.slot {
-                OwnProfileEmbedded(controller: slot).id(ObjectIdentifier(slot)).frame(height: 250)
+                OwnProfileEmbedded(controller: slot, fitsContent: true).id(ObjectIdentifier(slot))
                     .padding(.horizontal, -16)
             }
         case .shelf:

@@ -197,7 +197,7 @@ private struct ShopCheckInListScreen<Card: View>: View {
     private var status: some View {
         VStack(spacing: 8) {
             if state.isLoading {
-                ProgressView(strings.text(state.hasLoaded ? "shop_checkin_list_refreshing" : "shop_checkin_list_loading"))
+                CoffeePeekNativeLoader(label: strings.text(state.hasLoaded ? "shop_checkin_list_refreshing" : "shop_checkin_list_loading"), size: 32, showsLabel: true)
             } else if state.hasLoadError {
                 Text(strings.text(errorMessage))
                 Button(strings.text("shop_detail_retry"), action: onRetry).buttonStyle(.bordered)

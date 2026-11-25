@@ -260,7 +260,7 @@ private struct CollectionsQuickCreateContent: View {
 }
 
 @MainActor
-private final class CollectionsWorkspaceHostingController: UIHostingController<CollectionsWorkspaceHost> {
+private final class CollectionsWorkspaceHostingController: UIHostingController<CollectionsWorkspaceHost>, CoffeePeekNativeContentSizing {
     private let model: CollectionsWorkspaceModel
     private let workspace: IosCollectionsWorkspace
     init(workspace: IosCollectionsWorkspace, strings: CollectionsWorkspaceStrings) {
@@ -268,9 +268,13 @@ private final class CollectionsWorkspaceHostingController: UIHostingController<C
         model = CollectionsWorkspaceModel(workspace: workspace, strings: strings)
         super.init(rootView: CollectionsWorkspaceHost(model: model, strings: strings))
         view.backgroundColor = .clear
+        if ["Owner", "Featured"].contains(workspace.current().mode) { sizingOptions = .intrinsicContentSize }
     }
     @available(*, unavailable)
     required init?(coder: NSCoder) { fatalError("Use init(workspace:strings:)") }
+    func contentSize(width: CGFloat) -> CGSize {
+        sizeThatFits(in: CGSize(width: width, height: .greatestFiniteMagnitude))
+    }
     isolated deinit { workspace.close() }
 }
 
@@ -370,18 +374,27 @@ private struct CollectionsWorkspaceHost: View {
     }
 
     private var state: IosCollectionsWorkspaceState { model.state }
-    private var content: some View {
+    @ViewBuilder private var content: some View {
+        if ["Owner", "Featured"].contains(state.mode) { rows }
+        else { scrollingContent }
+    }
+
+    private var rows: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            status
+            switch state.mode {
+            case "Editor": if state.signedIn && !state.loading { editor }
+            case "Preference": preferences
+            case "Owner": owner
+            case "Featured": featured
+            default: publicCollection
+            }
+        }.padding(16)
+    }
+
+    private var scrollingContent: some View {
         ScrollView {
-            LazyVStack(alignment: .leading, spacing: 16) {
-                status
-                switch state.mode {
-                case "Editor": if state.signedIn && !state.loading { editor }
-                case "Preference": preferences
-                case "Owner": owner
-                case "Featured": featured
-                default: publicCollection
-                }
-            }.padding(16)
+            rows
         }
         .safeAreaInset(edge: .top, spacing: 0) { header }
         .safeAreaInset(edge: .bottom, spacing: 0) { bottomAction }
@@ -407,7 +420,7 @@ private struct CollectionsWorkspaceHost: View {
 
     @ViewBuilder private var status: some View {
         if state.loading || state.refreshing || state.preparingCover {
-            ProgressView(strings["collections_loading"]).frame(maxWidth: .infinity)
+            CoffeePeekNativeLoader(label: strings["collections_loading"], size: 32, showsLabel: true).frame(maxWidth: .infinity)
         }
         if !state.signedIn && ["Editor", "Owner", "Preference"].contains(state.mode) {
             Text(strings["collections_sign_in_hint"])
@@ -487,7 +500,7 @@ private struct CollectionsWorkspaceHost: View {
     @ViewBuilder private var bottomAction: some View {
         if state.mode == "Editor" {
             Button(action: model.workspace.save) {
-                HStack { if state.busy { ProgressView() }; Text(strings["collections_save"]) }.frame(maxWidth: .infinity, minHeight: 44)
+                HStack { if state.busy { CoffeePeekNativeLoader(color: .black, size: 24) }; Text(strings["collections_save"]) }.frame(maxWidth: .infinity, minHeight: 44)
             }.buttonStyle(.borderedProminent).tint(CoffeePeekNativeStyle.accent).foregroundStyle(.black)
                 .disabled(!state.canSave).padding(16).background(.bar)
         } else if state.mode == "Public" && state.id != nil {
@@ -500,19 +513,21 @@ private struct CollectionsWorkspaceHost: View {
 
     private var owner: some View {
         VStack(alignment: .leading, spacing: 16) {
-            ScrollView(.horizontal) {
-                LazyHStack(alignment: .top, spacing: 16) {
-                    ForEach(state.lists, id: \.id) { item in
-                        Button { model.workspace.openCollection(id: item.id) } label: {
-                            collectionCard(item).frame(width: 176, height: 176)
-                        }.buttonStyle(.plain)
-                    }
+            LazyVGrid(columns: collectionColumns, spacing: 16) {
+                ForEach(state.lists, id: \.id) { item in
+                    Button { model.workspace.openCollection(id: item.id) } label: {
+                        collectionCard(item)
+                    }.buttonStyle(.plain)
                 }
             }
             if state.signedIn && !state.loading && state.lists.isEmpty && state.failure == nil {
                 Text(strings["collections_library_empty"])
             }
         }
+    }
+
+    private var collectionColumns: [GridItem] {
+        Array(repeating: GridItem(.flexible(minimum: 0), spacing: 16, alignment: .top), count: 2)
     }
 
     private func collectionCard(_ item: IosCollectionsWorkspaceList) -> some View {
@@ -524,11 +539,13 @@ private struct CollectionsWorkspaceHost: View {
     @ViewBuilder private var featured: some View {
         if let id = state.id {
             Text(state.title).font(.title2)
-            Button { model.workspace.openCollection(id: id) } label: {
-                CollectionSummaryCard(title: state.title, count: Int32(state.places.count), strings: strings) {
-                    WorkspaceCover(workspace: model.workspace, id: id, version: state.accountVersion).id(state.coverKey)
-                }.frame(maxWidth: 220)
-            }.buttonStyle(.plain)
+            LazyVGrid(columns: collectionColumns, spacing: 16) {
+                Button { model.workspace.openCollection(id: id) } label: {
+                    CollectionSummaryCard(title: state.title, count: Int32(state.places.count), strings: strings) {
+                        WorkspaceCover(workspace: model.workspace, id: id, version: state.accountVersion).id(state.coverKey)
+                    }
+                }.buttonStyle(.plain)
+            }
         }
     }
 

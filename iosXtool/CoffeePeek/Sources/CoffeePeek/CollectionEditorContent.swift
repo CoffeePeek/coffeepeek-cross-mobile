@@ -90,8 +90,12 @@ private func collectionContentSample() -> some View {
                 }
             CollectionProfilePreferenceContent(visible: true, selectedTitle: "Кофейные выходные", enabled: true,
                 strings: CollectionsWorkspaceStrings(languageTag: "ru"), onVisibility: { _ in }, onChoose: {}, onDone: {})
-            CollectionSummaryCard(title: "Кофейные выходные", count: 7,
-                strings: CollectionsWorkspaceStrings(languageTag: "ru")) { CoffeePeekPhotoPlaceholder() }
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible(minimum: 0), spacing: 16), count: 2), spacing: 16) {
+                ForEach(0..<5) { index in
+                    CollectionSummaryCard(title: index == 0 ? "Кофейные выходные с друзьями" : "Коллекция \(index + 1)", count: 7,
+                        strings: CollectionsWorkspaceStrings(languageTag: "ru")) { CoffeePeekPhotoPlaceholder() }
+                }
+            }
         }.padding(16)
     }.font(CoffeePeekNativeStyle.font(16)).foregroundStyle(CoffeePeekNativeStyle.foreground)
         .background(CoffeePeekNativeStyle.background)

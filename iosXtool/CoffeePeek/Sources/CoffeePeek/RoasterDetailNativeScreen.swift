@@ -116,7 +116,7 @@ struct RoasterDetailNativeScreen: View {
                 Button { source?.share() } label: { Image(systemName: "square.and.arrow.up").frame(width: 48, height: 48) }
                     .shopDetailGlassCircle()
                     .accessibilityLabel(strings["roaster_share"])
-                if let ownership { OwnProfileEmbedded(controller: ownership).frame(width: 48, height: 48) }
+                if let ownership { OwnProfileEmbedded(controller: ownership, drawsBackground: false).frame(width: 48, height: 48) }
             }
         }.font(.system(size: 20)).buttonStyle(.plain).padding(.horizontal, 12).padding(.top, topInset + 12)
     }
