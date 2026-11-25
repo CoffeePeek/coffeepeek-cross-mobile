@@ -350,6 +350,10 @@ codex/ios-native. Preserve its guard and reconcile that branch before publishing
 - Empty-argument native text lookups now use the raw resource overload. Explicit
   arguments still use the formatting overload. The same behavior is aligned in
   Discovery, Shop and Home resource adapters.
+- Added three iOS resource contracts for both raw share templates, explicit
+  formatting, and constructing/using the feed sharer with real packaged strings.
+  They use Compose's native test resource copy task, without a UI or global-locale
+  mutation. Compilation/execution of these additional contracts is pending.
 - Native drawable decoding now accepts raster data before parsing vector XML;
   both consumers reuse the design-system decoder. Added non-UI native contracts
   for PNG fallback, vector size/tint and empty input. App and design-system native
