@@ -30,35 +30,6 @@ struct CollectionEditorContent<Cover: View>: View {
     }
 }
 
-struct CollectionProfilePreferenceContent: View {
-    let visible: Bool
-    let selectedTitle: String?
-    let enabled: Bool
-    let strings: CollectionsWorkspaceStrings
-    let onVisibility: (Bool) -> Void
-    let onChoose: () -> Void
-    let onDone: () -> Void
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            Text(strings["collections_settings"]).font(.title2).accessibilityAddTraits(.isHeader)
-            Toggle(strings["collections_profile_show"], isOn: Binding(get: { visible }, set: { onVisibility($0) }))
-                .tint(CoffeePeekNativeStyle.accent).disabled(!enabled)
-            Text(strings["collections_profile_choice_hint"]).font(.caption).foregroundStyle(CoffeePeekNativeStyle.secondary)
-            if visible {
-                Button(action: onChoose) {
-                    HStack {
-                        Text(selectedTitle ?? strings["collections_profile_choose"])
-                        Spacer()
-                        Image(systemName: "chevron.forward")
-                    }
-                }.disabled(!enabled)
-            }
-            Button(strings["collections_done"], action: onDone).frame(maxWidth: .infinity, minHeight: 44)
-        }
-    }
-}
-
 struct CollectionSummaryCard<Cover: View>: View {
     let title: String
     let countText: String
@@ -93,8 +64,6 @@ private func collectionContentSample() -> some View {
                 onTitle: { _ in }, onDescription: { _ in }, onVisibility: { _ in }) {
                     CoffeePeekPhotoPlaceholder().frame(width: 108, height: 108).clipShape(RoundedRectangle(cornerRadius: 16))
                 }
-            CollectionProfilePreferenceContent(visible: true, selectedTitle: "Кофейные выходные", enabled: true,
-                strings: CollectionsWorkspaceStrings(languageTag: "ru"), onVisibility: { _ in }, onChoose: {}, onDone: {})
             LazyVGrid(columns: Array(repeating: GridItem(.flexible(minimum: 0), spacing: 16), count: 2), spacing: 16) {
                 ForEach(0..<5) { index in
                     CollectionSummaryCard(title: index == 0 ? "Кофейные выходные с друзьями" : "Коллекция \(index + 1)",

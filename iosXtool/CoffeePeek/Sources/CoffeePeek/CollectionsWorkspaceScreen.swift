@@ -303,7 +303,7 @@ final class CollectionsWorkspaceModel: ObservableObject {
         }, onExport: { [weak self] poster, epoch in
             self?.exportRequest = CollectionsPosterExport(poster: poster, epoch: epoch.int32Value)
         })
-        if ["Owner", "Preference", "Featured"].contains(state.mode) { workspace.reload() }
+        if ["Owner", "Featured"].contains(state.mode) { workspace.reload() }
     }
 
     isolated deinit {
@@ -325,7 +325,6 @@ private struct CollectionsWorkspaceHost: View {
     @State private var coverItem: PhotosPickerItem?
     @State private var coverVersion: Int32 = 0
     @State private var deleting = false
-    @State private var choosingFeatured = false
     @State private var reloading = false
     @Environment(\.dismiss) private var dismiss
 
@@ -350,7 +349,7 @@ private struct CollectionsWorkspaceHost: View {
             if model.exportRequest?.id == request.id { model.exportRequest = nil }
         }
         .onChange(of: model.state.accountVersion) { _, _ in
-            coverItem = nil; selectingCover = false; choosingFeatured = false; deleting = false
+            coverItem = nil; selectingCover = false; deleting = false
         }
         .photosPicker(isPresented: $selectingCover, selection: $coverItem, matching: .images)
         .task(id: coverItem) {
@@ -370,7 +369,6 @@ private struct CollectionsWorkspaceHost: View {
             Button(strings["collections_reload_confirm"], role: .destructive, action: model.workspace.reload)
             Button(strings["collections_cancel"], role: .cancel) {}
         } message: { Text(strings["collections_reload_message"]) }
-        .sheet(isPresented: $choosingFeatured) { featuredChoices }
     }
 
     private var state: IosCollectionsWorkspaceState { model.state }
@@ -387,7 +385,6 @@ private struct CollectionsWorkspaceHost: View {
         status
         switch state.mode {
         case "Editor": if state.signedIn && !state.loading { editor }
-        case "Preference": preferences
         case "Owner": owner
         case "Featured": featured
         default: publicCollection
@@ -424,7 +421,7 @@ private struct CollectionsWorkspaceHost: View {
         if state.loading || state.refreshing || state.preparingCover {
             CoffeePeekNativeLoader(label: strings["collections_loading"], size: 32, showsLabel: true).frame(maxWidth: .infinity)
         }
-        if !state.signedIn && ["Editor", "Owner", "Preference"].contains(state.mode) {
+        if !state.signedIn && ["Editor", "Owner"].contains(state.mode) {
             Text(strings["collections_sign_in_hint"])
             Button(strings["collections_sign_in"], action: model.workspace.signIn).buttonStyle(.borderedProminent)
         }
@@ -548,36 +545,6 @@ private struct CollectionsWorkspaceHost: View {
                     }
                 }.buttonStyle(.plain)
             }
-        }
-    }
-
-    private var preferences: some View {
-        CollectionProfilePreferenceContent(visible: state.featuredId != nil,
-            selectedTitle: state.lists.first { $0.id == state.featuredId }?.title,
-            enabled: !state.loading && !state.busy && state.failure != "Load", strings: strings,
-            onVisibility: { showing in
-                if !state.signedIn { model.workspace.signIn() }
-                else if showing { choosingFeatured = true } else { model.workspace.feature(id: nil) }
-            }, onChoose: { choosingFeatured = true }, onDone: { dismiss() })
-    }
-
-    private var featuredChoices: some View {
-        NavigationStack {
-            List {
-                Text(strings["collections_profile_choice_hint"]).font(.caption)
-                choice(title: strings["collections_profile_none"], id: nil)
-                ForEach(state.lists.filter(\.isPublic), id: \.id) { item in choice(title: item.title, id: item.id) }
-                if !state.lists.contains(where: \.isPublic) { Text(strings["collections_profile_no_public"]) }
-            }.navigationTitle(strings["collections_profile_list"]).navigationBarTitleDisplayMode(.inline)
-                .toolbar { Button(strings["collections_cancel"]) { choosingFeatured = false } }
-        }.presentationDetents([.medium, .large])
-    }
-
-    private func choice(title: String, id: String?) -> some View {
-        Button {
-            model.workspace.feature(id: id); choosingFeatured = false
-        } label: {
-            HStack { Text(title); Spacer(); if state.featuredId == id { Image(systemName: "checkmark") } }
         }
     }
 

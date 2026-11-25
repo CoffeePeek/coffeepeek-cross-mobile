@@ -566,3 +566,27 @@ codex/ios-native. Preserve its guard and reconcile that branch before publishing
 - Current whole-app Swift 6 complete-strict typecheck passed. The existing Firebase
   Messaging token() deprecation is unchanged; no new isolation error was reported.
   Full ARM64 executable linking awaits the fresh Kotlin framework.
+
+### Follow-up owner decisions after 3236 (2026-11-26)
+
+- Build 3236 passed fresh Kotlin framework compilation and full Swift 6 strict
+  ARM64 link (fc132f9f054eef8e1ddcf19ad5ab6a72b29fbe16f87853e8ade828035804e1f1),
+  development signing and in-place installation on the same iPhone15,4 / iOS
+  27.2.1. Android directDebug assembly/DEX and function limits passed. Discovery
+  209 / 25 suites and collections 89 / 6 suites retained their successful
+  up-to-date unit results; these were not new test executions.
+- The owner superseded the preference move: remove its gear and show-on-profile
+  controls entirely. Retire the unused native preference renderer/bridge and
+  its newly introduced factory test; existing Android/domain preference behavior
+  and persisted account settings are not rewritten. Library/page/header share
+  the same native background; its create button uses the shared glass primitive.
+- The shelf follow-up removes its scan CTA, total weight and archive toolbar
+  button. Three-pack rows will share glass shelf rails. Archive search and rows
+  move into the shelf settings sheet using the existing Kotlin archive session;
+  the parent owns child disposal and propagates its account/access guard.
+  Selected archived bags navigate after the sheet is dismissed. Existing shelf
+  writes, finish/reorder rules and analytics remain authoritative in Kotlin.
+- Manual 3236 checks observed square library covers and the preference sheet;
+  new owner feedback superseded that UI before full motion/refresh acceptance.
+  The app-scoped diagnostic session was closed. New build/device and macOS gates
+  are required for these follow-ups; no TestFlight upload is claimed.

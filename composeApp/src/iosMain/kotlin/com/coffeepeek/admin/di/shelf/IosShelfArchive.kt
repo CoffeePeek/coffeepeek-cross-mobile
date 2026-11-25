@@ -25,6 +25,7 @@ class IosShelfArchive internal constructor(
     private val media: IosCatalogueMedia,
     private val onBack: () -> Unit,
     private val onBag: (String) -> Unit,
+    private val allowed: () -> Boolean = { true },
 ) {
     private val owner = account.visibilityScope
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
@@ -94,7 +95,7 @@ class IosShelfArchive internal constructor(
         covers.cancel()
     }
 
-    private fun isCurrent() = !revoked.value && owner != null && account.visibilityScope == owner
+    private fun isCurrent() = !revoked.value && owner != null && account.visibilityScope == owner && allowed()
 }
 
 class IosShelfArchiveObservation internal constructor(private vararg val jobs: Job?) {

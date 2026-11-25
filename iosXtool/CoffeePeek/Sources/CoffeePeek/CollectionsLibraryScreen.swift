@@ -25,7 +25,6 @@ private final class CollectionsLibraryHostingController: UIHostingController<Col
 private final class CollectionsLibraryModel: ObservableObject {
     let library: IosCollectionsLibrary
     @Published var state: IosCollectionsLibraryState
-    @Published var preferences: UIViewController?
     private var observation: IosCollectionsLibraryObservation?
 
     init(library: IosCollectionsLibrary) {
@@ -37,7 +36,6 @@ private final class CollectionsLibraryModel: ObservableObject {
         guard observation == nil else { return }
         state = library.current()
         observation = library.observe { [weak self] state in
-            if self?.state.accountVersion != state.accountVersion || !state.signedIn { self?.preferences = nil }
             self?.state = state
         }
         library.reload()
@@ -47,8 +45,6 @@ private final class CollectionsLibraryModel: ObservableObject {
         observation?.cancel()
         observation = nil
     }
-
-    func showPreferences() { preferences = library.makePreferences() }
 
     isolated deinit {
         observation?.cancel()
@@ -67,8 +63,7 @@ private struct CollectionsLibraryHost: View {
             onReload: model.library.reload,
             onBack: model.library.back,
             onSignIn: model.library.signIn,
-            onEditor: { model.library.openEditor(id: $0) },
-            onPreferences: model.showPreferences
+            onEditor: { model.library.openEditor(id: $0) }
         ) { item in
             CollectionsLibraryCover(
                 library: model.library,
@@ -79,22 +74,6 @@ private struct CollectionsLibraryHost: View {
         }
         .onAppear(perform: model.appear)
         .onDisappear(perform: model.disappear)
-        .sheet(isPresented: Binding(get: { model.preferences != nil }, set: { if !$0 { model.preferences = nil } })) {
-            preferencesSheet
-        }
-    }
-
-    private var preferencesSheet: some View {
-        VStack(spacing: 0) {
-            HStack {
-                Spacer()
-                Button { model.preferences = nil } label: { Image(systemName: "xmark").frame(width: 44, height: 44) }
-                    .buttonStyle(.plain).shopDetailGlassCircle().accessibilityLabel(strings.settingsCancel)
-            }.padding(12)
-            if let controller = model.preferences { OwnProfileEmbedded(controller: controller) }
-        }
-        .foregroundStyle(CoffeePeekNativeStyle.foreground).background(CoffeePeekNativeStyle.background)
-        .presentationDetents([.medium, .large]).presentationDragIndicator(.visible)
     }
 }
 
@@ -106,7 +85,6 @@ private struct CollectionsLibraryScreen<Cover: View>: View {
     let onBack: () -> Void
     let onSignIn: () -> Void
     let onEditor: (String?) -> Void
-    let onPreferences: () -> Void
     @ViewBuilder let cover: (IosCollectionsLibraryItem) -> Cover
 
     var body: some View {
@@ -123,22 +101,19 @@ private struct CollectionsLibraryScreen<Cover: View>: View {
             .padding(16)
         }
         .safeAreaInset(edge: .top, spacing: 0) { header }
-        .background(Color(uiColor: .systemGroupedBackground))
+        .font(CoffeePeekNativeStyle.font(16)).foregroundStyle(CoffeePeekNativeStyle.foreground)
+        .background(CoffeePeekNativeStyle.background.ignoresSafeArea())
     }
 
     private var header: some View {
         CoffeePeekNativeNavigationHeader(title: strings.text("library.title"),
             backLabel: strings.text("library.back"), back: onBack)
         .overlay(alignment: .trailing) {
-            HStack(spacing: 8) {
-                Button(action: onPreferences) {
-                    Image(systemName: "gearshape").frame(width: 44, height: 44)
-                }.buttonStyle(.plain).shopDetailGlassCircle().accessibilityLabel(strings.settingsTitle)
-                Button { onEditor(nil) } label: {
-                    Label(strings.text("library.new"), systemImage: "plus")
-                        .labelStyle(.iconOnly).frame(minWidth: 44, minHeight: 44)
-                }
+            Button { onEditor(nil) } label: {
+                Label(strings.text("library.new"), systemImage: "plus")
+                    .labelStyle(.iconOnly).frame(width: 44, height: 44)
             }
+            .buttonStyle(.plain).shopDetailGlassCircle()
             .disabled(!state.signedIn)
             .padding(.trailing, 12)
         }
@@ -260,8 +235,6 @@ private struct CollectionsLibraryStrings {
     }
 
     func count(_ value: Int32) -> String { String(format: text("library.count"), value) }
-    var settingsTitle: String { bundle.localizedString(forKey: "collections_settings", value: nil, table: "CollectionsWorkspace") }
-    var settingsCancel: String { bundle.localizedString(forKey: "collections_cancel", value: nil, table: "CollectionsWorkspace") }
 }
 
 private var libraryPreviewState: IosCollectionsLibraryState {
@@ -290,7 +263,7 @@ private var libraryPreviewState: IosCollectionsLibraryState {
         onReload: {},
         onBack: {},
         onSignIn: {},
-        onEditor: { _ in }, onPreferences: {}
+        onEditor: { _ in }
     ) { _ in Color.gray.opacity(0.2) }
     .preferredColorScheme(.light)
 }
@@ -303,7 +276,7 @@ private var libraryPreviewState: IosCollectionsLibraryState {
         onReload: {},
         onBack: {},
         onSignIn: {},
-        onEditor: { _ in }, onPreferences: {}
+        onEditor: { _ in }
     ) { _ in Color.gray.opacity(0.2) }
     .preferredColorScheme(.dark)
     .environment(\.dynamicTypeSize, .accessibility2)

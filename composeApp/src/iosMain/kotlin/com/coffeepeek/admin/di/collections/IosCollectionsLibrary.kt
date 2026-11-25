@@ -11,7 +11,6 @@ import kotlinx.cinterop.addressOf
 import kotlinx.cinterop.usePinned
 import platform.Foundation.NSData
 import platform.Foundation.create
-import platform.UIKit.UIViewController
 
 /** Swift sees presentation values only; account access and media authorization stay in Kotlin. */
 class IosCollectionsLibrary internal constructor(
@@ -19,7 +18,6 @@ class IosCollectionsLibrary internal constructor(
     private val onBack: () -> Unit,
     private val onSignIn: () -> Unit,
     private val onEditor: (String?) -> Unit,
-    private val preferences: () -> UIViewController,
 ) {
     fun current(): IosCollectionsLibraryState = session.current().iosState()
 
@@ -38,7 +36,6 @@ class IosCollectionsLibrary internal constructor(
     fun signIn() = session.signIn()
     fun back() = session.back()
     fun close() = session.close()
-    fun makePreferences(): UIViewController? = if (session.current().signedIn) preferences() else null
 
     fun loadCover(id: String, accountVersion: Int,
         onCover: (NSData?, String?) -> Unit): IosCollectionsLibraryObservation =

@@ -33,7 +33,6 @@ class IosCollectionsWorkspace internal constructor(
     fun save() { session?.save() }
     fun delete() { session?.delete() }
     fun removeCover() { session?.removeCover() }
-    fun feature(id: String?) { session?.feature(id) }
     fun togglePlace(key: String) { session?.togglePlace(key) }
     fun movePlace(key: String, target: String, after: Boolean) { session?.movePlace(key, target, after) }
     fun openCollection(id: String) { session?.openCollection(id) }
