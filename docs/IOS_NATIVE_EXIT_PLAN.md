@@ -406,3 +406,32 @@ codex/ios-native. Preserve its guard and reconcile that branch before publishing
   without account or route identifiers. Swift 6 type checking passed before the
   final additional scalar fields; complete code generation and device review of
   build 3231 remain pending. No new automated UI suite was added.
+
+### Device navigation evidence and corrected ownership (2026-11-25)
+
+- Build 3231 passed full Swift 6 complete-strict ARM64 code generation/link:
+  `97fd6a18eaf62aef5492f72189e0b409e46091dd71e3493c296f17370e7c84c3`.
+  It was signed and installed in place on iPhone15,4 / iOS 27.2.1. The main
+  `com.coffeepeek` version stayed unchanged. One persistent USB session recorded
+  app-only diagnostics and manual interactions; no device security setting changed.
+- Manual review confirmed a light Search root without the black bottom band,
+  a populated guest feed without a crash, and tabs visible after switching between
+  those roots. Advanced filters correctly required authentication for the guest.
+  This did not exercise the filter sheet itself or authenticate a test account.
+- Returning from the sign-in destination reproduced the missing tabs in 3231:
+  settled UIKit depth was one, `isTabBarHidden` was false, but the tab bar view
+  remained hidden and the bottom inset was 34. A later generation reset restored
+  it. Screenshots and raw app logs remain local. The earlier startup success did
+  not establish navigation acceptance.
+- Superseding the preceding manual depth policy, each native route now declares
+  `hidesBottomBarWhenPushed` from its actual stack index before installation,
+  including cached controllers. UIKit owns push/pop and cancelled-pop visibility.
+  The tab controller visibility API is reserved for the expanded Discovery map,
+  with its own applied-override bookkeeping and reset cleanup. Navigation depth
+  never writes that override. No delayed task, direct view repair or frame hack
+  was introduced; routing acknowledgement and generation guards remain.
+- Verification plan for this Swift-only correction: full Swift 6 strict ARM64
+  link and macOS simulator build, followed by manual detail/sign-in back/cancel,
+  expanded-map collapse/return, tab switching and appearance checks on the same
+  iPhone. Shared Kotlin behavior is unchanged; the preceding executed shared and
+  native contracts remain relevant. Device/release acceptance is still pending.
