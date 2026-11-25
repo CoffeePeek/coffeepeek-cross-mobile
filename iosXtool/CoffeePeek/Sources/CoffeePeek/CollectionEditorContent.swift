@@ -61,20 +61,23 @@ struct CollectionProfilePreferenceContent: View {
 
 struct CollectionSummaryCard<Cover: View>: View {
     let title: String
-    let count: Int32
-    let strings: CollectionsWorkspaceStrings
+    let countText: String
     @ViewBuilder let cover: () -> Cover
 
     var body: some View {
-        ZStack(alignment: .bottomLeading) {
-            cover()
-            LinearGradient(stops: [.init(color: .clear, location: 0.3),
-                .init(color: .black.opacity(0.85), location: 1)], startPoint: .top, endPoint: .bottom)
-            VStack(alignment: .leading, spacing: 4) {
-                Text(title).font(.headline).lineLimit(2)
-                Text(strings.count(count)).font(.caption)
-            }.foregroundStyle(.white).padding(12)
-        }.aspectRatio(1, contentMode: .fit).clipped().clipShape(RoundedRectangle(cornerRadius: 16))
+        Color.clear.aspectRatio(1, contentMode: .fit)
+            .overlay {
+                ZStack(alignment: .bottomLeading) {
+                    cover()
+                    LinearGradient(stops: [.init(color: .clear, location: 0.3),
+                        .init(color: .black.opacity(0.85), location: 1)], startPoint: .top, endPoint: .bottom)
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(title).font(.headline).lineLimit(2)
+                        Text(countText).font(.caption)
+                    }.foregroundStyle(.white).padding(12)
+                }
+            }
+            .clipped().clipShape(RoundedRectangle(cornerRadius: 16))
             .accessibilityElement(children: .combine)
     }
 }
@@ -92,8 +95,8 @@ private func collectionContentSample() -> some View {
                 strings: CollectionsWorkspaceStrings(languageTag: "ru"), onVisibility: { _ in }, onChoose: {}, onDone: {})
             LazyVGrid(columns: Array(repeating: GridItem(.flexible(minimum: 0), spacing: 16), count: 2), spacing: 16) {
                 ForEach(0..<5) { index in
-                    CollectionSummaryCard(title: index == 0 ? "Кофейные выходные с друзьями" : "Коллекция \(index + 1)", count: 7,
-                        strings: CollectionsWorkspaceStrings(languageTag: "ru")) { CoffeePeekPhotoPlaceholder() }
+                    CollectionSummaryCard(title: index == 0 ? "Кофейные выходные с друзьями" : "Коллекция \(index + 1)",
+                        countText: CollectionsWorkspaceStrings(languageTag: "ru").count(7)) { CoffeePeekPhotoPlaceholder() }
                 }
             }
         }.padding(16)

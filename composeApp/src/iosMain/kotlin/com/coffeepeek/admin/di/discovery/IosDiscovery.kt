@@ -30,12 +30,11 @@ class IosDiscovery internal constructor(
     private var disposed = false
     private var released = false
     private var onRelease = onClose
-    private val prepared = MutableStateFlow(initiallyReady)
     internal val screenVisible = MutableStateFlow(false)
     private var presenter: () -> UIViewController? = { null }
     private val presentation = MutableStateFlow<DiscoveryIosPresentation?>(initial)
-    private val state = MutableStateFlow(initial.state)
-    private val roasters = MutableStateFlow<IosRoasterDiscovery?>(null)
+    private var state = initial.state
+    private val display = MutableStateFlow(IosDiscoveryPresentation(initial.state.toNative(), null, initiallyReady))
     private val filters = MutableStateFlow<IosDiscoveryFilters?>(null)
     internal val visibleElements = MutableStateFlow<Set<String>>(emptySet())
     private val map = IosDiscoveryMap(scope, { presentation.value }, ::isCurrent)
@@ -45,12 +44,11 @@ class IosDiscovery internal constructor(
         fail()
     }.collect { if (!isCurrent()) revoke() } } }
 
-    fun currentState() = state.value.toNative()
+    fun currentPresentation() = display.value
     internal fun fail() {
         failed.value = true
         revoke()
     }
-    fun isReady() = prepared.value && isCurrent()
     fun bindPresenter(presenter: () -> UIViewController?) { if (!revoked.value) this.presenter = presenter }
     internal fun presentationHost() = presenter().takeIf { isCurrent() }
     internal fun bindDisposal(dispose: () -> Unit) {
@@ -62,14 +60,14 @@ class IosDiscovery internal constructor(
         onVisibility(active)
     }
     fun bottomClearance(value: Float) { if (isCurrent() && value.isFinite()) onClearance(maxOf(value, minimumBottomClearance)) }
-    fun observe(onState: (IosDiscoveryState) -> Unit) =
-        IosDiscoveryObservation(scope.launch { combine(state, prepared) { data, _ -> data }.collect { onState(it.toNative()) } })
+    fun observePresentation(onState: (IosDiscoveryPresentation) -> Unit) =
+        IosDiscoveryObservation(scope.launch { display.collect(onState) })
 
-    internal fun update(data: DiscoveryIosPresentation, ready: Boolean = true) {
+    internal fun update(data: DiscoveryIosPresentation, ready: Boolean = true, roasters: IosRoasterDiscovery? = null) {
         if (!isCurrent()) return
         presentation.value = data
-        state.value = data.state
-        prepared.value = ready
+        state = data.state
+        display.value = IosDiscoveryPresentation(state.toNative(), roasters, ready)
         map.update()
     }
 
@@ -112,14 +110,6 @@ class IosDiscovery internal constructor(
     fun createMapView(): UIView = map.createView()
     fun updateMapView(view: UIView, dark: Boolean) = map.attach(view, dark)
 
-    fun currentRoasters(): IosRoasterDiscovery? = roasters.value.takeIf { isCurrent() }
-    fun observeRoasters(onSource: (IosRoasterDiscovery?) -> Unit) =
-        IosDiscoveryObservation(scope.launch { roasters.collect { onSource(it.takeIf { isCurrent() }) } })
-
-    internal fun roastersChanged(source: IosRoasterDiscovery?) {
-        roasters.value = source.takeIf { isCurrent() }
-    }
-
     fun close() {
         if (disposed) return
         disposed = true
@@ -129,7 +119,6 @@ class IosDiscovery internal constructor(
 
     private fun revoke() {
         revoked.value = true
-        prepared.value = false
         screenVisible.value = false
         presenter = { null }
         clearPresentation()
@@ -140,8 +129,8 @@ class IosDiscovery internal constructor(
         filters.value?.dispose()
         filters.value = null
         presentation.value = null
-        roasters.value = null
-        state.value = state.value.copy(active = false, shops = emptyList(), recent = emptyList(), mapShops = emptyList())
+        state = state.copy(active = false, shops = emptyList(), recent = emptyList(), mapShops = emptyList())
+        display.value = IosDiscoveryPresentation(state.toNative(), null, false)
         visibleElements.value = emptySet()
         map.close()
     }
@@ -155,7 +144,7 @@ class IosDiscovery internal constructor(
     }
 
     private fun isCurrent(): Boolean = !revoked.value && accounts.discoveryAccount() == account
-    private fun isInteractive(): Boolean = isCurrent() && state.value.active
+    private fun isInteractive(): Boolean = isCurrent() && state.active
 }
 
 class IosDiscoveryObservation internal constructor(private val job: Job) {

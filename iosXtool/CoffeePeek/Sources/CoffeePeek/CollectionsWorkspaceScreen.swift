@@ -440,7 +440,7 @@ private struct CollectionsWorkspaceHost: View {
 
     private var editor: some View {
         VStack(alignment: .leading, spacing: 20) {
-            CollectionEditorContent(title: state.title, description: state.description, isPublic: state.isPublic,
+            CollectionEditorContent(title: state.title, description: state.description_, isPublic: state.isPublic,
                 enabled: !state.busy, strings: strings, onTitle: model.workspace.title,
                 onDescription: model.workspace.editDescription, onVisibility: model.workspace.visibility) { coverEditor }
             if state.id != nil {
@@ -533,7 +533,7 @@ private struct CollectionsWorkspaceHost: View {
     }
 
     private func collectionCard(_ item: IosCollectionsWorkspaceList) -> some View {
-        CollectionSummaryCard(title: item.title, count: item.count, strings: strings) {
+        CollectionSummaryCard(title: item.title, countText: strings.count(item.count)) {
             WorkspaceCover(workspace: model.workspace, id: item.id, version: state.accountVersion).id(item.imageKey)
         }
     }
@@ -543,7 +543,7 @@ private struct CollectionsWorkspaceHost: View {
             Text(state.title).font(.title2)
             LazyVGrid(columns: collectionColumns, spacing: 16) {
                 Button { model.workspace.openCollection(id: id) } label: {
-                    CollectionSummaryCard(title: state.title, count: Int32(state.places.count), strings: strings) {
+                    CollectionSummaryCard(title: state.title, countText: strings.count(Int32(state.places.count))) {
                         WorkspaceCover(workspace: model.workspace, id: id, version: state.accountVersion).id(state.coverKey)
                     }
                 }.buttonStyle(.plain)
@@ -587,7 +587,7 @@ private struct CollectionsWorkspaceHost: View {
                 WorkspaceCover(workspace: model.workspace, id: id, version: state.accountVersion)
                     .id(state.coverKey).aspectRatio(1.6, contentMode: .fit).clipped().clipShape(RoundedRectangle(cornerRadius: 20))
                 Text(state.title).font(.title2)
-                if !state.description.isEmpty { Text(state.description) }
+                if !state.description_.isEmpty { Text(state.description_) }
                 Text(strings.count(Int32(state.places.count))).foregroundStyle(CoffeePeekNativeStyle.secondary)
                 ForEach(state.places, id: \.key) { place in
                     Button { model.workspace.openPlace(key: place.key) } label: { placeRow(place) }.buttonStyle(.plain)

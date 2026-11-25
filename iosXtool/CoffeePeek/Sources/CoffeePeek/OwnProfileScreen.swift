@@ -77,21 +77,6 @@ private struct OwnProfileScreen: View {
         .sheet(isPresented: model.connectionsPresented) {
             OwnProfileConnectionsSheet(model: model)
         }
-        .sheet(item: $model.preferences) { slot in
-            VStack(spacing: 8) {
-                HStack {
-                    Text(model.strings["profile_collections_settings"]).font(.headline)
-                    Spacer()
-                    Button(model.strings["profile_cancel"]) { model.preferences = nil }
-                }
-                .padding()
-                OwnProfileEmbedded(controller: slot.controller)
-            }
-            .background(CoffeePeekNativeStyle.background)
-            .foregroundStyle(CoffeePeekNativeStyle.foreground)
-            .tint(CoffeePeekNativeStyle.foreground)
-            .presentationDetents([.medium, .large])
-        }
     }
 
     private var menu: some View {
@@ -164,21 +149,17 @@ private struct OwnProfileScreen: View {
             checkInsTab
         case .collections:
             VStack(alignment: .leading, spacing: 8) {
-                HStack {
-                    Text(model.strings[OwnProfileTab.collections.rawValue])
-                        .font(CoffeePeekNativeStyle.font(22, weight: "SemiBold", relativeTo: .title2))
-                        .accessibilityAddTraits(.isHeader)
-                    Spacer()
-                    CoffeePeekNativeChevronButton(label: model.strings["profile_section_all_collections"], action: model.profile.openCollections)
-                    Button {
-                        model.showPreferences()
-                    } label: {
-                        Image(systemName: "gearshape").frame(width: 44, height: 44)
+                Button(action: model.profile.openCollections) {
+                    HStack {
+                        Text(model.strings[OwnProfileTab.collections.rawValue])
+                            .font(CoffeePeekNativeStyle.font(22, weight: "SemiBold", relativeTo: .title2))
+                        Spacer()
+                        Image(systemName: "chevron.right").frame(width: 44, height: 44).shopDetailGlassCircle()
                     }
-                    .buttonStyle(.plain).shopDetailGlassCircle()
-                    .accessibilityLabel(model.strings["profile_collections_settings"])
+                    .contentShape(Rectangle())
                 }
-                .padding(.horizontal, 16)
+                .buttonStyle(.plain).padding(.horizontal, 16)
+                .accessibilityLabel(model.strings["profile_section_all_collections"])
                 if let collections = model.collections {
                     OwnProfileEmbedded(controller: collections, fitsContent: true)
                 }
@@ -200,7 +181,6 @@ final class OwnProfileModel: ObservableObject {
     @Published private(set) var selected: OwnProfileTab = .checkIns
     @Published private(set) var strings: OwnProfileStrings
     @Published private(set) var photoViewer: IosPhotoViewer?
-    @Published var preferences: OwnProfileSlot?
     @Published var logoutPresented = false
     @Published private(set) var scrollRevision = 0
     @Published var headerTopInset: CGFloat = 0
@@ -283,10 +263,6 @@ final class OwnProfileModel: ObservableObject {
         observeCalendar()
     }
 
-    func showPreferences() {
-        preferences = OwnProfileSlot(controller: profile.makeCollectionPreferences())
-    }
-
     private func update(_ next: IosOwnProfileState) {
         state = next
         if !next.active {
@@ -294,7 +270,6 @@ final class OwnProfileModel: ObservableObject {
             calendarObservation = nil
             activity = nil
             photoViewer = nil
-            preferences = nil
             logoutPresented = false
             shelf = nil
             collections = nil

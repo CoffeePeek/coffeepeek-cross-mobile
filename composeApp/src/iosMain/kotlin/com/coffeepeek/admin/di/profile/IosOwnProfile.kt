@@ -142,8 +142,6 @@ class IosOwnProfile internal constructor(
 
     fun makeCollections(): UIViewController = collections("Owner", null, null)
 
-    fun makeCollectionPreferences(): UIViewController = collections("Preference", null, null)
-
     fun makeShelf(): UIViewController = shelfController(::isCurrent)
 
     fun close() {

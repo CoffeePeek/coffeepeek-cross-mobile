@@ -14,6 +14,7 @@ struct CoffeePeekNativeLoader: View {
     private let contours = IosLoaderGeometry.shared.contours.map { shape in
         shape.map { CGPoint(x: CGFloat($0.x), y: CGFloat($0.y)) }
     }
+    private var stroke: CGFloat { max(size / 16, 2) }
 
     var body: some View {
         VStack(spacing: 8) {
@@ -31,17 +32,15 @@ struct CoffeePeekNativeLoader: View {
             let position = moving ? elapsed.truncatingRemainder(dividingBy: geometry.morphSeconds) / geometry.morphSeconds * Double(contours.count) : 0
             let morph = floor(position) + eased(position - floor(position))
             let fill = moving ? elapsed.truncatingRemainder(dividingBy: geometry.fillSeconds) / geometry.fillSeconds * Double(geometry.maxFill) : 0.5
-            let shape = CoffeePeekLoaderContour(contours: contours, morph: morph, stroke: CGFloat(geometry.stroke))
+            let shape = CoffeePeekLoaderContour(contours: contours, morph: morph, stroke: stroke)
             ZStack {
-                shape.stroke(color.opacity(0.18), style: StrokeStyle(lineWidth: CGFloat(geometry.stroke), lineCap: .round, lineJoin: .round))
+                shape.stroke(color.opacity(0.18), style: StrokeStyle(lineWidth: stroke, lineCap: .round, lineJoin: .round))
                 if fill > 0.01 {
                     shape.trim(from: 0, to: CGFloat(fill)).stroke(color,
-                        style: StrokeStyle(lineWidth: CGFloat(geometry.stroke), lineCap: .butt, lineJoin: .round))
+                        style: StrokeStyle(lineWidth: stroke, lineCap: .butt, lineJoin: .round))
                 }
             }.rotationEffect(.degrees(moving ? elapsed / geometry.rotationSeconds * 360 : 0))
         }
-        .frame(width: CGFloat(geometry.size), height: CGFloat(geometry.size))
-        .scaleEffect(size / CGFloat(geometry.size))
         .frame(width: size, height: size)
         .clipped()
     }

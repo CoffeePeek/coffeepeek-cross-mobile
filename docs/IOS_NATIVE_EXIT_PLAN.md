@@ -509,3 +509,34 @@ codex/ios-native. Preserve its guard and reconcile that branch before publishing
   anchors remain stationary. Catalog entry travel is bounded to 48 points rather
   than depending on a potentially very tall LazyVStack. A second review found no
   concrete blocker. Full Swift 6 strict ARM64 code generation is running for 3235.
+
+### User review of 3235 and remaining corrections (2026-11-26)
+
+- Build 3235 passed full Swift 6 strict ARM64 link, SHA-256
+  `abf658ce9c9b939465339a30370843c453fb536e4c6d676ce06e04961da20c1b`.
+  Signing and in-place installation on the agreed iPhone succeeded. Its light
+  Search screenshot confirms the new preview gap. USB developer transport then
+  reset while Windows still listed the USB device; the user confirmed the screen
+  stayed on. It later reappeared without a host-service restart or settings change.
+- The user's review found non-square collection imagery, unsynchronized catalog
+  arrival, remaining system refresh indicators and redundant collection actions.
+  These are retained as failed acceptance checks. A native editor also displayed
+  NSObject.description instead of the exported Kotlin description_ field; the
+  reader is corrected without writing or repairing any account data.
+- Collection cards now obtain square bounds independently of remote-image ideal
+  size. The profile and library reuse that card. The owner chose one profile
+  header action for the full library, with public-profile preferences moved into
+  that library; the same Kotlin preference session/factory remains authoritative.
+- Catalog mode and prepared roaster child move to one Kotlin presentation snapshot.
+  A single presentation collector prepares the child before publishing, replacing
+  the independent state/child observations. Picker-only animation modifiers must
+  not cancel ordinary Discovery transitions. Layout state remains in the shared
+  feature; Swift owns the coordinated animation.
+- Remaining loader work includes all eleven app-owned pull-to-refresh controls,
+  using one native adapter and actual Kotlin busy state. Compact contour strokes
+  now retain the design-system minimum width instead of shrinking a 48-point view.
+- Verification plan: compile/link the changed Kotlin bridge, run affected non-UI
+  contracts and Android assembly/DEX checks, then full Swift 6 strict build,
+  macOS verification and same-device UI review. Preserve lazy lists, account
+  invalidation, cancellation and existing refresh actions. No UI test suite or
+  live account mutations are authorized for verification. TestFlight is pending.

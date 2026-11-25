@@ -78,7 +78,10 @@ internal class IosNativeDiscoveryOwner(factory: NativeDiscoverySessionFactory, p
 
     private fun observePresentation() {
         scope.launch { combine(binding.presentations, binding.ready) { data, ready -> data to ready }
-            .collect { (data, ready) -> source.update(data, ready) } }
+            .collect { (data, ready) ->
+                updateRoasterSource(data.state, core.currentRuntime().roasters)
+                source.update(data, ready, roasterSource)
+            } }
         scope.launch { binding.filters.collect(source::updateFilters) }
         scope.launch { combine(core.runtime, binding.ready, source.screenVisible) { state, ready, visible ->
             AppConfig.storeReviewsEnabled && state.reviewEligible && ready && visible
@@ -131,14 +134,12 @@ internal class IosNativeDiscoveryOwner(factory: NativeDiscoverySessionFactory, p
         scope.launch { combine(core.runtime.map { it.roasters }.distinctUntilChanged(), roasterSession.state) { context, _ ->
             roasterSession.hasResults(context.query, context.selectedRoasterIds, context.favoritesOnly)
         }.distinctUntilChanged().collect(core::roasterResults) }
-        scope.launch { binding.presentations.map { it.state }.collect { updateRoasterSource(it, core.currentRuntime().roasters) } }
     }
     private fun updateRoasterSource(state: DiscoveryIosState, context: DiscoveryRoasterContext) {
         val shown = state.roastersExpanded || (!state.mapExpanded && (state.landing || state.showRoasterResults))
         if (!shown) {
             roasterSource?.close()
             roasterSource = null
-            source.roastersChanged(null)
             return
         }
         val host = roasterHost(context, state)
@@ -148,7 +149,6 @@ internal class IosNativeDiscoveryOwner(factory: NativeDiscoverySessionFactory, p
         }
         roasterSource?.update(host)
         roasterSource?.setVisible(state.active && visible)
-        source.roastersChanged(roasterSource)
     }
     private fun roasterHost(context: DiscoveryRoasterContext, state: DiscoveryIosState) = NativeRoasterDiscoveryHost(
         context.query, context.selectedRoasterIds, context.favoritesOnly, state.roastersExpanded,

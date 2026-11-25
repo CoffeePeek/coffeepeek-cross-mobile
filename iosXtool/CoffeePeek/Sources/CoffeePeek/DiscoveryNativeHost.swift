@@ -200,36 +200,29 @@ private struct CheckInShopPickerStatus: View {
 @MainActor
 private final class DiscoveryNativeModel: ObservableObject {
     let discovery: IosDiscovery
-    @Published private(set) var state: IosDiscoveryState
-    @Published private(set) var roasterSource: IosRoasterDiscovery?
-    @Published private(set) var ready: Bool
+    @Published private(set) var presentation: IosDiscoveryPresentation
+    var state: IosDiscoveryState { presentation.state }
+    var roasterSource: IosRoasterDiscovery? { presentation.roasters }
+    var ready: Bool { presentation.ready }
     @Published private(set) var filterSheet: DiscoveryNativeFilterSheet?
     private var observation: IosDiscoveryObservation?
-    private var roasterObservation: IosDiscoveryObservation?
     private var filterObservation: IosDiscoveryObservation?
 
     init(_ discovery: IosDiscovery) {
         self.discovery = discovery
-        state = discovery.currentState()
-        roasterSource = discovery.currentRoasters()
-        ready = discovery.isReady()
+        presentation = discovery.currentPresentation()
         filterSheet = discovery.currentFilters().map(DiscoveryNativeFilterSheet.init)
     }
 
     isolated deinit {
         observation?.cancel()
-        roasterObservation?.cancel()
         filterObservation?.cancel()
     }
 
     func observe() {
         guard observation == nil else { return }
-        state = discovery.currentState()
-        observation = discovery.observe { [weak self] in
-            self?.state = $0
-            self?.ready = self?.discovery.isReady() ?? false
-        }
-        roasterObservation = discovery.observeRoasters { [weak self] in self?.roasterSource = $0 }
+        presentation = discovery.currentPresentation()
+        observation = discovery.observePresentation { [weak self] in self?.presentation = $0 }
         filterObservation = discovery.observeFilters { [weak self] in self?.filterSheet = $0.map(DiscoveryNativeFilterSheet.init) }
     }
     func dismissFilters() { discovery.applyFilters() }

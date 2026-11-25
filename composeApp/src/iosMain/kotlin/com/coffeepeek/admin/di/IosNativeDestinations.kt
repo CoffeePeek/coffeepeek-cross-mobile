@@ -97,7 +97,9 @@ internal class IosNativeDestinations(private val dependencies: Koin, private val
     }
     private fun collections(screen: Navigator.Screen): (() -> UIViewController)? = when (screen) {
         Navigator.Screen.CollectionsComposer, Navigator.Screen.CollectionsLibrary ->
-            iosCollectionsLibraryContent(ui.makeCollectionsLibraryController, ::languageTag, dependencies.get(), dependencies.get(), dependencies.get())
+            iosCollectionsLibraryContent(ui.makeCollectionsLibraryController, ::languageTag, dependencies.get(), dependencies.get(), dependencies.get()) {
+                workspace("Preference", null, null)
+            }
         is Navigator.Screen.PublicCollection -> { { workspace("Snapshot", screen.id, null) } }
         is Navigator.Screen.SavedPublicCollection -> { { workspace("Public", screen.id, null) } }
         is Navigator.Screen.CollectionEditor -> { { workspace("Editor", screen.id, null) } }
