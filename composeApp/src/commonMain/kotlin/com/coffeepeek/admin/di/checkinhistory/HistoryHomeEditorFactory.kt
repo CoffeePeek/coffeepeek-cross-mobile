@@ -6,7 +6,6 @@ import com.coffeepeek.admin.di.shelf.ShelfHomeCheckInBags
 import com.coffeepeek.admin.analytics.CheckInTracker
 import com.coffeepeek.admin.di.homecheckin.AppHomeCheckInRepository
 import com.coffeepeek.admin.di.homecheckin.appHomeCheckInEditor
-import com.coffeepeek.admin.di.community.nativeHomeDetailRenderer
 import com.coffeepeek.admin.di.catalog.BrewMethodCatalog
 import com.coffeepeek.feature.coffee.api.CoffeePicker
 import com.coffeepeek.core.designsystem.component.CoffeePeekImage
@@ -27,7 +26,7 @@ internal fun historyHomeEditorFactory(repository: HomePreparationRepository, pic
 ) = HistoryHomeEditorFactory { lease, tracker ->
     HistoryHomeEntries(
         createHomeCheckInDetailEntry(AppHomeCheckInRepository(lease, repository),
-            { lease.isLoggedIn && lease.isCurrent() }, nativeRenderer = nativeHomeDetailRenderer()) { url, description, modifier, _ ->
+            { lease.isLoggedIn && lease.isCurrent() }) { url, description, modifier, _ ->
             CoffeePeekImage(url, contentDescription = description, modifier = modifier, contentScale = ContentScale.Crop)
         },
         appHomeCheckInEditor(lease, repository, picker, methods, CheckInSource.Diary, tracker, shelfBags),

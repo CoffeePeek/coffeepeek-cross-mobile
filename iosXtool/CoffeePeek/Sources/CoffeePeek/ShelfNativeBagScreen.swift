@@ -67,6 +67,7 @@ private struct ShelfNativeBrewHost: View {
             if let controller { OwnProfileEmbedded(controller: controller).ignoresSafeArea() }
             else { ProgressView() }
         }.onAppear { if controller == nil { controller = model.screen.makeBrew() } }
+            .onDisappear { model.screen.releaseBrew(); controller = nil }
     }
 }
 
@@ -133,6 +134,7 @@ private struct ShelfNativeBagDetails: View {
 
  }
 
+@MainActor
 private func shelfBagPreview() -> some View {
     ScrollView {
         ShelfNativeBagDetails(state: shelfNativePreviewState(), item: shelfNativePreviewItem(), strings: ShelfNativeStrings("ru"),

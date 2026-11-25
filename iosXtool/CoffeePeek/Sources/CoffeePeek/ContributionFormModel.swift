@@ -199,6 +199,6 @@ final class ContributionFormModel: ObservableObject {
         preparingPhotos = true
     }
 
-    deinit { observation?.cancel() }
+    isolated deinit { observation?.cancel() }
 }
 

@@ -37,6 +37,7 @@ internal data class PublicProfileState(
     val isLoadingMoreConnections: Boolean = false,
     val connectionsError: PublicProfileError? = null,
     val hasMoreConnections: Boolean = false,
+    val followingCount: Int? = null,
 )
 
 /** The month shown first is the current one in Minsk (UTC+3), as the server counts activity. */

@@ -9,11 +9,7 @@ struct HomeCheckInNativeBeanPicker: View {
     @State private var footerHeight: CGFloat = 180
     @FocusState private var searching: Bool
     private var bags: [IosHomeCheckInOption] {
-        let query = state.catalog.beanQuery.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !query.isEmpty else { return state.catalog.shelfBags }
-        return state.catalog.shelfBags.filter {
-            [$0.name, $0.detail].compactMap { $0 }.contains { $0.localizedCaseInsensitiveContains(query) }
-        }
+        state.catalog.shelfBags
     }
     var body: some View {
         GeometryReader { geometry in
@@ -46,18 +42,13 @@ struct HomeCheckInNativeBeanPicker: View {
         .onPreferenceChange(HomeCheckInBeanFooterHeight.self) { footerHeight = $0 }
     }
     private var header: some View {
-        HStack {
-            Button(action: actions.closeBeans) { Image(systemName: "chevron.left").frame(width: 48, height: 48) }
-                .accessibilityLabel(strings["home_check_in_back_to_editor"])
-            Text(strings["home_check_in_bean"]).font(CoffeePeekNativeStyle.font(22, weight: "Bold", relativeTo: .title2))
-                .accessibilityAddTraits(.isHeader)
-            Spacer()
-        }.tint(CoffeePeekNativeStyle.foreground)
+        CoffeePeekNativeNavigationHeader(title: strings["home_check_in_bean"],
+            backLabel: strings["home_check_in_back_to_editor"], back: actions.closeBeans)
     }
     private var search: some View {
         HStack {
             Image(systemName: "magnifyingglass").accessibilityHidden(true)
-            TextField(strings["home_check_in_bean_search"], text: Binding(get: { state.catalog.beanQuery }, set: actions.query))
+            TextField(strings["home_check_in_bean_search"], text: Binding(get: { state.catalog.beanQuery }, set: { actions.query($0) }))
                 .submitLabel(.search).onSubmit(actions.search).focused($searching)
             if !state.catalog.beanQuery.isEmpty {
                 Button { actions.query("") } label: { Image(systemName: "xmark.circle.fill").frame(width: 44, height: 44) }

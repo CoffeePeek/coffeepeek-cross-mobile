@@ -5,9 +5,12 @@ import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.produceState
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.staticCompositionLocalOf
 import com.coffeepeek.feature.discovery.impl.search.SearchAction
 import com.coffeepeek.feature.discovery.impl.search.SearchState
+import com.coffeepeek.core.designsystem.resources.LocalCoffeePeekLanguageTag
 
 private val LocalIosFilterPresenter =
     staticCompositionLocalOf<(@Composable (DiscoveryIosFilterPresentation) -> Unit)?> { null }
@@ -33,11 +36,18 @@ class DiscoveryIosFilterPresentation internal constructor(
 internal actual fun PlatformDiscoveryFilterSheet(state: SearchState, onAction: (SearchAction) -> Unit): Boolean {
     val presenter = LocalIosFilterPresenter.current ?: return false
     val draft = remember { DiscoveryFilterDraft(state.filters) }
+    val filters by draft.state.collectAsState()
     val currentFilters by rememberUpdatedState(state.filters)
     val action by rememberUpdatedState(onAction)
+    val language = LocalCoffeePeekLanguageTag.current
+    val resources = remember(language) { DiscoveryIosResources() }
+    val viewState by produceState<DiscoveryIosFilterViewState?>(null, resources, state, filters) {
+        value = resources.discoveryIosFilterViewState(state, filters)
+    }
+    val resolved = viewState ?: return true
     val close = { action(SearchAction.CloseFilters) }
     presenter(DiscoveryIosFilterPresentation(
-        state = discoveryIosFilterViewState(state, draft.filters),
+        state = resolved,
         onReset = draft::reset,
         onPrice = draft::price,
         onToggle = draft::toggle,

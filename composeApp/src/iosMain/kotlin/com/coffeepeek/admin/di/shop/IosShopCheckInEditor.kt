@@ -26,14 +26,16 @@ import kotlinx.datetime.toLocalDateTime
 import kotlin.time.Instant
 import platform.UIKit.UIImage
 
-/** The composition owns this form and its existing account-bound dependencies. */
+/** The native presentation owns this form and its existing account-bound dependencies. */
 class IosShopCheckInEditor internal constructor(
     private val form: ShopCheckInNativeForm,
     private val language: LanguagePort,
     private val picker: () -> ShopCheckInPhotoPickerController?,
     private val callbacks: () -> ShopCheckInNativeCallbacks,
 ) {
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+    internal val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+    private var presenter: () -> platform.UIKit.UIViewController? = { null }
+    private var release: () -> Unit = {}
     private val presentation = NativeShopCheckInSession(
         ShopCheckInCreateInput(form.shopSlug, "", ShopRating(4, 4, 4), form.dates.visitInstant(form.dates.nowMillis())),
         form.repository, form.drafts, AppShopCheckInAnalytics(form.isCurrent), form.publication,
@@ -41,12 +43,17 @@ class IosShopCheckInEditor internal constructor(
     private val preparing = MutableStateFlow(false)
     private val imageCache = mutableMapOf<ShopCheckInPhoto, UIImage?>()
     private var closed = false
+    private var revoked = false
     private var photoRequest = 0
 
     init { scope.launch { presentation.events.collect(::handleEvent) } }
 
     fun current() = presentation.current().toIos()
     fun languageTag() = language.current().languageTag
+    fun bindPresenter(presenter: () -> platform.UIKit.UIViewController?) { if (!closed) this.presenter = presenter }
+    internal fun presentationHost() = presenter().takeIf { isCurrent() }
+    internal fun bindDisposal(release: () -> Unit) { if (closed) release() else this.release = release }
+    internal fun photoLoading(loading: Boolean) { if (!closed) preparing.value = loading }
     fun observe(onState: (IosShopCheckInState) -> Unit, onLanguage: (String) -> Unit) = IosShopCheckInObservation(
         scope.launch {
             combine(presentation.state, preparing, language.observe()) { state, _, locale ->
@@ -94,16 +101,27 @@ class IosShopCheckInEditor internal constructor(
 
     internal fun syncPicker() { preparing.value = picker()?.isPreparing == true }
 
-    fun close() {
-        if (closed) return
-        closed = true
+    internal fun revoke() {
+        if (revoked) return
+        revoked = true
         photoRequest++
-        scope.cancel()
+        preparing.value = false
         presentation.close()
         imageCache.clear()
+        presenter = { null }
+        val release = release
+        this.release = {}
+        release()
     }
 
-    private fun isCurrent() = !closed && form.isCurrent()
+    fun close() {
+        if (closed) return
+        revoke()
+        closed = true
+        scope.cancel()
+    }
+
+    private fun isCurrent() = !closed && !revoked && form.isCurrent()
 
     private fun action(block: () -> Unit) { if (isCurrent()) block() }
 

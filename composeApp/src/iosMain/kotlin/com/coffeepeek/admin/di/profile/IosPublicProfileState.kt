@@ -44,7 +44,7 @@ private fun PublicProfileSnapshot.identity(): IosOwnProfileIdentity? {
     val visible = profile?.takeUnless { it.isBlockedByViewer } ?: return null
     val stats = visible.stats
     return IosOwnProfileIdentity(visible.nickname, visible.about, visible.avatarUrl, stats.checkIns, stats.coffeeShops,
-        stats.roasters, stats.followers, canOpenFollowers = true)
+        stats.roasters, stats.followers, canOpenFollowers = true, following = followingCount)
 }
 
 private fun PublicProfileSnapshot.ratings(): Map<String, IosPublicProfileRating> = checkIns.mapNotNull { row ->

@@ -40,6 +40,9 @@ import com.coffeepeek.admin.di.shelf.iosShelfModule
 import com.coffeepeek.admin.locator.Constants
 
 internal fun iosPlatformModules(apiBaseUrl: String = Constants.BASE_URL) = listOf(
+    org.koin.dsl.module {
+        single<com.coffeepeek.admin.di.shop.ShopFavoriteIntent> { shopFavoritePickerIntent(get(), get()) }
+    },
     contributionsModule(),
     serverFavoritesModule(),
     coffeeModule(),
@@ -92,7 +95,7 @@ private fun iosShopGalleryRenderer(client: ApiClients) =
 
 private fun Scope.iosShopDetailRenderer() =
     FeatureShopDetailScreenRenderer(sessions = get(), accounts = get(), details = get(), votes = get(),
-        favorites = get(), favoriteIntent = shopFavoritePickerIntent(get(), get()), favoriteCollections = get(), checkInForm = get(),
+        favorites = get(), favoriteIntent = get(), favoriteCollections = get(), checkInForm = get(),
         visibility = get(), blockActions = get())
 
 private fun Scope.iosShopCheckInListRenderer() =

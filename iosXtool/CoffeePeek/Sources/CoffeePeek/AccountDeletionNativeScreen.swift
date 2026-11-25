@@ -50,6 +50,7 @@ struct AccountDeletionNativeScreen: View {
     }
 }
 
+@MainActor
 private func deletionPreview(_ language: String, requested: Bool) -> some View {
     AccountDeletionNativeScreen(state: IosAccountDeletionState(email: "fixture@example.invalid", loading: false,
         sending: false, requested: requested, canSend: !requested, resendAvailable: false, revoked: false,

@@ -7,6 +7,7 @@ func makeShelfArchiveController(archive: IosShelfArchive, languageTag: String) -
     UIHostingController(rootView: ShelfArchiveHost(archive: archive, strings: ShelfArchiveStrings(languageTag)))
 }
 
+@MainActor
 private final class ShelfArchiveModel: ObservableObject {
     let archive: IosShelfArchive
     @Published private(set) var state: IosShelfArchiveState
@@ -28,7 +29,7 @@ private final class ShelfArchiveModel: ObservableObject {
         observation = nil
     }
 
-    deinit {
+    isolated deinit {
         observation?.cancel()
         archive.close()
     }
@@ -83,19 +84,10 @@ private struct ShelfArchiveScreen<Cover: View>: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 8) {
-            HStack(spacing: 8) {
-                Button(action: onBack) {
-                    Label(strings.text("archive.back"), systemImage: "chevron.backward")
-                        .labelStyle(.iconOnly)
-                        .frame(minWidth: 44, minHeight: 44)
-                }
-                Text(strings.text("archive.title"))
-                    .font(CoffeePeekNativeStyle.font(18, weight: "SemiBold", relativeTo: .headline))
-                    .accessibilityAddTraits(.isHeader)
-            }
-            if state.signedIn { search }
+            CoffeePeekNativeNavigationHeader(title: strings.text("archive.title"),
+                backLabel: strings.text("archive.back"), back: onBack)
+            if state.signedIn { search.padding(.horizontal, 16) }
         }
-        .padding(.horizontal, 16)
         .padding(.bottom, 8)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(CoffeePeekNativeStyle.background)
@@ -104,7 +96,7 @@ private struct ShelfArchiveScreen<Cover: View>: View {
     private var search: some View {
         HStack(spacing: 8) {
             Image(systemName: "magnifyingglass").accessibilityHidden(true)
-            TextField(strings.text("archive.search"), text: Binding(get: { state.query }, set: onQuery))
+            TextField(strings.text("archive.search"), text: Binding(get: { state.query }, set: { onQuery($0) }))
                 .disableAutocorrection(true)
             if !state.query.isEmpty {
                 Button { onQuery("") } label: {
@@ -253,6 +245,7 @@ private struct ShelfArchiveStrings {
     }
 }
 
+@MainActor
 private func shelfArchivePreview() -> some View {
     let row = IosShelfArchiveRow(id: "sample", title: "Santa Rosa", roaster: "Sample Roaster",
         days: nil, daysKey: nil, rating: nil, hasPhoto: false)

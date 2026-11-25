@@ -13,10 +13,6 @@ interface CollectionsLibrarySession {
     fun close()
 }
 
-fun interface CollectionsLibraryObservation {
-    fun cancel()
-}
-
 data class CollectionsLibrarySnapshot(
     val accountVersion: Int,
     val signedIn: Boolean,
@@ -25,6 +21,7 @@ data class CollectionsLibrarySnapshot(
     val failed: Boolean,
     val query: String,
     val items: List<CollectionsLibraryItem>,
+    val matchingItems: List<CollectionsLibraryItem> = items,
 )
 
 data class CollectionsLibraryItem(

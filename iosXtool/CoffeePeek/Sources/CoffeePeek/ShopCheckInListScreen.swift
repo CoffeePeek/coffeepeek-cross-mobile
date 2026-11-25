@@ -4,7 +4,23 @@ import UIKit
 
 @MainActor
 func makeShopCheckInListController(list: IosShopCheckInList, languageTag: String) -> UIViewController {
-    UIHostingController(rootView: ShopCheckInListHost(list: list, strings: ShopCheckInListStrings(languageTag: languageTag)))
+    let strings = ShopCheckInListStrings(languageTag: languageTag)
+    let controller = ShopCheckInListHostingController(list: list, strings: strings)
+    controller.title = strings.text("shop_checkin_list_title")
+    return controller
+}
+
+@MainActor
+private final class ShopCheckInListHostingController: UIHostingController<ShopCheckInListHost> {
+    private let visibility: CoffeePeekNativeControllerVisibility
+    init(list: IosShopCheckInList, strings: ShopCheckInListStrings) {
+        let visibility = CoffeePeekNativeControllerVisibility { list.setVisible(shown: $0) }
+        self.visibility = visibility
+        super.init(rootView: ShopCheckInListHost(list: list, strings: strings, visibility: visibility))
+    }
+    required dynamic init?(coder: NSCoder) { nil }
+    override func viewDidAppear(_ animated: Bool) { super.viewDidAppear(animated); visibility.setShowing(true) }
+    override func viewWillDisappear(_ animated: Bool) { visibility.setShowing(false); super.viewWillDisappear(animated) }
 }
 
 private struct ShopCheckInListHost: View {
@@ -12,16 +28,18 @@ private struct ShopCheckInListHost: View {
     @StateObject private var model: ShopCheckInListModel
     private let list: IosShopCheckInList
     private let strings: ShopCheckInListStrings
+    let visibility: CoffeePeekNativeControllerVisibility
 
-    init(list: IosShopCheckInList, strings: ShopCheckInListStrings) {
+    init(list: IosShopCheckInList, strings: ShopCheckInListStrings, visibility: CoffeePeekNativeControllerVisibility) {
         self.list = list
         self.strings = strings
+        self.visibility = visibility
         _model = StateObject(wrappedValue: ShopCheckInListModel(list: list))
     }
 
     var body: some View {
         ShopCheckInListScreen(state: model.state, strings: strings,
-                              onBack: { list.back() }, onRetry: { list.retry() },
+                              onRetry: { list.retry() },
                               onSignIn: { list.signIn() }, onRegister: { list.register() }) { row in
             ShopCheckInListCard(row: row, date: list.dateLabel(raw: row.date), strings: strings,
                                 actions: actions(for: row), loadArtwork: { index, receive in
@@ -34,10 +52,13 @@ private struct ShopCheckInListHost: View {
         .accessibilityHidden(model.viewer != nil)
         .allowsHitTesting(model.viewer == nil)
         .coffeePeekPhotoViewer(model.viewer, languageTag: strings.languageTag, onDismiss: { model.viewer = nil })
-        .onAppear { model.start(unknownAuthor: strings.text("shop_checkins_author_unknown")) }
+        .onAppear {
+            model.start(unknownAuthor: strings.text("shop_checkins_author_unknown"))
+            visibility.setForeground(scenePhase == .active)
+        }
         .onDisappear { model.stop() }
         .onChange(of: scenePhase) { _, next in
-            if next == .active && model.isObserved { list.resume() }
+            visibility.setForeground(next == .active)
         }
     }
 
@@ -52,6 +73,7 @@ private struct ShopCheckInListHost: View {
     }
 }
 
+@MainActor
 private final class ShopCheckInListModel: ObservableObject {
     @Published private(set) var state: ShopCheckInListPresentation
     @Published var viewer: IosPhotoViewer?
@@ -64,7 +86,7 @@ private final class ShopCheckInListModel: ObservableObject {
         state = ShopCheckInListPresentation(list.currentState())
     }
 
-    deinit {
+    isolated deinit {
         observation?.cancel()
         list.close()
     }
@@ -74,7 +96,6 @@ private final class ShopCheckInListModel: ObservableObject {
         update(list.currentState())
         observation = list.observe(onState: { [weak self] in self?.update($0) },
                                    onPhoto: { [weak self] in self?.openPhoto($0) }, unknownAuthor: unknownAuthor)
-        list.resume()
     }
 
     func stop() {
@@ -134,7 +155,6 @@ private struct ShopCheckInListPresentation {
 private struct ShopCheckInListScreen<Card: View>: View {
     let state: ShopCheckInListPresentation
     let strings: ShopCheckInListStrings
-    let onBack: () -> Void
     let onRetry: () -> Void
     let onSignIn: () -> Void
     let onRegister: () -> Void
@@ -147,26 +167,7 @@ private struct ShopCheckInListScreen<Card: View>: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(CoffeePeekNativeStyle.background)
-        .safeAreaInset(edge: .top, spacing: 0) { header }
         .foregroundStyle(CoffeePeekNativeStyle.foreground)
-    }
-
-    private var header: some View {
-        HStack(spacing: 8) {
-            Button(action: onBack) {
-                Label(strings.text("shop_detail_back"), systemImage: "chevron.backward")
-                    .labelStyle(.iconOnly)
-                    .frame(minWidth: 44, minHeight: 44)
-                    .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-            Text(strings.text("shop_checkin_list_title"))
-                .font(CoffeePeekNativeStyle.font(18, weight: "Bold", relativeTo: .headline))
-                .accessibilityAddTraits(.isHeader)
-            Spacer()
-        }
-        .padding(.horizontal, 12)
-        .background(.bar)
     }
 
     private var list: some View {
@@ -185,9 +186,7 @@ private struct ShopCheckInListScreen<Card: View>: View {
                 ForEach(state.rows) { card($0) }
                 if state.showGuestPrompt { guestPrompt }
                 ForEach(0..<state.hiddenCount, id: \.self) { _ in
-                    RoundedRectangle(cornerRadius: 16).fill(CoffeePeekNativeStyle.surface)
-                        .frame(height: 80)
-                        .accessibilityHidden(true)
+                    ShopCheckInGuestPlaceholder()
                 }
             }
             .padding(16)
@@ -214,19 +213,38 @@ private struct ShopCheckInListScreen<Card: View>: View {
     }
 
     private var guestPrompt: some View {
-        VStack(spacing: 10) {
-            Text(strings.text("shop_checkins_join_prompt")).multilineTextAlignment(.center)
-            Button(strings.text("shop_reviews_sign_in"), action: onSignIn)
-                .buttonStyle(.borderedProminent)
-            Button(action: onRegister) {
-                Text(strings.text("shop_checkins_no_account") + " " + strings.text("shop_reviews_register"))
-                    .frame(minHeight: 44)
-            }
-        }
-        .padding(16)
-        .frame(maxWidth: .infinity)
-        .background(CoffeePeekNativeStyle.surface, in: RoundedRectangle(cornerRadius: 16))
+        CoffeePeekGuestAccountCard(prompt: strings.text("shop_checkins_join_prompt"),
+            loginTitle: strings.text("shop_reviews_sign_in"),
+            noAccountPrompt: strings.text("shop_checkins_no_account"), registerTitle: strings.text("shop_reviews_register"),
+            login: onSignIn, register: onRegister)
     }
+}
+
+/// Only neutral shapes are rendered; hidden check-in data never enters this view.
+struct ShopCheckInGuestPlaceholder: View {
+    var body: some View {
+        GeometryReader { geometry in
+            VStack(alignment: .leading, spacing: 12) {
+                ForEach(0..<4) { index in
+                    RoundedRectangle(cornerRadius: 6).fill(CoffeePeekNativeStyle.surfaceVariant)
+                        .frame(width: max(0, geometry.size.width - 32) * (index == 0 ? 0.5 : 0.85), height: 16)
+                }
+            }.frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading).padding(16)
+                .blur(radius: 8)
+        }
+        .frame(height: 192)
+        .background(CoffeePeekNativeStyle.surface, in: RoundedRectangle(cornerRadius: 16))
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .overlay(RoundedRectangle(cornerRadius: 16).strokeBorder(CoffeePeekNativeStyle.border))
+        .allowsHitTesting(false).accessibilityHidden(true)
+    }
+}
+
+#Preview("Guest check-in blur light") {
+    ShopCheckInGuestPlaceholder().frame(width: 280).padding().preferredColorScheme(.light)
+}
+#Preview("Guest check-in blur dark") {
+    ShopCheckInGuestPlaceholder().frame(width: 280).padding().preferredColorScheme(.dark)
 }
 
 struct ShopCheckInListStrings {
@@ -243,17 +261,27 @@ struct ShopCheckInListStrings {
     }
 }
 
-private func shopCheckInListPreview() -> some View {
+@MainActor
+private func shopCheckInListPreview(guest: Bool = false) -> some View {
     var state = ShopCheckInListPresentation()
     state.shopTitle = "CoffeePeek"
     state.overall = "4.6"
     state.checkInCount = 3
+    state.showGuestPrompt = guest
+    state.hiddenCount = guest ? 2 : 0
     state.breakdown = [ShopCheckInRatingPresentation(value: 4.6, label: "4.6")]
-    return ShopCheckInListScreen(state: state, strings: ShopCheckInListStrings(languageTag: "ru"),
-                                 onBack: {}, onRetry: {}, onSignIn: {}, onRegister: {}) {
-        Text($0.note)
+    return NavigationStack {
+        ShopCheckInListScreen(state: state, strings: ShopCheckInListStrings(languageTag: "ru"),
+                             onRetry: {}, onSignIn: {}, onRegister: {}) { Text($0.note) }
+            .navigationTitle(ShopCheckInListStrings(languageTag: "ru").text("shop_checkin_list_title"))
+            .navigationBarTitleDisplayMode(.inline)
     }
 }
 
-#Preview("Check-ins Â· Light") { shopCheckInListPreview().preferredColorScheme(.light) }
-#Preview("Check-ins Â· Dark") { shopCheckInListPreview().preferredColorScheme(.dark) }
+#Preview("Check-ins · Light") { shopCheckInListPreview().preferredColorScheme(.light) }
+#Preview("Check-ins · Dark") { shopCheckInListPreview().preferredColorScheme(.dark) }
+#Preview("Guest check-ins light") { shopCheckInListPreview(guest: true).preferredColorScheme(.light) }
+#Preview("Guest check-ins dark") { shopCheckInListPreview(guest: true).preferredColorScheme(.dark) }
+#Preview("Check-ins · Large text") {
+    shopCheckInListPreview().preferredColorScheme(.dark).environment(\.dynamicTypeSize, .accessibility2)
+}

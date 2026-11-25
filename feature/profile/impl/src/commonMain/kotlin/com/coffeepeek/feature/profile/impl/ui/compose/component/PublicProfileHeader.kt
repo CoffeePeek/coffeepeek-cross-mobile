@@ -1,16 +1,13 @@
 package com.coffeepeek.feature.profile.impl.ui.compose.component
 
 import org.jetbrains.compose.ui.tooling.preview.Preview
-import androidx.compose.foundation.BorderStroke
 import com.coffeepeek.feature.profile.impl.resources.Res
 import com.coffeepeek.feature.profile.impl.resources.profile_avatar_of
 import com.coffeepeek.feature.profile.impl.resources.profile_follow
 import com.coffeepeek.feature.profile.impl.resources.profile_follow_description
 import com.coffeepeek.feature.profile.impl.resources.profile_following
 import com.coffeepeek.feature.profile.impl.resources.profile_open_avatar
-import com.coffeepeek.feature.profile.impl.resources.profile_open_followers
 import com.coffeepeek.feature.profile.impl.resources.profile_stat_check_ins
-import com.coffeepeek.feature.profile.impl.resources.profile_stat_followers
 import com.coffeepeek.feature.profile.impl.resources.profile_stat_shops
 import com.coffeepeek.feature.profile.impl.resources.profile_unfollow_description
 import androidx.compose.foundation.background
@@ -21,7 +18,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -30,9 +26,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
-import com.coffeepeek.core.designsystem.component.CoffeePeekOutlinedButton as OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
@@ -52,7 +46,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.coffeepeek.core.designsystem.theme.CoffeePeekColors
 import com.coffeepeek.feature.profile.api.ProfileImage
 import com.coffeepeek.feature.profile.domain.PublicProfileStats
@@ -69,12 +62,14 @@ internal fun PublicProfileHeader(
     onFollow: (() -> Unit)? = null,
     stats: PublicProfileStats? = null,
     onFollowersClick: (() -> Unit)? = null,
+    followingCount: Int? = null,
+    onFollowingClick: (() -> Unit)? = null,
     onShopsClick: (() -> Unit)? = null,
     onRoastersClick: (() -> Unit)? = null,
     onAvatarClick: () -> Unit,
 ) {
     BoxWithConstraints(Modifier.fillMaxWidth()) {
-        val statsWidth = (if (stats?.roasters == 0) 168.dp else 220.dp) * LocalDensity.current.fontScale
+        val statsWidth = 168.dp * LocalDensity.current.fontScale
         val inlineStats = maxWidth >= statsWidth + 68.dp
         val avatarSize = if (inlineStats) (maxWidth - statsWidth - 12.dp).coerceIn(56.dp, 88.dp) else 88.dp
         Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -85,12 +80,13 @@ internal fun PublicProfileHeader(
                     Text("@${nickname.trimStart('@')}", style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground,
                         maxLines = 2, overflow = TextOverflow.Ellipsis)
-                    if (stats != null && inlineStats) ProfileStats(stats, onFollowersClick, onShopsClick, onRoastersClick)
+                    if (stats != null && inlineStats) ProfileStats(stats, onShopsClick, onRoastersClick)
                 }
             }
-            if (stats != null && !inlineStats) ProfileStats(stats, onFollowersClick, onShopsClick, onRoastersClick)
+            if (stats != null && !inlineStats) ProfileStats(stats, onShopsClick, onRoastersClick)
             if (!about.isNullOrBlank()) Text(about, style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant)
+            if (stats != null) PublicProfileConnectionsRow(stats.followers, followingCount, onFollowersClick, onFollowingClick)
             if (onFollow != null) ProfileFollowButton(nickname, isFollowing, followEnabled, onFollow)
         }
     }
@@ -118,33 +114,26 @@ private fun ProfileAvatar(nickname: String, avatarUrl: String?, image: ProfileIm
 private fun ProfileFollowButton(nickname: String, isFollowing: Boolean, enabled: Boolean, onClick: () -> Unit) {
     val description = stringResource(if (isFollowing) Res.string.profile_unfollow_description else Res.string.profile_follow_description,
         nickname.trimStart('@'))
-    OutlinedButton(
-        onClick = onClick, enabled = enabled, modifier = Modifier.semantics { contentDescription = description },
-        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-        colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.primary),
-    ) { Text(stringResource(if (isFollowing) Res.string.profile_following else Res.string.profile_follow),
-        style = MaterialTheme.typography.labelMedium) }
+    com.coffeepeek.core.designsystem.component.CoffeePeekButton(
+        text = stringResource(if (isFollowing) Res.string.profile_following else Res.string.profile_follow),
+        onClick = onClick, enabled = enabled, modifier = Modifier.semantics { contentDescription = description })
 }
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun ProfileStats(stats: PublicProfileStats, onFollowersClick: (() -> Unit)?,
-    onShopsClick: (() -> Unit)?, onRoastersClick: (() -> Unit)?, modifier: Modifier = Modifier) {
+private fun ProfileStats(stats: PublicProfileStats, onShopsClick: (() -> Unit)?,
+    onRoastersClick: (() -> Unit)?, modifier: Modifier = Modifier) {
     val checkIns = stringResource(Res.string.profile_stat_check_ins)
     val shops = stringResource(Res.string.profile_stat_shops)
     val roasters = stringResource(Res.string.profile_stat_roasters)
-    val followers = stringResource(Res.string.profile_stat_followers)
     FlowRow(modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
-        maxItemsInEachRow = if (LocalDensity.current.fontScale > 1.3f) 2 else 4) {
+        maxItemsInEachRow = if (LocalDensity.current.fontScale > 1.3f) 2 else 3) {
         ProfileStat(stats.checkIns, checkIns, Modifier.weight(1f))
         ProfileStat(stats.coffeeShops, shops, Modifier.weight(1f),
             onShopsClick, stringResource(Res.string.profile_menu_submitted_shops))
-        if (stats.roasters > 0) ProfileStat(stats.roasters, roasters, Modifier.weight(1f),
+        ProfileStat(stats.roasters, roasters, Modifier.weight(1f),
             onRoastersClick, stringResource(Res.string.profile_menu_submitted_roasters))
-        ProfileStat(stats.followers, followers, Modifier.weight(1f),
-            onFollowersClick, stringResource(Res.string.profile_open_followers))
     }
 }
 
@@ -172,7 +161,8 @@ private fun ProfileHeaderPreview(dark: Boolean, own: Boolean = true, width: Dp =
                 PublicProfileHeader("Arsen", null, "Фоткаю, пью, варю… Ладно, шучу, не варю", { _, _, _ -> },
                     stats = PublicProfileStats(19, 27, roasters, 1),
                     onShopsClick = if (own) ({}) else null, onRoastersClick = if (own) ({}) else null,
-                    onFollowersClick = {}, onAvatarClick = {})
+                    onFollowersClick = {}, followingCount = 4, onFollowingClick = {},
+                    onFollow = if (own) null else ({}), onAvatarClick = {})
             }
         }
     }

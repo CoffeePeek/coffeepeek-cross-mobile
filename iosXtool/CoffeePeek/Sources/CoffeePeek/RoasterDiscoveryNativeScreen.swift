@@ -16,6 +16,7 @@ struct RoasterDiscoveryNativeHost: View {
     }
 }
 
+@MainActor
 private final class RoasterDiscoveryNativeModel: ObservableObject {
     @Published var state: IosRoasterDiscoveryState
     @Published var strings: OwnProfileStrings
@@ -41,7 +42,7 @@ private final class RoasterDiscoveryNativeModel: ObservableObject {
             source.observeLanguage { [weak self] in self?.strings = OwnProfileStrings(languageTag: $0, table: "NativeRoaster") }]
     }
     func stop() { observations.forEach { $0.cancel() }; observations = [] }
-    deinit { observations.forEach { $0.cancel() } }
+    isolated deinit { observations.forEach { $0.cancel() } }
 }
 
 struct RoasterDiscoveryNativeScreen: View {
@@ -124,6 +125,7 @@ struct RoasterDiscoveryNativeScreen: View {
     }
 }
 
+@MainActor
 private func roasterDiscoveryPreview(_ search: Bool, language: String) -> some View {
     RoasterDiscoveryNativeScreen(state: IosRoasterDiscoveryState(active: true, loading: false, failed: false,
         query: "", bottomClearance: 0, cards: [IosRoasterCard(slug: "fixture", name: "CoffeePeek", photo: nil, about: "Кофе каждый день",

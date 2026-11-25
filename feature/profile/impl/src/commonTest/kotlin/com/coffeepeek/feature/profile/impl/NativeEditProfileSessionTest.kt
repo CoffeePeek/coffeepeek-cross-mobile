@@ -3,6 +3,7 @@ package com.coffeepeek.feature.profile.impl
 import androidx.lifecycle.ViewModelStore
 import com.coffeepeek.feature.profile.api.ProfileAvatarImage
 import com.coffeepeek.feature.profile.api.ProfileEditPort
+import com.coffeepeek.feature.profile.api.ProfileAccountPort
 import com.coffeepeek.feature.profile.impl.ui.EditProfileViewModel
 import com.coffeepeek.feature.profile.impl.ui.FakeProfileAccounts
 import com.coffeepeek.feature.profile.impl.ui.model.EditProfileError
@@ -14,6 +15,13 @@ import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.cancelAndJoin
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlin.test.*
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -29,10 +37,18 @@ class NativeEditProfileSessionTest {
     }
     @BeforeTest fun before() { Dispatchers.setMain(dispatcher) }
     @AfterTest fun after() { store.clear(); Dispatchers.resetMain() }
-    private fun session(): NativeEditProfileSession {
-        val model = EditProfileViewModel(accounts, edit)
+    private fun session(account: ProfileAccountPort = accounts): NativeEditProfileSession {
+        val model = EditProfileViewModel(account, edit)
         store.put("editor", model)
-        return NativeEditProfileSession(model, accounts)
+        return NativeEditProfileSession(model, account, store::clear)
+    }
+
+    private fun failingAccount(failure: CompletableDeferred<Unit>) = object : ProfileAccountPort by accounts {
+        override fun observeActiveAccount(): Flow<String?> = flow {
+            emit(accounts.activeAccount())
+            failure.await()
+            error("Account observation failed")
+        }
     }
 
     @Test fun revokedSnapshotContainsNoPrivateDraftOrPendingDialog() {
@@ -92,5 +108,59 @@ class NativeEditProfileSessionTest {
         runCurrent()
         assertEquals(listOf("username"), writes)
         assertFalse(session.current().canSave)
+    }
+
+    @Test fun avatarIsOwnedBeforeThePlatformPickerClearsItsTemporaryBuffer() = runTest(dispatcher) {
+        val session = session()
+        runCurrent()
+        val bytes = byteArrayOf(1, 2, 3)
+        session.avatarPicked(ProfileAvatarImage("photo", "image/png", bytes))
+        bytes.fill(0)
+        runCurrent()
+        assertContentEquals(byteArrayOf(1, 2, 3), session.current().avatar?.bytes)
+    }
+
+    @Test fun closeClearsTheStoreAndRejectsQueuedDraftWritesAndRepeatedDisposal() = runTest(dispatcher) {
+        val session = session()
+        runCurrent()
+        session.aboutChanged("Pending draft")
+        session.close()
+        session.close()
+        session.save()
+        session.usernameChanged("Late username")
+        runCurrent()
+        assertFalse(session.isCurrent())
+        assertTrue(session.current().revoked)
+        assertTrue(writes.isEmpty())
+        assertEquals("", session.current().about)
+    }
+
+    @Test fun accountFlowFailurePublishesSanitizedStateToTheExistingUiObserver() = runTest(dispatcher) {
+        val failure = CompletableDeferred<Unit>()
+        val session = session(failingAccount(failure))
+        val snapshots = mutableListOf<NativeEditProfileState>()
+        backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { session.state.toList(snapshots) }
+        runCurrent()
+        session.aboutChanged("Private draft")
+        runCurrent()
+        assertEquals("Private draft", snapshots.last().about)
+        failure.complete(Unit)
+        runCurrent()
+        assertTrue(snapshots.last().revoked)
+        assertEquals("", snapshots.last().username)
+        assertEquals("", snapshots.last().about)
+        assertNull(snapshots.last().avatar)
+        assertFalse(session.isCurrent())
+    }
+
+    @Test fun cancellingOneUiObserverDoesNotDisposeTheDraftOwner() = runTest(dispatcher) {
+        val session = session()
+        val observer = backgroundScope.launch(UnconfinedTestDispatcher(testScheduler)) { session.state.toList(mutableListOf()) }
+        runCurrent()
+        session.aboutChanged("Keep draft")
+        runCurrent()
+        observer.cancelAndJoin()
+        assertTrue(session.isCurrent())
+        assertEquals("Keep draft", session.current().about)
     }
 }

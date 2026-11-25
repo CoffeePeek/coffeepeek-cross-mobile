@@ -58,14 +58,7 @@ import com.coffeepeek.feature.community.impl.post.PostState
 import com.coffeepeek.feature.community.impl.post.PostViewModel
 
 /** What the post screen asks the caller to do; navigation is not decided here. */
-internal class PostCallbacks(
-    val onBack: () -> Unit,
-    val onSignIn: () -> Unit,
-    val onOpenAuthor: (slug: String, name: String, avatarUrl: String?) -> Unit,
-    val onOpenShop: (slug: String) -> Unit,
-    val onOpenCoffee: (slug: String) -> Unit,
-    val onEditHome: (String) -> Unit = {},
-)
+internal typealias PostCallbacks = com.coffeepeek.feature.community.api.CommunityPostNavigation
 
 internal class PostPhotoPreview(val thumbnails: List<String>, val originals: List<String>, val index: Int)
 
@@ -106,13 +99,10 @@ internal fun PostScreenContent(
     var preview by remember { mutableStateOf<PostPhotoPreview?>(null) }
     preview?.takeIf { state.post != null && state.error == null }
         ?.let { host.photoViewer(it.thumbnails, it.originals, it.index) { preview = null } }
-    state.editing?.let { PostEditorSheet(it, state.drinks, state.drinksFailed, state.isSaving, postEditorCallbacks(onAction), host) }
-    if (state.isReportOpen) ReportSheet(state.reportForm(), postReportCallbacks(onAction), host)
+    state.editing?.let { PostEditorSheet(it, state.drinks, state.drinksFailed, state.isSaving, postEditorCallbacks(onAction)) }
+    if (state.isReportOpen) ReportSheet(state.reportForm(), postReportCallbacks(onAction))
     val authorFallback = stringResource(Res.string.community_user)
     val sharer = postSharer(host)
-    if (host.nativeDetail != null) {
-        if (NativePostDetail(state, onAction, host, blockActions, callbacks, snackbar, modifier) { preview = it }) return
-    }
     CoffeePeekScaffold(
         modifier = modifier,
         topBar = { CoffeePeekTopBar(stringResource(Res.string.community_post_title), stringResource(Res.string.community_back), onBack = callbacks.onBack) },
@@ -183,9 +173,9 @@ internal fun postActions(
     )
 }
 
-private fun PostState.reportForm() = ReportForm(reportText, reportIssue, reportFailed, reportFailure, isReporting)
+internal fun PostState.reportForm() = ReportForm(reportText, reportIssue, reportFailed, reportFailure, isReporting)
 
-private fun postReportCallbacks(onAction: (PostAction) -> Unit) = ReportCallbacks(
+internal fun postReportCallbacks(onAction: (PostAction) -> Unit) = ReportCallbacks(
     onText = { onAction(PostAction.ReportText(it)) },
     onSubmit = { onAction(PostAction.SubmitReport) },
     onDismiss = { onAction(PostAction.DismissReport) },

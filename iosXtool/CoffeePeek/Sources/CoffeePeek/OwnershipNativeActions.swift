@@ -17,9 +17,10 @@ private final class OwnershipActionsHostingController: UIHostingController<Owner
         safeAreaRegions = []
     }
     @MainActor required dynamic init?(coder: NSCoder) { return nil }
-    deinit { model.close() }
+    isolated deinit { model.close() }
 }
 
+@MainActor
 private final class OwnershipActionsModel: ObservableObject {
     let actions: IosOwnershipActions
     @Published var owner: Bool
@@ -41,7 +42,7 @@ private final class OwnershipActionsModel: ObservableObject {
     func beginClaim() { claim = actions.makeClaim { [weak self] in self?.claim = nil } }
     func close() { observation?.cancel(); observation = nil; claim = nil; actions.close() }
     private func update() { owner = actions.owner(); active = actions.active(); strings = OwnershipNativeStrings(actions.languageTag()) }
-    deinit { observation?.cancel() }
+    isolated deinit { observation?.cancel() }
 }
 
 private struct OwnershipActionsHost: View {
@@ -54,7 +55,8 @@ private struct OwnershipActionsHost: View {
             }
         }
         .onAppear(perform: model.appear)
-        .sheet(isPresented: Binding(get: { model.claim != nil }, set: { if !$0 { model.claim = nil } })) {
+        .sheet(isPresented: Binding(get: { model.claim != nil }, set: { if !$0 { model.claim = nil } }),
+            onDismiss: model.actions.releaseClaim) {
             if let controller = model.claim {
                 OwnProfileEmbedded(controller: controller).ignoresSafeArea().interactiveDismissDisabled()
             }
@@ -75,8 +77,9 @@ private struct OwnershipNativeActionsContent: View {
                 Button(action: edit) { controlLabel(strings["ownership_edit"], symbol: "square.and.pencil") }
             } else {
                 Menu {
-                    if !roaster { Button(strings["ownership_edit"], action: suggest) }
-                    Button(strings[roaster ? "ownership_representative_roaster" : "ownership_representative"], action: claim)
+                    if !roaster { Button(strings["ownership_edit"], systemImage: "square.and.pencil", action: suggest) }
+                    Button(strings[roaster ? "ownership_representative_roaster" : "ownership_representative"],
+                        systemImage: "person.crop.circle.badge.checkmark", action: claim)
                 } label: { controlLabel(strings["ownership_actions"], symbol: "ellipsis") }
             }
         }

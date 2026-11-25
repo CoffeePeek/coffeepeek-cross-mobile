@@ -23,10 +23,16 @@ internal fun iosShopReportContent(): (String, String) -> (() -> UIViewController
     val sessions = koinInject<SessionReader>()
     val factory = LocalIosShopReportController.current
     val languageTag by rememberUpdatedState(LocalCoffeePeekLanguageTag.current)
+    return iosShopReportContent(factory, { languageTag }, clients, sessions)
+}
+
+internal fun iosShopReportContent(factory: (IosShopReport, String, String, () -> Unit) -> UIViewController,
+    language: () -> String, clients: ApiClients, sessions: SessionReader,
+): (String, String) -> (() -> UIViewController) {
     return { shopId, shopTitle -> {
         val report = IosShopReport(
             shopId, createShopIssueReportRepository(clients.client), sessions,
         )
-        factory(report, languageTag, shopTitle, Navigator::popBack)
+        factory(report, language(), shopTitle, Navigator::popBack)
     } }
 }

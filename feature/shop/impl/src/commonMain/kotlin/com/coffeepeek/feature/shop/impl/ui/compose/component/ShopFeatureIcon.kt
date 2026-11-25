@@ -25,7 +25,7 @@ internal fun shopFeaturePainter(feature: ShopFeature): Painter = if (feature.isB
     painterResource(shopBrewArtwork(feature.name))
 } else rememberVectorPainter(shopTagArtwork(feature.slug))
 
-private fun shopBrewArtwork(value: String): org.jetbrains.compose.resources.DrawableResource {
+internal fun shopBrewArtwork(value: String): org.jetbrains.compose.resources.DrawableResource {
     val name = value.lowercase()
     return when {
         "аэропресс" in name || "aeropress" in name -> CoffeePeekBrewIcons.Aeropress
@@ -38,7 +38,7 @@ private fun shopBrewArtwork(value: String): org.jetbrains.compose.resources.Draw
     }
 }
 
-private fun shopTagArtwork(slug: String?): androidx.compose.ui.graphics.vector.ImageVector {
+internal fun shopTagArtwork(slug: String?): androidx.compose.ui.graphics.vector.ImageVector {
     return when (slug?.trim()?.lowercase()) {
         "roastery" -> CoffeePeekIcons.Factory
         "beans-for-sale" -> CoffeePeekIcons.ShoppingBag

@@ -15,9 +15,10 @@ private final class ShelfNativeHostingController: UIHostingController<ShelfNativ
         super.init(rootView: ShelfNativeHost(model: model))
     }
     @MainActor required dynamic init?(coder: NSCoder) { return nil }
-    deinit { model.screen.close() }
+    isolated deinit { model.screen.close() }
 }
 
+@MainActor
 final class ShelfNativeModel: ObservableObject {
     let screen: IosShelfScreen
     let strings: ShelfNativeStrings
@@ -56,7 +57,7 @@ final class ShelfNativeModel: ObservableObject {
         case .save(let later): screen.save(later: later)
         }
     }
-    deinit { observation?.cancel() }
+    isolated deinit { observation?.cancel() }
 }
 
 private struct ShelfNativeHost: View {
@@ -137,15 +138,15 @@ struct ShelfNativeHeader: View {
     let back: String
     let onBack: () -> Void
     var body: some View {
-        HStack {
-            Button(action: onBack) { Label(back, systemImage: "chevron.backward").labelStyle(.iconOnly).frame(width: 44, height: 44) }
-            Text(title).font(.headline).accessibilityAddTraits(.isHeader)
-            Spacer()
-        }
-        .foregroundStyle(CoffeePeekNativeStyle.foreground)
-        .padding(.horizontal, 8)
-        .background(CoffeePeekNativeStyle.background)
+        CoffeePeekNativeNavigationHeader(title: title, backLabel: back, back: onBack)
     }
+}
+
+#Preview("Shelf header light") {
+    ShelfNativeHeader(title: "Полка", back: "Назад", onBack: {}).preferredColorScheme(.light)
+}
+#Preview("Shelf header dark") {
+    ShelfNativeHeader(title: "Полка", back: "Назад", onBack: {}).preferredColorScheme(.dark)
 }
 
 struct ShelfNativeStatus: View {

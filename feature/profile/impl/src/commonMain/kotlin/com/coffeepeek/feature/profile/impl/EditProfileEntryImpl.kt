@@ -1,7 +1,6 @@
 package com.coffeepeek.feature.profile.impl
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.coffeepeek.feature.profile.api.AccountDeletionEntry
@@ -21,16 +20,12 @@ import com.coffeepeek.feature.profile.impl.ui.compose.EditProfileScreen
  */
 fun createEditProfileEntry(
     accounts: ProfileAccountPort, edit: ProfileEditPort, slots: EditProfileSlots,
-    nativeContent: (@Composable (NativeEditProfileSession, () -> Unit, () -> Unit, Modifier) -> Boolean)? = null,
 ): EditProfileEntry =
     object : EditProfileEntry {
         @Composable
         override fun Content(onBack: () -> Unit, onOpenAccountDeletion: () -> Unit, modifier: Modifier) {
             val model = viewModel(key = "edit-profile") { EditProfileViewModel(accounts, edit) }
-            val session = remember(model) { NativeEditProfileSession(model, accounts) }
-            if (nativeContent?.invoke(session, onBack, onOpenAccountDeletion, modifier) != true) {
-                EditProfileScreen(model, slots, onBack, onOpenAccountDeletion, modifier)
-            }
+            EditProfileScreen(model, slots, onBack, onOpenAccountDeletion, modifier)
         }
     }
 

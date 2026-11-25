@@ -2,12 +2,17 @@ package com.coffeepeek.feature.roaster.impl
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.ViewModelStore
+import com.coffeepeek.feature.roaster.api.RoasterFavoritesPort
+import com.coffeepeek.feature.roaster.api.RoasterListAnalytics
+import com.coffeepeek.feature.roaster.domain.repository.RoasterRepository
 import com.coffeepeek.feature.roaster.impl.ui.RoasterListViewModel
 import com.coffeepeek.feature.roaster.impl.ui.model.RoasterListAction
 import com.coffeepeek.feature.roaster.impl.ui.model.RoasterListEvent
 import com.coffeepeek.feature.roaster.impl.ui.model.RoasterListState
 import com.coffeepeek.feature.roaster.impl.ui.model.RoasterMessage
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.filter
 
 typealias NativeRoasterDiscoveryContent = @Composable (NativeRoasterListSession, NativeRoasterDiscoveryHost) -> Boolean
 
@@ -17,22 +22,37 @@ class NativeRoasterDiscoveryHost(
     val onCancel: () -> Unit, val onFavoriteFeedback: () -> Unit, val modifier: Modifier, val bottomClearance: Float,
 )
 
-class NativeRoasterListSession internal constructor(private val model: RoasterListViewModel) {
-    val state = model.state.map { it.native() }
-    val opened = model.events.map { (it as RoasterListEvent.OpenRoaster).slug }
-    fun current() = model.state.value.native()
+fun createNativeRoasterListSession(repository: RoasterRepository,
+    favorites: RoasterFavoritesPort = RoasterFavoritesPort.None,
+    analytics: RoasterListAnalytics = RoasterListAnalytics.None): NativeRoasterListSession {
+    val model = RoasterListViewModel(repository, favorites, analytics)
+    val store = ViewModelStore().apply { put("native-roaster-list", model) }
+    return NativeRoasterListSession(model, store::clear)
+}
+
+class NativeRoasterListSession internal constructor(private val model: RoasterListViewModel,
+    private val dispose: () -> Unit = {}) {
+    private var closed = false
+    val state = model.state.map { current() }
+    val opened = model.events.filter { !closed }.map { (it as RoasterListEvent.OpenRoaster).slug }
+    fun current() = if (closed) NativeRoasterListState(emptyList(), emptyList(), false, false, "", null, null)
+        else model.state.value.native()
     fun criteria(query: String, selected: Set<String>, favorites: Boolean) {
-        model.onAction(RoasterListAction.QueryChanged(query))
-        model.onAction(RoasterListAction.SelectedRoastersChanged(selected))
-        model.onAction(RoasterListAction.FavoritesOnlyChanged(favorites))
+        dispatch(RoasterListAction.QueryChanged(query))
+        dispatch(RoasterListAction.SelectedRoastersChanged(selected))
+        dispatch(RoasterListAction.FavoritesOnlyChanged(favorites))
     }
-    fun retry() = model.onAction(RoasterListAction.Refresh)
-    fun open(slug: String) = model.onAction(RoasterListAction.OpenRoaster(slug))
-    fun favorite(slug: String) = model.onAction(RoasterListAction.ToggleFavorite(slug))
-    fun appeared(slug: String) = model.onAction(RoasterListAction.LoadDetails(slug))
-    fun tag(slug: String) = model.onAction(RoasterListAction.ToggleTag(slug))
-    fun clearTags() = model.onAction(RoasterListAction.ClearTags)
-    fun dismissMessage() = model.onAction(RoasterListAction.DismissMessage)
+    fun retry() = dispatch(RoasterListAction.Refresh)
+    fun hasResults(query: String, selected: Set<String>, favorites: Boolean): Boolean? =
+        if (closed) false else model.state.value.hasResults(query, selected, favorites)
+    fun open(slug: String) = dispatch(RoasterListAction.OpenRoaster(slug))
+    fun favorite(slug: String) = dispatch(RoasterListAction.ToggleFavorite(slug))
+    fun appeared(slug: String) = dispatch(RoasterListAction.LoadDetails(slug))
+    fun tag(slug: String) = dispatch(RoasterListAction.ToggleTag(slug))
+    fun clearTags() = dispatch(RoasterListAction.ClearTags)
+    fun dismissMessage() = dispatch(RoasterListAction.DismissMessage)
+    fun close() { if (!closed) { closed = true; dispose() } }
+    private fun dispatch(action: RoasterListAction) { if (!closed) model.onAction(action) }
 }
 
 data class NativeRoasterCard(

@@ -22,10 +22,16 @@ internal fun iosContentReportContent(): (String, Boolean, Boolean) -> (() -> UIV
     val languageTag by rememberUpdatedState(LocalCoffeePeekLanguageTag.current)
     val sessions = koinInject<SessionReader>()
     val repository = koinInject<ContentReportRepository>()
+    return iosContentReportContent(factory, { languageTag }, sessions, repository)
+}
+
+internal fun iosContentReportContent(factory: (IosContentReport, String) -> UIViewController, language: () -> String,
+    sessions: SessionReader, repository: ContentReportRepository,
+): (String, Boolean, Boolean) -> (() -> UIViewController) {
     return { id, isCheckIn, preview -> {
         val report = IosContentReport(id, isCheckIn, preview, sessions, repository, Navigator::popBack) {
             Navigator.navigate(Navigator.Screen.Auth)
         }
-        factory(report, languageTag)
+        factory(report, language())
     } }
 }

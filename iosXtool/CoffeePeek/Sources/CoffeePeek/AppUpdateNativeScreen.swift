@@ -17,6 +17,7 @@ struct AppUpdateNativeHost: View {
     }
 }
 
+@MainActor
 private final class AppUpdateNativeModel: ObservableObject {
     @Published var error: String?
     @Published var strings: OwnProfileStrings
@@ -37,7 +38,7 @@ private final class AppUpdateNativeModel: ObservableObject {
             }]
     }
     func stop() { observations.forEach { $0.cancel() }; observations = [] }
-    deinit { observations.forEach { $0.cancel() } }
+    isolated deinit { observations.forEach { $0.cancel() } }
 }
 
 struct AppUpdateNativeScreen: View {

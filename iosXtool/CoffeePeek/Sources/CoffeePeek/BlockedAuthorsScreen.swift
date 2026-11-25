@@ -144,20 +144,8 @@ private struct BlockedAuthorsScreen: View {
     }
 
     private var header: some View {
-        HStack(alignment: .firstTextBaseline, spacing: 8) {
-            Button(action: onBack) {
-                Label(strings.text("author_blocking_back"), systemImage: "chevron.backward")
-                    .labelStyle(.iconOnly)
-                    .frame(minWidth: 44, minHeight: 44)
-                    .contentShape(Rectangle())
-            }
-            Text(strings.text("author_blocking_title"))
-                .font(.headline)
-                .accessibilityAddTraits(.isHeader)
-            Spacer(minLength: 0)
-        }
-        .padding(.horizontal, 12)
-        .background(.bar)
+        CoffeePeekNativeNavigationHeader(title: strings.text("author_blocking_title"),
+            backLabel: strings.text("author_blocking_back"), back: onBack)
     }
 
     @ViewBuilder private var authorList: some View {
@@ -257,7 +245,7 @@ private struct BlockedAuthorRow: View {
     }
 }
 
-private struct BlockedAuthorsStrings {
+struct BlockedAuthorsStrings {
     private let bundle: Bundle
 
     init(languageTag: String) {

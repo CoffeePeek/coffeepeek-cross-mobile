@@ -1,24 +1,17 @@
 package com.coffeepeek.admin.ui
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
-import com.coffeepeek.admin.base.BaseViewModel
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.coffeepeek.core.session.SessionReader
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 
 class NavigatorViewModel(
     private val sessionRepository: SessionReader,
-) : BaseViewModel() {
-
-    internal var guestOnboardingDismissed by mutableStateOf(false)
-
-    internal val navigationSession: StateFlow<RootNavigationSession?> = sessionRepository.observeRootNavigationSession()
-        .stateIn(
-            scope = workScope,
-            started = SharingStarted.WhileSubscribed(stopTimeoutMillis = 5_000),
-            initialValue = null,
-        )
+) : ViewModel() {
+    private val lifecycle = RootNavigationLifecycle(Navigator::prepareRootTransition, Navigator::acceptRootTransition)
+    internal val navigationState = lifecycle.state
+    internal fun dismissOnboarding() = lifecycle.dismissOnboarding()
+    init {
+        viewModelScope.launch { sessionRepository.observeRootNavigationSession().collect(lifecycle::accept) }
+    }
 }

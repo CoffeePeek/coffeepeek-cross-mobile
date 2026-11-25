@@ -15,7 +15,8 @@ class IosRoasterDetail internal constructor(
     private var host: NativeRoasterDetailHost,
     language: LanguagePort, accounts: SessionReader, private val media: IosCatalogueMedia,
     private val ownership: (() -> Boolean) -> UIViewController?,
-) : IosRoasterScreen(language, accounts, media::observeImage) {
+    onClose: () -> Unit = {},
+) : IosRoasterScreen(language, accounts, media::observeImage, onClose) {
     fun current(): IosRoasterDetailState {
         val state = session.current()
         val active = isCurrent()

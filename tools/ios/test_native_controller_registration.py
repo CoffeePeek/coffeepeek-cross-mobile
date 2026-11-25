@@ -7,19 +7,28 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 APPS = ("iosApp/iosApp/CoffeePeekApp.swift", "iosXtool/CoffeePeek/Sources/CoffeePeek/CoffeePeekApp.swift")
-REGISTRATION = re.compile(r"(MainViewControllerKt\.configureNative\w+|Ios\w+Controllers\.shared\.configure)\s*\(")
+REGISTRATION = re.compile(r"(MainViewControllerKt\.configureNative\w+|Ios\w+Controllers\.shared\.configure)\s*[({]")
+SHARED_CONFIGURATION = {
+    "configureCoffeePeekNativeGlass": "iosXtool/CoffeePeek/Sources/CoffeePeek/CoffeePeekNativeGlass.swift",
+    "configureCoffeePeekNativeNavigation": "iosXtool/CoffeePeek/Sources/CoffeePeek/NativeRootController.swift",
+}
 
 
 def registrations(path):
-    return Counter(REGISTRATION.findall((ROOT / path).read_text(encoding="utf-8")))
+    source = (ROOT / path).read_text(encoding="utf-8")
+    result = Counter(REGISTRATION.findall(source))
+    for configure, implementation in SHARED_CONFIGURATION.items():
+        calls = len(re.findall(r"\b" + re.escape(configure) + r"\(\)", source))
+        shared = Counter(REGISTRATION.findall((ROOT / implementation).read_text(encoding="utf-8")))
+        result.update({name: count * calls for name, count in shared.items()})
+    return result
 
 
 def required_registrations():
     boundary = ROOT / "composeApp/src/iosMain/kotlin/com/coffeepeek/admin"
     main = (boundary / "MainViewController.kt").read_text(encoding="utf-8")
     forwarders = set(re.findall(r"^fun (configureNative\w+)\(", main, re.M))
-    # Glass is installed through the shared Swift helper, rather than directly.
-    expected = {f"MainViewControllerKt.{name}" for name in forwarders if name != "configureNativeGlass"}
+    expected = {f"MainViewControllerKt.{name}" for name in forwarders}
     for path in boundary.rglob("*.kt"):
         objects = re.findall(r"^object (Ios\w+Controllers)\s*\{", path.read_text(encoding="utf-8"), re.M)
         expected.update(f"{name}.shared.configure" for name in objects)

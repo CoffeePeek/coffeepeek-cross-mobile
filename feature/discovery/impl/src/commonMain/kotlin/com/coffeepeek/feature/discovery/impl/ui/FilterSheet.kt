@@ -36,6 +36,7 @@ import androidx.compose.material3.Text
 import com.coffeepeek.core.designsystem.component.CoffeePeekTextButton as TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.foundation.layout.width
@@ -97,7 +98,8 @@ private fun ColumnScope.FilterSheetContent(
     state: SearchState, draft: DiscoveryFilterDraft,
     onDone: () -> Unit, onRetry: () -> Unit,
 ) {
-    FilterSheetHeader(draft.filters.activeCount > 0, draft::reset, onDone)
+    val filters by draft.state.collectAsState()
+    FilterSheetHeader(filters.activeCount > 0, draft::reset, onDone)
     Column(
         Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState())
             .padding(horizontal = CoffeePeekDimens.spacing4).padding(bottom = CoffeePeekDimens.spacing6),
@@ -143,7 +145,7 @@ private fun FilterSheetHeader(resetEnabled: Boolean, onReset: () -> Unit, onDone
 
 @Composable
 private fun FilterSelections(state: SearchState, draft: DiscoveryFilterDraft) {
-    val filters = draft.filters
+    val filters by draft.state.collectAsState()
     PriceFilter(filters.priceLevel, draft::selectPrice)
     Selection(Res.string.discovery_section_roasters, state.catalogs.roasters, filters.roasterIds,
         { draft.toggle(DiscoveryFilterGroup.Roasters, it) }) { entry -> DiscoveryRoasterAvatar(entry.name, entry.photoUrl) }

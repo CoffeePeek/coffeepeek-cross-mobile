@@ -6,10 +6,35 @@ import UIKit
 func makeRoasterController(screen: IosRoasterScreen) -> UIViewController {
     switch screen {
     case let source as IosRoasterDetail:
-        return UIHostingController(rootView: RoasterDetailNativeHost(source: source))
+        return RoasterDetailHostingController(source: source)
     default:
         preconditionFailure("Unsupported native roaster screen")
     }
+}
+
+private final class RoasterDetailHostingController: UIHostingController<RoasterDetailNativeHost> {
+    private let source: IosRoasterDetail
+    init(source: IosRoasterDetail) {
+        self.source = source
+        super.init(rootView: RoasterDetailNativeHost(source: source))
+        safeAreaRegions = []
+        view.backgroundColor = .clear
+    }
+    @MainActor required dynamic init?(coder: NSCoder) { return nil }
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        source.setVisible(visible: true)
+    }
+    override func viewWillDisappear(_ animated: Bool) {
+        source.setVisible(visible: false)
+        super.viewWillDisappear(animated)
+    }
+    override func viewSafeAreaInsetsDidChange() {
+        super.viewSafeAreaInsetsDidChange()
+        rootView.topInset = view.safeAreaInsets.top
+        rootView.bottomInset = view.safeAreaInsets.bottom
+    }
+    isolated deinit { source.close() }
 }
 
 extension View {
@@ -23,12 +48,12 @@ private struct RoasterNativeExposure: ViewModifier {
     let source: IosRoasterScreen?
     @State private var fraction = 0.0
     func body(content: Content) -> some View {
-        content.onGeometryChange(for: Double.self) { geometry in
-            let rect = geometry.frame(in: .global)
+        content.onGeometryChange(for: CGRect.self) { geometry in
+            geometry.frame(in: .global)
+        } action: { rect in
             let visible = rect.intersection(UIScreen.main.bounds)
             let area = rect.width * rect.height
-            return area > 0 && !visible.isNull ? Double(visible.width * visible.height / area) : 0
-        } action: { next in
+            let next = area > 0 && !visible.isNull ? Double(visible.width * visible.height / area) : 0
             fraction = next
             source?.visible(section: key, fraction: next)
         }

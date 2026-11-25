@@ -18,12 +18,10 @@ private final class CollectionsLibraryHostingController: UIHostingController<Col
     }
     @available(*, unavailable)
     required init?(coder: NSCoder) { fatalError("Use init(library:strings:)") }
-    deinit {
-        let library = library
-        DispatchQueue.main.async { library.close() }
-    }
+    isolated deinit { library.close() }
 }
 
+@MainActor
 private final class CollectionsLibraryModel: ObservableObject {
     let library: IosCollectionsLibrary
     @Published var state: IosCollectionsLibraryState
@@ -46,7 +44,7 @@ private final class CollectionsLibraryModel: ObservableObject {
         observation = nil
     }
 
-    deinit {
+    isolated deinit {
         observation?.cancel()
     }
 }
@@ -106,21 +104,16 @@ private struct CollectionsLibraryScreen<Cover: View>: View {
     }
 
     private var header: some View {
-        HStack(spacing: 8) {
-            Button(action: onBack) {
-                Label(strings.text("library.back"), systemImage: "chevron.backward")
-                    .labelStyle(.iconOnly).frame(minWidth: 44, minHeight: 44)
-            }
-            Text(strings.text("library.title")).font(.headline).accessibilityAddTraits(.isHeader)
-            Spacer(minLength: 0)
+        CoffeePeekNativeNavigationHeader(title: strings.text("library.title"),
+            backLabel: strings.text("library.back"), back: onBack)
+        .overlay(alignment: .trailing) {
             Button { onEditor(nil) } label: {
                 Label(strings.text("library.new"), systemImage: "plus")
                     .labelStyle(.iconOnly).frame(minWidth: 44, minHeight: 44)
             }
             .disabled(!state.signedIn)
+            .padding(.trailing, 12)
         }
-        .padding(.horizontal, 12)
-        .background(.bar)
     }
 
     @ViewBuilder private var status: some View {
@@ -140,7 +133,7 @@ private struct CollectionsLibraryScreen<Cover: View>: View {
     private var search: some View {
         HStack {
             Image(systemName: "magnifyingglass").accessibilityHidden(true)
-            TextField(strings.text("library.search"), text: Binding(get: { state.query }, set: onQuery))
+            TextField(strings.text("library.search"), text: Binding(get: { state.query }, set: { onQuery($0) }))
                 .textInputAutocapitalization(.never)
                 .disableAutocorrection(true)
             if !state.query.isEmpty {
@@ -172,7 +165,7 @@ private struct CollectionsLibraryScreen<Cover: View>: View {
     }
 
     private var filteredItems: [IosCollectionsLibraryItem] {
-        state.items.filter { state.query.isEmpty || $0.title.localizedCaseInsensitiveContains(state.query) }
+        state.matchingItems
     }
 
     @ViewBuilder private var emptyState: some View {
@@ -252,21 +245,18 @@ private struct CollectionsLibraryStrings {
 }
 
 private var libraryPreviewState: IosCollectionsLibraryState {
-    IosCollectionsLibraryState(
+    let items = [
+        IosCollectionsLibraryItem(id: "one", title: "Кофейни выходного дня", isPublic: true, count: 7, imageKey: "one"),
+        IosCollectionsLibraryItem(id: "two", title: "Избранное", isPublic: false, count: 3, imageKey: "two")
+    ]
+    return IosCollectionsLibraryState(
         accountVersion: 0,
         signedIn: true,
         loading: false,
         refreshing: false,
         failed: false,
         query: "",
-        items: [
-            IosCollectionsLibraryItem(
-                id: "one", title: "Кофейни выходного дня", isPublic: true, count: 7, imageKey: "one"
-            ),
-            IosCollectionsLibraryItem(
-                id: "two", title: "Избранное", isPublic: false, count: 3, imageKey: "two"
-            )
-        ]
+        items: items, matchingItems: items
     )
 }
 

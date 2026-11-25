@@ -33,7 +33,7 @@ private struct PublicProfileScreen: View {
             VStack(spacing: 0) {
                 toolbar
                 ScrollView {
-                    LazyVStack(alignment: .leading, spacing: 14) {
+                    LazyVStack(alignment: .leading, spacing: 16) {
                         content(viewport: geometry.size.height)
                     }
                     .padding(.horizontal, 16)
@@ -53,21 +53,11 @@ private struct PublicProfileScreen: View {
     }
 
     private var toolbar: some View {
-        HStack(spacing: 4) {
-            Button { model.profile?.back() } label: {
-                Image(systemName: "chevron.left").frame(width: 48, height: 48)
+        CoffeePeekNativeNavigationHeader(title: model.strings[model.checkInsOnly ? "profile_section_check_ins" : "profile_title"],
+            backLabel: model.strings["profile_back"], back: { model.profile?.back() })
+            .overlay(alignment: .trailing) {
+                toolbarActions.buttonStyle(.plain).padding(.trailing, 10)
             }
-            .accessibilityLabel(model.strings["profile_back"])
-            Spacer(minLength: 0)
-            Text(model.strings[model.checkInsOnly ? "profile_section_check_ins" : "profile_title"])
-                .font(CoffeePeekNativeStyle.font(20, weight: "Semibold", relativeTo: .headline))
-                .accessibilityAddTraits(.isHeader)
-                .multilineTextAlignment(.center)
-            Spacer(minLength: 0)
-            toolbarActions
-        }
-        .buttonStyle(.plain)
-        .padding(.horizontal, 8)
     }
 
     @ViewBuilder
@@ -80,6 +70,7 @@ private struct PublicProfileScreen: View {
                     Image(systemName: "square.and.arrow.up").frame(width: 48, height: 48)
                 }
                 .accessibilityLabel(model.strings["profile_share"])
+                .shopDetailGlassCircle()
             } else {
                 Color.clear.frame(width: 48, height: 48)
             }
@@ -99,6 +90,7 @@ private struct PublicProfileScreen: View {
                 Image(systemName: "ellipsis").frame(width: 48, height: 48)
             }
             .accessibilityLabel(model.strings["profile_author_actions"])
+            .shopDetailGlassCircle()
         } else {
             Color.clear.frame(width: 48, height: 48)
         }
@@ -139,9 +131,9 @@ private struct PublicProfileScreen: View {
     }
 
     private func overview(identity: IosOwnProfileIdentity, viewport: CGFloat) -> some View {
-        VStack(alignment: .leading, spacing: 14) {
+        VStack(alignment: .leading, spacing: 16) {
             OwnProfileHeader(identity: identity, strings: model.strings, profile: nil, select: model.selectStat,
-                enabled: { $0 == .followers }, imageLoader: model.loadImage)
+                enabled: { $0 == .followers || $0 == .following }, imageLoader: model.loadImage)
             if !model.state.own { follow }
             PublicProfileWeek(model: model)
             if model.state.refreshFailed {
@@ -149,21 +141,15 @@ private struct PublicProfileScreen: View {
                     model.profile?.refresh()
                 }
             }
-            OwnProfileTabs(selection: model.selected, strings: model.strings, select: model.select)
+            OwnProfileTabs(selection: model.selected, strings: model.strings, select: model.select, equalWidth: true)
             selectedTab(viewport: viewport)
         }
     }
 
     private var follow: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Button { model.profile?.toggleFollow() } label: {
-                Label(model.strings[model.state.following ? "profile_following" : "profile_follow"],
-                      systemImage: model.state.following ? "checkmark" : "person.badge.plus")
-                    .frame(maxWidth: .infinity, minHeight: 44)
-                    .background(CoffeePeekNativeStyle.surface, in: Capsule())
-            }
-            .buttonStyle(.plain)
-            .disabled(!model.state.followEnabled)
+            CoffeePeekNativeActionButton(title: model.strings[model.state.following ? "profile_following" : "profile_follow"],
+                enabled: model.state.followEnabled) { model.profile?.toggleFollow() }
             if model.state.followFailed {
                 OwnProfileRetry(message: model.strings["profile_follow_failed"], strings: model.strings) {
                     model.profile?.toggleFollow()
@@ -191,6 +177,7 @@ private struct PublicProfileScreen: View {
     }
 }
 
+@MainActor
 final class PublicProfileModel: ObservableObject {
     let profile: IosPublicProfile?
     let checkInsOnly: Bool
@@ -215,7 +202,7 @@ final class PublicProfileModel: ObservableObject {
         strings = Self.strings(language: language)
     }
 
-    deinit {
+    isolated deinit {
         observation?.cancel()
         profile?.close()
     }
@@ -249,6 +236,8 @@ final class PublicProfileModel: ObservableObject {
     func selectStat(_ stat: OwnProfileStat) {
         if stat == .followers {
             profile?.openConnections(followers: true)
+        } else if stat == .following {
+            profile?.openConnections(followers: false)
         } else if stat == .avatar {
             guard viewer == nil else { return }
             viewer = profile?.makeAvatarViewer()
@@ -286,9 +275,10 @@ final class PublicProfileModel: ObservableObject {
     }
 }
 
+@MainActor
 private func publicProfilePreview(language: String, checkInsOnly: Bool = false) -> some View {
     let identity = IosOwnProfileIdentity(name: "CoffeePeek", about: "Кофе и прогулки", avatar: nil, checkIns: 6, shops: 2,
-        roasters: 1, followers: 11, canOpenFollowers: true)
+        roasters: 1, followers: 11, canOpenFollowers: true, following: KotlinInt(int: 4))
     let activity = IosPublicProfileActivity(days: [
         IosPublicProfileDay(date: "2026-11-16", today: false, count: 2, photo: nil),
         IosPublicProfileDay(date: "2026-11-17", today: true, count: 0, photo: nil),

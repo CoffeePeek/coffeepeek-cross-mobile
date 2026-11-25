@@ -9,6 +9,7 @@ import com.coffeepeek.admin.di.checkinhistory.CheckInHistorySession
 import com.coffeepeek.admin.di.media.IosCatalogueMedia
 import com.coffeepeek.admin.config.AppConfig
 import com.coffeepeek.admin.di.shelf.iosShelfFactory
+import com.coffeepeek.admin.di.shelf.IosShelfFactory
 import com.coffeepeek.admin.di.shelf.nativeShelfController
 import com.coffeepeek.admin.locator.Constants
 import com.coffeepeek.admin.session.OldReviewDrafts
@@ -53,6 +54,16 @@ internal fun iosOwnProfileContent(): () -> UIViewController {
     val imageFetcher = koinInject<ImageUrlFetcher>()
     val collections = iosCollectionsWorkspaceContent()
     val media = remember(imageFetcher) { IosCatalogueMedia(imageFetcher, Constants.BASE_URL) }
+    return iosOwnProfileContent(factory, shelf, accounts, notifications, auth, drafts, repository, checkIns, visibility,
+        snapshots, sessions, shops, homes, calendar, language, media, collections)
+}
+
+internal fun iosOwnProfileContent(factory: (IosOwnProfile) -> UIViewController, shelf: IosShelfFactory,
+    accounts: ProfileAccountPort, notifications: NotificationFeature, auth: AuthRepository, drafts: OldReviewDrafts,
+    repository: PublicProfileData, checkIns: PublicCheckInsPort, visibility: AuthorVisibility, snapshots: ProfileSnapshotStore,
+    sessions: SessionReader, shops: CheckInHistoryRepository, homes: HomeHistoryReader, calendar: AppCheckInHistoryCalendar,
+    language: LanguagePort, media: IosCatalogueMedia, collections: (String, String?, String?) -> UIViewController,
+): () -> UIViewController {
     return {
         val lease = CheckInHistorySession(sessions)
         val profile = createIosOwnProfileSession(accounts, AppProfileSignOut(notifications, auth, drafts),

@@ -125,15 +125,13 @@ private fun SavedCollectionsState.toLibrarySnapshot() = CollectionsLibrarySnapsh
     refreshing = refreshing,
     failed = failure != null,
     query = query,
-    items = lists.map {
-        CollectionsLibraryItem(
-            id = it.id,
-            title = it.title,
-            isPublic = it.visibility == SavedCollectionVisibility.Public,
-            count = it.itemCount,
-            imageKey = "$accountVersion:${it.id}:${it.revision}:${it.itemCount}:${it.cover}",
-        )
-    },
+    items = lists.map { it.libraryItem(accountVersion) },
+    matchingItems = lists.filter { matchesCollectionQuery(it.title, query) }.map { it.libraryItem(accountVersion) },
+)
+
+private fun SavedCollectionSummary.libraryItem(version: Int) = CollectionsLibraryItem(
+    id, title, visibility == SavedCollectionVisibility.Public, itemCount,
+    "$version:$id:$revision:$itemCount:$cover",
 )
 
 private fun SavedCollectionsEvent.toLibraryEvent(): CollectionsLibraryEvent? = when (this) {

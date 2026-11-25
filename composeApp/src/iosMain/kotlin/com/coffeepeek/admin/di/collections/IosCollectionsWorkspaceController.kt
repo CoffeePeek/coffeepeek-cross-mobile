@@ -21,6 +21,12 @@ internal fun iosCollectionsWorkspaceContent(): (String, String?, String?) -> UIV
     val saved = koinInject<SavedCollectionsRepository>()
     val snapshots = koinInject<CollectionsRepository>()
     val account = koinInject<CollectionsAccount>()
+    return iosCollectionsWorkspaceContent(factory, { language }, saved, snapshots, account)
+}
+
+internal fun iosCollectionsWorkspaceContent(factory: (IosCollectionsWorkspace, String) -> UIViewController,
+    language: () -> String, saved: SavedCollectionsRepository, snapshots: CollectionsRepository, account: CollectionsAccount,
+): (String, String?, String?) -> UIViewController {
     return { mode, id, slug ->
         val session = if (mode == "Snapshot") IosCollectionsWorkspace(null, PublicCollectionSession(
             checkNotNull(id), snapshots, account, Navigator::popBack, ::openSavedList,
@@ -31,7 +37,7 @@ internal fun iosCollectionsWorkspaceContent(): (String, String?, String?) -> UIV
             { Navigator.navigate(Navigator.Screen.CollectionEditor(it)) },
             { Navigator.navigate(Navigator.Screen.SavedPublicCollection(it)) },
             ::openCollectionShop, ::openCollectionRoaster, ShareHelper::shareText))
-        factory(session, language)
+        factory(session, language())
     }
 }
 

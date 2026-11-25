@@ -12,6 +12,7 @@ struct ShopDetailNativeScreen: View {
     @State private var viewportWidth: CGFloat = 320
     @State private var visibleNames: Set<String> = []
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private func text(_ key: String) -> String { state.labels[key] ?? "" }
 
@@ -69,7 +70,9 @@ struct ShopDetailNativeScreen: View {
                     .background(CoffeePeekNativeStyle.surface, in: RoundedRectangle(cornerRadius: 24))
                     .overlay { RoundedRectangle(cornerRadius: 24).strokeBorder(CoffeePeekNativeStyle.border).allowsHitTesting(false) }
                     .padding(.horizontal, 16)
-            }.padding(.bottom, 16)
+            }
+            .padding(.bottom, 16)
+            .animation(reduceMotion ? nil : .easeInOut(duration: 0.25), value: state.scheduleExpanded)
         }
         .scrollIndicators(.hidden)
         .safeAreaInset(edge: .bottom, spacing: 0) { footer(details) }
@@ -218,11 +221,9 @@ struct ShopDetailNativeScreen: View {
 
     private var checkIns: some View {
         VStack(alignment: .leading, spacing: 16) {
-            HStack {
-                Text(text("check-ins")).font(CoffeePeekNativeStyle.font(22, weight: "SemiBold", relativeTo: .title2))
-                Spacer()
-                if state.checkInCount > 0 { Button(text("all-check-ins")) { actions.call("check-ins") } }
-            }.padding(.horizontal, 16)
+            shopDetailCheckInsHeader(title: text("check-ins"), label: text("all-check-ins"),
+                showAll: !state.rows.isEmpty, onOpen: { actions.call("check-ins") })
+                .padding(.horizontal, 16)
             if !state.rows.isEmpty {
                 ShopCheckInListRatings(overall: state.overall, count: state.checkInCount, isSample: state.sample,
                     breakdown: state.breakdown, strings: ShopCheckInListStrings(languageTag: state.languageTag))
@@ -231,11 +232,10 @@ struct ShopDetailNativeScreen: View {
             }
             if state.rows.isEmpty { Text(text("checkins-empty")).padding(.horizontal, 16) }
             if !state.loggedIn && !state.rows.isEmpty {
-                VStack(alignment: .leading, spacing: 10) {
-                    Text(text("guest"))
-                    Button(text("sign-in")) { actions.call("sign-in") }
-                    HStack { Text(text("no-account")); Button(text("register")) { actions.call("register") } }
-                }.padding(.horizontal, 16)
+                CoffeePeekGuestAccountCard(prompt: text("guest"), loginTitle: text("sign-in"),
+                    noAccountPrompt: text("no-account"), registerTitle: text("register"),
+                    login: { actions.call("sign-in") }, register: { actions.call("register") })
+                    .padding(.horizontal, 16)
             }
         }
     }
@@ -252,8 +252,7 @@ struct ShopDetailNativeScreen: View {
             HStack(alignment: .top, spacing: 12) {
                 ForEach(state.rows) { row in card(row).frame(width: checkInWidth).fixedSize(horizontal: false, vertical: true) }
                 ForEach(0..<state.hiddenCheckIns, id: \.self) { _ in
-                    VStack { CoffeePeekPhotoPlaceholder(); Image(systemName: "lock.fill") }
-                        .frame(width: 240, height: 220).clipShape(RoundedRectangle(cornerRadius: 16)).accessibilityHidden(true)
+                    ShopCheckInGuestPlaceholder().frame(width: checkInWidth)
                 }
             }.padding(.horizontal, 16)
         }.scrollIndicators(.hidden)
@@ -329,6 +328,35 @@ private struct ShopHeroPhotoMetadata: View {
     ShopHeroPhotoMetadata(kind: "SPECIALTY", position: "1 / 4").padding().background(.black).preferredColorScheme(.dark)
 }
 
+@MainActor
+private func shopDetailCheckInsHeader(title: String, label: String, showAll: Bool, onOpen: @escaping () -> Void) -> some View {
+    HStack {
+        Text(title).font(CoffeePeekNativeStyle.font(22, weight: "SemiBold", relativeTo: .title2))
+            .accessibilityAddTraits(.isHeader)
+        Spacer()
+        if showAll {
+            CoffeePeekNativeChevronButton(label: label, action: onOpen)
+        }
+    }.foregroundStyle(CoffeePeekNativeStyle.foreground)
+}
+
+@MainActor
+private func shopDetailCheckInsHeaderPreview() -> some View {
+    VStack(spacing: 16) {
+        shopDetailCheckInsHeader(title: "Чекины", label: "Все чекины", showAll: true, onOpen: {})
+        shopDetailCheckInsHeader(title: "Чекины", label: "Все чекины", showAll: false, onOpen: {})
+    }.padding(16).background(CoffeePeekNativeStyle.background)
+}
+
+#Preview("Shop check-in header light") { shopDetailCheckInsHeaderPreview().preferredColorScheme(.light) }
+#Preview("Shop check-in header dark") { shopDetailCheckInsHeaderPreview().preferredColorScheme(.dark) }
+#Preview("Shop check-in header accessibility light") {
+    shopDetailCheckInsHeaderPreview().dynamicTypeSize(.accessibility2).preferredColorScheme(.light)
+}
+#Preview("Shop check-in header accessibility dark") {
+    shopDetailCheckInsHeaderPreview().dynamicTypeSize(.accessibility2).preferredColorScheme(.dark)
+}
+
 struct ShopDetailExposureFrame: Equatable { let feature: String; let rect: CGRect }
 struct ShopDetailExposureFrames: PreferenceKey {
     static var defaultValue: [String: ShopDetailExposureFrame] { [:] }
@@ -357,21 +385,29 @@ func shopDetailPreviewData() -> ShopDetailNativeData {
         kind: "SPECIALTY", rating: "4.8", reviews: "24 чекина", isOpen: true, canRoute: true, photos: [],
         roasters: [IosShopDetailRoaster(id: "preview-roaster", name: "Местная обжарка", photo: nil, label: "Открыть обжарщика")],
         beans: ["Эфиопия", "Бразилия"], equipment: ["V60", "Аэропресс"], scheduleStatus: "Открыто до 22:00",
-        schedule: [IosShopDetailSchedule(day: "Понедельник", hours: "09:00 – 22:00", today: true)],
+        schedule: ["Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота", "Воскресенье"].enumerated().map {
+            IosShopDetailSchedule(day: $0.element, hours: "09:00 – 22:00", today: $0.offset == 0)
+        },
         menu: IosShopDetailMenu(groups: [[IosShopDetailMenuItem(id: "flat-white", title: "Флэт уайт", amount: "5,50", currency: "BYN", priceLabel: "5,50 белорусских рублей")]], photos: [], freshness: ["Актуально на 18.11.2026"]),
         contacts: [IosShopDetailContact(kind: "website", title: "coffeepeek.app", target: "https://coffeepeek.app", copyable: false, label: "Открыть сайт")],
         features: [IosShopDetailFeature(name: "Wi-Fi", icon: nil),
             IosShopDetailFeature(name: "Велопарковка", icon: nil)],
         featureToggle: "Показать все", priceValue: "8 BYN",
         priceTiers: [IosShopDetailPriceTier(count: 2, label: "Около 8 BYN", selected: true)])
-    state.labels = ["back": "Назад", "share": "Поделиться", "description": "Описание", "roasters": "Обжарщики",
-        "beans": "Кофе", "equipment": "Оборудование", "hours": "Часы работы", "menu": "Меню", "contacts": "Контакты",
-        "features": "Особенности", "route": "Маршрут", "check-in": "Чекин", "check-ins": "Чекины", "price": "Средний чек",
-        "distance": "От вас", "checkins-empty": "Станьте первым, кто оставит чекин", "report": "Заметили ошибку?",
-        "report-body": "Помогите нам сделать CoffeePeek лучше"]
+    state.labels = shopDetailPreviewLabels
     return state
 }
 
+private var shopDetailPreviewLabels: [String: String] {
+    ["back": "Назад", "share": "Поделиться", "description": "Описание", "roasters": "Обжарщики",
+        "beans": "Кофе", "equipment": "Оборудование", "hours": "Часы работы", "menu": "Меню", "contacts": "Контакты",
+        "features": "Особенности", "route": "Маршрут", "check-in": "Чекин", "check-ins": "Чекины", "price": "Средний чек",
+        "all-check-ins": "Все чекины", "hours-expand": "Показать часы работы", "hours-collapse": "Скрыть часы работы",
+        "distance": "От вас", "checkins-empty": "Станьте первым, кто оставит чекин", "report": "Заметили ошибку?",
+        "report-body": "Помогите нам сделать CoffeePeek лучше"]
+}
+
+@MainActor
 private func shopDetailPreview() -> some View {
     ShopDetailNativeScreen(state: shopDetailPreviewData(), actions: ShopDetailNativeActions(), topInset: 44, bottomInset: 20,
         owner: { AnyView(Color.clear.frame(width: 48, height: 48)) }, card: { _ in AnyView(EmptyView()) })

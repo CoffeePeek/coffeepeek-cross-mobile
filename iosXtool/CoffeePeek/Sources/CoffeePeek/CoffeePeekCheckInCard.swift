@@ -117,19 +117,7 @@ struct CoffeePeekCheckInCard: View {
     }
 
     private func stars(_ value: Double) -> some View {
-        HStack(spacing: 8) {
-            HStack(spacing: 4) {
-                ForEach(0..<5) { index in
-                    Image(systemName: "star").font(.system(size: 20))
-                        .foregroundStyle(CoffeePeekNativeStyle.secondary)
-                        .overlay(alignment: .leading) {
-                            Image(systemName: "star.fill").font(.system(size: 20)).foregroundStyle(CoffeePeekNativeStyle.accent)
-                                .mask(alignment: .leading) { Rectangle().frame(width: 22 * min(1, max(0, value - Double(index)))) }
-                        }.frame(width: 22, height: 22)
-                }
-            }
-            Text(String(format: "%.1f", value)).font(CoffeePeekNativeStyle.font(15))
-        }.accessibilityElement(children: .ignore).accessibilityLabel(data.ratingLabel)
+        CoffeePeekNativeRating(value: value, valueText: String(format: "%.1f", value), label: data.ratingLabel)
     }
 
     @ViewBuilder private var publication: some View {

@@ -56,25 +56,31 @@ struct ShopDetailNativeInformation: View {
 
     private var schedule: some View {
         section(text("hours")) {
-            VStack(spacing: 12) {
+            VStack(spacing: 0) {
                 Button { actions.call("schedule") } label: {
                     HStack(spacing: 12) {
                         Image(systemName: "clock")
                         Text(details.scheduleStatus).frame(maxWidth: .infinity, alignment: .leading)
                         Image(systemName: "chevron.right").rotationEffect(.degrees(scheduleExpanded ? 90 : 0))
-                    }.frame(minHeight: 44)
+                    }.frame(maxWidth: .infinity, minHeight: 44).padding(16).contentShape(Rectangle())
                 }.buttonStyle(.plain).accessibilityLabel(text(scheduleExpanded ? "hours-collapse" : "hours-expand"))
                 if scheduleExpanded {
-                    Divider()
-                    ForEach(Array(details.schedule.enumerated()), id: \.offset) { _, day in
-                        HStack(alignment: .top, spacing: 12) {
-                            Text(day.day).frame(maxWidth: .infinity, alignment: .leading)
-                            Text(day.hours).multilineTextAlignment(.trailing)
-                        }.font(CoffeePeekNativeStyle.font(14)).foregroundStyle(CoffeePeekNativeStyle.secondary)
-                    }
+                    scheduleDays.padding(.horizontal, 16).padding(.bottom, 16).transition(.opacity)
                 }
-            }.padding(16).shopDetailPanel()
+            }.shopDetailPanel()
         }.shopDetailExposure("Hours", id: "hours")
+    }
+
+    private var scheduleDays: some View {
+        VStack(spacing: 12) {
+            Divider()
+            ForEach(Array(details.schedule.enumerated()), id: \.offset) { _, day in
+                HStack(alignment: .top, spacing: 12) {
+                    Text(day.day).frame(maxWidth: .infinity, alignment: .leading)
+                    Text(day.hours).multilineTextAlignment(.trailing)
+                }.font(CoffeePeekNativeStyle.font(14)).foregroundStyle(CoffeePeekNativeStyle.secondary)
+            }
+        }
     }
 
     private func menuSection(_ menu: IosShopDetailMenu) -> some View {
@@ -90,8 +96,10 @@ struct ShopDetailNativeInformation: View {
                     if index > 0 { Divider().padding(.horizontal, 16) }
                     HStack(spacing: 12) {
                         Button { actions.call("link", contact.target) } label: {
-                            Label(contact.title, systemImage: contactSymbol(contact.kind))
-                                .frame(maxWidth: .infinity, alignment: .leading).frame(minHeight: 44)
+                            HStack(spacing: 12) {
+                                CoffeePeekNativeContactIcon(kind: contact.kind)
+                                Text(contact.title).frame(maxWidth: .infinity, alignment: .leading)
+                            }.frame(maxWidth: .infinity, minHeight: 48).contentShape(Rectangle())
                         }.buttonStyle(.plain).accessibilityLabel(contact.label)
                         if contact.copyable {
                             Button { actions.call("copy", contact.title) } label: {
@@ -105,13 +113,19 @@ struct ShopDetailNativeInformation: View {
     }
 
     private var features: some View {
-        section(text("features")) {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack {
+                Text(text("features")).font(CoffeePeekNativeStyle.font(22, weight: "SemiBold", relativeTo: .title2))
+                    .accessibilityAddTraits(.isHeader)
+                Spacer()
+                if details.features.count > 5 {
+                    CoffeePeekNativeChevronButton(label: details.featureToggle,
+                        symbol: featuresExpanded ? "chevron.up" : "chevron.down") { actions.call("features") }
+                }
+            }
             VStack(alignment: .leading, spacing: 8) {
                 ForEach(Array(details.features.prefix(featuresExpanded ? details.features.count : 5).enumerated()), id: \.offset) { _, feature in
                     featureRow(feature)
-                }
-                if details.features.count > 5 {
-                    Button(details.featureToggle) { actions.call("features") }.frame(maxWidth: .infinity, minHeight: 44)
                 }
             }.padding(16).shopDetailPanel()
         }
@@ -135,14 +149,6 @@ struct ShopDetailNativeInformation: View {
         }
     }
 
-    private func contactSymbol(_ kind: String) -> String {
-        switch kind {
-        case "phone": "phone"
-        case "email": "envelope"
-        case "instagram": "camera"
-        default: "globe"
-        }
-    }
 }
 
 private struct ShopMenuNativeContent: View {
@@ -258,6 +264,7 @@ private struct ShopMenuNativeFreshness: View {
     }
 }
 
+@MainActor
 private func shopMenuNativePreview(photos: Bool = true) -> some View {
     let menu = IosShopDetailMenu(groups: [
         [IosShopDetailMenuItem(id: "espresso", title: "Эспрессо", amount: "4,00", currency: "BYN", priceLabel: nil),
@@ -297,3 +304,25 @@ private extension View {
             featuresExpanded: true, labels: shopDetailPreviewData().labels, actions: ShopDetailNativeActions()).padding()
     }.background(CoffeePeekNativeStyle.background).preferredColorScheme(.dark)
 }
+
+private struct ShopScheduleInteractionPreview: View {
+    @State private var expanded = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
+    var body: some View {
+        ScrollView {
+            if let details = shopDetailPreviewData().details {
+                ShopDetailNativeInformation(details: details, scheduleExpanded: expanded,
+                    featuresExpanded: false, labels: shopDetailPreviewData().labels,
+                    actions: ShopDetailNativeActions(perform: { name, _, _ in
+                        if name == "schedule" { expanded.toggle() }
+                    }))
+                    .padding(16)
+                    .animation(reduceMotion ? nil : .easeInOut(duration: 0.25), value: expanded)
+            }
+        }.background(CoffeePeekNativeStyle.background)
+    }
+}
+
+#Preview("Shop hours interaction light") { ShopScheduleInteractionPreview().preferredColorScheme(.light) }
+#Preview("Shop hours interaction dark") { ShopScheduleInteractionPreview().preferredColorScheme(.dark) }

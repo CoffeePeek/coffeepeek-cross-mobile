@@ -4,21 +4,55 @@ import UIKit
 
 @MainActor
 func makeEditProfileController(editor: IosEditProfile) -> UIViewController {
-    UIHostingController(rootView: EditProfileNativeHost(editor: editor))
+    EditProfileHostingController(editor: editor)
 }
 
+@MainActor
+private final class EditProfileHostingController: UIHostingController<EditProfileNativeHost> {
+    private let editor: IosEditProfile
+    private let visibility: CoffeePeekNativeControllerVisibility
+    init(editor: IosEditProfile) {
+        self.editor = editor
+        let visibility = CoffeePeekNativeControllerVisibility { editor.setVisible(visible: $0) }
+        self.visibility = visibility
+        super.init(rootView: EditProfileNativeHost(editor: editor, visibility: visibility))
+        editor.bindPresenter { [weak self] in self }
+        view.backgroundColor = .clear
+    }
+    @MainActor required dynamic init?(coder: NSCoder) { return nil }
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        visibility.setShowing(true)
+    }
+    override func viewWillDisappear(_ animated: Bool) {
+        visibility.setShowing(false)
+        super.viewWillDisappear(animated)
+    }
+    isolated deinit { editor.close() }
+}
+
+@MainActor
 private struct EditProfileNativeHost: View {
     @StateObject private var model: EditProfileNativeModel
-    init(editor: IosEditProfile) {
+    let visibility: CoffeePeekNativeControllerVisibility
+    @Environment(\.scenePhase) private var scenePhase
+    init(editor: IosEditProfile, visibility: CoffeePeekNativeControllerVisibility) {
         _model = StateObject(wrappedValue: EditProfileNativeModel(editor: editor))
+        self.visibility = visibility
     }
     var body: some View {
         EditProfileNativeContent(state: model.state, strings: model.strings, actions: model.actions)
             .environment(\.locale, Locale(identifier: model.strings.languageTag))
-            .onAppear(perform: model.observe)
+            .background(CoffeePeekLocalBackProtection(protected: model.state.saving).frame(width: 0, height: 0))
+            .onAppear {
+                model.observe()
+                visibility.setForeground(scenePhase == .active)
+            }
+            .onChange(of: scenePhase) { _, phase in visibility.setForeground(phase == .active) }
     }
 }
 
+@MainActor
 private final class EditProfileNativeModel: ObservableObject {
     @Published private(set) var state: IosEditProfileState
     @Published private(set) var strings: EditProfileNativeStrings
@@ -29,7 +63,7 @@ private final class EditProfileNativeModel: ObservableObject {
         state = editor.current()
         strings = EditProfileNativeStrings(languageTag: editor.languageTag())
     }
-    deinit { observation?.cancel() }
+    isolated deinit { observation?.cancel() }
     func observe() {
         guard observation == nil else { return }
         state = editor.current()

@@ -7,6 +7,7 @@ import com.coffeepeek.core.media.image.PhotoPermission
 import com.coffeepeek.core.media.image.ProtectedPhotoSession
 import com.coffeepeek.core.media.image.SystemPhotoCacheClock
 import com.coffeepeek.core.media.image.isProtectedCheckInPhoto
+import com.coffeepeek.core.media.image.isImmutablePhotoVariant
 import io.kamel.core.config.ResourceConfigBuilder
 import io.kamel.core.getOrNull
 import io.ktor.utils.io.toByteArray
@@ -36,6 +37,20 @@ suspend fun ImageUrlFetcher.loadIosImage(source: ImageUrl): UIImage? = withConte
         throw cancelled
     } catch (_: Exception) {
         null
+    }
+}
+
+/** One-shot cache warming never renews a display grant or requests a protected original. */
+suspend fun ImageUrlFetcher.prefetchIosImage(source: ImageUrl, canLoad: () -> Boolean) {
+    if (!canLoad()) return
+    if (!isProtectedCheckInPhoto(source.url)) {
+        loadIosImage(source)
+        return
+    }
+    if (!isImmutablePhotoVariant(source.url)) return
+    val scope = ProtectedPhotoSession.changes.value
+    if (canLoad() && ProtectedPhotoSession.current(scope)) {
+        loadIosImage(source.copy(permissionScope = scope, displayPermission = PhotoDisplayPermission(revalidate = false)))
     }
 }
 

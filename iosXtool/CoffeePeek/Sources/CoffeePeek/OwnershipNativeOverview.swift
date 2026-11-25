@@ -77,6 +77,7 @@ struct OwnershipNativeOverview: View {
     }
 }
 
+@MainActor
 private func ownershipOverviewPreview() -> some View {
     ScrollView { OwnershipNativeOverview(state: ownershipPreviewState(), tab: false, strings: OwnershipNativeStrings("ru"),
         send: { _ in }, imageLoader: { _, _ in nil }, qrLink: { _ in nil }, shareQr: { _, _ in }).padding() }

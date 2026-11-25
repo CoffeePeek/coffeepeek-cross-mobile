@@ -4,6 +4,7 @@ import SwiftUI
 struct CoffeePeekNativeLoader: View {
     let label: String
     var animated = true
+    var color: Color = CoffeePeekNativeStyle.accent
     @Environment(\.accessibilityReduceMotion) private var reducedMotion
     @Environment(\.scenePhase) private var scenePhase
     @State private var started = Date()
@@ -21,9 +22,9 @@ struct CoffeePeekNativeLoader: View {
             let fill = moving ? elapsed.truncatingRemainder(dividingBy: geometry.fillSeconds) / geometry.fillSeconds * Double(geometry.maxFill) : 0.5
             let shape = CoffeePeekLoaderContour(contours: contours, morph: morph, stroke: CGFloat(geometry.stroke))
             ZStack {
-                shape.stroke(CoffeePeekNativeStyle.accent.opacity(0.18), style: StrokeStyle(lineWidth: CGFloat(geometry.stroke), lineCap: .round, lineJoin: .round))
+                shape.stroke(color.opacity(0.18), style: StrokeStyle(lineWidth: CGFloat(geometry.stroke), lineCap: .round, lineJoin: .round))
                 if fill > 0.01 {
-                    shape.trim(from: 0, to: CGFloat(fill)).stroke(CoffeePeekNativeStyle.accent,
+                    shape.trim(from: 0, to: CGFloat(fill)).stroke(color,
                         style: StrokeStyle(lineWidth: CGFloat(geometry.stroke), lineCap: .butt, lineJoin: .round))
                 }
             }.rotationEffect(.degrees(moving ? elapsed / geometry.rotationSeconds * 360 : 0))

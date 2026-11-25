@@ -80,9 +80,7 @@ internal fun editProfileSlots() = EditProfileSlots(
 
 internal fun featureAccountScreenRenderer(accounts: ProfileAccountPort, edit: ProfileEditPort, deletion: AccountDeletionPort): FeatureAccountScreenRenderer {
     return FeatureAccountScreenRenderer(
-        edit = createEditProfileEntry(accounts, edit, editProfileSlots(), { session, back, deletion, modifier ->
-            PlatformEditProfile(session, back, deletion, modifier)
-        }),
+        edit = createEditProfileEntry(accounts, edit, editProfileSlots()),
         deletion = createAccountDeletionEntry(accounts, deletion),
     )
 }

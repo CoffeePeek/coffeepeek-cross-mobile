@@ -16,6 +16,10 @@ interface BusinessOwnershipEntry {
     fun Content(onBack: () -> Unit, onLogin: () -> Unit, initialKind: String? = null, initialSlug: String? = null, initialId: String? = null)
     @Composable fun ProfileChanges(): Long
     @Composable fun Session(): BusinessSessionState
+    /** One application-owned collector; cancellation ends account observation. */
+    suspend fun observeSessionChanges()
+    suspend fun refreshSession()
+    val profileChanges: StateFlow<Long>
     val accountSwitchState: StateFlow<BusinessSessionState>
     suspend fun switchAccountMode()
     @Composable fun AccountSwitch()

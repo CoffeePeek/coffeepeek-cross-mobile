@@ -32,7 +32,7 @@ internal fun filterTagLabel(entry: CatalogEntry): String =
 internal fun filterBrewMethodLabel(entry: CatalogEntry): String =
     brewMethodLabelResource(entry.id)?.let { stringResource(it) } ?: entry.name
 
-private fun tagLabelResource(id: String): StringResource? = when (id.catalogKey()) {
+internal fun tagLabelResource(id: String): StringResource? = when (id.catalogKey()) {
     "roastery" -> Res.string.discovery_tag_roastery
     "beans-for-sale" -> Res.string.discovery_tag_beans_for_sale
     "decaf" -> Res.string.discovery_tag_decaf
@@ -49,7 +49,7 @@ private fun tagLabelResource(id: String): StringResource? = when (id.catalogKey(
     else -> null
 }
 
-private fun brewMethodLabelResource(id: String): StringResource? = when (id.catalogKey()) {
+internal fun brewMethodLabelResource(id: String): StringResource? = when (id.catalogKey()) {
     "cold-brew" -> Res.string.discovery_brew_cold_brew
     "batch-brew" -> Res.string.discovery_brew_batch_brew
     "espresso" -> Res.string.discovery_brew_espresso

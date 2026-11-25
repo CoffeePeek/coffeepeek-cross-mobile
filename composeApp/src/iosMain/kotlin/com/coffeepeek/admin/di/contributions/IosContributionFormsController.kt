@@ -25,9 +25,14 @@ internal fun iosContributionFormsContent(
     val catalogs = koinInject<ContributionCatalogs>()
     val sessions = koinInject<SessionReader>()
     val images = koinInject<ImageUrlFetcher>()
-    val dependencies = remember(repository, catalogs, sessions, images) {
-        NativeContributionForms(repository, catalogs, sessions, IosCatalogueMedia(images, Constants.BASE_URL))
-    }
+    val media = remember(images) { IosCatalogueMedia(images, Constants.BASE_URL) }
+    return iosContributionFormsContent(factory, language, repository, catalogs, sessions, media)
+}
+
+internal fun iosContributionFormsContent(factory: (IosContributionsRoute, String) -> UIViewController, language: () -> String,
+    repository: ContributionsRepository, catalogs: ContributionCatalogs, sessions: SessionReader, media: IosCatalogueMedia,
+): (Navigator.Screen) -> (() -> UIViewController)? {
+    val dependencies = NativeContributionForms(repository, catalogs, sessions, media)
     return { screen -> screen.nativeFormArgs()?.let { args -> { factory(dependencies.create(args), language()) } } }
 }
 

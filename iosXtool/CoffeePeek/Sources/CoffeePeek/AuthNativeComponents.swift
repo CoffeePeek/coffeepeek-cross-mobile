@@ -2,6 +2,17 @@ import ComposeApp
 import SwiftUI
 import UIKit
 
+#Preview("Auth glass navigation light") {
+    NativeAuthPage(title: "Вход", subtitle: nil, strings: NativeAuthStrings(languageTag: "ru"), back: {}) {
+        Color.clear.frame(height: 80)
+    }.preferredColorScheme(.light)
+}
+#Preview("Auth glass navigation dark") {
+    NativeAuthPage(title: "Уваход", subtitle: nil, strings: NativeAuthStrings(languageTag: "be"), back: {}) {
+        Color.clear.frame(height: 80)
+    }.preferredColorScheme(.dark)
+}
+
 struct NativeAuthStrings {
     private let bundle: Bundle
     private let locale: Locale
@@ -79,7 +90,7 @@ struct NativeAuthPage<Content: View>: View {
                 .frame(minWidth: 44, minHeight: 44)
                 .contentShape(Rectangle())
             }
-            .buttonStyle(.plain)
+            .buttonStyle(.plain).shopDetailGlassCircle()
             Text(title).font(CoffeePeekNativeStyle.font(22, weight: "Bold", relativeTo: .title2))
                 .frame(maxWidth: .infinity).multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true).accessibilityAddTraits(.isHeader)

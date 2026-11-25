@@ -6,6 +6,7 @@ import com.coffeepeek.core.designsystem.component.CoffeePeekPhotoViewerImages
 import com.coffeepeek.core.media.ImageUrl
 import com.coffeepeek.core.media.ImageUrlFetcher
 import com.coffeepeek.core.media.loadIosImage
+import com.coffeepeek.core.media.prefetchIosImage
 import com.coffeepeek.core.media.observeIosViewerImage
 import com.coffeepeek.core.media.resolveImageData
 import platform.UIKit.UIImage
@@ -15,6 +16,7 @@ internal class IosCatalogueMedia(
     private val apiBaseUrl: String,
 ) {
     suspend fun loadImage(url: String): UIImage? = imageFetcher.loadIosImage(imageUrl(url))
+    suspend fun prefetch(url: String, canLoad: () -> Boolean) = imageFetcher.prefetchIosImage(imageUrl(url), canLoad)
 
     fun observeImage(url: String, canLoad: () -> Boolean) =
         imageFetcher.observeIosViewerImage(imageUrl(url), canLoad)

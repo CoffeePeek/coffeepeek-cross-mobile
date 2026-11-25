@@ -4,7 +4,7 @@ package com.coffeepeek.admin.di.coffee
 
 import com.coffeepeek.admin.di.media.IosCatalogueMedia
 import com.coffeepeek.admin.ui.Navigator
-import com.coffeepeek.admin.ui.nativeScreenHost
+import com.coffeepeek.admin.ui.NativeLocalBackProtection
 import com.coffeepeek.admin.utils.OpenInBrowser
 import com.coffeepeek.admin.utils.ShareHelper
 import com.coffeepeek.core.designsystem.component.CoffeePeekPhotoViewerImages
@@ -64,7 +64,7 @@ class IosCoffeeDetail internal constructor(
 
     fun closePhotos() = session.closePhotos()
 
-    fun visible(host: UIViewController) = analytics.updateOwner(host.nativeScreenHost()?.analyticsVisit)
+    fun visible(host: UIViewController) = analytics.updateOwner(NativeLocalBackProtection.visit(host))
     fun hidden() = analytics.updateOwner(null)
 
     fun updateExposure(section: String, fraction: Float) = analytics.updateFraction(section, fraction)

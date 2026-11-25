@@ -3,8 +3,93 @@ import SwiftUI
 import UIKit
 
 @MainActor
+func makeHomeCheckInRouteController(route: IosHomeCheckInRoute) -> UIViewController {
+    UIHostingController(rootView: HomeCheckInRouteHost(model: HomeCheckInRouteModel(route)))
+}
+
+@MainActor
+private struct HomeCheckInRouteHost: View {
+    @StateObject var model: HomeCheckInRouteModel
+    var body: some View {
+        let photo = model.state.photo
+        Group {
+            if let detail = model.state.detail {
+                VStack(spacing: 0) {
+                    CoffeePeekNativeNavigationHeader(title: model.state.navigationTitle, backLabel: model.state.detailBack,
+                        back: { model.route.back() }).disabled(!model.state.dismissAllowed)
+                    HomeCheckInRouteDetail(detail: detail).id(ObjectIdentifier(detail))
+                }
+            } else {
+                CoffeePeekNativeRouteStatus(failed: model.state.failed, title: model.state.title, retry: model.state.retry,
+                    back: model.state.back, onRetry: { model.route.retry() }, onBack: { model.route.back() })
+            }
+        }
+        .onAppear(perform: model.observe)
+        .fullScreenCover(item: model.editorBinding) { item in
+            HomeCheckInRouteEditor(editor: item.editor).interactiveDismissDisabled(!model.state.dismissAllowed)
+        }
+        .coffeePeekPhotoViewer(photo?.viewer, languageTag: photo?.languageTag ?? "ru") {
+            if let photo { model.route.dismissPhoto(photo: photo) }
+        }
+        .background(CoffeePeekLocalBackProtection(protected: model.state.editor != nil || !model.state.dismissAllowed))
+    }
+}
+
+@MainActor
+private final class HomeCheckInRouteModel: ObservableObject {
+    let route: IosHomeCheckInRoute
+    @Published private(set) var state: IosHomeCheckInRouteState
+    private var observation: IosHomeCheckInObservation?
+    init(_ route: IosHomeCheckInRoute) {
+        self.route = route
+        state = route.current()
+    }
+    isolated deinit {
+        observation?.cancel()
+        route.close()
+    }
+    func observe() {
+        guard observation == nil else { return }
+        observation = route.observe { [weak self] in self?.state = $0 }
+    }
+    var editorBinding: Binding<HomeCheckInRouteEditorIdentity?> {
+        let presented = state.editor
+        return Binding(get: { self.state.editor.map(HomeCheckInRouteEditorIdentity.init) }, set: {
+            if $0 == nil, let presented { self.route.requestEditorDismiss(editor: presented) }
+        })
+    }
+}
+
+private struct HomeCheckInRouteEditorIdentity: Identifiable {
+    let editor: IosHomeCheckInEditor
+    var id: ObjectIdentifier { ObjectIdentifier(editor) }
+}
+private struct HomeCheckInRouteEditor: UIViewControllerRepresentable {
+    let editor: IosHomeCheckInEditor
+    func makeUIViewController(context: Context) -> UIViewController { makeHomeCheckInEditorController(editor: editor) }
+    func updateUIViewController(_ uiViewController: UIViewController, context: Context) {}
+}
+private struct HomeCheckInRouteDetail: UIViewControllerRepresentable {
+    let detail: IosCheckInDetail
+    func makeUIViewController(context: Context) -> UIViewController { makeCheckInDetailController(detail: detail) }
+    func updateUIViewController(_ uiViewController: UIViewController, context: Context) {}
+}
+
+@MainActor
 func makeHomeCheckInEditorController(editor: IosHomeCheckInEditor) -> UIViewController {
-    UIHostingController(rootView: HomeCheckInNativeHost(editor: editor))
+    HomeCheckInHostingController(editor: editor)
+}
+
+@MainActor
+private final class HomeCheckInHostingController: UIHostingController<HomeCheckInNativeHost> {
+    private let editor: IosHomeCheckInEditor
+    init(editor: IosHomeCheckInEditor) {
+        self.editor = editor
+        super.init(rootView: HomeCheckInNativeHost(editor: editor))
+        editor.bindPresenter { [weak self] in self }
+    }
+    @MainActor required dynamic init?(coder: NSCoder) { return nil }
+    isolated deinit { editor.close() }
 }
 
 private struct HomeCheckInNativeHost: View {
@@ -16,9 +101,11 @@ private struct HomeCheckInNativeHost: View {
         HomeCheckInNativeContent(state: model.state, strings: model.strings, today: model.editor.today(), actions: model.actions)
             .environment(\.locale, Locale(identifier: model.strings.languageTag))
             .onAppear(perform: model.observe)
+            .background(CoffeePeekLocalBackProtection(protected: true))
     }
 }
 
+@MainActor
 final class HomeCheckInNativeModel: ObservableObject {
     @Published private(set) var state: IosHomeCheckInState
     @Published private(set) var strings: CheckInNativeStrings
@@ -29,7 +116,7 @@ final class HomeCheckInNativeModel: ObservableObject {
         state = editor.current()
         strings = CheckInNativeStrings(languageTag: editor.languageTag(), table: "NativeHomeCheckIn")
     }
-    deinit { observation?.cancel() }
+    isolated deinit { observation?.cancel() }
     func observe() {
         guard observation == nil else { return }
         state = editor.current()
@@ -121,8 +208,10 @@ struct HomeCheckInNativeContent: View {
                     }.padding(.horizontal, 16).padding(.vertical, 8)
                 }
                 .scrollDismissesKeyboard(.interactively)
-                if !keyboardVisible { footer }
             } else { loadStatus }
+        }
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            if state.status.ready && !keyboardVisible { footer }
         }
     }
 
@@ -133,9 +222,10 @@ struct HomeCheckInNativeContent: View {
                 .accessibilityAddTraits(.isHeader)
             Spacer()
             Button(action: actions.close) { Image(systemName: "xmark").frame(width: 48, height: 48) }
+                .buttonStyle(.plain).shopDetailGlassCircle()
                 .accessibilityLabel(strings["home_check_in_editor_close"])
                 .disabled(state.status.saving).tint(CoffeePeekNativeStyle.foreground)
-        }.padding(.horizontal, 16).padding(.bottom, 16)
+        }.padding(.horizontal, 16).padding(.vertical, 8)
     }
 
     private var primaryFields: some View {
@@ -167,7 +257,7 @@ struct HomeCheckInNativeContent: View {
     private var footer: some View {
         VStack(spacing: 8) {
             CheckInNativeField(title: "", error: error("Visibility"), style: .home) {
-                Toggle(isOn: Binding(get: { state.draft.isPublic?.boolValue == true }, set: actions.visibility)) {
+                Toggle(isOn: Binding(get: { state.draft.isPublic?.boolValue == true }, set: { actions.visibility($0) })) {
                     VStack(alignment: .leading, spacing: 4) {
                         Text(strings["home_check_in_public_title"]).font(CoffeePeekNativeStyle.font(17, weight: "Semibold"))
                         Text(strings["home_check_in_public_hint"]).font(CoffeePeekNativeStyle.font(13))

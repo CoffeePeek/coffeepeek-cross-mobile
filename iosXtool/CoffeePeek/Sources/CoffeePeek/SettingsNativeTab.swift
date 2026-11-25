@@ -23,11 +23,8 @@ struct SettingsNativeTab: View {
 
     private var content: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text(strings.text("settings_tab_title"))
-                .font(CoffeePeekNativeStyle.rootHeadingFont)
-                .accessibilityAddTraits(.isHeader)
+            CoffeePeekNativeRootHeader(title: strings.text("settings_tab_title")) { EmptyView() }
                 .padding(.top, headerTopInset)
-                .padding(.bottom, 4)
             if state.showGuestCard { guestSection }
             if state.hasBusinesses { businessSection }
             if state.showAddRows { addSection }
@@ -101,7 +98,7 @@ struct SettingsNativeTab: View {
             SettingsNativeRow(title: title, description: description, systemImage: "bell", navigates: true) { open(.login) }
         } else {
             SettingsNativeLabel.toggle(title, description: description, icon: "bell",
-                                       isOn: Binding(get: { preference.checked }, set: setPushEnabled))
+                                       isOn: Binding(get: { preference.checked }, set: { setPushEnabled($0) }))
             .disabled(!preference.enabled)
             if let failure = preference.failureKey {
                 if preference.canRetry {
@@ -159,6 +156,7 @@ struct SettingsNativeTab: View {
 
 }
 
+@MainActor
 private func settingsPreview(guest: Bool, languageTag: String) -> some View {
     SettingsNativeTab(
         state: IosSettingsTabState(

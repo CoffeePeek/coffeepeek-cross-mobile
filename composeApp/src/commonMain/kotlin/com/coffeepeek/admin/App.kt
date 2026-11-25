@@ -1,6 +1,5 @@
 package com.coffeepeek.admin
 
-import kotlinx.coroutines.launch
 import androidx.compose.runtime.getValue
 import androidx.compose.foundation.background
 import androidx.compose.material3.MaterialTheme
@@ -11,6 +10,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.compose.ui.Modifier
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.admin.theme.PlatformSystemBars
@@ -32,6 +32,7 @@ import org.koin.compose.koinInject
 
 @Composable
 fun App(onReady: () -> Unit = {}) {
+    AppForegroundNotifications()
     LaunchedEffect(Unit) {
         onReady()
     }
@@ -51,7 +52,6 @@ fun App(onReady: () -> Unit = {}) {
 /** Shared presentation environment, also used by native iOS tab controllers. */
 @Composable
 internal fun AppContent(content: @Composable () -> Unit) {
-    AppForegroundNotifications()
     val kamelConfig = koinInject<KamelConfig>()
     val language by koinInject<AppLanguagePreference>().selection.collectAsState()
     val themeMode by ThemeManager.themeMode.collectAsState()
@@ -88,15 +88,11 @@ internal fun AppContent(content: @Composable () -> Unit) {
 @Composable
 private fun AppForegroundNotifications() {
     val notifications = koinInject<com.coffeepeek.feature.notifications.api.NotificationFeature>()
-    androidx.lifecycle.compose.LifecycleResumeEffect(notifications) {
-        notifications.foreground()
-        val heartbeat = kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Default).launch {
-            while (true) {
-                kotlinx.coroutines.delay(15 * 60 * 1_000L)
-                notifications.foreground()
-            }
+    val lifecycle = androidx.lifecycle.compose.LocalLifecycleOwner.current.lifecycle
+    LaunchedEffect(notifications, lifecycle) {
+        lifecycle.repeatOnLifecycle(androidx.lifecycle.Lifecycle.State.RESUMED) {
+            com.coffeepeek.admin.notifications.foregroundNotificationHeartbeat(notifications::foreground)
         }
-        onPauseOrDispose { heartbeat.cancel() }
     }
 }
 

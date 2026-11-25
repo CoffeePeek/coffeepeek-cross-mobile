@@ -6,6 +6,8 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.coffeepeek.core.media.image.*
 import io.kamel.core.Resource
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.sync.Semaphore
 import kotlinx.coroutines.sync.withPermit
@@ -19,9 +21,7 @@ fun PrefetchPhotos(urls: List<String>, inPhotoViewer: Boolean = false) {
     // Visible rows claim transfer slots first; fast scrolls cancel speculative work.
     LaunchedEffect(urls) { delay(150); started = true }
     if (!started) return
-    val candidates = urls.asSequence().filter(String::isNotBlank).distinct()
-        .filter { !isProtectedCheckInPhoto(it) || isImmutablePhotoVariant(it) }
-        .take(6).toList()
+    val candidates = photoPrefetchCandidates(urls)
     var completed by remember(candidates) { mutableStateOf(emptySet<String>()) }
     // A global limit also covers simultaneous list/gallery prefetch windows.
     candidates.filterNot { it in completed }.take(2).forEach { url ->
@@ -45,3 +45,12 @@ fun PrefetchPhotos(urls: List<String>, inPhotoViewer: Boolean = false) {
 }
 
 private val photoPrefetchRequests = Semaphore(2)
+
+/** Native hosts cancel this child operation when covered, hidden or outside the current account. */
+suspend fun prefetchPhotoWindow(urls: List<String>, load: suspend (String) -> Unit) = coroutineScope {
+    delay(150)
+    photoPrefetchCandidates(urls).forEach { url -> launch { photoPrefetchRequests.withPermit { load(url) } } }
+}
+
+internal fun photoPrefetchCandidates(urls: List<String>) = urls.asSequence().filter(String::isNotBlank).distinct()
+    .filter { !isProtectedCheckInPhoto(it) || isImmutablePhotoVariant(it) }.take(6).toList()

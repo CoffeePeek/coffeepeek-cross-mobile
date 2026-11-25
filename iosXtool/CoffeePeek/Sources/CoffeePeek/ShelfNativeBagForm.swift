@@ -122,6 +122,7 @@ struct ShelfNativeBagForm: View {
     }
 }
 
+@MainActor
 private func shelfFormPreview() -> some View {
     let state = IosShelfAddState(step: "Form", scanner: "Ready", downloadBytes: 0, downloadDone: 0,
         downloadTotal: 0, frame: [], stages: [], failure: nil, query: "Santa Rosa", roaster: "Coffee Roaster",

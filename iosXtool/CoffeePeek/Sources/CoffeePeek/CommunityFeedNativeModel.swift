@@ -4,18 +4,71 @@ import UIKit
 
 @MainActor
 func makeCommunityFeedController(feed: IosCommunityFeed) -> UIViewController {
-    UIHostingController(rootView: CommunityFeedNativeHost(feed: feed))
+    CommunityFeedHostingController(feed: feed)
 }
 
-private struct CommunityFeedNativeHost: View {
-    @StateObject private var model: CommunityFeedNativeModel
+@MainActor
+private final class CommunityFeedHostingController: UIHostingController<CommunityFeedNativeHost> {
+    private let feed: IosCommunityFeed
+    private let visibility: CoffeePeekNativeControllerVisibility
     init(feed: IosCommunityFeed) {
+        self.feed = feed
+        let visibility = CoffeePeekNativeControllerVisibility { feed.setVisible(visible: $0) }
+        self.visibility = visibility
+        super.init(rootView: CommunityFeedNativeHost(feed: feed, visibility: visibility))
+        view.backgroundColor = .clear
+    }
+    @MainActor required dynamic init?(coder: NSCoder) { return nil }
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        feed.bottomClearance(value: Double(view.safeAreaInsets.bottom))
+        visibility.setShowing(true)
+    }
+    override func viewWillDisappear(_ animated: Bool) {
+        visibility.setShowing(false)
+        super.viewWillDisappear(animated)
+    }
+    override func viewSafeAreaInsetsDidChange() {
+        super.viewSafeAreaInsetsDidChange()
+        feed.bottomClearance(value: Double(view.safeAreaInsets.bottom))
+    }
+    isolated deinit { feed.close() }
+}
+
+@MainActor
+private struct CommunityFeedNativeHost: View {
+    let feed: IosCommunityFeed
+    let visibility: CoffeePeekNativeControllerVisibility
+    @Environment(\.scenePhase) private var scenePhase
+    @StateObject private var model: CommunityFeedNativeModel
+    init(feed: IosCommunityFeed, visibility: CoffeePeekNativeControllerVisibility) {
+        self.feed = feed
+        self.visibility = visibility
         _model = StateObject(wrappedValue: CommunityFeedNativeModel(feed: feed))
     }
     var body: some View {
-        CommunityFeedNativeContent(state: model.presentation, actions: model.actions)
-            .onAppear(perform: model.observe)
+        CommunityFeedNativeContent(state: model.presentation, actions: model.actions, headerAction: notificationAction)
+            .onAppear {
+                model.observe()
+                visibility.setForeground(scenePhase == .active)
+            }
+            .onChange(of: scenePhase) { _, phase in visibility.setForeground(phase == .active) }
+            .coffeePeekCommunityOverlays(feed.overlays)
     }
+    private var notificationAction: AnyView? {
+        feed.notifications.map { inbox in
+            AnyView(CommunityNotificationButton(inbox: inbox, languageTag: feed.notificationLanguageTag)
+                .frame(width: 48, height: 48).id(ObjectIdentifier(inbox)))
+        }
+    }
+}
+
+@MainActor
+private struct CommunityNotificationButton: UIViewControllerRepresentable {
+    let inbox: IosNotificationInbox
+    let languageTag: String
+    func makeUIViewController(context: Context) -> UIViewController { makeNotificationInboxController(inbox: inbox, languageTag: languageTag) }
+    func updateUIViewController(_ controller: UIViewController, context: Context) {}
 }
 
 @MainActor
@@ -23,17 +76,14 @@ private final class CommunityFeedNativeModel: ObservableObject {
     private let feed: IosCommunityFeed
     @Published private var state: IosCommunityFeedState
     private var observation: IosCommunityFeedObservation?
-    private var refreshObservation: IosCommunityFeedObservation?
-    private var refreshContinuation: CheckedContinuation<Void, Never>?
+    private var refreshing = false
 
     init(feed: IosCommunityFeed) {
         self.feed = feed
         state = feed.current()
     }
-    deinit {
+    isolated deinit {
         observation?.cancel()
-        refreshObservation?.cancel()
-        refreshContinuation?.resume()
     }
     func observe() {
         guard observation == nil else { return }
@@ -47,25 +97,16 @@ private final class CommunityFeedNativeModel: ObservableObject {
             visible: { feed.visible(key: $0, fraction: $1) })
     }
     private func refresh() async {
-        guard refreshContinuation == nil else { return }
-        await withTaskCancellationHandler {
-            await withCheckedContinuation { continuation in
-                refreshContinuation = continuation
-                let subscription = feed.refresh { [weak self] in self?.finishRefresh() }
-                if refreshContinuation == nil { subscription.cancel() }
-                else { refreshObservation = subscription }
-            }
-        } onCancel: {
-            Task { @MainActor [weak self] in self?.finishRefresh() }
+        guard !refreshing, !Task.isCancelled else { return }
+        refreshing = true
+        let completion = AsyncStream<Void>.makeStream(bufferingPolicy: .bufferingNewest(1))
+        let subscription = feed.refresh { completion.continuation.finish() }
+        defer {
+            subscription.cancel()
+            completion.continuation.finish()
+            refreshing = false
         }
-    }
-    private func finishRefresh() {
-        let continuation = refreshContinuation
-        let subscription = refreshObservation
-        refreshContinuation = nil
-        refreshObservation = nil
-        subscription?.cancel()
-        continuation?.resume()
+        for await _ in completion.stream {}
     }
     var presentation: CommunityFeedNativePresentation {
         guard state.active else { return CommunityFeedNativePresentation(active: false) }

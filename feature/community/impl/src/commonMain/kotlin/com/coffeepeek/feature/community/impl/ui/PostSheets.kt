@@ -92,25 +92,22 @@ import com.coffeepeek.feature.community.domain.rules.MAX_REPORT_LENGTH
 import com.coffeepeek.feature.community.domain.rules.OTHER_DRINK
 import com.coffeepeek.feature.community.domain.rules.ReportIssue
 import com.coffeepeek.feature.community.impl.resources.*
-import com.coffeepeek.feature.community.api.CommunityHost
 import com.coffeepeek.feature.community.impl.timeline.CommunityAction
 import com.coffeepeek.feature.community.impl.timeline.CommunityState
 import com.coffeepeek.feature.community.impl.timeline.EditError
 import com.coffeepeek.feature.community.impl.timeline.PostEditState
 
 @Composable
-internal fun EditSheet(state: CommunityState, onAction: (CommunityAction) -> Unit, host: CommunityHost) {
+internal fun EditSheet(state: CommunityState, onAction: (CommunityAction) -> Unit) {
     val edit = state.editing ?: return
-    PostEditorSheet(edit, state.drinks, state.drinksFailed, state.isSaving, timelineEditorCallbacks(onAction), host)
+    PostEditorSheet(edit, state.drinks, state.drinksFailed, state.isSaving, timelineEditorCallbacks(onAction))
 }
 
 @Composable
-internal fun PostEditorSheet(edit: PostEditState, drinks: List<DrinkOption>, failed: Boolean, saving: Boolean, callbacks: PostEditorCallbacks, host: CommunityHost) {
+internal fun PostEditorSheet(edit: PostEditState, drinks: List<DrinkOption>, failed: Boolean, saving: Boolean, callbacks: PostEditorCallbacks) {
     CoffeePeekSwipeDismissModalBottomSheet(onDismissRequest = callbacks.onDismiss,
         dismissDescription = stringResource(Res.string.community_close), dismissEnabled = !saving) {
-        val native = host.nativeEditor
-        if (native != null) native(nativeEditorPresentation(edit, drinks, failed, saving), nativeEditorActions(edit, drinks, callbacks))
-        else EditSheetContent(edit, drinks, failed, saving, callbacks)
+        EditSheetContent(edit, drinks, failed, saving, callbacks)
     }
 }
 
@@ -136,14 +133,14 @@ internal fun EditSheetContent(edit: PostEditState, drinks: List<DrinkOption>, dr
 @Composable
 internal fun editErrorText(error: EditError): String = when (error) {
     is EditError.Server -> error.message ?: stringResource(Res.string.community_edit_save_failed)
-    is EditError.Invalid -> stringResource(
-        when (error.issue) {
-            EditIssue.NoteTooLong -> Res.string.community_issue_note_too_long
-            EditIssue.RatingOutOfRange -> Res.string.community_issue_rating
-            EditIssue.DrinkNameRequired -> Res.string.community_issue_drink_required
-            EditIssue.DrinkNameNotAllowed -> Res.string.community_issue_drink_not_allowed
-        },
-    )
+    is EditError.Invalid -> stringResource(nativeEditIssueResource(error.issue))
+}
+
+internal fun nativeEditIssueResource(issue: EditIssue) = when (issue) {
+    EditIssue.NoteTooLong -> Res.string.community_issue_note_too_long
+    EditIssue.RatingOutOfRange -> Res.string.community_issue_rating
+    EditIssue.DrinkNameRequired -> Res.string.community_issue_drink_required
+    EditIssue.DrinkNameNotAllowed -> Res.string.community_issue_drink_not_allowed
 }
 
 @Composable
@@ -220,12 +217,10 @@ private fun DrinkField(edit: PostEditState, drinks: List<DrinkOption>, failed: B
 }
 
 @Composable
-internal fun ReportSheet(form: ReportForm, callbacks: ReportCallbacks, host: CommunityHost) {
+internal fun ReportSheet(form: ReportForm, callbacks: ReportCallbacks) {
     CoffeePeekSwipeDismissModalBottomSheet(onDismissRequest = callbacks.onDismiss,
         dismissDescription = stringResource(Res.string.community_close), dismissEnabled = !form.isSending) {
-        val native = host.nativeReport
-        if (native != null) native(nativeReportPresentation(form), nativeReportActions(callbacks))
-        else ReportSheetContent(form, callbacks)
+        ReportSheetContent(form, callbacks)
     }
 }
 

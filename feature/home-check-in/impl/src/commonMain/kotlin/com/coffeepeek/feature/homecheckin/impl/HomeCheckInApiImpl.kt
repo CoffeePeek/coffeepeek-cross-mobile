@@ -7,7 +7,6 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.coffeepeek.feature.homecheckin.api.HomeCheckInDetailEntry
-import com.coffeepeek.feature.homecheckin.api.HomeCheckInNativeDetailRenderer
 import com.coffeepeek.feature.homecheckin.domain.repository.HomePreparationRepository
 import com.coffeepeek.feature.homecheckin.impl.ui.HomeCheckInDetailViewModel
 import com.coffeepeek.feature.homecheckin.impl.ui.compose.HomeCheckInDetailScreen
@@ -22,16 +21,17 @@ import com.coffeepeek.feature.homecheckin.impl.ui.compose.model.HomeCheckInDetai
 fun createHomeCheckInDetailEntry(
     repository: HomePreparationRepository,
     canAccess: () -> Boolean,
-    nativeRenderer: HomeCheckInNativeDetailRenderer? = null,
     imageContent: @Composable (url: String, description: String, modifier: Modifier, isCutout: Boolean) -> Unit,
-): HomeCheckInDetailEntry = HomeCheckInApiImpl(repository, canAccess, imageContent, nativeRenderer)
+): HomeCheckInDetailEntry {
+    return HomeCheckInApiImpl(repository, canAccess, imageContent)
+}
 
 private class HomeCheckInApiImpl(
     private val repository: HomePreparationRepository,
     private val canAccess: () -> Boolean,
     private val imageContent: @Composable (String, String, Modifier, Boolean) -> Unit,
-    private val nativeRenderer: HomeCheckInNativeDetailRenderer?,
-) : HomeCheckInDetailEntry {
+) : HomeCheckInDetailEntry, NativeHomeDetailEntry {
+    override fun createNativeDetail(id: String, generation: Int) = NativeHomeDetailSession(repository, canAccess, id, generation)
     @Composable
     override fun Content(
         preparationId: String,
@@ -54,7 +54,7 @@ private class HomeCheckInApiImpl(
                 HomeCheckInDetailViewModel(preparationId, repository, sessionGeneration) { currentAccess && canAccess() }
             }
             HomeCheckInDetailScreen(model, accessAllowed && canAccess(), formatPreparedAt,
-                formatBrewMethod, imageContent, modifier, notice, onDismissAllowedChange, nativeRenderer) { event ->
+                formatBrewMethod, imageContent, modifier, notice, onDismissAllowedChange) { event ->
                 when (event) {
                     HomeCheckInDetailEvent.Close -> onClose()
                     is HomeCheckInDetailEvent.Edit -> onEdit(event.preparationId)

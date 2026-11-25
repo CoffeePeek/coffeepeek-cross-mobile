@@ -6,37 +6,85 @@ import com.coffeepeek.admin.di.media.IosCatalogueMedia
 import com.coffeepeek.admin.di.roaster.IosRoasterDiscovery
 import com.coffeepeek.core.session.SessionReader
 import com.coffeepeek.feature.discovery.impl.ui.DiscoveryIosPresentation
+import com.coffeepeek.feature.discovery.impl.ui.DiscoveryIosFilterPresentation
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import platform.UIKit.UIImage
 import platform.UIKit.UIView
+import platform.UIKit.UIViewController
 
 /** One native surface; account generations revoke actions, protected media and child owner slots together. */
 class IosDiscovery internal constructor(
     initial: DiscoveryIosPresentation, private val media: IosCatalogueMedia,
     private val accounts: SessionReader,
+    initiallyReady: Boolean = true,
+    val minimumBottomClearance: Float = 0f,
+    private val onVisibility: (Boolean) -> Unit = {},
+    private val onClearance: (Float) -> Unit = {},
+    onClose: () -> Unit = {},
 ) {
-    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+    internal val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private val account = accounts.discoveryAccount()
-    private var closed = false
+    private val revoked = MutableStateFlow(false)
+    internal val failed = MutableStateFlow(false)
+    private var disposed = false
+    private var released = false
+    private var onRelease = onClose
+    private val prepared = MutableStateFlow(initiallyReady)
+    internal val screenVisible = MutableStateFlow(false)
+    private var presenter: () -> UIViewController? = { null }
     private val presentation = MutableStateFlow<DiscoveryIosPresentation?>(initial)
     private val state = MutableStateFlow(initial.state)
     private val roasters = MutableStateFlow<IosRoasterDiscovery?>(null)
+    private val filters = MutableStateFlow<IosDiscoveryFilters?>(null)
     internal val visibleElements = MutableStateFlow<Set<String>>(emptySet())
     private val map = IosDiscoveryMap(scope, { presentation.value }, ::isCurrent)
 
-    init { scope.launch { accounts.observeSession().collect { if (!isCurrent()) revoke() } } }
+    init { scope.launch { accounts.observeSession().catch {
+        if (it is CancellationException) throw it
+        fail()
+    }.collect { if (!isCurrent()) revoke() } } }
 
     fun currentState() = state.value.toNative()
+    internal fun fail() {
+        failed.value = true
+        revoke()
+    }
+    fun isReady() = prepared.value && isCurrent()
+    fun bindPresenter(presenter: () -> UIViewController?) { if (!revoked.value) this.presenter = presenter }
+    internal fun presentationHost() = presenter().takeIf { isCurrent() }
+    internal fun bindDisposal(dispose: () -> Unit) {
+        if (released) dispose() else onRelease = dispose
+    }
+    fun setVisible(visible: Boolean) {
+        val active = visible && isCurrent()
+        screenVisible.value = active
+        onVisibility(active)
+    }
+    fun bottomClearance(value: Float) { if (isCurrent() && value.isFinite()) onClearance(maxOf(value, minimumBottomClearance)) }
     fun observe(onState: (IosDiscoveryState) -> Unit) =
-        IosDiscoveryObservation(scope.launch { state.collect { onState(it.toNative()) } })
+        IosDiscoveryObservation(scope.launch { combine(state, prepared) { data, _ -> data }.collect { onState(it.toNative()) } })
 
-    internal fun update(data: DiscoveryIosPresentation) {
+    internal fun update(data: DiscoveryIosPresentation, ready: Boolean = true) {
         if (!isCurrent()) return
         presentation.value = data
         state.value = data.state
+        prepared.value = ready
         map.update()
     }
+
+    internal fun updateFilters(data: DiscoveryIosFilterPresentation?) {
+        if (!isCurrent()) return
+        if (data == null) {
+            filters.value?.dispose()
+            filters.value = null
+        } else filters.value?.update(data) ?: run { filters.value = IosDiscoveryFilters(data, media) }
+    }
+    fun currentFilters() = filters.value.takeIf { isCurrent() }
+    fun observeFilters(onFilters: (IosDiscoveryFilters?) -> Unit) = IosDiscoveryObservation(scope.launch {
+        filters.collect { onFilters(it.takeIf { isCurrent() }) }
+    })
+    fun applyFilters() { if (isCurrent()) filters.value?.apply() }
 
     fun perform(name: String, id: String) {
         if (!isInteractive()) return
@@ -46,7 +94,7 @@ class IosDiscovery internal constructor(
 
     fun query(text: String) { if (isInteractive()) presentation.value?.onQuery?.invoke(text) }
     fun visible(name: String, shown: Boolean) {
-        visibleElements.value = if (shown && !closed) visibleElements.value + name else visibleElements.value - name
+        visibleElements.value = if (shown && !revoked.value) visibleElements.value + name else visibleElements.value - name
     }
 
     fun loadImage(url: String, onImage: (UIImage?) -> Unit) = IosDiscoveryObservation(scope.launch {
@@ -72,13 +120,25 @@ class IosDiscovery internal constructor(
         roasters.value = source.takeIf { isCurrent() }
     }
 
-    internal fun close() {
+    fun close() {
+        if (disposed) return
+        disposed = true
         revoke()
         scope.cancel()
     }
 
     private fun revoke() {
-        closed = true
+        revoked.value = true
+        prepared.value = false
+        screenVisible.value = false
+        presenter = { null }
+        clearPresentation()
+        release()
+    }
+
+    private fun clearPresentation() {
+        filters.value?.dispose()
+        filters.value = null
         presentation.value = null
         roasters.value = null
         state.value = state.value.copy(active = false, shops = emptyList(), recent = emptyList(), mapShops = emptyList())
@@ -86,7 +146,15 @@ class IosDiscovery internal constructor(
         map.close()
     }
 
-    private fun isCurrent(): Boolean = !closed && accounts.discoveryAccount() == account
+    private fun release() {
+        if (released) return
+        released = true
+        val dispose = onRelease
+        onRelease = {}
+        dispose()
+    }
+
+    private fun isCurrent(): Boolean = !revoked.value && accounts.discoveryAccount() == account
     private fun isInteractive(): Boolean = isCurrent() && state.value.active
 }
 

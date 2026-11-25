@@ -88,7 +88,7 @@ private final class CheckInAuthController: UIViewController {
         }
     }
 
-    deinit {
+    isolated deinit {
         observation?.cancel()
         flow.close()
     }
@@ -148,7 +148,7 @@ private final class AuthHostingController<Content: View>: UIHostingController<Co
         return nil
     }
 
-    deinit {
+    isolated deinit {
         screen.close()
     }
 }

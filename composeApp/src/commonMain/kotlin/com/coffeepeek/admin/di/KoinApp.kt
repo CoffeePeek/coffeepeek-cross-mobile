@@ -1,5 +1,7 @@
 package com.coffeepeek.admin.di
 
+import com.coffeepeek.admin.di.discovery.discoveryBindings
+
 import com.coffeepeek.core.media.createImageUrlFetcher
 
 import com.coffeepeek.admin.config.AppConfig
@@ -142,7 +144,7 @@ private fun appModule(
     single<CommunityScreenRenderer> { communityRendererFactory() }
     single<CheckInDetailScreenRenderer> { checkInDetailRendererFactory() }
     single<ContributionsScreenRenderer> { contributionsRendererFactory() }
-    single<DiscoveryScreenRenderer> { discoveryRendererFactory() }
+    discoveryBindings(discoveryRendererFactory)
     includes(com.coffeepeek.admin.di.community.communityModule())
     single<com.coffeepeek.feature.auth.api.LocalUserData> { com.coffeepeek.admin.di.auth.UserSessionLocalUserData(get()) }
     single<com.coffeepeek.feature.auth.api.AuthAnalytics> { com.coffeepeek.admin.di.auth.AppAuthAnalytics() }

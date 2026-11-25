@@ -27,6 +27,16 @@ import platform.Foundation.NSData
 import platform.Foundation.create
 import platform.UIKit.UIImage
 import platform.UIKit.UIImageRenderingMode.UIImageRenderingModeAlwaysTemplate
+import platform.UIKit.UIScreen
+
+/** Resolves an existing vector asset without starting a renderer/composition lifetime. */
+fun coffeePeekNativeVectorImage(vector: ImageVector, size: Float = 20f, scale: Float = UIScreen.mainScreen.scale.toFloat(),
+    direction: LayoutDirection = LayoutDirection.Ltr): UIImage {
+    require(size.isFinite() && size > 0 && scale.isFinite() && scale > 0)
+    val density = Density(scale)
+    val bitmap = coffeePeekVectorBitmap(vector, (size * scale).toInt().coerceAtLeast(1), density, direction)
+    return coffeePeekEncodeNativeImage(bitmap, scale.toDouble())
+}
 
 /** Keeps the actual design-system icon, including custom vectors without an SF Symbol equivalent. */
 @Composable
@@ -54,10 +64,14 @@ private fun coffeePeekRenderNativeImage(painter: Painter, density: Density, dire
     CanvasDrawScope().draw(density, direction, Canvas(bitmap), Size(side.toFloat(), side.toFloat())) {
         with(painter) { draw(size) }
     }
+    return coffeePeekEncodeNativeImage(bitmap, density.density.toDouble())
+}
+
+private fun coffeePeekEncodeNativeImage(bitmap: ImageBitmap, scale: Double): UIImage {
     val image = Image.makeFromBitmap(bitmap.asSkiaBitmap())
     try {
         val data = checkNotNull(image.encodeToData())
-        try { return coffeePeekTemplateImage(data.bytes, density.density.toDouble()) }
+        try { return coffeePeekTemplateImage(data.bytes, scale) }
         finally { data.close() }
     } finally {
         image.close()

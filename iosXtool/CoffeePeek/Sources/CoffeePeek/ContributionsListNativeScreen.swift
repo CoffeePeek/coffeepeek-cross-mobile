@@ -180,6 +180,7 @@ private struct ContributionNativeCard: View {
     }
 }
 
+@MainActor
 private func contributionsListPreview() -> some View {
     ContributionsListNativeScreen(
         kind: "shops",

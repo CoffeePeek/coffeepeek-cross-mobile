@@ -17,5 +17,9 @@ internal val LocalIosThemeSettingsController =
 internal fun iosThemeSettingsContent(): () -> UIViewController {
     val factory = LocalIosThemeSettingsController.current
     val languageTag by rememberUpdatedState(LocalCoffeePeekLanguageTag.current)
-    return { factory(IosThemeSettings(AppThemePort()), languageTag, Navigator::popBack) }
+    return iosThemeSettingsContent(factory) { languageTag }
 }
+
+internal fun iosThemeSettingsContent(factory: (IosThemeSettings, String, () -> Unit) -> UIViewController,
+    language: () -> String,
+): () -> UIViewController = { factory(IosThemeSettings(AppThemePort()), language(), Navigator::popBack) }

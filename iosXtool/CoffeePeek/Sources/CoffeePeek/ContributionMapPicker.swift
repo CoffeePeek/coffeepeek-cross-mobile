@@ -26,10 +26,10 @@ struct ContributionMapContent<Map: View>: View {
     var body: some View {
         ZStack {
             map().overlay {
-                Image(systemName: "mappin").font(.system(size: 34, weight: .semibold))
+                Image(systemName: "mappin.circle.fill").font(.system(size: 40, weight: .semibold))
                     .foregroundStyle(CoffeePeekNativeStyle.accent)
                     .shadow(color: .black.opacity(0.5), radius: 3, y: 1)
-                    .offset(y: -14)
+                    .offset(y: -20)
                     .allowsHitTesting(false)
                     .accessibilityLabel(strings.text("map_pin"))
             }.ignoresSafeArea()
@@ -37,9 +37,12 @@ struct ContributionMapContent<Map: View>: View {
                 HStack {
                     mapControl("xmark", label: strings.text("map_cancel"), action: onCancel)
                     Spacer()
-                    mapControl("location.fill", label: strings.text("map_my_location"), action: onLocate)
                 }
                 Spacer()
+                HStack {
+                    Spacer()
+                    mapControl("location.fill", label: strings.text("map_my_location"), action: onLocate)
+                }.padding(.bottom, 8)
                 VStack(alignment: .leading, spacing: 12) {
                     Text(strings.text("map_hint")).font(CoffeePeekNativeStyle.font(16, weight: "SemiBold", relativeTo: .headline))
                     if let state {
@@ -60,9 +63,9 @@ struct ContributionMapContent<Map: View>: View {
         Button(action: action) {
             Image(systemName: symbol).font(.system(size: 18, weight: .semibold))
                 .frame(width: 48, height: 48)
-                .background(.regularMaterial, in: Circle())
         }
         .buttonStyle(.plain)
+        .shopDetailGlassCircle()
         .accessibilityLabel(label)
     }
 }
@@ -76,7 +79,7 @@ private struct ContributionMapCanvas: UIViewRepresentable {
 }
 
 @MainActor
-final class ContributionLocationPermission: NSObject, CLLocationManagerDelegate {
+final class ContributionLocationPermission: NSObject, @MainActor CLLocationManagerDelegate {
     private let manager = CLLocationManager()
     private var completion: ((Bool) -> Void)?
 
@@ -108,6 +111,7 @@ final class ContributionLocationPermission: NSObject, CLLocationManagerDelegate 
 
 
 
+@MainActor
 private func contributionMapSample() -> some View {
     ContributionMapContent(state: ContributionMapSnapshot(latitude: 53.9, longitude: 27.5,
         cameraLatitude: nil, cameraLongitude: nil, address: "Sandbox street, 1",

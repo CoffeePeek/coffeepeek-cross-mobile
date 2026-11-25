@@ -184,7 +184,7 @@ internal fun dayName(day: Int) = when (day) {
     else -> Res.string.shop_schedule_sunday
 }
 
-private fun shortDayName(day: Int) = when (day) {
+internal fun shortDayName(day: Int) = when (day) {
     1 -> Res.string.shop_schedule_monday_short
     2 -> Res.string.shop_schedule_tuesday_short
     3 -> Res.string.shop_schedule_wednesday_short

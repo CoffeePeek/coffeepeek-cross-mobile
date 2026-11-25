@@ -2,6 +2,7 @@ import ComposeApp
 import SwiftUI
 import UIKit
 
+@MainActor
 private final class ShelfNativeCameraModel: ObservableObject {
     let screen: IosShelfScreen
     @Published var camera: IosShelfNativeCamera?
@@ -15,7 +16,7 @@ private final class ShelfNativeCameraModel: ObservableObject {
         observation = camera?.observe { [weak self] in self?.state = $0 }
     }
     func stop() { observation?.cancel(); observation = nil; screen.stopCamera(); camera = nil; state = nil }
-    deinit { observation?.cancel(); camera?.close() }
+    isolated deinit { observation?.cancel(); camera?.close() }
 }
 
 struct ShelfNativeCameraScreen: View {

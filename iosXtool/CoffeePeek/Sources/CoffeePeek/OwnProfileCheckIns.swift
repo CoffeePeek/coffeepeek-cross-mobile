@@ -63,54 +63,73 @@ private struct OwnProfileCheckInsContent: View {
     }
 }
 
-struct OwnProfileFollowersSheet: View {
+struct OwnProfileConnectionsSheet: View {
     @ObservedObject var model: OwnProfileModel
 
     var body: some View {
-        let followers = model.state.followers
-        VStack(alignment: .leading) {
-            HStack {
-                Text(model.strings["profile_stat_followers"]).font(.headline).accessibilityAddTraits(.isHeader)
-                Spacer()
-                Button(model.strings["profile_cancel"], action: model.profile.closeFollowers)
-                    .frame(minHeight: 44)
-            }
-            ScrollView {
-                LazyVStack(alignment: .leading, spacing: 6) {
-                    ForEach(followers.people, id: \.slug) { person in
-                        Button { model.profile.openFollower(slug: person.slug) } label: {
-                            HStack(spacing: 8) {
-                                OwnProfileImage(url: person.avatar, profile: model.profile, symbol: "person.crop.circle")
-                                    .frame(width: 40, height: 40).clipShape(Circle())
-                                Text(person.name)
-                                Spacer()
-                                Image(systemName: "chevron.right")
-                            }
-                            .frame(minHeight: 44)
-                            .contentShape(Rectangle())
-                        }
-                        .buttonStyle(.plain)
-                    }
-                    if followers.loading {
-                        ProgressView().frame(maxWidth: .infinity, minHeight: 44)
-                    } else if followers.failed {
-                        OwnProfileRetry(message: model.strings["profile_followers_failed"], strings: model.strings,
-                                        retry: model.profile.retryFollowers)
-                    } else if followers.more {
-                        Button(model.strings["profile_load_more"], action: model.profile.moreFollowers)
-                            .frame(minHeight: 44)
-                    } else if followers.people.isEmpty {
-                        Text(model.strings["profile_followers_empty"]).foregroundStyle(CoffeePeekNativeStyle.secondary)
-                    }
-                }
-            }
-        }
-        .padding(16)
-        .foregroundStyle(CoffeePeekNativeStyle.foreground)
-        .background(CoffeePeekNativeStyle.background)
+        CoffeePeekProfileConnectionsSheet(state: model.state.connections, strings: model.strings,
+            loadImage: profileImageLoader(model.profile), close: model.profile.closeConnections,
+            select: { model.profile.openConnections(followers: $0) }, retry: model.profile.retryConnections,
+            more: model.profile.moreConnections, openUser: { model.profile.openConnection(slug: $0) })
     }
 }
 
+struct CoffeePeekProfileConnectionsSheet: View {
+    let state: IosPublicProfileConnections
+    let strings: OwnProfileStrings
+    let loadImage: ProfileImageLoader
+    let close: () -> Void
+    let select: (Bool) -> Void
+    let retry: () -> Void
+    let more: () -> Void
+    let openUser: (String) -> Void
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            CoffeePeekProfileSheetHeader(title: strings[state.followers ? "profile_followers" : "profile_following_title"],
+                closeLabel: strings["profile_close"], close: close)
+            Picker(strings["profile_followers"], selection: Binding(get: { state.followers }, set: { select($0) })) {
+                Text(strings["profile_followers"]).tag(true)
+                Text(strings["profile_following_title"]).tag(false)
+            }.pickerStyle(.segmented)
+            people
+        }.padding(16).foregroundStyle(CoffeePeekNativeStyle.foreground)
+            .background(CoffeePeekNativeStyle.background)
+            .presentationDetents([.medium, .large]).presentationDragIndicator(.visible)
+    }
+
+    private var people: some View {
+        ScrollView {
+            LazyVStack(alignment: .leading, spacing: 6) {
+                ForEach(state.people, id: \.slug) { person in
+                    CoffeePeekProfilePersonRow(person: person, hint: strings["profile_open_user"], loadImage: loadImage) {
+                        openUser(person.slug)
+                    }
+                }
+                if state.loading { ProgressView().frame(maxWidth: .infinity, minHeight: 44) }
+                else if state.failed {
+                    OwnProfileRetry(message: strings[state.followers ? "profile_followers_failed" : "profile_following_failed"],
+                        strings: strings, retry: retry)
+                } else if state.people.isEmpty {
+                    Text(strings[state.followers ? "profile_followers_empty" : "profile_following_empty"])
+                        .foregroundStyle(CoffeePeekNativeStyle.secondary)
+                } else if state.more { Button(strings["profile_load_more"], action: more).frame(minHeight: 44) }
+            }
+        }.id(state.followers)
+    }
+}
+
+@MainActor
+private func profileConnectionsSheetPreview(_ followers: Bool) -> some View {
+    CoffeePeekProfileConnectionsSheet(state: IosPublicProfileConnections(open: true, followers: followers,
+        loading: false, failed: false, more: false, people: [IosOwnProfileFollower(slug: "preview", name: "CoffeePeek", avatar: nil)]),
+        strings: OwnProfileStrings(languageTag: "ru"), loadImage: { _, _ in nil },
+        close: {}, select: { _ in }, retry: {}, more: {}, openUser: { _ in })
+}
+#Preview("Followers sheet light") { profileConnectionsSheetPreview(true).preferredColorScheme(.light) }
+#Preview("Following sheet dark") { profileConnectionsSheetPreview(false).preferredColorScheme(.dark) }
+
+@MainActor
 private func ownProfileCheckInPreview(language: String) -> some View {
     let brew = IosOwnProfileBrew(bean: "Ethiopia", roaster: "CoffeePeek", method: "pour_over",
                                 dose: "15", seconds: 180, taste: 4, cover: nil, coffee: nil)
@@ -130,6 +149,7 @@ private func ownProfileCheckInPreview(language: String) -> some View {
     ownProfileCheckInPreview(language: "be").preferredColorScheme(.dark)
 }
 
+@MainActor
 private func ownProfileHistoryPreview(selectedDate: String?) -> some View {
     let rows = [false, true].map { home in
         IosOwnProfileCheckIn(id: home ? "home:fixture" : "shop:fixture", name: "CoffeePeek", avatar: nil,
@@ -138,7 +158,7 @@ private func ownProfileHistoryPreview(selectedDate: String?) -> some View {
     }
     let state = IosOwnProfileState(active: true, identity: nil, loading: false, refreshing: false,
         failed: false, refreshFailed: false, checkInsLoading: false, checkInsFailed: false, checkIns: rows,
-        followers: IosOwnProfileFollowers(open: false, loading: false, failed: false, more: false, people: []),
+        connections: IosPublicProfileConnections(open: false, followers: true, loading: false, failed: false, more: false, people: []),
         moreCheckIns: false, loadingMoreCheckIns: false, moreCheckInsFailed: false, selectedDate: selectedDate)
     return ScrollView {
         OwnProfileCheckInsContent(state: state, strings: OwnProfileStrings(languageTag: "ru")).padding(16)

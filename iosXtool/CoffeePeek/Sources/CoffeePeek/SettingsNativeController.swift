@@ -63,6 +63,7 @@ private func hostSettingsTab(_ model: IosSettingsTab) -> UIViewController {
     )
 }
 
+@MainActor
 private final class SettingsTabLayout: ObservableObject {
     @Published var headerTopInset: CGFloat = 0
 }
@@ -111,7 +112,7 @@ private final class SettingsHostingController<Content: View>: UIHostingControlle
         safeAreaChanged?(view.safeAreaInsets.top)
     }
 
-    deinit {
+    isolated deinit {
         screen.close()
     }
 }

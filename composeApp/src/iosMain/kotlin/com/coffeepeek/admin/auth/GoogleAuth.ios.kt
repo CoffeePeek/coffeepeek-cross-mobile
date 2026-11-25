@@ -2,6 +2,8 @@ package com.coffeepeek.admin.auth
 
 import com.coffeepeek.admin.config.AppConfig
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import kotlin.coroutines.resume
 
 object IosGoogleAuthBridge {
@@ -21,7 +23,11 @@ object IosGoogleAuthBridge {
 
     fun isConfigured(): Boolean = configured && signInHandler != null
 
-    suspend fun signIn(): Result<String> = suspendCancellableCoroutine { continuation ->
+    suspend fun signIn(): Result<String> = withContext(Dispatchers.Main) {
+        awaitToken()
+    }
+
+    private suspend fun awaitToken(): Result<String> = suspendCancellableCoroutine { continuation ->
         val handler = signInHandler
         if (!configured || handler == null) {
             continuation.resume(Result.failure(IllegalStateException("Google Sign-In не настроен")))
@@ -38,8 +44,9 @@ object IosGoogleAuthBridge {
         }
     }
 
-    fun signOut() {
+    suspend fun signOut() = withContext(Dispatchers.Main) {
         signOutHandler?.invoke()
+        Unit
     }
 }
 

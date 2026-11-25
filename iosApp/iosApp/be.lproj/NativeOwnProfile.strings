@@ -75,3 +75,22 @@
 
 "profile_check_ins_clear_date" = "Скінуць дату";
 "profile_check_in_open" = "Адкрыць чэкін";
+
+"profile_connections_followers_one" = "%d падпісчык";
+"profile_connections_followers_few" = "%d падпісчыкі";
+"profile_connections_followers_many" = "%d падпісчыкаў";
+"profile_connections_following_one" = "%d падпіска";
+"profile_connections_following_few" = "%d падпіскі";
+"profile_connections_following_many" = "%d падпісак";
+
+"profile_followers" = "Падпісчыкі";
+
+"profile_following_title" = "Падпіскі";
+
+"profile_following_empty" = "Пакуль няма падпісак";
+
+"profile_following_failed" = "Не ўдалося загрузіць падпіскі";
+
+"profile_close" = "Закрыць";
+
+"profile_open_user" = "Адкрыць профіль";

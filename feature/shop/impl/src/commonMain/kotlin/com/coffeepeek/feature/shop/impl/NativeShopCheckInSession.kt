@@ -14,6 +14,9 @@ import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopCheckInFormEvent
 import com.coffeepeek.feature.shop.impl.ui.compose.model.ShopCheckInFormState
 import com.coffeepeek.feature.shop.impl.ui.data.ShopCheckInDraftStore
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.filter
 import kotlin.time.Clock
 import kotlin.time.Instant
 
@@ -28,11 +31,13 @@ class NativeShopCheckInSession(
 ) {
     private val model = ShopCheckInCreateViewModel(initial, repository, drafts, now, analytics, publication)
     private val store = ViewModelStore().apply { put("native-shop-check-in", model) }
-    private var closed = false
-    val state = model.state.map { NativeShopCheckInSnapshot(it, !closed) }
-    val events = model.events.map { it.nativeEvent() }
+    private val closed = MutableStateFlow(false)
+    private val empty = ShopCheckInFormState(initial.copy(text = "", rating = ShopRating(0, 0, 0), drinkSlug = null,
+        customDrinkName = null, photos = emptyList()), isLoading = false)
+    val state = combine(model.state, closed) { state, closed -> NativeShopCheckInSnapshot(if (closed) empty else state, !closed) }
+    val events = model.events.filter { !closed.value }.map { it.nativeEvent() }
 
-    fun current() = NativeShopCheckInSnapshot(model.state.value, !closed)
+    fun current() = NativeShopCheckInSnapshot(if (closed.value) empty else model.state.value, !closed.value)
     fun noteChanged(value: String) = send(ShopCheckInFormAction.TextChanged(value))
     fun ratingChanged(place: Int, service: Int, coffee: Int) = send(ShopCheckInFormAction.RatingChanged(ShopRating(place, service, coffee)))
     fun visitChanged(iso: String) = send(ShopCheckInFormAction.VisitDateChanged(iso))
@@ -53,13 +58,13 @@ class NativeShopCheckInSession(
     fun goToFeed() = send(ShopCheckInFormAction.GoToFeed)
 
     fun close() {
-        if (closed) return
-        closed = true
+        if (closed.value) return
+        closed.value = true
         store.clear()
     }
 
     private fun send(action: ShopCheckInFormAction) {
-        if (!closed) model.onAction(action)
+        if (!closed.value) model.onAction(action)
     }
 }
 

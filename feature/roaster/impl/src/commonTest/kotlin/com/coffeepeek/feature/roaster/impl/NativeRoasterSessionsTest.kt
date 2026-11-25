@@ -14,8 +14,10 @@ class NativeRoasterSessionsTest {
     private val store = ViewModelStore()
     private val repository = FakeRoasterRepository()
     private val favorites = FakeFavorites()
+    private val owners = mutableListOf<() -> Unit>()
     @BeforeTest fun before() = Dispatchers.setMain(dispatcher)
     @AfterTest fun after() {
+        owners.forEach { it() }
         store.clear()
         Dispatchers.resetMain()
     }
@@ -81,5 +83,34 @@ class NativeRoasterSessionsTest {
         session.dismissMessage()
         runCurrent()
         assertNull(session.current().messageKey)
+    }
+
+    @Test fun standaloneListClosesItsModelAndRejectsLateNativeCommands() = runTest(dispatcher) {
+        val session = createNativeRoasterListSession(repository, favorites).also { owners.add(it::close) }
+        runCurrent()
+        val reads = repository.catalogCalls
+        session.close()
+        session.close()
+        session.retry()
+        session.favorite("a")
+        runCurrent()
+        assertEquals(reads, repository.catalogCalls)
+        assertTrue(favorites.changes.isEmpty())
+        assertTrue(session.current().cards.isEmpty())
+    }
+
+    @Test fun standaloneDetailClosesItsModelAndRejectsLateNativeCommands() = runTest(dispatcher) {
+        val session = createNativeRoasterDetailSession("a", repository, favorites).also { owners.add(it::close) }
+        runCurrent()
+        val reads = repository.detailCalls.size
+        session.close()
+        session.close()
+        session.retry()
+        session.favorite()
+        session.photo("https://fixture.invalid/photo")
+        runCurrent()
+        assertEquals(reads, repository.detailCalls.size)
+        assertTrue(favorites.changes.isEmpty())
+        assertNull(session.current().details)
     }
 }

@@ -34,6 +34,7 @@ private struct ShelfNativeGridContent: View {
     let messageExpired: (String) -> Void
     @State private var dragged: String?
     @State private var settingsShown = false
+    @State private var dropRequest: ShelfNativeDrop?
 
     var body: some View {
         ScrollView {
@@ -46,7 +47,12 @@ private struct ShelfNativeGridContent: View {
         }
         .refreshable { action("refresh", nil) }
         .safeAreaInset(edge: .bottom) { if own && (state.undo || state.failure != nil) { message } }
-        .onDisappear { dragged = nil }
+        .onDisappear { dragged = nil; dropRequest = nil }
+        .task(id: dropRequest?.id) {
+            guard let request = dropRequest else { return }
+            await request.load()
+            if dropRequest?.id == request.id { dropRequest = nil }
+        }
          .sheet(isPresented: $settingsShown) {
             ShelfNativeVisibilitySettings(state: state, strings: strings, setVisible: setVisible,
                 retry: { action("retryVisibility", nil) }, close: { settingsShown = false })
@@ -140,10 +146,7 @@ private struct ShelfNativeGridContent: View {
     private func acceptDrop(_ providers: [NSItemProvider], perform: @escaping (String) -> Void) -> Bool {
         guard let expected = dragged, let provider = providers.first(where: { $0.canLoadObject(ofClass: NSString.self) }) else { return false }
         dragged = nil
-        provider.loadObject(ofClass: NSString.self) { object, _ in
-            guard object as? String == "coffeepeek-shelf:" + expected else { return }
-            DispatchQueue.main.async { perform(expected) }
-        }
+        dropRequest = ShelfNativeDrop(provider: provider, expected: expected, perform: perform)
         return true
     }
 
@@ -154,6 +157,28 @@ private struct ShelfNativeGridContent: View {
             if state.undo { Button(strings["shelf_undo"]) { action("undo", nil) } }
             Button { action("dismiss", nil) } label: { Label(strings["shelf_sheet_close"], systemImage: "xmark").labelStyle(.iconOnly) }
         }.padding().background(CoffeePeekNativeStyle.surface)
+    }
+}
+
+@MainActor
+private struct ShelfNativeDrop: Identifiable {
+    let id = UUID()
+    let provider: NSItemProvider
+    let expected: String
+    let perform: (String) -> Void
+
+    func load() async {
+        let expected = self.expected
+        let response = AsyncStream<Bool>.makeStream(bufferingPolicy: .bufferingNewest(1))
+        let progress = provider.loadObject(ofClass: NSString.self) { object, _ in
+            response.continuation.yield(object as? String == "coffeepeek-shelf:" + expected)
+            response.continuation.finish()
+        }
+        defer { progress.cancel(); response.continuation.finish() }
+        for await accepted in response.stream {
+            if accepted && !Task.isCancelled { perform(expected) }
+            return
+        }
     }
 }
 
@@ -185,6 +210,7 @@ private struct ShelfNativeVisibilitySettings: View {
 
 }
 
+@MainActor
 private func shelfGridPreview() -> some View {
     let state = shelfNativePreviewState()
     return ShelfNativeGridContent(state: state, strings: ShelfNativeStrings("ru"), own: true,

@@ -13,6 +13,7 @@ private final class OwnershipNativeHostingController: UIHostingController<Owners
         let model = OwnershipNativeModel(screen)
         self.model = model
         super.init(rootView: OwnershipNativeHost(model: model))
+        screen.bindPhotoPresenter { [weak self] in self }
     }
     @MainActor required dynamic init?(coder: NSCoder) { return nil }
     override func viewDidAppear(_ animated: Bool) {
@@ -29,9 +30,10 @@ private final class OwnershipNativeHostingController: UIHostingController<Owners
     }
     func presentationControllerShouldDismiss(_ presentationController: UIPresentationController) -> Bool { false }
     func presentationControllerDidAttemptToDismiss(_ presentationController: UIPresentationController) { model.send(.action("back")) }
-    deinit { model.screen.close() }
+    isolated deinit { model.screen.close() }
 }
 
+@MainActor
 final class OwnershipNativeModel: ObservableObject {
     let screen: IosOwnershipScreen
     @Published var state: IosOwnershipState
@@ -70,7 +72,7 @@ final class OwnershipNativeModel: ObservableObject {
             return CoffeePeekCardImageRequest { job.cancel() }
         }
     }
-    deinit { observation?.cancel() }
+    isolated deinit { observation?.cancel() }
 }
 
 enum OwnershipNativeIntent {
@@ -126,13 +128,17 @@ struct OwnershipNativeContent: View {
     }
 
     private var header: some View {
-        HStack {
-            if !tab {
-                Button { send(.action("back")) } label: { Label(strings["ownership_back"], systemImage: "chevron.backward").labelStyle(.iconOnly).frame(width: 44, height: 44) }
+        Group {
+            if tab {
+                HStack {
+                    Text(title).font(.largeTitle.weight(.semibold)).accessibilityAddTraits(.isHeader)
+                    Spacer()
+                }.padding(.horizontal, 16).padding(.vertical, 8)
+            } else {
+                CoffeePeekNativeNavigationHeader(title: title, backLabel: strings["ownership_back"],
+                    back: { send(.action("back")) })
             }
-            Text(title).font(tab ? .largeTitle.weight(.semibold) : .headline).accessibilityAddTraits(.isHeader)
-            Spacer()
-        }.padding(.horizontal, 16).padding(.vertical, 8).background(CoffeePeekNativeStyle.background)
+        }.background(CoffeePeekNativeStyle.background)
     }
     private var title: String {
         if tab { return strings["ownership_business"] }
@@ -189,6 +195,7 @@ func ownershipPreviewState(_ destination: String = "Overview") -> IosOwnershipSt
         roastersPage: 1, roastersNext: false, contact: "owner@example.test", evidence: "Representative", evidencePhotos: [],
         claim: ownershipPreviewClaim(), editorKind: "Roaster", editorPhotos: [], fields: [IosOwnershipField(name: "Name", value: "CoffeePeek Roasters"), IosOwnershipField(name: "About", value: "Coffee")])
 }
+@MainActor
 private func ownershipTabPreview() -> some View {
     OwnershipNativeContent(state: ownershipPreviewState(), tab: true, strings: OwnershipNativeStrings("ru"),
         send: { _ in }, imageLoader: { _, _ in nil }, qrLink: { _ in nil }, shareQr: { _, _ in })

@@ -30,8 +30,8 @@ struct CommunityFeedNativeStatus: View {
     }
 
     private var signIn: some View {
-        Button { perform("signIn") } label: { Text(state.labels.signIn).frame(maxWidth: .infinity, minHeight: 32) }
-            .buttonStyle(.borderedProminent).buttonBorderShape(.capsule).controlSize(.large).foregroundStyle(.black)
+        CoffeePeekNativeActionButton(title: state.labels.signIn, fontSize: 16) { perform("signIn") }
+            .fixedSize(horizontal: false, vertical: true)
     }
 
     private static let errorMascot: UIImage? = {

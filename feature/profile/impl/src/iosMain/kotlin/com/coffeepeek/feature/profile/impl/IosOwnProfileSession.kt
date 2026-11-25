@@ -44,11 +44,13 @@ class OwnProfileSnapshot internal constructor(own: OwnProfileState, public: Publ
     val refreshing = active && own.isRefreshing
     val failed = active && own.error != null
     val refreshFailed = active && own.refreshError != null
-    val followersOpen = publicProfile != null && public?.connectionKind == PublicProfileConnectionKind.Followers
-    val followers = public?.connections.orEmpty().takeIf { followersOpen }.orEmpty()
-    val followersLoading = followersOpen && (public?.isLoadingConnections == true || public?.isLoadingMoreConnections == true)
-    val followersFailed = followersOpen && public?.connectionsError != null
-    val moreFollowers = followersOpen && public?.hasMoreConnections == true
+    val followingCount = public?.followingCount.takeIf { publicProfile != null }
+    val connectionKind = public?.connectionKind.takeIf { publicProfile != null }
+    val connectionsOpen = connectionKind != null
+    val connections = public?.connections.orEmpty().takeIf { connectionsOpen }.orEmpty()
+    val connectionsLoading = connectionsOpen && (public?.isLoadingConnections == true || public?.isLoadingMoreConnections == true)
+    val connectionsFailed = connectionsOpen && public?.connectionsError != null
+    val moreConnections = connectionsOpen && public?.hasMoreConnections == true
 }
 
 class OwnProfileCheckInSnapshot internal constructor(val checkIn: PublicProfileCheckIn) {
@@ -105,10 +107,12 @@ class IosOwnProfileSession internal constructor(
         if (isCurrent()) own.onAction(OwnProfileAction.Logout)
     }
 
-    fun openFollowers() = publicAction(PublicProfileAction.OpenConnections(PublicProfileConnectionKind.Followers))
-    fun closeFollowers() = publicAction(PublicProfileAction.CloseConnections)
-    fun retryFollowers() = publicAction(PublicProfileAction.RetryConnections)
-    fun moreFollowers() = publicAction(PublicProfileAction.LoadMoreConnections)
+    fun openConnections(followers: Boolean) = publicAction(PublicProfileAction.OpenConnections(
+        if (followers) PublicProfileConnectionKind.Followers else PublicProfileConnectionKind.Following))
+    fun closeConnections() = publicAction(PublicProfileAction.CloseConnections)
+    fun retryConnections() = publicAction(PublicProfileAction.RetryConnections)
+    fun moreConnections() = publicAction(PublicProfileAction.LoadMoreConnections)
+    fun refreshFollowingCount() = publicAction(PublicProfileAction.RefreshFollowingCount)
 
     fun close() {
         invalidate("closed")

@@ -451,6 +451,5 @@ private fun previewState(): ShopDetailState {
 private fun ShopDetailPresentationContent(state: ShopDetailState, onAction: (ShopDetailAction) -> Unit,
     distanceLabel: String?, formatCheckInDate: (String) -> String, formatMenuDate: (String) -> String,
     snackbarHostState: SnackbarHostState) {
-    if (PlatformShopDetailContent(state, onAction, distanceLabel, formatCheckInDate, formatMenuDate, snackbarHostState)) return
     ShopDetailScreenContent(state, onAction, distanceLabel, formatCheckInDate, formatMenuDate, snackbarHostState)
 }

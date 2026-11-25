@@ -281,9 +281,13 @@ private fun RootNavHost(
     }
 
     private val _openLoginAfterSessionEnd = MutableStateFlow(false)
+    internal val nativeLoginAfterSessionEnd = _openLoginAfterSessionEnd.asStateFlow()
+    internal fun consumeNativeLoginAfterSessionEnd() = _openLoginAfterSessionEnd.compareAndSet(true, false)
     private val pendingAppLink = MutableStateFlow<Screen?>(null)
     // Keep the guide out of an app-link launch after the destination consumes the pending route.
     private val hasOpenedAppLink = MutableStateFlow(false)
+    internal val nativePendingLink = pendingAppLink.asStateFlow()
+    internal val nativeOpenedLink = hasOpenedAppLink.asStateFlow()
     private val checkInSignInHandoff = ShopCheckInSignInHandoff()
 
     internal fun shopCheckInSignInAttempt(shopId: String, sessions: SessionReader): ShopCheckInSignInHandoff.Attempt =
@@ -301,6 +305,9 @@ private fun RootNavHost(
     fun consumeTabSelection() {
         _pendingTabSelection.value = null
     }
+
+    internal fun consumeNativeTab(expected: Screen) = _pendingTabSelection.compareAndSet(expected, null)
+    internal fun consumeNativeLink(expected: Screen) = pendingAppLink.compareAndSet(expected, null)
 
     fun openLoginAfterSessionEnd() {
         _openLoginAfterSessionEnd.value = true
@@ -397,70 +404,68 @@ private fun RootNavHost(
         }
     }
 
+    internal fun prepareRootTransition(transition: RootSessionTransition) {
+        if (transition.resetsNavigation) clearPlatformNavigationState()
+        if (transition.clearsPrivateRequests) clearSessionNavigationRequests()
+    }
+
+    internal suspend fun acceptRootTransition(transition: RootSessionTransition) {
+        if (transition.current.isLoggedIn) {
+            checkInSignInHandoff.take()?.let { pendingAppLink.compareAndSet(null, it) }
+        } else {
+            ErrorHandler.clearError()
+            LoadingHandler.clearLoading()
+        }
+    }
+
     @Composable
     operator fun invoke(
         vm: NavigatorViewModel = platformViewModel(),
     ) {
         val errorMessage = ErrorHandler.errorMessage.collectAsState().value
         val loading = LoadingHandler.isLoading.collectAsState().value
-        val session by vm.navigationSession.collectAsState()
-        val isLoggedIn = session?.isLoggedIn
-        var previousSession by remember { mutableStateOf<RootNavigationSession?>(null) }
-        var navigationGeneration by remember { mutableIntStateOf(0) }
+        val state by vm.navigationState.collectAsState()
 
         ErrorDialog(
             show = errorMessage != null,
             message = errorMessage ?: "",
             onDismiss = { ErrorHandler.clearError() }
         )
-        LaunchedEffect(session) {
-            val currentSession = session ?: return@LaunchedEffect
-            val loggedIn = currentSession.isLoggedIn
-            if (previousSession != null && previousSession != currentSession) {
-                clearPlatformNavigationState()
-                navigationGeneration++
-                if (!loggedIn || previousSession?.isLoggedIn == true) clearSessionNavigationRequests()
-            }
-            previousSession = currentSession
-            if (loggedIn) {
-                vm.guestOnboardingDismissed = false
-                checkInSignInHandoff.take()?.let { pendingAppLink.compareAndSet(null, it) }
-            } else {
-                ErrorHandler.clearError()
-                LoadingHandler.clearLoading()
-                if (_openLoginAfterSessionEnd.value) {
-                    _openLoginAfterSessionEnd.value = false
-                    yield()
-                    navigate(Screen.Auth)
-                }
-            }
-        }
-
-        NavigationContent(vm, isLoggedIn, previousSession?.isLoggedIn, navigationGeneration, loading)
+        NavigationContent(vm, state, loading)
     }
 
     @Composable
     private fun NavigationContent(
         vm: NavigatorViewModel,
-        isLoggedIn: Boolean?,
-        previousLoginState: Boolean?,
-        generation: Int,
+        state: RootNavigationState,
         loading: Boolean,
     ) {
         val openedAppLink by hasOpenedAppLink.collectAsState()
+        val isLoggedIn = state.session?.isLoggedIn
+        DeferredLogin(vm, isLoggedIn)
         Box(modifier = Modifier.fillMaxSize()) {
             if (isLoggedIn != null) {
-                key(generation, isLoggedIn) {
+                key(state.generation, isLoggedIn) {
                     BaseNavigator(isLoggedIn)
                 }
             }
             LoadingDialog(show = loading)
-            if (isLoggedIn == false && previousLoginState == false && !openedAppLink && !vm.guestOnboardingDismissed) {
+            if (isLoggedIn == false && !openedAppLink && !state.onboardingDismissed) {
                 GuestCheckInOnboardingHost { destination ->
-                    if (vm.guestOnboardingDismissed) return@GuestCheckInOnboardingHost
-                    vm.guestOnboardingDismissed = true
-                    destination?.let(::navigate)
+                    if (vm.dismissOnboarding()) destination?.let(::navigate)
                 }
+            }
+        }
+    }
+
+    @Composable
+    private fun DeferredLogin(vm: NavigatorViewModel, isLoggedIn: Boolean?) {
+        val requested by _openLoginAfterSessionEnd.collectAsState()
+        LaunchedEffect(isLoggedIn, requested) {
+            if (isLoggedIn == false && requested) {
+                vm.dismissOnboarding()
+                yield()
+                if (consumeNativeLoginAfterSessionEnd()) navigate(Screen.Auth)
             }
         }
     }

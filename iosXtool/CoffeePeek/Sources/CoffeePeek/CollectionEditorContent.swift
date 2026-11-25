@@ -15,14 +15,14 @@ struct CollectionEditorContent<Cover: View>: View {
         VStack(alignment: .leading, spacing: 20) {
             HStack(alignment: .top, spacing: 16) {
                 cover()
-                TextField(strings["collections_name"], text: Binding(get: { title }, set: onTitle))
+                TextField(strings["collections_name"], text: Binding(get: { title }, set: { onTitle($0) }))
                     .textFieldStyle(.roundedBorder).disabled(!enabled)
             }
             Text(strings["collections_description"]).font(.caption).foregroundStyle(CoffeePeekNativeStyle.secondary)
             TextField(strings["collections_description_placeholder"],
-                text: Binding(get: { description }, set: onDescription), axis: .vertical)
+                text: Binding(get: { description }, set: { onDescription($0) }), axis: .vertical)
                 .lineLimit(3...6).textFieldStyle(.roundedBorder).disabled(!enabled)
-            Toggle(strings["collections_public_switch"], isOn: Binding(get: { isPublic }, set: onVisibility))
+            Toggle(strings["collections_public_switch"], isOn: Binding(get: { isPublic }, set: { onVisibility($0) }))
                 .tint(CoffeePeekNativeStyle.accent).disabled(!enabled)
             Text(strings[isPublic ? "collections_public_hint" : "collections_private_hint"])
                 .font(.caption).foregroundStyle(CoffeePeekNativeStyle.secondary)
@@ -42,7 +42,7 @@ struct CollectionProfilePreferenceContent: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             Text(strings["collections_settings"]).font(.title2).accessibilityAddTraits(.isHeader)
-            Toggle(strings["collections_profile_show"], isOn: Binding(get: { visible }, set: onVisibility))
+            Toggle(strings["collections_profile_show"], isOn: Binding(get: { visible }, set: { onVisibility($0) }))
                 .tint(CoffeePeekNativeStyle.accent).disabled(!enabled)
             Text(strings["collections_profile_choice_hint"]).font(.caption).foregroundStyle(CoffeePeekNativeStyle.secondary)
             if visible {
@@ -79,6 +79,7 @@ struct CollectionSummaryCard<Cover: View>: View {
     }
 }
 
+@MainActor
 private func collectionContentSample() -> some View {
     ScrollView {
         VStack(alignment: .leading, spacing: 24) {

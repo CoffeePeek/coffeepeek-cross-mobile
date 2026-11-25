@@ -40,8 +40,6 @@ internal fun DiscoveryTab(
     focus: MapFocus?,
     modifier: Modifier = Modifier,
 ) {
-    if (PlatformDiscoveryContent(searchViewModel, mapViewModel, host, roasters, analytics, callbacks,
-        bottomClearance, focus, modifier, picker = false)) return
     val state by searchViewModel.state.collectAsStateWithLifecycle()
     LaunchedEffect(searchViewModel, mapViewModel) {
         searchViewModel.state.map { it.criteria }.distinctUntilChanged().collect { mapViewModel.onAction(MapAction.SyncCriteria(it)) }

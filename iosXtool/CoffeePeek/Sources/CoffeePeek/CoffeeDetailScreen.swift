@@ -58,6 +58,7 @@ private struct CoffeeDetailHost: View {
     }
 }
 
+@MainActor
 private final class CoffeeDetailModel: ObservableObject {
     @Published private(set) var state: IosCoffeeDetailState
     @Published private(set) var viewer: IosPhotoViewer?
@@ -69,7 +70,7 @@ private final class CoffeeDetailModel: ObservableObject {
         state = detail.currentState()
     }
 
-    deinit {
+    isolated deinit {
         observation?.cancel()
         detail.close()
     }
@@ -155,7 +156,7 @@ private struct CoffeeDetailScreen: View {
                 .labelStyle(.iconOnly)
                 .frame(minWidth: 44, minHeight: 44)
                 .contentShape(Rectangle())
-        }
+        }.buttonStyle(.plain).shopDetailGlassCircle()
     }
 
     private var loadError: some View {
@@ -321,6 +322,7 @@ private struct CoffeeDetailScreen: View {
     }
 }
 
+@MainActor
 private func coffeeDetailPreview(languageTag: String, failed: Bool) -> some View {
     let product = IosCoffeeProduct(
         name: "Эфиопия", photo: nil, countries: "Эфиопия", productKind: "roasted_beans",

@@ -1,0 +1,285 @@
+# iOS native exit — 2026-11-25
+
+Status: native implementation connected; final integration/verification in progress. The owner requested completion of the remaining
+items in `IOS_NATIVE_UI_AUDIT_2026_11_25.md`, including the containers.
+
+Owner clarification: data, business logic and ViewModels stay in Kotlin/KMP;
+all active application UI, navigation and modal containers must be SwiftUI/UIKit.
+Build 3228 is a visible-UI checkpoint and does not satisfy the complete target.
+Root/route Compose hosts are required remaining work, not an accepted final state.
+
+Current root continuation supersedes the historical checkpoint statuses below:
+`MainViewController` constructs `IosNativeRoot` directly. Swift owns tabs, pushed
+controllers, headers, modal presentation and UIKit transition completion. The old
+Compose root/route controller and navigation memory were removed. Ordinary
+constructor-injected destinations retain feature-owned Kotlin sessions. A repeated
+read-only reachability audit found no active Compose UI destination or modal in
+either launcher; shared Android UI and unused platform adapters are not selected.
+This is static reachability evidence, not device acceptance or a release claim.
+
+Delivery instruction (owner, 2026-11-25): upload the resulting version to
+TestFlight after all requested fixes are finished. Use the existing
+`.github/workflows/ios-testflight.yml` archive/sign/upload pipeline for
+`com.coffeepeek`; the locally signed `com.coffeepeek.xcross` Debug package is a
+separate device-verification artifact. The current workflow permits main and a
+manual dispatch from codex/ios-native. Do not dispatch an unfinished checkpoint
+or describe workflow dispatch as a completed upload/Apple processing.
+
+## Decision and ownership
+
+Keep the existing KMP repositories, account guards and feature ViewModels. Move
+remaining presentation to SwiftUI/UIKit and make feature sessions explicitly owned
+by their native controller. Application composition owns native root navigation,
+global modal arbitration, platform configuration and adapters. No new Gradle
+modules, dependencies or second application are needed.
+
+```mermaid
+flowchart TD
+    App[Native application lifecycle] --> Root[UIKit root navigation]
+    Root --> Controller[SwiftUI / UIKit feature controller]
+    Controller --> Session[Feature-owned KMP session]
+    Session --> VM[Shared feature ViewModel]
+    VM --> Repository[Existing domain repository contracts]
+    Root --> Ports[Root platform ports: theme, session, analytics, links]
+```
+
+This replaces implicit composition lifetime with explicit start/observe/close.
+Cancellation must stop observations and media work. An account change must clear
+private state and prevent late results. Native modal dismissal and model disposal
+must each run once, including interactive dismissal and account invalidation.
+
+## Checkpoints and acceptance
+
+1. Collections membership and quick creation: reuse SavedCollectionsViewModel,
+   account revisions, membership validation, decorated repository analytics and
+   favorite synchronization. Native search, grouped lists, errors, retry, keyboard,
+   cancellation, busy guards and quick-create validation must remain available.
+2. Author operation status: replace the last visible Compose contour with the
+   existing native contour loader; preserve accessibility and operation lifetime.
+3. Native modal paths: Home create/edit, brew from shelf, community edit/report,
+   ownership claim and snackbar placement. Retire the old iOS wrapper when its
+   last active consumer has been replaced. Common Android UI remains supported.
+4. Root and route bootstrap: extract plain feature session factories before
+   removing Compose roots. Preserve foreground work, update/guest prompts, theme,
+   language, navigation/deep links, consent and analytics visibility ownership.
+   A native screen embedded in a Compose root does not satisfy this checkpoint.
+
+## Verification
+
+Use feature unit/contract tests for request races, account changes, close and
+failure recovery. Compile affected shared and iOS modules; assemble Android
+directDebug including packaged DEX checks with `--max-workers=6`. Do not add UI or
+screenshot automation. Add colocated light/dark previews for native components.
+Build and sign the native application only after sources are frozen; install an
+in-place update on the previously agreed USB iPhone when available. Manual checks
+must cover light/dark, larger text, safe areas, keyboard, swipe/back/cancel and
+modal placement without real-account writes. Compilation, previews and fake
+contracts do not certify device behavior or live persistence.
+
+## Risks and alternatives
+
+Removing MainViewController alone would lose composition-owned session, theme,
+foreground and navigation collectors. Keeping a transparent Compose root would
+hide rather than finish the container migration. Reimplementing repository logic
+in Swift would fork account/concurrency rules. The selected incremental session
+approach preserves the shared behavior, at the cost of explicit lifetime adapters.
+
+## Evidence
+
+- Implemented native membership/quick creation, native contour factory, Home
+  full-screen presentation, plain native shelf-brew lifetime, plain ownership
+  claim lifetime, native community sheets, feed/header placement and messages.
+- Shared verification: collections 88 tests / 6 suites; community 72 / 7;
+  ownership 25 / 4; application modal/global-flow contracts 31 / 4; native
+  Home session 7 / 1. Total: 223 executed Kotlin contracts, no failures.
+  Android directDebug assembled and packaged runtime class checks passed.
+  Function-body gate: 128 recorded, 0 new; baseline only shrank.
+- An ordinary Windows `:composeApp:compileKotlinIosArm64` was SKIPPED, so it is
+  not evidence of application iOS compilation. The xcross 3228 build is the
+  required application compile/link gate. The final 3228 build passed Kotlin,
+  framework linking and SwiftUI, was signed, and was not installed because the
+  provisioned USB device was absent. Subsequent root/session changes below are
+  newer than that signed artifact and require their own native compile/link gate.
+- All 40 Python tooling contracts passed in the final run, including the actual
+  Swift photo model compiled with Swift 6 complete strict concurrency. The new
+  isolated-deinit pattern also passed standalone strict-concurrency type checking
+  with Swift 6.4.2 in the app's current Swift 5 compatibility language mode. This
+  does not certify the whole application's conversion to Swift 6 language mode.
+- Original failures remain in local logs: one UIKit extension import was fixed;
+  registration checks were extended to follow the shared native-controls helper;
+  a manifest fixture run during xcross's temporary scannerless rewrite was rerun
+  after restoration. The final 40-test run is separate from those failures.
+- Root/route CompositionLocal/effect integration remains open. It must not be
+  described as a complete removal of Compose runtime or containers. Discovery,
+  feed and shop need plain feature-owned sessions before final root removal;
+  native view rendering alone does not supply that lifetime API.
+- Device UI, accessibility, cancel/back and live backend gates remain untested
+  for these changes. No new real-account writes or device settings changes.
+
+### Root/session continuation
+
+- Roaster detail and Business/MyBusiness routes now use direct native controller
+  factories. Their existing Kotlin ViewModels have explicit owned stores and
+  close hooks; native controller destruction cancels observations and media.
+  MyBusiness retains local back handling so an edge pop cannot bypass draft
+  confirmation. Full-route account replacement leaves stack reset to the root;
+  the short-lived representative claim keeps its separate close-on-revocation.
+- Ownership access observation, resume refresh and profile-save revisions are
+  plain Kotlin contracts. Android's composition calls the same implementations.
+  Saving a native editor updates the same revision observed by shop/roaster
+  details. No authorization checks or repository writers moved into Swift.
+- RootNavigationLifecycle owns session transitions and one-time guest completion
+  outside Compose; NavigatorViewModel now uses its lifecycle viewModelScope.
+  Account replacement resets private requests; guest login retains its pending
+  check-in handoff; identical root session values keep stack generation.
+- Pending notification opens use a cancellable plain collector shared by the
+  current host and the future native root. Account readiness, cancellation and
+  compare-and-set consumption remain in Kotlin. Native analytics observations
+  use the existing service/consent and exposure ledger, with actual visibility,
+  foreground and uninterrupted 500 ms exposure; no second service was created.
+- Foreground notification heartbeat now belongs only to App, rather than every
+  nested AppContent. It is a structured child of the root lifecycle.
+- Verification on 2026-11-25: roaster 31 tests / 4 suites; ownership 30 / 6;
+  application root/notification/analytics selection 28 / 6. All passed, with no
+  retries of failed assertions. The first application test compilation exposed a
+  missing suspend modifier in a test fixture, corrected before the passing run.
+  Android directDebug assembly and packaged DEX checks passed; body gate remains
+  128 recorded / 0 new. No Android app was installed or launched.
+
+### Swift 6 and native lifetime checkpoint (2026-11-25)
+
+- Main Discovery now selects its owned plain Kotlin session and Swift controller;
+  its strings, vector artwork, filter draft and nested roaster transport no longer
+  require a feature composition. Discovery contracts passed: 204 tests / 25 suites.
+  The check-in picker still needs its separate lease-bound owner.
+- Both Xcode application configurations explicitly use Swift 6 and complete strict
+  concurrency. The package uses Swift 6 language mode too. Xcode project settings
+  were changed through a project model; a model comparison verified that the only
+  semantic changes are those two compiler settings.
+- UI observable owners and teardown are MainActor isolated. Gallery import,
+  cover import, poster export/timeout, refresh and shelf drop handling use owned
+  tasks/streams; no application `Task {}`, GCD aggregation or unchecked Sendable
+  was introduced. Poster child tasks exchange String/Data, retaining KMP objects
+  behind the MainActor request owner.
+- Apple begin/cancel and Google begin/sign-out are dispatched by Kotlin to Main.
+  Apple cancellation carries the challenge identity and completes platform cleanup
+  within the request's structured finally. Nonce/state/nonempty-token checks remain.
+  Google SDK callbacks are documented to run on Main in GIDSignIn.h; their missing
+  isolation annotation is bridged with a checked MainActor assertion after copying
+  the token String. The SDK result object never crosses that boundary.
+- OAuth callbacks are single-use MainActor models. There is no singleton OAuth
+  AsyncStream or application task queue. Google SDK has no public programmatic
+  cancellation API in the installed version; cancelled Kotlin requests ignore late
+  replies, while its external UI remains busy until the SDK finishes. This existing
+  SDK limitation is not certified by compiler or fake tests.
+- Launch readiness retains completion across cancelled waiters. Push uses a fresh
+  per-run channel/delegate; closing an old run cannot detach a newer delegate or
+  publish a stale SDK result. Permission/account/token acceptance remains in KMP.
+- Search matching for collections and shelf beans moved into Kotlin and shares
+  Android query semantics. Filtering does not remove membership/library data.
+- The constructor registry is now independent of composition. Auth routing has an
+  ordinary overload; settings redirects use the parent scope. Other destination
+  captures and the actual Compose root are still active.
+- Verification: Kotlin/Native application compilation and real framework link
+  passed; Swift 6 complete-strict ARM64 executable link passed (module CoffeePeek,
+  executable SHA-256 `9bc71bf3c99cc128e1185db1369fcdd3780b3c4eec0927bef35bf858d137d102`).
+  Standard Android directDebug/packaged DEX checks and 33 application contracts /
+  7 suites passed; collections 89 / 6; home check-in 95 / 7; tooling 42 tests passed,
+  including compiled/executed Swift callback, readiness and photo model contracts.
+  Body gate: 128 recorded / 0 new. No device was installed or launched.
+- Retain earlier failures: full Swift code generation caught isolation issues
+  beyond typecheck, fixed before the successful link. Lifetime test fixtures first
+  failed to compile due to async assertions/iterator isolation, then were corrected.
+  Remaining link warnings concern the existing deprecated Firebase token API and
+  the Windows cross-toolchain SDK/linker; there are no concurrency diagnostics.
+
+Community continuation now selects ordinary owned feed/post sessions and direct
+native controllers. Resolved copy feeds a single pure card mapper; native drafts,
+photo/message lifetimes, analytics and bounded prefetch no longer need composition.
+All root tabs require native content. Old feed/detail/form renderer hooks and the
+root-tab fallback content were removed; the Compose root/navigation itself remains.
+Kotlin/Native compilation passed after removal. The actual Swift 6 complete-strict
+ARM64 executable linked successfully (SHA-256
+`c643bffec5db0e954c03a85591c798356d7e993a779b4ff5ffa62a71c3a61f1c`).
+The subsequent native message fade also passed Swift primary-file object emission.
+This executable predates the profile/picker continuation below.
+
+### Profile and picker continuation (2026-11-25)
+
+- Edit profile now uses an ordinary owned feature session/store, direct native
+  controller, visibility-bound saved events and native photo picker. The old
+  platform renderer hook was removed. Avatar input is copied before the picker
+  wipes its buffer; account-flow failure publishes a sanitized snapshot while
+  UI observations remain alive. A child photo-import lifetime rejects late
+  camera/gallery callbacks after revocation and wipes late uncancellable results.
+- Check-in shop selection now has a direct native navigation owner. It retains
+  the existing browsing/history leases, recent-shop adapter, Search/Map ViewModels,
+  permission counters and one-shot navigation/handoff. Failure/retry can replace
+  the lease and dispose the previous source. Native visibility combines actual
+  controller visibility with foreground state. The last Compose Discovery/picker
+  renderer and platform-content hooks were removed; Android content stays active.
+- Native Discovery uses one owned account observation shared by Search/Map. A
+  non-cancellation failure revokes the native feature owner, cancels its models
+  and is exposed as terminal status. The picker presents native failure/retry
+  even when its separate browsing-host observation did not fail. Buffered events
+  are checked again at delivery, so terminal failure cannot navigate afterwards.
+- Kotlin/Native application compilation passed for these changes. The preceding
+  final Android run passed 209 Discovery tests / 25 suites, 92 profile / 9 and 14 app
+  navigation/lease/photo contracts / 3, with directDebug assembly and packaged DEX
+  checks, including the buffered-event regression. Body
+  gate remains 128 recorded / 0 new. Five tooling tests also passed, including
+  actual Swift visibility/readiness/push/photo contracts. No device run occurred.
+- Preserve the first native compilation failure in local diagnostics: application
+  code attempted to import an internal feature resource. It was corrected by an
+  ordinary feature-owned localized-title function, without widening Res visibility.
+- A fresh framework/full Swift link for this continuation is still required.
+  The main Discovery terminal failure/retry presentation must be connected during
+  remaining root/session work; exporting the terminal status alone is not native
+  root recovery acceptance.
+
+Required next: shop detail and home/editor owners; remaining
+constructor-injected destination factories; native global modal
+arbitration and Swift root navigation. Do not call this complete native exit.
+Device UI, actual OAuth/push/backend behavior and release archive remain separate
+gates. No TestFlight upload has been started. The owner authorizes uploading the
+final completed version; the existing workflow allows main or manual dispatch from
+codex/ios-native. Preserve its guard and reconcile that branch before publishing.
+
+### Native root and remaining feature owners (2026-11-25)
+
+- Shop and Home detail/create/edit now own ordinary feature sessions/stores,
+  resource observations and native photo launchers. Revocation sanitizes observed
+  form state while subscriptions are alive; linked check-in intent is consumed
+  once across rebinding. Main discovery now exposes account-observation failure
+  with a native retry that replaces its Search/Map owner.
+- Root routing retains existing tabs, auth replacement, deep links, push opens,
+  sign-in handoffs and account generations. UIKit acknowledges transitions;
+  cancelled swipes retain actual stacks and completed pops release controllers.
+  Superseded intents wait for an already started transition; root revocation
+  cancels its acknowledgement. Pending links/tabs use expected-value consumption.
+- Native root arbitration covers onboarding/update, global loading/errors,
+  author operations, collection membership/quick-create and the global check-in
+  picker/Home flow. Navigation after a modal waits for actual dismissal; collection
+  writes protect dismissal using the current Kotlin busy state. Sources retired
+  before UIKit constructs them close without waiting for a nonexistent callback.
+- Foreground notification heartbeat, ownership refresh, author refresh, theme and
+  language readiness, existing consent/analytics and create exposure remain app
+  owned. Session observation failure hides private controllers and offers retry.
+- Shop/Home verification before the root continuation: shop 118 tests/12 suites,
+  home 99/8 and app 46/6, all passing; Android directDebug packaged DEX checks passed.
+  Native application compilation passed. Latest body gate was 126 recorded/0 new.
+  The root routing and acknowledgement contracts added afterwards still require
+  execution with the final integration. Earlier failures remain in local logs.
+- First root framework link passed (58.9 s compilation, 14m33 s framework link).
+  Later account/modal guards and incoming native-token rotation are newer than
+  that artifact and require regeneration. Swift header verification exposed a
+  boxed Kotlin Boolean callback, corrected with its explicit boolValue conversion;
+  final complete Swift 6 code generation/link remains open.
+- Release now observes the exact uploaded version/build until Apple reports VALID,
+  rejected/invalid or a bounded processing timeout. Its six non-UI contracts passed;
+  authorization material and API error bodies are not logged. Ruby signing syntax
+  and real Apple API use will be checked by the existing release workflow.
+- No current device UI run, real-account write or TestFlight upload has occurred.
+  Next: retain remote native-token checkpoint, run final contracts/Android/native
+  builds and tooling checks, publish the reviewed integration, then run and monitor
+  TestFlight archive/upload/Apple processing. No completed release is claimed here.

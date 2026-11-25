@@ -25,17 +25,17 @@ class NativeHomeCheckInSession(
         preparationId, sessionGeneration, canAccess, analytics = analytics,
         startBean = bean?.let { HomeCheckInStartBean(it.slug, it.name, it.shelfBagId) })
     private val store = ViewModelStore().apply { put("native-home-editor", model) }
-    private var closed = false
+    private val closed = MutableStateFlow(false)
     private var photoRevision = 0L
     private var photoDelivery: ((List<HomePreparationUpload>) -> Unit)? = null
     private val preparing = MutableStateFlow(false)
     private val delivery = HomeCheckInPhotoDelivery(::canReceivePhotos) { dispatch(HomeCheckInEditorAction.PhotosAdded(it)) }
 
-    val state = combine(model.state, preparing) { value, loading -> visible(value).nativeSnapshot(preparationId != null, dates, loading) }
-    val events = model.events.filter { !closed && model.canDeliver(it) }.map { it.event.nativeEvent() }
+    val state = combine(model.state, preparing, closed) { value, loading, _ -> visible(value).nativeSnapshot(preparationId != null, dates, loading) }
+    val events = model.events.filter { !closed.value && model.canDeliver(it) }.map { it.event.nativeEvent() }
 
     fun current() = visible(model.state.value).nativeSnapshot(preparationId != null, dates, preparing.value)
-    fun isCurrent(): Boolean = !closed && canAccess() && !model.state.value.isAccessRevoked
+    fun isCurrent(): Boolean = !closed.value && canAccess() && !model.state.value.isAccessRevoked
     fun today(): String = dates.localDate(dates.currentInstant())
     fun retryDetail() = dispatch(HomeCheckInEditorAction.RetryDetail)
     fun retryMethods() = dispatch(HomeCheckInEditorAction.RetryMethods)
@@ -102,23 +102,23 @@ class NativeHomeCheckInSession(
     }
 
     fun close() {
-        if (closed) return
-        closed = true
+        if (closed.value) return
+        closed.value = true
         cancelPhotos(photoRevision)
         delivery.dispose()
         store.clear()
     }
 
-    private fun canReceivePhotos(): Boolean = !closed && canAccess() && preparationId == null && model.state.value.let {
+    private fun canReceivePhotos(): Boolean = !closed.value && canAccess() && preparationId == null && model.state.value.let {
         it.isReady && !it.isSaving && !it.isLoading && it.savedEntry == null && !it.isClosed && !it.isAccessRevoked
     }
 
     private fun dispatch(action: HomeCheckInEditorAction) {
-        if (!closed && canAccess()) model.onAction(action)
+        if (!closed.value && canAccess()) model.onAction(action)
     }
 
     private fun visible(value: HomeCheckInEditorState): HomeCheckInEditorState = when {
-        closed -> HomeCheckInEditorState(isClosed = true)
+        closed.value -> HomeCheckInEditorState(isClosed = true)
         !canAccess() -> HomeCheckInEditorState(isAccessRevoked = true)
         else -> value
     }

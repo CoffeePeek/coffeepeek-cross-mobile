@@ -27,7 +27,7 @@ private final class OwnProfileHostingController: UIHostingController<OwnProfileH
 
     // SwiftUI may rebuild its state graph while UIKit retains the root tab.
     // The account lease ends only when that root controller is released.
-    deinit { profile.close() }
+    isolated deinit { profile.close() }
 }
 
 private struct OwnProfileHost: View {
@@ -75,8 +75,8 @@ private struct OwnProfileScreen: View {
         } message: {
             Text(model.strings["profile_logout_message"])
         }
-        .sheet(isPresented: model.followersPresented) {
-            OwnProfileFollowersSheet(model: model)
+        .sheet(isPresented: model.connectionsPresented) {
+            OwnProfileConnectionsSheet(model: model)
         }
         .sheet(item: $model.preferences) { slot in
             VStack(spacing: 8) {
@@ -96,14 +96,10 @@ private struct OwnProfileScreen: View {
     }
 
     private var menu: some View {
-        HStack {
-            Text(model.strings["profile_title"])
-                .font(CoffeePeekNativeStyle.rootHeadingFont)
-                .accessibilityAddTraits(.isHeader)
-            Spacer(minLength: 0)
+        CoffeePeekNativeRootHeader(title: model.strings["profile_title"]) {
             if model.state.active {
                 Menu {
-                    Button(model.strings["profile_edit"], systemImage: "square.and.pencil", action: model.profile.edit)
+                    ownProfileEditButton(title: model.strings["profile_edit"], action: model.profile.edit)
                     ForEach(OwnProfileContribution.allCases) { contribution in
                         Button(model.strings[contribution.resource], systemImage: contribution.symbol) {
                             model.profile.openContribution(kind: contribution.rawValue)
@@ -170,13 +166,17 @@ private struct OwnProfileScreen: View {
         case .collections:
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
-                    Button(model.strings["profile_section_all_collections"], action: model.profile.openCollections)
+                    Text(model.strings[OwnProfileTab.collections.rawValue])
+                        .font(CoffeePeekNativeStyle.font(22, weight: "SemiBold", relativeTo: .title2))
+                        .accessibilityAddTraits(.isHeader)
                     Spacer()
+                    CoffeePeekNativeChevronButton(label: model.strings["profile_section_all_collections"], action: model.profile.openCollections)
                     Button {
                         model.showPreferences()
                     } label: {
                         Image(systemName: "gearshape").frame(width: 44, height: 44)
                     }
+                    .buttonStyle(.plain).shopDetailGlassCircle()
                     .accessibilityLabel(model.strings["profile_collections_settings"])
                 }
                 .padding(.horizontal, 16)
@@ -195,6 +195,7 @@ private struct OwnProfileScreen: View {
     }
 }
 
+@MainActor
 final class OwnProfileModel: ObservableObject {
     @Published private(set) var state: IosOwnProfileState
     @Published private(set) var activity: IosOwnProfileActivity?
@@ -218,13 +219,13 @@ final class OwnProfileModel: ObservableObject {
         strings = OwnProfileStrings(languageTag: profile.languageTag())
     }
 
-    deinit {
+    isolated deinit {
         observation?.cancel()
         calendarObservation?.cancel()
     }
 
-    var followersPresented: Binding<Bool> {
-        Binding(get: { self.state.followers.open }, set: { if !$0 { self.profile.closeFollowers() } })
+    var connectionsPresented: Binding<Bool> {
+        Binding(get: { self.state.connections.open }, set: { if !$0 { self.profile.closeConnections() } })
     }
 
     func observe() {
@@ -258,7 +259,8 @@ final class OwnProfileModel: ObservableObject {
         case .checkIns: select(.checkIns)
         case .shops: profile.openContribution(kind: OwnProfileContribution.shops.rawValue)
         case .roasters: profile.openContribution(kind: OwnProfileContribution.roasters.rawValue)
-        case .followers: profile.openFollowers()
+        case .followers: profile.openConnections(followers: true)
+        case .following: profile.openConnections(followers: false)
         case .avatar: photoViewer = profile.avatarViewer()
         }
     }
@@ -343,6 +345,13 @@ struct OwnProfileStrings {
     func count(_ key: String, _ value: Int) -> String {
         String(format: self[key], value)
     }
+
+    func connectionCount(_ value: Int?, followers: Bool) -> String {
+        guard let value else { return self[followers ? "profile_followers" : "profile_following_title"] }
+        let tail = value % 100
+        let form = (11...14).contains(tail) ? "many" : value % 10 == 1 ? "one" : (2...4).contains(value % 10) ? "few" : "many"
+        return count("profile_connections_\(followers ? "followers" : "following")_\(form)", value)
+    }
 }
 
 enum OwnProfileTab: String, CaseIterable, Identifiable {
@@ -370,6 +379,28 @@ private enum OwnProfileContribution: String, CaseIterable, Identifiable {
         }
     }
 }
+
+@MainActor
+private func ownProfileEditButton(title: String, action: @escaping () -> Void) -> some View {
+    Button(title, systemImage: "person.crop.circle", action: action)
+}
+
+@MainActor
+private func ownProfileActionIconsPreview() -> some View {
+    let strings = OwnProfileStrings(languageTag: "ru")
+    return VStack(alignment: .leading, spacing: 16) {
+        ownProfileEditButton(title: strings["profile_edit"], action: {})
+        ForEach(OwnProfileContribution.allCases) { contribution in
+            Label(strings[contribution.resource], systemImage: contribution.symbol)
+        }
+    }
+    .labelStyle(.titleAndIcon).buttonStyle(.plain)
+    .foregroundStyle(CoffeePeekNativeStyle.foreground)
+    .padding(16).background(CoffeePeekNativeStyle.background)
+}
+
+#Preview("Profile action icons light") { ownProfileActionIconsPreview().preferredColorScheme(.light) }
+#Preview("Profile action icons dark") { ownProfileActionIconsPreview().preferredColorScheme(.dark) }
 
 struct OwnProfileSlot: Identifiable {
     let controller: UIViewController

@@ -12,6 +12,7 @@ import platform.Foundation.NSData
 import platform.Foundation.create
 import platform.UIKit.UIImage
 import platform.UIKit.UIImagePNGRepresentation
+import platform.UIKit.UIViewController
 import platform.posix.memcpy
 
 class IosOwnershipScreen internal constructor(private val session: IosOwnershipSession,
@@ -20,6 +21,9 @@ class IosOwnershipScreen internal constructor(private val session: IosOwnershipS
     val claimSheet = session.claimSheet
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
     private var closed = false
+    private var photoPresenter: () -> UIViewController? = { null }
+    fun bindPhotoPresenter(presenter: () -> UIViewController?) { if (!closed) photoPresenter = presenter }
+    internal fun photoHost() = if (closed) null else photoPresenter()
     fun current() = session.current().iosState().let { state ->
         if (closed) state.copy(signedIn = false, claims = emptyList(), businesses = emptyList(), contact = "", evidence = "",
             evidencePhotos = emptyList(), claim = null, editorPhotos = emptyList(), fields = emptyList()) else state
@@ -55,7 +59,7 @@ class IosOwnershipScreen internal constructor(private val session: IosOwnershipS
             }
         }))
     }
-    fun close() { closed = true; scope.cancel() }
+    fun close() { if (!closed) { closed = true; photoPresenter = { null }; scope.cancel(); session.close() } }
 }
 
 class IosOwnershipObservation internal constructor(private val jobs: List<Job>) { fun cancel() = jobs.forEach { it.cancel() } }

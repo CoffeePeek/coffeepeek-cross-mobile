@@ -36,7 +36,7 @@ internal fun IosDiscoveryFilterController(
     val fetcher = koinInject<ImageUrlFetcher>()
     val model = remember(host, fetcher) { IosDiscoveryFilters(presentation, IosCatalogueMedia(fetcher, Constants.BASE_URL)) }
     val controller = remember(host, model, factory) { factory(model) }
-    val delegate = remember(model) { FilterDismissDelegate(model::close) }
+    val delegate = remember(model) { FilterDismissDelegate(model::apply) }
     val style = MaterialTheme.colorScheme.uiKitStyle
     SideEffect {
         model.update(presentation)

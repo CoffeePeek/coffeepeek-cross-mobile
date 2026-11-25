@@ -43,13 +43,8 @@ struct CollectionPosterPreview: View {
             }.padding(16)
         }
         .safeAreaInset(edge: .top) {
-            HStack {
-                Button(action: model.workspace.back) {
-                    Label(strings["collections_back"], systemImage: "chevron.backward").labelStyle(.iconOnly)
-                        .frame(minWidth: 44, minHeight: 44)
-                }
-                Text(model.state.title).font(.headline).lineLimit(1); Spacer()
-            }.padding(.horizontal, 8).background(.bar)
+            CoffeePeekNativeNavigationHeader(title: model.state.title,
+                backLabel: strings["collections_back"], back: model.workspace.back)
         }
         .safeAreaInset(edge: .bottom) {
             HStack {
@@ -202,58 +197,59 @@ func renderCollectionPosters(_ poster: IosCollectionsPoster, workspace: IosColle
 
 @MainActor
 private func loadCollectionPosterPhotos(_ poster: IosCollectionsPoster, workspace: IosCollectionsWorkspace) async -> [String: UIImage] {
-    let places = poster.pages.flatMap(\.cards).map(\.place)
+    let places = poster.pages.flatMap(\.cards).compactMap { card -> (key: String, url: String)? in
+        guard let url = card.place.photoUrl else { return nil }
+        return (card.place.key, url)
+    }
+    let request = CollectionPosterPhotoRequest(workspace: workspace)
     var result: [String: UIImage] = [:]
     let deadline = Date().addingTimeInterval(12)
     for start in stride(from: 0, to: places.count, by: 4) {
         guard !Task.isCancelled && Date() < deadline else { break }
         let batch = Array(places[start..<min(start + 4, places.count)])
-        let loaded = await withTaskGroup(of: (String, UIImage?).self) { group in
+        let loaded = await withTaskGroup(of: (String, Data?).self) { group in
             for place in batch {
                 group.addTask {
-                    guard let url = place.photoUrl else { return (place.key, nil) }
-                    let request = await CollectionPosterPhotoRequest()
-                    return (place.key, await request.load(workspace: workspace, url: url))
+                    (place.key, await request.load(url: place.url))
                 }
             }
-            var values: [(String, UIImage?)] = []
+            var values: [(String, Data?)] = []
             for await value in group { values.append(value) }
             return values
         }
-        for (key, image) in loaded { result[key] = image }
+        for (key, data) in loaded { result[key] = data.flatMap { coffeePeekNativeThumbnail($0) } }
     }
     return result
 }
 
 @MainActor
 private final class CollectionPosterPhotoRequest {
-    private var observation: IosCollectionsWorkspaceObservation?
-    private var continuation: CheckedContinuation<UIImage?, Never>?
-    private var timeout: Task<Void, Never>?
+    private let workspace: IosCollectionsWorkspace
+    init(workspace: IosCollectionsWorkspace) { self.workspace = workspace }
 
-    func load(workspace: IosCollectionsWorkspace, url: String) async -> UIImage? {
-        await withTaskCancellationHandler {
-            await withCheckedContinuation { continuation in
-                self.continuation = continuation
-                let observation = workspace.loadPhoto(url: url) { [weak self] data in
-                    self?.finish(data.flatMap { coffeePeekNativeThumbnail($0 as Data) })
-                }
-                if self.continuation == nil { observation.cancel() } else { self.observation = observation }
-                timeout = Task { [weak self] in
-                    try? await Task.sleep(nanoseconds: 4_000_000_000)
-                    self?.finish(nil)
-                }
-                if Task.isCancelled { finish(nil) }
+    func load(url: String) async -> Data? {
+        await withTaskGroup(of: Data?.self) { group in
+            group.addTask { await self.receive(url: url) }
+            group.addTask {
+                try? await Task.sleep(for: .seconds(4))
+                return nil
             }
-        } onCancel: { Task { @MainActor [weak self] in self?.finish(nil) } }
+            let data = await group.next() ?? nil
+            group.cancelAll()
+            return Task.isCancelled ? nil : data
+        }
     }
 
-    private func finish(_ image: UIImage?) {
-        guard let continuation else { return }
-        self.continuation = nil
-        observation?.cancel()
-        timeout?.cancel()
-        continuation.resume(returning: image)
+    private func receive(url: String) async -> Data? {
+        guard !Task.isCancelled else { return nil }
+        let response = AsyncStream<Data?>.makeStream(bufferingPolicy: .bufferingNewest(1))
+        let observation = workspace.loadPhoto(url: url) { data in
+            response.continuation.yield(data.map { $0 as Data })
+            response.continuation.finish()
+        }
+        defer { observation.cancel(); response.continuation.finish() }
+        for await data in response.stream { return Task.isCancelled ? nil : data }
+        return nil
     }
 }
 

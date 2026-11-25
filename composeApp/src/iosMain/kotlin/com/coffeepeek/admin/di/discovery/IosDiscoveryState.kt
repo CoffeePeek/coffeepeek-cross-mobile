@@ -42,6 +42,9 @@ data class IosDiscoveryState(
     val chips: List<IosDiscoveryChip>,
     val activeFilterCount: Int,
     val labels: Map<String, String>,
+    val pickerResultQuery: String?,
+    val pickerResultNearby: Boolean,
+    val allResultsEmpty: Boolean,
 )
 
 data class IosDiscoveryShop(

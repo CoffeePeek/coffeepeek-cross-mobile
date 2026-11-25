@@ -5,6 +5,7 @@ import com.coffeepeek.feature.profile.domain.PublicProfileConnectionKind
 internal sealed interface PublicProfileAction {
     data object Initialize : PublicProfileAction
     data object Refresh : PublicProfileAction
+    data object RefreshFollowingCount : PublicProfileAction
     data object ToggleFollow : PublicProfileAction
     data object RetryFavorites : PublicProfileAction
     data class ChangeActivityMonth(val month: String) : PublicProfileAction

@@ -1,6 +1,5 @@
 package com.coffeepeek.feature.discovery.impl.ui
 
-import androidx.compose.runtime.Composable
 import com.coffeepeek.feature.discovery.api.MapCanvasState
 import com.coffeepeek.feature.discovery.api.MapCanvasCallbacks
 import com.coffeepeek.feature.discovery.api.MapCamera
@@ -14,7 +13,6 @@ class DiscoveryIosPresentation internal constructor(
     val onAction: (String, String) -> Unit,
     val onQuery: (String) -> Unit,
     val openLocationSettings: () -> Unit,
-    val roasters: @Composable (Boolean) -> Unit,
 )
 
 data class DiscoveryIosState(
@@ -58,6 +56,9 @@ data class DiscoveryIosState(
     val chips: List<DiscoveryIosChip>,
     val activeFilterCount: Int,
     val labels: Map<String, String>,
+    val pickerResultQuery: String?,
+    val pickerResultNearby: Boolean,
+    val allResultsEmpty: Boolean,
 )
 
 data class DiscoveryIosShop(

@@ -182,4 +182,10 @@
     <string name="profile_edit_display_shelf">Кофейная полка</string>
     <string name="profile_edit_camera">Сделать фото</string>
     <string name="profile_edit_gallery">Выбрать из галереи</string>
+    <string name="profile_connections_followers_one">%1$d подписчик</string>
+    <string name="profile_connections_followers_few">%1$d подписчика</string>
+    <string name="profile_connections_followers_many">%1$d подписчиков</string>
+    <string name="profile_connections_following_one">%1$d подписка</string>
+    <string name="profile_connections_following_few">%1$d подписки</string>
+    <string name="profile_connections_following_many">%1$d подписок</string>
 </resources>

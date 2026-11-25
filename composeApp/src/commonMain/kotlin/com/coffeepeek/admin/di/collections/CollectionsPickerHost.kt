@@ -31,11 +31,10 @@ internal fun CollectionsPickerHost() {
         DisposableEffect(owner) { onDispose { owner.viewModelStore.clear() } }
         LaunchedEffect(current) { requests.presented(current) }
         CompositionLocalProvider(LocalViewModelStoreOwner provides owner) {
-            koinInject<CollectionsEntry>().Picker(current.target, onDismiss = { requests.dismiss(current) },
-                onSignIn = {
-                    requests.dismiss(current)
-                    Navigator.navigate(Navigator.Screen.Auth)
-                }, modifier = Modifier)
+            val dismiss = { requests.dismiss(current) }
+            val signIn = { requests.dismiss(current); Navigator.navigate(Navigator.Screen.Auth) }
+            if (!PlatformCollectionsPicker(current.target, dismiss, signIn))
+                koinInject<CollectionsEntry>().Picker(current.target, dismiss, signIn, Modifier)
         }
     } }
 }

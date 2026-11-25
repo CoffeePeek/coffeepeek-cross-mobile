@@ -36,8 +36,15 @@ internal class OwnershipEntry(
     private val onLogin: () -> Unit,
 ) : BusinessOwnershipEntry {
     private val access = OwnershipAccess(repository, account)
-    private val profileChanges = kotlinx.coroutines.flow.MutableStateFlow(0L)
+    private val mutableProfileChanges = kotlinx.coroutines.flow.MutableStateFlow(0L)
+    override val profileChanges = mutableProfileChanges.asStateFlow()
     internal fun nativeSignedIn() = account.current() != null
+    internal fun nativeModel(tab: Boolean, kind: BusinessKind?, slug: String?, id: String?) =
+        OwnershipViewModel(repository, account, kind, slug, id, tab)
+    internal fun nativeSession(model: OwnershipViewModel, tab: Boolean, claim: Boolean,
+        choosePhotos: () -> Unit, dispose: () -> Unit) =
+        IosOwnershipSession(model, account, tab, claim, choosePhotos, checkInLink, shareCheckInQr,
+            { kind, id -> openBusiness(model.state.value, kind, id) }, dispose)
     internal fun profileEditorId(kind: BusinessKind, id: String, slug: String,
         identities: Set<String> = access.state.value.ownedIdentities): String? {
         if ("${kind.name}:$id" !in identities && "${kind.name}:$slug" !in identities) return null
@@ -45,15 +52,20 @@ internal class OwnershipEntry(
     }
     internal fun nativeEdit(kind: String, id: String) = onEdit(kind, id)
     internal fun nativeLogin() = onLogin()
+    internal fun nativeProfileSaved() { mutableProfileChanges.value++ }
     @Composable override fun ProfileChanges(): Long = profileChanges.collectAsState().value
-    @Composable override fun Session(): BusinessSessionState {
-        LaunchedEffect(access) { account.observe().distinctUntilChanged().collect {
+    override suspend fun observeSessionChanges() {
+        account.observe().distinctUntilChanged().collect {
             access.reset()
             access.refresh()
-        } }
+        }
+    }
+    override suspend fun refreshSession() = access.refresh()
+    @Composable override fun Session(): BusinessSessionState {
+        LaunchedEffect(access) { observeSessionChanges() }
         val scope = rememberCoroutineScope()
         androidx.lifecycle.compose.LifecycleResumeEffect(access) {
-            val job = scope.launch { access.refresh() }
+            val job = scope.launch { refreshSession() }
             onPauseOrDispose { job.cancel() }
         }
         return access.state.collectAsState().value
@@ -118,7 +130,7 @@ internal class OwnershipEntry(
                 when (event) {
                     OwnershipEvent.Close -> back()
                     OwnershipEvent.Login -> login()
-                    OwnershipEvent.ProfileSaved -> profileChanges.value++
+                    OwnershipEvent.ProfileSaved -> nativeProfileSaved()
                 }
             }
         }

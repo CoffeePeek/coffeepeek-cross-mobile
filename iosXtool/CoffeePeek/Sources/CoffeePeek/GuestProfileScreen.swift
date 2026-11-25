@@ -17,7 +17,7 @@ private final class GuestProfileHostingController: UIHostingController<GuestProf
 
     @MainActor required dynamic init?(coder: NSCoder) { return nil }
 
-    deinit { profile.close() }
+    isolated deinit { profile.close() }
 }
 
 private struct GuestProfileHost: View {
@@ -69,17 +69,14 @@ private struct GuestProfileScreen: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
-                Text(strings.text("profile_title"))
-                    .font(CoffeePeekNativeStyle.rootHeadingFont)
-                    .accessibilityAddTraits(.isHeader)
-                    .padding(.bottom, 4)
+                CoffeePeekNativeRootHeader(title: strings.text("profile_title")) { EmptyView() }
                 CoffeePeekGuestAccountCard(
                     prompt: strings.text("guest_prompt"), loginTitle: strings.text("guest_login"),
                     noAccountPrompt: strings.text("guest_no_account"), registerTitle: strings.text("guest_register"),
                     login: login, register: register
                 )
             }
-            .padding(16).padding(.bottom, 100)
+            .padding(.horizontal, 16).padding(.bottom, 16).padding(.bottom, 100)
         }
         .font(CoffeePeekNativeStyle.font(17))
         .foregroundStyle(CoffeePeekNativeStyle.foreground)

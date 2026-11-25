@@ -37,13 +37,8 @@ struct EditProfileNativeContent: View {
     }
 
     private var header: some View {
-        HStack(spacing: 12) {
-            Button(action: actions.back) { Image(systemName: "chevron.left").frame(width: 44, height: 44) }
-                .buttonStyle(.plain).accessibilityLabel(strings["profile_back"]).disabled(state.saving)
-            Text(strings["profile_edit_title"]).font(CoffeePeekNativeStyle.font(20, weight: "Bold"))
-                .frame(maxWidth: .infinity).multilineTextAlignment(.center).accessibilityAddTraits(.isHeader)
-            Color.clear.frame(width: 44, height: 44).accessibilityHidden(true)
-        }.padding(.horizontal, 8).padding(.vertical, 8)
+        CoffeePeekNativeNavigationHeader(title: strings["profile_edit_title"],
+            backLabel: strings["profile_back"], back: actions.back).disabled(state.saving)
     }
 
     private var form: some View {

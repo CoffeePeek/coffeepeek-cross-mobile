@@ -116,6 +116,7 @@ private struct ChangeRequestNativeScreen: View {
     }
 }
 
+@MainActor
 private func changeRequestPreview() -> some View {
     ChangeRequestNativeScreen(
         state: IosChangeRequestState(

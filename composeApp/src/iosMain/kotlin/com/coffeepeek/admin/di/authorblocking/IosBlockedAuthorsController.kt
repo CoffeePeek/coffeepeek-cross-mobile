@@ -20,10 +20,13 @@ internal fun iosBlockedAuthorsContent(): () -> UIViewController {
     val factory = LocalIosBlockedAuthorsController.current
     val languageTag by rememberUpdatedState(LocalCoffeePeekLanguageTag.current)
     val presenter = koinInject<AuthorBlockingPresenter>()
-    val authors = remember(presenter) { IosBlockedAuthors(presenter) }
-    return {
-        factory(authors, languageTag, Navigator::popBack,
+    return iosBlockedAuthorsContent(factory, { languageTag }, presenter)
+}
+
+internal fun iosBlockedAuthorsContent(factory: (IosBlockedAuthors, String, () -> Unit, () -> Unit, () -> Unit) -> UIViewController,
+    language: () -> String, presenter: AuthorBlockingPresenter,
+): () -> UIViewController = {
+        factory(IosBlockedAuthors(presenter), language(), Navigator::popBack,
             { Navigator.navigate(Navigator.Screen.Auth) },
             { Navigator.navigate(Navigator.Screen.Register) })
-    }
 }
