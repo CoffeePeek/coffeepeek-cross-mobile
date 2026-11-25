@@ -54,6 +54,7 @@ final class CoffeePeekRootModalPresenter: NSObject, UIAdaptivePresentationContro
         guard let presenter = blocking ? primary?.controller ?? host : host,
               presenter.presentedViewController == nil, presenter.viewIfLoaded?.window != nil,
               !waitForTransition(presenter) else { return }
+        presenter.view.endEditing(true)
         guard let controller = source.modalController(presentation: model) else { return }
         if model.fullScreen, !(controller is UIAlertController), controller.modalPresentationStyle != .overFullScreen {
             controller.modalPresentationStyle = .fullScreen

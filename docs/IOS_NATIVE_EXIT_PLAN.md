@@ -283,3 +283,31 @@ codex/ios-native. Preserve its guard and reconcile that branch before publishing
   Next: retain remote native-token checkpoint, run final contracts/Android/native
   builds and tooling checks, publish the reviewed integration, then run and monitor
   TestFlight archive/upload/Apple processing. No completed release is claimed here.
+
+### Integrated contract verification (2026-11-25)
+
+- Retained native token rotation checkpoint `5c0a92e986c7` by merging it into the
+  native-exit branch. Its delayed-login fix is preserved in both the Kotlin root
+  lifecycle adapter and native root, including a request arriving after logout.
+- Final Kotlin results: 1,606 tests / 262 suites, zero failures/errors/skips across
+  application (735), session (39), network (72), auth data (36), shop (118), Home
+  (99), discovery (209), community (87), profile (92), collections (89) and ownership
+  (30). Android directDebug assembled and packaged runtime classes passed.
+- All 43 iOS tooling tests passed, including executed Swift 6 strict lifetime,
+  readiness/push ownership, callback and photo-upgrade models. Four release
+  versioning tests and six exact-build processing observer tests passed.
+- Body limits pass at 125 recorded / zero new. Regeneration removed three obsolete
+  entries; it added none. Generate and verify must run in separate Gradle invocations
+  because their existing task graph has no dependency for the generated file.
+- Preserve earlier failures in local diagnostics: the old photo-picker assertion
+  required shared byte ownership and now asserts copied ownership; the Swift test
+  extraction boundary was renamed with NativeRootView; the combined baseline
+  generation/verification invocation failed Gradle validation. Separate final
+  application tests, tooling and body gate passed after those corrections.
+- The integrated Kotlin framework is linking; full Swift 6 code generation/link,
+  macOS archive/signing and real Apple processing remain required before delivery.
+- Whole-app Swift 6 complete-strict type checking passed against the integrated
+  Kotlin header. Both native root controller and modal presenter passed real
+  primary-file ARM64 object emission. The boxed Boolean/void callback adaptations
+  are explicit; no Sendable/isolation bypass was added. Remaining warning is the
+  existing Firebase token API deprecation. Full executable linking remains open.

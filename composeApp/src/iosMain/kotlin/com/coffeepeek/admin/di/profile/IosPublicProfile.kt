@@ -2,7 +2,6 @@
 
 package com.coffeepeek.admin.di.profile
 
-import androidx.compose.ui.window.ComposeUIViewController
 import com.coffeepeek.admin.AppContent
 import com.coffeepeek.admin.di.media.IosCatalogueMedia
 import com.coffeepeek.admin.di.media.IosPhotoViewer

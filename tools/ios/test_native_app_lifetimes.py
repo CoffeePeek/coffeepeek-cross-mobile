@@ -130,7 +130,7 @@ import Foundation
 
     def test_readiness_restart_and_push_delegate_ownership(self):
         source = (ROOT / "iosApp/iosApp/CoffeePeekApp.swift").read_text(encoding="utf-8")
-        readiness = source[source.index("@MainActor\nprivate final class NativeLaunchReadiness"):source.index("private struct ComposeRootView")]
+        readiness = source[source.index("@MainActor\nprivate final class NativeLaunchReadiness"):source.index("private struct NativeRootView")]
         events = source[source.index("private enum PushPlatformEvent"):source.index("private final class PushNotificationDelegate")]
         push = source[source.index("@MainActor\nprivate final class PushPlatformRun"):source.index("@MainActor\nfinal class PushAppDelegate")]
         with tempfile.TemporaryDirectory(prefix="coffeepeek-native-lifetimes-") as directory:

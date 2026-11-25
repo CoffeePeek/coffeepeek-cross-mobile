@@ -13,7 +13,6 @@ func configureCoffeePeekNativeNavigation() {
     IosDiscoveryRouteControllers.shared.configure(factory: makeDiscoveryRouteController)
     NativeLocalBackProtection.shared.configure(update: { controller, protected in
         coffeePeekRouteHost(controller)?.protectsBack = protected.boolValue
-        return KotlinUnit()
     }, identity: { coffeePeekRouteHost($0)?.route.visit })
 }
 
@@ -83,6 +82,7 @@ private final class CoffeePeekRootController: UIViewController, UITabBarControll
         modals.flush()
     }
     private func showUnavailable(_ next: IosRootState) {
+        view.endEditing(true)
         if installedGeneration != nil {
             tabs.setViewControllers([], animated: false)
             navigations.removeAll()
@@ -129,6 +129,7 @@ private final class CoffeePeekRootController: UIViewController, UITabBarControll
         tabs.setViewControllers(controllers, animated: false)
     }
     private func applyNavigation() {
+        view.endEditing(true)
         let command = state.command
         let generation = state.generation
         let selected = Int(state.selected)
