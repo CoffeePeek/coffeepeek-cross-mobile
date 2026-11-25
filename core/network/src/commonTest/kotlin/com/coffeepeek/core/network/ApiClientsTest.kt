@@ -53,7 +53,7 @@ class ApiClientsTest {
                 { refreshToken ->
                     refreshes++
                     refreshGate?.await()
-                    plain.put("/api/Tokens/native")
+                    plain.put("/api/tokens/native")
                     Result.success(SessionTokens("new", refreshToken))
                 }
             },

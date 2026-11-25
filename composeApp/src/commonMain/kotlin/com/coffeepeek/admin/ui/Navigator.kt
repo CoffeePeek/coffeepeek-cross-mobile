@@ -387,6 +387,7 @@ private fun RootNavHost(
         val errorMessage = ErrorHandler.errorMessage.collectAsState().value
         val loading = LoadingHandler.isLoading.collectAsState().value
         val isLoggedIn by vm.isLoggedIn.collectAsState()
+        val openLogin by _openLoginAfterSessionEnd.collectAsState()
         var previousLoginState by remember { mutableStateOf<Boolean?>(null) }
         var navigationGeneration by remember { mutableIntStateOf(0) }
 
@@ -409,11 +410,13 @@ private fun RootNavHost(
             } else {
                 ErrorHandler.clearError()
                 LoadingHandler.clearLoading()
-                if (_openLoginAfterSessionEnd.value) {
-                    _openLoginAfterSessionEnd.value = false
-                    yield()
-                    navigate(Screen.Auth)
-                }
+            }
+        }
+        LaunchedEffect(isLoggedIn, openLogin) {
+            if (isLoggedIn == false && openLogin) {
+                vm.guestOnboardingDismissed = true
+                yield()
+                if (_openLoginAfterSessionEnd.compareAndSet(true, false)) navigate(Screen.Auth)
             }
         }
 

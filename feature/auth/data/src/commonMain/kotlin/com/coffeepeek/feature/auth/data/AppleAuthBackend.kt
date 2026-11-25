@@ -16,11 +16,12 @@ import io.ktor.http.isSuccess
 import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.Serializable
 import io.ktor.serialization.ContentConvertException
+import kotlin.time.Instant
 
 /** Apple keeps the existing nonce/state wire contract and ASI diagnostics; tokens never escape data. */
 internal class AppleAuthBackend(private val client: HttpClient) {
     suspend fun challenge(): AppleSignInChallenge {
-        val response = client.post("/api/Tokens/apple/challenge")
+        val response = client.post("/api/tokens/apple/challenge")
         val envelope = response.body<Envelope<AppleChallengeDto>>()
         val data = envelope.data
         if (!response.status.isSuccess() || !envelope.isSuccess || data == null || data.challengeId.isBlank() || data.nonce.isBlank())
@@ -37,14 +38,15 @@ internal class AppleAuthBackend(private val client: HttpClient) {
         if (!response.status.isSuccess()) throw AuthApiException("${envelope?.message.orEmpty()} [ASI-H${response.status.value}]", response.status.value)
         if (envelope == null) throw AuthApiException("Invalid Apple response [ASI-R]")
         if (!envelope.isSuccess) throw AuthApiException("${envelope.message.orEmpty()} [ASI-A]")
-        val access = envelope.data?.accessToken?.takeIf(String::isNotBlank)
-        val refresh = envelope.data?.refreshToken?.takeIf(String::isNotBlank)
+        val data = envelope.data ?: throw AuthApiException("Missing Apple session [ASI-I]")
+        val access = data.accessToken?.takeIf(String::isNotBlank)
+        val refresh = data.refreshToken?.takeIf(String::isNotBlank)
         if (access == null || refresh == null) throw AuthApiException("Missing Apple session [ASI-I]")
-        return TokensDto(access, refresh)
+        return TokensDto(access, refresh, data.accessTokenExpiresAt, data.refreshTokenExpiresAt)
     }
 
     private suspend fun loginResponse(request: AppleLoginRequest): HttpResponse = try {
-        client.post("/api/Tokens/apple/login") {
+        client.post("/api/tokens/apple/login") {
             expectSuccess = false
             contentType(ContentType.Application.Json)
             setBody(request)
@@ -62,7 +64,16 @@ internal class AppleAuthBackend(private val client: HttpClient) {
 private data class AppleChallengeDto(val challengeId: String, val nonce: String)
 
 @Serializable
-private data class AppleLoginRequest(val challengeId: String, val idToken: String, val analyticsEnabled: Boolean? = null)
+private data class AppleLoginRequest(val challengeId: String, val idToken: String, val analyticsEnabled: Boolean? = null) {
+    override fun toString(): String = "AppleLoginRequest([redacted])"
+}
 
 @Serializable
-private data class AppleTokensDto(val accessToken: String? = null, val refreshToken: String? = null)
+private data class AppleTokensDto(
+    val accessToken: String? = null,
+    val refreshToken: String? = null,
+    val accessTokenExpiresAt: Instant? = null,
+    val refreshTokenExpiresAt: Instant? = null,
+) {
+    override fun toString(): String = "AppleTokensDto([redacted])"
+}

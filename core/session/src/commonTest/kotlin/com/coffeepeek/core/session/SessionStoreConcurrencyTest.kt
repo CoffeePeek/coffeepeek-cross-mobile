@@ -7,6 +7,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import kotlin.test.*
+import kotlin.time.Instant
 
 @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
 class SessionStoreConcurrencyTest {
@@ -57,5 +58,22 @@ class SessionStoreConcurrencyTest {
         saving.join(); logout.join()
         assertNull(store.state.value)
         assertNull(repository.peekSession())
+    }
+    @Test fun expiryOnlyUpdateDuringPersistenceCommitsTheWholeLatestPair() = runTest {
+        val store = Store().apply { writeGate = CompletableDeferred() }
+        val repository = DefaultSessionStore(store, legacyRows)
+        val initial = Session("access", "refresh", "owner",
+            Instant.parse("2026-11-25T12:00:00Z"), Instant.parse("2026-12-25T12:00:00Z"))
+        val saving = launch { repository.saveSession(initial) }
+        runCurrent()
+        val updated = initial.copy(accessTokenExpiresAt = Instant.parse("2026-11-26T12:00:00Z"),
+            refreshTokenExpiresAt = Instant.parse("2026-12-26T12:00:00Z"))
+        repository.applySession(updated)
+        store.writeGate!!.complete(Unit)
+        saving.join()
+        assertEquals(SessionCredentials("access", "refresh", updated.accessTokenExpiresAt,
+            updated.refreshTokenExpiresAt), store.state.value)
+        assertEquals(updated, repository.peekSession())
+        assertFalse(repository.replaceSession(initial, initial))
     }
 }

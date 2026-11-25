@@ -3,8 +3,8 @@ package com.coffeepeek.feature.auth.data
 import io.ktor.client.statement.HttpResponse
 import io.ktor.http.HttpHeaders
 
-/** The refresh token the server sets as a `refreshToken` cookie, when it does. */
-internal fun HttpResponse.refreshTokenCookie(): String? {
+/** Google login alone still returns refreshToken via Set-Cookie; subsequent refresh/logout use native JSON. */
+internal fun HttpResponse.googleRefreshTokenCookie(): String? {
     val setCookies = headers.getAll(HttpHeaders.SetCookie)
         ?: headers[HttpHeaders.SetCookie]?.let { listOf(it) }
         ?: return null
@@ -18,9 +18,8 @@ private fun cookieValue(setCookieHeader: String, cookieName: String): String? {
         setCookieHeader.split(',').mapTo(this) { it.trim() }
     }
     for (candidate in candidates) {
-        val startIndex = candidate.indexOf(prefix, ignoreCase = true)
-        if (startIndex < 0) continue
-        val rawValue = candidate.substring(startIndex + prefix.length).substringBefore(';').trim()
+        if (!candidate.startsWith(prefix, ignoreCase = true)) continue
+        val rawValue = candidate.substring(prefix.length).substringBefore(';').trim()
         if (rawValue.isNotBlank()) return rawValue.percentDecoded()
     }
     return null

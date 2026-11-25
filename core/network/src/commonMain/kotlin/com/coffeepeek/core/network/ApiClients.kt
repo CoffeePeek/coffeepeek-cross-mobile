@@ -39,6 +39,7 @@ class ApiClients(
 
     val plainClient: HttpClient = apiClientFactory {
         install(UserAgent) { agent = deviceUserAgent() }
+        install(HttpTimeout)
         installServerErrorValidation()
         install(ContentNegotiation) { json(networkJson) }
         defaultRequest { url(baseUrl) }
@@ -72,7 +73,7 @@ class ApiClients(
         }
         defaultRequest { url(baseUrl) }
         configureBearerAuthentication(baseUrl, session, coordinator, requireHttps, markAuthRetry)
-    }.also { it.readCurrentSessionForRequests(); intercept(it) }
+    }.also { intercept(it) }
 
     val client: HttpClient = apiClientFactory {
         installServerErrorValidation()
@@ -82,7 +83,7 @@ class ApiClients(
         install(HttpCache) {
             createHttpCacheStorage(cacheFolderPath)?.let(::publicStorage)
         }
-    }.also { it.readCurrentSessionForRequests(); intercept(it) }
+    }.also { intercept(it) }
 
     private fun intercept(httpClient: HttpClient) {
         if (debug) {

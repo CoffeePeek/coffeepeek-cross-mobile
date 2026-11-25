@@ -1,10 +1,23 @@
 package com.coffeepeek.core.network
 
+import kotlin.time.Instant
+
 /** Transport credentials only; feature DTOs and storage implementations stay outside core. */
-class SessionTokens(val accessToken: String, val refreshToken: String?) {
+class SessionTokens(
+    val accessToken: String,
+    val refreshToken: String?,
+    val accessTokenExpiresAt: Instant? = null,
+    val refreshTokenExpiresAt: Instant? = null,
+) {
     override fun equals(other: Any?): Boolean = this === other ||
-        other is SessionTokens && accessToken == other.accessToken && refreshToken == other.refreshToken
-    override fun hashCode(): Int = 31 * accessToken.hashCode() + (refreshToken?.hashCode() ?: 0)
+        other is SessionTokens && accessToken == other.accessToken && refreshToken == other.refreshToken &&
+        accessTokenExpiresAt == other.accessTokenExpiresAt && refreshTokenExpiresAt == other.refreshTokenExpiresAt
+    override fun hashCode(): Int {
+        var hash = accessToken.hashCode()
+        hash = 31 * hash + refreshToken.hashCode()
+        hash = 31 * hash + accessTokenExpiresAt.hashCode()
+        return 31 * hash + refreshTokenExpiresAt.hashCode()
+    }
     override fun toString(): String = "SessionTokens(redacted)"
 }
 
