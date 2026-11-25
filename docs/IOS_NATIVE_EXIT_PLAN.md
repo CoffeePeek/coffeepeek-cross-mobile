@@ -467,3 +467,16 @@ codex/ios-native. Preserve its guard and reconcile that branch before publishing
   same-device review of grid sizing after asynchronous data, map expansion,
   roaster menu background and bottom-tab back/cancel. No new UI automation or
   business/data changes are introduced. TestFlight remains pending these checks.
+- Build 3233 passed complete Swift 6 strict ARM64 code generation/link:
+  `9fb7ae046846349cdd5866e20119b6358274517161a325aef261f42268fcfcd8`.
+  Signing and package verification passed. Its first installation attempt found no
+  USB device; no update or device acceptance is claimed for that attempt.
+- An earlier whole-app typecheck reached its end but failed because a preview
+  source was edited during that run. That original failure is retained locally;
+  the subsequent full frozen-source ARM64 compile/link above passed.
+- A read-only review found nine standalone compact indicators without accessible
+  names. They now use existing feature-local operation/loading labels; other
+  indicators retain caller labels or their parent button label. Nonembedded
+  collection workspace lists retain their previous LazyVStack behavior. These
+  final Swift-only follow-ups are compiling for build 3234. The layout controller
+  sizing, isolation and cancellation review found no other actionable issue.

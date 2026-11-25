@@ -65,7 +65,7 @@ private struct ShelfNativeBrewHost: View {
     var body: some View {
         Group {
             if let controller { OwnProfileEmbedded(controller: controller).ignoresSafeArea() }
-            else { CoffeePeekNativeLoader(size: 24) }
+            else { CoffeePeekNativeLoader(label: model.strings["shelf_brew_action"], size: 24) }
         }.onAppear { if controller == nil { controller = model.screen.makeBrew() } }
             .onDisappear { model.screen.releaseBrew(); controller = nil }
     }

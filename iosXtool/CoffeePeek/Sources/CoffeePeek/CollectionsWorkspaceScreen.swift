@@ -380,21 +380,23 @@ private struct CollectionsWorkspaceHost: View {
     }
 
     private var rows: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            status
-            switch state.mode {
-            case "Editor": if state.signedIn && !state.loading { editor }
-            case "Preference": preferences
-            case "Owner": owner
-            case "Featured": featured
-            default: publicCollection
-            }
-        }.padding(16)
+        VStack(alignment: .leading, spacing: 16) { rowContents }.padding(16)
+    }
+
+    @ViewBuilder private var rowContents: some View {
+        status
+        switch state.mode {
+        case "Editor": if state.signedIn && !state.loading { editor }
+        case "Preference": preferences
+        case "Owner": owner
+        case "Featured": featured
+        default: publicCollection
+        }
     }
 
     private var scrollingContent: some View {
         ScrollView {
-            rows
+            LazyVStack(alignment: .leading, spacing: 16) { rowContents }.padding(16)
         }
         .safeAreaInset(edge: .top, spacing: 0) { header }
         .safeAreaInset(edge: .bottom, spacing: 0) { bottomAction }

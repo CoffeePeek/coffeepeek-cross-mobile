@@ -40,7 +40,7 @@ struct ShopCheckInNativeFields: View {
 
     private var drink: some View {
         CheckInNativeField(title: strings["shop_checkin_form_drink"]) {
-            if state.drinksLoading { CoffeePeekNativeLoader(size: 24) }
+            if state.drinksLoading { CoffeePeekNativeLoader(label: strings["shop_checkin_form_drink"], size: 24) }
             if state.drinksFailed {
                 Button(strings["shop_checkin_form_drinks_error"], action: actions.retryDrinks)
             }

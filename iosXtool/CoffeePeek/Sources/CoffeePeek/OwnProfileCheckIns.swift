@@ -106,7 +106,7 @@ struct CoffeePeekProfileConnectionsSheet: View {
                         openUser(person.slug)
                     }
                 }
-                if state.loading { CoffeePeekNativeLoader(size: 24).frame(maxWidth: .infinity, minHeight: 44) }
+                if state.loading { CoffeePeekNativeLoader(label: strings["profile_loading"], size: 24).frame(maxWidth: .infinity, minHeight: 44) }
                 else if state.failed {
                     OwnProfileRetry(message: strings[state.followers ? "profile_followers_failed" : "profile_following_failed"],
                         strings: strings, retry: retry)

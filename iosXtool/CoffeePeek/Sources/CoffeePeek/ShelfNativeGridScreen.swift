@@ -198,7 +198,7 @@ private struct ShelfNativeVisibilitySettings: View {
             Toggle(strings["shelf_profile_show"], isOn: Binding(get: { state.visibility }, set: { setVisible($0) }))
                 .disabled(!state.visibilityEnabled)
             Text(strings["shelf_profile_show_hint"]).font(.footnote).foregroundStyle(CoffeePeekNativeStyle.secondary)
-            if state.visibilityLoading { CoffeePeekNativeLoader(size: 24) }
+            if state.visibilityLoading { CoffeePeekNativeLoader(label: strings["shelf_profile_show"], size: 24) }
             if let error = state.visibilityError {
                 Text(strings[error == "Load" ? "shelf_profile_visibility_load_failed" : "shelf_profile_visibility_save_failed"])
                     .font(.footnote).foregroundStyle(.red)

@@ -98,7 +98,7 @@ struct ShelfNativeAddScreen: View {
                     Text(stageText(stage.name))
                 }.foregroundStyle(stage.status == "Done" ? CoffeePeekNativeStyle.accent : CoffeePeekNativeStyle.secondary)
             }
-            CoffeePeekNativeLoader(size: 24).frame(maxWidth: .infinity)
+            CoffeePeekNativeLoader(label: strings["shelf_scan_title"], size: 24).frame(maxWidth: .infinity)
         }
         .task(id: add.step) {
             if add.step == "Revealing" {
