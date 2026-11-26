@@ -1,0 +1,175 @@
+diff --git a/packages/xcross/lib/src/shared/compose/build/swift_runner_builder.dart b/packages/xcross/lib/src/shared/compose/build/swift_runner_builder.dart
+index 20d1fcf..820af4b 100644
+--- a/packages/xcross/lib/src/shared/compose/build/swift_runner_builder.dart
++++ b/packages/xcross/lib/src/shared/compose/build/swift_runner_builder.dart
+@@ -11,6 +11,7 @@ import 'package:xcross/src/shared/compose/project/kmp_project.dart';
+ import 'package:xcross/src/shared/compose/swiftpm/host_package_link.dart';
+ import 'package:xcross/src/shared/compose/toolchain/compose_toolchain.dart';
+ import 'package:xcross/src/shared/errors/errors.dart';
++import 'package:xcross/src/shared/swiftpm/response_arguments.dart';
+ 
+ @internal
+ typedef SwiftRunnerRunChecked =
+@@ -75,7 +76,7 @@ final class SwiftRunnerBuilder<T extends PlatformHostInterface> {
+       files: runner.host.fileSystem,
+     );
+ 
+-    final swiftc = ProcessInvocation.forHost(toolchain.host, toolchain.swiftc, [
++    final arguments = <String>[
+       '-sdk',
+       iphoneSdk,
+       '-target',
+@@ -153,7 +154,12 @@ final class SwiftRunnerBuilder<T extends PlatformHostInterface> {
+       ...project.swiftSources,
+       '-o',
+       runnerPath,
+-    ]);
++    ];
++    final swiftc = ProcessInvocation.forHost(
++      toolchain.host,
++      toolchain.swiftc,
++      await swiftRunnerArguments(runner.host, buildDir, arguments),
++    );
+     await _runChecked(
+       swiftc.executable,
+       swiftc.arguments,
+@@ -238,3 +244,22 @@ void _validateFramework(
+     );
+   }
+ }
++
++/// Windows CreateProcess limits argv even when swiftc is launched without a shell.
++/// Reuse the Swift driver quoting used by the Windows SwiftPM plan repair.
++@internal
++Future<List<String>> swiftRunnerArguments(
++  PlatformHostInterface host,
++  String buildDirectory,
++  List<String> arguments,
++) async {
++  if (host is! WindowsHostInterface) return arguments;
++  final responsePath = p.absolute(p.join(buildDirectory, 'swift-runner.rsp'));
++  final file = host.fileSystem.file(responsePath);
++  await file.parent.create(recursive: true);
++  final contents = arguments
++      .map(SwiftPmResponseArguments.quoteWindowsArgument)
++      .join('\n');
++  await file.writeAsString('$contents\n', flush: true);
++  return ['@$responsePath'];
++}
+diff --git a/packages/xcross/test/compose/swift_runner_response_test.dart b/packages/xcross/test/compose/swift_runner_response_test.dart
+new file mode 100644
+--- /dev/null
++++ b/packages/xcross/test/compose/swift_runner_response_test.dart
+@@ -0,0 +1,112 @@
++import 'dart:io';
++
++import 'package:cli_kit/host/windows/windows_host.dart';
++import 'package:path/path.dart' as p;
++import 'package:test/test.dart';
++import 'package:xcross/src/shared/compose/build/swift_runner_builder.dart';
++
++import 'support/compose_platforms.dart';
++
++void main() {
++  late ComposeTestSession session;
++  setUp(() => session = createComposeTestSession());
++  tearDown(() => session.dispose());
++
++  test('Windows externalizes long Swift argv with driver escaping', () async {
++    final args = [
++      r'C:\source with spaces\кофе.swift',
++      '',
++      r'-DNAME="quoted"',
++      'C:\\trailing\\',
++      r'@executable_path/Frameworks',
++      for (var i = 0; i < 800; i++) 'C:\\long-source-directory\\Source$i.swift',
++    ];
++    final build = p.join(session.temporaryRoot.path, 'runner with spaces');
++    final actual = await swiftRunnerArguments(
++      Platform.isWindows
++          ? WindowsHost(architecture: 'x64')
++          : session.hosts.windowsX64.host,
++      build,
++      args,
++    );
++    expect(actual, hasLength(1));
++    expect(actual.single.startsWith('@'), isTrue);
++    final file = File(actual.single.substring(1));
++    final lines = await file.readAsLines();
++    expect(lines, hasLength(args.length));
++    expect(lines.take(5), [
++      r'"C:\source with spaces\кофе.swift"',
++      '""',
++      r'"-DNAME=\"quoted\""',
++      r'"C:\trailing\\"',
++      r'"@executable_path/Frameworks"',
++    ]);
++    expect((await file.readAsString()).length, greaterThan(32767));
++    expect(actual.single.length, lessThan(1000));
++  });
++
++  test(
++    'POSIX keeps original argv and does not write a response file',
++    () async {
++      final build = p.join(session.temporaryRoot.path, 'posix-runner');
++      final args = ['-sdk', '/SDK with spaces', '/src/App.swift'];
++      expect(
++        await swiftRunnerArguments(session.hosts.linuxX64.host, build, args),
++        same(args),
++      );
++      expect(Directory(build).existsSync(), isFalse);
++    },
++  );
++
++  test(
++    'Windows Swift driver reads quoted paths macros and long argument list',
++    () async {
++      final probe = await Process.run('swiftc.exe', ['--version']);
++      expect(probe.exitCode, 0);
++      final build = p.join(
++        session.temporaryRoot.path,
++        'Swift response кофе',
++      );
++      final source = File(p.join(build, 'source with spaces.swift'));
++      await source.parent.create(recursive: true);
++      await source.writeAsString('let responseProbe = 1\n');
++      final args = [
++        '-typecheck',
++        '-module-name',
++        'ResponseProbe',
++        '-I',
++        'C:\\search path with spaces\\',
++        '-Xcc',
++        r'-DPROBE="a\b"',
++        source.path,
++      ];
++      final direct = await Process.run('swiftc.exe', ['-###', ...args]);
++      final response = await swiftRunnerArguments(
++        WindowsHost(architecture: 'x64'),
++        build,
++        ['-###', ...args],
++      );
++      final expanded = await Process.run('swiftc.exe', response);
++      expect(expanded.exitCode, direct.exitCode);
++      expect(expanded.stdout, direct.stdout);
++      expect(expanded.stderr, direct.stderr);
++      final longArgs = [
++        ...args,
++        for (var i = 0; i < 800; i++) ...[
++          '-I',
++          'C:\\long-search-path-with-spaces\\entry$i',
++        ],
++      ];
++      expect(longArgs.join(' ').length, greaterThan(32767));
++      final longResponse = await swiftRunnerArguments(
++        WindowsHost(architecture: 'x64'),
++        build,
++        longArgs,
++      );
++      final result = await Process.run('swiftc.exe', longResponse);
++      expect(result.exitCode, 0, reason: '${result.stdout}\n${result.stderr}');
++    },
++    skip:
++        !Platform.isWindows || !Platform.environment.containsKey('SWIFT_TEST'),
++  );
++}

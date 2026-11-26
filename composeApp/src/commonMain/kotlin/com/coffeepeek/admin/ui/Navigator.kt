@@ -10,7 +10,7 @@ import com.coffeepeek.admin.di.homecheckin.GuestCheckInOnboardingHost
 
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
-import com.coffeepeek.admin.ui.screen.checkins.CheckInHistoryDestination
+import com.coffeepeek.admin.ui.screen.checkins.HomeCheckInDetailDestination
 import com.coffeepeek.admin.ui.screen.shelf.ShelfScreenRenderer
 import com.coffeepeek.admin.ui.screen.contributions.ContributionKind
 import com.coffeepeek.admin.ui.screen.contributions.ContributionsScreenRenderer
@@ -217,8 +217,7 @@ private fun RootNavHost(
         @Serializable data object CollectionsLibrary : Screen
         @Serializable data class CollectionEditor(val id: String? = null) : Screen
         @Serializable data class SavedPublicCollection(val id: String) : Screen
-        @Serializable data object VisitedPlaces : Screen
-        @Serializable data object HomeCheckIns : Screen
+        @Serializable data class HomeCheckInDetail(val id: String) : Screen
         @Serializable data object ShelfArchive : Screen
         @Serializable data object ShelfAddBag : Screen
         @Serializable data class ShelfBag(val bagId: String) : Screen
@@ -251,25 +250,48 @@ private fun RootNavHost(
     private val _pendingProfileShelf = MutableStateFlow(false)
     val pendingProfileShelf = _pendingProfileShelf.asStateFlow()
 
+    private val _pendingProfileCheckIns = MutableStateFlow(false)
+    val pendingProfileCheckIns = _pendingProfileCheckIns.asStateFlow()
+
     fun consumeProfileShelf() {
         _pendingProfileShelf.value = false
+    }
+
+    fun consumeProfileCheckIns() {
+        _pendingProfileCheckIns.value = false
+    }
+
+    /** Explicit history intent; ordinary profile tab selection retains its current section and date. */
+    fun openProfileCheckIns(popCurrent: Boolean = false) {
+        consumeProfileShelf()
+        _pendingProfileCheckIns.value = true
+        if (popCurrent) popThenSelectTab(Screen.ProfileTab) else selectTab(Screen.ProfileTab)
     }
 
     private fun clearSessionNavigationRequests() {
         hasOpenedAppLink.value = false
         consumeProfileShelf()
+        consumeProfileCheckIns()
     }
 
     fun returnToProfileShelf() {
+        consumeProfileCheckIns()
         _pendingProfileShelf.value = true
         popThenSelectTab(Screen.ProfileTab)
     }
 
     private val _openLoginAfterSessionEnd = MutableStateFlow(false)
+    internal val nativeLoginAfterSessionEnd = _openLoginAfterSessionEnd.asStateFlow()
+    internal fun consumeNativeLoginAfterSessionEnd() = _openLoginAfterSessionEnd.compareAndSet(true, false)
     private val pendingAppLink = MutableStateFlow<Screen?>(null)
     // Keep the guide out of an app-link launch after the destination consumes the pending route.
     private val hasOpenedAppLink = MutableStateFlow(false)
+    internal val nativePendingLink = pendingAppLink.asStateFlow()
+    internal val nativeOpenedLink = hasOpenedAppLink.asStateFlow()
     private val checkInSignInHandoff = ShopCheckInSignInHandoff()
+
+    internal fun shopCheckInSignInAttempt(shopId: String, sessions: SessionReader): ShopCheckInSignInHandoff.Attempt =
+        checkInSignInHandoff.attempt(shopId) { sessions.isActiveSession(sessions.peekSession()) }
 
     internal fun openAppLink(screen: Screen) {
         hasOpenedAppLink.value = true
@@ -283,6 +305,9 @@ private fun RootNavHost(
     fun consumeTabSelection() {
         _pendingTabSelection.value = null
     }
+
+    internal fun consumeNativeTab(expected: Screen) = _pendingTabSelection.compareAndSet(expected, null)
+    internal fun consumeNativeLink(expected: Screen) = pendingAppLink.compareAndSet(expected, null)
 
     fun openLoginAfterSessionEnd() {
         _openLoginAfterSessionEnd.value = true
@@ -328,8 +353,7 @@ private fun RootNavHost(
         is Screen.CollectionsLibrary,
         is Screen.CollectionEditor,
         is Screen.SavedPublicCollection,
-        is Screen.VisitedPlaces,
-        is Screen.HomeCheckIns,
+        is Screen.HomeCheckInDetail,
         is Screen.ShelfArchive,
         is Screen.ShelfAddBag,
         is Screen.ShelfBag,
@@ -380,71 +404,68 @@ private fun RootNavHost(
         }
     }
 
+    internal fun prepareRootTransition(transition: RootSessionTransition) {
+        if (transition.resetsNavigation) clearPlatformNavigationState()
+        if (transition.clearsPrivateRequests) clearSessionNavigationRequests()
+    }
+
+    internal suspend fun acceptRootTransition(transition: RootSessionTransition) {
+        if (transition.current.isLoggedIn) {
+            checkInSignInHandoff.take()?.let { pendingAppLink.compareAndSet(null, it) }
+        } else {
+            ErrorHandler.clearError()
+            LoadingHandler.clearLoading()
+        }
+    }
+
     @Composable
     operator fun invoke(
         vm: NavigatorViewModel = platformViewModel(),
     ) {
         val errorMessage = ErrorHandler.errorMessage.collectAsState().value
         val loading = LoadingHandler.isLoading.collectAsState().value
-        val isLoggedIn by vm.isLoggedIn.collectAsState()
-        val openLogin by _openLoginAfterSessionEnd.collectAsState()
-        var previousLoginState by remember { mutableStateOf<Boolean?>(null) }
-        var navigationGeneration by remember { mutableIntStateOf(0) }
+        val state by vm.navigationState.collectAsState()
 
         ErrorDialog(
             show = errorMessage != null,
             message = errorMessage ?: "",
             onDismiss = { ErrorHandler.clearError() }
         )
-        LaunchedEffect(isLoggedIn) {
-            val loggedIn = isLoggedIn ?: return@LaunchedEffect
-            if (previousLoginState != null && previousLoginState != loggedIn) {
-                clearPlatformNavigationState()
-                navigationGeneration++
-                if (!loggedIn) clearSessionNavigationRequests()
-            }
-            previousLoginState = loggedIn
-            if (loggedIn) {
-                vm.guestOnboardingDismissed = false
-                checkInSignInHandoff.take()?.let { pendingAppLink.compareAndSet(null, it) }
-            } else {
-                ErrorHandler.clearError()
-                LoadingHandler.clearLoading()
-            }
-        }
-        LaunchedEffect(isLoggedIn, openLogin) {
-            if (isLoggedIn == false && openLogin) {
-                vm.guestOnboardingDismissed = true
-                yield()
-                if (_openLoginAfterSessionEnd.compareAndSet(true, false)) navigate(Screen.Auth)
-            }
-        }
-
-        NavigationContent(vm, isLoggedIn, previousLoginState, navigationGeneration, loading)
+        NavigationContent(vm, state, loading)
     }
 
     @Composable
     private fun NavigationContent(
         vm: NavigatorViewModel,
-        isLoggedIn: Boolean?,
-        previousLoginState: Boolean?,
-        generation: Int,
+        state: RootNavigationState,
         loading: Boolean,
     ) {
         val openedAppLink by hasOpenedAppLink.collectAsState()
+        val isLoggedIn = state.session?.isLoggedIn
+        DeferredLogin(vm, isLoggedIn)
         Box(modifier = Modifier.fillMaxSize()) {
             if (isLoggedIn != null) {
-                key(generation, isLoggedIn) {
+                key(state.generation, isLoggedIn) {
                     BaseNavigator(isLoggedIn)
                 }
             }
             LoadingDialog(show = loading)
-            if (isLoggedIn == false && previousLoginState == false && !openedAppLink && !vm.guestOnboardingDismissed) {
+            if (isLoggedIn == false && !openedAppLink && !state.onboardingDismissed) {
                 GuestCheckInOnboardingHost { destination ->
-                    if (vm.guestOnboardingDismissed) return@GuestCheckInOnboardingHost
-                    vm.guestOnboardingDismissed = true
-                    destination?.let(::navigate)
+                    if (vm.dismissOnboarding()) destination?.let(::navigate)
                 }
+            }
+        }
+    }
+
+    @Composable
+    private fun DeferredLogin(vm: NavigatorViewModel, isLoggedIn: Boolean?) {
+        val requested by _openLoginAfterSessionEnd.collectAsState()
+        LaunchedEffect(isLoggedIn, requested) {
+            if (isLoggedIn == false && requested) {
+                vm.dismissOnboarding()
+                yield()
+                if (consumeNativeLoginAfterSessionEnd()) navigate(Screen.Auth)
             }
         }
     }
@@ -485,7 +506,10 @@ private fun RootNavHost(
 
         LaunchedEffect(appLink) {
             val screen = appLink ?: return@LaunchedEffect
-            nav.navigate(screen.appLinkDestination(isLoggedIn)) {
+            if (screen == Screen.ProfileTab) {
+                nav.popBackStack<Screen.Main>(inclusive = false)
+                selectTab(Screen.ProfileTab)
+            } else nav.navigate(screen.appLinkDestination(isLoggedIn)) {
                 launchSingleTop = true
                 popUpTo<Screen.Main>()
             }
@@ -632,16 +656,12 @@ koinInject<ContributionsScreenRenderer>().Editor(route.shopId, route.section, ro
                     composable<Screen.CollectionsLibrary> { CollectionsLibraryDestination() }
                     composable<Screen.CollectionEditor> { backStack -> CollectionEditorDestination(backStack.toRoute<Screen.CollectionEditor>().id) }
                     composable<Screen.SavedPublicCollection> { backStack -> SavedPublicCollectionDestination(backStack.toRoute<Screen.SavedPublicCollection>().id) }
-                    composable<Screen.VisitedPlaces> { CheckInHistoryDestination() }
-                    composable<Screen.HomeCheckIns> { CheckInHistoryDestination() }
+                    homeCheckInRoutes()
                     composable<Screen.ShelfArchive> { koinInject<ShelfScreenRenderer>().Archive() }
                     composable<Screen.ShelfAddBag> { koinInject<ShelfScreenRenderer>().AddBag() }
                     composable<Screen.ShelfBag> { backStack ->
                         val route = backStack.toRoute<Screen.ShelfBag>()
                         koinInject<ShelfScreenRenderer>().Bag(route.bagId)
-                    }
-                    composable<Screen.EditHomeCheckIn> { entry ->
-                        CheckInHistoryDestination(initialHomeId = entry.toRoute<Screen.EditHomeCheckIn>().id)
                     }
                     composable<Screen.CitySettings> { koinInject<SettingsScreenRenderer>().City() }
                     composable<Screen.ThemeSettings> { koinInject<SettingsScreenRenderer>().Theme() }
@@ -649,6 +669,15 @@ koinInject<ContributionsScreenRenderer>().Editor(route.shopId, route.section, ro
                     composable<Screen.BlockedAuthors> { com.coffeepeek.admin.di.authorblocking.AuthorBlockingScreenRoute() }
                     composable<Screen.UsagePolicy> { koinInject<SettingsScreenRenderer>().UsagePolicy() }
             }
+        }
+    }
+
+    private fun androidx.navigation.NavGraphBuilder.homeCheckInRoutes() {
+        composable<Screen.HomeCheckInDetail> { entry ->
+            HomeCheckInDetailDestination(entry.toRoute<Screen.HomeCheckInDetail>().id)
+        }
+        composable<Screen.EditHomeCheckIn> { entry ->
+            HomeCheckInDetailDestination(entry.toRoute<Screen.EditHomeCheckIn>().id, editOnLoad = true)
         }
     }
 
@@ -687,12 +716,11 @@ koinInject<ContributionsScreenRenderer>().Editor(route.shopId, route.section, ro
             Screen.CollectionsLibrary -> CollectionsLibraryDestination()
             is Screen.CollectionEditor -> CollectionEditorDestination(screen.id)
             is Screen.SavedPublicCollection -> SavedPublicCollectionDestination(screen.id)
-            Screen.VisitedPlaces -> CheckInHistoryDestination()
-            Screen.HomeCheckIns -> CheckInHistoryDestination()
+            is Screen.HomeCheckInDetail -> HomeCheckInDetailDestination(screen.id)
             Screen.ShelfArchive -> koinInject<ShelfScreenRenderer>().Archive()
             Screen.ShelfAddBag -> koinInject<ShelfScreenRenderer>().AddBag()
             is Screen.ShelfBag -> koinInject<ShelfScreenRenderer>().Bag(screen.bagId)
-            is Screen.EditHomeCheckIn -> CheckInHistoryDestination(initialHomeId = screen.id)
+            is Screen.EditHomeCheckIn -> HomeCheckInDetailDestination(screen.id, editOnLoad = true)
             Screen.CitySettings -> koinInject<SettingsScreenRenderer>().City()
             Screen.ThemeSettings -> koinInject<SettingsScreenRenderer>().Theme()
             Screen.LanguageSettings -> koinInject<SettingsScreenRenderer>().Language()
@@ -719,15 +747,13 @@ koinInject<ContributionsScreenRenderer>().Editor(route.shopId, route.section, ro
     @Composable
     private fun ShopCheckInSignInRoute(shopId: String) {
         val sessions = koinInject<SessionReader>()
-        val request = remember(shopId) { ShopCheckInSignInHandoff.Request(shopId) }
-        DisposableEffect(request, sessions) {
-            checkInSignInHandoff.begin(request)
-            onDispose {
-                if (!sessions.isActiveSession(sessions.peekSession())) checkInSignInHandoff.cancel(request)
-            }
+        val attempt = remember(shopId, sessions) { shopCheckInSignInAttempt(shopId, sessions) }
+        DisposableEffect(attempt) {
+            attempt.begin()
+            onDispose(attempt::dispose)
         }
         koinInject<AuthScreenRenderer>().CheckInLogin(onClose = {
-            checkInSignInHandoff.cancel(request)
+            attempt.cancel()
             popBack()
         })
     }

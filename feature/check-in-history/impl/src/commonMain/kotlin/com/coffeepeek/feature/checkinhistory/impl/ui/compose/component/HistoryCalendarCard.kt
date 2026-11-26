@@ -24,7 +24,6 @@ import com.coffeepeek.core.designsystem.component.CoffeePeekIcon
 import com.coffeepeek.core.designsystem.icons.CoffeePeekIcons
 import com.coffeepeek.core.designsystem.theme.CoffeePeekDimens
 import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
-import com.coffeepeek.feature.checkinhistory.api.ProfileActivityHeader
 import com.coffeepeek.feature.checkinhistory.domain.model.HistoryMonth
 import com.coffeepeek.feature.checkinhistory.impl.resources.*
 import com.coffeepeek.feature.checkinhistory.impl.ui.compose.model.*
@@ -34,8 +33,7 @@ import com.coffeepeek.core.designsystem.resources.coffeePeekStringResource as st
 
 @Composable
 internal fun HistoryCalendarCard(state: CombinedHistoryState, onAction: (CombinedHistoryAction) -> Unit,
-    modifier: Modifier = Modifier, imageContent: HistoryImageContent? = null, framed: Boolean = true,
-    profileHeader: ProfileActivityHeader? = null, profileWeek: List<String>? = null) {
+    modifier: Modifier = Modifier, imageContent: HistoryImageContent? = null, framed: Boolean = true) {
     val haptics = LocalHapticFeedback.current
     val select: (CombinedHistoryAction) -> Unit = { action ->
         haptics.performHapticFeedback(HapticFeedbackType.SegmentTick)
@@ -46,23 +44,16 @@ internal fun HistoryCalendarCard(state: CombinedHistoryState, onAction: (Combine
             else androidx.compose.ui.graphics.Color.Transparent),
         border = if (framed) BorderStroke(0.5.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f)) else null) {
         Column(Modifier.padding(if (framed) 12.dp else 0.dp)) {
-            HistoryCalendarHeader(state, select, profileHeader, showArrows = profileWeek == null)
-            HistoryCalendarDays(state, select, imageContent, profileWeek)
+            HistoryCalendarHeader(state, select)
+            HistoryCalendarDays(state, select, imageContent)
         }
     }
 }
 
 @Composable
-private fun HistoryCalendarHeader(state: CombinedHistoryState, select: (CombinedHistoryAction) -> Unit,
-    profileHeader: ProfileActivityHeader?, showArrows: Boolean) {
+private fun HistoryCalendarHeader(state: CombinedHistoryState, select: (CombinedHistoryAction) -> Unit) {
     val title = historyMonthTitle(state.month)
     val canGoBack = state.month != HistoryMonth(1, 1)
-    if (profileHeader != null) {
-        val previous: (() -> Unit)? = if (showArrows && canGoBack) ({ select(CombinedHistoryAction.ChangeMonth(-1)) }) else null
-        val next: (() -> Unit)? = if (showArrows && state.canGoNextMonth) ({ select(CombinedHistoryAction.ChangeMonth(1)) }) else null
-        profileHeader(title, previous, next)
-        return
-    }
     Row(Modifier.fillMaxWidth().padding(start = 4.dp), verticalAlignment = Alignment.CenterVertically) {
         Text(title, Modifier.weight(1f),
             style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.SemiBold)
@@ -74,7 +65,7 @@ private fun HistoryCalendarHeader(state: CombinedHistoryState, select: (Combined
 
 @Composable
 private fun HistoryCalendarDays(
-    state: CombinedHistoryState, select: (CombinedHistoryAction) -> Unit, image: HistoryImageContent?, profileWeek: List<String>?,
+    state: CombinedHistoryState, select: (CombinedHistoryAction) -> Unit, image: HistoryImageContent?,
 ) {
     Spacer(Modifier.height(8.dp))
     Row(Modifier.fillMaxWidth()) {
@@ -85,7 +76,7 @@ private fun HistoryCalendarDays(
     }
     HorizontalDivider(Modifier.padding(top = 10.dp, bottom = 6.dp),
         color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
-    HistoryCalendarGrid(state, select, image, profileWeek)
+    HistoryCalendarGrid(state, select, image)
 }
 
 @Composable
@@ -115,11 +106,10 @@ private fun HistoryCalendarSummary(state: CombinedHistoryState, select: (Combine
 
 @Composable
 private fun HistoryCalendarGrid(
-    state: CombinedHistoryState, select: (CombinedHistoryAction) -> Unit, image: HistoryImageContent?, profileWeek: List<String>?,
+    state: CombinedHistoryState, select: (CombinedHistoryAction) -> Unit, image: HistoryImageContent?,
 ) {
     val counts = state.calendarCounts
-    val weeks = profileWeek?.let { listOf(it) }
-        ?: historyCalendarCells(state.month).map { day -> day?.let(state.month::date) }.chunked(7)
+    val weeks = historyCalendarCells(state.month).map { day -> day?.let(state.month::date) }.chunked(7)
     weeks.forEach { week ->
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
             week.forEach { date ->

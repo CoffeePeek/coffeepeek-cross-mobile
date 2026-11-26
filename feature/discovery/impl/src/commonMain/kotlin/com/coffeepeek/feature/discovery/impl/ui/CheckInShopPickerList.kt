@@ -23,7 +23,6 @@ import com.coffeepeek.core.designsystem.theme.CoffeePeekTheme
 import com.coffeepeek.feature.discovery.impl.resources.*
 import com.coffeepeek.feature.discovery.impl.search.SearchAction
 import com.coffeepeek.feature.discovery.impl.search.SearchState
-import com.coffeepeek.feature.discovery.impl.search.matchesPickerQuery
 import com.coffeepeek.feature.discovery.domain.model.Coordinates
 import com.coffeepeek.feature.discovery.domain.model.ShopSummary
 import com.coffeepeek.feature.discovery.domain.rules.searchText
@@ -46,7 +45,7 @@ internal fun CheckInShopPickerList(
     }
     val recentIds = remember(recent) { recent.mapTo(mutableSetOf(), ShopSummary::id) }
     val remaining = remember(shops, recentIds) { shops.filterNot { it.id in recentIds } }
-    val isPending = applied?.matchesPickerQuery(state.criteria) != true && state.error == null
+    val isPending = state.checkInShopPickerResults().pending
     KeepPickerTopAtRecents(list, recent.isNotEmpty())
     PickerPagination(state, list, isPending, onAction)
     PrefetchListPhotos(list, (recent + remaining).map { "shop:${it.id}" to listOfNotNull(it.photoUrl) })

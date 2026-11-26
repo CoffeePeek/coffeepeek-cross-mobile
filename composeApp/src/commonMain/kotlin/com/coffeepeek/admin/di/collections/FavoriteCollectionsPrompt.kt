@@ -1,6 +1,6 @@
 package com.coffeepeek.admin.di.collections
 
-/** App-level heart action. Android supplies the collections picker; other platforms retain their current writer. */
+/** App-level shop and roaster heart action. Both platforms select memberships before writing. */
 interface FavoriteCollectionsPrompt {
     fun shop(slug: String)
     fun roaster(slug: String)

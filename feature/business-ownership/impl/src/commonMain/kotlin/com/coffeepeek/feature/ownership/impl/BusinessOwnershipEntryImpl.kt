@@ -9,6 +9,7 @@ import com.coffeepeek.feature.ownership.impl.ui.OwnershipViewModel
 import com.coffeepeek.feature.ownership.impl.ui.OwnershipAccess
 import com.coffeepeek.feature.ownership.impl.ui.compose.*
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import com.coffeepeek.feature.ownership.impl.ui.compose.BusinessOwnershipScreen
 import com.coffeepeek.feature.ownership.impl.ui.compose.model.OwnershipEvent
@@ -20,9 +21,12 @@ fun createBusinessOwnershipEntry(
     onEdit: (String, String) -> Unit = { _, _ -> },
     onOpenBusiness: (String, String) -> Unit = { _, _ -> },
     onLogin: () -> Unit = {},
-): BusinessOwnershipEntry = OwnershipEntry(repository, account, image, picker, backHandler, checkInLink, shareCheckInQr, onEdit, onOpenBusiness, onLogin)
+): BusinessOwnershipEntry {
+    return OwnershipEntry(repository, account, image, picker, backHandler, checkInLink, shareCheckInQr,
+        onEdit, onOpenBusiness, onLogin)
+}
 
-private class OwnershipEntry(
+internal class OwnershipEntry(
     private val repository: BusinessOwnershipRepository, private val account: OwnershipAccount,
     private val image: OwnershipImage, private val picker: OwnershipPhotoPicker, private val backHandler: OwnershipBackHandler,
     private val checkInLink: (String) -> String?,
@@ -32,39 +36,69 @@ private class OwnershipEntry(
     private val onLogin: () -> Unit,
 ) : BusinessOwnershipEntry {
     private val access = OwnershipAccess(repository, account)
-    private val profileChanges = kotlinx.coroutines.flow.MutableStateFlow(0L)
+    private val mutableProfileChanges = kotlinx.coroutines.flow.MutableStateFlow(0L)
+    override val profileChanges = mutableProfileChanges.asStateFlow()
+    internal fun nativeSignedIn() = account.current() != null
+    internal fun nativeModel(tab: Boolean, kind: BusinessKind?, slug: String?, id: String?) =
+        OwnershipViewModel(repository, account, kind, slug, id, tab)
+    internal fun nativeSession(model: OwnershipViewModel, tab: Boolean, claim: Boolean,
+        choosePhotos: () -> Unit, dispose: () -> Unit) =
+        IosOwnershipSession(model, account, tab, claim, choosePhotos, checkInLink, shareCheckInQr,
+            { kind, id -> openBusiness(model.state.value, kind, id) }, dispose)
+    internal fun profileEditorId(kind: BusinessKind, id: String, slug: String,
+        identities: Set<String> = access.state.value.ownedIdentities): String? {
+        if ("${kind.name}:$id" !in identities && "${kind.name}:$slug" !in identities) return null
+        return access.editorId(kind, id, slug)
+    }
+    internal fun nativeEdit(kind: String, id: String) = onEdit(kind, id)
+    internal fun nativeLogin() = onLogin()
+    internal fun nativeProfileSaved() { mutableProfileChanges.value++ }
     @Composable override fun ProfileChanges(): Long = profileChanges.collectAsState().value
-    @Composable override fun Session(): BusinessSessionState {
-        LaunchedEffect(access) { account.observe().distinctUntilChanged().collect {
+    override suspend fun observeSessionChanges() {
+        account.observe().distinctUntilChanged().collect {
             access.reset()
             access.refresh()
-        } }
+        }
+    }
+    override suspend fun refreshSession() = access.refresh()
+    @Composable override fun Session(): BusinessSessionState {
+        LaunchedEffect(access) { observeSessionChanges() }
         val scope = rememberCoroutineScope()
         androidx.lifecycle.compose.LifecycleResumeEffect(access) {
-            val job = scope.launch { access.refresh() }
+            val job = scope.launch { refreshSession() }
             onPauseOrDispose { job.cancel() }
         }
         return access.state.collectAsState().value
     }
+    override val accountSwitchState = access.state.asStateFlow()
+
+    override suspend fun switchAccountMode() = access.switchMode()
+
     @Composable override fun AccountSwitch() {
-        val state by access.state.collectAsState()
+        val state by accountSwitchState.collectAsState()
         val scope = rememberCoroutineScope()
-        OwnershipAccountSwitch(state) { scope.launch { access.switchMode() } }
+        OwnershipAccountSwitch(state) { scope.launch { switchAccountMode() } }
     }
     @Composable override fun Tab() {
         val model = viewModel(key = "business-tab") { OwnershipViewModel(repository, account, businessTab = true) }
         val state by model.state.collectAsState()
-        BusinessTabContent(state, model::onAction, image, checkInLink, shareCheckInQr) { kind, id ->
-            val business = (state.shops + state.roasters?.items.orEmpty()).firstOrNull { it.kind == kind && it.id == id }
-            val slug = business?.slug
-            if (slug.isNullOrBlank()) onEdit(kind.name, id) else onOpenBusiness(kind.name, slug)
-        }
+        val open = { kind: String, id: String -> openBusiness(state, kind, id) }
+        if (PlatformOwnershipContent(model, account, picker, tab = true,
+                checkInLink = checkInLink, shareQr = shareCheckInQr, openBusiness = open)) return
+        BusinessTabContent(state, model::onAction, image, checkInLink, shareCheckInQr) { kind, id -> open(kind.name, id) }
     }
+
+    private fun openBusiness(state: com.coffeepeek.feature.ownership.impl.ui.compose.model.OwnershipState, kind: String, id: String) {
+        val business = (state.shops + state.roasters?.items.orEmpty()).firstOrNull { it.kind.name == kind && it.id == id } ?: return
+        val slug = business.slug
+        if (slug.isNullOrBlank()) onEdit(kind, id) else onOpenBusiness(kind, slug)
+    }
+
     @Composable override fun ProfileActions(kind: String, id: String, slug: String, onSuggest: () -> Unit, onOwnerEdit: () -> Unit,
         favorite: @Composable () -> Unit, share: @Composable () -> Unit) {
         val state by access.state.collectAsState()
         val businessKind = BusinessKind.valueOf(kind)
-        val editorId = if ("$kind:$id" in state.ownedIdentities || "$kind:$slug" in state.ownedIdentities) access.editorId(businessKind, id, slug) else null
+        val editorId = profileEditorId(businessKind, id, slug, state.ownedIdentities)
         OwnershipProfileActions(
             owner = editorId != null,
             suggest = onSuggest,
@@ -75,8 +109,13 @@ private class OwnershipEntry(
             onLogin = onLogin,
             roaster = businessKind == BusinessKind.Roaster,
         ) { dismiss ->
-            OwnershipClaimSheet(repository, account, businessKind, slug, image, picker, dismiss, onLogin)
+            ClaimContent(businessKind, slug, dismiss, onLogin)
         }
+    }
+
+    @Composable
+    internal fun ClaimContent(kind: BusinessKind, slug: String, dismiss: () -> Unit, login: () -> Unit, nativeModal: Boolean = true) {
+        OwnershipClaimSheet(repository, account, kind, slug, image, picker, dismiss, login, nativeModal)
     }
 
     @Composable
@@ -91,11 +130,11 @@ private class OwnershipEntry(
                 when (event) {
                     OwnershipEvent.Close -> back()
                     OwnershipEvent.Login -> login()
-                    OwnershipEvent.ProfileSaved -> profileChanges.value++
+                    OwnershipEvent.ProfileSaved -> nativeProfileSaved()
                 }
             }
         }
         backHandler { model.onAction(com.coffeepeek.feature.ownership.impl.ui.compose.model.OwnershipAction.Back) }
-        BusinessOwnershipScreen(model, image, picker)
+        if (!PlatformOwnershipContent(model, account, picker)) BusinessOwnershipScreen(model, image, picker)
     }
 }

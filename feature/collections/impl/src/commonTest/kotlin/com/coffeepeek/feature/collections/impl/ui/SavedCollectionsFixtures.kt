@@ -75,9 +75,11 @@ internal class SavedTestRepository : SavedCollectionsRepository {
     var uploadError: Throwable? = null
     var updateFailure: Throwable? = null
     var mineFailure: Throwable? = null
+    var createFailure: Throwable? = null
     var membershipFailure: Throwable? = null
     var featuredFailure: Throwable? = null
     var mineGate: CompletableDeferred<Unit>? = null
+    var createGate: CompletableDeferred<Unit>? = null
     var mineReads = 0
     var membershipGate: CompletableDeferred<Unit>? = null
     var featuredGate: CompletableDeferred<Unit>? = null
@@ -102,6 +104,8 @@ internal class SavedTestRepository : SavedCollectionsRepository {
     override suspend fun public(id: String): Result<SavedCollection> { publicReads++; return Result.success(publicList) }
     override suspend fun create(metadata: SavedCollectionMetadata): Result<SavedCollection> {
         creates++
+        createGate?.await()
+        createFailure?.let { return Result.failure(it) }
         value = SavedCollection(SavedCollectionSummary("created", metadata.title.trim(), metadata.description.trim(), metadata.visibility))
         lists = lists + value.summary
         cachedLists = cachedLists?.plus(value.summary)

@@ -33,78 +33,46 @@ import coffeepeek.composeapp.generated.resources.Res
 import org.jetbrains.compose.resources.painterResource
 
 object ErrorDialog {
-
     @Composable
-    operator fun invoke(
-        show: Boolean,
-        message: String,
-        title: String = stringResource(Res.string.error_dialog_unexpected_error),
-        onDismiss: () -> Unit
-    ) {
-        val localizedErrorDialogShelfCameraTipsClose = stringResource(Res.string.error_dialog_shelf_camera_tips_close)
+    operator fun invoke(show: Boolean, message: String,
+        title: String = stringResource(Res.string.error_dialog_unexpected_error), onDismiss: () -> Unit) {
+        if (!show) return
+        val close = stringResource(Res.string.error_dialog_shelf_camera_tips_close)
+        if (PlatformGlobalError(title, message, close, onDismiss)) return
+        Dialog(onDismissRequest = onDismiss) { ErrorDialogContent(title, message, close, onDismiss) }
+    }
+}
 
-        if (show) {
-            Dialog(onDismissRequest = onDismiss) {
-                Surface(
-                    shape = RoundedCornerShape(28.dp),
-                    color = MaterialTheme.colorScheme.surface,
-                    tonalElevation = 6.dp,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp)
-                ) {
-                    Column(
-                        modifier = Modifier.padding(24.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Image(
-                            painter = painterResource(CoffeePeekIllustrations.LoadError),
-                            contentDescription = null,
-                            contentScale = ContentScale.Fit,
-                            modifier = Modifier.size(96.dp),
-                        )
-
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        Text(
-                            text = title,
-                            style = MaterialTheme.typography.titleLarge.copy(
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 20.sp
-                            ),
-                            textAlign = TextAlign.Center,
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        Text(
-                            text = message,
-                            style = MaterialTheme.typography.bodyMedium,
-                            textAlign = TextAlign.Center,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-
-                        Spacer(modifier = Modifier.height(24.dp))
-
-                        Button(
-                            onClick = onDismiss,
-                            modifier = Modifier.fillMaxWidth().heightIn(min = CoffeePeekDimens.buttonHeight),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = MaterialTheme.colorScheme.primary,
-                                contentColor   = MaterialTheme.colorScheme.onPrimary,
-                            ),
-                            shape = RoundedCornerShape(percent = 50),
-                        ) {
-                            Text(
-                                text = localizedErrorDialogShelfCameraTipsClose,
-                                style = MaterialTheme.typography.labelLarge.copy(fontSize = 16.sp),
-                                modifier = Modifier.padding(vertical = 4.dp)
-                            )
-                        }
-                    }
-                }
-            }
+@Composable
+private fun ErrorDialogContent(title: String, message: String, close: String, onDismiss: () -> Unit) {
+    Surface(shape = RoundedCornerShape(28.dp), color = MaterialTheme.colorScheme.surface,
+        tonalElevation = 6.dp, modifier = Modifier.fillMaxWidth().padding(16.dp)) {
+        Column(Modifier.padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+            ErrorDialogMessage(title, message)
+            Spacer(Modifier.height(24.dp))
+            ErrorDialogCloseButton(close, onDismiss)
         }
+    }
+}
+
+@Composable
+private fun ErrorDialogMessage(title: String, message: String) {
+    Image(painterResource(CoffeePeekIllustrations.LoadError), contentDescription = null,
+        contentScale = ContentScale.Fit, modifier = Modifier.size(96.dp))
+    Spacer(Modifier.height(16.dp))
+    Text(title, style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold, fontSize = 20.sp),
+        textAlign = TextAlign.Center, color = MaterialTheme.colorScheme.onSurface)
+    Spacer(Modifier.height(8.dp))
+    Text(message, style = MaterialTheme.typography.bodyMedium, textAlign = TextAlign.Center,
+        color = MaterialTheme.colorScheme.onSurfaceVariant)
+}
+
+@Composable
+private fun ErrorDialogCloseButton(label: String, onDismiss: () -> Unit) {
+    Button(onClick = onDismiss, modifier = Modifier.fillMaxWidth().heightIn(min = CoffeePeekDimens.buttonHeight),
+        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary,
+            contentColor = MaterialTheme.colorScheme.onPrimary), shape = RoundedCornerShape(percent = 50)) {
+        Text(label, style = MaterialTheme.typography.labelLarge.copy(fontSize = 16.sp),
+            modifier = Modifier.padding(vertical = 4.dp))
     }
 }

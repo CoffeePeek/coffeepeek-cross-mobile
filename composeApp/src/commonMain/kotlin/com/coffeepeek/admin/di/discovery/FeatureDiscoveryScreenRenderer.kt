@@ -34,7 +34,9 @@ import kotlinx.coroutines.flow.map
 import org.koin.compose.koinInject
 
 /** Both platforms use the migrated search; navigation and native map remain app-owned. */
-internal class FeatureDiscoveryScreenRenderer(private val entry: DiscoveryTabEntry) : DiscoveryScreenRenderer {
+internal class FeatureDiscoveryScreenRenderer(private val entry: DiscoveryTabEntry, private val sessions: AppDiscoverySessions) :
+    DiscoveryScreenRenderer, NativeDiscoverySessionFactory {
+    override fun createNativeSession() = sessions.nativeSession()
     @Composable
     override fun Tab(onMapExpandedChange: (Boolean) -> Unit, reselections: Flow<Unit>) {
         val pendingMapFocus by Navigator.pendingMapFocus.collectAsState()
@@ -61,23 +63,10 @@ private fun checkInResumeAction(): (() -> Unit)? {
     val sessions = koinInject<SessionReader>()
     val drafts = koinInject<AppShopCheckInDraftStore>()
     val destination by remember(sessions, drafts) {
-        sessions.observeSession()
-            .map { it?.takeIf(sessions::isActiveSession)?.userId }
-            .distinctUntilChanged()
-            .flatMapLatest { owner ->
-                if (owner == null) flowOf(null)
-                else drafts.observeLatestShop(owner).map { slug -> slug?.let { owner to it } }.catch { emit(null) }
-            }
+        observeCheckInResumeDestination(sessions, drafts)
     }.collectAsStateWithLifecycle(initialValue = null)
-    val (owner, slug) = destination ?: return null
-    val session = sessions.peekSession()
-    if (session?.userId != owner || !sessions.isActiveSession(session)) return null
-    return {
-        val current = sessions.peekSession()
-        if (current?.userId == owner && sessions.isActiveSession(current)) {
-            Navigator.navigate(Navigator.Screen.ShopCheckInEditor(slug))
-        }
-    }
+    val current = activeShopResumeDestination(destination, sessions) ?: return null
+    return { resumeShopCheckIn(current, sessions) }
 }
 
 internal fun featureDiscoveryScreenRenderer(
@@ -93,19 +82,8 @@ internal fun featureDiscoveryScreenRenderer(
 ): DiscoveryScreenRenderer {
     val favoriteAdapter = AppDiscoveryFavorites(favorites, favoriteCollections)
     val repository = createDiscoveryRepository(client, favoriteAdapter::favoriteIds, roasterEntries(catalog))
-    return FeatureDiscoveryScreenRenderer(
-        createDiscoveryTabEntry(
-            repository = repository,
-            favorites = favoriteAdapter,
-            city = city,
-            location = location,
-            account = SessionDiscoveryAccount(sessions),
-            shopDetails = ShopDiscoveryDetails(shops),
-            analytics = AppDiscoveryAnalytics(),
-            host = discoveryHost(),
-            roasters = discoveryRoasterSlots(roasters),
-        ),
-    )
+    val assembly = AppDiscoverySessions(repository, favoriteAdapter, city, location, SessionDiscoveryAccount(sessions), ShopDiscoveryDetails(shops))
+    return FeatureDiscoveryScreenRenderer(assembly.entry(discoveryHost(), discoveryRoasterSlots(roasters)), assembly)
 }
 
 private fun discoveryRoasterSlots(roasters: RoasterScreenRenderer) = DiscoveryRoasterSlots(

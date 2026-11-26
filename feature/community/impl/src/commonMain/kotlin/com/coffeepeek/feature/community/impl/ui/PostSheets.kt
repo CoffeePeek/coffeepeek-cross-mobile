@@ -131,16 +131,16 @@ internal fun EditSheetContent(edit: PostEditState, drinks: List<DrinkOption>, dr
 }
 
 @Composable
-private fun editErrorText(error: EditError): String = when (error) {
+internal fun editErrorText(error: EditError): String = when (error) {
     is EditError.Server -> error.message ?: stringResource(Res.string.community_edit_save_failed)
-    is EditError.Invalid -> stringResource(
-        when (error.issue) {
-            EditIssue.NoteTooLong -> Res.string.community_issue_note_too_long
-            EditIssue.RatingOutOfRange -> Res.string.community_issue_rating
-            EditIssue.DrinkNameRequired -> Res.string.community_issue_drink_required
-            EditIssue.DrinkNameNotAllowed -> Res.string.community_issue_drink_not_allowed
-        },
-    )
+    is EditError.Invalid -> stringResource(nativeEditIssueResource(error.issue))
+}
+
+internal fun nativeEditIssueResource(issue: EditIssue) = when (issue) {
+    EditIssue.NoteTooLong -> Res.string.community_issue_note_too_long
+    EditIssue.RatingOutOfRange -> Res.string.community_issue_rating
+    EditIssue.DrinkNameRequired -> Res.string.community_issue_drink_required
+    EditIssue.DrinkNameNotAllowed -> Res.string.community_issue_drink_not_allowed
 }
 
 @Composable

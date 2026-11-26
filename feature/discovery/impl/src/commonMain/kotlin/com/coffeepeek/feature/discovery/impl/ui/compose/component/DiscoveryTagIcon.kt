@@ -15,14 +15,14 @@ internal fun discoveryTagArtwork(slug: String?): ImageVector = when (slug?.trim(
     "roastery" -> CoffeePeekIcons.Factory
     "beans-for-sale" -> CoffeePeekIcons.ShoppingBag
     "decaf" -> CoffeePeekIcons.CoffeeBean
-    "to_go" -> CoffeePeekIcons.Footprints
+    "to-go" -> CoffeePeekIcons.Footprints
     "plan-based-milk", "plant-based-milk" -> CoffeePeekIcons.Leaf
-    "laptop_friendly" -> CoffeePeekIcons.Laptop
+    "laptop-friendly" -> CoffeePeekIcons.Laptop
     "outside-seating" -> CoffeePeekIcons.Sun
     "breakfasts" -> CoffeePeekIcons.Egg
     "bakery" -> CoffeePeekIcons.Bread
     "confectionery" -> CoffeePeekIcons.Cake
-    "pet_friendly" -> CoffeePeekIcons.PawPrint
+    "pet-friendly" -> CoffeePeekIcons.PawPrint
     "vegan" -> CoffeePeekIcons.Avocado
     "gluten-free" -> CoffeePeekIcons.GrainsSlash
     else -> CoffeePeekIcons.ListStar

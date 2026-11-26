@@ -37,6 +37,8 @@ private fun Module.collectionsRepositories(apiBaseUrl: String, trackPickerFavori
 }
 
 internal class SessionCollectionsAccount(private val sessions: SessionReader) : CollectionsAccount {
+    override val mediaScopes get() = sessions.observeSession().map { mediaScope() }.distinctUntilChanged()
+    override fun mediaScope(): String? = currentId()?.let { "$it:${sessions.accountGeneration()}" }
     override val identities get() = sessions.observeSession().map { current ->
         current?.takeIf(sessions::isActiveSession)?.userId?.takeIf(String::isNotBlank)
     }.distinctUntilChanged()

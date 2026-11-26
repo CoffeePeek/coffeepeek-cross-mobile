@@ -134,6 +134,7 @@
     <string name="shelf_scan_tip_clean">Без рук, зярнят і блікаў на пачцы</string>
     <string name="shelf_scan_camera">Сфатаграфаваць</string>
     <string name="shelf_scan_gallery">Выбраць з галерэі</string>
+    <string name="shelf_scanner_disabled">Сканер часова адключаны ў гэтай зборцы.</string>
     <string name="shelf_scanner_checking">Правяраем сканер</string>
     <string name="shelf_scanner_download">Падрыхтаваць сканер</string>
     <string name="shelf_scanner_prepare">Падрыхтаваць сканер · %1$d МБ</string>

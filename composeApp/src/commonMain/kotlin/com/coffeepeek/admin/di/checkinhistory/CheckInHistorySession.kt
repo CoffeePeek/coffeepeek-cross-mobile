@@ -23,11 +23,13 @@ internal class CheckInHistorySession(
 ) {
     val isLoggedIn = sessions.isActiveSession(session) && !session?.userId.isNullOrBlank()
     private val accountId = session?.userId.takeIf { isLoggedIn }
+    private val generation = sessions.accountGeneration()
     @Volatile private var revoked = false
 
     fun isCurrent(session: Session? = sessions.peekSession()): Boolean {
         val active = sessions.isActiveSession(session) && !session?.userId.isNullOrBlank()
-        return !revoked && active == isLoggedIn && (!active || session.userId == accountId)
+        return !revoked && active == isLoggedIn && (!active || session.userId == accountId) &&
+            sessions.accountGeneration() == generation
     }
 
     fun revoke() { revoked = true }

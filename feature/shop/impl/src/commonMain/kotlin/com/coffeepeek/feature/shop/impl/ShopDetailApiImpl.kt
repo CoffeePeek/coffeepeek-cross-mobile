@@ -78,7 +78,7 @@ private class DefaultShopDetailEntry(
     }
 }
 
-private fun ShopDetailEvent.toPublicEffect(unknownAuthor: String): ShopDetailEffect? = when (this) {
+internal fun ShopDetailEvent.toPublicEffect(unknownAuthor: String): ShopDetailEffect? = when (this) {
     ShopDetailEvent.Back -> ShopDetailEffect.Back
     ShopDetailEvent.SignIn -> ShopDetailEffect.SignIn
     is ShopDetailEvent.FavoriteRequiresSignIn -> ShopDetailEffect.FavoriteRequiresSignIn(shopId, desired)

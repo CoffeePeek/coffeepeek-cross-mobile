@@ -92,17 +92,18 @@ private fun PublicProfileLoadedContent(state: PublicProfileState, profile: Publi
         checkIns = {},
         checkInsList = { modifier, header ->
             PublicProfileCheckInsTab(state, viewingOwn, authorActions, slots, callbacks,
-                checkInList, modifier, own?.bottomContentPadding ?: 20.dp, own?.activity, header)
+                checkInList, modifier, own?.bottomContentPadding ?: 20.dp, header)
         },
         collections = { PublicProfileCollections(profile, viewingOwn, slots, own) },
         shelf = { slots.shelfPreview(profile.slug, viewingOwn) },
         modifier = Modifier.fillMaxSize().then(if (own == null) Modifier.navigationBarsPadding() else Modifier),
-        ownerShelf = own?.shelf, bottomPadding = own?.bottomContentPadding ?: 20.dp,
+        ownerShelf = own?.shelf, ownerHistory = own?.history, bottomPadding = own?.bottomContentPadding ?: 20.dp,
     ) { selectCheckIns ->
         Column(Modifier.padding(horizontal = 16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Spacer(Modifier.height(2.dp))
             PublicProfileIdentity(state, profile, viewingOwn, slots, callbacks, own)
-            ProfileCheckInCalendar(state, profile, slots.image, own?.activity, callbacks.onAction) { date ->
+            if (own != null) own.history.calendar()
+            else ProfileCheckInCalendar(state, profile, slots.image, callbacks.onAction) { date ->
                 callbacks.onAction(PublicProfileAction.SelectCheckInDate(date))
                 if (date != null) selectCheckIns()
             }
@@ -122,6 +123,8 @@ private fun PublicProfileIdentity(state: PublicProfileState, profile: PublicProf
         onShopsClick = if (viewingOwn) ({ contributions(ProfileContribution.Shops) }) else null,
         onRoastersClick = if (viewingOwn) ({ contributions(ProfileContribution.Roasters) }) else null,
         onFollowersClick = { callbacks.onAction(PublicProfileAction.OpenConnections(PublicProfileConnectionKind.Followers)) },
+        followingCount = state.followingCount,
+        onFollowingClick = { callbacks.onAction(PublicProfileAction.OpenConnections(PublicProfileConnectionKind.Following)) },
         onAvatarClick = { profile.avatarUrl?.let { callbacks.onPhotoClick(listOf(it), listOf(it), 0) } })
 }
 

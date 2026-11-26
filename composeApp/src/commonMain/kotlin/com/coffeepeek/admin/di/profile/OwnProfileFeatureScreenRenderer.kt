@@ -40,7 +40,6 @@ import com.coffeepeek.feature.profile.api.ProfileCheckInLikes
 import com.coffeepeek.feature.authorblocking.api.AuthorBlockActions
 import com.coffeepeek.feature.authorblocking.api.AuthorVisibility
 import com.coffeepeek.feature.profile.api.OwnProfileEntry
-import com.coffeepeek.feature.profile.api.OwnProfileActivity
 import com.coffeepeek.feature.profile.api.OwnProfileSlots
 import com.coffeepeek.feature.profile.api.OwnProfileShelf
 import com.coffeepeek.feature.profile.api.ProfileSignOutPort
@@ -140,10 +139,7 @@ private fun ownProfileSlots(activity: FeatureProfileActivityRenderer) = OwnProfi
             dismissDescription = stringResource(Res.string.profile_collections_cancel),
         ) { ProfileDisplayPreferences() }
     },
-    activity = OwnProfileActivity(
-        month = { date, select, expanded, header -> activity.Calendar(date, select, expanded, header) },
-        onOpenHistory = { Navigator.navigate(Navigator.Screen.VisitedPlaces) },
-    ),
+    history = { content -> activity.History(content) },
     loadError = { onRetry -> CoffeePeekLoadErrorContent(onRetry = onRetry) },
     shelf = OwnProfileShelf(
         content = { modifier, header -> ProfileOwnShelf(modifier, header) },

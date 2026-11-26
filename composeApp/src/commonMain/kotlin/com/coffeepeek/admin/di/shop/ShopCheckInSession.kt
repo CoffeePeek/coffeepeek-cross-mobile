@@ -19,10 +19,12 @@ internal class ShopCheckInSession(
     private val onCheckInCreated: () -> Unit = {},
 ) : ShopCheckInRepository {
     val userId = sessions.peekSession()?.userId
+    private val generation = sessions.accountGeneration()
     @Volatile private var revoked = false
 
     fun isCurrent(session: Session? = sessions.peekSession()): Boolean =
-        !revoked && !userId.isNullOrBlank() && session?.userId == userId && sessions.isActiveSession(session)
+        !revoked && !userId.isNullOrBlank() && session?.userId == userId && sessions.isActiveSession(session) &&
+            sessions.accountGeneration() == generation
 
     fun revoke() { revoked = true }
 

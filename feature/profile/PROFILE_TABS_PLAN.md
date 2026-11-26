@@ -328,3 +328,28 @@ On `c054e4081` with this patch, the function-body check and both Android
 assemblies passed, including packaged runtime classes and Sandbox isolation.
 Profile compiled for Kotlin iOS Arm64. The scroll behavior was reviewed in
 source and remains unverified on a device.
+
+### Own profile display name (#421) — 2026-11-26
+
+The native owner header now uses the feature-owned presentation name: the
+current own profile's nonblank userName, then the public nickname, then the
+canonical profile slug. A stale public nickname cannot override the current
+own name. No email or authentication identifier is used. Inactive or missing
+owner identities expose no presentation name. The native bridge only maps
+this name; existing header @ styling, profile URLs and check-in author data
+retain their responsibilities.
+
+Verification scope: seven common presentation policy regressions cover names
+that differ from slugs, stale/public/blank fallbacks and missing identity.
+Native snapshot and account-session assertions cover replacement and closure.
+The paired native header previews now include a display name with a space.
+The implementation is based on integration parent 43dfcc43f0b71b42223a0d8f1033e7f1d3612f14.
+On that parent with this patch, Profile impl ran 110 JVM tests across ten suites
+with zero failures, errors or skips, including all seven new name cases. The
+function-body check and directSandbox assembly passed on the first run, including
+Sandbox isolation and packaged DEX runtime-class checks (build 1.2.2.3385-sandbox,
+com.coffeepeek.sandbox, APK SHA-256
+b6af7d9b0f3f6f6f754a20742296cf7dbade69ce658cc77e3f0a85ac3cf8dcfd).
+The native snapshot/session test changes have not been compiled or executed;
+Kotlin/Native and full iOS validation remain pending. Previews were not rendered.
+No device, real account, backend write or TestFlight validation was performed.

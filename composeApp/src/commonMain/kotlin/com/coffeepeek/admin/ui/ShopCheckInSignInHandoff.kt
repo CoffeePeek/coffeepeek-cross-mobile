@@ -5,16 +5,27 @@ import kotlinx.coroutines.flow.getAndUpdate
 
 /** Keeps the scanned shop through the navigation reset after authentication. */
 internal class ShopCheckInSignInHandoff {
-    class Request(val shopId: String)
+    private class Request(val shopId: String)
 
     private val pending = MutableStateFlow<Request?>(null)
 
-    fun begin(request: Request) {
-        pending.value = request
+    fun attempt(shopId: String, hasActiveSession: () -> Boolean): Attempt {
+        val request = Request(shopId)
+        return Attempt(
+            begin = { pending.value = request },
+            cancel = { pending.compareAndSet(request, null) },
+            hasActiveSession = hasActiveSession,
+        )
     }
 
-    fun cancel(request: Request) {
-        pending.compareAndSet(request, null)
+    class Attempt internal constructor(
+        val begin: () -> Unit,
+        val cancel: () -> Unit,
+        private val hasActiveSession: () -> Boolean,
+    ) {
+        fun dispose() {
+            if (!hasActiveSession()) cancel()
+        }
     }
 
     fun take(): Navigator.Screen.ShopCheckInEditor? =

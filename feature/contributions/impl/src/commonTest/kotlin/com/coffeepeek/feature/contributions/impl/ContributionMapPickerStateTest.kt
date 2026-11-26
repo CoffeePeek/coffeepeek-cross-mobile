@@ -13,6 +13,16 @@ class ContributionMapPickerStateTest {
     private val a = GeoPoint(53.9, 27.5)
     private val b = GeoPoint(54.0, 28.0)
 
+    @Test fun nativeLocationCanMoveTheCameraWithoutChangingTheManualPanContract() {
+        val picker = ContributionMapPickerState(a)
+        picker.cameraApplied()
+        picker.move(b)
+        assertNull(picker.state.cameraTarget)
+        picker.showLocation(a)
+        assertEquals(a, picker.state.point)
+        assertEquals(a, picker.state.cameraTarget)
+    }
+
     @Test fun cameraTargetIsConsumedOnceAndLocationRequestsAreExplicit() {
         val picker = ContributionMapPickerState(a)
         assertEquals(a, picker.state.cameraTarget)
