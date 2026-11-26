@@ -14,7 +14,6 @@ internal class SavedCollectionsViewModel(private val saved: SavedCollectionsRepo
     private val target: SavedCollectionTarget? = null, private val profileSlug: String? = null) :
     MviViewModel<SavedCollectionsState, SavedCollectionsAction, SavedCollectionsEvent>(initialSavedState(saved, account, mode, target)) {
     private var generation = 0
-    private var owner: String? = null
     private var work: Job? = null
     private var reloadPending = false
 
@@ -80,7 +79,6 @@ internal class SavedCollectionsViewModel(private val saved: SavedCollectionsRepo
 
     private suspend fun resetAccount(owner: String?) {
         generation++
-        this.owner = owner
         reloadPending = false
         work?.cancel()
         clearCover()
@@ -203,14 +201,15 @@ internal class SavedCollectionsViewModel(private val saved: SavedCollectionsRepo
     private fun save() {
         if (!writable() || mode != SavedCollectionsMode.Editor || !SavedCollectionRules.validMetadata(metadata())) return
         val epoch = generation
+        val completion = SavedCollectionsEvent.Saved(epoch, account.mediaScope() ?: return)
         val editedPlaces = editedPlaces()
         updateState { copy(busy = true, failure = null) }
         launchWork(epoch) {
             val result = saveMetadata(epoch).checked()
-            if (epoch != generation) return@launchWork
+            if (!isCurrentSave(completion)) return@launchWork
             val collection = result.getOrNull()
             if (collection == null) updateState { copy(failure = failureFor(result.exceptionOrNull())) }
-            else saveItems(epoch, collection, editedPlaces)
+            else saveItems(completion, collection, editedPlaces)
         }
     }
 
@@ -233,23 +232,24 @@ internal class SavedCollectionsViewModel(private val saved: SavedCollectionsRepo
             else saved.update(existing.id, metadata(), existing.revision)
     }
 
-    private suspend fun saveItems(epoch: Int, collection: SavedCollection, editedPlaces: List<CollectionPlace>?) {
+    private suspend fun saveItems(completion: SavedCollectionsEvent.Saved, collection: SavedCollection, editedPlaces: List<CollectionPlace>?) {
         clearCover()
         updateState { copy(collection = collection, title = collection.summary.title, description = collection.summary.description,
             visibility = collection.summary.visibility, coverInput = null, uploadedCover = null, removeCover = false) }
         val result = if (editedPlaces == null) Result.success(collection)
             else saved.replaceItems(collection.summary.id, editedPlaces, collection.summary.revision).checked()
-        if (epoch != generation) return
+        if (!isCurrentSave(completion)) return
         updateState {
             val value = result.getOrNull()
             copy(collection = value ?: collection, places = value?.places ?: places,
                 selectedPlaces = value?.places?.map { it.key }?.toSet() ?: selectedPlaces,
                 failure = result.exceptionOrNull()?.let(::failureFor))
         }
-        if (result.isSuccess && isCurrentSave(epoch)) sendEvent(SavedCollectionsEvent.Saved(epoch))
+        if (result.isSuccess && isCurrentSave(completion)) sendEvent(completion)
     }
 
-    internal fun isCurrentSave(epoch: Int): Boolean = epoch == generation && owner != null && owner == account.currentId()
+    internal fun isCurrentSave(completion: SavedCollectionsEvent.Saved): Boolean =
+        completion.epoch == generation && completion.ownerScope == account.mediaScope()
 
     private fun metadata() = SavedCollectionMetadata(currentState.title, currentState.description,
         currentState.visibility, currentState.uploadedCover, currentState.removeCover)

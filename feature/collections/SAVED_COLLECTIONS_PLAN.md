@@ -572,3 +572,26 @@ production analytics was used. A macOS native compilation/test gate remains
 pending. Manual Sandbox and native UI review
 remain unverified; existing colocated previews were not rendered here. The private
 Telegram video attached to the issue was not viewed.
+
+Review follow-up, 2026-11-26: the first gate above verifies `26a106d11`.
+An account ID plus collector-local epoch can miss a conflated A→B→A replacement.
+Save completion now captures the existing opaque `CollectionsAccount.mediaScope`
+at write start and checks it again after writes and at feature event delivery.
+Application navigation additionally carries the originating root instance and
+`RootNavigationSession` lifetime. Compose checks both against the live session
+before popping/selecting, without scheduling a second global navigation command;
+native checks them when its deferred transition actually plans the new stack.
+Queued old-root completions cannot clear successor profile navigation requests.
+Four additional save and four queued-root contracts cover the missed lifetimes.
+The original 849-case passing gate did not cover these paths; source review
+demonstrated both P2 defects before this correction. Independent static re-review
+of the corrected source and callers reported no remaining findings.
+
+The follow-up working tree based on `26a106d11` passed on the same Windows/JDK 17
+setup: collections 7 suites/110 cases and application Direct Debug unit
+168 suites/747 cases, 857 total, zero failures/errors/skips, no retries.
+Direct Sandbox assembly/isolation/packaged runtime classes passed again.
+Function-body verification passed before and after regeneration, 125 recorded,
+zero new; the new root-event helper only reduced BaseNavigator 146→145.
+Koin appModule remains 70. No device or live state was touched; Kotlin/Native and
+macOS UI compilation/execution remain pending.

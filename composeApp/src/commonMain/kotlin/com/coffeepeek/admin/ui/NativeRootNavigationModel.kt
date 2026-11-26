@@ -32,7 +32,7 @@ internal class NativeRootNavigationModel(private var loggedIn: Boolean, business
             if (it.size > 1) it.dropLast(1) else it
         })
         is Navigator.NavEvent.SelectTab -> select(event.tab, reset = true)
-        Navigator.NavEvent.ReturnToProfile -> returnToProfile()
+        is Navigator.NavEvent.ReturnToProfile -> returnToProfile()
         is Navigator.NavEvent.NavigateTo -> navigate(event.screen.profileDestination(loggedIn))
     }
 

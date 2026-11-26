@@ -19,6 +19,7 @@ import com.coffeepeek.admin.di.shop.*
 import com.coffeepeek.admin.di.shopreport.iosShopReportContent
 import com.coffeepeek.admin.locator.Constants
 import com.coffeepeek.admin.ui.Navigator
+import com.coffeepeek.admin.ui.RootNavigationOrigin
 import com.coffeepeek.admin.ui.component.NativeReviewDateFormatter
 import com.coffeepeek.admin.ui.screen.checkins.CheckInShopPickerRenderer
 import com.coffeepeek.core.network.ApiClients
@@ -36,12 +37,13 @@ internal class IosNativeDestinations(private val dependencies: Koin, private val
     parent: CoroutineScope, private val loggedIn: () -> Boolean, private val resetLogin: () -> Unit,
     private val mapExpanded: (Boolean) -> Unit, private val reselections: Flow<Unit>,
     private val registerRefresh: (() -> Unit) -> (() -> Unit),
+    private val navigationOrigin: RootNavigationOrigin,
 ) {
     private val language = dependencies.get<LanguagePort>()
     private val media = IosCatalogueMedia(dependencies.get(), Constants.BASE_URL)
     private val dates = NativeReviewDateFormatter(parent, language.observe().map { it.languageTag })
     private val workspace = iosCollectionsWorkspaceContent(ui.makeCollectionsWorkspaceController, ::languageTag,
-        dependencies.get(), dependencies.get(), dependencies.get())
+        dependencies.get(), dependencies.get(), dependencies.get()) { Navigator.returnToProfile(navigationOrigin) }
     private val shelf = iosShelfFactory(dependencies.get(), dependencies.get(), dependencies.get(), dependencies.get(), language, media)
     private val auth = iosAuthContent(ui.makeAuthController, dependencies.get(),
         IosAuthDestinations(dependencies.get(), dependencies.get(), language))

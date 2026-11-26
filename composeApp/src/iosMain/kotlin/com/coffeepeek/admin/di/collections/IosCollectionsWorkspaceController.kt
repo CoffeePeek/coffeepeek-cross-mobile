@@ -2,6 +2,7 @@ package com.coffeepeek.admin.di.collections
 
 import androidx.compose.runtime.*
 import com.coffeepeek.admin.ui.Navigator
+import com.coffeepeek.admin.ui.LocalRootNavigationOrigin
 import com.coffeepeek.admin.utils.ShareHelper
 import com.coffeepeek.core.designsystem.resources.LocalCoffeePeekLanguageTag
 import com.coffeepeek.feature.collections.domain.repository.*
@@ -21,11 +22,13 @@ internal fun iosCollectionsWorkspaceContent(): (String, String?, String?) -> UIV
     val saved = koinInject<SavedCollectionsRepository>()
     val snapshots = koinInject<CollectionsRepository>()
     val account = koinInject<CollectionsAccount>()
-    return iosCollectionsWorkspaceContent(factory, { language }, saved, snapshots, account)
+    val origin = LocalRootNavigationOrigin.current
+    return iosCollectionsWorkspaceContent(factory, { language }, saved, snapshots, account) { Navigator.returnToProfile(origin) }
 }
 
 internal fun iosCollectionsWorkspaceContent(factory: (IosCollectionsWorkspace, String) -> UIViewController,
     language: () -> String, saved: SavedCollectionsRepository, snapshots: CollectionsRepository, account: CollectionsAccount,
+    onSaved: () -> Unit,
 ): (String, String?, String?) -> UIViewController {
     return { mode, id, slug ->
         val session = if (mode == "Snapshot") IosCollectionsWorkspace(null, PublicCollectionSession(
@@ -36,7 +39,7 @@ internal fun iosCollectionsWorkspaceContent(factory: (IosCollectionsWorkspace, S
             { Navigator.navigate(Navigator.Screen.Auth) },
             { Navigator.navigate(Navigator.Screen.CollectionEditor(it)) },
             { Navigator.navigate(Navigator.Screen.SavedPublicCollection(it)) },
-            ::openCollectionShop, ::openCollectionRoaster, ShareHelper::shareText, onSaved = Navigator::returnToProfile), photos = snapshots)
+            ::openCollectionShop, ::openCollectionRoaster, ShareHelper::shareText, onSaved = onSaved), photos = snapshots)
         factory(session, language())
     }
 }

@@ -152,7 +152,7 @@ class CollectionsWorkspaceSession(
             SavedCollectionsEvent.Back -> onBack()
             SavedCollectionsEvent.SignIn -> onSignIn()
             SavedCollectionsEvent.CancelExport -> Unit
-            is SavedCollectionsEvent.Saved -> if (model.isCurrentSave(event.epoch)) onSaved()
+            is SavedCollectionsEvent.Saved -> if (model.isCurrentSave(event)) onSaved()
             is SavedCollectionsEvent.Editor -> onEditor(event.id)
             is SavedCollectionsEvent.Place -> if (event.value.kind == CollectionPlaceKind.CoffeeShop) onShop(event.value.slug) else onRoaster(event.value.slug)
             is SavedCollectionsEvent.Share -> onShare(event.value)

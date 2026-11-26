@@ -35,7 +35,7 @@ internal sealed interface SavedCollectionsEvent {
     data object Back : SavedCollectionsEvent
     data object SignIn : SavedCollectionsEvent
     data object CancelExport : SavedCollectionsEvent
-    data class Saved(val epoch: Int) : SavedCollectionsEvent
+    data class Saved(val epoch: Int, val ownerScope: String) : SavedCollectionsEvent
     data class Editor(val id: String?) : SavedCollectionsEvent
     data class Place(val value: CollectionPlace) : SavedCollectionsEvent
     data class Share(val value: String) : SavedCollectionsEvent

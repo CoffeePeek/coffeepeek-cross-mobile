@@ -3,13 +3,16 @@ package com.coffeepeek.admin.ui
 import kotlin.test.*
 
 class NativeRootNavigationModelTest {
+    private fun profileReturn() = Navigator.NavEvent.ReturnToProfile(
+        RootNavigationOrigin(RootNavigationSession(true, "owner", 1)))
+
     @Test fun savedCollectionReturnsFromTheLibraryToTheProfileRoot() {
         val model = NativeRootNavigationModel(true)
         model.confirm(model.plan(Navigator.NavEvent.SelectTab(Navigator.Screen.ProfileTab)))
         val profile = model.actual.stacks[2].first()
         model.confirm(model.plan(Navigator.NavEvent.NavigateTo(Navigator.Screen.CollectionsLibrary)))
         model.confirm(model.plan(Navigator.NavEvent.NavigateTo(Navigator.Screen.CollectionEditor())))
-        model.confirm(model.plan(Navigator.NavEvent.ReturnToProfile))
+        model.confirm(model.plan(profileReturn()))
         assertEquals(2, model.actual.selected)
         assertEquals(listOf(profile), model.actual.stacks[2])
         model.confirm(model.plan(Navigator.NavEvent.PopBack))
@@ -25,7 +28,7 @@ class NativeRootNavigationModelTest {
         val source = model.actual.stacks[0]
         model.confirm(model.plan(Navigator.NavEvent.NavigateTo(Navigator.Screen.CollectionsLibrary)))
         model.confirm(model.plan(Navigator.NavEvent.NavigateTo(Navigator.Screen.CollectionEditor("edited"))))
-        model.confirm(model.plan(Navigator.NavEvent.ReturnToProfile))
+        model.confirm(model.plan(profileReturn()))
         assertEquals(2, model.actual.selected)
         assertEquals(1, model.actual.stacks[2].size)
         model.confirm(model.plan(Navigator.NavEvent.NavigateTo(Navigator.Screen.FeedTab)))
@@ -36,7 +39,7 @@ class NativeRootNavigationModelTest {
         val model = NativeRootNavigationModel(true)
         model.confirm(model.plan(Navigator.NavEvent.SelectTab(Navigator.Screen.ProfileTab)))
         model.confirm(model.plan(Navigator.NavEvent.NavigateTo(Navigator.Screen.CollectionEditor("edited"))))
-        model.confirm(model.plan(Navigator.NavEvent.ReturnToProfile))
+        model.confirm(model.plan(profileReturn()))
         assertEquals(listOf(Navigator.Screen.ProfileTab), model.actual.stacks[2].map { it.screen })
     }
 

@@ -3,6 +3,7 @@ package com.coffeepeek.feature.collections.impl.ui
 import androidx.lifecycle.ViewModelStore
 import com.coffeepeek.feature.collections.domain.model.*
 import com.coffeepeek.feature.collections.domain.repository.SavedCollectionsRepository
+import com.coffeepeek.feature.collections.domain.repository.CollectionsAccount
 import com.coffeepeek.feature.collections.impl.ui.model.*
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collect
@@ -13,6 +14,10 @@ import kotlin.test.*
 class SavedCollectionSaveTest {
     private val dispatcher = StandardTestDispatcher()
     private val account = SavedTestAccount()
+    private var accountLifetime = 0
+    private val saveAccount = object : CollectionsAccount by account {
+        override fun mediaScope() = account.currentId()?.let { "$it:$accountLifetime" }
+    }
     private val saved = SavedTestRepository()
     private val store = ViewModelStore()
     private var nextModel = 0
@@ -40,7 +45,7 @@ class SavedCollectionSaveTest {
         saved.createGate!!.complete(Unit)
         runCurrent()
         assertEquals(1, events.saved().size)
-        assertTrue(model.isCurrentSave(events.saved().single().epoch))
+        assertTrue(model.isCurrentSave(events.saved().single()))
     }
 
     @Test fun metadataEditFinishesWithoutRewritingUnchangedItems() = runTest(dispatcher) {
@@ -149,15 +154,68 @@ class SavedCollectionSaveTest {
         startCreation(model)
         val completion = events.saved().single()
         account.owner.value = "next"
-        assertFalse(model.isCurrentSave(completion.epoch))
+        assertFalse(model.isCurrentSave(completion))
         runCurrent()
         model.onAction(SavedCollectionsAction.Back)
         runCurrent()
-        assertFalse(model.isCurrentSave(completion.epoch))
+        assertFalse(model.isCurrentSave(completion))
+    }
+
+    @Test fun bufferedCompletionRejectsAnAccountRoundTripBeforeCollectorsResume() = runTest(dispatcher) {
+        val model = editor()
+        val events = observe(model)
+        startCreation(model)
+        val completion = events.saved().single()
+        val epoch = model.state.value.accountVersion
+        changeLifetime("second")
+        changeLifetime("first")
+        assertEquals(epoch, model.state.value.accountVersion)
+        assertFalse(model.isCurrentSave(completion))
+        runCurrent()
+        assertFalse(model.isCurrentSave(completion))
+    }
+
+    @Test fun bufferedCompletionRejectsANewLifetimeForTheSameIdentity() = runTest(dispatcher) {
+        val model = editor()
+        val events = observe(model)
+        startCreation(model)
+        val completion = events.saved().single()
+        changeLifetime("first")
+        assertFalse(model.isCurrentSave(completion))
+    }
+
+    @Test fun lateCreationAfterAConflatedAccountRoundTripDoesNotEmitCompletion() = runTest(dispatcher) {
+        val gate = CompletableDeferred<Unit>()
+        val model = editor(repository = delayedCreation(gate))
+        val events = observe(model)
+        startCreation(model)
+        changeLifetime("second")
+        changeLifetime("first")
+        gate.complete(Unit)
+        runCurrent()
+        assertTrue(events.saved().isEmpty())
+    }
+
+    @Test fun aNewSameIdentityLifetimeDuringItemWriteDoesNotEmitCompletion() = runTest(dispatcher) {
+        val model = editor("private")
+        val events = observe(model)
+        saved.itemGate = CompletableDeferred()
+        model.onAction(SavedCollectionsAction.TogglePlace(savedShop.key))
+        model.onAction(SavedCollectionsAction.Save)
+        runCurrent()
+        changeLifetime("first")
+        saved.itemGate!!.complete(Unit)
+        runCurrent()
+        assertTrue(events.saved().isEmpty())
+    }
+
+    private fun changeLifetime(owner: String) {
+        accountLifetime++
+        account.owner.value = owner
     }
 
     private fun TestScope.editor(id: String? = null, repository: SavedCollectionsRepository = saved): SavedCollectionsViewModel {
-        val model = SavedCollectionsViewModel(repository, SavedTestSnapshots(), account, SavedCollectionsMode.Editor, id)
+        val model = SavedCollectionsViewModel(repository, SavedTestSnapshots(), saveAccount, SavedCollectionsMode.Editor, id)
         store.put("editor:${nextModel++}", model)
         runCurrent()
         return model
